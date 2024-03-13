@@ -66,6 +66,14 @@ service Query {
         "/babylon/zoneconcierge/v1/finalized_chain_info/{chain_id}/height/"
         "{height}";
   }
+  // ChainRegistryList queries the list of chains that are registered to Babylon
+  rpc ChainRegistryList(QueryChainRegistryListRequest) returns (QueryChainRegistryListResponse) {
+    option (google.api.http).get = "/babylon/zoneconcierge/v1/chain_registry_list";
+  }
+  // ChainsRegistry queries the latest info for a given list of chains in Babylon's view
+  rpc ChainsRegistry(QueryChainsRegistryRequest) returns (QueryChainsRegistryResponse) {
+    option (google.api.http).get = "/babylon/zoneconcierge/v1/chains_registry";
+  }
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
@@ -199,4 +207,26 @@ message QueryFinalizedChainInfoUntilHeightResponse {
 
   // proof is the proof that the chain info is finalized
   babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 5;
+}
+
+// QueryChainRegistryListRequest is request type for the Query/ChainRegistryList RPC method
+message QueryChainRegistryListRequest {
+  // pagination defines whether to have the pagination in the request
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryChainRegistryListResponse is response type for the Query/ChainRegistryList RPC method
+message QueryChainRegistryListResponse {
+  // chain_ids are IDs of the chains in ascending alphabetical order
+  repeated string chain_ids = 1;
+  // pagination defines the pagination in the response
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryChainsRegistryRequest is request type for the Query/ChainsRegistry RPC method.
+message QueryChainsRegistryRequest { repeated string chain_ids = 1; }
+
+// QueryChainsRegistryResponse is response type for the Query/ChainsRegistry RPC method.
+message QueryChainsRegistryResponse {
+  repeated babylon.zoneconcierge.v1.ChainRegister chains_register = 1;
 }
