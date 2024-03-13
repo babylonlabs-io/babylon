@@ -13,6 +13,8 @@ import (
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/keeper"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	bsckeeper "github.com/babylonchain/babylon/x/btcstkconsumer/keeper"
+	bsctypes "github.com/babylonchain/babylon/x/btcstkconsumer/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
@@ -29,29 +31,32 @@ var (
 type Helper struct {
 	t testing.TB
 
-	Ctx                  sdk.Context
-	BTCStakingKeeper     *keeper.Keeper
-	BTCLightClientKeeper *types.MockBTCLightClientKeeper
-	BTCCheckpointKeeper  *types.MockBtcCheckpointKeeper
-	CheckpointingKeeper  *types.MockCheckpointingKeeper
-	MsgServer            types.MsgServer
-	Net                  *chaincfg.Params
+	Ctx                     sdk.Context
+	BTCStakingKeeper        *keeper.Keeper
+	BTCLightClientKeeper    *types.MockBTCLightClientKeeper
+	BTCCheckpointKeeper     *types.MockBtcCheckpointKeeper
+	CheckpointingKeeper     *types.MockCheckpointingKeeper
+	MsgServer               types.MsgServer
+	BtcStkConsumerMsgServer bsctypes.MsgServer
+	Net                     *chaincfg.Params
 }
 
 func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKeeper *types.MockBtcCheckpointKeeper, ckptKeeper *types.MockCheckpointingKeeper) *Helper {
-	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper, ckptKeeper)
+	k, bscKeeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper, ckptKeeper)
 	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
 	msgSrvr := keeper.NewMsgServerImpl(*k)
+	btcStkConsumerMsgServer := bsckeeper.NewMsgServerImpl(*bscKeeper)
 
 	return &Helper{
-		t:                    t,
-		Ctx:                  ctx,
-		BTCStakingKeeper:     k,
-		BTCLightClientKeeper: btclcKeeper,
-		BTCCheckpointKeeper:  btccKeeper,
-		CheckpointingKeeper:  ckptKeeper,
-		MsgServer:            msgSrvr,
-		Net:                  &chaincfg.SimNetParams,
+		t:                       t,
+		Ctx:                     ctx,
+		BTCStakingKeeper:        k,
+		BTCLightClientKeeper:    btclcKeeper,
+		BTCCheckpointKeeper:     btccKeeper,
+		CheckpointingKeeper:     ckptKeeper,
+		MsgServer:               msgSrvr,
+		BtcStkConsumerMsgServer: btcStkConsumerMsgServer,
+		Net:                     &chaincfg.SimNetParams,
 	}
 }
 

@@ -182,3 +182,26 @@ func (mr *MockCheckpointingKeeperMockRecorder) GetLastFinalizedEpoch(ctx interfa
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastFinalizedEpoch", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetLastFinalizedEpoch), ctx)
 }
+
+// MockBTCStkConsumerKeeper is a mock of BTCStkConsumerKeeper interface.
+type MockBTCStkConsumerKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockBTCStkConsumerKeeperMockRecorder
+}
+
+// MockBTCStkConsumerKeeperMockRecorder is the mock recorder for MockBTCStkConsumerKeeper.
+type MockBTCStkConsumerKeeperMockRecorder struct {
+	mock *MockBTCStkConsumerKeeper
+}
+
+// NewMockBTCStkConsumerKeeper creates a new mock instance.
+func NewMockBTCStkConsumerKeeper(ctrl *gomock.Controller) *MockBTCStkConsumerKeeper {
+	mock := &MockBTCStkConsumerKeeper{ctrl: ctrl}
+	mock.recorder = &MockBTCStkConsumerKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockBTCStkConsumerKeeper) EXPECT() *MockBTCStkConsumerKeeperMockRecorder {
+	return m.recorder
+}

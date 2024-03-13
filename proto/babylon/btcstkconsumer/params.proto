@@ -1,0 +1,15 @@
+syntax = "proto3";
+package babylon.btcstkconsumer;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/btcstkconsumer/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (amino.name) = "babylon/x/btcstkconsumer/Params";
+  option (gogoproto.equal) = true;
+
+  
+}
