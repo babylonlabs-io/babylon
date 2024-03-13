@@ -13,7 +13,7 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-const maxQueryChainsLimit = 100
+const maxQueryChainsInfoLimit = 100
 
 func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	if req == nil {
@@ -61,8 +61,8 @@ func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest)
 	}
 
 	// return if chain IDs exceed the limit
-	if len(req.ChainIds) > maxQueryChainsLimit {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsLimit)
+	if len(req.ChainIds) > maxQueryChainsInfoLimit {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
 	}
 
 	// return if chain IDs contain duplicates or empty strings
@@ -122,8 +122,8 @@ func (k Keeper) EpochChainsInfo(c context.Context, req *types.QueryEpochChainsIn
 	}
 
 	// return if chain IDs exceed the limit
-	if len(req.ChainIds) > maxQueryChainsLimit {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsLimit)
+	if len(req.ChainIds) > maxQueryChainsInfoLimit {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
 	}
 
 	// return if chain IDs contain duplicates or empty strings
@@ -225,8 +225,8 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 	}
 
 	// return if chain IDs exceed the limit
-	if len(req.ChainIds) > maxQueryChainsLimit {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsLimit)
+	if len(req.ChainIds) > maxQueryChainsInfoLimit {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
 	}
 
 	// return if chain IDs contain duplicates or empty strings
@@ -399,66 +399,5 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 		return nil, err
 	}
 
-	return resp, nil
-}
-
-func (k Keeper) ChainRegistryList(c context.Context, req *types.QueryChainRegistryListRequest) (*types.QueryChainRegistryListResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	ctx := sdk.UnwrapSDKContext(c)
-
-	chainIDs := []string{}
-	store := k.chainRegistryStore(ctx)
-	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
-		chainID := string(key)
-		chainIDs = append(chainIDs, chainID)
-		return nil
-	})
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	resp := &types.QueryChainRegistryListResponse{
-		ChainIds:   chainIDs,
-		Pagination: pageRes,
-	}
-	return resp, nil
-}
-
-// ChainsRegistry returns the registration for a given list of chains
-func (k Keeper) ChainsRegistry(c context.Context, req *types.QueryChainsRegistryRequest) (*types.QueryChainsRegistryResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	// return if no chain IDs are provided
-	if len(req.ChainIds) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "chain IDs cannot be empty")
-	}
-
-	// return if chain IDs exceed the limit
-	if len(req.ChainIds) > maxQueryChainsLimit {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsLimit)
-	}
-
-	// return if chain IDs contain duplicates or empty strings
-	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ChainIds); err != nil {
-		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidChainIDs.Wrap(err.Error()).Error())
-	}
-
-	ctx := sdk.UnwrapSDKContext(c)
-	var chainsRegister []*types.ChainRegister
-	for _, chainID := range req.ChainIds {
-		chainRegister, err := k.GetChainRegister(ctx, chainID)
-		if err != nil {
-			return nil, err
-		}
-
-		chainsRegister = append(chainsRegister, chainRegister)
-	}
-
-	resp := &types.QueryChainsRegistryResponse{ChainsRegister: chainsRegister}
 	return resp, nil
 }

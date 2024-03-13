@@ -1,0 +1,61 @@
+syntax = "proto3";
+package babylon.btcstkconsumer.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "babylon/btcstkconsumer/v1/btcstkconsumer.proto";
+import "babylon/btcstkconsumer/v1/params.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/btcstkconsumer/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/btcstkconsumer/v1/params";
+  }
+  // ChainRegistryList queries the list of chains that are registered to Babylon
+  rpc ChainRegistryList(QueryChainRegistryListRequest) returns (QueryChainRegistryListResponse) {
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/chain_registry_list";
+  }
+  // ChainsRegistry queries the latest info for a given list of chains in Babylon's view
+  rpc ChainsRegistry(QueryChainsRegistryRequest) returns (QueryChainsRegistryResponse) {
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/chains_registry";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+// QueryChainRegistryListRequest is request type for the Query/ChainRegistryList RPC method
+message QueryChainRegistryListRequest {
+  // pagination defines whether to have the pagination in the request
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryChainRegistryListResponse is response type for the Query/ChainRegistryList RPC method
+message QueryChainRegistryListResponse {
+  // chain_ids are IDs of the chains in ascending alphabetical order
+  repeated string chain_ids = 1;
+  // pagination defines the pagination in the response
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryChainsRegistryRequest is request type for the Query/ChainsRegistry RPC method.
+message QueryChainsRegistryRequest { repeated string chain_ids = 1; }
+
+// QueryChainsRegistryResponse is response type for the Query/ChainsRegistry RPC method.
+message QueryChainsRegistryResponse {
+  repeated babylon.btcstkconsumer.v1.ChainRegister chains_register = 1;
+}
