@@ -25,3 +25,5 @@ type CheckpointingKeeper interface {
 	GetEpoch(ctx context.Context) *etypes.Epoch
 	GetLastFinalizedEpoch(ctx context.Context) uint64
 }
+
+type BTCStkConsumerKeeper interface{}
