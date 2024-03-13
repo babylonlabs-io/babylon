@@ -15,7 +15,8 @@ const (
 )
 
 var (
-	ParamsKey = []byte("p_btcstkconsumer")
+	ParamsKey        = []byte("p_btcstkconsumer")
+	ChainRegisterKey = []byte{0x01} // ChainRegisterKey defines the key to store the chain register for each CZ in store
 )
 
 func KeyPrefix(p string) []byte {

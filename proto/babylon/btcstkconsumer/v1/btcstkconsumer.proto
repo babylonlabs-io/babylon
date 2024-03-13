@@ -1,0 +1,14 @@
+syntax = "proto3";
+package babylon.btcstkconsumer.v1;
+
+option go_package = "github.com/babylonchain/babylon/x/btcstkconsumer/types";
+
+// ChainRegister is the registration information of a CZ
+message ChainRegister {
+  // chain_id is the ID of the chain
+  string chain_id = 1;
+  // chain_name is the name of the chain
+  string chain_name = 2;
+  // chain_description is a description for the chain (can be empty)
+  string chain_description = 3;
+}
