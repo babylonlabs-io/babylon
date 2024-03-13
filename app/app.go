@@ -128,6 +128,9 @@ import (
 	"github.com/babylonchain/babylon/x/btcstaking"
 	btcstakingkeeper "github.com/babylonchain/babylon/x/btcstaking/keeper"
 	btcstakingtypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/babylonchain/babylon/x/btcstkconsumer"
+	bsckeeper "github.com/babylonchain/babylon/x/btcstkconsumer/keeper"
+	bsctypes "github.com/babylonchain/babylon/x/btcstkconsumer/types"
 	"github.com/babylonchain/babylon/x/checkpointing"
 	checkpointingkeeper "github.com/babylonchain/babylon/x/checkpointing/keeper"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
@@ -243,10 +246,13 @@ type BabylonApp struct {
 	MonitorKeeper        monitorkeeper.Keeper
 
 	// IBC-related modules
-	IBCKeeper           *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	IBCFeeKeeper        ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
-	TransferKeeper      ibctransferkeeper.Keeper // for cross-chain fungible token transfers
-	ZoneConciergeKeeper zckeeper.Keeper          // for cross-chain fungible token transfers
+	IBCKeeper      *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCFeeKeeper   ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
+	TransferKeeper ibctransferkeeper.Keeper // for cross-chain fungible token transfers
+
+	// Integration-related modules
+	BTCStkConsumerKeeper bsckeeper.Keeper
+	ZoneConciergeKeeper  zckeeper.Keeper
 
 	// BTC staking related modules
 	BTCStakingKeeper btcstakingkeeper.Keeper
@@ -327,6 +333,8 @@ func NewBabylonApp(
 		ibcexported.StoreKey,
 		ibctransfertypes.StoreKey,
 		ibcfeetypes.StoreKey,
+		// Integration related modules
+		bsctypes.StoreKey,
 		zctypes.StoreKey,
 		// BTC staking related modules
 		btcstakingtypes.StoreKey,
@@ -617,6 +625,14 @@ func NewBabylonApp(
 		app.IBCKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
 	)
 
+	app.BTCStkConsumerKeeper = bsckeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[bsctypes.StoreKey]),
+		app.AccountKeeper,
+		app.BankKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	zcKeeper := zckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
@@ -676,8 +692,9 @@ func NewBabylonApp(
 	app.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[btcstakingtypes.StoreKey]),
-		&btclightclientKeeper,
-		&btcCheckpointKeeper,
+		&app.BTCLightClientKeeper,
+		&app.BtcCheckpointKeeper,
+		&app.BTCStkConsumerKeeper,
 		btcNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -685,8 +702,8 @@ func NewBabylonApp(
 	app.FinalityKeeper = finalitykeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[finalitytypes.StoreKey]),
-		app.BTCStakingKeeper,
-		app.IncentiveKeeper,
+		&app.BTCStakingKeeper,
+		&app.IncentiveKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -800,6 +817,8 @@ func NewBabylonApp(
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper),
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper),
 		monitor.NewAppModule(appCodec, app.MonitorKeeper),
+		// Babylon modules - integration
+		btcstkconsumer.NewAppModule(appCodec, app.BTCStkConsumerKeeper, app.AccountKeeper, app.BankKeeper),
 		zoneconcierge.NewAppModule(appCodec, app.ZoneConciergeKeeper, app.AccountKeeper, app.BankKeeper),
 		// Babylon modules - btc staking
 		btcstaking.NewAppModule(appCodec, app.BTCStakingKeeper),
@@ -854,9 +873,11 @@ func NewBabylonApp(
 		// IBC-related modules
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
-		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
+		// Integration related modules
+		bsctypes.ModuleName,
+		zctypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -882,9 +903,11 @@ func NewBabylonApp(
 		// IBC-related modules
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
-		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
+		// Integration related modules
+		bsctypes.ModuleName,
+		zctypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -914,9 +937,11 @@ func NewBabylonApp(
 		// IBC-related modules
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
-		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
+		// Integration related modules
+		bsctypes.ModuleName,
+		zctypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,

@@ -20,6 +20,7 @@ type (
 
 		btclcKeeper types.BTCLightClientKeeper
 		btccKeeper  types.BtcCheckpointKeeper
+		bscKeeper   types.BTCStkConsumerKeeper
 
 		btcNet *chaincfg.Params
 		// the address capable of executing a MsgUpdateParams message. Typically, this
@@ -34,6 +35,7 @@ func NewKeeper(
 
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
+	bscKeeper types.BTCStkConsumerKeeper,
 
 	btcNet *chaincfg.Params,
 	authority string,
@@ -44,6 +46,7 @@ func NewKeeper(
 
 		btclcKeeper: btclcKeeper,
 		btccKeeper:  btccKeeper,
+		bscKeeper:   bscKeeper,
 
 		btcNet:    btcNet,
 		authority: authority,
