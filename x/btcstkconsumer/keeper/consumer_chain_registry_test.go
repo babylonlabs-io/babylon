@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/babylonchain/babylon/x/btcstkconsumer/types"
 	"math/rand"
 	"testing"
 
@@ -17,7 +17,7 @@ func FuzzChainRegistry(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		babylonApp := app.Setup(t, false)
-		zcKeeper := babylonApp.ZoneConciergeKeeper
+		zcKeeper := babylonApp.BTCStkConsumerKeeper
 		ctx := babylonApp.NewContext(false)
 		// Create a random chain id that starts with "test-"
 		czChainID := "test-" + datagen.GenRandomHexStr(r, 10)
