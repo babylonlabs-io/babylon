@@ -36,7 +36,6 @@ var (
 	FinalizedEpochKey     = []byte{0x16} // FinalizedEpochKey defines the key to store the last finalised epoch
 	LastSentBTCSegmentKey = []byte{0x17} // LastSentBTCSegmentKey is key holding last btc light client segment sent to other cosmos zones
 	ParamsKey             = []byte{0x18} // key prefix for the parameters
-	ChainRegisterKey      = []byte{0x19} // ChainRegisterKey defines the key to store the chain register for each CZ in store
 )
 
 func KeyPrefix(p string) []byte {
