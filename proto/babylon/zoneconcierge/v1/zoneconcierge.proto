@@ -82,6 +82,16 @@ message ChainInfoWithProof {
   tendermint.crypto.ProofOps proof_header_in_epoch = 2;
 }
 
+// ChainRegister is the registration information of a CZ
+message ChainRegister {
+  // chain_id is the ID of the chain
+  string chain_id = 1;
+  // chain_name is the name of the chain
+  string chain_name = 2;
+  // chain_description is a description for the chain (can be empty)
+  string chain_description = 3;
+}
+
 // FinalizedChainInfo is the information of a CZ that is BTC-finalised
 message FinalizedChainInfo {
   // chain_id is the ID of the chain
