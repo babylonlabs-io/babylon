@@ -17,4 +17,7 @@ var (
 	ErrInvalidMerkleProof      = errorsmod.Register(ModuleName, 1109, "invalid Merkle inclusion proof")
 	ErrInvalidChainInfo        = errorsmod.Register(ModuleName, 1110, "invalid chain info")
 	ErrInvalidChainIDs         = errorsmod.Register(ModuleName, 1111, "chain ids contain duplicates or empty strings")
+	ErrChainNotRegistered      = errorsmod.Register(ModuleName, 1112, "chain not registered")
+	ErrInvalidChainRegister    = errorsmod.Register(ModuleName, 1113, "invalid chain register")
+	ErrChainAlreadyRegistered  = errorsmod.Register(ModuleName, 1114, "chain already registered")
 )
