@@ -127,155 +127,36 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
-// MsgRegisterChain defines a message for registering CZ chains to the zoneconcierge module.
-type MsgRegisterChain struct {
-	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
-	// chain_id is the ID of the chain
-	ChainId string `protobuf:"bytes,2,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
-	// chain_name is the name of the chain
-	ChainName string `protobuf:"bytes,3,opt,name=chain_name,json=chainName,proto3" json:"chain_name,omitempty"`
-	// chain_description is a description for the chain (can be empty)
-	ChainDescription string `protobuf:"bytes,4,opt,name=chain_description,json=chainDescription,proto3" json:"chain_description,omitempty"`
-}
-
-func (m *MsgRegisterChain) Reset()         { *m = MsgRegisterChain{} }
-func (m *MsgRegisterChain) String() string { return proto.CompactTextString(m) }
-func (*MsgRegisterChain) ProtoMessage()    {}
-func (*MsgRegisterChain) Descriptor() ([]byte, []int) {
-	return fileDescriptor_35e2112d987e4e18, []int{2}
-}
-func (m *MsgRegisterChain) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgRegisterChain) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgRegisterChain.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgRegisterChain) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgRegisterChain.Merge(m, src)
-}
-func (m *MsgRegisterChain) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgRegisterChain) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgRegisterChain.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgRegisterChain proto.InternalMessageInfo
-
-func (m *MsgRegisterChain) GetSigner() string {
-	if m != nil {
-		return m.Signer
-	}
-	return ""
-}
-
-func (m *MsgRegisterChain) GetChainId() string {
-	if m != nil {
-		return m.ChainId
-	}
-	return ""
-}
-
-func (m *MsgRegisterChain) GetChainName() string {
-	if m != nil {
-		return m.ChainName
-	}
-	return ""
-}
-
-func (m *MsgRegisterChain) GetChainDescription() string {
-	if m != nil {
-		return m.ChainDescription
-	}
-	return ""
-}
-
-// MsgRegisterChainResponse is the response to the MsgRegisterChain message.
-type MsgRegisterChainResponse struct {
-}
-
-func (m *MsgRegisterChainResponse) Reset()         { *m = MsgRegisterChainResponse{} }
-func (m *MsgRegisterChainResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgRegisterChainResponse) ProtoMessage()    {}
-func (*MsgRegisterChainResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_35e2112d987e4e18, []int{3}
-}
-func (m *MsgRegisterChainResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgRegisterChainResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgRegisterChainResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgRegisterChainResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgRegisterChainResponse.Merge(m, src)
-}
-func (m *MsgRegisterChainResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgRegisterChainResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgRegisterChainResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgRegisterChainResponse proto.InternalMessageInfo
-
 func init() {
 	proto.RegisterType((*MsgUpdateParams)(nil), "babylon.zoneconcierge.v1.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "babylon.zoneconcierge.v1.MsgUpdateParamsResponse")
-	proto.RegisterType((*MsgRegisterChain)(nil), "babylon.zoneconcierge.v1.MsgRegisterChain")
-	proto.RegisterType((*MsgRegisterChainResponse)(nil), "babylon.zoneconcierge.v1.MsgRegisterChainResponse")
 }
 
 func init() { proto.RegisterFile("babylon/zoneconcierge/v1/tx.proto", fileDescriptor_35e2112d987e4e18) }
 
 var fileDescriptor_35e2112d987e4e18 = []byte{
-	// 459 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0x4f, 0x6f, 0xd3, 0x30,
-	0x18, 0xc6, 0x6b, 0x36, 0x0a, 0xf5, 0xf8, 0x33, 0xac, 0x89, 0xa5, 0x91, 0x08, 0xa5, 0x12, 0xd2,
-	0x28, 0x22, 0x51, 0x8b, 0xe0, 0xb0, 0x03, 0x12, 0x85, 0x0b, 0x87, 0x02, 0x0a, 0xe2, 0xc2, 0x65,
-	0x72, 0x12, 0xcb, 0xb5, 0xb4, 0xd8, 0x91, 0xed, 0x4d, 0x2b, 0x27, 0xc4, 0x27, 0xe0, 0xca, 0x85,
-	0xcf, 0xb0, 0x03, 0x1f, 0x62, 0xc7, 0x89, 0x13, 0x27, 0x84, 0xda, 0xc3, 0x0e, 0x7c, 0x09, 0x14,
-	0xdb, 0x51, 0x95, 0x48, 0x9d, 0x7a, 0xcb, 0xeb, 0xe7, 0xe7, 0xf7, 0x79, 0xf2, 0xc8, 0xf0, 0x41,
-	0x82, 0x93, 0xd9, 0xa1, 0xe0, 0xd1, 0x67, 0xc1, 0x49, 0x2a, 0x78, 0xca, 0x88, 0xa4, 0x24, 0x3a,
-	0x1e, 0x46, 0xfa, 0x24, 0x2c, 0xa4, 0xd0, 0x02, 0x79, 0x0e, 0x09, 0x6b, 0x48, 0x78, 0x3c, 0xf4,
-	0x77, 0xa8, 0xa0, 0xc2, 0x40, 0x51, 0xf9, 0x65, 0x79, 0xbf, 0x9b, 0x0a, 0x95, 0x0b, 0x75, 0x60,
-	0x05, 0x3b, 0x38, 0x69, 0xd7, 0x4e, 0x51, 0xae, 0x68, 0x69, 0x91, 0x2b, 0xea, 0x84, 0x87, 0x2b,
-	0x63, 0x14, 0x58, 0xe2, 0xdc, 0xdd, 0xef, 0x7f, 0x07, 0xf0, 0xf6, 0x44, 0xd1, 0x8f, 0x45, 0x86,
-	0x35, 0x79, 0x6f, 0x14, 0xf4, 0x1c, 0x76, 0xf0, 0x91, 0x9e, 0x0a, 0xc9, 0xf4, 0xcc, 0x03, 0x3d,
-	0xb0, 0xd7, 0x19, 0x7b, 0xbf, 0x7e, 0x3e, 0xd9, 0x71, 0xc6, 0x2f, 0xb3, 0x4c, 0x12, 0xa5, 0x3e,
-	0x68, 0xc9, 0x38, 0x8d, 0x97, 0x28, 0x7a, 0x01, 0xdb, 0x76, 0xb7, 0x77, 0xa5, 0x07, 0xf6, 0xb6,
-	0x46, 0xbd, 0x70, 0xd5, 0x7f, 0x86, 0xd6, 0x69, 0xbc, 0x79, 0xf6, 0xe7, 0x7e, 0x2b, 0x76, 0xb7,
-	0xf6, 0x6f, 0x7d, 0xbd, 0x38, 0x1d, 0x2c, 0xf7, 0xf5, 0xbb, 0x70, 0xb7, 0x11, 0x2d, 0x26, 0xaa,
-	0x10, 0x5c, 0x91, 0xfe, 0x0f, 0x00, 0xb7, 0x27, 0x8a, 0xc6, 0x84, 0x32, 0xa5, 0x89, 0x7c, 0x35,
-	0xc5, 0x8c, 0xa3, 0xbb, 0xb0, 0xad, 0x18, 0xe5, 0x44, 0xda, 0xd0, 0xb1, 0x9b, 0x50, 0x17, 0x5e,
-	0x4f, 0x4b, 0xe0, 0x80, 0x65, 0x26, 0x59, 0x27, 0xbe, 0x66, 0xe6, 0x37, 0x19, 0xba, 0x07, 0xa1,
-	0x95, 0x38, 0xce, 0x89, 0xb7, 0x61, 0xc4, 0x8e, 0x39, 0x79, 0x8b, 0x73, 0x82, 0x1e, 0xc3, 0x3b,
-	0x56, 0xce, 0x88, 0x4a, 0x25, 0x2b, 0x34, 0x13, 0xdc, 0xdb, 0x34, 0xd4, 0xb6, 0x11, 0x5e, 0x2f,
-	0xcf, 0xf7, 0xb7, 0xca, 0xf8, 0xce, 0xb3, 0xef, 0x43, 0xaf, 0x99, 0xaf, 0x0a, 0x3f, 0xfa, 0x07,
-	0xe0, 0xc6, 0x44, 0x51, 0x74, 0x08, 0x6f, 0xd4, 0x7a, 0x7f, 0xb4, 0xba, 0xaf, 0x46, 0x0f, 0xfe,
-	0x70, 0x6d, 0xb4, 0x72, 0x45, 0x02, 0xde, 0xac, 0xd7, 0x35, 0xb8, 0x74, 0x47, 0x8d, 0xf5, 0x47,
-	0xeb, 0xb3, 0x95, 0xa1, 0x7f, 0xf5, 0xcb, 0xc5, 0xe9, 0x00, 0x8c, 0xdf, 0x9d, 0xcd, 0x03, 0x70,
-	0x3e, 0x0f, 0xc0, 0xdf, 0x79, 0x00, 0xbe, 0x2d, 0x82, 0xd6, 0xf9, 0x22, 0x68, 0xfd, 0x5e, 0x04,
-	0xad, 0x4f, 0xcf, 0x28, 0xd3, 0xd3, 0xa3, 0x24, 0x4c, 0x45, 0x1e, 0xb9, 0xf5, 0xa6, 0xd4, 0x6a,
-	0x88, 0x4e, 0x1a, 0x8f, 0x57, 0xcf, 0x0a, 0xa2, 0x92, 0xb6, 0x79, 0xb9, 0x4f, 0xff, 0x07, 0x00,
-	0x00, 0xff, 0xff, 0xc1, 0x62, 0x32, 0x24, 0x69, 0x03, 0x00, 0x00,
+	// 331 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x4c, 0x4a, 0x4c, 0xaa,
+	0xcc, 0xc9, 0xcf, 0xd3, 0xaf, 0xca, 0xcf, 0x4b, 0x4d, 0xce, 0xcf, 0x4b, 0xce, 0x4c, 0x2d, 0x4a,
+	0x4f, 0xd5, 0x2f, 0x33, 0xd4, 0x2f, 0xa9, 0xd0, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x92, 0x80,
+	0x2a, 0xd1, 0x43, 0x51, 0xa2, 0x57, 0x66, 0x28, 0x25, 0x92, 0x9e, 0x9f, 0x9e, 0x0f, 0x56, 0xa4,
+	0x0f, 0x62, 0x41, 0xd4, 0x4b, 0x49, 0x26, 0xe7, 0x17, 0xe7, 0xe6, 0x17, 0xc7, 0x43, 0x24, 0x20,
+	0x1c, 0xa8, 0x94, 0x38, 0x84, 0xa7, 0x9f, 0x5b, 0x9c, 0x0e, 0xb2, 0x22, 0xb7, 0x38, 0x1d, 0x2a,
+	0xa1, 0x8a, 0xd3, 0x19, 0x05, 0x89, 0x45, 0x89, 0xb9, 0x50, 0xfd, 0x4a, 0x33, 0x19, 0xb9, 0xf8,
+	0x7d, 0x8b, 0xd3, 0x43, 0x0b, 0x52, 0x12, 0x4b, 0x52, 0x03, 0xc0, 0x32, 0x42, 0x66, 0x5c, 0x9c,
+	0x89, 0xa5, 0x25, 0x19, 0xf9, 0x45, 0x99, 0x25, 0x95, 0x12, 0x8c, 0x0a, 0x8c, 0x1a, 0x9c, 0x4e,
+	0x12, 0x97, 0xb6, 0xe8, 0x8a, 0x40, 0x2d, 0x76, 0x4c, 0x49, 0x29, 0x4a, 0x2d, 0x2e, 0x0e, 0x2e,
+	0x29, 0xca, 0xcc, 0x4b, 0x0f, 0x42, 0x28, 0x15, 0xb2, 0xe3, 0x62, 0x83, 0x98, 0x2d, 0xc1, 0xa4,
+	0xc0, 0xa8, 0xc1, 0x6d, 0xa4, 0xa0, 0x87, 0xcb, 0x9f, 0x7a, 0x10, 0x9b, 0x9c, 0x58, 0x4e, 0xdc,
+	0x93, 0x67, 0x08, 0x82, 0xea, 0xb2, 0xe2, 0x6b, 0x7a, 0xbe, 0x41, 0x0b, 0x61, 0x9e, 0x92, 0x24,
+	0x97, 0x38, 0x9a, 0xd3, 0x82, 0x52, 0x8b, 0x0b, 0xf2, 0xf3, 0x8a, 0x53, 0x8d, 0xaa, 0xb8, 0x98,
+	0x7d, 0x8b, 0xd3, 0x85, 0x72, 0xb8, 0x78, 0x50, 0x5c, 0xae, 0x89, 0xdb, 0x46, 0x34, 0x93, 0xa4,
+	0x0c, 0x89, 0x56, 0x0a, 0xb3, 0x54, 0x8a, 0xb5, 0xe1, 0xf9, 0x06, 0x2d, 0x46, 0x27, 0xff, 0x13,
+	0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63, 0x39, 0x86,
+	0x0b, 0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0x32, 0x4d, 0xcf, 0x2c, 0xc9, 0x28, 0x4d,
+	0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x87, 0x9a, 0x9e, 0x9c, 0x91, 0x98, 0x99, 0x07, 0xe3, 0xe8, 0x57,
+	0xa0, 0xc5, 0x46, 0x49, 0x65, 0x41, 0x6a, 0x71, 0x12, 0x1b, 0x38, 0x2a, 0x8c, 0x01, 0x01, 0x00,
+	0x00, 0xff, 0xff, 0x05, 0xf5, 0x03, 0x87, 0x3a, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -292,8 +173,6 @@ const _ = grpc.SupportPackageIsVersion4
 type MsgClient interface {
 	// UpdateParams updates the zoneconcierge module parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
-	// RegisterChain registers a CZ chain to the zoneconcierge module.
-	RegisterChain(ctx context.Context, in *MsgRegisterChain, opts ...grpc.CallOption) (*MsgRegisterChainResponse, error)
 }
 
 type msgClient struct {
@@ -313,21 +192,10 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 	return out, nil
 }
 
-func (c *msgClient) RegisterChain(ctx context.Context, in *MsgRegisterChain, opts ...grpc.CallOption) (*MsgRegisterChainResponse, error) {
-	out := new(MsgRegisterChainResponse)
-	err := c.cc.Invoke(ctx, "/babylon.zoneconcierge.v1.Msg/RegisterChain", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// UpdateParams updates the zoneconcierge module parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
-	// RegisterChain registers a CZ chain to the zoneconcierge module.
-	RegisterChain(context.Context, *MsgRegisterChain) (*MsgRegisterChainResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -336,9 +204,6 @@ type UnimplementedMsgServer struct {
 
 func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
-}
-func (*UnimplementedMsgServer) RegisterChain(ctx context.Context, req *MsgRegisterChain) (*MsgRegisterChainResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterChain not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -363,24 +228,6 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_RegisterChain_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgRegisterChain)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).RegisterChain(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/babylon.zoneconcierge.v1.Msg/RegisterChain",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).RegisterChain(ctx, req.(*MsgRegisterChain))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "babylon.zoneconcierge.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -388,10 +235,6 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateParams",
 			Handler:    _Msg_UpdateParams_Handler,
-		},
-		{
-			MethodName: "RegisterChain",
-			Handler:    _Msg_RegisterChain_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -461,80 +304,6 @@ func (m *MsgUpdateParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgRegisterChain) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgRegisterChain) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgRegisterChain) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.ChainDescription) > 0 {
-		i -= len(m.ChainDescription)
-		copy(dAtA[i:], m.ChainDescription)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.ChainDescription)))
-		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.ChainName) > 0 {
-		i -= len(m.ChainName)
-		copy(dAtA[i:], m.ChainName)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.ChainName)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.ChainId) > 0 {
-		i -= len(m.ChainId)
-		copy(dAtA[i:], m.ChainId)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.ChainId)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Signer) > 0 {
-		i -= len(m.Signer)
-		copy(dAtA[i:], m.Signer)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Signer)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgRegisterChainResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgRegisterChainResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgRegisterChainResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -562,40 +331,6 @@ func (m *MsgUpdateParams) Size() (n int) {
 }
 
 func (m *MsgUpdateParamsResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *MsgRegisterChain) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Signer)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.ChainId)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.ChainName)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.ChainDescription)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	return n
-}
-
-func (m *MsgRegisterChainResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -752,234 +487,6 @@ func (m *MsgUpdateParamsResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgUpdateParamsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgRegisterChain) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgRegisterChain: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgRegisterChain: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Signer", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Signer = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ChainId = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainName", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ChainName = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainDescription", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ChainDescription = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgRegisterChainResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgRegisterChainResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgRegisterChainResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
