@@ -31,8 +31,8 @@ type (
 		epochingKeeper      types.EpochingKeeper
 		storeQuerier        storetypes.Queryable
 		scopedKeeper        types.ScopedKeeper
-		// the address capable of executing a MsgUpdateParams message. Typically, this
-		// should be the x/gov module account.
+		// The address capable of executing a MsgUpdateParams message.
+		// Typically, this should be the x/gov module account.
 		authority string
 	}
 )

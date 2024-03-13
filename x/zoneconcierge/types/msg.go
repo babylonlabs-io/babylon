@@ -7,4 +7,5 @@ import (
 // ensure that these message types implement the sdk.Msg interface
 var (
 	_ sdk.Msg = &MsgUpdateParams{}
+	_ sdk.Msg = &MsgRegisterChain{}
 )
