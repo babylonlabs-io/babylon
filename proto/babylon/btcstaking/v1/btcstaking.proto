@@ -33,6 +33,9 @@ message FinalityProvider {
     // the finality provider is slashed.
     // if it's 0 then the finality provider is not slashed
     uint64 slashed_btc_height = 7;
+    // chain_id is the chain id of the chain the finality provider is operating on.
+    // If it's missing / empty, it's assumed the finality provider is operating in the Babylon chain.
+    string chain_id = 8;
 }
 
 // FinalityProviderWithMeta wraps the FinalityProvider with metadata.
