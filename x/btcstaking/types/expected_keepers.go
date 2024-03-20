@@ -28,5 +28,6 @@ type CheckpointingKeeper interface {
 
 type BTCStkConsumerKeeper interface {
 	IsChainRegistered(ctx context.Context, chainID string) bool
+	HasFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) bool
 	SetFinalityProvider(ctx context.Context, fp *FinalityProvider)
 }
