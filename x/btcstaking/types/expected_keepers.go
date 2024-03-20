@@ -20,4 +20,7 @@ type BtcCheckpointKeeper interface {
 	GetParams(ctx context.Context) (p btcctypes.Params)
 }
 
-type BTCStkConsumerKeeper interface{}
+type BTCStkConsumerKeeper interface {
+	IsChainRegistered(ctx context.Context, chainID string) bool
+	SetFinalityProvider(ctx context.Context, fp *FinalityProvider)
+}
