@@ -26,4 +26,7 @@ type CheckpointingKeeper interface {
 	GetLastFinalizedEpoch(ctx context.Context) uint64
 }
 
-type BTCStkConsumerKeeper interface{}
+type BTCStkConsumerKeeper interface {
+	IsChainRegistered(ctx context.Context, chainID string) bool
+	SetFinalityProvider(ctx context.Context, fp *FinalityProvider)
+}

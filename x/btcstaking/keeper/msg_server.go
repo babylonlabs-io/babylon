@@ -86,6 +86,13 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	// Default chain id
+	chainID := req.GetChainId()
+	if chainID == "" {
+		// canonical chain id
+		chainID = ctx.ChainID()
+	}
+
 	// all good, add this finality provider
 	fp := types.FinalityProvider{
 		Description:     req.Description,
@@ -95,8 +102,8 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		Pop:             req.Pop,
 		MasterPubRand:   req.MasterPubRand,
 		RegisteredEpoch: ms.ckptKeeper.GetEpoch(ctx).EpochNumber,
+		ChainId:         chainID,
 	}
-	ms.SetFinalityProvider(ctx, &fp)
 
 	// notify subscriber
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventNewFinalityProvider{Fp: &fp}); err != nil {

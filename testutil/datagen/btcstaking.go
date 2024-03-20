@@ -96,6 +96,7 @@ func GenRandomCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, bbnS
 		BtcPk:         bip340PK,
 		Pop:           pop,
 		MasterPubRand: mpr.MarshalBase58(),
+		ChainId:       "", // TODO: parameterise
 	}, nil
 }
 

@@ -159,6 +159,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 		BtcPk:         fp.BtcPk,
 		Pop:           fp.Pop,
 		MasterPubRand: fp.MasterPubRand,
+		ChainId:       "",
 	}
 
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
