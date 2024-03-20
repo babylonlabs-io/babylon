@@ -100,6 +100,10 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 	if chainID == ctx.ChainID() {
 		ms.SetFinalityProvider(ctx, &fp)
 	} else {
+		// ensure finality provider does not already exist
+		if ms.bscKeeper.HasFinalityProvider(ctx, req.BtcPk) {
+			return nil, types.ErrFpRegistered
+		}
 		// Check that chain is registered in the btcstkconsumer module
 		if !ms.bscKeeper.IsChainRegistered(ctx, chainID) {
 			return nil, types.ErrChainIDNotRegistered
