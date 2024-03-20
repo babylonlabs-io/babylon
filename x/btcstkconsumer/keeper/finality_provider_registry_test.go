@@ -47,7 +47,6 @@ func FuzzFPRegistry(f *testing.F) {
 		bscKeeper.SetChainRegister(ctx, chainRegister)
 
 		// Now add a finality provider for the chain to the registry
-
 		fp := btcstaking.FinalityProvider{
 			BtcPk:   fpBtcPk,
 			ChainId: czChainID,
@@ -55,7 +54,7 @@ func FuzzFPRegistry(f *testing.F) {
 		bscKeeper.SetFinalityProvider(ctx, &fp)
 
 		// Check that the finality provider is being registered
-		hasFP := bscKeeper.HasFinalityProvider(ctx, czChainID, fpBtcPk)
+		hasFP := bscKeeper.HasFinalityProvider(ctx, fpBtcPk)
 		require.True(t, hasFP)
 	})
 }
