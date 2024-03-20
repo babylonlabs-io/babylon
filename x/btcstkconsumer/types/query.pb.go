@@ -5,9 +5,15 @@ package types
 
 import (
 	context "context"
+	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
+	github_com_babylonchain_babylon_types "github.com/babylonchain/babylon/types"
+	types1 "github.com/babylonchain/babylon/x/btcstaking/types"
+	_ "github.com/cosmos/cosmos-proto"
+	_ "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
+	types "github.com/cosmos/cosmos-sdk/x/staking/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -305,6 +311,336 @@ func (m *QueryChainsRegistryResponse) GetChainsRegister() []*ChainRegister {
 	return nil
 }
 
+// QueryFinalityProvidersRequest is the request type for the
+// Query/FinalityProviders RPC method.
+type QueryFinalityProvidersRequest struct {
+	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	// pagination defines an optional pagination for the request.
+	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryFinalityProvidersRequest) Reset()         { *m = QueryFinalityProvidersRequest{} }
+func (m *QueryFinalityProvidersRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalityProvidersRequest) ProtoMessage()    {}
+func (*QueryFinalityProvidersRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4e6c48e60b6a8bd8, []int{6}
+}
+func (m *QueryFinalityProvidersRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryFinalityProvidersRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryFinalityProvidersRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryFinalityProvidersRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProvidersRequest.Merge(m, src)
+}
+func (m *QueryFinalityProvidersRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryFinalityProvidersRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProvidersRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryFinalityProvidersRequest proto.InternalMessageInfo
+
+func (m *QueryFinalityProvidersRequest) GetChainId() string {
+	if m != nil {
+		return m.ChainId
+	}
+	return ""
+}
+
+func (m *QueryFinalityProvidersRequest) GetPagination() *query.PageRequest {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
+// QueryFinalityProvidersResponse is the response type for the
+// Query/FinalityProviders RPC method.
+type QueryFinalityProvidersResponse struct {
+	// finality_providers contains all the finality providers
+	FinalityProviders []*FinalityProviderResponse `protobuf:"bytes,1,rep,name=finality_providers,json=finalityProviders,proto3" json:"finality_providers,omitempty"`
+	// pagination defines the pagination in the response.
+	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryFinalityProvidersResponse) Reset()         { *m = QueryFinalityProvidersResponse{} }
+func (m *QueryFinalityProvidersResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalityProvidersResponse) ProtoMessage()    {}
+func (*QueryFinalityProvidersResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4e6c48e60b6a8bd8, []int{7}
+}
+func (m *QueryFinalityProvidersResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryFinalityProvidersResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryFinalityProvidersResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryFinalityProvidersResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProvidersResponse.Merge(m, src)
+}
+func (m *QueryFinalityProvidersResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryFinalityProvidersResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProvidersResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryFinalityProvidersResponse proto.InternalMessageInfo
+
+func (m *QueryFinalityProvidersResponse) GetFinalityProviders() []*FinalityProviderResponse {
+	if m != nil {
+		return m.FinalityProviders
+	}
+	return nil
+}
+
+func (m *QueryFinalityProvidersResponse) GetPagination() *query.PageResponse {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
+// QueryFinalityProviderRequest requests information about a finality provider
+type QueryFinalityProviderRequest struct {
+	// chain id is the chain id this finality provider is registered to
+	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	// fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
+	FpBtcPkHex string `protobuf:"bytes,2,opt,name=fp_btc_pk_hex,json=fpBtcPkHex,proto3" json:"fp_btc_pk_hex,omitempty"`
+}
+
+func (m *QueryFinalityProviderRequest) Reset()         { *m = QueryFinalityProviderRequest{} }
+func (m *QueryFinalityProviderRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalityProviderRequest) ProtoMessage()    {}
+func (*QueryFinalityProviderRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4e6c48e60b6a8bd8, []int{8}
+}
+func (m *QueryFinalityProviderRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryFinalityProviderRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryFinalityProviderRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryFinalityProviderRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderRequest.Merge(m, src)
+}
+func (m *QueryFinalityProviderRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryFinalityProviderRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryFinalityProviderRequest proto.InternalMessageInfo
+
+func (m *QueryFinalityProviderRequest) GetChainId() string {
+	if m != nil {
+		return m.ChainId
+	}
+	return ""
+}
+
+func (m *QueryFinalityProviderRequest) GetFpBtcPkHex() string {
+	if m != nil {
+		return m.FpBtcPkHex
+	}
+	return ""
+}
+
+// QueryFinalityProviderResponse contains information about a finality provider
+type QueryFinalityProviderResponse struct {
+	// finality_provider contains the FinalityProvider
+	FinalityProvider *FinalityProviderResponse `protobuf:"bytes,1,opt,name=finality_provider,json=finalityProvider,proto3" json:"finality_provider,omitempty"`
+}
+
+func (m *QueryFinalityProviderResponse) Reset()         { *m = QueryFinalityProviderResponse{} }
+func (m *QueryFinalityProviderResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalityProviderResponse) ProtoMessage()    {}
+func (*QueryFinalityProviderResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4e6c48e60b6a8bd8, []int{9}
+}
+func (m *QueryFinalityProviderResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryFinalityProviderResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryFinalityProviderResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryFinalityProviderResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderResponse.Merge(m, src)
+}
+func (m *QueryFinalityProviderResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryFinalityProviderResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryFinalityProviderResponse proto.InternalMessageInfo
+
+func (m *QueryFinalityProviderResponse) GetFinalityProvider() *FinalityProviderResponse {
+	if m != nil {
+		return m.FinalityProvider
+	}
+	return nil
+}
+
+// FinalityProviderResponse defines a finality provider with voting power information.
+type FinalityProviderResponse struct {
+	// description defines the description terms for the finality provider.
+	Description *types.Description `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
+	// commission defines the commission rate of the finality provider.
+	Commission *cosmossdk_io_math.LegacyDec `protobuf:"bytes,2,opt,name=commission,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"commission,omitempty"`
+	// babylon_pk is the Babylon secp256k1 PK of this finality provider
+	Addr string `protobuf:"bytes,3,opt,name=addr,proto3" json:"addr,omitempty"`
+	// btc_pk is the Bitcoin secp256k1 PK of this finality provider
+	// the PK follows encoding in BIP-340 spec
+	BtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,4,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"btc_pk,omitempty"`
+	// pop is the proof of possession of babylon_pk and btc_pk
+	Pop *types1.ProofOfPossessionBTC `protobuf:"bytes,5,opt,name=pop,proto3" json:"pop,omitempty"`
+	// slashed_babylon_height indicates the Babylon height when
+	// the finality provider is slashed.
+	// if it's 0 then the finality provider is not slashed
+	SlashedBabylonHeight uint64 `protobuf:"varint,6,opt,name=slashed_babylon_height,json=slashedBabylonHeight,proto3" json:"slashed_babylon_height,omitempty"`
+	// slashed_btc_height indicates the BTC height when
+	// the finality provider is slashed.
+	// if it's 0 then the finality provider is not slashed
+	SlashedBtcHeight uint64 `protobuf:"varint,7,opt,name=slashed_btc_height,json=slashedBtcHeight,proto3" json:"slashed_btc_height,omitempty"`
+	// height is the queried Babylon height
+	Height uint64 `protobuf:"varint,8,opt,name=height,proto3" json:"height,omitempty"`
+	// voting_power is the voting power of this finality provider at the given height
+	VotingPower uint64 `protobuf:"varint,9,opt,name=voting_power,json=votingPower,proto3" json:"voting_power,omitempty"`
+	// chain_id is the chain id this finality provider is registered to
+	ChainId string `protobuf:"bytes,10,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+}
+
+func (m *FinalityProviderResponse) Reset()         { *m = FinalityProviderResponse{} }
+func (m *FinalityProviderResponse) String() string { return proto.CompactTextString(m) }
+func (*FinalityProviderResponse) ProtoMessage()    {}
+func (*FinalityProviderResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4e6c48e60b6a8bd8, []int{10}
+}
+func (m *FinalityProviderResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *FinalityProviderResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_FinalityProviderResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *FinalityProviderResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FinalityProviderResponse.Merge(m, src)
+}
+func (m *FinalityProviderResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *FinalityProviderResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_FinalityProviderResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_FinalityProviderResponse proto.InternalMessageInfo
+
+func (m *FinalityProviderResponse) GetDescription() *types.Description {
+	if m != nil {
+		return m.Description
+	}
+	return nil
+}
+
+func (m *FinalityProviderResponse) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+func (m *FinalityProviderResponse) GetPop() *types1.ProofOfPossessionBTC {
+	if m != nil {
+		return m.Pop
+	}
+	return nil
+}
+
+func (m *FinalityProviderResponse) GetSlashedBabylonHeight() uint64 {
+	if m != nil {
+		return m.SlashedBabylonHeight
+	}
+	return 0
+}
+
+func (m *FinalityProviderResponse) GetSlashedBtcHeight() uint64 {
+	if m != nil {
+		return m.SlashedBtcHeight
+	}
+	return 0
+}
+
+func (m *FinalityProviderResponse) GetHeight() uint64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
+func (m *FinalityProviderResponse) GetVotingPower() uint64 {
+	if m != nil {
+		return m.VotingPower
+	}
+	return 0
+}
+
+func (m *FinalityProviderResponse) GetChainId() string {
+	if m != nil {
+		return m.ChainId
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "babylon.btcstkconsumer.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.btcstkconsumer.v1.QueryParamsResponse")
@@ -312,6 +648,11 @@ func init() {
 	proto.RegisterType((*QueryChainRegistryListResponse)(nil), "babylon.btcstkconsumer.v1.QueryChainRegistryListResponse")
 	proto.RegisterType((*QueryChainsRegistryRequest)(nil), "babylon.btcstkconsumer.v1.QueryChainsRegistryRequest")
 	proto.RegisterType((*QueryChainsRegistryResponse)(nil), "babylon.btcstkconsumer.v1.QueryChainsRegistryResponse")
+	proto.RegisterType((*QueryFinalityProvidersRequest)(nil), "babylon.btcstkconsumer.v1.QueryFinalityProvidersRequest")
+	proto.RegisterType((*QueryFinalityProvidersResponse)(nil), "babylon.btcstkconsumer.v1.QueryFinalityProvidersResponse")
+	proto.RegisterType((*QueryFinalityProviderRequest)(nil), "babylon.btcstkconsumer.v1.QueryFinalityProviderRequest")
+	proto.RegisterType((*QueryFinalityProviderResponse)(nil), "babylon.btcstkconsumer.v1.QueryFinalityProviderResponse")
+	proto.RegisterType((*FinalityProviderResponse)(nil), "babylon.btcstkconsumer.v1.FinalityProviderResponse")
 }
 
 func init() {
@@ -319,41 +660,74 @@ func init() {
 }
 
 var fileDescriptor_4e6c48e60b6a8bd8 = []byte{
-	// 545 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x94, 0x4f, 0x6b, 0x13, 0x41,
-	0x18, 0xc6, 0x33, 0x55, 0x83, 0x99, 0x42, 0xa5, 0x63, 0x0f, 0xba, 0xd5, 0x55, 0x17, 0xac, 0x21,
-	0xe8, 0x8c, 0x89, 0x18, 0xec, 0xb5, 0x8a, 0x22, 0x78, 0x48, 0xf7, 0xa8, 0x87, 0x30, 0xbb, 0x1d,
-	0xb6, 0x8b, 0xd9, 0x9d, 0xed, 0xcc, 0x24, 0x98, 0xab, 0x07, 0xcf, 0x82, 0x1f, 0x40, 0xf0, 0xe4,
-	0x51, 0xf0, 0x0b, 0x78, 0xec, 0xb1, 0xe0, 0xc5, 0x93, 0x48, 0x22, 0xf8, 0x35, 0x64, 0x67, 0xa6,
-	0x36, 0x9b, 0x66, 0x93, 0xd8, 0x4b, 0x58, 0xde, 0x79, 0x9e, 0xf7, 0xfd, 0xbd, 0x7f, 0x08, 0xbc,
-	0x1d, 0xd0, 0x60, 0xd8, 0xe3, 0x29, 0x09, 0x54, 0x28, 0xd5, 0xeb, 0x90, 0xa7, 0xb2, 0x9f, 0x30,
-	0x41, 0x06, 0x4d, 0x72, 0xd0, 0x67, 0x62, 0x88, 0x33, 0xc1, 0x15, 0x47, 0x57, 0xad, 0x0c, 0x17,
-	0x65, 0x78, 0xd0, 0x74, 0xd6, 0x69, 0x12, 0xa7, 0x9c, 0xe8, 0x5f, 0xa3, 0x76, 0x36, 0x22, 0x1e,
-	0x71, 0xfd, 0x49, 0xf2, 0x2f, 0x1b, 0xbd, 0x16, 0x71, 0x1e, 0xf5, 0x18, 0xa1, 0x59, 0x4c, 0x68,
-	0x9a, 0x72, 0x45, 0x55, 0xcc, 0x53, 0x69, 0x5f, 0x1b, 0x21, 0x97, 0x09, 0x97, 0x24, 0xa0, 0x92,
-	0x99, 0xd2, 0x64, 0xd0, 0x0c, 0x98, 0xa2, 0x4d, 0x92, 0xd1, 0x28, 0x4e, 0xb5, 0xd8, 0x6a, 0x71,
-	0x39, 0xf4, 0x14, 0x9f, 0xd1, 0x6f, 0x95, 0xeb, 0x33, 0x2a, 0x68, 0x62, 0x19, 0xbc, 0x0d, 0x88,
-	0x76, 0xf3, 0xca, 0x1d, 0x1d, 0xf4, 0xd9, 0x41, 0x9f, 0x49, 0xe5, 0xbd, 0x82, 0x97, 0x0b, 0x51,
-	0x99, 0xf1, 0x54, 0x32, 0xf4, 0x04, 0x56, 0x8d, 0xf9, 0x0a, 0xb8, 0x09, 0xea, 0xab, 0xad, 0x5b,
-	0xb8, 0x74, 0x46, 0xd8, 0x58, 0x77, 0x6a, 0x87, 0x3f, 0x6f, 0x54, 0x3e, 0xff, 0xf9, 0xd2, 0x00,
-	0xbe, 0xf5, 0x7a, 0x11, 0xbc, 0xae, 0x93, 0x3f, 0xde, 0xa7, 0x71, 0xea, 0xb3, 0x28, 0x96, 0x4a,
-	0x0c, 0x5f, 0xc4, 0x52, 0xd9, 0xea, 0xe8, 0x29, 0x84, 0x27, 0xfd, 0xdb, 0x52, 0x5b, 0xd8, 0x0c,
-	0x0b, 0xe7, 0xc3, 0xc2, 0x66, 0x4f, 0x76, 0x58, 0xb8, 0x43, 0x23, 0x66, 0xbd, 0xfe, 0x84, 0xd3,
-	0x7b, 0x07, 0xa0, 0x5b, 0x56, 0xc9, 0x76, 0xb4, 0x09, 0x6b, 0x61, 0xfe, 0xd8, 0x8d, 0xf7, 0xf2,
-	0xa6, 0xce, 0xd5, 0x6b, 0xfe, 0x45, 0x1d, 0x78, 0xbe, 0x27, 0xd1, 0xb3, 0x02, 0xc7, 0x8a, 0xe6,
-	0xb8, 0xb3, 0x90, 0xc3, 0x64, 0x2e, 0x80, 0x6c, 0x43, 0xe7, 0x84, 0x43, 0x1e, 0x83, 0x1c, 0xb7,
-	0x3b, 0x8f, 0xc1, 0xcb, 0xe0, 0xe6, 0x4c, 0xab, 0xe5, 0xdf, 0x85, 0x97, 0xb4, 0x54, 0x76, 0x85,
-	0x7e, 0x62, 0x42, 0x67, 0x58, 0x6d, 0xd5, 0xe7, 0xac, 0x66, 0x62, 0x1c, 0x4c, 0xf8, 0x6b, 0xe1,
-	0x44, 0x6a, 0x26, 0x5a, 0x9f, 0xce, 0xc3, 0x0b, 0xba, 0x24, 0xfa, 0x08, 0x60, 0xd5, 0xac, 0x11,
-	0xdd, 0x9b, 0x93, 0xee, 0xf4, 0xfd, 0x38, 0x78, 0x59, 0xb9, 0x69, 0xc3, 0x6b, 0xbf, 0xfd, 0xfe,
-	0xfb, 0xc3, 0xca, 0x7d, 0x84, 0x89, 0xf5, 0x69, 0x26, 0xb2, 0xe8, 0x86, 0xd1, 0x37, 0x00, 0xd7,
-	0x4f, 0x2d, 0x17, 0x3d, 0x5a, 0x54, 0xbd, 0xec, 0xf2, 0x9c, 0xed, 0x33, 0x38, 0xcb, 0x5a, 0x98,
-	0x41, 0x6d, 0xd6, 0x2c, 0xac, 0xbd, 0xdb, 0xcb, 0x61, 0xbf, 0x02, 0xb8, 0x56, 0x5c, 0x2e, 0x7a,
-	0xb8, 0x14, 0xc5, 0xf4, 0x1d, 0x39, 0xed, 0xff, 0xb5, 0x59, 0xf2, 0x96, 0x26, 0xbf, 0x8b, 0x1a,
-	0x8b, 0xc8, 0xe5, 0x3f, 0xf4, 0x9d, 0xce, 0xe1, 0xc8, 0x05, 0x47, 0x23, 0x17, 0xfc, 0x1a, 0xb9,
-	0xe0, 0xfd, 0xd8, 0xad, 0x1c, 0x8d, 0xdd, 0xca, 0x8f, 0xb1, 0x5b, 0x79, 0xd9, 0x8e, 0x62, 0xb5,
-	0xdf, 0x0f, 0x70, 0xc8, 0x93, 0xd9, 0xcb, 0x7c, 0x33, 0x9d, 0x5e, 0x0d, 0x33, 0x26, 0x83, 0xaa,
-	0xfe, 0x3f, 0x7a, 0xf0, 0x37, 0x00, 0x00, 0xff, 0xff, 0x83, 0x96, 0xd6, 0xf2, 0x9e, 0x05, 0x00,
+	// 1073 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x56, 0xcf, 0x6f, 0x1b, 0x45,
+	0x14, 0xce, 0xe6, 0x87, 0x13, 0x4f, 0x4a, 0x49, 0x86, 0xa8, 0x72, 0x9c, 0xe2, 0x24, 0x0b, 0x94,
+	0x28, 0xc4, 0xbb, 0xb5, 0xd3, 0x98, 0xf6, 0xc0, 0x01, 0x37, 0x94, 0x56, 0xb4, 0xea, 0x66, 0x41,
+	0x42, 0x02, 0xa4, 0x65, 0x7f, 0x8c, 0xd7, 0x2b, 0xdb, 0x3b, 0xdb, 0x99, 0xb1, 0x89, 0x85, 0x38,
+	0xd0, 0x03, 0x67, 0x24, 0xfe, 0x00, 0x6e, 0x88, 0x23, 0x12, 0xbd, 0xc3, 0x05, 0xa9, 0x17, 0xa4,
+	0xaa, 0x5c, 0x50, 0x0f, 0x11, 0x4a, 0x90, 0xf8, 0x37, 0xd0, 0xce, 0xce, 0x3a, 0x5e, 0xdb, 0x6b,
+	0x27, 0x51, 0x2f, 0x91, 0x67, 0xde, 0xf7, 0xbd, 0xf9, 0xde, 0xf7, 0x66, 0xe7, 0x05, 0xbc, 0x65,
+	0x99, 0x56, 0xb7, 0x89, 0x7d, 0xd5, 0x62, 0x36, 0x65, 0x0d, 0x1b, 0xfb, 0xb4, 0xdd, 0x42, 0x44,
+	0xed, 0x94, 0xd4, 0x47, 0x6d, 0x44, 0xba, 0x4a, 0x40, 0x30, 0xc3, 0x70, 0x55, 0xc0, 0x94, 0x24,
+	0x4c, 0xe9, 0x94, 0xf2, 0xcb, 0x66, 0xcb, 0xf3, 0xb1, 0xca, 0xff, 0x46, 0xe8, 0xfc, 0x8a, 0x8b,
+	0x5d, 0xcc, 0x7f, 0xaa, 0xe1, 0x2f, 0xb1, 0x7b, 0xd5, 0xc5, 0xd8, 0x6d, 0x22, 0xd5, 0x0c, 0x3c,
+	0xd5, 0xf4, 0x7d, 0xcc, 0x4c, 0xe6, 0x61, 0x9f, 0x8a, 0xe8, 0xaa, 0x8d, 0x69, 0x0b, 0x53, 0x23,
+	0xa2, 0x45, 0x0b, 0x11, 0x92, 0xa3, 0x95, 0x6a, 0x93, 0x6e, 0xc0, 0xb0, 0x4a, 0x91, 0x1d, 0x94,
+	0xf7, 0x2a, 0x8d, 0x92, 0xda, 0x40, 0xdd, 0x18, 0xf3, 0xa6, 0xc0, 0x50, 0x66, 0x36, 0x3c, 0xdf,
+	0x55, 0x3b, 0x25, 0x0b, 0x31, 0xb3, 0x14, 0xaf, 0x05, 0x6a, 0x5b, 0xa0, 0x2c, 0x93, 0xa2, 0xa8,
+	0xbe, 0x1e, 0x30, 0x30, 0x5d, 0xcf, 0xe7, 0x8a, 0x04, 0xf6, 0x5a, 0xc2, 0x99, 0x38, 0x6b, 0xdf,
+	0x4a, 0xe0, 0xd6, 0x47, 0xe3, 0x02, 0x1c, 0x08, 0x80, 0x92, 0x6e, 0xf1, 0x80, 0x9b, 0xa3, 0x0e,
+	0x4e, 0xe0, 0x03, 0x93, 0x98, 0x2d, 0x51, 0xb2, 0xbc, 0x02, 0xe0, 0x41, 0x58, 0x82, 0xc6, 0x37,
+	0x75, 0xf4, 0xa8, 0x8d, 0x28, 0x93, 0x3f, 0x07, 0xaf, 0x25, 0x76, 0x69, 0x80, 0x7d, 0x8a, 0xe0,
+	0x3e, 0xc8, 0x44, 0xe4, 0x9c, 0xb4, 0x21, 0x6d, 0x2d, 0x96, 0x37, 0x95, 0xd4, 0x8e, 0x2a, 0x11,
+	0xb5, 0x9a, 0x7d, 0x7a, 0xb4, 0x3e, 0xf5, 0xf3, 0x7f, 0xbf, 0x6c, 0x4b, 0xba, 0xe0, 0xca, 0x2e,
+	0x78, 0x9d, 0x27, 0xbf, 0x5d, 0x37, 0x3d, 0x5f, 0x47, 0xae, 0x47, 0x19, 0xe9, 0xde, 0xf7, 0x28,
+	0x13, 0xa7, 0xc3, 0x3b, 0x00, 0x9c, 0x1a, 0x29, 0x8e, 0xba, 0xa6, 0x88, 0x6e, 0x86, 0xae, 0x2b,
+	0xd1, 0xad, 0x12, 0xae, 0x2b, 0x9a, 0xe9, 0x22, 0xc1, 0xd5, 0xfb, 0x98, 0xf2, 0x77, 0x12, 0x28,
+	0xa4, 0x9d, 0x24, 0x2a, 0x5a, 0x03, 0x59, 0x3b, 0x0c, 0x1a, 0x9e, 0x13, 0x16, 0x35, 0xb3, 0x95,
+	0xd5, 0x17, 0xf8, 0xc6, 0x3d, 0x87, 0xc2, 0x0f, 0x13, 0x3a, 0xa6, 0xb9, 0x8e, 0xb7, 0x27, 0xea,
+	0x88, 0x32, 0x27, 0x84, 0xdc, 0x02, 0xf9, 0x53, 0x1d, 0x34, 0x16, 0x12, 0x97, 0x3b, 0x4e, 0x83,
+	0x1c, 0x80, 0xb5, 0x91, 0x54, 0xa1, 0xff, 0x00, 0xbc, 0xca, 0xa1, 0xd4, 0x20, 0x3c, 0x84, 0x08,
+	0xcf, 0xb0, 0x58, 0xde, 0x1a, 0xd3, 0x9a, 0x3e, 0x3b, 0x10, 0xd1, 0x2f, 0xdb, 0x7d, 0xa9, 0x11,
+	0x91, 0x1f, 0x4b, 0xa2, 0x3f, 0x77, 0x3c, 0xdf, 0x6c, 0x7a, 0xac, 0xab, 0x11, 0xdc, 0xf1, 0x1c,
+	0x44, 0xe2, 0xdb, 0x01, 0x57, 0xc1, 0x42, 0x2c, 0x98, 0x77, 0x27, 0xab, 0xcf, 0x0b, 0xbd, 0x03,
+	0xad, 0x9b, 0xbe, 0x70, 0xeb, 0xfe, 0x8c, 0x5b, 0x37, 0x42, 0x84, 0x28, 0xdd, 0x02, 0xb0, 0x26,
+	0x82, 0xe1, 0xf7, 0x1e, 0x45, 0x45, 0xf5, 0xbb, 0x63, 0xaa, 0x1f, 0xcc, 0xd8, 0xeb, 0xd8, 0x72,
+	0x6d, 0xf0, 0xac, 0x97, 0x77, 0x03, 0xbe, 0x00, 0x57, 0x47, 0x96, 0x73, 0x06, 0x4b, 0x37, 0xc1,
+	0x2b, 0xb5, 0xc0, 0xb0, 0x98, 0x6d, 0x04, 0x0d, 0xa3, 0x8e, 0x0e, 0xb9, 0x8c, 0xac, 0x0e, 0x6a,
+	0x41, 0x95, 0xd9, 0x5a, 0xe3, 0x2e, 0x3a, 0x94, 0xbf, 0x4d, 0x6b, 0x59, 0xcf, 0xac, 0x2f, 0xc1,
+	0xf2, 0x90, 0x59, 0xe2, 0xcb, 0xba, 0x90, 0x57, 0x4b, 0x83, 0x5e, 0xc9, 0x3f, 0xcd, 0x82, 0x5c,
+	0xea, 0xf1, 0x1f, 0x80, 0x45, 0x07, 0x51, 0x9b, 0x78, 0x41, 0xdf, 0x27, 0xfd, 0x46, 0x6c, 0x64,
+	0xfc, 0x14, 0xc6, 0x2e, 0xee, 0x9f, 0x42, 0xf5, 0x7e, 0x1e, 0x7c, 0x00, 0x80, 0x8d, 0x5b, 0x2d,
+	0x8f, 0xd2, 0xb8, 0x1d, 0xd9, 0x6a, 0xf1, 0xc5, 0xd1, 0xfa, 0x5a, 0x94, 0x88, 0x3a, 0x0d, 0xc5,
+	0xc3, 0x6a, 0xcb, 0x64, 0x75, 0xe5, 0x3e, 0x72, 0x4d, 0xbb, 0xbb, 0x8f, 0xec, 0xe7, 0x4f, 0x8a,
+	0x40, 0x9c, 0xb3, 0x8f, 0x6c, 0xbd, 0x2f, 0x01, 0xdc, 0x01, 0xb3, 0xa6, 0xe3, 0x90, 0xdc, 0x0c,
+	0x4f, 0x94, 0x7b, 0xfe, 0xa4, 0xb8, 0x22, 0x90, 0xef, 0x3b, 0x0e, 0x41, 0x94, 0x7e, 0xcc, 0x88,
+	0xe7, 0xbb, 0x3a, 0x47, 0xc1, 0x07, 0x20, 0x13, 0x35, 0x21, 0x37, 0xbb, 0x21, 0x6d, 0x5d, 0xaa,
+	0x56, 0x5e, 0x1c, 0xad, 0x97, 0x5d, 0x8f, 0xd5, 0xdb, 0x96, 0x62, 0xe3, 0x96, 0x2a, 0x5c, 0xe4,
+	0x6d, 0x8b, 0x17, 0x2a, 0xeb, 0x06, 0x88, 0x2a, 0xd5, 0x7b, 0xda, 0xee, 0x8d, 0xeb, 0x5a, 0xdb,
+	0xfa, 0x08, 0x75, 0xf5, 0x39, 0x2b, 0x6c, 0x1b, 0x7c, 0x0f, 0xcc, 0x04, 0x38, 0xc8, 0xcd, 0x71,
+	0x2b, 0xde, 0x49, 0xf6, 0x20, 0xb6, 0x43, 0xd1, 0x08, 0xc6, 0xb5, 0x87, 0x35, 0x0d, 0x53, 0x8a,
+	0xb8, 0xe6, 0xea, 0x27, 0xb7, 0xf5, 0x90, 0x07, 0x6f, 0x80, 0x2b, 0xb4, 0x69, 0xd2, 0x3a, 0x72,
+	0x0c, 0x41, 0x35, 0xea, 0xc8, 0x73, 0xeb, 0x2c, 0x97, 0xd9, 0x90, 0xb6, 0x66, 0xf5, 0x15, 0x11,
+	0xad, 0x46, 0xc1, 0xbb, 0x3c, 0x06, 0x77, 0x00, 0xec, 0xb1, 0x98, 0x1d, 0x33, 0xe6, 0x39, 0x63,
+	0x29, 0x66, 0x30, 0x5b, 0xa0, 0xaf, 0x80, 0x8c, 0x40, 0x2c, 0x70, 0x84, 0x58, 0xc1, 0x4d, 0x70,
+	0xa9, 0x83, 0x99, 0xe7, 0xbb, 0x46, 0x80, 0xbf, 0x42, 0x24, 0x97, 0xe5, 0xd1, 0xc5, 0x68, 0x4f,
+	0x0b, 0xb7, 0x12, 0xf7, 0x19, 0x24, 0xee, 0x73, 0xf9, 0x8f, 0x79, 0x30, 0xc7, 0x2f, 0x2b, 0xfc,
+	0x51, 0x02, 0x99, 0x68, 0x4c, 0xc0, 0xe2, 0x98, 0x4b, 0x38, 0x3c, 0x9f, 0xf2, 0xca, 0x59, 0xe1,
+	0xd1, 0xfd, 0x93, 0x2b, 0x8f, 0xff, 0xfa, 0xf7, 0x87, 0xe9, 0xeb, 0x50, 0x19, 0xdd, 0xa5, 0xb4,
+	0x19, 0x09, 0x7f, 0x97, 0xc0, 0xf2, 0xd0, 0xf0, 0x80, 0x37, 0x27, 0x9d, 0x9e, 0x36, 0xd9, 0xf2,
+	0xb7, 0x2e, 0xc0, 0x4c, 0x2b, 0x61, 0x84, 0xea, 0xc8, 0x72, 0x22, 0xe8, 0x46, 0x33, 0x14, 0xfb,
+	0xab, 0x04, 0x2e, 0x27, 0x87, 0x07, 0xdc, 0x3b, 0x93, 0x8a, 0xc1, 0x39, 0x95, 0xaf, 0x9c, 0x97,
+	0x26, 0x94, 0x97, 0xb9, 0xf2, 0x1d, 0xb8, 0x3d, 0x49, 0x39, 0xed, 0x49, 0x87, 0xbf, 0x49, 0x60,
+	0x79, 0xe8, 0xe9, 0x9f, 0x6c, 0x7c, 0xda, 0xc8, 0x9a, 0x6c, 0x7c, 0xea, 0x9c, 0x91, 0xf7, 0xb8,
+	0x7c, 0x15, 0x16, 0xc7, 0xc8, 0x1f, 0x1e, 0x44, 0xf0, 0x48, 0x02, 0x4b, 0x83, 0x49, 0xe1, 0xbb,
+	0xe7, 0x95, 0x11, 0xeb, 0xbf, 0x79, 0x7e, 0xa2, 0x90, 0xff, 0x29, 0x97, 0x7f, 0x00, 0x1f, 0x9e,
+	0x4b, 0xbe, 0xfa, 0x75, 0x62, 0xe6, 0x7c, 0x33, 0x0c, 0xa9, 0x6a, 0x4f, 0x8f, 0x0b, 0xd2, 0xb3,
+	0xe3, 0x82, 0xf4, 0xcf, 0x71, 0x41, 0xfa, 0xfe, 0xa4, 0x30, 0xf5, 0xec, 0xa4, 0x30, 0xf5, 0xf7,
+	0x49, 0x61, 0xea, 0xb3, 0xca, 0xa4, 0x57, 0xf1, 0x70, 0x50, 0x03, 0x7f, 0x26, 0xad, 0x0c, 0xff,
+	0x97, 0x74, 0xf7, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0x25, 0xbb, 0xa4, 0x6b, 0x4f, 0x0c, 0x00,
 	0x00,
 }
 
@@ -375,6 +749,10 @@ type QueryClient interface {
 	ChainRegistryList(ctx context.Context, in *QueryChainRegistryListRequest, opts ...grpc.CallOption) (*QueryChainRegistryListResponse, error)
 	// ChainsRegistry queries the latest info for a given list of chains in Babylon's view
 	ChainsRegistry(ctx context.Context, in *QueryChainsRegistryRequest, opts ...grpc.CallOption) (*QueryChainsRegistryResponse, error)
+	// FinalityProviders queries all finality providers for a given chain
+	FinalityProviders(ctx context.Context, in *QueryFinalityProvidersRequest, opts ...grpc.CallOption) (*QueryFinalityProvidersResponse, error)
+	// FinalityProvider info about one finality provider
+	FinalityProvider(ctx context.Context, in *QueryFinalityProviderRequest, opts ...grpc.CallOption) (*QueryFinalityProviderResponse, error)
 }
 
 type queryClient struct {
@@ -412,6 +790,24 @@ func (c *queryClient) ChainsRegistry(ctx context.Context, in *QueryChainsRegistr
 	return out, nil
 }
 
+func (c *queryClient) FinalityProviders(ctx context.Context, in *QueryFinalityProvidersRequest, opts ...grpc.CallOption) (*QueryFinalityProvidersResponse, error) {
+	out := new(QueryFinalityProvidersResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstkconsumer.v1.Query/FinalityProviders", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) FinalityProvider(ctx context.Context, in *QueryFinalityProviderRequest, opts ...grpc.CallOption) (*QueryFinalityProviderResponse, error) {
+	out := new(QueryFinalityProviderResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstkconsumer.v1.Query/FinalityProvider", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// Parameters queries the parameters of the module.
@@ -420,6 +816,10 @@ type QueryServer interface {
 	ChainRegistryList(context.Context, *QueryChainRegistryListRequest) (*QueryChainRegistryListResponse, error)
 	// ChainsRegistry queries the latest info for a given list of chains in Babylon's view
 	ChainsRegistry(context.Context, *QueryChainsRegistryRequest) (*QueryChainsRegistryResponse, error)
+	// FinalityProviders queries all finality providers for a given chain
+	FinalityProviders(context.Context, *QueryFinalityProvidersRequest) (*QueryFinalityProvidersResponse, error)
+	// FinalityProvider info about one finality provider
+	FinalityProvider(context.Context, *QueryFinalityProviderRequest) (*QueryFinalityProviderResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -434,6 +834,12 @@ func (*UnimplementedQueryServer) ChainRegistryList(ctx context.Context, req *Que
 }
 func (*UnimplementedQueryServer) ChainsRegistry(ctx context.Context, req *QueryChainsRegistryRequest) (*QueryChainsRegistryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChainsRegistry not implemented")
+}
+func (*UnimplementedQueryServer) FinalityProviders(ctx context.Context, req *QueryFinalityProvidersRequest) (*QueryFinalityProvidersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinalityProviders not implemented")
+}
+func (*UnimplementedQueryServer) FinalityProvider(ctx context.Context, req *QueryFinalityProviderRequest) (*QueryFinalityProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinalityProvider not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -494,6 +900,42 @@ func _Query_ChainsRegistry_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_FinalityProviders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFinalityProvidersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).FinalityProviders(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.btcstkconsumer.v1.Query/FinalityProviders",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).FinalityProviders(ctx, req.(*QueryFinalityProvidersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_FinalityProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFinalityProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).FinalityProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.btcstkconsumer.v1.Query/FinalityProvider",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).FinalityProvider(ctx, req.(*QueryFinalityProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "babylon.btcstkconsumer.v1.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -509,6 +951,14 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ChainsRegistry",
 			Handler:    _Query_ChainsRegistry_Handler,
+		},
+		{
+			MethodName: "FinalityProviders",
+			Handler:    _Query_FinalityProviders_Handler,
+		},
+		{
+			MethodName: "FinalityProvider",
+			Handler:    _Query_FinalityProvider_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -719,6 +1169,274 @@ func (m *QueryChainsRegistryResponse) MarshalToSizedBuffer(dAtA []byte) (int, er
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryFinalityProvidersRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryFinalityProvidersRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryFinalityProvidersRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.ChainId) > 0 {
+		i -= len(m.ChainId)
+		copy(dAtA[i:], m.ChainId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ChainId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryFinalityProvidersResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryFinalityProvidersResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryFinalityProvidersResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.FinalityProviders) > 0 {
+		for iNdEx := len(m.FinalityProviders) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.FinalityProviders[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryFinalityProviderRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryFinalityProviderRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryFinalityProviderRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.FpBtcPkHex) > 0 {
+		i -= len(m.FpBtcPkHex)
+		copy(dAtA[i:], m.FpBtcPkHex)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.FpBtcPkHex)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.ChainId) > 0 {
+		i -= len(m.ChainId)
+		copy(dAtA[i:], m.ChainId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ChainId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryFinalityProviderResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryFinalityProviderResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryFinalityProviderResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.FinalityProvider != nil {
+		{
+			size, err := m.FinalityProvider.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *FinalityProviderResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *FinalityProviderResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *FinalityProviderResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ChainId) > 0 {
+		i -= len(m.ChainId)
+		copy(dAtA[i:], m.ChainId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ChainId)))
+		i--
+		dAtA[i] = 0x52
+	}
+	if m.VotingPower != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.VotingPower))
+		i--
+		dAtA[i] = 0x48
+	}
+	if m.Height != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Height))
+		i--
+		dAtA[i] = 0x40
+	}
+	if m.SlashedBtcHeight != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.SlashedBtcHeight))
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.SlashedBabylonHeight != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.SlashedBabylonHeight))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.Pop != nil {
+		{
+			size, err := m.Pop.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x2a
+	}
+	if m.BtcPk != nil {
+		{
+			size := m.BtcPk.Size()
+			i -= size
+			if _, err := m.BtcPk.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Addr) > 0 {
+		i -= len(m.Addr)
+		copy(dAtA[i:], m.Addr)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Addr)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Commission != nil {
+		{
+			size := m.Commission.Size()
+			i -= size
+			if _, err := m.Commission.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Description != nil {
+		{
+			size, err := m.Description.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -808,6 +1526,117 @@ func (m *QueryChainsRegistryResponse) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
+	}
+	return n
+}
+
+func (m *QueryFinalityProvidersRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ChainId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryFinalityProvidersResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.FinalityProviders) > 0 {
+		for _, e := range m.FinalityProviders {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryFinalityProviderRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ChainId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.FpBtcPkHex)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryFinalityProviderResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.FinalityProvider != nil {
+		l = m.FinalityProvider.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *FinalityProviderResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Description != nil {
+		l = m.Description.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.Commission != nil {
+		l = m.Commission.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.Addr)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.BtcPk != nil {
+		l = m.BtcPk.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.Pop != nil {
+		l = m.Pop.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.SlashedBabylonHeight != 0 {
+		n += 1 + sovQuery(uint64(m.SlashedBabylonHeight))
+	}
+	if m.SlashedBtcHeight != 0 {
+		n += 1 + sovQuery(uint64(m.SlashedBtcHeight))
+	}
+	if m.Height != 0 {
+		n += 1 + sovQuery(uint64(m.Height))
+	}
+	if m.VotingPower != 0 {
+		n += 1 + sovQuery(uint64(m.VotingPower))
+	}
+	l = len(m.ChainId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
 	}
 	return n
 }
@@ -1299,6 +2128,777 @@ func (m *QueryChainsRegistryResponse) Unmarshal(dAtA []byte) error {
 			if err := m.ChainsRegister[len(m.ChainsRegister)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryFinalityProvidersRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryFinalityProvidersRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryFinalityProvidersRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ChainId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageRequest{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryFinalityProvidersResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryFinalityProvidersResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryFinalityProvidersResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FinalityProviders", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FinalityProviders = append(m.FinalityProviders, &FinalityProviderResponse{})
+			if err := m.FinalityProviders[len(m.FinalityProviders)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageResponse{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryFinalityProviderRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryFinalityProviderRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryFinalityProviderRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ChainId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FpBtcPkHex", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FpBtcPkHex = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryFinalityProviderResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryFinalityProviderResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryFinalityProviderResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FinalityProvider", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.FinalityProvider == nil {
+				m.FinalityProvider = &FinalityProviderResponse{}
+			}
+			if err := m.FinalityProvider.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *FinalityProviderResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: FinalityProviderResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: FinalityProviderResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Description == nil {
+				m.Description = &types.Description{}
+			}
+			if err := m.Description.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Commission", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v cosmossdk_io_math.LegacyDec
+			m.Commission = &v
+			if err := m.Commission.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Addr", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Addr = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcPk", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_types.BIP340PubKey
+			m.BtcPk = &v
+			if err := m.BtcPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pop", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pop == nil {
+				m.Pop = &types1.ProofOfPossessionBTC{}
+			}
+			if err := m.Pop.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashedBabylonHeight", wireType)
+			}
+			m.SlashedBabylonHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SlashedBabylonHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashedBtcHeight", wireType)
+			}
+			m.SlashedBtcHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SlashedBtcHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			m.Height = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Height |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VotingPower", wireType)
+			}
+			m.VotingPower = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.VotingPower |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ChainId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
