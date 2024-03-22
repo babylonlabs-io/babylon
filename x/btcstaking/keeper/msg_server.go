@@ -205,6 +205,16 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		}
 	}
 
+	// Ensure all finality providers are known to Babylon and at least 1 one of them
+	// is a Babylon finality provider, and then check whether the BTC stake is
+	// restaked to FPs of consumer chains
+	// TODO: ensure the BTC delegation does not restake to too many finality providers
+	// (pending concrete design)
+	restakedToConsumers, err := ms.validateRestakedFPs(ctx, req.FpBtcPkList)
+	if err != nil {
+		return nil, err
+	}
+
 	// Parse staking tx
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(req.StakingTx.Transaction)
 	if err != nil {
@@ -447,6 +457,15 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
 		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
 	}
+	// if this BTC delegation restaked to consumer chains' FPs, add it to
+	// btcstkconsumer module's storage as well
+	// TODO: revisit the relationship between BTC staking module and BTC staking consumer
+	// module and consolidating the storage of BTC delegations.
+	if restakedToConsumers {
+		if err := ms.bscKeeper.AddBTCDelegation(ctx, newBTCDel); err != nil {
+			panic(fmt.Errorf("failed to add BTC delegation restaked to consumer chains' finality providers despite it has passed verification: %w", err))
+		}
+	}
 
 	return &types.MsgCreateBTCDelegationResponse{}, nil
 }
@@ -482,6 +501,12 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 
 	if err != nil {
 		return nil, err
+	}
+
+	// check whether the BTC stake is restaked to FPs of consumer chains
+	restakedToConsumers, err := ms.validateRestakedFPs(ctx, btcDel.FpBtcPkList)
+	if err != nil {
+		panic(err) // btcDel has passed verification and this can only be programming error
 	}
 
 	// ensure that the given covenant PK is in the parameter
@@ -606,6 +631,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		req.UnbondingTxSig,
 		parsedUnbondingSlashingAdaptorSignatures,
 		params,
+		restakedToConsumers,
 	)
 
 	return &types.MsgAddCovenantSigsResponse{}, nil
@@ -627,6 +653,12 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	if err != nil {
 		return nil, err
+	}
+
+	// check whether the BTC stake is restaked to FPs of consumer chains
+	restakedToConsumers, err := ms.validateRestakedFPs(ctx, btcDel.FpBtcPkList)
+	if err != nil {
+		panic(err) // btcDel has passed verification and this can only be programming error
 	}
 
 	// ensure the BTC delegation with the given staking tx hash is active
@@ -663,7 +695,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	// all good, add the signature to BTC delegation's undelegation
 	// and set back
-	ms.btcUndelegate(ctx, btcDel, req.UnbondingTxSig)
+	ms.btcUndelegate(ctx, btcDel, req.UnbondingTxSig, restakedToConsumers)
 
 	return &types.MsgBTCUndelegateResponse{}, nil
 }

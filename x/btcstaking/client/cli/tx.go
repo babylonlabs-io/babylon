@@ -202,7 +202,7 @@ func NewEditFinalityProviderCmd() *cobra.Command {
 
 func NewCreateBTCDelegationCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-btc-delegation [babylon_pk] [btc_pk] [pop] [staking_tx_info] [fp_pk] [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig]",
+		Use:   "create-btc-delegation [babylon_pk] [btc_pk] [pop] [staking_tx_info] [fp_pk1],[fp_pk2],... [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig]",
 		Args:  cobra.ExactArgs(14),
 		Short: "Create a BTC delegation",
 		Long: strings.TrimSpace(
@@ -243,11 +243,15 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				return err
 			}
 
-			// TODO: Support multiple finality providers
-			// get finality provider PK
-			fpPK, err := bbn.NewBIP340PubKeyFromHex(args[4])
-			if err != nil {
-				return err
+			// get finality provider PKs
+			fpPKStrs := strings.Split(args[4], ",")
+			fpPKs := make([]bbn.BIP340PubKey, len(fpPKStrs))
+			for i := range fpPKStrs {
+				fpPK, err := bbn.NewBIP340PubKeyFromHex(fpPKStrs[i])
+				if err != nil {
+					return err
+				}
+				fpPKs[i] = *fpPK
 			}
 
 			// get staking time
@@ -306,7 +310,7 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				Signer:                        clientCtx.FromAddress.String(),
 				BabylonPk:                     &babylonPK,
 				BtcPk:                         btcPK,
-				FpBtcPkList:                   []bbn.BIP340PubKey{*fpPK},
+				FpBtcPkList:                   fpPKs,
 				Pop:                           pop,
 				StakingTime:                   uint32(stakingTime),
 				StakingValue:                  int64(stakingValue),

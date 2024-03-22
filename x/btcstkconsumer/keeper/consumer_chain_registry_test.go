@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"github.com/babylonchain/babylon/x/btcstkconsumer/types"
 	"math/rand"
 	"testing"
 
@@ -19,37 +18,27 @@ func FuzzChainRegistry(f *testing.F) {
 		babylonApp := app.Setup(t, false)
 		zcKeeper := babylonApp.BTCStkConsumerKeeper
 		ctx := babylonApp.NewContext(false)
-		// Create a random chain id that starts with "test-"
-		czChainID := "test-" + datagen.GenRandomHexStr(r, 10)
+
+		// generate a random chain register
+		chainRegister := datagen.GenRandomChainRegister(r)
 
 		// check that the chain is not registered
-		isRegistered := zcKeeper.IsChainRegistered(ctx, czChainID)
+		isRegistered := zcKeeper.IsChainRegistered(ctx, chainRegister.ChainId)
 		require.False(t, isRegistered)
-		// Create a random chain name
-		czChainName := datagen.GenRandomHexStr(r, 5)
-		// Create a random chain description
-		czChainDesc := "Chain description: " + datagen.GenRandomHexStr(r, 15)
 
 		// Check that the chain is not registered
-		chainRegister, err := zcKeeper.GetChainRegister(ctx, czChainID)
+		chainRegister2, err := zcKeeper.GetChainRegister(ctx, chainRegister.ChainId)
 		require.Error(t, err)
-		require.Nil(t, chainRegister)
-
-		// Populate ChainRegister object
-		chainRegister = &types.ChainRegister{
-			ChainId:          czChainID,
-			ChainName:        czChainName,
-			ChainDescription: czChainDesc,
-		}
+		require.Nil(t, chainRegister2)
 
 		// Register the chain
 		zcKeeper.SetChainRegister(ctx, chainRegister)
 
 		// check that the chain is registered
-		chainRegister, err = zcKeeper.GetChainRegister(ctx, czChainID)
+		chainRegister2, err = zcKeeper.GetChainRegister(ctx, chainRegister.ChainId)
 		require.NoError(t, err)
-		require.Equal(t, czChainID, chainRegister.ChainId)
-		require.Equal(t, czChainName, chainRegister.ChainName)
-		require.Equal(t, czChainDesc, chainRegister.ChainDescription)
+		require.Equal(t, chainRegister.ChainId, chainRegister2.ChainId)
+		require.Equal(t, chainRegister.ChainName, chainRegister2.ChainName)
+		require.Equal(t, chainRegister.ChainDescription, chainRegister2.ChainDescription)
 	})
 }

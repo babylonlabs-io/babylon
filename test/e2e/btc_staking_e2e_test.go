@@ -176,9 +176,10 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	s.NoError(err)
 
 	// submit the message for creating BTC delegation
+	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(delBTCPK)}
 	nonValidatorNode.CreateBTCDelegation(
 		delBabylonSK.PubKey().(*secp256k1.PubKey),
-		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
+		delBTCPKs,
 		pop,
 		stakingTxInfo,
 		fp.BtcPk,

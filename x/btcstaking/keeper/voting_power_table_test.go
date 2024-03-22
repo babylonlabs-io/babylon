@@ -8,6 +8,7 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -45,13 +46,14 @@ func FuzzVotingPowerTable(f *testing.F) {
 		stakingValue := datagen.RandomInt(r, 100000) + 100000
 		for i := uint64(0); i < numFpsWithVotingPower; i++ {
 			for j := uint64(0); j < numBTCDels; j++ {
-				_, _, _, delMsg, del := h.CreateDelegation(
+				_, _, _, delMsg, del, err := h.CreateDelegation(
 					r,
-					fps[i].BtcPk.MustToBTCPK(),
+					[]*btcec.PublicKey{fps[i].BtcPk.MustToBTCPK()},
 					changeAddress.EncodeAddress(),
 					int64(stakingValue),
 					1000,
 				)
+				h.NoError(err)
 				h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
 			}
 		}
@@ -179,13 +181,14 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 
 			// delegate to this finality provider
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
-			_, _, _, delMsg, del := h.CreateDelegation(
+			_, _, _, delMsg, del, err := h.CreateDelegation(
 				r,
-				fp.BtcPk.MustToBTCPK(),
+				[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
 				changeAddress.EncodeAddress(),
 				int64(stakingValue),
 				1000,
 			)
+			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
 
 			// record voting power
@@ -279,13 +282,14 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 
 			// create BTC delegation and add covenant signatures to activate it
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
-			_, _, _, delMsg, del := h.CreateDelegation(
+			_, _, _, delMsg, del, err := h.CreateDelegation(
 				r,
-				fpPK,
+				[]*btcec.PublicKey{fpPK},
 				changeAddress.EncodeAddress(),
 				int64(stakingValue),
 				1000,
 			)
+			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
 
 			// record voting power
@@ -328,13 +332,14 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
 			fpBTCPK := fpsWithMeta[i].BtcPk
-			_, _, _, delMsg, del := h.CreateDelegation(
+			_, _, _, delMsg, del, err := h.CreateDelegation(
 				r,
-				fpBTCPK.MustToBTCPK(),
+				[]*btcec.PublicKey{fpBTCPK.MustToBTCPK()},
 				changeAddress.EncodeAddress(),
 				int64(stakingValue),
 				1000,
 			)
+			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
 
 			// accumulate voting power for this finality provider
@@ -353,13 +358,14 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 
 			// create BTC delegation and add covenant signatures to activate it
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
-			_, _, _, delMsg, del := h.CreateDelegation(
+			_, _, _, delMsg, del, err := h.CreateDelegation(
 				r,
-				fpPK,
+				[]*btcec.PublicKey{fpPK},
 				changeAddress.EncodeAddress(),
 				int64(stakingValue),
 				1000,
 			)
+			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
 
 			// record voting power

@@ -12,6 +12,7 @@ import (
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	bsmodule "github.com/babylonchain/babylon/x/btcstaking"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/golang/mock/gomock"
 )
 
@@ -54,13 +55,14 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 		for i := 0; i < numDelsUnderFP; i++ {
 			// generate and insert new BTC delegation
 			stakingValue := int64(2 * 10e8)
-			stakingTxHash, _, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
+			stakingTxHash, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 				r,
-				fp.BtcPk.MustToBTCPK(),
+				[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
 				changeAddress.EncodeAddress(),
 				stakingValue,
 				1000,
 			)
+			h.NoError(err)
 			// retrieve BTC delegation in DB
 			btcDelMap[stakingTxHash] = append(btcDelMap[stakingTxHash], actualDel)
 			// generate and insert new covenant signatures
