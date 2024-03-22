@@ -20,6 +20,7 @@ import (
 )
 
 const (
+	FlagConsumerChainId = "consumer-chain-id"
 	FlagMoniker         = "moniker"
 	FlagIdentity        = "identity"
 	FlagWebsite         = "website"
@@ -39,8 +40,8 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		NewCreateFinalityProvicerCmd(),
-		NewEditFinalityProvicerCmd(),
+		NewCreateFinalityProviderCmd(),
+		NewEditFinalityProviderCmd(),
 		NewCreateBTCDelegationCmd(),
 		NewAddCovenantSigsCmd(),
 		NewBTCUndelegateCmd(),
@@ -50,13 +51,13 @@ func GetTxCmd() *cobra.Command {
 	return cmd
 }
 
-func NewCreateFinalityProvicerCmd() *cobra.Command {
+func NewCreateFinalityProviderCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-finality-provider [babylon_pk] [btc_pk] [pop]",
+		Use:   "create-finality-provider <babylon_pk> <btc_pk> <pop>",
 		Args:  cobra.ExactArgs(3),
 		Short: "Create a finality provider",
 		Long: strings.TrimSpace(
-			`Create a finality provider.`, // TODO: example
+			`Creates a finality provider for Babylon or a Consumer chain.`, // TODO: example
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -67,6 +68,7 @@ func NewCreateFinalityProvicerCmd() *cobra.Command {
 			fs := cmd.Flags()
 
 			// get description
+			chainID, _ := fs.GetString(FlagConsumerChainId)
 			moniker, _ := fs.GetString(FlagMoniker)
 			identity, _ := fs.GetString(FlagIdentity)
 			website, _ := fs.GetString(FlagWebsite)
@@ -115,6 +117,7 @@ func NewCreateFinalityProvicerCmd() *cobra.Command {
 				BabylonPk:   &babylonPK,
 				BtcPk:       btcPK,
 				Pop:         pop,
+				ChainId:     chainID,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
@@ -122,6 +125,7 @@ func NewCreateFinalityProvicerCmd() *cobra.Command {
 	}
 
 	fs := cmd.Flags()
+	fs.String(FlagConsumerChainId, "", "The finality provider's Consumer chain id, if any")
 	fs.String(FlagMoniker, "", "The finality provider's (optional) moniker")
 	fs.String(FlagWebsite, "", "The finality provider's (optional) website")
 	fs.String(FlagSecurityContact, "", "The finality provider's (optional) security contact email")
@@ -134,7 +138,7 @@ func NewCreateFinalityProvicerCmd() *cobra.Command {
 	return cmd
 }
 
-func NewEditFinalityProvicerCmd() *cobra.Command {
+func NewEditFinalityProviderCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "edit-finality-provider [btc_pk]",
 		Args:  cobra.ExactArgs(1),
