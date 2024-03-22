@@ -45,6 +45,16 @@ func (k Keeper) HasFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubK
 	return store.Has(*fpBTCPK)
 }
 
+// GetFinalityProviderChain gets the finality provider chain id for the given finality provider Bitcoin PK
+func (k Keeper) GetFinalityProviderChain(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (string, error) {
+	if !k.HasFinalityProvider(ctx, fpBTCPK) {
+		return "", btcstaking.ErrFpNotFound
+	}
+	store := k.finalityProviderChainStore(ctx)
+	chainID := store.Get(*fpBTCPK)
+	return string(chainID), nil
+}
+
 // IterateFPs iterates over all finality providers for a given chain
 func (k Keeper) IterateFPs(ctx context.Context, chainId string, handler func(fp *btcstaking.FinalityProvider) bool) {
 	// filter out all finality providers with positive voting power
