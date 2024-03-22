@@ -131,3 +131,28 @@ func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProv
 	fpResp := types.NewFinalityProviderResponse(fp)
 	return &types.QueryFinalityProviderResponse{FinalityProvider: fpResp}, nil
 }
+
+// FinalityProviderChain returns the chain ID for the finality provider with the specified finality provider BTC PK
+func (k Keeper) FinalityProviderChain(c context.Context, req *types.QueryFinalityProviderChainRequest) (*types.QueryFinalityProviderChainResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	if len(req.FpBtcPkHex) == 0 {
+		return nil, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidRequest, "finality provider BTC public key cannot be empty")
+	}
+
+	fpPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	chainID, err := k.GetFinalityProviderChain(ctx, fpPK)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryFinalityProviderChainResponse{ChainId: chainID}, nil
+}
