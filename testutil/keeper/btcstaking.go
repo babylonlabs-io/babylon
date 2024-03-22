@@ -21,23 +21,38 @@ import (
 
 	"github.com/babylonchain/babylon/x/btcstaking/keeper"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	bsckeeper "github.com/babylonchain/babylon/x/btcstkconsumer/keeper"
+	bsctypes "github.com/babylonchain/babylon/x/btcstkconsumer/types"
 )
 
 func BTCStakingKeeper(
 	t testing.TB,
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
-	bscKeeper types.BTCStkConsumerKeeper,
-) (*keeper.Keeper, sdk.Context) {
-	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
-
+) (*keeper.Keeper, *bsckeeper.Keeper, sdk.Context) {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
-	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
-	require.NoError(t, stateStore.LoadLatestVersion())
 
 	registry := codectypes.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
+
+	// mount KV store for BTC staking consumer keeper
+	bscStoreKey := storetypes.NewKVStoreKey(bsctypes.StoreKey)
+	stateStore.MountStoreWithDB(bscStoreKey, storetypes.StoreTypeIAVL, db)
+	require.NoError(t, stateStore.LoadLatestVersion())
+	// create BTC staking consumer keeper
+	bscKeeper := bsckeeper.NewKeeper(
+		cdc,
+		runtime.NewKVStoreService(bscStoreKey),
+		nil,
+		nil,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	// mount KV store for BTC staking keeper
+	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
+	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
+	require.NoError(t, stateStore.LoadLatestVersion())
 
 	k := keeper.NewKeeper(
 		cdc,
@@ -57,5 +72,5 @@ func BTCStakingKeeper(
 		panic(err)
 	}
 
-	return &k, ctx
+	return &k, &bscKeeper, ctx
 }
