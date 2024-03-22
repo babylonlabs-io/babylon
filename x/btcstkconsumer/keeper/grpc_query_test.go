@@ -233,6 +233,59 @@ func FuzzFinalityProvider(f *testing.F) {
 	})
 }
 
+// FuzzFinalityProviderChain tests the FinalityProviderChain gRPC query endpoint
+func FuzzFinalityProviderChain(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		babylonApp := app.Setup(t, false)
+		bscKeeper := babylonApp.BTCStkConsumerKeeper
+		ctx := babylonApp.NewContext(false)
+
+		// Generate random finality providers and add them to kv store under a chain id
+		fpsMap := make(map[string]*btcstaking.FinalityProvider)
+		chainID := datagen.GenRandomHexStr(r, 30)
+		var existingFp string
+		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
+			fp, err := datagen.GenRandomFinalityProvider(r)
+			require.NoError(t, err)
+			fp.ChainId = chainID
+
+			bscKeeper.SetFinalityProvider(ctx, fp)
+			existingFp = fp.BtcPk.MarshalHex()
+			fpsMap[existingFp] = fp
+		}
+
+		// Test nil request
+		resp, err := bscKeeper.FinalityProviderChain(ctx, nil)
+		require.Error(t, err)
+		require.Nil(t, resp)
+
+		// Generate a request with a valid key
+		req := types.QueryFinalityProviderChainRequest{FpBtcPkHex: existingFp}
+		resp, err = bscKeeper.FinalityProviderChain(ctx, &req)
+		if err != nil {
+			t.Errorf("Valid request led to an error %s", err)
+		}
+		if resp == nil {
+			t.Fatalf("Valid request led to a nil response")
+		}
+
+		// check keys from map matches those in returned response
+		require.Equal(t, chainID, resp.ChainId)
+
+		// check some random non-existing guy
+		fp, err := datagen.GenRandomFinalityProvider(r)
+		require.NoError(t, err)
+		req = types.QueryFinalityProviderChainRequest{FpBtcPkHex: fp.BtcPk.MarshalHex()}
+		respNonExists, err := bscKeeper.FinalityProviderChain(ctx, &req)
+		require.Error(t, err)
+		require.Nil(t, respNonExists)
+		require.True(t, errors.Is(err, btcstaking.ErrFpNotFound))
+	})
+}
+
 // Constructors for PageRequest objects
 func constructRequestWithKeyAndLimit(r *rand.Rand, key []byte, limit uint64) *query.PageRequest {
 	// If the limit is 0, set one randomly

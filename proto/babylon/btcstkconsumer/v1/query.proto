@@ -19,7 +19,7 @@ option go_package = "github.com/babylonchain/babylon/x/btcstkconsumer/types";
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/babylonchain/babylon/btcstkconsumer/v1/params";
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/params";
   }
   // ChainRegistryList queries the list of chains that are registered to Babylon
   rpc ChainRegistryList(QueryChainRegistryListRequest) returns (QueryChainRegistryListResponse) {
@@ -27,17 +27,22 @@ service Query {
   }
   // ChainsRegistry queries the latest info for a given list of chains in Babylon's view
   rpc ChainsRegistry(QueryChainsRegistryRequest) returns (QueryChainsRegistryResponse) {
-    option (google.api.http).get = "/babylon/btcstkconsumer/v1/chains_registry";
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/chains_registry/{chain_ids}";
+  }
+
+  // FinalityProviderChain info about one finality provider's chain id
+  rpc FinalityProviderChain(QueryFinalityProviderChainRequest) returns (QueryFinalityProviderChainResponse) {
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/finality_provider_chain/{fp_btc_pk_hex}";
   }
 
   // FinalityProviders queries all finality providers for a given chain
   rpc FinalityProviders(QueryFinalityProvidersRequest) returns (QueryFinalityProvidersResponse) {
-    option (google.api.http).get = "/babylon/btcstkconsumer/v1/finality_providers";
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/finality_providers/{chain_id}";
   }
 
   // FinalityProvider info about one finality provider
   rpc FinalityProvider(QueryFinalityProviderRequest) returns (QueryFinalityProviderResponse) {
-    option (google.api.http).get = "/babylon/btcstkconsumer/v1/finality_providers/{fp_btc_pk_hex}/finality_provider";
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/finality_provider/{chain_id}/{fp_btc_pk_hex}";
   }
 }
 
@@ -137,4 +142,15 @@ message FinalityProviderResponse {
   uint64 voting_power = 9;
   // chain_id is the chain id this finality provider is registered to
   string chain_id = 10;
+}
+
+// QueryFinalityProviderChainRequest requests the chain a CZ finality provider belongs to
+message QueryFinalityProviderChainRequest {
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
+  string fp_btc_pk_hex = 1;
+}
+
+// QueryFinalityProviderChainResponse returns the CZ finality provier chain id
+message QueryFinalityProviderChainResponse {
+  string chain_id = 1;
 }
