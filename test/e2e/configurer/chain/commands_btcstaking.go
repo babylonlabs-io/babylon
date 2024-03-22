@@ -43,7 +43,7 @@ func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *
 
 func (n *NodeConfig) CreateBTCDelegation(
 	babylonPK *secp256k1.PubKey,
-	btcPk *bbn.BIP340PubKey,
+	btcPKs []bbn.BIP340PubKey,
 	pop *bstypes.ProofOfPossession,
 	stakingTxInfo *btcctypes.TransactionInfo,
 	fpPK *bbn.BIP340PubKey,
@@ -64,7 +64,12 @@ func (n *NodeConfig) CreateBTCDelegation(
 	require.NoError(n.t, err)
 	babylonPKHex := hex.EncodeToString(babylonPKBytes)
 
-	btcPkHex := btcPk.MarshalHex()
+	var btcPKHexList []string
+	for _, btcPK := range btcPKs {
+		btcPKHex := btcPK.MarshalHex()
+		btcPKHexList = append(btcPKHexList, btcPKHex)
+	}
+	btcPKHexListStr := strings.Join(btcPKHexList, ",")
 
 	// get pop hex
 	popHex, err := pop.ToHexStr()
@@ -93,7 +98,7 @@ func (n *NodeConfig) CreateBTCDelegation(
 	unbondingValueStr := sdkmath.NewInt(int64(unbondingValue)).String()
 	delUnbondingSlashingSigHex := delUnbondingSlashingSig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "btcstaking", "create-btc-delegation", babylonPKHex, btcPkHex, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex, "--from=val"}
+	cmd := []string{"babylond", "tx", "btcstaking", "create-btc-delegation", babylonPKHex, btcPKHexListStr, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex, "--from=val"}
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully created BTC delegation")

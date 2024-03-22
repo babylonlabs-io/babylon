@@ -30,14 +30,17 @@ var (
 	net = &chaincfg.SimNetParams
 )
 
+// TODO: move this to keeper package rather than keeper_test so that
+// it can be inherited to test other modules?
 type Helper struct {
 	t testing.TB
 
 	Ctx                     sdk.Context
 	BTCStakingKeeper        *keeper.Keeper
+	BTCStkConsumerKeeper    *bsckeeper.Keeper
 	BTCLightClientKeeper    *types.MockBTCLightClientKeeper
-	BTCCheckpointKeeper     *types.MockBtcCheckpointKeeper
 	CheckpointingKeeper     *types.MockCheckpointingKeeper
+	BTCCheckpointKeeper     *types.MockBtcCheckpointKeeper
 	MsgServer               types.MsgServer
 	BtcStkConsumerMsgServer bsctypes.MsgServer
 	Net                     *chaincfg.Params
@@ -53,9 +56,10 @@ func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKe
 		t:                       t,
 		Ctx:                     ctx,
 		BTCStakingKeeper:        k,
+		BTCStkConsumerKeeper:    bscKeeper,
 		BTCLightClientKeeper:    btclcKeeper,
-		BTCCheckpointKeeper:     btccKeeper,
 		CheckpointingKeeper:     ckptKeeper,
+		BTCCheckpointKeeper:     btccKeeper,
 		MsgServer:               msgSrvr,
 		BtcStkConsumerMsgServer: btcStkConsumerMsgServer,
 		Net:                     &chaincfg.SimNetParams,
@@ -167,9 +171,43 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	return fpBTCSK, fpBTCPK, fp
 }
 
+func (h *Helper) CreateConsumerChainFinalityProvider(r *rand.Rand, chainID string) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider, error) {
+	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	bbnSK, _, err := datagen.GenRandomSecp256k1KeyPair(r)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	msr, _, err := eots.NewMasterRandPair(r)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpSK, bbnSK, msr)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	fp.ChainId = chainID
+	msgNewFp := types.MsgCreateFinalityProvider{
+		Signer:      datagen.GenRandomAccount().Address,
+		Description: fp.Description,
+		Commission:  fp.Commission,
+		BabylonPk:   fp.BabylonPk,
+		BtcPk:       fp.BtcPk,
+		Pop:         fp.Pop,
+		ChainId:     fp.ChainId,
+	}
+	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return fpSK, fpPK, fp, nil
+}
+
 func (h *Helper) CreateDelegationCustom(
 	r *rand.Rand,
-	fpPK *btcec.PublicKey,
+	fpPKs []*btcec.PublicKey,
 	changeAddress string,
 	stakingValue int64,
 	stakingTime uint16,
@@ -188,7 +226,7 @@ func (h *Helper) CreateDelegationCustom(
 		h.t,
 		h.Net,
 		delSK,
-		[]*btcec.PublicKey{fpPK},
+		fpPKs,
 		covPKs,
 		bsParams.CovenantQuorum,
 		stakingTimeBlocks,
@@ -247,7 +285,7 @@ func (h *Helper) CreateDelegationCustom(
 		h.t,
 		h.Net,
 		delSK,
-		[]*btcec.PublicKey{fpPK},
+		fpPKs,
 		covPKs,
 		bsParams.CovenantQuorum,
 		wire.NewOutPoint(&stkTxHash, stkOutputIdx),
@@ -266,12 +304,11 @@ func (h *Helper) CreateDelegationCustom(
 	h.NoError(err)
 
 	// all good, construct and send MsgCreateBTCDelegation message
-	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
 	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
 		Signer:                        signer,
 		BabylonPk:                     delBabylonPK.(*secp256k1.PubKey),
 		BtcPk:                         stPk,
-		FpBtcPkList:                   []bbn.BIP340PubKey{*fpBTCPK},
+		FpBtcPkList:                   bbn.NewBIP340PKsFromBTCPKs(fpPKs),
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
 		StakingValue:                  stakingValue,
@@ -295,11 +332,11 @@ func (h *Helper) CreateDelegationCustom(
 
 func (h *Helper) CreateDelegation(
 	r *rand.Rand,
-	fpPK *btcec.PublicKey,
+	fpPKs []*btcec.PublicKey,
 	changeAddress string,
 	stakingValue int64,
 	stakingTime uint16,
-) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation, *types.BTCDelegation) {
+) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation, *types.BTCDelegation, error) {
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
 
@@ -310,22 +347,27 @@ func (h *Helper) CreateDelegation(
 
 	stakingTxHash, delSK, delPK, msgCreateBTCDel, err := h.CreateDelegationCustom(
 		r,
-		fpPK,
+		fpPKs,
 		changeAddress,
 		stakingValue,
 		stakingTime,
 		stakingValue-1000,
 		uint16(minUnbondingTime)+1,
 	)
-
-	h.NoError(err)
+	if err != nil {
+		return "", nil, nil, nil, nil, err
+	}
 
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(msgCreateBTCDel.StakingTx.Transaction)
-	h.NoError(err)
+	if err != nil {
+		return "", nil, nil, nil, nil, err
+	}
 	btcDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingMsgTx.TxHash().String())
-	h.NoError(err)
+	if err != nil {
+		return "", nil, nil, nil, nil, err
+	}
 
-	return stakingTxHash, delSK, delPK, msgCreateBTCDel, btcDel
+	return stakingTxHash, delSK, delPK, msgCreateBTCDel, btcDel, nil
 }
 
 func (h *Helper) GenerateCovenantSignaturesMessages(
@@ -434,8 +476,7 @@ func (h *Helper) CreateCovenantSigs(
 	require.NotNil(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantUnbondingSigList)
 	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantUnbondingSigList, int(bsParams.CovenantQuorum))
 	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs, int(bsParams.CovenantQuorum))
-	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs[0].AdaptorSigs, 1)
-
+	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs[0].AdaptorSigs, len(del.FpBtcPkList))
 }
 
 func (h *Helper) GetDelegationAndCheckValues(
