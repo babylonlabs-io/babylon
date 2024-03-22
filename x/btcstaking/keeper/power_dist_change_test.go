@@ -7,6 +7,7 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -37,13 +38,15 @@ func FuzzFinalityProviderEvents(f *testing.F) {
 			ensure that it has voting power
 		*/
 		stakingValue := int64(2 * 10e8)
-		_, _, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
+		_, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 			r,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 		)
+		h.NoError(err)
+
 		// give it a quorum number of covenant signatures
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
 		for i := 0; i < int(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum); i++ {
@@ -111,13 +114,14 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		expectedStakingTxHash, _, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
+		expectedStakingTxHash, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 			r,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 		)
+		h.NoError(err)
 
 		/*
 			at this point, there should be 1 event that BTC delegation
