@@ -20,6 +20,7 @@ import (
 )
 
 const (
+	FlagConsumerChainId = "consumer-chain-id"
 	FlagMoniker         = "moniker"
 	FlagIdentity        = "identity"
 	FlagWebsite         = "website"
@@ -56,7 +57,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(3),
 		Short: "Create a finality provider",
 		Long: strings.TrimSpace(
-			`Create a finality provider.`, // TODO: example
+			`Creates a finality provider for Babylon or a Consumer chain.`, // TODO: example
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -67,6 +68,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 			fs := cmd.Flags()
 
 			// get description
+			chainID, _ := fs.GetString(FlagConsumerChainId)
 			moniker, _ := fs.GetString(FlagMoniker)
 			identity, _ := fs.GetString(FlagIdentity)
 			website, _ := fs.GetString(FlagWebsite)
@@ -115,6 +117,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 				BabylonPk:   &babylonPK,
 				BtcPk:       btcPK,
 				Pop:         pop,
+				ChainId:     chainID,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
@@ -122,6 +125,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 	}
 
 	fs := cmd.Flags()
+	fs.String(FlagConsumerChainId, "", "The finality provider's Consumer chain id, if any")
 	fs.String(FlagMoniker, "", "The finality provider's (optional) moniker")
 	fs.String(FlagWebsite, "", "The finality provider's (optional) website")
 	fs.String(FlagSecurityContact, "", "The finality provider's (optional) security contact email")

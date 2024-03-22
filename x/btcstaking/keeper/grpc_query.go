@@ -70,6 +70,20 @@ func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProv
 	ctx := sdk.UnwrapSDKContext(c)
 	fp, err := k.GetFinalityProvider(ctx, key)
 	if err != nil {
+		// Try in the btcstkconsumer module
+		if k.bscKeeper.HasFinalityProvider(ctx, fpPK) {
+			fpChain, err := k.bscKeeper.GetFinalityProviderChain(ctx, fpPK)
+			if err != nil {
+				return nil, err
+			}
+			fp, err := k.bscKeeper.GetFinalityProvider(ctx, fpChain, fpPK)
+			if err != nil {
+				return nil, err
+			}
+			// FPs for consumer chains are not stored in the voting power table
+			fpResp := types.NewFinalityProviderResponse(fp, 0, 0)
+			return &types.QueryFinalityProviderResponse{FinalityProvider: fpResp}, nil
+		}
 		return nil, err
 	}
 
