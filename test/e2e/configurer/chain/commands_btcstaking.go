@@ -43,7 +43,7 @@ func (n *NodeConfig) CreateFinalityProvider(walletAddrOrName string, btcPK *bbn.
 }
 
 func (n *NodeConfig) CreateBTCDelegation(
-	btcPk *bbn.BIP340PubKey,
+	btcPKs []bbn.BIP340PubKey,
 	pop *bstypes.ProofOfPossessionBTC,
 	stakingTxInfo *btcctypes.TransactionInfo,
 	fpPK *bbn.BIP340PubKey,
@@ -62,7 +62,12 @@ func (n *NodeConfig) CreateBTCDelegation(
 ) (outStr string) {
 	n.LogActionF("creating BTC delegation")
 
-	btcPkHex := btcPk.MarshalHex()
+	var btcPKHexList []string
+	for _, btcPK := range btcPKs {
+		btcPKHex := btcPK.MarshalHex()
+		btcPKHexList = append(btcPKHexList, btcPKHex)
+	}
+	btcPKHexListStr := strings.Join(btcPKHexList, ",")
 
 	// get pop hex
 	popHex, err := pop.ToHexStr()
@@ -93,18 +98,16 @@ func (n *NodeConfig) CreateBTCDelegation(
 
 	cmd := []string{
 		"babylond", "tx", "btcstaking", "create-btc-delegation",
-		btcPkHex, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
+		btcPKHexListStr, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
 		fmt.Sprintf("--from=%s", fromWalletName), containers.FlagHome, flagKeyringTest,
 		n.FlagChainID(), "--log_format=json",
 	}
 
 	if generateOnly {
 		cmd = append(cmd, "--generate-only")
-	} else {
-		cmd = append(cmd, "-b=sync", "--yes")
 	}
 
-	outBuff, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
+	outBuff, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
 	require.NoError(n.t, err)
 	n.LogActionF("successfully created BTC delegation")
 	return outBuff.String()

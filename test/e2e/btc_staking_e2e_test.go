@@ -104,8 +104,9 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	s.NoError(err)
 
 	// submit the message for creating BTC delegation
+	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(delBTCPK)}
 	nonValidatorNode.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
+		delBTCPKs,
 		pop,
 		stakingTxInfo,
 		cacheFP.BtcPk,
@@ -495,8 +496,9 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	s.NoError(err)
 
 	// submit the message for only generate the Tx to create BTC delegation
+	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(delBTCPK)}
 	jsonTx := nonValidatorNode.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
+		delBTCPKs,
 		pop,
 		stakingTxInfo,
 		cacheFP.BtcPk,
@@ -575,8 +577,9 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 	s.True(stakerBalances.IsZero())
 
 	// submit the message to create BTC delegation
+	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(delBTCPK)}
 	nonValidatorNode.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
+		delBTCPKs,
 		pop,
 		stakingTxInfo,
 		cacheFP.BtcPk,
@@ -684,8 +687,9 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	// submit the message to create BTC delegation using the fee grant
 	// but putting as fee more than the spend limit
 	// it should fail by exceeding the fee limit.
+	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(delBTCPK)}
 	output := node.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
+		delBTCPKs,
 		pop,
 		stakingTxInfo,
 		cacheFP.BtcPk,
@@ -708,7 +712,7 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 
 	// submit the message to create BTC delegation using the fee grant at the max of spend limit
 	node.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
+		delBTCPKs,
 		pop,
 		stakingTxInfo,
 		cacheFP.BtcPk,

@@ -158,13 +158,14 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, _, _, msgCreateBTCDel, _ := h.CreateDelegation(
+		stakingTxHash, _, _, msgCreateBTCDel, _, err := h.CreateDelegation(
 			r,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 		)
+		h.NoError(err)
 
 		// ensure consistency between the msg and the BTC delegation in DB
 		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
@@ -203,13 +204,14 @@ func TestProperVersionInDelegation(t *testing.T) {
 
 	// generate and insert new BTC delegation
 	stakingValue := int64(2 * 10e8)
-	stakingTxHash, _, _, _, _ := h.CreateDelegation(
+	stakingTxHash, _, _, _, _, err := h.CreateDelegation(
 		r,
-		fpPK,
+		[]*btcec.PublicKey{fpPK},
 		changeAddress.EncodeAddress(),
 		stakingValue,
 		1000,
 	)
+	require.NoError(t, err)
 
 	// ensure consistency between the msg and the BTC delegation in DB
 	actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
@@ -230,7 +232,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	// create new delegation
 	stakingTxHash1, _, _, _, err := h.CreateDelegationCustom(
 		r,
-		fpPK,
+		[]*btcec.PublicKey{fpPK},
 		changeAddress.EncodeAddress(),
 		stakingValue,
 		1000,
@@ -271,13 +273,14 @@ func FuzzAddCovenantSigs(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, _, _, msgCreateBTCDel, _ := h.CreateDelegation(
+		stakingTxHash, _, _, msgCreateBTCDel, _, err := h.CreateDelegation(
 			r,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 		)
+		h.NoError(err)
 
 		// ensure consistency between the msg and the BTC delegation in DB
 		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
@@ -339,13 +342,14 @@ func FuzzBTCUndelegate(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, delSK, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
+		stakingTxHash, delSK, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 			r,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 		)
+		h.NoError(err)
 
 		// add covenant signatures to this BTC delegation
 		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
@@ -411,13 +415,14 @@ func FuzzSelectiveSlashing(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, _, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
+		stakingTxHash, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 			r,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 		)
+		h.NoError(err)
 
 		// add covenant signatures to this BTC delegation
 		// so that the BTC delegation becomes bonded
@@ -478,13 +483,14 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, _, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
+		stakingTxHash, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 			r,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 		)
+		h.NoError(err)
 
 		// add covenant signatures to this BTC delegation
 		// so that the BTC delegation becomes bonded
@@ -723,7 +729,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			stakingValue := int64(2 * 10e8)
 			stakingTxHash, _, _, _, err := h.CreateDelegationCustom(
 				r,
-				fpPK,
+				[]*btcec.PublicKey{fpPK},
 				changeAddress.EncodeAddress(),
 				stakingValue,
 				1000,
@@ -795,7 +801,7 @@ func TestMinimalUnbondingRate(t *testing.T) {
 			// generate and insert new BTC delegation
 			stakingTxHash, _, _, _, err := h.CreateDelegationCustom(
 				r,
-				fpPK,
+				[]*btcec.PublicKey{fpPK},
 				changeAddress.EncodeAddress(),
 				tt.stakingValue,
 				1000,
