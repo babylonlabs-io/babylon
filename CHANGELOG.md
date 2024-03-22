@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased](https://github.com/babylonchain/babylon-private/tree/HEAD)
+
+[Full Changelog](https://github.com/babylonchain/babylon-private/compare/euphrates-0.1.0-rc.0...HEAD)
+
+## [euphrates-0.1.0-rc.0](https://github.com/babylonchain/babylon-private/tree/euphrates-0.1.0-rc.0) (2024-03-22)
+
+[Full Changelog](https://github.com/babylonchain/babylon-private/compare/v0.8.5...euphrates-0.1.0-rc.0)
+
+**Closed issues:**
+
+- handler for registering consumer chain finality providers [\#211](https://github.com/babylonchain/babylon-private/issues/211)
+- restaking support and tests [\#208](https://github.com/babylonchain/babylon-private/issues/208)
+- New module for BTC staking integration [\#204](https://github.com/babylonchain/babylon-private/issues/204)
+- Consumer chain finality provider registry [\#203](https://github.com/babylonchain/babylon-private/issues/203)
+
 ## [v0.8.0](https://github.com/babylonchain/babylon/tree/v0.8.0) (2024-02-08)
 
 [Full Changelog](https://github.com/babylonchain/babylon/compare/v0.8.0-rc.0...v0.8.0)
