@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/babylonchain/babylon-private/tree/HEAD)
 
-[Full Changelog](https://github.com/babylonchain/babylon-private/compare/euphrates-0.1.0-rc.0...HEAD)
+[Full Changelog](https://github.com/babylonchain/babylon-private/compare/euphrates-0.1.0-rc.1...HEAD)
+
+## [euphrates-0.1.0-rc.1](https://github.com/babylonchain/babylon-private/tree/euphrates-0.1.0-rc.1) (2024-03-25)
+
+[Full Changelog](https://github.com/babylonchain/babylon-private/compare/euphrates-0.1.0-rc.0...euphrates-0.1.0-rc.1)
+
+**Fixed bugs:**
+
+- Fix: only calculating Babylon FPs for FP set rotation (#223)
 
 ## [euphrates-0.1.0-rc.0](https://github.com/babylonchain/babylon-private/tree/euphrates-0.1.0-rc.0) (2024-03-22)
 
