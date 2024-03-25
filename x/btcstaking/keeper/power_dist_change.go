@@ -123,10 +123,13 @@ func (k Keeper) processAllPowerDistUpdateEvents(
 				if err != nil {
 					panic(err) // only programming error
 				}
-				// add the BTC delegation to each restaked finality provider
+				// add the BTC delegation to each restaked **Babylon** finality provider
+				// TODO: separate FpBtcPkList for Babylon FPs and consumer chain FPs
 				for _, fpBTCPK := range btcDel.FpBtcPkList {
-					fpBTCPKHex := fpBTCPK.MarshalHex()
-					activeBTCDels[fpBTCPKHex] = append(activeBTCDels[fpBTCPKHex], btcDel)
+					if k.HasFinalityProvider(ctx, fpBTCPK) {
+						fpBTCPKHex := fpBTCPK.MarshalHex()
+						activeBTCDels[fpBTCPKHex] = append(activeBTCDels[fpBTCPKHex], btcDel)
+					}
 				}
 			} else if delEvent.NewState == types.BTCDelegationStatus_UNBONDED {
 				// add the expired BTC delegation to the map
