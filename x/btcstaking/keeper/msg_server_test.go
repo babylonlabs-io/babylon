@@ -195,13 +195,14 @@ func TestProperVersionInDelegation(t *testing.T) {
 
 	// generate and insert new BTC delegation
 	stakingValue := int64(2 * 10e8)
-	stakingTxHash, _, _, _, _ := h.CreateDelegation(
+	stakingTxHash, _, _, _, _, err := h.CreateDelegation(
 		r,
-		fpPK,
+		[]*btcec.PublicKey{fpPK},
 		changeAddress.EncodeAddress(),
 		stakingValue,
 		1000,
 	)
+	h.NoError(err)
 
 	// ensure consistency between the msg and the BTC delegation in DB
 	actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
@@ -222,7 +223,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	// create new delegation
 	stakingTxHash1, _, _, _, err := h.CreateDelegationCustom(
 		r,
-		fpPK,
+		[]*btcec.PublicKey{fpPK},
 		changeAddress.EncodeAddress(),
 		stakingValue,
 		1000,
