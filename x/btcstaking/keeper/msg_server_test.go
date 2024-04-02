@@ -225,7 +225,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 		stakingValue,
 		1000,
 	)
-	require.NoError(t, err)
+	h.NoError(err)
 
 	// ensure consistency between the msg and the BTC delegation in DB
 	actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
