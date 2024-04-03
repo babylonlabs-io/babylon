@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	"math/rand"
 	"testing"
 
@@ -160,6 +161,10 @@ func (h *Helper) CreateConsumerChainFinalityProvider(r *rand.Rand, chainID strin
 		return nil, nil, nil, err
 	}
 	fp.ChainId = chainID
+
+	registeredEpoch := uint64(10)
+	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Eq(h.Ctx)).Return(&etypes.Epoch{EpochNumber: registeredEpoch}).AnyTimes()
+
 	msgNewFp := types.MsgCreateFinalityProvider{
 		Description: fp.Description,
 		Commission:  fp.Commission,

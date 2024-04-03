@@ -35,8 +35,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		wValue := h.BTCCheckpointKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
 
 		// generate and insert new Babylon finality provider
-		_, fpPK, fp := h.CreateFinalityProvider(r)
-		t.Log(changeAddress, fpPK, fp)
+		_, fpPK, _ := h.CreateFinalityProvider(r)
 		/*
 			ensure that registering a consumer chain finality provider with non-existing
 			chain ID will fail
@@ -53,7 +52,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		_, czFPPK, czFP, err := h.CreateConsumerChainFinalityProvider(r, chainRegister.ChainId)
 		h.NoError(err)
 		czFPBTCPK := bbn.NewBIP340PubKeyFromBTCPK(czFPPK)
-		czFP2, err := h.BTCStkConsumerKeeper.GetFinalityProvider(h.Ctx, chainRegister.ChainId, czFPBTCPK)
+		czFP2, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, chainRegister.ChainId, czFPBTCPK)
 		h.NoError(err)
 		require.Equal(t, czFP, czFP2)
 
@@ -84,7 +83,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 			1000,
 		)
 		h.Error(err)
-		require.True(t, errors.Is(err, types.ErrNoBabylonFPRestaked))
+		require.True(t, errors.Is(err, types.ErrNoBabylonFPRestaked), err)
 
 		/*
 			happy case -- restaking to a Babylon fp and a consumer chain fp

@@ -80,7 +80,6 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	unbondingTxSig *bbn.BIP340Signature,
 	parsedUnbondingSlashingAdaptorSignatures []asig.AdaptorSignature,
 	params *types.Params,
-	restakedToConsumers bool,
 ) {
 	// All is fine add received signatures to the BTC delegation and BtcUndelegation
 	btcDel.AddCovenantSigs(
@@ -90,12 +89,8 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 		parsedUnbondingSlashingAdaptorSignatures,
 	)
 
-	// set BTC delegation back to KV store (and consumer's KV store if restaked to
-	// consumer finality providers)
+	// set BTC delegation back to KV store
 	k.setBTCDelegation(ctx, btcDel)
-	if restakedToConsumers {
-		k.bscKeeper.SetBTCDelegation(ctx, btcDel)
-	}
 
 	// If reaching the covenant quorum after this msg, the BTC delegation becomes
 	// active. Then, record and emit this event
@@ -122,16 +117,11 @@ func (k Keeper) btcUndelegate(
 	ctx sdk.Context,
 	btcDel *types.BTCDelegation,
 	unbondingTxSig *bbn.BIP340Signature,
-	restakedToConsumers bool,
 ) {
 	btcDel.BtcUndelegation.DelegatorUnbondingSig = unbondingTxSig
 
-	// set BTC delegation back to KV store (and consumer's KV store if restaked to
-	// consumer finality providers)
+	// set BTC delegation back to KV store
 	k.setBTCDelegation(ctx, btcDel)
-	if restakedToConsumers {
-		k.bscKeeper.SetBTCDelegation(ctx, btcDel)
-	}
 
 	// notify subscriber about this unbonded BTC delegation
 	event := &types.EventBTCDelegationStateUpdate{
@@ -157,20 +147,34 @@ func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 }
 
 // validateRestakedFPs ensures all finality providers are known to Babylon and at least
-// 1 one of them is a Babylon finality provider. It also checks whether the BTC stake is
+// one of them is a Babylon finality provider. It also checks whether the BTC stake is
 // restaked to FPs of consumer chains
 func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) (bool, error) {
-	restakedToBabylon := false
-	restakedToConsumers := false
+	var (
+		fp                  *types.FinalityProvider
+		err                 error
+		restakedToBabylon   = false
+		restakedToConsumers = false
+	)
+
 	for _, fpBTCPK := range fpBTCPKs {
-		if k.HasFinalityProvider(ctx, fpBTCPK) {
+		// find the fp and determine whether it's Babylon fp or consumer chain fp
+		if fp, err = k.GetFinalityProvider(ctx, fpBTCPK); err == nil {
 			restakedToBabylon = true
 			continue
-		} else if k.bscKeeper.HasFinalityProvider(ctx, &fpBTCPK) {
+		} else if chainID, err := k.bscKeeper.GetConsumerFinalityProviderChain(ctx, &fpBTCPK); err == nil {
+			fp, err = k.bscKeeper.GetConsumerFinalityProvider(ctx, chainID, &fpBTCPK)
+			if err != nil {
+				return false, err
+			}
 			restakedToConsumers = true
 			continue
 		} else {
 			return false, types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPK.MarshalHex())
+		}
+		// ensure the finality provider is not slashed
+		if fp.IsSlashed() {
+			return false, types.ErrFpAlreadySlashed
 		}
 	}
 	if !restakedToBabylon {
