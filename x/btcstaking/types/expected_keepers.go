@@ -8,8 +8,6 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	etypes "github.com/babylonchain/babylon/x/epoching/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	query "github.com/cosmos/cosmos-sdk/types/query"
 )
 
 type BTCLightClientKeeper interface {
@@ -29,12 +27,9 @@ type CheckpointingKeeper interface {
 }
 
 type BTCStkConsumerKeeper interface {
-	IsChainRegistered(ctx context.Context, chainID string) bool
-	HasFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) bool
-	GetFinalityProviderChain(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (string, error)
-	GetFinalityProvider(ctx context.Context, chainID string, fpBTCPK *bbn.BIP340PubKey) (*FinalityProvider, error)
-	SetFinalityProvider(ctx context.Context, fp *FinalityProvider)
-	AddBTCDelegation(ctx sdk.Context, btcDel *BTCDelegation) error
-	SetBTCDelegation(ctx context.Context, btcDel *BTCDelegation)
-	GetBTCDelegatorDelegationsResponses(ctx sdk.Context, fpBTCPK *bbn.BIP340PubKey, pagination *query.PageRequest, wValue uint64, btcHeight uint64, covenantQuorum uint32) ([]*BTCDelegatorDelegationsResponse, *query.PageResponse, error)
+	IsConsumerChainRegistered(ctx context.Context, chainID string) bool
+	HasConsumerFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) bool
+	GetConsumerFinalityProviderChain(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (string, error)
+	GetConsumerFinalityProvider(ctx context.Context, chainID string, fpBTCPK *bbn.BIP340PubKey) (*FinalityProvider, error)
+	SetConsumerFinalityProvider(ctx context.Context, fp *FinalityProvider)
 }

@@ -14,14 +14,14 @@ func (k Keeper) SetChainRegister(ctx context.Context, chainRegister *types.Chain
 }
 
 // IsChainRegistered returns whether the chain register exists for a given ID
-func (k Keeper) IsChainRegistered(ctx context.Context, chainID string) bool {
+func (k Keeper) IsConsumerChainRegistered(ctx context.Context, chainID string) bool {
 	store := k.chainRegistryStore(ctx)
 	return store.Has([]byte(chainID))
 }
 
 // GetChainRegister returns the ChainRegister struct for a chain with a given ID.
 func (k Keeper) GetChainRegister(ctx context.Context, chainID string) (*types.ChainRegister, error) {
-	if !k.IsChainRegistered(ctx, chainID) {
+	if !k.IsConsumerChainRegistered(ctx, chainID) {
 		return nil, types.ErrChainNotRegistered
 	}
 
@@ -47,10 +47,10 @@ func (k Keeper) GetAllRegisteredChainIDs(ctx context.Context) []string {
 }
 
 // chainRegistryStore stores the information of registered CZ chains
-// prefix: ChainRegisterKey
+// prefix: ConsumerChainRegisterKey
 // key: chainID
 // value: ChainRegister
 func (k Keeper) chainRegistryStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	return prefix.NewStore(storeAdapter, types.ChainRegisterKey)
+	return prefix.NewStore(storeAdapter, types.ConsumerChainRegisterKey)
 }

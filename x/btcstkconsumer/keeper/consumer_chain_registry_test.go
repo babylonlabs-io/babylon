@@ -23,7 +23,7 @@ func FuzzChainRegistry(f *testing.F) {
 		chainRegister := datagen.GenRandomChainRegister(r)
 
 		// check that the chain is not registered
-		isRegistered := zcKeeper.IsChainRegistered(ctx, chainRegister.ChainId)
+		isRegistered := zcKeeper.IsConsumerChainRegistered(ctx, chainRegister.ChainId)
 		require.False(t, isRegistered)
 
 		// Check that the chain is not registered

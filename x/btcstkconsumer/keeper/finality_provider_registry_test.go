@@ -24,7 +24,7 @@ func FuzzFPRegistry(f *testing.F) {
 		czChainID := "test-" + datagen.GenRandomHexStr(r, 10)
 
 		// check that the chain is not registered
-		isRegistered := bscKeeper.IsChainRegistered(ctx, czChainID)
+		isRegistered := bscKeeper.IsConsumerChainRegistered(ctx, czChainID)
 		require.False(t, isRegistered)
 
 		// Create a random finality provider public key
@@ -51,10 +51,10 @@ func FuzzFPRegistry(f *testing.F) {
 			BtcPk:   fpBtcPk,
 			ChainId: czChainID,
 		}
-		bscKeeper.SetFinalityProvider(ctx, &fp)
+		bscKeeper.SetConsumerFinalityProvider(ctx, &fp)
 
 		// Check that the finality provider is being registered
-		hasFP := bscKeeper.HasFinalityProvider(ctx, fpBtcPk)
+		hasFP := bscKeeper.HasConsumerFinalityProvider(ctx, fpBtcPk)
 		require.True(t, hasFP)
 	})
 }
