@@ -123,7 +123,7 @@ func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProv
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	fp, err := k.GetFinalityProvider(ctx, req.ChainId, fpPK)
+	fp, err := k.GetConsumerFinalityProvider(ctx, req.ChainId, fpPK)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (k Keeper) FinalityProviderChain(c context.Context, req *types.QueryFinalit
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	chainID, err := k.GetFinalityProviderChain(ctx, fpPK)
+	chainID, err := k.GetConsumerFinalityProviderChain(ctx, fpPK)
 	if err != nil {
 		return nil, err
 	}

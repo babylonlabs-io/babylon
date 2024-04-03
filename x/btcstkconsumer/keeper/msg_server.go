@@ -33,7 +33,7 @@ func (ms msgServer) RegisterChain(goCtx context.Context, req *types.MsgRegisterC
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if ms.IsChainRegistered(ctx, req.ChainId) {
+	if ms.IsConsumerChainRegistered(ctx, req.ChainId) {
 		return nil, types.ErrChainAlreadyRegistered
 	}
 	ms.SetChainRegister(ctx, &chainRegister)

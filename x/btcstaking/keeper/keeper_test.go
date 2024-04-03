@@ -153,7 +153,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	registeredEpoch := uint64(10)
 	fp.RegisteredEpoch = registeredEpoch
 
-	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Eq(h.Ctx)).Return(&etypes.Epoch{EpochNumber: registeredEpoch}).Times(1)
+	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Eq(h.Ctx)).Return(&etypes.Epoch{EpochNumber: registeredEpoch}).AnyTimes()
 
 	msgNewFp := types.MsgCreateFinalityProvider{
 		Signer:        datagen.GenRandomAccount().Address,
@@ -180,7 +180,7 @@ func (h *Helper) CreateConsumerChainFinalityProvider(r *rand.Rand, chainID strin
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	msr, _, err := eots.NewMasterRandPair(r)
+	msr, mpr, err := eots.NewMasterRandPair(r)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -189,14 +189,20 @@ func (h *Helper) CreateConsumerChainFinalityProvider(r *rand.Rand, chainID strin
 		return nil, nil, nil, err
 	}
 	fp.ChainId = chainID
+
+	registeredEpoch := uint64(10)
+	fp.RegisteredEpoch = registeredEpoch
+	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Eq(h.Ctx)).Return(&etypes.Epoch{EpochNumber: registeredEpoch}).AnyTimes()
+
 	msgNewFp := types.MsgCreateFinalityProvider{
-		Signer:      datagen.GenRandomAccount().Address,
-		Description: fp.Description,
-		Commission:  fp.Commission,
-		BabylonPk:   fp.BabylonPk,
-		BtcPk:       fp.BtcPk,
-		Pop:         fp.Pop,
-		ChainId:     fp.ChainId,
+		Signer:        datagen.GenRandomAccount().Address,
+		Description:   fp.Description,
+		Commission:    fp.Commission,
+		BabylonPk:     fp.BabylonPk,
+		BtcPk:         fp.BtcPk,
+		Pop:           fp.Pop,
+		MasterPubRand: mpr.MarshalBase58(),
+		ChainId:       fp.ChainId,
 	}
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
 	if err != nil {

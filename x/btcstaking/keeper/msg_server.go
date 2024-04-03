@@ -105,6 +105,20 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		ChainId:         chainID,
 	}
 
+	if chainID == ctx.ChainID() {
+		ms.SetFinalityProvider(ctx, &fp)
+	} else {
+		// ensure finality provider does not already exist
+		if ms.bscKeeper.HasConsumerFinalityProvider(ctx, req.BtcPk) {
+			return nil, types.ErrFpRegistered
+		}
+		// Check that chain is registered in the btcstkconsumer module
+		if !ms.bscKeeper.IsConsumerChainRegistered(ctx, chainID) {
+			return nil, types.ErrChainIDNotRegistered
+		}
+		ms.bscKeeper.SetConsumerFinalityProvider(ctx, &fp)
+	}
+
 	// notify subscriber
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventNewFinalityProvider{Fp: &fp}); err != nil {
 		return nil, err
@@ -199,28 +213,12 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidProofOfPossession.Wrapf("error while validating proof of posession: %v", err)
 	}
 
-	// Ensure all finality providers are known to Babylon, are not slashed,
-	// and their registered epochs are finalised
-	lastFinalizedEpoch := ms.GetLastFinalizedEpoch(ctx)
-	for _, fpBTCPK := range req.FpBtcPkList {
-		// get this finality provider
-		fp, err := ms.GetFinalityProvider(ctx, fpBTCPK)
-		if err != nil {
-			return nil, err
-		}
-		// ensure the finality provider is not slashed
-		if fp.IsSlashed() {
-			return nil, types.ErrFpAlreadySlashed
-		}
-		// ensure the finality provider's registered epoch is finalised
-		if lastFinalizedEpoch < fp.RegisteredEpoch {
-			return nil, types.ErrFpNotBTCTimestamped
-		}
-	}
-
-	// Ensure all finality providers are known to Babylon and at least 1 one of them
-	// is a Babylon finality provider, and then check whether the BTC stake is
-	// restaked to FPs of consumer chains
+	// Ensure all finality providers
+	// - are known to Babylon,
+	// - at least 1 one of them is a Babylon finality provider,
+	// - are not slashed, and
+	// - their registered epochs are finalised
+	// and then check whether the BTC stake is restaked to FPs of consumer chains
 	// TODO: ensure the BTC delegation does not restake to too many finality providers
 	// (pending concrete design)
 	restakedToConsumers, err := ms.validateRestakedFPs(ctx, req.FpBtcPkList)
@@ -470,12 +468,10 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
 		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
 	}
-	// if this BTC delegation restaked to consumer chains' FPs, add it to
-	// btcstkconsumer module's storage as well
-	// TODO: revisit the relationship between BTC staking module and BTC staking consumer
-	// module and consolidating the storage of BTC delegations.
+	// if this BTC delegation is restaked to consumer chains' FPs, add it to btcstkconsumer indexes
+	// TODO: revisit the relationship between BTC staking module and BTC staking consumer module
 	if restakedToConsumers {
-		if err := ms.bscKeeper.AddBTCDelegation(ctx, newBTCDel); err != nil {
+		if err := ms.IndexBTCConsumerDelegation(ctx, newBTCDel); err != nil {
 			panic(fmt.Errorf("failed to add BTC delegation restaked to consumer chains' finality providers despite it has passed verification: %w", err))
 		}
 	}
@@ -517,7 +513,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	}
 
 	// check whether the BTC stake is restaked to FPs of consumer chains
-	restakedToConsumers, err := ms.validateRestakedFPs(ctx, btcDel.FpBtcPkList)
+	_, err = ms.validateRestakedFPs(ctx, btcDel.FpBtcPkList)
 	if err != nil {
 		panic(err) // btcDel has passed verification and this can only be programming error
 	}
@@ -644,7 +640,6 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		req.UnbondingTxSig,
 		parsedUnbondingSlashingAdaptorSignatures,
 		params,
-		restakedToConsumers,
 	)
 
 	return &types.MsgAddCovenantSigsResponse{}, nil
@@ -669,7 +664,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	}
 
 	// check whether the BTC stake is restaked to FPs of consumer chains
-	restakedToConsumers, err := ms.validateRestakedFPs(ctx, btcDel.FpBtcPkList)
+	_, err = ms.validateRestakedFPs(ctx, btcDel.FpBtcPkList)
 	if err != nil {
 		panic(err) // btcDel has passed verification and this can only be programming error
 	}
@@ -708,7 +703,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	// all good, add the signature to BTC delegation's undelegation
 	// and set back
-	ms.btcUndelegate(ctx, btcDel, req.UnbondingTxSig, restakedToConsumers)
+	ms.btcUndelegate(ctx, btcDel, req.UnbondingTxSig)
 
 	return &types.MsgBTCUndelegateResponse{}, nil
 }

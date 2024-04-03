@@ -120,7 +120,7 @@ func FuzzFinalityProviders(f *testing.F) {
 			require.NoError(t, err)
 			fp.ChainId = chainID
 
-			bscKeeper.SetFinalityProvider(ctx, fp)
+			bscKeeper.SetConsumerFinalityProvider(ctx, fp)
 			fpsMap[fp.BtcPk.MarshalHex()] = fp
 		}
 		numOfFpsInStore := len(fpsMap)
@@ -189,7 +189,7 @@ func FuzzFinalityProvider(f *testing.F) {
 			require.NoError(t, err)
 			fp.ChainId = chainID
 
-			bscKeeper.SetFinalityProvider(ctx, fp)
+			bscKeeper.SetConsumerFinalityProvider(ctx, fp)
 			existingFp = fp.BtcPk.MarshalHex()
 			fpsMap[existingFp] = fp
 		}
@@ -252,7 +252,7 @@ func FuzzFinalityProviderChain(f *testing.F) {
 			require.NoError(t, err)
 			fp.ChainId = chainID
 
-			bscKeeper.SetFinalityProvider(ctx, fp)
+			bscKeeper.SetConsumerFinalityProvider(ctx, fp)
 			existingFp = fp.BtcPk.MarshalHex()
 			fpsMap[existingFp] = fp
 		}
