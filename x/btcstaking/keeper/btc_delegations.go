@@ -151,30 +151,34 @@ func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 // restaked to FPs of consumer chains
 func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) (bool, error) {
 	var (
-		fp                  *types.FinalityProvider
-		err                 error
 		restakedToBabylon   = false
 		restakedToConsumers = false
 	)
 
 	for _, fpBTCPK := range fpBTCPKs {
 		// find the fp and determine whether it's Babylon fp or consumer chain fp
-		if fp, err = k.GetFinalityProvider(ctx, fpBTCPK); err == nil {
+		if fp, err := k.GetFinalityProvider(ctx, fpBTCPK); err == nil {
+			// ensure the finality provider is not slashed
+			if fp.IsSlashed() {
+				return false, types.ErrFpAlreadySlashed
+			}
+			// ensure the finality provider's registered epoch is finalised
 			restakedToBabylon = true
 			continue
 		} else if chainID, err := k.bscKeeper.GetConsumerFinalityProviderChain(ctx, &fpBTCPK); err == nil {
-			fp, err = k.bscKeeper.GetConsumerFinalityProvider(ctx, chainID, &fpBTCPK)
+			fp, err := k.bscKeeper.GetConsumerFinalityProvider(ctx, chainID, &fpBTCPK)
 			if err != nil {
 				return false, err
 			}
+			// ensure the finality provider is not slashed
+			if fp.IsSlashed() {
+				return false, types.ErrFpAlreadySlashed
+			}
+			// ensure the finality provider's registered epoch is finalised
 			restakedToConsumers = true
 			continue
 		} else {
 			return false, types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPK.MarshalHex())
-		}
-		// ensure the finality provider is not slashed
-		if fp.IsSlashed() {
-			return false, types.ErrFpAlreadySlashed
 		}
 	}
 	if !restakedToBabylon {
