@@ -35,3 +35,8 @@ func TestBTCTimestampingPhase2RlyTestSuite(t *testing.T) {
 func TestBTCStakingTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingTestSuite))
 }
+
+// TestBTCStakingIntegrationTestSuite includes btc staking integration related tests
+func TestBTCStakingIntegrationTestSuite(t *testing.T) {
+	suite.Run(t, new(BTCStakingIntegrationTestSuite))
+}

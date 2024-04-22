@@ -7,16 +7,9 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/stretchr/testify/suite"
-
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/x/feegrant"
 	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/crypto/eots"
@@ -29,6 +22,12 @@ import (
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	ftypes "github.com/babylonchain/babylon/x/finality/types"
 	itypes "github.com/babylonchain/babylon/x/incentive/types"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
 )
 
 var (
@@ -109,7 +108,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 		delBTCPKs,
 		pop,
 		stakingTxInfo,
-		cacheFP.BtcPk,
+		[]*bbn.BIP340PubKey{cacheFP.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
 		testStakingInfo.SlashingTx,
@@ -501,7 +500,7 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 		delBTCPKs,
 		pop,
 		stakingTxInfo,
-		cacheFP.BtcPk,
+		[]*bbn.BIP340PubKey{cacheFP.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
 		testStakingInfo.SlashingTx,
@@ -582,7 +581,7 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 		delBTCPKs,
 		pop,
 		stakingTxInfo,
-		cacheFP.BtcPk,
+		[]*bbn.BIP340PubKey{cacheFP.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
 		testStakingInfo.SlashingTx,
@@ -692,7 +691,7 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 		delBTCPKs,
 		pop,
 		stakingTxInfo,
-		cacheFP.BtcPk,
+		[]*bbn.BIP340PubKey{cacheFP.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
 		testStakingInfo.SlashingTx,
@@ -715,7 +714,7 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 		delBTCPKs,
 		pop,
 		stakingTxInfo,
-		cacheFP.BtcPk,
+		[]*bbn.BIP340PubKey{cacheFP.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
 		testStakingInfo.SlashingTx,
