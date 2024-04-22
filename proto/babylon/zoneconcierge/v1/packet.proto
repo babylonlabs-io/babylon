@@ -5,6 +5,7 @@ import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 import "babylon/checkpointing/v1/checkpoint.proto";
 import "babylon/btclightclient/v1/btclightclient.proto";
 import "babylon/epoching/v1/epoching.proto";
+import "babylon/btcstaking/v1/packet.proto";
 import "babylon/zoneconcierge/v1/zoneconcierge.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
@@ -15,6 +16,7 @@ message ZoneconciergePacketData {
   // packet is the actual message carried in the IBC packet
   oneof packet { 
     BTCTimestamp btc_timestamp = 1; 
+    babylon.btcstaking.v1.BTCStakingIBCPacket btc_staking = 2;
   }
 }
 
