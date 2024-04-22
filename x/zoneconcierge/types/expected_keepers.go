@@ -10,7 +10,6 @@ import (
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
@@ -105,7 +104,5 @@ type EpochingKeeper interface {
 	GetEpoch(ctx context.Context) *epochingtypes.Epoch
 }
 
-// CometClient is a Comet client that allows to query tx inclusion proofs
-type CometClient interface {
-	Tx(ctx context.Context, hash []byte, prove bool) (*ctypes.ResultTx, error)
+type BTCStakingKeeper interface {
 }
