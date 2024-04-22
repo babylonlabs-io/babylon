@@ -16,21 +16,23 @@ import (
 
 type (
 	Keeper struct {
-		cdc          codec.BinaryCodec
-		storeService corestoretypes.KVStoreService
-
-		ics4Wrapper         types.ICS4Wrapper
-		clientKeeper        types.ClientKeeper
-		channelKeeper       types.ChannelKeeper
-		portKeeper          types.PortKeeper
-		authKeeper          types.AccountKeeper
-		bankKeeper          types.BankKeeper
+		cdc           codec.BinaryCodec
+		storeService  corestoretypes.KVStoreService
+		ics4Wrapper   types.ICS4Wrapper
+		clientKeeper  types.ClientKeeper
+		channelKeeper types.ChannelKeeper
+		portKeeper    types.PortKeeper
+		authKeeper    types.AccountKeeper
+		bankKeeper    types.BankKeeper
+		// used in BTC timestamping
 		btclcKeeper         types.BTCLightClientKeeper
 		checkpointingKeeper types.CheckpointingKeeper
 		btccKeeper          types.BtcCheckpointKeeper
 		epochingKeeper      types.EpochingKeeper
 		storeQuerier        storetypes.Queryable
-		scopedKeeper        types.ScopedKeeper
+		// used in BTC staking
+		bsKeeper     types.BTCStakingKeeper
+		scopedKeeper types.ScopedKeeper
 		// The address capable of executing a MsgUpdateParams message.
 		// Typically, this should be the x/gov module account.
 		authority string
@@ -51,6 +53,7 @@ func NewKeeper(
 	btccKeeper types.BtcCheckpointKeeper,
 	epochingKeeper types.EpochingKeeper,
 	storeQuerier storetypes.Queryable,
+	bsKeeper types.BTCStakingKeeper,
 	scopedKeeper types.ScopedKeeper,
 	authority string,
 ) *Keeper {
@@ -68,6 +71,7 @@ func NewKeeper(
 		btccKeeper:          btccKeeper,
 		epochingKeeper:      epochingKeeper,
 		storeQuerier:        storeQuerier,
+		bsKeeper:            bsKeeper,
 		scopedKeeper:        scopedKeeper,
 		authority:           authority,
 	}
