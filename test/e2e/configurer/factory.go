@@ -195,3 +195,19 @@ func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, 
 		containerManager,
 	), nil
 }
+
+func NewBTCStakingIntegrationConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
+	containerManager, err := containers.NewManager(isDebugLogEnabled, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewCurrentBranchConfigurer(t,
+		[]*chain.Config{
+			// we only need 1 chain for testing BTC Staking Integration
+			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, nil),
+		},
+		baseSetup, // base set up
+		containerManager,
+	), nil
+}
