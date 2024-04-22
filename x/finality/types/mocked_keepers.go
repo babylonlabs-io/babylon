@@ -53,7 +53,7 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetBTCStakingActivatedHeight(ctx int
 // GetFinalityProvider mocks base method.
 func (m *MockBTCStakingKeeper) GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*types.FinalityProvider, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConsumerFinalityProvider", ctx, fpBTCPK)
+	ret := m.ctrl.Call(m, "GetFinalityProvider", ctx, fpBTCPK)
 	ret0, _ := ret[0].(*types.FinalityProvider)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -62,7 +62,7 @@ func (m *MockBTCStakingKeeper) GetFinalityProvider(ctx context.Context, fpBTCPK 
 // GetFinalityProvider indicates an expected call of GetFinalityProvider.
 func (mr *MockBTCStakingKeeperMockRecorder) GetFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConsumerFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetFinalityProvider), ctx, fpBTCPK)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetFinalityProvider), ctx, fpBTCPK)
 }
 
 // GetLastFinalizedEpoch mocks base method.
@@ -139,7 +139,7 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetVotingPowerTable(ctx, height inte
 // HasFinalityProvider mocks base method.
 func (m *MockBTCStakingKeeper) HasFinalityProvider(ctx context.Context, fpBTCPK []byte) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasConsumerFinalityProvider", ctx, fpBTCPK)
+	ret := m.ctrl.Call(m, "HasFinalityProvider", ctx, fpBTCPK)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
@@ -147,7 +147,7 @@ func (m *MockBTCStakingKeeper) HasFinalityProvider(ctx context.Context, fpBTCPK 
 // HasFinalityProvider indicates an expected call of HasFinalityProvider.
 func (mr *MockBTCStakingKeeperMockRecorder) HasFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasConsumerFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).HasFinalityProvider), ctx, fpBTCPK)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).HasFinalityProvider), ctx, fpBTCPK)
 }
 
 // RemoveVotingPowerDistCache mocks base method.

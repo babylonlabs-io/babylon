@@ -205,3 +205,73 @@ func NewMockBTCStkConsumerKeeper(ctrl *gomock.Controller) *MockBTCStkConsumerKee
 func (m *MockBTCStkConsumerKeeper) EXPECT() *MockBTCStkConsumerKeeperMockRecorder {
 	return m.recorder
 }
+
+// GetConsumerFinalityProvider mocks base method.
+func (m *MockBTCStkConsumerKeeper) GetConsumerFinalityProvider(ctx context.Context, chainID string, fpBTCPK *types.BIP340PubKey) (*FinalityProvider, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConsumerFinalityProvider", ctx, chainID, fpBTCPK)
+	ret0, _ := ret[0].(*FinalityProvider)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetConsumerFinalityProvider indicates an expected call of GetConsumerFinalityProvider.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) GetConsumerFinalityProvider(ctx, chainID, fpBTCPK interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConsumerFinalityProvider", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).GetConsumerFinalityProvider), ctx, chainID, fpBTCPK)
+}
+
+// GetConsumerFinalityProviderChain mocks base method.
+func (m *MockBTCStkConsumerKeeper) GetConsumerFinalityProviderChain(ctx context.Context, fpBTCPK *types.BIP340PubKey) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConsumerFinalityProviderChain", ctx, fpBTCPK)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetConsumerFinalityProviderChain indicates an expected call of GetConsumerFinalityProviderChain.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) GetConsumerFinalityProviderChain(ctx, fpBTCPK interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConsumerFinalityProviderChain", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).GetConsumerFinalityProviderChain), ctx, fpBTCPK)
+}
+
+// HasConsumerFinalityProvider mocks base method.
+func (m *MockBTCStkConsumerKeeper) HasConsumerFinalityProvider(ctx context.Context, fpBTCPK *types.BIP340PubKey) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasConsumerFinalityProvider", ctx, fpBTCPK)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasConsumerFinalityProvider indicates an expected call of HasConsumerFinalityProvider.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) HasConsumerFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasConsumerFinalityProvider", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).HasConsumerFinalityProvider), ctx, fpBTCPK)
+}
+
+// IsConsumerChainRegistered mocks base method.
+func (m *MockBTCStkConsumerKeeper) IsConsumerChainRegistered(ctx context.Context, chainID string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsConsumerChainRegistered", ctx, chainID)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsConsumerChainRegistered indicates an expected call of IsConsumerChainRegistered.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) IsConsumerChainRegistered(ctx, chainID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsConsumerChainRegistered", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).IsConsumerChainRegistered), ctx, chainID)
+}
+
+// SetConsumerFinalityProvider mocks base method.
+func (m *MockBTCStkConsumerKeeper) SetConsumerFinalityProvider(ctx context.Context, fp *FinalityProvider) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetConsumerFinalityProvider", ctx, fp)
+}
+
+// SetConsumerFinalityProvider indicates an expected call of SetConsumerFinalityProvider.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) SetConsumerFinalityProvider(ctx, fp interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetConsumerFinalityProvider", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).SetConsumerFinalityProvider), ctx, fp)
+}

@@ -633,61 +633,6 @@ func NewBabylonApp(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	zcKeeper := zckeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
-		app.IBCFeeKeeper,
-		app.IBCKeeper.ClientKeeper,
-		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
-		app.AccountKeeper,
-		app.BankKeeper,
-		&btclightclientKeeper,
-		&checkpointingKeeper,
-		&btcCheckpointKeeper,
-		epochingKeeper,
-		storeQuerier,
-		scopedZoneConciergeKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-	app.ZoneConciergeKeeper = *zcKeeper
-
-	// Create Transfer Keepers
-	app.TransferKeeper = ibctransferkeeper.NewKeeper(
-		appCodec,
-		keys[ibctransfertypes.StoreKey],
-		app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCFeeKeeper,
-		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
-		app.AccountKeeper,
-		app.BankKeeper,
-		scopedTransferKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	app.MonitorKeeper = monitorkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[monitortypes.StoreKey]),
-		&btclightclientKeeper,
-	)
-
-	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
-	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
-	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
-	app.EpochingKeeper = *epochingKeeper.SetHooks(
-		epochingtypes.NewMultiEpochingHooks(app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
-	)
-
-	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
-	app.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
-		checkpointingtypes.NewMultiCheckpointingHooks(app.EpochingKeeper.Hooks(), app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
-	)
-	app.BtcCheckpointKeeper = btcCheckpointKeeper
-	app.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
-		btclightclienttypes.NewMultiBTCLightClientHooks(app.BtcCheckpointKeeper.Hooks()),
-	)
-
 	// set up BTC staking keeper
 	app.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
 		appCodec,
@@ -705,6 +650,67 @@ func NewBabylonApp(
 		runtime.NewKVStoreService(keys[finalitytypes.StoreKey]),
 		&app.BTCStakingKeeper,
 		&app.IncentiveKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	monitorKeeper := monitorkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[monitortypes.StoreKey]),
+		&btclightclientKeeper,
+	)
+
+	zcKeeper := zckeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
+		app.IBCFeeKeeper,
+		app.IBCKeeper.ClientKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		&btclightclientKeeper,
+		&checkpointingKeeper,
+		&btcCheckpointKeeper,
+		&epochingKeeper,
+		storeQuerier,
+		&app.BTCStakingKeeper,
+		scopedZoneConciergeKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
+	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
+	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
+	epochingKeeper.SetHooks(
+		epochingtypes.NewMultiEpochingHooks(zcKeeper.Hooks(), monitorKeeper.Hooks()),
+	)
+	// set hooks
+	checkpointingKeeper.SetHooks(
+		checkpointingtypes.NewMultiCheckpointingHooks(epochingKeeper.Hooks(), zcKeeper.Hooks(), monitorKeeper.Hooks()),
+	)
+	btclightclientKeeper.SetHooks(
+		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks()),
+	)
+
+	// wire the keepers with hooks to the app
+	app.EpochingKeeper = epochingKeeper
+	app.BTCLightClientKeeper = btclightclientKeeper
+	app.CheckpointingKeeper = checkpointingKeeper
+	app.BtcCheckpointKeeper = btcCheckpointKeeper
+	app.MonitorKeeper = monitorKeeper
+	app.ZoneConciergeKeeper = *zcKeeper
+
+	// Create Transfer Keepers
+	app.TransferKeeper = ibctransferkeeper.NewKeeper(
+		appCodec,
+		keys[ibctransfertypes.StoreKey],
+		app.GetSubspace(ibctransfertypes.ModuleName),
+		app.IBCFeeKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		scopedTransferKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 

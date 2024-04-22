@@ -13,7 +13,6 @@ import (
 	types1 "github.com/babylonchain/babylon/x/btclightclient/types"
 	types2 "github.com/babylonchain/babylon/x/checkpointing/types"
 	types3 "github.com/babylonchain/babylon/x/epoching/types"
-	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	types4 "github.com/cosmos/cosmos-sdk/types"
 	types5 "github.com/cosmos/ibc-go/modules/capability/types"
 	types6 "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
@@ -802,40 +801,25 @@ func (mr *MockEpochingKeeperMockRecorder) GetHistoricalEpoch(ctx, epochNumber in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHistoricalEpoch", reflect.TypeOf((*MockEpochingKeeper)(nil).GetHistoricalEpoch), ctx, epochNumber)
 }
 
-// MockCometClient is a mock of CometClient interface.
-type MockCometClient struct {
+// MockBTCStakingKeeper is a mock of BTCStakingKeeper interface.
+type MockBTCStakingKeeper struct {
 	ctrl     *gomock.Controller
-	recorder *MockCometClientMockRecorder
+	recorder *MockBTCStakingKeeperMockRecorder
 }
 
-// MockCometClientMockRecorder is the mock recorder for MockCometClient.
-type MockCometClientMockRecorder struct {
-	mock *MockCometClient
+// MockBTCStakingKeeperMockRecorder is the mock recorder for MockBTCStakingKeeper.
+type MockBTCStakingKeeperMockRecorder struct {
+	mock *MockBTCStakingKeeper
 }
 
-// NewMockCometClient creates a new mock instance.
-func NewMockCometClient(ctrl *gomock.Controller) *MockCometClient {
-	mock := &MockCometClient{ctrl: ctrl}
-	mock.recorder = &MockCometClientMockRecorder{mock}
+// NewMockBTCStakingKeeper creates a new mock instance.
+func NewMockBTCStakingKeeper(ctrl *gomock.Controller) *MockBTCStakingKeeper {
+	mock := &MockBTCStakingKeeper{ctrl: ctrl}
+	mock.recorder = &MockBTCStakingKeeperMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockCometClient) EXPECT() *MockCometClientMockRecorder {
+func (m *MockBTCStakingKeeper) EXPECT() *MockBTCStakingKeeperMockRecorder {
 	return m.recorder
-}
-
-// Tx mocks base method.
-func (m *MockCometClient) Tx(ctx context.Context, hash []byte, prove bool) (*coretypes.ResultTx, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Tx", ctx, hash, prove)
-	ret0, _ := ret[0].(*coretypes.ResultTx)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Tx indicates an expected call of Tx.
-func (mr *MockCometClientMockRecorder) Tx(ctx, hash, prove interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Tx", reflect.TypeOf((*MockCometClient)(nil).Tx), ctx, hash, prove)
 }
