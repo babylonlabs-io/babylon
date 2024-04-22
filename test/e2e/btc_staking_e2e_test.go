@@ -6,14 +6,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
-
 	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/test/e2e/configurer"
 	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
@@ -24,6 +16,13 @@ import (
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	ftypes "github.com/babylonchain/babylon/x/finality/types"
 	itypes "github.com/babylonchain/babylon/x/incentive/types"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
 )
 
 var (
@@ -182,7 +181,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 		delBTCPKs,
 		pop,
 		stakingTxInfo,
-		fp.BtcPk,
+		[]*bbn.BIP340PubKey{fp.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
 		testStakingInfo.SlashingTx,
