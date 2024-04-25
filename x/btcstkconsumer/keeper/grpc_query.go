@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	errorsmod "cosmossdk.io/errors"
 	btcstaking "github.com/babylonchain/babylon/x/btcstaking/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -16,77 +17,77 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-const maxQueryChainsRegistryLimit = 100
+const maxQueryConsumersRegistryLimit = 100
 
-func (k Keeper) ChainRegistryList(c context.Context, req *types.QueryChainRegistryListRequest) (*types.QueryChainRegistryListResponse, error) {
+func (k Keeper) ConsumerRegistryList(c context.Context, req *types.QueryConsumerRegistryListRequest) (*types.QueryConsumerRegistryListResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
 
-	chainIDs := []string{}
-	store := k.chainRegistryStore(ctx)
+	consumerIDs := []string{}
+	store := k.consumerRegistryStore(ctx)
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
-		chainID := string(key)
-		chainIDs = append(chainIDs, chainID)
+		consumerID := string(key)
+		consumerIDs = append(consumerIDs, consumerID)
 		return nil
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	resp := &types.QueryChainRegistryListResponse{
-		ChainIds:   chainIDs,
-		Pagination: pageRes,
+	resp := &types.QueryConsumerRegistryListResponse{
+		ConsumerIds: consumerIDs,
+		Pagination:  pageRes,
 	}
 	return resp, nil
 }
 
-// ChainsRegistry returns the registration for a given list of chains
-func (k Keeper) ChainsRegistry(c context.Context, req *types.QueryChainsRegistryRequest) (*types.QueryChainsRegistryResponse, error) {
+// ConsumersRegistry returns the registration for a given list of consumers
+func (k Keeper) ConsumersRegistry(c context.Context, req *types.QueryConsumersRegistryRequest) (*types.QueryConsumersRegistryResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	// return if no chain IDs are provided
-	if len(req.ChainIds) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "chain IDs cannot be empty")
+	// return if no consumer IDs are provided
+	if len(req.ConsumerIds) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "consumer IDs cannot be empty")
 	}
 
-	// return if chain IDs exceed the limit
-	if len(req.ChainIds) > maxQueryChainsRegistryLimit {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsRegistryLimit)
+	// return if consumer IDs exceed the limit
+	if len(req.ConsumerIds) > maxQueryConsumersRegistryLimit {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d consumers", maxQueryConsumersRegistryLimit)
 	}
 
-	// return if chain IDs contain duplicates or empty strings
-	if err := bbn.CheckForDuplicatesAndEmptyStrings(req.ChainIds); err != nil {
-		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidChainIDs.Wrap(err.Error()).Error())
+	// return if consumer IDs contain duplicates or empty strings
+	if err := bbn.CheckForDuplicatesAndEmptyStrings(req.ConsumerIds); err != nil {
+		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidConsumerIDs.Wrap(err.Error()).Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	var chainsRegister []*types.ChainRegister
-	for _, chainID := range req.ChainIds {
-		chainRegister, err := k.GetChainRegister(ctx, chainID)
+	var consumersRegister []*types.ConsumerRegister
+	for _, consumerID := range req.ConsumerIds {
+		consumerRegister, err := k.GetConsumerRegister(ctx, consumerID)
 		if err != nil {
 			return nil, err
 		}
 
-		chainsRegister = append(chainsRegister, chainRegister)
+		consumersRegister = append(consumersRegister, consumerRegister)
 	}
 
-	resp := &types.QueryChainsRegistryResponse{ChainsRegister: chainsRegister}
+	resp := &types.QueryConsumersRegistryResponse{ConsumersRegister: consumersRegister}
 	return resp, nil
 }
 
-// FinalityProviders returns a paginated list of all registered finality providers for a given chain
+// FinalityProviders returns a paginated list of all registered finality providers for a given consumer
 func (k Keeper) FinalityProviders(c context.Context, req *types.QueryFinalityProvidersRequest) (*types.QueryFinalityProvidersResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	store := k.finalityProviderStore(ctx, req.ChainId)
+	store := k.finalityProviderStore(ctx, req.ConsumerId)
 
 	var fpResp []*types.FinalityProviderResponse
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
@@ -123,7 +124,7 @@ func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProv
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	fp, err := k.GetConsumerFinalityProvider(ctx, req.ChainId, fpPK)
+	fp, err := k.GetConsumerFinalityProvider(ctx, req.ConsumerId, fpPK)
 	if err != nil {
 		return nil, err
 	}
@@ -132,8 +133,8 @@ func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProv
 	return &types.QueryFinalityProviderResponse{FinalityProvider: fpResp}, nil
 }
 
-// FinalityProviderChain returns the chain ID for the finality provider with the specified finality provider BTC PK
-func (k Keeper) FinalityProviderChain(c context.Context, req *types.QueryFinalityProviderChainRequest) (*types.QueryFinalityProviderChainResponse, error) {
+// FinalityProviderConsumer returns the consumer ID for the finality provider with the specified finality provider BTC PK
+func (k Keeper) FinalityProviderConsumer(c context.Context, req *types.QueryFinalityProviderConsumerRequest) (*types.QueryFinalityProviderConsumerResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -149,10 +150,10 @@ func (k Keeper) FinalityProviderChain(c context.Context, req *types.QueryFinalit
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	chainID, err := k.GetConsumerFinalityProviderChain(ctx, fpPK)
+	consumerID, err := k.GetConsumerOfFinalityProvider(ctx, fpPK)
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryFinalityProviderChainResponse{ChainId: chainID}, nil
+	return &types.QueryFinalityProviderConsumerResponse{ConsumerId: consumerID}, nil
 }

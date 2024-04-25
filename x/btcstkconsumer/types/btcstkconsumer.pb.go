@@ -22,28 +22,29 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// ChainRegister is the registration information of a CZ
-type ChainRegister struct {
-	// chain_id is the ID of the chain
-	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
-	// chain_name is the name of the chain
-	ChainName string `protobuf:"bytes,2,opt,name=chain_name,json=chainName,proto3" json:"chain_name,omitempty"`
-	// chain_description is a description for the chain (can be empty)
-	ChainDescription string `protobuf:"bytes,3,opt,name=chain_description,json=chainDescription,proto3" json:"chain_description,omitempty"`
+// ConsumerRegister is the registration information of a consumer
+type ConsumerRegister struct {
+	// consumer_id is the ID of the consumer
+	// - for Cosmos SDK chains, the consumer ID will be the IBC client ID
+	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
+	// consumer_name is the name of the consumer
+	ConsumerName string `protobuf:"bytes,2,opt,name=consumer_name,json=consumerName,proto3" json:"consumer_name,omitempty"`
+	// consumer_description is a description for the consumer (can be empty)
+	ConsumerDescription string `protobuf:"bytes,3,opt,name=consumer_description,json=consumerDescription,proto3" json:"consumer_description,omitempty"`
 }
 
-func (m *ChainRegister) Reset()         { *m = ChainRegister{} }
-func (m *ChainRegister) String() string { return proto.CompactTextString(m) }
-func (*ChainRegister) ProtoMessage()    {}
-func (*ChainRegister) Descriptor() ([]byte, []int) {
+func (m *ConsumerRegister) Reset()         { *m = ConsumerRegister{} }
+func (m *ConsumerRegister) String() string { return proto.CompactTextString(m) }
+func (*ConsumerRegister) ProtoMessage()    {}
+func (*ConsumerRegister) Descriptor() ([]byte, []int) {
 	return fileDescriptor_de3ccd621fe1efd4, []int{0}
 }
-func (m *ChainRegister) XXX_Unmarshal(b []byte) error {
+func (m *ConsumerRegister) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ChainRegister) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ConsumerRegister) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ChainRegister.Marshal(b, m, deterministic)
+		return xxx_messageInfo_ConsumerRegister.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -53,41 +54,41 @@ func (m *ChainRegister) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-func (m *ChainRegister) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ChainRegister.Merge(m, src)
+func (m *ConsumerRegister) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ConsumerRegister.Merge(m, src)
 }
-func (m *ChainRegister) XXX_Size() int {
+func (m *ConsumerRegister) XXX_Size() int {
 	return m.Size()
 }
-func (m *ChainRegister) XXX_DiscardUnknown() {
-	xxx_messageInfo_ChainRegister.DiscardUnknown(m)
+func (m *ConsumerRegister) XXX_DiscardUnknown() {
+	xxx_messageInfo_ConsumerRegister.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ChainRegister proto.InternalMessageInfo
+var xxx_messageInfo_ConsumerRegister proto.InternalMessageInfo
 
-func (m *ChainRegister) GetChainId() string {
+func (m *ConsumerRegister) GetConsumerId() string {
 	if m != nil {
-		return m.ChainId
+		return m.ConsumerId
 	}
 	return ""
 }
 
-func (m *ChainRegister) GetChainName() string {
+func (m *ConsumerRegister) GetConsumerName() string {
 	if m != nil {
-		return m.ChainName
+		return m.ConsumerName
 	}
 	return ""
 }
 
-func (m *ChainRegister) GetChainDescription() string {
+func (m *ConsumerRegister) GetConsumerDescription() string {
 	if m != nil {
-		return m.ChainDescription
+		return m.ConsumerDescription
 	}
 	return ""
 }
 
 func init() {
-	proto.RegisterType((*ChainRegister)(nil), "babylon.btcstkconsumer.v1.ChainRegister")
+	proto.RegisterType((*ConsumerRegister)(nil), "babylon.btcstkconsumer.v1.ConsumerRegister")
 }
 
 func init() {
@@ -95,24 +96,24 @@ func init() {
 }
 
 var fileDescriptor_de3ccd621fe1efd4 = []byte{
-	// 215 bytes of a gzipped FileDescriptorProto
+	// 217 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xd2, 0x4b, 0x4a, 0x4c, 0xaa,
 	0xcc, 0xc9, 0xcf, 0xd3, 0x4f, 0x2a, 0x49, 0x2e, 0x2e, 0xc9, 0x4e, 0xce, 0xcf, 0x2b, 0x2e, 0xcd,
 	0x4d, 0x2d, 0xd2, 0x2f, 0x33, 0x44, 0x13, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x92, 0x84,
-	0xaa, 0xd7, 0x43, 0x93, 0x2d, 0x33, 0x54, 0x2a, 0xe3, 0xe2, 0x75, 0xce, 0x48, 0xcc, 0xcc, 0x0b,
-	0x4a, 0x4d, 0xcf, 0x2c, 0x2e, 0x49, 0x2d, 0x12, 0x92, 0xe4, 0xe2, 0x48, 0x06, 0x09, 0xc4, 0x67,
-	0xa6, 0x48, 0x30, 0x2a, 0x30, 0x6a, 0x70, 0x06, 0xb1, 0x83, 0xf9, 0x9e, 0x29, 0x42, 0xb2, 0x5c,
-	0x5c, 0x10, 0xa9, 0xbc, 0xc4, 0xdc, 0x54, 0x09, 0x26, 0xb0, 0x24, 0x27, 0x58, 0xc4, 0x2f, 0x31,
-	0x37, 0x55, 0x48, 0x9b, 0x4b, 0x10, 0x22, 0x9d, 0x92, 0x5a, 0x9c, 0x5c, 0x94, 0x59, 0x50, 0x92,
-	0x99, 0x9f, 0x27, 0xc1, 0x0c, 0x56, 0x25, 0x00, 0x96, 0x70, 0x41, 0x88, 0x3b, 0x05, 0x9c, 0x78,
-	0x24, 0xc7, 0x78, 0xe1, 0x91, 0x1c, 0xe3, 0x83, 0x47, 0x72, 0x8c, 0x13, 0x1e, 0xcb, 0x31, 0x5c,
-	0x78, 0x2c, 0xc7, 0x70, 0xe3, 0xb1, 0x1c, 0x43, 0x94, 0x59, 0x7a, 0x66, 0x49, 0x46, 0x69, 0x92,
-	0x5e, 0x72, 0x7e, 0xae, 0x3e, 0xd4, 0xdd, 0x60, 0xdd, 0x30, 0x8e, 0x7e, 0x05, 0xba, 0xb7, 0x4b,
-	0x2a, 0x0b, 0x52, 0x8b, 0x93, 0xd8, 0xc0, 0x7e, 0x35, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0x3c,
-	0xde, 0xbc, 0x51, 0x1d, 0x01, 0x00, 0x00,
+	0xaa, 0xd7, 0x43, 0x93, 0x2d, 0x33, 0x54, 0xea, 0x66, 0xe4, 0x12, 0x70, 0x86, 0xf2, 0x83, 0x52,
+	0xd3, 0x33, 0x8b, 0x4b, 0x52, 0x8b, 0x84, 0xe4, 0xb9, 0xb8, 0x61, 0x6a, 0xe2, 0x33, 0x53, 0x24,
+	0x18, 0x15, 0x18, 0x35, 0x38, 0x83, 0xb8, 0x60, 0x42, 0x9e, 0x29, 0x42, 0xca, 0x5c, 0xbc, 0x70,
+	0x05, 0x79, 0x89, 0xb9, 0xa9, 0x12, 0x4c, 0x60, 0x25, 0x3c, 0x30, 0x41, 0xbf, 0xc4, 0xdc, 0x54,
+	0x21, 0x43, 0x2e, 0x11, 0xb8, 0xa2, 0x94, 0xd4, 0xe2, 0xe4, 0xa2, 0xcc, 0x82, 0x92, 0xcc, 0xfc,
+	0x3c, 0x09, 0x66, 0xb0, 0x5a, 0x61, 0x98, 0x9c, 0x0b, 0x42, 0xca, 0x29, 0xe0, 0xc4, 0x23, 0x39,
+	0xc6, 0x0b, 0x8f, 0xe4, 0x18, 0x1f, 0x3c, 0x92, 0x63, 0x9c, 0xf0, 0x58, 0x8e, 0xe1, 0xc2, 0x63,
+	0x39, 0x86, 0x1b, 0x8f, 0xe5, 0x18, 0xa2, 0xcc, 0xd2, 0x33, 0x4b, 0x32, 0x4a, 0x93, 0xf4, 0x92,
+	0xf3, 0x73, 0xf5, 0xa1, 0xbe, 0x49, 0xce, 0x48, 0xcc, 0xcc, 0x83, 0x71, 0xf4, 0x2b, 0xd0, 0x03,
+	0xa3, 0xa4, 0xb2, 0x20, 0xb5, 0x38, 0x89, 0x0d, 0x1c, 0x02, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff,
+	0xff, 0xda, 0xb7, 0x17, 0xd5, 0x33, 0x01, 0x00, 0x00,
 }
 
-func (m *ChainRegister) Marshal() (dAtA []byte, err error) {
+func (m *ConsumerRegister) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -122,34 +123,34 @@ func (m *ChainRegister) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ChainRegister) MarshalTo(dAtA []byte) (int, error) {
+func (m *ConsumerRegister) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *ChainRegister) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *ConsumerRegister) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.ChainDescription) > 0 {
-		i -= len(m.ChainDescription)
-		copy(dAtA[i:], m.ChainDescription)
-		i = encodeVarintBtcstkconsumer(dAtA, i, uint64(len(m.ChainDescription)))
+	if len(m.ConsumerDescription) > 0 {
+		i -= len(m.ConsumerDescription)
+		copy(dAtA[i:], m.ConsumerDescription)
+		i = encodeVarintBtcstkconsumer(dAtA, i, uint64(len(m.ConsumerDescription)))
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.ChainName) > 0 {
-		i -= len(m.ChainName)
-		copy(dAtA[i:], m.ChainName)
-		i = encodeVarintBtcstkconsumer(dAtA, i, uint64(len(m.ChainName)))
+	if len(m.ConsumerName) > 0 {
+		i -= len(m.ConsumerName)
+		copy(dAtA[i:], m.ConsumerName)
+		i = encodeVarintBtcstkconsumer(dAtA, i, uint64(len(m.ConsumerName)))
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.ChainId) > 0 {
-		i -= len(m.ChainId)
-		copy(dAtA[i:], m.ChainId)
-		i = encodeVarintBtcstkconsumer(dAtA, i, uint64(len(m.ChainId)))
+	if len(m.ConsumerId) > 0 {
+		i -= len(m.ConsumerId)
+		copy(dAtA[i:], m.ConsumerId)
+		i = encodeVarintBtcstkconsumer(dAtA, i, uint64(len(m.ConsumerId)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -167,21 +168,21 @@ func encodeVarintBtcstkconsumer(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *ChainRegister) Size() (n int) {
+func (m *ConsumerRegister) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.ChainId)
+	l = len(m.ConsumerId)
 	if l > 0 {
 		n += 1 + l + sovBtcstkconsumer(uint64(l))
 	}
-	l = len(m.ChainName)
+	l = len(m.ConsumerName)
 	if l > 0 {
 		n += 1 + l + sovBtcstkconsumer(uint64(l))
 	}
-	l = len(m.ChainDescription)
+	l = len(m.ConsumerDescription)
 	if l > 0 {
 		n += 1 + l + sovBtcstkconsumer(uint64(l))
 	}
@@ -194,7 +195,7 @@ func sovBtcstkconsumer(x uint64) (n int) {
 func sozBtcstkconsumer(x uint64) (n int) {
 	return sovBtcstkconsumer(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *ChainRegister) Unmarshal(dAtA []byte) error {
+func (m *ConsumerRegister) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -217,15 +218,15 @@ func (m *ChainRegister) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ChainRegister: wiretype end group for non-group")
+			return fmt.Errorf("proto: ConsumerRegister: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ChainRegister: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ConsumerRegister: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -253,11 +254,11 @@ func (m *ChainRegister) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainId = string(dAtA[iNdEx:postIndex])
+			m.ConsumerId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainName", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerName", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -285,11 +286,11 @@ func (m *ChainRegister) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainName = string(dAtA[iNdEx:postIndex])
+			m.ConsumerName = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainDescription", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerDescription", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -317,7 +318,7 @@ func (m *ChainRegister) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainDescription = string(dAtA[iNdEx:postIndex])
+			m.ConsumerDescription = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

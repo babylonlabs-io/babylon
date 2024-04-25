@@ -37,22 +37,22 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		// generate and insert new Babylon finality provider
 		_, fpPK, _ := h.CreateFinalityProvider(r)
 		/*
-			ensure that registering a consumer chain finality provider with non-existing
-			chain ID will fail
+			ensure that registering a consumer finality provider with non-existing
+			consumer ID will fail
 		*/
-		_, _, _, err = h.CreateConsumerChainFinalityProvider(r, "non-existing chain ID")
+		_, _, _, err = h.CreateConsumerFinalityProvider(r, "non-existing chain ID")
 		h.Error(err)
 
 		/*
-			register a new consumer chain and create a new finality provider under it
+			register a new consumer and create a new finality provider under it
 			ensure it's correctly generated
 		*/
-		chainRegister := datagen.GenRandomChainRegister(r)
-		h.BTCStkConsumerKeeper.SetChainRegister(h.Ctx, chainRegister)
-		_, czFPPK, czFP, err := h.CreateConsumerChainFinalityProvider(r, chainRegister.ChainId)
+		consumerRegister := datagen.GenRandomConsumerRegister(r)
+		h.BTCStkConsumerKeeper.SetConsumerRegister(h.Ctx, consumerRegister)
+		_, czFPPK, czFP, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
 		h.NoError(err)
 		czFPBTCPK := bbn.NewBIP340PubKeyFromBTCPK(czFPPK)
-		czFP2, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, chainRegister.ChainId, czFPBTCPK)
+		czFP2, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, consumerRegister.ConsumerId, czFPBTCPK)
 		h.NoError(err)
 		require.Equal(t, czFP, czFP2)
 
@@ -86,7 +86,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		require.True(t, errors.Is(err, types.ErrNoBabylonFPRestaked), err)
 
 		/*
-			happy case -- restaking to a Babylon fp and a consumer chain fp
+			happy case -- restaking to a Babylon fp and a consumer fp
 		*/
 		_, _, _, msgBTCDel, actualDel, err := h.CreateDelegation(
 			r,
@@ -110,7 +110,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 	})
 }
 
-func FuzzFinalityProviderDelegations_RestakingConsumerChains(f *testing.F) {
+func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -128,15 +128,15 @@ func FuzzFinalityProviderDelegations_RestakingConsumerChains(f *testing.F) {
 		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 		h.NoError(err)
 
-		// register a new consumer chain
-		chainRegister := datagen.GenRandomChainRegister(r)
-		h.BTCStkConsumerKeeper.SetChainRegister(h.Ctx, chainRegister)
+		// register a new consumer
+		consumerRegister := datagen.GenRandomConsumerRegister(r)
+		h.BTCStkConsumerKeeper.SetConsumerRegister(h.Ctx, consumerRegister)
 
 		// generate and insert new Babylon finality provider
 		_, fpPK, fp := h.CreateFinalityProvider(r)
 
-		// generate and insert new consumer chain finality provider
-		_, czFPPK, czFP, err := h.CreateConsumerChainFinalityProvider(r, chainRegister.ChainId)
+		// generate and insert new consumer finality provider
+		_, czFPPK, czFP, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
 		h.NoError(err)
 
 		// Generate a random number of BTC delegations under this finality provider
@@ -162,7 +162,7 @@ func FuzzFinalityProviderDelegations_RestakingConsumerChains(f *testing.F) {
 
 		/*
 			Test BTC delegator delegations under the Babylon finality provider
-			or the consumer chain finality provider
+			or the consumer finality provider
 		*/
 
 		// Generate a page request with a limit and a nil key
@@ -170,7 +170,7 @@ func FuzzFinalityProviderDelegations_RestakingConsumerChains(f *testing.F) {
 		limit := datagen.RandomInt(r, len(expectedBtcDelsMap)) + 1
 		pagination := constructRequestWithLimit(r, limit)
 
-		// the tested finality provider is under Babylon or consumer chain
+		// the tested finality provider is under Babylon or consumer
 		testedFP := fp
 		if datagen.OneInN(r, 2) {
 			testedFP = czFP
@@ -193,7 +193,7 @@ func FuzzFinalityProviderDelegations_RestakingConsumerChains(f *testing.F) {
 				btcDel := btcDels.Dels[0]
 				require.Len(t, btcDel.FpBtcPkList, 2)
 				require.Equal(t, fp.BtcPk, &btcDel.FpBtcPkList[0])   // Babylon finality provider
-				require.Equal(t, czFP.BtcPk, &btcDel.FpBtcPkList[1]) // consumer chain finality provider
+				require.Equal(t, czFP.BtcPk, &btcDel.FpBtcPkList[1]) // consumer finality provider
 				// Check if the pk exists in the map
 				_, ok := expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()]
 				require.True(t, ok)

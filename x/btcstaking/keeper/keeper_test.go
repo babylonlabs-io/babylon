@@ -143,7 +143,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 		Commission:  fp.Commission,
 		BtcPk:       fp.BtcPk,
 		Pop:         fp.Pop,
-		ChainId:     "",
+		ConsumerId:  "",
 	}
 
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
@@ -151,7 +151,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	return fpSK, fpPK, fp
 }
 
-func (h *Helper) CreateConsumerChainFinalityProvider(r *rand.Rand, chainID string) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider, error) {
+func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider, error) {
 	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 	if err != nil {
 		return nil, nil, nil, err
@@ -160,17 +160,19 @@ func (h *Helper) CreateConsumerChainFinalityProvider(r *rand.Rand, chainID strin
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	fp.ChainId = chainID
+	fp.ConsumerId = consumerID
 
 	registeredEpoch := uint64(10)
 	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Eq(h.Ctx)).Return(&etypes.Epoch{EpochNumber: registeredEpoch}).AnyTimes()
+
+	fp.ConsumerId = consumerID
 
 	msgNewFp := types.MsgCreateFinalityProvider{
 		Description: fp.Description,
 		Commission:  fp.Commission,
 		BtcPk:       fp.BtcPk,
 		Pop:         fp.Pop,
-		ChainId:     fp.ChainId,
+		ConsumerId:  fp.ConsumerId,
 	}
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
 	if err != nil {

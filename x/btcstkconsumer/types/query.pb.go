@@ -120,24 +120,24 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
-// QueryChainRegistryListRequest is request type for the Query/ChainRegistryList RPC method
-type QueryChainRegistryListRequest struct {
+// QueryConsumerRegistryListRequest is request type for the Query/ConsumerRegistryList RPC method
+type QueryConsumerRegistryListRequest struct {
 	// pagination defines whether to have the pagination in the request
 	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
-func (m *QueryChainRegistryListRequest) Reset()         { *m = QueryChainRegistryListRequest{} }
-func (m *QueryChainRegistryListRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryChainRegistryListRequest) ProtoMessage()    {}
-func (*QueryChainRegistryListRequest) Descriptor() ([]byte, []int) {
+func (m *QueryConsumerRegistryListRequest) Reset()         { *m = QueryConsumerRegistryListRequest{} }
+func (m *QueryConsumerRegistryListRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryConsumerRegistryListRequest) ProtoMessage()    {}
+func (*QueryConsumerRegistryListRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4e6c48e60b6a8bd8, []int{2}
 }
-func (m *QueryChainRegistryListRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryConsumerRegistryListRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryChainRegistryListRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryConsumerRegistryListRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryChainRegistryListRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryConsumerRegistryListRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -147,45 +147,45 @@ func (m *QueryChainRegistryListRequest) XXX_Marshal(b []byte, deterministic bool
 		return b[:n], nil
 	}
 }
-func (m *QueryChainRegistryListRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryChainRegistryListRequest.Merge(m, src)
+func (m *QueryConsumerRegistryListRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryConsumerRegistryListRequest.Merge(m, src)
 }
-func (m *QueryChainRegistryListRequest) XXX_Size() int {
+func (m *QueryConsumerRegistryListRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryChainRegistryListRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryChainRegistryListRequest.DiscardUnknown(m)
+func (m *QueryConsumerRegistryListRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryConsumerRegistryListRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryChainRegistryListRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryConsumerRegistryListRequest proto.InternalMessageInfo
 
-func (m *QueryChainRegistryListRequest) GetPagination() *query.PageRequest {
+func (m *QueryConsumerRegistryListRequest) GetPagination() *query.PageRequest {
 	if m != nil {
 		return m.Pagination
 	}
 	return nil
 }
 
-// QueryChainRegistryListResponse is response type for the Query/ChainRegistryList RPC method
-type QueryChainRegistryListResponse struct {
-	// chain_ids are IDs of the chains in ascending alphabetical order
-	ChainIds []string `protobuf:"bytes,1,rep,name=chain_ids,json=chainIds,proto3" json:"chain_ids,omitempty"`
+// QueryConsumerRegistryListResponse is response type for the Query/ConsumerRegistryList RPC method
+type QueryConsumerRegistryListResponse struct {
+	// consumer_ids are IDs of the consumers in ascending alphabetical order
+	ConsumerIds []string `protobuf:"bytes,1,rep,name=consumer_ids,json=consumerIds,proto3" json:"consumer_ids,omitempty"`
 	// pagination defines the pagination in the response
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
-func (m *QueryChainRegistryListResponse) Reset()         { *m = QueryChainRegistryListResponse{} }
-func (m *QueryChainRegistryListResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryChainRegistryListResponse) ProtoMessage()    {}
-func (*QueryChainRegistryListResponse) Descriptor() ([]byte, []int) {
+func (m *QueryConsumerRegistryListResponse) Reset()         { *m = QueryConsumerRegistryListResponse{} }
+func (m *QueryConsumerRegistryListResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryConsumerRegistryListResponse) ProtoMessage()    {}
+func (*QueryConsumerRegistryListResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4e6c48e60b6a8bd8, []int{3}
 }
-func (m *QueryChainRegistryListResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryConsumerRegistryListResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryChainRegistryListResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryConsumerRegistryListResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryChainRegistryListResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryConsumerRegistryListResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -195,49 +195,49 @@ func (m *QueryChainRegistryListResponse) XXX_Marshal(b []byte, deterministic boo
 		return b[:n], nil
 	}
 }
-func (m *QueryChainRegistryListResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryChainRegistryListResponse.Merge(m, src)
+func (m *QueryConsumerRegistryListResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryConsumerRegistryListResponse.Merge(m, src)
 }
-func (m *QueryChainRegistryListResponse) XXX_Size() int {
+func (m *QueryConsumerRegistryListResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryChainRegistryListResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryChainRegistryListResponse.DiscardUnknown(m)
+func (m *QueryConsumerRegistryListResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryConsumerRegistryListResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryChainRegistryListResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryConsumerRegistryListResponse proto.InternalMessageInfo
 
-func (m *QueryChainRegistryListResponse) GetChainIds() []string {
+func (m *QueryConsumerRegistryListResponse) GetConsumerIds() []string {
 	if m != nil {
-		return m.ChainIds
+		return m.ConsumerIds
 	}
 	return nil
 }
 
-func (m *QueryChainRegistryListResponse) GetPagination() *query.PageResponse {
+func (m *QueryConsumerRegistryListResponse) GetPagination() *query.PageResponse {
 	if m != nil {
 		return m.Pagination
 	}
 	return nil
 }
 
-// QueryChainsRegistryRequest is request type for the Query/ChainsRegistry RPC method.
-type QueryChainsRegistryRequest struct {
-	ChainIds []string `protobuf:"bytes,1,rep,name=chain_ids,json=chainIds,proto3" json:"chain_ids,omitempty"`
+// QueryConsumersRegistryRequest is request type for the Query/ConsumersRegistry RPC method.
+type QueryConsumersRegistryRequest struct {
+	ConsumerIds []string `protobuf:"bytes,1,rep,name=consumer_ids,json=consumerIds,proto3" json:"consumer_ids,omitempty"`
 }
 
-func (m *QueryChainsRegistryRequest) Reset()         { *m = QueryChainsRegistryRequest{} }
-func (m *QueryChainsRegistryRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryChainsRegistryRequest) ProtoMessage()    {}
-func (*QueryChainsRegistryRequest) Descriptor() ([]byte, []int) {
+func (m *QueryConsumersRegistryRequest) Reset()         { *m = QueryConsumersRegistryRequest{} }
+func (m *QueryConsumersRegistryRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryConsumersRegistryRequest) ProtoMessage()    {}
+func (*QueryConsumersRegistryRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4e6c48e60b6a8bd8, []int{4}
 }
-func (m *QueryChainsRegistryRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryConsumersRegistryRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryChainsRegistryRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryConsumersRegistryRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryChainsRegistryRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryConsumersRegistryRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -247,42 +247,42 @@ func (m *QueryChainsRegistryRequest) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-func (m *QueryChainsRegistryRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryChainsRegistryRequest.Merge(m, src)
+func (m *QueryConsumersRegistryRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryConsumersRegistryRequest.Merge(m, src)
 }
-func (m *QueryChainsRegistryRequest) XXX_Size() int {
+func (m *QueryConsumersRegistryRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryChainsRegistryRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryChainsRegistryRequest.DiscardUnknown(m)
+func (m *QueryConsumersRegistryRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryConsumersRegistryRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryChainsRegistryRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryConsumersRegistryRequest proto.InternalMessageInfo
 
-func (m *QueryChainsRegistryRequest) GetChainIds() []string {
+func (m *QueryConsumersRegistryRequest) GetConsumerIds() []string {
 	if m != nil {
-		return m.ChainIds
+		return m.ConsumerIds
 	}
 	return nil
 }
 
-// QueryChainsRegistryResponse is response type for the Query/ChainsRegistry RPC method.
-type QueryChainsRegistryResponse struct {
-	ChainsRegister []*ChainRegister `protobuf:"bytes,1,rep,name=chains_register,json=chainsRegister,proto3" json:"chains_register,omitempty"`
+// QueryConsumersRegistryResponse is response type for the Query/ConsumersRegistry RPC method.
+type QueryConsumersRegistryResponse struct {
+	ConsumersRegister []*ConsumerRegister `protobuf:"bytes,1,rep,name=consumers_register,json=consumersRegister,proto3" json:"consumers_register,omitempty"`
 }
 
-func (m *QueryChainsRegistryResponse) Reset()         { *m = QueryChainsRegistryResponse{} }
-func (m *QueryChainsRegistryResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryChainsRegistryResponse) ProtoMessage()    {}
-func (*QueryChainsRegistryResponse) Descriptor() ([]byte, []int) {
+func (m *QueryConsumersRegistryResponse) Reset()         { *m = QueryConsumersRegistryResponse{} }
+func (m *QueryConsumersRegistryResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryConsumersRegistryResponse) ProtoMessage()    {}
+func (*QueryConsumersRegistryResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4e6c48e60b6a8bd8, []int{5}
 }
-func (m *QueryChainsRegistryResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryConsumersRegistryResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryChainsRegistryResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryConsumersRegistryResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryChainsRegistryResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryConsumersRegistryResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -292,21 +292,21 @@ func (m *QueryChainsRegistryResponse) XXX_Marshal(b []byte, deterministic bool) 
 		return b[:n], nil
 	}
 }
-func (m *QueryChainsRegistryResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryChainsRegistryResponse.Merge(m, src)
+func (m *QueryConsumersRegistryResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryConsumersRegistryResponse.Merge(m, src)
 }
-func (m *QueryChainsRegistryResponse) XXX_Size() int {
+func (m *QueryConsumersRegistryResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryChainsRegistryResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryChainsRegistryResponse.DiscardUnknown(m)
+func (m *QueryConsumersRegistryResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryConsumersRegistryResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryChainsRegistryResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryConsumersRegistryResponse proto.InternalMessageInfo
 
-func (m *QueryChainsRegistryResponse) GetChainsRegister() []*ChainRegister {
+func (m *QueryConsumersRegistryResponse) GetConsumersRegister() []*ConsumerRegister {
 	if m != nil {
-		return m.ChainsRegister
+		return m.ConsumersRegister
 	}
 	return nil
 }
@@ -314,7 +314,7 @@ func (m *QueryChainsRegistryResponse) GetChainsRegister() []*ChainRegister {
 // QueryFinalityProvidersRequest is the request type for the
 // Query/FinalityProviders RPC method.
 type QueryFinalityProvidersRequest struct {
-	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
 	// pagination defines an optional pagination for the request.
 	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
@@ -352,9 +352,9 @@ func (m *QueryFinalityProvidersRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryFinalityProvidersRequest proto.InternalMessageInfo
 
-func (m *QueryFinalityProvidersRequest) GetChainId() string {
+func (m *QueryFinalityProvidersRequest) GetConsumerId() string {
 	if m != nil {
-		return m.ChainId
+		return m.ConsumerId
 	}
 	return ""
 }
@@ -424,8 +424,8 @@ func (m *QueryFinalityProvidersResponse) GetPagination() *query.PageResponse {
 
 // QueryFinalityProviderRequest requests information about a finality provider
 type QueryFinalityProviderRequest struct {
-	// chain id is the chain id this finality provider is registered to
-	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	// consumer id is the consumer id this finality provider is registered to
+	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
 	// fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
 	FpBtcPkHex string `protobuf:"bytes,2,opt,name=fp_btc_pk_hex,json=fpBtcPkHex,proto3" json:"fp_btc_pk_hex,omitempty"`
 }
@@ -463,9 +463,9 @@ func (m *QueryFinalityProviderRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryFinalityProviderRequest proto.InternalMessageInfo
 
-func (m *QueryFinalityProviderRequest) GetChainId() string {
+func (m *QueryFinalityProviderRequest) GetConsumerId() string {
 	if m != nil {
-		return m.ChainId
+		return m.ConsumerId
 	}
 	return ""
 }
@@ -548,8 +548,8 @@ type FinalityProviderResponse struct {
 	Height uint64 `protobuf:"varint,8,opt,name=height,proto3" json:"height,omitempty"`
 	// voting_power is the voting power of this finality provider at the given height
 	VotingPower uint64 `protobuf:"varint,9,opt,name=voting_power,json=votingPower,proto3" json:"voting_power,omitempty"`
-	// chain_id is the chain id this finality provider is registered to
-	ChainId string `protobuf:"bytes,10,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	// consumer_id is the consumer id this finality provider is registered to
+	ConsumerId string `protobuf:"bytes,10,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
 }
 
 func (m *FinalityProviderResponse) Reset()         { *m = FinalityProviderResponse{} }
@@ -634,31 +634,31 @@ func (m *FinalityProviderResponse) GetVotingPower() uint64 {
 	return 0
 }
 
-func (m *FinalityProviderResponse) GetChainId() string {
+func (m *FinalityProviderResponse) GetConsumerId() string {
 	if m != nil {
-		return m.ChainId
+		return m.ConsumerId
 	}
 	return ""
 }
 
-// QueryFinalityProviderChainRequest requests the chain a CZ finality provider belongs to
-type QueryFinalityProviderChainRequest struct {
+// QueryFinalityProviderConsumerRequest requests the consumer a CZ finality provider belongs to
+type QueryFinalityProviderConsumerRequest struct {
 	// fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
 	FpBtcPkHex string `protobuf:"bytes,1,opt,name=fp_btc_pk_hex,json=fpBtcPkHex,proto3" json:"fp_btc_pk_hex,omitempty"`
 }
 
-func (m *QueryFinalityProviderChainRequest) Reset()         { *m = QueryFinalityProviderChainRequest{} }
-func (m *QueryFinalityProviderChainRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryFinalityProviderChainRequest) ProtoMessage()    {}
-func (*QueryFinalityProviderChainRequest) Descriptor() ([]byte, []int) {
+func (m *QueryFinalityProviderConsumerRequest) Reset()         { *m = QueryFinalityProviderConsumerRequest{} }
+func (m *QueryFinalityProviderConsumerRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalityProviderConsumerRequest) ProtoMessage()    {}
+func (*QueryFinalityProviderConsumerRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4e6c48e60b6a8bd8, []int{11}
 }
-func (m *QueryFinalityProviderChainRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalityProviderConsumerRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryFinalityProviderChainRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalityProviderConsumerRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryFinalityProviderChainRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalityProviderConsumerRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -668,42 +668,42 @@ func (m *QueryFinalityProviderChainRequest) XXX_Marshal(b []byte, deterministic 
 		return b[:n], nil
 	}
 }
-func (m *QueryFinalityProviderChainRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryFinalityProviderChainRequest.Merge(m, src)
+func (m *QueryFinalityProviderConsumerRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderConsumerRequest.Merge(m, src)
 }
-func (m *QueryFinalityProviderChainRequest) XXX_Size() int {
+func (m *QueryFinalityProviderConsumerRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryFinalityProviderChainRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryFinalityProviderChainRequest.DiscardUnknown(m)
+func (m *QueryFinalityProviderConsumerRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderConsumerRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryFinalityProviderChainRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalityProviderConsumerRequest proto.InternalMessageInfo
 
-func (m *QueryFinalityProviderChainRequest) GetFpBtcPkHex() string {
+func (m *QueryFinalityProviderConsumerRequest) GetFpBtcPkHex() string {
 	if m != nil {
 		return m.FpBtcPkHex
 	}
 	return ""
 }
 
-// QueryFinalityProviderChainResponse returns the CZ finality provier chain id
-type QueryFinalityProviderChainResponse struct {
-	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+// QueryFinalityProviderConsumerResponse returns the CZ finality provier consumer id
+type QueryFinalityProviderConsumerResponse struct {
+	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
 }
 
-func (m *QueryFinalityProviderChainResponse) Reset()         { *m = QueryFinalityProviderChainResponse{} }
-func (m *QueryFinalityProviderChainResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryFinalityProviderChainResponse) ProtoMessage()    {}
-func (*QueryFinalityProviderChainResponse) Descriptor() ([]byte, []int) {
+func (m *QueryFinalityProviderConsumerResponse) Reset()         { *m = QueryFinalityProviderConsumerResponse{} }
+func (m *QueryFinalityProviderConsumerResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalityProviderConsumerResponse) ProtoMessage()    {}
+func (*QueryFinalityProviderConsumerResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4e6c48e60b6a8bd8, []int{12}
 }
-func (m *QueryFinalityProviderChainResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalityProviderConsumerResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryFinalityProviderChainResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalityProviderConsumerResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryFinalityProviderChainResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalityProviderConsumerResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -713,21 +713,21 @@ func (m *QueryFinalityProviderChainResponse) XXX_Marshal(b []byte, deterministic
 		return b[:n], nil
 	}
 }
-func (m *QueryFinalityProviderChainResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryFinalityProviderChainResponse.Merge(m, src)
+func (m *QueryFinalityProviderConsumerResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderConsumerResponse.Merge(m, src)
 }
-func (m *QueryFinalityProviderChainResponse) XXX_Size() int {
+func (m *QueryFinalityProviderConsumerResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryFinalityProviderChainResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryFinalityProviderChainResponse.DiscardUnknown(m)
+func (m *QueryFinalityProviderConsumerResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderConsumerResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryFinalityProviderChainResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalityProviderConsumerResponse proto.InternalMessageInfo
 
-func (m *QueryFinalityProviderChainResponse) GetChainId() string {
+func (m *QueryFinalityProviderConsumerResponse) GetConsumerId() string {
 	if m != nil {
-		return m.ChainId
+		return m.ConsumerId
 	}
 	return ""
 }
@@ -735,17 +735,17 @@ func (m *QueryFinalityProviderChainResponse) GetChainId() string {
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "babylon.btcstkconsumer.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.btcstkconsumer.v1.QueryParamsResponse")
-	proto.RegisterType((*QueryChainRegistryListRequest)(nil), "babylon.btcstkconsumer.v1.QueryChainRegistryListRequest")
-	proto.RegisterType((*QueryChainRegistryListResponse)(nil), "babylon.btcstkconsumer.v1.QueryChainRegistryListResponse")
-	proto.RegisterType((*QueryChainsRegistryRequest)(nil), "babylon.btcstkconsumer.v1.QueryChainsRegistryRequest")
-	proto.RegisterType((*QueryChainsRegistryResponse)(nil), "babylon.btcstkconsumer.v1.QueryChainsRegistryResponse")
+	proto.RegisterType((*QueryConsumerRegistryListRequest)(nil), "babylon.btcstkconsumer.v1.QueryConsumerRegistryListRequest")
+	proto.RegisterType((*QueryConsumerRegistryListResponse)(nil), "babylon.btcstkconsumer.v1.QueryConsumerRegistryListResponse")
+	proto.RegisterType((*QueryConsumersRegistryRequest)(nil), "babylon.btcstkconsumer.v1.QueryConsumersRegistryRequest")
+	proto.RegisterType((*QueryConsumersRegistryResponse)(nil), "babylon.btcstkconsumer.v1.QueryConsumersRegistryResponse")
 	proto.RegisterType((*QueryFinalityProvidersRequest)(nil), "babylon.btcstkconsumer.v1.QueryFinalityProvidersRequest")
 	proto.RegisterType((*QueryFinalityProvidersResponse)(nil), "babylon.btcstkconsumer.v1.QueryFinalityProvidersResponse")
 	proto.RegisterType((*QueryFinalityProviderRequest)(nil), "babylon.btcstkconsumer.v1.QueryFinalityProviderRequest")
 	proto.RegisterType((*QueryFinalityProviderResponse)(nil), "babylon.btcstkconsumer.v1.QueryFinalityProviderResponse")
 	proto.RegisterType((*FinalityProviderResponse)(nil), "babylon.btcstkconsumer.v1.FinalityProviderResponse")
-	proto.RegisterType((*QueryFinalityProviderChainRequest)(nil), "babylon.btcstkconsumer.v1.QueryFinalityProviderChainRequest")
-	proto.RegisterType((*QueryFinalityProviderChainResponse)(nil), "babylon.btcstkconsumer.v1.QueryFinalityProviderChainResponse")
+	proto.RegisterType((*QueryFinalityProviderConsumerRequest)(nil), "babylon.btcstkconsumer.v1.QueryFinalityProviderConsumerRequest")
+	proto.RegisterType((*QueryFinalityProviderConsumerResponse)(nil), "babylon.btcstkconsumer.v1.QueryFinalityProviderConsumerResponse")
 }
 
 func init() {
@@ -753,79 +753,79 @@ func init() {
 }
 
 var fileDescriptor_4e6c48e60b6a8bd8 = []byte{
-	// 1147 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x57, 0xcd, 0x6f, 0xdc, 0x44,
-	0x14, 0x8f, 0xf3, 0xb1, 0xcd, 0x4e, 0x4a, 0x49, 0x86, 0x50, 0x6d, 0x36, 0x65, 0x93, 0xb8, 0x50,
-	0x42, 0x69, 0xec, 0x26, 0x69, 0x97, 0x14, 0x51, 0x3e, 0xb6, 0x21, 0x6d, 0xa0, 0x55, 0x5d, 0xc3,
-	0x09, 0x90, 0x8c, 0x3f, 0x66, 0xbd, 0xd6, 0x66, 0x3d, 0xae, 0x67, 0x12, 0xb2, 0xaa, 0x72, 0xa0,
-	0x07, 0xce, 0x08, 0xfe, 0x07, 0x84, 0x38, 0x71, 0xe8, 0x1d, 0x8e, 0x15, 0x12, 0x52, 0x55, 0x24,
-	0x84, 0x7a, 0x88, 0xaa, 0x04, 0x89, 0x7f, 0x03, 0x79, 0xfc, 0xbc, 0x59, 0xef, 0x67, 0x36, 0xea,
-	0xa5, 0xda, 0x99, 0xf9, 0xfd, 0xde, 0xfc, 0x7e, 0xef, 0xbd, 0xf1, 0x6b, 0xd0, 0x1b, 0x96, 0x69,
-	0xd5, 0xb7, 0xa8, 0xaf, 0x5a, 0xdc, 0x66, 0xbc, 0x6a, 0x53, 0x9f, 0x6d, 0xd7, 0x48, 0xa8, 0xee,
-	0x2c, 0xab, 0xf7, 0xb7, 0x49, 0x58, 0x57, 0x82, 0x90, 0x72, 0x8a, 0x67, 0x00, 0xa6, 0xa4, 0x61,
-	0xca, 0xce, 0x72, 0x7e, 0xca, 0xac, 0x79, 0x3e, 0x55, 0xc5, 0xbf, 0x31, 0x3a, 0x3f, 0xed, 0x52,
-	0x97, 0x8a, 0x9f, 0x6a, 0xf4, 0x0b, 0x76, 0xcf, 0xb9, 0x94, 0xba, 0x5b, 0x44, 0x35, 0x03, 0x4f,
-	0x35, 0x7d, 0x9f, 0x72, 0x93, 0x7b, 0xd4, 0x67, 0x70, 0x3a, 0x63, 0x53, 0x56, 0xa3, 0xcc, 0x88,
-	0x69, 0xf1, 0x02, 0x8e, 0xe4, 0x78, 0xa5, 0xda, 0x61, 0x3d, 0xe0, 0x54, 0x65, 0xc4, 0x0e, 0x56,
-	0xae, 0x16, 0xab, 0xcb, 0x6a, 0x95, 0xd4, 0x13, 0xcc, 0xeb, 0x80, 0x61, 0xdc, 0xac, 0x7a, 0xbe,
-	0xab, 0xee, 0x2c, 0x5b, 0x84, 0x9b, 0xcb, 0xc9, 0x1a, 0x50, 0x17, 0x01, 0x65, 0x99, 0x8c, 0xc4,
-	0xfe, 0x1a, 0xc0, 0xc0, 0x74, 0x3d, 0x5f, 0x28, 0x02, 0xec, 0x85, 0x54, 0x66, 0x92, 0xa8, 0x4d,
-	0x2b, 0xc0, 0xcd, 0x75, 0xc6, 0x05, 0x34, 0x00, 0x80, 0xd2, 0x3d, 0xc5, 0x2d, 0xd9, 0xec, 0x74,
-	0x71, 0x0a, 0x1f, 0x98, 0xa1, 0x59, 0x03, 0xcb, 0xf2, 0x34, 0xc2, 0xf7, 0x22, 0x0b, 0x9a, 0xd8,
-	0xd4, 0xc9, 0xfd, 0x6d, 0xc2, 0xb8, 0xfc, 0x25, 0x7a, 0x25, 0xb5, 0xcb, 0x02, 0xea, 0x33, 0x82,
-	0xd7, 0x51, 0x26, 0x26, 0xe7, 0xa4, 0x79, 0x69, 0x71, 0x62, 0x65, 0x41, 0xe9, 0x5a, 0x51, 0x25,
-	0xa6, 0x96, 0xb2, 0x8f, 0xf7, 0xe7, 0x86, 0x7e, 0xfe, 0xef, 0xd7, 0x8b, 0x92, 0x0e, 0x5c, 0xd9,
-	0x45, 0xaf, 0x89, 0xe0, 0x37, 0x2a, 0xa6, 0xe7, 0xeb, 0xc4, 0xf5, 0x18, 0x0f, 0xeb, 0xb7, 0x3d,
-	0xc6, 0xe1, 0x76, 0xbc, 0x81, 0xd0, 0x51, 0x22, 0xe1, 0xaa, 0x0b, 0x0a, 0x54, 0x33, 0xca, 0xba,
-	0x12, 0x77, 0x15, 0x64, 0x5d, 0xd1, 0x4c, 0x97, 0x00, 0x57, 0x6f, 0x62, 0xca, 0xdf, 0x49, 0xa8,
-	0xd0, 0xed, 0x26, 0x70, 0x34, 0x8b, 0xb2, 0x76, 0x74, 0x68, 0x78, 0x4e, 0x64, 0x6a, 0x64, 0x31,
-	0xab, 0x8f, 0x8b, 0x8d, 0x4d, 0x87, 0xe1, 0x9b, 0x29, 0x1d, 0xc3, 0x42, 0xc7, 0x9b, 0x7d, 0x75,
-	0xc4, 0x91, 0x53, 0x42, 0xae, 0xa1, 0xfc, 0x91, 0x0e, 0x96, 0x08, 0x49, 0xec, 0xf6, 0xd2, 0x20,
-	0x07, 0x68, 0xb6, 0x23, 0x15, 0xf4, 0xdf, 0x43, 0x2f, 0x0b, 0x28, 0x33, 0x42, 0x71, 0x44, 0x42,
-	0x11, 0x61, 0x62, 0x65, 0xb1, 0x47, 0x69, 0x9a, 0xd2, 0x41, 0x42, 0xfd, 0x8c, 0xdd, 0x14, 0x9a,
-	0x84, 0xf2, 0x43, 0x09, 0xea, 0xb3, 0xe1, 0xf9, 0xe6, 0x96, 0xc7, 0xeb, 0x5a, 0x48, 0x77, 0x3c,
-	0x87, 0x84, 0x49, 0x77, 0xe0, 0x19, 0x34, 0x9e, 0x08, 0x16, 0xd5, 0xc9, 0xea, 0xa7, 0x40, 0x6f,
-	0x4b, 0xe9, 0x86, 0x4f, 0x5c, 0xba, 0x3f, 0x93, 0xd2, 0x75, 0x10, 0x01, 0xd6, 0x2d, 0x84, 0xcb,
-	0x70, 0x18, 0xbd, 0xf7, 0xf8, 0x14, 0xdc, 0xaf, 0xf6, 0x70, 0xdf, 0x1a, 0xb1, 0x51, 0xb1, 0xa9,
-	0x72, 0xeb, 0x5d, 0x2f, 0xae, 0x03, 0xbe, 0x42, 0xe7, 0x3a, 0xda, 0x39, 0x46, 0x4a, 0x17, 0xd0,
-	0x4b, 0xe5, 0xc0, 0xb0, 0xb8, 0x6d, 0x04, 0x55, 0xa3, 0x42, 0x76, 0x85, 0x8c, 0xac, 0x8e, 0xca,
-	0x41, 0x89, 0xdb, 0x5a, 0xf5, 0x16, 0xd9, 0x95, 0xbf, 0xed, 0x56, 0xb2, 0x46, 0xb2, 0xbe, 0x46,
-	0x53, 0x6d, 0xc9, 0x82, 0x97, 0x75, 0xa2, 0x5c, 0x4d, 0xb6, 0xe6, 0x4a, 0xfe, 0x69, 0x14, 0xe5,
-	0xba, 0x5e, 0xff, 0x31, 0x9a, 0x70, 0x08, 0xb3, 0x43, 0x2f, 0x68, 0x7a, 0xd2, 0xe7, 0x93, 0x44,
-	0x26, 0x9f, 0xc2, 0x24, 0x8b, 0xeb, 0x47, 0x50, 0xbd, 0x99, 0x87, 0xef, 0x20, 0x64, 0xd3, 0x5a,
-	0xcd, 0x63, 0x2c, 0x29, 0x47, 0xb6, 0xb4, 0xf4, 0x6c, 0x7f, 0x6e, 0x36, 0x0e, 0xc4, 0x9c, 0xaa,
-	0xe2, 0x51, 0xb5, 0x66, 0xf2, 0x8a, 0x72, 0x9b, 0xb8, 0xa6, 0x5d, 0x5f, 0x27, 0xf6, 0xd3, 0x47,
-	0x4b, 0x08, 0xee, 0x59, 0x27, 0xb6, 0xde, 0x14, 0x00, 0x5f, 0x42, 0xa3, 0xa6, 0xe3, 0x84, 0xb9,
-	0x11, 0x11, 0x28, 0xf7, 0xf4, 0xd1, 0xd2, 0x34, 0x20, 0x3f, 0x72, 0x9c, 0x90, 0x30, 0xf6, 0x19,
-	0x0f, 0x3d, 0xdf, 0xd5, 0x05, 0x0a, 0xdf, 0x41, 0x99, 0xb8, 0x08, 0xb9, 0xd1, 0x79, 0x69, 0xf1,
-	0x74, 0xa9, 0xf8, 0x6c, 0x7f, 0x6e, 0xc5, 0xf5, 0x78, 0x65, 0xdb, 0x52, 0x6c, 0x5a, 0x53, 0x21,
-	0x8b, 0xa2, 0x6c, 0xc9, 0x42, 0xe5, 0xf5, 0x80, 0x30, 0xa5, 0xb4, 0xa9, 0xad, 0x5e, 0xb9, 0xac,
-	0x6d, 0x5b, 0x9f, 0x92, 0xba, 0x3e, 0x66, 0x45, 0x65, 0xc3, 0xd7, 0xd1, 0x48, 0x40, 0x83, 0xdc,
-	0x98, 0x48, 0xc5, 0xdb, 0xe9, 0x1a, 0x24, 0xe9, 0x50, 0xb4, 0x90, 0xd2, 0xf2, 0xdd, 0xb2, 0x46,
-	0x19, 0x23, 0x42, 0x73, 0xe9, 0xf3, 0x1b, 0x7a, 0xc4, 0xc3, 0x57, 0xd0, 0x59, 0xb6, 0x65, 0xb2,
-	0x0a, 0x71, 0x0c, 0xa0, 0x1a, 0x15, 0xe2, 0xb9, 0x15, 0x9e, 0xcb, 0xcc, 0x4b, 0x8b, 0xa3, 0xfa,
-	0x34, 0x9c, 0x96, 0xe2, 0xc3, 0x5b, 0xe2, 0x0c, 0x5f, 0x42, 0xb8, 0xc1, 0xe2, 0x76, 0xc2, 0x38,
-	0x25, 0x18, 0x93, 0x09, 0x83, 0xdb, 0x80, 0x3e, 0x8b, 0x32, 0x80, 0x18, 0x17, 0x08, 0x58, 0xe1,
-	0x05, 0x74, 0x7a, 0x87, 0x72, 0xcf, 0x77, 0x8d, 0x80, 0x7e, 0x43, 0xc2, 0x5c, 0x56, 0x9c, 0x4e,
-	0xc4, 0x7b, 0x5a, 0xb4, 0x95, 0xea, 0x67, 0x94, 0xea, 0x67, 0x79, 0x03, 0x2d, 0x74, 0xec, 0x55,
-	0xf8, 0x2a, 0xc5, 0xef, 0xa1, 0xad, 0xe9, 0xa5, 0xb6, 0xa6, 0xff, 0x00, 0xc9, 0xbd, 0xe2, 0x40,
-	0xe7, 0x75, 0x7f, 0x58, 0x2b, 0xbf, 0x64, 0xd1, 0x98, 0x88, 0x80, 0x7f, 0x90, 0x50, 0x26, 0x9e,
-	0x57, 0x78, 0xa9, 0xc7, 0x6b, 0x68, 0x1f, 0x94, 0x79, 0xe5, 0xb8, 0xf0, 0x58, 0x8e, 0xfc, 0xd6,
-	0xc3, 0xbf, 0xfe, 0xfd, 0x71, 0xf8, 0x3c, 0x5e, 0x50, 0xfb, 0xcd, 0x67, 0xfc, 0xbb, 0x84, 0xa6,
-	0xda, 0x06, 0x17, 0x5e, 0xeb, 0x77, 0x61, 0xb7, 0xa9, 0x9a, 0xbf, 0x76, 0x02, 0x26, 0xa8, 0x2e,
-	0x0a, 0xd5, 0x97, 0xb1, 0xd2, 0x43, 0x75, 0x9c, 0xe5, 0x10, 0xe8, 0xc6, 0x56, 0x24, 0xf6, 0x37,
-	0x09, 0x9d, 0x49, 0x0f, 0x2e, 0x7c, 0xf5, 0x58, 0x2a, 0x5a, 0x67, 0x64, 0xbe, 0x38, 0x28, 0x0d,
-	0x94, 0xbf, 0x2f, 0x94, 0xaf, 0xe1, 0x62, 0x3f, 0xe5, 0xac, 0x21, 0x5d, 0x7d, 0xd0, 0x98, 0xc6,
-	0x7b, 0xf8, 0xb9, 0x84, 0x5e, 0xed, 0xd8, 0x60, 0xf8, 0xbd, 0x7e, 0x8a, 0x7a, 0xf5, 0x77, 0xfe,
-	0xfa, 0x09, 0xd9, 0x60, 0xeb, 0x13, 0x61, 0x6b, 0x1d, 0x97, 0x7a, 0xd8, 0x6a, 0xfb, 0xde, 0x1b,
-	0xf1, 0xa7, 0xe9, 0x41, 0xea, 0x61, 0xed, 0xe1, 0x3f, 0x24, 0x34, 0xd5, 0x36, 0x65, 0xfb, 0xf7,
-	0x59, 0xb7, 0xff, 0x1d, 0xf4, 0xef, 0xb3, 0xae, 0x23, 0x5d, 0xfe, 0x50, 0xd8, 0x7a, 0x17, 0xaf,
-	0x0d, 0x62, 0x8b, 0x1d, 0x15, 0x6c, 0x0f, 0xff, 0x2d, 0xa1, 0xc9, 0xd6, 0xf8, 0xf8, 0x9d, 0x41,
-	0x15, 0x25, 0x56, 0xd6, 0x06, 0x27, 0x82, 0x93, 0xbb, 0xc2, 0xc9, 0x26, 0xbe, 0x39, 0x88, 0x93,
-	0x26, 0x23, 0xad, 0x55, 0x2a, 0x69, 0x8f, 0x0f, 0x0a, 0xd2, 0x93, 0x83, 0x82, 0xf4, 0xfc, 0xa0,
-	0x20, 0x7d, 0x7f, 0x58, 0x18, 0x7a, 0x72, 0x58, 0x18, 0xfa, 0xe7, 0xb0, 0x30, 0xf4, 0x45, 0xb1,
-	0xdf, 0x0c, 0xda, 0x6d, 0xbd, 0x5b, 0x0c, 0x25, 0x2b, 0x23, 0xfe, 0x00, 0x58, 0xfd, 0x3f, 0x00,
-	0x00, 0xff, 0xff, 0x88, 0xdc, 0x96, 0x10, 0xbd, 0x0d, 0x00, 0x00,
+	// 1148 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x57, 0xcd, 0x73, 0xdb, 0xc4,
+	0x1b, 0x8e, 0xf2, 0xe1, 0xdf, 0xcf, 0xeb, 0x32, 0x13, 0x2f, 0x99, 0x8e, 0x6b, 0x8a, 0x93, 0xa8,
+	0x1f, 0x84, 0xd2, 0x48, 0x38, 0x29, 0xa1, 0x9d, 0xb6, 0x7c, 0x38, 0x69, 0x9b, 0x40, 0x32, 0x18,
+	0xc1, 0xa9, 0x1c, 0x84, 0x24, 0xaf, 0x65, 0xe1, 0x58, 0xab, 0x6a, 0x37, 0x21, 0x9e, 0x92, 0x03,
+	0x9c, 0xb8, 0xc1, 0xc0, 0x3f, 0xc1, 0x81, 0x03, 0x87, 0xfe, 0x11, 0x3d, 0x50, 0xa6, 0x53, 0x0e,
+	0x40, 0x0f, 0x19, 0x26, 0x61, 0x86, 0x0b, 0x7f, 0x04, 0xa3, 0xd5, 0x2b, 0xc7, 0x92, 0x3f, 0x94,
+	0x78, 0xb8, 0x64, 0xbc, 0xbb, 0xcf, 0xfb, 0xee, 0xf3, 0x3c, 0xef, 0xee, 0xbe, 0x0a, 0xba, 0x64,
+	0x1a, 0x66, 0x7b, 0x9b, 0xba, 0xaa, 0xc9, 0x2d, 0xc6, 0x9b, 0x16, 0x75, 0xd9, 0x4e, 0x8b, 0xf8,
+	0xea, 0x6e, 0x59, 0x7d, 0xb0, 0x43, 0xfc, 0xb6, 0xe2, 0xf9, 0x94, 0x53, 0x7c, 0x0e, 0x60, 0x4a,
+	0x1c, 0xa6, 0xec, 0x96, 0x8b, 0x79, 0xa3, 0xe5, 0xb8, 0x54, 0x15, 0x7f, 0x43, 0x74, 0x71, 0xc6,
+	0xa6, 0x36, 0x15, 0x3f, 0xd5, 0xe0, 0x17, 0xcc, 0x9e, 0xb7, 0x29, 0xb5, 0xb7, 0x89, 0x6a, 0x78,
+	0x8e, 0x6a, 0xb8, 0x2e, 0xe5, 0x06, 0x77, 0xa8, 0xcb, 0x60, 0xf5, 0x9c, 0x45, 0x59, 0x8b, 0x32,
+	0x3d, 0x0c, 0x0b, 0x07, 0xb0, 0x24, 0x87, 0x23, 0xd5, 0xf2, 0xdb, 0x1e, 0xa7, 0x2a, 0x23, 0x96,
+	0xb7, 0xf4, 0xc6, 0x4a, 0xb3, 0xac, 0x36, 0x49, 0x3b, 0xc2, 0x5c, 0x04, 0x0c, 0xe3, 0x46, 0xd3,
+	0x71, 0x6d, 0x75, 0xb7, 0x6c, 0x12, 0x6e, 0x94, 0xa3, 0x31, 0xa0, 0xae, 0x00, 0xca, 0x34, 0x18,
+	0x09, 0xf5, 0x75, 0x80, 0x9e, 0x61, 0x3b, 0xae, 0x60, 0x04, 0xd8, 0xcb, 0x31, 0x67, 0xa2, 0xac,
+	0x5d, 0x23, 0xc0, 0xcd, 0xf6, 0xc7, 0x79, 0xd4, 0x03, 0x80, 0x32, 0xd8, 0xe2, 0x84, 0x9b, 0xfd,
+	0x36, 0x8e, 0xe1, 0x3d, 0xc3, 0x37, 0x5a, 0x20, 0x59, 0x9e, 0x41, 0xf8, 0xc3, 0x40, 0x42, 0x55,
+	0x4c, 0x6a, 0xe4, 0xc1, 0x0e, 0x61, 0x5c, 0xfe, 0x04, 0xbd, 0x18, 0x9b, 0x65, 0x1e, 0x75, 0x19,
+	0xc1, 0x6b, 0x28, 0x13, 0x06, 0x17, 0xa4, 0x39, 0x69, 0x21, 0xb7, 0x34, 0xaf, 0x0c, 0xac, 0xa8,
+	0x12, 0x86, 0x56, 0xb2, 0x8f, 0x0f, 0x66, 0xc7, 0x7e, 0xf8, 0xfb, 0xa7, 0x2b, 0x92, 0x06, 0xb1,
+	0xf2, 0x67, 0x68, 0x4e, 0x24, 0x5f, 0x05, 0xb4, 0x46, 0x6c, 0x87, 0x71, 0xbf, 0xbd, 0xe9, 0x30,
+	0x0e, 0x04, 0xf0, 0x5d, 0x84, 0x8e, 0xbd, 0x84, 0xdd, 0x2e, 0x2b, 0x50, 0xd0, 0xc0, 0x78, 0x25,
+	0x3c, 0x58, 0x60, 0xbc, 0x52, 0x35, 0x6c, 0x02, 0xb1, 0x5a, 0x57, 0xa4, 0xfc, 0x8d, 0x84, 0xe6,
+	0x87, 0x6c, 0x06, 0xba, 0xe6, 0xd1, 0x99, 0x88, 0xba, 0xee, 0xd4, 0x02, 0x75, 0x13, 0x0b, 0x59,
+	0x2d, 0x17, 0xcd, 0x6d, 0xd4, 0x18, 0xbe, 0x17, 0x23, 0x34, 0x2e, 0x08, 0xbd, 0x92, 0x4a, 0x28,
+	0xcc, 0x1f, 0x63, 0x54, 0x41, 0x2f, 0xc7, 0x08, 0xb1, 0x88, 0x51, 0x24, 0x3d, 0x9d, 0x8c, 0xfc,
+	0x05, 0x2a, 0x0d, 0xca, 0x01, 0x8a, 0xee, 0x23, 0x1c, 0x05, 0x30, 0xdd, 0x17, 0xab, 0xc4, 0x17,
+	0xa9, 0x72, 0x4b, 0xaf, 0x0d, 0xa9, 0x5a, 0xdc, 0x26, 0xe2, 0x6b, 0x79, 0x2b, 0xbe, 0x07, 0xf1,
+	0xe5, 0xaf, 0x25, 0x90, 0x70, 0xd7, 0x71, 0x8d, 0x6d, 0x87, 0xb7, 0xab, 0x3e, 0xdd, 0x75, 0x6a,
+	0x02, 0x12, 0x4a, 0x98, 0x45, 0xb9, 0x2e, 0x09, 0xa2, 0x7c, 0x59, 0x0d, 0x1d, 0x2b, 0x48, 0x94,
+	0x77, 0x7c, 0xe4, 0xf2, 0x3e, 0x91, 0xc0, 0x89, 0x3e, 0x54, 0xc0, 0x09, 0x13, 0xe1, 0x3a, 0x2c,
+	0x06, 0xcf, 0x42, 0xb8, 0x0a, 0x4e, 0x2c, 0x0f, 0x71, 0x22, 0x99, 0xb1, 0x53, 0xcc, 0x7c, 0x3d,
+	0xb9, 0xd7, 0x7f, 0x77, 0x38, 0x4c, 0x74, 0xbe, 0xaf, 0x9c, 0x13, 0x1b, 0x3b, 0x8f, 0x5e, 0xa8,
+	0x7b, 0xba, 0xc9, 0x2d, 0xdd, 0x6b, 0xea, 0x0d, 0xb2, 0x27, 0xc8, 0x64, 0x35, 0x54, 0xf7, 0x2a,
+	0xdc, 0xaa, 0x36, 0xd7, 0xc9, 0x9e, 0xfc, 0xe5, 0xa0, 0xf2, 0x75, 0x2c, 0xfb, 0x14, 0xe5, 0x7b,
+	0x2c, 0x83, 0x3b, 0x38, 0x92, 0x63, 0xd3, 0x49, 0xc7, 0xe4, 0x1f, 0x27, 0x51, 0x61, 0xe0, 0xf6,
+	0x77, 0x50, 0xae, 0x46, 0x98, 0xe5, 0x3b, 0x5e, 0xd7, 0xe5, 0xbf, 0x10, 0xd9, 0x19, 0xbd, 0x9b,
+	0x91, 0x97, 0x6b, 0xc7, 0x50, 0xad, 0x3b, 0x0e, 0x6f, 0x21, 0x64, 0xd1, 0x56, 0xcb, 0x61, 0x2c,
+	0x2a, 0x4a, 0xb6, 0xb2, 0xf8, 0xfc, 0x60, 0xf6, 0xa5, 0x30, 0x11, 0xab, 0x35, 0x15, 0x87, 0xaa,
+	0x2d, 0x83, 0x37, 0x94, 0x4d, 0x62, 0x1b, 0x56, 0x7b, 0x8d, 0x58, 0xcf, 0x1e, 0x2d, 0x22, 0xd8,
+	0x67, 0x8d, 0x58, 0x5a, 0x57, 0x02, 0x7c, 0x15, 0x4d, 0x1a, 0xb5, 0x9a, 0x5f, 0x98, 0x10, 0x89,
+	0x0a, 0xcf, 0x1e, 0x2d, 0xce, 0x00, 0xf2, 0xdd, 0x5a, 0xcd, 0x27, 0x8c, 0x7d, 0xc4, 0x7d, 0xc7,
+	0xb5, 0x35, 0x81, 0xc2, 0x5b, 0x28, 0x13, 0x16, 0xa1, 0x30, 0x39, 0x27, 0x2d, 0x9c, 0xa9, 0xac,
+	0x3c, 0x3f, 0x98, 0x5d, 0xb2, 0x1d, 0xde, 0xd8, 0x31, 0x15, 0x8b, 0xb6, 0x54, 0x70, 0xd1, 0x6a,
+	0x18, 0x8e, 0x1b, 0x0d, 0x54, 0xde, 0xf6, 0x08, 0x53, 0x2a, 0x1b, 0xd5, 0xe5, 0x6b, 0xaf, 0x57,
+	0x77, 0xcc, 0xf7, 0x49, 0x5b, 0x9b, 0x32, 0x83, 0xb2, 0xe1, 0xdb, 0x68, 0xc2, 0xa3, 0x5e, 0x61,
+	0x4a, 0x58, 0x91, 0xb8, 0xbf, 0x91, 0x1d, 0x4a, 0xd5, 0xa7, 0xb4, 0xfe, 0x41, 0xbd, 0x4a, 0x19,
+	0x23, 0x82, 0x73, 0xe5, 0xe3, 0x55, 0x2d, 0x88, 0xc3, 0xd7, 0xd0, 0x59, 0xb6, 0x6d, 0xb0, 0x06,
+	0xa9, 0xe9, 0x10, 0xaa, 0x37, 0x88, 0x63, 0x37, 0x78, 0x21, 0x33, 0x27, 0x2d, 0x4c, 0x6a, 0x33,
+	0xb0, 0x5a, 0x09, 0x17, 0xd7, 0xc5, 0x1a, 0xbe, 0x8a, 0x70, 0x27, 0x8a, 0x5b, 0x51, 0xc4, 0xff,
+	0x44, 0xc4, 0x74, 0x14, 0xc1, 0x2d, 0x40, 0x9f, 0x45, 0x19, 0x40, 0xfc, 0x5f, 0x20, 0x60, 0x14,
+	0x3c, 0x67, 0xbb, 0x94, 0x3b, 0xae, 0xad, 0x7b, 0xf4, 0x73, 0xe2, 0x17, 0xb2, 0x62, 0x35, 0x17,
+	0xce, 0x55, 0x83, 0xa9, 0xe4, 0xa9, 0x46, 0xc9, 0x53, 0x2d, 0x6f, 0xa0, 0x8b, 0x7d, 0x4f, 0xec,
+	0xf1, 0x6b, 0x15, 0x3d, 0x9d, 0x89, 0xd3, 0x2f, 0xf5, 0x9c, 0xfe, 0x75, 0x74, 0x29, 0x25, 0x15,
+	0x9c, 0xc2, 0xb4, 0xab, 0xb6, 0xf4, 0x5b, 0x16, 0x4d, 0x89, 0x54, 0xf8, 0x3b, 0x09, 0x65, 0xc2,
+	0x76, 0x87, 0x17, 0x87, 0xdc, 0x8f, 0xde, 0x3e, 0x5b, 0x54, 0x4e, 0x0a, 0x0f, 0x49, 0xc9, 0xaf,
+	0x7e, 0xf5, 0xeb, 0x5f, 0xdf, 0x8f, 0x5f, 0xc0, 0xf3, 0x6a, 0x5a, 0x7b, 0xc7, 0x3f, 0x4b, 0x68,
+	0xa6, 0x5f, 0xd3, 0xc3, 0x37, 0xd3, 0xf6, 0x1c, 0xd2, 0x97, 0x8b, 0xb7, 0x46, 0x0b, 0x06, 0xfa,
+	0x37, 0x04, 0xfd, 0x65, 0x5c, 0x1e, 0x42, 0xbf, 0x63, 0xba, 0x0f, 0x19, 0xf4, 0xed, 0x80, 0xf5,
+	0x2f, 0x12, 0xca, 0xf7, 0xb4, 0x3b, 0x7c, 0xfd, 0xa4, 0x74, 0x92, 0x5d, 0xb6, 0x78, 0x63, 0x84,
+	0x48, 0x50, 0xb1, 0x26, 0x54, 0xbc, 0x85, 0x6f, 0x9d, 0x40, 0x05, 0xeb, 0xc8, 0x50, 0x1f, 0x76,
+	0x77, 0xf5, 0x7d, 0xfc, 0x8f, 0xd4, 0xfb, 0x04, 0x46, 0x7b, 0xe2, 0xb7, 0xd3, 0xd8, 0xa5, 0xdc,
+	0x84, 0xe2, 0x3b, 0xa3, 0x27, 0x00, 0x95, 0x5b, 0x42, 0xe5, 0x3d, 0x7c, 0x67, 0x88, 0xca, 0x9e,
+	0x2e, 0xa1, 0x77, 0x56, 0x1f, 0xc6, 0x2e, 0xe2, 0x3e, 0x7e, 0x22, 0xa1, 0x7c, 0x4f, 0x93, 0x4e,
+	0xaf, 0xdf, 0xa0, 0x4f, 0x8c, 0xf4, 0xfa, 0x0d, 0xfc, 0x22, 0x90, 0x57, 0x85, 0xb2, 0xdb, 0xf8,
+	0xe6, 0x69, 0x94, 0xb1, 0x58, 0xfd, 0xf6, 0xf1, 0x1f, 0x12, 0x9a, 0x4e, 0x6e, 0x81, 0xdf, 0x3c,
+	0x2d, 0xa9, 0x48, 0xcd, 0xf5, 0xd3, 0x07, 0x82, 0x18, 0x4d, 0x88, 0xd9, 0xc4, 0xef, 0x9d, 0x46,
+	0x4c, 0x5c, 0x4b, 0xb2, 0x56, 0x95, 0xea, 0xe3, 0xc3, 0x92, 0xf4, 0xf4, 0xb0, 0x24, 0xfd, 0x79,
+	0x58, 0x92, 0xbe, 0x3d, 0x2a, 0x8d, 0x3d, 0x3d, 0x2a, 0x8d, 0xfd, 0x7e, 0x54, 0x1a, 0xbb, 0xbf,
+	0x92, 0xd6, 0xc2, 0xf6, 0x92, 0xdb, 0x8b, 0x9e, 0x66, 0x66, 0xc4, 0x3f, 0x1b, 0xcb, 0xff, 0x06,
+	0x00, 0x00, 0xff, 0xff, 0xd2, 0xfd, 0x84, 0xdd, 0x29, 0x0e, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -842,13 +842,13 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// Parameters queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
-	// ChainRegistryList queries the list of chains that are registered to Babylon
-	ChainRegistryList(ctx context.Context, in *QueryChainRegistryListRequest, opts ...grpc.CallOption) (*QueryChainRegistryListResponse, error)
-	// ChainsRegistry queries the latest info for a given list of chains in Babylon's view
-	ChainsRegistry(ctx context.Context, in *QueryChainsRegistryRequest, opts ...grpc.CallOption) (*QueryChainsRegistryResponse, error)
-	// FinalityProviderChain info about one finality provider's chain id
-	FinalityProviderChain(ctx context.Context, in *QueryFinalityProviderChainRequest, opts ...grpc.CallOption) (*QueryFinalityProviderChainResponse, error)
-	// FinalityProviders queries all finality providers for a given chain
+	// ConsumerRegistryList queries the list of consumers that are registered to Babylon
+	ConsumerRegistryList(ctx context.Context, in *QueryConsumerRegistryListRequest, opts ...grpc.CallOption) (*QueryConsumerRegistryListResponse, error)
+	// ConsumersRegistry queries the latest info for a given list of consumers in Babylon's view
+	ConsumersRegistry(ctx context.Context, in *QueryConsumersRegistryRequest, opts ...grpc.CallOption) (*QueryConsumersRegistryResponse, error)
+	// FinalityProviderConsumer info about one finality provider's consumer id
+	FinalityProviderConsumer(ctx context.Context, in *QueryFinalityProviderConsumerRequest, opts ...grpc.CallOption) (*QueryFinalityProviderConsumerResponse, error)
+	// FinalityProviders queries all finality providers for a given consumer
 	FinalityProviders(ctx context.Context, in *QueryFinalityProvidersRequest, opts ...grpc.CallOption) (*QueryFinalityProvidersResponse, error)
 	// FinalityProvider info about one finality provider
 	FinalityProvider(ctx context.Context, in *QueryFinalityProviderRequest, opts ...grpc.CallOption) (*QueryFinalityProviderResponse, error)
@@ -871,27 +871,27 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 	return out, nil
 }
 
-func (c *queryClient) ChainRegistryList(ctx context.Context, in *QueryChainRegistryListRequest, opts ...grpc.CallOption) (*QueryChainRegistryListResponse, error) {
-	out := new(QueryChainRegistryListResponse)
-	err := c.cc.Invoke(ctx, "/babylon.btcstkconsumer.v1.Query/ChainRegistryList", in, out, opts...)
+func (c *queryClient) ConsumerRegistryList(ctx context.Context, in *QueryConsumerRegistryListRequest, opts ...grpc.CallOption) (*QueryConsumerRegistryListResponse, error) {
+	out := new(QueryConsumerRegistryListResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstkconsumer.v1.Query/ConsumerRegistryList", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) ChainsRegistry(ctx context.Context, in *QueryChainsRegistryRequest, opts ...grpc.CallOption) (*QueryChainsRegistryResponse, error) {
-	out := new(QueryChainsRegistryResponse)
-	err := c.cc.Invoke(ctx, "/babylon.btcstkconsumer.v1.Query/ChainsRegistry", in, out, opts...)
+func (c *queryClient) ConsumersRegistry(ctx context.Context, in *QueryConsumersRegistryRequest, opts ...grpc.CallOption) (*QueryConsumersRegistryResponse, error) {
+	out := new(QueryConsumersRegistryResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstkconsumer.v1.Query/ConsumersRegistry", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) FinalityProviderChain(ctx context.Context, in *QueryFinalityProviderChainRequest, opts ...grpc.CallOption) (*QueryFinalityProviderChainResponse, error) {
-	out := new(QueryFinalityProviderChainResponse)
-	err := c.cc.Invoke(ctx, "/babylon.btcstkconsumer.v1.Query/FinalityProviderChain", in, out, opts...)
+func (c *queryClient) FinalityProviderConsumer(ctx context.Context, in *QueryFinalityProviderConsumerRequest, opts ...grpc.CallOption) (*QueryFinalityProviderConsumerResponse, error) {
+	out := new(QueryFinalityProviderConsumerResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstkconsumer.v1.Query/FinalityProviderConsumer", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -920,13 +920,13 @@ func (c *queryClient) FinalityProvider(ctx context.Context, in *QueryFinalityPro
 type QueryServer interface {
 	// Parameters queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
-	// ChainRegistryList queries the list of chains that are registered to Babylon
-	ChainRegistryList(context.Context, *QueryChainRegistryListRequest) (*QueryChainRegistryListResponse, error)
-	// ChainsRegistry queries the latest info for a given list of chains in Babylon's view
-	ChainsRegistry(context.Context, *QueryChainsRegistryRequest) (*QueryChainsRegistryResponse, error)
-	// FinalityProviderChain info about one finality provider's chain id
-	FinalityProviderChain(context.Context, *QueryFinalityProviderChainRequest) (*QueryFinalityProviderChainResponse, error)
-	// FinalityProviders queries all finality providers for a given chain
+	// ConsumerRegistryList queries the list of consumers that are registered to Babylon
+	ConsumerRegistryList(context.Context, *QueryConsumerRegistryListRequest) (*QueryConsumerRegistryListResponse, error)
+	// ConsumersRegistry queries the latest info for a given list of consumers in Babylon's view
+	ConsumersRegistry(context.Context, *QueryConsumersRegistryRequest) (*QueryConsumersRegistryResponse, error)
+	// FinalityProviderConsumer info about one finality provider's consumer id
+	FinalityProviderConsumer(context.Context, *QueryFinalityProviderConsumerRequest) (*QueryFinalityProviderConsumerResponse, error)
+	// FinalityProviders queries all finality providers for a given consumer
 	FinalityProviders(context.Context, *QueryFinalityProvidersRequest) (*QueryFinalityProvidersResponse, error)
 	// FinalityProvider info about one finality provider
 	FinalityProvider(context.Context, *QueryFinalityProviderRequest) (*QueryFinalityProviderResponse, error)
@@ -939,14 +939,14 @@ type UnimplementedQueryServer struct {
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
 }
-func (*UnimplementedQueryServer) ChainRegistryList(ctx context.Context, req *QueryChainRegistryListRequest) (*QueryChainRegistryListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ChainRegistryList not implemented")
+func (*UnimplementedQueryServer) ConsumerRegistryList(ctx context.Context, req *QueryConsumerRegistryListRequest) (*QueryConsumerRegistryListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConsumerRegistryList not implemented")
 }
-func (*UnimplementedQueryServer) ChainsRegistry(ctx context.Context, req *QueryChainsRegistryRequest) (*QueryChainsRegistryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ChainsRegistry not implemented")
+func (*UnimplementedQueryServer) ConsumersRegistry(ctx context.Context, req *QueryConsumersRegistryRequest) (*QueryConsumersRegistryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConsumersRegistry not implemented")
 }
-func (*UnimplementedQueryServer) FinalityProviderChain(ctx context.Context, req *QueryFinalityProviderChainRequest) (*QueryFinalityProviderChainResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FinalityProviderChain not implemented")
+func (*UnimplementedQueryServer) FinalityProviderConsumer(ctx context.Context, req *QueryFinalityProviderConsumerRequest) (*QueryFinalityProviderConsumerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinalityProviderConsumer not implemented")
 }
 func (*UnimplementedQueryServer) FinalityProviders(ctx context.Context, req *QueryFinalityProvidersRequest) (*QueryFinalityProvidersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FinalityProviders not implemented")
@@ -977,56 +977,56 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_ChainRegistryList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryChainRegistryListRequest)
+func _Query_ConsumerRegistryList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryConsumerRegistryListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).ChainRegistryList(ctx, in)
+		return srv.(QueryServer).ConsumerRegistryList(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.btcstkconsumer.v1.Query/ChainRegistryList",
+		FullMethod: "/babylon.btcstkconsumer.v1.Query/ConsumerRegistryList",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ChainRegistryList(ctx, req.(*QueryChainRegistryListRequest))
+		return srv.(QueryServer).ConsumerRegistryList(ctx, req.(*QueryConsumerRegistryListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_ChainsRegistry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryChainsRegistryRequest)
+func _Query_ConsumersRegistry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryConsumersRegistryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).ChainsRegistry(ctx, in)
+		return srv.(QueryServer).ConsumersRegistry(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.btcstkconsumer.v1.Query/ChainsRegistry",
+		FullMethod: "/babylon.btcstkconsumer.v1.Query/ConsumersRegistry",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ChainsRegistry(ctx, req.(*QueryChainsRegistryRequest))
+		return srv.(QueryServer).ConsumersRegistry(ctx, req.(*QueryConsumersRegistryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_FinalityProviderChain_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryFinalityProviderChainRequest)
+func _Query_FinalityProviderConsumer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFinalityProviderConsumerRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).FinalityProviderChain(ctx, in)
+		return srv.(QueryServer).FinalityProviderConsumer(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.btcstkconsumer.v1.Query/FinalityProviderChain",
+		FullMethod: "/babylon.btcstkconsumer.v1.Query/FinalityProviderConsumer",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).FinalityProviderChain(ctx, req.(*QueryFinalityProviderChainRequest))
+		return srv.(QueryServer).FinalityProviderConsumer(ctx, req.(*QueryFinalityProviderConsumerRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1076,16 +1076,16 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_Params_Handler,
 		},
 		{
-			MethodName: "ChainRegistryList",
-			Handler:    _Query_ChainRegistryList_Handler,
+			MethodName: "ConsumerRegistryList",
+			Handler:    _Query_ConsumerRegistryList_Handler,
 		},
 		{
-			MethodName: "ChainsRegistry",
-			Handler:    _Query_ChainsRegistry_Handler,
+			MethodName: "ConsumersRegistry",
+			Handler:    _Query_ConsumersRegistry_Handler,
 		},
 		{
-			MethodName: "FinalityProviderChain",
-			Handler:    _Query_FinalityProviderChain_Handler,
+			MethodName: "FinalityProviderConsumer",
+			Handler:    _Query_FinalityProviderConsumer_Handler,
 		},
 		{
 			MethodName: "FinalityProviders",
@@ -1156,7 +1156,7 @@ func (m *QueryParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryChainRegistryListRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryConsumerRegistryListRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1166,12 +1166,12 @@ func (m *QueryChainRegistryListRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryChainRegistryListRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryConsumerRegistryListRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryChainRegistryListRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryConsumerRegistryListRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1191,7 +1191,7 @@ func (m *QueryChainRegistryListRequest) MarshalToSizedBuffer(dAtA []byte) (int, 
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryChainRegistryListResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryConsumerRegistryListResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1201,12 +1201,12 @@ func (m *QueryChainRegistryListResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryChainRegistryListResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryConsumerRegistryListResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryChainRegistryListResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryConsumerRegistryListResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1223,11 +1223,11 @@ func (m *QueryChainRegistryListResponse) MarshalToSizedBuffer(dAtA []byte) (int,
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.ChainIds) > 0 {
-		for iNdEx := len(m.ChainIds) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.ChainIds[iNdEx])
-			copy(dAtA[i:], m.ChainIds[iNdEx])
-			i = encodeVarintQuery(dAtA, i, uint64(len(m.ChainIds[iNdEx])))
+	if len(m.ConsumerIds) > 0 {
+		for iNdEx := len(m.ConsumerIds) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.ConsumerIds[iNdEx])
+			copy(dAtA[i:], m.ConsumerIds[iNdEx])
+			i = encodeVarintQuery(dAtA, i, uint64(len(m.ConsumerIds[iNdEx])))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -1235,7 +1235,7 @@ func (m *QueryChainRegistryListResponse) MarshalToSizedBuffer(dAtA []byte) (int,
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryChainsRegistryRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryConsumersRegistryRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1245,21 +1245,21 @@ func (m *QueryChainsRegistryRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryChainsRegistryRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryConsumersRegistryRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryChainsRegistryRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryConsumersRegistryRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.ChainIds) > 0 {
-		for iNdEx := len(m.ChainIds) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.ChainIds[iNdEx])
-			copy(dAtA[i:], m.ChainIds[iNdEx])
-			i = encodeVarintQuery(dAtA, i, uint64(len(m.ChainIds[iNdEx])))
+	if len(m.ConsumerIds) > 0 {
+		for iNdEx := len(m.ConsumerIds) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.ConsumerIds[iNdEx])
+			copy(dAtA[i:], m.ConsumerIds[iNdEx])
+			i = encodeVarintQuery(dAtA, i, uint64(len(m.ConsumerIds[iNdEx])))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -1267,7 +1267,7 @@ func (m *QueryChainsRegistryRequest) MarshalToSizedBuffer(dAtA []byte) (int, err
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryChainsRegistryResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryConsumersRegistryResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1277,20 +1277,20 @@ func (m *QueryChainsRegistryResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryChainsRegistryResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryConsumersRegistryResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryChainsRegistryResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryConsumersRegistryResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.ChainsRegister) > 0 {
-		for iNdEx := len(m.ChainsRegister) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.ConsumersRegister) > 0 {
+		for iNdEx := len(m.ConsumersRegister) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.ChainsRegister[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.ConsumersRegister[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -1336,10 +1336,10 @@ func (m *QueryFinalityProvidersRequest) MarshalToSizedBuffer(dAtA []byte) (int, 
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.ChainId) > 0 {
-		i -= len(m.ChainId)
-		copy(dAtA[i:], m.ChainId)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.ChainId)))
+	if len(m.ConsumerId) > 0 {
+		i -= len(m.ConsumerId)
+		copy(dAtA[i:], m.ConsumerId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ConsumerId)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1422,10 +1422,10 @@ func (m *QueryFinalityProviderRequest) MarshalToSizedBuffer(dAtA []byte) (int, e
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.ChainId) > 0 {
-		i -= len(m.ChainId)
-		copy(dAtA[i:], m.ChainId)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.ChainId)))
+	if len(m.ConsumerId) > 0 {
+		i -= len(m.ConsumerId)
+		copy(dAtA[i:], m.ConsumerId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ConsumerId)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1487,10 +1487,10 @@ func (m *FinalityProviderResponse) MarshalToSizedBuffer(dAtA []byte) (int, error
 	_ = i
 	var l int
 	_ = l
-	if len(m.ChainId) > 0 {
-		i -= len(m.ChainId)
-		copy(dAtA[i:], m.ChainId)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.ChainId)))
+	if len(m.ConsumerId) > 0 {
+		i -= len(m.ConsumerId)
+		copy(dAtA[i:], m.ConsumerId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ConsumerId)))
 		i--
 		dAtA[i] = 0x52
 	}
@@ -1572,7 +1572,7 @@ func (m *FinalityProviderResponse) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryFinalityProviderChainRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalityProviderConsumerRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1582,12 +1582,12 @@ func (m *QueryFinalityProviderChainRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryFinalityProviderChainRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderConsumerRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryFinalityProviderChainRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderConsumerRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1602,7 +1602,7 @@ func (m *QueryFinalityProviderChainRequest) MarshalToSizedBuffer(dAtA []byte) (i
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryFinalityProviderChainResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalityProviderConsumerResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1612,20 +1612,20 @@ func (m *QueryFinalityProviderChainResponse) Marshal() (dAtA []byte, err error) 
 	return dAtA[:n], nil
 }
 
-func (m *QueryFinalityProviderChainResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderConsumerResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryFinalityProviderChainResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderConsumerResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.ChainId) > 0 {
-		i -= len(m.ChainId)
-		copy(dAtA[i:], m.ChainId)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.ChainId)))
+	if len(m.ConsumerId) > 0 {
+		i -= len(m.ConsumerId)
+		copy(dAtA[i:], m.ConsumerId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ConsumerId)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1663,7 +1663,7 @@ func (m *QueryParamsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryChainRegistryListRequest) Size() (n int) {
+func (m *QueryConsumerRegistryListRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1676,14 +1676,14 @@ func (m *QueryChainRegistryListRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryChainRegistryListResponse) Size() (n int) {
+func (m *QueryConsumerRegistryListResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.ChainIds) > 0 {
-		for _, s := range m.ChainIds {
+	if len(m.ConsumerIds) > 0 {
+		for _, s := range m.ConsumerIds {
 			l = len(s)
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -1695,14 +1695,14 @@ func (m *QueryChainRegistryListResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryChainsRegistryRequest) Size() (n int) {
+func (m *QueryConsumersRegistryRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.ChainIds) > 0 {
-		for _, s := range m.ChainIds {
+	if len(m.ConsumerIds) > 0 {
+		for _, s := range m.ConsumerIds {
 			l = len(s)
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -1710,14 +1710,14 @@ func (m *QueryChainsRegistryRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryChainsRegistryResponse) Size() (n int) {
+func (m *QueryConsumersRegistryResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.ChainsRegister) > 0 {
-		for _, e := range m.ChainsRegister {
+	if len(m.ConsumersRegister) > 0 {
+		for _, e := range m.ConsumersRegister {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -1731,7 +1731,7 @@ func (m *QueryFinalityProvidersRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.ChainId)
+	l = len(m.ConsumerId)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
@@ -1767,7 +1767,7 @@ func (m *QueryFinalityProviderRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.ChainId)
+	l = len(m.ConsumerId)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
@@ -1829,14 +1829,14 @@ func (m *FinalityProviderResponse) Size() (n int) {
 	if m.VotingPower != 0 {
 		n += 1 + sovQuery(uint64(m.VotingPower))
 	}
-	l = len(m.ChainId)
+	l = len(m.ConsumerId)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
 	return n
 }
 
-func (m *QueryFinalityProviderChainRequest) Size() (n int) {
+func (m *QueryFinalityProviderConsumerRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1849,13 +1849,13 @@ func (m *QueryFinalityProviderChainRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryFinalityProviderChainResponse) Size() (n int) {
+func (m *QueryFinalityProviderConsumerResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.ChainId)
+	l = len(m.ConsumerId)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
@@ -2001,7 +2001,7 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryChainRegistryListRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryConsumerRegistryListRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2024,10 +2024,10 @@ func (m *QueryChainRegistryListRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryChainRegistryListRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryConsumerRegistryListRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryChainRegistryListRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryConsumerRegistryListRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2087,7 +2087,7 @@ func (m *QueryChainRegistryListRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryChainRegistryListResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryConsumerRegistryListResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2110,15 +2110,15 @@ func (m *QueryChainRegistryListResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryChainRegistryListResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryConsumerRegistryListResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryChainRegistryListResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryConsumerRegistryListResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainIds", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerIds", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2146,7 +2146,7 @@ func (m *QueryChainRegistryListResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainIds = append(m.ChainIds, string(dAtA[iNdEx:postIndex]))
+			m.ConsumerIds = append(m.ConsumerIds, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -2205,7 +2205,7 @@ func (m *QueryChainRegistryListResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryChainsRegistryRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryConsumersRegistryRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2228,15 +2228,15 @@ func (m *QueryChainsRegistryRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryChainsRegistryRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryConsumersRegistryRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryChainsRegistryRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryConsumersRegistryRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainIds", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerIds", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2264,7 +2264,7 @@ func (m *QueryChainsRegistryRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainIds = append(m.ChainIds, string(dAtA[iNdEx:postIndex]))
+			m.ConsumerIds = append(m.ConsumerIds, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -2287,7 +2287,7 @@ func (m *QueryChainsRegistryRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryChainsRegistryResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryConsumersRegistryResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2310,15 +2310,15 @@ func (m *QueryChainsRegistryResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryChainsRegistryResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryConsumersRegistryResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryChainsRegistryResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryConsumersRegistryResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainsRegister", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumersRegister", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2345,8 +2345,8 @@ func (m *QueryChainsRegistryResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainsRegister = append(m.ChainsRegister, &ChainRegister{})
-			if err := m.ChainsRegister[len(m.ChainsRegister)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.ConsumersRegister = append(m.ConsumersRegister, &ConsumerRegister{})
+			if err := m.ConsumersRegister[len(m.ConsumersRegister)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2402,7 +2402,7 @@ func (m *QueryFinalityProvidersRequest) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2430,7 +2430,7 @@ func (m *QueryFinalityProvidersRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainId = string(dAtA[iNdEx:postIndex])
+			m.ConsumerId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -2640,7 +2640,7 @@ func (m *QueryFinalityProviderRequest) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2668,7 +2668,7 @@ func (m *QueryFinalityProviderRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainId = string(dAtA[iNdEx:postIndex])
+			m.ConsumerId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -3091,7 +3091,7 @@ func (m *FinalityProviderResponse) Unmarshal(dAtA []byte) error {
 			}
 		case 10:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3119,7 +3119,7 @@ func (m *FinalityProviderResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainId = string(dAtA[iNdEx:postIndex])
+			m.ConsumerId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -3142,7 +3142,7 @@ func (m *FinalityProviderResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryFinalityProviderChainRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalityProviderConsumerRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3165,10 +3165,10 @@ func (m *QueryFinalityProviderChainRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryFinalityProviderChainRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalityProviderConsumerRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryFinalityProviderChainRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalityProviderConsumerRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3224,7 +3224,7 @@ func (m *QueryFinalityProviderChainRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryFinalityProviderChainResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalityProviderConsumerResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3247,15 +3247,15 @@ func (m *QueryFinalityProviderChainResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryFinalityProviderChainResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalityProviderConsumerResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryFinalityProviderChainResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalityProviderConsumerResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3283,7 +3283,7 @@ func (m *QueryFinalityProviderChainResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainId = string(dAtA[iNdEx:postIndex])
+			m.ConsumerId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

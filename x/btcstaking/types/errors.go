@@ -31,6 +31,6 @@ var (
 	ErrVotingPowerTableNotUpdated   = errorsmod.Register(ModuleName, 1122, "voting power table has not been updated")
 	ErrVotingPowerDistCacheNotFound = errorsmod.Register(ModuleName, 1123, "the voting power distribution cache is not found")
 	ErrParamsNotFound               = errorsmod.Register(ModuleName, 1124, "the parameters are not found")
-	ErrChainIDNotRegistered         = errorsmod.Register(ModuleName, 1125, "CZ chain not registered")
+	ErrConsumerIDNotRegistered      = errorsmod.Register(ModuleName, 1125, "Consumer is not registered")
 	ErrNoBabylonFPRestaked          = errorsmod.Register(ModuleName, 1126, "the BTC delegation request does not restake to any Babylon finality provider")
 )

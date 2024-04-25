@@ -75,7 +75,7 @@ func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.Priva
 		BtcPk:       bip340PK,
 		Addr:        fpAddr.String(),
 		Pop:         pop,
-		ChainId:     "", // TODO: parameterise
+		ConsumerId:  "", // TODO: parameterise
 	}, nil
 }
 

@@ -165,8 +165,8 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 			// ensure the finality provider's registered epoch is finalised
 			restakedToBabylon = true
 			continue
-		} else if chainID, err := k.bscKeeper.GetConsumerFinalityProviderChain(ctx, &fpBTCPK); err == nil {
-			fp, err := k.bscKeeper.GetConsumerFinalityProvider(ctx, chainID, &fpBTCPK)
+		} else if consumerID, err := k.bscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
+			fp, err := k.bscKeeper.GetConsumerFinalityProvider(ctx, consumerID, &fpBTCPK)
 			if err != nil {
 				return false, err
 			}

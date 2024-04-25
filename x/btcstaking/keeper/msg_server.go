@@ -86,11 +86,11 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		return nil, types.ErrFpRegistered
 	}
 
-	// Default chain id
-	chainID := req.GetChainId()
-	if chainID == "" {
+	// default consumer ID is Babylon's chain ID
+	consumerID := req.GetConsumerId()
+	if consumerID == "" {
 		// canonical chain id
-		chainID = ctx.ChainID()
+		consumerID = ctx.ChainID()
 	}
 
 	// all good, add this finality provider
@@ -100,19 +100,19 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		Addr:        fpAddr.String(),
 		BtcPk:       req.BtcPk,
 		Pop:         req.Pop,
-		ChainId:     chainID,
+		ConsumerId:  consumerID,
 	}
 
-	if chainID == ctx.ChainID() {
+	if consumerID == ctx.ChainID() {
 		ms.SetFinalityProvider(ctx, &fp)
 	} else {
 		// ensure finality provider does not already exist
 		if ms.bscKeeper.HasConsumerFinalityProvider(ctx, req.BtcPk) {
 			return nil, types.ErrFpRegistered
 		}
-		// Check that chain is registered in the btcstkconsumer module
-		if !ms.bscKeeper.IsConsumerChainRegistered(ctx, chainID) {
-			return nil, types.ErrChainIDNotRegistered
+		// Check that consumer is registered in the btcstkconsumer module
+		if !ms.bscKeeper.IsConsumerRegistered(ctx, consumerID) {
+			return nil, types.ErrConsumerIDNotRegistered
 		}
 		ms.bscKeeper.SetConsumerFinalityProvider(ctx, &fp)
 	}
@@ -226,7 +226,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// - at least 1 one of them is a Babylon finality provider,
 	// - are not slashed, and
 	// - their registered epochs are finalised
-	// and then check whether the BTC stake is restaked to FPs of consumer chains
+	// and then check whether the BTC stake is restaked to FPs of consumers
 	// TODO: ensure the BTC delegation does not restake to too many finality providers
 	// (pending concrete design)
 	restakedToConsumers, err := ms.validateRestakedFPs(ctx, req.FpBtcPkList)
@@ -476,11 +476,11 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
 		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
 	}
-	// if this BTC delegation is restaked to consumer chains' FPs, add it to btcstkconsumer indexes
+	// if this BTC delegation is restaked to consumers' FPs, add it to btcstkconsumer indexes
 	// TODO: revisit the relationship between BTC staking module and BTC staking consumer module
 	if restakedToConsumers {
 		if err := ms.IndexBTCConsumerDelegation(ctx, newBTCDel); err != nil {
-			panic(fmt.Errorf("failed to add BTC delegation restaked to consumer chains' finality providers despite it has passed verification: %w", err))
+			panic(fmt.Errorf("failed to add BTC delegation restaked to consumers' finality providers despite it has passed verification: %w", err))
 		}
 	}
 
@@ -520,7 +520,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, err
 	}
 
-	// check whether the BTC stake is restaked to FPs of consumer chains
+	// check whether the BTC stake is restaked to FPs of consumers
 	_, err = ms.validateRestakedFPs(ctx, btcDel.FpBtcPkList)
 	if err != nil {
 		panic(err) // btcDel has passed verification and this can only be programming error
@@ -671,7 +671,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		return nil, err
 	}
 
-	// check whether the BTC stake is restaked to FPs of consumer chains
+	// check whether the BTC stake is restaked to FPs of consumers
 	_, err = ms.validateRestakedFPs(ctx, btcDel.FpBtcPkList)
 	if err != nil {
 		panic(err) // btcDel has passed verification and this can only be programming error
