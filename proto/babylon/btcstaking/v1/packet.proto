@@ -59,6 +59,9 @@ message SlashedFinalityProvider {
   // btc_pk_hex is the Bitcoin secp256k1 PK of this finality provider
   // the PK follows encoding in BIP-340 spec in hex format
   string btc_pk_hex = 1;
+  // recovered_fp_btc_sk is the finality provider's BTC SK extracted due to slashing
+  // this allows the consumer chain to verify the BTC delegation is indeed slashed
+  string recovered_fp_btc_sk = 2;
 }
 
 // ActiveBTCDelegation is an IBC packet sent from Babylon to consumer chain
@@ -129,13 +132,14 @@ message BTCUndelegationInfo {
   repeated CovenantAdaptorSignatures covenant_slashing_sigs = 6;
 }
 
-// SlashedBTCDelegation is an IBC packet sent upon a slashed BTC delegation
-// Slashing can happen on both Babylon and consumer chain, so both of them could
-// send this packet to each other
+// SlashedBTCDelegation is an IBC packet sent from Babylon to consumer chain
+// about a slashed BTC delegation restaked to >=1 of this consumer chain's 
+// finality provider
 message SlashedBTCDelegation {
   // staking tx hash of the BTC delegation. It uniquely identifies a BTC delegation
   string staking_tx_hash = 1;
-  // recovered_fp_btc_sk is the finality provider's BTC SK extracted due to slashing
+  // recovered_fp_btc_sk is the extracted BTC SK of the finality provider on
+  // this consumer chain
   // this allows the consumer chain to verify the BTC delegation is indeed slashed
   string recovered_fp_btc_sk = 2;
 }

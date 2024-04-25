@@ -1,9 +1,9 @@
 package e2e
 
 import (
+	"errors"
 	"fmt"
 	"math"
-	"strings"
 	"time"
 
 	"github.com/babylonchain/babylon/crypto/eots"
@@ -219,7 +219,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		fmt.Println("current epoch", ce)
 		resp, err := nonValidatorNode.QueryRawCheckpoint(endEpoch)
 		if err != nil {
-			if !strings.Contains(err.Error(), "codespace checkpointing code 1201") {
+			if !errors.Is(err, ckpttypes.ErrCkptDoesNotExist) {
 				return false
 			}
 		}
