@@ -9,13 +9,13 @@ import (
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgUpdateParams{}, "btcstkconsumer/MsgUpdateParams", nil)
-	cdc.RegisterConcrete(&MsgRegisterChain{}, "btcstkconsumer/MsgRegisterChain", nil)
+	cdc.RegisterConcrete(&MsgRegisterConsumer{}, "btcstkconsumer/MsgRegisterConsumer", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgUpdateParams{},
-		&MsgRegisterChain{},
+		&MsgRegisterConsumer{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

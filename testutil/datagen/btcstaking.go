@@ -86,7 +86,7 @@ func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.Priva
 		BabylonPk:   secp256k1PK,
 		BtcPk:       bip340PK,
 		Pop:         pop,
-		ChainId:     "", // TODO: parameterise
+		ConsumerId:  "", // TODO: parameterise
 	}, nil
 }
 

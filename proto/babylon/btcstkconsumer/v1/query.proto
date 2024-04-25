@@ -21,28 +21,28 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylon/btcstkconsumer/v1/params";
   }
-  // ChainRegistryList queries the list of chains that are registered to Babylon
-  rpc ChainRegistryList(QueryChainRegistryListRequest) returns (QueryChainRegistryListResponse) {
-    option (google.api.http).get = "/babylon/btcstkconsumer/v1/chain_registry_list";
+  // ConsumerRegistryList queries the list of consumers that are registered to Babylon
+  rpc ConsumerRegistryList(QueryConsumerRegistryListRequest) returns (QueryConsumerRegistryListResponse) {
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/consumer_registry_list";
   }
-  // ChainsRegistry queries the latest info for a given list of chains in Babylon's view
-  rpc ChainsRegistry(QueryChainsRegistryRequest) returns (QueryChainsRegistryResponse) {
-    option (google.api.http).get = "/babylon/btcstkconsumer/v1/chains_registry/{chain_ids}";
-  }
-
-  // FinalityProviderChain info about one finality provider's chain id
-  rpc FinalityProviderChain(QueryFinalityProviderChainRequest) returns (QueryFinalityProviderChainResponse) {
-    option (google.api.http).get = "/babylon/btcstkconsumer/v1/finality_provider_chain/{fp_btc_pk_hex}";
+  // ConsumersRegistry queries the latest info for a given list of consumers in Babylon's view
+  rpc ConsumersRegistry(QueryConsumersRegistryRequest) returns (QueryConsumersRegistryResponse) {
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/consumers_registry/{consumer_ids}";
   }
 
-  // FinalityProviders queries all finality providers for a given chain
+  // FinalityProviderConsumer info about one finality provider's consumer id
+  rpc FinalityProviderConsumer(QueryFinalityProviderConsumerRequest) returns (QueryFinalityProviderConsumerResponse) {
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/finality_provider_consumer/{fp_btc_pk_hex}";
+  }
+
+  // FinalityProviders queries all finality providers for a given consumer
   rpc FinalityProviders(QueryFinalityProvidersRequest) returns (QueryFinalityProvidersResponse) {
-    option (google.api.http).get = "/babylon/btcstkconsumer/v1/finality_providers/{chain_id}";
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/finality_providers/{consumer_id}";
   }
 
   // FinalityProvider info about one finality provider
   rpc FinalityProvider(QueryFinalityProviderRequest) returns (QueryFinalityProviderResponse) {
-    option (google.api.http).get = "/babylon/btcstkconsumer/v1/finality_provider/{chain_id}/{fp_btc_pk_hex}";
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/finality_provider/{consumer_id}/{fp_btc_pk_hex}";
   }
 }
 
@@ -58,32 +58,32 @@ message QueryParamsResponse {
   ];
 }
 
-// QueryChainRegistryListRequest is request type for the Query/ChainRegistryList RPC method
-message QueryChainRegistryListRequest {
+// QueryConsumerRegistryListRequest is request type for the Query/ConsumerRegistryList RPC method
+message QueryConsumerRegistryListRequest {
   // pagination defines whether to have the pagination in the request
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
-// QueryChainRegistryListResponse is response type for the Query/ChainRegistryList RPC method
-message QueryChainRegistryListResponse {
-  // chain_ids are IDs of the chains in ascending alphabetical order
-  repeated string chain_ids = 1;
+// QueryConsumerRegistryListResponse is response type for the Query/ConsumerRegistryList RPC method
+message QueryConsumerRegistryListResponse {
+  // consumer_ids are IDs of the consumers in ascending alphabetical order
+  repeated string consumer_ids = 1;
   // pagination defines the pagination in the response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// QueryChainsRegistryRequest is request type for the Query/ChainsRegistry RPC method.
-message QueryChainsRegistryRequest { repeated string chain_ids = 1; }
+// QueryConsumersRegistryRequest is request type for the Query/ConsumersRegistry RPC method.
+message QueryConsumersRegistryRequest { repeated string consumer_ids = 1; }
 
-// QueryChainsRegistryResponse is response type for the Query/ChainsRegistry RPC method.
-message QueryChainsRegistryResponse {
-  repeated babylon.btcstkconsumer.v1.ChainRegister chains_register = 1;
+// QueryConsumersRegistryResponse is response type for the Query/ConsumersRegistry RPC method.
+message QueryConsumersRegistryResponse {
+  repeated babylon.btcstkconsumer.v1.ConsumerRegister consumers_register = 1;
 }
 
 // QueryFinalityProvidersRequest is the request type for the
 // Query/FinalityProviders RPC method.
 message QueryFinalityProvidersRequest {
-  string chain_id = 1;
+  string consumer_id = 1;
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
@@ -100,8 +100,8 @@ message QueryFinalityProvidersResponse {
 
 // QueryFinalityProviderRequest requests information about a finality provider
 message QueryFinalityProviderRequest {
-  // chain id is the chain id this finality provider is registered to
-  string chain_id = 1;
+  // consumer id is the consumer id this finality provider is registered to
+  string consumer_id = 1;
   // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
   string fp_btc_pk_hex = 2;
 }
@@ -140,17 +140,17 @@ message FinalityProviderResponse {
   uint64 height = 8;
   // voting_power is the voting power of this finality provider at the given height
   uint64 voting_power = 9;
-  // chain_id is the chain id this finality provider is registered to
-  string chain_id = 10;
+  // consumer_id is the consumer id this finality provider is registered to
+  string consumer_id = 10;
 }
 
-// QueryFinalityProviderChainRequest requests the chain a CZ finality provider belongs to
-message QueryFinalityProviderChainRequest {
+// QueryFinalityProviderConsumerRequest requests the consumer a CZ finality provider belongs to
+message QueryFinalityProviderConsumerRequest {
   // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
   string fp_btc_pk_hex = 1;
 }
 
-// QueryFinalityProviderChainResponse returns the CZ finality provier chain id
-message QueryFinalityProviderChainResponse {
-  string chain_id = 1;
+// QueryFinalityProviderConsumerResponse returns the CZ finality provier consumer id
+message QueryFinalityProviderConsumerResponse {
+  string consumer_id = 1;
 }

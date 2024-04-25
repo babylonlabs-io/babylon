@@ -27,9 +27,9 @@ type CheckpointingKeeper interface {
 }
 
 type BTCStkConsumerKeeper interface {
-	IsConsumerChainRegistered(ctx context.Context, chainID string) bool
+	IsConsumerRegistered(ctx context.Context, consumerID string) bool
 	HasConsumerFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) bool
-	GetConsumerFinalityProviderChain(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (string, error)
-	GetConsumerFinalityProvider(ctx context.Context, chainID string, fpBTCPK *bbn.BIP340PubKey) (*FinalityProvider, error)
+	GetConsumerOfFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (string, error)
+	GetConsumerFinalityProvider(ctx context.Context, consumerID string, fpBTCPK *bbn.BIP340PubKey) (*FinalityProvider, error)
 	SetConsumerFinalityProvider(ctx context.Context, fp *FinalityProvider)
 }

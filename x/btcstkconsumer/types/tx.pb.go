@@ -126,29 +126,29 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
-// MsgRegisterChain defines a message for registering CZ chains to the btcstkconsumer module.
-type MsgRegisterChain struct {
+// MsgRegisterConsumer defines a message for registering CZ consumers to the btcstkconsumer module.
+type MsgRegisterConsumer struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
-	// chain_id is the ID of the chain
-	ChainId string `protobuf:"bytes,2,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
-	// chain_name is the name of the chain
-	ChainName string `protobuf:"bytes,3,opt,name=chain_name,json=chainName,proto3" json:"chain_name,omitempty"`
-	// chain_description is a description for the chain (can be empty)
-	ChainDescription string `protobuf:"bytes,4,opt,name=chain_description,json=chainDescription,proto3" json:"chain_description,omitempty"`
+	// consumer_id is the ID of the consumer
+	ConsumerId string `protobuf:"bytes,2,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
+	// consumer_name is the name of the consumer
+	ConsumerName string `protobuf:"bytes,3,opt,name=consumer_name,json=consumerName,proto3" json:"consumer_name,omitempty"`
+	// consumer_description is a description for the consumer (can be empty)
+	ConsumerDescription string `protobuf:"bytes,4,opt,name=consumer_description,json=consumerDescription,proto3" json:"consumer_description,omitempty"`
 }
 
-func (m *MsgRegisterChain) Reset()         { *m = MsgRegisterChain{} }
-func (m *MsgRegisterChain) String() string { return proto.CompactTextString(m) }
-func (*MsgRegisterChain) ProtoMessage()    {}
-func (*MsgRegisterChain) Descriptor() ([]byte, []int) {
+func (m *MsgRegisterConsumer) Reset()         { *m = MsgRegisterConsumer{} }
+func (m *MsgRegisterConsumer) String() string { return proto.CompactTextString(m) }
+func (*MsgRegisterConsumer) ProtoMessage()    {}
+func (*MsgRegisterConsumer) Descriptor() ([]byte, []int) {
 	return fileDescriptor_12cd7e02078b20ee, []int{2}
 }
-func (m *MsgRegisterChain) XXX_Unmarshal(b []byte) error {
+func (m *MsgRegisterConsumer) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgRegisterChain) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRegisterConsumer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgRegisterChain.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRegisterConsumer.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -158,62 +158,62 @@ func (m *MsgRegisterChain) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
-func (m *MsgRegisterChain) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgRegisterChain.Merge(m, src)
+func (m *MsgRegisterConsumer) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRegisterConsumer.Merge(m, src)
 }
-func (m *MsgRegisterChain) XXX_Size() int {
+func (m *MsgRegisterConsumer) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgRegisterChain) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgRegisterChain.DiscardUnknown(m)
+func (m *MsgRegisterConsumer) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRegisterConsumer.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgRegisterChain proto.InternalMessageInfo
+var xxx_messageInfo_MsgRegisterConsumer proto.InternalMessageInfo
 
-func (m *MsgRegisterChain) GetSigner() string {
+func (m *MsgRegisterConsumer) GetSigner() string {
 	if m != nil {
 		return m.Signer
 	}
 	return ""
 }
 
-func (m *MsgRegisterChain) GetChainId() string {
+func (m *MsgRegisterConsumer) GetConsumerId() string {
 	if m != nil {
-		return m.ChainId
+		return m.ConsumerId
 	}
 	return ""
 }
 
-func (m *MsgRegisterChain) GetChainName() string {
+func (m *MsgRegisterConsumer) GetConsumerName() string {
 	if m != nil {
-		return m.ChainName
+		return m.ConsumerName
 	}
 	return ""
 }
 
-func (m *MsgRegisterChain) GetChainDescription() string {
+func (m *MsgRegisterConsumer) GetConsumerDescription() string {
 	if m != nil {
-		return m.ChainDescription
+		return m.ConsumerDescription
 	}
 	return ""
 }
 
-// MsgRegisterChainResponse is the response to the MsgRegisterChain message.
-type MsgRegisterChainResponse struct {
+// MsgRegisterConsumerResponse is the response to the MsgRegisterConsumer message.
+type MsgRegisterConsumerResponse struct {
 }
 
-func (m *MsgRegisterChainResponse) Reset()         { *m = MsgRegisterChainResponse{} }
-func (m *MsgRegisterChainResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgRegisterChainResponse) ProtoMessage()    {}
-func (*MsgRegisterChainResponse) Descriptor() ([]byte, []int) {
+func (m *MsgRegisterConsumerResponse) Reset()         { *m = MsgRegisterConsumerResponse{} }
+func (m *MsgRegisterConsumerResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRegisterConsumerResponse) ProtoMessage()    {}
+func (*MsgRegisterConsumerResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_12cd7e02078b20ee, []int{3}
 }
-func (m *MsgRegisterChainResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgRegisterConsumerResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgRegisterChainResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRegisterConsumerResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgRegisterChainResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRegisterConsumerResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -223,23 +223,23 @@ func (m *MsgRegisterChainResponse) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *MsgRegisterChainResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgRegisterChainResponse.Merge(m, src)
+func (m *MsgRegisterConsumerResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRegisterConsumerResponse.Merge(m, src)
 }
-func (m *MsgRegisterChainResponse) XXX_Size() int {
+func (m *MsgRegisterConsumerResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgRegisterChainResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgRegisterChainResponse.DiscardUnknown(m)
+func (m *MsgRegisterConsumerResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRegisterConsumerResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgRegisterChainResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgRegisterConsumerResponse proto.InternalMessageInfo
 
 func init() {
 	proto.RegisterType((*MsgUpdateParams)(nil), "babylon.btcstkconsumer.v1.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "babylon.btcstkconsumer.v1.MsgUpdateParamsResponse")
-	proto.RegisterType((*MsgRegisterChain)(nil), "babylon.btcstkconsumer.v1.MsgRegisterChain")
-	proto.RegisterType((*MsgRegisterChainResponse)(nil), "babylon.btcstkconsumer.v1.MsgRegisterChainResponse")
+	proto.RegisterType((*MsgRegisterConsumer)(nil), "babylon.btcstkconsumer.v1.MsgRegisterConsumer")
+	proto.RegisterType((*MsgRegisterConsumerResponse)(nil), "babylon.btcstkconsumer.v1.MsgRegisterConsumerResponse")
 }
 
 func init() {
@@ -247,38 +247,38 @@ func init() {
 }
 
 var fileDescriptor_12cd7e02078b20ee = []byte{
-	// 483 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x52, 0x31, 0x6f, 0x13, 0x31,
-	0x14, 0x8e, 0x29, 0x14, 0xce, 0x05, 0xd1, 0x9e, 0x2a, 0x7a, 0x39, 0x89, 0xa3, 0xdc, 0x80, 0xaa,
-	0x44, 0xdc, 0xa9, 0xa9, 0xd4, 0xa1, 0x03, 0x12, 0xa1, 0x0b, 0x43, 0x50, 0x75, 0x88, 0x85, 0xa5,
-	0xf2, 0xdd, 0x59, 0x8e, 0x05, 0xb6, 0x0f, 0xdb, 0xa9, 0x9a, 0x0d, 0x31, 0x32, 0xf1, 0x0b, 0x98,
-	0x19, 0x33, 0xf0, 0x23, 0xba, 0x51, 0x31, 0x31, 0x21, 0x94, 0x0c, 0x19, 0xf9, 0x0b, 0xe8, 0x6c,
-	0x47, 0x51, 0x22, 0x52, 0xc1, 0x12, 0xe5, 0xbd, 0xef, 0xf3, 0xf7, 0xbd, 0xef, 0xdd, 0x83, 0x71,
-	0x8e, 0xf2, 0xe1, 0x5b, 0xc1, 0xd3, 0x5c, 0x17, 0x4a, 0xbf, 0x29, 0x04, 0x57, 0x03, 0x86, 0x65,
-	0x7a, 0xb6, 0x9f, 0xea, 0xf3, 0xa4, 0x92, 0x42, 0x0b, 0xbf, 0xe9, 0x38, 0xc9, 0x22, 0x27, 0x39,
-	0xdb, 0x0f, 0xb7, 0x10, 0xa3, 0x5c, 0xa4, 0xe6, 0xd7, 0xb2, 0xc3, 0x9d, 0x42, 0x28, 0x26, 0x54,
-	0xca, 0x14, 0xa9, 0x55, 0x98, 0x22, 0x0e, 0x68, 0x5a, 0xe0, 0xd4, 0x54, 0xa9, 0x2d, 0x1c, 0xb4,
-	0x4d, 0x04, 0x11, 0xb6, 0x5f, 0xff, 0x73, 0xdd, 0x47, 0xab, 0x67, 0xab, 0x90, 0x44, 0xcc, 0xbd,
-	0x8e, 0xbf, 0x01, 0x78, 0xb7, 0xa7, 0xc8, 0xab, 0xaa, 0x44, 0x1a, 0x9f, 0x18, 0xc4, 0x3f, 0x84,
-	0x1e, 0x1a, 0xe8, 0xbe, 0x90, 0x54, 0x0f, 0x03, 0xb0, 0x0b, 0xf6, 0xbc, 0x6e, 0xf0, 0xfd, 0xeb,
-	0xe3, 0x6d, 0x67, 0xfb, 0xb4, 0x2c, 0x25, 0x56, 0xea, 0xa5, 0x96, 0x94, 0x93, 0x6c, 0x4e, 0xf5,
-	0x8f, 0xe1, 0xba, 0xd5, 0x0e, 0xae, 0xed, 0x82, 0xbd, 0x8d, 0xce, 0xc3, 0x64, 0x65, 0xf8, 0xc4,
-	0x5a, 0x75, 0xbd, 0x8b, 0x9f, 0x0f, 0x1a, 0x5f, 0xa6, 0xa3, 0x16, 0xc8, 0xdc, 0xdb, 0xa3, 0x27,
-	0x1f, 0xa6, 0xa3, 0xd6, 0x5c, 0xf5, 0xe3, 0x74, 0xd4, 0x6a, 0xcf, 0xc2, 0x9c, 0xff, 0x25, 0xce,
-	0xd2, 0xf4, 0x71, 0x13, 0xee, 0x2c, 0xb5, 0x32, 0xac, 0x2a, 0xc1, 0x15, 0x8e, 0x3f, 0x03, 0xb8,
-	0xd9, 0x53, 0x24, 0xc3, 0x84, 0x2a, 0x8d, 0xe5, 0xb3, 0x3e, 0xa2, 0xdc, 0xbf, 0x07, 0xd7, 0x15,
-	0x25, 0x1c, 0x4b, 0x1b, 0x35, 0x73, 0x95, 0xdf, 0x84, 0xb7, 0x8a, 0x9a, 0x70, 0x4a, 0x4b, 0x93,
-	0xc7, 0xcb, 0x6e, 0x9a, 0xfa, 0x79, 0xe9, 0xdf, 0x87, 0xd0, 0x42, 0x1c, 0x31, 0x1c, 0xac, 0x19,
-	0xd0, 0x33, 0x9d, 0x17, 0x88, 0x61, 0xbf, 0x0d, 0xb7, 0x2c, 0x5c, 0x62, 0x55, 0x48, 0x5a, 0x69,
-	0x2a, 0x78, 0x70, 0xdd, 0xb0, 0x36, 0x0d, 0x70, 0x3c, 0xef, 0x1f, 0x6d, 0xd4, 0x71, 0x9d, 0x67,
-	0x1c, 0xc2, 0x60, 0x79, 0xbe, 0xd9, 0xf0, 0x9d, 0xdf, 0x00, 0xae, 0xf5, 0x14, 0xf1, 0x39, 0xbc,
-	0xbd, 0xf0, 0xb5, 0x5a, 0x57, 0x6c, 0x79, 0x69, 0x11, 0x61, 0xe7, 0xdf, 0xb9, 0x33, 0x5f, 0xff,
-	0x1d, 0xbc, 0xb3, 0xb8, 0xb0, 0xf6, 0xd5, 0x22, 0x0b, 0xe4, 0xf0, 0xe0, 0x3f, 0xc8, 0x33, 0xcb,
-	0xf0, 0xc6, 0xfb, 0xfa, 0x22, 0xba, 0x27, 0x17, 0xe3, 0x08, 0x5c, 0x8e, 0x23, 0xf0, 0x6b, 0x1c,
-	0x81, 0x4f, 0x93, 0xa8, 0x71, 0x39, 0x89, 0x1a, 0x3f, 0x26, 0x51, 0xe3, 0xf5, 0x21, 0xa1, 0xba,
-	0x3f, 0xc8, 0x93, 0x42, 0xb0, 0xd4, 0xe9, 0x9b, 0xc5, 0xa6, 0x2b, 0x0f, 0x45, 0x0f, 0x2b, 0xac,
-	0xf2, 0x75, 0x73, 0xf4, 0x07, 0x7f, 0x02, 0x00, 0x00, 0xff, 0xff, 0x75, 0xfa, 0xfc, 0x9e, 0xba,
-	0x03, 0x00, 0x00,
+	// 487 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x93, 0x31, 0x6f, 0xd3, 0x40,
+	0x14, 0xc7, 0x73, 0x14, 0x22, 0xe5, 0x52, 0x04, 0x5c, 0x23, 0xea, 0x18, 0xe1, 0x16, 0x23, 0xa1,
+	0x2a, 0x08, 0x5b, 0x09, 0x52, 0x86, 0x0e, 0x48, 0x84, 0x2e, 0x0c, 0x41, 0x95, 0x11, 0x0b, 0x4b,
+	0x75, 0xb6, 0x4f, 0x97, 0x13, 0xdc, 0x9d, 0x75, 0x77, 0xa9, 0x1a, 0x26, 0xc4, 0xc8, 0xc4, 0xc7,
+	0x60, 0x8c, 0x04, 0x1f, 0xa2, 0x1b, 0x15, 0x13, 0x13, 0x42, 0xc9, 0x90, 0xaf, 0xc0, 0x88, 0x62,
+	0x9f, 0x1b, 0x35, 0x34, 0x11, 0x2c, 0x96, 0xdf, 0x7b, 0xbf, 0x7b, 0xff, 0xf7, 0x7f, 0x3e, 0x43,
+	0x3f, 0xc6, 0xf1, 0xe8, 0xad, 0x14, 0x61, 0x6c, 0x12, 0x6d, 0xde, 0x24, 0x52, 0xe8, 0x21, 0x27,
+	0x2a, 0x3c, 0x6e, 0x87, 0xe6, 0x24, 0xc8, 0x94, 0x34, 0x12, 0x35, 0x2d, 0x13, 0x5c, 0x64, 0x82,
+	0xe3, 0xb6, 0x7b, 0x0b, 0x73, 0x26, 0x64, 0x98, 0x3f, 0x0b, 0xda, 0xdd, 0x4e, 0xa4, 0xe6, 0x52,
+	0x87, 0x5c, 0xd3, 0x79, 0x17, 0xae, 0xa9, 0x2d, 0x34, 0x8b, 0xc2, 0x51, 0x1e, 0x85, 0x45, 0x60,
+	0x4b, 0x0d, 0x2a, 0xa9, 0x2c, 0xf2, 0xf3, 0x37, 0x9b, 0x7d, 0xb0, 0x7a, 0xb6, 0x0c, 0x2b, 0xcc,
+	0xed, 0x69, 0xff, 0x1b, 0x80, 0x37, 0xfa, 0x9a, 0xbe, 0xca, 0x52, 0x6c, 0xc8, 0x61, 0x5e, 0x41,
+	0x5d, 0x58, 0xc3, 0x43, 0x33, 0x90, 0x8a, 0x99, 0x91, 0x03, 0x76, 0xc1, 0x5e, 0xad, 0xe7, 0x7c,
+	0xff, 0xfa, 0xa8, 0x61, 0x65, 0x9f, 0xa6, 0xa9, 0x22, 0x5a, 0xbf, 0x34, 0x8a, 0x09, 0x1a, 0x2d,
+	0x50, 0x74, 0x00, 0xab, 0x45, 0x6f, 0xe7, 0xca, 0x2e, 0xd8, 0xab, 0x77, 0xee, 0x05, 0x2b, 0xcd,
+	0x07, 0x85, 0x54, 0xaf, 0x76, 0xfa, 0x73, 0xa7, 0xf2, 0x79, 0x36, 0x6e, 0x81, 0xc8, 0x9e, 0xdd,
+	0x7f, 0xf2, 0x61, 0x36, 0x6e, 0x2d, 0xba, 0x7e, 0x9c, 0x8d, 0x5b, 0x0f, 0x4b, 0x33, 0x27, 0x97,
+	0xd8, 0x59, 0x9a, 0xde, 0x6f, 0xc2, 0xed, 0xa5, 0x54, 0x44, 0x74, 0x26, 0x85, 0x26, 0xfe, 0x17,
+	0x00, 0xb7, 0xfa, 0x9a, 0x46, 0x84, 0x32, 0x6d, 0x88, 0x7a, 0x66, 0xbb, 0xa0, 0xdb, 0xb0, 0xaa,
+	0x19, 0x15, 0x44, 0x15, 0x6e, 0x23, 0x1b, 0xa1, 0x1d, 0x58, 0x2f, 0x95, 0x8e, 0x58, 0x9a, 0xbb,
+	0xaa, 0x45, 0xb0, 0x4c, 0x3d, 0x4f, 0xd1, 0x7d, 0x78, 0xfd, 0x1c, 0x10, 0x98, 0x13, 0x67, 0x23,
+	0x47, 0x36, 0xcb, 0xe4, 0x0b, 0xcc, 0x09, 0x6a, 0xc3, 0xc6, 0x39, 0x94, 0x12, 0x9d, 0x28, 0x96,
+	0x19, 0x26, 0x85, 0x73, 0x35, 0x67, 0xb7, 0xca, 0xda, 0xc1, 0xa2, 0xb4, 0x5f, 0x9f, 0xef, 0xc0,
+	0x4e, 0xe1, 0xdf, 0x85, 0x77, 0x2e, 0x19, 0xba, 0x34, 0xd5, 0xf9, 0x0d, 0xe0, 0x46, 0x5f, 0x53,
+	0x24, 0xe0, 0xe6, 0x85, 0xaf, 0xd8, 0x5a, 0xb3, 0xfd, 0xa5, 0x05, 0xb9, 0x9d, 0x7f, 0x67, 0x4b,
+	0x5d, 0xf4, 0x0e, 0xde, 0xfc, 0x6b, 0x91, 0xc1, 0xfa, 0x3e, 0xcb, 0xbc, 0xdb, 0xfd, 0x3f, 0xbe,
+	0xd4, 0x76, 0xaf, 0xbd, 0x9f, 0x5f, 0x99, 0xde, 0xe1, 0xe9, 0xc4, 0x03, 0x67, 0x13, 0x0f, 0xfc,
+	0x9a, 0x78, 0xe0, 0xd3, 0xd4, 0xab, 0x9c, 0x4d, 0xbd, 0xca, 0x8f, 0xa9, 0x57, 0x79, 0xdd, 0xa5,
+	0xcc, 0x0c, 0x86, 0x71, 0x90, 0x48, 0x1e, 0x5a, 0x89, 0x64, 0x80, 0x99, 0x08, 0x57, 0xde, 0x24,
+	0x33, 0xca, 0x88, 0x8e, 0xab, 0xf9, 0x5f, 0xf1, 0xf8, 0x4f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x7b,
+	0xeb, 0x67, 0x7e, 0xdb, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -296,8 +296,8 @@ type MsgClient interface {
 	// UpdateParams defines a (governance) operation for updating the module
 	// parameters. The authority defaults to the x/gov module account.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
-	// RegisterChain registers a CZ chain to the btcstkconsumer module.
-	RegisterChain(ctx context.Context, in *MsgRegisterChain, opts ...grpc.CallOption) (*MsgRegisterChainResponse, error)
+	// RegisterConsumer registers a CZ consumer to the btcstkconsumer module.
+	RegisterConsumer(ctx context.Context, in *MsgRegisterConsumer, opts ...grpc.CallOption) (*MsgRegisterConsumerResponse, error)
 }
 
 type msgClient struct {
@@ -317,9 +317,9 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 	return out, nil
 }
 
-func (c *msgClient) RegisterChain(ctx context.Context, in *MsgRegisterChain, opts ...grpc.CallOption) (*MsgRegisterChainResponse, error) {
-	out := new(MsgRegisterChainResponse)
-	err := c.cc.Invoke(ctx, "/babylon.btcstkconsumer.v1.Msg/RegisterChain", in, out, opts...)
+func (c *msgClient) RegisterConsumer(ctx context.Context, in *MsgRegisterConsumer, opts ...grpc.CallOption) (*MsgRegisterConsumerResponse, error) {
+	out := new(MsgRegisterConsumerResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstkconsumer.v1.Msg/RegisterConsumer", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -331,8 +331,8 @@ type MsgServer interface {
 	// UpdateParams defines a (governance) operation for updating the module
 	// parameters. The authority defaults to the x/gov module account.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
-	// RegisterChain registers a CZ chain to the btcstkconsumer module.
-	RegisterChain(context.Context, *MsgRegisterChain) (*MsgRegisterChainResponse, error)
+	// RegisterConsumer registers a CZ consumer to the btcstkconsumer module.
+	RegisterConsumer(context.Context, *MsgRegisterConsumer) (*MsgRegisterConsumerResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -342,8 +342,8 @@ type UnimplementedMsgServer struct {
 func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
 }
-func (*UnimplementedMsgServer) RegisterChain(ctx context.Context, req *MsgRegisterChain) (*MsgRegisterChainResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterChain not implemented")
+func (*UnimplementedMsgServer) RegisterConsumer(ctx context.Context, req *MsgRegisterConsumer) (*MsgRegisterConsumerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterConsumer not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -368,20 +368,20 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_RegisterChain_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgRegisterChain)
+func _Msg_RegisterConsumer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRegisterConsumer)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).RegisterChain(ctx, in)
+		return srv.(MsgServer).RegisterConsumer(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.btcstkconsumer.v1.Msg/RegisterChain",
+		FullMethod: "/babylon.btcstkconsumer.v1.Msg/RegisterConsumer",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).RegisterChain(ctx, req.(*MsgRegisterChain))
+		return srv.(MsgServer).RegisterConsumer(ctx, req.(*MsgRegisterConsumer))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -395,8 +395,8 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_UpdateParams_Handler,
 		},
 		{
-			MethodName: "RegisterChain",
-			Handler:    _Msg_RegisterChain_Handler,
+			MethodName: "RegisterConsumer",
+			Handler:    _Msg_RegisterConsumer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -466,7 +466,7 @@ func (m *MsgUpdateParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgRegisterChain) Marshal() (dAtA []byte, err error) {
+func (m *MsgRegisterConsumer) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -476,34 +476,34 @@ func (m *MsgRegisterChain) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgRegisterChain) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRegisterConsumer) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgRegisterChain) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRegisterConsumer) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.ChainDescription) > 0 {
-		i -= len(m.ChainDescription)
-		copy(dAtA[i:], m.ChainDescription)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.ChainDescription)))
+	if len(m.ConsumerDescription) > 0 {
+		i -= len(m.ConsumerDescription)
+		copy(dAtA[i:], m.ConsumerDescription)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ConsumerDescription)))
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.ChainName) > 0 {
-		i -= len(m.ChainName)
-		copy(dAtA[i:], m.ChainName)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.ChainName)))
+	if len(m.ConsumerName) > 0 {
+		i -= len(m.ConsumerName)
+		copy(dAtA[i:], m.ConsumerName)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ConsumerName)))
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.ChainId) > 0 {
-		i -= len(m.ChainId)
-		copy(dAtA[i:], m.ChainId)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.ChainId)))
+	if len(m.ConsumerId) > 0 {
+		i -= len(m.ConsumerId)
+		copy(dAtA[i:], m.ConsumerId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ConsumerId)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -517,7 +517,7 @@ func (m *MsgRegisterChain) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgRegisterChainResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgRegisterConsumerResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -527,12 +527,12 @@ func (m *MsgRegisterChainResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgRegisterChainResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRegisterConsumerResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgRegisterChainResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRegisterConsumerResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -575,7 +575,7 @@ func (m *MsgUpdateParamsResponse) Size() (n int) {
 	return n
 }
 
-func (m *MsgRegisterChain) Size() (n int) {
+func (m *MsgRegisterConsumer) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -585,22 +585,22 @@ func (m *MsgRegisterChain) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.ChainId)
+	l = len(m.ConsumerId)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.ChainName)
+	l = len(m.ConsumerName)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.ChainDescription)
+	l = len(m.ConsumerDescription)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
 	return n
 }
 
-func (m *MsgRegisterChainResponse) Size() (n int) {
+func (m *MsgRegisterConsumerResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -780,7 +780,7 @@ func (m *MsgUpdateParamsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgRegisterChain) Unmarshal(dAtA []byte) error {
+func (m *MsgRegisterConsumer) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -803,10 +803,10 @@ func (m *MsgRegisterChain) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgRegisterChain: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgRegisterConsumer: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgRegisterChain: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgRegisterConsumer: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -843,7 +843,7 @@ func (m *MsgRegisterChain) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -871,11 +871,11 @@ func (m *MsgRegisterChain) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainId = string(dAtA[iNdEx:postIndex])
+			m.ConsumerId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainName", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerName", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -903,11 +903,11 @@ func (m *MsgRegisterChain) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainName = string(dAtA[iNdEx:postIndex])
+			m.ConsumerName = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainDescription", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerDescription", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -935,7 +935,7 @@ func (m *MsgRegisterChain) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainDescription = string(dAtA[iNdEx:postIndex])
+			m.ConsumerDescription = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -958,7 +958,7 @@ func (m *MsgRegisterChain) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgRegisterChainResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgRegisterConsumerResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -981,10 +981,10 @@ func (m *MsgRegisterChainResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgRegisterChainResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgRegisterConsumerResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgRegisterChainResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgRegisterConsumerResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

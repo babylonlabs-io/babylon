@@ -144,7 +144,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 		BabylonPk:   fp.BabylonPk,
 		BtcPk:       fp.BtcPk,
 		Pop:         fp.Pop,
-		ChainId:     "",
+		ConsumerId:  "",
 	}
 
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
@@ -152,7 +152,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	return fpSK, fpPK, fp
 }
 
-func (h *Helper) CreateConsumerChainFinalityProvider(r *rand.Rand, chainID string) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider, error) {
+func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider, error) {
 	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 	if err != nil {
 		return nil, nil, nil, err
@@ -161,29 +161,20 @@ func (h *Helper) CreateConsumerChainFinalityProvider(r *rand.Rand, chainID strin
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	msr, mpr, err := eots.NewMasterRandPair(r)
+	fp, err := datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpSK, bbnSK)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpSK, bbnSK, msr)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	fp.ChainId = chainID
-
-	registeredEpoch := uint64(10)
-	fp.RegisteredEpoch = registeredEpoch
-	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Eq(h.Ctx)).Return(&etypes.Epoch{EpochNumber: registeredEpoch}).AnyTimes()
+	fp.ConsumerId = consumerID
 
 	msgNewFp := types.MsgCreateFinalityProvider{
-		Signer:        datagen.GenRandomAccount().Address,
-		Description:   fp.Description,
-		Commission:    fp.Commission,
-		BabylonPk:     fp.BabylonPk,
-		BtcPk:         fp.BtcPk,
-		Pop:           fp.Pop,
-		MasterPubRand: mpr.MarshalBase58(),
-		ChainId:       fp.ChainId,
+		Signer:      datagen.GenRandomAccount().Address,
+		Description: fp.Description,
+		Commission:  fp.Commission,
+		BabylonPk:   fp.BabylonPk,
+		BtcPk:       fp.BtcPk,
+		Pop:         fp.Pop,
+		ConsumerId:  fp.ConsumerId,
 	}
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
 	if err != nil {
