@@ -16,8 +16,8 @@ service Msg {
   // UpdateParams defines a (governance) operation for updating the module
   // parameters. The authority defaults to the x/gov module account.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
-  // RegisterChain registers a CZ chain to the btcstkconsumer module.
-  rpc RegisterChain(MsgRegisterChain) returns (MsgRegisterChainResponse);
+  // RegisterConsumer registers a CZ consumer to the btcstkconsumer module.
+  rpc RegisterConsumer(MsgRegisterConsumer) returns (MsgRegisterConsumerResponse);
 }
 
 // MsgUpdateParams is the Msg/UpdateParams request type.
@@ -41,18 +41,18 @@ message MsgUpdateParams {
 // MsgUpdateParams message.
 message MsgUpdateParamsResponse {}
 
-// MsgRegisterChain defines a message for registering CZ chains to the btcstkconsumer module.
-message MsgRegisterChain {
+// MsgRegisterConsumer defines a message for registering CZ consumers to the btcstkconsumer module.
+message MsgRegisterConsumer {
   option (cosmos.msg.v1.signer) = "signer";
 
   string signer = 1;
-  // chain_id is the ID of the chain
-  string chain_id = 2;
-  // chain_name is the name of the chain
-  string chain_name = 3;
-  // chain_description is a description for the chain (can be empty)
-  string chain_description = 4;
+  // consumer_id is the ID of the consumer
+  string consumer_id = 2;
+  // consumer_name is the name of the consumer
+  string consumer_name = 3;
+  // consumer_description is a description for the consumer (can be empty)
+  string consumer_description = 4;
 }
 
-// MsgRegisterChainResponse is the response to the MsgRegisterChain message.
-message MsgRegisterChainResponse {}
+// MsgRegisterConsumerResponse is the response to the MsgRegisterConsumer message.
+message MsgRegisterConsumerResponse {}

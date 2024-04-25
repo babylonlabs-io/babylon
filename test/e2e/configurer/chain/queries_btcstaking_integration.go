@@ -12,37 +12,37 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func (n *NodeConfig) QueryChainRegistryList(pagination *query.PageRequest) *bsctypes.QueryChainRegistryListResponse {
+func (n *NodeConfig) QueryConsumerRegistryList(pagination *query.PageRequest) *bsctypes.QueryConsumerRegistryListResponse {
 	queryParams := url.Values{}
 	if pagination != nil {
 		queryParams.Set("pagination.key", base64.URLEncoding.EncodeToString(pagination.Key))
 		queryParams.Set("pagination.limit", strconv.Itoa(int(pagination.Limit)))
 	}
 
-	bz, err := n.QueryGRPCGateway("/babylon/btcstkconsumer/v1/chain_registry_list", queryParams)
+	bz, err := n.QueryGRPCGateway("/babylon/btcstkconsumer/v1/consumer_registry_list", queryParams)
 	require.NoError(n.t, err)
 
-	var resp bsctypes.QueryChainRegistryListResponse
+	var resp bsctypes.QueryConsumerRegistryListResponse
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
 	require.NoError(n.t, err)
 
 	return &resp
 }
 
-func (n *NodeConfig) QueryChainRegistry(consumerChainId string) []*bsctypes.ChainRegister {
-	path := fmt.Sprintf("/babylon/btcstkconsumer/v1/chains_registry/%s", consumerChainId)
+func (n *NodeConfig) QueryConsumerRegistry(consumerId string) []*bsctypes.ConsumerRegister {
+	path := fmt.Sprintf("/babylon/btcstkconsumer/v1/consumers_registry/%s", consumerId)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
-	var resp bsctypes.QueryChainsRegistryResponse
+	var resp bsctypes.QueryConsumersRegistryResponse
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
 	require.NoError(n.t, err)
 
-	return resp.ChainsRegister
+	return resp.ConsumersRegister
 }
 
-func (n *NodeConfig) QueryConsumerFinalityProviders(consumerChainId string) []*bsctypes.FinalityProviderResponse {
-	path := fmt.Sprintf("/babylon/btcstkconsumer/v1/finality_providers/%s", consumerChainId)
+func (n *NodeConfig) QueryConsumerFinalityProviders(consumerId string) []*bsctypes.FinalityProviderResponse {
+	path := fmt.Sprintf("/babylon/btcstkconsumer/v1/finality_providers/%s", consumerId)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
@@ -53,8 +53,8 @@ func (n *NodeConfig) QueryConsumerFinalityProviders(consumerChainId string) []*b
 	return resp.FinalityProviders
 }
 
-func (n *NodeConfig) QueryConsumerFinalityProvider(consumerChainId, fpBtcPkHex string) *bsctypes.FinalityProviderResponse {
-	path := fmt.Sprintf("/babylon/btcstkconsumer/v1/finality_provider/%s/%s", consumerChainId, fpBtcPkHex)
+func (n *NodeConfig) QueryConsumerFinalityProvider(consumerId, fpBtcPkHex string) *bsctypes.FinalityProviderResponse {
+	path := fmt.Sprintf("/babylon/btcstkconsumer/v1/finality_provider/%s/%s", consumerId, fpBtcPkHex)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 

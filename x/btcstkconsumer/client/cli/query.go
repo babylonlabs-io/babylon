@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -22,19 +23,19 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdQueryParams())
-	cmd.AddCommand(CmdRegisteredChain())
-	cmd.AddCommand(CmdRegisteredChains())
-	cmd.AddCommand(CmdFinalityProviderChain())
+	cmd.AddCommand(CmdRegisteredConsumer())
+	cmd.AddCommand(CmdRegisteredConsumers())
+	cmd.AddCommand(CmdFinalityProviderConsumer())
 	cmd.AddCommand(CmdFinalityProvider())
 	cmd.AddCommand(CmdFinalityProviders())
 
 	return cmd
 }
 
-func CmdRegisteredChains() *cobra.Command {
+func CmdRegisteredConsumers() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "registered-chains",
-		Short: "retrieve list of registered chains",
+		Use:   "registered-consumers",
+		Short: "retrieve list of registered consumers",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -46,7 +47,7 @@ func CmdRegisteredChains() *cobra.Command {
 				return err
 			}
 
-			res, err := queryClient.ChainRegistryList(cmd.Context(), &types.QueryChainRegistryListRequest{
+			res, err := queryClient.ConsumerRegistryList(cmd.Context(), &types.QueryConsumerRegistryListRequest{
 				Pagination: pageReq,
 			})
 			if err != nil {
@@ -58,23 +59,23 @@ func CmdRegisteredChains() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
-	flags.AddPaginationFlagsToCmd(cmd, "registered-chains")
+	flags.AddPaginationFlagsToCmd(cmd, "registered-consumers")
 
 	return cmd
 }
 
-func CmdRegisteredChain() *cobra.Command {
+func CmdRegisteredConsumer() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "registered-chain <chain-id>",
-		Short: "retrieve a given registered chain's info",
+		Use:   "registered-consumer <consumer-id>",
+		Short: "retrieve a given registered consumer's info",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
-			res, err := queryClient.ChainsRegistry(
+			res, err := queryClient.ConsumersRegistry(
 				cmd.Context(),
-				&types.QueryChainsRegistryRequest{
-					ChainIds: []string{args[0]},
+				&types.QueryConsumersRegistryRequest{
+					ConsumerIds: []string{args[0]},
 				},
 			)
 			if err != nil {
@@ -90,17 +91,17 @@ func CmdRegisteredChain() *cobra.Command {
 	return cmd
 }
 
-func CmdFinalityProviderChain() *cobra.Command {
+func CmdFinalityProviderConsumer() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "finality-provider-chain <fp_btc_pk_hex>",
-		Short: "retrieve a given CZ finality provider's registered chain id",
+		Use:   "finality-provider-consumer <fp_btc_pk_hex>",
+		Short: "retrieve a given CZ finality provider's registered consumer id",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
-			res, err := queryClient.FinalityProviderChain(
+			res, err := queryClient.FinalityProviderConsumer(
 				cmd.Context(),
-				&types.QueryFinalityProviderChainRequest{
+				&types.QueryFinalityProviderConsumerRequest{
 					FpBtcPkHex: args[0],
 				},
 			)
@@ -119,8 +120,8 @@ func CmdFinalityProviderChain() *cobra.Command {
 
 func CmdFinalityProvider() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "finality-provider <chain-id> <fp_btc_pk_hex>",
-		Short: "retrieve a given chain's finality provider",
+		Use:   "finality-provider <consumer-id> <fp_btc_pk_hex>",
+		Short: "retrieve a given consumer's finality provider",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -129,7 +130,7 @@ func CmdFinalityProvider() *cobra.Command {
 				cmd.Context(),
 				&types.QueryFinalityProviderRequest{
 					FpBtcPkHex: args[1],
-					ChainId:    args[0],
+					ConsumerId: args[0],
 				},
 			)
 			if err != nil {
@@ -147,8 +148,8 @@ func CmdFinalityProvider() *cobra.Command {
 
 func CmdFinalityProviders() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "finality-providers <chain-id>",
-		Short: "retrieve a given chain's all finality providers",
+		Use:   "finality-providers <consumer-id>",
+		Short: "retrieve a given consumer's all finality providers",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -161,7 +162,7 @@ func CmdFinalityProviders() *cobra.Command {
 			}
 
 			res, err := queryClient.FinalityProviders(cmd.Context(), &types.QueryFinalityProvidersRequest{
-				ChainId:    args[0],
+				ConsumerId: args[0],
 				Pagination: pageReq,
 			})
 			if err != nil {

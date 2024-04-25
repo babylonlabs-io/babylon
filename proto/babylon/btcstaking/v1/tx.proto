@@ -57,9 +57,9 @@ message MsgCreateFinalityProvider {
   // master_pub_rand is the master public randomness of the finality provider
   // encoded as a base58 string
   string master_pub_rand = 7;
-  // chain id is a registered CZ chain id, or Babylon's chain id.
+  // consumer_id is the ID of the consumer
   // If it's empty, it's assumed to be Babylon's chain id
-  string chain_id = 8;
+  string consumer_id = 8;
 }
 // MsgCreateFinalityProviderResponse is the response for MsgCreateFinalityProvider
 message MsgCreateFinalityProviderResponse {}

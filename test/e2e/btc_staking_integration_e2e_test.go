@@ -38,7 +38,7 @@ func (s *BTCStakingIntegrationTestSuite) SetupSuite() {
 
 	// The e2e test flow is as follows:
 	//
-	// 1. Configure 1 chain with some validator nodes
+	// 1. Configure 1 consumer with some validator nodes
 	// 2. Execute various e2e tests
 	s.configurer, err = configurer.NewBTCStakingIntegrationConfigurer(s.T(), true)
 
@@ -56,28 +56,28 @@ func (s *BTCStakingIntegrationTestSuite) TearDownSuite() {
 	s.Require().NoError(err)
 }
 
-func (s *BTCStakingIntegrationTestSuite) Test1RegisterNewConsumerChain() {
+func (s *BTCStakingIntegrationTestSuite) Test1RegisterNewConsumer() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
-	s.registerVerifyConsumerChain(nonValidatorNode)
+	s.registerVerifyConsumer(nonValidatorNode)
 }
 
-func (s *BTCStakingIntegrationTestSuite) Test2CreateConsumerChainFinalityProvider() {
+func (s *BTCStakingIntegrationTestSuite) Test2CreateConsumerFinalityProvider() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// get the chain registered in Test1
-	chainRegistryList := nonValidatorNode.QueryChainRegistryList(&query.PageRequest{Limit: 1})
-	consumerChainId := chainRegistryList.ChainIds[0]
+	// get the consumer registered in Test1
+	consumerRegistryList := nonValidatorNode.QueryConsumerRegistryList(&query.PageRequest{Limit: 1})
+	consumerId := consumerRegistryList.ConsumerIds[0]
 
-	// create a random num of finality providers from 1 to 5 on the consumer chain
+	// create a random num of finality providers from 1 to 5 on the consumer
 	numFPs := datagen.RandomInt(r, 5) + 1
 	for i := 0; i < int(numFPs); i++ {
-		s.createVerifyConsumerChainFP(nonValidatorNode, consumerChainId)
+		s.createVerifyConsumerFP(nonValidatorNode, consumerId)
 	}
 }
 
@@ -87,25 +87,25 @@ func (s *BTCStakingIntegrationTestSuite) Test3RestakeDelegationToMultipleFPs() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// get the chain registered in Test1
-	chainRegistryList := nonValidatorNode.QueryChainRegistryList(&query.PageRequest{Limit: 1})
-	consumerChainId := chainRegistryList.ChainIds[0]
-	// get the consumer chain created in Test2
-	consumerChainFp := nonValidatorNode.QueryConsumerFinalityProviders(consumerChainId)[0]
+	// get the consumer registered in Test1
+	consumerRegistryList := nonValidatorNode.QueryConsumerRegistryList(&query.PageRequest{Limit: 1})
+	consumerId := consumerRegistryList.ConsumerIds[0]
+	// get the consumer created in Test2
+	consumerFp := nonValidatorNode.QueryConsumerFinalityProviders(consumerId)[0]
 
 	// register a babylon finality provider
 	babylonFp := s.createVerifyBabylonFP(nonValidatorNode)
 
-	// create a delegation and restake to both Babylon and consumer chain finality providers
+	// create a delegation and restake to both Babylon and consumer finality providers
 	// NOTE: this will create delegation in pending state as covenant sigs are not provided
-	delBtcPk, stakingTxHash := s.createBabylonDelegation(nonValidatorNode, babylonFp, consumerChainFp)
+	delBtcPk, stakingTxHash := s.createBabylonDelegation(nonValidatorNode, babylonFp, consumerFp)
 
 	// check delegation
 	delegation := nonValidatorNode.QueryBtcDelegation(stakingTxHash)
 	s.NotNil(delegation)
 
-	// check consumer chain finality provider delegation
-	czPendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(consumerChainFp.BtcPk.MarshalHex())
+	// check consumer finality provider delegation
+	czPendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex())
 	s.Len(czPendingDelSet, 1)
 	czPendingDels := czPendingDelSet[0]
 	s.Len(czPendingDels.Dels, 1)
@@ -121,24 +121,24 @@ func (s *BTCStakingIntegrationTestSuite) Test3RestakeDelegationToMultipleFPs() {
 	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
 }
 
-// helper function: register a random chain on Babylon and verify it
-func (s *BTCStakingIntegrationTestSuite) registerVerifyConsumerChain(babylonNode *chain.NodeConfig) *bsctypes.ChainRegister {
-	// Register a random chain on Babylon
-	randomChain := datagen.GenRandomChainRegister(r)
-	babylonNode.RegisterConsumerChain(randomChain.ChainId, randomChain.ChainName, randomChain.ChainDescription)
+// helper function: register a random consumer on Babylon and verify it
+func (s *BTCStakingIntegrationTestSuite) registerVerifyConsumer(babylonNode *chain.NodeConfig) *bsctypes.ConsumerRegister {
+	// Register a random consumer on Babylon
+	randomConsumer := datagen.GenRandomConsumerRegister(r)
+	babylonNode.RegisterConsumer(randomConsumer.ConsumerId, randomConsumer.ConsumerName, randomConsumer.ConsumerDescription)
 	babylonNode.WaitForNextBlock()
 
-	// Query the chain registry to verify the chain was registered
-	chainRegistry := babylonNode.QueryChainRegistry(randomChain.ChainId)
-	s.Require().Len(chainRegistry, 1)
-	s.Require().Equal(randomChain.ChainId, chainRegistry[0].ChainId)
-	s.Require().Equal(randomChain.ChainName, chainRegistry[0].ChainName)
-	s.Require().Equal(randomChain.ChainDescription, chainRegistry[0].ChainDescription)
-	return randomChain
+	// Query the consumer registry to verify the consumer was registered
+	consumerRegistry := babylonNode.QueryConsumerRegistry(randomConsumer.ConsumerId)
+	s.Require().Len(consumerRegistry, 1)
+	s.Require().Equal(randomConsumer.ConsumerId, consumerRegistry[0].ConsumerId)
+	s.Require().Equal(randomConsumer.ConsumerName, consumerRegistry[0].ConsumerName)
+	s.Require().Equal(randomConsumer.ConsumerDescription, consumerRegistry[0].ConsumerDescription)
+	return randomConsumer
 }
 
-// helper function: create a random consumer chain finality provider on Babylon and verify it
-func (s *BTCStakingIntegrationTestSuite) createVerifyConsumerChainFP(babylonNode *chain.NodeConfig, consumerChainId string) *bstypes.FinalityProvider {
+// helper function: create a random consumer finality provider on Babylon and verify it
+func (s *BTCStakingIntegrationTestSuite) createVerifyConsumerFP(babylonNode *chain.NodeConfig, consumerId string) *bstypes.FinalityProvider {
 	/*
 		create a random consumer finality provider on Babylon
 	*/
@@ -149,7 +149,7 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyConsumerChainFP(babylonNode
 	czFp, err := datagen.GenRandomCustomFinalityProvider(r, czFpBTCSK, babylonNode.SecretKey, sr)
 	s.NoError(err)
 	babylonNode.CreateConsumerFinalityProvider(
-		czFp.BabylonPk, czFp.BtcPk, czFp.Pop, czFp.MasterPubRand, consumerChainId, czFp.Description.Moniker,
+		czFp.BabylonPk, czFp.BtcPk, czFp.Pop, czFp.MasterPubRand, consumerId, czFp.Description.Moniker,
 		czFp.Description.Identity, czFp.Description.Website, czFp.Description.SecurityContact,
 		czFp.Description.Details, czFp.Commission,
 	)
@@ -158,7 +158,7 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyConsumerChainFP(babylonNode
 	babylonNode.WaitForNextBlock()
 
 	// query the existence of finality provider and assert equivalence
-	actualFp := babylonNode.QueryConsumerFinalityProvider(consumerChainId, czFp.BtcPk.MarshalHex())
+	actualFp := babylonNode.QueryConsumerFinalityProvider(consumerId, czFp.BtcPk.MarshalHex())
 	s.Equal(czFp.Description, actualFp.Description)
 	s.Equal(czFp.Commission, actualFp.Commission)
 	s.Equal(czFp.BabylonPk, actualFp.BabylonPk)
@@ -166,7 +166,7 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyConsumerChainFP(babylonNode
 	s.Equal(czFp.Pop, actualFp.Pop)
 	s.Equal(czFp.SlashedBabylonHeight, actualFp.SlashedBabylonHeight)
 	s.Equal(czFp.SlashedBtcHeight, actualFp.SlashedBtcHeight)
-	s.Equal(consumerChainId, actualFp.ChainId)
+	s.Equal(consumerId, actualFp.ConsumerId)
 	return czFp
 }
 
@@ -200,11 +200,11 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyBabylonFP(babylonNode *chai
 	return actualFps[0]
 }
 
-// helper function: create a Babylon delegation and restake to Babylon and consumer chain finality providers
-func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNode *chain.NodeConfig, babylonFp *bstypes.FinalityProviderResponse, consumerChainFp *bsctypes.FinalityProviderResponse) (*btcec.PublicKey, string) {
+// helper function: create a Babylon delegation and restake to Babylon and consumer finality providers
+func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNode *chain.NodeConfig, babylonFp *bstypes.FinalityProviderResponse, consumerFp *bsctypes.FinalityProviderResponse) (*btcec.PublicKey, string) {
 	// finalise epochs until the registered epoch of the finality provider
 	// so that the finality provider can receive BTC delegations
-	// TODO: it is assumed here that babylonFp is registered after consumerChainFp so
+	// TODO: it is assumed here that babylonFp is registered after consumerFp so
 	//  if we finalize registered epoch of babylonFp the other would also get finalized
 	//  ideally we should get registered epoch of each restaked fp and finalize it.
 	var (
@@ -229,7 +229,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 	nonValidatorNode.FinalizeSealedEpochs(startEpoch, endEpoch)
 
 	/*
-		create a random BTC delegation restaking to Babylon and consumer chain finality providers
+		create a random BTC delegation restaking to Babylon and consumer finality providers
 	*/
 
 	delBbnSk := nonValidatorNode.SecretKey
@@ -256,7 +256,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		s.T(),
 		net,
 		delBtcSk,
-		[]*btcec.PublicKey{babylonFp.BtcPk.MustToBTCPK(), consumerChainFp.BtcPk.MustToBTCPK()},
+		[]*btcec.PublicKey{babylonFp.BtcPk.MustToBTCPK(), consumerFp.BtcPk.MustToBTCPK()},
 		covenantBTCPKs,
 		covenantQuorum,
 		stakingTimeBlocks,
@@ -302,7 +302,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		s.T(),
 		net,
 		delBtcSk,
-		[]*btcec.PublicKey{babylonFp.BtcPk.MustToBTCPK(), consumerChainFp.BtcPk.MustToBTCPK()},
+		[]*btcec.PublicKey{babylonFp.BtcPk.MustToBTCPK(), consumerFp.BtcPk.MustToBTCPK()},
 		covenantBTCPKs,
 		covenantQuorum,
 		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
@@ -322,7 +322,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		delBTCPKs,
 		pop,
 		stakingTxInfo,
-		[]*bbn.BIP340PubKey{babylonFp.BtcPk, consumerChainFp.BtcPk},
+		[]*bbn.BIP340PubKey{babylonFp.BtcPk, consumerFp.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
 		testStakingInfo.SlashingTx,

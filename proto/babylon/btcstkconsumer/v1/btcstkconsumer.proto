@@ -3,12 +3,13 @@ package babylon.btcstkconsumer.v1;
 
 option go_package = "github.com/babylonchain/babylon/x/btcstkconsumer/types";
 
-// ChainRegister is the registration information of a CZ
-message ChainRegister {
-  // chain_id is the ID of the chain
-  string chain_id = 1;
-  // chain_name is the name of the chain
-  string chain_name = 2;
-  // chain_description is a description for the chain (can be empty)
-  string chain_description = 3;
+// ConsumerRegister is the registration information of a consumer
+message ConsumerRegister {
+  // consumer_id is the ID of the consumer
+  // - for Cosmos SDK chains, the consumer ID will be the IBC client ID
+  string consumer_id = 1;
+  // consumer_name is the name of the consumer
+  string consumer_name = 2;
+  // consumer_description is a description for the consumer (can be empty)
+  string consumer_description = 3;
 }

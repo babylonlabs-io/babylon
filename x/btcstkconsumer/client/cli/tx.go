@@ -2,8 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"strings"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -23,19 +24,19 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		NewRegisterChainCmd(),
+		NewRegisterConsumerCmd(),
 	)
 
 	return cmd
 }
 
-func NewRegisterChainCmd() *cobra.Command {
+func NewRegisterConsumerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register-chain <chain-id> <name> [description]",
+		Use:   "register-consumer <consumer-id> <name> [description]",
 		Args:  cobra.RangeArgs(2, 3),
-		Short: "Registers a CZ chain",
+		Short: "Registers a CZ consumer",
 		Long: strings.TrimSpace(
-			`Registers a CZ chain.`,
+			`Registers a CZ consumer.`,
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -44,24 +45,24 @@ func NewRegisterChainCmd() *cobra.Command {
 			}
 
 			// get description
-			chainId := args[0]
-			if chainId == "" {
-				return fmt.Errorf("chain's id cannot be empty")
+			consumerId := args[0]
+			if consumerId == "" {
+				return fmt.Errorf("consumer's id cannot be empty")
 			}
 			name := args[1]
 			if name == "" {
-				return fmt.Errorf("chain's name cannot be empty")
+				return fmt.Errorf("consumer's name cannot be empty")
 			}
 			description := ""
 			if len(args) == 3 {
 				description = args[2]
 			}
 
-			msg := types.MsgRegisterChain{
-				Signer:           clientCtx.FromAddress.String(),
-				ChainId:          chainId,
-				ChainName:        name,
-				ChainDescription: description,
+			msg := types.MsgRegisterConsumer{
+				Signer:              clientCtx.FromAddress.String(),
+				ConsumerId:          consumerId,
+				ConsumerName:        name,
+				ConsumerDescription: description,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

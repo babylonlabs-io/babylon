@@ -1,10 +1,11 @@
 package keeper_test
 
 import (
-	btcstaking "github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/babylonchain/babylon/x/btcstkconsumer/types"
 	"math/rand"
 	"testing"
+
+	btcstaking "github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/babylonchain/babylon/x/btcstkconsumer/types"
 
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -20,36 +21,36 @@ func FuzzFPRegistry(f *testing.F) {
 		babylonApp := app.Setup(t, false)
 		bscKeeper := babylonApp.BTCStkConsumerKeeper
 		ctx := babylonApp.NewContext(false)
-		// Create a random chain id that starts with "test-"
-		czChainID := "test-" + datagen.GenRandomHexStr(r, 10)
+		// Create a random consumer id that starts with "test-"
+		consumerID := "test-" + datagen.GenRandomHexStr(r, 10)
 
-		// check that the chain is not registered
-		isRegistered := bscKeeper.IsConsumerChainRegistered(ctx, czChainID)
+		// check that the consumer is not registered
+		isRegistered := bscKeeper.IsConsumerRegistered(ctx, consumerID)
 		require.False(t, isRegistered)
 
 		// Create a random finality provider public key
 		fpBtcPk, err := datagen.GenRandomBIP340PubKey(r)
 		require.NoError(t, err)
 
-		// Create a random chain name
-		czChainName := datagen.GenRandomHexStr(r, 5)
-		// Create a random chain description
-		czChainDesc := "Chain description: " + datagen.GenRandomHexStr(r, 15)
+		// Create a random consumer name
+		consumerName := datagen.GenRandomHexStr(r, 5)
+		// Create a random consumer description
+		consumerDesc := "Consumer description: " + datagen.GenRandomHexStr(r, 15)
 
-		// Populate ChainRegister object
-		chainRegister := &types.ChainRegister{
-			ChainId:          czChainID,
-			ChainName:        czChainName,
-			ChainDescription: czChainDesc,
+		// Populate ConsumerRegister object
+		consumerRegister := &types.ConsumerRegister{
+			ConsumerId:          consumerID,
+			ConsumerName:        consumerName,
+			ConsumerDescription: consumerDesc,
 		}
 
-		// Register the chain
-		bscKeeper.SetChainRegister(ctx, chainRegister)
+		// Register the consumer
+		bscKeeper.SetConsumerRegister(ctx, consumerRegister)
 
-		// Now add a finality provider for the chain to the registry
+		// Now add a finality provider for the consumer to the registry
 		fp := btcstaking.FinalityProvider{
-			BtcPk:   fpBtcPk,
-			ChainId: czChainID,
+			BtcPk:      fpBtcPk,
+			ConsumerId: consumerID,
 		}
 		bscKeeper.SetConsumerFinalityProvider(ctx, &fp)
 

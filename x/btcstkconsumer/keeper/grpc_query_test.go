@@ -16,11 +16,11 @@ import (
 	btcstaking "github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
-type chainRegister struct {
-	chainID string
+type consumerRegister struct {
+	consumerID string
 }
 
-func FuzzChainRegistryList(f *testing.F) {
+func FuzzConsumerRegistryList(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -30,38 +30,38 @@ func FuzzChainRegistryList(f *testing.F) {
 		bscKeeper := babylonApp.BTCStkConsumerKeeper
 		ctx := babylonApp.NewContext(false)
 
-		// invoke the chain registration a random number of times with random chain IDs
+		// invoke the consumer registration a random number of times with random consumer IDs
 		numRegistrations := datagen.RandomInt(r, 100) + 1
-		var allChainIDs []string
+		var allConsumerIDs []string
 		for i := uint64(0); i < numRegistrations; i++ {
-			var chainID = datagen.GenRandomHexStr(r, 30)
-			allChainIDs = append(allChainIDs, chainID)
+			var consumerID = datagen.GenRandomHexStr(r, 30)
+			allConsumerIDs = append(allConsumerIDs, consumerID)
 
-			bscKeeper.SetChainRegister(ctx, &types.ChainRegister{
-				ChainId:   chainID,
-				ChainName: datagen.GenRandomHexStr(r, 5),
+			bscKeeper.SetConsumerRegister(ctx, &types.ConsumerRegister{
+				ConsumerId:   consumerID,
+				ConsumerName: datagen.GenRandomHexStr(r, 5),
 			})
 		}
 
-		limit := datagen.RandomInt(r, len(allChainIDs)) + 1
+		limit := datagen.RandomInt(r, len(allConsumerIDs)) + 1
 
-		// Query to get actual chain IDs
-		resp, err := bscKeeper.ChainRegistryList(ctx, &types.QueryChainRegistryListRequest{
+		// Query to get actual consumer IDs
+		resp, err := bscKeeper.ConsumerRegistryList(ctx, &types.QueryConsumerRegistryListRequest{
 			Pagination: &query.PageRequest{
 				Limit: limit,
 			},
 		})
 		require.NoError(t, err)
-		actualChainIDs := resp.ChainIds
+		actualConsumerIDs := resp.ConsumerIds
 
-		require.Equal(t, limit, uint64(len(actualChainIDs)))
+		require.Equal(t, limit, uint64(len(actualConsumerIDs)))
 		for i := uint64(0); i < limit; i++ {
-			require.Contains(t, allChainIDs, actualChainIDs[i])
+			require.Contains(t, allConsumerIDs, actualConsumerIDs[i])
 		}
 	})
 }
 
-func FuzzChainsRegistry(f *testing.F) {
+func FuzzConsumersRegistry(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -72,33 +72,33 @@ func FuzzChainsRegistry(f *testing.F) {
 		ctx := babylonApp.NewContext(false)
 
 		var (
-			chainsRegister []chainRegister
-			chainIDs       []string
+			consumersRegister []consumerRegister
+			consumerIDs       []string
 		)
-		// invoke the chain registration a random number of times with random chain IDs
-		numChains := datagen.RandomInt(r, 100) + 1
-		for i := uint64(0); i < numChains; i++ {
-			chainID := datagen.GenRandomHexStr(r, 30)
+		// invoke the consumer registration a random number of times with random consumer IDs
+		numConsumers := datagen.RandomInt(r, 100) + 1
+		for i := uint64(0); i < numConsumers; i++ {
+			consumerID := datagen.GenRandomHexStr(r, 30)
 
-			chainIDs = append(chainIDs, chainID)
-			chainsRegister = append(chainsRegister, chainRegister{
-				chainID: chainID,
+			consumerIDs = append(consumerIDs, consumerID)
+			consumersRegister = append(consumersRegister, consumerRegister{
+				consumerID: consumerID,
 			})
 
-			bscKeeper.SetChainRegister(ctx, &types.ChainRegister{
-				ChainId:   chainID,
-				ChainName: datagen.GenRandomHexStr(r, 5),
+			bscKeeper.SetConsumerRegister(ctx, &types.ConsumerRegister{
+				ConsumerId:   consumerID,
+				ConsumerName: datagen.GenRandomHexStr(r, 5),
 			})
 
 		}
 
-		resp, err := bscKeeper.ChainsRegistry(ctx, &types.QueryChainsRegistryRequest{
-			ChainIds: chainIDs,
+		resp, err := bscKeeper.ConsumersRegistry(ctx, &types.QueryConsumersRegistryRequest{
+			ConsumerIds: consumerIDs,
 		})
 		require.NoError(t, err)
 
-		for i, respData := range resp.ChainsRegister {
-			require.Equal(t, chainsRegister[i].chainID, respData.ChainId)
+		for i, respData := range resp.ConsumersRegister {
+			require.Equal(t, consumersRegister[i].consumerID, respData.ConsumerId)
 		}
 	})
 }
@@ -112,13 +112,13 @@ func FuzzFinalityProviders(f *testing.F) {
 		bscKeeper := babylonApp.BTCStkConsumerKeeper
 		ctx := babylonApp.NewContext(false)
 
-		// Generate random finality providers and add them to kv store under a chain id
-		chainID := datagen.GenRandomHexStr(r, 30)
+		// Generate random finality providers and add them to kv store under a consumer id
+		consumerID := datagen.GenRandomHexStr(r, 30)
 		fpsMap := make(map[string]*btcstaking.FinalityProvider)
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
-			fp.ChainId = chainID
+			fp.ConsumerId = consumerID
 
 			bscKeeper.SetConsumerFinalityProvider(ctx, fp)
 			fpsMap[fp.BtcPk.MarshalHex()] = fp
@@ -138,7 +138,7 @@ func FuzzFinalityProviders(f *testing.F) {
 		limit := datagen.RandomInt(r, numOfFpsInStore) + 1
 		pagination := constructRequestWithLimit(r, limit)
 		// Generate the initial query
-		req := types.QueryFinalityProvidersRequest{ChainId: chainID, Pagination: pagination}
+		req := types.QueryFinalityProvidersRequest{ConsumerId: consumerID, Pagination: pagination}
 		// Construct a mapping from the finality providers found to a boolean value
 		// Will be used later to evaluate whether all the finality providers were returned
 		fpsFound := make(map[string]bool)
@@ -162,7 +162,7 @@ func FuzzFinalityProviders(f *testing.F) {
 
 			// Construct the next page request
 			pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
-			req = types.QueryFinalityProvidersRequest{ChainId: chainID, Pagination: pagination}
+			req = types.QueryFinalityProvidersRequest{ConsumerId: consumerID, Pagination: pagination}
 		}
 
 		if len(fpsFound) != len(fpsMap) {
@@ -180,14 +180,14 @@ func FuzzFinalityProvider(f *testing.F) {
 		bscKeeper := babylonApp.BTCStkConsumerKeeper
 		ctx := babylonApp.NewContext(false)
 
-		// Generate random finality providers and add them to kv store under a chain id
+		// Generate random finality providers and add them to kv store under a consumer id
 		fpsMap := make(map[string]*btcstaking.FinalityProvider)
-		chainID := datagen.GenRandomHexStr(r, 30)
+		consumerID := datagen.GenRandomHexStr(r, 30)
 		var existingFp string
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
-			fp.ChainId = chainID
+			fp.ConsumerId = consumerID
 
 			bscKeeper.SetConsumerFinalityProvider(ctx, fp)
 			existingFp = fp.BtcPk.MarshalHex()
@@ -201,7 +201,7 @@ func FuzzFinalityProvider(f *testing.F) {
 
 		for k, v := range fpsMap {
 			// Generate a request with a valid key
-			req := types.QueryFinalityProviderRequest{ChainId: chainID, FpBtcPkHex: k}
+			req := types.QueryFinalityProviderRequest{ConsumerId: consumerID, FpBtcPkHex: k}
 			resp, err := bscKeeper.FinalityProvider(ctx, &req)
 			if err != nil {
 				t.Errorf("Valid request led to an error %s", err)
@@ -218,14 +218,14 @@ func FuzzFinalityProvider(f *testing.F) {
 		// check some random non-existing guy
 		fp, err := datagen.GenRandomFinalityProvider(r)
 		require.NoError(t, err)
-		req := types.QueryFinalityProviderRequest{ChainId: chainID, FpBtcPkHex: fp.BtcPk.MarshalHex()}
+		req := types.QueryFinalityProviderRequest{ConsumerId: consumerID, FpBtcPkHex: fp.BtcPk.MarshalHex()}
 		respNonExists, err := bscKeeper.FinalityProvider(ctx, &req)
 		require.Error(t, err)
 		require.Nil(t, respNonExists)
 		require.True(t, errors.Is(err, btcstaking.ErrFpNotFound))
 
-		// check some existing fp over a random non-existing chain-id
-		req = types.QueryFinalityProviderRequest{ChainId: "nonexistent", FpBtcPkHex: existingFp}
+		// check some existing fp over a random non-existing consumer-id
+		req = types.QueryFinalityProviderRequest{ConsumerId: "nonexistent", FpBtcPkHex: existingFp}
 		respNonExists, err = bscKeeper.FinalityProvider(ctx, &req)
 		require.Error(t, err)
 		require.Nil(t, respNonExists)
@@ -233,8 +233,8 @@ func FuzzFinalityProvider(f *testing.F) {
 	})
 }
 
-// FuzzFinalityProviderChain tests the FinalityProviderChain gRPC query endpoint
-func FuzzFinalityProviderChain(f *testing.F) {
+// FuzzFinalityProviderConsumer tests the FinalityProviderConsumer gRPC query endpoint
+func FuzzFinalityProviderConsumer(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -243,14 +243,14 @@ func FuzzFinalityProviderChain(f *testing.F) {
 		bscKeeper := babylonApp.BTCStkConsumerKeeper
 		ctx := babylonApp.NewContext(false)
 
-		// Generate random finality providers and add them to kv store under a chain id
+		// Generate random finality providers and add them to kv store under a consumer id
 		fpsMap := make(map[string]*btcstaking.FinalityProvider)
-		chainID := datagen.GenRandomHexStr(r, 30)
+		consumerID := datagen.GenRandomHexStr(r, 30)
 		var existingFp string
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
-			fp.ChainId = chainID
+			fp.ConsumerId = consumerID
 
 			bscKeeper.SetConsumerFinalityProvider(ctx, fp)
 			existingFp = fp.BtcPk.MarshalHex()
@@ -258,13 +258,13 @@ func FuzzFinalityProviderChain(f *testing.F) {
 		}
 
 		// Test nil request
-		resp, err := bscKeeper.FinalityProviderChain(ctx, nil)
+		resp, err := bscKeeper.FinalityProviderConsumer(ctx, nil)
 		require.Error(t, err)
 		require.Nil(t, resp)
 
 		// Generate a request with a valid key
-		req := types.QueryFinalityProviderChainRequest{FpBtcPkHex: existingFp}
-		resp, err = bscKeeper.FinalityProviderChain(ctx, &req)
+		req := types.QueryFinalityProviderConsumerRequest{FpBtcPkHex: existingFp}
+		resp, err = bscKeeper.FinalityProviderConsumer(ctx, &req)
 		if err != nil {
 			t.Errorf("Valid request led to an error %s", err)
 		}
@@ -273,13 +273,13 @@ func FuzzFinalityProviderChain(f *testing.F) {
 		}
 
 		// check keys from map matches those in returned response
-		require.Equal(t, chainID, resp.ChainId)
+		require.Equal(t, consumerID, resp.ConsumerId)
 
 		// check some random non-existing guy
 		fp, err := datagen.GenRandomFinalityProvider(r)
 		require.NoError(t, err)
-		req = types.QueryFinalityProviderChainRequest{FpBtcPkHex: fp.BtcPk.MarshalHex()}
-		respNonExists, err := bscKeeper.FinalityProviderChain(ctx, &req)
+		req = types.QueryFinalityProviderConsumerRequest{FpBtcPkHex: fp.BtcPk.MarshalHex()}
+		respNonExists, err := bscKeeper.FinalityProviderConsumer(ctx, &req)
 		require.Error(t, err)
 		require.Nil(t, respNonExists)
 		require.True(t, errors.Is(err, btcstaking.ErrFpNotFound))

@@ -10,18 +10,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func (n *NodeConfig) RegisterConsumerChain(chainId, chainName, chainDesc string) {
-	n.LogActionF("registering consumer chain on babylon")
+func (n *NodeConfig) RegisterConsumer(consumerId, consumerName, consumerDesc string) {
+	n.LogActionF("registering consumer on babylon")
 
 	cmd := []string{
-		"babylond", "tx", "btcstkconsumer", "register-chain", chainId, chainName, chainDesc, "--from=val",
+		"babylond", "tx", "btcstkconsumer", "register-consumer", consumerId, consumerName, consumerDesc, "--from=val",
 	}
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
-	n.LogActionF("successfully registered consumer chain on babylon")
+	n.LogActionF("successfully registered consumer on babylon")
 }
 
-func (n *NodeConfig) CreateConsumerFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossession, masterPubRand, consumerChainId, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec) {
+func (n *NodeConfig) CreateConsumerFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossession, masterPubRand, consumerId, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec) {
 	n.LogActionF("creating consumer finality provider")
 
 	// get babylon PK hex
@@ -35,7 +35,7 @@ func (n *NodeConfig) CreateConsumerFinalityProvider(babylonPK *secp256k1.PubKey,
 	require.NoError(n.t, err)
 
 	cmd := []string{
-		"babylond", "tx", "btcstaking", "create-finality-provider", babylonPKHex, btcPKHex, popHex, masterPubRand, "--from=val", "--consumer-chain-id", consumerChainId, "--moniker", moniker, "--identity", identity, "--website", website, "--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
+		"babylond", "tx", "btcstaking", "create-finality-provider", babylonPKHex, btcPKHex, popHex, masterPubRand, "--from=val", "--consumer-id", consumerId, "--moniker", moniker, "--identity", identity, "--website", website, "--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
 	}
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)

@@ -72,15 +72,15 @@ func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProv
 	if err != nil {
 		// Try in the btcstkconsumer module
 		if k.bscKeeper.HasConsumerFinalityProvider(ctx, fpPK) {
-			fpChain, err := k.bscKeeper.GetConsumerFinalityProviderChain(ctx, fpPK)
+			fpConsumer, err := k.bscKeeper.GetConsumerOfFinalityProvider(ctx, fpPK)
 			if err != nil {
 				return nil, err
 			}
-			fp, err := k.bscKeeper.GetConsumerFinalityProvider(ctx, fpChain, fpPK)
+			fp, err := k.bscKeeper.GetConsumerFinalityProvider(ctx, fpConsumer, fpPK)
 			if err != nil {
 				return nil, err
 			}
-			// FPs for consumer chains are not stored in the voting power table
+			// FPs for consumers are not stored in the voting power table
 			fpResp := types.NewFinalityProviderResponse(fp, 0, 0)
 			return &types.QueryFinalityProviderResponse{FinalityProvider: fpResp}, nil
 		}
@@ -291,7 +291,7 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 			return nil, err
 		}
 	} else if k.bscKeeper.HasConsumerFinalityProvider(ctx, fpPK) {
-		// this is a consumer chain finality provider
+		// this is a consumer finality provider
 		btcDels, pageRes, err = k.GetBTCConsumerDelegatorDelegationsResponses(sdkCtx, fpPK, req.Pagination, currentWValue, btcHeight, covenantQuorum)
 		if err != nil {
 			return nil, err

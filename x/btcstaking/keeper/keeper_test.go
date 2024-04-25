@@ -163,7 +163,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 		BtcPk:         fp.BtcPk,
 		Pop:           fp.Pop,
 		MasterPubRand: fp.MasterPubRand,
-		ChainId:       "",
+		ConsumerId:    "",
 	}
 
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
@@ -171,7 +171,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	return fpBTCSK, fpBTCPK, fp
 }
 
-func (h *Helper) CreateConsumerChainFinalityProvider(r *rand.Rand, chainID string) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider, error) {
+func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider, error) {
 	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 	if err != nil {
 		return nil, nil, nil, err
@@ -188,7 +188,7 @@ func (h *Helper) CreateConsumerChainFinalityProvider(r *rand.Rand, chainID strin
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	fp.ChainId = chainID
+	fp.ConsumerId = consumerID
 
 	registeredEpoch := uint64(10)
 	fp.RegisteredEpoch = registeredEpoch
@@ -202,7 +202,7 @@ func (h *Helper) CreateConsumerChainFinalityProvider(r *rand.Rand, chainID strin
 		BtcPk:         fp.BtcPk,
 		Pop:           fp.Pop,
 		MasterPubRand: mpr.MarshalBase58(),
-		ChainId:       fp.ChainId,
+		ConsumerId:    fp.ConsumerId,
 	}
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
 	if err != nil {

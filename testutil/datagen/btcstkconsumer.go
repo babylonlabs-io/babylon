@@ -6,10 +6,10 @@ import (
 	bsctypes "github.com/babylonchain/babylon/x/btcstkconsumer/types"
 )
 
-func GenRandomChainRegister(r *rand.Rand) *bsctypes.ChainRegister {
-	return &bsctypes.ChainRegister{
-		ChainId:          "test-" + GenRandomHexStr(r, 10),
-		ChainName:        GenRandomHexStr(r, 5),
-		ChainDescription: "Chain description: " + GenRandomHexStr(r, 15),
+func GenRandomConsumerRegister(r *rand.Rand) *bsctypes.ConsumerRegister {
+	return &bsctypes.ConsumerRegister{
+		ConsumerId:          "test-" + GenRandomHexStr(r, 10),
+		ConsumerName:        GenRandomHexStr(r, 5),
+		ConsumerDescription: "Chain description: " + GenRandomHexStr(r, 15),
 	}
 }

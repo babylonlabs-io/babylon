@@ -15,20 +15,20 @@ import (
 
 // SetConsumerFinalityProvider adds the given finality provider to CZ chains KVStore
 func (k Keeper) SetConsumerFinalityProvider(ctx context.Context, fp *btcstaking.FinalityProvider) {
-	store := k.finalityProviderStore(ctx, fp.ChainId)
+	store := k.finalityProviderStore(ctx, fp.ConsumerId)
 	fpBytes := k.cdc.MustMarshal(fp)
 	store.Set(fp.BtcPk.MustMarshal(), fpBytes)
 	// Update the finality provider chain store
 	fpChainStore := k.finalityProviderChainStore(ctx)
-	fpChainStore.Set(fp.BtcPk.MustMarshal(), []byte(fp.ChainId))
+	fpChainStore.Set(fp.BtcPk.MustMarshal(), []byte(fp.ConsumerId))
 }
 
 // GetConsumerFinalityProvider gets the finality provider in the chain id with the given finality provider Bitcoin PK
-func (k Keeper) GetConsumerFinalityProvider(ctx context.Context, chainID string, fpBTCPK *bbn.BIP340PubKey) (*btcstaking.FinalityProvider, error) {
+func (k Keeper) GetConsumerFinalityProvider(ctx context.Context, consumerId string, fpBTCPK *bbn.BIP340PubKey) (*btcstaking.FinalityProvider, error) {
 	if !k.HasConsumerFinalityProvider(ctx, fpBTCPK) {
 		return nil, btcstaking.ErrFpNotFound
 	}
-	store := k.finalityProviderStore(ctx, chainID)
+	store := k.finalityProviderStore(ctx, consumerId)
 	fpBytes := store.Get(*fpBTCPK)
 	if fpBytes == nil {
 		// FP exists, but not for this chain id
@@ -45,8 +45,8 @@ func (k Keeper) HasConsumerFinalityProvider(ctx context.Context, fpBTCPK *bbn.BI
 	return store.Has(*fpBTCPK)
 }
 
-// GetConsumerFinalityProviderChain gets the finality provider chain id for the given finality provider Bitcoin PK
-func (k Keeper) GetConsumerFinalityProviderChain(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (string, error) {
+// GetConsumerOfFinalityProvider gets the finality provider chain id for the given finality provider Bitcoin PK
+func (k Keeper) GetConsumerOfFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (string, error) {
 	if !k.HasConsumerFinalityProvider(ctx, fpBTCPK) {
 		return "", btcstaking.ErrFpNotFound
 	}

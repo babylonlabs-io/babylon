@@ -19,24 +19,24 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-// RegisterChain registers a CZ chain
-func (ms msgServer) RegisterChain(goCtx context.Context, req *types.MsgRegisterChain) (*types.MsgRegisterChainResponse, error) {
-	// Create ChanRegister from MsgRegisterChain
-	chainRegister := types.ChainRegister{
-		ChainId:          req.ChainId,
-		ChainName:        req.ChainName,
-		ChainDescription: req.ChainDescription,
+// RegisterConsumer registers a CZ consumer
+func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegisterConsumer) (*types.MsgRegisterConsumerResponse, error) {
+	// Create ChanRegister from MsgRegisterConsumer
+	consumerRegister := types.ConsumerRegister{
+		ConsumerId:          req.ConsumerId,
+		ConsumerName:        req.ConsumerName,
+		ConsumerDescription: req.ConsumerDescription,
 	}
 
-	if err := chainRegister.Validate(); err != nil {
-		return nil, types.ErrInvalidChainRegister.Wrapf("invalid chain: %v", err)
+	if err := consumerRegister.Validate(); err != nil {
+		return nil, types.ErrInvalidConsumerRegister.Wrapf("invalid consumer: %v", err)
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if ms.IsConsumerChainRegistered(ctx, req.ChainId) {
-		return nil, types.ErrChainAlreadyRegistered
+	if ms.IsConsumerRegistered(ctx, req.ConsumerId) {
+		return nil, types.ErrConsumerAlreadyRegistered
 	}
-	ms.SetChainRegister(ctx, &chainRegister)
+	ms.SetConsumerRegister(ctx, &consumerRegister)
 
-	return &types.MsgRegisterChainResponse{}, nil
+	return &types.MsgRegisterConsumerResponse{}, nil
 }

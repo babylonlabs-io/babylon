@@ -16,9 +16,9 @@ const (
 
 var (
 	ParamsKey                        = []byte("p_btcstkconsumer")
-	ConsumerChainRegisterKey         = []byte{0x01} // ConsumerChainRegisterKey defines the key to the chain register for each CZ in store
-	ConsumerFinalityProviderKey      = []byte{0x02} // ConsumerFinalityProviderKey defines the key to the CZ finality providers store
-	ConsumerFinalityProviderChainKey = []byte{0x03} // ConsumerFinalityProviderChainKey defines the key to the CZ chains per FP BTC PK store
+	ConsumerRegisterKey              = []byte{0x01} // ConsumerRegisterKey defines the key to the chain register for each consumer in store
+	ConsumerFinalityProviderKey      = []byte{0x02} // ConsumerFinalityProviderKey defines the key to the consumer finality providers store
+	ConsumerFinalityProviderChainKey = []byte{0x03} // ConsumerFinalityProviderChainKey defines the key to the consumer chains per FP BTC PK store
 )
 
 func KeyPrefix(p string) []byte {
