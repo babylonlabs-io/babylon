@@ -146,7 +146,7 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyConsumerFP(babylonNode *cha
 	czFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
 	sr, _, err := eots.NewMasterRandPair(r)
 	s.NoError(err)
-	czFp, err := datagen.GenRandomCustomFinalityProvider(r, czFpBTCSK, babylonNode.SecretKey, sr)
+	czFp, err := datagen.GenRandomCustomFinalityProvider(r, czFpBTCSK, babylonNode.SecretKey, sr, consumerId)
 	s.NoError(err)
 	babylonNode.CreateConsumerFinalityProvider(
 		czFp.BabylonPk, czFp.BtcPk, czFp.Pop, czFp.MasterPubRand, consumerId, czFp.Description.Moniker,
@@ -179,7 +179,7 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyBabylonFP(babylonNode *chai
 	babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
 	sr, _, err := eots.NewMasterRandPair(r)
 	s.NoError(err)
-	babylonFp, err := datagen.GenRandomCustomFinalityProvider(r, babylonFpBTCSK, babylonNode.SecretKey, sr)
+	babylonFp, err := datagen.GenRandomCustomFinalityProvider(r, babylonFpBTCSK, babylonNode.SecretKey, sr, "")
 	s.NoError(err)
 	babylonNode.CreateFinalityProvider(babylonFp.BabylonPk, babylonFp.BtcPk, babylonFp.Pop, babylonFp.MasterPubRand, babylonFp.Description.Moniker, babylonFp.Description.Identity, babylonFp.Description.Website, babylonFp.Description.SecurityContact, babylonFp.Description.Details, babylonFp.Commission)
 

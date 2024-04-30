@@ -108,15 +108,9 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 	if consumerID == ctx.ChainID() {
 		ms.SetFinalityProvider(ctx, &fp)
 	} else {
-		// ensure finality provider does not already exist
-		if ms.bscKeeper.HasConsumerFinalityProvider(ctx, req.BtcPk) {
-			return nil, types.ErrFpRegistered
+		if err := ms.SetConsumerFinalityProvider(ctx, &fp, consumerID); err != nil {
+			return nil, err
 		}
-		// Check that consumer is registered in the btcstkconsumer module
-		if !ms.bscKeeper.IsConsumerRegistered(ctx, consumerID) {
-			return nil, types.ErrConsumerIDNotRegistered
-		}
-		ms.bscKeeper.SetConsumerFinalityProvider(ctx, &fp)
 	}
 
 	// notify subscriber
@@ -165,9 +159,9 @@ func (ms msgServer) EditFinalityProvider(ctx context.Context, req *types.MsgEdit
 	return &types.MsgEditFinalityProviderResponse{}, nil
 }
 
-// caluculateMinimumUnbondingValue calculates minimum unbonding value basend on current staking output value
+// calculateMinimumUnbondingValue calculates minimum unbonding value basend on current staking output value
 // and params.MinUnbondingRate
-func caluculateMinimumUnbondingValue(
+func calculateMinimumUnbondingValue(
 	stakingOutput *wire.TxOut,
 	params *types.Params,
 ) btcutil.Amount {
@@ -449,7 +443,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0")
 	}
 
-	minUnbondingValue := caluculateMinimumUnbondingValue(stakingMsgTx.TxOut[stakingOutputIdx], &vp.Params)
+	minUnbondingValue := calculateMinimumUnbondingValue(stakingMsgTx.TxOut[stakingOutputIdx], &vp.Params)
 	if btcutil.Amount(unbondingMsgTx.TxOut[0].Value) < minUnbondingValue {
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding output value must be at least %s, based on staking output", minUnbondingValue)
 	}

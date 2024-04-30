@@ -24,4 +24,5 @@ var (
 	VotingPowerDistCacheKey = []byte{0x07} // key prefix for voting power distribution cache
 	PowerDistUpdateKey      = []byte{0x08} // key prefix for power distribution update events
 	BTCConsumerDelegatorKey = []byte{0x09} // key prefix for the Consumer BTC delegators
+	BTCStakingEventKey      = []byte{0x0A} // key prefix for the BTC staking events
 )

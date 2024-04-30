@@ -34,7 +34,7 @@ func benchmarkAddFinalitySig(b *testing.B) {
 	require.NoError(b, err)
 	msr, _, err := eots.NewMasterRandPair(r)
 	require.NoError(b, err)
-	fp, err := datagen.GenRandomCustomFinalityProvider(r, btcSK, fpBBNSK, msr)
+	fp, err := datagen.GenRandomCustomFinalityProvider(r, btcSK, fpBBNSK, msr, "")
 	require.NoError(b, err)
 
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)

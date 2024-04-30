@@ -127,7 +127,7 @@ func CreateFinalityProvider(r *rand.Rand, t *testing.T) *types.FinalityProvider 
 	msr, _, err := eots.NewMasterRandPair(r)
 	require.NoError(t, err)
 
-	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpBTCSK, fpBBNSK, msr)
+	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpBTCSK, fpBBNSK, msr, "")
 	require.NoError(t, err)
 
 	return &types.FinalityProvider{
@@ -147,7 +147,8 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	msr, _, err := eots.NewMasterRandPair(r)
 	h.NoError(err)
 
-	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpBTCSK, fpBBNSK, msr)
+	consumerID := "" // Use empty string to create a Babylon finality provider
+	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpBTCSK, fpBBNSK, msr, consumerID)
 	h.NoError(err)
 
 	registeredEpoch := uint64(10)
@@ -163,7 +164,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 		BtcPk:         fp.BtcPk,
 		Pop:           fp.Pop,
 		MasterPubRand: fp.MasterPubRand,
-		ConsumerId:    "",
+		ConsumerId:    consumerID,
 	}
 
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
@@ -184,7 +185,7 @@ func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpSK, bbnSK, msr)
+	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpSK, bbnSK, msr, consumerID)
 	if err != nil {
 		return nil, nil, nil, err
 	}

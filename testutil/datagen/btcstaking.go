@@ -44,7 +44,7 @@ func GenRandomFinalityProvider(r *rand.Rand) (*bstypes.FinalityProvider, error) 
 	if err != nil {
 		return nil, err
 	}
-	return GenRandomCustomFinalityProvider(r, btcSK, bbnSK, msr)
+	return GenRandomCustomFinalityProvider(r, btcSK, bbnSK, msr, "")
 }
 
 func CreateNFinalityProviders(r *rand.Rand, t *testing.T, n int) []*bstypes.FinalityProvider {
@@ -65,7 +65,7 @@ func GenRandomDescription(r *rand.Rand) *stakingtypes.Description {
 	return &stakingtypes.Description{Moniker: GenRandomHexStr(r, 10)}
 }
 
-func GenRandomCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, bbnSK cryptotypes.PrivKey, msr *eots.MasterSecretRand) (*bstypes.FinalityProvider, error) {
+func GenRandomCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, bbnSK cryptotypes.PrivKey, msr *eots.MasterSecretRand, consumerID string) (*bstypes.FinalityProvider, error) {
 	// commission
 	commission := GenRandomCommission(r)
 	// description
@@ -96,7 +96,7 @@ func GenRandomCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, bbnS
 		BtcPk:         bip340PK,
 		Pop:           pop,
 		MasterPubRand: mpr.MarshalBase58(),
-		ConsumerId:    "", // TODO: parameterise
+		ConsumerId:    consumerID,
 	}, nil
 }
 

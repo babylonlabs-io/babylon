@@ -49,7 +49,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		require.NoError(t, err)
 		msr, _, err := eots.NewMasterRandPair(r)
 		require.NoError(t, err)
-		fp, err := datagen.GenRandomCustomFinalityProvider(r, btcSK, fpBBNSK, msr)
+		fp, err := datagen.GenRandomCustomFinalityProvider(r, btcSK, fpBBNSK, msr, "")
 		require.NoError(t, err)
 
 		// randomise registered epoch for this finality provider
@@ -167,7 +167,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	require.NoError(t, err)
 	msr, _, err := eots.NewMasterRandPair(r)
 	require.NoError(t, err)
-	fp, err := datagen.GenRandomCustomFinalityProvider(r, btcSK, fpBBNSK, msr)
+	fp, err := datagen.GenRandomCustomFinalityProvider(r, btcSK, fpBBNSK, msr, "")
 	require.NoError(t, err)
 	fp.RegisteredEpoch = 10
 	bsKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).AnyTimes()
