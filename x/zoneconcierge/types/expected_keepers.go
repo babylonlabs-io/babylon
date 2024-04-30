@@ -4,6 +4,7 @@ import (
 	"context"
 
 	bbn "github.com/babylonchain/babylon/types"
+	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
 
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -105,4 +106,6 @@ type EpochingKeeper interface {
 }
 
 type BTCStakingKeeper interface {
+	GetAllBTCStakingConsumerIBCPackets(ctx context.Context) map[string]*bstypes.BTCStakingIBCPacket
+	DeleteBTCStakingConsumerIBCPacket(ctx context.Context, consumerID string)
 }

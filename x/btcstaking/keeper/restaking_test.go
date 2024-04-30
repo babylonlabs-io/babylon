@@ -54,10 +54,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		czFPBTCPK := bbn.NewBIP340PubKeyFromBTCPK(czFPPK)
 		czFP2, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, consumerRegister.ConsumerId, czFPBTCPK)
 		h.NoError(err)
-		czFP.RegisteredEpoch = czFP2.RegisteredEpoch
 		require.Equal(t, czFP, czFP2)
-
-		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(czFP.RegisteredEpoch).AnyTimes()
 
 		/*
 			ensure BTC delegation request will fail if some fp PK does not exist
@@ -141,8 +138,6 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 		// generate and insert new consumer finality provider
 		_, czFPPK, czFP, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
 		h.NoError(err)
-
-		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(czFP.RegisteredEpoch).AnyTimes()
 
 		// Generate a random number of BTC delegations under this finality provider
 		numBTCDels := datagen.RandomInt(r, 10) + 1

@@ -107,7 +107,9 @@ func FuzzAddFinalitySig(f *testing.F) {
 		// create and register a random finality provider
 		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
+		bbnSK, _, err := datagen.GenRandomSecp256k1KeyPair(r)
+		require.NoError(t, err)
+		fp, err := datagen.GenRandomCustomFinalityProvider(r, btcSK, bbnSK, "")
 		require.NoError(t, err)
 		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 		fpBTCPKBytes := fpBTCPK.MustMarshal()
@@ -213,7 +215,9 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	// create and register a random finality provider
 	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
+	bbnSK, _, err := datagen.GenRandomSecp256k1KeyPair(r)
+	require.NoError(t, err)
+	fp, err := datagen.GenRandomCustomFinalityProvider(r, btcSK, bbnSK, "")
 	require.NoError(t, err)
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
