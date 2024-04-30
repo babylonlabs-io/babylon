@@ -1,6 +1,7 @@
 package datagen
 
 import (
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"math/rand"
 	"testing"
 
@@ -26,12 +27,12 @@ const (
 )
 
 func GenRandomFinalityProvider(r *rand.Rand) (*bstypes.FinalityProvider, error) {
-	// key pairs
+	// BTC key pairs
 	btcSK, _, err := GenRandomBTCKeyPair(r)
 	if err != nil {
 		return nil, err
 	}
-	return GenRandomFinalityProviderWithBTCSK(r, btcSK)
+	return GenRandomFinalityProviderWithBTCSK(r, btcSK, "")
 }
 
 func CreateNFinalityProviders(r *rand.Rand, t *testing.T, n int) []*bstypes.FinalityProvider {
@@ -44,8 +45,8 @@ func CreateNFinalityProviders(r *rand.Rand, t *testing.T, n int) []*bstypes.Fina
 	return fps
 }
 
-func GenRandomFinalityProviderWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bstypes.FinalityProvider, error) {
-	return GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, GenRandomAccount().GetAddress())
+func GenRandomFinalityProviderWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey, consumerID string) (*bstypes.FinalityProvider, error) {
+	return GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, GenRandomAccount().GetAddress(), consumerID)
 }
 
 func GenRandomCommission(r *rand.Rand) sdkmath.LegacyDec {
@@ -56,7 +57,7 @@ func GenRandomDescription(r *rand.Rand) *stakingtypes.Description {
 	return &stakingtypes.Description{Moniker: GenRandomHexStr(r, 10)}
 }
 
-func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKey, fpAddr sdk.AccAddress) (*bstypes.FinalityProvider, error) {
+func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKey, fpAddr sdk.AccAddress, consumerID string) (*bstypes.FinalityProvider, error) {
 	// commission
 	commission := GenRandomCommission(r)
 	// description
@@ -75,8 +76,13 @@ func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.Priva
 		BtcPk:       bip340PK,
 		Addr:        fpAddr.String(),
 		Pop:         pop,
-		ConsumerId:  "", // TODO: parameterise
+		ConsumerId:  consumerID,
 	}, nil
+}
+
+func GenRandomCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, bbnSK cryptotypes.PrivKey, consumerID string) (*bstypes.FinalityProvider, error) {
+	fpAddr := sdk.MustAccAddressFromBech32(bbnSK.PubKey().Address().String())
+	return GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, fpAddr, consumerID)
 }
 
 // TODO: accomodate presign unbonding flow

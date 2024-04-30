@@ -120,7 +120,8 @@ func (h *Helper) GenAndApplyCustomParams(
 func CreateFinalityProvider(r *rand.Rand, t *testing.T) *types.FinalityProvider {
 	fpSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
+
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, "")
 	require.NoError(t, err)
 
 	return &types.FinalityProvider{
@@ -135,7 +136,7 @@ func CreateFinalityProvider(r *rand.Rand, t *testing.T) *types.FinalityProvider 
 func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider) {
 	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, "")
 	h.NoError(err)
 	msgNewFp := types.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
@@ -156,7 +157,7 @@ func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, consumerID)
 	if err != nil {
 		return nil, nil, nil, err
 	}

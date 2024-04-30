@@ -79,7 +79,22 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	cacheFP = s.CreateNodeFP(nonValidatorNode)
+	//cacheFP = s.CreateNodeFP(nonValidatorNode)
+	/*
+		create a random finality provider on Babylon
+	*/
+	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
+	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpBTCSK, nonValidatorNode.SecretKey, "")
+	s.NoError(err)
+	nonValidatorNode.CreateFinalityProvider("val", fp.BtcPk, fp.Pop, fp.Description.Moniker, fp.Description.Identity, fp.Description.Website, fp.Description.SecurityContact, fp.Description.Details, fp.Commission)
+
+	// wait for a block so that above txs take effect
+	nonValidatorNode.WaitForNextBlock()
+
+	// query the existence of finality provider and assert equivalence
+	actualFps := nonValidatorNode.QueryFinalityProviders()
+	s.Len(actualFps, 1)
+	s.equalFinalityProviderResp(fp, actualFps[0])
 
 	/*
 		create a random BTC delegation under this finality provider
@@ -854,7 +869,7 @@ func (s *BTCStakingTestSuite) CreateNodeFP(node *chain.NodeConfig) (newFP *bstyp
 	nodeAddr, err := sdk.AccAddressFromBech32(node.PublicAddress)
 	s.NoError(err)
 
-	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, nodeAddr)
+	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, nodeAddr, "")
 	s.NoError(err)
 	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission)
 

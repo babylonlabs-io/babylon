@@ -108,6 +108,21 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 		activeEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
 		btcTip := k.btclcKeeper.GetTipInfo(ctx)
 		k.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
+
+		// get consumer ids of only non-Babylon finality providers
+		restakedFPConsumerIDs, err := k.restakedFPConsumerIDs(ctx, btcDel.FpBtcPkList)
+		if err != nil {
+			panic(fmt.Errorf("failed to get consumer ids for the restaked BTC delegation: %w", err))
+		}
+		consumerEvent, err := types.CreateActiveBTCDelegationEvent(btcDel)
+		if err != nil {
+			panic(fmt.Errorf("failed to create active BTC delegation event: %w", err))
+		}
+		for _, consumerID := range restakedFPConsumerIDs {
+			if err := k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
+				panic(fmt.Errorf("failed to add active BTC delegation event: %w", err))
+			}
+		}
 	}
 }
 
@@ -137,6 +152,22 @@ func (k Keeper) btcUndelegate(
 	unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	k.addPowerDistUpdateEvent(ctx, btcTip.Height, unbondedEvent)
+
+	// get consumer ids of only non-Babylon finality providers
+	restakedFPConsumerIDs, err := k.restakedFPConsumerIDs(ctx, btcDel.FpBtcPkList)
+	if err != nil {
+		panic(fmt.Errorf("failed to get consumer ids for the restaked BTC delegation: %w", err))
+	}
+	// create consumer event for unbonded BTC delegation and add it to the consumer's event store
+	consumerEvent, err := types.CreateUnbondedBTCDelegationEvent(btcDel)
+	if err != nil {
+		panic(fmt.Errorf("failed to create unbonded BTC delegation event: %w", err))
+	}
+	for _, consumerID := range restakedFPConsumerIDs {
+		if err = k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
+			panic(fmt.Errorf("failed to add active BTC delegation event: %w", err))
+		}
+	}
 }
 
 func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegation) {
@@ -150,10 +181,8 @@ func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 // one of them is a Babylon finality provider. It also checks whether the BTC stake is
 // restaked to FPs of consumer chains
 func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) (bool, error) {
-	var (
-		restakedToBabylon   = false
-		restakedToConsumers = false
-	)
+	restakedToBabylon := false
+	restakedToConsumers := false
 
 	for _, fpBTCPK := range fpBTCPKs {
 		// find the fp and determine whether it's Babylon fp or consumer chain fp
@@ -162,7 +191,6 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 			if fp.IsSlashed() {
 				return false, types.ErrFpAlreadySlashed
 			}
-			// ensure the finality provider's registered epoch is finalised
 			restakedToBabylon = true
 			continue
 		} else if consumerID, err := k.bscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
@@ -174,7 +202,6 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 			if fp.IsSlashed() {
 				return false, types.ErrFpAlreadySlashed
 			}
-			// ensure the finality provider's registered epoch is finalised
 			restakedToConsumers = true
 			continue
 		} else {
@@ -186,6 +213,23 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 		return false, types.ErrNoBabylonFPRestaked
 	}
 	return restakedToConsumers, nil
+}
+
+// restakedFPConsumerIDs returns the consumer IDs of non-Babylon finality providers
+func (k Keeper) restakedFPConsumerIDs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) ([]string, error) {
+	var consumerIDs []string
+
+	for _, fpBTCPK := range fpBTCPKs {
+		if _, err := k.GetFinalityProvider(ctx, fpBTCPK); err == nil {
+			continue
+		} else if consumerID, err := k.bscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
+			consumerIDs = append(consumerIDs, consumerID)
+		} else {
+			return nil, types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPK.MarshalHex())
+		}
+	}
+
+	return consumerIDs, nil
 }
 
 // GetBTCDelegation gets the BTC delegation with a given staking tx hash

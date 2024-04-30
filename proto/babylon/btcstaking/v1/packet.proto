@@ -43,8 +43,8 @@ message NewFinalityProvider {
   // commission defines the commission rate of the finality provider.
   // It forms as a string converted from "cosmossdk.io/math.LegacyDec"
   string commission = 2;
-  // babylon_pk is the Babylon secp256k1 PK of this finality provider
-  cosmos.crypto.secp256k1.PubKey babylon_pk = 3;
+  // addr is the bech32 address identifier of the finality provider.
+  string addr = 3;
   // btc_pk_hex is the Bitcoin secp256k1 PK of this finality provider
   // the PK follows encoding in BIP-340 spec in hex format
   string btc_pk_hex = 4;
@@ -53,24 +53,22 @@ message NewFinalityProvider {
   // master_pub_rand is the master public randomness of the finality provider
   // encoded as a base58 string
   string master_pub_rand = 6;
-  // registered_epoch is the epoch when this finality provider is registered
-  uint64 registered_epoch = 7;
   // slashed_babylon_height indicates the Babylon height when
   // the finality provider is slashed.
   // if it's 0 then the finality provider is not slashed
-  uint64 slashed_babylon_height = 8;
+  uint64 slashed_babylon_height = 7;
   // slashed_btc_height indicates the BTC height when
   // the finality provider is slashed.
   // if it's 0 then the finality provider is not slashed
-  uint64 slashed_btc_height = 9;
+  uint64 slashed_btc_height = 8;
   // consumer_id is the ID of the consumer the finality provider is operating on.
   // If it's missing / empty, it's assumed the finality provider is operating in Babylon.
-  string consumer_id = 10;
+  string consumer_id = 9;
 }
 
 // ActiveBTCDelegation is an IBC packet sent from Babylon to consumer
 // upon a BTC delegation newly receives covenant signatures and thus becomes active
-message ActiveBTCDelegation { 
+message ActiveBTCDelegation {
   // btc_pk_hex is the Bitcoin secp256k1 PK of this BTC delegation
   // the PK follows encoding in BIP-340 spec in hex format
   string btc_pk_hex = 1;
@@ -156,4 +154,21 @@ message UnbondedBTCDelegation {
   // unbonding_tx_sig is the signature on the unbonding tx signed by the BTC delegator
   // It proves that the BTC delegator wants to unbond
   bytes unbonding_tx_sig = 2;
+}
+
+// BTCStakingConsumerEvent defines the structure for storing BTC staking events
+// which will be later sent to consumer chains as IBC packets.
+message BTCStakingConsumerEvent {
+  // oneof event represents a mutually exclusive choice among different event types.
+  // Only one event type can be set within each BTCStakingEvent message instance.
+  oneof event {
+    // NewFinalityProvider represents the event of a new finality provider being created.
+    NewFinalityProvider new_fp = 1;
+    // ActiveBTCDelegation represents the event of an active BTC delegation.
+    ActiveBTCDelegation active_del = 2;
+    // SlashedBTCDelegation represents the event of a slashed BTC delegation.
+    SlashedBTCDelegation slashed_del = 3;
+    // UnbondedBTCDelegation represents the event of an unbonded BTC delegation.
+    UnbondedBTCDelegation unbonded_del = 4;
+  }
 }

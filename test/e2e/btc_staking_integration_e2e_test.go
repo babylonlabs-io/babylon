@@ -1,12 +1,8 @@
 package e2e
 
 import (
-	"errors"
-	"fmt"
 	"math"
-	"time"
 
-	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/test/e2e/configurer"
 	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
@@ -15,7 +11,6 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	bsctypes "github.com/babylonchain/babylon/x/btcstkconsumer/types"
-	ckpttypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/wire"
@@ -144,12 +139,10 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyConsumerFP(babylonNode *cha
 	*/
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
 	czFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
-	sr, _, err := eots.NewMasterRandPair(r)
-	s.NoError(err)
-	czFp, err := datagen.GenRandomCustomFinalityProvider(r, czFpBTCSK, babylonNode.SecretKey, sr)
+	czFp, err := datagen.GenRandomCustomFinalityProvider(r, czFpBTCSK, babylonNode.SecretKey, consumerId)
 	s.NoError(err)
 	babylonNode.CreateConsumerFinalityProvider(
-		czFp.BabylonPk, czFp.BtcPk, czFp.Pop, czFp.MasterPubRand, consumerId, czFp.Description.Moniker,
+		czFp.BabylonPk, czFp.BtcPk, czFp.Pop, consumerId, czFp.Description.Moniker,
 		czFp.Description.Identity, czFp.Description.Website, czFp.Description.SecurityContact,
 		czFp.Description.Details, czFp.Commission,
 	)
@@ -177,11 +170,9 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyBabylonFP(babylonNode *chai
 	*/
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
 	babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
-	sr, _, err := eots.NewMasterRandPair(r)
+	babylonFp, err := datagen.GenRandomCustomFinalityProvider(r, babylonFpBTCSK, babylonNode.SecretKey, "")
 	s.NoError(err)
-	babylonFp, err := datagen.GenRandomCustomFinalityProvider(r, babylonFpBTCSK, babylonNode.SecretKey, sr)
-	s.NoError(err)
-	babylonNode.CreateFinalityProvider(babylonFp.BabylonPk, babylonFp.BtcPk, babylonFp.Pop, babylonFp.MasterPubRand, babylonFp.Description.Moniker, babylonFp.Description.Identity, babylonFp.Description.Website, babylonFp.Description.SecurityContact, babylonFp.Description.Details, babylonFp.Commission)
+	babylonNode.CreateFinalityProvider(babylonFp.BabylonPk, babylonFp.BtcPk, babylonFp.Pop, babylonFp.Description.Moniker, babylonFp.Description.Identity, babylonFp.Description.Website, babylonFp.Description.SecurityContact, babylonFp.Description.Details, babylonFp.Commission)
 
 	// wait for a block so that above txs take effect
 	babylonNode.WaitForNextBlock()
@@ -202,32 +193,6 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyBabylonFP(babylonNode *chai
 
 // helper function: create a Babylon delegation and restake to Babylon and consumer finality providers
 func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNode *chain.NodeConfig, babylonFp *bstypes.FinalityProviderResponse, consumerFp *bsctypes.FinalityProviderResponse) (*btcec.PublicKey, string) {
-	// finalise epochs until the registered epoch of the finality provider
-	// so that the finality provider can receive BTC delegations
-	// TODO: it is assumed here that babylonFp is registered after consumerFp so
-	//  if we finalize registered epoch of babylonFp the other would also get finalized
-	//  ideally we should get registered epoch of each restaked fp and finalize it.
-	var (
-		startEpoch = uint64(1)
-		endEpoch   = babylonFp.RegisteredEpoch
-	)
-	// wait until the end epoch is sealed
-	s.Eventually(func() bool {
-		ch, _ := nonValidatorNode.QueryCurrentHeight()
-		ce, _ := nonValidatorNode.QueryCurrentEpoch()
-		fmt.Println("current height", ch)
-		fmt.Println("current epoch", ce)
-		resp, err := nonValidatorNode.QueryRawCheckpoint(endEpoch)
-		if err != nil {
-			if !errors.Is(err, ckpttypes.ErrCkptDoesNotExist) {
-				return false
-			}
-		}
-		return resp.Status == ckpttypes.Sealed
-	}, time.Minute, time.Second*5)
-	// finalise these epochs
-	nonValidatorNode.FinalizeSealedEpochs(startEpoch, endEpoch)
-
 	/*
 		create a random BTC delegation restaking to Babylon and consumer finality providers
 	*/
