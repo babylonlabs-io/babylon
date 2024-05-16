@@ -10,7 +10,7 @@ import (
 )
 
 func (k Keeper) AddBTCStakingConsumerEvent(ctx context.Context, consumerID string, event *types.BTCStakingConsumerEvent) error {
-	store := k.btcStakingConsumerEventStore(ctx, consumerID)
+	store := k.btcStakingConsumerEventStore(ctx)
 	storeKey := []byte(consumerID)
 
 	// If the consumer already has events, append the new event to the existing list
@@ -42,7 +42,7 @@ func (k Keeper) AddBTCStakingConsumerEvent(ctx context.Context, consumerID strin
 
 // GetBTCStakingConsumerIBCPacket gets BTC staking consumer IBC packet for a given consumer ID.
 func (k Keeper) GetBTCStakingConsumerIBCPacket(ctx context.Context, consumerID string) *types.BTCStakingIBCPacket {
-	store := k.btcStakingConsumerEventStore(ctx, consumerID)
+	store := k.btcStakingConsumerEventStore(ctx)
 	storeKey := []byte(consumerID)
 	if !store.Has(storeKey) {
 		return nil
@@ -57,9 +57,8 @@ func (k Keeper) GetBTCStakingConsumerIBCPacket(ctx context.Context, consumerID s
 // GetAllBTCStakingConsumerIBCPackets retrieves all BTC staking consumer IBC packets from the store,
 // returning a map where the keys are consumer IDs and the values are the corresponding BTCStakingIBCPacket.
 func (k Keeper) GetAllBTCStakingConsumerIBCPackets(ctx context.Context) map[string]*types.BTCStakingIBCPacket {
-	storeAdaptor := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	evStore := prefix.NewStore(storeAdaptor, types.BTCStakingEventKey)
-	iter := evStore.Iterator(nil, nil)
+	store := k.btcStakingConsumerEventStore(ctx)
+	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 
 	// Initialize the map to hold consumer ID keys and IBC packet values.
@@ -75,7 +74,7 @@ func (k Keeper) GetAllBTCStakingConsumerIBCPackets(ctx context.Context) map[stri
 }
 
 func (k Keeper) DeleteBTCStakingConsumerIBCPacket(ctx context.Context, consumerID string) {
-	store := k.btcStakingConsumerEventStore(ctx, consumerID)
+	store := k.btcStakingConsumerEventStore(ctx)
 	storeKey := []byte(consumerID)
 	store.Delete(storeKey)
 }
@@ -84,8 +83,7 @@ func (k Keeper) DeleteBTCStakingConsumerIBCPacket(ctx context.Context, consumerI
 // prefix: BTCStakingEventKey || consumer ID
 // key: BTCStakingConsumerEventType
 // value: BTCStakingConsumerEvents (a list of BTCStakingConsumerEvent)
-func (k Keeper) btcStakingConsumerEventStore(ctx context.Context, consumerID string) prefix.Store {
+func (k Keeper) btcStakingConsumerEventStore(ctx context.Context) prefix.Store {
 	storeAdaptor := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	evStore := prefix.NewStore(storeAdaptor, types.BTCStakingEventKey)
-	return prefix.NewStore(evStore, []byte(consumerID))
+	return prefix.NewStore(storeAdaptor, types.BTCStakingEventKey)
 }
