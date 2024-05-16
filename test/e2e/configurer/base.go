@@ -74,22 +74,21 @@ func (bc *baseConfigurer) runValidators(chainConfig *chain.Config) error {
 	return nil
 }
 
-func (bc *baseConfigurer) InstantiateBabylonContract() error {
+func (bc *baseConfigurer) InstantiateBabylonContract(enableBTCStaking bool) error {
 	// Store the contract on the second chain (B)
 	chainConfig := bc.chainConfigs[1]
-	contractPath := "/bytecode/babylon_contract.wasm"
+	babylonContractPath := "/bytecode/babylon_contract.wasm"
 	nonValidatorNode, err := chainConfig.GetNodeAtIndex(2)
 	if err != nil {
 		bc.t.Logf("error getting non-validator node: %v", err)
 		return err
 	}
-	nonValidatorNode.StoreWasmCode(contractPath, initialization.ValidatorWalletName)
+
+	// Store Babylon contract
+	nonValidatorNode.StoreWasmCode(babylonContractPath, initialization.ValidatorWalletName)
 	nonValidatorNode.WaitForNextBlock()
 	nonValidatorNode.WaitForNextBlock()
-
-	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
-
-	// Instantiate the contract
+	babylonContractWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
 	initMsg := fmt.Sprintf(`{ "network": %q, "babylon_tag": %q, "btc_confirmation_depth": %d, "checkpoint_finalization_timeout": %d, "notify_cosmos_zone": %s }`,
 		types.BtcRegtest,
 		types2.DefaultCheckpointTag,
@@ -97,13 +96,33 @@ func (bc *baseConfigurer) InstantiateBabylonContract() error {
 		2,
 		"false",
 	)
+
+	// Store BTC staking contract if required
+	if enableBTCStaking {
+		btcStakingContractPath := "/bytecode/btc_staking.wasm"
+		nonValidatorNode.StoreWasmCode(btcStakingContractPath, initialization.ValidatorWalletName)
+		nonValidatorNode.WaitForNextBlock()
+		nonValidatorNode.WaitForNextBlock()
+		btcStakingContractWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
+
+		initMsg = fmt.Sprintf(`{ "network": %q, "babylon_tag": %q, "btc_confirmation_depth": %d, "checkpoint_finalization_timeout": %d, "notify_cosmos_zone": %s, "btc_staking_code_id": %d }`,
+			types.BtcRegtest,
+			types2.DefaultCheckpointTag,
+			1,
+			2,
+			"false",
+			btcStakingContractWasmId,
+		)
+	}
+
+	// Instantiate the Babylon contract, if the initMsg has the btc_staking_code_id field, it will internally instantiate the btc staking contract as well
 	nonValidatorNode.InstantiateWasmContract(
-		strconv.Itoa(latestWasmId),
+		strconv.Itoa(babylonContractWasmId),
 		initMsg,
 		initialization.ValidatorWalletName,
 	)
 	nonValidatorNode.WaitForNextBlock()
-	contracts, err := nonValidatorNode.QueryContractsFromId(1)
+	contracts, err := nonValidatorNode.QueryContractsFromId(babylonContractWasmId)
 	if err != nil {
 		bc.t.Logf("error querying contracts from id: %v", err)
 		return err

@@ -21,7 +21,7 @@ type Configurer interface {
 
 	RunValidators() error
 
-	InstantiateBabylonContract() error
+	InstantiateBabylonContract(enableBTCStaking bool) error
 
 	RunHermesRelayerIBC() error
 
@@ -157,7 +157,7 @@ func NewBTCTimestampingPhase2Configurer(t *testing.T, isDebugLogEnabled bool) (C
 			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, ibcConfigChainA),
 			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB, ibcConfigChainB),
 		},
-		withPhase2IBC(baseSetup), // IBC setup (requires contract address)
+		withPhase2HermesIBC(baseSetup, false), // IBC setup (requires contract address)
 		containerManager,
 	), nil
 }
@@ -174,7 +174,7 @@ func NewBTCTimestampingPhase2RlyConfigurer(t *testing.T, isDebugLogEnabled bool)
 			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, ibcConfigChainA),
 			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB, ibcConfigChainB),
 		},
-		withPhase2RlyIBC(baseSetup), // IBC setup with wasmd and Go relayer
+		withPhase2GoRlyIBC(baseSetup), // IBC setup with wasmd and Go relayer
 		containerManager,
 	), nil
 }
@@ -204,10 +204,10 @@ func NewBTCStakingIntegrationConfigurer(t *testing.T, isDebugLogEnabled bool) (C
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			// we only need 1 chain for testing BTC Staking Integration
-			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, nil),
+			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, ibcConfigChainA),
+			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB, ibcConfigChainB),
 		},
-		baseSetup, // base set up
+		withPhase2HermesIBC(baseSetup, true), // IBC setup (requires contract address)
 		containerManager,
 	), nil
 }

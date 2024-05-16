@@ -67,3 +67,18 @@ func (n *NodeConfig) QueryPacketAcknowledgement(channelID string, portID string,
 
 	return &resp, nil
 }
+
+func (n *NodeConfig) QueryChannelClientState(channelID, portID string) (*channeltypes.QueryChannelClientStateResponse, error) {
+	path := fmt.Sprintf("/ibc/core/channel/v1/channels/%s/ports/%s/client_state", channelID, portID)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp channeltypes.QueryChannelClientStateResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
