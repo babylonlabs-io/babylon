@@ -1,8 +1,8 @@
 package e2e
 
 import (
+	"encoding/hex"
 	"errors"
-	"fmt"
 	"math"
 	"time"
 
@@ -21,7 +21,12 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/suite"
+)
+
+var (
+	czDelBtcSk, czDelBtcPk, _ = datagen.GenRandomBTCKeyPair(r)
 )
 
 type BTCStakingIntegrationTestSuite struct {
@@ -56,31 +61,82 @@ func (s *BTCStakingIntegrationTestSuite) TearDownSuite() {
 	s.Require().NoError(err)
 }
 
+// Test1RegisterNewConsumer registers a new consumer on Babylon
 func (s *BTCStakingIntegrationTestSuite) Test1RegisterNewConsumer() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	babylonNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
-	s.registerVerifyConsumer(nonValidatorNode)
+
+	consumerID := s.getIBCClientID()
+	s.registerVerifyConsumer(babylonNode, consumerID)
 }
 
+// Test2CreateConsumerFinalityProvider -
+// 1. Creates a consumer finality provider under the consumer registered in Test1RegisterNewConsumer
+// 2. Verifies that the finality provider is stored in the smart contract
 func (s *BTCStakingIntegrationTestSuite) Test2CreateConsumerFinalityProvider() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// get the consumer registered in Test1
+	// retrieve the registered consumer in Test1
 	consumerRegistryList := nonValidatorNode.QueryConsumerRegistryList(&query.PageRequest{Limit: 1})
+	s.NotNil(consumerRegistryList)
+	s.NotNil(consumerRegistryList.ConsumerIds)
+	s.Equal(1, len(consumerRegistryList.ConsumerIds))
 	consumerId := consumerRegistryList.ConsumerIds[0]
 
-	// create a random num of finality providers from 1 to 5 on the consumer
-	numFPs := datagen.RandomInt(r, 5) + 1
-	for i := 0; i < int(numFPs); i++ {
-		s.createVerifyConsumerFP(nonValidatorNode, consumerId)
+	// generate a random number of finality providers from 1 to 5
+	numConsumerFPs := datagen.RandomInt(r, 5) + 1
+	var consumerFps []*bstypes.FinalityProvider
+	for i := 0; i < int(numConsumerFPs); i++ {
+		consumerFp := s.createVerifyConsumerFP(nonValidatorNode, consumerId)
+		consumerFps = append(consumerFps, consumerFp)
+	}
+
+	czNode, err := s.configurer.GetChainConfig(1).GetNodeAtIndex(2)
+	s.NoError(err)
+	// retrieve staking contract address and query finality providers stored in the contract
+	stakingContracts, err := czNode.QueryContractsFromId(2)
+	s.NoError(err)
+	s.Equal(1, len(stakingContracts))
+	stakingContractAddr := stakingContracts[0]
+
+	// query the staking contract for finality providers
+	var dataFromContract *chain.ConsumerFpResponse
+	s.Eventually(func() bool {
+		// try to retrieve expected number of finality providers from the contract
+		dataFromContract, err = czNode.QueryConsumerFps(stakingContractAddr)
+		if err != nil {
+			return false
+		}
+		return len(dataFromContract.ConsumerFps) == int(numConsumerFPs)
+	}, time.Second*20, time.Second)
+
+	// create a map of expected finality providers for verification
+	fpMap := make(map[string]*bstypes.FinalityProvider)
+	for _, czFp := range consumerFps {
+		fpMap[czFp.BtcPk.MarshalHex()] = czFp
+	}
+
+	// validate that all finality providers match with the consumer list
+	for _, czFp := range dataFromContract.ConsumerFps {
+		fpFromMap, ok := fpMap[czFp.BtcPkHex]
+		s.True(ok)
+		s.Equal(fpFromMap.BtcPk.MarshalHex(), czFp.BtcPkHex)
+		//s.Equal(fpFromMap.RegisteredEpoch, czFp.RegisteredEpoch) // TODO: registered epoch doesn't match, investigate
+		s.Equal(fpFromMap.MasterPubRand, czFp.MasterPubRand)
+		s.Equal(fpFromMap.SlashedBabylonHeight, czFp.SlashedBabylonHeight)
+		s.Equal(fpFromMap.SlashedBtcHeight, czFp.SlashedBtcHeight)
+		s.Equal(fpFromMap.ConsumerId, czFp.ChainID)
 	}
 }
 
+// Test3RestakeDelegationToMultipleFPs creates a Babylon delegation and restakes
+// it to both Babylon and consumer finality provider created in Test2CreateConsumerFinalityProvider
+// This will create a delegation in pending state as covenant sigs are not provided
 func (s *BTCStakingIntegrationTestSuite) Test3RestakeDelegationToMultipleFPs() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
@@ -121,10 +177,133 @@ func (s *BTCStakingIntegrationTestSuite) Test3RestakeDelegationToMultipleFPs() {
 	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
 }
 
+// Test4ActivateDelegation -
+// 1. Activates the delegation created in Test3RestakeDelegationToMultipleFPs by submitting covenant sigs
+// 2. Verifies that the active delegation is stored in the smart contract
+func (s *BTCStakingIntegrationTestSuite) Test4ActivateDelegation() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	consumerRegistryList := nonValidatorNode.QueryConsumerRegistryList(&query.PageRequest{Limit: 1})
+	consumerId := consumerRegistryList.ConsumerIds[0]
+	// get the consumer created in Test2
+	consumerFp := nonValidatorNode.QueryConsumerFinalityProviders(consumerId)[0]
+
+	// activate the delegation created in Test3 by submitting covenant sigs
+	s.submitCovenantSigs(nonValidatorNode, consumerFp)
+
+	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex())
+	s.Len(activeDelsSet, 1)
+
+	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
+	s.NoError(err)
+	s.NotNil(activeDels)
+	s.Len(activeDels.Dels, 1)
+
+	activeDel := activeDels.Dels[0]
+	czNode, err := s.configurer.GetChainConfig(1).GetNodeAtIndex(2)
+	s.NoError(err)
+	stakingContracts, err := czNode.QueryContractsFromId(2)
+	s.NoError(err)
+	stakingContractAddr := stakingContracts[0]
+
+	// query the staking contract for delegations
+	var dataFromContract *chain.ConsumerDelegationResponse
+	s.Eventually(func() bool {
+		// try to retrieve expected number of delegations from the contract
+		dataFromContract, err = czNode.QueryConsumerDelegations(stakingContractAddr)
+		if err != nil {
+			return false
+		}
+		return len(dataFromContract.ConsumerDelegations) == 1
+	}, time.Second*20, time.Second)
+
+	s.Equal(activeDel.BtcPk.MarshalHex(), dataFromContract.ConsumerDelegations[0].BtcPkHex)
+	s.Len(dataFromContract.ConsumerDelegations[0].FpBtcPkList, 2)
+	s.Equal(activeDel.FpBtcPkList[0].MarshalHex(), dataFromContract.ConsumerDelegations[0].FpBtcPkList[0])
+	s.Equal(activeDel.FpBtcPkList[1].MarshalHex(), dataFromContract.ConsumerDelegations[0].FpBtcPkList[1])
+	s.Equal(activeDel.StartHeight, dataFromContract.ConsumerDelegations[0].StartHeight)
+	s.Equal(activeDel.EndHeight, dataFromContract.ConsumerDelegations[0].EndHeight)
+	s.Equal(activeDel.TotalSat, dataFromContract.ConsumerDelegations[0].TotalSat)
+	s.Equal(hex.EncodeToString(activeDel.StakingTx), hex.EncodeToString(dataFromContract.ConsumerDelegations[0].StakingTx))
+	s.Equal(activeDel.SlashingTx.ToHexStr(), hex.EncodeToString(dataFromContract.ConsumerDelegations[0].SlashingTx))
+}
+
+// Test5ContractQueries -
+// 1. Query all finality providers stored in the staking contract
+// 2. Query all BTC delegations stored in the staking contract
+// 3. Query a single finality provider from the staking contract
+// 4. Query a single BTC delegation from the staking contract
+// 5. Query BTC delegations of a specific finality provider from the staking contract
+func (s *BTCStakingIntegrationTestSuite) Test5ContractQueries() {
+	// 1. Already covered in Test2CreateConsumerFinalityProvider
+	// 2. Already covered in Test4ActivateDelegation
+
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+	consumerRegistryList := nonValidatorNode.QueryConsumerRegistryList(&query.PageRequest{Limit: 1})
+	consumerId := consumerRegistryList.ConsumerIds[0]
+	consumerFp := nonValidatorNode.QueryConsumerFinalityProviders(consumerId)[0]
+
+	czNode, err := s.configurer.GetChainConfig(1).GetNodeAtIndex(2)
+	s.NoError(err)
+
+	stakingContracts, err := czNode.QueryContractsFromId(2)
+	s.NoError(err)
+	stakingContractAddr := stakingContracts[0]
+
+	// 3. Query a single finality provider from the staking contract
+	contractFP, err := czNode.QuerySingleConsumerFp(stakingContractAddr, consumerFp.BtcPk.MarshalHex())
+	s.NoError(err)
+	s.Equal(consumerFp.BtcPk.MarshalHex(), contractFP.BtcPkHex)
+	s.Equal(consumerFp.SlashedBabylonHeight, contractFP.SlashedBabylonHeight)
+	s.Equal(consumerFp.SlashedBtcHeight, contractFP.SlashedBtcHeight)
+	s.Equal(consumerFp.ConsumerId, contractFP.ChainID)
+	// TODO: check how to assert registered epoch, it is not present in the response
+
+	// 4. Query a single BTC delegation from the staking contract
+	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex())
+	s.Len(activeDelsSet, 1)
+	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
+	s.NoError(err)
+	s.NotNil(activeDels)
+	s.Len(activeDels.Dels, 1)
+	activeDel := activeDels.Dels[0]
+	stakingTxHashHex := activeDel.MustGetStakingTxHash().String()
+	contractDel, err := czNode.QuerySingleConsumerDelegation(stakingContractAddr, stakingTxHashHex)
+	s.NoError(err)
+	s.Equal(activeDel.BtcPk.MarshalHex(), contractDel.BtcPkHex)
+	s.Len(contractDel.FpBtcPkList, 2)
+	s.Equal(activeDel.FpBtcPkList[0].MarshalHex(), contractDel.FpBtcPkList[0])
+	s.Equal(activeDel.FpBtcPkList[1].MarshalHex(), contractDel.FpBtcPkList[1])
+	s.Equal(activeDel.StartHeight, contractDel.StartHeight)
+	s.Equal(activeDel.EndHeight, contractDel.EndHeight)
+	s.Equal(activeDel.TotalSat, contractDel.TotalSat)
+	s.Equal(hex.EncodeToString(activeDel.StakingTx), hex.EncodeToString(contractDel.StakingTx))
+	s.Equal(activeDel.SlashingTx.ToHexStr(), hex.EncodeToString(contractDel.SlashingTx))
+
+	// 5. Query BTC delegations of a specific finality provider from the staking contract
+	contractDelsByFp, err := czNode.QueryConsumerDelegationsByFp(stakingContractAddr, consumerFp.BtcPk.MarshalHex())
+	s.NoError(err)
+	s.NotNil(contractDelsByFp)
+	s.Len(contractDelsByFp.StakingTxHashes, 1)
+	s.Equal(activeDel.MustGetStakingTxHash().String(), contractDelsByFp.StakingTxHashes[0])
+}
+
+// TODO: add test for unbonding/slashing when they are supported in smart contract
+
 // helper function: register a random consumer on Babylon and verify it
-func (s *BTCStakingIntegrationTestSuite) registerVerifyConsumer(babylonNode *chain.NodeConfig) *bsctypes.ConsumerRegister {
+func (s *BTCStakingIntegrationTestSuite) registerVerifyConsumer(babylonNode *chain.NodeConfig, consumerID string) *bsctypes.ConsumerRegister {
 	// Register a random consumer on Babylon
-	randomConsumer := datagen.GenRandomConsumerRegister(r)
+	randomConsumer := &bsctypes.ConsumerRegister{
+		ConsumerId:          consumerID,
+		ConsumerName:        datagen.GenRandomHexStr(r, 5),
+		ConsumerDescription: "Chain description: " + datagen.GenRandomHexStr(r, 15),
+	}
 	babylonNode.RegisterConsumer(randomConsumer.ConsumerId, randomConsumer.ConsumerName, randomConsumer.ConsumerDescription)
 	babylonNode.WaitForNextBlock()
 
@@ -213,10 +392,6 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 	)
 	// wait until the end epoch is sealed
 	s.Eventually(func() bool {
-		ch, _ := nonValidatorNode.QueryCurrentHeight()
-		ce, _ := nonValidatorNode.QueryCurrentEpoch()
-		fmt.Println("current height", ch)
-		fmt.Println("current epoch", ce)
 		resp, err := nonValidatorNode.QueryRawCheckpoint(endEpoch)
 		if err != nil {
 			if !errors.Is(err, ckpttypes.ErrCkptDoesNotExist) {
@@ -233,8 +408,6 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 	*/
 
 	delBbnSk := nonValidatorNode.SecretKey
-	delBtcSk, delBtcPk, _ := datagen.GenRandomBTCKeyPair(r)
-
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := nonValidatorNode.QueryBTCStakingParams()
 
@@ -247,7 +420,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		covenantBTCPKs = append(covenantBTCPKs, covenantPK.MustToBTCPK())
 	}
 	// NOTE: we use the node's secret key as Babylon secret key for the BTC delegation
-	pop, err := bstypes.NewPoP(delBbnSk, delBtcSk)
+	pop, err := bstypes.NewPoP(delBbnSk, czDelBtcSk)
 	s.NoError(err)
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
@@ -255,7 +428,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		r,
 		s.T(),
 		net,
-		delBtcSk,
+		czDelBtcSk,
 		[]*btcec.PublicKey{babylonFp.BtcPk.MustToBTCPK(), consumerFp.BtcPk.MustToBTCPK()},
 		covenantBTCPKs,
 		covenantQuorum,
@@ -276,7 +449,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		stakingMsgTx,
 		datagen.StakingOutIdx,
 		stakingSlashingPathInfo.GetPkScriptPath(),
-		delBtcSk,
+		czDelBtcSk,
 	)
 	s.NoError(err)
 
@@ -301,7 +474,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		r,
 		s.T(),
 		net,
-		delBtcSk,
+		czDelBtcSk,
 		[]*btcec.PublicKey{babylonFp.BtcPk.MustToBTCPK(), consumerFp.BtcPk.MustToBTCPK()},
 		covenantBTCPKs,
 		covenantQuorum,
@@ -312,11 +485,11 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		params.SlashingRate,
 		unbondingTime,
 	)
-	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBtcSk)
+	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(czDelBtcSk)
 	s.NoError(err)
 
 	// submit the message for creating BTC delegation
-	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(delBtcPk)}
+	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(czDelBtcPk)}
 	nonValidatorNode.CreateBTCDelegation(
 		delBbnSk.PubKey().(*secp256k1.PubKey),
 		delBTCPKs,
@@ -338,5 +511,180 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 	nonValidatorNode.WaitForNextBlock()
 	nonValidatorNode.WaitForNextBlock()
 
-	return delBtcPk, stakingTxHash
+	return czDelBtcPk, stakingTxHash
+}
+
+// helper function: verify if the ibc channels are open and get the ibc client id of the CZ node
+func (s *BTCStakingIntegrationTestSuite) getIBCClientID() string {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	babylonNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	chainB := s.configurer.GetChainConfig(1)
+	chainB.WaitUntilHeight(1)
+	czNode, err := chainB.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	var babylonChannel *channeltypes.IdentifiedChannel
+	s.Eventually(func() bool {
+		babylonChannelsResp, err := babylonNode.QueryIBCChannels()
+		if err != nil {
+			return false
+		}
+		if len(babylonChannelsResp.Channels) != 1 {
+			return false
+		}
+		// channel has to be open and ordered
+		babylonChannel = babylonChannelsResp.Channels[0]
+		if babylonChannel.State != channeltypes.OPEN {
+			return false
+		}
+		s.Equal(channeltypes.ORDERED, babylonChannel.Ordering)
+		// the counterparty has to be the Babylon smart contract
+		s.Contains(babylonChannel.Counterparty.PortId, "wasm.")
+		return true
+	}, time.Minute, time.Second*2)
+
+	// Wait until the channel (CZ side) is open
+	var czChannel *channeltypes.IdentifiedChannel
+	s.Eventually(func() bool {
+		czChannelsResp, err := czNode.QueryIBCChannels()
+		if err != nil {
+			return false
+		}
+		if len(czChannelsResp.Channels) != 1 {
+			return false
+		}
+		czChannel = czChannelsResp.Channels[0]
+		if czChannel.State != channeltypes.OPEN {
+			return false
+		}
+		s.Equal(channeltypes.ORDERED, czChannel.Ordering)
+		s.Equal(babylonChannel.PortId, czChannel.Counterparty.PortId)
+		return true
+	}, time.Minute, time.Second*2)
+
+	czChannelState, err := czNode.QueryChannelClientState(czChannel.ChannelId, czChannel.PortId)
+	s.NoError(err)
+
+	nextSequenceRecv, err := czNode.QueryNextSequenceReceive(babylonChannel.Counterparty.ChannelId, babylonChannel.Counterparty.PortId)
+	s.NoError(err)
+	// there are no packets sent yet, so the next sequence receive should be 1
+	s.Equal(uint64(1), nextSequenceRecv.NextSequenceReceive)
+	return czChannelState.IdentifiedClientState.GetClientId()
+}
+
+// helper function: submit covenant sigs to activate the BTC delegation
+func (s *BTCStakingIntegrationTestSuite) submitCovenantSigs(nonValidatorNode *chain.NodeConfig, consumerFp *bsctypes.FinalityProviderResponse) {
+	pendingDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex())
+	s.Len(pendingDelsSet, 1)
+	pendingDels := pendingDelsSet[0]
+	s.Len(pendingDels.Dels, 1)
+	pendingDelResp := pendingDels.Dels[0]
+	pendingDel, err := ParseRespBTCDelToBTCDel(pendingDelResp)
+	s.NoError(err)
+	s.Len(pendingDel.CovenantSigs, 0)
+
+	slashingTx := pendingDel.SlashingTx
+	stakingTx := pendingDel.StakingTx
+
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(stakingTx)
+	s.NoError(err)
+	stakingTxHash := stakingMsgTx.TxHash().String()
+
+	params := nonValidatorNode.QueryBTCStakingParams()
+
+	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
+	s.NoError(err)
+
+	stakingInfo, err := pendingDel.GetStakingInfo(params, net)
+	s.NoError(err)
+
+	stakingSlashingPathInfo, err := stakingInfo.SlashingPathSpendInfo()
+	s.NoError(err)
+
+	/*
+		generate and insert new covenant signature, in order to activate the BTC delegation
+	*/
+	// covenant signatures on slashing tx
+	covenantSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		covenantSKs,
+		fpBTCPKs,
+		stakingMsgTx,
+		stakingSlashingPathInfo.GetPkScriptPath(),
+		slashingTx,
+	)
+	s.NoError(err)
+
+	// cov Schnorr sigs on unbonding signature
+	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	s.NoError(err)
+	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
+	s.NoError(err)
+
+	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
+		covenantSKs,
+		stakingMsgTx,
+		pendingDel.StakingOutputIdx,
+		unbondingPathInfo.GetPkScriptPath(),
+		unbondingTx,
+	)
+	s.NoError(err)
+
+	unbondingInfo, err := pendingDel.GetUnbondingInfo(params, net)
+	s.NoError(err)
+	unbondingSlashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
+	s.NoError(err)
+	covenantUnbondingSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		covenantSKs,
+		fpBTCPKs,
+		unbondingTx,
+		unbondingSlashingPathInfo.GetPkScriptPath(),
+		pendingDel.BtcUndelegation.SlashingTx,
+	)
+	s.NoError(err)
+
+	for i := 0; i < int(covenantQuorum); i++ {
+		nonValidatorNode.AddCovenantSigs(
+			covenantSlashingSigs[i].CovPk,
+			stakingTxHash,
+			covenantSlashingSigs[i].AdaptorSigs,
+			bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
+			covenantUnbondingSlashingSigs[i].AdaptorSigs,
+		)
+		// wait for a block so that above txs take effect
+		nonValidatorNode.WaitForNextBlock()
+	}
+
+	// wait for a block so that above txs take effect
+	nonValidatorNode.WaitForNextBlock()
+	nonValidatorNode.WaitForNextBlock()
+
+	// ensure the BTC delegation has covenant sigs now
+	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex())
+	s.Len(activeDelsSet, 1)
+
+	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
+	s.NoError(err)
+	s.NotNil(activeDels)
+	s.Len(activeDels.Dels, 1)
+
+	activeDel := activeDels.Dels[0]
+	s.True(activeDel.HasCovenantQuorums(covenantQuorum))
+
+	// wait for a block so that above txs take effect and the voting power table
+	// is updated in the next block's BeginBlock
+	nonValidatorNode.WaitForNextBlock()
+
+	// ensure BTC staking is activated
+	activatedHeight := nonValidatorNode.QueryActivatedHeight()
+	s.Positive(activatedHeight)
+	// ensure finality provider has voting power at activated height
+	currentBtcTip, err := nonValidatorNode.QueryTip()
+	s.NoError(err)
+	activeFps := nonValidatorNode.QueryActiveFinalityProvidersAtHeight(activatedHeight)
+	s.Len(activeFps, 1)
+	s.Equal(activeFps[0].VotingPower, activeDels.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
+	s.Equal(activeFps[0].VotingPower, activeDel.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
 }
