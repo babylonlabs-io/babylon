@@ -2,7 +2,12 @@
 
 ## [Unreleased](https://github.com/babylonchain/babylon-private/tree/HEAD)
 
-[Full Changelog](https://github.com/babylonchain/babylon-private/compare/euphrates-0.1.0-rc.1...HEAD)
+[Full Changelog](https://github.com/babylonchain/babylon-private/compare/euphrates-0.2.0-rc.0...HEAD)
+
+
+## [euphrates-v0.2.0-rc.0](https://github.com/babylonchain/babylon-private/tree/euphrates-v0.2.0-rc.0) (2024-05-17)
+
+[Full Changelog](https://github.com/babylonchain/babylon-private/compare/euphrates-0.1.0-rc.1...euphrates-v0.2.0-rc.0)
 
 ## [euphrates-0.1.0-rc.1](https://github.com/babylonchain/babylon-private/tree/euphrates-0.1.0-rc.1) (2024-03-25)
 
