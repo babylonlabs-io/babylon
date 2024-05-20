@@ -155,3 +155,4 @@ workflows:
               only:
                 - main
                 - dev
+                - base/consumer-chain-support
