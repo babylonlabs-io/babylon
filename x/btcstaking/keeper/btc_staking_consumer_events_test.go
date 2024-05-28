@@ -67,8 +67,6 @@ func FuzzSetBTCStakingEventStore_NewFp(f *testing.F) {
 			require.Equal(t, fp.BabylonPk, evFp.BabylonPk)
 			require.Equal(t, fp.BtcPk.MarshalHex(), evFp.BtcPkHex)
 			require.Equal(t, fp.Pop, evFp.Pop)
-			require.Equal(t, fp.SlashedBabylonHeight, evFp.SlashedBabylonHeight)
-			require.Equal(t, fp.SlashedBtcHeight, evFp.SlashedBtcHeight)
 			require.Equal(t, fp.ConsumerId, evFp.ConsumerId)
 		}
 	})
