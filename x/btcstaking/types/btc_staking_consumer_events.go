@@ -6,14 +6,12 @@ func CreateNewFinalityProviderEvent(fp *FinalityProvider) *BTCStakingConsumerEve
 	event := &BTCStakingConsumerEvent{
 		Event: &BTCStakingConsumerEvent_NewFp{
 			NewFp: &NewFinalityProvider{
-				Description:          fp.Description,
-				Commission:           fp.Commission.String(),
-				Addr:                 fp.Addr,
-				BtcPkHex:             fp.BtcPk.MarshalHex(),
-				Pop:                  fp.Pop,
-				SlashedBabylonHeight: fp.SlashedBabylonHeight,
-				SlashedBtcHeight:     fp.SlashedBtcHeight,
-				ConsumerId:           fp.ConsumerId,
+				Description: fp.Description,
+				Commission:  fp.Commission.String(),
+				Addr:        fp.Addr,
+				BtcPkHex:    fp.BtcPk.MarshalHex(),
+				Pop:         fp.Pop,
+				ConsumerId:  fp.ConsumerId,
 			},
 		},
 	}

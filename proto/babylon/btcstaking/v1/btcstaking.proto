@@ -32,10 +32,10 @@ message FinalityProvider {
     // slashed_btc_height indicates the BTC height when
     // the finality provider is slashed.
     // if it's 0 then the finality provider is not slashed
-    uint64 slashed_btc_height = 9;
+    uint64 slashed_btc_height = 7;
     // consumer_id is the ID of the consumer the finality provider is operating on.
     // If it's missing / empty, it's assumed the finality provider is operating in the Babylon chain.
-    string consumer_id = 10;
+    string consumer_id = 8;
 }
 
 // FinalityProviderWithMeta wraps the FinalityProvider with metadata.

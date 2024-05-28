@@ -50,14 +50,6 @@ message NewFinalityProvider {
   string btc_pk_hex = 4;
   // pop is the proof of possession of babylon_pk and btc_pk
   ProofOfPossessionBTC pop = 5;
-  // slashed_babylon_height indicates the Babylon height when
-  // the finality provider is slashed.
-  // if it's 0 then the finality provider is not slashed
-  uint64 slashed_babylon_height = 6;
-  // slashed_btc_height indicates the BTC height when
-  // the finality provider is slashed.
-  // if it's 0 then the finality provider is not slashed
-  uint64 slashed_btc_height = 7;
   // consumer_id is the ID of the consumer the finality provider is operating on.
   // If it's missing / empty, it's assumed the finality provider is operating in Babylon.
   string consumer_id = 8;
