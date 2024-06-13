@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"encoding/hex"
+	"github.com/cosmos/cosmos-sdk/types"
 	"math"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/suite"
@@ -419,7 +419,8 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyConsumerFP(babylonNode *cha
 	czFp, err := datagen.GenRandomCustomFinalityProvider(r, czFpBTCSK, babylonNode.SecretKey, consumerId)
 	s.NoError(err)
 	babylonNode.CreateConsumerFinalityProvider(
-		czFp.BabylonPk, czFp.BtcPk, czFp.Pop, consumerId, czFp.Description.Moniker,
+		"val",
+		czFp.BtcPk, czFp.Pop, consumerId, czFp.Description.Moniker,
 		czFp.Description.Identity, czFp.Description.Website, czFp.Description.SecurityContact,
 		czFp.Description.Details, czFp.Commission,
 	)
@@ -431,7 +432,6 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyConsumerFP(babylonNode *cha
 	actualFp := babylonNode.QueryConsumerFinalityProvider(consumerId, czFp.BtcPk.MarshalHex())
 	s.Equal(czFp.Description, actualFp.Description)
 	s.Equal(czFp.Commission, actualFp.Commission)
-	s.Equal(czFp.BabylonPk, actualFp.BabylonPk)
 	s.Equal(czFp.BtcPk, actualFp.BtcPk)
 	s.Equal(czFp.Pop, actualFp.Pop)
 	s.Equal(czFp.SlashedBabylonHeight, actualFp.SlashedBabylonHeight)
@@ -449,7 +449,7 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyBabylonFP(babylonNode *chai
 	babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
 	babylonFp, err := datagen.GenRandomCustomFinalityProvider(r, babylonFpBTCSK, babylonNode.SecretKey, "")
 	s.NoError(err)
-	babylonNode.CreateFinalityProvider(babylonFp.BabylonPk, babylonFp.BtcPk, babylonFp.Pop, babylonFp.Description.Moniker, babylonFp.Description.Identity, babylonFp.Description.Website, babylonFp.Description.SecurityContact, babylonFp.Description.Details, babylonFp.Commission)
+	babylonNode.CreateFinalityProvider("val", babylonFp.BtcPk, babylonFp.Pop, babylonFp.Description.Moniker, babylonFp.Description.Identity, babylonFp.Description.Website, babylonFp.Description.SecurityContact, babylonFp.Description.Details, babylonFp.Commission)
 
 	// wait for a block so that above txs take effect
 	babylonNode.WaitForNextBlock()
@@ -459,7 +459,6 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyBabylonFP(babylonNode *chai
 	s.Len(actualFps, 1)
 	s.Equal(babylonFp.Description, actualFps[0].Description)
 	s.Equal(babylonFp.Commission, actualFps[0].Commission)
-	s.Equal(babylonFp.BabylonPk, actualFps[0].BabylonPk)
 	s.Equal(babylonFp.BtcPk, actualFps[0].BtcPk)
 	s.Equal(babylonFp.Pop, actualFps[0].Pop)
 	s.Equal(babylonFp.SlashedBabylonHeight, actualFps[0].SlashedBabylonHeight)
@@ -475,6 +474,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 	*/
 
 	delBbnSk := nonValidatorNode.SecretKey
+	delBbnAddr := types.AccAddress(delBbnSk.PubKey().Address().Bytes())
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := nonValidatorNode.QueryBTCStakingParams()
 
@@ -487,7 +487,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		covenantBTCPKs = append(covenantBTCPKs, covenantPK.MustToBTCPK())
 	}
 	// NOTE: we use the node's secret key as Babylon secret key for the BTC delegation
-	pop, err := bstypes.NewPoP(delBbnSk, czDelBtcSk)
+	pop, err := bstypes.NewPoPBTC(delBbnAddr, czDelBtcSk)
 	s.NoError(err)
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
@@ -558,7 +558,6 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 	// submit the message for creating BTC delegation
 	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(czDelBtcPk)}
 	nonValidatorNode.CreateBTCDelegation(
-		delBbnSk.PubKey().(*secp256k1.PubKey),
 		delBTCPKs,
 		pop,
 		stakingTxInfo,
@@ -569,9 +568,11 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		delegatorSig,
 		testUnbondingInfo.UnbondingTx,
 		testUnbondingInfo.SlashingTx,
-		uint16(unbondingTime),
+		unbondingTime,
 		btcutil.Amount(unbondingValue),
 		delUnbondingSlashingSig,
+		"val",
+		false,
 	)
 
 	// wait for a block so that above txs take effect

@@ -64,7 +64,6 @@ func FuzzSetBTCStakingEventStore_NewFp(f *testing.F) {
 			// Assert individual fields
 			require.Equal(t, fp.Description.Moniker, evFp.Description.Moniker)
 			require.Equal(t, fp.Commission.String(), evFp.Commission)
-			require.Equal(t, fp.BabylonPk, evFp.BabylonPk)
 			require.Equal(t, fp.BtcPk.MarshalHex(), evFp.BtcPkHex)
 			require.Equal(t, fp.Pop, evFp.Pop)
 			require.Equal(t, fp.ConsumerId, evFp.ConsumerId)
@@ -93,7 +92,7 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 
 		// register a random consumer on Babylon
 		randomConsumer := registerAndVerifyConsumer(t, r, h)
-		// create new consumer finality provider
+		// create a new consumer finality provider
 		_, consumerFpPK, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
 		require.NoError(t, err)
 		// create new Babylon finality provider
@@ -183,7 +182,7 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 
 		// register a random consumer on Babylon
 		randomConsumer := registerAndVerifyConsumer(t, r, h)
-		// create new consumer finality provider
+		// create a new consumer finality provider
 		_, consumerFpPK, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
 		require.NoError(t, err)
 		// create new Babylon finality provider
@@ -219,7 +218,7 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 			UnbondingTxSig: bbn.NewBIP340SignatureFromBTCSig(delUnbondingSig),
 		}
 
-		// ensure the system does not panick due to a bogus unbonding msg
+		// ensure the system does not panic due to a bogus unbonding msg
 		bogusMsg := *msg
 		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
 		_, err = h.MsgServer.BTCUndelegate(h.Ctx, &bogusMsg)
