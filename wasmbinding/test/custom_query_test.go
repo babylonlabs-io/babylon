@@ -3,20 +3,13 @@ package wasmbinding
 import (
 	"encoding/json"
 	"math/rand"
-	"os"
 	"runtime"
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonchain/babylon/app"
@@ -39,9 +32,9 @@ func getArtifactPath() string {
 var pathToContract = getArtifactPath()
 
 func TestQueryEpoch(t *testing.T) {
-	acc := randomAccountAddress()
-	babylonApp, ctx := setupAppWithContext(t)
-	fundAccount(t, ctx, babylonApp, acc)
+	acc := RandomAccountAddress()
+	babylonApp, ctx := SetupAppWithContext(t)
+	FundAccount(t, ctx, babylonApp, acc)
 
 	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
@@ -60,9 +53,9 @@ func TestQueryEpoch(t *testing.T) {
 }
 
 func TestFinalizedEpoch(t *testing.T) {
-	acc := randomAccountAddress()
-	babylonApp, ctx := setupAppWithContext(t)
-	fundAccount(t, ctx, babylonApp, acc)
+	acc := RandomAccountAddress()
+	babylonApp, ctx := SetupAppWithContext(t)
+	FundAccount(t, ctx, babylonApp, acc)
 
 	// babylonApp.ZoneConciergeKeeper
 	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
@@ -87,9 +80,9 @@ func TestFinalizedEpoch(t *testing.T) {
 }
 
 func TestQueryBtcTip(t *testing.T) {
-	acc := randomAccountAddress()
-	babylonApp, ctx := setupAppWithContext(t)
-	fundAccount(t, ctx, babylonApp, acc)
+	acc := RandomAccountAddress()
+	babylonApp, ctx := SetupAppWithContext(t)
+	FundAccount(t, ctx, babylonApp, acc)
 
 	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
@@ -108,9 +101,9 @@ func TestQueryBtcTip(t *testing.T) {
 }
 
 func TestQueryBtcBase(t *testing.T) {
-	acc := randomAccountAddress()
-	babylonApp, ctx := setupAppWithContext(t)
-	fundAccount(t, ctx, babylonApp, acc)
+	acc := RandomAccountAddress()
+	babylonApp, ctx := SetupAppWithContext(t)
+	FundAccount(t, ctx, babylonApp, acc)
 
 	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
@@ -128,9 +121,9 @@ func TestQueryBtcBase(t *testing.T) {
 }
 
 func TestQueryBtcByHash(t *testing.T) {
-	acc := randomAccountAddress()
-	babylonApp, ctx := setupAppWithContext(t)
-	fundAccount(t, ctx, babylonApp, acc)
+	acc := RandomAccountAddress()
+	babylonApp, ctx := SetupAppWithContext(t)
+	FundAccount(t, ctx, babylonApp, acc)
 
 	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
 	tip := babylonApp.BTCLightClientKeeper.GetTipInfo(ctx)
@@ -149,9 +142,9 @@ func TestQueryBtcByHash(t *testing.T) {
 }
 
 func TestQueryBtcByNumber(t *testing.T) {
-	acc := randomAccountAddress()
-	babylonApp, ctx := setupAppWithContext(t)
-	fundAccount(t, ctx, babylonApp, acc)
+	acc := RandomAccountAddress()
+	babylonApp, ctx := SetupAppWithContext(t)
+	FundAccount(t, ctx, babylonApp, acc)
 
 	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
 	tip := babylonApp.BTCLightClientKeeper.GetTipInfo(ctx)
@@ -170,9 +163,9 @@ func TestQueryBtcByNumber(t *testing.T) {
 }
 
 func TestQueryNonExistingHeader(t *testing.T) {
-	acc := randomAccountAddress()
-	babylonApp, ctx := setupAppWithContext(t)
-	fundAccount(t, ctx, babylonApp, acc)
+	acc := RandomAccountAddress()
+	babylonApp, ctx := SetupAppWithContext(t)
+	FundAccount(t, ctx, babylonApp, acc)
 
 	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
@@ -197,69 +190,6 @@ func TestQueryNonExistingHeader(t *testing.T) {
 	require.Nil(t, resp1.HeaderInfo)
 }
 
-func setupAppWithContext(t *testing.T) (*app.BabylonApp, sdk.Context) {
-	return setupAppWithContextAndCustomHeight(t, 1)
-}
-
-func setupAppWithContextAndCustomHeight(t *testing.T, height int64) (*app.BabylonApp, sdk.Context) {
-	babylonApp := app.Setup(t, false)
-	ctx := babylonApp.BaseApp.NewContext(false).
-		WithBlockHeader(cmtproto.Header{Height: height, Time: time.Now().UTC()})
-	return babylonApp, ctx
-}
-
-func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
-	key := ed25519.GenPrivKey()
-	pub := key.PubKey()
-	addr := sdk.AccAddress(pub.Address())
-	return key, pub, addr
-}
-
-func randomAccountAddress() sdk.AccAddress {
-	_, _, addr := keyPubAddr()
-	return addr
-}
-
-func mintCoinsTo(
-	bankKeeper bankkeeper.Keeper,
-	ctx sdk.Context,
-	addr sdk.AccAddress,
-	amounts sdk.Coins) error {
-	if err := bankKeeper.MintCoins(ctx, minttypes.ModuleName, amounts); err != nil {
-		return err
-	}
-
-	return bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, amounts)
-}
-
-func fundAccount(
-	t *testing.T,
-	ctx sdk.Context,
-	bbn *app.BabylonApp,
-	acc sdk.AccAddress) {
-
-	err := mintCoinsTo(bbn.BankKeeper, ctx, acc, sdk.NewCoins(
-		sdk.NewCoin("ubbn", math.NewInt(10000000000)),
-	))
-	require.NoError(t, err)
-}
-
-func storeTestCodeCode(
-	t *testing.T,
-	ctx sdk.Context,
-	babylonApp *app.BabylonApp,
-	addr sdk.AccAddress,
-	codePath string,
-) (uint64, []byte) {
-	wasmCode, err := os.ReadFile(codePath)
-
-	require.NoError(t, err)
-	permKeeper := keeper.NewPermissionedKeeper(babylonApp.WasmKeeper, keeper.DefaultAuthorizationPolicy{})
-	id, checksum, err := permKeeper.Create(ctx, addr, wasmCode, nil)
-	require.NoError(t, err)
-	return id, checksum
-}
-
 func instantiateExampleContract(
 	t *testing.T,
 	ctx sdk.Context,
@@ -282,7 +212,7 @@ func deployTestContract(
 	codePath string,
 ) sdk.AccAddress {
 
-	codeId, _ := storeTestCodeCode(t, ctx, bbn, deployer, codePath)
+	codeId, _ := StoreTestCodeCode(t, ctx, bbn, deployer, codePath)
 
 	contractAddr := instantiateExampleContract(t, ctx, bbn, deployer, codeId)
 
