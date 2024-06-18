@@ -12,6 +12,8 @@ import (
 	lcKeeper "github.com/babylonchain/babylon/x/btclightclient/keeper"
 	epochingkeeper "github.com/babylonchain/babylon/x/epoching/keeper"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -161,6 +163,18 @@ func RegisterCustomPlugins(
 	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
 		Custom: CustomQuerier(wasmQueryPlugin),
 	})
+
+	return []wasmkeeper.Option{
+		queryPluginOpt,
+	}
+}
+
+func RegisterGrpcQueries(queryRouter baseapp.GRPCQueryRouter, codec codec.Codec) []wasmkeeper.Option {
+	queryPluginOpt := wasmkeeper.WithQueryPlugins(
+		&wasmkeeper.QueryPlugins{
+			Stargate: wasmkeeper.AcceptListStargateQuerier(WhitelistedGrpcQuery(), &queryRouter, codec),
+			Grpc:     wasmkeeper.AcceptListGrpcQuerier(WhitelistedGrpcQuery(), &queryRouter, codec),
+		})
 
 	return []wasmkeeper.Option{
 		queryPluginOpt,

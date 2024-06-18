@@ -740,6 +740,7 @@ func NewBabylonApp(
 	}
 
 	wasmOpts = append(owasm.RegisterCustomPlugins(&app.EpochingKeeper, &app.ZoneConciergeKeeper, &app.BTCLightClientKeeper), wasmOpts...)
+	wasmOpts = append(owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
 
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
