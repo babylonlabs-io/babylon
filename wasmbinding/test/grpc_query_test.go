@@ -2,7 +2,6 @@ package wasmbinding
 
 import (
 	"encoding/json"
-	"runtime"
 	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -12,19 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO consider doing it by enviromental variables as currently it may fail on some
-// weird architectures
-func getGrpcArtifactPath() string {
-	if runtime.GOARCH == "amd64" {
-		return "../testdata/artifacts/testgrpc.wasm"
-	} else if runtime.GOARCH == "arm64" {
-		return "../testdata/artifacts/testgrpc-aarch64.wasm"
-	} else {
-		panic("Unsupported architecture")
-	}
-}
-
-var pathToGrpcContract = getGrpcArtifactPath()
+var pathToGrpcContract = "../testdata/artifacts/testgrpc.wasm"
 
 func TestGrpcQueryEpoch(t *testing.T) {
 	acc := RandomAccountAddress()
