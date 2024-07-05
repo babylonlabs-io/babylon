@@ -1069,10 +1069,11 @@ func NewBabylonApp(
 
 	// At startup, after all modules have been registered, check that all proto
 	// annotations are correct.
-	protoFiles, err := proto.MergedRegistry()
-	if err != nil {
-		panic(err)
-	}
+	// FIXME (https://github.com/babylonchain/babylon-private/issues/266): This is a temporary fix
+	protoFiles, _ := proto.MergedRegistry()
+	// if err != nil {
+	// 	panic(err)
+	// }
 	err = msgservice.ValidateProtoAnnotations(protoFiles)
 	if err != nil {
 		// Once we switch to using protoreflect-based antehandlers, we might
