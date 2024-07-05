@@ -376,6 +376,12 @@ func newBabylonScriptPaths(
 	}, nil
 }
 
+// BuildStakingInfo builds all Babylon specific BTC scripts that must
+// be committed to in the staking output.
+// Returned `StakingInfo` object exposes methods to build spend info for each
+// of the script spending paths which later must be included in the witness.
+// It is up to the caller to verify whether parameters provided to this function
+// obey parameters expected by Babylon chain.
 func BuildStakingInfo(
 	stakerKey *btcec.PublicKey,
 	fpKeys []*btcec.PublicKey,
@@ -456,6 +462,12 @@ type UnbondingInfo struct {
 	slashingPathLeafHash chainhash.Hash
 }
 
+// BuildUnbondingInfo builds all Babylon specific BTC scripts that must
+// be committed to in the unbonding output.
+// Returned `UnbondingInfo` object exposes methods to build spend info for each
+// of the script spending paths which later must be included in the witness.
+// It is up to the caller to verify whether parameters provided to this function
+// obey parameters expected by Babylon chain.
 func BuildUnbondingInfo(
 	stakerKey *btcec.PublicKey,
 	fpKeys []*btcec.PublicKey,
