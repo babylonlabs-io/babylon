@@ -1,7 +1,6 @@
 package datagen
 
 import (
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"math/rand"
 	"testing"
 
@@ -78,11 +77,6 @@ func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.Priva
 		Pop:         pop,
 		ConsumerId:  consumerID,
 	}, nil
-}
-
-func GenRandomCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, bbnSK cryptotypes.PrivKey, consumerID string) (*bstypes.FinalityProvider, error) {
-	fpAddr := sdk.MustAccAddressFromBech32(bbnSK.PubKey().Address().String())
-	return GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, fpAddr, consumerID)
 }
 
 // TODO: accomodate presign unbonding flow

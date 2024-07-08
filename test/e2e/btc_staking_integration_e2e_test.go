@@ -416,7 +416,8 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyConsumerFP(babylonNode *cha
 	*/
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
 	czFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
-	czFp, err := datagen.GenRandomCustomFinalityProvider(r, czFpBTCSK, babylonNode.SecretKey, consumerId)
+	czFp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, czFpBTCSK, consumerId)
+
 	s.NoError(err)
 	babylonNode.CreateConsumerFinalityProvider(
 		"val",
@@ -447,7 +448,7 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyBabylonFP(babylonNode *chai
 	*/
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
 	babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
-	babylonFp, err := datagen.GenRandomCustomFinalityProvider(r, babylonFpBTCSK, babylonNode.SecretKey, "")
+	babylonFp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, babylonFpBTCSK, "")
 	s.NoError(err)
 	babylonNode.CreateFinalityProvider("val", babylonFp.BtcPk, babylonFp.Pop, babylonFp.Description.Moniker, babylonFp.Description.Identity, babylonFp.Description.Website, babylonFp.Description.SecurityContact, babylonFp.Description.Details, babylonFp.Commission)
 

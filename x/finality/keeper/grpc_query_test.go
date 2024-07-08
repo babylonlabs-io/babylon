@@ -198,10 +198,8 @@ func FuzzListPubRandCommit(f *testing.F) {
 		sk, _, err := datagen.GenRandomBTCKeyPair(r)
 		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey())
 		require.NoError(t, err)
-		bbnSK, _, err := datagen.GenRandomSecp256k1KeyPair(r)
-		require.NoError(t, err)
 		// register finality provider
-		fp, err := datagen.GenRandomCustomFinalityProvider(r, sk, bbnSK, "")
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, sk, "")
 		require.NoError(t, err)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(fp, nil).AnyTimes()
 		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(true).AnyTimes()

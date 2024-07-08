@@ -84,7 +84,8 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 		create a random finality provider on Babylon
 	*/
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
-	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpBTCSK, nonValidatorNode.SecretKey, "")
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpBTCSK, "")
+
 	s.NoError(err)
 	nonValidatorNode.CreateFinalityProvider("val", fp.BtcPk, fp.Pop, fp.Description.Moniker, fp.Description.Identity, fp.Description.Website, fp.Description.SecurityContact, fp.Description.Details, fp.Commission)
 
