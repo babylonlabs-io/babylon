@@ -16,7 +16,7 @@ import (
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	bsckeeper "github.com/babylonchain/babylon/x/btcstkconsumer/keeper"
 	bsctypes "github.com/babylonchain/babylon/x/btcstkconsumer/types"
-	"github.com/btcsuite/btcd/btcec/v2"
+	btcec "github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -161,14 +161,12 @@ func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	fp.ConsumerId = consumerID
 
 	registeredEpoch := uint64(10)
 	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Eq(h.Ctx)).Return(&etypes.Epoch{EpochNumber: registeredEpoch}).AnyTimes()
 
-	fp.ConsumerId = consumerID
-
 	msgNewFp := types.MsgCreateFinalityProvider{
+		Addr:        fp.Addr,
 		Description: fp.Description,
 		Commission:  fp.Commission,
 		BtcPk:       fp.BtcPk,
