@@ -8,13 +8,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/babylonchain/babylon/btcstaking"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/btcstaking"
 )
 
 func getBtcNetworkParams(network string) (*chaincfg.Params, error) {
@@ -86,7 +87,7 @@ type Parameters struct {
 	UnbondingTxVersion         int      `json:"unbonding_tx_version"`
 	UnbondingTime              int      `json:"unbonding_time"`
 	UnbondingFee               int      `json:"unbonding_fee"`
-	MagicBytes                 string   `json:"magic_bytes"`
+	Tag                        string   `json:"tag"`
 	Network                    string   `json:"network"`
 }
 
@@ -124,7 +125,7 @@ type ParsedParams struct {
 	UnbondingTxVersion         uint32
 	UnbondingTime              uint16
 	UnbondingFee               btcutil.Amount
-	MagicBytes                 []byte
+	Tag                        []byte
 	Network                    *chaincfg.Params
 }
 
@@ -139,7 +140,7 @@ func parseTestParams(t *testing.T, p *Parameters) (*ParsedParams, error) {
 		return nil, err
 	}
 
-	magicBytes, err := hex.DecodeString(p.MagicBytes)
+	tag, err := hex.DecodeString(p.Tag)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +162,7 @@ func parseTestParams(t *testing.T, p *Parameters) (*ParsedParams, error) {
 		UnbondingTxVersion:         uint32(p.UnbondingTxVersion),
 		UnbondingTime:              uint16(p.UnbondingTime),
 		UnbondingFee:               btcutil.Amount(p.UnbondingFee),
-		MagicBytes:                 magicBytes,
+		Tag:                        tag,
 		Network:                    network,
 	}, nil
 }
@@ -260,7 +261,7 @@ func TestVectorsCompatiblity(t *testing.T) {
 
 		if tc.Expected.OpReturnScript != "" {
 			data, err := btcstaking.NewV0OpReturnDataFromParsed(
-				parsedParams.MagicBytes,
+				parsedParams.Tag,
 				parsedParams.StakerPublicKey,
 				parsedParams.FinalityProviderPublicKeys[0],
 				parsedParams.StakingTime,
@@ -320,7 +321,7 @@ func GenerateTestCase(
 	stakingTime int,
 	unbondingTime int,
 	unbondingFee int,
-	magicBytes []byte,
+	tag []byte,
 ) string {
 	emptyHash := [32]byte{}
 	eh, err := chainhash.NewHash(emptyHash[:])
@@ -379,7 +380,7 @@ func GenerateTestCase(
 	// if there is more build op_return output
 	if len(finalityKeys) == 1 {
 		opInfo, err := btcstaking.BuildV0IdentifiableStakingOutputs(
-			magicBytes,
+			tag,
 			keysToPubKeys(t, stakerKeys)[0],
 			keysToPubKeys(t, finalityKeys)[0],
 			keysToPubKeys(t, covenantKeys),
@@ -404,7 +405,7 @@ func GenerateTestCase(
 		UnbondingTxVersion:         2,
 		UnbondingTime:              unbondingTime,
 		UnbondingFee:               unbondingFee,
-		MagicBytes:                 hex.EncodeToString(magicBytes),
+		Tag:                        hex.EncodeToString(tag),
 		Network:                    "mainnet",
 	}
 

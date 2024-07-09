@@ -81,7 +81,7 @@ Data in the OP_RETURN output is described by the following struct:
 
 ```go
 type V0OpReturnData struct {
-	MagicBytes                []byte
+	Tag                       []byte
 	Version                   byte
 	StakerPublicKey           []byte
 	FinalityProviderPublicKey []byte
@@ -91,7 +91,7 @@ type V0OpReturnData struct {
 The implementation of the struct can be found [here](../btcstaking/identifiable_staking.go?pain=1#L52)
 
 Fields description:
-- `MagicBytes` - 4 bytes, tag which is used to identify the staking transaction
+- `Tag` - 4 bytes, tag which is used to identify the staking transaction
 among other transactions in the Bitcoin ledger.
 It is specified in the `global_parameters.Tag` field.
 - `Version` - 1 byte, current version of the OP_RETURN output
@@ -107,7 +107,7 @@ output in the staking transaction.
 
 This data is serialized as follows:
 ```
-SerializedStakingData = MagicBytes || Version || StakerPublicKey || FinalityProviderPublicKey || StakingTime
+SerializedStakingData = Tag || Version || StakerPublicKey || FinalityProviderPublicKey || StakingTime
 ```
 
 To transform this data into OP_RETURN data:
@@ -166,7 +166,7 @@ function with the following signature:
 
 ```go
 func BuildV0IdentifiableStakingOutputsAndTx(
-	magicBytes []byte,
+	tag []byte,
 	stakerKey *btcec.PublicKey,
 	fpKey *btcec.PublicKey,
 	covenantKeys []*btcec.PublicKey,
