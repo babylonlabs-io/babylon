@@ -44,7 +44,7 @@ The `gentxs` directory contains the genesis transactions. It contains
 transactions that assign bbn tokens to a single address that is defined for each
 node.
 
-The `node0` directory contains the the following,
+The `node0` directory contains the following,
 
 ```console
 $ ls .testnet/node0/babylond
