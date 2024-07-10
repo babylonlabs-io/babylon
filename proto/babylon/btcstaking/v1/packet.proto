@@ -58,6 +58,8 @@ message NewFinalityProvider {
 // ActiveBTCDelegation is an IBC packet sent from Babylon to consumer
 // upon a BTC delegation newly receives covenant signatures and thus becomes active
 message ActiveBTCDelegation {
+  // staker_addr is the address to receive rewards from BTC delegation.
+  string staker_addr = 11;
   // btc_pk_hex is the Bitcoin secp256k1 PK of this BTC delegation
   // the PK follows encoding in BIP-340 spec in hex format
   string btc_pk_hex = 1;
