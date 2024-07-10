@@ -123,9 +123,9 @@ func (s *BTCStakingIntegrationTestSuite) Test2CreateConsumerFinalityProvider() {
 		fpFromMap, ok := fpMap[czFp.BtcPkHex]
 		s.True(ok)
 		s.Equal(fpFromMap.BtcPk.MarshalHex(), czFp.BtcPkHex)
-		s.Equal(fpFromMap.SlashedBabylonHeight, czFp.SlashedBabylonHeight)
+		s.Equal(fpFromMap.SlashedBabylonHeight, czFp.SlashedHeight)
 		s.Equal(fpFromMap.SlashedBtcHeight, czFp.SlashedBtcHeight)
-		s.Equal(fpFromMap.ConsumerId, czFp.ChainID)
+		s.Equal(fpFromMap.ConsumerId, czFp.ConsumerID)
 	}
 }
 
@@ -228,16 +228,29 @@ func (s *BTCStakingIntegrationTestSuite) Test4ActivateDelegation() {
 
 	// assert the fp voting power is updated in the staking contract
 	var data2FromContract *chain.ConsumerFpsByPowerResponse
+	fpsWithPower := make([]chain.ConsumerFpInfo, 0)
 	s.Eventually(func() bool {
 		data2FromContract, err = czNode.QueryConsumerFpsByPower(stakingContractAddr)
 		if err != nil {
 			return false
 		}
-		return len(data2FromContract.Fps) == 1
+		// Filter out no power fps
+		for _, fp := range data2FromContract.Fps {
+			if fp.Power > 0 {
+				fpsWithPower = append(fpsWithPower, fp)
+			}
+		}
+
+		return len(fpsWithPower) == 1
 	}, time.Second*20, time.Second)
 
+	totalPower := uint64(0)
+	for _, fp := range data2FromContract.Fps {
+		totalPower += fp.Power
+	}
+
 	czPowerFromNode := s.getFpTotalPowerFromBabylonNode(consumerFp)
-	s.Equal(czPowerFromNode, data2FromContract.Fps[0].Power)
+	s.Equal(czPowerFromNode, totalPower)
 }
 
 // Test5UnbondDelegation -
@@ -319,10 +332,15 @@ func (s *BTCStakingIntegrationTestSuite) Test5UnbondDelegation() {
 		if err != nil {
 			return false
 		}
-		return len(dataFromContract.Fps) == 1
+		return len(dataFromContract.Fps) >= 1
 	}, time.Second*20, time.Second)
 
-	s.Equal(uint64(0), dataFromContract.Fps[0].Power) // expect the power to be 0 after unbonding
+	totalPower := uint64(0)
+	for _, fp := range dataFromContract.Fps {
+		totalPower += fp.Power
+	}
+
+	s.Equal(uint64(0), totalPower) // expect the power to be 0 after unbonding
 }
 
 // Test6ContractQueries -
@@ -354,9 +372,9 @@ func (s *BTCStakingIntegrationTestSuite) Test6ContractQueries() {
 	contractFP, err := czNode.QuerySingleConsumerFp(stakingContractAddr, consumerFp.BtcPk.MarshalHex())
 	s.NoError(err)
 	s.Equal(consumerFp.BtcPk.MarshalHex(), contractFP.BtcPkHex)
-	s.Equal(consumerFp.SlashedBabylonHeight, contractFP.SlashedBabylonHeight)
+	s.Equal(consumerFp.SlashedBabylonHeight, contractFP.SlashedHeight)
 	s.Equal(consumerFp.SlashedBtcHeight, contractFP.SlashedBtcHeight)
-	s.Equal(consumerFp.ConsumerId, contractFP.ChainID)
+	s.Equal(consumerFp.ConsumerId, contractFP.ConsumerID)
 
 	// 4. Query a single BTC delegation from the staking contract
 	nodeFpDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex())
