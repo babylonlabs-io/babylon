@@ -10,19 +10,18 @@ import (
 )
 
 type ConsumerFpsResponse struct {
-	ConsumerFps []SingleConsumerFpResponse `json:"fps"`
+	ConsumerFps []ConsumerFpResponse `json:"fps"`
 }
 
-// SingleConsumerFpResponse represents the finality provider data returned by the contract query.
+// ConsumerFpResponse represents the finality provider data returned by the contract query.
 // For more details, refer to the following links:
-// https://github.com/babylonchain/babylon-contract/blob/v0.5.3/packages/apis/src/btc_staking_api.rs
-// https://github.com/babylonchain/babylon-contract/blob/v0.5.3/contracts/btc-staking/src/msg.rs
-// https://github.com/babylonchain/babylon-contract/blob/v0.5.3/contracts/btc-staking/schema/btc-staking.json
-type SingleConsumerFpResponse struct {
-	BtcPkHex             string `json:"btc_pk_hex"`
-	SlashedBabylonHeight uint64 `json:"slashed_babylon_height"`
-	SlashedBtcHeight     uint64 `json:"slashed_btc_height"`
-	ChainID              string `json:"chain_id"`
+// https://github.com/babylonchain/babylon-contract/blob/v0.7.0/contracts/btc-staking/src/msg.rs
+// https://github.com/babylonchain/babylon-contract/blob/v0.7.0/contracts/btc-staking/schema/btc-staking.json
+type ConsumerFpResponse struct {
+	BtcPkHex         string `json:"btc_pk_hex"`
+	SlashedHeight    uint64 `json:"slashed_height"`
+	SlashedBtcHeight uint64 `json:"slashed_btc_height"`
+	ConsumerID       string `json:"consumer_id"`
 }
 
 type ConsumerDelegationsResponse struct {
@@ -75,11 +74,6 @@ type ConsumerFpInfo struct {
 
 type ConsumerFpsByPowerResponse struct {
 	Fps []ConsumerFpInfo `json:"fps"`
-}
-
-type SingleConsumerFpPowerResponse struct {
-	BtcPkHex string `json:"btc_pk_hex"`
-	Power    uint64 `json:"power"`
 }
 
 // QueryConsumerFps queries all finality providers stored in the staking contract
@@ -146,11 +140,11 @@ func (n *NodeConfig) QueryConsumerDelegationsByFp(stakingContractAddr string, fp
 }
 
 // QuerySingleConsumerFp queries a specific finality provider by Bitcoin public key hex
-func (n *NodeConfig) QuerySingleConsumerFp(stakingContractAddr string, btcPkHex string) (*SingleConsumerFpResponse, error) {
+func (n *NodeConfig) QuerySingleConsumerFp(stakingContractAddr string, btcPkHex string) (*ConsumerFpResponse, error) {
 	queryMsg := fmt.Sprintf(`{"finality_provider":{"btc_pk_hex":"%s"}}`, btcPkHex)
 	var (
 		smartContractResponse *wasmtypes.QuerySmartContractStateResponse
-		result                SingleConsumerFpResponse
+		result                ConsumerFpResponse
 		err                   error
 	)
 	require.Eventually(n.t, func() bool {
@@ -208,8 +202,8 @@ func (n *NodeConfig) QueryConsumerFpsByPower(stakingContractAddr string) (*Consu
 	return &result, err
 }
 
-// QuerySingleConsumerFpPower queries a specific finality provider by Bitcoin public key hex and returns its power
-func (n *NodeConfig) QuerySingleConsumerFpPower(stakingContractAddr string, fpBtcPkHex string, height *uint64) (*SingleConsumerFpPowerResponse, error) {
+// QueryConsumerFpInfo queries a specific finality provider by Bitcoin public key hex and returns its power
+func (n *NodeConfig) QueryConsumerFpInfo(stakingContractAddr string, fpBtcPkHex string, height *uint64) (*ConsumerFpInfo, error) {
 	var queryMsg string
 	if height != nil {
 		queryMsg = fmt.Sprintf(`{"finality_provider_info":{"btc_pk_hex":"%s", "height": "%d"}}`, fpBtcPkHex, *height)
@@ -219,7 +213,7 @@ func (n *NodeConfig) QuerySingleConsumerFpPower(stakingContractAddr string, fpBt
 
 	var (
 		smartContractResponse *wasmtypes.QuerySmartContractStateResponse
-		result                SingleConsumerFpPowerResponse
+		result                ConsumerFpInfo
 		err                   error
 	)
 	require.Eventually(n.t, func() bool {
