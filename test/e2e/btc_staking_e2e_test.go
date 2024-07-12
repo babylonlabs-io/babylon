@@ -733,7 +733,7 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	// wait for a block so that above txs take effect
 	node.WaitForNextBlock()
 
-	// check the delegation was success.
+	// check that the delegation succeeded
 	delegation := node.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
 	s.NotNil(delegation)
 	s.Equal(granteeStakerAddr.String(), delegation.BtcDelegation.StakerAddr)

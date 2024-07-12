@@ -110,8 +110,10 @@ func (n *NodeConfig) CreateBTCDelegation(
 	if generateOnly {
 		cmd = append(cmd, "--generate-only")
 	}
+	//cmd = append(cmd, fmt.Sprintf("--chain-id=%s", n.chainId), "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata")
+	cmd = append(cmd, fmt.Sprintf("--chain-id=%s", n.chainId), "-b=sync", "--yes")
+	outBuff, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 
-	outBuff, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
 	require.NoError(n.t, err)
 	n.LogActionF("successfully created BTC delegation")
 	return outBuff.String()
