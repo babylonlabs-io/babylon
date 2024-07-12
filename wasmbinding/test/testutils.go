@@ -2,6 +2,7 @@ package wasmbinding
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -71,6 +72,7 @@ func StoreTestCodeCode(
 	addr sdk.AccAddress,
 	codePath string,
 ) (uint64, []byte) {
+	codePath = filepath.Clean(codePath)
 	wasmCode, err := os.ReadFile(codePath)
 
 	require.NoError(t, err)
