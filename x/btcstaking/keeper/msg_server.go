@@ -212,7 +212,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	// verify proof of possession
 	if err := req.Pop.Verify(stakerAddr, req.BtcPk, ms.btcNet); err != nil {
-		return nil, types.ErrInvalidProofOfPossession.Wrapf("error while validating proof of posession: %v", err)
+		return nil, types.ErrInvalidProofOfPossession.Wrapf("error while validating proof of possession: %v", err)
 	}
 
 	// Ensure all finality providers
