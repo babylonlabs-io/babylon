@@ -17,6 +17,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/wire"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/suite"
@@ -104,7 +105,7 @@ func (s *BTCStakingIntegrationTestSuite) Test2CreateConsumerFinalityProvider() {
 	// query the staking contract for finality providers
 	var dataFromContract *chain.ConsumerFpsResponse
 	s.Eventually(func() bool {
-		// try to retrieve expected number of finality providers from the contract
+		// try to retrieve the expected number of finality providers from the contract
 		dataFromContract, err = czNode.QueryConsumerFps(stakingContractAddr)
 		if err != nil {
 			return false
@@ -428,27 +429,28 @@ func (s *BTCStakingIntegrationTestSuite) registerVerifyConsumer(babylonNode *cha
 }
 
 // helper function: create a random consumer finality provider on Babylon and verify it
-func (s *BTCStakingIntegrationTestSuite) createVerifyConsumerFP(babylonNode *chain.NodeConfig, consumerId string) *bstypes.FinalityProvider {
+func (s *BTCStakingIntegrationTestSuite) createVerifyConsumerFP(node *chain.NodeConfig, consumerId string) *bstypes.FinalityProvider {
 	/*
 		create a random consumer finality provider on Babylon
 	*/
-	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
-	czFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
-	czFp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, czFpBTCSK, consumerId)
-
+	nodeAddr, err := sdk.AccAddressFromBech32(node.PublicAddress)
 	s.NoError(err)
-	babylonNode.CreateConsumerFinalityProvider(
-		"val",
+	// the node is the new FP
+
+	czFp, err := datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, nodeAddr, consumerId)
+	s.NoError(err)
+
+	node.CreateConsumerFinalityProvider(czFp.Addr,
 		czFp.BtcPk, czFp.Pop, consumerId, czFp.Description.Moniker,
 		czFp.Description.Identity, czFp.Description.Website, czFp.Description.SecurityContact,
-		czFp.Description.Details, czFp.Commission,
-	)
+		czFp.Description.Details, czFp.Commission)
+	s.NoError(err)
 
-	// wait for a block so that above txs take effect
-	babylonNode.WaitForNextBlock()
+	// Wait for a block so that above txs take effect
+	node.WaitForNextBlock()
 
 	// query the existence of finality provider and assert equivalence
-	actualFp := babylonNode.QueryConsumerFinalityProvider(consumerId, czFp.BtcPk.MarshalHex())
+	actualFp := node.QueryConsumerFinalityProvider(consumerId, czFp.BtcPk.MarshalHex())
 	s.Equal(czFp.Description, actualFp.Description)
 	s.Equal(czFp.Commission, actualFp.Commission)
 	s.Equal(czFp.BtcPk, actualFp.BtcPk)
@@ -456,25 +458,27 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyConsumerFP(babylonNode *cha
 	s.Equal(czFp.SlashedBabylonHeight, actualFp.SlashedBabylonHeight)
 	s.Equal(czFp.SlashedBtcHeight, actualFp.SlashedBtcHeight)
 	s.Equal(consumerId, actualFp.ConsumerId)
+
 	return czFp
 }
 
 // helper function: create a random Babylon finality provider and verify it
-func (s *BTCStakingIntegrationTestSuite) createVerifyBabylonFP(babylonNode *chain.NodeConfig) *bstypes.FinalityProviderResponse {
+func (s *BTCStakingIntegrationTestSuite) createVerifyBabylonFP(node *chain.NodeConfig) *bstypes.FinalityProviderResponse {
 	/*
 		create a random finality provider on Babylon
 	*/
-	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
-	babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
-	babylonFp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, babylonFpBTCSK, "")
+	nodeAddr, err := sdk.AccAddressFromBech32(node.PublicAddress)
 	s.NoError(err)
-	babylonNode.CreateFinalityProvider("val", babylonFp.BtcPk, babylonFp.Pop, babylonFp.Description.Moniker, babylonFp.Description.Identity, babylonFp.Description.Website, babylonFp.Description.SecurityContact, babylonFp.Description.Details, babylonFp.Commission)
+
+	babylonFp, err := datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, nodeAddr, "")
+	s.NoError(err)
+	node.CreateFinalityProvider(babylonFp.Addr, babylonFp.BtcPk, babylonFp.Pop, babylonFp.Description.Moniker, babylonFp.Description.Identity, babylonFp.Description.Website, babylonFp.Description.SecurityContact, babylonFp.Description.Details, babylonFp.Commission)
 
 	// wait for a block so that above txs take effect
-	babylonNode.WaitForNextBlock()
+	node.WaitForNextBlock()
 
 	// query the existence of finality provider and assert equivalence
-	actualFps := babylonNode.QueryFinalityProviders()
+	actualFps := node.QueryFinalityProviders()
 	s.Len(actualFps, 1)
 	s.Equal(babylonFp.Description, actualFps[0].Description)
 	s.Equal(babylonFp.Commission, actualFps[0].Commission)
