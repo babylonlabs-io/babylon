@@ -67,9 +67,9 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 	}
 
 	// verify proof of possession
-	//if err := req.Pop.Verify(fpAddr, req.BtcPk, ms.btcNet); err != nil {
-	//	return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession: %v", err)
-	//}
+	if err := req.Pop.Verify(fpAddr, req.BtcPk, ms.btcNet); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession: %v", err)
+	}
 
 	// ensure commission rate is
 	// - at least the minimum commission rate in parameters, and

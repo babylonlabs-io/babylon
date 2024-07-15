@@ -854,7 +854,7 @@ func (s *BTCStakingTestSuite) CreateNodeFP(node *chain.NodeConfig) (newFP *bstyp
 	nodeAddr, err := sdk.AccAddressFromBech32(node.PublicAddress)
 	s.NoError(err)
 
-	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, nodeAddr, "")
+	newFP, err = datagen.GenCustomFinalityProvider(r, fpBTCSK, nodeAddr, "")
 	s.NoError(err)
 	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission)
 

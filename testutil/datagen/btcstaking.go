@@ -45,7 +45,7 @@ func CreateNFinalityProviders(r *rand.Rand, t *testing.T, n int) []*bstypes.Fina
 }
 
 func GenRandomFinalityProviderWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey, consumerID string) (*bstypes.FinalityProvider, error) {
-	return GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, GenRandomAccount().GetAddress(), consumerID)
+	return GenCustomFinalityProvider(r, btcSK, GenRandomAccount().GetAddress(), consumerID)
 }
 
 func GenRandomCommission(r *rand.Rand) sdkmath.LegacyDec {
@@ -56,7 +56,7 @@ func GenRandomDescription(r *rand.Rand) *stakingtypes.Description {
 	return &stakingtypes.Description{Moniker: GenRandomHexStr(r, 10)}
 }
 
-func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKey, fpAddr sdk.AccAddress, consumerID string) (*bstypes.FinalityProvider, error) {
+func GenCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, fpAddr sdk.AccAddress, consumerID string) (*bstypes.FinalityProvider, error) {
 	// commission
 	commission := GenRandomCommission(r)
 	// description
