@@ -102,6 +102,9 @@ import (
 	"github.com/cosmos/ibc-go/modules/capability"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
+	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee"
 	ibcfeekeeper "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/keeper"
 	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
@@ -166,12 +169,6 @@ const (
 )
 
 var (
-	// TODO review possible capabilities
-	// The last arguments can contain custom message handlers, and custom query handlers,
-	// if we want to allow any custom callbacks
-	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
-	wasmCapabilities = []string{"iterator", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "staking", "babylon"}
-
 	// DefaultNodeHome default home directories for the application daemon
 	DefaultNodeHome string
 	// fee collector account, module accounts and their permissions
@@ -246,6 +243,7 @@ type BabylonApp struct {
 	IBCKeeper           *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	IBCFeeKeeper        ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
 	TransferKeeper      ibctransferkeeper.Keeper // for cross-chain fungible token transfers
+	IBCWasmKeeper       ibcwasmkeeper.Keeper     // for IBC wasm light clients
 	ZoneConciergeKeeper zckeeper.Keeper          // for cross-chain fungible token transfers
 
 	// BTC staking related modules
@@ -327,6 +325,7 @@ func NewBabylonApp(
 		ibcexported.StoreKey,
 		ibctransfertypes.StoreKey,
 		ibcfeetypes.StoreKey,
+		ibcwasmtypes.StoreKey,
 		zctypes.StoreKey,
 		// BTC staking related modules
 		btcstakingtypes.StoreKey,
@@ -734,9 +733,25 @@ func NewBabylonApp(
 		app.GRPCQueryRouter(),
 		homePath,
 		wasmConfig,
-		wasmCapabilities,
+		WasmCapabilities(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmOpts...,
+	)
+
+	ibcWasmConfig :=
+		ibcwasmtypes.WasmConfig{
+			DataDir:               filepath.Join(homePath, "ibc_08-wasm"),
+			SupportedCapabilities: WasmCapabilities(),
+			ContractDebugMode:     false,
+		}
+
+	app.IBCWasmKeeper = ibcwasmkeeper.NewKeeperWithConfig(
+		appCodec,
+		runtime.NewKVStoreService(keys[ibcwasmtypes.StoreKey]),
+		app.IBCKeeper.ClientKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		ibcWasmConfig,
+		app.GRPCQueryRouter(),
 	)
 
 	// Set legacy router for backwards compatibility with gov v1beta1
@@ -803,6 +818,7 @@ func NewBabylonApp(
 		transfer.NewAppModule(app.TransferKeeper),
 		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		ibctm.AppModule{},
+		ibcwasm.NewAppModule(app.IBCWasmKeeper),
 		// Babylon modules - btc timestamping
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper),
@@ -862,6 +878,7 @@ func NewBabylonApp(
 		monitortypes.ModuleName,
 		// IBC-related modules
 		ibcexported.ModuleName,
+		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
@@ -890,6 +907,7 @@ func NewBabylonApp(
 		monitortypes.ModuleName,
 		// IBC-related modules
 		ibcexported.ModuleName,
+		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
@@ -922,6 +940,7 @@ func NewBabylonApp(
 		monitortypes.ModuleName,
 		// IBC-related modules
 		ibcexported.ModuleName,
+		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
@@ -1024,6 +1043,13 @@ func NewBabylonApp(
 	if manager := app.SnapshotManager(); manager != nil {
 		err := manager.RegisterExtensions(
 			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.WasmKeeper),
+		)
+		if err != nil {
+			panic(fmt.Errorf("failed to register snapshot extension: %s", err))
+		}
+
+		err = manager.RegisterExtensions(
+			ibcwasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.IBCWasmKeeper),
 		)
 		if err != nil {
 			panic(fmt.Errorf("failed to register snapshot extension: %s", err))
@@ -1295,4 +1321,21 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(zctypes.ModuleName)
 
 	return paramsKeeper
+}
+
+// Capabilities of the IBC wasm contracts
+func WasmCapabilities() []string {
+	// The last arguments can contain custom message handlers, and custom query handlers,
+	// if we want to allow any custom callbacks
+	return []string{
+		"iterator",
+		"staking",
+		"stargate",
+		"cosmwasm_1_1",
+		"cosmwasm_1_2",
+		"cosmwasm_1_3",
+		"cosmwasm_1_4",
+		"cosmwasm_2_0",
+		"babylon",
+	}
 }

@@ -5,9 +5,10 @@ module github.com/babylonchain/babylon
 require (
 	github.com/CosmWasm/wasmd v0.51.0
 	github.com/btcsuite/btcd v0.24.2
-	github.com/cometbft/cometbft v0.38.6
+	github.com/cometbft/cometbft v0.38.7
 	github.com/cometbft/cometbft-db v0.9.1 // indirect
 	github.com/cosmos/cosmos-sdk v0.50.6
+	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.0.0-20240429153234-e1e6da7e4ead
 	github.com/cosmos/relayer/v2 v2.5.1
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -38,7 +39,7 @@ require (
 	cosmossdk.io/x/feegrant v0.1.0
 	cosmossdk.io/x/tx v0.13.3
 	cosmossdk.io/x/upgrade v0.1.1
-	github.com/CosmWasm/wasmvm/v2 v2.0.0
+	github.com/CosmWasm/wasmvm/v2 v2.0.1
 	github.com/avast/retry-go/v4 v4.5.1
 	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
@@ -48,7 +49,7 @@ require (
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/gogoproto v1.4.12
 	github.com/cosmos/ibc-go/modules/capability v1.0.0
-	github.com/cosmos/ibc-go/v8 v8.0.0
+	github.com/cosmos/ibc-go/v8 v8.3.0
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0
 	github.com/docker/docker v23.0.8+incompatible
 	github.com/golang/mock v1.6.0
@@ -60,6 +61,7 @@ require (
 	github.com/ory/dockertest/v3 v3.9.1
 	github.com/vulpine-io/io-test v1.0.0
 	go.uber.org/zap v1.26.0
+	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240227224415-6ceb2ff114de
 )
 
@@ -242,7 +244,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.22.0 // indirect
 	go.opentelemetry.io/otel/trace v1.22.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
