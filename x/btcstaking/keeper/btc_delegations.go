@@ -184,7 +184,9 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 	restakedToBabylon := false
 	restakedToConsumers := false
 
-	for _, fpBTCPK := range fpBTCPKs {
+	for i := range fpBTCPKs {
+		fpBTCPK := fpBTCPKs[i]
+
 		// find the fp and determine whether it's Babylon fp or consumer chain fp
 		if fp, err := k.GetFinalityProvider(ctx, fpBTCPK); err == nil {
 			// ensure the finality provider is not slashed
@@ -219,7 +221,8 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 func (k Keeper) restakedFPConsumerIDs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) ([]string, error) {
 	var consumerIDs []string
 
-	for _, fpBTCPK := range fpBTCPKs {
+	for i := range fpBTCPKs {
+		fpBTCPK := fpBTCPKs[i]
 		if _, err := k.GetFinalityProvider(ctx, fpBTCPK); err == nil {
 			continue
 		} else if consumerID, err := k.bscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {

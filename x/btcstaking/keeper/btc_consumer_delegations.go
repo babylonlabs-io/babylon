@@ -27,7 +27,9 @@ func (k Keeper) IndexBTCConsumerDelegation(ctx sdk.Context, btcDel *bstypes.BTCD
 	}
 
 	// for each finality provider the delegation restakes to, update its index
-	for _, fpBTCPK := range btcDel.FpBtcPkList {
+	for i := range btcDel.FpBtcPkList {
+		fpBTCPK := btcDel.FpBtcPkList[i]
+
 		// skip Babylon finality providers
 		if !k.bscKeeper.HasConsumerFinalityProvider(ctx, &fpBTCPK) {
 			continue
