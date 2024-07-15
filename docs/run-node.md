@@ -82,7 +82,7 @@ babylond --home .testnet/node{i}/babylond/ --chain-id <chain-id> \
     query <module-name> <query-name>
 ```
 
-For example, in order to get the hashes maintained by the `btcligthclient`
+For example, in order to get the hashes maintained by the `btclightclient`
 module:
 
 ```console
