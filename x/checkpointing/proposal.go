@@ -45,7 +45,6 @@ func NewProposalHandler(
 func (h *ProposalHandler) SetHandlers(bApp *baseapp.BaseApp) {
 	bApp.SetPrepareProposal(h.PrepareProposal())
 	bApp.SetProcessProposal(h.ProcessProposal())
-	bApp.SetPreBlocker(h.PreBlocker())
 }
 
 // PrepareProposal examines the vote extensions from the previous block, accumulates
@@ -329,14 +328,14 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 	}
 }
 
-// PreBlocker extracts the checkpoint from the injected tx and stores it in
-// the application
+// PreBlocker extracts the checkpoint from the injected tx and stores it in the application
 // no more validation is needed as it is already done in ProcessProposal
+// NOTE: this is appended to the existing PreBlocker in BabylonApp at app.go
 func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 	return func(ctx sdk.Context, req *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
-		k := h.ckptKeeper
 		res := &sdk.ResponsePreBlock{}
 
+		k := h.ckptKeeper
 		epoch := k.GetEpoch(ctx)
 		// BLS signatures are sent in the last block of the previous epoch,
 		// so they should be aggregated in the first block of the new epoch

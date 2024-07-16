@@ -11,25 +11,21 @@ import (
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
-	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
-	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/circuit"
-	circuitkeeper "cosmossdk.io/x/circuit/keeper"
 	circuittypes "cosmossdk.io/x/circuit/types"
 	"cosmossdk.io/x/evidence"
-	evidencekeeper "cosmossdk.io/x/evidence/keeper"
 	evidencetypes "cosmossdk.io/x/evidence/types"
 	"cosmossdk.io/x/feegrant"
-	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 	feegrantmodule "cosmossdk.io/x/feegrant/module"
 	"cosmossdk.io/x/upgrade"
-	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	wasmapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/babylonchain/babylon/app/upgrades"
+	bbn "github.com/babylonchain/babylon/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -49,102 +45,75 @@ import (
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
-	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/consensus"
-	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
-	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
-	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
-	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/mint"
-	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
-	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
-	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/cosmos/ibc-go/modules/capability"
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee"
-	ibcfeekeeper "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/keeper"
 	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
 	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v8/modules/core"
-	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types" // ibc module puts types under `ibchost` rather than `ibctypes`
+	ibc "github.com/cosmos/ibc-go/v8/modules/core" // ibc module puts types under `ibchost` rather than `ibctypes`
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
+	appkeepers "github.com/babylonchain/babylon/app/keepers"
 	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/client/docs"
-	bbn "github.com/babylonchain/babylon/types"
-	owasm "github.com/babylonchain/babylon/wasmbinding"
 	"github.com/babylonchain/babylon/x/btccheckpoint"
-	btccheckpointkeeper "github.com/babylonchain/babylon/x/btccheckpoint/keeper"
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/babylonchain/babylon/x/btclightclient"
-	btclightclientkeeper "github.com/babylonchain/babylon/x/btclightclient/keeper"
 	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking"
-	btcstakingkeeper "github.com/babylonchain/babylon/x/btcstaking/keeper"
 	btcstakingtypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/babylonchain/babylon/x/checkpointing"
-	checkpointingkeeper "github.com/babylonchain/babylon/x/checkpointing/keeper"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/epoching"
 	epochingkeeper "github.com/babylonchain/babylon/x/epoching/keeper"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/finality"
-	finalitykeeper "github.com/babylonchain/babylon/x/finality/keeper"
 	finalitytypes "github.com/babylonchain/babylon/x/finality/types"
 	"github.com/babylonchain/babylon/x/incentive"
-	incentivekeeper "github.com/babylonchain/babylon/x/incentive/keeper"
 	incentivetypes "github.com/babylonchain/babylon/x/incentive/types"
 	"github.com/babylonchain/babylon/x/monitor"
-	monitorkeeper "github.com/babylonchain/babylon/x/monitor/keeper"
 	monitortypes "github.com/babylonchain/babylon/x/monitor/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
@@ -169,6 +138,9 @@ const (
 )
 
 var (
+	// EmptyWasmOpts defines a type alias for a list of wasm options.
+	EmptyWasmOpts []wasmkeeper.Option
+
 	// DefaultNodeHome default home directories for the application daemon
 	DefaultNodeHome string
 	// fee collector account, module accounts and their permissions
@@ -183,13 +155,21 @@ var (
 		ibcfeetypes.ModuleName:         nil,
 		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
 	}
+
+	// software upgrades and forks
+	Upgrades = []upgrades.Upgrade{}
+	Forks    = []upgrades.Fork{}
 )
 
-// Wasm related variables
-var (
-	// EmptyWasmOpts defines a type alias for a list of wasm options.
-	EmptyWasmOpts []wasmkeeper.Option
-)
+func init() {
+	// Note: If this changes, the home directory under x/checkpointing/client/cli/tx.go needs to change as well
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	DefaultNodeHome = filepath.Join(userHomeDir, ".babylond")
+}
 
 var (
 	_ runtime.AppI            = (*BabylonApp)(nil)
@@ -201,66 +181,14 @@ var (
 // capabilities aren't needed for testing.
 type BabylonApp struct {
 	*baseapp.BaseApp
+	*appkeepers.AppKeepers
+
 	legacyAmino *codec.LegacyAmino
 	appCodec    codec.Codec
 	txConfig    client.TxConfig
 
 	interfaceRegistry types.InterfaceRegistry
-
-	invCheckPeriod uint
-
-	// keys to access the substores
-	keys    map[string]*storetypes.KVStoreKey
-	tkeys   map[string]*storetypes.TransientStoreKey
-	memKeys map[string]*storetypes.MemoryStoreKey
-
-	// keepers
-	AccountKeeper         authkeeper.AccountKeeper
-	BankKeeper            bankkeeper.Keeper
-	CapabilityKeeper      *capabilitykeeper.Keeper
-	StakingKeeper         *stakingkeeper.Keeper
-	SlashingKeeper        slashingkeeper.Keeper
-	MintKeeper            mintkeeper.Keeper
-	DistrKeeper           distrkeeper.Keeper
-	GovKeeper             govkeeper.Keeper
-	CrisisKeeper          *crisiskeeper.Keeper
-	UpgradeKeeper         *upgradekeeper.Keeper
-	ParamsKeeper          paramskeeper.Keeper
-	AuthzKeeper           authzkeeper.Keeper
-	EvidenceKeeper        evidencekeeper.Keeper
-	FeeGrantKeeper        feegrantkeeper.Keeper
-	ConsensusParamsKeeper consensusparamkeeper.Keeper
-	CircuitKeeper         circuitkeeper.Keeper
-
-	// Babylon modules
-	EpochingKeeper       epochingkeeper.Keeper
-	BTCLightClientKeeper btclightclientkeeper.Keeper
-	BtcCheckpointKeeper  btccheckpointkeeper.Keeper
-	CheckpointingKeeper  checkpointingkeeper.Keeper
-	MonitorKeeper        monitorkeeper.Keeper
-
-	// IBC-related modules
-	IBCKeeper           *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	IBCFeeKeeper        ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
-	TransferKeeper      ibctransferkeeper.Keeper // for cross-chain fungible token transfers
-	IBCWasmKeeper       ibcwasmkeeper.Keeper     // for IBC wasm light clients
-	ZoneConciergeKeeper zckeeper.Keeper          // for cross-chain fungible token transfers
-
-	// BTC staking related modules
-	BTCStakingKeeper btcstakingkeeper.Keeper
-	FinalityKeeper   finalitykeeper.Keeper
-
-	// wasm smart contract module
-	WasmKeeper wasmkeeper.Keeper
-
-	// tokenomics-related modules
-	IncentiveKeeper incentivekeeper.Keeper
-
-	// make scoped keepers public for test purposes
-	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
-	ScopedZoneConciergeKeeper capabilitykeeper.ScopedKeeper
-	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
+	invCheckPeriod    uint
 
 	// the module manager
 	ModuleManager      *module.Manager
@@ -273,20 +201,15 @@ type BabylonApp struct {
 	configurator module.Configurator
 }
 
-func init() {
-	// Note: If this changes, the home directory under x/checkpointing/client/cli/tx.go needs to change as well
-	userHomeDir, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
-
-	DefaultNodeHome = filepath.Join(userHomeDir, ".babylond")
-}
-
 // NewBabylonApp returns a reference to an initialized BabylonApp.
 func NewBabylonApp(
-	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
-	invCheckPeriod uint, privSigner *PrivSigner,
+	logger log.Logger,
+	db dbm.DB,
+	traceStore io.Writer,
+	loadLatest bool,
+	skipUpgradeHeights map[int64]bool,
+	invCheckPeriod uint,
+	privSigner *appkeepers.PrivSigner,
 	appOpts servertypes.AppOptions,
 	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
@@ -294,8 +217,6 @@ func NewBabylonApp(
 	// we could also take it from global object which should be initialised in rootCmd
 	// but this way it makes babylon app more testable
 	btcConfig := bbn.ParseBtcOptionsFromConfig(appOpts)
-	powLimit := btcConfig.PowLimit()
-	btcNetParams := btcConfig.NetParams()
 	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
 	if homePath == "" {
 		homePath = DefaultNodeHome
@@ -309,476 +230,43 @@ func NewBabylonApp(
 	std.RegisterLegacyAminoCodec(legacyAmino)
 	std.RegisterInterfaces(interfaceRegistry)
 
-	keys := storetypes.NewKVStoreKeys(
-		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey, crisistypes.StoreKey,
-		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
-		govtypes.StoreKey, paramstypes.StoreKey, consensusparamtypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
-		evidencetypes.StoreKey, circuittypes.StoreKey, capabilitytypes.StoreKey,
-		authzkeeper.StoreKey,
-		// Babylon modules
-		epochingtypes.StoreKey,
-		btclightclienttypes.StoreKey,
-		btccheckpointtypes.StoreKey,
-		checkpointingtypes.StoreKey,
-		monitortypes.StoreKey,
-		// IBC-related modules
-		ibcexported.StoreKey,
-		ibctransfertypes.StoreKey,
-		ibcfeetypes.StoreKey,
-		ibcwasmtypes.StoreKey,
-		zctypes.StoreKey,
-		// BTC staking related modules
-		btcstakingtypes.StoreKey,
-		finalitytypes.StoreKey,
-		// WASM
-		wasmtypes.StoreKey,
-		// tokenomics-related modules
-		incentivetypes.StoreKey,
-	)
-	accountKeeper := authkeeper.NewAccountKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[authtypes.StoreKey]),
-		authtypes.ProtoBaseAccount,
-		maccPerms,
-		authcodec.NewBech32Codec(appparams.Bech32PrefixAccAddr),
-		appparams.Bech32PrefixAccAddr,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	bankKeeper := bankkeeper.NewBaseKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[banktypes.StoreKey]),
-		accountKeeper,
-		BlockedAddresses(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		logger,
-	)
-
-	stakingKeeper := stakingkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[stakingtypes.StoreKey]),
-		accountKeeper,
-		bankKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		authcodec.NewBech32Codec(appparams.Bech32PrefixValAddr),
-		authcodec.NewBech32Codec(appparams.Bech32PrefixConsAddr),
-	)
-
-	// NOTE: the epoching module has to be set before the chekpointing module, as the checkpointing module will have access to the epoching module
-	epochingKeeper := epochingkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[epochingtypes.StoreKey]),
-		bankKeeper,
-		stakingKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	checkpointingKeeper := checkpointingkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[checkpointingtypes.StoreKey]),
-		privSigner.WrappedPV,
-		epochingKeeper,
-	)
-
-	// set proposal extension
-	prepareOpt := func(bApp *baseapp.BaseApp) {
-		proposalHandler := checkpointing.NewProposalHandler(
-			logger, &checkpointingKeeper, bApp.Mempool(), bApp)
-		proposalHandler.SetHandlers(bApp)
-	}
-	baseAppOptions = append(baseAppOptions, prepareOpt)
-
-	// set vote extension
-	voteExtOp := func(bApp *baseapp.BaseApp) {
-		voteExtHandler := checkpointing.NewVoteExtensionHandler(logger, &checkpointingKeeper)
-		voteExtHandler.SetHandlers(bApp)
-	}
-	baseAppOptions = append(baseAppOptions, voteExtOp)
-
 	bApp := baseapp.NewBaseApp(appName, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetTxEncoder(txConfig.TxEncoder())
 
-	tkeys := storetypes.NewTransientStoreKeys(
-		paramstypes.TStoreKey, btccheckpointtypes.TStoreKey)
-	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
-	// not include this key.
-	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, "testingkey")
-
-	// register streaming services
-	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
-		panic(err)
+	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	if err != nil {
+		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
 
 	app := &BabylonApp{
+		AppKeepers:        &appkeepers.AppKeepers{},
 		BaseApp:           bApp,
 		legacyAmino:       legacyAmino,
 		appCodec:          appCodec,
 		txConfig:          txConfig,
 		interfaceRegistry: interfaceRegistry,
 		invCheckPeriod:    invCheckPeriod,
-		keys:              keys,
-		tkeys:             tkeys,
-		memKeys:           memKeys,
 	}
 
-	app.ParamsKeeper = initParamsKeeper(
+	app.AppKeepers.InitKeepers(
+		logger,
 		appCodec,
-		legacyAmino,
-		keys[paramstypes.StoreKey],
-		tkeys[paramstypes.TStoreKey],
-	)
-
-	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[consensusparamtypes.StoreKey]),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		runtime.EventService{},
-	)
-	bApp.SetParamStore(app.ConsensusParamsKeeper.ParamsStore)
-
-	app.CapabilityKeeper = capabilitykeeper.NewKeeper(
-		appCodec,
-		keys[capabilitytypes.StoreKey],
-		memKeys[capabilitytypes.MemStoreKey],
-	)
-
-	// grant capabilities for the ibc and ibc-transfer modules
-	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
-	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-	scopedZoneConciergeKeeper := app.CapabilityKeeper.ScopeToModule(zctypes.ModuleName)
-	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
-
-	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
-	// their scoped modules in `NewApp` with `ScopeToModule`
-	app.CapabilityKeeper.Seal()
-
-	// add keepers
-	app.AccountKeeper = accountKeeper
-
-	app.BankKeeper = bankKeeper
-
-	app.StakingKeeper = stakingKeeper
-
-	app.CircuitKeeper = circuitkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[circuittypes.StoreKey]),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		app.AccountKeeper.AddressCodec(),
-	)
-	app.BaseApp.SetCircuitBreaker(&app.CircuitKeeper)
-
-	app.MintKeeper = mintkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[minttypes.StoreKey]),
-		app.StakingKeeper,
-		app.AccountKeeper,
-		app.BankKeeper,
-		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	app.DistrKeeper = distrkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[distrtypes.StoreKey]),
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.StakingKeeper,
-		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	// set up incentive keeper
-	app.IncentiveKeeper = incentivekeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[incentivetypes.StoreKey]),
-		app.BankKeeper,
-		app.AccountKeeper,
-		&epochingKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		authtypes.FeeCollectorName,
-	)
-
-	app.SlashingKeeper = slashingkeeper.NewKeeper(
-		appCodec,
-		legacyAmino,
-		runtime.NewKVStoreService(keys[slashingtypes.StoreKey]),
-		app.StakingKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	app.CrisisKeeper = crisiskeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[crisistypes.StoreKey]),
+		&btcConfig,
+		encCfg,
+		bApp,
+		maccPerms,
+		homePath,
 		invCheckPeriod,
-		app.BankKeeper,
-		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		app.AccountKeeper.AddressCodec(),
-	)
-
-	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[feegrant.StoreKey]),
-		app.AccountKeeper,
-	)
-	// register the staking hooks
-	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
-	app.StakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks(), epochingKeeper.Hooks()),
-	)
-
-	// set the governance module account as the authority for conducting upgrades
-	app.UpgradeKeeper = upgradekeeper.NewKeeper(
 		skipUpgradeHeights,
-		runtime.NewKVStoreService(keys[upgradetypes.StoreKey]),
-		appCodec,
-		homePath,
-		app.BaseApp,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	app.AuthzKeeper = authzkeeper.NewKeeper(
-		runtime.NewKVStoreService(keys[authzkeeper.StoreKey]),
-		appCodec,
-		app.MsgServiceRouter(),
-		app.AccountKeeper,
-	)
-
-	app.IBCKeeper = ibckeeper.NewKeeper(
-		appCodec,
-		keys[ibcexported.StoreKey],
-		app.GetSubspace(ibcexported.ModuleName),
-		app.StakingKeeper,
-		app.UpgradeKeeper,
-		scopedIBCKeeper,
-		// From 8.0.0 the IBC keeper requires an authority for the messages
-		// `MsgIBCSoftwareUpgrade` and `MsgRecoverClient`
-		// https://github.com/cosmos/ibc-go/releases/tag/v8.0.0
-		// Gov is the proper authority for those types of messages
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	// register the proposal types
-	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
-	// by granting the governance module the right to execute the message.
-	// See: https://github.com/cosmos/cosmos-sdk/blob/release/v0.46.x/x/gov/spec/01_concepts.md#proposal-messages
-	// TODO: investigate how to migrate to new proposal flow
-	govRouter := govv1beta1.NewRouter()
-	govRouter.AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
-		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper))
-
-	// TODO: this should be a function parameter
-	govConfig := govtypes.DefaultConfig()
-	/*
-		Example of setting gov params:
-		govConfig.MaxMetadataLen = 10000
-	*/
-	govKeeper := govkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[govtypes.StoreKey]),
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.StakingKeeper,
-		app.DistrKeeper,
-		app.MsgServiceRouter(),
-		govConfig,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String())
-
-	app.GovKeeper = *govKeeper.SetHooks(
-		govtypes.NewMultiGovHooks(
-		// register the governance hooks
-		),
-	)
-
-	btclightclientKeeper := btclightclientkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[btclightclienttypes.StoreKey]),
-		btcConfig,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	btcCheckpointKeeper := btccheckpointkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[btccheckpointtypes.StoreKey]),
-		tkeys[btccheckpointtypes.TStoreKey],
-		&btclightclientKeeper,
-		&checkpointingKeeper,
-		&app.IncentiveKeeper,
-		&powLimit,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	// create querier for KVStore
-	storeQuerier, ok := app.CommitMultiStore().(storetypes.Queryable)
-	if !ok {
-		panic(errorsmod.Wrap(sdkerrors.ErrUnknownRequest, "multistore doesn't support queries"))
-	}
-
-	app.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
-		appCodec, keys[ibcfeetypes.StoreKey],
-		app.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
-		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
-	)
-
-	zcKeeper := zckeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
-		app.IBCFeeKeeper,
-		app.IBCKeeper.ClientKeeper,
-		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
-		app.AccountKeeper,
-		app.BankKeeper,
-		&btclightclientKeeper,
-		&checkpointingKeeper,
-		&btcCheckpointKeeper,
-		epochingKeeper,
-		storeQuerier,
-		scopedZoneConciergeKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-	app.ZoneConciergeKeeper = *zcKeeper
-
-	// Create Transfer Keepers
-	app.TransferKeeper = ibctransferkeeper.NewKeeper(
-		appCodec,
-		keys[ibctransfertypes.StoreKey],
-		app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCFeeKeeper,
-		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
-		app.AccountKeeper,
-		app.BankKeeper,
-		scopedTransferKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	app.MonitorKeeper = monitorkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[monitortypes.StoreKey]),
-		&btclightclientKeeper,
-	)
-
-	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
-	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
-	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
-	app.EpochingKeeper = *epochingKeeper.SetHooks(
-		epochingtypes.NewMultiEpochingHooks(app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
-	)
-
-	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
-	app.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
-		checkpointingtypes.NewMultiCheckpointingHooks(app.EpochingKeeper.Hooks(), app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
-	)
-	app.BtcCheckpointKeeper = btcCheckpointKeeper
-	app.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
-		btclightclienttypes.NewMultiBTCLightClientHooks(app.BtcCheckpointKeeper.Hooks()),
-	)
-
-	// set up BTC staking keeper
-	app.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[btcstakingtypes.StoreKey]),
-		&btclightclientKeeper,
-		&btcCheckpointKeeper,
-		&checkpointingKeeper,
-		btcNetParams,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-	// set up finality keeper
-	app.FinalityKeeper = finalitykeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[finalitytypes.StoreKey]),
-		app.BTCStakingKeeper,
-		app.IncentiveKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	// create evidence keeper with router
-	evidenceKeeper := evidencekeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[evidencetypes.StoreKey]),
-		app.StakingKeeper,
-		app.SlashingKeeper,
-		app.AccountKeeper.AddressCodec(),
-		runtime.ProvideCometInfoService(),
-	)
-	// If evidence needs to be handled for the app, set routes in router here and seal
-	app.EvidenceKeeper = *evidenceKeeper
-
-	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
-	if err != nil {
-		panic(fmt.Sprintf("error while reading wasm config: %s", err))
-	}
-
-	wasmOpts = append(owasm.RegisterCustomPlugins(&app.EpochingKeeper, &app.ZoneConciergeKeeper, &app.BTCLightClientKeeper), wasmOpts...)
-
-	app.WasmKeeper = wasmkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.StakingKeeper,
-		distrkeeper.NewQuerier(app.DistrKeeper),
-		app.IBCFeeKeeper,
-		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
-		scopedWasmKeeper,
-		app.TransferKeeper,
-		app.MsgServiceRouter(),
-		app.GRPCQueryRouter(),
-		homePath,
+		privSigner,
+		appOpts,
 		wasmConfig,
-		WasmCapabilities(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		wasmOpts...,
+		wasmOpts,
+		BlockedAddresses(),
 	)
-
-	ibcWasmConfig :=
-		ibcwasmtypes.WasmConfig{
-			DataDir:               filepath.Join(homePath, "ibc_08-wasm"),
-			SupportedCapabilities: WasmCapabilities(),
-			ContractDebugMode:     false,
-		}
-
-	app.IBCWasmKeeper = ibcwasmkeeper.NewKeeperWithConfig(
-		appCodec,
-		runtime.NewKVStoreService(keys[ibcwasmtypes.StoreKey]),
-		app.IBCKeeper.ClientKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		ibcWasmConfig,
-		app.GRPCQueryRouter(),
-	)
-
-	// Set legacy router for backwards compatibility with gov v1beta1
-	app.GovKeeper.SetLegacyRouter(govRouter)
-
-	// Create all supported IBC routes
-	var transferStack porttypes.IBCModule
-	transferStack = transfer.NewIBCModule(app.TransferKeeper)
-	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.IBCFeeKeeper)
-
-	var zoneConciergeStack porttypes.IBCModule
-	zoneConciergeStack = zoneconcierge.NewIBCModule(app.ZoneConciergeKeeper)
-	zoneConciergeStack = ibcfee.NewIBCMiddleware(zoneConciergeStack, app.IBCFeeKeeper)
-
-	var wasmStack porttypes.IBCModule
-	wasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper)
-	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, app.IBCFeeKeeper)
-
-	// Create static IBC router, add ibc-transfer module route, then set and seal it
-	ibcRouter := porttypes.NewRouter().
-		AddRoute(ibctransfertypes.ModuleName, transferStack).
-		AddRoute(zctypes.ModuleName, zoneConciergeStack).
-		AddRoute(wasmtypes.ModuleName, wasmStack)
-
-	// Setting Router will finalize all routes by sealing router
-	// No more routes can be added
-	app.IBCKeeper.SetRouter(ibcRouter)
 
 	/****  Module Options ****/
 
@@ -959,8 +447,7 @@ func NewBabylonApp(
 
 	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	err = app.ModuleManager.RegisterServices(app.configurator)
-	if err != nil {
+	if err := app.ModuleManager.RegisterServices(app.configurator); err != nil {
 		panic(err)
 	}
 
@@ -987,9 +474,9 @@ func NewBabylonApp(
 	app.sm.RegisterStoreDecoders()
 
 	// initialize stores
-	app.MountKVStores(keys)
-	app.MountTransientStores(tkeys)
-	app.MountMemoryStores(memKeys)
+	app.MountKVStores(app.GetKVStoreKeys())
+	app.MountTransientStores(app.GetTransientStoreKeys())
+	app.MountMemoryStores(app.GetMemoryStoreKeys())
 
 	// initialize AnteHandler, which includes
 	// - authAnteHandler
@@ -1009,7 +496,7 @@ func NewBabylonApp(
 			},
 			IBCKeeper:             app.IBCKeeper,
 			WasmConfig:            &wasmConfig,
-			TXCounterStoreService: runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
+			TXCounterStoreService: runtime.NewKVStoreService(app.AppKeepers.GetKey(wasmtypes.StoreKey)),
 			WasmKeeper:            &app.WasmKeeper,
 			CircuitKeeper:         &app.CircuitKeeper,
 		},
@@ -1025,8 +512,30 @@ func NewBabylonApp(
 		NewBtcValidationDecorator(btcConfig, &app.BtcCheckpointKeeper),
 	)
 
-	// initialize BaseApp
+	// set proposal extension
+	proposalHandler := checkpointing.NewProposalHandler(
+		logger, &app.CheckpointingKeeper, bApp.Mempool(), bApp)
+	proposalHandler.SetHandlers(bApp)
+
+	// set vote extension
+	voteExtHandler := checkpointing.NewVoteExtensionHandler(logger, &app.CheckpointingKeeper)
+	voteExtHandler.SetHandlers(bApp)
+
 	app.SetInitChainer(app.InitChainer)
+	app.SetPreBlocker(func(ctx sdk.Context, req *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+		// execute the existing PreBlocker
+		res, err := app.PreBlocker(ctx, req)
+		if err != nil {
+			return res, err
+		}
+		// execute checkpointing module's PreBlocker
+		// NOTE: this does not change the consensus parameter in `res`
+		ckptPreBlocker := proposalHandler.PreBlocker()
+		if _, err := ckptPreBlocker(ctx, req); err != nil {
+			return res, err
+		}
+		return res, nil
+	})
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 	app.SetAnteHandler(anteHandler)
@@ -1056,11 +565,6 @@ func NewBabylonApp(
 		}
 	}
 
-	app.ScopedIBCKeeper = scopedIBCKeeper
-	app.ScopedZoneConciergeKeeper = scopedZoneConciergeKeeper
-	app.ScopedTransferKeeper = scopedTransferKeeper
-	app.ScopedWasmKeeper = scopedWasmKeeper
-
 	// At startup, after all modules have been registered, check that all proto
 	// annotations are correct.
 	protoFiles, err := proto.MergedRegistry()
@@ -1073,6 +577,10 @@ func NewBabylonApp(
 		// want to panic here instead of logging a warning.
 		_, _ = fmt.Fprintln(os.Stderr, err.Error())
 	}
+
+	// set upgrade handler and store loader for supporting software upgrade
+	app.setupUpgradeHandlers()
+	app.setupUpgradeStoreLoaders()
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
@@ -1104,8 +612,19 @@ func (app *BabylonApp) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock)
 	return app.ModuleManager.PreBlock(ctx)
 }
 
+// BeginBlockForks is intended to be ran in a chain upgrade.
+func (app *BabylonApp) BeginBlockForks(ctx sdk.Context) {
+	for _, fork := range Forks {
+		if ctx.BlockHeight() == fork.UpgradeHeight {
+			fork.BeginForkLogic(ctx, app.AppKeepers)
+			return
+		}
+	}
+}
+
 // BeginBlocker application updates every begin block
 func (app *BabylonApp) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
+	app.BeginBlockForks(ctx)
 	return app.ModuleManager.BeginBlock(ctx)
 }
 
@@ -1180,35 +699,6 @@ func (app *BabylonApp) EncodingConfig() *appparams.EncodingConfig {
 		TxConfig:          app.TxConfig(),
 		Amino:             app.LegacyAmino(),
 	}
-}
-
-// GetKey returns the KVStoreKey for the provided store key.
-//
-// NOTE: This is solely to be used for testing purposes.
-func (app *BabylonApp) GetKey(storeKey string) *storetypes.KVStoreKey {
-	return app.keys[storeKey]
-}
-
-// GetTKey returns the TransientStoreKey for the provided store key.
-//
-// NOTE: This is solely to be used for testing purposes.
-func (app *BabylonApp) GetTKey(storeKey string) *storetypes.TransientStoreKey {
-	return app.tkeys[storeKey]
-}
-
-// GetMemKey returns the MemStoreKey for the provided mem key.
-//
-// NOTE: This is solely used for testing purposes.
-func (app *BabylonApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
-	return app.memKeys[storeKey]
-}
-
-// GetSubspace returns a param subspace for a given module name.
-//
-// NOTE: This is solely to be used for testing purposes.
-func (app *BabylonApp) GetSubspace(moduleName string) paramstypes.Subspace {
-	subspace, _ := app.ParamsKeeper.GetSubspace(moduleName)
-	return subspace
 }
 
 // SimulationManager implements the SimulationApp interface
@@ -1287,6 +777,39 @@ func (app *BabylonApp) AutoCliOpts() autocli.AppOptions {
 	}
 }
 
+// configure store loader that checks if version == upgradeHeight and applies store upgrades
+func (app *BabylonApp) setupUpgradeStoreLoaders() {
+	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Sprintf("failed to read upgrade info from disk %s", err))
+	}
+
+	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		return
+	}
+
+	for _, upgrade := range Upgrades {
+		if upgradeInfo.Name == upgrade.UpgradeName {
+			storeUpgrades := upgrade.StoreUpgrades
+			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
+		}
+	}
+}
+
+func (app *BabylonApp) setupUpgradeHandlers() {
+	for _, upgrade := range Upgrades {
+		app.UpgradeKeeper.SetUpgradeHandler(
+			upgrade.UpgradeName,
+			upgrade.CreateUpgradeHandler(
+				app.ModuleManager,
+				app.configurator,
+				app.BaseApp,
+				app.AppKeepers,
+			),
+		)
+	}
+}
+
 // GetMaccPerms returns a copy of the module account permissions
 func GetMaccPerms() map[string][]string {
 	dupMaccPerms := make(map[string][]string)
@@ -1307,35 +830,4 @@ func BlockedAddresses() map[string]bool {
 	delete(modAccAddrs, authtypes.NewModuleAddress(govtypes.ModuleName).String())
 
 	return modAccAddrs
-}
-
-// initParamsKeeper init params keeper and its subspaces
-func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
-	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
-
-	// TODO: Only modules which did not migrate yet to new way of hanldling params
-	// are the IBC-related modules. Once they are migrated, we can remove this and
-	// whole usage of params module
-	paramsKeeper.Subspace(ibcexported.ModuleName)
-	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
-	paramsKeeper.Subspace(zctypes.ModuleName)
-
-	return paramsKeeper
-}
-
-// Capabilities of the IBC wasm contracts
-func WasmCapabilities() []string {
-	// The last arguments can contain custom message handlers, and custom query handlers,
-	// if we want to allow any custom callbacks
-	return []string{
-		"iterator",
-		"staking",
-		"stargate",
-		"cosmwasm_1_1",
-		"cosmwasm_1_2",
-		"cosmwasm_1_3",
-		"cosmwasm_1_4",
-		"cosmwasm_2_0",
-		"babylon",
-	}
 }

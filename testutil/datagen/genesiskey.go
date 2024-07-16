@@ -1,6 +1,11 @@
 package datagen
 
 import (
+	"github.com/babylonchain/babylon/app"
+	appkeepers "github.com/babylonchain/babylon/app/keepers"
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/privval"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -8,11 +13,6 @@ import (
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/privval"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
 type GenesisValidators struct {
@@ -88,7 +88,7 @@ func GenesisValidatorSet(numVals int) (*GenesisValidators, error) {
 
 // GenesisValidatorSetWithPrivSigner generates a set with `numVals` genesis validators
 // along with the privSigner, which will be in the 0th position of the return validator set
-func GenesisValidatorSetWithPrivSigner(numVals int) (*GenesisValidators, *app.PrivSigner, error) {
+func GenesisValidatorSetWithPrivSigner(numVals int) (*GenesisValidators, *appkeepers.PrivSigner, error) {
 	ps, err := app.SetupTestPrivSigner()
 	if err != nil {
 		return nil, nil, err
