@@ -667,19 +667,21 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 
 	// tries to create a send transaction putting the freegranter as feepayer, it should FAIL
 	// since we only gave grant for BTC delegation msgs.
-	outBuff, errBuff, err := node.BankSendOutput(
-		wGratee, node.PublicAddress, stakerBalance.String(),
-		fmt.Sprintf("--fee-granter=%s", feePayerAddr.String()),
-	)
-	outputStr := outBuff.String() + errBuff.String()
-	s.Require().Contains(outputStr, fmt.Sprintf("code: %d", feegrant.ErrMessageNotAllowed.ABCICode()))
-	s.Require().Contains(outputStr, feegrant.ErrMessageNotAllowed.Error())
-	s.Nil(err)
+	// TODO: Uncomment the next lines when issue: https://github.com/babylonchain/babylon/issues/693
+	// is fixed on cosmos-sdk side
+	// outBuff, errBuff, err := node.BankSendOutput(
+	// 	wGratee, node.PublicAddress, stakerBalance.String(),
+	// 	fmt.Sprintf("--fee-granter=%s", feePayerAddr.String()),
+	// )
+	// outputStr := outBuff.String() + errBuff.String()
+	// s.Require().Contains(outputStr, fmt.Sprintf("code: %d", feegrant.ErrMessageNotAllowed.ABCICode()))
+	// s.Require().Contains(outputStr, feegrant.ErrMessageNotAllowed.Error())
+	// s.Nil(err)
 
-	// staker should not have lost any balance.
-	stakerBalances, err := node.QueryBalances(granteeStakerAddr.String())
-	s.Require().NoError(err)
-	s.Require().Equal(stakerBalance.String(), stakerBalances.String())
+	// // staker should not have lost any balance.
+	// stakerBalances, err := node.QueryBalances(granteeStakerAddr.String())
+	// s.Require().NoError(err)
+	// s.Require().Equal(stakerBalance.String(), stakerBalances.String())
 
 	// submit the message to create BTC delegation using the fee grant
 	// but putting as fee more than the spend limit
@@ -737,7 +739,7 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 
 	// verify the balances after the BTC delegation was submited
 	// the staker should continue to have zero as balance.
-	stakerBalances, err = node.QueryBalances(granteeStakerAddr.String())
+	stakerBalances, err := node.QueryBalances(granteeStakerAddr.String())
 	s.NoError(err)
 	s.Equal(stakerBalance.String(), stakerBalances.String())
 
