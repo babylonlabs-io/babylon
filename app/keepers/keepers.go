@@ -528,6 +528,7 @@ func (ak *AppKeepers) InitKeepers(
 		btcNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+
 	// set up finality keeper
 	ak.FinalityKeeper = finalitykeeper.NewKeeper(
 		appCodec,
@@ -536,6 +537,8 @@ func (ak *AppKeepers) InitKeepers(
 		ak.IncentiveKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	ak.BTCStakingKeeper = *ak.BTCStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(ak.FinalityKeeper.Hooks()))
+	ak.FinalityKeeper = *ak.FinalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(ak.BTCStakingKeeper.Hooks()))
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(

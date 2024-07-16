@@ -24,8 +24,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/babylonchain/babylon/app/upgrades"
-	bbn "github.com/babylonchain/babylon/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -94,6 +92,9 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
+
+	"github.com/babylonchain/babylon/app/upgrades"
+	bbn "github.com/babylonchain/babylon/types"
 
 	appkeepers "github.com/babylonchain/babylon/app/keepers"
 	appparams "github.com/babylonchain/babylon/app/params"

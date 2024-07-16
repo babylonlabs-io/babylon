@@ -5,9 +5,10 @@ import (
 	"fmt"
 
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
 // SetFinalityProvider adds the given finality provider to KVStore
@@ -62,6 +63,27 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	// event for updating the finality provider set
 	powerUpdateEvent := types.NewEventPowerDistUpdateWithSlashedFP(fp.BtcPk)
 	k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
+
+	return nil
+}
+
+// RevertInactiveFinalityProvider sets the Inactive flag of the given finality provider
+// to false
+func (k Keeper) RevertInactiveFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
+	// ensure finality provider exists
+	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
+	if err != nil {
+		return err
+	}
+
+	// ignore the finality provider is already slashed
+	// or detected as inactive
+	if fp.IsSlashed() || fp.IsInactive() {
+		return nil
+	}
+
+	fp.Inactive = false
+	k.SetFinalityProvider(ctx, fp)
 
 	return nil
 }
