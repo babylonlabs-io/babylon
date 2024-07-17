@@ -3,12 +3,19 @@ package types_test
 import (
 	"bytes"
 	"encoding/hex"
+	"math/rand"
 	"testing"
+	"time"
 
+	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	"github.com/btcsuite/btcd/btcutil"
 	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
+	"github.com/stretchr/testify/require"
 )
 
 // Sanity test checking mostly btcd code, that we can realy parse bitcoin transaction
@@ -162,5 +169,108 @@ func TestParsingCorrectBtcProofs(t *testing.T) {
 		if !bytes.Equal(expectedOpReturn, p.OpReturnData) {
 			t.Errorf("Test %d does not contain expected op return data", i)
 		}
+	}
+}
+
+func buildOpReturnOutput(t *testing.T, r *rand.Rand, dataLen int) *wire.TxOut {
+	data := datagen.GenRandomByteArray(r, uint64(dataLen))
+	pkscript, err := txscript.NewScriptBuilder().AddOp(txscript.OP_RETURN).AddData(data).Script()
+	require.NoError(t, err)
+
+	return wire.NewTxOut(0, pkscript)
+}
+
+func TestExtractingOpReturn(t *testing.T) {
+	tests := []struct {
+		name            string
+		buildTxFn       func(t *testing.T, r *rand.Rand) *btcutil.Tx
+		expectedDatalen int
+		returnsErr      bool
+	}{
+		{
+			name: "transaction with 1 op_return output containing 80 bytes of data",
+			buildTxFn: func(t *testing.T, r *rand.Rand) *btcutil.Tx {
+				tx := wire.NewMsgTx(wire.TxVersion)
+				tx.AddTxOut(buildOpReturnOutput(t, r, 80))
+				return btcutil.NewTx(tx)
+			},
+			expectedDatalen: 80,
+			returnsErr:      false,
+		},
+		{
+			name: "transaction with 1 op_return output containing 81 bytes of data",
+			buildTxFn: func(t *testing.T, r *rand.Rand) *btcutil.Tx {
+				tx := wire.NewMsgTx(wire.TxVersion)
+				tx.AddTxOut(buildOpReturnOutput(t, r, 81))
+				return btcutil.NewTx(tx)
+			},
+			expectedDatalen: 0,
+			returnsErr:      false,
+		},
+		{
+			name: "transaction with 1 op_return output containing 0 bytes of data",
+			buildTxFn: func(t *testing.T, r *rand.Rand) *btcutil.Tx {
+				tx := wire.NewMsgTx(wire.TxVersion)
+				tx.AddTxOut(buildOpReturnOutput(t, r, 0))
+				return btcutil.NewTx(tx)
+			},
+			expectedDatalen: 0,
+			returnsErr:      false,
+		},
+		{
+			name: "transaction with 2 op_return outputs",
+			buildTxFn: func(t *testing.T, r *rand.Rand) *btcutil.Tx {
+				tx := wire.NewMsgTx(wire.TxVersion)
+				tx.AddTxOut(buildOpReturnOutput(t, r, 1))
+				tx.AddTxOut(buildOpReturnOutput(t, r, 2))
+				return btcutil.NewTx(tx)
+			},
+			expectedDatalen: 0,
+			returnsErr:      true,
+		},
+		{
+			name: "transaction with 1 op_return output containing 80 bytes of data, but with invalid OP_PUSHDATA2 opcode",
+			buildTxFn: func(t *testing.T, r *rand.Rand) *btcutil.Tx {
+				tx := wire.NewMsgTx(wire.TxVersion)
+				output := buildOpReturnOutput(t, r, 80)
+				// change valid txscript.OP_PUSHDATA1 to invalid txscript.OP_PUSHDATA2.
+				// This op code is invalid because it pushes less than 255 bytes of data
+				output.PkScript[1] = txscript.OP_PUSHDATA2
+				tx.AddTxOut(output)
+				return btcutil.NewTx(tx)
+			},
+			expectedDatalen: 0,
+			returnsErr:      false,
+		},
+		{
+			name: "transaction with 1 op_return output containing 80 bytes of data, but with invalid OP_PUSHDATA4 opcode",
+			buildTxFn: func(t *testing.T, r *rand.Rand) *btcutil.Tx {
+				tx := wire.NewMsgTx(wire.TxVersion)
+				output := buildOpReturnOutput(t, r, 80)
+				// change valid txscript.OP_PUSHDATA1 to invalid txscript.OP_PUSHDATA2.
+				// This op code is invalid because it pushes less than 255 bytes of data
+				output.PkScript[1] = txscript.OP_PUSHDATA4
+				tx.AddTxOut(output)
+				return btcutil.NewTx(tx)
+			},
+			expectedDatalen: 0,
+			returnsErr:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := rand.New(rand.NewSource(time.Now().Unix()))
+			tx := tt.buildTxFn(t, r)
+			data, err := btcctypes.ExtractStandardOpReturnData(tx)
+			if tt.returnsErr {
+				require.Error(t, err)
+				require.Nil(t, data)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, data)
+				require.Equal(t, tt.expectedDatalen, len(data))
+			}
+		})
 	}
 }
