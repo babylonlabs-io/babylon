@@ -496,7 +496,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		create a random BTC delegation restaking to Babylon and consumer finality providers
 	*/
 
-	fpBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
+	delBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := nonValidatorNode.QueryBTCStakingParams()
 
@@ -509,7 +509,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		covenantBTCPKs = append(covenantBTCPKs, covenantPK.MustToBTCPK())
 	}
 	// NOTE: we use the node's secret key as Babylon secret key for the BTC delegation
-	pop, err := bstypes.NewPoPBTC(fpBabylonAddr, czDelBtcSk)
+	pop, err := bstypes.NewPoPBTC(delBabylonAddr, czDelBtcSk)
 	s.NoError(err)
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
