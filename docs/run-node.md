@@ -139,6 +139,11 @@ $ ls .testnets
 gentxs node0 node1 node2 node3
 ```
 
+## Running node in Production
+
+When running the Babylon node in a production setting, operators should adhere to 
+[CometBFT Guidelines](https://docs.cometbft.com/v0.38/core/running-in-production)
+
 ## Testing
 
 ```console
