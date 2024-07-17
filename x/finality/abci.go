@@ -28,7 +28,7 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 		// tally all non-finalised blocks
 		k.TallyBlocks(ctx)
 
-		// detect inactive finality providers if there are any
+		// detect sluggish finality providers if there are any
 		// heightToExamine is determined by the current height - params.FinalitySigTimeout
 		// which indicates that finality providers have up to `params.FinalitySigTimeout` blocks
 		// to send votes on the height to be examined as whether `missed` or not (1 or 0 of a

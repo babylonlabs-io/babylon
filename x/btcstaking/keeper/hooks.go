@@ -20,18 +20,18 @@ func (k Keeper) Hooks() Hooks {
 	return Hooks{k}
 }
 
-// AfterInactiveFinalityProviderDetected updates the status of the given finality provider to `inactive`
-func (h Hooks) AfterInactiveFinalityProviderDetected(ctx context.Context, fpPk *bbntypes.BIP340PubKey) error {
+// AfterSluggishFinalityProviderDetected updates the status of the given finality provider to `sluggish`
+func (h Hooks) AfterSluggishFinalityProviderDetected(ctx context.Context, fpPk *bbntypes.BIP340PubKey) error {
 	fp, err := h.k.GetFinalityProvider(ctx, fpPk.MustMarshal())
 	if err != nil {
 		return err
 	}
 
-	if fp.IsInactive() {
-		return fmt.Errorf("the finality provider %s is already detected as inactive", fpPk.MarshalHex())
+	if fp.IsSluggish() {
+		return fmt.Errorf("the finality provider %s is already detected as sluggish", fpPk.MarshalHex())
 	}
 
-	fp.Inactive = true
+	fp.Sluggish = true
 
 	h.k.SetFinalityProvider(ctx, fp)
 

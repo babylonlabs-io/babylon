@@ -225,3 +225,51 @@ func (k Keeper) ListEvidences(ctx context.Context, req *types.QueryListEvidences
 	}
 	return resp, nil
 }
+
+// SigningInfo returns signing-info of a specific finality provider.
+func (k Keeper) SigningInfo(ctx context.Context, req *types.QuerySigningInfoRequest) (*types.QuerySigningInfoResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+
+	if req.FpBtcPkHex == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "empty finality provider public key")
+	}
+
+	fpPk, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid finality provider public key")
+	}
+
+	signingInfo, err := k.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "SigningInfo not found for the finality provider %s", req.FpBtcPkHex)
+	}
+
+	return &types.QuerySigningInfoResponse{FpSigningInfo: signingInfo}, nil
+}
+
+// SigningInfos returns signing-infos of all finality providers.
+func (k Keeper) SigningInfos(ctx context.Context, req *types.QuerySigningInfosRequest) (*types.QuerySigningInfosResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+
+	store := k.storeService.OpenKVStore(ctx)
+	var signInfos []types.FinalityProviderSigningInfo
+
+	signingInfoStore := prefix.NewStore(runtime.KVStoreAdapter(store), types.FinalityProviderSigningInfoKeyPrefix)
+	pageRes, err := query.Paginate(signingInfoStore, req.Pagination, func(key, value []byte) error {
+		var info types.FinalityProviderSigningInfo
+		err := k.cdc.Unmarshal(value, &info)
+		if err != nil {
+			return err
+		}
+		signInfos = append(signInfos, info)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &types.QuerySigningInfosResponse{FpSigningInfos: signInfos, Pagination: pageRes}, nil
+}

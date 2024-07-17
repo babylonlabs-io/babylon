@@ -6,18 +6,19 @@ import (
 
 	"cosmossdk.io/math"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (fp *FinalityProvider) IsSlashed() bool {
 	return fp.SlashedBabylonHeight > 0
 }
 
-func (fp *FinalityProvider) IsInactive() bool {
-	return fp.Inactive
+func (fp *FinalityProvider) IsSluggish() bool {
+	return fp.Sluggish
 }
 
 func (fp *FinalityProvider) ValidateBasic() error {

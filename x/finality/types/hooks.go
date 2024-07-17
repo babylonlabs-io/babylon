@@ -15,9 +15,9 @@ func NewMultiFinalityHooks(hooks ...FinalityHooks) MultiFinalityHooks {
 	return hooks
 }
 
-func (h MultiFinalityHooks) AfterInactiveFinalityProviderDetected(ctx context.Context, btcPk *types.BIP340PubKey) error {
+func (h MultiFinalityHooks) AfterSluggishFinalityProviderDetected(ctx context.Context, btcPk *types.BIP340PubKey) error {
 	for i := range h {
-		if err := h[i].AfterInactiveFinalityProviderDetected(ctx, btcPk); err != nil {
+		if err := h[i].AfterSluggishFinalityProviderDetected(ctx, btcPk); err != nil {
 			return err
 		}
 	}

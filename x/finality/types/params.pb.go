@@ -34,7 +34,7 @@ type Params struct {
 	// vote before being judged as missing their voting turn on the given block
 	FinalitySigTimeout int64 `protobuf:"varint,2,opt,name=finality_sig_timeout,json=finalitySigTimeout,proto3" json:"finality_sig_timeout,omitempty"`
 	// min_signed_per_window defines the minimum number of blocks that a finality provider is required to sign
-	// within the sliding window to avoid being detected as inactive
+	// within the sliding window to avoid being detected as sluggish
 	MinSignedPerWindow cosmossdk_io_math.LegacyDec `protobuf:"bytes,3,opt,name=min_signed_per_window,json=minSignedPerWindow,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"min_signed_per_window"`
 	// min_pub_rand is the minimum number of public randomness each
 	// message should commit

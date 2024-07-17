@@ -67,9 +67,9 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	return nil
 }
 
-// RevertInactiveFinalityProvider sets the Inactive flag of the given finality provider
+// RevertSluggishFinalityProvider sets the Sluggish flag of the given finality provider
 // to false
-func (k Keeper) RevertInactiveFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
+func (k Keeper) RevertSluggishFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
 	// ensure finality provider exists
 	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
 	if err != nil {
@@ -77,12 +77,12 @@ func (k Keeper) RevertInactiveFinalityProvider(ctx context.Context, fpBTCPK []by
 	}
 
 	// ignore the finality provider is already slashed
-	// or detected as inactive
-	if fp.IsSlashed() || fp.IsInactive() {
+	// or detected as sluggish
+	if fp.IsSlashed() || fp.IsSluggish() {
 		return nil
 	}
 
-	fp.Inactive = false
+	fp.Sluggish = false
 	k.SetFinalityProvider(ctx, fp)
 
 	return nil

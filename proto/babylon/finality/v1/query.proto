@@ -54,6 +54,16 @@ service Query {
   rpc ListEvidences(QueryListEvidencesRequest) returns (QueryListEvidencesResponse) {
     option (google.api.http).get = "/babylon/finality/v1/evidences";
   }
+
+  // SigningInfo queries the signing info of given finality provider BTC public key
+  rpc SigningInfo(QuerySigningInfoRequest) returns (QuerySigningInfoResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/signing_infos/{fp_btc_pk_hex}";
+  }
+
+  // SigningInfos queries the signing info of all the active finality providers
+  rpc SigningInfos(QuerySigningInfosRequest) returns (QuerySigningInfosResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/signing_infos";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -206,5 +216,34 @@ message QueryListEvidencesResponse {
   repeated Evidence evidences = 1;
 
   // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QuerySigningInfoRequest is the request type for the Query/SigningInfo RPC
+// method
+message QuerySigningInfoRequest {
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK
+  // (in BIP340 format) of the finality provider
+  string fp_btc_pk_hex = 1;
+}
+
+// QuerySigningInfoResponse is the response type for the Query/SigningInfo RPC
+// method
+message QuerySigningInfoResponse {
+  // fp_signing_info is the signing info of requested finality provider BTC public key
+  FinalityProviderSigningInfo fp_signing_info = 1 [(gogoproto.nullable) = false];
+}
+
+// QuerySigningInfosRequest is the request type for the Query/SigningInfos RPC
+// method
+message QuerySigningInfosRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QuerySigningInfosResponse is the response type for the Query/SigningInfos RPC
+// method
+message QuerySigningInfosResponse {
+  // info is the signing info of all finality providers with signing info
+  repeated FinalityProviderSigningInfo fp_signing_infos = 1 [(gogoproto.nullable) = false];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

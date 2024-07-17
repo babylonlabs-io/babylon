@@ -11,7 +11,7 @@ import (
 )
 
 // HandleLiveness handles liveness of each active finality provider for a given height
-// including identifying inactive finality providers and applying punishment
+// including identifying sluggish finality providers and applying punishment (TBD)
 func (k Keeper) HandleLiveness(ctx context.Context, height int64) {
 	// get all the active finality providers for the height
 	fpSet := k.BTCStakingKeeper.GetVotingPowerTable(ctx, uint64(height))
@@ -19,8 +19,8 @@ func (k Keeper) HandleLiveness(ctx context.Context, height int64) {
 	voterBTCPKs := k.GetVoters(ctx, uint64(height))
 
 	// Iterate over all the finality providers which *should* have signed this block
-	// store whether or not they have actually signed it, identify inactive
-	// ones, and apply punishment
+	// store whether or not they have actually signed it, identify sluggish
+	// ones, and apply punishment (TBD)
 	for fpPkHex := range fpSet {
 		fpPk, err := types.NewBIP340PubKeyFromHex(fpPkHex)
 		if err != nil {
@@ -38,7 +38,7 @@ func (k Keeper) HandleLiveness(ctx context.Context, height int64) {
 }
 
 // HandleFinalityProviderLiveness updates the voting history of the given finality provider and
-// detect inactive the finality provider if the number of missed block is reached to the threshold in a
+// detect sluggish the finality provider if the number of missed block is reached to the threshold in a
 // sliding window
 func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.BIP340PubKey, missed bool, height int64) error {
 	params := k.GetParams(ctx)
@@ -62,8 +62,6 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if missed {
-		// TODO emit event
-
 		k.Logger(sdkCtx).Debug(
 			"absent finality provider",
 			"height", height,
@@ -79,34 +77,51 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 	// if we are past the minimum height and the finality provider has missed too many blocks, punish them
 	if height > minHeight && signInfo.MissedBlocksCounter > maxMissed {
 		updated = true
-		// TODO emit event
+
+		k.Logger(sdkCtx).Info(
+			"detected sluggish finality provider",
+			"height", height,
+			"public_key", fpPk.MarshalHex(),
+			"missed_count", signInfo.MissedBlocksCounter,
+			"threshold", minSignedPerWindow,
+			"window_size", signedBlocksWindow,
+		)
 
 		// Inactivity detected
-		err = k.hooks.AfterInactiveFinalityProviderDetected(ctx, fpPk)
+		err = k.hooks.AfterSluggishFinalityProviderDetected(ctx, fpPk)
 		if err != nil {
 			return err
 		}
 
-		k.Logger(sdkCtx).Info(
-			"detected inactive finality provider",
-			"height", height,
-			"public_key", fpPk.MarshalHex(),
-		)
-	} else if fp.IsInactive() {
-		updated = true
-		// TODO emit event
-
-		// change the Inactive flag of the finality provider to false
-		err = k.BTCStakingKeeper.RevertInactiveFinalityProvider(ctx, fpPk.MustMarshal())
-		if err != nil {
-			return fmt.Errorf("failed to revert inactive finality provider %s: %w", fpPk.MarshalHex(), err)
+		if err := sdkCtx.EventManager().EmitTypedEvent(
+			finalitytypes.NewEventSluggishFinalityProviderDetected(fpPk),
+		); err != nil {
+			panic(fmt.Errorf("failed to emit sluggish finality provider detected event for height %d: %w", height, err))
 		}
 
+		finalitytypes.IncrementSluggishFinalityProviderCounter()
+	} else if fp.IsSluggish() {
+		updated = true
+
 		k.Logger(sdkCtx).Info(
-			"reverted inactive finality provider",
+			"reverted sluggish finality provider",
 			"height", height,
 			"public_key", fpPk.MarshalHex(),
 		)
+
+		// change the sluggish flag of the finality provider to false
+		err = k.BTCStakingKeeper.RevertSluggishFinalityProvider(ctx, fpPk.MustMarshal())
+		if err != nil {
+			return fmt.Errorf("failed to revert sluggish finality provider %s: %w", fpPk.MarshalHex(), err)
+		}
+
+		if err := sdkCtx.EventManager().EmitTypedEvent(
+			finalitytypes.NewEventSluggishFinalityProviderReverted(fpPk),
+		); err != nil {
+			panic(fmt.Errorf("failed to emit sluggish finality provider reverted event for height %d: %w", height, err))
+		}
+
+		finalitytypes.DecrementSluggishFinalityProviderCounter()
 	}
 
 	// Set the updated signing info

@@ -27,13 +27,13 @@ func FuzzHandleLiveness(f *testing.F) {
 		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper)
 
 		mockedHooks := types.NewMockFinalityHooks(ctrl)
-		mockedHooks.EXPECT().AfterInactiveFinalityProviderDetected(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		mockedHooks.EXPECT().AfterSluggishFinalityProviderDetected(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 		fKeeper.SetHooks(mockedHooks)
 
 		params := fKeeper.GetParams(ctx)
 		fpPk, err := datagen.GenRandomBIP340PubKey(r)
 		require.NoError(t, err)
-		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), fpPk.MustMarshal()).Return(&bstypes.FinalityProvider{Inactive: false}, nil).AnyTimes()
+		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), fpPk.MustMarshal()).Return(&bstypes.FinalityProvider{Sluggish: false}, nil).AnyTimes()
 		signingInfo := types.NewFinalityProviderSigningInfo(
 			fpPk,
 			1,
@@ -58,31 +58,31 @@ func FuzzHandleLiveness(f *testing.F) {
 		minSignedPerWindow := params.MinSignedPerWindowInt()
 		maxMissed := params.SignedBlocksWindow - minSignedPerWindow
 		// for blocks up to the inactivity boundary, mark the finality provider as having not signed
-		inactiveDetectedHeight := height + maxMissed + 1
-		for ; height < inactiveDetectedHeight; height++ {
+		sluggishDetectedHeight := height + maxMissed + 1
+		for ; height < sluggishDetectedHeight; height++ {
 			err := fKeeper.HandleFinalityProviderLiveness(ctx, fpPk, true, height)
 			require.NoError(t, err)
 			signingInfo, err = fKeeper.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
 			require.NoError(t, err)
-			if height < inactiveDetectedHeight-1 {
+			if height < sluggishDetectedHeight-1 {
 				require.GreaterOrEqual(t, maxMissed, signingInfo.MissedBlocksCounter)
 			} else {
 				require.Less(t, maxMissed, signingInfo.MissedBlocksCounter)
 			}
 		}
 
-		// perform heights that not missed, expect the inactive is reverted
-		bsKeeper.EXPECT().RevertInactiveFinalityProvider(gomock.Any(), fpPk.MustMarshal()).Return(nil).AnyTimes()
-		inactiveRevertedHeight := height + maxMissed
-		for ; height < inactiveRevertedHeight; height++ {
+		// perform heights that not missed, expect the sluggish is reverted
+		bsKeeper.EXPECT().RevertSluggishFinalityProvider(gomock.Any(), fpPk.MustMarshal()).Return(nil).AnyTimes()
+		sluggishRevertedHeight := height + maxMissed
+		for ; height < sluggishRevertedHeight; height++ {
 			err := fKeeper.HandleFinalityProviderLiveness(ctx, fpPk, false, height)
 			require.NoError(t, err)
 			signingInfo, err = fKeeper.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
 			require.NoError(t, err)
-			if height < inactiveRevertedHeight-1 {
+			if height < sluggishRevertedHeight-1 {
 				require.Less(t, maxMissed, signingInfo.MissedBlocksCounter)
 			} else {
-				// the inactive fp is reverted
+				// the sluggish fp is reverted
 				require.Equal(t, maxMissed, signingInfo.MissedBlocksCounter)
 			}
 		}

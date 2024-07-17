@@ -10,7 +10,8 @@ finalization status of blocks, and identifying equivocating finality providers
 in the finalization rounds. This includes:
 
 - handling requests for submitting finality votes from finality providers;
-- maintaining the finalization status of blocks; and
+- maintaining the finalization status of blocks;
+- identifying sluggish finality providers; and
 - maintaining equivocation evidences of culpable finality providers.
 
 ## Table of contents
@@ -179,6 +180,58 @@ message Evidence {
 }
 ```
 
+### Signing info tracker
+
+Information about finality providers' voting histories is tracked through
+`FinalityProviderSigningInfo`. It is indexed in the store as follows:
+
+- `FinalityProviderSigningTracker: BTCPublicKey -> ProtoBuffer
+  (FinalityProviderSigningInfo)`
+
+- FinalityProviderMissedBlockBitmap: `BTCPublicKey -> VarInt(didMiss)` (varint
+  is a number encoding format)
+
+The first mapping allows us to easily look at the recent signing info for a
+finality provider based on its public key, while the second mapping
+(`MissedBlocksBitArray`) acts as a bit-array of size `SignedBlocksWindow`
+that tells us if the finality provider missed the block for a given index in
+the bit-array. The index in the bit-array is given as little-endian uint64.
+The result is a varint that takes on 0 or 1, where 0 indicates the finality
+provider did not miss (did sign) the corresponding block, and 1 indicates
+they missed the block (did not sign).
+
+Note that the `MissedBlocksBitArray` is not explicitly initialized up-front.
+Keys are added as the first `SignedBlocksWindow` blocks
+for a newly active finality provider. The `SignedBlocksWindow` parameter
+defines the size (number of blocks) of the sliding window used to track
+finality provider liveness.
+
+The information stored for tracking finality provider liveness is as follows:
+
+```protobuf
+// FinalityProviderSigningInfo defines a finality provider's signing info 
+// for monitoring their liveness activity.
+message FinalityProviderSigningInfo {
+  // fp_btc_pk is the BTC PK of the finality provider that casts this finality
+  // signature
+  bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // start_height is the block height at which finality provider become active
+  int64 start_height = 2;
+  // missed_blocks_counter defines a counter to avoid unnecessary array reads.
+  // Note that `Sum(MissedBlocksBitArray)` always equals `MissedBlocksCounter`.
+  int64 missed_blocks_counter = 3;
+}
+```
+
+Note that the value of `missed_blocks_counter` in the
+`FinalityProviderSigningInfo` is the same as the summed value of the
+corresponding missed block bitmap. This is to avoid unnecessary bitmap reads.
+Also note that the judgement of whether a finality signature is `missed` or not
+is irreversible.
+
+The two maps will be updated upon `BeginBlock` which will be described in a
+later section.
+
 ## Messages
 
 The Finality module handles the following messages from finality providers. The
@@ -285,11 +338,12 @@ been >=1 active BTC delegations)*:
          distribute rewards to the voted finality providers and their BTC
          delegations. Otherwise, none of the subsequent blocks shall be
          finalized and the loop breaks here.
+3. Update the finality provider's voting history and label it to `sluggish`
+   if the number of block it has missed has passed the parameterized threshold.
 
 ## Events
 
-The Finality module defines the `EventSlashedFinalityProvider` event. It is
-emitted when a finality provider is slashed due to equivocation.
+The Finality module defines the following events.
 
 ```protobuf
 // EventSlashedFinalityProvider is the event emitted when a finality provider is slashed
@@ -298,6 +352,21 @@ message EventSlashedFinalityProvider {
     // evidence is the evidence that the finality provider double signs
     Evidence evidence = 1;
 }
+
+// EventSluggishFinalityProviderDetected is the event emitted when a finality provider is
+// detected as sluggish
+message EventSluggishFinalityProviderDetected {
+// public_key is the BTC public key of the finality provider
+string public_key = 1;
+}
+
+// EventSluggishFinalityProviderReverted is the event emitted when a sluggish finality
+// provider is no longer considered sluggish
+message EventSluggishFinalityProviderReverted {
+// public_key is the BTC public key of the finality provider
+string public_key = 1;
+}
+
 ```
 
 ## Queries

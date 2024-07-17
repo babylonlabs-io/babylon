@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 
@@ -360,6 +361,76 @@ func FuzzListEvidences(f *testing.F) {
 		for _, actualEvidence := range resp.Evidences {
 			require.Equal(t, evidences[actualEvidence.FpBtcPk.MarshalHex()].CanonicalAppHash, actualEvidence.CanonicalAppHash)
 			require.Equal(t, evidences[actualEvidence.FpBtcPk.MarshalHex()].ForkAppHash, actualEvidence.ForkAppHash)
+		}
+	})
+}
+
+func FuzzSigningInfo(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		// Setup keeper and context
+		fKeeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
+		ctx = sdk.UnwrapSDKContext(ctx)
+
+		// generate a random list of signing info
+		numSigningInfo := datagen.RandomInt(r, 100) + 10
+
+		fpSigningInfos := map[string]*types.FinalityProviderSigningInfo{}
+		fpPks := make([]string, 0)
+		for i := uint64(0); i < numSigningInfo; i++ {
+			// random key pair
+			fpPk, err := datagen.GenRandomBIP340PubKey(r)
+			require.NoError(t, err)
+			fpPks = append(fpPks, fpPk.MarshalHex())
+
+			// random height and missed block counter
+			height := int64(datagen.RandomInt(r, 100) + 1)
+			missedBlockCounter := int64(datagen.RandomInt(r, 100) + 1)
+
+			// create signing info and add it to map and finality keeper
+			signingInfo := types.NewFinalityProviderSigningInfo(fpPk, height, missedBlockCounter)
+			err = fKeeper.FinalityProviderSigningTracker.Set(ctx, fpPk.MustMarshal(), signingInfo)
+			require.NoError(t, err)
+			fpSigningInfos[fpPk.MarshalHex()] = &signingInfo
+		}
+
+		// perform queries for signing info of a given finality provider
+		for i := uint64(0); i < numSigningInfo; i++ {
+			fpPk := fpPks[i]
+			req := &types.QuerySigningInfoRequest{FpBtcPkHex: fpPk}
+			resp, err := fKeeper.SigningInfo(ctx, req)
+			require.NoError(t, err)
+			require.Equal(t, fpSigningInfos[fpPk].StartHeight, resp.FpSigningInfo.StartHeight)
+			require.Equal(t, fpSigningInfos[fpPk].MissedBlocksCounter, resp.FpSigningInfo.MissedBlocksCounter)
+			require.Equal(t, fpPk, resp.FpSigningInfo.FpBtcPk.MarshalHex())
+		}
+
+		// perform a query for signing info of non-exist finality provider
+		nonExistFpPk, err := datagen.GenRandomBIP340PubKey(r)
+		require.NoError(t, err)
+		require.NoError(t, err)
+		invalidReq := &types.QuerySigningInfoRequest{FpBtcPkHex: nonExistFpPk.MarshalHex()}
+		_, err = fKeeper.SigningInfo(ctx, invalidReq)
+		require.Contains(t, err.Error(), fmt.Sprintf("SigningInfo not found for the finality provider %s", nonExistFpPk.MarshalHex()))
+
+		// perform a query for signing infos of all the finality providers
+		limit := datagen.RandomInt(r, int(numSigningInfo)) + 1
+		req := &types.QuerySigningInfosRequest{
+			Pagination: &query.PageRequest{
+				CountTotal: true,
+				Limit:      limit,
+			},
+		}
+		resp, err := fKeeper.SigningInfos(ctx, req)
+		require.NoError(t, err)
+		require.LessOrEqual(t, len(resp.FpSigningInfos), int(limit))  // check if pagination takes effect
+		require.EqualValues(t, resp.Pagination.Total, numSigningInfo) // ensure evidences before startHeight are not included
+		for _, si := range resp.FpSigningInfos {
+			require.Equal(t, fpSigningInfos[si.FpBtcPk.MarshalHex()].MissedBlocksCounter, si.MissedBlocksCounter)
+			require.Equal(t, fpSigningInfos[si.FpBtcPk.MarshalHex()].FpBtcPk.MarshalHex(), si.FpBtcPk.MarshalHex())
+			require.Equal(t, fpSigningInfos[si.FpBtcPk.MarshalHex()].StartHeight, si.StartHeight)
 		}
 	})
 }

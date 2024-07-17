@@ -163,18 +163,18 @@ func (mr *MockBTCStakingKeeperMockRecorder) RemoveVotingPowerDistCache(ctx, heig
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveVotingPowerDistCache", reflect.TypeOf((*MockBTCStakingKeeper)(nil).RemoveVotingPowerDistCache), ctx, height)
 }
 
-// RevertInactiveFinalityProvider mocks base method.
-func (m *MockBTCStakingKeeper) RevertInactiveFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
+// RevertSluggishFinalityProvider mocks base method.
+func (m *MockBTCStakingKeeper) RevertSluggishFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RevertInactiveFinalityProvider", ctx, fpBTCPK)
+	ret := m.ctrl.Call(m, "RevertSluggishFinalityProvider", ctx, fpBTCPK)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// RevertInactiveFinalityProvider indicates an expected call of RevertInactiveFinalityProvider.
-func (mr *MockBTCStakingKeeperMockRecorder) RevertInactiveFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
+// RevertSluggishFinalityProvider indicates an expected call of RevertSluggishFinalityProvider.
+func (mr *MockBTCStakingKeeperMockRecorder) RevertSluggishFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevertInactiveFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).RevertInactiveFinalityProvider), ctx, fpBTCPK)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevertSluggishFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).RevertSluggishFinalityProvider), ctx, fpBTCPK)
 }
 
 // SlashFinalityProvider mocks base method.
@@ -286,16 +286,16 @@ func (m *MockFinalityHooks) EXPECT() *MockFinalityHooksMockRecorder {
 	return m.recorder
 }
 
-// AfterInactiveFinalityProviderDetected mocks base method.
-func (m *MockFinalityHooks) AfterInactiveFinalityProviderDetected(ctx context.Context, btcPk *types.BIP340PubKey) error {
+// AfterSluggishFinalityProviderDetected mocks base method.
+func (m *MockFinalityHooks) AfterSluggishFinalityProviderDetected(ctx context.Context, btcPk *types.BIP340PubKey) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AfterInactiveFinalityProviderDetected", ctx, btcPk)
+	ret := m.ctrl.Call(m, "AfterSluggishFinalityProviderDetected", ctx, btcPk)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// AfterInactiveFinalityProviderDetected indicates an expected call of AfterInactiveFinalityProviderDetected.
-func (mr *MockFinalityHooksMockRecorder) AfterInactiveFinalityProviderDetected(ctx, btcPk interface{}) *gomock.Call {
+// AfterSluggishFinalityProviderDetected indicates an expected call of AfterSluggishFinalityProviderDetected.
+func (mr *MockFinalityHooksMockRecorder) AfterSluggishFinalityProviderDetected(ctx, btcPk interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterInactiveFinalityProviderDetected", reflect.TypeOf((*MockFinalityHooks)(nil).AfterInactiveFinalityProviderDetected), ctx, btcPk)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterSluggishFinalityProviderDetected", reflect.TypeOf((*MockFinalityHooks)(nil).AfterSluggishFinalityProviderDetected), ctx, btcPk)
 }
