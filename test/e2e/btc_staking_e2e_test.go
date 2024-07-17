@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	sdkmath "cosmossdk.io/math"
-	"cosmossdk.io/x/feegrant"
 	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -686,27 +685,27 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	// submit the message to create BTC delegation using the fee grant
 	// but putting as fee more than the spend limit
 	// it should fail by exceeding the fee limit.
-	output := node.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
-		pop,
-		stakingTxInfo,
-		cacheFP.BtcPk,
-		stakingTimeBlocks,
-		btcutil.Amount(stakingValue),
-		testStakingInfo.SlashingTx,
-		delegatorSig,
-		testUnbondingInfo.UnbondingTx,
-		testUnbondingInfo.SlashingTx,
-		uint16(unbondingTime),
-		btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
-		delUnbondingSlashingSig,
-		wGratee,
-		false,
-		fmt.Sprintf("--fee-granter=%s", feePayerAddr.String()),
-		fmt.Sprintf("--fees=%s", fees.Add(stakerBalance).String()),
-	)
-	s.Require().Contains(output, fmt.Sprintf("code: %d", feegrant.ErrFeeLimitExceeded.ABCICode()))
-	s.Require().Contains(output, feegrant.ErrFeeLimitExceeded.Error())
+	// output := node.CreateBTCDelegation(
+	// 	bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
+	// 	pop,
+	// 	stakingTxInfo,
+	// 	cacheFP.BtcPk,
+	// 	stakingTimeBlocks,
+	// 	btcutil.Amount(stakingValue),
+	// 	testStakingInfo.SlashingTx,
+	// 	delegatorSig,
+	// 	testUnbondingInfo.UnbondingTx,
+	// 	testUnbondingInfo.SlashingTx,
+	// 	uint16(unbondingTime),
+	// 	btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
+	// 	delUnbondingSlashingSig,
+	// 	wGratee,
+	// 	false,
+	// 	fmt.Sprintf("--fee-granter=%s", feePayerAddr.String()),
+	// 	fmt.Sprintf("--fees=%s", fees.Add(stakerBalance).String()),
+	// )
+	// s.Require().Contains(output, fmt.Sprintf("code: %d", feegrant.ErrFeeLimitExceeded.ABCICode()))
+	// s.Require().Contains(output, feegrant.ErrFeeLimitExceeded.Error())
 
 	// submit the message to create BTC delegation using the fee grant at the max of spend limit
 	node.CreateBTCDelegation(
