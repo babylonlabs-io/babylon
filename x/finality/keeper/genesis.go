@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	btcstk "github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/finality/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis initializes the keeper state from a provided initial genesis state.
@@ -30,6 +31,21 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 
 	for _, prc := range gs.PubRandCommit {
 		k.SetPubRandCommit(ctx, prc.FpBtcPk, prc.PubRandCommit)
+	}
+
+	for _, info := range gs.SigningInfos {
+		err := k.FinalityProviderSigningTracker.Set(ctx, info.FpBtcPk.MustMarshal(), info.FpSigningInfo)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, array := range gs.MissedBlocks {
+		for _, missed := range array.MissedBlocks {
+			if err := k.SetMissedBlockBitmapValue(ctx, array.FpBtcPk, missed.Index, missed.Missed); err != nil {
+				return err
+			}
+		}
 	}
 
 	return k.SetParams(ctx, gs.Params)
@@ -62,6 +78,11 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
+	signingInfos, missedBlocks, err := k.signingInfosAndMissedBlock(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.GenesisState{
 		Params:           k.GetParams(ctx),
 		IndexedBlocks:    blocks,
@@ -69,6 +90,8 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		VoteSigs:         voteSigs,
 		PublicRandomness: pubRandomness,
 		PubRandCommit:    prCommit,
+		SigningInfos:     signingInfos,
+		MissedBlocks:     missedBlocks,
 	}, nil
 }
 
@@ -196,6 +219,39 @@ func (k Keeper) exportPubRandCommit(ctx context.Context) ([]*types.PubRandCommit
 	}
 
 	return commtRandoms, nil
+}
+
+func (k Keeper) signingInfosAndMissedBlock(ctx context.Context) ([]types.SigningInfo, []types.FinalityProviderMissedBlocks, error) {
+	signingInfos := make([]types.SigningInfo, 0)
+	missedBlocks := make([]types.FinalityProviderMissedBlocks, 0)
+	err := k.FinalityProviderSigningTracker.Walk(ctx, nil, func(fpPkBytes []byte, info types.FinalityProviderSigningInfo) (stop bool, err error) {
+		fpPk, err := bbn.NewBIP340PubKey(fpPkBytes)
+		if err != nil {
+			return true, err
+		}
+
+		signingInfos = append(signingInfos, types.SigningInfo{
+			FpBtcPk:       fpPk,
+			FpSigningInfo: info,
+		})
+
+		localMissedBlocks, err := k.GetFinalityProviderMissedBlocks(ctx, fpPk)
+		if err != nil {
+			return true, err
+		}
+
+		missedBlocks = append(missedBlocks, types.FinalityProviderMissedBlocks{
+			FpBtcPk:      fpPk,
+			MissedBlocks: localMissedBlocks,
+		})
+
+		return false, nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return signingInfos, missedBlocks, nil
 }
 
 // parsePubKeyAndBlkHeightFromStoreKey expects to receive a key with
