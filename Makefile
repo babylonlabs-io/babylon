@@ -428,7 +428,7 @@ init-testnet-dirs: ## Initialize directories for testnet, creates a ./.testnets 
 	# need to create the dir before hand so that the docker container has write access to the `.testnets` dir
 	# regardless of the user it uses
 	mkdir -p $(CURDIR)/.testnets && chmod o+w $(CURDIR)/.testnets
-	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/home/babylon/.testnets:Z babylonchain/babylond \
+	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/home/babylon/.testnets:Z babylonlabs-io/babylond \
 			  babylond testnet init-files --v 4 -o /home/babylon/.testnets \
 			  --starting-ip-address 192.168.10.2 --keyring-backend=test \
 			  --chain-id chain-test --btc-confirmation-depth 2 --additional-sender-account true \

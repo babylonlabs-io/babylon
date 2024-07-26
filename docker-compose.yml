@@ -3,7 +3,7 @@ version: "3"
 services:
   babylondnode0:
     container_name: babylondnode0
-    image: "babylonchain/babylond"
+    image: "babylonlabs-io/babylond"
     command: >
       babylond --home /babylondhome start --log_format 'plain' 2>&1 | tee /babylondhome/babylond.log
     cap_add:
@@ -23,7 +23,7 @@ services:
 
   babylondnode1:
     container_name: babylondnode1
-    image: "babylonchain/babylond"
+    image: "babylonlabs-io/babylond"
     command: >
       babylond --home /babylondhome start --log_format 'plain' 2>&1 | tee /babylondhome/babylond.log
     cap_add:
@@ -43,7 +43,7 @@ services:
 
   babylondnode2:
     container_name: babylondnode2
-    image: "babylonchain/babylond"
+    image: "babylonlabs-io/babylond"
     environment:
       - LOG=${LOG:-babylond.log}
     command: >
@@ -65,7 +65,7 @@ services:
 
   babylondnode3:
     container_name: babylondnode3
-    image: "babylonchain/babylond"
+    image: "babylonlabs-io/babylond"
     environment:
       - LOG=${LOG:-babylond.log}
     command: >

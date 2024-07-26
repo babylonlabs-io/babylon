@@ -38,7 +38,7 @@ RUN addgroup --gid 1137 --system babylon && adduser --uid 1137 --gid 1137 --syst
 RUN apt-get update && apt-get install -y bash curl jq wget
 
 # Label should match your github repo
-LABEL org.opencontainers.image.source="https://github.com/babylonchain/babylond:${VERSION}"
+LABEL org.opencontainers.image.source="https://github.com/babylonlabs-io/babylond:${VERSION}"
 
 # Install libraries
 # Cosmwasm - Download correct libwasmvm version
