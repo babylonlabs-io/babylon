@@ -6,7 +6,7 @@ package types
 import (
 	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
-	github_com_babylonchain_babylon_types "github.com/babylonchain/babylon/types"
+	github_com_babylonchain_babylon_types "github.com/babylonlabs-io/babylon/types"
 	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -85,7 +85,7 @@ func (m *VotingPowerDistCache) GetFinalityProviders() []*FinalityProviderDistInf
 type FinalityProviderDistInfo struct {
 	// btc_pk is the Bitcoin secp256k1 PK of this finality provider
 	// the PK follows encoding in BIP-340 spec
-	BtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"btc_pk,omitempty"`
+	BtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"btc_pk,omitempty"`
 	// addr is the address to receive commission from delegations.
 	Addr string `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
 	// commission defines the commission rate of finality provider
@@ -154,7 +154,7 @@ func (m *FinalityProviderDistInfo) GetBtcDels() []*BTCDelDistInfo {
 type BTCDelDistInfo struct {
 	// btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
 	// the PK follows encoding in BIP-340 spec
-	BtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"btc_pk,omitempty"`
+	BtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"btc_pk,omitempty"`
 	// staker_addr is the address to receive rewards from BTC delegation.
 	StakerAddr string `protobuf:"bytes,2,opt,name=staker_addr,json=stakerAddr,proto3" json:"staker_addr,omitempty"`
 	// staking_tx_hash is the staking tx hash of the BTC delegation

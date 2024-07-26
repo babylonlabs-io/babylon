@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
-	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	btctest "github.com/babylonlabs-io/babylon/testutil/bitcoin"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/require"
 )

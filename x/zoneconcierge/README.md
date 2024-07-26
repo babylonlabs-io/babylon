@@ -472,7 +472,7 @@ for different use cases, e.g., BTC-assisted unbonding.
 
 The phase 2 integration does not require any change to the PoS blockchain's
 code. Rather, it only needs to deploy a [Babylon
-contract](https://github.com/babylonchain/babylon-contract) on the PoS
+contract](https://github.com/babylonlabs-io/babylon-contract) on the PoS
 blockchain, and start an IBC relayer between Babylon and the Babylon contract on
 the PoS blockchain. The Babylon contract can be deployed to a blockchain
 supporting [CosmWasm](https://github.com/CosmWasm/cosmwasm) smart contracts,

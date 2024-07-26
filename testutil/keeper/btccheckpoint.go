@@ -19,8 +19,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/x/btccheckpoint/keeper"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 )
 
 func NewBTCCheckpointKeeper(

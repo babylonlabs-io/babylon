@@ -5,7 +5,7 @@ package types
 
 import (
 	fmt "fmt"
-	github_com_babylonchain_babylon_types "github.com/babylonchain/babylon/types"
+	github_com_babylonchain_babylon_types "github.com/babylonlabs-io/babylon/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
@@ -141,10 +141,10 @@ type VoteSig struct {
 	// block_height is the height of the voted block.
 	BlockHeight uint64 `protobuf:"varint,1,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 	// fp_btc_pk is the BTC PK of the finality provider that casts this vote
-	FpBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	FpBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// finality_sig is the finality signature to this block
 	// where finality signature is an EOTS signature, i.e.
-	FinalitySig *github_com_babylonchain_babylon_types.SchnorrEOTSSig `protobuf:"bytes,3,opt,name=finality_sig,json=finalitySig,proto3,customtype=github.com/babylonchain/babylon/types.SchnorrEOTSSig" json:"finality_sig,omitempty"`
+	FinalitySig *github_com_babylonchain_babylon_types.SchnorrEOTSSig `protobuf:"bytes,3,opt,name=finality_sig,json=finalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/types.SchnorrEOTSSig" json:"finality_sig,omitempty"`
 }
 
 func (m *VoteSig) Reset()         { *m = VoteSig{} }
@@ -192,9 +192,9 @@ type PublicRandomness struct {
 	// block_height is the height of block which the finality provider submited public randomness.
 	BlockHeight uint64 `protobuf:"varint,1,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 	// fp_btc_pk is the BTC PK of the finality provider that casts this vote.
-	FpBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	FpBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// pub_rand is the public randomness the finality provider has committed to.
-	PubRand *github_com_babylonchain_babylon_types.SchnorrPubRand `protobuf:"bytes,3,opt,name=pub_rand,json=pubRand,proto3,customtype=github.com/babylonchain/babylon/types.SchnorrPubRand" json:"pub_rand,omitempty"`
+	PubRand *github_com_babylonchain_babylon_types.SchnorrPubRand `protobuf:"bytes,3,opt,name=pub_rand,json=pubRand,proto3,customtype=github.com/babylonlabs-io/babylon/types.SchnorrPubRand" json:"pub_rand,omitempty"`
 }
 
 func (m *PublicRandomness) Reset()         { *m = PublicRandomness{} }
@@ -240,7 +240,7 @@ func (m *PublicRandomness) GetBlockHeight() uint64 {
 // PubRandCommitWithPK is the public randomness commitment with the finality provider's BTC public key
 type PubRandCommitWithPK struct {
 	// fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
-	FpBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	FpBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// pub_rand_commit is the public randomness commitment
 	PubRandCommit *PubRandCommit `protobuf:"bytes,2,opt,name=pub_rand_commit,json=pubRandCommit,proto3" json:"pub_rand_commit,omitempty"`
 }
@@ -288,7 +288,7 @@ func (m *PubRandCommitWithPK) GetPubRandCommit() *PubRandCommit {
 // SigningInfo stores finality provider signing info of corresponding BTC public key.
 type SigningInfo struct {
 	// fp_btc_pk is the BTC PK of the finality provider
-	FpBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	FpBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// fp_signing_info represents the signing info of this finality provider.
 	FpSigningInfo FinalityProviderSigningInfo `protobuf:"bytes,2,opt,name=fp_signing_info,json=fpSigningInfo,proto3" json:"fp_signing_info"`
 }
@@ -337,7 +337,7 @@ func (m *SigningInfo) GetFpSigningInfo() FinalityProviderSigningInfo {
 // BTC public key.
 type FinalityProviderMissedBlocks struct {
 	// fp_btc_pk is the BTC PK of the finality provider
-	FpBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	FpBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// missed_blocks is an array of missed blocks by the finality provider.
 	MissedBlocks []MissedBlock `protobuf:"bytes,2,rep,name=missed_blocks,json=missedBlocks,proto3" json:"missed_blocks"`
 }

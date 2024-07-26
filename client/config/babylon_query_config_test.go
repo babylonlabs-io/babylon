@@ -3,7 +3,7 @@ package config_test
 import (
 	"testing"
 
-	"github.com/babylonchain/babylon/client/config"
+	"github.com/babylonlabs-io/babylon/client/config"
 	"github.com/stretchr/testify/require"
 )
 

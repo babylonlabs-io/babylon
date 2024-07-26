@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
-	appkeepers "github.com/babylonchain/babylon/app/keepers"
-	"github.com/babylonchain/babylon/test/e2e/util"
+	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
+	"github.com/babylonlabs-io/babylon/test/e2e/util"
 )
 
 func InitChain(id, dataDir string, nodeConfigs []*NodeConfig, votingPeriod, expeditedVotingPeriod time.Duration, forkHeight int) (*Chain, error) {

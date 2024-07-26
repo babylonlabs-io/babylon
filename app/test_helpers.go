@@ -30,12 +30,12 @@ import (
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/stretchr/testify/require"
 
-	appkeepers "github.com/babylonchain/babylon/app/keepers"
-	appparams "github.com/babylonchain/babylon/app/params"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/privval"
-	bbn "github.com/babylonchain/babylon/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/privval"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 // SetupOptions defines arguments that are passed into `Simapp` constructor.

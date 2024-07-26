@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/boljen/go-bitmap"
 	"github.com/cosmos/cosmos-sdk/codec"
 )

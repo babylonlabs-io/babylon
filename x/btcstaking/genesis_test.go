@@ -3,10 +3,10 @@ package btcstaking_test
 import (
 	"testing"
 
-	keepertest "github.com/babylonchain/babylon/testutil/keeper"
-	"github.com/babylonchain/babylon/testutil/nullify"
-	"github.com/babylonchain/babylon/x/btcstaking"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
+	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/testutil/nullify"
+	"github.com/babylonlabs-io/babylon/x/btcstaking"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/stretchr/testify/require"
 )
 

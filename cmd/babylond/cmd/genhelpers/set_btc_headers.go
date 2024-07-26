@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	btclighttypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 
 	"github.com/spf13/cobra"
 )

@@ -3,8 +3,8 @@ package types
 import (
 	"context"
 
-	bbn "github.com/babylonchain/babylon/types"
-	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 type BTCStakingKeeper interface {

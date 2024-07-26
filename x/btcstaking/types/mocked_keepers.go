@@ -9,10 +9,10 @@ import (
 	big "math/big"
 	reflect "reflect"
 
-	types "github.com/babylonchain/babylon/types"
-	types0 "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	types1 "github.com/babylonchain/babylon/x/btclightclient/types"
-	types2 "github.com/babylonchain/babylon/x/epoching/types"
+	types "github.com/babylonlabs-io/babylon/types"
+	types0 "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	types1 "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	types2 "github.com/babylonlabs-io/babylon/x/epoching/types"
 	gomock "github.com/golang/mock/gomock"
 )
 

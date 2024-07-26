@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 )

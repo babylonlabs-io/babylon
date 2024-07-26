@@ -5,15 +5,15 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	bbn "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/require"
 
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
-	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	btctest "github.com/babylonlabs-io/babylon/testutil/bitcoin"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 func FuzzBTCDelegation(f *testing.F) {

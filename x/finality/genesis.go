@@ -3,8 +3,8 @@ package finality
 import (
 	"context"
 
-	"github.com/babylonchain/babylon/x/finality/keeper"
-	"github.com/babylonchain/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/x/finality/keeper"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

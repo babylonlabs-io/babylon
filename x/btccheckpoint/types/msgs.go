@@ -5,7 +5,7 @@ import (
 	fmt "fmt"
 	"math/big"
 
-	txformat "github.com/babylonchain/babylon/btctxformatter"
+	txformat "github.com/babylonlabs-io/babylon/btctxformatter"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )

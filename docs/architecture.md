@@ -210,14 +210,14 @@ this function. Most notably:
 
 - [Cosmos Relayer](https://github.com/cosmos/relayer):
   A fully functional relayer written in Go.
-- [Babylon Relayer](https://github.com/babylonchain/babylon-relayer/):
+- [Babylon Relayer](https://github.com/babylonlabs-io/babylon-relayer/):
   A wrapper of the Cosmos Relayer that can maintain a one-way IBC connection.
   It is recommended to be used when the Consumer Zone does not deploy the
   Babylon smart contract.
 - [Hermes Relayer](https://github.com/informalsystems/hermes):
   A fully functional relayer written in Rust.
 
-### [Babylon Contract](https://github.com/babylonchain/babylon-contract)
+### [Babylon Contract](https://github.com/babylonlabs-io/babylon-contract)
 
 A [CosmWasm](https://cosmwasm.com/) smart contract intended for
 deployment in a Consumer Zone.

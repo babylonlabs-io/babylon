@@ -17,17 +17,17 @@ import (
 	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonchain/babylon/app/params"
-	"github.com/babylonchain/babylon/crypto/eots"
-	"github.com/babylonchain/babylon/test/e2e/configurer"
-	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
-	"github.com/babylonchain/babylon/test/e2e/initialization"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
-	ftypes "github.com/babylonchain/babylon/x/finality/types"
-	itypes "github.com/babylonchain/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/crypto/eots"
+	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 )
 
 var (
@@ -666,7 +666,7 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 
 	// tries to create a send transaction putting the freegranter as feepayer, it should FAIL
 	// since we only gave grant for BTC delegation msgs.
-	// TODO: Uncomment the next lines when issue: https://github.com/babylonchain/babylon/issues/693
+	// TODO: Uncomment the next lines when issue: https://github.com/babylonlabs-io/babylon/issues/693
 	// is fixed on cosmos-sdk side
 	// outBuff, errBuff, err := node.BankSendOutput(
 	// 	wGratee, node.PublicAddress, stakerBalance.String(),

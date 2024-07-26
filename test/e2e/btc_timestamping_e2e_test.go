@@ -8,11 +8,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/babylonchain/babylon/test/e2e/configurer"
-	"github.com/babylonchain/babylon/test/e2e/initialization"
-	bbn "github.com/babylonchain/babylon/types"
-	ct "github.com/babylonchain/babylon/x/checkpointing/types"
-	itypes "github.com/babylonchain/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	ct "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 )

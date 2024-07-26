@@ -4,10 +4,10 @@ import (
 	"context"
 	"math/big"
 
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	etypes "github.com/babylonchain/babylon/x/epoching/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	etypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 type BTCLightClientKeeper interface {

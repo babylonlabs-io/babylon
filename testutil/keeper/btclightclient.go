@@ -20,10 +20,10 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
-	bapp "github.com/babylonchain/babylon/app"
-	bbn "github.com/babylonchain/babylon/types"
-	btclightclientk "github.com/babylonchain/babylon/x/btclightclient/keeper"
-	btclightclientt "github.com/babylonchain/babylon/x/btclightclient/types"
+	bapp "github.com/babylonlabs-io/babylon/app"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btclightclientk "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
+	btclightclientt "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
 
 func BTCLightClientKeeper(t testing.TB) (*btclightclientk.Keeper, sdk.Context) {

@@ -5,7 +5,7 @@ package types
 
 import (
 	fmt "fmt"
-	github_com_babylonchain_babylon_crypto_bls12381 "github.com/babylonchain/babylon/crypto/bls12381"
+	github_com_babylonchain_babylon_crypto_bls12381 "github.com/babylonlabs-io/babylon/crypto/bls12381"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
@@ -27,7 +27,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // BlsKey wraps BLS public key with PoP
 type BlsKey struct {
 	// pubkey is the BLS public key of a validator
-	Pubkey *github_com_babylonchain_babylon_crypto_bls12381.PublicKey `protobuf:"bytes,1,opt,name=pubkey,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.PublicKey" json:"pubkey,omitempty"`
+	Pubkey *github_com_babylonchain_babylon_crypto_bls12381.PublicKey `protobuf:"bytes,1,opt,name=pubkey,proto3,customtype=github.com/babylonlabs-io/babylon/crypto/bls12381.PublicKey" json:"pubkey,omitempty"`
 	// pop is the proof-of-possession of the BLS key
 	Pop *ProofOfPossession `protobuf:"bytes,2,opt,name=pop,proto3" json:"pop,omitempty"`
 }
@@ -80,7 +80,7 @@ type ProofOfPossession struct {
 	Ed25519Sig []byte `protobuf:"bytes,1,opt,name=ed25519_sig,json=ed25519Sig,proto3" json:"ed25519_sig,omitempty"`
 	// bls_sig is the result of PoP, bls_sig = sign(key = BLS_sk, data =
 	// ed25519_sig)
-	BlsSig *github_com_babylonchain_babylon_crypto_bls12381.Signature `protobuf:"bytes,2,opt,name=bls_sig,json=blsSig,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.Signature" json:"bls_sig,omitempty"`
+	BlsSig *github_com_babylonchain_babylon_crypto_bls12381.Signature `protobuf:"bytes,2,opt,name=bls_sig,json=blsSig,proto3,customtype=github.com/babylonlabs-io/babylon/crypto/bls12381.Signature" json:"bls_sig,omitempty"`
 }
 
 func (m *ProofOfPossession) Reset()         { *m = ProofOfPossession{} }
@@ -246,7 +246,7 @@ type VoteExtension struct {
 	// height is the height of the vote extension
 	Height uint64 `protobuf:"varint,5,opt,name=height,proto3" json:"height,omitempty"`
 	// bls_sig is the BLS signature
-	BlsSig *github_com_babylonchain_babylon_crypto_bls12381.Signature `protobuf:"bytes,6,opt,name=bls_sig,json=blsSig,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.Signature" json:"bls_sig,omitempty"`
+	BlsSig *github_com_babylonchain_babylon_crypto_bls12381.Signature `protobuf:"bytes,6,opt,name=bls_sig,json=blsSig,proto3,customtype=github.com/babylonlabs-io/babylon/crypto/bls12381.Signature" json:"bls_sig,omitempty"`
 }
 
 func (m *VoteExtension) Reset()         { *m = VoteExtension{} }

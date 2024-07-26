@@ -3,7 +3,7 @@ package babylon.finality.v1;
 
 import "babylon/finality/v1/finality.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/finality/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/finality/types";
 
 // EventSlashedFinalityProvider is the event emitted when a finality provider is slashed
 // due to signing two conflicting blocks

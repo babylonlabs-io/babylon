@@ -3,7 +3,7 @@ package babylon.btccheckpoint.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/btccheckpoint/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/btccheckpoint/types";
 
 // Params defines the parameters for the module.
 message Params {

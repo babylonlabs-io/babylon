@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 )

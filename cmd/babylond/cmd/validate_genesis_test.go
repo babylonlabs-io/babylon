@@ -8,7 +8,7 @@ import (
 
 	dbm "github.com/cosmos/cosmos-db"
 
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/spf13/viper"
@@ -22,8 +22,8 @@ import (
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/cmd/babylond/cmd"
+	"github.com/babylonlabs-io/babylon/app"
+	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
 )
 
 func TestCheckCorrespondence(t *testing.T) {

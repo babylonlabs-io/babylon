@@ -5,7 +5,7 @@ package types
 
 import (
 	fmt "fmt"
-	github_com_babylonchain_babylon_types "github.com/babylonchain/babylon/types"
+	github_com_babylonchain_babylon_types "github.com/babylonlabs-io/babylon/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
@@ -270,7 +270,7 @@ func (*EventPowerDistUpdate) XXX_OneofWrappers() []interface{} {
 // is slashed
 // TODO: unify with existing slashing events
 type EventPowerDistUpdate_EventSlashedFinalityProvider struct {
-	Pk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=pk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"pk,omitempty"`
+	Pk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=pk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"pk,omitempty"`
 }
 
 func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) Reset() {

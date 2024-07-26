@@ -1,8 +1,8 @@
 package util
 
 import (
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/app"
+	"github.com/babylonlabs-io/babylon/app/params"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"

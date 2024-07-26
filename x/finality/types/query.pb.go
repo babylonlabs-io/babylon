@@ -6,7 +6,7 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	github_com_babylonchain_babylon_types "github.com/babylonchain/babylon/types"
+	github_com_babylonchain_babylon_types "github.com/babylonlabs-io/babylon/types"
 	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
@@ -207,7 +207,7 @@ func (m *QueryListPublicRandomnessRequest) GetPagination() *query.PageRequest {
 type QueryListPublicRandomnessResponse struct {
 	// pub_rand_map is the map where the key is the height and the value
 	// is the public randomness at this height for the given finality provider
-	PubRandMap map[uint64]*github_com_babylonchain_babylon_types.SchnorrPubRand `protobuf:"bytes,1,rep,name=pub_rand_map,json=pubRandMap,proto3,customtype=github.com/babylonchain/babylon/types.SchnorrPubRand" json:"pub_rand_map,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	PubRandMap map[uint64]*github_com_babylonchain_babylon_types.SchnorrPubRand `protobuf:"bytes,1,rep,name=pub_rand_map,json=pubRandMap,proto3,customtype=github.com/babylonlabs-io/babylon/types.SchnorrPubRand" json:"pub_rand_map,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// pagination defines the pagination in the response.
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
@@ -678,7 +678,7 @@ func (m *QueryVotesAtHeightRequest) GetHeight() uint64 {
 type QueryVotesAtHeightResponse struct {
 	// btc_pk is the Bitcoin secp256k1 PK of finality providers who have signed the block at given height.
 	// the PK follows encoding in BIP-340 spec
-	BtcPks []github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,rep,name=btc_pks,json=btcPks,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"btc_pks,omitempty"`
+	BtcPks []github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,rep,name=btc_pks,json=btcPks,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"btc_pks,omitempty"`
 }
 
 func (m *QueryVotesAtHeightResponse) Reset()         { *m = QueryVotesAtHeightResponse{} }

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 
-	"github.com/babylonchain/babylon/x/checkpointing/keeper"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 )

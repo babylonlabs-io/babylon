@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	types "github.com/babylonchain/babylon/types"
-	types0 "github.com/babylonchain/babylon/x/btcstaking/types"
+	types "github.com/babylonlabs-io/babylon/types"
+	types0 "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	gomock "github.com/golang/mock/gomock"
 )
 

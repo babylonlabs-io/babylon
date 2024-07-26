@@ -7,7 +7,7 @@ LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
 PROJECT_NAME ?= babylon
 BUILDDIR ?= $(CURDIR)/build
-HTTPS_GIT := https://github.com/babylonchain/babylon.git
+HTTPS_GIT := https://github.com/babylonlabs-io/babylon.git
 DOCKER := $(shell which docker)
 SIMAPP = ./simapp
 
@@ -341,7 +341,7 @@ lint-go:
 format: ## Run code formater
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -name '*.pb.go' | xargs gofmt -w -s
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -name '*.pb.go' | xargs misspell -w
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -name '*.pb.go' | xargs goimports -w -local github.com/babylonchain/babylon
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -name '*.pb.go' | xargs goimports -w -local github.com/babylonlabs-io/babylon
 .PHONY: format
 
 ###############################################################################
@@ -363,12 +363,12 @@ gosec-local: ## Run local security checkss
 DEVDOC_SAVE = docker commit `docker ps -a -n 1 -q` devdoc:local
 
 devdoc-init: ## Initialize documentation
-	$(DOCKER) run -it -v "$(CURDIR):/go/src/github.com/babylonchain/babylon" -w "/go/src/github.com/babylonchain/babylon" tendermint/devdoc echo
+	$(DOCKER) run -it -v "$(CURDIR):/go/src/github.com/babylonlabs-io/babylon" -w "/go/src/github.com/babylonlabs-io/babylon" tendermint/devdoc echo
 	# TODO make this safer
 	$(call DEVDOC_SAVE)
 
 devdoc: ## Generate documentation
-	$(DOCKER) run -it -v "$(CURDIR):/go/src/github.com/babylonchain/babylon" -w "/go/src/github.com/babylonchain/babylon" devdoc:local bash
+	$(DOCKER) run -it -v "$(CURDIR):/go/src/github.com/babylonlabs-io/babylon" -w "/go/src/github.com/babylonlabs-io/babylon" devdoc:local bash
 
 devdoc-save: ## Save documentation changes
 	# TODO make this safer

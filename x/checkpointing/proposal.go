@@ -13,7 +13,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	ckpttypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 const defaultInjectedTxIndex = 0

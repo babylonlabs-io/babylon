@@ -4,7 +4,7 @@ package babylon.incentive;
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/incentive/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
 
 // Params defines the parameters for the module, including portions of rewards
 // distributed to each type of stakeholder. Note that sum of the portions should
