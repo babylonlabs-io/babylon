@@ -94,6 +94,7 @@ import (
 	"github.com/spf13/cast"
 
 	"github.com/babylonlabs-io/babylon/app/upgrades"
+	"github.com/babylonlabs-io/babylon/app/upgrades/vanilla"
 	bbn "github.com/babylonlabs-io/babylon/types"
 
 	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
@@ -158,8 +159,10 @@ var (
 	}
 
 	// software upgrades and forks
-	Upgrades = []upgrades.Upgrade{}
-	Forks    = []upgrades.Fork{}
+	Upgrades = []upgrades.Upgrade{
+		vanilla.Upgrade,
+	}
+	Forks = []upgrades.Fork{}
 )
 
 func init() {

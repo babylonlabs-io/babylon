@@ -13,6 +13,7 @@ import (
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -39,9 +40,9 @@ type Manager struct {
 
 // NewManager creates a new Manager instance and initializes
 // all Docker specific utilities. Returns an error if initialization fails.
-func NewManager(isDebugLogEnabled bool, isCosmosRelayer bool) (docker *Manager, err error) {
+func NewManager(isDebugLogEnabled bool, isCosmosRelayer, isUpgrade bool) (docker *Manager, err error) {
 	docker = &Manager{
-		ImageConfig:       NewImageConfig(isCosmosRelayer),
+		ImageConfig:       NewImageConfig(isCosmosRelayer, isUpgrade),
 		resources:         make(map[string]*dockertest.Resource),
 		isDebugLogEnabled: isDebugLogEnabled,
 	}
@@ -252,7 +253,7 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 
 	runOpts := &dockertest.RunOptions{
 		Name:       containerName,
-		Repository: BabylonContainerName,
+		Repository: m.CurrentRepository,
 		NetworkID:  m.network.Network.ID,
 		User:       "root:root",
 		Entrypoint: []string{
@@ -264,6 +265,7 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		Mounts: []string{
 			fmt.Sprintf("%s/:%s", valCondifDir, BabylonHomePath),
 			fmt.Sprintf("%s/bytecode:/bytecode", pwd),
+			fmt.Sprintf("%s/upgrades:/upgrades", pwd),
 		},
 	}
 
@@ -321,17 +323,20 @@ func (m *Manager) RemoveNodeResource(containerName string) error {
 }
 
 // ClearResources removes all outstanding Docker resources created by the Manager.
-func (m *Manager) ClearResources() error {
+func (m *Manager) ClearResources() (e error) {
+	g := new(errgroup.Group)
 	for _, resource := range m.resources {
-		if err := m.pool.Purge(resource); err != nil {
-			return err
-		}
+		resource := resource
+		g.Go(func() error {
+			return m.pool.Purge(resource)
+		})
 	}
 
-	if err := m.pool.RemoveNetwork(m.network); err != nil {
+	if err := g.Wait(); err != nil {
 		return err
 	}
-	return nil
+
+	return m.pool.RemoveNetwork(m.network)
 }
 
 func noRestart(config *docker.HostConfig) {
@@ -339,4 +344,39 @@ func noRestart(config *docker.HostConfig) {
 	config.RestartPolicy = docker.RestartPolicy{
 		Name: "no",
 	}
+}
+
+// RunChainInitResource runs a chain init container to initialize genesis and configs for a chain with chainId.
+// The chain is to be configured with chainVotingPeriod and validators deserialized from validatorConfigBytes.
+// The genesis and configs are to be mounted on the init container as volume on mountDir path.
+// Returns the container resource and error if any. This method does not Purge the container. The caller
+// must deal with removing the resource.
+func (m *Manager) RunChainInitResource(chainId string, chainVotingPeriod, chainExpeditedVotingPeriod int, validatorConfigBytes []byte, mountDir string, forkHeight int) (*dockertest.Resource, error) {
+	votingPeriodDuration := time.Duration(chainVotingPeriod * 1000000000)
+	expeditedVotingPeriodDuration := time.Duration(chainExpeditedVotingPeriod * 1000000000)
+
+	initResource, err := m.pool.RunWithOptions(
+		&dockertest.RunOptions{
+			Name:       chainId,
+			Repository: InitChainContainerE2E,
+			NetworkID:  m.network.Network.ID,
+			Cmd: []string{
+				fmt.Sprintf("--data-dir=%s", mountDir),
+				fmt.Sprintf("--chain-id=%s", chainId),
+				fmt.Sprintf("--config=%s", validatorConfigBytes),
+				fmt.Sprintf("--voting-period=%v", votingPeriodDuration),
+				fmt.Sprintf("--expedited-voting-period=%v", expeditedVotingPeriodDuration),
+				fmt.Sprintf("--fork-height=%v", forkHeight),
+			},
+			User: "root:root",
+			Mounts: []string{
+				fmt.Sprintf("%s:%s", mountDir, mountDir),
+			},
+		},
+		noRestart,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return initResource, nil
 }

@@ -3,14 +3,22 @@ package containers
 // ImageConfig contains all images and their respective tags
 // needed for running e2e tests.
 type ImageConfig struct {
+	// IBC relayer for cosmos-SDK
 	RelayerRepository string
 	RelayerTag        string
+
+	CurrentRepository string
 }
 
 //nolint:deadcode
 const (
-	// name of babylon container produced by running `make localnet-build-env`
+	// Images that do not have specified tag, latest will be used by default.
+	// name of babylon image produced by running `make build-docker`
 	BabylonContainerName = "babylonlabs-io/babylond"
+	// name of babylon image produced by running `make build-docker-e2e`
+	BabylonContainerNameBeforeUpgrade = "babylonlabs-io/babylond-before-upgrade"
+	// name of the image produced by running `make e2e-init-chain` in contrib/images
+	InitChainContainerE2E = "babylonlabs-io/babylond-e2e-init-chain"
 
 	hermesRelayerRepository = "informalsystems/hermes"
 	hermesRelayerTag        = "v1.8.2"
@@ -23,18 +31,23 @@ const (
 // NewImageConfig returns ImageConfig needed for running e2e test.
 // If isUpgrade is true, returns images for running the upgrade
 // If isFork is true, utilizes provided fork height to initiate fork logic
-func NewImageConfig(isCosmosRelayer bool) ImageConfig {
+func NewImageConfig(isCosmosRelayer, isUpgrade bool) (ic ImageConfig) {
+	ic = ImageConfig{
+		CurrentRepository: BabylonContainerName,
+	}
+
+	if isUpgrade {
+		// starts at the older version and later upgrades it to current branch... BabylonContainerName
+		ic.CurrentRepository = BabylonContainerNameBeforeUpgrade
+	}
+
 	if isCosmosRelayer {
-		config := ImageConfig{
-			RelayerRepository: cosmosRelayerRepository,
-			RelayerTag:        cosmosRelayerTag,
-		}
-		return config
+		ic.RelayerRepository = cosmosRelayerRepository
+		ic.RelayerTag = cosmosRelayerTag
+		return ic
 	} else {
-		config := ImageConfig{
-			RelayerRepository: hermesRelayerRepository,
-			RelayerTag:        hermesRelayerTag,
-		}
-		return config
+		ic.RelayerRepository = hermesRelayerRepository
+		ic.RelayerTag = hermesRelayerTag
+		return ic
 	}
 }
