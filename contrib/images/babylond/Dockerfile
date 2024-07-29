@@ -3,6 +3,7 @@ FROM golang:1.21 AS build-env
 # Version to build. Default is empty
 ARG VERSION
 
+ARG BUILD_TAGS=""
 ARG LEDGER_ENABLED="false"
 # Cosmos build options
 ARG COSMOS_BUILD_OPTIONS=""

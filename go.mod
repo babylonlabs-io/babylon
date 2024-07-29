@@ -64,6 +64,7 @@ require (
 	github.com/vulpine-io/io-test v1.0.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0
+	golang.org/x/sync v0.7.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240227224415-6ceb2ff114de
 )
 
@@ -247,7 +248,6 @@ require (
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.20.0 // indirect
 	google.golang.org/api v0.162.0 // indirect

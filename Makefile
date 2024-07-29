@@ -427,7 +427,8 @@ dockerNetworkList=$($(DOCKER) network ls --filter name=bbn-testnet --format {{.I
 build-docker: ## Build babylond Docker image
 	$(MAKE) -C contrib/images babylond
 
-build-docker-e2e: build-docker
+build-docker-e2e:
+	$(MAKE) -C contrib/images babylond-e2e
 	$(MAKE) -C contrib/images babylond-before-upgrade
 	$(MAKE) -C contrib/images e2e-init-chain
 
