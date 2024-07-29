@@ -4,7 +4,7 @@ import (
 	"cosmossdk.io/collections"
 	"github.com/cosmos/cosmos-sdk/types/address"
 
-	"github.com/babylonchain/babylon/types"
+	"github.com/babylonlabs-io/babylon/types"
 )
 
 const (

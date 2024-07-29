@@ -6,9 +6,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	btcstk "github.com/babylonchain/babylon/btcstaking"
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/finality/types"
+	btcstk "github.com/babylonlabs-io/babylon/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 // InitGenesis initializes the keeper state from a provided initial genesis state.

@@ -12,9 +12,9 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/babylonchain/babylon/x/btclightclient/client/cli"
-	"github.com/babylonchain/babylon/x/btclightclient/keeper"
-	"github.com/babylonchain/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/btclightclient/client/cli"
+	"github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
+	"github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"

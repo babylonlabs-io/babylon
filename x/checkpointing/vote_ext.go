@@ -8,8 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonchain/babylon/x/checkpointing/keeper"
-	ckpttypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
+	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 // VoteExtensionHandler defines a BLS-based vote extension handlers for Babylon.

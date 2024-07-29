@@ -18,8 +18,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/x/epoching/keeper"
-	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/x/epoching/keeper"
+	"github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 func EpochingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {

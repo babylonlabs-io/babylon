@@ -13,7 +13,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 const chainUpgradeGuide = "https://github.com/cosmos/cosmos-sdk/blob/a51aa517c46c70df04a06f586c67fb765e45322a/UPGRADING.md"

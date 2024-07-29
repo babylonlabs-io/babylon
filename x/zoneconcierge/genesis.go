@@ -2,8 +2,8 @@ package zoneconcierge
 
 import (
 	"context"
-	"github.com/babylonchain/babylon/x/zoneconcierge/keeper"
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

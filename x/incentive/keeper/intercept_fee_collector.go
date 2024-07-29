@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"context"
-	"github.com/babylonchain/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/x/incentive/types"
 )
 
 // HandleCoinsInFeeCollector intercepts a portion of coins in fee collector, and distributes

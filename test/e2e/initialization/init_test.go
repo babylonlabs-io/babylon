@@ -13,7 +13,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 )
 
 const forkHeight = 10

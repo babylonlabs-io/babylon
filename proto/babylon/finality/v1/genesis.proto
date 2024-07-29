@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "babylon/finality/v1/params.proto";
 import "babylon/finality/v1/finality.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/finality/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/finality/types";
 
 // GenesisState defines the finality module's genesis state.
 message GenesisState {
@@ -35,10 +35,10 @@ message VoteSig {
   // block_height is the height of the voted block.
   uint64 block_height = 1;
 	// fp_btc_pk is the BTC PK of the finality provider that casts this vote
-  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
 	// finality_sig is the finality signature to this block
 	// where finality signature is an EOTS signature, i.e.
-  bytes finality_sig = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
+  bytes finality_sig = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrEOTSSig" ];
 }
 
 // PublicRandomness the block height and public randomness that the finality provider has submitted.
@@ -46,15 +46,15 @@ message PublicRandomness {
   // block_height is the height of block which the finality provider submited public randomness.
   uint64 block_height = 1;
   // fp_btc_pk is the BTC PK of the finality provider that casts this vote.
-  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   // pub_rand is the public randomness the finality provider has committed to.
-  bytes pub_rand = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
+  bytes pub_rand = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrPubRand" ];
 }
 
 // PubRandCommitWithPK is the public randomness commitment with the finality provider's BTC public key
 message PubRandCommitWithPK {
   // fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
-  bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   // pub_rand_commit is the public randomness commitment
   PubRandCommit pub_rand_commit = 2;
 }
@@ -62,7 +62,7 @@ message PubRandCommitWithPK {
 // SigningInfo stores finality provider signing info of corresponding BTC public key.
 message SigningInfo {
   // fp_btc_pk is the BTC PK of the finality provider
-  bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   // fp_signing_info represents the signing info of this finality provider.
   FinalityProviderSigningInfo fp_signing_info = 2 [(gogoproto.nullable) = false];
 }
@@ -71,7 +71,7 @@ message SigningInfo {
 // BTC public key.
 message FinalityProviderMissedBlocks {
   // fp_btc_pk is the BTC PK of the finality provider
-  bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   // missed_blocks is an array of missed blocks by the finality provider.
   repeated MissedBlock missed_blocks = 2 [(gogoproto.nullable) = false];
 }

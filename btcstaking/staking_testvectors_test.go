@@ -15,7 +15,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/btcstaking"
+	"github.com/babylonlabs-io/babylon/btcstaking"
 )
 
 func getBtcNetworkParams(network string) (*chaincfg.Params, error) {

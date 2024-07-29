@@ -5,8 +5,8 @@ import (
 
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
 
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 type ValidatorKeys struct {

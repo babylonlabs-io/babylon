@@ -28,7 +28,7 @@ func (c *Client) GetKeyring() keyring.Keyring {
 // the file system lock, in order to remain thread-safe when multiple concurrent
 // relayers are running on the same machine and accessing the same keyring
 // adapted from
-// https://github.com/babylonchain/babylon-relayer/blob/f962d0940832a8f84f747c5d9cbc67bc1b156386/bbnrelayer/utils.go#L212
+// https://github.com/babylonlabs-io/babylon-relayer/blob/f962d0940832a8f84f747c5d9cbc67bc1b156386/bbnrelayer/utils.go#L212
 func (c *Client) accessKeyWithLock(accessFunc func()) error {
 	// use lock file to guard concurrent access to the keyring
 	lockFilePath := path.Join(c.provider.PCfg.KeyDirectory, "keys.lock")

@@ -6,7 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	// "github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

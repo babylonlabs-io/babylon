@@ -9,7 +9,7 @@ import (
 	"cosmossdk.io/core/address"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 
-	appparams "github.com/babylonchain/babylon/app/params"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -18,7 +18,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	// "github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

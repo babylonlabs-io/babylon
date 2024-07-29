@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/babylonchain/babylon/app/keepers"
+	"github.com/babylonlabs-io/babylon/app/keepers"
 )
 
 // BaseAppParamManager defines an interrace that BaseApp is expected to fulfill

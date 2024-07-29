@@ -10,8 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/privval"
+	"github.com/babylonlabs-io/babylon/app"
+	"github.com/babylonlabs-io/babylon/privval"
 )
 
 // CmdCreateBls CLI command to create BLS file with proof of possession.

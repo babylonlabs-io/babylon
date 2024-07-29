@@ -5,9 +5,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/babylonchain/babylon/crypto/bip322"
-	"github.com/babylonchain/babylon/crypto/ecdsa"
-	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonlabs-io/babylon/crypto/bip322"
+	"github.com/babylonlabs-io/babylon/crypto/ecdsa"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"

@@ -11,7 +11,7 @@ import (
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client/config"
 
-	"github.com/babylonchain/babylon/privval"
+	"github.com/babylonlabs-io/babylon/privval"
 )
 
 const defaultConfigTemplate = `# This is a TOML config file.

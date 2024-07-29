@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
-	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	"github.com/babylonchain/babylon/x/btccheckpoint/types"
+	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	"github.com/stretchr/testify/require"
 )
 

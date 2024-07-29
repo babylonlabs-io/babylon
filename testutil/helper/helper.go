@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"cosmossdk.io/core/header"
-	appkeepers "github.com/babylonchain/babylon/app/keepers"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -26,11 +26,11 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/babylonchain/babylon/app"
-	appparams "github.com/babylonchain/babylon/app/params"
-	btcstakingtypes "github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/babylonchain/babylon/x/epoching/keeper"
-	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/app"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/x/epoching/keeper"
+	"github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 // Helper is a structure which wraps the entire app and exposes functionalities for testing the epoching module

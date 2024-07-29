@@ -3,7 +3,7 @@ package types
 import (
 	"context"
 
-	"github.com/babylonchain/babylon/types"
+	"github.com/babylonlabs-io/babylon/types"
 )
 
 // combine multiple BTC staking hooks, all hook functions are run in array sequence

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/babylonchain/babylon/crypto/eots"
+	"github.com/babylonlabs-io/babylon/crypto/eots"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"

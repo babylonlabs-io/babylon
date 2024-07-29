@@ -1,7 +1,7 @@
 package types
 
 import (
-	bbntypes "github.com/babylonchain/babylon/types"
+	bbntypes "github.com/babylonlabs-io/babylon/types"
 )
 
 // NewFinalityProviderSigningInfo creates a new FinalityProviderSigningInfo instance

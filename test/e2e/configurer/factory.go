@@ -3,10 +3,10 @@ package configurer
 import (
 	"testing"
 
-	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
-	"github.com/babylonchain/babylon/test/e2e/containers"
-	"github.com/babylonchain/babylon/test/e2e/initialization"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/test/e2e/containers"
+	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
+	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 )
 

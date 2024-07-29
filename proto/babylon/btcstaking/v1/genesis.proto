@@ -7,7 +7,7 @@ import "babylon/btcstaking/v1/btcstaking.proto";
 import "babylon/btcstaking/v1/incentive.proto";
 import "babylon/btcstaking/v1/events.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 
 // GenesisState defines the btcstaking module's genesis state.
 message GenesisState {
@@ -36,7 +36,7 @@ message VotingPowerFP {
   // block_height is the height of the block the voting power was stored.
   uint64 block_height = 1;
   // fp_btc_pk the finality provider btc public key.
-  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   // voting_power is the power of the finality provider at this specific block height.
   uint64 voting_power = 3;
 }
@@ -62,9 +62,9 @@ message BTCDelegator {
   // idx the btc delegator index.
   BTCDelegatorDelegationIndex idx = 1;
   // fp_btc_pk the finality provider btc public key.
-  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   // del_btc_pk the delegator btc public key.
-  bytes del_btc_pk = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  bytes del_btc_pk = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
 }
 
 // EventIndex contains the event and its index.

@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testhelper "github.com/babylonchain/babylon/testutil/helper"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"

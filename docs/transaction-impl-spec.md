@@ -259,7 +259,7 @@ timelock script, the following function could be implemented
 ```go
 import (
 	// Babylon btc staking library
-	"github.com/babylonchain/babylon/btcstaking"
+	"github.com/babylonlabs-io/babylon/btcstaking"
 )
 
 func buildTimelockScriptAndControlBlock(

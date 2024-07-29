@@ -7,7 +7,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/finality/v1/params.proto";
 import "babylon/finality/v1/finality.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/finality/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/finality/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -90,7 +90,7 @@ message QueryListPublicRandomnessRequest {
 message QueryListPublicRandomnessResponse {
   // pub_rand_map is the map where the key is the height and the value
   // is the public randomness at this height for the given finality provider
-  map<uint64, bytes> pub_rand_map = 1  [(gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
+  map<uint64, bytes> pub_rand_map = 1  [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrPubRand" ];
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -181,7 +181,7 @@ message QueryVotesAtHeightRequest {
 message QueryVotesAtHeightResponse {
   // btc_pk is the Bitcoin secp256k1 PK of finality providers who have signed the block at given height.
   // the PK follows encoding in BIP-340 spec
-  repeated bytes btc_pks = 1 [(gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey"];
+  repeated bytes btc_pks = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey"];
 }
 
 // QueryEvidenceRequest is the request type for the

@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 // SetFinalityProvider adds the given finality provider to KVStore

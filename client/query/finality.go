@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	finalitytypes "github.com/babylonchain/babylon/x/finality/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 )

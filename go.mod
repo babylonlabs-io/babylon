@@ -1,6 +1,6 @@
 go 1.21
 
-module github.com/babylonchain/babylon
+module github.com/babylonlabs-io/babylon
 
 require (
 	github.com/CosmWasm/wasmd v0.51.0

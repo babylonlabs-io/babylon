@@ -2,8 +2,8 @@ package types_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"math/rand"
 	"testing"
 )

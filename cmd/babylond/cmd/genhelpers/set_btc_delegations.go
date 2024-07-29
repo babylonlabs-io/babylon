@@ -3,7 +3,7 @@ package genhelpers
 import (
 	"fmt"
 
-	btcstktypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/genutil"

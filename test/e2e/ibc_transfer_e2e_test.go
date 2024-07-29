@@ -3,8 +3,8 @@ package e2e
 import (
 	"time"
 
-	"github.com/babylonchain/babylon/test/e2e/configurer"
-	"github.com/babylonchain/babylon/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 )

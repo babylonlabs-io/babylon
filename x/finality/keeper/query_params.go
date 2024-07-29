@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/babylonchain/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

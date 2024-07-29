@@ -4,16 +4,16 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testhelper "github.com/babylonchain/babylon/testutil/helper"
-	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
+	"github.com/babylonlabs-io/babylon/x/epoching/types"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonchain/babylon/app/params"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 )
 
 var (

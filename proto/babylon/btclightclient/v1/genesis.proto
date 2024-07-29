@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "babylon/btclightclient/v1/btclightclient.proto";
 import "babylon/btclightclient/v1/params.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/btclightclient/types";
 
 // GenesisState defines the btclightclient module's genesis state.
 message GenesisState {

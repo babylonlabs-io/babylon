@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"cosmossdk.io/store/prefix"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

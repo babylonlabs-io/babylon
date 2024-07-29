@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 
-	bbntypes "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	bbntypes "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"

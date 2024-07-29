@@ -3,7 +3,7 @@ package babylon.btccheckpoint.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/btccheckpoint/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/btccheckpoint/types";
 
 // Consider we have a Merkle tree with following structure:
 //            ROOT
@@ -36,7 +36,7 @@ message BTCSpvProof {
   // Should have exactly 80 bytes
   bytes confirming_btc_header = 4
       [ (gogoproto.customtype) =
-            "github.com/babylonchain/babylon/types.BTCHeaderBytes" ];
+            "github.com/babylonlabs-io/babylon/types.BTCHeaderBytes" ];
 }
 
 // Each provided OP_RETURN transaction can be identified by hash of block in
@@ -45,7 +45,7 @@ message TransactionKey {
   uint32 index = 1;
   bytes hash = 2
       [ (gogoproto.customtype) =
-            "github.com/babylonchain/babylon/types.BTCHeaderHashBytes" ];
+            "github.com/babylonlabs-io/babylon/types.BTCHeaderHashBytes" ];
 }
 
 // Checkpoint can be composed from multiple transactions, so to identify whole
@@ -143,7 +143,7 @@ message BTCCheckpointInfo {
   // youngest block of best submission
   bytes best_submission_btc_block_hash = 3
       [ (gogoproto.customtype) =
-            "github.com/babylonchain/babylon/types.BTCHeaderHashBytes" ];
+            "github.com/babylonlabs-io/babylon/types.BTCHeaderHashBytes" ];
   // the BTC checkpoint transactions of the best submission
   repeated TransactionInfo best_submission_transactions = 4;
   // list of vigilantes' addresses of the best submission

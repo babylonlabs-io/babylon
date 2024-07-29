@@ -3,7 +3,7 @@ package types
 import (
 	fmt "fmt"
 
-	"github.com/babylonchain/babylon/crypto/eots"
+	"github.com/babylonlabs-io/babylon/crypto/eots"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
