@@ -4,11 +4,10 @@
 package signetlaunch
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"sort"
 
 	store "cosmossdk.io/store/types"
@@ -61,18 +60,17 @@ func propLaunch(
 	return insertBtcHeaders(ctx, btcLigthK, newHeaders)
 }
 
-// LoadBTCHeadersFromData returns the BTC headers load from the data/btc_headers.json path.
+// LoadBTCHeadersFromData returns the BTC headers load from the json string with the headers inside of it.
 func LoadBTCHeadersFromData() ([]*btclighttypes.BTCHeaderInfo, error) {
-	pwd, err := os.Getwd()
+	cdc := appparams.DefaultEncodingConfig().Codec
+	buff := bytes.NewBufferString(NewBtcHeadersStr)
+
+	var gs btclighttypes.GenesisState
+	err := cdc.UnmarshalJSON(buff.Bytes(), &gs)
 	if err != nil {
 		return nil, err
 	}
 
-	btcHeadersFilePath := filepath.Join(pwd, "data/btc_headers.json")
-	gs, err := btclighttypes.LoadBtcLightGenStateFromFile(appparams.DefaultEncodingConfig().Codec, btcHeadersFilePath)
-	if err != nil {
-		return nil, err
-	}
 	return gs.BtcHeaders, nil
 }
 

@@ -1,4 +1,6 @@
-{
+package signetlaunch
+
+const NewBtcHeadersStr = `{
   "btc_headers": [
     {
       "header": "0000002095156a30ef4e6c9764c0ce83fac51a37365b2092bd39bdbfd038f5b98f00000077f14ee2b34b7dcbb7e3fc624184b919b74cd047837728593140ee21e59cc5bee4c9a766644d011e4e202800",
@@ -85,4 +87,4 @@
       "work": "180357618"
     }
   ]
-}
+}`
