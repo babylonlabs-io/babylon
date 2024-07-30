@@ -53,14 +53,14 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 	oldHeadersStoredLen := 1 // only block zero is set by default in genesis for e2e test
 
 	storedBtcHeadersResp := n.QueryBtcLightClientMainchain()
-	newHeadersLen := len(storedBtcHeadersResp)
-	s.Equal(newHeadersLen, oldHeadersStoredLen+lenHeadersInserted)
+	storedHeadersLen := len(storedBtcHeadersResp)
+	s.Equal(storedHeadersLen, oldHeadersStoredLen+lenHeadersInserted)
 
 	// ensure the headers were inserted at the end
-	for i := 0; i < newHeadersLen-lenHeadersInserted; i++ {
-		headerInserted := btcHeadersInserted[i]
-		headerStoredResp := storedBtcHeadersResp[oldHeadersStoredLen+i]
+	for i := 0; i < storedHeadersLen-lenHeadersInserted; i++ {
+		headerInsertedResp := btcHeadersInserted[i].ToResponse()
+		headerStoredResp := storedBtcHeadersResp[storedHeadersLen-(oldHeadersStoredLen+i)] // reverse
 
-		s.EqualValues(headerInserted.ToResponse(), headerStoredResp)
+		s.EqualValues(headerInsertedResp, headerStoredResp)
 	}
 }
