@@ -1,7 +1,7 @@
 // This code is only for testing purposes.
 // DO NOT USE IN PRODUCTION!
 
-package launchsignet
+package signetlaunch
 
 import (
 	"context"
@@ -25,7 +25,7 @@ import (
 )
 
 var Upgrade = upgrades.Upgrade{
-	UpgradeName:          "launch-signet",
+	UpgradeName:          "signet-launch",
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades:        store.StoreUpgrades{},
 }

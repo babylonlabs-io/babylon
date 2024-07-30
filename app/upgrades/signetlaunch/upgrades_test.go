@@ -1,4 +1,4 @@
-package launchsignet_test
+package signetlaunch_test
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/babylonlabs-io/babylon/app"
-	v1 "github.com/babylonlabs-io/babylon/app/upgrades/launchsignet"
+	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -88,7 +88,7 @@ func (s *UpgradeTestSuite) TestUpgradePayments() {
 				s.Equal(newHeadersLen, oldHeadersLen+lenHeadersInserted)
 
 				// ensure the headers were inserted at the end
-				s.Equal(allBtcHeaders[len(allBtcHeaders)-lenHeadersInserted:], btcHeaders)
+				s.Equal(allBtcHeaders[newHeadersLen-lenHeadersInserted:], btcHeaders)
 			},
 		},
 	}
