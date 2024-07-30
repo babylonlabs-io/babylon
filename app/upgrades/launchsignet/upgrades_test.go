@@ -1,4 +1,4 @@
-package launch_test
+package launchsignet_test
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/babylonlabs-io/babylon/app"
-	v1 "github.com/babylonlabs-io/babylon/app/upgrades/launch"
+	v1 "github.com/babylonlabs-io/babylon/app/upgrades/launchsignet"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"

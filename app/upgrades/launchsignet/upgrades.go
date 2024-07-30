@@ -1,7 +1,7 @@
 // This code is only for testing purposes.
 // DO NOT USE IN PRODUCTION!
 
-package launch
+package launchsignet
 
 import (
 	"context"
@@ -26,7 +26,7 @@ import (
 )
 
 var Upgrade = upgrades.Upgrade{
-	UpgradeName:          "launch",
+	UpgradeName:          "launch-signet",
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades:        store.StoreUpgrades{},
 }
@@ -97,7 +97,7 @@ func insertBtcHeaders(
 	k.InsertHeaderInfos(ctx, headers)
 
 	allBlocks := k.GetMainChainFromWithLimit(ctx, 0, 1)
-	isRetarget := btclighttypes.IsRetargetBlock(allBlocks[0], &chaincfg.MainNetParams)
+	isRetarget := btclighttypes.IsRetargetBlock(allBlocks[0], &chaincfg.SigNetParams)
 	if !isRetarget {
 		return fmt.Errorf("first header be a difficulty adjustment block")
 	}
