@@ -20,7 +20,6 @@ RUN go mod download
 COPY ./ /go/src/github.com/babylonlabs-io/babylon/
 # If version is set, then checkout this version
 RUN if [ -n "${VERSION}" ]; then \
-        git fetch origin ${VERSION}; \
         git checkout -f ${VERSION}; \
     fi
 
