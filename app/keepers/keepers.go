@@ -199,7 +199,9 @@ func (ak *AppKeepers) InitKeepers(
 		ibctransfertypes.StoreKey,
 		ibcfeetypes.StoreKey,
 		ibcwasmtypes.StoreKey,
-		zctypes.StoreKey,
+		// Integration related modules
+		bsctypes.ModuleName,
+		zctypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.StoreKey,
 		finalitytypes.StoreKey,
@@ -482,28 +484,6 @@ func (ak *AppKeepers) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	ak.MonitorKeeper = monitorkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[monitortypes.StoreKey]),
-		&btclightclientKeeper,
-	)
-
-	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
-	epochingKeeper.SetMsgServiceRouter(bApp.MsgServiceRouter())
-	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
-	ak.EpochingKeeper = *epochingKeeper.SetHooks(
-		epochingtypes.NewMultiEpochingHooks(ak.ZoneConciergeKeeper.Hooks(), ak.MonitorKeeper.Hooks()),
-	)
-
-	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
-	ak.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
-		checkpointingtypes.NewMultiCheckpointingHooks(ak.EpochingKeeper.Hooks(), ak.ZoneConciergeKeeper.Hooks(), ak.MonitorKeeper.Hooks()),
-	)
-	ak.BtcCheckpointKeeper = btcCheckpointKeeper
-	ak.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
-		btclightclienttypes.NewMultiBTCLightClientHooks(ak.BtcCheckpointKeeper.Hooks()),
-	)
-
 	ak.BTCStkConsumerKeeper = bsckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[bsctypes.StoreKey]),
@@ -513,7 +493,7 @@ func (ak *AppKeepers) InitKeepers(
 	)
 
 	// set up BTC staking keeper
-	ak.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
+	btcStakingKeeper := btcstakingkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[btcstakingtypes.StoreKey]),
 		&btclightclientKeeper,
@@ -525,15 +505,19 @@ func (ak *AppKeepers) InitKeepers(
 	)
 
 	// set up finality keeper
-	ak.FinalityKeeper = finalitykeeper.NewKeeper(
+	finalityKeeper := finalitykeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[finalitytypes.StoreKey]),
-		ak.BTCStakingKeeper,
+		btcStakingKeeper,
 		ak.IncentiveKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	ak.BTCStakingKeeper = *ak.BTCStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(ak.FinalityKeeper.Hooks()))
-	ak.FinalityKeeper = *ak.FinalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(ak.BTCStakingKeeper.Hooks()))
+
+	monitorKeeper := monitorkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[monitortypes.StoreKey]),
+		&btclightclientKeeper,
+	)
 
 	zcKeeper := zckeeper.NewKeeper(
 		appCodec,
@@ -553,7 +537,33 @@ func (ak *AppKeepers) InitKeepers(
 		scopedZoneConciergeKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+
+	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
+	epochingKeeper.SetMsgServiceRouter(bApp.MsgServiceRouter())
+	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
+	epochingKeeper.SetHooks(
+		epochingtypes.NewMultiEpochingHooks(zcKeeper.Hooks(), monitorKeeper.Hooks()),
+	)
+	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
+	checkpointingKeeper.SetHooks(
+		checkpointingtypes.NewMultiCheckpointingHooks(epochingKeeper.Hooks(), zcKeeper.Hooks(), monitorKeeper.Hooks()),
+	)
+	btclightclientKeeper.SetHooks(
+		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks()),
+	)
+	// set up BTCStaking and Finality keepers
+	btcStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(finalityKeeper.Hooks()))
+	finalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(btcStakingKeeper.Hooks()))
+
+	// wire the keepers with hooks to the app
+	ak.EpochingKeeper = epochingKeeper
+	ak.BTCLightClientKeeper = btclightclientKeeper
+	ak.CheckpointingKeeper = checkpointingKeeper
+	ak.BtcCheckpointKeeper = btcCheckpointKeeper
+	ak.MonitorKeeper = monitorKeeper
 	ak.ZoneConciergeKeeper = *zcKeeper
+	ak.BTCStakingKeeper = btcStakingKeeper
+	ak.FinalityKeeper = finalityKeeper
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -568,6 +578,7 @@ func (ak *AppKeepers) InitKeepers(
 	ak.EvidenceKeeper = *evidenceKeeper
 
 	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.ZoneConciergeKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
+	wasmOpts = append(owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
