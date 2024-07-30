@@ -3,15 +3,18 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
 	errorsmod "cosmossdk.io/errors"
-
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonchain/babylon/btcstaking"
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/wire"
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"google.golang.org/grpc/codes"
@@ -49,6 +52,8 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 
 // CreateFinalityProvider creates a finality provider
 func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.MsgCreateFinalityProvider) (*types.MsgCreateFinalityProviderResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateFinalityProvider)
+
 	// ensure the finality provider address does not already exist
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// basic stateless checks
@@ -56,16 +61,22 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	fpAddr, err := sdk.AccAddressFromBech32(req.Addr)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Addr, err)
+	}
+
 	// verify proof of possession
-	if err := req.Pop.Verify(req.BabylonPk, req.BtcPk, ms.btcNet); err != nil {
+	if err := req.Pop.Verify(fpAddr, req.BtcPk, ms.btcNet); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession: %v", err)
 	}
 
-	// ensure commission rate is at least the minimum commission rate in parameters
+	// ensure commission rate is
+	// - at least the minimum commission rate in parameters, and
+	// - at most 1
 	if req.Commission.LT(ms.MinCommissionRate(ctx)) {
 		return nil, types.ErrCommissionLTMinRate.Wrapf("cannot set finality provider commission to less than minimum rate of %s", ms.MinCommissionRate(ctx))
 	}
-
 	if req.Commission.GT(sdkmath.LegacyOneDec()) {
 		return nil, types.ErrCommissionGTMaxRate
 	}
@@ -79,7 +90,7 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 	fp := types.FinalityProvider{
 		Description: req.Description,
 		Commission:  req.Commission,
-		BabylonPk:   req.BabylonPk,
+		Addr:        fpAddr.String(),
 		BtcPk:       req.BtcPk,
 		Pop:         req.Pop,
 	}
@@ -93,20 +104,78 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 	return &types.MsgCreateFinalityProviderResponse{}, nil
 }
 
+// EditFinalityProvider edits an existing finality provider
+func (ms msgServer) EditFinalityProvider(ctx context.Context, req *types.MsgEditFinalityProvider) (*types.MsgEditFinalityProviderResponse, error) {
+	// basic stateless checks
+	// NOTE: after this, description is guaranteed to be valid
+	if err := req.ValidateBasic(); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	// ensure commission rate is
+	// - at least the minimum commission rate in parameters, and
+	// - at most 1
+	if req.Commission.LT(ms.MinCommissionRate(ctx)) {
+		return nil, types.ErrCommissionLTMinRate.Wrapf("cannot set finality provider commission to less than minimum rate of %s", ms.MinCommissionRate(ctx))
+	}
+	if req.Commission.GT(sdkmath.LegacyOneDec()) {
+		return nil, types.ErrCommissionGTMaxRate
+	}
+
+	// TODO: check to index the finality provider by his address instead of the BTC pk
+	// find the finality provider with the given BTC PK
+	fp, err := ms.GetFinalityProvider(ctx, req.BtcPk)
+	if err != nil {
+		return nil, err
+	}
+
+	fpAddr, err := sdk.AccAddressFromBech32(req.Addr)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Addr, err)
+	}
+
+	// ensure the signer corresponds to the finality provider's Babylon address
+	if !strings.EqualFold(fpAddr.String(), fp.Addr) {
+		return nil, status.Errorf(codes.PermissionDenied, "the signer does not correspond to the finality provider's Babylon address")
+	}
+
+	// all good, update the finality provider and set back
+	fp.Description = req.Description
+	fp.Commission = req.Commission
+	ms.SetFinalityProvider(ctx, fp)
+
+	return &types.MsgEditFinalityProviderResponse{}, nil
+}
+
+// caluculateMinimumUnbondingValue calculates minimum unbonding value basend on current staking output value
+// and params.MinUnbondingRate
+func caluculateMinimumUnbondingValue(
+	stakingOutput *wire.TxOut,
+	params *types.Params,
+) btcutil.Amount {
+	// this conversions must always succeed, as it is part of our params
+	minUnbondingRate := params.MinUnbondingRate.MustFloat64()
+	// Caluclate min unbonding output value based on staking output, use btc native multiplication
+	minUnbondingOutputValue := btcutil.Amount(stakingOutput.Value).MulF64(minUnbondingRate)
+	return minUnbondingOutputValue
+}
+
 // CreateBTCDelegation creates a BTC delegation
 // TODO: refactor this handler. It's now too convoluted
 func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCreateBTCDelegation) (*types.MsgCreateBTCDelegationResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateBTCDelegation)
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// basic stateless checks
 	if err := req.ValidateBasic(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	params := ms.GetParams(ctx)
+	vp := ms.GetParamsWithVersion(ctx)
 	btccParams := ms.btccKeeper.GetParams(ctx)
 	kValue, wValue := btccParams.BtcConfirmationDepth, btccParams.CheckpointFinalizationTimeout
 
-	minUnbondingTime := types.MinimumUnbondingTime(params, btccParams)
+	minUnbondingTime := types.MinimumUnbondingTime(vp.Params, btccParams)
 
 	// Check unbonding time (staking time from unbonding tx) is larger than min unbonding time
 	// which is larger value from:
@@ -121,15 +190,27 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// - is smaller than math.MaxUint16 (due to check in req.ValidateBasic())
 	validatedUnbondingTime := uint16(req.UnbondingTime)
 
+	stakerAddr, err := sdk.AccAddressFromBech32(req.StakerAddr)
+	if err != nil {
+		return nil, types.ErrInvalidStakingTx.Wrapf("invalid staker addr %s: %v", req.StakerAddr, err)
+	}
+
 	// verify proof of possession
-	if err := req.Pop.Verify(req.BabylonPk, req.BtcPk, ms.btcNet); err != nil {
+	if err := req.Pop.Verify(stakerAddr, req.BtcPk, ms.btcNet); err != nil {
 		return nil, types.ErrInvalidProofOfPossession.Wrapf("error while validating proof of posession: %v", err)
 	}
 
-	// Ensure all finality providers are known to Babylon
+	// Ensure all finality providers are known to Babylon, are not slashed,
+	// and their registered epochs are finalised
 	for _, fpBTCPK := range req.FpBtcPkList {
-		if !ms.HasFinalityProvider(ctx, fpBTCPK) {
-			return nil, types.ErrFpNotFound.Wrapf("finality provider pk: %s", fpBTCPK.MarshalHex())
+		// get this finality provider
+		fp, err := ms.GetFinalityProvider(ctx, fpBTCPK)
+		if err != nil {
+			return nil, err
+		}
+		// ensure the finality provider is not slashed
+		if fp.IsSlashed() {
+			return nil, types.ErrFpAlreadySlashed
 		}
 	}
 
@@ -151,7 +232,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	if err != nil {
 		return nil, types.ErrInvalidStakingTx.Wrapf("cannot parse finality provider PK list: %v", err)
 	}
-	covenantPKs, err := bbn.NewBTCPKsFromBIP340PKs(params.CovenantPks)
+	covenantPKs, err := bbn.NewBTCPKsFromBIP340PKs(vp.Params.CovenantPks)
 	if err != nil {
 		// programming error
 		panic("failed to parse covenant PKs in KVStore")
@@ -162,7 +243,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		stakerPk,
 		fpPKs,
 		covenantPKs,
-		params.CovenantQuorum,
+		vp.Params.CovenantQuorum,
 		uint16(req.StakingTime),
 		btcutil.Amount(req.StakingValue),
 		ms.btcNet,
@@ -209,7 +290,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	// decode slashing address
 	// TODO: Decode slashing address only once, as it is the same for all BTC delegations
-	slashingAddr, err := btcutil.DecodeAddress(params.SlashingAddress, ms.btcNet)
+	slashingAddr, err := btcutil.DecodeAddress(vp.Params.SlashingAddress, ms.btcNet)
 	if err != nil {
 		panic(fmt.Errorf("failed to decode slashing address in genesis: %w", err))
 	}
@@ -219,8 +300,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		slashingMsgTx,
 		stakingMsgTx,
 		stakingOutputIdx,
-		params.MinSlashingTxFeeSat,
-		params.SlashingRate,
+		vp.Params.MinSlashingTxFeeSat,
+		vp.Params.SlashingRate,
 		slashingAddr,
 		stakerPk,
 		validatedUnbondingTime,
@@ -236,8 +317,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	err = req.SlashingTx.VerifySignature(
-		stakingInfo.StakingOutput.PkScript,
-		stakingInfo.StakingOutput.Value,
+		stakingInfo.StakingOutput,
 		slashingSpendInfo.GetPkScriptPath(),
 		stakerPk,
 		req.DelegatorSlashingSig,
@@ -251,7 +331,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// have voting power only when 1) its corresponding staking tx is k-deep,
 	// and 2) it receives a covenant signature
 	newBTCDel := &types.BTCDelegation{
-		BabylonPk:        req.BabylonPk,
+		StakerAddr:       stakerAddr.String(),
 		BtcPk:            req.BtcPk,
 		Pop:              req.Pop,
 		FpBtcPkList:      req.FpBtcPkList,
@@ -263,8 +343,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		SlashingTx:       req.SlashingTx,
 		DelegatorSig:     req.DelegatorSlashingSig,
 		UnbondingTime:    uint32(validatedUnbondingTime),
-		CovenantSigs:     nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
-		BtcUndelegation:  nil, // this will be constructed in below code
+		CovenantSigs:     nil,        // NOTE: covenant signature will be submitted in a separate msg by covenant
+		BtcUndelegation:  nil,        // this will be constructed in below code
+		ParamsVersion:    vp.Version, // version of the params against delegations was validated
 	}
 
 	/*
@@ -295,7 +376,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		newBTCDel.BtcPk.MustToBTCPK(),
 		fpPKs,
 		covenantPKs,
-		params.CovenantQuorum,
+		vp.Params.CovenantQuorum,
 		validatedUnbondingTime,
 		btcutil.Amount(req.UnbondingValue),
 		ms.btcNet,
@@ -315,9 +396,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		unbondingSlashingMsgTx,
 		unbondingMsgTx,
 		unbondingOutputIdx,
-		params.MinSlashingTxFeeSat,
-		params.SlashingRate,
-		params.MustGetSlashingAddress(ms.btcNet),
+		vp.Params.MinSlashingTxFeeSat,
+		vp.Params.SlashingRate,
+		vp.Params.MustGetSlashingAddress(ms.btcNet),
 		stakerPk,
 		validatedUnbondingTime,
 		ms.btcNet,
@@ -335,8 +416,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	err = req.UnbondingSlashingTx.VerifySignature(
-		unbondingInfo.UnbondingOutput.PkScript,
-		unbondingInfo.UnbondingOutput.Value,
+		unbondingInfo.UnbondingOutput,
 		unbondingSlashingSpendInfo.GetPkScriptPath(),
 		newBTCDel.BtcPk.MustToBTCPK(),
 		req.DelegatorUnbondingSlashingSig,
@@ -345,9 +425,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidSlashingTx.Wrapf("invalid delegator signature: %v", err)
 	}
 
-	// Check unbonding tx against staking tx.
-	// - that input points to the staking tx, staking output
+	// Check unbonding tx fees against staking tx.
 	// - fee is larger than 0
+	// - ubonding output value is is at leat `MinUnbondingValue` percent of staking output value
 	if unbondingMsgTx.TxOut[0].Value >= stakingMsgTx.TxOut[newBTCDel.StakingOutputIdx].Value {
 		// Note: we do not enfore any minimum fee for unbonding tx, we only require that it is larger than 0
 		// Given that unbonding tx must not be replacable and we do not allow sending it second time, it places
@@ -355,6 +435,11 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		// Unbonding tx should not be replaceable at babylon level (and by extension on btc level), as this would
 		// allow staker to spam the network with unbonding txs, which would force covenant and finality provider to send signatures.
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0")
+	}
+
+	minUnbondingValue := caluculateMinimumUnbondingValue(stakingMsgTx.TxOut[stakingOutputIdx], &vp.Params)
+	if btcutil.Amount(unbondingMsgTx.TxOut[0].Value) < minUnbondingValue {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding output value must be at least %s, based on staking output", minUnbondingValue)
 	}
 
 	// all good, add BTC undelegation
@@ -367,31 +452,43 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		CovenantUnbondingSigList: nil,
 	}
 
+	// add this BTC delegation, and emit corresponding events
 	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
-		panic(fmt.Errorf("failed to set BTC delegation that has passed verification: %w", err))
-	}
-
-	// notify subscriber
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventNewBTCDelegation{BtcDel: newBTCDel}); err != nil {
-		panic(fmt.Errorf("failed to emit EventNewBTCDelegation: %w", err))
+		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
 	}
 
 	return &types.MsgCreateBTCDelegationResponse{}, nil
 }
 
+func (ms msgServer) getBTCDelWithParams(
+	ctx context.Context,
+	stakingTxHash string) (*types.BTCDelegation, *types.Params, error) {
+	btcDel, err := ms.GetBTCDelegation(ctx, stakingTxHash)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	bsParams := ms.GetParamsByVersion(ctx, btcDel.ParamsVersion)
+	if bsParams == nil {
+		panic("params version in BTC delegation is not found")
+	}
+
+	return btcDel, bsParams, nil
+}
+
 // AddCovenantSig adds signatures from covenants to a BTC delegation
 // TODO: refactor this handler. Now it's too convoluted
 func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCovenantSigs) (*types.MsgAddCovenantSigsResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddCovenantSigs)
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// basic stateless checks
 	if err := req.ValidateBasic(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	params := ms.GetParams(ctx)
+	btcDel, params, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
 
-	// ensure BTC delegation exists
-	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
@@ -411,10 +508,17 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return &types.MsgAddCovenantSigsResponse{}, nil
 	}
 
-	// Note: we assume the order of adaptor sigs is matched to the
-	// order of finality providers in the delegation
-	// TODO: ensure the order for restaking, currently, we only have one finality provider
-	//  one covenant emulator
+	// ensure BTC delegation is still pending, i.e., not expired
+	btcTipHeight := ms.btclcKeeper.GetTipInfo(ctx).Height
+	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+	status := btcDel.GetStatus(btcTipHeight, wValue, params.CovenantQuorum)
+	if status != types.BTCDelegationStatus_PENDING {
+		ms.Logger(ctx).Debug("Received covenant signature after the BTC delegation is already expired", "covenant pk", req.Pk.MarshalHex())
+		return &types.MsgAddCovenantSigsResponse{}, nil
+	}
+
+	// Check that the number of covenant sigs and number of the
+	// finality providers are matched
 	if len(req.SlashingTxSigs) != len(btcDel.FpBtcPkList) {
 		return nil, types.ErrInvalidCovenantSig.Wrapf(
 			"number of covenant signatures: %d, number of finality providers being staked to: %d",
@@ -424,7 +528,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	/*
 		Verify each covenant adaptor signature over slashing tx
 	*/
-	stakingInfo, err := btcDel.GetStakingInfo(&params, ms.btcNet)
+	stakingInfo, err := btcDel.GetStakingInfo(params, ms.btcNet)
 	if err != nil {
 		panic(fmt.Errorf("failed to get staking info from a verified delegation: %w", err))
 	}
@@ -447,10 +551,6 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 
 	// Check that the number of covenant sigs and number of the
 	// finality providers are matched
-	// Note: we assume the order of adaptor sigs is matched to the
-	// order of finality providers in the delegation
-	// TODO: ensure the order for restaking, currently, we only have one finality provider
-	//  one covenant emulator
 	if len(req.SlashingUnbondingTxSigs) != len(btcDel.FpBtcPkList) {
 		return nil, types.ErrInvalidCovenantSig.Wrapf(
 			"number of covenant signatures: %d, number of finality providers being staked to: %d",
@@ -470,10 +570,9 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		// this fails, it is a programming error
 		panic(err)
 	}
-	if err := btcstaking.VerifyTransactionSigWithOutputData(
+	if err := btcstaking.VerifyTransactionSigWithOutput(
 		unbondingMsgTx,
-		stakingInfo.StakingOutput.PkScript,
-		stakingInfo.StakingOutput.Value,
+		stakingInfo.StakingOutput,
 		unbondingSpendInfo.GetPkScriptPath(),
 		req.Pk.MustToBTCPK(),
 		*req.UnbondingTxSig,
@@ -485,7 +584,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		verify each adaptor signature on slashing unbonding tx
 	*/
 	unbondingOutput := unbondingMsgTx.TxOut[0] // unbonding tx always have only one output
-	unbondingInfo, err := btcDel.GetUnbondingInfo(&params, ms.btcNet)
+	unbondingInfo, err := btcDel.GetUnbondingInfo(params, ms.btcNet)
 	if err != nil {
 		panic(err)
 	}
@@ -507,19 +606,16 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	}
 
 	// All is fine add received signatures to the BTC delegation and BtcUndelegation
-	btcDel.AddCovenantSigs(
+	// and emit corresponding events
+	ms.addCovenantSigsToBTCDelegation(
+		ctx,
+		btcDel,
 		req.Pk,
 		parsedSlashingAdaptorSignatures,
 		req.UnbondingTxSig,
 		parsedUnbondingSlashingAdaptorSignatures,
+		params,
 	)
-
-	ms.setBTCDelegation(ctx, btcDel)
-
-	// notify subscriber
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventActivateBTCDelegation{BtcDel: btcDel}); err != nil {
-		panic(fmt.Errorf("failed to emit EventActivateBTCDelegation: %w", err))
-	}
 
 	return &types.MsgAddCovenantSigsResponse{}, nil
 }
@@ -528,16 +624,16 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 // this effectively proves that the BTC delegator wants to unbond and Babylon
 // will consider its BTC delegation unbonded
 func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndelegate) (*types.MsgBTCUndelegateResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyBTCUndelegate)
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// basic stateless checks
 	if err := req.ValidateBasic(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	bsParams := ms.GetParams(ctx)
+	btcDel, bsParams, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
 
-	// ensure BTC delegation exists
-	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
@@ -554,7 +650,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	if err != nil {
 		panic(fmt.Errorf("failed to parse unbonding tx from existing delegation with hash %s : %v", req.StakingTxHash, err))
 	}
-	stakingInfo, err := btcDel.GetStakingInfo(&bsParams, ms.btcNet)
+	stakingInfo, err := btcDel.GetStakingInfo(bsParams, ms.btcNet)
 	if err != nil {
 		panic(fmt.Errorf("failed to get staking info from a verified delegation: %w", err))
 	}
@@ -564,10 +660,9 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		// this fails, it is a programming error
 		panic(err)
 	}
-	if err := btcstaking.VerifyTransactionSigWithOutputData(
+	if err := btcstaking.VerifyTransactionSigWithOutput(
 		unbondingMsgTx,
-		stakingInfo.StakingOutput.PkScript,
-		stakingInfo.StakingOutput.Value,
+		stakingInfo.StakingOutput,
 		unbondingSpendInfo.GetPkScriptPath(),
 		btcDel.BtcPk.MustToBTCPK(),
 		*req.UnbondingTxSig,
@@ -577,20 +672,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	// all good, add the signature to BTC delegation's undelegation
 	// and set back
-	btcDel.BtcUndelegation.DelegatorUnbondingSig = req.UnbondingTxSig
-	ms.setBTCDelegation(ctx, btcDel)
-
-	// notify subscriber about this unbonded BTC delegation
-	event := &types.EventUnbondedBTCDelegation{
-		BtcPk:           btcDel.BtcPk,
-		FpBtcPkList:     btcDel.FpBtcPkList,
-		StakingTxHash:   req.StakingTxHash,
-		UnbondingTxHash: unbondingMsgTx.TxHash().String(),
-		FromState:       types.BTCDelegationStatus_ACTIVE,
-	}
-	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-		panic(fmt.Errorf("failed to emit EventUnbondedBTCDelegation: %w", err))
-	}
+	ms.btcUndelegate(ctx, btcDel, req.UnbondingTxSig)
 
 	return &types.MsgBTCUndelegateResponse{}, nil
 }
@@ -598,14 +680,16 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 // SelectiveSlashingEvidence handles the evidence that a finality provider has
 // selectively slashed a BTC delegation
 func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.MsgSelectiveSlashingEvidence) (*types.MsgSelectiveSlashingEvidenceResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	bsParams := ms.GetParams(ctx)
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeySelectiveSlashingEvidence)
 
-	// ensure BTC delegation exists
-	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	btcDel, bsParams, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
+
 	if err != nil {
 		return nil, err
 	}
+
 	// ensure the BTC delegation is active, or its BTC undelegation receives an
 	// unbonding signature from the staker
 	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
@@ -625,11 +709,12 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 		return nil, types.ErrFpNotFound.Wrapf("BTC delegation is not staked to the finality provider")
 	}
 
-	// ensure the finality provider exists and is not slashed
+	// ensure the finality provider exists
 	fp, err := ms.GetFinalityProvider(ctx, fpBTCPK.MustMarshal())
 	if err != nil {
 		panic(types.ErrFpNotFound.Wrapf("failing to find the finality provider with BTC delegations"))
 	}
+	// ensure the finality provider is not slashed
 	if fp.IsSlashed() {
 		return nil, types.ErrFpAlreadySlashed
 	}

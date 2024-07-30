@@ -5,7 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +23,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
-				Params: types.Params{
+				Params: []*types.Params{&types.Params{
 					CovenantPks:                types.DefaultParams().CovenantPks,
 					CovenantQuorum:             types.DefaultParams().CovenantQuorum,
 					SlashingAddress:            types.DefaultParams().SlashingAddress,
@@ -31,14 +31,15 @@ func TestGenesisState_Validate(t *testing.T) {
 					MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.5"),
 					SlashingRate:               sdkmath.LegacyMustNewDecFromStr("0.1"),
 					MaxActiveFinalityProviders: 100,
-				},
+					MinUnbondingRate:           sdkmath.LegacyMustNewDecFromStr("0.8"),
+				}},
 			},
 			valid: true,
 		},
 		{
 			desc: "invalid slashing rate in genesis",
 			genState: &types.GenesisState{
-				Params: types.Params{
+				Params: []*types.Params{&types.Params{
 					CovenantPks:                types.DefaultParams().CovenantPks,
 					CovenantQuorum:             types.DefaultParams().CovenantQuorum,
 					SlashingAddress:            types.DefaultParams().SlashingAddress,
@@ -46,8 +47,25 @@ func TestGenesisState_Validate(t *testing.T) {
 					MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.5"),
 					SlashingRate:               sdkmath.LegacyZeroDec(), // invalid slashing rate
 					MaxActiveFinalityProviders: 100,
+					MinUnbondingRate:           sdkmath.LegacyMustNewDecFromStr("0.8"),
 				},
-			},
+				}},
+			valid: false,
+		},
+		{
+			desc: "invalid unbonding value in genesis",
+			genState: &types.GenesisState{
+				Params: []*types.Params{&types.Params{
+					CovenantPks:                types.DefaultParams().CovenantPks,
+					CovenantQuorum:             types.DefaultParams().CovenantQuorum,
+					SlashingAddress:            types.DefaultParams().SlashingAddress,
+					MinSlashingTxFeeSat:        500,
+					MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.5"),
+					SlashingRate:               sdkmath.LegacyMustNewDecFromStr("0.1"),
+					MaxActiveFinalityProviders: 100,
+					MinUnbondingRate:           sdkmath.LegacyZeroDec(),
+				},
+				}},
 			valid: false,
 		},
 	}

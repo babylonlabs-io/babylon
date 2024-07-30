@@ -5,45 +5,98 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func NewRewardDistCache() *RewardDistCache {
-	return &RewardDistCache{
+func NewVotingPowerDistCache() *VotingPowerDistCache {
+	return &VotingPowerDistCache{
 		TotalVotingPower:  0,
 		FinalityProviders: []*FinalityProviderDistInfo{},
 	}
 }
 
-func (rdc *RewardDistCache) AddFinalityProviderDistInfo(v *FinalityProviderDistInfo) {
-	if v.TotalVotingPower > 0 {
-		// append finality provider dist info and accumulate voting power
-		rdc.FinalityProviders = append(rdc.FinalityProviders, v)
-		rdc.TotalVotingPower += v.TotalVotingPower
+func (dc *VotingPowerDistCache) Empty() bool {
+	return len(dc.FinalityProviders) == 0
+}
+
+func (dc *VotingPowerDistCache) AddFinalityProviderDistInfo(v *FinalityProviderDistInfo) {
+	dc.FinalityProviders = append(dc.FinalityProviders, v)
+}
+
+func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPowerDistCache, maxActiveFPs uint32) []*FinalityProviderDistInfo {
+	activeFps := dc.GetActiveFinalityProviderSet(maxActiveFPs)
+	prevActiveFps := prevDc.GetActiveFinalityProviderSet(maxActiveFPs)
+	newActiveFps := make([]*FinalityProviderDistInfo, 0)
+
+	for pk, fp := range activeFps {
+		_, exists := prevActiveFps[pk]
+		if !exists {
+			newActiveFps = append(newActiveFps, fp)
+		}
+	}
+
+	return newActiveFps
+}
+
+// ApplyActiveFinalityProviders sorts all finality providers, counts the total voting
+// power of top N finality providers, and records them in cache
+func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(maxActiveFPs uint32) {
+	// reset total voting power
+	dc.TotalVotingPower = 0
+	// sort finality providers
+	SortFinalityProviders(dc.FinalityProviders)
+	// calculate voting power of top N finality providers
+	numActiveFPs := dc.GetNumActiveFPs(maxActiveFPs)
+	for i := uint32(0); i < numActiveFPs; i++ {
+		dc.TotalVotingPower += dc.FinalityProviders[i].TotalVotingPower
 	}
 }
 
-// FilterVotedFinalityProviders filters out finality providers that have voted according to a map of given voters
-// and update total voted power accordingly
-func (rdc *RewardDistCache) FilterVotedFinalityProviders(voterBTCPKs map[string]struct{}) {
-	filteredFps := []*FinalityProviderDistInfo{}
+func (dc *VotingPowerDistCache) GetNumActiveFPs(maxActiveFPs uint32) uint32 {
+	return min(maxActiveFPs, uint32(len(dc.FinalityProviders)))
+}
+
+// GetActiveFinalityProviderSet returns a set of active finality providers
+// keyed by the hex string of the finality provider's BTC public key
+// i.e., top N of them in terms of voting power
+func (dc *VotingPowerDistCache) GetActiveFinalityProviderSet(maxActiveFPs uint32) map[string]*FinalityProviderDistInfo {
+	numActiveFPs := dc.GetNumActiveFPs(maxActiveFPs)
+
+	activeFps := make(map[string]*FinalityProviderDistInfo)
+
+	for _, fp := range dc.FinalityProviders[:numActiveFPs] {
+		activeFps[fp.BtcPk.MarshalHex()] = fp
+	}
+
+	return activeFps
+}
+
+// FilterVotedDistCache filters out a voting power distribution cache
+// with finality providers that have voted according to a map of given
+// voters, and their total voted power.
+func (dc *VotingPowerDistCache) FilterVotedDistCache(maxActiveFPs uint32, voterBTCPKs map[string]struct{}) *VotingPowerDistCache {
+	activeFPs := dc.GetActiveFinalityProviderSet(maxActiveFPs)
+	var filteredFps []*FinalityProviderDistInfo
 	totalVotingPower := uint64(0)
-	for _, v := range rdc.FinalityProviders {
-		if _, ok := voterBTCPKs[v.BtcPk.MarshalHex()]; ok {
+	for k, v := range activeFPs {
+		if _, ok := voterBTCPKs[k]; ok {
 			filteredFps = append(filteredFps, v)
 			totalVotingPower += v.TotalVotingPower
 		}
 	}
-	rdc.FinalityProviders = filteredFps
-	rdc.TotalVotingPower = totalVotingPower
+
+	return &VotingPowerDistCache{
+		FinalityProviders: filteredFps,
+		TotalVotingPower:  totalVotingPower,
+	}
 }
 
 // GetFinalityProviderPortion returns the portion of a finality provider's voting power out of the total voting power
-func (rdc *RewardDistCache) GetFinalityProviderPortion(v *FinalityProviderDistInfo) sdkmath.LegacyDec {
-	return sdkmath.LegacyNewDec(int64(v.TotalVotingPower)).QuoTruncate(sdkmath.LegacyNewDec(int64(rdc.TotalVotingPower)))
+func (dc *VotingPowerDistCache) GetFinalityProviderPortion(v *FinalityProviderDistInfo) sdkmath.LegacyDec {
+	return sdkmath.LegacyNewDec(int64(v.TotalVotingPower)).QuoTruncate(sdkmath.LegacyNewDec(int64(dc.TotalVotingPower)))
 }
 
 func NewFinalityProviderDistInfo(fp *FinalityProvider) *FinalityProviderDistInfo {
 	return &FinalityProviderDistInfo{
 		BtcPk:            fp.BtcPk,
-		BabylonPk:        fp.BabylonPk,
+		Addr:             fp.Addr,
 		Commission:       fp.Commission,
 		TotalVotingPower: 0,
 		BtcDels:          []*BTCDelDistInfo{},
@@ -51,28 +104,23 @@ func NewFinalityProviderDistInfo(fp *FinalityProvider) *FinalityProviderDistInfo
 }
 
 func (v *FinalityProviderDistInfo) GetAddress() sdk.AccAddress {
-	return sdk.AccAddress(v.BabylonPk.Address())
+	return sdk.MustAccAddressFromBech32(v.Addr)
 }
 
-func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *BTCDelegation, btcHeight uint64, wValue uint64, covenantQuorum uint32) {
+func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *BTCDelegation) {
 	btcDelDistInfo := &BTCDelDistInfo{
-		BabylonPk:   btcDel.BabylonPk,
-		VotingPower: btcDel.VotingPower(btcHeight, wValue, covenantQuorum),
+		BtcPk:         btcDel.BtcPk,
+		StakerAddr:    btcDel.StakerAddr,
+		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
+		VotingPower:   btcDel.TotalSat,
 	}
-
-	if btcDelDistInfo.VotingPower > 0 {
-		// if this BTC delegation has voting power, append it and accumulate voting power
-		v.BtcDels = append(v.BtcDels, btcDelDistInfo)
-		v.TotalVotingPower += btcDelDistInfo.VotingPower
-	}
+	v.BtcDels = append(v.BtcDels, btcDelDistInfo)
+	v.TotalVotingPower += btcDelDistInfo.VotingPower
 }
 
-func (v *FinalityProviderDistInfo) AddBTCDistInfo(info *BTCDelDistInfo) {
-	if info.VotingPower > 0 {
-		// if this BTC delegation has voting power, append it and accumulate voting power
-		v.BtcDels = append(v.BtcDels, info)
-		v.TotalVotingPower += info.VotingPower
-	}
+func (v *FinalityProviderDistInfo) AddBTCDelDistInfo(d *BTCDelDistInfo) {
+	v.BtcDels = append(v.BtcDels, d)
+	v.TotalVotingPower += d.VotingPower
 }
 
 // GetBTCDelPortion returns the portion of a BTC delegation's voting power out of
@@ -82,5 +130,5 @@ func (v *FinalityProviderDistInfo) GetBTCDelPortion(d *BTCDelDistInfo) sdkmath.L
 }
 
 func (d *BTCDelDistInfo) GetAddress() sdk.AccAddress {
-	return sdk.AccAddress(d.BabylonPk.Address())
+	return sdk.MustAccAddressFromBech32(d.StakerAddr)
 }

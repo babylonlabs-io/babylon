@@ -5,15 +5,16 @@ import (
 	"fmt"
 
 	corestoretypes "cosmossdk.io/core/store"
-
 	"cosmossdk.io/log"
-	bbn "github.com/babylonchain/babylon/types"
+
+	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 
-	"github.com/babylonchain/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	proto "github.com/cosmos/gogoproto/proto"
 )
 
 type (
@@ -47,8 +48,21 @@ func NewKeeper(
 	}
 }
 
-func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+// Logger returns the logger with the key value of the current module.
+func (Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// emitTypedEventWithLog emits an event and logs if it errors.
+func (k Keeper) emitTypedEventWithLog(ctx context.Context, evt proto.Message) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if err := sdkCtx.EventManager().EmitTypedEvent(evt); err != nil {
+		k.Logger(sdkCtx).Error(
+			"faied to emit event",
+			"type", evt.String(),
+			"reason", err.Error(),
+		)
+	}
 }
 
 // SetHooks sets the btclightclient hooks
@@ -92,6 +106,14 @@ func (k Keeper) insertHeaders(
 		k.triggerRollForward(ctx, h)
 	}
 	return nil
+}
+
+// InsertHeaderInfos inserts multiple headers info at the store.
+func (k Keeper) InsertHeaderInfos(ctx context.Context, infos []*types.BTCHeaderInfo) {
+	hs := k.headersState(ctx)
+	for _, inf := range infos {
+		hs.insertHeader(inf)
+	}
 }
 
 func (k Keeper) InsertHeaders(ctx context.Context, headers []bbn.BTCHeaderBytes) error {

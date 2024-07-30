@@ -8,12 +8,12 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 // finalizedInfo is a private struct that stores metadata and proofs
@@ -48,10 +48,17 @@ func (k Keeper) getChainID(ctx context.Context, channel channeltypes.IdentifiedC
 func (k Keeper) getFinalizedInfo(
 	ctx context.Context,
 	epochNum uint64,
-	headersToBroadcast []*btclctypes.BTCHeaderInfo) (*finalizedInfo, error) {
+	headersToBroadcast []*btclctypes.BTCHeaderInfo,
+) (*finalizedInfo, error) {
 	finalizedEpochInfo, err := k.epochingKeeper.GetHistoricalEpoch(ctx, epochNum)
 	if err != nil {
 		return nil, err
+	}
+
+	// get proof that the epoch is sealed
+	proofEpochSealed := k.getSealedEpochProof(ctx, epochNum)
+	if proofEpochSealed == nil {
+		panic(err) // only programming error
 	}
 
 	// assign raw checkpoint
@@ -67,12 +74,6 @@ func (k Keeper) getFinalizedInfo(
 		return nil, fmt.Errorf("empty bestSubmissionBtcInfo")
 	}
 	btcSubmissionKey := &bestSubmissionBtcInfo.SubmissionKey
-
-	// proof that the epoch is sealed
-	proofEpochSealed, err := k.ProveEpochSealed(ctx, epochNum)
-	if err != nil {
-		return nil, err
-	}
 
 	// proof that the epoch's checkpoint is submitted to BTC
 	// i.e., the two `TransactionInfo`s for the checkpoint
@@ -122,9 +123,9 @@ func (k Keeper) createBTCTimestamp(
 	// NOTE: it's possible that this chain does not have chain info at the moment
 	// In this case, skip sending BTC timestamp for this chain at this epoch
 	epochNum := finalizedInfo.EpochInfo.EpochNumber
-	finalizedChainInfo, err := k.GetEpochChainInfo(ctx, chainID, epochNum)
+	epochChainInfo, err := k.GetEpochChainInfo(ctx, chainID, epochNum)
 	if err != nil {
-		return nil, fmt.Errorf("no finalizedChainInfo for chain %s at epoch %d", chainID, epochNum)
+		return nil, fmt.Errorf("no epochChainInfo for chain %s at epoch %d", chainID, epochNum)
 	}
 
 	// construct BTC timestamp from everything
@@ -144,15 +145,10 @@ func (k Keeper) createBTCTimestamp(
 
 	// if there is a CZ header checkpointed in this finalised epoch,
 	// add this CZ header and corresponding proofs to the BTC timestamp
-	if finalizedChainInfo.LatestHeader.BabylonEpoch == epochNum {
-		// get proofCZHeaderInEpoch
-		proofCZHeaderInEpoch, err := k.ProveCZHeaderInEpoch(ctx, finalizedChainInfo.LatestHeader, finalizedInfo.EpochInfo)
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate proofCZHeaderInEpoch for chain %s: %w", chainID, err)
-		}
-
-		btcTimestamp.Header = finalizedChainInfo.LatestHeader
-		btcTimestamp.Proof.ProofCzHeaderInEpoch = proofCZHeaderInEpoch
+	epochOfHeader := epochChainInfo.ChainInfo.LatestHeader.BabylonEpoch
+	if epochOfHeader == epochNum {
+		btcTimestamp.Header = epochChainInfo.ChainInfo.LatestHeader
+		btcTimestamp.Proof.ProofCzHeaderInEpoch = epochChainInfo.ProofHeaderInEpoch
 	}
 
 	return btcTimestamp, nil

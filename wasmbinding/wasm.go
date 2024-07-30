@@ -6,12 +6,12 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/wasmbinding/bindings"
-	lcKeeper "github.com/babylonchain/babylon/x/btclightclient/keeper"
-	epochingkeeper "github.com/babylonchain/babylon/x/epoching/keeper"
-	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/wasmbinding/bindings"
+	lcKeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
+	epochingkeeper "github.com/babylonlabs-io/babylon/x/epoching/keeper"
+	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -56,12 +56,7 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 
 			return bz, nil
 		case contractQuery.LatestFinalizedEpochInfo != nil:
-			epoch, err := qp.zcKeeper.GetFinalizedEpoch(ctx)
-
-			if err != nil {
-				return nil, err
-			}
-
+			epoch := qp.zcKeeper.GetLastFinalizedEpoch(ctx)
 			epochInfo, err := qp.epochingKeeper.GetHistoricalEpoch(ctx, epoch)
 
 			if err != nil {

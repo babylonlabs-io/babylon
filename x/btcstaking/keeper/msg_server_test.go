@@ -9,18 +9,21 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testhelper "github.com/babylonchain/babylon/testutil/helper"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 func FuzzMsgCreateFinalityProvider(f *testing.F) {
@@ -28,7 +31,17 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h := NewHelper(t, nil, nil)
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
+
+		// set all parameters
+		h.GenAndApplyParams(r)
 
 		// generate new finality providers
 		fps := []*types.FinalityProvider{}
@@ -36,10 +49,9 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
 			msg := &types.MsgCreateFinalityProvider{
-				Signer:      datagen.GenRandomAccount().Address,
+				Addr:        fp.Addr,
 				Description: fp.Description,
 				Commission:  fp.Commission,
-				BabylonPk:   fp.BabylonPk,
 				BtcPk:       fp.BtcPk,
 				Pop:         fp.Pop,
 			}
@@ -57,16 +69,67 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		// duplicated finality providers should not pass
 		for _, fp2 := range fps {
 			msg := &types.MsgCreateFinalityProvider{
-				Signer:      datagen.GenRandomAccount().Address,
+				Addr:        fp2.Addr,
 				Description: fp2.Description,
 				Commission:  fp2.Commission,
-				BabylonPk:   fp2.BabylonPk,
 				BtcPk:       fp2.BtcPk,
 				Pop:         fp2.Pop,
 			}
 			_, err := h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.Error(t, err)
 		}
+	})
+}
+
+func FuzzMsgEditFinalityProvider(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		h := testhelper.NewHelper(t)
+		bsKeeper := h.App.BTCStakingKeeper
+		msgSrvr := keeper.NewMsgServerImpl(bsKeeper)
+
+		// generate new finality provider
+		fp, err := datagen.GenRandomFinalityProvider(r)
+		require.NoError(t, err)
+		// insert the finality provider
+		h.AddFinalityProvider(fp)
+		// assert the finality providers exist in KVStore
+		require.True(t, bsKeeper.HasFinalityProvider(h.Ctx, *fp.BtcPk))
+
+		// updated commission and description
+		newCommission := datagen.GenRandomCommission(r)
+		newDescription := datagen.GenRandomDescription(r)
+
+		// scenario 1: editing finality provider should succeed
+		msg := &types.MsgEditFinalityProvider{
+			Addr:        fp.Addr,
+			BtcPk:       *fp.BtcPk,
+			Description: newDescription,
+			Commission:  &newCommission,
+		}
+		_, err = msgSrvr.EditFinalityProvider(h.Ctx, msg)
+		h.NoError(err)
+		editedFp, err := bsKeeper.GetFinalityProvider(h.Ctx, *fp.BtcPk)
+		h.NoError(err)
+		require.Equal(t, newCommission, *editedFp.Commission)
+		require.Equal(t, newDescription, editedFp.Description)
+
+		// scenario 2: message from an unauthorised signer should fail
+		newCommission = datagen.GenRandomCommission(r)
+		newDescription = datagen.GenRandomDescription(r)
+		invalidAddr := datagen.GenRandomAccount().Address
+		msg = &types.MsgEditFinalityProvider{
+			Addr:        invalidAddr,
+			BtcPk:       *fp.BtcPk,
+			Description: newDescription,
+			Commission:  &newCommission,
+		}
+		_, err = msgSrvr.EditFinalityProvider(h.Ctx, msg)
+		h.EqualError(err, status.Errorf(codes.PermissionDenied, "the signer does not correspond to the finality provider's Babylon address"))
+		errStatus := status.Convert(err)
+		require.Equal(t, codes.PermissionDenied, errStatus.Code())
 	})
 }
 
@@ -81,7 +144,8 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		h.GenAndApplyParams(r)
@@ -94,7 +158,7 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, _, _, msgCreateBTCDel := h.CreateDelegation(
+		stakingTxHash, _, _, msgCreateBTCDel, _ := h.CreateDelegation(
 			r,
 			fpPK,
 			changeAddress.EncodeAddress(),
@@ -105,7 +169,7 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		// ensure consistency between the msg and the BTC delegation in DB
 		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		require.Equal(h.t, msgCreateBTCDel.BabylonPk, actualDel.BabylonPk)
+		require.Equal(h.t, msgCreateBTCDel.StakerAddr, actualDel.StakerAddr)
 		require.Equal(h.t, msgCreateBTCDel.Pop, actualDel.Pop)
 		require.Equal(h.t, msgCreateBTCDel.StakingTx.Transaction, actualDel.StakingTx)
 		require.Equal(h.t, msgCreateBTCDel.SlashingTx, actualDel.SlashingTx)
@@ -115,6 +179,71 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		// delegation is not activated by covenant yet
 		require.False(h.t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 	})
+}
+
+func TestProperVersionInDelegation(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+	h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
+
+	// set all parameters
+	h.GenAndApplyParams(r)
+
+	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+	require.NoError(t, err)
+
+	// generate and insert new finality provider
+	_, fpPK, _ := h.CreateFinalityProvider(r)
+
+	// generate and insert new BTC delegation
+	stakingValue := int64(2 * 10e8)
+	stakingTxHash, _, _, _, _ := h.CreateDelegation(
+		r,
+		fpPK,
+		changeAddress.EncodeAddress(),
+		stakingValue,
+		1000,
+	)
+
+	// ensure consistency between the msg and the BTC delegation in DB
+	actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+	h.NoError(err)
+	err = actualDel.ValidateBasic()
+	h.NoError(err)
+	// Current version will be `1` as:
+	// - version `0` is initialized by `NewHelper`
+	// - version `1` is set by `GenAndApplyParams`
+	require.Equal(t, uint32(1), actualDel.ParamsVersion)
+
+	customMinUnbondingTime := uint32(2000)
+	currentParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+	currentParams.MinUnbondingTime = 2000
+	// Update new params
+	err = h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
+	require.NoError(t, err)
+	// create new delegation
+	stakingTxHash1, _, _, _, err := h.CreateDelegationCustom(
+		r,
+		fpPK,
+		changeAddress.EncodeAddress(),
+		stakingValue,
+		1000,
+		stakingValue-1000,
+		uint16(customMinUnbondingTime)+1,
+	)
+	require.NoError(t, err)
+	actualDel1, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash1)
+	h.NoError(err)
+	err = actualDel1.ValidateBasic()
+	h.NoError(err)
+	// Assert that the new delegation has the updated params version
+	require.Equal(t, uint32(2), actualDel1.ParamsVersion)
 }
 
 func FuzzAddCovenantSigs(f *testing.F) {
@@ -128,7 +257,8 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -141,7 +271,7 @@ func FuzzAddCovenantSigs(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, _, _, msgCreateBTCDel := h.CreateDelegation(
+		stakingTxHash, _, _, msgCreateBTCDel, _ := h.CreateDelegation(
 			r,
 			fpPK,
 			changeAddress.EncodeAddress(),
@@ -192,7 +322,8 @@ func FuzzBTCUndelegate(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -208,7 +339,7 @@ func FuzzBTCUndelegate(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, delSK, _, msgCreateBTCDel := h.CreateDelegation(
+		stakingTxHash, delSK, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
 			r,
 			fpPK,
 			changeAddress.EncodeAddress(),
@@ -217,8 +348,6 @@ func FuzzBTCUndelegate(f *testing.F) {
 		)
 
 		// add covenant signatures to this BTC delegation
-		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
-		h.NoError(err)
 		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
 
 		// ensure the BTC delegation is bonded right now
@@ -266,7 +395,8 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -281,7 +411,7 @@ func FuzzSelectiveSlashing(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, _, _, msgCreateBTCDel := h.CreateDelegation(
+		stakingTxHash, _, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
 			r,
 			fpPK,
 			changeAddress.EncodeAddress(),
@@ -291,8 +421,6 @@ func FuzzSelectiveSlashing(f *testing.F) {
 
 		// add covenant signatures to this BTC delegation
 		// so that the BTC delegation becomes bonded
-		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
-		h.NoError(err)
 		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
 		// now BTC delegation has all covenant signatures
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
@@ -334,7 +462,8 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -349,7 +478,7 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, _, _, msgCreateBTCDel := h.CreateDelegation(
+		stakingTxHash, _, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
 			r,
 			fpPK,
 			changeAddress.EncodeAddress(),
@@ -359,8 +488,6 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 
 		// add covenant signatures to this BTC delegation
 		// so that the BTC delegation becomes bonded
-		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
-		h.NoError(err)
 		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
 		// now BTC delegation has all covenant signatures
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
@@ -412,7 +539,8 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 	btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-	h := NewHelper(t, btclcKeeper, btccKeeper)
+	ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+	h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 	// set covenant PK to params
 	_, covenantPKs := h.GenAndApplyParams(r)
@@ -456,13 +584,12 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	stakingMsgTx := testStakingInfo.StakingTx
 	serializedStakingTx, err := bbn.SerializeBTCTx(stakingMsgTx)
 	require.NoError(t, err)
-	// random signer
-	signer := datagen.GenRandomAccount().Address
 	// random Babylon SK
-	delBabylonSK, delBabylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
-	require.NoError(t, err)
+	acc := datagen.GenRandomAccount()
+	stakerAddr := sdk.MustAccAddressFromBech32(acc.Address)
+
 	// PoP
-	pop, err := types.NewPoP(delBabylonSK, delSK)
+	pop, err := types.NewPoPBTC(stakerAddr, delSK)
 	require.NoError(t, err)
 	// generate staking tx info
 	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
@@ -510,10 +637,10 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	h.NoError(err)
 
 	// all good, construct and send MsgCreateBTCDelegation message
+	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
 	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
-		Signer:                        signer,
-		BabylonPk:                     delBabylonPK.(*secp256k1.PubKey),
-		FpBtcPkList:                   []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
+		StakerAddr:                    stakerAddr.String(),
+		FpBtcPkList:                   []bbn.BIP340PubKey{*fpBTCPK},
 		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey()),
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
@@ -527,6 +654,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 		UnbondingSlashingTx:           testUnbondingInfo.SlashingTx,
 		DelegatorUnbondingSlashingSig: delUnbondingSlashingSig,
 	}
+
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	require.Error(t, err)
 	require.True(t, errors.Is(err, types.ErrFpNotFound))
@@ -579,7 +707,8 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			// mock BTC light client and BTC checkpoint modules
 			btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 			btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-			h := NewHelper(t, btclcKeeper, btccKeeper)
+			ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+			h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 			// set all parameters
 			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.minUnbondingTime)
@@ -598,6 +727,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 				changeAddress.EncodeAddress(),
 				stakingValue,
 				1000,
+				stakingValue-1000,
 				tt.unbondingTimeInDelegation,
 			)
 			if tt.err != nil {
@@ -614,6 +744,78 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 	}
 }
 
+func TestMinimalUnbondingRate(t *testing.T) {
+	tests := []struct {
+		name                       string
+		stakingValue               int64
+		unbondingValueInDelegation int64
+		err                        error
+	}{
+		{
+			name:                       "successful delegation when unbonding value is >=80% of staking value",
+			stakingValue:               10000,
+			unbondingValueInDelegation: 8000,
+			err:                        nil,
+		},
+		{
+			name:                       "failed delegation when unbonding value is <80% of staking value",
+			stakingValue:               10000,
+			unbondingValueInDelegation: 7999,
+			err:                        types.ErrInvalidUnbondingTx,
+		},
+		{
+			name:                       "failed delegation when unbonding value >= stake value",
+			stakingValue:               10000,
+			unbondingValueInDelegation: 10000,
+			err:                        types.ErrInvalidUnbondingTx,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := rand.New(rand.NewSource(time.Now().Unix()))
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			// mock BTC light client and BTC checkpoint modules
+			btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+			btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+			ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+			h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
+
+			// set all parameters, by default minimal unbonding value is 80% of staking value
+			_, _ = h.GenAndApplyParams(r)
+
+			changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+			require.NoError(t, err)
+
+			// generate and insert new finality provider
+			_, fpPK, _ := h.CreateFinalityProvider(r)
+
+			// generate and insert new BTC delegation
+			stakingTxHash, _, _, _, err := h.CreateDelegationCustom(
+				r,
+				fpPK,
+				changeAddress.EncodeAddress(),
+				tt.stakingValue,
+				1000,
+				tt.unbondingValueInDelegation,
+				1000,
+			)
+			if tt.err != nil {
+				require.Error(t, err)
+				require.True(t, errors.Is(err, tt.err))
+			} else {
+				require.NoError(t, err)
+				// Retrieve delegation from keeper
+				delegation, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+				require.NoError(t, err)
+				require.NotNil(t, delegation)
+			}
+		})
+	}
+}
+
 func createNDelegationsForFinalityProvider(
 	r *rand.Rand,
 	t *testing.T,
@@ -624,13 +826,12 @@ func createNDelegationsForFinalityProvider(
 ) []*types.BTCDelegation {
 	var delegations []*types.BTCDelegation
 	for i := 0; i < numDelegations; i++ {
-		covenatnSks, _, err := datagen.GenRandomBTCKeyPairs(r, int(quorum))
+		covenatnSks, covenantPks, err := datagen.GenRandomBTCKeyPairs(r, int(quorum))
 		require.NoError(t, err)
 
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 
-		net := &chaincfg.SimNetParams
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
 
@@ -639,9 +840,11 @@ func createNDelegationsForFinalityProvider(
 		del, err := datagen.GenRandomBTCDelegation(
 			r,
 			t,
+			net,
 			[]bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
 			delSK,
 			covenatnSks,
+			covenantPks,
 			quorum,
 			slashingAddress.EncodeAddress(),
 			0,
@@ -668,14 +871,29 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		valSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(1)
+		valSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(2)
 		require.NoError(t, err)
 
-		var expectedProviderData map[string]*ExpectedProviderData = make(map[string]*ExpectedProviderData)
+		var expectedProviderData = make(map[string]*ExpectedProviderData)
 
 		// Create two test apps from the same set of validators
 		h := testhelper.NewHelperWithValSet(t, valSet, privSigner)
 		h1 := testhelper.NewHelperWithValSet(t, valSet, privSigner)
+		// app hash should be same at the beginning
+		appHash1 := hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 := hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
+		require.Equal(t, appHash1, appHash2)
+
+		// Execute block for both apps
+		h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
+		require.NoError(t, err)
+		h1.Ctx, err = h1.ApplyEmptyBlockWithVoteExtension(r)
+		require.NoError(t, err)
+		// Given that there is no transactions and the data in db is the same
+		// app hash produced by both apps should be the same
+		appHash1 = hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 = hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
+		require.Equal(t, appHash1, appHash2)
 
 		// Default params are the same in both apps
 		covQuorum := h.App.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
@@ -720,16 +938,14 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		}
 
 		// Execute block for both apps
-		ctx, err := h.ApplyEmptyBlockWithVoteExtension(r)
+		h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
 		require.NoError(t, err)
-
-		ctx1, err := h1.ApplyEmptyBlockWithVoteExtension(r)
+		h1.Ctx, err = h1.ApplyEmptyBlockWithVoteExtension(r)
 		require.NoError(t, err)
-
 		// Given that there is no transactions and the data in db is the same
 		// app hash produced by both apps should be the same
-		appHash1 := hex.EncodeToString(ctx.BlockHeader().AppHash)
-		appHash2 := hex.EncodeToString(ctx1.BlockHeader().AppHash)
+		appHash1 = hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 = hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
 		require.Equal(t, appHash1, appHash2)
 	})
 }

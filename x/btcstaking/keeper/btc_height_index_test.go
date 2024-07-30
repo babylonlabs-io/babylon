@@ -4,10 +4,10 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	keepertest "github.com/babylonchain/babylon/testutil/keeper"
-	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +22,7 @@ func FuzzBTCHeightIndex(f *testing.F) {
 
 		// mock BTC light client
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
-		keeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, nil)
+		keeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, nil, nil)
 
 		// randomise Babylon height and BTC height
 		babylonHeight := datagen.RandomInt(r, 100)
@@ -32,12 +32,10 @@ func FuzzBTCHeightIndex(f *testing.F) {
 		keeper.IndexBTCHeight(ctx)
 
 		// assert BTC height
-		actualBtcHeight, err := keeper.GetBTCHeightAtBabylonHeight(ctx, babylonHeight)
-		require.NoError(t, err)
+		actualBtcHeight := keeper.GetBTCHeightAtBabylonHeight(ctx, babylonHeight)
 		require.Equal(t, btcHeight, actualBtcHeight)
 		// assert current BTC height
-		curBtcHeight, err := keeper.GetCurrentBTCHeight(ctx)
-		require.NoError(t, err)
+		curBtcHeight := keeper.GetCurrentBTCHeight(ctx)
 		require.Equal(t, btcHeight, curBtcHeight)
 	})
 }

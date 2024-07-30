@@ -4,8 +4,8 @@ import (
 	"fmt"
 	math "math"
 
-	"github.com/babylonchain/babylon/btcstaking"
-	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonlabs-io/babylon/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -14,6 +14,7 @@ import (
 var (
 	_ sdk.Msg = &MsgUpdateParams{}
 	_ sdk.Msg = &MsgCreateFinalityProvider{}
+	_ sdk.Msg = &MsgEditFinalityProvider{}
 	_ sdk.Msg = &MsgCreateBTCDelegation{}
 	_ sdk.Msg = &MsgAddCovenantSigs{}
 	_ sdk.Msg = &MsgBTCUndelegate{}
@@ -32,9 +33,6 @@ func (m *MsgCreateFinalityProvider) ValidateBasic() error {
 	if _, err := m.Description.EnsureLength(); err != nil {
 		return err
 	}
-	if m.BabylonPk == nil {
-		return fmt.Errorf("empty Babylon public key")
-	}
 	if m.BtcPk == nil {
 		return fmt.Errorf("empty BTC public key")
 	}
@@ -44,10 +42,29 @@ func (m *MsgCreateFinalityProvider) ValidateBasic() error {
 	if m.Pop == nil {
 		return fmt.Errorf("empty proof of possession")
 	}
-	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
+	if _, err := sdk.AccAddressFromBech32(m.Addr); err != nil {
+		return fmt.Errorf("invalid FP addr: %s - %v", m.Addr, err)
+	}
+	return m.Pop.ValidateBasic()
+}
+
+func (m *MsgEditFinalityProvider) ValidateBasic() error {
+	if m.Commission == nil {
+		return fmt.Errorf("empty commission")
+	}
+	if m.Description == nil {
+		return fmt.Errorf("empty description")
+	}
+	if len(m.Description.Moniker) == 0 {
+		return fmt.Errorf("empty moniker")
+	}
+	if _, err := m.Description.EnsureLength(); err != nil {
 		return err
 	}
-	if err := m.Pop.ValidateBasic(); err != nil {
+	if len(m.BtcPk) != bbn.BIP340PubKeyLen {
+		return fmt.Errorf("malformed BTC PK")
+	}
+	if _, err := bbn.NewBIP340PubKey(m.BtcPk); err != nil {
 		return err
 	}
 
@@ -55,8 +72,8 @@ func (m *MsgCreateFinalityProvider) ValidateBasic() error {
 }
 
 func (m *MsgCreateBTCDelegation) ValidateBasic() error {
-	if m.BabylonPk == nil {
-		return fmt.Errorf("empty Babylon public key")
+	if _, err := sdk.AccAddressFromBech32(m.StakerAddr); err != nil {
+		return fmt.Errorf("invalid staker addr %s: %w", m.StakerAddr, err)
 	}
 	if m.Pop == nil {
 		return fmt.Errorf("empty proof of possession")
@@ -84,10 +101,6 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 
 	if _, err := m.DelegatorSlashingSig.ToBTCSig(); err != nil {
 		return fmt.Errorf("invalid delegator slashing signature: %w", err)
-	}
-
-	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
-		return err
 	}
 
 	// Check staking time is at most uint16

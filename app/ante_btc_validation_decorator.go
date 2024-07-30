@@ -1,10 +1,10 @@
 package app
 
 import (
-	bbn "github.com/babylonchain/babylon/types"
-	btccheckpointkeeper "github.com/babylonchain/babylon/x/btccheckpoint/keeper"
-	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btclightclient "github.com/babylonchain/babylon/x/btclightclient/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btccheckpointkeeper "github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclightclient "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -42,7 +42,7 @@ func (bvd BtcValidationDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulat
 				powLimit := bvd.BtcCfg.PowLimit()
 				err := msg.ValidateHeaders(&powLimit)
 				if err != nil {
-					return ctx, btclightclient.ErrInvalidProofOfWOrk
+					return ctx, btclightclient.ErrInvalidProofOfWOrk.Wrapf("MsgInsertHeaders error: %s - PoW Limit - %s", err.Error(), powLimit.String())
 				}
 			default:
 				// NOOP in case of other messages

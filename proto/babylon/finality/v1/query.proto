@@ -7,7 +7,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/finality/v1/params.proto";
 import "babylon/finality/v1/finality.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/finality/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/finality/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -17,8 +17,17 @@ service Query {
   }
 
   // ListPublicRandomness is a range query for public randomness of a given finality provider
+  // NOTE: Babylon only has the knowledge of public randomness that is already revealed by
+  // finality providers, i.e., the finality provider alreayd provides a finality signature
+  // at the corresponding height
+  // TODO: remove public randomness storage?
   rpc ListPublicRandomness(QueryListPublicRandomnessRequest) returns (QueryListPublicRandomnessResponse) {
     option (google.api.http).get = "/babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/public_randomness_list";
+  }
+
+  // ListPubRandCommit is a range query for public randomness commitments of a given finality provider
+  rpc ListPubRandCommit(QueryListPubRandCommitRequest) returns (QueryListPubRandCommitResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/pub_rand_commit_list";
   }
 
   // Block queries a block at a given height
@@ -44,6 +53,16 @@ service Query {
   // ListEvidences queries is a range query for evidences
   rpc ListEvidences(QueryListEvidencesRequest) returns (QueryListEvidencesResponse) {
     option (google.api.http).get = "/babylon/finality/v1/evidences";
+  }
+
+  // SigningInfo queries the signing info of given finality provider BTC public key
+  rpc SigningInfo(QuerySigningInfoRequest) returns (QuerySigningInfoResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/signing_infos/{fp_btc_pk_hex}";
+  }
+
+  // SigningInfos queries the signing info of all the active finality providers
+  rpc SigningInfos(QuerySigningInfosRequest) returns (QuerySigningInfosResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/signing_infos";
   }
 }
 
@@ -71,12 +90,40 @@ message QueryListPublicRandomnessRequest {
 message QueryListPublicRandomnessResponse {
   // pub_rand_map is the map where the key is the height and the value
   // is the public randomness at this height for the given finality provider
-  map<uint64, bytes> pub_rand_map = 1  [(gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
+  map<uint64, bytes> pub_rand_map = 1  [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrPubRand" ];
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
+// PubRandCommitResponse is the response type for a public randomness commitment
+message PubRandCommitResponse {
+  // num_pub_rand is the number of committed public randomness
+  uint64 num_pub_rand = 1;
+  // commitment is the value of the commitment
+  bytes commitment = 2;
+}
+
+// QueryListPubRandCommitRequest is the request type for the
+// Query/ListPubRandCommit RPC method.
+message QueryListPubRandCommitRequest {
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
+  string fp_btc_pk_hex = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryListPubRandCommitResponse is the response type for the
+// Query/ListPubRandCommit RPC method.
+message QueryListPubRandCommitResponse {
+  // pub_rand_commit_map is the map where the key is the start height and the value
+  // is the public randomness commitment at this height for the given finality provider
+  map<uint64, PubRandCommitResponse> pub_rand_commit_map = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
 
 // QueriedBlockStatus is the status of blocks that the querier wants to query.
 enum QueriedBlockStatus {
@@ -134,7 +181,7 @@ message QueryVotesAtHeightRequest {
 message QueryVotesAtHeightResponse {
   // btc_pk is the Bitcoin secp256k1 PK of finality providers who have signed the block at given height.
   // the PK follows encoding in BIP-340 spec
-  repeated bytes btc_pks = 1 [(gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey"];
+  repeated bytes btc_pks = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey"];
 }
 
 // QueryEvidenceRequest is the request type for the
@@ -169,5 +216,34 @@ message QueryListEvidencesResponse {
   repeated Evidence evidences = 1;
 
   // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QuerySigningInfoRequest is the request type for the Query/SigningInfo RPC
+// method
+message QuerySigningInfoRequest {
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK
+  // (in BIP340 format) of the finality provider
+  string fp_btc_pk_hex = 1;
+}
+
+// QuerySigningInfoResponse is the response type for the Query/SigningInfo RPC
+// method
+message QuerySigningInfoResponse {
+  // fp_signing_info is the signing info of requested finality provider BTC public key
+  FinalityProviderSigningInfo fp_signing_info = 1 [(gogoproto.nullable) = false];
+}
+
+// QuerySigningInfosRequest is the request type for the Query/SigningInfos RPC
+// method
+message QuerySigningInfosRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QuerySigningInfosResponse is the response type for the Query/SigningInfos RPC
+// method
+message QuerySigningInfosResponse {
+  // info is the signing info of all finality providers with signing info
+  repeated FinalityProviderSigningInfo fp_signing_infos = 1 [(gogoproto.nullable) = false];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

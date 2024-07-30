@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/app"
+	"github.com/babylonlabs-io/babylon/app"
 )
 
 func Test_TestnetCmd(t *testing.T) {
@@ -33,7 +33,7 @@ func Test_TestnetCmd(t *testing.T) {
 		DB:                 dbm.NewMemDB(),
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            app.EmptyAppOptions{},
+		AppOpts:            app.TmpAppOptions(),
 	})
 	err = genutiltest.ExecInitCmd(bbn.BasicModuleManager, home, bbn.AppCodec())
 	require.NoError(t, err)

@@ -10,11 +10,10 @@ type ImageConfig struct {
 //nolint:deadcode
 const (
 	// name of babylon container produced by running `make localnet-build-env`
-	BabylonContainerName = "babylonchain/babylond"
+	BabylonContainerName = "babylonlabs-io/babylond"
 
 	hermesRelayerRepository = "informalsystems/hermes"
-	// TODO: Replace with version tag once we have a working version
-	hermesRelayerTag = "master"
+	hermesRelayerTag        = "v1.8.2"
 	// Built using the `build-cosmos-relayer-docker` target on an Intel (amd64) machine and pushed to ECR
 	cosmosRelayerRepository = "public.ecr.aws/t9e9i3h0/cosmos-relayer"
 	// TODO: Replace with version tag once we have a working version

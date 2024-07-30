@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 
-	bbntypes "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	bbntypes "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
@@ -146,12 +146,12 @@ func (k Keeper) EpochChainsInfo(c context.Context, req *types.QueryEpochChainsIn
 		}
 
 		// find the chain info of the given epoch
-		chainInfo, err := k.GetEpochChainInfo(ctx, chainID, req.EpochNum)
+		chainInfoWithProof, err := k.GetEpochChainInfo(ctx, chainID, req.EpochNum)
 		if err != nil {
 			return nil, err
 		}
 
-		chainsInfo = append(chainsInfo, chainInfo)
+		chainsInfo = append(chainsInfo, chainInfoWithProof.ChainInfo)
 	}
 
 	resp := &types.QueryEpochChainsInfoResponse{ChainsInfo: chainsInfo}
@@ -238,11 +238,7 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 	resp := &types.QueryFinalizedChainsInfoResponse{FinalizedChainsInfo: []*types.FinalizedChainInfo{}}
 
 	// find the last finalised epoch
-	lastFinalizedEpoch, err := k.GetFinalizedEpoch(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+	lastFinalizedEpoch := k.GetLastFinalizedEpoch(ctx)
 	for _, chainID := range req.ChainIds {
 		// check if chain ID is valid
 		if !k.HasChainInfo(ctx, chainID) {
@@ -258,10 +254,11 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 		}
 
 		// find the chain info in the last finalised epoch
-		chainInfo, err := k.GetEpochChainInfo(ctx, chainID, lastFinalizedEpoch)
+		chainInfoWithProof, err := k.GetEpochChainInfo(ctx, chainID, lastFinalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
+		chainInfo := chainInfoWithProof.ChainInfo
 
 		// set finalizedEpoch as the earliest epoch that snapshots this chain info.
 		// it's possible that the chain info's epoch is way before the last finalised epoch
@@ -320,16 +317,13 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 	resp := &types.QueryFinalizedChainInfoUntilHeightResponse{}
 
 	// find the last finalised epoch
-	lastFinalizedEpoch, err := k.GetFinalizedEpoch(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+	lastFinalizedEpoch := k.GetLastFinalizedEpoch(ctx)
 	// find the chain info in the last finalised epoch
-	chainInfo, err := k.GetEpochChainInfo(ctx, req.ChainId, lastFinalizedEpoch)
+	chainInfoWithProof, err := k.GetEpochChainInfo(ctx, req.ChainId, lastFinalizedEpoch)
 	if err != nil {
 		return nil, err
 	}
+	chainInfo := chainInfoWithProof.ChainInfo
 
 	// set finalizedEpoch as the earliest epoch that snapshots this chain info.
 	// it's possible that the chain info's epoch is way before the last finalised epoch
@@ -370,11 +364,11 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 		}
 		// assign the finalizedEpoch, and retrieve epoch info, raw ckpt and submission key
 		finalizedEpoch = closestHeader.BabylonEpoch
-		chainInfo, err = k.GetEpochChainInfo(ctx, req.ChainId, finalizedEpoch)
+		chainInfoWithProof, err := k.GetEpochChainInfo(ctx, req.ChainId, finalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
-		resp.FinalizedChainInfo = chainInfo
+		resp.FinalizedChainInfo = chainInfoWithProof.ChainInfo
 		resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
 		if err != nil {
 			return nil, err

@@ -10,10 +10,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	babylonApp "github.com/babylonchain/babylon/app"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btcltypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	btcstypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	babylonApp "github.com/babylonlabs-io/babylon/app"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btcltypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	btcstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 const (
@@ -37,10 +37,10 @@ const (
 	flagCovenantQuorum             = "covenant-quorum"
 	flagMaxActiveFinalityProviders = "max-active-finality-providers"
 	flagMinUnbondingTime           = "min-unbonding-time"
+	flagMinUnbondingRate           = "min-unbonding-rate"
 	flagSlashingAddress            = "slashing-address"
 	flagMinSlashingFee             = "min-slashing-fee-sat"
 	flagSlashingRate               = "slashing-rate"
-	flagMinPubRand                 = "min-pub-rand"
 	flagMinCommissionRate          = "min-commission-rate"
 )
 
@@ -69,7 +69,7 @@ type GenesisCLIArgs struct {
 	SlashingRate                 math.LegacyDec
 	MaxActiveFinalityProviders   uint32
 	MinUnbondingTime             uint16
-	MinPubRand                   uint64
+	MinUnbondingRate             math.LegacyDec
 	MinCommissionRate            math.LegacyDec
 }
 
@@ -97,8 +97,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().String(flagSlashingRate, "0.1", "Bitcoin staking slashing rate")
 	cmd.Flags().Uint32(flagMaxActiveFinalityProviders, 100, "Bitcoin staking maximum active finality providers")
 	cmd.Flags().Uint16(flagMinUnbondingTime, 0, "Min timelock on unbonding transaction in btc blocks")
-	// finality args
-	cmd.Flags().Uint64(flagMinPubRand, 100, "Bitcoin staking minimum public randomness commit")
+	cmd.Flags().String(flagMinUnbondingRate, "0.8", "Min amount of btc required in unbonding output expressed as a fraction of staking output")
 	// inflation args
 	cmd.Flags().Float64(flagInflationRateChange, 0.13, "Inflation rate change")
 	cmd.Flags().Float64(flagInflationMax, 0.2, "Maximum inflation")
@@ -130,7 +129,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	slashingRate, _ := cmd.Flags().GetString(flagSlashingRate)
 	maxActiveFinalityProviders, _ := cmd.Flags().GetUint32(flagMaxActiveFinalityProviders)
 	minUnbondingTime, _ := cmd.Flags().GetUint16(flagMinUnbondingTime)
-	minPubRand, _ := cmd.Flags().GetUint64(flagMinPubRand)
+	minUnbondingRate, _ := cmd.Flags().GetString(flagMinUnbondingRate)
 	genesisTimeUnix, _ := cmd.Flags().GetInt64(flagGenesisTime)
 	inflationRateChange, _ := cmd.Flags().GetFloat64(flagInflationRateChange)
 	inflationMax, _ := cmd.Flags().GetFloat64(flagInflationMax)
@@ -169,7 +168,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		SlashingRate:                 math.LegacyMustNewDecFromStr(slashingRate),
 		MaxActiveFinalityProviders:   maxActiveFinalityProviders,
 		MinUnbondingTime:             minUnbondingTime,
-		MinPubRand:                   minPubRand,
+		MinUnbondingRate:             math.LegacyMustNewDecFromStr(minUnbondingRate),
 		GenesisTime:                  genesisTime,
 		InflationRateChange:          inflationRateChange,
 		InflationMax:                 inflationMax,

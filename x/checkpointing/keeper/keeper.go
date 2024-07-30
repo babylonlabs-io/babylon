@@ -7,7 +7,7 @@ import (
 
 	corestoretypes "cosmossdk.io/core/store"
 
-	txformat "github.com/babylonchain/babylon/btctxformatter"
+	txformat "github.com/babylonlabs-io/babylon/btctxformatter"
 
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -15,9 +15,9 @@ import (
 
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 type (
@@ -66,20 +66,30 @@ func (k Keeper) SealCheckpoint(ctx context.Context, ckptWithMeta *types.RawCheck
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	// if reaching this line, it means ckptWithMeta is updated,
+	// and we need to write the updated ckptWithMeta back to KVStore
+	if err := k.AddRawCheckpoint(ctx, ckptWithMeta); err != nil {
+		return err
+	}
+
 	// record state update of Sealed
 	ckptWithMeta.RecordStateUpdate(ctx, types.Sealed)
-	// log in console
-	k.Logger(sdkCtx).Info(fmt.Sprintf("Checkpointing: checkpoint for epoch %v is Sealed", ckptWithMeta.Ckpt.EpochNum))
 	// emit event
 	if err := sdkCtx.EventManager().EmitTypedEvent(
 		&types.EventCheckpointSealed{Checkpoint: ckptWithMeta},
 	); err != nil {
 		panic(fmt.Errorf("failed to emit checkpoint sealed event for epoch %v", ckptWithMeta.Ckpt.EpochNum))
 	}
+	// invoke hook
+	if err := k.AfterRawCheckpointSealed(ctx, ckptWithMeta.Ckpt.EpochNum); err != nil {
+		k.Logger(sdkCtx).Error("failed to trigger checkpoint sealed hook for epoch %v: %v", ckptWithMeta.Ckpt.EpochNum, err)
+	}
 
-	// if reaching this line, it means ckptWithMeta is updated,
-	// and we need to write the updated ckptWithMeta back to KVStore
-	return k.AddRawCheckpoint(ctx, ckptWithMeta)
+	// log in console
+	k.Logger(sdkCtx).Info(fmt.Sprintf("Checkpointing: checkpoint for epoch %v is Sealed", ckptWithMeta.Ckpt.EpochNum))
+
+	return nil
 }
 
 func (k Keeper) VerifyBLSSig(ctx context.Context, sig *types.BlsSig) error {
@@ -297,7 +307,11 @@ func (k Keeper) SetCheckpointConfirmed(ctx context.Context, epoch uint64) {
 // and records the associated state update in lifecycle
 func (k Keeper) SetCheckpointFinalized(ctx context.Context, epoch uint64) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	// set the checkpoint's status to be finalised
 	ckpt := k.setCheckpointStatus(ctx, epoch, types.Confirmed, types.Finalized)
+	// remember the last finalised epoch
+	k.SetLastFinalizedEpoch(ctx, epoch)
+	// emit event
 	err := sdkCtx.EventManager().EmitTypedEvent(
 		&types.EventCheckpointFinalized{Checkpoint: ckpt},
 	)
@@ -394,4 +408,25 @@ func (k Keeper) GetTotalVotingPower(ctx context.Context, epochNumber uint64) int
 
 func (k Keeper) GetPubKeyByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (cmtprotocrypto.PublicKey, error) {
 	return k.epochingKeeper.GetPubKeyByConsAddr(ctx, consAddr)
+}
+
+// GetLastFinalizedEpoch gets the last finalised epoch
+func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
+	store := k.storeService.OpenKVStore(ctx)
+	epochNumberBytes, err := store.Get(types.LastFinalizedEpochKey)
+	if err != nil {
+		// we have set epoch 0 to be finalised at genesis so this can
+		// only be a programming error
+		panic(err)
+	}
+	return sdk.BigEndianToUint64(epochNumberBytes)
+}
+
+// SetLastFinalizedEpoch sets the last finalised epoch
+func (k Keeper) SetLastFinalizedEpoch(ctx context.Context, epochNumber uint64) {
+	store := k.storeService.OpenKVStore(ctx)
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
+	if err := store.Set(types.LastFinalizedEpochKey, epochNumberBytes); err != nil {
+		panic(err)
+	}
 }

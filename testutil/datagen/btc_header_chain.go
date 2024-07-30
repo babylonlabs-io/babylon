@@ -4,8 +4,8 @@ import (
 	"math/rand"
 
 	sdkmath "cosmossdk.io/math"
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/btclightclient/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 )
@@ -69,8 +69,30 @@ func NewBTCHeaderChainFromParent(
 	}
 }
 
+func NewBTCHeaderChainFromParentInfoResponse(
+	r *rand.Rand,
+	parent *types.BTCHeaderInfoResponse,
+	length uint32,
+) *BTCHeaderPartialChain {
+	headerBytes, err := bbn.NewBTCHeaderBytesFromHex(parent.HeaderHex)
+	if err != nil {
+		panic(err)
+	}
+	return NewBTCHeaderChainFromParent(
+		r,
+		parent.Height+1,
+		parent.Work,
+		headerBytes.ToBlockHeader(),
+		length,
+	)
+}
+
 func (c *BTCHeaderPartialChain) GetChainInfo() []*types.BTCHeaderInfo {
 	return ChainToInfoChain(c.Headers, c.initialHeaderHeight, c.inititialHeaderTotalWork)
+}
+
+func (c *BTCHeaderPartialChain) GetChainInfoResponse() []*types.BTCHeaderInfoResponse {
+	return ChainToInfoResponseChain(c.Headers, c.initialHeaderHeight, c.inititialHeaderTotalWork)
 }
 
 func (c *BTCHeaderPartialChain) ChainToBytes() []bbn.BTCHeaderBytes {

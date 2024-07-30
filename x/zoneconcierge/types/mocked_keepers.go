@@ -8,11 +8,11 @@ import (
 	context "context"
 	reflect "reflect"
 
-	types "github.com/babylonchain/babylon/types"
-	types0 "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	types1 "github.com/babylonchain/babylon/x/btclightclient/types"
-	types2 "github.com/babylonchain/babylon/x/checkpointing/types"
-	types3 "github.com/babylonchain/babylon/x/epoching/types"
+	types "github.com/babylonlabs-io/babylon/types"
+	types0 "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	types1 "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	types2 "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	types3 "github.com/babylonlabs-io/babylon/x/epoching/types"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	types4 "github.com/cosmos/cosmos-sdk/types"
 	types5 "github.com/cosmos/ibc-go/modules/capability/types"
@@ -719,6 +719,20 @@ func (m *MockCheckpointingKeeper) GetBLSPubKeySet(ctx context.Context, epochNumb
 func (mr *MockCheckpointingKeeperMockRecorder) GetBLSPubKeySet(ctx, epochNumber interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBLSPubKeySet", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetBLSPubKeySet), ctx, epochNumber)
+}
+
+// GetLastFinalizedEpoch mocks base method.
+func (m *MockCheckpointingKeeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLastFinalizedEpoch", ctx)
+	ret0, _ := ret[0].(uint64)
+	return ret0
+}
+
+// GetLastFinalizedEpoch indicates an expected call of GetLastFinalizedEpoch.
+func (mr *MockCheckpointingKeeperMockRecorder) GetLastFinalizedEpoch(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastFinalizedEpoch", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetLastFinalizedEpoch), ctx)
 }
 
 // GetRawCheckpoint mocks base method.

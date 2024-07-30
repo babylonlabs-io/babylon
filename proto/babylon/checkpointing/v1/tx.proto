@@ -6,7 +6,7 @@ import "babylon/checkpointing/v1/bls_key.proto";
 import "cosmos/staking/v1beta1/tx.proto";
 import "cosmos/msg/v1/msg.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/checkpointing/types";
 
 // Msg defines the checkpointing Msg service.
 service Msg {

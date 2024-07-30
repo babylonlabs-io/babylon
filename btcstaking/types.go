@@ -12,16 +12,22 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+
+	bbn "github.com/babylonlabs-io/babylon/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
 	// Point with unknown discrete logarithm defined in: https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#constructing-and-spending-taproot-outputs
-	// using it as internal public key efectively disables taproot key spends
+	// using it as internal public key effectively disables taproot key spends
 	unspendableKeyPath = "0250929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0"
 )
 
 var (
-	unspendableKeyPathKey = unspendableKeyPathInternalPubKeyInternal(unspendableKeyPath)
+	unspendableKeyPathKey    = unspendableKeyPathInternalPubKeyInternal(unspendableKeyPath)
+	errBuildingStakingInfo   = fmt.Errorf("error building staking info")
+	errBuildingUnbondingInfo = fmt.Errorf("error building unbonding info")
+	ErrDuplicatedKeyInScript = fmt.Errorf("duplicated key in script")
 )
 
 func unspendableKeyPathInternalPubKeyInternal(keyHex string) btcec.PublicKey {
@@ -255,13 +261,49 @@ type babylonScriptPaths struct {
 	timeLockPathScript []byte
 	// unbondingPathScript is the script path for on-demand early unbonding
 	// <Staker_PK> OP_CHECKSIGVERIFY
-	// <Covenant_PK1> OP_CHECKSIG ... <Covenant_PKN> OP_CHECKSIGADD M OP_GREATERTHANOREQUAL OP_VERIFY
+	// <Covenant_PK1> OP_CHECKSIG ... <Covenant_PKN> OP_CHECKSIGADD M OP_NUMEQUAL
 	unbondingPathScript []byte
 	// slashingPathScript is the script path for slashing
 	// <Staker_PK> OP_CHECKSIGVERIFY
-	// <Covenant_PK1> OP_CHECKSIG ... <Covenant_PKN> OP_CHECKSIGADD M OP_GREATERTHANOREQUAL OP_VERIFY
-	// <FP_PK1> OP_CHECKSIG ... <FP_PKN> OP_CHECKSIGADD 1 OP_GREATERTHANOREQUAL OP_VERIFY
+	// <FP_PK1> OP_CHECKSIG ... <FP_PKN> OP_CHECKSIGADD 1 OP_NUMEQUALVERIFY
+	// <Covenant_PK1> OP_CHECKSIG ... <Covenant_PKN> OP_CHECKSIGADD M OP_NUMEQUAL
 	slashingPathScript []byte
+}
+
+func keyToString(key *btcec.PublicKey) string {
+	return hex.EncodeToString(schnorr.SerializePubKey(key))
+}
+
+func checkForDuplicateKeys(
+	stakerKey *btcec.PublicKey,
+	fpKeys []*btcec.PublicKey,
+	covenantKeys []*btcec.PublicKey,
+) error {
+	keyMap := make(map[string]struct{})
+
+	keyMap[keyToString(stakerKey)] = struct{}{}
+
+	for _, key := range fpKeys {
+		keyStr := keyToString(key)
+
+		if _, ok := keyMap[keyStr]; ok {
+			return fmt.Errorf("key: %s: %w", keyStr, ErrDuplicatedKeyInScript)
+		}
+
+		keyMap[keyStr] = struct{}{}
+	}
+
+	for _, key := range covenantKeys {
+		keyStr := keyToString(key)
+
+		if _, ok := keyMap[keyStr]; ok {
+			return fmt.Errorf("key: %s: %w", keyStr, ErrDuplicatedKeyInScript)
+		}
+
+		keyMap[keyStr] = struct{}{}
+	}
+
+	return nil
 }
 
 func newBabylonScriptPaths(
@@ -273,6 +315,10 @@ func newBabylonScriptPaths(
 ) (*babylonScriptPaths, error) {
 	if stakerKey == nil {
 		return nil, fmt.Errorf("staker key is nil")
+	}
+
+	if err := checkForDuplicateKeys(stakerKey, fpKeys, covenantKeys); err != nil {
+		return nil, fmt.Errorf("error building scripts: %w", err)
 	}
 
 	timeLockPathScript, err := buildTimeLockScript(stakerKey, lockTime)
@@ -300,7 +346,7 @@ func newBabylonScriptPaths(
 		return nil, err
 	}
 
-	fpSigScript, err := buildMultiSigScript(
+	fpMultisigScript, err := buildMultiSigScript(
 		fpKeys,
 		// we always require only one finality provider to sign
 		1,
@@ -319,7 +365,7 @@ func newBabylonScriptPaths(
 
 	slashingPathScript := aggregateScripts(
 		stakerSigScript,
-		fpSigScript,
+		fpMultisigScript,
 		covenantMultisigScript,
 	)
 
@@ -330,6 +376,12 @@ func newBabylonScriptPaths(
 	}, nil
 }
 
+// BuildStakingInfo builds all Babylon specific BTC scripts that must
+// be committed to in the staking output.
+// Returned `StakingInfo` object exposes methods to build spend info for each
+// of the script spending paths which later must be included in the witness.
+// It is up to the caller to verify whether parameters provided to this function
+// obey parameters expected by Babylon chain.
 func BuildStakingInfo(
 	stakerKey *btcec.PublicKey,
 	fpKeys []*btcec.PublicKey,
@@ -350,7 +402,7 @@ func BuildStakingInfo(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
 	}
 
 	var unbondingPaths [][]byte
@@ -368,13 +420,13 @@ func BuildStakingInfo(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
 	}
 
 	taprootPkScript, err := sh.taprootPkScript(net)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
 	}
 
 	stakingOutput := wire.NewTxOut(int64(stakingAmount), taprootPkScript)
@@ -410,6 +462,12 @@ type UnbondingInfo struct {
 	slashingPathLeafHash chainhash.Hash
 }
 
+// BuildUnbondingInfo builds all Babylon specific BTC scripts that must
+// be committed to in the unbonding output.
+// Returned `UnbondingInfo` object exposes methods to build spend info for each
+// of the script spending paths which later must be included in the witness.
+// It is up to the caller to verify whether parameters provided to this function
+// obey parameters expected by Babylon chain.
 func BuildUnbondingInfo(
 	stakerKey *btcec.PublicKey,
 	fpKeys []*btcec.PublicKey,
@@ -430,7 +488,7 @@ func BuildUnbondingInfo(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
 	}
 
 	var unbondingPaths [][]byte
@@ -446,13 +504,13 @@ func BuildUnbondingInfo(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
 	}
 
 	taprootPkScript, err := sh.taprootPkScript(net)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
 	}
 
 	unbondingOutput := wire.NewTxOut(int64(unbondingAmount), taprootPkScript)
@@ -473,15 +531,15 @@ func (i *UnbondingInfo) SlashingPathSpendInfo() (*SpendInfo, error) {
 	return i.scriptHolder.scriptSpendInfoByName(i.slashingPathLeafHash)
 }
 
-// IsSlashingRateValid checks if the given slashing rate is between the valid range i.e., (0,1) with a precision of at most 2 decimal places.
-func IsSlashingRateValid(slashingRate sdkmath.LegacyDec) bool {
+// IsRateValid checks if the given rate is between the valid range i.e., (0,1) with a precision of at most 2 decimal places.
+func IsRateValid(rate sdkmath.LegacyDec) bool {
 	// Check if the slashing rate is between 0 and 1
-	if slashingRate.LTE(sdkmath.LegacyZeroDec()) || slashingRate.GTE(sdkmath.LegacyOneDec()) {
+	if rate.LTE(sdkmath.LegacyZeroDec()) || rate.GTE(sdkmath.LegacyOneDec()) {
 		return false
 	}
 
 	// Multiply by 100 to move the decimal places and check if precision is at most 2 decimal places
-	multipliedRate := slashingRate.Mul(sdkmath.LegacyNewDec(100))
+	multipliedRate := rate.Mul(sdkmath.LegacyNewDec(100))
 
 	// Truncate the rate to remove decimal places
 	truncatedRate := multipliedRate.TruncateDec()
@@ -498,7 +556,7 @@ type RelativeTimeLockTapScriptInfo struct {
 	LockTime uint16
 	// taproot address of the script
 	TapAddress btcutil.Address
-	// pkscript in output wchich commits to the given script/leaf
+	// pkscript in output which commits to the given script/leaf
 	PkScript []byte
 }
 
@@ -554,4 +612,21 @@ func BuildRelativeTimelockTaprootScript(
 		TapAddress: taprootAddress,
 		PkScript:   taprootPkScript,
 	}, nil
+}
+
+// ParseBlkHeightAndPubKeyFromStoreKey expects to receive a key with
+// BigEndianUint64(blkHeight) || BIP340PubKey(fpBTCPK)
+func ParseBlkHeightAndPubKeyFromStoreKey(key []byte) (blkHeight uint64, fpBTCPK *bbn.BIP340PubKey, err error) {
+	sizeBigEndian := 8
+	if len(key) < sizeBigEndian+1 {
+		return 0, nil, fmt.Errorf("key not long enough to parse block height and BIP340PubKey: %s", key)
+	}
+
+	fpBTCPK, err = bbn.NewBIP340PubKey(key[sizeBigEndian:])
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to parse pub key from key %w: %w", bbn.ErrUnmarshal, err)
+	}
+
+	blkHeight = sdk.BigEndianToUint64(key[:sizeBigEndian])
+	return blkHeight, fpBTCPK, nil
 }

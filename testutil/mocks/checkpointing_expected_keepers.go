@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	types "github.com/babylonchain/babylon/x/checkpointing/types"
-	types0 "github.com/babylonchain/babylon/x/epoching/types"
+	types "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	types0 "github.com/babylonlabs-io/babylon/x/epoching/types"
 	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	types1 "github.com/cosmos/cosmos-sdk/types"
 	types2 "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -63,21 +63,6 @@ func (m *MockEpochingKeeper) EnqueueMsg(ctx context.Context, msg types0.QueuedMe
 func (mr *MockEpochingKeeperMockRecorder) EnqueueMsg(ctx, msg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnqueueMsg", reflect.TypeOf((*MockEpochingKeeper)(nil).EnqueueMsg), ctx, msg)
-}
-
-// GetAppHash mocks base method.
-func (m *MockEpochingKeeper) GetAppHash(ctx context.Context, height uint64) ([]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAppHash", ctx, height)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAppHash indicates an expected call of GetAppHash.
-func (mr *MockEpochingKeeperMockRecorder) GetAppHash(ctx, height interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAppHash", reflect.TypeOf((*MockEpochingKeeper)(nil).GetAppHash), ctx, height)
 }
 
 // GetEpoch mocks base method.
@@ -228,4 +213,18 @@ func (m *MockCheckpointingHooks) AfterRawCheckpointForgotten(ctx context.Context
 func (mr *MockCheckpointingHooksMockRecorder) AfterRawCheckpointForgotten(ctx, ckpt interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterRawCheckpointForgotten", reflect.TypeOf((*MockCheckpointingHooks)(nil).AfterRawCheckpointForgotten), ctx, ckpt)
+}
+
+// AfterRawCheckpointSealed mocks base method.
+func (m *MockCheckpointingHooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AfterRawCheckpointSealed", ctx, epoch)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AfterRawCheckpointSealed indicates an expected call of AfterRawCheckpointSealed.
+func (mr *MockCheckpointingHooksMockRecorder) AfterRawCheckpointSealed(ctx, epoch interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterRawCheckpointSealed", reflect.TypeOf((*MockCheckpointingHooks)(nil).AfterRawCheckpointSealed), ctx, epoch)
 }

@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
@@ -11,14 +12,15 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/finality/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 var _ types.QueryServer = Keeper{}
 
 // ListPublicRandomness returns a list of public randomness committed by a given
 // finality provider
+// TODO: remove public randomness storage?
 func (k Keeper) ListPublicRandomness(ctx context.Context, req *types.QueryListPublicRandomnessRequest) (*types.QueryListPublicRandomnessResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -30,7 +32,7 @@ func (k Keeper) ListPublicRandomness(ctx context.Context, req *types.QueryListPu
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	store := k.pubRandStore(sdkCtx, fpBTCPK)
+	store := k.pubRandFpStore(sdkCtx, fpBTCPK)
 	pubRandMap := map[uint64]*bbn.SchnorrPubRand{}
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
 		height := sdk.BigEndianToUint64(key)
@@ -48,6 +50,39 @@ func (k Keeper) ListPublicRandomness(ctx context.Context, req *types.QueryListPu
 	resp := &types.QueryListPublicRandomnessResponse{
 		PubRandMap: pubRandMap,
 		Pagination: pageRes,
+	}
+	return resp, nil
+}
+
+// ListPubRandCommit returns a list of public randomness commitment by a given
+// finality provider
+func (k Keeper) ListPubRandCommit(ctx context.Context, req *types.QueryListPubRandCommitRequest) (*types.QueryListPubRandCommitResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal finality provider BTC PK hex: %v", err)
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	store := k.pubRandCommitFpStore(sdkCtx, fpBTCPK)
+	pubRandCommitMap := map[uint64]*types.PubRandCommitResponse{}
+	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
+		height := sdk.BigEndianToUint64(key)
+		var prCommit types.PubRandCommit
+		k.cdc.MustUnmarshal(value, &prCommit)
+		pubRandCommitMap[height] = prCommit.ToResponse()
+		return nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &types.QueryListPubRandCommitResponse{
+		PubRandCommitMap: pubRandCommitMap,
+		Pagination:       pageRes,
 	}
 	return resp, nil
 }
@@ -189,4 +224,52 @@ func (k Keeper) ListEvidences(ctx context.Context, req *types.QueryListEvidences
 		Pagination: pageRes,
 	}
 	return resp, nil
+}
+
+// SigningInfo returns signing-info of a specific finality provider.
+func (k Keeper) SigningInfo(ctx context.Context, req *types.QuerySigningInfoRequest) (*types.QuerySigningInfoResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+
+	if req.FpBtcPkHex == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "empty finality provider public key")
+	}
+
+	fpPk, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid finality provider public key")
+	}
+
+	signingInfo, err := k.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "SigningInfo not found for the finality provider %s", req.FpBtcPkHex)
+	}
+
+	return &types.QuerySigningInfoResponse{FpSigningInfo: signingInfo}, nil
+}
+
+// SigningInfos returns signing-infos of all finality providers.
+func (k Keeper) SigningInfos(ctx context.Context, req *types.QuerySigningInfosRequest) (*types.QuerySigningInfosResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+
+	store := k.storeService.OpenKVStore(ctx)
+	var signInfos []types.FinalityProviderSigningInfo
+
+	signingInfoStore := prefix.NewStore(runtime.KVStoreAdapter(store), types.FinalityProviderSigningInfoKeyPrefix)
+	pageRes, err := query.Paginate(signingInfoStore, req.Pagination, func(key, value []byte) error {
+		var info types.FinalityProviderSigningInfo
+		err := k.cdc.Unmarshal(value, &info)
+		if err != nil {
+			return err
+		}
+		signInfos = append(signInfos, info)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &types.QuerySigningInfosResponse{FpSigningInfos: signInfos, Pagination: pageRes}, nil
 }

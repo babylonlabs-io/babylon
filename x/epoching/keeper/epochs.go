@@ -6,11 +6,10 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
-	"github.com/cometbft/cometbft/crypto/merkle"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 func (k Keeper) setEpochInfo(ctx context.Context, epochNumber uint64, epoch *types.Epoch) {
@@ -33,7 +32,7 @@ func (k Keeper) getEpochInfo(ctx context.Context, epochNumber uint64) (*types.Ep
 }
 
 // InitEpoch sets the zero epoch number to DB
-func (k Keeper) InitEpoch(ctx context.Context) {
+func (k Keeper) InitEpoch(ctx context.Context) *types.Epoch {
 	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 	if header.Height > 0 {
 		panic("InitEpoch can be invoked only at genesis")
@@ -41,6 +40,7 @@ func (k Keeper) InitEpoch(ctx context.Context) {
 	epochInterval := k.GetParams(ctx).EpochInterval
 	epoch := types.NewEpoch(0, epochInterval, 0, &header.Time)
 	k.setEpochInfo(ctx, 0, &epoch)
+	return &epoch
 }
 
 // GetEpoch fetches the current epoch
@@ -60,9 +60,10 @@ func (k Keeper) GetHistoricalEpoch(ctx context.Context, epochNumber uint64) (*ty
 	return epoch, err
 }
 
-// RecordLastHeaderAndAppHashRoot records the last header and Merkle root of all AppHashs
-// for the current epoch, and stores the epoch metadata to KVStore
-func (k Keeper) RecordLastHeaderAndAppHashRoot(ctx context.Context) error {
+// RecordLastHeaderTime records the last header's timestamp for the current
+// epoch, and stores the epoch metadata to KVStore
+// The timestamp is used for unbonding delegations once the epoch is timestamped
+func (k Keeper) RecordLastHeaderTime(ctx context.Context) error {
 	epoch := k.GetEpoch(ctx)
 	if !epoch.IsLastBlock(ctx) {
 		return errorsmod.Wrapf(types.ErrInvalidHeight, "RecordLastBlockHeader can only be invoked at the last block of an epoch")
@@ -70,13 +71,6 @@ func (k Keeper) RecordLastHeaderAndAppHashRoot(ctx context.Context) error {
 	// record last block header
 	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 	epoch.LastBlockTime = &header.Time
-	// calculate and record the Merkle root
-	appHashes, err := k.GetAllAppHashesForEpoch(ctx, epoch)
-	if err != nil {
-		return err
-	}
-	appHashRoot := merkle.HashFromByteSlices(appHashes)
-	epoch.AppHashRoot = appHashRoot
 	// save back to KVStore
 	k.setEpochInfo(ctx, epoch.EpochNumber, epoch)
 	return nil

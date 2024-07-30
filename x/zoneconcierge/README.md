@@ -5,7 +5,7 @@ headers from other PoS blockchains. These BTC timestamps allow PoS blockchains
 integrating with Babylon to achieve Bitcoin security, i.e., forking the PoS
 blockchain is as hard as forking Bitcoin. The Zone Concierge module leverages
 the IBC protocol to receive PoS blockchains' headers and provide them with
-succint and provable information about their timestamps.
+succinct and provable information about their timestamps.
 
 There are two phases of integration for a PoS blockchain:
 
@@ -472,7 +472,7 @@ for different use cases, e.g., BTC-assisted unbonding.
 
 The phase 2 integration does not require any change to the PoS blockchain's
 code. Rather, it only needs to deploy a [Babylon
-contract](https://github.com/babylonchain/babylon-contract) on the PoS
+contract](https://github.com/babylonlabs-io/babylon-contract) on the PoS
 blockchain, and start an IBC relayer between Babylon and the Babylon contract on
 the PoS blockchain. The Babylon contract can be deployed to a blockchain
 supporting [CosmWasm](https://github.com/CosmWasm/cosmwasm) smart contracts,

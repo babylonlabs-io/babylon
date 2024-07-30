@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	cmttime "github.com/cometbft/cometbft/types/time"
@@ -35,12 +36,11 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonchain/babylon/app"
-	appparams "github.com/babylonchain/babylon/app/params"
-	"github.com/babylonchain/babylon/privval"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	bbn "github.com/babylonchain/babylon/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/privval"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 var (
@@ -97,8 +97,7 @@ Example:
 				genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex, genesisCliArgs.BaseBtcHeaderHeight,
 				genesisCliArgs.AllowedReporterAddresses, genesisCliArgs.CovenantPKs, genesisCliArgs.CovenantQuorum,
 				genesisCliArgs.SlashingAddress, genesisCliArgs.MinSlashingTransactionFeeSat, genesisCliArgs.MinCommissionRate,
-				genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveFinalityProviders, genesisCliArgs.MinUnbondingTime,
-				genesisCliArgs.MinPubRand, genesisCliArgs.InflationRateChange, genesisCliArgs.InflationMin,
+				genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveFinalityProviders, genesisCliArgs.MinUnbondingTime, genesisCliArgs.MinUnbondingRate, genesisCliArgs.InflationRateChange, genesisCliArgs.InflationMin,
 				genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded, genesisCliArgs.BlocksPerYear,
 				genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit, genesisCliArgs.VoteExtensionEnableHeight)
 
@@ -322,7 +321,7 @@ func InitTestnet(
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), babylonConfig)
 
 		// create and save client config
-		if _, err = app.CreateClientConfig(chainID, keyringBackend, nodeDir); err != nil {
+		if _, err = appkeepers.CreateClientConfig(chainID, keyringBackend, nodeDir); err != nil {
 			return err
 		}
 	}

@@ -1,11 +1,11 @@
 package types_test
 
 import (
-	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/stretchr/testify/require"
 )
 

@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/babylonchain/babylon/types"
+	"github.com/babylonlabs-io/babylon/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 )
 

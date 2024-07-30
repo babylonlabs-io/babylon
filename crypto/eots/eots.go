@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	ecdsa_schnorr "github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr"
@@ -32,13 +33,13 @@ func PubGen(k *PrivateKey) *PublicKey {
 
 // RandGen returns the value to be used as random value when signing, and the associated public value.
 func RandGen(randSource io.Reader) (*PrivateRand, *PublicRand, error) {
-	pk, err := KeyGen(randSource)
+	sk, err := KeyGen(randSource)
 	if err != nil {
 		return nil, nil, err
 	}
 	var j secp256k1.JacobianPoint
-	pk.PubKey().AsJacobian(&j)
-	return &pk.Key, &j.X, nil
+	sk.PubKey().AsJacobian(&j)
+	return &sk.Key, &j.X, nil
 }
 
 // hash function is used for hashing the message input for all functions of the library.
@@ -118,12 +119,23 @@ func signHash(sk *PrivateKey, privateRand *PrivateRand, hash [32]byte) (*Signatu
 // Verify verifies that the signature is valid for this message, public key and random value.
 func Verify(pubKey *PublicKey, r *PublicRand, message []byte, sig *Signature) error {
 	h := hash(message)
-	return verifyHash(pubKey, r, h, sig)
+	pubkeyBytes := schnorr.SerializePubKey(pubKey)
+	return verifyHash(pubkeyBytes, r, h, sig)
 }
 
 // Verify verifies that the signature is valid for this hashed message, public key and random value.
 // Based on unexported schnorrVerify of btcd.
-func verifyHash(pubKey *PublicKey, r *PublicRand, hash [32]byte, sig *Signature) error {
+func verifyHash(pubKeyBytes []byte, r *PublicRand, hash [32]byte, sig *Signature) error {
+	// Step 2.
+	//
+	// P = lift_x(int(pk))
+	//
+	// Fail if P is not a point on the curve
+	pubKey, err := schnorr.ParsePubKey(pubKeyBytes)
+	if err != nil {
+		return err
+	}
+
 	// Fail if P is not a point on the curve
 	if !pubKey.IsOnCurve() {
 		str := "pubkey point is not on curve"

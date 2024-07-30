@@ -1,25 +1,23 @@
 package datagen
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/btcstaking"
-	bbn "github.com/babylonchain/babylon/types"
-	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 const (
@@ -47,36 +45,35 @@ func CreateNFinalityProviders(r *rand.Rand, t *testing.T, n int) []*bstypes.Fina
 }
 
 func GenRandomFinalityProviderWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bstypes.FinalityProvider, error) {
-	bbnSK, _, err := GenRandomSecp256k1KeyPair(r)
-	if err != nil {
-		return nil, err
-	}
-	return GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, bbnSK)
+	return GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, GenRandomAccount().GetAddress())
 }
 
-func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKey, bbnSK cryptotypes.PrivKey) (*bstypes.FinalityProvider, error) {
+func GenRandomCommission(r *rand.Rand) sdkmath.LegacyDec {
+	return sdkmath.LegacyNewDecWithPrec(int64(RandomInt(r, 49)+1), 2) // [1/100, 50/100]
+}
+
+func GenRandomDescription(r *rand.Rand) *stakingtypes.Description {
+	return &stakingtypes.Description{Moniker: GenRandomHexStr(r, 10)}
+}
+
+func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKey, fpAddr sdk.AccAddress) (*bstypes.FinalityProvider, error) {
 	// commission
-	commission := sdkmath.LegacyNewDecWithPrec(int64(RandomInt(r, 49)+1), 2) // [1/100, 50/100]
+	commission := GenRandomCommission(r)
 	// description
-	description := stakingtypes.Description{Moniker: GenRandomHexStr(r, 10)}
+	description := GenRandomDescription(r)
 	// key pairs
 	btcPK := btcSK.PubKey()
 	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
-	bbnPK := bbnSK.PubKey()
-	secp256k1PK, ok := bbnPK.(*secp256k1.PubKey)
-	if !ok {
-		return nil, fmt.Errorf("failed to assert bbnPK to *secp256k1.PubKey")
-	}
 	// pop
-	pop, err := bstypes.NewPoP(bbnSK, btcSK)
+	pop, err := bstypes.NewPoPBTC(fpAddr, btcSK)
 	if err != nil {
 		return nil, err
 	}
 	return &bstypes.FinalityProvider{
-		Description: &description,
+		Description: description,
 		Commission:  &commission,
-		BabylonPk:   secp256k1PK,
 		BtcPk:       bip340PK,
+		Addr:        fpAddr.String(),
 		Pop:         pop,
 	}, nil
 }
@@ -85,55 +82,35 @@ func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.Priva
 func GenRandomBTCDelegation(
 	r *rand.Rand,
 	t *testing.T,
+	btcNet *chaincfg.Params,
 	fpBTCPKs []bbn.BIP340PubKey,
 	delSK *btcec.PrivateKey,
 	covenantSKs []*btcec.PrivateKey,
+	covenantPks []*btcec.PublicKey,
 	covenantQuorum uint32,
 	slashingAddress string,
 	startHeight, endHeight, totalSat uint64,
 	slashingRate sdkmath.LegacyDec,
 	slashingChangeLockTime uint16,
 ) (*bstypes.BTCDelegation, error) {
-	net := &chaincfg.SimNetParams
 	delPK := delSK.PubKey()
 	delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(delPK)
-	// list of covenant PKs
-	covenantBTCPKs := []*btcec.PublicKey{}
-	for _, covenantSK := range covenantSKs {
-		covenantBTCPKs = append(covenantBTCPKs, covenantSK.PubKey())
-	}
-	// list of finality provider PKs
-	fpPKs := []*btcec.PublicKey{}
-	for _, fpBTCPK := range fpBTCPKs {
-		fpPK, err := fpBTCPK.ToBTCPK()
-		if err != nil {
-			return nil, err
-		}
-		fpPKs = append(fpPKs, fpPK)
-	}
 
-	// BTC delegation Babylon key pairs
-	bbnSK, bbnPK, err := GenRandomSecp256k1KeyPair(r)
+	// list of finality provider PKs
+	fpPKs, err := bbn.NewBTCPKsFromBIP340PKs(fpBTCPKs)
 	if err != nil {
 		return nil, err
 	}
-	secp256k1PK, ok := bbnPK.(*secp256k1.PubKey)
-	if !ok {
-		return nil, fmt.Errorf("failed to assert bbnPK to *secp256k1.PubKey")
-	}
-	// pop
-	pop, err := bstypes.NewPoP(bbnSK, delSK)
-	if err != nil {
-		return nil, err
-	}
+	staker := GenRandomAccount()
+
 	// staking/slashing tx
 	stakingSlashingInfo := GenBTCStakingSlashingInfo(
 		r,
 		t,
-		net,
+		btcNet,
 		delSK,
 		fpPKs,
-		covenantBTCPKs,
+		covenantPks,
 		covenantQuorum,
 		uint16(endHeight-startHeight),
 		int64(totalSat),
@@ -145,22 +122,20 @@ func GenRandomBTCDelegation(
 	slashingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.SlashingPathSpendInfo()
 	require.NoError(t, err)
 
-	stakingMsgTx := stakingSlashingInfo.StakingTx
-
-	// delegator sig
+	// delegator pre-signs slashing tx
 	delegatorSig, err := stakingSlashingInfo.SlashingTx.Sign(
-		stakingMsgTx,
+		stakingSlashingInfo.StakingTx,
 		StakingOutIdx,
 		slashingPathSpendInfo.GetPkScriptPath(),
 		delSK,
 	)
 	require.NoError(t, err)
 
-	// covenant sigs
+	// covenant pre-signs slashing tx
 	covenantSigs, err := GenCovenantAdaptorSigs(
 		covenantSKs,
 		fpPKs,
-		stakingMsgTx,
+		stakingSlashingInfo.StakingTx,
 		slashingPathSpendInfo.GetPkScriptPath(),
 		stakingSlashingInfo.SlashingTx,
 	)
@@ -169,8 +144,12 @@ func GenRandomBTCDelegation(
 	serializedStakingTx, err := bbn.SerializeBTCTx(stakingSlashingInfo.StakingTx)
 	require.NoError(t, err)
 	w := uint16(100) // TODO: parameterise w
+
+	pop, err := bstypes.NewPoPBTC(sdk.MustAccAddressFromBech32(staker.Address), delSK)
+	require.NoError(t, err)
+
 	del := &bstypes.BTCDelegation{
-		BabylonPk:        secp256k1PK,
+		StakerAddr:       staker.Address,
 		BtcPk:            delBTCPK,
 		Pop:              pop,
 		FpBtcPkList:      fpBTCPKs,
@@ -196,10 +175,10 @@ func GenRandomBTCDelegation(
 	unbondingSlashingInfo := GenBTCUnbondingSlashingInfo(
 		r,
 		t,
-		net,
+		btcNet,
 		delSK,
 		fpPKs,
-		covenantBTCPKs,
+		covenantPks,
 		covenantQuorum,
 		wire.NewOutPoint(&stkTxHash, StakingOutIdx),
 		w+1,
@@ -229,7 +208,7 @@ func GenRandomBTCDelegation(
 	covUnbondingSlashingSigs, covUnbondingSigs, err := unbondingSlashingInfo.GenCovenantSigs(
 		covenantSKs,
 		fpPKs,
-		stakingMsgTx,
+		stakingSlashingInfo.StakingTx,
 		unbondingPathSpendInfo.GetPkScriptPath(),
 	)
 	require.NoError(t, err)

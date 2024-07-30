@@ -21,12 +21,12 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/test/e2e/util"
-	blc "github.com/babylonchain/babylon/x/btclightclient/types"
-	ct "github.com/babylonchain/babylon/x/checkpointing/types"
-	etypes "github.com/babylonchain/babylon/x/epoching/types"
-	mtypes "github.com/babylonchain/babylon/x/monitor/types"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/test/e2e/util"
+	blc "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	ct "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	etypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	mtypes "github.com/babylonlabs-io/babylon/x/monitor/types"
+	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]byte, error) {
@@ -175,7 +175,7 @@ func (n *NodeConfig) QueryListSnapshots() ([]*cmtabcitypes.Snapshot, error) {
 // 	return contractsResponse.Contracts, nil
 // }
 
-func (n *NodeConfig) QueryRawCheckpoint(epoch uint64) (*ct.RawCheckpointWithMeta, error) {
+func (n *NodeConfig) QueryRawCheckpoint(epoch uint64) (*ct.RawCheckpointWithMetaResponse, error) {
 	path := fmt.Sprintf("babylon/checkpointing/v1/raw_checkpoint/%d", epoch)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
@@ -206,7 +206,7 @@ func (n *NodeConfig) QueryRawCheckpoints(pagination *query.PageRequest) (*ct.Que
 	return &checkpointingResponse, nil
 }
 
-func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfo, error) {
+func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfoResponse, error) {
 	bz, err := n.QueryGRPCGateway("babylon/btclightclient/v1/baseheader", url.Values{})
 	require.NoError(n.t, err)
 
@@ -218,7 +218,7 @@ func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfo, error) {
 	return blcResponse.Header, nil
 }
 
-func (n *NodeConfig) QueryTip() (*blc.BTCHeaderInfo, error) {
+func (n *NodeConfig) QueryTip() (*blc.BTCHeaderInfoResponse, error) {
 	bz, err := n.QueryGRPCGateway("babylon/btclightclient/v1/tip", url.Values{})
 	require.NoError(n.t, err)
 

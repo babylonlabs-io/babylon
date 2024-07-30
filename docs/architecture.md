@@ -108,7 +108,7 @@ an alarm will be raised by the monitor program.
 A standalone program that submits
 Babylon checkpoints to Bitcoin as
 Bitcoin transactions embedding data
-utilising the `OP_RETURN` Bitcoin script code.
+utilizing the `OP_RETURN` Bitcoin script code.
 
 ### [Vigilante Reporter](https://github.com/babylonchain/vigilante)
 
@@ -187,7 +187,7 @@ finality provider's private keys.
 
 ### [Covenant Emulator](https://github.com/babylonchain/covenant-emulator)
 
-A standalone program utilised by the covenant emulation committee members.
+A standalone program utilized by the covenant emulation committee members.
 It emulates [covenant](https://covenants.info) functionality by monitoring
 for pending staking requests,
 verifying their contents, and
@@ -210,14 +210,14 @@ this function. Most notably:
 
 - [Cosmos Relayer](https://github.com/cosmos/relayer):
   A fully functional relayer written in Go.
-- [Babylon Relayer](https://github.com/babylonchain/babylon-relayer/):
+- [Babylon Relayer](https://github.com/babylonlabs-io/babylon-relayer/):
   A wrapper of the Cosmos Relayer that can maintain a one-way IBC connection.
   It is recommended to be used when the Consumer Zone does not deploy the
   Babylon smart contract.
 - [Hermes Relayer](https://github.com/informalsystems/hermes):
   A fully functional relayer written in Rust.
 
-### [Babylon Contract](https://github.com/babylonchain/babylon-contract)
+### [Babylon Contract](https://github.com/babylonlabs-io/babylon-contract)
 
 A [CosmWasm](https://cosmwasm.com/) smart contract intended for
 deployment in a Consumer Zone.

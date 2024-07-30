@@ -1,17 +1,21 @@
 package datagen
 
 import (
+	"context"
 	"math/big"
 	"math/rand"
+	"testing"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	bbn "github.com/babylonchain/babylon/types"
-	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btclightclientk "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/stretchr/testify/require"
 )
 
 type RetargetInfo struct {
@@ -270,6 +274,34 @@ func GenRandomValidChainStartingFrom(
 	return headers
 }
 
+// GenRandBtcChainInsertingInKeeper generates random BTCHeaderInfo and insert its headers
+// into the keeper store.
+// this function must not be used at difficulty adjustment boundaries, as then
+// difficulty adjustment calculation will fail
+func GenRandBtcChainInsertingInKeeper(
+	t *testing.T,
+	r *rand.Rand,
+	k *btclightclientk.Keeper,
+	ctx context.Context,
+	initialHeight uint64,
+	chainLength uint64,
+) (*btclightclienttypes.BTCHeaderInfo, *BTCHeaderPartialChain) {
+	genesisHeader := NewBTCHeaderChainWithLength(r, initialHeight, 0, 1)
+	genesisHeaderInfo := genesisHeader.GetChainInfo()[0]
+	k.SetBaseBTCHeader(ctx, *genesisHeaderInfo)
+	randomChain := NewBTCHeaderChainFromParentInfo(
+		r,
+		genesisHeaderInfo,
+		uint32(chainLength),
+	)
+	err := k.InsertHeaders(ctx, randomChain.ChainToBytes())
+	require.NoError(t, err)
+	tip := k.GetTipInfo(ctx)
+	randomChainTipInfo := randomChain.GetTipInfo()
+	require.True(t, tip.Eq(randomChainTipInfo))
+	return genesisHeaderInfo, randomChain
+}
+
 func ChainToInfoChain(
 	chain []*wire.BlockHeader,
 	initialHeaderNumber uint64,
@@ -299,6 +331,42 @@ func ChainToInfoChain(
 		)
 
 		infoChain[i] = headerInfo
+
+		totalDifficulty = headerTotalDifficulty
+	}
+
+	return infoChain
+}
+
+func ChainToInfoResponseChain(
+	chain []*wire.BlockHeader,
+	initialHeaderNumber uint64,
+	initialHeaderTotalWork sdkmath.Uint,
+) []*btclightclienttypes.BTCHeaderInfoResponse {
+	if len(chain) == 0 {
+		return []*btclightclienttypes.BTCHeaderInfoResponse{}
+	}
+
+	infoChain := make([]*btclightclienttypes.BTCHeaderInfoResponse, len(chain))
+
+	totalDifficulty := initialHeaderTotalWork
+
+	for i, header := range chain {
+		headerWork := btclightclienttypes.CalcHeaderWork(header)
+		headerTotalDifficulty := btclightclienttypes.CumulativeWork(headerWork, totalDifficulty)
+		hash := header.BlockHash()
+		headerBytes := bbn.NewBTCHeaderBytesFromBlockHeader(header)
+		headerHash := bbn.NewBTCHeaderHashBytesFromChainhash(&hash)
+		headerNumber := initialHeaderNumber + uint64(i)
+
+		headerInfoResponse := btclightclienttypes.NewBTCHeaderInfoResponse(
+			&headerBytes,
+			&headerHash,
+			headerNumber,
+			&headerTotalDifficulty,
+		)
+
+		infoChain[i] = headerInfoResponse
 
 		totalDifficulty = headerTotalDifficulty
 	}

@@ -1,6 +1,7 @@
 package checkpointing
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"slices"
@@ -12,27 +13,29 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/babylonchain/babylon/x/checkpointing/keeper"
-	ckpttypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 const defaultInjectedTxIndex = 0
 
 type ProposalHandler struct {
 	logger                        log.Logger
-	ckptKeeper                    *keeper.Keeper
-	valStore                      baseapp.ValidatorStore
+	ckptKeeper                    CheckpointingKeeper
 	txVerifier                    baseapp.ProposalTxVerifier
 	defaultPrepareProposalHandler sdk.PrepareProposalHandler
 	defaultProcessProposalHandler sdk.ProcessProposalHandler
 }
 
-func NewProposalHandler(logger log.Logger, ckptKeeper *keeper.Keeper, mp mempool.Mempool, txVerifier baseapp.ProposalTxVerifier) *ProposalHandler {
+func NewProposalHandler(
+	logger log.Logger,
+	ckptKeeper CheckpointingKeeper,
+	mp mempool.Mempool,
+	txVerifier baseapp.ProposalTxVerifier,
+) *ProposalHandler {
 	defaultHandler := baseapp.NewDefaultProposalHandler(mp, txVerifier)
 	return &ProposalHandler{
 		logger:                        logger,
 		ckptKeeper:                    ckptKeeper,
-		valStore:                      ckptKeeper,
 		txVerifier:                    txVerifier,
 		defaultPrepareProposalHandler: defaultHandler.PrepareProposalHandler(),
 		defaultProcessProposalHandler: defaultHandler.ProcessProposalHandler(),
@@ -42,7 +45,6 @@ func NewProposalHandler(logger log.Logger, ckptKeeper *keeper.Keeper, mp mempool
 func (h *ProposalHandler) SetHandlers(bApp *baseapp.BaseApp) {
 	bApp.SetPrepareProposal(h.PrepareProposal())
 	bApp.SetProcessProposal(h.ProcessProposal())
-	bApp.SetPreBlocker(h.PreBlocker())
 }
 
 // PrepareProposal examines the vote extensions from the previous block, accumulates
@@ -75,7 +77,7 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 		}
 
 		// 1. verify the validity of vote extensions (2/3 majority is achieved)
-		err = baseapp.ValidateVoteExtensions(ctx, h.valStore, req.Height, ctx.ChainID(), req.LocalLastCommit)
+		err = baseapp.ValidateVoteExtensions(ctx, h.ckptKeeper, req.Height, ctx.ChainID(), req.LocalLastCommit)
 		if err != nil {
 			return proposalRes, fmt.Errorf("invalid vote extensions: %w", err)
 		}
@@ -111,7 +113,7 @@ func (h *ProposalHandler) buildCheckpointFromVoteExtensions(ctx sdk.Context, epo
 		return nil, err
 	}
 	ckpt := ckpttypes.NewCheckpointWithMeta(ckpttypes.NewCheckpoint(epoch, prevBlockID), ckpttypes.Accumulating)
-	validBLSSigs := h.getValidBlsSigs(ctx, extendedVotes)
+	validBLSSigs := h.getValidBlsSigs(ctx, extendedVotes, prevBlockID)
 	vals := h.ckptKeeper.GetValidatorSet(ctx, epoch)
 	totalPower := h.ckptKeeper.GetTotalVotingPower(ctx, epoch)
 	// TODO: maybe we don't need to verify BLS sigs anymore as they are already
@@ -154,7 +156,7 @@ func (h *ProposalHandler) buildCheckpointFromVoteExtensions(ctx sdk.Context, epo
 	return ckpt, nil
 }
 
-func (h *ProposalHandler) getValidBlsSigs(ctx sdk.Context, extendedVotes []abci.ExtendedVoteInfo) []ckpttypes.BlsSig {
+func (h *ProposalHandler) getValidBlsSigs(ctx sdk.Context, extendedVotes []abci.ExtendedVoteInfo, blockHash []byte) []ckpttypes.BlsSig {
 	k := h.ckptKeeper
 	validBLSSigs := make([]ckpttypes.BlsSig, 0, len(extendedVotes))
 	for _, voteInfo := range extendedVotes {
@@ -168,6 +170,14 @@ func (h *ProposalHandler) getValidBlsSigs(ctx sdk.Context, extendedVotes []abci.
 			h.logger.Error("failed to unmarshal vote extension", "err", err)
 			continue
 		}
+
+		if !bytes.Equal(*ve.BlockHash, blockHash) {
+			h.logger.Error("the BLS sig is signed over unexpected block hash",
+				"expected", hex.EncodeToString(blockHash),
+				"got", ve.BlockHash.String())
+			continue
+		}
+
 		sig := ve.ToBLSSig()
 
 		if err := k.VerifyBLSSig(ctx, sig); err != nil {
@@ -276,10 +286,10 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			}
 
 			// 3. verify the validity of the vote extension (2/3 majority is achieved)
-			err = baseapp.ValidateVoteExtensions(ctx, h.valStore, req.Height, ctx.ChainID(), *injectedCkpt.ExtendedCommitInfo)
+			err = baseapp.ValidateVoteExtensions(ctx, h.ckptKeeper, req.Height, ctx.ChainID(), *injectedCkpt.ExtendedCommitInfo)
 			if err != nil {
 				// the returned err will lead to panic as something very wrong happened during consensus
-				return resReject, err
+				return resReject, nil
 			}
 
 			// 4. rebuild the checkpoint from vote extensions and compare it with
@@ -318,14 +328,14 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 	}
 }
 
-// PreBlocker extracts the checkpoint from the injected tx and stores it in
-// the application
+// PreBlocker extracts the checkpoint from the injected tx and stores it in the application
 // no more validation is needed as it is already done in ProcessProposal
+// NOTE: this is appended to the existing PreBlocker in BabylonApp at app.go
 func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 	return func(ctx sdk.Context, req *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
-		k := h.ckptKeeper
 		res := &sdk.ResponsePreBlock{}
 
+		k := h.ckptKeeper
 		epoch := k.GetEpoch(ctx)
 		// BLS signatures are sent in the last block of the previous epoch,
 		// so they should be aggregated in the first block of the new epoch

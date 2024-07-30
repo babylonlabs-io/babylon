@@ -7,8 +7,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	btcstakingtypes "github.com/babylonchain/babylon/x/btcstaking/types"
-	finalitytypes "github.com/babylonchain/babylon/x/finality/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 
 	comettypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -29,12 +29,12 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 
-	appparams "github.com/babylonchain/babylon/app/params"
-	bbn "github.com/babylonchain/babylon/types"
-	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.Command {
@@ -75,7 +75,7 @@ Example:
 					genesisCliArgs.CovenantPKs, genesisCliArgs.CovenantQuorum,
 					genesisCliArgs.SlashingAddress, genesisCliArgs.MinSlashingTransactionFeeSat,
 					genesisCliArgs.MinCommissionRate, genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveFinalityProviders,
-					genesisCliArgs.MinUnbondingTime, genesisCliArgs.MinPubRand, genesisCliArgs.InflationRateChange,
+					genesisCliArgs.MinUnbondingTime, genesisCliArgs.MinUnbondingRate, genesisCliArgs.InflationRateChange,
 					genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded,
 					genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit, genesisCliArgs.VoteExtensionEnableHeight)
 			} else if network == "mainnet" {
@@ -138,7 +138,7 @@ func PrepareGenesis(
 
 	// btclightclient genesis
 	btclightclientGenState := btclightclienttypes.DefaultGenesis()
-	btclightclientGenState.BaseBtcHeader = genesisParams.BtclightclientBaseBtcHeader
+	btclightclientGenState.BtcHeaders = []*btclightclienttypes.BTCHeaderInfo{&genesisParams.BtclightclientBaseBtcHeader}
 	btclightclientGenState.Params = genesisParams.BtclightclientParams
 	genesisState[btclightclienttypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(btclightclientGenState)
 
@@ -154,7 +154,8 @@ func PrepareGenesis(
 
 	// btcstaking module genesis
 	btcstakingGenState := btcstakingtypes.DefaultGenesis()
-	btcstakingGenState.Params = genesisParams.BtcstakingParams
+	// here we can start only from single params, which will be initially labelled version 0
+	btcstakingGenState.Params = []*btcstakingtypes.Params{&genesisParams.BtcstakingParams}
 	genesisState[btcstakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(btcstakingGenState)
 
 	// finality module genesis
@@ -240,8 +241,7 @@ type GenesisParams struct {
 func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint64,
 	btcFinalizationTimeout uint64, checkpointTag string, epochInterval uint64, baseBtcHeaderHex string,
 	baseBtcHeaderHeight uint64, allowedReporters []string, covenantPKs []string, covenantQuorum uint32, slashingAddress string, minSlashingFee int64,
-	minCommissionRate sdkmath.LegacyDec, slashingRate sdkmath.LegacyDec, maxActiveFinalityProviders uint32, minUnbondingTime uint16,
-	minPubRand uint64, inflationRateChange float64,
+	minCommissionRate sdkmath.LegacyDec, slashingRate sdkmath.LegacyDec, maxActiveFinalityProviders uint32, minUnbondingTime uint16, minUnbondingRate sdkmath.LegacyDec, inflationRateChange float64,
 	inflationMin float64, inflationMax float64, goalBonded float64,
 	blocksPerYear uint64, genesisTime time.Time, blockGasLimit int64, voteExtensionEnableHeight int64) GenesisParams {
 
@@ -286,9 +286,14 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	genParams.MintParams.GoalBonded = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", goalBonded))
 
 	genParams.GovParams = govv1.DefaultParams()
+	// TODO investigate those numbers
 	genParams.GovParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(
 		genParams.NativeCoinMetadatas[0].Base,
 		sdkmath.NewInt(2_500_000_000),
+	))
+	genParams.GovParams.ExpeditedMinDeposit = sdk.NewCoins(sdk.NewCoin(
+		genParams.NativeCoinMetadatas[0].Base,
+		sdkmath.NewInt(10_000_000_000),
 	))
 
 	genParams.CrisisConstantFee = sdk.NewCoin(
@@ -339,12 +344,12 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	genParams.BtcstakingParams.SlashingRate = slashingRate
 	genParams.BtcstakingParams.MaxActiveFinalityProviders = maxActiveFinalityProviders
 	genParams.BtcstakingParams.MinUnbondingTime = uint32(minUnbondingTime)
+	genParams.BtcstakingParams.MinUnbondingRate = minUnbondingRate
 	if err := genParams.BtcstakingParams.Validate(); err != nil {
 		panic(err)
 	}
 
 	genParams.FinalityParams = finalitytypes.DefaultParams()
-	genParams.FinalityParams.MinPubRand = minPubRand
 	if err := genParams.FinalityParams.Validate(); err != nil {
 		panic(err)
 	}

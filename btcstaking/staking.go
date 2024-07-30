@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
@@ -14,7 +15,7 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 )
 
 // buildSlashingTxFromOutpoint builds a valid slashing transaction by creating a new Bitcoin transaction that slashes a portion
@@ -44,7 +45,7 @@ func buildSlashingTxFromOutpoint(
 	}
 
 	// Validate slashing rate
-	if !IsSlashingRateValid(slashingRate) {
+	if !IsRateValid(slashingRate) {
 		return nil, ErrInvalidSlashingRate
 	}
 
@@ -214,7 +215,7 @@ func IsSimpleTransfer(tx *wire.MsgTx) error {
 	return nil
 }
 
-// ValidateSlashingTx performs basic checks on a slashing transaction:
+// validateSlashingTx performs basic checks on a slashing transaction:
 // - the slashing transaction is not nil.
 // - the slashing transaction has exactly one input.
 // - the slashing transaction is non-replaceable.
@@ -225,7 +226,7 @@ func IsSimpleTransfer(tx *wire.MsgTx) error {
 //   - neither of the outputs are considered dust.
 //
 // - the min fee for slashing tx is preserved
-func ValidateSlashingTx(
+func validateSlashingTx(
 	slashingTx *wire.MsgTx,
 	slashingAddress btcutil.Address,
 	slashingRate sdkmath.LegacyDec,
@@ -329,6 +330,7 @@ func ValidateSlashingTx(
 }
 
 // CheckTransactions validates all relevant data of slashing and funding transaction.
+// - both transactions are valid from pov of BTC rules
 // - funding transaction has output committing to the provided script
 // - slashing transaction is valid
 // - slashing transaction input hash is pointing to funding transaction hash
@@ -344,13 +346,25 @@ func CheckTransactions(
 	slashingChangeLockTime uint16,
 	net *chaincfg.Params,
 ) error {
+	if slashingTx == nil || fundingTransaction == nil {
+		return fmt.Errorf("slashing and funding transactions must not be nil")
+	}
+
+	if err := blockchain.CheckTransactionSanity(btcutil.NewTx(slashingTx)); err != nil {
+		return fmt.Errorf("slashing transaction does not obey BTC rules: %w", err)
+	}
+
+	if err := blockchain.CheckTransactionSanity(btcutil.NewTx(fundingTransaction)); err != nil {
+		return fmt.Errorf("funding transaction does not obey BTC rules: %w", err)
+	}
+
 	// Check if slashing tx min fee is valid
 	if slashingTxMinFee <= 0 {
 		return fmt.Errorf("slashing transaction min fee must be larger than 0")
 	}
 
 	// Check if slashing rate is in the valid range (0,1)
-	if !IsSlashingRateValid(slashingRate) {
+	if !IsRateValid(slashingRate) {
 		return ErrInvalidSlashingRate
 	}
 
@@ -360,7 +374,7 @@ func CheckTransactions(
 
 	stakingOutput := fundingTransaction.TxOut[fundingOutputIdx]
 	// 3. Check if slashing transaction is valid
-	if err := ValidateSlashingTx(
+	if err := validateSlashingTx(
 		slashingTx,
 		slashingAddress,
 		slashingRate,
@@ -575,28 +589,6 @@ func VerifyTransactionSigWithOutput(
 		return fmt.Errorf("funding output must not be nil")
 	}
 
-	return VerifyTransactionSigWithOutputData(
-		transaction,
-		fundingOutput.PkScript,
-		fundingOutput.Value,
-		script,
-		pubKey,
-		signature,
-	)
-}
-
-// VerifyTransactionSigWithOutputData verifies that:
-// - provided transaction has exactly one input
-// - provided signature is valid schnorr BIP340 signature
-// - provided signature is signing whole provided transaction	(SigHashDefault)
-func VerifyTransactionSigWithOutputData(
-	transaction *wire.MsgTx,
-	fundingOutputPkScript []byte,
-	fundingOutputValue int64,
-	script []byte,
-	pubKey *btcec.PublicKey,
-	signature []byte) error {
-
 	if transaction == nil {
 		return fmt.Errorf("tx to verify not be nil")
 	}
@@ -612,8 +604,8 @@ func VerifyTransactionSigWithOutputData(
 	tapLeaf := txscript.NewBaseTapLeaf(script)
 
 	inputFetcher := txscript.NewCannedPrevOutputFetcher(
-		fundingOutputPkScript,
-		fundingOutputValue,
+		fundingOutput.PkScript,
+		fundingOutput.Value,
 	)
 
 	sigHashes := txscript.NewTxSigHashes(transaction, inputFetcher)
@@ -641,14 +633,13 @@ func VerifyTransactionSigWithOutputData(
 	return nil
 }
 
-// EncVerifyTransactionSigWithOutputData verifies that:
+// EncVerifyTransactionSigWithOutput verifies that:
 // - provided transaction has exactly one input
 // - provided signature is valid adaptor signature
 // - provided signature is signing whole provided transaction (SigHashDefault)
-func EncVerifyTransactionSigWithOutputData(
+func EncVerifyTransactionSigWithOutput(
 	transaction *wire.MsgTx,
-	fundingOutputPkScript []byte,
-	fundingOutputValue int64,
+	fundingOut *wire.TxOut,
 	script []byte,
 	pubKey *btcec.PublicKey,
 	encKey *asig.EncryptionKey,
@@ -669,8 +660,8 @@ func EncVerifyTransactionSigWithOutputData(
 	tapLeaf := txscript.NewBaseTapLeaf(script)
 
 	inputFetcher := txscript.NewCannedPrevOutputFetcher(
-		fundingOutputPkScript,
-		fundingOutputValue,
+		fundingOut.PkScript,
+		fundingOut.Value,
 	)
 
 	sigHashes := txscript.NewTxSigHashes(transaction, inputFetcher)

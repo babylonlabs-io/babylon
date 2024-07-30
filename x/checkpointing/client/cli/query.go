@@ -12,7 +12,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -80,12 +80,12 @@ func CmdRawCheckpoint() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			epoch_num, err := strconv.ParseUint(args[0], 10, 64)
+			epochNum, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
 
-			params := types.NewQueryRawCheckpointRequest(epoch_num)
+			params := types.NewQueryRawCheckpointRequest(epochNum)
 			res, err := queryClient.RawCheckpoint(context.Background(), params)
 			if err != nil {
 				return err

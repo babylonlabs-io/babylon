@@ -6,7 +6,7 @@ import "gogoproto/gogo.proto";
 import "cosmos/staking/v1beta1/tx.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/epoching/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/epoching/types";
 
 // Epoch is a structure that contains the metadata of an epoch
 message Epoch {
@@ -22,17 +22,14 @@ message Epoch {
   // finalised. The last_block_time field is nil in the epoch's beginning, and
   // is set upon the end of this epoch.
   google.protobuf.Timestamp last_block_time = 4 [ (gogoproto.stdtime) = true ];
-  // app_hash_root is the Merkle root of all AppHashs in this epoch
-  // It will be used for proving a block is in an epoch
-  bytes app_hash_root = 5;
   // sealer is the last block of the sealed epoch
   // sealer_app_hash points to the sealer but stored in the 1st header
   // of the next epoch
-  bytes sealer_app_hash = 6;
+  bytes sealer_app_hash = 5;
   // sealer_block_hash is the hash of the sealer
   // the validator set has generated a BLS multisig on the hash,
   // i.e., hash of the last block in the epoch
-  bytes sealer_block_hash = 7;
+  bytes sealer_block_hash = 6;
 }
 
 // QueuedMessage is a message that can change the validator set and is delayed
@@ -57,13 +54,6 @@ message QueuedMessage {
   }
 }
 
-// QueuedMessageList is a message that contains a list of staking-related
-// messages queued for an epoch
-message QueuedMessageList {
-  uint64 epoch_number = 1;
-  repeated QueuedMessage msgs = 2;
-}
-
 // BondState is the bond state of a validator or delegation
 enum BondState {
   // CREATED is when the validator/delegation has been created
@@ -78,14 +68,14 @@ enum BondState {
   REMOVED = 4;
 }
 
-// ValStateUpdate is a messages that records a state update of a validator
+// ValStateUpdate is a message that records a state update of a validator
 message ValStateUpdate {
   BondState state = 1;
   uint64 block_height = 2;
   google.protobuf.Timestamp block_time = 3 [ (gogoproto.stdtime) = true ];
 }
 
-// ValidatorLifecycle is a message that records records the lifecycle of
+// ValidatorLifecycle is a message that records the lifecycle of
 // a validator
 message ValidatorLifecycle {
   string val_addr = 1;
@@ -102,7 +92,7 @@ message DelegationStateUpdate {
   google.protobuf.Timestamp block_time = 5 [ (gogoproto.stdtime) = true ];
 }
 
-// ValidatorLifecycle is a message that records records the lifecycle of
+// ValidatorLifecycle is a message that records the lifecycle of
 // a delegation
 message DelegationLifecycle {
   string del_addr = 1;

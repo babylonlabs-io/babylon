@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/test/e2e/util"
+	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
+	"github.com/babylonlabs-io/babylon/test/e2e/util"
 )
 
 func InitChain(id, dataDir string, nodeConfigs []*NodeConfig, votingPeriod, expeditedVotingPeriod time.Duration, forkHeight int) (*Chain, error) {
@@ -42,7 +42,7 @@ func InitChain(id, dataDir string, nodeConfigs []*NodeConfig, votingPeriod, expe
 	}
 
 	for _, node := range chain.nodes {
-		_, _ = app.CreateClientConfig(node.chain.chainMeta.Id, "test", node.configDir())
+		_, _ = appkeepers.CreateClientConfig(node.chain.chainMeta.Id, "test", node.configDir())
 	}
 
 	return chain.export(), nil

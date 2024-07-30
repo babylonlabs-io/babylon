@@ -8,16 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/p2p"
 	cmttypes "github.com/cometbft/cometbft/types"
-	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -25,7 +21,6 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
-	simsutils "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -36,12 +31,12 @@ import (
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/viper"
 
-	babylonApp "github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/cmd/babylond/cmd"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/privval"
-	"github.com/babylonchain/babylon/test/e2e/util"
-	bbn "github.com/babylonchain/babylon/types"
+	babylonApp "github.com/babylonlabs-io/babylon/app"
+	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/privval"
+	"github.com/babylonlabs-io/babylon/test/e2e/util"
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 type internalNode struct {
@@ -252,6 +247,7 @@ func (n *internalNode) export() *Node {
 		ConfigDir:     n.configDir(),
 		Mnemonic:      n.mnemonic,
 		PublicAddress: addr.String(),
+		WalletName:    n.keyInfo.Name,
 		SecretKey:     n.privateKey,
 		PublicKey:     pub.Bytes(),
 		PeerId:        n.peerId,
@@ -298,28 +294,13 @@ func (n *internalNode) init() error {
 	config.SetRoot(n.configDir())
 	config.Moniker = n.moniker
 
-	appOptions := make(simsutils.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = n.configDir()
-	appOptions["btc-config.network"] = string(bbn.BtcSimnet)
-
-	privSigner := &babylonApp.PrivSigner{WrappedPV: &privval.WrappedFilePV{Key: n.consensusKey}}
-	// Create a temp app to get the default genesis state
-	tempApp := babylonApp.NewBabylonApp(
-		log.NewNopLogger(),
-		dbm.NewMemDB(),
-		nil,
-		true,
-		map[int64]bool{},
-		0,
-		privSigner,
-		appOptions,
-		[]wasmkeeper.Option{})
-
 	appGenesis, err := n.getAppGenesis()
 	if err != nil {
 		return err
 	}
 
+	// Create a temp app to get the default genesis state
+	tempApp := babylonApp.NewTmpBabylonApp()
 	appState, err := json.MarshalIndent(tempApp.DefaultGenesis(), "", " ")
 	if err != nil {
 		return fmt.Errorf("failed to JSON encode app genesis state: %w", err)

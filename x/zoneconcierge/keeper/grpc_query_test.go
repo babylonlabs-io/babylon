@@ -4,18 +4,18 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/app"
-	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/app"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 type chainInfo struct {
@@ -424,6 +424,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		hooks.AfterEpochEnds(ctx, epoch.EpochNumber)
 		err := hooks.AfterRawCheckpointFinalized(ctx, epoch.EpochNumber)
 		require.NoError(t, err)
+		checkpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epoch.EpochNumber).AnyTimes()
 
 		// check if the chain info of this epoch is recorded or not
 		resp, err := zcKeeper.FinalizedChainsInfo(ctx, &zctypes.QueryFinalizedChainsInfoRequest{ChainIds: chainIDs, Prove: true})

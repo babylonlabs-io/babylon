@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonchain/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -19,6 +19,9 @@ func (k Keeper) IndexBlock(ctx context.Context) {
 		Finalized: false,
 	}
 	k.SetBlock(ctx, ib)
+
+	// record the block height
+	types.RecordLastHeight(uint64(headerInfo.Height))
 }
 
 func (k Keeper) SetBlock(ctx context.Context, block *types.IndexedBlock) {

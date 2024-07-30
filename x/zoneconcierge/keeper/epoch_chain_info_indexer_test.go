@@ -7,8 +7,8 @@ import (
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/app"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
 )
 
 func FuzzEpochChainInfoIndexer(f *testing.F) {
@@ -39,7 +39,8 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		hooks.AfterEpochEnds(ctx, epochNum)
 
 		// check if the chain info of this epoch is recorded or not
-		chainInfo, err := zcKeeper.GetEpochChainInfo(ctx, czChainID, epochNum)
+		chainInfoWithProof, err := zcKeeper.GetEpochChainInfo(ctx, czChainID, epochNum)
+		chainInfo := chainInfoWithProof.ChainInfo
 		require.NoError(t, err)
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
 		require.Equal(t, numHeaders, chainInfo.TimestampedHeadersCount)

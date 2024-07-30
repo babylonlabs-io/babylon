@@ -4,11 +4,11 @@ import (
 	"math/rand"
 	"testing"
 
-	bbn "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	"github.com/babylonchain/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,7 +28,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
 		state := blcKeeper.HeadersState(ctx)
 
 		// operations no empty state
@@ -62,7 +62,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		initchainHeight := datagen.RandomInt(r, 50) + 10
 
 		// populate the state with random chain
-		_, chain := genRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,

@@ -9,10 +9,9 @@ The Finality module is responsible for handling finality votes, maintaining the
 finalization status of blocks, and identifying equivocating finality providers
 in the finalization rounds. This includes:
 
-- handling requests for committing EOTS public randomness from finality
-  providers;
 - handling requests for submitting finality votes from finality providers;
-- maintaining the finalization status of blocks; and
+- maintaining the finalization status of blocks;
+- identifying sluggish finality providers; and
 - maintaining equivocation evidences of culpable finality providers.
 
 ## Table of contents
@@ -20,13 +19,10 @@ in the finalization rounds. This includes:
 - [Table of contents](#table-of-contents)
 - [Concepts](#concepts)
 - [States](#states)
-  - [Parameters](#parameters)
-  - [Public randomness](#public-randomness)
   - [Finality votes](#finality-votes)
   - [Indexed blocks with finalization status](#indexed-blocks-with-finalization-status)
   - [Equivocation evidences](#equivocation-evidences)
 - [Messages](#messages)
-  - [MsgCommitPubRandList](#msgcommitpubrandlist)
   - [MsgAddFinalitySig](#msgaddfinalitysig)
   - [MsgUpdateParams](#msgupdateparams)
 - [EndBlocker](#endblocker)
@@ -79,17 +75,21 @@ adversarial finality providers.
 **Interaction between finality providers and the Finality module.** In order to
 participate in the finality voting round, an active finality provider with BTC
 delegations (as specified in the [BTC Staking module](../btcstaking/README.md))
-needs to interact with the Finality module as follows:
+needs to interact with Babylon as follows:
 
-- **Committing EOTS public randomness.** The finality provider proactively
-  commits a list of *EOTS public randomness* for future heights to the Finality
-  module. EOTS ensures that given an EOTS public randomness, a signer can only
-  sign a single message. Otherwise, anyone can extract the signer's secret key
-  by using two EOTS signatures on different messages, the corresponding EOTS
-  public randomness, and the signer's public key.
-- **Submitting EOTS signatures.** Upon a new block, if the finality provider has
-  committed an EOTS public randomness at this height, then it submits an EOTS
-  signature w.r.t. the committed EOTS public randomness to the Finality module.
+- **Committing EOTS master public randomness.** The finality provider needs to
+  generate a pair of EOTS master secret/public randomness, and commit the master
+  public randomness when registering itself to Babylon. The EOTS master
+  secret/public randomness allows to derive a EOTS secret/public randomness
+  deterministically for each given height, respectively. Babylon further
+  requires the epoch of the finality provider registration to be finalized by
+  BTC timestamping before the registered finality provider can submit finality
+  signatures. This ensures that each finality provider has a unique public
+  randomness for each height, and that if the finality provider submits two
+  finality signatures over two conflicting blocks, anyone can extract the
+  finality provider's secret key using EOTS.
+- **Submitting EOTS signatures.** Upon a new block, the finality provider
+  submits an EOTS signature w.r.t. the derived public randomness at that height.
   The Finality module will verify the EOTS signature, and check if there are
   known EOTS signatures on conflicting blocks from this finality provider. If
   yes, then this constitutes an equivocation, and the Finality module will save
@@ -106,39 +106,6 @@ transactions to the Bitcoin network.
 
 The Finality module maintains the following KV stores.
 
-### Parameters
-
-The [parameter storage](./keeper/params.go) maintains the Finality module's
-parameters. The Finality module's parameters are represented as a `Params`
-[object](../../proto/babylon/finality/v1/params.proto) defined as follows:
-
-```protobuf
-// Params defines the parameters for the module.
-message Params {
-  option (gogoproto.goproto_stringer) = false;
-
-  // min_pub_rand is the minimum number of public randomness each 
-  // message should commit
-  uint64 min_pub_rand = 1;
-}
-```
-
-### Public randomness
-
-The [public randomness storage](./keeper/public_randomness.go) maintains the
-list of EOTS public randomness that each finality provider commits to Babylon.
-The key is the finality provider's Bitcoin secp256k1 public key concatenated
-with the block height, and the value is a `SchnorrPubRand`
-[object](../../types/btc_schnorr_pub_rand.go) representing the EOTS public
-randomness that this finality provider commits at this height. The
-`SchnorrPubRand` is a point on the secp256k1 curve, and is defined as a 32-byte
-array in the implementation.
-
-```go
-type SchnorrPubRand []byte
-const SchnorrPubRandLen = 32
-```
-
 ### Finality votes
 
 The [finality vote storage](./keeper/votes.go) maintains the finality votes of
@@ -147,9 +114,9 @@ finality provider's Bitcoin secp256k1 public key, and the value is a
 `SchnorrEOTSSig` [object](../../types/btc_schnorr_eots.go) representing an EOTS
 signature. Here, the EOTS signature is signed over a block's height and
 `AppHash` by the finality provider, using the private randomness corresponding
-to the EOTS public randomness it commits to at the block's height. The EOTS
-signature serves as a finality vote on this block from this finality provider.
-It is a 32-byte scalar and is defined as a 32-byte array in the implementation.
+to the EOTS public randomness derived using the block height. The EOTS signature
+serves as a finality vote on this block from this finality provider. It is a
+32-byte scalar and is defined as a 32-byte array in the implementation.
 
 ```go
 type SchnorrEOTSSig []byte
@@ -191,12 +158,13 @@ secp256k1 secret key, as per EOTS's extractability property.
 // Evidence is the evidence that a finality provider has signed finality
 // signatures with correct public randomness on two conflicting Babylon headers
 message Evidence {
-    // fp_btc_pk is the BTC Pk of the finality provider that casts this vote
-    bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // fp_btc_pk is the BTC PK of the finality provider that casts this vote
+    bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
     // block_height is the height of the conflicting blocks
     uint64 block_height = 2;
-    // pub_rand is the public randomness the finality provider has committed to
-    bytes pub_rand = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
+    // master_pub_rand is the master public randomness the finality provider has committed to
+    // encoded as a base58 string
+    string master_pub_rand = 3;
     // canonical_app_hash is the AppHash of the canonical block
     bytes canonical_app_hash = 4;
     // fork_app_hash is the AppHash of the fork block
@@ -205,12 +173,64 @@ message Evidence {
     // where finality signature is an EOTS signature, i.e.,
     // the `s` in a Schnorr signature `(r, s)`
     // `r` is the public randomness that is already committed by the finality provider
-    bytes canonical_finality_sig = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
+    bytes canonical_finality_sig = 6 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrEOTSSig" ];
     // fork_finality_sig is the finality signature to the fork block
     // where finality signature is an EOTS signature
-    bytes fork_finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
+    bytes fork_finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrEOTSSig" ];
 }
 ```
+
+### Signing info tracker
+
+Information about finality providers' voting histories is tracked through
+`FinalityProviderSigningInfo`. It is indexed in the store as follows:
+
+- `FinalityProviderSigningTracker: BTCPublicKey -> ProtoBuffer
+  (FinalityProviderSigningInfo)`
+
+- FinalityProviderMissedBlockBitmap: `BTCPublicKey -> VarInt(didMiss)` (varint
+  is a number encoding format)
+
+The first mapping allows us to easily look at the recent signing info for a
+finality provider based on its public key, while the second mapping
+(`MissedBlocksBitArray`) acts as a bit-array of size `SignedBlocksWindow`
+that tells us if the finality provider missed the block for a given index in
+the bit-array. The index in the bit-array is given as little-endian uint64.
+The result is a varint that takes on 0 or 1, where 0 indicates the finality
+provider did not miss (did sign) the corresponding block, and 1 indicates
+they missed the block (did not sign).
+
+Note that the `MissedBlocksBitArray` is not explicitly initialized up-front.
+Keys are added as the first `SignedBlocksWindow` blocks
+for a newly active finality provider. The `SignedBlocksWindow` parameter
+defines the size (number of blocks) of the sliding window used to track
+finality provider liveness.
+
+The information stored for tracking finality provider liveness is as follows:
+
+```protobuf
+// FinalityProviderSigningInfo defines a finality provider's signing info 
+// for monitoring their liveness activity.
+message FinalityProviderSigningInfo {
+  // fp_btc_pk is the BTC PK of the finality provider that casts this finality
+  // signature
+  bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  // start_height is the block height at which finality provider become active
+  int64 start_height = 2;
+  // missed_blocks_counter defines a counter to avoid unnecessary array reads.
+  // Note that `Sum(MissedBlocksBitArray)` always equals `MissedBlocksCounter`.
+  int64 missed_blocks_counter = 3;
+}
+```
+
+Note that the value of `missed_blocks_counter` in the
+`FinalityProviderSigningInfo` is the same as the summed value of the
+corresponding missed block bitmap. This is to avoid unnecessary bitmap reads.
+Also note that the judgement of whether a finality signature is `missed` or not
+is irreversible.
+
+The two maps will be updated upon `BeginBlock` which will be described in a
+later section.
 
 ## Messages
 
@@ -219,45 +239,6 @@ message formats are defined at
 [proto/babylon/finality/v1/tx.proto](../../proto/babylon/finality/v1/tx.proto).
 The message handlers are defined at
 [x/finality/keeper/msg_server.go](./keeper/msg_server.go).
-
-### MsgCommitPubRandList
-
-The `MsgCommitPubRandList` message is used for committing a list of EOTS public
-randomness that will be used by a finality provider in the future. It is
-typically submitted by a finality provider via the [finality
-provider](https://github.com/babylonchain/finality-provider) program.
-
-```protobuf
-// MsgCommitPubRandList defines a message for committing a list of public randomness for EOTS
-message MsgCommitPubRandList {
-    option (cosmos.msg.v1.signer) = "signer";
-
-    string signer = 1;
-    // fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
-    bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-    // start_height is the start block height of the list of public randomness
-    uint64 start_height = 3;
-    // pub_rand_list is the list of public randomness
-    repeated bytes pub_rand_list = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
-    // sig is the signature on (start_height || pub_rand_list) signed by 
-    // SK corresponding to fp_btc_pk. This prevents others to commit public
-    // randomness on behalf of fp_btc_pk
-    // TODO: another option is to restrict signer to correspond to fp_btc_pk. This restricts
-    // the tx submitter to be the holder of fp_btc_pk. Decide this later
-    bytes sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-}
-```
-
-Upon `MsgCommitPubRandList`, a Babylon node will execute as follows:
-
-1. Ensure the message contains at least `MinPubRand` number of EOTS public
-   randomness, where `MinPubRand` is defined in the module parameters.
-2. Ensure the finality provider has been registered in Babylon.
-3. Ensure the list of EOTS public randomness does not overlap with existing EOTS
-   public randomness that this finality provider previously committed before.
-4. Verify the Schnorr signature over the list of public randomness signed by the
-   finality provider.
-5. Store the list of EOTS public randomness to the public randomness storage.
 
 ### MsgAddFinalitySig
 
@@ -273,7 +254,7 @@ message MsgAddFinalitySig {
 
     string signer = 1;
     // fp_btc_pk is the BTC PK of the finality provider that casts this vote
-    bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
     // block_height is the height of the voted block
     uint64 block_height = 3;
     // block_app_hash is the AppHash of the voted block
@@ -282,7 +263,7 @@ message MsgAddFinalitySig {
     // where finality signature is an EOTS signature, i.e.,
     // the `s` in a Schnorr signature `(r, s)`
     // `r` is the public randomness that is already committed by the finality provider
-    bytes finality_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
+    bytes finality_sig = 5 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrEOTSSig" ];
 }
 ```
 
@@ -290,18 +271,20 @@ Upon `MsgAddFinalitySig`, a Babylon node will execute as follows:
 
 1. Ensure the finality provider has been registered in Babylon and is not
    slashed.
-2. Ensure the finality provider has voting power at this height.
-3. Ensure the finality provider has not previously casted the same vote.
-4. Ensure the finality provider has a committed EOTS public randomness at this
-   height.
-5. Verify the EOTS signature w.r.t. the committed EOTS public randomness.
-6. If the voted block's `AppHash` is different from the canonical block at the
+2. Ensure the epoch that the finality provider is registered has been finalized
+   by BTC timestamping.
+3. Ensure the finality provider has voting power at this height.
+4. Ensure the finality provider has not previously casted the same vote.
+5. Derive the EOTS public randomness using the committed EOTS master public
+   randomness and the block height.
+6. Verify the EOTS signature w.r.t. the derived EOTS public randomness.
+7. If the voted block's `AppHash` is different from the canonical block at the
    same height known by the Babylon node, then this means the finality provider
    has voted for a fork. Babylon node buffers this finality vote to the evidence
    storage. If the finality provider has also voted for the block at the same
    height, then this finality provider is slashed, i.e., its voting power is
    removed, equivocation evidence is recorded, and a slashing event is emitted.
-7. If the voted block's `AppHash` is same as that of the canonical block at the
+8. If the voted block's `AppHash` is same as that of the canonical block at the
    same height, then this means the finality provider has voted for the
    canonical block, and the Babylon node will store this finality vote to the
    finality vote storage. If the finality provider has also voted for a fork
@@ -355,11 +338,12 @@ been >=1 active BTC delegations)*:
          distribute rewards to the voted finality providers and their BTC
          delegations. Otherwise, none of the subsequent blocks shall be
          finalized and the loop breaks here.
+3. Update the finality provider's voting history and label it to `sluggish`
+   if the number of block it has missed has passed the parameterized threshold.
 
 ## Events
 
-The Finality module defines the `EventSlashedFinalityProvider` event. It is
-emitted when a finality provider is slashed due to equivocation.
+The Finality module defines the following events.
 
 ```protobuf
 // EventSlashedFinalityProvider is the event emitted when a finality provider is slashed
@@ -368,6 +352,21 @@ message EventSlashedFinalityProvider {
     // evidence is the evidence that the finality provider double signs
     Evidence evidence = 1;
 }
+
+// EventSluggishFinalityProviderDetected is the event emitted when a finality provider is
+// detected as sluggish
+message EventSluggishFinalityProviderDetected {
+// public_key is the BTC public key of the finality provider
+string public_key = 1;
+}
+
+// EventSluggishFinalityProviderReverted is the event emitted when a sluggish finality
+// provider is no longer considered sluggish
+message EventSluggishFinalityProviderReverted {
+// public_key is the BTC public key of the finality provider
+string public_key = 1;
+}
+
 ```
 
 ## Queries

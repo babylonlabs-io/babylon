@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/babylonchain/babylon/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 )
 
 func main() {
@@ -63,7 +63,7 @@ func main() {
 		panic("persistent peers are required, separated by commas")
 	}
 
-	if err := os.MkdirAll(dataDir, 0o755); err != nil {
+	if err := os.MkdirAll(dataDir, 0750); err != nil {
 		panic(err)
 	}
 

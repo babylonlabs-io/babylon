@@ -2,23 +2,29 @@ package types
 
 import (
 	"fmt"
-
 	"sort"
 
 	"cosmossdk.io/math"
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 )
 
 func (fp *FinalityProvider) IsSlashed() bool {
 	return fp.SlashedBabylonHeight > 0
 }
 
+func (fp *FinalityProvider) IsSluggish() bool {
+	return fp.Sluggish
+}
+
 func (fp *FinalityProvider) ValidateBasic() error {
 	// ensure fields are non-empty and well-formatted
-	if fp.BabylonPk == nil {
-		return fmt.Errorf("empty Babylon public key")
+	if _, err := sdk.AccAddressFromBech32(fp.Addr); err != nil {
+		return fmt.Errorf("invalid finality provider address: %s - %w", fp.Addr, err)
 	}
 	if fp.BtcPk == nil {
 		return fmt.Errorf("empty BTC public key")
@@ -30,28 +36,18 @@ func (fp *FinalityProvider) ValidateBasic() error {
 		return fmt.Errorf("empty proof of possession")
 	}
 	if err := fp.Pop.ValidateBasic(); err != nil {
-		return err
+		return fmt.Errorf("PoP is not valid: %w", err)
 	}
 
 	return nil
 }
 
-// FilterTopNFinalityProviders returns the top n finality providers based on VotingPower.
-func FilterTopNFinalityProviders(fps []*FinalityProviderWithMeta, n uint32) []*FinalityProviderWithMeta {
-	numFps := uint32(len(fps))
-
-	// if the given finality provider set is no bigger than n, no need to do anything
-	if numFps <= n {
-		return fps
-	}
-
-	// Sort the finality providers slice, from higher to lower voting power
+// SortFinalityProviders sorts the finality providers slice,
+// from higher to lower voting power
+func SortFinalityProviders(fps []*FinalityProviderDistInfo) {
 	sort.SliceStable(fps, func(i, j int) bool {
-		return fps[i].VotingPower > fps[j].VotingPower
+		return fps[i].TotalVotingPower > fps[j].TotalVotingPower
 	})
-
-	// Return the top n elements
-	return fps[:n]
 }
 
 func ExistsDup(btcPKs []bbn.BIP340PubKey) bool {
@@ -82,8 +78,10 @@ func NewSignatureInfo(pk *bbn.BIP340PubKey, sig *bbn.BIP340Signature) *Signature
 // the order of covenant adaptor signatures will follow the reverse lexicographical order
 // of signing public keys, in order to be used as tx witness
 func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSignatures, params *Params) ([]*asig.AdaptorSignature, error) {
-	// construct the map where key is the covenant PK and value is this
-	// covenant member's adaptor signature encrypted by the given finality provider's PK
+	// construct the map where
+	// - key is the covenant PK, and
+	// - value is this covenant member's adaptor signature encrypted
+	//   by the given finality provider's PK
 	covSigsMap := map[string]*asig.AdaptorSignature{}
 	for _, covSigs := range covSigsList {
 		// find the adaptor signature at the corresponding finality provider's index

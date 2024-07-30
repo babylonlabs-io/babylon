@@ -21,13 +21,13 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/babylonchain/babylon/privval"
-	bbn "github.com/babylonchain/babylon/types"
-	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	blctypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/privval"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	blctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 
-	"github.com/babylonchain/babylon/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/test/e2e/util"
 )
 
 // NodeConfig is a confiuration for the node supplied from the test runner
@@ -314,7 +314,7 @@ func updateBtcLightClientGenesis(blcGenState *blctypes.GenesisState) {
 		panic(err)
 	}
 	work := blctypes.CalcWork(&baseBtcHeader)
-	blcGenState.BaseBtcHeader = *blctypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)
+	blcGenState.BtcHeaders = []*blctypes.BTCHeaderInfo{blctypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)}
 }
 
 func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.GenesisState) {
@@ -369,7 +369,7 @@ func updateCheckpointingGenesis(c *internalChain) func(*checkpointingtypes.Genes
 			proofOfPossession, err := privval.BuildPoP(node.consensusKey.PrivKey, node.consensusKey.BlsPrivKey)
 
 			if err != nil {
-				panic("It should be possible to build proof of possesion from validator private keys")
+				panic("It should be possible to build proof of possession from validator private keys")
 			}
 
 			valPubKey, err := cryptocodec.FromCmtPubKeyInterface(node.consensusKey.PubKey)

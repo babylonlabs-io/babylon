@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path/filepath"
 
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -11,7 +12,7 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 )
 
 // DefaultGenesis returns the default Capability genesis state
@@ -54,7 +55,7 @@ func NewGenesisKey(delAddr sdk.ValAddress, blsPubKey *bls12381.PublicKey, pop *P
 }
 
 func LoadGenesisKeyFromFile(filePath string) (*GenesisKey, error) {
-	genBlsJSONBytes, err := os.ReadFile(filePath)
+	genBlsJSONBytes, err := os.ReadFile(filepath.Clean(filePath))
 	if err != nil {
 		return nil, err
 	}

@@ -9,14 +9,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 const (
@@ -39,7 +38,8 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		NewCreateFinalityProvicerCmd(),
+		NewCreateFinalityProviderCmd(),
+		NewEditFinalityProviderCmd(),
 		NewCreateBTCDelegationCmd(),
 		NewAddCovenantSigsCmd(),
 		NewBTCUndelegateCmd(),
@@ -49,10 +49,10 @@ func GetTxCmd() *cobra.Command {
 	return cmd
 }
 
-func NewCreateFinalityProvicerCmd() *cobra.Command {
+func NewCreateFinalityProviderCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-finality-provider [babylon_pk] [btc_pk] [pop]",
-		Args:  cobra.ExactArgs(3),
+		Use:   "create-finality-provider [btc_pk] [pop]",
+		Args:  cobra.ExactArgs(2),
 		Short: "Create a finality provider",
 		Long: strings.TrimSpace(
 			`Create a finality provider.`, // TODO: example
@@ -85,33 +85,22 @@ func NewCreateFinalityProvicerCmd() *cobra.Command {
 				return err
 			}
 
-			// get Babylon PK
-			babylonPKBytes, err := hex.DecodeString(args[0])
-			if err != nil {
-				return err
-			}
-			var babylonPK secp256k1.PubKey
-			if err := babylonPK.Unmarshal(babylonPKBytes); err != nil {
-				return err
-			}
-
 			// get BTC PK
-			btcPK, err := bbn.NewBIP340PubKeyFromHex(args[1])
+			btcPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
 			if err != nil {
 				return err
 			}
 
 			// get PoP
-			pop, err := types.NewPoPFromHex(args[2])
+			pop, err := types.NewPoPBTCFromHex(args[1])
 			if err != nil {
 				return err
 			}
 
 			msg := types.MsgCreateFinalityProvider{
-				Signer:      clientCtx.FromAddress.String(),
+				Addr:        clientCtx.FromAddress.String(),
 				Description: &description,
 				Commission:  &rate,
-				BabylonPk:   &babylonPK,
 				BtcPk:       btcPK,
 				Pop:         pop,
 			}
@@ -133,10 +122,76 @@ func NewCreateFinalityProvicerCmd() *cobra.Command {
 	return cmd
 }
 
+func NewEditFinalityProviderCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "edit-finality-provider [btc_pk]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Edit an existing finality provider",
+		Long: strings.TrimSpace(
+			`Edit an existing finality provider.`, // TODO: example
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			fs := cmd.Flags()
+
+			// get description
+			moniker, _ := fs.GetString(FlagMoniker)
+			identity, _ := fs.GetString(FlagIdentity)
+			website, _ := fs.GetString(FlagWebsite)
+			security, _ := fs.GetString(FlagSecurityContact)
+			details, _ := fs.GetString(FlagDetails)
+			description := stakingtypes.NewDescription(
+				moniker,
+				identity,
+				website,
+				security,
+				details,
+			)
+			// get commission
+			rateStr, _ := fs.GetString(FlagCommissionRate)
+			rate, err := sdkmath.LegacyNewDecFromStr(rateStr)
+			if err != nil {
+				return err
+			}
+
+			// get BTC PK
+			btcPK, err := hex.DecodeString(args[1])
+			if err != nil {
+				return err
+			}
+
+			msg := types.MsgEditFinalityProvider{
+				Addr:        clientCtx.FromAddress.String(),
+				BtcPk:       btcPK,
+				Description: &description,
+				Commission:  &rate,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
+
+	fs := cmd.Flags()
+	fs.String(FlagMoniker, "", "The finality provider's (optional) moniker")
+	fs.String(FlagWebsite, "", "The finality provider's (optional) website")
+	fs.String(FlagSecurityContact, "", "The finality provider's (optional) security contact email")
+	fs.String(FlagDetails, "", "The finality provider's (optional) details")
+	fs.String(FlagIdentity, "", "The (optional) identity signature (ex. UPort or Keybase)")
+	fs.String(FlagCommissionRate, "0", "The initial commission rate percentage")
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
 func NewCreateBTCDelegationCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-btc-delegation [babylon_pk] [btc_pk] [pop] [staking_tx_info] [fp_pk] [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig]",
-		Args:  cobra.ExactArgs(14),
+		Use:   "create-btc-delegation [btc_pk] [pop_hex] [staking_tx_info] [fp_pk] [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig]",
+		Args:  cobra.ExactArgs(13),
 		Short: "Create a BTC delegation",
 		Long: strings.TrimSpace(
 			`Create a BTC delegation.`, // TODO: example
@@ -147,97 +202,86 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				return err
 			}
 
-			// get Babylon PK
-			babylonPKBytes, err := hex.DecodeString(args[0])
-			if err != nil {
-				return err
-			}
-			var babylonPK secp256k1.PubKey
-			if err := babylonPK.Unmarshal(babylonPKBytes); err != nil {
-				return err
-			}
-
 			// staker pk
-			btcPK, err := bbn.NewBIP340PubKeyFromHex(args[1])
+			btcPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
 
 			if err != nil {
 				return err
 			}
 
 			// get PoP
-			pop, err := types.NewPoPFromHex(args[2])
+			pop, err := types.NewPoPBTCFromHex(args[1])
 			if err != nil {
 				return err
 			}
 
 			// get staking tx info
-			stakingTxInfo, err := btcctypes.NewTransactionInfoFromHex(args[3])
+			stakingTxInfo, err := btcctypes.NewTransactionInfoFromHex(args[2])
 			if err != nil {
 				return err
 			}
 
 			// TODO: Support multiple finality providers
 			// get finality provider PK
-			fpPK, err := bbn.NewBIP340PubKeyFromHex(args[4])
+			fpPK, err := bbn.NewBIP340PubKeyFromHex(args[3])
 			if err != nil {
 				return err
 			}
 
 			// get staking time
-			stakingTime, err := parseLockTime(args[5])
+			stakingTime, err := parseLockTime(args[4])
 			if err != nil {
 				return err
 			}
 
-			stakingValue, err := parseBtcAmount(args[6])
+			stakingValue, err := parseBtcAmount(args[5])
 			if err != nil {
 				return err
 			}
 
 			// get slashing tx
-			slashingTx, err := types.NewBTCSlashingTxFromHex(args[7])
+			slashingTx, err := types.NewBTCSlashingTxFromHex(args[6])
 			if err != nil {
 				return err
 			}
 
 			// get delegator sig on slashing tx
-			delegatorSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[8])
+			delegatorSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[7])
 			if err != nil {
 				return err
 			}
 
 			// get unbonding tx
-			_, unbondingTxBytes, err := bbn.NewBTCTxFromHex(args[9])
+			_, unbondingTxBytes, err := bbn.NewBTCTxFromHex(args[8])
 			if err != nil {
 				return err
 			}
 
 			// get unbonding slashing tx
-			unbondingSlashingTx, err := types.NewBTCSlashingTxFromHex(args[10])
+			unbondingSlashingTx, err := types.NewBTCSlashingTxFromHex(args[9])
 			if err != nil {
 				return err
 			}
 
 			// get staking time
-			unbondingTime, err := parseLockTime(args[11])
+			unbondingTime, err := parseLockTime(args[10])
 			if err != nil {
 				return err
 			}
 
-			unbondingValue, err := parseBtcAmount(args[12])
+			unbondingValue, err := parseBtcAmount(args[11])
 			if err != nil {
 				return err
 			}
 
 			// get delegator sig on unbonding slashing tx
-			delegatorUnbondingSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[13])
+			delegatorUnbondingSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[12])
 			if err != nil {
 				return err
 			}
 
 			msg := types.MsgCreateBTCDelegation{
-				Signer:                        clientCtx.FromAddress.String(),
-				BabylonPk:                     &babylonPK,
+				StakerAddr:                    clientCtx.FromAddress.String(),
 				BtcPk:                         btcPK,
 				FpBtcPkList:                   []bbn.BIP340PubKey{*fpPK},
 				Pop:                           pop,

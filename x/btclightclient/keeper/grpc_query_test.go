@@ -4,12 +4,12 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	"github.com/babylonchain/babylon/x/btclightclient/types"
+	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
 
 func FuzzHashesQuery(f *testing.F) {
@@ -34,7 +34,7 @@ func FuzzHashesQuery(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
 
 		// Test nil request
 		resp, err := blcKeeper.Hashes(ctx, nil)
@@ -59,7 +59,7 @@ func FuzzHashesQuery(f *testing.F) {
 			t.Errorf("Invalid key led to a nil error")
 		}
 
-		baseHeader, chain := genRandomChain(
+		baseHeader, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -133,7 +133,7 @@ func FuzzContainsQuery(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
 
 		// Test nil input
 		resp, err := blcKeeper.Contains(ctx, nil)
@@ -145,7 +145,7 @@ func FuzzContainsQuery(f *testing.F) {
 		}
 
 		// Generate a random chain of headers and insert it into storage
-		_, chain := genRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -200,7 +200,7 @@ func FuzzMainChainQuery(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
 
 		// Test nil input
 		resp, err := blcKeeper.MainChain(ctx, nil)
@@ -226,7 +226,7 @@ func FuzzMainChainQuery(f *testing.F) {
 		}
 
 		// Generate a random chain of headers and insert it into storage
-		base, chain := genRandomChain(
+		base, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -300,7 +300,7 @@ func FuzzMainChainQuery(f *testing.F) {
 				}
 				if !resp.Headers[i].Eq(mainchain[idx]) {
 					t.Errorf("%t", reverse)
-					t.Errorf("Response does not match mainchain. Expected %s got %s", mainchain[idx].Hash, resp.Headers[i].Hash)
+					t.Errorf("Response does not match mainchain. Expected %s got %s", mainchain[idx].Hash, resp.Headers[i].HashHex)
 				}
 				mcIdx += 1
 			}
@@ -327,7 +327,7 @@ func FuzzTipQuery(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
 
 		// Test nil input
 		resp, err := blcKeeper.Tip(ctx, nil)
@@ -339,7 +339,7 @@ func FuzzTipQuery(f *testing.F) {
 		}
 
 		// Generate a random chain of headers and insert it into storage
-		_, chain := genRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -356,7 +356,7 @@ func FuzzTipQuery(f *testing.F) {
 			t.Fatalf("Valid input led to nil response")
 		}
 		if !resp.Header.Eq(chain.GetTipInfo()) {
-			t.Errorf("Invalid header returned. Expected %s, got %s", chain.GetTipInfo().Hash, resp.Header.Hash)
+			t.Errorf("Invalid header returned. Expected %s, got %s", chain.GetTipInfo().Hash, resp.Header.HeaderHex)
 		}
 	})
 }
@@ -373,7 +373,7 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
 
 		// Test nil input
 		resp, err := blcKeeper.BaseHeader(ctx, nil)
@@ -385,7 +385,7 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 		}
 
 		// Generate a random chain of headers and insert it into storage
-		base, _ := genRandomChain(
+		base, _ := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -402,7 +402,7 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 			t.Fatalf("Valid input led to nil response")
 		}
 		if !resp.Header.Eq(base) {
-			t.Errorf("Invalid header returned. Expected %s, got %s", base.Hash, resp.Header.Hash)
+			t.Errorf("Invalid header returned. Expected %s, got %s", base.Hash, resp.Header.HashHex)
 		}
 	})
 }

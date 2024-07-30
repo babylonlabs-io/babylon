@@ -2,18 +2,20 @@ package helper
 
 import (
 	"bytes"
+	"fmt"
+	"sort"
 	"testing"
 
 	"cosmossdk.io/core/header"
+	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	protoio "github.com/cosmos/gogoproto/io"
-
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 
 	"cosmossdk.io/math"
 	"github.com/cosmos/gogoproto/proto"
@@ -24,11 +26,11 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/babylonchain/babylon/app"
-	appparams "github.com/babylonchain/babylon/app/params"
-	btcstakingtypes "github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/babylonchain/babylon/x/epoching/keeper"
-	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/app"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/x/epoching/keeper"
+	"github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 // Helper is a structure which wraps the entire app and exposes functionalities for testing the epoching module
@@ -54,7 +56,7 @@ func NewHelper(t *testing.T) *Helper {
 
 // NewHelperWithValSet is same as NewHelper, except that it creates a set of validators
 // the privSigner is the 0th validator in valSet
-func NewHelperWithValSet(t *testing.T, valSet *datagen.GenesisValidators, privSigner *app.PrivSigner) *Helper {
+func NewHelperWithValSet(t *testing.T, valSet *datagen.GenesisValidators, privSigner *appkeepers.PrivSigner) *Helper {
 	// generate the genesis account
 	signerPubKey := privSigner.WrappedPV.Key.PubKey
 	acc := authtypes.NewBaseAccount(signerPubKey.Address().Bytes(), &cosmosed.PubKey{Key: signerPubKey.Bytes()}, 0, 0)
@@ -90,11 +92,68 @@ func NewHelperWithValSet(t *testing.T, valSet *datagen.GenesisValidators, privSi
 	}
 }
 
+// NewHelperWithValSetNoSigner is same as NewHelperWithValSet, except that the privSigner is not
+// included in the validator set
+func NewHelperWithValSetNoSigner(t *testing.T, valSet *datagen.GenesisValidators, privSigner *appkeepers.PrivSigner) *Helper {
+	// generate the genesis account
+	signerPubKey := privSigner.WrappedPV.Key.PubKey
+	acc := authtypes.NewBaseAccount(signerPubKey.Address().Bytes(), &cosmosed.PubKey{Key: signerPubKey.Bytes()}, 0, 0)
+	privSigner.WrappedPV.Key.DelegatorAddress = acc.Address
+	// set a random validator address instead of the privSigner's
+	valSet.Keys[0].ValidatorAddress = datagen.GenRandomValidatorAddress().String()
+	// ensure the genesis account has a sufficient amount of tokens
+	balance := banktypes.Balance{
+		Address: acc.GetAddress().String(),
+		Coins:   sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdk.DefaultPowerReduction.MulRaw(10000000))),
+	}
+	GenAccs := []authtypes.GenesisAccount{acc}
+
+	// setup the app and ctx
+	app := app.SetupWithGenesisValSet(t, valSet.GetGenesisKeys(), privSigner, GenAccs, balance)
+	ctx := app.BaseApp.NewContext(false).WithBlockHeight(1).WithHeaderInfo(header.Info{Height: 1}) // NOTE: height is 1
+
+	// get necessary subsets of the app/keeper
+	epochingKeeper := app.EpochingKeeper
+	querier := keeper.Querier{Keeper: epochingKeeper}
+	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
+	types.RegisterQueryServer(queryHelper, querier)
+	queryClient := types.NewQueryClient(queryHelper)
+	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
+
+	return &Helper{
+		t,
+		ctx,
+		app,
+		msgSrvr,
+		queryClient,
+		GenAccs,
+		valSet,
+	}
+}
+
 func (h *Helper) NoError(err error) {
 	require.NoError(h.t, err)
 }
 
-func (h *Helper) getExtendedVotesFromValSet(epochNum, height uint64, blockHash checkpointingtypes.BlockHash, valSet *datagen.GenesisValidators) ([]abci.ExtendedVoteInfo, error) {
+func (h *Helper) Error(err error) {
+	require.Error(h.t, err)
+}
+
+func (h *Helper) EqualError(err, expected error) {
+	require.EqualError(h.t, err, expected.Error())
+}
+
+func (h *Helper) getExtendedVotesFromValSet(
+	epochNum uint64,
+	height uint64,
+	blockHash checkpointingtypes.BlockHash,
+	valSet *datagen.GenesisValidators,
+	numInvalidVotes int,
+) ([]abci.ExtendedVoteInfo, error) {
+	if len(valSet.Keys) < numInvalidVotes {
+		return nil, fmt.Errorf("number of invalid votes is more than the validator set size")
+	}
+
 	valPrivKey := valSet.GetValPrivKeys()
 	blsPrivKeys := valSet.GetBLSPrivKeys()
 	genesisKeys := valSet.GetGenesisKeys()
@@ -122,6 +181,10 @@ func (h *Helper) getExtendedVotesFromValSet(epochNum, height uint64, blockHash c
 			Round:     int64(0),
 			ChainId:   h.App.ChainID(),
 		}
+		if i < numInvalidVotes {
+			cve.Extension = []byte("doesn't matter")
+		}
+
 		var cveBuffer bytes.Buffer
 		err = protoio.NewDelimitedWriter(&cveBuffer).WriteMsg(&cve)
 		if err != nil {
@@ -152,6 +215,15 @@ func (h *Helper) getExtendedVotesFromValSet(epochNum, height uint64, blockHash c
 		}
 		extendedVotes = append(extendedVotes, veInfo)
 	}
+
+	// below are copied from https://github.com/cosmos/cosmos-sdk/blob/v0.50.6/baseapp/abci_utils_test.go
+	// Since v0.50.5 Cosmos SDK enforces certain order for vote extensions
+	sort.SliceStable(extendedVotes, func(i, j int) bool {
+		if extendedVotes[i].Validator.Power == extendedVotes[j].Validator.Power {
+			return bytes.Compare(extendedVotes[i].Validator.Address, extendedVotes[j].Validator.Address) == -1
+		}
+		return extendedVotes[i].Validator.Power > extendedVotes[j].Validator.Power
+	})
 
 	return extendedVotes, nil
 }

@@ -23,8 +23,8 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	flag "github.com/spf13/pflag"
 
-	"github.com/babylonchain/babylon/privval"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/privval"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 // validator struct to define the fields of the validator
@@ -56,7 +56,7 @@ func parseAndValidateValidatorJSON(cdc codec.Codec, path string) (validator, err
 		MinSelfDelegation   string          `json:"min-self-delegation"`
 	}
 
-	contents, err := os.ReadFile(path)
+	contents, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		return validator{}, err
 	}

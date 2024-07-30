@@ -4,14 +4,15 @@ import (
 	"context"
 	"math/rand"
 	"testing"
+	"time"
 
 	"cosmossdk.io/core/header"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	keepertest "github.com/babylonchain/babylon/testutil/keeper"
-	bbn "github.com/babylonchain/babylon/types"
-	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/babylonchain/babylon/x/finality/keeper"
-	"github.com/babylonchain/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/x/finality/keeper"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -72,10 +73,8 @@ func FuzzCommitPubRandList(f *testing.F) {
 		_, err = ms.CommitPubRandList(ctx, msg)
 		require.NoError(t, err)
 		// query last public randomness and assert
-		actualHeight, actualPubRand, err := fKeeper.GetLastPubRand(ctx, fpBTCPK)
-		require.NoError(t, err)
-		require.Equal(t, startHeight+numPubRand-1, actualHeight)
-		require.Equal(t, msg.PubRandList[len(msg.PubRandList)-1].MustMarshal(), actualPubRand.MustMarshal())
+		lastPrCommit := fKeeper.GetLastPubRandCommit(ctx, fpBTCPK)
+		require.NotNil(t, lastPrCommit)
 
 		// Case 4: commit a pubrand list with overlap of the existing pubrand in KVStore and it should fail
 		overlappedStartHeight := startHeight + numPubRand - 1 - datagen.RandomInt(r, 5)
@@ -90,11 +89,6 @@ func FuzzCommitPubRandList(f *testing.F) {
 		require.NoError(t, err)
 		_, err = ms.CommitPubRandList(ctx, msg)
 		require.NoError(t, err)
-		// query last public randomness and assert
-		actualHeight, actualPubRand, err = fKeeper.GetLastPubRand(ctx, fpBTCPK)
-		require.NoError(t, err)
-		require.Equal(t, nonOverlappedStartHeight+numPubRand-1, actualHeight)
-		require.Equal(t, msg.PubRandList[len(msg.PubRandList)-1].MustMarshal(), actualPubRand.MustMarshal())
 	})
 }
 
@@ -122,17 +116,16 @@ func FuzzAddFinalitySig(f *testing.F) {
 		// commit some public randomness
 		startHeight := uint64(0)
 		numPubRand := uint64(200)
-		srList, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+		randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
 		require.NoError(t, err)
 		_, err = ms.CommitPubRandList(ctx, msgCommitPubRandList)
 		require.NoError(t, err)
 
 		// generate a vote
-		blockHeight := uint64(1)
-		sr, _ := srList[startHeight+blockHeight], msgCommitPubRandList.PubRandList[startHeight+blockHeight]
-		blockHash := datagen.GenRandomByteArray(r, 32)
+		blockHeight := startHeight + uint64(1)
+		blockAppHash := datagen.GenRandomByteArray(r, 32)
 		signer := datagen.GenRandomAccount().Address
-		msg, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, blockHeight, blockHash)
+		msg, err := datagen.NewMsgAddFinalitySig(signer, btcSK, startHeight, blockHeight, randListInfo, blockAppHash)
 		require.NoError(t, err)
 
 		// Case 1: fail if the finality provider does not have voting power
@@ -156,7 +149,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		// Case 3: successful if the finality provider has voting power and has not casted this vote yet
 		// index this block first
-		ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: blockHash})
+		ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: blockAppHash})
 		fKeeper.IndexBlock(ctx)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		// add vote and it should work
@@ -174,8 +167,8 @@ func FuzzAddFinalitySig(f *testing.F) {
 		require.NotNil(t, resp)
 
 		// Case 5: the finality provider is slashed if it votes for a fork
-		blockHash2 := datagen.GenRandomByteArray(r, 32)
-		msg2, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, blockHeight, blockHash2)
+		blockAppHash2 := datagen.GenRandomByteArray(r, 32)
+		msg2, err := datagen.NewMsgAddFinalitySig(signer, btcSK, startHeight, blockHeight, randListInfo, blockAppHash2)
 		require.NoError(t, err)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		// mock slashing interface
@@ -202,10 +195,80 @@ func FuzzAddFinalitySig(f *testing.F) {
 		require.True(t, btcSK.Key.Equals(&btcSK2.Key) || btcSK.Key.Negate().Equals(&btcSK2.Key))
 		require.Equal(t, btcSK.PubKey().SerializeCompressed()[1:], btcSK2.PubKey().SerializeCompressed()[1:])
 
-		// Case 6: slashed finality proivder cannot vote
+		// Case 6: slashed finality provider cannot vote
 		fp.SlashedBabylonHeight = blockHeight
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		_, err = ms.AddFinalitySig(ctx, msg)
 		require.Equal(t, bstypes.ErrFpAlreadySlashed, err)
 	})
+}
+
+func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil)
+	ms := keeper.NewMsgServerImpl(*fKeeper)
+	// create and register a random finality provider
+	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
+	require.NoError(t, err)
+	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+	fpBTCPKBytes := fpBTCPK.MustMarshal()
+	require.NoError(t, err)
+	bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(),
+		gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
+	// commit some public randomness
+	startHeight := uint64(0)
+	numPubRand := uint64(200)
+	randListInfo, msgCommitPubRandList, err :=
+		datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight,
+			numPubRand)
+	require.NoError(t, err)
+	_, err = ms.CommitPubRandList(ctx, msgCommitPubRandList)
+	require.NoError(t, err)
+	// set a block height of 1 and some random list
+	blockHeight := startHeight + uint64(1)
+
+	// generate two random hashes, one for the canonical block and
+	// one for a fork block
+	canonicalHash := datagen.GenRandomByteArray(r, 32)
+	forkHash := datagen.GenRandomByteArray(r, 32)
+	signer := datagen.GenRandomAccount().Address
+	require.NoError(t, err)
+	// (1) Set a canonical hash at height 1
+	ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: canonicalHash})
+	fKeeper.IndexBlock(ctx)
+	// (2) Vote for a different block at height 1, this will make us have
+	// some "evidence"
+	ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: forkHash})
+	msg1, err := datagen.NewMsgAddFinalitySig(signer, btcSK, startHeight, blockHeight, randListInfo, forkHash)
+
+	require.NoError(t, err)
+	bsKeeper.EXPECT().GetVotingPower(gomock.Any(),
+		gomock.Eq(fpBTCPKBytes),
+		gomock.Eq(blockHeight)).Return(uint64(1)).AnyTimes()
+	bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(),
+		gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
+	_, err = ms.AddFinalitySig(ctx, msg1)
+	require.NoError(t, err)
+	// (3) Now vote for the canonical block at height 1. This should slash Finality provider
+	msg, err := datagen.NewMsgAddFinalitySig(signer, btcSK, startHeight, blockHeight, randListInfo, canonicalHash)
+	ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: canonicalHash})
+	require.NoError(t, err)
+	bsKeeper.EXPECT().GetVotingPower(gomock.Any(),
+		gomock.Eq(fpBTCPKBytes),
+		gomock.Eq(blockHeight)).Return(uint64(1)).AnyTimes()
+	bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(),
+		gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
+	bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(),
+		gomock.Eq(fpBTCPKBytes)).Return(nil).Times(1)
+	_, err = ms.AddFinalitySig(ctx, msg)
+	require.NoError(t, err)
+	sig, err := fKeeper.GetSig(ctx, blockHeight, fpBTCPK)
+	require.NoError(t, err)
+	require.Equal(t, msg.FinalitySig.MustMarshal(),
+		sig.MustMarshal())
 }

@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -31,6 +31,8 @@ var (
 
 	AddrToBlsKeyPrefix = append(RegistrationPrefix, 0x0) // where we save the concrete BLS public keys
 	BlsKeyToAddrPrefix = append(RegistrationPrefix, 0x1) // where we save BLS key set
+
+	LastFinalizedEpochKey = []byte{0x04} // LastFinalizedEpochKey defines the key to store the last finalised epoch
 )
 
 // CkptsObjectKey defines epoch

@@ -3,8 +3,10 @@ package keeper
 import (
 	"context"
 
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"cosmossdk.io/store/prefix"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -37,34 +39,41 @@ func (k Keeper) setLastSentSegment(ctx context.Context, segment *types.BTCChainS
 	}
 }
 
-// GetFinalizedEpoch gets the last finalised epoch
-// used upon querying the last BTC-finalised chain info for CZs
-func (k Keeper) GetFinalizedEpoch(ctx context.Context) (uint64, error) {
-	store := k.storeService.OpenKVStore(ctx)
-	has, err := store.Has(types.FinalizedEpochKey)
-	if err != nil {
-		panic(err)
-	}
-	if !has {
-		return 0, types.ErrFinalizedEpochNotFound
-	}
-	epochNumberBytes, err := store.Get(types.FinalizedEpochKey)
-	if err != nil {
-		panic(err)
-	}
-	return sdk.BigEndianToUint64(epochNumberBytes), nil
-}
-
-// setFinalizedEpoch sets the last finalised epoch
-// called upon each AfterRawCheckpointFinalized hook invocation
-func (k Keeper) setFinalizedEpoch(ctx context.Context, epochNumber uint64) {
-	store := k.storeService.OpenKVStore(ctx)
-	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
-	if err := store.Set(types.FinalizedEpochKey, epochNumberBytes); err != nil {
-		panic(err)
-	}
+func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
+	return k.checkpointingKeeper.GetLastFinalizedEpoch(ctx)
 }
 
 func (k Keeper) GetEpoch(ctx context.Context) *epochingtypes.Epoch {
 	return k.epochingKeeper.GetEpoch(ctx)
+}
+
+func (k Keeper) recordSealedEpochProof(ctx context.Context, epochNum uint64) {
+	// proof that the epoch is sealed
+	proofEpochSealed, err := k.ProveEpochSealed(ctx, epochNum)
+	if err != nil {
+		panic(err) // only programming error
+	}
+
+	store := k.sealedEpochProofStore(ctx)
+	store.Set(sdk.Uint64ToBigEndian(epochNum), k.cdc.MustMarshal(proofEpochSealed))
+}
+
+func (k Keeper) getSealedEpochProof(ctx context.Context, epochNum uint64) *types.ProofEpochSealed {
+	store := k.sealedEpochProofStore(ctx)
+	proofBytes := store.Get(sdk.Uint64ToBigEndian(epochNum))
+	if len(proofBytes) == 0 {
+		return nil
+	}
+	var proof types.ProofEpochSealed
+	k.cdc.MustUnmarshal(proofBytes, &proof)
+	return &proof
+}
+
+// sealedEpochProofStore stores the proof that each epoch is sealed
+// prefix: SealedEpochProofKey
+// key: epochNumber
+// value: ChainInfoWithProof
+func (k Keeper) sealedEpochProofStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.SealedEpochProofKey)
 }

@@ -2,7 +2,7 @@ package types
 
 import (
 	"context"
-	lc "github.com/babylonchain/babylon/x/btclightclient/types"
+	lc "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
 
 type BTCLightClientKeeper interface {

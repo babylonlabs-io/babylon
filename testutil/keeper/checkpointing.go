@@ -16,8 +16,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/x/checkpointing/keeper"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 func CheckpointingKeeper(t testing.TB, ek types.EpochingKeeper, signer keeper.BlsSigner) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec) {

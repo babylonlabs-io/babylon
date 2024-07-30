@@ -4,11 +4,12 @@ import (
 	"math/rand"
 	"testing"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testhelper "github.com/babylonchain/babylon/testutil/helper"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 // FuzzAddBLSSigVoteExtension_MultipleVals tests adding BLS signatures via VoteExtension
@@ -75,9 +76,9 @@ func FuzzAddBLSSigVoteExtension_InsufficientVotingPower(f *testing.F) {
 	})
 }
 
-// FuzzAddBLSSigVoteExtension_InvalidBLSSig tests adding BLS signatures
-// with invalid BLS signature
-func FuzzAddBLSSigVoteExtension_InvalidBLSSig(f *testing.F) {
+// FuzzAddBLSSigVoteExtension_InvalidVoteExtensions tests adding BLS signatures
+// with invalid BLS signatures
+func FuzzAddBLSSigVoteExtension_InvalidVoteExtensions(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -90,7 +91,7 @@ func FuzzAddBLSSigVoteExtension_InvalidBLSSig(f *testing.F) {
 
 		interval := ek.GetParams(helper.Ctx).EpochInterval
 		for i := uint64(0); i < interval-1; i++ {
-			_, err := helper.ApplyEmptyBlockWithInvalidBLSSig(r)
+			_, err := helper.ApplyEmptyBlockWithInvalidVoteExtensions(r)
 			if i < interval-2 {
 				require.NoError(t, err)
 			} else {
@@ -100,9 +101,9 @@ func FuzzAddBLSSigVoteExtension_InvalidBLSSig(f *testing.F) {
 	})
 }
 
-// FuzzAddBLSSigVoteExtension_EmptyVoteExtensions tests resilience against
-// empty vote extensions
-func FuzzAddBLSSigVoteExtension_EmptyVoteExtensions(f *testing.F) {
+// FuzzAddBLSSigVoteExtension_SomeInvalidVoteExtensions tests resilience
+// of ProcessProposal against invalid vote extensions
+func FuzzAddBLSSigVoteExtension_SomeInvalidVoteExtensions(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -120,11 +121,11 @@ func FuzzAddBLSSigVoteExtension_EmptyVoteExtensions(f *testing.F) {
 		// go to block 10, ensure the checkpoint is finalized
 		interval := ek.GetParams(helper.Ctx).EpochInterval
 		for i := uint64(0); i < interval-2; i++ {
-			_, err := helper.ApplyEmptyBlockWithSomeEmptyVoteExtensions(r)
+			_, err := helper.ApplyEmptyBlockWithSomeInvalidVoteExtensions(r)
 			require.NoError(t, err)
 		}
 		// height 11, i.e., 1st block of next epoch
-		_, err = helper.ApplyEmptyBlockWithSomeEmptyVoteExtensions(r)
+		_, err = helper.ApplyEmptyBlockWithSomeInvalidVoteExtensions(r)
 		require.NoError(t, err)
 
 		epoch = ek.GetEpoch(helper.Ctx)
@@ -133,5 +134,119 @@ func FuzzAddBLSSigVoteExtension_EmptyVoteExtensions(f *testing.F) {
 		ckpt, err := ck.GetRawCheckpoint(helper.Ctx, epoch.EpochNumber-1)
 		require.NoError(t, err)
 		require.Equal(t, types.Sealed, ckpt.Status)
+	})
+}
+
+// FuzzExtendVote_InvalidBlockHash tests the case where the
+// block hash for signing is invalid in terms of format
+func FuzzExtendVote_InvalidBlockHash(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+		helper := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
+		ek := helper.App.EpochingKeeper
+
+		epoch := ek.GetEpoch(helper.Ctx)
+		require.Equal(t, uint64(1), epoch.EpochNumber)
+
+		// go to block 10, reaching epoch boundary
+		interval := ek.GetParams(helper.Ctx).EpochInterval
+		for i := uint64(0); i < interval-2; i++ {
+			_, err := helper.ApplyEmptyBlockWithVoteExtension(r)
+			require.NoError(t, err)
+		}
+
+		req1 := &abci.RequestExtendVote{
+			Hash:   datagen.GenRandomByteArray(r, datagen.RandomIntOtherThan(r, types.HashSize, 100)),
+			Height: 10,
+		}
+		_, err = helper.App.ExtendVote(helper.Ctx, req1)
+		require.Error(t, err)
+
+		req2 := &abci.RequestExtendVote{
+			Hash:   datagen.GenRandomByteArray(r, types.HashSize),
+			Height: 10,
+		}
+		_, err = helper.App.ExtendVote(helper.Ctx, req2)
+		require.NoError(t, err)
+	})
+}
+
+// FuzzExtendVote_EmptyBLSPrivKey tests the case where the
+// BLS private key of the private signer is missing
+func FuzzExtendVote_EmptyBLSPrivKey(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, ps, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+
+		// set the BLS private key to be nil to trigger panic
+		ps.WrappedPV.Key.BlsPrivKey = nil
+		helper := testhelper.NewHelperWithValSet(t, genesisValSet, ps)
+		ek := helper.App.EpochingKeeper
+
+		epoch := ek.GetEpoch(helper.Ctx)
+		require.Equal(t, uint64(1), epoch.EpochNumber)
+
+		// go to block 10, reaching epoch boundary
+		interval := ek.GetParams(helper.Ctx).EpochInterval
+		for i := uint64(0); i < interval-2; i++ {
+			_, err := helper.ApplyEmptyBlockWithVoteExtension(r)
+			require.NoError(t, err)
+		}
+
+		req := &abci.RequestExtendVote{
+			Hash:   datagen.GenRandomByteArray(r, types.HashSize),
+			Height: 10,
+		}
+
+		// error is expected due to nil BLS private key
+		_, err = helper.App.ExtendVote(helper.Ctx, req)
+		require.Error(t, err)
+	})
+}
+
+// FuzzExtendVote_NotInValidatorSet tests the case where the
+// private signer is not in the validator set
+func FuzzExtendVote_NotInValidatorSet(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, ps, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+
+		// the private signer is not included in the validator set
+		helper := testhelper.NewHelperWithValSetNoSigner(t, genesisValSet, ps)
+
+		ek := helper.App.EpochingKeeper
+
+		epoch := ek.GetEpoch(helper.Ctx)
+		require.Equal(t, uint64(1), epoch.EpochNumber)
+
+		// go to block 10, reaching epoch boundary
+		interval := ek.GetParams(helper.Ctx).EpochInterval
+		for i := uint64(0); i < interval-2; i++ {
+			_, err := helper.ApplyEmptyBlockWithSomeInvalidVoteExtensions(r)
+			require.NoError(t, err)
+		}
+
+		req := &abci.RequestExtendVote{
+			Hash:   datagen.GenRandomByteArray(r, types.HashSize),
+			Height: 10,
+		}
+
+		// error is expected because the BLS signer in not
+		// in the validator set
+		_, err = helper.App.ExtendVote(helper.Ctx, req)
+		require.Error(t, err)
 	})
 }

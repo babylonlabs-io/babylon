@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"context"
-	"github.com/babylonchain/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
 
 // Implements BTCLightClientHooks interface

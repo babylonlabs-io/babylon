@@ -2,8 +2,11 @@ package chain
 
 import (
 	"encoding/hex"
+	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
@@ -11,22 +14,18 @@ import (
 	"github.com/btcsuite/btcd/wire"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/stretchr/testify/require"
+	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	"github.com/babylonlabs-io/babylon/test/e2e/containers"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
-func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossession, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec) {
+func (n *NodeConfig) CreateFinalityProvider(walletAddrOrName string, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossessionBTC, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec) {
 	n.LogActionF("creating finality provider")
 
-	// get babylon PK hex
-	babylonPKBytes, err := babylonPK.Marshal()
-	require.NoError(n.t, err)
-	babylonPKHex := hex.EncodeToString(babylonPKBytes)
 	// get BTC PK hex
 	btcPKHex := btcPK.MarshalHex()
 	// get pop hex
@@ -34,7 +33,9 @@ func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *
 	require.NoError(n.t, err)
 
 	cmd := []string{
-		"babylond", "tx", "btcstaking", "create-finality-provider", babylonPKHex, btcPKHex, popHex, "--from=val", "--moniker", moniker, "--identity", identity, "--website", website, "--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
+		"babylond", "tx", "btcstaking", "create-finality-provider", btcPKHex, popHex,
+		fmt.Sprintf("--from=%s", walletAddrOrName), "--moniker", moniker, "--identity", identity, "--website", website,
+		"--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
 	}
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
@@ -42,9 +43,8 @@ func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *
 }
 
 func (n *NodeConfig) CreateBTCDelegation(
-	babylonPK *secp256k1.PubKey,
 	btcPk *bbn.BIP340PubKey,
-	pop *bstypes.ProofOfPossession,
+	pop *bstypes.ProofOfPossessionBTC,
 	stakingTxInfo *btcctypes.TransactionInfo,
 	fpPK *bbn.BIP340PubKey,
 	stakingTimeBlocks uint16,
@@ -56,13 +56,11 @@ func (n *NodeConfig) CreateBTCDelegation(
 	unbondingTime uint16,
 	unbondingValue btcutil.Amount,
 	delUnbondingSlashingSig *bbn.BIP340Signature,
-) {
+	fromWalletName string,
+	generateOnly bool,
+	overallFlags ...string,
+) (outStr string) {
 	n.LogActionF("creating BTC delegation")
-
-	// get babylon PK hex
-	babylonPKBytes, err := babylonPK.Marshal()
-	require.NoError(n.t, err)
-	babylonPKHex := hex.EncodeToString(babylonPKBytes)
 
 	btcPkHex := btcPk.MarshalHex()
 
@@ -93,10 +91,23 @@ func (n *NodeConfig) CreateBTCDelegation(
 	unbondingValueStr := sdkmath.NewInt(int64(unbondingValue)).String()
 	delUnbondingSlashingSigHex := delUnbondingSlashingSig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "btcstaking", "create-btc-delegation", babylonPKHex, btcPkHex, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex, "--from=val"}
-	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	cmd := []string{
+		"babylond", "tx", "btcstaking", "create-btc-delegation",
+		btcPkHex, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
+		fmt.Sprintf("--from=%s", fromWalletName), containers.FlagHome, flagKeyringTest,
+		n.FlagChainID(), "--log_format=json",
+	}
+
+	if generateOnly {
+		cmd = append(cmd, "--generate-only")
+	} else {
+		cmd = append(cmd, "-b=sync", "--yes")
+	}
+
+	outBuff, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 	require.NoError(n.t, err)
 	n.LogActionF("successfully created BTC delegation")
+	return outBuff.String()
 }
 
 func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash string, slashingSigs [][]byte, unbondingSig *bbn.BIP340Signature, unbondingSlashingSigs [][]byte) {
@@ -133,7 +144,7 @@ func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash stri
 	n.LogActionF("successfully added covenant signatures")
 }
 
-func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, pubRandList []bbn.SchnorrPubRand, sig *bbn.BIP340Signature) {
+func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
 	n.LogActionF("committing public randomness list")
 
 	cmd := []string{"babylond", "tx", "finality", "commit-pubrand-list"}
@@ -146,11 +157,13 @@ func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight ui
 	startHeightStr := strconv.FormatUint(startHeight, 10)
 	cmd = append(cmd, startHeightStr)
 
-	// add each pubrand to cmd
-	for _, pr := range pubRandList {
-		prHex := pr.ToHexStr()
-		cmd = append(cmd, prHex)
-	}
+	// add num_pub_rand to cmd
+	numPubRandStr := strconv.FormatUint(numPubrand, 10)
+	cmd = append(cmd, numPubRandStr)
+
+	// add commitment to cmd
+	commitmentHex := hex.EncodeToString(commitment)
+	cmd = append(cmd, commitmentHex)
 
 	// add sig to cmd
 	sigHex := sig.ToHexStr()
@@ -160,23 +173,27 @@ func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight ui
 	cmd = append(cmd, "--from=val")
 
 	// gas
-	cmd = append(cmd, "--gas=auto", "--gas-prices=1ubbn", "--gas-adjustment=1.3")
+	cmd = append(cmd, "--gas=500000")
 
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully committed public randomness list")
 }
 
-func (n *NodeConfig) AddFinalitySig(fpBTCPK *bbn.BIP340PubKey, blockHeight uint64, blockLch []byte, finalitySig *bbn.SchnorrEOTSSig) {
+func (n *NodeConfig) AddFinalitySig(fpBTCPK *bbn.BIP340PubKey, blockHeight uint64, pubRand *bbn.SchnorrPubRand, proof cmtcrypto.Proof, appHash []byte, finalitySig *bbn.SchnorrEOTSSig) {
 	n.LogActionF("add finality signature")
 
 	fpBTCPKHex := fpBTCPK.MarshalHex()
 	blockHeightStr := strconv.FormatUint(blockHeight, 10)
-	blockLchHex := hex.EncodeToString(blockLch)
+	pubRandHex := pubRand.MarshalHex()
+	proofBytes, err := proof.Marshal()
+	require.NoError(n.t, err)
+	proofHex := hex.EncodeToString(proofBytes)
+	appHashHex := hex.EncodeToString(appHash)
 	finalitySigHex := finalitySig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "finality", "add-finality-sig", fpBTCPKHex, blockHeightStr, blockLchHex, finalitySigHex, "--from=val", "--gas=500000"}
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	cmd := []string{"babylond", "tx", "finality", "add-finality-sig", fpBTCPKHex, blockHeightStr, pubRandHex, proofHex, appHashHex, finalitySigHex, "--from=val", "--gas=500000"}
+	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added finality signature")
 }

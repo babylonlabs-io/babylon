@@ -3,7 +3,7 @@ package babylon.btclightclient.v1;
 
 import "babylon/btclightclient/v1/btclightclient.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/btclightclient/types";
 
 // The header included in the event is the block in the history
 // of the current mainchain to which we are rolling back to.

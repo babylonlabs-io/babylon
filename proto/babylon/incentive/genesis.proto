@@ -4,7 +4,7 @@ package babylon.incentive;
 import "gogoproto/gogo.proto";
 import "babylon/incentive/params.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/incentive/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
 
 // GenesisState defines the incentive module's genesis state.
 message GenesisState {

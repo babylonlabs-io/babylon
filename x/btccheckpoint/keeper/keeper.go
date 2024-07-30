@@ -11,9 +11,9 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store/prefix"
-	txformat "github.com/babylonchain/babylon/btctxformatter"
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/btccheckpoint/types"
+	txformat "github.com/babylonlabs-io/babylon/btctxformatter"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

@@ -1,42 +1,53 @@
 package keeper_test
 
 import (
-	"context"
 	"math/rand"
 	"testing"
 
 	"cosmossdk.io/core/header"
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	keepertest "github.com/babylonchain/babylon/testutil/keeper"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	"github.com/babylonchain/babylon/x/btcstaking/keeper"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+)
+
+var (
+	net = &chaincfg.SimNetParams
 )
 
 type Helper struct {
 	t testing.TB
 
-	Ctx                  context.Context
+	Ctx                  sdk.Context
 	BTCStakingKeeper     *keeper.Keeper
 	BTCLightClientKeeper *types.MockBTCLightClientKeeper
 	BTCCheckpointKeeper  *types.MockBtcCheckpointKeeper
+	CheckpointingKeeper  *types.MockCheckpointingKeeper
+	BTCStakingHooks      *types.MockBtcStakingHooks
 	MsgServer            types.MsgServer
 	Net                  *chaincfg.Params
 }
 
-func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKeeper *types.MockBtcCheckpointKeeper) *Helper {
-	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKeeper *types.MockBtcCheckpointKeeper, ckptKeeper *types.MockCheckpointingKeeper) *Helper {
+	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper, ckptKeeper)
 	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
 	msgSrvr := keeper.NewMsgServerImpl(*k)
+
+	ctrl := gomock.NewController(t)
+	mockedHooks := types.NewMockBtcStakingHooks(ctrl)
+	mockedHooks.EXPECT().AfterFinalityProviderActivated(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	k.SetHooks(mockedHooks)
 
 	return &Helper{
 		t:                    t,
@@ -44,6 +55,7 @@ func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKe
 		BTCStakingKeeper:     k,
 		BTCLightClientKeeper: btclcKeeper,
 		BTCCheckpointKeeper:  btccKeeper,
+		CheckpointingKeeper:  ckptKeeper,
 		MsgServer:            msgSrvr,
 		Net:                  &chaincfg.SimNetParams,
 	}
@@ -61,11 +73,19 @@ func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.
 	return h.GenAndApplyCustomParams(r, 100, 0)
 }
 
+func (h *Helper) SetCtxHeight(height uint64) {
+	h.Ctx = datagen.WithCtxHeight(h.Ctx, height)
+}
+
 func (h *Helper) GenAndApplyCustomParams(
 	r *rand.Rand,
 	finalizationTimeout uint64,
 	minUnbondingTime uint32,
 ) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
+	// mock base header
+	baseHeader := btclctypes.SimnetGenesisBlock()
+	h.BTCLightClientKeeper.EXPECT().GetBaseBTCHeader(gomock.Any()).Return(&baseHeader).AnyTimes()
+
 	// mocking stuff for BTC checkpoint keeper
 	h.BTCCheckpointKeeper.EXPECT().GetPowLimit().Return(h.Net.PowLimit).AnyTimes()
 
@@ -88,6 +108,7 @@ func (h *Helper) GenAndApplyCustomParams(
 		SlashingRate:               sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
 		MaxActiveFinalityProviders: 100,
 		MinUnbondingTime:           minUnbondingTime,
+		MinUnbondingRate:           sdkmath.LegacyMustNewDecFromStr("0.8"),
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs
@@ -102,7 +123,7 @@ func CreateFinalityProvider(r *rand.Rand, t *testing.T) *types.FinalityProvider 
 	return &types.FinalityProvider{
 		Description: fp.Description,
 		Commission:  fp.Commission,
-		BabylonPk:   fp.BabylonPk,
+		Addr:        fp.Addr,
 		BtcPk:       fp.BtcPk,
 		Pop:         fp.Pop,
 	}
@@ -114,13 +135,13 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
 	h.NoError(err)
 	msgNewFp := types.MsgCreateFinalityProvider{
-		Signer:      datagen.GenRandomAccount().Address,
+		Addr:        fp.Addr,
 		Description: fp.Description,
 		Commission:  fp.Commission,
-		BabylonPk:   fp.BabylonPk,
 		BtcPk:       fp.BtcPk,
 		Pop:         fp.Pop,
 	}
+
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
 	h.NoError(err)
 	return fpSK, fpPK, fp
@@ -132,6 +153,7 @@ func (h *Helper) CreateDelegationCustom(
 	changeAddress string,
 	stakingValue int64,
 	stakingTime uint16,
+	unbondingValue int64,
 	unbondingTime uint16,
 ) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation, error) {
 	delSK, delPK, err := datagen.GenRandomBTCKeyPair(r)
@@ -159,12 +181,10 @@ func (h *Helper) CreateDelegationCustom(
 	stakingTxHash := testStakingInfo.StakingTx.TxHash().String()
 
 	// random signer
-	signer := datagen.GenRandomAccount().Address
-	// random Babylon SK
-	delBabylonSK, delBabylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
-	h.NoError(err)
+	staker := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
+
 	// PoP
-	pop, err := types.NewPoP(delBabylonSK, delSK)
+	pop, err := types.NewPoPBTC(staker, delSK)
 	h.NoError(err)
 	// generate staking tx info
 	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
@@ -176,8 +196,8 @@ func (h *Helper) CreateDelegationCustom(
 	txInfo := btcctypes.NewTransactionInfo(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, serializedStakingTx, btcHeaderWithProof.SpvProof.MerkleNodes)
 
 	// mock for testing k-deep stuff
-	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Any(), gomock.Eq(btcHeader.Hash())).Return(&btclctypes.BTCHeaderInfo{Header: &btcHeader, Height: 10}).AnyTimes()
-	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Hash())).Return(&btclctypes.BTCHeaderInfo{Header: &btcHeader, Height: 10}).AnyTimes()
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 
 	slashingSpendInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
 	h.NoError(err)
@@ -200,7 +220,6 @@ func (h *Helper) CreateDelegationCustom(
 	stkTxHash := testStakingInfo.StakingTx.TxHash()
 	stkOutputIdx := uint32(0)
 
-	unbondingValue := stakingValue - 1000
 	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
 		r,
 		h.t,
@@ -225,11 +244,11 @@ func (h *Helper) CreateDelegationCustom(
 	h.NoError(err)
 
 	// all good, construct and send MsgCreateBTCDelegation message
+	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
 	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
-		Signer:                        signer,
-		BabylonPk:                     delBabylonPK.(*secp256k1.PubKey),
+		StakerAddr:                    staker.String(),
 		BtcPk:                         stPk,
-		FpBtcPkList:                   []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
+		FpBtcPkList:                   []bbn.BIP340PubKey{*fpBTCPK},
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
 		StakingValue:                  stakingValue,
@@ -244,7 +263,6 @@ func (h *Helper) CreateDelegationCustom(
 	}
 
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
-
 	if err != nil {
 		return "", nil, nil, nil, err
 	}
@@ -258,7 +276,7 @@ func (h *Helper) CreateDelegation(
 	changeAddress string,
 	stakingValue int64,
 	stakingTime uint16,
-) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation) {
+) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation, *types.BTCDelegation) {
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
 
@@ -273,12 +291,18 @@ func (h *Helper) CreateDelegation(
 		changeAddress,
 		stakingValue,
 		stakingTime,
+		stakingValue-1000,
 		uint16(minUnbondingTime)+1,
 	)
 
 	h.NoError(err)
 
-	return stakingTxHash, delSK, delPK, msgCreateBTCDel
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(msgCreateBTCDel.StakingTx.Transaction)
+	h.NoError(err)
+	btcDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingMsgTx.TxHash().String())
+	h.NoError(err)
+
+	return stakingTxHash, delSK, delPK, msgCreateBTCDel, btcDel
 }
 
 func (h *Helper) GenerateCovenantSignaturesMessages(
@@ -344,7 +368,7 @@ func (h *Helper) GenerateCovenantSignaturesMessages(
 
 	for i := 0; i < len(bsParams.CovenantPks); i++ {
 		msgAddCovenantSig := &types.MsgAddCovenantSigs{
-			Signer:                  msgCreateBTCDel.Signer,
+			Signer:                  msgCreateBTCDel.StakerAddr,
 			Pk:                      covenantSlashingTxSigs[i].CovPk,
 			StakingTxHash:           stakingTxHash,
 			SlashingTxSigs:          covenantSlashingTxSigs[i].AdaptorSigs,
@@ -400,7 +424,8 @@ func (h *Helper) GetDelegationAndCheckValues(
 ) *types.BTCDelegation {
 	actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 	h.NoError(err)
-	require.Equal(h.t, msgCreateBTCDel.BabylonPk, actualDel.BabylonPk)
+	// TODO: update pop in BTC delegation
+	require.Equal(h.t, msgCreateBTCDel.StakerAddr, actualDel.StakerAddr)
 	require.Equal(h.t, msgCreateBTCDel.Pop, actualDel.Pop)
 	require.Equal(h.t, msgCreateBTCDel.StakingTx.Transaction, actualDel.StakingTx)
 	require.Equal(h.t, msgCreateBTCDel.SlashingTx, actualDel.SlashingTx)

@@ -3,7 +3,7 @@ package babylon.monitor.v1;
 
 import "google/api/annotations.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/monitor/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/monitor/types";
 
 // Query defines the gRPC querier service.
 service Query {

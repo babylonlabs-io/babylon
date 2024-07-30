@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/babylonchain/babylon/x/incentive/keeper"
-	"github.com/babylonchain/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/x/incentive/keeper"
+	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
