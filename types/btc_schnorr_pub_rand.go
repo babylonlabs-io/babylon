@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/babylonchain/babylon/crypto/eots"
+	"github.com/babylonlabs-io/babylon/crypto/eots"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )

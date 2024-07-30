@@ -9,10 +9,10 @@ import (
 	big "math/big"
 	reflect "reflect"
 
-	types "github.com/babylonchain/babylon/types"
-	types0 "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	types1 "github.com/babylonchain/babylon/x/btclightclient/types"
-	types2 "github.com/babylonchain/babylon/x/epoching/types"
+	types "github.com/babylonlabs-io/babylon/types"
+	types0 "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	types1 "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	types2 "github.com/babylonlabs-io/babylon/x/epoching/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -274,4 +274,41 @@ func (m *MockBTCStkConsumerKeeper) SetConsumerFinalityProvider(ctx context.Conte
 func (mr *MockBTCStkConsumerKeeperMockRecorder) SetConsumerFinalityProvider(ctx, fp interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetConsumerFinalityProvider", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).SetConsumerFinalityProvider), ctx, fp)
+}
+
+// MockBtcStakingHooks is a mock of BtcStakingHooks interface.
+type MockBtcStakingHooks struct {
+	ctrl     *gomock.Controller
+	recorder *MockBtcStakingHooksMockRecorder
+}
+
+// MockBtcStakingHooksMockRecorder is the mock recorder for MockBtcStakingHooks.
+type MockBtcStakingHooksMockRecorder struct {
+	mock *MockBtcStakingHooks
+}
+
+// NewMockBtcStakingHooks creates a new mock instance.
+func NewMockBtcStakingHooks(ctrl *gomock.Controller) *MockBtcStakingHooks {
+	mock := &MockBtcStakingHooks{ctrl: ctrl}
+	mock.recorder = &MockBtcStakingHooksMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockBtcStakingHooks) EXPECT() *MockBtcStakingHooksMockRecorder {
+	return m.recorder
+}
+
+// AfterFinalityProviderActivated mocks base method.
+func (m *MockBtcStakingHooks) AfterFinalityProviderActivated(ctx context.Context, fpPk *types.BIP340PubKey) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AfterFinalityProviderActivated", ctx, fpPk)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AfterFinalityProviderActivated indicates an expected call of AfterFinalityProviderActivated.
+func (mr *MockBtcStakingHooksMockRecorder) AfterFinalityProviderActivated(ctx, fpPk interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterFinalityProviderActivated", reflect.TypeOf((*MockBtcStakingHooks)(nil).AfterFinalityProviderActivated), ctx, fpPk)
 }

@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/finality/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

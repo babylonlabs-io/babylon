@@ -4,10 +4,10 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	keepertest "github.com/babylonchain/babylon/testutil/keeper"
-	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )

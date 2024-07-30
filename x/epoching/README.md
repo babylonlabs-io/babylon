@@ -350,7 +350,7 @@ module, and then inserts the message to the epoch message queue storage.
 ### MsgUpdateParams
 
 The `MsgUpdateParams` message is used for updating the module parameters for the
-Epoching module. It can only be executed via a govenance proposal.
+Epoching module. It can only be executed via a governance proposal.
 
 ```protobuf
 // MsgUpdateParams defines a message for updating Epoching module parameters.

@@ -1,7 +1,7 @@
 syntax = "proto3";
 package babylon.btcstaking.v1;
 
-option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 
 // BTCSigType indicates the type of btc_sig in a pop
 enum BTCSigType {

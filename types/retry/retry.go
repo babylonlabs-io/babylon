@@ -6,9 +6,9 @@ import (
 	"math/big"
 	"time"
 
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 // unrecoverableErrors is a list of errors which are unsafe and should not be retried.

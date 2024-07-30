@@ -5,9 +5,9 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/stretchr/testify/require"
 )
 

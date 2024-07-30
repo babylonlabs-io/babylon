@@ -3,8 +3,8 @@ package checkpointing
 import (
 	"context"
 
-	"github.com/babylonchain/babylon/x/checkpointing/keeper"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis

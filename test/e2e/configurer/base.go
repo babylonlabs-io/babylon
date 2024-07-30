@@ -12,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
-	"github.com/babylonchain/babylon/test/e2e/containers"
-	"github.com/babylonchain/babylon/test/e2e/initialization"
-	"github.com/babylonchain/babylon/test/e2e/util"
-	"github.com/babylonchain/babylon/types"
-	types2 "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/test/e2e/containers"
+	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/types"
+	types2 "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	"github.com/stretchr/testify/require"
 )
 

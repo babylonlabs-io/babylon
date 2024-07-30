@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"cosmossdk.io/core/header"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	keepertest "github.com/babylonchain/babylon/testutil/keeper"
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/finality/keeper"
-	"github.com/babylonchain/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/finality/keeper"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )

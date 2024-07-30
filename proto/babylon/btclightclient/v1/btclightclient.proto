@@ -3,7 +3,7 @@ package babylon.btclightclient.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/btclightclient/types";
 
 // BTCHeaderInfo is a structure that contains all relevant information about a
 // BTC header
@@ -16,10 +16,10 @@ option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 message BTCHeaderInfo {
   bytes header = 1
       [ (gogoproto.customtype) =
-            "github.com/babylonchain/babylon/types.BTCHeaderBytes" ];
+            "github.com/babylonlabs-io/babylon/types.BTCHeaderBytes" ];
   bytes hash = 2
       [ (gogoproto.customtype) =
-            "github.com/babylonchain/babylon/types.BTCHeaderHashBytes" ];
+            "github.com/babylonlabs-io/babylon/types.BTCHeaderHashBytes" ];
   uint64 height = 3;
   bytes work = 4
       [ (gogoproto.customtype) = "cosmossdk.io/math.Uint" ];

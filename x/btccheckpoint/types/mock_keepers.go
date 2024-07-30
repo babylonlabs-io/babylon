@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	txformat "github.com/babylonchain/babylon/btctxformatter"
-	bbn "github.com/babylonchain/babylon/types"
+	txformat "github.com/babylonlabs-io/babylon/btctxformatter"
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 type MockBTCLightClientKeeper struct {

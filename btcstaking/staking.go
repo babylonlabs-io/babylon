@@ -15,7 +15,7 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 )
 
 // buildSlashingTxFromOutpoint builds a valid slashing transaction by creating a new Bitcoin transaction that slashes a portion

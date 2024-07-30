@@ -8,7 +8,7 @@ import "babylon/epoching/v1/epoching.proto";
 import "babylon/btcstaking/v1/packet.proto";
 import "babylon/zoneconcierge/v1/zoneconcierge.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/zoneconcierge/types";
 
 // ZoneconciergePacketData is the message that defines the IBC packets of
 // ZoneConcierge

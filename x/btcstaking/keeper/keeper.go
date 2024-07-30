@@ -7,10 +7,11 @@ import (
 	corestoretypes "cosmossdk.io/core/store"
 
 	"cosmossdk.io/log"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 type (
@@ -22,6 +23,8 @@ type (
 		btccKeeper  types.BtcCheckpointKeeper
 		ckptKeeper  types.CheckpointingKeeper
 		bscKeeper   types.BTCStkConsumerKeeper
+
+		hooks types.BtcStakingHooks
 
 		btcNet *chaincfg.Params
 		// the address capable of executing a MsgUpdateParams message. Typically, this
@@ -51,9 +54,22 @@ func NewKeeper(
 		ckptKeeper:  ckptKeeper,
 		bscKeeper:   bscKeeper,
 
+		hooks: nil,
+
 		btcNet:    btcNet,
 		authority: authority,
 	}
+}
+
+// SetHooks sets the BTC staking hooks
+func (k *Keeper) SetHooks(sh types.BtcStakingHooks) *Keeper {
+	if k.hooks != nil {
+		panic("cannot set BTC staking hooks twice")
+	}
+
+	k.hooks = sh
+
+	return k
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

@@ -7,8 +7,8 @@ import (
 	"math"
 
 	"cosmossdk.io/store/prefix"
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/btccheckpoint/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 )
 
 func (k Keeper) HasSubmission(ctx context.Context, sk types.SubmissionKey) bool {

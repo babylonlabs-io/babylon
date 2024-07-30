@@ -5,7 +5,7 @@
 Babylon's BTC staking protocol turns Bitcoin into a staking asset with the aim
 to enhance the economic security of the Babylon chain. Bitcoin holders can stake
 their Bitcoin by locking them using a special transaction on the Bitcoin chain.
-The locked Bitcoin contribute to Babylon chain's economic security and generate
+The locked Bitcoin contributes to Babylon chain's economic security and generates
 yields for the Bitcoin stakers.
 The protocol has the following important properties:
 
@@ -36,7 +36,7 @@ the Bitcoin Staker, and the other is called the Finality Provider.
 
 - **Bitcoin Staker**: A Bitcoin Staker is an entity identified by `<StakerPk>`
 in staking scripts. Note that a staking transaction can be funded from
-arbitrary UTXO, including those owned by multsig/MPC/threshold accounts.
+arbitrary UTXO, including those owned by multisig/MPC/threshold accounts.
 Thus, `<StakerPk>` is not necessarily the address of the source of the fund.
 Rather, it is the controller and beneficiary of the stake after its creation.
 - **Finality Provider**: A Finality Provider is the an entity that votes
@@ -259,7 +259,7 @@ This leads to following system wide repercussions:
   unbonding transaction in this staking request. This staking request will become
   active only when `CovenantThreshold` signatures will be received by Babylon
   chain. Lack of `FinalityProviderPk` in unbonding path, means that after
-  delegation becomes active, staker can send unbodning transaction any time
+  delegation becomes active, staker can send unbonding transaction any time
   without asking finality provider for permission.
 - existence of `FinalityProviderPk` in slashing path, coupled with the fact that
   btc staker needs to provide pre-signed slashing transaction which needs to be

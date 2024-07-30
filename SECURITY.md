@@ -25,7 +25,7 @@ Send your detailed vulnerability report to `security@babylonchain.io`.
 
 ### 2. GitHub Private Vulnerability Reporting
 
-Utilize [GitHub's Private Vulnerability Reporting](https://github.com/babylonchain/babylon/security/advisories/new)
+Utilize [GitHub's Private Vulnerability Reporting](https://github.com/babylonlabs-io/babylon/security/advisories/new)
 for confidential disclosure.
 
 ## Submit Vulnerability Report

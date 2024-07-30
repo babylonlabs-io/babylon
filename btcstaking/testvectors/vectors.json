@@ -18,7 +18,7 @@
         "unbonding_tx_version": 2,
         "unbonding_time": 100,
         "unbonding_fee": 2000,
-        "magic_bytes": "01020304",
+        "tag": "01020304",
         "network": "mainnet"
       },
       "expected": {
@@ -55,7 +55,7 @@
         "unbonding_tx_version": 2,
         "unbonding_time": 50,
         "unbonding_fee": 20000,
-        "magic_bytes": "01020304",
+        "tag": "01020304",
         "network": "mainnet"
       },
       "expected": {
@@ -94,7 +94,7 @@
         "unbonding_tx_version": 2,
         "unbonding_time": 50,
         "unbonding_fee": 20000,
-        "magic_bytes": "01020304",
+        "tag": "01020304",
         "network": "mainnet"
       },
       "expected": {
@@ -135,7 +135,7 @@
         "unbonding_tx_version": 2,
         "unbonding_time": 201,
         "unbonding_fee": 50000,
-        "magic_bytes": "01020304",
+        "tag": "01020304",
         "network": "mainnet"
       },
       "expected": {
@@ -196,7 +196,7 @@
         "unbonding_tx_version": 2,
         "unbonding_time": 201,
         "unbonding_fee": 100000,
-        "magic_bytes": "01020304",
+        "tag": "01020304",
         "network": "mainnet"
       },
       "expected": {

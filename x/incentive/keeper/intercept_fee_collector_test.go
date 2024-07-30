@@ -6,10 +6,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-	"github.com/babylonchain/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/golang/mock/gomock"

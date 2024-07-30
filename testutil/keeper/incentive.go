@@ -18,8 +18,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/x/incentive/keeper"
-	"github.com/babylonchain/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/x/incentive/keeper"
+	"github.com/babylonlabs-io/babylon/x/incentive/types"
 )
 
 func IncentiveKeeper(t testing.TB, bankKeeper types.BankKeeper, accountKeeper types.AccountKeeper, epochingKeeper types.EpochingKeeper) (*keeper.Keeper, sdk.Context) {

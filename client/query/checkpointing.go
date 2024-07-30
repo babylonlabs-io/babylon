@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 )

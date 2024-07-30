@@ -2,7 +2,7 @@
 set -o nounset -o pipefail
 command -v shellcheck >/dev/null && shellcheck "$0"
 
-OWNER="babylonchain"
+OWNER="babylonlabs-io"
 REPO="babylon-contract"
 CONTRACTS="babylon_contract btc_staking"
 OUTPUT_FOLDER="$(dirname "$0")/../bytecode"
@@ -20,7 +20,10 @@ GH_TAGS="$GH_REPO/releases/tags/$TAG"
 AUTH="Authorization: token $GITHUB_API_TOKEN"
 
 # Validate token
-curl -o /dev/null -sH "$AUTH" $GH_REPO || { echo "Error: Invalid repo, token or network issue!";  exit 1; }
+curl -o /dev/null -sH "$AUTH" $GH_REPO || {
+    echo "Error: Invalid repo, token or network issue!"
+    exit 1
+}
 
 # Read asset tags
 RESPONSE=$(curl -sH "$AUTH" "$GH_TAGS")

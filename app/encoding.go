@@ -9,8 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	simsutils "github.com/cosmos/cosmos-sdk/testutil/sims"
 
-	appparams "github.com/babylonchain/babylon/app/params"
-	bbn "github.com/babylonchain/babylon/types"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 // TmpAppOptions returns an app option with tmp dir and btc network

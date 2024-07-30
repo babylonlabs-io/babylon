@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/babylonchain/babylon/crypto/eots"
+	"github.com/babylonlabs-io/babylon/crypto/eots"
 	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

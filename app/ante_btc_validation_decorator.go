@@ -1,10 +1,10 @@
 package app
 
 import (
-	bbn "github.com/babylonchain/babylon/types"
-	btccheckpointkeeper "github.com/babylonchain/babylon/x/btccheckpoint/keeper"
-	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btclightclient "github.com/babylonchain/babylon/x/btclightclient/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btccheckpointkeeper "github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclightclient "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

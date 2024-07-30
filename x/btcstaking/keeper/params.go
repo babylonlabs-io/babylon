@@ -7,7 +7,7 @@ import (
 
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 )
 

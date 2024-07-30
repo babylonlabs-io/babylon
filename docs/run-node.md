@@ -44,7 +44,7 @@ The `gentxs` directory contains the genesis transactions. It contains
 transactions that assign bbn tokens to a single address that is defined for each
 node.
 
-The `node0` directory contains the the following,
+The `node0` directory contains the following,
 
 ```console
 $ ls .testnet/node0/babylond
@@ -82,7 +82,7 @@ babylond --home .testnet/node{i}/babylond/ --chain-id <chain-id> \
     query <module-name> <query-name>
 ```
 
-For example, in order to get the hashes maintained by the `btcligthclient`
+For example, in order to get the hashes maintained by the `btclightclient`
 module:
 
 ```console
@@ -138,6 +138,11 @@ The corresponding node directories can be found under `.testnets`
 $ ls .testnets
 gentxs node0 node1 node2 node3
 ```
+
+## Running node in Production
+
+When running the Babylon node in a production setting, operators should adhere to 
+[CometBFT Guidelines](https://docs.cometbft.com/v0.38/core/running-in-production)
 
 ## Testing
 

@@ -9,7 +9,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

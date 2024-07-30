@@ -3,9 +3,9 @@ package e2e
 import (
 	"time"
 
-	"github.com/babylonchain/babylon/test/e2e/configurer"
-	"github.com/babylonchain/babylon/test/e2e/initialization"
-	ct "github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
+	ct "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/suite"

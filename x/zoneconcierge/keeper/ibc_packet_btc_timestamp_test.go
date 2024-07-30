@@ -5,10 +5,10 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	btclckeeper "github.com/babylonchain/babylon/x/btclightclient/keeper"
-	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/app"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	btclckeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/stretchr/testify/require"
 )
 

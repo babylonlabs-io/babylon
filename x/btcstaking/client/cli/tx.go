@@ -12,10 +12,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 const (

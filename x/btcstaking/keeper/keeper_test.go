@@ -1,27 +1,28 @@
 package keeper_test
 
 import (
-	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	"math/rand"
 	"testing"
 
 	"cosmossdk.io/core/header"
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	keepertest "github.com/babylonchain/babylon/testutil/keeper"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	"github.com/babylonchain/babylon/x/btcstaking/keeper"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
-	bsckeeper "github.com/babylonchain/babylon/x/btcstkconsumer/keeper"
-	bsctypes "github.com/babylonchain/babylon/x/btcstkconsumer/types"
-	btcec "github.com/btcsuite/btcd/btcec/v2"
+	etypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	bsckeeper "github.com/babylonlabs-io/babylon/x/btcstkconsumer/keeper"
+	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 )
 
 var (
@@ -39,6 +40,7 @@ type Helper struct {
 	BTCLightClientKeeper    *types.MockBTCLightClientKeeper
 	CheckpointingKeeper     *types.MockCheckpointingKeeper
 	BTCCheckpointKeeper     *types.MockBtcCheckpointKeeper
+	BTCStakingHooks         *types.MockBtcStakingHooks
 	MsgServer               types.MsgServer
 	BtcStkConsumerMsgServer bsctypes.MsgServer
 	Net                     *chaincfg.Params
@@ -49,6 +51,11 @@ func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKe
 	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 	btcStkConsumerMsgServer := bsckeeper.NewMsgServerImpl(*bscKeeper)
+
+	ctrl := gomock.NewController(t)
+	mockedHooks := types.NewMockBtcStakingHooks(ctrl)
+	mockedHooks.EXPECT().AfterFinalityProviderActivated(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	k.SetHooks(mockedHooks)
 
 	return &Helper{
 		t:                       t,

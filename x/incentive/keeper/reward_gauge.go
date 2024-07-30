@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonchain/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

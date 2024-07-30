@@ -16,7 +16,7 @@ done
 cd ..
 
 # move proto files to the right places
-cp -r github.com/babylonchain/babylon/* ./
+cp -r github.com/babylonlabs-io/babylon/* ./
 rm -rf github.com
 
 go mod tidy -compat=1.21

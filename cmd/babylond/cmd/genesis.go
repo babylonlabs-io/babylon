@@ -7,8 +7,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	btcstakingtypes "github.com/babylonchain/babylon/x/btcstaking/types"
-	finalitytypes "github.com/babylonchain/babylon/x/finality/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 
 	comettypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -29,12 +29,12 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 
-	appparams "github.com/babylonchain/babylon/app/params"
-	bbn "github.com/babylonchain/babylon/types"
-	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.Command {

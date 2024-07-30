@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"math/rand"
 
-	"github.com/babylonchain/babylon/btctxformatter"
+	"github.com/babylonlabs-io/babylon/btctxformatter"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"

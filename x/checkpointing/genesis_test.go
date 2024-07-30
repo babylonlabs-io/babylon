@@ -3,17 +3,17 @@ package checkpointing_test
 import (
 	"testing"
 
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/privval"
-	"github.com/babylonchain/babylon/x/checkpointing"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/privval"
+	"github.com/babylonlabs-io/babylon/x/checkpointing"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	simapp "github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
+	simapp "github.com/babylonlabs-io/babylon/app"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 func TestInitGenesis(t *testing.T) {

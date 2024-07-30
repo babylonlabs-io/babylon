@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/app"
+	"github.com/babylonlabs-io/babylon/app"
 )
 
 func Test_TestnetCmd(t *testing.T) {

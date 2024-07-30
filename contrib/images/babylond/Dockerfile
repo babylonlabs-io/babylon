@@ -15,12 +15,12 @@ ARG COSMOS_BUILD_OPTIONS=""
 RUN apt-get update && apt-get install -y make git bash gcc curl jq
 
 # Build
-WORKDIR /go/src/github.com/babylonchain/babylon
+WORKDIR /go/src/github.com/babylonlabs-io/babylon
 # First cache dependencies
-COPY go.mod go.sum /go/src/github.com/babylonchain/babylon/
+COPY go.mod go.sum /go/src/github.com/babylonlabs-io/babylon/
 RUN go mod download
 # Then copy everything else
-COPY ./ /go/src/github.com/babylonchain/babylon/
+COPY ./ /go/src/github.com/babylonlabs-io/babylon/
 # If version is set, then checkout this version
 RUN if [ -n "${VERSION}" ]; then \
         git checkout -f ${VERSION}; \
@@ -39,11 +39,11 @@ RUN addgroup --gid 1137 --system babylon && adduser --uid 1137 --gid 1137 --syst
 RUN apt-get update && apt-get install -y bash curl jq wget
 
 # Label should match your github repo
-LABEL org.opencontainers.image.source="https://github.com/babylonchain/babylond:${VERSION}"
+LABEL org.opencontainers.image.source="https://github.com/babylonlabs-io/babylond:${VERSION}"
 
 # Install libraries
 # Cosmwasm - Download correct libwasmvm version
-COPY --from=build-env /go/src/github.com/babylonchain/babylon/go.mod /tmp
+COPY --from=build-env /go/src/github.com/babylonlabs-io/babylon/go.mod /tmp
 RUN WASMVM_VERSION=$(grep github.com/CosmWasm/wasmvm /tmp/go.mod | cut -d' ' -f2) && \
     wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm.$(uname -m).so \
         -O /lib/libwasmvm.$(uname -m).so && \
@@ -52,7 +52,7 @@ RUN WASMVM_VERSION=$(grep github.com/CosmWasm/wasmvm /tmp/go.mod | cut -d' ' -f2
     sha256sum /lib/libwasmvm.$(uname -m).so | grep $(cat /tmp/checksums.txt | grep libwasmvm.$(uname -m) | cut -d ' ' -f 1)
 RUN rm -f /tmp/go.mod
 
-COPY --from=build-env /go/src/github.com/babylonchain/babylon/build/babylond /bin/babylond
+COPY --from=build-env /go/src/github.com/babylonlabs-io/babylon/build/babylond /bin/babylond
 
 # Set home directory and user
 WORKDIR /home/babylon

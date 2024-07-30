@@ -4,9 +4,9 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/crypto/eots"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/crypto/eots"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/stretchr/testify/require"
 )
 

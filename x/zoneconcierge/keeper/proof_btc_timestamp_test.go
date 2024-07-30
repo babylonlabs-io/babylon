@@ -12,13 +12,13 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testhelper "github.com/babylonchain/babylon/testutil/helper"
-	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
+	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 func FuzzProofCZHeaderInEpoch(f *testing.F) {
