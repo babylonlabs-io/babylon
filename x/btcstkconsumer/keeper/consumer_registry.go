@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonchain/babylon/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 )
 
 func (k Keeper) SetConsumerRegister(ctx context.Context, consumerRegister *types.ConsumerRegister) {

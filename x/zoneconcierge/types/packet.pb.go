@@ -5,9 +5,9 @@ package types
 
 import (
 	fmt "fmt"
-	types "github.com/babylonchain/babylon/x/btcstaking/types"
 	types4 "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	types1 "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	types "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	types3 "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	types2 "github.com/babylonlabs-io/babylon/x/epoching/types"
 	proto "github.com/cosmos/gogoproto/proto"

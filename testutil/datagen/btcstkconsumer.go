@@ -3,7 +3,7 @@ package datagen
 import (
 	"math/rand"
 
-	bsctypes "github.com/babylonchain/babylon/x/btcstkconsumer/types"
+	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 )
 
 func GenRandomConsumerRegister(r *rand.Rand) *bsctypes.ConsumerRegister {

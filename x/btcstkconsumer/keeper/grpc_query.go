@@ -4,11 +4,11 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-	btcstaking "github.com/babylonchain/babylon/x/btcstaking/types"
+	btcstaking "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/btcstkconsumer/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"

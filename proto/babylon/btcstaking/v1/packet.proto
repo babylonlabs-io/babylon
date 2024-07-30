@@ -5,7 +5,7 @@ import "cosmos/staking/v1beta1/staking.proto";
 import "babylon/btcstaking/v1/pop.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 
 // ConsumerIBCPacket is an IBC packet sent from consumer to Babylon
 // upon a finality provider being slashed on the consumer

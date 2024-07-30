@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	bsctypes "github.com/babylonchain/babylon/x/btcstkconsumer/types"
+	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 )

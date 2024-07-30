@@ -16,9 +16,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonchain/babylon/x/btcstkconsumer/client/cli"
-	"github.com/babylonchain/babylon/x/btcstkconsumer/keeper"
-	"github.com/babylonchain/babylon/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/client/cli"
+	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/keeper"
+	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 )
 
 var (

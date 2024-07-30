@@ -70,6 +70,8 @@ import (
 	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	btcstakingkeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	bsckeeper "github.com/babylonlabs-io/babylon/x/btcstkconsumer/keeper"
+	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	epochingkeeper "github.com/babylonlabs-io/babylon/x/epoching/keeper"
@@ -129,11 +131,14 @@ type AppKeepers struct {
 	MonitorKeeper        monitorkeeper.Keeper
 
 	// IBC-related modules
-	IBCKeeper           *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	IBCFeeKeeper        ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
-	TransferKeeper      ibctransferkeeper.Keeper // for cross-chain fungible token transfers
-	IBCWasmKeeper       ibcwasmkeeper.Keeper     // for IBC wasm light clients
-	ZoneConciergeKeeper zckeeper.Keeper          // for cross-chain fungible token transfers
+	IBCKeeper      *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCFeeKeeper   ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
+	TransferKeeper ibctransferkeeper.Keeper // for cross-chain fungible token transfers
+	IBCWasmKeeper  ibcwasmkeeper.Keeper     // for IBC wasm light clients
+
+	// Integration-related modules
+	BTCStkConsumerKeeper bsckeeper.Keeper
+	ZoneConciergeKeeper  zckeeper.Keeper
 
 	// BTC staking related modules
 	BTCStakingKeeper btcstakingkeeper.Keeper
@@ -463,25 +468,6 @@ func (ak *AppKeepers) InitKeepers(
 		ak.IBCKeeper.PortKeeper, ak.AccountKeeper, ak.BankKeeper,
 	)
 
-	zcKeeper := zckeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
-		ak.IBCFeeKeeper,
-		ak.IBCKeeper.ClientKeeper,
-		ak.IBCKeeper.ChannelKeeper,
-		ak.IBCKeeper.PortKeeper,
-		ak.AccountKeeper,
-		ak.BankKeeper,
-		&btclightclientKeeper,
-		&checkpointingKeeper,
-		&btcCheckpointKeeper,
-		epochingKeeper,
-		storeQuerier,
-		scopedZoneConciergeKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-	ak.ZoneConciergeKeeper = *zcKeeper
-
 	// Create Transfer Keepers
 	ak.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
@@ -518,6 +504,14 @@ func (ak *AppKeepers) InitKeepers(
 		btclightclienttypes.NewMultiBTCLightClientHooks(ak.BtcCheckpointKeeper.Hooks()),
 	)
 
+	ak.BTCStkConsumerKeeper = bsckeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[bsctypes.StoreKey]),
+		ak.AccountKeeper,
+		ak.BankKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	// set up BTC staking keeper
 	ak.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
 		appCodec,
@@ -525,6 +519,7 @@ func (ak *AppKeepers) InitKeepers(
 		&btclightclientKeeper,
 		&btcCheckpointKeeper,
 		&checkpointingKeeper,
+		&ak.BTCStkConsumerKeeper,
 		btcNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -539,6 +534,26 @@ func (ak *AppKeepers) InitKeepers(
 	)
 	ak.BTCStakingKeeper = *ak.BTCStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(ak.FinalityKeeper.Hooks()))
 	ak.FinalityKeeper = *ak.FinalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(ak.BTCStakingKeeper.Hooks()))
+
+	zcKeeper := zckeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
+		ak.IBCFeeKeeper,
+		ak.IBCKeeper.ClientKeeper,
+		ak.IBCKeeper.ChannelKeeper,
+		ak.IBCKeeper.PortKeeper,
+		ak.AccountKeeper,
+		ak.BankKeeper,
+		&btclightclientKeeper,
+		&checkpointingKeeper,
+		&btcCheckpointKeeper,
+		epochingKeeper,
+		storeQuerier,
+		&ak.BTCStakingKeeper,
+		scopedZoneConciergeKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+	ak.ZoneConciergeKeeper = *zcKeeper
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(

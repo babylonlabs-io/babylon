@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	bbn "github.com/babylonlabs-io/babylon/types"

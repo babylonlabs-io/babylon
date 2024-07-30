@@ -9,7 +9,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
-
 	"github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/crypto/eots"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
@@ -21,6 +20,12 @@ import (
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
 )
 
 var (
@@ -704,8 +709,9 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	// s.Require().Contains(output, feegrant.ErrFeeLimitExceeded.Error())
 
 	// submit the message to create BTC delegation using the fee grant at the max of spend limit
+	btcPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(delBTCPK)}
 	node.CreateBTCDelegation(
-		delBTCPKs,
+		btcPKs,
 		pop,
 		stakingTxInfo,
 		[]*bbn.BIP340PubKey{cacheFP.BtcPk},
