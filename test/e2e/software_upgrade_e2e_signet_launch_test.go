@@ -5,6 +5,7 @@ import (
 
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/config"
 )
 
@@ -46,17 +47,23 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 	resp := n.QueryAppliedPlan(v1.Upgrade.UpgradeName)
 	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height 25")
 
-	allBtcHeaders := n.QueryBtcLightClientMainchain()
-
-	btcHeadersFromFile, err := v1.LoadBTCHeadersFromData()
+	btcHeadersInserted, err := v1.LoadBTCHeadersFromData()
 	s.NoError(err)
 
-	lenHeadersInserted := len(btcHeadersFromFile)
-	oldHeadersLen := 1 // only block zero is set by default in e2e test
+	lenHeadersInserted := len(btcHeadersInserted)
+	oldHeadersStoredLen := 1 // only block zero is set by default in genesis for e2e test
 
-	newHeadersLen := len(allBtcHeaders)
-	s.Equal(newHeadersLen, oldHeadersLen+lenHeadersInserted)
+	storedBtcHeadersResp := n.QueryBtcLightClientMainchain()
+	newHeadersLen := len(storedBtcHeadersResp)
+	s.Equal(newHeadersLen, oldHeadersStoredLen+lenHeadersInserted)
 
 	// ensure the headers were inserted at the end
-	s.EqualValues(allBtcHeaders[newHeadersLen-lenHeadersInserted:], btcHeadersFromFile)
+	for i := 0; i < newHeadersLen-lenHeadersInserted; i++ {
+		headerInserted := btcHeadersInserted[i]
+		headerStoredResp := storedBtcHeadersResp[oldHeadersStoredLen+i]
+
+		headerStored, err := chain.ParseBTCHeaderInfoResponseToInfo(headerStoredResp)
+		s.NoError(err)
+		s.EqualValues(headerInserted, headerStored)
+	}
 }
