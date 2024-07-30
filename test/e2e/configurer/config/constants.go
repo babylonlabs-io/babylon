@@ -15,6 +15,7 @@ const (
 	MaxRetries = 60
 	// PropSubmitBlocks estimated number of blocks it takes to submit for a proposal
 	PropSubmitBlocks float32 = 1
-	// VanillaUpgradeFilePath upgrade vanilla testing
-	VanillaUpgradeFilePath = "/upgrades/vanilla.json"
+	// UpgradeVanillaFilePath upgrade vanilla testing
+	UpgradeVanillaFilePath      = "/upgrades/vanilla.json"
+	UpgradeSignetLaunchFilePath = "/upgrades/signet-launch.json"
 )

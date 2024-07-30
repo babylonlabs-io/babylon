@@ -3,21 +3,22 @@ package e2e
 import (
 	"github.com/stretchr/testify/suite"
 
+	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/config"
 )
 
-type SoftwareUpgradeVanillaTestSuite struct {
+type SoftwareUpgradeSignetLaunchTestSuite struct {
 	suite.Suite
 
 	configurer configurer.Configurer
 }
 
-func (s *SoftwareUpgradeVanillaTestSuite) SetupSuite() {
+func (s *SoftwareUpgradeSignetLaunchTestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
 	var err error
 
-	s.configurer, err = configurer.NewSoftwareUpgradeConfigurer(s.T(), false, config.UpgradeVanillaFilePath)
+	s.configurer, err = configurer.NewSoftwareUpgradeConfigurer(s.T(), false, config.UpgradeSignetLaunchFilePath)
 	s.NoError(err)
 	err = s.configurer.ConfigureChains()
 	s.NoError(err)
@@ -25,13 +26,13 @@ func (s *SoftwareUpgradeVanillaTestSuite) SetupSuite() {
 	s.NoError(err)
 }
 
-func (s *SoftwareUpgradeVanillaTestSuite) TearDownSuite() {
+func (s *SoftwareUpgradeSignetLaunchTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
 	s.Require().NoError(err)
 }
 
-// TestUpgradeVanilla only checks that new fp was added.
-func (s *SoftwareUpgradeVanillaTestSuite) TestUpgradeVanilla() {
+// TestUpgradeSignetLaunch Checks if the BTC Headers were inserted.
+func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 	// chain is already upgraded, only checks for differences in state are expected
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(30) // five blocks more than upgrade
@@ -45,6 +46,17 @@ func (s *SoftwareUpgradeVanillaTestSuite) TestUpgradeVanilla() {
 	resp := n.QueryAppliedPlan("vanilla")
 	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height 25")
 
-	fps := n.QueryFinalityProviders()
-	s.Len(fps, 1, "it should have one finality provider, since the vanilla upgrade just added a new one")
+	allBtcHeaders := n.QueryBtcLightClientMainchain()
+
+	btcHeadersFromFile, err := v1.LoadBTCHeadersFromData()
+	s.NoError(err)
+
+	lenHeadersInserted := len(btcHeadersFromFile)
+	oldHeadersLen := 1 // only block zero is set by default in e2e test
+
+	newHeadersLen := len(allBtcHeaders)
+	s.Equal(newHeadersLen, oldHeadersLen+lenHeadersInserted)
+
+	// ensure the headers were inserted at the end
+	s.Equal(allBtcHeaders[newHeadersLen-lenHeadersInserted:], btcHeadersFromFile)
 }
