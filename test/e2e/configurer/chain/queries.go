@@ -12,6 +12,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	cmtabcitypes "github.com/cometbft/cometbft/abci/types"
 	cmttypes "github.com/cometbft/cometbft/types"
@@ -19,6 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
@@ -412,4 +414,55 @@ func (n *NodeConfig) QueryWasmSmartObject(contract string, msg string) (resultOb
 		return nil, err
 	}
 	return resultObject, nil
+}
+
+func (n *NodeConfig) QueryProposal(proposalNumber int) govtypesv1.QueryProposalResponse {
+	path := fmt.Sprintf("cosmos/gov/v1beta1/proposals/%d", proposalNumber)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var resp govtypesv1.QueryProposalResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return resp
+}
+
+func (n *NodeConfig) QueryProposals() govtypesv1.QueryProposalsResponse {
+	bz, err := n.QueryGRPCGateway("cosmos/gov/v1beta1/proposals", url.Values{})
+	require.NoError(n.t, err)
+
+	var resp govtypesv1.QueryProposalsResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return resp
+}
+
+func (n *NodeConfig) QueryAppliedPlan(planName string) upgradetypes.QueryAppliedPlanResponse {
+	path := fmt.Sprintf("cosmos/upgrade/v1beta1/applied_plan/%s", planName)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var resp upgradetypes.QueryAppliedPlanResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return resp
+}
+
+func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) sdk.TxResponse {
+	cmd := []string{
+		"babylond", "q", "tx", "--type=hash", txHash, "--output=json",
+		n.FlagChainID(),
+	}
+
+	out, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
+	require.NoError(n.t, err)
+
+	var txResp sdk.TxResponse
+	err = util.Cdc.UnmarshalJSON(out.Bytes(), &txResp)
+	require.NoError(n.t, err)
+
+	return txResp
 }

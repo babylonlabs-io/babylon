@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -17,6 +17,8 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -67,9 +69,9 @@ const (
 )
 
 var (
-	StakeAmountIntA  = math.NewInt(StakeAmountA)
+	StakeAmountIntA  = sdkmath.NewInt(StakeAmountA)
 	StakeAmountCoinA = sdk.NewCoin(BabylonDenom, StakeAmountIntA)
-	StakeAmountIntB  = math.NewInt(StakeAmountB)
+	StakeAmountIntB  = sdkmath.NewInt(StakeAmountB)
 	StakeAmountCoinB = sdk.NewCoin(BabylonDenom, StakeAmountIntB)
 
 	InitBalanceStrA = fmt.Sprintf("%d%s", BabylonBalanceA, BabylonDenom)
@@ -216,6 +218,11 @@ func initGenesis(chain *internalChain, votingPeriod, expeditedVotingPeriod time.
 		return err
 	}
 
+	err = updateModuleGenesis(appGenState, govtypes.ModuleName, &govv1.GenesisState{}, updateGovGenesis(votingPeriod, expeditedVotingPeriod))
+	if err != nil {
+		return err
+	}
+
 	err = updateModuleGenesis(appGenState, minttypes.ModuleName, &minttypes.GenesisState{}, updateMintGenesis)
 	if err != nil {
 		return err
@@ -288,6 +295,14 @@ func updateBankGenesis(bankGenState *banktypes.GenesisState) {
 	})
 }
 
+func updateGovGenesis(votingPeriod, expeditedVotingPeriod time.Duration) func(govGenState *govv1.GenesisState) {
+	return func(govGenState *govv1.GenesisState) {
+		govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(100)))
+		govGenState.Params.VotingPeriod = &votingPeriod
+		govGenState.Params.ExpeditedVotingPeriod = &expeditedVotingPeriod
+	}
+}
+
 func updateMintGenesis(mintGenState *minttypes.GenesisState) {
 	mintGenState.Params.MintDenom = BabylonDenom
 }
@@ -299,7 +314,7 @@ func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
 		MaxEntries:        7,
 		HistoricalEntries: 10000,
 		UnbondingTime:     staketypes.DefaultUnbondingTime,
-		MinCommissionRate: math.LegacyZeroDec(),
+		MinCommissionRate: sdkmath.LegacyZeroDec(),
 	}
 }
 

@@ -297,12 +297,12 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.Equal(prCommitMap[activatedHeight].Commitment, msgCommitPubRandList.Commitment)
 
 	// no reward gauge for finality provider and delegation yet
-	fpBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
+	fpBabylonAddr, err := sdk.AccAddressFromBech32(cacheFP.Addr)
+	s.NoError(err)
+
 	_, err = nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
-	s.Error(err)
-	delBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
-	_, err = nonValidatorNode.QueryRewardGauge(delBabylonAddr)
-	s.Error(err)
+	s.ErrorContains(err, itypes.ErrRewardGaugeNotFound.Error())
+	delBabylonAddr := fpBabylonAddr
 
 	/*
 		submit finality signature
@@ -358,8 +358,10 @@ func (s *BTCStakingTestSuite) Test4WithdrawReward() {
 	s.NoError(err)
 
 	// finality provider balance before withdraw
-	fpBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
-	delBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
+	fpBabylonAddr, err := sdk.AccAddressFromBech32(cacheFP.Addr)
+	s.NoError(err)
+	delBabylonAddr := fpBabylonAddr
+
 	fpBalance, err := nonValidatorNode.QueryBalances(fpBabylonAddr.String())
 	s.NoError(err)
 	// finality provider reward gauge should not be fully withdrawn

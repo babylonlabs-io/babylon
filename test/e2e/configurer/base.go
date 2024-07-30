@@ -19,6 +19,7 @@ import (
 	"github.com/babylonlabs-io/babylon/types"
 	types2 "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 )
 
 // baseConfigurer is the base implementation for the
@@ -39,16 +40,18 @@ const defaultSyncUntilHeight = 3
 func (bc *baseConfigurer) ClearResources() error {
 	bc.t.Log("tearing down e2e integration test suite...")
 
-	if err := bc.containerManager.ClearResources(); err != nil {
-		return err
-	}
+	g := new(errgroup.Group)
+	g.Go(func() error {
+		return bc.containerManager.ClearResources()
+	})
 
 	for _, chainConfig := range bc.chainConfigs {
-		if err := os.RemoveAll(chainConfig.DataDir); err != nil {
-			return err
-		}
+		chainConfig := chainConfig
+		g.Go(func() error {
+			return os.RemoveAll(chainConfig.DataDir)
+		})
 	}
-	return nil
+	return g.Wait()
 }
 
 func (bc *baseConfigurer) GetChainConfig(chainIndex int) *chain.Config {
