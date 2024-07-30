@@ -40,7 +40,9 @@ func CreateUpgradeHandler(
 	return func(context context.Context, _plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(context)
 
-		propLaunch(ctx, &keepers.BTCLightClientKeeper)
+		if err := propLaunch(ctx, &keepers.BTCLightClientKeeper); err != nil {
+			panic(err)
+		}
 
 		return mm.RunMigrations(ctx, cfg, fromVM)
 	}
