@@ -20,7 +20,6 @@ import (
 	"github.com/babylonlabs-io/babylon/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
-	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
 	btclightkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
@@ -68,7 +67,7 @@ func LoadBTCHeadersFromData() ([]*btclighttypes.BTCHeaderInfo, error) {
 	}
 
 	btcHeadersFilePath := filepath.Join(pwd, "data/btc_headers.json")
-	gs, err := genhelpers.LoadBtcLightGenStateFromFile(appparams.DefaultEncodingConfig().Codec, btcHeadersFilePath)
+	gs, err := btclighttypes.LoadBtcLightGenStateFromFile(appparams.DefaultEncodingConfig().Codec, btcHeadersFilePath)
 	if err != nil {
 		return nil, err
 	}

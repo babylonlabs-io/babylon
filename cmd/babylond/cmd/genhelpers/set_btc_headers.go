@@ -2,12 +2,8 @@ package genhelpers
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
-	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
@@ -51,7 +47,7 @@ Possible content of 'btc_headers.json' is
 			config := server.GetServerContextFromCmd(cmd).Config
 			config.SetRoot(clientCtx.HomeDir)
 
-			inputBtcHeaders, err := LoadBtcLightGenStateFromFile(clientCtx.Codec, args[0])
+			inputBtcHeaders, err := btclighttypes.LoadBtcLightGenStateFromFile(clientCtx.Codec, args[0])
 			if err != nil {
 				return err
 			}
@@ -101,24 +97,4 @@ Possible content of 'btc_headers.json' is
 	}
 
 	return cmd
-}
-
-func LoadBtcLightGenStateFromFile(cdc codec.Codec, inputFilePath string) (*btclighttypes.GenesisState, error) {
-	filePath := filepath.Clean(inputFilePath)
-	if !cmtos.FileExists(filePath) {
-		return nil, fmt.Errorf("input file %s does not exists", filePath)
-	}
-
-	bz, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, err
-	}
-
-	var genState btclighttypes.GenesisState
-	err = cdc.UnmarshalJSON(bz, &genState)
-	if err != nil {
-		return nil, err
-	}
-
-	return &genState, nil
 }
