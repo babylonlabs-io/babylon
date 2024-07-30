@@ -36,15 +36,17 @@ type Manager struct {
 	network           *dockertest.Network
 	resources         map[string]*dockertest.Resource
 	isDebugLogEnabled bool
+	identifier        string
 }
 
 // NewManager creates a new Manager instance and initializes
 // all Docker specific utilities. Returns an error if initialization fails.
-func NewManager(isDebugLogEnabled bool, isCosmosRelayer, isUpgrade bool) (docker *Manager, err error) {
+func NewManager(identifier string, isDebugLogEnabled bool, isCosmosRelayer, isUpgrade bool) (docker *Manager, err error) {
 	docker = &Manager{
 		ImageConfig:       NewImageConfig(isCosmosRelayer, isUpgrade),
 		resources:         make(map[string]*dockertest.Resource),
 		isDebugLogEnabled: isDebugLogEnabled,
+		identifier:        identifier,
 	}
 	docker.pool, err = dockertest.NewPool("")
 	if err != nil {
@@ -379,4 +381,9 @@ func (m *Manager) RunChainInitResource(chainId string, chainVotingPeriod, chainE
 		return nil, err
 	}
 	return initResource, nil
+}
+
+// NetworkName returns the network name concatenated with the identifier name
+func (m *Manager) NetworkName() string {
+	return fmt.Sprintf("bbn-testnet-%s", m.identifier)
 }
