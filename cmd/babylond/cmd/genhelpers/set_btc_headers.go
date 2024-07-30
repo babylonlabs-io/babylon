@@ -51,7 +51,7 @@ Possible content of 'btc_headers.json' is
 			config := server.GetServerContextFromCmd(cmd).Config
 			config.SetRoot(clientCtx.HomeDir)
 
-			inputBtcHeaders, err := getBtcLightGenStateFromFile(clientCtx.Codec, args[0])
+			inputBtcHeaders, err := LoadBtcLightGenStateFromFile(clientCtx.Codec, args[0])
 			if err != nil {
 				return err
 			}
@@ -103,7 +103,7 @@ Possible content of 'btc_headers.json' is
 	return cmd
 }
 
-func getBtcLightGenStateFromFile(cdc codec.Codec, inputFilePath string) (*btclighttypes.GenesisState, error) {
+func LoadBtcLightGenStateFromFile(cdc codec.Codec, inputFilePath string) (*btclighttypes.GenesisState, error) {
 	filePath := filepath.Clean(inputFilePath)
 	if !cmtos.FileExists(filePath) {
 		return nil, fmt.Errorf("input file %s does not exists", filePath)
