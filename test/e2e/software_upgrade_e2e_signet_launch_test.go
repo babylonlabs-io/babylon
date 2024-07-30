@@ -5,7 +5,6 @@ import (
 
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/config"
 )
 
@@ -62,8 +61,6 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 		headerInserted := btcHeadersInserted[i]
 		headerStoredResp := storedBtcHeadersResp[oldHeadersStoredLen+i]
 
-		headerStored, err := chain.ParseBTCHeaderInfoResponseToInfo(headerStoredResp)
-		s.NoError(err)
-		s.EqualValues(headerInserted, headerStored)
+		s.EqualValues(headerInserted.ToResponse(), headerStoredResp)
 	}
 }
