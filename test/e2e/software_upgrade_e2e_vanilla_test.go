@@ -3,6 +3,7 @@ package e2e
 import (
 	"github.com/stretchr/testify/suite"
 
+	v1 "github.com/babylonlabs-io/babylon/app/upgrades/vanilla"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/config"
 )
@@ -42,7 +43,7 @@ func (s *SoftwareUpgradeVanillaTestSuite) TestUpgradeVanilla() {
 	expectedUpgradeHeight := int64(25)
 
 	// makes sure that the upgrade was actually executed
-	resp := n.QueryAppliedPlan("vanilla")
+	resp := n.QueryAppliedPlan(v1.Upgrade.UpgradeName)
 	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height 25")
 
 	fps := n.QueryFinalityProviders()
