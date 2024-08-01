@@ -159,7 +159,7 @@ member required to authorize spending using `unbonding_script` or `slashing_scri
 - `staking_amout` - chosen by the user, it will be placed in `staking_output.value`
 - `btc_network` - btc network on which staking transactions will take place
 
-#### Building OP_RETRUN and staking output implementation
+#### Building OP_RETURN and staking output implementation
 
 The Babylon staking library exposes the [BuildV0IdentifiableStakingOutputsAndTx](../btcstaking/identifiable_staking.go?plain=1#L231)
 function with the following signature:
@@ -324,7 +324,7 @@ import (
 	"github.com/btcsuite/btcd/btcutil/psbt"
 )
 
-func BuildPsbtForSigningUnbondingTransaciton(
+func BuildPsbtForSigningUnbondingTransaction(
 	unbondingTx *wire.MsgTx,
 	stakingOutput *wire.TxOut,
 	stakerKey *btcec.PublicKey,
