@@ -32,12 +32,16 @@ func CreateUpgradeHandler(
 	keepers *keepers.AppKeepers,
 ) upgradetypes.UpgradeHandler {
 	return func(context context.Context, _plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-
 		ctx := sdk.UnwrapSDKContext(context)
+
+		migrations, err := mm.RunMigrations(ctx, cfg, fromVM)
+		if err != nil {
+			return nil, err
+		}
 
 		propVanilla(ctx, &keepers.AccountKeeper, &keepers.BTCStakingKeeper)
 
-		return mm.RunMigrations(ctx, cfg, fromVM)
+		return migrations, nil
 	}
 }
 
