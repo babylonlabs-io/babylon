@@ -4,8 +4,8 @@ import (
 	"context"
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/babylonchain/babylon/x/incentive/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

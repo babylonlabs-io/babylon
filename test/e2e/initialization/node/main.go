@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/babylonchain/babylon/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 )
 
 func main() {

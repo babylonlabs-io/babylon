@@ -23,8 +23,8 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/x/zoneconcierge/keeper"
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 // zoneconciergeChannelKeeper is a stub of ChannelKeeper

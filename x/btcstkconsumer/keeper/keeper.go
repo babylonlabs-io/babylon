@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonchain/babylon/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 )
 
 type Keeper struct {

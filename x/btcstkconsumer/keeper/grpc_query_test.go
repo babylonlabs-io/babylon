@@ -9,11 +9,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/app"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 
-	btcstaking "github.com/babylonchain/babylon/x/btcstaking/types"
+	btcstaking "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 type consumerRegister struct {

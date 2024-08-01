@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"cosmossdk.io/store/prefix"
-	bbn "github.com/babylonchain/babylon/types"
-	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -1,8 +1,8 @@
 package types_test
 
 import (
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/privval"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/stretchr/testify/require"

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/babylonchain/babylon/test/e2e/util"
-	incentivetypes "github.com/babylonchain/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/test/e2e/util"
+	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )

@@ -4,7 +4,7 @@ package babylon.incentive;
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/incentive/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
 
 // Gauge is an object that stores rewards to be distributed
 // code adapted from https://github.com/osmosis-labs/osmosis/blob/v18.0.0/proto/osmosis/incentives/gauge.proto

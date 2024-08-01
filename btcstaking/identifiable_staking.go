@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	// length of magic prefix indentifying staking transactions
-	MagicBytesLen = 4
-	// 4 bytes magic bytes + 1 byte version + 32 bytes staker public key + 32 bytes finality provider public key + 2 bytes staking time
+	// length of tag prefix indentifying staking transactions
+	TagLen = 4
+	// 4 bytes tag + 1 byte version + 32 bytes staker public key + 32 bytes finality provider public key + 2 bytes staking time
 	V0OpReturnDataSize = 71
 
 	v0OpReturnCreationErrMsg = "cannot create V0 op_return data"
@@ -50,7 +50,7 @@ func uint16FromBytes(b []byte) (uint16, error) {
 // V0OpReturnData represents the data that is embedded in the OP_RETURN output
 // It marshalls to exactly 71 bytes
 type V0OpReturnData struct {
-	MagicBytes                []byte
+	Tag                       []byte
 	Version                   byte
 	StakerPublicKey           *XonlyPubKey
 	FinalityProviderPublicKey *XonlyPubKey
@@ -58,13 +58,13 @@ type V0OpReturnData struct {
 }
 
 func NewV0OpReturnData(
-	magicBytes []byte,
+	tag []byte,
 	stakerPublicKey []byte,
 	finalityProviderPublicKey []byte,
 	stakingTime []byte,
 ) (*V0OpReturnData, error) {
-	if len(magicBytes) != MagicBytesLen {
-		return nil, fmt.Errorf("%s: invalid magic bytes length: %d, expected: %d", v0OpReturnCreationErrMsg, len(magicBytes), MagicBytesLen)
+	if len(tag) != TagLen {
+		return nil, fmt.Errorf("%s: invalid tag length: %d, expected: %d", v0OpReturnCreationErrMsg, len(tag), TagLen)
 	}
 
 	stakerKey, err := XOnlyPublicKeyFromBytes(stakerPublicKey)
@@ -85,17 +85,17 @@ func NewV0OpReturnData(
 		return nil, fmt.Errorf("%s:invalid staking time:%w", v0OpReturnCreationErrMsg, err)
 	}
 
-	return NewV0OpReturnDataFromParsed(magicBytes, stakerKey.PubKey, fpKey.PubKey, stakingTimeValue)
+	return NewV0OpReturnDataFromParsed(tag, stakerKey.PubKey, fpKey.PubKey, stakingTimeValue)
 }
 
 func NewV0OpReturnDataFromParsed(
-	magicBytes []byte,
+	tag []byte,
 	stakerPublicKey *btcec.PublicKey,
 	finalityProviderPublicKey *btcec.PublicKey,
 	stakingTime uint16,
 ) (*V0OpReturnData, error) {
-	if len(magicBytes) != MagicBytesLen {
-		return nil, fmt.Errorf("%s:invalid magic bytes length: %d, expected: %d", v0OpReturnCreationErrMsg, len(magicBytes), MagicBytesLen)
+	if len(tag) != TagLen {
+		return nil, fmt.Errorf("%s:invalid tag length: %d, expected: %d", v0OpReturnCreationErrMsg, len(tag), TagLen)
 	}
 
 	if stakerPublicKey == nil {
@@ -107,7 +107,7 @@ func NewV0OpReturnDataFromParsed(
 	}
 
 	return &V0OpReturnData{
-		MagicBytes:                magicBytes,
+		Tag:                       tag,
 		Version:                   0,
 		StakerPublicKey:           &XonlyPubKey{stakerPublicKey},
 		FinalityProviderPublicKey: &XonlyPubKey{finalityProviderPublicKey},
@@ -119,18 +119,18 @@ func NewV0OpReturnDataFromBytes(b []byte) (*V0OpReturnData, error) {
 	if len(b) != V0OpReturnDataSize {
 		return nil, fmt.Errorf("invalid op return data length: %d, expected: %d", len(b), V0OpReturnDataSize)
 	}
-	magicBytes := b[:MagicBytesLen]
+	tag := b[:TagLen]
 
-	version := b[MagicBytesLen]
+	version := b[TagLen]
 
 	if version != 0 {
 		return nil, fmt.Errorf("invalid op return version: %d, expected: %d", version, 0)
 	}
 
-	stakerPublicKey := b[MagicBytesLen+1 : MagicBytesLen+1+schnorr.PubKeyBytesLen]
-	finalityProviderPublicKey := b[MagicBytesLen+1+schnorr.PubKeyBytesLen : MagicBytesLen+1+schnorr.PubKeyBytesLen*2]
-	stakingTime := b[MagicBytesLen+1+schnorr.PubKeyBytesLen*2:]
-	return NewV0OpReturnData(magicBytes, stakerPublicKey, finalityProviderPublicKey, stakingTime)
+	stakerPublicKey := b[TagLen+1 : TagLen+1+schnorr.PubKeyBytesLen]
+	finalityProviderPublicKey := b[TagLen+1+schnorr.PubKeyBytesLen : TagLen+1+schnorr.PubKeyBytesLen*2]
+	stakingTime := b[TagLen+1+schnorr.PubKeyBytesLen*2:]
+	return NewV0OpReturnData(tag, stakerPublicKey, finalityProviderPublicKey, stakingTime)
 }
 
 func getV0OpReturnBytes(out *wire.TxOut) ([]byte, error) {
@@ -164,7 +164,7 @@ func NewV0OpReturnDataFromTxOutput(out *wire.TxOut) (*V0OpReturnData, error) {
 
 func (d *V0OpReturnData) Marshall() []byte {
 	var data []byte
-	data = append(data, d.MagicBytes...)
+	data = append(data, d.Tag...)
 	data = append(data, d.Version)
 	data = append(data, d.StakerPublicKey.Marshall()...)
 	data = append(data, d.FinalityProviderPublicKey.Marshall()...)
@@ -182,7 +182,7 @@ func (d *V0OpReturnData) ToTxOutput() (*wire.TxOut, error) {
 
 // BuildV0IdentifiableStakingOutputs creates outputs which every staking transaction must have
 func BuildV0IdentifiableStakingOutputs(
-	magicBytes []byte,
+	tag []byte,
 	stakerKey *btcec.PublicKey,
 	fpKey *btcec.PublicKey,
 	covenantKeys []*btcec.PublicKey,
@@ -204,7 +204,7 @@ func BuildV0IdentifiableStakingOutputs(
 		return nil, err
 	}
 
-	opReturnData, err := NewV0OpReturnDataFromParsed(magicBytes, stakerKey, fpKey, stakingTime)
+	opReturnData, err := NewV0OpReturnDataFromParsed(tag, stakerKey, fpKey, stakingTime)
 
 	if err != nil {
 		return nil, err
@@ -229,7 +229,7 @@ func BuildV0IdentifiableStakingOutputs(
 // BuildV0IdentifiableStakingOutputsAndTx creates outputs which every staking transaction must have and
 // returns the not-funded transaction with these outputs
 func BuildV0IdentifiableStakingOutputsAndTx(
-	magicBytes []byte,
+	tag []byte,
 	stakerKey *btcec.PublicKey,
 	fpKey *btcec.PublicKey,
 	covenantKeys []*btcec.PublicKey,
@@ -239,7 +239,7 @@ func BuildV0IdentifiableStakingOutputsAndTx(
 	net *chaincfg.Params,
 ) (*IdentifiableStakingInfo, *wire.MsgTx, error) {
 	info, err := BuildV0IdentifiableStakingOutputs(
-		magicBytes,
+		tag,
 		stakerKey,
 		fpKey,
 		covenantKeys,
@@ -344,7 +344,7 @@ func tryToGetStakingOutput(outputs []*wire.TxOut, stakingOutputPkScript []byte) 
 // It does all necessary checks to ensure that the transaction is valid staking transaction.
 func ParseV0StakingTx(
 	tx *wire.MsgTx,
-	expectedMagicBytes []byte,
+	expectedTag []byte,
 	covenantKeys []*btcec.PublicKey,
 	covenantQuorum uint32,
 	net *chaincfg.Params,
@@ -354,8 +354,8 @@ func ParseV0StakingTx(
 		return nil, fmt.Errorf("nil tx")
 	}
 
-	if len(expectedMagicBytes) != MagicBytesLen {
-		return nil, fmt.Errorf("invalid magic bytes length: %d, expected: %d", len(expectedMagicBytes), MagicBytesLen)
+	if len(expectedTag) != TagLen {
+		return nil, fmt.Errorf("invalid tag length: %d, expected: %d", len(expectedTag), TagLen)
 	}
 
 	if len(covenantKeys) == 0 {
@@ -382,11 +382,11 @@ func ParseV0StakingTx(
 	}
 
 	// at this point we know that transaction has op return output which seems to match
-	// the expected shape. Check the magic bytes and version.
-	if !bytes.Equal(opReturnData.MagicBytes, expectedMagicBytes) {
-		return nil, fmt.Errorf("unexpected magic bytes: %s, expected: %s",
-			hex.EncodeToString(opReturnData.MagicBytes),
-			hex.EncodeToString(expectedMagicBytes),
+	// the expected shape. Check the tag and version.
+	if !bytes.Equal(opReturnData.Tag, expectedTag) {
+		return nil, fmt.Errorf("unexpected tag: %s, expected: %s",
+			hex.EncodeToString(opReturnData.Tag),
+			hex.EncodeToString(expectedTag),
 		)
 	}
 
@@ -434,11 +434,11 @@ func ParseV0StakingTx(
 // checks:
 // 1. Whether the transaction has at least 2 outputs
 // 2. have an op return output
-// 3. op return output has expected magic bytes
+// 3. op return output has expected tag
 // This function is much faster than ParseV0StakingTx, as it does not perform
 // all necessary checks.
-func IsPossibleV0StakingTx(tx *wire.MsgTx, expectedMagicBytes []byte) bool {
-	if len(expectedMagicBytes) != MagicBytesLen {
+func IsPossibleV0StakingTx(tx *wire.MsgTx, expectedTag []byte) bool {
+	if len(expectedTag) != TagLen {
 		return false
 	}
 
@@ -457,18 +457,18 @@ func IsPossibleV0StakingTx(tx *wire.MsgTx, expectedMagicBytes []byte) bool {
 			continue
 		}
 
-		if !bytes.Equal(data[:MagicBytesLen], expectedMagicBytes) {
-			// this is not the op return output we are looking for as magic bytes do not match
+		if !bytes.Equal(data[:TagLen], expectedTag) {
+			// this is not the op return output we are looking for as tag do not match
 			continue
 		}
 
-		if data[MagicBytesLen] != 0 {
+		if data[TagLen] != 0 {
 			// this is not the v0 op return output
 			continue
 		}
 
 		if possibleStakingTx {
-			// this is second output that matches the magic bytes, we do not allow for multiple op return outputs
+			// this is second output that matches the tag, we do not allow for multiple op return outputs
 			// so this is not a valid staking transaction
 			return false
 		}

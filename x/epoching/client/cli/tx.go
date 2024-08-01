@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/babylonchain/babylon/app/params"
-	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"

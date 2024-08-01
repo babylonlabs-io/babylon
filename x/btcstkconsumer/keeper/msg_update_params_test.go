@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 )
 
 func TestMsgUpdateParams(t *testing.T) {

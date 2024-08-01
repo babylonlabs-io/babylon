@@ -4,7 +4,7 @@ package babylon.btcstaking.v1;
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 
 // Params defines the parameters for the module.
 message Params {
@@ -12,7 +12,7 @@ message Params {
 
   // covenant_pks is the list of public keys held by the covenant committee
   // each PK follows encoding in BIP-340 spec on Bitcoin
-  repeated bytes covenant_pks = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  repeated bytes covenant_pks = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   // covenant_quorum is the minimum number of signatures needed for the covenant
   // multisignature
   uint32 covenant_quorum = 2;

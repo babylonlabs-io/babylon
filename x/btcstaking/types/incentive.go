@@ -20,6 +20,21 @@ func (dc *VotingPowerDistCache) AddFinalityProviderDistInfo(v *FinalityProviderD
 	dc.FinalityProviders = append(dc.FinalityProviders, v)
 }
 
+func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPowerDistCache, maxActiveFPs uint32) []*FinalityProviderDistInfo {
+	activeFps := dc.GetActiveFinalityProviderSet(maxActiveFPs)
+	prevActiveFps := prevDc.GetActiveFinalityProviderSet(maxActiveFPs)
+	newActiveFps := make([]*FinalityProviderDistInfo, 0)
+
+	for pk, fp := range activeFps {
+		_, exists := prevActiveFps[pk]
+		if !exists {
+			newActiveFps = append(newActiveFps, fp)
+		}
+	}
+
+	return newActiveFps
+}
+
 // ApplyActiveFinalityProviders sorts all finality providers, counts the total voting
 // power of top N finality providers, and records them in cache
 func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(maxActiveFPs uint32) {
@@ -38,22 +53,30 @@ func (dc *VotingPowerDistCache) GetNumActiveFPs(maxActiveFPs uint32) uint32 {
 	return min(maxActiveFPs, uint32(len(dc.FinalityProviders)))
 }
 
-// GetActiveFinalityProviders returns the list of active finality providers
+// GetActiveFinalityProviderSet returns a set of active finality providers
+// keyed by the hex string of the finality provider's BTC public key
 // i.e., top N of them in terms of voting power
-func (dc *VotingPowerDistCache) GetActiveFinalityProviders(maxActiveFPs uint32) []*FinalityProviderDistInfo {
+func (dc *VotingPowerDistCache) GetActiveFinalityProviderSet(maxActiveFPs uint32) map[string]*FinalityProviderDistInfo {
 	numActiveFPs := dc.GetNumActiveFPs(maxActiveFPs)
-	return dc.FinalityProviders[:numActiveFPs]
+
+	activeFps := make(map[string]*FinalityProviderDistInfo)
+
+	for _, fp := range dc.FinalityProviders[:numActiveFPs] {
+		activeFps[fp.BtcPk.MarshalHex()] = fp
+	}
+
+	return activeFps
 }
 
 // FilterVotedDistCache filters out a voting power distribution cache
 // with finality providers that have voted according to a map of given
 // voters, and their total voted power.
 func (dc *VotingPowerDistCache) FilterVotedDistCache(maxActiveFPs uint32, voterBTCPKs map[string]struct{}) *VotingPowerDistCache {
-	activeFPs := dc.GetActiveFinalityProviders(maxActiveFPs)
-	filteredFps := []*FinalityProviderDistInfo{}
+	activeFPs := dc.GetActiveFinalityProviderSet(maxActiveFPs)
+	var filteredFps []*FinalityProviderDistInfo
 	totalVotingPower := uint64(0)
-	for _, v := range activeFPs {
-		if _, ok := voterBTCPKs[v.BtcPk.MarshalHex()]; ok {
+	for k, v := range activeFPs {
+		if _, ok := voterBTCPKs[k]; ok {
 			filteredFps = append(filteredFps, v)
 			totalVotingPower += v.TotalVotingPower
 		}

@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/babylonchain/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/stretchr/testify/require"
 )
 

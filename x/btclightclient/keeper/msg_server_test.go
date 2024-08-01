@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/babylonchain/babylon/testutil/keeper"
-	"github.com/babylonchain/babylon/x/btclightclient/keeper"
-	"github.com/babylonchain/babylon/x/btclightclient/types"
+	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
+	"github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

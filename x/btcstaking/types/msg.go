@@ -4,8 +4,8 @@ import (
 	"fmt"
 	math "math"
 
-	"github.com/babylonchain/babylon/btcstaking"
-	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonlabs-io/babylon/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

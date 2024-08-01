@@ -8,9 +8,9 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
 
-	bbn "github.com/babylonchain/babylon/types"
-	btcstaking "github.com/babylonchain/babylon/x/btcstaking/types"
-	btcstktypes "github.com/babylonchain/babylon/x/btcstkconsumer/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcstaking "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 )
 
 // SetConsumerFinalityProvider adds the given finality provider to CZ chains KVStore

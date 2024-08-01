@@ -6,7 +6,7 @@ import (
 
 	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
-	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 )

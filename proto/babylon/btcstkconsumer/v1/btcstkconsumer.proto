@@ -1,7 +1,7 @@
 syntax = "proto3";
 package babylon.btcstkconsumer.v1;
 
-option go_package = "github.com/babylonchain/babylon/x/btcstkconsumer/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types";
 
 // ConsumerRegister is the registration information of a consumer
 message ConsumerRegister {

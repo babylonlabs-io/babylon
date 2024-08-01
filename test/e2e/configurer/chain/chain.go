@@ -10,9 +10,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/test/e2e/configurer/config"
-	"github.com/babylonchain/babylon/test/e2e/containers"
-	"github.com/babylonchain/babylon/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/test/e2e/configurer/config"
+	"github.com/babylonlabs-io/babylon/test/e2e/containers"
+	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 )
 
 type Config struct {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/babylonchain/babylon/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/x/monitor/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

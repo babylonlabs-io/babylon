@@ -3,14 +3,14 @@ package types
 import (
 	"context"
 
-	bbn "github.com/babylonchain/babylon/types"
-	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
 
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"

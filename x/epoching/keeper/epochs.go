@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 func (k Keeper) setEpochInfo(ctx context.Context, epochNumber uint64, epoch *types.Epoch) {

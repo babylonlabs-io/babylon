@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 var _ types.QueryServer = Keeper{}

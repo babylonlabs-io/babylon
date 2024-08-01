@@ -31,12 +31,12 @@ import (
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/viper"
 
-	babylonApp "github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/cmd/babylond/cmd"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/privval"
-	"github.com/babylonchain/babylon/test/e2e/util"
-	bbn "github.com/babylonchain/babylon/types"
+	babylonApp "github.com/babylonlabs-io/babylon/app"
+	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/privval"
+	"github.com/babylonlabs-io/babylon/test/e2e/util"
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 type internalNode struct {

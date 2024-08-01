@@ -2,9 +2,9 @@ package wasmbinding
 
 import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	bsttypes "github.com/babylonchain/babylon/x/btcstaking/types"
-	bsctypes "github.com/babylonchain/babylon/x/btcstkconsumer/types"
-	epochtypes "github.com/babylonchain/babylon/x/epoching/types"
+	bsttypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
+	epochtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 // WhitelistedGrpcQuery returns the whitelisted Grpc queries

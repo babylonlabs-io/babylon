@@ -15,8 +15,8 @@ type ConsumerFpsResponse struct {
 
 // ConsumerFpResponse represents the finality provider data returned by the contract query.
 // For more details, refer to the following links:
-// https://github.com/babylonchain/babylon-contract/blob/v0.7.0/contracts/btc-staking/src/msg.rs
-// https://github.com/babylonchain/babylon-contract/blob/v0.7.0/contracts/btc-staking/schema/btc-staking.json
+// https://github.com/babylonlabs-io/babylon-contract/blob/v0.7.0/contracts/btc-staking/src/msg.rs
+// https://github.com/babylonlabs-io/babylon-contract/blob/v0.7.0/contracts/btc-staking/schema/btc-staking.json
 type ConsumerFpResponse struct {
 	BtcPkHex         string `json:"btc_pk_hex"`
 	SlashedHeight    uint64 `json:"slashed_height"`

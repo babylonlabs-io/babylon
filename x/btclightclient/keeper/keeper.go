@@ -7,11 +7,11 @@ import (
 	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 
-	bbn "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 
-	"github.com/babylonchain/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	proto "github.com/cosmos/gogoproto/proto"

@@ -4,7 +4,7 @@ package babylon.btcstaking.v1;
 import "gogoproto/gogo.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 
 // EventNewFinalityProvider is the event emitted when a finality provider is created
 message EventNewFinalityProvider { FinalityProvider fp = 1; }
@@ -37,7 +37,7 @@ message EventPowerDistUpdate {
   // is slashed
   // TODO: unify with existing slashing events
   message EventSlashedFinalityProvider {
-    bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   }
 
   // ev is the event that affects voting power distribution

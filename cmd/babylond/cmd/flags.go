@@ -10,10 +10,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	babylonApp "github.com/babylonchain/babylon/app"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btcltypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	btcstypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	babylonApp "github.com/babylonlabs-io/babylon/app"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btcltypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	btcstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 const (

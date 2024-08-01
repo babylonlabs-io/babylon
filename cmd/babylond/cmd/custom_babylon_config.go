@@ -4,7 +4,7 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 
-	bbn "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 type BtcConfig struct {

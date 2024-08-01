@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 
-	"github.com/babylonchain/babylon/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

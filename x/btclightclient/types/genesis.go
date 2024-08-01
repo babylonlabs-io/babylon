@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	bbn "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/chaincfg"
 
 	"github.com/cosmos/cosmos-sdk/codec"

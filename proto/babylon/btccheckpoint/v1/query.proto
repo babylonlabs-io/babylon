@@ -7,7 +7,7 @@ import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/btccheckpoint/v1/params.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/btccheckpoint/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/btccheckpoint/types";
 
 // Query defines the gRPC querier service.
 service Query {

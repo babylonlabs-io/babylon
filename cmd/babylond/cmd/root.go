@@ -8,6 +8,7 @@ import (
 	confixcmd "cosmossdk.io/tools/confix/cmd"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	dbm "github.com/cosmos/cosmos-db"
@@ -39,9 +40,9 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/app/params"
-	"github.com/babylonchain/babylon/cmd/babylond/cmd/genhelpers"
+	"github.com/babylonlabs-io/babylon/app"
+	"github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
 )
 
 // NewRootCmd creates a new root command for babylond. It is called once in the
@@ -274,7 +275,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	}
 
 	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
-	privSigner, err := app.InitPrivSigner(homeDir)
+	privSigner, err := appkeepers.InitPrivSigner(homeDir)
 	if err != nil {
 		panic(err)
 	}
@@ -313,7 +314,7 @@ func appExport(
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
-	privSigner, err := app.InitPrivSigner(homePath)
+	privSigner, err := appkeepers.InitPrivSigner(homePath)
 	if err != nil {
 		panic(err)
 	}

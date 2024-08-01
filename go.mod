@@ -1,13 +1,14 @@
 go 1.21
 
-module github.com/babylonchain/babylon
+module github.com/babylonlabs-io/babylon
 
 require (
 	github.com/CosmWasm/wasmd v0.51.0
 	github.com/btcsuite/btcd v0.24.2
-	github.com/cometbft/cometbft v0.38.6
+	github.com/cometbft/cometbft v0.38.7
 	github.com/cometbft/cometbft-db v0.9.1 // indirect
 	github.com/cosmos/cosmos-sdk v0.50.6
+	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.0.0-20240429153234-e1e6da7e4ead
 	github.com/cosmos/relayer/v2 v2.5.1
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -26,6 +27,7 @@ require (
 require (
 	cosmossdk.io/api v0.7.4
 	cosmossdk.io/client/v2 v2.0.0-beta.1
+	cosmossdk.io/collections v0.4.0
 	cosmossdk.io/core v0.11.0
 	cosmossdk.io/depinject v1.0.0-alpha.4
 	cosmossdk.io/errors v1.0.1
@@ -38,8 +40,9 @@ require (
 	cosmossdk.io/x/feegrant v0.1.0
 	cosmossdk.io/x/tx v0.13.3
 	cosmossdk.io/x/upgrade v0.1.1
-	github.com/CosmWasm/wasmvm/v2 v2.0.0
+	github.com/CosmWasm/wasmvm/v2 v2.0.1
 	github.com/avast/retry-go/v4 v4.5.1
+	github.com/bits-and-blooms/bitset v1.10.0
 	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
 	github.com/btcsuite/btcd/btcutil v1.1.5
@@ -49,7 +52,7 @@ require (
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/gogoproto v1.4.12
 	github.com/cosmos/ibc-go/modules/capability v1.0.0
-	github.com/cosmos/ibc-go/v8 v8.0.0
+	github.com/cosmos/ibc-go/v8 v8.3.0
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0
 	github.com/docker/docker v23.0.8+incompatible
 	github.com/golang/mock v1.6.0
@@ -143,7 +146,6 @@ require (
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	cloud.google.com/go/iam v1.1.6 // indirect
 	cloud.google.com/go/storage v1.38.0 // indirect
-	cosmossdk.io/collections v0.4.0 // indirect
 	cosmossdk.io/x/nft v0.1.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
@@ -154,7 +156,6 @@ require (
 	github.com/aead/siphash v1.0.1 // indirect
 	github.com/aws/aws-sdk-go v1.44.312 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
-	github.com/bits-and-blooms/bitset v1.10.0 // indirect
 	github.com/bufbuild/connect-go v1.5.2 // indirect
 	github.com/bufbuild/protocompile v0.6.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect

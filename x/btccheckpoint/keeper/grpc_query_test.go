@@ -9,8 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	dg "github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/x/btccheckpoint/types"
+	dg "github.com/babylonlabs-io/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 )
 
 func TestBtcCheckpointInfo(t *testing.T) {

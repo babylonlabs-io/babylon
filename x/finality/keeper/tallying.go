@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/babylonchain/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

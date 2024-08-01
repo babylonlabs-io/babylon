@@ -21,12 +21,12 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/test/e2e/util"
-	blc "github.com/babylonchain/babylon/x/btclightclient/types"
-	ct "github.com/babylonchain/babylon/x/checkpointing/types"
-	etypes "github.com/babylonchain/babylon/x/epoching/types"
-	mtypes "github.com/babylonchain/babylon/x/monitor/types"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/test/e2e/util"
+	blc "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	ct "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	etypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	mtypes "github.com/babylonlabs-io/babylon/x/monitor/types"
+	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]byte, error) {

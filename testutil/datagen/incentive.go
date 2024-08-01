@@ -4,9 +4,9 @@ import (
 	"math/rand"
 
 	sdkmath "cosmossdk.io/math"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
-	itypes "github.com/babylonchain/babylon/x/incentive/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

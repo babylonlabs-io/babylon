@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/babylonchain/babylon/testutil/keeper"
-	"github.com/babylonchain/babylon/x/btcstkconsumer/keeper"
-	"github.com/babylonchain/babylon/x/btcstkconsumer/types"
+	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/keeper"
+	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 )
 
 func setupMsgServer(t testing.TB) (keeper.Keeper, types.MsgServer, context.Context) {

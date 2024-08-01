@@ -3,7 +3,7 @@ package babylon.checkpointing.v1;
 
 import "babylon/checkpointing/v1/checkpoint.proto";
 
-option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/checkpointing/types";
 
 // EventCheckpointAccumulating is emitted when a checkpoint reaches the
 // `Accumulating` state.

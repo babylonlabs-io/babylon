@@ -20,13 +20,13 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/testutil/helper"
-	"github.com/babylonchain/babylon/testutil/mocks"
-	"github.com/babylonchain/babylon/x/checkpointing"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	et "github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/testutil/helper"
+	"github.com/babylonlabs-io/babylon/testutil/mocks"
+	"github.com/babylonlabs-io/babylon/x/checkpointing"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	et "github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 type TestValidator struct {

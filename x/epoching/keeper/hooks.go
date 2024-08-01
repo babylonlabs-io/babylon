@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"cosmossdk.io/math"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/babylonchain/babylon/x/epoching/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )

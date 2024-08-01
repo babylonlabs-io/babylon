@@ -6,8 +6,8 @@ import (
 
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
 )
 
 // SimulateNewHeaders generates a non-zero number of canonical headers

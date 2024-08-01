@@ -21,13 +21,13 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/babylonchain/babylon/privval"
-	bbn "github.com/babylonchain/babylon/types"
-	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	blctypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/privval"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	blctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 
-	"github.com/babylonchain/babylon/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/test/e2e/util"
 )
 
 // NodeConfig is a confiuration for the node supplied from the test runner

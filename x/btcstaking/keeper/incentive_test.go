@@ -4,12 +4,13 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 func FuzzRecordVotingPowerDistCache(f *testing.F) {
@@ -73,7 +74,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		require.NotNil(t, dc)
 		require.Equal(t, dc.TotalVotingPower, numFpsWithVotingPower*numBTCDels*stakingValue)
 		maxNumFps := h.BTCStakingKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders
-		activeFPs := dc.GetActiveFinalityProviders(maxNumFps)
+		activeFPs := dc.GetActiveFinalityProviderSet(maxNumFps)
 		for _, fpDistInfo := range activeFPs {
 			require.Equal(t, fpDistInfo.TotalVotingPower, numBTCDels*stakingValue)
 			fp, ok := fpsWithVotingPowerMap[fpDistInfo.Addr]

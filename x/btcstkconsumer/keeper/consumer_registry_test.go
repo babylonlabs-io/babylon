@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/app"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/stretchr/testify/require"
 )
 

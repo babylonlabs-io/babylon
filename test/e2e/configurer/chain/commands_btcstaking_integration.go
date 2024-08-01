@@ -1,10 +1,11 @@
 package chain
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"fmt"
-	bbn "github.com/babylonchain/babylon/types"
-	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
+
+	sdkmath "cosmossdk.io/math"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/stretchr/testify/require"
 )
 

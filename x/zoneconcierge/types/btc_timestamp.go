@@ -10,13 +10,13 @@ import (
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	txformat "github.com/babylonchain/babylon/btctxformatter"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btclckeeper "github.com/babylonchain/babylon/x/btclightclient/keeper"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	txformat "github.com/babylonlabs-io/babylon/btctxformatter"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclckeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 func GetCZHeaderKey(chainID string, height uint64) []byte {
