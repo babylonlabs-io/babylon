@@ -1,6 +1,7 @@
 package signetlaunch_test
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 	"time"
@@ -11,6 +12,8 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/babylonlabs-io/babylon/app"
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
+	"github.com/babylonlabs-io/babylon/x/btclightclient"
+	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -36,13 +39,31 @@ func (s *UpgradeTestSuite) SetupTest() {
 	s.app = app.Setup(s.T(), false)
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
 	s.preModule = upgrade.NewAppModule(s.app.UpgradeKeeper, s.app.AccountKeeper.AddressCodec())
+
+	var btcHeaderZero btclighttypes.BTCHeaderInfo
+	// signet btc header 0
+	btcHeaderZeroStr := `{
+	 	"header": "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a008f4d5fae77031e8ad22203",
+	 	"hash": "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6",
+		"work": "77414720"
+	}`
+	buff := bytes.NewBufferString(btcHeaderZeroStr)
+
+	err := s.app.EncodingConfig().Codec.UnmarshalJSON(buff.Bytes(), &btcHeaderZero)
+	s.NoError(err)
+
+	k := s.app.BTCLightClientKeeper
+	btclightclient.InitGenesis(s.ctx, s.app.BTCLightClientKeeper, btclighttypes.GenesisState{
+		Params:     k.GetParams(s.ctx),
+		BtcHeaders: []*btclighttypes.BTCHeaderInfo{&btcHeaderZero},
+	})
 }
 
 func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(UpgradeTestSuite))
 }
 
-func (s *UpgradeTestSuite) TestUpgradePayments() {
+func (s *UpgradeTestSuite) TestUpgrade() {
 	oldHeadersLen := 0
 
 	testCases := []struct {
@@ -80,15 +101,18 @@ func (s *UpgradeTestSuite) TestUpgradePayments() {
 				// ensure the btc headers were added
 				allBtcHeaders := s.app.BTCLightClientKeeper.GetMainChainFrom(s.ctx, 0)
 
-				btcHeaders, err := v1.LoadBTCHeadersFromData()
+				btcHeadersInserted, err := v1.LoadBTCHeadersFromData()
 				s.NoError(err)
-				lenHeadersInserted := len(btcHeaders)
+				lenHeadersInserted := len(btcHeadersInserted)
 
 				newHeadersLen := len(allBtcHeaders)
 				s.Equal(newHeadersLen, oldHeadersLen+lenHeadersInserted)
 
-				// ensure the headers were inserted at the end
-				s.Equal(allBtcHeaders[newHeadersLen-lenHeadersInserted:], btcHeaders)
+				// ensure the headers were inserted as expected
+				for i, btcHeaderInserted := range btcHeadersInserted {
+					btcHeaderInState := allBtcHeaders[oldHeadersLen+i]
+					s.True(btcHeaderInserted.Eq(btcHeaderInState))
+				}
 			},
 		},
 	}

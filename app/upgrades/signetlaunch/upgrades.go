@@ -19,6 +19,7 @@ import (
 	"github.com/babylonlabs-io/babylon/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	btclightkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
@@ -82,23 +83,30 @@ func LoadBTCHeadersFromData() ([]*btclighttypes.BTCHeaderInfo, error) {
 func insertBtcHeaders(
 	ctx sdk.Context,
 	k *btclightkeeper.Keeper,
-	headers []*btclighttypes.BTCHeaderInfo,
+	btcHeaders []*btclighttypes.BTCHeaderInfo,
 ) error {
-	if len(headers) == 0 {
+	if len(btcHeaders) == 0 {
 		return errors.New("no headers to insert")
 	}
 
 	// sort by height to make sure it is deterministic
-	sort.Slice(headers, func(i, j int) bool {
-		return headers[i].Height > headers[j].Height
+	sort.Slice(btcHeaders, func(i, j int) bool {
+		return btcHeaders[i].Height <= btcHeaders[j].Height
 	})
 
-	for _, header := range headers {
-		if err := header.Validate(); err != nil {
+	headersBytes := make([]bbn.BTCHeaderBytes, len(btcHeaders))
+	for i, btcHeader := range btcHeaders {
+		h := btcHeader
+		if err := h.Validate(); err != nil {
 			return err
 		}
+
+		headersBytes[i] = *h.Header
 	}
-	k.InsertHeaderInfos(ctx, headers)
+
+	if err := k.InsertHeaders(ctx, headersBytes); err != nil {
+		return err
+	}
 
 	allBlocks := k.GetMainChainFromWithLimit(ctx, 0, 1)
 	isRetarget := btclighttypes.IsRetargetBlock(allBlocks[0], &chaincfg.SigNetParams)
