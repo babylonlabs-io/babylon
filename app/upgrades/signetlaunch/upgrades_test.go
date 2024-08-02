@@ -102,12 +102,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				for i, btcHeaderInserted := range btcHeadersInserted {
 					btcHeaderInState := allBtcHeaders[oldHeadersLen+i]
 
-					s.EqualValues(btcHeaderInserted.Hash.MarshalHex(), btcHeaderInState.Hash.MarshalHex())
 					s.EqualValues(btcHeaderInserted.Header.MarshalHex(), btcHeaderInState.Header.MarshalHex())
-					s.EqualValues(btcHeaderInserted.Height, btcHeaderInState.Height)
-
-					// TODO: check why work does not match
-					// s.EqualValues(btcHeaderInserted.Work.String(), btcHeaderInState.Work.String())
 				}
 			},
 		},

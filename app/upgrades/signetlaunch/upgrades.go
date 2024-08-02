@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 
 	store "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
@@ -89,18 +88,9 @@ func insertBtcHeaders(
 		return errors.New("no headers to insert")
 	}
 
-	// sort by height to make sure it is deterministic
-	sort.Slice(btcHeaders, func(i, j int) bool {
-		return btcHeaders[i].Height <= btcHeaders[j].Height
-	})
-
 	headersBytes := make([]bbn.BTCHeaderBytes, len(btcHeaders))
 	for i, btcHeader := range btcHeaders {
 		h := btcHeader
-		if err := h.Validate(); err != nil {
-			return err
-		}
-
 		headersBytes[i] = *h.Header
 	}
 

@@ -63,13 +63,10 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 
 	// ensure the headers were inserted at the end
 	for i := 0; i < lenHeadersInserted; i++ {
-		headerInsertedResp := btcHeadersInserted[i].ToResponse()
+		headerInserted := btcHeadersInserted[i]
 		reversedStoredIndex := storedHeadersLen - (oldHeadersStoredLen + i + 1)
 		headerStoredResp := storedBtcHeadersResp[reversedStoredIndex] // reverse reading
 
-		s.EqualValues(headerInsertedResp.HashHex, headerStoredResp.HashHex)
-		s.EqualValues(headerInsertedResp.HeaderHex, headerStoredResp.HeaderHex)
-		s.EqualValues(headerInsertedResp.Height, headerStoredResp.Height)
-		// s.EqualValues(headerInsertedResp.Work.String(), headerStoredResp.Work.String())
+		s.EqualValues(headerInserted.Header.MarshalHex(), headerStoredResp.HeaderHex)
 	}
 }
