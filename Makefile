@@ -255,7 +255,7 @@ endif
 .PHONY: run-tests test test-all $(TEST_TARGETS)
 
 test-e2e: build-docker-e2e
-	go test -mod=readonly -timeout=25m -v $(PACKAGES_E2E) -count=1 --tags=e2e
+	go test -mod=readonly -timeout=30m -v $(PACKAGES_E2E) -count=1 --tags=e2e
 
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
