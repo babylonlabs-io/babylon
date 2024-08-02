@@ -1,7 +1,9 @@
 package chain
 
 import (
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,6 +17,7 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/config"
 	"github.com/babylonlabs-io/babylon/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
+	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
 
 type Config struct {
@@ -29,6 +32,7 @@ type Config struct {
 	LatestProposalNumber int
 	LatestLockNumber     int
 	NodeConfigs          []*NodeConfig
+	BTCHeaders           []*btclighttypes.BTCHeaderInfo
 	IBCConfig            *ibctesting.ChannelConfig
 
 	LatestCodeId int
@@ -59,6 +63,7 @@ func New(t *testing.T, containerManager *containers.Manager, id string, initVali
 		ExpeditedVotingPeriod: config.PropDepositBlocks + numVal*config.PropVoteBlocks + config.PropBufferBlocks - 2,
 		t:                     t,
 		containerManager:      containerManager,
+		BTCHeaders:            []*btclighttypes.BTCHeaderInfo{},
 	}
 }
 
@@ -181,4 +186,17 @@ func (c *Config) TxGovVoteFromAllNodes(propID int, option govv1.VoteOption, over
 	for _, n := range c.NodeConfigs {
 		n.TxGovVote(n.WalletName, propID, option, overallFlags...)
 	}
+}
+
+// BTCHeaderBytesHexJoined join all the btc headers as byte string hex
+func (c *Config) BTCHeaderBytesHexJoined() string {
+	strBtcHeaders := make([]string, len(c.BTCHeaders))
+	for i, btcHeader := range c.BTCHeaders {
+		bz, err := btcHeader.Marshal()
+		if err != nil {
+			panic(err)
+		}
+		strBtcHeaders[i] = hex.EncodeToString(bz)
+	}
+	return strings.Join(strBtcHeaders, ",")
 }

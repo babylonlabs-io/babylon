@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"testing"
@@ -15,6 +16,7 @@ import (
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -35,6 +37,7 @@ import (
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/privval"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
@@ -353,4 +356,23 @@ func initAccountWithCoins(app *BabylonApp, ctx sdk.Context, addr sdk.AccAddress,
 	if err != nil {
 		panic(err)
 	}
+}
+
+// SignetBtcHeaderZero returns the BTC Header block zero from signet.
+func SignetBtcHeaderZero(cdc codec.Codec) (*btclighttypes.BTCHeaderInfo, error) {
+	var btcHeaderZero btclighttypes.BTCHeaderInfo
+	// signet btc header 0
+	btcHeaderZeroStr := `{
+	 	"header": "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a008f4d5fae77031e8ad22203",
+	 	"hash": "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6",
+		"work": "77414720"
+	}`
+	buff := bytes.NewBufferString(btcHeaderZeroStr)
+
+	err := cdc.UnmarshalJSON(buff.Bytes(), &btcHeaderZero)
+	if err != nil {
+		return nil, err
+	}
+
+	return &btcHeaderZero, nil
 }

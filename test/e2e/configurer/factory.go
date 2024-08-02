@@ -6,6 +6,7 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
+	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 )
@@ -202,17 +203,20 @@ func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, 
 }
 
 // NewSoftwareUpgradeConfigurer returns a new Configurer for Software Upgrade testing
-func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string) (Configurer, error) {
+func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, btcHeaders []*btclighttypes.BTCHeaderInfo) (Configurer, error) {
 	identifier := t.Name()
 	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, true)
 	if err != nil {
 		return nil, err
 	}
 
+	chainA := chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, nil)
+	chainA.BTCHeaders = btcHeaders
+
 	return NewUpgradeConfigurer(t,
 		[]*chain.Config{
 			// we only need 1 chain for testing upgrade
-			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, nil),
+			chainA,
 		},
 		withUpgrade(baseSetup), // base set up with upgrade
 		containerManager,
