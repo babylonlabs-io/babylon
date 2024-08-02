@@ -48,7 +48,25 @@ func main() {
 		panic(err)
 	}
 
+	btcHeaders := btcHeaderFromFlag(btcHeadersBytesHexStr)
+	createdChain, err := initialization.InitChain(chainId, dataDir, valConfig, votingPeriod, expeditedVotingPeriod, forkHeight, btcHeaders)
+	if err != nil {
+		panic(err)
+	}
+
+	b, _ := json.Marshal(createdChain)
+	fileName := fmt.Sprintf("%v/%v-encode", dataDir, chainId)
+	if err = os.WriteFile(fileName, b, 0o777); err != nil {
+		panic(err)
+	}
+}
+
+func btcHeaderFromFlag(btcHeadersBytesHexStr string) []*btclighttypes.BTCHeaderInfo {
 	btcHeaders := []*btclighttypes.BTCHeaderInfo{}
+	if len(btcHeadersBytesHexStr) == 0 {
+		return btcHeaders
+	}
+
 	btcHeadersBytesHex := strings.Split(btcHeadersBytesHexStr, ",")
 	for _, btcHeaderBytesHex := range btcHeadersBytesHex {
 		btcHeaderBytes, err := hex.DecodeString(btcHeaderBytesHex)
@@ -64,15 +82,5 @@ func main() {
 
 		btcHeaders = append(btcHeaders, btcHeader)
 	}
-
-	createdChain, err := initialization.InitChain(chainId, dataDir, valConfig, votingPeriod, expeditedVotingPeriod, forkHeight, btcHeaders)
-	if err != nil {
-		panic(err)
-	}
-
-	b, _ := json.Marshal(createdChain)
-	fileName := fmt.Sprintf("%v/%v-encode", dataDir, chainId)
-	if err = os.WriteFile(fileName, b, 0o777); err != nil {
-		panic(err)
-	}
+	return btcHeaders
 }

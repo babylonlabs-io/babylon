@@ -211,7 +211,9 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 	}
 
 	chainA := chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, nil)
-	chainA.BTCHeaders = btcHeaders
+	if btcHeaders != nil {
+		chainA.BTCHeaders = btcHeaders
+	}
 
 	return NewUpgradeConfigurer(t,
 		[]*chain.Config{
