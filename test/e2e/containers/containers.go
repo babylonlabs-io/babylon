@@ -41,22 +41,22 @@ type Manager struct {
 
 // NewManager creates a new Manager instance and initializes
 // all Docker specific utilities. Returns an error if initialization fails.
-func NewManager(identifier string, isDebugLogEnabled bool, isCosmosRelayer, isUpgrade bool) (docker *Manager, err error) {
-	docker = &Manager{
+func NewManager(identifier string, isDebugLogEnabled bool, isCosmosRelayer, isUpgrade bool) (m *Manager, err error) {
+	m = &Manager{
 		ImageConfig:       NewImageConfig(isCosmosRelayer, isUpgrade),
 		resources:         make(map[string]*dockertest.Resource),
 		isDebugLogEnabled: isDebugLogEnabled,
 		identifier:        identifier,
 	}
-	docker.pool, err = dockertest.NewPool("")
+	m.pool, err = dockertest.NewPool("")
 	if err != nil {
 		return nil, err
 	}
-	docker.network, err = docker.pool.CreateNetwork("bbn-testnet")
+	m.network, err = m.pool.CreateNetwork(m.NetworkName())
 	if err != nil {
 		return nil, err
 	}
-	return docker, nil
+	return m, nil
 }
 
 // ExecTxCmd Runs ExecTxCmdWithSuccessString searching for `code: 0`
