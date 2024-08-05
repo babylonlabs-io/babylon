@@ -99,13 +99,49 @@ func (k Keeper) insertHeaders(
 		k.triggerRollBack(ctx, result.RollbackInfo.HeaderToRollbackTo)
 	}
 
+	k.insertHeadersFromInsertResult(ctx, result, true)
+	return nil
+}
+
+func (k Keeper) insertHeadersNoEventsAndRollback(
+	ctx context.Context,
+	headers []*wire.BlockHeader,
+) error {
+	headerState := k.headersState(ctx)
+
+	result, err := k.bl.InsertHeaders(
+		headerState,
+		headers,
+	)
+	if err != nil {
+		return err
+	}
+
+	// if we receive rollback, should return error
+	if result.RollbackInfo != nil {
+		return fmt.Errorf("rollback should not happend %+v", result.RollbackInfo)
+	}
+
+	k.insertHeadersFromInsertResult(ctx, result, false)
+	return nil
+}
+
+func (k Keeper) insertHeadersFromInsertResult(
+	ctx context.Context,
+	result *types.InsertResult,
+	triggerEventsAndHooks bool,
+) {
+	headerState := k.headersState(ctx)
+
 	for _, header := range result.HeadersToInsert {
 		h := header
 		headerState.insertHeader(h)
+		if !triggerEventsAndHooks {
+			continue
+		}
 		k.triggerHeaderInserted(ctx, h)
 		k.triggerRollForward(ctx, h)
 	}
-	return nil
 }
 
 // InsertHeaderInfos inserts multiple headers info at the store.
@@ -121,12 +157,26 @@ func (k Keeper) InsertHeaders(ctx context.Context, headers []bbn.BTCHeaderBytes)
 		return types.ErrEmptyMessage
 	}
 
+	blockHeaders := btcHeadersBytesToBlockHeader(headers)
+	return k.insertHeaders(ctx, blockHeaders)
+}
+
+func (k Keeper) InsertHeadersNoEventsAndRollback(ctx context.Context, headers []bbn.BTCHeaderBytes) error {
+	if len(headers) == 0 {
+		return types.ErrEmptyMessage
+	}
+
+	blockHeaders := btcHeadersBytesToBlockHeader(headers)
+	return k.insertHeadersNoEventsAndRollback(ctx, blockHeaders)
+}
+
+func btcHeadersBytesToBlockHeader(headers []bbn.BTCHeaderBytes) []*wire.BlockHeader {
 	blockHeaders := make([]*wire.BlockHeader, len(headers))
 	for i, header := range headers {
 		blockHeaders[i] = header.ToBlockHeader()
 	}
 
-	return k.insertHeaders(ctx, blockHeaders)
+	return blockHeaders
 }
 
 // BlockHeight returns the height of the provided header
