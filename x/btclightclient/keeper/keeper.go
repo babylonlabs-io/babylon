@@ -75,11 +75,66 @@ func (k *Keeper) SetHooks(bh types.BTCLightClientHooks) *Keeper {
 	return k
 }
 
+func (k Keeper) insertHandler() func(ctx context.Context, s headersState, result *types.InsertResult) error {
+	return func(ctx context.Context, s headersState, result *types.InsertResult) error {
+		// if we receive rollback, should return error
+		if result.RollbackInfo != nil {
+			return fmt.Errorf("rollback should not happend %+v", result.RollbackInfo)
+		}
+
+		for _, header := range result.HeadersToInsert {
+			h := header
+			s.insertHeader(h)
+		}
+		return nil
+	}
+}
+
+func (k Keeper) triggerEventAndHandleHooksHandler() func(ctx context.Context, s headersState, result *types.InsertResult) error {
+	return func(ctx context.Context, s headersState, result *types.InsertResult) error {
+		// if we have rollback, first delete all headers up to the rollback point
+		if result.RollbackInfo != nil {
+			// roll back to the height
+			s.rollBackHeadersUpTo(result.RollbackInfo.HeaderToRollbackTo.Height)
+			// trigger rollback event
+			k.triggerRollBack(ctx, result.RollbackInfo.HeaderToRollbackTo)
+		}
+
+		for _, header := range result.HeadersToInsert {
+			h := header
+			s.insertHeader(h)
+			k.triggerHeaderInserted(ctx, h)
+			k.triggerRollForward(ctx, h)
+		}
+		return nil
+	}
+}
+
+func (k Keeper) insertHeadersWithHookAndEvents(
+	ctx context.Context,
+	headers []*wire.BlockHeader) error {
+	return k.insertHeadersInternal(
+		ctx,
+		headers,
+		k.triggerEventAndHandleHooksHandler(),
+	)
+}
+
 func (k Keeper) insertHeaders(
 	ctx context.Context,
-	headers []*wire.BlockHeader,
-) error {
+	headers []*wire.BlockHeader) error {
+	return k.insertHeadersInternal(
+		ctx,
+		headers,
+		k.insertHandler(),
+	)
+}
 
+func (k Keeper) insertHeadersInternal(
+	ctx context.Context,
+	headers []*wire.BlockHeader,
+	handleInsertResult func(ctx context.Context, s headersState, result *types.InsertResult) error,
+) error {
 	headerState := k.headersState(ctx)
 
 	result, err := k.bl.InsertHeaders(
@@ -91,57 +146,7 @@ func (k Keeper) insertHeaders(
 		return err
 	}
 
-	// if we have rollback, first delete all headers up to the rollback point
-	if result.RollbackInfo != nil {
-		// roll back to the height
-		headerState.rollBackHeadersUpTo(result.RollbackInfo.HeaderToRollbackTo.Height)
-		// trigger rollback event
-		k.triggerRollBack(ctx, result.RollbackInfo.HeaderToRollbackTo)
-	}
-
-	k.insertHeadersFromInsertResult(ctx, result, true)
-	return nil
-}
-
-func (k Keeper) insertHeadersNoEventsAndRollback(
-	ctx context.Context,
-	headers []*wire.BlockHeader,
-) error {
-	headerState := k.headersState(ctx)
-
-	result, err := k.bl.InsertHeaders(
-		headerState,
-		headers,
-	)
-	if err != nil {
-		return err
-	}
-
-	// if we receive rollback, should return error
-	if result.RollbackInfo != nil {
-		return fmt.Errorf("rollback should not happend %+v", result.RollbackInfo)
-	}
-
-	k.insertHeadersFromInsertResult(ctx, result, false)
-	return nil
-}
-
-func (k Keeper) insertHeadersFromInsertResult(
-	ctx context.Context,
-	result *types.InsertResult,
-	triggerEventsAndHooks bool,
-) {
-	headerState := k.headersState(ctx)
-
-	for _, header := range result.HeadersToInsert {
-		h := header
-		headerState.insertHeader(h)
-		if !triggerEventsAndHooks {
-			continue
-		}
-		k.triggerHeaderInserted(ctx, h)
-		k.triggerRollForward(ctx, h)
-	}
+	return handleInsertResult(ctx, headerState, result)
 }
 
 // InsertHeaderInfos inserts multiple headers info at the store.
@@ -152,6 +157,15 @@ func (k Keeper) InsertHeaderInfos(ctx context.Context, infos []*types.BTCHeaderI
 	}
 }
 
+func (k Keeper) InsertHeadersWithHookAndEvents(ctx context.Context, headers []bbn.BTCHeaderBytes) error {
+	if len(headers) == 0 {
+		return types.ErrEmptyMessage
+	}
+
+	blockHeaders := btcHeadersBytesToBlockHeader(headers)
+	return k.insertHeadersWithHookAndEvents(ctx, blockHeaders)
+}
+
 func (k Keeper) InsertHeaders(ctx context.Context, headers []bbn.BTCHeaderBytes) error {
 	if len(headers) == 0 {
 		return types.ErrEmptyMessage
@@ -159,15 +173,6 @@ func (k Keeper) InsertHeaders(ctx context.Context, headers []bbn.BTCHeaderBytes)
 
 	blockHeaders := btcHeadersBytesToBlockHeader(headers)
 	return k.insertHeaders(ctx, blockHeaders)
-}
-
-func (k Keeper) InsertHeadersNoEventsAndRollback(ctx context.Context, headers []bbn.BTCHeaderBytes) error {
-	if len(headers) == 0 {
-		return types.ErrEmptyMessage
-	}
-
-	blockHeaders := btcHeadersBytesToBlockHeader(headers)
-	return k.insertHeadersNoEventsAndRollback(ctx, blockHeaders)
 }
 
 func btcHeadersBytesToBlockHeader(headers []bbn.BTCHeaderBytes) []*wire.BlockHeader {

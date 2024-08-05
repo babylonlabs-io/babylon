@@ -47,7 +47,7 @@ func (m msgServer) InsertHeaders(ctx context.Context, msg *types.MsgInsertHeader
 		return nil, types.ErrUnauthorizedReporter.Wrapf("reporter %s is not authorized to insert headers", reporterAddress)
 	}
 
-	err := m.k.InsertHeaders(sdkCtx, msg.Headers)
+	err := m.k.InsertHeadersWithHookAndEvents(sdkCtx, msg.Headers)
 
 	if err != nil {
 		return nil, err

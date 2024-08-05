@@ -94,7 +94,7 @@ func insertBtcHeaders(
 		headersBytes[i] = *h.Header
 	}
 
-	if err := k.InsertHeadersNoEventsAndRollback(ctx, headersBytes); err != nil {
+	if err := k.InsertHeaders(ctx, headersBytes); err != nil {
 		return err
 	}
 

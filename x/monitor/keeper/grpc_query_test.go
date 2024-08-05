@@ -41,7 +41,7 @@ func FuzzQueryEndedEpochBtcHeight(f *testing.F) {
 			10,
 		)
 		headerBytes := datagen.HeaderToHeaderBytes(chain)
-		err := lck.InsertHeaders(ctx, headerBytes)
+		err := lck.InsertHeadersWithHookAndEvents(ctx, headerBytes)
 		require.NoError(t, err)
 
 		// go to BeginBlock of block 11, and thus entering epoch 2
@@ -98,7 +98,7 @@ func FuzzQueryReportedCheckpointBtcHeight(f *testing.F) {
 			10,
 		)
 		headerBytes := datagen.HeaderToHeaderBytes(chain)
-		err := lck.InsertHeaders(ctx, headerBytes)
+		err := lck.InsertHeadersWithHookAndEvents(ctx, headerBytes)
 		require.NoError(t, err)
 
 		// Add checkpoint
