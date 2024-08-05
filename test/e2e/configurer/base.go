@@ -40,11 +40,11 @@ const defaultSyncUntilHeight = 3
 func (bc *baseConfigurer) ClearResources() error {
 	bc.t.Log("tearing down e2e integration test suite...")
 
-	g := new(errgroup.Group)
-	g.Go(func() error {
-		return bc.containerManager.ClearResources()
-	})
+	if err := bc.containerManager.ClearResources(); err != nil {
+		return err
+	}
 
+	g := new(errgroup.Group)
 	for _, chainConfig := range bc.chainConfigs {
 		chainConfig := chainConfig
 		g.Go(func() error {
