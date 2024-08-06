@@ -286,6 +286,9 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		msgCommitPubRandList.Sig,
 	)
 
+	// finalise epoch 1
+	nonValidatorNode.FinalizeSealedEpochs(1, 1)
+
 	// ensure public randomness list is eventually committed
 	nonValidatorNode.WaitForNextBlock()
 	var prCommitMap map[uint64]*ftypes.PubRandCommitResponse
