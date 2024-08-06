@@ -26,6 +26,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 )
@@ -270,6 +271,8 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	// get activated height
 	activatedHeight := nonValidatorNode.QueryActivatedHeight()
 	s.Positive(activatedHeight)
+	_, err = nonValidatorNode.QueryCurrentHeight()
+	s.NoError(err)
 
 	/*
 		commit a number of public randomness since activatedHeight
@@ -286,19 +289,6 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		msgCommitPubRandList.Sig,
 	)
 
-	// finalise epoch 1
-	nonValidatorNode.FinalizeSealedEpochs(1, 1)
-
-	// ensure public randomness list is eventually committed
-	nonValidatorNode.WaitForNextBlock()
-	var prCommitMap map[uint64]*ftypes.PubRandCommitResponse
-	s.Eventually(func() bool {
-		prCommitMap = nonValidatorNode.QueryListPubRandCommit(cacheFP.BtcPk)
-		return len(prCommitMap) > 0
-	}, time.Minute, time.Second*5)
-	s.Equal(prCommitMap[activatedHeight].NumPubRand, msgCommitPubRandList.NumPubRand)
-	s.Equal(prCommitMap[activatedHeight].Commitment, msgCommitPubRandList.Commitment)
-
 	// no reward gauge for finality provider and delegation yet
 	fpBabylonAddr, err := sdk.AccAddressFromBech32(cacheFP.Addr)
 	s.NoError(err)
@@ -306,6 +296,40 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	_, err = nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
 	s.ErrorContains(err, itypes.ErrRewardGaugeNotFound.Error())
 	delBabylonAddr := fpBabylonAddr
+
+	// finalize epochs from 1 to the current epoch
+	currentEpoch, err := nonValidatorNode.QueryCurrentEpoch()
+	s.NoError(err)
+
+	// wait until the end epoch is sealed
+	s.Eventually(func() bool {
+		resp, err := nonValidatorNode.QueryRawCheckpoint(currentEpoch)
+		if err != nil {
+			return false
+		}
+		return resp.Status == ckpttypes.Sealed
+	}, time.Minute, time.Second*5)
+	nonValidatorNode.FinalizeSealedEpochs(1, currentEpoch)
+	lastFinalizedEpoch := uint64(0)
+
+	// ensure the committed epoch is finalized
+	s.Eventually(func() bool {
+		lastFinalizedEpoch, err = nonValidatorNode.QueryLastFinalizedEpoch()
+		if err != nil {
+			return false
+		}
+		return lastFinalizedEpoch >= currentEpoch
+	}, time.Minute, time.Second)
+
+	// ensure public randomness list is eventually committed
+	var prCommitMap map[uint64]*ftypes.PubRandCommitResponse
+	s.Eventually(func() bool {
+		prCommitMap = nonValidatorNode.QueryListPubRandCommit(cacheFP.BtcPk)
+		return len(prCommitMap) > 0
+	}, time.Minute, time.Second*5)
+	s.Equal(prCommitMap[activatedHeight].NumPubRand, msgCommitPubRandList.NumPubRand)
+	s.Equal(prCommitMap[activatedHeight].Commitment, msgCommitPubRandList.Commitment)
+	s.LessOrEqual(prCommitMap[activatedHeight].EpochNum, lastFinalizedEpoch)
 
 	/*
 		submit finality signature
@@ -325,20 +349,12 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	nonValidatorNode.AddFinalitySig(cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
 	// ensure vote is eventually cast
-	nonValidatorNode.WaitForNextBlock()
-	var votes []bbn.BIP340PubKey
+	var finalizedBlocks []*ftypes.IndexedBlock
 	s.Eventually(func() bool {
-		votes = nonValidatorNode.QueryVotesAtHeight(activatedHeight)
-		return len(votes) > 0
+		finalizedBlocks = nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
+		return len(finalizedBlocks) > 0
 	}, time.Minute, time.Second*5)
-	s.Equal(1, len(votes))
-	s.Equal(votes[0].MarshalHex(), cacheFP.BtcPk.MarshalHex())
-	// once the vote is cast, ensure block is finalised
-	finalizedBlock := nonValidatorNode.QueryIndexedBlock(activatedHeight)
-	s.NotEmpty(finalizedBlock)
-	s.Equal(appHash.Bytes(), finalizedBlock.AppHash)
-	finalizedBlocks := nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
-	s.NotEmpty(finalizedBlocks)
+	s.Equal(activatedHeight, finalizedBlocks[0].Height)
 	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 
 	// ensure finality provider has received rewards after the block is finalised
