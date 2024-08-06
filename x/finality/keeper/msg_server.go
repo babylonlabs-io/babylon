@@ -7,12 +7,13 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	bbn "github.com/babylonlabs-io/babylon/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 type msgServer struct {
@@ -82,7 +83,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	}
 	fpPK := req.FpBtcPk
 	if ms.BTCStakingKeeper.GetVotingPower(ctx, fpPK.MustMarshal(), req.BlockHeight) == 0 {
-		return nil, types.ErrInvalidFinalitySig.Wrapf("the finality provider %v does not have voting power at height %d", fpPK.MustMarshal(), req.BlockHeight)
+		return nil, types.ErrInvalidFinalitySig.Wrapf("the finality provider %s does not have voting power at height %d", fpPK.MarshalHex(), req.BlockHeight)
 	}
 
 	// ensure the finality provider has not cast the same vote yet
@@ -100,6 +101,13 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	prCommit, err := ms.GetPubRandCommitForHeight(ctx, req.FpBtcPk, req.BlockHeight)
 	if err != nil {
 		return nil, err
+	}
+	// ensure the finality provider's last randomness commit is already finalised by BTC timestamping
+	finalizedEpoch := ms.BTCStakingKeeper.GetLastFinalizedEpoch(ctx)
+	if finalizedEpoch < prCommit.EpochNum {
+		return nil, types.ErrPubRandCommitNotBTCTimestamped.
+			Wrapf("the finality provider %s last committed epoch number: %d, last finalized epoch number: %d",
+				fp.BtcPk.MarshalHex(), prCommit.EpochNum, finalizedEpoch)
 	}
 
 	// verify the finality signature message w.r.t. the public randomness commitment
@@ -132,7 +140,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		// if this finality provider has also signed canonical block, slash it
 		canonicalSig, err := ms.GetSig(ctx, req.BlockHeight, fpPK)
 		if err == nil {
-			//set canonial sig
+			// set canonial sig
 			evidence.CanonicalFinalitySig = canonicalSig
 			// slash this finality provider, including setting its voting power to
 			// zero, extracting its BTC SK, and emit an event
@@ -206,6 +214,7 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 		StartHeight: req.StartHeight,
 		NumPubRand:  req.NumPubRand,
 		Commitment:  req.Commitment,
+		EpochNum:    ms.BTCStakingKeeper.GetEpoch(ctx),
 	}
 
 	// get last public randomness commitment

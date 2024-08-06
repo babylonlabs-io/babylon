@@ -90,3 +90,12 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
 	return k.ckptKeeper.GetLastFinalizedEpoch(ctx)
 }
+
+func (k Keeper) GetEpoch(ctx context.Context) uint64 {
+	epoch := k.ckptKeeper.GetEpoch(ctx)
+	if epoch == nil {
+		panic(fmt.Errorf("epoch cannot be nil"))
+	}
+
+	return epoch.EpochNumber
+}

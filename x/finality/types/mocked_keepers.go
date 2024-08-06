@@ -51,6 +51,20 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetBTCStakingActivatedHeight(ctx int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBTCStakingActivatedHeight", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetBTCStakingActivatedHeight), ctx)
 }
 
+// GetEpoch mocks base method.
+func (m *MockBTCStakingKeeper) GetEpoch(ctx context.Context) uint64 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEpoch", ctx)
+	ret0, _ := ret[0].(uint64)
+	return ret0
+}
+
+// GetEpoch indicates an expected call of GetEpoch.
+func (mr *MockBTCStakingKeeperMockRecorder) GetEpoch(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpoch", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetEpoch), ctx)
+}
+
 // GetFinalityProvider mocks base method.
 func (m *MockBTCStakingKeeper) GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*types0.FinalityProvider, error) {
 	m.ctrl.T.Helper()
