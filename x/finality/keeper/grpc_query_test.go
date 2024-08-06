@@ -205,6 +205,7 @@ func FuzzListPubRandCommit(f *testing.F) {
 		require.NoError(t, err)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(fp, nil).AnyTimes()
 		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(true).AnyTimes()
+		bsKeeper.EXPECT().GetEpoch(gomock.Any()).Return(uint64(1)).AnyTimes()
 
 		numPrCommitList := datagen.RandomInt(r, 10) + 1
 		prCommitList := []*types.PubRandCommit{}
