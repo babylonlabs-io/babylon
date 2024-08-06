@@ -17,6 +17,7 @@ jobs:
   lint_test:
     needs: free-disk-space
     uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@remove_go_cache
+    secrets: inherit
     with:
       run-unit-tests: true
       run-integration-tests: true
