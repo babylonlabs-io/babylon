@@ -52,7 +52,8 @@ func isExpectedErr(err error) bool {
 }
 
 // Do executes a func with retry
-// TODO: check if this is needed, because is not being used.
+// TODO: Remove this function, and make our programs to depend on retires based
+// on some standard retry library
 func Do(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() error) error {
 	if err := retryableFunc(); err != nil {
 		if isUnrecoverableErr(err) {
@@ -66,9 +67,10 @@ func Do(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() er
 		}
 
 		// Add some randomness to prevent thrashing
-		jitter, err := randDuration(int64(sleep))
-		if err != nil {
-			return err
+		// TODO: This duration should be passed by the caller
+		jitter, randomnessErr := randDuration(int64(sleep))
+		if randomnessErr != nil {
+			return randomnessErr
 		}
 		sleep = sleep + jitter/2
 
