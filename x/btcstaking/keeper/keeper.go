@@ -21,7 +21,6 @@ type (
 
 		btclcKeeper types.BTCLightClientKeeper
 		btccKeeper  types.BtcCheckpointKeeper
-		ckptKeeper  types.CheckpointingKeeper
 
 		hooks types.BtcStakingHooks
 
@@ -38,7 +37,6 @@ func NewKeeper(
 
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
-	ckptKeeper types.CheckpointingKeeper,
 
 	btcNet *chaincfg.Params,
 	authority string,
@@ -49,7 +47,6 @@ func NewKeeper(
 
 		btclcKeeper: btclcKeeper,
 		btccKeeper:  btccKeeper,
-		ckptKeeper:  ckptKeeper,
 
 		hooks: nil,
 
@@ -85,17 +82,4 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	k.UpdatePowerDist(ctx)
 
 	return nil
-}
-
-func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
-	return k.ckptKeeper.GetLastFinalizedEpoch(ctx)
-}
-
-func (k Keeper) GetEpoch(ctx context.Context) uint64 {
-	epoch := k.ckptKeeper.GetEpoch(ctx)
-	if epoch == nil {
-		panic(fmt.Errorf("epoch cannot be nil"))
-	}
-
-	return epoch.EpochNumber
 }

@@ -103,7 +103,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, err
 	}
 	// ensure the finality provider's last randomness commit is already finalised by BTC timestamping
-	finalizedEpoch := ms.BTCStakingKeeper.GetLastFinalizedEpoch(ctx)
+	finalizedEpoch := ms.GetLastFinalizedEpoch(ctx)
 	if finalizedEpoch < prCommit.EpochNum {
 		return nil, types.ErrPubRandCommitNotBTCTimestamped.
 			Wrapf("the finality provider %s last committed epoch number: %d, last finalized epoch number: %d",
@@ -214,7 +214,7 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 		StartHeight: req.StartHeight,
 		NumPubRand:  req.NumPubRand,
 		Commitment:  req.Commitment,
-		EpochNum:    ms.BTCStakingKeeper.GetEpoch(ctx),
+		EpochNum:    ms.GetCurrentEpoch(ctx),
 	}
 
 	// get last public randomness commitment

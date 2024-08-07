@@ -14,12 +14,13 @@ import (
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 func setupMsgServer(t testing.TB) (*keeper.Keeper, types.MsgServer, context.Context) {
-	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
 	return fKeeper, keeper.NewMsgServerImpl(*fKeeper), ctx
 }
 
@@ -38,10 +39,11 @@ func FuzzCommitPubRandList(f *testing.F) {
 		defer ctrl.Finish()
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 		committedEpochNum := datagen.GenRandomEpochNum(r)
-		bsKeeper.EXPECT().GetEpoch(gomock.Any()).Return(committedEpochNum).AnyTimes()
+		cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: committedEpochNum}).AnyTimes()
 
 		// create a random finality provider
 		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
@@ -109,7 +111,8 @@ func FuzzAddFinalitySig(f *testing.F) {
 		defer ctrl.Finish()
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
 		// create and register a random finality provider
@@ -124,7 +127,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		// set committed epoch num
 		committedEpochNum := datagen.GenRandomEpochNum(r) + 1
-		bsKeeper.EXPECT().GetEpoch(gomock.Any()).Return(committedEpochNum).AnyTimes()
+		cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: committedEpochNum}).AnyTimes()
 
 		// commit some public randomness
 		startHeight := uint64(0)
@@ -143,7 +146,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		// Case 0: fail if the committed epoch is not finalized
 		lastFinalizedEpoch := datagen.RandomInt(r, int(committedEpochNum))
-		o1 := bsKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(lastFinalizedEpoch).Times(1)
+		o1 := cKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(lastFinalizedEpoch).Times(1)
 		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(1)).Times(1)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		_, err = ms.AddFinalitySig(ctx, msg)
@@ -151,7 +154,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		// set the committed epoch finalized for the rest of the cases
 		lastFinalizedEpoch = datagen.GenRandomEpochNum(r) + committedEpochNum
-		bsKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(lastFinalizedEpoch).After(o1).AnyTimes()
+		cKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(lastFinalizedEpoch).After(o1).AnyTimes()
 
 		// Case 1: fail if the finality provider does not have voting power
 		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(0)).Times(1)
@@ -233,7 +236,8 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
-	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil)
+	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 	// create and register a random finality provider
 	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
@@ -245,8 +249,8 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	require.NoError(t, err)
 	bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(),
 		gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
-	bsKeeper.EXPECT().GetEpoch(gomock.Any()).Return(uint64(1)).AnyTimes()
-	bsKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(1)).AnyTimes()
+	cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: 1}).AnyTimes()
+	cKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(1)).AnyTimes()
 	// commit some public randomness
 	startHeight := uint64(0)
 	numPubRand := uint64(200)

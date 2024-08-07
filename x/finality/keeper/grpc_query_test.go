@@ -14,6 +14,7 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
@@ -24,7 +25,7 @@ func FuzzBlock(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		height := datagen.RandomInt(r, 100)
@@ -55,7 +56,7 @@ func FuzzListBlocks(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// index a random list of finalised blocks
@@ -146,7 +147,7 @@ func FuzzVotesAtHeight(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// Add random number of voted finality providers to the store
@@ -191,7 +192,8 @@ func FuzzListPubRandCommit(f *testing.F) {
 
 		// Setup keeper and context
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
-		fKeeper, ctx := testkeeper.FinalityKeeper(t, bsKeeper, nil)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		fKeeper, ctx := testkeeper.FinalityKeeper(t, bsKeeper, nil, cKeeper)
 		ctx = sdk.UnwrapSDKContext(ctx)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
@@ -205,7 +207,7 @@ func FuzzListPubRandCommit(f *testing.F) {
 		require.NoError(t, err)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(fp, nil).AnyTimes()
 		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(true).AnyTimes()
-		bsKeeper.EXPECT().GetEpoch(gomock.Any()).Return(uint64(1)).AnyTimes()
+		cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: 1}).AnyTimes()
 
 		numPrCommitList := datagen.RandomInt(r, 10) + 1
 		prCommitList := []*types.PubRandCommit{}
@@ -261,7 +263,7 @@ func FuzzQueryEvidence(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// set random BTC SK PK
@@ -308,7 +310,7 @@ func FuzzListEvidences(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// generate a random list of evidences since startHeight
@@ -372,7 +374,7 @@ func FuzzSigningInfo(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		fKeeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
+		fKeeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// generate a random list of signing info
