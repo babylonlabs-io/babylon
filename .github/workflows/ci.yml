@@ -88,12 +88,17 @@ jobs:
     needs: build
     runs-on: ubuntu-22.04
     steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Build E2E Dockers
         run: |
-          sudo make build-docker-e2e
+            sudo make build-docker-e2e
 
   run-integration-tests:
     needs: build-integration-tests
