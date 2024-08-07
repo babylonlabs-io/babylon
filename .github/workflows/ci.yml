@@ -6,7 +6,14 @@ on:
     - '**'
 
 jobs:
+  free-disk-space:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Free Disk Space (Ubuntu)
+      uses: jlumbroso/free-disk-space@main
+
   build:
+    needs: free-disk-space
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
