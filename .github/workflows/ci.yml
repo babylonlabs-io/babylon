@@ -14,7 +14,7 @@ jobs:
 
   lint_test:
     needs: free-disk-space
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@remove_go_cache
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@v0.2.1
     secrets: inherit
     with:
       run-unit-tests: true
@@ -23,10 +23,10 @@ jobs:
       integration-tests-command: |
         sudo make test-e2e
 
-  docker_pipeline:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.2.1
-    secrets: inherit
-    with:
-     publish: false
-     dockerfile: ./contrib/images/babylond/Dockerfile
-     repoName: babylond
+  # docker_pipeline:
+  #   uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.2.1
+  #   secrets: inherit
+  #   with:
+  #    publish: false
+  #    dockerfile: ./contrib/images/babylond/Dockerfile
+  #    repoName: babylond
