@@ -3,23 +3,115 @@ name: ci
 on:
   push:
     branches:
-    - '**'
+      - '**'
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
 
 jobs:
-  lint_test:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@v0.2.1
-    secrets: inherit
-    with:
-     run-unit-tests: true
-     run-integration-tests: true
-     run-lint: true
-     integration-tests-command: |
-      sudo make test-e2e
-     
-  docker_pipeline:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.2.1
-    secrets: inherit
-    with:
-     publish: false
-     dockerfile: ./contrib/images/babylond/Dockerfile
-     repoName: babylond
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Print Go environment
+        run: go env
+
+      - name: Build Application
+        run: make build
+
+# needs: build, in other jobs is to utilize the go cache created by build
+  lint:
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Run Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.59
+          args: --timeout=10m
+
+  unit-tests:
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Run Unit Tests
+        run: |
+          make test
+
+  check-mock-gen:
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Run make mock-gen
+        run: make mocks
+
+      - name: Check for uncommitted changes
+        run: |
+          if ! git diff --exit-code; then
+            echo "Uncommitted changes detected. Please run 'make mocks' before committing."
+            exit 1
+          fi
+
+  build-integration-tests:
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build E2E Dockers
+        run: |
+            sudo make build-docker-e2e
+
+  run-integration-tests:
+    needs: build-integration-tests
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Run E2E Tests
+        run: |
+          sudo make test-e2e-cache

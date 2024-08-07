@@ -4,16 +4,16 @@ BABYLON_VERSION_BEFORE_UPGRADE ?= v0.9.0
 
 all: babylond cosmos-relayer
 
-babylond: babylond-rmi
+babylond:
 	docker build --tag babylonlabs-io/babylond -f babylond/Dockerfile ${BABYLON_FULL_PATH}
 
-babylond-e2e: babylond-rmi
+babylond-e2e:
 	docker build --tag babylonlabs-io/babylond -f babylond/Dockerfile ${BABYLON_FULL_PATH} \
-		--build-arg BUILD_TAGS="e2e" --progress=plain
+		--build-arg BUILD_TAGS="e2e"
 
 ## TODO: once release docker public versions for tags, remove this!
 babylond-before-upgrade:
-	docker build --tag babylonlabs-io/babylond-before-upgrade -f babylond/Dockerfile --progress=plain \
+	docker build --tag babylonlabs-io/babylond-before-upgrade -f babylond/Dockerfile \
     --build-arg VERSION="${BABYLON_VERSION_BEFORE_UPGRADE}" ${BABYLON_FULL_PATH}
 
 babylond-rmi:
