@@ -8,6 +8,7 @@ on:
 jobs:
   lint_test:
     uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@v0.2.1
+    secrets: inherit
     with:
      run-unit-tests: true
      run-integration-tests: true
