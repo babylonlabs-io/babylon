@@ -7,26 +7,108 @@ on:
 
 jobs:
   free-disk-space:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Free Disk Space (Ubuntu)
       uses: jlumbroso/free-disk-space@main
+      with:
+        # this might remove tools that are actually needed,
+        # if set to "true" but frees about 6 GB
+        tool-cache: true
 
-  lint_test:
+  build:
     needs: free-disk-space
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@v0.2.1
-    secrets: inherit
-    with:
-      run-unit-tests: true
-      run-integration-tests: true
-      run-lint: true
-      integration-tests-command: |
-        sudo make test-e2e
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  # docker_pipeline:
-  #   uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.2.1
-  #   secrets: inherit
-  #   with:
-  #    publish: false
-  #    dockerfile: ./contrib/images/babylond/Dockerfile
-  #    repoName: babylond
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Print Go environment
+        run: go env
+
+      - name: Build Application
+        run: make build
+
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Run Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.59
+          args: --timeout=10m
+
+  unit-tests:
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Run Unit Tests
+        run: |
+          make test
+
+  integration-tests:
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Run Integration Tests
+        run: sudo make test-e2e
+
+  check-mock-gen:
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Run make mock-gen
+        run: make mock-gen
+
+      - name: Check for uncommitted changes
+        run: |
+          if ! git diff --exit-code; then
+            echo "Uncommitted changes detected. Please run 'make mock-gen' before committing."
+            exit 1
+          fi
+
+
+# docker_pipeline:
+#   uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.2.1
+#   secrets: inherit
+#   with:
+#    publish: false
+#    dockerfile: ./contrib/images/babylond/Dockerfile
+#    repoName: babylond
