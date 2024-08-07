@@ -23,6 +23,7 @@ jobs:
       - name: Build Application
         run: make build
 
+# needs: build, in other jobs is to utilize the go cache created by build
   lint:
     needs: build
     runs-on: ubuntu-22.04
