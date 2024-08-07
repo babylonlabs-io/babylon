@@ -3,7 +3,11 @@ name: ci
 on:
   push:
     branches:
-    - '**'
+      - '**'
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -97,6 +101,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
 
       - name: Run E2E Tests
         run: |
