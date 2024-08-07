@@ -41,22 +41,22 @@ type Manager struct {
 
 // NewManager creates a new Manager instance and initializes
 // all Docker specific utilities. Returns an error if initialization fails.
-func NewManager(identifier string, isDebugLogEnabled bool, isCosmosRelayer, isUpgrade bool) (docker *Manager, err error) {
-	docker = &Manager{
+func NewManager(identifier string, isDebugLogEnabled bool, isCosmosRelayer, isUpgrade bool) (m *Manager, err error) {
+	m = &Manager{
 		ImageConfig:       NewImageConfig(isCosmosRelayer, isUpgrade),
 		resources:         make(map[string]*dockertest.Resource),
 		isDebugLogEnabled: isDebugLogEnabled,
 		identifier:        identifier,
 	}
-	docker.pool, err = dockertest.NewPool("")
+	m.pool, err = dockertest.NewPool("")
 	if err != nil {
 		return nil, err
 	}
-	docker.network, err = docker.pool.CreateNetwork("bbn-testnet")
+	m.network, err = m.pool.CreateNetwork(m.NetworkName())
 	if err != nil {
 		return nil, err
 	}
-	return docker, nil
+	return m, nil
 }
 
 // ExecTxCmd Runs ExecTxCmdWithSuccessString searching for `code: 0`
@@ -247,14 +247,14 @@ func (m *Manager) RunRlyResource(chainAID, osmoARelayerNodeName, osmoAValMnemoni
 
 // RunNodeResource runs a node container. Assings containerName to the container.
 // Mounts the container on valConfigDir volume on the running host. Returns the container resource and error if any.
-func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir string) (*dockertest.Resource, error) {
+func (m *Manager) RunNodeResource(chainId string, nodeName, valCondifDir string) (*dockertest.Resource, error) {
 	pwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
 	}
 
 	runOpts := &dockertest.RunOptions{
-		Name:       containerName,
+		Name:       m.ContainerName(nodeName),
 		Repository: m.CurrentRepository,
 		NetworkID:  m.network.Network.ID,
 		User:       "root:root",
@@ -276,7 +276,7 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		return nil, err
 	}
 
-	m.resources[containerName] = resource
+	m.resources[m.ContainerName(nodeName)] = resource
 
 	return resource, nil
 }
@@ -287,10 +287,10 @@ func (m *Manager) PurgeResource(resource *dockertest.Resource) error {
 }
 
 // GetNodeResource returns the node resource for containerName.
-func (m *Manager) GetNodeResource(containerName string) (*dockertest.Resource, error) {
-	resource, exists := m.resources[containerName]
+func (m *Manager) GetNodeResource(nodeName string) (*dockertest.Resource, error) {
+	resource, exists := m.resources[m.ContainerName(nodeName)]
 	if !exists {
-		return nil, fmt.Errorf("node resource not found: container name: %s", containerName)
+		return nil, fmt.Errorf("node resource not found: container name: %s", nodeName)
 	}
 	return resource, nil
 }
@@ -299,8 +299,8 @@ func (m *Manager) GetNodeResource(containerName string) (*dockertest.Resource, e
 // necessary to connect to the portId exposed inside the container.
 // The container is determined by containerName.
 // Returns the host-port or error if any.
-func (m *Manager) GetHostPort(containerName string, portId string) (string, error) {
-	resource, err := m.GetNodeResource(containerName)
+func (m *Manager) GetHostPort(nodeName string, portId string) (string, error) {
+	resource, err := m.GetNodeResource(nodeName)
 	if err != nil {
 		return "", err
 	}
@@ -309,8 +309,8 @@ func (m *Manager) GetHostPort(containerName string, portId string) (string, erro
 
 // RemoveNodeResource removes a node container specified by containerName.
 // Returns error if any.
-func (m *Manager) RemoveNodeResource(containerName string) error {
-	resource, err := m.GetNodeResource(containerName)
+func (m *Manager) RemoveNodeResource(nodeName string) error {
+	resource, err := m.GetNodeResource(nodeName)
 	if err != nil {
 		return err
 	}
@@ -320,7 +320,7 @@ func (m *Manager) RemoveNodeResource(containerName string) error {
 	if err := m.pool.Client.RemoveContainer(opts); err != nil {
 		return err
 	}
-	delete(m.resources, containerName)
+	delete(m.resources, m.ContainerName(nodeName))
 	return nil
 }
 
