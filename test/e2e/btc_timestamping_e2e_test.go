@@ -38,7 +38,6 @@ func (s *BTCTimestampingTestSuite) SetupSuite() {
 	// 3. Run IBC relayer between the two chains.
 	// 4. Execute various e2e tests, including IBC
 	s.configurer, err = configurer.NewBTCTimestampingConfigurer(s.T(), true)
-
 	s.Require().NoError(err)
 
 	err = s.configurer.ConfigureChains()

@@ -254,6 +254,7 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		return nil, err
 	}
 
+	fmt.Printf("\nrunning RunNodeResource container name %s", containerName)
 	runOpts := &dockertest.RunOptions{
 		Name:       containerName,
 		Repository: m.CurrentRepository,
@@ -361,6 +362,8 @@ func (m *Manager) RunChainInitResource(chainId string, chainVotingPeriod, chainE
 	votingPeriodDuration := time.Duration(chainVotingPeriod * 1000000000)
 	expeditedVotingPeriodDuration := time.Duration(chainExpeditedVotingPeriod * 1000000000)
 
+	fmt.Printf("\n running RunChainInitResource %s", chainId)
+	fmt.Printf("\n running network %s", m.network.Network.ID)
 	initResource, err := m.pool.RunWithOptions(
 		&dockertest.RunOptions{
 			Name:       chainId,

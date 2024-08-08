@@ -1,6 +1,7 @@
 package configurer
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -40,12 +41,12 @@ func (cb *CurrentBranchConfigurer) ConfigureChains() error {
 
 func (cb *CurrentBranchConfigurer) ConfigureChain(chainConfig *chain.Config) error {
 	cb.t.Logf("starting e2e infrastructure from current branch for chain-id: %s", chainConfig.Id)
-	tmpDir, err := os.MkdirTemp("", "bbn-e2e-testnet-")
+	tmpDir, err := os.MkdirTemp("", "bbn-e2e-testnet-*")
 	if err != nil {
 		return err
 	}
 	cb.t.Logf("temp directory for chain-id %v: %v", chainConfig.Id, tmpDir)
-
+	fmt.Printf("\n tmp dir for config chain %s - ", tmpDir)
 	initializedChain, err := initialization.InitChain(
 		chainConfig.Id,
 		tmpDir,

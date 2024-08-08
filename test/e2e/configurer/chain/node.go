@@ -53,6 +53,7 @@ func (n *NodeConfig) Run() error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("\n running node resource %s - chainId: %s", n.Name, n.chainId)
 
 	hostPort := resource.GetHostPort("26657/tcp")
 	rpcClient, err := rpchttp.New("tcp://"+hostPort, "/websocket")

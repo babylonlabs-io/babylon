@@ -352,6 +352,7 @@ func (n *internalNode) initNodeConfigs(persistentPeers []string) error {
 	valConfig.P2P.ListenAddress = "tcp://0.0.0.0:26656"
 	valConfig.P2P.AddrBookStrict = false
 	valConfig.P2P.ExternalAddress = fmt.Sprintf("%s:%d", n.moniker, 26656)
+	fmt.Printf("\ninitNodeConfigs %+v - external addr %s", persistentPeers, valConfig.P2P.ExternalAddress)
 	valConfig.RPC.ListenAddress = "tcp://0.0.0.0:26657"
 	valConfig.StateSync.Enable = false
 	valConfig.LogLevel = "debug"
