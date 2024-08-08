@@ -113,7 +113,6 @@ jobs:
         id: check-babylond-before-upgrade
         with:
           name: babylond-before-upgrade
-
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Build docker and save babylond-before-upgrade
@@ -194,7 +193,7 @@ jobs:
           go-version: 1.21
       - name: Run e2e TestBTCTimestampingTestSuite
         run: |
-          sudo make test-e2e-cache-btc-timestamping
+          make test-e2e-cache-btc-timestamping
 
   e2e-run-btc-timestamping-phase-2-hermes:
     needs: [e2e-docker-build-babylon]
