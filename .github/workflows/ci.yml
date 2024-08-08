@@ -84,6 +84,46 @@ jobs:
             exit 1
           fi
 
+
+  e2e-docker-build-babylon:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build docker babylond
+        run: |
+          make -C contrib/images babylond
+      - name: Docker save babylon
+        run: |
+          docker save -o /tmp/docker-babylonlabs.tar.gz babylonlabs-io/babylond:latest
+
+      - name: Upload babylon artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: babylond-${{ github.sha }} # so it renovates at every new sha
+          path: /tmp/docker-babylonlabs.tar.gz
+
+  e2e-run-btc-timestamping:
+    needs: e2e-docker-build-babylon
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download babylon artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: babylond-${{ github.sha }}
+          path: /tmp/docker-babylonlabs.tar.gz
+
+      - name: Docker load babylond
+        run: |
+          docker load < /tmp/docker-babylonlabs.tar.gz
+
+      - name: Run e2e TestBTCTimestampingTestSuite
+        run: |
+          make test-e2e-cache-btc-timestamping
+
   build-run-integration-tests:
     needs: build
     runs-on: ubuntu-22.04
