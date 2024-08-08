@@ -188,7 +188,7 @@ jobs:
       - name: Docker load babylond
         run: |
           docker load < /tmp/docker-babylond.tar.gz
-      - name: Set up Go
+      - name: Cache Go
         uses: actions/setup-go@v5
         with:
           go-version: 1.21
