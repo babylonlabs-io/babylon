@@ -108,47 +108,43 @@ jobs:
   e2e-docker-build-babylon-before-upgrade:
     runs-on: ubuntu-22.04
     steps:
-      - name: Artifact babylond-before-upgrade exists # TODO: check why it doesn't work to load from older workflow runs .-.
-        uses: xSAVIKx/artifact-exists-action@v0
-        id: check-babylond-before-upgrade
-        with:
-          name: babylond-before-upgrade
+      # - name: Artifact babylond-before-upgrade exists # TODO: check why it doesn't work to load from older workflow runs .-.
+      #   uses: xSAVIKx/artifact-exists-action@v0
+      #   id: check-babylond-before-upgrade
+      #   with:
+      #     name: babylond-before-upgrade
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Build docker and save babylond-before-upgrade
-        if: steps.check-babylond-before-upgrade.outputs.exists == 'false'
+      - name: Build docker babylond-before-upgrade
         run: |
           make -C contrib/images babylond-before-upgrade
+      - name: Docker save babylond-before-upgrade
+        run: |
           docker save -o /tmp/docker-babylond-before-upgrade.tar.gz babylonlabs-io/babylond-before-upgrade:latest
       - name: Upload babylond-before-upgrade artifact
         uses: actions/upload-artifact@v4
         with:
           name: babylond-before-upgrade
           path: /tmp/docker-babylond-before-upgrade.tar.gz
-          retention-days: 90
+          # retention-days: 90
 
   e2e-docker-build-e2e-init-chain:
     runs-on: ubuntu-22.04
     steps:
-      - name: Artifact init-chain exists
-        uses: xSAVIKx/artifact-exists-action@v0
-        id: check-init-chain
-        with:
-          name: init-chain
-
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Build docker and save init-chain
-        if: steps.check-init-chain.outputs.exists == 'false'
+      - name: Build docker init-chain
         run: |
           make -C contrib/images e2e-init-chain
+      - name: Docker save init-chain
+        run: |
           docker save -o /tmp/docker-init-chain.tar.gz babylonlabs-io/babylond-e2e-init-chain:latest
       - name: Upload init-chain artifact
         uses: actions/upload-artifact@v4
         with:
           name: init-chain
           path: /tmp/docker-init-chain.tar.gz
-          retention-days: 90
+          # retention-days: 90
 
   e2e-run-ibc-transfer:
     needs: [e2e-docker-build-babylon, build]
