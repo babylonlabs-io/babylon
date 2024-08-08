@@ -49,12 +49,10 @@ func NewNodeConfig(t *testing.T, initNode *initialization.Node, initConfig *init
 // method.
 func (n *NodeConfig) Run() error {
 	n.t.Logf("starting node container: %s", n.Name)
-	fmt.Printf("Start Run node %+v", n)
 	resource, err := n.containerManager.RunNodeResource(n.chainId, n.Name, n.ConfigDir)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("\n running node resource %s - chainId: %s", n.Name, n.chainId)
 
 	hostPort := resource.GetHostPort("26657/tcp")
 	rpcClient, err := rpchttp.New("tcp://"+hostPort, "/websocket")
@@ -67,11 +65,9 @@ func (n *NodeConfig) Run() error {
 	require.Eventually(
 		n.t,
 		func() bool {
-			fmt.Printf("\neventually check query current height %+v", n)
 			// This fails if unsuccessful.
 			_, err := n.QueryCurrentHeight()
 			if err != nil {
-				fmt.Printf("err on QueryCurrentHeight %s", err.Error())
 				return false
 			}
 			n.t.Logf("started node container: %s", n.Name)

@@ -70,8 +70,6 @@ func (bc *baseConfigurer) RunValidators() error {
 func (bc *baseConfigurer) runValidators(chainConfig *chain.Config) error {
 	bc.t.Logf("starting %s validator containers...", chainConfig.Id)
 	for _, node := range chainConfig.NodeConfigs {
-		fmt.Printf("\n runValidators: %s", node.Name)
-
 		if err := node.Run(); err != nil {
 			return err
 		}

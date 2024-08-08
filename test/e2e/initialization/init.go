@@ -17,7 +17,6 @@ func InitChain(id, dataDir string, nodeConfigs []*NodeConfig, votingPeriod, expe
 	}
 
 	for _, nodeConfig := range nodeConfigs {
-		fmt.Printf("\n newNode node %s-%s is Validator %+v", chain.chainMeta.Id, nodeConfig.Name, nodeConfig.IsValidator)
 		newNode, err := newNode(chain, nodeConfig)
 		if err != nil {
 			return nil, err
@@ -33,7 +32,6 @@ func InitChain(id, dataDir string, nodeConfigs []*NodeConfig, votingPeriod, expe
 	for _, peer := range chain.nodes {
 		peerID := fmt.Sprintf("%s@%s:26656", peer.getNodeKey().ID(), peer.moniker)
 		peer.peerId = peerID
-		fmt.Printf("\n node peerID: %s - moniker %s", peerID, peer.moniker)
 		peers = append(peers, peerID)
 	}
 

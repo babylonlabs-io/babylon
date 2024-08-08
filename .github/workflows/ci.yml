@@ -68,7 +68,7 @@ jobs:
         with:
           name: babylond-before-upgrade
           path: /tmp/docker-babylond-before-upgrade.tar.gz
-          # retention-days: 90
+          # retention-days: 90 active this back if artifact-exists-action works
 
   e2e-docker-build-e2e-init-chain:
     runs-on: ubuntu-22.04

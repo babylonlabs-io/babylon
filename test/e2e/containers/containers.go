@@ -259,9 +259,8 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 	runOpts := &dockertest.RunOptions{
 		Name:       containerName,
 		Repository: m.CurrentRepository,
-		// NetworkID:  m.network.Network.ID,
-		Networks: []*dockertest.Network{m.network},
-		User:     "root:root",
+		NetworkID:  m.network.Network.ID,
+		User:       "root:root",
 		Entrypoint: []string{
 			"sh",
 			"-c",
@@ -274,7 +273,7 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 			fmt.Sprintf("%s/upgrades:/upgrades", pwd),
 		},
 	}
-	fmt.Printf("\n\n run opts docker: %+v", runOpts)
+
 	resource, err := m.pool.RunWithOptions(runOpts, noRestart)
 	if err != nil {
 		return nil, err
@@ -364,8 +363,6 @@ func (m *Manager) RunChainInitResource(chainId string, chainVotingPeriod, chainE
 	votingPeriodDuration := time.Duration(chainVotingPeriod * 1000000000)
 	expeditedVotingPeriodDuration := time.Duration(chainExpeditedVotingPeriod * 1000000000)
 
-	fmt.Printf("\n running RunChainInitResource %s", chainId)
-	fmt.Printf("\n running network %s", m.network.Network.ID)
 	initResource, err := m.pool.RunWithOptions(
 		&dockertest.RunOptions{
 			Name:       chainId,

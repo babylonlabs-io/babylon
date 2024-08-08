@@ -219,7 +219,6 @@ func (uc *UpgradeConfigurer) runProposalUpgrade() error {
 
 	// remove all containers so we can upgrade them to the new version
 	for _, chainConfig := range uc.chainConfigs {
-		fmt.Printf("\n upgradeContainers %+v - prop height %d", chainConfig, chainConfig.UpgradePropHeight)
 		if err := uc.upgradeContainers(chainConfig, chainConfig.UpgradePropHeight); err != nil {
 			return err
 		}
