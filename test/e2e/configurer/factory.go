@@ -1,6 +1,8 @@
 package configurer
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"testing"
@@ -112,6 +114,8 @@ var (
 	}
 )
 
+const MaxIndetifierSize = 10
+
 // NewBTCTimestampingConfigurer returns a new Configurer for BTC timestamping service.
 // TODO currently only one configuration is available. Consider testing upgrades
 // when necessary
@@ -213,7 +217,6 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 
 	return NewUpgradeConfigurer(t,
 		[]*chain.Config{
-
 			// we only need 1 chain for testing upgrade
 			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
 		},
@@ -226,7 +229,13 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 
 func identifierName(t *testing.T) string {
 	str := strings.ToLower(t.Name())
-	return strings.ReplaceAll(str, "/", "-")
+	str = strings.ReplaceAll(str, "/", "-")
+	h := sha256.New()
+	hex := hex.EncodeToString(h.Sum([]byte(str)))
+	if len(hex) > MaxIndetifierSize { // cap size to first MaxIndetifierSize
+		return hex[:MaxIndetifierSize-1]
+	}
+	return hex
 }
 
 func updateNodeConfigNameWithIdentifier(cfgs []*initialization.NodeConfig, identifier string) []*initialization.NodeConfig {

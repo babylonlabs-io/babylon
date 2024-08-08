@@ -32,6 +32,7 @@ func NewCurrentBranchConfigurer(t *testing.T, chainConfigs []*chain.Config, setu
 func (cb *CurrentBranchConfigurer) ConfigureChains() error {
 	cb.t.Logf("Current branch configure chains")
 	for _, chainConfig := range cb.chainConfigs {
+		fmt.Printf("\nconfigure chain :%s - %s", chainConfig.Id, chainConfig.DataDir)
 		if err := cb.ConfigureChain(chainConfig); err != nil {
 			return err
 		}
@@ -46,7 +47,7 @@ func (cb *CurrentBranchConfigurer) ConfigureChain(chainConfig *chain.Config) err
 		return err
 	}
 	cb.t.Logf("temp directory for chain-id %v: %v", chainConfig.Id, tmpDir)
-	fmt.Printf("\n tmp dir for config chain %s - ", tmpDir)
+	fmt.Printf("\n tmp dir for config chain %s - %+v", tmpDir, chainConfig)
 	initializedChain, err := initialization.InitChain(
 		chainConfig.Id,
 		tmpDir,

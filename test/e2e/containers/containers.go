@@ -57,6 +57,7 @@ func NewManager(identifier string, isDebugLogEnabled bool, isCosmosRelayer, isUp
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("\n\ncreating network %s - %s\n\n", m.NetworkName(), m.network.Network.ID)
 	return m, nil
 }
 
@@ -258,8 +259,9 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 	runOpts := &dockertest.RunOptions{
 		Name:       containerName,
 		Repository: m.CurrentRepository,
-		NetworkID:  m.network.Network.ID,
-		User:       "root:root",
+		// NetworkID:  m.network.Network.ID,
+		Networks: []*dockertest.Network{m.network},
+		User:     "root:root",
 		Entrypoint: []string{
 			"sh",
 			"-c",
@@ -272,7 +274,7 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 			fmt.Sprintf("%s/upgrades:/upgrades", pwd),
 		},
 	}
-
+	fmt.Printf("\n\n run opts docker: %+v", runOpts)
 	resource, err := m.pool.RunWithOptions(runOpts, noRestart)
 	if err != nil {
 		return nil, err
