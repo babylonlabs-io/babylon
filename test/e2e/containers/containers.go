@@ -42,41 +42,41 @@ type Manager struct {
 
 // NewManager creates a new Manager instance and initializes
 // all Docker specific utilities. Returns an error if initialization fails.
-func NewManager(identifier string, isDebugLogEnabled bool, isCosmosRelayer, isUpgrade bool) (docker *Manager, err error) {
-	docker = &Manager{
+func NewManager(identifier string, isDebugLogEnabled bool, isCosmosRelayer, isUpgrade bool) (m *Manager, err error) {
+	m = &Manager{
 		ImageConfig:       NewImageConfig(isCosmosRelayer, isUpgrade),
 		resources:         make(map[string]*dockertest.Resource),
 		isDebugLogEnabled: isDebugLogEnabled,
 		identifier:        identifier,
 	}
-	docker.pool, err = dockertest.NewPool("")
+	m.pool, err = dockertest.NewPool("")
 	if err != nil {
 		return nil, err
 	}
-	docker.network, err = docker.pool.CreateNetwork("bbn-testnet")
+	m.network, err = m.pool.CreateNetwork(m.NetworkName())
 	if err != nil {
 		return nil, err
 	}
-	return docker, nil
+	return m, nil
 }
 
 // ExecTxCmd Runs ExecTxCmdWithSuccessString searching for `code: 0`
-func (m *Manager) ExecTxCmd(t *testing.T, chainId string, containerName string, command []string) (bytes.Buffer, bytes.Buffer, error) {
-	return m.ExecTxCmdWithSuccessString(t, chainId, containerName, command, "code: 0")
+func (m *Manager) ExecTxCmd(t *testing.T, chainId string, nodeName string, command []string) (bytes.Buffer, bytes.Buffer, error) {
+	return m.ExecTxCmdWithSuccessString(t, chainId, nodeName, command, "code: 0")
 }
 
 // ExecTxCmdWithSuccessString Runs ExecCmd, with flags for txs added.
 // namely adding flags `--chain-id={chain-id} -b=block --yes --keyring-backend=test "--log_format=json"`,
 // and searching for `successStr`
-func (m *Manager) ExecTxCmdWithSuccessString(t *testing.T, chainId string, containerName string, command []string, successStr string) (bytes.Buffer, bytes.Buffer, error) {
+func (m *Manager) ExecTxCmdWithSuccessString(t *testing.T, chainId string, nodeName string, command []string, successStr string) (bytes.Buffer, bytes.Buffer, error) {
 	allTxArgs := []string{fmt.Sprintf("--chain-id=%s", chainId), "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
 	txCommand := append(command, allTxArgs...)
-	return m.ExecCmd(t, containerName, txCommand, successStr)
+	return m.ExecCmd(t, m.ContainerName(nodeName), txCommand, successStr)
 }
 
 // ExecHermesCmd executes command on the hermes relaer container.
 func (m *Manager) ExecHermesCmd(t *testing.T, command []string, success string) (bytes.Buffer, bytes.Buffer, error) {
-	return m.ExecCmd(t, hermesContainerName, command, success)
+	return m.ExecCmd(t, m.HermesContainerName(), command, success)
 }
 
 // ExecCmd executes command by running it on the node container (specified by containerName)
@@ -84,11 +84,11 @@ func (m *Manager) ExecHermesCmd(t *testing.T, command []string, success string) 
 // It is found by checking if stdout or stderr contains the success string anywhere within it.
 // returns container std out, container std err, and error if any.
 // An error is returned if the command fails to execute or if the success string is not found in the output.
-func (m *Manager) ExecCmd(t *testing.T, containerName string, command []string, success string) (bytes.Buffer, bytes.Buffer, error) {
-	if _, ok := m.resources[containerName]; !ok {
-		return bytes.Buffer{}, bytes.Buffer{}, fmt.Errorf("no resource %s found", containerName)
+func (m *Manager) ExecCmd(t *testing.T, fullContainerName string, command []string, success string) (bytes.Buffer, bytes.Buffer, error) {
+	if _, ok := m.resources[fullContainerName]; !ok {
+		return bytes.Buffer{}, bytes.Buffer{}, fmt.Errorf("no resource %s found", fullContainerName)
 	}
-	containerId := m.resources[containerName].Container.ID
+	containerId := m.resources[fullContainerName].Container.ID
 
 	var (
 		outBuf bytes.Buffer
@@ -165,7 +165,7 @@ func (m *Manager) ExecCmd(t *testing.T, containerName string, command []string, 
 func (m *Manager) RunHermesResource(chainAID, osmoARelayerNodeName, osmoAValMnemonic, chainBID, osmoBRelayerNodeName, osmoBValMnemonic string, hermesCfgPath string) (*dockertest.Resource, error) {
 	hermesResource, err := m.pool.RunWithOptions(
 		&dockertest.RunOptions{
-			Name:       hermesContainerName,
+			Name:       m.HermesContainerName(),
 			Repository: m.RelayerRepository,
 			Tag:        m.RelayerTag,
 			NetworkID:  m.network.Network.ID,
@@ -201,7 +201,7 @@ func (m *Manager) RunHermesResource(chainAID, osmoARelayerNodeName, osmoAValMnem
 	if err != nil {
 		return nil, err
 	}
-	m.resources[hermesContainerName] = hermesResource
+	m.resources[m.HermesContainerName()] = hermesResource
 	return hermesResource, nil
 }
 
@@ -210,7 +210,7 @@ func (m *Manager) RunHermesResource(chainAID, osmoARelayerNodeName, osmoAValMnem
 func (m *Manager) RunRlyResource(chainAID, osmoARelayerNodeName, osmoAValMnemonic, chainAIbcPort, chainBID, osmoBRelayerNodeName, osmoBValMnemonic, chainBIbcPort string, rlyCfgPath string) (*dockertest.Resource, error) {
 	rlyResource, err := m.pool.RunWithOptions(
 		&dockertest.RunOptions{
-			Name:       cosmosRelayerContainerName,
+			Name:       m.CosmosRlyrContainerName(),
 			Repository: m.RelayerRepository,
 			Tag:        m.RelayerTag,
 			NetworkID:  m.network.Network.ID,
@@ -242,20 +242,20 @@ func (m *Manager) RunRlyResource(chainAID, osmoARelayerNodeName, osmoAValMnemoni
 	if err != nil {
 		return nil, err
 	}
-	m.resources[cosmosRelayerContainerName] = rlyResource
+	m.resources[m.CosmosRlyrContainerName()] = rlyResource
 	return rlyResource, nil
 }
 
 // RunNodeResource runs a node container. Assings containerName to the container.
 // Mounts the container on valConfigDir volume on the running host. Returns the container resource and error if any.
-func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir string) (*dockertest.Resource, error) {
+func (m *Manager) RunNodeResource(chainId string, nodeName, valCondifDir string) (*dockertest.Resource, error) {
 	pwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
 	}
 
 	runOpts := &dockertest.RunOptions{
-		Name:       containerName,
+		Name:       m.ContainerName(nodeName),
 		Repository: m.CurrentRepository,
 		NetworkID:  m.network.Network.ID,
 		User:       "root:root",
@@ -277,7 +277,7 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		return nil, err
 	}
 
-	m.resources[containerName] = resource
+	m.resources[m.ContainerName(nodeName)] = resource
 
 	return resource, nil
 }
@@ -288,10 +288,10 @@ func (m *Manager) PurgeResource(resource *dockertest.Resource) error {
 }
 
 // GetNodeResource returns the node resource for containerName.
-func (m *Manager) GetNodeResource(containerName string) (*dockertest.Resource, error) {
-	resource, exists := m.resources[containerName]
+func (m *Manager) GetNodeResource(nodeName string) (*dockertest.Resource, error) {
+	resource, exists := m.resources[m.ContainerName(nodeName)]
 	if !exists {
-		return nil, fmt.Errorf("node resource not found: container name: %s", containerName)
+		return nil, fmt.Errorf("node resource not found: container name: %s", nodeName)
 	}
 	return resource, nil
 }
@@ -300,8 +300,8 @@ func (m *Manager) GetNodeResource(containerName string) (*dockertest.Resource, e
 // necessary to connect to the portId exposed inside the container.
 // The container is determined by containerName.
 // Returns the host-port or error if any.
-func (m *Manager) GetHostPort(containerName string, portId string) (string, error) {
-	resource, err := m.GetNodeResource(containerName)
+func (m *Manager) GetHostPort(nodeName string, portId string) (string, error) {
+	resource, err := m.GetNodeResource(nodeName)
 	if err != nil {
 		return "", err
 	}
@@ -310,8 +310,8 @@ func (m *Manager) GetHostPort(containerName string, portId string) (string, erro
 
 // RemoveNodeResource removes a node container specified by containerName.
 // Returns error if any.
-func (m *Manager) RemoveNodeResource(containerName string) error {
-	resource, err := m.GetNodeResource(containerName)
+func (m *Manager) RemoveNodeResource(nodeName string) error {
+	resource, err := m.GetNodeResource(nodeName)
 	if err != nil {
 		return err
 	}
@@ -321,7 +321,7 @@ func (m *Manager) RemoveNodeResource(containerName string) error {
 	if err := m.pool.Client.RemoveContainer(opts); err != nil {
 		return err
 	}
-	delete(m.resources, containerName)
+	delete(m.resources, m.ContainerName(nodeName))
 	return nil
 }
 
@@ -390,4 +390,21 @@ func (m *Manager) RunChainInitResource(chainId string, chainVotingPeriod, chainE
 // NetworkName returns the network name concatenated with the identifier name
 func (m *Manager) NetworkName() string {
 	return fmt.Sprintf("bbn-testnet-%s", m.identifier)
+}
+
+// HermesContainerName returns the hermes container name concatenated with the
+// identifier
+func (m *Manager) HermesContainerName() string {
+	return fmt.Sprintf("%s-%s", hermesContainerName, m.identifier)
+}
+
+// CosmosRlyrContainerName returns the cosmos relayer container name
+// concatenated with the identifier
+func (m *Manager) CosmosRlyrContainerName() string {
+	return fmt.Sprintf("%s-%s", cosmosRelayerContainerName, m.identifier)
+}
+
+// ContainerName returns the container name concatenated with the identifier
+func (m *Manager) ContainerName(nodeName string) string {
+	return fmt.Sprintf("%s-%s", nodeName, m.identifier)
 }
