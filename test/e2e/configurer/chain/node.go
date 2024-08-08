@@ -67,7 +67,7 @@ func (n *NodeConfig) Run() error {
 	require.Eventually(
 		n.t,
 		func() bool {
-			fmt.Printf("eventually check query current height %+v", n)
+			fmt.Printf("\neventually check query current height %+v", n)
 			// This fails if unsuccessful.
 			_, err := n.QueryCurrentHeight()
 			if err != nil {
