@@ -81,7 +81,7 @@ func (uc *UpgradeConfigurer) ConfigureChains() error {
 
 func (uc *UpgradeConfigurer) ConfigureChain(chainConfig *chain.Config) error {
 	uc.t.Logf("starting upgrade e2e infrastructure for chain-id: %s", chainConfig.Id)
-	tmpDir, err := os.MkdirTemp("", "bbn-e2e-testnet-")
+	tmpDir, err := os.MkdirTemp("", "bbn-e2e-testnet-*")
 	if err != nil {
 		return err
 	}
@@ -183,6 +183,7 @@ func (uc *UpgradeConfigurer) RunUpgrade() error {
 }
 
 func (uc *UpgradeConfigurer) runProposalUpgrade() error {
+	fmt.Printf("running runProposalUpgrade for %+v", uc.chainConfigs)
 	// submit, deposit, and vote for upgrade proposal
 	// prop height = current height + voting period + time it takes to submit proposal + small buffer
 	for _, chainConfig := range uc.chainConfigs {
@@ -206,7 +207,7 @@ func (uc *UpgradeConfigurer) runProposalUpgrade() error {
 	for _, chainConfig := range uc.chainConfigs {
 		uc.t.Logf("waiting to reach upgrade height on chain %s", chainConfig.Id)
 		chainConfig.WaitUntilHeight(chainConfig.UpgradePropHeight)
-		uc.t.Logf("upgrade height reached on chain %s", chainConfig.Id)
+		uc.t.Logf("upgrade height %d reached on chain %s", chainConfig.UpgradePropHeight, chainConfig.Id)
 	}
 
 	// remove all containers so we can upgrade them to the new version
@@ -261,6 +262,7 @@ func (uc *UpgradeConfigurer) upgradeContainers(chainConfig *chain.Config, propHe
 	// Check if any of the goroutines returned an error
 	for err := range errCh {
 		if err != nil {
+			fmt.Printf("err on running node %s", err.Error())
 			return err
 		}
 	}

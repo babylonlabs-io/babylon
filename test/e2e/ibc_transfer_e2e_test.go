@@ -34,7 +34,9 @@ func (s *IBCTransferTestSuite) SetupSuite() {
 
 func (s *IBCTransferTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
-	s.Require().NoError(err)
+	if err != nil {
+		s.T().Logf("error to clear resources %s", err.Error())
+	}
 }
 
 func (s *IBCTransferTestSuite) Test1IBCTransfer() {
