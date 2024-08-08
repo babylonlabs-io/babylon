@@ -254,7 +254,6 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		return nil, err
 	}
 
-	fmt.Printf("\nrunning RunNodeResource container name %s", containerName)
 	runOpts := &dockertest.RunOptions{
 		Name:       containerName,
 		Repository: m.CurrentRepository,
