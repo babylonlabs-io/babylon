@@ -50,7 +50,9 @@ func (s *BTCTimestampingTestSuite) SetupSuite() {
 
 func (s *BTCTimestampingTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
-	s.Require().NoError(err)
+	if err != nil {
+		s.T().Logf("error to clear resources %s", err.Error())
+	}
 }
 
 // Most simple test, just checking that two chains are up and connected through

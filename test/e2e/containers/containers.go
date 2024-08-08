@@ -3,6 +3,7 @@ package containers
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -334,11 +335,14 @@ func (m *Manager) ClearResources() (e error) {
 		})
 	}
 
-	if err := g.Wait(); err != nil {
-		return err
+	// TODO: fix error to delete wasm
+	// unlinkat /tmp/bbn-e2e-testnet-2820217771/bbn-test-a/bbn-test-a-node-babylon-default-a-2/ibc_08-wasm/state/wasm: permission denied
+	err := g.Wait()
+	if err != nil {
+		fmt.Printf("error to clear resources %s", err.Error())
 	}
 
-	return m.pool.RemoveNetwork(m.network)
+	return errors.Join(err, m.pool.RemoveNetwork(m.network))
 }
 
 func noRestart(config *docker.HostConfig) {

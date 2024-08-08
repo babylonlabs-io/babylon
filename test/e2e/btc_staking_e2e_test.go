@@ -68,7 +68,9 @@ func (s *BTCStakingTestSuite) SetupSuite() {
 
 func (s *BTCStakingTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
-	s.Require().NoError(err)
+	if err != nil {
+		s.T().Logf("error to clear resources %s", err.Error())
+	}
 }
 
 // TestCreateFinalityProviderAndDelegation is an end-to-end test for
