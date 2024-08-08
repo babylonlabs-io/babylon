@@ -141,7 +141,7 @@ jobs:
       - name: Build docker and save init-chain
         if: steps.check-init-chain.outputs.exists == 'false'
         run: |
-          make -C contrib/images init-chain
+          make -C contrib/images e2e-init-chain
           docker save -o /tmp/docker-init-chain.tar.gz babylonlabs-io/babylond-e2e-init-chain:latest
       - name: Upload init-chain artifact
         uses: actions/upload-artifact@v4
