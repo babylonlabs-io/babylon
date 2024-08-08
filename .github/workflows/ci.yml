@@ -175,7 +175,7 @@ jobs:
           sudo make test-e2e-cache-ibc-transfer
 
   e2e-run-btc-timestamping:
-    needs: [e2e-docker-build-babylon]
+    needs: [e2e-docker-build-babylon, build]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
@@ -187,9 +187,11 @@ jobs:
           path: /tmp
       - name: Docker load babylond
         run: |
-          ls -la
-          ls -la /tmp
           docker load < /tmp/docker-babylond.tar.gz
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
       - name: Run e2e TestBTCTimestampingTestSuite
         run: |
           sudo make test-e2e-cache-btc-timestamping
@@ -216,6 +218,47 @@ jobs:
       - name: Run e2e TestBTCTimestampingPhase2HermesTestSuite
         run: |
           sudo make test-e2e-cache-btc-timestamping-phase-2-hermes
+
+  e2e-run-btc-timestamping-phase-2-rly:
+    needs: [e2e-docker-build-babylon]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Download babylon artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: babylond-${{ github.sha }}
+          path: /tmp
+      - name: Docker load babylond
+        run: |
+          docker load < /tmp/docker-babylond.tar.gz
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Run e2e TestBTCTimestampingPhase2RlyTestSuite
+        run: |
+          sudo make test-e2e-cache-btc-timestamping-phase-2-rly
+
+  e2e-run-btc-staking:
+    needs: [e2e-docker-build-babylon]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Download babylon artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: babylond-${{ github.sha }}
+          path: /tmp
+      - name: Docker load babylond
+        run: |
+          docker load < /tmp/docker-babylond.tar.gz
+      - name: Run e2e TestBTCStakingTestSuite
+        run: |
+          sudo make test-e2e-cache-btc-staking
 
   e2e-run-upgrade-vanilla:
     needs: [e2e-docker-build-babylon, e2e-docker-build-babylon-before-upgrade, e2e-docker-build-e2e-init-chain]
