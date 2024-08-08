@@ -84,6 +84,9 @@ jobs:
             exit 1
           fi
 
+###############################################################################
+###                                   E2E                                   ###
+###############################################################################
 
   e2e-docker-build-babylon:
     runs-on: ubuntu-22.04
@@ -95,13 +98,30 @@ jobs:
           make -C contrib/images babylond
       - name: Docker save babylon
         run: |
-          docker save -o /tmp/docker-babylonlabs.tar.gz babylonlabs-io/babylond:latest
+          docker save -o /tmp/docker-babylond.tar.gz babylonlabs-io/babylond:latest
 
       - name: Upload babylon artifact
         uses: actions/upload-artifact@v4
         with:
           name: babylond-${{ github.sha }} # so it renovates at every new sha
-          path: /tmp/docker-babylonlabs.tar.gz
+          path: /tmp/docker-babylond.tar.gz
+
+  e2e-docker-build-babylon-before-upgrade:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build docker babylond-before-upgrade
+        run: |
+          make -C contrib/images babylond-before-upgrade
+      - name: Docker save babylond-before-upgrade
+        run: |
+          docker save -o /tmp/docker-babylond-before-upgrade.tar.gz babylonlabs-io/babylond-before-upgrade:latest
+      - name: Upload babylond-before-upgrade artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: babylond-before-upgrade
+          path: /tmp/docker-babylond-before-upgrade.tar.gz
 
   e2e-run-btc-timestamping:
     needs: [e2e-docker-build-babylon, unit-tests]
@@ -114,15 +134,38 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: babylond-${{ github.sha }}
-          path: /tmp/docker-babylonlabs.tar.gz
 
       - name: Docker load babylond
         run: |
-          docker load < /tmp/docker-babylonlabs.tar.gz
+          docker load < /tmp/docker-babylond.tar.gz
 
       - name: Run e2e TestBTCTimestampingTestSuite
         run: |
           make test-e2e-cache-btc-timestamping
+
+  e2e-run-upgrade-vanilla:
+    needs: [e2e-docker-build-babylon, e2e-docker-build-babylon-before-upgrade]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Download babylon artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: babylond-${{ github.sha }}
+      - name: Download babylond-before-upgrade artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: babylond-before-upgrade
+      - name: Docker load babylond
+        run: |
+          docker load < /tmp/docker-babylond.tar.gz
+      - name: Docker load babylond-before-upgrade
+        run: |
+          docker load < /tmp/docker-babylond-before-upgrade.tar.gz
+      - name: Run e2e TestSoftwareUpgradeTestSuite
+        run: |
+          make test-e2e-cache-upgrade-vanilla
 
   build-run-integration-tests:
     needs: build
