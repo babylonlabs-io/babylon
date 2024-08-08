@@ -180,7 +180,6 @@ func (uc *UpgradeConfigurer) RunUpgrade() error {
 }
 
 func (uc *UpgradeConfigurer) runProposalUpgrade() error {
-	fmt.Printf("running runProposalUpgrade for %+v", uc.chainConfigs)
 	// submit, deposit, and vote for upgrade proposal
 	// prop height = current height + voting period + time it takes to submit proposal + small buffer
 	for _, chainConfig := range uc.chainConfigs {
@@ -259,7 +258,6 @@ func (uc *UpgradeConfigurer) upgradeContainers(chainConfig *chain.Config, propHe
 	// Check if any of the goroutines returned an error
 	for err := range errCh {
 		if err != nil {
-			fmt.Printf("err on running node %s", err.Error())
 			return err
 		}
 	}

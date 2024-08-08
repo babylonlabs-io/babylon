@@ -57,7 +57,6 @@ func NewManager(identifier string, isDebugLogEnabled bool, isCosmosRelayer, isUp
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("\n\ncreating network %s - %s\n\n", m.NetworkName(), m.network.Network.ID)
 	return m, nil
 }
 
@@ -255,7 +254,6 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		return nil, err
 	}
 
-	fmt.Printf("\nrunning RunNodeResource container name %s", containerName)
 	runOpts := &dockertest.RunOptions{
 		Name:       containerName,
 		Repository: m.CurrentRepository,
