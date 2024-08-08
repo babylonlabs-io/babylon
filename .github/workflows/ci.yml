@@ -104,7 +104,7 @@ jobs:
           path: /tmp/docker-babylonlabs.tar.gz
 
   e2e-run-btc-timestamping:
-    needs: e2e-docker-build-babylon
+    needs: [e2e-docker-build-babylon, unit-tests]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
