@@ -99,7 +99,6 @@ jobs:
       - name: Docker save babylon
         run: |
           docker save -o /tmp/docker-babylond.tar.gz babylonlabs-io/babylond:latest
-
       - name: Upload babylon artifact
         uses: actions/upload-artifact@v4
         with:
@@ -123,22 +122,45 @@ jobs:
           name: babylond-before-upgrade
           path: /tmp/docker-babylond-before-upgrade.tar.gz
 
+  e2e-run-ibc-transfer:
+    needs: [e2e-docker-build-babylon]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Download babylon artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: babylond-${{ github.sha }}
+          path: /tmp
+      - name: Docker load babylond
+        run: |
+          docker load < /tmp/docker-babylond.tar.gz
+      - name: Login to Docker Hub # load hermes
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Run e2e TestIBCTranferTestSuite
+        run: |
+          make test-e2e-cache-ibc-transfer
+
   e2e-run-btc-timestamping:
     needs: [e2e-docker-build-babylon, unit-tests]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Download babylon artifact
         uses: actions/download-artifact@v4
         with:
           name: babylond-${{ github.sha }}
-
+          path: /tmp
       - name: Docker load babylond
         run: |
+          ls -la
+          ls -la /tmp
           docker load < /tmp/docker-babylond.tar.gz
-
       - name: Run e2e TestBTCTimestampingTestSuite
         run: |
           make test-e2e-cache-btc-timestamping
@@ -153,10 +175,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: babylond-${{ github.sha }}
+          path: /tmp
       - name: Download babylond-before-upgrade artifact
         uses: actions/download-artifact@v4
         with:
           name: babylond-before-upgrade
+          path: /tmp
       - name: Docker load babylond
         run: |
           docker load < /tmp/docker-babylond.tar.gz
