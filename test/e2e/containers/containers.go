@@ -68,10 +68,10 @@ func (m *Manager) ExecTxCmd(t *testing.T, chainId string, nodeName string, comma
 // ExecTxCmdWithSuccessString Runs ExecCmd, with flags for txs added.
 // namely adding flags `--chain-id={chain-id} -b=block --yes --keyring-backend=test "--log_format=json"`,
 // and searching for `successStr`
-func (m *Manager) ExecTxCmdWithSuccessString(t *testing.T, chainId string, nodeName string, command []string, successStr string) (bytes.Buffer, bytes.Buffer, error) {
+func (m *Manager) ExecTxCmdWithSuccessString(t *testing.T, chainId string, containerName string, command []string, successStr string) (bytes.Buffer, bytes.Buffer, error) {
 	allTxArgs := []string{fmt.Sprintf("--chain-id=%s", chainId), "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
 	txCommand := append(command, allTxArgs...)
-	return m.ExecCmd(t, m.ContainerName(nodeName), txCommand, successStr)
+	return m.ExecCmd(t, containerName, txCommand, successStr)
 }
 
 // ExecHermesCmd executes command on the hermes relaer container.
@@ -248,14 +248,14 @@ func (m *Manager) RunRlyResource(chainAID, osmoARelayerNodeName, osmoAValMnemoni
 
 // RunNodeResource runs a node container. Assings containerName to the container.
 // Mounts the container on valConfigDir volume on the running host. Returns the container resource and error if any.
-func (m *Manager) RunNodeResource(chainId string, nodeName, valCondifDir string) (*dockertest.Resource, error) {
+func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir string) (*dockertest.Resource, error) {
 	pwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
 	}
 
 	runOpts := &dockertest.RunOptions{
-		Name:       m.ContainerName(nodeName),
+		Name:       containerName,
 		Repository: m.CurrentRepository,
 		NetworkID:  m.network.Network.ID,
 		User:       "root:root",
@@ -277,7 +277,7 @@ func (m *Manager) RunNodeResource(chainId string, nodeName, valCondifDir string)
 		return nil, err
 	}
 
-	m.resources[m.ContainerName(nodeName)] = resource
+	m.resources[containerName] = resource
 
 	return resource, nil
 }
@@ -288,10 +288,10 @@ func (m *Manager) PurgeResource(resource *dockertest.Resource) error {
 }
 
 // GetNodeResource returns the node resource for containerName.
-func (m *Manager) GetNodeResource(nodeName string) (*dockertest.Resource, error) {
-	resource, exists := m.resources[m.ContainerName(nodeName)]
+func (m *Manager) GetNodeResource(containerName string) (*dockertest.Resource, error) {
+	resource, exists := m.resources[containerName]
 	if !exists {
-		return nil, fmt.Errorf("node resource not found: container name: %s", nodeName)
+		return nil, fmt.Errorf("node resource not found: container name: %s", containerName)
 	}
 	return resource, nil
 }
@@ -310,8 +310,8 @@ func (m *Manager) GetHostPort(nodeName string, portId string) (string, error) {
 
 // RemoveNodeResource removes a node container specified by containerName.
 // Returns error if any.
-func (m *Manager) RemoveNodeResource(nodeName string) error {
-	resource, err := m.GetNodeResource(nodeName)
+func (m *Manager) RemoveNodeResource(containerName string) error {
+	resource, err := m.GetNodeResource(containerName)
 	if err != nil {
 		return err
 	}
@@ -321,7 +321,7 @@ func (m *Manager) RemoveNodeResource(nodeName string) error {
 	if err := m.pool.Client.RemoveContainer(opts); err != nil {
 		return err
 	}
-	delete(m.resources, m.ContainerName(nodeName))
+	delete(m.resources, containerName)
 	return nil
 }
 
@@ -402,9 +402,4 @@ func (m *Manager) HermesContainerName() string {
 // concatenated with the identifier
 func (m *Manager) CosmosRlyrContainerName() string {
 	return fmt.Sprintf("%s-%s", cosmosRelayerContainerName, m.identifier)
-}
-
-// ContainerName returns the container name concatenated with the identifier
-func (m *Manager) ContainerName(nodeName string) string {
-	return fmt.Sprintf("%s-%s", nodeName, m.identifier)
 }

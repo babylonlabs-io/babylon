@@ -1,6 +1,7 @@
 package configurer
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -123,8 +124,8 @@ func NewBTCTimestampingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configu
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, ibcConfigChainA),
-			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB, ibcConfigChainB),
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), ibcConfigChainA),
+			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), ibcConfigChainB),
 		},
 		withIBC(baseSetup), // base set up with IBC
 		containerManager,
@@ -140,8 +141,8 @@ func NewIBCTransferConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer,
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, ibcConfigChainA),
-			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB, ibcConfigChainB),
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), ibcConfigChainA),
+			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), ibcConfigChainB),
 		},
 		withIBCTransferChannel(baseSetup), // base set up with IBC
 		containerManager,
@@ -158,8 +159,8 @@ func NewBTCTimestampingPhase2Configurer(t *testing.T, isDebugLogEnabled bool) (C
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, ibcConfigChainA),
-			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB, ibcConfigChainB),
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), ibcConfigChainA),
+			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), ibcConfigChainB),
 		},
 		withPhase2IBC(baseSetup), // IBC setup (requires contract address)
 		containerManager,
@@ -176,8 +177,8 @@ func NewBTCTimestampingPhase2RlyConfigurer(t *testing.T, isDebugLogEnabled bool)
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, ibcConfigChainA),
-			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB, ibcConfigChainB),
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), ibcConfigChainA),
+			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), ibcConfigChainB),
 		},
 		withPhase2RlyIBC(baseSetup), // IBC setup with wasmd and Go relayer
 		containerManager,
@@ -195,7 +196,7 @@ func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
 			// we only need 1 chain for testing BTC staking
-			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, nil),
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
 		},
 		baseSetup, // base set up
 		containerManager,
@@ -212,8 +213,9 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 
 	return NewUpgradeConfigurer(t,
 		[]*chain.Config{
+
 			// we only need 1 chain for testing upgrade
-			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, nil),
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
 		},
 		withUpgrade(baseSetup), // base set up with upgrade
 		containerManager,
@@ -225,4 +227,20 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 func identifierName(t *testing.T) string {
 	str := strings.ToLower(t.Name())
 	return strings.ReplaceAll(str, "/", "-")
+}
+
+func updateNodeConfigNameWithIdentifier(cfgs []*initialization.NodeConfig, identifier string) []*initialization.NodeConfig {
+	result := make([]*initialization.NodeConfig, len(cfgs))
+	for i, cfg := range cfgs {
+		result[i] = &initialization.NodeConfig{
+			Name:               fmt.Sprintf("%s-%s", cfg.Name, identifier),
+			Pruning:            cfg.Pruning,
+			PruningKeepRecent:  cfg.PruningKeepRecent,
+			PruningInterval:    cfg.PruningInterval,
+			SnapshotInterval:   cfg.SnapshotInterval,
+			SnapshotKeepRecent: cfg.SnapshotKeepRecent,
+			IsValidator:        cfg.IsValidator,
+		}
+	}
+	return result
 }
