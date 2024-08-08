@@ -1,4 +1,4 @@
-FROM golang:1.21 as build-env
+FROM golang:1.21 AS build-env
 
 # Version to build. Default is empty
 ARG VERSION
