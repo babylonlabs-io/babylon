@@ -20,7 +20,6 @@ LABEL org.opencontainers.image.source="https://github.com/babylonlabs-io/babylon
 RUN wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm.x86_64.so \
         -O /lib/libwasmvm.x86_64.so
 
-FROM wasm-link as final
 # Args only last for a single build stage - renew
 ARG E2E_SCRIPT_NAME
 

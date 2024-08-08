@@ -1,7 +1,10 @@
-FROM golang:1.21 as go-bbn
+FROM golang:1.21 as build-env
 
 # Version to build. Default is empty
 ARG VERSION
+ARG BUILD_TAGS=""
+ARG LEDGER_ENABLED="false"
+ARG COSMOS_BUILD_OPTIONS=""
 
 WORKDIR /go/src/github.com/babylonlabs-io/babylon
 COPY ./ /go/src/github.com/babylonlabs-io/babylon/
@@ -12,16 +15,8 @@ RUN if [ -n "${VERSION}" ]; then \
         git checkout -f ${VERSION}; \
     fi
 
-FROM go-bbn as go-bbn-dep
-
 # Cache mod dependencies
 RUN go mod download
-
-FROM go-bbn-dep as build-env
-
-ARG BUILD_TAGS=""
-ARG LEDGER_ENABLED="false"
-ARG COSMOS_BUILD_OPTIONS=""
 
 RUN LEDGER_ENABLED=$LEDGER_ENABLED \
     BUILD_TAGS=$BUILD_TAGS \
@@ -41,5 +36,4 @@ LABEL org.opencontainers.image.source="https://github.com/babylonlabs-io/babylon
 RUN wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm.x86_64.so \
         -O /lib/libwasmvm.x86_64.so
 
-FROM wasm-link as final
 COPY --from=build-env /go/src/github.com/babylonlabs-io/babylon/build/babylond /bin/babylond
