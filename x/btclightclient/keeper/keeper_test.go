@@ -160,7 +160,7 @@ func FuzzKeeperInsertValidChainExtension(f *testing.F) {
 		extendedChainWork := oldTip.Work.Add(*chainExtensionWork)
 		extendedChainHeight := uint64(uint32(oldTip.Height) + newChainLength)
 
-		err := blcKeeper.InsertHeaders(ctx, keepertest.NewBTCHeaderBytesList(chainToInsert))
+		err := blcKeeper.InsertHeadersWithHookAndEvents(ctx, keepertest.NewBTCHeaderBytesList(chainToInsert))
 		require.NoError(t, err)
 
 		// updated tip
@@ -247,7 +247,7 @@ func FuzzKeeperInsertValidBetterChain(f *testing.F) {
 
 		require.True(t, len(removedBranch) > 0)
 
-		err := blcKeeper.InsertHeaders(ctx, keepertest.NewBTCHeaderBytesList(chainToInsert))
+		err := blcKeeper.InsertHeadersWithHookAndEvents(ctx, keepertest.NewBTCHeaderBytesList(chainToInsert))
 		require.NoError(t, err)
 
 		// updated tip
@@ -332,16 +332,16 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 		require.NotNil(t, currentTip)
 
 		// Inserting nil headers should result with error
-		errNil := blcKeeper.InsertHeaders(ctx, nil)
+		errNil := blcKeeper.InsertHeadersWithHookAndEvents(ctx, nil)
 		require.Error(t, errNil)
 
 		// Inserting empty headers should result with error
-		errEmpty := blcKeeper.InsertHeaders(ctx, []bbn.BTCHeaderBytes{})
+		errEmpty := blcKeeper.InsertHeadersWithHookAndEvents(ctx, []bbn.BTCHeaderBytes{})
 		require.Error(t, errEmpty)
 
 		// Inserting header without existing parent should result with error
 		chain := datagen.NewBTCHeaderChainWithLength(r, 0, 0, 10)
-		errNoParent := blcKeeper.InsertHeaders(ctx, chain.ChainToBytes()[1:])
+		errNoParent := blcKeeper.InsertHeadersWithHookAndEvents(ctx, chain.ChainToBytes()[1:])
 		require.Error(t, errNoParent)
 		require.True(t, errors.Is(errNoParent, types.ErrHeaderParentDoesNotExist))
 
@@ -358,7 +358,7 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 
 		// bump the nonce, it should fail validation and tip should not change
 		chainToInsert[3].Nonce = chainToInsert[3].Nonce + 1
-		errInvalidHeader := blcKeeper.InsertHeaders(ctx, keepertest.NewBTCHeaderBytesList(chainToInsert))
+		errInvalidHeader := blcKeeper.InsertHeadersWithHookAndEvents(ctx, keepertest.NewBTCHeaderBytesList(chainToInsert))
 		require.Error(t, errInvalidHeader)
 		newTip := blcKeeper.GetTipInfo(ctx)
 		// tip did not change
@@ -374,7 +374,7 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 			nil,
 			1,
 		)
-		errWorseChain := blcKeeper.InsertHeaders(ctx, keepertest.NewBTCHeaderBytesList(worseChain))
+		errWorseChain := blcKeeper.InsertHeadersWithHookAndEvents(ctx, keepertest.NewBTCHeaderBytesList(worseChain))
 		require.Error(t, errWorseChain)
 		require.True(t, errors.Is(errWorseChain, types.ErrChainWithNotEnoughWork))
 	})
@@ -409,13 +409,13 @@ func FuzzKeeperValdateHeaderAtDifficultyAdjustmentBoundaries(f *testing.F) {
 
 		// this will always fail as last header is at adjustment boundary, but we created
 		// it without adjustment
-		err := blcKeeper.InsertHeaders(ctx, randomChain.ChainToBytes())
+		err := blcKeeper.InsertHeadersWithHookAndEvents(ctx, randomChain.ChainToBytes())
 		require.Error(t, err)
 
 		randomChainWithoutLastHeader := randomChain.Headers[:len(randomChain.Headers)-1]
 		chain := keepertest.NewBTCHeaderBytesList(randomChainWithoutLastHeader)
 		// now all headers are valid, and we are below adjustment boundary
-		err = blcKeeper.InsertHeaders(ctx, chain)
+		err = blcKeeper.InsertHeadersWithHookAndEvents(ctx, chain)
 		require.NoError(t, err)
 
 		currentTip := blcKeeper.GetTipInfo(ctx)
@@ -429,7 +429,7 @@ func FuzzKeeperValdateHeaderAtDifficultyAdjustmentBoundaries(f *testing.F) {
 			nil,
 		)
 		// try to insert header at adjustment boundary without adjustment should fail
-		err = blcKeeper.InsertHeaders(ctx, []bbn.BTCHeaderBytes{bbn.NewBTCHeaderBytesFromBlockHeader(invalidAdjustedHeader)})
+		err = blcKeeper.InsertHeadersWithHookAndEvents(ctx, []bbn.BTCHeaderBytes{bbn.NewBTCHeaderBytesFromBlockHeader(invalidAdjustedHeader)})
 		require.Error(t, err)
 
 		// Inserting valid adjusted header should succeed
@@ -446,7 +446,7 @@ func FuzzKeeperValdateHeaderAtDifficultyAdjustmentBoundaries(f *testing.F) {
 		)
 		validAdjustedHeaderBytes := bbn.NewBTCHeaderBytesFromBlockHeader(validAdjustedHeader)
 
-		err = blcKeeper.InsertHeaders(ctx, []bbn.BTCHeaderBytes{bbn.NewBTCHeaderBytesFromBlockHeader(validAdjustedHeader)})
+		err = blcKeeper.InsertHeadersWithHookAndEvents(ctx, []bbn.BTCHeaderBytes{bbn.NewBTCHeaderBytesFromBlockHeader(validAdjustedHeader)})
 		require.NoError(t, err)
 
 		newTip := blcKeeper.GetTipInfo(ctx)

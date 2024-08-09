@@ -29,6 +29,9 @@ e2e-init-chain:
 	@DOCKER_BUILDKIT=1 docker build -t babylonlabs-io/babylond-e2e-init-chain --build-arg E2E_SCRIPT_NAME=chain --platform=linux/x86_64 \
 		-f e2e-initialization/init.Dockerfile ${BABYLON_FULL_PATH}
 
+e2e-init-chain-rmi:
+	docker rmi babylonlabs-io/babylond-e2e-init-chain 2>/dev/null; true
+
 cosmos-relayer: cosmos-relayer-rmi
 	docker build --tag babylonlabs-io/cosmos-relayer:${RELAYER_TAG} -f cosmos-relayer/Dockerfile \
 				${BABYLON_FULL_PATH}/contrib/images/cosmos-relayer

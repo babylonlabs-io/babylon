@@ -294,7 +294,7 @@ func GenRandBtcChainInsertingInKeeper(
 		genesisHeaderInfo,
 		uint32(chainLength),
 	)
-	err := k.InsertHeaders(ctx, randomChain.ChainToBytes())
+	err := k.InsertHeadersWithHookAndEvents(ctx, randomChain.ChainToBytes())
 	require.NoError(t, err)
 	tip := k.GetTipInfo(ctx)
 	randomChainTipInfo := randomChain.GetTipInfo()

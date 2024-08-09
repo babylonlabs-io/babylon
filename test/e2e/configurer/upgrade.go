@@ -96,7 +96,10 @@ func (uc *UpgradeConfigurer) ConfigureChain(chainConfig *chain.Config) error {
 		forkHeight = forkHeight - config.ForkHeightPreUpgradeOffset
 	}
 
-	chainInitResource, err := uc.containerManager.RunChainInitResource(chainConfig.Id, int(chainConfig.VotingPeriod), int(chainConfig.ExpeditedVotingPeriod), validatorConfigBytes, tmpDir, int(forkHeight))
+	chainInitResource, err := uc.containerManager.RunChainInitResource(
+		chainConfig.Id, int(chainConfig.VotingPeriod), int(chainConfig.ExpeditedVotingPeriod),
+		validatorConfigBytes, tmpDir, int(forkHeight), chainConfig.BTCHeaderBytesHexJoined(),
+	)
 	if err != nil {
 		return err
 	}
@@ -238,26 +241,8 @@ func (uc *UpgradeConfigurer) upgradeContainers(chainConfig *chain.Config, propHe
 	uc.t.Logf("starting upgrade for chain-id: %s...", chainConfig.Id)
 	uc.containerManager.CurrentRepository = containers.BabylonContainerName
 
-	errCh := make(chan error, len(chainConfig.NodeConfigs))
-	var wg sync.WaitGroup
-
 	for _, node := range chainConfig.NodeConfigs {
-		wg.Add(1)
-		go func(node *chain.NodeConfig) {
-			defer wg.Done()
-			if err := node.Run(); err != nil {
-				errCh <- err
-			}
-		}(node)
-	}
-
-	// Wait for all goroutines to complete
-	wg.Wait()
-	close(errCh)
-
-	// Check if any of the goroutines returned an error
-	for err := range errCh {
-		if err != nil {
+		if err := node.Run(); err != nil {
 			return err
 		}
 	}

@@ -357,7 +357,14 @@ func noRestart(config *docker.HostConfig) {
 // The genesis and configs are to be mounted on the init container as volume on mountDir path.
 // Returns the container resource and error if any. This method does not Purge the container. The caller
 // must deal with removing the resource.
-func (m *Manager) RunChainInitResource(chainId string, chainVotingPeriod, chainExpeditedVotingPeriod int, validatorConfigBytes []byte, mountDir string, forkHeight int) (*dockertest.Resource, error) {
+func (m *Manager) RunChainInitResource(
+	chainId string,
+	chainVotingPeriod, chainExpeditedVotingPeriod int,
+	validatorConfigBytes []byte,
+	mountDir string,
+	forkHeight int,
+	btcHeaders string,
+) (*dockertest.Resource, error) {
 	votingPeriodDuration := time.Duration(chainVotingPeriod * 1000000000)
 	expeditedVotingPeriodDuration := time.Duration(chainExpeditedVotingPeriod * 1000000000)
 
@@ -373,6 +380,7 @@ func (m *Manager) RunChainInitResource(chainId string, chainVotingPeriod, chainE
 				fmt.Sprintf("--voting-period=%v", votingPeriodDuration),
 				fmt.Sprintf("--expedited-voting-period=%v", expeditedVotingPeriodDuration),
 				fmt.Sprintf("--fork-height=%v", forkHeight),
+				fmt.Sprintf("--btc-headers=%s", btcHeaders),
 			},
 			User: "root:root",
 			Mounts: []string{
