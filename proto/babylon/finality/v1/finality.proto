@@ -27,6 +27,8 @@ message PubRandCommit {
     // commitment is the value of the commitment
     // currently, it is the root of the merkle tree constructed by the public randomness
     bytes commitment = 3;
+    // epoch_num defines the epoch number that the commit falls into
+    uint64 epoch_num = 4;
 }
 
 // Evidence is the evidence that a finality provider has signed finality

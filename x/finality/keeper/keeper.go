@@ -18,8 +18,9 @@ type (
 		cdc          codec.BinaryCodec
 		storeService corestoretypes.KVStoreService
 
-		BTCStakingKeeper types.BTCStakingKeeper
-		IncentiveKeeper  types.IncentiveKeeper
+		BTCStakingKeeper    types.BTCStakingKeeper
+		IncentiveKeeper     types.IncentiveKeeper
+		CheckpointingKeeper types.CheckpointingKeeper
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
 		authority string
@@ -38,6 +39,7 @@ func NewKeeper(
 	storeService corestoretypes.KVStoreService,
 	btcstakingKeeper types.BTCStakingKeeper,
 	incentiveKeeper types.IncentiveKeeper,
+	checkpointingKeeper types.CheckpointingKeeper,
 	authority string,
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
@@ -45,9 +47,10 @@ func NewKeeper(
 		cdc:          cdc,
 		storeService: storeService,
 
-		BTCStakingKeeper: btcstakingKeeper,
-		IncentiveKeeper:  incentiveKeeper,
-		authority:        authority,
+		BTCStakingKeeper:    btcstakingKeeper,
+		IncentiveKeeper:     incentiveKeeper,
+		CheckpointingKeeper: checkpointingKeeper,
+		authority:           authority,
 		FinalityProviderSigningTracker: collections.NewMap(
 			sb,
 			types.FinalityProviderSigningInfoKeyPrefix,
@@ -81,5 +84,14 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
-	return k.BTCStakingKeeper.GetLastFinalizedEpoch(ctx)
+	return k.CheckpointingKeeper.GetLastFinalizedEpoch(ctx)
+}
+
+func (k Keeper) GetCurrentEpoch(ctx context.Context) uint64 {
+	currentEpoch := k.CheckpointingKeeper.GetEpoch(ctx)
+	if currentEpoch == nil {
+		panic("cannot get the current epoch")
+	}
+
+	return currentEpoch.EpochNumber
 }

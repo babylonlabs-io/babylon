@@ -16,7 +16,7 @@ func FuzzTestExportGenesis(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		k, ctx := keepertest.FinalityKeeper(t, nil, nil)
+		k, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
 
 		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)

@@ -23,8 +23,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
+		h := NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)

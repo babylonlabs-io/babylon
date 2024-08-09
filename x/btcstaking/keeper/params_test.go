@@ -5,14 +5,15 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetParams(t *testing.T) {
-	k, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+	k, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
 	params := types.DefaultParams()
 
 	err := k.SetParams(ctx, params)
@@ -22,7 +23,7 @@ func TestGetParams(t *testing.T) {
 }
 
 func TestGetParamsVersions(t *testing.T) {
-	k, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+	k, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
 	params := types.DefaultParams()
 
 	pv := k.GetParamsWithVersion(ctx)
@@ -55,7 +56,7 @@ func FuzzParamsVersioning(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		k, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+		k, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
 		numVersionsToGenerate := r.Intn(100) + 1
 		params0 := k.GetParams(ctx)
 		var generatedParams []*types.Params

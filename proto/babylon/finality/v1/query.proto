@@ -102,6 +102,8 @@ message PubRandCommitResponse {
   uint64 num_pub_rand = 1;
   // commitment is the value of the commitment
   bytes commitment = 2;
+  // epoch_num defines the epoch number that the commit falls into
+  uint64 epoch_num = 3;
 }
 
 // QueryListPubRandCommitRequest is the request type for the

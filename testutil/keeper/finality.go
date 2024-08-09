@@ -22,7 +22,7 @@ import (
 	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
-func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types.IncentiveKeeper) (*keeper.Keeper, sdk.Context) {
+func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types.IncentiveKeeper, cKeeper types.CheckpointingKeeper) (*keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 
 	db := dbm.NewMemDB()
@@ -38,6 +38,7 @@ func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types
 		runtime.NewKVStoreService(storeKey),
 		bsKeeper,
 		iKeeper,
+		cKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 

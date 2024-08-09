@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"cosmossdk.io/core/header"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
 )
 
 func benchmarkAddFinalitySig(b *testing.B) {
@@ -23,7 +24,8 @@ func benchmarkAddFinalitySig(b *testing.B) {
 	defer ctrl.Finish()
 
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
-	fKeeper, ctx := keepertest.FinalityKeeper(b, bsKeeper, nil)
+	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+	fKeeper, ctx := keepertest.FinalityKeeper(b, bsKeeper, nil, cKeeper)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 
 	// create a random finality provider

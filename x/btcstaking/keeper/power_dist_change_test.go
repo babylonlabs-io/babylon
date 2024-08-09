@@ -4,12 +4,13 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
@@ -23,8 +24,7 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
+		h := NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		h.GenAndApplyParams(r)
@@ -75,8 +75,7 @@ func FuzzFinalityProviderEvents(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
+		h := NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -153,8 +152,7 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
+		h := NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
