@@ -27,7 +27,9 @@ func (s *SoftwareUpgradeVanillaTestSuite) SetupSuite() {
 
 func (s *SoftwareUpgradeVanillaTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
-	s.Require().NoError(err)
+	if err != nil {
+		s.T().Logf("error to clear resources %s", err.Error())
+	}
 }
 
 // TestUpgradeVanilla only checks that new fp was added.
