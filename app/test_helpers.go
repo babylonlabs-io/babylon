@@ -358,21 +358,21 @@ func initAccountWithCoins(app *BabylonApp, ctx sdk.Context, addr sdk.AccAddress,
 	}
 }
 
-// SignetBtcHeaderZero returns the BTC Header block zero from signet.
-func SignetBtcHeaderZero(cdc codec.Codec) (*btclighttypes.BTCHeaderInfo, error) {
-	var btcHeaderZero btclighttypes.BTCHeaderInfo
+// SignetBtcHeaderGenesis returns the BTC Header block zero from signet.
+func SignetBtcHeaderGenesis(cdc codec.Codec) (*btclighttypes.BTCHeaderInfo, error) {
+	var btcHeaderGenesis btclighttypes.BTCHeaderInfo
 	// signet btc header 0
-	btcHeaderZeroStr := `{
+	btcHeaderGenesisStr := `{
 	 	"header": "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a008f4d5fae77031e8ad22203",
 	 	"hash": "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6",
 		"work": "77414720"
 	}`
-	buff := bytes.NewBufferString(btcHeaderZeroStr)
+	buff := bytes.NewBufferString(btcHeaderGenesisStr)
 
-	err := cdc.UnmarshalJSON(buff.Bytes(), &btcHeaderZero)
+	err := cdc.UnmarshalJSON(buff.Bytes(), &btcHeaderGenesis)
 	if err != nil {
 		return nil, err
 	}
 
-	return &btcHeaderZero, nil
+	return &btcHeaderGenesis, nil
 }

@@ -39,13 +39,13 @@ func (s *UpgradeTestSuite) SetupTest() {
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
 	s.preModule = upgrade.NewAppModule(s.app.UpgradeKeeper, s.app.AccountKeeper.AddressCodec())
 
-	btcHeaderZero, err := app.SignetBtcHeaderZero(s.app.EncodingConfig().Codec)
+	btcHeaderGenesis, err := app.SignetBtcHeaderGenesis(s.app.EncodingConfig().Codec)
 	s.NoError(err)
 
 	k := s.app.BTCLightClientKeeper
 	btclightclient.InitGenesis(s.ctx, s.app.BTCLightClientKeeper, btclighttypes.GenesisState{
 		Params:     k.GetParams(s.ctx),
-		BtcHeaders: []*btclighttypes.BTCHeaderInfo{btcHeaderZero},
+		BtcHeaders: []*btclighttypes.BTCHeaderInfo{btcHeaderGenesis},
 	})
 }
 

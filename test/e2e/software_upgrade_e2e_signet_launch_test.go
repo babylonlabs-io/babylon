@@ -21,9 +21,9 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
 	var err error
 
-	btcHeaderZero, err := app.SignetBtcHeaderZero(app.NewTmpBabylonApp().AppCodec())
+	btcHeaderGenesis, err := app.SignetBtcHeaderGenesis(app.NewTmpBabylonApp().AppCodec())
 	s.NoError(err)
-	s.configurer, err = configurer.NewSoftwareUpgradeConfigurer(s.T(), false, config.UpgradeSignetLaunchFilePath, []*btclighttypes.BTCHeaderInfo{btcHeaderZero})
+	s.configurer, err = configurer.NewSoftwareUpgradeConfigurer(s.T(), false, config.UpgradeSignetLaunchFilePath, []*btclighttypes.BTCHeaderInfo{btcHeaderGenesis})
 	s.NoError(err)
 	err = s.configurer.ConfigureChains()
 	s.NoError(err)
