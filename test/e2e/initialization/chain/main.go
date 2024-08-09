@@ -1,13 +1,16 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
+	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
 
 func main() {
@@ -16,6 +19,7 @@ func main() {
 		dataDir               string
 		chainId               string
 		config                string
+		btcHeadersBytesHexStr string
 		votingPeriod          time.Duration
 		expeditedVotingPeriod time.Duration
 		forkHeight            int
@@ -24,6 +28,7 @@ func main() {
 	flag.StringVar(&dataDir, "data-dir", "", "chain data directory")
 	flag.StringVar(&chainId, "chain-id", "", "chain ID")
 	flag.StringVar(&config, "config", "", "serialized config")
+	flag.StringVar(&btcHeadersBytesHexStr, "btc-headers", "", "btc header bytes comma separated")
 	flag.DurationVar(&votingPeriod, "voting-period", 30000000000, "voting period")
 	flag.DurationVar(&expeditedVotingPeriod, "expedited-voting-period", 20000000000, "expedited voting period")
 	flag.IntVar(&forkHeight, "fork-height", 0, "fork height")
@@ -43,7 +48,8 @@ func main() {
 		panic(err)
 	}
 
-	createdChain, err := initialization.InitChain(chainId, dataDir, valConfig, votingPeriod, expeditedVotingPeriod, forkHeight)
+	btcHeaders := btcHeaderFromFlag(btcHeadersBytesHexStr)
+	createdChain, err := initialization.InitChain(chainId, dataDir, valConfig, votingPeriod, expeditedVotingPeriod, forkHeight, btcHeaders)
 	if err != nil {
 		panic(err)
 	}
@@ -53,4 +59,28 @@ func main() {
 	if err = os.WriteFile(fileName, b, 0o777); err != nil {
 		panic(err)
 	}
+}
+
+func btcHeaderFromFlag(btcHeadersBytesHexStr string) []*btclighttypes.BTCHeaderInfo {
+	btcHeaders := []*btclighttypes.BTCHeaderInfo{}
+	if len(btcHeadersBytesHexStr) == 0 {
+		return btcHeaders
+	}
+
+	btcHeadersBytesHex := strings.Split(btcHeadersBytesHexStr, ",")
+	for _, btcHeaderBytesHex := range btcHeadersBytesHex {
+		btcHeaderBytes, err := hex.DecodeString(btcHeaderBytesHex)
+		if err != nil {
+			panic(err)
+		}
+
+		btcHeader := &btclighttypes.BTCHeaderInfo{}
+		err = btcHeader.Unmarshal(btcHeaderBytes)
+		if err != nil {
+			panic(err)
+		}
+
+		btcHeaders = append(btcHeaders, btcHeader)
+	}
+	return btcHeaders
 }

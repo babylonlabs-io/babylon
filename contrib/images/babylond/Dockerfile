@@ -2,27 +2,21 @@ FROM golang:1.21 AS build-env
 
 # Version to build. Default is empty
 ARG VERSION
-
 ARG BUILD_TAGS=""
 ARG LEDGER_ENABLED="false"
-# Cosmos build options
 ARG COSMOS_BUILD_OPTIONS=""
 
-# Install cli tools for building and final image
-RUN apt-get update && apt-get install -y make git bash gcc curl jq
-
-# Build
 WORKDIR /go/src/github.com/babylonlabs-io/babylon
-# First cache dependencies
-COPY go.mod go.sum /go/src/github.com/babylonlabs-io/babylon/
-RUN go mod download
-# Then copy everything else
 COPY ./ /go/src/github.com/babylonlabs-io/babylon/
-# If version is set, then checkout this version
+
+# Handle if version is set
 RUN if [ -n "${VERSION}" ]; then \
-        git fetch --all; \
+        git fetch origin tag ${VERSION} --no-tags; \
         git checkout -f ${VERSION}; \
     fi
+
+# Cache mod dependencies
+RUN go mod download
 
 RUN LEDGER_ENABLED=$LEDGER_ENABLED \
     BUILD_TAGS=$BUILD_TAGS \
@@ -30,10 +24,9 @@ RUN LEDGER_ENABLED=$LEDGER_ENABLED \
     LINK_STATICALLY=false \
     make build
 
-FROM debian:bookworm-slim AS run
-# Create a user
-RUN addgroup --gid 1137 --system babylon && adduser --uid 1137 --gid 1137 --system --home /home/babylon babylon
-RUN apt-get update && apt-get install -y bash curl jq wget
+FROM debian:bookworm-slim AS wasm-link
+
+RUN apt-get update && apt-get install -y wget bash
 
 # Label should match your github repo
 LABEL org.opencontainers.image.source="https://github.com/babylonlabs-io/babylond:${VERSION}"
@@ -50,9 +43,3 @@ RUN WASMVM_VERSION=$(grep github.com/CosmWasm/wasmvm /tmp/go.mod | cut -d' ' -f2
 RUN rm -f /tmp/go.mod
 
 COPY --from=build-env /go/src/github.com/babylonlabs-io/babylon/build/babylond /bin/babylond
-
-# Set home directory and user
-WORKDIR /home/babylon
-RUN chown -R babylon /home/babylon
-RUN chmod g+s /home/babylon
-USER babylon

@@ -147,7 +147,7 @@ build: BUILD_ARGS=-o $(BUILDDIR)/ ## Build babylond binary
 build-linux: ## Build babylond linux version binary
 	GOOS=linux GOARCH=$(if $(findstring aarch64,$(shell uname -m)) || $(findstring arm64,$(shell uname -m)),arm64,amd64) LEDGER_ENABLED=false $(MAKE) build
 
-$(BUILD_TARGETS): go.sum $(BUILDDIR)/
+$(BUILD_TARGETS): $(BUILDDIR)/
 	go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
 
 $(BUILDDIR)/:
@@ -254,8 +254,31 @@ endif
 
 .PHONY: run-tests test test-all $(TEST_TARGETS)
 
-test-e2e: build-docker-e2e
-	go test -mod=readonly -timeout=25m -v $(PACKAGES_E2E) -count=1 --tags=e2e
+test-e2e: build-docker-e2e test-e2e-cache
+
+test-e2e-cache:
+	go test -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-cache-ibc-transfer:
+	go test -run TestIBCTranferTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-cache-btc-timestamping:
+	go test -run TestBTCTimestampingTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-cache-btc-timestamping-phase-2-hermes:
+	go test -run TestBTCTimestampingPhase2HermesTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-cache-btc-timestamping-phase-2-rly:
+	go test -run TestBTCTimestampingPhase2RlyTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-cache-btc-staking:
+	go test -run TestBTCStakingTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-cache-upgrade-vanilla:
+	go test -run TestSoftwareUpgradeTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-cache-upgrade-signet:
+	go test -run TestSoftwareUpgradeSignetLaunchTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
