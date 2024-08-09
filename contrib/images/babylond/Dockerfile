@@ -25,15 +25,21 @@ RUN LEDGER_ENABLED=$LEDGER_ENABLED \
     make build
 
 FROM debian:bookworm-slim AS wasm-link
-ARG WASMVM_VERSION="v2.0.1"
 
 RUN apt-get update && apt-get install -y wget bash
 
 # Label should match your github repo
 LABEL org.opencontainers.image.source="https://github.com/babylonlabs-io/babylond:${VERSION}"
 
+# Install libraries
 # Cosmwasm - Download correct libwasmvm version
-RUN wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm.x86_64.so \
-        -O /lib/libwasmvm.x86_64.so
+COPY --from=build-env /go/src/github.com/babylonlabs-io/babylon/go.mod /tmp
+RUN WASMVM_VERSION=$(grep github.com/CosmWasm/wasmvm /tmp/go.mod | cut -d' ' -f2) && \
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm.$(uname -m).so \
+        -O /lib/libwasmvm.$(uname -m).so && \
+    # verify checksum
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
+    sha256sum /lib/libwasmvm.$(uname -m).so | grep $(cat /tmp/checksums.txt | grep libwasmvm.$(uname -m) | cut -d ' ' -f 1)
+RUN rm -f /tmp/go.mod
 
 COPY --from=build-env /go/src/github.com/babylonlabs-io/babylon/build/babylond /bin/babylond
