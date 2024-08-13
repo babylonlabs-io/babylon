@@ -11,7 +11,6 @@ var (
 	ErrBTCDelegationNotFound        = errorsmod.Register(ModuleName, 1102, "the BTC delegation is not found")
 	ErrFpRegistered                 = errorsmod.Register(ModuleName, 1103, "the finality provider has already been registered")
 	ErrFpAlreadySlashed             = errorsmod.Register(ModuleName, 1104, "the finality provider has already been slashed")
-	ErrFpNotBTCTimestamped          = errorsmod.Register(ModuleName, 1105, "the finality provider is not BTC timestamped yet")
 	ErrBTCStakingNotActivated       = errorsmod.Register(ModuleName, 1106, "the BTC staking protocol is not activated yet")
 	ErrBTCHeightNotFound            = errorsmod.Register(ModuleName, 1107, "the BTC height is not found")
 	ErrReusedStakingTx              = errorsmod.Register(ModuleName, 1108, "the BTC staking tx is already used")

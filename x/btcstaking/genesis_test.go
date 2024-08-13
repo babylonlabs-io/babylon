@@ -3,11 +3,12 @@ package btcstaking_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/testutil/nullify"
 	"github.com/babylonlabs-io/babylon/x/btcstaking"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGenesis(t *testing.T) {
@@ -16,7 +17,7 @@ func TestGenesis(t *testing.T) {
 		Params: []*types.Params{&p},
 	}
 
-	k, ctx := keepertest.BTCStakingKeeper(t, nil, nil, nil)
+	k, ctx := keepertest.BTCStakingKeeper(t, nil, nil)
 	btcstaking.InitGenesis(ctx, *k, genesisState)
 	got := btcstaking.ExportGenesis(ctx, *k)
 	require.NotNil(t, got)
