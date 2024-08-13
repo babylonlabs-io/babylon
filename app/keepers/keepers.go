@@ -524,7 +524,6 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[btcstakingtypes.StoreKey]),
 		&btclightclientKeeper,
 		&btcCheckpointKeeper,
-		&checkpointingKeeper,
 		btcNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -535,6 +534,7 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[finalitytypes.StoreKey]),
 		ak.BTCStakingKeeper,
 		ak.IncentiveKeeper,
+		ak.CheckpointingKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	ak.BTCStakingKeeper = *ak.BTCStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(ak.FinalityKeeper.Hooks()))
