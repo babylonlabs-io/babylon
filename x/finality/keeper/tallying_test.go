@@ -5,15 +5,16 @@ import (
 	"math/rand"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
 )
 
 func FuzzTallying_PanicCases(f *testing.F) {
@@ -26,7 +27,8 @@ func FuzzTallying_PanicCases(f *testing.F) {
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
 
 		// Case 1: expect to panic if tallying upon BTC staking protocol is not activated
 		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(uint64(0), bstypes.ErrBTCStakingNotActivated).Times(1)
@@ -56,7 +58,8 @@ func FuzzTallying_FinalizingNoBlock(f *testing.F) {
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
 
 		// activate BTC staking protocol at a random height
 		activatedHeight := datagen.RandomInt(r, 10) + 1
@@ -99,7 +102,8 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		bsKeeper.EXPECT().GetParams(gomock.Any()).Return(bstypes.Params{MaxActiveFinalityProviders: 100}).AnyTimes()
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
 
 		// activate BTC staking protocol at a random height
 		activatedHeight := datagen.RandomInt(r, 10) + 1

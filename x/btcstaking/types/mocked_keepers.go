@@ -12,7 +12,6 @@ import (
 	types "github.com/babylonlabs-io/babylon/types"
 	types0 "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	types1 "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	types2 "github.com/babylonlabs-io/babylon/x/epoching/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -130,57 +129,6 @@ func (m *MockBtcCheckpointKeeper) GetPowLimit() *big.Int {
 func (mr *MockBtcCheckpointKeeperMockRecorder) GetPowLimit() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPowLimit", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetPowLimit))
-}
-
-// MockCheckpointingKeeper is a mock of CheckpointingKeeper interface.
-type MockCheckpointingKeeper struct {
-	ctrl     *gomock.Controller
-	recorder *MockCheckpointingKeeperMockRecorder
-}
-
-// MockCheckpointingKeeperMockRecorder is the mock recorder for MockCheckpointingKeeper.
-type MockCheckpointingKeeperMockRecorder struct {
-	mock *MockCheckpointingKeeper
-}
-
-// NewMockCheckpointingKeeper creates a new mock instance.
-func NewMockCheckpointingKeeper(ctrl *gomock.Controller) *MockCheckpointingKeeper {
-	mock := &MockCheckpointingKeeper{ctrl: ctrl}
-	mock.recorder = &MockCheckpointingKeeperMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockCheckpointingKeeper) EXPECT() *MockCheckpointingKeeperMockRecorder {
-	return m.recorder
-}
-
-// GetEpoch mocks base method.
-func (m *MockCheckpointingKeeper) GetEpoch(ctx context.Context) *types2.Epoch {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEpoch", ctx)
-	ret0, _ := ret[0].(*types2.Epoch)
-	return ret0
-}
-
-// GetEpoch indicates an expected call of GetEpoch.
-func (mr *MockCheckpointingKeeperMockRecorder) GetEpoch(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpoch", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetEpoch), ctx)
-}
-
-// GetLastFinalizedEpoch mocks base method.
-func (m *MockCheckpointingKeeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLastFinalizedEpoch", ctx)
-	ret0, _ := ret[0].(uint64)
-	return ret0
-}
-
-// GetLastFinalizedEpoch indicates an expected call of GetLastFinalizedEpoch.
-func (mr *MockCheckpointingKeeperMockRecorder) GetLastFinalizedEpoch(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastFinalizedEpoch", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetLastFinalizedEpoch), ctx)
 }
 
 // MockBtcStakingHooks is a mock of BtcStakingHooks interface.

@@ -24,7 +24,8 @@ func FuzzHandleLiveness(f *testing.F) {
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		bsKeeper.EXPECT().GetParams(gomock.Any()).Return(bstypes.Params{MaxActiveFinalityProviders: 100}).AnyTimes()
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
 
 		mockedHooks := types.NewMockFinalityHooks(ctrl)
 		mockedHooks.EXPECT().AfterSluggishFinalityProviderDetected(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()

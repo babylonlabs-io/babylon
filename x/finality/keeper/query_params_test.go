@@ -3,13 +3,14 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestParamsQuery(t *testing.T) {
-	keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
+	keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
 	params := types.DefaultParams()
 	err := keeper.SetParams(ctx, params)
 	require.NoError(t, err)

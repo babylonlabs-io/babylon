@@ -7,18 +7,20 @@ import (
 	"time"
 
 	"cosmossdk.io/core/header"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
 )
 
 func setupMsgServer(t testing.TB) (*keeper.Keeper, types.MsgServer, context.Context) {
-	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
 	return fKeeper, keeper.NewMsgServerImpl(*fKeeper), ctx
 }
 
@@ -29,7 +31,7 @@ func TestMsgServer(t *testing.T) {
 }
 
 func FuzzCommitPubRandList(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -37,8 +39,11 @@ func FuzzCommitPubRandList(f *testing.F) {
 		defer ctrl.Finish()
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
+		committedEpochNum := datagen.GenRandomEpochNum(r)
+		cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: committedEpochNum}).AnyTimes()
 
 		// create a random finality provider
 		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
@@ -75,6 +80,11 @@ func FuzzCommitPubRandList(f *testing.F) {
 		// query last public randomness and assert
 		lastPrCommit := fKeeper.GetLastPubRandCommit(ctx, fpBTCPK)
 		require.NotNil(t, lastPrCommit)
+		require.Equal(t, committedEpochNum, lastPrCommit.EpochNum)
+		committedHeight := datagen.RandomInt(r, int(numPubRand)) + startHeight
+		commitByHeight, err := fKeeper.GetPubRandCommitForHeight(ctx, fpBTCPK, committedHeight)
+		require.NoError(t, err)
+		require.Equal(t, committedEpochNum, commitByHeight.EpochNum)
 
 		// Case 4: commit a pubrand list with overlap of the existing pubrand in KVStore and it should fail
 		overlappedStartHeight := startHeight + numPubRand - 1 - datagen.RandomInt(r, 5)
@@ -93,7 +103,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 }
 
 func FuzzAddFinalitySig(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -101,7 +111,8 @@ func FuzzAddFinalitySig(f *testing.F) {
 		defer ctrl.Finish()
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
 		// create and register a random finality provider
@@ -113,6 +124,11 @@ func FuzzAddFinalitySig(f *testing.F) {
 		fpBTCPKBytes := fpBTCPK.MustMarshal()
 		require.NoError(t, err)
 		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
+
+		// set committed epoch num
+		committedEpochNum := datagen.GenRandomEpochNum(r) + 1
+		cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: committedEpochNum}).AnyTimes()
+
 		// commit some public randomness
 		startHeight := uint64(0)
 		numPubRand := uint64(200)
@@ -127,6 +143,18 @@ func FuzzAddFinalitySig(f *testing.F) {
 		signer := datagen.GenRandomAccount().Address
 		msg, err := datagen.NewMsgAddFinalitySig(signer, btcSK, startHeight, blockHeight, randListInfo, blockAppHash)
 		require.NoError(t, err)
+
+		// Case 0: fail if the committed epoch is not finalized
+		lastFinalizedEpoch := datagen.RandomInt(r, int(committedEpochNum))
+		o1 := cKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(lastFinalizedEpoch).Times(1)
+		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(1)).Times(1)
+		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
+		_, err = ms.AddFinalitySig(ctx, msg)
+		require.ErrorIs(t, err, types.ErrPubRandCommitNotBTCTimestamped)
+
+		// set the committed epoch finalized for the rest of the cases
+		lastFinalizedEpoch = datagen.GenRandomEpochNum(r) + committedEpochNum
+		cKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(lastFinalizedEpoch).After(o1).AnyTimes()
 
 		// Case 1: fail if the finality provider does not have voting power
 		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(0)).Times(1)
@@ -208,7 +236,8 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
-	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil)
+	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 	// create and register a random finality provider
 	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
@@ -220,6 +249,8 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	require.NoError(t, err)
 	bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(),
 		gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
+	cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: 1}).AnyTimes()
+	cKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(1)).AnyTimes()
 	// commit some public randomness
 	startHeight := uint64(0)
 	numPubRand := uint64(200)
@@ -245,7 +276,6 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	// some "evidence"
 	ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: forkHash})
 	msg1, err := datagen.NewMsgAddFinalitySig(signer, btcSK, startHeight, blockHeight, randListInfo, forkHash)
-
 	require.NoError(t, err)
 	bsKeeper.EXPECT().GetVotingPower(gomock.Any(),
 		gomock.Eq(fpBTCPKBytes),
