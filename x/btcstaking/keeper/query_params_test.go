@@ -3,13 +3,14 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestParamsQuery(t *testing.T) {
-	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
 	params := types.DefaultParams()
 
 	err := keeper.SetParams(ctx, params)
@@ -21,7 +22,7 @@ func TestParamsQuery(t *testing.T) {
 }
 
 func TestParamsByVersionQuery(t *testing.T) {
-	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
 
 	// starting with `1` as BTCStakingKeeper creates params with version 0
 	params1 := types.DefaultParams()
