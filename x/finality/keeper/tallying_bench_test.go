@@ -8,13 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
 )
 
 func benchmarkTallyBlocks(b *testing.B, numFPs int) {
@@ -24,7 +25,8 @@ func benchmarkTallyBlocks(b *testing.B, numFPs int) {
 
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
-	fKeeper, ctx := keepertest.FinalityKeeper(b, bsKeeper, iKeeper)
+	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+	fKeeper, ctx := keepertest.FinalityKeeper(b, bsKeeper, iKeeper, cKeeper)
 
 	// activate BTC staking protocol at a random height
 	activatedHeight := uint64(1)
