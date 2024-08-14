@@ -534,6 +534,7 @@ func (ak *AppKeepers) InitKeepers(
 		epochingKeeper,
 		storeQuerier,
 		&ak.BTCStakingKeeper,
+		&ak.BTCStkConsumerKeeper,
 		scopedZoneConciergeKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)

@@ -32,6 +32,7 @@ type (
 		storeQuerier        storetypes.Queryable
 		// used in BTC staking
 		bsKeeper     types.BTCStakingKeeper
+		btcStkKeeper types.BTCStkConsumerKeeper
 		scopedKeeper types.ScopedKeeper
 		// The address capable of executing a MsgUpdateParams message.
 		// Typically, this should be the x/gov module account.
@@ -54,6 +55,7 @@ func NewKeeper(
 	epochingKeeper types.EpochingKeeper,
 	storeQuerier storetypes.Queryable,
 	bsKeeper types.BTCStakingKeeper,
+	btcStkKeeper types.BTCStkConsumerKeeper,
 	scopedKeeper types.ScopedKeeper,
 	authority string,
 ) *Keeper {
@@ -72,6 +74,7 @@ func NewKeeper(
 		epochingKeeper:      epochingKeeper,
 		storeQuerier:        storeQuerier,
 		bsKeeper:            bsKeeper,
+		btcStkKeeper:        btcStkKeeper,
 		scopedKeeper:        scopedKeeper,
 		authority:           authority,
 	}

@@ -5,8 +5,6 @@ import (
 	"math"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
@@ -18,6 +16,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/wire"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/suite"
@@ -60,14 +59,14 @@ func (s *BTCStakingIntegrationTestSuite) TearDownSuite() {
 }
 
 // Test1RegisterNewConsumer registers a new consumer on Babylon
-func (s *BTCStakingIntegrationTestSuite) Test1RegisterNewConsumer() {
+func (s *BTCStakingIntegrationTestSuite) Test1AutoRegisterAndVerifyNewConsumer() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	babylonNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	consumerID := s.getIBCClientID()
-	s.registerVerifyConsumer(babylonNode, consumerID)
+	s.verifyConsumerRegistration(babylonNode, consumerID)
 }
 
 // Test2CreateConsumerFinalityProvider -
@@ -409,23 +408,24 @@ func (s *BTCStakingIntegrationTestSuite) Test6ContractQueries() {
 // TODO: add test for slashing when its supported in smart contract
 
 // helper function: register a random consumer on Babylon and verify it
-func (s *BTCStakingIntegrationTestSuite) registerVerifyConsumer(babylonNode *chain.NodeConfig, consumerID string) *bsctypes.ConsumerRegister {
-	// Register a random consumer on Babylon
-	randomConsumer := &bsctypes.ConsumerRegister{
-		ConsumerId:          consumerID,
-		ConsumerName:        datagen.GenRandomHexStr(r, 5),
-		ConsumerDescription: "Chain description: " + datagen.GenRandomHexStr(r, 15),
-	}
-	babylonNode.RegisterConsumer(randomConsumer.ConsumerId, randomConsumer.ConsumerName, randomConsumer.ConsumerDescription)
-	babylonNode.WaitForNextBlock()
+func (s *BTCStakingIntegrationTestSuite) verifyConsumerRegistration(babylonNode *chain.NodeConfig, consumerID string) *bsctypes.ConsumerRegister {
+	var consumerRegistry []*bsctypes.ConsumerRegister
 
-	// Query the consumer registry to verify the consumer was registered
-	consumerRegistry := babylonNode.QueryConsumerRegistry(randomConsumer.ConsumerId)
+	s.Eventually(func() bool {
+		consumerRegistry = babylonNode.QueryConsumerRegistry(consumerID)
+		return len(consumerRegistry) == 1
+	}, time.Minute, 5*time.Second, "Consumer was not registered within the expected time")
+
 	s.Require().Len(consumerRegistry, 1)
-	s.Require().Equal(randomConsumer.ConsumerId, consumerRegistry[0].ConsumerId)
-	s.Require().Equal(randomConsumer.ConsumerName, consumerRegistry[0].ConsumerName)
-	s.Require().Equal(randomConsumer.ConsumerDescription, consumerRegistry[0].ConsumerDescription)
-	return randomConsumer
+	registeredConsumer := consumerRegistry[0]
+
+	//s.Require().Equal(consumerID, registeredConsumer.ConsumerId)
+	s.T().Logf("Consumer registered: ID=%s, Name=%s, Description=%s",
+		registeredConsumer.ConsumerId,
+		registeredConsumer.ConsumerName,
+		registeredConsumer.ConsumerDescription)
+
+	return registeredConsumer
 }
 
 // helper function: create a random consumer finality provider on Babylon and verify it

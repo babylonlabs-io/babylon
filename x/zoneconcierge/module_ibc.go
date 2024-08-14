@@ -1,6 +1,8 @@
 package zoneconcierge
 
 import (
+	"fmt"
+
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
 	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
@@ -149,9 +151,27 @@ func (im IBCModule) OnRecvPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	// Babylon is supposed to not take any IBC packet
-	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
-	return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "Babylon is supposed to not take any IBC packet"))
+	var packetData types.ZoneconciergePacketData
+	if errProto := types.ModuleCdc.Unmarshal(modulePacket.GetData(), &packetData); errProto != nil {
+		im.keeper.Logger(ctx).Error("Failed to unmarshal packet data with protobuf", "error", errProto)
+		if errJSON := types.ModuleCdc.UnmarshalJSON(modulePacket.GetData(), &packetData); errJSON != nil {
+			im.keeper.Logger(ctx).Error("Failed to unmarshal packet data with JSON", "error", errJSON)
+			return channeltypes.NewErrorAcknowledgement(fmt.Errorf("cannot unmarshal packet data with protobuf (error: %v) or JSON (error: %v)", errProto, errJSON))
+		}
+	}
+
+	switch packet := packetData.Packet.(type) {
+	case *types.ZoneconciergePacketData_ConsumerRegister:
+		err := im.keeper.HandleConsumerRegistration(ctx, modulePacket.DestinationPort, modulePacket.DestinationChannel, packet.ConsumerRegister)
+		if err != nil {
+			return channeltypes.NewErrorAcknowledgement(err)
+		}
+		return channeltypes.NewResultAcknowledgement([]byte("Consumer registered successfully"))
+	// Add other packet types here if needed
+	default:
+		errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg))
+	}
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface

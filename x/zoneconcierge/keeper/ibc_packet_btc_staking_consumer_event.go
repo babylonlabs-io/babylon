@@ -2,7 +2,9 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -48,4 +50,25 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 		// Delete the events for the current consumer ID from the store after successful transmission.
 		k.bsKeeper.DeleteBTCStakingConsumerIBCPacket(ctx, consumerID)
 	}
+}
+
+// HandleConsumerRegistration processes the consumer registration packet and registers the consumer
+func (k Keeper) HandleConsumerRegistration(
+	ctx sdk.Context,
+	destinationPort string,
+	destinationChannel string,
+	consumerRegister *types.ConsumerRegisterIBCPacket,
+) error {
+	clientID, _, err := k.channelKeeper.GetChannelClientState(ctx, destinationPort, destinationChannel)
+	if err != nil {
+		return fmt.Errorf("failed to get client state: %w", err)
+	}
+
+	consumerRegisterData := &btcstkconsumertypes.ConsumerRegister{
+		ConsumerId:          clientID,
+		ConsumerName:        consumerRegister.ConsumerName,
+		ConsumerDescription: consumerRegister.ConsumerDescription,
+	}
+
+	return k.btcStkKeeper.RegisterConsumer(ctx, consumerRegisterData)
 }

@@ -4,15 +4,15 @@ import (
 	"context"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
-
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
 	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
@@ -108,4 +108,8 @@ type EpochingKeeper interface {
 type BTCStakingKeeper interface {
 	GetAllBTCStakingConsumerIBCPackets(ctx context.Context) map[string]*bstypes.BTCStakingIBCPacket
 	DeleteBTCStakingConsumerIBCPacket(ctx context.Context, consumerID string)
+}
+
+type BTCStkConsumerKeeper interface {
+	RegisterConsumer(ctx context.Context, consumerRegister *btcstkconsumertypes.ConsumerRegister) error
 }

@@ -105,13 +105,27 @@ func (bc *baseConfigurer) InstantiateBabylonContract(enableBTCStaking bool) erro
 		nonValidatorNode.WaitForNextBlock()
 		btcStakingContractWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
 
-		initMsg = fmt.Sprintf(`{ "network": %q, "babylon_tag": %q, "btc_confirmation_depth": %d, "checkpoint_finalization_timeout": %d, "notify_cosmos_zone": %s, "btc_staking_code_id": %d }`,
+		consumerName := "TestConsumer"
+		consumerDescription := "Test Consumer Description"
+
+		initMsg = fmt.Sprintf(`{
+            "network": %q,
+            "babylon_tag": %q,
+            "btc_confirmation_depth": %d,
+            "checkpoint_finalization_timeout": %d,
+            "notify_cosmos_zone": %s,
+            "btc_staking_code_id": %d,
+            "consumer_name": %q,
+            "consumer_description": %q
+        }`,
 			types.BtcRegtest,
 			types2.DefaultCheckpointTag,
 			1,
 			2,
 			"false",
 			btcStakingContractWasmId,
+			consumerName,
+			consumerDescription,
 		)
 	}
 

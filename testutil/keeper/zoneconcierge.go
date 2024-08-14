@@ -69,7 +69,7 @@ func (zoneconciergeStoreQuerier) Query(req *storetypes.RequestQuery) (*storetype
 	}, nil
 }
 
-func ZoneConciergeKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, checkpointingKeeper types.CheckpointingKeeper, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper, bsKeeper types.BTCStakingKeeper) (*keeper.Keeper, sdk.Context) {
+func ZoneConciergeKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, checkpointingKeeper types.CheckpointingKeeper, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper, bsKeeper types.BTCStakingKeeper, btcStkKeeper types.BTCStkConsumerKeeper) (*keeper.Keeper, sdk.Context) {
 	logger := log.NewTestLogger(t)
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
@@ -98,6 +98,7 @@ func ZoneConciergeKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, c
 		epochingKeeper,
 		zoneconciergeStoreQuerier{},
 		bsKeeper,
+		btcStkKeeper,
 		capabilityKeeper.ScopeToModule("ZoneconciergeScopedKeeper"),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)

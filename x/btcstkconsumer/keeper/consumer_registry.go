@@ -47,6 +47,20 @@ func (k Keeper) GetAllRegisteredConsumerIDs(ctx context.Context) []string {
 	return consumerIDs
 }
 
+// RegisterConsumer validates and registers a new consumer
+func (k Keeper) RegisterConsumer(ctx context.Context, consumerRegister *types.ConsumerRegister) error {
+	if err := consumerRegister.Validate(); err != nil {
+		return types.ErrInvalidConsumerRegister.Wrapf("invalid consumer: %v", err)
+	}
+
+	if k.IsConsumerRegistered(ctx, consumerRegister.ConsumerId) {
+		return types.ErrConsumerAlreadyRegistered
+	}
+
+	k.SetConsumerRegister(ctx, consumerRegister)
+	return nil
+}
+
 // consumerRegistryStore stores the information of registered CZ consumers
 // prefix: ConsumerRegisterKey
 // key: consumerID
