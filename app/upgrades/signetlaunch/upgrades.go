@@ -21,12 +21,17 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btclightkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 )
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          "signet-launch",
 	CreateUpgradeHandler: CreateUpgradeHandler,
-	StoreUpgrades:        store.StoreUpgrades{},
+	StoreUpgrades: store.StoreUpgrades{
+		Added: []string{
+			bsctypes.ModuleName,
+		},
+	},
 }
 
 // CreateUpgradeHandler upgrade handler for launch.

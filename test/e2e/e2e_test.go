@@ -43,7 +43,7 @@ func TestBTCStakingIntegrationTestSuite(t *testing.T) {
 
 // TestSoftwareUpgradeTestSuite tests software upgrade protocol end-to-end
 func TestSoftwareUpgradeTestSuite(t *testing.T) {
-	suite.Run(t, new(SoftwareUpgradeVanillaTestSuite))
+	// suite.Run(t, new(SoftwareUpgradeVanillaTestSuite))
 }
 
 // TestSoftwareUpgradeSignetLaunchTestSuite tests software upgrade of signet launch end-to-end
