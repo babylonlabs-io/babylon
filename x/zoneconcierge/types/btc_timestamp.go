@@ -273,7 +273,7 @@ func (ts *BTCTimestamp) Verify(
 		headerBytes := bbn.NewBTCHeaderBytesFromBlockHeader(headerInfo.Header.ToBlockHeader())
 		headersBytes = append(headersBytes, headerBytes)
 	}
-	if err := btclcKeeper.InsertHeaders(ctx, headersBytes); err != nil {
+	if err := btclcKeeper.InsertHeadersWithHookAndEvents(ctx, headersBytes); err != nil {
 		return err
 	}
 

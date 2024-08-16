@@ -8,9 +8,16 @@ import (
 
 	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
+	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
 
-func InitChain(id, dataDir string, nodeConfigs []*NodeConfig, votingPeriod, expeditedVotingPeriod time.Duration, forkHeight int) (*Chain, error) {
+func InitChain(
+	id, dataDir string,
+	nodeConfigs []*NodeConfig,
+	votingPeriod, expeditedVotingPeriod time.Duration,
+	forkHeight int,
+	btcHeaders []*btclighttypes.BTCHeaderInfo,
+) (*Chain, error) {
 	chain, err := new(id, dataDir)
 	if err != nil {
 		return nil, err
@@ -24,7 +31,7 @@ func InitChain(id, dataDir string, nodeConfigs []*NodeConfig, votingPeriod, expe
 		chain.nodes = append(chain.nodes, newNode)
 	}
 
-	if err := initGenesis(chain, votingPeriod, expeditedVotingPeriod, forkHeight); err != nil {
+	if err := initGenesis(chain, votingPeriod, expeditedVotingPeriod, forkHeight, btcHeaders); err != nil {
 		return nil, err
 	}
 

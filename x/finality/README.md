@@ -2,7 +2,7 @@
 
 Babylon's BTC Staking protocol introduces an additional consensus round on
 blocks produced by CometBFT, called the finality round. The participants of this
-round are referred as finality providers and their voting power stems from
+round are referred to as finality providers and their voting power stems from
 staked bitcoins delegated to them.
 
 The Finality module is responsible for handling finality votes, maintaining the
@@ -12,7 +12,7 @@ in the finalization rounds. This includes:
 - handling requests for submitting finality votes from finality providers;
 - maintaining the finalization status of blocks;
 - identifying sluggish finality providers; and
-- maintaining equivocation evidences of culpable finality providers.
+- maintaining equivocation evidence of culpable finality providers.
 
 ## Table of contents
 

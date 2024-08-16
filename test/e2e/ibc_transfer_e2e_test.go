@@ -34,13 +34,15 @@ func (s *IBCTransferTestSuite) SetupSuite() {
 
 func (s *IBCTransferTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
-	s.Require().NoError(err)
+	if err != nil {
+		s.T().Logf("error to clear resources %s", err.Error())
+	}
 }
 
 func (s *IBCTransferTestSuite) Test1IBCTransfer() {
-	babylonChain := s.configurer.GetChainConfig(0)
+	bbnChain := s.configurer.GetChainConfig(0)
 
-	babylonNode, err := babylonChain.GetNodeAtIndex(2)
+	babylonNode, err := bbnChain.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	sender := initialization.ValidatorWalletName

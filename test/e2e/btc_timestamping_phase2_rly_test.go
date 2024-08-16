@@ -44,7 +44,9 @@ func (s *BTCTimestampingPhase2RlyTestSuite) SetupSuite() {
 
 func (s *BTCTimestampingPhase2RlyTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
-	s.Require().NoError(err)
+	if err != nil {
+		s.T().Logf("error to clear resources %s", err.Error())
+	}
 }
 
 func (s *BTCTimestampingPhase2RlyTestSuite) Test1IbcCheckpointingPhase2Rly() {

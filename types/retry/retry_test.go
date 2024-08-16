@@ -1,9 +1,11 @@
 package retry
 
 import (
-	"github.com/stretchr/testify/require"
+	"errors"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestUnrecoverableError(t *testing.T) {
@@ -18,4 +20,14 @@ func TestExpectedError(t *testing.T) {
 		return expectedErrors[0]
 	})
 	require.NoError(t, err)
+}
+
+func TestDoNotShadowAnError(t *testing.T) {
+	var expectedError = errors.New("expected error")
+
+	err := Do(1*time.Second, 1*time.Second, func() error {
+		return expectedError
+	})
+	require.Error(t, err)
+	require.ErrorIs(t, err, expectedError)
 }
