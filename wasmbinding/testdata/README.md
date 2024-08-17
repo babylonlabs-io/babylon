@@ -8,7 +8,6 @@ This approach enables us to specify which branch from bindings library we want t
 Until custom babylon api is stable this approach enables faster iteration than publishing
 wasm blobs from bindings library directly.
 
-
 ## Artifacts
 
 We are storing current version of artifacts in repo to speed up the CI.

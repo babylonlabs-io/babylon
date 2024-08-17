@@ -435,7 +435,8 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyConsumerFP(nonValidatorNode
 	*/
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
 	czFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
-	fpBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
+	fpBabylonAddr, err := sdk.AccAddressFromBech32(nonValidatorNode.PublicAddress)
+	s.NoError(err)
 	czFp, err := datagen.GenCustomFinalityProvider(r, czFpBTCSK, fpBabylonAddr, consumerId)
 
 	s.NoError(err)
@@ -469,7 +470,8 @@ func (s *BTCStakingIntegrationTestSuite) createVerifyBabylonFP(nonValidatorNode 
 	*/
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
 	babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
-	fpBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
+	fpBabylonAddr, err := sdk.AccAddressFromBech32(nonValidatorNode.PublicAddress)
+	s.NoError(err)
 	babylonFp, err := datagen.GenCustomFinalityProvider(r, babylonFpBTCSK, fpBabylonAddr, "")
 	s.NoError(err)
 	nonValidatorNode.CreateFinalityProvider("val", babylonFp.BtcPk, babylonFp.Pop, babylonFp.Description.Moniker, babylonFp.Description.Identity, babylonFp.Description.Website, babylonFp.Description.SecurityContact, babylonFp.Description.Details, babylonFp.Commission)
@@ -496,7 +498,8 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		create a random BTC delegation restaking to Babylon and consumer finality providers
 	*/
 
-	delBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
+	delBabylonAddr, err := sdk.AccAddressFromBech32(nonValidatorNode.PublicAddress)
+	s.NoError(err)
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := nonValidatorNode.QueryBTCStakingParams()
 

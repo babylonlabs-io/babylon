@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -17,6 +17,8 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -25,6 +27,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	blctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
@@ -67,9 +70,9 @@ const (
 )
 
 var (
-	StakeAmountIntA  = math.NewInt(StakeAmountA)
+	StakeAmountIntA  = sdkmath.NewInt(StakeAmountA)
 	StakeAmountCoinA = sdk.NewCoin(BabylonDenom, StakeAmountIntA)
-	StakeAmountIntB  = math.NewInt(StakeAmountB)
+	StakeAmountIntB  = sdkmath.NewInt(StakeAmountB)
 	StakeAmountCoinB = sdk.NewCoin(BabylonDenom, StakeAmountIntB)
 
 	InitBalanceStrA = fmt.Sprintf("%d%s", BabylonBalanceA, BabylonDenom)
@@ -166,7 +169,12 @@ func updateModuleGenesis[V proto.Message](appGenState map[string]json.RawMessage
 	return nil
 }
 
-func initGenesis(chain *internalChain, votingPeriod, expeditedVotingPeriod time.Duration, forkHeight int) error {
+func initGenesis(
+	chain *internalChain,
+	votingPeriod, expeditedVotingPeriod time.Duration,
+	forkHeight int,
+	btcHeaders []*btclighttypes.BTCHeaderInfo,
+) error {
 	// initialize a genesis file
 	configDir := chain.nodes[0].configDir()
 
@@ -216,6 +224,11 @@ func initGenesis(chain *internalChain, votingPeriod, expeditedVotingPeriod time.
 		return err
 	}
 
+	err = updateModuleGenesis(appGenState, govtypes.ModuleName, &govv1.GenesisState{}, updateGovGenesis(votingPeriod, expeditedVotingPeriod))
+	if err != nil {
+		return err
+	}
+
 	err = updateModuleGenesis(appGenState, minttypes.ModuleName, &minttypes.GenesisState{}, updateMintGenesis)
 	if err != nil {
 		return err
@@ -241,7 +254,7 @@ func initGenesis(chain *internalChain, votingPeriod, expeditedVotingPeriod time.
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, blctypes.ModuleName, blctypes.DefaultGenesis(), updateBtcLightClientGenesis)
+	err = updateModuleGenesis(appGenState, blctypes.ModuleName, blctypes.DefaultGenesis(), updateBtcLightClientGenesis(btcHeaders))
 	if err != nil {
 		return err
 	}
@@ -288,6 +301,14 @@ func updateBankGenesis(bankGenState *banktypes.GenesisState) {
 	})
 }
 
+func updateGovGenesis(votingPeriod, expeditedVotingPeriod time.Duration) func(govGenState *govv1.GenesisState) {
+	return func(govGenState *govv1.GenesisState) {
+		govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(100)))
+		govGenState.Params.VotingPeriod = &votingPeriod
+		govGenState.Params.ExpeditedVotingPeriod = &expeditedVotingPeriod
+	}
+}
+
 func updateMintGenesis(mintGenState *minttypes.GenesisState) {
 	mintGenState.Params.MintDenom = BabylonDenom
 }
@@ -299,7 +320,7 @@ func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
 		MaxEntries:        7,
 		HistoricalEntries: 10000,
 		UnbondingTime:     staketypes.DefaultUnbondingTime,
-		MinCommissionRate: math.LegacyZeroDec(),
+		MinCommissionRate: sdkmath.LegacyZeroDec(),
 	}
 }
 
@@ -307,14 +328,21 @@ func updateCrisisGenesis(crisisGenState *crisistypes.GenesisState) {
 	crisisGenState.ConstantFee.Denom = BabylonDenom
 }
 
-func updateBtcLightClientGenesis(blcGenState *blctypes.GenesisState) {
-	btcSimnetGenesisHex := "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000"
-	baseBtcHeader, err := bbn.NewBTCHeaderBytesFromHex(btcSimnetGenesisHex)
-	if err != nil {
-		panic(err)
+func updateBtcLightClientGenesis(btcHeaders []*btclighttypes.BTCHeaderInfo) func(blcGenState *blctypes.GenesisState) {
+	return func(blcGenState *btclighttypes.GenesisState) {
+		if len(btcHeaders) > 0 {
+			blcGenState.BtcHeaders = btcHeaders
+			return
+		}
+
+		btcSimnetGenesisHex := "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000"
+		baseBtcHeader, err := bbn.NewBTCHeaderBytesFromHex(btcSimnetGenesisHex)
+		if err != nil {
+			panic(err)
+		}
+		work := blctypes.CalcWork(&baseBtcHeader)
+		blcGenState.BtcHeaders = []*blctypes.BTCHeaderInfo{blctypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)}
 	}
-	work := blctypes.CalcWork(&baseBtcHeader)
-	blcGenState.BtcHeaders = []*blctypes.BTCHeaderInfo{blctypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)}
 }
 
 func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.GenesisState) {

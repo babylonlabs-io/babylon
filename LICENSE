@@ -8,12 +8,82 @@ License text copyright (c) 2017 MariaDB Corporation Ab, All Rights Reserved.
 
 Parameters
 
-Licensor:             Babylon Labs, Ltd.
+Licensor:             Babylon Labs Ltd.
 
-Licensed Work:        Babylon
-                      The Licensed Work is (c) 2023 Babylon Labs, Ltd.
+Licensed Work:        Babylon Node
+                      The Licensed Work is (c) 2024 Babylon Labs Ltd.
 
-Additional Use Grant: None.
+Additional Use Grant:
+
+In addition to the uses permitted under the non-production license below,
+we grant you a limited, non-exclusive, non-transferable, non-sublicensable,
+revocable license, limited as set forth below, to use the Licensed Work
+in this repository for production commercial uses built on or using and integrated
+with the Babylon Protocol, not including Competing Uses.
+
+Any use beyond the scope of this license, including uses that are not built on or
+using and integrated with the Babylon Protocol, or are Competing Uses,
+will terminate this license to you, automatically and without notice.
+
+This License applies separately and solely to the specific versions of the Licensed Work
+in the specified repository on or before the date of this License, and we may require a
+different license and different provisions for each subsequent version of the
+Licensed Work released by us.
+
+"Babylon Labs", "we", "our", or "us" means Babylon Labs Ltd.
+
+"Babylon Protocol" means the Bitcoin staking protocol as further described in the documentation
+here (https://docs.babylonlabs.io/docs/introduction/babylon-overview), as updated from time to time.
+
+"Competing Use" means any use of the Licensed Work in any product, software, protocol, network,
+application, or service that is made available to any party and that
+(i) substitutes for the use of the Babylon Protocol,
+(ii) offers the same or substantially similar functionality as the Babylon Protocol or
+(iii) is built on or uses a protocol with substantially similar functionality as the Babylon Protocol
+or otherwise facilitates the staking of bitcoin other than by utilizing the Babylon Protocol.
+
+The provisions in this License apply to each individual, entity, group, or association
+(each and collectively, "you" or "your") who uses the Licensed Work for production,
+and you agree to such provisions. Your production use of the Licensed Work is conditional on your
+agreement to this License. If you do not agree and consent to be bound to this License,
+do not so use the Software.
+
+If you do not fall within the limited scope of this license as described above or below,
+or are otherwise not in strict compliance with this License, then this production license does not
+extend to you and does not grant you any production use, including any copying, distributing, or
+making any derivative use of the Licensed Work for production purposes.
+
+Limited Scope of License. Your commercial production license to the Licensed Work
+under this License does not extend to any use:
+
+1.  unless you have legal capacity to consent and agree to be bound by this License;
+2.  unless you have the technical knowledge necessary or advisable to understand and evaluate the
+    risks of using the Licensed Work and the Babylon Protocol;
+3.  if you are a resident or agent of, or an entity organized, incorporated or doing business in,
+    Afghanistan, Belarus, Bosnia and Herzegovina, Burundi, Central African Republic, Crimea, Cuba,
+    Democratic People's Republic of Korea, Democratic Republic of the Congo,
+    Donetsk or Luhansk Regions of Ukraine, Eritrea, Guinea, Guinea-Bissau, Haiti, Iran, Iraq, Lebanon,
+    Libya, Mali, Myanmar, Nicaragua, Russia, Somalia, South Sudan, Sudan, Syria, Venezuela, Yemen,
+    or Zimbabwe or any other country to which the United States, the United Kingdom,
+    the European Union or any of its member states or the United Nations or any of its member states
+    (collectively, the "Major Jurisdictions") embargoes goods or imposes sanctions
+    (such embargoed or sanctioned territories, collectively, the "Restricted Territories");
+4.  if you are, or if you directly or indirectly own or control, from any person or entity that is
+    listed on any sanctions list or equivalent maintained by any of the Major Jurisdictions
+    (collectively, "Sanctions Lists Persons");
+5.  to transact in or with any Restricted Territories or Sanctions List Persons;
+6.  if you are a U.S. Person as defined in 17 CFR § 230.902, or currently or ordinarily located or
+    resident in (or incorporated or organized in) the United States of America, Canada, or
+    Australia (collectively, "Excluded Jurisdictions"), or to transact in or with Excluded Jurisdictions;
+7.  to defraud, or otherwise materially mislead, any person;
+8.  in violation of applicable laws, rules or regulations in your relevant jurisdiction;
+9.  that circumvents any sanctions or export controls targeting you or the country or territory where
+    you are located; or
+10. in any activity that transmits, exchanges, or is otherwise supported by the direct or indirect
+    proceeds of criminal or fraudulent activity.
+
+Any production use of the Licensed Work by you confirms your agreement to the foregoing limitations,
+and your understanding and agreement that they are limitations and not restrictions.
 
 Change Date:          2027-01-20 (January 20th, 2027)
 

@@ -44,7 +44,9 @@ func (s *BTCTimestampingPhase2HermesTestSuite) SetupSuite() {
 
 func (s *BTCTimestampingPhase2HermesTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
-	s.Require().NoError(err)
+	if err != nil {
+		s.T().Logf("error to clear resources %s", err.Error())
+	}
 }
 
 func (s *BTCTimestampingPhase2HermesTestSuite) Test1IbcCheckpointingPhase2Hermes() {
