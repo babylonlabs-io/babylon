@@ -20,6 +20,10 @@ type BtcCheckpointKeeper interface {
 	GetParams(ctx context.Context) (p btcctypes.Params)
 }
 
+type FinalityKeeper interface {
+	HasTimestampedPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) bool
+}
+
 type BtcStakingHooks interface {
 	AfterFinalityProviderActivated(ctx context.Context, fpPk *bbn.BIP340PubKey) error
 }

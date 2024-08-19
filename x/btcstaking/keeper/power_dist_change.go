@@ -113,6 +113,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	events []*types.EventPowerDistUpdate,
 	maxActiveFps uint32,
 ) *types.VotingPowerDistCache {
+	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	// a map where key is finality provider's BTC PK hex and value is a list
 	// of BTC delegations that newly become active under this provider
 	activeBTCDels := map[string][]*types.BTCDelegation{}
@@ -196,6 +197,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 
 		// add this finality provider to the new cache if it has voting power
 		if fp.TotalVotingPower > 0 {
+			// voting power is not assigned if it does not have timestamped
+			// public randomness for this height
+			if k.FinalityKeeper.HasTimestampedPubRand(ctx, fp.BtcPk, height) {
+				fp.TotalVotingPower = 0
+			}
 			newDc.AddFinalityProviderDistInfo(&fp)
 		}
 	}
@@ -232,6 +238,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 
 		// add this finality provider to the new cache if it has voting power
 		if fpDistInfo.TotalVotingPower > 0 {
+			// voting power is not assigned if it does not have timestamped
+			// public randomness for this height
+			if k.FinalityKeeper.HasTimestampedPubRand(ctx, fpBTCPK, height) {
+				fpDistInfo.TotalVotingPower = 0
+			}
 			newDc.AddFinalityProviderDistInfo(fpDistInfo)
 		}
 	}
