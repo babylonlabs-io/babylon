@@ -57,7 +57,7 @@ func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest)
 
 	// return if no chain IDs are provided
 	if len(req.ConsumerIds) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "chain IDs cannot be empty")
+		return nil, status.Error(codes.InvalidArgument, "consumer IDs cannot be empty")
 	}
 
 	// return if chain IDs exceed the limit
@@ -118,7 +118,7 @@ func (k Keeper) EpochChainsInfo(c context.Context, req *types.QueryEpochChainsIn
 
 	// return if no chain IDs are provided
 	if len(req.ConsumerIds) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "chain IDs cannot be empty")
+		return nil, status.Error(codes.InvalidArgument, "consumer IDs cannot be empty")
 	}
 
 	// return if chain IDs exceed the limit

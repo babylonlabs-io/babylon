@@ -61,9 +61,9 @@ func FuzzBTCTimestamp(f *testing.F) {
 		// handle a random header from a random consumer chain
 		consumerID := datagen.GenRandomHexStr(r, 10)
 		height := datagen.RandomInt(r, 100) + 1
-		ibctmHeader := datagen.GenRandomIBCTMHeader(r, consumerID, height)
+		ibctmHeader := datagen.GenRandomIBCTMHeader(r, height)
 		headerInfo := datagen.HeaderToHeaderInfo(ibctmHeader)
-		zck.HandleHeaderWithValidCommit(h.Ctx, datagen.GenRandomByteArray(r, 32), headerInfo, consumerID, false)
+		zck.HandleHeaderWithValidCommit(h.Ctx, datagen.GenRandomByteArray(r, 32), headerInfo, false)
 
 		// ensure the header is successfully inserted
 		indexedHeader, err := zck.GetHeader(h.Ctx, consumerID, height)
