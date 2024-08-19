@@ -29,7 +29,7 @@ func FuzzForkIndexer(f *testing.F) {
 		forks := zcKeeper.GetForks(ctx, czChainID, numHeaders-1)
 		require.Equal(t, numForkHeaders, uint64(len(forks.Headers)))
 		for i := range forks.Headers {
-			require.Equal(t, czChainID, forks.Headers[i].ChainId)
+			require.Equal(t, czChainID, forks.Headers[i].ConsumerId)
 			require.Equal(t, numHeaders-1, forks.Headers[i].Height)
 			require.Equal(t, forkHeaders[i].Header.AppHash, forks.Headers[i].Hash)
 		}
@@ -39,7 +39,7 @@ func FuzzForkIndexer(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
 		for i := range forks.Headers {
-			require.Equal(t, czChainID, chainInfo.LatestForks.Headers[i].ChainId)
+			require.Equal(t, czChainID, chainInfo.LatestForks.Headers[i].ConsumerId)
 			require.Equal(t, numHeaders-1, chainInfo.LatestForks.Headers[i].Height)
 			require.Equal(t, forkHeaders[i].Header.AppHash, chainInfo.LatestForks.Headers[i].Hash)
 		}

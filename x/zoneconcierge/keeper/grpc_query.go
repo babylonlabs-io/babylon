@@ -31,11 +31,11 @@ func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (
 
 	ctx := sdk.UnwrapSDKContext(c)
 
-	chainIDs := []string{}
+	ConsumerIds := []string{}
 	store := k.chainInfoStore(ctx)
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
-		chainID := string(key)
-		chainIDs = append(chainIDs, chainID)
+		ConsumerId := string(key)
+		ConsumerIds = append(ConsumerIds, ConsumerId)
 		return nil
 	})
 	if err != nil {
@@ -43,8 +43,8 @@ func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (
 	}
 
 	resp := &types.QueryChainListResponse{
-		ChainIds:   chainIDs,
-		Pagination: pageRes,
+		ConsumerIds: ConsumerIds,
+		Pagination:  pageRes,
 	}
 	return resp, nil
 }
@@ -56,24 +56,24 @@ func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest)
 	}
 
 	// return if no chain IDs are provided
-	if len(req.ChainIds) == 0 {
+	if len(req.ConsumerIds) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "chain IDs cannot be empty")
 	}
 
 	// return if chain IDs exceed the limit
-	if len(req.ChainIds) > maxQueryChainsInfoLimit {
+	if len(req.ConsumerIds) > maxQueryChainsInfoLimit {
 		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
 	}
 
 	// return if chain IDs contain duplicates or empty strings
-	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ChainIds); err != nil {
-		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidChainIDs.Wrap(err.Error()).Error())
+	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ConsumerIds); err != nil {
+		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidConsumerIDs.Wrap(err.Error()).Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
 	var chainsInfo []*types.ChainInfo
-	for _, chainID := range req.ChainIds {
-		chainInfo, err := k.GetChainInfo(ctx, chainID)
+	for _, ConsumerId := range req.ConsumerIds {
+		chainInfo, err := k.GetChainInfo(ctx, ConsumerId)
 		if err != nil {
 			return nil, err
 		}
@@ -91,17 +91,17 @@ func (k Keeper) Header(c context.Context, req *types.QueryHeaderRequest) (*types
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	if len(req.ChainId) == 0 {
+	if len(req.ConsumerId) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
 
-	header, err := k.GetHeader(ctx, req.ChainId, req.Height)
+	header, err := k.GetHeader(ctx, req.ConsumerId, req.Height)
 	if err != nil {
 		return nil, err
 	}
-	forks := k.GetForks(ctx, req.ChainId, req.Height)
+	forks := k.GetForks(ctx, req.ConsumerId, req.Height)
 	resp := &types.QueryHeaderResponse{
 		Header:      header,
 		ForkHeaders: forks,
@@ -117,36 +117,36 @@ func (k Keeper) EpochChainsInfo(c context.Context, req *types.QueryEpochChainsIn
 	}
 
 	// return if no chain IDs are provided
-	if len(req.ChainIds) == 0 {
+	if len(req.ConsumerIds) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "chain IDs cannot be empty")
 	}
 
 	// return if chain IDs exceed the limit
-	if len(req.ChainIds) > maxQueryChainsInfoLimit {
+	if len(req.ConsumerIds) > maxQueryChainsInfoLimit {
 		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
 	}
 
 	// return if chain IDs contain duplicates or empty strings
-	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ChainIds); err != nil {
-		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidChainIDs.Wrap(err.Error()).Error())
+	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ConsumerIds); err != nil {
+		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidConsumerIDs.Wrap(err.Error()).Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
 	var chainsInfo []*types.ChainInfo
-	for _, chainID := range req.ChainIds {
+	for _, ConsumerId := range req.ConsumerIds {
 		// check if chain ID is valid
-		if !k.HasChainInfo(ctx, chainID) {
-			return nil, status.Error(codes.InvalidArgument, types.ErrChainInfoNotFound.Wrapf("chain ID %s", chainID).Error())
+		if !k.HasChainInfo(ctx, ConsumerId) {
+			return nil, status.Error(codes.InvalidArgument, types.ErrChainInfoNotFound.Wrapf("chain ID %s", ConsumerId).Error())
 		}
 
 		// if the chain info is not found in the given epoch, return with empty fields
-		if !k.EpochChainInfoExists(ctx, chainID, req.EpochNum) {
-			chainsInfo = append(chainsInfo, &types.ChainInfo{ChainId: chainID})
+		if !k.EpochChainInfoExists(ctx, ConsumerId, req.EpochNum) {
+			chainsInfo = append(chainsInfo, &types.ChainInfo{ConsumerId: ConsumerId})
 			continue
 		}
 
 		// find the chain info of the given epoch
-		chainInfoWithProof, err := k.GetEpochChainInfo(ctx, chainID, req.EpochNum)
+		chainInfoWithProof, err := k.GetEpochChainInfo(ctx, ConsumerId, req.EpochNum)
 		if err != nil {
 			return nil, err
 		}
@@ -164,14 +164,14 @@ func (k Keeper) ListHeaders(c context.Context, req *types.QueryListHeadersReques
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	if len(req.ChainId) == 0 {
+	if len(req.ConsumerId) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
 
 	headers := []*types.IndexedHeader{}
-	store := k.canonicalChainStore(ctx, req.ChainId)
+	store := k.canonicalChainStore(ctx, req.ConsumerId)
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
 		var header types.IndexedHeader
 		k.cdc.MustUnmarshal(value, &header)
@@ -196,13 +196,13 @@ func (k Keeper) ListEpochHeaders(c context.Context, req *types.QueryListEpochHea
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	if len(req.ChainId) == 0 {
+	if len(req.ConsumerId) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
 
-	headers, err := k.GetEpochHeaders(ctx, req.ChainId, req.EpochNum)
+	headers, err := k.GetEpochHeaders(ctx, req.ConsumerId, req.EpochNum)
 	if err != nil {
 		return nil, err
 	}
@@ -220,18 +220,18 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 	}
 
 	// return if no chain IDs are provided
-	if len(req.ChainIds) == 0 {
+	if len(req.ConsumerIds) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
 	}
 
 	// return if chain IDs exceed the limit
-	if len(req.ChainIds) > maxQueryChainsInfoLimit {
+	if len(req.ConsumerIds) > maxQueryChainsInfoLimit {
 		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
 	}
 
 	// return if chain IDs contain duplicates or empty strings
-	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ChainIds); err != nil {
-		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidChainIDs.Wrap(err.Error()).Error())
+	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ConsumerIds); err != nil {
+		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidConsumerIDs.Wrap(err.Error()).Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
@@ -239,22 +239,22 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 
 	// find the last finalised epoch
 	lastFinalizedEpoch := k.GetLastFinalizedEpoch(ctx)
-	for _, chainID := range req.ChainIds {
+	for _, ConsumerId := range req.ConsumerIds {
 		// check if chain ID is valid
-		if !k.HasChainInfo(ctx, chainID) {
-			return nil, status.Error(codes.InvalidArgument, types.ErrChainInfoNotFound.Wrapf("chain ID %s", chainID).Error())
+		if !k.HasChainInfo(ctx, ConsumerId) {
+			return nil, status.Error(codes.InvalidArgument, types.ErrChainInfoNotFound.Wrapf("chain ID %s", ConsumerId).Error())
 		}
 
-		data := &types.FinalizedChainInfo{ChainId: chainID}
+		data := &types.FinalizedChainInfo{ConsumerId: ConsumerId}
 
 		// if the chain info is not found in the last finalised epoch, return with empty fields
-		if !k.EpochChainInfoExists(ctx, chainID, lastFinalizedEpoch) {
+		if !k.EpochChainInfoExists(ctx, ConsumerId, lastFinalizedEpoch) {
 			resp.FinalizedChainsInfo = append(resp.FinalizedChainsInfo, data)
 			continue
 		}
 
 		// find the chain info in the last finalised epoch
-		chainInfoWithProof, err := k.GetEpochChainInfo(ctx, chainID, lastFinalizedEpoch)
+		chainInfoWithProof, err := k.GetEpochChainInfo(ctx, ConsumerId, lastFinalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
@@ -309,7 +309,7 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	if len(req.ChainId) == 0 {
+	if len(req.ConsumerId) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
 	}
 
@@ -319,7 +319,7 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 	// find the last finalised epoch
 	lastFinalizedEpoch := k.GetLastFinalizedEpoch(ctx)
 	// find the chain info in the last finalised epoch
-	chainInfoWithProof, err := k.GetEpochChainInfo(ctx, req.ChainId, lastFinalizedEpoch)
+	chainInfoWithProof, err := k.GetEpochChainInfo(ctx, req.ConsumerId, lastFinalizedEpoch)
 	if err != nil {
 		return nil, err
 	}
@@ -358,13 +358,13 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 		}
 	} else { // the requested height is before the last finalised chain info
 		// starting from the requested height, iterate backward until a timestamped header
-		closestHeader, err := k.FindClosestHeader(ctx, req.ChainId, req.Height)
+		closestHeader, err := k.FindClosestHeader(ctx, req.ConsumerId, req.Height)
 		if err != nil {
 			return nil, err
 		}
 		// assign the finalizedEpoch, and retrieve epoch info, raw ckpt and submission key
 		finalizedEpoch = closestHeader.BabylonEpoch
-		chainInfoWithProof, err := k.GetEpochChainInfo(ctx, req.ChainId, finalizedEpoch)
+		chainInfoWithProof, err := k.GetEpochChainInfo(ctx, req.ConsumerId, finalizedEpoch)
 		if err != nil {
 			return nil, err
 		}

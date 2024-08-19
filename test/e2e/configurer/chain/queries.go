@@ -306,13 +306,13 @@ func (n *NodeConfig) QueryChains() (*[]string, error) {
 	if err := util.Cdc.UnmarshalJSON(bz, &chainsResponse); err != nil {
 		return nil, err
 	}
-	return &chainsResponse.ChainIds, nil
+	return &chainsResponse.ConsumerIds, nil
 }
 
-func (n *NodeConfig) QueryChainsInfo(chainIDs []string) ([]*zctypes.ChainInfo, error) {
+func (n *NodeConfig) QueryChainsInfo(consumerIDs []string) ([]*zctypes.ChainInfo, error) {
 	queryParams := url.Values{}
-	for _, chainId := range chainIDs {
-		queryParams.Add("chain_ids", chainId)
+	for _, consumerId := range consumerIDs {
+		queryParams.Add("consumer_ids", consumerId)
 	}
 
 	bz, err := n.QueryGRPCGateway("/babylon/zoneconcierge/v1/chains_info", queryParams)

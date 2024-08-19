@@ -10,11 +10,11 @@ import (
 )
 
 // HandleHeaderWithValidCommit handles a CZ header with a valid QC
-func (k Keeper) HandleHeaderWithValidCommit(ctx context.Context, txHash []byte, header *types.HeaderInfo, isOnFork bool) {
+func (k Keeper) HandleHeaderWithValidCommit(ctx context.Context, txHash []byte, header *types.HeaderInfo, clientID string, isOnFork bool) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	babylonHeader := sdkCtx.HeaderInfo()
 	indexedHeader := types.IndexedHeader{
-		ChainId:             header.ChainId,
+		ConsumerId:          clientID,
 		Hash:                header.AppHash,
 		Height:              header.Height,
 		Time:                &header.Time,
@@ -30,27 +30,27 @@ func (k Keeper) HandleHeaderWithValidCommit(ctx context.Context, txHash []byte, 
 		chainInfo *types.ChainInfo
 		err       error
 	)
-	if !k.HasChainInfo(ctx, indexedHeader.ChainId) {
+	if !k.HasChainInfo(ctx, indexedHeader.ConsumerId) {
 		// chain info does not exist yet, initialise chain info for this chain
-		chainInfo, err = k.InitChainInfo(ctx, indexedHeader.ChainId)
+		chainInfo, err = k.InitChainInfo(ctx, indexedHeader.ConsumerId)
 		if err != nil {
-			panic(fmt.Errorf("failed to initialize chain info of %s: %w", indexedHeader.ChainId, err))
+			panic(fmt.Errorf("failed to initialize chain info of %s: %w", indexedHeader.ConsumerId, err))
 		}
 	} else {
 		// get chain info
-		chainInfo, err = k.GetChainInfo(ctx, indexedHeader.ChainId)
+		chainInfo, err = k.GetChainInfo(ctx, indexedHeader.ConsumerId)
 		if err != nil {
-			panic(fmt.Errorf("failed to get chain info of %s: %w", indexedHeader.ChainId, err))
+			panic(fmt.Errorf("failed to get chain info of %s: %w", indexedHeader.ConsumerId, err))
 		}
 	}
 
 	if isOnFork {
 		// insert header to fork index
-		if err := k.insertForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+		if err := k.insertForkHeader(ctx, indexedHeader.ConsumerId, &indexedHeader); err != nil {
 			panic(err)
 		}
 		// update the latest fork in chain info
-		if err := k.tryToUpdateLatestForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+		if err := k.tryToUpdateLatestForkHeader(ctx, indexedHeader.ConsumerId, &indexedHeader); err != nil {
 			panic(err)
 		}
 	} else {
@@ -62,11 +62,11 @@ func (k Keeper) HandleHeaderWithValidCommit(ctx context.Context, txHash []byte, 
 		}
 
 		// insert header to canonical chain index
-		if err := k.insertHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+		if err := k.insertHeader(ctx, indexedHeader.ConsumerId, &indexedHeader); err != nil {
 			panic(err)
 		}
 		// update the latest canonical header in chain info
-		if err := k.updateLatestHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+		if err := k.updateLatestHeader(ctx, indexedHeader.ConsumerId, &indexedHeader); err != nil {
 			panic(err)
 		}
 	}

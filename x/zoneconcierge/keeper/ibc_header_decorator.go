@@ -22,21 +22,22 @@ func NewIBCHeaderDecorator(k Keeper) *IBCHeaderDecorator {
 	}
 }
 
-func (d *IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg) (*types.HeaderInfo, *ibctmtypes.ClientState) {
+func (d *IBCHeaderDecorator) parseMsgUpdateClient(ctx sdk.Context, m sdk.Msg) (*types.HeaderInfo, *ibctmtypes.ClientState, string) {
 	// ensure the message is MsgUpdateClient
 	msgUpdateClient, ok := m.(*clienttypes.MsgUpdateClient)
 	if !ok {
-		return nil, nil
+		return nil, nil, ""
 	}
+	clientID := msgUpdateClient.ClientId
 	// unpack ClientMsg inside MsgUpdateClient
 	clientMsg, err := clienttypes.UnpackClientMessage(msgUpdateClient.ClientMessage)
 	if err != nil {
-		return nil, nil
+		return nil, nil, ""
 	}
 	// ensure the ClientMsg is a Comet header
 	ibctmHeader, ok := clientMsg.(*ibctmtypes.Header)
 	if !ok {
-		return nil, nil
+		return nil, nil, ""
 	}
 
 	// all good, we get the headerInfo
@@ -51,15 +52,15 @@ func (d *IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg)
 	// ensure the corresponding clientState exists
 	clientState, exist := d.k.clientKeeper.GetClientState(ctx, msgUpdateClient.ClientId)
 	if !exist {
-		return nil, nil
+		return nil, nil, ""
 	}
 	// ensure the clientState is a Comet clientState
 	cmtClientState, ok := clientState.(*ibctmtypes.ClientState)
 	if !ok {
-		return nil, nil
+		return nil, nil, ""
 	}
 
-	return headerInfo, cmtClientState
+	return headerInfo, cmtClientState, clientID
 }
 
 func (d *IBCHeaderDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, success bool, next sdk.PostHandler) (sdk.Context, error) {
@@ -78,7 +79,7 @@ func (d *IBCHeaderDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, su
 
 	for _, msg := range tx.GetMsgs() {
 		// try to extract the headerInfo and the client's status
-		headerInfo, clientState := d.getHeaderAndClientState(ctx, msg)
+		headerInfo, clientState, clientID := d.parseMsgUpdateClient(ctx, msg)
 		if headerInfo == nil {
 			continue
 		}
@@ -91,7 +92,7 @@ func (d *IBCHeaderDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, su
 		// fail, eventually failing the entire tx. All state updates due to this
 		// failed tx will be rolled back.
 		isOnFork := !clientState.FrozenHeight.IsZero()
-		d.k.HandleHeaderWithValidCommit(ctx, txHash, headerInfo, isOnFork)
+		d.k.HandleHeaderWithValidCommit(ctx, txHash, headerInfo, clientID, isOnFork)
 
 		// unfreeze client (by setting FrozenHeight to zero again) if the client is frozen
 		// due to a fork header
