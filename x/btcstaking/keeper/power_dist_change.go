@@ -199,7 +199,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		if fp.TotalVotingPower > 0 {
 			// voting power is not assigned if it does not have timestamped
 			// public randomness for this height
-			if k.FinalityKeeper.HasTimestampedPubRand(ctx, fp.BtcPk, height) {
+			if !k.FinalityKeeper.HasTimestampedPubRand(ctx, fp.BtcPk, height) {
 				fp.TotalVotingPower = 0
 			}
 			newDc.AddFinalityProviderDistInfo(&fp)
@@ -240,7 +240,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		if fpDistInfo.TotalVotingPower > 0 {
 			// voting power is not assigned if it does not have timestamped
 			// public randomness for this height
-			if k.FinalityKeeper.HasTimestampedPubRand(ctx, fpBTCPK, height) {
+			if !k.FinalityKeeper.HasTimestampedPubRand(ctx, fpBTCPK, height) {
 				fpDistInfo.TotalVotingPower = 0
 			}
 			newDc.AddFinalityProviderDistInfo(fpDistInfo)
