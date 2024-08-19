@@ -16,6 +16,5 @@ const (
 	// PropSubmitBlocks estimated number of blocks it takes to submit for a proposal
 	PropSubmitBlocks float32 = 1
 	// Upgrade prop files json
-	UpgradeVanillaFilePath      = "/upgrades/vanilla.json"
 	UpgradeSignetLaunchFilePath = "/upgrades/signet-launch.json"
 )
