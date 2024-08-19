@@ -4,14 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
 
 	govv1 "cosmossdk.io/api/cosmos/gov/v1"
 	sdkmath "cosmossdk.io/math"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/config"
@@ -196,9 +200,13 @@ func (uc *UpgradeConfigurer) runProposalUpgrade() error {
 		// }
 		// TODO: need to make a way to update proposal height
 		// chainConfig.UpgradePropHeight = currentHeight + int64(chainConfig.VotingPeriod) + int64(config.PropSubmitBlocks) + int64(config.PropBufferBlocks)
-		chainConfig.UpgradePropHeight = 25 // at least read from the prop plan file
-		propID := node.TxGovPropSubmitProposal(uc.upgradeJsonFilePath, node.WalletName)
+		msgProp, err := uc.ParseGovPropFromFile()
+		if err != nil {
+			return err
+		}
+		chainConfig.UpgradePropHeight = msgProp.Plan.Height
 
+		propID := node.TxGovPropSubmitProposal(uc.upgradeJsonFilePath, node.WalletName)
 		chainConfig.TxGovVoteFromAllNodes(propID, govv1.VoteOption_VOTE_OPTION_YES)
 	}
 
@@ -251,4 +259,75 @@ func (uc *UpgradeConfigurer) upgradeContainers(chainConfig *chain.Config, propHe
 	chainConfig.WaitUntilHeight(propHeight + 1)
 	uc.t.Logf("upgrade successful on chain %s", chainConfig.Id)
 	return nil
+}
+
+// ParseGovPropFromFile loads the proposal from the UpgradeSignetLaunchFilePath
+func (uc *UpgradeConfigurer) ParseGovPropFromFile() (*upgradetypes.MsgSoftwareUpgrade, error) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
+	upgradePath := filepath.Join(pwd, uc.upgradeJsonFilePath)
+	return ParseGovPropFromFile(upgradePath)
+}
+
+// ParseGovPropFromFile loads from the file the Upgrade msg.
+func ParseGovPropFromFile(propFilePath string) (*upgradetypes.MsgSoftwareUpgrade, error) {
+	_, msgs, _, err := parseSubmitProposal(app.NewTmpBabylonApp().AppCodec(), propFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	upgradeMsg, ok := msgs[0].(*upgradetypes.MsgSoftwareUpgrade)
+	if !ok {
+		return nil, fmt.Errorf("unable to parse msg to upgradetypes.MsgSoftwareUpgrade")
+	}
+	return upgradeMsg, nil
+}
+
+// Copy from https://github.com/cosmos/cosmos-sdk/blob/4251905d56e0e7a3350145beedceafe786953295/x/gov/client/cli/util.go#L83
+// Not exported structure and file
+// proposal defines the new Msg-based proposal.
+type proposal struct {
+	// Msgs defines an array of sdk.Msgs proto-JSON-encoded as Anys.
+	Messages  []json.RawMessage `json:"messages,omitempty"`
+	Metadata  string            `json:"metadata"`
+	Deposit   string            `json:"deposit"`
+	Title     string            `json:"title"`
+	Summary   string            `json:"summary"`
+	Expedited bool              `json:"expedited"`
+}
+
+// parseSubmitProposal reads and parses the proposal.
+func parseSubmitProposal(cdc codec.Codec, path string) (proposal, []sdk.Msg, sdk.Coins, error) {
+	var proposal proposal
+
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return proposal, nil, nil, err
+	}
+
+	err = json.Unmarshal(contents, &proposal)
+	if err != nil {
+		return proposal, nil, nil, err
+	}
+
+	msgs := make([]sdk.Msg, len(proposal.Messages))
+	for i, anyJSON := range proposal.Messages {
+		var msg sdk.Msg
+		err := cdc.UnmarshalInterfaceJSON(anyJSON, &msg)
+		if err != nil {
+			return proposal, nil, nil, err
+		}
+
+		msgs[i] = msg
+	}
+
+	deposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
+	if err != nil {
+		return proposal, nil, nil, err
+	}
+
+	return proposal, msgs, deposit, nil
 }

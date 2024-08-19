@@ -8,7 +8,5 @@
       "plan": { "name": "signet-launch", "info": "Msg info", "height": 25 }
     }
   ],
-  "deposit": "500000000ubbn",
-  "initial_deposit": "500000000ubbn",
-  "initialDeposit": "500000000ubbn"
+  "deposit": "500000000ubbn"
 }
