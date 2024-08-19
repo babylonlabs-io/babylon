@@ -48,7 +48,7 @@ func FuzzChainList(f *testing.F) {
 				allConsumerIDs = append(allConsumerIDs, consumerID)
 			}
 			header := datagen.GenRandomIBCTMHeader(r, 0)
-			zcKeeper.HandleHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), datagen.HeaderToHeaderInfo(header), false)
+			zcKeeper.HandleHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), datagen.NewZCHeaderInfo(header, consumerID), false)
 		}
 
 		limit := datagen.RandomInt(r, len(allConsumerIDs)) + 1

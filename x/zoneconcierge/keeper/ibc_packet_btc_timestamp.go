@@ -231,7 +231,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 		// get the ID of the chain under this channel
 		consumerID, err := k.getClientID(ctx, channel)
 		if err != nil {
-			k.Logger(sdkCtx).Error("failed to get chain ID, skip sending BTC timestamp for this chain", "channelID", channel.ChannelId, "error", err)
+			k.Logger(sdkCtx).Error("failed to get client ID, skip sending BTC timestamp for this consumer", "channelID", channel.ChannelId, "error", err)
 			continue
 		}
 

@@ -16,7 +16,7 @@ func SimulateNewHeaders(ctx context.Context, r *rand.Rand, k *zckeeper.Keeper, c
 	// invoke the hook a number of times to simulate a number of blocks
 	for i := uint64(0); i < numHeaders; i++ {
 		header := datagen.GenRandomIBCTMHeader(r, startHeight+i)
-		k.HandleHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), datagen.HeaderToHeaderInfo(header), false)
+		k.HandleHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), datagen.NewZCHeaderInfo(header, consumerID), false)
 		headers = append(headers, header)
 	}
 	return headers
@@ -28,7 +28,7 @@ func SimulateNewHeadersAndForks(ctx context.Context, r *rand.Rand, k *zckeeper.K
 	// invoke the hook a number of times to simulate a number of blocks
 	for i := uint64(0); i < numHeaders; i++ {
 		header := datagen.GenRandomIBCTMHeader(r, startHeight+i)
-		k.HandleHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), datagen.HeaderToHeaderInfo(header), false)
+		k.HandleHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), datagen.NewZCHeaderInfo(header, consumerID), false)
 		headers = append(headers, header)
 	}
 
@@ -36,7 +36,7 @@ func SimulateNewHeadersAndForks(ctx context.Context, r *rand.Rand, k *zckeeper.K
 	forkHeaders := []*ibctmtypes.Header{}
 	for i := uint64(0); i < numForkHeaders; i++ {
 		header := datagen.GenRandomIBCTMHeader(r, startHeight+numHeaders-1)
-		k.HandleHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), datagen.HeaderToHeaderInfo(header), true)
+		k.HandleHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), datagen.NewZCHeaderInfo(header, consumerID), true)
 		forkHeaders = append(forkHeaders, header)
 	}
 	return headers, forkHeaders

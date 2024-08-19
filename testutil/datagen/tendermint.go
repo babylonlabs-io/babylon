@@ -41,12 +41,13 @@ func GenRandomTMHeaderInfo(r *rand.Rand, chainID string, height uint64) *header.
 	}
 }
 
-func HeaderToHeaderInfo(header *ibctmtypes.Header) *zctypes.HeaderInfo {
+func NewZCHeaderInfo(header *ibctmtypes.Header, clientID string) *zctypes.HeaderInfo {
 	return &zctypes.HeaderInfo{
-		AppHash: header.Header.AppHash,
-		ChainId: header.Header.ChainID,
-		Time:    header.Header.Time,
-		Height:  uint64(header.Header.Height),
+		ClientId: clientID,
+		AppHash:  header.Header.AppHash,
+		ChainId:  header.Header.ChainID,
+		Time:     header.Header.Time,
+		Height:   uint64(header.Header.Height),
 	}
 }
 
