@@ -165,7 +165,6 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-		finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), gomock.Any(), gomock.Any()).Return(true).AnyTimes()
 		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
 
 		// set all parameters
@@ -176,6 +175,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		// generate a random batch of finality providers, each with a BTC delegation with random power
 		fpsWithMeta := []*types.FinalityProviderDistInfo{}
 		numFps := datagen.RandomInt(r, 300) + 1
+		noTimestampedFps := map[string]bool{}
 		for i := uint64(0); i < numFps; i++ {
 			// generate finality provider
 			_, _, fp := h.CreateFinalityProvider(r)
@@ -191,11 +191,20 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 			)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
 
+			// 30 percent not have timestamped randomness, which causes
+			// zero voting power in the table
+			fpDistInfo := &types.FinalityProviderDistInfo{BtcPk: fp.BtcPk}
+			if r.Intn(10) <= 2 {
+				finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), fp.BtcPk, gomock.Any()).Return(false).AnyTimes()
+				noTimestampedFps[fp.BtcPk.MarshalHex()] = true
+				fpDistInfo.TotalVotingPower = 0
+			} else {
+				finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), fp.BtcPk, gomock.Any()).Return(true).AnyTimes()
+				fpDistInfo.TotalVotingPower = stakingValue
+			}
+
 			// record voting power
-			fpsWithMeta = append(fpsWithMeta, &types.FinalityProviderDistInfo{
-				BtcPk:            fp.BtcPk,
-				TotalVotingPower: stakingValue,
-			})
+			fpsWithMeta = append(fpsWithMeta, fpDistInfo)
 		}
 
 		maxActiveFpsParam := h.BTCStakingKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders
