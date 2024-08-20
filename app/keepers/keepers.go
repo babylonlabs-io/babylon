@@ -542,6 +542,8 @@ func (ak *AppKeepers) InitKeepers(
 	)
 	ak.BTCStakingKeeper = *ak.BTCStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(ak.FinalityKeeper.Hooks()))
 	ak.FinalityKeeper = *ak.FinalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(ak.BTCStakingKeeper.Hooks()))
+	// TODO this introduces circular dependency between the finality module and
+	// the btcstaking modules, need refactoring
 	ak.BTCStakingKeeper.FinalityKeeper = ak.FinalityKeeper
 
 	// create evidence keeper with router

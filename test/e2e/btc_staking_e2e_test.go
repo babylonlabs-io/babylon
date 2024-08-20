@@ -355,7 +355,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.Eventually(func() bool {
 		finalizedBlocks = nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
 		return len(finalizedBlocks) > 0
-	}, time.Minute, time.Second*5)
+	}, time.Minute, time.Second)
 	s.Equal(activatedHeight, finalizedBlocks[0].Height)
 	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 

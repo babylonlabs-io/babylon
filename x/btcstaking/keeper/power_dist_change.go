@@ -197,11 +197,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 
 		// add this finality provider to the new cache if it has voting power
 		if fp.TotalVotingPower > 0 {
-			// voting power is not assigned if it does not have timestamped
-			// public randomness for this height
-			if !k.FinalityKeeper.HasTimestampedPubRand(ctx, fp.BtcPk, height) {
-				fp.TotalVotingPower = 0
-			}
 			newDc.AddFinalityProviderDistInfo(&fp)
 		}
 	}
@@ -238,12 +233,18 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 
 		// add this finality provider to the new cache if it has voting power
 		if fpDistInfo.TotalVotingPower > 0 {
-			// voting power is not assigned if it does not have timestamped
-			// public randomness for this height
-			if !k.FinalityKeeper.HasTimestampedPubRand(ctx, fpBTCPK, height) {
-				fpDistInfo.TotalVotingPower = 0
-			}
 			newDc.AddFinalityProviderDistInfo(fpDistInfo)
+		}
+	}
+
+	// set voting power to 0 if the fp does not have timestamped pub rand
+	for _, fp := range newDc.FinalityProviders {
+		// TODO calling HasTimestampedPubRand potentially iterates
+		// all the pub rand committed by the fp, which might slow down
+		// the process, need optimization
+		if fp.TotalVotingPower > 0 &&
+			!k.FinalityKeeper.HasTimestampedPubRand(ctx, fp.BtcPk, height) {
+			fp.TotalVotingPower = 0
 		}
 	}
 
