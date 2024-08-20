@@ -40,7 +40,7 @@ var _ Configurer = (*UpgradeConfigurer)(nil)
 // NewUpgradeConfigurer returns a upgrade configurer, if forkHeight is bigger
 // than 0 it implies that it is a fork upgrade that does not pass by a gov prop
 // if it is set to zero it runs the upgrade by the gov prop.
-func NewUpgradeConfigurer(t *testing.T, chainConfigs []*chain.Config, setupTests setupFn, containerManager *containers.Manager, upgradePlanFilePath string, forkHeight int64) Configurer {
+func NewUpgradeConfigurer(t *testing.T, chainConfigs []*chain.Config, setupTests setupFn, containerManager *containers.Manager, upgradePlanFilePath string, forkHeight int64) *UpgradeConfigurer {
 	t.Helper()
 	return &UpgradeConfigurer{
 		baseConfigurer: baseConfigurer{
@@ -301,7 +301,7 @@ func (uc *UpgradeConfigurer) UpgradeFilePath() (string, error) {
 	return filepath.Join(pwd, uc.upgradeJsonFilePath), nil
 }
 
-// parseGovPropFromFile loads from the file the Upgrade msg.
+// parseGovPropFromFile loads from the file and parse it to the upgrade msg.
 func parseGovPropFromFile(cdc codec.Codec, propFilePath string) (*proposal, *upgradetypes.MsgSoftwareUpgrade, error) {
 	prop, msgs, _, err := parseSubmitProposal(cdc, propFilePath)
 	if err != nil {

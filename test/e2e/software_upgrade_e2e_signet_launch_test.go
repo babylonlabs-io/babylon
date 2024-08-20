@@ -26,7 +26,7 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) SetupSuite() {
 
 	cfg, err := configurer.NewSoftwareUpgradeConfigurer(s.T(), true, config.UpgradeSignetLaunchFilePath, []*btclighttypes.BTCHeaderInfo{btcHeaderGenesis})
 	s.NoError(err)
-	s.configurer = cfg.(*configurer.UpgradeConfigurer)
+	s.configurer = cfg
 
 	err = s.configurer.ConfigureChains()
 	s.NoError(err)
