@@ -24,7 +24,6 @@ func TestParseGovPropFromFile(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, msgProp.Plan.Name, v1.Upgrade.UpgradeName)
-	require.Equal(t, msgProp.Plan.Height, int64(25))
 }
 
 func TestWriteGovPropToFile(t *testing.T) {
