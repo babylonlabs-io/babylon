@@ -14,7 +14,7 @@ import (
 type SoftwareUpgradeSignetLaunchTestSuite struct {
 	suite.Suite
 
-	configurer configurer.Configurer
+	configurer *configurer.UpgradeConfigurer
 }
 
 func (s *SoftwareUpgradeSignetLaunchTestSuite) SetupSuite() {
@@ -23,17 +23,22 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) SetupSuite() {
 
 	btcHeaderGenesis, err := app.SignetBtcHeaderGenesis(app.NewTmpBabylonApp().AppCodec())
 	s.NoError(err)
-	s.configurer, err = configurer.NewSoftwareUpgradeConfigurer(s.T(), false, config.UpgradeSignetLaunchFilePath, []*btclighttypes.BTCHeaderInfo{btcHeaderGenesis})
+
+	cfg, err := configurer.NewSoftwareUpgradeConfigurer(s.T(), true, config.UpgradeSignetLaunchFilePath, []*btclighttypes.BTCHeaderInfo{btcHeaderGenesis})
 	s.NoError(err)
+	s.configurer = cfg
+
 	err = s.configurer.ConfigureChains()
 	s.NoError(err)
 	err = s.configurer.RunSetup() // upgrade happens at the setup of configurer.
-	s.NoError(err)
+	s.Require().NoError(err)
 }
 
 func (s *SoftwareUpgradeSignetLaunchTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
-	s.Require().NoError(err)
+	if err != nil {
+		s.T().Logf("error to clear resources %s", err.Error())
+	}
 }
 
 // TestUpgradeSignetLaunch Checks if the BTC Headers were inserted.
@@ -45,11 +50,13 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 	n, err := chainA.GetDefaultNode()
 	s.NoError(err)
 
-	expectedUpgradeHeight := int64(25)
+	govProp, err := s.configurer.ParseGovPropFromFile()
+	s.NoError(err)
 
 	// makes sure that the upgrade was actually executed
+	expectedUpgradeHeight := govProp.Plan.Height
 	resp := n.QueryAppliedPlan(v1.Upgrade.UpgradeName)
-	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height 25")
+	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height %d", expectedUpgradeHeight)
 
 	btcHeadersInserted, err := v1.LoadBTCHeadersFromData()
 	s.NoError(err)

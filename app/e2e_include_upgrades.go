@@ -4,9 +4,10 @@ package app
 
 import (
 	"github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
-	"github.com/babylonlabs-io/babylon/app/upgrades/vanilla"
 )
 
+// init is used to include signet upgrade used for e2e testing
+// this file should be removed once the upgrade testing with signet ends.
 func init() {
-	Upgrades = append(Upgrades, vanilla.Upgrade, signetlaunch.Upgrade)
+	Upgrades = append(Upgrades, signetlaunch.Upgrade)
 }
