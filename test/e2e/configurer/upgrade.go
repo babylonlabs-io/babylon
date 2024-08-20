@@ -189,22 +189,22 @@ func (uc *UpgradeConfigurer) RunUpgrade() error {
 func (uc *UpgradeConfigurer) runProposalUpgrade() error {
 	// submit, deposit, and vote for upgrade proposal
 	// prop height = current height + voting period + time it takes to submit proposal + small buffer
-	for _, chainConfig := range uc.chainConfigs {
+	for _, chainConfig := range uc.chainConfigs { // runs the same upgrade for each chain config
 		node, err := chainConfig.GetDefaultNode()
 		if err != nil {
 			return err
 		}
-		// currentHeight, err := node.QueryCurrentHeight()
-		// if err != nil {
-		// 	return err
-		// }
-		// TODO: need to make a way to update proposal height
-		// chainConfig.UpgradePropHeight = currentHeight + int64(chainConfig.VotingPeriod) + int64(config.PropSubmitBlocks) + int64(config.PropBufferBlocks)
-		msgProp, err := uc.ParseGovPropFromFile()
+
+		currentHeight, err := node.QueryCurrentHeight()
 		if err != nil {
 			return err
 		}
-		chainConfig.UpgradePropHeight = msgProp.Plan.Height
+
+		chainConfig.UpgradePropHeight = currentHeight + int64(chainConfig.VotingPeriod) + int64(config.PropSubmitBlocks) + int64(config.PropBufferBlocks)
+		err = uc.SetGovPropUpgradeHeight(chainConfig.UpgradePropHeight)
+		if err != nil {
+			return err
+		}
 
 		propID := node.TxGovPropSubmitProposal(uc.upgradeJsonFilePath, node.WalletName)
 		chainConfig.TxGovVoteFromAllNodes(propID, govv1.VoteOption_VOTE_OPTION_YES)
@@ -268,22 +268,62 @@ func (uc *UpgradeConfigurer) ParseGovPropFromFile() (*upgradetypes.MsgSoftwareUp
 		return nil, err
 	}
 
+	cdc := app.NewTmpBabylonApp().AppCodec()
 	upgradePath := filepath.Join(pwd, uc.upgradeJsonFilePath)
-	return ParseGovPropFromFile(upgradePath)
+
+	_, msgSoftwareUpgrade, err := parseGovPropFromFile(cdc, upgradePath)
+	return msgSoftwareUpgrade, err
 }
 
-// ParseGovPropFromFile loads from the file the Upgrade msg.
-func ParseGovPropFromFile(propFilePath string) (*upgradetypes.MsgSoftwareUpgrade, error) {
-	_, msgs, _, err := parseSubmitProposal(app.NewTmpBabylonApp().AppCodec(), propFilePath)
+// SetGovPropUpgradeHeight loads the proposal from the UpgradeSignetLaunchFilePath
+func (uc *UpgradeConfigurer) SetGovPropUpgradeHeight(newUpgradeHeight int64) error {
+	cdc := app.NewTmpBabylonApp().AppCodec()
+	upgradePath, err := uc.UpgradeFilePath()
 	if err != nil {
-		return nil, err
+		return err
+	}
+
+	prop, msgSoftwareUpgrade, err := parseGovPropFromFile(cdc, upgradePath)
+	if err != nil {
+		return err
+	}
+	msgSoftwareUpgrade.Plan.Height = newUpgradeHeight
+
+	return writeGovPropToFile(cdc, upgradePath, *prop, *msgSoftwareUpgrade)
+}
+
+// UpgradeFilePath returns the local full path of the upgrade file
+func (uc *UpgradeConfigurer) UpgradeFilePath() (string, error) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(pwd, uc.upgradeJsonFilePath), nil
+}
+
+// parseGovPropFromFile loads from the file the Upgrade msg.
+func parseGovPropFromFile(cdc codec.Codec, propFilePath string) (*proposal, *upgradetypes.MsgSoftwareUpgrade, error) {
+	prop, msgs, _, err := parseSubmitProposal(cdc, propFilePath)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	upgradeMsg, ok := msgs[0].(*upgradetypes.MsgSoftwareUpgrade)
 	if !ok {
-		return nil, fmt.Errorf("unable to parse msg to upgradetypes.MsgSoftwareUpgrade")
+		return nil, nil, fmt.Errorf("unable to parse msg to upgradetypes.MsgSoftwareUpgrade")
 	}
-	return upgradeMsg, nil
+	return &prop, upgradeMsg, nil
+}
+
+// writeGovPropToFile loads from the file the Upgrade msg as json.
+func writeGovPropToFile(cdc codec.Codec, propFilePath string, prop proposal, msgSoftwareUpgrade upgradetypes.MsgSoftwareUpgrade) error {
+	bz, err := cdc.MarshalInterfaceJSON(&msgSoftwareUpgrade)
+	if err != nil {
+		return err
+	}
+	prop.Messages = []json.RawMessage{bz}
+
+	return writeProposalToFile(cdc, propFilePath, prop)
 }
 
 // Copy from https://github.com/cosmos/cosmos-sdk/blob/4251905d56e0e7a3350145beedceafe786953295/x/gov/client/cli/util.go#L83
@@ -330,4 +370,14 @@ func parseSubmitProposal(cdc codec.Codec, path string) (proposal, []sdk.Msg, sdk
 	}
 
 	return proposal, msgs, deposit, nil
+}
+
+// writeProposalToFile marshal the prop as json to the file.
+func writeProposalToFile(cdc codec.Codec, path string, prop proposal) error {
+	bz, err := json.MarshalIndent(&prop, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, bz, 0644)
 }
