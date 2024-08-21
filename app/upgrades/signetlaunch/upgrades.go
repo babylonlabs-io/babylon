@@ -6,12 +6,16 @@ package signetlaunch
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 
 	store "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
@@ -21,12 +25,17 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btclightkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          "signet-launch",
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades:        store.StoreUpgrades{},
+}
+
+type dataSignedFps struct {
+	SignedTxsFP []any `json:"signed_txs_create_fp"`
 }
 
 // CreateUpgradeHandler upgrade handler for launch.
@@ -77,6 +86,101 @@ func LoadBTCHeadersFromData() ([]*btclighttypes.BTCHeaderInfo, error) {
 	}
 
 	return gs.BtcHeaders, nil
+}
+
+// LoadSignedFPsFromData returns the finality providers from the json string.
+// It also verifies if the msg is correctly signed and is valid to be inserted.
+func LoadSignedFPsFromData(cdc codec.Codec, txDecoder sdk.TxDecoder) ([]*btcstktypes.MsgCreateFinalityProvider, error) {
+	buff := bytes.NewBufferString(SignedFPsStr)
+
+	var d dataSignedFps
+	err := json.Unmarshal(buff.Bytes(), &d)
+	if err != nil {
+		return nil, err
+	}
+
+	fps := make([]*btcstktypes.MsgCreateFinalityProvider, len(d.SignedTxsFP))
+	for i, txAny := range d.SignedTxsFP {
+		txBytes, err := json.Marshal(txAny)
+		if err != nil {
+			return nil, err
+		}
+
+		tx, err := txDecoder(txBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		fp, err := parseCreateFPFromSignedTx(cdc, tx)
+		if err != nil {
+			return nil, err
+		}
+
+		fps[i] = fp
+	}
+
+	// sorts all the FPs by their addresses
+	sort.Slice(fps, func(i, j int) bool {
+		return fps[i].Addr > fps[j].Addr
+	})
+
+	return fps, nil
+}
+
+func parseCreateFPFromSignedTx(cdc codec.Codec, tx sdk.Tx) (*btcstktypes.MsgCreateFinalityProvider, error) {
+	msgsV2, err := tx.GetMsgsV2()
+	if err != nil {
+		return nil, err
+	}
+
+	msgs := tx.GetMsgs()
+	if len(msgs) == 0 {
+		return nil, fmt.Errorf("invalid msg, there is no msg inside the tx %+v", tx)
+	}
+
+	// each tx should only contain one msg
+	if len(msgs) != 1 {
+		return nil, fmt.Errorf("each tx should contain only one message, invalid tx %+v", tx)
+	}
+
+	msg, ok := msgs[0].(*btcstktypes.MsgCreateFinalityProvider)
+	if !ok {
+		return nil, fmt.Errorf("unable to parse %+v to MsgCreateFinalityProvider", msg)
+	}
+
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, fmt.Errorf("error validating basic msg: %w", err)
+	}
+
+	msgV2 := msgsV2[0]
+	signers, err := cdc.GetMsgV2Signers(msgV2)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get signers from msg %+v: %w", msg, err)
+	}
+
+	if len(signers) == 0 {
+		return nil, fmt.Errorf("no signer at msg %+v", msgV2)
+	}
+
+	signerAddrStr, err := cdc.InterfaceRegistry().SigningContext().AddressCodec().BytesToString(signers[0])
+	if err != nil {
+		return nil, err
+	}
+
+	signerBbnAddr, err := sdk.AccAddressFromBech32(signerAddrStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid signer address %s, err: %w", signerAddrStr, err)
+	}
+
+	if !strings.EqualFold(msg.Addr, signerAddrStr) {
+		return nil, fmt.Errorf("signer address: %s is different from finality provider address: %s", signerAddrStr, msg.Addr)
+	}
+
+	if err := msg.Pop.VerifyBIP340(signerBbnAddr, msg.BtcPk); err != nil {
+		return nil, fmt.Errorf("invalid Proof of Possession with signer %s: %w", signerBbnAddr.String(), err)
+	}
+
+	return msg, nil
 }
 
 func insertBtcHeaders(
