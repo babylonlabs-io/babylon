@@ -77,7 +77,6 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingP
 	for i := uint32(0); i < dc.GetNumActiveFPs(maxActiveFps); i++ {
 		fp := dc.FinalityProviders[i]
 		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
-
 	}
 
 	// set the voting power distribution cache of the current height
@@ -237,15 +236,12 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		}
 	}
 
-	// set voting power to 0 if the fp does not have timestamped pub rand
+	// label fps that does not have timestamped pub rand
 	for _, fp := range newDc.FinalityProviders {
 		// TODO calling HasTimestampedPubRand potentially iterates
 		// all the pub rand committed by the fp, which might slow down
 		// the process, need optimization
-		if fp.TotalVotingPower > 0 &&
-			!k.FinalityKeeper.HasTimestampedPubRand(ctx, fp.BtcPk, height) {
-			fp.TotalVotingPower = 0
-		}
+		fp.IsTimestamped = k.FinalityKeeper.HasTimestampedPubRand(ctx, fp.BtcPk, height)
 	}
 
 	// filter out the top N finality providers and their total voting power, and

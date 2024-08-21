@@ -193,14 +193,14 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 
 			// 30 percent not have timestamped randomness, which causes
 			// zero voting power in the table
-			fpDistInfo := &types.FinalityProviderDistInfo{BtcPk: fp.BtcPk}
+			fpDistInfo := &types.FinalityProviderDistInfo{BtcPk: fp.BtcPk, TotalVotingPower: stakingValue}
 			if r.Intn(10) <= 2 {
 				finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), fp.BtcPk, gomock.Any()).Return(false).AnyTimes()
 				noTimestampedFps[fp.BtcPk.MarshalHex()] = true
-				fpDistInfo.TotalVotingPower = 0
+				fpDistInfo.IsTimestamped = false
 			} else {
 				finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), fp.BtcPk, gomock.Any()).Return(true).AnyTimes()
-				fpDistInfo.TotalVotingPower = stakingValue
+				fpDistInfo.IsTimestamped = true
 			}
 
 			// record voting power
@@ -209,8 +209,8 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 
 		maxActiveFpsParam := h.BTCStakingKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders
 		// get a map of expected active finality providers
-		types.SortFinalityProviders(fpsWithMeta)
-		expectedActiveFps := fpsWithMeta[:min(uint32(len(fpsWithMeta)), maxActiveFpsParam)]
+		types.SortFinalityProvidersWithTimestamping(fpsWithMeta)
+		expectedActiveFps := fpsWithMeta[:min(uint32(len(fpsWithMeta)-len(noTimestampedFps)), maxActiveFpsParam)]
 		expectedActiveFpsMap := map[string]uint64{}
 		for _, fp := range expectedActiveFps {
 			expectedActiveFpsMap[fp.BtcPk.MarshalHex()] = fp.TotalVotingPower
@@ -223,7 +223,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
 		require.NoError(t, err)
 
-		//  only finality providers in expectedActiveFpsMap have voting power
+		// only finality providers in expectedActiveFpsMap have voting power
 		for _, fp := range fpsWithMeta {
 			power := h.BTCStakingKeeper.GetVotingPower(h.Ctx, fp.BtcPk.MustMarshal(), babylonHeight)
 			if expectedPower, ok := expectedActiveFpsMap[fp.BtcPk.MarshalHex()]; ok {
