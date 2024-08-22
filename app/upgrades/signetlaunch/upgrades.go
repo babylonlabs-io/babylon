@@ -151,9 +151,10 @@ func parseCreateFPFromSignedTx(cdc codec.Codec, tx sdk.Tx) (*btcstktypes.MsgCrea
 		return nil, fmt.Errorf("invalid msg, there is no msg inside the tx %+v", tx)
 	}
 
-	// each tx should only contain one msg
+	// each tx should only contain one msg, because it is expected by our guide to only
+	// send one msg of type `MsgCreateFinalityProvider` by signed transaction
 	if len(msgs) != 1 {
-		return nil, fmt.Errorf("each tx should contain only one message, invalid tx %+v", tx)
+		return nil, fmt.Errorf("each tx v1 should contain only one message, invalid tx %+v", tx)
 	}
 
 	msg, ok := msgs[0].(*btcstktypes.MsgCreateFinalityProvider)
@@ -165,14 +166,18 @@ func parseCreateFPFromSignedTx(cdc codec.Codec, tx sdk.Tx) (*btcstktypes.MsgCrea
 		return nil, fmt.Errorf("error validating basic msg: %w", err)
 	}
 
+	if len(msgs) != 1 {
+		return nil, fmt.Errorf("each tx v2 should contain only one message, invalid tx %+v", tx)
+	}
+
 	msgV2 := msgsV2[0]
 	signers, err := cdc.GetMsgV2Signers(msgV2)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get signers from msg %+v: %w", msg, err)
 	}
 
-	if len(signers) == 0 {
-		return nil, fmt.Errorf("no signer at msg %+v", msgV2)
+	if len(signers) != 1 {
+		return nil, fmt.Errorf("there should be only one signer at tx: %+v", msgV2)
 	}
 
 	signerAddrStr, err := cdc.InterfaceRegistry().SigningContext().AddressCodec().BytesToString(signers[0])
