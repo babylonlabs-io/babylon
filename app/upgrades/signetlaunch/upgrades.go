@@ -25,6 +25,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btclightkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	btcstkkeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	btcstktypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -53,7 +54,7 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
-		if err := propLaunch(ctx, &keepers.BTCLightClientKeeper); err != nil {
+		if err := propLaunch(ctx, keepers.Codec, keepers.TxEncodingConfig.TxJSONDecoder(), &keepers.BTCLightClientKeeper, &keepers.BTCStakingKeeper); err != nil {
 			panic(err)
 		}
 
@@ -64,14 +65,26 @@ func CreateUpgradeHandler(
 // propLaunch runs the proposal of launch that is meant to insert new BTC Headers.
 func propLaunch(
 	ctx sdk.Context,
+	cdc codec.Codec,
+	txDecoder sdk.TxDecoder,
 	btcLigthK *btclightkeeper.Keeper,
+	btcStkK *btcstkkeeper.Keeper,
 ) error {
 	newHeaders, err := LoadBTCHeadersFromData()
 	if err != nil {
 		return err
 	}
 
-	return insertBtcHeaders(ctx, btcLigthK, newHeaders)
+	if err := insertBtcHeaders(ctx, btcLigthK, newHeaders); err != nil {
+		return err
+	}
+
+	fps, err := LoadSignedFPsFromData(cdc, txDecoder)
+	if err != nil {
+		return err
+	}
+
+	return insertFPs(ctx, btcStkK, fps)
 }
 
 // LoadBTCHeadersFromData returns the BTC headers load from the json string with the headers inside of it.
@@ -181,6 +194,20 @@ func parseCreateFPFromSignedTx(cdc codec.Codec, tx sdk.Tx) (*btcstktypes.MsgCrea
 	}
 
 	return msg, nil
+}
+
+func insertFPs(
+	ctx sdk.Context,
+	k *btcstkkeeper.Keeper,
+	fpMsgs []*btcstktypes.MsgCreateFinalityProvider,
+) error {
+	for _, fpMsg := range fpMsgs {
+		if err := k.AddFinalityProvider(ctx, fpMsg); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func insertBtcHeaders(

@@ -4,12 +4,47 @@ import (
 	"context"
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
+
+// AddFinalityProvider adds the given finality provider to KVStore if it has valid
+// commission and it was not inserted before
+func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateFinalityProvider) error {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	params := k.GetParams(ctx)
+	// ensure commission rate is
+	// - at least the minimum commission rate in parameters, and
+	// - at most 1
+	if msg.Commission.LT(params.MinCommissionRate) {
+		return types.ErrCommissionLTMinRate.Wrapf("cannot set finality provider commission to less than minimum rate of %s", params.MinCommissionRate.String())
+	}
+	if msg.Commission.GT(sdkmath.LegacyOneDec()) {
+		return types.ErrCommissionGTMaxRate
+	}
+
+	// ensure finality provider does not already exist
+	if k.HasFinalityProvider(ctx, *msg.BtcPk) {
+		return types.ErrFpRegistered
+	}
+
+	// all good, add this finality provider
+	fp := types.FinalityProvider{
+		Description: msg.Description,
+		Commission:  msg.Commission,
+		Addr:        msg.Addr,
+		BtcPk:       msg.BtcPk,
+		Pop:         msg.Pop,
+	}
+	k.SetFinalityProvider(ctx, &fp)
+
+	// notify subscriber
+	return ctx.EventManager().EmitTypedEvent(&types.EventNewFinalityProvider{Fp: &fp})
+}
 
 // SetFinalityProvider adds the given finality provider to KVStore
 func (k Keeper) SetFinalityProvider(ctx context.Context, fp *types.FinalityProvider) {

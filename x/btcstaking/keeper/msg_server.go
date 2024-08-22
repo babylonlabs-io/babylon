@@ -71,36 +71,9 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession: %v", err)
 	}
 
-	// ensure commission rate is
-	// - at least the minimum commission rate in parameters, and
-	// - at most 1
-	if req.Commission.LT(ms.MinCommissionRate(ctx)) {
-		return nil, types.ErrCommissionLTMinRate.Wrapf("cannot set finality provider commission to less than minimum rate of %s", ms.MinCommissionRate(ctx))
-	}
-	if req.Commission.GT(sdkmath.LegacyOneDec()) {
-		return nil, types.ErrCommissionGTMaxRate
-	}
-
-	// ensure finality provider does not already exist
-	if ms.HasFinalityProvider(ctx, *req.BtcPk) {
-		return nil, types.ErrFpRegistered
-	}
-
-	// all good, add this finality provider
-	fp := types.FinalityProvider{
-		Description: req.Description,
-		Commission:  req.Commission,
-		Addr:        fpAddr.String(),
-		BtcPk:       req.BtcPk,
-		Pop:         req.Pop,
-	}
-	ms.SetFinalityProvider(ctx, &fp)
-
-	// notify subscriber
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventNewFinalityProvider{Fp: &fp}); err != nil {
+	if err := ms.AddFinalityProvider(ctx, req); err != nil {
 		return nil, err
 	}
-
 	return &types.MsgCreateFinalityProviderResponse{}, nil
 }
 

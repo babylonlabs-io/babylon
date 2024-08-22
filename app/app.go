@@ -243,7 +243,10 @@ func NewBabylonApp(
 	}
 
 	app := &BabylonApp{
-		AppKeepers:        &appkeepers.AppKeepers{},
+		AppKeepers: &appkeepers.AppKeepers{
+			Codec:            appCodec,
+			TxEncodingConfig: txConfig,
+		},
 		BaseApp:           bApp,
 		legacyAmino:       legacyAmino,
 		appCodec:          appCodec,
