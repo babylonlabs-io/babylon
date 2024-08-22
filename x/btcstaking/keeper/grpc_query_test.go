@@ -26,7 +26,7 @@ func FuzzActivatedHeight(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// not activated yet
@@ -51,7 +51,7 @@ func FuzzFinalityProviders(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// Generate random finality providers and add them to kv store
@@ -116,7 +116,7 @@ func FuzzFinalityProvider(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		// Setup keeper and context
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// Generate random finality providers and add them to kv store
@@ -172,7 +172,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil)
 
 		// covenant and slashing addr
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
@@ -274,7 +274,7 @@ func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
 
 		// random finality provider
 		fp, err := datagen.GenRandomFinalityProvider(r)
@@ -323,7 +323,7 @@ func FuzzFinalityProviderCurrentVotingPower(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
 
 		// random finality provider
 		fp, err := datagen.GenRandomFinalityProvider(r)
@@ -375,7 +375,7 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 10}).AnyTimes()
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil)
 
 		// covenant and slashing addr
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
@@ -494,7 +494,7 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil)
 
 		// covenant and slashing addr
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)

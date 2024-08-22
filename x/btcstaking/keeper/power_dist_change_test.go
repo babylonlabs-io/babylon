@@ -24,7 +24,9 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
+		finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
 
 		// set all parameters
 		h.GenAndApplyParams(r)
@@ -75,7 +77,9 @@ func FuzzFinalityProviderEvents(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
+		finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -152,7 +156,9 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
+		finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)

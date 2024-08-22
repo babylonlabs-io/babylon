@@ -4,10 +4,11 @@ import (
 	"math/rand"
 
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
@@ -105,6 +106,7 @@ func GenRandomFinalityProviderDistInfo(r *rand.Rand) (*bstypes.FinalityProviderD
 		}
 		fpDistInfo.BtcDels = append(fpDistInfo.BtcDels, btcDelDistInfo)
 		fpDistInfo.TotalVotingPower += btcDelDistInfo.VotingPower
+		fpDistInfo.IsTimestamped = true
 	}
 	return fpDistInfo, nil
 }
