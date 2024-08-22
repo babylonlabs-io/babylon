@@ -115,7 +115,7 @@ func (ms msgServer) EditFinalityProvider(ctx context.Context, req *types.MsgEdit
 	// all good, update the finality provider and set back
 	fp.Description = req.Description
 	fp.Commission = req.Commission
-	ms.SetFinalityProvider(ctx, fp)
+	ms.setFinalityProvider(ctx, fp)
 
 	return &types.MsgEditFinalityProviderResponse{}, nil
 }

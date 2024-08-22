@@ -313,5 +313,11 @@ func (h *Helper) AddDelegation(del *btcstakingtypes.BTCDelegation) {
 }
 
 func (h *Helper) AddFinalityProvider(fp *btcstakingtypes.FinalityProvider) {
-	h.App.BTCStakingKeeper.SetFinalityProvider(h.Ctx, fp)
+	h.App.BTCStakingKeeper.AddFinalityProvider(h.Ctx, &btcstakingtypes.MsgCreateFinalityProvider{
+		Addr:        fp.Addr,
+		Description: fp.Description,
+		Commission:  fp.Commission,
+		BtcPk:       fp.BtcPk,
+		Pop:         fp.Pop,
+	})
 }
