@@ -97,17 +97,10 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return &types.MsgAddFinalitySigResponse{}, nil
 	}
 
-	// find the public randomness commitment for this height from this finality provider
-	prCommit, err := ms.GetPubRandCommitForHeight(ctx, req.FpBtcPk, req.BlockHeight)
+	// find the timestamped public randomness commitment for this height from this finality provider
+	prCommit, err := ms.GetTimestampedPubRandCommitForHeight(ctx, req.FpBtcPk, req.BlockHeight)
 	if err != nil {
 		return nil, err
-	}
-	// ensure the finality provider's last randomness commit is already finalised by BTC timestamping
-	finalizedEpoch := ms.GetLastFinalizedEpoch(ctx)
-	if finalizedEpoch < prCommit.EpochNum {
-		return nil, types.ErrPubRandCommitNotBTCTimestamped.
-			Wrapf("the finality provider %s last committed epoch number: %d, last finalized epoch number: %d",
-				fp.BtcPk.MarshalHex(), prCommit.EpochNum, finalizedEpoch)
 	}
 
 	// verify the finality signature message w.r.t. the public randomness commitment
