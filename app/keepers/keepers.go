@@ -181,6 +181,9 @@ func (ak *AppKeepers) InitKeepers(
 	powLimit := btcConfig.PowLimit()
 	btcNetParams := btcConfig.NetParams()
 
+	ak.Codec = appCodec
+	ak.TxEncodingConfig = encodingConfig.TxConfig
+
 	// set persistent store keys
 	keys := storetypes.NewKVStoreKeys(
 		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey, crisistypes.StoreKey,
