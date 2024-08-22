@@ -116,6 +116,43 @@ func (mr *MockBtcCheckpointKeeperMockRecorder) GetParams(ctx interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParams", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetParams), ctx)
 }
 
+// MockFinalityKeeper is a mock of FinalityKeeper interface.
+type MockFinalityKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockFinalityKeeperMockRecorder
+}
+
+// MockFinalityKeeperMockRecorder is the mock recorder for MockFinalityKeeper.
+type MockFinalityKeeperMockRecorder struct {
+	mock *MockFinalityKeeper
+}
+
+// NewMockFinalityKeeper creates a new mock instance.
+func NewMockFinalityKeeper(ctrl *gomock.Controller) *MockFinalityKeeper {
+	mock := &MockFinalityKeeper{ctrl: ctrl}
+	mock.recorder = &MockFinalityKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockFinalityKeeper) EXPECT() *MockFinalityKeeperMockRecorder {
+	return m.recorder
+}
+
+// HasTimestampedPubRand mocks base method.
+func (m *MockFinalityKeeper) HasTimestampedPubRand(ctx context.Context, fpBtcPK *types.BIP340PubKey, height uint64) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasTimestampedPubRand", ctx, fpBtcPK, height)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasTimestampedPubRand indicates an expected call of HasTimestampedPubRand.
+func (mr *MockFinalityKeeperMockRecorder) HasTimestampedPubRand(ctx, fpBtcPK, height interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasTimestampedPubRand", reflect.TypeOf((*MockFinalityKeeper)(nil).HasTimestampedPubRand), ctx, fpBtcPK, height)
+}
+
 // MockBtcStakingHooks is a mock of BtcStakingHooks interface.
 type MockBtcStakingHooks struct {
 	ctrl     *gomock.Controller
