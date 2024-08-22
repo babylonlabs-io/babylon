@@ -24,7 +24,9 @@ func FuzzVotingPowerTable(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
+		finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -162,7 +164,8 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -172,6 +175,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		// generate a random batch of finality providers, each with a BTC delegation with random power
 		fpsWithMeta := []*types.FinalityProviderDistInfo{}
 		numFps := datagen.RandomInt(r, 300) + 1
+		noTimestampedFps := map[string]bool{}
 		for i := uint64(0); i < numFps; i++ {
 			// generate finality provider
 			_, _, fp := h.CreateFinalityProvider(r)
@@ -187,17 +191,26 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 			)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
 
+			// 30 percent not have timestamped randomness, which causes
+			// zero voting power in the table
+			fpDistInfo := &types.FinalityProviderDistInfo{BtcPk: fp.BtcPk, TotalVotingPower: stakingValue}
+			if r.Intn(10) <= 2 {
+				finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), fp.BtcPk, gomock.Any()).Return(false).AnyTimes()
+				noTimestampedFps[fp.BtcPk.MarshalHex()] = true
+				fpDistInfo.IsTimestamped = false
+			} else {
+				finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), fp.BtcPk, gomock.Any()).Return(true).AnyTimes()
+				fpDistInfo.IsTimestamped = true
+			}
+
 			// record voting power
-			fpsWithMeta = append(fpsWithMeta, &types.FinalityProviderDistInfo{
-				BtcPk:            fp.BtcPk,
-				TotalVotingPower: stakingValue,
-			})
+			fpsWithMeta = append(fpsWithMeta, fpDistInfo)
 		}
 
 		maxActiveFpsParam := h.BTCStakingKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders
 		// get a map of expected active finality providers
-		types.SortFinalityProviders(fpsWithMeta)
-		expectedActiveFps := fpsWithMeta[:min(uint32(len(fpsWithMeta)), maxActiveFpsParam)]
+		types.SortFinalityProvidersWithTimestamping(fpsWithMeta)
+		expectedActiveFps := fpsWithMeta[:min(uint32(len(fpsWithMeta)-len(noTimestampedFps)), maxActiveFpsParam)]
 		expectedActiveFpsMap := map[string]uint64{}
 		for _, fp := range expectedActiveFps {
 			expectedActiveFpsMap[fp.BtcPk.MarshalHex()] = fp.TotalVotingPower
@@ -210,7 +223,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
 		require.NoError(t, err)
 
-		//  only finality providers in expectedActiveFpsMap have voting power
+		// only finality providers in expectedActiveFpsMap have voting power
 		for _, fp := range fpsWithMeta {
 			power := h.BTCStakingKeeper.GetVotingPower(h.Ctx, fp.BtcPk.MustMarshal(), babylonHeight)
 			if expectedPower, ok := expectedActiveFpsMap[fp.BtcPk.MarshalHex()]; ok {
@@ -246,7 +259,9 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
+		finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
