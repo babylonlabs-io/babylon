@@ -13,6 +13,7 @@ import (
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
 	"github.com/babylonlabs-io/babylon/x/btclightclient"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -56,6 +57,7 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (s *UpgradeTestSuite) TestUpgrade() {
 	oldHeadersLen := 0
+	oldFPsLen := 0
 
 	testCases := []struct {
 		msg         string
@@ -68,6 +70,10 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 			func() {
 				allBtcHeaders := s.app.BTCLightClientKeeper.GetMainChainFrom(s.ctx, 0)
 				oldHeadersLen = len(allBtcHeaders)
+
+				resp, err := s.app.BTCStakingKeeper.FinalityProviders(s.ctx, &types.QueryFinalityProvidersRequest{})
+				s.NoError(err)
+				oldFPsLen = len(resp.FinalityProviders)
 			},
 			func() {
 				// inject upgrade plan
@@ -104,6 +110,24 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 					btcHeaderInState := allBtcHeaders[oldHeadersLen+i]
 
 					s.EqualValues(btcHeaderInserted.Header.MarshalHex(), btcHeaderInState.Header.MarshalHex())
+				}
+
+				resp, err := s.app.BTCStakingKeeper.FinalityProviders(s.ctx, &types.QueryFinalityProvidersRequest{})
+				s.NoError(err)
+				newFPsLen := len(resp.FinalityProviders)
+
+				fpsInserted, err := v1.LoadSignedFPsFromData(s.app.Codec, s.app.TxConfig().TxJSONDecoder())
+				s.NoError(err)
+
+				s.Equal(newFPsLen, oldFPsLen+len(fpsInserted))
+				for _, fpInserted := range fpsInserted {
+					fpFromKeeper, err := s.app.BTCStakingKeeper.GetFinalityProvider(s.ctx, *fpInserted.BtcPk)
+					s.NoError(err)
+
+					s.EqualValues(fpFromKeeper.Addr, fpInserted.Addr)
+					s.EqualValues(fpFromKeeper.Description, fpInserted.Description)
+					s.EqualValues(fpFromKeeper.Commission.String(), fpInserted.Commission.String())
+					s.EqualValues(fpFromKeeper.Pop.String(), fpInserted.Pop.String())
 				}
 			},
 		},

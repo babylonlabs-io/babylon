@@ -103,7 +103,7 @@ func LoadBTCHeadersFromData() ([]*btclighttypes.BTCHeaderInfo, error) {
 
 // LoadSignedFPsFromData returns the finality providers from the json string.
 // It also verifies if the msg is correctly signed and is valid to be inserted.
-func LoadSignedFPsFromData(cdc codec.Codec, txDecoder sdk.TxDecoder) ([]*btcstktypes.MsgCreateFinalityProvider, error) {
+func LoadSignedFPsFromData(cdc codec.Codec, txJSONDecoder sdk.TxDecoder) ([]*btcstktypes.MsgCreateFinalityProvider, error) {
 	buff := bytes.NewBufferString(SignedFPsStr)
 
 	var d dataSignedFps
@@ -119,7 +119,7 @@ func LoadSignedFPsFromData(cdc codec.Codec, txDecoder sdk.TxDecoder) ([]*btcstkt
 			return nil, err
 		}
 
-		tx, err := txDecoder(txBytes)
+		tx, err := txJSONDecoder(txBytes)
 		if err != nil {
 			return nil, err
 		}
