@@ -35,7 +35,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	if len(events) == 0 {
 		if dc != nil {
 			// map everything in prev height to this height
-			k.recordVotingPowerAndCache(ctx, dc, maxActiveFps)
+			k.recordVotingPowerAndCache(ctx, dc)
 		}
 		return
 	}
@@ -57,7 +57,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events, maxActiveFps)
 
 	// find newly bonded finality providers and execute the hooks
-	newBondedFinalityProviders := newDc.FindNewActiveFinalityProviders(dc, maxActiveFps)
+	newBondedFinalityProviders := newDc.FindNewActiveFinalityProviders(dc)
 	for _, fp := range newBondedFinalityProviders {
 		if err := k.hooks.AfterFinalityProviderActivated(ctx, fp.BtcPk); err != nil {
 			panic(fmt.Errorf("failed to execute after finality provider %s bonded", fp.BtcPk.MarshalHex()))
@@ -65,28 +65,27 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	}
 
 	// record voting power and cache for this height
-	k.recordVotingPowerAndCache(ctx, newDc, maxActiveFps)
+	k.recordVotingPowerAndCache(ctx, newDc)
 	// record metrics
-	k.recordMetrics(newDc, maxActiveFps)
+	k.recordMetrics(newDc)
 }
 
-func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingPowerDistCache, maxActiveFps uint32) {
+func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingPowerDistCache) {
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 
 	// set voting power table for this height
-	for i := uint32(0); i < dc.GetNumActiveFPs(maxActiveFps); i++ {
+	for i := uint32(0); i < dc.NumActiveFps; i++ {
 		fp := dc.FinalityProviders[i]
 		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
-
 	}
 
 	// set the voting power distribution cache of the current height
 	k.setVotingPowerDistCache(ctx, babylonTipHeight, dc)
 }
 
-func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache, maxActiveFps uint32) {
+func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache) {
 	// number of active FPs
-	numActiveFPs := int(dc.GetNumActiveFPs(maxActiveFps))
+	numActiveFPs := int(dc.NumActiveFps)
 	types.RecordActiveFinalityProviders(numActiveFPs)
 	// number of inactive FPs
 	numInactiveFPs := len(dc.FinalityProviders) - numActiveFPs
@@ -113,6 +112,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	events []*types.EventPowerDistUpdate,
 	maxActiveFps uint32,
 ) *types.VotingPowerDistCache {
+	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	// a map where key is finality provider's BTC PK hex and value is a list
 	// of BTC delegations that newly become active under this provider
 	activeBTCDels := map[string][]*types.BTCDelegation{}
@@ -234,6 +234,14 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		if fpDistInfo.TotalVotingPower > 0 {
 			newDc.AddFinalityProviderDistInfo(fpDistInfo)
 		}
+	}
+
+	// label fps that does not have timestamped pub rand
+	for _, fp := range newDc.FinalityProviders {
+		// TODO calling HasTimestampedPubRand potentially iterates
+		// all the pub rand committed by the fp, which might slow down
+		// the process, need optimization
+		fp.IsTimestamped = k.FinalityKeeper.HasTimestampedPubRand(ctx, fp.BtcPk, height)
 	}
 
 	// filter out the top N finality providers and their total voting power, and

@@ -19,8 +19,9 @@ type (
 		cdc          codec.BinaryCodec
 		storeService corestoretypes.KVStoreService
 
-		btclcKeeper types.BTCLightClientKeeper
-		btccKeeper  types.BtcCheckpointKeeper
+		btclcKeeper    types.BTCLightClientKeeper
+		btccKeeper     types.BtcCheckpointKeeper
+		FinalityKeeper types.FinalityKeeper
 
 		hooks types.BtcStakingHooks
 
@@ -37,6 +38,7 @@ func NewKeeper(
 
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
+	finalityKeeper types.FinalityKeeper,
 
 	btcNet *chaincfg.Params,
 	authority string,
@@ -45,8 +47,9 @@ func NewKeeper(
 		cdc:          cdc,
 		storeService: storeService,
 
-		btclcKeeper: btclcKeeper,
-		btccKeeper:  btccKeeper,
+		btclcKeeper:    btclcKeeper,
+		btccKeeper:     btccKeeper,
+		FinalityKeeper: finalityKeeper,
 
 		hooks: nil,
 
