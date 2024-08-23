@@ -112,7 +112,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	events []*types.EventPowerDistUpdate,
 	maxActiveFps uint32,
 ) *types.VotingPowerDistCache {
-	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	// height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	// a map where key is finality provider's BTC PK hex and value is a list
 	// of BTC delegations that newly become active under this provider
 	activeBTCDels := map[string][]*types.BTCDelegation{}
@@ -241,7 +241,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// TODO calling HasTimestampedPubRand potentially iterates
 		// all the pub rand committed by the fp, which might slow down
 		// the process, need optimization
-		fp.IsTimestamped = k.FinalityKeeper.HasTimestampedPubRand(ctx, fp.BtcPk, height)
+		fp.IsTimestamped = true
 	}
 
 	// filter out the top N finality providers and their total voting power, and
