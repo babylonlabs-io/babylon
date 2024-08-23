@@ -606,7 +606,7 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 	s.NotNil(delegation)
 	s.Equal(granteeStakerAddr.String(), delegation.BtcDelegation.StakerAddr)
 
-	// verify the balances after the BTC delegation was submited
+	// verify the balances after the BTC delegation was submitted
 	// the staker should continue to have zero as balance.
 	stakerBalances, err = nonValidatorNode.QueryBalances(granteeStakerAddr.String())
 	s.NoError(err)
@@ -740,7 +740,7 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	s.NotNil(delegation)
 	s.Equal(granteeStakerAddr.String(), delegation.BtcDelegation.StakerAddr)
 
-	// verify the balances after the BTC delegation was submited
+	// verify the balances after the BTC delegation was submitted
 	// the staker should continue to have zero as balance.
 	stakerBalances, err := node.QueryBalances(granteeStakerAddr.String())
 	s.NoError(err)

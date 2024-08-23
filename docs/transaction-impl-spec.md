@@ -156,7 +156,7 @@ will be put in `unbonding_script` and `slashing_script`.
 - `covenant_committee_quorum` - it can be retrieved from
 `global_parameters.covenant_quorum`. It is quorum of covenant committee
 member required to authorize spending using `unbonding_script` or `slashing_script`
-- `staking_amout` - chosen by the user, it will be placed in `staking_output.value`
+- `staking_amount` - chosen by the user, it will be placed in `staking_output.value`
 - `btc_network` - btc network on which staking transactions will take place
 
 #### Building OP_RETURN and staking output implementation

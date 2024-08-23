@@ -246,7 +246,7 @@ func (m *Manager) RunRlyResource(chainAID, osmoARelayerNodeName, osmoAValMnemoni
 	return rlyResource, nil
 }
 
-// RunNodeResource runs a node container. Assings containerName to the container.
+// RunNodeResource runs a node container. Assigns containerName to the container.
 // Mounts the container on valConfigDir volume on the running host. Returns the container resource and error if any.
 func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir string) (*dockertest.Resource, error) {
 	pwd, err := os.Getwd()

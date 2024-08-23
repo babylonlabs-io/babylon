@@ -147,15 +147,15 @@ func (ms msgServer) EditFinalityProvider(ctx context.Context, req *types.MsgEdit
 	return &types.MsgEditFinalityProviderResponse{}, nil
 }
 
-// caluculateMinimumUnbondingValue calculates minimum unbonding value basend on current staking output value
+// calculateMinimumUnbondingValue calculates minimum unbonding value basend on current staking output value
 // and params.MinUnbondingRate
-func caluculateMinimumUnbondingValue(
+func calculateMinimumUnbondingValue(
 	stakingOutput *wire.TxOut,
 	params *types.Params,
 ) btcutil.Amount {
 	// this conversions must always succeed, as it is part of our params
 	minUnbondingRate := params.MinUnbondingRate.MustFloat64()
-	// Caluclate min unbonding output value based on staking output, use btc native multiplication
+	// Calculate min unbonding output value based on staking output, use btc native multiplication
 	minUnbondingOutputValue := btcutil.Amount(stakingOutput.Value).MulF64(minUnbondingRate)
 	return minUnbondingOutputValue
 }
@@ -197,7 +197,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	// verify proof of possession
 	if err := req.Pop.Verify(stakerAddr, req.BtcPk, ms.btcNet); err != nil {
-		return nil, types.ErrInvalidProofOfPossession.Wrapf("error while validating proof of posession: %v", err)
+		return nil, types.ErrInvalidProofOfPossession.Wrapf("error while validating proof of possession: %v", err)
 	}
 
 	// Ensure all finality providers are known to Babylon, are not slashed,
@@ -222,8 +222,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	// Check staking tx is not duplicated
 	stakingTxHash := stakingMsgTx.TxHash()
-	delgation := ms.getBTCDelegation(ctx, stakingTxHash)
-	if delgation != nil {
+	delegation := ms.getBTCDelegation(ctx, stakingTxHash)
+	if delegation != nil {
 		return nil, types.ErrReusedStakingTx.Wrapf("duplicated tx hash: %s", stakingTxHash.String())
 	}
 
@@ -429,7 +429,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// - fee is larger than 0
 	// - ubonding output value is is at leat `MinUnbondingValue` percent of staking output value
 	if unbondingMsgTx.TxOut[0].Value >= stakingMsgTx.TxOut[newBTCDel.StakingOutputIdx].Value {
-		// Note: we do not enfore any minimum fee for unbonding tx, we only require that it is larger than 0
+		// Note: we do not enforce any minimum fee for unbonding tx, we only require that it is larger than 0
 		// Given that unbonding tx must not be replacable and we do not allow sending it second time, it places
 		// burden on staker to choose right fee.
 		// Unbonding tx should not be replaceable at babylon level (and by extension on btc level), as this would
@@ -437,7 +437,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0")
 	}
 
-	minUnbondingValue := caluculateMinimumUnbondingValue(stakingMsgTx.TxOut[stakingOutputIdx], &vp.Params)
+	minUnbondingValue := calculateMinimumUnbondingValue(stakingMsgTx.TxOut[stakingOutputIdx], &vp.Params)
 	if btcutil.Amount(unbondingMsgTx.TxOut[0].Value) < minUnbondingValue {
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding output value must be at least %s, based on staking output", minUnbondingValue)
 	}

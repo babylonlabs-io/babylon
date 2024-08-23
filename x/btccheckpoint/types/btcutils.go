@@ -53,20 +53,20 @@ func min(a, b uint) uint {
 //	l1  l2 l3 l4
 //
 // slice should look like [l1, l2, l3, l4, d1, d2, r]
-// also it takes number of leafs i.e nodes at lowest level of the tree and index
+// also it takes number of leaves i.e nodes at lowest level of the tree and index
 // of the leaf which supposed to be proven
 // it returns list of hashes required to prove given index
-func createBranch(nodes []*chainhash.Hash, numfLeafs uint, idx uint) []*chainhash.Hash {
+func createBranch(nodes []*chainhash.Hash, numfLeaves uint, idx uint) []*chainhash.Hash {
 
 	var branch []*chainhash.Hash
 
 	// size represents number of merkle nodes at given level. At 0 level, number of
-	// nodes is equal to number of leafs
-	var size = numfLeafs
+	// nodes is equal to number of leaves
+	var size = numfLeaves
 
 	var index = idx
 
-	// i represents starting index of given level. 0 level i.e leafs always start
+	// i represents starting index of given level. 0 level i.e leaves always start
 	// at index 0
 	var i uint = 0
 
@@ -74,9 +74,9 @@ func createBranch(nodes []*chainhash.Hash, numfLeafs uint, idx uint) []*chainhas
 
 		// index^1 means we want to get sibling of the node we are proving
 		// ie. for index=2, index^1 = 3 and for index=3 index^1=2
-		// so xoring last bit by 1, select node oposite to the node we want the proof
+		// so xoring last bit by 1, select node opposite to the node we want the proof
 		// for.
-		// case with `size-1` is needed when the number of leafs is not power of 2
+		// case with `size-1` is needed when the number of leaves is not power of 2
 		// and xor^1 could point outside of the tree
 		j := min(index^1, size-1)
 
@@ -106,7 +106,7 @@ func CreateProofForIdx(transactions [][]byte, idx uint) ([]*chainhash.Hash, erro
 	}
 
 	if int(idx) >= len(transactions) {
-		return nil, errors.New("provided index should be smaller that lenght of transaction list")
+		return nil, errors.New("provided index should be smaller that length of transaction list")
 	}
 
 	var txs []*btcutil.Tx

@@ -177,7 +177,7 @@ func (m *EventSelectiveSlashing) GetEvidence() *SelectiveSlashingEvidence {
 	return nil
 }
 
-// EventPowerDistUpdate is an event that affects voting power distirbution
+// EventPowerDistUpdate is an event that affects voting power distribution
 // of BTC staking protocol
 type EventPowerDistUpdate struct {
 	// ev is the event that affects voting power distribution

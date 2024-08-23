@@ -18,7 +18,7 @@ const (
 )
 
 // r is a regular expression that matched the store key prefix
-// we cannot use modules names direclty as sometimes module key != store key
+// we cannot use modules names directly as sometimes module key != store key
 // for example account module has store key "acc" and module key "auth"
 var r, _ = regexp.Compile("s/k:[A-Za-z]+/")
 
@@ -101,7 +101,7 @@ func PrintDBStats(db dbm.DB, printInterval int) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("****************** Retrived database iterator ******************\n")
+	fmt.Printf("****************** Retrieved database iterator ******************\n")
 
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
@@ -172,7 +172,7 @@ func ModuleSizeCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Int(FlagPrintInterval, 100000, "interval between printing databse stats")
+	cmd.Flags().Int(FlagPrintInterval, 100000, "interval between printing database stats")
 
 	return cmd
 }

@@ -95,7 +95,7 @@ func U64ToBEBytes(u uint64) []byte {
 	return u64bytes
 }
 
-func encodeFirstOpRetrun(
+func encodeFirstOpReturn(
 	tag BabylonTag,
 	version FormatVersion,
 	epoch uint64,
@@ -173,7 +173,7 @@ func EncodeCheckpointData(
 		return nil, nil, errors.New("address should have 20 bytes")
 	}
 
-	var firstHalf = encodeFirstOpRetrun(
+	var firstHalf = encodeFirstOpReturn(
 		tag,
 		version,
 		rawBTCCheckpoint.Epoch,

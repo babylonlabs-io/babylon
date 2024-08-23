@@ -208,7 +208,7 @@ message Epoch {
   // finalised. The last_block_time field is nil in the epoch's beginning, and
   // is set upon the end of this epoch.
   google.protobuf.Timestamp last_block_time = 4 [ (gogoproto.stdtime) = true ];
-  // app_hash_root is the Merkle root of all AppHashs in this epoch
+  // app_hash_root is the Merkle root of all AppHashes in this epoch
   // It will be used for proving a block is in an epoch
   bytes app_hash_root = 5;
   // sealer is the last block of the sealed epoch

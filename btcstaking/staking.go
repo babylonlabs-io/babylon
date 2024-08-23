@@ -157,7 +157,7 @@ func BuildSlashingTxFromStakingTxStrict(
 	stakingTxHash := stakingTx.TxHash()
 	stakingOutpoint := wire.NewOutPoint(&stakingTxHash, stakingOutputIdx)
 
-	// Create taproot address commiting to timelock script
+	// Create taproot address committing to timelock script
 	si, err := BuildRelativeTimelockTaprootScript(
 		stakerPk,
 		slashChangeLockTime,
@@ -334,7 +334,7 @@ func validateSlashingTx(
 // - funding transaction has output committing to the provided script
 // - slashing transaction is valid
 // - slashing transaction input hash is pointing to funding transaction hash
-// - slashing transaction input index is pointing to funding transaction output commiting to the script
+// - slashing transaction input index is pointing to funding transaction output committing to the script
 func CheckTransactions(
 	slashingTx *wire.MsgTx,
 	fundingTransaction *wire.MsgTx,

@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	// length of tag prefix indentifying staking transactions
+	// length of tag prefix identifying staking transactions
 	TagLen = 4
 	// 4 bytes tag + 1 byte version + 32 bytes staker public key + 32 bytes finality provider public key + 2 bytes staking time
 	V0OpReturnDataSize = 71
@@ -391,7 +391,7 @@ func ParseV0StakingTx(
 	}
 
 	if opReturnData.Version != 0 {
-		return nil, fmt.Errorf("unexpcted version: %d, expected: %d", opReturnData.Version, 0)
+		return nil, fmt.Errorf("unexpected version: %d, expected: %d", opReturnData.Version, 0)
 	}
 
 	// 3. Op return seems to be valid V0 op return output. Now, we need to check whether

@@ -20,7 +20,7 @@ import (
 
 // Sanity test checking mostly btcd code, that we can realy parse bitcoin transaction
 func TestBtcTransactionParsing(t *testing.T) {
-	// Few randomly chosed btc valid btc transactions
+	// Few randomly chose btc valid btc transactions
 	tests := []struct {
 		bitcoinTransactionHex string
 		txHash                string

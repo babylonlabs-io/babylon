@@ -14,7 +14,7 @@ import (
 type EpochingKeeper interface {
 	GetEpoch(ctx context.Context) *epochingtypes.Epoch
 	EnqueueMsg(ctx context.Context, msg epochingtypes.QueuedMessage)
-	GetValidatorSet(ctx context.Context, epochNumer uint64) epochingtypes.ValidatorSet
+	GetValidatorSet(ctx context.Context, epochNumber uint64) epochingtypes.ValidatorSet
 	GetTotalVotingPower(ctx context.Context, epochNumber uint64) int64
 	CheckMsgCreateValidator(ctx context.Context, msg *stakingtypes.MsgCreateValidator) error
 	GetPubKeyByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (cmtprotocrypto.PublicKey, error)

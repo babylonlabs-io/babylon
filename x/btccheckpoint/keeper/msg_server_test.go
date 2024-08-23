@@ -352,7 +352,7 @@ func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 	}
 
 	// Due to reorg one submission from epoch 1 lands on fork, which means it is no
-	// longer vaiable. It should be pruned. Other subbmissions should be left
+	// longer variable. It should be pruned. Other subbmissions should be left
 	// intact
 	tk.BTCLightClient.DeleteHeader(b2Hash(msg1))
 

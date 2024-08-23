@@ -1249,7 +1249,7 @@ type QueryClient interface {
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	// ListPublicRandomness is a range query for public randomness of a given finality provider
 	// NOTE: Babylon only has the knowledge of public randomness that is already revealed by
-	// finality providers, i.e., the finality provider alreayd provides a finality signature
+	// finality providers, i.e., the finality provider already provides a finality signature
 	// at the corresponding height
 	// TODO: remove public randomness storage?
 	ListPublicRandomness(ctx context.Context, in *QueryListPublicRandomnessRequest, opts ...grpc.CallOption) (*QueryListPublicRandomnessResponse, error)
@@ -1375,7 +1375,7 @@ type QueryServer interface {
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	// ListPublicRandomness is a range query for public randomness of a given finality provider
 	// NOTE: Babylon only has the knowledge of public randomness that is already revealed by
-	// finality providers, i.e., the finality provider alreayd provides a finality signature
+	// finality providers, i.e., the finality provider already provides a finality signature
 	// at the corresponding height
 	// TODO: remove public randomness storage?
 	ListPublicRandomness(context.Context, *QueryListPublicRandomnessRequest) (*QueryListPublicRandomnessResponse, error)

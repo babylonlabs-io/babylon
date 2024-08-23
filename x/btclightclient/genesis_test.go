@@ -94,5 +94,5 @@ func TestImportExport(t *testing.T) {
 
 	failedKVAs, failedKVBs := thelper.DiffKVStores(KvA, KvB, [][]byte{})
 	require.Equal(t, len(failedKVAs), len(failedKVBs), "unequal sets of key-values to compare btcligthclient")
-	require.Equal(t, len(failedKVAs), 0, "should not exist any difference froms states.")
+	require.Equal(t, len(failedKVAs), 0, "should not exist any difference forms states.")
 }

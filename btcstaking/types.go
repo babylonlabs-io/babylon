@@ -53,12 +53,12 @@ func unspendableKeyPathInternalPubKey() btcec.PublicKey {
 func NewTaprootTreeFromScripts(
 	scripts [][]byte,
 ) *txscript.IndexedTapScriptTree {
-	var tapLeafs []txscript.TapLeaf
+	var tapLeaves []txscript.TapLeaf
 	for _, script := range scripts {
 		scr := script
-		tapLeafs = append(tapLeafs, txscript.NewBaseTapLeaf(scr))
+		tapLeaves = append(tapLeaves, txscript.NewBaseTapLeaf(scr))
 	}
-	return txscript.AssembleTaprootScriptTree(tapLeafs...)
+	return txscript.AssembleTaprootScriptTree(tapLeaves...)
 }
 
 func DeriveTaprootAddress(
@@ -125,8 +125,8 @@ func newTaprootScriptHolder(
 		}, nil
 	}
 
-	createdLeafs := make(map[chainhash.Hash]bool)
-	tapLeafs := make([]txscript.TapLeaf, len(scripts))
+	createdLeaves := make(map[chainhash.Hash]bool)
+	tapLeaves := make([]txscript.TapLeaf, len(scripts))
 
 	for i, s := range scripts {
 		script := s
@@ -137,15 +137,15 @@ func newTaprootScriptHolder(
 		tapLeaf := txscript.NewBaseTapLeaf(script)
 		leafHash := tapLeaf.TapHash()
 
-		if _, ok := createdLeafs[leafHash]; ok {
+		if _, ok := createdLeaves[leafHash]; ok {
 			return nil, fmt.Errorf("duplicate script in provided scripts")
 		}
 
-		createdLeafs[leafHash] = true
-		tapLeafs[i] = tapLeaf
+		createdLeaves[leafHash] = true
+		tapLeaves[i] = tapLeaf
 	}
 
-	scriptTree := txscript.AssembleTaprootScriptTree(tapLeafs...)
+	scriptTree := txscript.AssembleTaprootScriptTree(tapLeaves...)
 
 	return &taprootScriptHolder{
 		internalPubKey: internalPubKey,
@@ -181,7 +181,7 @@ func (t *taprootScriptHolder) taprootPkScript(net *chaincfg.Params) ([]byte, err
 // Package responsible for different kinds of btc scripts used by babylon
 // Staking script has 3 spending paths:
 // 1. Staker can spend after relative time lock - staking
-// 2. Staker can spend with covenat cooperation any time
+// 2. Staker can spend with covenant cooperation any time
 // 3. Staker can spend with finality provider and covenant cooperation any time.
 type StakingInfo struct {
 	StakingOutput         *wire.TxOut

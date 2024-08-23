@@ -167,7 +167,7 @@ func parseTestParams(t *testing.T, p *Parameters) (*ParsedParams, error) {
 	}, nil
 }
 
-func TestVectorsCompatiblity(t *testing.T) {
+func TestVectorsCompatibility(t *testing.T) {
 	cases := ReadTestCases()
 
 	for _, tc := range cases.Test {
@@ -317,7 +317,7 @@ func GenerateTestCase(
 	numCovenantKeys int,
 	covenantQuorum int,
 	numFinalityKeys int,
-	stakingAmout int,
+	stakingAmount int,
 	stakingTime int,
 	unbondingTime int,
 	unbondingFee int,
@@ -336,7 +336,7 @@ func GenerateTestCase(
 		keysToPubKeys(t, covenantKeys),
 		uint32(covenantQuorum),
 		uint16(stakingTime),
-		btcutil.Amount(stakingAmout),
+		btcutil.Amount(stakingAmount),
 		&chaincfg.MainNetParams,
 	)
 	require.NoError(t, err)
@@ -353,7 +353,7 @@ func GenerateTestCase(
 		keysToPubKeys(t, covenantKeys),
 		uint32(covenantQuorum),
 		uint16(unbondingTime),
-		btcutil.Amount(stakingAmout)-btcutil.Amount(unbondingFee),
+		btcutil.Amount(stakingAmount)-btcutil.Amount(unbondingFee),
 		&chaincfg.MainNetParams,
 	)
 
@@ -386,7 +386,7 @@ func GenerateTestCase(
 			keysToPubKeys(t, covenantKeys),
 			uint32(covenantQuorum),
 			uint16(stakingTime),
-			btcutil.Amount(stakingAmout),
+			btcutil.Amount(stakingAmount),
 			&chaincfg.MainNetParams,
 		)
 		require.NoError(t, err)
@@ -399,7 +399,7 @@ func GenerateTestCase(
 		FinalityProviderPublicKeys: finalityKeys,
 		StakerPublicKey:            stakerKeys[0],
 		StakingTime:                stakingTime,
-		StakingValue:               stakingAmout,
+		StakingValue:               stakingAmount,
 		StakingTxHash:              eh.String(),
 		StakingOutputIndex:         0,
 		UnbondingTxVersion:         2,

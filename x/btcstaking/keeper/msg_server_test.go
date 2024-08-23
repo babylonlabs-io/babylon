@@ -904,7 +904,7 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 
 		fps := datagen.CreateNFinalityProviders(r, t, numFinalityProviders)
 
-		// Fill the databse of both apps with the same finality providers and delegations
+		// Fill the database of both apps with the same finality providers and delegations
 		for _, fp := range fps {
 			h.AddFinalityProvider(fp)
 			h1.AddFinalityProvider(fp)

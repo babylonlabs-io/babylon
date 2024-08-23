@@ -185,7 +185,7 @@ message RawCheckpointResponse {
 message CheckpointStateUpdateResponse {
   // state defines the event of a state transition towards this state
   CheckpointStatus state = 1;
-  // status_desc respresents the description of status enum.
+  // status_desc represents the description of status enum.
   string status_desc = 2;
   // block_height is the height of the Babylon block that triggers the state
   // update
@@ -200,7 +200,7 @@ message RawCheckpointWithMetaResponse {
   RawCheckpointResponse ckpt = 1;
   // status defines the status of the checkpoint
   CheckpointStatus status = 2;
-  // status_desc respresents the description of status enum.
+  // status_desc represents the description of status enum.
   string status_desc = 3;
   // bls_aggr_pk defines the aggregated BLS public key
   bytes bls_aggr_pk = 4

@@ -187,7 +187,7 @@ func FuzzKeeperInsertValidChainExtension(f *testing.F) {
 		}
 
 		// check events and hooks
-		rollForwadType, _ := sdk.TypedEventToEvent(&types.EventBTCRollForward{})
+		rollForwardType, _ := sdk.TypedEventToEvent(&types.EventBTCRollForward{})
 		headerInsertedType, _ := sdk.TypedEventToEvent(&types.EventBTCHeaderInserted{})
 
 		events := ctx.EventManager().Events()
@@ -204,7 +204,7 @@ func FuzzKeeperInsertValidChainExtension(f *testing.F) {
 			require.True(t, mockHooks.AfterBTCRollForwardStore[i].Hash.Eq(&hash))
 			// event should be in order inserted -> roll forward
 			require.Equal(t, events[i*2].Type, headerInsertedType.Type)
-			require.Equal(t, events[i*2+1].Type, rollForwadType.Type)
+			require.Equal(t, events[i*2+1].Type, rollForwardType.Type)
 		}
 	})
 }
@@ -282,7 +282,7 @@ func FuzzKeeperInsertValidBetterChain(f *testing.F) {
 
 		// check events and hooks
 		rollBackType, _ := sdk.TypedEventToEvent(&types.EventBTCRollBack{})
-		rollForwadType, _ := sdk.TypedEventToEvent(&types.EventBTCRollForward{})
+		rollForwardType, _ := sdk.TypedEventToEvent(&types.EventBTCRollForward{})
 		headerInsertedType, _ := sdk.TypedEventToEvent(&types.EventBTCHeaderInserted{})
 
 		events := ctx.EventManager().Events()
@@ -310,7 +310,7 @@ func FuzzKeeperInsertValidBetterChain(f *testing.F) {
 			require.True(t, mockHooks.AfterBTCRollForwardStore[i].Hash.Eq(&hash))
 
 			require.Equal(t, events[i*2+1].Type, headerInsertedType.Type)
-			require.Equal(t, events[i*2].Type, rollForwadType.Type)
+			require.Equal(t, events[i*2].Type, rollForwardType.Type)
 		}
 	})
 }
@@ -380,7 +380,7 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 	})
 }
 
-func FuzzKeeperValdateHeaderAtDifficultyAdjustmentBoundaries(f *testing.F) {
+func FuzzKeeperValidateHeaderAtDifficultyAdjustmentBoundaries(f *testing.F) {
 	// less seeds as we generate longer chains
 	datagen.AddRandomSeedsToFuzzer(f, 3)
 	f.Fuzz(func(t *testing.T, seed int64) {

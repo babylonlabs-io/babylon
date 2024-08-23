@@ -153,7 +153,7 @@ func FuzzMsgServerReorgChain(f *testing.F) {
 	})
 }
 
-func TestAllowUpdatesOnlyFromReportesInTheList(t *testing.T) {
+func TestAllowUpdatesOnlyFromReportersInTheList(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	sender1 := secp256k1.GenPrivKey()
 	address1, err := sdk.AccAddressFromHexUnsafe(sender1.PubKey().Address().String())

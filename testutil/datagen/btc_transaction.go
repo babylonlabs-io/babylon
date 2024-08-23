@@ -27,7 +27,7 @@ var (
 	// opcode.  It is defined here to reduce garbage creation.
 	opTrueScript = []byte{txscript.OP_TRUE}
 
-	tranasctionVersion = 1
+	transactionVersion = 1
 
 	lowFee = btcutil.Amount(1)
 )
@@ -147,7 +147,7 @@ func createCoinbaseTx(blockHeight int32, params *chaincfg.Params) *wire.MsgTx {
 		panic(err)
 	}
 
-	tx := wire.NewMsgTx(int32(tranasctionVersion))
+	tx := wire.NewMsgTx(int32(transactionVersion))
 	tx.AddTxIn(&wire.TxIn{
 		// Coinbase transactions have no inputs, so previous outpoint is
 		// zero hash and max index.
@@ -196,7 +196,7 @@ func makeSpendableOutWithRandOutPoint(r *rand.Rand, amount btcutil.Amount) spend
 }
 
 func createSpendTx(r *rand.Rand, spend *spendableOut, fee btcutil.Amount) *wire.MsgTx {
-	spendTx := wire.NewMsgTx(int32(tranasctionVersion))
+	spendTx := wire.NewMsgTx(int32(transactionVersion))
 	spendTx.AddTxIn(&wire.TxIn{
 		PreviousOutPoint: spend.prevOut,
 		Sequence:         wire.MaxTxInSequenceNum,
@@ -212,7 +212,7 @@ func createSpendTx(r *rand.Rand, spend *spendableOut, fee btcutil.Amount) *wire.
 }
 
 func createSpendOpReturnTx(spend *spendableOut, fee btcutil.Amount, data []byte) *wire.MsgTx {
-	spendTx := wire.NewMsgTx(int32(tranasctionVersion))
+	spendTx := wire.NewMsgTx(int32(transactionVersion))
 	spendTx.AddTxIn(&wire.TxIn{
 		PreviousOutPoint: spend.prevOut,
 		Sequence:         wire.MaxTxInSequenceNum,
@@ -466,7 +466,7 @@ func getRandomCheckpointDataForEpoch(r *rand.Rand, e uint64) testCheckpointData 
 	}
 }
 
-// both f and s must be parts retrived from txformat.Encode
+// both f and s must be parts retrieved from txformat.Encode
 func getExpectedOpReturn(tag txformat.BabylonTag, f []byte, s []byte) []byte {
 	firstPartNoHeader, err := txformat.GetCheckpointData(
 		tag,
@@ -533,7 +533,7 @@ func EncodeRawCkptToTestData(rawBTCCkpt *txformat.RawBtcCheckpoint) *TestRawChec
 // test helper to generate random number int in range, min and max must be non-negative
 func numInRange(r *rand.Rand, min int, max int) int {
 	if min < 0 || max < 0 || min >= max {
-		panic("min and max maust be positve numbers. min must be smaller than max")
+		panic("min and max maust be positive numbers. min must be smaller than max")
 	}
 
 	return r.Intn(max-min) + min

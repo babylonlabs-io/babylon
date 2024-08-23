@@ -109,17 +109,17 @@ func (mr *MockEpochingKeeperMockRecorder) GetTotalVotingPower(ctx, epochNumber i
 }
 
 // GetValidatorSet mocks base method.
-func (m *MockEpochingKeeper) GetValidatorSet(ctx context.Context, epochNumer uint64) types0.ValidatorSet {
+func (m *MockEpochingKeeper) GetValidatorSet(ctx context.Context, epochNumber uint64) types0.ValidatorSet {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetValidatorSet", ctx, epochNumer)
+	ret := m.ctrl.Call(m, "GetValidatorSet", ctx, epochNumber)
 	ret0, _ := ret[0].(types0.ValidatorSet)
 	return ret0
 }
 
 // GetValidatorSet indicates an expected call of GetValidatorSet.
-func (mr *MockEpochingKeeperMockRecorder) GetValidatorSet(ctx, epochNumer interface{}) *gomock.Call {
+func (mr *MockEpochingKeeperMockRecorder) GetValidatorSet(ctx, epochNumber interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorSet", reflect.TypeOf((*MockEpochingKeeper)(nil).GetValidatorSet), ctx, epochNumer)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorSet", reflect.TypeOf((*MockEpochingKeeper)(nil).GetValidatorSet), ctx, epochNumber)
 }
 
 // MockCheckpointingHooks is a mock of CheckpointingHooks interface.

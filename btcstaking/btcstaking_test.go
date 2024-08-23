@@ -267,7 +267,7 @@ func TestSpendingUnbondingPathCovenant35MultiSig(t *testing.T) {
 	require.NoError(t, err)
 
 	// scenario where all keys are available
-	covenantSigantures := GenerateSignatures(
+	covenantSignatures := GenerateSignatures(
 		t,
 		scenario.CovenantKeys,
 		spendStakeTx,
@@ -275,10 +275,10 @@ func TestSpendingUnbondingPathCovenant35MultiSig(t *testing.T) {
 		si.RevealedLeaf,
 	)
 
-	covenantSigantures[1] = nil
-	covenantSigantures[3] = nil
+	covenantSignatures[1] = nil
+	covenantSignatures[3] = nil
 
-	witness, err := si.CreateUnbondingPathWitness(covenantSigantures, stakerSig)
+	witness, err := si.CreateUnbondingPathWitness(covenantSignatures, stakerSig)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 
@@ -336,14 +336,14 @@ func TestSpendingUnbondingPathSingleKeyCovenant(t *testing.T) {
 	require.NoError(t, err)
 
 	// scenario where all keys are available
-	covenantSigantures := GenerateSignatures(
+	covenantSignatures := GenerateSignatures(
 		t,
 		scenario.CovenantKeys,
 		spendStakeTx,
 		stakingInfo.StakingOutput,
 		si.RevealedLeaf,
 	)
-	witness, err := si.CreateUnbondingPathWitness(covenantSigantures, stakerSig)
+	witness, err := si.CreateUnbondingPathWitness(covenantSignatures, stakerSig)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 
@@ -399,7 +399,7 @@ func TestSpendingSlashingPathCovenant35MultiSig(t *testing.T) {
 		si.RevealedLeaf,
 	)
 	require.NoError(t, err)
-	covenantSigantures := GenerateSignatures(
+	covenantSignatures := GenerateSignatures(
 		t,
 		scenario.CovenantKeys,
 		spendStakeTx,
@@ -414,11 +414,11 @@ func TestSpendingSlashingPathCovenant35MultiSig(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	covenantSigantures[0] = nil
-	covenantSigantures[3] = nil
+	covenantSignatures[0] = nil
+	covenantSignatures[3] = nil
 
 	witness, err := si.CreateSlashingPathWitness(
-		covenantSigantures,
+		covenantSignatures,
 		[]*schnorr.Signature{fpSig},
 		stakerSig,
 	)
@@ -479,15 +479,15 @@ func TestSpendingSlashingPathCovenant35MultiSigFinalityProviderRestaking(t *test
 	require.NoError(t, err)
 
 	// only use 3 out of 5 covenant signatures
-	covenantSigantures := GenerateSignatures(
+	covenantSignatures := GenerateSignatures(
 		t,
 		scenario.CovenantKeys,
 		spendStakeTx,
 		stakingInfo.StakingOutput,
 		si.RevealedLeaf,
 	)
-	covenantSigantures[0] = nil
-	covenantSigantures[1] = nil
+	covenantSignatures[0] = nil
+	covenantSignatures[1] = nil
 
 	// only use one of the finality provider signatures
 	// script should still be valid as we require only one finality provider signature
@@ -501,7 +501,7 @@ func TestSpendingSlashingPathCovenant35MultiSigFinalityProviderRestaking(t *test
 	)
 	fpSignatures[0] = nil
 
-	witness, err := si.CreateSlashingPathWitness(covenantSigantures, fpSignatures, stakerSig)
+	witness, err := si.CreateSlashingPathWitness(covenantSignatures, fpSignatures, stakerSig)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 

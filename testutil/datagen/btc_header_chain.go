@@ -17,7 +17,7 @@ type BTCHeaderPartialChain struct {
 	// slice of Headers forming valid chain
 	Headers                  []*wire.BlockHeader
 	initialHeaderHeight      uint64
-	inititialHeaderTotalWork sdkmath.Uint
+	initialHeaderTotalWork sdkmath.Uint
 }
 
 func NewBTCHeaderChainWithLength(
@@ -65,7 +65,7 @@ func NewBTCHeaderChainFromParent(
 	return &BTCHeaderPartialChain{
 		Headers:                  headers,
 		initialHeaderHeight:      initialHeaderHeight,
-		inititialHeaderTotalWork: initialHeaderTotalWork,
+		initialHeaderTotalWork: initialHeaderTotalWork,
 	}
 }
 
@@ -88,11 +88,11 @@ func NewBTCHeaderChainFromParentInfoResponse(
 }
 
 func (c *BTCHeaderPartialChain) GetChainInfo() []*types.BTCHeaderInfo {
-	return ChainToInfoChain(c.Headers, c.initialHeaderHeight, c.inititialHeaderTotalWork)
+	return ChainToInfoChain(c.Headers, c.initialHeaderHeight, c.initialHeaderTotalWork)
 }
 
 func (c *BTCHeaderPartialChain) GetChainInfoResponse() []*types.BTCHeaderInfoResponse {
-	return ChainToInfoResponseChain(c.Headers, c.initialHeaderHeight, c.inititialHeaderTotalWork)
+	return ChainToInfoResponseChain(c.Headers, c.initialHeaderHeight, c.initialHeaderTotalWork)
 }
 
 func (c *BTCHeaderPartialChain) ChainToBytes() []bbn.BTCHeaderBytes {
@@ -107,7 +107,7 @@ func (c *BTCHeaderPartialChain) ChainToBytes() []bbn.BTCHeaderBytes {
 }
 
 func (c *BTCHeaderPartialChain) GetTipInfo() *types.BTCHeaderInfo {
-	chainInfo := ChainToInfoChain(c.Headers, c.initialHeaderHeight, c.inititialHeaderTotalWork)
+	chainInfo := ChainToInfoChain(c.Headers, c.initialHeaderHeight, c.initialHeaderTotalWork)
 	return chainInfo[len(chainInfo)-1]
 }
 
@@ -117,13 +117,13 @@ func (c *BTCHeaderPartialChain) TipHeader() *wire.BlockHeader {
 
 func (c *BTCHeaderPartialChain) GetRandomHeaderInfo(r *rand.Rand) *types.BTCHeaderInfo {
 	randIdx := RandomInt(r, len(c.Headers))
-	headerInfo := ChainToInfoChain(c.Headers, c.initialHeaderHeight, c.inititialHeaderTotalWork)
+	headerInfo := ChainToInfoChain(c.Headers, c.initialHeaderHeight, c.initialHeaderTotalWork)
 	return headerInfo[randIdx]
 }
 
 func (c *BTCHeaderPartialChain) GetRandomHeaderInfoNoTip(r *rand.Rand) *types.BTCHeaderInfo {
 	randIdx := RandomInt(r, len(c.Headers)-1)
-	headerInfo := ChainToInfoChain(c.Headers, c.initialHeaderHeight, c.inititialHeaderTotalWork)
+	headerInfo := ChainToInfoChain(c.Headers, c.initialHeaderHeight, c.initialHeaderTotalWork)
 	return headerInfo[randIdx]
 }
 

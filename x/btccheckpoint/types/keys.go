@@ -29,7 +29,7 @@ const (
 )
 
 var (
-	SubmisionKeyPrefix       = []byte{3}
+	SubmissionKeyPrefix       = []byte{3}
 	EpochDataPrefix          = []byte{4}
 	LastFinalizedEpochKey    = append([]byte{5}, []byte(LatestFinalizedEpochKey)...)
 	BtcLightClientUpdatedKey = append([]byte{6}, []byte(btcLightClientUpdated)...)
@@ -40,8 +40,8 @@ func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
 
-func PrefixedSubmisionKey(cdc codec.BinaryCodec, k *SubmissionKey) []byte {
-	return append(SubmisionKeyPrefix, cdc.MustMarshal(k)...)
+func PrefixedSubmissionKey(cdc codec.BinaryCodec, k *SubmissionKey) []byte {
+	return append(SubmissionKeyPrefix, cdc.MustMarshal(k)...)
 }
 
 func GetEpochIndexKey(e uint64) []byte {

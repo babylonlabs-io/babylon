@@ -55,14 +55,14 @@ func CreateUpgradeHandler(
 // propLaunch runs the proposal of launch that is meant to insert new BTC Headers.
 func propLaunch(
 	ctx sdk.Context,
-	btcLigthK *btclightkeeper.Keeper,
+	btcLightK *btclightkeeper.Keeper,
 ) error {
 	newHeaders, err := LoadBTCHeadersFromData()
 	if err != nil {
 		return err
 	}
 
-	return insertBtcHeaders(ctx, btcLigthK, newHeaders)
+	return insertBtcHeaders(ctx, btcLightK, newHeaders)
 }
 
 // LoadBTCHeadersFromData returns the BTC headers load from the json string with the headers inside of it.

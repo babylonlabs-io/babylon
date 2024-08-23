@@ -13,7 +13,7 @@ import (
 
 func (k Keeper) HasSubmission(ctx context.Context, sk types.SubmissionKey) bool {
 	store := k.storeService.OpenKVStore(ctx)
-	kBytes := types.PrefixedSubmisionKey(k.cdc, &sk)
+	kBytes := types.PrefixedSubmissionKey(k.cdc, &sk)
 	has, err := store.Has(kBytes)
 	if err != nil {
 		panic(err)
@@ -42,7 +42,7 @@ func (k Keeper) GetBestSubmission(ctx context.Context, epochNumber uint64) (type
 // addEpochSubmission save given submission key and data to database and takes
 // car of updating any necessary indexes.
 // Provided submmission should be known to btclightclient and all of its blocks
-// should be on btc main chaing as viewed by btclightclient
+// should be on btc main chain as viewed by btclightclient
 func (k Keeper) addEpochSubmission(
 	ctx context.Context,
 	epochNum uint64,
@@ -85,7 +85,7 @@ func (k Keeper) addEpochSubmission(
 
 func (k Keeper) saveSubmission(ctx context.Context, sk types.SubmissionKey, sd types.SubmissionData) {
 	store := k.storeService.OpenKVStore(ctx)
-	kBytes := types.PrefixedSubmisionKey(k.cdc, &sk)
+	kBytes := types.PrefixedSubmissionKey(k.cdc, &sk)
 	sBytes := k.cdc.MustMarshal(&sd)
 	if err := store.Set(kBytes, sBytes); err != nil {
 		panic(err)
@@ -94,7 +94,7 @@ func (k Keeper) saveSubmission(ctx context.Context, sk types.SubmissionKey, sd t
 
 func (k Keeper) deleteSubmission(ctx context.Context, sk types.SubmissionKey) {
 	store := k.storeService.OpenKVStore(ctx)
-	kBytes := types.PrefixedSubmisionKey(k.cdc, &sk)
+	kBytes := types.PrefixedSubmissionKey(k.cdc, &sk)
 	if err := store.Delete(kBytes); err != nil {
 		panic(err)
 	}
@@ -104,7 +104,7 @@ func (k Keeper) deleteSubmission(ctx context.Context, sk types.SubmissionKey) {
 // under the given key
 func (k Keeper) GetSubmissionData(ctx context.Context, sk types.SubmissionKey) *types.SubmissionData {
 	store := k.storeService.OpenKVStore(ctx)
-	kBytes := types.PrefixedSubmisionKey(k.cdc, &sk)
+	kBytes := types.PrefixedSubmissionKey(k.cdc, &sk)
 	sdBytes, err := store.Get(kBytes)
 	if err != nil {
 		panic(err)

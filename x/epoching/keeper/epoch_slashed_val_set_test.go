@@ -35,25 +35,25 @@ func FuzzSlashedValSet(f *testing.F) {
 
 		// slash a random subset of validators
 		numSlashed := r.Intn(len(getValSet))
-		excpectedSlashedVals := []sdk.ValAddress{}
+		expectedSlashedVals := []sdk.ValAddress{}
 		for i := 0; i < numSlashed; i++ {
 			idx := r.Intn(len(getValSet))
 			slashedVal := getValSet[idx]
 			_, err = stakingKeeper.Slash(ctx, slashedVal.Addr, 0, slashedVal.Power, sdkmath.LegacyOneDec())
 			require.NoError(t, err)
 			// add the slashed validator to the slashed validator set
-			excpectedSlashedVals = append(excpectedSlashedVals, slashedVal.Addr)
+			expectedSlashedVals = append(expectedSlashedVals, slashedVal.Addr)
 			// remove the slashed validator from the validator set in order to avoid slashing a validator more than once
 			getValSet = append(getValSet[:idx], getValSet[idx+1:]...)
 		}
 
 		// check whether the slashed validator set in DB is consistent or not
 		actualSlashedVals := keeper.GetSlashedValidators(ctx, 1)
-		require.Equal(t, len(excpectedSlashedVals), len(actualSlashedVals))
-		sortVals(excpectedSlashedVals)
+		require.Equal(t, len(expectedSlashedVals), len(actualSlashedVals))
+		sortVals(expectedSlashedVals)
 		actualSlashedVals = types.NewSortedValidatorSet(actualSlashedVals)
 		for i := range actualSlashedVals {
-			require.Equal(t, excpectedSlashedVals[i], actualSlashedVals[i].GetValAddress())
+			require.Equal(t, expectedSlashedVals[i], actualSlashedVals[i].GetValAddress())
 		}
 
 		// go to epoch 2

@@ -122,18 +122,18 @@ func (k Keeper) headerDepth(ctx context.Context, headerHash *bbn.BTCHeaderHashBy
 // - its lowest depth is larger than highest depth of new submission
 func (k Keeper) checkAncestors(
 	ctx context.Context,
-	submisionEpoch uint64,
+	submissionEpoch uint64,
 	newSubmissionInfo *types.SubmissionBtcInfo,
 ) error {
 
-	if submisionEpoch <= 1 {
+	if submissionEpoch <= 1 {
 		// do not need to check ancestors for epoch 0 and 1
 		return nil
 	}
 
 	// this is valid checkpoint for not initial epoch, we need to check previous epoch
 	// checkpoints
-	previousEpochData := k.GetEpochData(ctx, submisionEpoch-1)
+	previousEpochData := k.GetEpochData(ctx, submissionEpoch-1)
 
 	// First check if there are any checkpoints for previous epoch at all.
 	if previousEpochData == nil {
@@ -155,7 +155,7 @@ func (k Keeper) checkAncestors(
 
 		if err != nil {
 			// Previous epoch submission block either landed on fork or was pruned
-			// Submission will be pruned, so it should not be treated vaiable ancestor
+			// Submission will be pruned, so it should not be treated variable ancestor
 			continue
 		}
 
@@ -182,7 +182,7 @@ func (k Keeper) setBtcLightClientUpdated(ctx context.Context) {
 
 // BtcLightClientUpdated checks if btc light client was updated during block execution
 func (k Keeper) BtcLightClientUpdated(ctx context.Context) bool {
-	// transient store is cleared after each block execution, therfore if
+	// transient store is cleared after each block execution, therefore if
 	// BtcLightClientKey is set, it means setBtcLightClientUpdated was called during
 	// current block execution
 	store := sdk.UnwrapSDKContext(ctx).TransientStore(k.tsKey)
@@ -230,7 +230,7 @@ func (k Keeper) getEpochChanges(
 
 		if err != nil {
 			// submission no longer on main chain, mark it as to delete, and do not count
-			// it as vaiable submission
+			// it as variable submission
 			submissionsToDelete = append(submissionsToDelete, sk)
 			continue
 		}

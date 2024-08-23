@@ -29,7 +29,7 @@ func (k Keeper) GetAllOpenZCChannels(ctx context.Context) []channeltypes.Identif
 	return openZCChannels
 }
 
-// isChannelUninitialized checks whether the channel is not initilialised yet
+// isChannelUninitialized checks whether the channel is not initialised yet
 // it's done by checking whether the packet sequence number is 1 (the first sequence number) or not
 func (k Keeper) isChannelUninitialized(ctx context.Context, channel channeltypes.IdentifiedChannel) bool {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)

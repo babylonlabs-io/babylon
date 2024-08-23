@@ -22,7 +22,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 }
 
 // TODO at some point add proper logging of error
-// TODO emit some events for external consumers. Those should be probably emited
+// TODO emit some events for external consumers. Those should be probably emitted
 // at EndBlockerCallback
 func (ms msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBTCSpvProof) (*types.MsgInsertBTCSpvProofResponse, error) {
 

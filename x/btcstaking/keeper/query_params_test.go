@@ -31,7 +31,7 @@ func TestParamsByVersionQuery(t *testing.T) {
 	params3 := types.DefaultParams()
 	params3.MinUnbondingTime = 30000
 
-	// Check that after update we always return the latest version of params throuh Params query
+	// Check that after update we always return the latest version of params through Params query
 	err := keeper.SetParams(ctx, params1)
 	require.NoError(t, err)
 	response, err := keeper.Params(ctx, &types.QueryParamsRequest{})
