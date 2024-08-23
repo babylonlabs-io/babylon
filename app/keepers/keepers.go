@@ -18,7 +18,6 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -156,10 +155,6 @@ type AppKeepers struct {
 	keys    map[string]*storetypes.KVStoreKey
 	tkeys   map[string]*storetypes.TransientStoreKey
 	memKeys map[string]*storetypes.MemoryStoreKey
-
-	// encoding/decode helpers
-	Codec            codec.Codec
-	TxEncodingConfig client.TxEncodingConfig
 }
 
 func (ak *AppKeepers) InitKeepers(
@@ -180,9 +175,6 @@ func (ak *AppKeepers) InitKeepers(
 ) {
 	powLimit := btcConfig.PowLimit()
 	btcNetParams := btcConfig.NetParams()
-
-	ak.Codec = appCodec
-	ak.TxEncodingConfig = encodingConfig.TxConfig
 
 	// set persistent store keys
 	keys := storetypes.NewKVStoreKeys(

@@ -98,7 +98,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				// ensure the btc headers were added
 				allBtcHeaders := s.app.BTCLightClientKeeper.GetMainChainFrom(s.ctx, 0)
 
-				btcHeadersInserted, err := v1.LoadBTCHeadersFromData()
+				btcHeadersInserted, err := v1.LoadBTCHeadersFromData(s.app.AppCodec())
 				s.NoError(err)
 				lenHeadersInserted := len(btcHeadersInserted)
 
@@ -116,7 +116,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				s.NoError(err)
 				newFPsLen := len(resp.FinalityProviders)
 
-				fpsInserted, err := v1.LoadSignedFPsFromData(s.app.Codec, s.app.TxConfig().TxJSONDecoder())
+				fpsInserted, err := v1.LoadSignedFPsFromData(s.app.AppCodec())
 				s.NoError(err)
 
 				s.Equal(newFPsLen, oldFPsLen+len(fpsInserted))
@@ -147,7 +147,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 func TestLoadSignedFPsFromData(t *testing.T) {
 	bbnApp := app.NewTmpBabylonApp()
 
-	fps, err := v1.LoadSignedFPsFromData(bbnApp.AppCodec(), bbnApp.TxConfig().TxJSONDecoder())
+	fps, err := v1.LoadSignedFPsFromData(bbnApp.AppCodec())
 	require.NoError(t, err)
 	require.Len(t, fps, 2)
 }

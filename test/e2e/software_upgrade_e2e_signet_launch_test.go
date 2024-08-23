@@ -55,12 +55,14 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 	govProp, err := s.configurer.ParseGovPropFromFile()
 	s.NoError(err)
 
+	bbnApp := app.NewTmpBabylonApp()
+
 	// makes sure that the upgrade was actually executed
 	expectedUpgradeHeight := govProp.Plan.Height
 	resp := n.QueryAppliedPlan(v1.Upgrade.UpgradeName)
 	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height %d", expectedUpgradeHeight)
 
-	btcHeadersInserted, err := v1.LoadBTCHeadersFromData()
+	btcHeadersInserted, err := v1.LoadBTCHeadersFromData(bbnApp.AppCodec())
 	s.NoError(err)
 
 	lenHeadersInserted := len(btcHeadersInserted)
@@ -81,9 +83,8 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 
 	oldFPsLen := 0 // it should not have any FP
 	fpsFromNode := n.QueryFinalityProviders()
-	bbnApp := app.NewTmpBabylonApp()
 
-	fpsInserted, err := v1.LoadSignedFPsFromData(bbnApp.AppCodec(), bbnApp.TxConfig().TxJSONDecoder())
+	fpsInserted, err := v1.LoadSignedFPsFromData(bbnApp.AppCodec())
 	s.NoError(err)
 	s.Equal(len(fpsInserted), len(fpsFromNode)+oldFPsLen)
 
