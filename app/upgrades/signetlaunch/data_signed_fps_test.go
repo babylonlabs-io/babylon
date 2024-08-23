@@ -79,8 +79,8 @@ func TestValidateSignatureSignedFPsFromData(t *testing.T) {
 		// it needs to remove account right after, otherwise new accounts
 		// would have account number +1 and the signature verification would fail.
 		acc := bbnApp.AccountKeeper.NewAccountWithAddress(ctx, signerBbnAddr)
-		acc.SetSequence(0)
-		acc.SetAccountNumber(0)
+		require.NoError(t, acc.SetSequence(0))
+		require.NoError(t, acc.SetAccountNumber(0))
 		bbnApp.AccountKeeper.SetAccount(ctx, acc)
 
 		_, err = antehandlerSigVerifier(ctx, tx, simulateTx)
