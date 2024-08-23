@@ -42,17 +42,6 @@ func (fp *FinalityProvider) ValidateBasic() error {
 	return nil
 }
 
-// ToMsg parses the finality provider to type MsgCreateFinalityProvider.
-func (fp *FinalityProvider) ToMsg() *MsgCreateFinalityProvider {
-	return &MsgCreateFinalityProvider{
-		Addr:        fp.Addr,
-		Description: fp.Description,
-		Commission:  fp.Commission,
-		BtcPk:       fp.BtcPk,
-		Pop:         fp.Pop,
-	}
-}
-
 // SortFinalityProviders sorts the finality providers slice,
 // from higher to lower voting power
 func SortFinalityProviders(fps []*FinalityProviderDistInfo) {

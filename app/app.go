@@ -254,7 +254,6 @@ func NewBabylonApp(
 
 	app.AppKeepers.InitKeepers(
 		logger,
-		appCodec,
 		&btcConfig,
 		encCfg,
 		bApp,

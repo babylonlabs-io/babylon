@@ -116,7 +116,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				s.NoError(err)
 				newFPsLen := len(resp.FinalityProviders)
 
-				fpsInserted, err := v1.LoadSignedFPsFromData(s.app.AppCodec())
+				fpsInserted, err := v1.LoadSignedFPsFromData(s.app.AppCodec(), s.app.TxConfig().TxJSONDecoder())
 				s.NoError(err)
 
 				s.Equal(newFPsLen, oldFPsLen+len(fpsInserted))
@@ -147,7 +147,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 func TestLoadSignedFPsFromData(t *testing.T) {
 	bbnApp := app.NewTmpBabylonApp()
 
-	fps, err := v1.LoadSignedFPsFromData(bbnApp.AppCodec())
+	fps, err := v1.LoadSignedFPsFromData(bbnApp.AppCodec(), bbnApp.TxConfig().TxJSONDecoder())
 	require.NoError(t, err)
 	require.Len(t, fps, 2)
 }

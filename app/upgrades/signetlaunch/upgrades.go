@@ -6,6 +6,7 @@ package signetlaunch
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -33,6 +34,10 @@ var Upgrade = upgrades.Upgrade{
 	StoreUpgrades:        store.StoreUpgrades{},
 }
 
+type DataSignedFps struct {
+	SignedTxsFP []any `json:"signed_txs_create_fp"`
+}
+
 // CreateUpgradeHandler upgrade handler for launch.
 func CreateUpgradeHandler(
 	mm *module.Manager,
@@ -48,7 +53,7 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
-		if err := propLaunch(ctx, &keepers.BTCLightClientKeeper, &keepers.BTCStakingKeeper); err != nil {
+		if err := propLaunch(ctx, keepers.EncCfg, &keepers.BTCLightClientKeeper, &keepers.BTCStakingKeeper); err != nil {
 			panic(err)
 		}
 
@@ -59,10 +64,11 @@ func CreateUpgradeHandler(
 // propLaunch runs the proposal of launch that is meant to insert new BTC Headers.
 func propLaunch(
 	ctx sdk.Context,
+	encCfg *appparams.EncodingConfig,
 	btcLigthK *btclightkeeper.Keeper,
 	btcStkK *btcstkkeeper.Keeper,
 ) error {
-	cdc := appparams.DefaultEncodingConfig().Codec
+	cdc := encCfg.Codec
 
 	newHeaders, err := LoadBTCHeadersFromData(cdc)
 	if err != nil {
@@ -73,7 +79,7 @@ func propLaunch(
 		return err
 	}
 
-	fps, err := LoadSignedFPsFromData(cdc)
+	fps, err := LoadSignedFPsFromData(cdc, encCfg.TxConfig.TxJSONDecoder())
 	if err != nil {
 		return err
 	}
@@ -95,16 +101,35 @@ func LoadBTCHeadersFromData(cdc codec.Codec) ([]*btclighttypes.BTCHeaderInfo, er
 }
 
 // LoadSignedFPsFromData returns the finality providers from the json string.
-func LoadSignedFPsFromData(cdc codec.Codec) ([]*btcstktypes.FinalityProvider, error) {
-	buff := bytes.NewBufferString(FPsStr)
+func LoadSignedFPsFromData(cdc codec.Codec, txJSONDecoder sdk.TxDecoder) ([]*btcstktypes.MsgCreateFinalityProvider, error) {
+	buff := bytes.NewBufferString(SignedFPsStr)
 
-	var gs btcstktypes.GenesisState
-	err := cdc.UnmarshalJSON(buff.Bytes(), &gs)
+	var d DataSignedFps
+	err := json.Unmarshal(buff.Bytes(), &d)
 	if err != nil {
 		return nil, err
 	}
 
-	fps := gs.FinalityProviders
+	fps := make([]*btcstktypes.MsgCreateFinalityProvider, len(d.SignedTxsFP))
+	for i, txAny := range d.SignedTxsFP {
+		txBytes, err := json.Marshal(txAny)
+		if err != nil {
+			return nil, err
+		}
+
+		tx, err := txJSONDecoder(txBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		fp, err := parseCreateFPFromSignedTx(cdc, tx)
+		if err != nil {
+			return nil, err
+		}
+
+		fps[i] = fp
+	}
+
 	// sorts all the FPs by their addresses
 	sort.Slice(fps, func(i, j int) bool {
 		return fps[i].Addr > fps[j].Addr
@@ -113,13 +138,27 @@ func LoadSignedFPsFromData(cdc codec.Codec) ([]*btcstktypes.FinalityProvider, er
 	return fps, nil
 }
 
+func parseCreateFPFromSignedTx(cdc codec.Codec, tx sdk.Tx) (*btcstktypes.MsgCreateFinalityProvider, error) {
+	msgs := tx.GetMsgs()
+	if len(msgs) != 1 {
+		return nil, fmt.Errorf("each tx should contain only one message, invalid tx %+v", tx)
+	}
+
+	msg, ok := msgs[0].(*btcstktypes.MsgCreateFinalityProvider)
+	if !ok {
+		return nil, fmt.Errorf("unable to parse %+v to MsgCreateFinalityProvider", msg)
+	}
+
+	return msg, nil
+}
+
 func insertFPs(
 	ctx sdk.Context,
 	k *btcstkkeeper.Keeper,
-	fps []*btcstktypes.FinalityProvider,
+	fps []*btcstktypes.MsgCreateFinalityProvider,
 ) error {
 	for _, fp := range fps {
-		if err := k.AddFinalityProvider(ctx, fp.ToMsg()); err != nil {
+		if err := k.AddFinalityProvider(ctx, fp); err != nil {
 			return err
 		}
 	}
