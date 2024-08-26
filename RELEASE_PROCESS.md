@@ -8,7 +8,7 @@
     - [Tagging Procedure](#tagging-procedure)
   - [Patch release Procedure](#patch-release-procedure)
 
-This document outlines the release process for Babylon node (Babylond)
+This document outlines the release process for Babylon node (babylond)
 
 Babylon follows [semantic versioning](https://semver.org), but with the following deviations to account for state-machine and API breaking changes.
 
