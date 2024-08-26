@@ -189,3 +189,13 @@ func (p Params) CovenantPksHex() []string {
 	}
 	return covPksHex
 }
+
+func (p Params) MustGetCovenantPks() []*btcec.PublicKey {
+	covenantKeys, err := bbn.NewBTCPKsFromBIP340PKs(p.CovenantPks)
+
+	if err != nil {
+		panic(fmt.Errorf("failed to get covenant keys: %w", err))
+	}
+
+	return covenantKeys
+}

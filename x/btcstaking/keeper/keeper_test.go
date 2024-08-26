@@ -281,8 +281,8 @@ func (h *Helper) CreateDelegation(
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
 
 	minUnbondingTime := types.MinimumUnbondingTime(
-		bsParams,
-		bcParams,
+		&bsParams,
+		&bcParams,
 	)
 
 	stakingTxHash, delSK, delPK, msgCreateBTCDel, err := h.CreateDelegationCustom(

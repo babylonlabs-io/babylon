@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	btcckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/btcstaking"
@@ -13,6 +15,7 @@ import (
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -160,49 +163,190 @@ func caluculateMinimumUnbondingValue(
 	return minUnbondingOutputValue
 }
 
-// CreateBTCDelegation creates a BTC delegation
-// TODO: refactor this handler. It's now too convoluted
-func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCreateBTCDelegation) (*types.MsgCreateBTCDelegationResponse, error) {
-	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateBTCDelegation)
+type ParamsValidationResult struct {
+	StakingOutputIdx   uint32
+	UnbondingOutputIdx uint32
+}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	// basic stateless checks
-	if err := req.ValidateBasic(); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	vp := ms.GetParamsWithVersion(ctx)
-	btccParams := ms.btccKeeper.GetParams(ctx)
-	kValue, wValue := btccParams.BtcConfirmationDepth, btccParams.CheckpointFinalizationTimeout
-
-	minUnbondingTime := types.MinimumUnbondingTime(vp.Params, btccParams)
-
+// ValidateParams validates parsed message against parameters
+func ValidateParams(
+	pm *types.ParsedCreateDelegationMessage,
+	parameters *types.Params,
+	btcheckpointParamseters *btcckpttypes.Params,
+	net *chaincfg.Params,
+) (*ParamsValidationResult, error) {
+	// 1. Validate unbonding time first as it will be used in other checks
+	minUnbondingTime := types.MinimumUnbondingTime(parameters, btcheckpointParamseters)
 	// Check unbonding time (staking time from unbonding tx) is larger than min unbonding time
 	// which is larger value from:
 	// - MinUnbondingTime
 	// - CheckpointFinalizationTimeout
-	if uint64(req.UnbondingTime) <= minUnbondingTime {
-		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding time %d must be larger than %d", req.UnbondingTime, minUnbondingTime)
+	if uint64(pm.UnbondingTime) <= minUnbondingTime {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding time %d must be larger than %d", pm.UnbondingTime, minUnbondingTime)
 	}
 
-	// At this point we know that unbonding time in request:
-	// - is larger than min unbonding time
-	// - is smaller than math.MaxUint16 (due to check in req.ValidateBasic())
-	validatedUnbondingTime := uint16(req.UnbondingTime)
+	stakingTxHash := pm.StakingTx.Transaction.TxHash()
+	covenantPks := parameters.MustGetCovenantPks()
+	slashingAddr := parameters.MustGetSlashingAddress(net)
 
-	stakerAddr, err := sdk.AccAddressFromBech32(req.StakerAddr)
+	// 2. Validate all data related to staking tx:
+	// - it has valid staking output
+	// - slashing tx is relevent to staking tx
+	// - slashing tx signature is valid
+	stakingInfo, err := btcstaking.BuildStakingInfo(
+		pm.StakerPK.PublicKey,
+		pm.FinalityProviderKeys.PublicKeys,
+		covenantPks,
+		parameters.CovenantQuorum,
+		pm.StakingTime,
+		pm.StakingValue,
+		net,
+	)
 	if err != nil {
-		return nil, types.ErrInvalidStakingTx.Wrapf("invalid staker addr %s: %v", req.StakerAddr, err)
+		return nil, types.ErrInvalidStakingTx.Wrapf("err: %v", err)
 	}
 
-	// verify proof of possession
-	if err := req.Pop.Verify(stakerAddr, req.BtcPk, ms.btcNet); err != nil {
+	stakingOutputIdx, err := bbn.GetOutputIdxInBTCTx(pm.StakingTx.Transaction, stakingInfo.StakingOutput)
+
+	if err != nil {
+		return nil, types.ErrInvalidStakingTx.Wrap("staking tx does not contain expected staking output")
+	}
+
+	if err := btcstaking.CheckTransactions(
+		pm.StakingSlashingTx.Transaction,
+		pm.StakingTx.Transaction,
+		stakingOutputIdx,
+		parameters.MinSlashingTxFeeSat,
+		parameters.SlashingRate,
+		slashingAddr,
+		pm.StakerPK.PublicKey,
+		pm.UnbondingTime,
+		net,
+	); err != nil {
+		return nil, types.ErrInvalidStakingTx.Wrap(err.Error())
+	}
+
+	slashingSpendInfo, err := stakingInfo.SlashingPathSpendInfo()
+	if err != nil {
+		panic(fmt.Errorf("failed to construct slashing path from the staking tx: %w", err))
+	}
+
+	if err := btcstaking.VerifyTransactionSigWithOutput(
+		pm.StakingSlashingTx.Transaction,
+		pm.StakingTx.Transaction.TxOut[stakingOutputIdx],
+		slashingSpendInfo.RevealedLeaf.Script,
+		pm.StakerPK.PublicKey,
+		pm.StakerStakingSlashingTxSig.BbnSig.MustMarshal(),
+	); err != nil {
+		return nil, types.ErrInvalidSlashingTx.Wrapf("invalid delegator signature: %v", err)
+	}
+
+	// 3. Validate all data related to unbonding tx:
+	// - it has valid unbonding output
+	// - slashing tx is relevent to unbonding tx
+	// - slashing tx signature is valid
+	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
+		pm.StakerPK.PublicKey,
+		pm.FinalityProviderKeys.PublicKeys,
+		covenantPks,
+		parameters.CovenantQuorum,
+		pm.UnbondingTime,
+		pm.UnbondingValue,
+		net,
+	)
+	if err != nil {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("err: %v", err)
+	}
+
+	unbondingOutputIdx, err := bbn.GetOutputIdxInBTCTx(pm.UnbondingTx.Transaction, unbondingInfo.UnbondingOutput)
+	if err != nil {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding tx does not contain expected unbonding output")
+	}
+
+	err = btcstaking.CheckTransactions(
+		pm.UnbondingSlashingTx.Transaction,
+		pm.UnbondingTx.Transaction,
+		unbondingOutputIdx,
+		parameters.MinSlashingTxFeeSat,
+		parameters.SlashingRate,
+		slashingAddr,
+		pm.StakerPK.PublicKey,
+		pm.UnbondingTime,
+		net,
+	)
+	if err != nil {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("err: %v", err)
+	}
+
+	unbondingSlashingSpendInfo, err := unbondingInfo.SlashingPathSpendInfo()
+	if err != nil {
+		panic(fmt.Errorf("failed to construct slashing path from the unbonding tx: %w", err))
+	}
+
+	if err := btcstaking.VerifyTransactionSigWithOutput(
+		pm.UnbondingSlashingTx.Transaction,
+		pm.UnbondingTx.Transaction.TxOut[unbondingOutputIdx],
+		unbondingSlashingSpendInfo.RevealedLeaf.Script,
+		pm.StakerPK.PublicKey,
+		pm.StakerUnbondingSlashingSig.BbnSig.MustMarshal(),
+	); err != nil {
+		return nil, types.ErrInvalidSlashingTx.Wrapf("invalid delegator signature: %v", err)
+	}
+
+	// 4. Check that unbonding tx input is pointing to staking tx
+	if !pm.UnbondingTx.Transaction.TxIn[0].PreviousOutPoint.Hash.IsEqual(&stakingTxHash) {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding transaction must spend staking output")
+	}
+
+	if pm.UnbondingTx.Transaction.TxIn[0].PreviousOutPoint.Index != stakingOutputIdx {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding transaction input must spend staking output")
+	}
+	// 5. Check unbonding tx fees against staking tx.
+	// - fee is larger than 0
+	// - ubonding output value is is at leat `MinUnbondingValue` percent of staking output value
+	if pm.UnbondingTx.Transaction.TxOut[0].Value >= pm.StakingTx.Transaction.TxOut[stakingOutputIdx].Value {
+		// Note: we do not enfore any minimum fee for unbonding tx, we only require that it is larger than 0
+		// Given that unbonding tx must not be replacable and we do not allow sending it second time, it places
+		// burden on staker to choose right fee.
+		// Unbonding tx should not be replaceable at babylon level (and by extension on btc level), as this would
+		// allow staker to spam the network with unbonding txs, which would force covenant and finality provider to send signatures.
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0")
+	}
+
+	minUnbondingValue := caluculateMinimumUnbondingValue(pm.StakingTx.Transaction.TxOut[stakingOutputIdx], parameters)
+	if btcutil.Amount(pm.UnbondingTx.Transaction.TxOut[0].Value) < minUnbondingValue {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding output value must be at least %s, based on staking output", minUnbondingValue)
+	}
+
+	return &ParamsValidationResult{
+		StakingOutputIdx:   stakingOutputIdx,
+		UnbondingOutputIdx: unbondingOutputIdx,
+	}, nil
+}
+
+// CreateBTCDelegation creates a BTC delegation
+func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCreateBTCDelegation) (*types.MsgCreateBTCDelegationResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateBTCDelegation)
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// 1. Parse the message into better domain format
+	parsedMsg, err := types.ParseCreateDelegationMessage(req)
+
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	// 2. Basic stateless checks
+	// - verify proof of possession
+	if err := parsedMsg.ParsedPop.Verify(parsedMsg.StakerAddress, parsedMsg.StakerPK.BbnPk, ms.btcNet); err != nil {
 		return nil, types.ErrInvalidProofOfPossession.Wrapf("error while validating proof of posession: %v", err)
 	}
 
+	// 3. Check finality providers to which message delegate
 	// Ensure all finality providers are known to Babylon, are not slashed,
 	// and their registered epochs are finalised
-	for _, fpBTCPK := range req.FpBtcPkList {
+	for _, fpBTCPK := range parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat {
 		// get this finality provider
 		fp, err := ms.GetFinalityProvider(ctx, fpBTCPK)
 		if err != nil {
@@ -214,242 +358,80 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		}
 	}
 
-	// Parse staking tx
-	stakingMsgTx, err := bbn.NewBTCTxFromBytes(req.StakingTx.Transaction)
+	// 3. Validated parsed message against parameters
+	vp := ms.GetParamsWithVersion(ctx)
+	// vp := ms.GetParamsWithVersion(ctx)
+	btccParams := ms.btccKeeper.GetParams(ctx)
+
+	paramsValidationResult, err := ValidateParams(parsedMsg, &vp.Params, &btccParams, ms.btcNet)
+
 	if err != nil {
-		return nil, types.ErrInvalidStakingTx.Wrapf("cannot be parsed: %v", err)
+		return nil, err
 	}
 
-	// Check staking tx is not duplicated
-	stakingTxHash := stakingMsgTx.TxHash()
-	delgation := ms.getBTCDelegation(ctx, stakingTxHash)
-	if delgation != nil {
-		return nil, types.ErrReusedStakingTx.Wrapf("duplicated tx hash: %s", stakingTxHash.String())
-	}
+	// 4. Check:
+	// - timelock of staking tx
+	// - staking tx is k-deep
+	// - staking tx inclusion proof
+	stakingTxHeader := ms.btclcKeeper.GetHeaderByHash(ctx, parsedMsg.StakingTxProofOfInclusion.HeaderHash)
 
-	// Check if data provided in request, matches data to which staking tx is committed
-	fpPKs, err := bbn.NewBTCPKsFromBIP340PKs(req.FpBtcPkList)
-	if err != nil {
-		return nil, types.ErrInvalidStakingTx.Wrapf("cannot parse finality provider PK list: %v", err)
-	}
-	covenantPKs, err := bbn.NewBTCPKsFromBIP340PKs(vp.Params.CovenantPks)
-	if err != nil {
-		// programming error
-		panic("failed to parse covenant PKs in KVStore")
-	}
-	stakerPk := req.BtcPk.MustToBTCPK()
-
-	stakingInfo, err := btcstaking.BuildStakingInfo(
-		stakerPk,
-		fpPKs,
-		covenantPKs,
-		vp.Params.CovenantQuorum,
-		uint16(req.StakingTime),
-		btcutil.Amount(req.StakingValue),
-		ms.btcNet,
-	)
-	if err != nil {
-		return nil, types.ErrInvalidStakingTx.Wrapf("err: %v", err)
-	}
-
-	stakingOutputIdx, err := bbn.GetOutputIdxInBTCTx(stakingMsgTx, stakingInfo.StakingOutput)
-	if err != nil {
-		return nil, types.ErrInvalidStakingTx.Wrap("staking tx does not contain expected staking output")
-	}
-
-	// Check staking tx timelock has correct values
-	// get startheight and endheight of the timelock
-	stakingTxHeader := ms.btclcKeeper.GetHeaderByHash(ctx, req.StakingTx.Key.Hash)
 	if stakingTxHeader == nil {
 		return nil, fmt.Errorf("header that includes the staking tx is not found")
 	}
-	startHeight := stakingTxHeader.Height
-	endHeight := stakingTxHeader.Height + uint64(req.StakingTime)
 
-	// ensure staking tx is k-deep
+	btcHeader := stakingTxHeader.Header.ToBlockHeader()
+
+	proofValid := btcckpttypes.VerifyInclusionProof(
+		btcutil.NewTx(parsedMsg.StakingTx.Transaction),
+		&btcHeader.MerkleRoot,
+		parsedMsg.StakingTxProofOfInclusion.Proof,
+		parsedMsg.StakingTxProofOfInclusion.Index,
+	)
+
+	if !proofValid {
+		return nil, types.ErrInvalidStakingTx.Wrapf("not included in the Bitcoin chain")
+	}
+
+	startHeight := stakingTxHeader.Height
+
+	endHeight := stakingTxHeader.Height + uint64(parsedMsg.StakingTime)
+
 	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
 	stakingTxDepth := btcTip.Height - stakingTxHeader.Height
-	if stakingTxDepth < kValue {
-		return nil, types.ErrInvalidStakingTx.Wrapf("not k-deep: k=%d; depth=%d", kValue, stakingTxDepth)
+	if stakingTxDepth < btccParams.BtcConfirmationDepth {
+		return nil, types.ErrInvalidStakingTx.Wrapf("not k-deep: k=%d; depth=%d", btccParams.BtcConfirmationDepth, stakingTxDepth)
 	}
 	// ensure staking tx's timelock has more than w BTC blocks left
-	if btcTip.Height+wValue >= endHeight {
-		return nil, types.ErrInvalidStakingTx.Wrapf("staking tx's timelock has no more than w(=%d) blocks left", wValue)
+	if btcTip.Height+btccParams.CheckpointFinalizationTimeout >= endHeight {
+		return nil, types.ErrInvalidStakingTx.Wrapf("staking tx's timelock has no more than w(=%d) blocks left", btccParams.CheckpointFinalizationTimeout)
 	}
 
-	// verify staking tx info, i.e., inclusion proof
-	if err := req.StakingTx.VerifyInclusion(stakingTxHeader.Header, ms.btccKeeper.GetPowLimit()); err != nil {
-		return nil, types.ErrInvalidStakingTx.Wrapf("not included in the Bitcoin chain: %v", err)
-	}
-
-	// check slashing tx and its consistency with staking tx
-	slashingMsgTx, err := req.SlashingTx.ToMsgTx()
-	if err != nil {
-		return nil, types.ErrInvalidSlashingTx.Wrapf("cannot be converted to wire.MsgTx: %v", err)
-	}
-
-	// decode slashing address
-	// TODO: Decode slashing address only once, as it is the same for all BTC delegations
-	slashingAddr, err := btcutil.DecodeAddress(vp.Params.SlashingAddress, ms.btcNet)
-	if err != nil {
-		panic(fmt.Errorf("failed to decode slashing address in genesis: %w", err))
-	}
-
-	// Check slashing tx and staking tx are valid and consistent
-	if err := btcstaking.CheckTransactions(
-		slashingMsgTx,
-		stakingMsgTx,
-		stakingOutputIdx,
-		vp.Params.MinSlashingTxFeeSat,
-		vp.Params.SlashingRate,
-		slashingAddr,
-		stakerPk,
-		validatedUnbondingTime,
-		ms.btcNet,
-	); err != nil {
-		return nil, types.ErrInvalidStakingTx.Wrap(err.Error())
-	}
-
-	// verify delegator sig against slashing path of the staking tx's script
-	slashingSpendInfo, err := stakingInfo.SlashingPathSpendInfo()
-	if err != nil {
-		panic(fmt.Errorf("failed to construct slashing path from the staking tx: %w", err))
-	}
-
-	err = req.SlashingTx.VerifySignature(
-		stakingInfo.StakingOutput,
-		slashingSpendInfo.GetPkScriptPath(),
-		stakerPk,
-		req.DelegatorSlashingSig,
-	)
-	if err != nil {
-		return nil, types.ErrInvalidSlashingTx.Wrapf("invalid delegator signature: %v", err)
-	}
-
-	// all good, construct BTCDelegation and insert BTC delegation
+	// 6.all good, construct BTCDelegation and insert BTC delegation
 	// NOTE: the BTC delegation does not have voting power yet. It will
-	// have voting power only when 1) its corresponding staking tx is k-deep,
-	// and 2) it receives a covenant signature
+	// have voting power only when it receives a covenant signatures
 	newBTCDel := &types.BTCDelegation{
-		StakerAddr:       stakerAddr.String(),
-		BtcPk:            req.BtcPk,
-		Pop:              req.Pop,
-		FpBtcPkList:      req.FpBtcPkList,
+		StakerAddr:       parsedMsg.StakerAddress.String(),
+		BtcPk:            parsedMsg.StakerPK.BbnPk,
+		Pop:              parsedMsg.ParsedPop,
+		FpBtcPkList:      parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat,
 		StartHeight:      startHeight,
 		EndHeight:        endHeight,
-		TotalSat:         uint64(stakingInfo.StakingOutput.Value),
-		StakingTx:        req.StakingTx.Transaction,
-		StakingOutputIdx: stakingOutputIdx,
-		SlashingTx:       req.SlashingTx,
-		DelegatorSig:     req.DelegatorSlashingSig,
-		UnbondingTime:    uint32(validatedUnbondingTime),
-		CovenantSigs:     nil,        // NOTE: covenant signature will be submitted in a separate msg by covenant
-		BtcUndelegation:  nil,        // this will be constructed in below code
-		ParamsVersion:    vp.Version, // version of the params against delegations was validated
-	}
-
-	/*
-		logics about early unbonding
-	*/
-
-	// deserialize provided transactions
-	unbondingSlashingMsgTx, err := req.UnbondingSlashingTx.ToMsgTx()
-	if err != nil {
-		return nil, types.ErrInvalidSlashingTx.Wrapf("cannot convert unbonding slashing tx to wire.MsgTx: %v", err)
-	}
-	unbondingMsgTx, err := bbn.NewBTCTxFromBytes(req.UnbondingTx)
-	if err != nil {
-		return nil, types.ErrInvalidUnbondingTx.Wrapf("cannot be converted to wire.MsgTx: %v", err)
-	}
-
-	// Check that unbonding tx input is pointing to staking tx
-	if !unbondingMsgTx.TxIn[0].PreviousOutPoint.Hash.IsEqual(&stakingTxHash) {
-		return nil, types.ErrInvalidUnbondingTx.Wrapf("slashing transaction must spend staking output")
-	}
-	// Check that staking tx output index matches unbonding tx output index
-	if unbondingMsgTx.TxIn[0].PreviousOutPoint.Index != stakingOutputIdx {
-		return nil, types.ErrInvalidUnbondingTx.Wrapf("slashing transaction input must spend staking output")
-	}
-
-	// building unbonding info
-	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
-		newBTCDel.BtcPk.MustToBTCPK(),
-		fpPKs,
-		covenantPKs,
-		vp.Params.CovenantQuorum,
-		validatedUnbondingTime,
-		btcutil.Amount(req.UnbondingValue),
-		ms.btcNet,
-	)
-	if err != nil {
-		return nil, types.ErrInvalidUnbondingTx.Wrapf("err: %v", err)
-	}
-
-	// get unbonding output index
-	unbondingOutputIdx, err := bbn.GetOutputIdxInBTCTx(unbondingMsgTx, unbondingInfo.UnbondingOutput)
-	if err != nil {
-		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding tx does not contain expected unbonding output")
-	}
-
-	// Check that slashing tx and unbonding tx are valid and consistent
-	err = btcstaking.CheckTransactions(
-		unbondingSlashingMsgTx,
-		unbondingMsgTx,
-		unbondingOutputIdx,
-		vp.Params.MinSlashingTxFeeSat,
-		vp.Params.SlashingRate,
-		vp.Params.MustGetSlashingAddress(ms.btcNet),
-		stakerPk,
-		validatedUnbondingTime,
-		ms.btcNet,
-	)
-	if err != nil {
-		return nil, types.ErrInvalidUnbondingTx.Wrapf("err: %v", err)
-	}
-
-	// Check staker signature against slashing path of the unbonding tx
-	unbondingSlashingSpendInfo, err := unbondingInfo.SlashingPathSpendInfo()
-	if err != nil {
-		// our staking info was constructed by using BuildStakingInfo constructor, so if
-		// this fails, it is a programming error
-		panic(err)
-	}
-
-	err = req.UnbondingSlashingTx.VerifySignature(
-		unbondingInfo.UnbondingOutput,
-		unbondingSlashingSpendInfo.GetPkScriptPath(),
-		newBTCDel.BtcPk.MustToBTCPK(),
-		req.DelegatorUnbondingSlashingSig,
-	)
-	if err != nil {
-		return nil, types.ErrInvalidSlashingTx.Wrapf("invalid delegator signature: %v", err)
-	}
-
-	// Check unbonding tx fees against staking tx.
-	// - fee is larger than 0
-	// - ubonding output value is is at leat `MinUnbondingValue` percent of staking output value
-	if unbondingMsgTx.TxOut[0].Value >= stakingMsgTx.TxOut[newBTCDel.StakingOutputIdx].Value {
-		// Note: we do not enfore any minimum fee for unbonding tx, we only require that it is larger than 0
-		// Given that unbonding tx must not be replacable and we do not allow sending it second time, it places
-		// burden on staker to choose right fee.
-		// Unbonding tx should not be replaceable at babylon level (and by extension on btc level), as this would
-		// allow staker to spam the network with unbonding txs, which would force covenant and finality provider to send signatures.
-		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0")
-	}
-
-	minUnbondingValue := caluculateMinimumUnbondingValue(stakingMsgTx.TxOut[stakingOutputIdx], &vp.Params)
-	if btcutil.Amount(unbondingMsgTx.TxOut[0].Value) < minUnbondingValue {
-		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding output value must be at least %s, based on staking output", minUnbondingValue)
-	}
-
-	// all good, add BTC undelegation
-	newBTCDel.BtcUndelegation = &types.BTCUndelegation{
-		UnbondingTx:              req.UnbondingTx,
-		SlashingTx:               req.UnbondingSlashingTx,
-		DelegatorSlashingSig:     req.DelegatorUnbondingSlashingSig,
-		DelegatorUnbondingSig:    nil,
-		CovenantSlashingSigs:     nil,
-		CovenantUnbondingSigList: nil,
+		TotalSat:         uint64(parsedMsg.StakingValue),
+		StakingTx:        parsedMsg.StakingTx.TransactionBytes,
+		StakingOutputIdx: paramsValidationResult.StakingOutputIdx,
+		SlashingTx:       types.NewBtcSlashingTxFromBytes(parsedMsg.StakingSlashingTx.TransactionBytes),
+		DelegatorSig:     parsedMsg.StakerStakingSlashingTxSig.BbnSig,
+		UnbondingTime:    uint32(parsedMsg.UnbondingTime),
+		CovenantSigs:     nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
+		BtcUndelegation: &types.BTCUndelegation{
+			UnbondingTx:              parsedMsg.UnbondingTx.TransactionBytes,
+			SlashingTx:               types.NewBtcSlashingTxFromBytes(parsedMsg.UnbondingSlashingTx.TransactionBytes),
+			DelegatorSlashingSig:     parsedMsg.StakerUnbondingSlashingSig.BbnSig,
+			DelegatorUnbondingSig:    nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
+			CovenantSlashingSigs:     nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
+			CovenantUnbondingSigList: nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
+		},
+		ParamsVersion: vp.Version, // version of the params against delegations was validated
 	}
 
 	// add this BTC delegation, and emit corresponding events
