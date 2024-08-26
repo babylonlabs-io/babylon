@@ -44,6 +44,9 @@ func (k Keeper) GetTimestampedPubRandCommitForHeight(ctx context.Context, fpBtcP
 
 	// ensure the finality provider's last randomness commit is already finalised by BTC timestamping
 	finalizedEpoch := k.GetLastFinalizedEpoch(ctx)
+	if finalizedEpoch == 0 {
+		return nil, fmt.Errorf("no finalized epoch yet")
+	}
 	if finalizedEpoch < prCommit.EpochNum {
 		return nil, types.ErrPubRandCommitNotBTCTimestamped.
 			Wrapf("the finality provider %s last committed epoch number: %d, last finalized epoch number: %d",
