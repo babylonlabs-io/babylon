@@ -32,10 +32,10 @@ func TestValidateSignatureSignedFPsFromData(t *testing.T) {
 	var d v1.DataSignedFps
 	err := json.Unmarshal(buff.Bytes(), &d)
 	require.NoError(t, err)
-	require.Len(t, d.SignedTxsFP, 2)
 
 	antehandlerSigVerifier := buildAnteHandlerSigVerifier(t, bbnApp)
 
+	fpAddrs := make(map[string]interface{}, len(d.SignedTxsFP))
 	for _, txAny := range d.SignedTxsFP {
 		txBytes, err := json.Marshal(txAny)
 		require.NoError(t, err)
@@ -49,6 +49,10 @@ func TestValidateSignatureSignedFPsFromData(t *testing.T) {
 
 		msg, ok := msgs[0].(*btcstktypes.MsgCreateFinalityProvider)
 		require.True(t, ok)
+
+		_, exist := fpAddrs[msg.Addr]
+		require.False(t, exist)
+		fpAddrs[msg.Addr] = nil
 
 		require.NoError(t, msg.ValidateBasic())
 

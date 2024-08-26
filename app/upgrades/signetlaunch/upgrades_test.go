@@ -16,7 +16,6 @@ import (
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -142,12 +141,4 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 			tc.post_update()
 		})
 	}
-}
-
-func TestLoadSignedFPsFromData(t *testing.T) {
-	bbnApp := app.NewTmpBabylonApp()
-
-	fps, err := v1.LoadSignedFPsFromData(bbnApp.AppCodec(), bbnApp.TxConfig().TxJSONDecoder())
-	require.NoError(t, err)
-	require.Len(t, fps, 2)
 }
