@@ -358,9 +358,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		}
 	}
 
-	// 3. Validated parsed message against parameters
+	// 3. Validate parsed message against parameters
 	vp := ms.GetParamsWithVersion(ctx)
-	// vp := ms.GetParamsWithVersion(ctx)
+
 	btccParams := ms.btccKeeper.GetParams(ctx)
 
 	paramsValidationResult, err := ValidateParams(parsedMsg, &vp.Params, &btccParams, ms.btcNet)
@@ -379,6 +379,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, fmt.Errorf("header that includes the staking tx is not found")
 	}
 
+	// no need to do more validations to the btc header as it was already
+	// validate by the btclight client module
 	btcHeader := stakingTxHeader.Header.ToBlockHeader()
 
 	proofValid := btcckpttypes.VerifyInclusionProof(
@@ -427,7 +429,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 			UnbondingTx:              parsedMsg.UnbondingTx.TransactionBytes,
 			SlashingTx:               types.NewBtcSlashingTxFromBytes(parsedMsg.UnbondingSlashingTx.TransactionBytes),
 			DelegatorSlashingSig:     parsedMsg.StakerUnbondingSlashingSig.BbnSig,
-			DelegatorUnbondingSig:    nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
+			DelegatorUnbondingSig:    nil,
 			CovenantSlashingSigs:     nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
 			CovenantUnbondingSigList: nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
 		},

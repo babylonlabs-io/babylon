@@ -86,9 +86,6 @@ func (h *Helper) GenAndApplyCustomParams(
 	baseHeader := btclctypes.SimnetGenesisBlock()
 	h.BTCLightClientKeeper.EXPECT().GetBaseBTCHeader(gomock.Any()).Return(&baseHeader).AnyTimes()
 
-	// mocking stuff for BTC checkpoint keeper
-	h.BTCCheckpointKeeper.EXPECT().GetPowLimit().Return(h.Net.PowLimit).AnyTimes()
-
 	params := btcctypes.DefaultParams()
 	params.CheckpointFinalizationTimeout = finalizationTimeout
 
