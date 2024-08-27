@@ -5,9 +5,9 @@ DO NOT USE IN PRODUCTION!
 
 ## Compile signet launch upgrade
 
-This upgrade has two data points loaded from strings. BTC Headers from
-`./data_btc_headers.go` and signed messages to create finality providers
-`./data_signed_fps.go`.
+This upgrade loads 2 JSONs from strings in different files.
+BTC Headers from `./data_btc_headers.go` and signed messages
+to create finality providers `./data_signed_fps.go`.
 
 ### BTC Headers
 
