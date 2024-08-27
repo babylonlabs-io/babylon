@@ -45,7 +45,7 @@ func (k Keeper) GetTimestampedPubRandCommitForHeight(ctx context.Context, fpBtcP
 	// ensure the finality provider's last randomness commit is already finalised by BTC timestamping
 	finalizedEpoch := k.GetLastFinalizedEpoch(ctx)
 	if finalizedEpoch == 0 {
-		return nil, fmt.Errorf("no finalized epoch yet")
+		return nil, types.ErrPubRandCommitNotBTCTimestamped.Wrapf("no finalized epoch yet")
 	}
 	if finalizedEpoch < prCommit.EpochNum {
 		return nil, types.ErrPubRandCommitNotBTCTimestamped.
@@ -58,7 +58,7 @@ func (k Keeper) GetTimestampedPubRandCommitForHeight(ctx context.Context, fpBtcP
 
 func (k Keeper) HasTimestampedPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) bool {
 	_, err := k.GetTimestampedPubRandCommitForHeight(ctx, fpBtcPK, height)
-	return err != nil
+	return err == nil
 }
 
 // SetPubRandCommit adds the given public randomness commitment for the given public key

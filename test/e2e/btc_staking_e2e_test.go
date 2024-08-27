@@ -244,21 +244,6 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 
 	activeDel := activeDels.Dels[0]
 	s.True(activeDel.HasCovenantQuorums(covenantQuorum))
-
-	// wait for a block so that above txs take effect and the voting power table
-	// is updated in the next block's BeginBlock
-	nonValidatorNode.WaitForNextBlock()
-
-	// ensure BTC staking is activated
-	activatedHeight := nonValidatorNode.QueryActivatedHeight()
-	s.Positive(activatedHeight)
-	// ensure finality provider has voting power at activated height
-	currentBtcTip, err := nonValidatorNode.QueryTip()
-	s.NoError(err)
-	activeFps := nonValidatorNode.QueryActiveFinalityProvidersAtHeight(activatedHeight)
-	s.Len(activeFps, 1)
-	s.Equal(activeFps[0].VotingPower, activeDels.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
-	s.Equal(activeFps[0].VotingPower, activeDel.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
 }
 
 // Test2CommitPublicRandomnessAndSubmitFinalitySignature is an end-to-end
@@ -271,10 +256,11 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.NoError(err)
 
 	// get activated height
-	activatedHeight := nonValidatorNode.QueryActivatedHeight()
-	s.Positive(activatedHeight)
-	_, err = nonValidatorNode.QueryCurrentHeight()
-	s.NoError(err)
+	activatedHeight, err := nonValidatorNode.QueryActivatedHeight()
+	s.ErrorContains(err, bstypes.ErrBTCStakingNotActivated.Error())
+	fps := nonValidatorNode.QueryFinalityProviders()
+	s.Len(fps, 1)
+	s.Zero(fps[0].VotingPower)
 
 	/*
 		commit a number of public randomness since activatedHeight
