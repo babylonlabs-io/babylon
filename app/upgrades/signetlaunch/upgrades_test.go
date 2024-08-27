@@ -1,4 +1,4 @@
-package vanilla_test
+package signetlaunch_test
 
 import (
 	"fmt"
@@ -10,8 +10,9 @@ import (
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/babylonlabs-io/babylon/app"
-	v1 "github.com/babylonlabs-io/babylon/app/upgrades/vanilla"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
+	"github.com/babylonlabs-io/babylon/x/btclightclient"
+	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -37,27 +38,35 @@ func (s *UpgradeTestSuite) SetupTest() {
 	s.app = app.Setup(s.T(), false)
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
 	s.preModule = upgrade.NewAppModule(s.app.UpgradeKeeper, s.app.AccountKeeper.AddressCodec())
+
+	btcHeaderGenesis, err := app.SignetBtcHeaderGenesis(s.app.EncodingConfig().Codec)
+	s.NoError(err)
+
+	k := s.app.BTCLightClientKeeper
+	btclightclient.InitGenesis(s.ctx, s.app.BTCLightClientKeeper, btclighttypes.GenesisState{
+		Params:     k.GetParams(s.ctx),
+		BtcHeaders: []*btclighttypes.BTCHeaderInfo{btcHeaderGenesis},
+	})
 }
 
 func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(UpgradeTestSuite))
 }
 
-func (s *UpgradeTestSuite) TestUpgradePayments() {
-	oldAcctNum := 0
+func (s *UpgradeTestSuite) TestUpgrade() {
+	oldHeadersLen := 0
 
 	testCases := []struct {
 		msg         string
 		pre_update  func()
 		update      func()
 		post_update func()
-		expPass     bool
 	}{
 		{
-			"Test vanilla software upgrade gov prop",
+			"Test launch software upgrade gov prop",
 			func() {
-				allAccounts := s.app.AccountKeeper.GetAllAccounts(s.ctx)
-				oldAcctNum = len(allAccounts)
+				allBtcHeaders := s.app.BTCLightClientKeeper.GetMainChainFrom(s.ctx, 0)
+				oldHeadersLen = len(allBtcHeaders)
 			},
 			func() {
 				// inject upgrade plan
@@ -79,17 +88,23 @@ func (s *UpgradeTestSuite) TestUpgradePayments() {
 				})
 			},
 			func() {
-				// ensure the account is removed
-				allAccounts := s.app.AccountKeeper.GetAllAccounts(s.ctx)
-				newAcctNum := len(allAccounts)
-				s.Equal(newAcctNum, oldAcctNum-1)
+				// ensure the btc headers were added
+				allBtcHeaders := s.app.BTCLightClientKeeper.GetMainChainFrom(s.ctx, 0)
 
-				// ensure finality provider is inserted
-				resp, err := s.app.BTCStakingKeeper.FinalityProviders(s.ctx, &bstypes.QueryFinalityProvidersRequest{})
+				btcHeadersInserted, err := v1.LoadBTCHeadersFromData()
 				s.NoError(err)
-				s.Len(resp.FinalityProviders, 1)
+				lenHeadersInserted := len(btcHeadersInserted)
+
+				newHeadersLen := len(allBtcHeaders)
+				s.Equal(newHeadersLen, oldHeadersLen+lenHeadersInserted)
+
+				// ensure the headers were inserted as expected
+				for i, btcHeaderInserted := range btcHeadersInserted {
+					btcHeaderInState := allBtcHeaders[oldHeadersLen+i]
+
+					s.EqualValues(btcHeaderInserted.Header.MarshalHex(), btcHeaderInState.Header.MarshalHex())
+				}
 			},
-			true,
 		},
 	}
 

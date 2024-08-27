@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -85,4 +87,20 @@ func GenesisStateFromAppState(cdc codec.Codec, appState map[string]json.RawMessa
 	}
 
 	return genesisState
+}
+
+func LoadBtcLightGenStateFromFile(cdc codec.Codec, inputFilePath string) (*GenesisState, error) {
+	filePath := filepath.Clean(inputFilePath)
+	bz, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var genState GenesisState
+	err = cdc.UnmarshalJSON(bz, &genState)
+	if err != nil {
+		return nil, err
+	}
+
+	return &genState, nil
 }

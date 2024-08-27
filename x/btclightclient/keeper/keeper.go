@@ -75,11 +75,66 @@ func (k *Keeper) SetHooks(bh types.BTCLightClientHooks) *Keeper {
 	return k
 }
 
+func (k Keeper) insertHandler() func(ctx context.Context, s headersState, result *types.InsertResult) error {
+	return func(ctx context.Context, s headersState, result *types.InsertResult) error {
+		// if we receive rollback, should return error
+		if result.RollbackInfo != nil {
+			return fmt.Errorf("rollback should not happend %+v", result.RollbackInfo)
+		}
+
+		for _, header := range result.HeadersToInsert {
+			h := header
+			s.insertHeader(h)
+		}
+		return nil
+	}
+}
+
+func (k Keeper) triggerEventAndHandleHooksHandler() func(ctx context.Context, s headersState, result *types.InsertResult) error {
+	return func(ctx context.Context, s headersState, result *types.InsertResult) error {
+		// if we have rollback, first delete all headers up to the rollback point
+		if result.RollbackInfo != nil {
+			// roll back to the height
+			s.rollBackHeadersUpTo(result.RollbackInfo.HeaderToRollbackTo.Height)
+			// trigger rollback event
+			k.triggerRollBack(ctx, result.RollbackInfo.HeaderToRollbackTo)
+		}
+
+		for _, header := range result.HeadersToInsert {
+			h := header
+			s.insertHeader(h)
+			k.triggerHeaderInserted(ctx, h)
+			k.triggerRollForward(ctx, h)
+		}
+		return nil
+	}
+}
+
+func (k Keeper) insertHeadersWithHookAndEvents(
+	ctx context.Context,
+	headers []*wire.BlockHeader) error {
+	return k.insertHeadersInternal(
+		ctx,
+		headers,
+		k.triggerEventAndHandleHooksHandler(),
+	)
+}
+
 func (k Keeper) insertHeaders(
 	ctx context.Context,
-	headers []*wire.BlockHeader,
-) error {
+	headers []*wire.BlockHeader) error {
+	return k.insertHeadersInternal(
+		ctx,
+		headers,
+		k.insertHandler(),
+	)
+}
 
+func (k Keeper) insertHeadersInternal(
+	ctx context.Context,
+	headers []*wire.BlockHeader,
+	handleInsertResult func(ctx context.Context, s headersState, result *types.InsertResult) error,
+) error {
 	headerState := k.headersState(ctx)
 
 	result, err := k.bl.InsertHeaders(
@@ -91,21 +146,7 @@ func (k Keeper) insertHeaders(
 		return err
 	}
 
-	// if we have rollback, first delete all headers up to the rollback point
-	if result.RollbackInfo != nil {
-		// roll back to the height
-		headerState.rollBackHeadersUpTo(result.RollbackInfo.HeaderToRollbackTo.Height)
-		// trigger rollback event
-		k.triggerRollBack(ctx, result.RollbackInfo.HeaderToRollbackTo)
-	}
-
-	for _, header := range result.HeadersToInsert {
-		h := header
-		headerState.insertHeader(h)
-		k.triggerHeaderInserted(ctx, h)
-		k.triggerRollForward(ctx, h)
-	}
-	return nil
+	return handleInsertResult(ctx, headerState, result)
 }
 
 // InsertHeaderInfos inserts multiple headers info at the store.
@@ -116,17 +157,31 @@ func (k Keeper) InsertHeaderInfos(ctx context.Context, infos []*types.BTCHeaderI
 	}
 }
 
+func (k Keeper) InsertHeadersWithHookAndEvents(ctx context.Context, headers []bbn.BTCHeaderBytes) error {
+	if len(headers) == 0 {
+		return types.ErrEmptyMessage
+	}
+
+	blockHeaders := btcHeadersBytesToBlockHeader(headers)
+	return k.insertHeadersWithHookAndEvents(ctx, blockHeaders)
+}
+
 func (k Keeper) InsertHeaders(ctx context.Context, headers []bbn.BTCHeaderBytes) error {
 	if len(headers) == 0 {
 		return types.ErrEmptyMessage
 	}
 
+	blockHeaders := btcHeadersBytesToBlockHeader(headers)
+	return k.insertHeaders(ctx, blockHeaders)
+}
+
+func btcHeadersBytesToBlockHeader(headers []bbn.BTCHeaderBytes) []*wire.BlockHeader {
 	blockHeaders := make([]*wire.BlockHeader, len(headers))
 	for i, header := range headers {
 		blockHeaders[i] = header.ToBlockHeader()
 	}
 
-	return k.insertHeaders(ctx, blockHeaders)
+	return blockHeaders
 }
 
 // BlockHeight returns the height of the provided header
@@ -203,6 +258,22 @@ func (k Keeper) GetMainChainFrom(ctx context.Context, startHeight uint64) []*typ
 		return false
 	}
 	k.headersState(ctx).IterateForwardHeaders(startHeight, accHeaderFn)
+	return headers
+}
+
+// GetMainChainFromWithLimit returns the current canonical chain from the given height up to the tip
+// If the height is higher than the tip, it returns an empty slice
+// If startHeight is 0, it returns the entire main chain
+func (k Keeper) GetMainChainFromWithLimit(ctx context.Context, startHeight, limit uint64) []*types.BTCHeaderInfo {
+	headers := make([]*types.BTCHeaderInfo, 0, limit)
+	fn := func(header *types.BTCHeaderInfo) bool {
+		if len(headers) >= int(limit) {
+			return true
+		}
+		headers = append(headers, header)
+		return false
+	}
+	k.headersState(ctx).IterateForwardHeaders(startHeight, fn)
 	return headers
 }
 

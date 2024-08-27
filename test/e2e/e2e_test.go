@@ -35,3 +35,8 @@ func TestBTCTimestampingPhase2RlyTestSuite(t *testing.T) {
 func TestBTCStakingTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingTestSuite))
 }
+
+// TestSoftwareUpgradeSignetLaunchTestSuite tests software upgrade of signet launch end-to-end
+func TestSoftwareUpgradeSignetLaunchTestSuite(t *testing.T) {
+	suite.Run(t, new(SoftwareUpgradeSignetLaunchTestSuite))
+}
