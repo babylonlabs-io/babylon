@@ -35,7 +35,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	if len(events) == 0 {
 		if dc != nil {
 			// map everything in prev height to this height
-			k.recordVotingPowerAndCache(ctx, dc, dc, maxActiveFps)
+			k.recordVotingPowerAndCache(ctx, dc, nil, maxActiveFps)
 		}
 		return
 	}
@@ -62,8 +62,26 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	k.recordMetrics(newDc)
 }
 
-func (k Keeper) recordVotingPowerAndCache(ctx context.Context, prevDc, newDc *types.VotingPowerDistCache, maxActiveFps uint32) *types.VotingPowerDistCache {
+func (k Keeper) recordVotingPowerAndCache(ctx context.Context, prevDc, newDc *types.VotingPowerDistCache, maxActiveFps uint32) {
+	if prevDc == nil {
+		panic("the previous voting power distribution cache cannot be nil")
+	}
+
+	// deep copy the previous dist cache if the new dist cache is nil
+	if newDc == nil {
+		newDc = types.NewVotingPowerDistCache()
+		newDc.TotalVotingPower = prevDc.TotalVotingPower
+		newDc.NumActiveFps = prevDc.NumActiveFps
+		newFps := make([]*types.FinalityProviderDistInfo, len(prevDc.FinalityProviders))
+		for i, prevFp := range prevDc.FinalityProviders {
+			newFp := *prevFp
+			newFps[i] = &newFp
+		}
+		newDc.FinalityProviders = newFps
+	}
+
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+
 	// label fps with whether it has timestamped pub rand
 	for _, fp := range newDc.FinalityProviders {
 		// TODO calling HasTimestampedPubRand potentially iterates
@@ -82,18 +100,17 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, prevDc, newDc *ty
 		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
 	}
 
-	// find newly bonded finality providers and execute the hooks
-	newBondedFinalityProviders := newDc.FindNewActiveFinalityProviders(prevDc)
-	for _, fp := range newBondedFinalityProviders {
+	// find newly activated finality providers and execute the hooks
+	newActivatedFinalityProviders := newDc.FindNewActiveFinalityProviders(prevDc)
+	for _, fp := range newActivatedFinalityProviders {
 		if err := k.hooks.AfterFinalityProviderActivated(ctx, fp.BtcPk); err != nil {
-			panic(fmt.Errorf("failed to execute after finality provider %s bonded", fp.BtcPk.MarshalHex()))
+			panic(fmt.Errorf("failed to execute after finality provider %s activated", fp.BtcPk.MarshalHex()))
 		}
+		k.Logger(sdk.UnwrapSDKContext(ctx)).Info("a new finality provider is activated", "pk", fp.BtcPk.MarshalHex())
 	}
 
 	// set the voting power distribution cache of the current height
 	k.setVotingPowerDistCache(ctx, babylonTipHeight, newDc)
-
-	return newDc
 }
 
 func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache) {

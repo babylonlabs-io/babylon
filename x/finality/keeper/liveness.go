@@ -142,7 +142,7 @@ func (k Keeper) updateSigningInfo(
 	// fetch signing info
 	signInfo, err := k.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
 	if err != nil {
-		return false, nil, err
+		return false, nil, fmt.Errorf("the signing info is not created")
 	}
 
 	signedBlocksWindow := params.SignedBlocksWindow
