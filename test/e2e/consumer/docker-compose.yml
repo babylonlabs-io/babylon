@@ -1,0 +1,64 @@
+services:
+  babylondnode0:
+    container_name: babylondnode0
+    image: "babylonlabs-io/babylond"
+    command: >
+      babylond --home /babylondhome start --log_format 'plain' 2>&1 | tee /babylondhome/babylond.log
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    ports:
+      - "26656-26657:26656-26657"
+      - "1317:1317"
+      - "9090:9090"
+      - "2345:2345"
+    volumes:
+      - ../.testnets/node0/babylond:/babylondhome:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.2
+
+  babylondnode1:
+    container_name: babylondnode1
+    image: "babylonlabs-io/babylond"
+    command: >
+      babylond --home /babylondhome start --log_format 'plain' 2>&1 | tee /babylondhome/babylond.log
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    ports:
+      - "26666-26667:26656-26657"
+      - "1318:1317"
+      - "9091:9090"
+      - "2346:2345"
+    volumes:
+      - ../.testnets/node1/babylond:/babylondhome:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.3
+
+  ibcsim-bcd:
+    container_name: ibcsim-bcd
+    image: babylonlabs-io/ibcsim-bcd
+    ports:
+      - "5183:5183"
+    volumes:
+      - ../.testnets:/data:Z
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.17
+    depends_on:
+      - babylondnode0
+      - babylondnode1
+    restart: unless-stopped
+
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.10.0/25
