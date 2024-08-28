@@ -297,18 +297,18 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 			return false
 		}
 		return resp.Status == ckpttypes.Sealed
-	}, time.Minute, time.Second*5)
+	}, time.Minute, time.Millisecond*50)
 	nonValidatorNode.FinalizeSealedEpochs(1, currentEpoch)
-	lastFinalizedEpoch := uint64(0)
 
 	// ensure the committed epoch is finalized
+	lastFinalizedEpoch := uint64(0)
 	s.Eventually(func() bool {
 		lastFinalizedEpoch, err = nonValidatorNode.QueryLastFinalizedEpoch()
 		if err != nil {
 			return false
 		}
 		return lastFinalizedEpoch >= currentEpoch
-	}, time.Minute, time.Second)
+	}, time.Minute, time.Millisecond*50)
 
 	// ensure btc staking is activated
 	var activatedHeight uint64
@@ -318,7 +318,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 			return false
 		}
 		return activatedHeight > 0
-	}, time.Minute, time.Second*5)
+	}, time.Minute, time.Millisecond*50)
 	s.T().Logf("the activated height is %d", activatedHeight)
 
 	/*
@@ -343,7 +343,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.Eventually(func() bool {
 		finalizedBlocks = nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
 		return len(finalizedBlocks) > 0
-	}, time.Minute, time.Second)
+	}, time.Minute, time.Millisecond*50)
 	s.Equal(activatedHeight, finalizedBlocks[0].Height)
 	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 	s.T().Logf("the block %d is finalized", activatedHeight)
