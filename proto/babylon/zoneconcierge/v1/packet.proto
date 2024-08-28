@@ -7,6 +7,7 @@ import "babylon/btcstaking/v1/packet.proto";
 import "babylon/checkpointing/v1/checkpoint.proto";
 import "babylon/epoching/v1/epoching.proto";
 import "babylon/zoneconcierge/v1/zoneconcierge.proto";
+import "babylon/finality/v1/finality.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/zoneconcierge/types";
 
@@ -18,6 +19,7 @@ message ZoneconciergePacketData {
     BTCTimestamp btc_timestamp = 1;
     babylon.btcstaking.v1.BTCStakingIBCPacket btc_staking = 2;
     ConsumerRegisterIBCPacket consumer_register = 3;
+    ConsumerSlashingIBCPacket consumer_slashing = 4;
   }
 }
 
@@ -55,11 +57,19 @@ message BTCTimestamp {
   babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 6;
 }
 
-// ConsumerRegisterPacketData defines the packet data for consumer registration
+// ConsumerRegisterIBCPacket defines the packet data for Consumer registration
 message ConsumerRegisterIBCPacket {
   // consumer_name is a unique identifier for the consumer chain
   string consumer_name = 1;
 
   // consumer_description is a brief explanation of the consumer chain's purpose
   string consumer_description = 2;
+}
+
+// ConsumerSlashingIBCPacket defines the slashing information that a Consumer sends to Babylon's ZoneConcierge upon a
+// Consumer slashing event.
+// It includes the FP public key, the Consumer block height at the slashing event, and the double sign evidence.
+message ConsumerSlashingIBCPacket {
+  /// evidence is the FP slashing evidence that the Consumer sends to Babylon
+  babylon.finality.v1.Evidence evidence = 1;
 }
