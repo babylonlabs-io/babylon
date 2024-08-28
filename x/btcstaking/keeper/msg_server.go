@@ -343,7 +343,14 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidProofOfPossession.Wrapf("error while validating proof of posession: %v", err)
 	}
 
-	// 3. Check finality providers to which message delegate
+	// 3. Check if it is not duplicated staking tx
+	stakingTxHash := parsedMsg.StakingTx.Transaction.TxHash()
+	delgation := ms.getBTCDelegation(ctx, stakingTxHash)
+	if delgation != nil {
+		return nil, types.ErrReusedStakingTx.Wrapf("duplicated tx hash: %s", stakingTxHash.String())
+	}
+
+	// 4. Check finality providers to which message delegate
 	// Ensure all finality providers are known to Babylon, are not slashed,
 	// and their registered epochs are finalised
 	for _, fpBTCPK := range parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat {
@@ -358,7 +365,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		}
 	}
 
-	// 3. Validate parsed message against parameters
+	// 5. Validate parsed message against parameters
 	vp := ms.GetParamsWithVersion(ctx)
 
 	btccParams := ms.btccKeeper.GetParams(ctx)
@@ -369,7 +376,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, err
 	}
 
-	// 4. Check:
+	// 6. Check:
 	// - timelock of staking tx
 	// - staking tx is k-deep
 	// - staking tx inclusion proof
@@ -408,7 +415,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidStakingTx.Wrapf("staking tx's timelock has no more than w(=%d) blocks left", btccParams.CheckpointFinalizationTimeout)
 	}
 
-	// 6.all good, construct BTCDelegation and insert BTC delegation
+	// 7.all good, construct BTCDelegation and insert BTC delegation
 	// NOTE: the BTC delegation does not have voting power yet. It will
 	// have voting power only when it receives a covenant signatures
 	newBTCDel := &types.BTCDelegation{
