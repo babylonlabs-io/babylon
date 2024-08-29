@@ -11,25 +11,21 @@ import (
 	"github.com/babylonlabs-io/babylon/wasmbinding/bindings"
 	lcKeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	epochingkeeper "github.com/babylonlabs-io/babylon/x/epoching/keeper"
-	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type QueryPlugin struct {
 	epochingKeeper *epochingkeeper.Keeper
-	zcKeeper       *zckeeper.Keeper
 	lcKeeper       *lcKeeper.Keeper
 }
 
 // NewQueryPlugin returns a reference to a new QueryPlugin.
 func NewQueryPlugin(
 	ek *epochingkeeper.Keeper,
-	zcKeeper *zckeeper.Keeper,
 	lcKeeper *lcKeeper.Keeper,
 ) *QueryPlugin {
 	return &QueryPlugin{
 		epochingKeeper: ek,
-		zcKeeper:       zcKeeper,
 		lcKeeper:       lcKeeper,
 	}
 }
@@ -55,20 +51,13 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 			}
 
 			return bz, nil
+
 		case contractQuery.LatestFinalizedEpochInfo != nil:
-			epoch := qp.zcKeeper.GetLastFinalizedEpoch(ctx)
-			epochInfo, err := qp.epochingKeeper.GetHistoricalEpoch(ctx, epoch)
-
-			if err != nil {
-				// Here something went really wrong with our data model. If epoch is finalized
-				// it should always be known by epoching module
-				panic(fmt.Sprintf("Finalized epoch %d not known by epoching module", epoch))
-			}
-
+			// TODO: Swoitch to use epoching keepedr
 			res := bindings.LatestFinalizedEpochInfoResponse{
 				EpochInfo: &bindings.FinalizedEpochInfo{
-					EpochNumber:     epoch,
-					LastBlockHeight: epochInfo.GetLastBlockHeight(),
+					EpochNumber:     1,
+					LastBlockHeight: 2,
 				},
 			}
 
@@ -153,10 +142,9 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 
 func RegisterCustomPlugins(
 	ek *epochingkeeper.Keeper,
-	zcKeeper *zckeeper.Keeper,
 	lcKeeper *lcKeeper.Keeper,
 ) []wasmkeeper.Option {
-	wasmQueryPlugin := NewQueryPlugin(ek, zcKeeper, lcKeeper)
+	wasmQueryPlugin := NewQueryPlugin(ek, lcKeeper)
 
 	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
 		Custom: CustomQuerier(wasmQueryPlugin),

@@ -116,9 +116,6 @@ import (
 	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/babylonlabs-io/babylon/x/monitor"
 	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
-	"github.com/babylonlabs-io/babylon/x/zoneconcierge"
-	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 const (
@@ -313,7 +310,6 @@ func NewBabylonApp(
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper),
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper),
 		monitor.NewAppModule(appCodec, app.MonitorKeeper),
-		zoneconcierge.NewAppModule(appCodec, app.ZoneConciergeKeeper, app.AccountKeeper, app.BankKeeper),
 		// Babylon modules - btc staking
 		btcstaking.NewAppModule(appCodec, app.BTCStakingKeeper),
 		finality.NewAppModule(appCodec, app.FinalityKeeper),
@@ -368,7 +364,6 @@ func NewBabylonApp(
 		ibcexported.ModuleName,
 		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
 		// BTC staking related modules
@@ -397,7 +392,6 @@ func NewBabylonApp(
 		ibcexported.ModuleName,
 		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
 		// BTC staking related modules
@@ -430,7 +424,6 @@ func NewBabylonApp(
 		ibcexported.ModuleName,
 		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
 		// BTC staking related modules
@@ -539,12 +532,6 @@ func NewBabylonApp(
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 	app.SetAnteHandler(anteHandler)
-
-	// set postHandler
-	postHandler := sdk.ChainPostDecorators(
-		zckeeper.NewIBCHeaderDecorator(app.ZoneConciergeKeeper),
-	)
-	app.SetPostHandler(postHandler)
 
 	// must be before Loading version
 	// requires the snapshot store to be created and registered as a BaseAppOption

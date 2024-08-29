@@ -3,7 +3,6 @@ package keepers
 import (
 	"path/filepath"
 
-	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	circuitkeeper "cosmossdk.io/x/circuit/keeper"
@@ -21,7 +20,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -80,9 +78,6 @@ import (
 	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	monitorkeeper "github.com/babylonlabs-io/babylon/x/monitor/keeper"
 	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
-	"github.com/babylonlabs-io/babylon/x/zoneconcierge"
-	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 // Capabilities of the IBC wasm contracts
@@ -129,11 +124,10 @@ type AppKeepers struct {
 	MonitorKeeper        monitorkeeper.Keeper
 
 	// IBC-related modules
-	IBCKeeper           *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	IBCFeeKeeper        ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
-	TransferKeeper      ibctransferkeeper.Keeper // for cross-chain fungible token transfers
-	IBCWasmKeeper       ibcwasmkeeper.Keeper     // for IBC wasm light clients
-	ZoneConciergeKeeper zckeeper.Keeper          // for cross-chain fungible token transfers
+	IBCKeeper      *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCFeeKeeper   ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
+	TransferKeeper ibctransferkeeper.Keeper // for cross-chain fungible token transfers
+	IBCWasmKeeper  ibcwasmkeeper.Keeper     // for IBC wasm light clients
 
 	// BTC staking related modules
 	BTCStakingKeeper btcstakingkeeper.Keeper
@@ -198,7 +192,6 @@ func (ak *AppKeepers) InitKeepers(
 		ibctransfertypes.StoreKey,
 		ibcfeetypes.StoreKey,
 		ibcwasmtypes.StoreKey,
-		zctypes.StoreKey,
 		// BTC staking related modules
 		btcstakingtypes.StoreKey,
 		finalitytypes.StoreKey,
@@ -291,7 +284,6 @@ func (ak *AppKeepers) InitKeepers(
 	// grant capabilities for the ibc and ibc-transfer modules
 	scopedIBCKeeper := ak.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	scopedTransferKeeper := ak.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-	scopedZoneConciergeKeeper := ak.CapabilityKeeper.ScopeToModule(zctypes.ModuleName)
 	scopedWasmKeeper := ak.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
@@ -454,37 +446,12 @@ func (ak *AppKeepers) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	// create querier for KVStore
-	storeQuerier, ok := bApp.CommitMultiStore().(storetypes.Queryable)
-	if !ok {
-		panic(errorsmod.Wrap(sdkerrors.ErrUnknownRequest, "multistore doesn't support queries"))
-	}
-
 	ak.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
 		appCodec, keys[ibcfeetypes.StoreKey],
 		ak.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper, ak.AccountKeeper, ak.BankKeeper,
 	)
-
-	zcKeeper := zckeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
-		ak.IBCFeeKeeper,
-		ak.IBCKeeper.ClientKeeper,
-		ak.IBCKeeper.ChannelKeeper,
-		ak.IBCKeeper.PortKeeper,
-		ak.AccountKeeper,
-		ak.BankKeeper,
-		&btclightclientKeeper,
-		&checkpointingKeeper,
-		&btcCheckpointKeeper,
-		epochingKeeper,
-		storeQuerier,
-		scopedZoneConciergeKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-	ak.ZoneConciergeKeeper = *zcKeeper
 
 	// Create Transfer Keepers
 	ak.TransferKeeper = ibctransferkeeper.NewKeeper(
@@ -510,12 +477,12 @@ func (ak *AppKeepers) InitKeepers(
 	epochingKeeper.SetMsgServiceRouter(bApp.MsgServiceRouter())
 	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
 	ak.EpochingKeeper = *epochingKeeper.SetHooks(
-		epochingtypes.NewMultiEpochingHooks(ak.ZoneConciergeKeeper.Hooks(), ak.MonitorKeeper.Hooks()),
+		epochingtypes.NewMultiEpochingHooks(ak.MonitorKeeper.Hooks()),
 	)
 
 	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
 	ak.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
-		checkpointingtypes.NewMultiCheckpointingHooks(ak.EpochingKeeper.Hooks(), ak.ZoneConciergeKeeper.Hooks(), ak.MonitorKeeper.Hooks()),
+		checkpointingtypes.NewMultiCheckpointingHooks(ak.EpochingKeeper.Hooks(), ak.MonitorKeeper.Hooks()),
 	)
 	ak.BtcCheckpointKeeper = btcCheckpointKeeper
 	ak.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
@@ -562,7 +529,7 @@ func (ak *AppKeepers) InitKeepers(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	ak.EvidenceKeeper = *evidenceKeeper
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.ZoneConciergeKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
+	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
@@ -609,10 +576,6 @@ func (ak *AppKeepers) InitKeepers(
 	transferStack = transfer.NewIBCModule(ak.TransferKeeper)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, ak.IBCFeeKeeper)
 
-	var zoneConciergeStack porttypes.IBCModule
-	zoneConciergeStack = zoneconcierge.NewIBCModule(ak.ZoneConciergeKeeper)
-	zoneConciergeStack = ibcfee.NewIBCMiddleware(zoneConciergeStack, ak.IBCFeeKeeper)
-
 	var wasmStack porttypes.IBCModule
 	wasmStack = wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCFeeKeeper)
 	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, ak.IBCFeeKeeper)
@@ -620,7 +583,6 @@ func (ak *AppKeepers) InitKeepers(
 	// Create static IBC router, add ibc-transfer module route, then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
-		AddRoute(zctypes.ModuleName, zoneConciergeStack).
 		AddRoute(wasmtypes.ModuleName, wasmStack)
 
 	// Setting Router will finalize all routes by sealing router
@@ -637,7 +599,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// whole usage of params module
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
-	paramsKeeper.Subspace(zctypes.ModuleName)
 
 	return paramsKeeper
 }

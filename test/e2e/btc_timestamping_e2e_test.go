@@ -11,7 +11,6 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	ct "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -103,89 +102,6 @@ func (s *BTCTimestampingTestSuite) Test3SendTx() {
 	s.NoError(err)
 	// tip should have 0 depth
 	s.Equal(tip2Depth, uint64(0))
-}
-
-func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
-	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(35)
-
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
-	s.NoError(err)
-
-	// Query open IBC channels and assert there is only one
-	channels, err := nonValidatorNode.QueryIBCChannels()
-	s.NoError(err)
-	s.Equal(1, len(channels.Channels), "Expected only one open IBC channel")
-	// Get the client ID under this IBC channel
-	channelClientState, err := nonValidatorNode.QueryChannelClientState(channels.Channels[0].ChannelId, channels.Channels[0].PortId)
-	s.NoError(err)
-	clientID := channelClientState.IdentifiedClientState.ClientId
-
-	// Query checkpoint chain info for opposing chain
-	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{clientID})
-	s.NoError(err)
-	s.Equal(chainsInfo[0].ConsumerId, clientID)
-
-	// Finalize epoch 1, 2, 3, as first headers of opposing chain are in epoch 3
-	var (
-		startEpochNum uint64 = 1
-		endEpochNum   uint64 = 3
-	)
-
-	// submitter/reporter address should not have any rewards yet
-	submitterReporterAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
-	_, err = nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
-	s.Error(err)
-
-	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
-
-	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(endEpochNum)
-	s.NoError(err)
-	s.Equal(endEpoch.Status, ct.Finalized)
-
-	// Wait for a some time to ensure that the checkpoint is included in the chain
-	time.Sleep(20 * time.Second)
-	// Wait for next block
-	nonValidatorNode.WaitForNextBlock()
-
-	// Check we have epoch info for opposing chain and some basic assertions
-	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(endEpochNum, []string{clientID})
-	s.NoError(err)
-	s.Equal(epochChainsInfo[0].ConsumerId, clientID)
-	s.Equal(epochChainsInfo[0].LatestHeader.BabylonEpoch, endEpochNum)
-
-	// Check we have finalized epoch info for opposing chain and some basic assertions
-	finalizedChainsInfo, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{clientID})
-	s.NoError(err)
-
-	// TODO Add more assertion here. Maybe check proofs ?
-	s.Equal(finalizedChainsInfo[0].FinalizedChainInfo.ConsumerId, clientID)
-	s.Equal(finalizedChainsInfo[0].EpochInfo.EpochNumber, endEpochNum)
-
-	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
-	s.NoError(err)
-
-	heightAtEndedEpoch, err := nonValidatorNode.QueryLightClientHeightEpochEnd(currEpoch - 1)
-	s.NoError(err)
-
-	if heightAtEndedEpoch == 0 {
-		// we can only assert, that btc lc height is larger than 0.
-		s.FailNow(fmt.Sprintf("Light client height should be  > 0 on epoch %d", currEpoch-1))
-	}
-
-	// ensure balance has increased after finalising some epochs
-	rewardGauges, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
-	s.NoError(err)
-	submitterRewardGauge, ok := rewardGauges[itypes.SubmitterType.String()]
-	s.True(ok)
-	s.True(submitterRewardGauge.Coins.IsAllPositive())
-	reporterRewardGauge, ok := rewardGauges[itypes.ReporterType.String()]
-	s.True(ok)
-	s.True(reporterRewardGauge.Coins.IsAllPositive())
-
-	chainB := s.configurer.GetChainConfig(1)
-	_, err = chainB.GetDefaultNode()
-	s.NoError(err)
 }
 
 func (s *BTCTimestampingTestSuite) Test5WithdrawReward() {
