@@ -17,22 +17,4 @@ docker run --rm -v $(pwd)/.testnets:/data babylonlabs-io/babylond \
     --covenant-pks "2d4ccbe538f846a750d82a77cd742895e51afcf23d86d05004a356b783902748" # should be updated if `covenant-keyring` dir is changed`
 
 # Create separate subpaths for each component and copy relevant configuration
-mkdir -p .testnets/bitcoin
-mkdir -p .testnets/vigilante
-mkdir -p .testnets/btc-staker
-mkdir -p .testnets/finality-provider
-mkdir -p .testnets/consumer-fp
-mkdir -p .testnets/eotsmanager
-mkdir -p .testnets/consumer-eotsmanager
-mkdir -p .testnets/covenant-emulator
-
-cp artifacts/vigilante.yml .testnets/vigilante/vigilante.yml
-cp artifacts/stakerd.conf .testnets/btc-staker/stakerd.conf
-cp artifacts/fpd.conf .testnets/finality-provider/fpd.conf
-cp artifacts/consumer-fpd.conf .testnets/consumer-fp/fpd.conf
-cp artifacts/eotsd.conf .testnets/eotsmanager/eotsd.conf
-cp artifacts/consumer-eotsd.conf .testnets/consumer-eotsmanager/eotsd.conf
-cp artifacts/covd.conf .testnets/covenant-emulator/covd.conf
-cp -R artifacts/covenant-keyring .testnets/covenant-emulator/keyring-test
-
 chmod -R 777 .testnets

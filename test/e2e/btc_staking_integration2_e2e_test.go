@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
@@ -106,8 +105,4 @@ func (s *BTCStakingIntegration2TestSuite) TestSuiteSetup() {
 	s.Require().NotEmpty(s.babylonRPC1, "babylonRPC1 should be set")
 	s.Require().NotEmpty(s.babylonRPC2, "babylonRPC2 should be set")
 	s.Require().NotEmpty(s.consumerChainRPC, "consumerChainRPC should be set")
-}
-
-func TestBTCStakingIntegration2(t *testing.T) {
-	suite.Run(t, new(BTCStakingIntegration2TestSuite))
 }

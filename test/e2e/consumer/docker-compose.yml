@@ -14,7 +14,7 @@ services:
       - "9090:9090"
       - "2345:2345"
     volumes:
-      - ../.testnets/node0/babylond:/babylondhome:Z
+      - .testnets/node0/babylond:/babylondhome:Z
     networks:
       localnet:
         ipv4_address: 192.168.10.2
@@ -34,7 +34,7 @@ services:
       - "9091:9090"
       - "2346:2345"
     volumes:
-      - ../.testnets/node1/babylond:/babylondhome:Z
+      - .testnets/node1/babylond:/babylondhome:Z
     networks:
       localnet:
         ipv4_address: 192.168.10.3
@@ -44,8 +44,12 @@ services:
     image: babylonlabs-io/ibcsim-bcd
     ports:
       - "5183:5183"
+      - "26676-26677:26656-26657"
+      - "1319:1317"
+      - "9092:9090"
+      - "2347:2345"
     volumes:
-      - ../.testnets:/data:Z
+      - .testnets:/data:Z
     networks:
       localnet:
         ipv4_address: 192.168.10.17
@@ -53,7 +57,6 @@ services:
       - babylondnode0
       - babylondnode1
     restart: unless-stopped
-
 
 networks:
   localnet:

@@ -27,13 +27,11 @@ RUN git clone https://github.com/cosmos/relayer.git
 RUN cd relayer && git fetch origin && git checkout ${RELAYER_TAG} && make install && cd -
 
 # Install bcd
-RUN git clone https://github.com/babylonlabs-io/babylon-sdk.git
-
-RUN mkdir -p /root/.ssh && ssh-keyscan github.com >> /root/.ssh/known_hosts
-RUN git config --global url."git@github.com:".insteadOf "https://github.com/"
-ENV GOPRIVATE=github.com/babylonlabs-io/*
-
-RUN --mount=type=secret,id=sshKey,target=/root/.ssh/id_rsa cd babylon-sdk && git fetch origin && git checkout ${BABYLON_SDK_TAG} && make install && cd -
+RUN git clone https://github.com/babylonlabs-io/babylon-sdk.git && \
+    cd babylon-sdk && \
+    git checkout ${BABYLON_SDK_TAG} && \
+    make install && \
+    cd -
 
 FROM debian:bullseye-slim AS run
 
