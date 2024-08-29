@@ -192,6 +192,14 @@ func verify(tx *btcutil.Tx, merkleRoot *chainhash.Hash, intermediateNodes []byte
 	return bytes.Equal(current[:], root)
 }
 
+func VerifyInclusionProof(
+	tx *btcutil.Tx,
+	merkleRoot *chainhash.Hash,
+	intermediateNodes []byte,
+	index uint32) bool {
+	return verify(tx, merkleRoot, intermediateNodes, index)
+}
+
 // ExtractStandardOpReturnData extract OP_RETURN data from transaction OP_RETURN
 // output.
 // If OP_RETURN output is not standard it will be ignored. If there is more than
