@@ -15,8 +15,8 @@ import (
 )
 
 type ParsedPublicKey struct {
-	PublicKey *btcec.PublicKey
-	BbnPk     *bbn.BIP340PubKey
+	*btcec.PublicKey
+	*bbn.BIP340PubKey
 }
 
 func NewParsedPublicKey(key *bbn.BIP340PubKey) (*ParsedPublicKey, error) {
@@ -26,18 +26,18 @@ func NewParsedPublicKey(key *bbn.BIP340PubKey) (*ParsedPublicKey, error) {
 	pk, err := key.ToBTCPK()
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to parer *bbn.BIP340PubKey: %w", err)
+		return nil, fmt.Errorf("failed to parse *bbn.BIP340PubKey: %w", err)
 	}
 
 	return &ParsedPublicKey{
-		PublicKey: pk,
-		BbnPk:     key,
+		PublicKey:    pk,
+		BIP340PubKey: key,
 	}, nil
 }
 
 type ParsedBIP340Signature struct {
-	Signature *schnorr.Signature
-	BbnSig    *bbn.BIP340Signature
+	*schnorr.Signature
+	*bbn.BIP340Signature
 }
 
 func NewParsedBIP340Signature(sig *bbn.BIP340Signature) (*ParsedBIP340Signature, error) {
@@ -52,8 +52,8 @@ func NewParsedBIP340Signature(sig *bbn.BIP340Signature) (*ParsedBIP340Signature,
 	}
 
 	return &ParsedBIP340Signature{
-		Signature: signature,
-		BbnSig:    sig,
+		Signature:       signature,
+		BIP340Signature: sig,
 	}, nil
 }
 
