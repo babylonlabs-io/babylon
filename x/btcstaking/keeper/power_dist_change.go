@@ -35,8 +35,23 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	if len(events) == 0 {
 		if dc != nil {
 			// map everything in prev height to this height
-			k.recordVotingPowerAndCache(ctx, dc, nil, maxActiveFps)
+			// NOTE: deep copy the previous dist cache because the
+			// cache for the new height shares the same distribution
+			// info due to no new events but timestamping status
+			// might be changed in the new dist cache after calling
+			// k.recordVotingPowerAndCache()
+			newDc := types.NewVotingPowerDistCache()
+			newDc.TotalVotingPower = dc.TotalVotingPower
+			newDc.NumActiveFps = dc.NumActiveFps
+			newFps := make([]*types.FinalityProviderDistInfo, len(dc.FinalityProviders))
+			for i, prevFp := range dc.FinalityProviders {
+				newFp := *prevFp
+				newFps[i] = &newFp
+			}
+			newDc.FinalityProviders = newFps
+			k.recordVotingPowerAndCache(ctx, dc, newDc, maxActiveFps)
 		}
+
 		return
 	}
 
@@ -62,27 +77,20 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	k.recordMetrics(newDc)
 }
 
+// recordVotingPowerAndCache assigns voting power to each active finality provider
+// with the following consideration:
+// 1. the fp must have timestamped pub rand
+// 2. the fp must in the top x ranked by the voting power (x is given by maxActiveFps)
+// NOTE: the previous and the new dist cache cannot be nil
 func (k Keeper) recordVotingPowerAndCache(ctx context.Context, prevDc, newDc *types.VotingPowerDistCache, maxActiveFps uint32) {
-	if prevDc == nil {
-		panic("the previous voting power distribution cache cannot be nil")
-	}
-
-	// deep copy the previous dist cache if the new dist cache is nil
-	if newDc == nil {
-		newDc = types.NewVotingPowerDistCache()
-		newDc.TotalVotingPower = prevDc.TotalVotingPower
-		newDc.NumActiveFps = prevDc.NumActiveFps
-		newFps := make([]*types.FinalityProviderDistInfo, len(prevDc.FinalityProviders))
-		for i, prevFp := range prevDc.FinalityProviders {
-			newFp := *prevFp
-			newFps[i] = &newFp
-		}
-		newDc.FinalityProviders = newFps
+	if prevDc == nil || newDc == nil {
+		panic("the voting power distribution cache cannot be nil")
 	}
 
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 
-	// label fps with whether it has timestamped pub rand
+	// label fps with whether it has timestamped pub rand so that these fps
+	// will not be assigned voting power
 	for _, fp := range newDc.FinalityProviders {
 		// TODO calling HasTimestampedPubRand potentially iterates
 		// all the pub rand committed by the fp, which might slow down
@@ -90,17 +98,19 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, prevDc, newDc *ty
 		fp.IsTimestamped = k.FinalityKeeper.HasTimestampedPubRand(ctx, fp.BtcPk, babylonTipHeight)
 	}
 
-	// filter out the top N finality providers and their total voting power, and
-	// record them in the new cache
+	// apply the finality provider voting power dist info to the new cache
+	// after which the cache would have active fps that are top N fps ranked
+	// by voting power with timestamped pub rand
 	newDc.ApplyActiveFinalityProviders(maxActiveFps)
 
-	// set voting power table for this height
+	// set voting power table for each active finality providers at this height
 	for i := uint32(0); i < newDc.NumActiveFps; i++ {
 		fp := newDc.FinalityProviders[i]
 		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
 	}
 
-	// find newly activated finality providers and execute the hooks
+	// find newly activated finality providers and execute the hooks by comparing
+	// the previous dist cache
 	newActivatedFinalityProviders := newDc.FindNewActiveFinalityProviders(prevDc)
 	for _, fp := range newActivatedFinalityProviders {
 		if err := k.hooks.AfterFinalityProviderActivated(ctx, fp.BtcPk); err != nil {
