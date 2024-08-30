@@ -8401,6 +8401,8 @@ paths:
                       an unrelayed 
 
                       IBC packet becomes timeout, measured in seconds
+                  enable_integration:
+                    type: boolean
             description: >-
               QueryParamsResponse is the response type for the Query/Params RPC
               method.
@@ -12188,6 +12190,8 @@ definitions:
           unrelayed 
 
           IBC packet becomes timeout, measured in seconds
+      enable_integration:
+        type: boolean
     description: Params defines the parameters for the module.
   babylon.zoneconcierge.v1.ProofEpochSealed:
     type: object
@@ -14189,6 +14193,8 @@ definitions:
               unrelayed 
 
               IBC packet becomes timeout, measured in seconds
+          enable_integration:
+            type: boolean
     description: QueryParamsResponse is the response type for the Query/Params RPC method.
   tendermint.crypto.ProofOp:
     type: object

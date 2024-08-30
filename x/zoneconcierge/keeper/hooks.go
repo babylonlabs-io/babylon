@@ -29,6 +29,11 @@ func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
 }
 
 func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error {
+	// if integration is not enabled, do not trigger hooks
+	if !h.k.GetParams(ctx).EnableIntegration {
+		return nil
+	}
+
 	// upon a raw checkpoint is sealed, index the current chain info for each consumer,
 	// and generate/save the proof that the epoch is sealed
 	h.k.recordEpochChainInfoProofs(ctx, epoch)
@@ -38,6 +43,11 @@ func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error
 
 // AfterRawCheckpointFinalized is triggered upon an epoch has been finalised
 func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) error {
+	// if integration is not enabled, do not trigger hooks
+	if !h.k.GetParams(ctx).EnableIntegration {
+		return nil
+	}
+
 	headersToBroadcast := h.k.getHeadersToBroadcast(ctx)
 
 	// send BTC timestamp to all open channels with ZoneConcierge
