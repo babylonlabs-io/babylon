@@ -1,6 +1,7 @@
 RELAYER_TAG := $(shell grep '^ENV RELAYER_TAG' cosmos-relayer/Dockerfile | cut -f3 -d\ )
 BABYLON_FULL_PATH := $(shell git rev-parse --show-toplevel)
 BABYLON_VERSION_BEFORE_UPGRADE ?= v0.9.1
+E2E_INIT_CHAIN_VERSION_BEFORE_UPGRADE ?= 544386204a860ee7159923b3d34174d0cf8c6049
 
 all: babylond cosmos-relayer
 
@@ -27,7 +28,7 @@ e2e-init-chain-rmi:
 
 e2e-init-chain:
 	@DOCKER_BUILDKIT=1 docker build -t babylonlabs-io/babylond-e2e-init-chain --build-arg E2E_SCRIPT_NAME=chain --platform=linux/x86_64 \
-		-f e2e-initialization/init.Dockerfile ${BABYLON_FULL_PATH}
+		-f e2e-initialization/init.Dockerfile --build-arg VERSION="${E2E_INIT_CHAIN_VERSION_BEFORE_UPGRADE}" ${BABYLON_FULL_PATH}
 
 cosmos-relayer: cosmos-relayer-rmi
 	docker build --tag babylonlabs-io/cosmos-relayer:${RELAYER_TAG} -f cosmos-relayer/Dockerfile \

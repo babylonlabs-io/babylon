@@ -42,8 +42,8 @@ message Params {
   // min_unbonding_time is the minimum time for unbonding transaction timelock in BTC blocks
   // renamed from min_unbonding_time to min_unbonding_time_blocks
   uint32 min_unbonding_time_blocks = 8 [
-    json_name = "min_unbonding_time",
-    (gogoproto.jsontag) = "min_unbonding_time"
+    json_name = "min_unbonding_time,omitempty",
+    (gogoproto.jsontag) = "min_unbonding_time,omitempty"
   ];
 
   // min_unbonding_rate deprecated in favor of unbonding_fee_sat
