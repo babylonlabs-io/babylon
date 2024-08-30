@@ -16,7 +16,7 @@ message Params {
   // multisignature
   uint32 covenant_quorum = 2;
   // slashing address deprecated field in favor of slashing_pk_script.
-  string deprecated_slashing_address = 3 [deprecated=true];
+  string slashing_address = 3 [deprecated=true];
   // min_slashing_tx_fee_sat is the minimum amount of tx fee (quantified
   // in Satoshi) needed for the pre-signed slashing tx. It covers both:
   // staking slashing transaction and unbonding slashing transaction
@@ -47,7 +47,7 @@ message Params {
   ];
 
   // min_unbonding_rate deprecated in favor of unbonding_fee_sat
-  string deprecated_min_unbonding_rate = 9 [deprecated=true];
+  string min_unbonding_rate = 9 [deprecated=true];
 
   // min_staking_value_sat is the minimum of satoshis locked in staking output
   int64 min_staking_value_sat = 10;
