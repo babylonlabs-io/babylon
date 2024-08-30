@@ -36,6 +36,7 @@ func ValidateParams(
 
 	// 2. Validate all data related to staking tx:
 	// - it has valid staking output
+	// - that staking time and value are correct
 	// - slashing tx is relevent to staking tx
 	// - slashing tx signature is valid
 	stakingInfo, err := btcstaking.BuildStakingInfo(
@@ -55,6 +56,26 @@ func ValidateParams(
 
 	if err != nil {
 		return nil, ErrInvalidStakingTx.Wrap("staking tx does not contain expected staking output")
+	}
+
+	if uint32(pm.StakingTime) < parameters.MinStakingTimeBlocks ||
+		uint32(pm.StakingTime) > parameters.MaxStakingTimeBlocks {
+		return nil, ErrInvalidStakingTx.Wrapf(
+			"staking time %d is out of bounds. Min: %d, Max: %d",
+			pm.StakingTime,
+			parameters.MinStakingTimeBlocks,
+			parameters.MaxStakingTimeBlocks,
+		)
+	}
+
+	if pm.StakingTx.Transaction.TxOut[stakingOutputIdx].Value < parameters.MinStakingValueSat ||
+		pm.StakingTx.Transaction.TxOut[stakingOutputIdx].Value > parameters.MaxStakingValueSat {
+		return nil, ErrInvalidStakingTx.Wrapf(
+			"staking value %d is out of bounds. Min: %d, Max: %d",
+			pm.StakingTx.Transaction.TxOut[stakingOutputIdx].Value,
+			parameters.MinStakingValueSat,
+			parameters.MaxStakingValueSat,
+		)
 	}
 
 	if err := btcstaking.CheckTransactions(

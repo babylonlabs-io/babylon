@@ -92,14 +92,37 @@ Example:
 				return errors.New("base Bitcoin header height should be a uint64")
 			}
 
-			genesisParams := TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
-				genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout, genesisCliArgs.CheckpointTag,
-				genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex, genesisCliArgs.BaseBtcHeaderHeight,
-				genesisCliArgs.AllowedReporterAddresses, genesisCliArgs.CovenantPKs, genesisCliArgs.CovenantQuorum,
-				genesisCliArgs.SlashingPkScript, genesisCliArgs.MinSlashingTransactionFeeSat, genesisCliArgs.MinCommissionRate,
-				genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveFinalityProviders, genesisCliArgs.MinUnbondingTime, genesisCliArgs.UnbondingFeeSat, genesisCliArgs.InflationRateChange, genesisCliArgs.InflationMin,
-				genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded, genesisCliArgs.BlocksPerYear,
-				genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit, genesisCliArgs.VoteExtensionEnableHeight)
+			genesisParams := TestnetGenesisParams(
+				genesisCliArgs.MaxActiveValidators,
+				genesisCliArgs.BtcConfirmationDepth,
+				genesisCliArgs.BtcFinalizationTimeout,
+				genesisCliArgs.CheckpointTag,
+				genesisCliArgs.EpochInterval,
+				genesisCliArgs.BaseBtcHeaderHex,
+				genesisCliArgs.BaseBtcHeaderHeight,
+				genesisCliArgs.AllowedReporterAddresses,
+				genesisCliArgs.CovenantPKs,
+				genesisCliArgs.CovenantQuorum,
+				genesisCliArgs.MinStakingAmtSat,
+				genesisCliArgs.MaxStakingAmtSat,
+				genesisCliArgs.MinStakingTimeBlocks,
+				genesisCliArgs.MaxStakingTimeBlocks,
+				genesisCliArgs.SlashingPkScript,
+				genesisCliArgs.MinSlashingTransactionFeeSat,
+				genesisCliArgs.MinCommissionRate,
+				genesisCliArgs.SlashingRate,
+				genesisCliArgs.MaxActiveFinalityProviders,
+				genesisCliArgs.MinUnbondingTime,
+				genesisCliArgs.UnbondingFeeSat,
+				genesisCliArgs.InflationRateChange,
+				genesisCliArgs.InflationMin,
+				genesisCliArgs.InflationMax,
+				genesisCliArgs.GoalBonded,
+				genesisCliArgs.BlocksPerYear,
+				genesisCliArgs.GenesisTime,
+				genesisCliArgs.BlockGasLimit,
+				genesisCliArgs.VoteExtensionEnableHeight,
+			)
 
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, genesisCliArgs.ChainID, minGasPrices,

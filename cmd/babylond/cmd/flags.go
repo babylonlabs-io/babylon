@@ -36,6 +36,10 @@ const (
 	flagVoteExtensionEnableHeight  = "vote-extension-enable-height"
 	flagCovenantPks                = "covenant-pks"
 	flagCovenantQuorum             = "covenant-quorum"
+	flagMinStakingAmtSat           = "min-staking-amount-sat"
+	flagMaxStakingAmtSat           = "max-staking-amount-sat"
+	flagMinStakingTimeBlocks       = "min-staking-time-blocks"
+	flagMaxStakingTimeBlocks       = "max-staking-time-blocks"
 	flagMaxActiveFinalityProviders = "max-active-finality-providers"
 	flagMinUnbondingTime           = "min-unbonding-time"
 	flagUnbondingFeeSat            = "unbonding-fee-sat"
@@ -65,6 +69,10 @@ type GenesisCLIArgs struct {
 	VoteExtensionEnableHeight    int64
 	CovenantPKs                  []string
 	CovenantQuorum               uint32
+	MinStakingAmtSat             int64
+	MaxStakingAmtSat             int64
+	MinStakingTimeBlocks         uint16
+	MaxStakingTimeBlocks         uint16
 	SlashingPkScript             string
 	MinSlashingTransactionFeeSat int64
 	SlashingRate                 math.LegacyDec
@@ -92,6 +100,10 @@ func addGenesisFlags(cmd *cobra.Command) {
 	// btcstaking args
 	cmd.Flags().String(flagCovenantPks, strings.Join(btcstypes.DefaultParams().CovenantPksHex(), ","), "Bitcoin staking covenant public keys, comma separated")
 	cmd.Flags().Uint32(flagCovenantQuorum, btcstypes.DefaultParams().CovenantQuorum, "Bitcoin staking covenant quorum")
+	cmd.Flags().Int64(flagMinStakingAmtSat, 500000, "Minimum staking amount in satoshis")
+	cmd.Flags().Int64(flagMaxStakingAmtSat, 100000000000, "Maximum staking amount in satoshis")
+	cmd.Flags().Uint16(flagMinStakingTimeBlocks, 100, "Minimum staking time in blocks")
+	cmd.Flags().Uint16(flagMaxStakingTimeBlocks, 10000, "Maximum staking time in blocks")
 	cmd.Flags().String(flagSlashingPkScript, hex.EncodeToString(btcstypes.DefaultParams().SlashingPkScript), "Bitcoin staking slashing pk script. Hex encoded.")
 	cmd.Flags().Int64(flagMinSlashingFee, 1000, "Bitcoin staking minimum slashing fee")
 	cmd.Flags().String(flagMinCommissionRate, "0", "Bitcoin staking validator minimum commission rate")
@@ -124,6 +136,10 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	reporterAddresses, _ := cmd.Flags().GetString(flagAllowedReporterAddresses)
 	covenantPks, _ := cmd.Flags().GetString(flagCovenantPks)
 	covenantQuorum, _ := cmd.Flags().GetUint32(flagCovenantQuorum)
+	minStakingAmtSat, _ := cmd.Flags().GetInt64(flagMinStakingAmtSat)
+	maxStakingAmtSat, _ := cmd.Flags().GetInt64(flagMaxStakingAmtSat)
+	minStakingTimeBlocks, _ := cmd.Flags().GetUint16(flagMinStakingTimeBlocks)
+	maxStakingTimeBlocks, _ := cmd.Flags().GetUint16(flagMaxStakingTimeBlocks)
 	slashingPkScript, _ := cmd.Flags().GetString(flagSlashingPkScript)
 	minSlashingFee, _ := cmd.Flags().GetInt64(flagMinSlashingFee)
 	minCommissionRate, _ := cmd.Flags().GetString(flagMinCommissionRate)
@@ -163,6 +179,10 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		AllowedReporterAddresses:     allowedReporterAddresses,
 		CovenantPKs:                  strings.Split(covenantPks, ","),
 		CovenantQuorum:               covenantQuorum,
+		MinStakingAmtSat:             minStakingAmtSat,
+		MaxStakingAmtSat:             maxStakingAmtSat,
+		MinStakingTimeBlocks:         minStakingTimeBlocks,
+		MaxStakingTimeBlocks:         maxStakingTimeBlocks,
 		SlashingPkScript:             slashingPkScript,
 		MinSlashingTransactionFeeSat: minSlashingFee,
 		MinCommissionRate:            math.LegacyMustNewDecFromStr(minCommissionRate),

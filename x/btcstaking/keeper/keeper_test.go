@@ -102,6 +102,10 @@ func (h *Helper) GenAndApplyCustomParams(
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, types.Params{
 		CovenantPks:                bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
 		CovenantQuorum:             3,
+		MinStakingValueSat:         1000,
+		MaxStakingValueSat:         int64(4 * 10e8),
+		MinStakingTimeBlocks:       10,
+		MaxStakingTimeBlocks:       10000,
 		SlashingPkScript:           slashingPkScript,
 		MinSlashingTxFeeSat:        10,
 		MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.01"),
