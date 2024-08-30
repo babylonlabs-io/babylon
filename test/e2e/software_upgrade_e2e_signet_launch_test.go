@@ -1,6 +1,8 @@
 package e2e
 
 import (
+	"sort"
+
 	"github.com/stretchr/testify/suite"
 
 	"github.com/babylonlabs-io/babylon/app"
@@ -53,12 +55,14 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 	govProp, err := s.configurer.ParseGovPropFromFile()
 	s.NoError(err)
 
+	bbnApp := app.NewTmpBabylonApp()
+
 	// makes sure that the upgrade was actually executed
 	expectedUpgradeHeight := govProp.Plan.Height
 	resp := n.QueryAppliedPlan(v1.Upgrade.UpgradeName)
 	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height %d", expectedUpgradeHeight)
 
-	btcHeadersInserted, err := v1.LoadBTCHeadersFromData()
+	btcHeadersInserted, err := v1.LoadBTCHeadersFromData(bbnApp.AppCodec())
 	s.NoError(err)
 
 	lenHeadersInserted := len(btcHeadersInserted)
@@ -75,5 +79,25 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 		headerStoredResp := storedBtcHeadersResp[reversedStoredIndex] // reverse reading
 
 		s.EqualValues(headerInserted.Header.MarshalHex(), headerStoredResp.HeaderHex)
+	}
+
+	oldFPsLen := 0 // it should not have any FP
+	fpsFromNode := n.QueryFinalityProviders()
+
+	fpsInserted, err := v1.LoadSignedFPsFromData(bbnApp.AppCodec(), bbnApp.TxConfig().TxJSONDecoder())
+	s.NoError(err)
+	s.Equal(len(fpsInserted), len(fpsFromNode)+oldFPsLen)
+
+	// sorts all the FPs from node to match the ones from loaded string json
+	sort.Slice(fpsFromNode, func(i, j int) bool {
+		return fpsFromNode[i].Addr > fpsFromNode[j].Addr
+	})
+
+	for i, fpInserted := range fpsInserted {
+		fpFromKeeper := fpsFromNode[i]
+		s.EqualValues(fpFromKeeper.Addr, fpInserted.Addr)
+		s.EqualValues(fpFromKeeper.Description, fpInserted.Description)
+		s.EqualValues(fpFromKeeper.Commission.String(), fpInserted.Commission.String())
+		s.EqualValues(fpFromKeeper.Pop.String(), fpInserted.Pop.String())
 	}
 }

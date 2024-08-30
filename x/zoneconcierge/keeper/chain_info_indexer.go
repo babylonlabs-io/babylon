@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	errorsmod "cosmossdk.io/errors"
@@ -12,20 +13,20 @@ import (
 
 func (k Keeper) setChainInfo(ctx context.Context, chainInfo *types.ChainInfo) {
 	store := k.chainInfoStore(ctx)
-	store.Set([]byte(chainInfo.ChainId), k.cdc.MustMarshal(chainInfo))
+	store.Set([]byte(chainInfo.ConsumerId), k.cdc.MustMarshal(chainInfo))
 }
 
-func (k Keeper) InitChainInfo(ctx context.Context, chainID string) (*types.ChainInfo, error) {
-	if len(chainID) == 0 {
-		return nil, fmt.Errorf("chainID is empty")
+func (k Keeper) InitChainInfo(ctx context.Context, consumerID string) (*types.ChainInfo, error) {
+	if len(consumerID) == 0 {
+		return nil, fmt.Errorf("consumerID is empty")
 	}
 	// ensure chain info has not been initialised yet
-	if k.HasChainInfo(ctx, chainID) {
+	if k.HasChainInfo(ctx, consumerID) {
 		return nil, errorsmod.Wrapf(types.ErrInvalidChainInfo, "chain info has already initialized")
 	}
 
 	chainInfo := &types.ChainInfo{
-		ChainId:      chainID,
+		ConsumerId:   consumerID,
 		LatestHeader: nil,
 		LatestForks: &types.Forks{
 			Headers: []*types.IndexedHeader{},
@@ -40,21 +41,21 @@ func (k Keeper) InitChainInfo(ctx context.Context, chainID string) (*types.Chain
 // HasChainInfo returns whether the chain info exists for a given ID
 // Since IBC does not provide API that allows to initialise chain info right before creating an IBC connection,
 // we can only check its existence every time, and return an empty one if it's not initialised yet.
-func (k Keeper) HasChainInfo(ctx context.Context, chainID string) bool {
+func (k Keeper) HasChainInfo(ctx context.Context, consumerId string) bool {
 	store := k.chainInfoStore(ctx)
-	return store.Has([]byte(chainID))
+	return store.Has([]byte(consumerId))
 }
 
 // GetChainInfo returns the ChainInfo struct for a chain with a given ID
 // Since IBC does not provide API that allows to initialise chain info right before creating an IBC connection,
 // we can only check its existence every time, and return an empty one if it's not initialised yet.
-func (k Keeper) GetChainInfo(ctx context.Context, chainID string) (*types.ChainInfo, error) {
-	if !k.HasChainInfo(ctx, chainID) {
+func (k Keeper) GetChainInfo(ctx context.Context, consumerId string) (*types.ChainInfo, error) {
+	if !k.HasChainInfo(ctx, consumerId) {
 		return nil, types.ErrChainInfoNotFound
 	}
 
 	store := k.chainInfoStore(ctx)
-	chainInfoBytes := store.Get([]byte(chainID))
+	chainInfoBytes := store.Get([]byte(consumerId))
 	var chainInfo types.ChainInfo
 	k.cdc.MustUnmarshal(chainInfoBytes, &chainInfo)
 	return &chainInfo, nil
@@ -66,14 +67,14 @@ func (k Keeper) GetChainInfo(ctx context.Context, chainID string) (*types.ChainI
 // Note that this function is triggered only upon receiving headers from the relayer,
 // and only a subset of headers in CZ are relayed. Thus TimestampedHeadersCount is not
 // equal to the total number of headers in CZ.
-func (k Keeper) updateLatestHeader(ctx context.Context, chainID string, header *types.IndexedHeader) error {
+func (k Keeper) updateLatestHeader(ctx context.Context, consumerId string, header *types.IndexedHeader) error {
 	if header == nil {
 		return errorsmod.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
-	chainInfo, err := k.GetChainInfo(ctx, chainID)
+	chainInfo, err := k.GetChainInfo(ctx, consumerId)
 	if err != nil {
 		// chain info has not been initialised yet
-		return fmt.Errorf("failed to get chain info of %s: %w", chainID, err)
+		return fmt.Errorf("failed to get chain info of %s: %w", consumerId, err)
 	}
 	chainInfo.LatestHeader = header     // replace the old latest header with the given one
 	chainInfo.TimestampedHeadersCount++ // increment the number of timestamped headers
@@ -87,12 +88,12 @@ func (k Keeper) updateLatestHeader(ctx context.Context, chainID string, header *
 // - If there is a fork header at the same height, add this fork to the set of latest fork headers
 // - If this fork header is newer than the previous one, replace the old fork headers with this fork header
 // - If this fork header is older than the current latest fork, ignore
-func (k Keeper) tryToUpdateLatestForkHeader(ctx context.Context, chainID string, header *types.IndexedHeader) error {
+func (k Keeper) tryToUpdateLatestForkHeader(ctx context.Context, consumerId string, header *types.IndexedHeader) error {
 	if header == nil {
 		return errorsmod.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
 
-	chainInfo, err := k.GetChainInfo(ctx, chainID)
+	chainInfo, err := k.GetChainInfo(ctx, consumerId)
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrChainInfoNotFound, "cannot insert fork header when chain info is not initialized")
 	}
@@ -117,23 +118,23 @@ func (k Keeper) tryToUpdateLatestForkHeader(ctx context.Context, chainID string,
 	return nil
 }
 
-// GetAllChainIDs gets all chain IDs that integrate Babylon
-func (k Keeper) GetAllChainIDs(ctx context.Context) []string {
-	chainIDs := []string{}
+// GetAllConsumerIDs gets IDs of all consumer that integrate Babylon
+func (k Keeper) GetAllConsumerIDs(ctx context.Context) []string {
+	consumerIds := []string{}
 	iter := k.chainInfoStore(ctx).Iterator(nil, nil)
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		chainIDBytes := iter.Key()
-		chainID := string(chainIDBytes)
-		chainIDs = append(chainIDs, chainID)
+		consumerIdBytes := iter.Key()
+		consumerId := string(consumerIdBytes)
+		consumerIds = append(consumerIds, consumerId)
 	}
-	return chainIDs
+	return consumerIds
 }
 
 // msgChainInfoStore stores the information of canonical chains and forks for CZs
 // prefix: ChainInfoKey
-// key: chainID
+// key: consumerId
 // value: ChainInfo
 func (k Keeper) chainInfoStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))

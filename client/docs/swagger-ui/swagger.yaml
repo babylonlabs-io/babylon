@@ -4738,7 +4738,7 @@ paths:
           type: boolean
       tags:
         - Query
-  /babylon/zoneconcierge/v1/chain_info/{chain_id}/header/{height}:
+  /babylon/zoneconcierge/v1/chain_info/{consumer_id}/header/{height}:
     get:
       summary: Header queries the CZ header and fork headers at a given height.
       operationId: Header
@@ -4751,9 +4751,9 @@ paths:
               header:
                 type: object
                 properties:
-                  chain_id:
+                  consumer_id:
                     type: string
-                    title: chain_id is the unique ID of the chain
+                    title: consumer_id is the unique ID of the consumer
                   hash:
                     type: string
                     format: byte
@@ -4816,9 +4816,9 @@ paths:
                     items:
                       type: object
                       properties:
-                        chain_id:
+                        consumer_id:
                           type: string
-                          title: chain_id is the unique ID of the chain
+                          title: consumer_id is the unique ID of the consumer
                         hash:
                           type: string
                           format: byte
@@ -5108,7 +5108,7 @@ paths:
                           "value": "1.212s"
                         }
       parameters:
-        - name: chain_id
+        - name: consumer_id
           in: path
           required: true
           type: string
@@ -5129,12 +5129,12 @@ paths:
           schema:
             type: object
             properties:
-              chain_ids:
+              consumer_ids:
                 type: array
                 items:
                   type: string
                 title: >-
-                  chain_ids are IDs of the chains in ascending alphabetical
+                  consumer_ids are IDs of the chains in ascending alphabetical
                   order
               pagination:
                 title: pagination defines the pagination in the response
@@ -5438,15 +5438,15 @@ paths:
                 items:
                   type: object
                   properties:
-                    chain_id:
+                    consumer_id:
                       type: string
-                      title: chain_id is the ID of the chain
+                      title: consumer_id is the ID of the consumer
                     latest_header:
                       type: object
                       properties:
-                        chain_id:
+                        consumer_id:
                           type: string
-                          title: chain_id is the unique ID of the chain
+                          title: consumer_id is the unique ID of the consumer
                         hash:
                           type: string
                           format: byte
@@ -5512,9 +5512,9 @@ paths:
                           items:
                             type: object
                             properties:
-                              chain_id:
+                              consumer_id:
                                 type: string
-                                title: chain_id is the unique ID of the chain
+                                title: consumer_id is the unique ID of the consumer
                               hash:
                                 type: string
                                 format: byte
@@ -5820,7 +5820,7 @@ paths:
                           "value": "1.212s"
                         }
       parameters:
-        - name: chain_ids
+        - name: consumer_ids
           in: query
           required: false
           type: array
@@ -5846,15 +5846,15 @@ paths:
                 items:
                   type: object
                   properties:
-                    chain_id:
+                    consumer_id:
                       type: string
-                      title: chain_id is the ID of the chain
+                      title: consumer_id is the ID of the consumer
                     latest_header:
                       type: object
                       properties:
-                        chain_id:
+                        consumer_id:
                           type: string
-                          title: chain_id is the unique ID of the chain
+                          title: consumer_id is the unique ID of the consumer
                         hash:
                           type: string
                           format: byte
@@ -5920,9 +5920,9 @@ paths:
                           items:
                             type: object
                             properties:
-                              chain_id:
+                              consumer_id:
                                 type: string
-                                title: chain_id is the unique ID of the chain
+                                title: consumer_id is the unique ID of the consumer
                               hash:
                                 type: string
                                 format: byte
@@ -6236,7 +6236,7 @@ paths:
           required: false
           type: string
           format: uint64
-        - name: chain_ids
+        - name: consumer_ids
           in: query
           required: false
           type: array
@@ -6245,7 +6245,7 @@ paths:
           collectionFormat: multi
       tags:
         - Query
-  /babylon/zoneconcierge/v1/finalized_chain_info/{chain_id}/height/{height}:
+  /babylon/zoneconcierge/v1/finalized_chain_info/{consumer_id}/height/{height}:
     get:
       summary: >-
         FinalizedChainInfoUntilHeight queries the BTC-finalised info no later
@@ -6262,15 +6262,15 @@ paths:
               finalized_chain_info:
                 type: object
                 properties:
-                  chain_id:
+                  consumer_id:
                     type: string
-                    title: chain_id is the ID of the chain
+                    title: consumer_id is the ID of the consumer
                   latest_header:
                     type: object
                     properties:
-                      chain_id:
+                      consumer_id:
                         type: string
-                        title: chain_id is the unique ID of the chain
+                        title: consumer_id is the unique ID of the consumer
                       hash:
                         type: string
                         format: byte
@@ -6336,9 +6336,9 @@ paths:
                         items:
                           type: object
                           properties:
-                            chain_id:
+                            consumer_id:
                               type: string
-                              title: chain_id is the unique ID of the chain
+                              title: consumer_id is the unique ID of the consumer
                             hash:
                               type: string
                               format: byte
@@ -6953,8 +6953,8 @@ paths:
                           "value": "1.212s"
                         }
       parameters:
-        - name: chain_id
-          description: chain_id is the ID of the CZ
+        - name: consumer_id
+          description: consumer_id is the ID of the CZ
           in: path
           required: true
           type: string
@@ -6996,21 +6996,21 @@ paths:
                 items:
                   type: object
                   properties:
-                    chain_id:
+                    consumer_id:
                       type: string
-                      title: chain_id is the ID of the chain
+                      title: consumer_id is the ID of the consumer
                     finalized_chain_info:
                       type: object
                       properties:
-                        chain_id:
+                        consumer_id:
                           type: string
-                          title: chain_id is the ID of the chain
+                          title: consumer_id is the ID of the consumer
                         latest_header:
                           type: object
                           properties:
-                            chain_id:
+                            consumer_id:
                               type: string
-                              title: chain_id is the unique ID of the chain
+                              title: consumer_id is the unique ID of the consumer
                             hash:
                               type: string
                               format: byte
@@ -7077,9 +7077,11 @@ paths:
                               items:
                                 type: object
                                 properties:
-                                  chain_id:
+                                  consumer_id:
                                     type: string
-                                    title: chain_id is the unique ID of the chain
+                                    title: >-
+                                      consumer_id is the unique ID of the
+                                      consumer
                                   hash:
                                     type: string
                                     format: byte
@@ -7706,8 +7708,8 @@ paths:
                           "value": "1.212s"
                         }
       parameters:
-        - name: chain_ids
-          description: chain_ids is the list of ids of CZs.
+        - name: consumer_ids
+          description: consumer_ids is the list of ids of CZs.
           in: query
           required: false
           type: array
@@ -7723,7 +7725,7 @@ paths:
           type: boolean
       tags:
         - Query
-  /babylon/zoneconcierge/v1/headers/{chain_id}:
+  /babylon/zoneconcierge/v1/headers/{consumer_id}:
     get:
       summary: |-
         ListHeaders queries the headers of a chain in Babylon's view, with
@@ -7740,9 +7742,9 @@ paths:
                 items:
                   type: object
                   properties:
-                    chain_id:
+                    consumer_id:
                       type: string
-                      title: chain_id is the unique ID of the chain
+                      title: consumer_id is the unique ID of the consumer
                     hash:
                       type: string
                       format: byte
@@ -8029,7 +8031,7 @@ paths:
                           "value": "1.212s"
                         }
       parameters:
-        - name: chain_id
+        - name: consumer_id
           in: path
           required: true
           type: string
@@ -8091,7 +8093,7 @@ paths:
           type: boolean
       tags:
         - Query
-  /babylon/zoneconcierge/v1/headers/{chain_id}/epochs/{epoch_num}:
+  /babylon/zoneconcierge/v1/headers/{consumer_id}/epochs/{epoch_num}:
     get:
       summary: |-
         ListEpochHeaders queries the headers of a chain timestamped in a given
@@ -8108,9 +8110,9 @@ paths:
                 items:
                   type: object
                   properties:
-                    chain_id:
+                    consumer_id:
                       type: string
-                      title: chain_id is the unique ID of the chain
+                      title: consumer_id is the unique ID of the consumer
                     hash:
                       type: string
                       format: byte
@@ -8368,7 +8370,7 @@ paths:
                           "value": "1.212s"
                         }
       parameters:
-        - name: chain_id
+        - name: consumer_id
           in: path
           required: true
           type: string
@@ -11393,15 +11395,15 @@ definitions:
   babylon.zoneconcierge.v1.ChainInfo:
     type: object
     properties:
-      chain_id:
+      consumer_id:
         type: string
-        title: chain_id is the ID of the chain
+        title: consumer_id is the ID of the consumer
       latest_header:
         type: object
         properties:
-          chain_id:
+          consumer_id:
             type: string
-            title: chain_id is the unique ID of the chain
+            title: consumer_id is the unique ID of the consumer
           hash:
             type: string
             format: byte
@@ -11460,9 +11462,9 @@ definitions:
             items:
               type: object
               properties:
-                chain_id:
+                consumer_id:
                   type: string
-                  title: chain_id is the unique ID of the chain
+                  title: consumer_id is the unique ID of the consumer
                 hash:
                   type: string
                   format: byte
@@ -11562,21 +11564,21 @@ definitions:
   babylon.zoneconcierge.v1.FinalizedChainInfo:
     type: object
     properties:
-      chain_id:
+      consumer_id:
         type: string
-        title: chain_id is the ID of the chain
+        title: consumer_id is the ID of the consumer
       finalized_chain_info:
         type: object
         properties:
-          chain_id:
+          consumer_id:
             type: string
-            title: chain_id is the ID of the chain
+            title: consumer_id is the ID of the consumer
           latest_header:
             type: object
             properties:
-              chain_id:
+              consumer_id:
                 type: string
-                title: chain_id is the unique ID of the chain
+                title: consumer_id is the unique ID of the consumer
               hash:
                 type: string
                 format: byte
@@ -11639,9 +11641,9 @@ definitions:
                 items:
                   type: object
                   properties:
-                    chain_id:
+                    consumer_id:
                       type: string
-                      title: chain_id is the unique ID of the chain
+                      title: consumer_id is the unique ID of the consumer
                     hash:
                       type: string
                       format: byte
@@ -12043,9 +12045,9 @@ definitions:
         items:
           type: object
           properties:
-            chain_id:
+            consumer_id:
               type: string
-              title: chain_id is the unique ID of the chain
+              title: consumer_id is the unique ID of the consumer
             hash:
               type: string
               format: byte
@@ -12126,9 +12128,9 @@ definitions:
   babylon.zoneconcierge.v1.IndexedHeader:
     type: object
     properties:
-      chain_id:
+      consumer_id:
         type: string
-        title: chain_id is the unique ID of the chain
+        title: consumer_id is the unique ID of the consumer
       hash:
         type: string
         format: byte
@@ -12478,11 +12480,11 @@ definitions:
   babylon.zoneconcierge.v1.QueryChainListResponse:
     type: object
     properties:
-      chain_ids:
+      consumer_ids:
         type: array
         items:
           type: string
-        title: chain_ids are IDs of the chains in ascending alphabetical order
+        title: consumer_ids are IDs of the chains in ascending alphabetical order
       pagination:
         title: pagination defines the pagination in the response
         type: object
@@ -12519,15 +12521,15 @@ definitions:
         items:
           type: object
           properties:
-            chain_id:
+            consumer_id:
               type: string
-              title: chain_id is the ID of the chain
+              title: consumer_id is the ID of the consumer
             latest_header:
               type: object
               properties:
-                chain_id:
+                consumer_id:
                   type: string
-                  title: chain_id is the unique ID of the chain
+                  title: consumer_id is the unique ID of the consumer
                 hash:
                   type: string
                   format: byte
@@ -12590,9 +12592,9 @@ definitions:
                   items:
                     type: object
                     properties:
-                      chain_id:
+                      consumer_id:
                         type: string
-                        title: chain_id is the unique ID of the chain
+                        title: consumer_id is the unique ID of the consumer
                       hash:
                         type: string
                         format: byte
@@ -12709,15 +12711,15 @@ definitions:
         items:
           type: object
           properties:
-            chain_id:
+            consumer_id:
               type: string
-              title: chain_id is the ID of the chain
+              title: consumer_id is the ID of the consumer
             latest_header:
               type: object
               properties:
-                chain_id:
+                consumer_id:
                   type: string
-                  title: chain_id is the unique ID of the chain
+                  title: consumer_id is the unique ID of the consumer
                 hash:
                   type: string
                   format: byte
@@ -12780,9 +12782,9 @@ definitions:
                   items:
                     type: object
                     properties:
-                      chain_id:
+                      consumer_id:
                         type: string
-                        title: chain_id is the unique ID of the chain
+                        title: consumer_id is the unique ID of the consumer
                       hash:
                         type: string
                         format: byte
@@ -12900,15 +12902,15 @@ definitions:
       finalized_chain_info:
         type: object
         properties:
-          chain_id:
+          consumer_id:
             type: string
-            title: chain_id is the ID of the chain
+            title: consumer_id is the ID of the consumer
           latest_header:
             type: object
             properties:
-              chain_id:
+              consumer_id:
                 type: string
-                title: chain_id is the unique ID of the chain
+                title: consumer_id is the unique ID of the consumer
               hash:
                 type: string
                 format: byte
@@ -12971,9 +12973,9 @@ definitions:
                 items:
                   type: object
                   properties:
-                    chain_id:
+                    consumer_id:
                       type: string
-                      title: chain_id is the unique ID of the chain
+                      title: consumer_id is the unique ID of the consumer
                     hash:
                       type: string
                       format: byte
@@ -13377,21 +13379,21 @@ definitions:
         items:
           type: object
           properties:
-            chain_id:
+            consumer_id:
               type: string
-              title: chain_id is the ID of the chain
+              title: consumer_id is the ID of the consumer
             finalized_chain_info:
               type: object
               properties:
-                chain_id:
+                consumer_id:
                   type: string
-                  title: chain_id is the ID of the chain
+                  title: consumer_id is the ID of the consumer
                 latest_header:
                   type: object
                   properties:
-                    chain_id:
+                    consumer_id:
                       type: string
-                      title: chain_id is the unique ID of the chain
+                      title: consumer_id is the unique ID of the consumer
                     hash:
                       type: string
                       format: byte
@@ -13456,9 +13458,9 @@ definitions:
                       items:
                         type: object
                         properties:
-                          chain_id:
+                          consumer_id:
                             type: string
-                            title: chain_id is the unique ID of the chain
+                            title: consumer_id is the unique ID of the consumer
                           hash:
                             type: string
                             format: byte
@@ -13870,9 +13872,9 @@ definitions:
       header:
         type: object
         properties:
-          chain_id:
+          consumer_id:
             type: string
-            title: chain_id is the unique ID of the chain
+            title: consumer_id is the unique ID of the consumer
           hash:
             type: string
             format: byte
@@ -13931,9 +13933,9 @@ definitions:
             items:
               type: object
               properties:
-                chain_id:
+                consumer_id:
                   type: string
-                  title: chain_id is the unique ID of the chain
+                  title: consumer_id is the unique ID of the consumer
                 hash:
                   type: string
                   format: byte
@@ -14027,9 +14029,9 @@ definitions:
         items:
           type: object
           properties:
-            chain_id:
+            consumer_id:
               type: string
-              title: chain_id is the unique ID of the chain
+              title: consumer_id is the unique ID of the consumer
             hash:
               type: string
               format: byte
@@ -14094,9 +14096,9 @@ definitions:
         items:
           type: object
           properties:
-            chain_id:
+            consumer_id:
               type: string
-              title: chain_id is the unique ID of the chain
+              title: consumer_id is the unique ID of the consumer
             hash:
               type: string
               format: byte

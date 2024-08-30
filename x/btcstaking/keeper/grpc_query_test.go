@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"context"
 	"errors"
 	"math/rand"
 	"testing"
@@ -17,6 +18,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	btcstakingkeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -60,7 +62,7 @@ func FuzzFinalityProviders(f *testing.F) {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
 
-			keeper.SetFinalityProvider(ctx, fp)
+			AddFinalityProvider(t, ctx, *keeper, fp)
 			fpsMap[fp.BtcPk.MarshalHex()] = fp
 		}
 		numOfFpsInStore := len(fpsMap)
@@ -125,7 +127,7 @@ func FuzzFinalityProvider(f *testing.F) {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
 
-			keeper.SetFinalityProvider(ctx, fp)
+			AddFinalityProvider(t, ctx, *keeper, fp)
 			fpsMap[fp.BtcPk.MarshalHex()] = fp
 		}
 
@@ -194,7 +196,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		for i := uint64(0); i < numFps; i++ {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
-			keeper.SetFinalityProvider(ctx, fp)
+			AddFinalityProvider(t, ctx, *keeper, fp)
 			fps = append(fps, fp)
 		}
 
@@ -281,7 +283,7 @@ func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
 		fp, err := datagen.GenRandomFinalityProvider(r)
 		require.NoError(t, err)
 		// add this finality provider
-		keeper.SetFinalityProvider(ctx, fp)
+		AddFinalityProvider(t, ctx, *keeper, fp)
 		// set random voting power at random height
 		randomHeight := datagen.RandomInt(r, 100) + 1
 		randomPower := datagen.RandomInt(r, 100) + 1
@@ -330,7 +332,7 @@ func FuzzFinalityProviderCurrentVotingPower(f *testing.F) {
 		fp, err := datagen.GenRandomFinalityProvider(r)
 		require.NoError(t, err)
 		// add this finality provider
-		keeper.SetFinalityProvider(ctx, fp)
+		AddFinalityProvider(t, ctx, *keeper, fp)
 		// set random voting power at random height
 		randomHeight := datagen.RandomInt(r, 100) + 1
 		ctx = datagen.WithCtxHeight(ctx, randomHeight)
@@ -400,7 +402,7 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 		for i := uint64(0); i < numFps; i++ {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
-			keeper.SetFinalityProvider(ctx, fp)
+			AddFinalityProvider(t, ctx, *keeper, fp)
 			fps = append(fps, fp)
 		}
 
@@ -515,7 +517,7 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 		// Generate a finality provider
 		fp, err := datagen.GenRandomFinalityProvider(r)
 		require.NoError(t, err)
-		keeper.SetFinalityProvider(ctx, fp)
+		AddFinalityProvider(t, ctx, *keeper, fp)
 
 		startHeight := datagen.RandomInt(r, 100) + 1
 		endHeight := datagen.RandomInt(r, 1000) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
@@ -616,4 +618,15 @@ func constructRequestWithKeyAndLimit(r *rand.Rand, key []byte, limit uint64) *qu
 
 func constructRequestWithLimit(r *rand.Rand, limit uint64) *query.PageRequest {
 	return constructRequestWithKeyAndLimit(r, nil, limit)
+}
+
+func AddFinalityProvider(t *testing.T, goCtx context.Context, k btcstakingkeeper.Keeper, fp *types.FinalityProvider) {
+	err := k.AddFinalityProvider(goCtx, &types.MsgCreateFinalityProvider{
+		Addr:        fp.Addr,
+		Description: fp.Description,
+		Commission:  fp.Commission,
+		BtcPk:       fp.BtcPk,
+		Pop:         fp.Pop,
+	})
+	require.NoError(t, err)
 }

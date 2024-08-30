@@ -23,8 +23,8 @@ func (k Keeper) Hooks() Hooks { return Hooks{k} }
 func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	// upon an epoch has ended, index the current chain info for each CZ
 	// TODO: do this together when epoch is sealed?
-	for _, chainID := range h.k.GetAllChainIDs(ctx) {
-		h.k.recordEpochChainInfo(ctx, chainID, epoch)
+	for _, consumerID := range h.k.GetAllConsumerIDs(ctx) {
+		h.k.recordEpochChainInfo(ctx, consumerID, epoch)
 	}
 }
 

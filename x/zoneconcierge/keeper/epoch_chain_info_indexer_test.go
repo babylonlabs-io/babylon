@@ -20,7 +20,7 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		babylonApp := app.Setup(t, false)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 		ctx := babylonApp.NewContext(false)
-		czChainID := "test-chainid"
+		consumerID := "test-consumerid"
 
 		hooks := zcKeeper.Hooks()
 
@@ -33,13 +33,13 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(r, 100) + 1
 		numForkHeaders := datagen.RandomInt(r, 10) + 1
-		SimulateNewHeadersAndForks(ctx, r, &zcKeeper, czChainID, 0, numHeaders, numForkHeaders)
+		SimulateNewHeadersAndForks(ctx, r, &zcKeeper, consumerID, 0, numHeaders, numForkHeaders)
 
 		// end this epoch
 		hooks.AfterEpochEnds(ctx, epochNum)
 
 		// check if the chain info of this epoch is recorded or not
-		chainInfoWithProof, err := zcKeeper.GetEpochChainInfo(ctx, czChainID, epochNum)
+		chainInfoWithProof, err := zcKeeper.GetEpochChainInfo(ctx, consumerID, epochNum)
 		chainInfo := chainInfoWithProof.ChainInfo
 		require.NoError(t, err)
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
@@ -57,7 +57,7 @@ func FuzzGetEpochHeaders(f *testing.F) {
 		babylonApp := app.Setup(t, false)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 		ctx := babylonApp.NewContext(false)
-		czChainID := "test-chainid"
+		consumerID := "test-consumerid"
 
 		hooks := zcKeeper.Hooks()
 
@@ -87,7 +87,7 @@ func FuzzGetEpochHeaders(f *testing.F) {
 			numHeadersList = append(numHeadersList, datagen.RandomInt(r, 100)+1)
 			numForkHeadersList = append(numForkHeadersList, datagen.RandomInt(r, 10)+1)
 			// trigger hooks to append these headers and fork headers
-			expectedHeaders, _ := SimulateNewHeadersAndForks(ctx, r, &zcKeeper, czChainID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
+			expectedHeaders, _ := SimulateNewHeadersAndForks(ctx, r, &zcKeeper, consumerID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
 			expectedHeadersMap[epochNum] = expectedHeaders
 			// prepare nextHeight for the next request
 			nextHeightList = append(nextHeightList, nextHeightList[i]+numHeadersList[i])
@@ -102,7 +102,7 @@ func FuzzGetEpochHeaders(f *testing.F) {
 		for i := uint64(0); i < numReqs; i++ {
 			epochNum := epochNumList[i]
 			// check if the headers are same as expected
-			headers, err := zcKeeper.GetEpochHeaders(ctx, czChainID, epochNum)
+			headers, err := zcKeeper.GetEpochHeaders(ctx, consumerID, epochNum)
 			require.NoError(t, err)
 			require.Equal(t, len(expectedHeadersMap[epochNum]), len(headers))
 			for j := 0; j < len(expectedHeadersMap[epochNum]); j++ {
