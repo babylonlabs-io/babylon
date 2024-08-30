@@ -34,6 +34,10 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
+	if !im.keeper.GetParams(ctx).EnableIntegration {
+		return "", types.ErrIntegrationDisabled
+	}
+
 	// the IBC channel has to be ordered
 	if order != channeltypes.ORDERED {
 		return "", errorsmod.Wrapf(channeltypes.ErrInvalidChannelOrdering, "expected %s channel, got %s ", channeltypes.ORDERED, order)
@@ -69,6 +73,10 @@ func (im IBCModule) OnChanOpenTry(
 	counterparty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
+	if !im.keeper.GetParams(ctx).EnableIntegration {
+		return "", types.ErrIntegrationDisabled
+	}
+
 	// the IBC channel has to be ordered
 	if order != channeltypes.ORDERED {
 		return "", errorsmod.Wrapf(channeltypes.ErrInvalidChannelOrdering, "expected %s channel, got %s ", channeltypes.ORDERED, order)
@@ -107,6 +115,10 @@ func (im IBCModule) OnChanOpenAck(
 	_,
 	counterpartyVersion string,
 ) error {
+	if !im.keeper.GetParams(ctx).EnableIntegration {
+		return types.ErrIntegrationDisabled
+	}
+
 	// check version consistency
 	if counterpartyVersion != types.Version {
 		return errorsmod.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
@@ -121,6 +133,10 @@ func (im IBCModule) OnChanOpenConfirm(
 	portID,
 	channelID string,
 ) error {
+	if !im.keeper.GetParams(ctx).EnableIntegration {
+		return types.ErrIntegrationDisabled
+	}
+
 	return nil
 }
 
