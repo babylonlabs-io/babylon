@@ -16,6 +16,7 @@ import (
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/cosmos/cosmos-sdk/client"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
@@ -63,6 +64,8 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.RegressionNetParams)
 		require.NoError(t, err)
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+		require.NoError(t, err)
 
 		startHeight := datagen.RandomInt(r, 100) + 1
 		endHeight := datagen.RandomInt(r, 1000) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
@@ -82,7 +85,7 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 				covenantSKs,
 				covenantPKs,
 				covenantQuorum,
-				slashingAddress.EncodeAddress(),
+				slashingPkScript,
 				startHeight, endHeight, 10000,
 				slashingRate,
 				slashingChangeLockTime,
@@ -151,7 +154,7 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 			covenantSKs,
 			covenantPKs,
 			covenantQuorum,
-			slashingAddress.EncodeAddress(),
+			slashingPkScript,
 			startHeight, endHeight, 10000,
 			slashingRate,
 			slashingChangeLockTime,

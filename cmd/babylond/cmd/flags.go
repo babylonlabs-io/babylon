@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/hex"
 	"strings"
 	"time"
 
@@ -37,8 +38,8 @@ const (
 	flagCovenantQuorum             = "covenant-quorum"
 	flagMaxActiveFinalityProviders = "max-active-finality-providers"
 	flagMinUnbondingTime           = "min-unbonding-time"
-	flagMinUnbondingRate           = "min-unbonding-rate"
-	flagSlashingAddress            = "slashing-address"
+	flagUnbondingFeeSat            = "unbonding-fee-sat"
+	flagSlashingPkScript           = "slashing-pk-script"
 	flagMinSlashingFee             = "min-slashing-fee-sat"
 	flagSlashingRate               = "slashing-rate"
 	flagMinCommissionRate          = "min-commission-rate"
@@ -64,12 +65,12 @@ type GenesisCLIArgs struct {
 	VoteExtensionEnableHeight    int64
 	CovenantPKs                  []string
 	CovenantQuorum               uint32
-	SlashingAddress              string
+	SlashingPkScript             string
 	MinSlashingTransactionFeeSat int64
 	SlashingRate                 math.LegacyDec
 	MaxActiveFinalityProviders   uint32
 	MinUnbondingTime             uint16
-	MinUnbondingRate             math.LegacyDec
+	UnbondingFeeSat              int64
 	MinCommissionRate            math.LegacyDec
 }
 
@@ -91,13 +92,13 @@ func addGenesisFlags(cmd *cobra.Command) {
 	// btcstaking args
 	cmd.Flags().String(flagCovenantPks, strings.Join(btcstypes.DefaultParams().CovenantPksHex(), ","), "Bitcoin staking covenant public keys, comma separated")
 	cmd.Flags().Uint32(flagCovenantQuorum, btcstypes.DefaultParams().CovenantQuorum, "Bitcoin staking covenant quorum")
-	cmd.Flags().String(flagSlashingAddress, btcstypes.DefaultParams().SlashingAddress, "Bitcoin staking slashing address")
+	cmd.Flags().String(flagSlashingPkScript, hex.EncodeToString(btcstypes.DefaultParams().SlashingPkScript), "Bitcoin staking slashing pk script. Hex encoded.")
 	cmd.Flags().Int64(flagMinSlashingFee, 1000, "Bitcoin staking minimum slashing fee")
 	cmd.Flags().String(flagMinCommissionRate, "0", "Bitcoin staking validator minimum commission rate")
 	cmd.Flags().String(flagSlashingRate, "0.1", "Bitcoin staking slashing rate")
 	cmd.Flags().Uint32(flagMaxActiveFinalityProviders, 100, "Bitcoin staking maximum active finality providers")
 	cmd.Flags().Uint16(flagMinUnbondingTime, 0, "Min timelock on unbonding transaction in btc blocks")
-	cmd.Flags().String(flagMinUnbondingRate, "0.8", "Min amount of btc required in unbonding output expressed as a fraction of staking output")
+	cmd.Flags().Int64(flagUnbondingFeeSat, 1000, "Required fee for unbonding transaction in satoshis")
 	// inflation args
 	cmd.Flags().Float64(flagInflationRateChange, 0.13, "Inflation rate change")
 	cmd.Flags().Float64(flagInflationMax, 0.2, "Maximum inflation")
@@ -123,13 +124,13 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	reporterAddresses, _ := cmd.Flags().GetString(flagAllowedReporterAddresses)
 	covenantPks, _ := cmd.Flags().GetString(flagCovenantPks)
 	covenantQuorum, _ := cmd.Flags().GetUint32(flagCovenantQuorum)
-	slashingAddress, _ := cmd.Flags().GetString(flagSlashingAddress)
+	slashingPkScript, _ := cmd.Flags().GetString(flagSlashingPkScript)
 	minSlashingFee, _ := cmd.Flags().GetInt64(flagMinSlashingFee)
 	minCommissionRate, _ := cmd.Flags().GetString(flagMinCommissionRate)
 	slashingRate, _ := cmd.Flags().GetString(flagSlashingRate)
 	maxActiveFinalityProviders, _ := cmd.Flags().GetUint32(flagMaxActiveFinalityProviders)
 	minUnbondingTime, _ := cmd.Flags().GetUint16(flagMinUnbondingTime)
-	minUnbondingRate, _ := cmd.Flags().GetString(flagMinUnbondingRate)
+	unbondingFeeSat, _ := cmd.Flags().GetInt64(flagUnbondingFeeSat)
 	genesisTimeUnix, _ := cmd.Flags().GetInt64(flagGenesisTime)
 	inflationRateChange, _ := cmd.Flags().GetFloat64(flagInflationRateChange)
 	inflationMax, _ := cmd.Flags().GetFloat64(flagInflationMax)
@@ -162,13 +163,13 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		AllowedReporterAddresses:     allowedReporterAddresses,
 		CovenantPKs:                  strings.Split(covenantPks, ","),
 		CovenantQuorum:               covenantQuorum,
-		SlashingAddress:              slashingAddress,
+		SlashingPkScript:             slashingPkScript,
 		MinSlashingTransactionFeeSat: minSlashingFee,
 		MinCommissionRate:            math.LegacyMustNewDecFromStr(minCommissionRate),
 		SlashingRate:                 math.LegacyMustNewDecFromStr(slashingRate),
 		MaxActiveFinalityProviders:   maxActiveFinalityProviders,
 		MinUnbondingTime:             minUnbondingTime,
-		MinUnbondingRate:             math.LegacyMustNewDecFromStr(minUnbondingRate),
+		UnbondingFeeSat:              unbondingFeeSat,
 		GenesisTime:                  genesisTime,
 		InflationRateChange:          inflationRateChange,
 		InflationMax:                 inflationMax,

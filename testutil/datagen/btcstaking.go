@@ -88,7 +88,7 @@ func GenRandomBTCDelegation(
 	covenantSKs []*btcec.PrivateKey,
 	covenantPks []*btcec.PublicKey,
 	covenantQuorum uint32,
-	slashingAddress string,
+	slashingPkScript []byte,
 	startHeight, endHeight, totalSat uint64,
 	slashingRate sdkmath.LegacyDec,
 	slashingChangeLockTime uint16,
@@ -114,7 +114,7 @@ func GenRandomBTCDelegation(
 		covenantQuorum,
 		uint16(endHeight-startHeight),
 		int64(totalSat),
-		slashingAddress,
+		slashingPkScript,
 		slashingRate,
 		slashingChangeLockTime,
 	)
@@ -183,7 +183,7 @@ func GenRandomBTCDelegation(
 		wire.NewOutPoint(&stkTxHash, StakingOutIdx),
 		w+1,
 		int64(unbondingValue),
-		slashingAddress,
+		slashingPkScript,
 		slashingRate,
 		slashingChangeLockTime,
 	)
@@ -242,7 +242,7 @@ func GenBTCStakingSlashingInfoWithOutPoint(
 	covenantQuorum uint32,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
-	slashingAddress string,
+	slashingPkScript []byte,
 	slashingRate sdkmath.LegacyDec,
 	slashingChangeLockTime uint16,
 ) *TestStakingSlashingInfo {
@@ -271,14 +271,10 @@ func GenBTCStakingSlashingInfoWithOutPoint(
 
 	tx.AddTxOut(wire.NewTxOut(10000, changeAddrScript)) // output for change
 
-	// construct slashing tx
-	slashingAddrBtc, err := btcutil.DecodeAddress(slashingAddress, btcNet)
-	require.NoError(t, err)
-
 	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
 		tx,
 		StakingOutIdx,
-		slashingAddrBtc,
+		slashingPkScript,
 		stakerSK.PubKey(),
 		slashingChangeLockTime,
 		2000,
@@ -305,7 +301,7 @@ func GenBTCStakingSlashingInfo(
 	covenantQuorum uint32,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
-	slashingAddress string,
+	slashingPkScript []byte,
 	slashingRate sdkmath.LegacyDec,
 	slashingChangeLockTime uint16,
 ) *TestStakingSlashingInfo {
@@ -323,7 +319,7 @@ func GenBTCStakingSlashingInfo(
 		covenantQuorum,
 		stakingTimeBlocks,
 		stakingValue,
-		slashingAddress,
+		slashingPkScript,
 		slashingRate,
 		slashingChangeLockTime,
 	)
@@ -340,7 +336,7 @@ func GenBTCUnbondingSlashingInfo(
 	stakingTransactionOutpoint *wire.OutPoint,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
-	slashingAddress string,
+	slashingPkScript []byte,
 	slashingRate sdkmath.LegacyDec,
 	slashingChangeLockTime uint16,
 ) *TestUnbondingSlashingInfo {
@@ -362,14 +358,10 @@ func GenBTCUnbondingSlashingInfo(
 	tx.AddTxIn(txIn)
 	tx.AddTxOut(unbondingInfo.UnbondingOutput)
 
-	// construct slashing tx
-	slashingAddrBtc, err := btcutil.DecodeAddress(slashingAddress, btcNet)
-	require.NoError(t, err)
-
 	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
 		tx,
 		StakingOutIdx,
-		slashingAddrBtc,
+		slashingPkScript,
 		stakerSK.PubKey(),
 		slashingChangeLockTime,
 		2000,

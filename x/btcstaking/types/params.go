@@ -10,6 +10,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
@@ -34,14 +35,19 @@ func DefaultCovenantCommittee() ([]*btcec.PrivateKey, []*btcec.PublicKey, uint32
 	return sks, pks, 3
 }
 
-func defaultSlashingAddress() string {
+func defaultSlashingPkScript() []byte {
 	// 20 bytes
 	pkHash := []byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 	addr, err := btcutil.NewAddressPubKeyHash(pkHash, &chaincfg.SimNetParams)
 	if err != nil {
 		panic(err)
 	}
-	return addr.EncodeAddress()
+
+	pkScript, err := txscript.PayToAddrScript(addr)
+	if err != nil {
+		panic(err)
+	}
+	return pkScript
 }
 
 // ParamKeyTable the param key table for launch module
@@ -55,7 +61,7 @@ func DefaultParams() Params {
 	return Params{
 		CovenantPks:         bbn.NewBIP340PKsFromBTCPKs(pks),
 		CovenantQuorum:      quorum,
-		SlashingAddress:     defaultSlashingAddress(),
+		SlashingPkScript:    defaultSlashingPkScript(),
 		MinSlashingTxFeeSat: 1000,
 		MinCommissionRate:   sdkmath.LegacyZeroDec(),
 		// The Default slashing rate is 0.1 i.e., 10% of the total staked BTC will be burned.
@@ -63,9 +69,8 @@ func DefaultParams() Params {
 		MaxActiveFinalityProviders: defaultMaxActiveFinalityProviders,
 		// The default minimum unbonding time is 0, which effectively defaults to checkpoint
 		// finalization timeout.
-		MinUnbondingTime: 0,
-		// By default unbonding value is 0.8
-		MinUnbondingRate: sdkmath.LegacyNewDecWithPrec(8, 1), // 8 * 10^{-1} = 0.8
+		MinUnbondingTimeBlocks: 0,
+		UnbondingFeeSat:        1000,
 	}
 }
 
@@ -144,15 +149,11 @@ func (p Params) Validate() error {
 		return btcstaking.ErrInvalidSlashingRate
 	}
 
-	if !btcstaking.IsRateValid(p.MinUnbondingRate) {
-		return fmt.Errorf("minimum unbonding value is invalid. it should be fraction in range (0, 1) with at 2 decimal places precision")
-	}
-
 	if err := validateMaxActiveFinalityProviders(p.MaxActiveFinalityProviders); err != nil {
 		return err
 	}
 
-	if err := validateMinUnbondingTime(p.MinUnbondingTime); err != nil {
+	if err := validateMinUnbondingTime(p.MinUnbondingTimeBlocks); err != nil {
 		return err
 	}
 
@@ -172,14 +173,6 @@ func (p Params) HasCovenantPK(pk *bbn.BIP340PubKey) bool {
 		}
 	}
 	return false
-}
-
-func (p Params) MustGetSlashingAddress(btcParams *chaincfg.Params) btcutil.Address {
-	slashingAddr, err := btcutil.DecodeAddress(p.SlashingAddress, btcParams)
-	if err != nil {
-		panic(fmt.Errorf("failed to decode slashing address in genesis: %w", err))
-	}
-	return slashingAddr
 }
 
 func (p Params) CovenantPksHex() []string {

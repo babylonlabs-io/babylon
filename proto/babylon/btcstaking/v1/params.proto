@@ -27,7 +27,7 @@ message Params {
   // PARAMETERS COVERING SLASHING
   // slashing_pk_script is the pk_script expected in slashing output ie. the first
   // output of slashing transaction
-  string slashing_pk_script = 7;
+  bytes slashing_pk_script = 7;
   // min_slashing_tx_fee_sat is the minimum amount of tx fee (quantified
   // in Satoshi) needed for the pre-signed slashing tx. It covers both:
   // staking slashing transaction and unbonding slashing transaction

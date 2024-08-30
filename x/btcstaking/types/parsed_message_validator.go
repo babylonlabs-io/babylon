@@ -6,27 +6,12 @@ import (
 	"github.com/babylonlabs-io/babylon/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/wire"
 )
 
 type ParamsValidationResult struct {
 	StakingOutputIdx   uint32
 	UnbondingOutputIdx uint32
-}
-
-// caluculateMinimumUnbondingValue calculates minimum unbonding value basend on current staking output value
-// and params.MinUnbondingRate
-func caluculateMinimumUnbondingValue(
-	stakingOutput *wire.TxOut,
-	params *Params,
-) btcutil.Amount {
-	// this conversions must always succeed, as it is part of our params
-	minUnbondingRate := params.MinUnbondingRate.MustFloat64()
-	// Caluclate min unbonding output value based on staking output, use btc native multiplication
-	minUnbondingOutputValue := btcutil.Amount(stakingOutput.Value).MulF64(minUnbondingRate)
-	return minUnbondingOutputValue
 }
 
 // ValidateParams validates parsed message against parameters
@@ -48,7 +33,6 @@ func ValidateParams(
 
 	stakingTxHash := pm.StakingTx.Transaction.TxHash()
 	covenantPks := parameters.MustGetCovenantPks()
-	slashingAddr := parameters.MustGetSlashingAddress(net)
 
 	// 2. Validate all data related to staking tx:
 	// - it has valid staking output
@@ -79,7 +63,7 @@ func ValidateParams(
 		stakingOutputIdx,
 		parameters.MinSlashingTxFeeSat,
 		parameters.SlashingRate,
-		slashingAddr,
+		parameters.SlashingPkScript,
 		pm.StakerPK.PublicKey,
 		pm.UnbondingTime,
 		net,
@@ -130,7 +114,7 @@ func ValidateParams(
 		unbondingOutputIdx,
 		parameters.MinSlashingTxFeeSat,
 		parameters.SlashingRate,
-		slashingAddr,
+		parameters.SlashingPkScript,
 		pm.StakerPK.PublicKey,
 		pm.UnbondingTime,
 		net,
@@ -174,9 +158,11 @@ func ValidateParams(
 		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0")
 	}
 
-	minUnbondingValue := caluculateMinimumUnbondingValue(pm.StakingTx.Transaction.TxOut[stakingOutputIdx], parameters)
-	if btcutil.Amount(pm.UnbondingTx.Transaction.TxOut[0].Value) < minUnbondingValue {
-		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding output value must be at least %s, based on staking output", minUnbondingValue)
+	// 6. Check that unbonding tx fee is as expected.
+	unbondingTxFee := pm.StakingTx.Transaction.TxOut[stakingOutputIdx].Value - pm.UnbondingTx.Transaction.TxOut[0].Value
+
+	if unbondingTxFee != parameters.UnbondingFeeSat {
+		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be %d, but got %d", parameters.UnbondingFeeSat, unbondingTxFee)
 	}
 
 	return &ParamsValidationResult{
