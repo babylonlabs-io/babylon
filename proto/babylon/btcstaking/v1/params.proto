@@ -47,7 +47,12 @@ message Params {
   ];
 
   // min_unbonding_rate deprecated in favor of unbonding_fee_sat
-  string min_unbonding_rate = 9 [deprecated=true];
+  string min_unbonding_rate = 9 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    deprecated=true
+  ];
 
   // min_staking_value_sat is the minimum of satoshis locked in staking output
   int64 min_staking_value_sat = 10;
