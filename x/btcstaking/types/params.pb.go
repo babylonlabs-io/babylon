@@ -28,47 +28,45 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params defines the parameters for the module.
 type Params struct {
+	// PARAMETERS COVERING STAKING
 	// covenant_pks is the list of public keys held by the covenant committee
 	// each PK follows encoding in BIP-340 spec on Bitcoin
 	CovenantPks []github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,1,rep,name=covenant_pks,json=covenantPks,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"covenant_pks,omitempty"`
 	// covenant_quorum is the minimum number of signatures needed for the covenant
 	// multisignature
 	CovenantQuorum uint32 `protobuf:"varint,2,opt,name=covenant_quorum,json=covenantQuorum,proto3" json:"covenant_quorum,omitempty"`
-	// slashing address deprecated field in favor of slashing_pk_script.
-	SlashingAddress string `protobuf:"bytes,3,opt,name=slashing_address,json=slashingAddress,proto3" json:"slashing_address,omitempty"` // Deprecated: Do not use.
-	// min_slashing_tx_fee_sat is the minimum amount of tx fee (quantified
-	// in Satoshi) needed for the pre-signed slashing tx. It covers both:
-	// staking slashing transaction and unbonding slashing transaction
-	MinSlashingTxFeeSat int64 `protobuf:"varint,4,opt,name=min_slashing_tx_fee_sat,json=minSlashingTxFeeSat,proto3" json:"min_slashing_tx_fee_sat,omitempty"`
-	// min_commission_rate is the chain-wide minimum commission rate that a finality provider
-	// can charge their delegators expressed as a decimal (e.g., 0.5 for 50%). Maximal precion
-	// is 2 decimal places
-	MinCommissionRate cosmossdk_io_math.LegacyDec `protobuf:"bytes,5,opt,name=min_commission_rate,json=minCommissionRate,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"min_commission_rate"`
-	// slashing_rate determines the portion of the staked amount to be slashed,
-	// expressed as a decimal (e.g., 0.5 for 50%). Maximal precion is 2 decimal
-	// places
-	SlashingRate cosmossdk_io_math.LegacyDec `protobuf:"bytes,6,opt,name=slashing_rate,json=slashingRate,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"slashing_rate"`
-	// max_active_finality_providers is the maximum number of active finality providers in the BTC staking protocol
-	MaxActiveFinalityProviders uint32 `protobuf:"varint,7,opt,name=max_active_finality_providers,json=maxActiveFinalityProviders,proto3" json:"max_active_finality_providers,omitempty"`
-	// min_unbonding_time is the minimum time for unbonding transaction timelock in BTC blocks
-	// renamed from min_unbonding_time to min_unbonding_time_blocks
-	MinUnbondingTimeBlocks uint32 `protobuf:"varint,8,opt,name=min_unbonding_time_blocks,json=min_unbonding_time,omitempty,proto3" json:"min_unbonding_time,omitempty"`
-	// min_unbonding_rate deprecated in favor of unbonding_fee_sat
-	MinUnbondingRate cosmossdk_io_math.LegacyDec `protobuf:"bytes,9,opt,name=min_unbonding_rate,json=minUnbondingRate,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"min_unbonding_rate"` // Deprecated: Do not use.
 	// min_staking_value_sat is the minimum of satoshis locked in staking output
-	MinStakingValueSat int64 `protobuf:"varint,10,opt,name=min_staking_value_sat,json=minStakingValueSat,proto3" json:"min_staking_value_sat,omitempty"`
+	MinStakingValueSat int64 `protobuf:"varint,3,opt,name=min_staking_value_sat,json=minStakingValueSat,proto3" json:"min_staking_value_sat,omitempty"`
 	// max_staking_value_sat is the maxiumum of satoshis locked in staking output
-	MaxStakingValueSat int64 `protobuf:"varint,11,opt,name=max_staking_value_sat,json=maxStakingValueSat,proto3" json:"max_staking_value_sat,omitempty"`
+	MaxStakingValueSat int64 `protobuf:"varint,4,opt,name=max_staking_value_sat,json=maxStakingValueSat,proto3" json:"max_staking_value_sat,omitempty"`
 	// min_staking_time is the minimum lock time specified in staking output script
-	MinStakingTimeBlocks uint32 `protobuf:"varint,12,opt,name=min_staking_time_blocks,json=minStakingTimeBlocks,proto3" json:"min_staking_time_blocks,omitempty"`
+	MinStakingTimeBlocks uint32 `protobuf:"varint,5,opt,name=min_staking_time_blocks,json=minStakingTimeBlocks,proto3" json:"min_staking_time_blocks,omitempty"`
 	// max_staking_time_blocks is the maximum lock time time specified in staking output script
-	MaxStakingTimeBlocks uint32 `protobuf:"varint,13,opt,name=max_staking_time_blocks,json=maxStakingTimeBlocks,proto3" json:"max_staking_time_blocks,omitempty"`
+	MaxStakingTimeBlocks uint32 `protobuf:"varint,6,opt,name=max_staking_time_blocks,json=maxStakingTimeBlocks,proto3" json:"max_staking_time_blocks,omitempty"`
 	// PARAMETERS COVERING SLASHING
 	// slashing_pk_script is the pk_script expected in slashing output ie. the first
 	// output of slashing transaction
-	SlashingPkScript []byte `protobuf:"bytes,14,opt,name=slashing_pk_script,json=slashingPkScript,proto3" json:"slashing_pk_script,omitempty"`
+	SlashingPkScript []byte `protobuf:"bytes,7,opt,name=slashing_pk_script,json=slashingPkScript,proto3" json:"slashing_pk_script,omitempty"`
+	// min_slashing_tx_fee_sat is the minimum amount of tx fee (quantified
+	// in Satoshi) needed for the pre-signed slashing tx. It covers both:
+	// staking slashing transaction and unbonding slashing transaction
+	MinSlashingTxFeeSat int64 `protobuf:"varint,8,opt,name=min_slashing_tx_fee_sat,json=minSlashingTxFeeSat,proto3" json:"min_slashing_tx_fee_sat,omitempty"`
+	// slashing_rate determines the portion of the staked amount to be slashed,
+	// expressed as a decimal (e.g., 0.5 for 50%). Maximal precion is 2 decimal
+	// places
+	SlashingRate cosmossdk_io_math.LegacyDec `protobuf:"bytes,9,opt,name=slashing_rate,json=slashingRate,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"slashing_rate"`
+	// PARAMETERS COVERING UNBONDING
+	// min_unbonding_time is the minimum time for unbonding transaction timelock in BTC blocks
+	MinUnbondingTimeBlocks uint32 `protobuf:"varint,10,opt,name=min_unbonding_time_blocks,json=minUnbondingTimeBlocks,proto3" json:"min_unbonding_time_blocks,omitempty"`
 	// unbonding_fee exact fee required for unbonding transaction
-	UnbondingFeeSat int64 `protobuf:"varint,15,opt,name=unbonding_fee_sat,json=unbondingFeeSat,proto3" json:"unbonding_fee_sat,omitempty"`
+	UnbondingFeeSat int64 `protobuf:"varint,11,opt,name=unbonding_fee_sat,json=unbondingFeeSat,proto3" json:"unbonding_fee_sat,omitempty"`
+	// PARAMETERS COVERING FINALITY PROVIDERS
+	// min_commission_rate is the chain-wide minimum commission rate that a finality provider
+	// can charge their delegators expressed as a decimal (e.g., 0.5 for 50%). Maximal precion
+	// is 2 decimal places
+	MinCommissionRate cosmossdk_io_math.LegacyDec `protobuf:"bytes,12,opt,name=min_commission_rate,json=minCommissionRate,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"min_commission_rate"`
+	// max_active_finality_providers is the maximum number of active finality providers in the BTC staking protocol
+	MaxActiveFinalityProviders uint32 `protobuf:"varint,13,opt,name=max_active_finality_providers,json=maxActiveFinalityProviders,proto3" json:"max_active_finality_providers,omitempty"`
 }
 
 func (m *Params) Reset()      { *m = Params{} }
@@ -110,35 +108,6 @@ func (m *Params) GetCovenantQuorum() uint32 {
 	return 0
 }
 
-// Deprecated: Do not use.
-func (m *Params) GetSlashingAddress() string {
-	if m != nil {
-		return m.SlashingAddress
-	}
-	return ""
-}
-
-func (m *Params) GetMinSlashingTxFeeSat() int64 {
-	if m != nil {
-		return m.MinSlashingTxFeeSat
-	}
-	return 0
-}
-
-func (m *Params) GetMaxActiveFinalityProviders() uint32 {
-	if m != nil {
-		return m.MaxActiveFinalityProviders
-	}
-	return 0
-}
-
-func (m *Params) GetMinUnbondingTimeBlocks() uint32 {
-	if m != nil {
-		return m.MinUnbondingTimeBlocks
-	}
-	return 0
-}
-
 func (m *Params) GetMinStakingValueSat() int64 {
 	if m != nil {
 		return m.MinStakingValueSat
@@ -174,9 +143,30 @@ func (m *Params) GetSlashingPkScript() []byte {
 	return nil
 }
 
+func (m *Params) GetMinSlashingTxFeeSat() int64 {
+	if m != nil {
+		return m.MinSlashingTxFeeSat
+	}
+	return 0
+}
+
+func (m *Params) GetMinUnbondingTimeBlocks() uint32 {
+	if m != nil {
+		return m.MinUnbondingTimeBlocks
+	}
+	return 0
+}
+
 func (m *Params) GetUnbondingFeeSat() int64 {
 	if m != nil {
 		return m.UnbondingFeeSat
+	}
+	return 0
+}
+
+func (m *Params) GetMaxActiveFinalityProviders() uint32 {
+	if m != nil {
+		return m.MaxActiveFinalityProviders
 	}
 	return 0
 }
@@ -247,50 +237,46 @@ func init() {
 }
 
 var fileDescriptor_8d1392776a3e15b9 = []byte{
-	// 685 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x54, 0x4f, 0x4f, 0x13, 0x4f,
-	0x18, 0xee, 0x02, 0xbf, 0xf2, 0x63, 0x28, 0x14, 0x46, 0x88, 0x0b, 0x4a, 0xdb, 0xe0, 0xc1, 0xc6,
-	0xc0, 0xd6, 0x0a, 0x26, 0x46, 0x4f, 0xac, 0x86, 0xc4, 0x68, 0x4c, 0xdd, 0x22, 0x07, 0x3d, 0x4c,
-	0x66, 0xb7, 0x43, 0x99, 0x6c, 0x67, 0x66, 0xdd, 0x99, 0x6e, 0xb6, 0xdf, 0xc2, 0xa3, 0x47, 0x3f,
-	0x84, 0x1f, 0x82, 0x23, 0xf1, 0x64, 0x48, 0x6c, 0x0c, 0xdc, 0xfc, 0x14, 0x66, 0x67, 0xff, 0x50,
-	0x95, 0x18, 0xbc, 0xed, 0xbc, 0xcf, 0xfb, 0x3c, 0xef, 0xce, 0xf3, 0xbe, 0xf3, 0x82, 0x4d, 0x17,
-	0xbb, 0xa3, 0x81, 0xe0, 0x2d, 0x57, 0x79, 0x52, 0x61, 0x9f, 0xf2, 0x7e, 0x2b, 0x6a, 0xb7, 0x02,
-	0x1c, 0x62, 0x26, 0xad, 0x20, 0x14, 0x4a, 0xc0, 0xd5, 0x2c, 0xc7, 0xba, 0xcc, 0xb1, 0xa2, 0xf6,
-	0xfa, 0x4a, 0x5f, 0xf4, 0x85, 0xce, 0x68, 0x25, 0x5f, 0x69, 0xf2, 0xfa, 0x9a, 0x27, 0x24, 0x13,
-	0x12, 0xa5, 0x40, 0x7a, 0x48, 0xa1, 0xcd, 0x6f, 0xb3, 0xa0, 0xdc, 0xd1, 0xc2, 0xf0, 0x1d, 0xa8,
-	0x78, 0x22, 0x22, 0x1c, 0x73, 0x85, 0x02, 0x5f, 0x9a, 0x46, 0x63, 0xba, 0x59, 0xb1, 0x1f, 0x9d,
-	0x8d, 0xeb, 0xbb, 0x7d, 0xaa, 0x8e, 0x87, 0xae, 0xe5, 0x09, 0xd6, 0xca, 0xea, 0x0e, 0xb0, 0x2b,
-	0xb7, 0xa9, 0xc8, 0x8f, 0x2d, 0x35, 0x0a, 0x88, 0xb4, 0xec, 0xe7, 0x9d, 0x9d, 0xdd, 0xfb, 0x9d,
-	0xa1, 0xfb, 0x82, 0x8c, 0x9c, 0xf9, 0x5c, 0xad, 0xe3, 0x4b, 0x78, 0x17, 0x54, 0x0b, 0xf1, 0xf7,
-	0x43, 0x11, 0x0e, 0x99, 0x39, 0xd5, 0x30, 0x9a, 0x0b, 0xce, 0x62, 0x1e, 0x7e, 0xad, 0xa3, 0x70,
-	0x1b, 0x2c, 0xc9, 0x01, 0x96, 0xc7, 0x94, 0xf7, 0x11, 0xee, 0xf5, 0x42, 0x22, 0xa5, 0x39, 0xdd,
-	0x30, 0x9a, 0x73, 0xf6, 0x94, 0x69, 0x38, 0xd5, 0x1c, 0xdb, 0x4b, 0x21, 0xb8, 0x0b, 0x6e, 0x32,
-	0xca, 0x51, 0x41, 0x51, 0x31, 0x3a, 0x22, 0x04, 0x49, 0xac, 0xcc, 0x99, 0x86, 0xd1, 0x9c, 0x76,
-	0x6e, 0x30, 0xca, 0xbb, 0x19, 0x7a, 0x10, 0xef, 0x13, 0xd2, 0xc5, 0x0a, 0x76, 0x41, 0x12, 0x46,
-	0x9e, 0x60, 0x8c, 0x4a, 0x49, 0x05, 0x47, 0x21, 0x56, 0xc4, 0xfc, 0x4f, 0xd7, 0xb9, 0x73, 0x32,
-	0xae, 0x97, 0xce, 0xc6, 0xf5, 0x5b, 0xa9, 0x51, 0xb2, 0xe7, 0x5b, 0x54, 0xb4, 0x18, 0x56, 0xc7,
-	0xd6, 0x4b, 0xd2, 0xc7, 0xde, 0xe8, 0x19, 0xf1, 0x9c, 0x65, 0x46, 0xf9, 0xd3, 0x82, 0xee, 0x60,
-	0x45, 0xe0, 0x21, 0x58, 0x28, 0x7e, 0x43, 0xcb, 0x95, 0xb5, 0x5c, 0xfb, 0x1a, 0x72, 0x5f, 0x3e,
-	0x6f, 0x83, 0xac, 0x2d, 0x89, 0x78, 0x25, 0xd7, 0xd1, 0xba, 0x7b, 0x60, 0x83, 0xe1, 0x18, 0x61,
-	0x4f, 0xd1, 0x88, 0xa0, 0x23, 0xca, 0xf1, 0x80, 0xaa, 0x51, 0xd2, 0xcc, 0x88, 0xf6, 0x48, 0x28,
-	0xcd, 0x59, 0x6d, 0xe4, 0x3a, 0xc3, 0xf1, 0x9e, 0xce, 0xd9, 0xcf, 0x52, 0x3a, 0x79, 0x06, 0xc4,
-	0x60, 0x2d, 0xb9, 0xef, 0x90, 0xbb, 0x82, 0xf7, 0xb4, 0x4d, 0x94, 0x11, 0xe4, 0x0e, 0x84, 0xe7,
-	0x4b, 0xf3, 0xff, 0x84, 0x6e, 0x37, 0x7e, 0x8c, 0xeb, 0xb7, 0xff, 0x4c, 0xda, 0x12, 0x8c, 0x2a,
-	0xc2, 0x02, 0x35, 0x72, 0xfe, 0x8a, 0x42, 0x0c, 0xe0, 0xaf, 0xb8, 0xb6, 0x60, 0x4e, 0x5b, 0xb0,
-	0xf3, 0xcf, 0x16, 0x98, 0x86, 0xb3, 0xc4, 0x28, 0x7f, 0x93, 0xab, 0x69, 0x23, 0xda, 0x60, 0x55,
-	0xf7, 0x3a, 0x1d, 0x77, 0x14, 0xe1, 0xc1, 0x30, 0xed, 0x34, 0xd0, 0x9d, 0x4e, 0xea, 0x77, 0x53,
-	0xec, 0x30, 0x81, 0x92, 0x46, 0x27, 0x14, 0x1c, 0x5f, 0x41, 0x99, 0xcf, 0x28, 0x38, 0xfe, 0x9d,
-	0xf2, 0x30, 0x9b, 0xa8, 0x8c, 0x32, 0xe9, 0x54, 0x45, 0x1b, 0xbd, 0x72, 0x59, 0xe7, 0x80, 0x32,
-	0x62, 0x6b, 0x4c, 0xd3, 0x26, 0x2a, 0x4d, 0xd2, 0x16, 0x32, 0x5a, 0x51, 0x6b, 0x82, 0xb6, 0x05,
-	0x60, 0x31, 0x34, 0x81, 0x8f, 0xa4, 0x17, 0xd2, 0x40, 0x99, 0x8b, 0x0d, 0xa3, 0x59, 0x71, 0x8a,
-	0x87, 0xd0, 0xf1, 0xbb, 0x3a, 0x0e, 0xef, 0x81, 0xe5, 0x4b, 0x83, 0xf3, 0x39, 0xaf, 0xea, 0xab,
-	0x54, 0x0b, 0x20, 0x9d, 0xf1, 0xc7, 0x33, 0x1f, 0x3f, 0xd5, 0x4b, 0x9b, 0x04, 0x54, 0xba, 0x4a,
-	0x84, 0xa4, 0x97, 0x3d, 0x72, 0x13, 0xcc, 0x46, 0x24, 0x4c, 0x66, 0xd6, 0x34, 0xf4, 0x6f, 0xe5,
-	0x47, 0xf8, 0x04, 0x94, 0xd3, 0x0d, 0xa3, 0x1f, 0xe6, 0xfc, 0x83, 0x0d, 0xeb, 0xca, 0x15, 0x63,
-	0xa5, 0x42, 0xf6, 0x4c, 0xd2, 0x53, 0x27, 0xa3, 0xd8, 0xaf, 0x4e, 0xce, 0x6b, 0xc6, 0xe9, 0x79,
-	0xcd, 0xf8, 0x7e, 0x5e, 0x33, 0x3e, 0x5c, 0xd4, 0x4a, 0xa7, 0x17, 0xb5, 0xd2, 0xd7, 0x8b, 0x5a,
-	0xe9, 0xed, 0x35, 0x76, 0x47, 0x3c, 0xb9, 0xe8, 0xf4, 0x22, 0x71, 0xcb, 0x7a, 0x3b, 0xed, 0xfc,
-	0x0c, 0x00, 0x00, 0xff, 0xff, 0x02, 0x93, 0x07, 0x8b, 0x0b, 0x05, 0x00, 0x00,
+	// 619 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x94, 0x4f, 0x4f, 0xd4, 0x4e,
+	0x18, 0xc7, 0xb7, 0x3f, 0xf8, 0x2d, 0x32, 0x2c, 0x22, 0x15, 0xb4, 0x60, 0xd8, 0xdd, 0xe0, 0xc1,
+	0x8d, 0x91, 0xd6, 0x15, 0x4c, 0xfc, 0x73, 0xa2, 0x12, 0x12, 0xa3, 0x31, 0xb5, 0x8b, 0x1c, 0xf4,
+	0xd0, 0x4c, 0xbb, 0xc3, 0x32, 0x69, 0x67, 0xa6, 0x76, 0xa6, 0x4d, 0xf7, 0x5d, 0x78, 0xf4, 0x68,
+	0xe2, 0x5b, 0xf0, 0x45, 0x70, 0x24, 0x9e, 0x0c, 0x07, 0x62, 0xe0, 0x8d, 0x98, 0x4e, 0xa7, 0xbb,
+	0x0d, 0xe1, 0xc0, 0x6d, 0x67, 0xbe, 0xcf, 0xf7, 0x79, 0x9e, 0x4f, 0x3a, 0xdf, 0x05, 0x9b, 0x3e,
+	0xf4, 0xc7, 0x11, 0xa3, 0x96, 0x2f, 0x02, 0x2e, 0x60, 0x88, 0xe9, 0xc8, 0xca, 0xfa, 0x56, 0x0c,
+	0x13, 0x48, 0xb8, 0x19, 0x27, 0x4c, 0x30, 0x7d, 0x55, 0xd5, 0x98, 0xd3, 0x1a, 0x33, 0xeb, 0xaf,
+	0xaf, 0x8c, 0xd8, 0x88, 0xc9, 0x0a, 0xab, 0xf8, 0x55, 0x16, 0xaf, 0xaf, 0x05, 0x8c, 0x13, 0xc6,
+	0xbd, 0x52, 0x28, 0x0f, 0xa5, 0xb4, 0xf9, 0xb3, 0x09, 0x9a, 0x8e, 0x6c, 0xac, 0x7f, 0x01, 0xad,
+	0x80, 0x65, 0x88, 0x42, 0x2a, 0xbc, 0x38, 0xe4, 0x86, 0xd6, 0x9d, 0xe9, 0xb5, 0xec, 0x17, 0x67,
+	0xe7, 0x9d, 0x9d, 0x11, 0x16, 0xc7, 0xa9, 0x6f, 0x06, 0x8c, 0x58, 0x6a, 0x6e, 0x04, 0x7d, 0xbe,
+	0x85, 0x59, 0x75, 0xb4, 0xc4, 0x38, 0x46, 0xdc, 0xb4, 0xdf, 0x3a, 0xdb, 0x3b, 0x4f, 0x9d, 0xd4,
+	0x7f, 0x87, 0xc6, 0xee, 0x42, 0xd5, 0xcd, 0x09, 0xb9, 0xfe, 0x08, 0x2c, 0x4d, 0x9a, 0x7f, 0x4d,
+	0x59, 0x92, 0x12, 0xe3, 0xbf, 0xae, 0xd6, 0x5b, 0x74, 0x6f, 0x57, 0xd7, 0x1f, 0xe5, 0xad, 0xde,
+	0x07, 0xab, 0x04, 0x53, 0x4f, 0x31, 0x79, 0x19, 0x8c, 0x52, 0xe4, 0x71, 0x28, 0x8c, 0x99, 0xae,
+	0xd6, 0x9b, 0x71, 0x75, 0x82, 0xe9, 0xa0, 0xd4, 0x0e, 0x0b, 0x69, 0x00, 0x85, 0xb4, 0xc0, 0xfc,
+	0x1a, 0xcb, 0xac, 0xb2, 0xc0, 0xfc, 0xaa, 0xe5, 0x39, 0xb8, 0x5f, 0x9f, 0x22, 0x30, 0x41, 0x9e,
+	0x1f, 0xb1, 0x20, 0xe4, 0xc6, 0xff, 0x72, 0xad, 0x95, 0xe9, 0x9c, 0x03, 0x4c, 0x90, 0x2d, 0x35,
+	0x69, 0xab, 0x4d, 0xaa, 0xdb, 0x9a, 0xca, 0x36, 0x99, 0x55, 0xb3, 0x3d, 0x01, 0x3a, 0x8f, 0x20,
+	0x3f, 0x2e, 0x3c, 0x71, 0xe8, 0xf1, 0x20, 0xc1, 0xb1, 0x30, 0xe6, 0xba, 0x5a, 0xaf, 0xe5, 0xde,
+	0xa9, 0x14, 0x27, 0x1c, 0xc8, 0x7b, 0x7d, 0x47, 0xed, 0x56, 0x39, 0x44, 0xee, 0x1d, 0xa1, 0x12,
+	0xe8, 0x96, 0x04, 0xba, 0x5b, 0xec, 0xa6, 0xd4, 0x83, 0x7c, 0x1f, 0x49, 0xa2, 0x43, 0xb0, 0x38,
+	0x71, 0x24, 0x50, 0x20, 0x63, 0xbe, 0xab, 0xf5, 0xe6, 0xed, 0xfe, 0xc9, 0x79, 0xa7, 0x71, 0x76,
+	0xde, 0x79, 0x50, 0x7e, 0x75, 0x3e, 0x0c, 0x4d, 0xcc, 0x2c, 0x02, 0xc5, 0xb1, 0xf9, 0x1e, 0x8d,
+	0x60, 0x30, 0xde, 0x43, 0xc1, 0xef, 0x5f, 0x5b, 0x40, 0x3d, 0x8a, 0x3d, 0x14, 0xb8, 0xad, 0xaa,
+	0x8f, 0x0b, 0x05, 0xd2, 0x5f, 0x82, 0xb5, 0x62, 0x9b, 0x94, 0xfa, 0x8c, 0x0e, 0xaf, 0x42, 0x03,
+	0x09, 0x7d, 0x8f, 0x60, 0xfa, 0xa9, 0xd2, 0x6b, 0xd8, 0x8f, 0xc1, 0xf2, 0xd4, 0x56, 0x21, 0x2c,
+	0x48, 0x84, 0xa5, 0x89, 0xa0, 0xd6, 0x1f, 0x80, 0x82, 0xca, 0x0b, 0x18, 0x21, 0x98, 0x73, 0xcc,
+	0x68, 0x09, 0xd1, 0x92, 0x10, 0x0f, 0x6f, 0x00, 0xe1, 0x2e, 0x13, 0x4c, 0xdf, 0x4c, 0xec, 0x72,
+	0xf7, 0x5d, 0xb0, 0x51, 0x7c, 0x2e, 0x18, 0x08, 0x9c, 0x21, 0xef, 0x08, 0x53, 0x18, 0x61, 0x31,
+	0x2e, 0x62, 0x90, 0xe1, 0x21, 0x4a, 0xb8, 0xb1, 0x28, 0xf7, 0x5f, 0x27, 0x30, 0xdf, 0x95, 0x35,
+	0xfb, 0xaa, 0xc4, 0xa9, 0x2a, 0x5e, 0xcd, 0x7e, 0xff, 0xd1, 0x69, 0x6c, 0x22, 0xd0, 0x1a, 0x08,
+	0x96, 0xa0, 0xa1, 0x8a, 0x8a, 0x01, 0xe6, 0x32, 0x94, 0x14, 0x73, 0x0c, 0x4d, 0xb6, 0xa8, 0x8e,
+	0xfa, 0x6b, 0xd0, 0x2c, 0x73, 0x2a, 0x9f, 0xf7, 0xc2, 0xb3, 0x0d, 0xf3, 0xda, 0xa0, 0x9a, 0x65,
+	0x23, 0x7b, 0xb6, 0x20, 0x73, 0x95, 0xc5, 0xfe, 0x70, 0x72, 0xd1, 0xd6, 0x4e, 0x2f, 0xda, 0xda,
+	0xdf, 0x8b, 0xb6, 0xf6, 0xed, 0xb2, 0xdd, 0x38, 0xbd, 0x6c, 0x37, 0xfe, 0x5c, 0xb6, 0x1b, 0x9f,
+	0x6f, 0x90, 0xc0, 0xbc, 0xfe, 0x77, 0x21, 0xe3, 0xe8, 0x37, 0x65, 0xc6, 0xb7, 0xff, 0x05, 0x00,
+	0x00, 0xff, 0xff, 0xc6, 0x9f, 0xaa, 0x8d, 0x51, 0x04, 0x00, 0x00,
 }
 
 func (m *Params) Marshal() (dAtA []byte, err error) {
@@ -313,57 +299,30 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.UnbondingFeeSat != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.UnbondingFeeSat))
-		i--
-		dAtA[i] = 0x78
-	}
-	if len(m.SlashingPkScript) > 0 {
-		i -= len(m.SlashingPkScript)
-		copy(dAtA[i:], m.SlashingPkScript)
-		i = encodeVarintParams(dAtA, i, uint64(len(m.SlashingPkScript)))
-		i--
-		dAtA[i] = 0x72
-	}
-	if m.MaxStakingTimeBlocks != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.MaxStakingTimeBlocks))
+	if m.MaxActiveFinalityProviders != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.MaxActiveFinalityProviders))
 		i--
 		dAtA[i] = 0x68
 	}
-	if m.MinStakingTimeBlocks != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.MinStakingTimeBlocks))
-		i--
-		dAtA[i] = 0x60
-	}
-	if m.MaxStakingValueSat != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.MaxStakingValueSat))
-		i--
-		dAtA[i] = 0x58
-	}
-	if m.MinStakingValueSat != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.MinStakingValueSat))
-		i--
-		dAtA[i] = 0x50
-	}
 	{
-		size := m.MinUnbondingRate.Size()
+		size := m.MinCommissionRate.Size()
 		i -= size
-		if _, err := m.MinUnbondingRate.MarshalTo(dAtA[i:]); err != nil {
+		if _, err := m.MinCommissionRate.MarshalTo(dAtA[i:]); err != nil {
 			return 0, err
 		}
 		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x4a
+	dAtA[i] = 0x62
+	if m.UnbondingFeeSat != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.UnbondingFeeSat))
+		i--
+		dAtA[i] = 0x58
+	}
 	if m.MinUnbondingTimeBlocks != 0 {
 		i = encodeVarintParams(dAtA, i, uint64(m.MinUnbondingTimeBlocks))
 		i--
-		dAtA[i] = 0x40
-	}
-	if m.MaxActiveFinalityProviders != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.MaxActiveFinalityProviders))
-		i--
-		dAtA[i] = 0x38
+		dAtA[i] = 0x50
 	}
 	{
 		size := m.SlashingRate.Size()
@@ -374,28 +333,38 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x32
-	{
-		size := m.MinCommissionRate.Size()
-		i -= size
-		if _, err := m.MinCommissionRate.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintParams(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x2a
+	dAtA[i] = 0x4a
 	if m.MinSlashingTxFeeSat != 0 {
 		i = encodeVarintParams(dAtA, i, uint64(m.MinSlashingTxFeeSat))
 		i--
+		dAtA[i] = 0x40
+	}
+	if len(m.SlashingPkScript) > 0 {
+		i -= len(m.SlashingPkScript)
+		copy(dAtA[i:], m.SlashingPkScript)
+		i = encodeVarintParams(dAtA, i, uint64(len(m.SlashingPkScript)))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if m.MaxStakingTimeBlocks != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.MaxStakingTimeBlocks))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.MinStakingTimeBlocks != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.MinStakingTimeBlocks))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.MaxStakingValueSat != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.MaxStakingValueSat))
+		i--
 		dAtA[i] = 0x20
 	}
-	if len(m.SlashingAddress) > 0 {
-		i -= len(m.SlashingAddress)
-		copy(dAtA[i:], m.SlashingAddress)
-		i = encodeVarintParams(dAtA, i, uint64(len(m.SlashingAddress)))
+	if m.MinStakingValueSat != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.MinStakingValueSat))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x18
 	}
 	if m.CovenantQuorum != 0 {
 		i = encodeVarintParams(dAtA, i, uint64(m.CovenantQuorum))
@@ -483,25 +452,6 @@ func (m *Params) Size() (n int) {
 	if m.CovenantQuorum != 0 {
 		n += 1 + sovParams(uint64(m.CovenantQuorum))
 	}
-	l = len(m.SlashingAddress)
-	if l > 0 {
-		n += 1 + l + sovParams(uint64(l))
-	}
-	if m.MinSlashingTxFeeSat != 0 {
-		n += 1 + sovParams(uint64(m.MinSlashingTxFeeSat))
-	}
-	l = m.MinCommissionRate.Size()
-	n += 1 + l + sovParams(uint64(l))
-	l = m.SlashingRate.Size()
-	n += 1 + l + sovParams(uint64(l))
-	if m.MaxActiveFinalityProviders != 0 {
-		n += 1 + sovParams(uint64(m.MaxActiveFinalityProviders))
-	}
-	if m.MinUnbondingTimeBlocks != 0 {
-		n += 1 + sovParams(uint64(m.MinUnbondingTimeBlocks))
-	}
-	l = m.MinUnbondingRate.Size()
-	n += 1 + l + sovParams(uint64(l))
 	if m.MinStakingValueSat != 0 {
 		n += 1 + sovParams(uint64(m.MinStakingValueSat))
 	}
@@ -518,8 +468,21 @@ func (m *Params) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovParams(uint64(l))
 	}
+	if m.MinSlashingTxFeeSat != 0 {
+		n += 1 + sovParams(uint64(m.MinSlashingTxFeeSat))
+	}
+	l = m.SlashingRate.Size()
+	n += 1 + l + sovParams(uint64(l))
+	if m.MinUnbondingTimeBlocks != 0 {
+		n += 1 + sovParams(uint64(m.MinUnbondingTimeBlocks))
+	}
 	if m.UnbondingFeeSat != 0 {
 		n += 1 + sovParams(uint64(m.UnbondingFeeSat))
+	}
+	l = m.MinCommissionRate.Size()
+	n += 1 + l + sovParams(uint64(l))
+	if m.MaxActiveFinalityProviders != 0 {
+		n += 1 + sovParams(uint64(m.MaxActiveFinalityProviders))
 	}
 	return n
 }
@@ -628,197 +591,6 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 			}
 		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SlashingAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowParams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthParams
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthParams
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.SlashingAddress = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MinSlashingTxFeeSat", wireType)
-			}
-			m.MinSlashingTxFeeSat = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowParams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.MinSlashingTxFeeSat |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MinCommissionRate", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowParams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthParams
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthParams
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.MinCommissionRate.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SlashingRate", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowParams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthParams
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthParams
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.SlashingRate.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 7:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MaxActiveFinalityProviders", wireType)
-			}
-			m.MaxActiveFinalityProviders = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowParams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.MaxActiveFinalityProviders |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 8:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MinUnbondingTimeBlocks", wireType)
-			}
-			m.MinUnbondingTimeBlocks = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowParams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.MinUnbondingTimeBlocks |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 9:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MinUnbondingRate", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowParams
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthParams
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthParams
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.MinUnbondingRate.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 10:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MinStakingValueSat", wireType)
 			}
@@ -837,7 +609,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 11:
+		case 4:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MaxStakingValueSat", wireType)
 			}
@@ -856,7 +628,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 12:
+		case 5:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MinStakingTimeBlocks", wireType)
 			}
@@ -875,7 +647,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 13:
+		case 6:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MaxStakingTimeBlocks", wireType)
 			}
@@ -894,7 +666,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 14:
+		case 7:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SlashingPkScript", wireType)
 			}
@@ -928,7 +700,79 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				m.SlashingPkScript = []byte{}
 			}
 			iNdEx = postIndex
-		case 15:
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinSlashingTxFeeSat", wireType)
+			}
+			m.MinSlashingTxFeeSat = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MinSlashingTxFeeSat |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashingRate", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.SlashingRate.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 10:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinUnbondingTimeBlocks", wireType)
+			}
+			m.MinUnbondingTimeBlocks = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MinUnbondingTimeBlocks |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 11:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingFeeSat", wireType)
 			}
@@ -943,6 +787,59 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.UnbondingFeeSat |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 12:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinCommissionRate", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.MinCommissionRate.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 13:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxActiveFinalityProviders", wireType)
+			}
+			m.MaxActiveFinalityProviders = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxActiveFinalityProviders |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
