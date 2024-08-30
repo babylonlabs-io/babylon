@@ -59,6 +59,10 @@ func ParamKeyTable() paramtypes.KeyTable {
 func DefaultParams() Params {
 	_, pks, quorum := DefaultCovenantCommittee()
 	return Params{
+		// start deprecated
+		MinUnbondingRate: sdkmath.LegacyZeroDec(),
+		SlashingAddress:  "",
+		// end deprecated
 		CovenantPks:          bbn.NewBIP340PKsFromBTCPKs(pks),
 		CovenantQuorum:       quorum,
 		MinStakingValueSat:   1000,
