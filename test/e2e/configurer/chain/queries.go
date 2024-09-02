@@ -312,7 +312,7 @@ func (n *NodeConfig) QueryChains() (*[]string, error) {
 func (n *NodeConfig) QueryChainsInfo(consumerIDs []string) ([]*zctypes.ChainInfo, error) {
 	queryParams := url.Values{}
 	for _, consumerId := range consumerIDs {
-		queryParams.Add("consumer_ids", consumerId)
+		queryParams.Add("chain_ids", consumerId)
 	}
 
 	bz, err := n.QueryGRPCGateway("/babylon/zoneconcierge/v1/chains_info", queryParams)
