@@ -72,7 +72,7 @@ follows:
       unbonding transaction, and unbonding slashing transaction to Babylon.
 3. The covenant committee verifies spending conditions of the staking
    transaction, and submits its signatures on the BTC staker's transactions. At
-   this point, the finality provider receives bitcoins and thus voting power
+   this point, the finality provider receives voting power
    from the BTC delegation.
 4. Upon each new block, the BTC Staking module will record the voting power
    table of finality providers.
@@ -297,6 +297,9 @@ voting power table of all finality providers at each height of the Babylon
 chain. The key is the block height concatenated with the finality provider's
 Bitcoin secp256k1 public key in BIP-340 format, and the value is the finality
 provider's voting power quantified in Satoshis.
+Voting power is assigned to top `N` (defined in parameters) finality providers
+that have BTC-timestamped public randomness for the height, ranked by the total
+delegated value.
 
 ### Params
 
@@ -406,9 +409,7 @@ Upon `MsgCreateFinalityProvider`, a Babylon node will execute as follows:
    parameters and at most 100%.
 3. Ensure the finality provider does not exist already.
 4. Ensure the finality provider is not slashed.
-5. Ensure the finality provider is registered at an epoch that has been BTC-timestamped.
-6. Ensure the committed master public randomness is in the correct format.
-7. Create a `FinalityProvider` object and save it to finality provider storage.
+5. Create a `FinalityProvider` object and save it to finality provider storage.
 
 ### MsgEditFinalityProvider
 
@@ -703,6 +704,9 @@ Upon `BeginBlock`, the BTC Staking module will execute the following:
    voting power table at the last height with all events that affect voting
    power distribution (including newly active BTC delegations, newly unbonded
    BTC delegations, and slashed finality providers).
+   Note that the voting power is assigned to a finality provider if it (1) has
+   BTC-timestamped public randomness, and (2) it is ranked at top `N` by the
+   total delegated value.
 3. If the BTC Staking protocol is activated, i.e., there exists at least 1
    active BTC delegation, then record the reward distribution w.r.t. the active
    finality providers and active BTC delegations.
