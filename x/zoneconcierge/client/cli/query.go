@@ -31,13 +31,13 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 func CmdChainsInfo() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "chains-info <chain-ids>",
-		Short: "retrieve the latest info for a given list of chains",
+		Use:   "chains-info <consumer-ids>",
+		Short: "retrieve the latest info for a given list of consumers",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
-			req := types.QueryChainsInfoRequest{ChainIds: args}
+			req := types.QueryChainsInfoRequest{ConsumerIds: args}
 			resp, err := queryClient.ChainsInfo(cmd.Context(), &req)
 			if err != nil {
 				return err
@@ -53,15 +53,15 @@ func CmdChainsInfo() *cobra.Command {
 
 func CmdFinalizedChainsInfo() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "finalized-chains-info <chain-ids>",
-		Short: "retrieve the finalized info for a given list of chains",
+		Use:   "finalized-chains-info <consumer-ids>",
+		Short: "retrieve the finalized info for a given list of consumers",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			prove, _ := cmd.Flags().GetBool("prove")
 
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
-			req := types.QueryFinalizedChainsInfoRequest{ChainIds: args, Prove: prove}
+			req := types.QueryFinalizedChainsInfoRequest{ConsumerIds: args, Prove: prove}
 			resp, err := queryClient.FinalizedChainsInfo(cmd.Context(), &req)
 			if err != nil {
 				return err
@@ -79,8 +79,8 @@ func CmdFinalizedChainsInfo() *cobra.Command {
 
 func CmdEpochChainsInfoInfo() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "epoch-chains-info <epoch-num> <chain-ids>",
-		Short: "retrieve the latest info for a list of chains in a given epoch",
+		Use:   "epoch-chains-info <epoch-num> <consumer-ids>",
+		Short: "retrieve the latest info for a list of consumers in a given epoch",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -90,7 +90,7 @@ func CmdEpochChainsInfoInfo() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			req := types.QueryEpochChainsInfoRequest{EpochNum: epoch, ChainIds: args[1:]}
+			req := types.QueryEpochChainsInfoRequest{EpochNum: epoch, ConsumerIds: args[1:]}
 			resp, err := queryClient.EpochChainsInfo(cmd.Context(), &req)
 			if err != nil {
 				return err

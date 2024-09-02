@@ -548,8 +548,8 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
 
 	minUnbondingTime := types.MinimumUnbondingTime(
-		bsParams,
-		bcParams,
+		&bsParams,
+		&bcParams,
 	)
 
 	slashingChangeLockTime := uint16(minUnbondingTime) + 1

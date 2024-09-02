@@ -21,12 +21,12 @@ func (c *QueryClient) QueryZoneConcierge(f func(ctx context.Context, queryClient
 }
 
 // FinalizedConnectedChainsInfo queries the zoneconcierge module to get the finalization information for a connected chain
-func (c *QueryClient) FinalizedConnectedChainsInfo(chainIds []string) (*zctypes.QueryFinalizedChainsInfoResponse, error) {
+func (c *QueryClient) FinalizedConnectedChainsInfo(consumerIds []string) (*zctypes.QueryFinalizedChainsInfoResponse, error) {
 	var resp *zctypes.QueryFinalizedChainsInfoResponse
 	err := c.QueryZoneConcierge(func(ctx context.Context, queryClient zctypes.QueryClient) error {
 		var err error
 		req := &zctypes.QueryFinalizedChainsInfoRequest{
-			ChainIds: chainIds,
+			ConsumerIds: consumerIds,
 		}
 		resp, err = queryClient.FinalizedChainsInfo(ctx, req)
 		return err
@@ -36,12 +36,12 @@ func (c *QueryClient) FinalizedConnectedChainsInfo(chainIds []string) (*zctypes.
 }
 
 // ConnectedChainsInfo queries the zoneconcierge module to get information for a connected chain
-func (c *QueryClient) ConnectedChainsInfo(chainIds []string) (*zctypes.QueryChainsInfoResponse, error) {
+func (c *QueryClient) ConnectedChainsInfo(consumerIds []string) (*zctypes.QueryChainsInfoResponse, error) {
 	var resp *zctypes.QueryChainsInfoResponse
 	err := c.QueryZoneConcierge(func(ctx context.Context, queryClient zctypes.QueryClient) error {
 		var err error
 		req := &zctypes.QueryChainsInfoRequest{
-			ChainIds: chainIds,
+			ConsumerIds: consumerIds,
 		}
 		resp, err = queryClient.ChainsInfo(ctx, req)
 		return err
@@ -64,12 +64,12 @@ func (c *QueryClient) ConnectedChainList() (*zctypes.QueryChainListResponse, err
 }
 
 // ConnectedChainHeaders queries the zoneconcierge module for the headers of a connected chain
-func (c *QueryClient) ConnectedChainHeaders(chainID string, pagination *sdkquerytypes.PageRequest) (*zctypes.QueryListHeadersResponse, error) {
+func (c *QueryClient) ConnectedChainHeaders(consumerID string, pagination *sdkquerytypes.PageRequest) (*zctypes.QueryListHeadersResponse, error) {
 	var resp *zctypes.QueryListHeadersResponse
 	err := c.QueryZoneConcierge(func(ctx context.Context, queryClient zctypes.QueryClient) error {
 		var err error
 		req := &zctypes.QueryListHeadersRequest{
-			ChainId:    chainID,
+			ConsumerId: consumerID,
 			Pagination: pagination,
 		}
 		resp, err = queryClient.ListHeaders(ctx, req)
@@ -80,13 +80,13 @@ func (c *QueryClient) ConnectedChainHeaders(chainID string, pagination *sdkquery
 }
 
 // ConnectedChainsEpochInfo queries the zoneconcierge module for the chain information of a connected chain at a particular epoch
-func (c *QueryClient) ConnectedChainsEpochInfo(chainIds []string, epochNum uint64) (*zctypes.QueryEpochChainsInfoResponse, error) {
+func (c *QueryClient) ConnectedChainsEpochInfo(consumerIds []string, epochNum uint64) (*zctypes.QueryEpochChainsInfoResponse, error) {
 	var resp *zctypes.QueryEpochChainsInfoResponse
 	err := c.QueryZoneConcierge(func(ctx context.Context, queryClient zctypes.QueryClient) error {
 		var err error
 		req := &zctypes.QueryEpochChainsInfoRequest{
-			ChainIds: chainIds,
-			EpochNum: epochNum,
+			ConsumerIds: consumerIds,
+			EpochNum:    epochNum,
 		}
 		resp, err = queryClient.EpochChainsInfo(ctx, req)
 		return err

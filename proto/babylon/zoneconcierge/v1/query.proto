@@ -21,7 +21,7 @@ service Query {
   // Header queries the CZ header and fork headers at a given height.
   rpc Header(QueryHeaderRequest) returns (QueryHeaderResponse) {
     option (google.api.http).get =
-        "/babylon/zoneconcierge/v1/chain_info/{chain_id}/header/{height}";
+        "/babylon/zoneconcierge/v1/chain_info/{consumer_id}/header/{height}";
   }
   // ChainList queries the list of chains that checkpoint to Babylon
   rpc ChainList(QueryChainListRequest) returns (QueryChainListResponse) {
@@ -43,14 +43,14 @@ service Query {
   // pagination support
   rpc ListHeaders(QueryListHeadersRequest) returns (QueryListHeadersResponse) {
     option (google.api.http).get =
-        "/babylon/zoneconcierge/v1/headers/{chain_id}";
+        "/babylon/zoneconcierge/v1/headers/{consumer_id}";
   }
   // ListEpochHeaders queries the headers of a chain timestamped in a given
   // epoch of Babylon, with pagination support
   rpc ListEpochHeaders(QueryListEpochHeadersRequest)
       returns (QueryListEpochHeadersResponse) {
     option (google.api.http).get =
-        "/babylon/zoneconcierge/v1/headers/{chain_id}/epochs/{epoch_num}";
+        "/babylon/zoneconcierge/v1/headers/{consumer_id}/epochs/{epoch_num}";
   }
   // FinalizedChainsInfo queries the BTC-finalised info of chains with given IDs, with proofs
   rpc FinalizedChainsInfo(QueryFinalizedChainsInfoRequest)
@@ -63,7 +63,7 @@ service Query {
   rpc FinalizedChainInfoUntilHeight(QueryFinalizedChainInfoUntilHeightRequest)
       returns (QueryFinalizedChainInfoUntilHeightResponse) {
     option (google.api.http).get =
-        "/babylon/zoneconcierge/v1/finalized_chain_info/{chain_id}/height/"
+        "/babylon/zoneconcierge/v1/finalized_chain_info/{consumer_id}/height/"
         "{height}";
   }
 }
@@ -79,7 +79,7 @@ message QueryParamsResponse {
 
 // QueryHeaderRequest is request type for the Query/Header RPC method.
 message QueryHeaderRequest {
-  string chain_id = 1;
+  string consumer_id = 1;
   uint64 height = 2;
 }
 
@@ -97,14 +97,14 @@ message QueryChainListRequest {
 
 // QueryChainListResponse is response type for the Query/ChainList RPC method
 message QueryChainListResponse {
-  // chain_ids are IDs of the chains in ascending alphabetical order
-  repeated string chain_ids = 1;
+  // consumer_ids are IDs of the chains in ascending alphabetical order
+  repeated string consumer_ids = 1;
   // pagination defines the pagination in the response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryChainsInfoRequest is request type for the Query/ChainsInfo RPC method.
-message QueryChainsInfoRequest { repeated string chain_ids = 1; }
+message QueryChainsInfoRequest { repeated string consumer_ids = 1; }
 
 // QueryChainsInfoResponse is response type for the Query/ChainsInfo RPC method.
 message QueryChainsInfoResponse {
@@ -115,7 +115,7 @@ message QueryChainsInfoResponse {
 // method.
 message QueryEpochChainsInfoRequest {
   uint64 epoch_num = 1;
-  repeated string chain_ids = 2;
+  repeated string consumer_ids = 2;
 }
 
 // QueryEpochChainsInfoResponse is response type for the Query/EpochChainsInfo RPC
@@ -127,7 +127,7 @@ message QueryEpochChainsInfoResponse {
 
 // QueryListHeadersRequest is request type for the Query/ListHeaders RPC method.
 message QueryListHeadersRequest {
-  string chain_id = 1;
+  string consumer_id = 1;
   // pagination defines whether to have the pagination in the request
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
@@ -145,7 +145,7 @@ message QueryListHeadersResponse {
 // RPC method.
 message QueryListEpochHeadersRequest {
   uint64 epoch_num = 1;
-  string chain_id = 2;
+  string consumer_id = 2;
 }
 
 // QueryListEpochHeadersResponse is response type for the Query/ListEpochHeaders
@@ -158,8 +158,8 @@ message QueryListEpochHeadersResponse {
 // QueryFinalizedChainsInfoRequest is request type for the
 // Query/FinalizedChainsInfo RPC method.
 message QueryFinalizedChainsInfoRequest {
-  // chain_ids is the list of ids of CZs
-  repeated string chain_ids = 1;
+  // consumer_ids is the list of ids of CZs
+  repeated string consumer_ids = 1;
   // prove indicates whether the querier wants to get proofs of this timestamp
   bool prove = 2;
 }
@@ -173,8 +173,8 @@ message QueryFinalizedChainsInfoResponse {
 // QueryFinalizedChainInfoUntilHeightRequest is request type for the
 // Query/FinalizedChainInfoUntilHeight RPC method.
 message QueryFinalizedChainInfoUntilHeightRequest {
-  // chain_id is the ID of the CZ
-  string chain_id = 1;
+  // consumer_id is the ID of the CZ
+  string consumer_id = 1;
   // height is the height of the CZ chain
   // such that the returned finalised chain info will be no later than this
   // height

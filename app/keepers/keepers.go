@@ -155,11 +155,12 @@ type AppKeepers struct {
 	keys    map[string]*storetypes.KVStoreKey
 	tkeys   map[string]*storetypes.TransientStoreKey
 	memKeys map[string]*storetypes.MemoryStoreKey
+
+	EncCfg *appparams.EncodingConfig
 }
 
 func (ak *AppKeepers) InitKeepers(
 	logger log.Logger,
-	appCodec codec.Codec,
 	btcConfig *bbn.BtcConfig,
 	encodingConfig *appparams.EncodingConfig,
 	bApp *baseapp.BaseApp,
@@ -175,6 +176,9 @@ func (ak *AppKeepers) InitKeepers(
 ) {
 	powLimit := btcConfig.PowLimit()
 	btcNetParams := btcConfig.NetParams()
+
+	ak.EncCfg = encodingConfig
+	appCodec := encodingConfig.Codec
 
 	// set persistent store keys
 	keys := storetypes.NewKVStoreKeys(

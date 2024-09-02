@@ -6,7 +6,6 @@ package types
 
 import (
 	context "context"
-	big "math/big"
 	reflect "reflect"
 
 	types "github.com/babylonlabs-io/babylon/types"
@@ -115,20 +114,6 @@ func (m *MockBtcCheckpointKeeper) GetParams(ctx context.Context) types0.Params {
 func (mr *MockBtcCheckpointKeeperMockRecorder) GetParams(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParams", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetParams), ctx)
-}
-
-// GetPowLimit mocks base method.
-func (m *MockBtcCheckpointKeeper) GetPowLimit() *big.Int {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPowLimit")
-	ret0, _ := ret[0].(*big.Int)
-	return ret0
-}
-
-// GetPowLimit indicates an expected call of GetPowLimit.
-func (mr *MockBtcCheckpointKeeperMockRecorder) GetPowLimit() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPowLimit", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetPowLimit))
 }
 
 // MockFinalityKeeper is a mock of FinalityKeeper interface.

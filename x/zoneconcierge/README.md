@@ -211,9 +211,9 @@ message Params {
 ### ChainInfo
 
 The [chain info storage](./keeper/chain_info_indexer.go) maintains `ChainInfo`
-for each PoS blockchain. The key is the PoS blockchain's `ChainID`, and the
-value is a `ChainInfo` object. The `ChainInfo` is a structure storing the
-information of a PoS blockchain that checkpoints to Babylon.
+for each PoS blockchain. The key is the PoS blockchain's `ConsumerID`, which is the
+ID of the IBC light client. The value is a `ChainInfo` object. The `ChainInfo` is
+a structure storing the information of a PoS blockchain that checkpoints to Babylon.
 
 ```protobuf
 // ChainInfo is the information of a CZ
@@ -235,14 +235,14 @@ message ChainInfo {
 
 The [epoch chain info storage](./keeper/epoch_chain_info_indexer.go) maintains
 `ChainInfo` at the end of each Babylon epoch for each PoS blockchain. The key is
-the PoS blockchain's `ChainID` plus the epoch number, and the value is a
+the PoS blockchain's `ConsumerID` plus the epoch number, and the value is a
 `ChainInfo` object.
 
 ### CanonicalChain
 
 The [canonical chain storage](./keeper/canonical_chain_indexer.go) maintains the
 metadata of canonical IBC headers of a PoS blockchain. The key is the consumer
-chain's `ChainID` plus the height, and the value is a `IndexedHeader` object.
+chain's `ConsumerID` plus the height, and the value is a `IndexedHeader` object.
 `IndexedHeader` is a structure storing IBC header's metadata.
 
 ```protobuf
@@ -277,7 +277,7 @@ message IndexedHeader {
 ### Fork
 
 The [fork storage](./keeper/fork_indexer.go) maintains the metadata of canonical
-IBC headers of a PoS blockchain. The key is the PoS blockchain's `ChainID` plus
+IBC headers of a PoS blockchain. The key is the PoS blockchain's `ConsumerID` plus
 the height, and the value is a list of `IndexedHeader` objects, which represent
 fork headers at that height.
 
@@ -421,9 +421,9 @@ Babylon. The logic is defined at
       is still canonical in the segment to the current tip of the BTC light
       client.
 3. For each of these IBC channels:
-   1. Find the `ChainID` of the counterparty chain (i.e., the PoS blockchain) in
+   1. Find the `ConsumerID` of the counterparty chain (i.e., the PoS blockchain) in
       the IBC channel.
-   2. Get the `ChainInfo` of the `ChainID` at the last finalized epoch.
+   2. Get the `ChainInfo` of the `ConsumerID` at the last finalized epoch.
    3. Get the metadata of the last finalized epoch and its corresponding raw
       checkpoint.
    4. Generate the proof that the last PoS blockchain's canonical header is

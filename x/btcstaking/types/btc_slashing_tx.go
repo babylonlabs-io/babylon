@@ -40,6 +40,11 @@ func NewBTCSlashingTxFromHex(txHex string) (*BTCSlashingTx, error) {
 	return &tx, nil
 }
 
+func NewBtcSlashingTxFromBytes(txBytes []byte) *BTCSlashingTx {
+	tx := BTCSlashingTx(txBytes)
+	return &tx
+}
+
 func (tx BTCSlashingTx) Marshal() ([]byte, error) {
 	return tx, nil
 }
