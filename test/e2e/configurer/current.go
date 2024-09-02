@@ -51,7 +51,10 @@ func (cb *CurrentBranchConfigurer) ConfigureChain(chainConfig *chain.Config) err
 		tmpDir,
 		chainConfig.ValidatorInitConfigs,
 		time.Duration(chainConfig.VotingPeriod*1000000000),
-		time.Duration(chainConfig.ExpeditedVotingPeriod*1000000000), 0)
+		time.Duration(chainConfig.ExpeditedVotingPeriod*1000000000),
+		0,
+		chainConfig.BTCHeaders,
+	)
 	if err != nil {
 		return err
 	}

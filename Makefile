@@ -409,16 +409,31 @@ proto-lint: ## Lint protobuf files
 .PHONY: proto-gen proto-swagger-gen proto-format prot-lint
 
 ###############################################################################
+###                               E2E build                                 ###
+###############################################################################
+
+# Executed to build the binary for chain initialization, one of
+## chain => test/e2e/initialization/chain/main.go
+## node  => test/e2e/initialization/node/main.go
+e2e-build-script:
+	mkdir -p $(BUILDDIR)
+	go build -mod=readonly $(BUILD_FLAGS) -o $(BUILDDIR)/ ./test/e2e/initialization/$(E2E_SCRIPT_NAME)
+
+###############################################################################
 ###                                Docker                                   ###
 ###############################################################################
 
 build-docker: ## Build babylond Docker image
 	$(MAKE) -C contrib/images babylond
 
+build-docker-e2e:
+	$(MAKE) -C contrib/images babylond-e2e
+	$(MAKE) -C contrib/images e2e-init-chain
+
 build-cosmos-relayer-docker: ## Build Docker image for the Cosmos relayer
 	$(MAKE) -C contrib/images cosmos-relayer
 
-.PHONY: build-docker build-cosmos-relayer-docker
+.PHONY: build-docker build-docker-e2e build-cosmos-relayer-docker
 
 ###############################################################################
 ###                                Localnet                                 ###
