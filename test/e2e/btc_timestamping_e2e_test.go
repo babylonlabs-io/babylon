@@ -112,19 +112,10 @@ func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// Query open IBC channels and assert there is only one
-	channels, err := nonValidatorNode.QueryIBCChannels()
-	s.NoError(err)
-	s.Equal(1, len(channels.Channels), "Expected only one open IBC channel")
-	// Get the client ID under this IBC channel
-	channelClientState, err := nonValidatorNode.QueryChannelClientState(channels.Channels[0].ChannelId, channels.Channels[0].PortId)
-	s.NoError(err)
-	clientID := channelClientState.IdentifiedClientState.ClientId
-
 	// Query checkpoint chain info for opposing chain
-	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{clientID})
+	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{initialization.ChainBID})
 	s.NoError(err)
-	s.Equal(chainsInfo[0].ChainId, clientID)
+	s.Equal(chainsInfo[0].ChainId, initialization.ChainBID)
 
 	// Finalize epoch 1, 2, 3, as first headers of opposing chain are in epoch 3
 	var (
@@ -149,17 +140,17 @@ func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	nonValidatorNode.WaitForNextBlock()
 
 	// Check we have epoch info for opposing chain and some basic assertions
-	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(endEpochNum, []string{clientID})
+	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(endEpochNum, []string{initialization.ChainBID})
 	s.NoError(err)
-	s.Equal(epochChainsInfo[0].ChainId, clientID)
+	s.Equal(epochChainsInfo[0].ChainId, initialization.ChainBID)
 	s.Equal(epochChainsInfo[0].LatestHeader.BabylonEpoch, endEpochNum)
 
 	// Check we have finalized epoch info for opposing chain and some basic assertions
-	finalizedChainsInfo, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{clientID})
+	finalizedChainsInfo, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{initialization.ChainBID})
 	s.NoError(err)
 
 	// TODO Add more assertion here. Maybe check proofs ?
-	s.Equal(finalizedChainsInfo[0].FinalizedChainInfo.ChainId, clientID)
+	s.Equal(finalizedChainsInfo[0].FinalizedChainInfo.ChainId, initialization.ChainBID)
 	s.Equal(finalizedChainsInfo[0].EpochInfo.EpochNumber, endEpochNum)
 
 	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()

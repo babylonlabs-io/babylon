@@ -267,7 +267,7 @@ func (n *NodeConfig) QueryListHeaders(consumerID string, pagination *query.PageR
 func (n *NodeConfig) QueryFinalizedChainsInfo(consumerIDs []string) ([]*zctypes.FinalizedChainInfo, error) {
 	queryParams := url.Values{}
 	for _, consumerID := range consumerIDs {
-		queryParams.Add("consumer_ids", consumerID)
+		queryParams.Add("chain_ids", consumerID)
 	}
 
 	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/finalized_chains_info", queryParams)
@@ -285,7 +285,7 @@ func (n *NodeConfig) QueryEpochChainsInfo(epochNum uint64, consumerIDs []string)
 	queryParams := url.Values{}
 	for _, consumerID := range consumerIDs {
 		queryParams.Add("epoch_num", fmt.Sprintf("%d", epochNum))
-		queryParams.Add("consumer_ids", consumerID)
+		queryParams.Add("chain_ids", consumerID)
 	}
 
 	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/epoch_chains_info", queryParams)
