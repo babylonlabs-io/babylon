@@ -11,6 +11,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,6 +32,9 @@ func FuzzSlashingTx_VerifySigAndASig(f *testing.F) {
 		// slashing address and key pairs
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+		require.NoError(t, err)
+
 		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
 		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
 		// with value below the dust threshold, causing test failure.
@@ -75,7 +79,7 @@ func FuzzSlashingTx_VerifySigAndASig(f *testing.F) {
 			covenantQuorum,
 			stakingTimeBlocks,
 			stakingValue,
-			slashingAddress.EncodeAddress(),
+			slashingPkScript,
 			slashingRate,
 			slashingChangeLockTime,
 		)
@@ -126,6 +130,9 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		// slashing address and key pairs
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+		require.NoError(t, err)
+
 		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
 		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
 		// with value below the dust threshold, causing test failure.
@@ -171,7 +178,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 			covenantQuorum,
 			stakingTimeBlocks,
 			stakingValue,
-			slashingAddress.EncodeAddress(),
+			slashingPkScript,
 			slashingRate,
 			slashingChangeLockTime,
 		)

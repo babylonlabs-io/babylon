@@ -6,9 +6,7 @@ import (
 	"github.com/babylonlabs-io/babylon/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/wire"
 )
 
 type ParamsValidationResult struct {
@@ -16,21 +14,8 @@ type ParamsValidationResult struct {
 	UnbondingOutputIdx uint32
 }
 
-// caluculateMinimumUnbondingValue calculates minimum unbonding value basend on current staking output value
-// and params.MinUnbondingRate
-func caluculateMinimumUnbondingValue(
-	stakingOutput *wire.TxOut,
-	params *Params,
-) btcutil.Amount {
-	// this conversions must always succeed, as it is part of our params
-	minUnbondingRate := params.MinUnbondingRate.MustFloat64()
-	// Caluclate min unbonding output value based on staking output, use btc native multiplication
-	minUnbondingOutputValue := btcutil.Amount(stakingOutput.Value).MulF64(minUnbondingRate)
-	return minUnbondingOutputValue
-}
-
-// ValidateParams validates parsed message against parameters
-func ValidateParams(
+// ValidateParsedMessageAgainstTheParams validates parsed message against parameters
+func ValidateParsedMessageAgainstTheParams(
 	pm *ParsedCreateDelegationMessage,
 	parameters *Params,
 	btcheckpointParamseters *btcckpttypes.Params,
@@ -48,10 +33,10 @@ func ValidateParams(
 
 	stakingTxHash := pm.StakingTx.Transaction.TxHash()
 	covenantPks := parameters.MustGetCovenantPks()
-	slashingAddr := parameters.MustGetSlashingAddress(net)
 
 	// 2. Validate all data related to staking tx:
 	// - it has valid staking output
+	// - that staking time and value are correct
 	// - slashing tx is relevent to staking tx
 	// - slashing tx signature is valid
 	stakingInfo, err := btcstaking.BuildStakingInfo(
@@ -73,13 +58,33 @@ func ValidateParams(
 		return nil, ErrInvalidStakingTx.Wrap("staking tx does not contain expected staking output")
 	}
 
+	if uint32(pm.StakingTime) < parameters.MinStakingTimeBlocks ||
+		uint32(pm.StakingTime) > parameters.MaxStakingTimeBlocks {
+		return nil, ErrInvalidStakingTx.Wrapf(
+			"staking time %d is out of bounds. Min: %d, Max: %d",
+			pm.StakingTime,
+			parameters.MinStakingTimeBlocks,
+			parameters.MaxStakingTimeBlocks,
+		)
+	}
+
+	if pm.StakingTx.Transaction.TxOut[stakingOutputIdx].Value < parameters.MinStakingValueSat ||
+		pm.StakingTx.Transaction.TxOut[stakingOutputIdx].Value > parameters.MaxStakingValueSat {
+		return nil, ErrInvalidStakingTx.Wrapf(
+			"staking value %d is out of bounds. Min: %d, Max: %d",
+			pm.StakingTx.Transaction.TxOut[stakingOutputIdx].Value,
+			parameters.MinStakingValueSat,
+			parameters.MaxStakingValueSat,
+		)
+	}
+
 	if err := btcstaking.CheckTransactions(
 		pm.StakingSlashingTx.Transaction,
 		pm.StakingTx.Transaction,
 		stakingOutputIdx,
 		parameters.MinSlashingTxFeeSat,
 		parameters.SlashingRate,
-		slashingAddr,
+		parameters.SlashingPkScript,
 		pm.StakerPK.PublicKey,
 		pm.UnbondingTime,
 		net,
@@ -130,7 +135,7 @@ func ValidateParams(
 		unbondingOutputIdx,
 		parameters.MinSlashingTxFeeSat,
 		parameters.SlashingRate,
-		slashingAddr,
+		parameters.SlashingPkScript,
 		pm.StakerPK.PublicKey,
 		pm.UnbondingTime,
 		net,
@@ -174,9 +179,11 @@ func ValidateParams(
 		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0")
 	}
 
-	minUnbondingValue := caluculateMinimumUnbondingValue(pm.StakingTx.Transaction.TxOut[stakingOutputIdx], parameters)
-	if btcutil.Amount(pm.UnbondingTx.Transaction.TxOut[0].Value) < minUnbondingValue {
-		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding output value must be at least %s, based on staking output", minUnbondingValue)
+	// 6. Check that unbonding tx fee is as expected.
+	unbondingTxFee := pm.StakingTx.Transaction.TxOut[stakingOutputIdx].Value - pm.UnbondingTx.Transaction.TxOut[0].Value
+
+	if unbondingTxFee != parameters.UnbondingFeeSat {
+		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be %d, but got %d", parameters.UnbondingFeeSat, unbondingTxFee)
 	}
 
 	return &ParamsValidationResult{
