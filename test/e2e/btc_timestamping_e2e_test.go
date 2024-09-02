@@ -124,7 +124,7 @@ func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	// Query checkpoint chain info for opposing chain
 	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{clientID})
 	s.NoError(err)
-	s.Equal(chainsInfo[0].ConsumerId, clientID)
+	s.Equal(chainsInfo[0].ChainId, clientID)
 
 	// Finalize epoch 1, 2, 3, as first headers of opposing chain are in epoch 3
 	var (
@@ -151,7 +151,7 @@ func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	// Check we have epoch info for opposing chain and some basic assertions
 	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(endEpochNum, []string{clientID})
 	s.NoError(err)
-	s.Equal(epochChainsInfo[0].ConsumerId, clientID)
+	s.Equal(epochChainsInfo[0].ChainId, clientID)
 	s.Equal(epochChainsInfo[0].LatestHeader.BabylonEpoch, endEpochNum)
 
 	// Check we have finalized epoch info for opposing chain and some basic assertions
@@ -159,7 +159,7 @@ func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	s.NoError(err)
 
 	// TODO Add more assertion here. Maybe check proofs ?
-	s.Equal(finalizedChainsInfo[0].FinalizedChainInfo.ConsumerId, clientID)
+	s.Equal(finalizedChainsInfo[0].FinalizedChainInfo.ChainId, clientID)
 	s.Equal(finalizedChainsInfo[0].EpochInfo.EpochNumber, endEpochNum)
 
 	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
