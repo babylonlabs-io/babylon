@@ -9,7 +9,7 @@ import (
 
 // QueryStore queries a KV pair in the KVStore, where
 // - moduleStoreKey is the store key of a module, e.g., zctypes.StoreKey
-// - key is the key of the queried KV pair, including the prefix, e.g., zctypes.EpochChainInfoKey || chainID in the chain info store
+// - key is the key of the queried KV pair, including the prefix, e.g., zctypes.EpochChainInfoKey || consumerID in the chain info store
 // and returns
 // - key of this KV pair
 // - value of this KV pair

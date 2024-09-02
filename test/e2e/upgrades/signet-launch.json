@@ -6,7 +6,7 @@
       "plan": {
         "name": "signet-launch",
         "time": "0001-01-01T00:00:00Z",
-        "height": "23",
+        "height": "21",
         "info": "Msg info",
         "upgraded_client_state": null
       }

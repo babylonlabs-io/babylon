@@ -127,8 +127,8 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 // - MinUnbondingTime
 // - CheckpointFinalizationTimeout
 func MinimumUnbondingTime(
-	stakingParams Params,
-	checkpointingParams btcctypes.Params) uint64 {
+	stakingParams *Params,
+	checkpointingParams *btcctypes.Params) uint64 {
 	return math.Max[uint64](
 		uint64(stakingParams.MinUnbondingTime),
 		checkpointingParams.CheckpointFinalizationTimeout,

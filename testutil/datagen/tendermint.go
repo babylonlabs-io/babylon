@@ -21,11 +21,11 @@ func GenRandomTMHeader(r *rand.Rand, chainID string, height uint64) *cmtproto.He
 	}
 }
 
-func GenRandomIBCTMHeader(r *rand.Rand, chainID string, height uint64) *ibctmtypes.Header {
+func GenRandomIBCTMHeader(r *rand.Rand, height uint64) *ibctmtypes.Header {
 	return &ibctmtypes.Header{
 		SignedHeader: &cmtproto.SignedHeader{
 			Header: &cmtproto.Header{
-				ChainID: chainID,
+				ChainID: GenRandomHexStr(r, 10),
 				Height:  int64(height),
 				AppHash: GenRandomByteArray(r, 32),
 			},
@@ -34,22 +34,20 @@ func GenRandomIBCTMHeader(r *rand.Rand, chainID string, height uint64) *ibctmtyp
 }
 
 func GenRandomTMHeaderInfo(r *rand.Rand, chainID string, height uint64) *header.Info {
-	tmHeader := GenRandomIBCTMHeader(r, chainID, height)
 	return &header.Info{
-		Height:  tmHeader.Header.Height,
-		Hash:    tmHeader.Header.DataHash,
-		Time:    tmHeader.Header.Time,
-		ChainID: tmHeader.Header.ChainID,
-		AppHash: tmHeader.Header.AppHash,
+		Height:  int64(height),
+		ChainID: chainID,
+		AppHash: GenRandomByteArray(r, 32),
 	}
 }
 
-func HeaderToHeaderInfo(header *ibctmtypes.Header) *zctypes.HeaderInfo {
+func NewZCHeaderInfo(header *ibctmtypes.Header, clientID string) *zctypes.HeaderInfo {
 	return &zctypes.HeaderInfo{
-		AppHash: header.Header.AppHash,
-		ChainId: header.Header.ChainID,
-		Time:    header.Header.Time,
-		Height:  uint64(header.Header.Height),
+		ClientId: clientID,
+		AppHash:  header.Header.AppHash,
+		ChainId:  header.Header.ChainID,
+		Time:     header.Header.Time,
+		Height:   uint64(header.Header.Height),
 	}
 }
 

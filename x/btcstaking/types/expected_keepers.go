@@ -2,7 +2,6 @@ package types
 
 import (
 	"context"
-	"math/big"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
@@ -16,7 +15,6 @@ type BTCLightClientKeeper interface {
 }
 
 type BtcCheckpointKeeper interface {
-	GetPowLimit() *big.Int
 	GetParams(ctx context.Context) (p btcctypes.Params)
 }
 

@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"context"
+
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	sdkerrors "cosmossdk.io/errors"
@@ -12,8 +13,8 @@ import (
 )
 
 // GetForks returns a list of forked headers at a given height
-func (k Keeper) GetForks(ctx context.Context, chainID string, height uint64) *types.Forks {
-	store := k.forkStore(ctx, chainID)
+func (k Keeper) GetForks(ctx context.Context, consumerID string, height uint64) *types.Forks {
+	store := k.forkStore(ctx, consumerID)
 	heightBytes := sdk.Uint64ToBigEndian(height)
 	// if no fork at the moment, create an empty struct
 	if !store.Has(heightBytes) {
@@ -28,12 +29,12 @@ func (k Keeper) GetForks(ctx context.Context, chainID string, height uint64) *ty
 }
 
 // insertForkHeader inserts a forked header to the list of forked headers at the same height
-func (k Keeper) insertForkHeader(ctx context.Context, chainID string, header *types.IndexedHeader) error {
+func (k Keeper) insertForkHeader(ctx context.Context, consumerID string, header *types.IndexedHeader) error {
 	if header == nil {
 		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
-	store := k.forkStore(ctx, chainID)
-	forks := k.GetForks(ctx, chainID, header.Height) // if no fork at the height, forks will be an empty struct rather than nil
+	store := k.forkStore(ctx, consumerID)
+	forks := k.GetForks(ctx, consumerID, header.Height) // if no fork at the height, forks will be an empty struct rather than nil
 	// if the header is already in forks, discard this header and return directly
 	for _, h := range forks.Headers {
 		if bytes.Equal(h.Hash, header.Hash) {
@@ -47,12 +48,12 @@ func (k Keeper) insertForkHeader(ctx context.Context, chainID string, header *ty
 }
 
 // forkStore stores the forks for each CZ
-// prefix: ForkKey || chainID
+// prefix: ForkKey || consumerID
 // key: height that this fork starts from
 // value: a list of IndexedHeader, representing each header in the fork
-func (k Keeper) forkStore(ctx context.Context, chainID string) prefix.Store {
+func (k Keeper) forkStore(ctx context.Context, consumerID string) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	forkStore := prefix.NewStore(storeAdapter, types.ForkKey)
-	chainIDBytes := []byte(chainID)
-	return prefix.NewStore(forkStore, chainIDBytes)
+	consumerIDBytes := []byte(consumerID)
+	return prefix.NewStore(forkStore, consumerIDBytes)
 }
