@@ -14,8 +14,8 @@ type ParamsValidationResult struct {
 	UnbondingOutputIdx uint32
 }
 
-// ValidateParams validates parsed message against parameters
-func ValidateParams(
+// ValidateParsedMessageAgainstTheParams validates parsed message against parameters
+func ValidateParsedMessageAgainstTheParams(
 	pm *ParsedCreateDelegationMessage,
 	parameters *Params,
 	btcheckpointParamseters *btcckpttypes.Params,
