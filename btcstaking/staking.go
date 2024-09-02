@@ -36,7 +36,8 @@ import (
 func buildSlashingTxFromOutpoint(
 	stakingOutput wire.OutPoint,
 	stakingAmount, fee int64,
-	slashingAddress, changeAddress btcutil.Address,
+	slashingPkScript []byte,
+	changeAddress btcutil.Address,
 	slashingRate sdkmath.LegacyDec,
 ) (*wire.MsgTx, error) {
 	// Validate staking amount
@@ -49,6 +50,10 @@ func buildSlashingTxFromOutpoint(
 		return nil, ErrInvalidSlashingRate
 	}
 
+	if len(slashingPkScript) == 0 {
+		return nil, fmt.Errorf("slashing pk script must not be empty")
+	}
+
 	// Calculate the amount to be slashed
 	slashingRateFloat64, err := slashingRate.Float64()
 	if err != nil {
@@ -57,11 +62,6 @@ func buildSlashingTxFromOutpoint(
 	slashingAmount := btcutil.Amount(stakingAmount).MulF64(slashingRateFloat64)
 	if slashingAmount <= 0 {
 		return nil, ErrInsufficientSlashingAmount
-	}
-	// Generate script for slashing address
-	slashingAddrScript, err := txscript.PayToAddrScript(slashingAddress)
-	if err != nil {
-		return nil, err
 	}
 
 	// Calculate the change amount
@@ -81,7 +81,7 @@ func buildSlashingTxFromOutpoint(
 	// means this tx is not replacable.
 	input := wire.NewTxIn(&stakingOutput, nil, nil)
 	tx.AddTxIn(input)
-	tx.AddTxOut(wire.NewTxOut(int64(slashingAmount), slashingAddrScript))
+	tx.AddTxOut(wire.NewTxOut(int64(slashingAmount), slashingPkScript))
 	tx.AddTxOut(wire.NewTxOut(int64(changeAmount), changeAddrScript))
 
 	// Verify that the none of the outputs is a dust output.
@@ -140,7 +140,7 @@ func getPossibleStakingOutput(
 func BuildSlashingTxFromStakingTxStrict(
 	stakingTx *wire.MsgTx,
 	stakingOutputIdx uint32,
-	slashingAddress btcutil.Address,
+	slashingPkScript []byte,
 	stakerPk *btcec.PublicKey,
 	slashChangeLockTime uint16,
 	fee int64,
@@ -172,7 +172,7 @@ func BuildSlashingTxFromStakingTxStrict(
 	return buildSlashingTxFromOutpoint(
 		*stakingOutpoint,
 		stakingOutput.Value, fee,
-		slashingAddress, si.TapAddress,
+		slashingPkScript, si.TapAddress,
 		slashingRate)
 }
 
@@ -228,7 +228,7 @@ func IsSimpleTransfer(tx *wire.MsgTx) error {
 // - the min fee for slashing tx is preserved
 func validateSlashingTx(
 	slashingTx *wire.MsgTx,
-	slashingAddress btcutil.Address,
+	slashingPkScript []byte,
 	slashingRate sdkmath.LegacyDec,
 	slashingTxMinFee, stakingOutputValue int64,
 	stakerPk *btcec.PublicKey,
@@ -270,11 +270,6 @@ func validateSlashingTx(
 		return fmt.Errorf("slashing transaction must slash at least staking output value * slashing rate")
 	}
 
-	// Verify that the first output pays to the provided slashing address.
-	slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
-	if err != nil {
-		return fmt.Errorf("error creating slashing pk script: %w", err)
-	}
 	if !bytes.Equal(slashingTx.TxOut[0].PkScript, slashingPkScript) {
 		return fmt.Errorf("slashing transaction must pay to the provided slashing address")
 	}
@@ -341,7 +336,7 @@ func CheckTransactions(
 	fundingOutputIdx uint32,
 	slashingTxMinFee int64,
 	slashingRate sdkmath.LegacyDec,
-	slashingAddress btcutil.Address,
+	slashingPkScript []byte,
 	stakerPk *btcec.PublicKey,
 	slashingChangeLockTime uint16,
 	net *chaincfg.Params,
@@ -376,7 +371,7 @@ func CheckTransactions(
 	// 3. Check if slashing transaction is valid
 	if err := validateSlashingTx(
 		slashingTx,
-		slashingAddress,
+		slashingPkScript,
 		slashingRate,
 		slashingTxMinFee,
 		stakingOutput.Value,

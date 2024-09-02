@@ -8,6 +8,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/stretchr/testify/require"
 
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
@@ -100,6 +101,8 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+		require.NoError(t, err)
 
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 		unbondingTime := uint16(100) + 1
@@ -118,7 +121,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 			covenantSigners,
 			covenantPKs,
 			covenantQuorum,
-			slashingAddress.EncodeAddress(),
+			slashingPkScript,
 			1000,
 			uint64(1000+stakingTimeBlocks),
 			uint64(stakingValue),
