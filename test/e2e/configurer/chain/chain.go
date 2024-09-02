@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	govv1 "cosmossdk.io/api/cosmos/gov/v1"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -179,13 +178,6 @@ func (c *Config) GetNodeAtIndex(nodeIndex int) (*NodeConfig, error) {
 		return nil, fmt.Errorf("node index (%d) is greter than the number of nodes available (%d)", nodeIndex, len(c.NodeConfigs))
 	}
 	return c.NodeConfigs[nodeIndex], nil
-}
-
-// TxGovVoteFromAllNodes votes in a gov prop from all nodes wallet.
-func (c *Config) TxGovVoteFromAllNodes(propID int, option govv1.VoteOption, overallFlags ...string) {
-	for _, n := range c.NodeConfigs {
-		n.TxGovVote(n.WalletName, propID, option, overallFlags...)
-	}
 }
 
 // BTCHeaderBytesHexJoined join all the btc headers as byte string hex

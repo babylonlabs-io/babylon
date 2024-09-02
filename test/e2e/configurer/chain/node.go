@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	cmtjson "github.com/cometbft/cometbft/libs/json"
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/stretchr/testify/require"
@@ -185,20 +184,4 @@ func (n *NodeConfig) LogActionF(msg string, args ...interface{}) {
 	timeSinceStart := time.Since(n.setupTime).Round(time.Millisecond)
 	s := fmt.Sprintf(msg, args...)
 	n.t.Logf("[%s] %s. From container %s", timeSinceStart, s, n.Name)
-}
-
-func (n *NodeConfig) Status() (*coretypes.ResultStatus, error) {
-	cmd := []string{"babylond", "status", "--output=json"}
-	outBuf, _, err := n.containerManager.ExecCmd(n.t, n.Name, cmd, "")
-	if err != nil {
-		return nil, err
-	}
-
-	var r coretypes.ResultStatus
-	err = cmtjson.Unmarshal(outBuf.Bytes(), &r)
-	if err != nil {
-		return nil, err
-	}
-
-	return &r, nil
 }
