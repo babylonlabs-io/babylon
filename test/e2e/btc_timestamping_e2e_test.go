@@ -38,7 +38,6 @@ func (s *BTCTimestampingTestSuite) SetupSuite() {
 	// 3. Run IBC relayer between the two chains.
 	// 4. Execute various e2e tests, including IBC
 	s.configurer, err = configurer.NewBTCTimestampingConfigurer(s.T(), true)
-
 	s.Require().NoError(err)
 
 	err = s.configurer.ConfigureChains()
@@ -50,7 +49,9 @@ func (s *BTCTimestampingTestSuite) SetupSuite() {
 
 func (s *BTCTimestampingTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
-	s.Require().NoError(err)
+	if err != nil {
+		s.T().Logf("error to clear resources %s", err.Error())
+	}
 }
 
 // Most simple test, just checking that two chains are up and connected through
@@ -111,10 +112,19 @@ func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// Query checkpoint chain info for opposing chain
-	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{initialization.ChainBID})
+	// Query open IBC channels and assert there is only one
+	channels, err := nonValidatorNode.QueryIBCChannels()
 	s.NoError(err)
-	s.Equal(chainsInfo[0].ChainId, initialization.ChainBID)
+	s.Equal(1, len(channels.Channels), "Expected only one open IBC channel")
+	// Get the client ID under this IBC channel
+	channelClientState, err := nonValidatorNode.QueryChannelClientState(channels.Channels[0].ChannelId, channels.Channels[0].PortId)
+	s.NoError(err)
+	clientID := channelClientState.IdentifiedClientState.ClientId
+
+	// Query checkpoint chain info for opposing chain
+	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{clientID})
+	s.NoError(err)
+	s.Equal(chainsInfo[0].ConsumerId, clientID)
 
 	// Finalize epoch 1, 2, 3, as first headers of opposing chain are in epoch 3
 	var (
@@ -139,17 +149,17 @@ func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	nonValidatorNode.WaitForNextBlock()
 
 	// Check we have epoch info for opposing chain and some basic assertions
-	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(endEpochNum, []string{initialization.ChainBID})
+	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(endEpochNum, []string{clientID})
 	s.NoError(err)
-	s.Equal(epochChainsInfo[0].ChainId, initialization.ChainBID)
+	s.Equal(epochChainsInfo[0].ConsumerId, clientID)
 	s.Equal(epochChainsInfo[0].LatestHeader.BabylonEpoch, endEpochNum)
 
 	// Check we have finalized epoch info for opposing chain and some basic assertions
-	finalizedChainsInfo, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{initialization.ChainBID})
+	finalizedChainsInfo, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{clientID})
 	s.NoError(err)
 
 	// TODO Add more assertion here. Maybe check proofs ?
-	s.Equal(finalizedChainsInfo[0].FinalizedChainInfo.ChainId, initialization.ChainBID)
+	s.Equal(finalizedChainsInfo[0].FinalizedChainInfo.ConsumerId, clientID)
 	s.Equal(finalizedChainsInfo[0].EpochInfo.EpochNumber, endEpochNum)
 
 	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
