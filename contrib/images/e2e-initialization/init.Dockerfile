@@ -1,10 +1,18 @@
 FROM golang:1.21 as build-env
 
 ARG E2E_SCRIPT_NAME
+# Version to build. Default is empty
+ARG VERSION
 
 # Copy All
 WORKDIR /go/src/github.com/babylonlabs-io/babylon
 COPY ./ /go/src/github.com/babylonlabs-io/babylon/
+
+# Handle if version is set
+RUN if [ -n "${VERSION}" ]; then \
+        git fetch origin tag ${VERSION} --no-tags; \
+        git checkout -f ${VERSION}; \
+    fi
 
 RUN LEDGER_ENABLED=false LINK_STATICALLY=false E2E_SCRIPT_NAME=${E2E_SCRIPT_NAME} make e2e-build-script
 
