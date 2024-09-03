@@ -6,9 +6,17 @@ import (
 	"net/http"
 	"time"
 
+	wasmparams "github.com/CosmWasm/wasmd/app/params"
+	bcdapp "github.com/babylonlabs-io/babylon-sdk/demo/app"
+	bcdparams "github.com/babylonlabs-io/babylon-sdk/demo/app/params"
 	"github.com/babylonlabs-io/babylon/client/config"
 	"github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/babylon"
+	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/config"
+	"github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
+	cwcc "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
 	"github.com/btcsuite/btcd/chaincfg"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 )
@@ -20,7 +28,8 @@ type BTCStakingIntegration2TestSuite struct {
 	babylonRPC2      string
 	consumerChainRPC string
 
-	babylonController *babylon.BabylonController
+	babylonController  *babylon.BabylonController
+	cosmwasmController *cosmwasm.CosmwasmConsumerController
 }
 
 func (s *BTCStakingIntegration2TestSuite) SetupSuite() {
@@ -53,6 +62,9 @@ func (s *BTCStakingIntegration2TestSuite) SetupSuite() {
 
 	err := s.initBabylonController()
 	s.Require().NoError(err, "Failed to initialize BabylonController")
+
+	err = s.initCosmwasmController()
+	s.Require().NoError(err, "Failed to initialize CosmwasmConsumerController")
 }
 
 func (s *BTCStakingIntegration2TestSuite) TearDownSuite() {
@@ -134,4 +146,50 @@ func (s *BTCStakingIntegration2TestSuite) initBabylonController() error {
 
 	s.babylonController = controller
 	return nil
+}
+
+func (s *BTCStakingIntegration2TestSuite) initCosmwasmController() error {
+	cfg := cwconfig.DefaultCosmwasmConfig()
+
+	// Override the RPC address with the one from your test suite
+	//cfg.RPCAddr = s.consumerChainRPC
+
+	// You might need to adjust other config values as needed for your test environment
+
+	// Create a logger
+	logger, _ := zap.NewDevelopment()
+
+	// // You'll need to provide the correct encoding config
+	// // This is typically available from your app's setup
+	// encodingConfig := wasmparams.MakeEncodingConfig()
+
+	sdk.SetAddrCacheEnabled(false)
+	bcdparams.SetAddressPrefixes()
+	tempApp := bcdapp.NewTmpApp()
+	//tempApp := wasmapp.NewWasmApp(sdklogs.NewNopLogger(), dbm.NewMemDB(), nil, false, simtestutil.NewAppOptionsWithFlagHome(s.T().TempDir()), []wasmkeeper.Option{})
+	encodingCfg := wasmparams.EncodingConfig{
+		InterfaceRegistry: tempApp.InterfaceRegistry(),
+		Codec:             tempApp.AppCodec(),
+		TxConfig:          tempApp.TxConfig(),
+		Amino:             tempApp.LegacyAmino(),
+	}
+	wcc, err := cwcc.NewCosmwasmConsumerController(cfg, encodingCfg, logger)
+	require.NoError(s.T(), err)
+
+	s.cosmwasmController = wcc
+	return nil
+}
+
+func (s *BTCStakingIntegration2TestSuite) TestConsumerChainInteraction() {
+	// Use Babylon controller
+	babylonStatus, err := s.babylonController.QueryNodeStatus()
+	s.Require().NoError(err, "Failed to query Babylon node status")
+	s.T().Logf("Babylon node status: %v", babylonStatus.SyncInfo.LatestBlockHeight)
+
+	// Use Cosmwasm controller
+	consumerStatus, err := s.cosmwasmController.GetCometNodeStatus()
+	s.Require().NoError(err, "Failed to query Consumer node status")
+	s.T().Logf("Consumer node status: %v", consumerStatus.SyncInfo.LatestBlockHeight)
+	// Add your test assertions here
+	// ...
 }

@@ -55,8 +55,8 @@ func DefaultCosmwasmConfig() *CosmwasmConfig {
 	return &CosmwasmConfig{
 		Key:                       "validator",
 		ChainID:                   "wasmd-test",
-		RPCAddr:                   "http://localhost:2990",
-		GRPCAddr:                  "https://localhost:9090",
+		RPCAddr:                   "http://localhost:26677",
+		GRPCAddr:                  "https://localhost:9092",
 		AccountPrefix:             "wasm",
 		KeyringBackend:            "test",
 		GasAdjustment:             1.3,
