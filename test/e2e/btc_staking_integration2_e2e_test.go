@@ -6,7 +6,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/babylonlabs-io/babylon/client/config"
+	"github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/babylon"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
 )
 
 type BTCStakingIntegration2TestSuite struct {
@@ -15,6 +19,8 @@ type BTCStakingIntegration2TestSuite struct {
 	babylonRPC1      string
 	babylonRPC2      string
 	consumerChainRPC string
+
+	babylonController *babylon.BabylonController
 }
 
 func (s *BTCStakingIntegration2TestSuite) SetupSuite() {
@@ -44,6 +50,9 @@ func (s *BTCStakingIntegration2TestSuite) SetupSuite() {
 
 		return ok1 && ok2 && ok3
 	}, 2*time.Minute, 5*time.Second, "Chain RPC endpoints not accessible or not running")
+
+	err := s.initBabylonController()
+	s.Require().NoError(err, "Failed to initialize BabylonController")
 }
 
 func (s *BTCStakingIntegration2TestSuite) TearDownSuite() {
@@ -97,6 +106,10 @@ func (s *BTCStakingIntegration2TestSuite) checkNodeStatus(rpcURL string) (string
 func (s *BTCStakingIntegration2TestSuite) TestDummy() {
 	s.T().Log("Running dummy test")
 	s.Require().True(true, "This test should always pass")
+
+	status, err := s.babylonController.QueryNodeStatus()
+	s.Require().NoError(err, "Failed to query node status")
+	s.T().Logf("Node status: %v", status.SyncInfo.LatestBlockHeight)
 }
 
 // TestSuiteSetup verifies that the SetupSuite method was called and RPC endpoints are set
@@ -105,4 +118,20 @@ func (s *BTCStakingIntegration2TestSuite) TestSuiteSetup() {
 	s.Require().NotEmpty(s.babylonRPC1, "babylonRPC1 should be set")
 	s.Require().NotEmpty(s.babylonRPC2, "babylonRPC2 should be set")
 	s.Require().NotEmpty(s.consumerChainRPC, "consumerChainRPC should be set")
+}
+
+func (s *BTCStakingIntegration2TestSuite) initBabylonController() error {
+	cfg := config.DefaultBabylonConfig()
+
+	btcParams := &chaincfg.RegressionNetParams // or whichever network you're using
+
+	logger, _ := zap.NewDevelopment()
+
+	controller, err := babylon.NewBabylonController(&cfg, btcParams, logger)
+	if err != nil {
+		return err
+	}
+
+	s.babylonController = controller
+	return nil
 }
