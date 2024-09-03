@@ -10,9 +10,9 @@ import (
 	sdkErr "cosmossdk.io/errors"
 	wasmdparams "github.com/CosmWasm/wasmd/app/params"
 	wasmdtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/config"
 	fptypes "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/types"
 	cwcclient "github.com/babylonlabs-io/babylon/test/e2e/cosmwasmclient/client"
-	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/cosmwasmclient/config"
 	bbntypes "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
@@ -31,10 +31,12 @@ type CosmwasmConsumerController struct {
 }
 
 func NewCosmwasmConsumerController(
-	wasmdConfig *cwconfig.CosmwasmConfig,
+	cfg *cwconfig.CosmwasmConfig,
 	encodingCfg wasmdparams.EncodingConfig,
 	logger *zap.Logger,
 ) (*CosmwasmConsumerController, error) {
+	wasmdConfig := cfg.ToQueryClientConfig()
+
 	if err := wasmdConfig.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid config for Wasmd client: %w", err)
 	}
@@ -51,7 +53,7 @@ func NewCosmwasmConsumerController(
 
 	return &CosmwasmConsumerController{
 		wc,
-		wasmdConfig,
+		cfg,
 		logger,
 	}, nil
 }

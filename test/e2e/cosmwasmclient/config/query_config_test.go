@@ -3,7 +3,7 @@ package config_test
 import (
 	"testing"
 
-	"github.com/babylonlabs-io/finality-provider/cosmwasmclient/config"
+	"github.com/babylonlabs-io/babylon/test/e2e/cosmwasmclient/config"
 	"github.com/stretchr/testify/require"
 )
 
