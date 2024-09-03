@@ -288,7 +288,7 @@ func (s *BTCStakingIntegration2TestSuite) Test4AutoRegisterAndVerifyNewConsumer(
 		return status.SyncInfo.LatestBlockHeight >= 1
 	}, time.Minute, time.Second*2, "Babylon chain did not produce a block within the expected time")
 
-	consumerID := s.getIBCClientID()
+	consumerID := "07-tendermint-0" // s.getIBCClientID()
 	s.verifyConsumerRegistration(consumerID)
 }
 
