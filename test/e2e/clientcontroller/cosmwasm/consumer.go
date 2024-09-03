@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"runtime/debug"
 	"sort"
 	"strings"
 
@@ -659,6 +660,8 @@ func (cc *CosmwasmConsumerController) QueryChannelClientState(channelID, portID 
 		resp, err = queryClient.ChannelClientState(ctx, req)
 		return err
 	})
+
+	debug.PrintStack()
 	return resp, err
 }
 

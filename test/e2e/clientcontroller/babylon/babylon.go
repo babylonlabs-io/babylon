@@ -464,3 +464,7 @@ func (bc *BabylonController) RegisterConsumerChain(id, name, description string)
 func (bc *BabylonController) IBCChannels() (*channeltypes.QueryChannelsResponse, error) {
 	return bc.bbnClient.IBCChannels()
 }
+
+func (bc *BabylonController) QueryConsumerRegistry(consumerID string) ([]*bsctypes.ConsumerRegister, error) {
+	return bc.bbnClient.QueryConsumersRegistry([]string{consumerID})
+}
