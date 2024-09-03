@@ -16,6 +16,7 @@ import (
 	cwcc "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
 	"github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
@@ -192,4 +193,70 @@ func (s *BTCStakingIntegration2TestSuite) TestConsumerChainInteraction() {
 	s.T().Logf("Consumer node status: %v", consumerStatus.SyncInfo.LatestBlockHeight)
 	// Add your test assertions here
 	// ...
+}
+
+func (s *BTCStakingIntegration2TestSuite) getIBCClientID() string {
+	// Wait for both chains to have at least one block
+	s.Eventually(func() bool {
+		babylonStatus, err := s.babylonController.QueryNodeStatus()
+		if err != nil || babylonStatus.SyncInfo.LatestBlockHeight < 1 {
+			return false
+		}
+		consumerStatus, err := s.cosmwasmController.GetCometNodeStatus()
+		if err != nil || consumerStatus.SyncInfo.LatestBlockHeight < 1 {
+			return false
+		}
+		return true
+	}, time.Minute, time.Second*2, "Chains did not produce blocks within the expected time")
+
+	var babylonChannel *channeltypes.IdentifiedChannel
+	s.Eventually(func() bool {
+		babylonChannelsResp, err := s.babylonController.IBCChannels()
+		if err != nil {
+			s.T().Logf("Error querying Babylon IBC channels: %v", err)
+			return false
+		}
+		if len(babylonChannelsResp.Channels) != 1 {
+			return false
+		}
+		babylonChannel = babylonChannelsResp.Channels[0]
+		if babylonChannel.State != channeltypes.OPEN {
+			return false
+		}
+		s.Equal(channeltypes.ORDERED, babylonChannel.Ordering)
+		s.Contains(babylonChannel.Counterparty.PortId, "wasm.")
+		return true
+	}, time.Minute, time.Second*2, "Failed to get expected Babylon IBC channel")
+
+	var consumerChannel *channeltypes.IdentifiedChannel
+	s.Eventually(func() bool {
+		consumerChannelsResp, err := s.cosmwasmController.IBCChannels()
+		if err != nil {
+			s.T().Logf("Error querying Consumer IBC channels: %v", err)
+			return false
+		}
+		if len(consumerChannelsResp.Channels) != 1 {
+			return false
+		}
+		consumerChannel = consumerChannelsResp.Channels[0]
+		if consumerChannel.State != channeltypes.OPEN {
+			return false
+		}
+		s.Equal(channeltypes.ORDERED, consumerChannel.Ordering)
+		s.Equal(babylonChannel.PortId, consumerChannel.Counterparty.PortId)
+		return true
+	}, time.Minute, time.Second*2, "Failed to get expected Consumer IBC channel")
+
+	// Query the channel client state
+	consumerChannelState, err := s.cosmwasmController.QueryChannelClientState(consumerChannel.ChannelId, consumerChannel.PortId)
+	s.Require().NoError(err, "Failed to query Consumer channel client state")
+
+	// Query the next sequence receive
+	nextSequenceRecv, err := s.cosmwasmController.QueryNextSequenceReceive(babylonChannel.Counterparty.ChannelId, babylonChannel.Counterparty.PortId)
+	s.Require().NoError(err, "Failed to query next sequence receive")
+
+	// Check that the next sequence receive is 1 (no packets sent yet)
+	s.Equal(uint64(1), nextSequenceRecv.NextSequenceReceive, "Unexpected next sequence receive value")
+
+	return consumerChannelState.IdentifiedClientState.ClientId
 }
