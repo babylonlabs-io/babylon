@@ -18,8 +18,10 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+	ctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/cosmos/relayer/v2/relayer/provider"
 	"go.uber.org/zap"
 )
@@ -640,4 +642,41 @@ func fromCosmosEventsToBytes(events []provider.RelayerEvent) []byte {
 		return nil
 	}
 	return bytes
+}
+
+func (cc *CosmwasmConsumerController) QueryNodeStatus() (*ctypes.ResultStatus, error) {
+	return cc.cwClient.QueryClient.RPCClient.Status(context.Background())
+}
+
+func (cc *CosmwasmConsumerController) QueryChannelClientState(channelID, portID string) (*channeltypes.QueryChannelClientStateResponse, error) {
+	var resp *channeltypes.QueryChannelClientStateResponse
+	err := cc.cwClient.QueryClient.QueryIBCChannel(func(ctx context.Context, queryClient channeltypes.QueryClient) error {
+		var err error
+		req := &channeltypes.QueryChannelClientStateRequest{
+			ChannelId: channelID,
+			PortId:    portID,
+		}
+		resp, err = queryClient.ChannelClientState(ctx, req)
+		return err
+	})
+	return resp, err
+}
+
+func (cc *CosmwasmConsumerController) QueryNextSequenceReceive(channelID, portID string) (*channeltypes.QueryNextSequenceReceiveResponse, error) {
+	var resp *channeltypes.QueryNextSequenceReceiveResponse
+	err := cc.cwClient.QueryClient.QueryIBCChannel(func(ctx context.Context, queryClient channeltypes.QueryClient) error {
+		var err error
+		req := &channeltypes.QueryNextSequenceReceiveRequest{
+			ChannelId: channelID,
+			PortId:    portID,
+		}
+		resp, err = queryClient.NextSequenceReceive(ctx, req)
+		return err
+	})
+	return resp, err
+}
+
+// IBCChannels queries the IBC channels
+func (cc *CosmwasmConsumerController) IBCChannels() (*channeltypes.QueryChannelsResponse, error) {
+	return cc.cwClient.IBCChannels()
 }

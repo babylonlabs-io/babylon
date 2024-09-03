@@ -23,6 +23,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
 	sttypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/cosmos/relayer/v2/relayer/provider"
 	"go.uber.org/zap"
 )
@@ -457,4 +458,9 @@ func (bc *BabylonController) RegisterConsumerChain(id, name, description string)
 	}
 
 	return &types.TxResponse{TxHash: res.TxHash}, nil
+}
+
+// IBCChannels queries the IBC channels
+func (bc *BabylonController) IBCChannels() (*channeltypes.QueryChannelsResponse, error) {
+	return bc.bbnClient.IBCChannels()
 }
