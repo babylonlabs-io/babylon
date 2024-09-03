@@ -1,10 +1,13 @@
 package chain
 
 import (
+	"encoding/hex"
 	"fmt"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	"strings"
 	"testing"
 	"time"
+
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,6 +16,7 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/config"
 	"github.com/babylonlabs-io/babylon/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
+	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
 
 type Config struct {
@@ -27,6 +31,7 @@ type Config struct {
 	LatestProposalNumber int
 	LatestLockNumber     int
 	NodeConfigs          []*NodeConfig
+	BTCHeaders           []*btclighttypes.BTCHeaderInfo
 	IBCConfig            *ibctesting.ChannelConfig
 
 	LatestCodeId int
@@ -57,6 +62,7 @@ func New(t *testing.T, containerManager *containers.Manager, id string, initVali
 		ExpeditedVotingPeriod: config.PropDepositBlocks + numVal*config.PropVoteBlocks + config.PropBufferBlocks - 2,
 		t:                     t,
 		containerManager:      containerManager,
+		BTCHeaders:            []*btclighttypes.BTCHeaderInfo{},
 	}
 }
 
@@ -172,4 +178,21 @@ func (c *Config) GetNodeAtIndex(nodeIndex int) (*NodeConfig, error) {
 		return nil, fmt.Errorf("node index (%d) is greter than the number of nodes available (%d)", nodeIndex, len(c.NodeConfigs))
 	}
 	return c.NodeConfigs[nodeIndex], nil
+}
+
+// BTCHeaderBytesHexJoined join all the btc headers as byte string hex
+func (c *Config) BTCHeaderBytesHexJoined() string {
+	if c.BTCHeaders == nil || len(c.BTCHeaders) == 0 {
+		return ""
+	}
+
+	strBtcHeaders := make([]string, len(c.BTCHeaders))
+	for i, btcHeader := range c.BTCHeaders {
+		bz, err := btcHeader.Marshal()
+		if err != nil {
+			panic(err)
+		}
+		strBtcHeaders[i] = hex.EncodeToString(bz)
+	}
+	return strings.Join(strBtcHeaders, ",")
 }
