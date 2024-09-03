@@ -468,3 +468,18 @@ func (bc *BabylonController) IBCChannels() (*channeltypes.QueryChannelsResponse,
 func (bc *BabylonController) QueryConsumerRegistry(consumerID string) ([]*bsctypes.ConsumerRegister, error) {
 	return bc.bbnClient.QueryConsumersRegistry([]string{consumerID})
 }
+
+func (bc *BabylonController) QueryChannelClientState(channelID, portID string) (*channeltypes.QueryChannelClientStateResponse, error) {
+	var resp *channeltypes.QueryChannelClientStateResponse
+	err := bc.bbnClient.QueryClient.QueryIBCChannel(func(ctx context.Context, queryClient channeltypes.QueryClient) error {
+		var err error
+		req := &channeltypes.QueryChannelClientStateRequest{
+			ChannelId: channelID,
+			PortId:    portID,
+		}
+		resp, err = queryClient.ChannelClientState(ctx, req)
+		return err
+	})
+
+	return resp, err
+}

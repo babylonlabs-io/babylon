@@ -14,6 +14,7 @@ import (
 	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/config"
 	"github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
 	cwcc "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
+	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
@@ -116,7 +117,7 @@ func (s *BTCStakingIntegration2TestSuite) checkNodeStatus(rpcURL string) (string
 }
 
 // TestDummy is a simple test to ensure the test suite is running
-func (s *BTCStakingIntegration2TestSuite) TestDummy() {
+func (s *BTCStakingIntegration2TestSuite) Test1Dummy() {
 	s.T().Log("Running dummy test")
 	s.Require().True(true, "This test should always pass")
 
@@ -126,7 +127,7 @@ func (s *BTCStakingIntegration2TestSuite) TestDummy() {
 }
 
 // TestSuiteSetup verifies that the SetupSuite method was called and RPC endpoints are set
-func (s *BTCStakingIntegration2TestSuite) TestSuiteSetup() {
+func (s *BTCStakingIntegration2TestSuite) Test2SuiteSetup() {
 	s.T().Log("Verifying suite setup")
 	s.Require().NotEmpty(s.babylonRPC1, "babylonRPC1 should be set")
 	s.Require().NotEmpty(s.babylonRPC2, "babylonRPC2 should be set")
@@ -174,6 +175,21 @@ func (s *BTCStakingIntegration2TestSuite) initCosmwasmController() error {
 		TxConfig:          tempApp.TxConfig(),
 		Amino:             tempApp.LegacyAmino(),
 	}
+
+	interfaces := encodingCfg.InterfaceRegistry.ListAllInterfaces()
+	s.T().Logf("Interfaces: %v", interfaces)
+
+	// Log implementations of ClientState
+	impls := encodingCfg.InterfaceRegistry.ListImplementations("ibc.core.client.v1.ClientState")
+	s.T().Logf("ClientState implementations: %v", impls)
+
+	// encodingCfg.InterfaceRegistry.RegisterImplementations()
+
+	// // Ensure that IBC types are registered
+	// clienttypes.RegisterInterfaces(encodingCfg.InterfaceRegistry)
+	// channeltypes.RegisterInterfaces(encodingCfg.InterfaceRegistry)
+	// connectiontypes.RegisterInterfaces(encodingCfg.InterfaceRegistry)
+
 	wcc, err := cwcc.NewCosmwasmConsumerController(cfg, encodingCfg, logger)
 	require.NoError(s.T(), err)
 
@@ -181,7 +197,7 @@ func (s *BTCStakingIntegration2TestSuite) initCosmwasmController() error {
 	return nil
 }
 
-func (s *BTCStakingIntegration2TestSuite) TestConsumerChainInteraction() {
+func (s *BTCStakingIntegration2TestSuite) Test3ConsumerChainInteraction() {
 	// Use Babylon controller
 	babylonStatus, err := s.babylonController.QueryNodeStatus()
 	s.Require().NoError(err, "Failed to query Babylon node status")
@@ -259,4 +275,43 @@ func (s *BTCStakingIntegration2TestSuite) getIBCClientID() string {
 	s.Equal(uint64(1), nextSequenceRecv.NextSequenceReceive, "Unexpected next sequence receive value")
 
 	return consumerChannelState.IdentifiedClientState.ClientId
+}
+
+func (s *BTCStakingIntegration2TestSuite) Test4AutoRegisterAndVerifyNewConsumer() {
+	// Wait for the Babylon chain to produce at least one block
+	s.Eventually(func() bool {
+		status, err := s.babylonController.QueryNodeStatus()
+		if err != nil {
+			s.T().Logf("Error querying Babylon node status: %v", err)
+			return false
+		}
+		return status.SyncInfo.LatestBlockHeight >= 1
+	}, time.Minute, time.Second*2, "Babylon chain did not produce a block within the expected time")
+
+	consumerID := s.getIBCClientID()
+	s.verifyConsumerRegistration(consumerID)
+}
+
+func (s *BTCStakingIntegration2TestSuite) verifyConsumerRegistration(consumerID string) *bsctypes.ConsumerRegister {
+	var consumerRegistry []*bsctypes.ConsumerRegister
+
+	s.Eventually(func() bool {
+		var err error
+		consumerRegistry, err = s.babylonController.QueryConsumerRegistry(consumerID)
+		if err != nil {
+			s.T().Logf("Error querying consumer registry: %v", err)
+			return false
+		}
+		return len(consumerRegistry) == 1
+	}, time.Minute, 5*time.Second, "Consumer was not registered within the expected time")
+
+	s.Require().Len(consumerRegistry, 1)
+	registeredConsumer := consumerRegistry[0]
+
+	s.T().Logf("Consumer registered: ID=%s, Name=%s, Description=%s",
+		registeredConsumer.ConsumerId,
+		registeredConsumer.ConsumerName,
+		registeredConsumer.ConsumerDescription)
+
+	return registeredConsumer
 }
