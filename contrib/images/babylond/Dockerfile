@@ -6,6 +6,8 @@ ARG BUILD_TAGS=""
 ARG LEDGER_ENABLED="false"
 ARG COSMOS_BUILD_OPTIONS=""
 
+ARG TARGETOS TARGETARCH
+
 WORKDIR /go/src/github.com/babylonlabs-io/babylon
 COPY ./ /go/src/github.com/babylonlabs-io/babylon/
 
@@ -22,6 +24,9 @@ RUN LEDGER_ENABLED=$LEDGER_ENABLED \
     BUILD_TAGS=$BUILD_TAGS \
     COSMOS_BUILD_OPTIONS=$COSMOS_BUILD_OPTIONS \
     LINK_STATICALLY=false \
+    GOOS=${TARGETOS} \
+    GOARCH=${TARGETARCH} \
+    CC=arm-linux-gnueabi-gcc CGO_ENABLED=1 \
     make build
 
 FROM debian:bookworm-slim AS wasm-link
