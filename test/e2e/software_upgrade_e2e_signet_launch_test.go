@@ -100,4 +100,14 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 		s.EqualValues(fpFromKeeper.Commission.String(), fpInserted.Commission.String())
 		s.EqualValues(fpFromKeeper.Pop.String(), fpInserted.Pop.String())
 	}
+
+	// check that staking params correctly deserialize and that they are the same
+	// as the one from the data
+	stakingParams := n.QueryBTCStakingParams()
+
+	paramsFromData, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec())
+	s.NoError(err)
+
+	s.EqualValues(paramsFromData, *stakingParams)
+
 }
