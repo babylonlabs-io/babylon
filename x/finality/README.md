@@ -89,7 +89,7 @@ needs to interact with Babylon as follows:
   Otherwise, anyone can extract the signer's secret key
   by using two EOTS signatures on different messages, the corresponding EOTS
   public randomness, and the signer's public key.
-  A public randomness commit takes effective only after it is BTC-timestamped.
+  A public randomness commit takes effect only after it is BTC-timestamped.
 - **Submitting EOTS signatures.** Upon a new block, the finality provider
   submits an EOTS signature w.r.t. the derived public randomness at that height.
   The Finality module will verify the EOTS signature, and check if there are
