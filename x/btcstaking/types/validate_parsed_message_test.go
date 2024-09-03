@@ -21,6 +21,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// testStakingParams generates valid staking parameters with randomized
+// - covenant committee members public keys
+// - slashing address
 func testStakingParams(
 	r *rand.Rand,
 	t *testing.T,
@@ -50,6 +53,7 @@ func testStakingParams(
 	}
 }
 
+// testCheckpointParams generates valid btccheckpoint parameters
 func testCheckpointParams() *btcckpttypes.Params {
 	return &btcckpttypes.Params{
 		BtcConfirmationDepth:          10,
@@ -69,6 +73,10 @@ type unbondingInfo struct {
 	serializedUnbondingTx []byte
 }
 
+// generateUnbondingInfo generates valid:
+// - unbonding transaction
+// - unbonding slashing transaction
+// - unbonding slashing transactions staker signature
 func generateUnbondingInfo(
 	r *rand.Rand,
 	t *testing.T,
@@ -113,6 +121,13 @@ func generateUnbondingInfo(
 	}
 }
 
+// createMsgDelegationForParams creates a valid message to create delegation
+// based on provided parameters.
+// It randomly generates:
+// - staker address and btc key pair
+// - finality provider btc key pair
+// - staking time
+// - staking value
 func createMsgDelegationForParams(
 	r *rand.Rand,
 	t *testing.T,
