@@ -916,7 +916,7 @@ func (s *BTCStakingTestSuite) BTCStakingUnbondSlashInfo(
 		covenantQuorum,
 		stakingTimeBlocks,
 		stakingValue,
-		params.SlashingAddress,
+		params.SlashingPkScript,
 		params.SlashingRate,
 		unbondingTime,
 	)
@@ -951,7 +951,7 @@ func (s *BTCStakingTestSuite) BTCStakingUnbondSlashInfo(
 		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
 		stakingTimeBlocks,
 		unbondingValue,
-		params.SlashingAddress,
+		params.SlashingPkScript,
 		params.SlashingRate,
 		unbondingTime,
 	)

@@ -73,6 +73,12 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				resp, err := s.app.BTCStakingKeeper.FinalityProviders(s.ctx, &types.QueryFinalityProvidersRequest{})
 				s.NoError(err)
 				oldFPsLen = len(resp.FinalityProviders)
+
+				// Before upgrade, the params should be different
+				paramsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.app.AppCodec())
+				s.NoError(err)
+				moduleParams := s.app.BTCStakingKeeper.GetParams(s.ctx)
+				s.NotEqualValues(moduleParams, paramsFromUpgrade)
 			},
 			func() {
 				// inject upgrade plan
@@ -128,6 +134,12 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 					s.EqualValues(fpFromKeeper.Commission.String(), fpInserted.Commission.String())
 					s.EqualValues(fpFromKeeper.Pop.String(), fpInserted.Pop.String())
 				}
+
+				// Afer upgrade, the params should be the same
+				paramsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.app.AppCodec())
+				s.NoError(err)
+				moduleParams := s.app.BTCStakingKeeper.GetParams(s.ctx)
+				s.EqualValues(moduleParams, paramsFromUpgrade)
 			},
 		},
 	}

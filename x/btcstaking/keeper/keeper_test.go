@@ -8,6 +8,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -100,16 +101,22 @@ func (h *Helper) GenAndApplyCustomParams(
 	h.NoError(err)
 	slashingAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 	h.NoError(err)
+	slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+	h.NoError(err)
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, types.Params{
 		CovenantPks:                bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
 		CovenantQuorum:             3,
-		SlashingAddress:            slashingAddress.EncodeAddress(),
+		MinStakingValueSat:         1000,
+		MaxStakingValueSat:         int64(4 * 10e8),
+		MinStakingTimeBlocks:       10,
+		MaxStakingTimeBlocks:       10000,
+		SlashingPkScript:           slashingPkScript,
 		MinSlashingTxFeeSat:        10,
 		MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.01"),
 		SlashingRate:               sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
 		MaxActiveFinalityProviders: 100,
-		MinUnbondingTime:           minUnbondingTime,
-		MinUnbondingRate:           sdkmath.LegacyMustNewDecFromStr("0.8"),
+		MinUnbondingTimeBlocks:     minUnbondingTime,
+		UnbondingFeeSat:            1000,
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs
@@ -174,7 +181,7 @@ func (h *Helper) CreateDelegationCustom(
 		bsParams.CovenantQuorum,
 		stakingTimeBlocks,
 		stakingValue,
-		bsParams.SlashingAddress,
+		bsParams.SlashingPkScript,
 		bsParams.SlashingRate,
 		unbondingTime,
 	)
@@ -232,7 +239,7 @@ func (h *Helper) CreateDelegationCustom(
 		wire.NewOutPoint(&stkTxHash, stkOutputIdx),
 		unbondingTime,
 		unbondingValue,
-		bsParams.SlashingAddress,
+		bsParams.SlashingPkScript,
 		bsParams.SlashingRate,
 		unbondingTime,
 	)

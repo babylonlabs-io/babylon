@@ -151,11 +151,14 @@ func testSlashingTx(
 	slashingAddress, err := genRandomBTCAddress(r)
 	require.NoError(t, err)
 
+	slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+	require.NoError(t, err)
+
 	// Construct slashing transaction using the provided parameters
 	slashingTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
 		stakingTx,
 		uint32(stakingOutputIdx),
-		slashingAddress,
+		slashingPkScript,
 		stakerPk,
 		slashingChangeLockTime,
 		fee,
@@ -196,7 +199,7 @@ func testSlashingTx(
 				uint32(stakingOutputIdx),
 				fee,
 				slashingRate,
-				slashingAddress,
+				slashingPkScript,
 				stakerPk,
 				slashingChangeLockTime,
 				&chaincfg.MainNetParams,
@@ -280,11 +283,14 @@ func TestSlashingTxWithOverflowMustNotAccepted(t *testing.T) {
 	slashingAddress, err := genRandomBTCAddress(r)
 	require.NoError(t, err)
 
+	slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+	require.NoError(t, err)
+
 	// Construct slashing transaction using the provided parameters
 	slashingTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
 		stakingTx,
 		uint32(0),
-		slashingAddress,
+		slashingPkScript,
 		sd.StakerKey,
 		slashingLockTime,
 		int64(minFee),
@@ -303,7 +309,7 @@ func TestSlashingTxWithOverflowMustNotAccepted(t *testing.T) {
 		uint32(0),
 		int64(minFee),
 		slashingRate,
-		slashingAddress,
+		slashingPkScript,
 		sd.StakerKey,
 		slashingLockTime,
 		&chaincfg.MainNetParams,

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -68,16 +69,37 @@ Example:
 
 			var genesisParams GenesisParams
 			if network == "testnet" {
-				genesisParams = TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
-					genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout, genesisCliArgs.CheckpointTag,
-					genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
-					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.AllowedReporterAddresses,
-					genesisCliArgs.CovenantPKs, genesisCliArgs.CovenantQuorum,
-					genesisCliArgs.SlashingAddress, genesisCliArgs.MinSlashingTransactionFeeSat,
-					genesisCliArgs.MinCommissionRate, genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveFinalityProviders,
-					genesisCliArgs.MinUnbondingTime, genesisCliArgs.MinUnbondingRate, genesisCliArgs.InflationRateChange,
-					genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded,
-					genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit, genesisCliArgs.VoteExtensionEnableHeight)
+				genesisParams = TestnetGenesisParams(
+					genesisCliArgs.MaxActiveValidators,
+					genesisCliArgs.BtcConfirmationDepth,
+					genesisCliArgs.BtcFinalizationTimeout,
+					genesisCliArgs.CheckpointTag,
+					genesisCliArgs.EpochInterval,
+					genesisCliArgs.BaseBtcHeaderHex,
+					genesisCliArgs.BaseBtcHeaderHeight,
+					genesisCliArgs.AllowedReporterAddresses,
+					genesisCliArgs.CovenantPKs,
+					genesisCliArgs.CovenantQuorum,
+					genesisCliArgs.MinStakingAmtSat,
+					genesisCliArgs.MaxStakingAmtSat,
+					genesisCliArgs.MinStakingTimeBlocks,
+					genesisCliArgs.MaxStakingTimeBlocks,
+					genesisCliArgs.SlashingPkScript,
+					genesisCliArgs.MinSlashingTransactionFeeSat,
+					genesisCliArgs.MinCommissionRate,
+					genesisCliArgs.SlashingRate,
+					genesisCliArgs.MaxActiveFinalityProviders,
+					genesisCliArgs.MinUnbondingTime,
+					genesisCliArgs.UnbondingFeeSat,
+					genesisCliArgs.InflationRateChange,
+					genesisCliArgs.InflationMin,
+					genesisCliArgs.InflationMax,
+					genesisCliArgs.GoalBonded,
+					genesisCliArgs.BlocksPerYear,
+					genesisCliArgs.GenesisTime,
+					genesisCliArgs.BlockGasLimit,
+					genesisCliArgs.VoteExtensionEnableHeight,
+				)
 			} else if network == "mainnet" {
 				// TODO: mainnet genesis params
 				panic("Mainnet params not implemented.")
@@ -238,12 +260,37 @@ type GenesisParams struct {
 	VoteExtensionsEnableHeight  int64
 }
 
-func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint64,
-	btcFinalizationTimeout uint64, checkpointTag string, epochInterval uint64, baseBtcHeaderHex string,
-	baseBtcHeaderHeight uint64, allowedReporters []string, covenantPKs []string, covenantQuorum uint32, slashingAddress string, minSlashingFee int64,
-	minCommissionRate sdkmath.LegacyDec, slashingRate sdkmath.LegacyDec, maxActiveFinalityProviders uint32, minUnbondingTime uint16, minUnbondingRate sdkmath.LegacyDec, inflationRateChange float64,
-	inflationMin float64, inflationMax float64, goalBonded float64,
-	blocksPerYear uint64, genesisTime time.Time, blockGasLimit int64, voteExtensionEnableHeight int64) GenesisParams {
+func TestnetGenesisParams(
+	maxActiveValidators uint32,
+	btcConfirmationDepth uint64,
+	btcFinalizationTimeout uint64,
+	checkpointTag string,
+	epochInterval uint64,
+	baseBtcHeaderHex string,
+	baseBtcHeaderHeight uint64,
+	allowedReporters []string,
+	covenantPKs []string,
+	covenantQuorum uint32,
+	minStakingAmtSat int64,
+	maxStakingAmtSat int64,
+	minStakingTimeBlocks uint16,
+	maxStakingTimeBlocks uint16,
+	slashingPkScriptHex string,
+	minSlashingFee int64,
+	minCommissionRate sdkmath.LegacyDec,
+	slashingRate sdkmath.LegacyDec,
+	maxActiveFinalityProviders uint32,
+	minUnbondingTime uint16,
+	unbondingFeeSat int64,
+	inflationRateChange float64,
+	inflationMin float64,
+	inflationMax float64,
+	goalBonded float64,
+	blocksPerYear uint64,
+	genesisTime time.Time,
+	blockGasLimit int64,
+	voteExtensionEnableHeight int64,
+) GenesisParams {
 
 	genParams := GenesisParams{}
 
@@ -336,15 +383,25 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 		}
 		covenantPKsBIP340 = append(covenantPKsBIP340, *pk)
 	}
+
+	slashingPkScript, err := hex.DecodeString(slashingPkScriptHex)
+	if err != nil {
+		panic(err)
+	}
+
 	genParams.BtcstakingParams.CovenantPks = covenantPKsBIP340
 	genParams.BtcstakingParams.CovenantQuorum = covenantQuorum
-	genParams.BtcstakingParams.SlashingAddress = slashingAddress
+	genParams.BtcstakingParams.MinStakingValueSat = minStakingAmtSat
+	genParams.BtcstakingParams.MaxStakingValueSat = maxStakingAmtSat
+	genParams.BtcstakingParams.MinStakingTimeBlocks = uint32(minStakingTimeBlocks)
+	genParams.BtcstakingParams.MaxStakingTimeBlocks = uint32(maxStakingTimeBlocks)
+	genParams.BtcstakingParams.SlashingPkScript = slashingPkScript
 	genParams.BtcstakingParams.MinSlashingTxFeeSat = minSlashingFee
 	genParams.BtcstakingParams.MinCommissionRate = minCommissionRate
 	genParams.BtcstakingParams.SlashingRate = slashingRate
 	genParams.BtcstakingParams.MaxActiveFinalityProviders = maxActiveFinalityProviders
-	genParams.BtcstakingParams.MinUnbondingTime = uint32(minUnbondingTime)
-	genParams.BtcstakingParams.MinUnbondingRate = minUnbondingRate
+	genParams.BtcstakingParams.MinUnbondingTimeBlocks = uint32(minUnbondingTime)
+	genParams.BtcstakingParams.UnbondingFeeSat = unbondingFeeSat
 	if err := genParams.BtcstakingParams.Validate(); err != nil {
 		panic(err)
 	}

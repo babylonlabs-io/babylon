@@ -167,7 +167,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	btccParams := ms.btccKeeper.GetParams(ctx)
 
-	paramsValidationResult, err := types.ValidateParams(parsedMsg, &vp.Params, &btccParams, ms.btcNet)
+	paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, &vp.Params, &btccParams, ms.btcNet)
 
 	if err != nil {
 		return nil, err

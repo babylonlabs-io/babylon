@@ -8,6 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	"github.com/btcsuite/btcd/txscript"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/golang/mock/gomock"
@@ -180,6 +181,8 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+		require.NoError(t, err)
 		slashingChangeLockTime := uint16(101)
 
 		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
@@ -219,7 +222,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 					covenantSKs,
 					covenantPKs,
 					covenantQuorum,
-					slashingAddress.EncodeAddress(),
+					slashingPkScript,
 					startHeight, endHeight, 10000,
 					slashingRate,
 					slashingChangeLockTime,
@@ -383,7 +386,8 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
-
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+		require.NoError(t, err)
 		slashingChangeLockTime := uint16(101)
 
 		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
@@ -425,7 +429,7 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 					covenantSKs,
 					covenantPKs,
 					covenantQuorum,
-					slashingAddress.EncodeAddress(),
+					slashingPkScript,
 					1, 1000, 10000,
 					slashingRate,
 					slashingChangeLockTime,
@@ -502,6 +506,8 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+		require.NoError(t, err)
 		slashingChangeLockTime := uint16(101)
 
 		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
@@ -534,7 +540,7 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 				covenantSKs,
 				covenantPKs,
 				covenantQuorum,
-				slashingAddress.EncodeAddress(),
+				slashingPkScript,
 				startHeight, endHeight, 10000,
 				slashingRate,
 				slashingChangeLockTime,

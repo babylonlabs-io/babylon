@@ -82,6 +82,29 @@ func (k Keeper) SetParams(ctx context.Context, p types.Params) error {
 	return nil
 }
 
+func (k Keeper) OverwriteParamsAtVersion(ctx context.Context, v uint32, p types.Params) error {
+	if err := p.Validate(); err != nil {
+		return fmt.Errorf("cannot overwrite params at version %d: %w", v, err)
+	}
+
+	paramsStore := k.paramsStore(ctx)
+
+	// check if the params at version v exists
+	spBytes := paramsStore.Get(uint32ToBytes(v))
+
+	if len(spBytes) == 0 {
+		return fmt.Errorf("params at version %d not found", v)
+	}
+
+	sp := types.StoredParams{
+		Params:  p,
+		Version: v,
+	}
+
+	paramsStore.Set(uint32ToBytes(v), k.cdc.MustMarshal(&sp))
+	return nil
+}
+
 func (k Keeper) GetAllParams(ctx context.Context) []*types.Params {
 	paramsStore := k.paramsStore(ctx)
 	it := paramsStore.Iterator(nil, nil)

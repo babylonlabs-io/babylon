@@ -10,6 +10,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -223,7 +224,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 
 	customMinUnbondingTime := uint32(2000)
 	currentParams := h.BTCStakingKeeper.GetParams(h.Ctx)
-	currentParams.MinUnbondingTime = 2000
+	currentParams.MinUnbondingTimeBlocks = 2000
 	// Update new params
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
 	require.NoError(t, err)
@@ -576,7 +577,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 		bsParams.CovenantQuorum,
 		stakingTimeBlocks,
 		stakingValue,
-		bsParams.SlashingAddress,
+		bsParams.SlashingPkScript,
 		bsParams.SlashingRate,
 		slashingChangeLockTime,
 	)
@@ -627,7 +628,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
 		uint16(unbondingTime),
 		unbondingValue,
-		bsParams.SlashingAddress,
+		bsParams.SlashingPkScript,
 		bsParams.SlashingRate,
 		slashingChangeLockTime,
 	)
@@ -744,78 +745,6 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 	}
 }
 
-func TestMinimalUnbondingRate(t *testing.T) {
-	tests := []struct {
-		name                       string
-		stakingValue               int64
-		unbondingValueInDelegation int64
-		err                        error
-	}{
-		{
-			name:                       "successful delegation when unbonding value is >=80% of staking value",
-			stakingValue:               10000,
-			unbondingValueInDelegation: 8000,
-			err:                        nil,
-		},
-		{
-			name:                       "failed delegation when unbonding value is <80% of staking value",
-			stakingValue:               10000,
-			unbondingValueInDelegation: 7999,
-			err:                        types.ErrInvalidUnbondingTx,
-		},
-		{
-			name:                       "failed delegation when unbonding value >= stake value",
-			stakingValue:               10000,
-			unbondingValueInDelegation: 10000,
-			err:                        types.ErrInvalidUnbondingTx,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := rand.New(rand.NewSource(time.Now().Unix()))
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			// mock BTC light client and BTC checkpoint modules
-			btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
-			btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-			finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-			h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
-
-			// set all parameters, by default minimal unbonding value is 80% of staking value
-			_, _ = h.GenAndApplyParams(r)
-
-			changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-			require.NoError(t, err)
-
-			// generate and insert new finality provider
-			_, fpPK, _ := h.CreateFinalityProvider(r)
-
-			// generate and insert new BTC delegation
-			stakingTxHash, _, _, _, err := h.CreateDelegationCustom(
-				r,
-				fpPK,
-				changeAddress.EncodeAddress(),
-				tt.stakingValue,
-				1000,
-				tt.unbondingValueInDelegation,
-				1000,
-			)
-			if tt.err != nil {
-				require.Error(t, err)
-				require.True(t, errors.Is(err, tt.err))
-			} else {
-				require.NoError(t, err)
-				// Retrieve delegation from keeper
-				delegation, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
-				require.NoError(t, err)
-				require.NotNil(t, delegation)
-			}
-		})
-	}
-}
-
 func createNDelegationsForFinalityProvider(
 	r *rand.Rand,
 	t *testing.T,
@@ -834,6 +763,8 @@ func createNDelegationsForFinalityProvider(
 
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+		require.NoError(t, err)
 
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
@@ -846,7 +777,7 @@ func createNDelegationsForFinalityProvider(
 			covenatnSks,
 			covenantPks,
 			quorum,
-			slashingAddress.EncodeAddress(),
+			slashingPkScript,
 			0,
 			0+math.MaxUint16,
 			uint64(stakingValue),

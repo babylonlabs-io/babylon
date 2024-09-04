@@ -53,12 +53,48 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
+		// Upgrade the staking parameters as first, as other upgrades depend on it.
+		if err := upgradeBtcStakingParameters(ctx, keepers.EncCfg, &keepers.BTCStakingKeeper); err != nil {
+			panic(err)
+		}
+
 		if err := propLaunch(ctx, keepers.EncCfg, &keepers.BTCLightClientKeeper, &keepers.BTCStakingKeeper); err != nil {
 			panic(err)
 		}
 
 		return migrations, nil
 	}
+}
+
+func LoadBtcStakingParamsFromData(cdc codec.Codec) (btcstktypes.Params, error) {
+	buff := bytes.NewBufferString(BtcStakingParamStr)
+
+	var params btcstktypes.Params
+	err := cdc.UnmarshalJSON(buff.Bytes(), &params)
+	if err != nil {
+		return btcstktypes.Params{}, err
+	}
+
+	return params, nil
+}
+
+func upgradeBtcStakingParameters(
+	ctx sdk.Context,
+	e *appparams.EncodingConfig,
+	k *btcstkkeeper.Keeper,
+) error {
+
+	cdc := e.Codec
+
+	params, err := LoadBtcStakingParamsFromData(cdc)
+
+	if err != nil {
+		return err
+	}
+
+	// We are overwriting the params at version 0, as the upgrade is happening from
+	// TGE chain so there should be only one version of the params
+	return k.OverwriteParamsAtVersion(ctx, 0, params)
 }
 
 // propLaunch runs the proposal of launch that is meant to insert new BTC Headers.
