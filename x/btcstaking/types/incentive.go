@@ -20,9 +20,9 @@ func (dc *VotingPowerDistCache) AddFinalityProviderDistInfo(v *FinalityProviderD
 	dc.FinalityProviders = append(dc.FinalityProviders, v)
 }
 
-func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPowerDistCache, maxActiveFPs uint32) []*FinalityProviderDistInfo {
-	activeFps := dc.GetActiveFinalityProviderSet(maxActiveFPs)
-	prevActiveFps := prevDc.GetActiveFinalityProviderSet(maxActiveFPs)
+func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPowerDistCache) []*FinalityProviderDistInfo {
+	activeFps := dc.GetActiveFinalityProviderSet()
+	prevActiveFps := prevDc.GetActiveFinalityProviderSet()
 	newActiveFps := make([]*FinalityProviderDistInfo, 0)
 
 	for pk, fp := range activeFps {
@@ -36,28 +36,44 @@ func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPow
 }
 
 // ApplyActiveFinalityProviders sorts all finality providers, counts the total voting
-// power of top N finality providers, and records them in cache
+// power of top N finality providers, excluding those who don't have timestamped pub rand
+// and records them in cache
 func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(maxActiveFPs uint32) {
-	// reset total voting power
-	dc.TotalVotingPower = 0
-	// sort finality providers
-	SortFinalityProviders(dc.FinalityProviders)
-	// calculate voting power of top N finality providers
-	numActiveFPs := dc.GetNumActiveFPs(maxActiveFPs)
-	for i := uint32(0); i < numActiveFPs; i++ {
-		dc.TotalVotingPower += dc.FinalityProviders[i].TotalVotingPower
-	}
-}
+	// sort finality providers with timestamping considered
+	SortFinalityProvidersWithTimestamping(dc.FinalityProviders)
 
-func (dc *VotingPowerDistCache) GetNumActiveFPs(maxActiveFPs uint32) uint32 {
-	return min(maxActiveFPs, uint32(len(dc.FinalityProviders)))
+	numActiveFPs := uint32(0)
+
+	// finality providers are in the descending order of voting power
+	// and timestamped ones come in the last
+	for _, fp := range dc.FinalityProviders {
+		if numActiveFPs == maxActiveFPs {
+			break
+		}
+		if fp.TotalVotingPower == 0 {
+			break
+		}
+		if !fp.IsTimestamped {
+			break
+		}
+		numActiveFPs++
+	}
+
+	totalVotingPower := uint64(0)
+
+	for i := uint32(0); i < numActiveFPs; i++ {
+		totalVotingPower += dc.FinalityProviders[i].TotalVotingPower
+	}
+
+	dc.TotalVotingPower = totalVotingPower
+	dc.NumActiveFps = numActiveFPs
 }
 
 // GetActiveFinalityProviderSet returns a set of active finality providers
 // keyed by the hex string of the finality provider's BTC public key
 // i.e., top N of them in terms of voting power
-func (dc *VotingPowerDistCache) GetActiveFinalityProviderSet(maxActiveFPs uint32) map[string]*FinalityProviderDistInfo {
-	numActiveFPs := dc.GetNumActiveFPs(maxActiveFPs)
+func (dc *VotingPowerDistCache) GetActiveFinalityProviderSet() map[string]*FinalityProviderDistInfo {
+	numActiveFPs := dc.NumActiveFps
 
 	activeFps := make(map[string]*FinalityProviderDistInfo)
 
@@ -71,8 +87,8 @@ func (dc *VotingPowerDistCache) GetActiveFinalityProviderSet(maxActiveFPs uint32
 // FilterVotedDistCache filters out a voting power distribution cache
 // with finality providers that have voted according to a map of given
 // voters, and their total voted power.
-func (dc *VotingPowerDistCache) FilterVotedDistCache(maxActiveFPs uint32, voterBTCPKs map[string]struct{}) *VotingPowerDistCache {
-	activeFPs := dc.GetActiveFinalityProviderSet(maxActiveFPs)
+func (dc *VotingPowerDistCache) FilterVotedDistCache(voterBTCPKs map[string]struct{}) *VotingPowerDistCache {
+	activeFPs := dc.GetActiveFinalityProviderSet()
 	var filteredFps []*FinalityProviderDistInfo
 	totalVotingPower := uint64(0)
 	for k, v := range activeFPs {

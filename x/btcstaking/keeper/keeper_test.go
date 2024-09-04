@@ -34,14 +34,19 @@ type Helper struct {
 	BTCStakingKeeper     *keeper.Keeper
 	BTCLightClientKeeper *types.MockBTCLightClientKeeper
 	BTCCheckpointKeeper  *types.MockBtcCheckpointKeeper
-	CheckpointingKeeper  *types.MockCheckpointingKeeper
+	FinalityKeeper       *types.MockFinalityKeeper
 	BTCStakingHooks      *types.MockBtcStakingHooks
 	MsgServer            types.MsgServer
 	Net                  *chaincfg.Params
 }
 
-func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKeeper *types.MockBtcCheckpointKeeper, ckptKeeper *types.MockCheckpointingKeeper) *Helper {
-	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper, ckptKeeper)
+func NewHelper(
+	t testing.TB,
+	btclcKeeper *types.MockBTCLightClientKeeper,
+	btccKeeper *types.MockBtcCheckpointKeeper,
+	finalityKeeper *types.MockFinalityKeeper,
+) *Helper {
+	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper, finalityKeeper)
 	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
@@ -56,7 +61,6 @@ func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKe
 		BTCStakingKeeper:     k,
 		BTCLightClientKeeper: btclcKeeper,
 		BTCCheckpointKeeper:  btccKeeper,
-		CheckpointingKeeper:  ckptKeeper,
 		MsgServer:            msgSrvr,
 		Net:                  &chaincfg.SimNetParams,
 	}

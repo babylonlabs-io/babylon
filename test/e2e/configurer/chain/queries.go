@@ -163,24 +163,12 @@ func (n *NodeConfig) QueryListSnapshots() ([]*cmtabcitypes.Snapshot, error) {
 	return listSnapshots.Snapshots, nil
 }
 
-// func (n *NodeConfig) QueryContractsFromId(codeId int) ([]string, error) {
-// 	path := fmt.Sprintf("/cosmwasm/wasm/v1/code/%d/contracts", codeId)
-// 	bz, err := n.QueryGRPCGateway(path)
-
-// 	require.NoError(n.t, err)
-
-// 	var contractsResponse wasmtypes.QueryContractsByCodeResponse
-// 	if err := util.Cdc.UnmarshalJSON(bz, &contractsResponse); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return contractsResponse.Contracts, nil
-// }
-
 func (n *NodeConfig) QueryRawCheckpoint(epoch uint64) (*ct.RawCheckpointWithMetaResponse, error) {
 	path := fmt.Sprintf("babylon/checkpointing/v1/raw_checkpoint/%d", epoch)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
-	require.NoError(n.t, err)
+	if err != nil {
+		return nil, err
+	}
 
 	var checkpointingResponse ct.QueryRawCheckpointResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &checkpointingResponse); err != nil {
@@ -206,6 +194,19 @@ func (n *NodeConfig) QueryRawCheckpoints(pagination *query.PageRequest) (*ct.Que
 	}
 
 	return &checkpointingResponse, nil
+}
+
+func (n *NodeConfig) QueryLastFinalizedEpoch() (uint64, error) {
+	queryParams := url.Values{}
+	queryParams.Add("status", fmt.Sprintf("%d", ct.Finalized))
+
+	bz, err := n.QueryGRPCGateway(fmt.Sprintf("/babylon/checkpointing/v1/last_raw_checkpoint/%d", ct.Finalized), queryParams)
+	require.NoError(n.t, err)
+	var res ct.QueryLastCheckpointWithStatusResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &res); err != nil {
+		return 0, err
+	}
+	return res.RawCheckpoint.EpochNum, nil
 }
 
 func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfoResponse, error) {

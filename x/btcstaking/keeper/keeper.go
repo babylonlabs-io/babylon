@@ -19,9 +19,9 @@ type (
 		cdc          codec.BinaryCodec
 		storeService corestoretypes.KVStoreService
 
-		btclcKeeper types.BTCLightClientKeeper
-		btccKeeper  types.BtcCheckpointKeeper
-		ckptKeeper  types.CheckpointingKeeper
+		btclcKeeper    types.BTCLightClientKeeper
+		btccKeeper     types.BtcCheckpointKeeper
+		FinalityKeeper types.FinalityKeeper
 
 		hooks types.BtcStakingHooks
 
@@ -38,7 +38,7 @@ func NewKeeper(
 
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
-	ckptKeeper types.CheckpointingKeeper,
+	finalityKeeper types.FinalityKeeper,
 
 	btcNet *chaincfg.Params,
 	authority string,
@@ -47,9 +47,9 @@ func NewKeeper(
 		cdc:          cdc,
 		storeService: storeService,
 
-		btclcKeeper: btclcKeeper,
-		btccKeeper:  btccKeeper,
-		ckptKeeper:  ckptKeeper,
+		btclcKeeper:    btclcKeeper,
+		btccKeeper:     btccKeeper,
+		FinalityKeeper: finalityKeeper,
 
 		hooks: nil,
 
@@ -85,8 +85,4 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	k.UpdatePowerDist(ctx)
 
 	return nil
-}
-
-func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
-	return k.ckptKeeper.GetLastFinalizedEpoch(ctx)
 }

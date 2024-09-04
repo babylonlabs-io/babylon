@@ -3,9 +3,10 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestParamsQuery(t *testing.T) {
