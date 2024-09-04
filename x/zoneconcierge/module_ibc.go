@@ -34,7 +34,7 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
-	if !im.keeper.GetParams(ctx).EnableIntegration {
+	if !types.EnableIntegration {
 		return "", types.ErrIntegrationDisabled
 	}
 
@@ -73,7 +73,7 @@ func (im IBCModule) OnChanOpenTry(
 	counterparty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
-	if !im.keeper.GetParams(ctx).EnableIntegration {
+	if !types.EnableIntegration {
 		return "", types.ErrIntegrationDisabled
 	}
 
@@ -115,7 +115,7 @@ func (im IBCModule) OnChanOpenAck(
 	_,
 	counterpartyVersion string,
 ) error {
-	if !im.keeper.GetParams(ctx).EnableIntegration {
+	if !types.EnableIntegration {
 		return types.ErrIntegrationDisabled
 	}
 
@@ -133,7 +133,7 @@ func (im IBCModule) OnChanOpenConfirm(
 	portID,
 	channelID string,
 ) error {
-	if !im.keeper.GetParams(ctx).EnableIntegration {
+	if !types.EnableIntegration {
 		return types.ErrIntegrationDisabled
 	}
 

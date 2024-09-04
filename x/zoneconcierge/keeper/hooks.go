@@ -23,7 +23,7 @@ func (k Keeper) Hooks() Hooks { return Hooks{k} }
 func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	// if integration is not enabled, do not trigger hooks
 	// NOTE: might not be needed, since the post handler is disabled
-	if !h.k.GetParams(ctx).EnableIntegration {
+	if !types.EnableIntegration {
 		return
 	}
 
@@ -37,7 +37,7 @@ func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
 func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error {
 	// if integration is not enabled, do not trigger hooks
 	// NOTE: might not be needed, since the proofs do not depend on consumer chains
-	if !h.k.GetParams(ctx).EnableIntegration {
+	if !types.EnableIntegration {
 		return nil
 	}
 
@@ -51,7 +51,7 @@ func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error
 // AfterRawCheckpointFinalized is triggered upon an epoch has been finalised
 func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) error {
 	// if integration is not enabled, do not trigger hooks
-	if !h.k.GetParams(ctx).EnableIntegration {
+	if !types.EnableIntegration {
 		return nil
 	}
 

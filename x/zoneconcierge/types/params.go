@@ -4,6 +4,10 @@ import (
 	"fmt"
 )
 
+var (
+	EnableIntegration = false
+)
+
 const (
 	DefaultIbcPacketTimeoutSeconds uint32 = 60 * 60 * 24       // 24 hours
 	MaxIbcPacketTimeoutSeconds     uint32 = 60 * 60 * 24 * 365 // 1 year
