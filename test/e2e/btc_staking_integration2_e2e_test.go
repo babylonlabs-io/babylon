@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	wasmparams "github.com/CosmWasm/wasmd/app/params"
@@ -13,10 +14,17 @@ import (
 	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/config"
 	"github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
 	cwcc "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
+	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
@@ -121,6 +129,196 @@ func (s *BTCStakingIntegration2TestSuite) Test3CreateConsumerFinalityProvider() 
 		s.Equal(fpFromMap.SlashedBtcHeight, czFp.SlashedBtcHeight)
 		s.Equal(fpFromMap.ConsumerId, czFp.ConsumerId)
 	}
+}
+
+func (s *BTCStakingIntegration2TestSuite) Test4RestakeDelegationToMultipleFPs() {
+	consumerID := "07-tendermint-0"
+
+	consumerFps, err := s.babylonController.QueryConsumerFinalityProviders(consumerID)
+	s.Require().NoError(err)
+	consumerFp := consumerFps[0]
+
+	// register a babylon finality provider
+	babylonFp := s.createVerifyBabylonFP()
+
+	// create a delegation and restake to both Babylon and consumer finality providers
+	// NOTE: this will create delegation in pending state as covenant sigs are not provided
+	delBtcPk, stakingTxHash := s.createBabylonDelegation(babylonFp, consumerFp)
+
+	// check delegation
+	//delegation := nonValidatorNode.QueryBtcDelegation(stakingTxHash)
+	//s.NotNil(delegation)
+	//
+	//// check consumer finality provider delegation
+	//czPendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex())
+	//s.Len(czPendingDelSet, 1)
+	//czPendingDels := czPendingDelSet[0]
+	//s.Len(czPendingDels.Dels, 1)
+	//s.Equal(delBtcPk.SerializeCompressed()[1:], czPendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	//s.Len(czPendingDels.Dels[0].CovenantSigs, 0)
+	//
+	//// check Babylon finality provider delegation
+	//pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(babylonFp.BtcPk.MarshalHex())
+	//s.Len(pendingDelSet, 1)
+	//pendingDels := pendingDelSet[0]
+	//s.Len(pendingDels.Dels, 1)
+	//s.Equal(delBtcPk.SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	//s.Len(pendingDels.Dels[0].CovenantSigs, 0)
+}
+
+func (s *BTCStakingIntegration2TestSuite) createBabylonDelegation(babylonFp *bstypes.FinalityProviderResponse, consumerFp *bsctypes.FinalityProviderResponse) (*btcec.PublicKey, string) {
+	/*
+		create a random BTC delegation restaking to Babylon and consumer finality providers
+	*/
+
+	delBabylonAddr, err := sdk.AccAddressFromBech32(s.babylonController.MustGetTxSigner())
+	s.NoError(err)
+	// BTC staking params, BTC delegation key pairs and PoP
+	params, err := s.babylonController.QueryStakingParams()
+	s.Require().NoError(err)
+
+	// minimal required unbonding time
+	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+
+	// get covenant BTC PKs
+	//covenantBTCPKs := []*btcec.PublicKey{}
+	//for _, covenantPK := range params.CovenantPks {
+	//	covenantBTCPKs = append(covenantBTCPKs, covenantPK.MustToBTCPK())
+	//}
+	// NOTE: we use the node's secret key as Babylon secret key for the BTC delegation
+	pop, err := bstypes.NewPoPBTC(delBabylonAddr, czDelBtcSk)
+	s.NoError(err)
+	// generate staking tx and slashing tx
+	stakingTimeBlocks := uint16(math.MaxUint16)
+	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
+		r,
+		s.T(),
+		net,
+		czDelBtcSk,
+		[]*btcec.PublicKey{babylonFp.BtcPk.MustToBTCPK(), consumerFp.BtcPk.MustToBTCPK()},
+		params.CovenantPks,
+		covenantQuorum,
+		stakingTimeBlocks,
+		stakingValue,
+		params.SlashingAddress.String(),
+		params.SlashingRate,
+		unbondingTime,
+	)
+
+	stakingMsgTx := testStakingInfo.StakingTx
+	stakingTxHash := stakingMsgTx.TxHash().String()
+	stakingSlashingPathInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
+	s.NoError(err)
+
+	// generate proper delegator sig
+	delegatorSig, err := testStakingInfo.SlashingTx.Sign(
+		stakingMsgTx,
+		datagen.StakingOutIdx,
+		stakingSlashingPathInfo.GetPkScriptPath(),
+		czDelBtcSk,
+	)
+	s.NoError(err)
+
+	// submit staking tx to Bitcoin and get inclusion proof
+	currentBtcTipResp, err := s.babylonController.QueryBtcLightClientTip()
+	s.NoError(err)
+	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+	s.NoError(err)
+
+	blockWithStakingTx := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), stakingMsgTx)
+	s.babylonController.InsertBtcBlockHeaders(&blockWithStakingTx.HeaderBytes)
+	// make block k-deep
+	for i := 0; i < initialization.BabylonBtcConfirmationPeriod; i++ {
+		nonValidatorNode.InsertNewEmptyBtcHeader(r)
+	}
+	stakingTxInfo := btcctypes.NewTransactionInfoFromSpvProof(blockWithStakingTx.SpvProof)
+
+	// generate BTC undelegation stuff
+	stkTxHash := testStakingInfo.StakingTx.TxHash()
+	unbondingValue := stakingValue - datagen.UnbondingTxFee // TODO: parameterise fee
+	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
+		r,
+		s.T(),
+		net,
+		czDelBtcSk,
+		[]*btcec.PublicKey{babylonFp.BtcPk.MustToBTCPK(), consumerFp.BtcPk.MustToBTCPK()},
+		params.CovenantPks,
+		covenantQuorum,
+		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
+		stakingTimeBlocks,
+		unbondingValue,
+		params.SlashingAddress.String(),
+		params.SlashingRate,
+		unbondingTime,
+	)
+	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(czDelBtcSk)
+	s.NoError(err)
+
+	// submit the message for creating BTC delegation
+	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(czDelBtcPk)}
+	s.babylonController.CreateBTCDelegation(
+		delBTCPKs,
+		pop,
+		stakingTxInfo,
+		[]*bbn.BIP340PubKey{babylonFp.BtcPk, consumerFp.BtcPk},
+		stakingTimeBlocks,
+		btcutil.Amount(stakingValue),
+		testStakingInfo.SlashingTx,
+		delegatorSig,
+		testUnbondingInfo.UnbondingTx,
+		testUnbondingInfo.SlashingTx,
+		unbondingTime,
+		btcutil.Amount(unbondingValue),
+		delUnbondingSlashingSig,
+		"val",
+		false,
+	)
+
+	// wait for a block so that above txs take effect
+	//nonValidatorNode.WaitForNextBlock()
+	//nonValidatorNode.WaitForNextBlock()
+
+	return czDelBtcPk, stakingTxHash
+}
+
+// helper function: create a random Babylon finality provider and verify it
+func (s *BTCStakingIntegration2TestSuite) createVerifyBabylonFP() *bstypes.FinalityProviderResponse {
+
+	/*
+		create a random finality provider on Babylon
+	*/
+	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
+	babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
+	fpBabylonAddr, err := sdk.AccAddressFromBech32(s.babylonController.MustGetTxSigner())
+	s.NoError(err)
+	babylonFp, err := datagen.GenCustomFinalityProvider(r, babylonFpBTCSK, fpBabylonAddr, "")
+	s.NoError(err)
+	bbnFpPop, err := babylonFp.Pop.Marshal()
+	s.NoError(err)
+	bbnDescription, err := babylonFp.Description.Marshal()
+	s.NoError(err)
+
+	_, err = s.babylonController.RegisterFinalityProvider(
+		"",
+		babylonFp.BtcPk,
+		bbnFpPop,
+		babylonFp.Commission,
+		bbnDescription,
+	)
+	s.NoError(err)
+
+	// query the existence of finality provider and assert equivalence
+	actualFps, err := s.babylonController.QueryFinalityProviders()
+	s.Require().NoError(err)
+	s.Len(actualFps, 1)
+	s.Equal(babylonFp.Description, actualFps[0].Description)
+	s.Equal(babylonFp.Commission, actualFps[0].Commission)
+	s.Equal(babylonFp.BtcPk, actualFps[0].BtcPk)
+	s.Equal(babylonFp.Pop, actualFps[0].Pop)
+	s.Equal(babylonFp.SlashedBabylonHeight, actualFps[0].SlashedBabylonHeight)
+	s.Equal(babylonFp.SlashedBtcHeight, actualFps[0].SlashedBtcHeight)
+
+	return actualFps[0]
 }
 
 func (s *BTCStakingIntegration2TestSuite) createVerifyConsumerFP(consumerId string) *bstypes.FinalityProvider {
