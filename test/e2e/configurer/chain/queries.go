@@ -180,9 +180,7 @@ func (n *NodeConfig) QueryListSnapshots() ([]*cmtabcitypes.Snapshot, error) {
 func (n *NodeConfig) QueryRawCheckpoint(epoch uint64) (*ct.RawCheckpointWithMetaResponse, error) {
 	path := fmt.Sprintf("babylon/checkpointing/v1/raw_checkpoint/%d", epoch)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(n.t, err)
 
 	var checkpointingResponse ct.QueryRawCheckpointResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &checkpointingResponse); err != nil {

@@ -15,8 +15,8 @@ message VotingPowerDistCache {
     uint64 total_voting_power = 1;
     // finality_providers is a list of finality providers' voting power information
     repeated FinalityProviderDistInfo finality_providers = 2;
-    // num_active_fps is the number of finality providers that have positive voting power
-    // as well as timestamped public randomness
+    // num_active_fps is the number of finality providers that have active BTC
+    // delegations as well as timestamped public randomness
     uint32 num_active_fps = 3;
 }
 

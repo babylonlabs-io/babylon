@@ -96,15 +96,11 @@ func (n *NodeConfig) QueryUnbondedDelegations() []*bstypes.BTCDelegationResponse
 
 func (n *NodeConfig) QueryActivatedHeight() (uint64, error) {
 	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/activated_height", url.Values{})
-	if err != nil {
-		return 0, err
-	}
+	require.NoError(n.t, err)
 
 	var resp bstypes.QueryActivatedHeightResponse
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
-	if err != nil {
-		return 0, err
-	}
+	require.NoError(n.t, err)
 
 	return resp.Height, nil
 }

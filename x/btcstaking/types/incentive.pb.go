@@ -34,8 +34,8 @@ type VotingPowerDistCache struct {
 	TotalVotingPower uint64 `protobuf:"varint,1,opt,name=total_voting_power,json=totalVotingPower,proto3" json:"total_voting_power,omitempty"`
 	// finality_providers is a list of finality providers' voting power information
 	FinalityProviders []*FinalityProviderDistInfo `protobuf:"bytes,2,rep,name=finality_providers,json=finalityProviders,proto3" json:"finality_providers,omitempty"`
-	// num_active_fps is the number of finality providers that have positive voting power
-	// as well as timestamped public randomness
+	// num_active_fps is the number of finality providers that have active BTC
+	// delegations as well as timestamped public randomness
 	NumActiveFps uint32 `protobuf:"varint,3,opt,name=num_active_fps,json=numActiveFps,proto3" json:"num_active_fps,omitempty"`
 }
 
