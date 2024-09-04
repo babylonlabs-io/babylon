@@ -259,6 +259,9 @@ test-e2e: build-docker-e2e test-e2e-cache
 test-e2e-cache:
 	go test -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
+test-e2e-cache-btc-staking-integration2:
+	go test -run TestBTCStakingIntegration2TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
 test-e2e-cache-ibc-transfer:
 	go test -run TestIBCTranferTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
