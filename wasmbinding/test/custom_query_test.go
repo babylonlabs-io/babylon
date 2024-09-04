@@ -59,6 +59,7 @@ func TestQueryEpoch(t *testing.T) {
 	require.Equal(t, resp.Epoch, newEpoch.EpochNumber)
 }
 
+// Need to pass epoching module to wasm keeper to fix this test
 func TestFinalizedEpoch(t *testing.T) {
 	acc := randomAccountAddress()
 	babylonApp, ctx := setupAppWithContext(t)
