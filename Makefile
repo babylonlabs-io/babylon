@@ -256,6 +256,12 @@ endif
 
 test-e2e: build-docker-e2e test-e2e-cache
 
+test-e2e-btc-staking-integration2:
+	$(MAKE) -C test/e2e/consumer build-integration-test
+	$(MAKE) -C test/e2e/consumer start-integration-test
+	$(MAKE) test-e2e-cache-btc-staking-integration2
+	$(MAKE) -C test/e2e/consumer stop-integration-test
+
 test-e2e-cache:
 	go test -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 

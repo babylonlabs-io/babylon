@@ -171,10 +171,12 @@ func (s *BTCStakingIntegration2TestSuite) getIBCClientID() string {
 			return false
 		}
 		if len(babylonChannelsResp.Channels) != 1 {
+			s.T().Logf("Expected 1 Babylon IBC channel, got %d", len(babylonChannelsResp.Channels))
 			return false
 		}
 		babylonChannel = babylonChannelsResp.Channels[0]
 		if babylonChannel.State != channeltypes.OPEN {
+			s.T().Logf("Babylon channel state is not OPEN, got %s", babylonChannel.State)
 			return false
 		}
 		s.Equal(channeltypes.ORDERED, babylonChannel.Ordering)

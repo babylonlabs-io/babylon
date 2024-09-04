@@ -41,6 +41,11 @@ func TestBTCStakingIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingIntegrationTestSuite))
 }
 
+// TestBTCStakingIntegration2TestSuite includes btc staking integration related tests
+func TestBTCStakingIntegration2TestSuite(t *testing.T) {
+	suite.Run(t, new(BTCStakingIntegration2TestSuite))
+}
+
 // TestSoftwareUpgradeTestSuite tests software upgrade protocol end-to-end
 func TestSoftwareUpgradeTestSuite(t *testing.T) {
 	// suite.Run(t, new(SoftwareUpgradeVanillaTestSuite))
