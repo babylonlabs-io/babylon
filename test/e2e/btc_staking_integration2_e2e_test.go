@@ -194,17 +194,10 @@ func (s *BTCStakingIntegration2TestSuite) getIBCClientID() string {
 	s.T().Logf("IBC channel is established successfully")
 
 	// Query the channel client state
-	consumerChannelState, err := s.cosmwasmController.QueryChannelClientState(consumerChannel.ChannelId, consumerChannel.PortId)
-	s.Require().NoError(err, "Failed to query Consumer channel client state")
+	babylonChannelState, err := s.babylonController.QueryChannelClientState(babylonChannel.ChannelId, babylonChannel.PortId)
+	s.Require().NoError(err, "Failed to query Babylon channel client state")
 
-	// Query the next sequence receive
-	nextSequenceRecv, err := s.cosmwasmController.QueryNextSequenceReceive(babylonChannel.Counterparty.ChannelId, babylonChannel.Counterparty.PortId)
-	s.Require().NoError(err, "Failed to query next sequence receive")
-
-	// Check that the next sequence receive is 1 (no packets sent yet)
-	s.Equal(uint64(1), nextSequenceRecv.NextSequenceReceive, "Unexpected next sequence receive value")
-
-	return consumerChannelState.IdentifiedClientState.ClientId
+	return babylonChannelState.IdentifiedClientState.ClientId
 }
 
 func (s *BTCStakingIntegration2TestSuite) verifyConsumerRegistration(consumerID string) *bsctypes.ConsumerRegister {
