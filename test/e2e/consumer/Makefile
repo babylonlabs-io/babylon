@@ -12,7 +12,7 @@ build-babylond:
 
 build-integration-test: build-babylond build-ibcsim-bcd
 
-start-integration-test: stop-integration-test #build-integration-test
+start-integration-test: stop-integration-test build-integration-test
 	./pre-deployment.sh
 	$(DOCKER) compose -f docker-compose.yml up -d
 
