@@ -104,7 +104,7 @@ func (bc *BabylonController) reliablySendMsgs(msgs []sdk.Msg, expectedErrs []*sd
 // it returns tx hash and error
 func (bc *BabylonController) RegisterFinalityProvider(
 	chainID string,
-	fpPk *btcec.PublicKey,
+	fpPk *bbntypes.BIP340PubKey,
 	pop []byte,
 	commission *math.LegacyDec,
 	description []byte,
@@ -122,7 +122,7 @@ func (bc *BabylonController) RegisterFinalityProvider(
 	fpAddr := bc.MustGetTxSigner()
 	msg := &btcstakingtypes.MsgCreateFinalityProvider{
 		Addr:        fpAddr,
-		BtcPk:       bbntypes.NewBIP340PubKeyFromBTCPK(fpPk),
+		BtcPk:       fpPk,
 		Pop:         &bbnPop,
 		Commission:  commission,
 		Description: &sdkDescription,
