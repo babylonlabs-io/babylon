@@ -39,6 +39,7 @@ RELAYER_CONF=$RELAYER_CONF_DIR/config/config.yaml
 cat <<EOT >$RELAYER_CONF
 global:
     api-listen-addr: :5183
+    max-retries: 20
     timeout: 20s
     memo: ""
     light-cache-size: 10

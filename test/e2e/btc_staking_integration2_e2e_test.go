@@ -13,6 +13,7 @@ import (
 	cwcc "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
 	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	"github.com/btcsuite/btcd/chaincfg"
+	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
@@ -58,30 +59,30 @@ func (s *BTCStakingIntegration2TestSuite) TearDownSuite() {
 }
 
 func (s *BTCStakingIntegration2TestSuite) Test1ChainStartup() {
+	var (
+		babylonStatus  *coretypes.ResultStatus
+		consumerStatus *coretypes.ResultStatus
+		err            error
+	)
+
 	// Use Babylon controller
-	babylonStatus, err := s.babylonController.QueryNodeStatus()
-	s.Require().NoError(err, "Failed to query Babylon node status")
+	s.Eventually(func() bool {
+		babylonStatus, err = s.babylonController.QueryNodeStatus()
+		return err == nil && babylonStatus.SyncInfo.LatestBlockHeight >= 1
+	}, time.Minute, time.Second, "Failed to query Babylon node status", err)
 	s.T().Logf("Babylon node status: %v", babylonStatus.SyncInfo.LatestBlockHeight)
 
 	// Use Cosmwasm controller
-	consumerStatus, err := s.cosmwasmController.GetCometNodeStatus()
-	s.Require().NoError(err, "Failed to query Consumer node status")
+	s.Eventually(func() bool {
+		consumerStatus, err = s.cosmwasmController.GetCometNodeStatus()
+		return err == nil && consumerStatus.SyncInfo.LatestBlockHeight >= 1
+	}, time.Minute, time.Second, "Failed to query Consumer node status", err)
 	s.T().Logf("Consumer node status: %v", consumerStatus.SyncInfo.LatestBlockHeight)
 	// Add your test assertions here
 	// ...
 }
 
 func (s *BTCStakingIntegration2TestSuite) Test2AutoRegisterAndVerifyNewConsumer() {
-	// Wait for the Babylon chain to produce at least one block
-	s.Eventually(func() bool {
-		status, err := s.babylonController.QueryNodeStatus()
-		if err != nil {
-			s.T().Logf("Error querying Babylon node status: %v", err)
-			return false
-		}
-		return status.SyncInfo.LatestBlockHeight >= 1
-	}, time.Minute, time.Second*2, "Babylon chain did not produce a block within the expected time")
-
 	consumerID := s.getIBCClientID() // "07-tendermint-0" TODO: try to fix the error otherwise hardcode consumer id for now
 	s.verifyConsumerRegistration(consumerID)
 }
@@ -150,19 +151,6 @@ func (s *BTCStakingIntegration2TestSuite) initCosmwasmController() error {
 }
 
 func (s *BTCStakingIntegration2TestSuite) getIBCClientID() string {
-	// Wait for both chains to have at least one block
-	s.Eventually(func() bool {
-		babylonStatus, err := s.babylonController.QueryNodeStatus()
-		if err != nil || babylonStatus.SyncInfo.LatestBlockHeight < 1 {
-			return false
-		}
-		consumerStatus, err := s.cosmwasmController.GetCometNodeStatus()
-		if err != nil || consumerStatus.SyncInfo.LatestBlockHeight < 1 {
-			return false
-		}
-		return true
-	}, time.Minute, time.Second*2, "Chains did not produce blocks within the expected time")
-
 	var babylonChannel *channeltypes.IdentifiedChannel
 	s.Eventually(func() bool {
 		babylonChannelsResp, err := s.babylonController.IBCChannels()
@@ -182,7 +170,7 @@ func (s *BTCStakingIntegration2TestSuite) getIBCClientID() string {
 		s.Equal(channeltypes.ORDERED, babylonChannel.Ordering)
 		s.Contains(babylonChannel.Counterparty.PortId, "wasm.")
 		return true
-	}, time.Minute, time.Second*2, "Failed to get expected Babylon IBC channel")
+	}, time.Minute*3, time.Second*10, "Failed to get expected Babylon IBC channel")
 
 	var consumerChannel *channeltypes.IdentifiedChannel
 	s.Eventually(func() bool {
@@ -202,6 +190,8 @@ func (s *BTCStakingIntegration2TestSuite) getIBCClientID() string {
 		s.Equal(babylonChannel.PortId, consumerChannel.Counterparty.PortId)
 		return true
 	}, time.Minute, time.Second*2, "Failed to get expected Consumer IBC channel")
+
+	s.T().Logf("IBC channel is established successfully")
 
 	// Query the channel client state
 	consumerChannelState, err := s.cosmwasmController.QueryChannelClientState(consumerChannel.ChannelId, consumerChannel.PortId)
