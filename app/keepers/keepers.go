@@ -614,8 +614,11 @@ func (ak *AppKeepers) InitKeepers(
 	// Create static IBC router, add ibc-transfer module route, then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
-		AddRoute(zctypes.ModuleName, zoneConciergeStack).
 		AddRoute(wasmtypes.ModuleName, wasmStack)
+	// Add zoneconcierge module to IBC router if integration is enabled
+	if zctypes.EnableIntegration {
+		ibcRouter.AddRoute(zctypes.ModuleName, zoneConciergeStack)
+	}
 
 	// Setting Router will finalize all routes by sealing router
 	// No more routes can be added
