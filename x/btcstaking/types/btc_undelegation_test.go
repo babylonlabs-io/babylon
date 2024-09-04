@@ -11,6 +11,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/stretchr/testify/require"
 )
 
@@ -53,6 +54,9 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
 
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+		require.NoError(t, err)
+
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 		unbondingTime := uint16(100) + 1
 		slashingChangeLockTime := unbondingTime
@@ -67,7 +71,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			covenantSigners,
 			covenantPKs,
 			covenantQuorum,
-			slashingAddress.EncodeAddress(),
+			slashingPkScript,
 			1000,
 			uint64(1000+stakingTimeBlocks),
 			uint64(stakingValue),

@@ -122,7 +122,7 @@ func MinimumUnbondingTime(
 	stakingParams *Params,
 	checkpointingParams *btcctypes.Params) uint64 {
 	return math.Max[uint64](
-		uint64(stakingParams.MinUnbondingTime),
+		uint64(stakingParams.MinUnbondingTimeBlocks),
 		checkpointingParams.CheckpointFinalizationTimeout,
 	)
 }
