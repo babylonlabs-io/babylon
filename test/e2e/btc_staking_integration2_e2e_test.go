@@ -103,40 +103,24 @@ func (s *BTCStakingIntegration2TestSuite) Test3CreateConsumerFinalityProvider() 
 		consumerFps = append(consumerFps, consumerFp)
 	}
 
-	//czNode, err := s.configurer.GetChainConfig(1).GetNodeAtIndex(2)
-	//s.NoError(err)
-	//// retrieve staking contract address and query finality providers stored in the contract
-	//stakingContracts, err := czNode.QueryContractsFromId(2)
-	//s.NoError(err)
-	//s.Equal(1, len(stakingContracts))
-	//stakingContractAddr := stakingContracts[0]
-	//
-	//// query the staking contract for finality providers
-	//var dataFromContract *chain.ConsumerFpsResponse
-	//s.Eventually(func() bool {
-	//	// try to retrieve expected number of finality providers from the contract
-	//	dataFromContract, err = czNode.QueryConsumerFps(stakingContractAddr)
-	//	if err != nil {
-	//		return false
-	//	}
-	//	return len(dataFromContract.ConsumerFps) == int(numConsumerFPs)
-	//}, time.Second*20, time.Second)
-	//
-	//// create a map of expected finality providers for verification
-	//fpMap := make(map[string]*bstypes.FinalityProvider)
-	//for _, czFp := range consumerFps {
-	//	fpMap[czFp.BtcPk.MarshalHex()] = czFp
-	//}
-	//
-	//// validate that all finality providers match with the consumer list
-	//for _, czFp := range dataFromContract.ConsumerFps {
-	//	fpFromMap, ok := fpMap[czFp.BtcPkHex]
-	//	s.True(ok)
-	//	s.Equal(fpFromMap.BtcPk.MarshalHex(), czFp.BtcPkHex)
-	//	s.Equal(fpFromMap.SlashedBabylonHeight, czFp.SlashedHeight)
-	//	s.Equal(fpFromMap.SlashedBtcHeight, czFp.SlashedBtcHeight)
-	//	s.Equal(fpFromMap.ConsumerId, czFp.ConsumerID)
-	//}
+	dataFromContract, err := s.cosmwasmController.QueryFinalityProviders()
+	s.Require().NoError(err)
+
+	// create a map of expected finality providers for verification
+	fpMap := make(map[string]*bstypes.FinalityProvider)
+	for _, czFp := range consumerFps {
+		fpMap[czFp.BtcPk.MarshalHex()] = czFp
+	}
+
+	// validate that all finality providers match with the consumer list
+	for _, czFp := range dataFromContract.Fps {
+		fpFromMap, ok := fpMap[czFp.BtcPkHex]
+		s.True(ok)
+		s.Equal(fpFromMap.BtcPk.MarshalHex(), czFp.BtcPkHex)
+		s.Equal(fpFromMap.SlashedBabylonHeight, czFp.SlashedBabylonHeight)
+		s.Equal(fpFromMap.SlashedBtcHeight, czFp.SlashedBtcHeight)
+		s.Equal(fpFromMap.ConsumerId, czFp.ConsumerId)
+	}
 }
 
 func (s *BTCStakingIntegration2TestSuite) createVerifyConsumerFP(consumerId string) *bstypes.FinalityProvider {
@@ -210,6 +194,8 @@ func (s *BTCStakingIntegration2TestSuite) initBabylonController() error {
 func (s *BTCStakingIntegration2TestSuite) initCosmwasmController() error {
 	cfg := cwconfig.DefaultCosmwasmConfig()
 
+	// TODO: should not hardcode
+	cfg.BtcStakingContractAddress = "bbnc1nc5tatafv6eyq7llkr2gv50ff9e22mnf70qgjlv737ktmt4eswrqgn0kq0"
 	// Override the RPC address with the one from your test suite
 	//cfg.RPCAddr = s.consumerChainRPC
 
