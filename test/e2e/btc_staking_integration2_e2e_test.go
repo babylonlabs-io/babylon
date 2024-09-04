@@ -14,15 +14,15 @@ import (
 	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/config"
 	"github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
 	cwcc "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	bbntypes "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -57,6 +57,8 @@ func (s *BTCStakingIntegration2TestSuite) SetupSuite() {
 
 	err = s.initCosmwasmController()
 	s.Require().NoError(err, "Failed to initialize CosmwasmConsumerController")
+
+	//time.Sleep(1 * time.Minute)
 }
 
 func (s *BTCStakingIntegration2TestSuite) TearDownSuite() {
@@ -143,7 +145,7 @@ func (s *BTCStakingIntegration2TestSuite) Test4RestakeDelegationToMultipleFPs() 
 
 	// create a delegation and restake to both Babylon and consumer finality providers
 	// NOTE: this will create delegation in pending state as covenant sigs are not provided
-	delBtcPk, stakingTxHash := s.createBabylonDelegation(babylonFp, consumerFp)
+	_, _ = s.createBabylonDelegation(babylonFp, consumerFp)
 
 	// check delegation
 	//delegation := nonValidatorNode.QueryBtcDelegation(stakingTxHash)
@@ -219,19 +221,47 @@ func (s *BTCStakingIntegration2TestSuite) createBabylonDelegation(babylonFp *bst
 	)
 	s.NoError(err)
 
-	// submit staking tx to Bitcoin and get inclusion proof
-	currentBtcTipResp, err := s.babylonController.QueryBtcLightClientTip()
-	s.NoError(err)
-	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
-	s.NoError(err)
+	//// submit staking tx to Bitcoin and get inclusion proof
+	//currentBtcTipResp, err := s.babylonController.QueryBtcLightClientTip()
+	//s.NoError(err)
+	//currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+	//s.NoError(err)
+	//
+	//blockWithStakingTx := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), stakingMsgTx)
+	//s.babylonController.InsertBtcBlockHeaders(&blockWithStakingTx.HeaderBytes)
+	//// make block k-deep
+	//for i := 0; i < initialization.BabylonBtcConfirmationPeriod; i++ {
+	//	nonValidatorNode.InsertNewEmptyBtcHeader(r)
+	//}
+	//stakingTxInfo := btcctypes.NewTransactionInfoFromSpvProof(blockWithStakingTx.SpvProof)
 
-	blockWithStakingTx := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), stakingMsgTx)
-	s.babylonController.InsertBtcBlockHeaders(&blockWithStakingTx.HeaderBytes)
-	// make block k-deep
-	for i := 0; i < initialization.BabylonBtcConfirmationPeriod; i++ {
-		nonValidatorNode.InsertNewEmptyBtcHeader(r)
+	// create and insert BTC headers which include the staking tx to get staking tx info
+	btcTipHeaderResp, err := s.babylonController.QueryBtcLightClientTip()
+	s.NoError(err)
+	tipHeader, err := bbntypes.NewBTCHeaderBytesFromHex(btcTipHeaderResp.HeaderHex)
+	s.NoError(err)
+	blockWithStakingTx := datagen.CreateBlockWithTransaction(r, tipHeader.ToBlockHeader(), testStakingInfo.StakingTx)
+	accumulatedWork := btclctypes.CalcWork(&blockWithStakingTx.HeaderBytes)
+	accumulatedWork = btclctypes.CumulativeWork(accumulatedWork, btcTipHeaderResp.Work)
+	parentBlockHeaderInfo := &btclctypes.BTCHeaderInfo{
+		Header: &blockWithStakingTx.HeaderBytes,
+		Hash:   blockWithStakingTx.HeaderBytes.Hash(),
+		Height: btcTipHeaderResp.Height + 1,
+		Work:   &accumulatedWork,
 	}
-	stakingTxInfo := btcctypes.NewTransactionInfoFromSpvProof(blockWithStakingTx.SpvProof)
+	headers := make([]bbntypes.BTCHeaderBytes, 0)
+	headers = append(headers, blockWithStakingTx.HeaderBytes)
+	for i := 0; i < int(params.ComfirmationTimeBlocks); i++ {
+		headerInfo := datagen.GenRandomValidBTCHeaderInfoWithParent(r, *parentBlockHeaderInfo)
+		headers = append(headers, *headerInfo.Header)
+		parentBlockHeaderInfo = headerInfo
+	}
+	_, err = s.babylonController.InsertBtcBlockHeaders(headers)
+	s.NoError(err)
+	btcHeader := blockWithStakingTx.HeaderBytes
+	serializedStakingTx, err := bbntypes.SerializeBTCTx(testStakingInfo.StakingTx)
+	s.NoError(err)
+	stakingTxInfo := btcctypes.NewTransactionInfo(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, serializedStakingTx, blockWithStakingTx.SpvProof.MerkleNodes)
 
 	// generate BTC undelegation stuff
 	stkTxHash := testStakingInfo.StakingTx.TxHash()
@@ -256,23 +286,43 @@ func (s *BTCStakingIntegration2TestSuite) createBabylonDelegation(babylonFp *bst
 
 	// submit the message for creating BTC delegation
 	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(czDelBtcPk)}
-	s.babylonController.CreateBTCDelegation(
-		delBTCPKs,
+	//s.babylonController.CreateBTCDelegation(
+	//	delBTCPKs,
+	//	pop,
+	//	stakingTxInfo,
+	//	[]*bbn.BIP340PubKey{babylonFp.BtcPk, consumerFp.BtcPk},
+	//	stakingTimeBlocks,
+	//	btcutil.Amount(stakingValue),
+	//	testStakingInfo.SlashingTx,
+	//	delegatorSig,
+	//	testUnbondingInfo.UnbondingTx,
+	//	testUnbondingInfo.SlashingTx,
+	//	unbondingTime,
+	//	btcutil.Amount(unbondingValue),
+	//	delUnbondingSlashingSig,
+	//	"val",
+	//	false,
+	//)
+
+	serializedUnbondingTx, err := bbn.SerializeBTCTx(testUnbondingInfo.UnbondingTx)
+	s.NoError(err)
+
+	// submit the BTC delegation to Babylon
+	_, err = s.babylonController.CreateBTCDelegation(
+		&delBTCPKs[0],
+		[]*btcec.PublicKey{babylonFp.BtcPk.MustToBTCPK(), consumerFp.BtcPk.MustToBTCPK()},
 		pop,
+		uint32(stakingTimeBlocks),
+		stakingValue,
 		stakingTxInfo,
-		[]*bbn.BIP340PubKey{babylonFp.BtcPk, consumerFp.BtcPk},
-		stakingTimeBlocks,
-		btcutil.Amount(stakingValue),
 		testStakingInfo.SlashingTx,
 		delegatorSig,
-		testUnbondingInfo.UnbondingTx,
+		serializedUnbondingTx,
+		uint32(unbondingTime),
+		unbondingValue,
 		testUnbondingInfo.SlashingTx,
-		unbondingTime,
-		btcutil.Amount(unbondingValue),
-		delUnbondingSlashingSig,
-		"val",
-		false,
-	)
+		delUnbondingSlashingSig)
+	s.NoError(err)
 
 	// wait for a block so that above txs take effect
 	//nonValidatorNode.WaitForNextBlock()
