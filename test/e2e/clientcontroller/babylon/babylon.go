@@ -322,6 +322,15 @@ func (bc *BabylonController) QueryConsumerFinalityProviders(consumerId string) (
 	return fps, nil
 }
 
+func (bc *BabylonController) QueryConsumerFinalityProvider(consumerId, fpBtcPkHex string) (*bsctypes.FinalityProviderResponse, error) {
+	res, err := bc.bbnClient.QueryClient.QueryConsumerFinalityProvider(consumerId, fpBtcPkHex)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query finality provider: %v", err)
+	}
+
+	return res, nil
+}
+
 func (bc *BabylonController) QueryBtcLightClientTip() (*btclctypes.BTCHeaderInfoResponse, error) {
 	res, err := bc.bbnClient.QueryClient.BTCHeaderChainTip()
 	if err != nil {

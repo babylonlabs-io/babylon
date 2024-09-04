@@ -14,6 +14,7 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
 	cwcc "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -91,41 +92,15 @@ func (s *BTCStakingIntegration2TestSuite) Test2AutoRegisterAndVerifyNewConsumer(
 	s.verifyConsumerRegistration(consumerID)
 }
 
-func (s *BTCStakingIntegration2TestSuite) initBabylonController() error {
-	cfg := config.DefaultBabylonConfig()
-
-	btcParams := &chaincfg.RegressionNetParams // or whichever network you're using
-
-	logger, _ := zap.NewDevelopment()
-	cfg.KeyDirectory = "/Users/gusin/Github/labs/cursor-bcd-babylon/babylon-private/test/e2e/consumer/.testnets/node0/babylond"
-	cfg.GasPrices = "0.02ubbn"
-	cfg.GasAdjustment = 20
-
-	sdkCfg := sdk.GetConfig()
-	fmt.Printf("CURRENT - SDK Account Prefix babylon init: %s\n", sdkCfg.GetBech32AccountAddrPrefix())
-	sdk.SetAddrCacheEnabled(false)
-	bbnparams.SetAddressPrefixes()
-	sdkCfg = sdk.GetConfig()
-	fmt.Printf("AFTER - SDK Account Prefix babylon init: %s\n", sdkCfg.GetBech32AccountAddrPrefix())
-
-	controller, err := babylon.NewBabylonController(&cfg, btcParams, logger)
-	if err != nil {
-		return err
-	}
-
-	s.babylonController = controller
-	return nil
-}
-
 func (s *BTCStakingIntegration2TestSuite) Test3CreateConsumerFinalityProvider() {
 	consumerID := "07-tendermint-0"
 
 	// generate a random number of finality providers from 1 to 5
 	numConsumerFPs := datagen.RandomInt(r, 5) + 1
-	//var consumerFps []*bstypes.FinalityProvider
+	var consumerFps []*bstypes.FinalityProvider
 	for i := 0; i < int(numConsumerFPs); i++ {
-		s.createVerifyConsumerFP(consumerID)
-		//consumerFps = append(consumerFps, consumerFp)
+		consumerFp := s.createVerifyConsumerFP(consumerID)
+		consumerFps = append(consumerFps, consumerFp)
 	}
 
 	//czNode, err := s.configurer.GetChainConfig(1).GetNodeAtIndex(2)
@@ -164,7 +139,7 @@ func (s *BTCStakingIntegration2TestSuite) Test3CreateConsumerFinalityProvider() 
 	//}
 }
 
-func (s *BTCStakingIntegration2TestSuite) createVerifyConsumerFP(consumerId string) {
+func (s *BTCStakingIntegration2TestSuite) createVerifyConsumerFP(consumerId string) *bstypes.FinalityProvider {
 	/*
 		create a random consumer finality provider on Babylon
 	*/
@@ -193,16 +168,43 @@ func (s *BTCStakingIntegration2TestSuite) createVerifyConsumerFP(consumerId stri
 	)
 	s.NoError(err)
 
-	//// query the existence of finality provider and assert equivalence
-	//actualFp := nonValidatorNode.QueryConsumerFinalityProvider(consumerId, czFp.BtcPk.MarshalHex())
-	//s.Equal(czFp.Description, actualFp.Description)
-	//s.Equal(czFp.Commission, actualFp.Commission)
-	//s.Equal(czFp.BtcPk, actualFp.BtcPk)
-	//s.Equal(czFp.Pop, actualFp.Pop)
-	//s.Equal(czFp.SlashedBabylonHeight, actualFp.SlashedBabylonHeight)
-	//s.Equal(czFp.SlashedBtcHeight, actualFp.SlashedBtcHeight)
-	//s.Equal(consumerId, actualFp.ConsumerId)
-	//return czFp
+	// query the existence of finality provider and assert equivalence
+	actualFp, err := s.babylonController.QueryConsumerFinalityProvider(consumerId, czFp.BtcPk.MarshalHex())
+	s.NoError(err)
+	s.Equal(czFp.Description, actualFp.Description)
+	s.Equal(czFp.Commission.String(), actualFp.Commission.String())
+	s.Equal(czFp.BtcPk, actualFp.BtcPk)
+	s.Equal(czFp.Pop, actualFp.Pop)
+	s.Equal(czFp.SlashedBabylonHeight, actualFp.SlashedBabylonHeight)
+	s.Equal(czFp.SlashedBtcHeight, actualFp.SlashedBtcHeight)
+	s.Equal(consumerId, actualFp.ConsumerId)
+	return czFp
+}
+
+func (s *BTCStakingIntegration2TestSuite) initBabylonController() error {
+	cfg := config.DefaultBabylonConfig()
+
+	btcParams := &chaincfg.RegressionNetParams // or whichever network you're using
+
+	logger, _ := zap.NewDevelopment()
+	cfg.KeyDirectory = "/Users/gusin/Github/labs/cursor-bcd-babylon/babylon-private/test/e2e/consumer/.testnets/node0/babylond"
+	cfg.GasPrices = "0.02ubbn"
+	cfg.GasAdjustment = 20
+
+	sdkCfg := sdk.GetConfig()
+	fmt.Printf("CURRENT - SDK Account Prefix babylon init: %s\n", sdkCfg.GetBech32AccountAddrPrefix())
+	sdk.SetAddrCacheEnabled(false)
+	bbnparams.SetAddressPrefixes()
+	sdkCfg = sdk.GetConfig()
+	fmt.Printf("AFTER - SDK Account Prefix babylon init: %s\n", sdkCfg.GetBech32AccountAddrPrefix())
+
+	controller, err := babylon.NewBabylonController(&cfg, btcParams, logger)
+	if err != nil {
+		return err
+	}
+
+	s.babylonController = controller
+	return nil
 }
 
 func (s *BTCStakingIntegration2TestSuite) initCosmwasmController() error {
