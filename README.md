@@ -68,4 +68,4 @@ Guides](https://docs.babylonchain.io/docs/user-guides/overview).
 ## Contributing
 
 The [docs](./docs) directory contains the necessary information on how to get
-started using the babylond executable for development purposes.
+started using the babylon executable for development purposes.
