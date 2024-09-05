@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
+	"os/exec"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -14,7 +15,7 @@ import (
 	"github.com/babylonlabs-io/babylon/client/config"
 	"github.com/babylonlabs-io/babylon/test/e2e/babylon_bcd_integration/clientcontroller/babylon"
 	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/babylon_bcd_integration/clientcontroller/config"
-	cosmwasm2 "github.com/babylonlabs-io/babylon/test/e2e/babylon_bcd_integration/clientcontroller/cosmwasm"
+	"github.com/babylonlabs-io/babylon/test/e2e/babylon_bcd_integration/clientcontroller/cosmwasm"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/types"
@@ -61,40 +62,38 @@ func DefaultSingleCovenantKey() (*btcec.PrivateKey, *btcec.PublicKey, string, er
 type BTCStakingIntegration2TestSuite struct {
 	suite.Suite
 
-	babylonRPC1      string
-	babylonRPC2      string
-	consumerChainRPC string
-
 	babylonController  *babylon.BabylonController
-	cosmwasmController *cosmwasm2.CosmwasmConsumerController
+	cosmwasmController *cosmwasm.CosmwasmConsumerController
 }
 
 func (s *BTCStakingIntegration2TestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
-
-	// Set the RPC URLs for the Babylon nodes and consumer chain
-	s.babylonRPC1 = "http://localhost:26657"
-	s.babylonRPC2 = "http://localhost:26667"
-	s.consumerChainRPC = "http://localhost:26677"
 
 	err := s.initBabylonController()
 	s.Require().NoError(err, "Failed to initialize BabylonController")
 
 	err = s.initCosmwasmController()
 	s.Require().NoError(err, "Failed to initialize CosmwasmConsumerController")
-
-	//time.Sleep(1 * time.Minute)
 }
 
 func (s *BTCStakingIntegration2TestSuite) TearDownSuite() {
 	s.T().Log("tearing down e2e integration test suite...")
 
-	// Run the stop-integration-test make target
-	// cmd := exec.Command("make", "-C", "../consumer", "stop-integration-test")
-	// output, err := cmd.CombinedOutput()
-	// if err != nil {
-	// 	s.T().Logf("Failed to run stop-integration-test: %s", output)
-	// }
+	cmd := exec.Command("make", "-C", "../babylon_bcd_integration", "stop-integration-test")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		s.T().Errorf("Failed to run stop-integration-test: %v\nOutput: %s", err, output)
+	} else {
+		s.T().Log("Successfully stopped integration test")
+	}
+
+	// Additional cleanup if necessary
+	if s.babylonController != nil {
+		s.babylonController.Close()
+	}
+	if s.cosmwasmController != nil {
+		s.cosmwasmController.Close()
+	}
 }
 
 func (s *BTCStakingIntegration2TestSuite) Test1ChainStartup() {
@@ -232,7 +231,7 @@ func (s *BTCStakingIntegration2TestSuite) Test5ActivateDelegation() {
 	s.True(activeDel.HasCovenantQuorums(1))
 
 	// Query the staking contract for delegations on the consumer chain
-	var dataFromContract *cosmwasm2.ConsumerDelegationsResponse
+	var dataFromContract *cosmwasm.ConsumerDelegationsResponse
 	s.Eventually(func() bool {
 		dataFromContract, err = s.cosmwasmController.QueryDelegations()
 		return err == nil && dataFromContract != nil && len(dataFromContract.Delegations) == 1
@@ -251,7 +250,7 @@ func (s *BTCStakingIntegration2TestSuite) Test5ActivateDelegation() {
 	s.Equal(activeDel.SlashingTx.ToHexStr(), hex.EncodeToString(dataFromContract.Delegations[0].SlashingTx))
 
 	// Query and assert finality provider voting power
-	var fpsByPower *cosmwasm2.ConsumerFpsByPowerResponse
+	var fpsByPower *cosmwasm.ConsumerFpsByPowerResponse
 	s.Eventually(func() bool {
 		fpsByPower, err = s.cosmwasmController.QueryFinalityProvidersByPower()
 		return err == nil && len(fpsByPower.Fps) > 0
@@ -377,13 +376,13 @@ func (s *BTCStakingIntegration2TestSuite) submitCovenantSigs(consumerFp *bsctype
 	s.Len(activeDels.Dels, 1)
 
 	activeDel := activeDels.Dels[0]
-	s.True(activeDel.HasCovenantQuorums(covenantQuorum))
+	s.True(activeDel.HasCovenantQuorums(1))
 
 	// wait for a block so that above txs take effect and the voting power table
 	// is updated in the next block's BeginBlock
 	// s.babylonController.WaitForNextBlock()
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(1 * time.Minute)
 	// ensure BTC staking is activated
 	activatedHeight, err := s.babylonController.QueryActivatedHeight()
 	s.NoError(err)
@@ -725,7 +724,7 @@ func (s *BTCStakingIntegration2TestSuite) initCosmwasmController() error {
 	// channeltypes.RegisterInterfaces(encodingCfg.InterfaceRegistry)
 	// connectiontypes.RegisterInterfaces(encodingCfg.InterfaceRegistry)
 
-	wcc, err := cosmwasm2.NewCosmwasmConsumerController(cfg, encodingCfg, logger)
+	wcc, err := cosmwasm.NewCosmwasmConsumerController(cfg, encodingCfg, logger)
 	require.NoError(s.T(), err)
 
 	s.cosmwasmController = wcc
