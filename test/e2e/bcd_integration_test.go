@@ -606,6 +606,7 @@ func (s *BCDIntegrationTestSuite) initCosmwasmController() error {
 	return nil
 }
 
+// nolint:unused
 func (s *BCDIntegrationTestSuite) getIBCClientID() string {
 	var babylonChannel *channeltypes.IdentifiedChannel
 	s.Eventually(func() bool {
