@@ -40,27 +40,6 @@ import (
 
 var MinCommissionRate = sdkmath.LegacyNewDecWithPrec(5, 2) // 5%
 
-// DefaultSingleCovenantKey returns a single, constant private key and its corresponding public key
-func DefaultSingleCovenantKey() (*btcec.PrivateKey, *btcec.PublicKey, string, error) {
-	// This is a constant private key for testing purposes only
-	const constantPrivateKeyHex = "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
-
-	privateKeyBytes, err := hex.DecodeString(constantPrivateKeyHex)
-	if err != nil {
-		return nil, nil, "", err
-	}
-
-	privateKey, publicKey := btcec.PrivKeyFromBytes(privateKeyBytes)
-
-	// Convert to BIP340 public key
-	bip340PubKey := types.NewBIP340PubKeyFromBTCPK(publicKey)
-
-	// Get the hex representation of the BIP340 public key
-	publicKeyHex := bip340PubKey.MarshalHex()
-
-	return privateKey, publicKey, publicKeyHex, nil
-}
-
 type BTCStakingIntegration2TestSuite struct {
 	suite.Suite
 
@@ -121,8 +100,6 @@ func (s *BTCStakingIntegration2TestSuite) Test1ChainStartup() {
 		return err == nil && consumerStatus.SyncInfo.LatestBlockHeight >= 1
 	}, time.Minute, time.Second, "Failed to query Consumer node status", err)
 	s.T().Logf("Consumer node status: %v", consumerStatus.SyncInfo.LatestBlockHeight)
-	// Add your test assertions here
-	// ...
 }
 
 func (s *BTCStakingIntegration2TestSuite) Test2AutoRegisterAndVerifyNewConsumer() {
@@ -255,7 +232,7 @@ func (s *BTCStakingIntegration2TestSuite) Test5ActivateDelegation() {
 }
 
 func (s *BTCStakingIntegration2TestSuite) submitCovenantSigs(consumerFp *bsctypes.FinalityProviderResponse) {
-	cvSK, _, _, err := DefaultSingleCovenantKey()
+	cvSK, _, _, err := getDeterministicCovenantKey()
 	s.NoError(err)
 
 	// check consumer finality provider delegation
@@ -721,4 +698,26 @@ func (s *BTCStakingIntegration2TestSuite) verifyConsumerRegistration(consumerID 
 		registeredConsumer.ConsumerDescription)
 
 	return registeredConsumer
+}
+
+// getDeterministicCovenantKey returns a single, constant private key and its corresponding public key.
+// This function is for testing purposes only and should never be used in production environments.
+func getDeterministicCovenantKey() (*btcec.PrivateKey, *btcec.PublicKey, string, error) {
+	// This is a constant private key for testing purposes only
+	const constantPrivateKeyHex = "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+
+	privateKeyBytes, err := hex.DecodeString(constantPrivateKeyHex)
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	privateKey, publicKey := btcec.PrivKeyFromBytes(privateKeyBytes)
+
+	// Convert to BIP340 public key
+	bip340PubKey := types.NewBIP340PubKeyFromBTCPK(publicKey)
+
+	// Get the hex representation of the BIP340 public key
+	publicKeyHex := bip340PubKey.MarshalHex()
+
+	return privateKey, publicKey, publicKeyHex, nil
 }
