@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"encoding/hex"
-	"fmt"
 	"math"
 	"os"
 	"os/exec"
@@ -522,11 +521,8 @@ func (s *BabylonBCDIntegrationTestSuite) createVerifyConsumerFP(consumerId strin
 	czFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
 	sdk.SetAddrCacheEnabled(false)
 	bbnparams.SetAddressPrefixes()
-	sdkCfg := sdk.GetConfig()
-	fmt.Printf("Current - Account Prefix: %s\n", sdkCfg.GetBech32AccountAddrPrefix())
 	fpBabylonAddr, err := sdk.AccAddressFromBech32(s.babylonController.MustGetTxSigner())
 	s.NoError(err)
-	fmt.Println("fpbabylonaddr", s.babylonController.MustGetTxSigner())
 	czFp, err := datagen.GenCustomFinalityProvider(r, czFpBTCSK, fpBabylonAddr, consumerId)
 	s.NoError(err)
 	czFp.Commission = &MinCommissionRate
@@ -575,13 +571,8 @@ func (s *BabylonBCDIntegrationTestSuite) initBabylonController() error {
 	cfg.GasPrices = "0.02ubbn"
 	cfg.GasAdjustment = 20
 
-	sdkCfg := sdk.GetConfig()
-	fmt.Printf("CURRENT - SDK Account Prefix babylon init: %s\n", sdkCfg.GetBech32AccountAddrPrefix())
 	sdk.SetAddrCacheEnabled(false)
 	bbnparams.SetAddressPrefixes()
-	sdkCfg = sdk.GetConfig()
-	fmt.Printf("AFTER - SDK Account Prefix babylon init: %s\n", sdkCfg.GetBech32AccountAddrPrefix())
-
 	controller, err := babylon.NewBabylonController(&cfg, btcParams, logger)
 	if err != nil {
 		return err
@@ -598,12 +589,8 @@ func (s *BabylonBCDIntegrationTestSuite) initCosmwasmController() error {
 	// Create a logger
 	logger, _ := zap.NewDevelopment()
 
-	sdkCfg := sdk.GetConfig()
-	fmt.Printf("CURRENT - SDK Account Prefix BCD init: %s\n", sdkCfg.GetBech32AccountAddrPrefix())
 	sdk.SetAddrCacheEnabled(false)
 	bcdparams.SetAddressPrefixes()
-	sdkCfg = sdk.GetConfig()
-	fmt.Printf("AFTER - SDK Account Prefix BCD init: %s\n", sdkCfg.GetBech32AccountAddrPrefix())
 	tempApp := bcdapp.NewTmpApp()
 	encodingCfg := wasmparams.EncodingConfig{
 		InterfaceRegistry: tempApp.InterfaceRegistry(),
@@ -611,13 +598,6 @@ func (s *BabylonBCDIntegrationTestSuite) initCosmwasmController() error {
 		TxConfig:          tempApp.TxConfig(),
 		Amino:             tempApp.LegacyAmino(),
 	}
-
-	interfaces := encodingCfg.InterfaceRegistry.ListAllInterfaces()
-	s.T().Logf("Interfaces: %v", interfaces)
-
-	// Log implementations of ClientState
-	impls := encodingCfg.InterfaceRegistry.ListImplementations("ibc.core.client.v1.ClientState")
-	s.T().Logf("ClientState implementations: %v", impls)
 
 	wcc, err := cosmwasm.NewCosmwasmConsumerController(cfg, encodingCfg, logger)
 	require.NoError(s.T(), err)
