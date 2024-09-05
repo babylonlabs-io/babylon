@@ -256,17 +256,11 @@ endif
 
 test-e2e: build-docker-e2e test-e2e-cache
 
-test-e2e-btc-staking-integration2:
-	$(MAKE) -C test/e2e/consumer build-integration-test
-	$(MAKE) -C test/e2e/consumer start-integration-test
-	$(MAKE) test-e2e-cache-btc-staking-integration2
-	$(MAKE) -C test/e2e/consumer stop-integration-test
-
 test-e2e-cache:
 	go test -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
-test-e2e-cache-btc-staking-integration2:
-	go test -run TestBTCStakingIntegration2TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+test-e2e-bcd-integration:
+	go test -run TestBCDIntegrationTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-ibc-transfer:
 	go test -run TestIBCTranferTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
@@ -463,6 +457,8 @@ build-docker-e2e:
 	$(MAKE) -C contrib/images babylond-e2e
 	$(MAKE) -C contrib/images babylond-before-upgrade
 	$(MAKE) -C contrib/images e2e-init-chain
+	$(MAKE) -C test/e2e/bcd_integration build-integration-test
+	$(MAKE) -C test/e2e/bcd_integration start-integration-test
 
 build-cosmos-relayer-docker: ## Build Docker image for the Cosmos relayer
 	$(MAKE) -C contrib/images cosmos-relayer

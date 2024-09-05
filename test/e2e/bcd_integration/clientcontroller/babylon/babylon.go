@@ -8,7 +8,7 @@ import (
 	"cosmossdk.io/math"
 	bbnclient "github.com/babylonlabs-io/babylon/client/client"
 	"github.com/babylonlabs-io/babylon/client/config"
-	types2 "github.com/babylonlabs-io/babylon/test/e2e/babylon_bcd_integration/clientcontroller/types"
+	types2 "github.com/babylonlabs-io/babylon/test/e2e/bcd_integration/clientcontroller/types"
 	bbntypes "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
