@@ -12,10 +12,9 @@ import (
 	bcdparams "github.com/babylonlabs-io/babylon-sdk/demo/app/params"
 	bbnparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/client/config"
-	"github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/babylon"
-	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/config"
-	"github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
-	cwcc "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
+	"github.com/babylonlabs-io/babylon/test/e2e/babylon_bcd_integration/clientcontroller/babylon"
+	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/babylon_bcd_integration/clientcontroller/config"
+	cosmwasm2 "github.com/babylonlabs-io/babylon/test/e2e/babylon_bcd_integration/clientcontroller/cosmwasm"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/types"
@@ -67,7 +66,7 @@ type BTCStakingIntegration2TestSuite struct {
 	consumerChainRPC string
 
 	babylonController  *babylon.BabylonController
-	cosmwasmController *cosmwasm.CosmwasmConsumerController
+	cosmwasmController *cosmwasm2.CosmwasmConsumerController
 }
 
 func (s *BTCStakingIntegration2TestSuite) SetupSuite() {
@@ -233,7 +232,7 @@ func (s *BTCStakingIntegration2TestSuite) Test5ActivateDelegation() {
 	s.True(activeDel.HasCovenantQuorums(1))
 
 	// Query the staking contract for delegations on the consumer chain
-	var dataFromContract *cwcc.ConsumerDelegationsResponse
+	var dataFromContract *cosmwasm2.ConsumerDelegationsResponse
 	s.Eventually(func() bool {
 		dataFromContract, err = s.cosmwasmController.QueryDelegations()
 		return err == nil && dataFromContract != nil && len(dataFromContract.Delegations) == 1
@@ -252,7 +251,7 @@ func (s *BTCStakingIntegration2TestSuite) Test5ActivateDelegation() {
 	s.Equal(activeDel.SlashingTx.ToHexStr(), hex.EncodeToString(dataFromContract.Delegations[0].SlashingTx))
 
 	// Query and assert finality provider voting power
-	var fpsByPower *cwcc.ConsumerFpsByPowerResponse
+	var fpsByPower *cosmwasm2.ConsumerFpsByPowerResponse
 	s.Eventually(func() bool {
 		fpsByPower, err = s.cosmwasmController.QueryFinalityProvidersByPower()
 		return err == nil && len(fpsByPower.Fps) > 0
@@ -660,7 +659,7 @@ func (s *BTCStakingIntegration2TestSuite) initBabylonController() error {
 	btcParams := &chaincfg.RegressionNetParams // or whichever network you're using
 
 	logger, _ := zap.NewDevelopment()
-	cfg.KeyDirectory = "/Users/gusin/Github/labs/cursor-bcd-babylon/babylon-private/test/e2e/consumer/.testnets/node0/babylond"
+	cfg.KeyDirectory = "/Users/gusin/Github/labs/cursor-bcd-babylon/babylon-private/test/e2e/babylon_bcd_integration/.testnets/node0/babylond"
 	cfg.GasPrices = "0.02ubbn"
 	cfg.GasAdjustment = 20
 
@@ -726,7 +725,7 @@ func (s *BTCStakingIntegration2TestSuite) initCosmwasmController() error {
 	// channeltypes.RegisterInterfaces(encodingCfg.InterfaceRegistry)
 	// connectiontypes.RegisterInterfaces(encodingCfg.InterfaceRegistry)
 
-	wcc, err := cwcc.NewCosmwasmConsumerController(cfg, encodingCfg, logger)
+	wcc, err := cosmwasm2.NewCosmwasmConsumerController(cfg, encodingCfg, logger)
 	require.NoError(s.T(), err)
 
 	s.cosmwasmController = wcc
