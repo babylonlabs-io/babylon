@@ -382,31 +382,6 @@ func (bc *BabylonController) QueryFinalityProviderDelegations(fpBtcPkHex string,
 	}
 
 	return resp.BtcDelegatorDelegations, nil
-
-	// var allDelegations []*btcstakingtypes.BTCDelegationResponse
-
-	// for {
-	// 	resp, err := bc.bbnClient.QueryClient.FinalityProviderDelegations(fpBtcPkHex, pagination)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to query finality provider delegations: %w", err)
-	// 	}
-
-	// 	for _, del := range resp.BtcDelegatorDelegations {
-	// 		allDelegations = append(allDelegations, del.Dels...)
-	// 	}
-
-	// 	if resp.Pagination == nil || resp.Pagination.NextKey == nil {
-	// 		break
-	// 	}
-
-	// 	pagination.Key = resp.Pagination.NextKey
-	// }
-
-	// if len(allDelegations) == 0 {
-	// 	return nil, fmt.Errorf("no delegations found for finality provider with BTC public key: %s", fpBtcPkHex)
-	// }
-
-	// return allDelegations, nil
 }
 
 func (bc *BabylonController) QueryActivatedHeight() (*btcstakingtypes.QueryActivatedHeightResponse, error) {
