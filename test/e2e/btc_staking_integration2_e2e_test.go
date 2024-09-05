@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math"
 	"time"
@@ -17,6 +18,7 @@ import (
 	cwcc "github.com/babylonlabs-io/babylon/test/e2e/clientcontroller/cosmwasm"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/types"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bbntypes "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
@@ -35,6 +37,27 @@ import (
 )
 
 var MinCommissionRate = sdkmath.LegacyNewDecWithPrec(5, 2) // 5%
+
+// DefaultSingleCovenantKey returns a single, constant private key and its corresponding public key
+func DefaultSingleCovenantKey() (*btcec.PrivateKey, *btcec.PublicKey, string, error) {
+	// This is a constant private key for testing purposes only
+	const constantPrivateKeyHex = "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+
+	privateKeyBytes, err := hex.DecodeString(constantPrivateKeyHex)
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	privateKey, publicKey := btcec.PrivKeyFromBytes(privateKeyBytes)
+
+	// Convert to BIP340 public key
+	bip340PubKey := types.NewBIP340PubKeyFromBTCPK(publicKey)
+
+	// Get the hex representation of the BIP340 public key
+	publicKeyHex := bip340PubKey.MarshalHex()
+
+	return privateKey, publicKey, publicKeyHex, nil
+}
 
 type BTCStakingIntegration2TestSuite struct {
 	suite.Suite
@@ -76,6 +99,7 @@ func (s *BTCStakingIntegration2TestSuite) TearDownSuite() {
 }
 
 func (s *BTCStakingIntegration2TestSuite) Test1ChainStartup() {
+	//s.T().Skip()
 	var (
 		babylonStatus  *coretypes.ResultStatus
 		consumerStatus *coretypes.ResultStatus
@@ -139,6 +163,7 @@ func (s *BTCStakingIntegration2TestSuite) Test3CreateConsumerFinalityProvider() 
 }
 
 func (s *BTCStakingIntegration2TestSuite) Test4RestakeDelegationToMultipleFPs() {
+	//s.T().Skip()
 	consumerID := "07-tendermint-0"
 
 	consumerFps, err := s.babylonController.QueryConsumerFinalityProviders(consumerID)
@@ -158,22 +183,224 @@ func (s *BTCStakingIntegration2TestSuite) Test4RestakeDelegationToMultipleFPs() 
 	s.NotNil(delegation)
 
 	// check consumer finality provider delegation
-	czPendingDelSet, err := s.babylonController.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex())
+	czPendingDelSet, err := s.babylonController.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex(), 1)
 	s.Require().NoError(err)
 	s.Len(czPendingDelSet, 1)
-	// czPendingDels := czPendingDelSet[0]
-	// s.Len(czPendingDels.Dels, 1)
-	s.Equal(delBtcPk.SerializeCompressed()[1:], czPendingDelSet[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
-	s.Len(czPendingDelSet[0].CovenantSigs, 0)
+	czPendingDels := czPendingDelSet[0]
+	s.Len(czPendingDels.Dels, 1)
+	s.Equal(delBtcPk.SerializeCompressed()[1:], czPendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	s.Len(czPendingDels.Dels[0].CovenantSigs, 0)
 
 	// check Babylon finality provider delegation
-	pendingDelSet, err := s.babylonController.QueryFinalityProviderDelegations(babylonFp.BtcPk.MarshalHex())
+	pendingDelSet, err := s.babylonController.QueryFinalityProviderDelegations(babylonFp.BtcPk.MarshalHex(), 1)
 	s.Require().NoError(err)
 	s.Len(pendingDelSet, 1)
-	// pendingDels := pendingDelSet[0]
-	// s.Len(pendingDels.Dels, 1)
-	s.Equal(delBtcPk.SerializeCompressed()[1:], pendingDelSet[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
-	s.Len(pendingDelSet[0].CovenantSigs, 0)
+	pendingDels := pendingDelSet[0]
+	s.Len(pendingDels.Dels, 1)
+	s.Equal(delBtcPk.SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
+}
+
+func (s *BTCStakingIntegration2TestSuite) Test5ActivateDelegation() {
+	cvSK, cvPK, cvPKHex, err := DefaultSingleCovenantKey()
+	// 02bb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d
+	s.Require().NoError(err)
+	fmt.Println("covenantPKHex", cvPKHex)
+	fmt.Println("cvSK", hex.EncodeToString(cvSK.Serialize()))
+	fmt.Println("cvPK", hex.EncodeToString(cvPK.SerializeCompressed()))
+	consumerId := "07-tendermint-0"
+
+	// Query consumer finality providers
+	consumerFps, err := s.babylonController.QueryConsumerFinalityProviders(consumerId)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(consumerFps)
+	consumerFp := consumerFps[0]
+
+	// Activate the delegation by submitting covenant sigs
+	s.submitCovenantSigs(consumerFp)
+
+	// ensure the BTC delegation has covenant sigs now
+	activeDelsSet, err := s.babylonController.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex(), 1)
+	s.NoError(err)
+	s.Len(activeDelsSet, 1)
+
+	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
+	s.NoError(err)
+	s.NotNil(activeDels)
+	s.Len(activeDels.Dels, 1)
+
+	activeDel := activeDels.Dels[0]
+	s.True(activeDel.HasCovenantQuorums(covenantQuorum))
+
+	// Query the staking contract for delegations on the consumer chain
+	var dataFromContract *cwcc.ConsumerDelegationsResponse
+	s.Eventually(func() bool {
+		dataFromContract, err = s.cosmwasmController.QueryDelegations()
+		return err == nil && dataFromContract != nil && len(dataFromContract.Delegations) == 1
+	}, time.Second*20, time.Second)
+
+	// Assert delegation details
+	s.Empty(dataFromContract.Delegations[0].UndelegationInfo.DelegatorUnbondingSig)
+	s.Equal(activeDel.BtcPk.MarshalHex(), dataFromContract.Delegations[0].BtcPkHex)
+	s.Len(dataFromContract.Delegations[0].FpBtcPkList, 2)
+	s.Equal(activeDel.FpBtcPkList[0].MarshalHex(), dataFromContract.Delegations[0].FpBtcPkList[0])
+	s.Equal(activeDel.FpBtcPkList[1].MarshalHex(), dataFromContract.Delegations[0].FpBtcPkList[1])
+	s.Equal(activeDel.StartHeight, dataFromContract.Delegations[0].StartHeight)
+	s.Equal(activeDel.EndHeight, dataFromContract.Delegations[0].EndHeight)
+	s.Equal(activeDel.TotalSat, dataFromContract.Delegations[0].TotalSat)
+	s.Equal(hex.EncodeToString(activeDel.StakingTx), hex.EncodeToString(dataFromContract.Delegations[0].StakingTx))
+	s.Equal(activeDel.SlashingTx.ToHexStr(), hex.EncodeToString(dataFromContract.Delegations[0].SlashingTx))
+
+	// Query and assert finality provider voting power
+	var fpsByPower *cwcc.ConsumerFpsByPowerResponse
+	s.Eventually(func() bool {
+		fpsByPower, err = s.cosmwasmController.QueryFinalityProvidersByPower()
+		return err == nil && len(fpsByPower.Fps) > 0
+	}, time.Second*20, time.Second)
+
+	s.Require().NotNil(fpsByPower)
+
+	totalPower := uint64(0)
+	for _, fp := range fpsByPower.Fps {
+		totalPower += fp.Power
+	}
+
+	//// Get FP total power from Babylon node
+	//babylonPower, err := s.getFpTotalPowerFromBabylonNode(consumerFp)
+	//s.Require().NoError(err)
+	//s.Equal(babylonPower, totalPower)
+}
+
+func (s *BTCStakingIntegration2TestSuite) submitCovenantSigs(consumerFp *bsctypes.FinalityProviderResponse) {
+	cvSK, _, _, err := DefaultSingleCovenantKey()
+	s.NoError(err)
+
+	// check consumer finality provider delegation
+	pendingDelsSet, err := s.babylonController.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex(), 1)
+	s.Require().NoError(err)
+	s.Len(pendingDelsSet, 1)
+	pendingDels := pendingDelsSet[0]
+	s.Len(pendingDels.Dels, 1)
+	pendingDelResp := pendingDels.Dels[0]
+	pendingDel, err := ParseRespBTCDelToBTCDel(pendingDelResp)
+	s.NoError(err)
+	s.Len(pendingDel.CovenantSigs, 0)
+
+	slashingTx := pendingDel.SlashingTx
+	stakingTx := pendingDel.StakingTx
+
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(stakingTx)
+	s.NoError(err)
+	stakingTxHash := stakingMsgTx.TxHash().String()
+
+	params, err := s.babylonController.QueryBTCStakingParams()
+	s.NoError(err)
+
+	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
+	s.NoError(err)
+
+	stakingInfo, err := pendingDel.GetStakingInfo(params, net)
+	s.NoError(err)
+
+	stakingSlashingPathInfo, err := stakingInfo.SlashingPathSpendInfo()
+	s.NoError(err)
+
+	/*
+		generate and insert new covenant signature, in order to activate the BTC delegation
+	*/
+	// covenant signatures on slashing tx
+	covenantSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		[]*btcec.PrivateKey{cvSK},
+		fpBTCPKs,
+		stakingMsgTx,
+		stakingSlashingPathInfo.GetPkScriptPath(),
+		slashingTx,
+	)
+	s.NoError(err)
+
+	// cov Schnorr sigs on unbonding signature
+	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	s.NoError(err)
+	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
+	s.NoError(err)
+
+	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
+		[]*btcec.PrivateKey{cvSK},
+		stakingMsgTx,
+		pendingDel.StakingOutputIdx,
+		unbondingPathInfo.GetPkScriptPath(),
+		unbondingTx,
+	)
+	s.NoError(err)
+
+	unbondingInfo, err := pendingDel.GetUnbondingInfo(params, net)
+	s.NoError(err)
+	unbondingSlashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
+	s.NoError(err)
+	covenantUnbondingSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		[]*btcec.PrivateKey{cvSK},
+		fpBTCPKs,
+		unbondingTx,
+		unbondingSlashingPathInfo.GetPkScriptPath(),
+		pendingDel.BtcUndelegation.SlashingTx,
+	)
+	s.NoError(err)
+
+	covPk, err := covenantSlashingSigs[0].CovPk.ToBTCPK()
+	s.NoError(err)
+
+	for i := 0; i < int(params.CovenantQuorum); i++ {
+		tx, err := s.babylonController.SubmitCovenantSigs(
+			covPk,
+			stakingTxHash,
+			covenantSlashingSigs[i].AdaptorSigs,
+			covUnbondingSigs[i],
+			covenantUnbondingSlashingSigs[i].AdaptorSigs,
+		)
+		s.Require().NoError(err)
+		s.Require().NotNil(tx)
+		// // wait for a block so that above txs take effect
+		// nonValidatorNode.WaitForNextBlock()
+	}
+
+	// // wait for a block so that above txs take effect
+	// nonValidatorNode.WaitForNextBlock()
+	// nonValidatorNode.WaitForNextBlock()
+
+	// ensure the BTC delegation has covenant sigs now
+	activeDelsSet, err := s.babylonController.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex(), 1)
+	s.NoError(err)
+	s.Len(activeDelsSet, 1)
+
+	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
+	s.NoError(err)
+	s.NotNil(activeDels)
+	s.Len(activeDels.Dels, 1)
+
+	activeDel := activeDels.Dels[0]
+	s.True(activeDel.HasCovenantQuorums(covenantQuorum))
+
+	// wait for a block so that above txs take effect and the voting power table
+	// is updated in the next block's BeginBlock
+	// s.babylonController.WaitForNextBlock()
+
+	// ensure BTC staking is activated
+	activatedHeight, err := s.babylonController.QueryActivatedHeight()
+	s.NoError(err)
+	s.Positive(activatedHeight)
+	// ensure finality provider has voting power at activated height
+	// currentBtcTip, err := s.babylonController.QueryBtcLightClientTip()
+	// s.NoError(err)
+	// activeFps := nonValidatorNode.QueryActiveFinalityProvidersAtHeight(activatedHeight)
+	// s.Len(activeFps, 1)
+	// s.Equal(activeFps[0].VotingPower, activeDels.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
+}
+
+func (s *BTCStakingIntegration2TestSuite) getFpTotalPowerFromBabylonNode(fp *bsctypes.FinalityProviderResponse) (uint64, error) {
+	// Implement logic to get FP total power from Babylon node
+	// This might involve querying the Babylon node for the FP's power
+	// You'll need to implement this based on your specific requirements
+	return 0, nil
 }
 
 func (s *BTCStakingIntegration2TestSuite) createBabylonDelegation(babylonFp *bstypes.FinalityProviderResponse, consumerFp *bsctypes.FinalityProviderResponse) (*btcec.PublicKey, string) {

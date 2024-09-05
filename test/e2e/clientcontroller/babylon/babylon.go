@@ -371,35 +371,51 @@ func (bc *BabylonController) QueryBTCDelegation(stakingTxHashHex string) (*btcst
 	return resp.BtcDelegation, nil
 }
 
-func (bc *BabylonController) QueryFinalityProviderDelegations(fpBtcPkHex string) ([]*btcstakingtypes.BTCDelegationResponse, error) {
+func (bc *BabylonController) QueryFinalityProviderDelegations(fpBtcPkHex string, limit uint64) ([]*btcstakingtypes.BTCDelegatorDelegationsResponse, error) {
 	pagination := &sdkquery.PageRequest{
-		Limit: 10,
+		Limit: limit,
 	}
 
-	var allDelegations []*btcstakingtypes.BTCDelegationResponse
-
-	for {
-		resp, err := bc.bbnClient.QueryClient.FinalityProviderDelegations(fpBtcPkHex, pagination)
-		if err != nil {
-			return nil, fmt.Errorf("failed to query finality provider delegations: %w", err)
-		}
-
-		for _, del := range resp.BtcDelegatorDelegations {
-			allDelegations = append(allDelegations, del.Dels...)
-		}
-
-		if resp.Pagination == nil || resp.Pagination.NextKey == nil {
-			break
-		}
-
-		pagination.Key = resp.Pagination.NextKey
+	resp, err := bc.bbnClient.QueryClient.FinalityProviderDelegations(fpBtcPkHex, pagination)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query finality provider delegations: %w", err)
 	}
 
-	if len(allDelegations) == 0 {
-		return nil, fmt.Errorf("no delegations found for finality provider with BTC public key: %s", fpBtcPkHex)
+	return resp.BtcDelegatorDelegations, nil
+
+	// var allDelegations []*btcstakingtypes.BTCDelegationResponse
+
+	// for {
+	// 	resp, err := bc.bbnClient.QueryClient.FinalityProviderDelegations(fpBtcPkHex, pagination)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("failed to query finality provider delegations: %w", err)
+	// 	}
+
+	// 	for _, del := range resp.BtcDelegatorDelegations {
+	// 		allDelegations = append(allDelegations, del.Dels...)
+	// 	}
+
+	// 	if resp.Pagination == nil || resp.Pagination.NextKey == nil {
+	// 		break
+	// 	}
+
+	// 	pagination.Key = resp.Pagination.NextKey
+	// }
+
+	// if len(allDelegations) == 0 {
+	// 	return nil, fmt.Errorf("no delegations found for finality provider with BTC public key: %s", fpBtcPkHex)
+	// }
+
+	// return allDelegations, nil
+}
+
+func (bc *BabylonController) QueryActivatedHeight() (*btcstakingtypes.QueryActivatedHeightResponse, error) {
+	resp, err := bc.bbnClient.QueryClient.ActivatedHeight()
+	if err != nil {
+		return nil, fmt.Errorf("failed to query activated height: %w", err)
 	}
 
-	return allDelegations, nil
+	return resp, nil
 }
 
 // queryDelegationsWithStatus queries BTC delegations
@@ -454,6 +470,15 @@ func (bc *BabylonController) QueryStakingParams() (*types.StakingParams, error) 
 		SlashingRate:              stakingParamRes.Params.SlashingRate,
 		MinUnbondingTime:          stakingParamRes.Params.MinUnbondingTime,
 	}, nil
+}
+
+func (bc *BabylonController) QueryBTCStakingParams() (*btcstakingtypes.Params, error) {
+	res, err := bc.bbnClient.QueryClient.BTCStakingParams()
+	if err != nil {
+		return nil, fmt.Errorf("failed to query BTC staking params: %v", err)
+	}
+
+	return &res.Params, nil
 }
 
 func (bc *BabylonController) SubmitCovenantSigs(

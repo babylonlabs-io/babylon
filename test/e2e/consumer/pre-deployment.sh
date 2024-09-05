@@ -14,7 +14,7 @@ docker run --rm -v $(pwd)/.testnets:/data babylonlabs-io/babylond \
     --slashing-rate 0.1 \
     --min-commission-rate 0.05 \
     --covenant-quorum 1 \
-    --covenant-pks "2d4ccbe538f846a750d82a77cd742895e51afcf23d86d05004a356b783902748" # should be updated if `covenant-keyring` dir is changed`
+    --covenant-pks "bb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d" # should be updated if `covenant-keyring` dir is changed`
 
 # Create separate subpaths for each component and copy relevant configuration
 chmod -R 777 .testnets
