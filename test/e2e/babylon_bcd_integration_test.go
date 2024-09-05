@@ -40,14 +40,14 @@ import (
 
 var MinCommissionRate = sdkmath.LegacyNewDecWithPrec(5, 2) // 5%
 
-type BTCStakingIntegration2TestSuite struct {
+type BabylonBCDIntegrationTestSuite struct {
 	suite.Suite
 
 	babylonController  *babylon.BabylonController
 	cosmwasmController *cosmwasm.CosmwasmConsumerController
 }
 
-func (s *BTCStakingIntegration2TestSuite) SetupSuite() {
+func (s *BabylonBCDIntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
 
 	err := s.initBabylonController()
@@ -57,7 +57,7 @@ func (s *BTCStakingIntegration2TestSuite) SetupSuite() {
 	s.Require().NoError(err, "Failed to initialize CosmwasmConsumerController")
 }
 
-func (s *BTCStakingIntegration2TestSuite) TearDownSuite() {
+func (s *BabylonBCDIntegrationTestSuite) TearDownSuite() {
 	s.T().Log("tearing down e2e integration test suite...")
 
 	// Get the current working directory
@@ -80,7 +80,7 @@ func (s *BTCStakingIntegration2TestSuite) TearDownSuite() {
 	}
 }
 
-func (s *BTCStakingIntegration2TestSuite) Test1ChainStartup() {
+func (s *BabylonBCDIntegrationTestSuite) Test1ChainStartup() {
 	var (
 		babylonStatus  *coretypes.ResultStatus
 		consumerStatus *coretypes.ResultStatus
@@ -102,13 +102,13 @@ func (s *BTCStakingIntegration2TestSuite) Test1ChainStartup() {
 	s.T().Logf("Consumer node status: %v", consumerStatus.SyncInfo.LatestBlockHeight)
 }
 
-func (s *BTCStakingIntegration2TestSuite) Test2AutoRegisterAndVerifyNewConsumer() {
+func (s *BabylonBCDIntegrationTestSuite) Test2AutoRegisterAndVerifyNewConsumer() {
 	// TODO: getting some error in ibc client-state, hardcode consumer id for now
 	consumerID := "07-tendermint-0" //  s.getIBCClientID()
 	s.verifyConsumerRegistration(consumerID)
 }
 
-func (s *BTCStakingIntegration2TestSuite) Test3CreateConsumerFinalityProvider() {
+func (s *BabylonBCDIntegrationTestSuite) Test3CreateConsumerFinalityProvider() {
 	consumerID := "07-tendermint-0"
 
 	// generate a random number of finality providers from 1 to 5
@@ -139,7 +139,7 @@ func (s *BTCStakingIntegration2TestSuite) Test3CreateConsumerFinalityProvider() 
 	}
 }
 
-func (s *BTCStakingIntegration2TestSuite) Test4RestakeDelegationToMultipleFPs() {
+func (s *BabylonBCDIntegrationTestSuite) Test4RestakeDelegationToMultipleFPs() {
 	consumerID := "07-tendermint-0"
 
 	consumerFps, err := s.babylonController.QueryConsumerFinalityProviders(consumerID)
@@ -177,7 +177,7 @@ func (s *BTCStakingIntegration2TestSuite) Test4RestakeDelegationToMultipleFPs() 
 	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
 }
 
-func (s *BTCStakingIntegration2TestSuite) Test5ActivateDelegation() {
+func (s *BabylonBCDIntegrationTestSuite) Test5ActivateDelegation() {
 	consumerId := "07-tendermint-0"
 
 	// Query consumer finality providers
@@ -231,7 +231,7 @@ func (s *BTCStakingIntegration2TestSuite) Test5ActivateDelegation() {
 	s.Require().NotNil(fpsByPower)
 }
 
-func (s *BTCStakingIntegration2TestSuite) submitCovenantSigs(consumerFp *bsctypes.FinalityProviderResponse) {
+func (s *BabylonBCDIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctypes.FinalityProviderResponse) {
 	cvSK, _, _, err := getDeterministicCovenantKey()
 	s.NoError(err)
 
@@ -348,7 +348,7 @@ func (s *BTCStakingIntegration2TestSuite) submitCovenantSigs(consumerFp *bsctype
 	}, time.Minute, time.Second*15, "BTC staking was not activated within the expected time")
 }
 
-func (s *BTCStakingIntegration2TestSuite) createBabylonDelegation(babylonFp *bstypes.FinalityProviderResponse, consumerFp *bsctypes.FinalityProviderResponse) (*btcec.PublicKey, string) {
+func (s *BabylonBCDIntegrationTestSuite) createBabylonDelegation(babylonFp *bstypes.FinalityProviderResponse, consumerFp *bsctypes.FinalityProviderResponse) (*btcec.PublicKey, string) {
 	/*
 		create a random BTC delegation restaking to Babylon and consumer finality providers
 	*/
@@ -472,7 +472,7 @@ func (s *BTCStakingIntegration2TestSuite) createBabylonDelegation(babylonFp *bst
 }
 
 // helper function: create a random Babylon finality provider and verify it
-func (s *BTCStakingIntegration2TestSuite) createVerifyBabylonFP() *bstypes.FinalityProviderResponse {
+func (s *BabylonBCDIntegrationTestSuite) createVerifyBabylonFP() *bstypes.FinalityProviderResponse {
 
 	/*
 		create a random finality provider on Babylon
@@ -514,7 +514,7 @@ func (s *BTCStakingIntegration2TestSuite) createVerifyBabylonFP() *bstypes.Final
 	return actualFps[0]
 }
 
-func (s *BTCStakingIntegration2TestSuite) createVerifyConsumerFP(consumerId string) *bstypes.FinalityProvider {
+func (s *BabylonBCDIntegrationTestSuite) createVerifyConsumerFP(consumerId string) *bstypes.FinalityProvider {
 	/*
 		create a random consumer finality provider on Babylon
 	*/
@@ -557,7 +557,7 @@ func (s *BTCStakingIntegration2TestSuite) createVerifyConsumerFP(consumerId stri
 	return czFp
 }
 
-func (s *BTCStakingIntegration2TestSuite) initBabylonController() error {
+func (s *BabylonBCDIntegrationTestSuite) initBabylonController() error {
 	cfg := config.DefaultBabylonConfig()
 
 	btcParams := &chaincfg.RegressionNetParams // or whichever network you're using
@@ -591,7 +591,7 @@ func (s *BTCStakingIntegration2TestSuite) initBabylonController() error {
 	return nil
 }
 
-func (s *BTCStakingIntegration2TestSuite) initCosmwasmController() error {
+func (s *BabylonBCDIntegrationTestSuite) initCosmwasmController() error {
 	cfg := cwconfig.DefaultCosmwasmConfig()
 	cfg.BtcStakingContractAddress = "bbnc1nc5tatafv6eyq7llkr2gv50ff9e22mnf70qgjlv737ktmt4eswrqgn0kq0"
 
@@ -626,7 +626,7 @@ func (s *BTCStakingIntegration2TestSuite) initCosmwasmController() error {
 	return nil
 }
 
-func (s *BTCStakingIntegration2TestSuite) getIBCClientID() string {
+func (s *BabylonBCDIntegrationTestSuite) getIBCClientID() string {
 	var babylonChannel *channeltypes.IdentifiedChannel
 	s.Eventually(func() bool {
 		babylonChannelsResp, err := s.babylonController.IBCChannels()
@@ -676,7 +676,7 @@ func (s *BTCStakingIntegration2TestSuite) getIBCClientID() string {
 	return babylonChannelState.IdentifiedClientState.ClientId
 }
 
-func (s *BTCStakingIntegration2TestSuite) verifyConsumerRegistration(consumerID string) *bsctypes.ConsumerRegister {
+func (s *BabylonBCDIntegrationTestSuite) verifyConsumerRegistration(consumerID string) *bsctypes.ConsumerRegister {
 	var consumerRegistry []*bsctypes.ConsumerRegister
 
 	s.Eventually(func() bool {
