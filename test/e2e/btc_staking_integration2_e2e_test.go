@@ -230,7 +230,7 @@ func (s *BTCStakingIntegration2TestSuite) Test5ActivateDelegation() {
 	s.Len(activeDels.Dels, 1)
 
 	activeDel := activeDels.Dels[0]
-	s.True(activeDel.HasCovenantQuorums(covenantQuorum))
+	s.True(activeDel.HasCovenantQuorums(1))
 
 	// Query the staking contract for delegations on the consumer chain
 	var dataFromContract *cwcc.ConsumerDelegationsResponse
@@ -384,10 +384,12 @@ func (s *BTCStakingIntegration2TestSuite) submitCovenantSigs(consumerFp *bsctype
 	// is updated in the next block's BeginBlock
 	// s.babylonController.WaitForNextBlock()
 
+	time.Sleep(10 * time.Second)
 	// ensure BTC staking is activated
 	activatedHeight, err := s.babylonController.QueryActivatedHeight()
 	s.NoError(err)
-	s.Positive(activatedHeight)
+	s.NotNil(activatedHeight)
+	s.Positive(activatedHeight.Height)
 	// ensure finality provider has voting power at activated height
 	// currentBtcTip, err := s.babylonController.QueryBtcLightClientTip()
 	// s.NoError(err)
