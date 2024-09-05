@@ -1,7 +1,7 @@
 FROM --platform=$BUILDPLATFORM golang:1.21 AS build-env
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc-arm-linux-gnueabi \
+    gcc-i686-linux-gnu \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
