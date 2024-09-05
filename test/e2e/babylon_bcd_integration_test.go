@@ -4,7 +4,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -79,25 +81,27 @@ func (s *BTCStakingIntegration2TestSuite) SetupSuite() {
 func (s *BTCStakingIntegration2TestSuite) TearDownSuite() {
 	s.T().Log("tearing down e2e integration test suite...")
 
-	cmd := exec.Command("make", "-C", "../babylon_bcd_integration", "stop-integration-test")
+	// Get the current working directory
+	currentDir, err := os.Getwd()
+	if err != nil {
+		s.T().Errorf("Failed to get current working directory: %v", err)
+		return
+	}
+
+	// Construct the path to the Makefile directory
+	makefileDir := filepath.Join(currentDir, "babylon_bcd_integration")
+
+	// Run the stop-integration-test make target
+	cmd := exec.Command("make", "-C", makefileDir, "stop-integration-test")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		s.T().Errorf("Failed to run stop-integration-test: %v\nOutput: %s", err, output)
 	} else {
 		s.T().Log("Successfully stopped integration test")
 	}
-
-	// Additional cleanup if necessary
-	if s.babylonController != nil {
-		s.babylonController.Close()
-	}
-	if s.cosmwasmController != nil {
-		s.cosmwasmController.Close()
-	}
 }
 
 func (s *BTCStakingIntegration2TestSuite) Test1ChainStartup() {
-	//s.T().Skip()
 	var (
 		babylonStatus  *coretypes.ResultStatus
 		consumerStatus *coretypes.ResultStatus
@@ -122,14 +126,12 @@ func (s *BTCStakingIntegration2TestSuite) Test1ChainStartup() {
 }
 
 func (s *BTCStakingIntegration2TestSuite) Test2AutoRegisterAndVerifyNewConsumer() {
-	//s.T().Skip()
-	// TODO: try to fix the error otherwise hardcode consumer id for now
+	// TODO: getting some error in ibc client-state, hardcode consumer id for now
 	consumerID := "07-tendermint-0" //  s.getIBCClientID()
 	s.verifyConsumerRegistration(consumerID)
 }
 
 func (s *BTCStakingIntegration2TestSuite) Test3CreateConsumerFinalityProvider() {
-	//s.T().Skip()
 	consumerID := "07-tendermint-0"
 
 	// generate a random number of finality providers from 1 to 5
@@ -161,7 +163,6 @@ func (s *BTCStakingIntegration2TestSuite) Test3CreateConsumerFinalityProvider() 
 }
 
 func (s *BTCStakingIntegration2TestSuite) Test4RestakeDelegationToMultipleFPs() {
-	//s.T().Skip()
 	consumerID := "07-tendermint-0"
 
 	consumerFps, err := s.babylonController.QueryConsumerFinalityProviders(consumerID)
@@ -200,12 +201,6 @@ func (s *BTCStakingIntegration2TestSuite) Test4RestakeDelegationToMultipleFPs() 
 }
 
 func (s *BTCStakingIntegration2TestSuite) Test5ActivateDelegation() {
-	cvSK, cvPK, cvPKHex, err := DefaultSingleCovenantKey()
-	// 02bb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d
-	s.Require().NoError(err)
-	fmt.Println("covenantPKHex", cvPKHex)
-	fmt.Println("cvSK", hex.EncodeToString(cvSK.Serialize()))
-	fmt.Println("cvPK", hex.EncodeToString(cvPK.SerializeCompressed()))
 	consumerId := "07-tendermint-0"
 
 	// Query consumer finality providers
@@ -257,16 +252,6 @@ func (s *BTCStakingIntegration2TestSuite) Test5ActivateDelegation() {
 	}, time.Second*20, time.Second)
 
 	s.Require().NotNil(fpsByPower)
-
-	totalPower := uint64(0)
-	for _, fp := range fpsByPower.Fps {
-		totalPower += fp.Power
-	}
-
-	//// Get FP total power from Babylon node
-	//babylonPower, err := s.getFpTotalPowerFromBabylonNode(consumerFp)
-	//s.Require().NoError(err)
-	//s.Equal(babylonPower, totalPower)
 }
 
 func (s *BTCStakingIntegration2TestSuite) submitCovenantSigs(consumerFp *bsctypes.FinalityProviderResponse) {
@@ -357,13 +342,7 @@ func (s *BTCStakingIntegration2TestSuite) submitCovenantSigs(consumerFp *bsctype
 		)
 		s.Require().NoError(err)
 		s.Require().NotNil(tx)
-		// // wait for a block so that above txs take effect
-		// nonValidatorNode.WaitForNextBlock()
 	}
-
-	// // wait for a block so that above txs take effect
-	// nonValidatorNode.WaitForNextBlock()
-	// nonValidatorNode.WaitForNextBlock()
 
 	// ensure the BTC delegation has covenant sigs now
 	activeDelsSet, err := s.babylonController.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex(), 1)
@@ -374,33 +353,22 @@ func (s *BTCStakingIntegration2TestSuite) submitCovenantSigs(consumerFp *bsctype
 	s.NoError(err)
 	s.NotNil(activeDels)
 	s.Len(activeDels.Dels, 1)
-
 	activeDel := activeDels.Dels[0]
 	s.True(activeDel.HasCovenantQuorums(1))
 
-	// wait for a block so that above txs take effect and the voting power table
-	// is updated in the next block's BeginBlock
-	// s.babylonController.WaitForNextBlock()
-
-	time.Sleep(1 * time.Minute)
 	// ensure BTC staking is activated
-	activatedHeight, err := s.babylonController.QueryActivatedHeight()
-	s.NoError(err)
-	s.NotNil(activatedHeight)
-	s.Positive(activatedHeight.Height)
-	// ensure finality provider has voting power at activated height
-	// currentBtcTip, err := s.babylonController.QueryBtcLightClientTip()
-	// s.NoError(err)
-	// activeFps := nonValidatorNode.QueryActiveFinalityProvidersAtHeight(activatedHeight)
-	// s.Len(activeFps, 1)
-	// s.Equal(activeFps[0].VotingPower, activeDels.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
-}
-
-func (s *BTCStakingIntegration2TestSuite) getFpTotalPowerFromBabylonNode(fp *bsctypes.FinalityProviderResponse) (uint64, error) {
-	// Implement logic to get FP total power from Babylon node
-	// This might involve querying the Babylon node for the FP's power
-	// You'll need to implement this based on your specific requirements
-	return 0, nil
+	s.Eventually(func() bool {
+		activatedHeight, err := s.babylonController.QueryActivatedHeight()
+		if err != nil {
+			s.T().Logf("Error querying activated height: %v", err)
+			return false
+		}
+		if activatedHeight == nil {
+			s.T().Log("Activated height is nil")
+			return false
+		}
+		return activatedHeight.Height > 0
+	}, time.Minute, time.Second*15, "BTC staking was not activated within the expected time")
 }
 
 func (s *BTCStakingIntegration2TestSuite) createBabylonDelegation(babylonFp *bstypes.FinalityProviderResponse, consumerFp *bsctypes.FinalityProviderResponse) (*btcec.PublicKey, string) {
@@ -417,11 +385,6 @@ func (s *BTCStakingIntegration2TestSuite) createBabylonDelegation(babylonFp *bst
 	// minimal required unbonding time
 	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
 
-	// get covenant BTC PKs
-	//covenantBTCPKs := []*btcec.PublicKey{}
-	//for _, covenantPK := range params.CovenantPks {
-	//	covenantBTCPKs = append(covenantBTCPKs, covenantPK.MustToBTCPK())
-	//}
 	// NOTE: we use the node's secret key as Babylon secret key for the BTC delegation
 	pop, err := bstypes.NewPoPBTC(delBabylonAddr, czDelBtcSk)
 	s.NoError(err)
@@ -455,20 +418,6 @@ func (s *BTCStakingIntegration2TestSuite) createBabylonDelegation(babylonFp *bst
 		czDelBtcSk,
 	)
 	s.NoError(err)
-
-	//// submit staking tx to Bitcoin and get inclusion proof
-	//currentBtcTipResp, err := s.babylonController.QueryBtcLightClientTip()
-	//s.NoError(err)
-	//currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
-	//s.NoError(err)
-	//
-	//blockWithStakingTx := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), stakingMsgTx)
-	//s.babylonController.InsertBtcBlockHeaders(&blockWithStakingTx.HeaderBytes)
-	//// make block k-deep
-	//for i := 0; i < initialization.BabylonBtcConfirmationPeriod; i++ {
-	//	nonValidatorNode.InsertNewEmptyBtcHeader(r)
-	//}
-	//stakingTxInfo := btcctypes.NewTransactionInfoFromSpvProof(blockWithStakingTx.SpvProof)
 
 	// create and insert BTC headers which include the staking tx to get staking tx info
 	btcTipHeaderResp, err := s.babylonController.QueryBtcLightClientTip()
@@ -521,23 +470,6 @@ func (s *BTCStakingIntegration2TestSuite) createBabylonDelegation(babylonFp *bst
 
 	// submit the message for creating BTC delegation
 	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(czDelBtcPk)}
-	//s.babylonController.CreateBTCDelegation(
-	//	delBTCPKs,
-	//	pop,
-	//	stakingTxInfo,
-	//	[]*bbn.BIP340PubKey{babylonFp.BtcPk, consumerFp.BtcPk},
-	//	stakingTimeBlocks,
-	//	btcutil.Amount(stakingValue),
-	//	testStakingInfo.SlashingTx,
-	//	delegatorSig,
-	//	testUnbondingInfo.UnbondingTx,
-	//	testUnbondingInfo.SlashingTx,
-	//	unbondingTime,
-	//	btcutil.Amount(unbondingValue),
-	//	delUnbondingSlashingSig,
-	//	"val",
-	//	false,
-	//)
 
 	serializedUnbondingTx, err := bbn.SerializeBTCTx(testUnbondingInfo.UnbondingTx)
 	s.NoError(err)
@@ -558,10 +490,6 @@ func (s *BTCStakingIntegration2TestSuite) createBabylonDelegation(babylonFp *bst
 		testUnbondingInfo.SlashingTx,
 		delUnbondingSlashingSig)
 	s.NoError(err)
-
-	// wait for a block so that above txs take effect
-	//nonValidatorNode.WaitForNextBlock()
-	//nonValidatorNode.WaitForNextBlock()
 
 	return czDelBtcPk, stakingTxHash
 }
@@ -598,13 +526,13 @@ func (s *BTCStakingIntegration2TestSuite) createVerifyBabylonFP() *bstypes.Final
 	// query the existence of finality provider and assert equivalence
 	actualFps, err := s.babylonController.QueryFinalityProviders()
 	s.Require().NoError(err)
-	//s.Len(actualFps, 1) //TODO: fix this back
-	//s.Equal(babylonFp.Description, actualFps[0].Description)
-	//s.Equal(babylonFp.Commission, actualFps[0].Commission)
-	//s.Equal(babylonFp.BtcPk, actualFps[0].BtcPk)
-	//s.Equal(babylonFp.Pop, actualFps[0].Pop)
-	//s.Equal(babylonFp.SlashedBabylonHeight, actualFps[0].SlashedBabylonHeight)
-	//s.Equal(babylonFp.SlashedBtcHeight, actualFps[0].SlashedBtcHeight)
+	s.Len(actualFps, 1)
+	s.Equal(babylonFp.Description, actualFps[0].Description)
+	s.Equal(babylonFp.Commission, actualFps[0].Commission)
+	s.Equal(babylonFp.BtcPk, actualFps[0].BtcPk)
+	s.Equal(babylonFp.Pop, actualFps[0].Pop)
+	s.Equal(babylonFp.SlashedBabylonHeight, actualFps[0].SlashedBabylonHeight)
+	s.Equal(babylonFp.SlashedBtcHeight, actualFps[0].SlashedBtcHeight)
 
 	return actualFps[0]
 }
@@ -658,7 +586,15 @@ func (s *BTCStakingIntegration2TestSuite) initBabylonController() error {
 	btcParams := &chaincfg.RegressionNetParams // or whichever network you're using
 
 	logger, _ := zap.NewDevelopment()
-	cfg.KeyDirectory = "/Users/gusin/Github/labs/cursor-bcd-babylon/babylon-private/test/e2e/babylon_bcd_integration/.testnets/node0/babylond"
+
+	// Get the current working directory
+	currentDir, err := os.Getwd()
+	if err != nil {
+		s.T().Fatalf("Failed to get current working directory: %v", err)
+	}
+
+	// Construct the path to the Makefile directory
+	cfg.KeyDirectory = filepath.Join(currentDir, "babylon_bcd_integration/.testnets/node0/babylond")
 	cfg.GasPrices = "0.02ubbn"
 	cfg.GasAdjustment = 20
 
@@ -680,20 +616,10 @@ func (s *BTCStakingIntegration2TestSuite) initBabylonController() error {
 
 func (s *BTCStakingIntegration2TestSuite) initCosmwasmController() error {
 	cfg := cwconfig.DefaultCosmwasmConfig()
-
-	// TODO: should not hardcode
 	cfg.BtcStakingContractAddress = "bbnc1nc5tatafv6eyq7llkr2gv50ff9e22mnf70qgjlv737ktmt4eswrqgn0kq0"
-	// Override the RPC address with the one from your test suite
-	//cfg.RPCAddr = s.consumerChainRPC
-
-	// You might need to adjust other config values as needed for your test environment
 
 	// Create a logger
 	logger, _ := zap.NewDevelopment()
-
-	// // You'll need to provide the correct encoding config
-	// // This is typically available from your app's setup
-	// encodingConfig := wasmparams.MakeEncodingConfig()
 
 	sdkCfg := sdk.GetConfig()
 	fmt.Printf("CURRENT - SDK Account Prefix BCD init: %s\n", sdkCfg.GetBech32AccountAddrPrefix())
@@ -702,7 +628,6 @@ func (s *BTCStakingIntegration2TestSuite) initCosmwasmController() error {
 	sdkCfg = sdk.GetConfig()
 	fmt.Printf("AFTER - SDK Account Prefix BCD init: %s\n", sdkCfg.GetBech32AccountAddrPrefix())
 	tempApp := bcdapp.NewTmpApp()
-	//tempApp := wasmapp.NewWasmApp(sdklogs.NewNopLogger(), dbm.NewMemDB(), nil, false, simtestutil.NewAppOptionsWithFlagHome(s.T().TempDir()), []wasmkeeper.Option{})
 	encodingCfg := wasmparams.EncodingConfig{
 		InterfaceRegistry: tempApp.InterfaceRegistry(),
 		Codec:             tempApp.AppCodec(),
@@ -716,13 +641,6 @@ func (s *BTCStakingIntegration2TestSuite) initCosmwasmController() error {
 	// Log implementations of ClientState
 	impls := encodingCfg.InterfaceRegistry.ListImplementations("ibc.core.client.v1.ClientState")
 	s.T().Logf("ClientState implementations: %v", impls)
-
-	// encodingCfg.InterfaceRegistry.RegisterImplementations()
-
-	// // Ensure that IBC types are registered
-	// clienttypes.RegisterInterfaces(encodingCfg.InterfaceRegistry)
-	// channeltypes.RegisterInterfaces(encodingCfg.InterfaceRegistry)
-	// connectiontypes.RegisterInterfaces(encodingCfg.InterfaceRegistry)
 
 	wcc, err := cosmwasm.NewCosmwasmConsumerController(cfg, encodingCfg, logger)
 	require.NoError(s.T(), err)
