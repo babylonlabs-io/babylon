@@ -100,14 +100,14 @@ func (s *BTCStakingIntegration2TestSuite) Test1ChainStartup() {
 }
 
 func (s *BTCStakingIntegration2TestSuite) Test2AutoRegisterAndVerifyNewConsumer() {
-	s.T().Skip()
+	//s.T().Skip()
 	// TODO: try to fix the error otherwise hardcode consumer id for now
 	consumerID := "07-tendermint-0" //  s.getIBCClientID()
 	s.verifyConsumerRegistration(consumerID)
 }
 
 func (s *BTCStakingIntegration2TestSuite) Test3CreateConsumerFinalityProvider() {
-	s.T().Skip()
+	//s.T().Skip()
 	consumerID := "07-tendermint-0"
 
 	// generate a random number of finality providers from 1 to 5
@@ -150,27 +150,30 @@ func (s *BTCStakingIntegration2TestSuite) Test4RestakeDelegationToMultipleFPs() 
 
 	// create a delegation and restake to both Babylon and consumer finality providers
 	// NOTE: this will create delegation in pending state as covenant sigs are not provided
-	_, _ = s.createBabylonDelegation(babylonFp, consumerFp)
+	delBtcPk, stakingTxHash := s.createBabylonDelegation(babylonFp, consumerFp)
 
 	// check delegation
-	//delegation := nonValidatorNode.QueryBtcDelegation(stakingTxHash)
-	//s.NotNil(delegation)
-	//
-	//// check consumer finality provider delegation
-	//czPendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex())
-	//s.Len(czPendingDelSet, 1)
-	//czPendingDels := czPendingDelSet[0]
-	//s.Len(czPendingDels.Dels, 1)
-	//s.Equal(delBtcPk.SerializeCompressed()[1:], czPendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
-	//s.Len(czPendingDels.Dels[0].CovenantSigs, 0)
-	//
-	//// check Babylon finality provider delegation
-	//pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(babylonFp.BtcPk.MarshalHex())
-	//s.Len(pendingDelSet, 1)
-	//pendingDels := pendingDelSet[0]
-	//s.Len(pendingDels.Dels, 1)
-	//s.Equal(delBtcPk.SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
-	//s.Len(pendingDels.Dels[0].CovenantSigs, 0)
+	delegation, err := s.babylonController.QueryBTCDelegation(stakingTxHash)
+	s.Require().NoError(err)
+	s.NotNil(delegation)
+
+	// check consumer finality provider delegation
+	czPendingDelSet, err := s.babylonController.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex())
+	s.Require().NoError(err)
+	s.Len(czPendingDelSet, 1)
+	// czPendingDels := czPendingDelSet[0]
+	// s.Len(czPendingDels.Dels, 1)
+	s.Equal(delBtcPk.SerializeCompressed()[1:], czPendingDelSet[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	s.Len(czPendingDelSet[0].CovenantSigs, 0)
+
+	// check Babylon finality provider delegation
+	pendingDelSet, err := s.babylonController.QueryFinalityProviderDelegations(babylonFp.BtcPk.MarshalHex())
+	s.Require().NoError(err)
+	s.Len(pendingDelSet, 1)
+	// pendingDels := pendingDelSet[0]
+	// s.Len(pendingDels.Dels, 1)
+	s.Equal(delBtcPk.SerializeCompressed()[1:], pendingDelSet[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	s.Len(pendingDelSet[0].CovenantSigs, 0)
 }
 
 func (s *BTCStakingIntegration2TestSuite) createBabylonDelegation(babylonFp *bstypes.FinalityProviderResponse, consumerFp *bsctypes.FinalityProviderResponse) (*btcec.PublicKey, string) {

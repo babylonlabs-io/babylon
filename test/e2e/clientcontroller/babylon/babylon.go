@@ -358,6 +358,50 @@ func (bc *BabylonController) QueryActiveDelegations(limit uint64) ([]*btcstaking
 	return bc.queryDelegationsWithStatus(btcstakingtypes.BTCDelegationStatus_ACTIVE, limit)
 }
 
+func (bc *BabylonController) QueryBTCDelegation(stakingTxHashHex string) (*btcstakingtypes.BTCDelegationResponse, error) {
+	resp, err := bc.bbnClient.QueryClient.BTCDelegation(stakingTxHashHex)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query BTC delegation: %w", err)
+	}
+
+	if resp.BtcDelegation == nil {
+		return nil, fmt.Errorf("no BTC delegation found for staking tx hash: %s", stakingTxHashHex)
+	}
+
+	return resp.BtcDelegation, nil
+}
+
+func (bc *BabylonController) QueryFinalityProviderDelegations(fpBtcPkHex string) ([]*btcstakingtypes.BTCDelegationResponse, error) {
+	pagination := &sdkquery.PageRequest{
+		Limit: 10,
+	}
+
+	var allDelegations []*btcstakingtypes.BTCDelegationResponse
+
+	for {
+		resp, err := bc.bbnClient.QueryClient.FinalityProviderDelegations(fpBtcPkHex, pagination)
+		if err != nil {
+			return nil, fmt.Errorf("failed to query finality provider delegations: %w", err)
+		}
+
+		for _, del := range resp.BtcDelegatorDelegations {
+			allDelegations = append(allDelegations, del.Dels...)
+		}
+
+		if resp.Pagination == nil || resp.Pagination.NextKey == nil {
+			break
+		}
+
+		pagination.Key = resp.Pagination.NextKey
+	}
+
+	if len(allDelegations) == 0 {
+		return nil, fmt.Errorf("no delegations found for finality provider with BTC public key: %s", fpBtcPkHex)
+	}
+
+	return allDelegations, nil
+}
+
 // queryDelegationsWithStatus queries BTC delegations
 // with the given status (either pending or unbonding)
 // it is only used when the program is running in Covenant mode
