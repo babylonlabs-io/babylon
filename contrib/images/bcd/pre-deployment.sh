@@ -2,7 +2,7 @@
 
 # Create new directory that will hold node and services' configuration
 mkdir -p .testnets && chmod -R 777 .testnets
-docker run --rm -v $(pwd)/.testnets:/data --user $(id -u):$(id -g) babylonlabs-io/babylond \
+docker run --rm -v $(pwd)/.testnets:/data babylonlabs-io/babylond \
     babylond testnet init-files --v 2 -o /data \
     --starting-ip-address 192.168.10.2 --keyring-backend=test \
     --chain-id chain-test --epoch-interval 10 \
