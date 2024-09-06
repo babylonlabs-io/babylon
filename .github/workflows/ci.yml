@@ -88,6 +88,23 @@ jobs:
           path: /tmp/docker-init-chain.tar.gz
           # retention-days: 90
 
+  e2e-docker-build-ibcsim-bcd:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build docker ibcsim-bcd
+        run: |
+          make -C contrib/images build-ibcsim-bcd
+      - name: Docker save ibcsim-bcd
+        run: |
+          docker save -o /tmp/docker-ibcsim-bcd.tar.gz babylonlabs-io/ibcsim-bcd:latest
+      - name: Upload ibcsim-bcd artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ibcsim-bcd-${{ github.sha }}
+          path: /tmp/docker-ibcsim-bcd.tar.gz
+
   e2e-run-ibc-transfer:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
@@ -294,3 +311,33 @@ jobs:
       - name: Run e2e TestSoftwareUpgradeSignetLaunchTestSuite
         run: |
           sudo make test-e2e-cache-upgrade-signet
+
+  e2e-run-bcd-consumer-integration-test:
+    needs: [e2e-docker-build-babylon, e2e-docker-build-ibcsim-bcd]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Download babylon artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: babylond-${{ github.sha }}
+          path: /tmp
+      - name: Download ibcsim-bcd artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ibcsim-bcd-${{ github.sha }}
+          path: /tmp
+      - name: Docker load babylond
+        run: |
+          docker load < /tmp/docker-babylond.tar.gz
+      - name: Docker load ibcsim-bcd
+        run: |
+          docker load < /tmp/docker-ibcsim-bcd.tar.gz
+      - name: Cache Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+      - name: Run BCD consumer integration test
+        run: |
+          make -C contrib/images start-bcd-consumer-integration-test
