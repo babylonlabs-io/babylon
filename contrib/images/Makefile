@@ -40,4 +40,20 @@ cosmos-relayer: cosmos-relayer-rmi
 cosmos-relayer-rmi:
 	docker rmi babylonlabs-io/cosmos-relayer 2>/dev/null; true
 
-.PHONY: all babylond babylond-before-upgrade cosmos-relayer e2e-init-chain babylond-rmi babylond-rmi-upgrade cosmos-relayer-rmi
+build-ibcsim-bcd:
+	docker build --tag babylonlabs-io/ibcsim-bcd -f bcd/Dockerfile ${BABYLON_FULL_PATH}
+
+ibcsim-bcd-rmi:
+	docker rmi babylonlabs-io/ibcsim-bcd 2>/dev/null; true
+
+build-integration-test: babylond build-ibcsim-bcd
+
+start-integration-test: stop-integration-test
+	bcd/pre-deployment.sh
+	docker compose -f bcd/docker-compose.yml up -d
+
+stop-integration-test:
+	docker compose -f bcd/docker-compose.yml down
+	rm -rf bcd/.testnets
+
+.PHONY: all babylond babylond-before-upgrade cosmos-relayer e2e-init-chain babylond-rmi babylond-rmi-upgrade cosmos-relayer-rmi build-ibcsim-bcd ibcsim-bcd-rmi build-integration-test start-integration-test stop-integration-test
