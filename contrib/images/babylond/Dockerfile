@@ -1,10 +1,5 @@
 FROM --platform=$BUILDPLATFORM golang:1.21 AS build-env
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc-i686-linux-gnu \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
 # Version to build. Default is empty
 ARG VERSION
 ARG BUILD_TAGS=""
@@ -29,9 +24,6 @@ RUN LEDGER_ENABLED=$LEDGER_ENABLED \
     BUILD_TAGS=$BUILD_TAGS \
     COSMOS_BUILD_OPTIONS=$COSMOS_BUILD_OPTIONS \
     LINK_STATICALLY=false \
-    GOOS=${TARGETOS} \
-    GOARCH=${TARGETARCH} \
-    CC=arm-linux-gnueabi-gcc CGO_ENABLED=1 \
     make build
 
 FROM debian:bookworm-slim AS wasm-link
