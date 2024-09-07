@@ -1,7 +1,5 @@
 FROM --platform=$BUILDPLATFORM golang:1.21 AS build-env
 
-# Version to build. Default is empty
-ARG VERSION
 ARG BUILD_TAGS=""
 ARG LEDGER_ENABLED="false"
 ARG COSMOS_BUILD_OPTIONS=""
@@ -10,12 +8,6 @@ ARG TARGETOS TARGETARCH
 
 WORKDIR /go/src/github.com/babylonlabs-io/babylon
 COPY ./ /go/src/github.com/babylonlabs-io/babylon/
-
-# Handle if version is set
-RUN if [ -n "${VERSION}" ]; then \
-        git fetch origin tag ${VERSION} --no-tags; \
-        git checkout -f ${VERSION}; \
-    fi
 
 # Cache mod dependencies
 RUN go mod download
