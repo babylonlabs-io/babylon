@@ -14,9 +14,9 @@ import (
 	bcdparams "github.com/babylonlabs-io/babylon-sdk/demo/app/params"
 	bbnparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/client/config"
-	"github.com/babylonlabs-io/babylon/test/e2e/bcd_integration/clientcontroller/babylon"
-	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/bcd_integration/clientcontroller/config"
-	"github.com/babylonlabs-io/babylon/test/e2e/bcd_integration/clientcontroller/cosmwasm"
+	"github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/clientcontroller/babylon"
+	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/clientcontroller/config"
+	"github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/clientcontroller/cosmwasm"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/types"
@@ -39,14 +39,14 @@ import (
 
 var MinCommissionRate = sdkmath.LegacyNewDecWithPrec(5, 2) // 5%
 
-type BCDIntegrationTestSuite struct {
+type BCDConsumerIntegrationTestSuite struct {
 	suite.Suite
 
 	babylonController  *babylon.BabylonController
 	cosmwasmController *cosmwasm.CosmwasmConsumerController
 }
 
-func (s *BCDIntegrationTestSuite) SetupSuite() {
+func (s *BCDConsumerIntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
 
 	err := s.initBabylonController()
@@ -56,7 +56,7 @@ func (s *BCDIntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err, "Failed to initialize CosmwasmConsumerController")
 }
 
-func (s *BCDIntegrationTestSuite) TearDownSuite() {
+func (s *BCDConsumerIntegrationTestSuite) TearDownSuite() {
 	s.T().Log("tearing down e2e integration test suite...")
 
 	// Get the current working directory
@@ -79,7 +79,7 @@ func (s *BCDIntegrationTestSuite) TearDownSuite() {
 	}
 }
 
-func (s *BCDIntegrationTestSuite) Test1ChainStartup() {
+func (s *BCDConsumerIntegrationTestSuite) Test1ChainStartup() {
 	var (
 		babylonStatus  *coretypes.ResultStatus
 		consumerStatus *coretypes.ResultStatus
@@ -101,13 +101,13 @@ func (s *BCDIntegrationTestSuite) Test1ChainStartup() {
 	s.T().Logf("Consumer node status: %v", consumerStatus.SyncInfo.LatestBlockHeight)
 }
 
-func (s *BCDIntegrationTestSuite) Test2AutoRegisterAndVerifyNewConsumer() {
+func (s *BCDConsumerIntegrationTestSuite) Test2AutoRegisterAndVerifyNewConsumer() {
 	// TODO: getting some error in ibc client-state, hardcode consumer id for now
 	consumerID := "07-tendermint-0" //  s.getIBCClientID()
 	s.verifyConsumerRegistration(consumerID)
 }
 
-func (s *BCDIntegrationTestSuite) Test3CreateConsumerFinalityProvider() {
+func (s *BCDConsumerIntegrationTestSuite) Test3CreateConsumerFinalityProvider() {
 	consumerID := "07-tendermint-0"
 
 	// generate a random number of finality providers from 1 to 5
@@ -138,7 +138,7 @@ func (s *BCDIntegrationTestSuite) Test3CreateConsumerFinalityProvider() {
 	}
 }
 
-func (s *BCDIntegrationTestSuite) Test4RestakeDelegationToMultipleFPs() {
+func (s *BCDConsumerIntegrationTestSuite) Test4RestakeDelegationToMultipleFPs() {
 	consumerID := "07-tendermint-0"
 
 	consumerFps, err := s.babylonController.QueryConsumerFinalityProviders(consumerID)
@@ -176,7 +176,7 @@ func (s *BCDIntegrationTestSuite) Test4RestakeDelegationToMultipleFPs() {
 	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
 }
 
-func (s *BCDIntegrationTestSuite) Test5ActivateDelegation() {
+func (s *BCDConsumerIntegrationTestSuite) Test5ActivateDelegation() {
 	consumerId := "07-tendermint-0"
 
 	// Query consumer finality providers
@@ -230,7 +230,7 @@ func (s *BCDIntegrationTestSuite) Test5ActivateDelegation() {
 	s.Require().NotNil(fpsByPower)
 }
 
-func (s *BCDIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctypes.FinalityProviderResponse) {
+func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctypes.FinalityProviderResponse) {
 	cvSK, _, _, err := getDeterministicCovenantKey()
 	s.NoError(err)
 
@@ -347,7 +347,7 @@ func (s *BCDIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctypes.Finali
 	}, time.Minute, time.Second*15, "BTC staking was not activated within the expected time")
 }
 
-func (s *BCDIntegrationTestSuite) createBabylonDelegation(babylonFp *bstypes.FinalityProviderResponse, consumerFp *bsctypes.FinalityProviderResponse) (*btcec.PublicKey, string) {
+func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bstypes.FinalityProviderResponse, consumerFp *bsctypes.FinalityProviderResponse) (*btcec.PublicKey, string) {
 	/*
 		create a random BTC delegation restaking to Babylon and consumer finality providers
 	*/
@@ -471,7 +471,7 @@ func (s *BCDIntegrationTestSuite) createBabylonDelegation(babylonFp *bstypes.Fin
 }
 
 // helper function: create a random Babylon finality provider and verify it
-func (s *BCDIntegrationTestSuite) createVerifyBabylonFP() *bstypes.FinalityProviderResponse {
+func (s *BCDConsumerIntegrationTestSuite) createVerifyBabylonFP() *bstypes.FinalityProviderResponse {
 
 	/*
 		create a random finality provider on Babylon
@@ -513,7 +513,7 @@ func (s *BCDIntegrationTestSuite) createVerifyBabylonFP() *bstypes.FinalityProvi
 	return actualFps[0]
 }
 
-func (s *BCDIntegrationTestSuite) createVerifyConsumerFP(consumerId string) *bstypes.FinalityProvider {
+func (s *BCDConsumerIntegrationTestSuite) createVerifyConsumerFP(consumerId string) *bstypes.FinalityProvider {
 	/*
 		create a random consumer finality provider on Babylon
 	*/
@@ -553,7 +553,7 @@ func (s *BCDIntegrationTestSuite) createVerifyConsumerFP(consumerId string) *bst
 	return czFp
 }
 
-func (s *BCDIntegrationTestSuite) initBabylonController() error {
+func (s *BCDConsumerIntegrationTestSuite) initBabylonController() error {
 	cfg := config.DefaultBabylonConfig()
 
 	btcParams := &chaincfg.RegressionNetParams // or whichever network you're using
@@ -582,7 +582,7 @@ func (s *BCDIntegrationTestSuite) initBabylonController() error {
 	return nil
 }
 
-func (s *BCDIntegrationTestSuite) initCosmwasmController() error {
+func (s *BCDConsumerIntegrationTestSuite) initCosmwasmController() error {
 	cfg := cwconfig.DefaultCosmwasmConfig()
 	cfg.BtcStakingContractAddress = "bbnc1nc5tatafv6eyq7llkr2gv50ff9e22mnf70qgjlv737ktmt4eswrqgn0kq0"
 
@@ -607,7 +607,7 @@ func (s *BCDIntegrationTestSuite) initCosmwasmController() error {
 }
 
 // nolint:unused
-func (s *BCDIntegrationTestSuite) getIBCClientID() string {
+func (s *BCDConsumerIntegrationTestSuite) getIBCClientID() string {
 	var babylonChannel *channeltypes.IdentifiedChannel
 	s.Eventually(func() bool {
 		babylonChannelsResp, err := s.babylonController.IBCChannels()
@@ -657,7 +657,7 @@ func (s *BCDIntegrationTestSuite) getIBCClientID() string {
 	return babylonChannelState.IdentifiedClientState.ClientId
 }
 
-func (s *BCDIntegrationTestSuite) verifyConsumerRegistration(consumerID string) *bsctypes.ConsumerRegister {
+func (s *BCDConsumerIntegrationTestSuite) verifyConsumerRegistration(consumerID string) *bsctypes.ConsumerRegister {
 	var consumerRegistry []*bsctypes.ConsumerRegister
 
 	s.Eventually(func() bool {

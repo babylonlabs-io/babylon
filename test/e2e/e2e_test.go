@@ -43,7 +43,7 @@ func TestBTCStakingIntegrationTestSuite(t *testing.T) {
 
 // TestBCDIntegrationTestSuite includes babylon<->bcd integration related tests
 func TestBCDIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, new(BCDIntegrationTestSuite))
+	suite.Run(t, new(BCDConsumerIntegrationTestSuite))
 }
 
 // TestSoftwareUpgradeTestSuite tests software upgrade protocol end-to-end

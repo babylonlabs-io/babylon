@@ -3,7 +3,7 @@ package config_test
 import (
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/test/e2e/bcd_integration/cosmwasmclient/config"
+	"github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/cosmwasmclient/config"
 	"github.com/stretchr/testify/require"
 )
 
