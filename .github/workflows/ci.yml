@@ -313,7 +313,7 @@ jobs:
           sudo make test-e2e-cache-upgrade-signet
 
   e2e-run-bcd-consumer-integration-test:
-    # needs: [e2e-docker-build-babylon]
+    needs: [e2e-docker-build-babylon, e2e-docker-build-ibcsim-bcd]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
@@ -322,12 +322,12 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: 1.21
-      - name: Build BCD consumer integration images
-        run: |
-          make -C contrib/images build-bcd-consumer-integration
+      # - name: Build BCD consumer integration images
+      #   run: |
+      #     make -C contrib/images build-bcd-consumer-integration
       - name: Start BCD consumer integration containers
         run: |
-          make -C contrib/images start-bcd-consumer-integration
+          sudo make -C contrib/images start-bcd-consumer-integration
       - name: Run BCD consumer integration test
         run: |
           make test-e2e-cache-bcd-consumer-integration
