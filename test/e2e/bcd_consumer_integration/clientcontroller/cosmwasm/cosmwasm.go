@@ -12,13 +12,12 @@ import (
 	wasmdtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/clientcontroller/config"
 	"github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/clientcontroller/types"
-	cwcclient "github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/cosmwasmclient/client"
 	bbntypes "github.com/babylonlabs-io/babylon/types"
+	cwcclient "github.com/babylonlabs-io/cosmwasm-client/client"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
@@ -644,7 +643,7 @@ func fromCosmosEventsToBytes(events []provider.RelayerEvent) []byte {
 	return bytes
 }
 
-func (cc *CosmwasmConsumerController) QueryNodeStatus() (*ctypes.ResultStatus, error) {
+func (cc *CosmwasmConsumerController) QueryNodeStatus() (*coretypes.ResultStatus, error) {
 	return cc.cwClient.QueryClient.RPCClient.Status(context.Background())
 }
 

@@ -43,6 +43,7 @@ require (
 	github.com/CosmWasm/wasmvm/v2 v2.0.3
 	github.com/avast/retry-go/v4 v4.5.1
 	github.com/babylonlabs-io/babylon-sdk/demo v0.0.0-20240814002132-55e711397a82
+	github.com/babylonlabs-io/cosmwasm-client v0.0.0-20240908181148-88f10f0917e6
 	github.com/bits-and-blooms/bitset v1.10.0
 	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2

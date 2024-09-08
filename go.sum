@@ -276,6 +276,8 @@ github.com/babylonlabs-io/babylon-sdk/demo v0.0.0-20240814002132-55e711397a82 h1
 github.com/babylonlabs-io/babylon-sdk/demo v0.0.0-20240814002132-55e711397a82/go.mod h1:QqEn1sL4RPG7DJ94XFYvuvEELml64s5XwPQpTayXJss=
 github.com/babylonlabs-io/babylon-sdk/x v0.0.0-20240814002132-55e711397a82 h1:F9U6iH+RqXo2ColXvGGByWDY0DdyAMnIgjpxQbWooiE=
 github.com/babylonlabs-io/babylon-sdk/x v0.0.0-20240814002132-55e711397a82/go.mod h1:WJlZy0RYCtyBFeO1mr0Tlo02csrlCAQgzmp4+NVX14g=
+github.com/babylonlabs-io/cosmwasm-client v0.0.0-20240908181148-88f10f0917e6 h1:dIkjNQmlo75sAZ4ZvPlEenfC4XdCR46eiPoTOX3a9i0=
+github.com/babylonlabs-io/cosmwasm-client v0.0.0-20240908181148-88f10f0917e6/go.mod h1:+No4dcrR8vJUm7bmx5y2TusLvPsjWeRHUB4WLmKtpEE=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=

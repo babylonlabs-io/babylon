@@ -249,14 +249,14 @@ func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctype
 	slashingTx := pendingDel.SlashingTx
 	stakingTx := pendingDel.StakingTx
 
-	stakingMsgTx, err := bbn.NewBTCTxFromBytes(stakingTx)
+	stakingMsgTx, err := bbntypes.NewBTCTxFromBytes(stakingTx)
 	s.NoError(err)
 	stakingTxHash := stakingMsgTx.TxHash().String()
 
 	params, err := s.babylonController.QueryBTCStakingParams()
 	s.NoError(err)
 
-	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
+	fpBTCPKs, err := bbntypes.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
 	s.NoError(err)
 
 	stakingInfo, err := pendingDel.GetStakingInfo(params, net)
@@ -281,7 +281,7 @@ func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctype
 	// cov Schnorr sigs on unbonding signature
 	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
 	s.NoError(err)
-	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
+	unbondingTx, err := bbntypes.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
 	s.NoError(err)
 
 	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
@@ -446,9 +446,9 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 	s.NoError(err)
 
 	// submit the message for creating BTC delegation
-	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(czDelBtcPk)}
+	delBTCPKs := []bbntypes.BIP340PubKey{*bbntypes.NewBIP340PubKeyFromBTCPK(czDelBtcPk)}
 
-	serializedUnbondingTx, err := bbn.SerializeBTCTx(testUnbondingInfo.UnbondingTx)
+	serializedUnbondingTx, err := bbntypes.SerializeBTCTx(testUnbondingInfo.UnbondingTx)
 	s.NoError(err)
 
 	// submit the BTC delegation to Babylon
@@ -694,7 +694,7 @@ func getDeterministicCovenantKey() (*btcec.PrivateKey, *btcec.PublicKey, string,
 	privateKey, publicKey := btcec.PrivKeyFromBytes(privateKeyBytes)
 
 	// Convert to BIP340 public key
-	bip340PubKey := bbn.NewBIP340PubKeyFromBTCPK(publicKey)
+	bip340PubKey := bbntypes.NewBIP340PubKeyFromBTCPK(publicKey)
 
 	// Get the hex representation of the BIP340 public key
 	publicKeyHex := bip340PubKey.MarshalHex()
