@@ -343,4 +343,4 @@ jobs:
           sudo make -C contrib/images start-bcd-consumer-integration
       - name: Run BCD consumer integration test
         run: |
-          make test-e2e-cache-bcd-consumer-integration
+          sudo make test-e2e-cache-bcd-consumer-integration

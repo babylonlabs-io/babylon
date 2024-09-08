@@ -69,11 +69,11 @@ func (s *BCDConsumerIntegrationTestSuite) TearDownSuite() {
 	// Construct the path to the Makefile directory
 	makefileDir := filepath.Join(currentDir, "../../contrib/images")
 
-	// Run the stop-integration-test make target
+	// Run the stop-bcd-consumer-integration make target
 	cmd := exec.Command("make", "-C", makefileDir, "stop-bcd-consumer-integration")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		s.T().Errorf("Failed to run stop-integration-test: %v\nOutput: %s", err, output)
+		s.T().Errorf("Failed to run stop-bcd-consumer-integration: %v\nOutput: %s", err, output)
 	} else {
 		s.T().Log("Successfully stopped integration test")
 	}
