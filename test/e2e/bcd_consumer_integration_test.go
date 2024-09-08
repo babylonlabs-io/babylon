@@ -19,8 +19,6 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/clientcontroller/cosmwasm"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/types"
-	bbn "github.com/babylonlabs-io/babylon/types"
 	bbntypes "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
@@ -696,7 +694,7 @@ func getDeterministicCovenantKey() (*btcec.PrivateKey, *btcec.PublicKey, string,
 	privateKey, publicKey := btcec.PrivKeyFromBytes(privateKeyBytes)
 
 	// Convert to BIP340 public key
-	bip340PubKey := types.NewBIP340PubKeyFromBTCPK(publicKey)
+	bip340PubKey := bbn.NewBIP340PubKeyFromBTCPK(publicKey)
 
 	// Get the hex representation of the BIP340 public key
 	publicKeyHex := bip340PubKey.MarshalHex()
