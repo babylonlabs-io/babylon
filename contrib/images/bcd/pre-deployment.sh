@@ -2,6 +2,7 @@
 
 # Create new directory that will hold node and services' configuration
 mkdir -p bcd/.testnets && chmod -R 777 bcd/.testnets
+echo "Creating and configuring testnet directory..."
 docker run --rm -v $(pwd)/bcd/.testnets:/data babylonlabs-io/babylond \
     babylond testnet init-files --v 2 -o /data \
     --starting-ip-address 192.168.10.2 --keyring-backend=test \
@@ -18,3 +19,4 @@ docker run --rm -v $(pwd)/bcd/.testnets:/data babylonlabs-io/babylond \
 
 # Create separate subpaths for each component and copy relevant configuration
 chmod -R 777 bcd/.testnets
+echo "Testnet directory created and configured successfully."
