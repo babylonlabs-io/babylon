@@ -518,7 +518,7 @@ func (bc *BabylonController) IBCChannels() (*channeltypes.QueryChannelsResponse,
 	return bc.bbnClient.IBCChannels()
 }
 
-func (bc *BabylonController) QueryConsumerRegistry(consumerID string) ([]*bsctypes.ConsumerRegister, error) {
+func (bc *BabylonController) QueryConsumerRegistry(consumerID string) (*bsctypes.QueryConsumersRegistryResponse, error) {
 	return bc.bbnClient.QueryConsumersRegistry([]string{consumerID})
 }
 

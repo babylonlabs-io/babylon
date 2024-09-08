@@ -41,8 +41,8 @@ func TestBTCStakingIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingIntegrationTestSuite))
 }
 
-// TestBCDIntegrationTestSuite includes babylon<->bcd integration related tests
-func TestBCDIntegrationTestSuite(t *testing.T) {
+// TestBCDConsumerIntegrationTestSuite includes babylon<->bcd integration related tests
+func TestBCDConsumerIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(BCDConsumerIntegrationTestSuite))
 }
 

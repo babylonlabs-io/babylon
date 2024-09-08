@@ -67,10 +67,10 @@ func (s *BCDConsumerIntegrationTestSuite) TearDownSuite() {
 	}
 
 	// Construct the path to the Makefile directory
-	makefileDir := filepath.Join(currentDir, "bcd_integration")
+	makefileDir := filepath.Join(currentDir, "../../contrib/images")
 
 	// Run the stop-integration-test make target
-	cmd := exec.Command("make", "-C", makefileDir, "stop-integration-test")
+	cmd := exec.Command("make", "-C", makefileDir, "stop-bcd-consumer-integration")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		s.T().Errorf("Failed to run stop-integration-test: %v\nOutput: %s", err, output)
@@ -89,16 +89,19 @@ func (s *BCDConsumerIntegrationTestSuite) Test1ChainStartup() {
 	// Use Babylon controller
 	s.Eventually(func() bool {
 		babylonStatus, err = s.babylonController.QueryNodeStatus()
-		return err == nil && babylonStatus.SyncInfo.LatestBlockHeight >= 1
+		return err == nil && babylonStatus != nil && babylonStatus.SyncInfo.LatestBlockHeight >= 1
 	}, time.Minute, time.Second, "Failed to query Babylon node status", err)
 	s.T().Logf("Babylon node status: %v", babylonStatus.SyncInfo.LatestBlockHeight)
 
 	// Use Cosmwasm controller
 	s.Eventually(func() bool {
 		consumerStatus, err = s.cosmwasmController.GetCometNodeStatus()
-		return err == nil && consumerStatus.SyncInfo.LatestBlockHeight >= 1
+		return err == nil && consumerStatus != nil && consumerStatus.SyncInfo.LatestBlockHeight >= 1
 	}, time.Minute, time.Second, "Failed to query Consumer node status", err)
 	s.T().Logf("Consumer node status: %v", consumerStatus.SyncInfo.LatestBlockHeight)
+
+	// Wait till IBC connection/channel b/w babylon<->bcd is established
+	s.waitForIBCConnection()
 }
 
 func (s *BCDConsumerIntegrationTestSuite) Test2AutoRegisterAndVerifyNewConsumer() {
@@ -567,7 +570,7 @@ func (s *BCDConsumerIntegrationTestSuite) initBabylonController() error {
 	}
 
 	// Construct the path to the Makefile directory
-	cfg.KeyDirectory = filepath.Join(currentDir, "bcd_integration/.testnets/node0/babylond")
+	cfg.KeyDirectory = filepath.Join(currentDir, "../../contrib/images/bcd/.testnets/node0/babylond")
 	cfg.GasPrices = "0.02ubbn"
 	cfg.GasAdjustment = 20
 
@@ -606,8 +609,7 @@ func (s *BCDConsumerIntegrationTestSuite) initCosmwasmController() error {
 	return nil
 }
 
-// nolint:unused
-func (s *BCDConsumerIntegrationTestSuite) getIBCClientID() string {
+func (s *BCDConsumerIntegrationTestSuite) waitForIBCConnection() {
 	var babylonChannel *channeltypes.IdentifiedChannel
 	s.Eventually(func() bool {
 		babylonChannelsResp, err := s.babylonController.IBCChannels()
@@ -651,27 +653,26 @@ func (s *BCDConsumerIntegrationTestSuite) getIBCClientID() string {
 	s.T().Logf("IBC channel is established successfully")
 
 	// Query the channel client state
-	babylonChannelState, err := s.babylonController.QueryChannelClientState(babylonChannel.ChannelId, babylonChannel.PortId)
-	s.Require().NoError(err, "Failed to query Babylon channel client state")
-
-	return babylonChannelState.IdentifiedClientState.ClientId
+	//babylonChannelState, err := s.babylonController.QueryChannelClientState(babylonChannel.ChannelId, babylonChannel.PortId)
+	//s.Require().NoError(err, "Failed to query Babylon channel client state")
+	//
+	//return babylonChannelState.IdentifiedClientState.ClientId
 }
 
 func (s *BCDConsumerIntegrationTestSuite) verifyConsumerRegistration(consumerID string) *bsctypes.ConsumerRegister {
-	var consumerRegistry []*bsctypes.ConsumerRegister
+	var consumerRegistryResp *bsctypes.QueryConsumersRegistryResponse
 
 	s.Eventually(func() bool {
 		var err error
-		consumerRegistry, err = s.babylonController.QueryConsumerRegistry(consumerID)
+		consumerRegistryResp, err = s.babylonController.QueryConsumerRegistry(consumerID)
 		if err != nil {
 			s.T().Logf("Error querying consumer registry: %v", err)
 			return false
 		}
-		return len(consumerRegistry) == 1
+		return consumerRegistryResp != nil && len(consumerRegistryResp.GetConsumersRegister()) == 1
 	}, time.Minute, 5*time.Second, "Consumer was not registered within the expected time")
 
-	s.Require().Len(consumerRegistry, 1)
-	registeredConsumer := consumerRegistry[0]
+	registeredConsumer := consumerRegistryResp.GetConsumersRegister()[0]
 
 	s.T().Logf("Consumer registered: ID=%s, Name=%s, Description=%s",
 		registeredConsumer.ConsumerId,

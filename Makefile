@@ -260,7 +260,7 @@ test-e2e-cache:
 	go test -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-bcd-consumer-integration:
-	go test -run BCDConsumerIntegrationTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+	go test -run TestBCDConsumerIntegrationTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-ibc-transfer:
 	go test -run TestIBCTranferTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
