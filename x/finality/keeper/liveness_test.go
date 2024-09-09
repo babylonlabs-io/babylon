@@ -34,7 +34,7 @@ func FuzzHandleLiveness(f *testing.F) {
 		params := fKeeper.GetParams(ctx)
 		fpPk, err := datagen.GenRandomBIP340PubKey(r)
 		require.NoError(t, err)
-		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), fpPk.MustMarshal()).Return(&bstypes.FinalityProvider{Sluggish: false}, nil).AnyTimes()
+		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), fpPk.MustMarshal()).Return(&bstypes.FinalityProvider{Jailed: false}, nil).AnyTimes()
 		signingInfo := types.NewFinalityProviderSigningInfo(
 			fpPk,
 			1,

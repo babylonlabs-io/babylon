@@ -69,7 +69,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 
 	// reconcile old voting power distribution cache and new events
 	// to construct the new distribution
-	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events, maxActiveFps)
+	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events)
 
 	// record voting power and cache for this height
 	k.recordVotingPowerAndCache(ctx, dc, newDc, maxActiveFps)
@@ -150,15 +150,14 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	ctx context.Context,
 	dc *types.VotingPowerDistCache,
 	events []*types.EventPowerDistUpdate,
-	maxActiveFps uint32,
 ) *types.VotingPowerDistCache {
 	// a map where key is finality provider's BTC PK hex and value is a list
 	// of BTC delegations that newly become active under this provider
 	activeBTCDels := map[string][]*types.BTCDelegation{}
 	// a map where key is unbonded BTC delegation's staking tx hash
 	unbondedBTCDels := map[string]struct{}{}
-	// a map where key is slashed finality providers' BTC PK
-	slashedFPs := map[string]struct{}{}
+	// a map where key is slashed or jailed finality providers' BTC PK
+	slashedOrJailedFPs := map[string]struct{}{}
 
 	/*
 		filter and classify all events into new/expired BTC delegations and slashed FPs
@@ -183,8 +182,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				unbondedBTCDels[delEvent.StakingTxHash] = struct{}{}
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
-			// slashed finality providers
-			slashedFPs[typedEvent.SlashedFp.Pk.MarshalHex()] = struct{}{}
+			// record slashed fps
+			slashedOrJailedFPs[typedEvent.SlashedFp.Pk.MarshalHex()] = struct{}{}
+		case *types.EventPowerDistUpdate_JailedFp:
+			// record jailed fps
+			slashedOrJailedFPs[typedEvent.JailedFp.Pk.MarshalHex()] = struct{}{}
 		}
 	}
 
@@ -208,8 +210,9 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 
 		fpBTCPKHex := fp.BtcPk.MarshalHex()
 
-		// if this finality provider is slashed, continue to avoid recording it
-		if _, ok := slashedFPs[fpBTCPKHex]; ok {
+		// if this finality provider is slashed or jailed, continue to avoid
+		// assigning voting power to it
+		if _, ok := slashedOrJailedFPs[fpBTCPKHex]; ok {
 			continue
 		}
 

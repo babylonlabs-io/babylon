@@ -58,9 +58,9 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 			}
 		}
 
-		newDc := h.BTCStakingKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, events, 100)
+		newDc := h.BTCStakingKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, events)
 		for i := 0; i < 10; i++ {
-			newDc2 := h.BTCStakingKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, events, 100)
+			newDc2 := h.BTCStakingKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, events)
 			require.Equal(t, newDc, newDc2)
 		}
 	})

@@ -38,7 +38,7 @@ func (k Keeper) HandleLiveness(ctx context.Context, height int64) {
 }
 
 // HandleFinalityProviderLiveness updates the voting history of the given finality provider and
-// detect sluggish the finality provider if the number of missed block is reached to the threshold in a
+// jail sluggish the finality provider if the number of missed block is reached to the threshold in a
 // sliding window
 func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.BIP340PubKey, missed bool, height int64) error {
 	params := k.GetParams(ctx)
@@ -47,8 +47,8 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 		return err
 	}
 
-	// don't update missed blocks when finality provider is already detected slashed
-	if fp.IsSlashed() {
+	// don't update missed blocks when finality provider is already slashed or jailed
+	if fp.IsSlashed() || fp.IsJailed() {
 		return nil
 	}
 
@@ -87,45 +87,15 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 			"window_size", signedBlocksWindow,
 		)
 
-		// Inactivity detected
-		err = k.hooks.AfterSluggishFinalityProviderDetected(ctx, fpPk)
-		if err != nil {
-			return err
+		// sluggish finality provider detected
+		if err := k.jailSluggishFinalityProvider(ctx, fpPk); err != nil {
+			panic(fmt.Errorf("failed to jail sluggish finality provider %s: %w", fpPk.MarshalHex(), err))
 		}
-
-		if err := sdkCtx.EventManager().EmitTypedEvent(
-			finalitytypes.NewEventSluggishFinalityProviderDetected(fpPk),
-		); err != nil {
-			panic(fmt.Errorf("failed to emit sluggish finality provider detected event for height %d: %w", height, err))
-		}
-
-		finalitytypes.IncrementSluggishFinalityProviderCounter()
-	} else if fp.IsSluggish() {
-		updated = true
-
-		k.Logger(sdkCtx).Info(
-			"reverted sluggish finality provider",
-			"height", height,
-			"public_key", fpPk.MarshalHex(),
-		)
-
-		// change the sluggish flag of the finality provider to false
-		err = k.BTCStakingKeeper.RevertSluggishFinalityProvider(ctx, fpPk.MustMarshal())
-		if err != nil {
-			return fmt.Errorf("failed to revert sluggish finality provider %s: %w", fpPk.MarshalHex(), err)
-		}
-
-		if err := sdkCtx.EventManager().EmitTypedEvent(
-			finalitytypes.NewEventSluggishFinalityProviderReverted(fpPk),
-		); err != nil {
-			panic(fmt.Errorf("failed to emit sluggish finality provider reverted event for height %d: %w", height, err))
-		}
-
-		finalitytypes.DecrementSluggishFinalityProviderCounter()
 	}
 
 	// Set the updated signing info
 	if updated {
+		signInfo.JailedUntil = sdkCtx.BlockHeader().Time.Add(params.JailDuration)
 		return k.FinalityProviderSigningTracker.Set(ctx, fpPk.MustMarshal(), *signInfo)
 	}
 
@@ -199,4 +169,22 @@ func (k Keeper) updateSigningInfo(
 	}
 
 	return modifiedSignInfo, &signInfo, nil
+}
+
+func (k Keeper) jailSluggishFinalityProvider(ctx context.Context, fpBtcPk *types.BIP340PubKey) error {
+	err := k.hooks.AfterSluggishFinalityProviderDetected(ctx, fpBtcPk)
+	if err != nil {
+		return err
+	}
+
+	err = sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(
+		finalitytypes.NewEventJailedFinalityProvider(fpBtcPk),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to emit sluggish finality provider detected event: %w", err)
+	}
+
+	finalitytypes.IncrementSluggishFinalityProviderCounter()
+
+	return nil
 }

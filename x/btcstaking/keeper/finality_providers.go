@@ -102,6 +102,43 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	return nil
 }
 
+// JailFinalityProvider jails a finality provider with the given PK
+// A jailed finality provider will not have voting power until it is
+// unjailed (assuming it still ranks top N and has timestamped pub rand)
+func (k Keeper) JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
+	// ensure finality provider exists
+	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
+	if err != nil {
+		return err
+	}
+
+	// ensure finality provider is not slashed yet
+	if fp.IsSlashed() {
+		return types.ErrFpAlreadySlashed
+	}
+
+	// ensure finality provider is not jailed yet
+	if fp.IsJailed() {
+		return types.ErrFpAlreadySlashed
+	}
+
+	// set finality provider to be jailed
+	fp.Jailed = true
+	k.setFinalityProvider(ctx, fp)
+
+	btcTip := k.btclcKeeper.GetTipInfo(ctx)
+	if btcTip == nil {
+		return fmt.Errorf("failed to get current BTC tip")
+	}
+
+	// record jailed event. The next `BeginBlock` will consume this
+	// event for updating the finality provider set
+	powerUpdateEvent := types.NewEventPowerDistUpdateWithJailedFP(fp.BtcPk)
+	k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
+
+	return nil
+}
+
 // RevertSluggishFinalityProvider sets the Sluggish flag of the given finality provider
 // to false
 func (k Keeper) RevertSluggishFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
@@ -113,11 +150,11 @@ func (k Keeper) RevertSluggishFinalityProvider(ctx context.Context, fpBTCPK []by
 
 	// ignore the finality provider is already slashed
 	// or detected as sluggish
-	if fp.IsSlashed() || fp.IsSluggish() {
+	if fp.IsSlashed() || fp.IsJailed() {
 		return nil
 	}
 
-	fp.Sluggish = false
+	fp.Jailed = false
 	k.setFinalityProvider(ctx, fp)
 
 	return nil
