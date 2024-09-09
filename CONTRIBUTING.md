@@ -8,6 +8,7 @@
     - [Pull Requests](#pull-requests)
     - [Requesting Reviews](#requesting-reviews)
     - [Updating Documentation](#updating-documentation)
+    - [Updating Changelog](#updating-changelog)
   - [Dependencies](#dependencies)
   - [Protobuf](#protobuf)
   - [Branching Model and Release](#branching-model-and-release)
@@ -119,6 +120,25 @@ affect production code).
 
 If you open a PR in Babylon, it is mandatory to update the relevant
 documentation in `/docs`.
+
+### Updating Changelog
+
+Any pr which is merged to `main` and affects consumers of the codebase,
+must modify changelog [file](./CHANGELOG.md) accordingly, by adding new entry
+in `Unreleased` section of the changelog.
+
+Examples of changes which require change log update:
+- bug fix
+- adding new api
+- adding new feature
+
+Examples of changed that do not require changelog updates:
+- refactoring of internal implementation
+- adding new tests
+- modifying documentation
+
+The rule of thumb here it that changelog should be updated whenever change is
+visible by external user.
 
 ## Dependencies
 
