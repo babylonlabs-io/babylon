@@ -4,7 +4,6 @@ import (
 	"context"
 	"math/rand"
 	"testing"
-	"time"
 
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
@@ -51,56 +50,90 @@ func SimulateNewHeadersAndForks(ctx context.Context, r *rand.Rand, k *zckeeper.K
 	return headers, forkHeaders
 }
 
-func TestFeatureGate(t *testing.T) {
-	// Save the original value of EnableIntegration
-	originalEnableIntegration := zctypes.EnableIntegration
-	// Restore the original value after the test
-	defer func() {
-		zctypes.EnableIntegration = originalEnableIntegration
-	}()
-	// Set EnableIntegration to false
-	zctypes.EnableIntegration = false
+func FuzzFeatureGate(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
-	helper := testhelper.NewHelper(t)
-	zcKeeper := helper.App.ZoneConciergeKeeper
-	ctx := helper.Ctx
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
 
-	// Create a random header and consumer ID
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	header := datagen.GenRandomIBCTMHeader(r, 1)
-	consumerID := datagen.GenRandomHexStr(r, 30)
-	headerInfo := datagen.NewZCHeaderInfo(header, consumerID)
+		// Save the original value of EnableIntegration
+		originalEnableIntegration := zctypes.EnableIntegration
+		// Restore the original value after the test
+		defer func() {
+			zctypes.EnableIntegration = originalEnableIntegration
+		}()
+		// Set EnableIntegration to a random value
+		currentEnableIntegration := datagen.OneInN(r, 2)
+		zctypes.EnableIntegration = currentEnableIntegration
 
-	/*
-		Ensure PostHandler is feature gated
-	*/
-	// Call HandleHeaderWithValidCommit
-	zcKeeper.HandleHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), headerInfo, false)
-	// Check that the header was not stored
-	_, err := zcKeeper.GetHeader(ctx, consumerID, 1)
-	require.Error(t, err, "Header should not be stored when EnableIntegration is false")
+		helper := testhelper.NewHelper(t)
+		zcKeeper := helper.App.ZoneConciergeKeeper
+		ctx := helper.Ctx
 
-	/*
-		Ensure GRPC query server is feature gated
-	*/
-	// Get zone concierge query client
-	zcQueryHelper := baseapp.NewQueryServerTestHelper(ctx, helper.App.InterfaceRegistry())
-	queryClient := zctypes.NewQueryClient(zcQueryHelper)
-	// Test GetParams query
-	paramsReq := &zctypes.QueryParamsRequest{}
-	_, err = queryClient.Params(ctx, paramsReq)
-	require.Error(t, err, "Params query should be blocked when EnableIntegration is false")
-	require.Contains(t, err.Error(), "handler not found for /babylon.zoneconcierge.v1.Query/Params")
+		// Create a random header and consumer ID
+		header := datagen.GenRandomIBCTMHeader(r, 1)
+		consumerID := datagen.GenRandomHexStr(r, 30)
+		headerInfo := datagen.NewZCHeaderInfo(header, consumerID)
 
-	/*
-		Ensure msg server is feature gated
-	*/
-	msgClient := zctypes.NewMsgClient(zcQueryHelper)
-	msgReq := &zctypes.MsgUpdateParams{
-		Authority: helper.App.GovKeeper.GetGovernanceAccount(ctx).GetAddress().String(),
-		Params:    zctypes.DefaultParams(),
-	}
-	_, err = msgClient.UpdateParams(ctx, msgReq)
-	require.Error(t, err, "MsgUpdateParams should be blocked when EnableIntegration is false")
-	require.Contains(t, err.Error(), "handler not found for /babylon.zoneconcierge.v1.Msg/UpdateParams")
+		/*
+			Ensure PostHandler is feature gated
+		*/
+		// Call HandleHeaderWithValidCommit
+		zcKeeper.HandleHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), headerInfo, false)
+		// Check that the header was not stored
+		_, err := zcKeeper.GetHeader(ctx, consumerID, 1)
+		if currentEnableIntegration {
+			require.NoError(t, err, "Header should be stored when EnableIntegration is true")
+		} else {
+			require.Error(t, err, "Header should not be stored when EnableIntegration is false")
+		}
+
+		/*
+			Ensure GRPC query server is feature gated
+		*/
+		// Get zone concierge query client
+		zcQueryHelper := baseapp.NewQueryServerTestHelper(ctx, helper.App.InterfaceRegistry())
+		queryClient := zctypes.NewQueryClient(zcQueryHelper)
+
+		// Test GetParams query
+		paramsReq := &zctypes.QueryParamsRequest{}
+		_, err = queryClient.Params(ctx, paramsReq)
+		if currentEnableIntegration {
+			require.NoError(t, err, "Params query should work when EnableIntegration is true")
+		} else {
+			require.Error(t, err, "Params query should be blocked when EnableIntegration is false")
+			require.Contains(t, err.Error(), "handler not found for /babylon.zoneconcierge.v1.Query/Params")
+		}
+
+		/*
+			Ensure msg server is feature gated
+		*/
+		msgClient := zctypes.NewMsgClient(zcQueryHelper)
+		msgReq := &zctypes.MsgUpdateParams{
+			Authority: helper.App.GovKeeper.GetGovernanceAccount(ctx).GetAddress().String(),
+			Params:    zctypes.DefaultParams(),
+		}
+		_, err = msgClient.UpdateParams(ctx, msgReq)
+		if currentEnableIntegration {
+			require.NoError(t, err, "MsgUpdateParams should work when EnableIntegration is true")
+		} else {
+			require.Error(t, err, "MsgUpdateParams should be blocked when EnableIntegration is false")
+			require.Contains(t, err.Error(), "handler not found for /babylon.zoneconcierge.v1.Msg/UpdateParams")
+		}
+
+		/*
+			Ensure IBC route does not contain zone concierge
+		*/
+		// Get the IBC keeper
+		ibcKeeper := helper.App.IBCKeeper
+		// Get the IBC router
+		router := ibcKeeper.Router
+		// Ensure the zone concierge module is not in the router
+		_, found := router.GetRoute(zctypes.ModuleName)
+		if currentEnableIntegration {
+			require.True(t, found, "Zone concierge module should be in the IBC router when EnableIntegration is true")
+		} else {
+			require.False(t, found, "Zone concierge module should not be in the IBC router when EnableIntegration is false")
+		}
+	})
 }
