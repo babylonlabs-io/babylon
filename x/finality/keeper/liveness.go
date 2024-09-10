@@ -74,28 +74,32 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 	minHeight := signInfo.StartHeight + signedBlocksWindow
 	maxMissed := signedBlocksWindow - minSignedPerWindow
 
-	// if we are past the minimum height and the finality provider has missed too many blocks, punish them
+	// if the number of missed block reaches the threshold within the sliding window
+	// jail the finality provider
 	if height > minHeight && signInfo.MissedBlocksCounter > maxMissed {
 		updated = true
 
+		if err := k.jailSluggishFinalityProvider(ctx, fpPk); err != nil {
+			return fmt.Errorf("failed to jail sluggish finality provider %s: %w", fpPk.MarshalHex(), err)
+		}
+
+		signInfo.JailedUntil = sdkCtx.BlockHeader().Time.Add(params.JailDuration)
+		// we need to reset the counter & bitmap so that the finality provider won't be
+		// immediately jailed after unjailing.
+		signInfo.MissedBlocksCounter = 0
+		if err := k.DeleteMissedBlockBitmap(ctx, fpPk); err != nil {
+			return fmt.Errorf("failed to remove the missed block bit map: %w", err)
+		}
+
 		k.Logger(sdkCtx).Info(
-			"detected sluggish finality provider",
+			"finality provider is jailed",
 			"height", height,
 			"public_key", fpPk.MarshalHex(),
-			"missed_count", signInfo.MissedBlocksCounter,
-			"threshold", minSignedPerWindow,
-			"window_size", signedBlocksWindow,
 		)
-
-		// sluggish finality provider detected
-		if err := k.jailSluggishFinalityProvider(ctx, fpPk); err != nil {
-			panic(fmt.Errorf("failed to jail sluggish finality provider %s: %w", fpPk.MarshalHex(), err))
-		}
 	}
 
 	// Set the updated signing info
 	if updated {
-		signInfo.JailedUntil = sdkCtx.BlockHeader().Time.Add(params.JailDuration)
 		return k.FinalityProviderSigningTracker.Set(ctx, fpPk.MustMarshal(), *signInfo)
 	}
 

@@ -139,27 +139,6 @@ func (k Keeper) JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error 
 	return nil
 }
 
-// RevertSluggishFinalityProvider sets the Sluggish flag of the given finality provider
-// to false
-func (k Keeper) RevertSluggishFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
-	// ensure finality provider exists
-	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
-	if err != nil {
-		return err
-	}
-
-	// ignore the finality provider is already slashed
-	// or detected as sluggish
-	if fp.IsSlashed() || fp.IsJailed() {
-		return nil
-	}
-
-	fp.Jailed = false
-	k.setFinalityProvider(ctx, fp)
-
-	return nil
-}
-
 // finalityProviderStore returns the KVStore of the finality provider set
 // prefix: FinalityProviderKey
 // key: Bitcoin secp256k1 PK
