@@ -23,6 +23,9 @@ var _ types.MsgServer = msgServer{}
 
 // UpdateParams updates the params
 func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	if !types.EnableIntegration {
+		return nil, types.ErrIntegrationDisabled
+	}
 	if ms.authority != req.Authority {
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, req.Authority)
 	}

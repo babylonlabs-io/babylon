@@ -8,6 +8,7 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
 	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
@@ -93,6 +94,9 @@ func FuzzFeatureGate(f *testing.F) {
 		*/
 		// Get zone concierge query client
 		zcQueryHelper := baseapp.NewQueryServerTestHelper(ctx, helper.App.InterfaceRegistry())
+		querier := zckeeper.Querier{Keeper: zcKeeper}
+		types.RegisterQueryServer(zcQueryHelper, querier)
+
 		queryClient := zctypes.NewQueryClient(zcQueryHelper)
 
 		// Test GetParams query
@@ -102,23 +106,23 @@ func FuzzFeatureGate(f *testing.F) {
 			require.NoError(t, err, "Params query should work when EnableIntegration is true")
 		} else {
 			require.Error(t, err, "Params query should be blocked when EnableIntegration is false")
-			require.Contains(t, err.Error(), "handler not found for /babylon.zoneconcierge.v1.Query/Params")
+			require.ErrorIs(t, err, types.ErrIntegrationDisabled)
 		}
 
 		/*
 			Ensure msg server is feature gated
 		*/
-		msgClient := zctypes.NewMsgClient(zcQueryHelper)
+		msgSrvr := zckeeper.NewMsgServerImpl(zcKeeper)
 		msgReq := &zctypes.MsgUpdateParams{
 			Authority: helper.App.GovKeeper.GetGovernanceAccount(ctx).GetAddress().String(),
 			Params:    zctypes.DefaultParams(),
 		}
-		_, err = msgClient.UpdateParams(ctx, msgReq)
+		_, err = msgSrvr.UpdateParams(ctx, msgReq)
 		if currentEnableIntegration {
 			require.NoError(t, err, "MsgUpdateParams should work when EnableIntegration is true")
 		} else {
 			require.Error(t, err, "MsgUpdateParams should be blocked when EnableIntegration is false")
-			require.Contains(t, err.Error(), "handler not found for /babylon.zoneconcierge.v1.Msg/UpdateParams")
+			require.ErrorIs(t, err, types.ErrIntegrationDisabled)
 		}
 
 		/*

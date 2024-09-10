@@ -19,10 +19,6 @@ import (
 	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
-func init() {
-	types.EnableIntegration = true
-}
-
 func signBLSWithBitmap(blsSKs []bls12381.PrivateKey, bm bitmap.Bitmap, msg []byte) (bls12381.Signature, error) {
 	sigs := []bls12381.Signature{}
 	for i := 0; i < len(blsSKs); i++ {
@@ -38,6 +34,15 @@ func FuzzBTCTimestamp(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
+		// Save the original value of EnableIntegration
+		originalEnableIntegration := types.EnableIntegration
+		// Restore the original value after the test
+		defer func() {
+			types.EnableIntegration = originalEnableIntegration
+		}()
+		// Set EnableIntegration to true
+		types.EnableIntegration = true
+
 		r := rand.New(rand.NewSource(seed))
 		// generate the validator set with 10 validators as genesis
 		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(10)

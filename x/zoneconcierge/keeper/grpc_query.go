@@ -11,13 +11,28 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var _ types.QueryServer = Keeper{}
+// Querier is used as Keeper will have duplicate methods if used directly, and gRPC names take precedence over keeper
+type Querier struct {
+	Keeper
+}
+
+var _ types.QueryServer = Querier{}
 
 const maxQueryChainsInfoLimit = 100
 
-func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+func validateRequest(req sdk.Msg) error {
+	if !types.EnableIntegration {
+		return types.ErrIntegrationDisabled
+	}
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+		return status.Error(codes.InvalidArgument, "invalid request")
+	}
+	return nil
+}
+
+func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	if err := validateRequest(req); err != nil {
+		return nil, err
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 
@@ -25,8 +40,8 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 }
 
 func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (*types.QueryChainListResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	if err := validateRequest(req); err != nil {
+		return nil, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
@@ -51,8 +66,8 @@ func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (
 
 // ChainsInfo returns the latest info for a given list of chains
 func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest) (*types.QueryChainsInfoResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	if err := validateRequest(req); err != nil {
+		return nil, err
 	}
 
 	// return if no chain IDs are provided
@@ -87,8 +102,8 @@ func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest)
 
 // Header returns the header and fork headers at a given height
 func (k Keeper) Header(c context.Context, req *types.QueryHeaderRequest) (*types.QueryHeaderResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	if err := validateRequest(req); err != nil {
+		return nil, err
 	}
 
 	if len(req.ConsumerId) == 0 {
@@ -112,8 +127,8 @@ func (k Keeper) Header(c context.Context, req *types.QueryHeaderRequest) (*types
 
 // EpochChainsInfo returns the latest info for list of chains in a given epoch
 func (k Keeper) EpochChainsInfo(c context.Context, req *types.QueryEpochChainsInfoRequest) (*types.QueryEpochChainsInfoResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	if err := validateRequest(req); err != nil {
+		return nil, err
 	}
 
 	// return if no chain IDs are provided
@@ -160,8 +175,8 @@ func (k Keeper) EpochChainsInfo(c context.Context, req *types.QueryEpochChainsIn
 
 // ListHeaders returns all headers of a chain with given ID, with pagination support
 func (k Keeper) ListHeaders(c context.Context, req *types.QueryListHeadersRequest) (*types.QueryListHeadersResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	if err := validateRequest(req); err != nil {
+		return nil, err
 	}
 
 	if len(req.ConsumerId) == 0 {
@@ -192,8 +207,8 @@ func (k Keeper) ListHeaders(c context.Context, req *types.QueryListHeadersReques
 // ListEpochHeaders returns all headers of a chain with given ID
 // TODO: support pagination in this RPC
 func (k Keeper) ListEpochHeaders(c context.Context, req *types.QueryListEpochHeadersRequest) (*types.QueryListEpochHeadersResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	if err := validateRequest(req); err != nil {
+		return nil, err
 	}
 
 	if len(req.ConsumerId) == 0 {
@@ -215,8 +230,8 @@ func (k Keeper) ListEpochHeaders(c context.Context, req *types.QueryListEpochHea
 
 // FinalizedChainsInfo returns the finalized info for a given list of chains
 func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalizedChainsInfoRequest) (*types.QueryFinalizedChainsInfoResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	if err := validateRequest(req); err != nil {
+		return nil, err
 	}
 
 	// return if no chain IDs are provided
@@ -305,8 +320,8 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 }
 
 func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.QueryFinalizedChainInfoUntilHeightRequest) (*types.QueryFinalizedChainInfoUntilHeightResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	if err := validateRequest(req); err != nil {
+		return nil, err
 	}
 
 	if len(req.ConsumerId) == 0 {
