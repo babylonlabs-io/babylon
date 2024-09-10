@@ -227,7 +227,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		fp.SlashedBabylonHeight = blockHeight
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		_, err = ms.AddFinalitySig(ctx, msg)
-		require.Equal(t, bstypes.ErrFpAlreadySlashed, err)
+		require.ErrorIs(t, err, bstypes.ErrFpAlreadySlashed)
 	})
 }
 

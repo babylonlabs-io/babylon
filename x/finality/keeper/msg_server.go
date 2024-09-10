@@ -49,6 +49,11 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinalitySig) (*types.MsgAddFinalitySigResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddFinalitySig)
 
+	if req.FpBtcPk == nil {
+		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")
+	}
+	fpPK := req.FpBtcPk
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// ensure the finality provider exists
@@ -74,14 +79,14 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	//     corrupt a new finality provider and equivocate a historical block over and over again, making a previous block
 	//     unfinalisable forever
 	if fp.IsSlashed() {
-		return nil, bstypes.ErrFpAlreadySlashed
+		return nil, bstypes.ErrFpAlreadySlashed.Wrapf(fmt.Sprintf("finality provider public key: %s", fpPK.MarshalHex()))
+	}
+
+	if fp.IsJailed() {
+		return nil, bstypes.ErrFpAlreadyJailed.Wrapf(fmt.Sprintf("finality provider public key: %s", fpPK.MarshalHex()))
 	}
 
 	// ensure the finality provider has voting power at this height
-	if req.FpBtcPk == nil {
-		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")
-	}
-	fpPK := req.FpBtcPk
 	if ms.BTCStakingKeeper.GetVotingPower(ctx, fpPK.MustMarshal(), req.BlockHeight) == 0 {
 		return nil, types.ErrInvalidFinalitySig.Wrapf("the finality provider %s does not have voting power at height %d", fpPK.MarshalHex(), req.BlockHeight)
 	}
