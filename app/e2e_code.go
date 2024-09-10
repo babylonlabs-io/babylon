@@ -7,7 +7,7 @@ package app
 
 import (
 	"github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
-	zctypes "github.com/babylonlabs-io/babylon/x/zonecaching/types"
+	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 // init is used to include signet upgrade used for e2e testing
