@@ -53,8 +53,8 @@ COPY --from=build-env /go/bin/rly /usr/bin/rly
 COPY --from=build-env /go/bin/bcd /usr/bin/bcd
 
 WORKDIR /ibcsim-bcd
-COPY contrib/images/bcd/wrapper.sh /ibcsim-bcd/wrapper.sh
-COPY contrib/images/bcd/setup-bcd.sh /ibcsim-bcd/setup-bcd.sh
+COPY contrib/images/ibcsim-bcd/wrapper.sh /ibcsim-bcd/wrapper.sh
+COPY contrib/images/ibcsim-bcd/setup-bcd.sh /ibcsim-bcd/setup-bcd.sh
 COPY test/e2e/bytecode/babylon_contract.wasm /ibcsim-bcd/babylon_contract.wasm
 COPY test/e2e/bytecode/btc_staking.wasm /ibcsim-bcd/btc_staking.wasm
 
