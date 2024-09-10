@@ -19,6 +19,10 @@ import (
 	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
+func init() {
+	types.EnableIntegration = true
+}
+
 func signBLSWithBitmap(blsSKs []bls12381.PrivateKey, bm bitmap.Bitmap, msg []byte) (bls12381.Signature, error) {
 	sigs := []bls12381.Signature{}
 	for i := 0; i < len(blsSKs); i++ {

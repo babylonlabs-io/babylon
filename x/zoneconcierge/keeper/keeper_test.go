@@ -4,11 +4,15 @@ import (
 	"context"
 	"math/rand"
 
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 )
+
+func init() {
+	zctypes.EnableIntegration = true
+}
 
 // SimulateNewHeaders generates a non-zero number of canonical headers
 func SimulateNewHeaders(ctx context.Context, r *rand.Rand, k *zckeeper.Keeper, consumerID string, startHeight uint64, numHeaders uint64) []*ibctmtypes.Header {
