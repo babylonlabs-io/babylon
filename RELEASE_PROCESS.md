@@ -42,7 +42,7 @@ branch (see [CONTRIBUTING.md](./CONTRIBUTING.md#pull-requests)).
   * **PRs targeting directly a release branch can be merged _only_ when
     exceptional circumstances arise**.
 * In the release branch
-  * Create by a PR, new version section in the `CHANGELOG.md` matching the released version e.g
+  * Create a PR that adds new version section in the `CHANGELOG.md`, matching the released version e.g
     for branch `release/v0.Y.x`, section will be called `v0.Y.0`
 * We freeze the release branch from receiving any new features and focus on
   releasing a release candidate.
@@ -56,19 +56,18 @@ branch (see [CONTRIBUTING.md](./CONTRIBUTING.md#pull-requests)).
   * The release verification on devnet must pass.
   * When bugs are found, create a PR for `main`, and backport fixes to the
     release branch.
-  * Before tagging release, create and merge pr to release branch that:
-    * Moves all changelog entries form `Unreleased` section of the changelog to newly created section `v0.Y.0`
+  * Before tagging the release, create and merge PR to the release branch that:
+    * Moves all changelog entries form `Unreleased` section of the changelog to the newly created section `v0.Y.0`
   * Create new release candidate tags after bugs are fixed.
 * After the team feels the release candidate is ready, create a full release:
   * **Note:** The final release MUST have the same commit hash as the latest
     corresponding release candidate.
   * Create a new annotated git tag in the release branch (follow the [Tagging
     Procedure](#tagging-procedure))
-* After final release is made e.g `v0.Y.0`, backport changelog changes to `main` branch
+* After the final release is made e.g `v0.Y.0`, backport changelog changes to the `main` branch
   * checkout a new branch from the main branch: `username/backport_changelog`
   * bring the new section from `release/v0.Y.x` branch to the `CHANGELOG.md` file on `main` branch
-  * open pr against the `main` branch
-
+  * open PR against the `main` branch
 
 ### Creating a new release branch
 

@@ -123,22 +123,22 @@ documentation in `/docs`.
 
 ### Updating Changelog
 
-Any pr which is merged to `main` and affects consumers of the codebase,
+Any PR which is merged to `main` and affects consumers of the codebase,
 must modify changelog [file](./CHANGELOG.md) accordingly, by adding new entry
 in `Unreleased` section of the changelog.
 
 Examples of changes which require change log update:
-- bug fix
-- adding new api
-- adding new feature
+- bug fixes
+- adding new APIs
+- adding new features
 
-Examples of changed that do not require changelog updates:
+Examples of changes that do not require changelog updates:
 - refactoring of internal implementation
 - adding new tests
 - modifying documentation
 
-The rule of thumb here it that changelog should be updated whenever change is
-visible by external user.
+The rule of thumb here is that the changelog should be updated as long as the change is
+visible by external users.
 
 ## Dependencies
 
