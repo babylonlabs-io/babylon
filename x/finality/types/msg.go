@@ -25,21 +25,37 @@ func (m *MsgAddFinalitySig) MsgToSign() []byte {
 // - verifying the proof of inclusion of the given public randomness
 // - verifying the finality signature w.r.t. the given block height/hash
 func VerifyFinalitySig(m *MsgAddFinalitySig, prCommit *PubRandCommit) error {
+	fmt.Printf("VerifyFinalitySig: Starting verification for block height %d\n", m.BlockHeight)
+
+	if m.Proof != nil {
+		fmt.Println("VerifyFinalitySig: m.Proof exists")
+	} else {
+		fmt.Println("VerifyFinalitySig: m.Proof is nil")
+	}
+
 	// verify the index of the public randomness
 	heightOfProof := prCommit.StartHeight + uint64(m.Proof.Index)
+	fmt.Printf("VerifyFinalitySig: Proof height: %d, Message block height: %d\n", heightOfProof, m.BlockHeight)
 	if m.BlockHeight != heightOfProof {
 		return ErrInvalidFinalitySig.Wrapf("the inclusion proof (for height %d) does not correspond to the given height (%d) in the message", heightOfProof, m.BlockHeight)
 	}
+
 	// verify the total number of randomness is same as in the commit
+	fmt.Printf("VerifyFinalitySig: Proof total: %d, Commit NumPubRand: %d\n", m.Proof.Total, prCommit.NumPubRand)
 	if uint64(m.Proof.Total) != prCommit.NumPubRand {
 		return ErrInvalidFinalitySig.Wrapf("the total number of public randomnesses in the proof (%d) does not match the number of public randomnesses committed (%d)", m.Proof.Total, prCommit.NumPubRand)
 	}
+
 	// verify the proof of inclusion for this public randomness
 	unwrappedProof, err := merkle.ProofFromProto(m.Proof)
 	if err != nil {
+		fmt.Printf("VerifyFinalitySig: Failed to unwrap proof: %v\n", err)
 		return ErrInvalidFinalitySig.Wrapf("failed to unwrap proof: %v", err)
 	}
+
+	fmt.Println("VerifyFinalitySig: Verifying inclusion proof")
 	if err := unwrappedProof.Verify(prCommit.Commitment, *m.PubRand); err != nil {
+		fmt.Printf("VerifyFinalitySig: Inclusion proof verification failed: %v\n", err)
 		return ErrInvalidFinalitySig.Wrapf("the inclusion proof of the public randomness is invalid: %v", err)
 	}
 
@@ -47,9 +63,18 @@ func VerifyFinalitySig(m *MsgAddFinalitySig, prCommit *PubRandCommit) error {
 	msgToSign := m.MsgToSign()
 	pk, err := m.FpBtcPk.ToBTCPK()
 	if err != nil {
+		fmt.Printf("VerifyFinalitySig: Failed to convert FpBtcPk to BTCPK: %v\n", err)
 		return err
 	}
-	return eots.Verify(pk, m.PubRand.ToFieldVal(), msgToSign, m.FinalitySig.ToModNScalar())
+
+	fmt.Println("VerifyFinalitySig: Verifying finality signature")
+	err = eots.Verify(pk, m.PubRand.ToFieldVal(), msgToSign, m.FinalitySig.ToModNScalar())
+	if err != nil {
+		fmt.Printf("VerifyFinalitySig: Finality signature verification failed: %v\n", err)
+	} else {
+		fmt.Println("VerifyFinalitySig: Verification successful")
+	}
+	return err
 }
 
 // HashToSign returns a 32-byte hash of (start_height || num_pub_rand || commitment)

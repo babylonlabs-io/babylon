@@ -8,6 +8,7 @@ import (
 	"cosmossdk.io/math"
 	bbnclient "github.com/babylonlabs-io/babylon/client/client"
 	"github.com/babylonlabs-io/babylon/client/config"
+	"github.com/babylonlabs-io/babylon/crypto/eots"
 	types2 "github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/clientcontroller/types"
 	bbntypes "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
@@ -19,6 +20,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
@@ -168,6 +170,19 @@ func (bc *BabylonController) QueryFinalityProviderHasPower(fpPk *btcec.PublicKey
 
 func (bc *BabylonController) QueryLatestFinalizedBlocks(count uint64) ([]*types2.BlockInfo, error) {
 	return bc.queryLatestBlocks(nil, count, finalitytypes.QueriedBlockStatus_FINALIZED, true)
+}
+
+func (bc *BabylonController) QueryIndexedBlock(height uint64) (*finalitytypes.IndexedBlock, error) {
+	resp, err := bc.bbnClient.Block(height)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query indexed block: %v", err)
+	}
+
+	return resp.Block, nil
+}
+
+func (bc *BabylonController) QueryCometBlock(height uint64) (*coretypes.ResultBlock, error) {
+	return bc.bbnClient.GetBlock(int64(height))
 }
 
 func (bc *BabylonController) QueryBlocks(startHeight, endHeight, limit uint64) ([]*types2.BlockInfo, error) {
@@ -456,6 +471,30 @@ func (bc *BabylonController) QueryBTCStakingParams() (*btcstakingtypes.Params, e
 	return &res.Params, nil
 }
 
+// IBCChannels queries the IBC channels
+func (bc *BabylonController) IBCChannels() (*channeltypes.QueryChannelsResponse, error) {
+	return bc.bbnClient.IBCChannels()
+}
+
+func (bc *BabylonController) QueryConsumerRegistry(consumerID string) (*bsctypes.QueryConsumersRegistryResponse, error) {
+	return bc.bbnClient.QueryConsumersRegistry([]string{consumerID})
+}
+
+func (bc *BabylonController) QueryChannelClientState(channelID, portID string) (*channeltypes.QueryChannelClientStateResponse, error) {
+	var resp *channeltypes.QueryChannelClientStateResponse
+	err := bc.bbnClient.QueryClient.QueryIBCChannel(func(ctx context.Context, queryClient channeltypes.QueryClient) error {
+		var err error
+		req := &channeltypes.QueryChannelClientStateRequest{
+			ChannelId: channelID,
+			PortId:    portID,
+		}
+		resp, err = queryClient.ChannelClientState(ctx, req)
+		return err
+	})
+
+	return resp, err
+}
+
 func (bc *BabylonController) SubmitCovenantSigs(
 	covPk *btcec.PublicKey,
 	stakingTxHash string,
@@ -513,26 +552,52 @@ func (bc *BabylonController) RegisterConsumerChain(id, name, description string)
 	return &types2.TxResponse{TxHash: res.TxHash}, nil
 }
 
-// IBCChannels queries the IBC channels
-func (bc *BabylonController) IBCChannels() (*channeltypes.QueryChannelsResponse, error) {
-	return bc.bbnClient.IBCChannels()
+func (bc *BabylonController) CommitPublicRandomness(
+	msgCommitPubRandList *finalitytypes.MsgCommitPubRandList,
+) (*types2.TxResponse, error) {
+	signerAddr := bc.MustGetTxSigner()
+	msgCommitPubRandList.Signer = signerAddr
+	res, err := bc.reliablySendMsg(msgCommitPubRandList, emptyErrs, emptyErrs)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types2.TxResponse{TxHash: res.TxHash}, nil
 }
 
-func (bc *BabylonController) QueryConsumerRegistry(consumerID string) (*bsctypes.QueryConsumersRegistryResponse, error) {
-	return bc.bbnClient.QueryConsumersRegistry([]string{consumerID})
-}
+func (bc *BabylonController) SubmitFinalitySignature(
+	fpSK *btcec.PrivateKey,
+	fpBtcPk *bbntypes.BIP340PubKey,
+	privateRand *eots.PrivateRand,
+	pubRand *bbntypes.SchnorrPubRand,
+	proof *cmtcrypto.Proof,
+	heightToVote uint64,
+) (*types2.TxResponse, error) {
+	block, err := bc.bbnClient.QueryClient.GetBlock(int64(heightToVote))
+	if err != nil {
+		return nil, err
+	}
+	msgToSign := append(sdk.Uint64ToBigEndian(heightToVote), block.Block.AppHash...)
+	sig, err := eots.Sign(fpSK, privateRand, msgToSign)
+	if err != nil {
+		return nil, err
+	}
+	eotsSig := bbntypes.NewSchnorrEOTSSigFromModNScalar(sig)
 
-func (bc *BabylonController) QueryChannelClientState(channelID, portID string) (*channeltypes.QueryChannelClientStateResponse, error) {
-	var resp *channeltypes.QueryChannelClientStateResponse
-	err := bc.bbnClient.QueryClient.QueryIBCChannel(func(ctx context.Context, queryClient channeltypes.QueryClient) error {
-		var err error
-		req := &channeltypes.QueryChannelClientStateRequest{
-			ChannelId: channelID,
-			PortId:    portID,
-		}
-		resp, err = queryClient.ChannelClientState(ctx, req)
-		return err
-	})
+	signerAddr := bc.MustGetTxSigner()
 
-	return resp, err
+	msgAddFinalitySig := &finalitytypes.MsgAddFinalitySig{
+		Signer:       signerAddr,
+		FpBtcPk:      fpBtcPk,
+		BlockHeight:  heightToVote,
+		PubRand:      pubRand,
+		Proof:        proof,
+		BlockAppHash: block.Block.AppHash,
+		FinalitySig:  eotsSig,
+	}
+	res, err := bc.reliablySendMsg(msgAddFinalitySig, emptyErrs, emptyErrs)
+	if err != nil {
+		return nil, err
+	}
+	return &types2.TxResponse{TxHash: res.TxHash}, nil
 }

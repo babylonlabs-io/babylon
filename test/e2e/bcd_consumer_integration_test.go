@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -36,6 +37,7 @@ import (
 )
 
 var MinCommissionRate = sdkmath.LegacyNewDecWithPrec(5, 2) // 5%
+var babylonFpBTCSK, babylonFpBTCPK, _ = datagen.GenRandomBTCKeyPair(r)
 
 type BCDConsumerIntegrationTestSuite struct {
 	suite.Suite
@@ -229,6 +231,77 @@ func (s *BCDConsumerIntegrationTestSuite) Test5ActivateDelegation() {
 	}, time.Second*20, time.Second)
 
 	s.Require().NotNil(fpsByPower)
+}
+
+func (s *BCDConsumerIntegrationTestSuite) Test6SubmitFinalitySig() {
+	//consumerID := "07-tendermint-0"
+	//
+	//consumerFps, err := s.babylonController.QueryConsumerFinalityProviders(consumerID)
+	//s.Require().NoError(err)
+	//s.Require().NotEmpty(consumerFps)
+	//consumerFp := consumerFps[0]
+
+	// get the activated height
+	activatedHeight, err := s.babylonController.QueryActivatedHeight()
+	s.NoError(err)
+	s.NotNil(activatedHeight)
+
+	// get the block at the activated height
+	activatedHeightBlock, err := s.babylonController.QueryCometBlock(activatedHeight.Height)
+	s.NoError(err)
+	s.NotNil(activatedHeightBlock)
+
+	// commit public randomness at the activated height
+
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, babylonFpBTCSK, activatedHeight.Height, 100)
+	s.NoError(err)
+
+	// submit the public randomness to the consumer chain
+	txResp, err := s.babylonController.CommitPublicRandomness(msgCommitPubRandList)
+	s.NoError(err)
+	s.NotNil(txResp)
+
+	// get the babylon finality provider
+	babylonFp, err := s.babylonController.QueryFinalityProviders()
+	s.NoError(err)
+	s.NotNil(babylonFp)
+
+	babylonFpBIP340PK := bbntypes.NewBIP340PubKeyFromBTCPK(babylonFpBTCPK)
+
+	// submit finality signature
+	txResp, err = s.babylonController.SubmitFinalitySignature(
+		babylonFpBTCSK,
+		babylonFpBIP340PK,
+		randListInfo.SRList[0],
+		&randListInfo.PRList[0],
+		randListInfo.ProofList[0].ToProto(),
+		activatedHeight.Height)
+	s.NoError(err)
+	s.NotNil(txResp)
+
+	// ensure vote is eventually cast
+	var votes []bbntypes.BIP340PubKey
+	s.Eventually(func() bool {
+		votes, err = s.babylonController.QueryVotesAtHeight(activatedHeight.Height)
+		if err != nil {
+			s.T().Logf("Error querying votes: %v", err)
+			return false
+		}
+		return len(votes) > 0
+	}, time.Minute, time.Second*5)
+	s.Equal(1, len(votes))
+	s.Equal(votes[0].MarshalHex(), babylonFpBIP340PK.MarshalHex())
+
+	// once the vote is cast, ensure block is finalised
+	finalizedBlock, err := s.babylonController.QueryIndexedBlock(activatedHeight.Height)
+	s.NoError(err)
+	s.NotEmpty(finalizedBlock)
+	s.Equal(strings.ToUpper(hex.EncodeToString(finalizedBlock.AppHash)), activatedHeightBlock.Block.AppHash.String())
+
+	// finalizedBlocks, err := s.babylonController.Quer
+	// s.NoError(err)
+	// s.NotEmpty(finalizedBlocks)
+	// s.Equal(finalizedBlocks[0].AppHash, activatedHeight.AppHash)
 }
 
 func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctypes.FinalityProviderResponse) {
@@ -478,7 +551,7 @@ func (s *BCDConsumerIntegrationTestSuite) createVerifyBabylonFP() *bstypes.Final
 		create a random finality provider on Babylon
 	*/
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
-	babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
+	// babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
 	sdk.SetAddrCacheEnabled(false)
 	bbnparams.SetAddressPrefixes()
 	fpBabylonAddr, err := sdk.AccAddressFromBech32(s.babylonController.MustGetTxSigner())

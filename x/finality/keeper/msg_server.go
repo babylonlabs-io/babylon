@@ -102,6 +102,13 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, err
 	}
 
+	ms.Logger(ctx).Info("Retrieved public randomness commitment",
+		"fpBtcPk", req.FpBtcPk.MarshalHex(),
+		"blockHeight", req.BlockHeight,
+		"startHeight", prCommit.StartHeight,
+		"numPubRand", prCommit.NumPubRand,
+		"commitment", fmt.Sprintf("%x", prCommit.Commitment))
+
 	// verify the finality signature message w.r.t. the public randomness commitment
 	// including the public randomness inclusion proof and the finality signature
 	if err := types.VerifyFinalitySig(req, prCommit); err != nil {

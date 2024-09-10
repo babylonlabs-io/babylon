@@ -72,3 +72,37 @@ func (k Keeper) HandleConsumerRegistration(
 
 	return k.btcStkKeeper.RegisterConsumer(ctx, consumerRegisterData)
 }
+
+func (k Keeper) HandleConsumerFPSlashing(
+	ctx sdk.Context,
+	destinationPort string,
+	destinationChannel string,
+	slashingEvent *types.ConsumerSlashingIBCPacket,
+) error {
+	clientID, _, err := k.channelKeeper.GetChannelClientState(ctx, destinationPort, destinationChannel)
+	if err != nil {
+		return fmt.Errorf("failed to get client state: %w", err)
+	}
+
+	fmt.Println("client id in HandleConsumerFPSlashing", clientID)
+
+	// Log the details of the slashing event
+	//k.Logger(ctx).Info("Received Consumer FP Slashing Event",
+	//	"clientID", clientID,
+	//	"btcPublicKey", hex.EncodeToString(slashingEvent.BtcPublicKey),
+	//	"slashingHeight", slashingEvent.SlashingHeight,
+	//	"extractedSecretKey", hex.EncodeToString(slashingEvent.ExtractedSecretKey),
+	//)
+
+	// // Emit an event for tracking purposes
+	// ctx.EventManager().EmitEvent(
+	// 	sdk.NewEvent(
+	// 		types.EventTypeConsumerFPSlashing,
+	// 		sdk.NewAttribute(types.AttributeKeyClientID, clientID),
+	// 		sdk.NewAttribute(types.AttributeKeyBTCPublicKey, hex.EncodeToString(slashingEvent.BtcPublicKey)),
+	// 		sdk.NewAttribute(types.AttributeKeySlashingHeight, fmt.Sprintf("%d", slashingEvent.SlashingHeight)),
+	// 	),
+	// )
+
+	return nil
+}
