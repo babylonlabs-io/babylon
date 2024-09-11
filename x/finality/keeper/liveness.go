@@ -41,7 +41,9 @@ func (k Keeper) HandleLiveness(ctx context.Context, height int64) {
 // jail sluggish the finality provider if the number of missed block is reached to the threshold in a
 // sliding window
 func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.BIP340PubKey, missed bool, height int64) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	params := k.GetParams(ctx)
+
 	fp, err := k.BTCStakingKeeper.GetFinalityProvider(ctx, fpPk.MustMarshal())
 	if err != nil {
 		return err
@@ -49,6 +51,13 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 
 	// don't update missed blocks when finality provider is already slashed or jailed
 	if fp.IsSlashed() || fp.IsJailed() {
+		k.Logger(sdkCtx).Debug(
+			"skip handling liveness",
+			"height", height,
+			"public_key", fpPk.MarshalHex(),
+			"is_slashed", fp.IsSlashed(),
+			"is_jailed", fp.IsJailed(),
+		)
 		return nil
 	}
 
@@ -60,7 +69,6 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 	signedBlocksWindow := params.SignedBlocksWindow
 	minSignedPerWindow := params.MinSignedPerWindowInt()
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if missed {
 		k.Logger(sdkCtx).Debug(
 			"absent finality provider",
@@ -83,7 +91,7 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 			return fmt.Errorf("failed to jail sluggish finality provider %s: %w", fpPk.MarshalHex(), err)
 		}
 
-		signInfo.JailedUntil = sdkCtx.BlockHeader().Time.Add(params.JailDuration)
+		signInfo.JailedUntil = sdkCtx.HeaderInfo().Time.Add(params.JailDuration)
 		// we need to reset the counter & bitmap so that the finality provider won't be
 		// immediately jailed after unjailing.
 		signInfo.MissedBlocksCounter = 0
