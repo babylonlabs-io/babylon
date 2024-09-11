@@ -11,7 +11,7 @@ import (
 )
 
 // HandleLiveness handles liveness of each active finality provider for a given height
-// including identifying sluggish finality providers and applying punishment (TBD)
+// including jailing sluggish finality providers and applying punishment (TBD)
 func (k Keeper) HandleLiveness(ctx context.Context, height int64) {
 	// get all the active finality providers for the height
 	fpSet := k.BTCStakingKeeper.GetVotingPowerTable(ctx, uint64(height))
@@ -196,7 +196,7 @@ func (k Keeper) jailSluggishFinalityProvider(ctx context.Context, fpBtcPk *types
 		return fmt.Errorf("failed to emit sluggish finality provider detected event: %w", err)
 	}
 
-	finalitytypes.IncrementSluggishFinalityProviderCounter()
+	finalitytypes.IncrementJailedFinalityProviderCounter()
 
 	return nil
 }
