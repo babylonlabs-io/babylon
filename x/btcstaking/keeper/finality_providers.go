@@ -119,7 +119,7 @@ func (k Keeper) JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error 
 
 	// ensure finality provider is not jailed yet
 	if fp.IsJailed() {
-		return types.ErrFpAlreadySlashed
+		return types.ErrFpAlreadyJailed
 	}
 
 	// set finality provider to be jailed
