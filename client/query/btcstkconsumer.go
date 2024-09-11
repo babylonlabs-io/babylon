@@ -35,7 +35,7 @@ func (c *QueryClient) QueryConsumerRegistryList(pagination *sdkquerytypes.PageRe
 }
 
 // QueryConsumersRegistry returns the consumer systems with the given consumer IDs
-func (c *QueryClient) QueryConsumersRegistry(consumerIDs []string) ([]*bsctypes.ConsumerRegister, error) {
+func (c *QueryClient) QueryConsumersRegistry(consumerIDs []string) (*bsctypes.QueryConsumersRegistryResponse, error) {
 	var resp *bsctypes.QueryConsumersRegistryResponse
 	err := c.QueryBTCStkConsumer(func(ctx context.Context, queryClient bsctypes.QueryClient) error {
 		var err error
@@ -46,7 +46,7 @@ func (c *QueryClient) QueryConsumersRegistry(consumerIDs []string) ([]*bsctypes.
 		return err
 	})
 
-	return resp.ConsumersRegister, err
+	return resp, err
 }
 
 // QueryConsumerFinalityProviders returns a list of finality providers under the given consumer system
