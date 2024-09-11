@@ -14,7 +14,7 @@ const (
 	DefaultSignedBlocksWindow = int64(100)
 	DefaultMinPubRand         = 100
 	DefaultFinalitySigTimeout = 3
-	DefaultJailDuration       = 60 * 10 * time.Second // 10 min
+	DefaultJailDuration       = 24 * 60 * 60 * 1 * time.Second // 1 day
 )
 
 var (
