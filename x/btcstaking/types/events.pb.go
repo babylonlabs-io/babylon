@@ -324,7 +324,7 @@ func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) XXX_DiscardUnknown()
 var xxx_messageInfo_EventPowerDistUpdate_EventSlashedFinalityProvider proto.InternalMessageInfo
 
 // EventJailedFinalityProvider defines an event that a finality provider
-// is jailed
+// is jailed after being detected sluggish
 type EventPowerDistUpdate_EventJailedFinalityProvider struct {
 	Pk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=pk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"pk,omitempty"`
 }

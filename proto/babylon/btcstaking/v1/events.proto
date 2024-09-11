@@ -41,7 +41,7 @@ message EventPowerDistUpdate {
   }
 
   // EventJailedFinalityProvider defines an event that a finality provider
-  // is jailed
+  // is jailed after being detected sluggish
   message EventJailedFinalityProvider {
     bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   }
