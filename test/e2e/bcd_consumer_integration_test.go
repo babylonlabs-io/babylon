@@ -231,6 +231,8 @@ func (s *BCDConsumerIntegrationTestSuite) Test5ActivateDelegation() {
 	}, time.Second*20, time.Second)
 
 	s.Require().NotNil(fpsByPower)
+	s.Equal(consumerFp.BtcPk.MarshalHex(), fpsByPower.Fps[0].BtcPkHex)
+	s.Equal(activeDel.TotalSat, fpsByPower.Fps[0].Power)
 }
 
 func (s *BCDConsumerIntegrationTestSuite) Test6SubmitFinalitySig() {
@@ -298,6 +300,46 @@ func (s *BCDConsumerIntegrationTestSuite) Test6SubmitFinalitySig() {
 	s.NotEmpty(finalizedBlock)
 	s.Equal(strings.ToUpper(hex.EncodeToString(finalizedBlock.AppHash)), activatedHeightBlock.Block.AppHash.String())
 	s.True(finalizedBlock.Finalized)
+
+	// equivocate by submitting invalid finality signature
+	txResp, err = s.babylonController.SubmitInvalidFinalitySignature(
+		r,
+		babylonFpBTCSK,
+		babylonFpBIP340PK,
+		randListInfo.SRList[0],
+		&randListInfo.PRList[0],
+		randListInfo.ProofList[0].ToProto(),
+		activatedHeight.Height,
+	)
+	s.NoError(err)
+	s.NotNil(txResp)
+
+	// check the finality provider is slashed
+	s.Eventually(func() bool {
+		slashed, err := s.babylonController.QueryFinalityProviderSlashed(babylonFpBTCPK)
+		if err != nil {
+			s.T().Logf("Error querying finality provider slashed status: %v", err)
+			return false
+		}
+		return slashed
+	}, time.Minute, time.Second*5)
+
+	consumerId := "07-tendermint-0"
+
+	// Query consumer finality providers
+	consumerFps, err := s.babylonController.QueryConsumerFinalityProviders(consumerId)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(consumerFps)
+	consumerFp := consumerFps[0]
+
+	// Query and assert finality provider voting power
+	var fpsByPower *cosmwasm.ConsumerFpsByPowerResponse
+	s.Eventually(func() bool {
+		fpsByPower, err = s.cosmwasmController.QueryFinalityProvidersByPower()
+		return err == nil && len(fpsByPower.Fps) > 0 && fpsByPower.Fps[0].Power == 0
+	}, time.Second*20, time.Second)
+
+	s.Equal(consumerFp.BtcPk.MarshalHex(), fpsByPower.Fps[0].BtcPkHex)
 
 	// finalizedBlocks, err := s.babylonController.Quer
 	// s.NoError(err)

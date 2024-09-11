@@ -3,6 +3,7 @@ package babylon
 import (
 	"context"
 	"fmt"
+	"math/rand"
 
 	sdkErr "cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -10,6 +11,7 @@ import (
 	"github.com/babylonlabs-io/babylon/client/config"
 	"github.com/babylonlabs-io/babylon/crypto/eots"
 	types2 "github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/clientcontroller/types"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbntypes "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
@@ -594,6 +596,41 @@ func (bc *BabylonController) SubmitFinalitySignature(
 		Proof:        proof,
 		BlockAppHash: block.Block.AppHash,
 		FinalitySig:  eotsSig,
+	}
+	res, err := bc.reliablySendMsg(msgAddFinalitySig, emptyErrs, emptyErrs)
+	if err != nil {
+		return nil, err
+	}
+	return &types2.TxResponse{TxHash: res.TxHash}, nil
+}
+
+func (bc *BabylonController) SubmitInvalidFinalitySignature(
+	r *rand.Rand,
+	fpSK *btcec.PrivateKey,
+	fpBtcPk *bbntypes.BIP340PubKey,
+	privateRand *eots.PrivateRand,
+	pubRand *bbntypes.SchnorrPubRand,
+	proof *cmtcrypto.Proof,
+	heightToVote uint64,
+) (*types2.TxResponse, error) {
+	invalidAppHash := datagen.GenRandomByteArray(r, 32)
+	invalidMsgToSign := append(sdk.Uint64ToBigEndian(heightToVote), invalidAppHash...)
+	invalidSig, err := eots.Sign(fpSK, privateRand, invalidMsgToSign)
+	if err != nil {
+		return nil, err
+	}
+	invalidEotsSig := bbntypes.NewSchnorrEOTSSigFromModNScalar(invalidSig)
+
+	signerAddr := bc.MustGetTxSigner()
+
+	msgAddFinalitySig := &finalitytypes.MsgAddFinalitySig{
+		Signer:       signerAddr,
+		FpBtcPk:      fpBtcPk,
+		BlockHeight:  heightToVote,
+		PubRand:      pubRand,
+		Proof:        proof,
+		BlockAppHash: invalidAppHash,
+		FinalitySig:  invalidEotsSig,
 	}
 	res, err := bc.reliablySendMsg(msgAddFinalitySig, emptyErrs, emptyErrs)
 	if err != nil {
