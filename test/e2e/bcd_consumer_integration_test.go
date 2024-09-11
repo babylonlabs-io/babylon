@@ -297,6 +297,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test6SubmitFinalitySig() {
 	s.NoError(err)
 	s.NotEmpty(finalizedBlock)
 	s.Equal(strings.ToUpper(hex.EncodeToString(finalizedBlock.AppHash)), activatedHeightBlock.Block.AppHash.String())
+	s.True(finalizedBlock.Finalized)
 
 	// finalizedBlocks, err := s.babylonController.Quer
 	// s.NoError(err)
