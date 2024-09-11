@@ -1,3 +1,11 @@
+// Package clientcontroller/babylon wraps the Babylon RPC/gRPC client for easy interaction with a Babylon node.
+// It simplifies querying and submitting transactions.
+
+// Core Babylon RPC/gRPC client lives under https://github.com/babylonlabs-io/babylon/tree/main/client/client
+
+// Clientcontroller is adapted from:
+// https://github.com/babylonlabs-io/finality-provider/blob/base/consumer-chain-support/clientcontroller/babylon/babylon.go
+
 package babylon
 
 import (
