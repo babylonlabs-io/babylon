@@ -173,6 +173,8 @@ func FuzzAddFinalitySig(f *testing.F) {
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		// mock slashing interface
 		bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(nil).Times(1)
+		bsKeeper.EXPECT().NotifyConsumersOfSlashedFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPK)).Return(nil).Times(1)
+
 		// NOTE: even though this finality provider is slashed, the msg should be successful
 		// Otherwise the saved evidence will be rolled back
 		_, err = ms.AddFinalitySig(ctx, msg2)
