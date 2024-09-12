@@ -1,3 +1,11 @@
+// Package clientcontroller/cosmwasm wraps the CosmWasm RPC/gRPC client for easy interaction with a Wasm enabled node.
+// It simplifies querying and submitting transactions to Babylon SDK node (bcd)
+
+// Core CosmWasm RPC/gRPC client lives under https://github.com/babylonlabs-io/cosmwasm-client
+
+// Clientcontroller is adapted from:
+// https://github.com/babylonlabs-io/finality-provider/blob/base/consumer-chain-support/clientcontroller/cosmwasm/consumer.go
+
 package cosmwasm
 
 import (

@@ -1,3 +1,11 @@
+// Package clientcontroller/babylon wraps the Babylon RPC/gRPC client for easy interaction with a Babylon node.
+// It simplifies querying and submitting transactions.
+
+// Core Babylon RPC/gRPC client lives under https://github.com/babylonlabs-io/babylon/tree/main/client/client
+
+// Clientcontroller is adapted from:
+// https://github.com/babylonlabs-io/finality-provider/blob/base/consumer-chain-support/clientcontroller/babylon/babylon.go
+
 package babylon
 
 import (
@@ -473,30 +481,6 @@ func (bc *BabylonController) QueryBTCStakingParams() (*btcstakingtypes.Params, e
 	return &res.Params, nil
 }
 
-// IBCChannels queries the IBC channels
-func (bc *BabylonController) IBCChannels() (*channeltypes.QueryChannelsResponse, error) {
-	return bc.bbnClient.IBCChannels()
-}
-
-func (bc *BabylonController) QueryConsumerRegistry(consumerID string) (*bsctypes.QueryConsumersRegistryResponse, error) {
-	return bc.bbnClient.QueryConsumersRegistry([]string{consumerID})
-}
-
-func (bc *BabylonController) QueryChannelClientState(channelID, portID string) (*channeltypes.QueryChannelClientStateResponse, error) {
-	var resp *channeltypes.QueryChannelClientStateResponse
-	err := bc.bbnClient.QueryClient.QueryIBCChannel(func(ctx context.Context, queryClient channeltypes.QueryClient) error {
-		var err error
-		req := &channeltypes.QueryChannelClientStateRequest{
-			ChannelId: channelID,
-			PortId:    portID,
-		}
-		resp, err = queryClient.ChannelClientState(ctx, req)
-		return err
-	})
-
-	return resp, err
-}
-
 func (bc *BabylonController) SubmitCovenantSigs(
 	covPk *btcec.PublicKey,
 	stakingTxHash string,
@@ -637,4 +621,28 @@ func (bc *BabylonController) SubmitInvalidFinalitySignature(
 		return nil, err
 	}
 	return &types2.TxResponse{TxHash: res.TxHash}, nil
+}
+
+// IBCChannels queries the IBC channels
+func (bc *BabylonController) IBCChannels() (*channeltypes.QueryChannelsResponse, error) {
+	return bc.bbnClient.IBCChannels()
+}
+
+func (bc *BabylonController) QueryConsumerRegistry(consumerID string) (*bsctypes.QueryConsumersRegistryResponse, error) {
+	return bc.bbnClient.QueryConsumersRegistry([]string{consumerID})
+}
+
+func (bc *BabylonController) QueryChannelClientState(channelID, portID string) (*channeltypes.QueryChannelClientStateResponse, error) {
+	var resp *channeltypes.QueryChannelClientStateResponse
+	err := bc.bbnClient.QueryClient.QueryIBCChannel(func(ctx context.Context, queryClient channeltypes.QueryClient) error {
+		var err error
+		req := &channeltypes.QueryChannelClientStateRequest{
+			ChannelId: channelID,
+			PortId:    portID,
+		}
+		resp, err = queryClient.ChannelClientState(ctx, req)
+		return err
+	})
+
+	return resp, err
 }
