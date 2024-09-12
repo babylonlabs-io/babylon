@@ -3,7 +3,7 @@ services:
     container_name: babylondnode0
     image: "babylonlabs-io/babylond"
     command: >
-      babylond --home /babylondhome start --log_format 'plain' 2>&1 | tee /babylondhome/babylond.log
+      babylond --home /babylondhome start --log_level trace --trace --log_format 'plain' 2>&1 | tee /babylondhome/babylond.log
     cap_add:
       - SYS_PTRACE
     security_opt:
@@ -23,7 +23,7 @@ services:
     container_name: babylondnode1
     image: "babylonlabs-io/babylond"
     command: >
-      babylond --home /babylondhome start --log_format 'plain' 2>&1 | tee /babylondhome/babylond.log
+      babylond --home /babylondhome start --log_level trace --trace --log_format 'plain' 2>&1 | tee /babylondhome/babylond.log
     cap_add:
       - SYS_PTRACE
     security_opt:

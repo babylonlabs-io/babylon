@@ -102,7 +102,7 @@ sed -i 's/"btc_staking_contract_address": ""/"btc_staking_contract_address": "'"
 
 # Start
 echo "Starting $BINARY..."
-$BINARY --home $CHAINDIR/$CHAINID start --pruning=nothing --grpc-web.enable=false --grpc.address="0.0.0.0:$GRPCPORT" --log_level trace --trace  >$CHAINDIR/$CHAINID.log 2>&1 &
+$BINARY --home $CHAINDIR/$CHAINID start --pruning=nothing --grpc-web.enable=false --grpc.address="0.0.0.0:$GRPCPORT" --log_level trace --trace --log_format 'plain' 2>&1 | tee $CHAINDIR/$CHAINID.log &
 sleep 20
 
 # upload contract code
