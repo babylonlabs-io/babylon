@@ -223,16 +223,35 @@ func (s *BCDConsumerIntegrationTestSuite) Test5ActivateDelegation() {
 	s.Equal(hex.EncodeToString(activeDel.StakingTx), hex.EncodeToString(dataFromContract.Delegations[0].StakingTx))
 	s.Equal(activeDel.SlashingTx.ToHexStr(), hex.EncodeToString(dataFromContract.Delegations[0].SlashingTx))
 
+	// var fpsByPower *cosmwasm.ConsumerFpsByPowerResponse
+	// s.Eventually(func() bool {
+	// 	fpsByPower, err = s.cosmwasmController.QueryFinalityProvidersByPower()
+	// 	return err == nil && len(fpsByPower.Fps) > 0
+	// }, time.Second*20, time.Second)
+
 	// Query and assert finality provider voting power
 	var fpsByPower *cosmwasm.ConsumerFpsByPowerResponse
 	s.Eventually(func() bool {
 		fpsByPower, err = s.cosmwasmController.QueryFinalityProvidersByPower()
-		return err == nil && len(fpsByPower.Fps) > 0
+		return err == nil && fpsByPower != nil && len(fpsByPower.Fps) > 0
 	}, time.Second*20, time.Second)
 
-	s.Require().NotNil(fpsByPower)
-	s.Equal(consumerFp.BtcPk.MarshalHex(), fpsByPower.Fps[0].BtcPkHex)
-	s.Equal(activeDel.TotalSat, fpsByPower.Fps[0].Power)
+	// Create a map of BTC public keys to ConsumerFpInfoResponse
+	fpMap := make(map[string]cosmwasm.ConsumerFpInfoResponse)
+	for _, fp := range fpsByPower.Fps {
+		fpMap[fp.BtcPkHex] = fp
+	}
+
+	// Check if the consumerFp's BTC public key exists in the map
+	consumerFpBtcPkHex := consumerFp.BtcPk.MarshalHex()
+	fpInfo, exists := fpMap[consumerFpBtcPkHex]
+	s.True(exists)
+	s.Equal(consumerFp.BtcPk.MarshalHex(), fpInfo.BtcPkHex)
+	s.Equal(activeDel.TotalSat, fpInfo.Power)
+
+	// s.Require().NotNil(fpsByPower)
+	// s.Equal(consumerFp.BtcPk.MarshalHex(), fpsByPower.Fps[0].BtcPkHex)
+	// s.Equal(activeDel.TotalSat, fpsByPower.Fps[0].Power)
 }
 
 func (s *BCDConsumerIntegrationTestSuite) Test6SubmitFinalitySig() {
@@ -336,10 +355,23 @@ func (s *BCDConsumerIntegrationTestSuite) Test6SubmitFinalitySig() {
 	var fpsByPower *cosmwasm.ConsumerFpsByPowerResponse
 	s.Eventually(func() bool {
 		fpsByPower, err = s.cosmwasmController.QueryFinalityProvidersByPower()
-		return err == nil && len(fpsByPower.Fps) > 0 && fpsByPower.Fps[0].Power == 0
+		return err == nil && fpsByPower != nil && len(fpsByPower.Fps) > 0
 	}, time.Second*20, time.Second)
 
-	s.Equal(consumerFp.BtcPk.MarshalHex(), fpsByPower.Fps[0].BtcPkHex)
+	// Create a map of BTC public keys to ConsumerFpInfoResponse
+	fpMap := make(map[string]cosmwasm.ConsumerFpInfoResponse)
+	for _, fp := range fpsByPower.Fps {
+		fpMap[fp.BtcPkHex] = fp
+	}
+
+	// Check if the consumerFp's BTC public key exists in the map
+	consumerFpBtcPkHex := consumerFp.BtcPk.MarshalHex()
+	fpInfo, exists := fpMap[consumerFpBtcPkHex]
+	s.True(exists)
+	s.Equal(consumerFp.BtcPk.MarshalHex(), fpInfo.BtcPkHex)
+	s.Equal(uint64(0), fpInfo.Power)
+
+	// s.Equal(consumerFp.BtcPk.MarshalHex(), fpsByPower.Fps[0].BtcPkHex)
 
 	// finalizedBlocks, err := s.babylonController.Quer
 	// s.NoError(err)
