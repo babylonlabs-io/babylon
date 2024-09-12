@@ -167,13 +167,6 @@ func (im IBCModule) OnRecvPacket(
 			return channeltypes.NewErrorAcknowledgement(err)
 		}
 		return channeltypes.NewResultAcknowledgement([]byte("Consumer registered successfully"))
-
-	case *types.ZoneconciergePacketData_ConsumerSlashing:
-		err := im.keeper.HandleConsumerFPSlashing(ctx, modulePacket.DestinationPort, modulePacket.DestinationChannel, packet.ConsumerSlashing)
-		if err != nil {
-			return channeltypes.NewErrorAcknowledgement(err)
-		}
-		return channeltypes.NewResultAcknowledgement([]byte("FP slashing event processed successfully"))
 	// Add other packet types here if needed
 	default:
 		errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
