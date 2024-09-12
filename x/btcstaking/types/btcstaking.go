@@ -42,16 +42,22 @@ func (fp *FinalityProvider) ValidateBasic() error {
 	return nil
 }
 
-// SortFinalityProvidersWithTimestamping sorts the finality providers slice,
+// SortFinalityProvidersWithTimestampingAndJailing sorts the finality providers slice,
 // from higher to lower voting power
 // finality providers that are timestamped come higher than
 // those are not
-func SortFinalityProvidersWithTimestamping(fps []*FinalityProviderDistInfo) {
+func SortFinalityProvidersWithTimestampingAndJailing(fps []*FinalityProviderDistInfo) {
 	sort.SliceStable(fps, func(i, j int) bool {
 		if fps[i].IsTimestamped && !fps[j].IsTimestamped {
 			return true
 		}
 		if !fps[i].IsTimestamped && fps[j].IsTimestamped {
+			return false
+		}
+		if !fps[i].IsJailed && fps[j].IsJailed {
+			return true
+		}
+		if fps[i].IsJailed && !fps[j].IsJailed {
 			return false
 		}
 		return fps[i].TotalVotingPower > fps[j].TotalVotingPower

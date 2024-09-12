@@ -218,9 +218,9 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		require.ErrorIs(t, err, types.ErrFpAlreadyJailed)
 
 		// ensure the jailed label is set
-		fpAfter, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
+		fpAfterJailing, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
 		h.NoError(err)
-		require.True(t, fpAfter.IsJailed())
+		require.True(t, fpAfterJailing.IsJailed())
 
 		// at this point, there should be only 1 event that the finality provider is jailed
 		btcTipHeight := btclcKeeper.GetTipInfo(h.Ctx).Height
@@ -239,6 +239,39 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		h.NoError(err)
 		// ensure the finality provider does not have voting power anymore
 		require.Zero(t, h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
+
+		/*
+				insert another active BTC delegation and check whether the jailed
+			    fp has voting power
+		*/
+		stakingValue = int64(2 * 10e8)
+		_, _, _, msgCreateBTCDel, actualDel = h.CreateDelegation(
+			r,
+			fpPK,
+			changeAddress.EncodeAddress(),
+			stakingValue,
+			1000,
+		)
+		// give it a quorum number of covenant signatures
+		msgs = h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+		for i := 0; i < int(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum); i++ {
+			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msgs[i])
+			h.NoError(err)
+		}
+
+		// execute BeginBlock
+		btcTip = btclcKeeper.GetTipInfo(h.Ctx)
+		babylonHeight += 1
+		h.SetCtxHeight(babylonHeight)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
+		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
+		h.NoError(err)
+		// ensure the finality provider is not jailed and has voting power at this height
+
+		fpAfterJailing, err = h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
+		h.NoError(err)
+		require.True(t, fpAfterJailing.IsJailed())
+		require.Equal(t, uint64(0), h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
 	})
 }
 

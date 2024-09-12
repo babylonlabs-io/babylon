@@ -91,11 +91,17 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, prevDc, newDc *ty
 
 	// label fps with whether it has timestamped pub rand so that these fps
 	// will not be assigned voting power
-	for _, fp := range newDc.FinalityProviders {
+	for _, fpDistInfo := range newDc.FinalityProviders {
 		// TODO calling HasTimestampedPubRand potentially iterates
-		// all the pub rand committed by the fp, which might slow down
+		// all the pub rand committed by the fpDistInfo, which might slow down
 		// the process, need optimization
-		fp.IsTimestamped = k.FinalityKeeper.HasTimestampedPubRand(ctx, fp.BtcPk, babylonTipHeight)
+		fpDistInfo.IsTimestamped = k.FinalityKeeper.HasTimestampedPubRand(ctx, fpDistInfo.BtcPk, babylonTipHeight)
+
+		fp, err := k.GetFinalityProvider(ctx, fpDistInfo.BtcPk.MustMarshal())
+		if err != nil {
+			panic(fmt.Errorf("the finality provider %s does not exist: %w", fp.BtcPk.MarshalHex(), err))
+		}
+		fpDistInfo.IsJailed = fp.IsJailed()
 	}
 
 	// apply the finality provider voting power dist info to the new cache
