@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -63,6 +64,37 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	// event for updating the finality provider set
 	powerUpdateEvent := types.NewEventPowerDistUpdateWithSlashedFP(fp.BtcPk)
 	k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
+
+	return nil
+}
+
+func (k Keeper) NotifyConsumersOfSlashedFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) error {
+	// Get all delegations for this finality provider
+	delegations, err := k.getFPBTCDelegations(ctx, fpBTCPK)
+	if err != nil {
+		return err
+	}
+
+	for _, delegation := range delegations {
+		// Create SlashedBTCDelegation event
+		consumerEvent, err := types.CreateSlashedBTCDelegationEvent(delegation)
+		if err != nil {
+			return err
+		}
+
+		// Get consumer IDs of non-Babylon finality providers
+		restakedFPConsumerIDs, err := k.restakedFPConsumerIDs(ctx, delegation.FpBtcPkList)
+		if err != nil {
+			return err
+		}
+
+		// Send event to each involved consumer chain
+		for _, consumerID := range restakedFPConsumerIDs {
+			if err := k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
+				return err
+			}
+		}
+	}
 
 	return nil
 }

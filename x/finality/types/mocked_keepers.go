@@ -151,6 +151,20 @@ func (mr *MockBTCStakingKeeperMockRecorder) HasFinalityProvider(ctx, fpBTCPK int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).HasFinalityProvider), ctx, fpBTCPK)
 }
 
+// NotifyConsumersOfSlashedFinalityProvider mocks base method.
+func (m *MockBTCStakingKeeper) NotifyConsumersOfSlashedFinalityProvider(ctx context.Context, fpBTCPK *types.BIP340PubKey) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NotifyConsumersOfSlashedFinalityProvider", ctx, fpBTCPK)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// NotifyConsumersOfSlashedFinalityProvider indicates an expected call of NotifyConsumersOfSlashedFinalityProvider.
+func (mr *MockBTCStakingKeeperMockRecorder) NotifyConsumersOfSlashedFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NotifyConsumersOfSlashedFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).NotifyConsumersOfSlashedFinalityProvider), ctx, fpBTCPK)
+}
+
 // RemoveVotingPowerDistCache mocks base method.
 func (m *MockBTCStakingKeeper) RemoveVotingPowerDistCache(ctx context.Context, height uint64) {
 	m.ctrl.T.Helper()

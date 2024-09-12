@@ -12,6 +12,7 @@ type BTCStakingKeeper interface {
 	GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*bstypes.FinalityProvider, error)
 	HasFinalityProvider(ctx context.Context, fpBTCPK []byte) bool
 	SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
+	NotifyConsumersOfSlashedFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) error
 	GetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64) uint64
 	GetVotingPowerTable(ctx context.Context, height uint64) map[string]uint64
 	GetBTCStakingActivatedHeight(ctx context.Context) (uint64, error)

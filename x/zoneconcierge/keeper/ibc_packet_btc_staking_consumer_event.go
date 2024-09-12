@@ -31,6 +31,12 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 			continue
 		}
 
+		// Log the IBC packet
+		k.Logger(sdkCtx).Info("BroadcastBTCStakingConsumerEvents: Preparing ZoneConcierge packet",
+			"consumerID", consumerID,
+			"packetType", "BtcStaking",
+			"packetContent", fmt.Sprintf("%+v", ibcPacket))
+
 		// Prepare the packet for ZoneConcierge.
 		zcPacket := &types.ZoneconciergePacketData{
 			Packet: &types.ZoneconciergePacketData_BtcStaking{
