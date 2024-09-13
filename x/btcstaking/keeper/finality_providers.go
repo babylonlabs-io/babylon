@@ -87,6 +87,7 @@ func (k Keeper) NotifyConsumersOfSlashedFinalityProvider(ctx context.Context, fp
 
 		// Send event to each involved consumer chain
 		for _, consumerID := range restakedFPConsumerIDs {
+			// TODO: repeated set ops in KV store is inefficient; consider refactoring
 			if err := k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
 				return err
 			}
