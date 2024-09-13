@@ -104,12 +104,18 @@ func (s *BCDConsumerIntegrationTestSuite) Test1ChainStartup() {
 	s.waitForIBCConnection()
 }
 
+// Test2AutoRegisterAndVerifyNewConsumer verifies that when an IBC connection
+// is established between the consumer chain and Babylon, the consumer is
+// automatically registered in Babylon's consumer registry.
 func (s *BCDConsumerIntegrationTestSuite) Test2AutoRegisterAndVerifyNewConsumer() {
 	// TODO: getting some error in ibc client-state, hardcode consumer id for now
 	consumerID := "07-tendermint-0" //  s.getIBCClientID()
 	s.verifyConsumerRegistration(consumerID)
 }
 
+// Test3CreateConsumerFinalityProvider creates and registers a random number of consumer FPs in Babylon.
+// Once the FPs are registered, Babylon automatically sends IBC packets to the consumer chain to transmit this data.
+// It verifies that the registered consumer FPs in Babylon match the data stored in the consumer chain's contract.
 func (s *BCDConsumerIntegrationTestSuite) Test3CreateConsumerFinalityProvider() {
 	consumerID := "07-tendermint-0"
 
@@ -141,6 +147,8 @@ func (s *BCDConsumerIntegrationTestSuite) Test3CreateConsumerFinalityProvider() 
 	}
 }
 
+// Test4RestakeDelegationToMultipleFPs creates a pending state delegation restaking to
+// both Babylon FP and 1 consumer FP
 func (s *BCDConsumerIntegrationTestSuite) Test4RestakeDelegationToMultipleFPs() {
 	consumerID := "07-tendermint-0"
 
@@ -179,6 +187,10 @@ func (s *BCDConsumerIntegrationTestSuite) Test4RestakeDelegationToMultipleFPs() 
 	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
 }
 
+// Test5ActivateDelegation activates the delegation by submitting covenant sigs
+// Once the delegation is activated, Babylon will automatically send IBC packets to the consumer chain to transmit this data.
+// It verifies that the delegation details stored in the consumer chain's contract match the data stored in the consumer chain's contract.
+// It also verifies that the consumer FP voting power is equal to the total stake.
 func (s *BCDConsumerIntegrationTestSuite) Test5ActivateDelegation() {
 	consumerId := "07-tendermint-0"
 
@@ -251,6 +263,8 @@ func (s *BCDConsumerIntegrationTestSuite) Test5ActivateDelegation() {
 	}, time.Minute, time.Second*5)
 }
 
+// Test6BabylonFPSubmitFinalitySig submits a Babylon FP finality sig to Babylon
+// It verifies that the vote is eventually cast and the block is finalized.
 func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPSubmitFinalitySig() {
 	// get the activated height
 	activatedHeight, err := s.babylonController.QueryActivatedHeight()
@@ -311,6 +325,9 @@ func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPSubmitFinalitySig() {
 	s.True(finalizedBlock.Finalized)
 }
 
+// Test7BabylonFPCascadedSlashing tests that the Babylon FP can be slashed for equivocation
+// It verifies Babylon informs the involved consumer chains about the slashing (cascading slashing)
+// It verifies that the consumer FP's voting power is 0 after the slashing
 func (s *BCDConsumerIntegrationTestSuite) Test7BabylonFPCascadedSlashing() {
 	// Get the activated height
 	activatedHeight, err := s.babylonController.QueryActivatedHeight()
@@ -381,6 +398,8 @@ func (s *BCDConsumerIntegrationTestSuite) Test7BabylonFPCascadedSlashing() {
 		return fpInfo.BtcPkHex == consumerFp.BtcPk.MarshalHex() && fpInfo.Power == 0
 	}, time.Minute, time.Second*5)
 }
+
+// TODO: Test8: Consumer FP cascaded slashing
 
 // helper function: submitCovenantSigs submits the covenant signatures to activate the BTC delegation
 func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctypes.FinalityProviderResponse) {
