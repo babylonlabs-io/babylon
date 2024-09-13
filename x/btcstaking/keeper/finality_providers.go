@@ -77,10 +77,7 @@ func (k Keeper) NotifyConsumersOfSlashedFinalityProvider(ctx context.Context, fp
 
 	for _, delegation := range delegations {
 		// Create SlashedBTCDelegation event
-		consumerEvent, err := types.CreateSlashedBTCDelegationEvent(delegation)
-		if err != nil {
-			return err
-		}
+		consumerEvent := types.CreateSlashedBTCDelegationEvent(delegation)
 
 		// Get consumer IDs of non-Babylon finality providers
 		restakedFPConsumerIDs, err := k.restakedFPConsumerIDs(ctx, delegation.FpBtcPkList)
