@@ -287,7 +287,6 @@ func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
 	s.NotNil(activatedHeightBlock)
 
 	// commit public randomness at the activated height
-
 	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, babylonFpBTCSK, activatedHeight.Height, 100)
 	s.NoError(err)
 
@@ -393,7 +392,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
 	}, time.Minute, time.Second*5)
 }
 
-// TODO: Test8: Consumer FP cascaded slashing
+// TODO: Test7: Consumer FP cascaded slashing
 
 // helper function: submitCovenantSigs submits the covenant signatures to activate the BTC delegation
 func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctypes.FinalityProviderResponse) {
