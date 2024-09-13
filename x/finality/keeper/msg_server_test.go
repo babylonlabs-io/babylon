@@ -267,6 +267,8 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 		gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 	bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(),
 		gomock.Eq(fpBTCPKBytes)).Return(nil).Times(1)
+	bsKeeper.EXPECT().NotifyConsumersOfSlashedFinalityProvider(gomock.Any(),
+		gomock.Eq(fpBTCPK)).Return(nil).Times(1)
 	_, err = ms.AddFinalitySig(ctx, msg)
 	require.NoError(t, err)
 	sig, err := fKeeper.GetSig(ctx, blockHeight, fpBTCPK)
