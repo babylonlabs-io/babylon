@@ -382,6 +382,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test7BabylonFPCascadedSlashing() {
 	}, time.Minute, time.Second*5)
 }
 
+// helper function: submitCovenantSigs submits the covenant signatures to activate the BTC delegation
 func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctypes.FinalityProviderResponse) {
 	cvSK, _, _, err := getDeterministicCovenantKey()
 	s.NoError(err)
@@ -499,11 +500,8 @@ func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctype
 	}, time.Minute, time.Second*15, "BTC staking was not activated within the expected time")
 }
 
+// helper function: createBabylonDelegation creates a random BTC delegation restaking to Babylon and consumer finality providers
 func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bstypes.FinalityProviderResponse, consumerFp *bsctypes.FinalityProviderResponse) (*btcec.PublicKey, string) {
-	/*
-		create a random BTC delegation restaking to Babylon and consumer finality providers
-	*/
-
 	delBabylonAddr, err := sdk.AccAddressFromBech32(s.babylonController.MustGetTxSigner())
 	s.NoError(err)
 	// BTC staking params, BTC delegation key pairs and PoP
@@ -622,12 +620,8 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 	return czDelBtcPk, stakingTxHash
 }
 
-// helper function: create a random Babylon finality provider and verify it
+// helper function: createVerifyBabylonFP creates a random Babylon finality provider and verifies it
 func (s *BCDConsumerIntegrationTestSuite) createVerifyBabylonFP() *bstypes.FinalityProviderResponse {
-
-	/*
-		create a random finality provider on Babylon
-	*/
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
 	// babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
 	sdk.SetAddrCacheEnabled(false)
@@ -665,6 +659,8 @@ func (s *BCDConsumerIntegrationTestSuite) createVerifyBabylonFP() *bstypes.Final
 	return actualFps[0]
 }
 
+// helper function: createVerifyConsumerFP creates a random consumer finality provider on Babylon
+// and verifies its existence.
 func (s *BCDConsumerIntegrationTestSuite) createVerifyConsumerFP(consumerId string) *bstypes.FinalityProvider {
 	/*
 		create a random consumer finality provider on Babylon
@@ -705,6 +701,7 @@ func (s *BCDConsumerIntegrationTestSuite) createVerifyConsumerFP(consumerId stri
 	return czFp
 }
 
+// helper function: initBabylonController initializes the Babylon controller with the default configuration.
 func (s *BCDConsumerIntegrationTestSuite) initBabylonController() error {
 	cfg := config.DefaultBabylonConfig()
 
@@ -734,6 +731,7 @@ func (s *BCDConsumerIntegrationTestSuite) initBabylonController() error {
 	return nil
 }
 
+// helper function: initCosmwasmController initializes the Cosmwasm controller with the default configuration.
 func (s *BCDConsumerIntegrationTestSuite) initCosmwasmController() error {
 	cfg := cwconfig.DefaultCosmwasmConfig()
 	cfg.BtcStakingContractAddress = "bbnc1nc5tatafv6eyq7llkr2gv50ff9e22mnf70qgjlv737ktmt4eswrqgn0kq0"
@@ -758,6 +756,7 @@ func (s *BCDConsumerIntegrationTestSuite) initCosmwasmController() error {
 	return nil
 }
 
+// helper function: waitForIBCConnection waits for the IBC connection to be established between Babylon and the consumer.
 func (s *BCDConsumerIntegrationTestSuite) waitForIBCConnection() {
 	var babylonChannel *channeltypes.IdentifiedChannel
 	s.Eventually(func() bool {
@@ -808,6 +807,8 @@ func (s *BCDConsumerIntegrationTestSuite) waitForIBCConnection() {
 	//return babylonChannelState.IdentifiedClientState.ClientId
 }
 
+// helper function: verifyConsumerRegistration verifies the automatic registration of a consumer
+// and returns the consumer details.
 func (s *BCDConsumerIntegrationTestSuite) verifyConsumerRegistration(consumerID string) *bsctypes.ConsumerRegister {
 	var consumerRegistryResp *bsctypes.QueryConsumersRegistryResponse
 
@@ -831,7 +832,7 @@ func (s *BCDConsumerIntegrationTestSuite) verifyConsumerRegistration(consumerID 
 	return registeredConsumer
 }
 
-// getDeterministicCovenantKey returns a single, constant private key and its corresponding public key.
+// helper function: getDeterministicCovenantKey returns a single, constant private key and its corresponding public key.
 // This function is for testing purposes only and should never be used in production environments.
 func getDeterministicCovenantKey() (*btcec.PrivateKey, *btcec.PublicKey, string, error) {
 	// This is a constant private key for testing purposes only
