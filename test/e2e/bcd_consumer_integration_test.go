@@ -251,7 +251,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test5ActivateDelegation() {
 	}, time.Minute, time.Second*5)
 }
 
-func (s *BCDConsumerIntegrationTestSuite) Test6SubmitFinalitySig() {
+func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPSubmitFinalitySig() {
 	// get the activated height
 	activatedHeight, err := s.babylonController.QueryActivatedHeight()
 	s.NoError(err)
@@ -309,9 +309,22 @@ func (s *BCDConsumerIntegrationTestSuite) Test6SubmitFinalitySig() {
 	s.NotEmpty(finalizedBlock)
 	s.Equal(strings.ToUpper(hex.EncodeToString(finalizedBlock.AppHash)), activatedHeightBlock.Block.AppHash.String())
 	s.True(finalizedBlock.Finalized)
+}
 
-	// equivocate by submitting invalid finality signature
-	txResp, err = s.babylonController.SubmitInvalidFinalitySignature(
+func (s *BCDConsumerIntegrationTestSuite) Test7BabylonFPCascadedSlashing() {
+	// Get the activated height
+	activatedHeight, err := s.babylonController.QueryActivatedHeight()
+	s.NoError(err)
+	s.NotNil(activatedHeight)
+
+	// Generate random data for the invalid signature
+	randListInfo, _, err := datagen.GenRandomMsgCommitPubRandList(r, babylonFpBTCSK, activatedHeight.Height, 100)
+	s.NoError(err)
+
+	babylonFpBIP340PK := bbntypes.NewBIP340PubKeyFromBTCPK(babylonFpBTCPK)
+
+	// Equivocate by submitting invalid finality signature
+	txResp, err := s.babylonController.SubmitInvalidFinalitySignature(
 		r,
 		babylonFpBTCSK,
 		babylonFpBIP340PK,
@@ -323,7 +336,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test6SubmitFinalitySig() {
 	s.NoError(err)
 	s.NotNil(txResp)
 
-	// check the finality provider is slashed
+	// Check the finality provider is slashed on Babylon
 	s.Eventually(func() bool {
 		slashed, err := s.babylonController.QueryFinalityProviderSlashed(babylonFpBTCPK)
 		if err != nil {
