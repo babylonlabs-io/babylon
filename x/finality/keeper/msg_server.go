@@ -240,7 +240,7 @@ func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340Pu
 	}
 
 	// Notify consumer chains about the slashed finality provider
-	if err := k.BTCStakingKeeper.NotifyConsumersOfSlashedFinalityProvider(ctx, fpBtcPk); err != nil {
+	if err := k.BTCStakingKeeper.PropagateFPSlashingToConsumers(ctx, fpBtcPk); err != nil {
 		panic(fmt.Errorf("failed to notify consumers of slashed finality provider: %w", err))
 	}
 

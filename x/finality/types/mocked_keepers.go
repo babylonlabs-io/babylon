@@ -151,18 +151,18 @@ func (mr *MockBTCStakingKeeperMockRecorder) HasFinalityProvider(ctx, fpBTCPK int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).HasFinalityProvider), ctx, fpBTCPK)
 }
 
-// NotifyConsumersOfSlashedFinalityProvider mocks base method.
-func (m *MockBTCStakingKeeper) NotifyConsumersOfSlashedFinalityProvider(ctx context.Context, fpBTCPK *types.BIP340PubKey) error {
+// PropagateFPSlashingToConsumers mocks base method.
+func (m *MockBTCStakingKeeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *types.BIP340PubKey) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NotifyConsumersOfSlashedFinalityProvider", ctx, fpBTCPK)
+	ret := m.ctrl.Call(m, "PropagateFPSlashingToConsumers", ctx, fpBTCPK)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// NotifyConsumersOfSlashedFinalityProvider indicates an expected call of NotifyConsumersOfSlashedFinalityProvider.
-func (mr *MockBTCStakingKeeperMockRecorder) NotifyConsumersOfSlashedFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
+// PropagateFPSlashingToConsumers indicates an expected call of PropagateFPSlashingToConsumers.
+func (mr *MockBTCStakingKeeperMockRecorder) PropagateFPSlashingToConsumers(ctx, fpBTCPK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NotifyConsumersOfSlashedFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).NotifyConsumersOfSlashedFinalityProvider), ctx, fpBTCPK)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropagateFPSlashingToConsumers", reflect.TypeOf((*MockBTCStakingKeeper)(nil).PropagateFPSlashingToConsumers), ctx, fpBTCPK)
 }
 
 // RemoveVotingPowerDistCache mocks base method.

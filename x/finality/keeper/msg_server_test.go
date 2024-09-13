@@ -173,7 +173,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		// mock slashing interface
 		bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(nil).Times(1)
-		bsKeeper.EXPECT().NotifyConsumersOfSlashedFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPK)).Return(nil).Times(1)
+		bsKeeper.EXPECT().PropagateFPSlashingToConsumers(gomock.Any(), gomock.Eq(fpBTCPK)).Return(nil).Times(1)
 
 		// NOTE: even though this finality provider is slashed, the msg should be successful
 		// Otherwise the saved evidence will be rolled back
@@ -267,7 +267,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 		gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 	bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(),
 		gomock.Eq(fpBTCPKBytes)).Return(nil).Times(1)
-	bsKeeper.EXPECT().NotifyConsumersOfSlashedFinalityProvider(gomock.Any(),
+	bsKeeper.EXPECT().PropagateFPSlashingToConsumers(gomock.Any(),
 		gomock.Eq(fpBTCPK)).Return(nil).Times(1)
 	_, err = ms.AddFinalitySig(ctx, msg)
 	require.NoError(t, err)
