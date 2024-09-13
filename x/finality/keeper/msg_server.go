@@ -239,9 +239,9 @@ func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340Pu
 		panic(fmt.Errorf("failed to slash finality provider: %v", err))
 	}
 
-	// Notify consumer chains about the slashed finality provider
+	// Propagate slashing information to consumer chains
 	if err := k.BTCStakingKeeper.PropagateFPSlashingToConsumers(ctx, fpBtcPk); err != nil {
-		panic(fmt.Errorf("failed to notify consumers of slashed finality provider: %w", err))
+		panic(fmt.Errorf("failed to propagate finality provider slashing to consumers: %w", err))
 	}
 
 	// emit slashing event
