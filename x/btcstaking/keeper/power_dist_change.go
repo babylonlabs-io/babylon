@@ -96,12 +96,6 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, prevDc, newDc *ty
 		// all the pub rand committed by the fpDistInfo, which might slow down
 		// the process, need optimization
 		fpDistInfo.IsTimestamped = k.FinalityKeeper.HasTimestampedPubRand(ctx, fpDistInfo.BtcPk, babylonTipHeight)
-
-		fp, err := k.GetFinalityProvider(ctx, fpDistInfo.BtcPk.MustMarshal())
-		if err != nil {
-			panic(fmt.Errorf("the finality provider %s does not exist: %w", fp.BtcPk.MarshalHex(), err))
-		}
-		fpDistInfo.IsJailed = fp.IsJailed()
 	}
 
 	// apply the finality provider voting power dist info to the new cache
@@ -162,11 +156,13 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	activeBTCDels := map[string][]*types.BTCDelegation{}
 	// a map where key is unbonded BTC delegation's staking tx hash
 	unbondedBTCDels := map[string]struct{}{}
-	// a map where key is slashed or jailed finality providers' BTC PK
-	slashedOrJailedFPs := map[string]struct{}{}
+	// a map where key is slashed finality providers' BTC PK
+	slashedFPs := map[string]struct{}{}
+	// a map where key is jailed finality providers' BTC PK
+	jailedFPs := map[string]struct{}{}
 
 	/*
-		filter and classify all events into new/expired BTC delegations and slashed FPs
+		filter and classify all events into new/expired BTC delegations and jailed/slashed FPs
 	*/
 	for _, event := range events {
 		switch typedEvent := event.Ev.(type) {
@@ -189,10 +185,10 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
 			// record slashed fps
-			slashedOrJailedFPs[typedEvent.SlashedFp.Pk.MarshalHex()] = struct{}{}
+			slashedFPs[typedEvent.SlashedFp.Pk.MarshalHex()] = struct{}{}
 		case *types.EventPowerDistUpdate_JailedFp:
 			// record jailed fps
-			slashedOrJailedFPs[typedEvent.JailedFp.Pk.MarshalHex()] = struct{}{}
+			jailedFPs[typedEvent.JailedFp.Pk.MarshalHex()] = struct{}{}
 		}
 	}
 
@@ -216,10 +212,17 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 
 		fpBTCPKHex := fp.BtcPk.MarshalHex()
 
-		// if this finality provider is slashed or jailed, continue to avoid
-		// assigning voting power to it
-		if _, ok := slashedOrJailedFPs[fpBTCPKHex]; ok {
+		// if this finality provider is slashed, continue to avoid
+		// assigning delegation to it
+		if _, ok := slashedFPs[fpBTCPKHex]; ok {
 			continue
+		}
+
+		// set IsJailed to be true if the fp is jailed
+		// Note that jailed fp can still accept delegations
+		// but won't be assigned with voting power
+		if _, ok := jailedFPs[fpBTCPKHex]; ok {
+			fp.IsJailed = true
 		}
 
 		// add all BTC delegations that are not unbonded to the new finality provider
