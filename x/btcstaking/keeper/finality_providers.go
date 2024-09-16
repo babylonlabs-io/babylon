@@ -75,6 +75,9 @@ func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn
 		return err
 	}
 
+	// Create a map to store FP to consumer ID mappings
+	fpToConsumerMap := make(map[string]string)
+
 	// Map to collect events for each consumer
 	consumerEvents := make(map[string][]*types.BTCStakingConsumerEvent)
 
@@ -82,14 +85,23 @@ func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn
 		// Create SlashedBTCDelegation event
 		consumerEvent := types.CreateSlashedBTCDelegationEvent(delegation)
 
-		// Get consumer IDs of non-Babylon finality providers
-		restakedFPConsumerIDs, err := k.restakedFPConsumerIDs(ctx, delegation.FpBtcPkList)
-		if err != nil {
-			return err
-		}
+		for _, delegationFPBTCPK := range delegation.FpBtcPkList {
+			fpBTCPKHex := delegationFPBTCPK.MarshalHex()
+			consumerID, exists := fpToConsumerMap[fpBTCPKHex]
+			if !exists {
+				// If not in map, check if it's a Babylon FP or get its consumer
+				if _, err := k.GetFinalityProvider(ctx, delegationFPBTCPK); err == nil {
+					// It's a Babylon FP, skip
+					continue
+				} else if consumerID, err = k.bscKeeper.GetConsumerOfFinalityProvider(ctx, &delegationFPBTCPK); err == nil {
+					// Found consumer, add to map
+					fpToConsumerMap[fpBTCPKHex] = consumerID
+				} else {
+					return types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPKHex)
+				}
+			}
 
-		// Collect events for each consumer
-		for _, consumerID := range restakedFPConsumerIDs {
+			// Add event to the consumer's event list
 			consumerEvents[consumerID] = append(consumerEvents[consumerID], consumerEvent)
 		}
 	}
