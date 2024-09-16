@@ -29,7 +29,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/docker/docker/pkg/ioutils"
 	"github.com/stretchr/testify/require"
 
 	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
@@ -251,7 +250,7 @@ func Setup(t *testing.T, isCheckTx bool) *BabylonApp {
 // SetupTestPrivSigner sets up a PrivSigner for testing
 func SetupTestPrivSigner() (*appkeepers.PrivSigner, error) {
 	// Create a temporary node directory
-	nodeDir, err := ioutils.TempDir("", "tmp-signer")
+	nodeDir, err := os.MkdirTemp("", "tmp-signer")
 	if err != nil {
 		return nil, err
 	}
