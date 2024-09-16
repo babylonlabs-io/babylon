@@ -148,8 +148,8 @@ func (k Keeper) UnjailFinalityProvider(ctx context.Context, fpBTCPK []byte) erro
 	}
 
 	// ensure finality provider is not jailed yet
-	if fp.IsJailed() {
-		return types.ErrFpAlreadyJailed
+	if !fp.IsJailed() {
+		return types.ErrFpNotJailed
 	}
 
 	fp.Jailed = false

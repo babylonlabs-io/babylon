@@ -238,7 +238,7 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 }
 
 func (k Keeper) UnjailFinalityProvider(ctx context.Context, req *types.MsgUnjailFinalityProvider) (*types.MsgUnjailFinalityProviderResponse, error) {
-	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyUnjailFinalityProvider)
 
 	fpPk := req.FpBtcPk
 	info, err := k.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
@@ -258,6 +258,8 @@ func (k Keeper) UnjailFinalityProvider(ctx context.Context, req *types.MsgUnjail
 	if err != nil {
 		return nil, fmt.Errorf("failed to unjail finality provider %s: %w", fpPk.MarshalHex(), err)
 	}
+
+	types.DecrementJailedFinalityProviderCounter()
 
 	return &types.MsgUnjailFinalityProviderResponse{}, nil
 }

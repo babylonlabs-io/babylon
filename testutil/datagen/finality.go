@@ -3,13 +3,14 @@ package datagen
 import (
 	"math/rand"
 
-	"github.com/babylonlabs-io/babylon/crypto/eots"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/crypto/eots"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 type RandListInfo struct {

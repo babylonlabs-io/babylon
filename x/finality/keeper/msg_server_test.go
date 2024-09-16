@@ -238,6 +238,57 @@ func FuzzAddFinalitySig(f *testing.F) {
 	})
 }
 
+func FuzzUnjailFinalityProvider(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 100)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
+		ms := keeper.NewMsgServerImpl(*fKeeper)
+
+		// create and register a random finality provider
+		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
+		require.NoError(t, err)
+		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+		fpBTCPKBytes := fpBTCPK.MustMarshal()
+		require.NoError(t, err)
+
+		// set fp to be jailed
+		fp.Jailed = true
+		jailedTime := time.Now()
+		signingInfo := types.FinalityProviderSigningInfo{
+			FpBtcPk:     fpBTCPK,
+			JailedUntil: time.Now(),
+		}
+		err = fKeeper.FinalityProviderSigningTracker.Set(ctx, fpBTCPK.MustMarshal(), signingInfo)
+		require.NoError(t, err)
+
+		signer := datagen.GenRandomAccount().Address
+		msg := &types.MsgUnjailFinalityProvider{
+			Signer:  signer,
+			FpBtcPk: fpBTCPK,
+		}
+
+		// case 1: unjail the fp when the jailing period is not passed
+		ctx = ctx.WithHeaderInfo(header.Info{Time: jailedTime.Truncate(1 * time.Second)})
+		_, err = ms.UnjailFinalityProvider(ctx, msg)
+		require.ErrorIs(t, err, types.ErrJailingPeriodNotPassed)
+
+		// case 2: unjail the fp when the jailing period is passed
+		ctx = ctx.WithHeaderInfo(header.Info{Time: jailedTime.Add(1 * time.Second)})
+		bsKeeper.EXPECT().UnjailFinalityProvider(ctx, fpBTCPKBytes).Return(nil).AnyTimes()
+		_, err = ms.UnjailFinalityProvider(ctx, msg)
+		require.NoError(t, err)
+	})
+}
+
 func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	ctrl := gomock.NewController(t)
