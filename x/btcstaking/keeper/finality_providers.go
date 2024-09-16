@@ -68,6 +68,24 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	return nil
 }
 
+// PropagateFPSlashingToConsumers propagates the slashing of a finality provider (FP) to all relevant consumer chains.
+// It processes all delegations associated with the given FP and creates slashing events for each affected consumer chain.
+//
+// The function performs the following steps:
+//  1. Retrieves all BTC delegations associated with the given finality provider.
+//  2. For each delegation:
+//     a. Creates a SlashedBTCDelegation event.
+//     b. Identifies the consumer chains associated with the FPs in the delegation.
+//     c. Ensures that each consumer chain receives only one event per delegation, even if multiple FPs in the delegation belong to the same consumer.
+//  3. Collects all events for each consumer chain.
+//  4. Sends the collected events to their respective consumer chains.
+//
+// Parameters:
+// - ctx: The context for the operation.
+// - fpBTCPK: The Bitcoin public key of the finality provider being slashed.
+//
+// Returns:
+// - An error if any operation fails, nil otherwise.
 func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) error {
 	// Get all delegations for this finality provider
 	delegations, err := k.getFPBTCDelegations(ctx, fpBTCPK)
@@ -85,6 +103,9 @@ func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn
 		// Create SlashedBTCDelegation event
 		consumerEvent := types.CreateSlashedBTCDelegationEvent(delegation)
 
+		// Track consumers seen for this delegation
+		seenConsumers := make(map[string]bool)
+
 		for _, delegationFPBTCPK := range delegation.FpBtcPkList {
 			fpBTCPKHex := delegationFPBTCPK.MarshalHex()
 			consumerID, exists := fpToConsumerMap[fpBTCPKHex]
@@ -101,8 +122,11 @@ func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn
 				}
 			}
 
-			// Add event to the consumer's event list
-			consumerEvents[consumerID] = append(consumerEvents[consumerID], consumerEvent)
+			// Add event to the consumer's event list only if not seen for this delegation
+			if !seenConsumers[consumerID] {
+				consumerEvents[consumerID] = append(consumerEvents[consumerID], consumerEvent)
+				seenConsumers[consumerID] = true
+			}
 		}
 	}
 
