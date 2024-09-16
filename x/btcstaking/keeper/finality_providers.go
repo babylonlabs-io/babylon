@@ -75,6 +75,9 @@ func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn
 		return err
 	}
 
+	// Map to collect events for each consumer
+	consumerEvents := make(map[string][]*types.BTCStakingConsumerEvent)
+
 	for _, delegation := range delegations {
 		// Create SlashedBTCDelegation event
 		consumerEvent := types.CreateSlashedBTCDelegationEvent(delegation)
@@ -85,12 +88,16 @@ func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn
 			return err
 		}
 
-		// Send event to each involved consumer chain
+		// Collect events for each consumer
 		for _, consumerID := range restakedFPConsumerIDs {
-			// TODO: repeated set ops in KV store is inefficient; consider refactoring
-			if err := k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
-				return err
-			}
+			consumerEvents[consumerID] = append(consumerEvents[consumerID], consumerEvent)
+		}
+	}
+
+	// Send collected events to each involved consumer chain
+	for consumerID, events := range consumerEvents {
+		if err := k.AddBTCStakingConsumerEvents(ctx, consumerID, events); err != nil {
+			return err
 		}
 	}
 

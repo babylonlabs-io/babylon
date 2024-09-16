@@ -40,6 +40,37 @@ func (k Keeper) AddBTCStakingConsumerEvent(ctx context.Context, consumerID strin
 	return nil
 }
 
+func (k Keeper) AddBTCStakingConsumerEvents(ctx context.Context, consumerID string, events []*types.BTCStakingConsumerEvent) error {
+	store := k.btcStakingConsumerEventStore(ctx)
+	storeKey := []byte(consumerID)
+
+	var packet types.BTCStakingIBCPacket
+	if store.Has(storeKey) {
+		eventsBytes := store.Get(storeKey)
+		k.cdc.MustUnmarshal(eventsBytes, &packet)
+	}
+
+	for _, event := range events {
+		switch {
+		case event.GetNewFp() != nil:
+			packet.NewFp = append(packet.NewFp, event.GetNewFp())
+		case event.GetActiveDel() != nil:
+			packet.ActiveDel = append(packet.ActiveDel, event.GetActiveDel())
+		case event.GetSlashedDel() != nil:
+			packet.SlashedDel = append(packet.SlashedDel, event.GetSlashedDel())
+		case event.GetUnbondedDel() != nil:
+			packet.UnbondedDel = append(packet.UnbondedDel, event.GetUnbondedDel())
+		default:
+			return fmt.Errorf("unrecognized event type for event %+v", event)
+		}
+	}
+
+	eventsBytes := k.cdc.MustMarshal(&packet)
+	store.Set(storeKey, eventsBytes)
+
+	return nil
+}
+
 // GetBTCStakingConsumerIBCPacket gets BTC staking consumer IBC packet for a given consumer ID.
 func (k Keeper) GetBTCStakingConsumerIBCPacket(ctx context.Context, consumerID string) *types.BTCStakingIBCPacket {
 	store := k.btcStakingConsumerEventStore(ctx)
