@@ -164,6 +164,20 @@ func (mr *MockBTCStakingKeeperMockRecorder) SlashFinalityProvider(ctx, fpBTCPK i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SlashFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).SlashFinalityProvider), ctx, fpBTCPK)
 }
 
+// UnjailFinalityProvider mocks base method.
+func (m *MockBTCStakingKeeper) UnjailFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnjailFinalityProvider", ctx, fpBTCPK)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UnjailFinalityProvider indicates an expected call of UnjailFinalityProvider.
+func (mr *MockBTCStakingKeeperMockRecorder) UnjailFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnjailFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).UnjailFinalityProvider), ctx, fpBTCPK)
+}
+
 // MockCheckpointingKeeper is a mock of CheckpointingKeeper interface.
 type MockCheckpointingKeeper struct {
 	ctrl     *gomock.Controller

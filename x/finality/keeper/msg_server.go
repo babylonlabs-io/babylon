@@ -237,6 +237,31 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	return &types.MsgCommitPubRandListResponse{}, nil
 }
 
+func (k Keeper) UnjailFinalityProvider(ctx context.Context, req *types.MsgUnjailFinalityProvider) (*types.MsgUnjailFinalityProviderResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
+
+	fpPk := req.FpBtcPk
+	info, err := k.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the signing info of finality provider %s: %w", fpPk.MarshalHex(), err)
+	}
+
+	// cannot be unjailed until jailing period is passed
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	curBlockTime := sdkCtx.HeaderInfo().Time
+	if curBlockTime.Before(info.JailedUntil) {
+		return nil, types.ErrJailingPeriodNotPassed.Wrapf(
+			fmt.Sprintf("current block time: %v, required %v", curBlockTime, info.JailedUntil))
+	}
+
+	err = k.BTCStakingKeeper.UnjailFinalityProvider(ctx, fpPk.MustMarshal())
+	if err != nil {
+		return nil, fmt.Errorf("failed to unjail finality provider %s: %w", fpPk.MarshalHex(), err)
+	}
+
+	return &types.MsgUnjailFinalityProviderResponse{}, nil
+}
+
 // slashFinalityProvider slashes a finality provider with the given evidence
 // including setting its voting power to zero, extracting its BTC SK,
 // and emit an event
