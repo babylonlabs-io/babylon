@@ -20,6 +20,9 @@ service Msg {
     // TODO: msg for evidence of equivocation. this is not specified yet
     // UpdateParams updates the finality module parameters.
     rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+    // UnjailFinalityProvider defines a method for unjailing a jailed
+    // finality provider, thus it can receive voting power
+    rpc UnjailFinalityProvider(MsgUnjailFinalityProvider) returns (MsgUnjailFinalityProviderResponse);
 }
 
 // MsgCommitPubRandList defines a message for committing a list of public randomness for EOTS
@@ -36,7 +39,7 @@ message MsgCommitPubRandList {
     // commitment is the commitment of these public randomness
     // currently it's the root of the Merkle tree that includes these public randomness
     bytes commitment = 5;
-    // sig is the signature on (start_height || num_pub_rand || commitment) signed by 
+    // sig is the signature on (start_height || num_pub_rand || commitment) signed by
     // SK corresponding to fp_btc_pk. This prevents others to commit public
     // randomness on behalf of fp_btc_pk
     // TODO: another option is to restrict signer to correspond to fp_btc_pk. This restricts
@@ -73,13 +76,13 @@ message MsgAddFinalitySigResponse{}
 // MsgUpdateParams defines a message for updating finality module parameters.
 message MsgUpdateParams {
     option (cosmos.msg.v1.signer) = "authority";
-  
+
     // authority is the address of the governance account.
     // just FYI: cosmos.AddressString marks that this field should use type alias
     // for AddressString instead of string, but the functionality is not yet implemented
     // in cosmos-proto
     string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  
+
     // params defines the finality parameters to update.
     //
     // NOTE: All parameters must be supplied.
@@ -87,3 +90,16 @@ message MsgUpdateParams {
 }
 // MsgUpdateParamsResponse is the response to the MsgUpdateParams message.
 message MsgUpdateParamsResponse {}
+
+// MsgUnjailFinalityProvider defines the Msg/UnjailFinalityProvider request type
+message MsgUnjailFinalityProvider {
+    option (gogoproto.goproto_getters) = false;
+    option (cosmos.msg.v1.signer) = "signer";
+
+    string signer = 1;
+    // fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
+    bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+}
+
+// MsgUnjailFinalityProviderResponse defines the Msg/UnjailFinalityProvider response type
+message MsgUnjailFinalityProviderResponse {}
