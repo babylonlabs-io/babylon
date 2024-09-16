@@ -40,7 +40,7 @@ func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPow
 // and records them in cache
 func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(maxActiveFPs uint32) {
 	// sort finality providers with timestamping considered
-	SortFinalityProvidersWithTimestampingAndJailing(dc.FinalityProviders)
+	SortFinalityProvidersWithZeroedVotingPower(dc.FinalityProviders)
 
 	numActiveFPs := uint32(0)
 
