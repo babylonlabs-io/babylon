@@ -122,11 +122,13 @@ func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn
 func (k Keeper) collectSlashedConsumerEvents(ctx context.Context, delegations []*types.BTCDelegation) (map[string][]*types.BTCStakingConsumerEvent, error) {
 	// Create a map to store FP to consumer ID mappings
 	fpToConsumerMap := make(map[string]string)
+
 	// Map to collect events for each consumer
 	consumerEvents := make(map[string][]*types.BTCStakingConsumerEvent)
 
 	for _, delegation := range delegations {
 		consumerEvent := types.CreateSlashedBTCDelegationEvent(delegation)
+
 		// Track consumers seen for this delegation
 		seenConsumers := make(map[string]bool)
 
