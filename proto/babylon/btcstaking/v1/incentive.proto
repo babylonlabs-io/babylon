@@ -39,6 +39,9 @@ message FinalityProviderDistInfo {
     // is_timestamped indicates whether the finality provider
     // has timestamped public randomness committed
     bool is_timestamped = 6;
+    // is_jailed indicates whether the finality provider
+    // is jailed, if so, it should not be assigned voting power
+    bool is_jailed = 7;
 }
 
 // BTCDelDistInfo contains the information related to reward distribution for a BTC delegation

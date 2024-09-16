@@ -209,7 +209,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 
 		maxActiveFpsParam := h.BTCStakingKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders
 		// get a map of expected active finality providers
-		types.SortFinalityProvidersWithTimestamping(fpsWithMeta)
+		types.SortFinalityProvidersWithZeroedVotingPower(fpsWithMeta)
 		expectedActiveFps := fpsWithMeta[:min(uint32(len(fpsWithMeta)-len(noTimestampedFps)), maxActiveFpsParam)]
 		expectedActiveFpsMap := map[string]uint64{}
 		for _, fp := range expectedActiveFps {

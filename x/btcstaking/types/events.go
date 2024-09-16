@@ -21,3 +21,13 @@ func NewEventPowerDistUpdateWithSlashedFP(fpBTCPK *bbn.BIP340PubKey) *EventPower
 		},
 	}
 }
+
+func NewEventPowerDistUpdateWithJailedFP(fpBTCPK *bbn.BIP340PubKey) *EventPowerDistUpdate {
+	return &EventPowerDistUpdate{
+		Ev: &EventPowerDistUpdate_JailedFp{
+			JailedFp: &EventPowerDistUpdate_EventJailedFinalityProvider{
+				Pk: fpBTCPK,
+			},
+		},
+	}
+}

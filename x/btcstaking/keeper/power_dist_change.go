@@ -69,7 +69,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 
 	// reconcile old voting power distribution cache and new events
 	// to construct the new distribution
-	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events, maxActiveFps)
+	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events)
 
 	// record voting power and cache for this height
 	k.recordVotingPowerAndCache(ctx, dc, newDc, maxActiveFps)
@@ -91,11 +91,11 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, prevDc, newDc *ty
 
 	// label fps with whether it has timestamped pub rand so that these fps
 	// will not be assigned voting power
-	for _, fp := range newDc.FinalityProviders {
+	for _, fpDistInfo := range newDc.FinalityProviders {
 		// TODO calling HasTimestampedPubRand potentially iterates
-		// all the pub rand committed by the fp, which might slow down
+		// all the pub rand committed by the fpDistInfo, which might slow down
 		// the process, need optimization
-		fp.IsTimestamped = k.FinalityKeeper.HasTimestampedPubRand(ctx, fp.BtcPk, babylonTipHeight)
+		fpDistInfo.IsTimestamped = k.FinalityKeeper.HasTimestampedPubRand(ctx, fpDistInfo.BtcPk, babylonTipHeight)
 	}
 
 	// apply the finality provider voting power dist info to the new cache
@@ -150,7 +150,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	ctx context.Context,
 	dc *types.VotingPowerDistCache,
 	events []*types.EventPowerDistUpdate,
-	maxActiveFps uint32,
 ) *types.VotingPowerDistCache {
 	// a map where key is finality provider's BTC PK hex and value is a list
 	// of BTC delegations that newly become active under this provider
@@ -159,9 +158,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	unbondedBTCDels := map[string]struct{}{}
 	// a map where key is slashed finality providers' BTC PK
 	slashedFPs := map[string]struct{}{}
+	// a map where key is jailed finality providers' BTC PK
+	jailedFPs := map[string]struct{}{}
 
 	/*
-		filter and classify all events into new/expired BTC delegations and slashed FPs
+		filter and classify all events into new/expired BTC delegations and jailed/slashed FPs
 	*/
 	for _, event := range events {
 		switch typedEvent := event.Ev.(type) {
@@ -183,8 +184,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				unbondedBTCDels[delEvent.StakingTxHash] = struct{}{}
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
-			// slashed finality providers
+			// record slashed fps
 			slashedFPs[typedEvent.SlashedFp.Pk.MarshalHex()] = struct{}{}
+		case *types.EventPowerDistUpdate_JailedFp:
+			// record jailed fps
+			jailedFPs[typedEvent.JailedFp.Pk.MarshalHex()] = struct{}{}
 		}
 	}
 
@@ -208,9 +212,17 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 
 		fpBTCPKHex := fp.BtcPk.MarshalHex()
 
-		// if this finality provider is slashed, continue to avoid recording it
+		// if this finality provider is slashed, continue to avoid
+		// assigning delegation to it
 		if _, ok := slashedFPs[fpBTCPKHex]; ok {
 			continue
+		}
+
+		// set IsJailed to be true if the fp is jailed
+		// Note that jailed fp can still accept delegations
+		// but won't be assigned with voting power
+		if _, ok := jailedFPs[fpBTCPKHex]; ok {
+			fp.IsJailed = true
 		}
 
 		// add all BTC delegations that are not unbonded to the new finality provider
