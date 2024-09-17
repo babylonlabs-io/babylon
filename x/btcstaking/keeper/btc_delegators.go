@@ -60,6 +60,33 @@ func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP
 	return &types.BTCDelegatorDelegations{Dels: btcDels}
 }
 
+func (k Keeper) getFPBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) ([]*types.BTCDelegation, error) {
+	store := k.btcDelegatorFpStore(ctx, fpBTCPK)
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	btcDels := make([]*types.BTCDelegation, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		var btcDelIndex types.BTCDelegatorDelegationIndex
+		if err := btcDelIndex.Unmarshal(iterator.Value()); err != nil {
+			return nil, err
+		}
+
+		for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
+			stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
+			if err != nil {
+				return nil, err
+			}
+			btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
+			if btcDel != nil {
+				btcDels = append(btcDels, btcDel)
+			}
+		}
+	}
+
+	return btcDels, nil
+}
+
 // btcDelegatorFpStore returns the KVStore of the BTC delegators
 // prefix: BTCDelegatorKey || finality provider's Bitcoin secp256k1 PK
 // key: delegator's Bitcoin secp256k1 PK

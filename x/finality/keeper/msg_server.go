@@ -239,6 +239,11 @@ func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340Pu
 		panic(fmt.Errorf("failed to slash finality provider: %v", err))
 	}
 
+	// Propagate slashing information to consumer chains
+	if err := k.BTCStakingKeeper.PropagateFPSlashingToConsumers(ctx, fpBtcPk); err != nil {
+		panic(fmt.Errorf("failed to propagate finality provider slashing to consumers: %w", err))
+	}
+
 	// emit slashing event
 	eventSlashing := types.NewEventSlashedFinalityProvider(evidence)
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {

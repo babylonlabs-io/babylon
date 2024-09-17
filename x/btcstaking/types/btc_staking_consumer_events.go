@@ -99,3 +99,13 @@ func CreateUnbondedBTCDelegationEvent(unbondedDel *BTCDelegation) (*BTCStakingCo
 
 	return event, nil
 }
+
+func CreateSlashedBTCDelegationEvent(slashedDel *BTCDelegation) *BTCStakingConsumerEvent {
+	return &BTCStakingConsumerEvent{
+		Event: &BTCStakingConsumerEvent_SlashedDel{
+			SlashedDel: &SlashedBTCDelegation{
+				StakingTxHash: slashedDel.MustGetStakingTxHash().String(),
+			},
+		},
+	}
+}

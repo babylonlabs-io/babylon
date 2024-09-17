@@ -217,22 +217,27 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 	return restakedToConsumers, nil
 }
 
-// restakedFPConsumerIDs returns the consumer IDs of non-Babylon finality providers
+// restakedFPConsumerIDs returns the unique consumer IDs of non-Babylon finality providers
 func (k Keeper) restakedFPConsumerIDs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) ([]string, error) {
-	var consumerIDs []string
+	consumerIDMap := make(map[string]struct{})
 
 	for i := range fpBTCPKs {
 		fpBTCPK := fpBTCPKs[i]
 		if _, err := k.GetFinalityProvider(ctx, fpBTCPK); err == nil {
 			continue
 		} else if consumerID, err := k.bscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
-			consumerIDs = append(consumerIDs, consumerID)
+			consumerIDMap[consumerID] = struct{}{}
 		} else {
 			return nil, types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPK.MarshalHex())
 		}
 	}
 
-	return consumerIDs, nil
+	uniqueConsumerIDs := make([]string, 0, len(consumerIDMap))
+	for consumerID := range consumerIDMap {
+		uniqueConsumerIDs = append(uniqueConsumerIDs, consumerID)
+	}
+
+	return uniqueConsumerIDs, nil
 }
 
 // GetBTCDelegation gets the BTC delegation with a given staking tx hash

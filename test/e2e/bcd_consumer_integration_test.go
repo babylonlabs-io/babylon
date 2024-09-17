@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -36,6 +37,7 @@ import (
 )
 
 var MinCommissionRate = sdkmath.LegacyNewDecWithPrec(5, 2) // 5%
+var babylonFpBTCSK, babylonFpBTCPK, _ = datagen.GenRandomBTCKeyPair(r)
 
 type BCDConsumerIntegrationTestSuite struct {
 	suite.Suite
@@ -102,12 +104,20 @@ func (s *BCDConsumerIntegrationTestSuite) Test1ChainStartup() {
 	s.waitForIBCConnection()
 }
 
+// Test2AutoRegisterAndVerifyNewConsumer
+// 1. Verifies that an IBC connection is established between the consumer chain and Babylon
+// 2. Checks that the consumer is automatically registered in Babylon's consumer registry
+// 3. Validates the consumer registration details in Babylon
 func (s *BCDConsumerIntegrationTestSuite) Test2AutoRegisterAndVerifyNewConsumer() {
 	// TODO: getting some error in ibc client-state, hardcode consumer id for now
 	consumerID := "07-tendermint-0" //  s.getIBCClientID()
 	s.verifyConsumerRegistration(consumerID)
 }
 
+// Test3CreateConsumerFinalityProvider
+// 1. Creates and registers a random number of consumer FPs in Babylon.
+// 2. Babylon automatically sends IBC packets to the consumer chain to transmit this data.
+// 3. Verifies that the registered consumer FPs in Babylon match the data stored in the consumer chain's contract.
 func (s *BCDConsumerIntegrationTestSuite) Test3CreateConsumerFinalityProvider() {
 	consumerID := "07-tendermint-0"
 
@@ -139,6 +149,9 @@ func (s *BCDConsumerIntegrationTestSuite) Test3CreateConsumerFinalityProvider() 
 	}
 }
 
+// Test4RestakeDelegationToMultipleFPs
+// 1. Creates a Babylon finality provider
+// 2. Creates a pending state delegation restaking to both Babylon FP and 1 consumer FP
 func (s *BCDConsumerIntegrationTestSuite) Test4RestakeDelegationToMultipleFPs() {
 	consumerID := "07-tendermint-0"
 
@@ -177,6 +190,12 @@ func (s *BCDConsumerIntegrationTestSuite) Test4RestakeDelegationToMultipleFPs() 
 	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
 }
 
+// Test5ActivateDelegation
+// 1. Submits covenant signatures to activate a BTC delegation
+// 2. Verifies the delegation is activated on Babylon
+// 3. Checks that Babylon sends IBC packets to update the consumer chain
+// 4. Verifies the delegation details in the consumer chain contract match Babylon
+// 5. Confirms the consumer FP voting power equals the total stake amount
 func (s *BCDConsumerIntegrationTestSuite) Test5ActivateDelegation() {
 	consumerId := "07-tendermint-0"
 
@@ -221,16 +240,161 @@ func (s *BCDConsumerIntegrationTestSuite) Test5ActivateDelegation() {
 	s.Equal(hex.EncodeToString(activeDel.StakingTx), hex.EncodeToString(dataFromContract.Delegations[0].StakingTx))
 	s.Equal(activeDel.SlashingTx.ToHexStr(), hex.EncodeToString(dataFromContract.Delegations[0].SlashingTx))
 
-	// Query and assert finality provider voting power
-	var fpsByPower *cosmwasm.ConsumerFpsByPowerResponse
+	// Query and assert finality provider voting power is equal to the total stake
 	s.Eventually(func() bool {
-		fpsByPower, err = s.cosmwasmController.QueryFinalityProvidersByPower()
-		return err == nil && len(fpsByPower.Fps) > 0
-	}, time.Second*20, time.Second)
+		fpsByPower, err := s.cosmwasmController.QueryFinalityProvidersByPower()
+		if err != nil {
+			s.T().Logf("Error querying finality providers by power: %v", err)
+			return false
+		}
+		if fpsByPower == nil || len(fpsByPower.Fps) == 0 {
+			return false
+		}
 
-	s.Require().NotNil(fpsByPower)
+		// Create a map of BTC public keys to ConsumerFpInfoResponse
+		fpMap := make(map[string]cosmwasm.ConsumerFpInfoResponse)
+		for _, fp := range fpsByPower.Fps {
+			fpMap[fp.BtcPkHex] = fp
+		}
+
+		// Check if the consumerFp's BTC public key exists in the map
+		consumerFpBtcPkHex := consumerFp.BtcPk.MarshalHex()
+		fpInfo, exists := fpMap[consumerFpBtcPkHex]
+		if !exists {
+			return false
+		}
+
+		return fpInfo.BtcPkHex == consumerFp.BtcPk.MarshalHex() && fpInfo.Power == activeDel.TotalSat
+	}, time.Minute, time.Second*5)
 }
 
+// Test6BabylonFPCascadedSlashing
+// 1. Submits a Babylon FP valid finality sig to Babylon
+// 2. Block is finalized.
+// 3. Equivocates/ Submits a invalid finality sig to Babylon
+// 4. Babylon FP is slashed
+// 4. Babylon notifies involved consumer about the delegations.
+// 5. Consumer discounts the voting power of other involved consumer FP's in the affected delegations
+func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
+	// get the activated height
+	activatedHeight, err := s.babylonController.QueryActivatedHeight()
+	s.NoError(err)
+	s.NotNil(activatedHeight)
+
+	// get the block at the activated height
+	activatedHeightBlock, err := s.babylonController.QueryCometBlock(activatedHeight.Height)
+	s.NoError(err)
+	s.NotNil(activatedHeightBlock)
+
+	// commit public randomness at the activated height
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, babylonFpBTCSK, activatedHeight.Height, 100)
+	s.NoError(err)
+
+	// submit the public randomness to the consumer chain
+	txResp, err := s.babylonController.CommitPublicRandomness(msgCommitPubRandList)
+	s.NoError(err)
+	s.NotNil(txResp)
+
+	// get the babylon finality provider
+	babylonFp, err := s.babylonController.QueryFinalityProviders()
+	s.NoError(err)
+	s.NotNil(babylonFp)
+
+	babylonFpBIP340PK := bbntypes.NewBIP340PubKeyFromBTCPK(babylonFpBTCPK)
+
+	// submit finality signature
+	txResp, err = s.babylonController.SubmitFinalitySignature(
+		babylonFpBTCSK,
+		babylonFpBIP340PK,
+		randListInfo.SRList[0],
+		&randListInfo.PRList[0],
+		randListInfo.ProofList[0].ToProto(),
+		activatedHeight.Height)
+	s.NoError(err)
+	s.NotNil(txResp)
+
+	// ensure vote is eventually cast
+	var votes []bbntypes.BIP340PubKey
+	s.Eventually(func() bool {
+		votes, err = s.babylonController.QueryVotesAtHeight(activatedHeight.Height)
+		if err != nil {
+			s.T().Logf("Error querying votes: %v", err)
+			return false
+		}
+		return len(votes) > 0
+	}, time.Minute, time.Second*5)
+	s.Equal(1, len(votes))
+	s.Equal(votes[0].MarshalHex(), babylonFpBIP340PK.MarshalHex())
+
+	// once the vote is cast, ensure block is finalised
+	finalizedBlock, err := s.babylonController.QueryIndexedBlock(activatedHeight.Height)
+	s.NoError(err)
+	s.NotEmpty(finalizedBlock)
+	s.Equal(strings.ToUpper(hex.EncodeToString(finalizedBlock.AppHash)), activatedHeightBlock.Block.AppHash.String())
+	s.True(finalizedBlock.Finalized)
+
+	// equivocate by submitting invalid finality signature
+	txResp, err = s.babylonController.SubmitInvalidFinalitySignature(
+		r,
+		babylonFpBTCSK,
+		babylonFpBIP340PK,
+		randListInfo.SRList[0],
+		&randListInfo.PRList[0],
+		randListInfo.ProofList[0].ToProto(),
+		activatedHeight.Height,
+	)
+	s.NoError(err)
+	s.NotNil(txResp)
+
+	// check the finality provider is slashed on Babylon
+	s.Eventually(func() bool {
+		slashed, err := s.babylonController.QueryFinalityProviderSlashed(babylonFpBTCPK)
+		if err != nil {
+			s.T().Logf("Error querying finality provider slashed status: %v", err)
+			return false
+		}
+		return slashed
+	}, time.Minute, time.Second*5)
+
+	consumerId := "07-tendermint-0"
+
+	// query consumer finality providers
+	consumerFps, err := s.babylonController.QueryConsumerFinalityProviders(consumerId)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(consumerFps)
+	consumerFp := consumerFps[0]
+
+	// query and assert finality provider voting power is zero after slashing
+	s.Eventually(func() bool {
+		fpsByPower, err := s.cosmwasmController.QueryFinalityProvidersByPower()
+		if err != nil {
+			s.T().Logf("Error querying finality providers by power: %v", err)
+			return false
+		}
+		if fpsByPower == nil || len(fpsByPower.Fps) == 0 {
+			return false
+		}
+
+		// create a map of BTC public keys to ConsumerFpInfoResponse
+		fpMap := make(map[string]cosmwasm.ConsumerFpInfoResponse)
+		for _, fp := range fpsByPower.Fps {
+			fpMap[fp.BtcPkHex] = fp
+		}
+
+		// check if the consumerFp's BTC public key exists in the map
+		consumerFpBtcPkHex := consumerFp.BtcPk.MarshalHex()
+		fpInfo, exists := fpMap[consumerFpBtcPkHex]
+		if !exists {
+			return false
+		}
+
+		return fpInfo.BtcPkHex == consumerFp.BtcPk.MarshalHex() && fpInfo.Power == 0
+	}, time.Minute, time.Second*5)
+}
+
+// TODO: Test7: Consumer FP cascaded slashing
+
+// helper function: submitCovenantSigs submits the covenant signatures to activate the BTC delegation
 func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctypes.FinalityProviderResponse) {
 	cvSK, _, _, err := getDeterministicCovenantKey()
 	s.NoError(err)
@@ -348,11 +512,8 @@ func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctype
 	}, time.Minute, time.Second*15, "BTC staking was not activated within the expected time")
 }
 
+// helper function: createBabylonDelegation creates a random BTC delegation restaking to Babylon and consumer finality providers
 func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bstypes.FinalityProviderResponse, consumerFp *bsctypes.FinalityProviderResponse) (*btcec.PublicKey, string) {
-	/*
-		create a random BTC delegation restaking to Babylon and consumer finality providers
-	*/
-
 	delBabylonAddr, err := sdk.AccAddressFromBech32(s.babylonController.MustGetTxSigner())
 	s.NoError(err)
 	// BTC staking params, BTC delegation key pairs and PoP
@@ -471,14 +632,10 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 	return czDelBtcPk, stakingTxHash
 }
 
-// helper function: create a random Babylon finality provider and verify it
+// helper function: createVerifyBabylonFP creates a random Babylon finality provider and verifies it
 func (s *BCDConsumerIntegrationTestSuite) createVerifyBabylonFP() *bstypes.FinalityProviderResponse {
-
-	/*
-		create a random finality provider on Babylon
-	*/
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
-	babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
+	// babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
 	sdk.SetAddrCacheEnabled(false)
 	bbnparams.SetAddressPrefixes()
 	fpBabylonAddr, err := sdk.AccAddressFromBech32(s.babylonController.MustGetTxSigner())
@@ -514,6 +671,8 @@ func (s *BCDConsumerIntegrationTestSuite) createVerifyBabylonFP() *bstypes.Final
 	return actualFps[0]
 }
 
+// helper function: createVerifyConsumerFP creates a random consumer finality provider on Babylon
+// and verifies its existence.
 func (s *BCDConsumerIntegrationTestSuite) createVerifyConsumerFP(consumerId string) *bstypes.FinalityProvider {
 	/*
 		create a random consumer finality provider on Babylon
@@ -554,6 +713,7 @@ func (s *BCDConsumerIntegrationTestSuite) createVerifyConsumerFP(consumerId stri
 	return czFp
 }
 
+// helper function: initBabylonController initializes the Babylon controller with the default configuration.
 func (s *BCDConsumerIntegrationTestSuite) initBabylonController() error {
 	cfg := config.DefaultBabylonConfig()
 
@@ -583,6 +743,7 @@ func (s *BCDConsumerIntegrationTestSuite) initBabylonController() error {
 	return nil
 }
 
+// helper function: initCosmwasmController initializes the Cosmwasm controller with the default configuration.
 func (s *BCDConsumerIntegrationTestSuite) initCosmwasmController() error {
 	cfg := cwconfig.DefaultCosmwasmConfig()
 	cfg.BtcStakingContractAddress = "bbnc1nc5tatafv6eyq7llkr2gv50ff9e22mnf70qgjlv737ktmt4eswrqgn0kq0"
@@ -607,6 +768,7 @@ func (s *BCDConsumerIntegrationTestSuite) initCosmwasmController() error {
 	return nil
 }
 
+// helper function: waitForIBCConnection waits for the IBC connection to be established between Babylon and the consumer.
 func (s *BCDConsumerIntegrationTestSuite) waitForIBCConnection() {
 	var babylonChannel *channeltypes.IdentifiedChannel
 	s.Eventually(func() bool {
@@ -657,6 +819,8 @@ func (s *BCDConsumerIntegrationTestSuite) waitForIBCConnection() {
 	//return babylonChannelState.IdentifiedClientState.ClientId
 }
 
+// helper function: verifyConsumerRegistration verifies the automatic registration of a consumer
+// and returns the consumer details.
 func (s *BCDConsumerIntegrationTestSuite) verifyConsumerRegistration(consumerID string) *bsctypes.ConsumerRegister {
 	var consumerRegistryResp *bsctypes.QueryConsumersRegistryResponse
 
@@ -680,7 +844,7 @@ func (s *BCDConsumerIntegrationTestSuite) verifyConsumerRegistration(consumerID 
 	return registeredConsumer
 }
 
-// getDeterministicCovenantKey returns a single, constant private key and its corresponding public key.
+// helper function: getDeterministicCovenantKey returns a single, constant private key and its corresponding public key.
 // This function is for testing purposes only and should never be used in production environments.
 func getDeterministicCovenantKey() (*btcec.PrivateKey, *btcec.PublicKey, string, error) {
 	// This is a constant private key for testing purposes only

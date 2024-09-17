@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -65,6 +66,96 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
 
 	return nil
+}
+
+// PropagateFPSlashingToConsumers propagates the slashing of a finality provider (FP) to all relevant consumer chains.
+// It processes all delegations associated with the given FP and creates slashing events for each affected consumer chain.
+//
+// The function performs the following steps:
+//  1. Retrieves all BTC delegations associated with the given finality provider.
+//  2. Collects slashed events for each consumer chain using collectSlashedConsumerEvents:
+//     a. For each delegation, creates a SlashedBTCDelegation event.
+//     b. Identifies the consumer chains associated with the FPs in the delegation.
+//     c. Ensures that each consumer chain receives only one event per delegation, even if multiple FPs in the delegation belong to the same consumer.
+//  3. Sends the collected events to their respective consumer chains.
+//
+// Parameters:
+// - ctx: The context for the operation.
+// - fpBTCPK: The Bitcoin public key of the finality provider being slashed.
+//
+// Returns:
+// - An error if any operation fails, nil otherwise.
+func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) error {
+	// Get all delegations for this finality provider
+	delegations, err := k.getFPBTCDelegations(ctx, fpBTCPK)
+	if err != nil {
+		return err
+	}
+
+	// Collect slashed events for each consumer
+	consumerEvents, err := k.collectSlashedConsumerEvents(ctx, delegations)
+	if err != nil {
+		return err
+	}
+
+	// Send collected events to each involved consumer chain
+	for consumerID, events := range consumerEvents {
+		if err := k.AddBTCStakingConsumerEvents(ctx, consumerID, events); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// collectSlashedConsumerEvents processes delegations and collects slashing events for each consumer chain.
+// It ensures that each consumer receives only one event per delegation, even if multiple finality providers
+// in the delegation belong to the same consumer.
+//
+// Parameters:
+// - ctx: The context for the operation.
+// - delegations: A slice of BTCDelegation objects to process.
+//
+// Returns:
+// - A map where the key is the consumer ID and the value is a slice of BTCStakingConsumerEvents.
+// - An error if any operation fails, nil otherwise.
+func (k Keeper) collectSlashedConsumerEvents(ctx context.Context, delegations []*types.BTCDelegation) (map[string][]*types.BTCStakingConsumerEvent, error) {
+	// Create a map to store FP to consumer ID mappings
+	fpToConsumerMap := make(map[string]string)
+
+	// Map to collect events for each consumer
+	consumerEvents := make(map[string][]*types.BTCStakingConsumerEvent)
+
+	for _, delegation := range delegations {
+		consumerEvent := types.CreateSlashedBTCDelegationEvent(delegation)
+
+		// Track consumers seen for this delegation
+		seenConsumers := make(map[string]bool)
+
+		for _, delegationFPBTCPK := range delegation.FpBtcPkList {
+			fpBTCPKHex := delegationFPBTCPK.MarshalHex()
+			consumerID, exists := fpToConsumerMap[fpBTCPKHex]
+			if !exists {
+				// If not in map, check if it's a Babylon FP or get its consumer
+				if _, err := k.GetFinalityProvider(ctx, delegationFPBTCPK); err == nil {
+					continue // It's a Babylon FP, skip
+				} else if consumerID, err = k.bscKeeper.GetConsumerOfFinalityProvider(ctx, &delegationFPBTCPK); err == nil {
+					// Found consumer, add to map
+					fpToConsumerMap[fpBTCPKHex] = consumerID
+				} else {
+					return nil, types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPKHex)
+				}
+			}
+
+			// Add event to the consumer's event list only if not seen for this delegation
+			if !seenConsumers[consumerID] {
+				consumerEvents[consumerID] = append(consumerEvents[consumerID], consumerEvent)
+				seenConsumers[consumerID] = true
+			}
+		}
+	}
+
+	return consumerEvents, nil
 }
 
 // RevertSluggishFinalityProvider sets the Sluggish flag of the given finality provider
