@@ -17,6 +17,5 @@ var (
 	ErrInvalidFinalitySig             = errorsmod.Register(ModuleName, 1108, "finality signature is not valid")
 	ErrNoSlashableEvidence            = errorsmod.Register(ModuleName, 1109, "there is no slashable evidence")
 	ErrPubRandCommitNotBTCTimestamped = errorsmod.Register(ModuleName, 1110, "the public randomness commit is not BTC timestamped yet")
-	ErrFinalityProviderNotJailed      = errorsmod.Register(ModuleName, 1111, "the finality provider is not jailed")
-	ErrJailingPeriodNotPassed         = errorsmod.Register(ModuleName, 1112, "the jailing period is not passed")
+	ErrJailingPeriodNotPassed         = errorsmod.Register(ModuleName, 1111, "the jailing period is not passed")
 )

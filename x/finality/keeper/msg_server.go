@@ -237,11 +237,28 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	return &types.MsgCommitPubRandListResponse{}, nil
 }
 
-func (k Keeper) UnjailFinalityProvider(ctx context.Context, req *types.MsgUnjailFinalityProvider) (*types.MsgUnjailFinalityProviderResponse, error) {
+// UnjailFinalityProvider unjails a jailed finality provider
+func (ms msgServer) UnjailFinalityProvider(ctx context.Context, req *types.MsgUnjailFinalityProvider) (*types.MsgUnjailFinalityProviderResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyUnjailFinalityProvider)
 
+	// ensure finality provider exists
 	fpPk := req.FpBtcPk
-	info, err := k.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
+	fp, err := ms.BTCStakingKeeper.GetFinalityProvider(ctx, fpPk.MustMarshal())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get finality provider %s: %w", fpPk.MarshalHex(), err)
+	}
+
+	// ensure the signer's address matches the fp's address
+	if fp.Addr != req.Signer {
+		return nil, fmt.Errorf("the fp's address %s does not match the signer %s of the requestion", fp.Addr, req.Signer)
+	}
+
+	// ensure finality provider is already jailed
+	if !fp.IsJailed() {
+		return nil, bstypes.ErrFpNotJailed
+	}
+
+	info, err := ms.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the signing info of finality provider %s: %w", fpPk.MarshalHex(), err)
 	}
@@ -249,12 +266,16 @@ func (k Keeper) UnjailFinalityProvider(ctx context.Context, req *types.MsgUnjail
 	// cannot be unjailed until jailing period is passed
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	curBlockTime := sdkCtx.HeaderInfo().Time
-	if curBlockTime.Before(info.JailedUntil) {
+	jailingPeriodPassed, err := info.IsJailingPeriodPassed(curBlockTime)
+	if err != nil {
+		return nil, err
+	}
+	if !jailingPeriodPassed {
 		return nil, types.ErrJailingPeriodNotPassed.Wrapf(
 			fmt.Sprintf("current block time: %v, required %v", curBlockTime, info.JailedUntil))
 	}
 
-	err = k.BTCStakingKeeper.UnjailFinalityProvider(ctx, fpPk.MustMarshal())
+	err = ms.BTCStakingKeeper.UnjailFinalityProvider(ctx, fpPk.MustMarshal())
 	if err != nil {
 		return nil, fmt.Errorf("failed to unjail finality provider %s: %w", fpPk.MarshalHex(), err)
 	}
