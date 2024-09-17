@@ -10,34 +10,7 @@ import (
 )
 
 func (k Keeper) AddBTCStakingConsumerEvent(ctx context.Context, consumerID string, event *types.BTCStakingConsumerEvent) error {
-	store := k.btcStakingConsumerEventStore(ctx)
-	storeKey := []byte(consumerID)
-
-	// If the consumer already has events, append the new event to the existing list
-	// TODO: repeated marshalling/unmarshalling is inefficient; consider refactoring
-	var events types.BTCStakingIBCPacket
-	if store.Has(storeKey) {
-		eventsBytes := store.Get(storeKey)
-		k.cdc.MustUnmarshal(eventsBytes, &events)
-	}
-
-	switch {
-	case event.GetNewFp() != nil:
-		events.NewFp = append(events.NewFp, event.GetNewFp())
-	case event.GetActiveDel() != nil:
-		events.ActiveDel = append(events.ActiveDel, event.GetActiveDel())
-	case event.GetSlashedDel() != nil:
-		events.SlashedDel = append(events.SlashedDel, event.GetSlashedDel())
-	case event.GetUnbondedDel() != nil:
-		events.UnbondedDel = append(events.UnbondedDel, event.GetUnbondedDel())
-	default:
-		return fmt.Errorf("unrecognized event type for event %+v", event)
-	}
-
-	eventsBytes := k.cdc.MustMarshal(&events)
-	store.Set(storeKey, eventsBytes)
-
-	return nil
+	return k.AddBTCStakingConsumerEvents(ctx, consumerID, []*types.BTCStakingConsumerEvent{event})
 }
 
 func (k Keeper) AddBTCStakingConsumerEvents(ctx context.Context, consumerID string, events []*types.BTCStakingConsumerEvent) error {
