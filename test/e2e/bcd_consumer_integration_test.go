@@ -393,7 +393,105 @@ func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
 	}, time.Minute, time.Second*5)
 }
 
-// TODO: Test7: Consumer FP cascaded slashing
+func (s *BCDConsumerIntegrationTestSuite) Test7ConsumerFPCascadedSlashing() {
+	consumerId := "07-tendermint-0"
+
+	consumerFps, err := s.babylonController.QueryConsumerFinalityProviders(consumerId)
+	s.Require().NoError(err)
+	consumerFp := consumerFps[1]
+
+	// register a babylon finality provider
+	babylonFp := s.createVerifyBabylonFP()
+
+	// create a delegation and restake to both Babylon and consumer finality providers
+	// NOTE: this will create delegation in pending state as covenant sigs are not provided
+	delBtcPk, stakingTxHash := s.createBabylonDelegation(babylonFp, consumerFp)
+
+	// check delegation
+	delegation, err := s.babylonController.QueryBTCDelegation(stakingTxHash)
+	s.Require().NoError(err)
+	s.NotNil(delegation)
+
+	// check consumer finality provider delegation
+	czPendingDelSet, err := s.babylonController.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex(), 1)
+	s.Require().NoError(err)
+	s.Len(czPendingDelSet, 1)
+	czPendingDels := czPendingDelSet[0]
+	s.Len(czPendingDels.Dels, 1)
+	s.Equal(delBtcPk.SerializeCompressed()[1:], czPendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	s.Len(czPendingDels.Dels[0].CovenantSigs, 0)
+
+	// check Babylon finality provider delegation
+	pendingDelSet, err := s.babylonController.QueryFinalityProviderDelegations(babylonFp.BtcPk.MarshalHex(), 1)
+	s.Require().NoError(err)
+	s.Len(pendingDelSet, 1)
+	pendingDels := pendingDelSet[0]
+	s.Len(pendingDels.Dels, 1)
+	s.Equal(delBtcPk.SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
+
+	// Activate the delegation by submitting covenant sigs
+	s.submitCovenantSigs(consumerFp)
+
+	// ensure the BTC delegation has covenant sigs now
+	activeDelsSet, err := s.babylonController.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex(), 1)
+	s.NoError(err)
+	s.Len(activeDelsSet, 1)
+
+	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
+	s.NoError(err)
+	s.NotNil(activeDels)
+	s.Len(activeDels.Dels, 1)
+
+	activeDel := activeDels.Dels[0]
+	s.True(activeDel.HasCovenantQuorums(1))
+
+	// Query the staking contract for delegations on the consumer chain
+	var dataFromContract *cosmwasm.ConsumerDelegationsResponse
+	s.Eventually(func() bool {
+		dataFromContract, err = s.cosmwasmController.QueryDelegations()
+		return err == nil && dataFromContract != nil && len(dataFromContract.Delegations) == 1
+	}, time.Second*20, time.Second)
+
+	// Assert delegation details
+	s.Empty(dataFromContract.Delegations[0].UndelegationInfo.DelegatorUnbondingSig)
+	s.Equal(activeDel.BtcPk.MarshalHex(), dataFromContract.Delegations[0].BtcPkHex)
+	s.Len(dataFromContract.Delegations[0].FpBtcPkList, 2)
+	s.Equal(activeDel.FpBtcPkList[0].MarshalHex(), dataFromContract.Delegations[0].FpBtcPkList[0])
+	s.Equal(activeDel.FpBtcPkList[1].MarshalHex(), dataFromContract.Delegations[0].FpBtcPkList[1])
+	s.Equal(activeDel.StartHeight, dataFromContract.Delegations[0].StartHeight)
+	s.Equal(activeDel.EndHeight, dataFromContract.Delegations[0].EndHeight)
+	s.Equal(activeDel.TotalSat, dataFromContract.Delegations[0].TotalSat)
+	s.Equal(hex.EncodeToString(activeDel.StakingTx), hex.EncodeToString(dataFromContract.Delegations[0].StakingTx))
+	s.Equal(activeDel.SlashingTx.ToHexStr(), hex.EncodeToString(dataFromContract.Delegations[0].SlashingTx))
+
+	// Query and assert finality provider voting power is equal to the total stake
+	s.Eventually(func() bool {
+		fpsByPower, err := s.cosmwasmController.QueryFinalityProvidersByPower()
+		if err != nil {
+			s.T().Logf("Error querying finality providers by power: %v", err)
+			return false
+		}
+		if fpsByPower == nil || len(fpsByPower.Fps) == 0 {
+			return false
+		}
+
+		// Create a map of BTC public keys to ConsumerFpInfoResponse
+		fpMap := make(map[string]cosmwasm.ConsumerFpInfoResponse)
+		for _, fp := range fpsByPower.Fps {
+			fpMap[fp.BtcPkHex] = fp
+		}
+
+		// Check if the consumerFp's BTC public key exists in the map
+		consumerFpBtcPkHex := consumerFp.BtcPk.MarshalHex()
+		fpInfo, exists := fpMap[consumerFpBtcPkHex]
+		if !exists {
+			return false
+		}
+
+		return fpInfo.BtcPkHex == consumerFp.BtcPk.MarshalHex() && fpInfo.Power == activeDel.TotalSat
+	}, time.Minute, time.Second*5)
+}
 
 // helper function: submitCovenantSigs submits the covenant signatures to activate the BTC delegation
 func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctypes.FinalityProviderResponse) {
