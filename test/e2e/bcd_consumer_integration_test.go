@@ -42,9 +42,10 @@ import (
 )
 
 var (
-	MinCommissionRate                 = sdkmath.LegacyNewDecWithPrec(5, 2) // 5%
-	babylonFpBTCSK, babylonFpBTCPK, _ = datagen.GenRandomBTCKeyPair(r)
-	randListInfo                      *datagen.RandListInfo
+	MinCommissionRate                   = sdkmath.LegacyNewDecWithPrec(5, 2) // 5%
+	babylonFpBTCSK, babylonFpBTCPK, _   = datagen.GenRandomBTCKeyPair(r)
+	babylonFpBTCSK2, babylonFpBTCPK2, _ = datagen.GenRandomBTCKeyPair(r)
+	randListInfo                        *datagen.RandListInfo
 )
 
 type BCDConsumerIntegrationTestSuite struct {
@@ -168,7 +169,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test4RestakeDelegationToMultipleFPs() 
 	consumerFp := consumerFps[0]
 
 	// register a babylon finality provider
-	babylonFp := s.createBabylonFPWithFinalizedPubRand()
+	babylonFp := s.createBabylonFPWithFinalizedPubRand(babylonFpBTCSK)
 
 	// create a delegation and restake to both Babylon and consumer finality providers
 	// NOTE: this will create delegation in pending state as covenant sigs are not provided
@@ -401,7 +402,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test7ConsumerFPCascadedSlashing() {
 	consumerFp := consumerFps[1]
 
 	// register a babylon finality provider
-	babylonFp := s.createVerifyBabylonFP()
+	babylonFp := s.createVerifyBabylonFP(babylonFpBTCSK2)
 
 	// create a delegation and restake to both Babylon and consumer finality providers
 	// NOTE: this will create delegation in pending state as covenant sigs are not provided
@@ -450,7 +451,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test7ConsumerFPCascadedSlashing() {
 	var dataFromContract *cosmwasm.ConsumerDelegationsResponse
 	s.Eventually(func() bool {
 		dataFromContract, err = s.cosmwasmController.QueryDelegations()
-		return err == nil && dataFromContract != nil && len(dataFromContract.Delegations) == 1
+		return err == nil && dataFromContract != nil && len(dataFromContract.Delegations) == 2
 	}, time.Second*20, time.Second)
 
 	// Assert delegation details
@@ -741,7 +742,7 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 }
 
 // helper function: createBabylonFPWithFinalizedPubRand creates a random Babylon finality provider, commits some public randomness, and finalise these public randomness
-func (s *BCDConsumerIntegrationTestSuite) createBabylonFPWithFinalizedPubRand() *bstypes.FinalityProviderResponse {
+func (s *BCDConsumerIntegrationTestSuite) createBabylonFPWithFinalizedPubRand(babylonFpBTCSK *btcec.PrivateKey) *bstypes.FinalityProviderResponse {
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
 	// babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
 	sdk.SetAddrCacheEnabled(false)
