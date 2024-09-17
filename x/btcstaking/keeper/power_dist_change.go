@@ -160,6 +160,8 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	slashedFPs := map[string]struct{}{}
 	// a map where key is jailed finality providers' BTC PK
 	jailedFPs := map[string]struct{}{}
+	// a map where key is unjailed finality providers' BTC PK
+	unjailedFPs := map[string]struct{}{}
 
 	/*
 		filter and classify all events into new/expired BTC delegations and jailed/slashed FPs
@@ -189,6 +191,9 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		case *types.EventPowerDistUpdate_JailedFp:
 			// record jailed fps
 			jailedFPs[typedEvent.JailedFp.Pk.MarshalHex()] = struct{}{}
+		case *types.EventPowerDistUpdate_UnjailedFp:
+			// record unjailed fps
+			unjailedFPs[typedEvent.UnjailedFp.Pk.MarshalHex()] = struct{}{}
 		}
 	}
 
@@ -223,6 +228,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// but won't be assigned with voting power
 		if _, ok := jailedFPs[fpBTCPKHex]; ok {
 			fp.IsJailed = true
+		}
+
+		// set IsJailed to be false if the fp is unjailed
+		if _, ok := unjailedFPs[fpBTCPKHex]; ok {
+			fp.IsJailed = false
 		}
 
 		// add all BTC delegations that are not unbonded to the new finality provider

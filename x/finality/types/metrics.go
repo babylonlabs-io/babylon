@@ -7,8 +7,9 @@ import (
 
 // performance oriented metrics measuring the execution time of each message
 const (
-	MetricsKeyCommitPubRandList = "commit_pub_rand_list"
-	MetricsKeyAddFinalitySig    = "add_finality_sig"
+	MetricsKeyCommitPubRandList      = "commit_pub_rand_list"
+	MetricsKeyAddFinalitySig         = "add_finality_sig"
+	MetricsKeyUnjailFinalityProvider = "unjail_finality_provider"
 )
 
 const (

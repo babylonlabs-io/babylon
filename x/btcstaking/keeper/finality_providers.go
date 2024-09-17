@@ -139,6 +139,35 @@ func (k Keeper) JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error 
 	return nil
 }
 
+// UnjailFinalityProvider reverts the Jailed flag of a finality provider
+func (k Keeper) UnjailFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
+	// ensure finality provider exists
+	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
+	if err != nil {
+		return err
+	}
+
+	// ensure finality provider is already jailed
+	if !fp.IsJailed() {
+		return types.ErrFpNotJailed
+	}
+
+	fp.Jailed = false
+	k.setFinalityProvider(ctx, fp)
+
+	btcTip := k.btclcKeeper.GetTipInfo(ctx)
+	if btcTip == nil {
+		return fmt.Errorf("failed to get current BTC tip")
+	}
+
+	// record unjailed event. The next `BeginBlock` will consume this
+	// event for updating the finality provider set
+	powerUpdateEvent := types.NewEventPowerDistUpdateWithUnjailedFP(fp.BtcPk)
+	k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
+
+	return nil
+}
+
 // finalityProviderStore returns the KVStore of the finality provider set
 // prefix: FinalityProviderKey
 // key: Bitcoin secp256k1 PK
