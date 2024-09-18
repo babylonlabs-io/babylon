@@ -628,6 +628,10 @@ func (s *BCDConsumerIntegrationTestSuite) Test7ConsumerFPCascadedSlashing() {
 	s.NoError(err)
 	s.NotNil(txResp)
 
+	s.Eventually(func() bool {
+		fp, err := s.cosmwasmController.QueryFinalityProvider(consumerFp.BtcPk.MarshalHex())
+		return err == nil && fp != nil && fp.SlashedHeight > 0
+	}, time.Minute, time.Second*5)
 }
 
 // helper function: submitCovenantSigs submits the covenant signatures to activate the BTC delegation

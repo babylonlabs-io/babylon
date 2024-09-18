@@ -549,6 +549,32 @@ func (wc *CosmwasmConsumerController) QueryFinalityProviders() (*ConsumerFpsResp
 	return &resp, nil
 }
 
+func (wc *CosmwasmConsumerController) QueryFinalityProvider(btcPkHex string) (*SingleConsumerFpResponse, error) {
+	queryMsgStruct := QueryMsgFinalityProvider{
+		FinalityProvider: FinalityProviderQuery{
+			BtcPkHex: btcPkHex,
+		},
+	}
+
+	queryMsgBytes, err := json.Marshal(queryMsgStruct)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal query message: %v", err)
+	}
+
+	dataFromContract, err := wc.QuerySmartContractState(wc.cfg.BtcStakingContractAddress, string(queryMsgBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	var resp SingleConsumerFpResponse
+	err = json.Unmarshal(dataFromContract.Data, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
 func (wc *CosmwasmConsumerController) QueryDelegations() (*ConsumerDelegationsResponse, error) {
 	queryMsgStruct := QueryMsgDelegations{
 		Delegations: struct{}{},

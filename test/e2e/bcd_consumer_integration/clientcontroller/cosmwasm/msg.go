@@ -10,10 +10,10 @@ type ConsumerFpsResponse struct {
 // https://github.com/babylonchain/babylon-contract/blob/v0.5.3/contracts/btc-staking/src/msg.rs
 // https://github.com/babylonchain/babylon-contract/blob/v0.5.3/contracts/btc-staking/schema/btc-staking.json
 type SingleConsumerFpResponse struct {
-	BtcPkHex             string `json:"btc_pk_hex"`
-	SlashedBabylonHeight uint64 `json:"slashed_babylon_height"`
-	SlashedBtcHeight     uint64 `json:"slashed_btc_height"`
-	ConsumerId           string `json:"consumer_id"`
+	BtcPkHex         string `json:"btc_pk_hex"`
+	SlashedHeight    uint64 `json:"slashed_height"`
+	SlashedBtcHeight uint64 `json:"slashed_btc_height"`
+	ConsumerId       string `json:"consumer_id"`
 }
 
 type ConsumerDelegationsResponse struct {
@@ -205,6 +205,14 @@ type FinalitySignatureQuery struct {
 
 type QueryMsgFinalityProviders struct {
 	FinalityProviders struct{} `json:"finality_providers"`
+}
+
+type QueryMsgFinalityProvider struct {
+	FinalityProvider FinalityProviderQuery `json:"finality_provider"`
+}
+
+type FinalityProviderQuery struct {
+	BtcPkHex string `json:"btc_pk_hex"`
 }
 
 type QueryMsgDelegations struct {
