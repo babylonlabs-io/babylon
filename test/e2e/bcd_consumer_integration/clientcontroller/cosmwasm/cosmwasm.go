@@ -18,6 +18,7 @@ import (
 	sdkErr "cosmossdk.io/errors"
 	wasmdparams "github.com/CosmWasm/wasmd/app/params"
 	wasmdtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/babylonlabs-io/babylon/crypto/eots"
 	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/clientcontroller/config"
 	"github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/clientcontroller/types"
 	bbntypes "github.com/babylonlabs-io/babylon/types"
@@ -80,7 +81,7 @@ func (wc *CosmwasmConsumerController) reliablySendMsgs(msgs []sdk.Msg, expectedE
 	)
 }
 
-// CommitPubRandList commits a list of Schnorr public randomness via a MsgCommitPubRand to Babylon
+// CommitPubRandList commits a list of Schnorr public randomness to contract deployed on Consumer Chain
 // it returns tx hash and error
 func (wc *CosmwasmConsumerController) CommitPubRandList(
 	fpPk *btcec.PublicKey,
@@ -118,27 +119,64 @@ func (wc *CosmwasmConsumerController) CommitPubRandList(
 
 // SubmitFinalitySig submits the finality signature via a MsgAddVote to Babylon
 func (wc *CosmwasmConsumerController) SubmitFinalitySig(
-	fpPk *btcec.PublicKey,
-	block *types.BlockInfo,
-	pubRand *btcec.FieldVal,
-	proof []byte, // TODO: have a type for proof
-	sig *btcec.ModNScalar,
+	fpSK *btcec.PrivateKey,
+	fpBtcPk *btcec.PublicKey,
+	privateRand *eots.PrivateRand,
+	pubRand *bbntypes.SchnorrPubRand,
+	proof *cmtcrypto.Proof,
+	heightToVote int64,
+	// sig *btcec.ModNScalar,
 ) (*types.TxResponse, error) {
-	cmtProof := cmtcrypto.Proof{}
-	if err := cmtProof.Unmarshal(proof); err != nil {
+	//cmtProof := cmtcrypto.Proof{}
+	//if err := cmtProof.Unmarshal(proof); err != nil {
+	//	return nil, err
+	//}
+
+	block, err := wc.GetCometBlock(int64(heightToVote))
+	if err != nil {
 		return nil, err
 	}
 
-	msg := ExecMsg{
-		SubmitFinalitySignature: &SubmitFinalitySignature{
-			FpPubkeyHex: bbntypes.NewBIP340PubKeyFromBTCPK(fpPk).MarshalHex(),
-			Height:      block.Height,
-			PubRand:     bbntypes.NewSchnorrPubRandFromFieldVal(pubRand).MustMarshal(),
-			Proof:       cmtProof,
-			BlockHash:   block.Hash,
-			Signature:   bbntypes.NewSchnorrEOTSSigFromModNScalar(sig).MustMarshal(),
-		},
+	msgToSign := append(sdk.Uint64ToBigEndian(uint64(heightToVote)), block.Block.AppHash...)
+	sig, err := eots.Sign(fpSK, privateRand, msgToSign)
+	if err != nil {
+		return nil, err
 	}
+	eotsSig := bbntypes.NewSchnorrEOTSSigFromModNScalar(sig)
+
+	submitFinalitySig := &SubmitFinalitySignature{
+		FpPubkeyHex: bbntypes.NewBIP340PubKeyFromBTCPK(fpBtcPk).MarshalHex(),
+		Height:      uint64(heightToVote),
+		PubRand:     pubRand.MustMarshal(),
+		Proof: Proof{
+			Total:    proof.Total,
+			Index:    proof.Index,
+			LeafHash: proof.LeafHash,
+			Aunts:    proof.Aunts,
+		},
+		BlockHash: block.Block.AppHash,
+		Signature: eotsSig.MustMarshal(),
+	}
+
+	// Log the fields of SubmitFinalitySignature
+	//fmt.Println("SubmitFinalitySignature fields:")
+	//fmt.Printf("FpPubkeyHex: %s\n", submitFinalitySig.FpPubkeyHex)
+	//fmt.Printf("Height: %d\n", submitFinalitySig.Height)
+	//fmt.Printf("PubRand: %x\n", submitFinalitySig.PubRand)
+	//fmt.Printf("Proof: %+v\n", submitFinalitySig.Proof)
+	//fmt.Printf("BlockHash: %x\n", submitFinalitySig.BlockHash)
+	//fmt.Printf("Signature: %x\n", submitFinalitySig.Signature)
+
+	msg := ExecMsg{
+		SubmitFinalitySignature: submitFinalitySig,
+	}
+
+	prettyJSON, err := json.MarshalIndent(msg, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("Pretty JSON:", string(prettyJSON))
 
 	msgBytes, err := json.Marshal(msg)
 	if err != nil {
@@ -173,9 +211,14 @@ func (wc *CosmwasmConsumerController) SubmitBatchFinalitySigs(
 				FpPubkeyHex: bbntypes.NewBIP340PubKeyFromBTCPK(fpPk).MarshalHex(),
 				Height:      b.Height,
 				PubRand:     bbntypes.NewSchnorrPubRandFromFieldVal(pubRandList[i]).MustMarshal(),
-				Proof:       cmtProof,
-				BlockHash:   b.Hash,
-				Signature:   bbntypes.NewSchnorrEOTSSigFromModNScalar(sigs[i]).MustMarshal(),
+				Proof: Proof{
+					Total:    int64(cmtProof.Total),
+					Index:    int64(cmtProof.Index),
+					LeafHash: cmtProof.LeafHash,
+					Aunts:    cmtProof.Aunts,
+				},
+				BlockHash: b.Hash,
+				Signature: bbntypes.NewSchnorrEOTSSigFromModNScalar(sigs[i]).MustMarshal(),
 			},
 		}
 
@@ -611,6 +654,12 @@ func (wc *CosmwasmConsumerController) MustGetValidatorAddress() string {
 // NOTE: this function is only meant to be used in tests.
 func (wc *CosmwasmConsumerController) GetCometNodeStatus() (*coretypes.ResultStatus, error) {
 	return wc.cwClient.GetStatus()
+}
+
+// GetCometBlock gets the tendermint block at a given height
+// NOTE: this function is only meant to be used in tests.
+func (wc *CosmwasmConsumerController) GetCometBlock(height int64) (*coretypes.ResultBlock, error) {
+	return wc.cwClient.GetBlock(height)
 }
 
 // QueryIndexedBlock queries the indexed block at a given height
