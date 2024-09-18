@@ -26,6 +26,8 @@ import (
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	btcstkkeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	btcstktypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	finalitykeeper "github.com/babylonlabs-io/babylon/x/finality/keeper"
+	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 var Upgrade = upgrades.Upgrade{
@@ -42,7 +44,6 @@ type DataSignedFps struct {
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	cfg module.Configurator,
-	app upgrades.BaseAppParamManager,
 	keepers *keepers.AppKeepers,
 ) upgradetypes.UpgradeHandler {
 	return func(context context.Context, _plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
@@ -55,6 +56,10 @@ func CreateUpgradeHandler(
 
 		// Upgrade the staking parameters as first, as other upgrades depend on it.
 		if err := upgradeBtcStakingParameters(ctx, keepers.EncCfg, &keepers.BTCStakingKeeper); err != nil {
+			panic(err)
+		}
+
+		if err := upgradeFinalityParameters(ctx, keepers.EncCfg, &keepers.FinalityKeeper); err != nil {
 			panic(err)
 		}
 
@@ -78,6 +83,18 @@ func LoadBtcStakingParamsFromData(cdc codec.Codec) (btcstktypes.Params, error) {
 	return params, nil
 }
 
+func LoadFinalityParamsFromData(cdc codec.Codec) (finalitytypes.Params, error) {
+	buff := bytes.NewBufferString(FinalityParamStr)
+
+	var params finalitytypes.Params
+	err := cdc.UnmarshalJSON(buff.Bytes(), &params)
+	if err != nil {
+		return finalitytypes.Params{}, err
+	}
+
+	return params, nil
+}
+
 func upgradeBtcStakingParameters(
 	ctx sdk.Context,
 	e *appparams.EncodingConfig,
@@ -95,6 +112,23 @@ func upgradeBtcStakingParameters(
 	// We are overwriting the params at version 0, as the upgrade is happening from
 	// TGE chain so there should be only one version of the params
 	return k.OverwriteParamsAtVersion(ctx, 0, params)
+}
+
+func upgradeFinalityParameters(
+	ctx sdk.Context,
+	e *appparams.EncodingConfig,
+	k *finalitykeeper.Keeper,
+) error {
+
+	cdc := e.Codec
+
+	params, err := LoadFinalityParamsFromData(cdc)
+
+	if err != nil {
+		return err
+	}
+
+	return k.SetParams(ctx, params)
 }
 
 // propLaunch runs the proposal of launch that is meant to insert new BTC Headers.
