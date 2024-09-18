@@ -105,9 +105,17 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 	// as the one from the data
 	stakingParams := n.QueryBTCStakingParams()
 
-	paramsFromData, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec())
+	stakingParamsFromData, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec())
 	s.NoError(err)
 
-	s.EqualValues(paramsFromData, *stakingParams)
+	s.EqualValues(stakingParamsFromData, *stakingParams)
 
+	// check that finality params correctly deserialize and that they are the same
+	// as the one from the data
+	finalityParams := n.QueryFinalityParams()
+
+	finalityParamsFromData, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec())
+	s.NoError(err)
+
+	s.EqualValues(finalityParamsFromData, *finalityParams)
 }

@@ -9,14 +9,15 @@ import (
 	"cosmossdk.io/core/header"
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/babylonlabs-io/babylon/app"
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
 	"github.com/babylonlabs-io/babylon/x/btclightclient"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
 )
 
 const (
@@ -75,10 +76,14 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				oldFPsLen = len(resp.FinalityProviders)
 
 				// Before upgrade, the params should be different
-				paramsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.app.AppCodec())
+				bsParamsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.app.AppCodec())
 				s.NoError(err)
-				moduleParams := s.app.BTCStakingKeeper.GetParams(s.ctx)
-				s.NotEqualValues(moduleParams, paramsFromUpgrade)
+				bsModuleParams := s.app.BTCStakingKeeper.GetParams(s.ctx)
+				s.NotEqualValues(bsModuleParams, bsParamsFromUpgrade)
+				fParamsFromUpgrade, err := v1.LoadFinalityParamsFromData(s.app.AppCodec())
+				s.NoError(err)
+				fModuleParams := s.app.FinalityKeeper.GetParams(s.ctx)
+				s.NotEqualValues(fModuleParams, fParamsFromUpgrade)
 			},
 			func() {
 				// inject upgrade plan
@@ -135,11 +140,15 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 					s.EqualValues(fpFromKeeper.Pop.String(), fpInserted.Pop.String())
 				}
 
-				// Afer upgrade, the params should be the same
-				paramsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.app.AppCodec())
+				// After upgrade, the params should be the same
+				bsParamsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.app.AppCodec())
 				s.NoError(err)
-				moduleParams := s.app.BTCStakingKeeper.GetParams(s.ctx)
-				s.EqualValues(moduleParams, paramsFromUpgrade)
+				bsModuleParams := s.app.BTCStakingKeeper.GetParams(s.ctx)
+				s.EqualValues(bsModuleParams, bsParamsFromUpgrade)
+				fParamsFromUpgrade, err := v1.LoadFinalityParamsFromData(s.app.AppCodec())
+				s.NoError(err)
+				fModuleParams := s.app.FinalityKeeper.GetParams(s.ctx)
+				s.EqualValues(fModuleParams, fParamsFromUpgrade)
 			},
 		},
 	}
