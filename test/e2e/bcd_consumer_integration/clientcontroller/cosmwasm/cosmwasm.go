@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"sort"
 	"strings"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/babylonlabs-io/babylon/crypto/eots"
 	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/clientcontroller/config"
 	"github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/clientcontroller/types"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbntypes "github.com/babylonlabs-io/babylon/types"
 	cwcclient "github.com/babylonlabs-io/cosmwasm-client/client"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -156,6 +158,86 @@ func (wc *CosmwasmConsumerController) SubmitFinalitySig(
 		},
 		BlockHash: block.Block.AppHash,
 		Signature: eotsSig.MustMarshal(),
+	}
+
+	// Log the fields of SubmitFinalitySignature
+	//fmt.Println("SubmitFinalitySignature fields:")
+	//fmt.Printf("FpPubkeyHex: %s\n", submitFinalitySig.FpPubkeyHex)
+	//fmt.Printf("Height: %d\n", submitFinalitySig.Height)
+	//fmt.Printf("PubRand: %x\n", submitFinalitySig.PubRand)
+	//fmt.Printf("Proof: %+v\n", submitFinalitySig.Proof)
+	//fmt.Printf("BlockHash: %x\n", submitFinalitySig.BlockHash)
+	//fmt.Printf("Signature: %x\n", submitFinalitySig.Signature)
+
+	msg := ExecMsg{
+		SubmitFinalitySignature: submitFinalitySig,
+	}
+
+	prettyJSON, err := json.MarshalIndent(msg, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("Pretty JSON:", string(prettyJSON))
+
+	msgBytes, err := json.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := wc.ExecuteContract(msgBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.TxResponse{TxHash: res.TxHash, Events: fromCosmosEventsToBytes(res.Events)}, nil
+}
+
+// SubmitFinalitySig submits the finality signature via a MsgAddVote to Babylon
+func (wc *CosmwasmConsumerController) SubmitInvalidFinalitySig(
+	r *rand.Rand,
+	fpSK *btcec.PrivateKey,
+	fpBtcPk *btcec.PublicKey,
+	privateRand *eots.PrivateRand,
+	pubRand *bbntypes.SchnorrPubRand,
+	proof *cmtcrypto.Proof,
+	heightToVote int64,
+) (*types.TxResponse, error) {
+	// block, err := wc.GetCometBlock(int64(heightToVote))
+
+	// block, err := wc.GetCometBlock(int64(heightToVote))
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// msgToSign := append(sdk.Uint64ToBigEndian(uint64(heightToVote)), block.Block.AppHash...)
+	// sig, err := eots.Sign(fpSK, privateRand, msgToSign)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	invalidAppHash := datagen.GenRandomByteArray(r, 32)
+	invalidMsgToSign := append(sdk.Uint64ToBigEndian(uint64(heightToVote)), invalidAppHash...)
+	invalidSig, err := eots.Sign(fpSK, privateRand, invalidMsgToSign)
+	if err != nil {
+		return nil, err
+	}
+	invalidEotsSig := bbntypes.NewSchnorrEOTSSigFromModNScalar(invalidSig)
+
+	// eotsSig := bbntypes.NewSchnorrEOTSSigFromModNScalar(sig)
+
+	submitFinalitySig := &SubmitFinalitySignature{
+		FpPubkeyHex: bbntypes.NewBIP340PubKeyFromBTCPK(fpBtcPk).MarshalHex(),
+		Height:      uint64(heightToVote),
+		PubRand:     pubRand.MustMarshal(),
+		Proof: Proof{
+			Total:    proof.Total,
+			Index:    proof.Index,
+			LeafHash: proof.LeafHash,
+			Aunts:    proof.Aunts,
+		},
+		BlockHash: invalidAppHash,
+		Signature: invalidEotsSig.MustMarshal(),
 	}
 
 	// Log the fields of SubmitFinalitySignature

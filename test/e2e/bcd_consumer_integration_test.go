@@ -566,6 +566,68 @@ func (s *BCDConsumerIntegrationTestSuite) Test7ConsumerFPCascadedSlashing() {
 	)
 	s.NoError(err)
 	s.NotNil(txResp)
+
+	// // ensure vote is eventually cast
+	// var votes []bbntypes.BIP340PubKey
+	// s.Eventually(func() bool {
+	// 	votes, err = s.cosmwasmController.QueryFinalitySignature(consumerFp.BtcPk.MarshalHex(), uint64(czlatestBlockHeight))
+	// 	if err != nil {
+	// 		s.T().Logf("Error querying votes: %v", err)
+	// 		return false
+	// 	}
+	// 	return len(votes) > 0
+	// }, time.Minute, time.Second*5)
+	// s.Equal(1, len(votes))
+	// s.Equal(votes[0].MarshalHex(), babylonFpBIP340PK.MarshalHex())
+
+	// // once the vote is cast, ensure block is finalised
+	// finalizedBlock, err := s.babylonController.QueryIndexedBlock(activatedHeight.Height)
+	// s.NoError(err)
+	// s.NotEmpty(finalizedBlock)
+	// s.Equal(strings.ToUpper(hex.EncodeToString(finalizedBlock.AppHash)), activatedHeightBlock.Block.AppHash.String())
+	// s.True(finalizedBlock.Finalized)
+
+	// ensure finality signature is submitted to smart contract
+	s.Eventually(func() bool {
+		fpSigsResponse, err := s.cosmwasmController.QueryFinalitySignature(consumerFp.BtcPk.MarshalHex(), uint64(czlatestBlockHeight))
+		if err != nil {
+			s.T().Logf("failed to query finality signature: %s", err.Error())
+			return false
+		}
+		if fpSigsResponse == nil || fpSigsResponse.Signature == nil || len(fpSigsResponse.Signature) == 0 {
+			return false
+		}
+		return true
+	}, time.Minute, time.Second*5)
+
+	//// ensure latest comet block is finalized
+	//s.Eventually(func() bool {
+	//	idxBlockedResponse, err := s.cosmwasmController.QueryIndexedBlock(uint64(czlatestBlockHeight))
+	//	if err != nil {
+	//		s.T().Logf("failed to query indexed block: %s", err.Error())
+	//		return false
+	//	}
+	//	if idxBlockedResponse == nil {
+	//		return false
+	//	}
+	//	if !idxBlockedResponse.Finalized {
+	//		return false
+	//	}
+	//	return true
+	//}, time.Minute, time.Second*5)
+
+	txResp, err = s.cosmwasmController.SubmitInvalidFinalitySig(
+		r,
+		czFpBTCSK,
+		czFpBTCPK,
+		randListInfo.SRList[0],
+		&randListInfo.PRList[0],
+		randListInfo.ProofList[0].ToProto(),
+		czlatestBlockHeight,
+	)
+	s.NoError(err)
+	s.NotNil(txResp)
+
 }
 
 // helper function: submitCovenantSigs submits the covenant signatures to activate the BTC delegation
