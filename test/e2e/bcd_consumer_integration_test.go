@@ -538,7 +538,7 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 		params.CovenantQuorum,
 		stakingTimeBlocks,
 		stakingValue,
-		params.SlashingAddress.String(),
+		params.SlashingPkScript,
 		params.SlashingRate,
 		unbondingTime,
 	)
@@ -599,7 +599,7 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
 		stakingTimeBlocks,
 		unbondingValue,
-		params.SlashingAddress.String(),
+		params.SlashingPkScript,
 		params.SlashingRate,
 		unbondingTime,
 	)

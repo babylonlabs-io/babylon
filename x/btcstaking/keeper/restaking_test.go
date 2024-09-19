@@ -23,8 +23,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
+		h := NewHelper(t, btclcKeeper, btccKeeper, nil)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -120,8 +119,7 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
+		h := NewHelper(t, btclcKeeper, btccKeeper, nil)
 
 		// set all parameters
 		h.GenAndApplyParams(r)

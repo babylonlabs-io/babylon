@@ -455,20 +455,16 @@ func (bc *BabylonController) QueryStakingParams() (*types2.StakingParams, error)
 		}
 		covenantPks = append(covenantPks, covPk)
 	}
-	slashingAddress, err := btcutil.DecodeAddress(stakingParamRes.Params.SlashingAddress, bc.btcParams)
-	if err != nil {
-		return nil, err
-	}
 
 	return &types2.StakingParams{
 		ComfirmationTimeBlocks:    ckptParamRes.Params.BtcConfirmationDepth,
 		FinalizationTimeoutBlocks: ckptParamRes.Params.CheckpointFinalizationTimeout,
 		MinSlashingTxFeeSat:       btcutil.Amount(stakingParamRes.Params.MinSlashingTxFeeSat),
 		CovenantPks:               covenantPks,
-		SlashingAddress:           slashingAddress,
+		SlashingPkScript:          stakingParamRes.Params.SlashingPkScript,
 		CovenantQuorum:            stakingParamRes.Params.CovenantQuorum,
 		SlashingRate:              stakingParamRes.Params.SlashingRate,
-		MinUnbondingTime:          stakingParamRes.Params.MinUnbondingTime,
+		MinUnbondingTime:          stakingParamRes.Params.MinUnbondingTimeBlocks,
 	}, nil
 }
 

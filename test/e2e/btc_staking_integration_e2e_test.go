@@ -526,7 +526,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		covenantQuorum,
 		stakingTimeBlocks,
 		stakingValue,
-		params.SlashingAddress,
+		params.SlashingPkScript,
 		params.SlashingRate,
 		unbondingTime,
 	)
@@ -573,7 +573,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
 		stakingTimeBlocks,
 		unbondingValue,
-		params.SlashingAddress,
+		params.SlashingPkScript,
 		params.SlashingRate,
 		unbondingTime,
 	)
@@ -771,7 +771,8 @@ func (s *BTCStakingIntegrationTestSuite) submitCovenantSigs(nonValidatorNode *ch
 	nonValidatorNode.WaitForNextBlock()
 
 	// ensure BTC staking is activated
-	activatedHeight := nonValidatorNode.QueryActivatedHeight()
+	activatedHeight, err := nonValidatorNode.QueryActivatedHeight()
+	s.NoError(err)
 	s.Positive(activatedHeight)
 	// ensure finality provider has voting power at activated height
 	currentBtcTip, err := nonValidatorNode.QueryTip()
