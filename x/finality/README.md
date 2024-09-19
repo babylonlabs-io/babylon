@@ -9,6 +9,8 @@ The Finality module is responsible for handling finality votes, maintaining the
 finalization status of blocks, and identifying equivocating finality providers
 in the finalization rounds. This includes:
 
+- handling requests for committing EOTS public randomness from finality
+providers;
 - handling requests for submitting finality votes from finality providers;
 - maintaining the finalization status of blocks;
 - identifying sluggish finality providers; and
@@ -19,10 +21,13 @@ in the finalization rounds. This includes:
 - [Table of contents](#table-of-contents)
 - [Concepts](#concepts)
 - [States](#states)
+  - [Parameters](#parameters)
+  - [Public randomness](#public-randomness)
   - [Finality votes](#finality-votes)
   - [Indexed blocks with finalization status](#indexed-blocks-with-finalization-status)
   - [Equivocation evidences](#equivocation-evidences)
 - [Messages](#messages)
+  - [MsgCommitPubRandList](#msgcommitpubrandlist)
   - [MsgAddFinalitySig](#msgaddfinalitysig)
   - [MsgUpdateParams](#msgupdateparams)
 - [EndBlocker](#endblocker)
@@ -77,17 +82,14 @@ participate in the finality voting round, an active finality provider with BTC
 delegations (as specified in the [BTC Staking module](../btcstaking/README.md))
 needs to interact with Babylon as follows:
 
-- **Committing EOTS master public randomness.** The finality provider needs to
-  generate a pair of EOTS master secret/public randomness, and commit the master
-  public randomness when registering itself to Babylon. The EOTS master
-  secret/public randomness allows to derive a EOTS secret/public randomness
-  deterministically for each given height, respectively. Babylon further
-  requires the epoch of the finality provider registration to be finalized by
-  BTC timestamping before the registered finality provider can submit finality
-  signatures. This ensures that each finality provider has a unique public
-  randomness for each height, and that if the finality provider submits two
-  finality signatures over two conflicting blocks, anyone can extract the
-  finality provider's secret key using EOTS.
+- **Committing EOTS public randomness.** The finality provider proactively
+  sends a merkle-tree-based commit of a list of *EOTS public randomness*
+  for future heights to the Finality module. EOTS ensures that given an EOTS
+  public randomness, a signer can only sign a single message.
+  Otherwise, anyone can extract the signer's secret key
+  by using two EOTS signatures on different messages, the corresponding EOTS
+  public randomness, and the signer's public key.
+  A public randomness commit takes effect only after it is BTC-timestamped.
 - **Submitting EOTS signatures.** Upon a new block, the finality provider
   submits an EOTS signature w.r.t. the derived public randomness at that height.
   The Finality module will verify the EOTS signature, and check if there are
@@ -105,6 +107,61 @@ transactions to the Bitcoin network.
 ## States
 
 The Finality module maintains the following KV stores.
+
+### Parameters
+
+The [parameter storage](./keeper/params.go) maintains the Finality module's
+parameters. The Finality module's parameters are represented as a `Params`
+[object](../../proto/babylon/finality/v1/params.proto) defined as follows:
+
+```protobuf
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  // signed_blocks_window defines the size of the sliding window for tracking finality provider liveness
+  int64 signed_blocks_window  = 1;
+  // finality_sig_timeout defines how much time (in terms of blocks) finality providers have to cast a finality
+  // vote before being judged as missing their voting turn on the given block
+  int64 finality_sig_timeout = 2;
+  // min_signed_per_window defines the minimum number of blocks that a finality provider is required to sign
+  // within the sliding window to avoid being detected as sluggish
+  bytes min_signed_per_window = 3 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+  // min_pub_rand is the minimum number of public randomness each
+  // message should commit
+  uint64 min_pub_rand = 4;
+}
+```
+
+### Public randomness
+
+The [public randomness storage](./keeper/public_randomness.go) maintains the
+EOTS public randomness commit that each finality provider commits to Babylon.
+The key is the finality provider's Bitcoin secp256k1 public key concatenated
+with the block height, and the value is a merkle tree constructed by the list
+of public randomness with starting height, and the number of public randomness.
+It also stores the epoch number at which Babylon receives the commit.
+
+```protobuf
+// PubRandCommit is a commitment to a series of public randomness
+// currently, the commitment is a root of a Merkle tree that includes
+// a series of public randomness
+message PubRandCommit {
+    // start_height is the height of the first commitment
+    uint64 start_height = 1;
+    // num_pub_rand is the number of committed public randomness
+    uint64 num_pub_rand = 2;
+    // commitment is the value of the commitment
+    // currently, it is the root of the merkle tree constructed by the public randomness
+    bytes commitment = 3;
+    // epoch_num defines the epoch number that the commit falls into
+    uint64 epoch_num = 4;
+}
+```
 
 ### Finality votes
 
@@ -239,6 +296,46 @@ message formats are defined at
 [proto/babylon/finality/v1/tx.proto](../../proto/babylon/finality/v1/tx.proto).
 The message handlers are defined at
 [x/finality/keeper/msg_server.go](./keeper/msg_server.go).
+
+### MsgCommitPubRandList
+
+The `MsgCommitPubRandList` message is used for committing a merkle tree
+constructed by a list of EOTS public randomness that will be used by a
+finality provider in the future. It is typically submitted by a finality
+provider via the [finality provider](https://github.com/babylonchain/finality-provider) program.
+
+```protobuf
+// MsgCommitPubRandList defines a message for committing a list of public randomness for EOTS
+message MsgCommitPubRandList {
+  option (cosmos.msg.v1.signer) = "signer";
+  string signer = 1;
+  // fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
+  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  // start_height is the start block height of the list of public randomness
+  uint64 start_height = 3;
+  // num_pub_rand is the number of public randomness committed
+  uint64 num_pub_rand = 4;
+  // commitment is the commitment of these public randomness
+  // currently it's the root of the Merkle tree that includes these public randomness
+  bytes commitment = 5;
+  // sig is the signature on (start_height || num_pub_rand || commitment) signed by 
+  // SK corresponding to fp_btc_pk. This prevents others to commit public
+  // randomness on behalf of fp_btc_pk
+  bytes sig = 6 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340Signature" ];
+}
+```
+
+Upon `MsgCommitPubRandList`, a Babylon node will execute as follows:
+
+1. Ensure the message contains at least `MinPubRand` number of EOTS public
+   randomness, where `MinPubRand` is defined in the module parameters.
+2. Ensure the finality provider has been registered in Babylon.
+3. Ensure the list of EOTS public randomness does not overlap with existing EOTS
+   public randomness that this finality provider previously committed before.
+4. Verify the Schnorr signature over the list of public randomness signed by the
+   finality provider.
+5. Store the list of EOTS public randomness along with the current epoch number
+   to the public randomness storage.
 
 ### MsgAddFinalitySig
 

@@ -6,9 +6,9 @@ import (
 
 	"cosmossdk.io/core/header"
 	sdkmath "cosmossdk.io/math"
-	etypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -38,16 +38,21 @@ type Helper struct {
 	BTCStakingKeeper        *keeper.Keeper
 	BTCStkConsumerKeeper    *bsckeeper.Keeper
 	BTCLightClientKeeper    *types.MockBTCLightClientKeeper
-	CheckpointingKeeper     *types.MockCheckpointingKeeper
 	BTCCheckpointKeeper     *types.MockBtcCheckpointKeeper
+	FinalityKeeper          *types.MockFinalityKeeper
 	BTCStakingHooks         *types.MockBtcStakingHooks
 	MsgServer               types.MsgServer
 	BtcStkConsumerMsgServer bsctypes.MsgServer
 	Net                     *chaincfg.Params
 }
 
-func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKeeper *types.MockBtcCheckpointKeeper, ckptKeeper *types.MockCheckpointingKeeper) *Helper {
-	k, bscKeeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper, ckptKeeper)
+func NewHelper(
+	t testing.TB,
+	btclcKeeper *types.MockBTCLightClientKeeper,
+	btccKeeper *types.MockBtcCheckpointKeeper,
+	finalityKeeper *types.MockFinalityKeeper,
+) *Helper {
+	k, bscKeeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper, finalityKeeper)
 	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 	btcStkConsumerMsgServer := bsckeeper.NewMsgServerImpl(*bscKeeper)
@@ -63,7 +68,6 @@ func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKe
 		BTCStakingKeeper:        k,
 		BTCStkConsumerKeeper:    bscKeeper,
 		BTCLightClientKeeper:    btclcKeeper,
-		CheckpointingKeeper:     ckptKeeper,
 		BTCCheckpointKeeper:     btccKeeper,
 		MsgServer:               msgSrvr,
 		BtcStkConsumerMsgServer: btcStkConsumerMsgServer,
@@ -96,9 +100,6 @@ func (h *Helper) GenAndApplyCustomParams(
 	baseHeader := btclctypes.SimnetGenesisBlock()
 	h.BTCLightClientKeeper.EXPECT().GetBaseBTCHeader(gomock.Any()).Return(&baseHeader).AnyTimes()
 
-	// mocking stuff for BTC checkpoint keeper
-	h.BTCCheckpointKeeper.EXPECT().GetPowLimit().Return(h.Net.PowLimit).AnyTimes()
-
 	params := btcctypes.DefaultParams()
 	params.CheckpointFinalizationTimeout = finalizationTimeout
 
@@ -109,16 +110,22 @@ func (h *Helper) GenAndApplyCustomParams(
 	h.NoError(err)
 	slashingAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 	h.NoError(err)
+	slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+	h.NoError(err)
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, types.Params{
 		CovenantPks:                bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
 		CovenantQuorum:             3,
-		SlashingAddress:            slashingAddress.EncodeAddress(),
+		MinStakingValueSat:         1000,
+		MaxStakingValueSat:         int64(4 * 10e8),
+		MinStakingTimeBlocks:       10,
+		MaxStakingTimeBlocks:       10000,
+		SlashingPkScript:           slashingPkScript,
 		MinSlashingTxFeeSat:        10,
 		MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.01"),
 		SlashingRate:               sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
 		MaxActiveFinalityProviders: 100,
-		MinUnbondingTime:           minUnbondingTime,
-		MinUnbondingRate:           sdkmath.LegacyMustNewDecFromStr("0.8"),
+		MinUnbondingTimeBlocks:     minUnbondingTime,
+		UnbondingFeeSat:            1000,
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs
@@ -169,9 +176,6 @@ func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string)
 		return nil, nil, nil, err
 	}
 
-	registeredEpoch := uint64(10)
-	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Eq(h.Ctx)).Return(&etypes.Epoch{EpochNumber: registeredEpoch}).AnyTimes()
-
 	msgNewFp := types.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
 		Description: fp.Description,
@@ -213,7 +217,7 @@ func (h *Helper) CreateDelegationCustom(
 		bsParams.CovenantQuorum,
 		stakingTimeBlocks,
 		stakingValue,
-		bsParams.SlashingAddress,
+		bsParams.SlashingPkScript,
 		bsParams.SlashingRate,
 		unbondingTime,
 	)
@@ -271,7 +275,7 @@ func (h *Helper) CreateDelegationCustom(
 		wire.NewOutPoint(&stkTxHash, stkOutputIdx),
 		unbondingTime,
 		unbondingValue,
-		bsParams.SlashingAddress,
+		bsParams.SlashingPkScript,
 		bsParams.SlashingRate,
 		unbondingTime,
 	)
@@ -320,8 +324,8 @@ func (h *Helper) CreateDelegation(
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
 
 	minUnbondingTime := types.MinimumUnbondingTime(
-		bsParams,
-		bcParams,
+		&bsParams,
+		&bcParams,
 	)
 
 	stakingTxHash, delSK, delPK, msgCreateBTCDel, err := h.CreateDelegationCustom(

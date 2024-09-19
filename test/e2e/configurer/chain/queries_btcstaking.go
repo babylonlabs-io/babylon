@@ -94,15 +94,19 @@ func (n *NodeConfig) QueryUnbondedDelegations() []*bstypes.BTCDelegationResponse
 	return resp.BtcDelegations
 }
 
-func (n *NodeConfig) QueryActivatedHeight() uint64 {
+func (n *NodeConfig) QueryActivatedHeight() (uint64, error) {
 	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/activated_height", url.Values{})
-	require.NoError(n.t, err)
+	if err != nil {
+		return 0, err
+	}
 
 	var resp bstypes.QueryActivatedHeightResponse
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
-	require.NoError(n.t, err)
+	if err != nil {
+		return 0, err
+	}
 
-	return resp.Height
+	return resp.Height, nil
 }
 
 // TODO: pagination support

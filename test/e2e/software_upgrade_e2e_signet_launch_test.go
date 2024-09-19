@@ -1,6 +1,8 @@
 package e2e
 
 import (
+	"sort"
+
 	"github.com/stretchr/testify/suite"
 
 	"github.com/babylonlabs-io/babylon/app"
@@ -14,7 +16,7 @@ import (
 type SoftwareUpgradeSignetLaunchTestSuite struct {
 	suite.Suite
 
-	configurer configurer.Configurer
+	configurer *configurer.UpgradeConfigurer
 }
 
 func (s *SoftwareUpgradeSignetLaunchTestSuite) SetupSuite() {
@@ -23,17 +25,22 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) SetupSuite() {
 
 	btcHeaderGenesis, err := app.SignetBtcHeaderGenesis(app.NewTmpBabylonApp().AppCodec())
 	s.NoError(err)
-	s.configurer, err = configurer.NewSoftwareUpgradeConfigurer(s.T(), false, config.UpgradeSignetLaunchFilePath, []*btclighttypes.BTCHeaderInfo{btcHeaderGenesis})
+
+	cfg, err := configurer.NewSoftwareUpgradeConfigurer(s.T(), true, config.UpgradeSignetLaunchFilePath, []*btclighttypes.BTCHeaderInfo{btcHeaderGenesis})
 	s.NoError(err)
+	s.configurer = cfg
+
 	err = s.configurer.ConfigureChains()
 	s.NoError(err)
 	err = s.configurer.RunSetup() // upgrade happens at the setup of configurer.
-	s.NoError(err)
+	s.Require().NoError(err)
 }
 
 func (s *SoftwareUpgradeSignetLaunchTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
-	s.Require().NoError(err)
+	if err != nil {
+		s.T().Logf("error to clear resources %s", err.Error())
+	}
 }
 
 // TestUpgradeSignetLaunch Checks if the BTC Headers were inserted.
@@ -45,13 +52,17 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 	n, err := chainA.GetDefaultNode()
 	s.NoError(err)
 
-	expectedUpgradeHeight := int64(25)
+	govProp, err := s.configurer.ParseGovPropFromFile()
+	s.NoError(err)
+
+	bbnApp := app.NewTmpBabylonApp()
 
 	// makes sure that the upgrade was actually executed
+	expectedUpgradeHeight := govProp.Plan.Height
 	resp := n.QueryAppliedPlan(v1.Upgrade.UpgradeName)
-	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height 25")
+	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height %d", expectedUpgradeHeight)
 
-	btcHeadersInserted, err := v1.LoadBTCHeadersFromData()
+	btcHeadersInserted, err := v1.LoadBTCHeadersFromData(bbnApp.AppCodec())
 	s.NoError(err)
 
 	lenHeadersInserted := len(btcHeadersInserted)
@@ -69,4 +80,34 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 
 		s.EqualValues(headerInserted.Header.MarshalHex(), headerStoredResp.HeaderHex)
 	}
+
+	oldFPsLen := 0 // it should not have any FP
+	fpsFromNode := n.QueryFinalityProviders()
+
+	fpsInserted, err := v1.LoadSignedFPsFromData(bbnApp.AppCodec(), bbnApp.TxConfig().TxJSONDecoder())
+	s.NoError(err)
+	s.Equal(len(fpsInserted), len(fpsFromNode)+oldFPsLen)
+
+	// sorts all the FPs from node to match the ones from loaded string json
+	sort.Slice(fpsFromNode, func(i, j int) bool {
+		return fpsFromNode[i].Addr > fpsFromNode[j].Addr
+	})
+
+	for i, fpInserted := range fpsInserted {
+		fpFromKeeper := fpsFromNode[i]
+		s.EqualValues(fpFromKeeper.Addr, fpInserted.Addr)
+		s.EqualValues(fpFromKeeper.Description, fpInserted.Description)
+		s.EqualValues(fpFromKeeper.Commission.String(), fpInserted.Commission.String())
+		s.EqualValues(fpFromKeeper.Pop.String(), fpInserted.Pop.String())
+	}
+
+	// check that staking params correctly deserialize and that they are the same
+	// as the one from the data
+	stakingParams := n.QueryBTCStakingParams()
+
+	paramsFromData, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec())
+	s.NoError(err)
+
+	s.EqualValues(paramsFromData, *stakingParams)
+
 }

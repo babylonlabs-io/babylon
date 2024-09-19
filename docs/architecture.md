@@ -31,7 +31,7 @@ whether the inclusion evidence for a Bitcoin transaction is valid.
 ### [BTC Checkpoint](../x/btccheckpoint)
 
 The BTC Checkpoint module verifies Babylon’s BTC checkpoints
-reported by the Vigilante Reporter, and
+reported by the Vigilante Reporter  and
 provides the confirmation status of these checkpoints to the Checkpointing
 module based on their depth according to the BTC Light Client module.
 
@@ -140,7 +140,7 @@ A standalone program that monitors:
   on the Bitcoin ledger to inform Babylon about them.
 - The execution of BTC Staking slashing transactions in the case
   of a finality provider double voting.
-  In the case of non-execution the monitor extracts the finality provider's
+  In the case of non-execution, the monitor extracts the finality provider's
   private key and executes the slashing.
 - The execution of a selective slashing attack launched
   by a finality provider. In this case,
@@ -169,12 +169,12 @@ has been developed to enable these functionalities:
   Daemon program connecting to a Bitcoin wallet and Babylon.
 - [BTC Staker Dashboard](https://github.com/babylonchain/btc-staking-dashboard):
   Web application connecting to a Bitcoin wallet extension and the Babylon API.
-  Should only be used for testing purposes.
+  It should only be used for testing purposes.
 - Wallet Integrations (TBD)
 
 ### [Finality Provider](https://github.com/babylonchain/finality-provider)
 
-A standalone program that allows for the registration and
+A standalone program that allows the registration and
 maintenance of a finality provider.
 It monitors for a finality provider's inclusion in the active set, commits
 [Extractable One Time Signature (EOTS)](https://docs.babylonchain.io/assets/files/btc_staking_litepaper-32bfea0c243773f0bfac63e148387aef.pdf)

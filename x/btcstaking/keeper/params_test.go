@@ -5,10 +5,11 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetParams(t *testing.T) {
@@ -65,7 +66,7 @@ func FuzzParamsVersioning(f *testing.F) {
 			params := types.DefaultParams()
 			// randomize two parameters so each params are slightly different
 			params.MinSlashingTxFeeSat = r.Int63()
-			params.MinUnbondingTime = uint32(r.Intn(math.MaxUint16))
+			params.MinUnbondingTimeBlocks = uint32(r.Intn(math.MaxUint16))
 			err := k.SetParams(ctx, params)
 			require.NoError(t, err)
 			generatedParams = append(generatedParams, &params)

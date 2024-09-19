@@ -42,10 +42,18 @@ func (fp *FinalityProvider) ValidateBasic() error {
 	return nil
 }
 
-// SortFinalityProviders sorts the finality providers slice,
+// SortFinalityProvidersWithTimestamping sorts the finality providers slice,
 // from higher to lower voting power
-func SortFinalityProviders(fps []*FinalityProviderDistInfo) {
+// finality providers that are timestamped come higher than
+// those are not
+func SortFinalityProvidersWithTimestamping(fps []*FinalityProviderDistInfo) {
 	sort.SliceStable(fps, func(i, j int) bool {
+		if fps[i].IsTimestamped && !fps[j].IsTimestamped {
+			return true
+		}
+		if !fps[i].IsTimestamped && fps[j].IsTimestamped {
+			return false
+		}
 		return fps[i].TotalVotingPower > fps[j].TotalVotingPower
 	})
 }
@@ -119,10 +127,10 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 // - MinUnbondingTime
 // - CheckpointFinalizationTimeout
 func MinimumUnbondingTime(
-	stakingParams Params,
-	checkpointingParams btcctypes.Params) uint64 {
+	stakingParams *Params,
+	checkpointingParams *btcctypes.Params) uint64 {
 	return math.Max[uint64](
-		uint64(stakingParams.MinUnbondingTime),
+		uint64(stakingParams.MinUnbondingTimeBlocks),
 		checkpointingParams.CheckpointFinalizationTimeout,
 	)
 }

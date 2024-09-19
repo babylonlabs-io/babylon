@@ -163,20 +163,6 @@ func (n *NodeConfig) QueryListSnapshots() ([]*cmtabcitypes.Snapshot, error) {
 	return listSnapshots.Snapshots, nil
 }
 
-// func (n *NodeConfig) QueryContractsFromId(codeId int) ([]string, error) {
-// 	path := fmt.Sprintf("/cosmwasm/wasm/v1/code/%d/contracts", codeId)
-// 	bz, err := n.QueryGRPCGateway(path)
-
-// 	require.NoError(n.t, err)
-
-// 	var contractsResponse wasmtypes.QueryContractsByCodeResponse
-// 	if err := util.Cdc.UnmarshalJSON(bz, &contractsResponse); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return contractsResponse.Contracts, nil
-// }
-
 func (n *NodeConfig) QueryRawCheckpoint(epoch uint64) (*ct.RawCheckpointWithMetaResponse, error) {
 	path := fmt.Sprintf("babylon/checkpointing/v1/raw_checkpoint/%d", epoch)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
@@ -208,6 +194,19 @@ func (n *NodeConfig) QueryRawCheckpoints(pagination *query.PageRequest) (*ct.Que
 	}
 
 	return &checkpointingResponse, nil
+}
+
+func (n *NodeConfig) QueryLastFinalizedEpoch() (uint64, error) {
+	queryParams := url.Values{}
+	queryParams.Add("status", fmt.Sprintf("%d", ct.Finalized))
+
+	bz, err := n.QueryGRPCGateway(fmt.Sprintf("/babylon/checkpointing/v1/last_raw_checkpoint/%d", ct.Finalized), queryParams)
+	require.NoError(n.t, err)
+	var res ct.QueryLastCheckpointWithStatusResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &res); err != nil {
+		return 0, err
+	}
+	return res.RawCheckpoint.EpochNum, nil
 }
 
 func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfoResponse, error) {
@@ -247,14 +246,14 @@ func (n *NodeConfig) QueryHeaderDepth(hash string) (uint64, error) {
 	return blcResponse.Depth, nil
 }
 
-func (n *NodeConfig) QueryListHeaders(chainID string, pagination *query.PageRequest) (*zctypes.QueryListHeadersResponse, error) {
+func (n *NodeConfig) QueryListHeaders(consumerID string, pagination *query.PageRequest) (*zctypes.QueryListHeadersResponse, error) {
 	queryParams := url.Values{}
 	if pagination != nil {
 		queryParams.Set("pagination.key", base64.URLEncoding.EncodeToString(pagination.Key))
 		queryParams.Set("pagination.limit", strconv.Itoa(int(pagination.Limit)))
 	}
 
-	path := fmt.Sprintf("babylon/zoneconcierge/v1/headers/%s", chainID)
+	path := fmt.Sprintf("babylon/zoneconcierge/v1/headers/%s", consumerID)
 	bz, err := n.QueryGRPCGateway(path, queryParams)
 	require.NoError(n.t, err)
 
@@ -266,10 +265,10 @@ func (n *NodeConfig) QueryListHeaders(chainID string, pagination *query.PageRequ
 	return &resp, nil
 }
 
-func (n *NodeConfig) QueryFinalizedChainsInfo(chainIDs []string) ([]*zctypes.FinalizedChainInfo, error) {
+func (n *NodeConfig) QueryFinalizedChainsInfo(consumerIDs []string) ([]*zctypes.FinalizedChainInfo, error) {
 	queryParams := url.Values{}
-	for _, chainId := range chainIDs {
-		queryParams.Add("chain_ids", chainId)
+	for _, consumerID := range consumerIDs {
+		queryParams.Add("consumer_ids", consumerID)
 	}
 
 	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/finalized_chains_info", queryParams)
@@ -283,11 +282,11 @@ func (n *NodeConfig) QueryFinalizedChainsInfo(chainIDs []string) ([]*zctypes.Fin
 	return resp.FinalizedChainsInfo, nil
 }
 
-func (n *NodeConfig) QueryEpochChainsInfo(epochNum uint64, chainIDs []string) ([]*zctypes.ChainInfo, error) {
+func (n *NodeConfig) QueryEpochChainsInfo(epochNum uint64, consumerIDs []string) ([]*zctypes.ChainInfo, error) {
 	queryParams := url.Values{}
-	for _, chainId := range chainIDs {
+	for _, consumerID := range consumerIDs {
 		queryParams.Add("epoch_num", fmt.Sprintf("%d", epochNum))
-		queryParams.Add("chain_ids", chainId)
+		queryParams.Add("consumer_ids", consumerID)
 	}
 
 	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/epoch_chains_info", queryParams)
@@ -308,13 +307,13 @@ func (n *NodeConfig) QueryChains() (*[]string, error) {
 	if err := util.Cdc.UnmarshalJSON(bz, &chainsResponse); err != nil {
 		return nil, err
 	}
-	return &chainsResponse.ChainIds, nil
+	return &chainsResponse.ConsumerIds, nil
 }
 
-func (n *NodeConfig) QueryChainsInfo(chainIDs []string) ([]*zctypes.ChainInfo, error) {
+func (n *NodeConfig) QueryChainsInfo(consumerIDs []string) ([]*zctypes.ChainInfo, error) {
 	queryParams := url.Values{}
-	for _, chainId := range chainIDs {
-		queryParams.Add("chain_ids", chainId)
+	for _, consumerId := range consumerIDs {
+		queryParams.Add("consumer_ids", consumerId)
 	}
 
 	bz, err := n.QueryGRPCGateway("/babylon/zoneconcierge/v1/chains_info", queryParams)

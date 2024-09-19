@@ -160,11 +160,12 @@ type AppKeepers struct {
 	keys    map[string]*storetypes.KVStoreKey
 	tkeys   map[string]*storetypes.TransientStoreKey
 	memKeys map[string]*storetypes.MemoryStoreKey
+
+	EncCfg *appparams.EncodingConfig
 }
 
 func (ak *AppKeepers) InitKeepers(
 	logger log.Logger,
-	appCodec codec.Codec,
 	btcConfig *bbn.BtcConfig,
 	encodingConfig *appparams.EncodingConfig,
 	bApp *baseapp.BaseApp,
@@ -180,6 +181,9 @@ func (ak *AppKeepers) InitKeepers(
 ) {
 	powLimit := btcConfig.PowLimit()
 	btcNetParams := btcConfig.NetParams()
+
+	ak.EncCfg = encodingConfig
+	appCodec := encodingConfig.Codec
 
 	// set persistent store keys
 	keys := storetypes.NewKVStoreKeys(
@@ -498,7 +502,9 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[btcstakingtypes.StoreKey]),
 		&btclightclientKeeper,
 		&btcCheckpointKeeper,
-		&checkpointingKeeper,
+		// setting the finality keeper as nil for now
+		// need to set it after finality keeper is initiated
+		nil,
 		&ak.BTCStkConsumerKeeper,
 		btcNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -510,6 +516,7 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[finalitytypes.StoreKey]),
 		btcStakingKeeper,
 		ak.IncentiveKeeper,
+		ak.CheckpointingKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -552,6 +559,13 @@ func (ak *AppKeepers) InitKeepers(
 	btclightclientKeeper.SetHooks(
 		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks()),
 	)
+
+	ak.BTCStakingKeeper = *ak.BTCStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(ak.FinalityKeeper.Hooks()))
+	ak.FinalityKeeper = *ak.FinalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(ak.BTCStakingKeeper.Hooks()))
+	// TODO this introduces circular dependency between the finality module and
+	// the btcstaking modules, need refactoring
+	ak.BTCStakingKeeper.FinalityKeeper = ak.FinalityKeeper
+
 	// set up BTCStaking and Finality keepers
 	btcStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(finalityKeeper.Hooks()))
 	finalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(btcStakingKeeper.Hooks()))
@@ -563,8 +577,6 @@ func (ak *AppKeepers) InitKeepers(
 	ak.BtcCheckpointKeeper = btcCheckpointKeeper
 	ak.MonitorKeeper = monitorKeeper
 	ak.ZoneConciergeKeeper = *zcKeeper
-	ak.BTCStakingKeeper = btcStakingKeeper
-	ak.FinalityKeeper = finalityKeeper
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(

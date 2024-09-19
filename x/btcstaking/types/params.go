@@ -10,6 +10,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
@@ -34,14 +35,19 @@ func DefaultCovenantCommittee() ([]*btcec.PrivateKey, []*btcec.PublicKey, uint32
 	return sks, pks, 3
 }
 
-func defaultSlashingAddress() string {
+func defaultSlashingPkScript() []byte {
 	// 20 bytes
 	pkHash := []byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 	addr, err := btcutil.NewAddressPubKeyHash(pkHash, &chaincfg.SimNetParams)
 	if err != nil {
 		panic(err)
 	}
-	return addr.EncodeAddress()
+
+	pkScript, err := txscript.PayToAddrScript(addr)
+	if err != nil {
+		panic(err)
+	}
+	return pkScript
 }
 
 // ParamKeyTable the param key table for launch module
@@ -53,19 +59,22 @@ func ParamKeyTable() paramtypes.KeyTable {
 func DefaultParams() Params {
 	_, pks, quorum := DefaultCovenantCommittee()
 	return Params{
-		CovenantPks:         bbn.NewBIP340PKsFromBTCPKs(pks),
-		CovenantQuorum:      quorum,
-		SlashingAddress:     defaultSlashingAddress(),
-		MinSlashingTxFeeSat: 1000,
-		MinCommissionRate:   sdkmath.LegacyZeroDec(),
+		CovenantPks:          bbn.NewBIP340PKsFromBTCPKs(pks),
+		CovenantQuorum:       quorum,
+		MinStakingValueSat:   1000,
+		MaxStakingValueSat:   10 * 10e8,
+		MinStakingTimeBlocks: 10,
+		MaxStakingTimeBlocks: math.MaxUint16,
+		SlashingPkScript:     defaultSlashingPkScript(),
+		MinSlashingTxFeeSat:  1000,
+		MinCommissionRate:    sdkmath.LegacyZeroDec(),
 		// The Default slashing rate is 0.1 i.e., 10% of the total staked BTC will be burned.
 		SlashingRate:               sdkmath.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
 		MaxActiveFinalityProviders: defaultMaxActiveFinalityProviders,
 		// The default minimum unbonding time is 0, which effectively defaults to checkpoint
 		// finalization timeout.
-		MinUnbondingTime: 0,
-		// By default unbonding value is 0.8
-		MinUnbondingRate: sdkmath.LegacyNewDecWithPrec(8, 1), // 8 * 10^{-1} = 0.8
+		MinUnbondingTimeBlocks: 0,
+		UnbondingFeeSat:        1000,
 	}
 }
 
@@ -121,6 +130,46 @@ func validateMinUnbondingTime(minUnbondingTimeBlocks uint32) error {
 	return nil
 }
 
+func validateStakingAmout(minStakingAmt, maxStakingAmt int64) error {
+	if minStakingAmt <= 0 {
+		return fmt.Errorf("minimum staking amount has to be positive")
+	}
+
+	if maxStakingAmt <= 0 {
+		return fmt.Errorf("maximum staking amount has to be positive")
+	}
+
+	if minStakingAmt > maxStakingAmt {
+		return fmt.Errorf("minimum staking amount cannot be greater than maximum staking amount")
+	}
+
+	return nil
+}
+
+func validateStakingTime(minStakingTime, maxStakingTime uint32) error {
+	if minStakingTime == 0 {
+		return fmt.Errorf("minimum staking time has to be positive")
+	}
+
+	if minStakingTime > math.MaxUint16 {
+		return fmt.Errorf("minimum staking time cannot be greater than %d", math.MaxUint16)
+	}
+
+	if maxStakingTime == 0 {
+		return fmt.Errorf("maximum staking time has to be positive")
+	}
+
+	if maxStakingTime > math.MaxUint16 {
+		return fmt.Errorf("maximum staking time cannot be greater than %d", math.MaxUint16)
+	}
+
+	if minStakingTime > maxStakingTime {
+		return fmt.Errorf("minimum staking time cannot be greater than maximum staking time")
+	}
+
+	return nil
+}
+
 // Validate validates the set of params
 func (p Params) Validate() error {
 	if p.CovenantQuorum == 0 {
@@ -129,6 +178,15 @@ func (p Params) Validate() error {
 	if p.CovenantQuorum*2 <= uint32(len(p.CovenantPks)) {
 		return fmt.Errorf("covenant quorum size has to be more than 1/2 of the covenant committee size")
 	}
+
+	if err := validateStakingAmout(p.MinStakingValueSat, p.MaxStakingValueSat); err != nil {
+		return err
+	}
+
+	if err := validateStakingTime(p.MinStakingTimeBlocks, p.MaxStakingTimeBlocks); err != nil {
+		return err
+	}
+
 	if err := validateCovenantPks(p.CovenantPks); err != nil {
 		return err
 	}
@@ -144,15 +202,11 @@ func (p Params) Validate() error {
 		return btcstaking.ErrInvalidSlashingRate
 	}
 
-	if !btcstaking.IsRateValid(p.MinUnbondingRate) {
-		return fmt.Errorf("minimum unbonding value is invalid. it should be fraction in range (0, 1) with at 2 decimal places precision")
-	}
-
 	if err := validateMaxActiveFinalityProviders(p.MaxActiveFinalityProviders); err != nil {
 		return err
 	}
 
-	if err := validateMinUnbondingTime(p.MinUnbondingTime); err != nil {
+	if err := validateMinUnbondingTime(p.MinUnbondingTimeBlocks); err != nil {
 		return err
 	}
 
@@ -174,18 +228,20 @@ func (p Params) HasCovenantPK(pk *bbn.BIP340PubKey) bool {
 	return false
 }
 
-func (p Params) MustGetSlashingAddress(btcParams *chaincfg.Params) btcutil.Address {
-	slashingAddr, err := btcutil.DecodeAddress(p.SlashingAddress, btcParams)
-	if err != nil {
-		panic(fmt.Errorf("failed to decode slashing address in genesis: %w", err))
-	}
-	return slashingAddr
-}
-
 func (p Params) CovenantPksHex() []string {
 	covPksHex := make([]string, 0, len(p.CovenantPks))
 	for _, pk := range p.CovenantPks {
 		covPksHex = append(covPksHex, pk.MarshalHex())
 	}
 	return covPksHex
+}
+
+func (p Params) MustGetCovenantPks() []*btcec.PublicKey {
+	covenantKeys, err := bbn.NewBTCPKsFromBIP340PKs(p.CovenantPks)
+
+	if err != nil {
+		panic(fmt.Errorf("failed to get covenant keys: %w", err))
+	}
+
+	return covenantKeys
 }

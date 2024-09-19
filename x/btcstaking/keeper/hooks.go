@@ -33,7 +33,7 @@ func (h Hooks) AfterSluggishFinalityProviderDetected(ctx context.Context, fpPk *
 
 	fp.Sluggish = true
 
-	h.k.SetFinalityProvider(ctx, fp)
+	h.k.setFinalityProvider(ctx, fp)
 
 	return nil
 }

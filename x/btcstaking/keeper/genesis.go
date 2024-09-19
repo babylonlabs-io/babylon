@@ -21,7 +21,7 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	}
 
 	for _, fp := range gs.FinalityProviders {
-		k.SetFinalityProvider(ctx, fp)
+		k.setFinalityProvider(ctx, fp)
 	}
 
 	for _, btcDel := range gs.BtcDelegations {

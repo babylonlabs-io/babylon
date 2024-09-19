@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	ct "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
@@ -51,6 +50,8 @@ func (s *BTCTimestampingPhase2HermesTestSuite) TearDownSuite() {
 
 func (s *BTCTimestampingPhase2HermesTestSuite) Test1IbcCheckpointingPhase2Hermes() {
 	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
 
 	babylonNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
@@ -98,9 +99,15 @@ func (s *BTCTimestampingPhase2HermesTestSuite) Test1IbcCheckpointingPhase2Hermes
 		return true
 	}, time.Minute, time.Second*2)
 
-	// Query checkpoint chain info for the consumer chain
-	listHeaderResp, err := babylonNode.QueryListHeaders(initialization.ChainBID, &query.PageRequest{Limit: 1})
+	// Get the client ID under this IBC channel
+	channelClientState, err := nonValidatorNode.QueryChannelClientState(babylonChannel.ChannelId, babylonChannel.PortId)
 	s.NoError(err)
+	clientID := channelClientState.IdentifiedClientState.ClientId
+
+	// Query checkpoint chain info for the consumer chain
+	listHeaderResp, err := babylonNode.QueryListHeaders(clientID, &query.PageRequest{Limit: 1})
+	s.NoError(err)
+	s.GreaterOrEqual(len(listHeaderResp.Headers), 1)
 	startEpochNum := listHeaderResp.Headers[0].BabylonEpoch
 	endEpochNum := startEpochNum + 2
 

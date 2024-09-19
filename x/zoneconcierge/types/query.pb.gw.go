@@ -62,15 +62,15 @@ func request_Query_Header_0(ctx context.Context, marshaler runtime.Marshaler, cl
 		_   = err
 	)
 
-	val, ok = pathParams["chain_id"]
+	val, ok = pathParams["consumer_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chain_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "consumer_id")
 	}
 
-	protoReq.ChainId, err = runtime.String(val)
+	protoReq.ConsumerId, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chain_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "consumer_id", err)
 	}
 
 	val, ok = pathParams["height"]
@@ -100,15 +100,15 @@ func local_request_Query_Header_0(ctx context.Context, marshaler runtime.Marshal
 		_   = err
 	)
 
-	val, ok = pathParams["chain_id"]
+	val, ok = pathParams["consumer_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chain_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "consumer_id")
 	}
 
-	protoReq.ChainId, err = runtime.String(val)
+	protoReq.ConsumerId, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chain_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "consumer_id", err)
 	}
 
 	val, ok = pathParams["height"]
@@ -236,7 +236,7 @@ func local_request_Query_EpochChainsInfo_0(ctx context.Context, marshaler runtim
 }
 
 var (
-	filter_Query_ListHeaders_0 = &utilities.DoubleArray{Encoding: map[string]int{"chain_id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	filter_Query_ListHeaders_0 = &utilities.DoubleArray{Encoding: map[string]int{"consumer_id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 func request_Query_ListHeaders_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -250,15 +250,15 @@ func request_Query_ListHeaders_0(ctx context.Context, marshaler runtime.Marshale
 		_   = err
 	)
 
-	val, ok = pathParams["chain_id"]
+	val, ok = pathParams["consumer_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chain_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "consumer_id")
 	}
 
-	protoReq.ChainId, err = runtime.String(val)
+	protoReq.ConsumerId, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chain_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "consumer_id", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -284,15 +284,15 @@ func local_request_Query_ListHeaders_0(ctx context.Context, marshaler runtime.Ma
 		_   = err
 	)
 
-	val, ok = pathParams["chain_id"]
+	val, ok = pathParams["consumer_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chain_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "consumer_id")
 	}
 
-	protoReq.ChainId, err = runtime.String(val)
+	protoReq.ConsumerId, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chain_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "consumer_id", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -318,15 +318,15 @@ func request_Query_ListEpochHeaders_0(ctx context.Context, marshaler runtime.Mar
 		_   = err
 	)
 
-	val, ok = pathParams["chain_id"]
+	val, ok = pathParams["consumer_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chain_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "consumer_id")
 	}
 
-	protoReq.ChainId, err = runtime.String(val)
+	protoReq.ConsumerId, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chain_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "consumer_id", err)
 	}
 
 	val, ok = pathParams["epoch_num"]
@@ -356,15 +356,15 @@ func local_request_Query_ListEpochHeaders_0(ctx context.Context, marshaler runti
 		_   = err
 	)
 
-	val, ok = pathParams["chain_id"]
+	val, ok = pathParams["consumer_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chain_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "consumer_id")
 	}
 
-	protoReq.ChainId, err = runtime.String(val)
+	protoReq.ConsumerId, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chain_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "consumer_id", err)
 	}
 
 	val, ok = pathParams["epoch_num"]
@@ -420,7 +420,7 @@ func local_request_Query_FinalizedChainsInfo_0(ctx context.Context, marshaler ru
 }
 
 var (
-	filter_Query_FinalizedChainInfoUntilHeight_0 = &utilities.DoubleArray{Encoding: map[string]int{"chain_id": 0, "height": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
+	filter_Query_FinalizedChainInfoUntilHeight_0 = &utilities.DoubleArray{Encoding: map[string]int{"consumer_id": 0, "height": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
 )
 
 func request_Query_FinalizedChainInfoUntilHeight_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -434,15 +434,15 @@ func request_Query_FinalizedChainInfoUntilHeight_0(ctx context.Context, marshale
 		_   = err
 	)
 
-	val, ok = pathParams["chain_id"]
+	val, ok = pathParams["consumer_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chain_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "consumer_id")
 	}
 
-	protoReq.ChainId, err = runtime.String(val)
+	protoReq.ConsumerId, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chain_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "consumer_id", err)
 	}
 
 	val, ok = pathParams["height"]
@@ -479,15 +479,15 @@ func local_request_Query_FinalizedChainInfoUntilHeight_0(ctx context.Context, ma
 		_   = err
 	)
 
-	val, ok = pathParams["chain_id"]
+	val, ok = pathParams["consumer_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chain_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "consumer_id")
 	}
 
-	protoReq.ChainId, err = runtime.String(val)
+	protoReq.ConsumerId, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chain_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "consumer_id", err)
 	}
 
 	val, ok = pathParams["height"]
@@ -953,7 +953,7 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 var (
 	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "zoneconcierge", "v1", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_Header_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"babylon", "zoneconcierge", "v1", "chain_info", "chain_id", "header", "height"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Header_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"babylon", "zoneconcierge", "v1", "chain_info", "consumer_id", "header", "height"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_ChainList_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "zoneconcierge", "v1", "chains"}, "", runtime.AssumeColonVerbOpt(false)))
 
@@ -961,13 +961,13 @@ var (
 
 	pattern_Query_EpochChainsInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "zoneconcierge", "v1", "epoch_chains_info"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ListHeaders_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "zoneconcierge", "v1", "headers", "chain_id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ListHeaders_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "zoneconcierge", "v1", "headers", "consumer_id"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ListEpochHeaders_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"babylon", "zoneconcierge", "v1", "headers", "chain_id", "epochs", "epoch_num"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ListEpochHeaders_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"babylon", "zoneconcierge", "v1", "headers", "consumer_id", "epochs", "epoch_num"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_FinalizedChainsInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "zoneconcierge", "v1", "finalized_chains_info"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_FinalizedChainInfoUntilHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 5}, []string{"babylon", "zoneconcierge", "v1", "finalized_chain_info", "chain_id", "height"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_FinalizedChainInfoUntilHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 5}, []string{"babylon", "zoneconcierge", "v1", "finalized_chain_info", "consumer_id", "height"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
