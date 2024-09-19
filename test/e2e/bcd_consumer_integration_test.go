@@ -154,7 +154,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test3CreateConsumerFinalityProvider() 
 		fpFromMap, ok := fpMap[czFp.BtcPkHex]
 		s.True(ok)
 		s.Equal(fpFromMap.BtcPk.MarshalHex(), czFp.BtcPkHex)
-		s.Equal(fpFromMap.SlashedBabylonHeight, czFp.SlashedBabylonHeight)
+		s.Equal(fpFromMap.SlashedBabylonHeight, czFp.SlashedHeight)
 		s.Equal(fpFromMap.SlashedBtcHeight, czFp.SlashedBtcHeight)
 		s.Equal(fpFromMap.ConsumerId, czFp.ConsumerId)
 	}
@@ -253,29 +253,13 @@ func (s *BCDConsumerIntegrationTestSuite) Test5ActivateDelegation() {
 
 	// Query and assert finality provider voting power is equal to the total stake
 	s.Eventually(func() bool {
-		fpsByPower, err := s.cosmwasmController.QueryFinalityProvidersByPower()
+		fpInfo, err := s.cosmwasmController.QueryFinalityProviderInfo(consumerFp.BtcPk.MustToBTCPK())
 		if err != nil {
-			s.T().Logf("Error querying finality providers by power: %v", err)
-			return false
-		}
-		if fpsByPower == nil || len(fpsByPower.Fps) == 0 {
+			s.T().Logf("Error querying finality provider info: %v", err)
 			return false
 		}
 
-		// Create a map of BTC public keys to ConsumerFpInfoResponse
-		fpMap := make(map[string]cosmwasm.ConsumerFpInfoResponse)
-		for _, fp := range fpsByPower.Fps {
-			fpMap[fp.BtcPkHex] = fp
-		}
-
-		// Check if the consumerFp's BTC public key exists in the map
-		consumerFpBtcPkHex := consumerFp.BtcPk.MarshalHex()
-		fpInfo, exists := fpMap[consumerFpBtcPkHex]
-		if !exists {
-			return false
-		}
-
-		return fpInfo.BtcPkHex == consumerFp.BtcPk.MarshalHex() && fpInfo.Power == activeDel.TotalSat
+		return fpInfo != nil && fpInfo.Power == activeDel.TotalSat && fpInfo.BtcPkHex == consumerFp.BtcPk.MarshalHex()
 	}, time.Minute, time.Second*5)
 }
 
@@ -370,29 +354,13 @@ func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
 
 	// query and assert finality provider voting power is zero after slashing
 	s.Eventually(func() bool {
-		fpsByPower, err := s.cosmwasmController.QueryFinalityProvidersByPower()
+		fpInfo, err := s.cosmwasmController.QueryFinalityProviderInfo(consumerFp.BtcPk.MustToBTCPK())
 		if err != nil {
 			s.T().Logf("Error querying finality providers by power: %v", err)
 			return false
 		}
-		if fpsByPower == nil || len(fpsByPower.Fps) == 0 {
-			return false
-		}
 
-		// create a map of BTC public keys to ConsumerFpInfoResponse
-		fpMap := make(map[string]cosmwasm.ConsumerFpInfoResponse)
-		for _, fp := range fpsByPower.Fps {
-			fpMap[fp.BtcPkHex] = fp
-		}
-
-		// check if the consumerFp's BTC public key exists in the map
-		consumerFpBtcPkHex := consumerFp.BtcPk.MarshalHex()
-		fpInfo, exists := fpMap[consumerFpBtcPkHex]
-		if !exists {
-			return false
-		}
-
-		return fpInfo.BtcPkHex == consumerFp.BtcPk.MarshalHex() && fpInfo.Power == 0
+		return fpInfo != nil && fpInfo.Power == 0 && fpInfo.BtcPkHex == consumerFp.BtcPk.MarshalHex()
 	}, time.Minute, time.Second*5)
 }
 
@@ -494,29 +462,13 @@ func (s *BCDConsumerIntegrationTestSuite) Test7ConsumerFPCascadedSlashing() {
 
 	// Query and assert finality provider voting power is equal to the total stake
 	s.Eventually(func() bool {
-		fpsByPower, err := s.cosmwasmController.QueryFinalityProvidersByPower()
+		fpInfo, err := s.cosmwasmController.QueryFinalityProviderInfo(consumerFp.BtcPk.MustToBTCPK())
 		if err != nil {
-			s.T().Logf("Error querying finality providers by power: %v", err)
-			return false
-		}
-		if fpsByPower == nil || len(fpsByPower.Fps) == 0 {
+			s.T().Logf("Error querying finality provider info: %v", err)
 			return false
 		}
 
-		// Create a map of BTC public keys to ConsumerFpInfoResponse
-		fpMap := make(map[string]cosmwasm.ConsumerFpInfoResponse)
-		for _, fp := range fpsByPower.Fps {
-			fpMap[fp.BtcPkHex] = fp
-		}
-
-		// Check if the consumerFp's BTC public key exists in the map
-		consumerFpBtcPkHex := consumerFp.BtcPk.MarshalHex()
-		fpInfo, exists := fpMap[consumerFpBtcPkHex]
-		if !exists {
-			return false
-		}
-
-		return fpInfo.BtcPkHex == consumerFp.BtcPk.MarshalHex() && fpInfo.Power == activeDel.TotalSat
+		return fpInfo != nil && fpInfo.Power == activeDel.TotalSat && fpInfo.BtcPkHex == consumerFp.BtcPk.MarshalHex()
 	}, time.Minute, time.Second*5)
 
 	czNodeStatus, err := s.cosmwasmController.GetCometNodeStatus()
@@ -631,6 +583,17 @@ func (s *BCDConsumerIntegrationTestSuite) Test7ConsumerFPCascadedSlashing() {
 	s.Eventually(func() bool {
 		fp, err := s.cosmwasmController.QueryFinalityProvider(consumerFp.BtcPk.MarshalHex())
 		return err == nil && fp != nil && fp.SlashedHeight > 0
+	}, time.Minute, time.Second*5)
+
+	// query and assert finality provider voting power is zero after slashing
+	s.Eventually(func() bool {
+		fpInfo, err := s.cosmwasmController.QueryFinalityProviderInfo(consumerFp.BtcPk.MustToBTCPK())
+		if err != nil {
+			s.T().Logf("Error querying finality providers by power: %v", err)
+			return false
+		}
+
+		return fpInfo != nil && fpInfo.Power == 0 && fpInfo.BtcPkHex == consumerFp.BtcPk.MarshalHex()
 	}, time.Minute, time.Second*5)
 }
 
