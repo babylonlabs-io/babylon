@@ -23,6 +23,17 @@ func (n *NodeConfig) QueryBTCStakingParams() *bstypes.Params {
 	return &resp.Params
 }
 
+func (n *NodeConfig) QueryFinalityParams() *ftypes.Params {
+	bz, err := n.QueryGRPCGateway("/babylon/finality/v1/params", url.Values{})
+	require.NoError(n.t, err)
+
+	var resp ftypes.QueryParamsResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return &resp.Params
+}
+
 func (n *NodeConfig) QueryFinalityProviders() []*bstypes.FinalityProviderResponse {
 	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/finality_providers", url.Values{})
 	require.NoError(n.t, err)

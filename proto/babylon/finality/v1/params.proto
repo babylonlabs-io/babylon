@@ -4,6 +4,7 @@ package babylon.finality.v1;
 import "gogoproto/gogo.proto";
 import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
+import "google/protobuf/duration.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/finality/types";
 
@@ -16,7 +17,7 @@ message Params {
   // vote before being judged as missing their voting turn on the given block
   int64 finality_sig_timeout = 2;
   // min_signed_per_window defines the minimum number of blocks that a finality provider is required to sign
-  // within the sliding window to avoid being detected as sluggish
+  // within the sliding window to avoid being jailed
   bytes min_signed_per_window = 3 [
     (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
@@ -26,4 +27,7 @@ message Params {
   // min_pub_rand is the minimum number of public randomness each
   // message should commit
   uint64 min_pub_rand = 4;
+  // jail_duration is the minimum period of time that a finality provider remains jailed
+  google.protobuf.Duration jail_duration = 5
+  [(gogoproto.nullable) = false, (amino.dont_omitempty) = true, (gogoproto.stdduration) = true];
 }

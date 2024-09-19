@@ -18,7 +18,7 @@ type BTCStakingKeeper interface {
 	GetBTCStakingActivatedHeight(ctx context.Context) (uint64, error)
 	GetVotingPowerDistCache(ctx context.Context, height uint64) (*bstypes.VotingPowerDistCache, error)
 	RemoveVotingPowerDistCache(ctx context.Context, height uint64)
-	RevertSluggishFinalityProvider(ctx context.Context, fpBTCPK []byte) error
+	UnjailFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 }
 
 type CheckpointingKeeper interface {

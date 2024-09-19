@@ -9,9 +9,9 @@ import (
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
 )
 
-func TestHardCodedBtcStakingParamsAreValid(t *testing.T) {
+func TestHardCodedFinalityParamsAreValid(t *testing.T) {
 	bbnApp := app.NewTmpBabylonApp()
-	loadedParamas, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec())
+	loadedParamas, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec())
 	require.NoError(t, err)
 	require.NoError(t, loadedParamas.Validate())
 }

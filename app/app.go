@@ -803,7 +803,6 @@ func (app *BabylonApp) setupUpgradeHandlers() {
 			upgrade.CreateUpgradeHandler(
 				app.ModuleManager,
 				app.configurator,
-				app.BaseApp,
 				app.AppKeepers,
 			),
 		)

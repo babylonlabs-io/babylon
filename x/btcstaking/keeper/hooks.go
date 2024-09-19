@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	bbntypes "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
@@ -22,18 +21,5 @@ func (k Keeper) Hooks() Hooks {
 
 // AfterSluggishFinalityProviderDetected updates the status of the given finality provider to `sluggish`
 func (h Hooks) AfterSluggishFinalityProviderDetected(ctx context.Context, fpPk *bbntypes.BIP340PubKey) error {
-	fp, err := h.k.GetFinalityProvider(ctx, fpPk.MustMarshal())
-	if err != nil {
-		return err
-	}
-
-	if fp.IsSluggish() {
-		return fmt.Errorf("the finality provider %s is already detected as sluggish", fpPk.MarshalHex())
-	}
-
-	fp.Sluggish = true
-
-	h.k.setFinalityProvider(ctx, fp)
-
-	return nil
+	return h.k.JailFinalityProvider(ctx, fpPk.MustMarshal())
 }

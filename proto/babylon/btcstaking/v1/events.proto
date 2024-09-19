@@ -40,11 +40,27 @@ message EventPowerDistUpdate {
     bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   }
 
+  // EventJailedFinalityProvider defines an event that a finality provider
+  // is jailed after being detected sluggish
+  message EventJailedFinalityProvider {
+    bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  }
+
+  // EventUnjailedFinalityProvider defines an event that a jailed finality provider
+  // is unjailed after the jailing period is passed
+  message EventUnjailedFinalityProvider {
+    bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  }
+
   // ev is the event that affects voting power distribution
   oneof ev {
     // slashed_fp means a finality provider is slashed
     EventSlashedFinalityProvider slashed_fp = 1;
+    // jailed_fp means a finality provider is jailed
+    EventJailedFinalityProvider jailed_fp = 2;
+    // unjailed_fp means a jailed finality provider is unjailed
+    EventUnjailedFinalityProvider unjailed_fp = 3;
     // btc_del_state_update means a BTC delegation's state is updated
-    EventBTCDelegationStateUpdate btc_del_state_update = 2;
+    EventBTCDelegationStateUpdate btc_del_state_update = 4;
   }
 }

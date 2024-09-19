@@ -30,4 +30,6 @@ var (
 	ErrVotingPowerTableNotUpdated   = errorsmod.Register(ModuleName, 1122, "voting power table has not been updated")
 	ErrVotingPowerDistCacheNotFound = errorsmod.Register(ModuleName, 1123, "the voting power distribution cache is not found")
 	ErrParamsNotFound               = errorsmod.Register(ModuleName, 1124, "the parameters are not found")
+	ErrFpAlreadyJailed              = errorsmod.Register(ModuleName, 1125, "the finality provider has already been jailed")
+	ErrFpNotJailed                  = errorsmod.Register(ModuleName, 1126, "the finality provider is not jailed")
 )
