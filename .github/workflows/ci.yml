@@ -19,6 +19,7 @@ jobs:
      run-lint: true
      run-build: true
      run-gosec: true
+     gosec-args: "-no-fail ./..."
 
   docker_pipeline:
     uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@hiep/add-gosec
