@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	bbn "github.com/babylonlabs-io/babylon/types"
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -71,4 +72,76 @@ func (k Keeper) HandleConsumerRegistration(
 	}
 
 	return k.btcStkKeeper.RegisterConsumer(ctx, consumerRegisterData)
+}
+
+func (k Keeper) HandleConsumerSlashing(
+	ctx sdk.Context,
+	destinationPort string,
+	destinationChannel string,
+	consumerSlashing *types.ConsumerSlashingIBCPacket,
+) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	clientID, _, err := k.channelKeeper.GetChannelClientState(ctx, destinationPort, destinationChannel)
+	if err != nil {
+		return fmt.Errorf("DEBUG: failed to get client state: %w", err)
+	}
+
+	k.Logger(sdkCtx).Info("DEBUG: Handling consumer slashing", "clientID", clientID, "evidence", consumerSlashing.Evidence)
+
+	slashingEvidence := consumerSlashing.Evidence
+	if slashingEvidence == nil {
+		return fmt.Errorf("DEBUG: consumer slashing evidence is nil")
+	}
+
+	slashedFpBTCSK, err := slashingEvidence.ExtractBTCSK()
+	if err != nil {
+		return fmt.Errorf("DEBUG: failed to extract BTCSK: %w", err)
+	}
+
+	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(slashedFpBTCSK.PubKey())
+	// slashedFpBTCPKHex := hex.EncodeToString(slashedFpBTCSK.PubKey().SerializeCompressed())
+	k.Logger(sdkCtx).Info("DEBUG: slashedFpBTCPKHex", "slashedFpBTCPKHex", bip340PK.MarshalHex())
+
+	evidenceFpBTCPKHex := slashingEvidence.FpBtcPk.MarshalHex()
+	k.Logger(sdkCtx).Info("DEBUG: evidenceFpBTCPKHex", "evidenceFpBTCPKHex", evidenceFpBTCPKHex)
+
+	if bip340PK.MarshalHex() != evidenceFpBTCPKHex {
+		return fmt.Errorf("DEBUG: slashed FP BTC PK does not match with the one in the evidence")
+	}
+
+	// Check if the finality provider is associated with a consumer
+	consumerID, err := k.btcStkKeeper.GetConsumerOfFinalityProvider(ctx, bip340PK)
+	if err != nil {
+		k.Logger(sdkCtx).Error("failed to get consumer of finality provider", "error", err)
+		return fmt.Errorf("failed to get consumer of finality provider: %w", err)
+	}
+
+	// consumer ID should match with clientID
+	if consumerID != clientID {
+		return fmt.Errorf("DEBUG: consumer ID does not match with client ID")
+	}
+
+	consumerFP, err := k.btcStkKeeper.GetConsumerFinalityProvider(ctx, consumerID, bip340PK)
+	if err != nil {
+		k.Logger(sdkCtx).Error("failed to get consumer finality provider", "error", err)
+		return fmt.Errorf("failed to get consumer finality provider: %w", err)
+	}
+
+	// Ensure the finality provider is not already slashed
+	if consumerFP.IsSlashed() {
+		k.Logger(sdkCtx).Error("finality provider is already slashed", "fp", bip340PK.MarshalHex())
+		return fmt.Errorf("finality provider is already slashed")
+	}
+
+	k.Logger(sdkCtx).Info("DEBUG: consumerID", "consumerID", consumerID)
+
+	// Propagate the slashing to all consumers
+	err = k.bsKeeper.PropagateFPSlashingToConsumers(ctx, bip340PK)
+	if err != nil {
+		k.Logger(sdkCtx).Error("failed to propagate slashing to consumers", "error", err)
+		return fmt.Errorf("failed to propagate slashing to consumers: %w", err)
+	}
+
+	return nil
 }
