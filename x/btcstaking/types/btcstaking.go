@@ -17,8 +17,8 @@ func (fp *FinalityProvider) IsSlashed() bool {
 	return fp.SlashedBabylonHeight > 0
 }
 
-func (fp *FinalityProvider) IsSluggish() bool {
-	return fp.Sluggish
+func (fp *FinalityProvider) IsJailed() bool {
+	return fp.Jailed
 }
 
 func (fp *FinalityProvider) ValidateBasic() error {
@@ -42,18 +42,24 @@ func (fp *FinalityProvider) ValidateBasic() error {
 	return nil
 }
 
-// SortFinalityProvidersWithTimestamping sorts the finality providers slice,
-// from higher to lower voting power
-// finality providers that are timestamped come higher than
-// those are not
-func SortFinalityProvidersWithTimestamping(fps []*FinalityProviderDistInfo) {
+// SortFinalityProvidersWithZeroedVotingPower sorts the finality providers slice,
+// from higher to lower voting power. In the following cases, the voting power
+// is treated as zero:
+// 1. IsTimestamped is false
+// 2. IsJailed is true
+func SortFinalityProvidersWithZeroedVotingPower(fps []*FinalityProviderDistInfo) {
 	sort.SliceStable(fps, func(i, j int) bool {
-		if fps[i].IsTimestamped && !fps[j].IsTimestamped {
-			return true
-		}
-		if !fps[i].IsTimestamped && fps[j].IsTimestamped {
+		iShouldBeZeroed := fps[i].IsJailed || !fps[i].IsTimestamped
+		jShouldBeZeroed := fps[j].IsJailed || !fps[j].IsTimestamped
+
+		if iShouldBeZeroed && !jShouldBeZeroed {
 			return false
 		}
+
+		if !iShouldBeZeroed && jShouldBeZeroed {
+			return true
+		}
+
 		return fps[i].TotalVotingPower > fps[j].TotalVotingPower
 	})
 }

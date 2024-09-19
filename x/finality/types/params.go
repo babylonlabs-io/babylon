@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"time"
 
 	"cosmossdk.io/math"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -13,6 +14,7 @@ const (
 	DefaultSignedBlocksWindow = int64(100)
 	DefaultMinPubRand         = 100
 	DefaultFinalitySigTimeout = 3
+	DefaultJailDuration       = 24 * 60 * 60 * 1 * time.Second // 1 day
 )
 
 var (
@@ -28,6 +30,7 @@ func DefaultParams() Params {
 		SignedBlocksWindow: DefaultSignedBlocksWindow,
 		MinSignedPerWindow: DefaultMinSignedPerWindow,
 		MinPubRand:         DefaultMinPubRand,
+		JailDuration:       DefaultJailDuration,
 	}
 }
 

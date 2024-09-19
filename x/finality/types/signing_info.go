@@ -1,7 +1,10 @@
 package types
 
 import (
+	"time"
+
 	bbntypes "github.com/babylonlabs-io/babylon/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 // NewFinalityProviderSigningInfo creates a new FinalityProviderSigningInfo instance
@@ -13,6 +16,14 @@ func NewFinalityProviderSigningInfo(
 		StartHeight:         startHeight,
 		MissedBlocksCounter: missedBlocksCounter,
 	}
+}
+
+func (si *FinalityProviderSigningInfo) IsJailingPeriodPassed(curBlockTime time.Time) (bool, error) {
+	if si.JailedUntil.IsZero() {
+		return false, bstypes.ErrFpNotJailed
+	}
+
+	return si.JailedUntil.Before(curBlockTime), nil
 }
 
 func (si *FinalityProviderSigningInfo) IncrementMissedBlocksCounter() {

@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -229,7 +230,79 @@ func FuzzAddFinalitySig(f *testing.F) {
 		fp.SlashedBabylonHeight = blockHeight
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		_, err = ms.AddFinalitySig(ctx, msg)
-		require.Equal(t, bstypes.ErrFpAlreadySlashed, err)
+		require.ErrorIs(t, err, bstypes.ErrFpAlreadySlashed)
+
+		// Case 7: jailed finality provider cannot vote
+		fp.Jailed = true
+		fp.SlashedBabylonHeight = 0
+		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
+		_, err = ms.AddFinalitySig(ctx, msg)
+		require.ErrorIs(t, err, bstypes.ErrFpAlreadyJailed)
+	})
+}
+
+func FuzzUnjailFinalityProvider(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 100)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
+		ms := keeper.NewMsgServerImpl(*fKeeper)
+
+		// create and register a random finality provider
+		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
+		require.NoError(t, err)
+		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+		fpBTCPKBytes := fpBTCPK.MustMarshal()
+		require.NoError(t, err)
+
+		// set fp to be jailed
+		fp.Jailed = true
+		jailedTime := time.Now()
+		signingInfo := types.FinalityProviderSigningInfo{
+			FpBtcPk: fpBTCPK,
+		}
+		err = fKeeper.FinalityProviderSigningTracker.Set(ctx, fpBTCPK.MustMarshal(), signingInfo)
+		require.NoError(t, err)
+
+		// case 1: the signer's address does not match fp's address
+		signer := datagen.GenRandomAccount().Address
+		msg := &types.MsgUnjailFinalityProvider{
+			Signer:  signer,
+			FpBtcPk: fpBTCPK,
+		}
+		ctx = ctx.WithHeaderInfo(header.Info{Time: jailedTime.Add(1 * time.Second)})
+		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), fpBTCPKBytes).Return(fp, nil).AnyTimes()
+		_, err = ms.UnjailFinalityProvider(ctx, msg)
+		require.Equal(t, fmt.Sprintf("the fp's address %s does not match the signer %s of the requestion",
+			fp.Addr, msg.Signer), err.Error())
+
+		// case 2: unjail the fp when the jailing period is zero
+		msg.Signer = fp.Addr
+		_, err = ms.UnjailFinalityProvider(ctx, msg)
+		require.ErrorIs(t, err, bstypes.ErrFpNotJailed)
+
+		// case 3: unjail the fp when the jailing period is not passed
+		msg.Signer = fp.Addr
+		signingInfo.JailedUntil = jailedTime
+		err = fKeeper.FinalityProviderSigningTracker.Set(ctx, fpBTCPK.MustMarshal(), signingInfo)
+		require.NoError(t, err)
+		ctx = ctx.WithHeaderInfo(header.Info{Time: jailedTime.Truncate(1 * time.Second)})
+		_, err = ms.UnjailFinalityProvider(ctx, msg)
+		require.ErrorIs(t, err, types.ErrJailingPeriodNotPassed)
+
+		// case 4: unjail the fp when the jailing period is passed
+		ctx = ctx.WithHeaderInfo(header.Info{Time: jailedTime.Add(1 * time.Second)})
+		bsKeeper.EXPECT().UnjailFinalityProvider(ctx, fpBTCPKBytes).Return(nil).AnyTimes()
+		_, err = ms.UnjailFinalityProvider(ctx, msg)
+		require.NoError(t, err)
 	})
 }
 
