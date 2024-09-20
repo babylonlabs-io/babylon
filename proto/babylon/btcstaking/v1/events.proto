@@ -1,13 +1,15 @@
 syntax = "proto3";
 package babylon.btcstaking.v1;
 
-import "gogoproto/gogo.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 
 // EventNewFinalityProvider is the event emitted when a finality provider is created
-message EventNewFinalityProvider { FinalityProvider fp = 1; }
+message EventNewFinalityProvider {
+  FinalityProvider fp = 1;
+}
 
 // EventBTCDelegationStateUpdate is the event emitted when a BTC delegation's state is
 // updated. There are the following possible state transitions:
@@ -40,6 +42,15 @@ message EventPowerDistUpdate {
     bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   }
 
+  // EventSlashedBTCDelegation defines an event that occurs when a consumer FP is slashed.
+  // This event represents the impact on a specific BTC delegation containing the slashed
+  // consumer FP. Babylon FPs in this delegation will have their voting power discounted
+  // as a result.
+  message EventSlashedBTCDelegation {
+    // staking_tx_hash is the hash of the BTC staking transaction for this delegation
+    string staking_tx_hash = 1;
+  }
+
   // EventJailedFinalityProvider defines an event that a finality provider
   // is jailed after being detected sluggish
   message EventJailedFinalityProvider {
@@ -62,5 +73,7 @@ message EventPowerDistUpdate {
     EventUnjailedFinalityProvider unjailed_fp = 3;
     // btc_del_state_update means a BTC delegation's state is updated
     EventBTCDelegationStateUpdate btc_del_state_update = 4;
+    // slashed_btc_delegation represents the affected BTC delegation when a consumer FP is slashed
+    EventSlashedBTCDelegation slashed_btc_delegation = 5;
   }
 }
