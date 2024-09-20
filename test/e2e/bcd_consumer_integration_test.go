@@ -960,7 +960,6 @@ func (s *BCDConsumerIntegrationTestSuite) verifyConsumerRegistration(consumerID 
 		var err error
 		consumerRegistryResp, err = s.babylonController.QueryConsumerRegistry(consumerID)
 		if err != nil {
-			s.T().Logf("Error querying consumer registry: %v", err)
 			return false
 		}
 		return consumerRegistryResp != nil && len(consumerRegistryResp.GetConsumersRegister()) == 1
