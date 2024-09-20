@@ -11,7 +11,7 @@ import (
 )
 
 type msgServer struct {
-	k Keeper
+	Keeper
 }
 
 // NewMsgServerImpl returns an implementation of the MsgServer interface
@@ -25,11 +25,11 @@ var _ types.MsgServer = msgServer{}
 // WrappedCreateValidator registers validator's BLS public key
 // and forwards corresponding MsgCreateValidator message to
 // the epoching module
-func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgWrappedCreateValidator) (*types.MsgWrappedCreateValidatorResponse, error) {
+func (k Keeper) WrappedCreateValidator(goCtx context.Context, msg *types.MsgWrappedCreateValidator) (*types.MsgWrappedCreateValidatorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// stateless checks on the inside `MsgCreateValidator` msg
-	if err := m.k.epochingKeeper.CheckMsgCreateValidator(ctx, msg.MsgCreateValidator); err != nil {
+	if err := k.epochingKeeper.CheckMsgCreateValidator(ctx, msg.MsgCreateValidator); err != nil {
 		return nil, err
 	}
 
@@ -39,7 +39,7 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 	}
 
 	// store BLS public key
-	err = m.k.CreateRegistration(ctx, *msg.Key.Pubkey, valAddr)
+	err = k.CreateRegistration(ctx, *msg.Key.Pubkey, valAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 		Msg: &epochingtypes.QueuedMessage_MsgCreateValidator{MsgCreateValidator: msg.MsgCreateValidator},
 	}
 
-	m.k.epochingKeeper.EnqueueMsg(ctx, queueMsg)
+	k.epochingKeeper.EnqueueMsg(ctx, queueMsg)
 
 	return &types.MsgWrappedCreateValidatorResponse{}, err
 }

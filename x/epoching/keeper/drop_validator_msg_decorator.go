@@ -21,7 +21,6 @@ func NewDropValidatorMsgDecorator(ek Keeper) *DropValidatorMsgDecorator {
 // AnteHandle performs an AnteHandler check that rejects all non-wrapped validator-related messages.
 // It will reject the following types of messages:
 // - MsgCreateValidator
-// - MsgDelegate
 // - MsgUndelegate
 // - MsgBeginRedelegate
 // - MsgCancelUnbondingDelegation
@@ -43,7 +42,7 @@ func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 // IsValidatorRelatedMsg checks if the given message is of non-wrapped type, which should be rejected
 func (qmd DropValidatorMsgDecorator) IsValidatorRelatedMsg(msg sdk.Msg) bool {
 	switch msg.(type) {
-	case *stakingtypes.MsgCreateValidator, *stakingtypes.MsgDelegate, *stakingtypes.MsgUndelegate, *stakingtypes.MsgBeginRedelegate, *stakingtypes.MsgCancelUnbondingDelegation:
+	case *stakingtypes.MsgCreateValidator, *stakingtypes.MsgUndelegate, *stakingtypes.MsgBeginRedelegate, *stakingtypes.MsgCancelUnbondingDelegation:
 		return true
 	default:
 		return false

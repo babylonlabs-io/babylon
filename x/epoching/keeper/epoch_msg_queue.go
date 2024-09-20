@@ -122,9 +122,13 @@ func (k Keeper) HandleQueuedMsg(ctx context.Context, msg *types.QueuedMessage) (
 	// get the handler function from router
 	handler := k.router.Handler(unwrappedMsgWithType)
 
+	// tells to the msg server to use the unwrap handler.
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx = sdkCtx.WithValue(types.CtxKeyUnwrapMsgServer, true)
+
 	// Create a new Context based off of the existing Context with a MultiStore branch
 	// in case message processing fails. At this point, the MultiStore is a branch of a branch.
-	handlerCtx, msCache := cacheTxContext(sdk.UnwrapSDKContext(ctx), msg.TxId, msg.MsgId, msg.BlockHeight)
+	handlerCtx, msCache := cacheTxContext(sdkCtx, msg.TxId, msg.MsgId, msg.BlockHeight)
 
 	// handle the unwrapped message
 	result, err := handler(handlerCtx, unwrappedMsgWithType)

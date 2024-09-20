@@ -16,7 +16,6 @@ func TestDropValidatorMsgDecorator(t *testing.T) {
 	}{
 		// wrapped message types that should be rejected
 		{&stakingtypes.MsgCreateValidator{}, true},
-		{&stakingtypes.MsgDelegate{}, true},
 		{&stakingtypes.MsgUndelegate{}, true},
 		{&stakingtypes.MsgBeginRedelegate{}, true},
 		{&stakingtypes.MsgCancelUnbondingDelegation{}, true},

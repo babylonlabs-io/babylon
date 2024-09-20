@@ -15,6 +15,9 @@ const (
 
 	// MemStoreKey defines the in-memory store key
 	MemStoreKey = "mem_epoching"
+
+	// CtxKeyUnwrapMsgServer defines to the context that it should use the unwraped msg handler (native from cosmos-sdk).
+	CtxKeyUnwrapMsgServer = "unwrap"
 )
 
 var (
