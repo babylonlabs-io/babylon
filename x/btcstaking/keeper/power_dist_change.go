@@ -162,6 +162,8 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	jailedFPs := map[string]struct{}{}
 	// a map where key is unjailed finality providers' BTC PK
 	unjailedFPs := map[string]struct{}{}
+	// a map where key is slashed BTC delegation's staking tx hash
+	slashedBTCDels := map[string]struct{}{}
 
 	/*
 		filter and classify all events into new/expired BTC delegations and jailed/slashed FPs
@@ -197,6 +199,9 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		case *types.EventPowerDistUpdate_UnjailedFp:
 			// record unjailed fps
 			unjailedFPs[typedEvent.UnjailedFp.Pk.MarshalHex()] = struct{}{}
+		case *types.EventPowerDistUpdate_SlashedBtcDelegation:
+			// Add the slashed BTC delegation to the map
+			slashedBTCDels[typedEvent.SlashedBtcDelegation.StakingTxHash] = struct{}{}
 		}
 	}
 
@@ -242,6 +247,16 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		for j := range dc.FinalityProviders[i].BtcDels {
 			btcDel := *dc.FinalityProviders[i].BtcDels[j]
 			if _, ok := unbondedBTCDels[btcDel.StakingTxHash]; !ok {
+				// Delegation is not unbonded (i.e., it's active)
+				if _, slashed := slashedBTCDels[btcDel.StakingTxHash]; slashed {
+					// If the BTC delegation is slashed, set its voting power to 0.
+					// This ensures that for this specific finality provider,
+					// the voting power of this delegation does not contribute
+					// to the total voting power. By modifying btcDel directly,
+					// we ensure that in subsequent heights, when the old cache
+					// is fetched, this delegation remains discounted for this FP.
+					btcDel.VotingPower = 0
+				}
 				fp.AddBTCDelDistInfo(&btcDel)
 			}
 		}
