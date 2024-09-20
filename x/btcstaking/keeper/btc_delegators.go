@@ -68,12 +68,15 @@ func (k Keeper) getFPBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubK
 
 	// Determine which store to use based on the finality provider type
 	if k.HasFinalityProvider(ctx, *fpBTCPK) {
+		// Babylon finality provider
 		store = k.btcDelegatorFpStore(ctx, fpBTCPK)
 		k.Logger(sdkCtx).Info("DEBUG: Using btcDelegatorFpStore for Babylon finality provider", "fpBTCPK", fpBTCPK)
 	} else if k.bscKeeper.HasConsumerFinalityProvider(ctx, fpBTCPK) {
+		// Consumer finality provider
 		store = k.btcConsumerDelegatorStore(ctx, fpBTCPK)
 		k.Logger(sdkCtx).Info("DEBUG: Using btcConsumerDelegatorStore for consumer finality provider", "fpBTCPK", fpBTCPK)
 	} else {
+		// if not found in either store, return error
 		k.Logger(sdkCtx).Error("DEBUG: Finality provider not found", "fpBTCPK", fpBTCPK)
 		return nil, types.ErrFpNotFound
 	}

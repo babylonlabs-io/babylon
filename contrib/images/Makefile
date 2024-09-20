@@ -8,7 +8,7 @@ babylond:
 	docker build --tag babylonlabs-io/babylond -f babylond/Dockerfile ${BABYLON_FULL_PATH}
 
 babylond-e2e:
-	docker build --tag babylonlabs-io/babylond -f babylond/Dockerfile ${BABYLON_FULL_PATH} \
+	docker build --no-cache --tag babylonlabs-io/babylond -f babylond/Dockerfile ${BABYLON_FULL_PATH} \
 		--build-arg BUILD_TAGS="e2e"
 
 ## TODO: once release docker public versions for tags, remove this!
@@ -41,7 +41,7 @@ cosmos-relayer-rmi:
 	docker rmi babylonlabs-io/cosmos-relayer 2>/dev/null; true
 
 build-ibcsim-bcd:
-	docker build --tag babylonlabs-io/ibcsim-bcd -f ibcsim-bcd/Dockerfile ${BABYLON_FULL_PATH}
+	docker build --no-cache --tag babylonlabs-io/ibcsim-bcd -f ibcsim-bcd/Dockerfile ${BABYLON_FULL_PATH}
 
 ibcsim-bcd-rmi:
 	docker rmi babylonlabs-io/ibcsim-bcd 2>/dev/null; true

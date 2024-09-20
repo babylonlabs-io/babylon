@@ -6,6 +6,7 @@ import (
 
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -129,6 +130,7 @@ func (k Keeper) HandleConsumerSlashing(
 	}
 
 	// Ensure the finality provider is not already slashed
+	// TODO: remove this check as babylon height will never be set for consumer finality provider
 	if consumerFP.IsSlashed() {
 		k.Logger(sdkCtx).Error("finality provider is already slashed", "fp", bip340PK.MarshalHex())
 		return fmt.Errorf("finality provider is already slashed")
@@ -136,11 +138,29 @@ func (k Keeper) HandleConsumerSlashing(
 
 	k.Logger(sdkCtx).Info("DEBUG: consumerID", "consumerID", consumerID)
 
-	// Propagate the slashing to all consumers
-	err = k.bsKeeper.PropagateFPSlashingToConsumers(ctx, bip340PK)
+	// Step 1: Identify associated Babylon FPs
+	associatedBabylonFPs, err := k.findAssociatedBabylonFPs(ctx, consumerFP)
 	if err != nil {
+		panic(fmt.Errorf("failed to find associated Babylon FPs: %v", err))
+	}
+
+	// Step 2: Discount voting power for each associated Babylon FP
+	for _, babylonFP := range associatedBabylonFPs {
+		if err := k.discountVotingPower(ctx, babylonFP, consumerFP); err != nil {
+			panic(fmt.Errorf("failed to discount voting power for Babylon FP %s: %v", babylonFP, err))
+		}
+	}
+
+	// Step 3: Propagate slashing information to other consumers
+	if err := k.bsKeeper.PropagateFPSlashingToConsumers(ctx, bip340PK); err != nil {
 		k.Logger(sdkCtx).Error("failed to propagate slashing to consumers", "error", err)
 		return fmt.Errorf("failed to propagate slashing to consumers: %w", err)
+	}
+
+	// Step 4: Emit Cosmos SDK event for the slashing reaction
+	eventSlashing := finalitytypes.NewEventSlashedFinalityProvider(slashingEvidence)
+	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {
+		panic(fmt.Errorf("failed to emit EventSlashedFinalityProvider event: %w", err))
 	}
 
 	return nil
