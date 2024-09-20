@@ -151,6 +151,8 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	dc *types.VotingPowerDistCache,
 	events []*types.EventPowerDistUpdate,
 ) *types.VotingPowerDistCache {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
 	// a map where key is finality provider's BTC PK hex and value is a list
 	// of BTC delegations that newly become active under this provider
 	activeBTCDels := map[string][]*types.BTCDelegation{}
@@ -202,6 +204,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		case *types.EventPowerDistUpdate_SlashedBtcDelegation:
 			// Add the slashed BTC delegation to the map
 			slashedBTCDels[typedEvent.SlashedBtcDelegation.StakingTxHash] = struct{}{}
+			k.Logger(sdkCtx).Info("DEBUG: slashed BTC delegation", "staking_tx_hash", typedEvent.SlashedBtcDelegation.StakingTxHash)
 		}
 	}
 
@@ -256,6 +259,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 					// we ensure that in subsequent heights, when the old cache
 					// is fetched, this delegation remains discounted for this FP.
 					btcDel.VotingPower = 0
+					k.Logger(sdkCtx).Info("DEBUG: discounted BTC delegation in old cache", "staking_tx_hash", btcDel.StakingTxHash)
 				}
 				fp.AddBTCDelDistInfo(&btcDel)
 			}
@@ -271,6 +275,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 					slashedDel := *d
 					slashedDel.TotalSat = 0
 					fp.AddBTCDel(&slashedDel)
+					k.Logger(sdkCtx).Info("DEBUG: discounted BTC delegation in new cache", "staking_tx_hash", d.MustGetStakingTxHash().String())
 				} else {
 					// If not slashed, add the delegation as normal
 					fp.AddBTCDel(d)
@@ -321,6 +326,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				slashedDel := *d
 				slashedDel.TotalSat = 0
 				fpDistInfo.AddBTCDel(&slashedDel)
+				k.Logger(sdkCtx).Info("DEBUG: discounted BTC delegation in new fp and new cache", "staking_tx_hash", d.MustGetStakingTxHash().String())
 			} else {
 				// If not slashed, add the delegation as normal
 				fpDistInfo.AddBTCDel(d)
