@@ -182,13 +182,14 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 			ensure that it has voting power
 		*/
 		stakingValue := int64(2 * 10e8)
-		_, _, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
+		_, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 			r,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 		)
+		require.NoError(t, err)
 		// give it a quorum number of covenant signatures
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
 		for i := 0; i < int(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum); i++ {
@@ -248,13 +249,14 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 			    fp has voting power
 		*/
 		stakingValue = int64(2 * 10e8)
-		_, _, _, msgCreateBTCDel, actualDel = h.CreateDelegation(
+		_, _, _, msgCreateBTCDel, actualDel, err = h.CreateDelegation(
 			r,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 		)
+		require.NoError(t, err)
 		// give it a quorum number of covenant signatures
 		msgs = h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
 		for i := 0; i < int(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum); i++ {
@@ -306,13 +308,14 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 			ensure that it has voting power
 		*/
 		stakingValue := int64(2 * 10e8)
-		_, _, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
+		_, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 			r,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 		)
+		require.NoError(t, err)
 		// give it a quorum number of covenant signatures
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
 		for i := 0; i < int(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum); i++ {

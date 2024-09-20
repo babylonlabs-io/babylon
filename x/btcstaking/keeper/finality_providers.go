@@ -50,7 +50,13 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 		ConsumerId:  consumerID,
 	}
 
-	k.setFinalityProvider(ctx, &fp)
+	if consumerID == ctx.ChainID() {
+		k.setFinalityProvider(ctx, &fp)
+	} else {
+		if err := k.SetConsumerFinalityProvider(ctx, &fp, consumerID); err != nil {
+			return err
+		}
+	}
 
 	// notify subscriber
 	return ctx.EventManager().EmitTypedEvent(&types.EventNewFinalityProvider{Fp: &fp})

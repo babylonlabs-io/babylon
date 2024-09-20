@@ -254,7 +254,10 @@ endif
 
 .PHONY: run-tests test test-all $(TEST_TARGETS)
 
-test-e2e: build-docker-e2e test-e2e-cache
+test-e2e: 
+	@$(MAKE) build-docker-e2e 
+	@$(MAKE) -C contrib/images start-bcd-consumer-integration
+	@$(MAKE) test-e2e-cache
 
 test-e2e-cache:
 	go test -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
@@ -455,7 +458,6 @@ build-docker-e2e:
 	$(MAKE) -C contrib/images babylond-before-upgrade
 	$(MAKE) -C contrib/images e2e-init-chain
 	$(MAKE) -C contrib/images build-bcd-consumer-integration
-	$(MAKE) -C contrib/images start-bcd-consumer-integration
 
 build-cosmos-relayer-docker: ## Build Docker image for the Cosmos relayer
 	$(MAKE) -C contrib/images cosmos-relayer

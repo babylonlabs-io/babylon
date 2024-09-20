@@ -277,6 +277,21 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		msgCommitPubRandList.Sig,
 	)
 
+	// Query the public randomness commitment for the finality provider
+	var commitEpoch uint64
+	s.Eventually(func() bool {
+		pubRandCommitMap := nonValidatorNode.QueryListPubRandCommit(msgCommitPubRandList.FpBtcPk)
+		if len(pubRandCommitMap) == 0 {
+			return false
+		}
+		for _, commit := range pubRandCommitMap {
+			commitEpoch = commit.EpochNum
+		}
+		return true
+	}, time.Minute, time.Second)
+
+	s.T().Logf("Successfully queried public randomness commitment for finality provider at epoch %d", commitEpoch)
+
 	// no reward gauge for finality provider and delegation yet
 	fpBabylonAddr, err := sdk.AccAddressFromBech32(cacheFP.Addr)
 	s.NoError(err)
@@ -285,19 +300,15 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.ErrorContains(err, itypes.ErrRewardGaugeNotFound.Error())
 	delBabylonAddr := fpBabylonAddr
 
-	// finalize epochs from 1 to the current epoch
-	currentEpoch, err := nonValidatorNode.QueryCurrentEpoch()
-	s.NoError(err)
-
 	// wait until the end epoch is sealed
 	s.Eventually(func() bool {
-		resp, err := nonValidatorNode.QueryRawCheckpoint(currentEpoch)
+		resp, err := nonValidatorNode.QueryRawCheckpoint(commitEpoch)
 		if err != nil {
 			return false
 		}
 		return resp.Status == ckpttypes.Sealed
 	}, time.Minute, time.Millisecond*50)
-	nonValidatorNode.FinalizeSealedEpochs(1, currentEpoch)
+	nonValidatorNode.FinalizeSealedEpochs(1, commitEpoch)
 
 	// ensure the committed epoch is finalized
 	lastFinalizedEpoch := uint64(0)
@@ -306,7 +317,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		if err != nil {
 			return false
 		}
-		return lastFinalizedEpoch >= currentEpoch
+		return lastFinalizedEpoch >= commitEpoch
 	}, time.Minute, time.Millisecond*50)
 
 	// ensure btc staking is activated

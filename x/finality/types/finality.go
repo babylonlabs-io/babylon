@@ -36,6 +36,7 @@ func (c *PubRandCommit) ToResponse() *PubRandCommitResponse {
 	return &PubRandCommitResponse{
 		NumPubRand: c.NumPubRand,
 		Commitment: c.Commitment,
+		EpochNum:   c.EpochNum,
 	}
 }
 

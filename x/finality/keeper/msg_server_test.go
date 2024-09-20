@@ -257,7 +257,7 @@ func FuzzUnjailFinalityProvider(f *testing.F) {
 		// create and register a random finality provider
 		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, "")
 		require.NoError(t, err)
 		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 		fpBTCPKBytes := fpBTCPK.MustMarshal()

@@ -516,7 +516,7 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[finalitytypes.StoreKey]),
 		btcStakingKeeper,
 		ak.IncentiveKeeper,
-		ak.CheckpointingKeeper,
+		checkpointingKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -560,16 +560,6 @@ func (ak *AppKeepers) InitKeepers(
 		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks()),
 	)
 
-	ak.BTCStakingKeeper = *ak.BTCStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(ak.FinalityKeeper.Hooks()))
-	ak.FinalityKeeper = *ak.FinalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(ak.BTCStakingKeeper.Hooks()))
-	// TODO this introduces circular dependency between the finality module and
-	// the btcstaking modules, need refactoring
-	ak.BTCStakingKeeper.FinalityKeeper = ak.FinalityKeeper
-
-	// set up BTCStaking and Finality keepers
-	btcStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(finalityKeeper.Hooks()))
-	finalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(btcStakingKeeper.Hooks()))
-
 	// wire the keepers with hooks to the app
 	ak.EpochingKeeper = epochingKeeper
 	ak.BTCLightClientKeeper = btclightclientKeeper
@@ -577,6 +567,14 @@ func (ak *AppKeepers) InitKeepers(
 	ak.BtcCheckpointKeeper = btcCheckpointKeeper
 	ak.MonitorKeeper = monitorKeeper
 	ak.ZoneConciergeKeeper = *zcKeeper
+
+	// TODO: this introduces circular dependency between the finality module and
+	// the btcstaking modules, need refactoring
+	btcStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(finalityKeeper.Hooks()))
+	finalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(btcStakingKeeper.Hooks()))
+	btcStakingKeeper.FinalityKeeper = finalityKeeper
+	ak.BTCStakingKeeper = btcStakingKeeper
+	ak.FinalityKeeper = finalityKeeper
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
