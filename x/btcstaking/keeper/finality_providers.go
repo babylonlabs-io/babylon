@@ -137,7 +137,7 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 // - An error if any operation fails, nil otherwise.
 func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) error {
 	// Get all delegations for this finality provider
-	delegations, err := k.getFPBTCDelegations(ctx, fpBTCPK)
+	delegations, err := k.GetFPBTCDelegations(ctx, fpBTCPK)
 	if err != nil {
 		return err
 	}

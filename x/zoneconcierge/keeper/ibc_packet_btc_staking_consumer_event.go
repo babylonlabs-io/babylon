@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
@@ -138,16 +139,17 @@ func (k Keeper) HandleConsumerSlashing(
 
 	k.Logger(sdkCtx).Info("DEBUG: consumerID", "consumerID", consumerID)
 
-	// Step 1: Identify associated Babylon FPs
-	associatedBabylonFPs, err := k.findAssociatedBabylonFPs(ctx, consumerFP)
+	btcDels, err := k.bsKeeper.GetFPBTCDelegations(ctx, bip340PK)
 	if err != nil {
-		panic(fmt.Errorf("failed to find associated Babylon FPs: %v", err))
+		k.Logger(sdkCtx).Error("failed to get BTC delegations", "error", err)
+		return fmt.Errorf("failed to get BTC delegations: %w", err)
 	}
 
-	// Step 2: Discount voting power for each associated Babylon FP
-	for _, babylonFP := range associatedBabylonFPs {
-		if err := k.discountVotingPower(ctx, babylonFP, consumerFP); err != nil {
-			panic(fmt.Errorf("failed to discount voting power for Babylon FP %s: %v", babylonFP, err))
+	// for each btc del, emit EventSlashedBTCDelegation
+	for _, btcDel := range btcDels {
+		eventSlashedBTCDelegation := bstypes.NewEventPowerDistUpdateWithSlashedBTCDelegation(btcDel.MustGetStakingTxHash().String())
+		if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashedBTCDelegation); err != nil {
+			panic(fmt.Errorf("failed to emit EventSlashedBTCDelegation event: %w", err))
 		}
 	}
 

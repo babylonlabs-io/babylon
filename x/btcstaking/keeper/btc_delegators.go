@@ -61,7 +61,7 @@ func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP
 	return &types.BTCDelegatorDelegations{Dels: btcDels}
 }
 
-func (k Keeper) getFPBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) ([]*types.BTCDelegation, error) {
+func (k Keeper) GetFPBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) ([]*types.BTCDelegation, error) {
 	var store prefix.Store
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)

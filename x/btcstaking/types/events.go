@@ -41,3 +41,13 @@ func NewEventPowerDistUpdateWithUnjailedFP(fpBTCPK *bbn.BIP340PubKey) *EventPowe
 		},
 	}
 }
+
+func NewEventPowerDistUpdateWithSlashedBTCDelegation(stakingTxHash string) *EventPowerDistUpdate {
+	return &EventPowerDistUpdate{
+		Ev: &EventPowerDistUpdate_SlashedBtcDelegation{
+			SlashedBtcDelegation: &EventPowerDistUpdate_EventSlashedBTCDelegation{
+				StakingTxHash: stakingTxHash,
+			},
+		},
+	}
+}

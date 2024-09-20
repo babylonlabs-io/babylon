@@ -109,6 +109,7 @@ type BTCStakingKeeper interface {
 	GetAllBTCStakingConsumerIBCPackets(ctx context.Context) map[string]*bstypes.BTCStakingIBCPacket
 	DeleteBTCStakingConsumerIBCPacket(ctx context.Context, consumerID string)
 	PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) error
+	GetFPBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) ([]*bstypes.BTCDelegation, error)
 }
 
 type BTCStkConsumerKeeper interface {
