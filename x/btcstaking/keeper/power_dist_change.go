@@ -315,7 +315,16 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// add each BTC delegation
 		fpActiveBTCDels := activeBTCDels[fpBTCPKHex]
 		for _, d := range fpActiveBTCDels {
-			fpDistInfo.AddBTCDel(d)
+			// Check if the newly activated delegation is slashed
+			if _, slashed := slashedBTCDels[d.MustGetStakingTxHash().String()]; slashed {
+				// If the new BTC delegation is slashed, create a copy with zero voting power
+				slashedDel := *d
+				slashedDel.TotalSat = 0
+				fpDistInfo.AddBTCDel(&slashedDel)
+			} else {
+				// If not slashed, add the delegation as normal
+				fpDistInfo.AddBTCDel(d)
+			}
 		}
 
 		// add this finality provider to the new cache if it has voting power
