@@ -118,6 +118,44 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	return nil
 }
 
+// SlashFinalityProvider slashes a finality provider with the given PK
+// A slashed finality provider will not have voting power
+func (k Keeper) SlashConsumerFinalityProvider(ctx context.Context, consumerID string, fpBTCPK *bbn.BIP340PubKey) error {
+	// ensure finality provider exists
+	fp, err := k.bscKeeper.GetConsumerFinalityProvider(ctx, consumerID, fpBTCPK)
+	if err != nil {
+		return err
+	}
+
+	// ensure finality provider is not slashed yet
+	if fp.IsSlashed() {
+		return types.ErrFpAlreadySlashed
+	}
+
+	// set finality provider to be slashed
+	fp.SlashedBabylonHeight = uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	btcTip := k.btclcKeeper.GetTipInfo(ctx)
+	if btcTip == nil {
+		return fmt.Errorf("failed to get current BTC tip")
+	}
+	fp.SlashedBtcHeight = btcTip.Height
+	k.bscKeeper.SetConsumerFinalityProvider(ctx, fp)
+
+	btcDels, err := k.GetFPBTCDelegations(ctx, fpBTCPK)
+	if err != nil {
+		return fmt.Errorf("failed to get BTC delegations: %w", err)
+	}
+
+	// for each btc del, record a slashed event
+	for _, btcDel := range btcDels {
+		stakingTxHash := btcDel.MustGetStakingTxHash().String()
+		eventSlashedBTCDelegation := types.NewEventPowerDistUpdateWithSlashedBTCDelegation(stakingTxHash)
+		k.addPowerDistUpdateEvent(ctx, btcTip.Height, eventSlashedBTCDelegation)
+	}
+
+	return nil
+}
+
 // PropagateFPSlashingToConsumers propagates the slashing of a finality provider (FP) to all relevant consumer chains.
 // It processes all delegations associated with the given FP and creates slashing events for each affected consumer chain.
 //
