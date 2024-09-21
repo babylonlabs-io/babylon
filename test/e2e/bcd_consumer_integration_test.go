@@ -48,8 +48,6 @@ var (
 	randListInfo                        *datagen.RandListInfo
 )
 
-//var czFpBTCSK, czFpBTCPK, _ = datagen.GenRandomBTCKeyPair(r)
-
 type BCDConsumerIntegrationTestSuite struct {
 	suite.Suite
 
@@ -334,14 +332,17 @@ func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
 	s.NoError(err)
 	s.NotNil(txResp)
 
-	// check the finality provider is slashed on Babylon
+	// check the babylon finality provider is slashed
+	babylonFpBIP340PKHex := bbntypes.NewBIP340PubKeyFromBTCPK(babylonFpBTCPK).MarshalHex()
 	s.Eventually(func() bool {
-		slashed, err := s.babylonController.QueryFinalityProviderSlashed(babylonFpBTCPK)
+		babylonFp, err := s.babylonController.QueryFinalityProvider(babylonFpBIP340PKHex)
 		if err != nil {
-			s.T().Logf("Error querying finality provider slashed status: %v", err)
+			s.T().Logf("Error querying finality provider: %v", err)
 			return false
 		}
-		return slashed
+		return babylonFp != nil &&
+			babylonFp.FinalityProvider.SlashedBtcHeight > 0 &&
+			babylonFp.FinalityProvider.VotingPower == 0
 	}, time.Minute, time.Second*5)
 
 	consumerId := "07-tendermint-0"
@@ -490,6 +491,31 @@ func (s *BCDConsumerIntegrationTestSuite) Test7ConsumerFPCascadedSlashing() {
 		}
 
 		return fpInfo != nil && fpInfo.Power == 0 && fpInfo.BtcPkHex == consumerFp.BtcPk.MarshalHex()
+	}, time.Minute, time.Second*5)
+
+	// check the babylon finality provider's voting power is discounted (cascaded slashing)
+	babylonFpBIP340PKHex := bbntypes.NewBIP340PubKeyFromBTCPK(babylonFpBTCPK2).MarshalHex()
+	s.Eventually(func() bool {
+		fp, err := s.babylonController.QueryFinalityProvider(babylonFpBIP340PKHex)
+		if err != nil {
+			s.T().Logf("Error querying finality provider: %v", err)
+			return false
+		}
+		return fp != nil &&
+			fp.FinalityProvider.VotingPower == 0 && // as there is only 1 delegation which got slashed
+			fp.FinalityProvider.SlashedBtcHeight == 0 // should not be slashed
+	}, time.Minute, time.Second*5)
+
+	// check consumer FP record in Babylon is updated
+	consumerFpBIP340PKHex := consumerFp.BtcPk.MarshalHex()
+	s.Eventually(func() bool {
+		fp, err := s.babylonController.QueryFinalityProvider(consumerFpBIP340PKHex)
+		if err != nil {
+			s.T().Logf("Error querying finality provider: %v", err)
+			return false
+		}
+		return fp != nil &&
+			fp.FinalityProvider.SlashedBtcHeight > 0 // should be recorded slashed
 	}, time.Minute, time.Second*5)
 }
 
