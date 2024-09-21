@@ -127,13 +127,7 @@ func (wc *CosmwasmConsumerController) SubmitFinalitySig(
 	pubRand *bbntypes.SchnorrPubRand,
 	proof *cmtcrypto.Proof,
 	heightToVote int64,
-	// sig *btcec.ModNScalar,
 ) (*types.TxResponse, error) {
-	//cmtProof := cmtcrypto.Proof{}
-	//if err := cmtProof.Unmarshal(proof); err != nil {
-	//	return nil, err
-	//}
-
 	block, err := wc.GetCometBlock(int64(heightToVote))
 	if err != nil {
 		return nil, err
@@ -159,15 +153,6 @@ func (wc *CosmwasmConsumerController) SubmitFinalitySig(
 		BlockHash: block.Block.AppHash,
 		Signature: eotsSig.MustMarshal(),
 	}
-
-	// Log the fields of SubmitFinalitySignature
-	//fmt.Println("SubmitFinalitySignature fields:")
-	//fmt.Printf("FpPubkeyHex: %s\n", submitFinalitySig.FpPubkeyHex)
-	//fmt.Printf("Height: %d\n", submitFinalitySig.Height)
-	//fmt.Printf("PubRand: %x\n", submitFinalitySig.PubRand)
-	//fmt.Printf("Proof: %+v\n", submitFinalitySig.Proof)
-	//fmt.Printf("BlockHash: %x\n", submitFinalitySig.BlockHash)
-	//fmt.Printf("Signature: %x\n", submitFinalitySig.Signature)
 
 	msg := ExecMsg{
 		SubmitFinalitySignature: submitFinalitySig,
@@ -196,19 +181,6 @@ func (wc *CosmwasmConsumerController) SubmitInvalidFinalitySig(
 	proof *cmtcrypto.Proof,
 	heightToVote int64,
 ) (*types.TxResponse, error) {
-	// block, err := wc.GetCometBlock(int64(heightToVote))
-
-	// block, err := wc.GetCometBlock(int64(heightToVote))
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// msgToSign := append(sdk.Uint64ToBigEndian(uint64(heightToVote)), block.Block.AppHash...)
-	// sig, err := eots.Sign(fpSK, privateRand, msgToSign)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	invalidAppHash := datagen.GenRandomByteArray(r, 32)
 	invalidMsgToSign := append(sdk.Uint64ToBigEndian(uint64(heightToVote)), invalidAppHash...)
 	invalidSig, err := eots.Sign(fpSK, privateRand, invalidMsgToSign)
@@ -216,8 +188,6 @@ func (wc *CosmwasmConsumerController) SubmitInvalidFinalitySig(
 		return nil, err
 	}
 	invalidEotsSig := bbntypes.NewSchnorrEOTSSigFromModNScalar(invalidSig)
-
-	// eotsSig := bbntypes.NewSchnorrEOTSSigFromModNScalar(sig)
 
 	submitFinalitySig := &SubmitFinalitySignature{
 		FpPubkeyHex: bbntypes.NewBIP340PubKeyFromBTCPK(fpBtcPk).MarshalHex(),
@@ -232,15 +202,6 @@ func (wc *CosmwasmConsumerController) SubmitInvalidFinalitySig(
 		BlockHash: invalidAppHash,
 		Signature: invalidEotsSig.MustMarshal(),
 	}
-
-	// Log the fields of SubmitFinalitySignature
-	//fmt.Println("SubmitFinalitySignature fields:")
-	//fmt.Printf("FpPubkeyHex: %s\n", submitFinalitySig.FpPubkeyHex)
-	//fmt.Printf("Height: %d\n", submitFinalitySig.Height)
-	//fmt.Printf("PubRand: %x\n", submitFinalitySig.PubRand)
-	//fmt.Printf("Proof: %+v\n", submitFinalitySig.Proof)
-	//fmt.Printf("BlockHash: %x\n", submitFinalitySig.BlockHash)
-	//fmt.Printf("Signature: %x\n", submitFinalitySig.Signature)
 
 	msg := ExecMsg{
 		SubmitFinalitySignature: submitFinalitySig,

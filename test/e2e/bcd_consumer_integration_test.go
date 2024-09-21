@@ -903,8 +903,6 @@ func (s *BCDConsumerIntegrationTestSuite) initCosmwasmController() error {
 	cfg.ChainID = "bcd-test"
 	cfg.KeyDirectory = filepath.Join(currentDir, "../../contrib/images/ibcsim-bcd/.testnets/bcd/bcd-test")
 	cfg.AccountPrefix = "bbnc"
-	//cfg.GasPrices = "0.02ubbn"
-	//cfg.GasAdjustment = 20
 
 	// Create a logger
 	logger, _ := zap.NewDevelopment()
