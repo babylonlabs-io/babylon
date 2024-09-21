@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/cosmos/cosmos-sdk/runtime"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"cosmossdk.io/store/prefix"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -61,23 +60,28 @@ func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP
 	return &types.BTCDelegatorDelegations{Dels: btcDels}
 }
 
+// GetFPBTCDelegations retrieves all BTC delegations for a given finality provider.
+// This function works for both Babylon finality providers and consumer finality providers.
+// It automatically determines and selects the appropriate KV store based on the finality provider type.
+//
+// Parameters:
+// - ctx: The context for the operation
+// - fpBTCPK: The Bitcoin public key of the finality provider
+//
+// Returns:
+// - A slice of BTCDelegation pointers representing all delegations for the given finality provider
+// - An error if the finality provider is not found or if there's an issue retrieving the delegations
 func (k Keeper) GetFPBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) ([]*types.BTCDelegation, error) {
 	var store prefix.Store
-
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
 	// Determine which store to use based on the finality provider type
 	if k.HasFinalityProvider(ctx, *fpBTCPK) {
 		// Babylon finality provider
 		store = k.btcDelegatorFpStore(ctx, fpBTCPK)
-		k.Logger(sdkCtx).Info("DEBUG: Using btcDelegatorFpStore for Babylon finality provider", "fpBTCPK", fpBTCPK)
 	} else if k.bscKeeper.HasConsumerFinalityProvider(ctx, fpBTCPK) {
 		// Consumer finality provider
 		store = k.btcConsumerDelegatorStore(ctx, fpBTCPK)
-		k.Logger(sdkCtx).Info("DEBUG: Using btcConsumerDelegatorStore for consumer finality provider", "fpBTCPK", fpBTCPK)
 	} else {
 		// if not found in either store, return error
-		k.Logger(sdkCtx).Error("DEBUG: Finality provider not found", "fpBTCPK", fpBTCPK)
 		return nil, types.ErrFpNotFound
 	}
 

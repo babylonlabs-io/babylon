@@ -81,64 +81,53 @@ func (k Keeper) HandleConsumerSlashing(
 	destinationChannel string,
 	consumerSlashing *types.ConsumerSlashingIBCPacket,
 ) error {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
 	clientID, _, err := k.channelKeeper.GetChannelClientState(ctx, destinationPort, destinationChannel)
 	if err != nil {
-		return fmt.Errorf("DEBUG: failed to get client state: %w", err)
+		return fmt.Errorf("failed to get client state: %w", err)
 	}
 
-	k.Logger(sdkCtx).Info("DEBUG: Handling consumer slashing", "clientID", clientID, "evidence", consumerSlashing.Evidence)
-
-	slashingEvidence := consumerSlashing.Evidence
-	if slashingEvidence == nil {
-		return fmt.Errorf("DEBUG: consumer slashing evidence is nil")
+	evidence := consumerSlashing.Evidence
+	if evidence == nil {
+		return fmt.Errorf("consumer slashing evidence is nil")
 	}
 
-	slashedFpBTCSK, err := slashingEvidence.ExtractBTCSK()
+	slashedFpBTCSK, err := evidence.ExtractBTCSK()
 	if err != nil {
-		return fmt.Errorf("DEBUG: failed to extract BTCSK: %w", err)
+		return fmt.Errorf("failed to extract BTCSK: %w", err)
 	}
 
-	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(slashedFpBTCSK.PubKey())
-	// slashedFpBTCPKHex := hex.EncodeToString(slashedFpBTCSK.PubKey().SerializeCompressed())
-	k.Logger(sdkCtx).Info("DEBUG: slashedFpBTCPKHex", "slashedFpBTCPKHex", bip340PK.MarshalHex())
-
-	evidenceFpBTCPKHex := slashingEvidence.FpBtcPk.MarshalHex()
-	k.Logger(sdkCtx).Info("DEBUG: evidenceFpBTCPKHex", "evidenceFpBTCPKHex", evidenceFpBTCPKHex)
-
-	if bip340PK.MarshalHex() != evidenceFpBTCPKHex {
-		return fmt.Errorf("DEBUG: slashed FP BTC PK does not match with the one in the evidence")
+	slashedFpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(slashedFpBTCSK.PubKey())
+	evidenceFpBTCPKHex := evidence.FpBtcPk.MarshalHex()
+	if slashedFpBTCPK.MarshalHex() != evidenceFpBTCPKHex {
+		return fmt.Errorf("slashed FP BTC PK does not match with the one in the evidence")
 	}
 
 	// Check if the finality provider is associated with a consumer
-	consumerID, err := k.btcStkKeeper.GetConsumerOfFinalityProvider(ctx, bip340PK)
+	consumerID, err := k.btcStkKeeper.GetConsumerOfFinalityProvider(ctx, slashedFpBTCPK)
 	if err != nil {
-		k.Logger(sdkCtx).Error("failed to get consumer of finality provider", "error", err)
 		return fmt.Errorf("failed to get consumer of finality provider: %w", err)
 	}
 
-	// consumer ID should match with clientID
+	// Verify that the consumer ID matches the client ID
 	if consumerID != clientID {
-		return fmt.Errorf("DEBUG: consumer ID does not match with client ID")
+		return fmt.Errorf("consumer ID (%s) does not match client ID (%s)", consumerID, clientID)
 	}
 
-	k.Logger(sdkCtx).Info("DEBUG: consumerID", "consumerID", consumerID)
-
-	err = k.bsKeeper.SlashConsumerFinalityProvider(ctx, consumerID, bip340PK)
-	if err != nil {
-		k.Logger(sdkCtx).Error("failed to slash consumer finality provider", "error", err)
+	// Update the consumer finality provider's slashed height and
+	// send power distribution update event so the affected Babylon FP's voting power can be adjusted
+	if err := k.bsKeeper.SlashConsumerFinalityProvider(ctx, consumerID, slashedFpBTCPK); err != nil {
 		return fmt.Errorf("failed to slash consumer finality provider: %w", err)
 	}
 
-	if err := k.bsKeeper.PropagateFPSlashingToConsumers(ctx, bip340PK); err != nil {
-		k.Logger(sdkCtx).Error("failed to propagate slashing to consumers", "error", err)
+	// Send slashing event to other involved consumers
+	if err := k.bsKeeper.PropagateFPSlashingToConsumers(ctx, slashedFpBTCPK); err != nil {
 		return fmt.Errorf("failed to propagate slashing to consumers: %w", err)
 	}
 
-	eventSlashing := finalitytypes.NewEventSlashedFinalityProvider(slashingEvidence)
+	// Emit slashed finality provider event so btc slasher/vigilante can slash the finality provider
+	eventSlashing := finalitytypes.NewEventSlashedFinalityProvider(evidence)
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {
-		panic(fmt.Errorf("failed to emit EventSlashedFinalityProvider event: %w", err))
+		return fmt.Errorf("failed to emit EventSlashedFinalityProvider event: %w", err)
 	}
 
 	return nil
