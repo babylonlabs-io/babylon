@@ -335,14 +335,14 @@ func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
 	// check the babylon finality provider is slashed
 	babylonFpBIP340PKHex := bbntypes.NewBIP340PubKeyFromBTCPK(babylonFpBTCPK).MarshalHex()
 	s.Eventually(func() bool {
-		babylonFp, err := s.babylonController.QueryFinalityProvider(babylonFpBIP340PKHex)
+		fp, err := s.babylonController.QueryFinalityProvider(babylonFpBIP340PKHex)
 		if err != nil {
 			s.T().Logf("Error querying finality provider: %v", err)
 			return false
 		}
-		return babylonFp != nil &&
-			babylonFp.FinalityProvider.SlashedBtcHeight > 0 &&
-			babylonFp.FinalityProvider.VotingPower == 0
+		return fp != nil &&
+			fp.FinalityProvider.SlashedBtcHeight > 0 &&
+			fp.FinalityProvider.VotingPower == 0
 	}, time.Minute, time.Second*5)
 
 	consumerId := "07-tendermint-0"
