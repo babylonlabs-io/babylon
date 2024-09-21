@@ -173,13 +173,6 @@ func (wc *CosmwasmConsumerController) SubmitFinalitySig(
 		SubmitFinalitySignature: submitFinalitySig,
 	}
 
-	prettyJSON, err := json.MarshalIndent(msg, "", "  ")
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Println("Pretty JSON:", string(prettyJSON))
-
 	msgBytes, err := json.Marshal(msg)
 	if err != nil {
 		return nil, err
@@ -252,13 +245,6 @@ func (wc *CosmwasmConsumerController) SubmitInvalidFinalitySig(
 	msg := ExecMsg{
 		SubmitFinalitySignature: submitFinalitySig,
 	}
-
-	prettyJSON, err := json.MarshalIndent(msg, "", "  ")
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Println("Pretty JSON:", string(prettyJSON))
 
 	msgBytes, err := json.Marshal(msg)
 	if err != nil {
@@ -368,7 +354,6 @@ func (wc *CosmwasmConsumerController) QueryFinalityProviderInfo(
 		},
 	}
 
-	// If blockHeight is provided, set it in the query
 	if len(opts) > 0 {
 		queryMsgStruct.FinalityProviderInfo.Height = opts[0]
 	}

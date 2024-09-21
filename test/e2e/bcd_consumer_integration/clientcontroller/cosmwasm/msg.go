@@ -164,7 +164,7 @@ type ExecMsg struct {
 
 type FinalityProviderInfo struct {
 	BtcPkHex string `json:"btc_pk_hex"`
-	Height   uint64 `json:"height"`
+	Height   uint64 `json:"height,omitempty"`
 }
 
 type QueryMsgFinalityProviderInfo struct {
