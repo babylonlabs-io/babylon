@@ -168,17 +168,10 @@ func (im IBCModule) OnRecvPacket(
 		}
 		return channeltypes.NewResultAcknowledgement([]byte("Consumer registered successfully"))
 	case *types.ZoneconciergePacketData_ConsumerSlashing:
-		im.keeper.Logger(ctx).Info("DEBUG: Received ConsumerSlashing packet",
-			"destination_port", modulePacket.DestinationPort,
-			"destination_channel", modulePacket.DestinationChannel,
-			"evidence", packet.ConsumerSlashing.Evidence)
-
 		err := im.keeper.HandleConsumerSlashing(ctx, modulePacket.DestinationPort, modulePacket.DestinationChannel, packet.ConsumerSlashing)
 		if err != nil {
-			im.keeper.Logger(ctx).Error("DEBUG: Failed to handle ConsumerSlashing", "error", err)
 			return channeltypes.NewErrorAcknowledgement(err)
 		}
-		im.keeper.Logger(ctx).Info("DEBUG: Successfully handled ConsumerSlashing")
 		return channeltypes.NewResultAcknowledgement([]byte("Consumer slashing handled successfully"))
 	// Add other packet types here if needed
 	default:
