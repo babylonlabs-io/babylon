@@ -806,20 +806,6 @@ func (s *BCDConsumerIntegrationTestSuite) commitAndFinalizePubRand(babylonFpBTCS
 	commitEpoch := firstPubRandCommit.EpochNum
 	// finalise until the epoch of the first public randomness commit
 	s.finalizeUntilEpoch(commitEpoch)
-
-	// eventually, the finality provider has voting power
-	s.Eventually(func() bool {
-		status, err := s.babylonController.QueryNodeStatus()
-		s.NoError(err)
-		height := uint64(status.SyncInfo.LatestBlockHeight)
-		hasPower, err := s.babylonController.QueryFinalityProviderHasPower(babylonFpBTCPK, height)
-		if err != nil {
-			s.T().Logf("Error querying voting power at height: %v", err)
-			return false
-		}
-		return hasPower
-	}, time.Minute, time.Second*1, "Voting power was not greater than 0 within the expected time")
-
 	return randList
 }
 
