@@ -812,7 +812,6 @@ func (s *BCDConsumerIntegrationTestSuite) commitAndFinalizePubRand(babylonFpBTCS
 		status, err := s.babylonController.QueryNodeStatus()
 		s.NoError(err)
 		height := uint64(status.SyncInfo.LatestBlockHeight)
-
 		hasPower, err := s.babylonController.QueryFinalityProviderHasPower(babylonFpBTCPK, height)
 		if err != nil {
 			s.T().Logf("Error querying voting power at height: %v", err)
