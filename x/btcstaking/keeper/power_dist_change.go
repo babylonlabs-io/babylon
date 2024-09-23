@@ -247,32 +247,27 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// add all BTC delegations that are not unbonded to the new finality provider
 		for j := range dc.FinalityProviders[i].BtcDels {
 			btcDel := *dc.FinalityProviders[i].BtcDels[j]
-			if _, ok := unbondedBTCDels[btcDel.StakingTxHash]; !ok {
-				// Delegation is not unbonded (i.e., it's active)
-				if _, slashed := slashedBTCDels[btcDel.StakingTxHash]; slashed {
-					// If the BTC delegation is slashed, set its voting power to 0.
-					// This ensures that for this specific finality provider,
-					// the voting power of this delegation does not contribute
-					// to the total voting power. By modifying btcDel directly,
-					// we ensure that in subsequent heights, when the old cache
-					// is fetched, this delegation remains discounted for this FP.
-					btcDel.VotingPower = 0
-				}
-				fp.AddBTCDelDistInfo(&btcDel)
+			// skip this delegation if it's unbonded
+			if _, unbonded := unbondedBTCDels[btcDel.StakingTxHash]; unbonded {
+				continue
 			}
+			// skip this delegation if it's slashed
+			if _, slashed := slashedBTCDels[btcDel.StakingTxHash]; slashed {
+				continue
+			}
+			// add the delegation info only if it's not unbonded and not slashed (i.e it's active)
+			fp.AddBTCDelDistInfo(&btcDel)
 		}
 
 		// process all new BTC delegations under this finality provider
 		if fpActiveBTCDels, ok := activeBTCDels[fpBTCPKHex]; ok {
 			// handle new BTC delegations for this finality provider
 			for _, d := range fpActiveBTCDels {
-				del := *d
+				// skip this delegation if it's slashed
 				if _, slashed := slashedBTCDels[d.MustGetStakingTxHash().String()]; slashed {
-					// If the new BTC delegation is slashed, set its voting power to 0
-					del.TotalSat = 0
+					continue
 				}
-
-				fp.AddBTCDel(&del)
+				fp.AddBTCDel(d)
 			}
 			// remove the finality provider entry in activeBTCDels map, so that
 			// after the for loop the rest entries in activeBTCDels belongs to new
@@ -313,12 +308,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// add each BTC delegation
 		fpActiveBTCDels := activeBTCDels[fpBTCPKHex]
 		for _, d := range fpActiveBTCDels {
-			del := *d
+			// skip this delegation if it's slashed
 			if _, slashed := slashedBTCDels[d.MustGetStakingTxHash().String()]; slashed {
-				// If the BTC delegation is slashed, set its voting power to 0.
-				del.TotalSat = 0
+				continue
 			}
-			fpDistInfo.AddBTCDel(&del)
+			fpDistInfo.AddBTCDel(d)
 		}
 
 		// add this finality provider to the new cache if it has voting power
