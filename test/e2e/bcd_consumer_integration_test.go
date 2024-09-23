@@ -45,7 +45,7 @@ var (
 	MinCommissionRate                   = sdkmath.LegacyNewDecWithPrec(5, 2) // 5%
 	babylonFpBTCSK, babylonFpBTCPK, _   = datagen.GenRandomBTCKeyPair(r)
 	babylonFpBTCSK2, babylonFpBTCPK2, _ = datagen.GenRandomBTCKeyPair(r)
-	randListInfo                        *datagen.RandListInfo
+	randListInfo1                       *datagen.RandListInfo
 )
 
 type BCDConsumerIntegrationTestSuite struct {
@@ -169,7 +169,10 @@ func (s *BCDConsumerIntegrationTestSuite) Test4RestakeDelegationToMultipleFPs() 
 	consumerFp := consumerFps[0]
 
 	// register a babylon finality provider
-	babylonFp := s.createBabylonFPWithFinalizedPubRand(babylonFpBTCSK)
+	babylonFp := s.createVerifyBabylonFP(babylonFpBTCSK)
+	// commit and finalize pub rand so Babylon FP has voting power
+	randList := s.commitAndFinalizePubRand(babylonFpBTCSK, babylonFpBTCPK, uint64(1))
+	randListInfo1 = randList
 
 	// create a delegation and restake to both Babylon and consumer finality providers
 	// NOTE: this will create delegation in pending state as covenant sigs are not provided
@@ -285,16 +288,15 @@ func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
 	s.NotNil(babylonFp)
 
 	babylonFpBIP340PK := bbntypes.NewBIP340PubKeyFromBTCPK(babylonFpBTCPK)
-
-	randIdx := activatedHeight.Height - 1
+	randIdx := activatedHeight.Height - 1 // pub rand was committed from height 1-100
 
 	// submit finality signature
 	txResp, err := s.babylonController.SubmitFinalitySignature(
 		babylonFpBTCSK,
 		babylonFpBIP340PK,
-		randListInfo.SRList[randIdx],
-		&randListInfo.PRList[randIdx],
-		randListInfo.ProofList[randIdx].ToProto(),
+		randListInfo1.SRList[randIdx],
+		&randListInfo1.PRList[randIdx],
+		randListInfo1.ProofList[randIdx].ToProto(),
 		activatedHeight.Height)
 	s.NoError(err)
 	s.NotNil(txResp)
@@ -324,9 +326,9 @@ func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
 		r,
 		babylonFpBTCSK,
 		babylonFpBIP340PK,
-		randListInfo.SRList[randIdx],
-		&randListInfo.PRList[randIdx],
-		randListInfo.ProofList[randIdx].ToProto(),
+		randListInfo1.SRList[randIdx],
+		&randListInfo1.PRList[randIdx],
+		randListInfo1.ProofList[randIdx].ToProto(),
 		activatedHeight.Height,
 	)
 	s.NoError(err)
@@ -373,22 +375,8 @@ func (s *BCDConsumerIntegrationTestSuite) Test7ConsumerFPCascadedSlashing() {
 	consumerFp, err := s.babylonController.QueryConsumerFinalityProvider(consumerId, resp.BtcPk.MarshalHex())
 	s.NoError(err)
 
-	newConsumerFp, czFpBTCSK, czFpBTCPK := s.createVerifyConsumerFP(consumerId)
-	consumerFps, err := s.babylonController.QueryConsumerFinalityProviders(consumerId)
-	s.Require().NoError(err)
-
-	// Create a map of finality providers
-	fpMap := make(map[string]*bsctypes.FinalityProviderResponse)
-	for _, fp := range consumerFps {
-		fpMap[fp.BtcPk.MarshalHex()] = fp
-	}
-
-	// Find the newly created finality provider
-	consumerFp, exists := fpMap[newConsumerFp.BtcPk.MarshalHex()]
-	s.Require().True(exists, "Newly created finality provider not found in the list")
-
 	// register a babylon finality provider
-	babylonFp := s.createBabylonFPWithFinalizedPubRand(babylonFpBTCSK2)
+	babylonFp := s.createVerifyBabylonFP(babylonFpBTCSK2)
 
 	// create a new delegation and restake to both Babylon and consumer finality provider
 	// NOTE: this will create delegation in pending state as covenant sigs are not provided
@@ -624,26 +612,19 @@ func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctype
 	activeDel := activeDels.Dels[0]
 	s.True(activeDel.HasCovenantQuorums(1))
 
-	// eventually, the finality provider has voting power
+	// ensure BTC staking is activated
 	s.Eventually(func() bool {
-		status, err := s.babylonController.QueryNodeStatus()
-		s.NoError(err)
-		height := uint64(status.SyncInfo.LatestBlockHeight)
-
-		hasPower, err := s.babylonController.QueryFinalityProviderHasPower(babylonFpBTCPK, height)
+		activatedHeight, err := s.babylonController.QueryActivatedHeight()
 		if err != nil {
-			s.T().Logf("Error querying voting power at height: %v", err)
+			s.T().Logf("Error querying activated height: %v", err)
 			return false
 		}
-		return hasPower
-	}, time.Minute, time.Second*1, "Voting power was not greater than 0 within the expected time")
-
-	// ensure BTC staking is activated
-	activatedHeight, err := s.babylonController.QueryActivatedHeight()
-	s.NoError(err)
-	s.Positive(activatedHeight.Height)
-
-	s.T().Logf("Activated height: %v", activatedHeight.Height)
+		if activatedHeight == nil {
+			s.T().Log("Activated height is nil")
+			return false
+		}
+		return activatedHeight.Height > 0
+	}, time.Minute, time.Second*15, "BTC staking was not activated within the expected time")
 }
 
 // helper function: createBabylonDelegation creates a random BTC delegation restaking to Babylon and consumer finality providers
@@ -766,8 +747,8 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 	return czDelBtcPk, stakingTxHash
 }
 
-// helper function: createBabylonFPWithFinalizedPubRand creates a random Babylon finality provider, commits some public randomness, and finalise these public randomness
-func (s *BCDConsumerIntegrationTestSuite) createBabylonFPWithFinalizedPubRand(babylonFpBTCSK *btcec.PrivateKey) *bstypes.FinalityProviderResponse {
+// helper function: createVerifyBabylonFP creates a random Babylon finality provider and verifies it
+func (s *BCDConsumerIntegrationTestSuite) createVerifyBabylonFP(babylonFpBTCSK *btcec.PrivateKey) *bstypes.FinalityProviderResponse {
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
 	// babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
 	sdk.SetAddrCacheEnabled(false)
@@ -791,32 +772,56 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonFPWithFinalizedPubRand(ba
 	)
 	s.NoError(err)
 
-	// query the existence of finality provider and assert equivalence
-	actualFps, err := s.babylonController.QueryFinalityProviders()
-	s.Require().NoError(err)
+	actualFp, err := s.babylonController.QueryFinalityProvider(babylonFp.BtcPk.MarshalHex())
+	s.NoError(err)
+	s.Equal(babylonFp.Description, actualFp.FinalityProvider.Description)
+	s.Equal(babylonFp.Commission, actualFp.FinalityProvider.Commission)
+	s.Equal(babylonFp.BtcPk, actualFp.FinalityProvider.BtcPk)
+	s.Equal(babylonFp.Pop, actualFp.FinalityProvider.Pop)
+	s.Equal(babylonFp.SlashedBabylonHeight, actualFp.FinalityProvider.SlashedBabylonHeight)
+	s.Equal(babylonFp.SlashedBtcHeight, actualFp.FinalityProvider.SlashedBtcHeight)
+	return actualFp.FinalityProvider
+}
 
+// helper function: commitAndFinalizePubRand commits public randomness at the given start height and finalizes it
+func (s *BCDConsumerIntegrationTestSuite) commitAndFinalizePubRand(babylonFpBTCSK *btcec.PrivateKey, babylonFpBTCPK *btcec.PublicKey, commitStartHeight uint64) *datagen.RandListInfo {
 	// commit public randomness list
 	numPubRand := uint64(100)
-	commitStartHeight := uint64(1)
 	randList, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, babylonFpBTCSK, commitStartHeight, numPubRand)
 	s.NoError(err)
-	randListInfo = randList
+
 	_, err = s.babylonController.CommitPublicRandomness(msgCommitPubRandList)
 	s.NoError(err)
-	// get public randomness commit
-	pubRandCommitMap, err := s.babylonController.QueryLastCommittedPublicRand(babylonFp.BtcPk.MustToBTCPK(), 1)
+
+	pubRandCommitMap, err := s.babylonController.QueryLastCommittedPublicRand(babylonFpBTCPK, commitStartHeight)
 	s.NoError(err)
 	s.Len(pubRandCommitMap, 1)
+
 	var firstPubRandCommit *ftypes.PubRandCommitResponse
 	for _, commit := range pubRandCommitMap {
 		firstPubRandCommit = commit
 		break
 	}
+
 	commitEpoch := firstPubRandCommit.EpochNum
 	// finalise until the epoch of the first public randomness commit
 	s.finalizeUntilEpoch(commitEpoch)
 
-	return actualFps[0]
+	// eventually, the finality provider has voting power
+	s.Eventually(func() bool {
+		status, err := s.babylonController.QueryNodeStatus()
+		s.NoError(err)
+		height := uint64(status.SyncInfo.LatestBlockHeight)
+
+		hasPower, err := s.babylonController.QueryFinalityProviderHasPower(babylonFpBTCPK, height)
+		if err != nil {
+			s.T().Logf("Error querying voting power at height: %v", err)
+			return false
+		}
+		return hasPower
+	}, time.Minute, time.Second*1, "Voting power was not greater than 0 within the expected time")
+
+	return randList
 }
 
 // helper function: createVerifyConsumerFP creates a random consumer finality provider on Babylon
