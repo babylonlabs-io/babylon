@@ -39,13 +39,11 @@ message EventPowerDistUpdate {
   // is slashed
   // TODO: unify with existing slashing events
   message EventSlashedFinalityProvider {
-    bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+    bytes pk = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey"];
   }
 
-  // EventSlashedBTCDelegation defines an event that occurs when a consumer FP is slashed.
-  // This event represents the impact on a specific BTC delegation containing the slashed
-  // consumer FP. Babylon FPs in this delegation will have their voting power discounted
-  // as a result.
+  // EventSlashedBTCDelegation defines an event emitted when a finality provider that this BTC delegation restakes to is slashed.
+  // As a result, Babylon finality providers in this delegation will have their voting power discounted.
   message EventSlashedBTCDelegation {
     // staking_tx_hash is the hash of the BTC staking transaction for this delegation
     string staking_tx_hash = 1;
@@ -54,13 +52,13 @@ message EventPowerDistUpdate {
   // EventJailedFinalityProvider defines an event that a finality provider
   // is jailed after being detected sluggish
   message EventJailedFinalityProvider {
-    bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+    bytes pk = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey"];
   }
 
   // EventUnjailedFinalityProvider defines an event that a jailed finality provider
   // is unjailed after the jailing period is passed
   message EventUnjailedFinalityProvider {
-    bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+    bytes pk = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey"];
   }
 
   // ev is the event that affects voting power distribution
