@@ -1,12 +1,14 @@
 package keeper_test
 
 import (
+	"context"
 	"errors"
 	"math/rand"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 
+	"github.com/btcsuite/btcd/txscript"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/golang/mock/gomock"
@@ -17,6 +19,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	btcstakingkeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -60,7 +63,7 @@ func FuzzFinalityProviders(f *testing.F) {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
 
-			keeper.SetFinalityProvider(ctx, fp)
+			AddFinalityProvider(t, ctx, *keeper, fp)
 			fpsMap[fp.BtcPk.MarshalHex()] = fp
 		}
 		numOfFpsInStore := len(fpsMap)
@@ -125,7 +128,7 @@ func FuzzFinalityProvider(f *testing.F) {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
 
-			keeper.SetFinalityProvider(ctx, fp)
+			AddFinalityProvider(t, ctx, *keeper, fp)
 			fpsMap[fp.BtcPk.MarshalHex()] = fp
 		}
 
@@ -172,12 +175,13 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		keeper, _, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, ckptKeeper)
+		keeper, _, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil)
 
 		// covenant and slashing addr
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
+		require.NoError(t, err)
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
 		require.NoError(t, err)
 		slashingChangeLockTime := uint16(101)
 
@@ -194,7 +198,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		for i := uint64(0); i < numFps; i++ {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
-			keeper.SetFinalityProvider(ctx, fp)
+			AddFinalityProvider(t, ctx, *keeper, fp)
 			fps = append(fps, fp)
 		}
 
@@ -218,7 +222,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 					covenantSKs,
 					covenantPKs,
 					covenantQuorum,
-					slashingAddress.EncodeAddress(),
+					slashingPkScript,
 					startHeight, endHeight, 10000,
 					slashingRate,
 					slashingChangeLockTime,
@@ -281,7 +285,7 @@ func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
 		fp, err := datagen.GenRandomFinalityProvider(r)
 		require.NoError(t, err)
 		// add this finality provider
-		keeper.SetFinalityProvider(ctx, fp)
+		AddFinalityProvider(t, ctx, *keeper, fp)
 		// set random voting power at random height
 		randomHeight := datagen.RandomInt(r, 100) + 1
 		randomPower := datagen.RandomInt(r, 100) + 1
@@ -330,7 +334,7 @@ func FuzzFinalityProviderCurrentVotingPower(f *testing.F) {
 		fp, err := datagen.GenRandomFinalityProvider(r)
 		require.NoError(t, err)
 		// add this finality provider
-		keeper.SetFinalityProvider(ctx, fp)
+		AddFinalityProvider(t, ctx, *keeper, fp)
 		// set random voting power at random height
 		randomHeight := datagen.RandomInt(r, 100) + 1
 		ctx = datagen.WithCtxHeight(ctx, randomHeight)
@@ -376,14 +380,14 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 10}).AnyTimes()
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		keeper, _, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, ckptKeeper)
+		keeper, _, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil)
 
 		// covenant and slashing addr
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
-
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+		require.NoError(t, err)
 		slashingChangeLockTime := uint16(101)
 
 		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
@@ -400,7 +404,7 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 		for i := uint64(0); i < numFps; i++ {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
-			keeper.SetFinalityProvider(ctx, fp)
+			AddFinalityProvider(t, ctx, *keeper, fp)
 			fps = append(fps, fp)
 		}
 
@@ -425,7 +429,7 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 					covenantSKs,
 					covenantPKs,
 					covenantQuorum,
-					slashingAddress.EncodeAddress(),
+					slashingPkScript,
 					1, 1000, 10000,
 					slashingRate,
 					slashingChangeLockTime,
@@ -496,12 +500,13 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		keeper, _, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, ckptKeeper)
+		keeper, _, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil)
 
 		// covenant and slashing addr
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
+		require.NoError(t, err)
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
 		require.NoError(t, err)
 		slashingChangeLockTime := uint16(101)
 
@@ -515,7 +520,7 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 		// Generate a finality provider
 		fp, err := datagen.GenRandomFinalityProvider(r)
 		require.NoError(t, err)
-		keeper.SetFinalityProvider(ctx, fp)
+		AddFinalityProvider(t, ctx, *keeper, fp)
 
 		startHeight := datagen.RandomInt(r, 100) + 1
 		endHeight := datagen.RandomInt(r, 1000) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
@@ -535,7 +540,7 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 				covenantSKs,
 				covenantPKs,
 				covenantQuorum,
-				slashingAddress.EncodeAddress(),
+				slashingPkScript,
 				startHeight, endHeight, 10000,
 				slashingRate,
 				slashingChangeLockTime,
@@ -616,4 +621,15 @@ func constructRequestWithKeyAndLimit(r *rand.Rand, key []byte, limit uint64) *qu
 
 func constructRequestWithLimit(r *rand.Rand, limit uint64) *query.PageRequest {
 	return constructRequestWithKeyAndLimit(r, nil, limit)
+}
+
+func AddFinalityProvider(t *testing.T, goCtx context.Context, k btcstakingkeeper.Keeper, fp *types.FinalityProvider) {
+	err := k.AddFinalityProvider(goCtx, &types.MsgCreateFinalityProvider{
+		Addr:        fp.Addr,
+		Description: fp.Description,
+		Commission:  fp.Commission,
+		BtcPk:       fp.BtcPk,
+		Pop:         fp.Pop,
+	})
+	require.NoError(t, err)
 }

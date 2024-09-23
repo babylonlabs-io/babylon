@@ -19,7 +19,7 @@ type StakingParams struct {
 	CovenantPks []*btcec.PublicKey
 
 	// Address to which slashing transactions are sent
-	SlashingAddress btcutil.Address
+	SlashingPkScript []byte
 
 	// Minimum number of signatures needed for the covenant multisignature
 	CovenantQuorum uint32

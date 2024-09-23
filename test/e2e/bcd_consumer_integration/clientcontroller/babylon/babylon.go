@@ -74,6 +74,10 @@ func NewBabylonController(
 	}, nil
 }
 
+func (bc *BabylonController) GetBBNClient() *bbnclient.Client {
+	return bc.bbnClient
+}
+
 func (bc *BabylonController) MustGetTxSigner() string {
 	signer := bc.GetKeyAddress()
 	prefix := bc.cfg.AccountPrefix
@@ -206,6 +210,24 @@ func (bc *BabylonController) QueryBlocks(startHeight, endHeight, limit uint64) (
 	return bc.queryLatestBlocks(sdk.Uint64ToBigEndian(startHeight), count, finalitytypes.QueriedBlockStatus_ANY, false)
 }
 
+// QueryLastCommittedPublicRand returns the last public randomness commitments
+func (bc *BabylonController) QueryLastCommittedPublicRand(fpPk *btcec.PublicKey, count uint64) (map[uint64]*finalitytypes.PubRandCommitResponse, error) {
+	fpBtcPk := bbntypes.NewBIP340PubKeyFromBTCPK(fpPk)
+
+	pagination := &sdkquery.PageRequest{
+		// NOTE: the count is limited by pagination queries
+		Limit:   count,
+		Reverse: true,
+	}
+
+	res, err := bc.bbnClient.QueryClient.ListPubRandCommit(fpBtcPk.MarshalHex(), pagination)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query committed public randomness: %w", err)
+	}
+
+	return res.PubRandCommitMap, nil
+}
+
 func (bc *BabylonController) queryLatestBlocks(startKey []byte, count uint64, status finalitytypes.QueriedBlockStatus, reverse bool) ([]*types2.BlockInfo, error) {
 	var blocks []*types2.BlockInfo
 	pagination := &sdkquery.PageRequest{
@@ -284,6 +306,37 @@ func (bc *BabylonController) CreateBTCDelegation(
 	}
 
 	return &types2.TxResponse{TxHash: res.TxHash}, nil
+}
+
+func (bc *BabylonController) InsertWBTCHeaders(r *rand.Rand) error {
+	params, err := bc.QueryStakingParams()
+	if err != nil {
+		return fmt.Errorf("failed to query staking params: %w", err)
+	}
+
+	btcTipResp, err := bc.QueryBtcLightClientTip()
+	if err != nil {
+		return fmt.Errorf("failed to query BTC light client tip: %w", err)
+	}
+
+	tipHeader, err := bbntypes.NewBTCHeaderBytesFromHex(btcTipResp.HeaderHex)
+	if err != nil {
+		return fmt.Errorf("failed to create BTC header from hex: %w", err)
+	}
+
+	wHeaders := datagen.NewBTCHeaderChainFromParentInfo(r, &btclctypes.BTCHeaderInfo{
+		Header: &tipHeader,
+		Hash:   tipHeader.Hash(),
+		Height: btcTipResp.Height,
+		Work:   &btcTipResp.Work,
+	}, uint32(params.FinalizationTimeoutBlocks))
+
+	_, err = bc.InsertBtcBlockHeaders(wHeaders.ChainToBytes())
+	if err != nil {
+		return fmt.Errorf("failed to insert BTC block headers: %w", err)
+	}
+
+	return nil
 }
 
 func (bc *BabylonController) InsertBtcBlockHeaders(headers []bbntypes.BTCHeaderBytes) (*provider.RelayerTxResponse, error) {
@@ -455,20 +508,16 @@ func (bc *BabylonController) QueryStakingParams() (*types2.StakingParams, error)
 		}
 		covenantPks = append(covenantPks, covPk)
 	}
-	slashingAddress, err := btcutil.DecodeAddress(stakingParamRes.Params.SlashingAddress, bc.btcParams)
-	if err != nil {
-		return nil, err
-	}
 
 	return &types2.StakingParams{
 		ComfirmationTimeBlocks:    ckptParamRes.Params.BtcConfirmationDepth,
 		FinalizationTimeoutBlocks: ckptParamRes.Params.CheckpointFinalizationTimeout,
 		MinSlashingTxFeeSat:       btcutil.Amount(stakingParamRes.Params.MinSlashingTxFeeSat),
 		CovenantPks:               covenantPks,
-		SlashingAddress:           slashingAddress,
+		SlashingPkScript:          stakingParamRes.Params.SlashingPkScript,
 		CovenantQuorum:            stakingParamRes.Params.CovenantQuorum,
 		SlashingRate:              stakingParamRes.Params.SlashingRate,
-		MinUnbondingTime:          stakingParamRes.Params.MinUnbondingTime,
+		MinUnbondingTime:          stakingParamRes.Params.MinUnbondingTimeBlocks,
 	}, nil
 }
 

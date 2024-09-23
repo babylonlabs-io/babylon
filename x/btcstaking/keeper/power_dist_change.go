@@ -35,8 +35,23 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	if len(events) == 0 {
 		if dc != nil {
 			// map everything in prev height to this height
-			k.recordVotingPowerAndCache(ctx, dc, maxActiveFps)
+			// NOTE: deep copy the previous dist cache because the
+			// cache for the new height shares the same distribution
+			// info due to no new events but timestamping status
+			// might be changed in the new dist cache after calling
+			// k.recordVotingPowerAndCache()
+			newDc := types.NewVotingPowerDistCache()
+			newDc.TotalVotingPower = dc.TotalVotingPower
+			newDc.NumActiveFps = dc.NumActiveFps
+			newFps := make([]*types.FinalityProviderDistInfo, len(dc.FinalityProviders))
+			for i, prevFp := range dc.FinalityProviders {
+				newFp := *prevFp
+				newFps[i] = &newFp
+			}
+			newDc.FinalityProviders = newFps
+			k.recordVotingPowerAndCache(ctx, dc, newDc, maxActiveFps)
 		}
+
 		return
 	}
 
@@ -54,39 +69,63 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 
 	// reconcile old voting power distribution cache and new events
 	// to construct the new distribution
-	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events, maxActiveFps)
-
-	// find newly bonded finality providers and execute the hooks
-	newBondedFinalityProviders := newDc.FindNewActiveFinalityProviders(dc, maxActiveFps)
-	for _, fp := range newBondedFinalityProviders {
-		if err := k.hooks.AfterFinalityProviderActivated(ctx, fp.BtcPk); err != nil {
-			panic(fmt.Errorf("failed to execute after finality provider %s bonded", fp.BtcPk.MarshalHex()))
-		}
-	}
+	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events)
 
 	// record voting power and cache for this height
-	k.recordVotingPowerAndCache(ctx, newDc, maxActiveFps)
+	k.recordVotingPowerAndCache(ctx, dc, newDc, maxActiveFps)
 	// record metrics
-	k.recordMetrics(newDc, maxActiveFps)
+	k.recordMetrics(newDc)
 }
 
-func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingPowerDistCache, maxActiveFps uint32) {
+// recordVotingPowerAndCache assigns voting power to each active finality provider
+// with the following consideration:
+// 1. the fp must have timestamped pub rand
+// 2. the fp must in the top x ranked by the voting power (x is given by maxActiveFps)
+// NOTE: the previous and the new dist cache cannot be nil
+func (k Keeper) recordVotingPowerAndCache(ctx context.Context, prevDc, newDc *types.VotingPowerDistCache, maxActiveFps uint32) {
+	if prevDc == nil || newDc == nil {
+		panic("the voting power distribution cache cannot be nil")
+	}
+
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 
-	// set voting power table for this height
-	for i := uint32(0); i < dc.GetNumActiveFPs(maxActiveFps); i++ {
-		fp := dc.FinalityProviders[i]
-		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
+	// label fps with whether it has timestamped pub rand so that these fps
+	// will not be assigned voting power
+	for _, fpDistInfo := range newDc.FinalityProviders {
+		// TODO calling HasTimestampedPubRand potentially iterates
+		// all the pub rand committed by the fpDistInfo, which might slow down
+		// the process, need optimization
+		fpDistInfo.IsTimestamped = k.FinalityKeeper.HasTimestampedPubRand(ctx, fpDistInfo.BtcPk, babylonTipHeight)
+	}
 
+	// apply the finality provider voting power dist info to the new cache
+	// after which the cache would have active fps that are top N fps ranked
+	// by voting power with timestamped pub rand
+	newDc.ApplyActiveFinalityProviders(maxActiveFps)
+
+	// set voting power table for each active finality providers at this height
+	for i := uint32(0); i < newDc.NumActiveFps; i++ {
+		fp := newDc.FinalityProviders[i]
+		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
+	}
+
+	// find newly activated finality providers and execute the hooks by comparing
+	// the previous dist cache
+	newActivatedFinalityProviders := newDc.FindNewActiveFinalityProviders(prevDc)
+	for _, fp := range newActivatedFinalityProviders {
+		if err := k.hooks.AfterFinalityProviderActivated(ctx, fp.BtcPk); err != nil {
+			panic(fmt.Errorf("failed to execute after finality provider %s activated", fp.BtcPk.MarshalHex()))
+		}
+		k.Logger(sdk.UnwrapSDKContext(ctx)).Info("a new finality provider is activated", "pk", fp.BtcPk.MarshalHex())
 	}
 
 	// set the voting power distribution cache of the current height
-	k.setVotingPowerDistCache(ctx, babylonTipHeight, dc)
+	k.setVotingPowerDistCache(ctx, babylonTipHeight, newDc)
 }
 
-func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache, maxActiveFps uint32) {
+func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache) {
 	// number of active FPs
-	numActiveFPs := int(dc.GetNumActiveFPs(maxActiveFps))
+	numActiveFPs := int(dc.NumActiveFps)
 	types.RecordActiveFinalityProviders(numActiveFPs)
 	// number of inactive FPs
 	numInactiveFPs := len(dc.FinalityProviders) - numActiveFPs
@@ -111,7 +150,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	ctx context.Context,
 	dc *types.VotingPowerDistCache,
 	events []*types.EventPowerDistUpdate,
-	maxActiveFps uint32,
 ) *types.VotingPowerDistCache {
 	// a map where key is finality provider's BTC PK hex and value is a list
 	// of BTC delegations that newly become active under this provider
@@ -120,9 +158,13 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	unbondedBTCDels := map[string]struct{}{}
 	// a map where key is slashed finality providers' BTC PK
 	slashedFPs := map[string]struct{}{}
+	// a map where key is jailed finality providers' BTC PK
+	jailedFPs := map[string]struct{}{}
+	// a map where key is unjailed finality providers' BTC PK
+	unjailedFPs := map[string]struct{}{}
 
 	/*
-		filter and classify all events into new/expired BTC delegations and slashed FPs
+		filter and classify all events into new/expired BTC delegations and jailed/slashed FPs
 	*/
 	for _, event := range events {
 		switch typedEvent := event.Ev.(type) {
@@ -147,8 +189,14 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				unbondedBTCDels[delEvent.StakingTxHash] = struct{}{}
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
-			// slashed finality providers
+			// record slashed fps
 			slashedFPs[typedEvent.SlashedFp.Pk.MarshalHex()] = struct{}{}
+		case *types.EventPowerDistUpdate_JailedFp:
+			// record jailed fps
+			jailedFPs[typedEvent.JailedFp.Pk.MarshalHex()] = struct{}{}
+		case *types.EventPowerDistUpdate_UnjailedFp:
+			// record unjailed fps
+			unjailedFPs[typedEvent.UnjailedFp.Pk.MarshalHex()] = struct{}{}
 		}
 	}
 
@@ -172,9 +220,22 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 
 		fpBTCPKHex := fp.BtcPk.MarshalHex()
 
-		// if this finality provider is slashed, continue to avoid recording it
+		// if this finality provider is slashed, continue to avoid
+		// assigning delegation to it
 		if _, ok := slashedFPs[fpBTCPKHex]; ok {
 			continue
+		}
+
+		// set IsJailed to be true if the fp is jailed
+		// Note that jailed fp can still accept delegations
+		// but won't be assigned with voting power
+		if _, ok := jailedFPs[fpBTCPKHex]; ok {
+			fp.IsJailed = true
+		}
+
+		// set IsJailed to be false if the fp is unjailed
+		if _, ok := unjailedFPs[fpBTCPKHex]; ok {
+			fp.IsJailed = false
 		}
 
 		// add all BTC delegations that are not unbonded to the new finality provider
@@ -238,10 +299,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			newDc.AddFinalityProviderDistInfo(fpDistInfo)
 		}
 	}
-
-	// filter out the top N finality providers and their total voting power, and
-	// record them in the new cache
-	newDc.ApplyActiveFinalityProviders(maxActiveFps)
 
 	return newDc
 }

@@ -2,7 +2,8 @@ package e2e
 
 import (
 	"encoding/hex"
-	"math"
+	"fmt"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 	bcdapp "github.com/babylonlabs-io/babylon-sdk/demo/app"
 	bcdparams "github.com/babylonlabs-io/babylon-sdk/demo/app/params"
 	bbnparams "github.com/babylonlabs-io/babylon/app/params"
+	txformat "github.com/babylonlabs-io/babylon/btctxformatter"
 	"github.com/babylonlabs-io/babylon/client/config"
 	"github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/clientcontroller/babylon"
 	cwconfig "github.com/babylonlabs-io/babylon/test/e2e/bcd_consumer_integration/clientcontroller/config"
@@ -25,19 +27,25 @@ import (
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 )
 
-var MinCommissionRate = sdkmath.LegacyNewDecWithPrec(5, 2) // 5%
-var babylonFpBTCSK, babylonFpBTCPK, _ = datagen.GenRandomBTCKeyPair(r)
+var (
+	MinCommissionRate                 = sdkmath.LegacyNewDecWithPrec(5, 2) // 5%
+	babylonFpBTCSK, babylonFpBTCPK, _ = datagen.GenRandomBTCKeyPair(r)
+	randListInfo                      *datagen.RandListInfo
+)
 
 type BCDConsumerIntegrationTestSuite struct {
 	suite.Suite
@@ -160,7 +168,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test4RestakeDelegationToMultipleFPs() 
 	consumerFp := consumerFps[0]
 
 	// register a babylon finality provider
-	babylonFp := s.createVerifyBabylonFP()
+	babylonFp := s.createBabylonFPWithFinalizedPubRand()
 
 	// create a delegation and restake to both Babylon and consumer finality providers
 	// NOTE: this will create delegation in pending state as covenant sigs are not provided
@@ -286,15 +294,6 @@ func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
 	s.NoError(err)
 	s.NotNil(activatedHeightBlock)
 
-	// commit public randomness at the activated height
-	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, babylonFpBTCSK, activatedHeight.Height, 100)
-	s.NoError(err)
-
-	// submit the public randomness to the consumer chain
-	txResp, err := s.babylonController.CommitPublicRandomness(msgCommitPubRandList)
-	s.NoError(err)
-	s.NotNil(txResp)
-
 	// get the babylon finality provider
 	babylonFp, err := s.babylonController.QueryFinalityProviders()
 	s.NoError(err)
@@ -302,13 +301,15 @@ func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
 
 	babylonFpBIP340PK := bbntypes.NewBIP340PubKeyFromBTCPK(babylonFpBTCPK)
 
+	randIdx := activatedHeight.Height - 1
+
 	// submit finality signature
-	txResp, err = s.babylonController.SubmitFinalitySignature(
+	txResp, err := s.babylonController.SubmitFinalitySignature(
 		babylonFpBTCSK,
 		babylonFpBIP340PK,
-		randListInfo.SRList[0],
-		&randListInfo.PRList[0],
-		randListInfo.ProofList[0].ToProto(),
+		randListInfo.SRList[randIdx],
+		&randListInfo.PRList[randIdx],
+		randListInfo.ProofList[randIdx].ToProto(),
 		activatedHeight.Height)
 	s.NoError(err)
 	s.NotNil(txResp)
@@ -338,9 +339,9 @@ func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
 		r,
 		babylonFpBTCSK,
 		babylonFpBIP340PK,
-		randListInfo.SRList[0],
-		&randListInfo.PRList[0],
-		randListInfo.ProofList[0].ToProto(),
+		randListInfo.SRList[randIdx],
+		&randListInfo.PRList[randIdx],
+		randListInfo.ProofList[randIdx].ToProto(),
 		activatedHeight.Height,
 	)
 	s.NoError(err)
@@ -489,6 +490,8 @@ func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctype
 	activeDelsSet, err := s.babylonController.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex(), 1)
 	s.NoError(err)
 	s.Len(activeDelsSet, 1)
+	s.Len(activeDelsSet[0].Dels, 1)
+	s.True(activeDelsSet[0].Dels[0].Active)
 
 	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
 	s.NoError(err)
@@ -497,19 +500,26 @@ func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctype
 	activeDel := activeDels.Dels[0]
 	s.True(activeDel.HasCovenantQuorums(1))
 
-	// ensure BTC staking is activated
+	// eventually, the finality provider has voting power
 	s.Eventually(func() bool {
-		activatedHeight, err := s.babylonController.QueryActivatedHeight()
+		status, err := s.babylonController.QueryNodeStatus()
+		s.NoError(err)
+		height := uint64(status.SyncInfo.LatestBlockHeight)
+
+		hasPower, err := s.babylonController.QueryFinalityProviderHasPower(babylonFpBTCPK, height)
 		if err != nil {
-			s.T().Logf("Error querying activated height: %v", err)
+			s.T().Logf("Error querying voting power at height: %v", err)
 			return false
 		}
-		if activatedHeight == nil {
-			s.T().Log("Activated height is nil")
-			return false
-		}
-		return activatedHeight.Height > 0
-	}, time.Minute, time.Second*15, "BTC staking was not activated within the expected time")
+		return hasPower
+	}, time.Minute, time.Second*1, "Voting power was not greater than 0 within the expected time")
+
+	// ensure BTC staking is activated
+	activatedHeight, err := s.babylonController.QueryActivatedHeight()
+	s.NoError(err)
+	s.Positive(activatedHeight.Height)
+
+	s.T().Logf("Activated height: %v", activatedHeight.Height)
 }
 
 // helper function: createBabylonDelegation creates a random BTC delegation restaking to Babylon and consumer finality providers
@@ -527,7 +537,7 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 	pop, err := bstypes.NewPoPBTC(delBabylonAddr, czDelBtcSk)
 	s.NoError(err)
 	// generate staking tx and slashing tx
-	stakingTimeBlocks := uint16(math.MaxUint16)
+	stakingTimeBlocks := uint16(10000)
 	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
 		r,
 		s.T(),
@@ -538,7 +548,7 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 		params.CovenantQuorum,
 		stakingTimeBlocks,
 		stakingValue,
-		params.SlashingAddress.String(),
+		params.SlashingPkScript,
 		params.SlashingRate,
 		unbondingTime,
 	)
@@ -599,7 +609,7 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
 		stakingTimeBlocks,
 		unbondingValue,
-		params.SlashingAddress.String(),
+		params.SlashingPkScript,
 		params.SlashingRate,
 		unbondingTime,
 	)
@@ -632,8 +642,8 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 	return czDelBtcPk, stakingTxHash
 }
 
-// helper function: createVerifyBabylonFP creates a random Babylon finality provider and verifies it
-func (s *BCDConsumerIntegrationTestSuite) createVerifyBabylonFP() *bstypes.FinalityProviderResponse {
+// helper function: createBabylonFPWithFinalizedPubRand creates a random Babylon finality provider, commits some public randomness, and finalise these public randomness
+func (s *BCDConsumerIntegrationTestSuite) createBabylonFPWithFinalizedPubRand() *bstypes.FinalityProviderResponse {
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
 	// babylonFpBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
 	sdk.SetAddrCacheEnabled(false)
@@ -667,6 +677,27 @@ func (s *BCDConsumerIntegrationTestSuite) createVerifyBabylonFP() *bstypes.Final
 	s.Equal(babylonFp.Pop, actualFps[0].Pop)
 	s.Equal(babylonFp.SlashedBabylonHeight, actualFps[0].SlashedBabylonHeight)
 	s.Equal(babylonFp.SlashedBtcHeight, actualFps[0].SlashedBtcHeight)
+
+	// commit public randomness list
+	numPubRand := uint64(100)
+	commitStartHeight := uint64(1)
+	randList, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, babylonFpBTCSK, commitStartHeight, numPubRand)
+	s.NoError(err)
+	randListInfo = randList
+	_, err = s.babylonController.CommitPublicRandomness(msgCommitPubRandList)
+	s.NoError(err)
+	// get public randomness commit
+	pubRandCommitMap, err := s.babylonController.QueryLastCommittedPublicRand(babylonFp.BtcPk.MustToBTCPK(), 1)
+	s.NoError(err)
+	s.Len(pubRandCommitMap, 1)
+	var firstPubRandCommit *ftypes.PubRandCommitResponse
+	for _, commit := range pubRandCommitMap {
+		firstPubRandCommit = commit
+		break
+	}
+	commitEpoch := firstPubRandCommit.EpochNum
+	// finalise until the epoch of the first public randomness commit
+	s.finalizeUntilEpoch(commitEpoch)
 
 	return actualFps[0]
 }
@@ -844,6 +875,101 @@ func (s *BCDConsumerIntegrationTestSuite) verifyConsumerRegistration(consumerID 
 	return registeredConsumer
 }
 
+func (s *BCDConsumerIntegrationTestSuite) finalizeUntilEpoch(epoch uint64) {
+	bbnClient := s.babylonController.GetBBNClient()
+
+	// wait until the checkpoint of this epoch is sealed
+	s.Eventually(func() bool {
+		lastSealedCkpt, err := bbnClient.LatestEpochFromStatus(ckpttypes.Sealed)
+		if err != nil {
+			return false
+		}
+		return epoch <= lastSealedCkpt.RawCheckpoint.EpochNum
+	}, 1*time.Minute, 1*time.Second)
+
+	s.T().Logf("start finalizing epochs till %d", epoch)
+	// Random source for the generation of BTC data
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+
+	// get all checkpoints of these epochs
+	pagination := &sdkquerytypes.PageRequest{
+		Key:   ckpttypes.CkptsObjectKey(0),
+		Limit: epoch,
+	}
+	resp, err := bbnClient.RawCheckpoints(pagination)
+	s.NoError(err)
+	s.Equal(int(epoch), len(resp.RawCheckpoints))
+
+	submitter := s.babylonController.GetKeyAddress()
+
+	for _, checkpoint := range resp.RawCheckpoints {
+		currentBtcTipResp, err := s.babylonController.QueryBtcLightClientTip()
+		s.NoError(err)
+		tipHeader, err := bbntypes.NewBTCHeaderBytesFromHex(currentBtcTipResp.HeaderHex)
+		s.NoError(err)
+
+		rawCheckpoint, err := checkpoint.Ckpt.ToRawCheckpoint()
+		s.NoError(err)
+
+		btcCheckpoint, err := ckpttypes.FromRawCkptToBTCCkpt(rawCheckpoint, submitter)
+		s.NoError(err)
+
+		babylonTagBytes, err := hex.DecodeString("01020304")
+		s.NoError(err)
+
+		p1, p2, err := txformat.EncodeCheckpointData(
+			babylonTagBytes,
+			txformat.CurrentVersion,
+			btcCheckpoint,
+		)
+		s.NoError(err)
+
+		tx1 := datagen.CreatOpReturnTransaction(r, p1)
+
+		opReturn1 := datagen.CreateBlockWithTransaction(r, tipHeader.ToBlockHeader(), tx1)
+		tx2 := datagen.CreatOpReturnTransaction(r, p2)
+		opReturn2 := datagen.CreateBlockWithTransaction(r, opReturn1.HeaderBytes.ToBlockHeader(), tx2)
+
+		// insert headers and proofs
+		_, err = s.babylonController.InsertBtcBlockHeaders([]bbntypes.BTCHeaderBytes{
+			opReturn1.HeaderBytes,
+			opReturn2.HeaderBytes,
+		})
+		s.NoError(err)
+
+		_, err = s.babylonController.InsertSpvProofs(submitter.String(), []*btcctypes.BTCSpvProof{
+			opReturn1.SpvProof,
+			opReturn2.SpvProof,
+		})
+		s.NoError(err)
+
+		// wait until this checkpoint is submitted
+		s.Eventually(func() bool {
+			ckpt, err := bbnClient.RawCheckpoint(checkpoint.Ckpt.EpochNum)
+			if err != nil {
+				return false
+			}
+			return ckpt.RawCheckpoint.Status == ckpttypes.Submitted
+		}, 1*time.Minute, 1*time.Second)
+	}
+
+	// insert w BTC headers
+	err = s.babylonController.InsertWBTCHeaders(r)
+	s.NoError(err)
+
+	// wait until the checkpoint of this epoch is finalised
+	s.Eventually(func() bool {
+		lastFinalizedCkpt, err := bbnClient.LatestEpochFromStatus(ckpttypes.Finalized)
+		if err != nil {
+			s.T().Logf("failed to get last finalized epoch: %v", err)
+			return false
+		}
+		return epoch <= lastFinalizedCkpt.RawCheckpoint.EpochNum
+	}, 1*time.Minute, 1*time.Second)
+
+	s.T().Logf("epoch %d is finalised", epoch)
+}
+
 // helper function: getDeterministicCovenantKey returns a single, constant private key and its corresponding public key.
 // This function is for testing purposes only and should never be used in production environments.
 func getDeterministicCovenantKey() (*btcec.PrivateKey, *btcec.PublicKey, string, error) {
@@ -862,6 +988,10 @@ func getDeterministicCovenantKey() (*btcec.PrivateKey, *btcec.PublicKey, string,
 
 	// Get the hex representation of the BIP340 public key
 	publicKeyHex := bip340PubKey.MarshalHex()
+
+	if publicKeyHex != "bb50e2d89a4ed70663d080659fe0ad4b9bc3e06c17a227433966cb59ceee020d" {
+		return nil, nil, "", fmt.Errorf("public key hex is not expected")
+	}
 
 	return privateKey, publicKey, publicKeyHex, nil
 }

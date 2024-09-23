@@ -3,9 +3,10 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestParamsQuery(t *testing.T) {
@@ -25,11 +26,11 @@ func TestParamsByVersionQuery(t *testing.T) {
 
 	// starting with `1` as BTCStakingKeeper creates params with version 0
 	params1 := types.DefaultParams()
-	params1.MinUnbondingTime = 10000
+	params1.MinUnbondingTimeBlocks = 10000
 	params2 := types.DefaultParams()
-	params2.MinUnbondingTime = 20000
+	params2.MinUnbondingTimeBlocks = 20000
 	params3 := types.DefaultParams()
-	params3.MinUnbondingTime = 30000
+	params3.MinUnbondingTimeBlocks = 30000
 
 	// Check that after update we always return the latest version of params throuh Params query
 	err := keeper.SetParams(ctx, params1)

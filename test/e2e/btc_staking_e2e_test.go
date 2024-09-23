@@ -18,6 +18,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -242,21 +243,6 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 
 	activeDel := activeDels.Dels[0]
 	s.True(activeDel.HasCovenantQuorums(covenantQuorum))
-
-	// wait for a block so that above txs take effect and the voting power table
-	// is updated in the next block's BeginBlock
-	nonValidatorNode.WaitForNextBlock()
-
-	// ensure BTC staking is activated
-	activatedHeight := nonValidatorNode.QueryActivatedHeight()
-	s.Positive(activatedHeight)
-	// ensure finality provider has voting power at activated height
-	currentBtcTip, err := nonValidatorNode.QueryTip()
-	s.NoError(err)
-	activeFps := nonValidatorNode.QueryActiveFinalityProvidersAtHeight(activatedHeight)
-	s.Len(activeFps, 1)
-	s.Equal(activeFps[0].VotingPower, activeDels.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
-	s.Equal(activeFps[0].VotingPower, activeDel.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
 }
 
 // Test2CommitPublicRandomnessAndSubmitFinalitySignature is an end-to-end
@@ -269,15 +255,19 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.NoError(err)
 
 	// get activated height
-	activatedHeight := nonValidatorNode.QueryActivatedHeight()
-	s.Positive(activatedHeight)
+	_, err = nonValidatorNode.QueryActivatedHeight()
+	s.ErrorContains(err, bstypes.ErrBTCStakingNotActivated.Error())
+	fps := nonValidatorNode.QueryFinalityProviders()
+	s.Len(fps, 1)
+	s.Zero(fps[0].VotingPower)
 
 	/*
 		commit a number of public randomness since activatedHeight
 	*/
 	// commit public randomness list
 	numPubRand := uint64(100)
-	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fpBTCSK, activatedHeight, numPubRand)
+	commitStartHeight := uint64(1)
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fpBTCSK, commitStartHeight, numPubRand)
 	s.NoError(err)
 	nonValidatorNode.CommitPubRandList(
 		msgCommitPubRandList.FpBtcPk,
@@ -287,15 +277,20 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		msgCommitPubRandList.Sig,
 	)
 
-	// ensure public randomness list is eventually committed
-	nonValidatorNode.WaitForNextBlock()
-	var prCommitMap map[uint64]*ftypes.PubRandCommitResponse
+	// Query the public randomness commitment for the finality provider
+	var commitEpoch uint64
 	s.Eventually(func() bool {
-		prCommitMap = nonValidatorNode.QueryListPubRandCommit(cacheFP.BtcPk)
-		return len(prCommitMap) > 0
-	}, time.Minute, time.Second*5)
-	s.Equal(prCommitMap[activatedHeight].NumPubRand, msgCommitPubRandList.NumPubRand)
-	s.Equal(prCommitMap[activatedHeight].Commitment, msgCommitPubRandList.Commitment)
+		pubRandCommitMap := nonValidatorNode.QueryListPubRandCommit(msgCommitPubRandList.FpBtcPk)
+		if len(pubRandCommitMap) == 0 {
+			return false
+		}
+		for _, commit := range pubRandCommitMap {
+			commitEpoch = commit.EpochNum
+		}
+		return true
+	}, time.Minute, time.Second)
+
+	s.T().Logf("Successfully queried public randomness commitment for finality provider at epoch %d", commitEpoch)
 
 	// no reward gauge for finality provider and delegation yet
 	fpBabylonAddr, err := sdk.AccAddressFromBech32(cacheFP.Addr)
@@ -305,6 +300,37 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.ErrorContains(err, itypes.ErrRewardGaugeNotFound.Error())
 	delBabylonAddr := fpBabylonAddr
 
+	// wait until the end epoch is sealed
+	s.Eventually(func() bool {
+		resp, err := nonValidatorNode.QueryRawCheckpoint(commitEpoch)
+		if err != nil {
+			return false
+		}
+		return resp.Status == ckpttypes.Sealed
+	}, time.Minute, time.Millisecond*50)
+	nonValidatorNode.FinalizeSealedEpochs(1, commitEpoch)
+
+	// ensure the committed epoch is finalized
+	lastFinalizedEpoch := uint64(0)
+	s.Eventually(func() bool {
+		lastFinalizedEpoch, err = nonValidatorNode.QueryLastFinalizedEpoch()
+		if err != nil {
+			return false
+		}
+		return lastFinalizedEpoch >= commitEpoch
+	}, time.Minute, time.Millisecond*50)
+
+	// ensure btc staking is activated
+	var activatedHeight uint64
+	s.Eventually(func() bool {
+		activatedHeight, err = nonValidatorNode.QueryActivatedHeight()
+		if err != nil {
+			return false
+		}
+		return activatedHeight > 0
+	}, time.Minute, time.Millisecond*50)
+	s.T().Logf("the activated height is %d", activatedHeight)
+
 	/*
 		submit finality signature
 	*/
@@ -313,7 +339,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.NoError(err)
 	appHash := blockToVote.AppHash
 
-	idx := 0
+	idx := activatedHeight - commitStartHeight
 	msgToSign := append(sdk.Uint64ToBigEndian(activatedHeight), appHash...)
 	// generate EOTS signature
 	sig, err := eots.Sign(fpBTCSK, randListInfo.SRList[idx], msgToSign)
@@ -323,21 +349,14 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	nonValidatorNode.AddFinalitySig(cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
 	// ensure vote is eventually cast
-	nonValidatorNode.WaitForNextBlock()
-	var votes []bbn.BIP340PubKey
+	var finalizedBlocks []*ftypes.IndexedBlock
 	s.Eventually(func() bool {
-		votes = nonValidatorNode.QueryVotesAtHeight(activatedHeight)
-		return len(votes) > 0
-	}, time.Minute, time.Second*5)
-	s.Equal(1, len(votes))
-	s.Equal(votes[0].MarshalHex(), cacheFP.BtcPk.MarshalHex())
-	// once the vote is cast, ensure block is finalised
-	finalizedBlock := nonValidatorNode.QueryIndexedBlock(activatedHeight)
-	s.NotEmpty(finalizedBlock)
-	s.Equal(appHash.Bytes(), finalizedBlock.AppHash)
-	finalizedBlocks := nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
-	s.NotEmpty(finalizedBlocks)
+		finalizedBlocks = nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
+		return len(finalizedBlocks) > 0
+	}, time.Minute, time.Millisecond*50)
+	s.Equal(activatedHeight, finalizedBlocks[0].Height)
 	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
+	s.T().Logf("the block %d is finalized", activatedHeight)
 
 	// ensure finality provider has received rewards after the block is finalised
 	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
@@ -351,6 +370,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTCDelegationType.String()]
 	s.True(ok)
 	s.True(btcDelRewardGauge.Coins.IsAllPositive())
+	s.T().Logf("the finality provider received rewards for providing finality")
 }
 
 func (s *BTCStakingTestSuite) Test4WithdrawReward() {
@@ -909,7 +929,7 @@ func (s *BTCStakingTestSuite) BTCStakingUnbondSlashInfo(
 		covenantQuorum,
 		stakingTimeBlocks,
 		stakingValue,
-		params.SlashingAddress,
+		params.SlashingPkScript,
 		params.SlashingRate,
 		unbondingTime,
 	)
@@ -944,7 +964,7 @@ func (s *BTCStakingTestSuite) BTCStakingUnbondSlashInfo(
 		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
 		stakingTimeBlocks,
 		unbondingValue,
-		params.SlashingAddress,
+		params.SlashingPkScript,
 		params.SlashingRate,
 		unbondingTime,
 	)

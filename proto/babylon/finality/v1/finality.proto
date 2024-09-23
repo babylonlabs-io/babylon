@@ -4,6 +4,8 @@ package babylon.finality.v1;
 option go_package = "github.com/babylonlabs-io/babylon/x/finality/types";
 
 import "gogoproto/gogo.proto";
+import "amino/amino.proto";
+import "google/protobuf/timestamp.proto";
 
 // IndexedBlock is the necessary metadata and finalization status of a block
 message IndexedBlock {
@@ -27,6 +29,8 @@ message PubRandCommit {
     // commitment is the value of the commitment
     // currently, it is the root of the merkle tree constructed by the public randomness
     bytes commitment = 3;
+    // epoch_num defines the epoch number that the commit falls into
+    uint64 epoch_num = 4;
 }
 
 // Evidence is the evidence that a finality provider has signed finality
@@ -62,4 +66,7 @@ message FinalityProviderSigningInfo {
     // missed_blocks_counter defines a counter to avoid unnecessary array reads.
     // Note that `Sum(MissedBlocksBitArray)` always equals `MissedBlocksCounter`.
     int64 missed_blocks_counter = 3;
+    // Timestamp until which the validator is jailed due to liveness downtime.
+    google.protobuf.Timestamp jailed_until = 4
+    [(gogoproto.stdtime) = true, (gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }

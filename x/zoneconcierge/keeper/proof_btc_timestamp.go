@@ -13,7 +13,7 @@ import (
 )
 
 func (k Keeper) ProveCZHeaderInEpoch(_ context.Context, header *types.IndexedHeader, epoch *epochingtypes.Epoch) (*cmtcrypto.ProofOps, error) {
-	czHeaderKey := types.GetCZHeaderKey(header.ChainId, header.Height)
+	czHeaderKey := types.GetCZHeaderKey(header.ConsumerId, header.Height)
 	_, _, proof, err := k.QueryStore(types.StoreKey, czHeaderKey, int64(epoch.GetSealerBlockHeight()))
 	if err != nil {
 		return nil, err

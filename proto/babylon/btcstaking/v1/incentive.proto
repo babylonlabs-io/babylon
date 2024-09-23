@@ -9,9 +9,15 @@ option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 // VotingPowerDistCache is the cache for voting power distribution of finality providers
 // and their BTC delegations at a height
 message VotingPowerDistCache {
+    option (gogoproto.goproto_getters) = false;
+    // total_voting_power is the total voting power of all the finality providers
+    // in the cache
     uint64 total_voting_power = 1;
     // finality_providers is a list of finality providers' voting power information
     repeated FinalityProviderDistInfo finality_providers = 2;
+    // num_active_fps is the number of finality providers that have active BTC
+    // delegations as well as timestamped public randomness
+    uint32 num_active_fps = 3;
 }
 
 // FinalityProviderDistInfo is the reward distribution of a finality provider and its BTC delegations
@@ -30,6 +36,12 @@ message FinalityProviderDistInfo {
     uint64 total_voting_power = 4;
     // btc_dels is a list of BTC delegations' voting power information under this finality provider
     repeated BTCDelDistInfo btc_dels = 5;
+    // is_timestamped indicates whether the finality provider
+    // has timestamped public randomness committed
+    bool is_timestamped = 6;
+    // is_jailed indicates whether the finality provider
+    // is jailed, if so, it should not be assigned voting power
+    bool is_jailed = 7;
 }
 
 // BTCDelDistInfo contains the information related to reward distribution for a BTC delegation

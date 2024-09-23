@@ -17,8 +17,8 @@ func (fp *FinalityProvider) IsSlashed() bool {
 	return fp.SlashedBabylonHeight > 0
 }
 
-func (fp *FinalityProvider) IsSluggish() bool {
-	return fp.Sluggish
+func (fp *FinalityProvider) IsJailed() bool {
+	return fp.Jailed
 }
 
 func (fp *FinalityProvider) ValidateBasic() error {
@@ -42,10 +42,24 @@ func (fp *FinalityProvider) ValidateBasic() error {
 	return nil
 }
 
-// SortFinalityProviders sorts the finality providers slice,
-// from higher to lower voting power
-func SortFinalityProviders(fps []*FinalityProviderDistInfo) {
+// SortFinalityProvidersWithZeroedVotingPower sorts the finality providers slice,
+// from higher to lower voting power. In the following cases, the voting power
+// is treated as zero:
+// 1. IsTimestamped is false
+// 2. IsJailed is true
+func SortFinalityProvidersWithZeroedVotingPower(fps []*FinalityProviderDistInfo) {
 	sort.SliceStable(fps, func(i, j int) bool {
+		iShouldBeZeroed := fps[i].IsJailed || !fps[i].IsTimestamped
+		jShouldBeZeroed := fps[j].IsJailed || !fps[j].IsTimestamped
+
+		if iShouldBeZeroed && !jShouldBeZeroed {
+			return false
+		}
+
+		if !iShouldBeZeroed && jShouldBeZeroed {
+			return true
+		}
+
 		return fps[i].TotalVotingPower > fps[j].TotalVotingPower
 	})
 }
@@ -119,10 +133,10 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 // - MinUnbondingTime
 // - CheckpointFinalizationTimeout
 func MinimumUnbondingTime(
-	stakingParams Params,
-	checkpointingParams btcctypes.Params) uint64 {
+	stakingParams *Params,
+	checkpointingParams *btcctypes.Params) uint64 {
 	return math.Max[uint64](
-		uint64(stakingParams.MinUnbondingTime),
+		uint64(stakingParams.MinUnbondingTimeBlocks),
 		checkpointingParams.CheckpointFinalizationTimeout,
 	)
 }

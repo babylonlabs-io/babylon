@@ -6,7 +6,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
@@ -27,21 +26,16 @@ type finalizedInfo struct {
 	BTCHeaders          []*btclctypes.BTCHeaderInfo
 }
 
-// getChainID gets the ID of the counterparty chain under the given channel
-func (k Keeper) getChainID(ctx context.Context, channel channeltypes.IdentifiedChannel) (string, error) {
+// getClientID gets the ID of the IBC client under the given channel
+// We will use the client ID as the consumer ID to uniquely identify
+// the consumer chain
+func (k Keeper) getClientID(ctx context.Context, channel channeltypes.IdentifiedChannel) (string, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	// get clientState under this channel
-	_, clientState, err := k.channelKeeper.GetChannelClientState(sdkCtx, channel.PortId, channel.ChannelId)
+	clientID, _, err := k.channelKeeper.GetChannelClientState(sdkCtx, channel.PortId, channel.ChannelId)
 	if err != nil {
 		return "", err
 	}
-	// cast clientState to comet clientState
-	// TODO: support for chains other than Cosmos zones
-	cmtClientState, ok := clientState.(*ibctmtypes.ClientState)
-	if !ok {
-		return "", fmt.Errorf("client must be a Comet client, expected: %T, got: %T", &ibctmtypes.ClientState{}, cmtClientState)
-	}
-	return cmtClientState.ChainId, nil
+	return clientID, nil
 }
 
 // getFinalizedInfo returns metadata and proofs that are identical to all BTC timestamps in the same epoch
@@ -99,7 +93,7 @@ func (k Keeper) getFinalizedInfo(
 // where the counterparty is a Cosmos zone
 func (k Keeper) createBTCTimestamp(
 	ctx context.Context,
-	chainID string,
+	consumerID string,
 	channel channeltypes.IdentifiedChannel,
 	finalizedInfo *finalizedInfo,
 ) (*types.BTCTimestamp, error) {
@@ -123,9 +117,9 @@ func (k Keeper) createBTCTimestamp(
 	// NOTE: it's possible that this chain does not have chain info at the moment
 	// In this case, skip sending BTC timestamp for this chain at this epoch
 	epochNum := finalizedInfo.EpochInfo.EpochNumber
-	epochChainInfo, err := k.GetEpochChainInfo(ctx, chainID, epochNum)
+	epochChainInfo, err := k.GetEpochChainInfo(ctx, consumerID, epochNum)
 	if err != nil {
-		return nil, fmt.Errorf("no epochChainInfo for chain %s at epoch %d", chainID, epochNum)
+		return nil, fmt.Errorf("no epochChainInfo for chain %s at epoch %d", consumerID, epochNum)
 	}
 
 	// construct BTC timestamp from everything
@@ -235,16 +229,16 @@ func (k Keeper) BroadcastBTCTimestamps(
 	// for each channel, construct and send BTC timestamp
 	for _, channel := range openZCChannels {
 		// get the ID of the chain under this channel
-		chainID, err := k.getChainID(ctx, channel)
+		consumerID, err := k.getClientID(ctx, channel)
 		if err != nil {
-			k.Logger(sdkCtx).Error("failed to get chain ID, skip sending BTC timestamp for this chain", "channelID", channel.ChannelId, "error", err)
+			k.Logger(sdkCtx).Error("failed to get client ID, skip sending BTC timestamp for this consumer", "channelID", channel.ChannelId, "error", err)
 			continue
 		}
 
 		// generate timestamp for this channel
-		btcTimestamp, err := k.createBTCTimestamp(ctx, chainID, channel, finalizedInfo)
+		btcTimestamp, err := k.createBTCTimestamp(ctx, consumerID, channel, finalizedInfo)
 		if err != nil {
-			k.Logger(sdkCtx).Error("failed to generate BTC timestamp, skip sending BTC timestamp for this chain", "chainID", chainID, "error", err)
+			k.Logger(sdkCtx).Error("failed to generate BTC timestamp, skip sending BTC timestamp for this chain", "consumerID", consumerID, "error", err)
 			continue
 		}
 
@@ -252,7 +246,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 		packet := types.NewBTCTimestampPacketData(btcTimestamp)
 		// send IBC packet
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
-			k.Logger(sdkCtx).Error("failed to send BTC timestamp IBC packet, skip sending BTC timestamp for this chain", "chainID", chainID, "channelID", channel.ChannelId, "error", err)
+			k.Logger(sdkCtx).Error("failed to send BTC timestamp IBC packet, skip sending BTC timestamp for this chain", "consumerID", consumerID, "channelID", channel.ChannelId, "error", err)
 			continue
 		}
 	}

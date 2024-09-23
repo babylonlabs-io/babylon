@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 // TallyBlocks tries to finalise all blocks that are non-finalised AND have a non-nil
@@ -89,8 +90,7 @@ func (k Keeper) finalizeBlock(ctx context.Context, block *types.IndexedBlock, vo
 		panic(err)
 	}
 	// filter out voted finality providers
-	maxActiveFPs := k.BTCStakingKeeper.GetParams(ctx).MaxActiveFinalityProviders
-	filteredDc := dc.FilterVotedDistCache(maxActiveFPs, voterBTCPKs)
+	filteredDc := dc.FilterVotedDistCache(voterBTCPKs)
 	// reward voted finality providers
 	k.IncentiveKeeper.RewardBTCStaking(ctx, block.Height, filteredDc)
 	// remove reward distribution cache afterwards

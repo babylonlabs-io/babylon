@@ -24,8 +24,9 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
+		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
+		finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -44,7 +45,8 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 			}
 		}
 
-		// for the first numFpsWithVotingPower finality providers, generate a random number of BTC delegations and add covenant signatures to activate them
+		// for the first numFpsWithVotingPower finality providers, generate a random number of BTC
+		// delegations and add covenant signatures to activate them
 		numBTCDels := datagen.RandomInt(r, 10) + 1
 		stakingValue := datagen.RandomInt(r, 100000) + 100000
 		for _, fp := range fpsWithVotingPowerMap {
@@ -73,8 +75,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		require.NoError(t, err)
 		require.NotNil(t, dc)
 		require.Equal(t, dc.TotalVotingPower, numFpsWithVotingPower*numBTCDels*stakingValue)
-		maxNumFps := h.BTCStakingKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders
-		activeFPs := dc.GetActiveFinalityProviderSet(maxNumFps)
+		activeFPs := dc.GetActiveFinalityProviderSet()
 		for _, fpDistInfo := range activeFPs {
 			require.Equal(t, fpDistInfo.TotalVotingPower, numBTCDels*stakingValue)
 			fp, ok := fpsWithVotingPowerMap[fpDistInfo.Addr]

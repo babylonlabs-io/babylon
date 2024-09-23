@@ -254,7 +254,6 @@ func NewBabylonApp(
 
 	app.AppKeepers.InitKeepers(
 		logger,
-		appCodec,
 		&btcConfig,
 		encCfg,
 		bApp,
@@ -813,7 +812,6 @@ func (app *BabylonApp) setupUpgradeHandlers() {
 			upgrade.CreateUpgradeHandler(
 				app.ModuleManager,
 				app.configurator,
-				app.BaseApp,
 				app.AppKeepers,
 			),
 		)

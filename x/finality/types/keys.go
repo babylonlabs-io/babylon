@@ -2,9 +2,6 @@ package types
 
 import (
 	"cosmossdk.io/collections"
-	"github.com/cosmos/cosmos-sdk/types/address"
-
-	"github.com/babylonlabs-io/babylon/types"
 )
 
 const (
@@ -51,13 +48,3 @@ var (
 	FinalityProviderSigningInfoKeyPrefix       = collections.NewPrefix(8) // key prefix for signing info
 	FinalityProviderMissedBlockBitmapKeyPrefix = collections.NewPrefix(9) // key prefix for missed block bitmap
 )
-
-// FinalityProviderSigningInfoKey - stored by finality provider public key in BIP340
-func FinalityProviderSigningInfoKey(pk *types.BIP340PubKey) []byte {
-	return append(FinalityProviderSigningInfoKeyPrefix, address.MustLengthPrefix(pk.MustMarshal())...)
-}
-
-// FinalityProviderMissedBlockBitmapKey - stored by finality provider public key in BIP340
-func FinalityProviderMissedBlockBitmapKey(pk *types.BIP340PubKey) []byte {
-	return append(FinalityProviderMissedBlockBitmapKeyPrefix, address.MustLengthPrefix(pk.MustMarshal())...)
-}

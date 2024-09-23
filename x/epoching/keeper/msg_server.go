@@ -4,11 +4,12 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 type msgServer struct {
@@ -242,7 +243,7 @@ func (ms msgServer) WrappedCancelUnbondingDelegation(goCtx context.Context, msg 
 		)
 	}
 
-	blockHeight := uint64(ctx.BlockHeader().Height)
+	blockHeight := uint64(ctx.HeaderInfo().Height)
 	if blockHeight == 0 {
 		return nil, types.ErrZeroEpochMsg
 	}

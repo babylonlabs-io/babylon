@@ -7,12 +7,13 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	bbn "github.com/babylonlabs-io/babylon/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 type msgServer struct {
@@ -48,6 +49,11 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinalitySig) (*types.MsgAddFinalitySigResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddFinalitySig)
 
+	if req.FpBtcPk == nil {
+		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")
+	}
+	fpPK := req.FpBtcPk
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// ensure the finality provider exists
@@ -73,16 +79,16 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	//     corrupt a new finality provider and equivocate a historical block over and over again, making a previous block
 	//     unfinalisable forever
 	if fp.IsSlashed() {
-		return nil, bstypes.ErrFpAlreadySlashed
+		return nil, bstypes.ErrFpAlreadySlashed.Wrapf(fmt.Sprintf("finality provider public key: %s", fpPK.MarshalHex()))
+	}
+
+	if fp.IsJailed() {
+		return nil, bstypes.ErrFpAlreadyJailed.Wrapf(fmt.Sprintf("finality provider public key: %s", fpPK.MarshalHex()))
 	}
 
 	// ensure the finality provider has voting power at this height
-	if req.FpBtcPk == nil {
-		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")
-	}
-	fpPK := req.FpBtcPk
 	if ms.BTCStakingKeeper.GetVotingPower(ctx, fpPK.MustMarshal(), req.BlockHeight) == 0 {
-		return nil, types.ErrInvalidFinalitySig.Wrapf("the finality provider %v does not have voting power at height %d", fpPK.MustMarshal(), req.BlockHeight)
+		return nil, types.ErrInvalidFinalitySig.Wrapf("the finality provider %s does not have voting power at height %d", fpPK.MarshalHex(), req.BlockHeight)
 	}
 
 	// ensure the finality provider has not cast the same vote yet
@@ -96,8 +102,8 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return &types.MsgAddFinalitySigResponse{}, nil
 	}
 
-	// find the public randomness commitment for this height from this finality provider
-	prCommit, err := ms.GetPubRandCommitForHeight(ctx, req.FpBtcPk, req.BlockHeight)
+	// find the timestamped public randomness commitment for this height from this finality provider
+	prCommit, err := ms.GetTimestampedPubRandCommitForHeight(ctx, req.FpBtcPk, req.BlockHeight)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +138,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		// if this finality provider has also signed canonical block, slash it
 		canonicalSig, err := ms.GetSig(ctx, req.BlockHeight, fpPK)
 		if err == nil {
-			//set canonial sig
+			// set canonial sig
 			evidence.CanonicalFinalitySig = canonicalSig
 			// slash this finality provider, including setting its voting power to
 			// zero, extracting its BTC SK, and emit an event
@@ -206,6 +212,7 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 		StartHeight: req.StartHeight,
 		NumPubRand:  req.NumPubRand,
 		Commitment:  req.Commitment,
+		EpochNum:    ms.GetCurrentEpoch(ctx),
 	}
 
 	// get last public randomness commitment
@@ -228,6 +235,54 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	// all good, commit the given public randomness list
 	ms.SetPubRandCommit(ctx, req.FpBtcPk, prCommit)
 	return &types.MsgCommitPubRandListResponse{}, nil
+}
+
+// UnjailFinalityProvider unjails a jailed finality provider
+func (ms msgServer) UnjailFinalityProvider(ctx context.Context, req *types.MsgUnjailFinalityProvider) (*types.MsgUnjailFinalityProviderResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyUnjailFinalityProvider)
+
+	// ensure finality provider exists
+	fpPk := req.FpBtcPk
+	fp, err := ms.BTCStakingKeeper.GetFinalityProvider(ctx, fpPk.MustMarshal())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get finality provider %s: %w", fpPk.MarshalHex(), err)
+	}
+
+	// ensure the signer's address matches the fp's address
+	if fp.Addr != req.Signer {
+		return nil, fmt.Errorf("the fp's address %s does not match the signer %s of the requestion", fp.Addr, req.Signer)
+	}
+
+	// ensure finality provider is already jailed
+	if !fp.IsJailed() {
+		return nil, bstypes.ErrFpNotJailed
+	}
+
+	info, err := ms.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the signing info of finality provider %s: %w", fpPk.MarshalHex(), err)
+	}
+
+	// cannot be unjailed until jailing period is passed
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	curBlockTime := sdkCtx.HeaderInfo().Time
+	jailingPeriodPassed, err := info.IsJailingPeriodPassed(curBlockTime)
+	if err != nil {
+		return nil, err
+	}
+	if !jailingPeriodPassed {
+		return nil, types.ErrJailingPeriodNotPassed.Wrapf(
+			fmt.Sprintf("current block time: %v, required %v", curBlockTime, info.JailedUntil))
+	}
+
+	err = ms.BTCStakingKeeper.UnjailFinalityProvider(ctx, fpPk.MustMarshal())
+	if err != nil {
+		return nil, fmt.Errorf("failed to unjail finality provider %s: %w", fpPk.MarshalHex(), err)
+	}
+
+	types.DecrementJailedFinalityProviderCounter()
+
+	return &types.MsgUnjailFinalityProviderResponse{}, nil
 }
 
 // slashFinalityProvider slashes a finality provider with the given evidence

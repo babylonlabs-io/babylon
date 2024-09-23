@@ -7,9 +7,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 /*
@@ -31,6 +32,33 @@ func (k Keeper) GetPubRandCommitForHeight(ctx context.Context, fpBtcPK *bbn.BIP3
 		}
 	}
 	return nil, types.ErrPubRandNotFound
+}
+
+// GetTimestampedPubRandCommitForHeight finds the public randomness commitment that includes the given
+// height for the given finality provider
+func (k Keeper) GetTimestampedPubRandCommitForHeight(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) (*types.PubRandCommit, error) {
+	prCommit, err := k.GetPubRandCommitForHeight(ctx, fpBtcPK, height)
+	if err != nil {
+		return nil, err
+	}
+
+	// ensure the finality provider's last randomness commit is already finalised by BTC timestamping
+	finalizedEpoch := k.GetLastFinalizedEpoch(ctx)
+	if finalizedEpoch == 0 {
+		return nil, types.ErrPubRandCommitNotBTCTimestamped.Wrapf("no finalized epoch yet")
+	}
+	if finalizedEpoch < prCommit.EpochNum {
+		return nil, types.ErrPubRandCommitNotBTCTimestamped.
+			Wrapf("the finality provider %s last committed epoch number: %d, last finalized epoch number: %d",
+				fpBtcPK.MarshalHex(), prCommit.EpochNum, finalizedEpoch)
+	}
+
+	return prCommit, nil
+}
+
+func (k Keeper) HasTimestampedPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) bool {
+	_, err := k.GetTimestampedPubRandCommitForHeight(ctx, fpBtcPK, height)
+	return err == nil
 }
 
 // SetPubRandCommit adds the given public randomness commitment for the given public key

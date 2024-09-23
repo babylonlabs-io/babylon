@@ -5,6 +5,7 @@ import (
 
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	etypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 type BTCStakingKeeper interface {
@@ -18,8 +19,12 @@ type BTCStakingKeeper interface {
 	GetBTCStakingActivatedHeight(ctx context.Context) (uint64, error)
 	GetVotingPowerDistCache(ctx context.Context, height uint64) (*bstypes.VotingPowerDistCache, error)
 	RemoveVotingPowerDistCache(ctx context.Context, height uint64)
+	UnjailFinalityProvider(ctx context.Context, fpBTCPK []byte) error
+}
+
+type CheckpointingKeeper interface {
+	GetEpoch(ctx context.Context) *etypes.Epoch
 	GetLastFinalizedEpoch(ctx context.Context) uint64
-	RevertSluggishFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 }
 
 // IncentiveKeeper defines the expected interface needed to distribute rewards.

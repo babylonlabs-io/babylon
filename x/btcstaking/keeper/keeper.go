@@ -19,10 +19,10 @@ type (
 		cdc          codec.BinaryCodec
 		storeService corestoretypes.KVStoreService
 
-		btclcKeeper types.BTCLightClientKeeper
-		btccKeeper  types.BtcCheckpointKeeper
-		ckptKeeper  types.CheckpointingKeeper
-		bscKeeper   types.BTCStkConsumerKeeper
+		btclcKeeper    types.BTCLightClientKeeper
+		btccKeeper     types.BtcCheckpointKeeper
+		FinalityKeeper types.FinalityKeeper
+		bscKeeper      types.BTCStkConsumerKeeper
 
 		hooks types.BtcStakingHooks
 
@@ -39,7 +39,7 @@ func NewKeeper(
 
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
-	ckptKeeper types.CheckpointingKeeper,
+	finalityKeeper types.FinalityKeeper,
 	bscKeeper types.BTCStkConsumerKeeper,
 
 	btcNet *chaincfg.Params,
@@ -49,10 +49,10 @@ func NewKeeper(
 		cdc:          cdc,
 		storeService: storeService,
 
-		btclcKeeper: btclcKeeper,
-		btccKeeper:  btccKeeper,
-		ckptKeeper:  ckptKeeper,
-		bscKeeper:   bscKeeper,
+		btclcKeeper:    btclcKeeper,
+		btccKeeper:     btccKeeper,
+		FinalityKeeper: finalityKeeper,
+		bscKeeper:      bscKeeper,
 
 		hooks: nil,
 
@@ -88,8 +88,4 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	k.UpdatePowerDist(ctx)
 
 	return nil
-}
-
-func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
-	return k.ckptKeeper.GetLastFinalizedEpoch(ctx)
 }

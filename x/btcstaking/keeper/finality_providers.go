@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,8 +13,57 @@ import (
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
-// SetFinalityProvider adds the given finality provider to KVStore
-func (k Keeper) SetFinalityProvider(ctx context.Context, fp *types.FinalityProvider) {
+// AddFinalityProvider adds the given finality provider to KVStore if it has valid
+// commission and it was not inserted before
+func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateFinalityProvider) error {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	params := k.GetParams(ctx)
+	// ensure commission rate is
+	// - at least the minimum commission rate in parameters, and
+	// - at most 1
+	if msg.Commission.LT(params.MinCommissionRate) {
+		return types.ErrCommissionLTMinRate.Wrapf("cannot set finality provider commission to less than minimum rate of %s", params.MinCommissionRate.String())
+	}
+	if msg.Commission.GT(sdkmath.LegacyOneDec()) {
+		return types.ErrCommissionGTMaxRate
+	}
+
+	// ensure finality provider does not already exist
+	if k.HasFinalityProvider(ctx, *msg.BtcPk) {
+		return types.ErrFpRegistered
+	}
+
+	// default consumer ID is Babylon's chain ID
+	consumerID := msg.GetConsumerId()
+	if consumerID == "" {
+		// canonical chain id
+		consumerID = ctx.ChainID()
+	}
+
+	// all good, add this finality provider
+	fp := types.FinalityProvider{
+		Description: msg.Description,
+		Commission:  msg.Commission,
+		Addr:        msg.Addr,
+		BtcPk:       msg.BtcPk,
+		Pop:         msg.Pop,
+		ConsumerId:  consumerID,
+	}
+
+	if consumerID == ctx.ChainID() {
+		k.setFinalityProvider(ctx, &fp)
+	} else {
+		if err := k.SetConsumerFinalityProvider(ctx, &fp, consumerID); err != nil {
+			return err
+		}
+	}
+
+	// notify subscriber
+	return ctx.EventManager().EmitTypedEvent(&types.EventNewFinalityProvider{Fp: &fp})
+}
+
+// setFinalityProvider adds the given finality provider to KVStore
+func (k Keeper) setFinalityProvider(ctx context.Context, fp *types.FinalityProvider) {
 	store := k.finalityProviderStore(ctx)
 	fpBytes := k.cdc.MustMarshal(fp)
 	store.Set(fp.BtcPk.MustMarshal(), fpBytes)
@@ -58,7 +108,7 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 		return fmt.Errorf("failed to get current BTC tip")
 	}
 	fp.SlashedBtcHeight = btcTip.Height
-	k.SetFinalityProvider(ctx, fp)
+	k.setFinalityProvider(ctx, fp)
 
 	// record slashed event. The next `BeginBlock` will consume this
 	// event for updating the finality provider set
@@ -158,23 +208,68 @@ func (k Keeper) collectSlashedConsumerEvents(ctx context.Context, delegations []
 	return consumerEvents, nil
 }
 
-// RevertSluggishFinalityProvider sets the Sluggish flag of the given finality provider
-// to false
-func (k Keeper) RevertSluggishFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
+// JailFinalityProvider jails a finality provider with the given PK
+// A jailed finality provider will not have voting power until it is
+// unjailed (assuming it still ranks top N and has timestamped pub rand)
+func (k Keeper) JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
 	// ensure finality provider exists
 	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
 	if err != nil {
 		return err
 	}
 
-	// ignore the finality provider is already slashed
-	// or detected as sluggish
-	if fp.IsSlashed() || fp.IsSluggish() {
-		return nil
+	// ensure finality provider is not slashed yet
+	if fp.IsSlashed() {
+		return types.ErrFpAlreadySlashed
 	}
 
-	fp.Sluggish = false
-	k.SetFinalityProvider(ctx, fp)
+	// ensure finality provider is not jailed yet
+	if fp.IsJailed() {
+		return types.ErrFpAlreadyJailed
+	}
+
+	// set finality provider to be jailed
+	fp.Jailed = true
+	k.setFinalityProvider(ctx, fp)
+
+	btcTip := k.btclcKeeper.GetTipInfo(ctx)
+	if btcTip == nil {
+		return fmt.Errorf("failed to get current BTC tip")
+	}
+
+	// record jailed event. The next `BeginBlock` will consume this
+	// event for updating the finality provider set
+	powerUpdateEvent := types.NewEventPowerDistUpdateWithJailedFP(fp.BtcPk)
+	k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
+
+	return nil
+}
+
+// UnjailFinalityProvider reverts the Jailed flag of a finality provider
+func (k Keeper) UnjailFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
+	// ensure finality provider exists
+	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
+	if err != nil {
+		return err
+	}
+
+	// ensure finality provider is already jailed
+	if !fp.IsJailed() {
+		return types.ErrFpNotJailed
+	}
+
+	fp.Jailed = false
+	k.setFinalityProvider(ctx, fp)
+
+	btcTip := k.btclcKeeper.GetTipInfo(ctx)
+	if btcTip == nil {
+		return fmt.Errorf("failed to get current BTC tip")
+	}
+
+	// record unjailed event. The next `BeginBlock` will consume this
+	// event for updating the finality provider set
+	powerUpdateEvent := types.NewEventPowerDistUpdateWithUnjailedFP(fp.BtcPk)
+	k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
 
 	return nil
 }

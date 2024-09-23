@@ -28,7 +28,7 @@ func BTCStakingKeeper(
 	t testing.TB,
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
-	ckptKeeper types.CheckpointingKeeper,
+	finalityKeeper types.FinalityKeeper,
 ) (*keeper.Keeper, *bsckeeper.Keeper, sdk.Context) {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
@@ -59,7 +59,7 @@ func BTCStakingKeeper(
 		runtime.NewKVStoreService(storeKey),
 		btclcKeeper,
 		btccKeeper,
-		ckptKeeper,
+		finalityKeeper,
 		bscKeeper,
 		&chaincfg.SimNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),

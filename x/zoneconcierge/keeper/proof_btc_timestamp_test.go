@@ -41,14 +41,14 @@ func FuzzProofCZHeaderInEpoch(f *testing.F) {
 		}
 
 		// handle a random header from a random consumer chain
-		chainID := datagen.GenRandomHexStr(r, 10)
+		consumerID := datagen.GenRandomHexStr(r, 10)
 		height := datagen.RandomInt(r, 100) + 1
-		ibctmHeader := datagen.GenRandomIBCTMHeader(r, chainID, height)
-		headerInfo := datagen.HeaderToHeaderInfo(ibctmHeader)
+		ibctmHeader := datagen.GenRandomIBCTMHeader(r, height)
+		headerInfo := datagen.NewZCHeaderInfo(ibctmHeader, consumerID)
 		zck.HandleHeaderWithValidCommit(h.Ctx, datagen.GenRandomByteArray(r, 32), headerInfo, false)
 
 		// ensure the header is successfully inserted
-		indexedHeader, err := zck.GetHeader(h.Ctx, chainID, height)
+		indexedHeader, err := zck.GetHeader(h.Ctx, consumerID, height)
 		h.NoError(err)
 
 		// enter the 1st block of the next epoch

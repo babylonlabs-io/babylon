@@ -7,8 +7,9 @@ import (
 
 // performance oriented metrics measuring the execution time of each message
 const (
-	MetricsKeyCommitPubRandList = "commit_pub_rand_list"
-	MetricsKeyAddFinalitySig    = "add_finality_sig"
+	MetricsKeyCommitPubRandList      = "commit_pub_rand_list"
+	MetricsKeyAddFinalitySig         = "add_finality_sig"
+	MetricsKeyUnjailFinalityProvider = "unjail_finality_provider"
 )
 
 const (
@@ -23,9 +24,9 @@ const (
 
 	/* Metrics for monitoring finality provider liveness */
 
-	// MetricsKeySluggishFinalityProviderCounter is the number of finality providers
-	// that are being labeled as sluggish
-	MetricsKeySluggishFinalityProviderCounter = "sluggish_finality_provider_counter"
+	// MetricsKeyJailedFinalityProviderCounter is the number of finality providers
+	// that are being labeled as jailed
+	MetricsKeyJailedFinalityProviderCounter = "jailed_finality_provider_counter"
 )
 
 // RecordLastHeight records the last height. It is triggered upon `IndexBlock`
@@ -51,10 +52,10 @@ func RecordLastFinalizedHeight(height uint64) {
 	)
 }
 
-// IncrementSluggishFinalityProviderCounter increments the counter for the sluggish
+// IncrementJailedFinalityProviderCounter increments the counter for the jailed
 // finality providers
-func IncrementSluggishFinalityProviderCounter() {
-	keys := []string{MetricsKeySluggishFinalityProviderCounter}
+func IncrementJailedFinalityProviderCounter() {
+	keys := []string{MetricsKeyJailedFinalityProviderCounter}
 	labels := []metrics.Label{telemetry.NewLabel(telemetry.MetricLabelNameModule, ModuleName)}
 	telemetry.IncrCounterWithLabels(
 		keys,
@@ -63,10 +64,10 @@ func IncrementSluggishFinalityProviderCounter() {
 	)
 }
 
-// DecrementSluggishFinalityProviderCounter increments the counter for the sluggish
+// DecrementJailedFinalityProviderCounter decrements the counter for the jailed
 // finality providers
-func DecrementSluggishFinalityProviderCounter() {
-	keys := []string{MetricsKeySluggishFinalityProviderCounter}
+func DecrementJailedFinalityProviderCounter() {
+	keys := []string{MetricsKeyJailedFinalityProviderCounter}
 	labels := []metrics.Label{telemetry.NewLabel(telemetry.MetricLabelNameModule, ModuleName)}
 	telemetry.IncrCounterWithLabels(
 		keys,

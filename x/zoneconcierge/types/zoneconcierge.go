@@ -46,8 +46,8 @@ func (p *ProofEpochSealed) ValidateBasic() error {
 }
 
 func (ih *IndexedHeader) ValidateBasic() error {
-	if len(ih.ChainId) == 0 {
-		return fmt.Errorf("empty ChainID")
+	if len(ih.ConsumerId) == 0 {
+		return fmt.Errorf("empty ConsumerID")
 	}
 	if len(ih.Hash) == 0 {
 		return fmt.Errorf("empty Hash")
@@ -66,7 +66,7 @@ func (ih *IndexedHeader) Equal(ih2 *IndexedHeader) bool {
 		return false
 	}
 
-	if ih.ChainId != ih2.ChainId {
+	if ih.ConsumerId != ih2.ConsumerId {
 		return false
 	}
 	if !bytes.Equal(ih.Hash, ih2.Hash) {
@@ -92,7 +92,7 @@ func (ci *ChainInfo) Equal(ci2 *ChainInfo) bool {
 		return false
 	}
 
-	if ci.ChainId != ci2.ChainId {
+	if ci.ConsumerId != ci2.ConsumerId {
 		return false
 	}
 	if !ci.LatestHeader.Equal(ci2.LatestHeader) {
@@ -110,8 +110,8 @@ func (ci *ChainInfo) Equal(ci2 *ChainInfo) bool {
 }
 
 func (ci *ChainInfo) ValidateBasic() error {
-	if len(ci.ChainId) == 0 {
-		return ErrInvalidChainInfo.Wrap("ChainID is empty")
+	if len(ci.ConsumerId) == 0 {
+		return ErrInvalidChainInfo.Wrap("ConsumerId is empty")
 	} else if ci.LatestHeader == nil {
 		return ErrInvalidChainInfo.Wrap("LatestHeader is nil")
 	} else if ci.LatestForks == nil {
