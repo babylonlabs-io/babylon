@@ -46,7 +46,7 @@ var (
 	babylonFpBTCSK, babylonFpBTCPK, _   = datagen.GenRandomBTCKeyPair(r)
 	babylonFpBTCSK2, babylonFpBTCPK2, _ = datagen.GenRandomBTCKeyPair(r)
 	randListInfo1                       *datagen.RandListInfo
-	// TODO: get consumer id from ibc client-state, investigate s.getIBCClientID()
+	// TODO: get consumer id from ibc client-state query
 	consumerID = "07-tendermint-0"
 )
 
