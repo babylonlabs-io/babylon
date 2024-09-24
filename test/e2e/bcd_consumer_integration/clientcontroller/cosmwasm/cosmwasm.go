@@ -119,7 +119,6 @@ func (wc *CosmwasmConsumerController) CommitPubRandList(
 	return &types.TxResponse{TxHash: res.TxHash}, nil
 }
 
-// SubmitFinalitySig submits the finality signature via a MsgAddVote to Babylon
 func (wc *CosmwasmConsumerController) SubmitFinalitySig(
 	fpSK *btcec.PrivateKey,
 	fpBtcPk *btcec.PublicKey,
@@ -128,7 +127,7 @@ func (wc *CosmwasmConsumerController) SubmitFinalitySig(
 	proof *cmtcrypto.Proof,
 	heightToVote int64,
 ) (*types.TxResponse, error) {
-	block, err := wc.GetCometBlock(int64(heightToVote))
+	block, err := wc.GetCometBlock(heightToVote)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +170,6 @@ func (wc *CosmwasmConsumerController) SubmitFinalitySig(
 	return &types.TxResponse{TxHash: res.TxHash, Events: fromCosmosEventsToBytes(res.Events)}, nil
 }
 
-// SubmitFinalitySig submits the finality signature via a MsgAddVote to Babylon
 func (wc *CosmwasmConsumerController) SubmitInvalidFinalitySig(
 	r *rand.Rand,
 	fpSK *btcec.PrivateKey,
@@ -241,8 +239,8 @@ func (wc *CosmwasmConsumerController) SubmitBatchFinalitySigs(
 				Height:      b.Height,
 				PubRand:     bbntypes.NewSchnorrPubRandFromFieldVal(pubRandList[i]).MustMarshal(),
 				Proof: Proof{
-					Total:    int64(cmtProof.Total),
-					Index:    int64(cmtProof.Index),
+					Total:    cmtProof.Total,
+					Index:    cmtProof.Index,
 					LeafHash: cmtProof.LeafHash,
 					Aunts:    cmtProof.Aunts,
 				},
