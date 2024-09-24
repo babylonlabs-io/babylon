@@ -2,8 +2,12 @@ package cmd
 
 import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 
+	sdkmath "cosmossdk.io/math"
+	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
@@ -26,8 +30,10 @@ type BabylonAppConfig struct {
 }
 
 func DefaultBabylonConfig() *BabylonAppConfig {
+	baseConfig := *serverconfig.DefaultConfig()
+	baseConfig.MinGasPrices = sdk.NewCoin(appparams.BaseCoinUnit, sdkmath.NewInt(0)).String()
 	return &BabylonAppConfig{
-		Config:    *serverconfig.DefaultConfig(),
+		Config:    baseConfig,
 		Wasm:      wasmtypes.DefaultWasmConfig(),
 		BtcConfig: defaultBabylonBtcConfig(),
 	}
