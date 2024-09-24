@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
@@ -258,6 +259,7 @@ type GenesisParams struct {
 	BtclightclientParams        btclightclienttypes.Params
 	BlockGasLimit               int64
 	VoteExtensionsEnableHeight  int64
+	IBCChannelParams            ibcchanneltypes.Params
 }
 
 func TestnetGenesisParams(
@@ -422,5 +424,7 @@ func TestnetGenesisParams(
 
 	genParams.BlockGasLimit = blockGasLimit
 	genParams.VoteExtensionsEnableHeight = voteExtensionEnableHeight
+	genParams.IBCChannelParams = ibcchanneltypes.DefaultParams()
+
 	return genParams
 }
