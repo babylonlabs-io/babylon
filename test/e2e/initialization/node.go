@@ -120,7 +120,7 @@ func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 	// set application configuration
 	appCfgPath := filepath.Join(n.configDir(), "config", "app.toml")
 
-	appConfig := cmd.DefaultBabylonConfig()
+	appConfig := cmd.DefaultBabylonAppConfig()
 
 	appConfig.BaseConfig.Pruning = nodeConfig.Pruning
 	appConfig.BaseConfig.PruningKeepRecent = nodeConfig.PruningKeepRecent

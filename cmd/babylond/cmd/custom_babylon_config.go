@@ -29,9 +29,9 @@ type BabylonAppConfig struct {
 	BtcConfig BtcConfig `mapstructure:"btc-config"`
 }
 
-func DefaultBabylonConfig() *BabylonAppConfig {
+func DefaultBabylonAppConfig() *BabylonAppConfig {
 	baseConfig := *serverconfig.DefaultConfig()
-	baseConfig.MinGasPrices = sdk.NewCoin(appparams.BaseCoinUnit, sdkmath.NewInt(0)).String()
+	baseConfig.MinGasPrices = sdk.NewCoin(appparams.BaseCoinUnit, sdkmath.NewInt(1)).String()
 	return &BabylonAppConfig{
 		Config:    baseConfig,
 		Wasm:      wasmtypes.DefaultWasmConfig(),

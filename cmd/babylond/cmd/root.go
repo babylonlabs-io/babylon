@@ -153,7 +153,7 @@ func initAppConfig() (string, interface{}) {
 
 	// Optionally allow the chain developer to overwrite the SDK's default
 	// server config.
-	babylonConfig := DefaultBabylonConfig()
+	babylonConfig := DefaultBabylonAppConfig()
 	babylonTemplate := DefaultBabylonTemplate()
 	// The SDK's default minimum gas price is set to "" (empty value) inside
 	// app.toml. If left empty by validators, the node will halt on startup.
@@ -167,7 +167,7 @@ func initAppConfig() (string, interface{}) {
 	//   own app.toml to override, or use this default value.
 	//
 	// In app, we set the min gas prices to 0.
-	babylonConfig.MinGasPrices = "1ubbn"
+	babylonConfig.MinGasPrices = "2ubbn"
 
 	return babylonTemplate, babylonConfig
 }
