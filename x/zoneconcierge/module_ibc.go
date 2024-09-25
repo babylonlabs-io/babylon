@@ -176,7 +176,6 @@ func (im IBCModule) OnRecvPacket(
 	// Add other packet types here if needed
 	default:
 		errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
-		im.keeper.Logger(ctx).Error("Unrecognized packet type", "type", fmt.Sprintf("%T", packet))
 		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg))
 	}
 }
