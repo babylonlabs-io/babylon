@@ -60,8 +60,31 @@ func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP
 	return &types.BTCDelegatorDelegations{Dels: btcDels}
 }
 
-func (k Keeper) getFPBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) ([]*types.BTCDelegation, error) {
-	store := k.btcDelegatorFpStore(ctx, fpBTCPK)
+// GetFPBTCDelegations retrieves all BTC delegations for a given finality provider.
+// This function works for both Babylon finality providers and consumer finality providers.
+// It automatically determines and selects the appropriate KV store based on the finality provider type.
+//
+// Parameters:
+// - ctx: The context for the operation
+// - fpBTCPK: The Bitcoin public key of the finality provider
+//
+// Returns:
+// - A slice of BTCDelegation pointers representing all delegations for the given finality provider
+// - An error if the finality provider is not found or if there's an issue retrieving the delegations
+func (k Keeper) GetFPBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) ([]*types.BTCDelegation, error) {
+	var store prefix.Store
+	// Determine which store to use based on the finality provider type
+	if k.HasFinalityProvider(ctx, *fpBTCPK) {
+		// Babylon finality provider
+		store = k.btcDelegatorFpStore(ctx, fpBTCPK)
+	} else if k.bscKeeper.HasConsumerFinalityProvider(ctx, fpBTCPK) {
+		// Consumer finality provider
+		store = k.btcConsumerDelegatorStore(ctx, fpBTCPK)
+	} else {
+		// if not found in either store, return error
+		return nil, types.ErrFpNotFound
+	}
+
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 

@@ -167,6 +167,12 @@ func (im IBCModule) OnRecvPacket(
 			return channeltypes.NewErrorAcknowledgement(err)
 		}
 		return channeltypes.NewResultAcknowledgement([]byte("Consumer registered successfully"))
+	case *types.ZoneconciergePacketData_ConsumerSlashing:
+		err := im.keeper.HandleConsumerSlashing(ctx, modulePacket.DestinationPort, modulePacket.DestinationChannel, packet.ConsumerSlashing)
+		if err != nil {
+			return channeltypes.NewErrorAcknowledgement(err)
+		}
+		return channeltypes.NewResultAcknowledgement([]byte("Consumer slashing handled successfully"))
 	// Add other packet types here if needed
 	default:
 		errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)

@@ -25,6 +25,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 
 	// get the power dist cache in the last height
 	dc := k.getVotingPowerDistCache(ctx, height-1)
+
 	// get all power distribution update events during the previous tip
 	// and the current tip
 	lastBTCTipHeight := k.GetBTCHeightAtBabylonHeight(ctx, height-1)
@@ -162,6 +163,8 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	jailedFPs := map[string]struct{}{}
 	// a map where key is unjailed finality providers' BTC PK
 	unjailedFPs := map[string]struct{}{}
+	// a map where key is slashed BTC delegation's staking tx hash
+	slashedBTCDels := map[string]struct{}{}
 
 	/*
 		filter and classify all events into new/expired BTC delegations and jailed/slashed FPs
@@ -197,6 +200,9 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		case *types.EventPowerDistUpdate_UnjailedFp:
 			// record unjailed fps
 			unjailedFPs[typedEvent.UnjailedFp.Pk.MarshalHex()] = struct{}{}
+		case *types.EventPowerDistUpdate_SlashedBtcDelegation:
+			// Add the slashed BTC delegation to the map
+			slashedBTCDels[typedEvent.SlashedBtcDelegation.StakingTxHash] = struct{}{}
 		}
 	}
 
@@ -241,15 +247,26 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// add all BTC delegations that are not unbonded to the new finality provider
 		for j := range dc.FinalityProviders[i].BtcDels {
 			btcDel := *dc.FinalityProviders[i].BtcDels[j]
-			if _, ok := unbondedBTCDels[btcDel.StakingTxHash]; !ok {
-				fp.AddBTCDelDistInfo(&btcDel)
+			// skip this delegation if it's unbonded
+			if _, unbonded := unbondedBTCDels[btcDel.StakingTxHash]; unbonded {
+				continue
 			}
+			// skip this delegation if it's slashed
+			if _, slashed := slashedBTCDels[btcDel.StakingTxHash]; slashed {
+				continue
+			}
+			// add the delegation info only if it's not unbonded and not slashed (i.e it's active)
+			fp.AddBTCDelDistInfo(&btcDel)
 		}
 
 		// process all new BTC delegations under this finality provider
 		if fpActiveBTCDels, ok := activeBTCDels[fpBTCPKHex]; ok {
 			// handle new BTC delegations for this finality provider
 			for _, d := range fpActiveBTCDels {
+				// skip this delegation if it's slashed
+				if _, slashed := slashedBTCDels[d.MustGetStakingTxHash().String()]; slashed {
+					continue
+				}
 				fp.AddBTCDel(d)
 			}
 			// remove the finality provider entry in activeBTCDels map, so that
@@ -291,6 +308,10 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// add each BTC delegation
 		fpActiveBTCDels := activeBTCDels[fpBTCPKHex]
 		for _, d := range fpActiveBTCDels {
+			// skip this delegation if it's slashed
+			if _, slashed := slashedBTCDels[d.MustGetStakingTxHash().String()]; slashed {
+				continue
+			}
 			fpDistInfo.AddBTCDel(d)
 		}
 

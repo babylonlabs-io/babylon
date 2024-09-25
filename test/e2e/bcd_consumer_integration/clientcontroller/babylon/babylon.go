@@ -165,6 +165,15 @@ func (bc *BabylonController) QueryFinalityProviderSlashed(fpPk *btcec.PublicKey)
 	return slashed, nil
 }
 
+func (bc *BabylonController) QueryFinalityProvider(fpBtcPkHex string) (*btcstakingtypes.QueryFinalityProviderResponse, error) {
+	res, err := bc.bbnClient.QueryClient.FinalityProvider(fpBtcPkHex)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query the finality provider %s: %v", fpBtcPkHex, err)
+	}
+
+	return res, nil
+}
+
 func (bc *BabylonController) QueryNodeStatus() (*coretypes.ResultStatus, error) {
 	return bc.bbnClient.QueryClient.GetStatus()
 }

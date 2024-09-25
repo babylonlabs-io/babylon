@@ -1,7 +1,5 @@
 package cosmwasm
 
-import cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
-
 type ConsumerFpsResponse struct {
 	Fps []SingleConsumerFpResponse `json:"fps"`
 }
@@ -12,10 +10,10 @@ type ConsumerFpsResponse struct {
 // https://github.com/babylonchain/babylon-contract/blob/v0.5.3/contracts/btc-staking/src/msg.rs
 // https://github.com/babylonchain/babylon-contract/blob/v0.5.3/contracts/btc-staking/schema/btc-staking.json
 type SingleConsumerFpResponse struct {
-	BtcPkHex             string `json:"btc_pk_hex"`
-	SlashedBabylonHeight uint64 `json:"slashed_babylon_height"`
-	SlashedBtcHeight     uint64 `json:"slashed_btc_height"`
-	ConsumerId           string `json:"consumer_id"`
+	BtcPkHex         string `json:"btc_pk_hex"`
+	SlashedHeight    uint64 `json:"slashed_height"`
+	SlashedBtcHeight uint64 `json:"slashed_btc_height"`
+	ConsumerId       string `json:"consumer_id"`
 }
 
 type ConsumerDelegationsResponse struct {
@@ -142,13 +140,20 @@ type CommitPublicRandomness struct {
 	Signature   []byte `json:"signature"`
 }
 
+type Proof struct {
+	Total    int64    `json:"total"`
+	Index    int64    `json:"index"`
+	LeafHash []byte   `json:"leaf_hash"`
+	Aunts    [][]byte `json:"aunts"`
+}
+
 type SubmitFinalitySignature struct {
-	FpPubkeyHex string          `json:"fp_pubkey_hex"`
-	Height      uint64          `json:"height"`
-	PubRand     []byte          `json:"pub_rand"`
-	Proof       cmtcrypto.Proof `json:"proof"` // nested struct
-	BlockHash   []byte          `json:"block_hash"`
-	Signature   []byte          `json:"signature"`
+	FpPubkeyHex string `json:"fp_pubkey_hex"`
+	Height      uint64 `json:"height"`
+	PubRand     []byte `json:"pub_rand"`
+	Proof       Proof  `json:"proof"` // nested struct
+	BlockHash   []byte `json:"block_hash"`
+	Signature   []byte `json:"signature"`
 }
 
 type ExecMsg struct {
@@ -159,7 +164,7 @@ type ExecMsg struct {
 
 type FinalityProviderInfo struct {
 	BtcPkHex string `json:"btc_pk_hex"`
-	Height   uint64 `json:"height"`
+	Height   uint64 `json:"height,omitempty"`
 }
 
 type QueryMsgFinalityProviderInfo struct {
@@ -200,6 +205,14 @@ type FinalitySignatureQuery struct {
 
 type QueryMsgFinalityProviders struct {
 	FinalityProviders struct{} `json:"finality_providers"`
+}
+
+type QueryMsgFinalityProvider struct {
+	FinalityProvider FinalityProviderQuery `json:"finality_provider"`
+}
+
+type FinalityProviderQuery struct {
+	BtcPkHex string `json:"btc_pk_hex"`
 }
 
 type QueryMsgDelegations struct {

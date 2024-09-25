@@ -118,6 +118,46 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	return nil
 }
 
+// SlashConsumerFinalityProvider slashes a consumer finality provider with the given PK
+func (k Keeper) SlashConsumerFinalityProvider(ctx context.Context, consumerID string, fpBTCPK *bbn.BIP340PubKey) error {
+	// Get consumer finality provider
+	fp, err := k.bscKeeper.GetConsumerFinalityProvider(ctx, consumerID, fpBTCPK)
+	if err != nil {
+		return err
+	}
+
+	// Return error if already slashed
+	if fp.IsSlashed() {
+		return types.ErrFpAlreadySlashed
+	}
+
+	// Set slashed height
+	fp.SlashedBabylonHeight = uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	btcTip := k.btclcKeeper.GetTipInfo(ctx)
+	if btcTip == nil {
+		return fmt.Errorf("failed to get current BTC tip")
+	}
+	fp.SlashedBtcHeight = btcTip.Height
+	k.bscKeeper.SetConsumerFinalityProvider(ctx, fp)
+
+	// Get all delegations for this consumer finality provider
+	btcDels, err := k.GetFPBTCDelegations(ctx, fpBTCPK)
+	if err != nil {
+		return fmt.Errorf("failed to get BTC delegations: %w", err)
+	}
+
+	// Record slashed BTC delegation events for each affected delegation
+	// These events will be processed in the next `BeginBlock` to update
+	// the power distribution of the involved Babylon FPs
+	for _, btcDel := range btcDels {
+		stakingTxHash := btcDel.MustGetStakingTxHash().String()
+		eventSlashedBTCDelegation := types.NewEventPowerDistUpdateWithSlashedBTCDelegation(stakingTxHash)
+		k.addPowerDistUpdateEvent(ctx, btcTip.Height, eventSlashedBTCDelegation)
+	}
+
+	return nil
+}
+
 // PropagateFPSlashingToConsumers propagates the slashing of a finality provider (FP) to all relevant consumer chains.
 // It processes all delegations associated with the given FP and creates slashing events for each affected consumer chain.
 //
@@ -137,7 +177,7 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 // - An error if any operation fails, nil otherwise.
 func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) error {
 	// Get all delegations for this finality provider
-	delegations, err := k.getFPBTCDelegations(ctx, fpBTCPK)
+	delegations, err := k.GetFPBTCDelegations(ctx, fpBTCPK)
 	if err != nil {
 		return err
 	}
