@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Bug Fixes
+
+* [#91](https://github.com/babylonlabs-io/babylon/pull/91) fix testnet command
+by add ibc default gen state and min gas price specification of `1ubbn`
+
 ## v0.10.0
 
 ### State Machine Breaking
