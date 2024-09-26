@@ -54,6 +54,3 @@ For the transition from Phase-1 to Phase-2, registered finality providers in
 Phase-1 will need to provider a signed
 [MsgCreateFinalityProvider](../../../x/btcstaking/types/tx.pb.go#38) as a
 json file message inside the networks repository registry.
-
-<!-- TODO: shell to generate the string message with signed finality
-providers from the networks repository -->

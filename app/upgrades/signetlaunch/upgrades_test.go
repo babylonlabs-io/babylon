@@ -7,14 +7,18 @@ import (
 
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/core/header"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/exp/constraints"
 
 	"github.com/babylonlabs-io/babylon/app"
-	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
+	"github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
 	"github.com/babylonlabs-io/babylon/x/btclightclient"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
@@ -34,7 +38,7 @@ type UpgradeTestSuite struct {
 
 func (s *UpgradeTestSuite) SetupTest() {
 	// add the upgrade plan
-	app.Upgrades = append(app.Upgrades, v1.Upgrade)
+	app.Upgrades = append(app.Upgrades, signetlaunch.Upgrade)
 
 	// set up app
 	s.app = app.Setup(s.T(), false)
@@ -59,6 +63,16 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	oldHeadersLen := 0
 	oldFPsLen := 0
 
+	tokenDistData, err := signetlaunch.LoadTokenDistributionFromData()
+	s.NoError(err)
+
+	balanceDiffByAddr := make(map[string]int64)
+	for _, td := range tokenDistData.TokenDistribution {
+		balanceDiffByAddr[td.AddressSender] -= td.Amount
+		balanceDiffByAddr[td.AddressReceiver] += td.Amount
+	}
+	balancesBeforeUpgrade := make(map[string]sdk.Coin)
+
 	testCases := []struct {
 		msg         string
 		pre_update  func()
@@ -76,19 +90,38 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				oldFPsLen = len(resp.FinalityProviders)
 
 				// Before upgrade, the params should be different
-				bsParamsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.app.AppCodec())
+				bsParamsFromUpgrade, err := signetlaunch.LoadBtcStakingParamsFromData(s.app.AppCodec())
 				s.NoError(err)
 				bsModuleParams := s.app.BTCStakingKeeper.GetParams(s.ctx)
 				s.NotEqualValues(bsModuleParams, bsParamsFromUpgrade)
-				fParamsFromUpgrade, err := v1.LoadFinalityParamsFromData(s.app.AppCodec())
+				fParamsFromUpgrade, err := signetlaunch.LoadFinalityParamsFromData(s.app.AppCodec())
 				s.NoError(err)
 				fModuleParams := s.app.FinalityKeeper.GetParams(s.ctx)
 				s.NotEqualValues(fModuleParams, fParamsFromUpgrade)
+
+				for addr, amountDiff := range balanceDiffByAddr {
+					sdkAddr := sdk.MustAccAddressFromBech32(addr)
+
+					if amountDiff < 0 {
+						// if the amount is lower than zero, it means the addr is going to spend tokens and
+						// could be that the addr does not have enough funds.
+						// For test completeness, mint the coins that the acc is going to spend.
+						coinsToMint := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(Abs(amountDiff))))
+						err = s.app.BankKeeper.MintCoins(s.ctx, minttypes.ModuleName, coinsToMint)
+						s.NoError(err)
+
+						err = s.app.BankKeeper.SendCoinsFromModuleToAccount(s.ctx, minttypes.ModuleName, sdkAddr, coinsToMint)
+						s.NoError(err)
+					}
+
+					// update the balances before upgrade only after mint check is done
+					balancesBeforeUpgrade[addr] = s.app.BankKeeper.GetBalance(s.ctx, sdkAddr, appparams.DefaultBondDenom)
+				}
 			},
 			func() {
 				// inject upgrade plan
 				s.ctx = s.ctx.WithBlockHeight(DummyUpgradeHeight - 1)
-				plan := upgradetypes.Plan{Name: v1.Upgrade.UpgradeName, Height: DummyUpgradeHeight}
+				plan := upgradetypes.Plan{Name: signetlaunch.Upgrade.UpgradeName, Height: DummyUpgradeHeight}
 				err := s.app.UpgradeKeeper.ScheduleUpgrade(s.ctx, plan)
 				s.NoError(err)
 
@@ -108,7 +141,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				// ensure the btc headers were added
 				allBtcHeaders := s.app.BTCLightClientKeeper.GetMainChainFrom(s.ctx, 0)
 
-				btcHeadersInserted, err := v1.LoadBTCHeadersFromData(s.app.AppCodec())
+				btcHeadersInserted, err := signetlaunch.LoadBTCHeadersFromData(s.app.AppCodec())
 				s.NoError(err)
 				lenHeadersInserted := len(btcHeadersInserted)
 
@@ -126,7 +159,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				s.NoError(err)
 				newFPsLen := len(resp.FinalityProviders)
 
-				fpsInserted, err := v1.LoadSignedFPsFromData(s.app.AppCodec(), s.app.TxConfig().TxJSONDecoder())
+				fpsInserted, err := signetlaunch.LoadSignedFPsFromData(s.app.AppCodec(), s.app.TxConfig().TxJSONDecoder())
 				s.NoError(err)
 
 				s.Equal(newFPsLen, oldFPsLen+len(fpsInserted))
@@ -141,14 +174,27 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				}
 
 				// After upgrade, the params should be the same
-				bsParamsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.app.AppCodec())
+				bsParamsFromUpgrade, err := signetlaunch.LoadBtcStakingParamsFromData(s.app.AppCodec())
 				s.NoError(err)
 				bsModuleParams := s.app.BTCStakingKeeper.GetParams(s.ctx)
 				s.EqualValues(bsModuleParams, bsParamsFromUpgrade)
-				fParamsFromUpgrade, err := v1.LoadFinalityParamsFromData(s.app.AppCodec())
+				fParamsFromUpgrade, err := signetlaunch.LoadFinalityParamsFromData(s.app.AppCodec())
 				s.NoError(err)
 				fModuleParams := s.app.FinalityKeeper.GetParams(s.ctx)
 				s.EqualValues(fModuleParams, fParamsFromUpgrade)
+
+				// verifies that all the modified balances match as expected after the upgrade
+				for addr, diff := range balanceDiffByAddr {
+					coinDiff := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(Abs(diff)))
+					expectedBalance := balancesBeforeUpgrade[addr].Add(coinDiff)
+					if diff < 0 {
+						expectedBalance = balancesBeforeUpgrade[addr].Sub(coinDiff)
+					}
+
+					sdkAddr := sdk.MustAccAddressFromBech32(addr)
+					balanceAfterUpgrade := s.app.BankKeeper.GetBalance(s.ctx, sdkAddr, appparams.DefaultBondDenom)
+					s.Equal(expectedBalance.String(), balanceAfterUpgrade.String())
+				}
 			},
 		},
 	}
@@ -162,4 +208,11 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 			tc.post_update()
 		})
 	}
+}
+
+func Abs[T constraints.Integer](x T) T {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
