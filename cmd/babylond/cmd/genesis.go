@@ -28,6 +28,8 @@ import (
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	ibctypes "github.com/cosmos/ibc-go/v8/modules/core/types"
 	"github.com/spf13/cobra"
 
 	appparams "github.com/babylonlabs-io/babylon/app/params"
@@ -223,6 +225,8 @@ func PrepareGenesis(
 		bankGenState.Supply = bankGenState.Supply.Add(bal.Coins...)
 	}
 	genesisState[banktypes.ModuleName] = cdc.MustMarshalJSON(bankGenState)
+
+	genesisState[ibcexported.ModuleName] = clientCtx.Codec.MustMarshalJSON(ibctypes.DefaultGenesisState())
 
 	appGenStateJSON, err := json.MarshalIndent(genesisState, "", "  ")
 

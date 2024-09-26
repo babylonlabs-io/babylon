@@ -26,7 +26,7 @@ RUN LEDGER_ENABLED=$LEDGER_ENABLED \
 
 FROM debian:bookworm-slim AS wasm-link
 
-RUN apt-get update && apt-get install -y wget bash
+RUN apt-get update && apt-get install -y wget bash jq
 
 # Label should match your github repo
 LABEL org.opencontainers.image.source="https://github.com/babylonlabs-io/babylond:${VERSION}"
