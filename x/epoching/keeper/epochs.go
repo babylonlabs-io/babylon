@@ -37,10 +37,13 @@ func (k Keeper) InitEpoch(ctx context.Context) *types.Epoch {
 	if header.Height > 0 {
 		panic("InitEpoch can be invoked only at genesis")
 	}
+	genesisEpoch := types.NewEpoch(0, 1, 0, &header.Time)
+	k.setEpochInfo(ctx, 0, &genesisEpoch)
 	epochInterval := k.GetParams(ctx).EpochInterval
-	epoch := types.NewEpoch(0, epochInterval, 0, &header.Time)
-	k.setEpochInfo(ctx, 0, &epoch)
-	return &epoch
+	firstEpoch := types.NewEpoch(1, epochInterval, 1, &header.Time)
+	k.setEpochInfo(ctx, 1, &firstEpoch)
+
+	return &genesisEpoch
 }
 
 // GetEpoch fetches the current epoch
