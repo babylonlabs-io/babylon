@@ -177,7 +177,7 @@ func InitTestnet(
 	nodeIDs := make([]string, numValidators)
 	valKeys := make([]*privval.ValidatorKeys, numValidators)
 
-	babylonConfig := DefaultBabylonConfig()
+	babylonConfig := DefaultBabylonAppConfig()
 	babylonConfig.MinGasPrices = minGasPrices
 	babylonConfig.API.Enable = true
 	babylonConfig.API.Address = "tcp://0.0.0.0:1317"
