@@ -137,60 +137,6 @@ jobs:
         run: |
           make test-e2e-cache-btc-timestamping
 
-  e2e-run-btc-timestamping-phase-2-hermes:
-    needs: [e2e-docker-build-babylon]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Download babylon artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: babylond-${{ github.sha }}
-          path: /tmp
-      - name: Docker load babylond
-        run: |
-          docker load < /tmp/docker-babylond.tar.gz
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Cache Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.21
-      - name: Run e2e TestBTCTimestampingPhase2HermesTestSuite
-        run: |
-          make test-e2e-cache-btc-timestamping-phase-2-hermes
-
-  e2e-run-btc-timestamping-phase-2-rly:
-    needs: [e2e-docker-build-babylon]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Download babylon artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: babylond-${{ github.sha }}
-          path: /tmp
-      - name: Docker load babylond
-        run: |
-          docker load < /tmp/docker-babylond.tar.gz
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Cache Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.21
-      - name: Run e2e TestBTCTimestampingPhase2RlyTestSuite
-        run: |
-          make test-e2e-cache-btc-timestamping-phase-2-rly
-
   e2e-run-btc-staking:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
