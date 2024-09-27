@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/crypto/eots"
 	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/crypto/eots"
 )
 
 func (c *PubRandCommit) IsInRange(height uint64) bool {
@@ -36,6 +37,7 @@ func (c *PubRandCommit) ToResponse() *PubRandCommitResponse {
 	return &PubRandCommitResponse{
 		NumPubRand: c.NumPubRand,
 		Commitment: c.Commitment,
+		EpochNum:   c.EpochNum,
 	}
 }
 
