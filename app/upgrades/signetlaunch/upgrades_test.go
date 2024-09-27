@@ -11,11 +11,11 @@ import (
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/test/e2e/util"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/suite"
-	"golang.org/x/exp/constraints"
 
 	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
@@ -106,7 +106,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 						// if the amount is lower than zero, it means the addr is going to spend tokens and
 						// could be that the addr does not have enough funds.
 						// For test completeness, mint the coins that the acc is going to spend.
-						coinsToMint := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(Abs(amountDiff))))
+						coinsToMint := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(util.Abs(amountDiff))))
 						err = s.app.BankKeeper.MintCoins(s.ctx, minttypes.ModuleName, coinsToMint)
 						s.NoError(err)
 
@@ -185,7 +185,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 				// verifies that all the modified balances match as expected after the upgrade
 				for addr, diff := range balanceDiffByAddr {
-					coinDiff := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(Abs(diff)))
+					coinDiff := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(util.Abs(diff)))
 					expectedBalance := balancesBeforeUpgrade[addr].Add(coinDiff)
 					if diff < 0 {
 						expectedBalance = balancesBeforeUpgrade[addr].Sub(coinDiff)
@@ -208,11 +208,4 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 			tc.post_update()
 		})
 	}
-}
-
-func Abs[T constraints.Integer](x T) T {
-	if x < 0 {
-		return -x
-	}
-	return x
 }

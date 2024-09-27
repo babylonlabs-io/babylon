@@ -209,7 +209,7 @@ func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, 
 }
 
 // NewSoftwareUpgradeConfigurer returns a new Configurer for Software Upgrade testing
-func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, btcHeaders []*btclighttypes.BTCHeaderInfo) (*UpgradeConfigurer, error) {
+func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, btcHeaders []*btclighttypes.BTCHeaderInfo, preUpgradeFunc PreUpgradeFunc) (*UpgradeConfigurer, error) {
 	identifier := identifierName(t)
 	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, true)
 	if err != nil {
@@ -230,6 +230,7 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 		containerManager,
 		upgradePath,
 		0,
+		preUpgradeFunc,
 	), nil
 }
 
