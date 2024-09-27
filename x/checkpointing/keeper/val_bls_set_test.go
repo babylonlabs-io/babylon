@@ -28,7 +28,7 @@ func FuzzGetValidatorBlsKeySet(f *testing.F) {
 		queryHelper := baseapp.NewQueryServerTestHelper(helper.Ctx, helper.App.InterfaceRegistry())
 		types.RegisterQueryServer(queryHelper, ck)
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
-		genesisVal := ek.GetValidatorSet(helper.Ctx, 0)[0]
+		genesisVal := ek.GetValidatorSet(helper.Ctx, 1)[0]
 		genesisBLSPubkey, err := ck.GetBlsPubKey(helper.Ctx, genesisVal.Addr)
 		require.NoError(t, err)
 
