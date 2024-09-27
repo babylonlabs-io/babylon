@@ -34,7 +34,7 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 		types.RegisterQueryServer(queryHelper, ck)
 		queryClient := types.NewQueryClient(queryHelper)
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
-		genesisVal := ek.GetValidatorSet(helper.Ctx, 0)[0]
+		genesisVal := ek.GetValidatorSet(helper.Ctx, 1)[0]
 		genesisBLSPubkey, err := ck.GetBlsPubKey(helper.Ctx, genesisVal.Addr)
 		require.NoError(t, err)
 
