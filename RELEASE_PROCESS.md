@@ -8,7 +8,7 @@
     - [Tagging Procedure](#tagging-procedure)
   - [Patch release Procedure](#patch-release-procedure)
 
-This document outlines the release process for the Babylon node (babylond)
+This document outlines the release process for the Babylon node (babylond).
 
 Babylon follows [semantic versioning](https://semver.org), but with the
 following deviations to account for state-machine and API breaking changes.
@@ -31,7 +31,7 @@ This includes events, queries, CLI interfaces.
 
 ## Release Procedure
 
-A _release_ is an increment of the second number (eg: `v0.1.0` → `v0.2.0`)
+A _release_ is an increment of the second number (eg: `v0.1.0` → `v0.2.0`).
 
 **Note**: Generally, PRs should target either `main` or a long-lived feature
 branch (see [CONTRIBUTING.md](./CONTRIBUTING.md#pull-requests)).
@@ -41,9 +41,9 @@ branch (see [CONTRIBUTING.md](./CONTRIBUTING.md#pull-requests)).
   the minor version number, with patch part substituted to `x` (eg: v0.11.x).
   * **PRs targeting directly a release branch can be merged _only_ when
     exceptional circumstances arise**.
-* In the release branch
+* In the release branch:
   * Create a PR that adds new version section in the `CHANGELOG.md`, matching the released version e.g
-    for branch `release/v0.Y.x`, section will be called `v0.Y.0`
+    for branch `release/v0.Y.x`, section will be called `v0.Y.0`.
 * We freeze the release branch from receiving any new features and focus on
   releasing a release candidate.
   * Finish audits and reviews.
@@ -57,27 +57,27 @@ branch (see [CONTRIBUTING.md](./CONTRIBUTING.md#pull-requests)).
   * When bugs are found, create a PR for `main`, and backport fixes to the
     release branch.
   * Before tagging the release, create and merge PR to the release branch that:
-    * Moves all changelog entries form `Unreleased` section of the changelog to the newly created section `v0.Y.0`
+    * Moves all changelog entries form `Unreleased` section of the changelog to the newly created section `v0.Y.0`.
   * Create new release candidate tags after bugs are fixed.
 * After the team feels the release candidate is ready, create a full release:
   * **Note:** The final release MUST have the same commit hash as the latest
     corresponding release candidate.
   * Create a new annotated git tag in the release branch (follow the [Tagging
-    Procedure](#tagging-procedure))
-* After the final release is made e.g `v0.Y.0`, backport changelog changes to the `main` branch
-  * checkout a new branch from the main branch: `username/backport_changelog`
-  * bring the new section from `release/v0.Y.x` branch to the `CHANGELOG.md` file on `main` branch
-  * open PR against the `main` branch
+    Procedure](#tagging-procedure)).
+* After the final release is made e.g `v0.Y.0`, backport changelog changes to the `main` branch:
+  * checkout a new branch from the main branch: `username/backport_changelog`.
+  * bring the new section from `release/v0.Y.x` branch to the `CHANGELOG.md` file on `main` branch.
+  * open PR against the `main` branch.
 
 ### Creating a new release branch
 
-- create a new release branch, e.g., `release/v0.10.x`
+- create a new release branch, e.g., `release/v0.10.x`:
     ```bash
     git checkout main
     git pull
     git checkout -b release/v0.10.x
     ```
-- push the release branch upstream
+- push the release branch upstream:
     ```bash
     git push
     ```
@@ -86,11 +86,11 @@ branch (see [CONTRIBUTING.md](./CONTRIBUTING.md#pull-requests)).
 Before cutting a release (e.g., `v0.10.0-rc.0`), the
 following steps are necessary:
 
-- move to the release branch, e.g., `release/v0.10.x`
+- move to the release branch, e.g., `release/v0.10.x`:
     ```bash
     git checkout release/v0.10.x
     ```
-- create new tag (follow the [Tagging Procedure](#tagging-procedure))
+- create new tag (follow the [Tagging Procedure](#tagging-procedure)).
 
 ### Tagging Procedure
 
