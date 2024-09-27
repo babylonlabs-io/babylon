@@ -10,12 +10,17 @@ const TokensDistribution = `{
     {
       "address_sender": "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
       "address_receiver": "bbn1yl6hdjhmkf37639730gffanpzndzdpmhep8cg6",
-      "amount": 15000000
+      "amount": 1500000
     },
     {
       "address_sender": "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
-      "address_receiver": "bbn17xpfvakm2amg962yls6f84z3kell8c5l88j35y",
-      "amount": 70000000
+      "address_receiver": "bbn1k6u5pge8w6lavtmunp02smehr4qtazkw8clg04",
+      "amount": 700000
+    },
+    {
+      "address_sender": "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
+      "address_receiver": "bbn1dj2c57fjv6md7pzykh9y6h407ln6xxcw090hre",
+      "amount": 100000
     }
   ]
 }`
