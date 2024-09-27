@@ -5,9 +5,13 @@ DO NOT USE IN PRODUCTION!
 
 ## Compile signet launch upgrade
 
-This upgrade loads 2 JSONs from strings in different files.
-BTC Headers from `./data_btc_headers.go` and signed messages
-to create finality providers `./data_signed_fps.go`.
+This upgrade loads 5 JSONs from strings in different files.
+
+- BTC Headers at `./data_btc_headers.go`
+- Finality Providers signed messages at`./data_signed_fps.go`
+- Tokens distribution at `./data_token_distribution.go`
+- BTC Staking Parameters `./btcstaking_params.go`
+- Finality Parameters `./finality_params.go`
 
 ### BTC Headers
 
@@ -54,3 +58,17 @@ For the transition from Phase-1 to Phase-2, registered finality providers in
 Phase-1 will need to provider a signed
 [MsgCreateFinalityProvider](../../../x/btcstaking/types/tx.pb.go#38) as a
 json file message inside the networks repository registry.
+
+### Tokens distribution
+
+During the upgrade, some tokens will be distributed so users and operators can
+finish their actions, by example:
+
+- BTC stakers to finalize their BTC delegation
+- Finality providers to submit pub rand and finality
+- New Cosmos-SDK validators to decentralize after the upgrade
+- Vigilantes
+- Covenant Emulators
+
+> This data for token distribution will be built accordingly with the
+data collected during Phase-1.
