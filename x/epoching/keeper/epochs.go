@@ -39,9 +39,6 @@ func (k Keeper) InitEpoch(ctx context.Context) *types.Epoch {
 	}
 	genesisEpoch := types.NewEpoch(0, 1, 0, &header.Time)
 	k.setEpochInfo(ctx, 0, &genesisEpoch)
-	epochInterval := k.GetParams(ctx).EpochInterval
-	firstEpoch := types.NewEpoch(1, epochInterval, 1, &header.Time)
-	k.setEpochInfo(ctx, 1, &firstEpoch)
 
 	return &genesisEpoch
 }
