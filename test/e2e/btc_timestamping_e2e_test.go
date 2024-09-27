@@ -11,6 +11,7 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	ct "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -104,14 +105,45 @@ func (s *BTCTimestampingTestSuite) Test3SendTx() {
 	s.Equal(tip2Depth, uint64(0))
 }
 
-func (s *BTCTimestampingTestSuite) Test5WithdrawReward() {
+func (s *BTCTimestampingTestSuite) Test4GenerateAndWithdrawReward() {
 	chainA := s.configurer.GetChainConfig(0)
+
+	chainA.WaitUntilHeight(35)
+
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// NOTE: nonValidatorNode.PublicAddress is the address associated with key name `val`
-	// and is both the submitter and reporter
+	// Finalize epoch 1, 2, 3
+	var (
+		startEpochNum uint64 = 1
+		endEpochNum   uint64 = 3
+	)
+
+	// submitter/reporter address should not have any rewards yet
 	submitterReporterAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
+	_, err = nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
+	s.Error(err)
+
+	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
+
+	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(endEpochNum)
+	s.NoError(err)
+	s.Equal(endEpoch.Status, ct.Finalized)
+
+	// Wait for a some time to ensure that the checkpoint is included in the chain
+	time.Sleep(20 * time.Second)
+	// Wait for next block
+	nonValidatorNode.WaitForNextBlock()
+
+	// ensure balance has increased after finalising some epochs
+	rewardGauges, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
+	s.NoError(err)
+	submitterRewardGauge, ok := rewardGauges[itypes.SubmitterType.String()]
+	s.True(ok)
+	s.True(submitterRewardGauge.Coins.IsAllPositive())
+	reporterRewardGauge, ok := rewardGauges[itypes.ReporterType.String()]
+	s.True(ok)
+	s.True(reporterRewardGauge.Coins.IsAllPositive())
 
 	// balance before withdraw
 	balance, err := nonValidatorNode.QueryBalances(submitterReporterAddr.String())
@@ -159,7 +191,7 @@ func (s *BTCTimestampingTestSuite) Test5WithdrawReward() {
 	s.True(rgs3[itypes.ReporterType.String()].IsFullyWithdrawn())
 }
 
-func (s *BTCTimestampingTestSuite) Test6Wasm() {
+func (s *BTCTimestampingTestSuite) Test5Wasm() {
 	contractPath := "/bytecode/storage_contract.wasm"
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
@@ -217,7 +249,7 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 	s.Greater(saveEpoch, latestFinalizedEpoch)
 }
 
-func (s *BTCTimestampingTestSuite) Test7InterceptFeeCollector() {
+func (s *BTCTimestampingTestSuite) Test6InterceptFeeCollector() {
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)

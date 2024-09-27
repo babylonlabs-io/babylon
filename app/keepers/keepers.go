@@ -529,7 +529,7 @@ func (ak *AppKeepers) InitKeepers(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	ak.EvidenceKeeper = *evidenceKeeper
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
+	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
