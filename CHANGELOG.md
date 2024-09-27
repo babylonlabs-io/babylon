@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v0.10.1
+
 ### Bug Fixes
 
 * [#91](https://github.com/babylonlabs-io/babylon/pull/91) fix testnet command
