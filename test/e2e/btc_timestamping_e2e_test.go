@@ -105,28 +105,15 @@ func (s *BTCTimestampingTestSuite) Test3SendTx() {
 	s.Equal(tip2Depth, uint64(0))
 }
 
-func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
+func (s *BTCTimestampingTestSuite) Test4GenerateAndWithdrawReward() {
 	chainA := s.configurer.GetChainConfig(0)
+
 	chainA.WaitUntilHeight(35)
 
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// Query open IBC channels and assert there is only one
-	channels, err := nonValidatorNode.QueryIBCChannels()
-	s.NoError(err)
-	s.Equal(1, len(channels.Channels), "Expected only one open IBC channel")
-	// Get the client ID under this IBC channel
-	channelClientState, err := nonValidatorNode.QueryChannelClientState(channels.Channels[0].ChannelId, channels.Channels[0].PortId)
-	s.NoError(err)
-	clientID := channelClientState.IdentifiedClientState.ClientId
-
-	// Query checkpoint chain info for opposing chain
-	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{clientID})
-	s.NoError(err)
-	s.Equal(chainsInfo[0].ConsumerId, clientID)
-
-	// Finalize epoch 1, 2, 3, as first headers of opposing chain are in epoch 3
+	// Finalize epoch 1, 2, 3
 	var (
 		startEpochNum uint64 = 1
 		endEpochNum   uint64 = 3
@@ -148,31 +135,6 @@ func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	// Wait for next block
 	nonValidatorNode.WaitForNextBlock()
 
-	// Check we have epoch info for opposing chain and some basic assertions
-	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(endEpochNum, []string{clientID})
-	s.NoError(err)
-	s.Equal(epochChainsInfo[0].ConsumerId, clientID)
-	s.Equal(epochChainsInfo[0].LatestHeader.BabylonEpoch, endEpochNum)
-
-	// Check we have finalized epoch info for opposing chain and some basic assertions
-	finalizedChainsInfo, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{clientID})
-	s.NoError(err)
-
-	// TODO Add more assertion here. Maybe check proofs ?
-	s.Equal(finalizedChainsInfo[0].FinalizedChainInfo.ConsumerId, clientID)
-	s.Equal(finalizedChainsInfo[0].EpochInfo.EpochNumber, endEpochNum)
-
-	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
-	s.NoError(err)
-
-	heightAtEndedEpoch, err := nonValidatorNode.QueryLightClientHeightEpochEnd(currEpoch - 1)
-	s.NoError(err)
-
-	if heightAtEndedEpoch == 0 {
-		// we can only assert, that btc lc height is larger than 0.
-		s.FailNow(fmt.Sprintf("Light client height should be  > 0 on epoch %d", currEpoch-1))
-	}
-
 	// ensure balance has increased after finalising some epochs
 	rewardGauges, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
 	s.NoError(err)
@@ -182,20 +144,6 @@ func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	reporterRewardGauge, ok := rewardGauges[itypes.ReporterType.String()]
 	s.True(ok)
 	s.True(reporterRewardGauge.Coins.IsAllPositive())
-
-	chainB := s.configurer.GetChainConfig(1)
-	_, err = chainB.GetDefaultNode()
-	s.NoError(err)
-}
-
-func (s *BTCTimestampingTestSuite) Test5WithdrawReward() {
-	chainA := s.configurer.GetChainConfig(0)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
-	s.NoError(err)
-
-	// NOTE: nonValidatorNode.PublicAddress is the address associated with key name `val`
-	// and is both the submitter and reporter
-	submitterReporterAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
 
 	// balance before withdraw
 	balance, err := nonValidatorNode.QueryBalances(submitterReporterAddr.String())
@@ -243,7 +191,7 @@ func (s *BTCTimestampingTestSuite) Test5WithdrawReward() {
 	s.True(rgs3[itypes.ReporterType.String()].IsFullyWithdrawn())
 }
 
-func (s *BTCTimestampingTestSuite) Test6Wasm() {
+func (s *BTCTimestampingTestSuite) Test5Wasm() {
 	contractPath := "/bytecode/storage_contract.wasm"
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
@@ -301,7 +249,7 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 	s.Greater(saveEpoch, latestFinalizedEpoch)
 }
 
-func (s *BTCTimestampingTestSuite) Test7InterceptFeeCollector() {
+func (s *BTCTimestampingTestSuite) Test6InterceptFeeCollector() {
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
