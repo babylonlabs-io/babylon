@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Misc Improvements
+
+* [#106](https://github.com/babylonlabs-io/babylon/pull/106) Add CLI command for
+  querying signing info of finality providers.
+
 ## v0.10.1
 
 ### Bug Fixes
