@@ -1,15 +1,15 @@
-package signetlaunch_test
+package v1_test
 
 import (
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
+	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCheckTokensDistributionFromData(t *testing.T) {
-	d, err := signetlaunch.LoadTokenDistributionFromData()
+	d, err := v1.LoadTokenDistributionFromData()
 	require.NoError(t, err)
 	require.Greater(t, len(d.TokenDistribution), 1)
 

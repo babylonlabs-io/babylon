@@ -9,8 +9,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
-	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
+	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
@@ -34,7 +33,7 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) SetupSuite() {
 	btcHeaderGenesis, err := app.SignetBtcHeaderGenesis(app.NewTmpBabylonApp().AppCodec())
 	s.NoError(err)
 
-	tokenDistData, err := signetlaunch.LoadTokenDistributionFromData()
+	tokenDistData, err := v1.LoadTokenDistributionFromData()
 	s.NoError(err)
 
 	balanceToMintByAddr := make(map[string]int64)
@@ -168,7 +167,7 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 	s.EqualValues(finalityParamsFromData, *finalityParams)
 
 	// Verifies the balance differences were really executed
-	tokenDistData, err := signetlaunch.LoadTokenDistributionFromData()
+	tokenDistData, err := v1.LoadTokenDistributionFromData()
 	s.NoError(err)
 
 	balanceDiffByAddr := make(map[string]int64)

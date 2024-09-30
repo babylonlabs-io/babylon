@@ -1,4 +1,4 @@
-package signetlaunch_test
+package v1_test
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
+	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
 	"github.com/babylonlabs-io/babylon/x/btclightclient"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
@@ -38,7 +38,7 @@ type UpgradeTestSuite struct {
 
 func (s *UpgradeTestSuite) SetupTest() {
 	// add the upgrade plan
-	app.Upgrades = append(app.Upgrades, signetlaunch.Upgrade)
+	app.Upgrades = append(app.Upgrades, v1.Upgrade)
 
 	// set up app
 	s.app = app.Setup(s.T(), false)
@@ -63,7 +63,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	oldHeadersLen := 0
 	oldFPsLen := 0
 
-	tokenDistData, err := signetlaunch.LoadTokenDistributionFromData()
+	tokenDistData, err := v1.LoadTokenDistributionFromData()
 	s.NoError(err)
 
 	balanceDiffByAddr := make(map[string]int64)
@@ -90,11 +90,11 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				oldFPsLen = len(resp.FinalityProviders)
 
 				// Before upgrade, the params should be different
-				bsParamsFromUpgrade, err := signetlaunch.LoadBtcStakingParamsFromData(s.app.AppCodec())
+				bsParamsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.app.AppCodec())
 				s.NoError(err)
 				bsModuleParams := s.app.BTCStakingKeeper.GetParams(s.ctx)
 				s.NotEqualValues(bsModuleParams, bsParamsFromUpgrade)
-				fParamsFromUpgrade, err := signetlaunch.LoadFinalityParamsFromData(s.app.AppCodec())
+				fParamsFromUpgrade, err := v1.LoadFinalityParamsFromData(s.app.AppCodec())
 				s.NoError(err)
 				fModuleParams := s.app.FinalityKeeper.GetParams(s.ctx)
 				s.NotEqualValues(fModuleParams, fParamsFromUpgrade)
@@ -121,7 +121,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 			func() {
 				// inject upgrade plan
 				s.ctx = s.ctx.WithBlockHeight(DummyUpgradeHeight - 1)
-				plan := upgradetypes.Plan{Name: signetlaunch.Upgrade.UpgradeName, Height: DummyUpgradeHeight}
+				plan := upgradetypes.Plan{Name: v1.Upgrade.UpgradeName, Height: DummyUpgradeHeight}
 				err := s.app.UpgradeKeeper.ScheduleUpgrade(s.ctx, plan)
 				s.NoError(err)
 
@@ -141,7 +141,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				// ensure the btc headers were added
 				allBtcHeaders := s.app.BTCLightClientKeeper.GetMainChainFrom(s.ctx, 0)
 
-				btcHeadersInserted, err := signetlaunch.LoadBTCHeadersFromData(s.app.AppCodec())
+				btcHeadersInserted, err := v1.LoadBTCHeadersFromData(s.app.AppCodec())
 				s.NoError(err)
 				lenHeadersInserted := len(btcHeadersInserted)
 
@@ -159,7 +159,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				s.NoError(err)
 				newFPsLen := len(resp.FinalityProviders)
 
-				fpsInserted, err := signetlaunch.LoadSignedFPsFromData(s.app.AppCodec(), s.app.TxConfig().TxJSONDecoder())
+				fpsInserted, err := v1.LoadSignedFPsFromData(s.app.AppCodec(), s.app.TxConfig().TxJSONDecoder())
 				s.NoError(err)
 
 				s.Equal(newFPsLen, oldFPsLen+len(fpsInserted))
@@ -174,11 +174,11 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				}
 
 				// After upgrade, the params should be the same
-				bsParamsFromUpgrade, err := signetlaunch.LoadBtcStakingParamsFromData(s.app.AppCodec())
+				bsParamsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.app.AppCodec())
 				s.NoError(err)
 				bsModuleParams := s.app.BTCStakingKeeper.GetParams(s.ctx)
 				s.EqualValues(bsModuleParams, bsParamsFromUpgrade)
-				fParamsFromUpgrade, err := signetlaunch.LoadFinalityParamsFromData(s.app.AppCodec())
+				fParamsFromUpgrade, err := v1.LoadFinalityParamsFromData(s.app.AppCodec())
 				s.NoError(err)
 				fModuleParams := s.app.FinalityKeeper.GetParams(s.ctx)
 				s.EqualValues(fModuleParams, fParamsFromUpgrade)

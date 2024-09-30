@@ -1,7 +1,7 @@
 // This code is only for testing purposes.
 // DO NOT USE IN PRODUCTION!
 
-package signetlaunch
+package v1
 
 import (
 	"bytes"
@@ -33,7 +33,7 @@ import (
 )
 
 var Upgrade = upgrades.Upgrade{
-	UpgradeName:          "signet-launch",
+	UpgradeName:          "v1",
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades:        store.StoreUpgrades{},
 }
