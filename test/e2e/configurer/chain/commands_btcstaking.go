@@ -98,9 +98,15 @@ func (n *NodeConfig) CreateBTCDelegation(
 		n.FlagChainID(), "--log_format=json",
 	}
 
+	// gas price
+	cmd = append(cmd, "--gas-prices=0.002ubbn")
+
 	if generateOnly {
 		cmd = append(cmd, "--generate-only")
 	} else {
+		// gas
+		cmd = append(cmd, "--gas=auto", "--gas-adjustment=1.3")
+		// broadcast stuff
 		cmd = append(cmd, "-b=sync", "--yes")
 	}
 
