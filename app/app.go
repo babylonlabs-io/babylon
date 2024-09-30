@@ -20,7 +20,6 @@ import (
 	feegrantmodule "cosmossdk.io/x/feegrant/module"
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	wasmapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -47,7 +46,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -93,6 +91,7 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
+	"github.com/babylonlabs-io/babylon/app/ante"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
 	bbn "github.com/babylonlabs-io/babylon/types"
 
@@ -108,7 +107,6 @@ import (
 	"github.com/babylonlabs-io/babylon/x/checkpointing"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/x/epoching"
-	epochingkeeper "github.com/babylonlabs-io/babylon/x/epoching/keeper"
 	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/x/finality"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
@@ -478,38 +476,20 @@ func NewBabylonApp(
 	app.MountTransientStores(app.GetTransientStoreKeys())
 	app.MountMemoryStores(app.GetMemoryStoreKeys())
 
-	// initialize AnteHandler, which includes
-	// - authAnteHandler
-	// - custom wasm ante handler NewLimitSimulationGasDecorator and NewCountTXDecorator
-	// - Extra decorators introduced in Babylon, such as DropValidatorMsgDecorator that delays validator-related messages
-	//
-	// We are using constructor from wasmapp as it introduces custom wasm ante handle decorators
-	// early in chain of ante handlers.
-	authAnteHandler, err := wasmapp.NewAnteHandler(
-		wasmapp.HandlerOptions{
-			HandlerOptions: ante.HandlerOptions{
-				AccountKeeper:   app.AccountKeeper,
-				BankKeeper:      app.BankKeeper,
-				SignModeHandler: txConfig.SignModeHandler(),
-				FeegrantKeeper:  app.FeeGrantKeeper,
-				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
-			},
-			IBCKeeper:             app.IBCKeeper,
-			WasmConfig:            &wasmConfig,
-			TXCounterStoreService: runtime.NewKVStoreService(app.AppKeepers.GetKey(wasmtypes.StoreKey)),
-			WasmKeeper:            &app.WasmKeeper,
-			CircuitKeeper:         &app.CircuitKeeper,
-		},
-	)
-
-	if err != nil {
-		panic(err)
-	}
-
-	anteHandler := sdk.ChainAnteDecorators(
-		NewWrappedAnteHandler(authAnteHandler),
-		epochingkeeper.NewDropValidatorMsgDecorator(app.EpochingKeeper),
-		NewBtcValidationDecorator(btcConfig, &app.BtcCheckpointKeeper),
+	// initialize AnteHandler for the app
+	anteHandler := ante.NewAnteHandler(
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.FeeGrantKeeper,
+		txConfig.SignModeHandler(),
+		app.IBCKeeper,
+		&wasmConfig,
+		&app.WasmKeeper,
+		&app.CircuitKeeper,
+		&app.EpochingKeeper,
+		btcConfig,
+		&app.BtcCheckpointKeeper,
+		runtime.NewKVStoreService(app.AppKeepers.GetKey(wasmtypes.StoreKey)),
 	)
 
 	// set proposal extension

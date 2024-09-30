@@ -1,4 +1,4 @@
-package app
+package ante
 
 import (
 	bbn "github.com/babylonlabs-io/babylon/types"
