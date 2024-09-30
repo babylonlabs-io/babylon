@@ -4,9 +4,9 @@
       "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
       "authority": "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
       "plan": {
-        "name": "signet-launch",
+        "name": "v1",
         "time": "0001-01-01T00:00:00Z",
-        "height": "21",
+        "height": "52",
         "info": "Msg info",
         "upgraded_client_state": null
       }

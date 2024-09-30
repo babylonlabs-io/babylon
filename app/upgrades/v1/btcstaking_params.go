@@ -1,4 +1,4 @@
-package signetlaunch
+package v1
 
 // TODO Some default parameters. Consider how to switch those depending on network:
 // mainnet, testnet, devnet etc.

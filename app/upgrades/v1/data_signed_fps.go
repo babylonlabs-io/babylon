@@ -1,4 +1,4 @@
-package signetlaunch
+package v1
 
 const SignedFPsStr = `{
   "signed_txs_create_fp": [
