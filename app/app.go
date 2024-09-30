@@ -478,16 +478,16 @@ func NewBabylonApp(
 
 	// initialize AnteHandler for the app
 	anteHandler := ante.NewAnteHandler(
-		app.AccountKeeper,
+		&app.AccountKeeper,
 		app.BankKeeper,
-		app.FeeGrantKeeper,
+		&app.FeeGrantKeeper,
 		txConfig.SignModeHandler(),
 		app.IBCKeeper,
 		&wasmConfig,
 		&app.WasmKeeper,
 		&app.CircuitKeeper,
 		&app.EpochingKeeper,
-		btcConfig,
+		&btcConfig,
 		&app.BtcCheckpointKeeper,
 		runtime.NewKVStoreService(app.AppKeepers.GetKey(wasmtypes.StoreKey)),
 	)

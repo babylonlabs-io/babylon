@@ -27,7 +27,7 @@ func NewAnteHandler(
 	wasmKeeper *wasmkeeper.Keeper,
 	circuitKeeper *circuitkeeper.Keeper,
 	epochingKeeper *epochingkeeper.Keeper,
-	btcConfig bbn.BtcConfig,
+	btcConfig *bbn.BtcConfig,
 	btccKeeper *btcckeeper.Keeper,
 	txCounterStoreService store.KVStoreService,
 ) sdk.AnteHandler {
@@ -46,6 +46,9 @@ func NewAnteHandler(
 				SignModeHandler: signModeHandler,
 				FeegrantKeeper:  feegrantKeeper,
 				SigGasConsumer:  authante.DefaultSigVerificationGasConsumer,
+				// CheckTxFeeWithGlobalMinGasPrices will enforce the global minimum
+				// gas price for all transactions.
+				TxFeeChecker: CheckTxFeeWithGlobalMinGasPrices,
 			},
 			IBCKeeper:             ibcKeeper,
 			WasmConfig:            wasmConfig,
