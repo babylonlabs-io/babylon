@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### State Machine Breaking
+
+* [#103](https://github.com/babylonlabs-io/babylon/pull/103) Add token distribution
+to upgrade handler and rename `signet-launch` to `v1`
+
 ## v0.10.0
 
 ### State Machine Breaking
