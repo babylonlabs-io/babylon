@@ -37,6 +37,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+* [#55](https://github.com/babylonlabs-io/babylon/pull/55) Remove `x/zoneconcierge`
+module
+
 ## v0.10.1
 
 ### Bug Fixes
