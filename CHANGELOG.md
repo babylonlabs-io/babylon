@@ -46,6 +46,11 @@ by add ibc default gen state and min gas price specification of `1ubbn`
 * [#93](https://github.com/babylonlabs-io/babylon/pull/93) fix genesis epoch
   initialization.
 
+### Misc Improvements
+
+* [#106](https://github.com/babylonlabs-io/babylon/pull/106) Add CLI command for
+  querying signing info of finality providers.
+
 ## v0.10.0
 
 ### State Machine Breaking
