@@ -865,6 +865,9 @@ func (s *BTCStakingTestSuite) CreateNodeFP(node *chain.NodeConfig) (newFP *bstyp
 
 	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, nodeAddr)
 	s.NoError(err)
+	// use a higher commission to ensure the reward is more than tx fee of a finality sig
+	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
+	newFP.Commission = &commission
 	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission)
 
 	// wait for a block so that above txs take effect
