@@ -32,10 +32,17 @@ import (
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
+const (
+	ZoneConciergeStoreKey = "zoneconcierge"
+)
+
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          "v1",
 	CreateUpgradeHandler: CreateUpgradeHandler,
-	StoreUpgrades:        store.StoreUpgrades{},
+	// Upgrade necessary for deletions of `zoneconcierge`
+	StoreUpgrades: store.StoreUpgrades{
+		Deleted: []string{ZoneConciergeStoreKey},
+	},
 }
 
 type DataSignedFps struct {

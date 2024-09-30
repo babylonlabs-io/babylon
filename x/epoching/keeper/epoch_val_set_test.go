@@ -23,7 +23,7 @@ func FuzzEpochValSet(f *testing.F) {
 		ctx, keeper := helper.Ctx, helper.App.EpochingKeeper
 		valSet, err := helper.App.StakingKeeper.GetLastValidators(helper.Ctx)
 		require.NoError(t, err)
-		getValSet := keeper.GetValidatorSet(ctx, 0)
+		getValSet := keeper.GetValidatorSet(ctx, 1)
 		require.Equal(t, len(valSet), len(getValSet))
 		for i := range getValSet {
 			consAddr, err := valSet[i].GetConsAddr()
@@ -37,7 +37,7 @@ func FuzzEpochValSet(f *testing.F) {
 		params := keeper.GetParams(ctx)
 
 		// generate a random number of new blocks
-		for i := uint64(0); i < params.EpochInterval; i++ {
+		for i := uint64(1); i < params.EpochInterval; i++ {
 			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
 			require.NoError(t, err)
 		}
