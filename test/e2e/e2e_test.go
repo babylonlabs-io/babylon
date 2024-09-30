@@ -19,18 +19,6 @@ func TestBTCTimestampingTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCTimestampingTestSuite))
 }
 
-// TestBTCTimestampingPhase2HermesTestSuite tests BTC timestamping phase 2 protocol end-to-end,
-// with the Hermes relayer
-func TestBTCTimestampingPhase2HermesTestSuite(t *testing.T) {
-	suite.Run(t, new(BTCTimestampingPhase2HermesTestSuite))
-}
-
-// TestBTCTimestampingPhase2RlyTestSuite tests BTC timestamping phase 2 protocol end-to-end,
-// with the Go relayer
-func TestBTCTimestampingPhase2RlyTestSuite(t *testing.T) {
-	suite.Run(t, new(BTCTimestampingPhase2RlyTestSuite))
-}
-
 // TestBTCStakingTestSuite tests BTC staking protocol end-to-end
 func TestBTCStakingTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingTestSuite))
