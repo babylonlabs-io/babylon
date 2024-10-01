@@ -1,4 +1,4 @@
-package v1
+package mainnet
 
 // TODO Some default parameters. Consider how to switch those depending on network:
 // mainnet, testnet, devnet etc.

@@ -10,6 +10,7 @@ import (
 	"github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
+	"github.com/babylonlabs-io/babylon/app/upgrades/v1/mainnet"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
@@ -153,7 +154,7 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 	// as the one from the data
 	stakingParams := n.QueryBTCStakingParams()
 
-	stakingParamsFromData, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec())
+	stakingParamsFromData, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec(), mainnet.BtcStakingParamStr)
 	s.NoError(err)
 
 	s.EqualValues(stakingParamsFromData, *stakingParams)
@@ -162,7 +163,7 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 	// as the one from the data
 	finalityParams := n.QueryFinalityParams()
 
-	finalityParamsFromData, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec())
+	finalityParamsFromData, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec(), mainnet.FinalityParamStr)
 	s.NoError(err)
 	s.EqualValues(finalityParamsFromData, *finalityParams)
 

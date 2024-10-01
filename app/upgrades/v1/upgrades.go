@@ -23,6 +23,7 @@ import (
 	"github.com/babylonlabs-io/babylon/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
+	"github.com/babylonlabs-io/babylon/app/upgrades/v1/mainnet"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btclightkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
@@ -43,6 +44,11 @@ var Upgrade = upgrades.Upgrade{
 	StoreUpgrades: store.StoreUpgrades{
 		Deleted: []string{ZoneConciergeStoreKey},
 	},
+}
+
+type UpdateStringData struct {
+	BTCStakingParam string
+	FinalityParam   string
 }
 
 type DataSignedFps struct {
@@ -71,7 +77,7 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
-		if err := upgradeParameters(ctx, keepers.EncCfg, &keepers.BTCStakingKeeper, &keepers.FinalityKeeper); err != nil {
+		if err := upgradeParameters(ctx, keepers.EncCfg.Codec, &keepers.BTCStakingKeeper, &keepers.FinalityKeeper, mainnet.BtcStakingParamStr, mainnet.FinalityParamStr); err != nil {
 			return nil, err
 		}
 
@@ -85,28 +91,26 @@ func CreateUpgradeHandler(
 
 func upgradeParameters(
 	ctx sdk.Context,
-	e *appparams.EncodingConfig,
+	cdc codec.Codec,
 	btcK *btcstkkeeper.Keeper,
 	finK *finalitykeeper.Keeper,
+	btcStakingParam, finalityParam string,
 ) error {
 	// Upgrade the staking parameters as first, as other upgrades depend on it.
-	if err := upgradeBtcStakingParameters(ctx, e, btcK); err != nil {
+	if err := upgradeBtcStakingParameters(ctx, cdc, btcK, btcStakingParam); err != nil {
 		return err
 	}
 
-	return upgradeFinalityParameters(ctx, e, finK)
+	return upgradeFinalityParameters(ctx, cdc, finK, finalityParam)
 }
 
 func upgradeBtcStakingParameters(
 	ctx sdk.Context,
-	e *appparams.EncodingConfig,
+	cdc codec.Codec,
 	k *btcstkkeeper.Keeper,
+	btcStakingParam string,
 ) error {
-
-	cdc := e.Codec
-
-	params, err := LoadBtcStakingParamsFromData(cdc)
-
+	params, err := LoadBtcStakingParamsFromData(cdc, btcStakingParam)
 	if err != nil {
 		return err
 	}
@@ -118,14 +122,11 @@ func upgradeBtcStakingParameters(
 
 func upgradeFinalityParameters(
 	ctx sdk.Context,
-	e *appparams.EncodingConfig,
+	cdc codec.Codec,
 	k *finalitykeeper.Keeper,
+	finalityParam string,
 ) error {
-
-	cdc := e.Codec
-
-	params, err := LoadFinalityParamsFromData(cdc)
-
+	params, err := LoadFinalityParamsFromData(cdc, finalityParam)
 	if err != nil {
 		return err
 	}
@@ -199,8 +200,8 @@ func upgradeSignedFPs(ctx sdk.Context, encCfg *appparams.EncodingConfig, btcStkK
 	return insertFPs(ctx, btcStkK, fps)
 }
 
-func LoadBtcStakingParamsFromData(cdc codec.Codec) (btcstktypes.Params, error) {
-	buff := bytes.NewBufferString(BtcStakingParamStr)
+func LoadBtcStakingParamsFromData(cdc codec.Codec, data string) (btcstktypes.Params, error) {
+	buff := bytes.NewBufferString(data)
 
 	var params btcstktypes.Params
 	err := cdc.UnmarshalJSON(buff.Bytes(), &params)
@@ -211,8 +212,8 @@ func LoadBtcStakingParamsFromData(cdc codec.Codec) (btcstktypes.Params, error) {
 	return params, nil
 }
 
-func LoadFinalityParamsFromData(cdc codec.Codec) (finalitytypes.Params, error) {
-	buff := bytes.NewBufferString(FinalityParamStr)
+func LoadFinalityParamsFromData(cdc codec.Codec, data string) (finalitytypes.Params, error) {
+	buff := bytes.NewBufferString(data)
 
 	var params finalitytypes.Params
 	err := cdc.UnmarshalJSON(buff.Bytes(), &params)
