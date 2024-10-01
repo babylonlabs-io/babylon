@@ -201,7 +201,7 @@ func (h *Helper) CreateDelegationCustom(
 	serializedStakingTx, err := bbn.SerializeBTCTx(testStakingInfo.StakingTx)
 	h.NoError(err)
 
-	txInfo := btcctypes.NewTransactionInfo(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, serializedStakingTx, btcHeaderWithProof.SpvProof.MerkleNodes)
+	txInclusionProof := types.NewInclusionProof(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, btcHeaderWithProof.SpvProof.MerkleNodes)
 
 	// mock for testing k-deep stuff
 	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Hash())).Return(&btclctypes.BTCHeaderInfo{Header: &btcHeader, Height: 10}).AnyTimes()
@@ -260,7 +260,8 @@ func (h *Helper) CreateDelegationCustom(
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
 		StakingValue:                  stakingValue,
-		StakingTx:                     txInfo,
+		StakingTx:                     serializedStakingTx,
+		StakingTxInclusionProof:       txInclusionProof,
 		SlashingTx:                    testStakingInfo.SlashingTx,
 		DelegatorSlashingSig:          delegatorSig,
 		UnbondingTx:                   serializedUnbondingTx,
@@ -305,7 +306,7 @@ func (h *Helper) CreateDelegation(
 
 	h.NoError(err)
 
-	stakingMsgTx, err := bbn.NewBTCTxFromBytes(msgCreateBTCDel.StakingTx.Transaction)
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(msgCreateBTCDel.StakingTx)
 	h.NoError(err)
 	btcDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingMsgTx.TxHash().String())
 	h.NoError(err)
@@ -421,26 +422,4 @@ func (h *Helper) CreateCovenantSigs(
 	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs, int(bsParams.CovenantQuorum))
 	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs[0].AdaptorSigs, 1)
 
-}
-
-func (h *Helper) GetDelegationAndCheckValues(
-	r *rand.Rand,
-	msgCreateBTCDel *types.MsgCreateBTCDelegation,
-	fpPK *btcec.PublicKey,
-	delegatorPK *btcec.PublicKey,
-	stakingTxHash string,
-) *types.BTCDelegation {
-	actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
-	h.NoError(err)
-	// TODO: update pop in BTC delegation
-	require.Equal(h.t, msgCreateBTCDel.StakerAddr, actualDel.StakerAddr)
-	require.Equal(h.t, msgCreateBTCDel.Pop, actualDel.Pop)
-	require.Equal(h.t, msgCreateBTCDel.StakingTx.Transaction, actualDel.StakingTx)
-	require.Equal(h.t, msgCreateBTCDel.SlashingTx, actualDel.SlashingTx)
-	// ensure the BTC delegation in DB is correctly formatted
-	err = actualDel.ValidateBasic()
-	h.NoError(err)
-	// delegation is not activated by covenant yet
-	require.False(h.t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
-	return actualDel
 }
