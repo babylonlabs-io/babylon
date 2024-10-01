@@ -50,7 +50,7 @@ type NodeConfig struct {
 const (
 	// common
 	BabylonDenom        = "ubbn"
-	MinGasPrice         = "0.000"
+	MinGasPrice         = "0.002"
 	ValidatorWalletName = "val"
 	BabylonOpReturnTag  = "01020304"
 
