@@ -12,7 +12,7 @@ import (
 func TestHardCodedBtcStakingParamsAreValid(t *testing.T) {
 	bbnApp := app.NewTmpBabylonApp()
 	for _, upgradeData := range UpgradeV1Data {
-		loadedParamas, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec(), upgradeData.BTCStakingParam)
+		loadedParamas, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec(), upgradeData.BtcStakingParamStr)
 		require.NoError(t, err)
 		require.NoError(t, loadedParamas.Validate())
 	}
@@ -21,7 +21,7 @@ func TestHardCodedBtcStakingParamsAreValid(t *testing.T) {
 func TestHardCodedFinalityParamsAreValid(t *testing.T) {
 	bbnApp := app.NewTmpBabylonApp()
 	for _, upgradeData := range UpgradeV1Data {
-		loadedParamas, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec(), upgradeData.FinalityParam)
+		loadedParamas, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec(), upgradeData.FinalityParamStr)
 		require.NoError(t, err)
 		require.NoError(t, loadedParamas.Validate())
 	}

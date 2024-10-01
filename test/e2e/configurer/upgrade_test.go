@@ -23,7 +23,7 @@ func TestParseGovPropFromFile(t *testing.T) {
 	_, msgProp, err := parseGovPropFromFile(cdc, upgradePath)
 	require.NoError(t, err)
 
-	require.Equal(t, msgProp.Plan.Name, v1.Upgrade.UpgradeName)
+	require.Equal(t, msgProp.Plan.Name, v1.UpgradeName)
 }
 
 func TestWriteGovPropToFile(t *testing.T) {

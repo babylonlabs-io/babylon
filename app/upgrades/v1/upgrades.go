@@ -23,7 +23,6 @@ import (
 	"github.com/babylonlabs-io/babylon/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
-	"github.com/babylonlabs-io/babylon/app/upgrades/v1/mainnet"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btclightkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
@@ -35,59 +34,41 @@ import (
 
 const (
 	ZoneConciergeStoreKey = "zoneconcierge"
+	UpgradeName           = "v1"
 )
 
-var Upgrade = upgrades.Upgrade{
-	UpgradeName:          "v1",
-	CreateUpgradeHandler: CreateUpgradeHandler,
-	// Upgrade necessary for deletions of `zoneconcierge`
-	StoreUpgrades: store.StoreUpgrades{
-		Deleted: []string{ZoneConciergeStoreKey},
-	},
-}
-
-type UpdateStringData struct {
-	BTCStakingParam   string
-	FinalityParam     string
-	BTCHeaders        string
-	FinalityProviders string
-}
-
-type DataSignedFps struct {
-	SignedTxsFP []any `json:"signed_txs_create_fp"`
-}
-
-type DataTokenDistribution struct {
-	TokenDistribution []struct {
-		AddressSender   string `json:"address_sender"`
-		AddressReceiver string `json:"address_receiver"`
-		Amount          int64  `json:"amount"`
-	} `json:"token_distribution"`
+func CreateUpgrade(upgradeDataStr UpgradeDataString) upgrades.Upgrade {
+	return upgrades.Upgrade{
+		UpgradeName:          UpgradeName,
+		CreateUpgradeHandler: CreateUpgradeHandler(upgradeDataStr),
+		// Upgrade necessary for deletions of `zoneconcierge`
+		StoreUpgrades: store.StoreUpgrades{
+			Deleted: []string{ZoneConciergeStoreKey},
+		},
+	}
 }
 
 // CreateUpgradeHandler upgrade handler for launch.
-func CreateUpgradeHandler(
-	mm *module.Manager,
-	cfg module.Configurator,
-	keepers *keepers.AppKeepers,
-) upgradetypes.UpgradeHandler {
-	return func(context context.Context, _plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-		ctx := sdk.UnwrapSDKContext(context)
+func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.CreateUpgradeHandler {
+	return func(mm *module.Manager, cfg module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
+		return func(context context.Context, _plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			ctx := sdk.UnwrapSDKContext(context)
 
-		migrations, err := mm.RunMigrations(ctx, cfg, fromVM)
-		if err != nil {
-			return nil, err
+			migrations, err := mm.RunMigrations(ctx, cfg, fromVM)
+			if err != nil {
+				return nil, err
+			}
+
+			if err := upgradeParameters(ctx, keepers.EncCfg.Codec, &keepers.BTCStakingKeeper, &keepers.FinalityKeeper, upgradeDataStr.BtcStakingParamStr, upgradeDataStr.FinalityParamStr); err != nil {
+				return nil, err
+			}
+
+			if err := upgradeLaunch(ctx, keepers.EncCfg, &keepers.BTCLightClientKeeper, &keepers.BTCStakingKeeper, keepers.BankKeeper, upgradeDataStr.NewBtcHeadersStr, upgradeDataStr.SignedFPsStr, upgradeDataStr.TokensDistributionStr); err != nil {
+				return nil, err
+			}
+
+			return migrations, nil
 		}
-
-		if err := upgradeParameters(ctx, keepers.EncCfg.Codec, &keepers.BTCStakingKeeper, &keepers.FinalityKeeper, mainnet.BtcStakingParamStr, mainnet.FinalityParamStr); err != nil {
-			return nil, err
-		}
-
-		if err := upgradeLaunch(ctx, keepers.EncCfg, &keepers.BTCLightClientKeeper, &keepers.BTCStakingKeeper, keepers.BankKeeper, mainnet.NewBtcHeadersStr, mainnet.SignedFPsStr); err != nil {
-			return nil, err
-		}
-
-		return migrations, nil
 	}
 }
 
@@ -146,9 +127,9 @@ func upgradeLaunch(
 	btcLigthK *btclightkeeper.Keeper,
 	btcStkK *btcstkkeeper.Keeper,
 	bankK bankkeeper.SendKeeper,
-	btcHeaders, fps string,
+	btcHeaders, fps, tokensDistribution string,
 ) error {
-	if err := upgradeTokensDistribution(ctx, bankK); err != nil {
+	if err := upgradeTokensDistribution(ctx, bankK, tokensDistribution); err != nil {
 		return err
 	}
 
@@ -159,8 +140,8 @@ func upgradeLaunch(
 	return upgradeSignedFPs(ctx, encCfg, btcStkK, fps)
 }
 
-func upgradeTokensDistribution(ctx sdk.Context, bankK bankkeeper.SendKeeper) error {
-	data, err := LoadTokenDistributionFromData()
+func upgradeTokensDistribution(ctx sdk.Context, bankK bankkeeper.SendKeeper, tokensDistribution string) error {
+	data, err := LoadTokenDistributionFromData(tokensDistribution)
 	if err != nil {
 		return err
 	}
@@ -279,8 +260,8 @@ func LoadSignedFPsFromData(cdc codec.Codec, txJSONDecoder sdk.TxDecoder, data st
 }
 
 // LoadTokenDistributionFromData returns the tokens to be distributed from the json string.
-func LoadTokenDistributionFromData() (DataTokenDistribution, error) {
-	buff := bytes.NewBufferString(TokensDistribution)
+func LoadTokenDistributionFromData(data string) (DataTokenDistribution, error) {
+	buff := bytes.NewBufferString(data)
 
 	var d DataTokenDistribution
 	err := json.Unmarshal(buff.Bytes(), &d)
