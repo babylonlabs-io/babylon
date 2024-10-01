@@ -160,7 +160,10 @@ $(BUILD_TARGETS): $(BUILDDIR)/
 $(BUILDDIR)/:
 	mkdir -p $(BUILDDIR)/
 
-.PHONY: build build-linux
+build-testnet:
+	BABYLON_BUILD_OPTIONS=testnet make build
+
+.PHONY: build build-linux build-testnet
 
 mockgen_cmd=go run github.com/golang/mock/mockgen@v1.6.0
 
