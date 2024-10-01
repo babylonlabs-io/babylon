@@ -36,6 +36,15 @@ func NewInclusionProofFromSpvProof(proof *btcctypes.BTCSpvProof) *InclusionProof
 	}
 }
 
+func (ip *InclusionProof) MarshalHex() (string, error) {
+	ipBytes, err := ip.Marshal()
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(ipBytes), nil
+}
+
 func (ip *InclusionProof) ValidateBasic() error {
 	if ip.Key == nil {
 		return fmt.Errorf("key in InclusionProof is nil")

@@ -188,7 +188,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		endHeight = startHeight + uint64(parsedMsg.StakingTime)
 	} else {
 		// consume base gas fee to compensate future submission of inclusion proof
-		ctx.GasMeter().ConsumeGas(ms.GetParams(ctx).DelegationCreationBaseGasFee, "delegation creation fee")
+		ctx.GasMeter().ConsumeGas(uint64(ms.GetParams(ctx).DelegationCreationBaseGasFeeSat), "delegation creation fee")
 	}
 
 	// 7.all good, construct BTCDelegation and insert BTC delegation

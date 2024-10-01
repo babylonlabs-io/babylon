@@ -5,8 +5,6 @@ import (
 	"math"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/btcstaking"
-	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -14,10 +12,15 @@ import (
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
+
+	"github.com/babylonlabs-io/babylon/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 const (
 	defaultMaxActiveFinalityProviders uint32 = 100
+	// TODO: need to determine a proper default value
+	DelegationCreationBaseGasFeeSat = 1000
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -73,8 +76,9 @@ func DefaultParams() Params {
 		MaxActiveFinalityProviders: defaultMaxActiveFinalityProviders,
 		// The default minimum unbonding time is 0, which effectively defaults to checkpoint
 		// finalization timeout.
-		MinUnbondingTimeBlocks: 0,
-		UnbondingFeeSat:        1000,
+		MinUnbondingTimeBlocks:          0,
+		UnbondingFeeSat:                 1000,
+		DelegationCreationBaseGasFeeSat: DelegationCreationBaseGasFeeSat,
 	}
 }
 

@@ -69,7 +69,11 @@ func (n *NodeConfig) CreateBTCDelegation(
 	require.NoError(n.t, err)
 
 	// get staking tx info hex
-	stakingTxInfoHex := hex.EncodeToString(stakingTx)
+	stakingTxHex := hex.EncodeToString(stakingTx)
+
+	// get inclusion proof hex
+	inclusionProofHex, err := inclusionProof.MarshalHex()
+	require.NoError(n.t, err)
 
 	fpPKHex := fpPK.MarshalHex()
 
@@ -92,7 +96,7 @@ func (n *NodeConfig) CreateBTCDelegation(
 
 	cmd := []string{
 		"babylond", "tx", "btcstaking", "create-btc-delegation",
-		btcPkHex, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
+		btcPkHex, popHex, stakingTxHex, inclusionProofHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
 		fmt.Sprintf("--from=%s", fromWalletName), containers.FlagHome, flagKeyringTest,
 		n.FlagChainID(), "--log_format=json",
 	}
