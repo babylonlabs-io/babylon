@@ -3,30 +3,78 @@ package e2e
 import (
 	"sort"
 
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/babylonlabs-io/babylon/app"
-	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
+	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/config"
+	"github.com/babylonlabs-io/babylon/test/e2e/util"
 )
 
 type SoftwareUpgradeSignetLaunchTestSuite struct {
 	suite.Suite
 
-	configurer *configurer.UpgradeConfigurer
+	configurer            *configurer.UpgradeConfigurer
+	balancesBeforeUpgrade map[string]sdk.Coin
 }
 
 func (s *SoftwareUpgradeSignetLaunchTestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
 	var err error
+	s.balancesBeforeUpgrade = make(map[string]sdk.Coin)
 
 	btcHeaderGenesis, err := app.SignetBtcHeaderGenesis(app.NewTmpBabylonApp().AppCodec())
 	s.NoError(err)
 
-	cfg, err := configurer.NewSoftwareUpgradeConfigurer(s.T(), true, config.UpgradeSignetLaunchFilePath, []*btclighttypes.BTCHeaderInfo{btcHeaderGenesis})
+	tokenDistData, err := v1.LoadTokenDistributionFromData()
+	s.NoError(err)
+
+	balanceToMintByAddr := make(map[string]int64)
+	for _, td := range tokenDistData.TokenDistribution {
+		balanceToMintByAddr[td.AddressSender] += td.Amount
+		balanceToMintByAddr[td.AddressReceiver] += 0
+	}
+
+	// func only runs right before the upgrade proposal is sent
+	preUpgradeFunc := func(chains []*chain.Config) {
+		node := chains[0].NodeConfigs[1]
+		uniqueAddrs := make(map[string]any)
+
+		for addr, amountToMint := range balanceToMintByAddr {
+			uniqueAddrs[addr] = struct{}{}
+			if amountToMint <= 0 {
+				continue
+			}
+
+			amountToSend := sdk.NewCoin(appparams.BaseCoinUnit, sdkmath.NewInt(amountToMint))
+			node.BankSendFromNode(addr, amountToSend.String())
+		}
+
+		// needs to wait for a block to make sure the send tx was processed and
+		// it queries the real balances before upgrade.
+		node.WaitForNextBlock()
+		for addr := range uniqueAddrs {
+			balance, err := node.QueryBalance(addr, appparams.DefaultBondDenom)
+			s.NoError(err)
+
+			s.balancesBeforeUpgrade[addr] = *balance
+		}
+	}
+
+	cfg, err := configurer.NewSoftwareUpgradeConfigurer(
+		s.T(),
+		true,
+		config.UpgradeSignetLaunchFilePath,
+		[]*btclighttypes.BTCHeaderInfo{btcHeaderGenesis},
+		preUpgradeFunc,
+	)
 	s.NoError(err)
 	s.configurer = cfg
 
@@ -116,6 +164,30 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 
 	finalityParamsFromData, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec())
 	s.NoError(err)
-
 	s.EqualValues(finalityParamsFromData, *finalityParams)
+
+	// Verifies the balance differences were really executed
+	tokenDistData, err := v1.LoadTokenDistributionFromData()
+	s.NoError(err)
+
+	balanceDiffByAddr := make(map[string]int64)
+	for _, td := range tokenDistData.TokenDistribution {
+		balanceDiffByAddr[td.AddressSender] -= td.Amount
+		balanceDiffByAddr[td.AddressReceiver] += td.Amount
+	}
+
+	for addr, diff := range balanceDiffByAddr {
+		coinDiff := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(util.Abs(diff)))
+		expectedBalance := s.balancesBeforeUpgrade[addr].Add(coinDiff)
+		if diff < 0 {
+			expectedBalance = s.balancesBeforeUpgrade[addr].Sub(coinDiff)
+		}
+
+		balanceAfterUpgrade, err := n.QueryBalance(addr, appparams.DefaultBondDenom)
+		s.NoError(err)
+
+		expBalance := expectedBalance.String()
+		actBalance := balanceAfterUpgrade.String()
+		s.Equal(expBalance, actBalance, "addr %s has different balances. Expected %s != %s Actual", addr, expBalance, actBalance)
+	}
 }

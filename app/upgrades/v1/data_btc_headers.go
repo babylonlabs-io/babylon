@@ -1,4 +1,4 @@
-package signetlaunch
+package v1
 
 const NewBtcHeadersStr = `{
   "btc_headers": [

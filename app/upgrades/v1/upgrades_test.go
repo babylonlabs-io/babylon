@@ -1,4 +1,4 @@
-package signetlaunch_test
+package v1_test
 
 import (
 	"fmt"
@@ -7,14 +7,18 @@ import (
 
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/core/header"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/test/e2e/util"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/babylonlabs-io/babylon/app"
-	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
+	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
 	"github.com/babylonlabs-io/babylon/x/btclightclient"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
@@ -59,6 +63,16 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	oldHeadersLen := 0
 	oldFPsLen := 0
 
+	tokenDistData, err := v1.LoadTokenDistributionFromData()
+	s.NoError(err)
+
+	balanceDiffByAddr := make(map[string]int64)
+	for _, td := range tokenDistData.TokenDistribution {
+		balanceDiffByAddr[td.AddressSender] -= td.Amount
+		balanceDiffByAddr[td.AddressReceiver] += td.Amount
+	}
+	balancesBeforeUpgrade := make(map[string]sdk.Coin)
+
 	testCases := []struct {
 		msg         string
 		pre_update  func()
@@ -84,6 +98,25 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				s.NoError(err)
 				fModuleParams := s.app.FinalityKeeper.GetParams(s.ctx)
 				s.NotEqualValues(fModuleParams, fParamsFromUpgrade)
+
+				for addr, amountDiff := range balanceDiffByAddr {
+					sdkAddr := sdk.MustAccAddressFromBech32(addr)
+
+					if amountDiff < 0 {
+						// if the amount is lower than zero, it means the addr is going to spend tokens and
+						// could be that the addr does not have enough funds.
+						// For test completeness, mint the coins that the acc is going to spend.
+						coinsToMint := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(util.Abs(amountDiff))))
+						err = s.app.BankKeeper.MintCoins(s.ctx, minttypes.ModuleName, coinsToMint)
+						s.NoError(err)
+
+						err = s.app.BankKeeper.SendCoinsFromModuleToAccount(s.ctx, minttypes.ModuleName, sdkAddr, coinsToMint)
+						s.NoError(err)
+					}
+
+					// update the balances before upgrade only after mint check is done
+					balancesBeforeUpgrade[addr] = s.app.BankKeeper.GetBalance(s.ctx, sdkAddr, appparams.DefaultBondDenom)
+				}
 			},
 			func() {
 				// inject upgrade plan
@@ -149,6 +182,19 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				s.NoError(err)
 				fModuleParams := s.app.FinalityKeeper.GetParams(s.ctx)
 				s.EqualValues(fModuleParams, fParamsFromUpgrade)
+
+				// verifies that all the modified balances match as expected after the upgrade
+				for addr, diff := range balanceDiffByAddr {
+					coinDiff := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(util.Abs(diff)))
+					expectedBalance := balancesBeforeUpgrade[addr].Add(coinDiff)
+					if diff < 0 {
+						expectedBalance = balancesBeforeUpgrade[addr].Sub(coinDiff)
+					}
+
+					sdkAddr := sdk.MustAccAddressFromBech32(addr)
+					balanceAfterUpgrade := s.app.BankKeeper.GetBalance(s.ctx, sdkAddr, appparams.DefaultBondDenom)
+					s.Equal(expectedBalance.String(), balanceAfterUpgrade.String())
+				}
 			},
 		},
 	}

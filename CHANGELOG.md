@@ -41,6 +41,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 * [#107](https://github.com/babylonlabs-io/babylon/pull/107) Implement ADR-027 and
 enable in-protocol minimum gas price
+* [#103](https://github.com/babylonlabs-io/babylon/pull/103) Add token distribution
+to upgrade handler and rename `signet-launch` to `v1`
 * [#55](https://github.com/babylonlabs-io/babylon/pull/55) Remove `x/zoneconcierge`
 module
 

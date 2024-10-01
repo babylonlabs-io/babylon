@@ -1,4 +1,4 @@
-package signetlaunch_test
+package v1_test
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/app"
-	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
+	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
 )
 
 func TestHardCodedFinalityParamsAreValid(t *testing.T) {
