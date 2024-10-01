@@ -19,7 +19,6 @@ import (
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 	"github.com/babylonlabs-io/babylon/test/e2e/containers"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -45,7 +44,8 @@ func (n *NodeConfig) CreateFinalityProvider(walletAddrOrName string, btcPK *bbn.
 func (n *NodeConfig) CreateBTCDelegation(
 	btcPk *bbn.BIP340PubKey,
 	pop *bstypes.ProofOfPossessionBTC,
-	stakingTxInfo *btcctypes.TransactionInfo,
+	stakingTx []byte,
+	inclusionProof *bstypes.InclusionProof,
 	fpPK *bbn.BIP340PubKey,
 	stakingTimeBlocks uint16,
 	stakingValue btcutil.Amount,
@@ -69,8 +69,7 @@ func (n *NodeConfig) CreateBTCDelegation(
 	require.NoError(n.t, err)
 
 	// get staking tx info hex
-	stakingTxInfoHex, err := stakingTxInfo.ToHexStr()
-	require.NoError(n.t, err)
+	stakingTxInfoHex := hex.EncodeToString(stakingTx)
 
 	fpPKHex := fpPK.MarshalHex()
 

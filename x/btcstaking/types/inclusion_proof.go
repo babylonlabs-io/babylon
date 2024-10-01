@@ -26,6 +26,16 @@ func NewInclusionProofFromHex(inclusionProofHex string) (*InclusionProof, error)
 	return &inclusionProof, nil
 }
 
+func NewInclusionProofFromSpvProof(proof *btcctypes.BTCSpvProof) *InclusionProof {
+	return &InclusionProof{
+		Key: &btcctypes.TransactionKey{
+			Index: proof.BtcTransactionIndex,
+			Hash:  proof.ConfirmingBtcHeader.Hash(),
+		},
+		Proof: proof.MerkleNodes,
+	}
+}
+
 func (ip *InclusionProof) ValidateBasic() error {
 	if ip.Key == nil {
 		return fmt.Errorf("key in InclusionProof is nil")

@@ -24,7 +24,6 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
@@ -100,7 +99,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
-	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, params, stakingTimeBlocks, cacheFP)
+	testStakingInfo, stakingTx, inclusionProof, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, params, stakingTimeBlocks, cacheFP)
 
 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
 	s.NoError(err)
@@ -109,7 +108,8 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	nonValidatorNode.CreateBTCDelegation(
 		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
 		pop,
-		stakingTxInfo,
+		stakingTx,
+		inclusionProof,
 		cacheFP.BtcPk,
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
@@ -501,7 +501,7 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
-	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, params, stakingTimeBlocks, cacheFP)
+	testStakingInfo, stakingTx, inclusionProof, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, params, stakingTimeBlocks, cacheFP)
 
 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
 	s.NoError(err)
@@ -510,7 +510,8 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	jsonTx := nonValidatorNode.CreateBTCDelegation(
 		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
 		pop,
-		stakingTxInfo,
+		stakingTx,
+		inclusionProof,
 		cacheFP.BtcPk,
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
@@ -571,7 +572,7 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16) - 5
-	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, btcStkParams, stakingTimeBlocks, cacheFP)
+	testStakingInfo, stakingTx, inclusionProof, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, btcStkParams, stakingTimeBlocks, cacheFP)
 
 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
 	s.NoError(err)
@@ -590,7 +591,8 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 	nonValidatorNode.CreateBTCDelegation(
 		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
 		pop,
-		stakingTxInfo,
+		stakingTx,
+		inclusionProof,
 		cacheFP.BtcPk,
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
@@ -662,7 +664,7 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16) - 2
-	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(node, btcStkParams, stakingTimeBlocks, cacheFP)
+	testStakingInfo, stakingTx, inclusionProof, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(node, btcStkParams, stakingTimeBlocks, cacheFP)
 
 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
 	s.NoError(err)
@@ -724,7 +726,8 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	node.CreateBTCDelegation(
 		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
 		pop,
-		stakingTxInfo,
+		stakingTx,
+		inclusionProof,
 		cacheFP.BtcPk,
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
@@ -898,7 +901,8 @@ func (s *BTCStakingTestSuite) BTCStakingUnbondSlashInfo(
 	fp *bstypes.FinalityProvider,
 ) (
 	testStakingInfo *datagen.TestStakingSlashingInfo,
-	stakingTxInfo *btcctypes.TransactionInfo,
+	stakingTx []byte,
+	txInclusionProof *bstypes.InclusionProof,
 	testUnbondingInfo *datagen.TestUnbondingSlashingInfo,
 	delegatorSig *bbn.BIP340Signature,
 ) {
@@ -935,7 +939,7 @@ func (s *BTCStakingTestSuite) BTCStakingUnbondSlashInfo(
 	for i := 0; i < initialization.BabylonBtcConfirmationPeriod; i++ {
 		node.InsertNewEmptyBtcHeader(r)
 	}
-	stakingTxInfo = btcctypes.NewTransactionInfoFromSpvProof(blockWithStakingTx.SpvProof)
+	inclusionProof := bstypes.NewInclusionProofFromSpvProof(blockWithStakingTx.SpvProof)
 
 	// generate BTC undelegation stuff
 	stkTxHash := testStakingInfo.StakingTx.TxHash()
@@ -967,5 +971,5 @@ func (s *BTCStakingTestSuite) BTCStakingUnbondSlashInfo(
 	)
 	s.NoError(err)
 
-	return testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig
+	return testStakingInfo, blockWithStakingTx.SpvProof.BtcTransaction, inclusionProof, testUnbondingInfo, delegatorSig
 }
