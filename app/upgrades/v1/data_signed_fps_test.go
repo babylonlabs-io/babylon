@@ -8,6 +8,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app"
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
+	"github.com/babylonlabs-io/babylon/app/upgrades/v1/mainnet"
 	btcstktypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -26,7 +27,7 @@ func TestValidateSignatureSignedFPsFromData(t *testing.T) {
 	chainID := "bbn-1"
 
 	ctx := bbnApp.BaseApp.NewContextLegacy(true, tmproto.Header{Height: 1, ChainID: chainID, Time: time.Now().UTC()})
-	buff := bytes.NewBufferString(v1.SignedFPsStr)
+	buff := bytes.NewBufferString(mainnet.SignedFPsStr)
 	simulateTx := false
 
 	var d v1.DataSignedFps

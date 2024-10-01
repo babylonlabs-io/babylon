@@ -1,4 +1,4 @@
-package v1
+package mainnet
 
 const NewBtcHeadersStr = `{
   "btc_headers": [

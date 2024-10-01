@@ -32,12 +32,16 @@ const (
 
 var UpgradeV1Data = []v1.UpdateStringData{
 	{
-		BTCStakingParam: testnetdata.BtcStakingParamStr,
-		FinalityParam:   testnetdata.FinalityParamStr,
+		BTCStakingParam:   testnetdata.BtcStakingParamStr,
+		FinalityParam:     testnetdata.FinalityParamStr,
+		BTCHeaders:        testnetdata.NewBtcHeadersStr,
+		FinalityProviders: testnetdata.SignedFPsStr,
 	},
 	{
-		BTCStakingParam: mainnetdata.BtcStakingParamStr,
-		FinalityParam:   mainnetdata.FinalityParamStr,
+		BTCStakingParam:   mainnetdata.BtcStakingParamStr,
+		FinalityParam:     mainnetdata.FinalityParamStr,
+		BTCHeaders:        mainnetdata.NewBtcHeadersStr,
+		FinalityProviders: mainnetdata.SignedFPsStr,
 	},
 }
 
@@ -155,7 +159,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 					// ensure the btc headers were added
 					allBtcHeaders := s.app.BTCLightClientKeeper.GetMainChainFrom(s.ctx, 0)
 
-					btcHeadersInserted, err := v1.LoadBTCHeadersFromData(s.app.AppCodec())
+					btcHeadersInserted, err := v1.LoadBTCHeadersFromData(s.app.AppCodec(), upgradeData.BTCHeaders)
 					s.NoError(err)
 					lenHeadersInserted := len(btcHeadersInserted)
 
@@ -173,7 +177,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 					s.NoError(err)
 					newFPsLen := len(resp.FinalityProviders)
 
-					fpsInserted, err := v1.LoadSignedFPsFromData(s.app.AppCodec(), s.app.TxConfig().TxJSONDecoder())
+					fpsInserted, err := v1.LoadSignedFPsFromData(s.app.AppCodec(), s.app.TxConfig().TxJSONDecoder(), upgradeData.FinalityProviders)
 					s.NoError(err)
 
 					s.Equal(newFPsLen, oldFPsLen+len(fpsInserted))
