@@ -71,21 +71,30 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
-		// Upgrade the staking parameters as first, as other upgrades depend on it.
-		if err := upgradeBtcStakingParameters(ctx, keepers.EncCfg, &keepers.BTCStakingKeeper); err != nil {
-			panic(err)
-		}
-
-		if err := upgradeFinalityParameters(ctx, keepers.EncCfg, &keepers.FinalityKeeper); err != nil {
-			panic(err)
+		if err := upgradeParameters(ctx, keepers.EncCfg, &keepers.BTCStakingKeeper, &keepers.FinalityKeeper); err != nil {
+			return nil, err
 		}
 
 		if err := upgradeLaunch(ctx, keepers.EncCfg, &keepers.BTCLightClientKeeper, &keepers.BTCStakingKeeper, keepers.BankKeeper); err != nil {
-			panic(err)
+			return nil, err
 		}
 
 		return migrations, nil
 	}
+}
+
+func upgradeParameters(
+	ctx sdk.Context,
+	e *appparams.EncodingConfig,
+	btcK *btcstkkeeper.Keeper,
+	finK *finalitykeeper.Keeper,
+) error {
+	// Upgrade the staking parameters as first, as other upgrades depend on it.
+	if err := upgradeBtcStakingParameters(ctx, e, btcK); err != nil {
+		return err
+	}
+
+	return upgradeFinalityParameters(ctx, e, finK)
 }
 
 func upgradeBtcStakingParameters(
