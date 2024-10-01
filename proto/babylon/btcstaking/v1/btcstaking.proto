@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/staking/v1beta1/staking.proto";
 import "babylon/btcstaking/v1/pop.proto";
+import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 
@@ -195,4 +196,15 @@ message SelectiveSlashingEvidence {
     // the covenant adaptor/Schnorr signature pair. It is the consequence
     // of selective slashing.
     bytes recovered_fp_btc_sk = 3;
-  }
+}
+
+// InclusionProof proves the existence of tx on BTC blockchain
+// including
+// - the position of the tx on BTC blockchain
+// - the Merkle proof that this tx is on the above position
+message InclusionProof {
+    // key is the position (txIdx, blockHash) of this tx on BTC blockchain
+    babylon.btccheckpoint.v1.TransactionKey key = 1;
+    // proof is the Merkle proof that this tx is included in the position in `key`
+    bytes proof = 2;
+}

@@ -19,7 +19,6 @@ import (
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 	"github.com/babylonlabs-io/babylon/test/e2e/containers"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -45,7 +44,8 @@ func (n *NodeConfig) CreateFinalityProvider(walletAddrOrName string, btcPK *bbn.
 func (n *NodeConfig) CreateBTCDelegation(
 	btcPk *bbn.BIP340PubKey,
 	pop *bstypes.ProofOfPossessionBTC,
-	stakingTxInfo *btcctypes.TransactionInfo,
+	stakingTx []byte,
+	inclusionProof *bstypes.InclusionProof,
 	fpPK *bbn.BIP340PubKey,
 	stakingTimeBlocks uint16,
 	stakingValue btcutil.Amount,
@@ -69,7 +69,10 @@ func (n *NodeConfig) CreateBTCDelegation(
 	require.NoError(n.t, err)
 
 	// get staking tx info hex
-	stakingTxInfoHex, err := stakingTxInfo.ToHexStr()
+	stakingTxHex := hex.EncodeToString(stakingTx)
+
+	// get inclusion proof hex
+	inclusionProofHex, err := inclusionProof.MarshalHex()
 	require.NoError(n.t, err)
 
 	fpPKHex := fpPK.MarshalHex()
@@ -93,7 +96,7 @@ func (n *NodeConfig) CreateBTCDelegation(
 
 	cmd := []string{
 		"babylond", "tx", "btcstaking", "create-btc-delegation",
-		btcPkHex, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
+		btcPkHex, popHex, stakingTxHex, inclusionProofHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
 		fmt.Sprintf("--from=%s", fromWalletName), containers.FlagHome, flagKeyringTest,
 		n.FlagChainID(), "--log_format=json",
 	}

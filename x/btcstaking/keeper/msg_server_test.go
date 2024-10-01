@@ -172,7 +172,7 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		h.NoError(err)
 		require.Equal(h.t, msgCreateBTCDel.StakerAddr, actualDel.StakerAddr)
 		require.Equal(h.t, msgCreateBTCDel.Pop, actualDel.Pop)
-		require.Equal(h.t, msgCreateBTCDel.StakingTx.Transaction, actualDel.StakingTx)
+		require.Equal(h.t, msgCreateBTCDel.StakingTx, actualDel.StakingTx)
 		require.Equal(h.t, msgCreateBTCDel.SlashingTx, actualDel.SlashingTx)
 		// ensure the BTC delegation in DB is correctly formatted
 		err = actualDel.ValidateBasic()
@@ -596,9 +596,8 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
 	btcHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlock.Header, stakingMsgTx)
 	btcHeader := btcHeaderWithProof.HeaderBytes
-	txInfo := btcctypes.NewTransactionInfo(
+	txInclusionProof := types.NewInclusionProof(
 		&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()},
-		serializedStakingTx,
 		btcHeaderWithProof.SpvProof.MerkleNodes,
 	)
 
@@ -646,7 +645,8 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
 		StakingValue:                  stakingValue,
-		StakingTx:                     txInfo,
+		StakingTx:                     serializedStakingTx,
+		StakingTxInclusionProof:       txInclusionProof,
 		SlashingTx:                    testStakingInfo.SlashingTx,
 		DelegatorSlashingSig:          delegatorSig,
 		UnbondingTx:                   unbondingTx,

@@ -5,12 +5,13 @@ import (
 	"fmt"
 
 	"cosmossdk.io/store/prefix"
-	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 // AddBTCDelegation adds a BTC delegation post verification to the system, including
@@ -58,14 +59,18 @@ func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) e
 
 	// NOTE: we don't need to record events for pending BTC delegations since these
 	// do not affect voting power distribution
-
-	// record event that the BTC delegation will become unbonded at endHeight-w
-	unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
-		StakingTxHash: stakingTxHash.String(),
-		NewState:      types.BTCDelegationStatus_UNBONDED,
-	})
-	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-	k.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-wValue, unbondedEvent)
+	// NOTE: we only insert unbonded event if EndHeight > 0, indicating that the
+	// delegation is already included on BTC with sufficient confirmations
+	if btcDel.EndHeight > 0 {
+		// record event that the BTC delegation will become unbonded at endHeight-w
+		unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+			StakingTxHash: stakingTxHash.String(),
+			NewState:      types.BTCDelegationStatus_UNBONDED,
+		})
+		// NOTE: we should have verified that EndHeight > btcTip.Height + CheckpointFinalizationTimeout
+		wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+		k.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-wValue, unbondedEvent)
+	}
 
 	return nil
 }

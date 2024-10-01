@@ -6,8 +6,6 @@ import (
 	"strings"
 	"time"
 
-	btcckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -173,43 +171,25 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, err
 	}
 
-	// 6. Check:
-	// - timelock of staking tx
-	// - staking tx is k-deep
-	// - staking tx inclusion proof
-	stakingTxHeader := ms.btclcKeeper.GetHeaderByHash(ctx, parsedMsg.StakingTxProofOfInclusion.HeaderHash)
+	// 6. If the delegation contains the inclusion proof, we need to verify the proof
+	// and set start height and end height
+	var startHeight, endHeight uint64
+	if parsedMsg.StakingTxProofOfInclusion != nil {
+		inclusionHeight, err := ms.VerifyInclusionProofAndGetHeight(
+			ctx,
+			btcutil.NewTx(parsedMsg.StakingTx.Transaction),
+			uint64(parsedMsg.StakingTime),
+			parsedMsg.StakingTxProofOfInclusion)
+		if err != nil {
+			return nil, fmt.Errorf("invalid inclusion proof: %w", err)
+		}
 
-	if stakingTxHeader == nil {
-		return nil, fmt.Errorf("header that includes the staking tx is not found")
-	}
-
-	// no need to do more validations to the btc header as it was already
-	// validated by the btclightclient module
-	btcHeader := stakingTxHeader.Header.ToBlockHeader()
-
-	proofValid := btcckpttypes.VerifyInclusionProof(
-		btcutil.NewTx(parsedMsg.StakingTx.Transaction),
-		&btcHeader.MerkleRoot,
-		parsedMsg.StakingTxProofOfInclusion.Proof,
-		parsedMsg.StakingTxProofOfInclusion.Index,
-	)
-
-	if !proofValid {
-		return nil, types.ErrInvalidStakingTx.Wrapf("not included in the Bitcoin chain")
-	}
-
-	startHeight := stakingTxHeader.Height
-
-	endHeight := stakingTxHeader.Height + uint64(parsedMsg.StakingTime)
-
-	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
-	stakingTxDepth := btcTip.Height - stakingTxHeader.Height
-	if stakingTxDepth < btccParams.BtcConfirmationDepth {
-		return nil, types.ErrInvalidStakingTx.Wrapf("not k-deep: k=%d; depth=%d", btccParams.BtcConfirmationDepth, stakingTxDepth)
-	}
-	// ensure staking tx's timelock has more than w BTC blocks left
-	if btcTip.Height+btccParams.CheckpointFinalizationTimeout >= endHeight {
-		return nil, types.ErrInvalidStakingTx.Wrapf("staking tx's timelock has no more than w(=%d) blocks left", btccParams.CheckpointFinalizationTimeout)
+		startHeight = inclusionHeight
+		endHeight = startHeight + uint64(parsedMsg.StakingTime)
+	} else {
+		// NOTE: here we consume more gas to protect Babylon chain and covenant members against spamming
+		// i.e creating delegation that will never reach BTC
+		ctx.GasMeter().ConsumeGas(vp.Params.DelegationCreationBaseGasFee, "delegation creation fee")
 	}
 
 	// 7.all good, construct BTCDelegation and insert BTC delegation
