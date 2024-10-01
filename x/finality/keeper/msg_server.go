@@ -49,12 +49,14 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinalitySig) (*types.MsgAddFinalitySigResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddFinalitySig)
 
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	gasMeter := ctx.GasMeter()
+	consumedGas := gasMeter.GasConsumed()
+
 	if req.FpBtcPk == nil {
 		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")
 	}
 	fpPK := req.FpBtcPk
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// ensure the finality provider exists
 	fp, err := ms.BTCStakingKeeper.GetFinalityProvider(ctx, req.FpBtcPk.MustMarshal())
@@ -98,7 +100,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	existingSig, err := ms.GetSig(ctx, req.BlockHeight, fpPK)
 	if err == nil && existingSig.Equals(req.FinalitySig) {
 		ms.Logger(ctx).Debug("Received duplicated finiality vote", "block height", req.BlockHeight, "finality provider", req.FpBtcPk)
-		// exactly same vote alreay exists, return success to the provider
+		// exactly same vote already exists, return success to the provider
 		return &types.MsgAddFinalitySigResponse{}, nil
 	}
 
@@ -176,6 +178,10 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		// zero, extracting its BTC SK, and emit an event
 		ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
 	}
+
+	consumedGasAfter := gasMeter.GasConsumed()
+	gasConsumed := consumedGasAfter - consumedGas
+	gasMeter.RefundGas(gasConsumed, "refund gas for submitting finality signatures successfully")
 
 	return &types.MsgAddFinalitySigResponse{}, nil
 }
