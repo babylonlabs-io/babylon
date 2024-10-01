@@ -220,9 +220,13 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				return err
 			}
 
-			inclusionProof, err := types.NewInclusionProofFromHex(args[3])
-			if err != nil {
-				return err
+			var inclusionProof *types.InclusionProof
+			// inclusionProof can be nil if empty argument is provided
+			if len(args[3]) > 0 {
+				inclusionProof, err = types.NewInclusionProofFromHex(args[3])
+				if err != nil {
+					return err
+				}
 			}
 
 			// TODO: Support multiple finality providers

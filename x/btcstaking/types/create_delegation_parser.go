@@ -107,7 +107,8 @@ func NewParsedProofOfInclusion(
 	ip *InclusionProof,
 ) (*ParsedProofOfInclusion, error) {
 	if ip == nil {
-		return nil, fmt.Errorf("cannot parse nil *InclusionProof")
+		// this is allowed
+		return nil, nil
 	}
 
 	if err := ip.ValidateBasic(); err != nil {
@@ -122,8 +123,10 @@ func NewParsedProofOfInclusion(
 }
 
 type ParsedCreateDelegationMessage struct {
-	StakerAddress              sdk.AccAddress
-	StakingTx                  *ParsedBtcTransaction
+	StakerAddress sdk.AccAddress
+	StakingTx     *ParsedBtcTransaction
+	// StakingTxInclusionProof is optional is and it is up to the caller to verify
+	// whether it is present or not
 	StakingTxProofOfInclusion  *ParsedProofOfInclusion
 	StakingTime                uint16
 	StakingValue               btcutil.Amount
@@ -148,6 +151,7 @@ func ParseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDel
 		return nil, fmt.Errorf("cannot parse nil MsgCreateBTCDelegation")
 	}
 
+	// NOTE: stakingTxProofOfInclusion could be nil as we allow msg.StakingTxInclusionProof to be nil
 	stakingTxProofOfInclusion, err := NewParsedProofOfInclusion(msg.StakingTxInclusionProof)
 
 	if err != nil {

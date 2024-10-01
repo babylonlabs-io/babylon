@@ -23,5 +23,5 @@ const BtcStakingParamStr = `
   "unbonding_fee_sat": "1000",
   "min_commission_rate": "0.03",
   "max_active_finality_providers": 100,
-  "delegation_creation_base_gas_fee_sat": 1000
+  "delegation_creation_base_gas_fee": 1000
 }`

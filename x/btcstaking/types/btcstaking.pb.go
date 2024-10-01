@@ -745,6 +745,10 @@ func (m *SelectiveSlashingEvidence) GetRecoveredFpBtcSk() []byte {
 	return nil
 }
 
+// InclusionProof proves the existence of tx on BTC blockchain
+// including
+// - the position of the tx on BTC blockchain
+// - the Merkle proof that this tx is on the above position
 type InclusionProof struct {
 	// key is the position (txIdx, blockHash) of this tx on BTC blockchain
 	Key *types1.TransactionKey `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`

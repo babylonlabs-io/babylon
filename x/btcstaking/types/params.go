@@ -20,7 +20,7 @@ import (
 const (
 	defaultMaxActiveFinalityProviders uint32 = 100
 	// TODO: need to determine a proper default value
-	DelegationCreationBaseGasFeeSat = 1000
+	defaultDelegationCreationBaseGasFee = 1000
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -76,9 +76,9 @@ func DefaultParams() Params {
 		MaxActiveFinalityProviders: defaultMaxActiveFinalityProviders,
 		// The default minimum unbonding time is 0, which effectively defaults to checkpoint
 		// finalization timeout.
-		MinUnbondingTimeBlocks:          0,
-		UnbondingFeeSat:                 1000,
-		DelegationCreationBaseGasFeeSat: DelegationCreationBaseGasFeeSat,
+		MinUnbondingTimeBlocks:       0,
+		UnbondingFeeSat:              1000,
+		DelegationCreationBaseGasFee: defaultDelegationCreationBaseGasFee,
 	}
 }
 
