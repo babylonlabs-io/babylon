@@ -18,7 +18,10 @@ RUN LEDGER_ENABLED=false LINK_STATICALLY=false E2E_SCRIPT_NAME=${E2E_SCRIPT_NAME
 
 FROM debian:bookworm-slim AS wasm-link
 
-RUN apt-get update && apt-get install -y wget bash
+
+# Create a user
+RUN addgroup --gid 1137 --system babylon && adduser --uid 1137 --gid 1137 --system --home /home/babylon babylon
+RUN apt-get update && apt-get install -y bash curl jq wget
 
 # Label should match your github repo
 LABEL org.opencontainers.image.source="https://github.com/babylonlabs-io/babylond:${VERSION}"
