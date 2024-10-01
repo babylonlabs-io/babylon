@@ -79,6 +79,13 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=babylon \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
+# Handles the inclusion of upgrade in binary
+ifeq (testnet,$(findstring testnet,$(BABYLON_BUILD_OPTIONS)))
+  BUILD_TAGS += testnet
+else
+  BUILD_TAGS += mainnet
+endif
+
 # DB backend selection
 ifeq (cleveldb,$(findstring cleveldb,$(BABYLON_BUILD_OPTIONS)))
   ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=cleveldb
