@@ -133,7 +133,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	oldFPsLen := 0 // it should not have any FP
 	fpsFromNode := n.QueryFinalityProviders()
 
-	fpsInserted, err := v1.LoadSignedFPsFromData(bbnApp.AppCodec(), bbnApp.TxConfig().TxJSONDecoder(), testnet.FinalityParamStr)
+	fpsInserted, err := v1.LoadSignedFPsFromData(bbnApp.AppCodec(), bbnApp.TxConfig().TxJSONDecoder(), testnet.SignedFPsStr)
 	s.NoError(err)
 	s.Equal(len(fpsInserted), len(fpsFromNode)+oldFPsLen)
 
