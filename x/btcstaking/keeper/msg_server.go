@@ -244,7 +244,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	}
 
 	// 2. check if the delegation already has inclusion proof
-	if btcDel.StartHeight > 0 {
+	if btcDel.HasInclusionProof() {
 		return nil, fmt.Errorf("the delegation %s already has inclusion proof", req.StakingTxHash)
 	}
 
@@ -271,7 +271,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	inclusionHeight, err := ms.VerifyInclusionProofAndGetHeight(
 		ctx,
 		btcutil.NewTx(stakingTx),
-		btcDel.StakingTime,
+		uint64(btcDel.StakingTime),
 		parsedInclusionProof)
 	if err != nil {
 		return nil, fmt.Errorf("invalid inclusion proof: %w", err)
@@ -279,7 +279,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 
 	// 6. set start height and end height and save it to db
 	btcDel.StartHeight = inclusionHeight
-	btcDel.EndHeight = btcDel.StartHeight + btcDel.StakingTime
+	btcDel.EndHeight = btcDel.StartHeight + uint64(btcDel.StakingTime)
 	ms.setBTCDelegation(ctx, btcDel)
 
 	// 7. emit activation and expiry event
