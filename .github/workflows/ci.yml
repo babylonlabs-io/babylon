@@ -159,7 +159,7 @@ jobs:
         run: |
           make test-e2e-cache-btc-staking
 
-  e2e-run-btc-staking:
+  e2e-run-btc-staking-pre-approval:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
     steps:
