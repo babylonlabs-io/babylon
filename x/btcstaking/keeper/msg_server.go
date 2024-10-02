@@ -490,8 +490,15 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	// ensure the BTC delegation with the given staking tx hash is active
 	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
 	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-	if btcDel.GetStatus(btcTip.Height, wValue, bsParams.CovenantQuorum) != types.BTCDelegationStatus_ACTIVE {
-		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an inactive BTC delegation")
+
+	btcDelStatus := btcDel.GetStatus(btcTip.Height, wValue, bsParams.CovenantQuorum)
+
+	if btcDelStatus == types.BTCDelegationStatus_PENDING {
+		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an pending BTC delegation")
+	}
+
+	if btcDelStatus == types.BTCDelegationStatus_UNBONDED {
+		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an unbonded BTC delegation")
 	}
 
 	// verify the signature on unbonding tx from delegator

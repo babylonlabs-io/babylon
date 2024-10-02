@@ -94,22 +94,30 @@ func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64, covenantQuorum uin
 		return BTCDelegationStatus_UNBONDED
 	}
 
+	// we are still pending covenant quorum
+	if !d.HasCovenantQuorums(covenantQuorum) {
+		return BTCDelegationStatus_PENDING
+	}
+
+	// we are still pending activation by inclusion proof
+	if !d.HasInclusionProof() {
+		// staking tx has not been included in a block yet
+		return BTCDelegationStatus_VERIFIED
+	}
+
+	// At this point we already have covenant quorum and inclusion proof,
+	// we can check the status based on the BTC height
 	if btcHeight < d.StartHeight || btcHeight+w > d.EndHeight {
 		// staking tx's timelock has not begun, or is less than w BTC
 		// blocks left, or is expired
 		return BTCDelegationStatus_UNBONDED
 	}
 
-	// at this point, BTC delegation has an active timelock, and Babylon is not
-	// aware of unbonding tx with delegator's signature
-	if d.HasCovenantQuorums(covenantQuorum) {
-		// this BTC delegation receives covenant quorums on
-		// {slashing/unbonding/unbondingslashing} txs, thus is active
-		return BTCDelegationStatus_ACTIVE
-	}
-
-	// no covenant quorum yet, pending
-	return BTCDelegationStatus_PENDING
+	// - we have covenant quorum
+	// - we have inclusion proof
+	// - we are not unbonded early
+	// - we are not expired
+	return BTCDelegationStatus_ACTIVE
 }
 
 // VotingPower returns the voting power of the BTC delegation at a given BTC height

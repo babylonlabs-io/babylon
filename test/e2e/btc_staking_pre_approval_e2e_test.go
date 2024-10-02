@@ -28,15 +28,16 @@ import (
 type BTCStakingPreApprovalTestSuite struct {
 	suite.Suite
 
-	r              *rand.Rand
-	net            *chaincfg.Params
-	fptBTCSK       *btcec.PrivateKey
-	delBTCSK       *btcec.PrivateKey
-	cacheFP        *bstypes.FinalityProvider
-	covenantSKs    []*btcec.PrivateKey
-	covenantQuorum uint32
-	stakingValue   int64
-	configurer     configurer.Configurer
+	r                    *rand.Rand
+	net                  *chaincfg.Params
+	fptBTCSK             *btcec.PrivateKey
+	delBTCSK             *btcec.PrivateKey
+	cacheFP              *bstypes.FinalityProvider
+	cachedInclusionProof *bstypes.InclusionProof
+	covenantSKs          []*btcec.PrivateKey
+	covenantQuorum       uint32
+	stakingValue         int64
+	configurer           configurer.Configurer
 }
 
 func (s *BTCStakingPreApprovalTestSuite) SetupSuite() {
@@ -101,6 +102,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegatio
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
 	testStakingInfo, stakingTx, inclusionProof, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, params, stakingTimeBlocks, s.cacheFP)
+	s.cachedInclusionProof = inclusionProof
 
 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(s.delBTCSK)
 	s.NoError(err)
@@ -110,7 +112,8 @@ func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegatio
 		bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey()),
 		pop,
 		stakingTx,
-		inclusionProof,
+		// We are passing `nil` as inclusion proof will be provided in separete tx
+		nil,
 		s.cacheFP.BtcPk,
 		stakingTimeBlocks,
 		btcutil.Amount(s.stakingValue),
@@ -245,7 +248,38 @@ func (s *BTCStakingPreApprovalTestSuite) Test2SubmitCovenantSignature() {
 	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum))
 }
 
-func (s *BTCStakingPreApprovalTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignature() {
+func (s *BTCStakingPreApprovalTestSuite) Test3SendStakingTransctionInclusionProof() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	verifiedDelegations := nonValidatorNode.QueryVerifiedDelegations()
+	s.Len(verifiedDelegations, 1)
+
+	btcDel, err := ParseRespBTCDelToBTCDel(verifiedDelegations[0])
+	s.NoError(err)
+	s.True(btcDel.HasCovenantQuorums(s.covenantQuorum))
+
+	// staking tx hash
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(btcDel.StakingTx)
+	s.NoError(err)
+	stakingTxHash := stakingMsgTx.TxHash()
+
+	nonValidatorNode.AddBTCDelegationInclusionProof(
+		&stakingTxHash,
+		s.cachedInclusionProof,
+	)
+
+	nonValidatorNode.WaitForNextBlock()
+	nonValidatorNode.WaitForNextBlock()
+
+	activeBTCDelegations := nonValidatorNode.QueryActiveDelegations()
+	s.Len(activeBTCDelegations, 1)
+	nonValidatorNode.WaitForNextBlock()
+}
+
+func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFinalitySignature() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
@@ -466,7 +500,6 @@ func (s *BTCStakingPreApprovalTestSuite) Test5SubmitStakerUnbonding() {
 	s.Equal(stakingTxHash, unbondDel.MustGetStakingTxHash())
 }
 
-// TODO: Remove duplication
 func (s *BTCStakingPreApprovalTestSuite) BTCStakingUnbondSlashInfo(
 	node *chain.NodeConfig,
 	params *bstypes.Params,
