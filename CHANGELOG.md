@@ -37,8 +37,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### State Machine Breaking
+
+* [#107](https://github.com/babylonlabs-io/babylon/pull/107) Implement ADR-027 and
+enable in-protocol minimum gas price
+* [#103](https://github.com/babylonlabs-io/babylon/pull/103) Add token distribution
+to upgrade handler and rename `signet-launch` to `v1`
+* [#55](https://github.com/babylonlabs-io/babylon/pull/55) Remove `x/zoneconcierge`
+module
+
+### Bug fixes
+
+### Misc Improvements
+
+* [#106](https://github.com/babylonlabs-io/babylon/pull/106) Add CLI command for
+  querying signing info of finality providers.
+
+## v0.10.1
+
 ### Bug Fixes
 
+* [#91](https://github.com/babylonlabs-io/babylon/pull/91) fix testnet command
+by add ibc default gen state and min gas price specification of `1ubbn`
 * [#93](https://github.com/babylonlabs-io/babylon/pull/93) fix genesis epoch
   initialization.
 

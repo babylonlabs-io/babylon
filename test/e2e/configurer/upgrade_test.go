@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/babylonlabs-io/babylon/app"
-	v1 "github.com/babylonlabs-io/babylon/app/upgrades/signetlaunch"
+	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/config"
 	"github.com/stretchr/testify/require"
 )

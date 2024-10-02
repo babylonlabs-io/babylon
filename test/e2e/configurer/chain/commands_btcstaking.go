@@ -101,9 +101,15 @@ func (n *NodeConfig) CreateBTCDelegation(
 		n.FlagChainID(), "--log_format=json",
 	}
 
+	// gas price
+	cmd = append(cmd, "--gas-prices=0.002ubbn")
+
 	if generateOnly {
 		cmd = append(cmd, "--generate-only")
 	} else {
+		// gas
+		cmd = append(cmd, "--gas=auto", "--gas-adjustment=1.3")
+		// broadcast stuff
 		cmd = append(cmd, "-b=sync", "--yes")
 	}
 
@@ -140,7 +146,7 @@ func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash stri
 	// used key
 	cmd = append(cmd, "--from=val")
 	// gas
-	cmd = append(cmd, "--gas=auto", "--gas-prices=1ubbn", "--gas-adjustment=1.3")
+	cmd = append(cmd, "--gas=auto", "--gas-adjustment=1.3")
 
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)

@@ -15,6 +15,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonlabs-io/babylon/app/params"
@@ -554,7 +555,6 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 	granteeStakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.KeysAdd(wGratee))
 
 	feePayerBalanceBeforeBTCDel := sdk.NewCoin(params.DefaultBondDenom, sdkmath.NewInt(100000))
-	fees := sdk.NewCoin(params.DefaultBondDenom, sdkmath.NewInt(50000))
 
 	// fund the granter
 	nonValidatorNode.BankSendFromNode(feePayerAddr.String(), feePayerBalanceBeforeBTCDel.String())
@@ -606,7 +606,6 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 		wGratee,
 		false,
 		fmt.Sprintf("--fee-granter=%s", feePayerAddr.String()),
-		fmt.Sprintf("--fees=%s", fees.String()),
 	)
 
 	// wait for a block so that above txs take effect
@@ -623,10 +622,10 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 	s.NoError(err)
 	s.True(stakerBalances.IsZero())
 
-	// the fee payer should have the (feePayerBalanceBeforeBTCDel - fee) == currentBalance
+	// the fee payer should have the feePayerBalanceBeforeBTCDel > currentBalance
 	feePayerBalances, err := nonValidatorNode.QueryBalances(feePayerAddr.String())
 	s.NoError(err)
-	s.Equal(feePayerBalanceBeforeBTCDel.Sub(fees).String(), feePayerBalances.String())
+	s.True(feePayerBalanceBeforeBTCDel.Amount.GT(feePayerBalances.AmountOf(appparams.BaseCoinUnit)))
 }
 
 // Test8BTCDelegationFeeGrantTyped is an end-to-end test to create a BTC delegation
@@ -741,7 +740,6 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 		wGratee,
 		false,
 		fmt.Sprintf("--fee-granter=%s", feePayerAddr.String()),
-		fmt.Sprintf("--fees=%s", fees.String()),
 	)
 
 	// wait for a block so that above txs take effect
@@ -758,10 +756,10 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	s.NoError(err)
 	s.Equal(stakerBalance.String(), stakerBalances.String())
 
-	// the fee payer should have the (feePayerBalanceBeforeBTCDel - fee) == currentBalance
+	// the fee payer should have the feePayerBalanceBeforeBTCDel > currentBalance
 	feePayerBalances, err := node.QueryBalances(feePayerAddr.String())
 	s.NoError(err)
-	s.Equal(feePayerBalanceBeforeBTCDel.Sub(fees).String(), feePayerBalances.String())
+	s.True(feePayerBalanceBeforeBTCDel.Amount.GT(feePayerBalances.AmountOf(appparams.BaseCoinUnit)))
 }
 
 // ParseRespsBTCDelToBTCDel parses an BTC delegation response to BTC Delegation
@@ -870,6 +868,9 @@ func (s *BTCStakingTestSuite) CreateNodeFP(node *chain.NodeConfig) (newFP *bstyp
 
 	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, nodeAddr)
 	s.NoError(err)
+	// use a higher commission to ensure the reward is more than tx fee of a finality sig
+	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
+	newFP.Commission = &commission
 	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission)
 
 	// wait for a block so that above txs take effect

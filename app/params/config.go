@@ -20,6 +20,18 @@ const (
 	Bech32PrefixAccAddr = "bbn"
 )
 
+// taken from https://github.com/celestiaorg/celestia-app/pull/2985
+const (
+	// DefaultMinGasPrice is the default min gas price that gets set in the app.toml file.
+	// The min gas price acts as a filter. Transactions below that limit will not pass
+	// a nodes `CheckTx` and thus not be proposed by that node.
+	DefaultMinGasPrice = 0.002
+
+	// GlobalMinGasPrice is used in the AnteHandler to ensure
+	// that all transactions have a gas price greater than or equal to this value.
+	GlobalMinGasPrice = DefaultMinGasPrice
+)
+
 var (
 	// Bech32PrefixAccPub defines the Bech32 prefix of an account's public key.
 	Bech32PrefixAccPub = Bech32PrefixAccAddr + "pub"

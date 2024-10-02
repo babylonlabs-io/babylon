@@ -11,8 +11,6 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 )
 
 type Configurer interface {
@@ -103,16 +101,6 @@ var (
 			IsValidator:        false,
 		},
 	}
-	ibcConfigChainA = &ibctesting.ChannelConfig{
-		PortID:  zctypes.PortID,
-		Order:   zctypes.Ordering,
-		Version: zctypes.Version,
-	}
-	ibcConfigChainB = &ibctesting.ChannelConfig{
-		PortID:  zctypes.PortID, // Will be replaced by the contract address in Phase 2 tests
-		Order:   zctypes.Ordering,
-		Version: zctypes.Version,
-	}
 )
 
 const MaxIndetifierSize = 10
@@ -129,8 +117,8 @@ func NewBTCTimestampingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configu
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), ibcConfigChainA),
-			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), ibcConfigChainB),
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
+			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), nil),
 		},
 		withIBC(baseSetup), // base set up with IBC
 		containerManager,
@@ -146,8 +134,8 @@ func NewIBCTransferConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer,
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), ibcConfigChainA),
-			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), ibcConfigChainB),
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
+			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), nil),
 		},
 		withIBCTransferChannel(baseSetup), // base set up with IBC
 		containerManager,
@@ -164,8 +152,8 @@ func NewBTCTimestampingPhase2Configurer(t *testing.T, isDebugLogEnabled bool) (C
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), ibcConfigChainA),
-			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), ibcConfigChainB),
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
+			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), nil),
 		},
 		withPhase2IBC(baseSetup), // IBC setup (requires contract address)
 		containerManager,
@@ -182,8 +170,8 @@ func NewBTCTimestampingPhase2RlyConfigurer(t *testing.T, isDebugLogEnabled bool)
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), ibcConfigChainA),
-			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), ibcConfigChainB),
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
+			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), nil),
 		},
 		withPhase2RlyIBC(baseSetup), // IBC setup with wasmd and Go relayer
 		containerManager,
@@ -209,7 +197,7 @@ func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, 
 }
 
 // NewSoftwareUpgradeConfigurer returns a new Configurer for Software Upgrade testing
-func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, btcHeaders []*btclighttypes.BTCHeaderInfo) (*UpgradeConfigurer, error) {
+func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, btcHeaders []*btclighttypes.BTCHeaderInfo, preUpgradeFunc PreUpgradeFunc) (*UpgradeConfigurer, error) {
 	identifier := identifierName(t)
 	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, true)
 	if err != nil {
@@ -230,6 +218,7 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 		containerManager,
 		upgradePath,
 		0,
+		preUpgradeFunc,
 	), nil
 }
 

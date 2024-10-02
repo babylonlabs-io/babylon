@@ -28,7 +28,6 @@ import (
 	ct "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	etypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	mtypes "github.com/babylonlabs-io/babylon/x/monitor/types"
-	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]byte, error) {
@@ -100,6 +99,22 @@ func (n *NodeConfig) QueryBalances(address string) (sdk.Coins, error) {
 		return sdk.Coins{}, err
 	}
 	return balancesResp.GetBalances(), nil
+}
+
+// QueryBalance returns balance of some address.
+func (n *NodeConfig) QueryBalance(address, denom string) (*sdk.Coin, error) {
+	path := fmt.Sprintf("cosmos/bank/v1beta1/balances/%s/by_denom", address)
+
+	params := url.Values{}
+	params.Set("denom", denom)
+	bz, err := n.QueryGRPCGateway(path, params)
+	require.NoError(n.t, err)
+
+	var balancesResp banktypes.QueryBalanceResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &balancesResp); err != nil {
+		return nil, err
+	}
+	return balancesResp.GetBalance(), nil
 }
 
 func (n *NodeConfig) QuerySupplyOf(denom string) (sdkmath.Int, error) {
@@ -244,85 +259,6 @@ func (n *NodeConfig) QueryHeaderDepth(hash string) (uint64, error) {
 	}
 
 	return blcResponse.Depth, nil
-}
-
-func (n *NodeConfig) QueryListHeaders(consumerID string, pagination *query.PageRequest) (*zctypes.QueryListHeadersResponse, error) {
-	queryParams := url.Values{}
-	if pagination != nil {
-		queryParams.Set("pagination.key", base64.URLEncoding.EncodeToString(pagination.Key))
-		queryParams.Set("pagination.limit", strconv.Itoa(int(pagination.Limit)))
-	}
-
-	path := fmt.Sprintf("babylon/zoneconcierge/v1/headers/%s", consumerID)
-	bz, err := n.QueryGRPCGateway(path, queryParams)
-	require.NoError(n.t, err)
-
-	var resp zctypes.QueryListHeadersResponse
-	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
-		return nil, err
-	}
-
-	return &resp, nil
-}
-
-func (n *NodeConfig) QueryFinalizedChainsInfo(consumerIDs []string) ([]*zctypes.FinalizedChainInfo, error) {
-	queryParams := url.Values{}
-	for _, consumerID := range consumerIDs {
-		queryParams.Add("consumer_ids", consumerID)
-	}
-
-	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/finalized_chains_info", queryParams)
-	require.NoError(n.t, err)
-
-	var resp zctypes.QueryFinalizedChainsInfoResponse
-	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
-		return nil, err
-	}
-
-	return resp.FinalizedChainsInfo, nil
-}
-
-func (n *NodeConfig) QueryEpochChainsInfo(epochNum uint64, consumerIDs []string) ([]*zctypes.ChainInfo, error) {
-	queryParams := url.Values{}
-	for _, consumerID := range consumerIDs {
-		queryParams.Add("epoch_num", fmt.Sprintf("%d", epochNum))
-		queryParams.Add("consumer_ids", consumerID)
-	}
-
-	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/epoch_chains_info", queryParams)
-	require.NoError(n.t, err)
-
-	var resp zctypes.QueryEpochChainsInfoResponse
-	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
-		return nil, err
-	}
-
-	return resp.ChainsInfo, nil
-}
-
-func (n *NodeConfig) QueryChains() (*[]string, error) {
-	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/chains", url.Values{})
-	require.NoError(n.t, err)
-	var chainsResponse zctypes.QueryChainListResponse
-	if err := util.Cdc.UnmarshalJSON(bz, &chainsResponse); err != nil {
-		return nil, err
-	}
-	return &chainsResponse.ConsumerIds, nil
-}
-
-func (n *NodeConfig) QueryChainsInfo(consumerIDs []string) ([]*zctypes.ChainInfo, error) {
-	queryParams := url.Values{}
-	for _, consumerId := range consumerIDs {
-		queryParams.Add("consumer_ids", consumerId)
-	}
-
-	bz, err := n.QueryGRPCGateway("/babylon/zoneconcierge/v1/chains_info", queryParams)
-	require.NoError(n.t, err)
-	var resp zctypes.QueryChainsInfoResponse
-	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
-		return nil, err
-	}
-	return resp.ChainsInfo, nil
 }
 
 func (n *NodeConfig) QueryCurrentEpoch() (uint64, error) {
