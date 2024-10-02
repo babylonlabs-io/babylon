@@ -2,16 +2,16 @@ package types
 
 import (
 	"fmt"
-	math "math"
+	"math"
 
-	"github.com/babylonlabs-io/babylon/btcstaking"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	btcckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 type ParsedPublicKey struct {
@@ -104,26 +104,29 @@ type ParsedProofOfInclusion struct {
 }
 
 func NewParsedProofOfInclusion(
-	info *btcckpttypes.TransactionInfo,
+	ip *InclusionProof,
 ) (*ParsedProofOfInclusion, error) {
-	if info == nil {
-		return nil, fmt.Errorf("cannot parse nil *btcckpttypes.TransactionInfo")
+	if ip == nil {
+		// this is allowed
+		return nil, nil
 	}
 
-	if err := info.ValidateBasic(); err != nil {
+	if err := ip.ValidateBasic(); err != nil {
 		return nil, err
 	}
 
 	return &ParsedProofOfInclusion{
-		HeaderHash: info.Key.Hash,
-		Proof:      info.Proof,
-		Index:      info.Key.Index,
+		HeaderHash: ip.Key.Hash,
+		Proof:      ip.Proof,
+		Index:      ip.Key.Index,
 	}, nil
 }
 
 type ParsedCreateDelegationMessage struct {
-	StakerAddress              sdk.AccAddress
-	StakingTx                  *ParsedBtcTransaction
+	StakerAddress sdk.AccAddress
+	StakingTx     *ParsedBtcTransaction
+	// StakingTxInclusionProof is optional is and it is up to the caller to verify
+	// whether it is present or not
 	StakingTxProofOfInclusion  *ParsedProofOfInclusion
 	StakingTime                uint16
 	StakingValue               btcutil.Amount
@@ -148,14 +151,15 @@ func ParseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDel
 		return nil, fmt.Errorf("cannot parse nil MsgCreateBTCDelegation")
 	}
 
-	stakingTxProofOfInclusion, err := NewParsedProofOfInclusion(msg.StakingTx)
+	// NOTE: stakingTxProofOfInclusion could be nil as we allow msg.StakingTxInclusionProof to be nil
+	stakingTxProofOfInclusion, err := NewParsedProofOfInclusion(msg.StakingTxInclusionProof)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse staking tx proof of inclusion: %v", err)
 	}
 
 	// 1. Parse all transactions
-	stakingTx, err := NewBtcTransaction(msg.StakingTx.Transaction)
+	stakingTx, err := NewBtcTransaction(msg.StakingTx)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to deserialize staking tx: %v", err)

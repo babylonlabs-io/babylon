@@ -55,6 +55,8 @@ message Params {
   ];
   // max_active_finality_providers is the maximum number of active finality providers in the BTC staking protocol
   uint32 max_active_finality_providers = 13;
+  // base gas fee for delegation creation
+  uint64 delegation_creation_base_gas_fee = 14;
 }
 
 // StoredParams attach information about the version of stored parameters

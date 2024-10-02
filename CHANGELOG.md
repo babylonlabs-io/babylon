@@ -45,6 +45,8 @@ enable in-protocol minimum gas price
 to upgrade handler and rename `signet-launch` to `v1`
 * [#55](https://github.com/babylonlabs-io/babylon/pull/55) Remove `x/zoneconcierge`
 module
+* [#117](https://github.com/babylonlabs-io/babylon/pull/117) Add support for
+pre-approval flow (ADR-026)
 
 ### Bug fixes
 
