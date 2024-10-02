@@ -34,15 +34,12 @@ func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, er
 	}
 }
 
-func (d *BTCDelegation) GetStakingTime() uint16 {
-	diff := d.EndHeight - d.StartHeight
-
-	if diff > math.MaxUint16 {
-		// In valid delegation, EndHeight is always greater than StartHeight and it is always uint16 value
+func (d *BTCDelegation) MustGetValidStakingTime() uint16 {
+	if d.StakingTime > math.MaxUint16 {
 		panic("invalid delegation in database")
 	}
 
-	return uint16(diff)
+	return uint16(d.StakingTime)
 }
 
 func (d *BTCDelegation) HasInclusionProof() bool {
@@ -238,7 +235,7 @@ func (d *BTCDelegation) GetStakingInfo(bsParams *Params, btcNet *chaincfg.Params
 		fpBtcPkList,
 		covenantBtcPkList,
 		bsParams.CovenantQuorum,
-		d.GetStakingTime(),
+		d.MustGetValidStakingTime(),
 		btcutil.Amount(d.TotalSat),
 		btcNet,
 	)
