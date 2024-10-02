@@ -260,7 +260,6 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	}
 
 	// 5. verify inclusion proof
-	// TODO we need to store staking time because start height or end height could be zero
 	parsedInclusionProof, err := types.NewParsedProofOfInclusion(req.StakingTxInclusionProof)
 	if err != nil {
 		return nil, err
@@ -273,7 +272,9 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 		ctx,
 		btcutil.NewTx(stakingTx),
 		uint64(btcDel.StakingTime),
-		parsedInclusionProof)
+		parsedInclusionProof,
+	)
+
 	if err != nil {
 		return nil, fmt.Errorf("invalid inclusion proof: %w", err)
 	}
