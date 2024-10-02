@@ -7,13 +7,13 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/cosmos/cosmos-sdk/telemetry"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
+	storetypes "cosmossdk.io/store/types"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
+	"github.com/cosmos/cosmos-sdk/telemetry"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 type msgServer struct {
@@ -50,6 +50,23 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddFinalitySig)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	refundable := false
+
+	gasMeter := ctx.GasMeter()
+	cacheGasMeter := storetypes.NewInfiniteGasMeter()
+	ctx = ctx.WithGasMeter(cacheGasMeter)
+
+	defer func() {
+		// reset gas meter
+		ctx = ctx.WithGasMeter(gasMeter)
+		// consume gas if not refundable
+		// NOTE: the gas only includes the cost during the message handler,
+		// but not the cost during the AnteHandlers
+		if !refundable {
+			gasMeter.ConsumeGas(cacheGasMeter.GasConsumed(), "consume gas for non-refundable finality signature")
+		}
+	}()
 
 	if req.FpBtcPk == nil {
 		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")
@@ -177,8 +194,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
 	}
 
-	gasMeter := ctx.GasMeter()
-	gasMeter.RefundGas(gasMeter.GasConsumed(), "refund gas for submitting finality signatures successfully")
+	refundable = true
 
 	return &types.MsgAddFinalitySigResponse{}, nil
 }
