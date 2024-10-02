@@ -200,6 +200,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		BtcPk:            parsedMsg.StakerPK.BIP340PubKey,
 		Pop:              parsedMsg.ParsedPop,
 		FpBtcPkList:      parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat,
+		StakingTime:      uint32(parsedMsg.StakingTime),
 		StartHeight:      startHeight,
 		EndHeight:        endHeight,
 		TotalSat:         uint64(parsedMsg.StakingValue),
