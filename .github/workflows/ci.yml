@@ -196,6 +196,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: 1.21
-      - name: Run e2e TestSoftwareUpgradeSignetLaunchTestSuite
+      - name: Run e2e TestSoftwareUpgradeV1TestnetTestSuite
         run: |
-          sudo make test-e2e-cache-upgrade-signet
+          sudo make test-e2e-cache-upgrade-v1
