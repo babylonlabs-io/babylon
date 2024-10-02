@@ -26,7 +26,10 @@ RUN LEDGER_ENABLED=$LEDGER_ENABLED \
 
 FROM debian:bookworm-slim AS wasm-link
 
-RUN apt-get update && apt-get install -y wget bash jq
+# Create a user
+RUN addgroup --gid 1137 --system babylon && adduser --uid 1137 --gid 1137 --system --home /home/babylon babylon
+
+RUN apt-get update && apt-get install -y curl wget bash jq
 
 # Label should match your github repo
 LABEL org.opencontainers.image.source="https://github.com/babylonlabs-io/babylond:${VERSION}"
@@ -43,3 +46,9 @@ RUN WASMVM_VERSION=$(grep github.com/CosmWasm/wasmvm /tmp/go.mod | cut -d' ' -f2
 RUN rm -f /tmp/go.mod
 
 COPY --from=build-env /go/src/github.com/babylonlabs-io/babylon/build/babylond /bin/babylond
+
+# Set home directory and user
+WORKDIR /home/babylon
+RUN chown -R babylon /home/babylon
+RUN chmod g+s /home/babylon
+USER babylon
