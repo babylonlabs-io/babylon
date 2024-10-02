@@ -103,6 +103,8 @@ func GenRandomBTCDelegation(
 	}
 	staker := GenRandomAccount()
 
+	stakingTime := uint16(endHeight - startHeight)
+
 	// staking/slashing tx
 	stakingSlashingInfo := GenBTCStakingSlashingInfo(
 		r,
@@ -112,7 +114,7 @@ func GenRandomBTCDelegation(
 		fpPKs,
 		covenantPks,
 		covenantQuorum,
-		uint16(endHeight-startHeight),
+		stakingTime,
 		int64(totalSat),
 		slashingPkScript,
 		slashingRate,
@@ -153,6 +155,7 @@ func GenRandomBTCDelegation(
 		BtcPk:            delBTCPK,
 		Pop:              pop,
 		FpBtcPkList:      fpBTCPKs,
+		StakingTime:      uint32(stakingTime),
 		StartHeight:      startHeight,
 		EndHeight:        endHeight,
 		TotalSat:         totalSat,
