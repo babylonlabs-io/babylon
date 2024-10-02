@@ -43,6 +43,7 @@ func GetTxCmd() *cobra.Command {
 		NewAddCovenantSigsCmd(),
 		NewBTCUndelegateCmd(),
 		NewSelectiveSlashingEvidenceCmd(),
+		NewAddBTCDelegationInclusionProofCmd(),
 	)
 
 	return cmd
@@ -304,6 +305,43 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				UnbondingValue:                int64(unbondingValue),
 				UnbondingSlashingTx:           unbondingSlashingTx,
 				DelegatorUnbondingSlashingSig: delegatorUnbondingSlashingSig,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewAddBTCDelegationInclusionProofCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "add-btc-inclusion-proof [staking_tx_hash] [inclusion_proof]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Add a signature on the unbonding tx of a BTC delegation identified by a given staking tx hash. ",
+		Long: strings.TrimSpace(
+			`Add a signature on the unbonding tx of a BTC delegation identified by a given staking tx hash signed by the delegator. The signature proves that delegator wants to unbond, and Babylon will consider the BTC delegation unbonded.`, // TODO: example
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			// get staking tx hash
+			stakingTxHash := args[0]
+
+			inclusionProof, err := types.NewInclusionProofFromHex(args[1])
+			if err != nil {
+				return err
+			}
+
+			msg := types.MsgAddBTCDelegationInclusionProof{
+				Signer:                  clientCtx.FromAddress.String(),
+				StakingTxHash:           stakingTxHash,
+				StakingTxInclusionProof: inclusionProof,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
