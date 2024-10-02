@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v0.11.0
+
 ### State Machine Breaking
 
 * [#107](https://github.com/babylonlabs-io/babylon/pull/107) Implement ADR-027 and
