@@ -16,6 +16,7 @@ var (
 	_ sdk.Msg = &MsgCreateBTCDelegation{}
 	_ sdk.Msg = &MsgAddCovenantSigs{}
 	_ sdk.Msg = &MsgBTCUndelegate{}
+	_ sdk.Msg = &MsgAddBTCDelegationInclusionProof{}
 )
 
 func (m *MsgCreateFinalityProvider) ValidateBasic() error {
@@ -118,6 +119,26 @@ func (m *MsgBTCUndelegate) ValidateBasic() error {
 
 	if _, err := m.UnbondingTxSig.ToBTCSig(); err != nil {
 		return fmt.Errorf("invalid delegator unbonding signature: %w", err)
+	}
+
+	return nil
+}
+
+func (m *MsgAddBTCDelegationInclusionProof) ValidateBasic() error {
+	if len(m.StakingTxHash) != chainhash.MaxHashStringSize {
+		return fmt.Errorf("staking tx hash is not %d", chainhash.MaxHashStringSize)
+	}
+
+	if m.StakingTxInclusionProof == nil {
+		return fmt.Errorf("empty inclusion proof")
+	}
+
+	if err := m.StakingTxInclusionProof.ValidateBasic(); err != nil {
+		return fmt.Errorf("invalid inclusion proof: %w", err)
+	}
+
+	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
+		return fmt.Errorf("invalid signer addr: %s - %v", m.Signer, err)
 	}
 
 	return nil
