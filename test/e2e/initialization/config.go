@@ -50,7 +50,7 @@ type NodeConfig struct {
 const (
 	// common
 	BabylonDenom        = "ubbn"
-	MinGasPrice         = "0.000"
+	MinGasPrice         = "0.002"
 	ValidatorWalletName = "val"
 	BabylonOpReturnTag  = "01020304"
 
@@ -58,11 +58,11 @@ const (
 	BabylonBtcFinalizationPeriod = 4
 	// chainA
 	ChainAID        = "bbn-test-a"
-	BabylonBalanceA = 200000000000
+	BabylonBalanceA = 3000000000000
 	StakeAmountA    = 100000000000
 	// chainB
 	ChainBID        = "bbn-test-b"
-	BabylonBalanceB = 500000000000
+	BabylonBalanceB = 5000000000000
 	StakeAmountB    = 400000000000
 
 	EpochDuration         = time.Second * 60

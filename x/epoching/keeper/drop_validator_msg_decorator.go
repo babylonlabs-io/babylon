@@ -8,11 +8,11 @@ import (
 
 // DropValidatorMsgDecorator defines an AnteHandler decorator that rejects all messages that might change the validator set.
 type DropValidatorMsgDecorator struct {
-	ek Keeper
+	ek *Keeper
 }
 
 // NewDropValidatorMsgDecorator creates a new DropValidatorMsgDecorator
-func NewDropValidatorMsgDecorator(ek Keeper) *DropValidatorMsgDecorator {
+func NewDropValidatorMsgDecorator(ek *Keeper) *DropValidatorMsgDecorator {
 	return &DropValidatorMsgDecorator{
 		ek: ek,
 	}
