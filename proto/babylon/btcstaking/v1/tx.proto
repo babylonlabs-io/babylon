@@ -22,6 +22,8 @@ service Msg {
   rpc EditFinalityProvider(MsgEditFinalityProvider) returns (MsgEditFinalityProviderResponse);
   // CreateBTCDelegation creates a new BTC delegation
   rpc CreateBTCDelegation(MsgCreateBTCDelegation) returns (MsgCreateBTCDelegationResponse);
+  // AddBTCDelegationInclusionProof adds inclusion proof of a given delegation on BTC chain
+  rpc AddBTCDelegationInclusionProof(MsgAddBTCDelegationInclusionProof) returns (MsgAddBTCDelegationInclusionProofResponse);
   // AddCovenantSigs handles signatures from a covenant member
   rpc AddCovenantSigs(MsgAddCovenantSigs) returns (MsgAddCovenantSigsResponse);
   // BTCUndelegate handles a signature on unbonding tx from its delegator
@@ -123,6 +125,20 @@ message MsgCreateBTCDelegation {
 }
 // MsgCreateBTCDelegationResponse is the response for MsgCreateBTCDelegation
 message MsgCreateBTCDelegationResponse {}
+
+// MsgAddBTCDelegationInclusionProof is the message for adding proof of inclusion of BTC delegation on BTC chain
+message MsgAddBTCDelegationInclusionProof {
+  option (cosmos.msg.v1.signer) = "signer";
+
+  string signer = 1;
+  // staking_tx_hash is the hash of the staking tx.
+  // It uniquely identifies a BTC delegation
+  string staking_tx_hash = 2;
+  // staking_tx_inclusion_proof is the inclusion proof of the staking tx in BTC chain
+  InclusionProof staking_tx_inclusion_proof = 3;
+}
+// MsgAddBTCDelegationInclusionProofResponse is the response for MsgAddBTCDelegationInclusionProof
+message MsgAddBTCDelegationInclusionProofResponse {}
 
 // MsgAddCovenantSigs is the message for handling signatures from a covenant member
 message MsgAddCovenantSigs {

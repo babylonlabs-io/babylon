@@ -45,7 +45,6 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 	}
 
 	startHeight := stakingTxHeader.Height
-	//
 	endHeight := stakingTxHeader.Height + stakingTime
 
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)

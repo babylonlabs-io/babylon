@@ -72,8 +72,12 @@ func (n *NodeConfig) CreateBTCDelegation(
 	stakingTxHex := hex.EncodeToString(stakingTx)
 
 	// get inclusion proof hex
-	inclusionProofHex, err := inclusionProof.MarshalHex()
-	require.NoError(n.t, err)
+	var inclusionProofHex string
+
+	if inclusionProof != nil {
+		inclusionProofHex, err = inclusionProof.MarshalHex()
+		require.NoError(n.t, err)
+	}
 
 	fpPKHex := fpPK.MarshalHex()
 
@@ -236,4 +240,17 @@ func (n *NodeConfig) BTCUndelegate(stakingTxHash *chainhash.Hash, delUnbondingSi
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added signature on unbonding tx from delegator")
+}
+
+func (n *NodeConfig) AddBTCDelegationInclusionProof(
+	stakingTxHash *chainhash.Hash,
+	inclusionProof *bstypes.InclusionProof) {
+	n.LogActionF("activate delegation by adding inclusion proof")
+	inclusionProofHex, err := inclusionProof.MarshalHex()
+	require.NoError(n.t, err)
+
+	cmd := []string{"babylond", "tx", "btcstaking", "add-btc-inclusion-proof", stakingTxHash.String(), inclusionProofHex, "--from=val"}
+	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully added inclusion proof")
 }
