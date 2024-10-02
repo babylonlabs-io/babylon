@@ -178,7 +178,9 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	}
 
 	gasMeter := ctx.GasMeter()
-	gasMeter.RefundGas(gasMeter.GasConsumed(), "refund gas for submitting finality signatures successfully")
+	if ctx.ExecMode() == sdk.ExecModeFinalize {
+		gasMeter.RefundGas(gasMeter.GasConsumed(), "refund gas for submitting finality signatures successfully")
+	}
 
 	return &types.MsgAddFinalitySigResponse{}, nil
 }

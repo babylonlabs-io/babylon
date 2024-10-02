@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"cosmossdk.io/core/header"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -114,6 +115,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
+		ctx = ctx.WithExecMode(sdk.ExecModeFinalize)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
 		// create and register a random finality provider
