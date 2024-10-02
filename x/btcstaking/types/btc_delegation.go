@@ -3,19 +3,20 @@ package types
 import (
 	"bytes"
 	"fmt"
-	math "math"
+	"math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/btcstaking"
-	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
+
+	"github.com/babylonlabs-io/babylon/btcstaking"
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, error) {
@@ -42,6 +43,10 @@ func (d *BTCDelegation) GetStakingTime() uint16 {
 	}
 
 	return uint16(diff)
+}
+
+func (d *BTCDelegation) HasInclusionProof() bool {
+	return d.StartHeight > 0 && d.EndHeight > 0
 }
 
 // GetFpIdx returns the index of the finality provider in the list of finality providers
