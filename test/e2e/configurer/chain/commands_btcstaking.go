@@ -198,7 +198,7 @@ func (n *NodeConfig) AddFinalitySig(fpBTCPK *bbn.BIP340PubKey, blockHeight uint6
 	appHashHex := hex.EncodeToString(appHash)
 	finalitySigHex := finalitySig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "finality", "add-finality-sig", fpBTCPKHex, blockHeightStr, pubRandHex, proofHex, appHashHex, finalitySigHex, "--from=val", "--gas=500000"}
+	cmd := []string{"babylond", "tx", "finality", "add-finality-sig", fpBTCPKHex, blockHeightStr, pubRandHex, proofHex, appHashHex, finalitySigHex, "--from=val", "--gas=auto", "--gas-adjustment=1.3"}
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added finality signature")
