@@ -50,8 +50,6 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddFinalitySig)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	gasMeter := ctx.GasMeter()
-	consumedGas := gasMeter.GasConsumed()
 
 	if req.FpBtcPk == nil {
 		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")
@@ -179,9 +177,8 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
 	}
 
-	consumedGasAfter := gasMeter.GasConsumed()
-	gasConsumed := consumedGasAfter - consumedGas
-	gasMeter.RefundGas(gasConsumed, "refund gas for submitting finality signatures successfully")
+	gasMeter := ctx.GasMeter()
+	gasMeter.RefundGas(gasMeter.GasConsumed(), "refund gas for submitting finality signatures successfully")
 
 	return &types.MsgAddFinalitySigResponse{}, nil
 }

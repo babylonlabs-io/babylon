@@ -156,6 +156,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(1)).Times(1)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 
+		ctx.GasMeter().RefundGas(ctx.GasMeter().GasConsumed(), "reset gas meter")
 		gasBefore = ctx.GasMeter().GasConsumed()
 		_, err = ms.AddFinalitySig(ctx, msg)
 		require.ErrorIs(t, err, types.ErrPubRandCommitNotBTCTimestamped)
@@ -170,6 +171,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(0)).Times(1)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 
+		ctx.GasMeter().RefundGas(ctx.GasMeter().GasConsumed(), "reset gas meter")
 		gasBefore = ctx.GasMeter().GasConsumed()
 		ctx.GasMeter().ConsumeGas(100, "simulate accessing the finality provider in KV store")
 		_, err = ms.AddFinalitySig(ctx, msg)
@@ -186,6 +188,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		msg.BlockHeight = blockHeight2
 
+		ctx.GasMeter().RefundGas(ctx.GasMeter().GasConsumed(), "reset gas meter")
 		gasBefore = ctx.GasMeter().GasConsumed()
 		_, err = ms.AddFinalitySig(ctx, msg)
 		require.Error(t, err)
@@ -201,6 +204,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		fKeeper.IndexBlock(ctx)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		// add vote and it should work
+		ctx.GasMeter().RefundGas(ctx.GasMeter().GasConsumed(), "reset gas meter")
 		gasBefore = ctx.GasMeter().GasConsumed()
 		_, err = ms.AddFinalitySig(ctx, msg)
 		require.NoError(t, err)
@@ -213,6 +217,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		// Case 4: In case of duplicate vote return success
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
+		ctx.GasMeter().RefundGas(ctx.GasMeter().GasConsumed(), "reset gas meter")
 		gasBefore = ctx.GasMeter().GasConsumed()
 		resp, err := ms.AddFinalitySig(ctx, msg)
 		require.NoError(t, err)
@@ -229,6 +234,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(nil).Times(1)
 		// NOTE: even though this finality provider is slashed, the msg should be successful
 		// Otherwise the saved evidence will be rolled back
+		ctx.GasMeter().RefundGas(ctx.GasMeter().GasConsumed(), "reset gas meter")
 		gasBefore = ctx.GasMeter().GasConsumed()
 		_, err = ms.AddFinalitySig(ctx, msg2)
 		require.NoError(t, err)
@@ -255,6 +261,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		// Case 6: slashed finality provider cannot vote
 		fp.SlashedBabylonHeight = blockHeight
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
+		ctx.GasMeter().RefundGas(ctx.GasMeter().GasConsumed(), "reset gas meter")
 		gasBefore = ctx.GasMeter().GasConsumed()
 		ctx.GasMeter().ConsumeGas(100, "simulate accessing the finality provider in KV store")
 		_, err = ms.AddFinalitySig(ctx, msg)
@@ -266,6 +273,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		fp.Jailed = true
 		fp.SlashedBabylonHeight = 0
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
+		ctx.GasMeter().RefundGas(ctx.GasMeter().GasConsumed(), "reset gas meter")
 		gasBefore = ctx.GasMeter().GasConsumed()
 		ctx.GasMeter().ConsumeGas(100, "simulate accessing the finality provider in KV store")
 		_, err = ms.AddFinalitySig(ctx, msg)
