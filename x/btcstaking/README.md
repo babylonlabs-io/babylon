@@ -90,11 +90,11 @@ delegation unbonded immediately upon such a signature.
 
 ## States
 
-The BTC Staking module maintains the following KV stores.
+The BTC Staking module uses the following prefixed namespaces within its KV store to organize different types of data
 
 ### Parameters
 
-The [parameter storage](./keeper/params.go) maintains the BTC Staking module's
+The [parameter management](./keeper/params.go) maintains the BTC Staking module's
 parameters. The BTC Staking module's parameters are represented as a `Params`
 [object](../../proto/babylon/btcstaking/v1/params.proto) defined as follows:
 
@@ -147,7 +147,7 @@ message Params {
 
 ### Finality providers
 
-The [finality provider storage](./keeper/finality_providers.go) maintains all
+The [finality provider management](./keeper/finality_providers.go) maintains all
 finality providers. The key is the finality provider's Bitcoin Secp256k1 public
 key in [BIP-340](https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki)
 format, and the value is a `FinalityProvider`
@@ -185,7 +185,7 @@ message FinalityProvider {
 
 ### BTC delegations
 
-The [BTC delegation storage](./keeper/btc_delegations.go) maintains all BTC
+The [BTC delegation management](./keeper/btc_delegations.go) maintains all BTC
 delegations. The key is the staking transaction hash corresponding to the BTC
 delegation, and the value is a `BTCDelegation` object. The `BTCDelegation`
 [structure](../../proto/babylon/btcstaking/v1/btcstaking.proto) includes
@@ -276,7 +276,7 @@ message BTCUndelegation {
 
 ### BTC delegation index
 
-The [BTC delegation index storage](./keeper/btc_delegators.go) maintains an
+The [BTC delegation index management](./keeper/btc_delegators.go) maintains an
 index between the BTC delegator and its BTC delegations. The key is the BTC
 delegator's Bitcoin secp256k1 public key in BIP-340 format, and the value is a
 `BTCDelegatorDelegationIndex`
@@ -292,7 +292,7 @@ message BTCDelegatorDelegationIndex {
 
 ### Voting power table
 
-The [voting power table storage](./keeper/voting_power_table.go) maintains the
+The [voting power table management](./keeper/voting_power_table.go) maintains the
 voting power table of all finality providers at each height of the Babylon
 chain. The key is the block height concatenated with the finality provider's
 Bitcoin secp256k1 public key in BIP-340 format, and the value is the finality
@@ -303,7 +303,7 @@ delegated value.
 
 ### Params
 
-The [parameter storage](./keeper/params.go) maintains the parameters for the BTC
+The [parameter managemnt](./keeper/params.go) maintains the parameters for the BTC
 staking module.
 
 ```protobuf
@@ -349,7 +349,7 @@ BTC stakers (aka delegators), and covenant emulators. The message formats are
 defined at
 [proto/babylon/btcstaking/v1/tx.proto](../../proto/babylon/btcstaking/v1/tx.proto).
 The message handlers are defined at
-[x/btcstaking/keeper/msg_server.go](./keeper/msg_server.go).
+[x/btcstaking/keeper/msg_server.go](./keeper/msg_server.go). For more information on the SDK messages, refer to the [Cosmos SDK documentation on messages and queries](https://docs.cosmos.network/main/build/building-modules/messages-and-queries) 
 
 ### MsgCreateFinalityProvider
 
@@ -765,8 +765,54 @@ message EventPowerDistUpdate {
 
 ## Queries
 
-The BTC staking module provides a set of queries about the status of finality
-providers and BTC delegations, listed at
-[docs.babylonchain.io](https://docs.babylonchain.io/docs/developer-guides/grpcrestapi#tag/BTCStaking).
+The BTC Staking module provides a set of queries related to the status of finality providers, BTC delegations, and other staking-related data. These queries can be accessed via gRPC and REST endpoints.
+
+Available Queries:
+Parameters
+Endpoint: `/babylon/btcstaking/v1/params`
+Description: Queries the current parameters of the BTC Staking module.
+
+Params by Version
+Endpoint: `/babylon/btcstaking/v1/params/{version}`
+Description: Queries the parameters of the module for a specific past version.
+
+Finality Providers
+Endpoint: `/babylon/btcstaking/v1/finality_providers`
+Description: Retrieves all finality providers in the Babylon staking module.
+
+Finality Provider by Public Key
+Endpoint: `/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/finality_provider`
+Description: Retrieves information about a specific finality provider by its Bitcoin public key (in BIP-340 format).
+
+BTC Delegations by Status
+Endpoint: `/babylon/btcstaking/v1/btc_delegations`
+Description: Queries all BTC delegations under a given status.
+
+Active Finality Providers at Height
+Endpoint: `/babylon/btcstaking/v1/finality_providers/{height}`
+Description: Retrieves finality providers with non-zero voting power at a specific Babylon block height.
+
+Finality Provider Power at Height
+Endpoint: `/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/power/`{height}
+Description: Queries the voting power of a specific finality provider at a given Babylon block height.
+
+Finality Provider Current Power
+Endpoint: `/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/power`
+Description: Queries the current voting power of a specific finality provider.
+
+Activated Height
+Endpoint: `/babylon/btcstaking/v1/activated_height`
+Description: Queries the block height when the BTC staking protocol was activated (i.e., the first height when there existed at least one finality provider with voting power).
+
+Finality Provider Delegations
+Endpoint: `/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/delegations`
+Description: Queries all BTC delegations under a specific finality provider.
+
+BTC Delegation by Staking Transaction Hash
+Endpoint: `/babylon/btcstaking/v1/btc_delegations/{staking_tx_hash_hex}`
+Description: Retrieves a specific BTC delegation by its corresponding staking transaction hash.
+
+Additional Information:
+For further details on how to use these queries and additional documentation, please refer to docs.babylonchain.io.
 
 <!-- TODO: update Babylon doc website -->
