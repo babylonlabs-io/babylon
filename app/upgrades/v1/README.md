@@ -1,9 +1,34 @@
-# Signet Launch
+# Upgrade V1
 
-This folder contains a software upgrade for testing purposes.
-DO NOT USE IN PRODUCTION!
+Babylon launched as Phase-1 without a cosmos chain running
+to collect BTC staking prior to decentralize the finality provider
+set of operators. The first upgrade of Babylon chain to start
+receiving BTC delegations will include the BTC headers created
+during Phase-1 and upgrade, finality providers registered in the
+dashboard, tokens distribution for the active users and operators
+that participated and need to finish their actions and update of
+parameters for `x/finality` and `x/btcstaking` modules.
 
-## Compile signet launch upgrade
+## Testnet vs Mainnet
+
+Babylon upgrade data will be different for mainnet and testnet,
+finality providers should not use the same keys for mainnet and testnet.
+So to register himself and test, the finality providers will use two
+different registrations one for mainnet and another for testnet. The
+BTC Headers also are different as the Bitcoin mainnet and signet produces
+different block headers. So, the upgrade data will be divided into 2
+`app/upgrades/v1`:
+
+- `app/upgrades/v1/mainnet` contains the files with JSON string for mainnet.
+- `app/upgrades/v1/testnet` contains the files with JSON string for testnet.
+
+## Devnets
+
+Devnets that are only for internal testing should just replace the upgrade
+data files in testnet and build the binary with `make build-testnet`. No need
+to push the devenet data into the github repository.
+
+## Upgrade data as string
 
 This upgrade loads 5 JSONs from strings in different files.
 
@@ -72,3 +97,12 @@ finish their actions, by example:
 
 > This data for token distribution will be built accordingly with the
 data collected during Phase-1.
+
+## Building with Upgrade
+
+Upgrade plan is included based on the build tags.
+By default the mainnet data is included with the upgrade plan,
+so running `make build` already adds the mainnet build tag and
+includes the upgrade plan with the mainnet data. If `make build-testnet`
+is run, it includes the `testnet` build tag and only includes the
+data for testnet in the upgrade plan.
