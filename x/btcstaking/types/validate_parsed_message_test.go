@@ -6,11 +6,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/btcstaking"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	btcckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -19,6 +14,12 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/btcstaking"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 // testStakingParams generates valid staking parameters with randomized
@@ -188,9 +189,8 @@ func createMsgDelegationForParams(
 	serializedStakingTx, err := bbn.SerializeBTCTx(testStakingInfo.StakingTx)
 	require.NoError(t, err)
 
-	txInfo := btcckpttypes.NewTransactionInfo(
+	txInclusionProof := types.NewInclusionProof(
 		&btcckpttypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()},
-		serializedStakingTx,
 		btcHeaderWithProof.SpvProof.MerkleNodes,
 	)
 
@@ -218,7 +218,8 @@ func createMsgDelegationForParams(
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
 		StakingValue:                  stakingValue,
-		StakingTx:                     txInfo,
+		StakingTx:                     serializedStakingTx,
+		StakingTxInclusionProof:       txInclusionProof,
 		SlashingTx:                    testStakingInfo.SlashingTx,
 		DelegatorSlashingSig:          delegatorSig,
 		UnbondingTx:                   unbondingInfo.serializedUnbondingTx,
@@ -340,7 +341,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				// modify staking output so that staking output is valid but it will have
 				// invalid time
-				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx.Transaction)
+				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx)
 				require.NoError(t, err)
 
 				invalidStakingTime := uint16(params.MinStakingTimeBlocks - 1)
@@ -365,7 +366,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				require.NoError(t, err)
 
 				msg.StakingTime = uint32(invalidStakingTime)
-				msg.StakingTx.Transaction = serializedNewStakingTx
+				msg.StakingTx = serializedNewStakingTx
 
 				return msg, params, checkpointParams
 			},
@@ -380,7 +381,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				// modify staking output so that staking output is valid but it will have
 				// invalid time
-				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx.Transaction)
+				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx)
 				require.NoError(t, err)
 
 				invalidStakingTime := uint16(params.MaxStakingTimeBlocks + 1)
@@ -405,7 +406,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				require.NoError(t, err)
 
 				msg.StakingTime = uint32(invalidStakingTime)
-				msg.StakingTx.Transaction = serializedNewStakingTx
+				msg.StakingTx = serializedNewStakingTx
 
 				return msg, params, checkpointParams
 			},
@@ -420,7 +421,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				// modify staking output so that staking output is valid but it will have
 				// invalid time
-				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx.Transaction)
+				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx)
 				require.NoError(t, err)
 
 				invalidStakingValue := params.MinStakingValueSat - 1
@@ -431,7 +432,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				require.NoError(t, err)
 
 				msg.StakingValue = invalidStakingValue
-				msg.StakingTx.Transaction = serializedNewStakingTx
+				msg.StakingTx = serializedNewStakingTx
 
 				return msg, params, checkpointParams
 			},
@@ -446,7 +447,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				// modify staking output so that staking output is valid but it will have
 				// invalid time
-				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx.Transaction)
+				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx)
 				require.NoError(t, err)
 
 				invalidStakingValue := params.MaxStakingValueSat + 1
@@ -457,7 +458,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				require.NoError(t, err)
 
 				msg.StakingValue = invalidStakingValue
-				msg.StakingTx.Transaction = serializedNewStakingTx
+				msg.StakingTx = serializedNewStakingTx
 
 				return msg, params, checkpointParams
 			},

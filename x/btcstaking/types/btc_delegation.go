@@ -3,19 +3,20 @@ package types
 import (
 	"bytes"
 	"fmt"
-	math "math"
+	"math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/btcstaking"
-	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
+
+	"github.com/babylonlabs-io/babylon/btcstaking"
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, error) {
@@ -33,15 +34,16 @@ func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, er
 	}
 }
 
-func (d *BTCDelegation) GetStakingTime() uint16 {
-	diff := d.EndHeight - d.StartHeight
-
-	if diff > math.MaxUint16 {
-		// In valid delegation, EndHeight is always greater than StartHeight and it is always uint16 value
+func (d *BTCDelegation) MustGetValidStakingTime() uint16 {
+	if d.StakingTime > math.MaxUint16 {
 		panic("invalid delegation in database")
 	}
 
-	return uint16(diff)
+	return uint16(d.StakingTime)
+}
+
+func (d *BTCDelegation) HasInclusionProof() bool {
+	return d.StartHeight > 0 && d.EndHeight > 0
 }
 
 // GetFpIdx returns the index of the finality provider in the list of finality providers
@@ -92,22 +94,30 @@ func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64, covenantQuorum uin
 		return BTCDelegationStatus_UNBONDED
 	}
 
+	// we are still pending covenant quorum
+	if !d.HasCovenantQuorums(covenantQuorum) {
+		return BTCDelegationStatus_PENDING
+	}
+
+	// we are still pending activation by inclusion proof
+	if !d.HasInclusionProof() {
+		// staking tx has not been included in a block yet
+		return BTCDelegationStatus_VERIFIED
+	}
+
+	// At this point we already have covenant quorum and inclusion proof,
+	// we can check the status based on the BTC height
 	if btcHeight < d.StartHeight || btcHeight+w > d.EndHeight {
 		// staking tx's timelock has not begun, or is less than w BTC
 		// blocks left, or is expired
 		return BTCDelegationStatus_UNBONDED
 	}
 
-	// at this point, BTC delegation has an active timelock, and Babylon is not
-	// aware of unbonding tx with delegator's signature
-	if d.HasCovenantQuorums(covenantQuorum) {
-		// this BTC delegation receives covenant quorums on
-		// {slashing/unbonding/unbondingslashing} txs, thus is active
-		return BTCDelegationStatus_ACTIVE
-	}
-
-	// no covenant quorum yet, pending
-	return BTCDelegationStatus_PENDING
+	// - we have covenant quorum
+	// - we have inclusion proof
+	// - we are not unbonded early
+	// - we are not expired
+	return BTCDelegationStatus_ACTIVE
 }
 
 // VotingPower returns the voting power of the BTC delegation at a given BTC height
@@ -233,7 +243,7 @@ func (d *BTCDelegation) GetStakingInfo(bsParams *Params, btcNet *chaincfg.Params
 		fpBtcPkList,
 		covenantBtcPkList,
 		bsParams.CovenantQuorum,
-		d.GetStakingTime(),
+		d.MustGetValidStakingTime(),
 		btcutil.Amount(d.TotalSat),
 		btcNet,
 	)

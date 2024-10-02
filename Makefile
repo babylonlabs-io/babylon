@@ -284,6 +284,9 @@ test-e2e-cache-btc-timestamping-phase-2-rly:
 test-e2e-cache-btc-staking:
 	go test -run TestBTCStakingTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
+test-e2e-cache-btc-staking-pre-approval:
+	go test -run TestBTCStakingPreApprovalTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
 test-e2e-cache-upgrade-v1:
 	go test -run TestSoftwareUpgradeV1TestnetTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 

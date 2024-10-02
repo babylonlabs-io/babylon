@@ -1,4 +1,4 @@
-package app
+package ante
 
 import (
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -9,12 +9,12 @@ import (
 )
 
 type BtcValidationDecorator struct {
-	BtcCfg              bbn.BtcConfig
+	BtcCfg              *bbn.BtcConfig
 	btccheckpointKeeper *btccheckpointkeeper.Keeper
 }
 
 func NewBtcValidationDecorator(
-	cfg bbn.BtcConfig,
+	cfg *bbn.BtcConfig,
 	k *btccheckpointkeeper.Keeper,
 ) BtcValidationDecorator {
 	return BtcValidationDecorator{
