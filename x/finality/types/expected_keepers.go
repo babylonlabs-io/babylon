@@ -27,7 +27,8 @@ type CheckpointingKeeper interface {
 	GetLastFinalizedEpoch(ctx context.Context) uint64
 }
 
-// IncentiveKeeper defines the expected interface needed to distribute rewards.
+// IncentiveKeeper defines the expected interface needed for distributing rewards
+// and refund transaction fee for finality signatures
 type IncentiveKeeper interface {
 	RewardBTCStaking(ctx context.Context, height uint64, filteredDc *bstypes.VotingPowerDistCache)
 	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)

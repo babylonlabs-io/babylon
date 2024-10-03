@@ -234,7 +234,10 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 
 		n.InsertHeader(&opReturn1.HeaderBytes)
 		n.InsertHeader(&opReturn2.HeaderBytes)
-		n.InsertProofs(opReturn1.SpvProof, opReturn2.SpvProof)
+
+		n.SubmitRefundableTxWithAssertion(func() {
+			n.InsertProofs(opReturn1.SpvProof, opReturn2.SpvProof)
+		})
 
 		n.WaitForCondition(func() bool {
 			ckpt, err := n.QueryRawCheckpoint(checkpoint.Ckpt.EpochNum)
@@ -443,4 +446,22 @@ func (n *NodeConfig) TxGovVote(from string, propID int, option govv1.VoteOption,
 	require.NoError(n.t, err)
 
 	n.LogActionF("successfully submitted vote %s to prop %d", option, propID)
+}
+
+// submitRefundableTxWithAssertion submits a refundable transaction,
+// and asserts that the tx fee is refunded
+func (n *NodeConfig) SubmitRefundableTxWithAssertion(
+	f func(),
+) {
+	// balance before submitting the refundable tx
+	submitterBalanceBefore, err := n.QueryBalances(n.PublicAddress)
+	require.NoError(n.t, err)
+
+	// submit refundable tx
+	f()
+
+	// ensure the tx fee is refunded and the balance is not changed
+	submitterBalanceAfter, err := n.QueryBalances(n.PublicAddress)
+	require.NoError(n.t, err)
+	require.Equal(n.t, submitterBalanceBefore, submitterBalanceAfter)
 }

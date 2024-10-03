@@ -92,6 +92,10 @@ func (ms msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertB
 		return nil, err
 	}
 
+	// At this point, the BTC checkpoint is considered the first valid one for the epoch.
+	// Thus, we can safely consider this message as refundable
+	ms.k.incentiveKeeper.IndexRefundableMsg(sdkCtx, req)
+
 	return &types.MsgInsertBTCSpvProofResponse{}, nil
 }
 

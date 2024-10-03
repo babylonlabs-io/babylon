@@ -11,6 +11,7 @@ import (
 	types "github.com/babylonlabs-io/babylon/types"
 	types0 "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	types1 "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	types2 "github.com/cosmos/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -188,4 +189,39 @@ func (m *MockBtcStakingHooks) AfterFinalityProviderActivated(ctx context.Context
 func (mr *MockBtcStakingHooksMockRecorder) AfterFinalityProviderActivated(ctx, fpPk interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterFinalityProviderActivated", reflect.TypeOf((*MockBtcStakingHooks)(nil).AfterFinalityProviderActivated), ctx, fpPk)
+}
+
+// MockIncentiveKeeper is a mock of IncentiveKeeper interface.
+type MockIncentiveKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockIncentiveKeeperMockRecorder
+}
+
+// MockIncentiveKeeperMockRecorder is the mock recorder for MockIncentiveKeeper.
+type MockIncentiveKeeperMockRecorder struct {
+	mock *MockIncentiveKeeper
+}
+
+// NewMockIncentiveKeeper creates a new mock instance.
+func NewMockIncentiveKeeper(ctrl *gomock.Controller) *MockIncentiveKeeper {
+	mock := &MockIncentiveKeeper{ctrl: ctrl}
+	mock.recorder = &MockIncentiveKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockIncentiveKeeper) EXPECT() *MockIncentiveKeeperMockRecorder {
+	return m.recorder
+}
+
+// IndexRefundableMsg mocks base method.
+func (m *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg types2.Msg) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "IndexRefundableMsg", ctx, msg)
+}
+
+// IndexRefundableMsg indicates an expected call of IndexRefundableMsg.
+func (mr *MockIncentiveKeeperMockRecorder) IndexRefundableMsg(ctx, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexRefundableMsg", reflect.TypeOf((*MockIncentiveKeeper)(nil).IndexRefundableMsg), ctx, msg)
 }

@@ -16,9 +16,9 @@ type (
 		cdc          codec.BinaryCodec
 		storeService corestoretypes.KVStoreService
 
-		epochingKeeper types.EpochingKeeper
 		bankKeeper     types.BankKeeper
 		accountKeeper  types.AccountKeeper
+		epochingKeeper types.EpochingKeeper
 
 		// RefundableMsgKeySet is the set of hashes of messages that can be refunded
 		// Each key is a hash of the message bytes
@@ -46,15 +46,15 @@ func NewKeeper(
 	return Keeper{
 		cdc:            cdc,
 		storeService:   storeService,
-		epochingKeeper: epochingKeeper,
 		bankKeeper:     bankKeeper,
+		accountKeeper:  accountKeeper,
+		epochingKeeper: epochingKeeper,
 		RefundableMsgKeySet: collections.NewKeySet(
 			sb,
 			types.RefundableMsgKeySetPrefix,
 			"refundable_msg_key_set",
 			collections.BytesKey,
 		),
-		accountKeeper:    accountKeeper,
 		authority:        authority,
 		feeCollectorName: feeCollectorName,
 	}

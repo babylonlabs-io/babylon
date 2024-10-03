@@ -498,6 +498,7 @@ func (ak *AppKeepers) InitKeepers(
 		// setting the finality keeper as nil for now
 		// need to set it after finality keeper is initiated
 		nil,
+		&ak.IncentiveKeeper,
 		btcNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)

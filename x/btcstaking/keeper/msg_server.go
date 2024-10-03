@@ -306,6 +306,10 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 	ms.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-wValue, unbondedEvent)
 
+	// at this point, the BTC delegation inclusion proof is verified and is not duplicated
+	// thus, we can safely consider this message as refundable
+	ms.iKeeper.IndexRefundableMsg(ctx, req)
+
 	return &types.MsgAddBTCDelegationInclusionProofResponse{}, nil
 }
 
@@ -466,6 +470,12 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		params,
 	)
 
+	// at this point, the covenant signatures are verified and are not duplicated.
+	// Thus, we can safely consider this message as refundable
+	// TODO: currently we refund tx fee for covenant signatures even if the BTC
+	// delegation already has a covenant quorum. Should we refund in this case?
+	ms.iKeeper.IndexRefundableMsg(ctx, req)
+
 	return &types.MsgAddCovenantSigsResponse{}, nil
 }
 
@@ -530,6 +540,10 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	// and set back
 	ms.btcUndelegate(ctx, btcDel, req.UnbondingTxSig)
 
+	// At this point, the unbonding signature is verified.
+	// Thus, we can safely consider this message as refundable
+	ms.iKeeper.IndexRefundableMsg(ctx, req)
+
 	return &types.MsgBTCUndelegateResponse{}, nil
 }
 
@@ -593,6 +607,10 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(event); err != nil {
 		panic(fmt.Errorf("failed to emit EventSelectiveSlashing event: %w", err))
 	}
+
+	// At this point, the selective slashing evidence is verified and is not duplicated.
+	// Thus, we can safely consider this message as refundable
+	ms.iKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgSelectiveSlashingEvidenceResponse{}, nil
 }
