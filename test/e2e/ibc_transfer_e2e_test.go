@@ -124,9 +124,7 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 	s.Require().Len(balanceB, 2)
 	// Look for the ugly IBC one
 	denom := getFirstIBCDenom(balanceB)
-	// Confirm val on B has enough funds
 	amount := balanceB.AmountOf(denom).Int64() - int64(delta) // have to pay gas fees
-	s.Assert().GreaterOrEqual(balanceB.AmountOf(denom).Int64(), amount)
 
 	transferCoin := sdk.NewInt64Coin(denom, amount)
 
