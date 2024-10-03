@@ -45,8 +45,9 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	babylonNode, err := bbnChain.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	sender := initialization.ValidatorWalletName
-	babylonNode.SendIBCTransfer(sender, sender, "", sdk.NewInt64Coin("ubbn", 1_000_000))
+	val := initialization.ValidatorWalletName
+	// Send 1_000_000 ubbn from val in chain-A to chain-B
+	babylonNode.SendIBCTransfer(val, val, "", sdk.NewInt64Coin("ubbn", 1_000_000))
 
 	time.Sleep(2 * time.Minute)
 
