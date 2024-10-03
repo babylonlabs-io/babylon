@@ -26,14 +26,14 @@ type Upgrade struct {
 	UpgradeName string
 
 	// CreateUpgradeHandler defines the function that creates an upgrade handler
-	CreateUpgradeHandler CreateUpgradeHandler
+	CreateUpgradeHandler UpgradeHandlerCreator
 
 	// Store upgrades, should be used for any new modules introduced, new modules deleted, or store names renamed.
 	StoreUpgrades store.StoreUpgrades
 }
 
-// CreateUpgradeHandler returns a function to run the upgrade handler according to the x/upgrade handler.
-type CreateUpgradeHandler func(*module.Manager, module.Configurator, *keepers.AppKeepers) upgradetypes.UpgradeHandler
+// UpgradeHandlerCreator returns a function to run the upgrade handler according to the x/upgrade handler.
+type UpgradeHandlerCreator func(*module.Manager, module.Configurator, *keepers.AppKeepers) upgradetypes.UpgradeHandler
 
 // Fork defines a struct containing the requisite fields for a non-software upgrade proposal
 // Hard Fork at a given height to implement.

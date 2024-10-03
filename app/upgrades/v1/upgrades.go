@@ -49,7 +49,7 @@ func CreateUpgrade(upgradeDataStr UpgradeDataString) upgrades.Upgrade {
 }
 
 // CreateUpgradeHandler upgrade handler for launch.
-func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.CreateUpgradeHandler {
+func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHandlerCreator {
 	return func(mm *module.Manager, cfg module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
 		return func(context context.Context, _plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 			ctx := sdk.UnwrapSDKContext(context)
