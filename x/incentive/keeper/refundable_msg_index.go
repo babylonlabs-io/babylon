@@ -10,6 +10,11 @@ import (
 // RefundTx refunds the given tx by sending the fee back to the fee payer.
 func (k Keeper) RefundTx(ctx context.Context, tx sdk.FeeTx) error {
 	txFee := tx.GetFee()
+	if txFee.IsZero() {
+		// not possible with the global min gas price mechanism
+		// but having this check for compatibility in the future
+		return nil
+	}
 	txFeePayer := tx.FeePayer()
 
 	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, k.feeCollectorName, txFeePayer, txFee)

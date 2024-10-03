@@ -237,9 +237,9 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 				bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
 				covenantUnbondingSlashingSigs[i].AdaptorSigs,
 			)
+			// wait for a block so that above txs take effect
+			nonValidatorNode.WaitForNextBlock()
 		})
-		// wait for a block so that above txs take effect
-		nonValidatorNode.WaitForNextBlock()
 	}
 
 	// wait for a block so that above txs take effect
@@ -352,17 +352,17 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
 		// submit finality signature
 		nonValidatorNode.AddFinalitySig(s.cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
-	})
 
-	// ensure vote is eventually cast
-	var finalizedBlocks []*ftypes.IndexedBlock
-	s.Eventually(func() bool {
-		finalizedBlocks = nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
-		return len(finalizedBlocks) > 0
-	}, time.Minute, time.Millisecond*50)
-	s.Equal(activatedHeight, finalizedBlocks[0].Height)
-	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
-	s.T().Logf("the block %d is finalized", activatedHeight)
+		// ensure vote is eventually cast
+		var finalizedBlocks []*ftypes.IndexedBlock
+		s.Eventually(func() bool {
+			finalizedBlocks = nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
+			return len(finalizedBlocks) > 0
+		}, time.Minute, time.Millisecond*50)
+		s.Equal(activatedHeight, finalizedBlocks[0].Height)
+		s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
+		s.T().Logf("the block %d is finalized", activatedHeight)
+	})
 
 	// ensure finality provider has received rewards after the block is finalised
 	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
@@ -472,9 +472,9 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
 		// submit the message for creating BTC undelegation
 		nonValidatorNode.BTCUndelegate(&stakingTxHash, delUnbondingSig)
+		// wait for a block so that above txs take effect
+		nonValidatorNode.WaitForNextBlock()
 	})
-	// wait for a block so that above txs take effect
-	nonValidatorNode.WaitForNextBlock()
 
 	// Wait for unbonded delegations to be created
 	var unbondedDelsResp []*bstypes.BTCDelegationResponse

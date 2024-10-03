@@ -54,8 +54,7 @@ func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, suc
 
 	// remove the refundable messages from the index, regardless whether the tx is refunded or not
 	// NOTE: If the message with same hash shows up again, the refunding rule will
-	// consider it duplicated
-	//   and the tx will not be refunded
+	// consider it duplicated and the tx will not be refunded
 	for _, msgHash := range refundableMsgHashList {
 		d.k.RemoveRefundableMsg(ctx, msgHash)
 	}
