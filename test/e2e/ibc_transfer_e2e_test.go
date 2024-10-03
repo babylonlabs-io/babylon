@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"math"
 	"strings"
 	"time"
 
@@ -86,21 +87,31 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	// Send transfer from val in chain-A (Node 3) to val in chain-B (Node 3)
 	babylonNodeA.SendIBCTransfer(val, addrB, "transfer", transferCoin)
 
-	time.Sleep(10 * time.Second)
+	s.Require().Eventually(func() bool {
+		// Check that the transfer is successful.
+		// Amounts have been discounted from val in chain-A and added (as a wrapped denom) to val in chain-B
+		balanceA2, err := babylonNodeA.QueryBalances(addrA)
+		if err != nil {
+			return false
+		}
+		return math.Abs(float64(balanceA.Sub(transferCoin).AmountOf(denom).Int64()-
+			balanceA2.AmountOf(denom).Int64())) < delta
+	}, 10*time.Second, 1*time.Second, "Transfer was not successful")
 
-	// Check that the transfer is successful.
-	// Amounts have been discounted from val in chain-A and added (as a wrapped denom) to val in chain-B
-	balanceA2, err := babylonNodeA.QueryBalances(addrA)
-	s.Require().NoError(err)
-	s.Assert().InDelta(balanceA.Sub(transferCoin).AmountOf(denom).Int64(), balanceA2.AmountOf(denom).Int64(), delta)
-
-	balanceB2, err := babylonNodeB.QueryBalances(addrB)
-	s.Require().NoError(err)
-	// Check that there are now two denoms in B
-	s.Require().Len(balanceB2, 2)
-	denomB := getFirstIBCDenom(balanceB2)
-	// Check the balance of the IBC denom
-	s.Assert().InDelta(balanceB2.AmountOf(denomB).Int64(), transferCoin.Amount.Int64(), delta)
+	s.Require().Eventually(func() bool {
+		balanceB2, err := babylonNodeB.QueryBalances(addrB)
+		if err != nil {
+			return false
+		}
+		// Check that there are now two denoms in B
+		if len(balanceB2) != 2 {
+			return false
+		}
+		denomB := getFirstIBCDenom(balanceB2)
+		// Check the balance of the IBC denom
+		return math.Abs(float64(balanceB2.AmountOf(denomB).Int64()-
+			transferCoin.Amount.Int64())) < delta
+	}, 10*time.Second, 1*time.Second, "Transfer was not successful")
 }
 
 func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
@@ -135,19 +146,27 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 
 	babylonNodeB.SendIBCTransfer(val, addrA, "transfer back", transferCoin)
 
-	time.Sleep(10 * time.Second)
+	s.Require().Eventually(func() bool {
+		balanceB2, err := babylonNodeB.QueryBalances(addrB)
+		if err != nil {
+			return false
+		}
+		return math.Abs(float64(balanceB.Sub(transferCoin).AmountOf(denom).Int64()-
+			balanceB2.AmountOf(denom).Int64())) < delta
+	}, 10*time.Second, 1*time.Second, "Transfer back was not successful")
 
-	// Check that the transfer is successful.
-	// Amounts have been discounted from val in chain-B and added to val in chain-A
-	balanceB2, err := babylonNodeB.QueryBalances(addrB)
-	s.Require().NoError(err)
-	s.Assert().InDelta(balanceB.Sub(transferCoin).AmountOf(denom).Int64(), balanceB2.AmountOf(denom).Int64(), delta)
-
-	balanceA2, err := babylonNodeA.QueryBalances(addrA)
-	s.Require().NoError(err)
-	// Check that there's still one denom in A
-	s.Require().Len(balanceA2, 1)
-	// Check that the balance of the native denom has increased
 	nativeCoin := sdk.NewInt64Coin(nativeDenom, amount)
-	s.Assert().InDelta(balanceA.Add(nativeCoin).AmountOf(nativeDenom).Int64(), balanceA2.AmountOf(nativeDenom).Int64(), delta)
+	s.Require().Eventually(func() bool {
+		balanceA2, err := babylonNodeA.QueryBalances(addrA)
+		if err != nil {
+			return false
+		}
+		// Check that there's still one denom in A
+		if len(balanceA2) != 1 {
+			return false
+		}
+		// Check that the balance of the native denom has increased
+		return math.Abs(float64(balanceA.Add(nativeCoin).AmountOf(nativeDenom).Int64()-
+			balanceA2.AmountOf(nativeDenom).Int64())) < delta
+	}, 10*time.Second, 1*time.Second, "Transfer back was not successful")
 }
