@@ -46,9 +46,9 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	s.NoError(err)
 
 	sender := initialization.ValidatorWalletName
-	babylonNode.SendIBCTransfer(sender, sender, "", sdk.NewInt64Coin("ubbn", 1000))
+	babylonNode.SendIBCTransfer(sender, sender, "", sdk.NewInt64Coin("ubbn", 1_000_000))
 
-	time.Sleep(1 * time.Minute)
+	time.Sleep(2 * time.Minute)
 
 	// TODO: check the transfer is successful. Right now this is done by manually looking at the log
 }
