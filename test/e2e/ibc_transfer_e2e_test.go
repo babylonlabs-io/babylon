@@ -67,7 +67,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	s.Require().NoError(err)
 
 	// Send transfer from val in chain-A (Node 3) to val in chain-B
-	babylonNodeA.SendIBCTransfer(val, val, "", transferAmount)
+	babylonNodeA.SendIBCTransfer(val, addrB, "", transferAmount)
 
 	time.Sleep(1 * time.Minute)
 
