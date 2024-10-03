@@ -1,9 +1,10 @@
 package keeper
 
 import (
-	corestoretypes "cosmossdk.io/core/store"
 	"fmt"
 
+	"cosmossdk.io/collections"
+	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -18,6 +19,11 @@ type (
 		epochingKeeper types.EpochingKeeper
 		bankKeeper     types.BankKeeper
 		accountKeeper  types.AccountKeeper
+
+		// RefundableMsgKeySet is the set of hashes of messages that can be refunded
+		// Each key is a hash of the message bytes
+		RefundableMsgKeySet collections.KeySet[[]byte]
+
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
 		authority string
@@ -35,11 +41,19 @@ func NewKeeper(
 	authority string,
 	feeCollectorName string,
 ) Keeper {
+	sb := collections.NewSchemaBuilder(storeService)
+
 	return Keeper{
-		cdc:              cdc,
-		storeService:     storeService,
-		epochingKeeper:   epochingKeeper,
-		bankKeeper:       bankKeeper,
+		cdc:            cdc,
+		storeService:   storeService,
+		epochingKeeper: epochingKeeper,
+		bankKeeper:     bankKeeper,
+		RefundableMsgKeySet: collections.NewKeySet(
+			sb,
+			types.RefundableMsgKeySetPrefix,
+			"refundable_msg_key_set",
+			collections.BytesKey,
+		),
 		accountKeeper:    accountKeeper,
 		authority:        authority,
 		feeCollectorName: feeCollectorName,
