@@ -40,16 +40,43 @@ func (s *IBCTransferTestSuite) TearDownSuite() {
 }
 
 func (s *IBCTransferTestSuite) Test1IBCTransfer() {
-	bbnChain := s.configurer.GetChainConfig(0)
+	val := initialization.ValidatorWalletName
+	denom := "ubbn"
+	amount := int64(1_000_000)
+	tol := 0.01 // 1% tolerance to account for gas fees
+	delta := float64(amount) * tol
+	transferAmount := sdk.NewInt64Coin(denom, amount)
 
-	babylonNode, err := bbnChain.GetNodeAtIndex(2)
+	bbnChainA := s.configurer.GetChainConfig(0)
+	bbnChainB := s.configurer.GetChainConfig(1)
+
+	babylonNodeA, err := bbnChainA.GetNodeAtIndex(2)
+	s.NoError(err)
+	babylonNodeB, err := bbnChainB.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	val := initialization.ValidatorWalletName
-	// Send 1_000_000 ubbn from val in chain-A to chain-B
-	babylonNode.SendIBCTransfer(val, val, "", sdk.NewInt64Coin("ubbn", 1_000_000))
+	// Check balance of val in chain-A (Node 3)
+	addrA := babylonNodeA.GetWallet(val)
+	balanceA, err := babylonNodeA.QueryBalances(addrA)
+	s.Require().NoError(err)
+	// Confirm val on A has enough funds
+	s.Assert().GreaterOrEqual(balanceA.AmountOf(denom).Int64(), amount)
 
-	time.Sleep(2 * time.Minute)
+	addrB := babylonNodeB.GetWallet(val)
+	balanceB, err := babylonNodeB.QueryBalances(addrB)
+	s.Require().NoError(err)
 
-	// TODO: check the transfer is successful. Right now this is done by manually looking at the log
+	// Send transfer from val in chain-A (Node 3) to val in chain-B
+	babylonNodeA.SendIBCTransfer(val, val, "", transferAmount)
+
+	time.Sleep(1 * time.Minute)
+
+	// Check the transfer is successful. Amounts have been discounted from val in chain-A and added to val in chain-B
+	balanceA2, err := babylonNodeA.QueryBalances(addrA)
+	s.Require().NoError(err)
+	s.Assert().InDelta(balanceA.Sub(transferAmount).AmountOf(denom).Int64(), balanceA2.AmountOf(denom).Int64(), delta)
+
+	balanceB2, err := babylonNodeB.QueryBalances(addrB)
+	s.Require().NoError(err)
+	s.Assert().InDelta(balanceB.Add(transferAmount).AmountOf(denom).Int64(), balanceB2.AmountOf(denom).Int64(), delta)
 }
