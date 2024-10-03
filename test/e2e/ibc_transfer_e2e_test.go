@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"strings"
 	"time"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
@@ -40,11 +41,10 @@ func (s *IBCTransferTestSuite) TearDownSuite() {
 }
 
 func (s *IBCTransferTestSuite) Test1IBCTransfer() {
-	val := initialization.ValidatorWalletName
 	denom := "ubbn"
 	amount := int64(1_000_000)
-	tol := 0.01 // 1% tolerance to account for gas fees
-	delta := float64(amount) * tol
+	delta := float64(10000) // Tolerance to account for gas fees
+
 	transferAmount := sdk.NewInt64Coin(denom, amount)
 
 	bbnChainA := s.configurer.GetChainConfig(0)
@@ -54,6 +54,8 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	s.NoError(err)
 	babylonNodeB, err := bbnChainB.GetNodeAtIndex(2)
 	s.NoError(err)
+
+	val := initialization.ValidatorWalletName
 
 	// Check balance of val in chain-A (Node 3)
 	addrA := babylonNodeA.GetWallet(val)
@@ -65,18 +67,33 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	addrB := babylonNodeB.GetWallet(val)
 	balanceB, err := babylonNodeB.QueryBalances(addrB)
 	s.Require().NoError(err)
+	// Only one denom in B
+	s.Require().Len(balanceB, 1)
 
 	// Send transfer from val in chain-A (Node 3) to val in chain-B
 	babylonNodeA.SendIBCTransfer(val, addrB, "", transferAmount)
 
-	time.Sleep(1 * time.Minute)
+	time.Sleep(10 * time.Second)
 
-	// Check the transfer is successful. Amounts have been discounted from val in chain-A and added to val in chain-B
+	// Check the transfer is successful.
+	// Amounts have been discounted from val in chain-A and added (as a wrapped denom) to val in chain-B
 	balanceA2, err := babylonNodeA.QueryBalances(addrA)
 	s.Require().NoError(err)
 	s.Assert().InDelta(balanceA.Sub(transferAmount).AmountOf(denom).Int64(), balanceA2.AmountOf(denom).Int64(), delta)
 
 	balanceB2, err := babylonNodeB.QueryBalances(addrB)
 	s.Require().NoError(err)
-	s.Assert().InDelta(balanceB.Add(transferAmount).AmountOf(denom).Int64(), balanceB2.AmountOf(denom).Int64(), delta)
+	// Check that there are now two denoms in B
+	s.Require().Len(balanceB2, 2)
+	// Look for the ugly IBC one
+	denomsB := balanceB2.Denoms()
+	var denomB string
+	for _, d := range denomsB {
+		if strings.HasPrefix(d, "ibc/") {
+			denomB = d
+			break
+		}
+	}
+	// Check the balance of the IBC denom
+	s.Assert().InDelta(balanceB2.AmountOf(denomB).Int64(), transferAmount.Amount.Int64(), delta)
 }
