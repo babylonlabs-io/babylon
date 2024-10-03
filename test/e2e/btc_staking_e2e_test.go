@@ -345,6 +345,11 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	sig, err := eots.Sign(s.fptBTCSK, randListInfo.SRList[idx], msgToSign)
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
+
+	// balance before the finality signature is submitted
+	submitterBalanceBefore, err := nonValidatorNode.QueryBalances(s.cacheFP.Addr)
+	s.NoError(err)
+
 	// submit finality signature
 	nonValidatorNode.AddFinalitySig(s.cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
@@ -357,6 +362,11 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.Equal(activatedHeight, finalizedBlocks[0].Height)
 	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 	s.T().Logf("the block %d is finalized", activatedHeight)
+
+	// ensure the tx fee is refunded and the balance is not changed
+	submitterBalanceAfter, err := nonValidatorNode.QueryBalances(s.cacheFP.Addr)
+	s.NoError(err)
+	s.Equal(submitterBalanceBefore, submitterBalanceAfter)
 
 	// ensure finality provider has received rewards after the block is finalised
 	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
