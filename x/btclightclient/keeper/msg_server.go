@@ -48,10 +48,16 @@ func (m msgServer) InsertHeaders(ctx context.Context, msg *types.MsgInsertHeader
 	}
 
 	err := m.k.InsertHeadersWithHookAndEvents(sdkCtx, msg.Headers)
-
 	if err != nil {
 		return nil, err
 	}
+
+	// At this point, the headers have been inserted, and the inserted
+	// headers extend the current chain or a fork that is longer than
+	// the current chain.
+	// Thus, we can safely consider this message as refundable
+	m.k.iKeeper.IndexRefundableMsg(sdkCtx, msg)
+
 	return &types.MsgInsertHeadersResponse{}, nil
 }
 

@@ -22,6 +22,7 @@ type (
 		cdc          codec.BinaryCodec
 		storeService corestoretypes.KVStoreService
 		hooks        types.BTCLightClientHooks
+		iKeeper      types.IncentiveKeeper
 		btcConfig    bbn.BtcConfig
 		bl           *types.BtcLightClient
 		authority    string
@@ -34,6 +35,7 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService corestoretypes.KVStoreService,
 	btcConfig bbn.BtcConfig,
+	iKeeper types.IncentiveKeeper,
 	authority string,
 ) Keeper {
 	bl := types.NewBtcLightClientFromParams(btcConfig.NetParams())
@@ -42,6 +44,7 @@ func NewKeeper(
 		cdc:          cdc,
 		storeService: storeService,
 		hooks:        nil,
+		iKeeper:      iKeeper,
 		btcConfig:    btcConfig,
 		bl:           bl,
 		authority:    authority,

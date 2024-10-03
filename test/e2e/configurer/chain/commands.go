@@ -232,9 +232,10 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 		tx2 := datagen.CreatOpReturnTransaction(r, p2)
 		opReturn2 := datagen.CreateBlockWithTransaction(r, opReturn1.HeaderBytes.ToBlockHeader(), tx2)
 
-		n.InsertHeader(&opReturn1.HeaderBytes)
-		n.InsertHeader(&opReturn2.HeaderBytes)
-
+		n.SubmitRefundableTxWithAssertion(func() {
+			n.InsertHeader(&opReturn1.HeaderBytes)
+			n.InsertHeader(&opReturn2.HeaderBytes)
+		})
 		n.SubmitRefundableTxWithAssertion(func() {
 			n.InsertProofs(opReturn1.SpvProof, opReturn2.SpvProof)
 		})

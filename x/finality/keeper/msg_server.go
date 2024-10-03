@@ -98,7 +98,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	existingSig, err := ms.GetSig(ctx, req.BlockHeight, fpPK)
 	if err == nil && existingSig.Equals(req.FinalitySig) {
 		ms.Logger(ctx).Debug("Received duplicated finiality vote", "block height", req.BlockHeight, "finality provider", req.FpBtcPk)
-		// exactly same vote alreay exists, return success to the provider
+		// exactly same vote already exists, return success to the provider
 		return &types.MsgAddFinalitySigResponse{}, nil
 	}
 
@@ -178,7 +178,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	}
 
 	// at this point, the finality signature is 1) valid, 2) over a canonical block,
-	// and 3) not duplicated
+	// and 3) not duplicated.
 	// Thus, we can safely consider this message as refundable
 	ms.IncentiveKeeper.IndexRefundableMsg(ctx, req)
 

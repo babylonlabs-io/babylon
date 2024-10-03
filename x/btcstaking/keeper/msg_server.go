@@ -472,8 +472,10 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 
 	// at this point, the covenant signatures are verified and are not duplicated.
 	// Thus, we can safely consider this message as refundable
-	// TODO: currently we refund tx fee for covenant signatures even if the BTC
-	// delegation already has a covenant quorum. Should we refund in this case?
+	// NOTE: currently we refund tx fee for covenant signatures even if the BTC
+	// delegation already has a covenant quorum. This is to ensure that covenant
+	// members do not spend transaction fee, even if they submit covenant signatures
+	// late.
 	ms.iKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgAddCovenantSigsResponse{}, nil

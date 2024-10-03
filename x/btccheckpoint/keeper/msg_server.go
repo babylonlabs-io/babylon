@@ -22,7 +22,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 }
 
 // TODO at some point add proper logging of error
-// TODO emit some events for external consumers. Those should be probably emited
+// TODO emit some events for external consumers. Those should be probably emitted
 // at EndBlockerCallback
 func (ms msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBTCSpvProof) (*types.MsgInsertBTCSpvProofResponse, error) {
 
@@ -92,7 +92,8 @@ func (ms msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertB
 		return nil, err
 	}
 
-	// At this point, the BTC checkpoint is considered the first valid one for the epoch.
+	// At this point, the BTC checkpoint is considered the first valid submission
+	// for the epoch.
 	// Thus, we can safely consider this message as refundable
 	ms.k.incentiveKeeper.IndexRefundableMsg(sdkCtx, req)
 

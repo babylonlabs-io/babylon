@@ -432,6 +432,7 @@ func (ak *AppKeepers) InitKeepers(
 		appCodec,
 		runtime.NewKVStoreService(keys[btclightclienttypes.StoreKey]),
 		*btcConfig,
+		&ak.IncentiveKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
