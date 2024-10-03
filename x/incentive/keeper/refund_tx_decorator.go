@@ -23,8 +23,7 @@ func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, suc
 	if ctx.ExecMode() != sdk.ExecModeFinalize && !simulate {
 		return next(ctx, tx, simulate, success)
 	}
-	// ignore unsuccessful tx
-	// NOTE: tx with a misbehaving header will still succeed, but will make the client to be frozen
+	// avoid refunding failed tx
 	if !success {
 		return next(ctx, tx, simulate, success)
 	}
@@ -53,7 +52,10 @@ func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, suc
 		}
 	}
 
-	// remove the refundable messages from the index
+	// remove the refundable messages from the index, regardless whether the tx is refunded or not
+	// NOTE: If the message with same hash shows up again, the refunding rule will
+	// consider it duplicated
+	//   and the tx will not be refunded
 	for _, msgHash := range refundableMsgHashList {
 		d.k.RemoveRefundableMsg(ctx, msgHash)
 	}

@@ -177,6 +177,11 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
 	}
 
+	// at this point, the finality signature is 1) valid, 2) over a canonical block,
+	// and 3) not duplicated
+	// Thus, we can safety consider this message as refundable
+	ms.IncentiveKeeper.IndexRefundableMsg(ctx, req)
+
 	return &types.MsgAddFinalitySigResponse{}, nil
 }
 

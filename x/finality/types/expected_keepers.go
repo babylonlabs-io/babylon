@@ -6,6 +6,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	etypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type BTCStakingKeeper interface {
@@ -29,6 +30,7 @@ type CheckpointingKeeper interface {
 // IncentiveKeeper defines the expected interface needed to distribute rewards.
 type IncentiveKeeper interface {
 	RewardBTCStaking(ctx context.Context, height uint64, filteredDc *bstypes.VotingPowerDistCache)
+	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
 }
 
 type BtcStakingHooks interface {
