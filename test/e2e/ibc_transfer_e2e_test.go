@@ -40,12 +40,25 @@ func (s *IBCTransferTestSuite) TearDownSuite() {
 	}
 }
 
+func getFirstIBCDenom(balance sdk.Coins) string {
+	// Look up the ugly IBC denom
+	denoms := balance.Denoms()
+	var denomB string
+	for _, d := range denoms {
+		if strings.HasPrefix(d, "ibc/") {
+			denomB = d
+			break
+		}
+	}
+	return denomB
+}
+
 func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	denom := "ubbn"
 	amount := int64(1_000_000)
 	delta := float64(10000) // Tolerance to account for gas fees
 
-	transferAmount := sdk.NewInt64Coin(denom, amount)
+	transferCoin := sdk.NewInt64Coin(denom, amount)
 
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
@@ -71,29 +84,72 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	s.Require().Len(balanceB, 1)
 
 	// Send transfer from val in chain-A (Node 3) to val in chain-B
-	babylonNodeA.SendIBCTransfer(val, addrB, "", transferAmount)
+	babylonNodeA.SendIBCTransfer(val, addrB, "transfer", transferCoin)
 
 	time.Sleep(10 * time.Second)
 
-	// Check the transfer is successful.
+	// Check that the transfer is successful.
 	// Amounts have been discounted from val in chain-A and added (as a wrapped denom) to val in chain-B
 	balanceA2, err := babylonNodeA.QueryBalances(addrA)
 	s.Require().NoError(err)
-	s.Assert().InDelta(balanceA.Sub(transferAmount).AmountOf(denom).Int64(), balanceA2.AmountOf(denom).Int64(), delta)
+	s.Assert().InDelta(balanceA.Sub(transferCoin).AmountOf(denom).Int64(), balanceA2.AmountOf(denom).Int64(), delta)
 
 	balanceB2, err := babylonNodeB.QueryBalances(addrB)
 	s.Require().NoError(err)
 	// Check that there are now two denoms in B
 	s.Require().Len(balanceB2, 2)
-	// Look for the ugly IBC one
-	denomsB := balanceB2.Denoms()
-	var denomB string
-	for _, d := range denomsB {
-		if strings.HasPrefix(d, "ibc/") {
-			denomB = d
-			break
-		}
-	}
+	denomB := getFirstIBCDenom(balanceB2)
 	// Check the balance of the IBC denom
-	s.Assert().InDelta(balanceB2.AmountOf(denomB).Int64(), transferAmount.Amount.Int64(), delta)
+	s.Assert().InDelta(balanceB2.AmountOf(denomB).Int64(), transferCoin.Amount.Int64(), delta)
+}
+
+func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
+	nativeDenom := "ubbn"
+	delta := float64(10000) // Tolerance to account for gas fees
+
+	bbnChainA := s.configurer.GetChainConfig(0)
+	bbnChainB := s.configurer.GetChainConfig(1)
+
+	babylonNodeA, err := bbnChainA.GetNodeAtIndex(2)
+	s.NoError(err)
+	babylonNodeB, err := bbnChainB.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	val := initialization.ValidatorWalletName
+
+	addrB := babylonNodeB.GetWallet(val)
+	balanceB, err := babylonNodeB.QueryBalances(addrB)
+	s.Require().NoError(err)
+	// Two denoms in B
+	s.Require().Len(balanceB, 2)
+	// Look for the ugly IBC one
+	denom := getFirstIBCDenom(balanceB)
+	// Confirm val on B has enough funds
+	amount := balanceB.AmountOf(denom).Int64() - int64(delta) // have to pay gas fees
+	s.Assert().GreaterOrEqual(balanceB.AmountOf(denom).Int64(), amount)
+
+	transferCoin := sdk.NewInt64Coin(denom, amount)
+
+	// Send transfer from val in chain-B (Node 3) to val in chain-A
+	addrA := babylonNodeA.GetWallet(val)
+	balanceA, err := babylonNodeA.QueryBalances(addrA)
+	s.Require().NoError(err)
+
+	babylonNodeB.SendIBCTransfer(val, addrA, "transfer back", transferCoin)
+
+	time.Sleep(10 * time.Second)
+
+	// Check that the transfer is successful.
+	// Amounts have been discounted from val in chain-B and added to val in chain-A
+	balanceB2, err := babylonNodeB.QueryBalances(addrB)
+	s.Require().NoError(err)
+	s.Assert().InDelta(balanceB.Sub(transferCoin).AmountOf(denom).Int64(), balanceB2.AmountOf(denom).Int64(), delta)
+
+	balanceA2, err := babylonNodeA.QueryBalances(addrA)
+	s.Require().NoError(err)
+	// Check that there's still one denom in A
+	s.Require().Len(balanceA2, 1)
+	// Check that the balance of the native denom has increased
+	nativeCoin := sdk.NewInt64Coin(nativeDenom, amount)
+	s.Assert().InDelta(balanceA.Add(nativeCoin).AmountOf(nativeDenom).Int64(), balanceA2.AmountOf(nativeDenom).Int64(), delta)
 }
