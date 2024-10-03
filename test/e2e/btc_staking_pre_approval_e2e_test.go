@@ -230,7 +230,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test2SubmitCovenantSignature() {
 			)
 			// wait for a block so that above txs take effect
 			nonValidatorNode.WaitForNextBlock()
-		})
+		}, true)
 	}
 
 	// wait for a block so that above txs take effect
@@ -275,7 +275,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test3SendStakingTransctionInclusionProo
 		)
 		nonValidatorNode.WaitForNextBlock()
 		nonValidatorNode.WaitForNextBlock()
-	})
+	}, true)
 
 	activeBTCDelegations := nonValidatorNode.QueryActiveDelegations()
 	s.Len(activeBTCDelegations, 1)
@@ -381,7 +381,16 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 		s.Equal(activatedHeight, finalizedBlocks[0].Height)
 		s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 		s.T().Logf("the block %d is finalized", activatedHeight)
-	})
+	}, true)
+
+	// submit an invalid finality signature, and tx should NOT be refunded
+	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
+		_, pk, err := datagen.GenRandomBTCKeyPair(s.r)
+		s.NoError(err)
+		btcPK := bbn.NewBIP340PubKeyFromBTCPK(pk)
+		nonValidatorNode.AddFinalitySig(btcPK, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+		nonValidatorNode.WaitForNextBlock()
+	}, false)
 
 	// ensure finality provider has received rewards after the block is finalised
 	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
@@ -493,7 +502,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test5SubmitStakerUnbonding() {
 		nonValidatorNode.BTCUndelegate(&stakingTxHash, delUnbondingSig)
 		// wait for a block so that above txs take effect
 		nonValidatorNode.WaitForNextBlock()
-	})
+	}, true)
 
 	// Wait for unbonded delegations to be created
 	var unbondedDelsResp []*bstypes.BTCDelegationResponse

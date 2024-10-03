@@ -239,7 +239,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 			)
 			// wait for a block so that above txs take effect
 			nonValidatorNode.WaitForNextBlock()
-		})
+		}, true)
 	}
 
 	// wait for a block so that above txs take effect
@@ -362,7 +362,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		s.Equal(activatedHeight, finalizedBlocks[0].Height)
 		s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 		s.T().Logf("the block %d is finalized", activatedHeight)
-	})
+	}, true)
 
 	// ensure finality provider has received rewards after the block is finalised
 	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
@@ -474,7 +474,7 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 		nonValidatorNode.BTCUndelegate(&stakingTxHash, delUnbondingSig)
 		// wait for a block so that above txs take effect
 		nonValidatorNode.WaitForNextBlock()
-	})
+	}, true)
 
 	// Wait for unbonded delegations to be created
 	var unbondedDelsResp []*bstypes.BTCDelegationResponse
