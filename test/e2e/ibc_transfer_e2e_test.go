@@ -83,7 +83,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	// Only one denom in B
 	s.Require().Len(balanceB, 1)
 
-	// Send transfer from val in chain-A (Node 3) to val in chain-B
+	// Send transfer from val in chain-A (Node 3) to val in chain-B (Node 3)
 	babylonNodeA.SendIBCTransfer(val, addrB, "transfer", transferCoin)
 
 	time.Sleep(10 * time.Second)
@@ -110,7 +110,7 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
-	babylonNodeA, err := bbnChainA.GetNodeAtIndex(2)
+	babylonNodeA, err := bbnChainA.GetNodeAtIndex(0)
 	s.NoError(err)
 	babylonNodeB, err := bbnChainB.GetNodeAtIndex(2)
 	s.NoError(err)
@@ -128,7 +128,7 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 
 	transferCoin := sdk.NewInt64Coin(denom, amount)
 
-	// Send transfer from val in chain-B (Node 3) to val in chain-A
+	// Send transfer from val in chain-B (Node 3) to val in chain-A (Node 1)
 	addrA := babylonNodeA.GetWallet(val)
 	balanceA, err := babylonNodeA.QueryBalances(addrA)
 	s.Require().NoError(err)
