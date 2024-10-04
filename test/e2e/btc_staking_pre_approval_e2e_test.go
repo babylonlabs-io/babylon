@@ -220,15 +220,17 @@ func (s *BTCStakingPreApprovalTestSuite) Test2SubmitCovenantSignature() {
 	s.NoError(err)
 
 	for i := 0; i < int(s.covenantQuorum); i++ {
-		nonValidatorNode.AddCovenantSigs(
-			covenantSlashingSigs[i].CovPk,
-			stakingTxHash,
-			covenantSlashingSigs[i].AdaptorSigs,
-			bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
-			covenantUnbondingSlashingSigs[i].AdaptorSigs,
-		)
-		// wait for a block so that above txs take effect
-		nonValidatorNode.WaitForNextBlock()
+		nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
+			nonValidatorNode.AddCovenantSigs(
+				covenantSlashingSigs[i].CovPk,
+				stakingTxHash,
+				covenantSlashingSigs[i].AdaptorSigs,
+				bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
+				covenantUnbondingSlashingSigs[i].AdaptorSigs,
+			)
+			// wait for a block so that above txs take effect
+			nonValidatorNode.WaitForNextBlock()
+		}, true)
 	}
 
 	// wait for a block so that above txs take effect
@@ -266,13 +268,14 @@ func (s *BTCStakingPreApprovalTestSuite) Test3SendStakingTransctionInclusionProo
 	s.NoError(err)
 	stakingTxHash := stakingMsgTx.TxHash()
 
-	nonValidatorNode.AddBTCDelegationInclusionProof(
-		&stakingTxHash,
-		s.cachedInclusionProof,
-	)
-
-	nonValidatorNode.WaitForNextBlock()
-	nonValidatorNode.WaitForNextBlock()
+	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
+		nonValidatorNode.AddBTCDelegationInclusionProof(
+			&stakingTxHash,
+			s.cachedInclusionProof,
+		)
+		nonValidatorNode.WaitForNextBlock()
+		nonValidatorNode.WaitForNextBlock()
+	}, true)
 
 	activeBTCDelegations := nonValidatorNode.QueryActiveDelegations()
 	s.Len(activeBTCDelegations, 1)
@@ -366,17 +369,28 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
 	// submit finality signature
-	nonValidatorNode.AddFinalitySig(s.cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
+		nonValidatorNode.AddFinalitySig(s.cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
-	// ensure vote is eventually cast
-	var finalizedBlocks []*ftypes.IndexedBlock
-	s.Eventually(func() bool {
-		finalizedBlocks = nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
-		return len(finalizedBlocks) > 0
-	}, time.Minute, time.Millisecond*50)
-	s.Equal(activatedHeight, finalizedBlocks[0].Height)
-	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
-	s.T().Logf("the block %d is finalized", activatedHeight)
+		// ensure vote is eventually cast
+		var finalizedBlocks []*ftypes.IndexedBlock
+		s.Eventually(func() bool {
+			finalizedBlocks = nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
+			return len(finalizedBlocks) > 0
+		}, time.Minute, time.Millisecond*50)
+		s.Equal(activatedHeight, finalizedBlocks[0].Height)
+		s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
+		s.T().Logf("the block %d is finalized", activatedHeight)
+	}, true)
+
+	// submit an invalid finality signature, and tx should NOT be refunded
+	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
+		_, pk, err := datagen.GenRandomBTCKeyPair(s.r)
+		s.NoError(err)
+		btcPK := bbn.NewBIP340PubKeyFromBTCPK(pk)
+		nonValidatorNode.AddFinalitySig(btcPK, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+		nonValidatorNode.WaitForNextBlock()
+	}, false)
 
 	// ensure finality provider has received rewards after the block is finalised
 	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
@@ -483,10 +497,12 @@ func (s *BTCStakingPreApprovalTestSuite) Test5SubmitStakerUnbonding() {
 	delUnbondingSig, err := activeDel.SignUnbondingTx(params, s.net, s.delBTCSK)
 	s.NoError(err)
 
-	// submit the message for creating BTC undelegation
-	nonValidatorNode.BTCUndelegate(&stakingTxHash, delUnbondingSig)
-	// wait for a block so that above txs take effect
-	nonValidatorNode.WaitForNextBlock()
+	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
+		// submit the message for creating BTC undelegation
+		nonValidatorNode.BTCUndelegate(&stakingTxHash, delUnbondingSig)
+		// wait for a block so that above txs take effect
+		nonValidatorNode.WaitForNextBlock()
+	}, true)
 
 	// Wait for unbonded delegations to be created
 	var unbondedDelsResp []*bstypes.BTCDelegationResponse

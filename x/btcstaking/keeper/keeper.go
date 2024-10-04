@@ -22,6 +22,7 @@ type (
 		btclcKeeper    types.BTCLightClientKeeper
 		btccKeeper     types.BtcCheckpointKeeper
 		FinalityKeeper types.FinalityKeeper
+		iKeeper        types.IncentiveKeeper
 
 		hooks types.BtcStakingHooks
 
@@ -39,6 +40,7 @@ func NewKeeper(
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
 	finalityKeeper types.FinalityKeeper,
+	iKeeper types.IncentiveKeeper,
 
 	btcNet *chaincfg.Params,
 	authority string,
@@ -50,6 +52,7 @@ func NewKeeper(
 		btclcKeeper:    btclcKeeper,
 		btccKeeper:     btccKeeper,
 		FinalityKeeper: finalityKeeper,
+		iKeeper:        iKeeper,
 
 		hooks: nil,
 

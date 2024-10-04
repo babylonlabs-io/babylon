@@ -6,6 +6,7 @@ import (
 
 	txformat "github.com/babylonlabs-io/babylon/btctxformatter"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type MockBTCLightClientKeeper struct {
@@ -96,4 +97,7 @@ func (ck MockCheckpointingKeeper) SetCheckpointForgotten(ctx context.Context, ep
 }
 
 func (ik *MockIncentiveKeeper) RewardBTCTimestamping(ctx context.Context, epoch uint64, rewardDistInfo *RewardDistInfo) {
+}
+
+func (ik *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg sdk.Msg) {
 }

@@ -46,11 +46,16 @@ func NewHelper(
 	btccKeeper *types.MockBtcCheckpointKeeper,
 	finalityKeeper *types.MockFinalityKeeper,
 ) *Helper {
-	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper, finalityKeeper)
+	ctrl := gomock.NewController(t)
+
+	// mock refundable messages
+	iKeeper := types.NewMockIncentiveKeeper(ctrl)
+	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+
+	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper, finalityKeeper, iKeeper)
 	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
-	ctrl := gomock.NewController(t)
 	mockedHooks := types.NewMockBtcStakingHooks(ctrl)
 	mockedHooks.EXPECT().AfterFinalityProviderActivated(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	k.SetHooks(mockedHooks)

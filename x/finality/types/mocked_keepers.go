@@ -11,6 +11,7 @@ import (
 	types "github.com/babylonlabs-io/babylon/types"
 	types0 "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	types1 "github.com/babylonlabs-io/babylon/x/epoching/types"
+	types2 "github.com/cosmos/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -250,6 +251,18 @@ func NewMockIncentiveKeeper(ctrl *gomock.Controller) *MockIncentiveKeeper {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockIncentiveKeeper) EXPECT() *MockIncentiveKeeperMockRecorder {
 	return m.recorder
+}
+
+// IndexRefundableMsg mocks base method.
+func (m *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg types2.Msg) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "IndexRefundableMsg", ctx, msg)
+}
+
+// IndexRefundableMsg indicates an expected call of IndexRefundableMsg.
+func (mr *MockIncentiveKeeperMockRecorder) IndexRefundableMsg(ctx, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexRefundableMsg", reflect.TypeOf((*MockIncentiveKeeper)(nil).IndexRefundableMsg), ctx, msg)
 }
 
 // RewardBTCStaking mocks base method.

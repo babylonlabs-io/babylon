@@ -111,6 +111,7 @@ import (
 	"github.com/babylonlabs-io/babylon/x/finality"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/babylonlabs-io/babylon/x/incentive"
+	incentivekeeper "github.com/babylonlabs-io/babylon/x/incentive/keeper"
 	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/babylonlabs-io/babylon/x/monitor"
 	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
@@ -512,6 +513,12 @@ func NewBabylonApp(
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 	app.SetAnteHandler(anteHandler)
+
+	// set postHandler
+	postHandler := sdk.ChainPostDecorators(
+		incentivekeeper.NewRefundTxDecorator(&app.IncentiveKeeper),
+	)
+	app.SetPostHandler(postHandler)
 
 	// must be before Loading version
 	// requires the snapshot store to be created and registered as a BaseAppOption

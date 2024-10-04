@@ -113,7 +113,9 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
+		iKeeper := types.NewMockIncentiveKeeper(ctrl)
+		iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
 		// create and register a random finality provider
@@ -310,7 +312,9 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	defer ctrl.Finish()
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
+	iKeeper := types.NewMockIncentiveKeeper(ctrl)
+	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 	// create and register a random finality provider
 	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)

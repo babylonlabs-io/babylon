@@ -2,8 +2,10 @@ package types
 
 import (
 	"context"
+
 	txformat "github.com/babylonlabs-io/babylon/btctxformatter"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type BTCLightClientKeeper interface {
@@ -40,4 +42,5 @@ type CheckpointingKeeper interface {
 
 type IncentiveKeeper interface {
 	RewardBTCTimestamping(ctx context.Context, epoch uint64, rewardDistInfo *RewardDistInfo)
+	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
 }
