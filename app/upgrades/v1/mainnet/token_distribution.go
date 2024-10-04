@@ -1,6 +1,6 @@
-package v1
+package mainnet
 
-const TokensDistribution = `{
+const TokensDistributionStr = `{
   "token_distribution": [
     {
       "address_sender": "bbn14d97wthm9fqvvdd96ax8lnfppwknndxztevs7k",

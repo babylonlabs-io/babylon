@@ -1,4 +1,4 @@
-package v1
+package mainnet
 
 const SignedFPsStr = `{
   "signed_txs_create_fp": [

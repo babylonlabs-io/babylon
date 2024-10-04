@@ -34,70 +34,66 @@ import (
 
 const (
 	ZoneConciergeStoreKey = "zoneconcierge"
+	UpgradeName           = "v1"
 )
 
-var Upgrade = upgrades.Upgrade{
-	UpgradeName:          "v1",
-	CreateUpgradeHandler: CreateUpgradeHandler,
-	// Upgrade necessary for deletions of `zoneconcierge`
-	StoreUpgrades: store.StoreUpgrades{
-		Deleted: []string{ZoneConciergeStoreKey},
-	},
-}
-
-type DataSignedFps struct {
-	SignedTxsFP []any `json:"signed_txs_create_fp"`
-}
-
-type DataTokenDistribution struct {
-	TokenDistribution []struct {
-		AddressSender   string `json:"address_sender"`
-		AddressReceiver string `json:"address_receiver"`
-		Amount          int64  `json:"amount"`
-	} `json:"token_distribution"`
+func CreateUpgrade(upgradeDataStr UpgradeDataString) upgrades.Upgrade {
+	return upgrades.Upgrade{
+		UpgradeName:          UpgradeName,
+		CreateUpgradeHandler: CreateUpgradeHandler(upgradeDataStr),
+		// Upgrade necessary for deletions of `zoneconcierge`
+		StoreUpgrades: store.StoreUpgrades{
+			Deleted: []string{ZoneConciergeStoreKey},
+		},
+	}
 }
 
 // CreateUpgradeHandler upgrade handler for launch.
-func CreateUpgradeHandler(
-	mm *module.Manager,
-	cfg module.Configurator,
-	keepers *keepers.AppKeepers,
-) upgradetypes.UpgradeHandler {
-	return func(context context.Context, _plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-		ctx := sdk.UnwrapSDKContext(context)
+func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHandlerCreator {
+	return func(mm *module.Manager, cfg module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
+		return func(context context.Context, _plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			ctx := sdk.UnwrapSDKContext(context)
 
-		migrations, err := mm.RunMigrations(ctx, cfg, fromVM)
-		if err != nil {
-			return nil, err
+			migrations, err := mm.RunMigrations(ctx, cfg, fromVM)
+			if err != nil {
+				return nil, err
+			}
+
+			if err := upgradeParameters(ctx, keepers.EncCfg.Codec, &keepers.BTCStakingKeeper, &keepers.FinalityKeeper, upgradeDataStr.BtcStakingParamStr, upgradeDataStr.FinalityParamStr); err != nil {
+				return nil, err
+			}
+
+			if err := upgradeLaunch(ctx, keepers.EncCfg, &keepers.BTCLightClientKeeper, &keepers.BTCStakingKeeper, keepers.BankKeeper, upgradeDataStr.NewBtcHeadersStr, upgradeDataStr.SignedFPsStr, upgradeDataStr.TokensDistributionStr); err != nil {
+				return nil, err
+			}
+
+			return migrations, nil
 		}
-
-		// Upgrade the staking parameters as first, as other upgrades depend on it.
-		if err := upgradeBtcStakingParameters(ctx, keepers.EncCfg, &keepers.BTCStakingKeeper); err != nil {
-			panic(err)
-		}
-
-		if err := upgradeFinalityParameters(ctx, keepers.EncCfg, &keepers.FinalityKeeper); err != nil {
-			panic(err)
-		}
-
-		if err := upgradeLaunch(ctx, keepers.EncCfg, &keepers.BTCLightClientKeeper, &keepers.BTCStakingKeeper, keepers.BankKeeper); err != nil {
-			panic(err)
-		}
-
-		return migrations, nil
 	}
+}
+
+func upgradeParameters(
+	ctx sdk.Context,
+	cdc codec.Codec,
+	btcK *btcstkkeeper.Keeper,
+	finK *finalitykeeper.Keeper,
+	btcStakingParam, finalityParam string,
+) error {
+	// Upgrade the staking parameters as first, as other upgrades depend on it.
+	if err := upgradeBtcStakingParameters(ctx, cdc, btcK, btcStakingParam); err != nil {
+		return err
+	}
+
+	return upgradeFinalityParameters(ctx, cdc, finK, finalityParam)
 }
 
 func upgradeBtcStakingParameters(
 	ctx sdk.Context,
-	e *appparams.EncodingConfig,
+	cdc codec.Codec,
 	k *btcstkkeeper.Keeper,
+	btcStakingParam string,
 ) error {
-
-	cdc := e.Codec
-
-	params, err := LoadBtcStakingParamsFromData(cdc)
-
+	params, err := LoadBtcStakingParamsFromData(cdc, btcStakingParam)
 	if err != nil {
 		return err
 	}
@@ -109,14 +105,11 @@ func upgradeBtcStakingParameters(
 
 func upgradeFinalityParameters(
 	ctx sdk.Context,
-	e *appparams.EncodingConfig,
+	cdc codec.Codec,
 	k *finalitykeeper.Keeper,
+	finalityParam string,
 ) error {
-
-	cdc := e.Codec
-
-	params, err := LoadFinalityParamsFromData(cdc)
-
+	params, err := LoadFinalityParamsFromData(cdc, finalityParam)
 	if err != nil {
 		return err
 	}
@@ -134,20 +127,21 @@ func upgradeLaunch(
 	btcLigthK *btclightkeeper.Keeper,
 	btcStkK *btcstkkeeper.Keeper,
 	bankK bankkeeper.SendKeeper,
+	btcHeaders, fps, tokensDistribution string,
 ) error {
-	if err := upgradeTokensDistribution(ctx, bankK); err != nil {
+	if err := upgradeTokensDistribution(ctx, bankK, tokensDistribution); err != nil {
 		return err
 	}
 
-	if err := upgradeBTCHeaders(ctx, encCfg.Codec, btcLigthK); err != nil {
+	if err := upgradeBTCHeaders(ctx, encCfg.Codec, btcLigthK, btcHeaders); err != nil {
 		return err
 	}
 
-	return upgradeSignedFPs(ctx, encCfg, btcStkK)
+	return upgradeSignedFPs(ctx, encCfg, btcStkK, fps)
 }
 
-func upgradeTokensDistribution(ctx sdk.Context, bankK bankkeeper.SendKeeper) error {
-	data, err := LoadTokenDistributionFromData()
+func upgradeTokensDistribution(ctx sdk.Context, bankK bankkeeper.SendKeeper, tokensDistribution string) error {
+	data, err := LoadTokenDistributionFromData(tokensDistribution)
 	if err != nil {
 		return err
 	}
@@ -172,8 +166,8 @@ func upgradeTokensDistribution(ctx sdk.Context, bankK bankkeeper.SendKeeper) err
 	return nil
 }
 
-func upgradeBTCHeaders(ctx sdk.Context, cdc codec.Codec, btcLigthK *btclightkeeper.Keeper) error {
-	newHeaders, err := LoadBTCHeadersFromData(cdc)
+func upgradeBTCHeaders(ctx sdk.Context, cdc codec.Codec, btcLigthK *btclightkeeper.Keeper, btcHeaders string) error {
+	newHeaders, err := LoadBTCHeadersFromData(cdc, btcHeaders)
 	if err != nil {
 		return err
 	}
@@ -181,17 +175,17 @@ func upgradeBTCHeaders(ctx sdk.Context, cdc codec.Codec, btcLigthK *btclightkeep
 	return insertBtcHeaders(ctx, btcLigthK, newHeaders)
 }
 
-func upgradeSignedFPs(ctx sdk.Context, encCfg *appparams.EncodingConfig, btcStkK *btcstkkeeper.Keeper) error {
-	fps, err := LoadSignedFPsFromData(encCfg.Codec, encCfg.TxConfig.TxJSONDecoder())
+func upgradeSignedFPs(ctx sdk.Context, encCfg *appparams.EncodingConfig, btcStkK *btcstkkeeper.Keeper, fps string) error {
+	msgCreateFps, err := LoadSignedFPsFromData(encCfg.Codec, encCfg.TxConfig.TxJSONDecoder(), fps)
 	if err != nil {
 		return err
 	}
 
-	return insertFPs(ctx, btcStkK, fps)
+	return insertFPs(ctx, btcStkK, msgCreateFps)
 }
 
-func LoadBtcStakingParamsFromData(cdc codec.Codec) (btcstktypes.Params, error) {
-	buff := bytes.NewBufferString(BtcStakingParamStr)
+func LoadBtcStakingParamsFromData(cdc codec.Codec, data string) (btcstktypes.Params, error) {
+	buff := bytes.NewBufferString(data)
 
 	var params btcstktypes.Params
 	err := cdc.UnmarshalJSON(buff.Bytes(), &params)
@@ -202,8 +196,8 @@ func LoadBtcStakingParamsFromData(cdc codec.Codec) (btcstktypes.Params, error) {
 	return params, nil
 }
 
-func LoadFinalityParamsFromData(cdc codec.Codec) (finalitytypes.Params, error) {
-	buff := bytes.NewBufferString(FinalityParamStr)
+func LoadFinalityParamsFromData(cdc codec.Codec, data string) (finalitytypes.Params, error) {
+	buff := bytes.NewBufferString(data)
 
 	var params finalitytypes.Params
 	err := cdc.UnmarshalJSON(buff.Bytes(), &params)
@@ -215,8 +209,8 @@ func LoadFinalityParamsFromData(cdc codec.Codec) (finalitytypes.Params, error) {
 }
 
 // LoadBTCHeadersFromData returns the BTC headers load from the json string with the headers inside of it.
-func LoadBTCHeadersFromData(cdc codec.Codec) ([]*btclighttypes.BTCHeaderInfo, error) {
-	buff := bytes.NewBufferString(NewBtcHeadersStr)
+func LoadBTCHeadersFromData(cdc codec.Codec, data string) ([]*btclighttypes.BTCHeaderInfo, error) {
+	buff := bytes.NewBufferString(data)
 
 	var gs btclighttypes.GenesisState
 	err := cdc.UnmarshalJSON(buff.Bytes(), &gs)
@@ -228,8 +222,8 @@ func LoadBTCHeadersFromData(cdc codec.Codec) ([]*btclighttypes.BTCHeaderInfo, er
 }
 
 // LoadSignedFPsFromData returns the finality providers from the json string.
-func LoadSignedFPsFromData(cdc codec.Codec, txJSONDecoder sdk.TxDecoder) ([]*btcstktypes.MsgCreateFinalityProvider, error) {
-	buff := bytes.NewBufferString(SignedFPsStr)
+func LoadSignedFPsFromData(cdc codec.Codec, txJSONDecoder sdk.TxDecoder, data string) ([]*btcstktypes.MsgCreateFinalityProvider, error) {
+	buff := bytes.NewBufferString(data)
 
 	var d DataSignedFps
 	err := json.Unmarshal(buff.Bytes(), &d)
@@ -266,8 +260,8 @@ func LoadSignedFPsFromData(cdc codec.Codec, txJSONDecoder sdk.TxDecoder) ([]*btc
 }
 
 // LoadTokenDistributionFromData returns the tokens to be distributed from the json string.
-func LoadTokenDistributionFromData() (DataTokenDistribution, error) {
-	buff := bytes.NewBufferString(TokensDistribution)
+func LoadTokenDistributionFromData(data string) (DataTokenDistribution, error) {
+	buff := bytes.NewBufferString(data)
 
 	var d DataTokenDistribution
 	err := json.Unmarshal(buff.Bytes(), &d)
