@@ -10,6 +10,7 @@ import (
 	"github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
+	"github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
@@ -18,14 +19,14 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
 )
 
-type SoftwareUpgradeSignetLaunchTestSuite struct {
+type SoftwareUpgradeV1TestnetTestSuite struct {
 	suite.Suite
 
 	configurer            *configurer.UpgradeConfigurer
 	balancesBeforeUpgrade map[string]sdk.Coin
 }
 
-func (s *SoftwareUpgradeSignetLaunchTestSuite) SetupSuite() {
+func (s *SoftwareUpgradeV1TestnetTestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
 	var err error
 	s.balancesBeforeUpgrade = make(map[string]sdk.Coin)
@@ -33,7 +34,7 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) SetupSuite() {
 	btcHeaderGenesis, err := app.SignetBtcHeaderGenesis(app.NewTmpBabylonApp().AppCodec())
 	s.NoError(err)
 
-	tokenDistData, err := v1.LoadTokenDistributionFromData()
+	tokenDistData, err := v1.LoadTokenDistributionFromData(testnet.TokensDistributionStr)
 	s.NoError(err)
 
 	balanceToMintByAddr := make(map[string]int64)
@@ -84,7 +85,7 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-func (s *SoftwareUpgradeSignetLaunchTestSuite) TearDownSuite() {
+func (s *SoftwareUpgradeV1TestnetTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
 	if err != nil {
 		s.T().Logf("error to clear resources %s", err.Error())
@@ -92,7 +93,7 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TearDownSuite() {
 }
 
 // TestUpgradeSignetLaunch Checks if the BTC Headers were inserted.
-func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
+func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// chain is already upgraded, only checks for differences in state are expected
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(30) // five blocks more than upgrade
@@ -107,10 +108,10 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 
 	// makes sure that the upgrade was actually executed
 	expectedUpgradeHeight := govProp.Plan.Height
-	resp := n.QueryAppliedPlan(v1.Upgrade.UpgradeName)
+	resp := n.QueryAppliedPlan(v1.UpgradeName)
 	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height %d", expectedUpgradeHeight)
 
-	btcHeadersInserted, err := v1.LoadBTCHeadersFromData(bbnApp.AppCodec())
+	btcHeadersInserted, err := v1.LoadBTCHeadersFromData(bbnApp.AppCodec(), testnet.NewBtcHeadersStr)
 	s.NoError(err)
 
 	lenHeadersInserted := len(btcHeadersInserted)
@@ -132,7 +133,7 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 	oldFPsLen := 0 // it should not have any FP
 	fpsFromNode := n.QueryFinalityProviders()
 
-	fpsInserted, err := v1.LoadSignedFPsFromData(bbnApp.AppCodec(), bbnApp.TxConfig().TxJSONDecoder())
+	fpsInserted, err := v1.LoadSignedFPsFromData(bbnApp.AppCodec(), bbnApp.TxConfig().TxJSONDecoder(), testnet.SignedFPsStr)
 	s.NoError(err)
 	s.Equal(len(fpsInserted), len(fpsFromNode)+oldFPsLen)
 
@@ -153,7 +154,7 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 	// as the one from the data
 	stakingParams := n.QueryBTCStakingParams()
 
-	stakingParamsFromData, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec())
+	stakingParamsFromData, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec(), testnet.BtcStakingParamStr)
 	s.NoError(err)
 
 	s.EqualValues(stakingParamsFromData, *stakingParams)
@@ -162,12 +163,12 @@ func (s *SoftwareUpgradeSignetLaunchTestSuite) TestUpgradeSignetLaunch() {
 	// as the one from the data
 	finalityParams := n.QueryFinalityParams()
 
-	finalityParamsFromData, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec())
+	finalityParamsFromData, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec(), testnet.FinalityParamStr)
 	s.NoError(err)
 	s.EqualValues(finalityParamsFromData, *finalityParams)
 
 	// Verifies the balance differences were really executed
-	tokenDistData, err := v1.LoadTokenDistributionFromData()
+	tokenDistData, err := v1.LoadTokenDistributionFromData(testnet.TokensDistributionStr)
 	s.NoError(err)
 
 	balanceDiffByAddr := make(map[string]int64)

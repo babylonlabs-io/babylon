@@ -9,7 +9,7 @@ babylond: babylond-rmi
 
 babylond-e2e:
 	docker build --tag babylonlabs-io/babylond -f babylond/Dockerfile ${BABYLON_FULL_PATH} \
-		--build-arg BUILD_TAGS="e2e"
+		--build-arg BABYLON_BUILD_OPTIONS="testnet"
 
 ## TODO: once release docker public versions for tags, remove this!
 babylond-before-upgrade: babylond-rmi-upgrade
