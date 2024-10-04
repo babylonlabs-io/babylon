@@ -99,6 +99,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	if err == nil && existingSig.Equals(req.FinalitySig) {
 		ms.Logger(ctx).Debug("Received duplicated finality vote", "block height", req.BlockHeight, "finality provider", req.FpBtcPk)
 		// exactly same vote already exists, return error
+		// this is to secure the tx refunding against duplicated messages
 		return nil, types.ErrDuplicatedFinalitySig
 	}
 

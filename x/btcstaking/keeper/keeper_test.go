@@ -75,8 +75,8 @@ func (h *Helper) NoError(err error) {
 	require.NoError(h.t, err)
 }
 
-func (h *Helper) Error(err error) {
-	require.Error(h.t, err)
+func (h *Helper) Error(err error, msgAndArgs ...any) {
+	require.Error(h.t, err, msgAndArgs...)
 }
 
 func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
