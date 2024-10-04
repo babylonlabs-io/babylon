@@ -30,13 +30,14 @@ to push the devenet data into the github repository.
 
 ## Upgrade data as string
 
-This upgrade loads 5 JSONs from strings in different files.
+This upgrade loads 6 JSONs from strings in different files.
 
 - BTC Headers at `./data_btc_headers.go`
 - Finality Providers signed messages at`./data_signed_fps.go`
 - Tokens distribution at `./data_token_distribution.go`
 - BTC Staking Parameters `./btcstaking_params.go`
 - Finality Parameters `./finality_params.go`
+- CosmWasm Parameters `./cosmwasm_params.go`
 
 ### BTC Headers
 

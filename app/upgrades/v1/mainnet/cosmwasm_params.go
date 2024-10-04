@@ -3,8 +3,6 @@ package mainnet
 // CosmWasm parameters for mainnet should allow only the
 // governance module account authtypes.NewModuleAddress(govtypes.ModuleName)
 // to upload and everybody to instantiate.
-// AccessTypeEverybody AccessType = 3
-// AccessTypeAnyOfAddresses AccessType = 4
 const CosmWasmParamStr = `{
   "code_upload_access": {
     "permission": "AnyOfAddresses",
