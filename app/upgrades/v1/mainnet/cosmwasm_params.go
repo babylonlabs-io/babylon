@@ -7,8 +7,8 @@ package mainnet
 // AccessTypeAnyOfAddresses AccessType = 4
 const CosmWasmParamStr = `{
   "code_upload_access": {
-    "permission": "ACCESS_TYPE_ANY_OF_ADDRESSES",
+    "permission": "AnyOfAddresses",
     "addresses": ["bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2"]
   },
-  "instantiate_default_permission": "ACCESS_TYPE_EVERYBODY"
+  "instantiate_default_permission": "Everybody"
 }`

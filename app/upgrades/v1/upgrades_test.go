@@ -254,4 +254,9 @@ func (s *UpgradeTestSuite) PostUpgrade() {
 		balanceAfterUpgrade := s.app.BankKeeper.GetBalance(s.ctx, sdkAddr, appparams.DefaultBondDenom)
 		s.Equal(expectedBalance.String(), balanceAfterUpgrade.String())
 	}
+
+	chainWasmParams := s.app.WasmKeeper.GetParams(s.ctx)
+	upgradeWasmParams, err := v1.LoadCosmWasmParamsFromData(s.app.AppCodec(), s.upgradeDataStr.CosmWasmParamStr)
+	s.NoError(err)
+	s.EqualValues(chainWasmParams, upgradeWasmParams)
 }

@@ -4,8 +4,7 @@ package testnet
 // upload and instantiate.
 const CosmWasmParamStr = `{
   "code_upload_access": {
-    "permission": "ACCESS_TYPE_EVERYBODY",
-    "addresses": []
+    "permission": "Everybody"
   },
-  "instantiate_default_permission": "ACCESS_TYPE_EVERYBODY"
+  "instantiate_default_permission": "Everybody"
 }`
