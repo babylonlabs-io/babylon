@@ -33,6 +33,25 @@ func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, suc
 		return next(ctx, tx, simulate, success)
 	}
 
+	refundable := d.CheckTxAndClearIndex(ctx, tx)
+
+	// if the tx is refundable, refund it
+	if refundable {
+		err := d.k.RefundTx(ctx, feeTx)
+		if err != nil {
+			d.k.Logger(ctx).Error("failed to refund tx", "error", err)
+			return next(ctx, tx, simulate, success)
+		}
+	}
+
+	// move to the next PostHandler
+	return next(ctx, tx, simulate, success)
+}
+
+// CheckTxAndClearIndex parses the given tx and returns a boolean indicating
+// whether the tx is refundable, and clears the refundable messages from the index
+// NOTE: a tx is refundable if all of its messages are unique and refundable
+func (d *RefundTxDecorator) CheckTxAndClearIndex(ctx sdk.Context, tx sdk.Tx) bool {
 	// NOTE: we use a map to avoid duplicated refundable messages, as
 	// otherwise one can fill a tx with duplicate messages to bloat the blockchain
 	refundableMsgHashSet := make(map[string]struct{})
@@ -45,22 +64,15 @@ func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, suc
 		}
 	}
 
-	// if all messages in the tx are unique and refundable, refund the tx
-	if len(refundableMsgHashSet) == len(tx.GetMsgs()) {
-		err := d.k.RefundTx(ctx, feeTx)
-		if err != nil {
-			d.k.Logger(ctx).Error("failed to refund tx", "error", err)
-			return next(ctx, tx, simulate, success)
-		}
-	}
+	// if all messages in the tx are unique and refundable, then this tx is refundable
+	refundable := len(refundableMsgHashSet) == len(tx.GetMsgs())
 
 	// remove the refundable messages from the index, regardless whether the tx is refunded or not
-	// NOTE: If the message with same hash shows up again, the refunding rule will
+	// NOTE: If the message with same hash shows up in a later tx, the refunding rule will
 	// consider it duplicated and the tx will not be refunded
 	for msgHash := range refundableMsgHashSet {
 		d.k.RemoveRefundableMsg(ctx, []byte(msgHash))
 	}
 
-	// move to the next PostHandler
-	return next(ctx, tx, simulate, success)
+	return refundable
 }

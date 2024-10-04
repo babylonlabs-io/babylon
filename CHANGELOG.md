@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### State Machine Breaking
 
+* [#130](https://github.com/babylonlabs-io/babylon/pull/130) Fix bugs in the
+transaction fee refunding mechanism for covenant signatures and finality signatures
 * [#125](https://github.com/babylonlabs-io/babylon/pull/125) Implement ADR-028 and
 refund transaction fee for certain transactions from protocol stakeholders
 
