@@ -25,7 +25,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 var _ types.MsgServer = msgServer{}
 
 // WrappedDelegate handles the MsgWrappedDelegate request
-func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedDelegate) (*types.MsgWrappedDelegateResponse, error) {
+func (k Keeper) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedDelegate) (*types.MsgWrappedDelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if msg.Msg == nil {
 		return nil, types.ErrNoWrappedMsg
@@ -36,13 +36,13 @@ func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrapped
 	if valErr != nil {
 		return nil, valErr
 	}
-	if _, err := ms.stk.GetValidator(ctx, valAddr); err != nil {
+	if _, err := k.stk.GetValidator(ctx, valAddr); err != nil {
 		return nil, err
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.Msg.DelegatorAddress); err != nil {
 		return nil, err
 	}
-	bondDenom, err := ms.stk.BondDenom(ctx)
+	bondDenom, err := k.stk.BondDenom(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrapped
 		return nil, err
 	}
 
-	ms.EnqueueMsg(ctx, queuedMsg)
+	k.EnqueueMsg(ctx, queuedMsg)
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedDelegate{
@@ -72,7 +72,7 @@ func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrapped
 			ValidatorAddress: msg.Msg.ValidatorAddress,
 			Amount:           msg.Msg.Amount.Amount.Uint64(),
 			Denom:            msg.Msg.Amount.GetDenom(),
-			EpochBoundary:    ms.GetEpoch(ctx).GetLastBlockHeight(),
+			EpochBoundary:    k.GetEpoch(ctx).GetLastBlockHeight(),
 		},
 	)
 	if err != nil {
@@ -83,7 +83,7 @@ func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrapped
 }
 
 // WrappedUndelegate handles the MsgWrappedUndelegate request
-func (ms msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappedUndelegate) (*types.MsgWrappedUndelegateResponse, error) {
+func (k Keeper) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappedUndelegate) (*types.MsgWrappedUndelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if msg.Msg == nil {
 		return nil, types.ErrNoWrappedMsg
@@ -98,10 +98,10 @@ func (ms msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrapp
 	if err != nil {
 		return nil, err
 	}
-	if _, err := ms.stk.ValidateUnbondAmount(ctx, delegatorAddress, valAddr, msg.Msg.Amount.Amount); err != nil {
+	if _, err := k.stk.ValidateUnbondAmount(ctx, delegatorAddress, valAddr, msg.Msg.Amount.Amount); err != nil {
 		return nil, err
 	}
-	bondDenom, err := ms.stk.BondDenom(ctx)
+	bondDenom, err := k.stk.BondDenom(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (ms msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrapp
 		return nil, err
 	}
 
-	ms.EnqueueMsg(ctx, queuedMsg)
+	k.EnqueueMsg(ctx, queuedMsg)
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedUndelegate{
@@ -131,7 +131,7 @@ func (ms msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrapp
 			ValidatorAddress: msg.Msg.ValidatorAddress,
 			Amount:           msg.Msg.Amount.Amount.Uint64(),
 			Denom:            msg.Msg.Amount.GetDenom(),
-			EpochBoundary:    ms.GetEpoch(ctx).GetLastBlockHeight(),
+			EpochBoundary:    k.GetEpoch(ctx).GetLastBlockHeight(),
 		},
 	)
 	if err != nil {
@@ -142,7 +142,7 @@ func (ms msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrapp
 }
 
 // WrappedBeginRedelegate handles the MsgWrappedBeginRedelegate request
-func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgWrappedBeginRedelegate) (*types.MsgWrappedBeginRedelegateResponse, error) {
+func (k Keeper) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgWrappedBeginRedelegate) (*types.MsgWrappedBeginRedelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if msg.Msg == nil {
 		return nil, types.ErrNoWrappedMsg
@@ -157,10 +157,10 @@ func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.Msg
 	if err != nil {
 		return nil, err
 	}
-	if _, err := ms.stk.ValidateUnbondAmount(ctx, delegatorAddress, valSrcAddr, msg.Msg.Amount.Amount); err != nil {
+	if _, err := k.stk.ValidateUnbondAmount(ctx, delegatorAddress, valSrcAddr, msg.Msg.Amount.Amount); err != nil {
 		return nil, err
 	}
-	bondDenom, err := ms.stk.BondDenom(ctx)
+	bondDenom, err := k.stk.BondDenom(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +185,7 @@ func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.Msg
 		return nil, err
 	}
 
-	ms.EnqueueMsg(ctx, queuedMsg)
+	k.EnqueueMsg(ctx, queuedMsg)
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedBeginRedelegate{
 			DelegatorAddress:            msg.Msg.DelegatorAddress,
@@ -193,7 +193,7 @@ func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.Msg
 			DestinationValidatorAddress: msg.Msg.ValidatorDstAddress,
 			Amount:                      msg.Msg.Amount.Amount.Uint64(),
 			Denom:                       msg.Msg.Amount.GetDenom(),
-			EpochBoundary:               ms.GetEpoch(ctx).GetLastBlockHeight(),
+			EpochBoundary:               k.GetEpoch(ctx).GetLastBlockHeight(),
 		},
 	)
 	if err != nil {
@@ -204,7 +204,7 @@ func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.Msg
 }
 
 // WrappedCancelUnbondingDelegation handles the MsgWrappedCancelUnbondingDelegation request
-func (ms msgServer) WrappedCancelUnbondingDelegation(goCtx context.Context, msg *types.MsgWrappedCancelUnbondingDelegation) (*types.MsgWrappedCancelUnbondingDelegationResponse, error) {
+func (k Keeper) WrappedCancelUnbondingDelegation(goCtx context.Context, msg *types.MsgWrappedCancelUnbondingDelegation) (*types.MsgWrappedCancelUnbondingDelegationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if msg.Msg == nil {
 		return nil, types.ErrNoWrappedMsg
@@ -233,7 +233,7 @@ func (ms msgServer) WrappedCancelUnbondingDelegation(goCtx context.Context, msg 
 		)
 	}
 
-	bondDenom, err := ms.stk.BondDenom(ctx)
+	bondDenom, err := k.stk.BondDenom(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -254,14 +254,14 @@ func (ms msgServer) WrappedCancelUnbondingDelegation(goCtx context.Context, msg 
 		return nil, err
 	}
 
-	ms.EnqueueMsg(ctx, queuedMsg)
+	k.EnqueueMsg(ctx, queuedMsg)
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedCancelUnbondingDelegation{
 			DelegatorAddress: msg.Msg.DelegatorAddress,
 			ValidatorAddress: msg.Msg.ValidatorAddress,
 			Amount:           msg.Msg.Amount.Amount.Uint64(),
 			CreationHeight:   msg.Msg.CreationHeight,
-			EpochBoundary:    ms.GetEpoch(ctx).GetLastBlockHeight(),
+			EpochBoundary:    k.GetEpoch(ctx).GetLastBlockHeight(),
 		},
 	)
 	if err != nil {
