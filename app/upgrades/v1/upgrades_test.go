@@ -35,6 +35,7 @@ var (
 	UpgradeV1DataTestnet = v1.UpgradeDataString{
 		BtcStakingParamStr:    testnetdata.BtcStakingParamStr,
 		FinalityParamStr:      testnetdata.FinalityParamStr,
+		CosmWasmParamStr:      testnetdata.CosmWasmParamStr,
 		NewBtcHeadersStr:      testnetdata.NewBtcHeadersStr,
 		SignedFPsStr:          testnetdata.SignedFPsStr,
 		TokensDistributionStr: testnetdata.TokensDistributionStr,
@@ -42,6 +43,7 @@ var (
 	UpgradeV1DataMainnet = v1.UpgradeDataString{
 		BtcStakingParamStr:    mainnetdata.BtcStakingParamStr,
 		FinalityParamStr:      mainnetdata.FinalityParamStr,
+		CosmWasmParamStr:      mainnetdata.CosmWasmParamStr,
 		NewBtcHeadersStr:      mainnetdata.NewBtcHeadersStr,
 		SignedFPsStr:          mainnetdata.SignedFPsStr,
 		TokensDistributionStr: mainnetdata.TokensDistributionStr,

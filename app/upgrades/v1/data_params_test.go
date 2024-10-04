@@ -12,17 +12,26 @@ import (
 func TestHardCodedBtcStakingParamsAreValid(t *testing.T) {
 	bbnApp := app.NewTmpBabylonApp()
 	for _, upgradeData := range UpgradeV1Data {
-		loadedParamas, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec(), upgradeData.BtcStakingParamStr)
+		params, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec(), upgradeData.BtcStakingParamStr)
 		require.NoError(t, err)
-		require.NoError(t, loadedParamas.Validate())
+		require.NoError(t, params.Validate())
 	}
 }
 
 func TestHardCodedFinalityParamsAreValid(t *testing.T) {
 	bbnApp := app.NewTmpBabylonApp()
 	for _, upgradeData := range UpgradeV1Data {
-		loadedParamas, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec(), upgradeData.FinalityParamStr)
+		params, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec(), upgradeData.FinalityParamStr)
 		require.NoError(t, err)
-		require.NoError(t, loadedParamas.Validate())
+		require.NoError(t, params.Validate())
+	}
+}
+
+func TestHardCodedWasmParamsAreValid(t *testing.T) {
+	bbnApp := app.NewTmpBabylonApp()
+	for _, upgradeData := range UpgradeV1Data {
+		params, err := v1.LoadCosmWasmParamsFromData(bbnApp.AppCodec(), upgradeData.CosmWasmParamStr)
+		require.NoError(t, err)
+		require.NotNil(t, params)
 	}
 }
