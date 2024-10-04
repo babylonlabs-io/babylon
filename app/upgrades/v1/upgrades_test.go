@@ -1,20 +1,30 @@
 package v1_test
 
 import (
+	_ "embed"
 	"fmt"
 	"testing"
 	"time"
 
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/core/header"
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/suite"
 
@@ -32,6 +42,9 @@ const (
 )
 
 var (
+	//go:embed testdata/staking.wasm
+	wasmContract []byte
+
 	UpgradeV1DataTestnet = v1.UpgradeDataString{
 		BtcStakingParamStr:    testnetdata.BtcStakingParamStr,
 		FinalityParamStr:      testnetdata.FinalityParamStr,
@@ -73,6 +86,10 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
+
+	stakingWasmChecksum, err := wasmvm.CreateChecksum(wasmContract)
+	s.NoError(err)
+
 	testCases := []struct {
 		msg            string
 		upgradeDataStr v1.UpgradeDataString
@@ -85,14 +102,46 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 			UpgradeV1DataMainnet,
 			s.PreUpgrade,
 			s.Upgrade,
-			s.PostUpgrade,
+			func() {
+				s.PostUpgrade()
+
+				// checks that not everybody can instantiate a contract
+				wasmMsgServer := wasmkeeper.NewMsgServerImpl(&s.app.WasmKeeper)
+				resp, err := wasmMsgServer.StoreCode(s.ctx, &wasmtypes.MsgStoreCode{
+					Sender:       datagen.GenRandomAddress().String(),
+					WASMByteCode: wasmContract,
+				})
+				s.Nil(resp)
+				s.EqualError(err, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not create code").Error())
+
+				// gov account can store new contracts
+				respFromGov, err := wasmMsgServer.StoreCode(s.ctx, &wasmtypes.MsgStoreCode{
+					Sender:       authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+					WASMByteCode: wasmContract,
+				})
+				s.NoError(err)
+				s.EqualValues(respFromGov.CodeID, 1)
+				s.Equal(stakingWasmChecksum[:], wasmvmtypes.Checksum(respFromGov.Checksum))
+			},
 		},
 		{
 			"Test launch software upgrade v1 testnet",
 			UpgradeV1DataTestnet,
 			s.PreUpgrade,
 			s.Upgrade,
-			s.PostUpgrade,
+			func() {
+				s.PostUpgrade()
+
+				// checks that anyone can instantiate a contract
+				wasmMsgServer := wasmkeeper.NewMsgServerImpl(&s.app.WasmKeeper)
+				resp, err := wasmMsgServer.StoreCode(s.ctx, &wasmtypes.MsgStoreCode{
+					Sender:       datagen.GenRandomAddress().String(),
+					WASMByteCode: wasmContract,
+				})
+				s.NoError(err)
+				s.EqualValues(resp.CodeID, 1)
+				s.Equal(stakingWasmChecksum[:], wasmvmtypes.Checksum(resp.Checksum))
+			},
 		},
 	}
 
