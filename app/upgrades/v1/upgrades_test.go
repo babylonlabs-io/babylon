@@ -42,7 +42,7 @@ const (
 )
 
 var (
-	//go:embed testdata/staking.wasm
+	//go:embed testdata/reflect_1_5.wasm
 	wasmContract []byte
 
 	UpgradeV1DataTestnet = v1.UpgradeDataString{
@@ -105,16 +105,17 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 			func() {
 				s.PostUpgrade()
 
+				randAddr := datagen.GenRandomAddress().String()
 				// checks that not everybody can instantiate a contract
 				wasmMsgServer := wasmkeeper.NewMsgServerImpl(&s.app.WasmKeeper)
 				resp, err := wasmMsgServer.StoreCode(s.ctx, &wasmtypes.MsgStoreCode{
-					Sender:       datagen.GenRandomAddress().String(),
+					Sender:       randAddr,
 					WASMByteCode: wasmContract,
 				})
 				s.Nil(resp)
 				s.EqualError(err, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not create code").Error())
 
-				// gov account can store new contracts
+				// onlu gov account can store new contracts
 				respFromGov, err := wasmMsgServer.StoreCode(s.ctx, &wasmtypes.MsgStoreCode{
 					Sender:       authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 					WASMByteCode: wasmContract,
@@ -122,6 +123,17 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				s.NoError(err)
 				s.EqualValues(respFromGov.CodeID, 1)
 				s.Equal(stakingWasmChecksum[:], wasmvmtypes.Checksum(respFromGov.Checksum))
+
+				// anyone can instantiate if it was stored already
+				respInst, err := wasmMsgServer.InstantiateContract(s.ctx, &wasmtypes.MsgInstantiateContract{
+					Sender: randAddr,
+					CodeID: respFromGov.CodeID,
+					Label:  "xxxx",
+					Msg:    []byte(`{}`),
+					Funds:  sdk.Coins{},
+				})
+				s.NoError(err)
+				s.NotNil(respInst.Address)
 			},
 		},
 		{
