@@ -356,11 +356,6 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return &types.MsgAddCovenantSigsResponse{}, nil
 	}
 
-	if btcDel.HasCovenantQuorums(params.CovenantQuorum) {
-		ms.Logger(ctx).Debug("Received covenant signature after achieving quorum", "covenant pk", req.Pk.MarshalHex())
-		return &types.MsgAddCovenantSigsResponse{}, nil
-	}
-
 	// ensure BTC delegation is still pending, i.e., not expired
 	btcTipHeight := ms.btclcKeeper.GetTipInfo(ctx).Height
 	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout

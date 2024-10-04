@@ -33,18 +33,20 @@ func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, suc
 		return next(ctx, tx, simulate, success)
 	}
 
-	refundableMsgHashList := make([][]byte, 0)
+	// NOTE: we use a map to avoid duplicated refundable messages, as
+	// otherwise one can fill a tx with duplicate messages to bloat the blockchain
+	refundableMsgHashSet := make(map[string]struct{})
 
 	// iterate over all messages in the tx, and record whether they are refundable
 	for _, msg := range tx.GetMsgs() {
 		msgHash := types.HashMsg(msg)
 		if d.k.HasRefundableMsg(ctx, msgHash) {
-			refundableMsgHashList = append(refundableMsgHashList, msgHash)
+			refundableMsgHashSet[string(msgHash)] = struct{}{}
 		}
 	}
 
-	// if all messages in the tx are refundable, refund the tx
-	if len(refundableMsgHashList) == len(tx.GetMsgs()) {
+	// if all messages in the tx are unique and refundable, refund the tx
+	if len(refundableMsgHashSet) == len(tx.GetMsgs()) {
 		err := d.k.RefundTx(ctx, feeTx)
 		if err != nil {
 			d.k.Logger(ctx).Error("failed to refund tx", "error", err)
@@ -55,8 +57,8 @@ func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, suc
 	// remove the refundable messages from the index, regardless whether the tx is refunded or not
 	// NOTE: If the message with same hash shows up again, the refunding rule will
 	// consider it duplicated and the tx will not be refunded
-	for _, msgHash := range refundableMsgHashList {
-		d.k.RemoveRefundableMsg(ctx, msgHash)
+	for msgHash := range refundableMsgHashSet {
+		d.k.RemoveRefundableMsg(ctx, []byte(msgHash))
 	}
 
 	// move to the next PostHandler

@@ -37,12 +37,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-## v0.11.0
-
 ### State Machine Breaking
 
 * [#125](https://github.com/babylonlabs-io/babylon/pull/125) Implement ADR-028 and
 refund transaction fee for certain transactions from protocol stakeholders
+
+## v0.11.0
+
+### State Machine Breaking
+
 * [#107](https://github.com/babylonlabs-io/babylon/pull/107) Implement ADR-027 and
 enable in-protocol minimum gas price
 * [#103](https://github.com/babylonlabs-io/babylon/pull/103) Add token distribution
