@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+* [131](https://github.com/babylonlabs-io/babylon/pull/131) Add new staking
+events
+
 ## v0.11.0
 
 ### State Machine Breaking
