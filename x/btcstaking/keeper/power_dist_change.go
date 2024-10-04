@@ -170,19 +170,28 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		switch typedEvent := event.Ev.(type) {
 		case *types.EventPowerDistUpdate_BtcDelStateUpdate:
 			delEvent := typedEvent.BtcDelStateUpdate
+			btcDel, err := k.GetBTCDelegation(ctx, delEvent.StakingTxHash)
+			if err != nil {
+				panic(err) // only programming error
+			}
 			if delEvent.NewState == types.BTCDelegationStatus_ACTIVE {
 				// newly active BTC delegation
-				btcDel, err := k.GetBTCDelegation(ctx, delEvent.StakingTxHash)
-				if err != nil {
-					panic(err) // only programming error
-				}
+
 				// add the BTC delegation to each restaked finality provider
 				for _, fpBTCPK := range btcDel.FpBtcPkList {
 					fpBTCPKHex := fpBTCPK.MarshalHex()
 					activeBTCDels[fpBTCPKHex] = append(activeBTCDels[fpBTCPKHex], btcDel)
 				}
 			} else if delEvent.NewState == types.BTCDelegationStatus_UNBONDED {
-				// add the expired BTC delegation to the map
+				sdkCtx := sdk.UnwrapSDKContext(ctx)
+				// delegation expired and become unbonded emit block event about this
+				// information
+				if !btcDel.IsUnbondedEarly() {
+					if err := sdkCtx.EventManager().EmitTypedEvent(delEvent); err != nil {
+						panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new unbonded BTC delegation: %w", err))
+					}
+				}
+				// add the unbonded BTC delegation to the map
 				unbondedBTCDels[delEvent.StakingTxHash] = struct{}{}
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:

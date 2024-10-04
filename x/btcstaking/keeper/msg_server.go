@@ -294,6 +294,17 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
 		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
 	}
+
+	stakingTxHash := btcDel.MustGetStakingTxHash()
+
+	if err := ctx.EventManager().EmitTypedEvent(types.NewInclusionProofEvent(
+		stakingTxHash.String(),
+		btcDel.StartHeight,
+		btcDel.EndHeight,
+	)); err != nil {
+		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new pending BTC delegation: %w", err))
+	}
+
 	activeEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
 	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
 	ms.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
