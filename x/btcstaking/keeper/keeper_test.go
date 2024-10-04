@@ -407,8 +407,8 @@ func (h *Helper) CreateCovenantSigs(
 
 	h.NoError(err)
 	covenantMsgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, del)
-	for _, msg := range covenantMsgs {
-		msgCopy := msg
+	for i := 0; i < int(bsParams.CovenantQuorum); i++ {
+		msgCopy := covenantMsgs[i]
 		_, err := h.MsgServer.AddCovenantSigs(h.Ctx, msgCopy)
 		h.NoError(err)
 	}
