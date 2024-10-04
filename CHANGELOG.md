@@ -39,7 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-* [131](https://github.com/babylonlabs-io/babylon/pull/131) Add new staking
+* #[131](https://github.com/babylonlabs-io/babylon/pull/131) Add new staking
 events
 
 ### Misc Improvements
