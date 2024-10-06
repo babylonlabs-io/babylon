@@ -196,7 +196,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 
 	ed1 := tk.GetEpochData(epoch)
 
-	// TODO Add custom equal fo submission key and transaction key to check
+	// TODO Add custom equal for submission key and transaction key to check
 	// it is expected key
 	if len(ed1.Keys) == 0 {
 		t.Errorf("Unexpected missing unconfirmed submissions")
@@ -352,7 +352,7 @@ func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 	}
 
 	// Due to reorg one submission from epoch 1 lands on fork, which means it is no
-	// longer vaiable. It should be pruned. Other subbmissions should be left
+	// longer variable. It should be pruned. Other subbmissions should be left
 	// intact
 	tk.BTCLightClient.DeleteHeader(b2Hash(msg1))
 
@@ -475,7 +475,7 @@ func TestTxIdxShouldBreakTies(t *testing.T) {
 	finalSubKey := ed.Keys[0]
 
 	// There is small chance that we can draw the same transactions indexes, which
-	// cannot happend in real life i.e in real life if block has the same depth
+	// cannot happen in real life i.e. in real life if block has the same depth
 	// then this is one block and transaction indexes.
 	// In that case this test is noop to avoid spoutius failures
 	if b1TxIdx(msg1) < b1TxIdx(msg2) {

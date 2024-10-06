@@ -820,7 +820,7 @@ func (m *RawCheckpointResponse) GetBitmap() []byte {
 type CheckpointStateUpdateResponse struct {
 	// state defines the event of a state transition towards this state
 	State CheckpointStatus `protobuf:"varint,1,opt,name=state,proto3,enum=babylon.checkpointing.v1.CheckpointStatus" json:"state,omitempty"`
-	// status_desc respresents the description of status enum.
+	// status_desc represents the description of status enum.
 	StatusDesc string `protobuf:"bytes,2,opt,name=status_desc,json=statusDesc,proto3" json:"status_desc,omitempty"`
 	// block_height is the height of the Babylon block that triggers the state
 	// update
@@ -896,7 +896,7 @@ type RawCheckpointWithMetaResponse struct {
 	Ckpt *RawCheckpointResponse `protobuf:"bytes,1,opt,name=ckpt,proto3" json:"ckpt,omitempty"`
 	// status defines the status of the checkpoint
 	Status CheckpointStatus `protobuf:"varint,2,opt,name=status,proto3,enum=babylon.checkpointing.v1.CheckpointStatus" json:"status,omitempty"`
-	// status_desc respresents the description of status enum.
+	// status_desc represents the description of status enum.
 	StatusDesc string `protobuf:"bytes,3,opt,name=status_desc,json=statusDesc,proto3" json:"status_desc,omitempty"`
 	// bls_aggr_pk defines the aggregated BLS public key
 	BlsAggrPk *github_com_babylonlabs_io_babylon_crypto_bls12381.PublicKey `protobuf:"bytes,4,opt,name=bls_aggr_pk,json=blsAggrPk,proto3,customtype=github.com/babylonlabs-io/babylon/crypto/bls12381.PublicKey" json:"bls_aggr_pk,omitempty"`

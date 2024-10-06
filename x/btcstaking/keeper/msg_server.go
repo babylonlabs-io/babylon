@@ -141,8 +141,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	// 3. Check if it is not duplicated staking tx
 	stakingTxHash := parsedMsg.StakingTx.Transaction.TxHash()
-	delgation := ms.getBTCDelegation(ctx, stakingTxHash)
-	if delgation != nil {
+	delegation := ms.getBTCDelegation(ctx, stakingTxHash)
+	if delegation != nil {
 		return nil, types.ErrReusedStakingTx.Wrapf("duplicated tx hash: %s", stakingTxHash.String())
 	}
 

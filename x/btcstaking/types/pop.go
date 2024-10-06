@@ -284,7 +284,7 @@ func VerifyBIP322SigPop(
 	net *chaincfg.Params,
 ) error {
 	if len(msg) == 0 || len(address) == 0 || len(signature) == 0 || len(pubKeyNoCoord) == 0 {
-		return fmt.Errorf("cannot verfiy bip322 signature. One of the required parameters is empty")
+		return fmt.Errorf("cannot verify bip322 signature. One of the required parameters is empty")
 	}
 
 	witness, err := bip322.SimpleSigToWitness(signature)

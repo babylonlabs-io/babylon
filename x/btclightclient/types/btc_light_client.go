@@ -405,7 +405,7 @@ func (l *BtcLightClient) InsertHeaders(readStore BtcChainReadStore, headers []*w
 }
 
 // checkHeader checks if the header is valid and can be added to the store.
-// One criticial condition is that to properly validate difficulty adjustments
+// One critical condition is that to properly validate difficulty adjustments
 // we should have at least one header which is at difficulty adjustment boundary
 // in store.
 func (l *BtcLightClient) checkHeader(

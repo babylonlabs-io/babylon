@@ -109,7 +109,7 @@ func FuzzEpochsInfo(f *testing.F) {
 		helper := testhelper.NewHelper(t)
 		ctx, keeper, queryClient := helper.Ctx, helper.App.EpochingKeeper, helper.QueryClient
 
-		// enque the 1st block of the numEpochs'th epoch
+		// enqueue the 1st block of the numEpochs'th epoch
 		epochInterval := keeper.GetParams(ctx).EpochInterval
 		for i := uint64(0); i < (numEpochs - 2); i++ { // exclude the existing epoch 0 and 1
 			for j := uint64(0); j < epochInterval; j++ {
@@ -149,7 +149,7 @@ func FuzzEpochMsgsQuery(f *testing.F) {
 		txidsMap := map[string]bool{}
 		helper := testhelper.NewHelper(t)
 		ctx, keeper, queryClient := helper.Ctx, helper.App.EpochingKeeper, helper.QueryClient
-		// enque a random number of msgs with random txids
+		// enqueue a random number of msgs with random txids
 		for i := uint64(0); i < numMsgs; i++ {
 			txid := datagen.GenRandomByteArray(r, 32)
 			txidsMap[hex.EncodeToString(txid)] = true

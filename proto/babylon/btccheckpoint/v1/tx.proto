@@ -21,7 +21,7 @@ service Msg {
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 
-// MsgInsertBTCSpvProof defines resquest to insert a new checkpoint into the
+// MsgInsertBTCSpvProof defines request to insert a new checkpoint into the
 // store
 message MsgInsertBTCSpvProof {
   option (cosmos.msg.v1.signer) = "submitter";

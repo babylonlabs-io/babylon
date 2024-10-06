@@ -21,7 +21,7 @@ type ParsedPublicKey struct {
 
 func NewParsedPublicKey(key *bbn.BIP340PubKey) (*ParsedPublicKey, error) {
 	if key == nil {
-		return nil, fmt.Errorf("cannont parse nil *bbn.BIP340PubKey")
+		return nil, fmt.Errorf("cannot parse nil *bbn.BIP340PubKey")
 	}
 	pk, err := key.ToBTCPK()
 
