@@ -362,7 +362,7 @@ func ParseV0StakingTx(
 		return nil, fmt.Errorf("no covenant keys specified")
 	}
 
-	if covenantQuorum > uint32(len(covenantKeys)) {
+	if int(covenantQuorum) > len(covenantKeys) {
 		return nil, fmt.Errorf("covenant quorum is greater than the number of covenant keys")
 	}
 

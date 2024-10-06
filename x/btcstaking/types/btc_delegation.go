@@ -184,13 +184,13 @@ func (d *BTCDelegation) ValidateBasic() error {
 	return nil
 }
 
-// HasCovenantQuorum returns whether a BTC delegation has a quorum number of signatures
+// HasCovenantQuorums returns whether a BTC delegation has a quorum number of signatures
 // from covenant members, including
 // - adaptor signatures on slashing tx
 // - Schnorr signatures on unbonding tx
 // - adaptor signatrues on unbonding slashing tx
 func (d *BTCDelegation) HasCovenantQuorums(quorum uint32) bool {
-	return uint32(len(d.CovenantSigs)) >= quorum && d.BtcUndelegation.HasCovenantQuorums(quorum)
+	return len(d.CovenantSigs) >= int(quorum) && d.BtcUndelegation.HasCovenantQuorums(quorum)
 }
 
 // IsSignedByCovMember checks whether the given covenant PK has signed the delegation

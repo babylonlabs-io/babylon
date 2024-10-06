@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"time"
 
@@ -88,7 +89,11 @@ func SerializeBTCTx(tx *wire.MsgTx) ([]byte, error) {
 func GetOutputIdxInBTCTx(tx *wire.MsgTx, output *wire.TxOut) (uint32, error) {
 	for i, txOut := range tx.TxOut {
 		if bytes.Equal(txOut.PkScript, output.PkScript) && txOut.Value == output.Value {
-			return uint32(i), nil
+			if i <= math.MaxUint32 {
+				return uint32(i), nil
+			} else {
+				return 0, fmt.Errorf("output index out of acceptable range")
+			}
 		}
 	}
 
