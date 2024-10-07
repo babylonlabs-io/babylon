@@ -30,6 +30,10 @@ to push the devenet data into the github repository.
 
 ## Upgrade data as string
 
+The upgrade data was left as string to make it easier for `devnet` testing
+where it is needed to replace the data files, and would be harder to create
+the data files if it used actual go structures to generate the data.
+
 This upgrade loads 6 JSONs from strings in different files.
 
 - BTC Headers at `./data_btc_headers.go`
