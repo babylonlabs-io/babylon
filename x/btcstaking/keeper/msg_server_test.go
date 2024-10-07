@@ -229,7 +229,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
 	require.NoError(t, err)
 	// create new delegation
-	stakingTxHash1, _, _, _, err := h.CreateDelegationCustom(
+	stakingTxHash1, _, _, _, _, err := h.CreateDelegationCustom(
 		r,
 		fpPK,
 		changeAddress.EncodeAddress(),
@@ -723,7 +723,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 
 			// generate and insert new BTC delegation
 			stakingValue := int64(2 * 10e8)
-			stakingTxHash, _, _, _, err := h.CreateDelegationCustom(
+			stakingTxHash, _, _, _, _, err := h.CreateDelegationCustom(
 				r,
 				fpPK,
 				changeAddress.EncodeAddress(),
