@@ -44,6 +44,11 @@ transaction fee refunding mechanism for covenant signatures and finality signatu
 * [#125](https://github.com/babylonlabs-io/babylon/pull/125) Implement ADR-028 and
 refund transaction fee for certain transactions from protocol stakeholders
 
+### Misc Improvements
+
+* [#113](https://github.com/babylonlabs-io/babylon/pull/113) Add multibuild binary
+for upgrade handler `testnet` and `mainnet`.
+
 ## v0.11.0
 
 ### State Machine Breaking

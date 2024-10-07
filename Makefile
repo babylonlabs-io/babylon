@@ -79,6 +79,13 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=babylon \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
+# Handles the inclusion of upgrade in binary
+ifeq (testnet,$(findstring testnet,$(BABYLON_BUILD_OPTIONS)))
+  BUILD_TAGS += testnet
+else
+  BUILD_TAGS += mainnet
+endif
+
 # DB backend selection
 ifeq (cleveldb,$(findstring cleveldb,$(BABYLON_BUILD_OPTIONS)))
   ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=cleveldb
@@ -153,7 +160,10 @@ $(BUILD_TARGETS): $(BUILDDIR)/
 $(BUILDDIR)/:
 	mkdir -p $(BUILDDIR)/
 
-.PHONY: build build-linux
+build-testnet:
+	BABYLON_BUILD_OPTIONS=testnet make build
+
+.PHONY: build build-linux build-testnet
 
 mockgen_cmd=go run github.com/golang/mock/mockgen@v1.6.0
 
@@ -276,8 +286,8 @@ test-e2e-cache-btc-staking:
 test-e2e-cache-btc-staking-pre-approval:
 	go test -run TestBTCStakingPreApprovalTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
-test-e2e-cache-upgrade-signet:
-	go test -run TestSoftwareUpgradeSignetLaunchTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+test-e2e-cache-upgrade-v1:
+	go test -run TestSoftwareUpgradeV1TestnetTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
