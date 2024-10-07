@@ -50,6 +50,8 @@ messages inside `authz.MsgExec`
 
 * [#113](https://github.com/babylonlabs-io/babylon/pull/113) Add multibuild binary
 for upgrade handler `testnet` and `mainnet`.
+* [#139](https://github.com/babylonlabs-io/babylon/pull/139) Removed `unbonding`
+delegation status in query.
 
 ## v0.11.0
 
