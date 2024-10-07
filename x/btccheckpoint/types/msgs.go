@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	fmt "fmt"
+	"math"
 	"math/big"
 
 	txformat "github.com/babylonlabs-io/babylon/btctxformatter"
@@ -52,10 +53,14 @@ func ParseTwoProofs(
 	var checkpointData [][]byte
 
 	for i, proof := range parsedProofs {
+		if i > math.MaxUint8 || i < 0 {
+			return nil, fmt.Errorf("expected at most 255 proofs but got %d", len(parsedProofs))
+		}
+		partIdxUint8 := uint8(i)
 		data, err := txformat.GetCheckpointData(
 			expectedTag,
 			txformat.CurrentVersion,
-			uint8(i),
+			partIdxUint8,
 			proof.OpReturnData,
 		)
 
@@ -65,7 +70,7 @@ func ParseTwoProofs(
 		checkpointData = append(checkpointData, data)
 	}
 
-	// at this point we know we have two correctly formatted babylon op return transactions
+	// at this point we know we have two correctly formated babylon op return transactions
 	// we need to check if parts match
 	rawCkptData, err := txformat.ConnectParts(txformat.CurrentVersion, checkpointData[0], checkpointData[1])
 

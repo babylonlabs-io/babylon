@@ -179,7 +179,7 @@ func (p Params) Validate() error {
 	if p.CovenantQuorum == 0 {
 		return fmt.Errorf("covenant quorum size has to be positive")
 	}
-	if p.CovenantQuorum*2 <= uint32(len(p.CovenantPks)) {
+	if int(p.CovenantQuorum)*2 <= len(p.CovenantPks) {
 		return fmt.Errorf("covenant quorum size has to be more than 1/2 of the covenant committee size")
 	}
 

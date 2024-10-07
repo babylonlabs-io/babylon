@@ -102,7 +102,7 @@ func getPossibleStakingOutput(
 		return nil, fmt.Errorf("provided staking transaction must not be nil")
 	}
 
-	if stakingOutputIdx >= uint32(len(stakingTx.TxOut)) {
+	if int(stakingOutputIdx) >= len(stakingTx.TxOut) {
 		return nil, fmt.Errorf("invalid staking output index %d, tx has %d outputs", stakingOutputIdx, len(stakingTx.TxOut))
 	}
 
@@ -363,7 +363,7 @@ func CheckTransactions(
 		return ErrInvalidSlashingRate
 	}
 
-	if fundingOutputIdx >= uint32(len(fundingTransaction.TxOut)) {
+	if int(fundingOutputIdx) >= len(fundingTransaction.TxOut) {
 		return fmt.Errorf("invalid funding output index %d, tx has %d outputs", fundingOutputIdx, len(fundingTransaction.TxOut))
 	}
 
@@ -552,7 +552,7 @@ func checkTxBeforeSigning(txToSign *wire.MsgTx, fundingTx *wire.MsgTx, fundingOu
 		return fmt.Errorf("tx to sign must have exactly one input")
 	}
 
-	if fundingOutputIdx >= uint32(len(fundingTx.TxOut)) {
+	if int(fundingOutputIdx) >= len(fundingTx.TxOut) {
 		return fmt.Errorf("invalid funding output index %d, tx has %d outputs", fundingOutputIdx, len(fundingTx.TxOut))
 	}
 
