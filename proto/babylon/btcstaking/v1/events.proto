@@ -2,12 +2,41 @@ syntax = "proto3";
 package babylon.btcstaking.v1;
 
 import "gogoproto/gogo.proto";
+import "cosmos/staking/v1beta1/staking.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 
-// EventNewFinalityProvider is the event emitted when a finality provider is created
-message EventNewFinalityProvider { FinalityProvider fp = 1; }
+// EventFinalityProviderCreated is the event emitted when a finality provider is created
+message EventFinalityProviderCreated {
+  // btc_pk is the Bitcoin secp256k1 PK of this finality provider
+  // the PK follows encoding in BIP-340 spec
+  bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  // addr is the address to receive commission from delegations.
+  string addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // commission defines the commission rate of the finality provider.
+  string commission = 3 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
+  ];
+  // description defines the description terms for the finality provider.
+  cosmos.staking.v1beta1.Description description = 4;
+}
+
+// EventFinalityProviderEdited is the event emitted when a finality provider is edited
+message EventFinalityProviderEdited {
+  // btc_pk is the Bitcoin secp256k1 PK of this finality provider
+  // the PK follows encoding in BIP-340 spec
+  bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  // commission defines the commission rate of the finality provider.
+  string commission = 2 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
+  ];
+  // description defines the description terms for the finality provider.
+  cosmos.staking.v1beta1.Description description = 3;
+}
 
 // EventBTCDelegationStateUpdate is the event emitted when a BTC delegation's state is
 // updated. There are the following possible state transitions:
@@ -63,4 +92,42 @@ message EventPowerDistUpdate {
     // btc_del_state_update means a BTC delegation's state is updated
     EventBTCDelegationStateUpdate btc_del_state_update = 4;
   }
+}
+
+message EventFinalityProviderStatusChange {
+  // btc_pk is the BTC public key of the finality provider
+  string btc_pk = 1;
+  // new_status is the new status that the finality provider
+  // is transitioned to
+  FinalityProviderStatus new_status = 2;
+}
+
+// FinalityProviderStatus is the status of a finality provider.
+// A finality provider starts with status INACTIVE once registered.
+// Possible status transitions are when:
+// 1. it has accumulated sufficient delegations and has
+// timestamped public randomness:
+// INACTIVE -> ACTIVE
+// 2. it is jailed due to downtime:
+// ACTIVE -> JAILED
+// 3. it is slashed due to double-sign:
+// ACTIVE -> SLASHED
+// 4. it is unjailed after a jailing period:
+// JAILED -> INACTIVE/ACTIVE (depending on (1))
+// 5. it does not have sufficient delegations or does not
+// have timestamped public randomness:
+// ACTIVE -> INACTIVE.
+// Note that it is impossible for a SLASHED finality provider to
+// transition to other status
+enum FinalityProviderStatus {
+  // STATUS_INACTIVE defines a finality provider that does not have sufficient
+  // delegations or does not have timestamped public randomness.
+  STATUS_INACTIVE = 0;
+  // STATUS_ACTIVE defines a finality provider that have sufficient delegations
+  // and have timestamped public randomness.
+  STATUS_ACTIVE = 1;
+  // STATUS_JAILED defines a finality provider that is jailed due to downtime
+  STATUS_JAILED = 2;
+  // STATUS_SLASHED defines a finality provider that is slashed due to double-sign
+  STATUS_SLASHED = 3;
 }

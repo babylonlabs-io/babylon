@@ -78,7 +78,7 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 }
 
 // EditFinalityProvider edits an existing finality provider
-func (ms msgServer) EditFinalityProvider(ctx context.Context, req *types.MsgEditFinalityProvider) (*types.MsgEditFinalityProviderResponse, error) {
+func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEditFinalityProvider) (*types.MsgEditFinalityProviderResponse, error) {
 	// basic stateless checks
 	// NOTE: after this, description is guaranteed to be valid
 	if err := req.ValidateBasic(); err != nil {
@@ -88,8 +88,10 @@ func (ms msgServer) EditFinalityProvider(ctx context.Context, req *types.MsgEdit
 	// ensure commission rate is
 	// - at least the minimum commission rate in parameters, and
 	// - at most 1
-	if req.Commission.LT(ms.MinCommissionRate(ctx)) {
-		return nil, types.ErrCommissionLTMinRate.Wrapf("cannot set finality provider commission to less than minimum rate of %s", ms.MinCommissionRate(ctx))
+	if req.Commission.LT(ms.MinCommissionRate(goCtx)) {
+		return nil, types.ErrCommissionLTMinRate.Wrapf(
+			"cannot set finality provider commission to less than minimum rate of %s",
+			ms.MinCommissionRate(goCtx))
 	}
 	if req.Commission.GT(sdkmath.LegacyOneDec()) {
 		return nil, types.ErrCommissionGTMaxRate
@@ -97,7 +99,7 @@ func (ms msgServer) EditFinalityProvider(ctx context.Context, req *types.MsgEdit
 
 	// TODO: check to index the finality provider by his address instead of the BTC pk
 	// find the finality provider with the given BTC PK
-	fp, err := ms.GetFinalityProvider(ctx, req.BtcPk)
+	fp, err := ms.GetFinalityProvider(goCtx, req.BtcPk)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +117,13 @@ func (ms msgServer) EditFinalityProvider(ctx context.Context, req *types.MsgEdit
 	// all good, update the finality provider and set back
 	fp.Description = req.Description
 	fp.Commission = req.Commission
-	ms.setFinalityProvider(ctx, fp)
+	ms.setFinalityProvider(goCtx, fp)
+
+	// notify subscriber
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := ctx.EventManager().EmitTypedEvent(types.NewEventFinalityProviderEdited(fp)); err != nil {
+		panic(fmt.Errorf("failed to emit EventFinalityProviderEdited event: %w", err))
+	}
 
 	return &types.MsgEditFinalityProviderResponse{}, nil
 }
