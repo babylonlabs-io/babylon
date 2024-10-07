@@ -161,7 +161,7 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, _, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -213,7 +213,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	stakingValue := int64(2 * 10e8)
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	stakingTxHash, _, _, err := h.CreateDelegation(
+	stakingTxHash, _, _, _, err := h.CreateDelegation(
 		r,
 		delSK,
 		fpPK,
@@ -243,7 +243,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
 	require.NoError(t, err)
 	// create new delegation
-	stakingTxHash1, _, _, err := h.CreateDelegation(
+	stakingTxHash1, _, _, _, err := h.CreateDelegation(
 		r,
 		delSK,
 		fpPK,
@@ -290,7 +290,7 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, _, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -365,7 +365,7 @@ func FuzzBTCUndelegate(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -444,7 +444,7 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -518,7 +518,7 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -768,7 +768,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			stakingValue := int64(2 * 10e8)
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			h.NoError(err)
-			stakingTxHash, _, _, err := h.CreateDelegation(
+			stakingTxHash, _, _, _, err := h.CreateDelegation(
 				r,
 				delSK,
 				fpPK,

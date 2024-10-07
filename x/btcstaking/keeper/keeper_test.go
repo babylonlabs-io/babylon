@@ -171,7 +171,7 @@ func (h *Helper) CreateDelegation(
 	unbondingValue int64,
 	unbondingTime uint16,
 	usePreApproval bool,
-) (string, *types.MsgCreateBTCDelegation, *types.BTCDelegation, error) {
+) (string, *types.MsgCreateBTCDelegation, *types.BTCDelegation, *types.InclusionProof, error) {
 	stakingTimeBlocks := stakingTime
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
@@ -294,7 +294,7 @@ func (h *Helper) CreateDelegation(
 
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	if err != nil {
-		return "", nil, nil, err
+		return "", nil, nil, nil, err
 	}
 
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(msgCreateBTCDel.StakingTx)
@@ -313,7 +313,7 @@ func (h *Helper) CreateDelegation(
 		require.True(h.t, btcDel.HasInclusionProof())
 	}
 
-	return stakingTxHash, msgCreateBTCDel, btcDel, nil
+	return stakingTxHash, msgCreateBTCDel, btcDel, txInclusionProof, nil
 }
 
 func (h *Helper) GenerateCovenantSignaturesMessages(

@@ -56,7 +56,7 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 			stakingValue := int64(2 * 10e8)
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			h.NoError(err)
-			stakingTxHash, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+			stakingTxHash, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
 				r,
 				delSK,
 				fp.BtcPk.MustToBTCPK(),

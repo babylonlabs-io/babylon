@@ -51,7 +51,17 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 			for i := 0; i < 5; i++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				h.NoError(err)
-				_, _, del, err := h.CreateDelegation(r, delSK, fpPK, changeAddress.EncodeAddress(), stakingValue, 1000, 0, 0, false)
+				_, _, del, _, err := h.CreateDelegation(
+					r,
+					delSK,
+					fpPK,
+					changeAddress.EncodeAddress(),
+					stakingValue,
+					1000,
+					0,
+					0,
+					false,
+				)
 				h.NoError(err)
 				event := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 					StakingTxHash: del.MustGetStakingTxHash().String(),
@@ -99,7 +109,7 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		_, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		_, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -191,7 +201,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		_, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		_, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -263,7 +273,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		*/
 		stakingValue = int64(2 * 10e8)
 		h.NoError(err)
-		_, msgCreateBTCDel, actualDel, err = h.CreateDelegation(
+		_, msgCreateBTCDel, actualDel, _, err = h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -328,7 +338,7 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		_, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		_, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -435,7 +445,7 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		expectedStakingTxHash, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		expectedStakingTxHash, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
