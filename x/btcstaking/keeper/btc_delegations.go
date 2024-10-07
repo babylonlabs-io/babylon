@@ -94,6 +94,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	parsedUnbondingSlashingAdaptorSignatures []asig.AdaptorSignature,
 	params *types.Params,
 ) {
+	hadQuorum := btcDel.HasCovenantQuorums(params.CovenantQuorum)
 
 	// All is fine add received signatures to the BTC delegation and BtcUndelegation
 	btcDel.AddCovenantSigs(
@@ -115,7 +116,9 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 
 	// If reaching the covenant quorum after this msg, the BTC delegation becomes
 	// active. Then, record and emit this event
-	if btcDel.HasCovenantQuorums(params.CovenantQuorum) {
+	// We only emit power distribution events, and external quorum events if it
+	// is the first time the quorum is reached
+	if !hadQuorum && btcDel.HasCovenantQuorums(params.CovenantQuorum) {
 		if btcDel.HasInclusionProof() {
 			quorumReachedEvent := types.NewCovenantQuorumReachedEvent(
 				btcDel,
