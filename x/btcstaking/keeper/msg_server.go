@@ -284,28 +284,24 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	btcDel.EndHeight = btcDel.StartHeight + uint64(btcDel.StakingTime)
 	ms.setBTCDelegation(ctx, btcDel)
 
-	// 7. emit activation and expiry event
-	// record event that the BTC delegation becomes active at this height
-	// notify subscriber
-	event := &types.EventBTCDelegationStateUpdate{
-		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
+	// 7. emit events
+	stakingTxHash := btcDel.MustGetStakingTxHash()
+	stateUpdateEvent := &types.EventBTCDelegationStateUpdate{
+		StakingTxHash: stakingTxHash.String(),
 		NewState:      types.BTCDelegationStatus_ACTIVE,
 	}
-	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
-	}
 
-	stakingTxHash := btcDel.MustGetStakingTxHash()
-
-	if err := ctx.EventManager().EmitTypedEvent(types.NewInclusionProofEvent(
+	newInclusionProofEvent := types.NewInclusionProofEvent(
 		stakingTxHash.String(),
 		btcDel.StartHeight,
 		btcDel.EndHeight,
-	)); err != nil {
-		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new pending BTC delegation: %w", err))
+	)
+
+	if err := ctx.EventManager().EmitTypedEvents(newInclusionProofEvent, stateUpdateEvent); err != nil {
+		panic(fmt.Errorf("failed to emit events for the new active BTC delegation: %w", err))
 	}
 
-	activeEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
+	activeEvent := types.NewEventPowerDistUpdateWithBTCDel(stateUpdateEvent)
 	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
 	ms.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
 

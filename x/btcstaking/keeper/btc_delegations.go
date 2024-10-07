@@ -48,20 +48,19 @@ func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) e
 	// save this BTC delegation
 	k.setBTCDelegation(ctx, btcDel)
 
-	// notify subscriber
-	event := &types.EventBTCDelegationStateUpdate{
+	// notify subscriber about events
+	stateUpdateEvent := &types.EventBTCDelegationStateUpdate{
 		StakingTxHash: stakingTxHash.String(),
 		NewState:      types.BTCDelegationStatus_PENDING,
 	}
-	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new pending BTC delegation: %w", err))
-	}
 
-	if err := ctx.EventManager().EmitTypedEvent(types.NewBtcDelCreationEvent(
+	delegationCreationEvent := types.NewBtcDelCreationEvent(
 		stakingTxHash.String(),
 		btcDel,
-	)); err != nil {
-		panic(fmt.Errorf("failed to emit EventBTCDelegationCreated for the new pending BTC delegation: %w", err))
+	)
+
+	if err := ctx.EventManager().EmitTypedEvents(delegationCreationEvent, stateUpdateEvent); err != nil {
+		panic(fmt.Errorf("failed to emit events for the new pending BTC delegation: %w", err))
 	}
 
 	// NOTE: we don't need to record events for pending BTC delegations since these
@@ -122,29 +121,32 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 
 	// If reaching the covenant quorum after this msg, the BTC delegation becomes
 	// active. Then, record and emit this event
-	if btcDel.HasCovenantQuorums(params.CovenantQuorum) && btcDel.HasInclusionProof() {
-		// notify subscriber
-		event := &types.EventBTCDelegationStateUpdate{
-			StakingTxHash: btcDel.MustGetStakingTxHash().String(),
-			NewState:      types.BTCDelegationStatus_ACTIVE,
-		}
-		if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-			panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
+	if btcDel.HasCovenantQuorums(params.CovenantQuorum) {
+		if btcDel.HasInclusionProof() {
+			// notify subscriber
+			event := &types.EventBTCDelegationStateUpdate{
+				StakingTxHash: btcDel.MustGetStakingTxHash().String(),
+				NewState:      types.BTCDelegationStatus_ACTIVE,
+			}
+			if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
+				panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
+			}
+
+			// record event that the BTC delegation becomes active at this height
+			activeEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
+			btcTip := k.btclcKeeper.GetTipInfo(ctx)
+			k.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
+		} else {
+			// notify subscriber
+			event := &types.EventBTCDelegationStateUpdate{
+				StakingTxHash: btcDel.MustGetStakingTxHash().String(),
+				NewState:      types.BTCDelegationStatus_VERIFIED,
+			}
+			if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
+				panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new verified BTC delegation: %w", err))
+			}
 		}
 
-		// record event that the BTC delegation becomes active at this height
-		activeEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
-		btcTip := k.btclcKeeper.GetTipInfo(ctx)
-		k.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
-	} else if btcDel.HasCovenantQuorums(params.CovenantQuorum) && !btcDel.HasInclusionProof() {
-		// notify subscriber
-		event := &types.EventBTCDelegationStateUpdate{
-			StakingTxHash: btcDel.MustGetStakingTxHash().String(),
-			NewState:      types.BTCDelegationStatus_VERIFIED,
-		}
-		if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-			panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new verified BTC delegation: %w", err))
-		}
 	}
 }
 
