@@ -5,12 +5,7 @@ type UpgradeDataString struct {
 	FinalityParamStr      string
 	CosmWasmParamStr      string
 	NewBtcHeadersStr      string
-	SignedFPsStr          string
 	TokensDistributionStr string
-}
-
-type DataSignedFps struct {
-	SignedTxsFP []any `json:"signed_txs_create_fp"`
 }
 
 type DataTokenDistribution struct {

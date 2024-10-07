@@ -34,7 +34,6 @@ import (
 	testnetdata "github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
 	"github.com/babylonlabs-io/babylon/x/btclightclient"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 const (
@@ -50,7 +49,6 @@ var (
 		FinalityParamStr:      testnetdata.FinalityParamStr,
 		CosmWasmParamStr:      testnetdata.CosmWasmParamStr,
 		NewBtcHeadersStr:      testnetdata.NewBtcHeadersStr,
-		SignedFPsStr:          testnetdata.SignedFPsStr,
 		TokensDistributionStr: testnetdata.TokensDistributionStr,
 	}
 	UpgradeV1DataMainnet = v1.UpgradeDataString{
@@ -58,7 +56,6 @@ var (
 		FinalityParamStr:      mainnetdata.FinalityParamStr,
 		CosmWasmParamStr:      mainnetdata.CosmWasmParamStr,
 		NewBtcHeadersStr:      mainnetdata.NewBtcHeadersStr,
-		SignedFPsStr:          mainnetdata.SignedFPsStr,
 		TokensDistributionStr: mainnetdata.TokensDistributionStr,
 	}
 	UpgradeV1Data = []v1.UpgradeDataString{UpgradeV1DataTestnet, UpgradeV1DataMainnet}
@@ -74,8 +71,6 @@ type UpgradeTestSuite struct {
 	upgradeDataStr v1.UpgradeDataString
 	// BTC Header checker
 	btcHeadersLenPreUpgrade int
-	// FPs checker
-	finalityProvidersLenPreUpgrade int
 	// TokenDistribution checker
 	balanceDiffByAddr     map[string]int64
 	balancesBeforeUpgrade map[string]sdk.Coin
@@ -203,10 +198,6 @@ func (s *UpgradeTestSuite) PreUpgrade() {
 	allBtcHeaders := s.app.BTCLightClientKeeper.GetMainChainFrom(s.ctx, 0)
 	s.btcHeadersLenPreUpgrade = len(allBtcHeaders)
 
-	resp, err := s.app.BTCStakingKeeper.FinalityProviders(s.ctx, &types.QueryFinalityProvidersRequest{})
-	s.NoError(err)
-	s.finalityProvidersLenPreUpgrade = len(resp.FinalityProviders)
-
 	// Before upgrade, the params should be different
 	bsParamsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.app.AppCodec(), s.upgradeDataStr.BtcStakingParamStr)
 	s.NoError(err)
@@ -273,24 +264,6 @@ func (s *UpgradeTestSuite) PostUpgrade() {
 		btcHeaderInState := allBtcHeaders[s.btcHeadersLenPreUpgrade+i]
 
 		s.EqualValues(btcHeaderInserted.Header.MarshalHex(), btcHeaderInState.Header.MarshalHex())
-	}
-
-	resp, err := s.app.BTCStakingKeeper.FinalityProviders(s.ctx, &types.QueryFinalityProvidersRequest{})
-	s.NoError(err)
-	newFPsLen := len(resp.FinalityProviders)
-
-	fpsInserted, err := v1.LoadSignedFPsFromData(s.app.AppCodec(), s.app.TxConfig().TxJSONDecoder(), s.upgradeDataStr.SignedFPsStr)
-	s.NoError(err)
-
-	s.Equal(newFPsLen, s.finalityProvidersLenPreUpgrade+len(fpsInserted))
-	for _, fpInserted := range fpsInserted {
-		fpFromKeeper, err := s.app.BTCStakingKeeper.GetFinalityProvider(s.ctx, *fpInserted.BtcPk)
-		s.NoError(err)
-
-		s.EqualValues(fpFromKeeper.Addr, fpInserted.Addr)
-		s.EqualValues(fpFromKeeper.Description, fpInserted.Description)
-		s.EqualValues(fpFromKeeper.Commission.String(), fpInserted.Commission.String())
-		s.EqualValues(fpFromKeeper.Pop.String(), fpInserted.Pop.String())
 	}
 
 	// After upgrade, the params should be the same
