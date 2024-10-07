@@ -18,7 +18,7 @@ message Params {
   uint32 covenant_quorum = 2;
   // min_staking_value_sat is the minimum of satoshis locked in staking output
   int64 min_staking_value_sat = 3;
-  // max_staking_value_sat is the maxiumum of satoshis locked in staking output
+  // max_staking_value_sat is the maximum of satoshis locked in staking output
   int64 max_staking_value_sat = 4;
   // min_staking_time is the minimum lock time specified in staking output script
   uint32 min_staking_time_blocks = 5;

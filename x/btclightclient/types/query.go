@@ -10,7 +10,7 @@ func (b *BTCHeaderInfo) ToResponse() *BTCHeaderInfoResponse {
 	}
 }
 
-// ParseBTCHeadersToResponse parses the infos into resposes.
+// ParseBTCHeadersToResponse parses the infos into responses.
 func ParseBTCHeadersToResponse(infos []*BTCHeaderInfo) (resp []*BTCHeaderInfoResponse) {
 	resp = make([]*BTCHeaderInfoResponse, len(infos))
 	for i, info := range infos {

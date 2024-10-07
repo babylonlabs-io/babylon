@@ -42,7 +42,7 @@ func (k Keeper) GetBestSubmission(ctx context.Context, epochNumber uint64) (type
 // addEpochSubmission save given submission key and data to database and takes
 // car of updating any necessary indexes.
 // Provided submmission should be known to btclightclient and all of its blocks
-// should be on btc main chaing as viewed by btclightclient
+// should be on btc main chain as viewed by btclightclient
 func (k Keeper) addEpochSubmission(
 	ctx context.Context,
 	epochNum uint64,

@@ -33,7 +33,7 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
 )
 
-// NodeConfig is a confiuration for the node supplied from the test runner
+// NodeConfig is a configuration for the node supplied from the test runner
 // to initialization scripts. It should be backwards compatible with earlier
 // versions. If this struct is updated, the change must be backported to earlier
 // branches that might be used for upgrade testing.

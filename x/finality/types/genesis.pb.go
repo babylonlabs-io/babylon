@@ -34,9 +34,9 @@ type GenesisState struct {
 	Evidences []*Evidence `protobuf:"bytes,3,rep,name=evidences,proto3" json:"evidences,omitempty"`
 	// votes_sigs contains all the votes of finality providers ever registered.
 	VoteSigs []*VoteSig `protobuf:"bytes,4,rep,name=vote_sigs,json=voteSigs,proto3" json:"vote_sigs,omitempty"`
-	// public_randomness contains all the public randomness ever commited from the finality providers.
+	// public_randomness contains all the public randomness ever committed from the finality providers.
 	PublicRandomness []*PublicRandomness `protobuf:"bytes,5,rep,name=public_randomness,json=publicRandomness,proto3" json:"public_randomness,omitempty"`
-	// pub_rand_commit contains all the public randomness commitment ever commited from the finality providers.
+	// pub_rand_commit contains all the public randomness commitment ever committed from the finality providers.
 	PubRandCommit []*PubRandCommitWithPK `protobuf:"bytes,6,rep,name=pub_rand_commit,json=pubRandCommit,proto3" json:"pub_rand_commit,omitempty"`
 	// signing_infos represents a map between finality provider public key and their
 	// signing infos.
@@ -189,7 +189,7 @@ func (m *VoteSig) GetBlockHeight() uint64 {
 
 // PublicRandomness the block height and public randomness that the finality provider has submitted.
 type PublicRandomness struct {
-	// block_height is the height of block which the finality provider submited public randomness.
+	// block_height is the height of block which the finality provider submitted public randomness.
 	BlockHeight uint64 `protobuf:"varint,1,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 	// fp_btc_pk is the BTC PK of the finality provider that casts this vote.
 	FpBtcPk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`

@@ -56,7 +56,7 @@ func (c *Client) SendMsgsToMempool(ctx context.Context, msgs []sdk.Msg) error {
 		}
 		return sendMsgErr
 	}, retry.Context(ctx), rtyAtt, rtyDel, rtyErr, retry.OnRetry(func(n uint, err error) {
-		c.logger.Debug("retrying", zap.Uint("attemp", n+1), zap.Uint("max_attempts", rtyAttNum), zap.Error(err))
+		c.logger.Debug("retrying", zap.Uint("attempt", n+1), zap.Uint("max_attempts", rtyAttNum), zap.Error(err))
 	})); err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func (c *Client) ReliablySendMsgs(ctx context.Context, msgs []sdk.Msg, expectedE
 		}
 		return nil
 	}, retry.Context(ctx), rtyAtt, rtyDel, rtyErr, retry.OnRetry(func(n uint, err error) {
-		c.logger.Debug("retrying", zap.Uint("attemp", n+1), zap.Uint("max_attempts", rtyAttNum), zap.Error(err))
+		c.logger.Debug("retrying", zap.Uint("attempt", n+1), zap.Uint("max_attempts", rtyAttNum), zap.Error(err))
 	})); err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func (c *Client) ReliablySendMsgsWithSigner(ctx context.Context, signerAddr sdk.
 		wg.Done()
 		return nil
 	}, retry.Context(ctx), rtyAtt, rtyDel, rtyErr, retry.OnRetry(func(n uint, err error) {
-		c.logger.Debug("retrying", zap.Uint("attemp", n+1), zap.Uint("max_attempts", rtyAttNum), zap.Error(err))
+		c.logger.Debug("retrying", zap.Uint("attempt", n+1), zap.Uint("max_attempts", rtyAttNum), zap.Error(err))
 	})); err != nil {
 		return nil, err
 	}
@@ -377,7 +377,7 @@ func (c *Client) CalculateGas(ctx context.Context, txf tx.Factory, signingPK cry
 // Sign signs a given tx with the private key. The bytes signed over are canconical.
 // The resulting signature will be added to the transaction builder overwriting the previous
 // ones if overwrite=true (otherwise, the signature will be appended).
-// Signing a transaction with mutltiple signers in the DIRECT mode is not supprted and will
+// Signing a transaction with mutltiple signers in the DIRECT mode is not supported and will
 // return an error.
 // An error is returned upon failure.
 func Sign(

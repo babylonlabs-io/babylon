@@ -141,8 +141,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	// 3. Check if it is not duplicated staking tx
 	stakingTxHash := parsedMsg.StakingTx.Transaction.TxHash()
-	delgation := ms.getBTCDelegation(ctx, stakingTxHash)
-	if delgation != nil {
+	delegation := ms.getBTCDelegation(ctx, stakingTxHash)
+	if delegation != nil {
 		return nil, types.ErrReusedStakingTx.Wrapf("duplicated tx hash: %s", stakingTxHash.String())
 	}
 
@@ -284,17 +284,26 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	btcDel.EndHeight = btcDel.StartHeight + uint64(btcDel.StakingTime)
 	ms.setBTCDelegation(ctx, btcDel)
 
-	// 7. emit activation and expiry event
-	// record event that the BTC delegation becomes active at this height
-	// notify subscriber
-	event := &types.EventBTCDelegationStateUpdate{
-		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
-		NewState:      types.BTCDelegationStatus_ACTIVE,
+	// 7. emit events
+	stakingTxHash := btcDel.MustGetStakingTxHash()
+
+	newInclusionProofEvent := types.NewInclusionProofEvent(
+		stakingTxHash.String(),
+		btcDel.StartHeight,
+		btcDel.EndHeight,
+		types.BTCDelegationStatus_ACTIVE,
+	)
+
+	if err := ctx.EventManager().EmitTypedEvents(newInclusionProofEvent); err != nil {
+		panic(fmt.Errorf("failed to emit events for the new active BTC delegation: %w", err))
 	}
-	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
-	}
-	activeEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
+
+	activeEvent := types.NewEventPowerDistUpdateWithBTCDel(
+		&types.EventBTCDelegationStateUpdate{
+			StakingTxHash: stakingTxHash.String(),
+			NewState:      types.BTCDelegationStatus_ACTIVE,
+		},
+	)
 	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
 	ms.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
 
@@ -353,21 +362,18 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 
 	if btcDel.IsSignedByCovMember(req.Pk) && btcDel.BtcUndelegation.IsSignedByCovMember(req.Pk) {
 		ms.Logger(ctx).Debug("Received duplicated covenant signature", "covenant pk", req.Pk.MarshalHex())
-		return &types.MsgAddCovenantSigsResponse{}, nil
+		// return error if the covenant signature is already submitted
+		// this is to secure the tx refunding against duplicated messages
+		return nil, types.ErrDuplicatedCovenantSig
 	}
 
-	if btcDel.HasCovenantQuorums(params.CovenantQuorum) {
-		ms.Logger(ctx).Debug("Received covenant signature after achieving quorum", "covenant pk", req.Pk.MarshalHex())
-		return &types.MsgAddCovenantSigsResponse{}, nil
-	}
-
-	// ensure BTC delegation is still pending, i.e., not expired
+	// ensure BTC delegation is still pending, i.e., not unbonded
 	btcTipHeight := ms.btclcKeeper.GetTipInfo(ctx).Height
 	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 	status := btcDel.GetStatus(btcTipHeight, wValue, params.CovenantQuorum)
-	if status != types.BTCDelegationStatus_PENDING {
-		ms.Logger(ctx).Debug("Received covenant signature after the BTC delegation is already expired", "covenant pk", req.Pk.MarshalHex())
-		return &types.MsgAddCovenantSigsResponse{}, nil
+	if status == types.BTCDelegationStatus_UNBONDED {
+		ms.Logger(ctx).Debug("Received covenant signature after the BTC delegation is already unbonded", "covenant pk", req.Pk.MarshalHex())
+		return nil, types.ErrInvalidCovenantSig.Wrap("the BTC delegation is already unbonded")
 	}
 
 	// Check that the number of covenant sigs and number of the

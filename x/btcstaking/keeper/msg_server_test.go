@@ -294,12 +294,12 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, &bogusMsg)
 		h.Error(err)
 
-		for _, msg := range msgs {
+		for i, msg := range msgs {
 			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
 			h.NoError(err)
-			// check that submitting the same covenant signature does not produce an error
+			// check that submitting the same covenant signature returns error
 			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
-			h.NoError(err)
+			h.Error(err, "i: %d", i)
 		}
 
 		// ensure the BTC delegation now has voting power
@@ -835,7 +835,7 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 
 		fps := datagen.CreateNFinalityProviders(r, t, numFinalityProviders)
 
-		// Fill the databse of both apps with the same finality providers and delegations
+		// Fill the database of both apps with the same finality providers and delegations
 		for _, fp := range fps {
 			h.AddFinalityProvider(fp)
 			h1.AddFinalityProvider(fp)

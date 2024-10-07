@@ -61,7 +61,7 @@ func (k Keeper) emitTypedEventWithLog(ctx context.Context, evt proto.Message) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if err := sdkCtx.EventManager().EmitTypedEvent(evt); err != nil {
 		k.Logger(sdkCtx).Error(
-			"faied to emit event",
+			"failed to emit event",
 			"type", evt.String(),
 			"reason", err.Error(),
 		)
@@ -82,7 +82,7 @@ func (k Keeper) insertHandler() func(ctx context.Context, s headersState, result
 	return func(ctx context.Context, s headersState, result *types.InsertResult) error {
 		// if we receive rollback, should return error
 		if result.RollbackInfo != nil {
-			return fmt.Errorf("rollback should not happend %+v", result.RollbackInfo)
+			return fmt.Errorf("rollback should not happen %+v", result.RollbackInfo)
 		}
 
 		for _, header := range result.HeadersToInsert {
@@ -267,7 +267,7 @@ func (k Keeper) GetMainChainFrom(ctx context.Context, startHeight uint64) []*typ
 // GetMainChainFromWithLimit returns the current canonical chain from the given height up to the tip
 // If the height is higher than the tip, it returns an empty slice
 // If startHeight is 0, it returns the entire main chain
-func (k Keeper) GetMainChainFromWithLimit(ctx context.Context, startHeight, limit uint64) []*types.BTCHeaderInfo {
+func (k Keeper) GetMainChainFromWithLimit(ctx context.Context, startHeight uint64, limit uint32) []*types.BTCHeaderInfo {
 	headers := make([]*types.BTCHeaderInfo, 0, limit)
 	fn := func(header *types.BTCHeaderInfo) bool {
 		if len(headers) >= int(limit) {

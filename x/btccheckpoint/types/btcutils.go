@@ -20,7 +20,7 @@ import (
 // - Bitcoin Transaction index in block
 // - Non-empty OpReturnData
 type ParsedProof struct {
-	// keeping header hash to avoid recomputing it everytime
+	// keeping header hash to avoid recomputing it every time
 	BlockHash        types.BTCHeaderHashBytes
 	Transaction      *btcutil.Tx
 	TransactionBytes []byte
@@ -74,7 +74,7 @@ func createBranch(nodes []*chainhash.Hash, numfLeafs uint, idx uint) []*chainhas
 
 		// index^1 means we want to get sibling of the node we are proving
 		// ie. for index=2, index^1 = 3 and for index=3 index^1=2
-		// so xoring last bit by 1, select node oposite to the node we want the proof
+		// so xoring last bit by 1, select node opposite to the node we want the proof
 		// for.
 		// case with `size-1` is needed when the number of leafs is not power of 2
 		// and xor^1 could point outside of the tree
@@ -106,7 +106,7 @@ func CreateProofForIdx(transactions [][]byte, idx uint) ([]*chainhash.Hash, erro
 	}
 
 	if int(idx) >= len(transactions) {
-		return nil, errors.New("provided index should be smaller that lenght of transaction list")
+		return nil, errors.New("provided index should be smaller that length of transaction list")
 	}
 
 	var txs []*btcutil.Tx

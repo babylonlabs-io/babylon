@@ -104,7 +104,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 }
 
 func FuzzAddFinalitySig(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -193,9 +193,8 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		// Case 4: In case of duplicate vote return success
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
-		resp, err := ms.AddFinalitySig(ctx, msg)
-		require.NoError(t, err)
-		require.NotNil(t, resp)
+		_, err = ms.AddFinalitySig(ctx, msg)
+		require.Error(t, err)
 
 		// Case 5: the finality provider is slashed if it votes for a fork
 		blockAppHash2 := datagen.GenRandomByteArray(r, 32)

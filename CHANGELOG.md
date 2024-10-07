@@ -44,6 +44,17 @@ update during v1 upgrade handler.
 
 ### Misc Improvements
 
+* [#130](https://github.com/babylonlabs-io/babylon/pull/130) Fix bugs in the
+transaction fee refunding mechanism for covenant signatures and finality signatures
+* [#125](https://github.com/babylonlabs-io/babylon/pull/125) Implement ADR-028 and
+refund transaction fee for certain transactions from protocol stakeholders
+* [#138](https://github.com/babylonlabs-io/babylon/pull/138) Intercept staking module
+messages inside `authz.MsgExec`
+
+### Improvements
+
+* #[131](https://github.com/babylonlabs-io/babylon/pull/131) Add new staking
+events
 * [#113](https://github.com/babylonlabs-io/babylon/pull/113) Add multibuild binary
 for upgrade handler `testnet` and `mainnet`.
 
@@ -51,8 +62,6 @@ for upgrade handler `testnet` and `mainnet`.
 
 ### State Machine Breaking
 
-* [#125](https://github.com/babylonlabs-io/babylon/pull/125) Implement ADR-028 and
-refund transaction fee for certain transactions from protocol stakeholders
 * [#107](https://github.com/babylonlabs-io/babylon/pull/107) Implement ADR-027 and
 enable in-protocol minimum gas price
 * [#103](https://github.com/babylonlabs-io/babylon/pull/103) Add token distribution

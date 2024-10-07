@@ -30,7 +30,7 @@ message EventSelectiveSlashing {
   SelectiveSlashingEvidence evidence = 1;
 }
 
-// EventPowerDistUpdate is an event that affects voting power distirbution
+// EventPowerDistUpdate is an event that affects voting power distribution
 // of BTC staking protocol
 message EventPowerDistUpdate {
   // EventSlashedFinalityProvider defines an event that a finality provider
@@ -63,4 +63,92 @@ message EventPowerDistUpdate {
     // btc_del_state_update means a BTC delegation's state is updated
     EventBTCDelegationStateUpdate btc_del_state_update = 4;
   }
+}
+
+// EventBTCDelegationCreated is the event emitted when a BTC delegation is created
+// on the Babylon chain
+message EventBTCDelegationCreated {
+  // staking_tx_hash is the hash of the staking tx.
+  // It uniquely identifies a BTC delegation
+  string staking_tx_hash = 1;
+  // version of the params used to validate the delegation
+  uint32 params_version = 2;
+  // finality_provider_btc_pks_hex is the list of hex str of Bitcoin secp256k1 PK of
+  // the finality providers that this BTC delegation delegates to
+  // the PK follows encoding in BIP-340 spec
+  repeated string finality_provider_btc_pks_hex = 3;
+  // staker_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the staker that
+  // creates this BTC delegation the PK follows encoding in BIP-340 spec
+  string staker_btc_pk_hex = 4;
+  // staking_time is the timelock of the staking tx specified in the BTC script
+  uint32 staking_time = 5;
+  // staking_amount is the total amount of BTC stake in this delegation
+  // quantified in satoshi
+  uint64 staking_amount = 6;
+  // unbonding_time is the time is timelock on unbonding tx chosen by the staker
+  uint32 unbonding_time = 7;
+  // unbonding_tx is hex encoded bytes of the unsigned unbonding tx
+  string unbonding_tx = 8;
+  // state of the BTC delegation
+  BTCDelegationStatus state = 9;
+}
+
+// EventCovenantSignatureRecevied is the event emitted when a covenant committee
+// sends valid covenant signatures for a BTC delegation
+message EventCovenantSignatureRecevied{
+  // staking_tx_hash is the hash of the staking identifing the BTC delegation
+  // that this covenant signature is for
+  string staking_tx_hash = 1;
+  // covenant_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the
+  // covnenat committee that send the signature
+  string covenant_btc_pk_hex = 2;
+  // covenant_unbonding_signature_hex is the hex str of the BIP340 Schnorr
+  // signature of the covenant committee on the unbonding tx
+  string covenant_unbonding_signature_hex = 3;
+}
+
+// EventCovenantQuroumReached is the event emitted quorum of covenant committee
+// is reached for a BTC delegation
+message EventCovenantQuroumReached {
+  // staking_tx_hash is the hash of the staking identifing the BTC delegation
+  // that this covenant signature is for
+  string staking_tx_hash = 1;
+  // state of the BTC delegation
+  BTCDelegationStatus state = 2;
+}
+
+// EventBTCDelegationInclusionProofReceived is the event emitted when a BTC delegation
+// inclusion proof is received
+message EventBTCDelegationInclusionProofReceived {
+  // staking_tx_hash is the hash of the staking tx.
+  // It uniquely identifies a BTC delegation
+  string staking_tx_hash = 1;
+  // start_height is the start BTC height of the BTC delegation
+  // it is the start BTC height of the timelock
+  uint64 start_height = 2;
+  // end_height is the end height of the BTC delegation
+  // it is calculated by end_height = start_height + staking_time
+  uint64 end_height = 3;
+  // state of the BTC delegation
+  BTCDelegationStatus state = 4;
+}
+
+// EventBTCDelgationUnbondedEarly is the event emitted when a BTC delegation
+// is unbonded by staker sending unbonding tx to BTC
+message EventBTCDelgationUnbondedEarly {
+  // staking_tx_hash is the hash of the staking tx.
+  // It uniquely identifies a BTC delegation
+  string staking_tx_hash = 1;
+  // state of the BTC delegation
+  BTCDelegationStatus state = 2;
+}
+
+// EventBTCDelegationExpired is the event emitted when a BTC delegation
+// is unbonded by expiration of the staking tx timelock
+message EventBTCDelegationExpired {
+  // staking_tx_hash is the hash of the staking tx.
+  // It uniquely identifies a BTC delegation
+  string staking_tx_hash = 1;
+  // state of the BTC delegation
+  BTCDelegationStatus state = 2;
 }
