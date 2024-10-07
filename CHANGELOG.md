@@ -43,16 +43,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 transaction fee refunding mechanism for covenant signatures and finality signatures
 * [#125](https://github.com/babylonlabs-io/babylon/pull/125) Implement ADR-028 and
 refund transaction fee for certain transactions from protocol stakeholders
+* [#137](https://github.com/babylonlabs-io/babylon/pull/137) Rename approved status
+of BTC delegation and adapt tests to the pre-approval flow.
 
 ### Misc Improvements
 
 * [#113](https://github.com/babylonlabs-io/babylon/pull/113) Add multibuild binary
 for upgrade handler `testnet` and `mainnet`.
-
-### State Machine Breaking
-
-* [#137](https://github.com/babylonlabs-io/babylon/pull/137) Rename approved status
-of BTC delegation and adapt tests to the pre-approval flow.
 
 ## v0.11.0
 
