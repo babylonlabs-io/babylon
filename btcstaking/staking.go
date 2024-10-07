@@ -78,7 +78,7 @@ func buildSlashingTxFromOutpoint(
 	// Create a new btc transaction
 	tx := wire.NewMsgTx(wire.TxVersion)
 	// TODO: this builds input with sequence number equal to MaxTxInSequenceNum, which
-	// means this tx is not replacable.
+	// means this tx is not replaceable.
 	input := wire.NewTxIn(&stakingOutput, nil, nil)
 	tx.AddTxIn(input)
 	tx.AddTxOut(wire.NewTxOut(int64(slashingAmount), slashingPkScript))
@@ -157,7 +157,7 @@ func BuildSlashingTxFromStakingTxStrict(
 	stakingTxHash := stakingTx.TxHash()
 	stakingOutpoint := wire.NewOutPoint(&stakingTxHash, stakingOutputIdx)
 
-	// Create taproot address commiting to timelock script
+	// Create taproot address committing to timelock script
 	si, err := BuildRelativeTimelockTaprootScript(
 		stakerPk,
 		slashChangeLockTime,
@@ -198,15 +198,15 @@ func IsTransferTx(tx *wire.MsgTx) error {
 // IsSimpleTransfer Simple transfer transaction is a transaction which:
 // - has exactly one input
 // - has exactly one output
-// - is not replacable
+// - is not replaceable
 // - does not have any locktime
 func IsSimpleTransfer(tx *wire.MsgTx) error {
 	if err := IsTransferTx(tx); err != nil {
-		return fmt.Errorf("invalid simple tansfer tx: %w", err)
+		return fmt.Errorf("invalid simple transfer tx: %w", err)
 	}
 
 	if tx.TxIn[0].Sequence != wire.MaxTxInSequenceNum {
-		return fmt.Errorf("simple transfer tx must not be replacable")
+		return fmt.Errorf("simple transfer tx must not be replaceable")
 	}
 
 	if tx.LockTime != 0 {
@@ -329,7 +329,7 @@ func validateSlashingTx(
 // - funding transaction has output committing to the provided script
 // - slashing transaction is valid
 // - slashing transaction input hash is pointing to funding transaction hash
-// - slashing transaction input index is pointing to funding transaction output commiting to the script
+// - slashing transaction input index is pointing to funding transaction output committing to the script
 func CheckTransactions(
 	slashingTx *wire.MsgTx,
 	fundingTransaction *wire.MsgTx,

@@ -78,7 +78,7 @@ func FuzzTestExportGenesis(f *testing.F) {
 			}
 			allPublicRandomness[i] = randomness
 
-			// updates the block everytime to make sure something is different.
+			// updates the block every time to make sure something is different.
 			blkHeight++
 		}
 

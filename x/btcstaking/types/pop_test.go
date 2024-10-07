@@ -320,7 +320,7 @@ func TestPoPBTCVerify(t *testing.T) {
 				BtcSigType: types.BTCSigType_BIP322,
 				BtcSig:     nil,
 			},
-			fmt.Errorf("failed to verify possession of babylon sig by the BTC key: cannot verfiy bip322 signature. One of the required parameters is empty"),
+			fmt.Errorf("failed to verify possession of babylon sig by the BTC key: cannot verify bip322 signature. One of the required parameters is empty"),
 		},
 		{
 			"invalid: nil signed msg",

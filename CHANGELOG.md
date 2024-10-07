@@ -45,6 +45,8 @@ transaction fee refunding mechanism for covenant signatures and finality signatu
 refund transaction fee for certain transactions from protocol stakeholders
 * [#137](https://github.com/babylonlabs-io/babylon/pull/137) Sdapt tests to the 
 pre-approval flow.
+* [#138](https://github.com/babylonlabs-io/babylon/pull/138) Intercept staking module
+messages inside `authz.MsgExec`.
 
 ### Misc Improvements
 

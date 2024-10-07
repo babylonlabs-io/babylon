@@ -17,9 +17,9 @@ message GenesisState {
   repeated Evidence evidences = 3;
   // votes_sigs contains all the votes of finality providers ever registered.
   repeated VoteSig vote_sigs = 4;
-  // public_randomness contains all the public randomness ever commited from the finality providers.
+  // public_randomness contains all the public randomness ever committed from the finality providers.
   repeated PublicRandomness public_randomness = 5;
-  // pub_rand_commit contains all the public randomness commitment ever commited from the finality providers.
+  // pub_rand_commit contains all the public randomness commitment ever committed from the finality providers.
   repeated PubRandCommitWithPK pub_rand_commit = 6;
   // signing_infos represents a map between finality provider public key and their
   // signing infos.
@@ -43,7 +43,7 @@ message VoteSig {
 
 // PublicRandomness the block height and public randomness that the finality provider has submitted.
 message PublicRandomness {
-  // block_height is the height of block which the finality provider submited public randomness.
+  // block_height is the height of block which the finality provider submitted public randomness.
   uint64 block_height = 1;
   // fp_btc_pk is the BTC PK of the finality provider that casts this vote.
   bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];

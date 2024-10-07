@@ -281,7 +281,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			err: types.ErrInvalidStakingTx,
 		},
 		{
-			name: "Msg.StakingTime do not match staking time commited in staking transaction",
+			name: "Msg.StakingTime do not match staking time committed in staking transaction",
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
@@ -294,7 +294,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			err: types.ErrInvalidStakingTx,
 		},
 		{
-			name: "Msg.StakingValue do not match staking time commited in staking transaction",
+			name: "Msg.StakingValue do not match staking time committed in staking transaction",
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()

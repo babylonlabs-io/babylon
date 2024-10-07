@@ -45,20 +45,20 @@ func FuzzGenerateAndParseValidV0StakingTransaction(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 		// 3 - 10 covenants
 		numCovenantKeys := uint32(r.Int31n(7) + 3)
-		quroum := uint32(r.Intn(int(numCovenantKeys)) + 1)
+		quorum := uint32(r.Intn(int(numCovenantKeys)) + 1)
 		stakingAmount := btcutil.Amount(r.Int63n(1000000000) + 10000)
 		stakingTime := uint16(r.Int31n(math.MaxUint16-1) + 1)
 		tag := datagen.GenRandomByteArray(r, btcstaking.TagLen)
 		net := &chaincfg.MainNetParams
 
-		sc := GenerateTestScenario(r, t, 1, numCovenantKeys, quroum, stakingAmount, stakingTime)
+		sc := GenerateTestScenario(r, t, 1, numCovenantKeys, quorum, stakingAmount, stakingTime)
 
 		outputs, err := btcstaking.BuildV0IdentifiableStakingOutputs(
 			tag,
 			sc.StakerKey.PubKey(),
 			sc.FinalityProviderKeys[0].PubKey(),
 			sc.CovenantPublicKeys(),
-			quroum,
+			quorum,
 			stakingTime,
 			stakingAmount,
 			net,
@@ -77,7 +77,7 @@ func FuzzGenerateAndParseValidV0StakingTransaction(f *testing.F) {
 			tx,
 			tag,
 			sc.CovenantPublicKeys(),
-			quroum,
+			quorum,
 			net,
 		)
 		require.NoError(t, err)

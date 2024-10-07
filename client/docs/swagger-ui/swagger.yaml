@@ -4124,7 +4124,7 @@ paths:
                     title: status defines the status of the checkpoint
                   status_desc:
                     type: string
-                    description: status_desc respresents the description of status enum.
+                    description: status_desc represents the description of status enum.
                   bls_aggr_pk:
                     type: string
                     format: byte
@@ -4163,7 +4163,7 @@ paths:
                         status_desc:
                           type: string
                           description: >-
-                            status_desc respresents the description of status
+                            status_desc represents the description of status
                             enum.
                         block_height:
                           type: string
@@ -4302,7 +4302,7 @@ paths:
                       title: status defines the status of the checkpoint
                     status_desc:
                       type: string
-                      description: status_desc respresents the description of status enum.
+                      description: status_desc represents the description of status enum.
                     bls_aggr_pk:
                       type: string
                       format: byte
@@ -4341,7 +4341,7 @@ paths:
                           status_desc:
                             type: string
                             description: >-
-                              status_desc respresents the description of status
+                              status_desc represents the description of status
                               enum.
                           block_height:
                             type: string
@@ -4550,7 +4550,7 @@ paths:
                       title: status defines the status of the checkpoint
                     status_desc:
                       type: string
-                      description: status_desc respresents the description of status enum.
+                      description: status_desc represents the description of status enum.
                     bls_aggr_pk:
                       type: string
                       format: byte
@@ -4589,7 +4589,7 @@ paths:
                           status_desc:
                             type: string
                             description: >-
-                              status_desc respresents the description of status
+                              status_desc represents the description of status
                               enum.
                           block_height:
                             type: string
@@ -6589,7 +6589,7 @@ paths:
                             Merkle root
 
                             The data could be arbitrary format, providing
-                            nessecary data
+                            necessary data
 
                             for example neighbouring node hash
                   proof_epoch_sealed:
@@ -6656,7 +6656,7 @@ paths:
                                 calculating Merkle root
 
                                 The data could be arbitrary format, providing
-                                nessecary data
+                                necessary data
 
                                 for example neighbouring node hash
                       proof_epoch_val_set:
@@ -6685,7 +6685,7 @@ paths:
                                 calculating Merkle root
 
                                 The data could be arbitrary format, providing
-                                nessecary data
+                                necessary data
 
                                 for example neighbouring node hash
                   proof_epoch_submitted:
@@ -7335,7 +7335,7 @@ paths:
                                   calculating Merkle root
 
                                   The data could be arbitrary format, providing
-                                  nessecary data
+                                  necessary data
 
                                   for example neighbouring node hash
                         proof_epoch_sealed:
@@ -7405,7 +7405,7 @@ paths:
                                       calculating Merkle root
 
                                       The data could be arbitrary format,
-                                      providing nessecary data
+                                      providing necessary data
 
                                       for example neighbouring node hash
                             proof_epoch_val_set:
@@ -7434,7 +7434,7 @@ paths:
                                       calculating Merkle root
 
                                       The data could be arbitrary format,
-                                      providing nessecary data
+                                      providing necessary data
 
                                       for example neighbouring node hash
                         proof_epoch_submitted:
@@ -10485,7 +10485,7 @@ definitions:
         title: state defines the event of a state transition towards this state
       status_desc:
         type: string
-        description: status_desc respresents the description of status enum.
+        description: status_desc represents the description of status enum.
       block_height:
         type: string
         format: uint64
@@ -10684,7 +10684,7 @@ definitions:
               title: status defines the status of the checkpoint
             status_desc:
               type: string
-              description: status_desc respresents the description of status enum.
+              description: status_desc represents the description of status enum.
             bls_aggr_pk:
               type: string
               format: byte
@@ -10722,7 +10722,7 @@ definitions:
                       state
                   status_desc:
                     type: string
-                    description: status_desc respresents the description of status enum.
+                    description: status_desc represents the description of status enum.
                   block_height:
                     type: string
                     format: uint64
@@ -10831,7 +10831,7 @@ definitions:
             title: status defines the status of the checkpoint
           status_desc:
             type: string
-            description: status_desc respresents the description of status enum.
+            description: status_desc represents the description of status enum.
           bls_aggr_pk:
             type: string
             format: byte
@@ -10867,7 +10867,7 @@ definitions:
                     state
                 status_desc:
                   type: string
-                  description: status_desc respresents the description of status enum.
+                  description: status_desc represents the description of status enum.
                 block_height:
                   type: string
                   format: uint64
@@ -10959,7 +10959,7 @@ definitions:
               title: status defines the status of the checkpoint
             status_desc:
               type: string
-              description: status_desc respresents the description of status enum.
+              description: status_desc represents the description of status enum.
             bls_aggr_pk:
               type: string
               format: byte
@@ -10997,7 +10997,7 @@ definitions:
                       state
                   status_desc:
                     type: string
-                    description: status_desc respresents the description of status enum.
+                    description: status_desc represents the description of status enum.
                   block_height:
                     type: string
                     format: uint64
@@ -11147,7 +11147,7 @@ definitions:
         title: status defines the status of the checkpoint
       status_desc:
         type: string
-        description: status_desc respresents the description of status enum.
+        description: status_desc represents the description of status enum.
       bls_aggr_pk:
         type: string
         format: byte
@@ -11181,7 +11181,7 @@ definitions:
               title: state defines the event of a state transition towards this state
             status_desc:
               type: string
-              description: status_desc respresents the description of status enum.
+              description: status_desc represents the description of status enum.
             block_height:
               type: string
               format: uint64
@@ -11874,7 +11874,7 @@ definitions:
                     ProofOp defines an operation used for calculating Merkle
                     root
 
-                    The data could be arbitrary format, providing nessecary data
+                    The data could be arbitrary format, providing necessary data
 
                     for example neighbouring node hash
           proof_epoch_sealed:
@@ -11936,7 +11936,7 @@ definitions:
                         ProofOp defines an operation used for calculating Merkle
                         root
 
-                        The data could be arbitrary format, providing nessecary
+                        The data could be arbitrary format, providing necessary
                         data
 
                         for example neighbouring node hash
@@ -11965,7 +11965,7 @@ definitions:
                         ProofOp defines an operation used for calculating Merkle
                         root
 
-                        The data could be arbitrary format, providing nessecary
+                        The data could be arbitrary format, providing necessary
                         data
 
                         for example neighbouring node hash
@@ -12244,7 +12244,7 @@ definitions:
                   format: byte
               title: |-
                 ProofOp defines an operation used for calculating Merkle root
-                The data could be arbitrary format, providing nessecary data
+                The data could be arbitrary format, providing necessary data
                 for example neighbouring node hash
       proof_epoch_val_set:
         title: |-
@@ -12267,7 +12267,7 @@ definitions:
                   format: byte
               title: |-
                 ProofOp defines an operation used for calculating Merkle root
-                The data could be arbitrary format, providing nessecary data
+                The data could be arbitrary format, providing necessary data
                 for example neighbouring node hash
     title: >-
       ProofEpochSealed is the proof that an epoch is sealed by the sealer
@@ -12316,7 +12316,7 @@ definitions:
                   format: byte
               title: |-
                 ProofOp defines an operation used for calculating Merkle root
-                The data could be arbitrary format, providing nessecary data
+                The data could be arbitrary format, providing necessary data
                 for example neighbouring node hash
       proof_epoch_sealed:
         title: proof_epoch_sealed is the proof that the epoch is sealed
@@ -12374,7 +12374,7 @@ definitions:
                     ProofOp defines an operation used for calculating Merkle
                     root
 
-                    The data could be arbitrary format, providing nessecary data
+                    The data could be arbitrary format, providing necessary data
 
                     for example neighbouring node hash
           proof_epoch_val_set:
@@ -12402,7 +12402,7 @@ definitions:
                     ProofOp defines an operation used for calculating Merkle
                     root
 
-                    The data could be arbitrary format, providing nessecary data
+                    The data could be arbitrary format, providing necessary data
 
                     for example neighbouring node hash
       proof_epoch_submitted:
@@ -13204,7 +13204,7 @@ definitions:
                     ProofOp defines an operation used for calculating Merkle
                     root
 
-                    The data could be arbitrary format, providing nessecary data
+                    The data could be arbitrary format, providing necessary data
 
                     for example neighbouring node hash
           proof_epoch_sealed:
@@ -13266,7 +13266,7 @@ definitions:
                         ProofOp defines an operation used for calculating Merkle
                         root
 
-                        The data could be arbitrary format, providing nessecary
+                        The data could be arbitrary format, providing necessary
                         data
 
                         for example neighbouring node hash
@@ -13295,7 +13295,7 @@ definitions:
                         ProofOp defines an operation used for calculating Merkle
                         root
 
-                        The data could be arbitrary format, providing nessecary
+                        The data could be arbitrary format, providing necessary
                         data
 
                         for example neighbouring node hash
@@ -13698,7 +13698,7 @@ definitions:
                           Merkle root
 
                           The data could be arbitrary format, providing
-                          nessecary data
+                          necessary data
 
                           for example neighbouring node hash
                 proof_epoch_sealed:
@@ -13761,7 +13761,7 @@ definitions:
                               Merkle root
 
                               The data could be arbitrary format, providing
-                              nessecary data
+                              necessary data
 
                               for example neighbouring node hash
                     proof_epoch_val_set:
@@ -13790,7 +13790,7 @@ definitions:
                               Merkle root
 
                               The data could be arbitrary format, providing
-                              nessecary data
+                              necessary data
 
                               for example neighbouring node hash
                 proof_epoch_submitted:
@@ -14205,7 +14205,7 @@ definitions:
         format: byte
     title: |-
       ProofOp defines an operation used for calculating Merkle root
-      The data could be arbitrary format, providing nessecary data
+      The data could be arbitrary format, providing necessary data
       for example neighbouring node hash
   tendermint.crypto.ProofOps:
     type: object
@@ -14225,6 +14225,6 @@ definitions:
               format: byte
           title: |-
             ProofOp defines an operation used for calculating Merkle root
-            The data could be arbitrary format, providing nessecary data
+            The data could be arbitrary format, providing necessary data
             for example neighbouring node hash
     title: ProofOps is Merkle proof defined by the list of ProofOps

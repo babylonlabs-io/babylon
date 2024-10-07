@@ -42,7 +42,7 @@ This upgrade loads 5 JSONs from strings in different files.
 
 This upgrade accepts insertion of multiple
 [`btclighttypes.BTCHeaderInfo`](../../../x/btclightclient/types/btclightclient.pb.go#36)
-due to Babylon Phase-1 and Phase-2 launch will be a few months appart, so
+due to Babylon Phase-1 and Phase-2 launch will be a few months apart, so
 during Phase-1 Babylon accepts BTC delegations without Babylonchain running.
 At the time of launching the Babylonchain it is needed all the BTC block
 headers that has passed since babylon started to accept BTC staking messages,

@@ -78,7 +78,7 @@ func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.Priva
 	}, nil
 }
 
-// TODO: accomodate presign unbonding flow
+// TODO: accommodate presign unbonding flow
 func GenRandomBTCDelegation(
 	r *rand.Rand,
 	t *testing.T,
