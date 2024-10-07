@@ -31,7 +31,7 @@ import (
 )
 
 func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]byte, error) {
-	// add the URL for the given validator ID, and pre-pend to path.
+	// add the URL for the given validator ID, and prepend to path.
 	hostPort, err := n.containerManager.GetHostPort(n.Name, "1317/tcp")
 	require.NoError(n.t, err)
 	endpoint := fmt.Sprintf("http://%s", hostPort)

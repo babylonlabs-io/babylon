@@ -163,8 +163,8 @@ func (k Keeper) voteSigs(ctx context.Context) ([]*types.VoteSig, error) {
 	return voteSigs, nil
 }
 
-// publicRandomness iterates over all commited randoms on the store, parses the finality provider public key
-// and the height from the iterator key and the commited random from the iterator value.
+// publicRandomness iterates over all committed randoms on the store, parses the finality provider public key
+// and the height from the iterator key and the committed random from the iterator value.
 // This function has high resource consumption and should be only used on export genesis.
 func (k Keeper) publicRandomness(ctx context.Context) ([]*types.PublicRandomness, error) {
 	store := k.pubRandStore(ctx)

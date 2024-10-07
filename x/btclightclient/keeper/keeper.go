@@ -61,7 +61,7 @@ func (k Keeper) emitTypedEventWithLog(ctx context.Context, evt proto.Message) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if err := sdkCtx.EventManager().EmitTypedEvent(evt); err != nil {
 		k.Logger(sdkCtx).Error(
-			"faied to emit event",
+			"failed to emit event",
 			"type", evt.String(),
 			"reason", err.Error(),
 		)
@@ -82,7 +82,7 @@ func (k Keeper) insertHandler() func(ctx context.Context, s headersState, result
 	return func(ctx context.Context, s headersState, result *types.InsertResult) error {
 		// if we receive rollback, should return error
 		if result.RollbackInfo != nil {
-			return fmt.Errorf("rollback should not happend %+v", result.RollbackInfo)
+			return fmt.Errorf("rollback should not happen %+v", result.RollbackInfo)
 		}
 
 		for _, header := range result.HeadersToInsert {

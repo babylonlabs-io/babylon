@@ -37,7 +37,7 @@ type Params struct {
 	CovenantQuorum uint32 `protobuf:"varint,2,opt,name=covenant_quorum,json=covenantQuorum,proto3" json:"covenant_quorum,omitempty"`
 	// min_staking_value_sat is the minimum of satoshis locked in staking output
 	MinStakingValueSat int64 `protobuf:"varint,3,opt,name=min_staking_value_sat,json=minStakingValueSat,proto3" json:"min_staking_value_sat,omitempty"`
-	// max_staking_value_sat is the maxiumum of satoshis locked in staking output
+	// max_staking_value_sat is the maximum of satoshis locked in staking output
 	MaxStakingValueSat int64 `protobuf:"varint,4,opt,name=max_staking_value_sat,json=maxStakingValueSat,proto3" json:"max_staking_value_sat,omitempty"`
 	// min_staking_time is the minimum lock time specified in staking output script
 	MinStakingTimeBlocks uint32 `protobuf:"varint,5,opt,name=min_staking_time_blocks,json=minStakingTimeBlocks,proto3" json:"min_staking_time_blocks,omitempty"`

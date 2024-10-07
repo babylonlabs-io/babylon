@@ -112,7 +112,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegatio
 		bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey()),
 		pop,
 		stakingTx,
-		// We are passing `nil` as inclusion proof will be provided in separete tx
+		// We are passing `nil` as inclusion proof will be provided in separate tx
 		nil,
 		s.cacheFP.BtcPk,
 		stakingTimeBlocks,

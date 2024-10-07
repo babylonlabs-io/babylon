@@ -37,6 +37,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### State Machine Breaking
+
+* [#130](https://github.com/babylonlabs-io/babylon/pull/130) Fix bugs in the
+transaction fee refunding mechanism for covenant signatures and finality signatures
+* [#125](https://github.com/babylonlabs-io/babylon/pull/125) Implement ADR-028 and
+refund transaction fee for certain transactions from protocol stakeholders
+* [#138](https://github.com/babylonlabs-io/babylon/pull/138) Intercept staking module
+messages inside `authz.MsgExec`
+
 ### Improvements
 
 * #[131](https://github.com/babylonlabs-io/babylon/pull/131) Add new staking
@@ -51,8 +60,6 @@ for upgrade handler `testnet` and `mainnet`.
 
 ### State Machine Breaking
 
-* [#125](https://github.com/babylonlabs-io/babylon/pull/125) Implement ADR-028 and
-refund transaction fee for certain transactions from protocol stakeholders
 * [#107](https://github.com/babylonlabs-io/babylon/pull/107) Implement ADR-027 and
 enable in-protocol minimum gas price
 * [#103](https://github.com/babylonlabs-io/babylon/pull/103) Add token distribution

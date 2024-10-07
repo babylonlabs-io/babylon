@@ -743,7 +743,7 @@ message EventSelectiveSlashing {
   SelectiveSlashingEvidence evidence = 1;
 }
 
-// EventPowerDistUpdate is an event that affects voting power distirbution
+// EventPowerDistUpdate is an event that affects voting power distribution
 // of BTC staking protocol
 message EventPowerDistUpdate {
   // EventSlashedFinalityProvider defines an event that a finality provider
