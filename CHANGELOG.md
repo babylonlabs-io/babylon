@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### State Machine Breaking
+
+* [#132](https://github.com/babylonlabs-io/babylon/pull/132) Add CosmWasm parameters
+update during v1 upgrade handler.
+
 ### Misc Improvements
 
 * [#113](https://github.com/babylonlabs-io/babylon/pull/113) Add multibuild binary
