@@ -426,14 +426,14 @@ func (h *Helper) CreateCovenantSigs(
 	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs, int(bsParams.CovenantQuorum))
 	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs[0].AdaptorSigs, 1)
 
-	// ensure the BTC delegation is approved (if using pre-approval flow) or active
+	// ensure the BTC delegation is verified (if using pre-approval flow) or active
 	status := actualDelWithCovenantSigs.GetStatus(btcTipHeight, bcParams.CheckpointFinalizationTimeout, bsParams.CovenantQuorum)
 	if msgCreateBTCDel.StakingTxInclusionProof != nil {
 		// not pre-approval flow, the BTC delegation should be active
 		require.Equal(h.t, status, types.BTCDelegationStatus_ACTIVE)
 	} else {
-		// pre-approval flow, the BTC delegation should be approved
-		require.Equal(h.t, status, types.BTCDelegationStatus_APPROVED)
+		// pre-approval flow, the BTC delegation should be verified
+		require.Equal(h.t, status, types.BTCDelegationStatus_VERIFIED)
 	}
 }
 
@@ -445,11 +445,11 @@ func (h *Helper) AddInclusionProof(
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 
-	// Get the BTC delegation and ensure it's approved
+	// Get the BTC delegation and ensure it's verified
 	del, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 	h.NoError(err)
 	status := del.GetStatus(btcTipHeight, bcParams.CheckpointFinalizationTimeout, bsParams.CovenantQuorum)
-	require.Equal(h.t, status, types.BTCDelegationStatus_APPROVED, "the BTC delegation shall be approved")
+	require.Equal(h.t, status, types.BTCDelegationStatus_VERIFIED, "the BTC delegation shall be verified")
 
 	// Create the MsgAddBTCDelegationInclusionProof message
 	msg := &types.MsgAddBTCDelegationInclusionProof{

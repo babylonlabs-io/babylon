@@ -162,9 +162,9 @@ message BTCDelegatorDelegationIndex {
 enum BTCDelegationStatus {
     // PENDING defines a delegation that is waiting for covenant signatures.
     PENDING = 0;
-    // APPROVED defines a delegation that has covenant signatures but is not yet
+    // VERIFIED defines a delegation that has covenant signatures but is not yet
     // included in the BTC chain.
-    APPROVED = 1;
+    VERIFIED = 1;
     // ACTIVE defines a delegation that has voting power
     ACTIVE = 2;
     // UNBONDED defines a delegation no longer has voting power:

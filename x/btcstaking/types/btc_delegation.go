@@ -102,7 +102,7 @@ func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64, covenantQuorum uin
 	// we are still pending activation by inclusion proof
 	if !d.HasInclusionProof() {
 		// staking tx has not been included in a block yet
-		return BTCDelegationStatus_APPROVED
+		return BTCDelegationStatus_VERIFIED
 	}
 
 	// At this point we already have covenant quorum and inclusion proof,

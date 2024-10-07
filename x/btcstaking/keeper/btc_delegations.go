@@ -115,15 +115,15 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 			k.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
 		} else {
 			// this BTC delegation goes through pre-approval flow
-			// notify subscriber that the BTC delegation becomes approved
+			// notify subscriber that the BTC delegation becomes verified
 			event := &types.EventBTCDelegationStateUpdate{
 				StakingTxHash: btcDel.MustGetStakingTxHash().String(),
-				NewState:      types.BTCDelegationStatus_APPROVED,
+				NewState:      types.BTCDelegationStatus_VERIFIED,
 			}
 			if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
 				panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
 			}
-			// NOTE: no need to record power dist update event for approved BTC delegations
+			// NOTE: no need to record power dist update event for verified BTC delegations
 			// since it does not have voting power
 		}
 	}

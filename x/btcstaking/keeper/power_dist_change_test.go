@@ -584,7 +584,7 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 			Generate a quorum number of covenant signatures
 		*/
 		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
-		// no event will be emitted to the event bus upon an approved BTC delegation
+		// no event will be emitted to the event bus upon an verified BTC delegation
 		// since it does not affect voting power distribution
 		events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 		require.Len(t, events, 0)
