@@ -32,4 +32,5 @@ var (
 	ErrParamsNotFound               = errorsmod.Register(ModuleName, 1124, "the parameters are not found")
 	ErrFpAlreadyJailed              = errorsmod.Register(ModuleName, 1125, "the finality provider has already been jailed")
 	ErrFpNotJailed                  = errorsmod.Register(ModuleName, 1126, "the finality provider is not jailed")
+	ErrDuplicatedCovenantSig        = errorsmod.Register(ModuleName, 1127, "the covenant signature is already submitted")
 )
