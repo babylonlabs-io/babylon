@@ -784,7 +784,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 				1000,
 				stakingValue-1000,
 				tt.unbondingTimeInDelegation,
-				false,
+				true,
 			)
 			if tt.err != nil {
 				require.Error(t, err)
