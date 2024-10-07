@@ -122,11 +122,7 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 		)
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
-		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
-		for i := 0; i < int(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum); i++ {
-			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msgs[i])
-			h.NoError(err)
-		}
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
 
 		// execute BeginBlock
 		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
@@ -214,11 +210,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		)
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
-		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
-		for i := 0; i < int(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum); i++ {
-			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msgs[i])
-			h.NoError(err)
-		}
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
 
 		// execute BeginBlock
 		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
@@ -286,11 +278,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		)
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
-		msgs = h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
-		for i := 0; i < int(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum); i++ {
-			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msgs[i])
-			h.NoError(err)
-		}
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
 
 		// execute BeginBlock
 		btcTip = btclcKeeper.GetTipInfo(h.Ctx)
@@ -351,11 +339,7 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		)
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
-		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
-		for i := 0; i < int(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum); i++ {
-			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msgs[i])
-			h.NoError(err)
-		}
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
 
 		// execute BeginBlock
 		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
@@ -488,11 +472,7 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 			Then, there should be an event that the BTC delegation becomes
 			active at the current height
 		*/
-		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
-		for i := 0; i < int(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum); i++ {
-			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msgs[i])
-			h.NoError(err)
-		}
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
 
 		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 		require.Len(t, events, 1)
