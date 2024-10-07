@@ -37,7 +37,7 @@ func ValidateParsedMessageAgainstTheParams(
 	// 2. Validate all data related to staking tx:
 	// - it has valid staking output
 	// - that staking time and value are correct
-	// - slashing tx is relevent to staking tx
+	// - slashing tx is relevant to staking tx
 	// - slashing tx signature is valid
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		pm.StakerPK.PublicKey,
@@ -109,7 +109,7 @@ func ValidateParsedMessageAgainstTheParams(
 
 	// 3. Validate all data related to unbonding tx:
 	// - it has valid unbonding output
-	// - slashing tx is relevent to unbonding tx
+	// - slashing tx is relevant to unbonding tx
 	// - slashing tx signature is valid
 	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
 		pm.StakerPK.PublicKey,
@@ -169,10 +169,10 @@ func ValidateParsedMessageAgainstTheParams(
 	}
 	// 5. Check unbonding tx fees against staking tx.
 	// - fee is larger than 0
-	// - ubonding output value is is at leat `MinUnbondingValue` percent of staking output value
+	// - ubonding output value is at least `MinUnbondingValue` percent of staking output value
 	if pm.UnbondingTx.Transaction.TxOut[0].Value >= pm.StakingTx.Transaction.TxOut[stakingOutputIdx].Value {
-		// Note: we do not enfore any minimum fee for unbonding tx, we only require that it is larger than 0
-		// Given that unbonding tx must not be replacable and we do not allow sending it second time, it places
+		// Note: we do not enforce any minimum fee for unbonding tx, we only require that it is larger than 0
+		// Given that unbonding tx must not be replaceable, and we do not allow sending it second time, it places
 		// burden on staker to choose right fee.
 		// Unbonding tx should not be replaceable at babylon level (and by extension on btc level), as this would
 		// allow staker to spam the network with unbonding txs, which would force covenant and finality provider to send signatures.

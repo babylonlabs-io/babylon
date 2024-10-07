@@ -439,7 +439,7 @@ func FuzzKeeperValdateHeaderAtDifficultyAdjustmentBoundaries(f *testing.F) {
 		}
 		validAdjustedHeader := datagen.GenRandomBtcdValidHeader(
 			r,
-			// current tip heigh is 2015
+			// current tip height is 2015
 			currentTip.Header.ToBlockHeader(),
 			nil,
 			&rt,
