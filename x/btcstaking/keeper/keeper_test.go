@@ -171,7 +171,7 @@ func (h *Helper) CreateDelegation(
 	unbondingValue int64,
 	unbondingTime uint16,
 	usePreApproval bool,
-) (string, *types.MsgCreateBTCDelegation, *types.BTCDelegation, *types.InclusionProof, error) {
+) (string, *types.MsgCreateBTCDelegation, *types.BTCDelegation, *btclctypes.BTCHeaderInfo, *types.InclusionProof, error) {
 	stakingTimeBlocks := stakingTime
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
@@ -222,8 +222,8 @@ func (h *Helper) CreateDelegation(
 	txInclusionProof := types.NewInclusionProof(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, btcHeaderWithProof.SpvProof.MerkleNodes)
 
 	// mock for testing k-deep stuff
-	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Any(), gomock.Eq(btcHeader.Hash())).Return(btcHeaderInfo).AnyTimes()
-	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: btcTipHeight}).AnyTimes()
+	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Hash())).Return(btcHeaderInfo).AnyTimes()
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: btcTipHeight}).AnyTimes()
 
 	slashingSpendInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
 	h.NoError(err)
@@ -294,7 +294,7 @@ func (h *Helper) CreateDelegation(
 
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	if err != nil {
-		return "", nil, nil, nil, err
+		return "", nil, nil, nil, nil, err
 	}
 
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(msgCreateBTCDel.StakingTx)
@@ -313,7 +313,7 @@ func (h *Helper) CreateDelegation(
 		require.True(h.t, btcDel.HasInclusionProof())
 	}
 
-	return stakingTxHash, msgCreateBTCDel, btcDel, txInclusionProof, nil
+	return stakingTxHash, msgCreateBTCDel, btcDel, btcHeaderInfo, txInclusionProof, nil
 }
 
 func (h *Helper) GenerateCovenantSignaturesMessages(
@@ -439,6 +439,7 @@ func (h *Helper) CreateCovenantSigs(
 
 func (h *Helper) AddInclusionProof(
 	stakingTxHash string,
+	btcHeader *btclctypes.BTCHeaderInfo,
 	proof *types.InclusionProof,
 ) {
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
@@ -455,6 +456,9 @@ func (h *Helper) AddInclusionProof(
 		StakingTxHash:           stakingTxHash,
 		StakingTxInclusionProof: proof,
 	}
+
+	// mock BTC header that includes the staking tx
+	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Header.Hash())).Return(btcHeader).AnyTimes()
 
 	// Call the AddBTCDelegationInclusionProof handler
 	_, err = h.MsgServer.AddBTCDelegationInclusionProof(h.Ctx, msg)

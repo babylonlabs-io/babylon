@@ -97,20 +97,35 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 
 	// If reaching the covenant quorum after this msg, the BTC delegation becomes
 	// active. Then, record and emit this event
-	if btcDel.HasCovenantQuorums(params.CovenantQuorum) && btcDel.HasInclusionProof() {
-		// notify subscriber
-		event := &types.EventBTCDelegationStateUpdate{
-			StakingTxHash: btcDel.MustGetStakingTxHash().String(),
-			NewState:      types.BTCDelegationStatus_ACTIVE,
-		}
-		if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-			panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
-		}
+	if btcDel.HasCovenantQuorums(params.CovenantQuorum) {
+		if btcDel.HasInclusionProof() {
+			// this BTC delegation does not go through pre-approval flow
+			// notify subscriber that the BTC delegation becomes active
+			event := &types.EventBTCDelegationStateUpdate{
+				StakingTxHash: btcDel.MustGetStakingTxHash().String(),
+				NewState:      types.BTCDelegationStatus_ACTIVE,
+			}
+			if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
+				panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
+			}
 
-		// record event that the BTC delegation becomes active at this height
-		activeEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
-		btcTip := k.btclcKeeper.GetTipInfo(ctx)
-		k.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
+			// record event that the BTC delegation becomes active at this height
+			activeEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
+			btcTip := k.btclcKeeper.GetTipInfo(ctx)
+			k.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
+		} else {
+			// this BTC delegation goes through pre-approval flow
+			// notify subscriber that the BTC delegation becomes approved
+			event := &types.EventBTCDelegationStateUpdate{
+				StakingTxHash: btcDel.MustGetStakingTxHash().String(),
+				NewState:      types.BTCDelegationStatus_APPROVED,
+			}
+			if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
+				panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
+			}
+			// NOTE: no need to record power dist update event for approved BTC delegations
+			// since it does not have voting power
+		}
 	}
 }
 
