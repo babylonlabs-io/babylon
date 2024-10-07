@@ -109,7 +109,7 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		_, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, inclusionProof, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -123,6 +123,8 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
 		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		// activate the BTC delegation
+		h.AddInclusionProof(stakingTxHash, inclusionProof)
 
 		// execute BeginBlock
 		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
@@ -197,7 +199,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		_, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, inclusionProof, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -211,6 +213,8 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
 		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		// activate the BTC delegation
+		h.AddInclusionProof(stakingTxHash, inclusionProof)
 
 		// execute BeginBlock
 		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
@@ -279,6 +283,8 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
 		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		// activate the BTC delegation
+		h.AddInclusionProof(stakingTxHash, inclusionProof)
 
 		// execute BeginBlock
 		btcTip = btclcKeeper.GetTipInfo(h.Ctx)
@@ -326,7 +332,7 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		_, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, inclusionProof, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -340,6 +346,8 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
 		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		// activate the BTC delegation
+		h.AddInclusionProof(stakingTxHash, inclusionProof)
 
 		// execute BeginBlock
 		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
@@ -429,7 +437,7 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		expectedStakingTxHash, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, inclusionProof, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -456,7 +464,7 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 		require.Len(t, events, 1)
 		btcDelStateUpdate := events[0].GetBtcDelStateUpdate()
 		require.NotNil(t, btcDelStateUpdate)
-		require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
+		require.Equal(t, stakingTxHash, btcDelStateUpdate.StakingTxHash)
 		require.Equal(t, types.BTCDelegationStatus_UNBONDED, btcDelStateUpdate.NewState)
 
 		// ensure this finality provider does not have voting power at the current height
@@ -468,17 +476,18 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 		require.Zero(t, h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
 
 		/*
-			Generate a quorum number of covenant signatures
+			Generate a quorum number of covenant signatures and inclusion proof
 			Then, there should be an event that the BTC delegation becomes
 			active at the current height
 		*/
 		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		h.AddInclusionProof(stakingTxHash, inclusionProof)
 
 		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 		require.Len(t, events, 1)
 		btcDelStateUpdate = events[0].GetBtcDelStateUpdate()
 		require.NotNil(t, btcDelStateUpdate)
-		require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
+		require.Equal(t, stakingTxHash, btcDelStateUpdate.StakingTxHash)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, btcDelStateUpdate.NewState)
 
 		// ensure this finality provider does not have voting power at the current height

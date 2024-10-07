@@ -222,8 +222,8 @@ func (h *Helper) CreateDelegation(
 	txInclusionProof := types.NewInclusionProof(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, btcHeaderWithProof.SpvProof.MerkleNodes)
 
 	// mock for testing k-deep stuff
-	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Hash())).Return(btcHeaderInfo).AnyTimes()
-	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: btcTipHeight}).AnyTimes()
+	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Any(), gomock.Eq(btcHeader.Hash())).Return(btcHeaderInfo).AnyTimes()
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: btcTipHeight}).AnyTimes()
 
 	slashingSpendInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
 	h.NoError(err)
@@ -435,4 +435,35 @@ func (h *Helper) CreateCovenantSigs(
 		// pre-approval flow, the BTC delegation should be approved
 		require.Equal(h.t, status, types.BTCDelegationStatus_APPROVED)
 	}
+}
+
+func (h *Helper) AddInclusionProof(
+	stakingTxHash string,
+	proof *types.InclusionProof,
+) {
+	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
+	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+
+	// Get the BTC delegation and ensure it's approved
+	del, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+	h.NoError(err)
+	status := del.GetStatus(btcTipHeight, bcParams.CheckpointFinalizationTimeout, bsParams.CovenantQuorum)
+	require.Equal(h.t, status, types.BTCDelegationStatus_APPROVED, "the BTC delegation shall be approved")
+
+	// Create the MsgAddBTCDelegationInclusionProof message
+	msg := &types.MsgAddBTCDelegationInclusionProof{
+		StakingTxHash:           stakingTxHash,
+		StakingTxInclusionProof: proof,
+	}
+
+	// Call the AddBTCDelegationInclusionProof handler
+	_, err = h.MsgServer.AddBTCDelegationInclusionProof(h.Ctx, msg)
+	h.NoError(err)
+
+	// Verify that the inclusion proof is added successfully and the BTC delegation
+	// has been activated
+	updatedDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+	h.NoError(err)
+	status = updatedDel.GetStatus(btcTipHeight, bcParams.CheckpointFinalizationTimeout, bsParams.CovenantQuorum)
+	require.Equal(h.t, status, types.BTCDelegationStatus_ACTIVE, "the BTC delegation shall be active")
 }

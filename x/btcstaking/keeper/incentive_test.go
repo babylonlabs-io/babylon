@@ -52,7 +52,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				h.NoError(err)
-				_, delMsg, del, _, err := h.CreateDelegation(
+				stakingTxHash, delMsg, del, inclusionProof, err := h.CreateDelegation(
 					r,
 					delSK,
 					fp.BtcPk.MustToBTCPK(),
@@ -61,10 +61,11 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 					1000,
 					0,
 					0,
-					false,
+					true,
 				)
 				h.NoError(err)
 				h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
+				h.AddInclusionProof(stakingTxHash, inclusionProof)
 			}
 		}
 

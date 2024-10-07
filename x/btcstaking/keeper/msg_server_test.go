@@ -365,7 +365,7 @@ func FuzzBTCUndelegate(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, inclusionProof, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -374,12 +374,14 @@ func FuzzBTCUndelegate(f *testing.F) {
 			1000,
 			0,
 			0,
-			false,
+			true,
 		)
 		h.NoError(err)
 
 		// add covenant signatures to this BTC delegation
 		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		// activate the BTC delegation
+		h.AddInclusionProof(stakingTxHash, inclusionProof)
 
 		// ensure the BTC delegation is bonded right now
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
@@ -444,7 +446,7 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, inclusionProof, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -453,13 +455,16 @@ func FuzzSelectiveSlashing(f *testing.F) {
 			1000,
 			0,
 			0,
-			false,
+			true,
 		)
 		h.NoError(err)
 
 		// add covenant signatures to this BTC delegation
 		// so that the BTC delegation becomes bonded
 		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		// activate the BTC delegation
+		h.AddInclusionProof(stakingTxHash, inclusionProof)
+
 		// now BTC delegation has all covenant signatures
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
@@ -518,7 +523,7 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, inclusionProof, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -527,13 +532,15 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 			1000,
 			0,
 			0,
-			false,
+			true,
 		)
 		h.NoError(err)
 
 		// add covenant signatures to this BTC delegation
 		// so that the BTC delegation becomes bonded
 		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		// activate the BTC delegation
+		h.AddInclusionProof(stakingTxHash, inclusionProof)
 		// now BTC delegation has all covenant signatures
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
