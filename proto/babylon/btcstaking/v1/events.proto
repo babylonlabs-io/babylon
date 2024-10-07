@@ -90,7 +90,7 @@ message EventBTCDelegationCreated {
   // unbonding_tx is hex encoded bytes of the unsigned unbonding tx
   string unbonding_tx = 8;
   // state of the BTC delegation
-  BTCDelegationStatus new_state = 9;
+  BTCDelegationStatus state = 9;
 }
 
 // EventCovenantSignatureRecevied is the event emitted when a covenant committee
@@ -106,7 +106,7 @@ message EventCovenantSignatureRecevied{
   // signature of the covenant committee on the unbonding tx
   string covenant_unbonding_signature_hex = 3;
   // state of the BTC delegation
-  BTCDelegationStatus new_state = 4;
+  BTCDelegationStatus state = 4;
 }
 
 // EventCoventatQuroumReached is the event emitted quorum of covenant committee
@@ -119,7 +119,7 @@ message EventCoventatQuroumReached {
   // covnenat committee that send the signature
   string covenant_btc_pk_hex = 2;
   // state of the BTC delegation
-  BTCDelegationStatus new_state = 3;
+  BTCDelegationStatus state = 3;
 }
 
 // EventBTCDelegationInclusionProofReceived is the event emitted when a BTC delegation
@@ -135,7 +135,7 @@ message EventBTCDelegationInclusionProofReceived {
   // it is calculated by end_height = start_height + staking_time
   uint64 end_height = 3;
   // state of the BTC delegation
-  BTCDelegationStatus new_state = 4;
+  BTCDelegationStatus state = 4;
 }
 
 // EventBTCDelgationUnbondedEarly is the event emitted when a BTC delegation
@@ -145,7 +145,7 @@ message EventBTCDelgationUnbondedEarly {
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 1;
   // state of the BTC delegation
-  BTCDelegationStatus new_state = 2;
+  BTCDelegationStatus state = 2;
 }
 
 // EventBTCDelegationExpired is the event emitted when a BTC delegation
@@ -155,5 +155,5 @@ message EventBTCDelegationExpired {
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 1;
   // state of the BTC delegation
-  BTCDelegationStatus new_state = 2;
+  BTCDelegationStatus state = 2;
 }
