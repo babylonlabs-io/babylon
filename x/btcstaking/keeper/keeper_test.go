@@ -168,6 +168,7 @@ func (h *Helper) CreateDelegationCustom(
 	stakingTime uint16,
 	unbondingValue int64,
 	unbondingTime uint16,
+	usePreApproval bool,
 ) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation, error) {
 	delSK, delPK, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
@@ -266,7 +267,6 @@ func (h *Helper) CreateDelegationCustom(
 		StakingTime:                   uint32(stakingTimeBlocks),
 		StakingValue:                  stakingValue,
 		StakingTx:                     serializedStakingTx,
-		StakingTxInclusionProof:       txInclusionProof,
 		SlashingTx:                    testStakingInfo.SlashingTx,
 		DelegatorSlashingSig:          delegatorSig,
 		UnbondingTx:                   serializedUnbondingTx,
@@ -274,6 +274,10 @@ func (h *Helper) CreateDelegationCustom(
 		UnbondingValue:                unbondingValue,
 		UnbondingSlashingTx:           testUnbondingInfo.SlashingTx,
 		DelegatorUnbondingSlashingSig: delSlashingTxSig,
+	}
+
+	if !usePreApproval {
+		msgCreateBTCDel.StakingTxInclusionProof = txInclusionProof
 	}
 
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
@@ -307,6 +311,7 @@ func (h *Helper) CreateDelegation(
 		stakingTime,
 		stakingValue-1000,
 		uint16(minUnbondingTime)+1,
+		false,
 	)
 
 	h.NoError(err)

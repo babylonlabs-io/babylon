@@ -237,6 +237,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 		1000,
 		stakingValue-1000,
 		uint16(customMinUnbondingTime)+1,
+		false,
 	)
 	require.NoError(t, err)
 	actualDel1, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash1)
@@ -730,6 +731,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 				1000,
 				stakingValue-1000,
 				tt.unbondingTimeInDelegation,
+				false,
 			)
 			if tt.err != nil {
 				require.Error(t, err)
