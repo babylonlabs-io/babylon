@@ -76,8 +76,8 @@ func (h *Helper) NoError(err error) {
 	require.NoError(h.t, err)
 }
 
-func (h *Helper) Error(err error) {
-	require.Error(h.t, err)
+func (h *Helper) Error(err error, msgAndArgs ...any) {
+	require.Error(h.t, err, msgAndArgs...)
 }
 
 func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
@@ -406,8 +406,8 @@ func (h *Helper) CreateCovenantSigs(
 
 	h.NoError(err)
 	covenantMsgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, del)
-	for _, msg := range covenantMsgs {
-		msgCopy := msg
+	for i := 0; i < int(bsParams.CovenantQuorum); i++ {
+		msgCopy := covenantMsgs[i]
 		_, err := h.MsgServer.AddCovenantSigs(h.Ctx, msgCopy)
 		h.NoError(err)
 	}
