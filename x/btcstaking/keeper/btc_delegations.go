@@ -48,18 +48,10 @@ func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) e
 	// save this BTC delegation
 	k.setBTCDelegation(ctx, btcDel)
 
-	// notify subscriber about events
-	stateUpdateEvent := &types.EventBTCDelegationStateUpdate{
-		StakingTxHash: stakingTxHash.String(),
-		NewState:      types.BTCDelegationStatus_PENDING,
-	}
-
-	delegationCreationEvent := types.NewBtcDelCreationEvent(
+	if err := ctx.EventManager().EmitTypedEvents(types.NewBtcDelCreationEvent(
 		stakingTxHash.String(),
 		btcDel,
-	)
-
-	if err := ctx.EventManager().EmitTypedEvents(delegationCreationEvent, stateUpdateEvent); err != nil {
+	)); err != nil {
 		panic(fmt.Errorf("failed to emit events for the new pending BTC delegation: %w", err))
 	}
 
@@ -71,6 +63,7 @@ func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) e
 			stakingTxHash.String(),
 			btcDel.StartHeight,
 			btcDel.EndHeight,
+			types.BTCDelegationStatus_PENDING,
 		)); err != nil {
 			panic(fmt.Errorf("failed to emit EventBTCDelegationInclusionProofReceived for the new pending BTC delegation: %w", err))
 		}
@@ -101,6 +94,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	parsedUnbondingSlashingAdaptorSignatures []asig.AdaptorSignature,
 	params *types.Params,
 ) {
+
 	// All is fine add received signatures to the BTC delegation and BtcUndelegation
 	btcDel.AddCovenantSigs(
 		covPK,
@@ -123,27 +117,31 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	// active. Then, record and emit this event
 	if btcDel.HasCovenantQuorums(params.CovenantQuorum) {
 		if btcDel.HasInclusionProof() {
-			// notify subscriber
-			event := &types.EventBTCDelegationStateUpdate{
-				StakingTxHash: btcDel.MustGetStakingTxHash().String(),
-				NewState:      types.BTCDelegationStatus_ACTIVE,
-			}
-			if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-				panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
+			quorumReachedEvent := types.NewCovenantQuorumReachedEvent(
+				btcDel,
+				types.BTCDelegationStatus_ACTIVE,
+			)
+			if err := ctx.EventManager().EmitTypedEvent(quorumReachedEvent); err != nil {
+				panic(fmt.Errorf("failed to emit emit for the new verified BTC delegation: %w", err))
 			}
 
 			// record event that the BTC delegation becomes active at this height
-			activeEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
+			activeEvent := types.NewEventPowerDistUpdateWithBTCDel(
+				&types.EventBTCDelegationStateUpdate{
+					StakingTxHash: btcDel.MustGetStakingTxHash().String(),
+					NewState:      types.BTCDelegationStatus_ACTIVE,
+				},
+			)
 			btcTip := k.btclcKeeper.GetTipInfo(ctx)
 			k.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
 		} else {
-			// notify subscriber
-			event := &types.EventBTCDelegationStateUpdate{
-				StakingTxHash: btcDel.MustGetStakingTxHash().String(),
-				NewState:      types.BTCDelegationStatus_VERIFIED,
-			}
-			if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-				panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new verified BTC delegation: %w", err))
+			quorumReachedEvent := types.NewCovenantQuorumReachedEvent(
+				btcDel,
+				types.BTCDelegationStatus_VERIFIED,
+			)
+
+			if err := ctx.EventManager().EmitTypedEvent(quorumReachedEvent); err != nil {
+				panic(fmt.Errorf("failed to emit emit for the new verified BTC delegation: %w", err))
 			}
 		}
 
@@ -160,20 +158,14 @@ func (k Keeper) btcUndelegate(
 	btcDel.BtcUndelegation.DelegatorUnbondingSig = unbondingTxSig
 	k.setBTCDelegation(ctx, btcDel)
 
-	// notify subscriber about this unbonded BTC delegation
-	event := &types.EventBTCDelegationStateUpdate{
-		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
-		NewState:      types.BTCDelegationStatus_UNBONDED,
-	}
-
 	if !btcDel.HasInclusionProof() {
 		return
 	}
 
-	// NOTE: do not generate voting power change event if the delegation
-	// does not have inclusion proof
-	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new unbonded BTC delegation: %w", err))
+	// notify subscriber about this unbonded BTC delegation
+	event := &types.EventBTCDelegationStateUpdate{
+		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
+		NewState:      types.BTCDelegationStatus_UNBONDED,
 	}
 
 	// record event that the BTC delegation becomes unbonded at this height

@@ -105,21 +105,16 @@ message EventCovenantSignatureRecevied{
   // covenant_unbonding_signature_hex is the hex str of the BIP340 Schnorr
   // signature of the covenant committee on the unbonding tx
   string covenant_unbonding_signature_hex = 3;
-  // state of the BTC delegation
-  BTCDelegationStatus state = 4;
 }
 
-// EventCoventatQuroumReached is the event emitted quorum of covenant committee
+// EventCovenantQuroumReached is the event emitted quorum of covenant committee
 // is reached for a BTC delegation
-message EventCoventatQuroumReached {
+message EventCovenantQuroumReached {
   // staking_tx_hash is the hash of the staking identifing the BTC delegation
   // that this covenant signature is for
   string staking_tx_hash = 1;
-  // covenant_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the
-  // covnenat committee that send the signature
-  string covenant_btc_pk_hex = 2;
   // state of the BTC delegation
-  BTCDelegationStatus state = 3;
+  BTCDelegationStatus state = 2;
 }
 
 // EventBTCDelegationInclusionProofReceived is the event emitted when a BTC delegation

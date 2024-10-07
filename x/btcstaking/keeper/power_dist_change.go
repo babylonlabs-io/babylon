@@ -186,11 +186,20 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				sdkCtx := sdk.UnwrapSDKContext(ctx)
 				// delegation expired and become unbonded emit block event about this
 				// information
-				if !btcDel.IsUnbondedEarly() {
-					if err := sdkCtx.EventManager().EmitTypedEvent(delEvent); err != nil {
-						panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new unbonded BTC delegation: %w", err))
+				if btcDel.IsUnbondedEarly() {
+					unbondedEarlyEvent := types.NewDelegationUnbondedEarlyEvent(delEvent.StakingTxHash)
+
+					if err := sdkCtx.EventManager().EmitTypedEvent(unbondedEarlyEvent); err != nil {
+						panic(fmt.Errorf("failed to emit event the new unbonded BTC delegation: %w", err))
+					}
+				} else {
+					expiredEvent := types.NewExpiredDelegationEvent(delEvent.StakingTxHash)
+
+					if err := sdkCtx.EventManager().EmitTypedEvent(expiredEvent); err != nil {
+						panic(fmt.Errorf("failed to emit event for the new expired BTC delegation: %w", err))
 					}
 				}
+
 				// add the unbonded BTC delegation to the map
 				unbondedBTCDels[delEvent.StakingTxHash] = struct{}{}
 			}
