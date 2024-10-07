@@ -267,7 +267,7 @@ func (k Keeper) GetMainChainFrom(ctx context.Context, startHeight uint64) []*typ
 // GetMainChainFromWithLimit returns the current canonical chain from the given height up to the tip
 // If the height is higher than the tip, it returns an empty slice
 // If startHeight is 0, it returns the entire main chain
-func (k Keeper) GetMainChainFromWithLimit(ctx context.Context, startHeight, limit uint64) []*types.BTCHeaderInfo {
+func (k Keeper) GetMainChainFromWithLimit(ctx context.Context, startHeight uint64, limit uint32) []*types.BTCHeaderInfo {
 	headers := make([]*types.BTCHeaderInfo, 0, limit)
 	fn := func(header *types.BTCHeaderInfo) bool {
 		if len(headers) >= int(limit) {

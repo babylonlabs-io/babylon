@@ -23,6 +23,8 @@ func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, er
 	switch statusStr {
 	case "pending":
 		return BTCDelegationStatus_PENDING, nil
+	case "verified":
+		return BTCDelegationStatus_VERIFIED, nil
 	case "active":
 		return BTCDelegationStatus_ACTIVE, nil
 	case "unbonded":
@@ -30,7 +32,7 @@ func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, er
 	case "any":
 		return BTCDelegationStatus_ANY, nil
 	default:
-		return -1, fmt.Errorf("invalid status string; should be one of {pending, active, unbonding, unbonded, any}")
+		return -1, fmt.Errorf("invalid status string; should be one of {pending, verified, active, unbonded, any}")
 	}
 }
 
@@ -83,6 +85,16 @@ func (d *BTCDelegation) GetCovSlashingAdaptorSig(
 // Babylon will consider this BTC delegation unbonded directly
 func (d *BTCDelegation) IsUnbondedEarly() bool {
 	return d.BtcUndelegation.DelegatorUnbondingSig != nil
+}
+
+func (d *BTCDelegation) FinalityProviderKeys() []string {
+	var fpPks = make([]string, len(d.FpBtcPkList))
+
+	for i, fpPk := range d.FpBtcPkList {
+		fpPks[i] = fpPk.MarshalHex()
+	}
+
+	return fpPks
 }
 
 // GetStatus returns the status of the BTC Delegation based on BTC height, w value, and covenant quorum
@@ -184,13 +196,13 @@ func (d *BTCDelegation) ValidateBasic() error {
 	return nil
 }
 
-// HasCovenantQuorum returns whether a BTC delegation has a quorum number of signatures
+// HasCovenantQuorums returns whether a BTC delegation has a quorum number of signatures
 // from covenant members, including
 // - adaptor signatures on slashing tx
 // - Schnorr signatures on unbonding tx
 // - adaptor signatrues on unbonding slashing tx
 func (d *BTCDelegation) HasCovenantQuorums(quorum uint32) bool {
-	return uint32(len(d.CovenantSigs)) >= quorum && d.BtcUndelegation.HasCovenantQuorums(quorum)
+	return len(d.CovenantSigs) >= int(quorum) && d.BtcUndelegation.HasCovenantQuorums(quorum)
 }
 
 // IsSignedByCovMember checks whether the given covenant PK has signed the delegation

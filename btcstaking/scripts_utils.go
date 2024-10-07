@@ -82,7 +82,7 @@ func buildMultiSigScript(
 		return nil, fmt.Errorf("no keys provided")
 	}
 
-	if threshold > uint32(len(keys)) {
+	if int(threshold) > len(keys) {
 		return nil, fmt.Errorf("required number of valid signers is greater than number of provided keys")
 	}
 
