@@ -51,8 +51,6 @@ messages inside `authz.MsgExec`
 * #[131](https://github.com/babylonlabs-io/babylon/pull/131) Add new staking
 events
 
-### Misc Improvements
-
 * [#113](https://github.com/babylonlabs-io/babylon/pull/113) Add multibuild binary
 for upgrade handler `testnet` and `mainnet`.
 
