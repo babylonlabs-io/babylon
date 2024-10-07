@@ -42,6 +42,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 * [#113](https://github.com/babylonlabs-io/babylon/pull/113) Add multibuild binary
 for upgrade handler `testnet` and `mainnet`.
 
+### State Machine Breaking
+
+* [#138](https://github.com/babylonlabs-io/babylon/pull/138) Intercept staking module
+messages inside `authz.MsgExec`
+
 ## v0.11.0
 
 ### State Machine Breaking
