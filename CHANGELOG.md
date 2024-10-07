@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Bug Fixes
+
+* [#140](https://github.com/babylonlabs-io/babylon/pull/140) Removed `unbonding`
+and add `verified` to delegation status parse `NewBTCDelegationStatusFromString`.
+
 ### State Machine Breaking
 
 * [#130](https://github.com/babylonlabs-io/babylon/pull/130) Fix bugs in the
@@ -50,8 +55,6 @@ messages inside `authz.MsgExec`
 
 * [#113](https://github.com/babylonlabs-io/babylon/pull/113) Add multibuild binary
 for upgrade handler `testnet` and `mainnet`.
-* [#140](https://github.com/babylonlabs-io/babylon/pull/140) Removed `unbonding`
-delegation status in query.
 
 ## v0.11.0
 
