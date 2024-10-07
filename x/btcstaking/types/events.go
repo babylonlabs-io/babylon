@@ -65,7 +65,7 @@ func NewBtcDelCreationEvent(
 		ParamsVersion:             btcDel.ParamsVersion,
 		FinalityProviderBtcPksHex: btcDel.FinalityProviderKeys(),
 		StakerBtcPkHex:            btcDel.BtcPk.MarshalHex(),
-		Timelock:                  btcDel.StakingTime,
+		StakingTime:               btcDel.StakingTime,
 		StakingAmount:             btcDel.TotalSat,
 		UnbondingTime:             btcDel.UnbondingTime,
 		UnbondingTx:               hex.EncodeToString(btcDel.BtcUndelegation.UnbondingTx),
