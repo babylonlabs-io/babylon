@@ -46,6 +46,8 @@ and add `verified` to delegation status parse `NewBTCDelegationStatusFromString`
 
 * [#132](https://github.com/babylonlabs-io/babylon/pull/132) Add CosmWasm parameters
 update during v1 upgrade handler.
+* [#142](https://github.com/babylonlabs-io/babylon/pull/142) Remove signed finality providers
+insert from the v1 upgrade handler.
 
 ### Misc Improvements
 

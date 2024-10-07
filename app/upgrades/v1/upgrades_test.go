@@ -81,7 +81,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-
 	stakingWasmChecksum, err := wasmvm.CreateChecksum(wasmContract)
 	s.NoError(err)
 
