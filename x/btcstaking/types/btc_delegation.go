@@ -85,6 +85,16 @@ func (d *BTCDelegation) IsUnbondedEarly() bool {
 	return d.BtcUndelegation.DelegatorUnbondingSig != nil
 }
 
+func (d *BTCDelegation) FinalityProviderKeys() []string {
+	var fpPks = make([]string, len(d.FpBtcPkList))
+
+	for i, fpPk := range d.FpBtcPkList {
+		fpPks[i] = fpPk.MarshalHex()
+	}
+
+	return fpPks
+}
+
 // GetStatus returns the status of the BTC Delegation based on BTC height, w value, and covenant quorum
 // Pending: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation does not have covenant signatures
 // Active: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation has quorum number of signatures over slashing tx, unbonding tx, and slashing unbonding tx from covenant committee
