@@ -54,13 +54,17 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 		for i := 0; i < numDelsUnderFP; i++ {
 			// generate and insert new BTC delegation
 			stakingValue := int64(2 * 10e8)
-			stakingTxHash, _, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
+			stakingTxHash, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 				r,
 				fp.BtcPk.MustToBTCPK(),
 				changeAddress.EncodeAddress(),
 				stakingValue,
 				1000,
+				0,
+				0,
+				false,
 			)
+			h.NoError(err)
 			// retrieve BTC delegation in DB
 			btcDelMap[stakingTxHash] = append(btcDelMap[stakingTxHash], actualDel)
 			// generate and insert new covenant signatures

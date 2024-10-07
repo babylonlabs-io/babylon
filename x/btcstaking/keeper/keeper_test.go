@@ -161,7 +161,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	return fpSK, fpPK, fp
 }
 
-func (h *Helper) CreateDelegationCustom(
+func (h *Helper) CreateDelegation(
 	r *rand.Rand,
 	fpPK *btcec.PublicKey,
 	changeAddress string,
@@ -178,6 +178,16 @@ func (h *Helper) CreateDelegationCustom(
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
 	covPKs, err := bbn.NewBTCPKsFromBIP340PKs(bsParams.CovenantPks)
 	h.NoError(err)
+
+	// if not set, use default values for unbonding value and time
+	defaultUnbondingValue := stakingValue - 1000
+	if unbondingValue == 0 {
+		unbondingValue = defaultUnbondingValue
+	}
+	defaultUnbondingTime := types.MinimumUnbondingTime(&bsParams, &bcParams) + 1
+	if unbondingTime == 0 {
+		unbondingTime = uint16(defaultUnbondingTime)
+	}
 
 	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
 		r,
@@ -305,37 +315,6 @@ func (h *Helper) CreateDelegationCustom(
 	}
 
 	return stakingTxHash, delSK, delPK, msgCreateBTCDel, btcDel, nil
-}
-
-func (h *Helper) CreateDelegation(
-	r *rand.Rand,
-	fpPK *btcec.PublicKey,
-	changeAddress string,
-	stakingValue int64,
-	stakingTime uint16,
-) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation, *types.BTCDelegation) {
-	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
-	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
-
-	minUnbondingTime := types.MinimumUnbondingTime(
-		&bsParams,
-		&bcParams,
-	)
-
-	stakingTxHash, delSK, delPK, msgCreateBTCDel, btcDel, err := h.CreateDelegationCustom(
-		r,
-		fpPK,
-		changeAddress,
-		stakingValue,
-		stakingTime,
-		stakingValue-1000,
-		uint16(minUnbondingTime)+1,
-		false,
-	)
-
-	h.NoError(err)
-
-	return stakingTxHash, delSK, delPK, msgCreateBTCDel, btcDel
 }
 
 func (h *Helper) GenerateCovenantSignaturesMessages(
