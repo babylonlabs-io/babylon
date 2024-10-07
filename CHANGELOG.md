@@ -54,6 +54,11 @@ events
 * [#113](https://github.com/babylonlabs-io/babylon/pull/113) Add multibuild binary
 for upgrade handler `testnet` and `mainnet`.
 
+### Bug Fixes
+
+* [#141](https://github.com/babylonlabs-io/babylon/pull/141) Generate voting
+power events only once when reaching covenant committee quorum
+
 ## v0.11.0
 
 ### State Machine Breaking
