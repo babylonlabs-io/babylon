@@ -3,6 +3,7 @@ package keeper
 import (
 	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -32,20 +33,40 @@ func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	}
 	// after genesis, if validator-related message, reject msg
 	for _, msg := range tx.GetMsgs() {
-		if qmd.IsValidatorRelatedMsg(msg) {
-			return ctx, epochingtypes.ErrUnwrappedMsgType
-		}
+		err := qmd.ValidateMsg(msg)
+		return ctx, err
 	}
 
 	return next(ctx, tx, simulate)
 }
 
-// IsValidatorRelatedMsg checks if the given message is of non-wrapped type, which should be rejected
-func (qmd DropValidatorMsgDecorator) IsValidatorRelatedMsg(msg sdk.Msg) bool {
-	switch msg.(type) {
+// ValidateMsg checks if the given message is of non-wrapped type, which should be rejected
+// It returns true if the message is a validator-related message, and false otherwise.
+// It returns an error if it is a MsgExec message which contains invalid messages.
+func (qmd DropValidatorMsgDecorator) ValidateMsg(msg sdk.Msg) error {
+	switch msg := msg.(type) {
 	case *stakingtypes.MsgCreateValidator, *stakingtypes.MsgDelegate, *stakingtypes.MsgUndelegate, *stakingtypes.MsgBeginRedelegate, *stakingtypes.MsgCancelUnbondingDelegation:
-		return true
+		// validator-related message
+		return epochingtypes.ErrUnwrappedMsgType
+	case *authz.MsgExec:
+		// MsgExec might contain a validator-related message and those should
+		// not bypass the ante handler
+		// https://jumpcrypto.com/writing/bypassing-ethermint-ante-handlers/
+		// unpack the exec message
+		internalMsgs, err := msg.GetMessages()
+		if err != nil {
+			// the internal message is not valid
+			return err
+		}
+		// check if any of the internal messages is a validator-related message
+		for _, internalMsg := range internalMsgs {
+			// recursively validate the internal message
+			if err := qmd.ValidateMsg(internalMsg); err != nil {
+				return err
+			}
+		}
+		return nil
 	default:
-		return false
+		return nil
 	}
 }
