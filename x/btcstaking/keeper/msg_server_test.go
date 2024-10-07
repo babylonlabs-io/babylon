@@ -159,8 +159,11 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, _, _, msgCreateBTCDel, _, err := h.CreateDelegation(
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingTxHash, msgCreateBTCDel, _, err := h.CreateDelegation(
 			r,
+			delSK,
 			fpPK,
 			changeAddress.EncodeAddress(),
 			stakingValue,
@@ -208,8 +211,11 @@ func TestProperVersionInDelegation(t *testing.T) {
 
 	// generate and insert new BTC delegation
 	stakingValue := int64(2 * 10e8)
-	stakingTxHash, _, _, _, _, err := h.CreateDelegation(
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	stakingTxHash, _, _, err := h.CreateDelegation(
 		r,
+		delSK,
 		fpPK,
 		changeAddress.EncodeAddress(),
 		stakingValue,
@@ -237,8 +243,9 @@ func TestProperVersionInDelegation(t *testing.T) {
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
 	require.NoError(t, err)
 	// create new delegation
-	stakingTxHash1, _, _, _, _, err := h.CreateDelegation(
+	stakingTxHash1, _, _, err := h.CreateDelegation(
 		r,
+		delSK,
 		fpPK,
 		changeAddress.EncodeAddress(),
 		stakingValue,
@@ -281,8 +288,11 @@ func FuzzAddCovenantSigs(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, _, _, msgCreateBTCDel, _, err := h.CreateDelegation(
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingTxHash, msgCreateBTCDel, _, err := h.CreateDelegation(
 			r,
+			delSK,
 			fpPK,
 			changeAddress.EncodeAddress(),
 			stakingValue,
@@ -353,8 +363,11 @@ func FuzzBTCUndelegate(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, delSK, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingTxHash, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 			r,
+			delSK,
 			fpPK,
 			changeAddress.EncodeAddress(),
 			stakingValue,
@@ -429,8 +442,11 @@ func FuzzSelectiveSlashing(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingTxHash, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 			r,
+			delSK,
 			fpPK,
 			changeAddress.EncodeAddress(),
 			stakingValue,
@@ -500,8 +516,11 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingTxHash, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 			r,
+			delSK,
 			fpPK,
 			changeAddress.EncodeAddress(),
 			stakingValue,
@@ -747,8 +766,11 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 
 			// generate and insert new BTC delegation
 			stakingValue := int64(2 * 10e8)
-			stakingTxHash, _, _, _, _, err := h.CreateDelegation(
+			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			h.NoError(err)
+			stakingTxHash, _, _, err := h.CreateDelegation(
 				r,
+				delSK,
 				fpPK,
 				changeAddress.EncodeAddress(),
 				stakingValue,

@@ -54,8 +54,11 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 		for i := 0; i < numDelsUnderFP; i++ {
 			// generate and insert new BTC delegation
 			stakingValue := int64(2 * 10e8)
-			stakingTxHash, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			h.NoError(err)
+			stakingTxHash, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 				r,
+				delSK,
 				fp.BtcPk.MustToBTCPK(),
 				changeAddress.EncodeAddress(),
 				stakingValue,

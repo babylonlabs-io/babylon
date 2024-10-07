@@ -49,7 +49,9 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 		events := []*types.EventPowerDistUpdate{}
 		for _, fpPK := range fpPKs {
 			for i := 0; i < 5; i++ {
-				_, _, _, _, del, err := h.CreateDelegation(r, fpPK, changeAddress.EncodeAddress(), stakingValue, 1000, 0, 0, false)
+				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+				h.NoError(err)
+				_, _, del, err := h.CreateDelegation(r, delSK, fpPK, changeAddress.EncodeAddress(), stakingValue, 1000, 0, 0, false)
 				h.NoError(err)
 				event := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 					StakingTxHash: del.MustGetStakingTxHash().String(),
@@ -95,8 +97,11 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 			ensure that it has voting power
 		*/
 		stakingValue := int64(2 * 10e8)
-		_, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		_, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 			r,
+			delSK,
 			fpPK,
 			changeAddress.EncodeAddress(),
 			stakingValue,
@@ -184,8 +189,11 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 			ensure that it has voting power
 		*/
 		stakingValue := int64(2 * 10e8)
-		_, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		_, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 			r,
+			delSK,
 			fpPK,
 			changeAddress.EncodeAddress(),
 			stakingValue,
@@ -254,8 +262,10 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 			    fp has voting power
 		*/
 		stakingValue = int64(2 * 10e8)
-		_, _, _, msgCreateBTCDel, actualDel, err = h.CreateDelegation(
+		h.NoError(err)
+		_, msgCreateBTCDel, actualDel, err = h.CreateDelegation(
 			r,
+			delSK,
 			fpPK,
 			changeAddress.EncodeAddress(),
 			stakingValue,
@@ -316,8 +326,11 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 			ensure that it has voting power
 		*/
 		stakingValue := int64(2 * 10e8)
-		_, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		_, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 			r,
+			delSK,
 			fpPK,
 			changeAddress.EncodeAddress(),
 			stakingValue,
@@ -420,8 +433,11 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		expectedStakingTxHash, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		expectedStakingTxHash, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
 			r,
+			delSK,
 			fpPK,
 			changeAddress.EncodeAddress(),
 			stakingValue,

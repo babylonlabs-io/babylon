@@ -50,8 +50,11 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		stakingValue := datagen.RandomInt(r, 100000) + 100000
 		for _, fp := range fpsWithVotingPowerMap {
 			for j := uint64(0); j < numBTCDels; j++ {
-				_, _, _, delMsg, del, err := h.CreateDelegation(
+				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+				h.NoError(err)
+				_, delMsg, del, err := h.CreateDelegation(
 					r,
+					delSK,
 					fp.BtcPk.MustToBTCPK(),
 					changeAddress.EncodeAddress(),
 					int64(stakingValue),

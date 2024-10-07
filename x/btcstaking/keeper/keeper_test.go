@@ -163,6 +163,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 
 func (h *Helper) CreateDelegation(
 	r *rand.Rand,
+	delSK *btcec.PrivateKey,
 	fpPK *btcec.PublicKey,
 	changeAddress string,
 	stakingValue int64,
@@ -170,9 +171,7 @@ func (h *Helper) CreateDelegation(
 	unbondingValue int64,
 	unbondingTime uint16,
 	usePreApproval bool,
-) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation, *types.BTCDelegation, error) {
-	delSK, delPK, err := datagen.GenRandomBTCKeyPair(r)
-	h.NoError(err)
+) (string, *types.MsgCreateBTCDelegation, *types.BTCDelegation, error) {
 	stakingTimeBlocks := stakingTime
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
@@ -295,7 +294,7 @@ func (h *Helper) CreateDelegation(
 
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	if err != nil {
-		return "", nil, nil, nil, nil, err
+		return "", nil, nil, err
 	}
 
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(msgCreateBTCDel.StakingTx)
@@ -314,7 +313,7 @@ func (h *Helper) CreateDelegation(
 		require.True(h.t, btcDel.HasInclusionProof())
 	}
 
-	return stakingTxHash, delSK, delPK, msgCreateBTCDel, btcDel, nil
+	return stakingTxHash, msgCreateBTCDel, btcDel, nil
 }
 
 func (h *Helper) GenerateCovenantSignaturesMessages(
