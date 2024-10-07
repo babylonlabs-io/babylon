@@ -107,7 +107,7 @@ func (n *NodeConfig) QueryUnbondedDelegations() []*bstypes.BTCDelegationResponse
 
 func (n *NodeConfig) QueryVerifiedDelegations() []*bstypes.BTCDelegationResponse {
 	queryParams := url.Values{}
-	queryParams.Add("status", fmt.Sprintf("%d", bstypes.BTCDelegationStatus_VERIFIED))
+	queryParams.Add("status", fmt.Sprintf("%d", bstypes.BTCDelegationStatus_APPROVED))
 	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/btc_delegations", queryParams)
 	require.NoError(n.t, err)
 

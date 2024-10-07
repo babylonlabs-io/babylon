@@ -24,7 +24,8 @@ import (
 )
 
 var (
-	net = &chaincfg.SimNetParams
+	net          = &chaincfg.SimNetParams
+	btcTipHeight = uint64(30)
 )
 
 type Helper struct {
@@ -213,7 +214,6 @@ func (h *Helper) CreateDelegationCustom(
 
 	// mock for testing k-deep stuff
 	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Hash())).Return(btcHeaderInfo).AnyTimes()
-	btcTipHeight := uint64(30)
 	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: btcTipHeight}).AnyTimes()
 
 	slashingSpendInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
@@ -419,6 +419,8 @@ func (h *Helper) CreateCovenantSigs(
 	msgCreateBTCDel *types.MsgCreateBTCDelegation,
 	del *types.BTCDelegation,
 ) {
+	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
+
 	stakingTx, err := bbn.NewBTCTxFromBytes(del.StakingTx)
 	stakingTxHash := stakingTx.TxHash().String()
 
@@ -446,4 +448,13 @@ func (h *Helper) CreateCovenantSigs(
 	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs, int(bsParams.CovenantQuorum))
 	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs[0].AdaptorSigs, 1)
 
+	// ensure the BTC delegation is approved (if using pre-approval flow) or active
+	status := actualDelWithCovenantSigs.GetStatus(btcTipHeight, bcParams.CheckpointFinalizationTimeout, bsParams.CovenantQuorum)
+	if msgCreateBTCDel.StakingTxInclusionProof != nil {
+		// not pre-approval flow, the BTC delegation should be active
+		require.Equal(h.t, status, types.BTCDelegationStatus_ACTIVE)
+	} else {
+		// pre-approval flow, the BTC delegation should be approved
+		require.Equal(h.t, status, types.BTCDelegationStatus_APPROVED)
+	}
 }
