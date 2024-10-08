@@ -1163,7 +1163,7 @@ var (
 
 	pattern_Query_FinalityProviderDelegations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"babylon", "btcstaking", "v1", "finality_providers", "fp_btc_pk_hex", "delegations"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_BTCDelegation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "btcstaking", "v1", "btc_delegations", "staking_tx_hash_hex"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_BTCDelegation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "btcstaking", "v1", "btc_delegation", "staking_tx_hash_hex"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
