@@ -224,7 +224,7 @@ func NewAdaptorSignatureFromBytes(asigBytes []byte) (*AdaptorSignature, error) {
 	}
 	// extract sHat
 	var sHat btcec.ModNScalar
-	sHat.SetByteSlice(asigBytes[JacobianPointSize : JacobianPointSize+ModNScalarSize]) //nolint:errcheck
+	sHat.SetByteSlice(asigBytes[JacobianPointSize : JacobianPointSize+ModNScalarSize])
 	// extract needNegation
 	needNegation := asigBytes[AdaptorSignatureSize-1] != 0x00
 

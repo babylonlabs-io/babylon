@@ -21,10 +21,14 @@ func magicHash(msg string) chainhash.Hash {
 	buf := bytes.NewBuffer(nil)
 	// we have to use wire.WriteVarString which encodes the string length into the byte array in Bitcoin's own way
 	// message prefix
-	// NOTE: we have control over the buffer so no need to check error
-	wire.WriteVarString(buf, 0, MAGIC_MESSAGE_PREFIX) //nolint:errcheck
+	// NOTE: we have control over the buffer so errors should not happen
+	if err := wire.WriteVarString(buf, 0, MAGIC_MESSAGE_PREFIX); err != nil {
+		panic(err)
+	}
 	// message
-	wire.WriteVarString(buf, 0, msg) //nolint:errcheck
+	if err := wire.WriteVarString(buf, 0, msg); err != nil {
+		panic(err)
+	}
 	bytes := buf.Bytes()
 
 	return chainhash.DoubleHashH(bytes)
