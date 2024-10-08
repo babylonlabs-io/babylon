@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/golang/mock/gomock"
@@ -660,4 +661,84 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
 		require.Len(t, events, 0)
 	})
+}
+
+func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	finalityKeeper := types.NewMockFinalityKeeper(ctrl)
+	h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+
+	// set all parameters
+	covenantSKs, _ := h.GenAndApplyParams(r)
+	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+	require.NoError(t, err)
+
+	// generate and insert new finality provider
+	_, fpPK, fp := h.CreateFinalityProvider(r)
+
+	// generate and insert new BTC delegation
+	stakingValue := int64(2 * 10e8)
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	expectedStakingTxHash, msgCreateBTCDel, actualDel, _, _, err := h.CreateDelegation(
+		r,
+		delSK,
+		fpPK,
+		changeAddress.EncodeAddress(),
+		stakingValue,
+		1000,
+		0,
+		0,
+		false,
+	)
+	h.NoError(err)
+
+	/*
+		at this point, there should be 1 event that BTC delegation
+		will become expired at end height - w
+	*/
+	// there exists no event at the current BTC tip
+	btcTip := btclcKeeper.GetTipInfo(h.Ctx)
+	events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
+	require.Len(t, events, 0)
+	// the BTC delegation will be unbonded at end height - w
+	unbondedHeight := actualDel.EndHeight - btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
+	events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
+	require.Len(t, events, 1)
+	btcDelStateUpdate := events[0].GetBtcDelStateUpdate()
+	require.NotNil(t, btcDelStateUpdate)
+	require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
+	require.Equal(t, types.BTCDelegationStatus_UNBONDED, btcDelStateUpdate.NewState)
+
+	// ensure this finality provider does not have voting power at the current height
+	babylonHeight := datagen.RandomInt(r, 10) + 1
+	h.SetCtxHeight(babylonHeight)
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
+	err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
+	h.NoError(err)
+	require.Zero(t, h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
+
+	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+
+	// Generate and report covenant signatures from all covenant members.
+	for _, m := range msgs {
+		mCopy := m
+		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, mCopy)
+		h.NoError(err)
+	}
+
+	// event though all covenant signatures are reported, only one event should be generated
+	events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
+	// we should only have one event that the BTC delegation becomes active
+	require.Len(t, events, 1)
+	btcDelStateUpdate = events[0].GetBtcDelStateUpdate()
+	require.NotNil(t, btcDelStateUpdate)
+	require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
+	require.Equal(t, types.BTCDelegationStatus_ACTIVE, btcDelStateUpdate.NewState)
 }
