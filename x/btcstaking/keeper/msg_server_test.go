@@ -3,12 +3,15 @@ package keeper_test
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math"
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
@@ -856,7 +859,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
 
 			// set all parameters
-			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.minUnbondingTime)
+			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.minUnbondingTime, 5, 3)
 
 			changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 			require.NoError(t, err)
@@ -1029,7 +1032,12 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 	})
 }
 
-func TestGasCostForActivatingBTCDelegation(t *testing.T) {
+func measureGasCost(
+	t *testing.T,
+	covenantCommitteeSize uint32,
+) uint64 {
+	covenantQuorum := covenantCommitteeSize/2 + 1
+
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -1041,12 +1049,14 @@ func TestGasCostForActivatingBTCDelegation(t *testing.T) {
 	h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
 
 	// set all parameters
-	covenantSKs, _ := h.GenAndApplyParams(r)
+	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 0, covenantCommitteeSize, covenantQuorum)
 	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 	require.NoError(t, err)
 
 	// generate and insert new finality provider
 	_, fpPK, _ := h.CreateFinalityProvider(r)
+
+	h.Ctx = h.Ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 
 	// generate and insert new BTC delegation
 	stakingValue := int64(2 * 10e8)
@@ -1071,4 +1081,36 @@ func TestGasCostForActivatingBTCDelegation(t *testing.T) {
 	// activate the BTC delegation, such that the BTC delegation becomes active
 	// and has voting power
 	h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
+
+	gas := h.Ctx.GasMeter().GasConsumed()
+	return gas
+}
+
+func TestGasCostForActivatingBTCDelegation(t *testing.T) {
+	gasCosts := []uint64{}
+	gasCosts = append(gasCosts, 0)
+	for i := 1; i <= 30; i++ {
+		gasCosts = append(gasCosts, measureGasCost(t, uint32(i)))
+	}
+
+	// Export gasCosts to a CSV file
+	if os.Getenv("EXPORT_GAS_COSTS") == "true" {
+		err := os.MkdirAll("../../../tmp", os.ModePerm)
+		require.NoError(t, err)
+		csvFile, err := os.Create("../../../tmp/gas_costs.csv")
+		require.NoError(t, err)
+		defer csvFile.Close()
+
+		// Write header
+		_, err = csvFile.WriteString("CovenantCommitteeSize,GasCost\n")
+		require.NoError(t, err)
+
+		// Write data
+		for size, cost := range gasCosts {
+			_, err = csvFile.WriteString(fmt.Sprintf("%d,%d\n", size, cost))
+			require.NoError(t, err)
+		}
+
+		t.Logf("Gas costs exported to gas_costs.csv")
+	}
 }

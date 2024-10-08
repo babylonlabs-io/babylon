@@ -81,7 +81,7 @@ func (h *Helper) Error(err error, msgAndArgs ...any) {
 }
 
 func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
-	return h.GenAndApplyCustomParams(r, 100, 0)
+	return h.GenAndApplyCustomParams(r, 100, 0, 5, 3)
 }
 
 func (h *Helper) SetCtxHeight(height uint64) {
@@ -92,6 +92,8 @@ func (h *Helper) GenAndApplyCustomParams(
 	r *rand.Rand,
 	finalizationTimeout uint64,
 	minUnbondingTime uint32,
+	covenantCommitteeSize uint32,
+	covenantQuorum uint32,
 ) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
 	// mock base header
 	baseHeader := btclctypes.SimnetGenesisBlock()
@@ -103,7 +105,7 @@ func (h *Helper) GenAndApplyCustomParams(
 	h.BTCCheckpointKeeper.EXPECT().GetParams(gomock.Any()).Return(params).AnyTimes()
 
 	// randomise covenant committee
-	covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
+	covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, int(covenantCommitteeSize))
 	h.NoError(err)
 	slashingAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 	h.NoError(err)
@@ -111,7 +113,7 @@ func (h *Helper) GenAndApplyCustomParams(
 	h.NoError(err)
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, types.Params{
 		CovenantPks:                bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
-		CovenantQuorum:             3,
+		CovenantQuorum:             covenantQuorum,
 		MinStakingValueSat:         1000,
 		MaxStakingValueSat:         int64(4 * 10e8),
 		MinStakingTimeBlocks:       10,
