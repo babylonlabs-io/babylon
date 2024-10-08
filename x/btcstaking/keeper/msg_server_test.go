@@ -1028,3 +1028,47 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		require.Equal(t, appHash1, appHash2)
 	})
 }
+
+func TestGasCostForActivatingBTCDelegation(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	finalityKeeper := types.NewMockFinalityKeeper(ctrl)
+	h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+
+	// set all parameters
+	covenantSKs, _ := h.GenAndApplyParams(r)
+	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+	require.NoError(t, err)
+
+	// generate and insert new finality provider
+	_, fpPK, _ := h.CreateFinalityProvider(r)
+
+	// generate and insert new BTC delegation
+	stakingValue := int64(2 * 10e8)
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+		r,
+		delSK,
+		fpPK,
+		changeAddress.EncodeAddress(),
+		stakingValue,
+		1000,
+		0,
+		0,
+		true,
+	)
+	h.NoError(err)
+
+	// add covenant signatures to this BTC delegation
+	h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+
+	// activate the BTC delegation, such that the BTC delegation becomes active
+	// and has voting power
+	h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
+}

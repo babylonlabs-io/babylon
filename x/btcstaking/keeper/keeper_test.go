@@ -406,7 +406,7 @@ func (h *Helper) CreateCovenantSigs(
 
 	h.NoError(err)
 	covenantMsgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, del)
-	for i := 0; i < int(bsParams.CovenantQuorum); i++ {
+	for i := 0; i < len(covenantSKs); i++ {
 		msgCopy := covenantMsgs[i]
 		_, err := h.MsgServer.AddCovenantSigs(h.Ctx, msgCopy)
 		h.NoError(err)
@@ -416,14 +416,14 @@ func (h *Helper) CreateCovenantSigs(
 	*/
 	actualDelWithCovenantSigs, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 	h.NoError(err)
-	require.Equal(h.t, len(actualDelWithCovenantSigs.CovenantSigs), int(bsParams.CovenantQuorum))
+	require.Len(h.t, actualDelWithCovenantSigs.CovenantSigs, len(covenantSKs))
 	require.True(h.t, actualDelWithCovenantSigs.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 
 	require.NotNil(h.t, actualDelWithCovenantSigs.BtcUndelegation)
 	require.NotNil(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs)
 	require.NotNil(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantUnbondingSigList)
-	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantUnbondingSigList, int(bsParams.CovenantQuorum))
-	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs, int(bsParams.CovenantQuorum))
+	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantUnbondingSigList, len(covenantSKs))
+	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs, len(covenantSKs))
 	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs[0].AdaptorSigs, 1)
 
 	// ensure the BTC delegation is verified (if using pre-approval flow) or active
