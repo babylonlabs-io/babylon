@@ -3,7 +3,6 @@ name: docker_publish
 on:
   push:
     branches:
-    - 'rafilx/test-lcd'
     - 'main'
     - 'dev'
     tags:
