@@ -44,6 +44,11 @@ and add `verified` to delegation status parse `NewBTCDelegationStatusFromString`
 
 ### State Machine Breaking
 
+* [#132](https://github.com/babylonlabs-io/babylon/pull/132) Add CosmWasm parameters
+update during v1 upgrade handler.
+
+### Misc Improvements
+
 * [#130](https://github.com/babylonlabs-io/babylon/pull/130) Fix bugs in the
 transaction fee refunding mechanism for covenant signatures and finality signatures
 * [#125](https://github.com/babylonlabs-io/babylon/pull/125) Implement ADR-028 and

@@ -30,13 +30,18 @@ to push the devenet data into the github repository.
 
 ## Upgrade data as string
 
-This upgrade loads 5 JSONs from strings in different files.
+The upgrade data was left as string to make it easier for `devnet` testing
+where it is needed to replace the data files, and would be harder to create
+the data files if it used actual go structures to generate the data.
+
+This upgrade loads 6 JSONs from strings in different files.
 
 - BTC Headers at `./data_btc_headers.go`
 - Finality Providers signed messages at`./data_signed_fps.go`
 - Tokens distribution at `./data_token_distribution.go`
 - BTC Staking Parameters `./btcstaking_params.go`
 - Finality Parameters `./finality_params.go`
+- CosmWasm Parameters `./cosmwasm_params.go`
 
 ### BTC Headers
 

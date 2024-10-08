@@ -3,6 +3,7 @@ package v1
 type UpgradeDataString struct {
 	BtcStakingParamStr    string
 	FinalityParamStr      string
+	CosmWasmParamStr      string
 	NewBtcHeadersStr      string
 	SignedFPsStr          string
 	TokensDistributionStr string
