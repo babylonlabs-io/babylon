@@ -31,9 +31,9 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // BTCDelegationStatus is the status of a delegation.
 // There are two possible valid state transition paths for a BTC delegation:
 // - PENDING -> ACTIVE -> UNBONDED
-// - PENDING -> APPROVED -> ACTIVE -> UNBONDED
+// - PENDING -> VERIFIED -> ACTIVE -> UNBONDED
 // and one invalid state transition path:
-// - PENDING -> APPROVED -> UNBONDED i.e the staker unbonded before
+// - PENDING -> VERIFIED -> UNBONDED i.e the staker unbonded before
 // activating delegation on Babylon chain.
 // In valid transition paths, the delegation becomes UNBONDED when:
 // - either the staking transaction timelock expires
