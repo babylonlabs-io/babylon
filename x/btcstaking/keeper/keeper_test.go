@@ -398,16 +398,15 @@ func (h *Helper) CreateCovenantSigs(
 	del *types.BTCDelegation,
 ) {
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
-
-	stakingTx, err := bbn.NewBTCTxFromBytes(del.StakingTx)
-	stakingTxHash := stakingTx.TxHash().String()
-
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 
+	stakingTx, err := bbn.NewBTCTxFromBytes(del.StakingTx)
 	h.NoError(err)
+	stakingTxHash := stakingTx.TxHash().String()
+
 	covenantMsgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, del)
-	for i := 0; i < int(bsParams.CovenantQuorum); i++ {
-		msgCopy := covenantMsgs[i]
+	for _, m := range covenantMsgs {
+		msgCopy := m
 		_, err := h.MsgServer.AddCovenantSigs(h.Ctx, msgCopy)
 		h.NoError(err)
 	}
@@ -416,14 +415,14 @@ func (h *Helper) CreateCovenantSigs(
 	*/
 	actualDelWithCovenantSigs, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 	h.NoError(err)
-	require.Equal(h.t, len(actualDelWithCovenantSigs.CovenantSigs), int(bsParams.CovenantQuorum))
+	require.Equal(h.t, len(actualDelWithCovenantSigs.CovenantSigs), len(covenantMsgs))
 	require.True(h.t, actualDelWithCovenantSigs.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 
 	require.NotNil(h.t, actualDelWithCovenantSigs.BtcUndelegation)
 	require.NotNil(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs)
 	require.NotNil(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantUnbondingSigList)
-	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantUnbondingSigList, int(bsParams.CovenantQuorum))
-	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs, int(bsParams.CovenantQuorum))
+	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantUnbondingSigList, len(covenantMsgs))
+	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs, len(covenantMsgs))
 	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs[0].AdaptorSigs, 1)
 
 	// ensure the BTC delegation is verified (if using pre-approval flow) or active
