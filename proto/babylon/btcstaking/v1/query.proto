@@ -35,7 +35,7 @@ service Query {
 
   // BTCDelegations queries all BTC delegations under a given status
   rpc BTCDelegations(QueryBTCDelegationsRequest) returns (QueryBTCDelegationsResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegations";
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegations/{status}";
   }
 
   // ActiveFinalityProvidersAtHeight queries finality providers with non zero voting power at given height.
