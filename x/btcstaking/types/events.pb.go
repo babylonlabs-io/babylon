@@ -600,6 +600,448 @@ func (m *EventFinalityProviderStatusChange) GetNewStatus() FinalityProviderStatu
 	return FinalityProviderStatus_STATUS_INACTIVE
 }
 
+// EventBTCDelegationCreated is the event emitted when a BTC delegation is created
+// on the Babylon chain
+type EventBTCDelegationCreated struct {
+	// staking_tx_hash is the hash of the staking tx.
+	// It uniquely identifies a BTC delegation
+	StakingTxHash string `protobuf:"bytes,1,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
+	// version of the params used to validate the delegation
+	ParamsVersion uint32 `protobuf:"varint,2,opt,name=params_version,json=paramsVersion,proto3" json:"params_version,omitempty"`
+	// finality_provider_btc_pks_hex is the list of hex str of Bitcoin secp256k1 PK of
+	// the finality providers that this BTC delegation delegates to
+	// the PK follows encoding in BIP-340 spec
+	FinalityProviderBtcPksHex []string `protobuf:"bytes,3,rep,name=finality_provider_btc_pks_hex,json=finalityProviderBtcPksHex,proto3" json:"finality_provider_btc_pks_hex,omitempty"`
+	// staker_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the staker that
+	// creates this BTC delegation the PK follows encoding in BIP-340 spec
+	StakerBtcPkHex string `protobuf:"bytes,4,opt,name=staker_btc_pk_hex,json=stakerBtcPkHex,proto3" json:"staker_btc_pk_hex,omitempty"`
+	// staking_time is the timelock of the staking tx specified in the BTC script
+	StakingTime uint32 `protobuf:"varint,5,opt,name=staking_time,json=stakingTime,proto3" json:"staking_time,omitempty"`
+	// staking_amount is the total amount of BTC stake in this delegation
+	// quantified in satoshi
+	StakingAmount uint64 `protobuf:"varint,6,opt,name=staking_amount,json=stakingAmount,proto3" json:"staking_amount,omitempty"`
+	// unbonding_time is the time is timelock on unbonding tx chosen by the staker
+	UnbondingTime uint32 `protobuf:"varint,7,opt,name=unbonding_time,json=unbondingTime,proto3" json:"unbonding_time,omitempty"`
+	// unbonding_tx is hex encoded bytes of the unsigned unbonding tx
+	UnbondingTx string `protobuf:"bytes,8,opt,name=unbonding_tx,json=unbondingTx,proto3" json:"unbonding_tx,omitempty"`
+	// state of the BTC delegation
+	State BTCDelegationStatus `protobuf:"varint,9,opt,name=state,proto3,enum=babylon.btcstaking.v1.BTCDelegationStatus" json:"state,omitempty"`
+}
+
+func (m *EventBTCDelegationCreated) Reset()         { *m = EventBTCDelegationCreated{} }
+func (m *EventBTCDelegationCreated) String() string { return proto.CompactTextString(m) }
+func (*EventBTCDelegationCreated) ProtoMessage()    {}
+func (*EventBTCDelegationCreated) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74118427820fff75, []int{6}
+}
+func (m *EventBTCDelegationCreated) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventBTCDelegationCreated) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventBTCDelegationCreated.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EventBTCDelegationCreated) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventBTCDelegationCreated.Merge(m, src)
+}
+func (m *EventBTCDelegationCreated) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventBTCDelegationCreated) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventBTCDelegationCreated.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventBTCDelegationCreated proto.InternalMessageInfo
+
+func (m *EventBTCDelegationCreated) GetStakingTxHash() string {
+	if m != nil {
+		return m.StakingTxHash
+	}
+	return ""
+}
+
+func (m *EventBTCDelegationCreated) GetParamsVersion() uint32 {
+	if m != nil {
+		return m.ParamsVersion
+	}
+	return 0
+}
+
+func (m *EventBTCDelegationCreated) GetFinalityProviderBtcPksHex() []string {
+	if m != nil {
+		return m.FinalityProviderBtcPksHex
+	}
+	return nil
+}
+
+func (m *EventBTCDelegationCreated) GetStakerBtcPkHex() string {
+	if m != nil {
+		return m.StakerBtcPkHex
+	}
+	return ""
+}
+
+func (m *EventBTCDelegationCreated) GetStakingTime() uint32 {
+	if m != nil {
+		return m.StakingTime
+	}
+	return 0
+}
+
+func (m *EventBTCDelegationCreated) GetStakingAmount() uint64 {
+	if m != nil {
+		return m.StakingAmount
+	}
+	return 0
+}
+
+func (m *EventBTCDelegationCreated) GetUnbondingTime() uint32 {
+	if m != nil {
+		return m.UnbondingTime
+	}
+	return 0
+}
+
+func (m *EventBTCDelegationCreated) GetUnbondingTx() string {
+	if m != nil {
+		return m.UnbondingTx
+	}
+	return ""
+}
+
+func (m *EventBTCDelegationCreated) GetState() BTCDelegationStatus {
+	if m != nil {
+		return m.State
+	}
+	return BTCDelegationStatus_PENDING
+}
+
+// EventCovenantSignatureRecevied is the event emitted when a covenant committee
+// sends valid covenant signatures for a BTC delegation
+type EventCovenantSignatureRecevied struct {
+	// staking_tx_hash is the hash of the staking identifing the BTC delegation
+	// that this covenant signature is for
+	StakingTxHash string `protobuf:"bytes,1,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
+	// covenant_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the
+	// covnenat committee that send the signature
+	CovenantBtcPkHex string `protobuf:"bytes,2,opt,name=covenant_btc_pk_hex,json=covenantBtcPkHex,proto3" json:"covenant_btc_pk_hex,omitempty"`
+	// covenant_unbonding_signature_hex is the hex str of the BIP340 Schnorr
+	// signature of the covenant committee on the unbonding tx
+	CovenantUnbondingSignatureHex string `protobuf:"bytes,3,opt,name=covenant_unbonding_signature_hex,json=covenantUnbondingSignatureHex,proto3" json:"covenant_unbonding_signature_hex,omitempty"`
+}
+
+func (m *EventCovenantSignatureRecevied) Reset()         { *m = EventCovenantSignatureRecevied{} }
+func (m *EventCovenantSignatureRecevied) String() string { return proto.CompactTextString(m) }
+func (*EventCovenantSignatureRecevied) ProtoMessage()    {}
+func (*EventCovenantSignatureRecevied) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74118427820fff75, []int{7}
+}
+func (m *EventCovenantSignatureRecevied) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventCovenantSignatureRecevied) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventCovenantSignatureRecevied.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EventCovenantSignatureRecevied) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventCovenantSignatureRecevied.Merge(m, src)
+}
+func (m *EventCovenantSignatureRecevied) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventCovenantSignatureRecevied) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventCovenantSignatureRecevied.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventCovenantSignatureRecevied proto.InternalMessageInfo
+
+func (m *EventCovenantSignatureRecevied) GetStakingTxHash() string {
+	if m != nil {
+		return m.StakingTxHash
+	}
+	return ""
+}
+
+func (m *EventCovenantSignatureRecevied) GetCovenantBtcPkHex() string {
+	if m != nil {
+		return m.CovenantBtcPkHex
+	}
+	return ""
+}
+
+func (m *EventCovenantSignatureRecevied) GetCovenantUnbondingSignatureHex() string {
+	if m != nil {
+		return m.CovenantUnbondingSignatureHex
+	}
+	return ""
+}
+
+// EventCovenantQuroumReached is the event emitted quorum of covenant committee
+// is reached for a BTC delegation
+type EventCovenantQuroumReached struct {
+	// staking_tx_hash is the hash of the staking identifing the BTC delegation
+	// that this covenant signature is for
+	StakingTxHash string `protobuf:"bytes,1,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
+	// state of the BTC delegation
+	State BTCDelegationStatus `protobuf:"varint,2,opt,name=state,proto3,enum=babylon.btcstaking.v1.BTCDelegationStatus" json:"state,omitempty"`
+}
+
+func (m *EventCovenantQuroumReached) Reset()         { *m = EventCovenantQuroumReached{} }
+func (m *EventCovenantQuroumReached) String() string { return proto.CompactTextString(m) }
+func (*EventCovenantQuroumReached) ProtoMessage()    {}
+func (*EventCovenantQuroumReached) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74118427820fff75, []int{8}
+}
+func (m *EventCovenantQuroumReached) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventCovenantQuroumReached) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventCovenantQuroumReached.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EventCovenantQuroumReached) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventCovenantQuroumReached.Merge(m, src)
+}
+func (m *EventCovenantQuroumReached) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventCovenantQuroumReached) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventCovenantQuroumReached.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventCovenantQuroumReached proto.InternalMessageInfo
+
+func (m *EventCovenantQuroumReached) GetStakingTxHash() string {
+	if m != nil {
+		return m.StakingTxHash
+	}
+	return ""
+}
+
+func (m *EventCovenantQuroumReached) GetState() BTCDelegationStatus {
+	if m != nil {
+		return m.State
+	}
+	return BTCDelegationStatus_PENDING
+}
+
+// EventBTCDelegationInclusionProofReceived is the event emitted when a BTC delegation
+// inclusion proof is received
+type EventBTCDelegationInclusionProofReceived struct {
+	// staking_tx_hash is the hash of the staking tx.
+	// It uniquely identifies a BTC delegation
+	StakingTxHash string `protobuf:"bytes,1,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
+	// start_height is the start BTC height of the BTC delegation
+	// it is the start BTC height of the timelock
+	StartHeight uint64 `protobuf:"varint,2,opt,name=start_height,json=startHeight,proto3" json:"start_height,omitempty"`
+	// end_height is the end height of the BTC delegation
+	// it is calculated by end_height = start_height + staking_time
+	EndHeight uint64 `protobuf:"varint,3,opt,name=end_height,json=endHeight,proto3" json:"end_height,omitempty"`
+	// state of the BTC delegation
+	State BTCDelegationStatus `protobuf:"varint,4,opt,name=state,proto3,enum=babylon.btcstaking.v1.BTCDelegationStatus" json:"state,omitempty"`
+}
+
+func (m *EventBTCDelegationInclusionProofReceived) Reset() {
+	*m = EventBTCDelegationInclusionProofReceived{}
+}
+func (m *EventBTCDelegationInclusionProofReceived) String() string { return proto.CompactTextString(m) }
+func (*EventBTCDelegationInclusionProofReceived) ProtoMessage()    {}
+func (*EventBTCDelegationInclusionProofReceived) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74118427820fff75, []int{9}
+}
+func (m *EventBTCDelegationInclusionProofReceived) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventBTCDelegationInclusionProofReceived) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventBTCDelegationInclusionProofReceived.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EventBTCDelegationInclusionProofReceived) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventBTCDelegationInclusionProofReceived.Merge(m, src)
+}
+func (m *EventBTCDelegationInclusionProofReceived) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventBTCDelegationInclusionProofReceived) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventBTCDelegationInclusionProofReceived.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventBTCDelegationInclusionProofReceived proto.InternalMessageInfo
+
+func (m *EventBTCDelegationInclusionProofReceived) GetStakingTxHash() string {
+	if m != nil {
+		return m.StakingTxHash
+	}
+	return ""
+}
+
+func (m *EventBTCDelegationInclusionProofReceived) GetStartHeight() uint64 {
+	if m != nil {
+		return m.StartHeight
+	}
+	return 0
+}
+
+func (m *EventBTCDelegationInclusionProofReceived) GetEndHeight() uint64 {
+	if m != nil {
+		return m.EndHeight
+	}
+	return 0
+}
+
+func (m *EventBTCDelegationInclusionProofReceived) GetState() BTCDelegationStatus {
+	if m != nil {
+		return m.State
+	}
+	return BTCDelegationStatus_PENDING
+}
+
+// EventBTCDelgationUnbondedEarly is the event emitted when a BTC delegation
+// is unbonded by staker sending unbonding tx to BTC
+type EventBTCDelgationUnbondedEarly struct {
+	// staking_tx_hash is the hash of the staking tx.
+	// It uniquely identifies a BTC delegation
+	StakingTxHash string `protobuf:"bytes,1,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
+	// state of the BTC delegation
+	State BTCDelegationStatus `protobuf:"varint,2,opt,name=state,proto3,enum=babylon.btcstaking.v1.BTCDelegationStatus" json:"state,omitempty"`
+}
+
+func (m *EventBTCDelgationUnbondedEarly) Reset()         { *m = EventBTCDelgationUnbondedEarly{} }
+func (m *EventBTCDelgationUnbondedEarly) String() string { return proto.CompactTextString(m) }
+func (*EventBTCDelgationUnbondedEarly) ProtoMessage()    {}
+func (*EventBTCDelgationUnbondedEarly) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74118427820fff75, []int{10}
+}
+func (m *EventBTCDelgationUnbondedEarly) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventBTCDelgationUnbondedEarly) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventBTCDelgationUnbondedEarly.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EventBTCDelgationUnbondedEarly) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventBTCDelgationUnbondedEarly.Merge(m, src)
+}
+func (m *EventBTCDelgationUnbondedEarly) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventBTCDelgationUnbondedEarly) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventBTCDelgationUnbondedEarly.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventBTCDelgationUnbondedEarly proto.InternalMessageInfo
+
+func (m *EventBTCDelgationUnbondedEarly) GetStakingTxHash() string {
+	if m != nil {
+		return m.StakingTxHash
+	}
+	return ""
+}
+
+func (m *EventBTCDelgationUnbondedEarly) GetState() BTCDelegationStatus {
+	if m != nil {
+		return m.State
+	}
+	return BTCDelegationStatus_PENDING
+}
+
+// EventBTCDelegationExpired is the event emitted when a BTC delegation
+// is unbonded by expiration of the staking tx timelock
+type EventBTCDelegationExpired struct {
+	// staking_tx_hash is the hash of the staking tx.
+	// It uniquely identifies a BTC delegation
+	StakingTxHash string `protobuf:"bytes,1,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
+	// state of the BTC delegation
+	State BTCDelegationStatus `protobuf:"varint,2,opt,name=state,proto3,enum=babylon.btcstaking.v1.BTCDelegationStatus" json:"state,omitempty"`
+}
+
+func (m *EventBTCDelegationExpired) Reset()         { *m = EventBTCDelegationExpired{} }
+func (m *EventBTCDelegationExpired) String() string { return proto.CompactTextString(m) }
+func (*EventBTCDelegationExpired) ProtoMessage()    {}
+func (*EventBTCDelegationExpired) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74118427820fff75, []int{11}
+}
+func (m *EventBTCDelegationExpired) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventBTCDelegationExpired) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventBTCDelegationExpired.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EventBTCDelegationExpired) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventBTCDelegationExpired.Merge(m, src)
+}
+func (m *EventBTCDelegationExpired) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventBTCDelegationExpired) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventBTCDelegationExpired.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventBTCDelegationExpired proto.InternalMessageInfo
+
+func (m *EventBTCDelegationExpired) GetStakingTxHash() string {
+	if m != nil {
+		return m.StakingTxHash
+	}
+	return ""
+}
+
+func (m *EventBTCDelegationExpired) GetState() BTCDelegationStatus {
+	if m != nil {
+		return m.State
+	}
+	return BTCDelegationStatus_PENDING
+}
+
 func init() {
 	proto.RegisterEnum("babylon.btcstaking.v1.FinalityProviderStatus", FinalityProviderStatus_name, FinalityProviderStatus_value)
 	proto.RegisterType((*EventFinalityProviderCreated)(nil), "babylon.btcstaking.v1.EventFinalityProviderCreated")
@@ -611,6 +1053,12 @@ func init() {
 	proto.RegisterType((*EventPowerDistUpdate_EventJailedFinalityProvider)(nil), "babylon.btcstaking.v1.EventPowerDistUpdate.EventJailedFinalityProvider")
 	proto.RegisterType((*EventPowerDistUpdate_EventUnjailedFinalityProvider)(nil), "babylon.btcstaking.v1.EventPowerDistUpdate.EventUnjailedFinalityProvider")
 	proto.RegisterType((*EventFinalityProviderStatusChange)(nil), "babylon.btcstaking.v1.EventFinalityProviderStatusChange")
+	proto.RegisterType((*EventBTCDelegationCreated)(nil), "babylon.btcstaking.v1.EventBTCDelegationCreated")
+	proto.RegisterType((*EventCovenantSignatureRecevied)(nil), "babylon.btcstaking.v1.EventCovenantSignatureRecevied")
+	proto.RegisterType((*EventCovenantQuroumReached)(nil), "babylon.btcstaking.v1.EventCovenantQuroumReached")
+	proto.RegisterType((*EventBTCDelegationInclusionProofReceived)(nil), "babylon.btcstaking.v1.EventBTCDelegationInclusionProofReceived")
+	proto.RegisterType((*EventBTCDelgationUnbondedEarly)(nil), "babylon.btcstaking.v1.EventBTCDelgationUnbondedEarly")
+	proto.RegisterType((*EventBTCDelegationExpired)(nil), "babylon.btcstaking.v1.EventBTCDelegationExpired")
 }
 
 func init() {
@@ -618,57 +1066,79 @@ func init() {
 }
 
 var fileDescriptor_74118427820fff75 = []byte{
-	// 794 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x95, 0x41, 0x6f, 0xe2, 0x46,
-	0x18, 0x86, 0xb1, 0x93, 0x46, 0x61, 0xe8, 0xee, 0x66, 0xa7, 0xec, 0x8a, 0xb2, 0x2d, 0x9b, 0xd2,
-	0x6a, 0x15, 0xad, 0x8a, 0xbd, 0xc9, 0xe6, 0xd0, 0x2b, 0x60, 0x58, 0x48, 0x69, 0x8a, 0x6c, 0xd2,
-	0x43, 0x2f, 0xd6, 0xd8, 0x9e, 0xd8, 0x53, 0x8c, 0x6d, 0x79, 0x06, 0x12, 0xee, 0x39, 0xf4, 0x98,
-	0xff, 0xd2, 0xfc, 0x88, 0x1e, 0xa3, 0x9c, 0xaa, 0x1c, 0xa2, 0x2a, 0xf9, 0x23, 0x95, 0xc7, 0x43,
-	0x21, 0x8d, 0xa9, 0x9a, 0x8a, 0xbd, 0xe1, 0x8f, 0xf7, 0x7b, 0x9f, 0xf1, 0x3b, 0xf3, 0x8d, 0x41,
-	0xd5, 0x42, 0xd6, 0xd4, 0x0f, 0x03, 0xd5, 0x62, 0x36, 0x65, 0x68, 0x48, 0x02, 0x57, 0x9d, 0xec,
-	0xaa, 0x78, 0x82, 0x03, 0x46, 0x95, 0x28, 0x0e, 0x59, 0x08, 0x5f, 0x08, 0x8d, 0x32, 0xd7, 0x28,
-	0x93, 0xdd, 0x72, 0xd1, 0x0d, 0xdd, 0x90, 0x2b, 0xd4, 0xe4, 0x57, 0x2a, 0x2e, 0x7f, 0x63, 0x87,
-	0x74, 0x14, 0x52, 0x75, 0x6e, 0x66, 0x61, 0x86, 0x76, 0x67, 0xcf, 0x42, 0xf5, 0x26, 0x1b, 0xbb,
-	0x00, 0x48, 0x75, 0x9f, 0xa7, 0x6e, 0x66, 0x8a, 0x49, 0x1f, 0xd2, 0xbf, 0xaa, 0xbf, 0xc9, 0xe0,
-	0x8b, 0x56, 0xb2, 0xcc, 0x36, 0x09, 0x90, 0x4f, 0xd8, 0xb4, 0x1f, 0x87, 0x13, 0xe2, 0xe0, 0xb8,
-	0x19, 0x63, 0xc4, 0xb0, 0x03, 0x7f, 0x04, 0x1b, 0x16, 0xb3, 0xcd, 0x68, 0x58, 0x92, 0xb6, 0xa5,
-	0x9d, 0x4f, 0x1b, 0xdf, 0x5d, 0xdf, 0xbc, 0xde, 0x77, 0x09, 0xf3, 0xc6, 0x96, 0x62, 0x87, 0x23,
-	0x55, 0x2c, 0xc1, 0x47, 0x16, 0xad, 0x91, 0x70, 0xf6, 0xa8, 0xb2, 0x69, 0x84, 0xa9, 0xd2, 0xe8,
-	0xf6, 0xdf, 0xef, 0xbf, 0xeb, 0x8f, 0xad, 0xef, 0xf1, 0x54, 0xff, 0xc4, 0x62, 0x76, 0x7f, 0x08,
-	0xbf, 0x05, 0xeb, 0xc8, 0x71, 0xe2, 0x92, 0xbc, 0x2d, 0xed, 0xe4, 0x1b, 0xa5, 0xab, 0x8b, 0x5a,
-	0x51, 0xac, 0xa8, 0xee, 0x38, 0x31, 0xa6, 0xd4, 0x60, 0x31, 0x09, 0x5c, 0x9d, 0xab, 0xe0, 0x0f,
-	0x00, 0xd8, 0xe1, 0x68, 0x44, 0x28, 0x25, 0x61, 0x50, 0x5a, 0xe3, 0x3d, 0xb5, 0xeb, 0x9b, 0xd7,
-	0xaf, 0xd2, 0x1e, 0xea, 0x0c, 0x15, 0x12, 0xaa, 0x23, 0xc4, 0x3c, 0xa5, 0x87, 0x5d, 0x64, 0x4f,
-	0x35, 0x6c, 0x5f, 0x5d, 0xd4, 0x80, 0xb0, 0xd4, 0xb0, 0xad, 0x2f, 0x18, 0xc0, 0x16, 0x28, 0x38,
-	0x98, 0xda, 0x31, 0x89, 0x58, 0xe2, 0xb7, 0xbe, 0x2d, 0xed, 0x14, 0xf6, 0xbe, 0x56, 0x84, 0x7a,
-	0xbe, 0x2d, 0x3c, 0x6d, 0x45, 0x9b, 0x4b, 0xf5, 0xc5, 0xbe, 0xea, 0x99, 0x0c, 0x5e, 0x65, 0xa6,
-	0xd6, 0x72, 0xc8, 0x47, 0x09, 0xed, 0x7e, 0x0c, 0xf2, 0x8a, 0x63, 0x58, 0xfb, 0x9f, 0x31, 0x9c,
-	0x4b, 0xe0, 0x4b, 0x1e, 0x43, 0x63, 0xd0, 0xd4, 0xb0, 0x8f, 0x5d, 0x94, 0x94, 0x0d, 0x86, 0x18,
-	0x3e, 0x8a, 0x1c, 0xc4, 0x30, 0x7c, 0x03, 0x9e, 0x09, 0x37, 0x93, 0x9d, 0x9a, 0x1e, 0xa2, 0x1e,
-	0x4f, 0x24, 0xaf, 0x3f, 0x11, 0xe5, 0xc1, 0x69, 0x07, 0x51, 0x0f, 0x7e, 0x00, 0xf9, 0x00, 0x9f,
-	0x98, 0x34, 0x69, 0xe5, 0xaf, 0xf7, 0x74, 0xef, 0xad, 0x92, 0x39, 0x30, 0xca, 0x03, 0xd6, 0x98,
-	0xea, 0x9b, 0x01, 0x3e, 0xe1, 0xd8, 0xea, 0x31, 0x78, 0xc9, 0x57, 0x64, 0x60, 0x1f, 0xdb, 0x8c,
-	0x4c, 0xb0, 0xe1, 0x23, 0xea, 0x91, 0xc0, 0x85, 0x3d, 0xb0, 0x89, 0x93, 0x3d, 0x0a, 0x6c, 0xcc,
-	0xd7, 0x50, 0xd8, 0x7b, 0xb7, 0x84, 0xf0, 0xa0, 0xb7, 0x25, 0xfa, 0xf4, 0xbf, 0x1d, 0xaa, 0x67,
-	0x1b, 0xa0, 0xc8, 0x41, 0xfd, 0xf0, 0x04, 0xc7, 0x1a, 0xa1, 0x4c, 0xbc, 0x31, 0x01, 0x80, 0x26,
-	0x6d, 0xd8, 0x31, 0x8f, 0x23, 0x01, 0xea, 0x2c, 0x01, 0x65, 0x19, 0xa4, 0x45, 0x23, 0xb5, 0xf8,
-	0xe7, 0xf1, 0xea, 0xe4, 0xf4, 0xbc, 0x70, 0x6f, 0x47, 0xf0, 0x18, 0xe4, 0x7f, 0x41, 0xc4, 0x4f,
-	0x49, 0x32, 0x27, 0x7d, 0x78, 0x34, 0xe9, 0x80, 0x3b, 0x64, 0x80, 0x36, 0x53, 0xef, 0x76, 0x04,
-	0x7d, 0x50, 0x18, 0x07, 0x73, 0x52, 0x7a, 0x5a, 0xba, 0x8f, 0x26, 0x1d, 0x09, 0x8f, 0x0c, 0x16,
-	0x98, 0xf9, 0xb7, 0x23, 0xe8, 0x82, 0x62, 0x32, 0x3b, 0x0e, 0xf6, 0xd3, 0xe3, 0x60, 0x8e, 0xb9,
-	0x87, 0x98, 0xd5, 0xfd, 0x7f, 0xc3, 0x2e, 0x3b, 0x86, 0x9d, 0x9c, 0xfe, 0xdc, 0x62, 0xb6, 0x86,
-	0xfd, 0x85, 0x62, 0xd9, 0x13, 0x37, 0xdf, 0x92, 0xac, 0x61, 0x07, 0xc8, 0x2b, 0x18, 0x60, 0x39,
-	0x1a, 0x96, 0x5d, 0x71, 0x5b, 0x64, 0x67, 0xbd, 0x42, 0x10, 0x11, 0xf3, 0xb8, 0x2c, 0xea, 0xd5,
-	0xa1, 0x1a, 0xeb, 0x40, 0xc6, 0x93, 0xea, 0xaf, 0x12, 0xf8, 0x2a, 0xf3, 0x22, 0x4c, 0x07, 0xb3,
-	0xe9, 0xa1, 0xc0, 0xc5, 0xf0, 0xc5, 0xbd, 0xeb, 0x30, 0x3f, 0xbb, 0xd4, 0x7a, 0x00, 0xcc, 0x86,
-	0x7e, 0x4c, 0xc5, 0xd4, 0xd7, 0x96, 0xec, 0x6f, 0xb6, 0xbf, 0x9e, 0x17, 0x83, 0x3f, 0xa6, 0x6f,
-	0x5d, 0xf0, 0x32, 0x5b, 0x04, 0x3f, 0x03, 0xcf, 0x8c, 0x41, 0x7d, 0x70, 0x64, 0x98, 0xdd, 0xc3,
-	0x7a, 0x73, 0xd0, 0xfd, 0xa9, 0xb5, 0x95, 0x83, 0xcf, 0xc1, 0x13, 0x51, 0x14, 0x25, 0x69, 0xa1,
-	0x74, 0x50, 0xef, 0xf6, 0x5a, 0xda, 0x96, 0x0c, 0x21, 0x78, 0x2a, 0x4a, 0x46, 0xaf, 0x6e, 0x74,
-	0x5a, 0xda, 0xd6, 0x5a, 0xe3, 0xf0, 0xf7, 0xdb, 0x8a, 0x74, 0x79, 0x5b, 0x91, 0xfe, 0xbc, 0xad,
-	0x48, 0xe7, 0x77, 0x95, 0xdc, 0xe5, 0x5d, 0x25, 0xf7, 0xc7, 0x5d, 0x25, 0xf7, 0xf3, 0x7f, 0x48,
-	0xf3, 0x74, 0xf1, 0x5b, 0xcd, 0xa3, 0xb5, 0x36, 0xf8, 0x97, 0xf8, 0xfd, 0x5f, 0x01, 0x00, 0x00,
-	0xff, 0xff, 0x5b, 0x3f, 0xe1, 0x66, 0x45, 0x08, 0x00, 0x00,
+	// 1138 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x57, 0x41, 0x73, 0xda, 0x46,
+	0x14, 0x46, 0x40, 0x5c, 0xb3, 0xc4, 0x8e, 0xad, 0x38, 0x19, 0xec, 0xd4, 0x04, 0xd3, 0x36, 0x43,
+	0x33, 0x05, 0x62, 0xc7, 0x87, 0x1e, 0x03, 0x06, 0x1b, 0x52, 0x37, 0xa5, 0xc2, 0xce, 0xa1, 0x17,
+	0xcd, 0x4a, 0x5a, 0xa4, 0xad, 0x85, 0xa4, 0xd1, 0xae, 0x30, 0xdc, 0xd3, 0x4e, 0xa7, 0xa7, 0xfc,
+	0x91, 0x9e, 0x9a, 0x1f, 0xd0, 0x63, 0x8f, 0x99, 0x1c, 0x3a, 0x9d, 0x1c, 0x32, 0x1d, 0xfb, 0x8f,
+	0x74, 0xb4, 0xbb, 0x12, 0x38, 0x86, 0x4e, 0xf0, 0xb8, 0xb9, 0xa1, 0xa7, 0xef, 0x7d, 0xdf, 0xf7,
+	0xde, 0xbe, 0x7d, 0x1a, 0x40, 0x51, 0x83, 0xda, 0xc8, 0x76, 0x9d, 0xaa, 0x46, 0x75, 0x42, 0xe1,
+	0x09, 0x76, 0xcc, 0xea, 0x60, 0xbb, 0x8a, 0x06, 0xc8, 0xa1, 0xa4, 0xe2, 0xf9, 0x2e, 0x75, 0xe5,
+	0x3b, 0x02, 0x53, 0x19, 0x63, 0x2a, 0x83, 0xed, 0x8d, 0x35, 0xd3, 0x35, 0x5d, 0x86, 0xa8, 0x86,
+	0xbf, 0x38, 0x78, 0xe3, 0x73, 0xdd, 0x25, 0x7d, 0x97, 0x54, 0xc7, 0x64, 0x1a, 0xa2, 0x70, 0x3b,
+	0x7a, 0x16, 0xa8, 0x07, 0xd3, 0x65, 0x27, 0x04, 0x38, 0x6e, 0x9d, 0xb3, 0xa9, 0x5c, 0x86, 0x3f,
+	0xf0, 0x57, 0xc5, 0xdf, 0x93, 0xe0, 0xd3, 0x66, 0x68, 0x73, 0x1f, 0x3b, 0xd0, 0xc6, 0x74, 0xd4,
+	0xf1, 0xdd, 0x01, 0x36, 0x90, 0xbf, 0xe7, 0x23, 0x48, 0x91, 0x21, 0x7f, 0x07, 0x16, 0x34, 0xaa,
+	0xab, 0xde, 0x49, 0x4e, 0x2a, 0x48, 0xa5, 0x9b, 0xf5, 0xaf, 0xdf, 0xbe, 0xbb, 0xbf, 0x6b, 0x62,
+	0x6a, 0x05, 0x5a, 0x45, 0x77, 0xfb, 0x55, 0x61, 0xc1, 0x86, 0x1a, 0x29, 0x63, 0x37, 0x7a, 0xac,
+	0xd2, 0x91, 0x87, 0x48, 0xa5, 0xde, 0xee, 0x3c, 0xde, 0x7d, 0xd4, 0x09, 0xb4, 0x6f, 0xd0, 0x48,
+	0xb9, 0xa1, 0x51, 0xbd, 0x73, 0x22, 0x7f, 0x05, 0xd2, 0xd0, 0x30, 0xfc, 0x5c, 0xb2, 0x20, 0x95,
+	0x32, 0xf5, 0xdc, 0x9b, 0x57, 0xe5, 0x35, 0xe1, 0xa8, 0x66, 0x18, 0x3e, 0x22, 0xa4, 0x4b, 0x7d,
+	0xec, 0x98, 0x0a, 0x43, 0xc9, 0xdf, 0x02, 0xa0, 0xbb, 0xfd, 0x3e, 0x26, 0x04, 0xbb, 0x4e, 0x2e,
+	0xc5, 0x72, 0xca, 0x6f, 0xdf, 0xdd, 0xbf, 0xc7, 0x73, 0x88, 0x71, 0x52, 0xc1, 0x6e, 0xb5, 0x0f,
+	0xa9, 0x55, 0x39, 0x44, 0x26, 0xd4, 0x47, 0x0d, 0xa4, 0xbf, 0x79, 0x55, 0x06, 0x82, 0xb2, 0x81,
+	0x74, 0x65, 0x82, 0x40, 0x6e, 0x82, 0xac, 0x81, 0x88, 0xee, 0x63, 0x8f, 0x86, 0x7c, 0xe9, 0x82,
+	0x54, 0xca, 0xee, 0x7c, 0x56, 0x11, 0xe8, 0xf1, 0xb1, 0xb0, 0x6e, 0x57, 0x1a, 0x63, 0xa8, 0x32,
+	0x99, 0x57, 0x7c, 0x91, 0x04, 0xf7, 0xa6, 0x76, 0xad, 0x69, 0xe0, 0xff, 0xa5, 0x69, 0x17, 0xdb,
+	0x90, 0xbc, 0xe6, 0x36, 0xa4, 0xae, 0xd8, 0x86, 0x97, 0x12, 0xd8, 0x64, 0x6d, 0xa8, 0x1f, 0xed,
+	0x35, 0x90, 0x8d, 0x4c, 0x18, 0x86, 0xbb, 0x14, 0x52, 0x74, 0xec, 0x19, 0x90, 0x22, 0xf9, 0x01,
+	0xb8, 0x25, 0xd8, 0x54, 0x3a, 0x54, 0x2d, 0x48, 0x2c, 0xd6, 0x91, 0x8c, 0xb2, 0x24, 0xc2, 0x47,
+	0xc3, 0x16, 0x24, 0x96, 0x7c, 0x00, 0x32, 0x0e, 0x3a, 0x55, 0x49, 0x98, 0xca, 0xca, 0x5b, 0xde,
+	0x79, 0x58, 0x99, 0x7a, 0x61, 0x2a, 0x97, 0xb4, 0x02, 0xa2, 0x2c, 0x3a, 0xe8, 0x94, 0xc9, 0x16,
+	0x7b, 0xe0, 0x2e, 0x73, 0xd4, 0x45, 0x36, 0xd2, 0x29, 0x1e, 0xa0, 0xae, 0x0d, 0x89, 0x85, 0x1d,
+	0x53, 0x3e, 0x04, 0x8b, 0x28, 0x3c, 0x23, 0x47, 0x47, 0xcc, 0x43, 0x76, 0xe7, 0xd1, 0x0c, 0x85,
+	0x4b, 0xb9, 0x4d, 0x91, 0xa7, 0xc4, 0x0c, 0xc5, 0x17, 0x0b, 0x60, 0x8d, 0x09, 0x75, 0xdc, 0x53,
+	0xe4, 0x37, 0x30, 0xa1, 0xa2, 0x62, 0x0c, 0x00, 0x09, 0xd3, 0x90, 0xa1, 0xf6, 0x3c, 0x21, 0xd4,
+	0x9a, 0x21, 0x34, 0x8d, 0x80, 0x07, 0xbb, 0x9c, 0xe2, 0xfd, 0xf1, 0x6a, 0x25, 0x94, 0x8c, 0x60,
+	0xdf, 0xf7, 0xe4, 0x1e, 0xc8, 0xfc, 0x08, 0xb1, 0xcd, 0x95, 0x92, 0x4c, 0xe9, 0x60, 0x6e, 0xa5,
+	0xa7, 0x8c, 0x61, 0x8a, 0xd0, 0x22, 0xe7, 0xde, 0xf7, 0x64, 0x1b, 0x64, 0x03, 0x67, 0xac, 0xc4,
+	0xa7, 0xa5, 0x3d, 0xb7, 0xd2, 0xb1, 0xe0, 0x98, 0xa2, 0x05, 0x22, 0xfe, 0x7d, 0x4f, 0x36, 0xc1,
+	0x5a, 0x78, 0x77, 0x0c, 0x64, 0xf3, 0x71, 0x50, 0x03, 0xc6, 0x21, 0xee, 0xea, 0xee, 0x7f, 0xc9,
+	0xce, 0x1a, 0xc3, 0x56, 0x42, 0x59, 0xd5, 0xa8, 0xde, 0x40, 0xf6, 0x44, 0x70, 0xc3, 0x12, 0x9b,
+	0x6f, 0x46, 0xaf, 0xe5, 0x16, 0x48, 0x5e, 0xc3, 0x05, 0x4e, 0x7a, 0x27, 0x1b, 0xa6, 0xd8, 0x16,
+	0xd3, 0x7b, 0x7d, 0x8d, 0x42, 0x58, 0xdc, 0xc7, 0x59, 0xad, 0xbe, 0x3e, 0xa9, 0x7a, 0x1a, 0x24,
+	0xd1, 0xa0, 0xf8, 0x8b, 0x04, 0xb6, 0xa6, 0x2e, 0x42, 0x7e, 0x31, 0xf7, 0x2c, 0xe8, 0x98, 0x48,
+	0xbe, 0x73, 0x61, 0x1d, 0x66, 0xa2, 0xa5, 0x76, 0x08, 0x40, 0x74, 0xe9, 0x03, 0x22, 0x6e, 0x7d,
+	0x79, 0xc6, 0xf9, 0x4e, 0xe7, 0x57, 0x32, 0xe2, 0xe2, 0x07, 0xa4, 0xf8, 0x5b, 0x0a, 0xac, 0x5f,
+	0x9e, 0x82, 0xe8, 0x33, 0xf6, 0xa1, 0x8b, 0xe8, 0x0b, 0xb0, 0xec, 0x41, 0x1f, 0xf6, 0x89, 0x3a,
+	0x40, 0x7e, 0xbc, 0x6c, 0x97, 0x94, 0x25, 0x1e, 0x7d, 0xce, 0x83, 0xf2, 0x13, 0xb0, 0xd9, 0x13,
+	0x8e, 0xc2, 0xaf, 0x2a, 0xb3, 0xa4, 0xf2, 0x1a, 0x89, 0x6a, 0xa1, 0x61, 0x2e, 0x55, 0x48, 0x95,
+	0x32, 0xca, 0x7a, 0xef, 0x3d, 0xdb, 0xf5, 0xb0, 0x70, 0xd2, 0x42, 0x43, 0xf9, 0x4b, 0xb0, 0x1a,
+	0x2a, 0xc7, 0x69, 0x2c, 0x2b, 0xcd, 0x2c, 0x2d, 0xf3, 0x17, 0x0c, 0x1b, 0x42, 0xb7, 0xc0, 0xcd,
+	0xd8, 0x3b, 0xee, 0xa3, 0xdc, 0x0d, 0xe6, 0x28, 0x1b, 0x19, 0xc7, 0x7d, 0x14, 0xda, 0x8e, 0x20,
+	0xb0, 0xef, 0x06, 0x0e, 0xcd, 0x2d, 0x14, 0xa4, 0x52, 0x3a, 0xae, 0xae, 0xc6, 0x82, 0x21, 0x2c,
+	0x70, 0x34, 0xd7, 0x31, 0x62, 0xae, 0x4f, 0x78, 0x75, 0x71, 0x94, 0xb1, 0x6d, 0x81, 0x9b, 0x13,
+	0xb0, 0x61, 0x6e, 0x91, 0xd9, 0xca, 0x8e, 0x41, 0x43, 0xf9, 0x09, 0xb8, 0xc1, 0x97, 0x75, 0x66,
+	0xee, 0x65, 0xcd, 0x13, 0x8b, 0x7f, 0x48, 0x20, 0xcf, 0xce, 0x6b, 0xcf, 0x1d, 0x20, 0x07, 0x3a,
+	0xb4, 0x8b, 0x4d, 0x07, 0xd2, 0xc0, 0x47, 0x0a, 0xd2, 0xd1, 0x00, 0xcf, 0x71, 0x68, 0x65, 0x70,
+	0x5b, 0x17, 0x24, 0x93, 0xdd, 0x64, 0x9f, 0x49, 0x65, 0x25, 0x7a, 0x15, 0xf7, 0xf3, 0x00, 0x14,
+	0x62, 0xf8, 0xb8, 0x4e, 0x12, 0xc9, 0x8b, 0xf3, 0x0b, 0x73, 0x37, 0x23, 0xdc, 0x71, 0x04, 0x8b,
+	0x4d, 0xb6, 0xd0, 0xb0, 0xf8, 0xb3, 0x04, 0x36, 0x2e, 0x94, 0xf0, 0x7d, 0xe0, 0xbb, 0x41, 0x5f,
+	0x41, 0x50, 0xb7, 0xe6, 0xb0, 0x1f, 0xf7, 0x32, 0x79, 0xd5, 0x5e, 0xfe, 0x25, 0x81, 0xd2, 0xe5,
+	0xd9, 0x6f, 0x3b, 0xba, 0x1d, 0x84, 0xe3, 0xda, 0xf1, 0x5d, 0xb7, 0x17, 0x76, 0x15, 0x0f, 0xe6,
+	0xb0, 0xc5, 0xc7, 0xce, 0xa7, 0xaa, 0x85, 0xb0, 0x69, 0x51, 0xe6, 0x2e, 0xcd, 0xc6, 0xce, 0xa7,
+	0x2d, 0x16, 0x92, 0x37, 0x01, 0x40, 0x8e, 0x11, 0x01, 0x52, 0x0c, 0x90, 0x41, 0x8e, 0x21, 0x5e,
+	0xc7, 0x85, 0xa5, 0xaf, 0x5a, 0xd8, 0xaf, 0xd1, 0x90, 0x70, 0x0c, 0x87, 0xf0, 0xc3, 0x40, 0x46,
+	0x13, 0xfa, 0xf6, 0xe8, 0x23, 0x76, 0xf9, 0x27, 0x69, 0xda, 0x86, 0x69, 0x0e, 0x3d, 0xec, 0x7f,
+	0xcc, 0xd3, 0x7e, 0x68, 0x82, 0xbb, 0xd3, 0xd7, 0xa1, 0x7c, 0x1b, 0xdc, 0xea, 0x1e, 0xd5, 0x8e,
+	0x8e, 0xbb, 0x6a, 0xfb, 0x59, 0x6d, 0xef, 0xa8, 0xfd, 0xbc, 0xb9, 0x92, 0x90, 0x57, 0xc1, 0x92,
+	0x08, 0x8a, 0x90, 0x34, 0x11, 0x7a, 0x5a, 0x6b, 0x1f, 0x36, 0x1b, 0x2b, 0x49, 0x59, 0x06, 0xcb,
+	0x22, 0xd4, 0x3d, 0xac, 0x75, 0x5b, 0xcd, 0xc6, 0x4a, 0xaa, 0xfe, 0xec, 0xcf, 0xb3, 0xbc, 0xf4,
+	0xfa, 0x2c, 0x2f, 0xfd, 0x73, 0x96, 0x97, 0x5e, 0x9e, 0xe7, 0x13, 0xaf, 0xcf, 0xf3, 0x89, 0xbf,
+	0xcf, 0xf3, 0x89, 0x1f, 0x3e, 0xe0, 0xbb, 0x31, 0x9c, 0xfc, 0x57, 0xc2, 0x3e, 0x22, 0xda, 0x02,
+	0xfb, 0xcf, 0xf1, 0xf8, 0xdf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xbf, 0xd8, 0x23, 0xa0, 0x2f, 0x0d,
+	0x00, 0x00,
 }
 
 func (m *EventFinalityProviderCreated) Marshal() (dAtA []byte, err error) {
@@ -1122,6 +1592,278 @@ func (m *EventFinalityProviderStatusChange) MarshalToSizedBuffer(dAtA []byte) (i
 	return len(dAtA) - i, nil
 }
 
+func (m *EventBTCDelegationCreated) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EventBTCDelegationCreated) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventBTCDelegationCreated) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.State != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.State))
+		i--
+		dAtA[i] = 0x48
+	}
+	if len(m.UnbondingTx) > 0 {
+		i -= len(m.UnbondingTx)
+		copy(dAtA[i:], m.UnbondingTx)
+		i = encodeVarintEvents(dAtA, i, uint64(len(m.UnbondingTx)))
+		i--
+		dAtA[i] = 0x42
+	}
+	if m.UnbondingTime != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.UnbondingTime))
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.StakingAmount != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.StakingAmount))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.StakingTime != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.StakingTime))
+		i--
+		dAtA[i] = 0x28
+	}
+	if len(m.StakerBtcPkHex) > 0 {
+		i -= len(m.StakerBtcPkHex)
+		copy(dAtA[i:], m.StakerBtcPkHex)
+		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakerBtcPkHex)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.FinalityProviderBtcPksHex) > 0 {
+		for iNdEx := len(m.FinalityProviderBtcPksHex) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.FinalityProviderBtcPksHex[iNdEx])
+			copy(dAtA[i:], m.FinalityProviderBtcPksHex[iNdEx])
+			i = encodeVarintEvents(dAtA, i, uint64(len(m.FinalityProviderBtcPksHex[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if m.ParamsVersion != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.ParamsVersion))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.StakingTxHash) > 0 {
+		i -= len(m.StakingTxHash)
+		copy(dAtA[i:], m.StakingTxHash)
+		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakingTxHash)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EventCovenantSignatureRecevied) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EventCovenantSignatureRecevied) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventCovenantSignatureRecevied) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.CovenantUnbondingSignatureHex) > 0 {
+		i -= len(m.CovenantUnbondingSignatureHex)
+		copy(dAtA[i:], m.CovenantUnbondingSignatureHex)
+		i = encodeVarintEvents(dAtA, i, uint64(len(m.CovenantUnbondingSignatureHex)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.CovenantBtcPkHex) > 0 {
+		i -= len(m.CovenantBtcPkHex)
+		copy(dAtA[i:], m.CovenantBtcPkHex)
+		i = encodeVarintEvents(dAtA, i, uint64(len(m.CovenantBtcPkHex)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.StakingTxHash) > 0 {
+		i -= len(m.StakingTxHash)
+		copy(dAtA[i:], m.StakingTxHash)
+		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakingTxHash)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EventCovenantQuroumReached) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EventCovenantQuroumReached) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventCovenantQuroumReached) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.State != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.State))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.StakingTxHash) > 0 {
+		i -= len(m.StakingTxHash)
+		copy(dAtA[i:], m.StakingTxHash)
+		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakingTxHash)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EventBTCDelegationInclusionProofReceived) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EventBTCDelegationInclusionProofReceived) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventBTCDelegationInclusionProofReceived) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.State != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.State))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.EndHeight != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.EndHeight))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.StartHeight != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.StartHeight))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.StakingTxHash) > 0 {
+		i -= len(m.StakingTxHash)
+		copy(dAtA[i:], m.StakingTxHash)
+		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakingTxHash)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EventBTCDelgationUnbondedEarly) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EventBTCDelgationUnbondedEarly) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventBTCDelgationUnbondedEarly) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.State != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.State))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.StakingTxHash) > 0 {
+		i -= len(m.StakingTxHash)
+		copy(dAtA[i:], m.StakingTxHash)
+		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakingTxHash)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EventBTCDelegationExpired) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EventBTCDelegationExpired) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventBTCDelegationExpired) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.State != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.State))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.StakingTxHash) > 0 {
+		i -= len(m.StakingTxHash)
+		copy(dAtA[i:], m.StakingTxHash)
+		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakingTxHash)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintEvents(dAtA []byte, offset int, v uint64) int {
 	offset -= sovEvents(v)
 	base := offset
@@ -1319,6 +2061,139 @@ func (m *EventFinalityProviderStatusChange) Size() (n int) {
 	}
 	if m.NewStatus != 0 {
 		n += 1 + sovEvents(uint64(m.NewStatus))
+	}
+	return n
+}
+
+func (m *EventBTCDelegationCreated) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.StakingTxHash)
+	if l > 0 {
+		n += 1 + l + sovEvents(uint64(l))
+	}
+	if m.ParamsVersion != 0 {
+		n += 1 + sovEvents(uint64(m.ParamsVersion))
+	}
+	if len(m.FinalityProviderBtcPksHex) > 0 {
+		for _, s := range m.FinalityProviderBtcPksHex {
+			l = len(s)
+			n += 1 + l + sovEvents(uint64(l))
+		}
+	}
+	l = len(m.StakerBtcPkHex)
+	if l > 0 {
+		n += 1 + l + sovEvents(uint64(l))
+	}
+	if m.StakingTime != 0 {
+		n += 1 + sovEvents(uint64(m.StakingTime))
+	}
+	if m.StakingAmount != 0 {
+		n += 1 + sovEvents(uint64(m.StakingAmount))
+	}
+	if m.UnbondingTime != 0 {
+		n += 1 + sovEvents(uint64(m.UnbondingTime))
+	}
+	l = len(m.UnbondingTx)
+	if l > 0 {
+		n += 1 + l + sovEvents(uint64(l))
+	}
+	if m.State != 0 {
+		n += 1 + sovEvents(uint64(m.State))
+	}
+	return n
+}
+
+func (m *EventCovenantSignatureRecevied) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.StakingTxHash)
+	if l > 0 {
+		n += 1 + l + sovEvents(uint64(l))
+	}
+	l = len(m.CovenantBtcPkHex)
+	if l > 0 {
+		n += 1 + l + sovEvents(uint64(l))
+	}
+	l = len(m.CovenantUnbondingSignatureHex)
+	if l > 0 {
+		n += 1 + l + sovEvents(uint64(l))
+	}
+	return n
+}
+
+func (m *EventCovenantQuroumReached) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.StakingTxHash)
+	if l > 0 {
+		n += 1 + l + sovEvents(uint64(l))
+	}
+	if m.State != 0 {
+		n += 1 + sovEvents(uint64(m.State))
+	}
+	return n
+}
+
+func (m *EventBTCDelegationInclusionProofReceived) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.StakingTxHash)
+	if l > 0 {
+		n += 1 + l + sovEvents(uint64(l))
+	}
+	if m.StartHeight != 0 {
+		n += 1 + sovEvents(uint64(m.StartHeight))
+	}
+	if m.EndHeight != 0 {
+		n += 1 + sovEvents(uint64(m.EndHeight))
+	}
+	if m.State != 0 {
+		n += 1 + sovEvents(uint64(m.State))
+	}
+	return n
+}
+
+func (m *EventBTCDelgationUnbondedEarly) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.StakingTxHash)
+	if l > 0 {
+		n += 1 + l + sovEvents(uint64(l))
+	}
+	if m.State != 0 {
+		n += 1 + sovEvents(uint64(m.State))
+	}
+	return n
+}
+
+func (m *EventBTCDelegationExpired) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.StakingTxHash)
+	if l > 0 {
+		n += 1 + l + sovEvents(uint64(l))
+	}
+	if m.State != 0 {
+		n += 1 + sovEvents(uint64(m.State))
 	}
 	return n
 }
@@ -2383,6 +3258,867 @@ func (m *EventFinalityProviderStatusChange) Unmarshal(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.NewStatus |= FinalityProviderStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipEvents(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EventBTCDelegationCreated) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowEvents
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EventBTCDelegationCreated: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EventBTCDelegationCreated: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvents
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakingTxHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ParamsVersion", wireType)
+			}
+			m.ParamsVersion = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ParamsVersion |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FinalityProviderBtcPksHex", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvents
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FinalityProviderBtcPksHex = append(m.FinalityProviderBtcPksHex, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakerBtcPkHex", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvents
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakerBtcPkHex = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTime", wireType)
+			}
+			m.StakingTime = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.StakingTime |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingAmount", wireType)
+			}
+			m.StakingAmount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.StakingAmount |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingTime", wireType)
+			}
+			m.UnbondingTime = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.UnbondingTime |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingTx", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvents
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UnbondingTx = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
+			}
+			m.State = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.State |= BTCDelegationStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipEvents(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EventCovenantSignatureRecevied) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowEvents
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EventCovenantSignatureRecevied: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EventCovenantSignatureRecevied: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvents
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakingTxHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CovenantBtcPkHex", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvents
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CovenantBtcPkHex = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CovenantUnbondingSignatureHex", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvents
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CovenantUnbondingSignatureHex = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipEvents(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EventCovenantQuroumReached) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowEvents
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EventCovenantQuroumReached: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EventCovenantQuroumReached: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvents
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakingTxHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
+			}
+			m.State = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.State |= BTCDelegationStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipEvents(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EventBTCDelegationInclusionProofReceived) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowEvents
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EventBTCDelegationInclusionProofReceived: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EventBTCDelegationInclusionProofReceived: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvents
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakingTxHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StartHeight", wireType)
+			}
+			m.StartHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.StartHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EndHeight", wireType)
+			}
+			m.EndHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EndHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
+			}
+			m.State = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.State |= BTCDelegationStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipEvents(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EventBTCDelgationUnbondedEarly) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowEvents
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EventBTCDelgationUnbondedEarly: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EventBTCDelgationUnbondedEarly: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvents
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakingTxHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
+			}
+			m.State = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.State |= BTCDelegationStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipEvents(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EventBTCDelegationExpired) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowEvents
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EventBTCDelegationExpired: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EventBTCDelegationExpired: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvents
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakingTxHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
+			}
+			m.State = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.State |= BTCDelegationStatus(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

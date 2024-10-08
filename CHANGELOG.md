@@ -46,7 +46,10 @@ refund transaction fee for certain transactions from protocol stakeholders
 * [#138](https://github.com/babylonlabs-io/babylon/pull/138) Intercept staking module
 messages inside `authz.MsgExec`
 
-### Misc Improvements
+### Improvements
+
+* #[131](https://github.com/babylonlabs-io/babylon/pull/131) Add new staking
+events
 
 * [#113](https://github.com/babylonlabs-io/babylon/pull/113) Add multibuild binary
 for upgrade handler `testnet` and `mainnet`.

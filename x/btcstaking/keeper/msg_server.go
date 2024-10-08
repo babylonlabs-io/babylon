@@ -292,17 +292,26 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	btcDel.EndHeight = btcDel.StartHeight + uint64(btcDel.StakingTime)
 	ms.setBTCDelegation(ctx, btcDel)
 
-	// 7. emit activation and expiry event
-	// record event that the BTC delegation becomes active at this height
-	// notify subscriber
-	event := &types.EventBTCDelegationStateUpdate{
-		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
-		NewState:      types.BTCDelegationStatus_ACTIVE,
+	// 7. emit events
+	stakingTxHash := btcDel.MustGetStakingTxHash()
+
+	newInclusionProofEvent := types.NewInclusionProofEvent(
+		stakingTxHash.String(),
+		btcDel.StartHeight,
+		btcDel.EndHeight,
+		types.BTCDelegationStatus_ACTIVE,
+	)
+
+	if err := ctx.EventManager().EmitTypedEvents(newInclusionProofEvent); err != nil {
+		panic(fmt.Errorf("failed to emit events for the new active BTC delegation: %w", err))
 	}
-	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
-	}
-	activeEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
+
+	activeEvent := types.NewEventPowerDistUpdateWithBTCDel(
+		&types.EventBTCDelegationStateUpdate{
+			StakingTxHash: stakingTxHash.String(),
+			NewState:      types.BTCDelegationStatus_ACTIVE,
+		},
+	)
 	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
 	ms.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
 
