@@ -48,14 +48,15 @@ and add `verified` to delegation status parse `NewBTCDelegationStatusFromString`
 transaction fee refunding mechanism for covenant signatures and finality signatures
 * [#125](https://github.com/babylonlabs-io/babylon/pull/125) Implement ADR-028 and
 refund transaction fee for certain transactions from protocol stakeholders
+* [#137](https://github.com/babylonlabs-io/babylon/pull/137) Adapt tests to the
+pre-approval flow.
 * [#138](https://github.com/babylonlabs-io/babylon/pull/138) Intercept staking module
-messages inside `authz.MsgExec`
+messages inside `authz.MsgExec`.
 
 ### Improvements
 
 * #[131](https://github.com/babylonlabs-io/babylon/pull/131) Add new staking
 events
-
 * [#113](https://github.com/babylonlabs-io/babylon/pull/113) Add multibuild binary
 for upgrade handler `testnet` and `mainnet`.
 

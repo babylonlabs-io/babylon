@@ -24,7 +24,8 @@ import (
 )
 
 var (
-	net = &chaincfg.SimNetParams
+	net          = &chaincfg.SimNetParams
+	btcTipHeight = uint64(30)
 )
 
 type Helper struct {
@@ -160,21 +161,32 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	return fpSK, fpPK, fp
 }
 
-func (h *Helper) CreateDelegationCustom(
+func (h *Helper) CreateDelegation(
 	r *rand.Rand,
+	delSK *btcec.PrivateKey,
 	fpPK *btcec.PublicKey,
 	changeAddress string,
 	stakingValue int64,
 	stakingTime uint16,
 	unbondingValue int64,
 	unbondingTime uint16,
-) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation, error) {
-	delSK, delPK, err := datagen.GenRandomBTCKeyPair(r)
-	h.NoError(err)
+	usePreApproval bool,
+) (string, *types.MsgCreateBTCDelegation, *types.BTCDelegation, *btclctypes.BTCHeaderInfo, *types.InclusionProof, error) {
 	stakingTimeBlocks := stakingTime
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
 	covPKs, err := bbn.NewBTCPKsFromBIP340PKs(bsParams.CovenantPks)
 	h.NoError(err)
+
+	// if not set, use default values for unbonding value and time
+	defaultUnbondingValue := stakingValue - 1000
+	if unbondingValue == 0 {
+		unbondingValue = defaultUnbondingValue
+	}
+	defaultUnbondingTime := types.MinimumUnbondingTime(&bsParams, &bcParams) + 1
+	if unbondingTime == 0 {
+		unbondingTime = uint16(defaultUnbondingTime)
+	}
 
 	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
 		r,
@@ -203,14 +215,15 @@ func (h *Helper) CreateDelegationCustom(
 	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
 	btcHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlock.Header, testStakingInfo.StakingTx)
 	btcHeader := btcHeaderWithProof.HeaderBytes
+	btcHeaderInfo := &btclctypes.BTCHeaderInfo{Header: &btcHeader, Height: 10}
 	serializedStakingTx, err := bbn.SerializeBTCTx(testStakingInfo.StakingTx)
 	h.NoError(err)
 
 	txInclusionProof := types.NewInclusionProof(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, btcHeaderWithProof.SpvProof.MerkleNodes)
 
 	// mock for testing k-deep stuff
-	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Hash())).Return(&btclctypes.BTCHeaderInfo{Header: &btcHeader, Height: 10}).AnyTimes()
-	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Hash())).Return(btcHeaderInfo).AnyTimes()
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: btcTipHeight}).AnyTimes()
 
 	slashingSpendInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
 	h.NoError(err)
@@ -266,7 +279,6 @@ func (h *Helper) CreateDelegationCustom(
 		StakingTime:                   uint32(stakingTimeBlocks),
 		StakingValue:                  stakingValue,
 		StakingTx:                     serializedStakingTx,
-		StakingTxInclusionProof:       txInclusionProof,
 		SlashingTx:                    testStakingInfo.SlashingTx,
 		DelegatorSlashingSig:          delegatorSig,
 		UnbondingTx:                   serializedUnbondingTx,
@@ -276,47 +288,32 @@ func (h *Helper) CreateDelegationCustom(
 		DelegatorUnbondingSlashingSig: delSlashingTxSig,
 	}
 
-	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
-	if err != nil {
-		return "", nil, nil, nil, err
+	if !usePreApproval {
+		msgCreateBTCDel.StakingTxInclusionProof = txInclusionProof
 	}
 
-	return stakingTxHash, delSK, delPK, msgCreateBTCDel, nil
-}
-
-func (h *Helper) CreateDelegation(
-	r *rand.Rand,
-	fpPK *btcec.PublicKey,
-	changeAddress string,
-	stakingValue int64,
-	stakingTime uint16,
-) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation, *types.BTCDelegation) {
-	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
-	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
-
-	minUnbondingTime := types.MinimumUnbondingTime(
-		&bsParams,
-		&bcParams,
-	)
-
-	stakingTxHash, delSK, delPK, msgCreateBTCDel, err := h.CreateDelegationCustom(
-		r,
-		fpPK,
-		changeAddress,
-		stakingValue,
-		stakingTime,
-		stakingValue-1000,
-		uint16(minUnbondingTime)+1,
-	)
-
-	h.NoError(err)
+	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
+	if err != nil {
+		return "", nil, nil, nil, nil, err
+	}
 
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(msgCreateBTCDel.StakingTx)
 	h.NoError(err)
 	btcDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingMsgTx.TxHash().String())
 	h.NoError(err)
 
-	return stakingTxHash, delSK, delPK, msgCreateBTCDel, btcDel
+	// ensure the delegation is still pending
+	require.Equal(h.t, btcDel.GetStatus(btcTipHeight, bcParams.CheckpointFinalizationTimeout, bsParams.CovenantQuorum), types.BTCDelegationStatus_PENDING)
+
+	if usePreApproval {
+		// the BTC delegation does not have inclusion proof
+		require.False(h.t, btcDel.HasInclusionProof())
+	} else {
+		// the BTC delegation has inclusion proof
+		require.True(h.t, btcDel.HasInclusionProof())
+	}
+
+	return stakingTxHash, msgCreateBTCDel, btcDel, btcHeaderInfo, txInclusionProof, nil
 }
 
 func (h *Helper) GenerateCovenantSignaturesMessages(
@@ -400,6 +397,9 @@ func (h *Helper) CreateCovenantSigs(
 	msgCreateBTCDel *types.MsgCreateBTCDelegation,
 	del *types.BTCDelegation,
 ) {
+	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
+	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+
 	stakingTx, err := bbn.NewBTCTxFromBytes(del.StakingTx)
 	h.NoError(err)
 	stakingTxHash := stakingTx.TxHash().String()
@@ -425,4 +425,48 @@ func (h *Helper) CreateCovenantSigs(
 	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs, len(covenantMsgs))
 	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs[0].AdaptorSigs, 1)
 
+	// ensure the BTC delegation is verified (if using pre-approval flow) or active
+	status := actualDelWithCovenantSigs.GetStatus(btcTipHeight, bcParams.CheckpointFinalizationTimeout, bsParams.CovenantQuorum)
+	if msgCreateBTCDel.StakingTxInclusionProof != nil {
+		// not pre-approval flow, the BTC delegation should be active
+		require.Equal(h.t, status, types.BTCDelegationStatus_ACTIVE)
+	} else {
+		// pre-approval flow, the BTC delegation should be verified
+		require.Equal(h.t, status, types.BTCDelegationStatus_VERIFIED)
+	}
+}
+
+func (h *Helper) AddInclusionProof(
+	stakingTxHash string,
+	btcHeader *btclctypes.BTCHeaderInfo,
+	proof *types.InclusionProof,
+) {
+	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
+	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+
+	// Get the BTC delegation and ensure it's verified
+	del, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+	h.NoError(err)
+	status := del.GetStatus(btcTipHeight, bcParams.CheckpointFinalizationTimeout, bsParams.CovenantQuorum)
+	require.Equal(h.t, status, types.BTCDelegationStatus_VERIFIED, "the BTC delegation shall be verified")
+
+	// Create the MsgAddBTCDelegationInclusionProof message
+	msg := &types.MsgAddBTCDelegationInclusionProof{
+		StakingTxHash:           stakingTxHash,
+		StakingTxInclusionProof: proof,
+	}
+
+	// mock BTC header that includes the staking tx
+	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Header.Hash())).Return(btcHeader).AnyTimes()
+
+	// Call the AddBTCDelegationInclusionProof handler
+	_, err = h.MsgServer.AddBTCDelegationInclusionProof(h.Ctx, msg)
+	h.NoError(err)
+
+	// Verify that the inclusion proof is added successfully and the BTC delegation
+	// has been activated
+	updatedDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+	h.NoError(err)
+	status = updatedDel.GetStatus(btcTipHeight, bcParams.CheckpointFinalizationTimeout, bsParams.CovenantQuorum)
+	require.Equal(h.t, status, types.BTCDelegationStatus_ACTIVE, "the BTC delegation shall be active")
 }
