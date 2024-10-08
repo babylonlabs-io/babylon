@@ -70,7 +70,7 @@ func (n *NodeConfig) QueryFinalityProviderDelegations(fpBTCPK string) []*bstypes
 }
 
 func (n *NodeConfig) QueryBtcDelegation(stakingTxHash string) *bstypes.QueryBTCDelegationResponse {
-	path := fmt.Sprintf("/babylon/btcstaking/v1/btc_delegations/%s", stakingTxHash)
+	path := fmt.Sprintf("/babylon/btcstaking/v1/btc_delegation/%s", stakingTxHash)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
@@ -81,8 +81,9 @@ func (n *NodeConfig) QueryBtcDelegation(stakingTxHash string) *bstypes.QueryBTCD
 	return &resp
 }
 
-func (n *NodeConfig) QueryBtcDelegations() *bstypes.QueryBTCDelegationsResponse {
-	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/btc_delegations", url.Values{})
+func (n *NodeConfig) QueryBtcDelegations(status bstypes.BTCDelegationStatus) *bstypes.QueryBTCDelegationsResponse {
+	path := fmt.Sprintf("/babylon/btcstaking/v1/btc_delegations/%d", status)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
 	var resp bstypes.QueryBTCDelegationsResponse
