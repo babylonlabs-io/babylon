@@ -12,6 +12,15 @@ func NewVotingPowerDistCache() *VotingPowerDistCache {
 	}
 }
 
+func NewVotingPowerDistCacheWithFinalityProviders(fps []*FinalityProviderDistInfo) *VotingPowerDistCache {
+	cache := NewVotingPowerDistCache()
+	for _, fp := range fps {
+		cache.AddFinalityProviderDistInfo(fp)
+	}
+
+	return cache
+}
+
 func (dc *VotingPowerDistCache) Empty() bool {
 	return len(dc.FinalityProviders) == 0
 }
@@ -33,6 +42,21 @@ func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPow
 	}
 
 	return newActiveFps
+}
+
+func (dc *VotingPowerDistCache) FindNewInactiveFinalityProviders(prevDc *VotingPowerDistCache) []*FinalityProviderDistInfo {
+	inactiveFps := dc.GetInactiveFinalityProviderSet()
+	prevInactiveFps := prevDc.GetInactiveFinalityProviderSet()
+	newInactiveFps := make([]*FinalityProviderDistInfo, 0)
+
+	for pk, fp := range inactiveFps {
+		_, exists := prevInactiveFps[pk]
+		if !exists {
+			newInactiveFps = append(newInactiveFps, fp)
+		}
+	}
+
+	return newInactiveFps
 }
 
 // ApplyActiveFinalityProviders sorts all finality providers, counts the total voting
@@ -85,6 +109,27 @@ func (dc *VotingPowerDistCache) GetActiveFinalityProviderSet() map[string]*Final
 	}
 
 	return activeFps
+}
+
+// GetInactiveFinalityProviderSet returns a set of inactive finality providers
+// keyed by the hex string of the finality provider's BTC public key
+// i.e., not within top N of them in terms of voting power and not slashed or jailed
+func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*FinalityProviderDistInfo {
+	numActiveFPs := dc.NumActiveFps
+
+	if len(dc.FinalityProviders) <= int(numActiveFPs) {
+		return nil
+	}
+
+	inactiveFps := make(map[string]*FinalityProviderDistInfo)
+
+	for _, fp := range dc.FinalityProviders[numActiveFPs:] {
+		if !fp.IsSlashed && !fp.IsJailed {
+			inactiveFps[fp.BtcPk.MarshalHex()] = fp
+		}
+	}
+
+	return inactiveFps
 }
 
 // FilterVotedDistCache filters out a voting power distribution cache

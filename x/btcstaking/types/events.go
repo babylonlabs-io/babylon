@@ -131,3 +131,13 @@ func NewExpiredDelegationEvent(
 		State:         BTCDelegationStatus_UNBONDED,
 	}
 }
+
+func NewFinalityProviderStatusChangeEvent(
+	fpPk *bbn.BIP340PubKey,
+	status FinalityProviderStatus,
+) *EventFinalityProviderStatusChange {
+	return &EventFinalityProviderStatusChange{
+		BtcPk:     fpPk.MarshalHex(),
+		NewStatus: status,
+	}
+}
