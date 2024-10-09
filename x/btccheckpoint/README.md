@@ -29,15 +29,15 @@ Babylon's BTC Checkpoint module allows Babylon chain to periodically checkpoint 
 
 Checkpoint Submission:
 1. When a new checkpoint for a specific epoch is available, the [vigilante](https://github.com/babylonlabs-io/vigilante) collects the necessary proof from the Bitcoin blockchain. 
-2. This proof is called an `SPVProof` (Simplified Payment Verification Proof), consisting of the Bitcoin Transaction, Index of the transaction, the Merkle path and the Bitcoin header that confirms the transaction.
-3. The Babylon relayer submits this proof to the Babylon chain using the `InsertBTCSpvProof` function. The proof is validated and stored in state. This includes parsing the submission, checking for duplicates, and verifying the checkpoint with the [checkpointing module](https://github.com/babylonlabs-io/babylon/blob/main/x/checkpointing/README.md).
+2. This proof is called an `SPVProof` (Simplified Payment Verification Proof), consisting of the Bitcoin transaction, Index of the transaction, the Merkle path and the Bitcoin header that confirms the transaction.
+3. The vigilante submits this proof to the Babylon chain using the `InsertBTCSpvProof` function. The proof is validated and stored in state. This includes parsing the submission, checking for duplicates, and verifying the checkpoint with the [checkpointing module](https://github.com/babylonlabs-io/babylon/blob/main/x/checkpointing/README.md).
 
 Checkpoint Verification:
 1. The Babylon chain maintains a Bitcoin light client through the [BTC Light Client module](https://github.com/babylonchain/babylon/blob/dev/x/btclightclient/README.md). This module is responsible for tracking Bitcoin block headers, allowing Babylon to verify the depth and validity of Bitcoin transactions without running a full Bitcoin node.
 2. When new Bitcoin blocks are produced, the headers are relayed to and processed by the Babylon chain's light client.
 3. As the light client's tip changes, it triggers the `OnTipChange` callback.
 4. This callback initiates the `checkCheckpoints` process,  which verifies the status of all submitted checkpoints based on their confirmation depth in the Bitcoin blockchain.
-5. All stored epochs are retrieved from state. For each epoch, the status is checked of the corresponding checkpoint. The status is then u sets all the correct statuses on the checkpoint module. 
+5. All stored epochs are retrieved from state. For each epoch, the status is checked of the corresponding checkpoint. The depth of the checkpoint in the Bitcoin blockchain is verified and based on the depth and the module's parameters, the checkpoint's status may be updated. If the status changes, it's updated in the state and the corresponding status is set in the checkpointing module
 
 ## States 
 
@@ -56,10 +56,11 @@ The BTC Checkpoint module uses a combination of prefixed namespaces and individu
 - `BtcLightClientUpdatedKey` indicates whether the BTC light client was updated during the current block execution.
 
 - `ParamsKey` stores modules parameters.
+
 ### Parameters
 The [parameter management](https://github.com/babylonlabs-io/babylon/blob/main/x/btccheckpoint/keeper/params.go) maintains the BTC Checkpoint module's parameters. The BTC Checkpoint module's parameters are represented as a `Params` [object](https://github.com/babylonlabs-io/babylon/blob/main/proto/babylon/btccheckpoint/v1/params.proto) defined as follows:
 
-```proto
+```protobuf
 // Params defines the parameters for the module.
 message Params {
   option (gogoproto.equal) = true;
@@ -88,9 +89,9 @@ message Params {
 
 ### Epoch Data
 
-Epoch data is managed by [submissions management](https://github.com/babylonlabs-io/babylon/blob/main/x/btccheckpoint/keeper/submissions.go) is used to store and retrieve epoch-related data. The epoch data is indexed by epoch number and is represented as an `EpochData` object:
+Epoch data is managed by [submissions management](https://github.com/babylonlabs-io/babylon/blob/main/x/btccheckpoint/keeper/submissions.go) and is used to store and retrieve epoch-related data. The epoch data is indexed by epoch number and is represented as an `EpochData` object:
 
-```
+```protobuf
 message EpochData {
   // keys is the list of all received checkpoints during this epoch, sorted by
   // order of submission.
@@ -107,9 +108,9 @@ The Last Finalized Epoch number is stored in the state as a big-endian encod
 
 ### Submission Data
 
-The [submissions management](https://github.com/babylonlabs-io/babylon/blob/main/x/btccheckpoint/keeper/submissions.go) for managing and interacting with checkpoint submissions in the BTC checkpoint module. The `SubmissionData` is defined as an object below.
+The [submissions management](https://github.com/babylonlabs-io/babylon/blob/main/x/btccheckpoint/keeper/submissions.go) is responsible for managing and interacting with checkpoint submissions in the BTC checkpoint module The `SubmissionData` is defined as an object below.
 
-```
+```protobuf
 message SubmissionData {
   // address of the submitter and reporter
   CheckpointAddresses vigilante_addresses = 1;
@@ -127,9 +128,9 @@ message SubmissionData {
 
 ### BTC Light Client Update
 
-The BTC Light Client Update is maintained in the transient store during block execution. It is accessed using the BtcLightClientUpdatedKey and indicates whether the BTC light client was updated during the current block execution.
+The BTC Light Client Update is maintained in the transient store during block execution. It is accessed using the `BtcLightClientUpdatedKey` and indicates whether the BTC light client was updated during the current block execution.
 
-```
+```go
 func GetBtcLightClientUpdatedKey() []byte {
 	return BtcLightClientUpdatedKey
 }
@@ -142,6 +143,7 @@ The module also maintains several key-value pairs in its store:
 - `ParamsKey`: Stores module parameters.
 
 These structures and key-value pairs allow the module to efficiently manage and retrieve checkpoint-related data.
+
 ## Messages
 
 The BTC Checkpoint module primarily handles messages from vigilantes (also known as submitters or relayers). The message formats are defined in [proto/babylon/btccheckpoint/v1/tx.proto](proto/babylon/btccheckpoint/v1/tx.proto.). The message handlers are likely defined in a file similar to [ x/btccheckpoint/keeper/msg_server.go](x/btccheckpoint/keeper/msg_server.go).  For more information on the SDK messages, refer to the [Cosmos SDK documentation on messages and queries](https://docs.cosmos.network/main/build/building-modules/messages-and-queries)
@@ -150,7 +152,7 @@ The BTC Checkpoint module primarily handles messages from vigilantes (also known
 
 `MsgInsertBTCSpvProof` is used by vigilante to insert a new checkpoint into the store, which can be seen [here](https://github.com/babylonlabs-io/vigilante/blob/24da0381465249aa7b55be682a66e32cdaddc81b/types/btccheckpoint.go#L11). 
 
-```
+```protobuf
 message MsgInsertBTCSpvProof {
   option (cosmos.msg.v1.signer) = "submitter";
   string submitter = 1;
@@ -171,7 +173,7 @@ Upon receiving a `MsgInsertBTCSpvProof`, a Babylon node will execute as follows:
 
 `MsgInsertBTCSpvProof` is used by vigilante to insert a new checkpoint into the store, which can be seen [here](https://github.com/babylonlabs-io/vigilante/blob/24da0381465249aa7b55be682a66e32cdaddc81b/types/btccheckpoint.go#L11).  This message is used to update the `btccheckpoint` module parameters. This should only be executable through governance proposals.
 
-```
+```protobuf
 message MsgUpdateParams {
   option (cosmos.msg.v1.signer) = "authority";
 
@@ -193,7 +195,7 @@ message MsgUpdateParams {
 Upon EndBlock, the BTC Checkpoint module executes the following:
 - Check if the BTC light client head has been updated during the block execution.
 - If the head has been updated, the status of all available checkpoints is checked to determine if any of them became confirmed, finalized, or abandoned.
-The logic for the EndBlocker is defined in at [x/btccheckpoint/abci.go](https://github.com/babylonlabs-io/babylon/blob/main/x/btccheckpoint/abci.go).
+The logic for the `EndBlocker` is defined in at [x/btccheckpoint/abci.go](https://github.com/babylonlabs-io/babylon/blob/main/x/btccheckpoint/abci.go).
 
 ## Queries
 
@@ -206,11 +208,11 @@ Endpoint: `/babylon/btccheckpoint/v1/params`
 Description: Queries the current parameters of the BTC Checkpoint module.
 
 **BTC Checkpoint Info**
-Endpoint: `/babylon/btccheckpoint/v1/{epoch_num}'
+Endpoint: `/babylon/btccheckpoint/v1/{epoch_num}`
 Description: Retrieves the best checkpoint information for a given epoch.
 
 **BTC Checkpoints Info**
-Endpoint: `/babylon/btccheckpoint/v1/
+Endpoint: `/babylon/btccheckpoint/v1/`
 Description: Retrieves checkpoint information for multiple epochs with pagination support.
 
 **Epoch Submissions**
