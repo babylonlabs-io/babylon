@@ -1,4 +1,4 @@
-FROM golang:1.21 as build-env
+FROM golang:1.21 AS build-env
 
 ARG E2E_SCRIPT_NAME
 # Version to build. Default is empty
@@ -18,6 +18,7 @@ RUN LEDGER_ENABLED=false LINK_STATICALLY=false E2E_SCRIPT_NAME=${E2E_SCRIPT_NAME
 
 FROM debian:bookworm-slim AS wasm-link
 
+ARG VERSION
 
 # Create a user
 RUN addgroup --gid 1137 --system babylon && adduser --uid 1137 --gid 1137 --system --home /home/babylon babylon

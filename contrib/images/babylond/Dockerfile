@@ -26,6 +26,8 @@ RUN LEDGER_ENABLED=$LEDGER_ENABLED \
 
 FROM debian:bookworm-slim AS wasm-link
 
+ARG VERSION
+
 # Create a user
 RUN addgroup --gid 1137 --system babylon && adduser --uid 1137 --gid 1137 --system --home /home/babylon babylon
 
