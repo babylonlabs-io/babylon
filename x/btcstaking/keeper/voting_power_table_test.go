@@ -47,14 +47,22 @@ func FuzzVotingPowerTable(f *testing.F) {
 		stakingValue := datagen.RandomInt(r, 100000) + 100000
 		for i := uint64(0); i < numFpsWithVotingPower; i++ {
 			for j := uint64(0); j < numBTCDels; j++ {
-				_, _, _, delMsg, del := h.CreateDelegation(
+				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+				h.NoError(err)
+				stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
 					r,
+					delSK,
 					fps[i].BtcPk.MustToBTCPK(),
 					changeAddress.EncodeAddress(),
 					int64(stakingValue),
 					1000,
+					0,
+					0,
+					true,
 				)
+				h.NoError(err)
 				h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
+				h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
 			}
 		}
 
@@ -182,14 +190,22 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 
 			// delegate to this finality provider
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
-			_, _, _, delMsg, del := h.CreateDelegation(
+			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			h.NoError(err)
+			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
 				r,
+				delSK,
 				fp.BtcPk.MustToBTCPK(),
 				changeAddress.EncodeAddress(),
 				int64(stakingValue),
 				1000,
+				0,
+				0,
+				true,
 			)
+			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
+			h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
 
 			// 30 percent not have timestamped randomness, which causes
 			// zero voting power in the table
@@ -292,14 +308,22 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 
 			// create BTC delegation and add covenant signatures to activate it
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
-			_, _, _, delMsg, del := h.CreateDelegation(
+			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			h.NoError(err)
+			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
 				r,
+				delSK,
 				fpPK,
 				changeAddress.EncodeAddress(),
 				int64(stakingValue),
 				1000,
+				0,
+				0,
+				true,
 			)
+			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
+			h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
 
 			// record voting power
 			fpsWithMeta = append(fpsWithMeta, &types.FinalityProviderWithMeta{
@@ -341,14 +365,22 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
 			fpBTCPK := fpsWithMeta[i].BtcPk
-			_, _, _, delMsg, del := h.CreateDelegation(
+			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			h.NoError(err)
+			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
 				r,
+				delSK,
 				fpBTCPK.MustToBTCPK(),
 				changeAddress.EncodeAddress(),
 				int64(stakingValue),
 				1000,
+				0,
+				0,
+				true,
 			)
+			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
+			h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
 
 			// accumulate voting power for this finality provider
 			fpsWithMeta[i].VotingPower += stakingValue
@@ -366,14 +398,22 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 
 			// create BTC delegation and add covenant signatures to activate it
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
-			_, _, _, delMsg, del := h.CreateDelegation(
+			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			h.NoError(err)
+			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
 				r,
+				delSK,
 				fpPK,
 				changeAddress.EncodeAddress(),
 				int64(stakingValue),
 				1000,
+				0,
+				0,
+				true,
 			)
+			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
+			h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
 
 			// record voting power
 			fpsWithMeta = append(fpsWithMeta, &types.FinalityProviderWithMeta{

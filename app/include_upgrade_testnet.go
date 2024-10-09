@@ -14,6 +14,7 @@ func init() {
 	Upgrades = []upgrades.Upgrade{v1.CreateUpgrade(v1.UpgradeDataString{
 		BtcStakingParamStr:    testnet.BtcStakingParamStr,
 		FinalityParamStr:      testnet.FinalityParamStr,
+		CosmWasmParamStr:      testnet.CosmWasmParamStr,
 		NewBtcHeadersStr:      testnet.NewBtcHeadersStr,
 		SignedFPsStr:          testnet.SignedFPsStr,
 		TokensDistributionStr: testnet.TokensDistributionStr,

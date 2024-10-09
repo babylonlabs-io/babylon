@@ -50,8 +50,8 @@ func FuzzBTCDelegation(f *testing.F) {
 		}
 
 		// randomise start height and end height
-		btcDel.StartHeight = datagen.RandomInt(r, 100)
-		btcDel.EndHeight = btcDel.StartHeight + datagen.RandomInt(r, 100)
+		btcDel.StartHeight = datagen.RandomInt(r, 100) + 1
+		btcDel.EndHeight = btcDel.StartHeight + datagen.RandomInt(r, 100) + 1
 
 		// randomise BTC tip and w
 		btcHeight := btcDel.StartHeight + datagen.RandomInt(r, 50)

@@ -14,6 +14,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	store "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -59,7 +61,12 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHand
 				return nil, err
 			}
 
-			if err := upgradeParameters(ctx, keepers.EncCfg.Codec, &keepers.BTCStakingKeeper, &keepers.FinalityKeeper, upgradeDataStr.BtcStakingParamStr, upgradeDataStr.FinalityParamStr); err != nil {
+			err = upgradeParameters(
+				ctx, keepers.EncCfg.Codec,
+				&keepers.BTCStakingKeeper, &keepers.FinalityKeeper, &keepers.WasmKeeper,
+				upgradeDataStr.BtcStakingParamStr, upgradeDataStr.FinalityParamStr, upgradeDataStr.CosmWasmParamStr,
+			)
+			if err != nil {
 				return nil, err
 			}
 
@@ -77,14 +84,32 @@ func upgradeParameters(
 	cdc codec.Codec,
 	btcK *btcstkkeeper.Keeper,
 	finK *finalitykeeper.Keeper,
-	btcStakingParam, finalityParam string,
+	wasmK *wasmkeeper.Keeper,
+	btcStakingParam, finalityParam, wasmParam string,
 ) error {
 	// Upgrade the staking parameters as first, as other upgrades depend on it.
 	if err := upgradeBtcStakingParameters(ctx, cdc, btcK, btcStakingParam); err != nil {
 		return err
 	}
+	if err := upgradeFinalityParameters(ctx, cdc, finK, finalityParam); err != nil {
+		return err
+	}
 
-	return upgradeFinalityParameters(ctx, cdc, finK, finalityParam)
+	return upgradeCosmWasmParameters(ctx, cdc, wasmK, wasmParam)
+}
+
+func upgradeCosmWasmParameters(
+	ctx sdk.Context,
+	cdc codec.Codec,
+	k *wasmkeeper.Keeper,
+	wasmParam string,
+) error {
+	params, err := LoadCosmWasmParamsFromData(cdc, wasmParam)
+	if err != nil {
+		return err
+	}
+
+	return k.SetParams(ctx, params)
 }
 
 func upgradeBtcStakingParameters(
@@ -203,6 +228,18 @@ func LoadFinalityParamsFromData(cdc codec.Codec, data string) (finalitytypes.Par
 	err := cdc.UnmarshalJSON(buff.Bytes(), &params)
 	if err != nil {
 		return finalitytypes.Params{}, err
+	}
+
+	return params, nil
+}
+
+func LoadCosmWasmParamsFromData(cdc codec.Codec, data string) (wasmtypes.Params, error) {
+	buff := bytes.NewBufferString(data)
+
+	var params wasmtypes.Params
+	err := cdc.UnmarshalJSON(buff.Bytes(), &params)
+	if err != nil {
+		return wasmtypes.Params{}, err
 	}
 
 	return params, nil
