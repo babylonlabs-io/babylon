@@ -15,7 +15,6 @@ func init() {
 		FinalityParamStr:      mainnet.FinalityParamStr,
 		CosmWasmParamStr:      mainnet.CosmWasmParamStr,
 		NewBtcHeadersStr:      mainnet.NewBtcHeadersStr,
-		SignedFPsStr:          mainnet.SignedFPsStr,
 		TokensDistributionStr: mainnet.TokensDistributionStr,
 	})}
 }
