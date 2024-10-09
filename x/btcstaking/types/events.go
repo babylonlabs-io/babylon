@@ -44,6 +44,23 @@ func NewEventPowerDistUpdateWithUnjailedFP(fpBTCPK *bbn.BIP340PubKey) *EventPowe
 	}
 }
 
+func NewEventFinalityProviderCreated(fp *FinalityProvider) *EventFinalityProviderCreated {
+	return &EventFinalityProviderCreated{
+		BtcPk:       fp.BtcPk,
+		Addr:        fp.Addr,
+		Commission:  fp.Commission,
+		Description: fp.Description,
+	}
+}
+
+func NewEventFinalityProviderEdited(fp *FinalityProvider) *EventFinalityProviderEdited {
+	return &EventFinalityProviderEdited{
+		BtcPk:       fp.BtcPk,
+		Commission:  fp.Commission,
+		Description: fp.Description,
+	}
+}
+
 func NewInclusionProofEvent(
 	stakingTxHash string,
 	startHeight uint64,
@@ -112,5 +129,15 @@ func NewExpiredDelegationEvent(
 	return &EventBTCDelegationExpired{
 		StakingTxHash: stakingTxHash,
 		State:         BTCDelegationStatus_UNBONDED,
+	}
+}
+
+func NewFinalityProviderStatusChangeEvent(
+	fpPk *bbn.BIP340PubKey,
+	status FinalityProviderStatus,
+) *EventFinalityProviderStatusChange {
+	return &EventFinalityProviderStatusChange{
+		BtcPk:     fpPk.MarshalHex(),
+		NewStatus: status,
 	}
 }
