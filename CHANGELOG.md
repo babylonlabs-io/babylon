@@ -37,11 +37,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-### Bug Fixes
-
-* [#140](https://github.com/babylonlabs-io/babylon/pull/140) Removed `unbonding`
-and add `verified` to delegation status parse `NewBTCDelegationStatusFromString`.
-
 ### State Machine Breaking
 
 * [#132](https://github.com/babylonlabs-io/babylon/pull/132) Add CosmWasm parameters
@@ -59,6 +54,8 @@ refund transaction fee for certain transactions from protocol stakeholders
 pre-approval flow.
 * [#138](https://github.com/babylonlabs-io/babylon/pull/138) Intercept staking module
 messages inside `authz.MsgExec`.
+* [#146](https://github.com/babylonlabs-io/babylon/pull/146) Add property status as a filter
+to BTC delegations rest request `QueryBTCDelegationsRequest`.
 
 ### Improvements
 
@@ -71,6 +68,8 @@ for upgrade handler `testnet` and `mainnet`.
 
 * [#141](https://github.com/babylonlabs-io/babylon/pull/141) Generate voting
 power events only once when reaching covenant committee quorum
+* [#140](https://github.com/babylonlabs-io/babylon/pull/140) Removed `unbonding`
+and add `verified` to delegation status parse `NewBTCDelegationStatusFromString`.
 
 ## v0.11.0
 
