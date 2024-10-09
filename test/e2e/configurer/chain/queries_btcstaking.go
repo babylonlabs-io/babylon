@@ -70,7 +70,7 @@ func (n *NodeConfig) QueryFinalityProviderDelegations(fpBTCPK string) []*bstypes
 }
 
 func (n *NodeConfig) QueryBtcDelegation(stakingTxHash string) *bstypes.QueryBTCDelegationResponse {
-	path := fmt.Sprintf("/babylon/btcstaking/v1/btc_delegations/%s", stakingTxHash)
+	path := fmt.Sprintf("/babylon/btcstaking/v1/btc_delegation/%s", stakingTxHash)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
@@ -81,8 +81,9 @@ func (n *NodeConfig) QueryBtcDelegation(stakingTxHash string) *bstypes.QueryBTCD
 	return &resp
 }
 
-func (n *NodeConfig) QueryBtcDelegations() *bstypes.QueryBTCDelegationsResponse {
-	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/btc_delegations", url.Values{})
+func (n *NodeConfig) QueryBtcDelegations(status bstypes.BTCDelegationStatus) *bstypes.QueryBTCDelegationsResponse {
+	path := fmt.Sprintf("/babylon/btcstaking/v1/btc_delegations/%d", status)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
 	var resp bstypes.QueryBTCDelegationsResponse
@@ -93,42 +94,15 @@ func (n *NodeConfig) QueryBtcDelegations() *bstypes.QueryBTCDelegationsResponse 
 }
 
 func (n *NodeConfig) QueryUnbondedDelegations() []*bstypes.BTCDelegationResponse {
-	queryParams := url.Values{}
-	queryParams.Add("status", fmt.Sprintf("%d", bstypes.BTCDelegationStatus_UNBONDED))
-	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/btc_delegations", queryParams)
-	require.NoError(n.t, err)
-
-	var resp bstypes.QueryBTCDelegationsResponse
-	err = util.Cdc.UnmarshalJSON(bz, &resp)
-	require.NoError(n.t, err)
-
-	return resp.BtcDelegations
+	return n.QueryBtcDelegations(bstypes.BTCDelegationStatus_UNBONDED).BtcDelegations
 }
 
 func (n *NodeConfig) QueryVerifiedDelegations() []*bstypes.BTCDelegationResponse {
-	queryParams := url.Values{}
-	queryParams.Add("status", fmt.Sprintf("%d", bstypes.BTCDelegationStatus_VERIFIED))
-	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/btc_delegations", queryParams)
-	require.NoError(n.t, err)
-
-	var resp bstypes.QueryBTCDelegationsResponse
-	err = util.Cdc.UnmarshalJSON(bz, &resp)
-	require.NoError(n.t, err)
-
-	return resp.BtcDelegations
+	return n.QueryBtcDelegations(bstypes.BTCDelegationStatus_VERIFIED).BtcDelegations
 }
 
 func (n *NodeConfig) QueryActiveDelegations() []*bstypes.BTCDelegationResponse {
-	queryParams := url.Values{}
-	queryParams.Add("status", fmt.Sprintf("%d", bstypes.BTCDelegationStatus_ACTIVE))
-	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/btc_delegations", queryParams)
-	require.NoError(n.t, err)
-
-	var resp bstypes.QueryBTCDelegationsResponse
-	err = util.Cdc.UnmarshalJSON(bz, &resp)
-	require.NoError(n.t, err)
-
-	return resp.BtcDelegations
+	return n.QueryBtcDelegations(bstypes.BTCDelegationStatus_ACTIVE).BtcDelegations
 }
 
 func (n *NodeConfig) QueryActivatedHeight() (uint64, error) {

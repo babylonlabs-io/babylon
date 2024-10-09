@@ -349,7 +349,7 @@ BTC stakers (aka delegators), and covenant emulators. The message formats are
 defined at
 [proto/babylon/btcstaking/v1/tx.proto](../../proto/babylon/btcstaking/v1/tx.proto).
 The message handlers are defined at
-[x/btcstaking/keeper/msg_server.go](./keeper/msg_server.go). For more information on the SDK messages, refer to the [Cosmos SDK documentation on messages and queries](https://docs.cosmos.network/main/build/building-modules/messages-and-queries) 
+[x/btcstaking/keeper/msg_server.go](./keeper/msg_server.go). For more information on the SDK messages, refer to the [Cosmos SDK documentation on messages and queries](https://docs.cosmos.network/main/build/building-modules/messages-and-queries)
 
 ### MsgCreateFinalityProvider
 
@@ -785,7 +785,7 @@ Endpoint: `/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/finality_pr
 Description: Retrieves information about a specific finality provider by its Bitcoin public key (in BIP-340 format).
 
 BTC Delegations by Status
-Endpoint: `/babylon/btcstaking/v1/btc_delegations`
+Endpoint: `/babylon/btcstaking/v1/btc_delegations/{status}`
 Description: Queries all BTC delegations under a given status.
 
 Active Finality Providers at Height
@@ -809,7 +809,7 @@ Endpoint: `/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/delegations
 Description: Queries all BTC delegations under a specific finality provider.
 
 BTC Delegation by Staking Transaction Hash
-Endpoint: `/babylon/btcstaking/v1/btc_delegations/{staking_tx_hash_hex}`
+Endpoint: `/babylon/btcstaking/v1/btc_delegation/{staking_tx_hash_hex}`
 Description: Retrieves a specific BTC delegation by its corresponding staking transaction hash.
 
 Additional Information:
