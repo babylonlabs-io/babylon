@@ -43,7 +43,7 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 	k.setFinalityProvider(ctx, &fp)
 
 	// notify subscriber
-	return ctx.EventManager().EmitTypedEvent(&types.EventNewFinalityProvider{Fp: &fp})
+	return ctx.EventManager().EmitTypedEvent(types.NewEventFinalityProviderCreated(&fp))
 }
 
 // setFinalityProvider adds the given finality provider to KVStore

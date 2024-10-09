@@ -38,10 +38,14 @@ message FinalityProviderDistInfo {
     repeated BTCDelDistInfo btc_dels = 5;
     // is_timestamped indicates whether the finality provider
     // has timestamped public randomness committed
+    // if no, it should not be assigned voting power
     bool is_timestamped = 6;
     // is_jailed indicates whether the finality provider
     // is jailed, if so, it should not be assigned voting power
     bool is_jailed = 7;
+    // is_slashed indicates whether the finality provider
+    // is slashed, if so, it should not be assigned voting power
+    bool is_slashed = 8;
 }
 
 // BTCDelDistInfo contains the information related to reward distribution for a BTC delegation
