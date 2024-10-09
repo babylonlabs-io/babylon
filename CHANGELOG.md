@@ -60,6 +60,7 @@ messages inside `authz.MsgExec`.
 
 ### Improvements
 
+* [#148](https://github.com/babylonlabs-io/babylon/pull/148) Add block results query
 * [#144](https://github.com/babylonlabs-io/babylon/pull/144) Add new finality provider events
 * [#131](https://github.com/babylonlabs-io/babylon/pull/131) Add new staking events
 * [#113](https://github.com/babylonlabs-io/babylon/pull/113) Add multibuild binary

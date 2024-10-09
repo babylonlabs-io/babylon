@@ -47,7 +47,7 @@ func (c *QueryClient) GetTx(hash []byte) (*coretypes.ResultTx, error) {
 	return c.RPCClient.Tx(ctx, hash, false)
 }
 
-func (c *QueryClient) BlockResults(ctx context.Context, height int64) (*coretypes.ResultBlockResults, error) {
+func (c *QueryClient) BlockResults(height int64) (*coretypes.ResultBlockResults, error) {
 	ctx, cancel := c.getQueryContext()
 	defer cancel()
 
