@@ -5,5 +5,5 @@ on:
 
 jobs:
   release:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_releaser.yml@main
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_releaser.yml@v0.7.0
     secrets: inherit
