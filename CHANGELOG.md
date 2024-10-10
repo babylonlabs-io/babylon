@@ -52,6 +52,7 @@ insert from the v1 upgrade handler.
 
 ### Improvements
 
+* [#151](https://github.com/babylonlabs-io/babylon/pull/151) Improve IBC transfer e2e test
 * [#130](https://github.com/babylonlabs-io/babylon/pull/130) Fix bugs in the
 transaction fee refunding mechanism for covenant signatures and finality signatures
 * [#125](https://github.com/babylonlabs-io/babylon/pull/125) Implement ADR-028 and
