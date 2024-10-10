@@ -40,6 +40,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Bug fixes
 * [#154](https://github.com/babylonlabs-io/babylon/pull/154) Fix "edit-finality-provider" cmd argument index
 
+### Improvements
+
+* [#148](https://github.com/babylonlabs-io/babylon/pull/148) Add block results query
+
 ## v0.12.0
 
 ### State Machine Breaking
@@ -51,6 +55,7 @@ insert from the v1 upgrade handler.
 
 ### Improvements
 
+* [#151](https://github.com/babylonlabs-io/babylon/pull/151) Improve IBC transfer e2e test
 * [#130](https://github.com/babylonlabs-io/babylon/pull/130) Fix bugs in the
 transaction fee refunding mechanism for covenant signatures and finality signatures
 * [#125](https://github.com/babylonlabs-io/babylon/pull/125) Implement ADR-028 and
