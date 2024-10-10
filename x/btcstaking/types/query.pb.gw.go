@@ -196,12 +196,33 @@ func local_request_Query_FinalityProvider_0(ctx context.Context, marshaler runti
 }
 
 var (
-	filter_Query_BTCDelegations_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_Query_BTCDelegations_0 = &utilities.DoubleArray{Encoding: map[string]int{"status": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 func request_Query_BTCDelegations_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryBTCDelegationsRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		e   int32
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["status"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "status")
+	}
+
+	e, err = runtime.Enum(val, BTCDelegationStatus_value)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "status", err)
+	}
+
+	protoReq.Status = BTCDelegationStatus(e)
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -218,6 +239,27 @@ func request_Query_BTCDelegations_0(ctx context.Context, marshaler runtime.Marsh
 func local_request_Query_BTCDelegations_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryBTCDelegationsRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		e   int32
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["status"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "status")
+	}
+
+	e, err = runtime.Enum(val, BTCDelegationStatus_value)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "status", err)
+	}
+
+	protoReq.Status = BTCDelegationStatus(e)
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -1109,7 +1151,7 @@ var (
 
 	pattern_Query_FinalityProvider_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"babylon", "btcstaking", "v1", "finality_providers", "fp_btc_pk_hex", "finality_provider"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_BTCDelegations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "btcstaking", "v1", "btc_delegations"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_BTCDelegations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "btcstaking", "v1", "btc_delegations", "status"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_ActiveFinalityProvidersAtHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "btcstaking", "v1", "finality_providers", "height"}, "", runtime.AssumeColonVerbOpt(false)))
 
@@ -1121,7 +1163,7 @@ var (
 
 	pattern_Query_FinalityProviderDelegations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"babylon", "btcstaking", "v1", "finality_providers", "fp_btc_pk_hex", "delegations"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_BTCDelegation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "btcstaking", "v1", "btc_delegations", "staking_tx_hash_hex"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_BTCDelegation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "btcstaking", "v1", "btc_delegation", "staking_tx_hash_hex"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

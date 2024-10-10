@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
 
 	sdkmath "cosmossdk.io/math"
 	store "cosmossdk.io/store/types"
@@ -70,7 +69,7 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHand
 				return nil, err
 			}
 
-			if err := upgradeLaunch(ctx, keepers.EncCfg, &keepers.BTCLightClientKeeper, &keepers.BTCStakingKeeper, keepers.BankKeeper, upgradeDataStr.NewBtcHeadersStr, upgradeDataStr.SignedFPsStr, upgradeDataStr.TokensDistributionStr); err != nil {
+			if err := upgradeLaunch(ctx, keepers.EncCfg, &keepers.BTCLightClientKeeper, keepers.BankKeeper, upgradeDataStr.NewBtcHeadersStr, upgradeDataStr.TokensDistributionStr); err != nil {
 				return nil, err
 			}
 
@@ -145,24 +144,18 @@ func upgradeFinalityParameters(
 // upgradeLaunch runs the upgrade:
 // - Transfer ubbn funds for token distribution
 // - Insert new BTC Headers
-// - Insert new finality providers
 func upgradeLaunch(
 	ctx sdk.Context,
 	encCfg *appparams.EncodingConfig,
 	btcLigthK *btclightkeeper.Keeper,
-	btcStkK *btcstkkeeper.Keeper,
 	bankK bankkeeper.SendKeeper,
-	btcHeaders, fps, tokensDistribution string,
+	btcHeaders, tokensDistribution string,
 ) error {
 	if err := upgradeTokensDistribution(ctx, bankK, tokensDistribution); err != nil {
 		return err
 	}
 
-	if err := upgradeBTCHeaders(ctx, encCfg.Codec, btcLigthK, btcHeaders); err != nil {
-		return err
-	}
-
-	return upgradeSignedFPs(ctx, encCfg, btcStkK, fps)
+	return upgradeBTCHeaders(ctx, encCfg.Codec, btcLigthK, btcHeaders)
 }
 
 func upgradeTokensDistribution(ctx sdk.Context, bankK bankkeeper.SendKeeper, tokensDistribution string) error {
@@ -198,15 +191,6 @@ func upgradeBTCHeaders(ctx sdk.Context, cdc codec.Codec, btcLigthK *btclightkeep
 	}
 
 	return insertBtcHeaders(ctx, btcLigthK, newHeaders)
-}
-
-func upgradeSignedFPs(ctx sdk.Context, encCfg *appparams.EncodingConfig, btcStkK *btcstkkeeper.Keeper, fps string) error {
-	msgCreateFps, err := LoadSignedFPsFromData(encCfg.Codec, encCfg.TxConfig.TxJSONDecoder(), fps)
-	if err != nil {
-		return err
-	}
-
-	return insertFPs(ctx, btcStkK, msgCreateFps)
 }
 
 func LoadBtcStakingParamsFromData(cdc codec.Codec, data string) (btcstktypes.Params, error) {
@@ -258,44 +242,6 @@ func LoadBTCHeadersFromData(cdc codec.Codec, data string) ([]*btclighttypes.BTCH
 	return gs.BtcHeaders, nil
 }
 
-// LoadSignedFPsFromData returns the finality providers from the json string.
-func LoadSignedFPsFromData(cdc codec.Codec, txJSONDecoder sdk.TxDecoder, data string) ([]*btcstktypes.MsgCreateFinalityProvider, error) {
-	buff := bytes.NewBufferString(data)
-
-	var d DataSignedFps
-	err := json.Unmarshal(buff.Bytes(), &d)
-	if err != nil {
-		return nil, err
-	}
-
-	fps := make([]*btcstktypes.MsgCreateFinalityProvider, len(d.SignedTxsFP))
-	for i, txAny := range d.SignedTxsFP {
-		txBytes, err := json.Marshal(txAny)
-		if err != nil {
-			return nil, err
-		}
-
-		tx, err := txJSONDecoder(txBytes)
-		if err != nil {
-			return nil, err
-		}
-
-		fp, err := parseCreateFPFromSignedTx(cdc, tx)
-		if err != nil {
-			return nil, err
-		}
-
-		fps[i] = fp
-	}
-
-	// sorts all the FPs by their addresses
-	sort.Slice(fps, func(i, j int) bool {
-		return fps[i].Addr > fps[j].Addr
-	})
-
-	return fps, nil
-}
-
 // LoadTokenDistributionFromData returns the tokens to be distributed from the json string.
 func LoadTokenDistributionFromData(data string) (DataTokenDistribution, error) {
 	buff := bytes.NewBufferString(data)
@@ -307,34 +253,6 @@ func LoadTokenDistributionFromData(data string) (DataTokenDistribution, error) {
 	}
 
 	return d, nil
-}
-
-func parseCreateFPFromSignedTx(cdc codec.Codec, tx sdk.Tx) (*btcstktypes.MsgCreateFinalityProvider, error) {
-	msgs := tx.GetMsgs()
-	if len(msgs) != 1 {
-		return nil, fmt.Errorf("each tx should contain only one message, invalid tx %+v", tx)
-	}
-
-	msg, ok := msgs[0].(*btcstktypes.MsgCreateFinalityProvider)
-	if !ok {
-		return nil, fmt.Errorf("unable to parse %+v to MsgCreateFinalityProvider", msg)
-	}
-
-	return msg, nil
-}
-
-func insertFPs(
-	ctx sdk.Context,
-	k *btcstkkeeper.Keeper,
-	fps []*btcstktypes.MsgCreateFinalityProvider,
-) error {
-	for _, fp := range fps {
-		if err := k.AddFinalityProvider(ctx, fp); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func insertBtcHeaders(

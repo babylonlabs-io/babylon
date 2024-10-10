@@ -1,8 +1,6 @@
 package e2e
 
 import (
-	"sort"
-
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -128,26 +126,6 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 		headerStoredResp := storedBtcHeadersResp[reversedStoredIndex] // reverse reading
 
 		s.EqualValues(headerInserted.Header.MarshalHex(), headerStoredResp.HeaderHex)
-	}
-
-	oldFPsLen := 0 // it should not have any FP
-	fpsFromNode := n.QueryFinalityProviders()
-
-	fpsInserted, err := v1.LoadSignedFPsFromData(bbnApp.AppCodec(), bbnApp.TxConfig().TxJSONDecoder(), testnet.SignedFPsStr)
-	s.NoError(err)
-	s.Equal(len(fpsInserted), len(fpsFromNode)+oldFPsLen)
-
-	// sorts all the FPs from node to match the ones from loaded string json
-	sort.Slice(fpsFromNode, func(i, j int) bool {
-		return fpsFromNode[i].Addr > fpsFromNode[j].Addr
-	})
-
-	for i, fpInserted := range fpsInserted {
-		fpFromKeeper := fpsFromNode[i]
-		s.EqualValues(fpFromKeeper.Addr, fpInserted.Addr)
-		s.EqualValues(fpFromKeeper.Description, fpInserted.Description)
-		s.EqualValues(fpFromKeeper.Commission.String(), fpInserted.Commission.String())
-		s.EqualValues(fpFromKeeper.Pop.String(), fpInserted.Pop.String())
 	}
 
 	// check that staking params correctly deserialize and that they are the same

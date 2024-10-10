@@ -37,17 +37,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-### Bug Fixes
+### Improvements
 
-* [#140](https://github.com/babylonlabs-io/babylon/pull/140) Removed `unbonding`
-and add `verified` to delegation status parse `NewBTCDelegationStatusFromString`.
+* [#148](https://github.com/babylonlabs-io/babylon/pull/148) Add block results query
+
+## v0.12.0
 
 ### State Machine Breaking
 
 * [#132](https://github.com/babylonlabs-io/babylon/pull/132) Add CosmWasm parameters
 update during v1 upgrade handler.
+* [#142](https://github.com/babylonlabs-io/babylon/pull/142) Remove signed finality providers
+insert from the v1 upgrade handler.
 
-### Misc Improvements
+### Improvements
 
 * [#130](https://github.com/babylonlabs-io/babylon/pull/130) Fix bugs in the
 transaction fee refunding mechanism for covenant signatures and finality signatures
@@ -57,10 +60,8 @@ refund transaction fee for certain transactions from protocol stakeholders
 pre-approval flow.
 * [#138](https://github.com/babylonlabs-io/babylon/pull/138) Intercept staking module
 messages inside `authz.MsgExec`.
-
-### Improvements
-
-* [#148](https://github.com/babylonlabs-io/babylon/pull/148) Add block results query
+* [#146](https://github.com/babylonlabs-io/babylon/pull/146) Add property status as a filter
+to BTC delegations rest request `QueryBTCDelegationsRequest`.
 * [#144](https://github.com/babylonlabs-io/babylon/pull/144) Add new finality provider events
 * [#131](https://github.com/babylonlabs-io/babylon/pull/131) Add new staking events
 * [#113](https://github.com/babylonlabs-io/babylon/pull/113) Add multibuild binary
@@ -70,6 +71,8 @@ for upgrade handler `testnet` and `mainnet`.
 
 * [#141](https://github.com/babylonlabs-io/babylon/pull/141) Generate voting
 power events only once when reaching covenant committee quorum
+* [#140](https://github.com/babylonlabs-io/babylon/pull/140) Removed `unbonding`
+and add `verified` to delegation status parse `NewBTCDelegationStatusFromString`.
 
 ## v0.11.0
 
