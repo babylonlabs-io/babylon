@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+* [#148](https://github.com/babylonlabs-io/babylon/pull/148) Add block results query
+
 ## v0.12.0
 
 ### State Machine Breaking
