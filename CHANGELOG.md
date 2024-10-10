@@ -37,6 +37,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Bug fixes
+* [#154](https://github.com/babylonlabs-io/babylon/pull/154) Fix "edit-finality-provider" cmd argument index
+
 ### Improvements
 
 * [#148](https://github.com/babylonlabs-io/babylon/pull/148) Add block results query
@@ -69,7 +72,6 @@ to BTC delegations rest request `QueryBTCDelegationsRequest`.
 for upgrade handler `testnet` and `mainnet`.
 
 ### Bug Fixes
-
 * [#141](https://github.com/babylonlabs-io/babylon/pull/141) Generate voting
 power events only once when reaching covenant committee quorum
 * [#140](https://github.com/babylonlabs-io/babylon/pull/140) Removed `unbonding`

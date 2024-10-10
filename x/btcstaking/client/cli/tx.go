@@ -159,7 +159,7 @@ func NewEditFinalityProviderCmd() *cobra.Command {
 			}
 
 			// get BTC PK
-			btcPK, err := hex.DecodeString(args[1])
+			btcPK, err := hex.DecodeString(args[0])
 			if err != nil {
 				return err
 			}
