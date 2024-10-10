@@ -138,9 +138,6 @@ help: ## Print this help message
 
 all: tools build lint test ## Run build, lint, and test
 
-# The below include contains the tools and runsim targets.
-# TODO: Fix following make file so it will work on linux
-# include contrib/devtools/Makefile
 
 ###############################################################################
 ###                                  Build                                  ###
@@ -398,32 +395,6 @@ gosec-local: ## Run local security checkss
 	gosec -exclude-generated -exclude-dir=$(CURDIR)/testutil -exclude-dir=$(CURDIR)/test -conf $(CURDIR)/gosec.json $(CURDIR)/...
 
 .PHONY: gosec gosec-local
-
-###############################################################################
-###                                 Devdoc                                  ###
-###############################################################################
-
-DEVDOC_SAVE = docker commit `docker ps -a -n 1 -q` devdoc:local
-
-devdoc-init: ## Initialize documentation
-	$(DOCKER) run -it -v "$(CURDIR):/go/src/github.com/babylonlabs-io/babylon" -w "/go/src/github.com/babylonlabs-io/babylon" tendermint/devdoc echo
-	# TODO make this safer
-	$(call DEVDOC_SAVE)
-
-devdoc: ## Generate documentation
-	$(DOCKER) run -it -v "$(CURDIR):/go/src/github.com/babylonlabs-io/babylon" -w "/go/src/github.com/babylonlabs-io/babylon" devdoc:local bash
-
-devdoc-save: ## Save documentation changes
-	# TODO make this safer
-	$(call DEVDOC_SAVE)
-
-devdoc-clean: ## Clean up documentation artifacts
-	docker rmi -f $$(docker images -f "dangling=true" -q)
-
-devdoc-update: ## Update documentation tools
-	docker pull tendermint/devdoc
-
-.PHONY: devdoc devdoc-clean devdoc-init devdoc-save devdoc-update
 
 ###############################################################################
 ###                                Protobuf                                 ###

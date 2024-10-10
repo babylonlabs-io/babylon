@@ -103,7 +103,6 @@ Example:
 					genesisCliArgs.VoteExtensionEnableHeight,
 				)
 			} else if network == "mainnet" {
-				// TODO: mainnet genesis params
 				panic("Mainnet params not implemented.")
 			} else {
 				return fmt.Errorf("please choose testnet or mainnet")
@@ -337,7 +336,6 @@ func TestnetGenesisParams(
 	genParams.MintParams.GoalBonded = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", goalBonded))
 
 	genParams.GovParams = govv1.DefaultParams()
-	// TODO investigate those numbers
 	genParams.GovParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(
 		genParams.NativeCoinMetadatas[0].Base,
 		sdkmath.NewInt(2_500_000_000),
