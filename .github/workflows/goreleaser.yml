@@ -1,0 +1,9 @@
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release:
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_releaser.yml@main
+    secrets: inherit
