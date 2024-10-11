@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btclightclient/types"
@@ -10,6 +11,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+const MaxHeadersPerRequest uint32 = 1000
 
 var _ types.QueryServer = Keeper{}
 
@@ -91,6 +94,10 @@ func (k Keeper) MainChain(c context.Context, req *types.QueryMainChainRequest) (
 		req.Pagination.Limit = query.DefaultLimit
 	}
 
+	if req.Pagination.Limit > uint64(MaxHeadersPerRequest) {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("pagination limit is larger than the maximum limit of %d", MaxHeadersPerRequest))
+	}
+
 	var keyHeader *types.BTCHeaderInfo
 	if len(req.Pagination.Key) != 0 {
 		headerHash, err := bbn.NewBTCHeaderHashBytesFromBytes(req.Pagination.Key)
@@ -106,7 +113,7 @@ func (k Keeper) MainChain(c context.Context, req *types.QueryMainChainRequest) (
 	var headers []*types.BTCHeaderInfo
 	var nextKey []byte
 	if req.Pagination.Reverse {
-		var start, end uint64
+		var start, end uint32
 		baseHeader := k.headersState(ctx).BaseHeader()
 		// The base header is located at the end of the mainchain
 		// which requires starting at the end
@@ -118,19 +125,20 @@ func (k Keeper) MainChain(c context.Context, req *types.QueryMainChainRequest) (
 		} else {
 			start = keyHeader.Height - baseHeader.Height
 		}
-		end = start + req.Pagination.Limit
+		// req.Pagination.Limit can be safely converted as `MaxHeadersPerRequest` is a uint32
+		end = start + uint32(req.Pagination.Limit)
 
-		if end >= uint64(len(mainchain)) {
-			end = uint64(len(mainchain))
+		if int(end) >= len(mainchain) {
+			end = uint32(len(mainchain))
 		}
 
 		// If the header's position on the mainchain is larger than the entire mainchain, then it is not part of the mainchain
 		// Also, if the element at the header's position on the mainchain is not the provided one, then it is not part of the mainchain
-		if start >= uint64(len(mainchain)) || !mainchain[start].Eq(keyHeader) {
+		if int(start) >= len(mainchain) || !mainchain[start].Eq(keyHeader) {
 			return nil, status.Error(codes.InvalidArgument, "header specified by key is not a part of the mainchain")
 		}
 		headers = mainchain[start:end]
-		if end < uint64(len(mainchain)) {
+		if int(end) < len(mainchain) {
 			nextKey = mainchain[end].Hash.MustMarshal()
 		}
 	} else {
@@ -143,11 +151,12 @@ func (k Keeper) MainChain(c context.Context, req *types.QueryMainChainRequest) (
 		startHeaderDepth := tip.Height - keyHeader.Height
 		// The depth that we want to retrieve up to
 		// -1 because the depth denotes how many headers have been built on top of it
-		depth := startHeaderDepth + req.Pagination.Limit - 1
+		// req.Pagination.Limit can be safely converted as `MaxHeadersPerRequest` is a uint32
+		depth := startHeaderDepth + uint32(req.Pagination.Limit) - 1
 		// Retrieve the mainchain up to the depth
 		mainchain := k.GetMainChainUpTo(ctx, depth)
 		// Check whether the key provided is part of the mainchain
-		if uint64(len(mainchain)) <= startHeaderDepth || !mainchain[startHeaderDepth].Eq(keyHeader) {
+		if uint32(len(mainchain)) <= startHeaderDepth || !mainchain[startHeaderDepth].Eq(keyHeader) {
 			return nil, status.Error(codes.InvalidArgument, "header specified by key is not a part of the mainchain")
 		}
 
@@ -205,5 +214,5 @@ func (k Keeper) HeaderDepth(ctx context.Context, req *types.QueryHeaderDepthRequ
 		return nil, err
 	}
 
-	return &types.QueryHeaderDepthResponse{Depth: uint64(depth)}, nil
+	return &types.QueryHeaderDepthResponse{Depth: depth}, nil
 }

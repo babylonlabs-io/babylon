@@ -72,14 +72,14 @@ func NewEventFinalityProviderEdited(fp *FinalityProvider) *EventFinalityProvider
 
 func NewInclusionProofEvent(
 	stakingTxHash string,
-	startHeight uint64,
-	endHeight uint64,
+	startHeight uint32,
+	endHeight uint32,
 	state BTCDelegationStatus,
 ) *EventBTCDelegationInclusionProofReceived {
 	return &EventBTCDelegationInclusionProofReceived{
 		StakingTxHash: stakingTxHash,
-		StartHeight:   strconv.FormatUint(startHeight, 10),
-		EndHeight:     strconv.FormatUint(endHeight, 10),
+		StartHeight:   strconv.FormatUint(uint64(startHeight), 10),
+		EndHeight:     strconv.FormatUint(uint64(endHeight), 10),
 		NewState:      state.String(),
 	}
 }

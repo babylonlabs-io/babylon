@@ -12,7 +12,7 @@ message Params {
   // btc_confirmation_depth is the confirmation depth in BTC.
   // A block is considered irreversible only when it is at least k-deep in BTC
   // (k in research paper)
-  uint64 btc_confirmation_depth = 1
+  uint32 btc_confirmation_depth = 1
       [ (gogoproto.moretags) = "yaml:\"btc_confirmation_depth\"" ];
 
   // checkpoint_finalization_timeout is the maximum time window (measured in BTC
@@ -21,7 +21,7 @@ message Params {
   // - being reported back to BBN
   // If a checkpoint has not been reported back within w BTC blocks, then BBN
   // has dishonest majority and is stalling checkpoints (w in research paper)
-  uint64 checkpoint_finalization_timeout = 2
+  uint32 checkpoint_finalization_timeout = 2
       [ (gogoproto.moretags) = "yaml:\"checkpoint_finalization_timeout\"" ];
 
   // 4byte tag in hex format, required to be present in the OP_RETURN transaction

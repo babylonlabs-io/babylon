@@ -27,7 +27,7 @@ func ValidateParsedMessageAgainstTheParams(
 	// which is larger value from:
 	// - MinUnbondingTime
 	// - CheckpointFinalizationTimeout
-	if uint64(pm.UnbondingTime) <= minUnbondingTime {
+	if uint32(pm.UnbondingTime) <= minUnbondingTime {
 		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding time %d must be larger than %d", pm.UnbondingTime, minUnbondingTime)
 	}
 

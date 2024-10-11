@@ -55,7 +55,6 @@ func TestImportExport(t *testing.T) {
 
 	chainExtension := datagen.GenRandomValidChainStartingFrom(
 		r,
-		initTip.Height,
 		initTip.Header.ToBlockHeader(),
 		nil,
 		10,
@@ -71,7 +70,6 @@ func TestImportExport(t *testing.T) {
 
 	newChainExt := datagen.GenRandomValidChainStartingFrom(
 		r,
-		newTip.Height,
 		newTip.Header.ToBlockHeader(),
 		nil,
 		10,

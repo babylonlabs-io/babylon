@@ -102,24 +102,24 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) GetBlockHeight(ctx context.Context, b *bbn.BTCHeaderHashBytes) (uint64, error) {
+func (k Keeper) GetBlockHeight(ctx context.Context, b *bbn.BTCHeaderHashBytes) (uint32, error) {
 	return k.btcLightClientKeeper.BlockHeight(ctx, b)
 }
 
-func (k Keeper) headerDepth(ctx context.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error) {
+func (k Keeper) headerDepth(ctx context.Context, headerHash *bbn.BTCHeaderHashBytes) (uint32, error) {
 	blockDepth, err := k.btcLightClientKeeper.MainChainDepth(ctx, headerHash)
 
 	if err != nil {
 		// one of blocks is not known to light client
 		return 0, submissionUnknownErr
 	}
-	return uint64(blockDepth), nil
+	return blockDepth, nil
 }
 
 // checkAncestors checks if there is at least one ancestor in previous epoch submissions
 // previous epoch submission is considered ancestor when:
 // - it is on main chain
-// - its lowest depth is larger than highest depth of new submission
+// - its lowest depth is larger than the highest depth of new submission
 func (k Keeper) checkAncestors(
 	ctx context.Context,
 	submisionEpoch uint64,

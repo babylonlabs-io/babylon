@@ -101,7 +101,7 @@ func (d *BTCDelegation) FinalityProviderKeys() []string {
 // Pending: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation does not have covenant signatures
 // Active: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation has quorum number of signatures over slashing tx, unbonding tx, and slashing unbonding tx from covenant committee
 // Unbonded: the BTC height is larger than `endHeight-w` or the BTC delegation has received a signature on unbonding tx from the delegator
-func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64, covenantQuorum uint32) BTCDelegationStatus {
+func (d *BTCDelegation) GetStatus(btcHeight uint32, w uint32, covenantQuorum uint32) BTCDelegationStatus {
 	if d.IsUnbondedEarly() {
 		return BTCDelegationStatus_UNBONDED
 	}
@@ -135,7 +135,7 @@ func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64, covenantQuorum uin
 // VotingPower returns the voting power of the BTC delegation at a given BTC height
 // and a given w value.
 // The BTC delegation d has voting power iff it is active.
-func (d *BTCDelegation) VotingPower(btcHeight uint64, w uint64, covenantQuorum uint32) uint64 {
+func (d *BTCDelegation) VotingPower(btcHeight uint32, w uint32, covenantQuorum uint32) uint64 {
 	if d.GetStatus(btcHeight, w, covenantQuorum) != BTCDelegationStatus_ACTIVE {
 		return 0
 	}
@@ -476,7 +476,7 @@ func (i *BTCDelegatorDelegationIndex) Add(stakingTxHash chainhash.Hash) error {
 }
 
 // VotingPower calculates the total voting power of all BTC delegations
-func (dels *BTCDelegatorDelegations) VotingPower(btcHeight uint64, w uint64, covenantQuorum uint32) uint64 {
+func (dels *BTCDelegatorDelegations) VotingPower(btcHeight uint32, w uint32, covenantQuorum uint32) uint64 {
 	power := uint64(0)
 	for _, del := range dels.Dels {
 		power += del.VotingPower(btcHeight, w, covenantQuorum)

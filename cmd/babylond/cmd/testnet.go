@@ -3,7 +3,6 @@ package cmd
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -88,9 +87,6 @@ Example:
 			btcNetwork, _ := cmd.Flags().GetString(flagBtcNetwork)
 			additionalAccount, _ := cmd.Flags().GetBool(flagAdditionalSenderAccount)
 			timeBetweenBlocks, _ := cmd.Flags().GetUint64(flagTimeBetweenBlocks)
-			if err != nil {
-				return errors.New("base Bitcoin header height should be a uint64")
-			}
 
 			genesisParams := TestnetGenesisParams(
 				genesisCliArgs.MaxActiveValidators,

@@ -188,7 +188,7 @@ func btcHeadersBytesToBlockHeader(headers []bbn.BTCHeaderBytes) []*wire.BlockHea
 }
 
 // BlockHeight returns the height of the provided header
-func (k Keeper) BlockHeight(ctx context.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error) {
+func (k Keeper) BlockHeight(ctx context.Context, headerHash *bbn.BTCHeaderHashBytes) (uint32, error) {
 	if headerHash == nil {
 		return 0, types.ErrEmptyMessage
 	}
@@ -202,8 +202,8 @@ func (k Keeper) BlockHeight(ctx context.Context, headerHash *bbn.BTCHeaderHashBy
 	return headerInfo.Height, nil
 }
 
-// MainChainDepth returns the depth of the header in the main chain, or error if it does not exists
-func (k Keeper) MainChainDepth(ctx context.Context, headerHashBytes *bbn.BTCHeaderHashBytes) (uint64, error) {
+// MainChainDepth returns the depth of the header in the main chain, or error if it does not exist
+func (k Keeper) MainChainDepth(ctx context.Context, headerHashBytes *bbn.BTCHeaderHashBytes) (uint32, error) {
 	if headerHashBytes == nil {
 		return 0, types.ErrEmptyMessage
 	}
@@ -241,7 +241,7 @@ func (k Keeper) GetHeaderByHash(ctx context.Context, hash *bbn.BTCHeaderHashByte
 }
 
 // GetHeaderByHeight returns header with given height from main chain, returns nil if such header is not found
-func (k Keeper) GetHeaderByHeight(ctx context.Context, height uint64) *types.BTCHeaderInfo {
+func (k Keeper) GetHeaderByHeight(ctx context.Context, height uint32) *types.BTCHeaderInfo {
 	header, err := k.headersState(ctx).GetHeaderByHeight(height)
 
 	if err != nil {
@@ -254,7 +254,7 @@ func (k Keeper) GetHeaderByHeight(ctx context.Context, height uint64) *types.BTC
 // GetMainChainFrom returns the current canonical chain from the given height up to the tip
 // If the height is higher than the tip, it returns an empty slice
 // If startHeight is 0, it returns the entire main chain
-func (k Keeper) GetMainChainFrom(ctx context.Context, startHeight uint64) []*types.BTCHeaderInfo {
+func (k Keeper) GetMainChainFrom(ctx context.Context, startHeight uint32) []*types.BTCHeaderInfo {
 	headers := make([]*types.BTCHeaderInfo, 0)
 	accHeaderFn := func(header *types.BTCHeaderInfo) bool {
 		headers = append(headers, header)
@@ -267,7 +267,7 @@ func (k Keeper) GetMainChainFrom(ctx context.Context, startHeight uint64) []*typ
 // GetMainChainFromWithLimit returns the current canonical chain from the given height up to the tip
 // If the height is higher than the tip, it returns an empty slice
 // If startHeight is 0, it returns the entire main chain
-func (k Keeper) GetMainChainFromWithLimit(ctx context.Context, startHeight uint64, limit uint32) []*types.BTCHeaderInfo {
+func (k Keeper) GetMainChainFromWithLimit(ctx context.Context, startHeight uint32, limit uint32) []*types.BTCHeaderInfo {
 	headers := make([]*types.BTCHeaderInfo, 0, limit)
 	fn := func(header *types.BTCHeaderInfo) bool {
 		if len(headers) >= int(limit) {
@@ -282,10 +282,10 @@ func (k Keeper) GetMainChainFromWithLimit(ctx context.Context, startHeight uint6
 
 // GetMainChainUpTo returns the current canonical chain as a collection of block headers
 // starting from the tip and ending on the header that has `depth` distance from it.
-func (k Keeper) GetMainChainUpTo(ctx context.Context, depth uint64) []*types.BTCHeaderInfo {
+func (k Keeper) GetMainChainUpTo(ctx context.Context, depth uint32) []*types.BTCHeaderInfo {
 	headers := make([]*types.BTCHeaderInfo, 0)
 
-	var currentDepth = uint64(0)
+	var currentDepth = uint32(0)
 	accHeaderFn := func(header *types.BTCHeaderInfo) bool {
 		// header header is at depth 0.
 		if currentDepth > depth {

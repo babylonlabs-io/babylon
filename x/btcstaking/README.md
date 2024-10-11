@@ -179,7 +179,7 @@ message FinalityProvider {
    // slashed_btc_height indicates the BTC height when
    // the finality provider is slashed.
    // if it's 0 then the finality provider is not slashed
-   uint64 slashed_btc_height = 7;
+   uint32 slashed_btc_height = 7;
 }
 ```
 
@@ -211,10 +211,10 @@ message BTCDelegation {
    repeated bytes fp_btc_pk_list = 4 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
    // start_height is the start BTC height of the BTC delegation
    // it is the start BTC height of the timelock
-   uint64 start_height = 5;
+   uint32 start_height = 5;
    // end_height is the end height of the BTC delegation
    // it is the end BTC height of the timelock - w
-   uint64 end_height = 6;
+   uint32 end_height = 6;
    // total_sat is the total amount of BTC stakes in this delegation
    // quantified in satoshi
    uint64 total_sat = 7;

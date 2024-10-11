@@ -50,12 +50,12 @@ func FuzzBTCDelegation(f *testing.F) {
 		}
 
 		// randomise start height and end height
-		btcDel.StartHeight = datagen.RandomInt(r, 100) + 1
-		btcDel.EndHeight = btcDel.StartHeight + datagen.RandomInt(r, 100) + 1
+		btcDel.StartHeight = uint32(datagen.RandomInt(r, 100)) + 1
+		btcDel.EndHeight = btcDel.StartHeight + uint32(datagen.RandomInt(r, 100)) + 1
 
 		// randomise BTC tip and w
-		btcHeight := btcDel.StartHeight + datagen.RandomInt(r, 50)
-		w := datagen.RandomInt(r, 50)
+		btcHeight := btcDel.StartHeight + uint32(datagen.RandomInt(r, 50))
+		w := uint32(datagen.RandomInt(r, 50))
 
 		// test expected voting power
 		hasVotingPower := hasCovenantSig && btcDel.StartHeight <= btcHeight && btcHeight+w <= btcDel.EndHeight
@@ -123,7 +123,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 			covenantQuorum,
 			slashingPkScript,
 			1000,
-			uint64(1000+stakingTimeBlocks),
+			uint32(1000+stakingTimeBlocks),
 			uint64(stakingValue),
 			slashingRate,
 			slashingChangeLockTime,

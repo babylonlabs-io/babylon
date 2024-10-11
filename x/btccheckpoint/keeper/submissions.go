@@ -132,12 +132,12 @@ func (k Keeper) checkSubmissionStatus(ctx context.Context, info *types.Submissio
 
 func (k Keeper) GetSubmissionBtcInfo(ctx context.Context, sk types.SubmissionKey) (*types.SubmissionBtcInfo, error) {
 
-	var youngestBlockDepth uint64 = math.MaxUint64
+	var youngestBlockDepth uint32 = math.MaxUint32
 	var youngestBlockHash *bbn.BTCHeaderHashBytes
 
 	var lowestIndexInMostFreshBlock uint32 = math.MaxUint32
 
-	var oldestBlockDepth = uint64(0)
+	var oldestBlockDepth = uint32(0)
 
 	for _, tk := range sk.Key {
 		currentBlockDepth, err := k.headerDepth(ctx, tk.Hash)

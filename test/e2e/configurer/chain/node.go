@@ -130,8 +130,8 @@ func (n *NodeConfig) WaitForCondition(doneCondition func() bool, errorMsg string
 	n.t.Errorf("node %s timed out waiting for condition. Msg: %s", n.Name, errorMsg)
 }
 
-func (n *NodeConfig) WaitUntilBtcHeight(height uint64) {
-	var latestBlockHeight uint64
+func (n *NodeConfig) WaitUntilBtcHeight(height uint32) {
+	var latestBlockHeight uint32
 	n.WaitForCondition(func() bool {
 		btcTip, err := n.QueryTip()
 		require.NoError(n.t, err)

@@ -67,7 +67,7 @@ func (s *BTCTimestampingTestSuite) Test1ConnectIbc() {
 
 func (s *BTCTimestampingTestSuite) Test2BTCBaseHeader() {
 	hardcodedHeader, _ := bbn.NewBTCHeaderBytesFromHex("0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000")
-	hardcodedHeaderHeight := uint64(0)
+	hardcodedHeaderHeight := uint32(0)
 
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
@@ -97,12 +97,12 @@ func (s *BTCTimestampingTestSuite) Test3SendTx() {
 	// check that light client properly updates its state
 	tip1Depth, err := nonValidatorNode.QueryHeaderDepth(tip1.HashHex)
 	s.NoError(err)
-	s.Equal(tip1Depth, uint64(1))
+	s.Equal(tip1Depth, uint32(1))
 
 	tip2Depth, err := nonValidatorNode.QueryHeaderDepth(tip2.HashHex)
 	s.NoError(err)
 	// tip should have 0 depth
-	s.Equal(tip2Depth, uint64(0))
+	s.Equal(tip2Depth, uint32(0))
 }
 
 func (s *BTCTimestampingTestSuite) Test4GenerateAndWithdrawReward() {

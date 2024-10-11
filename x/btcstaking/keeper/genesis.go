@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"math"
 
 	btcstk "github.com/babylonlabs-io/babylon/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -164,9 +165,13 @@ func (k Keeper) blockHeightChains(ctx context.Context) []*types.BlockHeightBbnTo
 
 	blocks := make([]*types.BlockHeightBbnToBtc, 0)
 	for ; iter.Valid(); iter.Next() {
+		blkHeightUint64 := sdk.BigEndianToUint64(iter.Value())
+		if blkHeightUint64 > math.MaxUint32 {
+			panic("block height value in storage is larger than math.MaxUint64")
+		}
 		blocks = append(blocks, &types.BlockHeightBbnToBtc{
 			BlockHeightBbn: sdk.BigEndianToUint64(iter.Key()),
-			BlockHeightBtc: sdk.BigEndianToUint64(iter.Value()),
+			BlockHeightBtc: uint32(blkHeightUint64),
 		})
 	}
 
@@ -248,7 +253,7 @@ func (k Keeper) votingPowersDistCacheBlkHeight(ctx context.Context) ([]*types.Vo
 
 func (k Keeper) setBlockHeightChains(ctx context.Context, blocks *types.BlockHeightBbnToBtc) {
 	store := k.btcHeightStore(ctx)
-	store.Set(sdk.Uint64ToBigEndian(blocks.BlockHeightBbn), sdk.Uint64ToBigEndian(blocks.BlockHeightBtc))
+	store.Set(sdk.Uint64ToBigEndian(blocks.BlockHeightBbn), sdk.Uint64ToBigEndian(uint64(blocks.BlockHeightBtc)))
 }
 
 // setEventIdx sets an event into the store.
@@ -269,13 +274,18 @@ func (k Keeper) setEventIdx(
 
 // parseUintsFromStoreKey expects to receive a key with
 // BigEndianUint64(blkHeight) || BigEndianUint64(Idx)
-func parseUintsFromStoreKey(key []byte) (blkHeight, idx uint64, err error) {
+func parseUintsFromStoreKey(key []byte) (blkHeight uint32, idx uint64, err error) {
 	sizeBigEndian := 8
 	if len(key) < sizeBigEndian*2 {
 		return 0, 0, fmt.Errorf("key not long enough to parse two uint64: %s", key)
 	}
 
-	return sdk.BigEndianToUint64(key[:sizeBigEndian]), sdk.BigEndianToUint64(key[sizeBigEndian:]), nil
+	blkHeightUint64 := sdk.BigEndianToUint64(key[:sizeBigEndian])
+	if blkHeightUint64 > math.MaxUint32 {
+		return 0, 0, fmt.Errorf("block height %d is larger than math.MaxUint32", blkHeightUint64)
+	}
+	idx = sdk.BigEndianToUint64(key[sizeBigEndian:])
+	return uint32(blkHeightUint64), idx, nil
 }
 
 // parseBIP340PubKeysFromStoreKey expects to receive a key with

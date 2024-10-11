@@ -22,7 +22,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		 Data generation:
 		 - Create four headers:
 			 1. The Base header. This will test whether the tip is set.
-			 2. Create random  chain of of headers, and insert them into the state
+			 2. Create random  chain of headers, and insert them into the state
 			 3. All operations should be consistent with each other.
 	*/
 	datagen.AddRandomSeedsToFuzzer(f, 10)
@@ -57,9 +57,9 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		require.Error(t, err)
 
 		// 10 to 60 headers
-		chainLength := datagen.RandomInt(r, 50) + 10
+		chainLength := uint32(datagen.RandomInt(r, 50) + 10)
 		// height from 10 to 60
-		initchainHeight := datagen.RandomInt(r, 50) + 10
+		initchainHeight := uint32(datagen.RandomInt(r, 50) + 10)
 
 		// populate the state with random chain
 		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
@@ -86,8 +86,8 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 			numBackward++
 			return false
 		})
-		require.Equal(t, chainLength+1, uint64(numForward))
-		require.Equal(t, chainLength+1, uint64(numBackward))
+		require.Equal(t, chainLength+1, uint32(numForward))
+		require.Equal(t, chainLength+1, uint32(numBackward))
 
 		chainInfos := chain.GetChainInfo()
 

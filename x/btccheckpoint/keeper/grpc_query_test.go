@@ -28,8 +28,8 @@ func TestBtcCheckpointInfo(t *testing.T) {
 	proofs := dg.BlockCreationResultToProofs(blockResults)
 	msg := dg.GenerateMessageWithRandomSubmitter(blockResults)
 
-	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint64(1))
-	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), uint64(1))
+	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint32(1))
+	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), uint32(1))
 
 	_, err := tk.insertProofMsg(msg)
 	require.NoErrorf(t, err, "Unexpected message processing error: %v", err)

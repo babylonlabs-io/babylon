@@ -265,12 +265,12 @@ type GenesisParams struct {
 
 func TestnetGenesisParams(
 	maxActiveValidators uint32,
-	btcConfirmationDepth uint64,
-	btcFinalizationTimeout uint64,
+	btcConfirmationDepth uint32,
+	btcFinalizationTimeout uint32,
 	checkpointTag string,
 	epochInterval uint64,
 	baseBtcHeaderHex string,
-	baseBtcHeaderHeight uint64,
+	baseBtcHeaderHeight uint32,
 	allowedReporters []string,
 	covenantPKs []string,
 	covenantQuorum uint32,

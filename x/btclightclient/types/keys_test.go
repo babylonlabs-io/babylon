@@ -16,9 +16,9 @@ func FuzzHeadersObjectKey(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		height := r.Uint64()
+		height := r.Uint32()
 		// get chainhash and height
-		heightBytes := sdk.Uint64ToBigEndian(height)
+		heightBytes := sdk.Uint64ToBigEndian(uint64(height))
 		// construct the expected key
 		var expectedKey []byte
 		expectedKey = append(expectedKey, heightBytes...)

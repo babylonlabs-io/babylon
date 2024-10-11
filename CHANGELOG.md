@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### State Machine Breaking 
+
+* [#181](https://github.com/babylonlabs-io/babylon/pull/181) Modify BTC heights
+  and depths to be of uint32 type instead of uint64.
+
 ### Bug fixes
 
 * [#180](https://github.com/babylonlabs-io/babylon/pull/180) Non-determinism in
