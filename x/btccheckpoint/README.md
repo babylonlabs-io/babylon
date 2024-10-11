@@ -3,7 +3,7 @@
 The BTC Checkpoint module is responsible for receiving and managing the checkpoints of Babylon's state on the Bitcoin blockchain. This includes:
 - handling requests for submitting raw checkpoints
 - processing Bitcoin SPV proofs for submitted checkpoints
-- managing the lifecycle of checkpoints (SUBMITTED, CONFIRMED, FINALIZED, SEALED)
+- managing the lifecycle of checkpoints (SEALED, SUBMITTED, CONFIRMED, FINALIZED)
 - handling the verification and finalization of checkpoints
 - distributing rewards for successful checkpoint submissions, and
 - proactively updating the status of checkpoints based on Bitcoin blockchain confirmations
@@ -36,8 +36,8 @@ Checkpoint Verification:
 1. The Babylon chain maintains a Bitcoin light client through the [BTC Light Client module](https://github.com/babylonchain/babylon/blob/dev/x/btclightclient/README.md). This module is responsible for tracking Bitcoin block headers, allowing Babylon to verify the depth and validity of Bitcoin transactions without running a full Bitcoin node.
 2. When new Bitcoin blocks are produced, the headers are relayed to and processed by the Babylon chain's light client.
 3. As the light client's tip changes, it triggers the `OnTipChange` callback.
-4. This callback initiates the `checkCheckpoints` process,  which verifies the status of all submitted checkpoints based on their confirmation depth in the Bitcoin blockchain.
-5. All stored epochs are retrieved from state. For each epoch, the status is checked of the corresponding checkpoint. The depth of the checkpoint in the Bitcoin blockchain is verified and based on the depth and the module's parameters, the checkpoint's status may be updated. If the status changes, it's updated in the state and the corresponding status is set in the checkpointing module
+4. This callback initiates the `checkCheckpoints` process,  which verifies the status of all submitted checkpoints based on their confirmation depth in the Bitcoin blockchain. This means that the Babylon chain will check if the checkpoint is still on the main chain, if the deepest (best) submission of older epoch happened before given submission, how deep is the submission, and mark each submission which is not known to btc light client or is on btc light fork as to delete. For more details on submissions see [Submissions](#submissions).
+5. Non-finalized epochs are retrieved from state. For each of these non-finalized epochs, the status is checked of the corresponding checkpoint. The depth of the checkpoint in the Bitcoin blockchain is verified and based on the depth and the module's parameters, the checkpoint's status may be updated. If the status changed, it's updated in the state and the corresponding status is set in the checkpointing module. Following the an epoch being finalized, all submissions are deleted.
 
 ## States 
 
@@ -193,8 +193,8 @@ message MsgUpdateParams {
 ## EndBlocker
 
 Upon EndBlock, the BTC Checkpoint module executes the following:
-- Check if the BTC light client head has been updated during the block execution.
-- If the head has been updated, the status of all available checkpoints is checked to determine if any of them became confirmed, finalized, or abandoned.
+- Check if the BTC light client head has been updated during the block execution using the `BtcLightClientUpdated` method.
+- If the head has been updated, non-finalized epochs are checked to determine if their checkpoints have become confirmed, finalized, or abandoned.
 The logic for the `EndBlocker` is defined in at [x/btccheckpoint/abci.go](https://github.com/babylonlabs-io/babylon/blob/main/x/btccheckpoint/abci.go).
 
 ## Queries
