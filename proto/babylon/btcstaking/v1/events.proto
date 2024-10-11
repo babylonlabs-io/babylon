@@ -5,17 +5,18 @@ import "gogoproto/gogo.proto";
 import "cosmos/staking/v1beta1/staking.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
 import "cosmos_proto/cosmos.proto";
+import "amino/amino.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 
 // EventFinalityProviderCreated is the event emitted when a finality provider is created
 message EventFinalityProviderCreated {
   // btc_pk_hex is the hex string of Bitcoin secp256k1 PK of this finality provider
-  string btc_pk_hex = 1;
+  string btc_pk_hex = 1 [(amino.dont_omitempty) = true];
   // addr is the babylon address to receive commission from delegations.
-  string addr = 2;
+  string addr = 2 [(amino.dont_omitempty) = true];
   // commission defines the commission rate of the finality provider in decimals.
-  string commission = 3;
+  string commission = 3 [(amino.dont_omitempty) = true];
   // moniker defines a human-readable name for the finality provider.
   string moniker = 4;
   // identity defines an optional identity signature (ex. UPort or Keybase).
@@ -31,9 +32,9 @@ message EventFinalityProviderCreated {
 // EventFinalityProviderEdited is the event emitted when a finality provider is edited
 message EventFinalityProviderEdited {
   // btc_pk_hex is the hex string of Bitcoin secp256k1 PK of this finality provider
-  string btc_pk_hex = 1;
+  string btc_pk_hex = 1 [(amino.dont_omitempty) = true];
   // commission defines the commission rate of the finality provider in decimals.
-  string commission = 2;
+  string commission = 2 [(amino.dont_omitempty) = true];
   // moniker defines a human-readable name for the finality provider.
   string moniker = 3;
   // identity defines an optional identity signature (ex. UPort or Keybase).
@@ -120,10 +121,10 @@ message EventPowerDistUpdate {
 // transition to other status
 message EventFinalityProviderStatusChange {
   // btc_pk is the BTC public key of the finality provider
-  string btc_pk = 1;
+  string btc_pk = 1 [(amino.dont_omitempty) = true];
   // new_state is the status that the finality provider
   // is transitioned to, following FinalityProviderStatus
-  string new_state = 2;
+  string new_state = 2 [(amino.dont_omitempty) = true];
 }
 
 // FinalityProviderStatus is the status of a finality provider.
@@ -145,27 +146,27 @@ enum FinalityProviderStatus {
 message EventBTCDelegationCreated {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
-  string staking_tx_hash = 1;
+  string staking_tx_hash = 1 [(amino.dont_omitempty) = true];
   // version of the params used to validate the delegation
-  string params_version = 2;
+  string params_version = 2 [(amino.dont_omitempty) = true];
   // finality_provider_btc_pks_hex is the list of hex str of Bitcoin secp256k1 PK of
   // the finality providers that this BTC delegation delegates to
   // the PK follows encoding in BIP-340 spec
-  repeated string finality_provider_btc_pks_hex = 3;
+  repeated string finality_provider_btc_pks_hex = 3 [(amino.dont_omitempty) = true];
   // staker_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the staker that
   // creates this BTC delegation the PK follows encoding in BIP-340 spec
-  string staker_btc_pk_hex = 4;
+  string staker_btc_pk_hex = 4 [(amino.dont_omitempty) = true];
   // staking_time is the timelock of the staking tx specified in the BTC script
-  string staking_time = 5;
+  string staking_time = 5 [(amino.dont_omitempty) = true];
   // staking_amount is the total amount of BTC stake in this delegation
   // quantified in satoshi
-  string staking_amount = 6;
+  string staking_amount = 6 [(amino.dont_omitempty) = true];
   // unbonding_time is the time is timelock on unbonding tx chosen by the staker
-  string unbonding_time = 7;
+  string unbonding_time = 7 [(amino.dont_omitempty) = true];
   // unbonding_tx is hex encoded bytes of the unsigned unbonding tx
-  string unbonding_tx = 8;
+  string unbonding_tx = 8 [(amino.dont_omitempty) = true];
   // new_state of the BTC delegation
-  string new_state = 9;
+  string new_state = 9 [(amino.dont_omitempty) = true];
 }
 
 // EventCovenantSignatureReceived is the event emitted when a covenant committee
@@ -173,13 +174,13 @@ message EventBTCDelegationCreated {
 message EventCovenantSignatureReceived{
   // staking_tx_hash is the hash of the staking identifing the BTC delegation
   // that this covenant signature is for
-  string staking_tx_hash = 1;
+  string staking_tx_hash = 1 [(amino.dont_omitempty) = true];
   // covenant_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the
   // covnenat committee that send the signature
-  string covenant_btc_pk_hex = 2;
+  string covenant_btc_pk_hex = 2 [(amino.dont_omitempty) = true];
   // covenant_unbonding_signature_hex is the hex str of the BIP340 Schnorr
   // signature of the covenant committee on the unbonding tx
-  string covenant_unbonding_signature_hex = 3;
+  string covenant_unbonding_signature_hex = 3 [(amino.dont_omitempty) = true];
 }
 
 // EventCovenantQuorumReached is the event emitted quorum of covenant committee
@@ -187,9 +188,9 @@ message EventCovenantSignatureReceived{
 message EventCovenantQuorumReached {
   // staking_tx_hash is the hash of the staking identifing the BTC delegation
   // that this covenant signature is for
-  string staking_tx_hash = 1;
+  string staking_tx_hash = 1 [(amino.dont_omitempty) = true];
   // new_state of the BTC delegation
-  string new_state = 2;
+  string new_state = 2 [(amino.dont_omitempty) = true];
 }
 
 // EventBTCDelegationInclusionProofReceived is the event emitted when a BTC delegation
@@ -197,15 +198,15 @@ message EventCovenantQuorumReached {
 message EventBTCDelegationInclusionProofReceived {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
-  string staking_tx_hash = 1;
+  string staking_tx_hash = 1 [(amino.dont_omitempty) = true];
   // start_height is the start BTC height of the BTC delegation
   // it is the start BTC height of the timelock
-  string start_height = 2;
+  string start_height = 2 [(amino.dont_omitempty) = true];
   // end_height is the end height of the BTC delegation
   // it is calculated by end_height = start_height + staking_time
-  string end_height = 3;
+  string end_height = 3 [(amino.dont_omitempty) = true];
   // new_state of the BTC delegation
-  string new_state = 4;
+  string new_state = 4 [(amino.dont_omitempty) = true];
 }
 
 // EventBTCDelgationUnbondedEarly is the event emitted when a BTC delegation
@@ -213,9 +214,9 @@ message EventBTCDelegationInclusionProofReceived {
 message EventBTCDelgationUnbondedEarly {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
-  string staking_tx_hash = 1;
+  string staking_tx_hash = 1 [(amino.dont_omitempty) = true];
   // new_state of the BTC delegation
-  string new_state = 2;
+  string new_state = 2 [(amino.dont_omitempty) = true];
 }
 
 // EventBTCDelegationExpired is the event emitted when a BTC delegation
@@ -223,7 +224,7 @@ message EventBTCDelgationUnbondedEarly {
 message EventBTCDelegationExpired {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
-  string staking_tx_hash = 1;
+  string staking_tx_hash = 1 [(amino.dont_omitempty) = true];
   // new_state of the BTC delegation
-  string new_state = 2;
+  string new_state = 2 [(amino.dont_omitempty) = true];
 }
