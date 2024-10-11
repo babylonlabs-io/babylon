@@ -512,7 +512,7 @@ release-dry-run:
 		$(GORELEASER_IMAGE) \
 		release \
 		--clean \
-		--skip-publish
+		--skip=publish
 
 release-snapshot:
 	docker run \
@@ -525,8 +525,7 @@ release-snapshot:
 		release \
 		--clean \
 		--snapshot \
-		--skip-validate \
-		--skip-publish
+		--skip=publish,validate
 
 # NOTE: By default, the CI will handle the release process.
 # this is for manually releasing.
