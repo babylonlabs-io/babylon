@@ -67,8 +67,8 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
 		require.NoError(t, err)
 
-		startHeight := datagen.RandomInt(r, 100) + 1
-		endHeight := datagen.RandomInt(r, 1000) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
+		startHeight := uint32(datagen.RandomInt(r, 100)) + 1
+		endHeight := uint32(datagen.RandomInt(r, 1000)) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 		slashingChangeLockTime := uint16(101)
 

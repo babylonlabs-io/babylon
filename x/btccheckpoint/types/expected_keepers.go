@@ -12,10 +12,10 @@ type BTCLightClientKeeper interface {
 	// BlockHeight should validate if header with given hash is valid and if it is
 	// part of known chain. In case this is true it should return this block height
 	// in case this is false it should return error
-	BlockHeight(ctx context.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error)
+	BlockHeight(ctx context.Context, headerHash *bbn.BTCHeaderHashBytes) (uint32, error)
 
 	// MainChainDepth returns the depth of the header in the main chain or error if the header does not exist
-	MainChainDepth(ctx context.Context, headerBytes *bbn.BTCHeaderHashBytes) (uint64, error)
+	MainChainDepth(ctx context.Context, headerBytes *bbn.BTCHeaderHashBytes) (uint32, error)
 }
 
 type CheckpointingKeeper interface {

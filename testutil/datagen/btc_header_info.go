@@ -161,9 +161,9 @@ func GenRandomBTCHeaderBytes(r *rand.Rand, parent *btclightclienttypes.BTCHeader
 	return bbn.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
 }
 
-// GenRandomBTCHeight returns a random uint64
-func GenRandomBTCHeight(r *rand.Rand) uint64 {
-	return r.Uint64()
+// GenRandomBTCHeight returns a random uint32
+func GenRandomBTCHeight(r *rand.Rand) uint32 {
+	return r.Uint32()
 }
 
 // GenRandomBTCHeaderInfoWithParentAndBits generates a BTCHeaderInfo object in which the `header.PrevBlock` points to the `parent`
@@ -253,7 +253,6 @@ func GenRandomBtcdValidHeader(
 
 func GenRandomValidChainStartingFrom(
 	r *rand.Rand,
-	parentHeaderHeight uint64,
 	parentHeader *wire.BlockHeader,
 	timeBetweenBlocks *TimeBetweenBlocksInfo,
 	numHeaders uint32,
@@ -283,8 +282,8 @@ func GenRandBtcChainInsertingInKeeper(
 	r *rand.Rand,
 	k *btclightclientk.Keeper,
 	ctx context.Context,
-	initialHeight uint64,
-	chainLength uint64,
+	initialHeight uint32,
+	chainLength uint32,
 ) (*btclightclienttypes.BTCHeaderInfo, *BTCHeaderPartialChain) {
 	genesisHeader := NewBTCHeaderChainWithLength(r, initialHeight, 0, 1)
 	genesisHeaderInfo := genesisHeader.GetChainInfo()[0]
@@ -292,7 +291,7 @@ func GenRandBtcChainInsertingInKeeper(
 	randomChain := NewBTCHeaderChainFromParentInfo(
 		r,
 		genesisHeaderInfo,
-		uint32(chainLength),
+		chainLength,
 	)
 	err := k.InsertHeadersWithHookAndEvents(ctx, randomChain.ChainToBytes())
 	require.NoError(t, err)
@@ -304,7 +303,7 @@ func GenRandBtcChainInsertingInKeeper(
 
 func ChainToInfoChain(
 	chain []*wire.BlockHeader,
-	initialHeaderNumber uint64,
+	initialHeaderNumber uint32,
 	initialHeaderTotalWork sdkmath.Uint,
 ) []*btclightclienttypes.BTCHeaderInfo {
 	if len(chain) == 0 {
@@ -321,7 +320,7 @@ func ChainToInfoChain(
 		hash := header.BlockHash()
 		headerBytes := bbn.NewBTCHeaderBytesFromBlockHeader(header)
 		headerHash := bbn.NewBTCHeaderHashBytesFromChainhash(&hash)
-		headerNumber := initialHeaderNumber + uint64(i)
+		headerNumber := initialHeaderNumber + uint32(i)
 
 		headerInfo := btclightclienttypes.NewBTCHeaderInfo(
 			&headerBytes,
@@ -340,7 +339,7 @@ func ChainToInfoChain(
 
 func ChainToInfoResponseChain(
 	chain []*wire.BlockHeader,
-	initialHeaderNumber uint64,
+	initialHeaderNumber uint32,
 	initialHeaderTotalWork sdkmath.Uint,
 ) []*btclightclienttypes.BTCHeaderInfoResponse {
 	if len(chain) == 0 {
@@ -357,7 +356,7 @@ func ChainToInfoResponseChain(
 		hash := header.BlockHash()
 		headerBytes := bbn.NewBTCHeaderBytesFromBlockHeader(header)
 		headerHash := bbn.NewBTCHeaderHashBytesFromChainhash(&hash)
-		headerNumber := initialHeaderNumber + uint64(i)
+		headerNumber := initialHeaderNumber + uint32(i)
 
 		headerInfoResponse := btclightclienttypes.NewBTCHeaderInfoResponse(
 			&headerBytes,

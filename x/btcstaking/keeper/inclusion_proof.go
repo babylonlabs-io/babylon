@@ -15,9 +15,9 @@ import (
 func (k Keeper) VerifyInclusionProofAndGetHeight(
 	ctx sdk.Context,
 	stakingTx *btcutil.Tx,
-	stakingTime uint64,
+	stakingTime uint32,
 	inclusionProof *types.ParsedProofOfInclusion,
-) (uint64, error) {
+) (uint32, error) {
 	btccParams := k.btccKeeper.GetParams(ctx)
 	// Check:
 	// - timelock of staking tx

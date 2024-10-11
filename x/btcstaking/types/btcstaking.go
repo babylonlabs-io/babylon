@@ -124,7 +124,7 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 		covSigsMap[covSigs.CovPk.MarshalHex()] = covSig
 	}
 
-	// sort covenant PKs in reverse reverse lexicographical order
+	// sort covenant PKs in reverse lexicographical order
 	orderedCovenantPKs := bbn.SortBIP340PKs(params.CovenantPks)
 
 	// get ordered list of covenant signatures w.r.t. the order of sorted covenant PKs
@@ -146,9 +146,9 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 // - CheckpointFinalizationTimeout
 func MinimumUnbondingTime(
 	stakingParams *Params,
-	checkpointingParams *btcctypes.Params) uint64 {
-	return math.Max[uint64](
-		uint64(stakingParams.MinUnbondingTimeBlocks),
+	checkpointingParams *btcctypes.Params) uint32 {
+	return math.Max[uint32](
+		stakingParams.MinUnbondingTimeBlocks,
 		checkpointingParams.CheckpointFinalizationTimeout,
 	)
 }

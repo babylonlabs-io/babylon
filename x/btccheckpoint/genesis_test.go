@@ -35,6 +35,6 @@ func TestInitGenesis(t *testing.T) {
 	}
 
 	btccheckpoint.InitGenesis(ctx, app.BtcCheckpointKeeper, genesisState)
-	require.Equal(t, app.BtcCheckpointKeeper.GetParams(ctx).BtcConfirmationDepth, uint64(888))
-	require.Equal(t, app.BtcCheckpointKeeper.GetParams(ctx).CheckpointFinalizationTimeout, uint64(999))
+	require.Equal(t, app.BtcCheckpointKeeper.GetParams(ctx).BtcConfirmationDepth, uint32(888))
+	require.Equal(t, app.BtcCheckpointKeeper.GetParams(ctx).CheckpointFinalizationTimeout, uint32(999))
 }

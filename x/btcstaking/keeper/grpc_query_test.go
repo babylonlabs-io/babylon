@@ -203,10 +203,10 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		}
 
 		// Generate a random number of BTC delegations under each finality provider
-		startHeight := datagen.RandomInt(r, 100) + 1
+		startHeight := uint32(datagen.RandomInt(r, 100)) + 1
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).AnyTimes()
 
-		endHeight := datagen.RandomInt(r, 1000) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
+		endHeight := uint32(datagen.RandomInt(r, 1000)) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
 		numBTCDels := datagen.RandomInt(r, 10) + 1
 		pendingBtcDelsMap := make(map[string]*types.BTCDelegation)
 		for _, fp := range fps {
@@ -522,8 +522,8 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 		require.NoError(t, err)
 		AddFinalityProvider(t, ctx, *keeper, fp)
 
-		startHeight := datagen.RandomInt(r, 100) + 1
-		endHeight := datagen.RandomInt(r, 1000) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
+		startHeight := uint32(datagen.RandomInt(r, 100)) + 1
+		endHeight := uint32(datagen.RandomInt(r, 1000)) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).AnyTimes()
 		// Generate a random number of BTC delegations under this finality provider
 		numBTCDels := datagen.RandomInt(r, 10) + 1

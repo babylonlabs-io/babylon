@@ -363,7 +363,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 // to the store
 func (k Keeper) addPowerDistUpdateEvent(
 	ctx context.Context,
-	btcHeight uint64,
+	btcHeight uint32,
 	event *types.EventPowerDistUpdate,
 ) {
 	store := k.powerDistUpdateEventBtcHeightStore(ctx, btcHeight)
@@ -385,7 +385,7 @@ func (k Keeper) addPowerDistUpdateEvent(
 // at a given BTC height
 // This is called after processing all BTC delegation events in `BeginBlocker`
 // nolint:unused
-func (k Keeper) ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint64) {
+func (k Keeper) ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint32) {
 	store := k.powerDistUpdateEventBtcHeightStore(ctx, btcHeight)
 	keys := [][]byte{}
 
@@ -407,7 +407,7 @@ func (k Keeper) ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint64
 }
 
 // GetAllPowerDistUpdateEvents gets all voting power update events
-func (k Keeper) GetAllPowerDistUpdateEvents(ctx context.Context, lastBTCTip uint64, curBTCTip uint64) []*types.EventPowerDistUpdate {
+func (k Keeper) GetAllPowerDistUpdateEvents(ctx context.Context, lastBTCTip uint32, curBTCTip uint32) []*types.EventPowerDistUpdate {
 	events := []*types.EventPowerDistUpdate{}
 	for i := lastBTCTip; i <= curBTCTip; i++ {
 		k.IteratePowerDistUpdateEvents(ctx, i, func(event *types.EventPowerDistUpdate) bool {
@@ -423,7 +423,7 @@ func (k Keeper) GetAllPowerDistUpdateEvents(ctx context.Context, lastBTCTip uint
 // This is called in `BeginBlocker`
 func (k Keeper) IteratePowerDistUpdateEvents(
 	ctx context.Context,
-	btcHeight uint64,
+	btcHeight uint32,
 	handleFunc func(event *types.EventPowerDistUpdate) bool,
 ) {
 	store := k.powerDistUpdateEventBtcHeightStore(ctx, btcHeight)
@@ -444,9 +444,9 @@ func (k Keeper) IteratePowerDistUpdateEvents(
 // prefix: PowerDistUpdateKey || BTC height
 // key: event index)
 // value: BTCDelegationStatus
-func (k Keeper) powerDistUpdateEventBtcHeightStore(ctx context.Context, btcHeight uint64) prefix.Store {
+func (k Keeper) powerDistUpdateEventBtcHeightStore(ctx context.Context, btcHeight uint32) prefix.Store {
 	store := k.powerDistUpdateEventStore(ctx)
-	return prefix.NewStore(store, sdk.Uint64ToBigEndian(btcHeight))
+	return prefix.NewStore(store, sdk.Uint64ToBigEndian(uint64(btcHeight)))
 }
 
 // powerDistUpdateEventStore returns the KVStore of events that affect

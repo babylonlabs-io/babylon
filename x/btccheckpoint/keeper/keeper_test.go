@@ -13,7 +13,7 @@ import (
 func TestKeeper_GetSubmissionBtcInfo(t *testing.T) {
 	type TxKeyDesc struct {
 		TxIdx uint32
-		Depth uint64
+		Depth uint32
 	}
 
 	type args struct {
@@ -24,9 +24,9 @@ func TestKeeper_GetSubmissionBtcInfo(t *testing.T) {
 	tests := []struct {
 		name                       string
 		args                       args
-		expectedYoungestBlockDepth uint64
+		expectedYoungestBlockDepth uint32
 		expectedTxIndex            uint32
-		expectedOldestBlockDepth   uint64
+		expectedOldestBlockDepth   uint32
 	}{
 		{"First header older. TxIndex larger in older header.", args{TxKeyDesc{TxIdx: 5, Depth: 10}, TxKeyDesc{TxIdx: 1, Depth: 0}}, 0, 1, 10},
 		{"First header older. TxIndex larger in younger header.", args{TxKeyDesc{TxIdx: 1, Depth: 10}, TxKeyDesc{TxIdx: 5, Depth: 0}}, 0, 5, 10},
@@ -90,23 +90,23 @@ func FuzzGetSubmissionBtcInfo(f *testing.F) {
 			{Index: txidx2, Hash: hash2},
 		}}
 
-		k.BTCLightClient.SetDepth(hash1, uint64(depth1))
-		k.BTCLightClient.SetDepth(hash2, uint64(depth2))
+		k.BTCLightClient.SetDepth(hash1, depth1)
+		k.BTCLightClient.SetDepth(hash2, depth2)
 
 		info, err := k.BTCCheckpoint.GetSubmissionBtcInfo(k.SdkCtx, sk)
 		require.NoError(t, err)
 
-		var expectedOldestDepth uint64
-		var expectedYoungestDepth uint64
+		var expectedOldestDepth uint32
+		var expectedYoungestDepth uint32
 		var expectedTxIdx uint32
 
 		if depth1 > depth2 {
-			expectedOldestDepth = uint64(depth1)
-			expectedYoungestDepth = uint64(depth2)
+			expectedOldestDepth = depth1
+			expectedYoungestDepth = depth2
 			expectedTxIdx = txidx2
 		} else if depth1 < depth2 {
-			expectedOldestDepth = uint64(depth2)
-			expectedYoungestDepth = uint64(depth1)
+			expectedOldestDepth = depth2
+			expectedYoungestDepth = depth1
 			expectedTxIdx = txidx1
 		} else {
 			if txidx1 > txidx2 {
@@ -114,8 +114,8 @@ func FuzzGetSubmissionBtcInfo(f *testing.F) {
 			} else {
 				expectedTxIdx = txidx1
 			}
-			expectedOldestDepth = uint64(depth1)
-			expectedYoungestDepth = uint64(depth1)
+			expectedOldestDepth = depth1
+			expectedYoungestDepth = depth1
 		}
 
 		require.Equal(t, info.YoungestBlockDepth, expectedYoungestDepth)

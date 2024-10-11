@@ -8,13 +8,13 @@ import (
 )
 
 const (
-	DefaultBtcConfirmationDepth          uint64 = 10
-	DefaultCheckpointFinalizationTimeout uint64 = 100
+	DefaultBtcConfirmationDepth          uint32 = 10
+	DefaultCheckpointFinalizationTimeout uint32 = 100
 	DefaultCheckpointTag                        = "01020304"
 )
 
 // NewParams creates a new Params instance
-func NewParams(btcConfirmationDepth uint64, checkpointFinalizationTimeout uint64, checkpointTag string) Params {
+func NewParams(btcConfirmationDepth uint32, checkpointFinalizationTimeout uint32, checkpointTag string) Params {
 	return Params{
 		BtcConfirmationDepth:          btcConfirmationDepth,
 		CheckpointFinalizationTimeout: checkpointFinalizationTimeout,
@@ -52,7 +52,7 @@ func (p Params) Validate() error {
 }
 
 func validateBtcConfirmationDepth(i interface{}) error {
-	v, ok := i.(uint64)
+	v, ok := i.(uint32)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
@@ -65,7 +65,7 @@ func validateBtcConfirmationDepth(i interface{}) error {
 }
 
 func validateCheckpointFinalizationTimeout(i interface{}) error {
-	v, ok := i.(uint64)
+	v, ok := i.(uint32)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}

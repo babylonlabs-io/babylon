@@ -14,7 +14,7 @@ import (
 
 type BtcChainReadStore interface {
 	GetHeaderByHash(hash *bbn.BTCHeaderHashBytes) (*BTCHeaderInfo, error)
-	GetHeaderByHeight(height uint64) (*BTCHeaderInfo, error)
+	GetHeaderByHeight(height uint32) (*BTCHeaderInfo, error)
 	GetTip() *BTCHeaderInfo
 }
 
@@ -82,13 +82,13 @@ func (l *lightChainCtx) FindPreviousCheckpoint() (blockchain.HeaderCtx, error) {
 
 type localHeaderInfo struct {
 	header    *wire.BlockHeader
-	height    uint64
+	height    uint32
 	totalWork sdkmath.Uint
 }
 
 func newLocalHeaderInfo(
 	header *wire.BlockHeader,
-	height uint64,
+	height uint32,
 	totalWork sdkmath.Uint) *localHeaderInfo {
 
 	return &localHeaderInfo{
@@ -132,7 +132,7 @@ func toBTCHeaderInfos(infos []*localHeaderInfo) []*BTCHeaderInfo {
 // based on neutrio light client
 // https://github.com/lightninglabs/neutrino/blob/master/blockmanager.go#L2944
 type lightHeaderCtx struct {
-	height    uint64
+	height    uint32
 	bits      uint32
 	timestamp int64
 	store     *storeWithExtensionChain
@@ -140,7 +140,7 @@ type lightHeaderCtx struct {
 
 var _ blockchain.HeaderCtx = (*lightHeaderCtx)(nil)
 
-func newLightHeaderCtx(height uint64, header *wire.BlockHeader,
+func newLightHeaderCtx(height uint32, header *wire.BlockHeader,
 	store *storeWithExtensionChain) *lightHeaderCtx {
 
 	return &lightHeaderCtx{
@@ -184,16 +184,16 @@ func (l *lightHeaderCtx) RelativeAncestorCtx(
 		return nil
 	}
 
-	ancU64 := uint64(ancestorHeight)
+	ancU32 := uint32(ancestorHeight)
 
-	ancestor := l.store.getHeaderAtHeight(ancU64)
+	ancestor := l.store.getHeaderAtHeight(ancU32)
 
 	if ancestor == nil {
 		return nil
 	}
 
 	return newLightHeaderCtx(
-		ancU64, ancestor.header, l.store,
+		ancU32, ancestor.header, l.store,
 	)
 }
 
@@ -285,7 +285,7 @@ func (s *storeWithExtensionChain) addHeader(header *localHeaderInfo) {
 	s.headers = append(s.headers, header)
 }
 
-func (s *storeWithExtensionChain) getHeaderAtHeight(height uint64) *localHeaderInfo {
+func (s *storeWithExtensionChain) getHeaderAtHeight(height uint32) *localHeaderInfo {
 	if len(s.headers) == 0 || height < s.headers[0].height {
 		h, err := s.store.GetHeaderByHeight(height)
 
@@ -397,7 +397,7 @@ func (l *BtcLightClient) InsertHeaders(readStore BtcChainReadStore, headers []*w
 		return &InsertResult{
 			HeadersToInsert: toBTCHeaderInfos(store.headers),
 			RollbackInfo: &RollbackInfo{
-				// we need to rollback to fork parent
+				// we need to roll back to fork parent
 				HeaderToRollbackTo: forkParent,
 			},
 		}, nil

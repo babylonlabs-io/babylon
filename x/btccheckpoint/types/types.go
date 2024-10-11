@@ -29,10 +29,10 @@ type RawCheckpointSubmission struct {
 type SubmissionBtcInfo struct {
 	SubmissionKey SubmissionKey
 	// Depth of the oldest btc header of the submission
-	OldestBlockDepth uint64
+	OldestBlockDepth uint32
 
 	// Depth of the youngest btc header of the submission
-	YoungestBlockDepth uint64
+	YoungestBlockDepth uint32
 
 	// Hash of the youngest btc header of the submission
 	YoungestBlockHash types.BTCHeaderHashBytes
@@ -136,7 +136,7 @@ func (submission *SubmissionBtcInfo) HappenedAfter(parentEpochSubmission *Submis
 // SubmissionDepth return depth of the submission. Due to the fact that submissions
 // are split between several btc blocks, in Babylon submission depth is the depth
 // of the youngest btc block
-func (submission *SubmissionBtcInfo) SubmissionDepth() uint64 {
+func (submission *SubmissionBtcInfo) SubmissionDepth() uint32 {
 	return submission.YoungestBlockDepth
 }
 

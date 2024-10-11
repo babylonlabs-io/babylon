@@ -248,7 +248,7 @@ func (n *NodeConfig) QueryTip() (*blc.BTCHeaderInfoResponse, error) {
 	return blcResponse.Header, nil
 }
 
-func (n *NodeConfig) QueryHeaderDepth(hash string) (uint64, error) {
+func (n *NodeConfig) QueryHeaderDepth(hash string) (uint32, error) {
 	path := fmt.Sprintf("babylon/btclightclient/v1/depth/%s", hash)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
@@ -271,7 +271,7 @@ func (n *NodeConfig) QueryCurrentEpoch() (uint64, error) {
 	return epochResponse.CurrentEpoch, nil
 }
 
-func (n *NodeConfig) QueryLightClientHeightEpochEnd(epoch uint64) (uint64, error) {
+func (n *NodeConfig) QueryLightClientHeightEpochEnd(epoch uint64) (uint32, error) {
 	monitorPath := fmt.Sprintf("/babylon/monitor/v1/epochs/%d", epoch)
 	bz, err := n.QueryGRPCGateway(monitorPath, url.Values{})
 	require.NoError(n.t, err)
@@ -282,7 +282,7 @@ func (n *NodeConfig) QueryLightClientHeightEpochEnd(epoch uint64) (uint64, error
 	return mResponse.BtcLightClientHeight, nil
 }
 
-func (n *NodeConfig) QueryLightClientHeightCheckpointReported(ckptHash []byte) (uint64, error) {
+func (n *NodeConfig) QueryLightClientHeightCheckpointReported(ckptHash []byte) (uint32, error) {
 	monitorPath := fmt.Sprintf("/babylon/monitor/v1/checkpoints/%x", ckptHash)
 	bz, err := n.QueryGRPCGateway(monitorPath, url.Values{})
 	require.NoError(n.t, err)
