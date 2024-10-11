@@ -21,7 +21,7 @@ The BTC Checkpoint module is responsible for receiving and managing the checkpoi
 - [Messages](#messages)
   - [MsgInsertBTCSpvProof](#msginsertbtcspvproof)
   - [MsgUpdateParams](#msgupdateparams)
-- [EndBlocker](#beginblocker)
+- [EndBlocker](#endblocker)
 - [Queries](#queries)
 
 ## Concepts 
