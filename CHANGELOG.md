@@ -37,7 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-### State Machine Breaking 
+### State Machine Breaking
 
 * [#181](https://github.com/babylonlabs-io/babylon/pull/181) Modify BTC heights
   and depths to be of uint32 type instead of uint64.
@@ -47,6 +47,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 * [#180](https://github.com/babylonlabs-io/babylon/pull/180) Non-determinism in
   sorting finality providers in the voting power table
 * [#154](https://github.com/babylonlabs-io/babylon/pull/154) Fix "edit-finality-provider" cmd argument index
+* [#186](https://github.com/babylonlabs-io/babylon/pull/186) Do not panic on `nil`
+Proof when handling finality votes
 
 ### Improvements
 
