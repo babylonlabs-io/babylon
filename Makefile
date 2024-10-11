@@ -496,7 +496,7 @@ update-changelog: ## Update the project changelog
 ###                                Release                                  ###
 ###############################################################################
 
-# Below is adapted from https://github.com/osmosis-labs/osmosis/blob/main/Makefile
+# The below is adapted from https://github.com/osmosis-labs/osmosis/blob/main/Makefile
 GO_VERSION := $(shell grep -E '^go [0-9]+\.[0-9]+' go.mod | awk '{print $$2}')
 GORELEASER_IMAGE := ghcr.io/goreleaser/goreleaser-cross:v$(GO_VERSION)
 COSMWASM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm/v2 | sed 's/.* //')
