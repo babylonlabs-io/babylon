@@ -53,6 +53,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 * [#170](https://github.com/babylonlabs-io/babylon/pull/170) Go releaser setup
 * [#168](https://github.com/babylonlabs-io/babylon/pull/168) Remove devdoc from
   Makefile and remove unnecessary gin replace.
+* [#184](https://github.com/babylonlabs-io/babylon/pull/184) Remove localnet
+  setup as it provides no additional testing value.
 
 ## v0.12.0
 
