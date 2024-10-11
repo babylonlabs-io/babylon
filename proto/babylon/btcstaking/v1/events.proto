@@ -10,32 +10,40 @@ option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 
 // EventFinalityProviderCreated is the event emitted when a finality provider is created
 message EventFinalityProviderCreated {
-  // btc_pk is the Bitcoin secp256k1 PK of this finality provider
-  // the PK follows encoding in BIP-340 spec
-  bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  // btc_pk_hex is the hex string of Bitcoin secp256k1 PK of this finality provider
+  string btc_pk_hex = 1;
   // addr is the address to receive commission from delegations.
-  string addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string addr = 2;
   // commission defines the commission rate of the finality provider.
-  string commission = 3 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
-  ];
-  // description defines the description terms for the finality provider.
-  cosmos.staking.v1beta1.Description description = 4;
+  string commission = 3;
+  // moniker defines a human-readable name for the finality provider.
+  string moniker = 4;
+  // identity defines an optional identity signature (ex. UPort or Keybase).
+  string identity = 5;
+  // website defines an optional website link.
+  string website = 6;
+  // security_contact defines an optional email for security contact.
+  string security_contact = 7;
+  // details define other optional details.
+  string details = 8;
 }
 
 // EventFinalityProviderEdited is the event emitted when a finality provider is edited
 message EventFinalityProviderEdited {
-  // btc_pk is the Bitcoin secp256k1 PK of this finality provider
-  // the PK follows encoding in BIP-340 spec
-  bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  // btc_pk_hex is the hex string of Bitcoin secp256k1 PK of this finality provider
+  string btc_pk_hex = 1;
   // commission defines the commission rate of the finality provider.
-  string commission = 2 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
-  ];
-  // description defines the description terms for the finality provider.
-  cosmos.staking.v1beta1.Description description = 3;
+  string commission = 2;
+  // moniker defines a human-readable name for the finality provider.
+  string moniker = 3;
+  // identity defines an optional identity signature (ex. UPort or Keybase).
+  string identity = 4;
+  // website defines an optional website link.
+  string website = 5;
+  // security_contact defines an optional email for security contact.
+  string security_contact = 6;
+  // details define other optional details.
+  string details = 7;
 }
 
 // EventBTCDelegationStateUpdate is the event emitted when a BTC delegation's state is
@@ -98,8 +106,8 @@ message EventFinalityProviderStatusChange {
   // btc_pk is the BTC public key of the finality provider
   string btc_pk = 1;
   // new_status is the new status that the finality provider
-  // is transitioned to
-  FinalityProviderStatus new_status = 2;
+  // is transitioned to, following FinalityProviderStatus
+  string new_status = 2;
 }
 
 // FinalityProviderStatus is the status of a finality provider.
@@ -120,16 +128,16 @@ message EventFinalityProviderStatusChange {
 // Note that it is impossible for a SLASHED finality provider to
 // transition to other status
 enum FinalityProviderStatus {
-  // STATUS_INACTIVE defines a finality provider that does not have sufficient
+  // FINALITY_PROVIDER_STATUS_INACTIVE defines a finality provider that does not have sufficient
   // delegations or does not have timestamped public randomness.
-  STATUS_INACTIVE = 0;
-  // STATUS_ACTIVE defines a finality provider that have sufficient delegations
+  FINALITY_PROVIDER_STATUS_INACTIVE = 0;
+  // FINALITY_PROVIDER_STATUS_ACTIVE defines a finality provider that have sufficient delegations
   // and have timestamped public randomness.
-  STATUS_ACTIVE = 1;
-  // STATUS_JAILED defines a finality provider that is jailed due to downtime
-  STATUS_JAILED = 2;
-  // STATUS_SLASHED defines a finality provider that is slashed due to double-sign
-  STATUS_SLASHED = 3;
+  FINALITY_PROVIDER_STATUS_ACTIVE = 1;
+  // FINALITY_PROVIDER_STATUS_JAILED defines a finality provider that is jailed due to downtime
+  FINALITY_PROVIDER_STATUS_JAILED = 2;
+  // FINALITY_PROVIDER_STATUS_SLASHED defines a finality provider that is slashed due to double-sign
+  FINALITY_PROVIDER_STATUS_SLASHED = 3;
 }
 
 // EventBTCDelegationCreated is the event emitted when a BTC delegation is created
@@ -139,7 +147,7 @@ message EventBTCDelegationCreated {
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 1;
   // version of the params used to validate the delegation
-  uint32 params_version = 2;
+  string params_version = 2;
   // finality_provider_btc_pks_hex is the list of hex str of Bitcoin secp256k1 PK of
   // the finality providers that this BTC delegation delegates to
   // the PK follows encoding in BIP-340 spec
@@ -148,21 +156,21 @@ message EventBTCDelegationCreated {
   // creates this BTC delegation the PK follows encoding in BIP-340 spec
   string staker_btc_pk_hex = 4;
   // staking_time is the timelock of the staking tx specified in the BTC script
-  uint32 staking_time = 5;
+  string staking_time = 5;
   // staking_amount is the total amount of BTC stake in this delegation
   // quantified in satoshi
-  uint64 staking_amount = 6;
+  string staking_amount = 6;
   // unbonding_time is the time is timelock on unbonding tx chosen by the staker
-  uint32 unbonding_time = 7;
+  string unbonding_time = 7;
   // unbonding_tx is hex encoded bytes of the unsigned unbonding tx
   string unbonding_tx = 8;
   // state of the BTC delegation
-  BTCDelegationStatus state = 9;
+  string state = 9;
 }
 
-// EventCovenantSignatureRecevied is the event emitted when a covenant committee
+// EventCovenantSignatureReceived is the event emitted when a covenant committee
 // sends valid covenant signatures for a BTC delegation
-message EventCovenantSignatureRecevied{
+message EventCovenantSignatureReceived{
   // staking_tx_hash is the hash of the staking identifing the BTC delegation
   // that this covenant signature is for
   string staking_tx_hash = 1;
@@ -174,14 +182,14 @@ message EventCovenantSignatureRecevied{
   string covenant_unbonding_signature_hex = 3;
 }
 
-// EventCovenantQuroumReached is the event emitted quorum of covenant committee
+// EventCovenantQuorumReached is the event emitted quorum of covenant committee
 // is reached for a BTC delegation
-message EventCovenantQuroumReached {
+message EventCovenantQuorumReached {
   // staking_tx_hash is the hash of the staking identifing the BTC delegation
   // that this covenant signature is for
   string staking_tx_hash = 1;
   // state of the BTC delegation
-  BTCDelegationStatus state = 2;
+  string state = 2;
 }
 
 // EventBTCDelegationInclusionProofReceived is the event emitted when a BTC delegation
@@ -192,12 +200,12 @@ message EventBTCDelegationInclusionProofReceived {
   string staking_tx_hash = 1;
   // start_height is the start BTC height of the BTC delegation
   // it is the start BTC height of the timelock
-  uint64 start_height = 2;
+  string start_height = 2;
   // end_height is the end height of the BTC delegation
   // it is calculated by end_height = start_height + staking_time
-  uint64 end_height = 3;
+  string end_height = 3;
   // state of the BTC delegation
-  BTCDelegationStatus state = 4;
+  string state = 4;
 }
 
 // EventBTCDelgationUnbondedEarly is the event emitted when a BTC delegation
@@ -207,7 +215,7 @@ message EventBTCDelgationUnbondedEarly {
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 1;
   // state of the BTC delegation
-  BTCDelegationStatus state = 2;
+  string state = 2;
 }
 
 // EventBTCDelegationExpired is the event emitted when a BTC delegation
@@ -217,5 +225,5 @@ message EventBTCDelegationExpired {
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 1;
   // state of the BTC delegation
-  BTCDelegationStatus state = 2;
+  string state = 2;
 }

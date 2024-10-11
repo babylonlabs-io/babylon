@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/hex"
+	"strconv"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
 )
@@ -46,18 +47,26 @@ func NewEventPowerDistUpdateWithUnjailedFP(fpBTCPK *bbn.BIP340PubKey) *EventPowe
 
 func NewEventFinalityProviderCreated(fp *FinalityProvider) *EventFinalityProviderCreated {
 	return &EventFinalityProviderCreated{
-		BtcPk:       fp.BtcPk,
-		Addr:        fp.Addr,
-		Commission:  fp.Commission,
-		Description: fp.Description,
+		BtcPkHex:        fp.BtcPk.MarshalHex(),
+		Addr:            fp.Addr,
+		Commission:      fp.Commission.String(),
+		Moniker:         fp.Description.Moniker,
+		Identity:        fp.Description.Identity,
+		Website:         fp.Description.Website,
+		SecurityContact: fp.Description.SecurityContact,
+		Details:         fp.Description.Details,
 	}
 }
 
 func NewEventFinalityProviderEdited(fp *FinalityProvider) *EventFinalityProviderEdited {
 	return &EventFinalityProviderEdited{
-		BtcPk:       fp.BtcPk,
-		Commission:  fp.Commission,
-		Description: fp.Description,
+		BtcPkHex:        fp.BtcPk.MarshalHex(),
+		Commission:      fp.Commission.String(),
+		Moniker:         fp.Description.Moniker,
+		Identity:        fp.Description.Identity,
+		Website:         fp.Description.Website,
+		SecurityContact: fp.Description.SecurityContact,
+		Details:         fp.Description.Details,
 	}
 }
 
@@ -69,9 +78,9 @@ func NewInclusionProofEvent(
 ) *EventBTCDelegationInclusionProofReceived {
 	return &EventBTCDelegationInclusionProofReceived{
 		StakingTxHash: stakingTxHash,
-		StartHeight:   startHeight,
-		EndHeight:     endHeight,
-		State:         state,
+		StartHeight:   strconv.FormatUint(startHeight, 10),
+		EndHeight:     strconv.FormatUint(endHeight, 10),
+		State:         state.String(),
 	}
 }
 
@@ -81,14 +90,14 @@ func NewBtcDelCreationEvent(
 ) *EventBTCDelegationCreated {
 	return &EventBTCDelegationCreated{
 		StakingTxHash:             stakingTxHash,
-		ParamsVersion:             btcDel.ParamsVersion,
+		ParamsVersion:             strconv.FormatUint(uint64(btcDel.ParamsVersion), 10),
 		FinalityProviderBtcPksHex: btcDel.FinalityProviderKeys(),
 		StakerBtcPkHex:            btcDel.BtcPk.MarshalHex(),
-		StakingTime:               btcDel.StakingTime,
-		StakingAmount:             btcDel.TotalSat,
-		UnbondingTime:             btcDel.UnbondingTime,
+		StakingTime:               strconv.FormatUint(uint64(btcDel.StakingTime), 10),
+		StakingAmount:             strconv.FormatUint(btcDel.TotalSat, 10),
+		UnbondingTime:             strconv.FormatUint(uint64(btcDel.UnbondingTime), 10),
 		UnbondingTx:               hex.EncodeToString(btcDel.BtcUndelegation.UnbondingTx),
-		State:                     BTCDelegationStatus_PENDING,
+		State:                     BTCDelegationStatus_PENDING.String(),
 	}
 }
 
@@ -96,8 +105,8 @@ func NewCovenantSignatureReceivedEvent(
 	btcDel *BTCDelegation,
 	covPK *bbn.BIP340PubKey,
 	unbondingTxSig *bbn.BIP340Signature,
-) *EventCovenantSignatureRecevied {
-	return &EventCovenantSignatureRecevied{
+) *EventCovenantSignatureReceived {
+	return &EventCovenantSignatureReceived{
 		StakingTxHash:                 btcDel.MustGetStakingTxHash().String(),
 		CovenantBtcPkHex:              covPK.MarshalHex(),
 		CovenantUnbondingSignatureHex: unbondingTxSig.ToHexStr(),
@@ -107,10 +116,10 @@ func NewCovenantSignatureReceivedEvent(
 func NewCovenantQuorumReachedEvent(
 	btcDel *BTCDelegation,
 	state BTCDelegationStatus,
-) *EventCovenantQuroumReached {
-	return &EventCovenantQuroumReached{
+) *EventCovenantQuorumReached {
+	return &EventCovenantQuorumReached{
 		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
-		State:         state,
+		State:         state.String(),
 	}
 }
 
@@ -119,7 +128,7 @@ func NewDelegationUnbondedEarlyEvent(
 ) *EventBTCDelgationUnbondedEarly {
 	return &EventBTCDelgationUnbondedEarly{
 		StakingTxHash: stakingTxHash,
-		State:         BTCDelegationStatus_UNBONDED,
+		State:         BTCDelegationStatus_UNBONDED.String(),
 	}
 }
 
@@ -128,7 +137,7 @@ func NewExpiredDelegationEvent(
 ) *EventBTCDelegationExpired {
 	return &EventBTCDelegationExpired{
 		StakingTxHash: stakingTxHash,
-		State:         BTCDelegationStatus_UNBONDED,
+		State:         BTCDelegationStatus_UNBONDED.String(),
 	}
 }
 
@@ -138,6 +147,6 @@ func NewFinalityProviderStatusChangeEvent(
 ) *EventFinalityProviderStatusChange {
 	return &EventFinalityProviderStatusChange{
 		BtcPk:     fpPk.MarshalHex(),
-		NewStatus: status,
+		NewStatus: status.String(),
 	}
 }
