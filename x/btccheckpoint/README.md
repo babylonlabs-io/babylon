@@ -203,20 +203,20 @@ The BTC Checkpoint module provides a set of queries related to the status o
 
 ### Available Queries
 
-**Parameters**
-Endpoint: `/babylon/btccheckpoint/v1/params`
+**Parameters**\
+Endpoint: `/babylon/btccheckpoint/v1/params`\
 Description: Queries the current parameters of the BTC Checkpoint module.
 
-**BTC Checkpoint Info**
-Endpoint: `/babylon/btccheckpoint/v1/{epoch_num}`
+**BTC Checkpoint Info**\
+Endpoint: `/babylon/btccheckpoint/v1/{epoch_num}`\
 Description: Retrieves the best checkpoint information for a given epoch.
 
-**BTC Checkpoints Info**
-Endpoint: `/babylon/btccheckpoint/v1/`
+**BTC Checkpoints Info**\
+Endpoint: `/babylon/btccheckpoint/v1/`\
 Description: Retrieves checkpoint information for multiple epochs with pagination support.
 
-**Epoch Submissions**
-Endpoint: `/babylon/btccheckpoint/v1/{epoch_num}/submissions`
+**Epoch Submissions**\
+Endpoint: `/babylon/btccheckpoint/v1/{epoch_num}/submissions`\
 Description: Retrieves all submissions for a given epoch.
 
 Additional Information: For further details on how to use these queries and additional documentation, please refer to docs.babylonchain.io.
