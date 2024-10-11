@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Bug fixes
+
+* [#180](https://github.com/babylonlabs-io/babylon/pull/180) Non-determinism in
+  sorting finality providers in the voting power table
+
 ## v0.12.0
 
 ### State Machine Breaking

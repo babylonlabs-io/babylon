@@ -60,6 +60,18 @@ func SortFinalityProvidersWithZeroedVotingPower(fps []*FinalityProviderDistInfo)
 			return true
 		}
 
+		iPkHex, jPkHex := fps[i].BtcPk.MarshalHex(), fps[j].BtcPk.MarshalHex()
+
+		if iShouldBeZeroed && jShouldBeZeroed {
+			// Both have zeroed voting power, compare BTC public keys
+			return iPkHex < jPkHex
+		}
+
+		// both voting power the same, compare BTC public keys
+		if fps[i].TotalVotingPower == fps[j].TotalVotingPower {
+			return iPkHex < jPkHex
+		}
+
 		return fps[i].TotalVotingPower > fps[j].TotalVotingPower
 	})
 }
