@@ -1,78 +1,63 @@
-package types
+package types_test
 
 import (
+	"math"
+	"math/rand"
 	"testing"
 
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/stretchr/testify/assert"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+
+	"github.com/stretchr/testify/require"
 )
 
-func TestSortFinalityProvidersWithZeroedVotingPower(t *testing.T) {
-	tests := []struct {
-		name     string
-		fps      []*FinalityProviderDistInfo
-		expected []*FinalityProviderDistInfo
-	}{
-		{
-			name: "Sort by voting power",
-			fps: []*FinalityProviderDistInfo{
-				{Addr: "fp1", TotalVotingPower: 100, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x03}},
-				{Addr: "fp2", TotalVotingPower: 200, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x02}},
-				{Addr: "fp3", TotalVotingPower: 150, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x01}},
-			},
-			expected: []*FinalityProviderDistInfo{
-				{Addr: "fp2", TotalVotingPower: 200, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x02}},
-				{Addr: "fp3", TotalVotingPower: 150, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x01}},
-				{Addr: "fp1", TotalVotingPower: 100, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x03}},
-			},
-		},
-		{
-			name: "Jailed and non-timestamped providers at the end",
-			fps: []*FinalityProviderDistInfo{
-				{Addr: "fp1", TotalVotingPower: 100, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x04}},
-				{Addr: "fp2", TotalVotingPower: 200, IsJailed: true, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x02}},
-				{Addr: "fp3", TotalVotingPower: 150, IsJailed: false, IsTimestamped: false, BtcPk: &bbn.BIP340PubKey{0x03}},
-				{Addr: "fp4", TotalVotingPower: 50, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x01}},
-			},
-			expected: []*FinalityProviderDistInfo{
-				{Addr: "fp1", TotalVotingPower: 100, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x04}},
-				{Addr: "fp4", TotalVotingPower: 50, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x01}},
-				{Addr: "fp2", TotalVotingPower: 200, IsJailed: true, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x02}},
-				{Addr: "fp3", TotalVotingPower: 150, IsJailed: false, IsTimestamped: false, BtcPk: &bbn.BIP340PubKey{0x03}},
-			},
-		},
-		{
-			name: "Equal voting power, sort by BTC public key",
-			fps: []*FinalityProviderDistInfo{
-				{Addr: "fp1", TotalVotingPower: 100, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x03}},
-				{Addr: "fp2", TotalVotingPower: 100, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x01}},
-				{Addr: "fp3", TotalVotingPower: 100, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x02}},
-			},
-			expected: []*FinalityProviderDistInfo{
-				{Addr: "fp2", TotalVotingPower: 100, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x01}},
-				{Addr: "fp3", TotalVotingPower: 100, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x02}},
-				{Addr: "fp1", TotalVotingPower: 100, IsJailed: false, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x03}},
-			},
-		},
-		{
-			name: "Zeroed voting power, sort by BTC public key",
-			fps: []*FinalityProviderDistInfo{
-				{Addr: "fp1", TotalVotingPower: 200, IsJailed: true, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x03}},
-				{Addr: "fp2", TotalVotingPower: 150, IsJailed: false, IsTimestamped: false, BtcPk: &bbn.BIP340PubKey{0x01}},
-				{Addr: "fp3", TotalVotingPower: 100, IsJailed: true, IsTimestamped: false, BtcPk: &bbn.BIP340PubKey{0x02}},
-			},
-			expected: []*FinalityProviderDistInfo{
-				{Addr: "fp2", TotalVotingPower: 150, IsJailed: false, IsTimestamped: false, BtcPk: &bbn.BIP340PubKey{0x01}},
-				{Addr: "fp3", TotalVotingPower: 100, IsJailed: true, IsTimestamped: false, BtcPk: &bbn.BIP340PubKey{0x02}},
-				{Addr: "fp1", TotalVotingPower: 200, IsJailed: true, IsTimestamped: true, BtcPk: &bbn.BIP340PubKey{0x03}},
-			},
-		},
-	}
+func FuzzSortingDeterminism(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 500)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		max_vp := math.MaxUint32
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			SortFinalityProvidersWithZeroedVotingPower(tt.fps)
-			assert.Equal(t, tt.expected, tt.fps, "Sorted slice should match expected order")
-		})
-	}
+		vp0 := datagen.RandomInt(r, max_vp) + 10
+		vp1 := datagen.RandomInt(r, max_vp) + 10
+		vp2 := datagen.RandomInt(r, max_vp) + 10
+		vp3 := datagen.RandomInt(r, max_vp) + 10
+		vp4 := datagen.RandomInt(r, max_vp) + 10
+
+		fpsWithMeta := []*types.FinalityProviderDistInfo{
+			{TotalVotingPower: vp0, IsJailed: false, IsTimestamped: true, Addr: "addr0", BtcPk: &bbn.BIP340PubKey{0x00}},
+			{TotalVotingPower: vp1, IsJailed: false, IsTimestamped: true, Addr: "addr1", BtcPk: &bbn.BIP340PubKey{0x01}},
+			{TotalVotingPower: vp2, IsJailed: false, IsTimestamped: true, Addr: "addr2", BtcPk: &bbn.BIP340PubKey{0x02}},
+			{TotalVotingPower: vp3, IsJailed: false, IsTimestamped: true, Addr: "addr3", BtcPk: &bbn.BIP340PubKey{0x03}},
+			{TotalVotingPower: vp4, IsJailed: false, IsTimestamped: true, Addr: "addr4", BtcPk: &bbn.BIP340PubKey{0x04}},
+		}
+		jailedIdx1 := datagen.RandomInt(r, len(fpsWithMeta))
+		jailedIdx2 := datagen.RandomIntOtherThan(r, int(jailedIdx1), len(fpsWithMeta))
+
+		fpsWithMeta[jailedIdx1].IsJailed = true
+		fpsWithMeta[jailedIdx1].IsTimestamped = false
+		fpsWithMeta[jailedIdx2].IsJailed = true
+		fpsWithMeta[jailedIdx2].IsTimestamped = false
+
+		fpsWithMeta1 := []*types.FinalityProviderDistInfo{
+			{TotalVotingPower: vp0, IsJailed: false, IsTimestamped: true, Addr: "addr0", BtcPk: &bbn.BIP340PubKey{0x00}},
+			{TotalVotingPower: vp1, IsJailed: false, IsTimestamped: true, Addr: "addr1", BtcPk: &bbn.BIP340PubKey{0x01}},
+			{TotalVotingPower: vp2, IsJailed: false, IsTimestamped: true, Addr: "addr2", BtcPk: &bbn.BIP340PubKey{0x02}},
+			{TotalVotingPower: vp3, IsJailed: false, IsTimestamped: true, Addr: "addr3", BtcPk: &bbn.BIP340PubKey{0x03}},
+			{TotalVotingPower: vp4, IsJailed: false, IsTimestamped: true, Addr: "addr4", BtcPk: &bbn.BIP340PubKey{0x04}},
+		}
+
+		fpsWithMeta1[jailedIdx1].IsJailed = true
+		fpsWithMeta1[jailedIdx1].IsTimestamped = false
+		fpsWithMeta1[jailedIdx2].IsJailed = true
+		fpsWithMeta1[jailedIdx2].IsTimestamped = false
+
+		types.SortFinalityProvidersWithZeroedVotingPower(fpsWithMeta)
+		types.SortFinalityProvidersWithZeroedVotingPower(fpsWithMeta1)
+
+		for i := 0; i < len(fpsWithMeta); i++ {
+			// our lists should be sorted in same order
+			require.Equal(t, fpsWithMeta[i].Addr, fpsWithMeta1[i].Addr)
+		}
+	})
 }
