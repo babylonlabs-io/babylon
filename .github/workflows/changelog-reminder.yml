@@ -1,0 +1,11 @@
+name: Changelog Reminder
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened, labeled, unlabeled]
+    branches:
+      - main
+
+jobs:
+  changelog_reminder:
+    uses: babylonlabs-io/.github/.github/workflows/reusable_changelog_reminder.yml@v0.7.0
+    secrets: inherit

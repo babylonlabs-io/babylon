@@ -110,6 +110,10 @@ git pull --tags
 
 git tag -s -a v0.10.0-rc.0 -m "Version v0.10.0-rc.0"
 ```
+
+With every tag, the Github action will use the `goreleaser` tool to create a
+release, including artifacts and their checksums.
+
 ## Patch Release Procedure
 
 A _patch release_ is an increment of the patch number (eg: `v10.0.0` → `v10.0.1`).
