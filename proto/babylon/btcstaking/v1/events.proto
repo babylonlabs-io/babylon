@@ -12,9 +12,9 @@ option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 message EventFinalityProviderCreated {
   // btc_pk_hex is the hex string of Bitcoin secp256k1 PK of this finality provider
   string btc_pk_hex = 1;
-  // addr is the address to receive commission from delegations.
+  // addr is the babylon address to receive commission from delegations.
   string addr = 2;
-  // commission defines the commission rate of the finality provider.
+  // commission defines the commission rate of the finality provider in decimals.
   string commission = 3;
   // moniker defines a human-readable name for the finality provider.
   string moniker = 4;
@@ -32,7 +32,7 @@ message EventFinalityProviderCreated {
 message EventFinalityProviderEdited {
   // btc_pk_hex is the hex string of Bitcoin secp256k1 PK of this finality provider
   string btc_pk_hex = 1;
-  // commission defines the commission rate of the finality provider.
+  // commission defines the commission rate of the finality provider in decimals.
   string commission = 2;
   // moniker defines a human-readable name for the finality provider.
   string moniker = 3;
@@ -102,15 +102,6 @@ message EventPowerDistUpdate {
   }
 }
 
-message EventFinalityProviderStatusChange {
-  // btc_pk is the BTC public key of the finality provider
-  string btc_pk = 1;
-  // new_status is the new status that the finality provider
-  // is transitioned to, following FinalityProviderStatus
-  string new_status = 2;
-}
-
-// FinalityProviderStatus is the status of a finality provider.
 // A finality provider starts with status INACTIVE once registered.
 // Possible status transitions are when:
 // 1. it has accumulated sufficient delegations and has
@@ -127,6 +118,15 @@ message EventFinalityProviderStatusChange {
 // ACTIVE -> INACTIVE.
 // Note that it is impossible for a SLASHED finality provider to
 // transition to other status
+message EventFinalityProviderStatusChange {
+  // btc_pk is the BTC public key of the finality provider
+  string btc_pk = 1;
+  // new_state is the status that the finality provider
+  // is transitioned to, following FinalityProviderStatus
+  string new_state = 2;
+}
+
+// FinalityProviderStatus is the status of a finality provider.
 enum FinalityProviderStatus {
   // FINALITY_PROVIDER_STATUS_INACTIVE defines a finality provider that does not have sufficient
   // delegations or does not have timestamped public randomness.
@@ -164,8 +164,8 @@ message EventBTCDelegationCreated {
   string unbonding_time = 7;
   // unbonding_tx is hex encoded bytes of the unsigned unbonding tx
   string unbonding_tx = 8;
-  // state of the BTC delegation
-  string state = 9;
+  // new_state of the BTC delegation
+  string new_state = 9;
 }
 
 // EventCovenantSignatureReceived is the event emitted when a covenant committee
@@ -188,8 +188,8 @@ message EventCovenantQuorumReached {
   // staking_tx_hash is the hash of the staking identifing the BTC delegation
   // that this covenant signature is for
   string staking_tx_hash = 1;
-  // state of the BTC delegation
-  string state = 2;
+  // new_state of the BTC delegation
+  string new_state = 2;
 }
 
 // EventBTCDelegationInclusionProofReceived is the event emitted when a BTC delegation
@@ -204,8 +204,8 @@ message EventBTCDelegationInclusionProofReceived {
   // end_height is the end height of the BTC delegation
   // it is calculated by end_height = start_height + staking_time
   string end_height = 3;
-  // state of the BTC delegation
-  string state = 4;
+  // new_state of the BTC delegation
+  string new_state = 4;
 }
 
 // EventBTCDelgationUnbondedEarly is the event emitted when a BTC delegation
@@ -214,8 +214,8 @@ message EventBTCDelgationUnbondedEarly {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 1;
-  // state of the BTC delegation
-  string state = 2;
+  // new_state of the BTC delegation
+  string new_state = 2;
 }
 
 // EventBTCDelegationExpired is the event emitted when a BTC delegation
@@ -224,6 +224,6 @@ message EventBTCDelegationExpired {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 1;
-  // state of the BTC delegation
-  string state = 2;
+  // new_state of the BTC delegation
+  string new_state = 2;
 }
