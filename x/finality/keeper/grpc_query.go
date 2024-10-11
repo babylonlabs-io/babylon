@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
@@ -246,7 +247,7 @@ func (k Keeper) SigningInfo(ctx context.Context, req *types.QuerySigningInfoRequ
 		return nil, status.Errorf(codes.NotFound, "SigningInfo not found for the finality provider %s", req.FpBtcPkHex)
 	}
 
-	return &types.QuerySigningInfoResponse{FpSigningInfo: signingInfo}, nil
+	return &types.QuerySigningInfoResponse{SigningInfo: k.convertToSigningInfoResponse(signingInfo)}, nil
 }
 
 // SigningInfos returns signing-infos of all finality providers.
@@ -271,5 +272,30 @@ func (k Keeper) SigningInfos(ctx context.Context, req *types.QuerySigningInfosRe
 	if err != nil {
 		return nil, err
 	}
-	return &types.QuerySigningInfosResponse{FpSigningInfos: signInfos, Pagination: pageRes}, nil
+	return &types.QuerySigningInfosResponse{SigningInfos: convertToSigningInfosResponse(signInfos), Pagination: pageRes}, nil
+}
+
+func (k Keeper) convertToSigningInfoResponse(info types.FinalityProviderSigningInfo) types.SigningInfoResponse {
+	return types.SigningInfoResponse{
+		FpBtcPkHex:          info.FpBtcPk.MarshalHex(),
+		StartHeight:         info.StartHeight,
+		MissedBlocksCounter: info.MissedBlocksCounter,
+		JailedUntil:         timestamppb.New(info.JailedUntil),
+	}
+
+}
+
+func convertToSigningInfoResponse(signInfos []slashingtypes.ValidatorSigningInfo) []*types.SigningInfo {
+	response := make([]*types.SigningInfo, len(signInfos))
+	for i, info := range signInfos {
+		response[i] = &types.SigningInfo{
+			Address:             info.Address,
+			StartHeight:         info.StartHeight,
+			IndexOffset:         info.IndexOffset,
+			JailedUntil:         info.JailedUntil,
+			Tombstoned:          info.Tombstoned,
+			MissedBlocksCounter: info.MissedBlocksCounter,
+		}
+	}
+	return response
 }
