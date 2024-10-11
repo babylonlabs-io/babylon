@@ -45,6 +45,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 * [#148](https://github.com/babylonlabs-io/babylon/pull/148) Add block results query
 
+### Misc Improvements
+
+* [#168](https://github.com/babylonlabs-io/babylon/pull/168) Remove devdoc from
+  Makefile and remove unnecessary gin replace.
+
 ## v0.12.0
 
 ### State Machine Breaking
