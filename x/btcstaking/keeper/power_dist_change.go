@@ -118,11 +118,11 @@ func (k Keeper) recordVotingPowerAndCache(goCtx context.Context, prevDc, newDc *
 			panic(fmt.Errorf("failed to execute after finality provider %s activated", fp.BtcPk.MarshalHex()))
 		}
 
-		statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_STATUS_ACTIVE)
+		statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE)
 		if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
 			panic(fmt.Errorf(
 				"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
-				types.FinalityProviderStatus_STATUS_ACTIVE.String(), err))
+				types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE.String(), err))
 		}
 
 		k.Logger(sdkCtx).Info("a new finality provider becomes active", "pk", fp.BtcPk.MarshalHex())
@@ -132,11 +132,11 @@ func (k Keeper) recordVotingPowerAndCache(goCtx context.Context, prevDc, newDc *
 	// subscribers
 	newInactiveFps := newDc.FindNewInactiveFinalityProviders(prevDc)
 	for _, fp := range newInactiveFps {
-		statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_STATUS_INACTIVE)
+		statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE)
 		if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
 			panic(fmt.Errorf(
 				"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
-				types.FinalityProviderStatus_STATUS_INACTIVE.String(), err))
+				types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE.String(), err))
 		}
 
 		k.Logger(sdkCtx).Info("a new finality provider becomes inactive", "pk", fp.BtcPk.MarshalHex())
@@ -263,11 +263,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		if _, ok := slashedFPs[fpBTCPKHex]; ok {
 			fp.IsSlashed = true
 
-			statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_STATUS_SLASHED)
+			statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED)
 			if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
 				panic(fmt.Errorf(
 					"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
-					types.FinalityProviderStatus_STATUS_SLASHED.String(), err))
+					types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED.String(), err))
 			}
 
 			continue
@@ -279,11 +279,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		if _, ok := jailedFPs[fpBTCPKHex]; ok {
 			fp.IsJailed = true
 
-			statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_STATUS_JAILED)
+			statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED)
 			if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
 				panic(fmt.Errorf(
 					"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
-					types.FinalityProviderStatus_STATUS_JAILED.String(), err))
+					types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED.String(), err))
 			}
 		}
 
