@@ -20,6 +20,30 @@ func (m *MsgAddFinalitySig) MsgToSign() []byte {
 	return msgToSignForVote(m.BlockHeight, m.BlockAppHash)
 }
 
+func (m *MsgAddFinalitySig) ValidateBasic() error {
+	if m.FpBtcPk == nil {
+		return ErrInvalidFinalitySig.Wrap("empty finality provider BTC public key")
+	}
+
+	if m.PubRand == nil {
+		return ErrInvalidFinalitySig.Wrap("empty public randomness")
+	}
+
+	if m.Proof == nil {
+		return ErrInvalidFinalitySig.Wrap("empty inclusion proof")
+	}
+
+	if m.FinalitySig == nil {
+		return ErrInvalidFinalitySig.Wrap("empty finality signature")
+	}
+
+	if len(m.BlockAppHash) != tmhash.Size {
+		return ErrInvalidFinalitySig.Wrapf("invalid block app hash length: got %d, want %d", len(m.BlockAppHash), tmhash.Size)
+	}
+
+	return nil
+}
+
 // VerifyFinalitySig verifies the finality signature message w.r.t. the
 // public randomness commitment. The verification includes
 // - verifying the proof of inclusion of the given public randomness

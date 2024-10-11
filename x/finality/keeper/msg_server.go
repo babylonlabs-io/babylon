@@ -49,9 +49,10 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinalitySig) (*types.MsgAddFinalitySigResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddFinalitySig)
 
-	if req.FpBtcPk == nil {
-		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")
+	if err := req.ValidateBasic(); err != nil {
+		return nil, err
 	}
+
 	fpPK := req.FpBtcPk
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -91,10 +92,6 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, types.ErrInvalidFinalitySig.Wrapf("the finality provider %s does not have voting power at height %d", fpPK.MarshalHex(), req.BlockHeight)
 	}
 
-	// ensure the finality provider has not cast the same vote yet
-	if req.FinalitySig == nil {
-		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality signature")
-	}
 	existingSig, err := ms.GetSig(ctx, req.BlockHeight, fpPK)
 	if err == nil && existingSig.Equals(req.FinalitySig) {
 		ms.Logger(ctx).Debug("Received duplicated finality vote", "block height", req.BlockHeight, "finality provider", req.FpBtcPk)
