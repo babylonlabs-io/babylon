@@ -193,7 +193,7 @@ func testSlashingTx(
 			require.ErrorIs(t, err, btcstaking.ErrDustOutputFound)
 		} else {
 			require.NoError(t, err)
-			err = btcstaking.CheckTransactions(
+			err = btcstaking.CheckSlashingTxMatchFundingTx(
 				slashingTx,
 				stakingTx,
 				uint32(stakingOutputIdx),
@@ -303,7 +303,7 @@ func TestSlashingTxWithOverflowMustNotAccepted(t *testing.T) {
 	slashingTx.TxOut[0].Value = math.MaxInt64 / 8
 	slashingTx.TxOut[1].Value = math.MaxInt64 / 8
 
-	err = btcstaking.CheckTransactions(
+	err = btcstaking.CheckSlashingTxMatchFundingTx(
 		slashingTx,
 		stakingTx,
 		uint32(0),
@@ -315,7 +315,7 @@ func TestSlashingTxWithOverflowMustNotAccepted(t *testing.T) {
 		&chaincfg.MainNetParams,
 	)
 	require.Error(t, err)
-	require.EqualError(t, err, "slashing transaction does not obey BTC rules: transaction output value is higher than max allowed value: 1152921504606846975 > 2.1e+15 ")
+	require.EqualError(t, err, "invalid slashing tx: btc transaction do not obey BTC rules: transaction output value is higher than max allowed value: 1152921504606846975 > 2.1e+15 ")
 }
 
 func TestNotAllowStakerKeyToBeFinalityProviderKey(t *testing.T) {
@@ -412,4 +412,149 @@ func TestNotAllowFinalityProviderKeysAsCovenantKeys(t *testing.T) {
 	require.Nil(t, unbondingTx)
 	require.Error(t, err)
 	require.True(t, errors.Is(err, btcstaking.ErrDuplicatedKeyInScript))
+}
+
+func TestCheckPreSignedTxSanity(t *testing.T) {
+	tests := []struct {
+		name           string
+		genTx          func() *wire.MsgTx
+		numInputs      uint32
+		numOutputs     uint32
+		maxTxVersion   int32
+		wantErr        bool
+		expectedErrMsg string
+	}{
+		{
+			name: "valid tx",
+			genTx: func() *wire.MsgTx {
+				tx := wire.NewMsgTx(2)
+				tx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(&chainhash.Hash{}, 0), nil, nil))
+				tx.AddTxOut(wire.NewTxOut(1000, nil))
+				return tx
+			},
+			numInputs:    1,
+			numOutputs:   1,
+			maxTxVersion: 2,
+			wantErr:      false,
+		},
+		{
+			name: "non standard version tx",
+			genTx: func() *wire.MsgTx {
+				tx := wire.NewMsgTx(0)
+				tx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(&chainhash.Hash{}, 0), nil, nil))
+				tx.AddTxOut(wire.NewTxOut(1000, nil))
+				return tx
+			},
+			numInputs:      1,
+			numOutputs:     1,
+			maxTxVersion:   2,
+			wantErr:        true,
+			expectedErrMsg: "tx version must be between 1 and 2",
+		},
+		{
+			name: "transaction with locktime",
+			genTx: func() *wire.MsgTx {
+				tx := wire.NewMsgTx(2)
+				tx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(&chainhash.Hash{}, 0), nil, nil))
+				tx.AddTxOut(wire.NewTxOut(1000, nil))
+				tx.LockTime = 1
+				return tx
+			},
+			numInputs:      1,
+			numOutputs:     1,
+			maxTxVersion:   2,
+			wantErr:        true,
+			expectedErrMsg: "pre-signed tx must not have locktime",
+		},
+		{
+			name: "transaction with sig script",
+			genTx: func() *wire.MsgTx {
+				tx := wire.NewMsgTx(2)
+				tx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(&chainhash.Hash{}, 0), nil, nil))
+				tx.AddTxOut(wire.NewTxOut(1000, nil))
+				tx.TxIn[0].SignatureScript = []byte{0x01, 0x02, 0x03}
+				return tx
+			},
+			numInputs:      1,
+			numOutputs:     1,
+			maxTxVersion:   2,
+			wantErr:        true,
+			expectedErrMsg: "pre-signed tx must not have signature script",
+		},
+		{
+			name: "transaction with invalid amount of inputs",
+			genTx: func() *wire.MsgTx {
+				tx := wire.NewMsgTx(2)
+				tx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(&chainhash.Hash{}, 0), nil, nil))
+				tx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(&chainhash.Hash{}, 1), nil, nil))
+				tx.AddTxOut(wire.NewTxOut(1000, nil))
+				return tx
+			},
+			numInputs:      1,
+			numOutputs:     1,
+			maxTxVersion:   2,
+			wantErr:        true,
+			expectedErrMsg: "tx must have exactly 1 inputs",
+		},
+		{
+			name: "transaction with invalid amount of outputs",
+			genTx: func() *wire.MsgTx {
+				tx := wire.NewMsgTx(2)
+				tx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(&chainhash.Hash{}, 0), nil, nil))
+				tx.AddTxOut(wire.NewTxOut(1000, nil))
+				tx.AddTxOut(wire.NewTxOut(1000, nil))
+				return tx
+			},
+			numInputs:      1,
+			numOutputs:     1,
+			maxTxVersion:   2,
+			wantErr:        true,
+			expectedErrMsg: "tx must have exactly 1 outputs",
+		},
+		{
+			name: "replacable transaction",
+			genTx: func() *wire.MsgTx {
+				tx := wire.NewMsgTx(2)
+				tx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(&chainhash.Hash{}, 0), nil, nil))
+				tx.AddTxOut(wire.NewTxOut(1000, nil))
+				tx.TxIn[0].Sequence = wire.MaxTxInSequenceNum - 1
+				return tx
+			},
+			numInputs:      1,
+			numOutputs:     1,
+			maxTxVersion:   2,
+			wantErr:        true,
+			expectedErrMsg: "pre-signed tx must not be replaceable",
+		},
+		{
+			name: "transaction with too big witness",
+			genTx: func() *wire.MsgTx {
+				tx := wire.NewMsgTx(2)
+				tx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(&chainhash.Hash{}, 0), nil, nil))
+				tx.AddTxOut(wire.NewTxOut(1000, nil))
+				witness := [20000000]byte{}
+				tx.TxIn[0].Witness = [][]byte{witness[:]}
+				return tx
+			},
+			numInputs:      1,
+			numOutputs:     1,
+			maxTxVersion:   2,
+			wantErr:        true,
+			expectedErrMsg: "tx weight must not exceed 400000",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := btcstaking.CheckPreSignedTxSanity(
+				tt.genTx(), tt.numInputs, tt.numOutputs, tt.maxTxVersion,
+			)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectedErrMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
