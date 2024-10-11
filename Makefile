@@ -459,12 +459,6 @@ diagrams: ## Generate diagrams for documentation
 
 .PHONY: diagrams
 
-update-changelog: ## Update the project changelog
-	@echo ./scripts/update_changelog.sh $(since_tag) $(upcoming_tag)
-	./scripts/update_changelog.sh $(since_tag) $(upcoming_tag)
-
-.PHONY: update-changelog
-
 ###############################################################################
 ###                                Release                                  ###
 ###############################################################################
