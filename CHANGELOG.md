@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v0.12.1
+
 ### Bug fixes
 
 * [#180](https://github.com/babylonlabs-io/babylon/pull/180) Non-determinism in
