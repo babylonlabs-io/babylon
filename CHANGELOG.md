@@ -50,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+* [#188](https://github.com/babylonlabs-io/babylon/pull/188) Simplify logic of FP set rotation
 * [#169](https://github.com/babylonlabs-io/babylon/pull/169) Improve external events format and update events doc
 * [#148](https://github.com/babylonlabs-io/babylon/pull/148) Add block results query
 
