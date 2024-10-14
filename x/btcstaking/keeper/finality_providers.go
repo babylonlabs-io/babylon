@@ -99,6 +99,14 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	powerUpdateEvent := types.NewEventPowerDistUpdateWithSlashedFP(fp.BtcPk)
 	k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
 
+	// emit status change event
+	statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED)
+	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
+		panic(fmt.Errorf(
+			"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
+			types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED.String(), err))
+	}
+
 	return nil
 }
 
@@ -135,6 +143,14 @@ func (k Keeper) JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error 
 	// event for updating the finality provider set
 	powerUpdateEvent := types.NewEventPowerDistUpdateWithJailedFP(fp.BtcPk)
 	k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
+
+	// emit status change event
+	statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED)
+	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
+		panic(fmt.Errorf(
+			"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
+			types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED.String(), err))
+	}
 
 	return nil
 }

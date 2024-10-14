@@ -58,8 +58,8 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 
 	// record voting power and cache for this height
 	k.recordVotingPowerAndCache(ctx, newDc, maxActiveFps)
-	// handle the state update of finality providers
-	k.handleFPStateUpdate(ctx, dc, newDc)
+	// emit events for finality providers with state updates
+	k.emitFPStateUpdateEvents(ctx, dc, newDc)
 	// record metrics
 	k.recordMetrics(newDc)
 }
@@ -99,9 +99,8 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *types.Voti
 	k.setVotingPowerDistCache(ctx, babylonTipHeight, newDc)
 }
 
-// handleFPStateUpdate handles the state update of finality providers
-// between the previous and the current voting power distribution cache
-func (k Keeper) handleFPStateUpdate(ctx context.Context, prevDc, newDc *types.VotingPowerDistCache) {
+// emitFPStateUpdateEvents emits events for finality providers with state updates
+func (k Keeper) emitFPStateUpdateEvents(ctx context.Context, prevDc, newDc *types.VotingPowerDistCache) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	newlyActiveFPs := newDc.FindNewActiveFinalityProviders(prevDc)
@@ -187,29 +186,14 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			}
 			if delEvent.NewState == types.BTCDelegationStatus_ACTIVE {
 				// newly active BTC delegation
-
 				// add the BTC delegation to each restaked finality provider
 				for _, fpBTCPK := range btcDel.FpBtcPkList {
 					fpBTCPKHex := fpBTCPK.MarshalHex()
 					activeBTCDels[fpBTCPKHex] = append(activeBTCDels[fpBTCPKHex], btcDel)
 				}
 			} else if delEvent.NewState == types.BTCDelegationStatus_UNBONDED {
-				// delegation expired and become unbonded emit block event about this
-				// information
-				if btcDel.IsUnbondedEarly() {
-					unbondedEarlyEvent := types.NewDelegationUnbondedEarlyEvent(delEvent.StakingTxHash)
-
-					if err := sdkCtx.EventManager().EmitTypedEvent(unbondedEarlyEvent); err != nil {
-						panic(fmt.Errorf("failed to emit event the new unbonded BTC delegation: %w", err))
-					}
-				} else {
-					expiredEvent := types.NewExpiredDelegationEvent(delEvent.StakingTxHash)
-
-					if err := sdkCtx.EventManager().EmitTypedEvent(expiredEvent); err != nil {
-						panic(fmt.Errorf("failed to emit event for the new expired BTC delegation: %w", err))
-					}
-				}
-
+				// emit event about this unbonded BTC delegation
+				emitUnbondedBTCDelEvent(sdkCtx, btcDel, delEvent.StakingTxHash)
 				// add the unbonded BTC delegation to the map
 				unbondedBTCDels[delEvent.StakingTxHash] = struct{}{}
 			}
@@ -249,14 +233,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// assigning delegation to it
 		if _, ok := slashedFPs[fpBTCPKHex]; ok {
 			fp.IsSlashed = true
-
-			statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED)
-			if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
-				panic(fmt.Errorf(
-					"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
-					types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED.String(), err))
-			}
-
 			continue
 		}
 
@@ -265,13 +241,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// but won't be assigned with voting power
 		if _, ok := jailedFPs[fpBTCPKHex]; ok {
 			fp.IsJailed = true
-
-			statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED)
-			if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
-				panic(fmt.Errorf(
-					"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
-					types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED.String(), err))
-			}
 		}
 
 		// set IsJailed to be false if the fp is unjailed
@@ -342,6 +311,23 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	}
 
 	return newDc
+}
+
+// emitUnbondedBTCDelEvent emits events for an unbonded BTC delegations
+func emitUnbondedBTCDelEvent(sdkCtx sdk.Context, btcDel *types.BTCDelegation, stakingTxHash string) {
+	// delegation expired and become unbonded emit block event about this
+	// information
+	if btcDel.IsUnbondedEarly() {
+		unbondedEarlyEvent := types.NewDelegationUnbondedEarlyEvent(stakingTxHash)
+		if err := sdkCtx.EventManager().EmitTypedEvent(unbondedEarlyEvent); err != nil {
+			panic(fmt.Errorf("failed to emit event the new unbonded BTC delegation: %w", err))
+		}
+	} else {
+		expiredEvent := types.NewExpiredDelegationEvent(stakingTxHash)
+		if err := sdkCtx.EventManager().EmitTypedEvent(expiredEvent); err != nil {
+			panic(fmt.Errorf("failed to emit event for the new expired BTC delegation: %w", err))
+		}
+	}
 }
 
 /* voting power distribution update event store */
