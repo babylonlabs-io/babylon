@@ -428,12 +428,11 @@ func FuzzSigningInfo(f *testing.F) {
 		}
 		resp, err := fKeeper.SigningInfos(ctx, req)
 		require.NoError(t, err)
-		require.LessOrEqual(t, len(resp.FpBtcPkHex), int(limit))      // check if pagination takes effect
+		require.LessOrEqual(t, len(resp.SigningInfos), int(limit))    // check if pagination takes effect
 		require.EqualValues(t, resp.Pagination.Total, numSigningInfo) // ensure evidences before startHeight are not included
-		for _, si := range resp.SigningInfo {
-			require.Equal(t, fpSigningInfos[si.FpBtcPk.MarshalHex()].MissedBlocksCounter, si.MissedBlocksCounter)
-			require.Equal(t, fpSigningInfos[si.FpBtcPk.MarshalHex()].FpBtcPk.MarshalHex(), si.FpBtcPk.MarshalHex())
-			require.Equal(t, fpSigningInfos[si.FpBtcPk.MarshalHex()].StartHeight, si.StartHeight)
+		for _, si := range resp.SigningInfos {
+			require.Equal(t, fpSigningInfos[si.FpBtcPkHex].MissedBlocksCounter, si.MissedBlocksCounter)
+			require.Equal(t, fpSigningInfos[si.FpBtcPkHex].StartHeight, si.StartHeight)
 		}
 	})
 }
