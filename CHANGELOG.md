@@ -44,6 +44,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Bug fixes
 
+* [#193](https://github.com/babylonlabs-io/babylon/pull/193) Fix witness construction of slashing tx
 * [#154](https://github.com/babylonlabs-io/babylon/pull/154) Fix "edit-finality-provider" cmd argument index
 * [#186](https://github.com/babylonlabs-io/babylon/pull/186) Do not panic on `nil`
 Proof when handling finality votes

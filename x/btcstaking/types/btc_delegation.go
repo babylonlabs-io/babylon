@@ -382,6 +382,7 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 		d.StakingOutputIdx,
 		d.DelegatorSig,
 		covAdaptorSigs,
+		bsParams.CovenantQuorum,
 		slashingSpendInfo,
 	)
 	if err != nil {
@@ -433,6 +434,7 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 		0,
 		d.BtcUndelegation.DelegatorSlashingSig,
 		covAdaptorSigs,
+		bsParams.CovenantQuorum,
 		slashingSpendInfo,
 	)
 	if err != nil {
