@@ -301,6 +301,10 @@ func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 			break
 		}
 	}
+	// ensure the number of covenant signatures is at least the quorum number
+	if numSigs < covenantQuorum {
+		return nil, fmt.Errorf("not enough covenant signatures to reach quorum")
+	}
 
 	/*
 		construct finality providers' part of witness, i.e.,
