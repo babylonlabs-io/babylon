@@ -35,23 +35,8 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	if len(events) == 0 {
 		if dc != nil {
 			// map everything in prev height to this height
-			// NOTE: deep copy the previous dist cache because the
-			// cache for the new height shares the same distribution
-			// info due to no new events but timestamping status
-			// might be changed in the new dist cache after calling
-			// k.recordVotingPowerAndCache()
-			newDc := types.NewVotingPowerDistCache()
-			newDc.TotalVotingPower = dc.TotalVotingPower
-			newDc.NumActiveFps = dc.NumActiveFps
-			newFps := make([]*types.FinalityProviderDistInfo, len(dc.FinalityProviders))
-			for i, prevFp := range dc.FinalityProviders {
-				newFp := *prevFp
-				newFps[i] = &newFp
-			}
-			newDc.FinalityProviders = newFps
-			k.recordVotingPowerAndCache(ctx, dc, newDc, maxActiveFps)
+			k.recordVotingPowerAndCache(ctx, dc, maxActiveFps)
 		}
-
 		return
 	}
 
@@ -72,7 +57,9 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events)
 
 	// record voting power and cache for this height
-	k.recordVotingPowerAndCache(ctx, dc, newDc, maxActiveFps)
+	k.recordVotingPowerAndCache(ctx, newDc, maxActiveFps)
+	// handle the state update of finality providers
+	k.handleFPStateUpdate(ctx, dc, newDc)
 	// record metrics
 	k.recordMetrics(newDc)
 }
@@ -81,14 +68,12 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 // with the following consideration:
 // 1. the fp must have timestamped pub rand
 // 2. the fp must in the top x ranked by the voting power (x is given by maxActiveFps)
-// NOTE: the previous and the new dist cache cannot be nil
-func (k Keeper) recordVotingPowerAndCache(goCtx context.Context, prevDc, newDc *types.VotingPowerDistCache, maxActiveFps uint32) {
-	if prevDc == nil || newDc == nil {
+func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *types.VotingPowerDistCache, maxActiveFps uint32) {
+	if newDc == nil {
 		panic("the voting power distribution cache cannot be nil")
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(goCtx)
-	babylonTipHeight := uint64(sdk.UnwrapSDKContext(goCtx).HeaderInfo().Height)
+	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 
 	// label fps with whether it has timestamped pub rand so that these fps
 	// will not be assigned voting power
@@ -96,7 +81,7 @@ func (k Keeper) recordVotingPowerAndCache(goCtx context.Context, prevDc, newDc *
 		// TODO calling HasTimestampedPubRand potentially iterates
 		// all the pub rand committed by the fpDistInfo, which might slow down
 		// the process, need optimization
-		fpDistInfo.IsTimestamped = k.FinalityKeeper.HasTimestampedPubRand(goCtx, fpDistInfo.BtcPk, babylonTipHeight)
+		fpDistInfo.IsTimestamped = k.FinalityKeeper.HasTimestampedPubRand(ctx, fpDistInfo.BtcPk, babylonTipHeight)
 	}
 
 	// apply the finality provider voting power dist info to the new cache
@@ -107,21 +92,21 @@ func (k Keeper) recordVotingPowerAndCache(goCtx context.Context, prevDc, newDc *
 	// set voting power table for each active finality providers at this height
 	for i := uint32(0); i < newDc.NumActiveFps; i++ {
 		fp := newDc.FinalityProviders[i]
-		k.SetVotingPower(goCtx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
+		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
 	}
 
-	k.handleFPStateUpdate(sdkCtx, prevDc, newDc)
-
 	// set the voting power distribution cache of the current height
-	k.setVotingPowerDistCache(sdkCtx, babylonTipHeight, newDc)
+	k.setVotingPowerDistCache(ctx, babylonTipHeight, newDc)
 }
 
 // handleFPStateUpdate handles the state update of finality providers
 // between the previous and the current voting power distribution cache
-func (k Keeper) handleFPStateUpdate(sdkCtx sdk.Context, prevDc, newDc *types.VotingPowerDistCache) {
+func (k Keeper) handleFPStateUpdate(ctx context.Context, prevDc, newDc *types.VotingPowerDistCache) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
 	newlyActiveFPs := newDc.FindNewActiveFinalityProviders(prevDc)
 	for _, fp := range newlyActiveFPs {
-		if err := k.hooks.AfterFinalityProviderActivated(sdkCtx, fp.BtcPk); err != nil {
+		if err := k.hooks.AfterFinalityProviderActivated(ctx, fp.BtcPk); err != nil {
 			panic(fmt.Errorf("failed to execute after finality provider %s activated", fp.BtcPk.MarshalHex()))
 		}
 
