@@ -61,6 +61,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 * [#184](https://github.com/babylonlabs-io/babylon/pull/184) Remove localnet
   setup as it provides no additional testing value.
 
+### State Machine Breaking
+
+* [#185](https://github.com/babylonlabs-io/babylon/pull/185) Check that
+unbonding / slashing transactions are standard
+
 ## v0.12.0
 
 ### State Machine Breaking

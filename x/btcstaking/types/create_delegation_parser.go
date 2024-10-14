@@ -10,7 +10,6 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
@@ -175,10 +174,6 @@ func ParseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDel
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to deserialize unbonding tx: %v", err)
-	}
-
-	if err := btcstaking.IsSimpleTransfer(unbondingTx.Transaction); err != nil {
-		return nil, fmt.Errorf("unbonding tx is not a simple transfer: %v", err)
 	}
 
 	unbondingSlashingTx, err := NewBtcTransaction(msg.UnbondingSlashingTx.MustMarshal())
