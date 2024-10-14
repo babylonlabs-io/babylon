@@ -37,6 +37,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### State Machine Breaking
+
+* [#181](https://github.com/babylonlabs-io/babylon/pull/181) Modify BTC heights
+  and depths to be of uint32 type instead of uint64.
+
+### Bug fixes
+
+* [#193](https://github.com/babylonlabs-io/babylon/pull/193) Fix witness construction of slashing tx
+* [#154](https://github.com/babylonlabs-io/babylon/pull/154) Fix "edit-finality-provider" cmd argument index
+* [#186](https://github.com/babylonlabs-io/babylon/pull/186) Do not panic on `nil`
+Proof when handling finality votes
+
+### Improvements
+
+* [#148](https://github.com/babylonlabs-io/babylon/pull/148) Add block results query
+
+### Misc Improvements
+
+* [#170](https://github.com/babylonlabs-io/babylon/pull/170) Go releaser setup
+* [#168](https://github.com/babylonlabs-io/babylon/pull/168) Remove devdoc from
+  Makefile and remove unnecessary gin replace.
+* [#184](https://github.com/babylonlabs-io/babylon/pull/184) Remove localnet
+  setup as it provides no additional testing value.
+
 ## v0.12.1
 
 ### Bug fixes

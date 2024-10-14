@@ -47,7 +47,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			CovenantPks:    bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
 			CovenantQuorum: covenantQuorum,
 		}
-		covenantSigners := covenantSKs[:covenantQuorum]
+		covenantSigners := covenantSKs
 
 		stakingTimeBlocks := uint16(5)
 		stakingValue := int64(2 * 10e8)
