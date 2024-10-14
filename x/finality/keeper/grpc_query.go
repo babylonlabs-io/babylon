@@ -11,7 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
@@ -272,7 +271,7 @@ func (k Keeper) SigningInfos(ctx context.Context, req *types.QuerySigningInfosRe
 	if err != nil {
 		return nil, err
 	}
-	return &types.QuerySigningInfosResponse{SigningInfos: convertToSigningInfosResponse(signInfos), Pagination: pageRes}, nil
+	return &types.QuerySigningInfosResponse{SigningInfos: k.convertToSigningInfosResponse(signInfos), Pagination: pageRes}, nil
 }
 
 func (k Keeper) convertToSigningInfoResponse(info types.FinalityProviderSigningInfo) types.SigningInfoResponse {
@@ -280,22 +279,14 @@ func (k Keeper) convertToSigningInfoResponse(info types.FinalityProviderSigningI
 		FpBtcPkHex:          info.FpBtcPk.MarshalHex(),
 		StartHeight:         info.StartHeight,
 		MissedBlocksCounter: info.MissedBlocksCounter,
-		JailedUntil:         timestamppb.New(info.JailedUntil),
+		JailedUntil:         info.JailedUntil,
 	}
-
 }
 
-func convertToSigningInfoResponse(signInfos []slashingtypes.ValidatorSigningInfo) []*types.SigningInfo {
-	response := make([]*types.SigningInfo, len(signInfos))
+func (k Keeper) convertToSigningInfosResponse(signInfos []types.FinalityProviderSigningInfo) []types.SigningInfoResponse {
+	response := make([]types.SigningInfoResponse, len(signInfos))
 	for i, info := range signInfos {
-		response[i] = &types.SigningInfo{
-			Address:             info.Address,
-			StartHeight:         info.StartHeight,
-			IndexOffset:         info.IndexOffset,
-			JailedUntil:         info.JailedUntil,
-			Tombstoned:          info.Tombstoned,
-			MissedBlocksCounter: info.MissedBlocksCounter,
-		}
+		response[i] = k.convertToSigningInfoResponse(info)
 	}
 	return response
 }

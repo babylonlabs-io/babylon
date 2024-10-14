@@ -7,6 +7,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/finality/v1/params.proto";
 import "babylon/finality/v1/finality.proto";
 import "google/protobuf/timestamp.proto";
+import "amino/amino.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/finality/types";
 
@@ -236,7 +237,7 @@ message SigningInfoResponse {
   string fp_btc_pk_hex = 1;
   int64 start_height = 2;
   int64 missed_blocks_counter = 3;
-  google.protobuf.Timestamp jailed_until = 4;
+  google.protobuf.Timestamp jailed_until = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // QuerySigningInfoResponse is the response type for the Query/SigningInfo RPC
