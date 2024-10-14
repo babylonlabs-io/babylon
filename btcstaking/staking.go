@@ -223,7 +223,7 @@ func IsSimpleTransfer(tx *wire.MsgTx) error {
 	return nil
 }
 
-// CheckPreSignedTxSanity perfomorms basic checks on a pre-signed transaction:
+// CheckPreSignedTxSanity performs basic checks on a pre-signed transaction:
 // - the transaction is not nil.
 // - the transaction obeys basic BTC rules.
 // - the transaction has exactly numInputs inputs.

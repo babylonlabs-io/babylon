@@ -415,6 +415,7 @@ func TestNotAllowFinalityProviderKeysAsCovenantKeys(t *testing.T) {
 }
 
 func TestCheckPreSignedTxSanity(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name           string
 		genTx          func() *wire.MsgTx
@@ -545,6 +546,7 @@ func TestCheckPreSignedTxSanity(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			err := btcstaking.CheckPreSignedTxSanity(
 				tt.genTx(), tt.numInputs, tt.numOutputs, tt.maxTxVersion,
 			)
