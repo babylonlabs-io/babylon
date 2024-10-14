@@ -21,7 +21,6 @@ import (
 func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	btcTipHeight := k.GetCurrentBTCHeight(ctx)
-	maxActiveFps := k.GetParams(ctx).MaxActiveFinalityProviders
 
 	// get the power dist cache in the last height
 	dc := k.getVotingPowerDistCache(ctx, height-1)
@@ -35,7 +34,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	if len(events) == 0 {
 		if dc != nil {
 			// map everything in prev height to this height
-			k.recordVotingPowerAndCache(ctx, dc, maxActiveFps)
+			k.recordVotingPowerAndCache(ctx, dc)
 		}
 		return
 	}
@@ -57,7 +56,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events)
 
 	// record voting power and cache for this height
-	k.recordVotingPowerAndCache(ctx, newDc, maxActiveFps)
+	k.recordVotingPowerAndCache(ctx, newDc)
 	// emit events for finality providers with state updates
 	k.emitFPStateUpdateEvents(ctx, dc, newDc)
 	// record metrics
@@ -68,10 +67,12 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 // with the following consideration:
 // 1. the fp must have timestamped pub rand
 // 2. the fp must in the top x ranked by the voting power (x is given by maxActiveFps)
-func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *types.VotingPowerDistCache, maxActiveFps uint32) {
+func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *types.VotingPowerDistCache) {
 	if newDc == nil {
 		panic("the voting power distribution cache cannot be nil")
 	}
+
+	maxActiveFps := k.GetParams(ctx).MaxActiveFinalityProviders
 
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 
@@ -155,6 +156,8 @@ func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache) {
 // - newly active BTC delegations
 // - newly unbonded BTC delegations
 // - slashed finality providers
+// - newly jailed finality providers
+// - newly unjailed finality providers
 func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	ctx context.Context,
 	dc *types.VotingPowerDistCache,
