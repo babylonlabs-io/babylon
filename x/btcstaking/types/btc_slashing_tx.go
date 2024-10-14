@@ -274,6 +274,7 @@ func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 	outputIdx uint32,
 	delegatorSig *bbn.BIP340Signature,
 	covenantSigs []*asig.AdaptorSignature,
+	covenantQuorum uint32,
 	slashingPathSpendInfo *btcstaking.SpendInfo,
 ) (*wire.MsgTx, error) {
 	/*
@@ -288,11 +289,16 @@ func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 	}
 	// decrypt each covenant adaptor signature to Schnorr signature
 	covSigs := make([]*schnorr.Signature, len(covenantSigs))
+	numSigs := uint32(0)
 	for i, covenantSig := range covenantSigs {
 		if covenantSig != nil {
 			covSigs[i] = covenantSig.Decrypt(decKey)
+			numSigs++
 		} else {
 			covSigs[i] = nil
+		}
+		if numSigs == covenantQuorum {
+			break
 		}
 	}
 
