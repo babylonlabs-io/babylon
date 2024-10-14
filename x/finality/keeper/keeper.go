@@ -7,10 +7,10 @@ import (
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
-	"github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 type (
