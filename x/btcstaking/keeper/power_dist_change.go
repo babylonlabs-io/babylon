@@ -110,11 +110,18 @@ func (k Keeper) recordVotingPowerAndCache(goCtx context.Context, prevDc, newDc *
 		k.SetVotingPower(goCtx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
 	}
 
-	// find newly activated finality providers and execute the hooks by comparing
-	// the previous dist cache
-	newActivatedFps := newDc.FindNewActiveFinalityProviders(prevDc)
-	for _, fp := range newActivatedFps {
-		if err := k.hooks.AfterFinalityProviderActivated(goCtx, fp.BtcPk); err != nil {
+	k.handleFPStateUpdate(sdkCtx, prevDc, newDc)
+
+	// set the voting power distribution cache of the current height
+	k.setVotingPowerDistCache(sdkCtx, babylonTipHeight, newDc)
+}
+
+// handleFPStateUpdate handles the state update of finality providers
+// between the previous and the current voting power distribution cache
+func (k Keeper) handleFPStateUpdate(sdkCtx sdk.Context, prevDc, newDc *types.VotingPowerDistCache) {
+	newlyActiveFPs := newDc.FindNewActiveFinalityProviders(prevDc)
+	for _, fp := range newlyActiveFPs {
+		if err := k.hooks.AfterFinalityProviderActivated(sdkCtx, fp.BtcPk); err != nil {
 			panic(fmt.Errorf("failed to execute after finality provider %s activated", fp.BtcPk.MarshalHex()))
 		}
 
@@ -128,10 +135,8 @@ func (k Keeper) recordVotingPowerAndCache(goCtx context.Context, prevDc, newDc *
 		k.Logger(sdkCtx).Info("a new finality provider becomes active", "pk", fp.BtcPk.MarshalHex())
 	}
 
-	// find finality providers that newly become inactive and emit events to
-	// subscribers
-	newInactiveFps := newDc.FindNewInactiveFinalityProviders(prevDc)
-	for _, fp := range newInactiveFps {
+	newlyInactiveFPs := newDc.FindNewInactiveFinalityProviders(prevDc)
+	for _, fp := range newlyInactiveFPs {
 		statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE)
 		if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
 			panic(fmt.Errorf(
@@ -141,9 +146,6 @@ func (k Keeper) recordVotingPowerAndCache(goCtx context.Context, prevDc, newDc *
 
 		k.Logger(sdkCtx).Info("a new finality provider becomes inactive", "pk", fp.BtcPk.MarshalHex())
 	}
-
-	// set the voting power distribution cache of the current height
-	k.setVotingPowerDistCache(sdkCtx, babylonTipHeight, newDc)
 }
 
 func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache) {
