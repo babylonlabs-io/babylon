@@ -60,6 +60,18 @@ func SortFinalityProvidersWithZeroedVotingPower(fps []*FinalityProviderDistInfo)
 			return true
 		}
 
+		iPkHex, jPkHex := fps[i].BtcPk.MarshalHex(), fps[j].BtcPk.MarshalHex()
+
+		if iShouldBeZeroed && jShouldBeZeroed {
+			// Both have zeroed voting power, compare BTC public keys
+			return iPkHex < jPkHex
+		}
+
+		// both voting power the same, compare BTC public keys
+		if fps[i].TotalVotingPower == fps[j].TotalVotingPower {
+			return iPkHex < jPkHex
+		}
+
 		return fps[i].TotalVotingPower > fps[j].TotalVotingPower
 	})
 }
@@ -112,7 +124,7 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 		covSigsMap[covSigs.CovPk.MarshalHex()] = covSig
 	}
 
-	// sort covenant PKs in reverse reverse lexicographical order
+	// sort covenant PKs in reverse lexicographical order
 	orderedCovenantPKs := bbn.SortBIP340PKs(params.CovenantPks)
 
 	// get ordered list of covenant signatures w.r.t. the order of sorted covenant PKs
@@ -134,9 +146,9 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 // - CheckpointFinalizationTimeout
 func MinimumUnbondingTime(
 	stakingParams *Params,
-	checkpointingParams *btcctypes.Params) uint64 {
-	return math.Max[uint64](
-		uint64(stakingParams.MinUnbondingTimeBlocks),
+	checkpointingParams *btcctypes.Params) uint32 {
+	return math.Max[uint32](
+		stakingParams.MinUnbondingTimeBlocks,
 		checkpointingParams.CheckpointFinalizationTimeout,
 	)
 }

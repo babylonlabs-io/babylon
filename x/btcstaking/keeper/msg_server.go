@@ -181,19 +181,19 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	// 6. If the delegation contains the inclusion proof, we need to verify the proof
 	// and set start height and end height
-	var startHeight, endHeight uint64
+	var startHeight, endHeight uint32
 	if parsedMsg.StakingTxProofOfInclusion != nil {
 		inclusionHeight, err := ms.VerifyInclusionProofAndGetHeight(
 			ctx,
 			btcutil.NewTx(parsedMsg.StakingTx.Transaction),
-			uint64(parsedMsg.StakingTime),
+			uint32(parsedMsg.StakingTime),
 			parsedMsg.StakingTxProofOfInclusion)
 		if err != nil {
 			return nil, fmt.Errorf("invalid inclusion proof: %w", err)
 		}
 
 		startHeight = inclusionHeight
-		endHeight = startHeight + uint64(parsedMsg.StakingTime)
+		endHeight = startHeight + uint32(parsedMsg.StakingTime)
 	} else {
 		// NOTE: here we consume more gas to protect Babylon chain and covenant members against spamming
 		// i.e creating delegation that will never reach BTC
@@ -279,7 +279,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	inclusionHeight, err := ms.VerifyInclusionProofAndGetHeight(
 		ctx,
 		btcutil.NewTx(stakingTx),
-		uint64(btcDel.StakingTime),
+		btcDel.StakingTime,
 		parsedInclusionProof,
 	)
 
@@ -289,7 +289,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 
 	// 6. set start height and end height and save it to db
 	btcDel.StartHeight = inclusionHeight
-	btcDel.EndHeight = btcDel.StartHeight + uint64(btcDel.StakingTime)
+	btcDel.EndHeight = btcDel.StartHeight + btcDel.StakingTime
 	ms.setBTCDelegation(ctx, btcDel)
 
 	// 7. emit events

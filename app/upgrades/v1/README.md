@@ -4,18 +4,14 @@ Babylon launched as Phase-1 without a cosmos chain running
 to collect BTC staking prior to decentralize the finality provider
 set of operators. The first upgrade of Babylon chain to start
 receiving BTC delegations will include the BTC headers created
-during Phase-1 and upgrade, finality providers registered in the
-dashboard, tokens distribution for the active users and operators
-that participated and need to finish their actions and update of
-parameters for `x/finality` and `x/btcstaking` modules.
+during Phase-1 and upgrade, tokens distribution for the active users
+and operators that participated and need to finish their actions and
+update of parameters for `x/finality` and `x/btcstaking` modules.
 
 ## Testnet vs Mainnet
 
 Babylon upgrade data will be different for mainnet and testnet,
-finality providers should not use the same keys for mainnet and testnet.
-So to register himself and test, the finality providers will use two
-different registrations one for mainnet and another for testnet. The
-BTC Headers also are different as the Bitcoin mainnet and signet produces
+The BTC Headers are different as the Bitcoin mainnet and signet produces
 different block headers. So, the upgrade data will be divided into 2
 `app/upgrades/v1`:
 
@@ -34,10 +30,9 @@ The upgrade data was left as string to make it easier for `devnet` testing
 where it is needed to replace the data files, and would be harder to create
 the data files if it used actual go structures to generate the data.
 
-This upgrade loads 6 JSONs from strings in different files.
+This upgrade loads 5 JSONs from strings in different files.
 
 - BTC Headers at `./data_btc_headers.go`
-- Finality Providers signed messages at`./data_signed_fps.go`
 - Tokens distribution at `./data_token_distribution.go`
 - BTC Staking Parameters `./btcstaking_params.go`
 - Finality Parameters `./finality_params.go`
@@ -74,20 +69,6 @@ echo "package signetlaunch
 
 const NewBtcHeadersStr = \`$btcHeadersJson\`" > $GO_BTC_HEADERS_PATH
 ```
-
-### Signed Create Finality Provider
-
-For BTC stakers to stake during Phase-1 it is needed to have finality
-providers. Babylon created a repository to publicly store this information
-inside [networks](https://github.com/babylonlabs-io/networks) repository.
-Inside the bbn-1 mainnet all the finality providers that wanted to be available
-for BTC staking since the beginning would need to
-[register](https://github.com/babylonlabs-io/networks/blob/main/bbn-1/finality-providers/README.md)
-theirselves in the registry.
-For the transition from Phase-1 to Phase-2, registered finality providers in
-Phase-1 will need to provider a signed
-[MsgCreateFinalityProvider](../../../x/btcstaking/types/tx.pb.go#38) as a
-json file message inside the networks repository registry.
 
 ### Tokens distribution
 

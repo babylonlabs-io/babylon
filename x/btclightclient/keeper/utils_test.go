@@ -56,7 +56,7 @@ func checkTip(
 	ctx context.Context,
 	blcKeeper *keeper.Keeper,
 	expectedWork sdkmath.Uint,
-	expectedHeight uint64,
+	expectedHeight uint32,
 	expectedTipHeader *wire.BlockHeader) {
 
 	currentTip := blcKeeper.GetTipInfo(ctx)

@@ -8,7 +8,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
-func NewBTCHeaderInfo(header *bbn.BTCHeaderBytes, headerHash *bbn.BTCHeaderHashBytes, height uint64, work *sdkmath.Uint) *BTCHeaderInfo {
+func NewBTCHeaderInfo(header *bbn.BTCHeaderBytes, headerHash *bbn.BTCHeaderHashBytes, height uint32, work *sdkmath.Uint) *BTCHeaderInfo {
 	return &BTCHeaderInfo{
 		Header: header,
 		Hash:   headerHash,
@@ -55,7 +55,7 @@ func (m *BTCHeaderInfo) Validate() error {
 	return nil
 }
 
-func NewBTCHeaderInfoResponse(header *bbn.BTCHeaderBytes, headerHash *bbn.BTCHeaderHashBytes, height uint64, work *sdkmath.Uint) *BTCHeaderInfoResponse {
+func NewBTCHeaderInfoResponse(header *bbn.BTCHeaderBytes, headerHash *bbn.BTCHeaderHashBytes, height uint32, work *sdkmath.Uint) *BTCHeaderInfoResponse {
 	return &BTCHeaderInfoResponse{
 		HeaderHex: header.MarshalHex(),
 		HashHex:   headerHash.MarshalHex(),

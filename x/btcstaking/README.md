@@ -179,7 +179,7 @@ message FinalityProvider {
    // slashed_btc_height indicates the BTC height when
    // the finality provider is slashed.
    // if it's 0 then the finality provider is not slashed
-   uint64 slashed_btc_height = 7;
+   uint32 slashed_btc_height = 7;
 }
 ```
 
@@ -211,10 +211,10 @@ message BTCDelegation {
    repeated bytes fp_btc_pk_list = 4 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
    // start_height is the start BTC height of the BTC delegation
    // it is the start BTC height of the timelock
-   uint64 start_height = 5;
+   uint32 start_height = 5;
    // end_height is the end height of the BTC delegation
    // it is the end BTC height of the timelock - w
-   uint64 end_height = 6;
+   uint32 end_height = 6;
    // total_sat is the total amount of BTC stakes in this delegation
    // quantified in satoshi
    uint64 total_sat = 7;
@@ -349,7 +349,7 @@ BTC stakers (aka delegators), and covenant emulators. The message formats are
 defined at
 [proto/babylon/btcstaking/v1/tx.proto](../../proto/babylon/btcstaking/v1/tx.proto).
 The message handlers are defined at
-[x/btcstaking/keeper/msg_server.go](./keeper/msg_server.go). For more information on the SDK messages, refer to the [Cosmos SDK documentation on messages and queries](https://docs.cosmos.network/main/build/building-modules/messages-and-queries) 
+[x/btcstaking/keeper/msg_server.go](./keeper/msg_server.go). For more information on the SDK messages, refer to the [Cosmos SDK documentation on messages and queries](https://docs.cosmos.network/main/build/building-modules/messages-and-queries)
 
 ### MsgCreateFinalityProvider
 
@@ -715,51 +715,165 @@ The logic is defined at [x/btcstaking/abci.go](./abci.go).
 
 ## Events
 
-The BTC staking module emits a set of events as follows. The events are defined
+The BTC staking module emits a set of events for external subscribers. The events are defined
 at `proto/babylon/btcstaking/v1/events.proto`.
 
-```protobuf
-// EventNewFinalityProvider is the event emitted when a finality provider is created
-message EventNewFinalityProvider { FinalityProvider fp = 1; }
+### Finality provider events
 
-// EventBTCDelegationStateUpdate is the event emitted when a BTC delegation's state is
-// updated. There are the following possible state transitions:
-// - non-existing -> pending, which happens upon `MsgCreateBTCDelegation`
-// - pending -> active, which happens upon `MsgAddCovenantSigs`
-// - active -> unbonded, which happens upon `MsgBTCUndelegate` or upon staking tx timelock expires
-message EventBTCDelegationStateUpdate {
+```protobuf
+// EventFinalityProviderCreated is the event emitted when a finality provider is created
+message EventFinalityProviderCreated {
+  // btc_pk_hex is the hex string of Bitcoin secp256k1 PK of this finality provider
+  string btc_pk_hex = 1;
+  // addr is the babylon address to receive commission from delegations.
+  string addr = 2;
+  // commission defines the commission rate of the finality provider in decimals.
+  string commission = 3;
+  // moniker defines a human-readable name for the finality provider.
+  string moniker = 4;
+  // identity defines an optional identity signature (ex. UPort or Keybase).
+  string identity = 5;
+  // website defines an optional website link.
+  string website = 6;
+  // security_contact defines an optional email for security contact.
+  string security_contact = 7;
+  // details define other optional details.
+  string details = 8;
+}
+
+// EventFinalityProviderEdited is the event emitted when a finality provider is edited
+message EventFinalityProviderEdited {
+  // btc_pk_hex is the hex string of Bitcoin secp256k1 PK of this finality provider
+  string btc_pk_hex = 1;
+  // commission defines the commission rate of the finality provider in decimals.
+  string commission = 2;
+  // moniker defines a human-readable name for the finality provider.
+  string moniker = 3;
+  // identity defines an optional identity signature (ex. UPort or Keybase).
+  string identity = 4;
+  // website defines an optional website link.
+  string website = 5;
+  // security_contact defines an optional email for security contact.
+  string security_contact = 6;
+  // details define other optional details.
+  string details = 7;
+}
+
+// A finality provider starts with status INACTIVE once registered.
+// Possible status transitions are when:
+// 1. it has accumulated sufficient delegations and has
+// timestamped public randomness:
+// INACTIVE -> ACTIVE
+// 2. it is jailed due to downtime:
+// ACTIVE -> JAILED
+// 3. it is slashed due to double-sign:
+// ACTIVE -> SLASHED
+// 4. it is unjailed after a jailing period:
+// JAILED -> INACTIVE/ACTIVE (depending on (1))
+// 5. it does not have sufficient delegations or does not
+// have timestamped public randomness:
+// ACTIVE -> INACTIVE.
+// Note that it is impossible for a SLASHED finality provider to
+// transition to other status
+message EventFinalityProviderStatusChange {
+  // btc_pk is the BTC public key of the finality provider
+  string btc_pk = 1;
+  // new_status is the status that the finality provider
+  // is transitioned to, following FinalityProviderStatus
+  string new_state = 2;
+}
+```
+
+### Delegation events
+
+```protobuf
+
+// EventBTCDelegationCreated is the event emitted when a BTC delegation is created
+// on the Babylon chain
+message EventBTCDelegationCreated {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 1;
-  // new_state is the new state of this BTC delegation
-  BTCDelegationStatus new_state = 2;
+  // version of the params used to validate the delegation
+  string params_version = 2;
+  // finality_provider_btc_pks_hex is the list of hex str of Bitcoin secp256k1 PK of
+  // the finality providers that this BTC delegation delegates to
+  // the PK follows encoding in BIP-340 spec
+  repeated string finality_provider_btc_pks_hex = 3;
+  // staker_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the staker that
+  // creates this BTC delegation the PK follows encoding in BIP-340 spec
+  string staker_btc_pk_hex = 4;
+  // staking_time is the timelock of the staking tx specified in the BTC script
+  string staking_time = 5;
+  // staking_amount is the total amount of BTC stake in this delegation
+  // quantified in satoshi
+  string staking_amount = 6;
+  // unbonding_time is the time is timelock on unbonding tx chosen by the staker
+  string unbonding_time = 7;
+  // unbonding_tx is hex encoded bytes of the unsigned unbonding tx
+  string unbonding_tx = 8;
+  // new_state of the BTC delegation
+  string new_state = 9;
 }
 
-// EventSelectiveSlashing is the event emitted when an adversarial
-// finality provider selectively slashes a BTC delegation. This will
-// result in slashing of all BTC delegations under this finality provider.
-message EventSelectiveSlashing {
-  // evidence is the evidence of selective slashing
-  SelectiveSlashingEvidence evidence = 1;
+// EventCovenantSignatureReceived is the event emitted when a covenant committee
+// sends valid covenant signatures for a BTC delegation
+message EventCovenantSignatureReceived{
+  // staking_tx_hash is the hash of the staking identifing the BTC delegation
+  // that this covenant signature is for
+  string staking_tx_hash = 1;
+  // covenant_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the
+  // covnenat committee that send the signature
+  string covenant_btc_pk_hex = 2;
+  // covenant_unbonding_signature_hex is the hex str of the BIP340 Schnorr
+  // signature of the covenant committee on the unbonding tx
+  string covenant_unbonding_signature_hex = 3;
 }
 
-// EventPowerDistUpdate is an event that affects voting power distribution
-// of BTC staking protocol
-message EventPowerDistUpdate {
-  // EventSlashedFinalityProvider defines an event that a finality provider
-  // is slashed
-  // TODO: unify with existing slashing events
-  message EventSlashedFinalityProvider {
-    bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
-  }
+// EventCovenantQuorumReached is the event emitted quorum of covenant committee
+// is reached for a BTC delegation
+message EventCovenantQuorumReached {
+  // staking_tx_hash is the hash of the staking identifing the BTC delegation
+  // that this covenant signature is for
+  string staking_tx_hash = 1;
+  // new_state of the BTC delegation
+  string new_state = 2;
+}
 
-  // ev is the event that affects voting power distribution
-  oneof ev {
-    // slashed_fp means a finality provider is slashed
-    EventSlashedFinalityProvider slashed_fp = 1;
-    // btc_del_state_update means a BTC delegation's state is updated
-    EventBTCDelegationStateUpdate btc_del_state_update = 2;
-  }
+// EventBTCDelegationInclusionProofReceived is the event emitted when a BTC delegation
+// inclusion proof is received
+message EventBTCDelegationInclusionProofReceived {
+  // staking_tx_hash is the hash of the staking tx.
+  // It uniquely identifies a BTC delegation
+  string staking_tx_hash = 1;
+  // start_height is the start BTC height of the BTC delegation
+  // it is the start BTC height of the timelock
+  string start_height = 2;
+  // end_height is the end height of the BTC delegation
+  // it is calculated by end_height = start_height + staking_time
+  string end_height = 3;
+  // new_state of the BTC delegation
+  string new_state = 4;
+}
+
+// EventBTCDelgationUnbondedEarly is the event emitted when a BTC delegation
+// is unbonded by staker sending unbonding tx to BTC
+message EventBTCDelgationUnbondedEarly {
+  // staking_tx_hash is the hash of the staking tx.
+  // It uniquely identifies a BTC delegation
+  string staking_tx_hash = 1;
+  // new_state of the BTC delegation
+  string new_state = 2;
+}
+
+// EventBTCDelegationExpired is the event emitted when a BTC delegation
+// is unbonded by expiration of the staking tx timelock
+message EventBTCDelegationExpired {
+  // staking_tx_hash is the hash of the staking tx.
+  // It uniquely identifies a BTC delegation
+  string staking_tx_hash = 1;
+  // new_state of the BTC delegation
+  string new_state = 2;
 }
 ```
 
@@ -785,7 +899,7 @@ Endpoint: `/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/finality_pr
 Description: Retrieves information about a specific finality provider by its Bitcoin public key (in BIP-340 format).
 
 BTC Delegations by Status
-Endpoint: `/babylon/btcstaking/v1/btc_delegations`
+Endpoint: `/babylon/btcstaking/v1/btc_delegations/{status}`
 Description: Queries all BTC delegations under a given status.
 
 Active Finality Providers at Height
@@ -809,7 +923,7 @@ Endpoint: `/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/delegations
 Description: Queries all BTC delegations under a specific finality provider.
 
 BTC Delegation by Staking Transaction Hash
-Endpoint: `/babylon/btcstaking/v1/btc_delegations/{staking_tx_hash_hex}`
+Endpoint: `/babylon/btcstaking/v1/btc_delegation/{staking_tx_hash_hex}`
 Description: Retrieves a specific BTC delegation by its corresponding staking transaction hash.
 
 Additional Information:

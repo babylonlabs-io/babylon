@@ -35,7 +35,7 @@ service Query {
 
   // BTCDelegations queries all BTC delegations under a given status
   rpc BTCDelegations(QueryBTCDelegationsRequest) returns (QueryBTCDelegationsResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegations";
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegations/{status}";
   }
 
   // ActiveFinalityProvidersAtHeight queries finality providers with non zero voting power at given height.
@@ -66,7 +66,7 @@ service Query {
 
   // BTCDelegation retrieves delegation by corresponding staking tx hash
   rpc BTCDelegation(QueryBTCDelegationRequest) returns (QueryBTCDelegationResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegations/{staking_tx_hash_hex}";
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegation/{staking_tx_hash_hex}";
   }
 }
 
@@ -253,10 +253,10 @@ message BTCDelegationResponse {
   repeated bytes fp_btc_pk_list = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   // start_height is the start BTC height of the BTC delegation
   // it is the start BTC height of the timelock
-  uint64 start_height = 4;
+  uint32 start_height = 4;
   // end_height is the end height of the BTC delegation
   // it is the end BTC height of the timelock - w
-  uint64 end_height = 5;
+  uint32 end_height = 5;
   // total_sat is the total amount of BTC stakes in this delegation
   // quantified in satoshi
   uint64 total_sat = 6;
@@ -344,7 +344,7 @@ message FinalityProviderResponse {
   // slashed_btc_height indicates the BTC height when
   // the finality provider is slashed.
   // if it's 0 then the finality provider is not slashed
-  uint64 slashed_btc_height = 7;
+  uint32 slashed_btc_height = 7;
   // height is the queried Babylon height
   uint64 height = 8;
   // voting_power is the voting power of this finality provider at the given height

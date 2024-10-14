@@ -124,21 +124,6 @@ babylond --home .testnet/node0/babylond --chain-id chain-test \
          tx btclightclient insert-header <header-hex>
 ```
 
-## Running a multi-node testnet
-
-We provide support for running a multi-node testnet using Docker. To build it
-
-```console
-make localnet-start
-```
-
-The corresponding node directories can be found under `.testnets`
-
-```console
-$ ls .testnets
-gentxs node0 node1 node2 node3
-```
-
 ## Running node in Production
 
 When running the Babylon node in a production setting, operators should adhere to 

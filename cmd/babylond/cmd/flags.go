@@ -52,12 +52,12 @@ const (
 type GenesisCLIArgs struct {
 	ChainID                      string
 	MaxActiveValidators          uint32
-	BtcConfirmationDepth         uint64
-	BtcFinalizationTimeout       uint64
+	BtcConfirmationDepth         uint32
+	BtcFinalizationTimeout       uint32
 	CheckpointTag                string
 	EpochInterval                uint64
 	BaseBtcHeaderHex             string
-	BaseBtcHeaderHeight          uint64
+	BaseBtcHeaderHeight          uint32
 	AllowedReporterAddresses     []string
 	InflationRateChange          float64
 	InflationMax                 float64
@@ -87,8 +87,8 @@ func addGenesisFlags(cmd *cobra.Command) {
 	// staking flags
 	cmd.Flags().Uint32(flagMaxActiveValidators, 10, "Maximum number of validators.")
 	// btccheckpoint flags
-	cmd.Flags().Uint64(flagBtcConfirmationDepth, 6, "Confirmation depth for Bitcoin headers.")
-	cmd.Flags().Uint64(flagBtcFinalizationTimeout, 20, "Finalization timeout for Bitcoin headers.")
+	cmd.Flags().Uint32(flagBtcConfirmationDepth, 6, "Confirmation depth for Bitcoin headers.")
+	cmd.Flags().Uint32(flagBtcFinalizationTimeout, 20, "Finalization timeout for Bitcoin headers.")
 	cmd.Flags().String(flagCheckpointTag, btcctypes.DefaultCheckpointTag, "Hex encoded tag for babylon checkpoint on btc")
 	// epoch args
 	cmd.Flags().Uint64(flagEpochInterval, 400, "Number of blocks between epochs. Must be more than 0.")
@@ -96,7 +96,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	// Genesis header for the simnet
 	cmd.Flags().String(flagBaseBtcHeaderHex, "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000", "Hex of the base Bitcoin header.")
 	cmd.Flags().String(flagAllowedReporterAddresses, strings.Join(btcltypes.DefaultParams().InsertHeadersAllowList, ","), "addresses of reporters allowed to submit Bitcoin headers to babylon")
-	cmd.Flags().Uint64(flagBaseBtcHeaderHeight, 0, "Height of the base Bitcoin header.")
+	cmd.Flags().Uint32(flagBaseBtcHeaderHeight, 0, "Height of the base Bitcoin header.")
 	// btcstaking args
 	cmd.Flags().String(flagCovenantPks, strings.Join(btcstypes.DefaultParams().CovenantPksHex(), ","), "Bitcoin staking covenant public keys, comma separated")
 	cmd.Flags().Uint32(flagCovenantQuorum, btcstypes.DefaultParams().CovenantQuorum, "Bitcoin staking covenant quorum")
@@ -127,12 +127,12 @@ func addGenesisFlags(cmd *cobra.Command) {
 func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
 	maxActiveValidators, _ := cmd.Flags().GetUint32(flagMaxActiveValidators)
-	btcConfirmationDepth, _ := cmd.Flags().GetUint64(flagBtcConfirmationDepth)
-	btcFinalizationTimeout, _ := cmd.Flags().GetUint64(flagBtcFinalizationTimeout)
+	btcConfirmationDepth, _ := cmd.Flags().GetUint32(flagBtcConfirmationDepth)
+	btcFinalizationTimeout, _ := cmd.Flags().GetUint32(flagBtcFinalizationTimeout)
 	checkpointTag, _ := cmd.Flags().GetString(flagCheckpointTag)
 	epochInterval, _ := cmd.Flags().GetUint64(flagEpochInterval)
 	baseBtcHeaderHex, _ := cmd.Flags().GetString(flagBaseBtcHeaderHex)
-	baseBtcHeaderHeight, _ := cmd.Flags().GetUint64(flagBaseBtcHeaderHeight)
+	baseBtcHeaderHeight, _ := cmd.Flags().GetUint32(flagBaseBtcHeaderHeight)
 	reporterAddresses, _ := cmd.Flags().GetString(flagAllowedReporterAddresses)
 	covenantPks, _ := cmd.Flags().GetString(flagCovenantPks)
 	covenantQuorum, _ := cmd.Flags().GetUint32(flagCovenantQuorum)

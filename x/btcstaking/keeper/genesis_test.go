@@ -38,7 +38,7 @@ func TestExportGenesis(t *testing.T) {
 
 	for _, fp := range fps {
 		btcHead := btclcK.GetTipInfo(ctx)
-		btcHead.Height = blkHeight + 100
+		btcHead.Height = uint32(blkHeight + 100)
 		btclcK.InsertHeaderInfos(ctx, []*btclightclientt.BTCHeaderInfo{
 			btcHead,
 		})

@@ -616,6 +616,8 @@ func BuildRelativeTimelockTaprootScript(
 
 // ParseBlkHeightAndPubKeyFromStoreKey expects to receive a key with
 // BigEndianUint64(blkHeight) || BIP340PubKey(fpBTCPK)
+// TODO: this function should not be in the btcstaking library
+// it is related to our internal cosmos sdk storage
 func ParseBlkHeightAndPubKeyFromStoreKey(key []byte) (blkHeight uint64, fpBTCPK *bbn.BIP340PubKey, err error) {
 	sizeBigEndian := 8
 	if len(key) < sizeBigEndian+1 {

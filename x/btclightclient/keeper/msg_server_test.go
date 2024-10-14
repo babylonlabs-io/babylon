@@ -43,8 +43,8 @@ func FuzzMsgServerInsertNewTip(f *testing.F) {
 			r,
 			blcKeeper,
 			ctx,
-			datagen.RandomInt(r, 50)+10,
-			datagen.RandomInt(r, 50)+10,
+			uint32(datagen.RandomInt(r, 50))+10,
+			uint32(datagen.RandomInt(r, 50))+10,
 		)
 		initTip := chain.GetTipInfo()
 
@@ -60,7 +60,6 @@ func FuzzMsgServerInsertNewTip(f *testing.F) {
 		chainExenstionLength := uint32(r.Int31n(200) + 1)
 		chainExtension := datagen.GenRandomValidChainStartingFrom(
 			r,
-			initTip.Height,
 			initTip.Header.ToBlockHeader(),
 			nil,
 			chainExenstionLength,
@@ -73,7 +72,7 @@ func FuzzMsgServerInsertNewTip(f *testing.F) {
 		require.NoError(t, err)
 
 		extendedChainWork := initTip.Work.Add(*chainExtensionWork)
-		extendedChainHeight := uint64(uint32(initTip.Height) + chainExenstionLength)
+		extendedChainHeight := initTip.Height + chainExenstionLength
 
 		checkTip(
 			t,
@@ -98,13 +97,13 @@ func FuzzMsgServerReorgChain(f *testing.F) {
 		srv, blcKeeper, sdkCtx := setupMsgServer(t)
 		ctx := sdk.UnwrapSDKContext(sdkCtx)
 
-		chainLength := datagen.RandomInt(r, 50) + 10
+		chainLength := uint32(datagen.RandomInt(r, 50)) + 10
 		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
 			ctx,
-			datagen.RandomInt(r, 50)+10,
+			uint32(datagen.RandomInt(r, 50))+10,
 			chainLength,
 		)
 		initTip := chain.GetTipInfo()
@@ -118,17 +117,16 @@ func FuzzMsgServerReorgChain(f *testing.F) {
 			initTip.Header.ToBlockHeader(),
 		)
 
-		reorgDepth := r.Intn(int(chainLength-1)) + 1
+		reorgDepth := r.Int31n(int32(chainLength-1)) + 1
 
-		forkHeaderHeight := initTip.Height - uint64(reorgDepth)
+		forkHeaderHeight := initTip.Height - uint32(reorgDepth)
 		forkHeader := blcKeeper.GetHeaderByHeight(ctx, forkHeaderHeight)
 		require.NotNil(t, forkHeader)
 
 		// fork chain will always be longer that current c
-		forkChainLen := reorgDepth + 10
+		forkChainLen := uint32(reorgDepth + 10)
 		chainExtension := datagen.GenRandomValidChainStartingFrom(
 			r,
-			forkHeader.Height,
 			forkHeader.Header.ToBlockHeader(),
 			nil,
 			uint32(forkChainLen),
@@ -140,7 +138,7 @@ func FuzzMsgServerReorgChain(f *testing.F) {
 		require.NoError(t, err)
 
 		extendedChainWork := forkHeader.Work.Add(*chainExtensionWork)
-		extendedChainHeight := forkHeader.Height + uint64(forkChainLen)
+		extendedChainHeight := forkHeader.Height + forkChainLen
 
 		checkTip(
 			t,
@@ -194,7 +192,6 @@ func TestAllowUpdatesOnlyFromReportesInTheList(t *testing.T) {
 
 	chainExtension := datagen.GenRandomValidChainStartingFrom(
 		r,
-		initTip.Height,
 		initTip.Header.ToBlockHeader(),
 		nil,
 		10,
@@ -210,7 +207,6 @@ func TestAllowUpdatesOnlyFromReportesInTheList(t *testing.T) {
 
 	newChainExt := datagen.GenRandomValidChainStartingFrom(
 		r,
-		newTip.Height,
 		newTip.Header.ToBlockHeader(),
 		nil,
 		10,

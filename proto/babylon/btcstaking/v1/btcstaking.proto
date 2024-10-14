@@ -33,7 +33,7 @@ message FinalityProvider {
     // slashed_btc_height indicates the BTC height when
     // the finality provider is slashed.
     // if it's 0 then the finality provider is not slashed
-    uint64 slashed_btc_height = 7;
+    uint32 slashed_btc_height = 7;
     // jailed defines whether the finality provider is jailed
     bool jailed = 8;
 }
@@ -54,7 +54,7 @@ message FinalityProviderWithMeta {
     // slashed_btc_height indicates the BTC height when
     // the finality provider is slashed.
     // if it's 0 then the finality provider is not slashed
-    uint64 slashed_btc_height = 5;
+    uint32 slashed_btc_height = 5;
     // jailed defines whether the finality provider is detected jailed
     bool jailed = 6;
 }
@@ -77,10 +77,10 @@ message BTCDelegation {
     uint32 staking_time = 5;
     // start_height is the start BTC height of the BTC delegation
     // it is the start BTC height of the timelock
-    uint64 start_height = 6;
+    uint32 start_height = 6;
     // end_height is the end height of the BTC delegation
     // it is calculated by end_height = start_height + staking_time
-    uint64 end_height = 7;
+    uint32 end_height = 7;
     // total_sat is the total amount of BTC stakes in this delegation
     // quantified in satoshi
     uint64 total_sat = 8;

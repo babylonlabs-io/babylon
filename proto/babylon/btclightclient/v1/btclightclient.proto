@@ -20,7 +20,7 @@ message BTCHeaderInfo {
   bytes hash = 2
       [ (gogoproto.customtype) =
             "github.com/babylonlabs-io/babylon/types.BTCHeaderHashBytes" ];
-  uint64 height = 3;
+  uint32 height = 3;
   bytes work = 4
       [ (gogoproto.customtype) = "cosmossdk.io/math.Uint" ];
 }

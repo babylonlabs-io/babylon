@@ -37,14 +37,6 @@
           "Params": "CheckpointingParams"
         }
       }
-    },
-    {
-      "url":  "./tmp-swagger-gen/babylon/zoneconcierge/v1/query.swagger.json",
-      "operationIds": {
-        "rename": {
-          "Params": "ZoneConciergeParams"
-        }
-      }
     }
   ]
 }

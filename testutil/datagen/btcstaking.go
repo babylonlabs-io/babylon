@@ -89,7 +89,8 @@ func GenRandomBTCDelegation(
 	covenantPks []*btcec.PublicKey,
 	covenantQuorum uint32,
 	slashingPkScript []byte,
-	startHeight, endHeight, totalSat uint64,
+	startHeight, endHeight uint32,
+	totalSat uint64,
 	slashingRate sdkmath.LegacyDec,
 	slashingChangeLockTime uint16,
 ) (*bstypes.BTCDelegation, error) {

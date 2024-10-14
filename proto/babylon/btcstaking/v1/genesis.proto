@@ -54,7 +54,7 @@ message BlockHeightBbnToBtc {
   // block_height_bbn is the height of the block in the babylon chain.
   uint64 block_height_bbn = 1;
   // block_height_btc is the height of the block in the BTC.
-  uint64 block_height_btc = 2;
+  uint32 block_height_btc = 2;
 }
 
 // BTCDelegator BTC delegator information with the associated finality provider.
@@ -72,7 +72,7 @@ message EventIndex {
   // idx is the index the event was stored.
   uint64 idx = 1;
   // block_height_btc is the height of the block in the BTC chain.
-  uint64 block_height_btc = 2;
+  uint32 block_height_btc = 2;
   // event the event stored.
   EventPowerDistUpdate event = 3;
 }

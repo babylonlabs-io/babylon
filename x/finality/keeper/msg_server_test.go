@@ -378,3 +378,69 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	require.Equal(t, msg.FinalitySig.MustMarshal(),
 		sig.MustMarshal())
 }
+
+func TestDoNotPanicOnNilProof(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+	iKeeper := types.NewMockIncentiveKeeper(ctrl)
+	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+	ms := keeper.NewMsgServerImpl(*fKeeper)
+
+	// create and register a random finality provider
+	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
+	require.NoError(t, err)
+	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+	fpBTCPKBytes := fpBTCPK.MustMarshal()
+	require.NoError(t, err)
+	bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
+
+	// set committed epoch num
+	committedEpochNum := datagen.GenRandomEpochNum(r) + 1
+	cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: committedEpochNum}).AnyTimes()
+
+	// commit some public randomness
+	startHeight := uint64(0)
+	numPubRand := uint64(200)
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+	require.NoError(t, err)
+	_, err = ms.CommitPubRandList(ctx, msgCommitPubRandList)
+	require.NoError(t, err)
+
+	// generate a vote
+	blockHeight := startHeight + uint64(1)
+	blockAppHash := datagen.GenRandomByteArray(r, 32)
+	signer := datagen.GenRandomAccount().Address
+	msg, err := datagen.NewMsgAddFinalitySig(
+		signer,
+		btcSK,
+		startHeight,
+		blockHeight,
+		randListInfo,
+		blockAppHash,
+	)
+	require.NoError(t, err)
+
+	// Not panic on empty proof
+	msg.Proof = nil
+	// Case 3: successful if the finality provider has voting power and has not casted this vote yet
+	// index this block first
+	ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: blockAppHash})
+	fKeeper.IndexBlock(ctx)
+	bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).AnyTimes()
+	// mock voting power
+	bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(1)).AnyTimes()
+	// set the committed epoch finalized for the rest of the cases
+	lastFinalizedEpoch := datagen.GenRandomEpochNum(r) + committedEpochNum
+	cKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(lastFinalizedEpoch).AnyTimes()
+
+	// add vote and it should work
+	_, err = ms.AddFinalitySig(ctx, msg)
+	require.Error(t, err)
+}

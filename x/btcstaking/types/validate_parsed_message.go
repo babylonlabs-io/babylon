@@ -27,7 +27,7 @@ func ValidateParsedMessageAgainstTheParams(
 	// which is larger value from:
 	// - MinUnbondingTime
 	// - CheckpointFinalizationTimeout
-	if uint64(pm.UnbondingTime) <= minUnbondingTime {
+	if uint32(pm.UnbondingTime) <= minUnbondingTime {
 		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding time %d must be larger than %d", pm.UnbondingTime, minUnbondingTime)
 	}
 
@@ -78,7 +78,7 @@ func ValidateParsedMessageAgainstTheParams(
 		)
 	}
 
-	if err := btcstaking.CheckTransactions(
+	if err := btcstaking.CheckSlashingTxMatchFundingTx(
 		pm.StakingSlashingTx.Transaction,
 		pm.StakingTx.Transaction,
 		stakingOutputIdx,
@@ -108,9 +108,16 @@ func ValidateParsedMessageAgainstTheParams(
 	}
 
 	// 3. Validate all data related to unbonding tx:
+	// - it is valid BTC pre-signed transaction
 	// - it has valid unbonding output
 	// - slashing tx is relevant to unbonding tx
 	// - slashing tx signature is valid
+	if err := btcstaking.CheckPreSignedUnbondingTxSanity(
+		pm.UnbondingTx.Transaction,
+	); err != nil {
+		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding tx is not a valid pre-signed transaction: %v", err)
+	}
+
 	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
 		pm.StakerPK.PublicKey,
 		pm.FinalityProviderKeys.PublicKeys,
@@ -129,7 +136,7 @@ func ValidateParsedMessageAgainstTheParams(
 		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding tx does not contain expected unbonding output")
 	}
 
-	err = btcstaking.CheckTransactions(
+	err = btcstaking.CheckSlashingTxMatchFundingTx(
 		pm.UnbondingSlashingTx.Transaction,
 		pm.UnbondingTx.Transaction,
 		unbondingOutputIdx,

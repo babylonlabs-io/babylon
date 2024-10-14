@@ -25,7 +25,7 @@ import (
 
 var (
 	net          = &chaincfg.SimNetParams
-	btcTipHeight = uint64(30)
+	btcTipHeight = uint32(30)
 )
 
 type Helper struct {
@@ -90,7 +90,7 @@ func (h *Helper) SetCtxHeight(height uint64) {
 
 func (h *Helper) GenAndApplyCustomParams(
 	r *rand.Rand,
-	finalizationTimeout uint64,
+	finalizationTimeout uint32,
 	minUnbondingTime uint32,
 ) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
 	// mock base header

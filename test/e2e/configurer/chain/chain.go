@@ -176,7 +176,7 @@ func (c *Config) GetPersistentPeers() []string {
 
 func (c *Config) GetNodeAtIndex(nodeIndex int) (*NodeConfig, error) {
 	if nodeIndex > len(c.NodeConfigs) {
-		return nil, fmt.Errorf("node index (%d) is greter than the number of nodes available (%d)", nodeIndex, len(c.NodeConfigs))
+		return nil, fmt.Errorf("node index (%d) is greater than the number of nodes available (%d)", nodeIndex, len(c.NodeConfigs))
 	}
 	return c.NodeConfigs[nodeIndex], nil
 }

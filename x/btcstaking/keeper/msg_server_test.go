@@ -808,7 +808,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 	tests := []struct {
 		name                      string
-		finalizationTimeout       uint64
+		finalizationTimeout       uint32
 		minUnbondingTime          uint32
 		unbondingTimeInDelegation uint16
 		err                       error
