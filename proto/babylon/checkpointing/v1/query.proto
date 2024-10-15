@@ -122,10 +122,21 @@ message QueryBlsPublicKeyListRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
+// BlsPublicKeyListResponse couples validator address, voting power, and its bls
+// public key
+message BlsPublicKeyListResponse {
+  // validator_address is the address of the validator
+  string validator_address = 1;
+  // bls_pub_key is the BLS public key of the validator
+  string bls_pub_key_hex = 2;
+  // voting_power is the voting power of the validator at the given epoch
+  uint64 voting_power = 3;
+}
+
 // QueryBlsPublicKeyListResponse is the response type for the
 // Query/BlsPublicKeys RPC method.
 message QueryBlsPublicKeyListResponse {
-  repeated ValidatorWithBlsKey validator_with_bls_keys = 1;
+  repeated BlsPublicKeyListResponse validator_with_bls_keys = 1;
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
