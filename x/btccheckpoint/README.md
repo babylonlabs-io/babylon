@@ -146,20 +146,13 @@ func GetBtcLightClientUpdatedKey() []byte {
 }
 ```
 
-The module also maintains several key-value pairs in its store:
-
-- `LastFinalizedEpochKey`: Stores the number of the last finalized epoch.
-- `BtcLightClientUpdatedKey`: Indicates whether the BTC light client was updated during the current block execution.
-- `ParamsKey`: Stores module parameters.
-
-These structures and key-value pairs allow the module to efficiently manage and retrieve checkpoint-related data.
-
 ## Messages
 
 The BTC Checkpoint module primarily handles messages from the vigilante reporter. The message formats are defined in [proto/babylon/btccheckpoint/v1/tx.proto](proto/babylon/btccheckpoint/v1/tx.proto.). The message handlers are defined in [x/btccheckpoint/keeper/msg_server.go](x/btccheckpoint/keeper/msg_server.go). For more information on the SDK messages, refer to the [Cosmos SDK documentation on messages and queries](https://docs.cosmos.network/main/build/building-modules/messages-and-queries)
+
 ### MsgInsertBTCSpvProof
 
-`MsgInsertBTCSpvProof` is used by vigilante  to insert a new checkpoint into the store, which can be seen [here](https://github.com/babylonlabs-io/vigilante/blob/24da0381465249aa7b55be682a66e32cdaddc81b/types/btccheckpoint.go#L11). 
+`MsgInsertBTCSpvProof` is used by vigilante reporter to insert a new checkpoint into the store, which can be seen [here](https://github.com/babylonlabs-io/vigilante/blob/24da0381465249aa7b55be682a66e32cdaddc81b/types/btccheckpoint.go#L11). 
 
 ```protobuf
 message MsgInsertBTCSpvProof {
