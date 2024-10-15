@@ -5,6 +5,7 @@ on:
     branches:
     - 'main'
     - 'dev'
+    - 'hot-fix-euphrates-0.5.0-rc.0'
     tags:
     - '*'
 
