@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "babylon/incentive/params.proto";
 import "babylon/incentive/incentive.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
 
@@ -56,10 +57,30 @@ message QueryBTCStakingGaugeRequest {
     uint64 height = 1;
 }
 
+message BTCStakingGaugeResponse {
+    // coins that have been in the gauge
+    // can have multiple coin denoms
+    repeated cosmos.base.v1beta1.Coin coins = 1 [
+        (gogoproto.nullable) = false,
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    ];
+
+}
+
+message BTCTimestampingGaugeResponse {
+    // coins that have been in the gauge
+    // can have multiple coin denoms
+    repeated cosmos.base.v1beta1.Coin coins = 1 [
+        (gogoproto.nullable) = false,
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    ];
+
+}
+
 // QueryBTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC method.
 message QueryBTCStakingGaugeResponse {
     // gauge is the BTC staking gauge at the queried height 
-    Gauge gauge = 1;
+    BTCStakingGaugeResponse gauge = 1;
 }
 
 // QueryBTCTimestampingGaugeRequest is request type for the Query/BTCTimestampingGauge RPC method.
@@ -71,5 +92,5 @@ message QueryBTCTimestampingGaugeRequest {
 // QueryBTCTimestampingGaugeResponse is response type for the Query/BTCTimestampingGauge RPC method.
 message QueryBTCTimestampingGaugeResponse {
     // gauge is the BTC timestamping gauge at the queried epoch 
-    Gauge gauge = 1;
+    BTCTimestampingGaugeResponse gauge = 1;
 }

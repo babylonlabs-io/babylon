@@ -289,6 +289,7 @@ func (s *BTCTimestampingTestSuite) Test6InterceptFeeCollector() {
 		if err != nil {
 			return false
 		}
+		btcTimestampingGauge = response.Gauge
 		s.T().Logf("BTC timestamping gauge at current epoch %d: %s", curEpoch, btcTimestampingGauge.String())
 		return !btcTimestampingGauge.Coins.Empty()
 	}, time.Second*10, time.Second)
