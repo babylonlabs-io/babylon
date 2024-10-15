@@ -109,9 +109,11 @@ func (k Keeper) RecentEpochStatusCount(ctx context.Context, req *types.QueryRece
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the last checkpointed epoch")
 	}
-	targetEpoch := tipEpoch - req.EpochCount + 1
-	if targetEpoch < req.EpochCount-1 { //nolint:staticcheck // uint64 doesn't go below zero
+	targetEpoch := tipEpoch
+	if req.EpochCount > tipEpoch {
 		targetEpoch = 0
+	} else {
+		targetEpoch -= req.EpochCount - 1
 	}
 	// iterate epochs in the reverse order and count epoch numbers for each status
 	epochStatusCount := make(map[string]uint64, 0)
