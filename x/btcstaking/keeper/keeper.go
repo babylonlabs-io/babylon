@@ -93,7 +93,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 		k.Logger(sdkCtx).With(
 			"currHeight", currHeight,
 			"activationHeight", activationHeight,
-		).Debug("module not active yet")
+		).Info("module not active yet")
 		return nil
 	}
 	// update voting power distribution
