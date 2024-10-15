@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"encoding/hex"
 	"math/rand"
 	"testing"
 
@@ -48,7 +49,7 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 		res, err := queryClient.BlsPublicKeyList(ctx, queryRequest)
 		require.NoError(t, err)
 		require.Len(t, res.ValidatorWithBlsKeys, 1)
-		require.Equal(t, res.ValidatorWithBlsKeys[0].BlsPubKey, genesisBLSPubkey.Bytes())
+		require.Equal(t, res.ValidatorWithBlsKeys[0].BlsPubKeyHex, hex.EncodeToString(genesisBLSPubkey.Bytes()))
 		require.Equal(t, res.ValidatorWithBlsKeys[0].VotingPower, uint64(1000))
 		require.Equal(t, res.ValidatorWithBlsKeys[0].ValidatorAddress, genesisVal.GetValAddressStr())
 

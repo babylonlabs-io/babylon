@@ -128,7 +128,7 @@ message BlsPublicKeyListResponse {
   // validator_address is the address of the validator
   string validator_address = 1;
   // bls_pub_key is the BLS public key of the validator
-  bytes bls_pub_key = 2;
+  string bls_pub_key_hex = 2;
   // voting_power is the voting power of the validator at the given epoch
   uint64 voting_power = 3;
 }
