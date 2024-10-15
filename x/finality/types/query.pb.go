@@ -986,15 +986,10 @@ func (m *QuerySigningInfoRequest) GetFpBtcPkHex() string {
 // SigningInfoResponse defines the API response containing a finality provider's signing info
 // for monitoring their liveness activity.
 type SigningInfoResponse struct {
-	// fp_btc_pk is the BTC PK of the finality provider that casts this vote
-	FpBtcPkHex string `protobuf:"bytes,1,opt,name=fp_btc_pk_hex,json=fpBtcPkHex,proto3" json:"fp_btc_pk_hex,omitempty"`
-	// start_height is the block height at which finality provider become active
-	StartHeight int64 `protobuf:"varint,2,opt,name=start_height,json=startHeight,proto3" json:"start_height,omitempty"`
-	// missed_blocks_counter defines a counter to avoid unnecessary array reads.
-	// Note that `Sum(MissedBlocksBitArray)` always equals `MissedBlocksCounter`.
-	MissedBlocksCounter int64 `protobuf:"varint,3,opt,name=missed_blocks_counter,json=missedBlocksCounter,proto3" json:"missed_blocks_counter,omitempty"`
-	// Timestamp until which the validator is jailed due to liveness downtime.
-	JailedUntil time.Time `protobuf:"bytes,4,opt,name=jailed_until,json=jailedUntil,proto3,stdtime" json:"jailed_until"`
+	FpBtcPkHex          string    `protobuf:"bytes,1,opt,name=fp_btc_pk_hex,json=fpBtcPkHex,proto3" json:"fp_btc_pk_hex,omitempty"`
+	StartHeight         int64     `protobuf:"varint,2,opt,name=start_height,json=startHeight,proto3" json:"start_height,omitempty"`
+	MissedBlocksCounter int64     `protobuf:"varint,3,opt,name=missed_blocks_counter,json=missedBlocksCounter,proto3" json:"missed_blocks_counter,omitempty"`
+	JailedUntil         time.Time `protobuf:"bytes,4,opt,name=jailed_until,json=jailedUntil,proto3,stdtime" json:"jailed_until"`
 }
 
 func (m *SigningInfoResponse) Reset()         { *m = SigningInfoResponse{} }
