@@ -89,7 +89,7 @@ func GenRandomBTCDelegation(
 	covenantPks []*btcec.PublicKey,
 	covenantQuorum uint32,
 	slashingPkScript []byte,
-	startHeight, endHeight uint32,
+	stakingTime, startHeight, endHeight uint32,
 	totalSat uint64,
 	slashingRate sdkmath.LegacyDec,
 	slashingChangeLockTime uint16,
@@ -104,8 +104,6 @@ func GenRandomBTCDelegation(
 	}
 	staker := GenRandomAccount()
 
-	stakingTime := uint16(endHeight - startHeight)
-
 	// staking/slashing tx
 	stakingSlashingInfo := GenBTCStakingSlashingInfo(
 		r,
@@ -115,7 +113,7 @@ func GenRandomBTCDelegation(
 		fpPKs,
 		covenantPks,
 		covenantQuorum,
-		stakingTime,
+		uint16(stakingTime),
 		int64(totalSat),
 		slashingPkScript,
 		slashingRate,

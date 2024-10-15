@@ -10,6 +10,7 @@ func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus)
 		StakerAddr:           btcDel.StakerAddr,
 		BtcPk:                btcDel.BtcPk,
 		FpBtcPkList:          btcDel.FpBtcPkList,
+		StakingTime:          btcDel.StakingTime,
 		StartHeight:          btcDel.StartHeight,
 		EndHeight:            btcDel.EndHeight,
 		TotalSat:             btcDel.TotalSat,
