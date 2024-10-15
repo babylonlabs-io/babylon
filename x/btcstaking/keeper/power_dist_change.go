@@ -191,9 +191,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
 			// record slashed fps
+			emitSlashedFPEvent(sdkCtx, typedEvent.SlashedFp.Pk)
 			slashedFPs[typedEvent.SlashedFp.Pk.MarshalHex()] = struct{}{}
 		case *types.EventPowerDistUpdate_JailedFp:
 			// record jailed fps
+			emitJailedFPEvent(sdkCtx, typedEvent.JailedFp.Pk)
 			jailedFPs[typedEvent.JailedFp.Pk.MarshalHex()] = struct{}{}
 		case *types.EventPowerDistUpdate_UnjailedFp:
 			// record unjailed fps
@@ -319,6 +321,24 @@ func emitUnbondedBTCDelEvent(sdkCtx sdk.Context, btcDel *types.BTCDelegation, st
 		if err := sdkCtx.EventManager().EmitTypedEvent(expiredEvent); err != nil {
 			panic(fmt.Errorf("failed to emit event for the new expired BTC delegation: %w", err))
 		}
+	}
+}
+
+func emitSlashedFPEvent(sdkCtx sdk.Context, fpBTCPK *bbn.BIP340PubKey) {
+	statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fpBTCPK, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED)
+	if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
+		panic(fmt.Errorf(
+			"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
+			types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED.String(), err))
+	}
+}
+
+func emitJailedFPEvent(sdkCtx sdk.Context, fpBTCPK *bbn.BIP340PubKey) {
+	statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fpBTCPK, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED)
+	if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
+		panic(fmt.Errorf(
+			"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
+			types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED.String(), err))
 	}
 }
 
