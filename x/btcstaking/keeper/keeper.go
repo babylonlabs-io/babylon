@@ -104,9 +104,9 @@ func (k Keeper) GetActivationBlockHeightVotingPower() int64 {
 	case chaincfg.MainNetParams.Name:
 		return 300
 	case chaincfg.TestNet3Params.Name:
-		return 35
+		return 50
 	case chaincfg.RegressionNetParams.Name:
-		return 10
+		return 40
 	default:
 		return 0
 	}
