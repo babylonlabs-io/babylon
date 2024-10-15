@@ -64,5 +64,5 @@ func (n *NodeConfig) QueryBTCTimestampingGauge(epoch uint64) (*incentivetypes.BT
 		return nil, err
 	}
 
-	return resp.Gauge.Gauge, nil
+	return resp.Gauge, nil
 }
