@@ -4,6 +4,7 @@ import (
 	fmt "fmt"
 
 	"github.com/babylonlabs-io/babylon/crypto/eots"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,6 +19,30 @@ var (
 
 func (m *MsgAddFinalitySig) MsgToSign() []byte {
 	return msgToSignForVote(m.BlockHeight, m.BlockAppHash)
+}
+
+func (m *MsgAddFinalitySig) ValidateBasic() error {
+	if m.FpBtcPk.Size() != bbn.BIP340PubKeyLen {
+		return ErrInvalidFinalitySig.Wrapf("invalid finality provider BTC public key length: got %d, want %d", m.FpBtcPk.Size(), bbn.BIP340PubKeyLen)
+	}
+
+	if m.PubRand.Size() != bbn.SchnorrPubRandLen {
+		return ErrInvalidFinalitySig.Wrapf("invalind public randomness length: got %d, want %d", m.PubRand.Size(), bbn.SchnorrPubRandLen)
+	}
+
+	if m.Proof == nil {
+		return ErrInvalidFinalitySig.Wrap("empty inclusion proof")
+	}
+
+	if m.FinalitySig.Size() != bbn.SchnorrEOTSSigLen {
+		return ErrInvalidFinalitySig.Wrapf("invalid finality signature length: got %d, want %d", m.FinalitySig.Size(), bbn.BIP340SignatureLen)
+	}
+
+	if len(m.BlockAppHash) != tmhash.Size {
+		return ErrInvalidFinalitySig.Wrapf("invalid block app hash length: got %d, want %d", len(m.BlockAppHash), tmhash.Size)
+	}
+
+	return nil
 }
 
 // VerifyFinalitySig verifies the finality signature message w.r.t. the
