@@ -96,12 +96,17 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	return nil
 }
 
+// GetActivationBlockHeightVotingPower returns the minimum block
+// height that the babylon should have to start processing
+// voting power distribution events.
 func (k Keeper) GetActivationBlockHeightVotingPower() int64 {
 	switch k.btcNet.Name {
 	case chaincfg.MainNetParams.Name:
 		return 300
+	case chaincfg.TestNet3Params.Name:
+		return 35
 	case chaincfg.RegressionNetParams.Name:
-		return 100
+		return 10
 	default:
 		return 0
 	}
