@@ -916,6 +916,8 @@ func createNDelegationsForFinalityProvider(
 
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
+		startHeight, endHeight := 1, math.MaxUint16
+		stakingTime := uint32(endHeight) - uint32(startHeight)
 		del, err := datagen.GenRandomBTCDelegation(
 			r,
 			t,
@@ -926,6 +928,7 @@ func createNDelegationsForFinalityProvider(
 			covenantPks,
 			quorum,
 			slashingPkScript,
+			stakingTime,
 			1,
 			1+(math.MaxUint16-1),
 			uint64(stakingValue),
