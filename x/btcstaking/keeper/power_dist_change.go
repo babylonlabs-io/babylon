@@ -34,7 +34,24 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	if len(events) == 0 {
 		if dc != nil {
 			// map everything in prev height to this height
-			k.recordVotingPowerAndCache(ctx, dc)
+			// NOTE: deep copy the previous dist cache because the
+			// cache for the new height shares the same distribution
+			// info due to no new events but timestamping status
+			// might be changed in the new dist cache after calling
+			// k.recordVotingPowerAndCache()
+			newDc := types.NewVotingPowerDistCache()
+			newDc.TotalVotingPower = dc.TotalVotingPower
+			newDc.NumActiveFps = dc.NumActiveFps
+			newFps := make([]*types.FinalityProviderDistInfo, len(dc.FinalityProviders))
+			for i, prevFp := range dc.FinalityProviders {
+				newFp := *prevFp
+				newFps[i] = &newFp
+			}
+			newDc.FinalityProviders = newFps
+			// record voting power and cache for this height
+			k.recordVotingPowerAndCache(ctx, newDc)
+			// emit events for finality providers with state updates
+			k.handleFPStateUpdates(ctx, dc, newDc)
 		}
 		return
 	}
@@ -58,7 +75,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	// record voting power and cache for this height
 	k.recordVotingPowerAndCache(ctx, newDc)
 	// emit events for finality providers with state updates
-	k.emitFPStateUpdateEvents(ctx, dc, newDc)
+	k.handleFPStateUpdates(ctx, dc, newDc)
 	// record metrics
 	k.recordMetrics(newDc)
 }
@@ -71,8 +88,6 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *types.Voti
 	if newDc == nil {
 		panic("the voting power distribution cache cannot be nil")
 	}
-
-	maxActiveFps := k.GetParams(ctx).MaxActiveFinalityProviders
 
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 
@@ -88,6 +103,7 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *types.Voti
 	// apply the finality provider voting power dist info to the new cache
 	// after which the cache would have active fps that are top N fps ranked
 	// by voting power with timestamped pub rand
+	maxActiveFps := k.GetParams(ctx).MaxActiveFinalityProviders
 	newDc.ApplyActiveFinalityProviders(maxActiveFps)
 
 	// set voting power table for each active finality providers at this height
@@ -100,8 +116,8 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *types.Voti
 	k.setVotingPowerDistCache(ctx, babylonTipHeight, newDc)
 }
 
-// emitFPStateUpdateEvents emits events for finality providers with state updates
-func (k Keeper) emitFPStateUpdateEvents(ctx context.Context, prevDc, newDc *types.VotingPowerDistCache) {
+// handleFPStateUpdates emits events and triggers hooks for finality providers with state updates
+func (k Keeper) handleFPStateUpdates(ctx context.Context, prevDc, newDc *types.VotingPowerDistCache) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	newlyActiveFPs := newDc.FindNewActiveFinalityProviders(prevDc)
