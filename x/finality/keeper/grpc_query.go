@@ -246,7 +246,7 @@ func (k Keeper) SigningInfo(ctx context.Context, req *types.QuerySigningInfoRequ
 		return nil, status.Errorf(codes.NotFound, "SigningInfo not found for the finality provider %s", req.FpBtcPkHex)
 	}
 
-	return &types.QuerySigningInfoResponse{FpSigningInfo: signingInfo}, nil
+	return &types.QuerySigningInfoResponse{SigningInfo: convertToSigningInfoResponse(signingInfo)}, nil
 }
 
 // SigningInfos returns signing-infos of all finality providers.
@@ -271,5 +271,22 @@ func (k Keeper) SigningInfos(ctx context.Context, req *types.QuerySigningInfosRe
 	if err != nil {
 		return nil, err
 	}
-	return &types.QuerySigningInfosResponse{FpSigningInfos: signInfos, Pagination: pageRes}, nil
+	return &types.QuerySigningInfosResponse{SigningInfos: convertToSigningInfosResponse(signInfos), Pagination: pageRes}, nil
+}
+
+func convertToSigningInfoResponse(info types.FinalityProviderSigningInfo) types.SigningInfoResponse {
+	return types.SigningInfoResponse{
+		FpBtcPkHex:          info.FpBtcPk.MarshalHex(),
+		StartHeight:         info.StartHeight,
+		MissedBlocksCounter: info.MissedBlocksCounter,
+		JailedUntil:         info.JailedUntil,
+	}
+}
+
+func convertToSigningInfosResponse(signInfos []types.FinalityProviderSigningInfo) []types.SigningInfoResponse {
+	response := make([]types.SigningInfoResponse, len(signInfos))
+	for i, info := range signInfos {
+		response[i] = convertToSigningInfoResponse(info)
+	}
+	return response
 }
