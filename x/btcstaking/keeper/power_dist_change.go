@@ -37,7 +37,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	// clear all events that have been consumed in this function
 	defer func() {
 		for i := lastBTCTipHeight; i <= btcTipHeight; i++ {
-			k.ClearPowerDistUpdateEvents(ctx, i)
+			k.clearPowerDistUpdateEvents(ctx, i)
 		}
 	}()
 
@@ -185,17 +185,17 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				}
 			} else if delEvent.NewState == types.BTCDelegationStatus_UNBONDED {
 				// emit event about this unbonded BTC delegation
-				emitUnbondedBTCDelEvent(sdkCtx, btcDel, delEvent.StakingTxHash)
+				types.EmitUnbondedBTCDelEvent(sdkCtx, delEvent.StakingTxHash, btcDel.IsUnbondedEarly())
 				// add the unbonded BTC delegation to the map
 				unbondedBTCDels[delEvent.StakingTxHash] = struct{}{}
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
 			// record slashed fps
-			emitSlashedFPEvent(sdkCtx, typedEvent.SlashedFp.Pk)
+			types.EmitSlashedFPEvent(sdkCtx, typedEvent.SlashedFp.Pk)
 			slashedFPs[typedEvent.SlashedFp.Pk.MarshalHex()] = struct{}{}
 		case *types.EventPowerDistUpdate_JailedFp:
 			// record jailed fps
-			emitJailedFPEvent(sdkCtx, typedEvent.JailedFp.Pk)
+			types.EmitJailedFPEvent(sdkCtx, typedEvent.JailedFp.Pk)
 			jailedFPs[typedEvent.JailedFp.Pk.MarshalHex()] = struct{}{}
 		case *types.EventPowerDistUpdate_UnjailedFp:
 			// record unjailed fps
@@ -307,41 +307,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	return newDc
 }
 
-// emitUnbondedBTCDelEvent emits events for an unbonded BTC delegations
-func emitUnbondedBTCDelEvent(sdkCtx sdk.Context, btcDel *types.BTCDelegation, stakingTxHash string) {
-	// delegation expired and become unbonded emit block event about this
-	// information
-	if btcDel.IsUnbondedEarly() {
-		unbondedEarlyEvent := types.NewDelegationUnbondedEarlyEvent(stakingTxHash)
-		if err := sdkCtx.EventManager().EmitTypedEvent(unbondedEarlyEvent); err != nil {
-			panic(fmt.Errorf("failed to emit event the new unbonded BTC delegation: %w", err))
-		}
-	} else {
-		expiredEvent := types.NewExpiredDelegationEvent(stakingTxHash)
-		if err := sdkCtx.EventManager().EmitTypedEvent(expiredEvent); err != nil {
-			panic(fmt.Errorf("failed to emit event for the new expired BTC delegation: %w", err))
-		}
-	}
-}
-
-func emitSlashedFPEvent(sdkCtx sdk.Context, fpBTCPK *bbn.BIP340PubKey) {
-	statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fpBTCPK, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED)
-	if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
-		panic(fmt.Errorf(
-			"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
-			types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED.String(), err))
-	}
-}
-
-func emitJailedFPEvent(sdkCtx sdk.Context, fpBTCPK *bbn.BIP340PubKey) {
-	statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fpBTCPK, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED)
-	if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
-		panic(fmt.Errorf(
-			"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
-			types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED.String(), err))
-	}
-}
-
 /* voting power distribution update event store */
 
 // addPowerDistUpdateEvent appends an event that affect voting power distribution
@@ -366,11 +331,11 @@ func (k Keeper) addPowerDistUpdateEvent(
 	store.Set(sdk.Uint64ToBigEndian(eventIdx), k.cdc.MustMarshal(event))
 }
 
-// ClearPowerDistUpdateEvents removes all BTC delegation state update events
+// clearPowerDistUpdateEvents removes all BTC delegation state update events
 // at a given BTC height
 // This is called after processing all BTC delegation events in `BeginBlocker`
 // nolint:unused
-func (k Keeper) ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint32) {
+func (k Keeper) clearPowerDistUpdateEvents(ctx context.Context, btcHeight uint32) {
 	store := k.powerDistUpdateEventBtcHeightStore(ctx, btcHeight)
 	keys := [][]byte{}
 
@@ -395,7 +360,7 @@ func (k Keeper) ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint32
 func (k Keeper) GetAllPowerDistUpdateEvents(ctx context.Context, lastBTCTip uint32, curBTCTip uint32) []*types.EventPowerDistUpdate {
 	events := []*types.EventPowerDistUpdate{}
 	for i := lastBTCTip; i <= curBTCTip; i++ {
-		k.IteratePowerDistUpdateEvents(ctx, i, func(event *types.EventPowerDistUpdate) bool {
+		k.iteratePowerDistUpdateEvents(ctx, i, func(event *types.EventPowerDistUpdate) bool {
 			events = append(events, event)
 			return true
 		})
@@ -403,10 +368,10 @@ func (k Keeper) GetAllPowerDistUpdateEvents(ctx context.Context, lastBTCTip uint
 	return events
 }
 
-// IteratePowerDistUpdateEvents uses the given handler function to handle each
+// iteratePowerDistUpdateEvents uses the given handler function to handle each
 // voting power distribution update event that happens at the given BTC height.
 // This is called in `BeginBlocker`
-func (k Keeper) IteratePowerDistUpdateEvents(
+func (k Keeper) iteratePowerDistUpdateEvents(
 	ctx context.Context,
 	btcHeight uint32,
 	handleFunc func(event *types.EventPowerDistUpdate) bool,
