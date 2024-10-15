@@ -24,42 +24,15 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 
 	// get the power dist cache in the last height
 	dc := k.getVotingPowerDistCache(ctx, height-1)
-	// get all power distribution update events during the previous tip
-	// and the current tip
-	lastBTCTipHeight := k.GetBTCHeightAtBabylonHeight(ctx, height-1)
-	events := k.GetAllPowerDistUpdateEvents(ctx, lastBTCTipHeight, btcTipHeight)
-
-	// if no event exists, then map previous voting power and
-	// cache to the current height
-	if len(events) == 0 {
-		if dc != nil {
-			// map everything in prev height to this height
-			// NOTE: deep copy the previous dist cache because the
-			// cache for the new height shares the same distribution
-			// info due to no new events but timestamping status
-			// might be changed in the new dist cache after calling
-			// k.recordVotingPowerAndCache()
-			newDc := types.NewVotingPowerDistCache()
-			newDc.TotalVotingPower = dc.TotalVotingPower
-			newDc.NumActiveFps = dc.NumActiveFps
-			newFps := make([]*types.FinalityProviderDistInfo, len(dc.FinalityProviders))
-			for i, prevFp := range dc.FinalityProviders {
-				newFp := *prevFp
-				newFps[i] = &newFp
-			}
-			newDc.FinalityProviders = newFps
-			// record voting power and cache for this height
-			k.recordVotingPowerAndCache(ctx, newDc)
-			// emit events for finality providers with state updates
-			k.handleFPStateUpdates(ctx, dc, newDc)
-		}
-		return
-	}
-
 	if dc == nil {
 		// no BTC staker at the prior height
 		dc = types.NewVotingPowerDistCache()
 	}
+
+	// get all power distribution update events during the previous tip
+	// and the current tip
+	lastBTCTipHeight := k.GetBTCHeightAtBabylonHeight(ctx, height-1)
+	events := k.GetAllPowerDistUpdateEvents(ctx, lastBTCTipHeight, btcTipHeight)
 
 	// clear all events that have been consumed in this function
 	defer func() {
