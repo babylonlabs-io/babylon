@@ -50,6 +50,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 * [#181](https://github.com/babylonlabs-io/babylon/pull/181) Modify BTC heights
   and depths to be of uint32 type instead of uint64.
+* [#204](https://github.com/babylonlabs-io/babylon/pull/204) Add minimum babylon
+  block height to start process BTC staking voting power distribution events.
 
 ### Bug fixes
 
