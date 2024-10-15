@@ -194,7 +194,10 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		delSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingPkScriptPath, delSK)
 		require.NoError(t, err)
 
-		covenantSigners := covenantSKs[:covenantQuorum]
+		// ensure that event if all covenant members provide covenant signatures,
+		// BuildSlashingTxWithWitness will only take a quorum number of signatures
+		// to construct the witness
+		covenantSigners := covenantSKs
 		// get covenant Schnorr signatures
 		covenantSigs, err := datagen.GenCovenantAdaptorSigs(
 			covenantSigners,
@@ -235,7 +238,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		}
 
 		// create slashing tx with witness
-		slashingMsgTxWithWitness, err := slashingTx.BuildSlashingTxWithWitness(fpSK, fpBTCPKs, stakingMsgTx, 0, delSig, covSigsForFP, slashingSpendInfo)
+		slashingMsgTxWithWitness, err := slashingTx.BuildSlashingTxWithWitness(fpSK, fpBTCPKs, stakingMsgTx, 0, delSig, covSigsForFP, covenantQuorum, slashingSpendInfo)
 		require.NoError(t, err)
 
 		// verify slashing tx with witness
