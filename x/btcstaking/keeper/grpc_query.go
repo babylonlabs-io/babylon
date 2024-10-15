@@ -307,7 +307,7 @@ func convertToActiveFinalityProvidersAtHeightResponse(finalityProvidersWithMeta 
 	var activeFinalityProvidersAtHeightResponse []*types.ActiveFinalityProvidersAtHeightResponse
 	for _, fpWithMeta := range finalityProvidersWithMeta {
 		activeFinalityProvidersAtHeightResponse = append(activeFinalityProvidersAtHeightResponse, &types.ActiveFinalityProvidersAtHeightResponse{
-			BtcPk:                fpWithMeta.BtcPk,
+			BtcPkHex:             fpWithMeta.BtcPk,
 			Height:               fpWithMeta.Height,
 			VotingPower:          fpWithMeta.VotingPower,
 			SlashedBabylonHeight: fpWithMeta.SlashedBabylonHeight,
