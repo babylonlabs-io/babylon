@@ -42,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 * [#194](https://github.com/babylonlabs-io/babylon/pull/194) Adjusted handling of `FinalityProviderSigningInfo` in finality keeper queries to improve API security
   * Modified `QuerySigningInfosResponse` to remove direct exposure of sensitive fields
   * Updated related tests in `x/finality/keeper/grpc_query_test.go`
+* [#203](https://github.com/babylonlabs-io/babylon/pull/203) Adjusted handling of `RewardGauge` in incentive keeper queries to improve API security
 
 ### State Machine Breaking
 
