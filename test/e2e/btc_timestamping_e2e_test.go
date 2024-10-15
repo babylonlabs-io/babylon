@@ -152,9 +152,9 @@ func (s *BTCTimestampingTestSuite) Test4GenerateAndWithdrawReward() {
 	rgs, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
 	s.NoError(err)
 	submitterRg, reporterRg := rgs[itypes.SubmitterType.String()], rgs[itypes.ReporterType.String()]
-	s.T().Logf("submitter witdhrawable reward: %s, reporter witdhrawable reward: %s before withdrawing", submitterRg.GetWithdrawableCoins().String(), reporterRg.GetWithdrawableCoins().String())
-	s.False(submitterRg.IsFullyWithdrawn())
-	s.False(reporterRg.IsFullyWithdrawn())
+	s.T().Logf("submitter witdhrawable reward: %s, reporter witdhrawable reward: %s before withdrawing", submitterRg.Coins.String(), reporterRg.Coins.String())
+	s.False(submitterRg.Coins.IsZero())
+	s.False(reporterRg.Coins.IsZero())
 
 	// withdraw submitter reward
 	nonValidatorNode.WithdrawReward(itypes.SubmitterType.String(), initialization.ValidatorWalletName)
@@ -170,8 +170,8 @@ func (s *BTCTimestampingTestSuite) Test4GenerateAndWithdrawReward() {
 	rgs2, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
 	s.NoError(err)
 	submitterRg2 := rgs2[itypes.SubmitterType.String()]
-	s.T().Logf("submitter withdrawable reward: %s after withdrawing", submitterRg2.GetWithdrawableCoins().String())
-	s.True(rgs2[itypes.SubmitterType.String()].IsFullyWithdrawn())
+	s.T().Logf("submitter withdrawable reward: %s after withdrawing", submitterRg2.Coins.String())
+	s.True(rgs2[itypes.SubmitterType.String()].Coins.IsZero())
 
 	// withdraw reporter reward
 	nonValidatorNode.WithdrawReward(itypes.ReporterType.String(), initialization.ValidatorWalletName)
@@ -187,8 +187,8 @@ func (s *BTCTimestampingTestSuite) Test4GenerateAndWithdrawReward() {
 	rgs3, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
 	s.NoError(err)
 	reporterRg3 := rgs3[itypes.SubmitterType.String()]
-	s.T().Logf("reporter withdrawable reward: %s after withdrawing", reporterRg3.GetWithdrawableCoins().String())
-	s.True(rgs3[itypes.ReporterType.String()].IsFullyWithdrawn())
+	s.T().Logf("reporter withdrawable reward: %s after withdrawing", reporterRg3.Coins.String())
+	s.True(rgs3[itypes.ReporterType.String()].Coins.IsZero())
 }
 
 func (s *BTCTimestampingTestSuite) Test5Wasm() {
