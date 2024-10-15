@@ -9,18 +9,19 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/testutil/helper"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	btcstktypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/cosmos/cosmos-sdk/client"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/testutil/helper"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 func FuzzCmdSetBtcDels(f *testing.F) {
@@ -69,6 +70,7 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 
 		startHeight := uint32(datagen.RandomInt(r, 100)) + 1
 		endHeight := uint32(datagen.RandomInt(r, 1000)) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
+		stakingTime := endHeight - startHeight
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 		slashingChangeLockTime := uint16(101)
 
@@ -86,7 +88,7 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 				covenantPKs,
 				covenantQuorum,
 				slashingPkScript,
-				startHeight, endHeight, 10000,
+				stakingTime, startHeight, endHeight, 10000,
 				slashingRate,
 				slashingChangeLockTime,
 			)
@@ -155,7 +157,7 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 			covenantPKs,
 			covenantQuorum,
 			slashingPkScript,
-			startHeight, endHeight, 10000,
+			stakingTime, startHeight, endHeight, 10000,
 			slashingRate,
 			slashingChangeLockTime,
 		)
