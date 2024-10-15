@@ -14,10 +14,6 @@ import (
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
-const (
-	ACTIVATION_BLOCK_HEIGHT_VOTING_POWER = 300
-)
-
 type (
 	Keeper struct {
 		cdc          codec.BinaryCodec
@@ -90,7 +86,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	k.IndexBTCHeight(ctx)
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	if sdkCtx.HeaderInfo().Height < ACTIVATION_BLOCK_HEIGHT_VOTING_POWER {
+	if sdkCtx.HeaderInfo().Height < k.GetActivationBlockHeightVotingPower() {
 		// TODO: remove it after Phase-2 launch
 		return nil
 	}
@@ -98,4 +94,15 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	k.UpdatePowerDist(ctx)
 
 	return nil
+}
+
+func (k Keeper) GetActivationBlockHeightVotingPower() int64 {
+	switch k.btcNet.Name {
+	case chaincfg.MainNetParams.Name:
+		return 300
+	case chaincfg.RegressionNetParams.Name:
+		return 100
+	default:
+		return 0
+	}
 }
