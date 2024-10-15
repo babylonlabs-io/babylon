@@ -86,8 +86,14 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	k.IndexBTCHeight(ctx)
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	if sdkCtx.HeaderInfo().Height < k.GetActivationBlockHeightVotingPower() {
+	activationHeight := k.GetActivationBlockHeightVotingPower()
+	currHeight := sdkCtx.HeaderInfo().Height
+	if currHeight < activationHeight {
 		// TODO: remove it after Phase-2 launch
+		k.Logger(sdkCtx).With(
+			"currHeight", currHeight,
+			"activationHeight", activationHeight,
+		).Debug("module not active yet")
 		return nil
 	}
 	// update voting power distribution
