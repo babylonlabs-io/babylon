@@ -39,12 +39,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### API Breaking
 
-* [#194](https://github.com/babylonlabs-io/babylon/pull/194) Adjusted handling of `FinalityProviderSigningInfo` in finality keeper queries to improve API security
-  * Modified `QuerySigningInfosResponse` to remove direct exposure of sensitive fields
-  * Updated related tests in `x/finality/keeper/grpc_query_test.go`
-* [#200](https://github.com/babylonlabs-io/babylon/pull/200) Adjusted handling of `Gauge` in incentive keeper queries to improve API security
-  * Modified `QueryBTCTimestampingGaugeResponse` and `QueryBTCStakingGaugeResponse` to remove direct exposure of sensitive fields
-  * Updated related tests in `x/incentive/keeper/grpc_query_test.go`
+* [#194](https://github.com/babylonlabs-io/babylon/pull/194) Adjusted handling of `FinalityProviderSigningInfo` in finality keeper queries to improve API security.
+  * Modified `QuerySigningInfosResponse` to remove direct exposure of sensitive fields.
+  * Updated related tests in `x/finality/keeper/grpc_query_test.go`.
+* [#200](https://github.com/babylonlabs-io/babylon/pull/200) Adjusted handling of `Gauge` in incentive keeper queries to improve API security.
+* [#201](https://github.com/babylonlabs-io/babylon/pull/201) Adjusted handling of `ValidatorWithBlsKey` in checkpoint keeper queries to improve API security.
 
 ### State Machine Breaking
 
@@ -61,6 +60,8 @@ Proof when handling finality votes
 
 ### Improvements
 
+* [#188](https://github.com/babylonlabs-io/babylon/pull/188) Simplify logic of FP set rotation
+* [#169](https://github.com/babylonlabs-io/babylon/pull/169) Improve external events format and update events doc
 * [#148](https://github.com/babylonlabs-io/babylon/pull/148) Add block results query
 
 ### Misc Improvements
