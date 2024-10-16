@@ -82,9 +82,6 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // the voting power distribution cache used for computing voting power table
 // and distributing rewards once the block is finalised by finality providers.
 func (k Keeper) BeginBlocker(ctx context.Context) error {
-	// index BTC height at the current height
-	k.IndexBTCHeight(ctx)
-
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	activationHeight := k.GetActivationBlockHeightVotingPower()
 	currHeight := sdkCtx.HeaderInfo().Height
@@ -96,6 +93,9 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 		).Info("module not active yet")
 		return nil
 	}
+
+	// index BTC height at the current height
+	k.IndexBTCHeight(ctx)
 	// update voting power distribution
 	k.UpdatePowerDist(ctx)
 
