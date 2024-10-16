@@ -83,14 +83,15 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // and distributing rewards once the block is finalised by finality providers.
 func (k Keeper) BeginBlocker(ctx context.Context) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	activationHeight := k.GetActivationBlockHeightVotingPower()
+	activationHeight := k.GetActivationHeight()
 	currHeight := sdkCtx.HeaderInfo().Height
 	if currHeight < activationHeight {
-		// TODO: remove it after Phase-2 launch
+		// TODO: remove it after Phase-2 launch in a future
+		// coordinated upgrade
 		k.Logger(sdkCtx).With(
 			"currHeight", currHeight,
 			"activationHeight", activationHeight,
-		).Info("module not active yet")
+		).Info("BTC staking is not activated yet")
 		return nil
 	}
 
@@ -102,12 +103,15 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	return nil
 }
 
-// GetActivationBlockHeightVotingPower returns the minimum block
-// height that the babylon should have to start processing
-// voting power distribution events.
-func (k Keeper) GetActivationBlockHeightVotingPower() int64 {
+// GetActivationHeight returns the minimum block height from which the BTC
+// staking protocol starts updating the voting power table.
+func (k Keeper) GetActivationHeight() int64 {
 	switch k.btcNet.Name {
+	// The activation height might differ accordingly
+	// with the test that will be done and the block time
+	// that the validator sets in config.
 	case chaincfg.MainNetParams.Name:
+		// For mainnet considering
 		return 300
 	case chaincfg.TestNet3Params.Name:
 		return 50
