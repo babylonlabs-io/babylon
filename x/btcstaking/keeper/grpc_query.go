@@ -201,7 +201,7 @@ func (k Keeper) ActiveFinalityProvidersAtHeight(ctx context.Context, req *types.
 		return nil, err
 	}
 
-	return &types.QueryActiveFinalityProvidersAtHeightResponse{FinalityProviders: finalityProvidersWithMeta, Pagination: pageRes}, nil
+	return &types.QueryActiveFinalityProvidersAtHeightResponse{FinalityProviders: convertToActiveFinalityProvidersAtHeightResponse(finalityProvidersWithMeta), Pagination: pageRes}, nil
 }
 
 // ActivatedHeight returns the Babylon height in which the BTC Staking protocol was enabled
@@ -301,4 +301,19 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 	return &types.QueryBTCDelegationResponse{
 		BtcDelegation: types.NewBTCDelegationResponse(btcDel, status),
 	}, nil
+}
+
+func convertToActiveFinalityProvidersAtHeightResponse(finalityProvidersWithMeta []*types.FinalityProviderWithMeta) []*types.ActiveFinalityProvidersAtHeightResponse {
+	var activeFinalityProvidersAtHeightResponse []*types.ActiveFinalityProvidersAtHeightResponse
+	for _, fpWithMeta := range finalityProvidersWithMeta {
+		activeFinalityProvidersAtHeightResponse = append(activeFinalityProvidersAtHeightResponse, &types.ActiveFinalityProvidersAtHeightResponse{
+			BtcPkHex:             fpWithMeta.BtcPk,
+			Height:               fpWithMeta.Height,
+			VotingPower:          fpWithMeta.VotingPower,
+			SlashedBabylonHeight: fpWithMeta.SlashedBabylonHeight,
+			SlashedBtcHeight:     fpWithMeta.SlashedBtcHeight,
+			Jailed:               fpWithMeta.Jailed,
+		})
+	}
+	return activeFinalityProvidersAtHeightResponse
 }

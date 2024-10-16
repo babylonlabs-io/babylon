@@ -480,10 +480,10 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 
 			for _, fp := range resp.FinalityProviders {
 				// Check if the pk exists in the map
-				if _, ok := fpsWithVotingPowerMap[fp.BtcPk.MarshalHex()]; !ok {
+				if _, ok := fpsWithVotingPowerMap[fp.BtcPkHex.MarshalHex()]; !ok {
 					t.Fatalf("rpc returned a finality provider that was not created")
 				}
-				fpsFound[fp.BtcPk.MarshalHex()] = true
+				fpsFound[fp.BtcPkHex.MarshalHex()] = true
 			}
 
 			// Construct the next page request
