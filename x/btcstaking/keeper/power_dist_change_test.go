@@ -152,12 +152,11 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 
 		// at this point, there should be only 1 event that the finality provider is slashed
 		btcTipHeight := btclcKeeper.GetTipInfo(h.Ctx).Height
-		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, btcTipHeight, func(ev *types.EventPowerDistUpdate) bool {
-			slashedFPEvent := ev.GetSlashedFp()
-			require.NotNil(t, slashedFPEvent)
-			require.Equal(t, fp.BtcPk.MustMarshal(), slashedFPEvent.Pk.MustMarshal())
-			return true
-		})
+		events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTipHeight, btcTipHeight)
+		require.Len(t, events, 1)
+		slashedFPEvent := events[0].GetSlashedFp()
+		require.NotNil(t, slashedFPEvent)
+		require.Equal(t, fp.BtcPk.MustMarshal(), slashedFPEvent.Pk.MustMarshal())
 
 		// execute BeginBlock
 		babylonHeight += 1
@@ -248,12 +247,11 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 
 		// at this point, there should be only 1 event that the finality provider is jailed
 		btcTipHeight := btclcKeeper.GetTipInfo(h.Ctx).Height
-		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, btcTipHeight, func(ev *types.EventPowerDistUpdate) bool {
-			jailedFPEvent := ev.GetJailedFp()
-			require.NotNil(t, jailedFPEvent)
-			require.Equal(t, fp.BtcPk.MustMarshal(), jailedFPEvent.Pk.MustMarshal())
-			return true
-		})
+		events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTipHeight, btcTipHeight)
+		require.Len(t, events, 1)
+		jailedFPEvent := events[0].GetJailedFp()
+		require.NotNil(t, jailedFPEvent)
+		require.Equal(t, fp.BtcPk.MustMarshal(), jailedFPEvent.Pk.MustMarshal())
 
 		// execute BeginBlock
 		babylonHeight += 1

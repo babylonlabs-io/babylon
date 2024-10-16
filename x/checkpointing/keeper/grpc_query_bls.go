@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"context"
+	"encoding/hex"
+
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/jinzhu/copier"
@@ -21,7 +23,7 @@ func (k Keeper) BlsPublicKeyList(c context.Context, req *types.QueryBlsPublicKey
 
 	if req.Pagination == nil {
 		return &types.QueryBlsPublicKeyListResponse{
-			ValidatorWithBlsKeys: valBLSKeys,
+			ValidatorWithBlsKeys: convertToBlsPublicKeyListResponse(valBLSKeys),
 		}, nil
 	}
 
@@ -46,6 +48,19 @@ func (k Keeper) BlsPublicKeyList(c context.Context, req *types.QueryBlsPublicKey
 	}
 
 	return &types.QueryBlsPublicKeyListResponse{
-		ValidatorWithBlsKeys: copiedValBLSKeys,
+		ValidatorWithBlsKeys: convertToBlsPublicKeyListResponse(copiedValBLSKeys),
 	}, nil
+}
+
+func convertToBlsPublicKeyListResponse(valBLSKeys []*types.ValidatorWithBlsKey) []*types.BlsPublicKeyListResponse {
+	blsPublicKeyListResponse := make([]*types.BlsPublicKeyListResponse, len(valBLSKeys))
+
+	for i, valBlsKey := range valBLSKeys {
+		blsPublicKeyListResponse[i] = &types.BlsPublicKeyListResponse{
+			ValidatorAddress: valBlsKey.ValidatorAddress,
+			BlsPubKeyHex:     hex.EncodeToString(valBlsKey.BlsPubKey),
+			VotingPower:      valBlsKey.VotingPower,
+		}
+	}
+	return blsPublicKeyListResponse
 }
