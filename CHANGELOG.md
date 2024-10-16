@@ -63,6 +63,8 @@ Proof when handling finality votes
 
 ### Improvements
 
+* [#188](https://github.com/babylonlabs-io/babylon/pull/188) Simplify logic of FP set rotation
+* [#169](https://github.com/babylonlabs-io/babylon/pull/169) Improve external events format and update events doc
 * [#148](https://github.com/babylonlabs-io/babylon/pull/148) Add block results query
 
 ### Misc Improvements
