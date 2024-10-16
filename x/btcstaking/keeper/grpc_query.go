@@ -311,6 +311,8 @@ func convertToActiveFinalityProvidersAtHeightResponse(finalityProvidersWithMeta 
 			Height:               fpWithMeta.Height,
 			VotingPower:          fpWithMeta.VotingPower,
 			SlashedBabylonHeight: fpWithMeta.SlashedBabylonHeight,
+			SlashedBtcHeight:     fpWithMeta.SlashedBtcHeight,
+			Jailed:               fpWithMeta.Jailed,
 		})
 	}
 	return activeFinalityProvidersAtHeightResponse
