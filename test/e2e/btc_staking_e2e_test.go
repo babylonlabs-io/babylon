@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"os"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -74,7 +76,16 @@ func (s *BTCStakingTestSuite) SetupSuite() {
 func (s *BTCStakingTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
 	if err != nil {
-		s.T().Logf("error to clear resources %s", err.Error())
+		// If there's a permission error, try to remove with sudo
+		if os.IsPermission(err) {
+			cmd := exec.Command("sudo", "rm", "-rf", "/tmp/bbn-e2e-testnet-*")
+			err = cmd.Run()
+			if err != nil {
+				s.T().Logf("Failed to clear resources even with sudo: %s", err.Error())
+			}
+		} else {
+			s.T().Logf("Error clearing resources: %s", err.Error())
+		}
 	}
 }
 
