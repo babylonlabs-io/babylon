@@ -308,9 +308,3 @@ func (s *BTCTimestampingTestSuite) Test6InterceptFeeCollector() {
 	s.True(incentiveBalance2.IsAllGTE(incentiveBalance))
 }
 
-func convertToRewardGauge(rg *itypes.RewardGaugesResponse) *itypes.RewardGauge {
-	return &itypes.RewardGauge{
-		Coins:          rg.Coins,
-		WithdrawnCoins: rg.WithdrawnCoins,
-	}
-}
