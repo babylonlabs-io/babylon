@@ -2,9 +2,11 @@ package types
 
 import (
 	"encoding/hex"
+	"fmt"
 	"strconv"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func NewEventPowerDistUpdateWithBTCDel(ev *EventBTCDelegationStateUpdate) *EventPowerDistUpdate {
@@ -148,5 +150,39 @@ func NewFinalityProviderStatusChangeEvent(
 	return &EventFinalityProviderStatusChange{
 		BtcPk:    fpPk.MarshalHex(),
 		NewState: status.String(),
+	}
+}
+
+// EmitUnbondedBTCDelEvent emits events for an unbonded BTC delegations
+func EmitUnbondedBTCDelEvent(sdkCtx sdk.Context, stakingTxHash string, unbondedEarly bool) {
+	// delegation expired and become unbonded emit block event about this information
+	if unbondedEarly {
+		unbondedEarlyEvent := NewDelegationUnbondedEarlyEvent(stakingTxHash)
+		if err := sdkCtx.EventManager().EmitTypedEvent(unbondedEarlyEvent); err != nil {
+			panic(fmt.Errorf("failed to emit event the new unbonded BTC delegation: %w", err))
+		}
+	} else {
+		expiredEvent := NewExpiredDelegationEvent(stakingTxHash)
+		if err := sdkCtx.EventManager().EmitTypedEvent(expiredEvent); err != nil {
+			panic(fmt.Errorf("failed to emit event for the new expired BTC delegation: %w", err))
+		}
+	}
+}
+
+func EmitSlashedFPEvent(sdkCtx sdk.Context, fpBTCPK *bbn.BIP340PubKey) {
+	statusChangeEvent := NewFinalityProviderStatusChangeEvent(fpBTCPK, FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED)
+	if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
+		panic(fmt.Errorf(
+			"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
+			FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED.String(), err))
+	}
+}
+
+func EmitJailedFPEvent(sdkCtx sdk.Context, fpBTCPK *bbn.BIP340PubKey) {
+	statusChangeEvent := NewFinalityProviderStatusChangeEvent(fpBTCPK, FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED)
+	if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
+		panic(fmt.Errorf(
+			"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
+			FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED.String(), err))
 	}
 }

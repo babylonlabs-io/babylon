@@ -21,49 +21,23 @@ import (
 func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	btcTipHeight := k.GetCurrentBTCHeight(ctx)
-	maxActiveFps := k.GetParams(ctx).MaxActiveFinalityProviders
 
 	// get the power dist cache in the last height
 	dc := k.getVotingPowerDistCache(ctx, height-1)
-	// get all power distribution update events during the previous tip
-	// and the current tip
-	lastBTCTipHeight := k.GetBTCHeightAtBabylonHeight(ctx, height-1)
-	events := k.GetAllPowerDistUpdateEvents(ctx, lastBTCTipHeight, btcTipHeight)
-
-	// if no event exists, then map previous voting power and
-	// cache to the current height
-	if len(events) == 0 {
-		if dc != nil {
-			// map everything in prev height to this height
-			// NOTE: deep copy the previous dist cache because the
-			// cache for the new height shares the same distribution
-			// info due to no new events but timestamping status
-			// might be changed in the new dist cache after calling
-			// k.recordVotingPowerAndCache()
-			newDc := types.NewVotingPowerDistCache()
-			newDc.TotalVotingPower = dc.TotalVotingPower
-			newDc.NumActiveFps = dc.NumActiveFps
-			newFps := make([]*types.FinalityProviderDistInfo, len(dc.FinalityProviders))
-			for i, prevFp := range dc.FinalityProviders {
-				newFp := *prevFp
-				newFps[i] = &newFp
-			}
-			newDc.FinalityProviders = newFps
-			k.recordVotingPowerAndCache(ctx, dc, newDc, maxActiveFps)
-		}
-
-		return
-	}
-
 	if dc == nil {
 		// no BTC staker at the prior height
 		dc = types.NewVotingPowerDistCache()
 	}
 
+	// get all power distribution update events during the previous tip
+	// and the current tip
+	lastBTCTipHeight := k.GetBTCHeightAtBabylonHeight(ctx, height-1)
+	events := k.GetAllPowerDistUpdateEvents(ctx, lastBTCTipHeight, btcTipHeight)
+
 	// clear all events that have been consumed in this function
 	defer func() {
 		for i := lastBTCTipHeight; i <= btcTipHeight; i++ {
-			k.ClearPowerDistUpdateEvents(ctx, i)
+			k.clearPowerDistUpdateEvents(ctx, i)
 		}
 	}()
 
@@ -72,7 +46,9 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events)
 
 	// record voting power and cache for this height
-	k.recordVotingPowerAndCache(ctx, dc, newDc, maxActiveFps)
+	k.recordVotingPowerAndCache(ctx, newDc)
+	// emit events for finality providers with state updates
+	k.handleFPStateUpdates(ctx, dc, newDc)
 	// record metrics
 	k.recordMetrics(newDc)
 }
@@ -81,14 +57,12 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 // with the following consideration:
 // 1. the fp must have timestamped pub rand
 // 2. the fp must in the top x ranked by the voting power (x is given by maxActiveFps)
-// NOTE: the previous and the new dist cache cannot be nil
-func (k Keeper) recordVotingPowerAndCache(goCtx context.Context, prevDc, newDc *types.VotingPowerDistCache, maxActiveFps uint32) {
-	if prevDc == nil || newDc == nil {
+func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *types.VotingPowerDistCache) {
+	if newDc == nil {
 		panic("the voting power distribution cache cannot be nil")
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(goCtx)
-	babylonTipHeight := uint64(sdk.UnwrapSDKContext(goCtx).HeaderInfo().Height)
+	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 
 	// label fps with whether it has timestamped pub rand so that these fps
 	// will not be assigned voting power
@@ -96,25 +70,32 @@ func (k Keeper) recordVotingPowerAndCache(goCtx context.Context, prevDc, newDc *
 		// TODO calling HasTimestampedPubRand potentially iterates
 		// all the pub rand committed by the fpDistInfo, which might slow down
 		// the process, need optimization
-		fpDistInfo.IsTimestamped = k.FinalityKeeper.HasTimestampedPubRand(goCtx, fpDistInfo.BtcPk, babylonTipHeight)
+		fpDistInfo.IsTimestamped = k.FinalityKeeper.HasTimestampedPubRand(ctx, fpDistInfo.BtcPk, babylonTipHeight)
 	}
 
 	// apply the finality provider voting power dist info to the new cache
 	// after which the cache would have active fps that are top N fps ranked
 	// by voting power with timestamped pub rand
+	maxActiveFps := k.GetParams(ctx).MaxActiveFinalityProviders
 	newDc.ApplyActiveFinalityProviders(maxActiveFps)
 
 	// set voting power table for each active finality providers at this height
 	for i := uint32(0); i < newDc.NumActiveFps; i++ {
 		fp := newDc.FinalityProviders[i]
-		k.SetVotingPower(goCtx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
+		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
 	}
 
-	// find newly activated finality providers and execute the hooks by comparing
-	// the previous dist cache
-	newActivatedFps := newDc.FindNewActiveFinalityProviders(prevDc)
-	for _, fp := range newActivatedFps {
-		if err := k.hooks.AfterFinalityProviderActivated(goCtx, fp.BtcPk); err != nil {
+	// set the voting power distribution cache of the current height
+	k.setVotingPowerDistCache(ctx, babylonTipHeight, newDc)
+}
+
+// handleFPStateUpdates emits events and triggers hooks for finality providers with state updates
+func (k Keeper) handleFPStateUpdates(ctx context.Context, prevDc, newDc *types.VotingPowerDistCache) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	newlyActiveFPs := newDc.FindNewActiveFinalityProviders(prevDc)
+	for _, fp := range newlyActiveFPs {
+		if err := k.hooks.AfterFinalityProviderActivated(ctx, fp.BtcPk); err != nil {
 			panic(fmt.Errorf("failed to execute after finality provider %s activated", fp.BtcPk.MarshalHex()))
 		}
 
@@ -128,10 +109,8 @@ func (k Keeper) recordVotingPowerAndCache(goCtx context.Context, prevDc, newDc *
 		k.Logger(sdkCtx).Info("a new finality provider becomes active", "pk", fp.BtcPk.MarshalHex())
 	}
 
-	// find finality providers that newly become inactive and emit events to
-	// subscribers
-	newInactiveFps := newDc.FindNewInactiveFinalityProviders(prevDc)
-	for _, fp := range newInactiveFps {
+	newlyInactiveFPs := newDc.FindNewInactiveFinalityProviders(prevDc)
+	for _, fp := range newlyInactiveFPs {
 		statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE)
 		if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
 			panic(fmt.Errorf(
@@ -141,9 +120,6 @@ func (k Keeper) recordVotingPowerAndCache(goCtx context.Context, prevDc, newDc *
 
 		k.Logger(sdkCtx).Info("a new finality provider becomes inactive", "pk", fp.BtcPk.MarshalHex())
 	}
-
-	// set the voting power distribution cache of the current height
-	k.setVotingPowerDistCache(sdkCtx, babylonTipHeight, newDc)
 }
 
 func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache) {
@@ -169,6 +145,8 @@ func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache) {
 // - newly active BTC delegations
 // - newly unbonded BTC delegations
 // - slashed finality providers
+// - newly jailed finality providers
+// - newly unjailed finality providers
 func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	ctx context.Context,
 	dc *types.VotingPowerDistCache,
@@ -200,37 +178,24 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			}
 			if delEvent.NewState == types.BTCDelegationStatus_ACTIVE {
 				// newly active BTC delegation
-
 				// add the BTC delegation to each restaked finality provider
 				for _, fpBTCPK := range btcDel.FpBtcPkList {
 					fpBTCPKHex := fpBTCPK.MarshalHex()
 					activeBTCDels[fpBTCPKHex] = append(activeBTCDels[fpBTCPKHex], btcDel)
 				}
 			} else if delEvent.NewState == types.BTCDelegationStatus_UNBONDED {
-				// delegation expired and become unbonded emit block event about this
-				// information
-				if btcDel.IsUnbondedEarly() {
-					unbondedEarlyEvent := types.NewDelegationUnbondedEarlyEvent(delEvent.StakingTxHash)
-
-					if err := sdkCtx.EventManager().EmitTypedEvent(unbondedEarlyEvent); err != nil {
-						panic(fmt.Errorf("failed to emit event the new unbonded BTC delegation: %w", err))
-					}
-				} else {
-					expiredEvent := types.NewExpiredDelegationEvent(delEvent.StakingTxHash)
-
-					if err := sdkCtx.EventManager().EmitTypedEvent(expiredEvent); err != nil {
-						panic(fmt.Errorf("failed to emit event for the new expired BTC delegation: %w", err))
-					}
-				}
-
+				// emit event about this unbonded BTC delegation
+				types.EmitUnbondedBTCDelEvent(sdkCtx, delEvent.StakingTxHash, btcDel.IsUnbondedEarly())
 				// add the unbonded BTC delegation to the map
 				unbondedBTCDels[delEvent.StakingTxHash] = struct{}{}
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
 			// record slashed fps
+			types.EmitSlashedFPEvent(sdkCtx, typedEvent.SlashedFp.Pk)
 			slashedFPs[typedEvent.SlashedFp.Pk.MarshalHex()] = struct{}{}
 		case *types.EventPowerDistUpdate_JailedFp:
 			// record jailed fps
+			types.EmitJailedFPEvent(sdkCtx, typedEvent.JailedFp.Pk)
 			jailedFPs[typedEvent.JailedFp.Pk.MarshalHex()] = struct{}{}
 		case *types.EventPowerDistUpdate_UnjailedFp:
 			// record unjailed fps
@@ -262,14 +227,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// assigning delegation to it
 		if _, ok := slashedFPs[fpBTCPKHex]; ok {
 			fp.IsSlashed = true
-
-			statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED)
-			if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
-				panic(fmt.Errorf(
-					"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
-					types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED.String(), err))
-			}
-
 			continue
 		}
 
@@ -278,13 +235,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// but won't be assigned with voting power
 		if _, ok := jailedFPs[fpBTCPKHex]; ok {
 			fp.IsJailed = true
-
-			statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED)
-			if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
-				panic(fmt.Errorf(
-					"failed to emit FinalityProviderStatusChangeEvent with status %s: %w",
-					types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED.String(), err))
-			}
 		}
 
 		// set IsJailed to be false if the fp is unjailed
@@ -381,11 +331,11 @@ func (k Keeper) addPowerDistUpdateEvent(
 	store.Set(sdk.Uint64ToBigEndian(eventIdx), k.cdc.MustMarshal(event))
 }
 
-// ClearPowerDistUpdateEvents removes all BTC delegation state update events
+// clearPowerDistUpdateEvents removes all BTC delegation state update events
 // at a given BTC height
 // This is called after processing all BTC delegation events in `BeginBlocker`
 // nolint:unused
-func (k Keeper) ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint32) {
+func (k Keeper) clearPowerDistUpdateEvents(ctx context.Context, btcHeight uint32) {
 	store := k.powerDistUpdateEventBtcHeightStore(ctx, btcHeight)
 	keys := [][]byte{}
 
@@ -410,7 +360,7 @@ func (k Keeper) ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint32
 func (k Keeper) GetAllPowerDistUpdateEvents(ctx context.Context, lastBTCTip uint32, curBTCTip uint32) []*types.EventPowerDistUpdate {
 	events := []*types.EventPowerDistUpdate{}
 	for i := lastBTCTip; i <= curBTCTip; i++ {
-		k.IteratePowerDistUpdateEvents(ctx, i, func(event *types.EventPowerDistUpdate) bool {
+		k.iteratePowerDistUpdateEvents(ctx, i, func(event *types.EventPowerDistUpdate) bool {
 			events = append(events, event)
 			return true
 		})
@@ -418,10 +368,10 @@ func (k Keeper) GetAllPowerDistUpdateEvents(ctx context.Context, lastBTCTip uint
 	return events
 }
 
-// IteratePowerDistUpdateEvents uses the given handler function to handle each
+// iteratePowerDistUpdateEvents uses the given handler function to handle each
 // voting power distribution update event that happens at the given BTC height.
 // This is called in `BeginBlocker`
-func (k Keeper) IteratePowerDistUpdateEvents(
+func (k Keeper) iteratePowerDistUpdateEvents(
 	ctx context.Context,
 	btcHeight uint32,
 	handleFunc func(event *types.EventPowerDistUpdate) bool,
