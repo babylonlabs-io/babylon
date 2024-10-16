@@ -45,7 +45,7 @@ func (n *NodeConfig) QueryFinalityProviders() []*bstypes.FinalityProviderRespons
 	return resp.FinalityProviders
 }
 
-func (n *NodeConfig) QueryActiveFinalityProvidersAtHeight(height uint64) []*bstypes.FinalityProviderWithMeta {
+func (n *NodeConfig) QueryActiveFinalityProvidersAtHeight(height uint64) []*bstypes.ActiveFinalityProvidersAtHeightResponse {
 	path := fmt.Sprintf("/babylon/btcstaking/v1/finality_providers/%d", height)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
