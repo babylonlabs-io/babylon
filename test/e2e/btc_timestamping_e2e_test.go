@@ -283,7 +283,7 @@ func (s *BTCTimestampingTestSuite) Test6InterceptFeeCollector() {
 	// at the 1st block of an epoch, the gauge does not exist since incentive's BeginBlock
 	// at this block accumulates rewards for BTC timestamping gauge for the previous block
 	// need to wait for a block to ensure the gauge is created
-	var btcTimestampingGauge *itypes.Gauge
+	var btcTimestampingGauge *itypes.BTCTimestampingGaugeResponse
 	s.Eventually(func() bool {
 		btcTimestampingGauge, err = nonValidatorNode.QueryBTCTimestampingGauge(curEpoch)
 		if err != nil {
