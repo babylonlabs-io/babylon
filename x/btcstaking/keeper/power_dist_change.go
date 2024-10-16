@@ -46,7 +46,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	// to construct the new distribution
 	k.Logger(sdkCtx).With(
 		"eventsLen", len(events),
-	).Info("processing events")
+	).Info("processing voting power update events")
 	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events)
 
 	// record voting power and cache for this height
