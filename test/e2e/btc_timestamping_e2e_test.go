@@ -152,9 +152,9 @@ func (s *BTCTimestampingTestSuite) Test4GenerateAndWithdrawReward() {
 	rgs, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
 	s.NoError(err)
 	submitterRg, reporterRg := rgs[itypes.SubmitterType.String()], rgs[itypes.ReporterType.String()]
-	s.T().Logf("submitter witdhrawable reward: %s, reporter witdhrawable reward: %s before withdrawing", submitterRg.Coins.String(), reporterRg.Coins.String())
-	s.False(submitterRg.Coins.IsZero())
-	s.False(reporterRg.Coins.IsZero())
+	s.T().Logf("submitter witdhrawable reward: %s, reporter witdhrawable reward: %s before withdrawing", convertToRewardGauge(submitterRg).GetWithdrawableCoins().String(), convertToRewardGauge(reporterRg).GetWithdrawableCoins().String())
+	s.False(convertToRewardGauge(submitterRg).IsFullyWithdrawn())
+	s.False(convertToRewardGauge(reporterRg).IsFullyWithdrawn())
 
 	// withdraw submitter reward
 	nonValidatorNode.WithdrawReward(itypes.SubmitterType.String(), initialization.ValidatorWalletName)
@@ -170,8 +170,8 @@ func (s *BTCTimestampingTestSuite) Test4GenerateAndWithdrawReward() {
 	rgs2, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
 	s.NoError(err)
 	submitterRg2 := rgs2[itypes.SubmitterType.String()]
-	s.T().Logf("submitter withdrawable reward: %s after withdrawing", submitterRg2.Coins.String())
-	s.True(rgs2[itypes.SubmitterType.String()].Coins.IsZero())
+	s.T().Logf("submitter withdrawable reward: %s after withdrawing", convertToRewardGauge(submitterRg2).GetWithdrawableCoins().String())
+	s.True(convertToRewardGauge(submitterRg2).IsFullyWithdrawn())
 
 	// withdraw reporter reward
 	nonValidatorNode.WithdrawReward(itypes.ReporterType.String(), initialization.ValidatorWalletName)
@@ -187,8 +187,8 @@ func (s *BTCTimestampingTestSuite) Test4GenerateAndWithdrawReward() {
 	rgs3, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
 	s.NoError(err)
 	reporterRg3 := rgs3[itypes.SubmitterType.String()]
-	s.T().Logf("reporter withdrawable reward: %s after withdrawing", reporterRg3.Coins.String())
-	s.True(rgs3[itypes.ReporterType.String()].Coins.IsZero())
+	s.T().Logf("reporter withdrawable reward: %s after withdrawing", convertToRewardGauge(reporterRg3).GetWithdrawableCoins().String())
+	s.True(convertToRewardGauge(reporterRg3).IsFullyWithdrawn())
 }
 
 func (s *BTCTimestampingTestSuite) Test5Wasm() {
@@ -306,4 +306,11 @@ func (s *BTCTimestampingTestSuite) Test6InterceptFeeCollector() {
 	s.NoError(err)
 	s.T().Logf("incentive module account's balance after a block: %s", incentiveBalance2.String())
 	s.True(incentiveBalance2.IsAllGTE(incentiveBalance))
+}
+
+func convertToRewardGauge(rg *itypes.RewardGaugesResponse) *itypes.RewardGauge {
+	return &itypes.RewardGauge{
+		Coins:          rg.Coins,
+		WithdrawnCoins: rg.WithdrawnCoins,
+	}
 }

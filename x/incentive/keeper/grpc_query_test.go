@@ -20,17 +20,20 @@ func FuzzRewardGaugesQuery(f *testing.F) {
 
 		// generate a list of random RewardGauge map and insert them to KVStore
 		// where in each map, key is stakeholder type and address is the reward gauge
-		rgMaps := []map[string]*types.RewardGauge{}
+		rgMaps := []map[string]*types.RewardGaugesResponse{}
 		sAddrList := []sdk.AccAddress{}
 		numRgMaps := datagen.RandomInt(r, 100)
 		for i := uint64(0); i < numRgMaps; i++ {
-			rgMap := map[string]*types.RewardGauge{}
+			rgMap := map[string]*types.RewardGaugesResponse{}
 			sAddr := datagen.GenRandomAccount().GetAddress()
 			sAddrList = append(sAddrList, sAddr)
 			for i := uint64(0); i <= datagen.RandomInt(r, 4); i++ {
 				sType := datagen.GenRandomStakeholderType(r)
 				rg := datagen.GenRandomRewardGauge(r)
-				rgMap[sType.String()] = rg
+				rgMap[sType.String()] = &types.RewardGaugesResponse{
+					Coins:          rg.Coins,
+					WithdrawnCoins: rg.WithdrawnCoins,
+				}
 
 				keeper.SetRewardGauge(ctx, sType, sAddr, rg)
 			}
