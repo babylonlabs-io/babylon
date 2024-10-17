@@ -97,7 +97,7 @@ func (k Keeper) Block(ctx context.Context, req *types.QueryBlockRequest) (*types
 		return nil, err
 	}
 
-	return &types.QueryBlockResponse{Block: b}, nil
+	return &types.QueryBlockResponse{Block: convertToBlockResponse(b)}, nil
 }
 
 // ListBlocks returns a list of blocks at the given finalisation status
@@ -129,7 +129,7 @@ func (k Keeper) ListBlocks(ctx context.Context, req *types.QueryListBlocksReques
 	}
 
 	resp := &types.QueryListBlocksResponse{
-		Blocks:     ibs,
+		Blocks:     convertToBlockResponseList(ibs),
 		Pagination: pageRes,
 	}
 	return resp, nil
@@ -289,4 +289,20 @@ func convertToSigningInfosResponse(signInfos []types.FinalityProviderSigningInfo
 		response[i] = convertToSigningInfoResponse(info)
 	}
 	return response
+}
+
+func convertToBlockResponse(ib *types.IndexedBlock) *types.BlockResponse {
+	return &types.BlockResponse{
+		Height:    ib.Height,
+		AppHash:   ib.AppHash,
+		Finalized: ib.Finalized,
+	}
+}
+
+func convertToBlockResponseList(ibs []*types.IndexedBlock) []*types.BlockResponse {
+	var blockResponses []*types.BlockResponse
+	for _, ib := range ibs {
+		blockResponses = append(blockResponses, convertToBlockResponse(ib))
+	}
+	return blockResponses
 }
