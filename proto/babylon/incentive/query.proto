@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "babylon/incentive/params.proto";
 import "babylon/incentive/incentive.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
 
@@ -43,11 +44,26 @@ message QueryRewardGaugesRequest {
     string address = 1;
 }
 
+// RewardGaugesResponse is an object that stores rewards distributed to a BTC staking/timestamping stakeholder
+message RewardGaugesResponse {
+    // coins are coins that have been in the gauge
+    // Can have multiple coin denoms
+    repeated cosmos.base.v1beta1.Coin coins = 1 [
+        (gogoproto.nullable) = false,
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    ];
+    // withdrawn_coins are coins that have been withdrawn by the stakeholder already
+    repeated cosmos.base.v1beta1.Coin withdrawn_coins = 2 [
+        (gogoproto.nullable) = false,
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    ];
+}
+
 // QueryRewardGaugesResponse is response type for the Query/RewardGauges RPC method.
 message QueryRewardGaugesResponse {
     // reward_gauges is the map of reward gauges, where key is the stakeholder type
     // and value is the reward gauge holding all rewards for the stakeholder in that type
-    map<string, RewardGauge> reward_gauges = 1;
+    map<string, RewardGaugesResponse> reward_gauges = 1;
 }
 
 // QueryBTCStakingGaugeRequest is request type for the Query/BTCStakingGauge RPC method.
@@ -56,10 +72,30 @@ message QueryBTCStakingGaugeRequest {
     uint64 height = 1;
 }
 
+message BTCStakingGaugeResponse {
+    // coins that have been in the gauge
+    // can have multiple coin denoms
+    repeated cosmos.base.v1beta1.Coin coins = 1 [
+        (gogoproto.nullable) = false,
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    ];
+
+}
+
+message BTCTimestampingGaugeResponse {
+    // coins that have been in the gauge
+    // can have multiple coin denoms
+    repeated cosmos.base.v1beta1.Coin coins = 1 [
+        (gogoproto.nullable) = false,
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    ];
+
+}
+
 // QueryBTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC method.
 message QueryBTCStakingGaugeResponse {
     // gauge is the BTC staking gauge at the queried height 
-    Gauge gauge = 1;
+    BTCStakingGaugeResponse gauge = 1;
 }
 
 // QueryBTCTimestampingGaugeRequest is request type for the Query/BTCTimestampingGauge RPC method.
@@ -71,5 +107,5 @@ message QueryBTCTimestampingGaugeRequest {
 // QueryBTCTimestampingGaugeResponse is response type for the Query/BTCTimestampingGauge RPC method.
 message QueryBTCTimestampingGaugeResponse {
     // gauge is the BTC timestamping gauge at the queried epoch 
-    Gauge gauge = 1;
+    BTCTimestampingGaugeResponse gauge = 1;
 }

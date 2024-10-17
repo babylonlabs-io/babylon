@@ -6,6 +6,8 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -158,18 +160,74 @@ func (m *QueryRewardGaugesRequest) GetAddress() string {
 	return ""
 }
 
+// RewardGaugesResponse is an object that stores rewards distributed to a BTC staking/timestamping stakeholder
+type RewardGaugesResponse struct {
+	// coins are coins that have been in the gauge
+	// Can have multiple coin denoms
+	Coins github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=coins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"coins"`
+	// withdrawn_coins are coins that have been withdrawn by the stakeholder already
+	WithdrawnCoins github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=withdrawn_coins,json=withdrawnCoins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"withdrawn_coins"`
+}
+
+func (m *RewardGaugesResponse) Reset()         { *m = RewardGaugesResponse{} }
+func (m *RewardGaugesResponse) String() string { return proto.CompactTextString(m) }
+func (*RewardGaugesResponse) ProtoMessage()    {}
+func (*RewardGaugesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e1a59cc0c7c44135, []int{3}
+}
+func (m *RewardGaugesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *RewardGaugesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_RewardGaugesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *RewardGaugesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RewardGaugesResponse.Merge(m, src)
+}
+func (m *RewardGaugesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *RewardGaugesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_RewardGaugesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RewardGaugesResponse proto.InternalMessageInfo
+
+func (m *RewardGaugesResponse) GetCoins() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.Coins
+	}
+	return nil
+}
+
+func (m *RewardGaugesResponse) GetWithdrawnCoins() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.WithdrawnCoins
+	}
+	return nil
+}
+
 // QueryRewardGaugesResponse is response type for the Query/RewardGauges RPC method.
 type QueryRewardGaugesResponse struct {
 	// reward_gauges is the map of reward gauges, where key is the stakeholder type
 	// and value is the reward gauge holding all rewards for the stakeholder in that type
-	RewardGauges map[string]*RewardGauge `protobuf:"bytes,1,rep,name=reward_gauges,json=rewardGauges,proto3" json:"reward_gauges,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	RewardGauges map[string]*RewardGaugesResponse `protobuf:"bytes,1,rep,name=reward_gauges,json=rewardGauges,proto3" json:"reward_gauges,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (m *QueryRewardGaugesResponse) Reset()         { *m = QueryRewardGaugesResponse{} }
 func (m *QueryRewardGaugesResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryRewardGaugesResponse) ProtoMessage()    {}
 func (*QueryRewardGaugesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e1a59cc0c7c44135, []int{3}
+	return fileDescriptor_e1a59cc0c7c44135, []int{4}
 }
 func (m *QueryRewardGaugesResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -198,7 +256,7 @@ func (m *QueryRewardGaugesResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryRewardGaugesResponse proto.InternalMessageInfo
 
-func (m *QueryRewardGaugesResponse) GetRewardGauges() map[string]*RewardGauge {
+func (m *QueryRewardGaugesResponse) GetRewardGauges() map[string]*RewardGaugesResponse {
 	if m != nil {
 		return m.RewardGauges
 	}
@@ -215,7 +273,7 @@ func (m *QueryBTCStakingGaugeRequest) Reset()         { *m = QueryBTCStakingGaug
 func (m *QueryBTCStakingGaugeRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBTCStakingGaugeRequest) ProtoMessage()    {}
 func (*QueryBTCStakingGaugeRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e1a59cc0c7c44135, []int{4}
+	return fileDescriptor_e1a59cc0c7c44135, []int{5}
 }
 func (m *QueryBTCStakingGaugeRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -251,17 +309,109 @@ func (m *QueryBTCStakingGaugeRequest) GetHeight() uint64 {
 	return 0
 }
 
+type BTCStakingGaugeResponse struct {
+	// coins that have been in the gauge
+	// can have multiple coin denoms
+	Coins github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=coins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"coins"`
+}
+
+func (m *BTCStakingGaugeResponse) Reset()         { *m = BTCStakingGaugeResponse{} }
+func (m *BTCStakingGaugeResponse) String() string { return proto.CompactTextString(m) }
+func (*BTCStakingGaugeResponse) ProtoMessage()    {}
+func (*BTCStakingGaugeResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e1a59cc0c7c44135, []int{6}
+}
+func (m *BTCStakingGaugeResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *BTCStakingGaugeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_BTCStakingGaugeResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *BTCStakingGaugeResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BTCStakingGaugeResponse.Merge(m, src)
+}
+func (m *BTCStakingGaugeResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *BTCStakingGaugeResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_BTCStakingGaugeResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_BTCStakingGaugeResponse proto.InternalMessageInfo
+
+func (m *BTCStakingGaugeResponse) GetCoins() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.Coins
+	}
+	return nil
+}
+
+type BTCTimestampingGaugeResponse struct {
+	// coins that have been in the gauge
+	// can have multiple coin denoms
+	Coins github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=coins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"coins"`
+}
+
+func (m *BTCTimestampingGaugeResponse) Reset()         { *m = BTCTimestampingGaugeResponse{} }
+func (m *BTCTimestampingGaugeResponse) String() string { return proto.CompactTextString(m) }
+func (*BTCTimestampingGaugeResponse) ProtoMessage()    {}
+func (*BTCTimestampingGaugeResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e1a59cc0c7c44135, []int{7}
+}
+func (m *BTCTimestampingGaugeResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *BTCTimestampingGaugeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_BTCTimestampingGaugeResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *BTCTimestampingGaugeResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BTCTimestampingGaugeResponse.Merge(m, src)
+}
+func (m *BTCTimestampingGaugeResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *BTCTimestampingGaugeResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_BTCTimestampingGaugeResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_BTCTimestampingGaugeResponse proto.InternalMessageInfo
+
+func (m *BTCTimestampingGaugeResponse) GetCoins() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.Coins
+	}
+	return nil
+}
+
 // QueryBTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC method.
 type QueryBTCStakingGaugeResponse struct {
 	// gauge is the BTC staking gauge at the queried height
-	Gauge *Gauge `protobuf:"bytes,1,opt,name=gauge,proto3" json:"gauge,omitempty"`
+	Gauge *BTCStakingGaugeResponse `protobuf:"bytes,1,opt,name=gauge,proto3" json:"gauge,omitempty"`
 }
 
 func (m *QueryBTCStakingGaugeResponse) Reset()         { *m = QueryBTCStakingGaugeResponse{} }
 func (m *QueryBTCStakingGaugeResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryBTCStakingGaugeResponse) ProtoMessage()    {}
 func (*QueryBTCStakingGaugeResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e1a59cc0c7c44135, []int{5}
+	return fileDescriptor_e1a59cc0c7c44135, []int{8}
 }
 func (m *QueryBTCStakingGaugeResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -290,7 +440,7 @@ func (m *QueryBTCStakingGaugeResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryBTCStakingGaugeResponse proto.InternalMessageInfo
 
-func (m *QueryBTCStakingGaugeResponse) GetGauge() *Gauge {
+func (m *QueryBTCStakingGaugeResponse) GetGauge() *BTCStakingGaugeResponse {
 	if m != nil {
 		return m.Gauge
 	}
@@ -307,7 +457,7 @@ func (m *QueryBTCTimestampingGaugeRequest) Reset()         { *m = QueryBTCTimest
 func (m *QueryBTCTimestampingGaugeRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBTCTimestampingGaugeRequest) ProtoMessage()    {}
 func (*QueryBTCTimestampingGaugeRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e1a59cc0c7c44135, []int{6}
+	return fileDescriptor_e1a59cc0c7c44135, []int{9}
 }
 func (m *QueryBTCTimestampingGaugeRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -346,14 +496,14 @@ func (m *QueryBTCTimestampingGaugeRequest) GetEpochNum() uint64 {
 // QueryBTCTimestampingGaugeResponse is response type for the Query/BTCTimestampingGauge RPC method.
 type QueryBTCTimestampingGaugeResponse struct {
 	// gauge is the BTC timestamping gauge at the queried epoch
-	Gauge *Gauge `protobuf:"bytes,1,opt,name=gauge,proto3" json:"gauge,omitempty"`
+	Gauge *BTCTimestampingGaugeResponse `protobuf:"bytes,1,opt,name=gauge,proto3" json:"gauge,omitempty"`
 }
 
 func (m *QueryBTCTimestampingGaugeResponse) Reset()         { *m = QueryBTCTimestampingGaugeResponse{} }
 func (m *QueryBTCTimestampingGaugeResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryBTCTimestampingGaugeResponse) ProtoMessage()    {}
 func (*QueryBTCTimestampingGaugeResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e1a59cc0c7c44135, []int{7}
+	return fileDescriptor_e1a59cc0c7c44135, []int{10}
 }
 func (m *QueryBTCTimestampingGaugeResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -382,7 +532,7 @@ func (m *QueryBTCTimestampingGaugeResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryBTCTimestampingGaugeResponse proto.InternalMessageInfo
 
-func (m *QueryBTCTimestampingGaugeResponse) GetGauge() *Gauge {
+func (m *QueryBTCTimestampingGaugeResponse) GetGauge() *BTCTimestampingGaugeResponse {
 	if m != nil {
 		return m.Gauge
 	}
@@ -393,9 +543,12 @@ func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "babylon.incentive.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.incentive.QueryParamsResponse")
 	proto.RegisterType((*QueryRewardGaugesRequest)(nil), "babylon.incentive.QueryRewardGaugesRequest")
+	proto.RegisterType((*RewardGaugesResponse)(nil), "babylon.incentive.RewardGaugesResponse")
 	proto.RegisterType((*QueryRewardGaugesResponse)(nil), "babylon.incentive.QueryRewardGaugesResponse")
-	proto.RegisterMapType((map[string]*RewardGauge)(nil), "babylon.incentive.QueryRewardGaugesResponse.RewardGaugesEntry")
+	proto.RegisterMapType((map[string]*RewardGaugesResponse)(nil), "babylon.incentive.QueryRewardGaugesResponse.RewardGaugesEntry")
 	proto.RegisterType((*QueryBTCStakingGaugeRequest)(nil), "babylon.incentive.QueryBTCStakingGaugeRequest")
+	proto.RegisterType((*BTCStakingGaugeResponse)(nil), "babylon.incentive.BTCStakingGaugeResponse")
+	proto.RegisterType((*BTCTimestampingGaugeResponse)(nil), "babylon.incentive.BTCTimestampingGaugeResponse")
 	proto.RegisterType((*QueryBTCStakingGaugeResponse)(nil), "babylon.incentive.QueryBTCStakingGaugeResponse")
 	proto.RegisterType((*QueryBTCTimestampingGaugeRequest)(nil), "babylon.incentive.QueryBTCTimestampingGaugeRequest")
 	proto.RegisterType((*QueryBTCTimestampingGaugeResponse)(nil), "babylon.incentive.QueryBTCTimestampingGaugeResponse")
@@ -404,46 +557,54 @@ func init() {
 func init() { proto.RegisterFile("babylon/incentive/query.proto", fileDescriptor_e1a59cc0c7c44135) }
 
 var fileDescriptor_e1a59cc0c7c44135 = []byte{
-	// 611 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x94, 0x3f, 0x6f, 0xd3, 0x40,
-	0x18, 0xc6, 0xe3, 0xb4, 0x09, 0xf4, 0x5a, 0x04, 0x3d, 0x22, 0xe4, 0x38, 0xc5, 0x24, 0x96, 0x40,
-	0x95, 0xa0, 0xb6, 0xc8, 0x1f, 0x15, 0x90, 0x00, 0x29, 0x08, 0x31, 0x11, 0x81, 0xdb, 0x89, 0x25,
-	0x3a, 0x27, 0x27, 0xc7, 0x6a, 0xec, 0x73, 0xed, 0x73, 0x21, 0x54, 0x59, 0xf8, 0x04, 0x48, 0x4c,
-	0xec, 0x2c, 0x7c, 0x0b, 0xc6, 0x8e, 0x95, 0x58, 0x98, 0x10, 0x24, 0x7c, 0x10, 0x94, 0xbb, 0x73,
-	0xe4, 0x36, 0x76, 0x69, 0xd9, 0xce, 0xef, 0xfb, 0xbc, 0xcf, 0xfb, 0xcb, 0xf9, 0x71, 0xc0, 0x4d,
-	0x0b, 0x59, 0xa3, 0x21, 0xf1, 0x0c, 0xc7, 0xeb, 0x61, 0x8f, 0x3a, 0x07, 0xd8, 0xd8, 0x8f, 0x70,
-	0x30, 0xd2, 0xfd, 0x80, 0x50, 0x02, 0xd7, 0x45, 0x5b, 0x9f, 0xb7, 0x95, 0x92, 0x4d, 0x6c, 0xc2,
-	0xba, 0xc6, 0xec, 0xc4, 0x85, 0xca, 0x86, 0x4d, 0x88, 0x3d, 0xc4, 0x06, 0xf2, 0x1d, 0x03, 0x79,
-	0x1e, 0xa1, 0x88, 0x3a, 0xc4, 0x0b, 0x45, 0x57, 0x5d, 0xdc, 0xe2, 0xa3, 0x00, 0xb9, 0x71, 0xbf,
-	0xb6, 0xd8, 0x9f, 0x9f, 0xb8, 0x44, 0x2b, 0x01, 0xf8, 0x7a, 0x06, 0xf6, 0x8a, 0xcd, 0x99, 0x78,
-	0x3f, 0xc2, 0x21, 0xd5, 0x3a, 0xe0, 0xfa, 0x89, 0x6a, 0xe8, 0x13, 0x2f, 0xc4, 0x70, 0x1b, 0x14,
-	0xb9, 0xbf, 0x2c, 0x55, 0xa5, 0xcd, 0xd5, 0x7a, 0x59, 0x5f, 0xf8, 0x1d, 0x3a, 0x1f, 0x69, 0x2f,
-	0x1f, 0xfd, 0xbc, 0x95, 0x33, 0x85, 0x5c, 0x6b, 0x02, 0x99, 0xf9, 0x99, 0xf8, 0x2d, 0x0a, 0xfa,
-	0x2f, 0x50, 0x64, 0xe3, 0x78, 0x17, 0x94, 0xc1, 0x25, 0xd4, 0xef, 0x07, 0x38, 0xe4, 0xae, 0x2b,
-	0x66, 0xfc, 0xa8, 0xfd, 0x96, 0x40, 0x39, 0x65, 0x4c, 0xc0, 0xf4, 0xc0, 0x95, 0x80, 0xd5, 0xbb,
-	0x36, 0x6b, 0xc8, 0x52, 0x75, 0x69, 0x73, 0xb5, 0xfe, 0x24, 0x85, 0x29, 0xd3, 0x44, 0x4f, 0x16,
-	0x9f, 0x7b, 0x34, 0x18, 0x99, 0x6b, 0x41, 0xa2, 0xa4, 0x74, 0xc1, 0xfa, 0x82, 0x04, 0x5e, 0x03,
-	0x4b, 0x7b, 0x78, 0x24, 0x68, 0x67, 0x47, 0xd8, 0x04, 0x85, 0x03, 0x34, 0x8c, 0xb0, 0x9c, 0x67,
-	0xf7, 0xa2, 0xa6, 0x30, 0x24, 0x6c, 0x4c, 0x2e, 0x7e, 0x94, 0x7f, 0x20, 0x69, 0x2d, 0x50, 0x61,
-	0x74, 0xed, 0xdd, 0x67, 0x3b, 0x14, 0xed, 0x39, 0x9e, 0xcd, 0x25, 0xe2, 0x72, 0x6e, 0x80, 0xe2,
-	0x00, 0x3b, 0xf6, 0x80, 0xb2, 0x6d, 0xcb, 0xa6, 0x78, 0xd2, 0x3a, 0x60, 0x23, 0x7d, 0x4c, 0x5c,
-	0x8e, 0x0e, 0x0a, 0xec, 0x56, 0xc4, 0x8b, 0x92, 0x53, 0x80, 0x04, 0x0a, 0x93, 0x69, 0x4f, 0x41,
-	0x35, 0xf6, 0xdb, 0x75, 0x5c, 0x1c, 0x52, 0xe4, 0xfa, 0xa7, 0x59, 0x2a, 0x60, 0x05, 0xfb, 0xa4,
-	0x37, 0xe8, 0x7a, 0x91, 0x2b, 0x70, 0x2e, 0xb3, 0x42, 0x27, 0x72, 0xb5, 0x1d, 0x50, 0x3b, 0xc3,
-	0xe0, 0xff, 0xa8, 0xea, 0x9f, 0x0b, 0xa0, 0xc0, 0x5c, 0xe1, 0x7b, 0x50, 0xe4, 0xc1, 0x82, 0xb7,
-	0xb3, 0xde, 0xef, 0x89, 0x04, 0x2b, 0x77, 0xfe, 0x25, 0xe3, 0x48, 0x5a, 0xed, 0xc3, 0xf7, 0x3f,
-	0x9f, 0xf2, 0x15, 0x58, 0x36, 0xb2, 0xbe, 0x25, 0xf8, 0x45, 0x02, 0x6b, 0xc9, 0x10, 0xc0, 0xbb,
-	0xe7, 0x8b, 0x18, 0x07, 0xb9, 0x77, 0x91, 0x3c, 0x6a, 0x0f, 0x19, 0x4e, 0x03, 0xde, 0x4f, 0xc1,
-	0x11, 0x9f, 0x85, 0x71, 0x28, 0x0e, 0x63, 0x23, 0x99, 0x7f, 0xf8, 0x55, 0x02, 0x57, 0x4f, 0xc5,
-	0x01, 0xea, 0x59, 0xcb, 0xd3, 0xe3, 0xa6, 0x18, 0xe7, 0xd6, 0x0b, 0xde, 0x16, 0xe3, 0x35, 0xe0,
-	0x56, 0x0a, 0xaf, 0x45, 0x7b, 0xdd, 0x90, 0x0f, 0x71, 0x44, 0xe3, 0x90, 0xa7, 0x77, 0x0c, 0xbf,
-	0x49, 0xa0, 0x94, 0x96, 0x14, 0xd8, 0x38, 0x03, 0x20, 0x2b, 0x98, 0x4a, 0xf3, 0x62, 0x43, 0x02,
-	0xfd, 0x31, 0x43, 0xdf, 0x86, 0xad, 0x0c, 0x74, 0x9a, 0x98, 0x8c, 0xf9, 0xe7, 0xf9, 0x1f, 0xb7,
-	0x5f, 0x1e, 0x4d, 0x54, 0xe9, 0x78, 0xa2, 0x4a, 0xbf, 0x26, 0xaa, 0xf4, 0x71, 0xaa, 0xe6, 0x8e,
-	0xa7, 0x6a, 0xee, 0xc7, 0x54, 0xcd, 0xbd, 0x69, 0xd8, 0x0e, 0x1d, 0x44, 0x96, 0xde, 0x23, 0x6e,
-	0x6c, 0x3d, 0x44, 0x56, 0xb8, 0xe5, 0x90, 0xf9, 0xa6, 0x77, 0x89, 0x5d, 0x74, 0xe4, 0xe3, 0xd0,
-	0x2a, 0xb2, 0xbf, 0xe3, 0xc6, 0xdf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x8a, 0xfc, 0x04, 0x89, 0x39,
-	0x06, 0x00, 0x00,
+	// 748 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x95, 0x41, 0x4f, 0x53, 0x4b,
+	0x14, 0xc7, 0x7b, 0x0b, 0xed, 0x7b, 0x9c, 0xc7, 0x7b, 0x3c, 0xc6, 0x46, 0x4b, 0xc1, 0x02, 0x37,
+	0x51, 0x89, 0xca, 0x1d, 0xa1, 0x10, 0xd4, 0x04, 0x35, 0x25, 0xc4, 0x95, 0x44, 0xaf, 0xac, 0xdc,
+	0xd4, 0xb9, 0xed, 0xe4, 0xf6, 0x4a, 0x7b, 0xa7, 0xdc, 0x99, 0x82, 0x15, 0x59, 0xe8, 0x27, 0x30,
+	0x71, 0xe5, 0xde, 0x8d, 0x7e, 0x0a, 0x97, 0x2c, 0x49, 0xdc, 0xb8, 0x52, 0x03, 0xae, 0xdc, 0xf8,
+	0x15, 0x4c, 0x67, 0xa6, 0xcd, 0xad, 0xbd, 0x17, 0x21, 0x31, 0xba, 0xea, 0xdc, 0x39, 0x73, 0xce,
+	0xff, 0x77, 0x66, 0xce, 0x39, 0x85, 0xb3, 0x0e, 0x71, 0x5a, 0x35, 0xe6, 0x63, 0xcf, 0x2f, 0x53,
+	0x5f, 0x78, 0x5b, 0x14, 0x6f, 0x36, 0x69, 0xd0, 0xb2, 0x1a, 0x01, 0x13, 0x0c, 0x8d, 0x6a, 0xb3,
+	0xd5, 0x35, 0xe7, 0x32, 0x2e, 0x73, 0x99, 0xb4, 0xe2, 0xf6, 0x4a, 0x1d, 0xcc, 0x4d, 0xb8, 0x8c,
+	0xb9, 0x35, 0x8a, 0x49, 0xc3, 0xc3, 0xc4, 0xf7, 0x99, 0x20, 0xc2, 0x63, 0x3e, 0xd7, 0xd6, 0x7c,
+	0xbf, 0x4a, 0x83, 0x04, 0xa4, 0xde, 0xb1, 0x4f, 0xf7, 0xdb, 0xbb, 0xab, 0x4e, 0x88, 0x32, 0xe3,
+	0x75, 0xc6, 0xb1, 0x43, 0x38, 0xc5, 0x5b, 0x73, 0x0e, 0x15, 0x64, 0x0e, 0x97, 0x99, 0xe7, 0x2b,
+	0xbb, 0x99, 0x01, 0x74, 0xaf, 0x0d, 0x7e, 0x57, 0xc6, 0xb5, 0xe9, 0x66, 0x93, 0x72, 0x61, 0xae,
+	0xc1, 0xa9, 0x9e, 0x5d, 0xde, 0x60, 0x3e, 0xa7, 0x68, 0x09, 0xd2, 0x4a, 0x3f, 0x6b, 0x4c, 0x19,
+	0x33, 0xff, 0xcc, 0x8f, 0x59, 0x7d, 0x79, 0x5a, 0xca, 0xa5, 0x38, 0xb8, 0xf7, 0x71, 0x32, 0x61,
+	0xeb, 0xe3, 0xe6, 0x02, 0x64, 0x65, 0x3c, 0x9b, 0x6e, 0x93, 0xa0, 0x72, 0x9b, 0x34, 0x5d, 0xda,
+	0xd1, 0x42, 0x59, 0xf8, 0x8b, 0x54, 0x2a, 0x01, 0xe5, 0x2a, 0xea, 0x90, 0xdd, 0xf9, 0x34, 0xbf,
+	0x19, 0x90, 0xe9, 0xf5, 0xd0, 0x1c, 0x04, 0x52, 0xed, 0x14, 0xda, 0x0e, 0x03, 0x12, 0x43, 0x25,
+	0x69, 0xb5, 0x93, 0xb4, 0x74, 0x92, 0xd6, 0x0a, 0xf3, 0xfc, 0xe2, 0x95, 0x36, 0xc6, 0xdb, 0x4f,
+	0x93, 0x33, 0xae, 0x27, 0xaa, 0x4d, 0xc7, 0x2a, 0xb3, 0x3a, 0xd6, 0x37, 0xa2, 0x7e, 0x66, 0x79,
+	0x65, 0x03, 0x8b, 0x56, 0x83, 0x72, 0xe9, 0xc0, 0x6d, 0x15, 0x19, 0x09, 0x18, 0xd9, 0xf6, 0x44,
+	0xb5, 0x12, 0x90, 0x6d, 0xbf, 0xa4, 0xc4, 0x92, 0xbf, 0x5e, 0xec, 0xbf, 0xae, 0x86, 0xfc, 0x36,
+	0xbf, 0x1a, 0x30, 0x16, 0x71, 0x51, 0x3a, 0xed, 0x32, 0xfc, 0x1b, 0xc8, 0xfd, 0x92, 0x2b, 0x0d,
+	0x3a, 0xfd, 0x1b, 0x11, 0xaf, 0x10, 0x1b, 0xc4, 0x0a, 0x6f, 0xae, 0xfa, 0x22, 0x68, 0xd9, 0xc3,
+	0x41, 0x68, 0x2b, 0x57, 0x85, 0xd1, 0xbe, 0x23, 0xe8, 0x7f, 0x18, 0xd8, 0xa0, 0x2d, 0xfd, 0x3e,
+	0xed, 0x25, 0x5a, 0x86, 0xd4, 0x16, 0xa9, 0x35, 0x69, 0x36, 0x29, 0x2b, 0xe1, 0x42, 0x04, 0x43,
+	0x94, 0xbc, 0xad, 0xbc, 0xae, 0x27, 0xaf, 0x1a, 0xe6, 0x22, 0x8c, 0x4b, 0xcc, 0xe2, 0xfa, 0xca,
+	0x7d, 0x41, 0x36, 0x3c, 0xdf, 0x95, 0x67, 0x3b, 0x75, 0x71, 0x1a, 0xd2, 0x55, 0xea, 0xb9, 0x55,
+	0x21, 0x65, 0x07, 0x6d, 0xfd, 0x65, 0x3e, 0x85, 0x33, 0x7d, 0x1e, 0xbf, 0xad, 0x2e, 0xcc, 0x67,
+	0x06, 0x4c, 0x14, 0xd7, 0x57, 0xd6, 0xbd, 0x3a, 0xe5, 0x82, 0xd4, 0x1b, 0x7f, 0x82, 0xe1, 0x21,
+	0x4c, 0x44, 0x5f, 0x9c, 0x46, 0xb8, 0x05, 0x29, 0x59, 0x20, 0xba, 0x4b, 0x2f, 0x46, 0xbc, 0x4d,
+	0x8c, 0xab, 0xad, 0x1c, 0xcd, 0x9b, 0x30, 0xd5, 0x51, 0x88, 0xc8, 0x54, 0xbd, 0xcf, 0x38, 0x0c,
+	0xd1, 0x06, 0x2b, 0x57, 0x4b, 0x7e, 0xb3, 0xae, 0x9f, 0xe8, 0x6f, 0xb9, 0xb1, 0xd6, 0xac, 0x9b,
+	0x8f, 0x60, 0xfa, 0x88, 0x00, 0x9a, 0x73, 0xb5, 0x97, 0x13, 0x47, 0x73, 0xc6, 0xfa, 0x6b, 0xd8,
+	0xf9, 0x57, 0x29, 0x48, 0x49, 0x31, 0xf4, 0x04, 0xd2, 0x6a, 0xfc, 0xa0, 0x73, 0x71, 0x3d, 0xd1,
+	0x33, 0xe7, 0x72, 0xe7, 0x7f, 0x76, 0x4c, 0x29, 0x99, 0xd3, 0xcf, 0xdf, 0x7f, 0x79, 0x99, 0x1c,
+	0x47, 0x63, 0x38, 0x6e, 0x22, 0xa3, 0xd7, 0x06, 0x0c, 0x87, 0x2b, 0x1e, 0x5d, 0x3a, 0x5e, 0x5b,
+	0x2a, 0x90, 0xcb, 0x27, 0xe9, 0x61, 0xf3, 0x9a, 0xc4, 0x29, 0xa0, 0xb9, 0x08, 0x1c, 0x3d, 0x3c,
+	0xf1, 0x8e, 0x5e, 0xec, 0xe2, 0xf0, 0xcc, 0x40, 0x6f, 0x0c, 0x18, 0xf9, 0xe1, 0xf1, 0x91, 0x15,
+	0x27, 0x1e, 0xdd, 0x99, 0x39, 0x7c, 0xec, 0xf3, 0x9a, 0x77, 0x51, 0xf2, 0x62, 0x34, 0x1b, 0xc1,
+	0xeb, 0x88, 0x72, 0x89, 0x2b, 0x27, 0x85, 0x88, 0x77, 0x54, 0xa3, 0xef, 0xa2, 0x77, 0x06, 0x64,
+	0xa2, 0x0a, 0x00, 0x15, 0x8e, 0x00, 0x88, 0xab, 0xd7, 0xdc, 0xc2, 0xc9, 0x9c, 0x34, 0xfa, 0xb2,
+	0x44, 0x5f, 0x42, 0x8b, 0x31, 0xe8, 0x22, 0xe4, 0xd9, 0xe1, 0xef, 0xb6, 0xc5, 0x6e, 0xf1, 0xce,
+	0xde, 0x41, 0xde, 0xd8, 0x3f, 0xc8, 0x1b, 0x9f, 0x0f, 0xf2, 0xc6, 0x8b, 0xc3, 0x7c, 0x62, 0xff,
+	0x30, 0x9f, 0xf8, 0x70, 0x98, 0x4f, 0x3c, 0x28, 0x84, 0xba, 0x5e, 0x87, 0xae, 0x11, 0x87, 0xcf,
+	0x7a, 0xac, 0xab, 0xf4, 0x38, 0xa4, 0x25, 0xc7, 0x80, 0x93, 0x96, 0x7f, 0xda, 0x85, 0xef, 0x01,
+	0x00, 0x00, 0xff, 0xff, 0x80, 0x08, 0x27, 0xd2, 0x7f, 0x08, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -728,6 +889,57 @@ func (m *QueryRewardGaugesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
+func (m *RewardGaugesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *RewardGaugesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RewardGaugesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.WithdrawnCoins) > 0 {
+		for iNdEx := len(m.WithdrawnCoins) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.WithdrawnCoins[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if len(m.Coins) > 0 {
+		for iNdEx := len(m.Coins) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Coins[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *QueryRewardGaugesResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -801,6 +1013,80 @@ func (m *QueryBTCStakingGaugeRequest) MarshalToSizedBuffer(dAtA []byte) (int, er
 		i = encodeVarintQuery(dAtA, i, uint64(m.Height))
 		i--
 		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *BTCStakingGaugeResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *BTCStakingGaugeResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *BTCStakingGaugeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Coins) > 0 {
+		for iNdEx := len(m.Coins) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Coins[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *BTCTimestampingGaugeResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *BTCTimestampingGaugeResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *BTCTimestampingGaugeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Coins) > 0 {
+		for iNdEx := len(m.Coins) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Coins[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
 	}
 	return len(dAtA) - i, nil
 }
@@ -947,6 +1233,27 @@ func (m *QueryRewardGaugesRequest) Size() (n int) {
 	return n
 }
 
+func (m *RewardGaugesResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Coins) > 0 {
+		for _, e := range m.Coins {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	if len(m.WithdrawnCoins) > 0 {
+		for _, e := range m.WithdrawnCoins {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
 func (m *QueryRewardGaugesResponse) Size() (n int) {
 	if m == nil {
 		return 0
@@ -977,6 +1284,36 @@ func (m *QueryBTCStakingGaugeRequest) Size() (n int) {
 	_ = l
 	if m.Height != 0 {
 		n += 1 + sovQuery(uint64(m.Height))
+	}
+	return n
+}
+
+func (m *BTCStakingGaugeResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Coins) > 0 {
+		for _, e := range m.Coins {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *BTCTimestampingGaugeResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Coins) > 0 {
+		for _, e := range m.Coins {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
 	}
 	return n
 }
@@ -1240,6 +1577,124 @@ func (m *QueryRewardGaugesRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *RewardGaugesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RewardGaugesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RewardGaugesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Coins", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Coins = append(m.Coins, types.Coin{})
+			if err := m.Coins[len(m.Coins)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WithdrawnCoins", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WithdrawnCoins = append(m.WithdrawnCoins, types.Coin{})
+			if err := m.WithdrawnCoins[len(m.WithdrawnCoins)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *QueryRewardGaugesResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1299,10 +1754,10 @@ func (m *QueryRewardGaugesResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.RewardGauges == nil {
-				m.RewardGauges = make(map[string]*RewardGauge)
+				m.RewardGauges = make(map[string]*RewardGaugesResponse)
 			}
 			var mapkey string
-			var mapvalue *RewardGauge
+			var mapvalue *RewardGaugesResponse
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -1376,7 +1831,7 @@ func (m *QueryRewardGaugesResponse) Unmarshal(dAtA []byte) error {
 					if postmsgIndex > l {
 						return io.ErrUnexpectedEOF
 					}
-					mapvalue = &RewardGauge{}
+					mapvalue = &RewardGaugesResponse{}
 					if err := mapvalue.Unmarshal(dAtA[iNdEx:postmsgIndex]); err != nil {
 						return err
 					}
@@ -1488,6 +1943,174 @@ func (m *QueryBTCStakingGaugeRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *BTCStakingGaugeResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: BTCStakingGaugeResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: BTCStakingGaugeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Coins", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Coins = append(m.Coins, types.Coin{})
+			if err := m.Coins[len(m.Coins)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *BTCTimestampingGaugeResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: BTCTimestampingGaugeResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: BTCTimestampingGaugeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Coins", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Coins = append(m.Coins, types.Coin{})
+			if err := m.Coins[len(m.Coins)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *QueryBTCStakingGaugeResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1547,7 +2170,7 @@ func (m *QueryBTCStakingGaugeResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Gauge == nil {
-				m.Gauge = &Gauge{}
+				m.Gauge = &BTCStakingGaugeResponse{}
 			}
 			if err := m.Gauge.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1702,7 +2325,7 @@ func (m *QueryBTCTimestampingGaugeResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Gauge == nil {
-				m.Gauge = &Gauge{}
+				m.Gauge = &BTCTimestampingGaugeResponse{}
 			}
 			if err := m.Gauge.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
