@@ -28,7 +28,7 @@ func FuzzTallying_PanicCases(f *testing.F) {
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 
 		// Case 1: expect to panic if tallying upon BTC staking protocol is not activated
 		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(uint64(0), bstypes.ErrBTCStakingNotActivated).Times(1)
@@ -59,7 +59,7 @@ func FuzzTallying_FinalizingNoBlock(f *testing.F) {
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 
 		// activate BTC staking protocol at a random height
 		activatedHeight := datagen.RandomInt(r, 10) + 1
@@ -103,7 +103,7 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 		bsKeeper.EXPECT().GetParams(gomock.Any()).Return(bstypes.Params{MaxActiveFinalityProviders: 100}).AnyTimes()
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 
 		// activate BTC staking protocol at a random height
 		activatedHeight := datagen.RandomInt(r, 10) + 1

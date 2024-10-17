@@ -23,7 +23,7 @@ import (
 	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
-func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types.IncentiveKeeper, cKeeper types.CheckpointingKeeper) (*keeper.Keeper, sdk.Context) {
+func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types.IncentiveKeeper, cKeeper types.CheckpointingKeeper, btcNet *chaincfg.Params) (*keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 
 	db := dbm.NewMemDB()
@@ -34,13 +34,17 @@ func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types
 	registry := codectypes.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
 
+	if btcNet == nil {
+		btcNet = &chaincfg.SimNetParams
+	}
+
 	k := keeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(storeKey),
 		bsKeeper,
 		iKeeper,
 		cKeeper,
-		&chaincfg.SimNetParams,
+		btcNet,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 

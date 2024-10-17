@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"cosmossdk.io/core/header"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -21,7 +22,7 @@ import (
 )
 
 func setupMsgServer(t testing.TB) (*keeper.Keeper, types.MsgServer, context.Context) {
-	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil, nil)
 	return fKeeper, keeper.NewMsgServerImpl(*fKeeper), ctx
 }
 
@@ -41,7 +42,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper, nil)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 		committedEpochNum := datagen.GenRandomEpochNum(r)
 		cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: committedEpochNum}).AnyTimes()
@@ -115,7 +116,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
 		// create and register a random finality provider
@@ -250,7 +251,7 @@ func FuzzUnjailFinalityProvider(f *testing.F) {
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper, nil)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
 		// create and register a random finality provider
@@ -313,7 +314,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
-	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 	// create and register a random finality provider
 	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
@@ -388,7 +389,7 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
-	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 
 	// create and register a random finality provider
@@ -443,4 +444,34 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	// add vote and it should work
 	_, err = ms.AddFinalitySig(ctx, msg)
 	require.Error(t, err)
+}
+
+func TestVerifyActivationHeight(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+	iKeeper := types.NewMockIncentiveKeeper(ctrl)
+	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+	btcNet := &chaincfg.MainNetParams
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, btcNet)
+	ms := keeper.NewMsgServerImpl(*fKeeper)
+
+	activationHeight := bbn.GetActivationHeight(btcNet.Name)
+
+	btcSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	startHeight := activationHeight - 1
+	numPubRand := uint64(200)
+	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+	require.NoError(t, err)
+
+	_, err = ms.CommitPubRandList(ctx, msgCommitPubRandList)
+	require.EqualError(t, err, types.ErrFinalityNotActivated.Wrapf(
+		"public rand commit start block height: %d is lower than activation height %d",
+		startHeight, activationHeight,
+	).Error())
+
 }
