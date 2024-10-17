@@ -83,9 +83,9 @@ func GenRandomBTCDelDistInfo(r *rand.Rand) (*bstypes.BTCDelDistInfo, error) {
 		return nil, err
 	}
 	return &bstypes.BTCDelDistInfo{
-		BtcPk:       btcPK,
-		StakerAddr:  GenRandomAccount().Address,
-		VotingPower: RandomInt(r, 1000) + 1,
+		BtcPk:      btcPK,
+		StakerAddr: GenRandomAccount().Address,
+		TotalSat:   RandomInt(r, 1000) + 1,
 	}, nil
 }
 
@@ -105,7 +105,7 @@ func GenRandomFinalityProviderDistInfo(r *rand.Rand) (*bstypes.FinalityProviderD
 			return nil, err
 		}
 		fpDistInfo.BtcDels = append(fpDistInfo.BtcDels, btcDelDistInfo)
-		fpDistInfo.TotalVotingPower += btcDelDistInfo.VotingPower
+		fpDistInfo.TotalBondedSat += btcDelDistInfo.TotalSat
 		fpDistInfo.IsTimestamped = true
 	}
 	return fpDistInfo, nil

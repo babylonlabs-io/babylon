@@ -68,11 +68,11 @@ func SortFinalityProvidersWithZeroedVotingPower(fps []*FinalityProviderDistInfo)
 		}
 
 		// both voting power the same, compare BTC public keys
-		if fps[i].TotalVotingPower == fps[j].TotalVotingPower {
+		if fps[i].TotalBondedSat == fps[j].TotalBondedSat {
 			return iPkHex < jPkHex
 		}
 
-		return fps[i].TotalVotingPower > fps[j].TotalVotingPower
+		return fps[i].TotalBondedSat > fps[j].TotalBondedSat
 	})
 }
 

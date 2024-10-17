@@ -82,7 +82,7 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *types.Voti
 	// set voting power table for each active finality providers at this height
 	for i := uint32(0); i < newDc.NumActiveFps; i++ {
 		fp := newDc.FinalityProviders[i]
-		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
+		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalBondedSat)
 	}
 
 	// set the voting power distribution cache of the current height
@@ -132,7 +132,7 @@ func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache) {
 	// staked Satoshi
 	stakedSats := btcutil.Amount(0)
 	for _, fp := range dc.FinalityProviders {
-		stakedSats += btcutil.Amount(fp.TotalVotingPower)
+		stakedSats += btcutil.Amount(fp.TotalBondedSat)
 	}
 	numStakedBTCs := stakedSats.ToBTC()
 	types.RecordMetricsKeyStakedBitcoins(float32(numStakedBTCs))
@@ -218,7 +218,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	for i := range dc.FinalityProviders {
 		// create a copy of the finality provider
 		fp := *dc.FinalityProviders[i]
-		fp.TotalVotingPower = 0
+		fp.TotalBondedSat = 0
 		fp.BtcDels = []*types.BTCDelDistInfo{}
 
 		fpBTCPKHex := fp.BtcPk.MarshalHex()
@@ -263,7 +263,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		}
 
 		// add this finality provider to the new cache if it has voting power
-		if fp.TotalVotingPower > 0 {
+		if fp.TotalBondedSat > 0 {
 			newDc.AddFinalityProviderDistInfo(&fp)
 		}
 	}
@@ -299,7 +299,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		}
 
 		// add this finality provider to the new cache if it has voting power
-		if fpDistInfo.TotalVotingPower > 0 {
+		if fpDistInfo.TotalBondedSat > 0 {
 			newDc.AddFinalityProviderDistInfo(fpDistInfo)
 		}
 	}

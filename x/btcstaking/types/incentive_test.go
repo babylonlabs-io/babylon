@@ -35,14 +35,14 @@ func TestVotingPowerDistCache(t *testing.T) {
 			prevDistCache:    NewVotingPowerDistCache(),
 			fps: []*FinalityProviderDistInfo{
 				{
-					BtcPk:            fpPubKey1,
-					TotalVotingPower: 1000,
-					IsTimestamped:    false,
+					BtcPk:          fpPubKey1,
+					TotalBondedSat: 1000,
+					IsTimestamped:  false,
 				},
 				{
-					BtcPk:            fpPubKey2,
-					TotalVotingPower: 2000,
-					IsTimestamped:    false,
+					BtcPk:          fpPubKey2,
+					TotalBondedSat: 2000,
+					IsTimestamped:  false,
 				},
 			},
 		},
@@ -55,14 +55,14 @@ func TestVotingPowerDistCache(t *testing.T) {
 			prevDistCache:    NewVotingPowerDistCache(),
 			fps: []*FinalityProviderDistInfo{
 				{
-					BtcPk:            fpPubKey1,
-					TotalVotingPower: 1000,
-					IsTimestamped:    true,
+					BtcPk:          fpPubKey1,
+					TotalBondedSat: 1000,
+					IsTimestamped:  true,
 				},
 				{
-					BtcPk:            fpPubKey2,
-					TotalVotingPower: 2000,
-					IsTimestamped:    true,
+					BtcPk:          fpPubKey2,
+					TotalBondedSat: 2000,
+					IsTimestamped:  true,
 				},
 			},
 		},
@@ -75,14 +75,14 @@ func TestVotingPowerDistCache(t *testing.T) {
 			prevDistCache:    NewVotingPowerDistCache(),
 			fps: []*FinalityProviderDistInfo{
 				{
-					BtcPk:            fpPubKey1,
-					TotalVotingPower: 1000,
-					IsTimestamped:    true,
+					BtcPk:          fpPubKey1,
+					TotalBondedSat: 1000,
+					IsTimestamped:  true,
 				},
 				{
-					BtcPk:            fpPubKey2,
-					TotalVotingPower: 2000,
-					IsTimestamped:    false,
+					BtcPk:          fpPubKey2,
+					TotalBondedSat: 2000,
+					IsTimestamped:  false,
 				},
 			},
 		},
@@ -95,14 +95,14 @@ func TestVotingPowerDistCache(t *testing.T) {
 			prevDistCache:    NewVotingPowerDistCache(),
 			fps: []*FinalityProviderDistInfo{
 				{
-					BtcPk:            fpPubKey1,
-					TotalVotingPower: 1000,
-					IsTimestamped:    true,
+					BtcPk:          fpPubKey1,
+					TotalBondedSat: 1000,
+					IsTimestamped:  true,
 				},
 				{
-					BtcPk:            fpPubKey2,
-					TotalVotingPower: 2000,
-					IsTimestamped:    true,
+					BtcPk:          fpPubKey2,
+					TotalBondedSat: 2000,
+					IsTimestamped:  true,
 				},
 			},
 		},
@@ -115,15 +115,15 @@ func TestVotingPowerDistCache(t *testing.T) {
 			prevDistCache:    NewVotingPowerDistCache(),
 			fps: []*FinalityProviderDistInfo{
 				{
-					BtcPk:            fpPubKey1,
-					TotalVotingPower: 1000,
-					IsTimestamped:    true,
+					BtcPk:          fpPubKey1,
+					TotalBondedSat: 1000,
+					IsTimestamped:  true,
 				},
 				{
-					BtcPk:            fpPubKey2,
-					TotalVotingPower: 2000,
-					IsTimestamped:    true,
-					IsJailed:         true,
+					BtcPk:          fpPubKey2,
+					TotalBondedSat: 2000,
+					IsTimestamped:  true,
+					IsJailed:       true,
 				},
 			},
 		},
@@ -136,15 +136,15 @@ func TestVotingPowerDistCache(t *testing.T) {
 			prevDistCache:    NewVotingPowerDistCache(),
 			fps: []*FinalityProviderDistInfo{
 				{
-					BtcPk:            fpPubKey1,
-					TotalVotingPower: 1000,
-					IsTimestamped:    true,
+					BtcPk:          fpPubKey1,
+					TotalBondedSat: 1000,
+					IsTimestamped:  true,
 				},
 				{
-					BtcPk:            fpPubKey2,
-					TotalVotingPower: 0, // a jailed fp cannot accept delegation
-					IsTimestamped:    true,
-					IsSlashed:        true,
+					BtcPk:          fpPubKey2,
+					TotalBondedSat: 0, // a jailed fp cannot accept delegation
+					IsTimestamped:  true,
+					IsSlashed:      true,
 				},
 			},
 		},
@@ -157,17 +157,17 @@ func TestVotingPowerDistCache(t *testing.T) {
 			prevDistCache: NewVotingPowerDistCacheWithFinalityProviders(
 				[]*FinalityProviderDistInfo{
 					{
-						BtcPk:            fpPubKey1,
-						TotalVotingPower: 1000,
-						IsTimestamped:    true,
-						IsJailed:         true,
+						BtcPk:          fpPubKey1,
+						TotalBondedSat: 1000,
+						IsTimestamped:  true,
+						IsJailed:       true,
 					}}),
 			fps: []*FinalityProviderDistInfo{
 				{
-					BtcPk:            fpPubKey1,
-					TotalVotingPower: 1000,
-					IsTimestamped:    true,
-					IsJailed:         false,
+					BtcPk:          fpPubKey1,
+					TotalBondedSat: 1000,
+					IsTimestamped:  true,
+					IsJailed:       false,
 				},
 			},
 		},
@@ -176,7 +176,7 @@ func TestVotingPowerDistCache(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			dc := NewVotingPowerDistCacheWithFinalityProviders(tc.fps)
 			dc.ApplyActiveFinalityProviders(tc.maxActiveFPs)
-			require.Equal(t, tc.totalVotingPower, dc.TotalVotingPower)
+			require.Equal(t, tc.totalVotingPower, dc.TotalBondedSat)
 			require.Equal(t, tc.numActiveFps, dc.NumActiveFps)
 
 			newActiveFps := dc.FindNewActiveFinalityProviders(tc.prevDistCache)

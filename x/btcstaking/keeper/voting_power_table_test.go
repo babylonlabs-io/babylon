@@ -209,7 +209,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 
 			// 30 percent not have timestamped randomness, which causes
 			// zero voting power in the table
-			fpDistInfo := &types.FinalityProviderDistInfo{BtcPk: fp.BtcPk, TotalVotingPower: stakingValue}
+			fpDistInfo := &types.FinalityProviderDistInfo{BtcPk: fp.BtcPk, TotalBondedSat: stakingValue}
 			if r.Intn(10) <= 2 {
 				finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), fp.BtcPk, gomock.Any()).Return(false).AnyTimes()
 				noTimestampedFps[fp.BtcPk.MarshalHex()] = true
@@ -229,7 +229,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		expectedActiveFps := fpsWithMeta[:min(uint32(len(fpsWithMeta)-len(noTimestampedFps)), maxActiveFpsParam)]
 		expectedActiveFpsMap := map[string]uint64{}
 		for _, fp := range expectedActiveFps {
-			expectedActiveFpsMap[fp.BtcPk.MarshalHex()] = fp.TotalVotingPower
+			expectedActiveFpsMap[fp.BtcPk.MarshalHex()] = fp.TotalBondedSat
 		}
 
 		// record voting power table
