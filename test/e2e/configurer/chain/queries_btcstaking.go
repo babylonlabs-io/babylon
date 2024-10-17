@@ -170,7 +170,7 @@ func (n *NodeConfig) QueryListBlocks(status ftypes.QueriedBlockStatus) []*ftypes
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
 	require.NoError(n.t, err)
 
-	return resp.Blocks
+	return convertToIndexedBlockList(resp.Blocks)
 }
 
 func (n *NodeConfig) QueryIndexedBlock(height uint64) *ftypes.IndexedBlock {
@@ -182,5 +182,21 @@ func (n *NodeConfig) QueryIndexedBlock(height uint64) *ftypes.IndexedBlock {
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
 	require.NoError(n.t, err)
 
-	return resp.Block
+	return convertToIndexedBlock(resp.Block)
+}
+
+func convertToIndexedBlock(br *ftypes.BlockResponse) *ftypes.IndexedBlock {
+	return &ftypes.IndexedBlock{
+		Height:    br.Height,
+		AppHash:   br.AppHash,
+		Finalized: br.Finalized,
+	}
+}
+
+func convertToIndexedBlockList(brs []*ftypes.BlockResponse) []*ftypes.IndexedBlock {
+	var ibs []*ftypes.IndexedBlock
+	for _, indexedBlock := range brs {
+		ibs = append(ibs, convertToIndexedBlock(indexedBlock))
+	}
+	return ibs
 }
