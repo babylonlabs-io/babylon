@@ -423,8 +423,8 @@ func (s *BTCStakingPreApprovalTestSuite) Test4WithdrawReward() {
 	fpRgs, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
 	s.NoError(err)
 	fpRg := fpRgs[itypes.FinalityProviderType.String()]
-	s.T().Logf("finality provider's withdrawable reward before withdrawing: %s", fpRg.GetWithdrawableCoins().String())
-	s.False(fpRg.IsFullyWithdrawn())
+	s.T().Logf("finality provider's withdrawable reward before withdrawing: %s", convertToRewardGauge(fpRg).GetWithdrawableCoins().String())
+	s.False(convertToRewardGauge(fpRg).IsFullyWithdrawn())
 
 	// withdraw finality provider reward
 	nonValidatorNode.WithdrawReward(itypes.FinalityProviderType.String(), initialization.ValidatorWalletName)
@@ -439,8 +439,8 @@ func (s *BTCStakingPreApprovalTestSuite) Test4WithdrawReward() {
 	fpRgs2, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
 	s.NoError(err)
 	fpRg2 := fpRgs2[itypes.FinalityProviderType.String()]
-	s.T().Logf("finality provider's withdrawable reward after withdrawing: %s", fpRg2.GetWithdrawableCoins().String())
-	s.True(fpRg2.IsFullyWithdrawn())
+	s.T().Logf("finality provider's withdrawable reward after withdrawing: %s", convertToRewardGauge(fpRg2).GetWithdrawableCoins().String())
+	s.True(convertToRewardGauge(fpRg2).IsFullyWithdrawn())
 
 	// BTC delegation balance before withdraw
 	btcDelBalance, err := nonValidatorNode.QueryBalances(delBabylonAddr.String())
@@ -449,8 +449,8 @@ func (s *BTCStakingPreApprovalTestSuite) Test4WithdrawReward() {
 	btcDelRgs, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
 	s.NoError(err)
 	btcDelRg := btcDelRgs[itypes.BTCDelegationType.String()]
-	s.T().Logf("BTC delegation's withdrawable reward before withdrawing: %s", btcDelRg.GetWithdrawableCoins().String())
-	s.False(btcDelRg.IsFullyWithdrawn())
+	s.T().Logf("BTC delegation's withdrawable reward before withdrawing: %s", convertToRewardGauge(btcDelRg).GetWithdrawableCoins().String())
+	s.False(convertToRewardGauge(btcDelRg).IsFullyWithdrawn())
 
 	// withdraw BTC delegation reward
 	nonValidatorNode.WithdrawReward(itypes.BTCDelegationType.String(), initialization.ValidatorWalletName)
@@ -464,7 +464,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4WithdrawReward() {
 	// BTC delegation reward gauge should be fully withdrawn now
 	btcDelRgs2, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
 	s.NoError(err)
-	btcDelRg2 := btcDelRgs2[itypes.BTCDelegationType.String()]
+	btcDelRg2 := convertToRewardGauge(btcDelRgs2[itypes.BTCDelegationType.String()])
 	s.T().Logf("BTC delegation's withdrawable reward after withdrawing: %s", btcDelRg2.GetWithdrawableCoins().String())
 	s.True(btcDelRg2.IsFullyWithdrawn())
 }
