@@ -53,9 +53,12 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, err
 	}
 
-	fpPK := req.FpBtcPk
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := ms.validateActivationHeightAddFinalitySig(ctx, req); err != nil {
+		return nil, err
+	}
+
+	fpPK := req.FpBtcPk
 
 	// ensure the finality provider exists
 	fp, err := ms.BTCStakingKeeper.GetFinalityProvider(ctx, req.FpBtcPk.MustMarshal())
@@ -188,6 +191,9 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := ms.validateActivationHeightCommitPubRand(ctx, req); err != nil {
+		return nil, err
+	}
 
 	// ensure the request contains enough number of public randomness
 	minPubRand := ms.GetParams(ctx).MinPubRand
@@ -302,4 +308,46 @@ func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340Pu
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {
 		panic(fmt.Errorf("failed to emit EventSlashedFinalityProvider event: %w", err))
 	}
+}
+
+// GetActivationHeight returns the activation height based
+// on the btc network config.
+func (ms msgServer) GetActivationHeight() uint64 {
+	return bbn.GetActivationHeight(ms.btcNet.Name)
+}
+
+// validateActivationHeightAddFinalitySig returns error if the msg add finality
+// block height is lower than the activation height
+func (ms msgServer) validateActivationHeightAddFinalitySig(ctx sdk.Context, msg *types.MsgAddFinalitySig) error {
+	// TODO: remove it after Phase-2 launch in a future coordinated upgrade
+	activationHeight := ms.GetActivationHeight()
+	if msg.BlockHeight < activationHeight {
+		ms.Logger(ctx).With(
+			"finalityBlockHeight", msg.BlockHeight,
+			"activationHeight", activationHeight,
+		).Info("BTC finality is not activated yet")
+		return types.ErrFinalityNotActivated.Wrapf(
+			"finality block height: %d is lower than activation height %d",
+			msg.BlockHeight, activationHeight,
+		)
+	}
+	return nil
+}
+
+// validateActivationHeightCommitPubRand returns error if the msg commit pub rand list
+// start height is lower than the activation height
+func (ms msgServer) validateActivationHeightCommitPubRand(ctx sdk.Context, msg *types.MsgCommitPubRandList) error {
+	// TODO: remove it after Phase-2 launch in a future coordinated upgrade
+	activationHeight := ms.GetActivationHeight()
+	if msg.StartHeight < activationHeight {
+		ms.Logger(ctx).With(
+			"pubRandStartHeight", msg.StartHeight,
+			"activationHeight", activationHeight,
+		).Info("BTC finality is not activated yet")
+		return types.ErrFinalityNotActivated.Wrapf(
+			"public rand commit start block height: %d is lower than activation height %d",
+			msg.StartHeight, activationHeight,
+		)
+	}
+	return nil
 }

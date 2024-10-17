@@ -8,6 +8,7 @@ import (
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
+	"github.com/btcsuite/btcd/chaincfg"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -39,6 +40,7 @@ func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types
 		bsKeeper,
 		iKeeper,
 		cKeeper,
+		&chaincfg.SimNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
