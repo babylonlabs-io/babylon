@@ -298,8 +298,8 @@ func FuzzQueryEvidence(f *testing.F) {
 			require.Nil(t, evidenceResp)
 		} else {
 			require.NoError(t, err)
-			require.Equal(t, randomFirstSlashableEvidence, evidenceResp.Evidence)
-			require.True(t, evidenceResp.Evidence.IsSlashable())
+			require.Equal(t, randomFirstSlashableEvidence, convertToEvidence(evidenceResp.Evidence))
+			require.True(t, convertToEvidence(evidenceResp.Evidence).IsSlashable())
 		}
 	})
 }
@@ -361,9 +361,10 @@ func FuzzListEvidences(f *testing.F) {
 		require.NoError(t, err)
 		require.LessOrEqual(t, len(resp.Evidences), int(limit))     // check if pagination takes effect
 		require.EqualValues(t, resp.Pagination.Total, numEvidences) // ensure evidences before startHeight are not included
-		for _, actualEvidence := range resp.Evidences {
-			require.Equal(t, evidences[actualEvidence.FpBtcPk.MarshalHex()].CanonicalAppHash, actualEvidence.CanonicalAppHash)
-			require.Equal(t, evidences[actualEvidence.FpBtcPk.MarshalHex()].ForkAppHash, actualEvidence.ForkAppHash)
+		for _, actualEvidenceResponse := range resp.Evidences {
+			actualEvidence := convertToEvidence(actualEvidenceResponse)
+			expectedEvidence := evidences[actualEvidenceResponse.FpBtcPkHex]
+			require.Equal(t, expectedEvidence, actualEvidence)
 		}
 	})
 }
@@ -435,4 +436,20 @@ func FuzzSigningInfo(f *testing.F) {
 			require.Equal(t, fpSigningInfos[si.FpBtcPkHex].StartHeight, si.StartHeight)
 		}
 	})
+}
+
+func convertToEvidence(er *types.EvidenceResponse) *types.Evidence {
+	fpBtcPk, err := bbn.NewBIP340PubKeyFromHex(er.FpBtcPkHex)
+	if err != nil {
+		return nil
+	}
+	return &types.Evidence{
+		FpBtcPk:              fpBtcPk,
+		BlockHeight:          er.BlockHeight,
+		PubRand:              er.PubRand,
+		CanonicalAppHash:     er.CanonicalAppHash,
+		ForkAppHash:          er.ForkAppHash,
+		CanonicalFinalitySig: er.CanonicalFinalitySig,
+		ForkFinalitySig:      er.ForkFinalitySig,
+	}
 }
