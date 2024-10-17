@@ -16,7 +16,7 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 	}
 
-	k, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
+	k, ctx := keepertest.FinalityKeeper(t, nil, nil, nil, nil)
 	finality.InitGenesis(ctx, *k, genesisState)
 	got := finality.ExportGenesis(ctx, *k)
 	require.NotNil(t, got)
