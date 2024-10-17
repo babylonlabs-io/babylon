@@ -80,16 +80,16 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		dc, err := h.BTCStakingKeeper.GetVotingPowerDistCache(h.Ctx, babylonHeight)
 		require.NoError(t, err)
 		require.NotNil(t, dc)
-		require.Equal(t, dc.TotalVotingPower, numFpsWithVotingPower*numBTCDels*stakingValue)
+		require.Equal(t, dc.TotalBondedSat, numFpsWithVotingPower*numBTCDels*stakingValue)
 		activeFPs := dc.GetActiveFinalityProviderSet()
 		for _, fpDistInfo := range activeFPs {
-			require.Equal(t, fpDistInfo.TotalVotingPower, numBTCDels*stakingValue)
+			require.Equal(t, fpDistInfo.TotalBondedSat, numBTCDels*stakingValue)
 			fp, ok := fpsWithVotingPowerMap[fpDistInfo.Addr]
 			require.True(t, ok)
 			require.Equal(t, fpDistInfo.Commission, fp.Commission)
 			require.Len(t, fpDistInfo.BtcDels, int(numBTCDels))
 			for _, delDistInfo := range fpDistInfo.BtcDels {
-				require.Equal(t, delDistInfo.VotingPower, stakingValue)
+				require.Equal(t, delDistInfo.TotalSat, stakingValue)
 			}
 		}
 	})
