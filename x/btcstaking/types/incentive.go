@@ -7,7 +7,7 @@ import (
 
 func NewVotingPowerDistCache() *VotingPowerDistCache {
 	return &VotingPowerDistCache{
-		TotalVotingPower:  0,
+		TotalBondedSat:    0,
 		FinalityProviders: []*FinalityProviderDistInfo{},
 	}
 }
@@ -74,7 +74,7 @@ func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(maxActiveFPs uint32
 		if numActiveFPs == maxActiveFPs {
 			break
 		}
-		if fp.TotalVotingPower == 0 {
+		if fp.TotalBondedSat == 0 {
 			break
 		}
 		if !fp.IsTimestamped {
@@ -86,13 +86,13 @@ func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(maxActiveFPs uint32
 		numActiveFPs++
 	}
 
-	totalVotingPower := uint64(0)
+	TotalBondedSat := uint64(0)
 
 	for i := uint32(0); i < numActiveFPs; i++ {
-		totalVotingPower += dc.FinalityProviders[i].TotalVotingPower
+		TotalBondedSat += dc.FinalityProviders[i].TotalBondedSat
 	}
 
-	dc.TotalVotingPower = totalVotingPower
+	dc.TotalBondedSat = TotalBondedSat
 	dc.NumActiveFps = numActiveFPs
 }
 
@@ -138,32 +138,32 @@ func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*Fin
 func (dc *VotingPowerDistCache) FilterVotedDistCache(voterBTCPKs map[string]struct{}) *VotingPowerDistCache {
 	activeFPs := dc.GetActiveFinalityProviderSet()
 	var filteredFps []*FinalityProviderDistInfo
-	totalVotingPower := uint64(0)
+	TotalBondedSat := uint64(0)
 	for k, v := range activeFPs {
 		if _, ok := voterBTCPKs[k]; ok {
 			filteredFps = append(filteredFps, v)
-			totalVotingPower += v.TotalVotingPower
+			TotalBondedSat += v.TotalBondedSat
 		}
 	}
 
 	return &VotingPowerDistCache{
 		FinalityProviders: filteredFps,
-		TotalVotingPower:  totalVotingPower,
+		TotalBondedSat:    TotalBondedSat,
 	}
 }
 
 // GetFinalityProviderPortion returns the portion of a finality provider's voting power out of the total voting power
 func (dc *VotingPowerDistCache) GetFinalityProviderPortion(v *FinalityProviderDistInfo) sdkmath.LegacyDec {
-	return sdkmath.LegacyNewDec(int64(v.TotalVotingPower)).QuoTruncate(sdkmath.LegacyNewDec(int64(dc.TotalVotingPower)))
+	return sdkmath.LegacyNewDec(int64(v.TotalBondedSat)).QuoTruncate(sdkmath.LegacyNewDec(int64(dc.TotalBondedSat)))
 }
 
 func NewFinalityProviderDistInfo(fp *FinalityProvider) *FinalityProviderDistInfo {
 	return &FinalityProviderDistInfo{
-		BtcPk:            fp.BtcPk,
-		Addr:             fp.Addr,
-		Commission:       fp.Commission,
-		TotalVotingPower: 0,
-		BtcDels:          []*BTCDelDistInfo{},
+		BtcPk:          fp.BtcPk,
+		Addr:           fp.Addr,
+		Commission:     fp.Commission,
+		TotalBondedSat: 0,
+		BtcDels:        []*BTCDelDistInfo{},
 	}
 }
 
@@ -176,21 +176,21 @@ func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *BTCDelegation) {
 		BtcPk:         btcDel.BtcPk,
 		StakerAddr:    btcDel.StakerAddr,
 		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
-		VotingPower:   btcDel.TotalSat,
+		TotalSat:      btcDel.TotalSat,
 	}
 	v.BtcDels = append(v.BtcDels, btcDelDistInfo)
-	v.TotalVotingPower += btcDelDistInfo.VotingPower
+	v.TotalBondedSat += btcDelDistInfo.TotalSat
 }
 
 func (v *FinalityProviderDistInfo) AddBTCDelDistInfo(d *BTCDelDistInfo) {
 	v.BtcDels = append(v.BtcDels, d)
-	v.TotalVotingPower += d.VotingPower
+	v.TotalBondedSat += d.TotalSat
 }
 
 // GetBTCDelPortion returns the portion of a BTC delegation's voting power out of
 // the finality provider's total voting power
 func (v *FinalityProviderDistInfo) GetBTCDelPortion(d *BTCDelDistInfo) sdkmath.LegacyDec {
-	return sdkmath.LegacyNewDec(int64(d.VotingPower)).QuoTruncate(sdkmath.LegacyNewDec(int64(v.TotalVotingPower)))
+	return sdkmath.LegacyNewDec(int64(d.TotalSat)).QuoTruncate(sdkmath.LegacyNewDec(int64(v.TotalBondedSat)))
 }
 
 func (d *BTCDelDistInfo) GetAddress() sdk.AccAddress {

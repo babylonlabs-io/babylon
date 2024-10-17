@@ -39,7 +39,7 @@ func (k Keeper) RewardGauges(goCtx context.Context, req *types.QueryRewardGauges
 		return nil, types.ErrRewardGaugeNotFound
 	}
 
-	return &types.QueryRewardGaugesResponse{RewardGauges: rgMap}, nil
+	return &types.QueryRewardGaugesResponse{RewardGauges: convertToRewardGaugesResponse(rgMap)}, nil
 }
 
 func (k Keeper) BTCStakingGauge(goCtx context.Context, req *types.QueryBTCStakingGaugeRequest) (*types.QueryBTCStakingGaugeResponse, error) {
@@ -82,4 +82,15 @@ func convertGaugeToBTCTimestampingResponse(gauge types.Gauge) *types.BTCTimestam
 	return &types.BTCTimestampingGaugeResponse{
 		Coins: gauge.Coins,
 	}
+}
+
+func convertToRewardGaugesResponse(rgMap map[string]*types.RewardGauge) map[string]*types.RewardGaugesResponse {
+	rewardGuagesResponse := make(map[string]*types.RewardGaugesResponse)
+	for stakeholderType, rg := range rgMap {
+		rewardGuagesResponse[stakeholderType] = &types.RewardGaugesResponse{
+			Coins:          rg.Coins,
+			WithdrawnCoins: rg.WithdrawnCoins,
+		}
+	}
+	return rewardGuagesResponse
 }
