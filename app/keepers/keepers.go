@@ -511,6 +511,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.BTCStakingKeeper,
 		ak.IncentiveKeeper,
 		ak.CheckpointingKeeper,
+		btcNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	ak.BTCStakingKeeper = *ak.BTCStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(ak.FinalityKeeper.Hooks()))

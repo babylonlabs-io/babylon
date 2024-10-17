@@ -19,4 +19,5 @@ var (
 	ErrNoSlashableEvidence            = errorsmod.Register(ModuleName, 1110, "there is no slashable evidence")
 	ErrPubRandCommitNotBTCTimestamped = errorsmod.Register(ModuleName, 1111, "the public randomness commit is not BTC timestamped yet")
 	ErrJailingPeriodNotPassed         = errorsmod.Register(ModuleName, 1112, "the jailing period is not passed")
+	ErrFinalityNotActivated           = errorsmod.Register(ModuleName, 1113, "finality is not active yet")
 )

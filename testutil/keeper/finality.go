@@ -8,6 +8,7 @@ import (
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
+	"github.com/btcsuite/btcd/chaincfg"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -22,7 +23,7 @@ import (
 	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
-func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types.IncentiveKeeper, cKeeper types.CheckpointingKeeper) (*keeper.Keeper, sdk.Context) {
+func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types.IncentiveKeeper, cKeeper types.CheckpointingKeeper, btcNet *chaincfg.Params) (*keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 
 	db := dbm.NewMemDB()
@@ -33,12 +34,17 @@ func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types
 	registry := codectypes.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
 
+	if btcNet == nil {
+		btcNet = &chaincfg.SimNetParams
+	}
+
 	k := keeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(storeKey),
 		bsKeeper,
 		iKeeper,
 		cKeeper,
+		btcNet,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
