@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### State Machine Breaking
+
+* [#207](https://github.com/babylonlabs-io/babylon/pull/207) Rename total voting power
+to total bonded sat
+
 ## v0.13.0
 
 ### API Breaking
