@@ -448,24 +448,17 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 
 func TestVerifyActivationHeight(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
-	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-	iKeeper := types.NewMockIncentiveKeeper(ctrl)
-	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
 	btcNet := &chaincfg.MainNetParams
-	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, btcNet)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil, btcNet)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
-
 	activationHeight := bbn.GetActivationHeight(btcNet.Name)
 
+	// checks pub rand commit
 	btcSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
 	startHeight := activationHeight - 1
 	numPubRand := uint64(200)
-	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
 	require.NoError(t, err)
 
 	_, err = ms.CommitPubRandList(ctx, msgCommitPubRandList)
@@ -474,4 +467,23 @@ func TestVerifyActivationHeight(t *testing.T) {
 		startHeight, activationHeight,
 	).Error())
 
+	// check finality vote
+	blockHeight := activationHeight - 1
+	blockAppHash := datagen.GenRandomByteArray(r, 32)
+	signer := datagen.GenRandomAccount().Address
+	msgFinality, err := datagen.NewMsgAddFinalitySig(
+		signer,
+		btcSK,
+		startHeight,
+		blockHeight,
+		randListInfo,
+		blockAppHash,
+	)
+	require.NoError(t, err)
+
+	_, err = ms.AddFinalitySig(ctx, msgFinality)
+	require.EqualError(t, err, types.ErrFinalityNotActivated.Wrapf(
+		"finality block height: %d is lower than activation height %d",
+		blockHeight, activationHeight,
+	).Error())
 }
