@@ -310,17 +310,11 @@ func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340Pu
 	}
 }
 
-// GetActivationHeight returns the activation height based
-// on the btc network config.
-func (ms msgServer) GetActivationHeight() uint64 {
-	return bbn.GetActivationHeight(ms.btcNet.Name)
-}
-
 // validateActivationHeightAddFinalitySig returns error if the msg add finality
 // block height is lower than the activation height
 func (ms msgServer) validateActivationHeightAddFinalitySig(ctx sdk.Context, msg *types.MsgAddFinalitySig) error {
 	// TODO: remove it after Phase-2 launch in a future coordinated upgrade
-	activationHeight := ms.GetActivationHeight()
+	activationHeight := ms.GetActivationHeight(ctx)
 	if msg.BlockHeight < activationHeight {
 		ms.Logger(ctx).With(
 			"finalityBlockHeight", msg.BlockHeight,
@@ -338,7 +332,7 @@ func (ms msgServer) validateActivationHeightAddFinalitySig(ctx sdk.Context, msg 
 // start height is lower than the activation height
 func (ms msgServer) validateActivationHeightCommitPubRand(ctx sdk.Context, msg *types.MsgCommitPubRandList) error {
 	// TODO: remove it after Phase-2 launch in a future coordinated upgrade
-	activationHeight := ms.GetActivationHeight()
+	activationHeight := ms.GetActivationHeight(ctx)
 	if msg.StartHeight < activationHeight {
 		ms.Logger(ctx).With(
 			"pubRandStartHeight", msg.StartHeight,

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"cosmossdk.io/core/header"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -22,7 +21,7 @@ import (
 )
 
 func setupMsgServer(t testing.TB) (*keeper.Keeper, types.MsgServer, context.Context) {
-	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil, nil)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
 	return fKeeper, keeper.NewMsgServerImpl(*fKeeper), ctx
 }
 
@@ -42,7 +41,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper, nil)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 		committedEpochNum := datagen.GenRandomEpochNum(r)
 		cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: committedEpochNum}).AnyTimes()
@@ -116,7 +115,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
 		// create and register a random finality provider
@@ -251,7 +250,7 @@ func FuzzUnjailFinalityProvider(f *testing.F) {
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper, nil)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
 		// create and register a random finality provider
@@ -314,7 +313,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
-	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 	// create and register a random finality provider
 	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
@@ -389,7 +388,7 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
-	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 
 	// create and register a random finality provider
@@ -448,10 +447,10 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 
 func TestVerifyActivationHeight(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	btcNet := &chaincfg.MainNetParams
-	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil, btcNet)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
-	activationHeight := bbn.GetActivationHeight(btcNet.Name)
+	fKeeper.SetParams(ctx, types.DefaultParams())
+	activationHeight := fKeeper.GetActivationHeight(ctx)
 
 	// checks pub rand commit
 	btcSK, _, err := datagen.GenRandomBTCKeyPair(r)

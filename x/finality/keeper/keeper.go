@@ -7,7 +7,6 @@ import (
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -25,7 +24,6 @@ type (
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
 		authority string
-		btcNet    *chaincfg.Params
 
 		hooks types.FinalityHooks
 
@@ -42,7 +40,6 @@ func NewKeeper(
 	btcstakingKeeper types.BTCStakingKeeper,
 	incentiveKeeper types.IncentiveKeeper,
 	checkpointingKeeper types.CheckpointingKeeper,
-	btcNet *chaincfg.Params,
 	authority string,
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
@@ -54,7 +51,6 @@ func NewKeeper(
 		IncentiveKeeper:     incentiveKeeper,
 		CheckpointingKeeper: checkpointingKeeper,
 		authority:           authority,
-		btcNet:              btcNet,
 		FinalityProviderSigningTracker: collections.NewMap(
 			sb,
 			types.FinalityProviderSigningInfoKeyPrefix,
@@ -98,4 +94,10 @@ func (k Keeper) GetCurrentEpoch(ctx context.Context) uint64 {
 	}
 
 	return currentEpoch.EpochNumber
+}
+
+// GetActivationHeight returns the activation height based
+// on the btc network config.
+func (k Keeper) GetActivationHeight(ctx sdk.Context) uint64 {
+	return k.GetParams(ctx).ActivationBlockHeight
 }
