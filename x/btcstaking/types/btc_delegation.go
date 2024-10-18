@@ -84,7 +84,7 @@ func (d *BTCDelegation) GetCovSlashingAdaptorSig(
 // Signing unbonding signature means the delegator wants to unbond early, and
 // Babylon will consider this BTC delegation unbonded directly
 func (d *BTCDelegation) IsUnbondedEarly() bool {
-	return d.BtcUndelegation.DelegatorUnbondingSig != nil
+	return d.BtcUndelegation.DelegatorUnbondingInfo != nil
 }
 
 func (d *BTCDelegation) FinalityProviderKeys() []string {

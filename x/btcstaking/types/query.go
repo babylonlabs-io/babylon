@@ -4,6 +4,14 @@ import (
 	"encoding/hex"
 )
 
+func delegatorUnbondingInfoToResponse(ui *DelegatorUnbondingInfo) *DelegatorUnbondingInfoResponse {
+	return &DelegatorUnbondingInfoResponse{
+		SpendStakeTxHex:                   hex.EncodeToString(ui.SpendStakeTx),
+		SpendStakeTxInclusionBlockHashHex: hex.EncodeToString(ui.SpendStakeTxInclusionBlockHash),
+		SpendStakeTxInclusionIndex:        ui.SpendStakeTxInclusionIndex,
+	}
+}
+
 // NewBTCDelegationResponse returns a new delegation response structure.
 func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus) (resp *BTCDelegationResponse) {
 	resp = &BTCDelegationResponse{
@@ -44,8 +52,8 @@ func (ud *BTCUndelegation) ToResponse() (resp *BTCUndelegationResponse) {
 		CovenantSlashingSigs:     ud.CovenantSlashingSigs,
 	}
 
-	if ud.DelegatorUnbondingSig != nil {
-		resp.DelegatorUnbondingSigHex = ud.DelegatorUnbondingSig.ToHexStr()
+	if ud.DelegatorUnbondingInfo != nil {
+		resp.DelegatorUnbondingInfoResponse = delegatorUnbondingInfoToResponse(ud.DelegatorUnbondingInfo)
 	}
 	if ud.SlashingTx != nil {
 		resp.SlashingTxHex = ud.SlashingTx.ToHexStr()

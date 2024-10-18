@@ -560,3 +560,34 @@ func TestCheckPreSignedTxSanity(t *testing.T) {
 		})
 	}
 }
+
+func TestXxx(t *testing.T) {
+	r := rand.New(rand.NewSource(0))
+	sd := genValidStakingScriptData(t, r)
+
+	info, err := btcstaking.BuildStakingInfo(
+		sd.StakerKey,
+		[]*btcec.PublicKey{sd.FinalityProviderKey},
+		[]*btcec.PublicKey{sd.CovenantKey},
+		1,
+		sd.StakingTime,
+		btcutil.Amount(10000),
+		&chaincfg.MainNetParams,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, info)
+
+	fmt.Println("fetchin timelcok")
+	timelock, err := info.TimeLockPathSpendInfo()
+	require.NoError(t, err)
+	require.NotNil(t, timelock)
+	fmt.Println("fetchin unbonding")
+	unbonding, err := info.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+	require.NotNil(t, unbonding)
+	fmt.Println("fetchin slashing")
+	slash, err := info.SlashingPathSpendInfo()
+	require.NoError(t, err)
+	require.NotNil(t, slash)
+
+}
