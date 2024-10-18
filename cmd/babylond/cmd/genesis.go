@@ -11,6 +11,7 @@ import (
 	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	comettypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -26,7 +27,6 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibctypes "github.com/cosmos/ibc-go/v8/modules/core/types"
@@ -194,7 +194,7 @@ func PrepareGenesis(
 
 	// mint module genesis
 	mintGenState := minttypes.DefaultGenesisState()
-	mintGenState.Params = genesisParams.MintParams
+	mintGenState.BondDenom = genesisParams.StakingParams.BondDenom
 	genesisState[minttypes.ModuleName] = cdc.MustMarshalJSON(mintGenState)
 
 	// distribution module genesis
@@ -244,7 +244,6 @@ type GenesisParams struct {
 	NativeCoinMetadatas []banktypes.Metadata
 
 	StakingParams      stakingtypes.Params
-	MintParams         minttypes.Params
 	DistributionParams distributiontypes.Params
 	GovParams          govv1.Params
 
@@ -325,15 +324,6 @@ func TestnetGenesisParams(
 	}
 	genParams.StakingParams.MaxValidators = maxActiveValidators
 	genParams.StakingParams.BondDenom = genParams.NativeCoinMetadatas[0].Base
-
-	genParams.MintParams = minttypes.DefaultParams()
-	genParams.MintParams.MintDenom = genParams.NativeCoinMetadatas[0].Base
-	genParams.MintParams.BlocksPerYear = blocksPerYear
-	// This should always work as inflation rate is already a float64
-	genParams.MintParams.InflationRateChange = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", inflationRateChange))
-	genParams.MintParams.InflationMin = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", inflationMin))
-	genParams.MintParams.InflationMax = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", inflationMax))
-	genParams.MintParams.GoalBonded = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", goalBonded))
 
 	genParams.GovParams = govv1.DefaultParams()
 	genParams.GovParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(

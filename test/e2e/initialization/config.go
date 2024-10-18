@@ -8,6 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -19,7 +20,6 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
@@ -310,7 +310,7 @@ func updateGovGenesis(votingPeriod, expeditedVotingPeriod time.Duration) func(go
 }
 
 func updateMintGenesis(mintGenState *minttypes.GenesisState) {
-	mintGenState.Params.MintDenom = BabylonDenom
+	mintGenState.BondDenom = BabylonDenom
 }
 
 func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {

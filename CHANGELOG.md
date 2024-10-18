@@ -41,6 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 * [#207](https://github.com/babylonlabs-io/babylon/pull/207) Rename total voting power
 to total bonded sat
+* [#211](https://github.com/babylonlabs-io/babylon/pull/211) Babylon inflation module
 
 ## v0.13.0
 

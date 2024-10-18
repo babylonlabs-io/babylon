@@ -20,12 +20,12 @@ import (
 	"github.com/babylonlabs-io/babylon/app/upgrades"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/babylonlabs-io/babylon/app"
