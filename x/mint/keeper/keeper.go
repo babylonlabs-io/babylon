@@ -66,10 +66,10 @@ func (k Keeper) GetMinter(ctx sdk.Context) (minter types.Minter) {
 }
 
 // SetMinter sets the minter.
-func (k Keeper) SetMinter(ctx sdk.Context, minter types.Minter) {
+func (k Keeper) SetMinter(ctx sdk.Context, minter types.Minter) error {
 	store := k.storeService.OpenKVStore(ctx)
 	b := k.cdc.MustMarshal(&minter)
-	store.Set(types.KeyMinter, b)
+	return store.Set(types.KeyMinter, b)
 }
 
 // GetGenesisTime returns the genesis time.
@@ -88,10 +88,10 @@ func (k Keeper) GetGenesisTime(ctx sdk.Context) (gt types.GenesisTime) {
 }
 
 // SetGenesisTime sets the genesis time.
-func (k Keeper) SetGenesisTime(ctx sdk.Context, gt types.GenesisTime) {
+func (k Keeper) SetGenesisTime(ctx sdk.Context, gt types.GenesisTime) error {
 	store := k.storeService.OpenKVStore(ctx)
 	b := k.cdc.MustMarshal(&gt)
-	store.Set(types.KeyGenesisTime, b)
+	return store.Set(types.KeyGenesisTime, b)
 }
 
 // StakingTokenSupply implements an alias call to the underlying staking keeper's

@@ -263,7 +263,7 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 func (n *NodeConfig) StoreWasmCode(wasmFile, from string) {
 	n.LogActionF("storing wasm code from file %s", wasmFile)
 	cmd := []string{"babylond", "tx", "wasm", "store", wasmFile, fmt.Sprintf("--from=%s", from), "--gas=auto", "--gas-adjustment=1.3"}
-	n.LogActionF(strings.Join(cmd, " "))
+	n.LogActionF("%s", strings.Join(cmd, " "))
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully stored")
@@ -272,7 +272,7 @@ func (n *NodeConfig) StoreWasmCode(wasmFile, from string) {
 func (n *NodeConfig) InstantiateWasmContract(codeId, initMsg, from string) {
 	n.LogActionF("instantiating wasm contract %s with %s", codeId, initMsg)
 	cmd := []string{"babylond", "tx", "wasm", "instantiate", codeId, initMsg, fmt.Sprintf("--from=%s", from), "--no-admin", "--label=contract", "--gas=auto", "--gas-adjustment=1.3"}
-	n.LogActionF(strings.Join(cmd, " "))
+	n.LogActionF("%s", strings.Join(cmd, " "))
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully initialized")
@@ -281,7 +281,7 @@ func (n *NodeConfig) InstantiateWasmContract(codeId, initMsg, from string) {
 func (n *NodeConfig) WasmExecute(contract, execMsg, from string) {
 	n.LogActionF("executing %s on wasm contract %s from %s", execMsg, contract, from)
 	cmd := []string{"babylond", "tx", "wasm", "execute", contract, execMsg, fmt.Sprintf("--from=%s", from)}
-	n.LogActionF(strings.Join(cmd, " "))
+	n.LogActionF("%s", strings.Join(cmd, " "))
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully executed")
@@ -291,7 +291,7 @@ func (n *NodeConfig) WasmExecute(contract, execMsg, from string) {
 func (n *NodeConfig) WithdrawReward(sType, from string) {
 	n.LogActionF("withdraw rewards of type %s for tx signer %s", sType, from)
 	cmd := []string{"babylond", "tx", "incentive", "withdraw-reward", sType, fmt.Sprintf("--from=%s", from)}
-	n.LogActionF(strings.Join(cmd, " "))
+	n.LogActionF("%s", strings.Join(cmd, " "))
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully withdrawn")

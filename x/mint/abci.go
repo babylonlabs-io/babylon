@@ -44,7 +44,9 @@ func maybeUpdateMinter(ctx sdk.Context, k keeper.Keeper) {
 
 	minter.InflationRate = newInflationRate
 	minter.AnnualProvisions = newInflationRate.MulInt(totalSupply)
-	k.SetMinter(ctx, minter)
+	if err := k.SetMinter(ctx, minter); err != nil {
+		panic(err)
+	}
 }
 
 // mintBlockProvision mints the block provision for the current block.
@@ -90,5 +92,7 @@ func setPreviousBlockTime(ctx sdk.Context, k keeper.Keeper) {
 	minter := k.GetMinter(ctx)
 	blockTime := ctx.BlockTime()
 	minter.PreviousBlockTime = &blockTime
-	k.SetMinter(ctx, minter)
+	if err := k.SetMinter(ctx, minter); err != nil {
+		panic(err)
+	}
 }
