@@ -80,12 +80,10 @@ func TestInflationRate(t *testing.T) {
 }
 
 func TestAnnualProvisions(t *testing.T) {
-	t.Run("annual provisions are set when originally zero", func(t *testing.T) {
+	t.Run("annual provisions are set after the chain starts", func(t *testing.T) {
 		h := helper.NewHelper(t)
 		a, ctx := h.App, h.Ctx
 
-		assert.True(t, a.MintKeeper.GetMinter(ctx).AnnualProvisions.IsZero())
-		mint.BeginBlocker(ctx, a.MintKeeper)
 		assert.False(t, a.MintKeeper.GetMinter(ctx).AnnualProvisions.IsZero())
 	})
 
@@ -101,7 +99,6 @@ func TestAnnualProvisions(t *testing.T) {
 		stakingBondDenom, err := a.StakingKeeper.BondDenom(ctx)
 		require.NoError(t, err)
 		require.Equal(t, a.MintKeeper.GetMinter(ctx).BondDenom, stakingBondDenom)
-		require.True(t, a.MintKeeper.GetMinter(ctx).AnnualProvisions.IsZero())
 
 		blockInterval := time.Second * 15
 
