@@ -44,6 +44,10 @@ to total bonded sat
 * [#204](https://github.com/babylonlabs-io/babylon/pull/204) Add minimum babylon
   block height to start processing finality messages.
 
+### Improvements
+
+* [#210](https://github.com/babylonlabs-io/babylon/pull/210) Parameterize finality parameters in prepare-genesis cmd
+
 ## v0.13.0
 
 ### API Breaking
@@ -55,6 +59,7 @@ to total bonded sat
 * [#201](https://github.com/babylonlabs-io/babylon/pull/201) Adjusted handling of `ValidatorWithBlsKey` in checkpoint keeper queries to improve API security.
 * [#202](https://github.com/babylonlabs-io/babylon/pull/202) Adjusted handling of `FinalityProviderWithMeta` in btcstaking keeper queries to improve API security.
 * [#203](https://github.com/babylonlabs-io/babylon/pull/203) Adjusted handling of `RewardGauge` in incentive keeper queries to improve API security.
+* [#208](https://github.com/babylonlabs-io/babylon/pull/208) Adjusted handling of `Evidence` in finality keeper queries to improve API security.
 
 ### State Machine Breaking
 
