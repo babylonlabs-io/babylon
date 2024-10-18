@@ -33,7 +33,7 @@ func CheckForDuplicatesAndEmptyStrings(input []string) error {
 }
 
 // GetActivationHeight returns the minimum block height from which the BTC
-// staking protocol starts updating the voting power table.
+// staking protocol starts processing finality messages.
 func GetActivationHeight(btcNetwork string) uint64 {
 	switch btcNetwork {
 	// The activation height might differ accordingly
