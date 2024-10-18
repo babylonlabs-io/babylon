@@ -66,6 +66,7 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHand
 
 			// Re-initialise the mint module as we have replaced Cosmos SDK's
 			// mint module with our own one.
+			// TODO: properly initialise the mint module in the upgrade handler
 			err = upgradeMint(
 				ctx,
 				keepers.EncCfg.Codec,
