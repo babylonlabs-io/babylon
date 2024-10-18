@@ -19,7 +19,8 @@ import (
 // UpdatePowerDist updates the voting power table and distribution cache.
 // This is triggered upon each `BeginBlock`
 func (k Keeper) UpdatePowerDist(ctx context.Context) {
-	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	height := uint64(sdkCtx.HeaderInfo().Height)
 	btcTipHeight := k.GetCurrentBTCHeight(ctx)
 
 	// get the power dist cache in the last height
@@ -43,6 +44,9 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 
 	// reconcile old voting power distribution cache and new events
 	// to construct the new distribution
+	k.Logger(sdkCtx).With(
+		"eventsLen", len(events),
+	).Info("processing voting power update events")
 	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events)
 
 	// record voting power and cache for this height

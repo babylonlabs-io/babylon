@@ -30,4 +30,7 @@ message Params {
   // jail_duration is the minimum period of time that a finality provider remains jailed
   google.protobuf.Duration jail_duration = 5
   [(gogoproto.nullable) = false, (amino.dont_omitempty) = true, (gogoproto.stdduration) = true];
+  // activation_block_height is the babylon block which the finality module will start to
+  // accept public randomness commit and finality voting.
+  uint64 activation_block_height = 6;
 }

@@ -24,8 +24,8 @@ paths:
                       format: uint64
                       description: EpochNumber of this checkpoint.
                     best_submission_btc_block_height:
-                      type: string
-                      format: uint64
+                      type: integer
+                      format: int64
                       title: btc height of the best submission of the epoch
                     best_submission_btc_block_hash:
                       type: string
@@ -229,8 +229,8 @@ paths:
                 type: object
                 properties:
                   btc_confirmation_depth:
-                    type: string
-                    format: uint64
+                    type: integer
+                    format: int64
                     title: >-
                       btc_confirmation_depth is the confirmation depth in BTC.
 
@@ -239,8 +239,8 @@ paths:
 
                       (k in research paper)
                   checkpoint_finalization_timeout:
-                    type: string
-                    format: uint64
+                    type: integer
+                    format: int64
                     title: >-
                       checkpoint_finalization_timeout is the maximum time window
                       (measured in BTC
@@ -308,8 +308,8 @@ paths:
                     format: uint64
                     description: EpochNumber of this checkpoint.
                   best_submission_btc_block_height:
-                    type: string
-                    format: uint64
+                    type: integer
+                    format: int64
                     title: btc height of the best submission of the epoch
                   best_submission_btc_block_hash:
                     type: string
@@ -520,8 +520,8 @@ paths:
                   hash_hex:
                     type: string
                   height:
-                    type: string
-                    format: uint64
+                    type: integer
+                    format: int64
                   work:
                     type: string
                     description: Work is the sdkmath.Uint as string.
@@ -676,8 +676,8 @@ paths:
             type: object
             properties:
               depth:
-                type: string
-                format: uint64
+                type: integer
+                format: int64
             title: >-
               QueryMainChainDepthResponse is the response type for the
               Query/MainChainDepth RPC
@@ -859,8 +859,8 @@ paths:
                     hash_hex:
                       type: string
                     height:
-                      type: string
-                      format: uint64
+                      type: integer
+                      format: int64
                     work:
                       type: string
                       description: Work is the sdkmath.Uint as string.
@@ -1055,8 +1055,8 @@ paths:
                   hash_hex:
                     type: string
                   height:
-                    type: string
-                    format: uint64
+                    type: integer
+                    format: int64
                   work:
                     type: string
                     description: Work is the sdkmath.Uint as string.
@@ -3726,9 +3726,8 @@ paths:
                     validator_address:
                       type: string
                       title: validator_address is the address of the validator
-                    bls_pub_key:
+                    bls_pub_key_hex:
                       type: string
-                      format: byte
                       title: bls_pub_key is the BLS public key of the validator
                     voting_power:
                       type: string
@@ -3737,8 +3736,8 @@ paths:
                         voting_power is the voting power of the validator at the
                         given epoch
                   title: >-
-                    ValidatorWithBlsKey couples validator address, voting power,
-                    and its bls
+                    BlsPublicKeyListResponse couples validator address, voting
+                    power, and its bls
 
                     public key
               pagination:
@@ -4747,8 +4746,8 @@ definitions:
         format: uint64
         description: EpochNumber of this checkpoint.
       best_submission_btc_block_height:
-        type: string
-        format: uint64
+        type: integer
+        format: int64
         title: btc height of the best submission of the epoch
       best_submission_btc_block_hash:
         type: string
@@ -4839,8 +4838,8 @@ definitions:
     type: object
     properties:
       btc_confirmation_depth:
-        type: string
-        format: uint64
+        type: integer
+        format: int64
         title: >-
           btc_confirmation_depth is the confirmation depth in BTC.
 
@@ -4849,8 +4848,8 @@ definitions:
 
           (k in research paper)
       checkpoint_finalization_timeout:
-        type: string
-        format: uint64
+        type: integer
+        format: int64
         title: >-
           checkpoint_finalization_timeout is the maximum time window (measured
           in BTC
@@ -4885,8 +4884,8 @@ definitions:
             format: uint64
             description: EpochNumber of this checkpoint.
           best_submission_btc_block_height:
-            type: string
-            format: uint64
+            type: integer
+            format: int64
             title: btc height of the best submission of the epoch
           best_submission_btc_block_hash:
             type: string
@@ -4970,8 +4969,8 @@ definitions:
               format: uint64
               description: EpochNumber of this checkpoint.
             best_submission_btc_block_height:
-              type: string
-              format: uint64
+              type: integer
+              format: int64
               title: btc height of the best submission of the epoch
             best_submission_btc_block_hash:
               type: string
@@ -5119,8 +5118,8 @@ definitions:
         type: object
         properties:
           btc_confirmation_depth:
-            type: string
-            format: uint64
+            type: integer
+            format: int64
             title: >-
               btc_confirmation_depth is the confirmation depth in BTC.
 
@@ -5129,8 +5128,8 @@ definitions:
 
               (k in research paper)
           checkpoint_finalization_timeout:
-            type: string
-            format: uint64
+            type: integer
+            format: int64
             title: >-
               checkpoint_finalization_timeout is the maximum time window
               (measured in BTC
@@ -5635,8 +5634,8 @@ definitions:
       hash_hex:
         type: string
       height:
-        type: string
-        format: uint64
+        type: integer
+        format: int64
       work:
         type: string
         description: Work is the sdkmath.Uint as string.
@@ -5675,8 +5674,8 @@ definitions:
           hash_hex:
             type: string
           height:
-            type: string
-            format: uint64
+            type: integer
+            format: int64
           work:
             type: string
             description: Work is the sdkmath.Uint as string.
@@ -5749,8 +5748,8 @@ definitions:
     type: object
     properties:
       depth:
-        type: string
-        format: uint64
+        type: integer
+        format: int64
     title: >-
       QueryMainChainDepthResponse is the response type for the
       Query/MainChainDepth RPC
@@ -5769,8 +5768,8 @@ definitions:
             hash_hex:
               type: string
             height:
-              type: string
-              format: uint64
+              type: integer
+              format: int64
             work:
               type: string
               description: Work is the sdkmath.Uint as string.
@@ -5842,8 +5841,8 @@ definitions:
           hash_hex:
             type: string
           height:
-            type: string
-            format: uint64
+            type: integer
+            format: int64
           work:
             type: string
             description: Work is the sdkmath.Uint as string.
@@ -6598,6 +6597,24 @@ definitions:
 
       NOTE: The amount field is an Int which implements the custom method
       signatures required by gogoproto.
+  babylon.checkpointing.v1.BlsPublicKeyListResponse:
+    type: object
+    properties:
+      validator_address:
+        type: string
+        title: validator_address is the address of the validator
+      bls_pub_key_hex:
+        type: string
+        title: bls_pub_key is the BLS public key of the validator
+      voting_power:
+        type: string
+        format: uint64
+        title: voting_power is the voting power of the validator at the given epoch
+    title: >-
+      BlsPublicKeyListResponse couples validator address, voting power, and its
+      bls
+
+      public key
   babylon.checkpointing.v1.CheckpointStateUpdateResponse:
     type: object
     properties:
@@ -6669,9 +6686,8 @@ definitions:
             validator_address:
               type: string
               title: validator_address is the address of the validator
-            bls_pub_key:
+            bls_pub_key_hex:
               type: string
-              format: byte
               title: bls_pub_key is the BLS public key of the validator
             voting_power:
               type: string
@@ -6680,8 +6696,8 @@ definitions:
                 voting_power is the voting power of the validator at the given
                 epoch
           title: >-
-            ValidatorWithBlsKey couples validator address, voting power, and its
-            bls
+            BlsPublicKeyListResponse couples validator address, voting power,
+            and its bls
 
             public key
       pagination:
@@ -7342,20 +7358,3 @@ definitions:
           transition and the time (in both timestamp and block height) of this
           transition.
     description: RawCheckpointWithMetaResponse wraps the raw checkpoint with metadata.
-  babylon.checkpointing.v1.ValidatorWithBlsKey:
-    type: object
-    properties:
-      validator_address:
-        type: string
-        title: validator_address is the address of the validator
-      bls_pub_key:
-        type: string
-        format: byte
-        title: bls_pub_key is the BLS public key of the validator
-      voting_power:
-        type: string
-        format: uint64
-        title: voting_power is the voting power of the validator at the given epoch
-    title: |-
-      ValidatorWithBlsKey couples validator address, voting power, and its bls
-      public key

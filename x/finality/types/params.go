@@ -15,6 +15,12 @@ const (
 	DefaultMinPubRand         = 100
 	DefaultFinalitySigTimeout = 3
 	DefaultJailDuration       = 24 * 60 * 60 * 1 * time.Second // 1 day
+	// For mainnet considering we want 48 hours
+	// at a block time of 10s that would be 17280 blocks
+	// considering the upgrade for Phase-2 will happen at block
+	// 220, the mainnet activation height for btcstaking should
+	// be 17280 + 220.
+	DefaultFinalityActivationHeight = 17500
 )
 
 var (
@@ -26,11 +32,12 @@ var _ paramtypes.ParamSet = (*Params)(nil)
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
 	return Params{
-		FinalitySigTimeout: DefaultFinalitySigTimeout,
-		SignedBlocksWindow: DefaultSignedBlocksWindow,
-		MinSignedPerWindow: DefaultMinSignedPerWindow,
-		MinPubRand:         DefaultMinPubRand,
-		JailDuration:       DefaultJailDuration,
+		FinalitySigTimeout:    DefaultFinalitySigTimeout,
+		SignedBlocksWindow:    DefaultSignedBlocksWindow,
+		MinSignedPerWindow:    DefaultMinSignedPerWindow,
+		MinPubRand:            DefaultMinPubRand,
+		JailDuration:          DefaultJailDuration,
+		ActivationBlockHeight: DefaultFinalityActivationHeight,
 	}
 }
 
@@ -53,6 +60,7 @@ func (p Params) String() string {
 }
 
 // Validate validates the params
+// finality activation height can be any value, even 0.
 func (p Params) Validate() error {
 	if err := validateSignedBlocksWindow(p.SignedBlocksWindow); err != nil {
 		return err

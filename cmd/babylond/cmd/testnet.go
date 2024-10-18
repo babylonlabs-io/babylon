@@ -126,6 +126,7 @@ Example:
 				genesisCliArgs.MinSignedPerWindow,
 				genesisCliArgs.FinalitySigTimeout,
 				genesisCliArgs.JailDuration,
+				genesisCliArgs.FinalityActivationBlockHeight,
 			)
 
 			return InitTestnet(

@@ -95,3 +95,9 @@ func (k Keeper) GetCurrentEpoch(ctx context.Context) uint64 {
 
 	return currentEpoch.EpochNumber
 }
+
+// GetActivationHeight returns the activation height based
+// on the btc network config.
+func (k Keeper) GetActivationHeight(ctx sdk.Context) uint64 {
+	return k.GetParams(ctx).ActivationBlockHeight
+}
