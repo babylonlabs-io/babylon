@@ -10,6 +10,7 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	pruningtypes "cosmossdk.io/store/pruning/types"
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	tmjson "github.com/cometbft/cometbft/libs/json"
@@ -27,7 +28,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
