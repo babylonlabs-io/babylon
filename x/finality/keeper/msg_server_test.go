@@ -449,7 +449,8 @@ func TestVerifyActivationHeight(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
-	fKeeper.SetParams(ctx, types.DefaultParams())
+	err := fKeeper.SetParams(ctx, types.DefaultParams())
+	require.NoError(t, err)
 	activationHeight := fKeeper.GetActivationHeight(ctx)
 
 	// checks pub rand commit
