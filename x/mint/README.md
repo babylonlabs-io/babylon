@@ -1,5 +1,10 @@
 # `x/mint`
 
+Adapted from <https://github.com/celestiaorg/celestia-app/tree/main/x/mint>
+TODO: fix the doc
+
+---
+
 ## Abstract
 
 celestia-app's `x/mint` is a fork of the Cosmos SDK [`x/mint`](https://github.com/cosmos/cosmos-sdk/tree/5cd0b2316a7103468af38eab5d886f9f069c9cd7/x/mint) module that makes some changes to the inflation mechanism. The changes were motivated by a desire for Celestia to have a pre-determined inflation schedule. See [ADR-019](../../docs/architecture/adr-019-strict-inflation-schedule.md) for more details.
@@ -7,7 +12,7 @@ celestia-app's `x/mint` is a fork of the Cosmos SDK [`x/mint`](https://github.co
 ### Inflation Schedule
 
 | Year | Inflation (%)     |
-|------|-------------------|
+| ---- | ----------------- |
 | 0    | 8.00              |
 | 1    | 7.20              |
 | 2    | 6.48              |

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
 	"cosmossdk.io/core/store"
@@ -54,7 +55,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // GetMinter returns the minter.
-func (k Keeper) GetMinter(ctx sdk.Context) (minter types.Minter) {
+func (k Keeper) GetMinter(ctx context.Context) (minter types.Minter) {
 	store := k.storeService.OpenKVStore(ctx)
 	b, err := store.Get(types.KeyMinter)
 	if err != nil {
@@ -66,14 +67,14 @@ func (k Keeper) GetMinter(ctx sdk.Context) (minter types.Minter) {
 }
 
 // SetMinter sets the minter.
-func (k Keeper) SetMinter(ctx sdk.Context, minter types.Minter) error {
+func (k Keeper) SetMinter(ctx context.Context, minter types.Minter) error {
 	store := k.storeService.OpenKVStore(ctx)
 	b := k.cdc.MustMarshal(&minter)
 	return store.Set(types.KeyMinter, b)
 }
 
 // GetGenesisTime returns the genesis time.
-func (k Keeper) GetGenesisTime(ctx sdk.Context) (gt types.GenesisTime) {
+func (k Keeper) GetGenesisTime(ctx context.Context) (gt types.GenesisTime) {
 	store := k.storeService.OpenKVStore(ctx)
 	b, err := store.Get(types.KeyGenesisTime)
 	if err != nil {
@@ -88,7 +89,7 @@ func (k Keeper) GetGenesisTime(ctx sdk.Context) (gt types.GenesisTime) {
 }
 
 // SetGenesisTime sets the genesis time.
-func (k Keeper) SetGenesisTime(ctx sdk.Context, gt types.GenesisTime) error {
+func (k Keeper) SetGenesisTime(ctx context.Context, gt types.GenesisTime) error {
 	store := k.storeService.OpenKVStore(ctx)
 	b := k.cdc.MustMarshal(&gt)
 	return store.Set(types.KeyGenesisTime, b)
@@ -96,13 +97,13 @@ func (k Keeper) SetGenesisTime(ctx sdk.Context, gt types.GenesisTime) error {
 
 // StakingTokenSupply implements an alias call to the underlying staking keeper's
 // StakingTokenSupply.
-func (k Keeper) StakingTokenSupply(ctx sdk.Context) (math.Int, error) {
+func (k Keeper) StakingTokenSupply(ctx context.Context) (math.Int, error) {
 	return k.stakingKeeper.StakingTokenSupply(ctx)
 }
 
 // MintCoins implements an alias call to the underlying bank keeper's
 // MintCoins.
-func (k Keeper) MintCoins(ctx sdk.Context, newCoins sdk.Coins) error {
+func (k Keeper) MintCoins(ctx context.Context, newCoins sdk.Coins) error {
 	if newCoins.Empty() {
 		return nil
 	}
@@ -112,6 +113,6 @@ func (k Keeper) MintCoins(ctx sdk.Context, newCoins sdk.Coins) error {
 
 // SendCoinsToFeeCollector sends newly minted coins from the x/mint module to
 // the x/auth fee collector module account.
-func (k Keeper) SendCoinsToFeeCollector(ctx sdk.Context, coins sdk.Coins) error {
+func (k Keeper) SendCoinsToFeeCollector(ctx context.Context, coins sdk.Coins) error {
 	return k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, coins)
 }

@@ -1,6 +1,7 @@
 package mint
 
 import (
+	"context"
 	"time"
 
 	"github.com/babylonlabs-io/babylon/x/mint/keeper"
@@ -11,7 +12,7 @@ import (
 
 // BeginBlocker updates the inflation rate, annual provisions, and then mints
 // the block provision for the current block.
-func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
+func BeginBlocker(ctx context.Context, k keeper.Keeper) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
 	maybeUpdateMinter(ctx, k)
@@ -23,10 +24,11 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 // inflation rate has changed. The inflation rate is expected to change once per
 // year at the genesis time anniversary until the TargetInflationRate is
 // reached.
-func maybeUpdateMinter(ctx sdk.Context, k keeper.Keeper) {
+func maybeUpdateMinter(ctx context.Context, k keeper.Keeper) {
 	minter := k.GetMinter(ctx)
 	genesisTime := k.GetGenesisTime(ctx).GenesisTime
-	newInflationRate := minter.CalculateInflationRate(ctx, *genesisTime)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	newInflationRate := minter.CalculateInflationRate(sdkCtx, *genesisTime)
 
 	isNonZeroAnnualProvisions := !minter.AnnualProvisions.IsZero()
 	if newInflationRate.Equal(minter.InflationRate) && isNonZeroAnnualProvisions {
@@ -50,7 +52,7 @@ func maybeUpdateMinter(ctx sdk.Context, k keeper.Keeper) {
 }
 
 // mintBlockProvision mints the block provision for the current block.
-func mintBlockProvision(ctx sdk.Context, k keeper.Keeper) {
+func mintBlockProvision(ctx context.Context, k keeper.Keeper) {
 	minter := k.GetMinter(ctx)
 	if minter.PreviousBlockTime == nil {
 		// exit early if previous block time is nil
@@ -58,7 +60,9 @@ func mintBlockProvision(ctx sdk.Context, k keeper.Keeper) {
 		return
 	}
 
-	toMintCoin, err := minter.CalculateBlockProvision(ctx.BlockTime(), *minter.PreviousBlockTime)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	toMintCoin, err := minter.CalculateBlockProvision(sdkCtx.BlockTime(), *minter.PreviousBlockTime)
 	if err != nil {
 		panic(err)
 	}
@@ -78,7 +82,7 @@ func mintBlockProvision(ctx sdk.Context, k keeper.Keeper) {
 		defer telemetry.ModuleSetGauge(types.ModuleName, float32(toMintCoin.Amount.Int64()), "minted_tokens")
 	}
 
-	ctx.EventManager().EmitEvent(
+	sdkCtx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeMint,
 			sdk.NewAttribute(types.AttributeKeyInflationRate, minter.InflationRate.String()),
@@ -88,9 +92,10 @@ func mintBlockProvision(ctx sdk.Context, k keeper.Keeper) {
 	)
 }
 
-func setPreviousBlockTime(ctx sdk.Context, k keeper.Keeper) {
+func setPreviousBlockTime(ctx context.Context, k keeper.Keeper) {
 	minter := k.GetMinter(ctx)
-	blockTime := ctx.BlockTime()
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	blockTime := sdkCtx.BlockTime()
 	minter.PreviousBlockTime = &blockTime
 	if err := k.SetMinter(ctx, minter); err != nil {
 		panic(err)
