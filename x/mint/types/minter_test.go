@@ -81,8 +81,8 @@ func TestCalculateBlockProvision(t *testing.T) {
 	minter := DefaultMinter()
 	current := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
 	blockInterval := 15 * time.Second
-	totalSupply := math.LegacyNewDec(1_000_000_000_000)              // 1 trillion utia
-	annualProvisions := totalSupply.Mul(InitialInflationRateAsDec()) // 80 billion utia
+	totalSupply := math.LegacyNewDec(1_000_000_000_000)              // 1 trillion ubbn
+	annualProvisions := totalSupply.Mul(InitialInflationRateAsDec()) // 80 billion ubbn
 
 	type testCase struct {
 		name             string
@@ -99,7 +99,7 @@ func TestCalculateBlockProvision(t *testing.T) {
 			annualProvisions: annualProvisions,
 			current:          current,
 			previous:         current.Add(-blockInterval),
-			// 80 billion utia (annual provisions) * 15 (seconds) / 31,556,952 (seconds per year) = 38026.48620817 which truncates to 38026 utia
+			// 80 billion ubbn (annual provisions) * 15 (seconds) / 31,556,952 (seconds per year) = 38026.48620817 which truncates to 38026 ubbn
 			want: sdk.NewCoin(DefaultBondDenom, math.NewInt(38026)),
 		},
 		{
@@ -107,7 +107,7 @@ func TestCalculateBlockProvision(t *testing.T) {
 			annualProvisions: annualProvisions,
 			current:          current,
 			previous:         current.Add(-2 * blockInterval),
-			// 80 billion utia (annual provisions) * 30 (seconds) / 31,556,952 (seconds per year) = 76052.97241635 which truncates to 76052 utia
+			// 80 billion ubbn (annual provisions) * 30 (seconds) / 31,556,952 (seconds per year) = 76052.97241635 which truncates to 76052 ubbn
 			want: sdk.NewCoin(DefaultBondDenom, math.NewInt(76052)),
 		},
 		{
@@ -138,8 +138,8 @@ func TestCalculateBlockProvisionError(t *testing.T) {
 	oneYear := time.Duration(NanosecondsPerYear)
 	end := current.Add(oneYear)
 
-	totalSupply := math.LegacyNewDec(1_000_000_000_000)              // 1 trillion utia
-	annualProvisions := totalSupply.Mul(InitialInflationRateAsDec()) // 80 billion utia
+	totalSupply := math.LegacyNewDec(1_000_000_000_000)              // 1 trillion ubbn
+	annualProvisions := totalSupply.Mul(InitialInflationRateAsDec()) // 80 billion ubbn
 	minter.AnnualProvisions = annualProvisions
 	totalBlockProvisions := math.LegacyNewDec(0)
 	for current.Before(end) {

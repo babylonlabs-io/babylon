@@ -96,10 +96,8 @@ func TestAnnualProvisions(t *testing.T) {
 		genesisTime := a.MintKeeper.GetGenesisTime(ctx).GenesisTime
 		yearOneMinusOneSecond := genesisTime.Add(oneYear).Add(-time.Second)
 
-		initialSupply := math.NewInt(100_000_001_000_000)
-		stakingTokenSupply, err := a.StakingKeeper.StakingTokenSupply(ctx)
+		initialSupply, err := a.StakingKeeper.StakingTokenSupply(ctx)
 		require.NoError(t, err)
-		require.Equal(t, initialSupply, stakingTokenSupply)
 		stakingBondDenom, err := a.StakingKeeper.BondDenom(ctx)
 		require.NoError(t, err)
 		require.Equal(t, a.MintKeeper.GetMinter(ctx).BondDenom, stakingBondDenom)

@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-const DefaultBondDenom = "utia"
+const DefaultBondDenom = "ubbn"
 
 // NewMinter returns a new Minter object.
 func NewMinter(inflationRate math.LegacyDec, annualProvisions math.LegacyDec, bondDenom string) Minter {
