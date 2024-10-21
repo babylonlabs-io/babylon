@@ -48,11 +48,6 @@ FROM alpine:3.14 AS run
 RUN addgroup --gid 1137 -S babylon && adduser --uid 1137 -S babylon -G babylon
 RUN apk add bash curl jq
 
-# Set VERSION to current git tag or hash if not provided
-RUN if [ -z "${VERSION}" ]; then \
-    VERSION=$(git describe --tags 2>/dev/null || git rev-parse --short HEAD); \
-    fi
-
 # Label should match your github repo
 LABEL org.opencontainers.image.source="https://github.com/babylonchain/babylond:${VERSION}"
 
