@@ -164,16 +164,26 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// and it should work.
 	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.ActivationBlockHeight-1, 3)
 	s.NoError(err)
-	outBuff, errBuf, err := n.CommitPubRandListOut(
+	_, _, err = n.CommitPubRandListOut(
 		fp.BtcPk,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.NumPubRand,
 		msgCommitPubRandList.Commitment,
 		msgCommitPubRandList.Sig,
 	)
+	// check the error happened
+	s.ErrorContains(err, finalitytypes.ErrFinalityNotActivated.Error())
+
+	// commits with valid start height
+	_, msgCommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.ActivationBlockHeight, 3)
 	s.NoError(err)
-	s.Contains(outBuff.String(), finalitytypes.ErrFinalityNotActivated)
-	s.Contains(errBuf.String(), finalitytypes.ErrFinalityNotActivated)
+	n.CommitPubRandList(
+		fp.BtcPk,
+		msgCommitPubRandList.StartHeight,
+		msgCommitPubRandList.NumPubRand,
+		msgCommitPubRandList.Commitment,
+		msgCommitPubRandList.Sig,
+	)
 
 	// Verifies the balance differences were really executed
 	tokenDistData, err := v1.LoadTokenDistributionFromData(testnet.TokensDistributionStr)
