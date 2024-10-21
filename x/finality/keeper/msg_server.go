@@ -54,8 +54,9 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if err := ms.validateActivationHeightAddFinalitySig(ctx, req); err != nil {
-		return nil, err
+	activationHeight, errMod := ms.validateActivationHeight(ctx, req.BlockHeight)
+	if errMod != nil {
+		return nil, errMod.Wrapf("finality block height: %d is lower than activation height %d", req.BlockHeight, activationHeight)
 	}
 
 	fpPK := req.FpBtcPk
@@ -191,8 +192,12 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if err := ms.validateActivationHeightCommitPubRand(ctx, req); err != nil {
-		return nil, err
+	activationHeight, errMod := ms.validateActivationHeight(ctx, req.StartHeight)
+	if errMod != nil {
+		return nil, types.ErrFinalityNotActivated.Wrapf(
+			"public rand commit start block height: %d is lower than activation height %d",
+			req.StartHeight, activationHeight,
+		)
 	}
 
 	// ensure the request contains enough number of public randomness
@@ -310,38 +315,17 @@ func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340Pu
 	}
 }
 
-// validateActivationHeightAddFinalitySig returns error if the msg add finality
-// block height is lower than the activation height
-func (ms msgServer) validateActivationHeightAddFinalitySig(ctx sdk.Context, msg *types.MsgAddFinalitySig) error {
+// validateActivationHeight returns error if the height received is lower than the finality
+// activation block height
+func (ms msgServer) validateActivationHeight(ctx sdk.Context, height uint64) (uint64, *errorsmod.Error) {
 	// TODO: remove it after Phase-2 launch in a future coordinated upgrade
 	activationHeight := ms.GetParams(ctx).ActivationBlockHeight
-	if msg.BlockHeight < activationHeight {
+	if height < activationHeight {
 		ms.Logger(ctx).With(
-			"finalityBlockHeight", msg.BlockHeight,
+			"height", height,
 			"activationHeight", activationHeight,
 		).Info("BTC finality is not activated yet")
-		return types.ErrFinalityNotActivated.Wrapf(
-			"finality block height: %d is lower than activation height %d",
-			msg.BlockHeight, activationHeight,
-		)
+		return activationHeight, types.ErrFinalityNotActivated
 	}
-	return nil
-}
-
-// validateActivationHeightCommitPubRand returns error if the msg commit pub rand list
-// start height is lower than the activation height
-func (ms msgServer) validateActivationHeightCommitPubRand(ctx sdk.Context, msg *types.MsgCommitPubRandList) error {
-	// TODO: remove it after Phase-2 launch in a future coordinated upgrade
-	activationHeight := ms.GetParams(ctx).ActivationBlockHeight
-	if msg.StartHeight < activationHeight {
-		ms.Logger(ctx).With(
-			"pubRandStartHeight", msg.StartHeight,
-			"activationHeight", activationHeight,
-		).Info("BTC finality is not activated yet")
-		return types.ErrFinalityNotActivated.Wrapf(
-			"public rand commit start block height: %d is lower than activation height %d",
-			msg.StartHeight, activationHeight,
-		)
-	}
-	return nil
+	return activationHeight, nil
 }
