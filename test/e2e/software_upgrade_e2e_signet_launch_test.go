@@ -164,7 +164,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// and it should work.
 	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.ActivationBlockHeight-1, 3)
 	s.NoError(err)
-	_, errBuf, err := n.CommitPubRandListOut(
+	outBuff, errBuf, err := n.CommitPubRandListOut(
 		fp.BtcPk,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.NumPubRand,
@@ -172,6 +172,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 		msgCommitPubRandList.Sig,
 	)
 	s.NoError(err)
+	s.Contains(outBuff.String(), finalitytypes.ErrFinalityNotActivated)
 	s.Contains(errBuf.String(), finalitytypes.ErrFinalityNotActivated)
 
 	// Verifies the balance differences were really executed
