@@ -52,6 +52,7 @@ RUN addgroup --gid 1137 -S babylon && adduser --uid 1137 -S babylon -G babylon
 RUN apk add bash curl jq
 
 # Label should match your github repo
+ARG VERSION
 LABEL org.opencontainers.image.source="https://github.com/babylonlabs-io/babylond:${VERSION}"
 
 # Install Libraries
