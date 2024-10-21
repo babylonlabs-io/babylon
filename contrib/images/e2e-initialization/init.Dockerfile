@@ -1,6 +1,8 @@
-FROM golang:1.21 AS build-env
+FROM golang:1.21-alpine AS build-env
 
 ARG E2E_SCRIPT_NAME
+# TARGETPLATFORM should be one of linux/amd64 or linux/arm64.
+ARG TARGETPLATFORM="linux/amd64"
 # Version to build. Default is empty
 ARG VERSION
 
@@ -10,33 +12,30 @@ COPY ./ /go/src/github.com/babylonlabs-io/babylon/
 
 # Handle if version is set
 RUN if [ -n "${VERSION}" ]; then \
-        git fetch origin tag ${VERSION} --no-tags; \
-        git checkout -f ${VERSION}; \
+    git fetch origin tag ${VERSION} --no-tags; \
+    git checkout -f ${VERSION}; \
     fi
 
-RUN LEDGER_ENABLED=false LINK_STATICALLY=false E2E_SCRIPT_NAME=${E2E_SCRIPT_NAME} make e2e-build-script
+# Cosmwasm - Download correct libwasmvm version
+RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm/v2 | cut -d ' ' -f 2) && \
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
+    -O /lib/libwasmvm_muslc.$(uname -m).a && \
+    # verify checksum
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
+    sha256sum /lib/libwasmvm_muslc.$(uname -m).a | grep $(cat /tmp/checksums.txt | grep libwasmvm_muslc.$(uname -m) | cut -d ' ' -f 1)
 
-FROM debian:bookworm-slim AS wasm-link
+RUN LEDGER_ENABLED=false LINK_STATICALLY=true E2E_SCRIPT_NAME=${E2E_SCRIPT_NAME} make e2e-build-script
+
+FROM alpine:3.14 AS run
 
 ARG VERSION
 
 # Create a user
-RUN addgroup --gid 1137 --system babylon && adduser --uid 1137 --gid 1137 --system --home /home/babylon babylon
-RUN apt-get update && apt-get install -y bash curl jq wget
+RUN addgroup --gid 1137 -S babylon && adduser --uid 1137 -S babylon -G babylon
+RUN apk add bash curl jq
 
 # Label should match your github repo
 LABEL org.opencontainers.image.source="https://github.com/babylonlabs-io/babylond:${VERSION}"
-
-# Install libraries
-# Cosmwasm - Download correct libwasmvm version
-COPY --from=build-env /go/src/github.com/babylonlabs-io/babylon/go.mod /tmp
-RUN WASMVM_VERSION=$(grep github.com/CosmWasm/wasmvm /tmp/go.mod | cut -d' ' -f2) && \
-    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm.$(uname -m).so \
-        -O /lib/libwasmvm.$(uname -m).so && \
-    # verify checksum
-    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
-    sha256sum /lib/libwasmvm.$(uname -m).so | grep $(cat /tmp/checksums.txt | grep libwasmvm.$(uname -m) | cut -d ' ' -f 1)
-RUN rm -f /tmp/go.mod
 
 # Args only last for a single build stage - renew
 ARG E2E_SCRIPT_NAME
