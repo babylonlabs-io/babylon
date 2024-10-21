@@ -41,6 +41,11 @@ type Helper struct {
 	Net                  *chaincfg.Params
 }
 
+type UnbondingTxInfo struct {
+	UnbondingTxInclusionProof *types.InclusionProof
+	UnbondingHeaderInfo       *btclctypes.BTCHeaderInfo
+}
+
 func NewHelper(
 	t testing.TB,
 	btclcKeeper *types.MockBTCLightClientKeeper,
@@ -171,7 +176,7 @@ func (h *Helper) CreateDelegation(
 	unbondingValue int64,
 	unbondingTime uint16,
 	usePreApproval bool,
-) (string, *types.MsgCreateBTCDelegation, *types.BTCDelegation, *btclctypes.BTCHeaderInfo, *types.InclusionProof, error) {
+) (string, *types.MsgCreateBTCDelegation, *types.BTCDelegation, *btclctypes.BTCHeaderInfo, *types.InclusionProof, *UnbondingTxInfo, error) {
 	stakingTimeBlocks := stakingTime
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
@@ -269,12 +274,15 @@ func (h *Helper) CreateDelegation(
 	serializedUnbondingTx, err := bbn.SerializeBTCTx(testUnbondingInfo.UnbondingTx)
 	h.NoError(err)
 
-
-	
-
-
-
-
+	prevBlockForUnbonding, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
+	btcUnbondingHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlockForUnbonding.Header, testUnbondingInfo.UnbondingTx)
+	btcUnbondingHeader := btcUnbondingHeaderWithProof.HeaderBytes
+	btcUnbondingHeaderInfo := &btclctypes.BTCHeaderInfo{Header: &btcUnbondingHeader, Height: 11}
+	unbondingTxInclusionProof := types.NewInclusionProof(
+		&btcctypes.TransactionKey{Index: 1, Hash: btcUnbondingHeader.Hash()},
+		btcUnbondingHeaderWithProof.SpvProof.MerkleNodes,
+	)
+	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcUnbondingHeader.Hash())).Return(btcUnbondingHeaderInfo).AnyTimes()
 
 	// all good, construct and send MsgCreateBTCDelegation message
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
@@ -301,7 +309,7 @@ func (h *Helper) CreateDelegation(
 
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	if err != nil {
-		return "", nil, nil, nil, nil, err
+		return "", nil, nil, nil, nil, nil, err
 	}
 
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(msgCreateBTCDel.StakingTx)
@@ -320,7 +328,10 @@ func (h *Helper) CreateDelegation(
 		require.True(h.t, btcDel.HasInclusionProof())
 	}
 
-	return stakingTxHash, msgCreateBTCDel, btcDel, btcHeaderInfo, txInclusionProof, nil
+	return stakingTxHash, msgCreateBTCDel, btcDel, btcHeaderInfo, txInclusionProof, &UnbondingTxInfo{
+		UnbondingTxInclusionProof: unbondingTxInclusionProof,
+		UnbondingHeaderInfo:       btcUnbondingHeaderInfo,
+	}, nil
 }
 
 func (h *Helper) GenerateCovenantSignaturesMessages(

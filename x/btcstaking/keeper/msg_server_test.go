@@ -163,7 +163,7 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, _, _, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -223,7 +223,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	stakingValue := int64(2 * 10e8)
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	stakingTxHash, _, _, _, _, err := h.CreateDelegation(
+	stakingTxHash, _, _, _, _, _, err := h.CreateDelegation(
 		r,
 		delSK,
 		fpPK,
@@ -253,7 +253,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
 	require.NoError(t, err)
 	// create new delegation
-	stakingTxHash1, _, _, _, _, err := h.CreateDelegation(
+	stakingTxHash1, _, _, _, _, _, err := h.CreateDelegation(
 		r,
 		delSK,
 		fpPK,
@@ -302,7 +302,7 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, _, _, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -385,7 +385,7 @@ func FuzzAddBTCDelegationInclusionProof(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -458,7 +458,7 @@ func FuzzBTCUndelegate(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, unbondingInfo, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -483,13 +483,11 @@ func FuzzBTCUndelegate(f *testing.F) {
 		status := actualDel.GetStatus(btcTip, wValue, bsParams.CovenantQuorum)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 
-		// construct unbonding msg
-		delUnbondingSig, err := actualDel.SignUnbondingTx(&bsParams, h.Net, delSK)
-		h.NoError(err)
 		msg := &types.MsgBTCUndelegate{
-			Signer:         datagen.GenRandomAccount().Address,
-			StakingTxHash:  stakingTxHash,
-			UnbondingTxSig: bbn.NewBIP340SignatureFromBTCSig(delUnbondingSig),
+			Signer:                        datagen.GenRandomAccount().Address,
+			StakingTxHash:                 stakingTxHash,
+			StakeSpendingTx:               actualDel.BtcUndelegation.UnbondingTx,
+			StakeSpendingTxInclusionProof: unbondingInfo.UnbondingTxInclusionProof,
 		}
 
 		// ensure the system does not panick due to a bogus unbonding msg
@@ -539,7 +537,7 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -616,7 +614,7 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -868,7 +866,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			stakingValue := int64(2 * 10e8)
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			h.NoError(err)
-			stakingTxHash, _, _, _, _, err := h.CreateDelegation(
+			stakingTxHash, _, _, _, _, _, err := h.CreateDelegation(
 				r,
 				delSK,
 				fpPK,

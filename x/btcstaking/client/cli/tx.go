@@ -441,7 +441,7 @@ func NewBTCUndelegateCmd() *cobra.Command {
 				return err
 			}
 
-			inclusionProof, err := types.NewInclusionProofFromHex(args[3])
+			inclusionProof, err := types.NewInclusionProofFromHex(args[2])
 			if err != nil {
 				return err
 			}
