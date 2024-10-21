@@ -18,12 +18,12 @@ RUN apk add --update --no-cache make git bash gcc linux-headers eudev-dev ncurse
 RUN apk add --no-cache musl-dev
 
 # Build
-WORKDIR /go/src/github.com/babylonchain/babylon
+WORKDIR /go/src/github.com/babylonlabs-io/babylon
 # First cache dependencies
-COPY go.mod go.sum /go/src/github.com/babylonchain/babylon/
+COPY go.mod go.sum /go/src/github.com/babylonlabs-io/babylon/
 RUN go mod download
 # Then copy everything else
-COPY ./ /go/src/github.com/babylonchain/babylon/
+COPY ./ /go/src/github.com/babylonlabs-io/babylon/
 # If version is set, then checkout this version
 RUN if [ -n "${VERSION}" ]; then \
     git fetch origin tag ${VERSION} --no-tags ; \
@@ -50,13 +50,13 @@ RUN addgroup --gid 1137 -S babylon && adduser --uid 1137 -S babylon -G babylon
 RUN apk add bash curl jq
 
 # Label should match your github repo
-LABEL org.opencontainers.image.source="https://github.com/babylonchain/babylond:${VERSION}"
+LABEL org.opencontainers.image.source="https://github.com/babylonlabs-io/babylond:${VERSION}"
 
 # Install Libraries
 # COPY --from=build-env /usr/lib/libgcc_s.so.1 /lib/
 # COPY --from=build-env /lib/ld-musl*.so.1* /lib
 
-COPY --from=build-env /go/src/github.com/babylonchain/babylon/build/babylond /bin/babylond
+COPY --from=build-env /go/src/github.com/babylonlabs-io/babylon/build/babylond /bin/babylond
 
 # Set home directory and user
 WORKDIR /home/babylon
