@@ -314,7 +314,7 @@ func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340Pu
 // block height is lower than the activation height
 func (ms msgServer) validateActivationHeightAddFinalitySig(ctx sdk.Context, msg *types.MsgAddFinalitySig) error {
 	// TODO: remove it after Phase-2 launch in a future coordinated upgrade
-	activationHeight := ms.GetActivationHeight(ctx)
+	activationHeight := ms.GetParams(ctx).ActivationBlockHeight
 	if msg.BlockHeight < activationHeight {
 		ms.Logger(ctx).With(
 			"finalityBlockHeight", msg.BlockHeight,
@@ -332,7 +332,7 @@ func (ms msgServer) validateActivationHeightAddFinalitySig(ctx sdk.Context, msg 
 // start height is lower than the activation height
 func (ms msgServer) validateActivationHeightCommitPubRand(ctx sdk.Context, msg *types.MsgCommitPubRandList) error {
 	// TODO: remove it after Phase-2 launch in a future coordinated upgrade
-	activationHeight := ms.GetActivationHeight(ctx)
+	activationHeight := ms.GetParams(ctx).ActivationBlockHeight
 	if msg.StartHeight < activationHeight {
 		ms.Logger(ctx).With(
 			"pubRandStartHeight", msg.StartHeight,
