@@ -56,15 +56,6 @@ func TestExportGenesis(t *testing.T) {
 			int(numDelegations),
 			params.CovenantQuorum,
 		)
-		vp := uint64(stakingValue)
-
-		// sets voting power
-		k.SetVotingPower(ctx, *fp.BtcPk, blkHeight, vp)
-		vpFps[fp.BtcPk.MarshalHex()] = &types.VotingPowerFP{
-			BlockHeight: blkHeight,
-			FpBtcPk:     fp.BtcPk,
-			VotingPower: vp,
-		}
 
 		for _, del := range delegations {
 			totalDelegations++
