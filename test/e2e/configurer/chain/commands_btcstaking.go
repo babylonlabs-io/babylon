@@ -1,6 +1,7 @@
 package chain
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -157,7 +158,13 @@ func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash stri
 	n.LogActionF("successfully added covenant signatures")
 }
 
-func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
+func (n *NodeConfig) CommitPubRandListOut(
+	fpBTCPK *bbn.BIP340PubKey,
+	startHeight uint64,
+	numPubrand uint64,
+	commitment []byte,
+	sig *bbn.BIP340Signature,
+) (outBuf, errBuf bytes.Buffer, err error) {
 	n.LogActionF("committing public randomness list")
 
 	cmd := []string{"babylond", "tx", "finality", "commit-pubrand-list"}
@@ -188,7 +195,11 @@ func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight ui
 	// gas
 	cmd = append(cmd, "--gas=500000")
 
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	return n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+}
+
+func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
+	_, _, err := n.CommitPubRandListOut(fpBTCPK, startHeight, numPubrand, commitment, sig)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully committed public randomness list")
 }

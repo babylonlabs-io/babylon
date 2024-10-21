@@ -1,6 +1,9 @@
 package e2e
 
 import (
+	"math/rand"
+	"time"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -9,7 +12,9 @@ import (
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
 	"github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
@@ -94,13 +99,22 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TearDownSuite() {
 func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// chain is already upgraded, only checks for differences in state are expected
 	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(30) // five blocks more than upgrade
 
 	n, err := chainA.GetDefaultNode()
 	s.NoError(err)
 
 	govProp, err := s.configurer.ParseGovPropFromFile()
 	s.NoError(err)
+	chainA.WaitUntilHeight(govProp.Plan.Height + 2) // waits for chain to produce blocks
+
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	fptBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
+	fp := CreateNodeFP(
+		s.T(),
+		r,
+		fptBTCSK,
+		n,
+	)
 
 	bbnApp := app.NewTmpBabylonApp()
 
@@ -141,6 +155,21 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// as the one from the data
 	finalityParams := n.QueryFinalityParams()
 
+	// FP tries to commit with start height before finality activation height
+	// it should fail, after commits with start height = finality activation height
+	// and it should work.
+	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParams.ActivationBlockHeight-1, 3)
+	s.NoError(err)
+	_, errBuf, err := n.CommitPubRandListOut(
+		fp.BtcPk,
+		msgCommitPubRandList.StartHeight,
+		msgCommitPubRandList.NumPubRand,
+		msgCommitPubRandList.Commitment,
+		msgCommitPubRandList.Sig,
+	)
+	s.Contains(errBuf.String(), finalitytypes.ErrFinalityNotActivated)
+	s.NoError(err)
+
 	finalityParamsFromData, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec(), testnet.FinalityParamStr)
 	s.NoError(err)
 	s.EqualValues(finalityParamsFromData, *finalityParams)
@@ -169,4 +198,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 		actBalance := balanceAfterUpgrade.String()
 		s.Equal(expBalance, actBalance, "addr %s has different balances. Expected %s != %s Actual", addr, expBalance, actBalance)
 	}
+
+	// chainA.WaitUntilHeight(int64(finalityParams.ActivationBlockHeight)) // waits for the finality
+
 }
