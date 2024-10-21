@@ -44,6 +44,7 @@ to total bonded sat
 
 ### Improvements
 
+* [#213](https://github.com/babylonlabs-io/babylon/pull/213) Bump wasmd and re-enable static linking
 * [#210](https://github.com/babylonlabs-io/babylon/pull/210) Parameterize finality parameters in prepare-genesis cmd
 
 ## v0.13.0
