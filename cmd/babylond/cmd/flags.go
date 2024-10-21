@@ -19,40 +19,40 @@ import (
 )
 
 const (
-	flagMaxActiveValidators           = "max-active-validators"
-	flagBtcConfirmationDepth          = "btc-confirmation-depth"
-	flagEpochInterval                 = "epoch-interval"
-	flagBtcFinalizationTimeout        = "btc-finalization-timeout"
-	flagCheckpointTag                 = "checkpoint-tag"
-	flagBaseBtcHeaderHex              = "btc-base-header"
-	flagBaseBtcHeaderHeight           = "btc-base-header-height"
-	flagAllowedReporterAddresses      = "allowed-reporter-addresses"
-	flagInflationRateChange           = "inflation-rate-change"
-	flagInflationMax                  = "inflation-max"
-	flagInflationMin                  = "inflation-min"
-	flagGoalBonded                    = "goal-bonded"
-	flagBlocksPerYear                 = "blocks-per-year"
-	flagGenesisTime                   = "genesis-time"
-	flagBlockGasLimit                 = "block-gas-limit"
-	flagVoteExtensionEnableHeight     = "vote-extension-enable-height"
-	flagCovenantPks                   = "covenant-pks"
-	flagCovenantQuorum                = "covenant-quorum"
-	flagMinStakingAmtSat              = "min-staking-amount-sat"
-	flagMaxStakingAmtSat              = "max-staking-amount-sat"
-	flagMinStakingTimeBlocks          = "min-staking-time-blocks"
-	flagMaxStakingTimeBlocks          = "max-staking-time-blocks"
-	flagMaxActiveFinalityProviders    = "max-active-finality-providers"
-	flagMinUnbondingTime              = "min-unbonding-time"
-	flagUnbondingFeeSat               = "unbonding-fee-sat"
-	flagSlashingPkScript              = "slashing-pk-script"
-	flagMinSlashingFee                = "min-slashing-fee-sat"
-	flagSlashingRate                  = "slashing-rate"
-	flagMinCommissionRate             = "min-commission-rate"
-	flagSignedBlocksWindow            = "signed-blocks-window"
-	flagFinalityActivationBlockHeight = "finality-activation-block-height"
-	flagMinSignedPerWindow            = "min-signed-per-window"
-	flagFinalitySigTimeout            = "finality-sig-timeout"
-	flagJailDuration                  = "jail-duration"
+	flagMaxActiveValidators        = "max-active-validators"
+	flagBtcConfirmationDepth       = "btc-confirmation-depth"
+	flagEpochInterval              = "epoch-interval"
+	flagBtcFinalizationTimeout     = "btc-finalization-timeout"
+	flagCheckpointTag              = "checkpoint-tag"
+	flagBaseBtcHeaderHex           = "btc-base-header"
+	flagBaseBtcHeaderHeight        = "btc-base-header-height"
+	flagAllowedReporterAddresses   = "allowed-reporter-addresses"
+	flagInflationRateChange        = "inflation-rate-change"
+	flagInflationMax               = "inflation-max"
+	flagInflationMin               = "inflation-min"
+	flagGoalBonded                 = "goal-bonded"
+	flagBlocksPerYear              = "blocks-per-year"
+	flagGenesisTime                = "genesis-time"
+	flagBlockGasLimit              = "block-gas-limit"
+	flagVoteExtensionEnableHeight  = "vote-extension-enable-height"
+	flagCovenantPks                = "covenant-pks"
+	flagCovenantQuorum             = "covenant-quorum"
+	flagMinStakingAmtSat           = "min-staking-amount-sat"
+	flagMaxStakingAmtSat           = "max-staking-amount-sat"
+	flagMinStakingTimeBlocks       = "min-staking-time-blocks"
+	flagMaxStakingTimeBlocks       = "max-staking-time-blocks"
+	flagMaxActiveFinalityProviders = "max-active-finality-providers"
+	flagMinUnbondingTime           = "min-unbonding-time"
+	flagUnbondingFeeSat            = "unbonding-fee-sat"
+	flagSlashingPkScript           = "slashing-pk-script"
+	flagMinSlashingFee             = "min-slashing-fee-sat"
+	flagSlashingRate               = "slashing-rate"
+	flagMinCommissionRate          = "min-commission-rate"
+	flagSignedBlocksWindow         = "signed-blocks-window"
+	flagActivationHeight           = "activation-height"
+	flagMinSignedPerWindow         = "min-signed-per-window"
+	flagFinalitySigTimeout         = "finality-sig-timeout"
+	flagJailDuration               = "jail-duration"
 )
 
 type GenesisCLIArgs struct {
@@ -138,7 +138,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64(flagFinalitySigTimeout, ftypes.DefaultFinalitySigTimeout, "How much time (in terms of blocks) finality providers have to cast a finality vote before being judged as missing their voting turn on the given block")
 	cmd.Flags().String(flagJailDuration, ftypes.DefaultJailDuration.String(), "Minimum period of time that a finality provider remains jailed")
 	// finality flags
-	cmd.Flags().Uint64(flagFinalityActivationBlockHeight, ftypes.DefaultFinalityActivationHeight, "Finality bbn block height activation to start accepting finality vote and pub rand")
+	cmd.Flags().Uint64(flagActivationHeight, ftypes.DefaultFinalityActivationHeight, "Finality bbn block height activation to start accepting finality vote and pub rand")
 }
 
 func parseGenesisFlags(cmd *cobra.Command) (*GenesisCLIArgs, error) {
@@ -176,7 +176,7 @@ func parseGenesisFlags(cmd *cobra.Command) (*GenesisCLIArgs, error) {
 	minSignedPerWindowStr, _ := cmd.Flags().GetString(flagMinSignedPerWindow)
 	finalitySigTimeout, _ := cmd.Flags().GetInt64(flagFinalitySigTimeout)
 	jailDurationStr, _ := cmd.Flags().GetString(flagJailDuration)
-	finalityActivationBlockHeight, _ := cmd.Flags().GetUint64(flagFinalityActivationBlockHeight)
+	finalityActivationBlockHeight, _ := cmd.Flags().GetUint64(flagActivationHeight)
 
 	if chainID == "" {
 		chainID = "chain-" + tmrand.NewRand().Str(6)
