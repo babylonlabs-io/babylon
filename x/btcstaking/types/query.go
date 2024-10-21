@@ -5,8 +5,14 @@ import (
 )
 
 func delegatorUnbondingInfoToResponse(ui *DelegatorUnbondingInfo) *DelegatorUnbondingInfoResponse {
+	var spendStakeTxHex string = ""
+
+	if len(ui.SpendStakeTx) > 0 {
+		spendStakeTxHex = hex.EncodeToString(ui.SpendStakeTx)
+	}
+
 	return &DelegatorUnbondingInfoResponse{
-		SpendStakeTxHex:                   hex.EncodeToString(ui.SpendStakeTx),
+		SpendStakeTxHex:                   spendStakeTxHex,
 		SpendStakeTxInclusionBlockHashHex: hex.EncodeToString(ui.SpendStakeTxInclusionBlockHash),
 		SpendStakeTxInclusionIndex:        ui.SpendStakeTxInclusionIndex,
 	}

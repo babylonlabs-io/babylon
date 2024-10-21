@@ -161,6 +161,34 @@ func (k Keeper) btcUndelegate(
 	btcDel.BtcUndelegation.DelegatorUnbondingInfo = u
 	k.setBTCDelegation(ctx, btcDel)
 
+	// stake is unbonding through unexpected tx, emit additional event
+	if len(u.SpendStakeTx) > 0 {
+		tx, err := bbn.NewBTCTxFromBytes(u.SpendStakeTx)
+
+		if err != nil {
+			panic(fmt.Errorf("failed to parse spend stake tx that should be valid: %w", err))
+		}
+
+		spendStakeTxHash := tx.TxHash().String()
+
+		headerHash, err := chainhash.NewHash(u.SpendStakeTxInclusionBlockHash)
+
+		if err != nil {
+			panic(fmt.Errorf("failed to parse header hash that should be valid: %w", err))
+		}
+
+		ev := &types.EventUnexpectedUnbondingTx{
+			StakingTxHash:          btcDel.MustGetStakingTxHash().String(),
+			SpendStakeTxHash:       spendStakeTxHash,
+			SpendStakeTxHeaderHash: headerHash.String(),
+			SpendStakeTxBlockIndex: u.SpendStakeTxInclusionIndex,
+		}
+
+		if err := ctx.EventManager().EmitTypedEvent(ev); err != nil {
+			panic(fmt.Errorf("failed to emit EventUnexpectedUnbondingTx event: %w", err))
+		}
+	}
+
 	if !btcDel.HasInclusionProof() {
 		return
 	}

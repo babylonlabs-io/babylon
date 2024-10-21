@@ -444,7 +444,9 @@ func (m *BTCDelegation) GetParamsVersion() uint32 {
 // spend_stake_tx was included
 // - spend_stake_tx_sig_inclusion_index: the index of spend_stake_tx in the block
 type DelegatorUnbondingInfo struct {
-	// spend_stake_tx is the transaction which spent the staking output
+	// spend_stake_tx is the transaction which spent the staking output. It is
+	// filled only if spend_stake_tx is different than unbonding_tx registered
+	// on the Babylon chain.
 	SpendStakeTx []byte `protobuf:"bytes,1,opt,name=spend_stake_tx,json=spendStakeTx,proto3" json:"spend_stake_tx,omitempty"`
 	// spend_stake_tx_inclusion_block_hash is the block hash of the block in which
 	// spend_stake_tx was included

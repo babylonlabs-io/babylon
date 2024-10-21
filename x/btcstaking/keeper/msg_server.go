@@ -604,9 +604,6 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		}
 	}
 
-	// TODO Add check for to compare unbonding tx with stake spending tx and emit
-	// proper event
-
 	// all good, add the signature to BTC delegation's undelegation
 	// and set back
 	ms.btcUndelegate(ctx, btcDel, delegatorUnbondingInfo)
