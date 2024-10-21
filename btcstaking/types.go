@@ -158,8 +158,6 @@ func (t *taprootScriptHolder) scriptSpendInfoByName(
 ) (*SpendInfo, error) {
 	scriptIdx, ok := t.scriptTree.LeafProofIndex[leafHash]
 
-	fmt.Printf("scriptIdx: %v\n", scriptIdx)
-
 	if !ok {
 		return nil, fmt.Errorf("script not found in script tree")
 	}
