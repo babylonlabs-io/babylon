@@ -979,7 +979,7 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 
 		// Default params are the same in both apps
 		covQuorum := h.App.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
-		maxFinalityProviders := int32(h.App.BTCStakingKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders)
+		maxFinalityProviders := int32(h.App.FinalityKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders)
 
 		// Number of finality providers from 10 to maxFinalityProviders + 10
 		numFinalityProviders := int(r.Int31n(maxFinalityProviders) + 10)

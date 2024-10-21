@@ -11,10 +11,11 @@ import (
 
 // Default parameter namespace
 const (
-	DefaultSignedBlocksWindow = int64(100)
-	DefaultMinPubRand         = 100
-	DefaultFinalitySigTimeout = 3
-	DefaultJailDuration       = 24 * 60 * 60 * 1 * time.Second // 1 day
+	DefaultMaxActiveFinalityProviders = uint32(100)
+	DefaultSignedBlocksWindow         = int64(100)
+	DefaultMinPubRand                 = 100
+	DefaultFinalitySigTimeout         = 3
+	DefaultJailDuration               = 24 * 60 * 60 * 1 * time.Second // 1 day
 )
 
 var (
@@ -26,11 +27,12 @@ var _ paramtypes.ParamSet = (*Params)(nil)
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
 	return Params{
-		FinalitySigTimeout: DefaultFinalitySigTimeout,
-		SignedBlocksWindow: DefaultSignedBlocksWindow,
-		MinSignedPerWindow: DefaultMinSignedPerWindow,
-		MinPubRand:         DefaultMinPubRand,
-		JailDuration:       DefaultJailDuration,
+		MaxActiveFinalityProviders: DefaultMaxActiveFinalityProviders,
+		FinalitySigTimeout:         DefaultFinalitySigTimeout,
+		SignedBlocksWindow:         DefaultSignedBlocksWindow,
+		MinSignedPerWindow:         DefaultMinSignedPerWindow,
+		MinPubRand:                 DefaultMinPubRand,
+		JailDuration:               DefaultJailDuration,
 	}
 }
 
@@ -54,6 +56,10 @@ func (p Params) String() string {
 
 // Validate validates the params
 func (p Params) Validate() error {
+	if err := validateMaxActiveFinalityProviders(p.MaxActiveFinalityProviders); err != nil {
+		return err
+	}
+
 	if err := validateSignedBlocksWindow(p.SignedBlocksWindow); err != nil {
 		return err
 	}
@@ -70,6 +76,15 @@ func (p Params) Validate() error {
 		return err
 	}
 
+	return nil
+}
+
+// validateMaxActiveFinalityProviders checks if the maximum number of
+// active finality providers is at least the default value
+func validateMaxActiveFinalityProviders(maxActiveFinalityProviders uint32) error {
+	if maxActiveFinalityProviders == 0 {
+		return fmt.Errorf("max finality providers must be positive")
+	}
 	return nil
 }
 

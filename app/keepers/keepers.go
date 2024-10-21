@@ -513,7 +513,6 @@ func (ak *AppKeepers) InitKeepers(
 		ak.CheckpointingKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	ak.BTCStakingKeeper = *ak.BTCStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(ak.FinalityKeeper.Hooks()))
 	ak.FinalityKeeper = *ak.FinalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(ak.BTCStakingKeeper.Hooks()))
 	// TODO this introduces circular dependency between the finality module and
 	// the btcstaking modules, need refactoring

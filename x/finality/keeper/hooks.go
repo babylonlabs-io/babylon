@@ -11,21 +11,9 @@ import (
 	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
-var _ types.BtcStakingHooks = Hooks{}
-
-// Hooks wrapper struct for finality keeper
-type Hooks struct {
-	k Keeper
-}
-
-// Return the BTC staking hooks
-func (k Keeper) Hooks() Hooks {
-	return Hooks{k}
-}
-
 // AfterFinalityProviderActivated updates the signing info start height or create a new signing info
-func (h Hooks) AfterFinalityProviderActivated(ctx context.Context, fpPk *bbntypes.BIP340PubKey) error {
-	signingInfo, err := h.k.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
+func (k Keeper) AfterFinalityProviderActivated(ctx context.Context, fpPk *bbntypes.BIP340PubKey) error {
+	signingInfo, err := k.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if err == nil {
 		signingInfo.StartHeight = sdkCtx.BlockHeight()
@@ -37,5 +25,5 @@ func (h Hooks) AfterFinalityProviderActivated(ctx context.Context, fpPk *bbntype
 		)
 	}
 
-	return h.k.FinalityProviderSigningTracker.Set(ctx, fpPk.MustMarshal(), signingInfo)
+	return k.FinalityProviderSigningTracker.Set(ctx, fpPk.MustMarshal(), signingInfo)
 }

@@ -84,8 +84,6 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 func (k Keeper) BeginBlocker(ctx context.Context) error {
 	// index BTC height at the current height
 	k.IndexBTCHeight(ctx)
-	// update voting power distribution
-	k.UpdatePowerDist(ctx)
 
 	return nil
 }
