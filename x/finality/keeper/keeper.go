@@ -79,6 +79,13 @@ func (k *Keeper) SetHooks(sh types.FinalityHooks) *Keeper {
 	return k
 }
 
+func (k Keeper) BeginBlocker(ctx context.Context) error {
+	// update voting power distribution
+	k.UpdatePowerDist(ctx)
+
+	return nil
+}
+
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }

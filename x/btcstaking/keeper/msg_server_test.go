@@ -94,6 +94,8 @@ func FuzzMsgEditFinalityProvider(f *testing.F) {
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
+		h.GenAndApplyParams(r)
+
 		// insert the finality provider
 		_, _, fp := h.CreateFinalityProvider(r)
 		// assert the finality providers exist in KVStore

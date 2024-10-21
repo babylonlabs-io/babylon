@@ -31,12 +31,13 @@ func FuzzVotingPowerTable(f *testing.F) {
 		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 		h.NoError(err)
 
-		// generate a random batch of finality providers
+		// generate a random batch of finality providers, and commit pub rand list with timestamp
 		fps := []*types.FinalityProvider{}
 		numFpsWithVotingPower := datagen.RandomInt(r, 10) + 2
 		numFps := numFpsWithVotingPower + datagen.RandomInt(r, 10)
 		for i := uint64(0); i < numFps; i++ {
-			_, _, fp := h.CreateFinalityProvider(r)
+			fpSK, _, fp := h.CreateFinalityProvider(r)
+			h.CommitPubRandList(r, fpSK, fp, 1, 100)
 			fps = append(fps, fp)
 		}
 
@@ -71,6 +72,8 @@ func FuzzVotingPowerTable(f *testing.F) {
 		h.SetCtxHeight(babylonHeight)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
+		require.NoError(t, err)
+		err = h.FinalityKeeper.BeginBlocker(h.Ctx)
 		require.NoError(t, err)
 
 		for i := uint64(0); i < numFpsWithVotingPower; i++ {
@@ -110,6 +113,8 @@ func FuzzVotingPowerTable(f *testing.F) {
 		require.NoError(t, err)
 		// index height and record power table
 		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
+		require.NoError(t, err)
+		err = h.FinalityKeeper.BeginBlocker(h.Ctx)
 		require.NoError(t, err)
 
 		// check if the slashed finality provider's voting power becomes zero

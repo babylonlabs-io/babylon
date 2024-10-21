@@ -5,11 +5,15 @@ import (
 	"testing"
 
 	"cosmossdk.io/core/header"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/store"
+	storemetrics "cosmossdk.io/store/metrics"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -21,6 +25,9 @@ import (
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	fkeeper "github.com/babylonlabs-io/babylon/x/finality/keeper"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 var (
@@ -31,11 +38,16 @@ var (
 type Helper struct {
 	t testing.TB
 
-	Ctx                  sdk.Context
-	BTCStakingKeeper     *keeper.Keeper
+	Ctx              sdk.Context
+	BTCStakingKeeper *keeper.Keeper
+	MsgServer        types.MsgServer
+
+	FinalityKeeper *fkeeper.Keeper
+	FMsgServer     ftypes.MsgServer
+
 	BTCLightClientKeeper *types.MockBTCLightClientKeeper
 	BTCCheckpointKeeper  *types.MockBtcCheckpointKeeper
-	MsgServer            types.MsgServer
+	CheckpointingKeeper  *ftypes.MockCheckpointingKeeper
 	Net                  *chaincfg.Params
 }
 
@@ -47,20 +59,38 @@ func NewHelper(
 	ctrl := gomock.NewController(t)
 
 	// mock refundable messages
-	iKeeper := types.NewMockIncentiveKeeper(ctrl)
+	iKeeper := ftypes.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
 
-	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper, iKeeper)
-	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
+	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
+	epoch := uint64(10)
+	ckptKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epoch}).AnyTimes()
+	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epoch).AnyTimes()
+
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+
+	k, ctx := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btclcKeeper, btccKeeper, iKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
+	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, iKeeper, ckptKeeper)
+	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
+
+	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
+
 	return &Helper{
-		t:                    t,
-		Ctx:                  ctx,
-		BTCStakingKeeper:     k,
+		t:   t,
+		Ctx: ctx,
+
+		BTCStakingKeeper: k,
+		MsgServer:        msgSrvr,
+
+		FinalityKeeper: fk,
+		FMsgServer:     fMsgSrvr,
+
 		BTCLightClientKeeper: btclcKeeper,
 		BTCCheckpointKeeper:  btccKeeper,
-		MsgServer:            msgSrvr,
+		CheckpointingKeeper:  ckptKeeper,
 		Net:                  &chaincfg.SimNetParams,
 	}
 }
@@ -465,4 +495,20 @@ func (h *Helper) AddInclusionProof(
 	h.NoError(err)
 	status = updatedDel.GetStatus(btcTipHeight, bcParams.CheckpointFinalizationTimeout, bsParams.CovenantQuorum)
 	require.Equal(h.t, status, types.BTCDelegationStatus_ACTIVE, "the BTC delegation shall be active")
+}
+
+func (h *Helper) CommitPubRandList(
+	r *rand.Rand,
+	fpSK *btcec.PrivateKey,
+	fp *types.FinalityProvider,
+	startHeight uint64,
+	numPubRand uint64,
+) *datagen.RandListInfo {
+	randListInfo, msg, err := datagen.GenRandomMsgCommitPubRandList(r, fpSK, startHeight, numPubRand)
+	h.NoError(err)
+
+	_, err = h.FMsgServer.CommitPubRandList(h.Ctx, msg)
+	h.NoError(err)
+
+	return randListInfo
 }
