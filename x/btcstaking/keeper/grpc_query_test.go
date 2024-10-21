@@ -8,6 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -22,6 +23,8 @@ import (
 	btcstakingkeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
+
+var net = &chaincfg.SimNetParams
 
 func FuzzActivatedHeight(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)

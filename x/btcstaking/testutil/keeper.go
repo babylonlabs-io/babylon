@@ -1,4 +1,4 @@
-package keeper_test
+package testutil
 
 import (
 	"math/rand"
@@ -35,7 +35,6 @@ type Helper struct {
 	BTCStakingKeeper     *keeper.Keeper
 	BTCLightClientKeeper *types.MockBTCLightClientKeeper
 	BTCCheckpointKeeper  *types.MockBtcCheckpointKeeper
-	FinalityKeeper       *types.MockFinalityKeeper
 	MsgServer            types.MsgServer
 	Net                  *chaincfg.Params
 }
@@ -44,7 +43,6 @@ func NewHelper(
 	t testing.TB,
 	btclcKeeper *types.MockBTCLightClientKeeper,
 	btccKeeper *types.MockBtcCheckpointKeeper,
-	finalityKeeper *types.MockFinalityKeeper,
 ) *Helper {
 	ctrl := gomock.NewController(t)
 
@@ -52,7 +50,7 @@ func NewHelper(
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
 
-	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper, finalityKeeper, iKeeper)
+	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper, iKeeper)
 	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
@@ -65,6 +63,10 @@ func NewHelper(
 		MsgServer:            msgSrvr,
 		Net:                  &chaincfg.SimNetParams,
 	}
+}
+
+func (h *Helper) T() testing.TB {
+	return h.t
 }
 
 func (h *Helper) NoError(err error) {

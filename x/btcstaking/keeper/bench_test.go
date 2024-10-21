@@ -13,6 +13,7 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	bsmodule "github.com/babylonlabs-io/babylon/x/btcstaking"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/testutil"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -24,8 +25,7 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 	defer ctrl.Finish()
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-	finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-	h := NewHelper(b, btclcKeeper, btccKeeper, finalityKeeper)
+	h := testutil.NewHelper(b, btclcKeeper, btccKeeper)
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
 	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)

@@ -9,6 +9,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/testutil"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -23,9 +24,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-		finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), gomock.Any(), gomock.Any()).Return(true).AnyTimes()
-		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
