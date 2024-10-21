@@ -95,6 +95,25 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 	}, nil
 }
 
+func (k Keeper) votingPowersDistCacheBlkHeight(ctx context.Context) ([]*types.VotingPowerDistCacheBlkHeight, error) {
+	vps := make([]*types.VotingPowerDistCacheBlkHeight, 0)
+	iter := k.votingPowerDistCacheStore(ctx).Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var dc types.VotingPowerDistCache
+		if err := dc.Unmarshal(iter.Value()); err != nil {
+			return nil, err
+		}
+		vps = append(vps, &types.VotingPowerDistCacheBlkHeight{
+			BlockHeight:    sdk.BigEndianToUint64(iter.Key()),
+			VpDistribution: &dc,
+		})
+	}
+
+	return vps, nil
+}
+
 // blocks loads all blocks stored.
 // This function has high resource consumption and should be only used on export genesis.
 func (k Keeper) blocks(ctx context.Context) ([]*types.IndexedBlock, error) {

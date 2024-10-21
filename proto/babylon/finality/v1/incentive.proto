@@ -1,10 +1,10 @@
 syntax = "proto3";
-package babylon.btcstaking.v1;
+package babylon.finality.v1;
 
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
+option go_package = "github.com/babylonlabs-io/babylon/x/finality/types";
 
 // VotingPowerDistCache is the cache for voting power distribution of finality providers
 // and their BTC delegations at a height

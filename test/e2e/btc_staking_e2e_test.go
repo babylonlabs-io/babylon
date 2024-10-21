@@ -266,7 +266,10 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.ErrorContains(err, bstypes.ErrBTCStakingNotActivated.Error())
 	fps := nonValidatorNode.QueryFinalityProviders()
 	s.Len(fps, 1)
-	s.Zero(fps[0].VotingPower)
+	// Query the current power of the finality provider
+	fpPower, err := nonValidatorNode.QueryFinalityProviderPowerAtHeight(fps[0].BtcPk, 1)
+	s.NoError(err)
+	s.Zero(fpPower)
 
 	/*
 		commit a number of public randomness since activatedHeight

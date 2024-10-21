@@ -151,6 +151,523 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
+// QueryFinalityProviderPowerAtHeightRequest is the request type for the
+// Query/FinalityProviderPowerAtHeight RPC method.
+type QueryFinalityProviderPowerAtHeightRequest struct {
+	// fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider that
+	// this BTC delegation delegates to
+	// the PK follows encoding in BIP-340 spec
+	FpBtcPkHex string `protobuf:"bytes,1,opt,name=fp_btc_pk_hex,json=fpBtcPkHex,proto3" json:"fp_btc_pk_hex,omitempty"`
+	// height is used for querying the given finality provider's voting power at this height
+	Height uint64 `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+}
+
+func (m *QueryFinalityProviderPowerAtHeightRequest) Reset() {
+	*m = QueryFinalityProviderPowerAtHeightRequest{}
+}
+func (m *QueryFinalityProviderPowerAtHeightRequest) String() string {
+	return proto.CompactTextString(m)
+}
+func (*QueryFinalityProviderPowerAtHeightRequest) ProtoMessage() {}
+func (*QueryFinalityProviderPowerAtHeightRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_32bddab77af6fdae, []int{2}
+}
+func (m *QueryFinalityProviderPowerAtHeightRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryFinalityProviderPowerAtHeightRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryFinalityProviderPowerAtHeightRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryFinalityProviderPowerAtHeightRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderPowerAtHeightRequest.Merge(m, src)
+}
+func (m *QueryFinalityProviderPowerAtHeightRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryFinalityProviderPowerAtHeightRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderPowerAtHeightRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryFinalityProviderPowerAtHeightRequest proto.InternalMessageInfo
+
+func (m *QueryFinalityProviderPowerAtHeightRequest) GetFpBtcPkHex() string {
+	if m != nil {
+		return m.FpBtcPkHex
+	}
+	return ""
+}
+
+func (m *QueryFinalityProviderPowerAtHeightRequest) GetHeight() uint64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
+// QueryFinalityProviderPowerAtHeightResponse is the response type for the
+// Query/FinalityProviderPowerAtHeight RPC method.
+type QueryFinalityProviderPowerAtHeightResponse struct {
+	// voting_power is the voting power of the finality provider
+	VotingPower uint64 `protobuf:"varint,1,opt,name=voting_power,json=votingPower,proto3" json:"voting_power,omitempty"`
+}
+
+func (m *QueryFinalityProviderPowerAtHeightResponse) Reset() {
+	*m = QueryFinalityProviderPowerAtHeightResponse{}
+}
+func (m *QueryFinalityProviderPowerAtHeightResponse) String() string {
+	return proto.CompactTextString(m)
+}
+func (*QueryFinalityProviderPowerAtHeightResponse) ProtoMessage() {}
+func (*QueryFinalityProviderPowerAtHeightResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_32bddab77af6fdae, []int{3}
+}
+func (m *QueryFinalityProviderPowerAtHeightResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryFinalityProviderPowerAtHeightResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryFinalityProviderPowerAtHeightResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryFinalityProviderPowerAtHeightResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderPowerAtHeightResponse.Merge(m, src)
+}
+func (m *QueryFinalityProviderPowerAtHeightResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryFinalityProviderPowerAtHeightResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderPowerAtHeightResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryFinalityProviderPowerAtHeightResponse proto.InternalMessageInfo
+
+func (m *QueryFinalityProviderPowerAtHeightResponse) GetVotingPower() uint64 {
+	if m != nil {
+		return m.VotingPower
+	}
+	return 0
+}
+
+// QueryFinalityProviderCurrentPowerRequest is the request type for the
+// Query/FinalityProviderCurrentPower RPC method.
+type QueryFinalityProviderCurrentPowerRequest struct {
+	// fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider that
+	// this BTC delegation delegates to
+	// the PK follows encoding in BIP-340 spec
+	FpBtcPkHex string `protobuf:"bytes,1,opt,name=fp_btc_pk_hex,json=fpBtcPkHex,proto3" json:"fp_btc_pk_hex,omitempty"`
+}
+
+func (m *QueryFinalityProviderCurrentPowerRequest) Reset() {
+	*m = QueryFinalityProviderCurrentPowerRequest{}
+}
+func (m *QueryFinalityProviderCurrentPowerRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalityProviderCurrentPowerRequest) ProtoMessage()    {}
+func (*QueryFinalityProviderCurrentPowerRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_32bddab77af6fdae, []int{4}
+}
+func (m *QueryFinalityProviderCurrentPowerRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryFinalityProviderCurrentPowerRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryFinalityProviderCurrentPowerRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryFinalityProviderCurrentPowerRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderCurrentPowerRequest.Merge(m, src)
+}
+func (m *QueryFinalityProviderCurrentPowerRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryFinalityProviderCurrentPowerRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderCurrentPowerRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryFinalityProviderCurrentPowerRequest proto.InternalMessageInfo
+
+func (m *QueryFinalityProviderCurrentPowerRequest) GetFpBtcPkHex() string {
+	if m != nil {
+		return m.FpBtcPkHex
+	}
+	return ""
+}
+
+// QueryFinalityProviderCurrentPowerResponse is the response type for the
+// Query/FinalityProviderCurrentPower RPC method.
+type QueryFinalityProviderCurrentPowerResponse struct {
+	// height is the current height
+	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+	// voting_power is the voting power of the finality provider
+	VotingPower uint64 `protobuf:"varint,2,opt,name=voting_power,json=votingPower,proto3" json:"voting_power,omitempty"`
+}
+
+func (m *QueryFinalityProviderCurrentPowerResponse) Reset() {
+	*m = QueryFinalityProviderCurrentPowerResponse{}
+}
+func (m *QueryFinalityProviderCurrentPowerResponse) String() string {
+	return proto.CompactTextString(m)
+}
+func (*QueryFinalityProviderCurrentPowerResponse) ProtoMessage() {}
+func (*QueryFinalityProviderCurrentPowerResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_32bddab77af6fdae, []int{5}
+}
+func (m *QueryFinalityProviderCurrentPowerResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryFinalityProviderCurrentPowerResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryFinalityProviderCurrentPowerResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryFinalityProviderCurrentPowerResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderCurrentPowerResponse.Merge(m, src)
+}
+func (m *QueryFinalityProviderCurrentPowerResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryFinalityProviderCurrentPowerResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderCurrentPowerResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryFinalityProviderCurrentPowerResponse proto.InternalMessageInfo
+
+func (m *QueryFinalityProviderCurrentPowerResponse) GetHeight() uint64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
+func (m *QueryFinalityProviderCurrentPowerResponse) GetVotingPower() uint64 {
+	if m != nil {
+		return m.VotingPower
+	}
+	return 0
+}
+
+// QueryActiveFinalityProvidersAtHeightRequest is the request type for the
+// Query/ActiveFinalityProvidersAtHeight RPC method.
+type QueryActiveFinalityProvidersAtHeightRequest struct {
+	// height defines at which Babylon height to query the finality providers info.
+	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+	// pagination defines an optional pagination for the request.
+	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryActiveFinalityProvidersAtHeightRequest) Reset() {
+	*m = QueryActiveFinalityProvidersAtHeightRequest{}
+}
+func (m *QueryActiveFinalityProvidersAtHeightRequest) String() string {
+	return proto.CompactTextString(m)
+}
+func (*QueryActiveFinalityProvidersAtHeightRequest) ProtoMessage() {}
+func (*QueryActiveFinalityProvidersAtHeightRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_32bddab77af6fdae, []int{6}
+}
+func (m *QueryActiveFinalityProvidersAtHeightRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryActiveFinalityProvidersAtHeightRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryActiveFinalityProvidersAtHeightRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryActiveFinalityProvidersAtHeightRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryActiveFinalityProvidersAtHeightRequest.Merge(m, src)
+}
+func (m *QueryActiveFinalityProvidersAtHeightRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryActiveFinalityProvidersAtHeightRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryActiveFinalityProvidersAtHeightRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryActiveFinalityProvidersAtHeightRequest proto.InternalMessageInfo
+
+func (m *QueryActiveFinalityProvidersAtHeightRequest) GetHeight() uint64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
+func (m *QueryActiveFinalityProvidersAtHeightRequest) GetPagination() *query.PageRequest {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
+// ActiveFinalityProvidersAtHeightResponse wraps the FinalityProvider with metadata.
+type ActiveFinalityProvidersAtHeightResponse struct {
+	// btc_pk is the Bitcoin secp256k1 PK of thisfinality provider
+	// the PK follows encoding in BIP-340 spec
+	BtcPkHex *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=btc_pk_hex,json=btcPkHex,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"btc_pk_hex,omitempty"`
+	// height is the queried Babylon height
+	Height uint64 `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+	// voting_power is the voting power of this finality provider at the given height
+	VotingPower uint64 `protobuf:"varint,3,opt,name=voting_power,json=votingPower,proto3" json:"voting_power,omitempty"`
+	// slashed_babylon_height indicates the Babylon height when
+	// the finality provider is slashed.
+	// if it's 0 then the finality provider is not slashed
+	SlashedBabylonHeight uint64 `protobuf:"varint,4,opt,name=slashed_babylon_height,json=slashedBabylonHeight,proto3" json:"slashed_babylon_height,omitempty"`
+	// slashed_btc_height indicates the BTC height when
+	// the finality provider is slashed.
+	// if it's 0 then the finality provider is not slashed
+	SlashedBtcHeight uint32 `protobuf:"varint,5,opt,name=slashed_btc_height,json=slashedBtcHeight,proto3" json:"slashed_btc_height,omitempty"`
+	// jailed defines whether the finality provider is detected jailed
+	Jailed bool `protobuf:"varint,6,opt,name=jailed,proto3" json:"jailed,omitempty"`
+}
+
+func (m *ActiveFinalityProvidersAtHeightResponse) Reset() {
+	*m = ActiveFinalityProvidersAtHeightResponse{}
+}
+func (m *ActiveFinalityProvidersAtHeightResponse) String() string { return proto.CompactTextString(m) }
+func (*ActiveFinalityProvidersAtHeightResponse) ProtoMessage()    {}
+func (*ActiveFinalityProvidersAtHeightResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_32bddab77af6fdae, []int{7}
+}
+func (m *ActiveFinalityProvidersAtHeightResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ActiveFinalityProvidersAtHeightResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ActiveFinalityProvidersAtHeightResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ActiveFinalityProvidersAtHeightResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ActiveFinalityProvidersAtHeightResponse.Merge(m, src)
+}
+func (m *ActiveFinalityProvidersAtHeightResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *ActiveFinalityProvidersAtHeightResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ActiveFinalityProvidersAtHeightResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ActiveFinalityProvidersAtHeightResponse proto.InternalMessageInfo
+
+func (m *ActiveFinalityProvidersAtHeightResponse) GetHeight() uint64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
+func (m *ActiveFinalityProvidersAtHeightResponse) GetVotingPower() uint64 {
+	if m != nil {
+		return m.VotingPower
+	}
+	return 0
+}
+
+func (m *ActiveFinalityProvidersAtHeightResponse) GetSlashedBabylonHeight() uint64 {
+	if m != nil {
+		return m.SlashedBabylonHeight
+	}
+	return 0
+}
+
+func (m *ActiveFinalityProvidersAtHeightResponse) GetSlashedBtcHeight() uint32 {
+	if m != nil {
+		return m.SlashedBtcHeight
+	}
+	return 0
+}
+
+func (m *ActiveFinalityProvidersAtHeightResponse) GetJailed() bool {
+	if m != nil {
+		return m.Jailed
+	}
+	return false
+}
+
+// QueryActiveFinalityProvidersAtHeightResponse is the response type for the
+// Query/ActiveFinalityProvidersAtHeight RPC method.
+type QueryActiveFinalityProvidersAtHeightResponse struct {
+	// finality_providers contains all the queried finality providersn.
+	FinalityProviders []*ActiveFinalityProvidersAtHeightResponse `protobuf:"bytes,1,rep,name=finality_providers,json=finalityProviders,proto3" json:"finality_providers,omitempty"`
+	// pagination defines the pagination in the response.
+	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryActiveFinalityProvidersAtHeightResponse) Reset() {
+	*m = QueryActiveFinalityProvidersAtHeightResponse{}
+}
+func (m *QueryActiveFinalityProvidersAtHeightResponse) String() string {
+	return proto.CompactTextString(m)
+}
+func (*QueryActiveFinalityProvidersAtHeightResponse) ProtoMessage() {}
+func (*QueryActiveFinalityProvidersAtHeightResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_32bddab77af6fdae, []int{8}
+}
+func (m *QueryActiveFinalityProvidersAtHeightResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryActiveFinalityProvidersAtHeightResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryActiveFinalityProvidersAtHeightResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryActiveFinalityProvidersAtHeightResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryActiveFinalityProvidersAtHeightResponse.Merge(m, src)
+}
+func (m *QueryActiveFinalityProvidersAtHeightResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryActiveFinalityProvidersAtHeightResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryActiveFinalityProvidersAtHeightResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryActiveFinalityProvidersAtHeightResponse proto.InternalMessageInfo
+
+func (m *QueryActiveFinalityProvidersAtHeightResponse) GetFinalityProviders() []*ActiveFinalityProvidersAtHeightResponse {
+	if m != nil {
+		return m.FinalityProviders
+	}
+	return nil
+}
+
+func (m *QueryActiveFinalityProvidersAtHeightResponse) GetPagination() *query.PageResponse {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
+// QueryActivatedHeightRequest is the request type for the Query/ActivatedHeight RPC method.
+type QueryActivatedHeightRequest struct {
+}
+
+func (m *QueryActivatedHeightRequest) Reset()         { *m = QueryActivatedHeightRequest{} }
+func (m *QueryActivatedHeightRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryActivatedHeightRequest) ProtoMessage()    {}
+func (*QueryActivatedHeightRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_32bddab77af6fdae, []int{9}
+}
+func (m *QueryActivatedHeightRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryActivatedHeightRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryActivatedHeightRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryActivatedHeightRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryActivatedHeightRequest.Merge(m, src)
+}
+func (m *QueryActivatedHeightRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryActivatedHeightRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryActivatedHeightRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryActivatedHeightRequest proto.InternalMessageInfo
+
+// QueryActivatedHeightResponse is the response type for the Query/ActivatedHeight RPC method.
+type QueryActivatedHeightResponse struct {
+	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+}
+
+func (m *QueryActivatedHeightResponse) Reset()         { *m = QueryActivatedHeightResponse{} }
+func (m *QueryActivatedHeightResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryActivatedHeightResponse) ProtoMessage()    {}
+func (*QueryActivatedHeightResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_32bddab77af6fdae, []int{10}
+}
+func (m *QueryActivatedHeightResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryActivatedHeightResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryActivatedHeightResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryActivatedHeightResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryActivatedHeightResponse.Merge(m, src)
+}
+func (m *QueryActivatedHeightResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryActivatedHeightResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryActivatedHeightResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryActivatedHeightResponse proto.InternalMessageInfo
+
+func (m *QueryActivatedHeightResponse) GetHeight() uint64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
 // QueryListPublicRandomnessRequest is the request type for the
 // Query/ListPublicRandomness RPC method.
 type QueryListPublicRandomnessRequest struct {
@@ -164,7 +681,7 @@ func (m *QueryListPublicRandomnessRequest) Reset()         { *m = QueryListPubli
 func (m *QueryListPublicRandomnessRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryListPublicRandomnessRequest) ProtoMessage()    {}
 func (*QueryListPublicRandomnessRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{2}
+	return fileDescriptor_32bddab77af6fdae, []int{11}
 }
 func (m *QueryListPublicRandomnessRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -221,7 +738,7 @@ func (m *QueryListPublicRandomnessResponse) Reset()         { *m = QueryListPubl
 func (m *QueryListPublicRandomnessResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryListPublicRandomnessResponse) ProtoMessage()    {}
 func (*QueryListPublicRandomnessResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{3}
+	return fileDescriptor_32bddab77af6fdae, []int{12}
 }
 func (m *QueryListPublicRandomnessResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -271,7 +788,7 @@ func (m *PubRandCommitResponse) Reset()         { *m = PubRandCommitResponse{} }
 func (m *PubRandCommitResponse) String() string { return proto.CompactTextString(m) }
 func (*PubRandCommitResponse) ProtoMessage()    {}
 func (*PubRandCommitResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{4}
+	return fileDescriptor_32bddab77af6fdae, []int{13}
 }
 func (m *PubRandCommitResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -334,7 +851,7 @@ func (m *QueryListPubRandCommitRequest) Reset()         { *m = QueryListPubRandC
 func (m *QueryListPubRandCommitRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryListPubRandCommitRequest) ProtoMessage()    {}
 func (*QueryListPubRandCommitRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{5}
+	return fileDescriptor_32bddab77af6fdae, []int{14}
 }
 func (m *QueryListPubRandCommitRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -391,7 +908,7 @@ func (m *QueryListPubRandCommitResponse) Reset()         { *m = QueryListPubRand
 func (m *QueryListPubRandCommitResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryListPubRandCommitResponse) ProtoMessage()    {}
 func (*QueryListPubRandCommitResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{6}
+	return fileDescriptor_32bddab77af6fdae, []int{15}
 }
 func (m *QueryListPubRandCommitResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -445,7 +962,7 @@ func (m *QueryBlockRequest) Reset()         { *m = QueryBlockRequest{} }
 func (m *QueryBlockRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBlockRequest) ProtoMessage()    {}
 func (*QueryBlockRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{7}
+	return fileDescriptor_32bddab77af6fdae, []int{16}
 }
 func (m *QueryBlockRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -492,7 +1009,7 @@ func (m *QueryBlockResponse) Reset()         { *m = QueryBlockResponse{} }
 func (m *QueryBlockResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryBlockResponse) ProtoMessage()    {}
 func (*QueryBlockResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{8}
+	return fileDescriptor_32bddab77af6fdae, []int{17}
 }
 func (m *QueryBlockResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -541,7 +1058,7 @@ func (m *QueryListBlocksRequest) Reset()         { *m = QueryListBlocksRequest{}
 func (m *QueryListBlocksRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryListBlocksRequest) ProtoMessage()    {}
 func (*QueryListBlocksRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{9}
+	return fileDescriptor_32bddab77af6fdae, []int{18}
 }
 func (m *QueryListBlocksRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -597,7 +1114,7 @@ func (m *QueryListBlocksResponse) Reset()         { *m = QueryListBlocksResponse
 func (m *QueryListBlocksResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryListBlocksResponse) ProtoMessage()    {}
 func (*QueryListBlocksResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{10}
+	return fileDescriptor_32bddab77af6fdae, []int{19}
 }
 func (m *QueryListBlocksResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -651,7 +1168,7 @@ func (m *QueryVotesAtHeightRequest) Reset()         { *m = QueryVotesAtHeightReq
 func (m *QueryVotesAtHeightRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryVotesAtHeightRequest) ProtoMessage()    {}
 func (*QueryVotesAtHeightRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{11}
+	return fileDescriptor_32bddab77af6fdae, []int{20}
 }
 func (m *QueryVotesAtHeightRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -699,7 +1216,7 @@ func (m *QueryVotesAtHeightResponse) Reset()         { *m = QueryVotesAtHeightRe
 func (m *QueryVotesAtHeightResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryVotesAtHeightResponse) ProtoMessage()    {}
 func (*QueryVotesAtHeightResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{12}
+	return fileDescriptor_32bddab77af6fdae, []int{21}
 }
 func (m *QueryVotesAtHeightResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -740,7 +1257,7 @@ func (m *QueryEvidenceRequest) Reset()         { *m = QueryEvidenceRequest{} }
 func (m *QueryEvidenceRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryEvidenceRequest) ProtoMessage()    {}
 func (*QueryEvidenceRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{13}
+	return fileDescriptor_32bddab77af6fdae, []int{22}
 }
 func (m *QueryEvidenceRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -803,7 +1320,7 @@ func (m *EvidenceResponse) Reset()         { *m = EvidenceResponse{} }
 func (m *EvidenceResponse) String() string { return proto.CompactTextString(m) }
 func (*EvidenceResponse) ProtoMessage()    {}
 func (*EvidenceResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{14}
+	return fileDescriptor_32bddab77af6fdae, []int{23}
 }
 func (m *EvidenceResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -870,7 +1387,7 @@ func (m *QueryEvidenceResponse) Reset()         { *m = QueryEvidenceResponse{} }
 func (m *QueryEvidenceResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryEvidenceResponse) ProtoMessage()    {}
 func (*QueryEvidenceResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{15}
+	return fileDescriptor_32bddab77af6fdae, []int{24}
 }
 func (m *QueryEvidenceResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -920,7 +1437,7 @@ func (m *QueryListEvidencesRequest) Reset()         { *m = QueryListEvidencesReq
 func (m *QueryListEvidencesRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryListEvidencesRequest) ProtoMessage()    {}
 func (*QueryListEvidencesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{16}
+	return fileDescriptor_32bddab77af6fdae, []int{25}
 }
 func (m *QueryListEvidencesRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -976,7 +1493,7 @@ func (m *QueryListEvidencesResponse) Reset()         { *m = QueryListEvidencesRe
 func (m *QueryListEvidencesResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryListEvidencesResponse) ProtoMessage()    {}
 func (*QueryListEvidencesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{17}
+	return fileDescriptor_32bddab77af6fdae, []int{26}
 }
 func (m *QueryListEvidencesResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1031,7 +1548,7 @@ func (m *QuerySigningInfoRequest) Reset()         { *m = QuerySigningInfoRequest
 func (m *QuerySigningInfoRequest) String() string { return proto.CompactTextString(m) }
 func (*QuerySigningInfoRequest) ProtoMessage()    {}
 func (*QuerySigningInfoRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{18}
+	return fileDescriptor_32bddab77af6fdae, []int{27}
 }
 func (m *QuerySigningInfoRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1085,7 +1602,7 @@ func (m *SigningInfoResponse) Reset()         { *m = SigningInfoResponse{} }
 func (m *SigningInfoResponse) String() string { return proto.CompactTextString(m) }
 func (*SigningInfoResponse) ProtoMessage()    {}
 func (*SigningInfoResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{19}
+	return fileDescriptor_32bddab77af6fdae, []int{28}
 }
 func (m *SigningInfoResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1152,7 +1669,7 @@ func (m *QuerySigningInfoResponse) Reset()         { *m = QuerySigningInfoRespon
 func (m *QuerySigningInfoResponse) String() string { return proto.CompactTextString(m) }
 func (*QuerySigningInfoResponse) ProtoMessage()    {}
 func (*QuerySigningInfoResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{20}
+	return fileDescriptor_32bddab77af6fdae, []int{29}
 }
 func (m *QuerySigningInfoResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1198,7 +1715,7 @@ func (m *QuerySigningInfosRequest) Reset()         { *m = QuerySigningInfosReque
 func (m *QuerySigningInfosRequest) String() string { return proto.CompactTextString(m) }
 func (*QuerySigningInfosRequest) ProtoMessage()    {}
 func (*QuerySigningInfosRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{21}
+	return fileDescriptor_32bddab77af6fdae, []int{30}
 }
 func (m *QuerySigningInfosRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1246,7 +1763,7 @@ func (m *QuerySigningInfosResponse) Reset()         { *m = QuerySigningInfosResp
 func (m *QuerySigningInfosResponse) String() string { return proto.CompactTextString(m) }
 func (*QuerySigningInfosResponse) ProtoMessage()    {}
 func (*QuerySigningInfosResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_32bddab77af6fdae, []int{22}
+	return fileDescriptor_32bddab77af6fdae, []int{31}
 }
 func (m *QuerySigningInfosResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1293,6 +1810,15 @@ func init() {
 	proto.RegisterEnum("babylon.finality.v1.QueriedBlockStatus", QueriedBlockStatus_name, QueriedBlockStatus_value)
 	proto.RegisterType((*QueryParamsRequest)(nil), "babylon.finality.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.finality.v1.QueryParamsResponse")
+	proto.RegisterType((*QueryFinalityProviderPowerAtHeightRequest)(nil), "babylon.finality.v1.QueryFinalityProviderPowerAtHeightRequest")
+	proto.RegisterType((*QueryFinalityProviderPowerAtHeightResponse)(nil), "babylon.finality.v1.QueryFinalityProviderPowerAtHeightResponse")
+	proto.RegisterType((*QueryFinalityProviderCurrentPowerRequest)(nil), "babylon.finality.v1.QueryFinalityProviderCurrentPowerRequest")
+	proto.RegisterType((*QueryFinalityProviderCurrentPowerResponse)(nil), "babylon.finality.v1.QueryFinalityProviderCurrentPowerResponse")
+	proto.RegisterType((*QueryActiveFinalityProvidersAtHeightRequest)(nil), "babylon.finality.v1.QueryActiveFinalityProvidersAtHeightRequest")
+	proto.RegisterType((*ActiveFinalityProvidersAtHeightResponse)(nil), "babylon.finality.v1.ActiveFinalityProvidersAtHeightResponse")
+	proto.RegisterType((*QueryActiveFinalityProvidersAtHeightResponse)(nil), "babylon.finality.v1.QueryActiveFinalityProvidersAtHeightResponse")
+	proto.RegisterType((*QueryActivatedHeightRequest)(nil), "babylon.finality.v1.QueryActivatedHeightRequest")
+	proto.RegisterType((*QueryActivatedHeightResponse)(nil), "babylon.finality.v1.QueryActivatedHeightResponse")
 	proto.RegisterType((*QueryListPublicRandomnessRequest)(nil), "babylon.finality.v1.QueryListPublicRandomnessRequest")
 	proto.RegisterType((*QueryListPublicRandomnessResponse)(nil), "babylon.finality.v1.QueryListPublicRandomnessResponse")
 	proto.RegisterMapType((map[uint64]*github_com_babylonlabs_io_babylon_types.SchnorrPubRand)(nil), "babylon.finality.v1.QueryListPublicRandomnessResponse.PubRandMapEntry")
@@ -1321,107 +1847,130 @@ func init() {
 func init() { proto.RegisterFile("babylon/finality/v1/query.proto", fileDescriptor_32bddab77af6fdae) }
 
 var fileDescriptor_32bddab77af6fdae = []byte{
-	// 1589 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x57, 0xdd, 0x6f, 0xd3, 0x56,
-	0x14, 0xef, 0x6d, 0xe9, 0xd7, 0x49, 0x32, 0xda, 0xdb, 0xc2, 0xba, 0x30, 0xd2, 0xd6, 0x40, 0xe9,
-	0x0a, 0xd8, 0x6b, 0xca, 0x18, 0xa0, 0x4d, 0xd0, 0xb0, 0x76, 0xad, 0x56, 0x4a, 0x70, 0x01, 0x69,
-	0xbc, 0x58, 0x76, 0xea, 0x24, 0x5e, 0x63, 0x5f, 0x13, 0xdb, 0x55, 0x2b, 0x84, 0x34, 0x4d, 0x1a,
-	0x0f, 0xd3, 0x26, 0x21, 0xed, 0x65, 0x7b, 0xe0, 0x61, 0xd2, 0x34, 0x4d, 0xdb, 0xcb, 0x5e, 0xf7,
-	0x1f, 0xf0, 0x88, 0xd8, 0x1e, 0x26, 0x26, 0xd8, 0x04, 0x93, 0xf6, 0x6f, 0x4c, 0xbe, 0xf7, 0x3a,
-	0xb1, 0x53, 0xe7, 0xa3, 0xa5, 0xda, 0x4b, 0x14, 0x5f, 0x9f, 0x8f, 0xdf, 0x39, 0xf7, 0xdc, 0x9f,
-	0x7f, 0x17, 0xc6, 0x35, 0x55, 0xdb, 0xae, 0x10, 0x4b, 0x2a, 0x1a, 0x96, 0x5a, 0x31, 0xdc, 0x6d,
-	0x69, 0x73, 0x56, 0xba, 0xe3, 0xe9, 0xd5, 0x6d, 0xd1, 0xae, 0x12, 0x97, 0xe0, 0x11, 0x6e, 0x20,
-	0x06, 0x06, 0xe2, 0xe6, 0x6c, 0x7a, 0xb4, 0x44, 0x4a, 0x84, 0xbe, 0x97, 0xfc, 0x7f, 0xcc, 0x34,
-	0xfd, 0x66, 0x89, 0x90, 0x52, 0x45, 0x97, 0x54, 0xdb, 0x90, 0x54, 0xcb, 0x22, 0xae, 0xea, 0x1a,
-	0xc4, 0x72, 0xf8, 0xdb, 0x99, 0x02, 0x71, 0x4c, 0xe2, 0x48, 0x9a, 0xea, 0xe8, 0x2c, 0x83, 0xb4,
-	0x39, 0xab, 0xe9, 0xae, 0x3a, 0x2b, 0xd9, 0x6a, 0xc9, 0xb0, 0xa8, 0x31, 0xb7, 0x9d, 0x88, 0x43,
-	0x65, 0xab, 0x55, 0xd5, 0x0c, 0xa2, 0x09, 0x71, 0x16, 0x35, 0x88, 0xcc, 0x66, 0x9c, 0xe3, 0xa1,
-	0x4f, 0x9a, 0x57, 0x94, 0x5c, 0xc3, 0xd4, 0x1d, 0x57, 0x35, 0x6d, 0x6e, 0x30, 0xac, 0x9a, 0x86,
-	0x45, 0x24, 0xfa, 0xcb, 0x96, 0x84, 0x51, 0xc0, 0xd7, 0x7d, 0x6c, 0x79, 0x9a, 0x4c, 0xd6, 0xef,
-	0x78, 0xba, 0xe3, 0x0a, 0x79, 0x18, 0x89, 0xac, 0x3a, 0x36, 0xb1, 0x1c, 0x1d, 0x5f, 0x80, 0x3e,
-	0x06, 0x6a, 0x0c, 0x4d, 0xa0, 0xe9, 0x44, 0xf6, 0x88, 0x18, 0xd3, 0x2c, 0x91, 0x39, 0xe5, 0x0e,
-	0x3c, 0x7a, 0x3e, 0xde, 0x25, 0x73, 0x07, 0xe1, 0x2b, 0x04, 0x13, 0x34, 0xe4, 0x8a, 0xe1, 0xb8,
-	0x79, 0x4f, 0xab, 0x18, 0x05, 0x59, 0xb5, 0xd6, 0x89, 0x69, 0xe9, 0x4e, 0x90, 0x16, 0x4f, 0x42,
-	0xaa, 0x68, 0x2b, 0x9a, 0x5b, 0x50, 0xec, 0x0d, 0xa5, 0xac, 0x6f, 0xd1, 0x34, 0x83, 0x32, 0x14,
-	0xed, 0x9c, 0x5b, 0xc8, 0x6f, 0x2c, 0xe9, 0x5b, 0x78, 0x11, 0xa0, 0xde, 0xbd, 0xb1, 0x6e, 0x0a,
-	0x63, 0x4a, 0x64, 0xad, 0x16, 0xfd, 0x56, 0x8b, 0x6c, 0x33, 0x79, 0xab, 0xc5, 0xbc, 0x5a, 0xd2,
-	0x79, 0x78, 0x39, 0xe4, 0x29, 0x3c, 0xe9, 0x86, 0xc9, 0x16, 0x78, 0x78, 0xc1, 0xdf, 0x23, 0x48,
-	0xda, 0x9e, 0xa6, 0x54, 0x55, 0x6b, 0x5d, 0x31, 0x55, 0x7b, 0x0c, 0x4d, 0xf4, 0x4c, 0x27, 0xb2,
-	0x8b, 0xb1, 0x75, 0xb7, 0x0d, 0x27, 0xe6, 0x3d, 0xcd, 0x5f, 0xbd, 0xaa, 0xda, 0x0b, 0x96, 0x5b,
-	0xdd, 0xce, 0x5d, 0x7c, 0xfa, 0x7c, 0xfc, 0x5c, 0xc9, 0x70, 0xcb, 0x9e, 0x26, 0x16, 0x88, 0x29,
-	0xf1, 0xa8, 0x15, 0x55, 0x73, 0xce, 0x18, 0x24, 0x78, 0x94, 0xdc, 0x6d, 0x5b, 0x77, 0xc4, 0xb5,
-	0x42, 0xd9, 0x22, 0xd5, 0x2a, 0x8f, 0x21, 0x83, 0x5d, 0x0b, 0x86, 0x3f, 0x8c, 0x69, 0xca, 0xc9,
-	0xb6, 0x4d, 0x61, 0xa0, 0xc2, 0x5d, 0x49, 0xbf, 0x0f, 0x07, 0x1b, 0x30, 0xe2, 0x21, 0xe8, 0xd9,
-	0xd0, 0xb7, 0xe9, 0x4e, 0x1c, 0x90, 0xfd, 0xbf, 0x78, 0x14, 0x7a, 0x37, 0xd5, 0x8a, 0xa7, 0xd3,
-	0x44, 0x49, 0x99, 0x3d, 0x5c, 0xec, 0x3e, 0x8f, 0x84, 0x4d, 0x38, 0xc4, 0xdd, 0xaf, 0x10, 0xd3,
-	0x34, 0xdc, 0x5a, 0x1f, 0x27, 0x20, 0x69, 0x79, 0xa6, 0x12, 0xb4, 0x92, 0x47, 0x03, 0xcb, 0x33,
-	0xb9, 0x3d, 0xce, 0x00, 0x14, 0xa8, 0x8f, 0xa9, 0x5b, 0x2e, 0x8f, 0x1c, 0x5a, 0xc1, 0x47, 0x60,
-	0x50, 0xb7, 0x49, 0xa1, 0xac, 0x58, 0x9e, 0x39, 0xd6, 0x43, 0xdd, 0x07, 0xe8, 0xc2, 0xaa, 0x67,
-	0x0a, 0x5f, 0x20, 0x38, 0x1a, 0xee, 0x7e, 0x18, 0xc1, 0xff, 0x3e, 0x59, 0xbf, 0x77, 0x43, 0xa6,
-	0x19, 0x18, 0xde, 0x8e, 0x2d, 0x18, 0xa9, 0x4d, 0x15, 0xab, 0x31, 0x34, 0x5c, 0xcb, 0x6d, 0x87,
-	0x6b, 0x67, 0x44, 0x31, 0xb2, 0x1a, 0xec, 0x9d, 0x3c, 0x64, 0x37, 0x2c, 0xef, 0xdf, 0xa4, 0x90,
-	0x86, 0xad, 0x6e, 0x31, 0x2f, 0x97, 0xc3, 0xf3, 0x92, 0xc8, 0xce, 0xc4, 0x93, 0x46, 0x5c, 0x59,
-	0xe1, 0xd9, 0x3a, 0x05, 0xc3, 0xb4, 0x07, 0xb9, 0x0a, 0x29, 0x6c, 0x04, 0xdb, 0x7a, 0x18, 0xfa,
-	0xca, 0xba, 0x51, 0x2a, 0xbb, 0x3c, 0x1f, 0x7f, 0x12, 0xae, 0x72, 0x56, 0xe3, 0xc6, 0xbc, 0xed,
-	0xef, 0x42, 0xaf, 0xe6, 0x2f, 0x70, 0xf6, 0x9a, 0x8c, 0x05, 0xb2, 0x6c, 0xad, 0xeb, 0x5b, 0xfa,
-	0x3a, 0xf3, 0x64, 0xf6, 0xc2, 0x77, 0x08, 0x0e, 0xd7, 0x36, 0x80, 0xbe, 0xa9, 0x51, 0xd6, 0x25,
-	0xe8, 0x73, 0x5c, 0xd5, 0xf5, 0x18, 0x25, 0xbe, 0x96, 0x3d, 0xd9, 0x74, 0xf7, 0x0c, 0x1e, 0x74,
-	0x8d, 0x9a, 0xcb, 0xdc, 0x6d, 0xdf, 0xc6, 0xee, 0x21, 0x82, 0xd7, 0x77, 0x60, 0xac, 0xf3, 0x36,
-	0x2d, 0xc4, 0xe1, 0x23, 0xd6, 0x41, 0xe5, 0xdc, 0x61, 0xdf, 0x06, 0x46, 0x98, 0x83, 0x37, 0x28,
-	0xbc, 0x5b, 0xc4, 0xd5, 0x9d, 0x79, 0x77, 0x89, 0x6e, 0x54, 0xbb, 0x7d, 0x24, 0x90, 0x8e, 0x73,
-	0xe2, 0x65, 0x5d, 0x87, 0x7e, 0x76, 0xa2, 0x59, 0x5d, 0xc9, 0xdc, 0xf9, 0xa7, 0xcf, 0xc7, 0xcf,
-	0x76, 0xca, 0xa7, 0xb9, 0xe5, 0xfc, 0xdc, 0xd9, 0xb7, 0xf3, 0x9e, 0xf6, 0x91, 0xbe, 0x2d, 0xf7,
-	0x69, 0x3e, 0x0d, 0x38, 0xc2, 0x05, 0x18, 0xa5, 0x09, 0x17, 0x36, 0x8d, 0x75, 0xdd, 0x2a, 0xe8,
-	0x9d, 0xf3, 0x87, 0xf0, 0x67, 0x0f, 0x0c, 0xd5, 0xdd, 0x38, 0xc4, 0x0e, 0x78, 0x67, 0x12, 0x92,
-	0xb4, 0xd7, 0x0a, 0xef, 0x40, 0x37, 0xed, 0x40, 0x82, 0xae, 0xb1, 0x82, 0xf1, 0x4d, 0x18, 0xa8,
-	0x51, 0xa7, 0xcf, 0x7d, 0xc9, 0x57, 0xfa, 0x72, 0xf4, 0x73, 0x56, 0xc0, 0xa7, 0x01, 0x17, 0x54,
-	0x8b, 0x58, 0x46, 0x41, 0xad, 0x28, 0xaa, 0x6d, 0x2b, 0x65, 0xd5, 0x29, 0x8f, 0x1d, 0xa0, 0xdc,
-	0x3b, 0x54, 0x7b, 0x33, 0x6f, 0xdb, 0x4b, 0xaa, 0x53, 0xc6, 0x02, 0xa4, 0x8a, 0xa4, 0xba, 0x51,
-	0x37, 0xec, 0xa5, 0x86, 0x09, 0x7f, 0x31, 0xb0, 0xb1, 0xe1, 0x70, 0x3d, 0x62, 0x30, 0x5b, 0x8a,
-	0x63, 0x94, 0xc6, 0xfa, 0xf6, 0x0c, 0x7b, 0xe1, 0xda, 0x8d, 0xb5, 0x35, 0xa3, 0x24, 0x8f, 0xd6,
-	0x22, 0x2f, 0xf2, 0xc0, 0x6b, 0x46, 0x09, 0x17, 0x61, 0x98, 0xa2, 0x8a, 0x24, 0xeb, 0x7f, 0xe5,
-	0x64, 0x07, 0xfd, 0xa0, 0xa1, 0x3c, 0xc2, 0x6d, 0x38, 0xd4, 0x30, 0x18, 0x7c, 0x87, 0xe7, 0x61,
-	0x40, 0xe7, 0x6b, 0x9c, 0x57, 0x4e, 0xc4, 0x9e, 0xae, 0x46, 0x47, 0xb9, 0xe6, 0x26, 0xdc, 0x47,
-	0xfc, 0x6c, 0xf8, 0x47, 0x37, 0xb0, 0x0b, 0x89, 0xa2, 0xa4, 0xe3, 0xaa, 0x55, 0x57, 0x89, 0x9c,
-	0x90, 0x04, 0x5d, 0xe3, 0xf3, 0xb1, 0x5f, 0x1c, 0xf2, 0x13, 0xe2, 0xe7, 0xad, 0x01, 0x08, 0x2f,
-	0xf5, 0x0a, 0x0c, 0x06, 0x98, 0x03, 0x26, 0xe9, 0xb0, 0xd6, 0xba, 0xdf, 0xfe, 0x11, 0xca, 0x7b,
-	0x9c, 0xef, 0xd6, 0x8c, 0x92, 0x65, 0x58, 0xa5, 0x65, 0xab, 0x48, 0x76, 0x71, 0x5a, 0x9f, 0x21,
-	0x18, 0x89, 0x78, 0xee, 0xea, 0xc0, 0x46, 0x36, 0xc4, 0xaf, 0xa1, 0x27, 0xba, 0x21, 0x59, 0x38,
-	0x64, 0x1a, 0x8e, 0xa3, 0xaf, 0x2b, 0x8c, 0x46, 0x95, 0x02, 0xf1, 0x2c, 0x57, 0xaf, 0xd2, 0xd3,
-	0xdb, 0x23, 0x8f, 0xb0, 0x97, 0x8c, 0xa5, 0xaf, 0xb0, 0x57, 0x78, 0x05, 0x92, 0x9f, 0xa8, 0x46,
-	0x45, 0x5f, 0x57, 0x3c, 0xcb, 0x35, 0x2a, 0xf4, 0x1c, 0x26, 0xb2, 0x69, 0x91, 0x89, 0x7a, 0x31,
-	0x10, 0xf5, 0xe2, 0x8d, 0x40, 0xd4, 0xe7, 0x52, 0xbe, 0xc2, 0x7e, 0xf0, 0xd7, 0x38, 0xfa, 0xf1,
-	0xdf, 0x5f, 0x66, 0x90, 0x9c, 0x60, 0xee, 0x37, 0x7d, 0x6f, 0xc1, 0x84, 0xb1, 0x9d, 0xdd, 0xa9,
-	0xf1, 0x66, 0xd2, 0x61, 0xcb, 0x8a, 0x61, 0x15, 0x09, 0x1f, 0xdb, 0xe9, 0xd8, 0xad, 0x8c, 0xf1,
-	0xe7, 0xca, 0x3e, 0xe1, 0xd4, 0x5f, 0x09, 0xda, 0xce, 0x74, 0xb5, 0x01, 0x8e, 0x4e, 0x27, 0xda,
-	0xf3, 0x74, 0xfe, 0x1a, 0x1c, 0x93, 0x68, 0x12, 0x5e, 0xd4, 0x1a, 0xa4, 0xc2, 0x45, 0x05, 0x03,
-	0xba, 0xdb, 0xaa, 0x92, 0xa1, 0xaa, 0xf6, 0x6f, 0x58, 0x67, 0x2e, 0x31, 0x41, 0x12, 0xd5, 0x00,
-	0x78, 0x18, 0x52, 0xab, 0xd7, 0x56, 0x95, 0xc5, 0xe5, 0xd5, 0xf9, 0x95, 0xe5, 0xdb, 0x0b, 0x1f,
-	0x0c, 0x75, 0xe1, 0x14, 0x0c, 0xd6, 0x1f, 0x11, 0xee, 0x87, 0x9e, 0xf9, 0xd5, 0x8f, 0x87, 0xba,
-	0xb3, 0x9f, 0xa7, 0xa0, 0x97, 0x16, 0x8f, 0x3f, 0x45, 0xd0, 0xc7, 0xae, 0x58, 0xb8, 0xb9, 0xd8,
-	0x88, 0xde, 0xe7, 0xd2, 0xd3, 0xed, 0x0d, 0x19, 0x68, 0xe1, 0xd8, 0x67, 0xbf, 0xfd, 0xf3, 0x75,
-	0xf7, 0x51, 0x7c, 0x44, 0x6a, 0x7e, 0x25, 0xc5, 0xcf, 0x10, 0x8c, 0xc6, 0x5d, 0x74, 0xf0, 0x3b,
-	0xbb, 0xbd, 0x18, 0x31, 0x78, 0xe7, 0xf6, 0x76, 0x9f, 0x12, 0x6e, 0x51, 0xb0, 0x79, 0xbc, 0x2a,
-	0xb5, 0xba, 0x1d, 0x2b, 0x76, 0x95, 0xf8, 0xf4, 0x53, 0x75, 0xa4, 0xbb, 0x91, 0xb3, 0x7d, 0x4f,
-	0xb2, 0x69, 0x64, 0xfa, 0x61, 0x65, 0xa1, 0x95, 0x8a, 0xe1, 0xb8, 0xf8, 0x09, 0x82, 0xe1, 0x1d,
-	0x5a, 0x1b, 0x67, 0x77, 0x25, 0xcc, 0x59, 0x65, 0x73, 0x7b, 0x10, 0xf3, 0xc2, 0x0d, 0x5a, 0xd6,
-	0x2a, 0x5e, 0x79, 0x85, 0xb2, 0x22, 0x97, 0x0b, 0x5a, 0xd4, 0x7d, 0x04, 0xbd, 0x74, 0xf8, 0xf0,
-	0x54, 0x73, 0x50, 0x61, 0x75, 0x9d, 0x3e, 0xd9, 0xd6, 0x8e, 0x03, 0x3e, 0x4d, 0x01, 0x4f, 0xe1,
-	0xe3, 0xb1, 0x80, 0x19, 0x05, 0x4a, 0x77, 0x19, 0x5d, 0xde, 0xc3, 0x5f, 0x22, 0x80, 0xba, 0x48,
-	0xc5, 0xa7, 0x5a, 0xb7, 0x28, 0x22, 0xb7, 0xd3, 0xa7, 0x3b, 0x33, 0xee, 0x68, 0x98, 0xb9, 0xc2,
-	0x7d, 0x88, 0x20, 0x15, 0xd1, 0x97, 0x58, 0x6c, 0x9e, 0x24, 0x4e, 0xbd, 0xa6, 0xa5, 0x8e, 0xed,
-	0x39, 0xae, 0x53, 0x14, 0xd7, 0x09, 0x7c, 0x2c, 0x16, 0xd7, 0xa6, 0xef, 0x53, 0x6f, 0xd7, 0xcf,
-	0x08, 0x06, 0x82, 0x0f, 0x2a, 0x7e, 0xab, 0x79, 0xaa, 0x06, 0xc9, 0x9a, 0x9e, 0xe9, 0xc4, 0x94,
-	0x03, 0x5a, 0xa2, 0x80, 0x72, 0xf8, 0xf2, 0x5e, 0x27, 0x2e, 0xf8, 0xbe, 0xe3, 0x6f, 0x10, 0xa4,
-	0x22, 0xea, 0xa1, 0x55, 0x37, 0xe3, 0xf4, 0x4e, 0xab, 0x6e, 0xc6, 0xca, 0x12, 0x61, 0x8a, 0x82,
-	0x9f, 0xc0, 0x99, 0x58, 0xf0, 0x75, 0xe5, 0xf1, 0x03, 0x82, 0x44, 0x88, 0xf8, 0x71, 0x8b, 0x59,
-	0xda, 0xa9, 0x29, 0xd2, 0x67, 0x3a, 0xb4, 0xe6, 0xa0, 0x2e, 0x52, 0x50, 0x67, 0x71, 0x36, 0x16,
-	0x54, 0xe4, 0x4b, 0xd5, 0xd8, 0x4c, 0xfc, 0x2d, 0x82, 0x64, 0xf8, 0x1b, 0x87, 0x3b, 0xcb, 0x5d,
-	0xeb, 0xa0, 0xd8, 0xa9, 0x39, 0xc7, 0x3a, 0x43, 0xb1, 0x1e, 0xc7, 0x42, 0x7b, 0xac, 0xb9, 0x95,
-	0x47, 0x2f, 0x32, 0xe8, 0xf1, 0x8b, 0x0c, 0xfa, 0xfb, 0x45, 0x06, 0x3d, 0x78, 0x99, 0xe9, 0x7a,
-	0xfc, 0x32, 0xd3, 0xf5, 0xc7, 0xcb, 0x4c, 0xd7, 0xed, 0x6c, 0x7b, 0xa9, 0xbd, 0x55, 0x0f, 0x4c,
-	0x55, 0xb7, 0xd6, 0x47, 0x55, 0xcd, 0xdc, 0x7f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x2d, 0xb4, 0xbe,
-	0x11, 0x96, 0x15, 0x00, 0x00,
+	// 1958 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x58, 0x4f, 0x6f, 0x1b, 0xc7,
+	0x15, 0xd7, 0x48, 0x96, 0x2c, 0x3f, 0x52, 0xb5, 0x34, 0x92, 0x55, 0x95, 0xb6, 0x29, 0x6a, 0x93,
+	0x58, 0xb2, 0xec, 0xec, 0x46, 0xb4, 0xeb, 0x26, 0x46, 0x12, 0x5b, 0x74, 0xed, 0x48, 0xad, 0x2c,
+	0x33, 0x2b, 0xc7, 0x40, 0x7d, 0x59, 0xec, 0xae, 0x96, 0xe4, 0x56, 0xdc, 0x3f, 0xe1, 0xce, 0xb2,
+	0x12, 0x8a, 0x00, 0x45, 0x0f, 0x39, 0x14, 0x2d, 0x10, 0xa0, 0x97, 0xf6, 0x90, 0x43, 0x81, 0xa2,
+	0x2d, 0xda, 0x4b, 0x8f, 0xed, 0x37, 0xc8, 0x31, 0x48, 0x7b, 0x28, 0x52, 0xc4, 0x2d, 0xec, 0xa0,
+	0xbd, 0xfb, 0x13, 0x14, 0x3b, 0x33, 0xcb, 0xdd, 0x25, 0x97, 0xe4, 0x52, 0x12, 0x7a, 0x11, 0xc4,
+	0x99, 0xf7, 0xe7, 0xf7, 0x7b, 0xf3, 0x66, 0xf6, 0xbd, 0x07, 0xcb, 0x9a, 0xaa, 0x1d, 0x35, 0x1d,
+	0x5b, 0xaa, 0x99, 0xb6, 0xda, 0x34, 0xc9, 0x91, 0xd4, 0xde, 0x90, 0x3e, 0xf4, 0x8d, 0xd6, 0x91,
+	0xe8, 0xb6, 0x1c, 0xe2, 0xe0, 0x79, 0x2e, 0x20, 0x86, 0x02, 0x62, 0x7b, 0xa3, 0xb0, 0x50, 0x77,
+	0xea, 0x0e, 0xdd, 0x97, 0x82, 0xff, 0x98, 0x68, 0xe1, 0x52, 0xdd, 0x71, 0xea, 0x4d, 0x43, 0x52,
+	0x5d, 0x53, 0x52, 0x6d, 0xdb, 0x21, 0x2a, 0x31, 0x1d, 0xdb, 0xe3, 0xbb, 0xeb, 0xba, 0xe3, 0x59,
+	0x8e, 0x27, 0x69, 0xaa, 0x67, 0x30, 0x0f, 0x52, 0x7b, 0x43, 0x33, 0x88, 0xba, 0x21, 0xb9, 0x6a,
+	0xdd, 0xb4, 0xa9, 0x30, 0x97, 0x2d, 0xa5, 0xa1, 0x72, 0xd5, 0x96, 0x6a, 0x85, 0xd6, 0x84, 0x34,
+	0x89, 0x0e, 0x44, 0x26, 0xb3, 0xcc, 0xf1, 0xd0, 0x5f, 0x9a, 0x5f, 0x93, 0x88, 0x69, 0x19, 0x1e,
+	0x51, 0x2d, 0x97, 0x0b, 0xcc, 0xa9, 0x96, 0x69, 0x3b, 0x12, 0xfd, 0xcb, 0x96, 0x84, 0x05, 0xc0,
+	0xef, 0x07, 0xd8, 0xaa, 0xd4, 0x99, 0x6c, 0x7c, 0xe8, 0x1b, 0x1e, 0x11, 0xaa, 0x30, 0x9f, 0x58,
+	0xf5, 0x5c, 0xc7, 0xf6, 0x0c, 0xfc, 0x16, 0x4c, 0x31, 0x50, 0x4b, 0xa8, 0x84, 0xd6, 0x72, 0xe5,
+	0x8b, 0x62, 0x4a, 0xb0, 0x44, 0xa6, 0x54, 0x39, 0xf3, 0xd9, 0xb3, 0xe5, 0x31, 0x99, 0x2b, 0x08,
+	0x35, 0xb8, 0x4a, 0x2d, 0x3e, 0xe0, 0x82, 0xd5, 0x96, 0xd3, 0x36, 0xf7, 0x8d, 0x56, 0xd5, 0xf9,
+	0x91, 0xd1, 0xda, 0x24, 0x5b, 0x86, 0x59, 0x6f, 0x10, 0xee, 0x1e, 0xaf, 0xc0, 0x4c, 0xcd, 0x55,
+	0x34, 0xa2, 0x2b, 0xee, 0x81, 0xd2, 0x30, 0x0e, 0xa9, 0xbb, 0x73, 0x32, 0xd4, 0xdc, 0x0a, 0xd1,
+	0xab, 0x07, 0x5b, 0xc6, 0x21, 0x5e, 0x84, 0xa9, 0x06, 0xd5, 0x59, 0x1a, 0x2f, 0xa1, 0xb5, 0x33,
+	0x32, 0xff, 0x25, 0x3c, 0x82, 0xf5, 0x2c, 0x7e, 0x38, 0xa1, 0x15, 0xc8, 0xb7, 0x1d, 0x62, 0xda,
+	0x75, 0xc5, 0x0d, 0xf6, 0xa9, 0x9f, 0x33, 0x72, 0x8e, 0xad, 0x51, 0x15, 0xe1, 0x21, 0xac, 0xa5,
+	0x1a, 0xbc, 0xe7, 0xb7, 0x5a, 0x86, 0x4d, 0xa8, 0x50, 0x76, 0xdc, 0x7d, 0xe3, 0x90, 0x34, 0xc7,
+	0xe1, 0x45, 0x24, 0x51, 0x9c, 0x64, 0x0f, 0xec, 0xf1, 0x5e, 0xd8, 0xbf, 0x40, 0x70, 0x8d, 0x3a,
+	0xda, 0xd4, 0x89, 0xd9, 0x36, 0xba, 0xdd, 0x79, 0xdd, 0x21, 0xef, 0xe7, 0xea, 0x01, 0x40, 0x94,
+	0xad, 0xd4, 0x51, 0xae, 0x7c, 0x45, 0x64, 0xa9, 0x2d, 0x06, 0xa9, 0x2d, 0xb2, 0xcb, 0xc3, 0x53,
+	0x5b, 0xac, 0xaa, 0x75, 0x83, 0xdb, 0x94, 0x63, 0x9a, 0xc2, 0x5f, 0xc6, 0x61, 0x75, 0x28, 0x14,
+	0x4e, 0xfb, 0x09, 0x40, 0x77, 0x0c, 0x2b, 0x6f, 0x7e, 0xf9, 0x6c, 0xf9, 0x66, 0xdd, 0x24, 0x0d,
+	0x5f, 0x13, 0x75, 0xc7, 0x92, 0x78, 0xe2, 0x35, 0x55, 0xcd, 0x7b, 0xdd, 0x74, 0xc2, 0x9f, 0x12,
+	0x39, 0x72, 0x0d, 0x4f, 0xac, 0x6c, 0x57, 0x6f, 0xdc, 0x7c, 0xa3, 0xea, 0x6b, 0xdf, 0x37, 0x8e,
+	0xe4, 0x69, 0x6d, 0x48, 0xce, 0xf4, 0x84, 0x73, 0xa2, 0x27, 0x9c, 0xf8, 0x26, 0x2c, 0x7a, 0x4d,
+	0xd5, 0x6b, 0x18, 0xfb, 0x0a, 0x77, 0xa5, 0x70, 0x53, 0x67, 0xa8, 0xf0, 0x02, 0xdf, 0xad, 0xb0,
+	0x4d, 0x46, 0x08, 0x5f, 0x07, 0xdc, 0xd1, 0x22, 0x7a, 0xa8, 0x31, 0x59, 0x42, 0x6b, 0x33, 0xf2,
+	0x6c, 0xa8, 0x41, 0x74, 0x2e, 0xbd, 0x08, 0x53, 0x3f, 0x54, 0xcd, 0xa6, 0xb1, 0xbf, 0x34, 0x55,
+	0x42, 0x6b, 0xd3, 0x32, 0xff, 0x25, 0x7c, 0x8d, 0xe0, 0x7a, 0xb6, 0xa3, 0xe4, 0xf1, 0x3b, 0x00,
+	0x1c, 0xde, 0x47, 0xc5, 0x0d, 0xa5, 0x96, 0x50, 0x69, 0x62, 0x2d, 0x57, 0x7e, 0x3b, 0xf5, 0xca,
+	0x66, 0xb4, 0x2c, 0xcf, 0xd5, 0xba, 0x45, 0xf0, 0x7b, 0x29, 0x09, 0xb2, 0x3a, 0x34, 0x41, 0xb8,
+	0xbd, 0x78, 0x86, 0x5c, 0x86, 0x8b, 0x11, 0x4b, 0x95, 0x18, 0xfb, 0x89, 0x04, 0x15, 0x6e, 0xc1,
+	0xa5, 0xf4, 0xed, 0xc1, 0x77, 0x25, 0xb8, 0x08, 0x25, 0xaa, 0xb8, 0x63, 0x7a, 0xa4, 0xea, 0x6b,
+	0x4d, 0x53, 0x97, 0x55, 0x7b, 0xdf, 0xb1, 0x6c, 0xc3, 0xf3, 0x46, 0x78, 0x70, 0x4e, 0xeb, 0x22,
+	0x7c, 0x31, 0x0e, 0x2b, 0x03, 0xf0, 0x70, 0x36, 0xbf, 0x45, 0x90, 0x77, 0x7d, 0x4d, 0x69, 0xa9,
+	0xf6, 0xbe, 0x62, 0xa9, 0x2e, 0x3f, 0xbd, 0x07, 0xa9, 0xa7, 0x37, 0xd4, 0x9c, 0x58, 0xf5, 0xb5,
+	0x60, 0xf5, 0xa1, 0xea, 0xde, 0xb7, 0x49, 0xeb, 0xa8, 0x72, 0xfb, 0xcb, 0x67, 0xcb, 0xb7, 0xb2,
+	0xde, 0xa6, 0x3d, 0xbd, 0x61, 0x3b, 0xad, 0x16, 0xb7, 0x21, 0x83, 0xdb, 0x31, 0x76, 0x6a, 0x87,
+	0x5f, 0x78, 0x07, 0xce, 0x77, 0x61, 0xc4, 0xb3, 0x30, 0x71, 0x60, 0x1c, 0xf1, 0xd3, 0x0c, 0xfe,
+	0xc5, 0x0b, 0x30, 0xd9, 0x56, 0x9b, 0xbe, 0x41, 0x1d, 0xe5, 0x65, 0xf6, 0xe3, 0xf6, 0xf8, 0x9b,
+	0x48, 0x68, 0xc3, 0x05, 0xae, 0x7e, 0xcf, 0xb1, 0x2c, 0x33, 0xca, 0x8a, 0x12, 0xe4, 0x6d, 0xdf,
+	0x52, 0xc2, 0x50, 0x72, 0x6b, 0x60, 0xfb, 0x16, 0x97, 0xc7, 0x45, 0x00, 0x9d, 0xea, 0x58, 0x86,
+	0x4d, 0xb8, 0xe5, 0xd8, 0x0a, 0xbe, 0x08, 0xe7, 0x0c, 0xd7, 0xd1, 0x1b, 0x8a, 0xed, 0x5b, 0xfc,
+	0x65, 0x98, 0xa6, 0x0b, 0xbb, 0xbe, 0x25, 0xfc, 0x0c, 0xc1, 0xe5, 0x78, 0xf4, 0xe3, 0x08, 0xfe,
+	0xef, 0x99, 0xf5, 0xf7, 0x71, 0x28, 0xf6, 0x03, 0xc3, 0xc3, 0x71, 0x08, 0xf3, 0x9d, 0xac, 0x62,
+	0x1c, 0x63, 0xc9, 0xb5, 0x3d, 0x34, 0xb9, 0x7a, 0x2d, 0x8a, 0x89, 0xd5, 0xf0, 0xec, 0xe4, 0x59,
+	0xb7, 0x6b, 0xf9, 0xf4, 0x32, 0xc5, 0xe9, 0x3a, 0xea, 0x01, 0xf9, 0x72, 0x37, 0x9e, 0x2f, 0xb9,
+	0xf2, 0x7a, 0x7a, 0xb5, 0x92, 0x46, 0x2b, 0x9e, 0x5b, 0xd7, 0x60, 0x8e, 0xc6, 0xa0, 0xd2, 0x74,
+	0xf4, 0x83, 0x21, 0x9f, 0x4b, 0xe1, 0x21, 0x2f, 0xa7, 0xb8, 0x30, 0x0f, 0xfb, 0x77, 0x60, 0x52,
+	0x0b, 0x16, 0x78, 0xd9, 0xb4, 0x92, 0x0a, 0x64, 0xdb, 0xde, 0x37, 0x0e, 0x8d, 0x7d, 0xa6, 0xc9,
+	0xe4, 0x85, 0xdf, 0x20, 0x58, 0xec, 0x1c, 0x00, 0xdd, 0xe9, 0x3c, 0x59, 0x77, 0x60, 0xca, 0x23,
+	0x2a, 0xf1, 0x59, 0x2d, 0xf6, 0x8d, 0xf2, 0x6a, 0xdf, 0xd3, 0x33, 0xb9, 0xd1, 0x3d, 0x2a, 0x2e,
+	0x73, 0xb5, 0x53, 0x4b, 0xbb, 0x4f, 0x11, 0x7c, 0xb3, 0x07, 0x63, 0x54, 0x30, 0x52, 0x22, 0xe1,
+	0xd7, 0x27, 0x03, 0x73, 0xae, 0x70, 0x7a, 0xdf, 0x95, 0x1b, 0xf0, 0x2d, 0x0a, 0xef, 0x89, 0x43,
+	0x8c, 0xac, 0x65, 0x8f, 0xe0, 0x40, 0x21, 0x4d, 0x89, 0xd3, 0x7a, 0x1f, 0xce, 0xb2, 0x1b, 0xcd,
+	0x78, 0xe5, 0x4f, 0x50, 0x9d, 0x4c, 0xd1, 0xea, 0xc4, 0x13, 0xde, 0x82, 0x05, 0xea, 0xf0, 0x7e,
+	0xf0, 0x59, 0xb5, 0x75, 0x63, 0x84, 0x92, 0xf2, 0x9f, 0x13, 0x30, 0x1b, 0xa9, 0x75, 0x2a, 0xdb,
+	0xa1, 0xef, 0xce, 0x0a, 0xe4, 0x69, 0xac, 0x95, 0x44, 0x51, 0x94, 0xa3, 0x6b, 0xbc, 0x24, 0xf9,
+	0x00, 0xa6, 0x3b, 0x4f, 0x67, 0xf0, 0xf6, 0xe5, 0x4f, 0xf4, 0xe5, 0x38, 0xcb, 0x5f, 0x85, 0xa0,
+	0x2e, 0xd2, 0x55, 0xdb, 0xb1, 0x4d, 0x5d, 0x6d, 0x2a, 0xaa, 0xeb, 0x2a, 0x0d, 0xd5, 0x6b, 0xd0,
+	0x4a, 0x2a, 0x2f, 0xcf, 0x76, 0x76, 0x36, 0x5d, 0x77, 0x4b, 0xf5, 0x1a, 0x58, 0x80, 0x99, 0x9a,
+	0xd3, 0x3a, 0x88, 0x04, 0x27, 0xa9, 0x60, 0x2e, 0x58, 0x0c, 0x65, 0x5c, 0x58, 0x8c, 0x2c, 0x76,
+	0x8a, 0x1f, 0xcf, 0xac, 0xd3, 0x5a, 0xea, 0x78, 0xb0, 0xef, 0x3f, 0x7a, 0xbc, 0xb7, 0x67, 0xd6,
+	0xe5, 0x85, 0x8e, 0xe5, 0xb0, 0x40, 0xda, 0x33, 0xeb, 0xb8, 0x06, 0x73, 0x14, 0x55, 0xc2, 0xd9,
+	0xd9, 0x13, 0x3b, 0x3b, 0x1f, 0x18, 0x8d, 0xf9, 0x11, 0x9e, 0xc2, 0x85, 0xae, 0xc4, 0xe0, 0x27,
+	0xbc, 0x09, 0xd3, 0x06, 0x5f, 0xe3, 0xef, 0xca, 0x6b, 0xa9, 0xb7, 0xab, 0x5b, 0x51, 0xee, 0xa8,
+	0x09, 0x1f, 0x23, 0x7e, 0x37, 0x82, 0xab, 0x1b, 0xca, 0xc5, 0x8a, 0xa2, 0xbc, 0x47, 0xd4, 0x16,
+	0x51, 0x12, 0x37, 0x24, 0x47, 0xd7, 0xb6, 0x4e, 0xb7, 0x3b, 0xf8, 0x23, 0xe2, 0xf7, 0xad, 0x0b,
+	0x08, 0xa7, 0x7a, 0x0f, 0xce, 0x85, 0x98, 0xc3, 0x97, 0x24, 0x23, 0xd7, 0x48, 0xef, 0xf4, 0x1e,
+	0x94, 0xb7, 0xf9, 0x7b, 0xb7, 0x67, 0xd6, 0x6d, 0xd3, 0xae, 0x6f, 0xdb, 0x35, 0x67, 0x84, 0xdb,
+	0xfa, 0x15, 0x82, 0xf9, 0x84, 0xe6, 0x48, 0x17, 0x36, 0x71, 0x20, 0x01, 0x87, 0x89, 0xe4, 0x81,
+	0x94, 0xe1, 0x82, 0x65, 0x7a, 0x5e, 0xd0, 0x70, 0xd0, 0x67, 0x54, 0xd1, 0x1d, 0xdf, 0x26, 0xbc,
+	0xa7, 0x99, 0x90, 0xe7, 0xd9, 0x26, 0x7b, 0xa5, 0xef, 0xb1, 0x2d, 0xbc, 0x03, 0x79, 0xd6, 0x69,
+	0x28, 0xbe, 0x4d, 0xcc, 0x26, 0xbd, 0x87, 0xb9, 0x72, 0x41, 0x64, 0xd3, 0x04, 0x31, 0x9c, 0x26,
+	0x88, 0x8f, 0xc3, 0x69, 0x42, 0x65, 0x26, 0x68, 0xed, 0x3f, 0xf9, 0xd7, 0x32, 0xfa, 0xc3, 0x7f,
+	0xff, 0xbc, 0x8e, 0xe4, 0x1c, 0x53, 0xff, 0x20, 0xd0, 0x16, 0x2c, 0x58, 0xea, 0x8d, 0x4e, 0xe7,
+	0xdd, 0xcc, 0x7b, 0x6c, 0x59, 0x31, 0xed, 0x9a, 0xc3, 0xd3, 0x76, 0x2d, 0xf5, 0x28, 0x53, 0xf4,
+	0xf9, 0x48, 0x21, 0xe7, 0x45, 0x5b, 0x82, 0xd6, 0xeb, 0xae, 0x93, 0xc0, 0xc9, 0xec, 0x44, 0xc7,
+	0xce, 0xce, 0xbf, 0x86, 0xd7, 0x24, 0xe9, 0x84, 0x93, 0xda, 0x83, 0x99, 0x38, 0xa9, 0x30, 0x41,
+	0x47, 0x65, 0x95, 0x8f, 0xb1, 0x3a, 0xbd, 0x64, 0x5d, 0xbf, 0xc3, 0x0a, 0x92, 0x64, 0x0d, 0x80,
+	0xe7, 0x60, 0x66, 0xf7, 0xd1, 0xae, 0xf2, 0x60, 0x7b, 0x77, 0x73, 0x67, 0xfb, 0xe9, 0xfd, 0xef,
+	0xce, 0x8e, 0xe1, 0x19, 0x38, 0x17, 0xfd, 0x44, 0xf8, 0x2c, 0x4c, 0x6c, 0xee, 0xfe, 0x60, 0x76,
+	0xbc, 0xfc, 0x72, 0x1e, 0x26, 0x29, 0x79, 0xfc, 0x13, 0x04, 0x53, 0x6c, 0xb6, 0x83, 0xfb, 0x17,
+	0x1b, 0xc9, 0x41, 0x52, 0x61, 0x6d, 0xb8, 0x20, 0x03, 0x2d, 0xbc, 0xf2, 0xd3, 0xbf, 0x7d, 0xfd,
+	0xcb, 0xf1, 0xcb, 0xf8, 0xa2, 0xd4, 0x7f, 0x16, 0x86, 0x9f, 0x23, 0x58, 0x1e, 0xd2, 0xab, 0xe2,
+	0xbb, 0xfd, 0x5d, 0x66, 0x9b, 0x85, 0x14, 0x36, 0x4f, 0x60, 0x81, 0xb3, 0xb9, 0x4d, 0xd9, 0xdc,
+	0xc4, 0xe5, 0x0e, 0x1b, 0x8d, 0xe8, 0x1e, 0x51, 0x0f, 0x4c, 0xbb, 0x1e, 0x9f, 0xdc, 0x45, 0xfd,
+	0xb9, 0xf4, 0x63, 0x76, 0xab, 0x3f, 0xc2, 0x2f, 0x11, 0x5c, 0x1e, 0x38, 0xbe, 0xc2, 0xef, 0xf6,
+	0x07, 0x98, 0x65, 0xbe, 0x56, 0xb8, 0x73, 0x6c, 0x7d, 0x4e, 0xaf, 0x4a, 0xe9, 0x7d, 0x0f, 0x6f,
+	0x8d, 0x40, 0x2f, 0xf1, 0xba, 0x7d, 0x24, 0xd1, 0x51, 0x4b, 0x44, 0xfa, 0x3f, 0x08, 0x2e, 0x0d,
+	0x9a, 0x89, 0xe1, 0x77, 0xb2, 0x63, 0x4e, 0x19, 0xcd, 0x15, 0xde, 0x3d, 0xae, 0x3a, 0x67, 0xfc,
+	0x1e, 0x65, 0xbc, 0x89, 0xef, 0x9c, 0x90, 0x31, 0xfe, 0x3d, 0x82, 0xf3, 0x5d, 0x33, 0x0c, 0xfc,
+	0xc6, 0x90, 0x84, 0xeb, 0x99, 0x86, 0x14, 0x36, 0x46, 0xd0, 0xe0, 0x0c, 0x24, 0xca, 0xe0, 0x2a,
+	0x5e, 0xed, 0xc3, 0x40, 0x0d, 0xf5, 0xf8, 0xe7, 0x05, 0x7f, 0x85, 0x60, 0x21, 0x6d, 0xaa, 0x80,
+	0xbf, 0x3d, 0xea, 0x14, 0x82, 0x61, 0xbe, 0x75, 0xbc, 0xe1, 0x85, 0xf0, 0x84, 0x02, 0xaf, 0xe2,
+	0x5d, 0x69, 0xd0, 0x0c, 0x7c, 0x50, 0xe0, 0xa9, 0x65, 0x5a, 0xc5, 0x32, 0xd3, 0x4a, 0xd3, 0xf4,
+	0x08, 0xfe, 0x02, 0xc1, 0x5c, 0x4f, 0x63, 0x8b, 0xcb, 0x23, 0x75, 0xc1, 0x8c, 0xd9, 0x8d, 0x63,
+	0x74, 0xce, 0xc2, 0x63, 0x4a, 0x6b, 0x17, 0xef, 0x9c, 0x80, 0x56, 0xa2, 0x93, 0xa7, 0xa4, 0x3e,
+	0x46, 0x30, 0x49, 0x5f, 0x7a, 0x7c, 0xa5, 0x3f, 0xa8, 0x78, 0x2b, 0x5b, 0x58, 0x1d, 0x2a, 0xc7,
+	0x01, 0x5f, 0xa7, 0x80, 0xaf, 0xe0, 0x57, 0x53, 0x01, 0xb3, 0x7a, 0x23, 0xba, 0xd0, 0x3f, 0x47,
+	0x00, 0x51, 0x47, 0x88, 0xaf, 0x0d, 0x0e, 0x51, 0xa2, 0xb7, 0x2d, 0x5c, 0xcf, 0x26, 0x9c, 0xe9,
+	0xcb, 0xc1, 0xdb, 0xc9, 0x4f, 0x11, 0xcc, 0x24, 0x9a, 0x39, 0x2c, 0xf6, 0x77, 0x92, 0xd6, 0x2a,
+	0x16, 0xa4, 0xcc, 0xf2, 0x1c, 0xd7, 0x35, 0x8a, 0xeb, 0x35, 0xfc, 0x4a, 0x2a, 0xae, 0x76, 0xa0,
+	0x13, 0x85, 0xeb, 0x4f, 0x08, 0xa6, 0xc3, 0xea, 0x15, 0x5f, 0xed, 0xef, 0xaa, 0xab, 0x3f, 0x2c,
+	0xac, 0x67, 0x11, 0xe5, 0x80, 0xb6, 0x28, 0xa0, 0x0a, 0xbe, 0x7b, 0xdc, 0x8c, 0x0b, 0x8b, 0x69,
+	0xfc, 0x2b, 0x04, 0x33, 0x89, 0x52, 0x7d, 0x50, 0x34, 0xd3, 0x9a, 0x8b, 0x41, 0xd1, 0x4c, 0xed,
+	0x01, 0x84, 0x2b, 0x14, 0x7c, 0x09, 0x17, 0x53, 0xc1, 0x47, 0x65, 0xfe, 0xef, 0x10, 0xe4, 0x62,
+	0x55, 0x16, 0x1e, 0x90, 0x4b, 0xbd, 0x05, 0x7c, 0xe1, 0xf5, 0x8c, 0xd2, 0x7d, 0x3f, 0xf3, 0x71,
+	0x50, 0x89, 0xb2, 0xb0, 0x3b, 0x98, 0xf8, 0xd7, 0x08, 0xf2, 0xf1, 0x82, 0x12, 0x67, 0xf3, 0xdd,
+	0x89, 0xa0, 0x98, 0x55, 0x9c, 0x63, 0x5d, 0xa7, 0x58, 0x5f, 0xc5, 0xc2, 0x70, 0xac, 0x95, 0x9d,
+	0xcf, 0x9e, 0x17, 0xd1, 0xe7, 0xcf, 0x8b, 0xe8, 0xdf, 0xcf, 0x8b, 0xe8, 0x93, 0x17, 0xc5, 0xb1,
+	0xcf, 0x5f, 0x14, 0xc7, 0xfe, 0xf1, 0xa2, 0x38, 0xf6, 0xb4, 0x3c, 0xbc, 0xaf, 0x3d, 0x8c, 0x0c,
+	0xd3, 0x16, 0x57, 0x9b, 0xa2, 0x2d, 0xc4, 0x8d, 0xff, 0x05, 0x00, 0x00, 0xff, 0xff, 0x09, 0x24,
+	0x1c, 0xa6, 0x7c, 0x1d, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1438,6 +1987,15 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// Parameters queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
+	// ActiveFinalityProvidersAtHeight queries finality providers with non zero voting power at given height.
+	ActiveFinalityProvidersAtHeight(ctx context.Context, in *QueryActiveFinalityProvidersAtHeightRequest, opts ...grpc.CallOption) (*QueryActiveFinalityProvidersAtHeightResponse, error)
+	// FinalityProviderPowerAtHeight queries the voting power of a finality provider at a given height
+	FinalityProviderPowerAtHeight(ctx context.Context, in *QueryFinalityProviderPowerAtHeightRequest, opts ...grpc.CallOption) (*QueryFinalityProviderPowerAtHeightResponse, error)
+	// FinalityProviderCurrentPower queries the voting power of a finality provider at the current height
+	FinalityProviderCurrentPower(ctx context.Context, in *QueryFinalityProviderCurrentPowerRequest, opts ...grpc.CallOption) (*QueryFinalityProviderCurrentPowerResponse, error)
+	// ActivatedHeight queries the height when BTC staking protocol is activated, i.e., the first height when
+	// there exists 1 finality provider with voting power
+	ActivatedHeight(ctx context.Context, in *QueryActivatedHeightRequest, opts ...grpc.CallOption) (*QueryActivatedHeightResponse, error)
 	// ListPublicRandomness is a range query for public randomness of a given finality provider
 	// NOTE: Babylon only has the knowledge of public randomness that is already revealed by
 	// finality providers, i.e., the finality provider already provides a finality signature
@@ -1473,6 +2031,42 @@ func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error) {
 	out := new(QueryParamsResponse)
 	err := c.cc.Invoke(ctx, "/babylon.finality.v1.Query/Params", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) ActiveFinalityProvidersAtHeight(ctx context.Context, in *QueryActiveFinalityProvidersAtHeightRequest, opts ...grpc.CallOption) (*QueryActiveFinalityProvidersAtHeightResponse, error) {
+	out := new(QueryActiveFinalityProvidersAtHeightResponse)
+	err := c.cc.Invoke(ctx, "/babylon.finality.v1.Query/ActiveFinalityProvidersAtHeight", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) FinalityProviderPowerAtHeight(ctx context.Context, in *QueryFinalityProviderPowerAtHeightRequest, opts ...grpc.CallOption) (*QueryFinalityProviderPowerAtHeightResponse, error) {
+	out := new(QueryFinalityProviderPowerAtHeightResponse)
+	err := c.cc.Invoke(ctx, "/babylon.finality.v1.Query/FinalityProviderPowerAtHeight", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) FinalityProviderCurrentPower(ctx context.Context, in *QueryFinalityProviderCurrentPowerRequest, opts ...grpc.CallOption) (*QueryFinalityProviderCurrentPowerResponse, error) {
+	out := new(QueryFinalityProviderCurrentPowerResponse)
+	err := c.cc.Invoke(ctx, "/babylon.finality.v1.Query/FinalityProviderCurrentPower", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) ActivatedHeight(ctx context.Context, in *QueryActivatedHeightRequest, opts ...grpc.CallOption) (*QueryActivatedHeightResponse, error) {
+	out := new(QueryActivatedHeightResponse)
+	err := c.cc.Invoke(ctx, "/babylon.finality.v1.Query/ActivatedHeight", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1564,6 +2158,15 @@ func (c *queryClient) SigningInfos(ctx context.Context, in *QuerySigningInfosReq
 type QueryServer interface {
 	// Parameters queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
+	// ActiveFinalityProvidersAtHeight queries finality providers with non zero voting power at given height.
+	ActiveFinalityProvidersAtHeight(context.Context, *QueryActiveFinalityProvidersAtHeightRequest) (*QueryActiveFinalityProvidersAtHeightResponse, error)
+	// FinalityProviderPowerAtHeight queries the voting power of a finality provider at a given height
+	FinalityProviderPowerAtHeight(context.Context, *QueryFinalityProviderPowerAtHeightRequest) (*QueryFinalityProviderPowerAtHeightResponse, error)
+	// FinalityProviderCurrentPower queries the voting power of a finality provider at the current height
+	FinalityProviderCurrentPower(context.Context, *QueryFinalityProviderCurrentPowerRequest) (*QueryFinalityProviderCurrentPowerResponse, error)
+	// ActivatedHeight queries the height when BTC staking protocol is activated, i.e., the first height when
+	// there exists 1 finality provider with voting power
+	ActivatedHeight(context.Context, *QueryActivatedHeightRequest) (*QueryActivatedHeightResponse, error)
 	// ListPublicRandomness is a range query for public randomness of a given finality provider
 	// NOTE: Babylon only has the knowledge of public randomness that is already revealed by
 	// finality providers, i.e., the finality provider already provides a finality signature
@@ -1594,6 +2197,18 @@ type UnimplementedQueryServer struct {
 
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
+}
+func (*UnimplementedQueryServer) ActiveFinalityProvidersAtHeight(ctx context.Context, req *QueryActiveFinalityProvidersAtHeightRequest) (*QueryActiveFinalityProvidersAtHeightResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ActiveFinalityProvidersAtHeight not implemented")
+}
+func (*UnimplementedQueryServer) FinalityProviderPowerAtHeight(ctx context.Context, req *QueryFinalityProviderPowerAtHeightRequest) (*QueryFinalityProviderPowerAtHeightResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinalityProviderPowerAtHeight not implemented")
+}
+func (*UnimplementedQueryServer) FinalityProviderCurrentPower(ctx context.Context, req *QueryFinalityProviderCurrentPowerRequest) (*QueryFinalityProviderCurrentPowerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinalityProviderCurrentPower not implemented")
+}
+func (*UnimplementedQueryServer) ActivatedHeight(ctx context.Context, req *QueryActivatedHeightRequest) (*QueryActivatedHeightResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ActivatedHeight not implemented")
 }
 func (*UnimplementedQueryServer) ListPublicRandomness(ctx context.Context, req *QueryListPublicRandomnessRequest) (*QueryListPublicRandomnessResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPublicRandomness not implemented")
@@ -1641,6 +2256,78 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(QueryServer).Params(ctx, req.(*QueryParamsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_ActiveFinalityProvidersAtHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryActiveFinalityProvidersAtHeightRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ActiveFinalityProvidersAtHeight(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.finality.v1.Query/ActiveFinalityProvidersAtHeight",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ActiveFinalityProvidersAtHeight(ctx, req.(*QueryActiveFinalityProvidersAtHeightRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_FinalityProviderPowerAtHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFinalityProviderPowerAtHeightRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).FinalityProviderPowerAtHeight(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.finality.v1.Query/FinalityProviderPowerAtHeight",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).FinalityProviderPowerAtHeight(ctx, req.(*QueryFinalityProviderPowerAtHeightRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_FinalityProviderCurrentPower_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFinalityProviderCurrentPowerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).FinalityProviderCurrentPower(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.finality.v1.Query/FinalityProviderCurrentPower",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).FinalityProviderCurrentPower(ctx, req.(*QueryFinalityProviderCurrentPowerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_ActivatedHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryActivatedHeightRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ActivatedHeight(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.finality.v1.Query/ActivatedHeight",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ActivatedHeight(ctx, req.(*QueryActivatedHeightRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1816,6 +2503,22 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_Params_Handler,
 		},
 		{
+			MethodName: "ActiveFinalityProvidersAtHeight",
+			Handler:    _Query_ActiveFinalityProvidersAtHeight_Handler,
+		},
+		{
+			MethodName: "FinalityProviderPowerAtHeight",
+			Handler:    _Query_FinalityProviderPowerAtHeight_Handler,
+		},
+		{
+			MethodName: "FinalityProviderCurrentPower",
+			Handler:    _Query_FinalityProviderCurrentPower_Handler,
+		},
+		{
+			MethodName: "ActivatedHeight",
+			Handler:    _Query_ActivatedHeight_Handler,
+		},
+		{
 			MethodName: "ListPublicRandomness",
 			Handler:    _Query_ListPublicRandomness_Handler,
 		},
@@ -1909,6 +2612,337 @@ func (m *QueryParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	i--
 	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryFinalityProviderPowerAtHeightRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryFinalityProviderPowerAtHeightRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryFinalityProviderPowerAtHeightRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Height != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Height))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.FpBtcPkHex) > 0 {
+		i -= len(m.FpBtcPkHex)
+		copy(dAtA[i:], m.FpBtcPkHex)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.FpBtcPkHex)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryFinalityProviderPowerAtHeightResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryFinalityProviderPowerAtHeightResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryFinalityProviderPowerAtHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.VotingPower != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.VotingPower))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryFinalityProviderCurrentPowerRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryFinalityProviderCurrentPowerRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryFinalityProviderCurrentPowerRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.FpBtcPkHex) > 0 {
+		i -= len(m.FpBtcPkHex)
+		copy(dAtA[i:], m.FpBtcPkHex)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.FpBtcPkHex)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryFinalityProviderCurrentPowerResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryFinalityProviderCurrentPowerResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryFinalityProviderCurrentPowerResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.VotingPower != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.VotingPower))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.Height != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Height))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryActiveFinalityProvidersAtHeightRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryActiveFinalityProvidersAtHeightRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryActiveFinalityProvidersAtHeightRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Height != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Height))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ActiveFinalityProvidersAtHeightResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ActiveFinalityProvidersAtHeightResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ActiveFinalityProvidersAtHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Jailed {
+		i--
+		if m.Jailed {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.SlashedBtcHeight != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.SlashedBtcHeight))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.SlashedBabylonHeight != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.SlashedBabylonHeight))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.VotingPower != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.VotingPower))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.Height != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Height))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.BtcPkHex != nil {
+		{
+			size := m.BtcPkHex.Size()
+			i -= size
+			if _, err := m.BtcPkHex.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryActiveFinalityProvidersAtHeightResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryActiveFinalityProvidersAtHeightResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryActiveFinalityProvidersAtHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.FinalityProviders) > 0 {
+		for iNdEx := len(m.FinalityProviders) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.FinalityProviders[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryActivatedHeightRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryActivatedHeightRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryActivatedHeightRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryActivatedHeightResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryActivatedHeightResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryActivatedHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Height != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Height))
+		i--
+		dAtA[i] = 0x8
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -2660,12 +3694,12 @@ func (m *SigningInfoResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	n13, err13 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.JailedUntil, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.JailedUntil):])
-	if err13 != nil {
-		return 0, err13
+	n15, err15 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.JailedUntil, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.JailedUntil):])
+	if err15 != nil {
+		return 0, err15
 	}
-	i -= n13
-	i = encodeVarintQuery(dAtA, i, uint64(n13))
+	i -= n15
+	i = encodeVarintQuery(dAtA, i, uint64(n15))
 	i--
 	dAtA[i] = 0x22
 	if m.MissedBlocksCounter != 0 {
@@ -2833,6 +3867,146 @@ func (m *QueryParamsResponse) Size() (n int) {
 	_ = l
 	l = m.Params.Size()
 	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryFinalityProviderPowerAtHeightRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.FpBtcPkHex)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.Height != 0 {
+		n += 1 + sovQuery(uint64(m.Height))
+	}
+	return n
+}
+
+func (m *QueryFinalityProviderPowerAtHeightResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.VotingPower != 0 {
+		n += 1 + sovQuery(uint64(m.VotingPower))
+	}
+	return n
+}
+
+func (m *QueryFinalityProviderCurrentPowerRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.FpBtcPkHex)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryFinalityProviderCurrentPowerResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Height != 0 {
+		n += 1 + sovQuery(uint64(m.Height))
+	}
+	if m.VotingPower != 0 {
+		n += 1 + sovQuery(uint64(m.VotingPower))
+	}
+	return n
+}
+
+func (m *QueryActiveFinalityProvidersAtHeightRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Height != 0 {
+		n += 1 + sovQuery(uint64(m.Height))
+	}
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *ActiveFinalityProvidersAtHeightResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.BtcPkHex != nil {
+		l = m.BtcPkHex.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.Height != 0 {
+		n += 1 + sovQuery(uint64(m.Height))
+	}
+	if m.VotingPower != 0 {
+		n += 1 + sovQuery(uint64(m.VotingPower))
+	}
+	if m.SlashedBabylonHeight != 0 {
+		n += 1 + sovQuery(uint64(m.SlashedBabylonHeight))
+	}
+	if m.SlashedBtcHeight != 0 {
+		n += 1 + sovQuery(uint64(m.SlashedBtcHeight))
+	}
+	if m.Jailed {
+		n += 2
+	}
+	return n
+}
+
+func (m *QueryActiveFinalityProvidersAtHeightResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.FinalityProviders) > 0 {
+		for _, e := range m.FinalityProviders {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryActivatedHeightRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryActivatedHeightResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Height != 0 {
+		n += 1 + sovQuery(uint64(m.Height))
+	}
 	return n
 }
 
@@ -3320,6 +4494,872 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryFinalityProviderPowerAtHeightRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryFinalityProviderPowerAtHeightRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryFinalityProviderPowerAtHeightRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FpBtcPkHex", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FpBtcPkHex = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			m.Height = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Height |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryFinalityProviderPowerAtHeightResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryFinalityProviderPowerAtHeightResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryFinalityProviderPowerAtHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VotingPower", wireType)
+			}
+			m.VotingPower = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.VotingPower |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryFinalityProviderCurrentPowerRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryFinalityProviderCurrentPowerRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryFinalityProviderCurrentPowerRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FpBtcPkHex", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FpBtcPkHex = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryFinalityProviderCurrentPowerResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryFinalityProviderCurrentPowerResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryFinalityProviderCurrentPowerResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			m.Height = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Height |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VotingPower", wireType)
+			}
+			m.VotingPower = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.VotingPower |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryActiveFinalityProvidersAtHeightRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryActiveFinalityProvidersAtHeightRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryActiveFinalityProvidersAtHeightRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			m.Height = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Height |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageRequest{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ActiveFinalityProvidersAtHeightResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ActiveFinalityProvidersAtHeightResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ActiveFinalityProvidersAtHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcPkHex", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonlabs_io_babylon_types.BIP340PubKey
+			m.BtcPkHex = &v
+			if err := m.BtcPkHex.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			m.Height = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Height |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VotingPower", wireType)
+			}
+			m.VotingPower = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.VotingPower |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashedBabylonHeight", wireType)
+			}
+			m.SlashedBabylonHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SlashedBabylonHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashedBtcHeight", wireType)
+			}
+			m.SlashedBtcHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SlashedBtcHeight |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Jailed", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Jailed = bool(v != 0)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryActiveFinalityProvidersAtHeightResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryActiveFinalityProvidersAtHeightResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryActiveFinalityProvidersAtHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FinalityProviders", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FinalityProviders = append(m.FinalityProviders, &ActiveFinalityProvidersAtHeightResponse{})
+			if err := m.FinalityProviders[len(m.FinalityProviders)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageResponse{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryActivatedHeightRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryActivatedHeightRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryActivatedHeightRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryActivatedHeightResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryActivatedHeightResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryActivatedHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			m.Height = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Height |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])

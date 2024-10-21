@@ -47,10 +47,6 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		}
 	}
 
-	for _, vpCache := range gs.VpDstCache {
-		k.setVotingPowerDistCache(ctx, vpCache.BlockHeight, vpCache.VpDistribution)
-	}
-
 	return nil
 }
 
@@ -76,11 +72,6 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
-	vpsCache, err := k.votingPowersDistCacheBlkHeight(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	return &types.GenesisState{
 		Params:            k.GetAllParams(ctx),
 		FinalityProviders: fps,
@@ -88,7 +79,6 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		BlockHeightChains: k.blockHeightChains(ctx),
 		BtcDelegators:     btcDels,
 		Events:            evts,
-		VpDstCache:        vpsCache,
 	}, nil
 }
 
@@ -195,25 +185,6 @@ func (k Keeper) eventIdxs(
 	}
 
 	return evts, nil
-}
-
-func (k Keeper) votingPowersDistCacheBlkHeight(ctx context.Context) ([]*types.VotingPowerDistCacheBlkHeight, error) {
-	vps := make([]*types.VotingPowerDistCacheBlkHeight, 0)
-	iter := k.votingPowerDistCacheStore(ctx).Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		var dc types.VotingPowerDistCache
-		if err := dc.Unmarshal(iter.Value()); err != nil {
-			return nil, err
-		}
-		vps = append(vps, &types.VotingPowerDistCacheBlkHeight{
-			BlockHeight:    sdk.BigEndianToUint64(iter.Key()),
-			VpDistribution: &dc,
-		})
-	}
-
-	return vps, nil
 }
 
 func (k Keeper) setBlockHeightChains(ctx context.Context, blocks *types.BlockHeightBbnToBtc) {

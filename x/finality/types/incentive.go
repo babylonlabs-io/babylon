@@ -1,7 +1,10 @@
 package types
 
 import (
+	"sort"
+
 	sdkmath "cosmossdk.io/math"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -57,6 +60,40 @@ func (dc *VotingPowerDistCache) FindNewInactiveFinalityProviders(prevDc *VotingP
 	}
 
 	return newInactiveFps
+}
+
+// SortFinalityProvidersWithZeroedVotingPower sorts the finality providers slice,
+// from higher to lower voting power. In the following cases, the voting power
+// is treated as zero:
+// 1. IsTimestamped is false
+// 2. IsJailed is true
+func SortFinalityProvidersWithZeroedVotingPower(fps []*FinalityProviderDistInfo) {
+	sort.SliceStable(fps, func(i, j int) bool {
+		iShouldBeZeroed := fps[i].IsJailed || !fps[i].IsTimestamped
+		jShouldBeZeroed := fps[j].IsJailed || !fps[j].IsTimestamped
+
+		if iShouldBeZeroed && !jShouldBeZeroed {
+			return false
+		}
+
+		if !iShouldBeZeroed && jShouldBeZeroed {
+			return true
+		}
+
+		iPkHex, jPkHex := fps[i].BtcPk.MarshalHex(), fps[j].BtcPk.MarshalHex()
+
+		if iShouldBeZeroed && jShouldBeZeroed {
+			// Both have zeroed voting power, compare BTC public keys
+			return iPkHex < jPkHex
+		}
+
+		// both voting power the same, compare BTC public keys
+		if fps[i].TotalBondedSat == fps[j].TotalBondedSat {
+			return iPkHex < jPkHex
+		}
+
+		return fps[i].TotalBondedSat > fps[j].TotalBondedSat
+	})
 }
 
 // ApplyActiveFinalityProviders sorts all finality providers, counts the total voting
@@ -157,7 +194,7 @@ func (dc *VotingPowerDistCache) GetFinalityProviderPortion(v *FinalityProviderDi
 	return sdkmath.LegacyNewDec(int64(v.TotalBondedSat)).QuoTruncate(sdkmath.LegacyNewDec(int64(dc.TotalBondedSat)))
 }
 
-func NewFinalityProviderDistInfo(fp *FinalityProvider) *FinalityProviderDistInfo {
+func NewFinalityProviderDistInfo(fp *bstypes.FinalityProvider) *FinalityProviderDistInfo {
 	return &FinalityProviderDistInfo{
 		BtcPk:          fp.BtcPk,
 		Addr:           fp.Addr,
@@ -171,7 +208,7 @@ func (v *FinalityProviderDistInfo) GetAddress() sdk.AccAddress {
 	return sdk.MustAccAddressFromBech32(v.Addr)
 }
 
-func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *BTCDelegation) {
+func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *bstypes.BTCDelegation) {
 	btcDelDistInfo := &BTCDelDistInfo{
 		BtcPk:         btcDel.BtcPk,
 		StakerAddr:    btcDel.StakerAddr,

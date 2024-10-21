@@ -1,14 +1,17 @@
-package types_test
+package keeper_test
 
 import (
 	"math/rand"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 func TestSortFinalityProvidersWithZeroedVotingPower(t *testing.T) {
@@ -79,6 +82,89 @@ func TestSortFinalityProvidersWithZeroedVotingPower(t *testing.T) {
 			require.Equal(t, tt.expected, tt.fps, "Sorted slice should match expected order")
 		})
 	}
+}
+
+func FuzzRecordVotingPowerDistCache(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := bstypes.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := bstypes.NewMockBtcCheckpointKeeper(ctrl)
+		finalityKeeper := bstypes.NewMockFinalityKeeper(ctrl)
+		finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+
+		// set all parameters
+		covenantSKs, _ := h.GenAndApplyParams(r)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		h.NoError(err)
+
+		// generate a random batch of finality providers
+		numFpsWithVotingPower := datagen.RandomInt(r, 10) + 2
+		numFps := numFpsWithVotingPower + datagen.RandomInt(r, 10)
+		fpsWithVotingPowerMap := map[string]*bstypes.FinalityProvider{}
+		for i := uint64(0); i < numFps; i++ {
+			_, _, fp := h.CreateFinalityProvider(r)
+			if i < numFpsWithVotingPower {
+				// these finality providers will receive BTC delegations and have voting power
+				fpsWithVotingPowerMap[fp.Addr] = fp
+			}
+		}
+
+		// for the first numFpsWithVotingPower finality providers, generate a random number of BTC
+		// delegations and add covenant signatures to activate them
+		numBTCDels := datagen.RandomInt(r, 10) + 1
+		stakingValue := datagen.RandomInt(r, 100000) + 100000
+		for _, fp := range fpsWithVotingPowerMap {
+			for j := uint64(0); j < numBTCDels; j++ {
+				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+				h.NoError(err)
+				stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+					r,
+					delSK,
+					fp.BtcPk.MustToBTCPK(),
+					changeAddress.EncodeAddress(),
+					int64(stakingValue),
+					1000,
+					0,
+					0,
+					true,
+				)
+				h.NoError(err)
+				h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
+				h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
+			}
+		}
+
+		// record voting power distribution cache
+		babylonHeight := datagen.RandomInt(r, 10) + 1
+		h.Ctx = datagen.WithCtxHeight(h.Ctx, babylonHeight)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
+		require.NoError(t, err)
+
+		// assert voting power distribution cache is correct
+		dc, err := h.BTCStakingKeeper.GetVotingPowerDistCache(h.Ctx, babylonHeight)
+		require.NoError(t, err)
+		require.NotNil(t, dc)
+		require.Equal(t, dc.TotalBondedSat, numFpsWithVotingPower*numBTCDels*stakingValue)
+		activeFPs := dc.GetActiveFinalityProviderSet()
+		for _, fpDistInfo := range activeFPs {
+			require.Equal(t, fpDistInfo.TotalBondedSat, numBTCDels*stakingValue)
+			fp, ok := fpsWithVotingPowerMap[fpDistInfo.Addr]
+			require.True(t, ok)
+			require.Equal(t, fpDistInfo.Commission, fp.Commission)
+			require.Len(t, fpDistInfo.BtcDels, int(numBTCDels))
+			for _, delDistInfo := range fpDistInfo.BtcDels {
+				require.Equal(t, delDistInfo.TotalSat, stakingValue)
+			}
+		}
+	})
 }
 
 // FuzzSortingDeterminism tests the property of the sorting algorithm that the result should

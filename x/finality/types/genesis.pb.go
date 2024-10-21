@@ -28,22 +28,27 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type GenesisState struct {
 	// params the current params of the state.
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
+	// voting_powers the voting power of every finality provider at every block height.
+	VotingPowers []*VotingPowerFP `protobuf:"bytes,2,rep,name=voting_powers,json=votingPowers,proto3" json:"voting_powers,omitempty"`
+	// vp_dst_cache is the table of all providers voting power with the total at one specific block.
+	// TODO: remove this after not storing in the keeper store it anymore.
+	VpDstCache []*VotingPowerDistCacheBlkHeight `protobuf:"bytes,3,rep,name=vp_dst_cache,json=vpDstCache,proto3" json:"vp_dst_cache,omitempty"`
 	// indexed_blocks all the btc blocks and if their status are finalized.
-	IndexedBlocks []*IndexedBlock `protobuf:"bytes,2,rep,name=indexed_blocks,json=indexedBlocks,proto3" json:"indexed_blocks,omitempty"`
+	IndexedBlocks []*IndexedBlock `protobuf:"bytes,4,rep,name=indexed_blocks,json=indexedBlocks,proto3" json:"indexed_blocks,omitempty"`
 	// evidences all the evidences ever registered.
-	Evidences []*Evidence `protobuf:"bytes,3,rep,name=evidences,proto3" json:"evidences,omitempty"`
+	Evidences []*Evidence `protobuf:"bytes,5,rep,name=evidences,proto3" json:"evidences,omitempty"`
 	// votes_sigs contains all the votes of finality providers ever registered.
-	VoteSigs []*VoteSig `protobuf:"bytes,4,rep,name=vote_sigs,json=voteSigs,proto3" json:"vote_sigs,omitempty"`
+	VoteSigs []*VoteSig `protobuf:"bytes,6,rep,name=vote_sigs,json=voteSigs,proto3" json:"vote_sigs,omitempty"`
 	// public_randomness contains all the public randomness ever committed from the finality providers.
-	PublicRandomness []*PublicRandomness `protobuf:"bytes,5,rep,name=public_randomness,json=publicRandomness,proto3" json:"public_randomness,omitempty"`
+	PublicRandomness []*PublicRandomness `protobuf:"bytes,7,rep,name=public_randomness,json=publicRandomness,proto3" json:"public_randomness,omitempty"`
 	// pub_rand_commit contains all the public randomness commitment ever committed from the finality providers.
-	PubRandCommit []*PubRandCommitWithPK `protobuf:"bytes,6,rep,name=pub_rand_commit,json=pubRandCommit,proto3" json:"pub_rand_commit,omitempty"`
+	PubRandCommit []*PubRandCommitWithPK `protobuf:"bytes,8,rep,name=pub_rand_commit,json=pubRandCommit,proto3" json:"pub_rand_commit,omitempty"`
 	// signing_infos represents a map between finality provider public key and their
 	// signing infos.
-	SigningInfos []SigningInfo `protobuf:"bytes,7,rep,name=signing_infos,json=signingInfos,proto3" json:"signing_infos"`
+	SigningInfos []SigningInfo `protobuf:"bytes,9,rep,name=signing_infos,json=signingInfos,proto3" json:"signing_infos"`
 	// missed_blocks represents a map between finality provider public key and their
 	// missed blocks.
-	MissedBlocks []FinalityProviderMissedBlocks `protobuf:"bytes,8,rep,name=missed_blocks,json=missedBlocks,proto3" json:"missed_blocks"`
+	MissedBlocks []FinalityProviderMissedBlocks `protobuf:"bytes,10,rep,name=missed_blocks,json=missedBlocks,proto3" json:"missed_blocks"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -84,6 +89,20 @@ func (m *GenesisState) GetParams() Params {
 		return m.Params
 	}
 	return Params{}
+}
+
+func (m *GenesisState) GetVotingPowers() []*VotingPowerFP {
+	if m != nil {
+		return m.VotingPowers
+	}
+	return nil
+}
+
+func (m *GenesisState) GetVpDstCache() []*VotingPowerDistCacheBlkHeight {
+	if m != nil {
+		return m.VpDstCache
+	}
+	return nil
 }
 
 func (m *GenesisState) GetIndexedBlocks() []*IndexedBlock {
@@ -135,6 +154,119 @@ func (m *GenesisState) GetMissedBlocks() []FinalityProviderMissedBlocks {
 	return nil
 }
 
+// VotingPowerFP contains the information about the voting power
+// of an finality provider in a specific block height.
+type VotingPowerFP struct {
+	// block_height is the height of the block the voting power was stored.
+	BlockHeight uint64 `protobuf:"varint,1,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
+	// fp_btc_pk the finality provider btc public key.
+	FpBtcPk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	// voting_power is the power of the finality provider at this specific block height.
+	VotingPower uint64 `protobuf:"varint,3,opt,name=voting_power,json=votingPower,proto3" json:"voting_power,omitempty"`
+}
+
+func (m *VotingPowerFP) Reset()         { *m = VotingPowerFP{} }
+func (m *VotingPowerFP) String() string { return proto.CompactTextString(m) }
+func (*VotingPowerFP) ProtoMessage()    {}
+func (*VotingPowerFP) Descriptor() ([]byte, []int) {
+	return fileDescriptor_52dc577f74d797d1, []int{1}
+}
+func (m *VotingPowerFP) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *VotingPowerFP) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_VotingPowerFP.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *VotingPowerFP) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_VotingPowerFP.Merge(m, src)
+}
+func (m *VotingPowerFP) XXX_Size() int {
+	return m.Size()
+}
+func (m *VotingPowerFP) XXX_DiscardUnknown() {
+	xxx_messageInfo_VotingPowerFP.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_VotingPowerFP proto.InternalMessageInfo
+
+func (m *VotingPowerFP) GetBlockHeight() uint64 {
+	if m != nil {
+		return m.BlockHeight
+	}
+	return 0
+}
+
+func (m *VotingPowerFP) GetVotingPower() uint64 {
+	if m != nil {
+		return m.VotingPower
+	}
+	return 0
+}
+
+// VotingPowerDistCacheBlkHeight the total voting power of the finality providers at one specific block height
+type VotingPowerDistCacheBlkHeight struct {
+	// block_height is the height of the block the voting power distribution cached was stored.
+	BlockHeight uint64 `protobuf:"varint,1,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
+	// vp_distribution the finality providers distribution cache at that height.
+	VpDistribution *VotingPowerDistCache `protobuf:"bytes,2,opt,name=vp_distribution,json=vpDistribution,proto3" json:"vp_distribution,omitempty"`
+}
+
+func (m *VotingPowerDistCacheBlkHeight) Reset()         { *m = VotingPowerDistCacheBlkHeight{} }
+func (m *VotingPowerDistCacheBlkHeight) String() string { return proto.CompactTextString(m) }
+func (*VotingPowerDistCacheBlkHeight) ProtoMessage()    {}
+func (*VotingPowerDistCacheBlkHeight) Descriptor() ([]byte, []int) {
+	return fileDescriptor_52dc577f74d797d1, []int{2}
+}
+func (m *VotingPowerDistCacheBlkHeight) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *VotingPowerDistCacheBlkHeight) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_VotingPowerDistCacheBlkHeight.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *VotingPowerDistCacheBlkHeight) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_VotingPowerDistCacheBlkHeight.Merge(m, src)
+}
+func (m *VotingPowerDistCacheBlkHeight) XXX_Size() int {
+	return m.Size()
+}
+func (m *VotingPowerDistCacheBlkHeight) XXX_DiscardUnknown() {
+	xxx_messageInfo_VotingPowerDistCacheBlkHeight.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_VotingPowerDistCacheBlkHeight proto.InternalMessageInfo
+
+func (m *VotingPowerDistCacheBlkHeight) GetBlockHeight() uint64 {
+	if m != nil {
+		return m.BlockHeight
+	}
+	return 0
+}
+
+func (m *VotingPowerDistCacheBlkHeight) GetVpDistribution() *VotingPowerDistCache {
+	if m != nil {
+		return m.VpDistribution
+	}
+	return nil
+}
+
 // VoteSig the vote of an finality provider
 // with the block of the vote, the finality provider btc public key and the vote signature.
 type VoteSig struct {
@@ -151,7 +283,7 @@ func (m *VoteSig) Reset()         { *m = VoteSig{} }
 func (m *VoteSig) String() string { return proto.CompactTextString(m) }
 func (*VoteSig) ProtoMessage()    {}
 func (*VoteSig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_52dc577f74d797d1, []int{1}
+	return fileDescriptor_52dc577f74d797d1, []int{3}
 }
 func (m *VoteSig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -201,7 +333,7 @@ func (m *PublicRandomness) Reset()         { *m = PublicRandomness{} }
 func (m *PublicRandomness) String() string { return proto.CompactTextString(m) }
 func (*PublicRandomness) ProtoMessage()    {}
 func (*PublicRandomness) Descriptor() ([]byte, []int) {
-	return fileDescriptor_52dc577f74d797d1, []int{2}
+	return fileDescriptor_52dc577f74d797d1, []int{4}
 }
 func (m *PublicRandomness) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -249,7 +381,7 @@ func (m *PubRandCommitWithPK) Reset()         { *m = PubRandCommitWithPK{} }
 func (m *PubRandCommitWithPK) String() string { return proto.CompactTextString(m) }
 func (*PubRandCommitWithPK) ProtoMessage()    {}
 func (*PubRandCommitWithPK) Descriptor() ([]byte, []int) {
-	return fileDescriptor_52dc577f74d797d1, []int{3}
+	return fileDescriptor_52dc577f74d797d1, []int{5}
 }
 func (m *PubRandCommitWithPK) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -297,7 +429,7 @@ func (m *SigningInfo) Reset()         { *m = SigningInfo{} }
 func (m *SigningInfo) String() string { return proto.CompactTextString(m) }
 func (*SigningInfo) ProtoMessage()    {}
 func (*SigningInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_52dc577f74d797d1, []int{4}
+	return fileDescriptor_52dc577f74d797d1, []int{6}
 }
 func (m *SigningInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -346,7 +478,7 @@ func (m *FinalityProviderMissedBlocks) Reset()         { *m = FinalityProviderMi
 func (m *FinalityProviderMissedBlocks) String() string { return proto.CompactTextString(m) }
 func (*FinalityProviderMissedBlocks) ProtoMessage()    {}
 func (*FinalityProviderMissedBlocks) Descriptor() ([]byte, []int) {
-	return fileDescriptor_52dc577f74d797d1, []int{5}
+	return fileDescriptor_52dc577f74d797d1, []int{7}
 }
 func (m *FinalityProviderMissedBlocks) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -394,7 +526,7 @@ func (m *MissedBlock) Reset()         { *m = MissedBlock{} }
 func (m *MissedBlock) String() string { return proto.CompactTextString(m) }
 func (*MissedBlock) ProtoMessage()    {}
 func (*MissedBlock) Descriptor() ([]byte, []int) {
-	return fileDescriptor_52dc577f74d797d1, []int{6}
+	return fileDescriptor_52dc577f74d797d1, []int{8}
 }
 func (m *MissedBlock) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -439,6 +571,8 @@ func (m *MissedBlock) GetMissed() bool {
 
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "babylon.finality.v1.GenesisState")
+	proto.RegisterType((*VotingPowerFP)(nil), "babylon.finality.v1.VotingPowerFP")
+	proto.RegisterType((*VotingPowerDistCacheBlkHeight)(nil), "babylon.finality.v1.VotingPowerDistCacheBlkHeight")
 	proto.RegisterType((*VoteSig)(nil), "babylon.finality.v1.VoteSig")
 	proto.RegisterType((*PublicRandomness)(nil), "babylon.finality.v1.PublicRandomness")
 	proto.RegisterType((*PubRandCommitWithPK)(nil), "babylon.finality.v1.PubRandCommitWithPK")
@@ -450,51 +584,59 @@ func init() {
 func init() { proto.RegisterFile("babylon/finality/v1/genesis.proto", fileDescriptor_52dc577f74d797d1) }
 
 var fileDescriptor_52dc577f74d797d1 = []byte{
-	// 693 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x95, 0xcf, 0x6f, 0xd3, 0x4a,
-	0x10, 0xc7, 0xe3, 0x24, 0x4d, 0xd2, 0x4d, 0xf2, 0xda, 0xb7, 0xad, 0x9e, 0xac, 0xbe, 0x92, 0xa6,
-	0x96, 0x90, 0x72, 0xc1, 0xe9, 0x2f, 0x21, 0x4a, 0x6f, 0x41, 0x85, 0x96, 0x80, 0xb0, 0x36, 0x05,
-	0x24, 0x04, 0x58, 0xb6, 0xb3, 0x76, 0x56, 0x8d, 0xbd, 0x96, 0x77, 0x13, 0x35, 0xff, 0x05, 0xff,
-	0x0d, 0x67, 0xc4, 0xa5, 0xc7, 0x1e, 0x51, 0x85, 0x2a, 0x48, 0xff, 0x11, 0x94, 0xb5, 0xd3, 0x98,
-	0xd4, 0xb4, 0x95, 0xa0, 0xe2, 0xb6, 0x3b, 0xf9, 0xce, 0x27, 0x33, 0xb3, 0x33, 0x63, 0xb0, 0x6a,
-	0x1a, 0xe6, 0xa0, 0x4b, 0xbd, 0xba, 0x4d, 0x3c, 0xa3, 0x4b, 0xf8, 0xa0, 0xde, 0x5f, 0xaf, 0x3b,
-	0xd8, 0xc3, 0x8c, 0x30, 0xd5, 0x0f, 0x28, 0xa7, 0x70, 0x21, 0x92, 0xa8, 0x63, 0x89, 0xda, 0x5f,
-	0x5f, 0x5a, 0x74, 0xa8, 0x43, 0xc5, 0xef, 0xf5, 0xd1, 0x29, 0x94, 0x2e, 0x55, 0x93, 0x68, 0xbe,
-	0x11, 0x18, 0x6e, 0x04, 0x5b, 0x52, 0x92, 0x14, 0x17, 0x60, 0xa1, 0x51, 0xbe, 0x66, 0x41, 0xe9,
-	0x49, 0x18, 0x42, 0x8b, 0x1b, 0x1c, 0xc3, 0x6d, 0x90, 0x0b, 0x21, 0xb2, 0x54, 0x95, 0x6a, 0xc5,
-	0x8d, 0xff, 0xd5, 0x84, 0x90, 0x54, 0x4d, 0x48, 0x1a, 0xd9, 0xe3, 0xb3, 0x95, 0x14, 0x8a, 0x1c,
-	0xe0, 0x1e, 0xf8, 0x87, 0x78, 0x6d, 0x7c, 0x84, 0xdb, 0xba, 0xd9, 0xa5, 0xd6, 0x21, 0x93, 0xd3,
-	0xd5, 0x4c, 0xad, 0xb8, 0xb1, 0x9a, 0x88, 0xd8, 0x0f, 0xa5, 0x8d, 0x91, 0x12, 0x95, 0x49, 0xec,
-	0xc6, 0xe0, 0x0e, 0x98, 0xc5, 0x7d, 0xd2, 0xc6, 0x9e, 0x85, 0x99, 0x9c, 0x11, 0x90, 0x3b, 0x89,
-	0x90, 0xdd, 0x48, 0x85, 0x26, 0x7a, 0xb8, 0x0d, 0x66, 0xfb, 0x94, 0x63, 0x9d, 0x11, 0x87, 0xc9,
-	0x59, 0xe1, 0xbc, 0x9c, 0xe8, 0xfc, 0x8a, 0x72, 0xdc, 0x22, 0x0e, 0x2a, 0xf4, 0xc3, 0x03, 0x83,
-	0x08, 0xfc, 0xeb, 0xf7, 0xcc, 0x2e, 0xb1, 0xf4, 0xc0, 0xf0, 0xda, 0xd4, 0xf5, 0x30, 0x63, 0xf2,
-	0x8c, 0x40, 0xdc, 0x4d, 0xae, 0x83, 0x50, 0xa3, 0x0b, 0x31, 0x9a, 0xf7, 0xa7, 0x2c, 0x50, 0x03,
-	0x73, 0x7e, 0xcf, 0x14, 0x40, 0xdd, 0xa2, 0xae, 0x4b, 0xb8, 0x9c, 0x13, 0xc4, 0xda, 0xaf, 0x88,
-	0x23, 0xe7, 0x47, 0x42, 0xf9, 0x9a, 0xf0, 0x8e, 0xd6, 0x44, 0x65, 0x3f, 0x6e, 0x84, 0x4d, 0x50,
-	0x66, 0xc4, 0xf1, 0x88, 0xe7, 0xe8, 0xc4, 0xb3, 0x29, 0x93, 0xf3, 0x82, 0x57, 0x4d, 0xe4, 0xb5,
-	0x42, 0xe5, 0xbe, 0x67, 0xd3, 0xe8, 0xb9, 0x4a, 0x6c, 0x62, 0x62, 0xf0, 0x2d, 0x28, 0xbb, 0x84,
-	0xb1, 0xc9, 0x9b, 0x15, 0x04, 0x6c, 0x3d, 0x11, 0xf6, 0x38, 0x3a, 0x6b, 0x01, 0x1d, 0x95, 0x3b,
-	0x78, 0x2e, 0x3c, 0xc3, 0x47, 0x1b, 0xd3, 0xdd, 0x98, 0x4d, 0xf9, 0x2e, 0x81, 0x7c, 0x54, 0x66,
-	0xb8, 0x0a, 0x4a, 0xe2, 0x2f, 0xf4, 0x0e, 0x26, 0x4e, 0x87, 0x8b, 0xfe, 0xca, 0xa2, 0xa2, 0xb0,
-	0xed, 0x09, 0x13, 0x3c, 0x00, 0xb3, 0xb6, 0xaf, 0x9b, 0xdc, 0xd2, 0xfd, 0x43, 0x39, 0x5d, 0x95,
-	0x6a, 0xa5, 0xc6, 0x83, 0xd3, 0xb3, 0x95, 0x2d, 0x87, 0xf0, 0x4e, 0xcf, 0x54, 0x2d, 0xea, 0xd6,
-	0xa3, 0xb0, 0xba, 0x86, 0xc9, 0xee, 0x11, 0x3a, 0xbe, 0xd6, 0xf9, 0xc0, 0xc7, 0x4c, 0x6d, 0xec,
-	0x6b, 0x9b, 0x5b, 0x6b, 0x5a, 0xcf, 0x6c, 0xe2, 0x01, 0xca, 0xdb, 0x7e, 0x83, 0x5b, 0xda, 0x21,
-	0x7c, 0x07, 0x4a, 0xe3, 0x24, 0x46, 0x4d, 0x21, 0x67, 0x04, 0xf8, 0xe1, 0xe9, 0xd9, 0xca, 0xfd,
-	0x9b, 0x82, 0x5b, 0x56, 0xc7, 0xa3, 0x41, 0xb0, 0xfb, 0xe2, 0xa0, 0x35, 0xea, 0x98, 0xe2, 0x98,
-	0xd7, 0x22, 0x8e, 0x32, 0x94, 0xc0, 0xfc, 0x74, 0x1f, 0xfc, 0xbd, 0x64, 0x5f, 0x82, 0xc2, 0xb8,
-	0xdd, 0x7e, 0x23, 0xd1, 0xa8, 0x0b, 0x51, 0x3e, 0xea, 0x3c, 0xe5, 0xa3, 0x04, 0x16, 0x12, 0x5a,
-	0xf3, 0xe7, 0x24, 0xa4, 0x3f, 0x95, 0xc4, 0xd3, 0xcb, 0x33, 0x93, 0x16, 0xdb, 0x48, 0xb9, 0x7e,
-	0x66, 0xa6, 0xa6, 0x45, 0xf9, 0x2c, 0x81, 0x62, 0x6c, 0x08, 0x6e, 0x29, 0xe2, 0xf7, 0x60, 0xce,
-	0xf6, 0xf5, 0xf8, 0x58, 0x46, 0x11, 0xaf, 0xdd, 0x68, 0x90, 0x2e, 0x4f, 0x69, 0xd9, 0xf6, 0x63,
-	0x46, 0xe5, 0x93, 0x04, 0x96, 0xaf, 0x9a, 0xbe, 0x5b, 0x4a, 0xab, 0x39, 0xbd, 0x1d, 0xd2, 0x57,
-	0xac, 0x9a, 0x58, 0x3c, 0x89, 0xcb, 0x60, 0x07, 0x14, 0x63, 0x12, 0xb8, 0x08, 0x66, 0xc4, 0xd6,
-	0x17, 0xd1, 0x66, 0x50, 0x78, 0x81, 0xff, 0x81, 0x5c, 0xe8, 0x24, 0xea, 0x57, 0x40, 0xd1, 0xad,
-	0xf1, 0xec, 0x78, 0x58, 0x91, 0x4e, 0x86, 0x15, 0xe9, 0xdb, 0xb0, 0x22, 0x7d, 0x38, 0xaf, 0xa4,
-	0x4e, 0xce, 0x2b, 0xa9, 0x2f, 0xe7, 0x95, 0xd4, 0x9b, 0x8d, 0xeb, 0x53, 0x3c, 0x9a, 0x7c, 0x02,
-	0x45, 0xb6, 0x66, 0x4e, 0x7c, 0xfd, 0x36, 0x7f, 0x04, 0x00, 0x00, 0xff, 0xff, 0xae, 0x0d, 0xf5,
-	0xca, 0x93, 0x07, 0x00, 0x00,
+	// 830 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x56, 0x4d, 0x6f, 0xe3, 0x44,
+	0x18, 0x8e, 0x9b, 0x36, 0x1f, 0x13, 0x67, 0xbb, 0x78, 0x57, 0xc8, 0x2a, 0xbb, 0x69, 0x6a, 0x84,
+	0x14, 0x0e, 0x24, 0xdb, 0x6c, 0x85, 0x28, 0xbd, 0xb9, 0xdf, 0x04, 0x84, 0x35, 0x29, 0x20, 0x21,
+	0xc0, 0xb2, 0x9d, 0x89, 0x33, 0x4a, 0xe2, 0x19, 0x79, 0x26, 0xa6, 0xf9, 0x17, 0x9c, 0xf8, 0x13,
+	0xfc, 0x00, 0xce, 0x88, 0x4b, 0x8f, 0x3d, 0xa2, 0x1e, 0x2a, 0x48, 0x7f, 0x06, 0x17, 0xe4, 0xb1,
+	0xd3, 0xb8, 0xa9, 0xdb, 0x46, 0x62, 0xab, 0xde, 0x66, 0xde, 0x3c, 0xef, 0x33, 0xef, 0x3b, 0xf3,
+	0x3e, 0x4f, 0x0c, 0x36, 0x6c, 0xcb, 0x1e, 0x0f, 0x88, 0xd7, 0xe8, 0x62, 0xcf, 0x1a, 0x60, 0x3e,
+	0x6e, 0x04, 0x9b, 0x0d, 0x17, 0x79, 0x88, 0x61, 0x56, 0xa7, 0x3e, 0xe1, 0x44, 0x79, 0x11, 0x43,
+	0xea, 0x53, 0x48, 0x3d, 0xd8, 0x5c, 0x7b, 0xe9, 0x12, 0x97, 0x88, 0xdf, 0x1b, 0xe1, 0x2a, 0x82,
+	0xae, 0x55, 0xd3, 0xd8, 0xa8, 0xe5, 0x5b, 0xc3, 0x98, 0x6c, 0x4d, 0x4b, 0x43, 0x5c, 0x13, 0x47,
+	0x98, 0x0f, 0xd3, 0x30, 0xd8, 0x73, 0x90, 0xc7, 0x71, 0x80, 0x22, 0x90, 0xf6, 0xef, 0x0a, 0x90,
+	0x0f, 0xa3, 0x3a, 0xdb, 0xdc, 0xe2, 0x48, 0xd9, 0x06, 0xb9, 0xe8, 0x24, 0x55, 0xaa, 0x4a, 0xb5,
+	0x52, 0xf3, 0x83, 0x7a, 0x4a, 0xdd, 0x75, 0x43, 0x40, 0xf4, 0xe5, 0xb3, 0xcb, 0xf5, 0x0c, 0x8c,
+	0x13, 0x94, 0x43, 0x50, 0x0e, 0x08, 0xc7, 0x9e, 0x6b, 0x52, 0xf2, 0x33, 0xf2, 0x99, 0xba, 0x54,
+	0xcd, 0xd6, 0x4a, 0x4d, 0x2d, 0x95, 0xe1, 0x5b, 0x81, 0x34, 0x42, 0xe0, 0x81, 0x01, 0xe5, 0x60,
+	0xb6, 0x65, 0xca, 0x09, 0x90, 0x03, 0x6a, 0x76, 0x18, 0x37, 0x1d, 0xcb, 0xe9, 0x21, 0x35, 0x2b,
+	0x78, 0x9a, 0x0f, 0xf1, 0xec, 0x61, 0xc6, 0x77, 0xc3, 0x04, 0x7d, 0xd0, 0x3f, 0x42, 0xd8, 0xed,
+	0x71, 0x08, 0x02, 0xba, 0x17, 0x07, 0x95, 0x23, 0xf0, 0x0c, 0x7b, 0x1d, 0x74, 0x8a, 0x3a, 0xa6,
+	0x3d, 0x20, 0x4e, 0x9f, 0xa9, 0xcb, 0x82, 0x77, 0x23, 0x95, 0xf7, 0x38, 0x82, 0xea, 0x21, 0x12,
+	0x96, 0x71, 0x62, 0xc7, 0x94, 0x1d, 0x50, 0x44, 0x01, 0xee, 0x20, 0xcf, 0x41, 0x4c, 0x5d, 0x11,
+	0x24, 0xaf, 0x53, 0x49, 0xf6, 0x63, 0x14, 0x9c, 0xe1, 0x95, 0x6d, 0x50, 0x0c, 0x08, 0x47, 0x26,
+	0xc3, 0x2e, 0x53, 0x73, 0x22, 0xf9, 0xd5, 0x5d, 0x9d, 0xa1, 0x36, 0x76, 0x61, 0x21, 0x88, 0x16,
+	0x4c, 0x81, 0xe0, 0x3d, 0x3a, 0xb2, 0x07, 0xd8, 0x31, 0x7d, 0xcb, 0xeb, 0x90, 0xa1, 0x87, 0x18,
+	0x53, 0xf3, 0x82, 0xe2, 0xa3, 0xf4, 0x67, 0x12, 0x68, 0x78, 0x0d, 0x86, 0xcf, 0xe9, 0x5c, 0x44,
+	0x31, 0xc0, 0x2a, 0x1d, 0xd9, 0x82, 0xd0, 0x74, 0xc8, 0x70, 0x88, 0xb9, 0x5a, 0x10, 0x8c, 0xb5,
+	0xbb, 0x18, 0xc3, 0xe4, 0x5d, 0x81, 0xfc, 0x0e, 0xf3, 0x9e, 0xd1, 0x82, 0x65, 0x9a, 0x0c, 0x2a,
+	0x2d, 0x50, 0x66, 0xd8, 0xf5, 0xc2, 0x39, 0xc0, 0x5e, 0x97, 0x30, 0xb5, 0x28, 0xf8, 0xaa, 0xa9,
+	0x7c, 0xed, 0x08, 0x79, 0xec, 0x75, 0x49, 0x3c, 0x4d, 0x32, 0x9b, 0x85, 0x98, 0xf2, 0x03, 0x28,
+	0x0f, 0x31, 0x63, 0xb3, 0x37, 0x03, 0x82, 0x6c, 0x33, 0x95, 0xec, 0x20, 0x5e, 0x1b, 0x3e, 0x09,
+	0xaf, 0xdb, 0xff, 0x4a, 0x64, 0x46, 0x8f, 0x36, 0x65, 0x1f, 0x26, 0x62, 0xda, 0x6f, 0x12, 0x28,
+	0xdf, 0x18, 0x44, 0x65, 0x03, 0xc8, 0xe2, 0x20, 0xb3, 0x27, 0x06, 0x48, 0x88, 0x60, 0x19, 0x96,
+	0x44, 0x2c, 0x9a, 0x29, 0xe5, 0x04, 0x14, 0xbb, 0xd4, 0xb4, 0xb9, 0x63, 0xd2, 0xbe, 0xba, 0x54,
+	0x95, 0x6a, 0xb2, 0xfe, 0xd9, 0xc5, 0xe5, 0xfa, 0x96, 0x8b, 0x79, 0x6f, 0x64, 0xd7, 0x1d, 0x32,
+	0x6c, 0xc4, 0xc5, 0x0d, 0x2c, 0x9b, 0x7d, 0x82, 0xc9, 0x74, 0xdb, 0xe0, 0x63, 0x8a, 0x58, 0x5d,
+	0x3f, 0x36, 0xde, 0x6e, 0xbd, 0x31, 0x46, 0x76, 0x0b, 0x8d, 0x61, 0xbe, 0x4b, 0x75, 0xee, 0x18,
+	0xfd, 0xf0, 0xe0, 0xa4, 0x78, 0xd4, 0x6c, 0x74, 0x70, 0x42, 0x17, 0xda, 0xaf, 0x12, 0x78, 0x7d,
+	0xef, 0xb8, 0x2f, 0x52, 0x3d, 0x04, 0xab, 0xa1, 0xb6, 0x30, 0xe3, 0x3e, 0xb6, 0x47, 0x1c, 0x13,
+	0x4f, 0xf4, 0x50, 0x6a, 0x7e, 0xbc, 0xb0, 0xbc, 0xe0, 0xb3, 0x80, 0xee, 0x25, 0x08, 0xb4, 0x7f,
+	0x24, 0x90, 0x8f, 0xa7, 0xf5, 0xe9, 0x2e, 0xf0, 0x47, 0x20, 0x4f, 0x0b, 0x0f, 0xb5, 0x25, 0x2e,
+	0x50, 0xd6, 0x3f, 0xbf, 0xb8, 0x5c, 0xff, 0x74, 0x51, 0xe2, 0xb6, 0xd3, 0xf3, 0x88, 0xef, 0xef,
+	0x7f, 0x7d, 0xd2, 0x0e, 0x85, 0x57, 0x9a, 0xf2, 0xb5, 0xb1, 0xab, 0x4d, 0x24, 0xf0, 0x7c, 0x5e,
+	0x4e, 0x4f, 0xd7, 0xec, 0x37, 0xa0, 0x30, 0x55, 0xed, 0xff, 0x68, 0x34, 0x16, 0x33, 0xcc, 0xc7,
+	0x02, 0xd6, 0x7e, 0x97, 0xc0, 0x8b, 0x14, 0x85, 0xdf, 0x6c, 0x42, 0x7a, 0x57, 0x4d, 0x7c, 0x71,
+	0xdb, 0x7a, 0xa2, 0x51, 0xd4, 0x1e, 0xb6, 0x9e, 0x39, 0xd3, 0xd1, 0xfe, 0x94, 0x40, 0x29, 0xe1,
+	0x25, 0x8f, 0x54, 0xf1, 0x4f, 0x60, 0xb5, 0x4b, 0xcd, 0xa4, 0xbb, 0xc5, 0x15, 0xbf, 0x59, 0xc8,
+	0x8f, 0x6e, 0x9b, 0x5d, 0xb9, 0x4b, 0x13, 0x41, 0xed, 0x0f, 0x09, 0xbc, 0xba, 0xcf, 0xc4, 0x1e,
+	0xa9, 0xad, 0xd6, 0xbc, 0xc9, 0x2e, 0xdd, 0xe3, 0xd8, 0x89, 0x7a, 0x52, 0x3d, 0x75, 0x07, 0x94,
+	0x12, 0x10, 0xe5, 0x25, 0x58, 0x11, 0x7f, 0x9e, 0xa2, 0xda, 0x2c, 0x8c, 0x36, 0xca, 0xfb, 0x20,
+	0x17, 0x25, 0x89, 0xfb, 0x2b, 0xc0, 0x78, 0xa7, 0x7f, 0x79, 0x36, 0xa9, 0x48, 0xe7, 0x93, 0x8a,
+	0xf4, 0xf7, 0xa4, 0x22, 0xfd, 0x72, 0x55, 0xc9, 0x9c, 0x5f, 0x55, 0x32, 0x7f, 0x5d, 0x55, 0x32,
+	0xdf, 0x37, 0x1f, 0x6e, 0xf1, 0x74, 0xf6, 0xa5, 0x23, 0xba, 0xb5, 0x73, 0xe2, 0x1b, 0xe7, 0xed,
+	0x7f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x81, 0x69, 0xce, 0x01, 0x9e, 0x09, 0x00, 0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -528,7 +670,7 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x42
+			dAtA[i] = 0x52
 		}
 	}
 	if len(m.SigningInfos) > 0 {
@@ -542,7 +684,7 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x3a
+			dAtA[i] = 0x4a
 		}
 	}
 	if len(m.PubRandCommit) > 0 {
@@ -556,7 +698,7 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x32
+			dAtA[i] = 0x42
 		}
 	}
 	if len(m.PublicRandomness) > 0 {
@@ -570,7 +712,7 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x2a
+			dAtA[i] = 0x3a
 		}
 	}
 	if len(m.VoteSigs) > 0 {
@@ -584,7 +726,7 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x22
+			dAtA[i] = 0x32
 		}
 	}
 	if len(m.Evidences) > 0 {
@@ -598,13 +740,41 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x1a
+			dAtA[i] = 0x2a
 		}
 	}
 	if len(m.IndexedBlocks) > 0 {
 		for iNdEx := len(m.IndexedBlocks) - 1; iNdEx >= 0; iNdEx-- {
 			{
 				size, err := m.IndexedBlocks[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.VpDstCache) > 0 {
+		for iNdEx := len(m.VpDstCache) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.VpDstCache[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.VotingPowers) > 0 {
+		for iNdEx := len(m.VotingPowers) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.VotingPowers[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -625,6 +795,91 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	i--
 	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *VotingPowerFP) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *VotingPowerFP) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *VotingPowerFP) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.VotingPower != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.VotingPower))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.FpBtcPk != nil {
+		{
+			size := m.FpBtcPk.Size()
+			i -= size
+			if _, err := m.FpBtcPk.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintGenesis(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.BlockHeight != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.BlockHeight))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *VotingPowerDistCacheBlkHeight) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *VotingPowerDistCacheBlkHeight) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *VotingPowerDistCacheBlkHeight) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.VpDistribution != nil {
+		{
+			size, err := m.VpDistribution.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintGenesis(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.BlockHeight != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.BlockHeight))
+		i--
+		dAtA[i] = 0x8
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -930,6 +1185,18 @@ func (m *GenesisState) Size() (n int) {
 	_ = l
 	l = m.Params.Size()
 	n += 1 + l + sovGenesis(uint64(l))
+	if len(m.VotingPowers) > 0 {
+		for _, e := range m.VotingPowers {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.VpDstCache) > 0 {
+		for _, e := range m.VpDstCache {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
 	if len(m.IndexedBlocks) > 0 {
 		for _, e := range m.IndexedBlocks {
 			l = e.Size()
@@ -971,6 +1238,41 @@ func (m *GenesisState) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
+	}
+	return n
+}
+
+func (m *VotingPowerFP) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.BlockHeight != 0 {
+		n += 1 + sovGenesis(uint64(m.BlockHeight))
+	}
+	if m.FpBtcPk != nil {
+		l = m.FpBtcPk.Size()
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	if m.VotingPower != 0 {
+		n += 1 + sovGenesis(uint64(m.VotingPower))
+	}
+	return n
+}
+
+func (m *VotingPowerDistCacheBlkHeight) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.BlockHeight != 0 {
+		n += 1 + sovGenesis(uint64(m.BlockHeight))
+	}
+	if m.VpDistribution != nil {
+		l = m.VpDistribution.Size()
+		n += 1 + l + sovGenesis(uint64(l))
 	}
 	return n
 }
@@ -1151,6 +1453,74 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VotingPowers", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.VotingPowers = append(m.VotingPowers, &VotingPowerFP{})
+			if err := m.VotingPowers[len(m.VotingPowers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VpDstCache", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.VpDstCache = append(m.VpDstCache, &VotingPowerDistCacheBlkHeight{})
+			if err := m.VpDstCache[len(m.VpDstCache)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field IndexedBlocks", wireType)
 			}
 			var msglen int
@@ -1183,7 +1553,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 3:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Evidences", wireType)
 			}
@@ -1217,7 +1587,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 4:
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field VoteSigs", wireType)
 			}
@@ -1251,7 +1621,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 5:
+		case 7:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PublicRandomness", wireType)
 			}
@@ -1285,7 +1655,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 6:
+		case 8:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PubRandCommit", wireType)
 			}
@@ -1319,7 +1689,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 7:
+		case 9:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SigningInfos", wireType)
 			}
@@ -1353,7 +1723,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 8:
+		case 10:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MissedBlocks", wireType)
 			}
@@ -1384,6 +1754,234 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			}
 			m.MissedBlocks = append(m.MissedBlocks, FinalityProviderMissedBlocks{})
 			if err := m.MissedBlocks[len(m.MissedBlocks)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *VotingPowerFP) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: VotingPowerFP: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: VotingPowerFP: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlockHeight", wireType)
+			}
+			m.BlockHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BlockHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FpBtcPk", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonlabs_io_babylon_types.BIP340PubKey
+			m.FpBtcPk = &v
+			if err := m.FpBtcPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VotingPower", wireType)
+			}
+			m.VotingPower = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.VotingPower |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *VotingPowerDistCacheBlkHeight) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: VotingPowerDistCacheBlkHeight: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: VotingPowerDistCacheBlkHeight: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlockHeight", wireType)
+			}
+			m.BlockHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BlockHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VpDistribution", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.VpDistribution == nil {
+				m.VpDistribution = &VotingPowerDistCache{}
+			}
+			if err := m.VpDistribution.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

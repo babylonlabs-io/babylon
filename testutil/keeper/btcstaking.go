@@ -27,7 +27,6 @@ func BTCStakingKeeper(
 	t testing.TB,
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
-	finalityKeeper types.FinalityKeeper,
 	iKeeper types.IncentiveKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
@@ -45,7 +44,6 @@ func BTCStakingKeeper(
 		runtime.NewKVStoreService(storeKey),
 		btclcKeeper,
 		btccKeeper,
-		finalityKeeper,
 		iKeeper,
 		&chaincfg.SimNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),

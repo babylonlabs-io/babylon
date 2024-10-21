@@ -2,16 +2,23 @@ package keeper_test
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
+	"math"
 	"math/rand"
 	"testing"
 	"time"
 
 	"cosmossdk.io/core/header"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
@@ -443,4 +450,143 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	// add vote and it should work
 	_, err = ms.AddFinalitySig(ctx, msg)
 	require.Error(t, err)
+}
+
+type ExpectedProviderData struct {
+	numDelegations int32
+	stakingValue   int32
+}
+
+func createNDelegationsForFinalityProvider(
+	r *rand.Rand,
+	t *testing.T,
+	fpPK *btcec.PublicKey,
+	stakingValue int64,
+	numDelegations int,
+	quorum uint32,
+) []*bstypes.BTCDelegation {
+	var delegations []*bstypes.BTCDelegation
+	for i := 0; i < numDelegations; i++ {
+		covenatnSks, covenantPks, err := datagen.GenRandomBTCKeyPairs(r, int(quorum))
+		require.NoError(t, err)
+
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		require.NoError(t, err)
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+		require.NoError(t, err)
+
+		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+
+		startHeight, endHeight := 1, math.MaxUint16
+		stakingTime := uint32(endHeight) - uint32(startHeight)
+		del, err := datagen.GenRandomBTCDelegation(
+			r,
+			t,
+			&chaincfg.SimNetParams,
+			[]bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
+			delSK,
+			covenatnSks,
+			covenantPks,
+			quorum,
+			slashingPkScript,
+			stakingTime,
+			1,
+			1+(math.MaxUint16-1),
+			uint64(stakingValue),
+			slashingRate,
+			math.MaxUint16,
+		)
+		require.NoError(t, err)
+
+		delegations = append(delegations, del)
+	}
+	return delegations
+}
+
+func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
+	// less seeds than usual as this is pretty long running test
+	datagen.AddRandomSeedsToFuzzer(f, 5)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		valSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(2)
+		require.NoError(t, err)
+
+		var expectedProviderData = make(map[string]*ExpectedProviderData)
+
+		// Create two test apps from the same set of validators
+		h := testhelper.NewHelperWithValSet(t, valSet, privSigner)
+		h1 := testhelper.NewHelperWithValSet(t, valSet, privSigner)
+		// app hash should be same at the beginning
+		appHash1 := hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 := hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
+		require.Equal(t, appHash1, appHash2)
+
+		// Execute block for both apps
+		h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
+		require.NoError(t, err)
+		h1.Ctx, err = h1.ApplyEmptyBlockWithVoteExtension(r)
+		require.NoError(t, err)
+		// Given that there is no transactions and the data in db is the same
+		// app hash produced by both apps should be the same
+		appHash1 = hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 = hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
+		require.Equal(t, appHash1, appHash2)
+
+		// Default params are the same in both apps
+		covQuorum := h.App.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
+		maxFinalityProviders := int32(h.App.FinalityKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders)
+
+		// Number of finality providers from 10 to maxFinalityProviders + 10
+		numFinalityProviders := int(r.Int31n(maxFinalityProviders) + 10)
+
+		fps := datagen.CreateNFinalityProviders(r, t, numFinalityProviders)
+
+		// Fill the database of both apps with the same finality providers and delegations
+		for _, fp := range fps {
+			h.AddFinalityProvider(fp)
+			h1.AddFinalityProvider(fp)
+		}
+
+		for _, fp := range fps {
+			// each finality provider has different amount of delegations with different amount
+			stakingValue := r.Int31n(200000) + 10000
+			numDelegations := r.Int31n(10)
+
+			if numDelegations > 0 {
+				expectedProviderData[fp.BtcPk.MarshalHex()] = &ExpectedProviderData{
+					numDelegations: numDelegations,
+					stakingValue:   stakingValue,
+				}
+			}
+
+			delegations := createNDelegationsForFinalityProvider(
+				r,
+				t,
+				fp.BtcPk.MustToBTCPK(),
+				int64(stakingValue),
+				int(numDelegations),
+				covQuorum,
+			)
+
+			for _, del := range delegations {
+				h.AddDelegation(del)
+				h1.AddDelegation(del)
+			}
+		}
+
+		// Execute block for both apps
+		h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
+		require.NoError(t, err)
+		h1.Ctx, err = h1.ApplyEmptyBlockWithVoteExtension(r)
+		require.NoError(t, err)
+		// Given that there is no transactions and the data in db is the same
+		// app hash produced by both apps should be the same
+		appHash1 = hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 = hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
+		require.Equal(t, appHash1, appHash2)
+	})
 }
