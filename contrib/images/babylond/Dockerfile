@@ -6,6 +6,7 @@ FROM golang:1.21-alpine AS build-env
 ARG TARGETPLATFORM="linux/amd64"
 # Version to build. Default is empty
 ARG VERSION
+ARG BABYLON_BUILD_OPTIONS=""
 
 # Use muslc for static libs
 ARG BUILD_TAGS="muslc"
@@ -39,6 +40,7 @@ RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm/v2 | cut -d ' ' -f 2)
     sha256sum /lib/libwasmvm_muslc.$(uname -m).a | grep $(cat /tmp/checksums.txt | grep libwasmvm_muslc.$(uname -m) | cut -d ' ' -f 1)
 
 RUN LEDGER_ENABLED=$LEDGER_ENABLED \
+    BABYLON_BUILD_OPTIONS=$BABYLON_BUILD_OPTIONS \
     BUILD_TAGS=$BUILD_TAGS \
     COSMOS_BUILD_OPTIONS=$COSMOS_BUILD_OPTIONS \
     LINK_STATICALLY=true \
