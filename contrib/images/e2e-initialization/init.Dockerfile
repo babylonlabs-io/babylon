@@ -10,7 +10,7 @@ COPY ./ /go/src/github.com/babylonlabs-io/babylon/
 
 # Handle if version is set
 RUN if [ -n "${VERSION}" ]; then \
-    git fetch origin tag ${VERSION} --no-tags; \
+    git fetch origin tag ${VERSION} --no-tags && \
     git checkout -f ${VERSION}; \
     fi
 
