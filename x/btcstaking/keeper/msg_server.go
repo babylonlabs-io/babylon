@@ -12,6 +12,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -497,6 +499,15 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	return &types.MsgAddCovenantSigsResponse{}, nil
 }
 
+func containsInput(tx *wire.MsgTx, inputHash *chainhash.Hash, inputIdx uint32) bool {
+	for _, txIn := range tx.TxIn {
+		if txIn.PreviousOutPoint.Hash.IsEqual(inputHash) && txIn.PreviousOutPoint.Index == inputIdx {
+			return true
+		}
+	}
+	return false
+}
+
 // BTCUndelegate adds a signature on the unbonding tx from the BTC delegator
 // this effectively proves that the BTC delegator wants to unbond and Babylon
 // will consider its BTC delegation unbonded
@@ -550,10 +561,47 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("stake spending tx is not included in the Bitcoin chain: invalid inclusion proof")
 	}
 
-	delegatorUnbondingInfo := types.DelegatorUnbondingInfo{
-		SpendStakeTx:                   req.StakeSpendingTx,
-		SpendStakeTxInclusionBlockHash: req.StakeSpendingTxInclusionProof.Key.Hash.MustMarshal(),
-		SpendStakeTxInclusionIndex:     req.StakeSpendingTxInclusionProof.Key.Index,
+	registeredUnbondingTx, err := bbn.NewBTCTxFromBytes(btcDel.BtcUndelegation.UnbondingTx)
+
+	if err != nil {
+		panic(fmt.Errorf("failed to parse unbonding tx from existing delegation with hash %s: %w", req.StakingTxHash, err))
+	}
+
+	registeredUnbondingTxHash := registeredUnbondingTx.TxHash()
+
+	spendStakeTxHash := stakeSpendingTx.TxHash()
+
+	var delegatorUnbondingInfo *types.DelegatorUnbondingInfo
+
+	// Check if stake spending tx is already registered unbonding tx. If so, we do
+	// not need to save it in database
+	if spendStakeTxHash.IsEqual(&registeredUnbondingTxHash) {
+		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
+			// if the stake spending tx is the same as the registered unbonding tx,
+			// we do not need to save it in the database
+			SpendStakeTx:                   []byte{},
+			SpendStakeTxInclusionBlockHash: req.StakeSpendingTxInclusionProof.Key.Hash.MustMarshal(),
+			SpendStakeTxInclusionIndex:     req.StakeSpendingTxInclusionProof.Key.Index,
+		}
+	} else {
+		// stakeSpendingTx is not unbonding tx, first we need to verify whether it
+		// acutally spends staking output
+		stakingTxHash, err := chainhash.NewHashFromStr(req.StakingTxHash)
+
+		if err != nil {
+			// panic as we already verified the staking tx hash in the beginning
+			panic(fmt.Errorf("failed to parse staking tx hash from existing delegation with hash %s: %w", req.StakingTxHash, err))
+		}
+
+		if !containsInput(stakeSpendingTx, stakingTxHash, btcDel.StakingOutputIdx) {
+			return nil, types.ErrInvalidBTCUndelegateReq.Wrap("stake spending tx does not spend staking output")
+		}
+
+		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
+			SpendStakeTx:                   req.StakeSpendingTx,
+			SpendStakeTxInclusionBlockHash: req.StakeSpendingTxInclusionProof.Key.Hash.MustMarshal(),
+			SpendStakeTxInclusionIndex:     req.StakeSpendingTxInclusionProof.Key.Index,
+		}
 	}
 
 	// TODO Add check for to compare unbonding tx with stake spending tx and emit
@@ -561,7 +609,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	// all good, add the signature to BTC delegation's undelegation
 	// and set back
-	ms.btcUndelegate(ctx, btcDel, &delegatorUnbondingInfo)
+	ms.btcUndelegate(ctx, btcDel, delegatorUnbondingInfo)
 
 	// At this point, the unbonding signature is verified.
 	// Thus, we can safely consider this message as refundable
