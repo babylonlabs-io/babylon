@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -164,13 +165,16 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// and it should work.
 	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.ActivationBlockHeight-1, 3)
 	s.NoError(err)
-	_, _, err = n.CommitPubRandListOut(
+	out, errOut, err := n.CommitPubRandListOut(
 		fp.BtcPk,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.NumPubRand,
 		msgCommitPubRandList.Commitment,
 		msgCommitPubRandList.Sig,
 	)
+	fmt.Printf("CommitPubRandListOut ErrOut %s", errOut.String())
+	fmt.Printf("CommitPubRandListOut out %s", out.String())
+
 	// check the error happened
 	s.ErrorContains(err, finalitytypes.ErrFinalityNotActivated.Error())
 
@@ -209,7 +213,4 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 		actBalance := balanceAfterUpgrade.String()
 		s.Equal(expBalance, actBalance, "addr %s has different balances. Expected %s != %s Actual", addr, expBalance, actBalance)
 	}
-
-	// chainA.WaitUntilHeight(int64(finalityParams.ActivationBlockHeight)) // waits for the finality
-
 }
