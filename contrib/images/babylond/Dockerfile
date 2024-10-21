@@ -5,7 +5,7 @@ FROM golang:1.21-alpine AS build-env
 # TARGETPLATFORM should be one of linux/amd64 or linux/arm64.
 ARG TARGETPLATFORM="linux/amd64"
 # Version to build. Default is empty
-ARG VERSION
+ARG VERSION=$(if [ -z "$VERSION" ]; then git describe --tags --always; else echo "$VERSION"; fi)
 
 # Use muslc for static libs
 ARG BUILD_TAGS="muslc"
