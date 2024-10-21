@@ -1,4 +1,4 @@
-package e2e
+–package e2e
 
 import (
 	"math/rand"
@@ -155,10 +155,14 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// as the one from the data
 	finalityParams := n.QueryFinalityParams()
 
+	finalityParamsFromData, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec(), testnet.FinalityParamStr)
+	s.NoError(err)
+	s.EqualValues(finalityParamsFromData, *finalityParams)
+
 	// FP tries to commit with start height before finality activation height
 	// it should fail, after commits with start height = finality activation height
 	// and it should work.
-	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParams.ActivationBlockHeight-1, 3)
+	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.ActivationBlockHeight-1, 3)
 	s.NoError(err)
 	_, errBuf, err := n.CommitPubRandListOut(
 		fp.BtcPk,
@@ -167,12 +171,8 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 		msgCommitPubRandList.Commitment,
 		msgCommitPubRandList.Sig,
 	)
+	s.NoError(err)
 	s.Contains(errBuf.String(), finalitytypes.ErrFinalityNotActivated)
-	s.NoError(err)
-
-	finalityParamsFromData, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec(), testnet.FinalityParamStr)
-	s.NoError(err)
-	s.EqualValues(finalityParamsFromData, *finalityParams)
 
 	// Verifies the balance differences were really executed
 	tokenDistData, err := v1.LoadTokenDistributionFromData(testnet.TokensDistributionStr)
