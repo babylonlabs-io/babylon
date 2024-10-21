@@ -36,7 +36,6 @@ type Helper struct {
 	BTCLightClientKeeper *types.MockBTCLightClientKeeper
 	BTCCheckpointKeeper  *types.MockBtcCheckpointKeeper
 	FinalityKeeper       *types.MockFinalityKeeper
-	BTCStakingHooks      *types.MockBtcStakingHooks
 	MsgServer            types.MsgServer
 	Net                  *chaincfg.Params
 }
@@ -56,10 +55,6 @@ func NewHelper(
 	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper, finalityKeeper, iKeeper)
 	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
 	msgSrvr := keeper.NewMsgServerImpl(*k)
-
-	mockedHooks := types.NewMockBtcStakingHooks(ctrl)
-	mockedHooks.EXPECT().AfterFinalityProviderActivated(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	k.SetHooks(mockedHooks)
 
 	return &Helper{
 		t:                    t,
@@ -110,19 +105,18 @@ func (h *Helper) GenAndApplyCustomParams(
 	slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
 	h.NoError(err)
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, types.Params{
-		CovenantPks:                bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
-		CovenantQuorum:             3,
-		MinStakingValueSat:         1000,
-		MaxStakingValueSat:         int64(4 * 10e8),
-		MinStakingTimeBlocks:       10,
-		MaxStakingTimeBlocks:       10000,
-		SlashingPkScript:           slashingPkScript,
-		MinSlashingTxFeeSat:        10,
-		MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.01"),
-		SlashingRate:               sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
-		MaxActiveFinalityProviders: 100,
-		MinUnbondingTimeBlocks:     minUnbondingTime,
-		UnbondingFeeSat:            1000,
+		CovenantPks:            bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
+		CovenantQuorum:         3,
+		MinStakingValueSat:     1000,
+		MaxStakingValueSat:     int64(4 * 10e8),
+		MinStakingTimeBlocks:   10,
+		MaxStakingTimeBlocks:   10000,
+		SlashingPkScript:       slashingPkScript,
+		MinSlashingTxFeeSat:    10,
+		MinCommissionRate:      sdkmath.LegacyMustNewDecFromStr("0.01"),
+		SlashingRate:           sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
+		MinUnbondingTimeBlocks: minUnbondingTime,
+		UnbondingFeeSat:        1000,
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs

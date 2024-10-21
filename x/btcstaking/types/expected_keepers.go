@@ -23,10 +23,6 @@ type FinalityKeeper interface {
 	HasTimestampedPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) bool
 }
 
-type BtcStakingHooks interface {
-	AfterFinalityProviderActivated(ctx context.Context, fpPk *bbn.BIP340PubKey) error
-}
-
 type IncentiveKeeper interface {
 	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
 }
