@@ -7,12 +7,12 @@ ARG TARGETPLATFORM="linux/amd64"
 # Version to build. Default is empty
 ARG VERSION
 ARG BABYLON_BUILD_OPTIONS=""
+ARG COSMOS_BUILD_OPTIONS=""
 
 # Use muslc for static libs
 ARG BUILD_TAGS="muslc"
 ARG LEDGER_ENABLED="false"
-# Cosmos build options
-ARG COSMOS_BUILD_OPTIONS=""
+
 
 # Install cli tools for building and final image
 RUN apk add --update --no-cache make git bash gcc linux-headers eudev-dev ncurses-dev openssh curl jq
@@ -41,8 +41,8 @@ RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm/v2 | cut -d ' ' -f 2)
 
 RUN LEDGER_ENABLED=$LEDGER_ENABLED \
     BABYLON_BUILD_OPTIONS=$BABYLON_BUILD_OPTIONS \
-    BUILD_TAGS=$BUILD_TAGS \
     COSMOS_BUILD_OPTIONS=$COSMOS_BUILD_OPTIONS \
+    BUILD_TAGS=$BUILD_TAGS \
     LINK_STATICALLY=true \
     make build
 
