@@ -5,7 +5,7 @@ FROM golang:1.21-alpine AS build-env
 # TARGETPLATFORM should be one of linux/amd64 or linux/arm64.
 ARG TARGETPLATFORM="linux/amd64"
 # Version to build. Default is empty
-ARG VERSION=$(if [ -z "$VERSION" ]; then git describe --tags --always; else echo "$VERSION"; fi)
+ARG VERSION
 
 # Use muslc for static libs
 ARG BUILD_TAGS="muslc"
@@ -47,6 +47,11 @@ FROM alpine:3.14 AS run
 # Create a user
 RUN addgroup --gid 1137 -S babylon && adduser --uid 1137 -S babylon -G babylon
 RUN apk add bash curl jq
+
+# Set VERSION to current git tag or hash if not provided
+RUN if [ -z "${VERSION}" ]; then \
+    VERSION=$(git describe --tags 2>/dev/null || git rev-parse --short HEAD); \
+    fi
 
 # Label should match your github repo
 LABEL org.opencontainers.image.source="https://github.com/babylonchain/babylond:${VERSION}"
