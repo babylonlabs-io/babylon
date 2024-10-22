@@ -22,11 +22,16 @@ import (
 	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
-func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types.IncentiveKeeper, cKeeper types.CheckpointingKeeper) (*keeper.Keeper, sdk.Context) {
+func FinalityKeeperWithStore(
+	t testing.TB,
+	db dbm.DB,
+	stateStore store.CommitMultiStore,
+	bsKeeper types.BTCStakingKeeper,
+	iKeeper types.IncentiveKeeper,
+	ckptKeeper types.CheckpointingKeeper,
+) (*keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 
-	db := dbm.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, stateStore.LoadLatestVersion())
 
@@ -38,12 +43,26 @@ func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types
 		runtime.NewKVStoreService(storeKey),
 		bsKeeper,
 		iKeeper,
-		cKeeper,
+		ckptKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())
 	ctx = ctx.WithHeaderInfo(header.Info{})
+
+	return &k, ctx
+}
+
+func FinalityKeeper(
+	t testing.TB,
+	bsKeeper types.BTCStakingKeeper,
+	iKeeper types.IncentiveKeeper,
+	ckptKeeper types.CheckpointingKeeper,
+) (*keeper.Keeper, sdk.Context) {
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+
+	k, ctx := FinalityKeeperWithStore(t, db, stateStore, bsKeeper, iKeeper, ckptKeeper)
 
 	// Initialize params
 	dParams := types.DefaultParams()
@@ -52,5 +71,5 @@ func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types
 		panic(err)
 	}
 
-	return &k, ctx
+	return k, ctx
 }
