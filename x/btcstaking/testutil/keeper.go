@@ -31,8 +31,9 @@ import (
 )
 
 var (
-	net          = &chaincfg.SimNetParams
-	btcTipHeight = uint32(30)
+	net              = &chaincfg.SimNetParams
+	btcTipHeight     = uint32(30)
+	timestampedEpoch = uint64(10)
 )
 
 type Helper struct {
@@ -63,9 +64,7 @@ func NewHelper(
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
 
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
-	epoch := uint64(10)
-	ckptKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epoch}).AnyTimes()
-	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epoch).AnyTimes()
+	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(timestampedEpoch).AnyTimes()
 
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
@@ -509,9 +508,20 @@ func (h *Helper) CommitPubRandList(
 	fp *types.FinalityProvider,
 	startHeight uint64,
 	numPubRand uint64,
+	timestamped bool,
 ) *datagen.RandListInfo {
 	randListInfo, msg, err := datagen.GenRandomMsgCommitPubRandList(r, fpSK, startHeight, numPubRand)
 	h.NoError(err)
+
+	// if timestamped, use the timestamped epoch, otherwise use the next epoch
+	var epoch uint64
+	if timestamped {
+		epoch = timestampedEpoch
+	} else {
+		epoch = timestampedEpoch + 1
+	}
+
+	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epoch}).Times(1)
 
 	_, err = h.FMsgServer.CommitPubRandList(h.Ctx, msg)
 	h.NoError(err)

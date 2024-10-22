@@ -37,7 +37,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 		numFps := numFpsWithVotingPower + datagen.RandomInt(r, 10)
 		for i := uint64(0); i < numFps; i++ {
 			fpSK, _, fp := h.CreateFinalityProvider(r)
-			h.CommitPubRandList(r, fpSK, fp, 1, 100)
+			h.CommitPubRandList(r, fpSK, fp, 1, 100, true)
 			fps = append(fps, fp)
 		}
 

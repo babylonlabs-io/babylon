@@ -39,7 +39,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		fpsWithVotingPowerMap := map[string]*types.FinalityProvider{}
 		for i := uint64(0); i < numFps; i++ {
 			fpSK, _, fp := h.CreateFinalityProvider(r)
-			h.CommitPubRandList(r, fpSK, fp, 1, 100)
+			h.CommitPubRandList(r, fpSK, fp, 1, 100, true)
 			if i < numFpsWithVotingPower {
 				// these finality providers will receive BTC delegations and have voting power
 				fpsWithVotingPowerMap[fp.Addr] = fp
@@ -122,7 +122,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		noTimestampedFps := map[string]bool{}
 		for i := uint64(0); i < numFps; i++ {
 			// generate finality provider
-			_, _, fp := h.CreateFinalityProvider(r)
+			fpSK, _, fp := h.CreateFinalityProvider(r)
 
 			// delegate to this finality provider
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
@@ -147,11 +147,11 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 			// zero voting power in the table
 			fpDistInfo := &types.FinalityProviderDistInfo{BtcPk: fp.BtcPk, TotalBondedSat: stakingValue}
 			if r.Intn(10) <= 2 {
-				finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), fp.BtcPk, gomock.Any()).Return(false).AnyTimes()
+				h.CommitPubRandList(r, fpSK, fp, 1, 100, false)
 				noTimestampedFps[fp.BtcPk.MarshalHex()] = true
 				fpDistInfo.IsTimestamped = false
 			} else {
-				finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), fp.BtcPk, gomock.Any()).Return(true).AnyTimes()
+				h.CommitPubRandList(r, fpSK, fp, 1, 100, true)
 				fpDistInfo.IsTimestamped = true
 			}
 
@@ -159,7 +159,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 			fpsWithMeta = append(fpsWithMeta, fpDistInfo)
 		}
 
-		maxActiveFpsParam := h.BTCStakingKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders
+		maxActiveFpsParam := h.FinalityKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders
 		// get a map of expected active finality providers
 		types.SortFinalityProvidersWithZeroedVotingPower(fpsWithMeta)
 		expectedActiveFps := fpsWithMeta[:min(uint32(len(fpsWithMeta)-len(noTimestampedFps)), maxActiveFpsParam)]
@@ -211,25 +211,23 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-		finalityKeeper.EXPECT().HasTimestampedPubRand(gomock.Any(), gomock.Any(), gomock.Any()).Return(true).AnyTimes()
-		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
 		// set random number of max number of finality providers
 		// in order to cover cases that number of finality providers is more or
 		// less than `MaxActiveFinalityProviders`
-		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
-		bsParams.MaxActiveFinalityProviders = uint32(datagen.RandomInt(r, 20) + 10)
-		err := h.BTCStakingKeeper.SetParams(h.Ctx, bsParams)
+		fParams := h.FinalityKeeper.GetParams(h.Ctx)
+		fParams.MaxActiveFinalityProviders = uint32(datagen.RandomInt(r, 20) + 10)
+		err := h.FinalityKeeper.SetParams(h.Ctx, fParams)
 		h.NoError(err)
 		// change address
 		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 		h.NoError(err)
 
 		numFps := datagen.RandomInt(r, 20) + 10
-		numActiveFPs := int(min(numFps, uint64(bsParams.MaxActiveFinalityProviders)))
+		numActiveFPs := int(min(numFps, uint64(fParams.MaxActiveFinalityProviders)))
 
 		/*
 			Generate a random batch of finality providers, each with a BTC delegation
@@ -326,7 +324,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		// create more finality providers
 		numNewFps := datagen.RandomInt(r, 20) + 10
 		numFps += numNewFps
-		numActiveFPs = int(min(numFps, uint64(bsParams.MaxActiveFinalityProviders)))
+		numActiveFPs = int(min(numFps, uint64(fParams.MaxActiveFinalityProviders)))
 		for i := uint64(0); i < numNewFps; i++ {
 			// generate finality provider
 			// generate and insert new finality provider
