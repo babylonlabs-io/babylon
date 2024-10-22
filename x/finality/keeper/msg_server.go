@@ -274,8 +274,7 @@ func (ms msgServer) UnjailFinalityProvider(ctx context.Context, req *types.MsgUn
 		return nil, err
 	}
 	if !jailingPeriodPassed {
-		return nil, types.ErrJailingPeriodNotPassed.Wrapf(
-			fmt.Sprintf("current block time: %v, required %v", curBlockTime, info.JailedUntil))
+		return nil, types.ErrJailingPeriodNotPassed.Wrapf("current block time: %v, required %v", curBlockTime, info.JailedUntil)
 	}
 
 	err = ms.BTCStakingKeeper.UnjailFinalityProvider(ctx, fpPk.MustMarshal())

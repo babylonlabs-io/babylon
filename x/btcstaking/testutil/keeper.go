@@ -31,7 +31,6 @@ import (
 )
 
 var (
-	net              = &chaincfg.SimNetParams
 	btcTipHeight     = uint32(30)
 	timestampedEpoch = uint64(10)
 )
