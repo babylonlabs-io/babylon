@@ -25,8 +25,6 @@ type (
 		// should be the x/gov module account.
 		authority string
 
-		hooks types.FinalityHooks
-
 		// FinalityProviderSigningTracker key: BIP340PubKey bytes | value: FinalityProviderSigningInfo
 		FinalityProviderSigningTracker collections.Map[[]byte, types.FinalityProviderSigningInfo]
 		// FinalityProviderMissedBlockBitmap key: BIP340PubKey bytes | value: byte key for a finality provider's missed block bitmap chunk
@@ -66,17 +64,6 @@ func NewKeeper(
 			collections.BytesValue,
 		),
 	}
-}
-
-// SetHooks sets the finality hooks
-func (k *Keeper) SetHooks(sh types.FinalityHooks) *Keeper {
-	if k.hooks != nil {
-		panic("cannot set finality hooks twice")
-	}
-
-	k.hooks = sh
-
-	return k
 }
 
 func (k Keeper) BeginBlocker(ctx context.Context) error {

@@ -510,7 +510,6 @@ func (ak *AppKeepers) InitKeepers(
 		ak.CheckpointingKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	ak.FinalityKeeper = *ak.FinalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(ak.BTCStakingKeeper.Hooks()))
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(

@@ -2,14 +2,17 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
+	"cosmossdk.io/collections"
 	"github.com/btcsuite/btcd/btcutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 /* power distribution update */
@@ -93,7 +96,7 @@ func (k Keeper) handleFPStateUpdates(ctx context.Context, prevDc, newDc *types.V
 
 	newlyActiveFPs := newDc.FindNewActiveFinalityProviders(prevDc)
 	for _, fp := range newlyActiveFPs {
-		if err := k.AfterFinalityProviderActivated(ctx, fp.BtcPk); err != nil {
+		if err := k.handleActivatedFinalityProvider(ctx, fp.BtcPk); err != nil {
 			panic(fmt.Errorf("failed to execute after finality provider %s activated", fp.BtcPk.MarshalHex()))
 		}
 
@@ -118,6 +121,23 @@ func (k Keeper) handleFPStateUpdates(ctx context.Context, prevDc, newDc *types.V
 
 		k.Logger(sdkCtx).Info("a new finality provider becomes inactive", "pk", fp.BtcPk.MarshalHex())
 	}
+}
+
+// handleActivatedFinalityProvider updates the signing info start height or create a new signing info
+func (k Keeper) handleActivatedFinalityProvider(ctx context.Context, fpPk *bbn.BIP340PubKey) error {
+	signingInfo, err := k.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if err == nil {
+		signingInfo.StartHeight = sdkCtx.BlockHeight()
+	} else if errors.Is(err, collections.ErrNotFound) {
+		signingInfo = ftypes.NewFinalityProviderSigningInfo(
+			fpPk,
+			sdkCtx.BlockHeight(),
+			0,
+		)
+	}
+
+	return k.FinalityProviderSigningTracker.Set(ctx, fpPk.MustMarshal(), signingInfo)
 }
 
 func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache) {
