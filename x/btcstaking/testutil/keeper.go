@@ -70,11 +70,17 @@ func NewHelper(
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
-	k, ctx := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btclcKeeper, btccKeeper, iKeeper)
+	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btclcKeeper, btccKeeper, iKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
 	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, iKeeper, ckptKeeper)
 	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
+
+	// set all parameters
+	err := k.SetParams(ctx, types.DefaultParams())
+	require.NoError(t, err)
+	err = fk.SetParams(ctx, ftypes.DefaultParams())
+	require.NoError(t, err)
 
 	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
 
