@@ -58,6 +58,11 @@ generalized unbonding handler
 * [#213](https://github.com/babylonlabs-io/babylon/pull/213) Bump wasmd and re-enable static linking
 * [#210](https://github.com/babylonlabs-io/babylon/pull/210) Parameterize finality parameters in prepare-genesis cmd
 
+### Bug fix
+
+* [#218](https://github.com/babylonlabs-io/babylon/pull/218) Fix removing voting
+power during expiry
+
 ## v0.13.0
 
 ### API Breaking
