@@ -9,9 +9,9 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/testutil"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 

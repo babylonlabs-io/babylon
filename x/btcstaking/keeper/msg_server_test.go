@@ -19,11 +19,11 @@ import (
 	"google.golang.org/grpc/status"
 
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/testutil"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
