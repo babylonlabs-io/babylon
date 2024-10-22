@@ -80,11 +80,11 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	//     corrupt a new finality provider and equivocate a historical block over and over again, making a previous block
 	//     unfinalisable forever
 	if fp.IsSlashed() {
-		return nil, bstypes.ErrFpAlreadySlashed.Wrapf(fmt.Sprintf("finality provider public key: %s", fpPK.MarshalHex()))
+		return nil, bstypes.ErrFpAlreadySlashed.Wrapf("finality provider public key: %s", fpPK.MarshalHex())
 	}
 
 	if fp.IsJailed() {
-		return nil, bstypes.ErrFpAlreadyJailed.Wrapf(fmt.Sprintf("finality provider public key: %s", fpPK.MarshalHex()))
+		return nil, bstypes.ErrFpAlreadyJailed.Wrapf("finality provider public key: %s", fpPK.MarshalHex())
 	}
 
 	// ensure the finality provider has voting power at this height

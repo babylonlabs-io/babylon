@@ -112,6 +112,13 @@ func (h *Helper) Error(err error, msgAndArgs ...any) {
 	require.Error(h.t, err, msgAndArgs...)
 }
 
+func (h *Helper) BeginBlocker() {
+	err := h.BTCStakingKeeper.BeginBlocker(h.Ctx)
+	h.NoError(err)
+	err = h.FinalityKeeper.BeginBlocker(h.Ctx)
+	h.NoError(err)
+}
+
 func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
 	return h.GenAndApplyCustomParams(r, 100, 0)
 }
