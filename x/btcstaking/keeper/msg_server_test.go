@@ -259,7 +259,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 		fpPK,
 		changeAddress.EncodeAddress(),
 		stakingValue,
-		1000,
+		10000,
 		stakingValue-1000,
 		uint16(customMinUnbondingTime)+1,
 		false,

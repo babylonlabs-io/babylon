@@ -42,8 +42,8 @@ func testStakingParams(
 		CovenantQuorum:             3,
 		MinStakingValueSat:         100000,
 		MaxStakingValueSat:         int64(4 * 10e8),
-		MinStakingTimeBlocks:       10,
-		MaxStakingTimeBlocks:       10000,
+		MinStakingTimeBlocks:       1000,
+		MaxStakingTimeBlocks:       100000,
 		SlashingPkScript:           slashingPkScript,
 		MinSlashingTxFeeSat:        1000,
 		MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.01"),
@@ -754,6 +754,20 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				msg.UnbondingTx = newUnbondingInfdo.serializedUnbondingTx
 				msg.UnbondingSlashingTx = newUnbondingInfdo.unbondingSlashingTx
 				msg.DelegatorUnbondingSlashingSig = newUnbondingInfdo.unbondingSlashinSig
+
+				return msg, params, checkpointParams
+			},
+			err: types.ErrInvalidUnbondingTx,
+		},
+		{
+			name: "Msg.UnbondingTime larger than Msg.StakingTime - CheckpointFinalizationTimeout",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				checkpointParams := testCheckpointParams()
+				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+
+				maxUnbondingTime := msg.StakingTime - checkpointParams.CheckpointFinalizationTimeout
+				msg.UnbondingTime = maxUnbondingTime + 1
 
 				return msg, params, checkpointParams
 			},

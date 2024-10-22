@@ -459,8 +459,8 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
 		events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 		require.Len(t, events, 0)
-		// the BTC delegation will be unbonded at end height - w
-		unbondedHeight := actualDel.EndHeight - btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
+		// the BTC delegation will be unbonded at end height - unbonding time
+		unbondedHeight := actualDel.EndHeight - actualDel.UnbondingTime
 		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
 		require.Len(t, events, 1)
 		btcDelStateUpdate := events[0].GetBtcDelStateUpdate()
@@ -613,7 +613,7 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		require.Equal(t, stakingTxHash, btcDelStateUpdate.StakingTxHash)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, btcDelStateUpdate.NewState)
 		// there exists 1 event that the BTC delegation becomes unbonded at end height - w
-		unbondedHeight := activatedDel.EndHeight - btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
+		unbondedHeight := activatedDel.EndHeight - activatedDel.UnbondingTime
 		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
 		require.Len(t, events, 1)
 		btcDelStateUpdate = events[0].GetBtcDelStateUpdate()
@@ -705,7 +705,7 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 	events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 	require.Len(t, events, 0)
 	// the BTC delegation will be unbonded at end height - w
-	unbondedHeight := actualDel.EndHeight - btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
+	unbondedHeight := actualDel.EndHeight - actualDel.UnbondingTime
 	events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
 	require.Len(t, events, 1)
 	btcDelStateUpdate := events[0].GetBtcDelStateUpdate()
