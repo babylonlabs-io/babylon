@@ -52,16 +52,13 @@ to total bonded sat
 activation block height to start processing finality messages in `x/finality` params.
 * [#215](https://github.com/babylonlabs-io/babylon/pull/215) Implement ADR-29
 generalized unbonding handler
+* [#218](https://github.com/babylonlabs-io/babylon/pull/218) Fix removing voting
+power during expiry
 
 ### Improvements
 
 * [#213](https://github.com/babylonlabs-io/babylon/pull/213) Bump wasmd and re-enable static linking
 * [#210](https://github.com/babylonlabs-io/babylon/pull/210) Parameterize finality parameters in prepare-genesis cmd
-
-### Bug fix
-
-* [#218](https://github.com/babylonlabs-io/babylon/pull/218) Fix removing voting
-power during expiry
 
 ## v0.13.0
 
