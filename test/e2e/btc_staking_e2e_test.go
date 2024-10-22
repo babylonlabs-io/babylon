@@ -869,16 +869,8 @@ func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstyp
 				}
 			}
 
-			unbondingHeader, err := bbn.NewBTCHeaderHashBytesFromHex(ud.DelegatorUnbondingInfoResponse.SpendStakeTxInclusionBlockHashHex)
-
-			if err != nil {
-				return nil, err
-			}
-
 			btcDel.BtcUndelegation.DelegatorUnbondingInfo = &bstypes.DelegatorUnbondingInfo{
-				SpendStakeTx:                   spendStakeTx,
-				SpendStakeTxInclusionBlockHash: unbondingHeader,
-				SpendStakeTxInclusionIndex:     ud.DelegatorUnbondingInfoResponse.SpendStakeTxInclusionIndex,
+				SpendStakeTx: spendStakeTx,
 			}
 		}
 	}

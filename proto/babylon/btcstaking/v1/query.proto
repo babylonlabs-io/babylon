@@ -313,13 +313,9 @@ message BTCDelegationResponse {
 // DelegatorUnbondingInfoResponse provides all necessary info about transaction
 // which spent the staking output
 message DelegatorUnbondingInfoResponse {
-  // spend_stake_tx_hex is the transaction which spent the staking output
+  // spend_stake_tx_hex is the transaction which spent the staking output. It is
+  // filled only if the spend_stake_tx_hex is different than the unbonding_tx_hex
   string spend_stake_tx_hex = 1;
-  // spend_stake_tx_inclusion_block_hash_hex is the block hash of the block in which
-  // spend_stake_tx was included
-  string spend_stake_tx_inclusion_block_hash_hex = 2;
-  // spend_stake_tx_inclusion_index is the index of spend_stake_tx in the block
-  uint32 spend_stake_tx_inclusion_index = 3;
 }
 
 // BTCUndelegationResponse provides all necessary info about the undeleagation

@@ -579,9 +579,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
 			// if the stake spending tx is the same as the registered unbonding tx,
 			// we do not need to save it in the database
-			SpendStakeTx:                   []byte{},
-			SpendStakeTxInclusionBlockHash: req.StakeSpendingTxInclusionProof.Key.Hash.MustMarshal(),
-			SpendStakeTxInclusionIndex:     req.StakeSpendingTxInclusionProof.Key.Index,
+			SpendStakeTx: []byte{},
 		}
 	} else {
 		// stakeSpendingTx is not unbonding tx, first we need to verify whether it
@@ -598,9 +596,18 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		}
 
 		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
-			SpendStakeTx:                   req.StakeSpendingTx,
-			SpendStakeTxInclusionBlockHash: req.StakeSpendingTxInclusionProof.Key.Hash.MustMarshal(),
-			SpendStakeTxInclusionIndex:     req.StakeSpendingTxInclusionProof.Key.Index,
+			SpendStakeTx: req.StakeSpendingTx,
+		}
+
+		ev := &types.EventUnexpectedUnbondingTx{
+			StakingTxHash:          btcDel.MustGetStakingTxHash().String(),
+			SpendStakeTxHash:       spendStakeTxHash.String(),
+			SpendStakeTxHeaderHash: req.StakeSpendingTxInclusionProof.Key.Hash.MarshalHex(),
+			SpendStakeTxBlockIndex: req.StakeSpendingTxInclusionProof.Key.Index,
+		}
+
+		if err := ctx.EventManager().EmitTypedEvent(ev); err != nil {
+			panic(fmt.Errorf("failed to emit EventUnexpectedUnbondingTx event: %w", err))
 		}
 	}
 
