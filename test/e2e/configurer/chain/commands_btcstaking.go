@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
@@ -247,13 +246,22 @@ func (n *NodeConfig) AddCovenantUnbondingSigs(
 	n.LogActionF("successfully added covenant unbonding sigs")
 }
 
-func (n *NodeConfig) BTCUndelegate(stakingTxHash *chainhash.Hash, delUnbondingSig *schnorr.Signature) {
+func (n *NodeConfig) BTCUndelegate(
+	stakingTxHash *chainhash.Hash,
+	spendStakeTx *wire.MsgTx,
+	spendStakeTxInclusionProof *bstypes.InclusionProof,
+) {
 	n.LogActionF("undelegate by using signature on unbonding tx from delegator")
 
-	sigHex := bbn.NewBIP340SignatureFromBTCSig(delUnbondingSig).ToHexStr()
-	cmd := []string{"babylond", "tx", "btcstaking", "btc-undelegate", stakingTxHash.String(), sigHex, "--from=val"}
+	spendStakeTxBytes, err := bbn.SerializeBTCTx(spendStakeTx)
+	require.NoError(n.t, err)
+	spendStakeTxHex := hex.EncodeToString(spendStakeTxBytes)
+	inclusionProofHex, err := spendStakeTxInclusionProof.MarshalHex()
+	require.NoError(n.t, err)
 
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	cmd := []string{"babylond", "tx", "btcstaking", "btc-undelegate", stakingTxHash.String(), spendStakeTxHex, inclusionProofHex, "--from=val"}
+
+	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added signature on unbonding tx from delegator")
 }

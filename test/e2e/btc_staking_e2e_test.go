@@ -457,14 +457,26 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	s.NoError(err)
 	stakingTxHash := stakingMsgTx.TxHash()
 
-	// delegator signs unbonding tx
-	params := nonValidatorNode.QueryBTCStakingParams()
-	delUnbondingSig, err := activeDel.SignUnbondingTx(params, s.net, s.delBTCSK)
+	currentBtcTipResp, err := nonValidatorNode.QueryTip()
 	s.NoError(err)
+	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+	s.NoError(err)
+
+	unbondingTx := activeDel.BtcUndelegation.UnbondingTx
+	unbondingTxMsg, err := bbn.NewBTCTxFromBytes(unbondingTx)
+	s.NoError(err)
+
+	blockWithUnbondingTx := datagen.CreateBlockWithTransaction(s.r, currentBtcTip.Header.ToBlockHeader(), unbondingTxMsg)
+	nonValidatorNode.InsertHeader(&blockWithUnbondingTx.HeaderBytes)
+	inclusionProof := bstypes.NewInclusionProofFromSpvProof(blockWithUnbondingTx.SpvProof)
 
 	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
 		// submit the message for creating BTC undelegation
-		nonValidatorNode.BTCUndelegate(&stakingTxHash, delUnbondingSig)
+		nonValidatorNode.BTCUndelegate(
+			&stakingTxHash,
+			unbondingTxMsg,
+			inclusionProof,
+		)
 		// wait for a block so that above txs take effect
 		nonValidatorNode.WaitForNextBlock()
 	}, true)
@@ -848,12 +860,18 @@ func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstyp
 			DelegatorSlashingSig:     delSlashingSig,
 		}
 
-		if len(ud.DelegatorUnbondingSigHex) > 0 {
-			delUnbondingSig, err := bbn.NewBIP340SignatureFromHex(ud.DelegatorUnbondingSigHex)
-			if err != nil {
-				return nil, err
+		if ud.DelegatorUnbondingInfoResponse != nil {
+			var spendStakeTx []byte = make([]byte, 0)
+			if ud.DelegatorUnbondingInfoResponse.SpendStakeTxHex != "" {
+				spendStakeTx, err = hex.DecodeString(ud.DelegatorUnbondingInfoResponse.SpendStakeTxHex)
+				if err != nil {
+					return nil, err
+				}
 			}
-			btcDel.BtcUndelegation.DelegatorUnbondingSig = delUnbondingSig
+
+			btcDel.BtcUndelegation.DelegatorUnbondingInfo = &bstypes.DelegatorUnbondingInfo{
+				SpendStakeTx: spendStakeTx,
+			}
 		}
 	}
 
