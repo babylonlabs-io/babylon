@@ -20,6 +20,11 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if uint64(sdkCtx.HeaderInfo().Height) < k.GetParams(ctx).ActivationBlockHeight {
+		return []abci.ValidatorUpdate{}, nil
+	}
+
 	// if the BTC staking protocol is activated, i.e., there exists a height where a finality provider
 	// has voting power, start indexing and tallying blocks
 	if _, err := k.BTCStakingKeeper.GetBTCStakingActivatedHeight(ctx); err == nil {
@@ -34,7 +39,7 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 		// to send votes on the height to be examined as whether `missed` or not (1 or 0 of a
 		// bit in a bit array of size params.SignedBlocksWindow)
 		// once this height is judged as `missed`, the judgement is irreversible
-		heightToExamine := sdk.UnwrapSDKContext(ctx).HeaderInfo().Height - k.GetParams(ctx).FinalitySigTimeout
+		heightToExamine := sdkCtx.HeaderInfo().Height - k.GetParams(ctx).FinalitySigTimeout
 		if heightToExamine >= 1 {
 			k.HandleLiveness(ctx, heightToExamine)
 		}
