@@ -15,12 +15,11 @@ import (
 
 func TestExportGenesis(t *testing.T) {
 	r, h := rand.New(rand.NewSource(11)), helper.NewHelper(t)
-	k, btclcK, btcCheckK, ctx := h.App.BTCStakingKeeper, h.App.BTCLightClientKeeper, h.App.BtcCheckpointKeeper, h.Ctx
+	k, btclcK, _, ctx := h.App.BTCStakingKeeper, h.App.BTCLightClientKeeper, h.App.BtcCheckpointKeeper, h.Ctx
 	numFps := 3
 
 	fps := datagen.CreateNFinalityProviders(r, t, numFps)
 	params := k.GetParams(ctx)
-	wValue := btcCheckK.GetParams(ctx).CheckpointFinalizationTimeout
 
 	chainsHeight := make([]*types.BlockHeightBbnToBtc, 0)
 	// creates the first as it starts already with an chain height from the helper.
@@ -99,7 +98,7 @@ func TestExportGenesis(t *testing.T) {
 			idxEvent := uint64(totalDelegations - 1)
 			eventsIdx[idxEvent] = &types.EventIndex{
 				Idx:            idxEvent,
-				BlockHeightBtc: del.EndHeight - wValue,
+				BlockHeightBtc: del.EndHeight - del.UnbondingTime,
 				Event:          unbondedEvent,
 			}
 		}
