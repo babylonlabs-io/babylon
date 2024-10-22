@@ -319,7 +319,7 @@ func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340Pu
 // activation block height
 func (ms msgServer) validateActivationHeight(ctx sdk.Context, height uint64) (uint64, *errorsmod.Error) {
 	// TODO: remove it after Phase-2 launch in a future coordinated upgrade
-	activationHeight := ms.GetParams(ctx).ActivationBlockHeight
+	activationHeight := ms.GetParams(ctx).FinalityActivationHeight
 	if height < activationHeight {
 		ms.Logger(ctx).With(
 			"height", height,

@@ -440,7 +440,7 @@ func TestnetGenesisParams(
 	genParams.FinalityParams.MinSignedPerWindow = minSignedPerWindow
 	genParams.FinalityParams.FinalitySigTimeout = finalitySigTimeout
 	genParams.FinalityParams.JailDuration = jailDuration
-	genParams.FinalityParams.ActivationBlockHeight = finalityActivationBlockHeight
+	genParams.FinalityParams.FinalityActivationHeight = finalityActivationBlockHeight
 	if err := genParams.FinalityParams.Validate(); err != nil {
 		panic(err)
 	}

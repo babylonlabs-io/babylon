@@ -360,7 +360,7 @@ func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.Genesi
 
 func updateFinalityGenesis(finalityGenState *finalitytypes.GenesisState) {
 	finalityGenState.Params = finalitytypes.DefaultParams()
-	finalityGenState.Params.ActivationBlockHeight = 0
+	finalityGenState.Params.FinalityActivationHeight = 0
 }
 
 func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {

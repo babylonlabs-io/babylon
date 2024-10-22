@@ -21,7 +21,7 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	if uint64(sdkCtx.HeaderInfo().Height) < k.GetParams(ctx).ActivationBlockHeight {
+	if uint64(sdkCtx.HeaderInfo().Height) < k.GetParams(ctx).FinalityActivationHeight {
 		return []abci.ValidatorUpdate{}, nil
 	}
 

@@ -163,7 +163,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// FP tries to commit with start height before finality activation height
 	// it should fail, after commits with start height = finality activation height
 	// and it should work.
-	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.ActivationBlockHeight-1, 3)
+	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.FinalityActivationHeight-1, 3)
 	s.NoError(err)
 	out, errOut, err := n.CommitPubRandListOut(
 		fp.BtcPk,
@@ -171,15 +171,16 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 		msgCommitPubRandList.NumPubRand,
 		msgCommitPubRandList.Commitment,
 		msgCommitPubRandList.Sig,
+		"",
 	)
-	fmt.Printf("CommitPubRandListOut ErrOut %s", errOut.String())
-	fmt.Printf("CommitPubRandListOut out %s", out.String())
+	fmt.Printf("\nCommitPubRandListOut ErrOut %s", errOut.String())
+	fmt.Printf("\nCommitPubRandListOut out %s", out.String())
 
 	// check the error happened
 	s.ErrorContains(err, finalitytypes.ErrFinalityNotActivated.Error())
 
 	// commits with valid start height
-	_, msgCommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.ActivationBlockHeight, 3)
+	_, msgCommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.FinalityActivationHeight, 3)
 	s.NoError(err)
 	n.CommitPubRandList(
 		fp.BtcPk,

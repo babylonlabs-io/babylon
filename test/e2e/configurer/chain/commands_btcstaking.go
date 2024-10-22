@@ -164,6 +164,7 @@ func (n *NodeConfig) CommitPubRandListOut(
 	numPubrand uint64,
 	commitment []byte,
 	sig *bbn.BIP340Signature,
+	success string,
 ) (outBuf, errBuf bytes.Buffer, err error) {
 	n.LogActionF("committing public randomness list")
 
@@ -195,11 +196,15 @@ func (n *NodeConfig) CommitPubRandListOut(
 	// gas
 	cmd = append(cmd, "--gas=500000")
 
-	return n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	allTxArgs := []string{fmt.Sprintf("--chain-id=%s", n.chainId), "--gas-prices=0.002ubbn", "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
+	txCommand := append(cmd, allTxArgs...)
+	return n.containerManager.ExecCmd(n.t, n.Name, txCommand, success)
+
+	// return n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 }
 
 func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
-	_, _, err := n.CommitPubRandListOut(fpBTCPK, startHeight, numPubrand, commitment, sig)
+	_, _, err := n.CommitPubRandListOut(fpBTCPK, startHeight, numPubrand, commitment, sig, "code: 0")
 	require.NoError(n.t, err)
 	n.LogActionF("successfully committed public randomness list")
 }

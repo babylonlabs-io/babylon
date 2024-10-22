@@ -451,7 +451,7 @@ func TestVerifyActivationHeight(t *testing.T) {
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 	err := fKeeper.SetParams(ctx, types.DefaultParams())
 	require.NoError(t, err)
-	activationHeight := fKeeper.GetParams(ctx).ActivationBlockHeight
+	activationHeight := fKeeper.GetParams(ctx).FinalityActivationHeight
 
 	// checks pub rand commit
 	btcSK, _, err := datagen.GenRandomBTCKeyPair(r)

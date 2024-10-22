@@ -32,12 +32,12 @@ var _ paramtypes.ParamSet = (*Params)(nil)
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
 	return Params{
-		FinalitySigTimeout:    DefaultFinalitySigTimeout,
-		SignedBlocksWindow:    DefaultSignedBlocksWindow,
-		MinSignedPerWindow:    DefaultMinSignedPerWindow,
-		MinPubRand:            DefaultMinPubRand,
-		JailDuration:          DefaultJailDuration,
-		ActivationBlockHeight: DefaultFinalityActivationHeight,
+		FinalitySigTimeout:       DefaultFinalitySigTimeout,
+		SignedBlocksWindow:       DefaultSignedBlocksWindow,
+		MinSignedPerWindow:       DefaultMinSignedPerWindow,
+		MinPubRand:               DefaultMinPubRand,
+		JailDuration:             DefaultJailDuration,
+		FinalityActivationHeight: DefaultFinalityActivationHeight,
 	}
 }
 
