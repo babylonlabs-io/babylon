@@ -8,5 +8,5 @@ const FinalityParamStr = `{
   "min_signed_per_window": "0.1",
   "min_pub_rand": 100,
   "jail_duration": "86400s",
-  "activation_block_height": 70
+  "finality_activation_height": 70
 }`
