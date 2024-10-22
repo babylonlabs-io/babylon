@@ -19,11 +19,11 @@ import (
 	"google.golang.org/grpc/status"
 
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -38,8 +38,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		h.GenAndApplyParams(r)
@@ -87,17 +86,20 @@ func FuzzMsgEditFinalityProvider(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h := testhelper.NewHelper(t)
-		bsKeeper := h.App.BTCStakingKeeper
-		msgSrvr := keeper.NewMsgServerImpl(bsKeeper)
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-		// generate new finality provider
-		fp, err := datagen.GenRandomFinalityProvider(r)
-		require.NoError(t, err)
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+
+		h.GenAndApplyParams(r)
+
 		// insert the finality provider
-		h.AddFinalityProvider(fp)
+		_, _, fp := h.CreateFinalityProvider(r)
 		// assert the finality providers exist in KVStore
-		require.True(t, bsKeeper.HasFinalityProvider(h.Ctx, *fp.BtcPk))
+		require.True(t, h.BTCStakingKeeper.HasFinalityProvider(h.Ctx, *fp.BtcPk))
 
 		// updated commission and description
 		newCommission := datagen.GenRandomCommission(r)
@@ -110,9 +112,9 @@ func FuzzMsgEditFinalityProvider(f *testing.F) {
 			Description: newDescription,
 			Commission:  &newCommission,
 		}
-		_, err = msgSrvr.EditFinalityProvider(h.Ctx, msg)
+		_, err := h.MsgServer.EditFinalityProvider(h.Ctx, msg)
 		h.NoError(err)
-		editedFp, err := bsKeeper.GetFinalityProvider(h.Ctx, *fp.BtcPk)
+		editedFp, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, *fp.BtcPk)
 		h.NoError(err)
 		require.Equal(t, newCommission, *editedFp.Commission)
 		require.Equal(t, newDescription, editedFp.Description)
@@ -127,10 +129,10 @@ func FuzzMsgEditFinalityProvider(f *testing.F) {
 			Description: newDescription,
 			Commission:  &newCommission,
 		}
-		_, err = msgSrvr.EditFinalityProvider(h.Ctx, msg)
-		h.EqualError(err, status.Errorf(codes.PermissionDenied, "the signer does not correspond to the finality provider's Babylon address"))
+		_, err = h.MsgServer.EditFinalityProvider(h.Ctx, msg)
+		require.Equal(h.T(), err, status.Errorf(codes.PermissionDenied, "the signer does not correspond to the finality provider's Babylon address"))
 		errStatus := status.Convert(err)
-		require.Equal(t, codes.PermissionDenied, errStatus.Code())
+		require.Equal(h.T(), codes.PermissionDenied, errStatus.Code())
 	})
 }
 
@@ -145,8 +147,7 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		h.GenAndApplyParams(r)
@@ -179,22 +180,22 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		// ensure consistency between the msg and the BTC delegation in DB
 		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		require.Equal(h.t, msgCreateBTCDel.StakerAddr, actualDel.StakerAddr)
-		require.Equal(h.t, msgCreateBTCDel.Pop, actualDel.Pop)
-		require.Equal(h.t, msgCreateBTCDel.StakingTx, actualDel.StakingTx)
-		require.Equal(h.t, msgCreateBTCDel.SlashingTx, actualDel.SlashingTx)
+		require.Equal(h.T(), msgCreateBTCDel.StakerAddr, actualDel.StakerAddr)
+		require.Equal(h.T(), msgCreateBTCDel.Pop, actualDel.Pop)
+		require.Equal(h.T(), msgCreateBTCDel.StakingTx, actualDel.StakingTx)
+		require.Equal(h.T(), msgCreateBTCDel.SlashingTx, actualDel.SlashingTx)
 		// ensure the BTC delegation in DB is correctly formatted
 		err = actualDel.ValidateBasic()
 		h.NoError(err)
 		// delegation is not activated by covenant yet
-		require.False(h.t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		require.False(h.T(), actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 
 		if usePreApproval {
-			require.Zero(h.t, actualDel.StartHeight)
-			require.Zero(h.t, actualDel.EndHeight)
+			require.Zero(h.T(), actualDel.StartHeight)
+			require.Zero(h.T(), actualDel.EndHeight)
 		} else {
-			require.Positive(h.t, actualDel.StartHeight)
-			require.Positive(h.t, actualDel.EndHeight)
+			require.Positive(h.T(), actualDel.StartHeight)
+			require.Positive(h.T(), actualDel.EndHeight)
 		}
 	})
 }
@@ -207,8 +208,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	// mock BTC light client and BTC checkpoint modules
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-	finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-	h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 	// set all parameters
 	h.GenAndApplyParams(r)
@@ -284,8 +284,7 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -319,7 +318,7 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
 		// delegation is not activated by covenant yet
-		require.False(h.t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		require.False(h.T(), actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
 
@@ -340,8 +339,8 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		// ensure the BTC delegation now has voting power
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		require.True(h.t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
-		require.True(h.t, actualDel.BtcUndelegation.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		require.True(h.T(), actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		require.True(h.T(), actualDel.BtcUndelegation.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 
 		tipHeight := h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height
 		checkpointTimeout := h.BTCCheckpointKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
@@ -370,8 +369,7 @@ func FuzzAddBTCDelegationInclusionProof(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -439,8 +437,7 @@ func FuzzBTCUndelegate(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -521,8 +518,7 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -598,8 +594,7 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -684,8 +679,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 	btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-	finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-	h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 	// set covenant PK to params
 	_, covenantPKs := h.GenAndApplyParams(r)
@@ -852,8 +846,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			// mock BTC light client and BTC checkpoint modules
 			btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 			btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-			finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-			h := NewHelper(t, btclcKeeper, btccKeeper, finalityKeeper)
+			h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 			// set all parameters
 			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.minUnbondingTime)
@@ -979,7 +972,7 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 
 		// Default params are the same in both apps
 		covQuorum := h.App.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
-		maxFinalityProviders := int32(h.App.BTCStakingKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders)
+		maxFinalityProviders := int32(h.App.FinalityKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders)
 
 		// Number of finality providers from 10 to maxFinalityProviders + 10
 		numFinalityProviders := int(r.Int31n(maxFinalityProviders) + 10)
