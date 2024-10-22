@@ -156,9 +156,9 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 func (k Keeper) btcUndelegate(
 	ctx sdk.Context,
 	btcDel *types.BTCDelegation,
-	unbondingTxSig *bbn.BIP340Signature,
+	u *types.DelegatorUnbondingInfo,
 ) {
-	btcDel.BtcUndelegation.DelegatorUnbondingSig = unbondingTxSig
+	btcDel.BtcUndelegation.DelegatorUnbondingInfo = u
 	k.setBTCDelegation(ctx, btcDel)
 
 	if !btcDel.HasInclusionProof() {

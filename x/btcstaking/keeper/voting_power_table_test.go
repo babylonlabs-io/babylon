@@ -49,7 +49,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				h.NoError(err)
-				stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+				stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 					r,
 					delSK,
 					fps[i].BtcPk.MustToBTCPK(),
@@ -192,7 +192,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			h.NoError(err)
-			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 				r,
 				delSK,
 				fp.BtcPk.MustToBTCPK(),
@@ -310,7 +310,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			h.NoError(err)
-			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 				r,
 				delSK,
 				fpPK,
@@ -367,7 +367,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 			fpBTCPK := fpsWithMeta[i].BtcPk
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			h.NoError(err)
-			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 				r,
 				delSK,
 				fpBTCPK.MustToBTCPK(),
@@ -400,7 +400,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			h.NoError(err)
-			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 				r,
 				delSK,
 				fpPK,
