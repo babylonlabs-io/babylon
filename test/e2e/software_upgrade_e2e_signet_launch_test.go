@@ -189,6 +189,8 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 		msgCommitPubRandList.Sig,
 	)
 
+	n.WaitForNextBlock()
+
 	listByHeight = n.QueryListPublicRandomness(fp.BtcPk)
 	_, listFound = listByHeight[finalityParamsFromData.FinalityActivationHeight]
 	s.True(listFound, "this list should exists, because the msg sent is after the activation height")
