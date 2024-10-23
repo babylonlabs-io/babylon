@@ -106,7 +106,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 
 	govProp, err := s.configurer.ParseGovPropFromFile()
 	s.NoError(err)
-	chainA.WaitUntilHeight(govProp.Plan.Height + 2) // waits for chain to produce blocks
+	chainA.WaitUntilHeight(govProp.Plan.Height + 1) // waits for chain to produce blocks
 
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	fptBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
@@ -165,7 +165,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// and it should work.
 	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.FinalityActivationHeight-1, 3)
 	s.NoError(err)
-	out, errOut, err := n.CommitPubRandListOut(
+	out, errOut, errPubRand := n.CommitPubRandListOut(
 		fp.BtcPk,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.NumPubRand,
@@ -175,9 +175,11 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	)
 	fmt.Printf("\nCommitPubRandListOut ErrOut %s", errOut.String())
 	fmt.Printf("\nCommitPubRandListOut out %s", out.String())
+	fmt.Printf("\n Finality params %+v", finalityParamsFromData)
+	fmt.Printf("\n msg commit pub rand %+v", msgCommitPubRandList)
 
 	// check the error happened
-	s.ErrorContains(err, finalitytypes.ErrFinalityNotActivated.Error())
+	s.ErrorContains(errPubRand, finalitytypes.ErrFinalityNotActivated.Error())
 
 	// commits with valid start height
 	_, msgCommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.FinalityActivationHeight, 3)
