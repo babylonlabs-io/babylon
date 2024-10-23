@@ -6,16 +6,16 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
-	"github.com/btcsuite/btcd/txscript"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
@@ -50,21 +50,23 @@ func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+		bk := types.NewMockBTCStakingKeeper(ctrl)
+		keeper, ctx := testkeeper.FinalityKeeper(t, bk, nil, nil)
 
 		// random finality provider
 		fp, err := datagen.GenRandomFinalityProvider(r)
 		require.NoError(t, err)
-		// add this finality provider
-		AddFinalityProvider(t, ctx, *keeper, fp)
 		// set random voting power at random height
 		randomHeight := datagen.RandomInt(r, 100) + 1
 		randomPower := datagen.RandomInt(r, 100) + 1
 		keeper.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), randomHeight, randomPower)
 
 		// happy case
+		bk.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Any()).Return(true).Times(1)
 		req1 := &types.QueryFinalityProviderPowerAtHeightRequest{
 			FpBtcPkHex: fp.BtcPk.MarshalHex(),
 			Height:     randomHeight,
@@ -75,6 +77,7 @@ func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
 
 		// case where the voting power store is not updated in
 		// the given height
+		bk.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Any()).Return(true).Times(1)
 		requestHeight := randomHeight + datagen.RandomInt(r, 10) + 1
 		req2 := &types.QueryFinalityProviderPowerAtHeightRequest{
 			FpBtcPkHex: fp.BtcPk.MarshalHex(),
@@ -84,6 +87,7 @@ func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
 		require.ErrorIs(t, err, types.ErrVotingPowerTableNotUpdated)
 
 		// case where the given fp pk does not exist
+		bk.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Any()).Return(false).Times(1)
 		randPk, err := datagen.GenRandomBIP340PubKey(r)
 		require.NoError(t, err)
 		req3 := &types.QueryFinalityProviderPowerAtHeightRequest{
@@ -91,7 +95,7 @@ func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
 			Height:     randomHeight,
 		}
 		_, err = keeper.FinalityProviderPowerAtHeight(ctx, req3)
-		require.ErrorIs(t, err, types.ErrFpNotFound)
+		require.ErrorIs(t, err, bstypes.ErrFpNotFound)
 	})
 }
 
@@ -99,15 +103,17 @@ func FuzzFinalityProviderCurrentVotingPower(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+		bk := types.NewMockBTCStakingKeeper(ctrl)
+		bk.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+		keeper, ctx := testkeeper.FinalityKeeper(t, bk, nil, nil)
 
 		// random finality provider
 		fp, err := datagen.GenRandomFinalityProvider(r)
 		require.NoError(t, err)
-		// add this finality provider
-		AddFinalityProvider(t, ctx, *keeper, fp)
 		// set random voting power at random height
 		randomHeight := datagen.RandomInt(r, 100) + 1
 		ctx = datagen.WithCtxHeight(ctx, randomHeight)
@@ -148,43 +154,29 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		// Setup keeper and context
-		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 10}).AnyTimes()
-		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil)
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := bstypes.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := bstypes.NewMockBtcCheckpointKeeper(ctrl)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
-		// covenant and slashing addr
-		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
-		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
-		require.NoError(t, err)
-		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
-		require.NoError(t, err)
-		slashingChangeLockTime := uint16(101)
+		covenantSKs, _ := h.GenAndApplyParams(r)
 
-		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
-		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
-		// with value below the dust threshold, causing test failure.
-		// Our goal is not to test failure due to such extreme cases here;
-		// this is already covered in FuzzGeneratingValidStakingSlashingTx
-		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		require.NoError(t, err)
 
 		// Generate a random batch of finality providers
-		var fps []*types.FinalityProvider
+		var fps []*bstypes.FinalityProvider
 		numFpsWithVotingPower := datagen.RandomInt(r, 10) + 1
 		numFps := numFpsWithVotingPower + datagen.RandomInt(r, 10)
 		for i := uint64(0); i < numFps; i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r)
-			require.NoError(t, err)
-			AddFinalityProvider(t, ctx, *keeper, fp)
+			_, _, fp := h.CreateFinalityProvider(r)
 			fps = append(fps, fp)
 		}
 
 		// For numFpsWithVotingPower finality providers, generate a random number of BTC delegations
 		numBTCDels := datagen.RandomInt(r, 10) + 1
 		babylonHeight := datagen.RandomInt(r, 10) + 1
-		fpsWithVotingPowerMap := make(map[string]*types.FinalityProvider)
+		fpsWithVotingPowerMap := make(map[string]*bstypes.FinalityProvider)
 		for i := uint64(0); i < numFpsWithVotingPower; i++ {
 			fpBTCPK := fps[i].BtcPk
 			fpsWithVotingPowerMap[fpBTCPK.MarshalHex()] = fps[i]
@@ -193,39 +185,30 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
-				startHeight, endHeight := uint32(1), uint32(1000)
-				stakingTime := endHeight - startHeight
-				btcDel, err := datagen.GenRandomBTCDelegation(
+				_, msg, btcDel, _, _, err := h.CreateDelegation(
 					r,
-					t,
-					net,
-					[]bbn.BIP340PubKey{*fpBTCPK},
 					delSK,
-					covenantSKs,
-					covenantPKs,
-					covenantQuorum,
-					slashingPkScript,
-					stakingTime, 1, 1000, 10000,
-					slashingRate,
-					slashingChangeLockTime,
+					fpBTCPK.MustToBTCPK(),
+					changeAddress.EncodeAddress(),
+					int64(babylonHeight),
+					uint16(1),
+					int64(1000),
+					uint16(10000),
+					false,
 				)
-				require.NoError(t, err)
-				err = keeper.AddBTCDelegation(ctx, btcDel)
-				require.NoError(t, err)
+				h.NoError(err)
+				h.CreateCovenantSigs(r, covenantSKs, msg, btcDel)
+
 				totalVotingPower += btcDel.TotalSat
 			}
-
-			keeper.SetVotingPower(ctx, fpBTCPK.MustMarshal(), babylonHeight, totalVotingPower)
 		}
+
+		h.BeginBlocker()
 
 		// Test nil request
-		resp, err := keeper.ActiveFinalityProvidersAtHeight(ctx, nil)
-		if resp != nil {
-			t.Errorf("Nil input led to a non-nil response")
-		}
-		if err == nil {
-			t.Errorf("Nil input led to a nil error")
-		}
+		resp, err := h.FinalityKeeper.ActiveFinalityProvidersAtHeight(h.Ctx, nil)
+		require.Nil(t, resp)
+		require.Error(t, err)
 
 		// Generate a page request with a limit and a nil key
 		limit := datagen.RandomInt(r, int(numFpsWithVotingPower)) + 1
@@ -237,7 +220,7 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 		fpsFound := make(map[string]bool, 0)
 
 		for i := uint64(0); i < numFpsWithVotingPower; i += limit {
-			resp, err = keeper.ActiveFinalityProvidersAtHeight(ctx, &req)
+			resp, err = h.FinalityKeeper.ActiveFinalityProvidersAtHeight(h.Ctx, &req)
 			if err != nil {
 				t.Errorf("Valid request led to an error %s", err)
 			}
@@ -261,122 +244,6 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 		if len(fpsFound) != len(fpsWithVotingPowerMap) {
 			t.Errorf("Some finality providers were missed. Got %d while %d were expected", len(fpsFound), len(fpsWithVotingPowerMap))
 		}
-	})
-}
-
-func FuzzFinalityProviderDelegations(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		// Setup keeper and context
-		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
-		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil)
-
-		// covenant and slashing addr
-		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
-		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
-		require.NoError(t, err)
-		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
-		require.NoError(t, err)
-		slashingChangeLockTime := uint16(101)
-
-		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
-		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
-		// with value below the dust threshold, causing test failure.
-		// Our goal is not to test failure due to such extreme cases here;
-		// this is already covered in FuzzGeneratingValidStakingSlashingTx
-		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
-
-		// Generate a finality provider
-		fp, err := datagen.GenRandomFinalityProvider(r)
-		require.NoError(t, err)
-		AddFinalityProvider(t, ctx, *keeper, fp)
-
-		startHeight := uint32(datagen.RandomInt(r, 100)) + 1
-		endHeight := uint32(datagen.RandomInt(r, 1000)) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
-		stakingTime := endHeight - startHeight
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).AnyTimes()
-		// Generate a random number of BTC delegations under this finality provider
-		numBTCDels := datagen.RandomInt(r, 10) + 1
-		expectedBtcDelsMap := make(map[string]*types.BTCDelegation)
-		for j := uint64(0); j < numBTCDels; j++ {
-			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-			require.NoError(t, err)
-			btcDel, err := datagen.GenRandomBTCDelegation(
-				r,
-				t,
-				net,
-				[]bbn.BIP340PubKey{*fp.BtcPk},
-				delSK,
-				covenantSKs,
-				covenantPKs,
-				covenantQuorum,
-				slashingPkScript,
-				stakingTime, startHeight, endHeight, 10000,
-				slashingRate,
-				slashingChangeLockTime,
-			)
-			require.NoError(t, err)
-			expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
-			err = keeper.AddBTCDelegation(ctx, btcDel)
-			require.NoError(t, err)
-		}
-
-		// Test nil request
-		resp, err := keeper.FinalityProviderDelegations(ctx, nil)
-		require.Nil(t, resp)
-		require.Error(t, err)
-
-		babylonHeight := datagen.RandomInt(r, 10) + 1
-		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
-		keeper.IndexBTCHeight(ctx)
-
-		// Generate a page request with a limit and a nil key
-		// query a page of BTC delegations and assert consistency
-		limit := datagen.RandomInt(r, len(expectedBtcDelsMap)) + 1
-
-		// FinalityProviderDelegations loads status, which calls GetTipInfo
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).AnyTimes()
-
-		keeper.IndexBTCHeight(ctx)
-
-		pagination := constructRequestWithLimit(r, limit)
-		// Generate the initial query
-		req := types.QueryFinalityProviderDelegationsRequest{
-			FpBtcPkHex: fp.BtcPk.MarshalHex(),
-			Pagination: pagination,
-		}
-		// Construct a mapping from the finality providers found to a boolean value
-		// Will be used later to evaluate whether all the finality providers were returned
-		btcDelsFound := make(map[string]bool, 0)
-
-		for i := uint64(0); i < numBTCDels; i += limit {
-			resp, err = keeper.FinalityProviderDelegations(ctx, &req)
-			require.NoError(t, err)
-			require.NotNil(t, resp)
-			for _, btcDels := range resp.BtcDelegatorDelegations {
-				require.Len(t, btcDels.Dels, 1)
-				btcDel := btcDels.Dels[0]
-				require.Equal(t, fp.BtcPk, &btcDel.FpBtcPkList[0])
-				// Check if the pk exists in the map
-				_, ok := expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()]
-				require.True(t, ok)
-				btcDelsFound[btcDel.BtcPk.MarshalHex()] = true
-			}
-			// Construct the next page request
-			pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
-			req = types.QueryFinalityProviderDelegationsRequest{
-				FpBtcPkHex: fp.BtcPk.MarshalHex(),
-				Pagination: pagination,
-			}
-		}
-		require.Equal(t, len(btcDelsFound), len(expectedBtcDelsMap))
-
 	})
 }
 
@@ -813,4 +680,23 @@ func convertToEvidence(er *types.EvidenceResponse) *types.Evidence {
 		CanonicalFinalitySig: er.CanonicalFinalitySig,
 		ForkFinalitySig:      er.ForkFinalitySig,
 	}
+}
+
+// Constructors for PageRequest objects
+func constructRequestWithKeyAndLimit(r *rand.Rand, key []byte, limit uint64) *query.PageRequest {
+	// If limit is 0, set one randomly
+	if limit == 0 {
+		limit = uint64(r.Int63() + 1) // Use Int63 instead of Uint64 to avoid overflows
+	}
+	return &query.PageRequest{
+		Key:        key,
+		Offset:     0, // only offset or key is set
+		Limit:      limit,
+		CountTotal: false, // only used when offset is used
+		Reverse:    false,
+	}
+}
+
+func constructRequestWithLimit(r *rand.Rand, limit uint64) *query.PageRequest {
+	return constructRequestWithKeyAndLimit(r, nil, limit)
 }

@@ -142,6 +142,122 @@ func FuzzFinalityProvider(f *testing.F) {
 	})
 }
 
+func FuzzFinalityProviderDelegations(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// Setup keeper and context
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil)
+
+		// covenant and slashing addr
+		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
+		require.NoError(t, err)
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+		require.NoError(t, err)
+		slashingChangeLockTime := uint16(101)
+
+		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
+		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
+		// with value below the dust threshold, causing test failure.
+		// Our goal is not to test failure due to such extreme cases here;
+		// this is already covered in FuzzGeneratingValidStakingSlashingTx
+		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+
+		// Generate a finality provider
+		fp, err := datagen.GenRandomFinalityProvider(r)
+		require.NoError(t, err)
+		AddFinalityProvider(t, ctx, *keeper, fp)
+
+		startHeight := uint32(datagen.RandomInt(r, 100)) + 1
+		endHeight := uint32(datagen.RandomInt(r, 1000)) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
+		stakingTime := endHeight - startHeight
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).AnyTimes()
+		// Generate a random number of BTC delegations under this finality provider
+		numBTCDels := datagen.RandomInt(r, 10) + 1
+		expectedBtcDelsMap := make(map[string]*types.BTCDelegation)
+		for j := uint64(0); j < numBTCDels; j++ {
+			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			require.NoError(t, err)
+			btcDel, err := datagen.GenRandomBTCDelegation(
+				r,
+				t,
+				net,
+				[]bbn.BIP340PubKey{*fp.BtcPk},
+				delSK,
+				covenantSKs,
+				covenantPKs,
+				covenantQuorum,
+				slashingPkScript,
+				stakingTime, startHeight, endHeight, 10000,
+				slashingRate,
+				slashingChangeLockTime,
+			)
+			require.NoError(t, err)
+			expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
+			err = keeper.AddBTCDelegation(ctx, btcDel)
+			require.NoError(t, err)
+		}
+
+		// Test nil request
+		resp, err := keeper.FinalityProviderDelegations(ctx, nil)
+		require.Nil(t, resp)
+		require.Error(t, err)
+
+		babylonHeight := datagen.RandomInt(r, 10) + 1
+		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
+		keeper.IndexBTCHeight(ctx)
+
+		// Generate a page request with a limit and a nil key
+		// query a page of BTC delegations and assert consistency
+		limit := datagen.RandomInt(r, len(expectedBtcDelsMap)) + 1
+
+		// FinalityProviderDelegations loads status, which calls GetTipInfo
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).AnyTimes()
+
+		keeper.IndexBTCHeight(ctx)
+
+		pagination := constructRequestWithLimit(r, limit)
+		// Generate the initial query
+		req := types.QueryFinalityProviderDelegationsRequest{
+			FpBtcPkHex: fp.BtcPk.MarshalHex(),
+			Pagination: pagination,
+		}
+		// Construct a mapping from the finality providers found to a boolean value
+		// Will be used later to evaluate whether all the finality providers were returned
+		btcDelsFound := make(map[string]bool, 0)
+
+		for i := uint64(0); i < numBTCDels; i += limit {
+			resp, err = keeper.FinalityProviderDelegations(ctx, &req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			for _, btcDels := range resp.BtcDelegatorDelegations {
+				require.Len(t, btcDels.Dels, 1)
+				btcDel := btcDels.Dels[0]
+				require.Equal(t, fp.BtcPk, &btcDel.FpBtcPkList[0])
+				// Check if the pk exists in the map
+				_, ok := expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()]
+				require.True(t, ok)
+				btcDelsFound[btcDel.BtcPk.MarshalHex()] = true
+			}
+			// Construct the next page request
+			pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
+			req = types.QueryFinalityProviderDelegationsRequest{
+				FpBtcPkHex: fp.BtcPk.MarshalHex(),
+				Pagination: pagination,
+			}
+		}
+		require.Equal(t, len(btcDelsFound), len(expectedBtcDelsMap))
+
+	})
+}
+
 func FuzzPendingBTCDelegations(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {

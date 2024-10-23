@@ -40,7 +40,7 @@ func (k Keeper) FinalityProviderPowerAtHeight(ctx context.Context, req *types.Qu
 	defer iter.Close()
 
 	if !iter.Valid() {
-		return nil, bstypes.ErrVotingPowerTableNotUpdated.Wrapf("height: %d", req.Height)
+		return nil, types.ErrVotingPowerTableNotUpdated.Wrapf("height: %d", req.Height)
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
