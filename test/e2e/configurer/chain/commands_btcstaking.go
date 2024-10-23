@@ -1,7 +1,6 @@
 package chain
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -155,51 +154,6 @@ func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash stri
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added covenant signatures")
-}
-
-func (n *NodeConfig) CommitPubRandListOut(
-	fpBTCPK *bbn.BIP340PubKey,
-	startHeight uint64,
-	numPubrand uint64,
-	commitment []byte,
-	sig *bbn.BIP340Signature,
-	success string,
-) (outBuf, errBuf bytes.Buffer, err error) {
-	n.LogActionF("committing public randomness list")
-
-	cmd := []string{"babylond", "tx", "finality", "commit-pubrand-list"}
-
-	// add finality provider BTC PK to cmd
-	fpBTCPKHex := fpBTCPK.MarshalHex()
-	cmd = append(cmd, fpBTCPKHex)
-
-	// add start height to cmd
-	startHeightStr := strconv.FormatUint(startHeight, 10)
-	cmd = append(cmd, startHeightStr)
-
-	// add num_pub_rand to cmd
-	numPubRandStr := strconv.FormatUint(numPubrand, 10)
-	cmd = append(cmd, numPubRandStr)
-
-	// add commitment to cmd
-	commitmentHex := hex.EncodeToString(commitment)
-	cmd = append(cmd, commitmentHex)
-
-	// add sig to cmd
-	sigHex := sig.ToHexStr()
-	cmd = append(cmd, sigHex)
-
-	// specify used key
-	cmd = append(cmd, "--from=val")
-
-	// gas
-	cmd = append(cmd, "--gas=500000")
-
-	allTxArgs := []string{fmt.Sprintf("--chain-id=%s", n.chainId), "--gas-prices=0.002ubbn", "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
-	txCommand := append(cmd, allTxArgs...)
-	return n.containerManager.ExecCmd(n.t, n.Name, txCommand, success)
-
-	// return n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 }
 
 func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
