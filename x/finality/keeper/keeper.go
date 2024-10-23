@@ -95,3 +95,14 @@ func (k Keeper) GetCurrentEpoch(ctx context.Context) uint64 {
 
 	return currentEpoch.EpochNumber
 }
+
+// ValidateActivation returns true if the finality is activated and ready
+// to start handling liveness, tally and index blocks.
+func (k Keeper) ValidateActivation(ctx context.Context) (activated bool) {
+	if uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height) < k.GetParams(ctx).FinalityActivationHeight {
+		return false
+	}
+
+	_, err := k.BTCStakingKeeper.GetBTCStakingActivatedHeight(ctx)
+	return err == nil
+}
