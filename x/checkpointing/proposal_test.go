@@ -502,8 +502,7 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.Len(t, prop.Txs, 1)
-				var checkpoint checkpointingtypes.InjectedCheckpoint
-				err := checkpoint.Unmarshal(prop.Txs[0])
+				checkpoint, err := h.ExtractInjectedCheckpoint(prop.Txs)
 				require.NoError(t, err)
 				err = verifyCheckpoint(scenario.ValidatorSet, checkpoint.Ckpt.Ckpt)
 				require.NoError(t, err)

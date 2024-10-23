@@ -7,12 +7,13 @@ import (
 	"slices"
 
 	"cosmossdk.io/log"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
@@ -95,7 +96,7 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 			Ckpt:               ckpt,
 			ExtendedCommitInfo: &req.LocalLastCommit,
 		}
-		injectedVoteExtTx, err := injectedCkpt.Marshal()
+		injectedVoteExtTx, err := h.buildInjectedTx(injectedCkpt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode vote extensions into a special tx: %w", err)
 		}
@@ -268,7 +269,7 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 		// and no BLS signatures are send in epoch 0
 		if epoch.IsVoteExtensionProposal(ctx) {
 			// 1. extract the special tx containing the checkpoint
-			injectedCkpt, err := extractInjectedCheckpoint(req.Txs)
+			injectedCkpt, err := h.ExtractInjectedCheckpoint(req.Txs)
 			if err != nil {
 				h.logger.Error(
 					"processProposal: failed to extract injected checkpoint from the tx set", "err", err)
@@ -345,7 +346,7 @@ func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 		}
 
 		// 1. extract the special tx containing BLS sigs
-		injectedCkpt, err := extractInjectedCheckpoint(req.Txs)
+		injectedCkpt, err := h.ExtractInjectedCheckpoint(req.Txs)
 		if err != nil {
 			return res, fmt.Errorf(
 				"preblocker: failed to extract injected checkpoint from the tx set: %w", err)
@@ -360,24 +361,46 @@ func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 	}
 }
 
-// extractInjectedCheckpoint extracts the injected checkpoint from the tx set
-func extractInjectedCheckpoint(txs [][]byte) (*ckpttypes.InjectedCheckpoint, error) {
+func (h *ProposalHandler) buildInjectedTx(injectedCkpt *ckpttypes.InjectedCheckpoint) ([]byte, error) {
+	encCfg := appparams.DefaultEncodingConfig()
+	txCfg := encCfg.TxConfig
+	ckpttypes.RegisterInterfaces(encCfg.InterfaceRegistry)
+	txFactory := tx.Factory{}.WithChainID("test-chain").WithTxConfig(txCfg)
+	txBuilder, err := txFactory.BuildUnsignedTx(injectedCkpt)
+	if err != nil {
+		return nil, err
+	}
+	txEncoder := txCfg.TxEncoder()
+
+	return txEncoder(txBuilder.GetTx())
+}
+
+// ExtractInjectedCheckpoint extracts the injected checkpoint from the tx set
+func (h *ProposalHandler) ExtractInjectedCheckpoint(txs [][]byte) (*ckpttypes.InjectedCheckpoint, error) {
 	if len(txs) < defaultInjectedTxIndex+1 {
 		return nil, fmt.Errorf("the tx set does not contain the injected tx")
 	}
 
-	injectedTx := txs[defaultInjectedTxIndex]
+	injectedTxBytes := txs[defaultInjectedTxIndex]
 
-	if len(injectedTx) == 0 {
+	if len(injectedTxBytes) == 0 {
 		return nil, fmt.Errorf("the injected vote extensions tx is empty")
 	}
 
-	var injectedCkpt ckpttypes.InjectedCheckpoint
-	if err := injectedCkpt.Unmarshal(injectedTx); err != nil {
+	encCfg := appparams.DefaultEncodingConfig()
+	ckpttypes.RegisterInterfaces(encCfg.InterfaceRegistry)
+	txDecoder := encCfg.TxConfig.TxDecoder()
+	injectedTx, err := txDecoder(injectedTxBytes)
+	if err != nil {
 		return nil, fmt.Errorf("failed to decode injected vote extension tx: %w", err)
 	}
+	msgs := injectedTx.GetMsgs()
+	if len(msgs) != 1 {
+		return nil, fmt.Errorf("injected tx must have exact one message, got %d", len(msgs))
+	}
+	injectedCkpt := msgs[0].(*ckpttypes.InjectedCheckpoint)
 
-	return &injectedCkpt, nil
+	return injectedCkpt, nil
 }
 
 // removeInjectedTx removes the injected tx from the tx set
