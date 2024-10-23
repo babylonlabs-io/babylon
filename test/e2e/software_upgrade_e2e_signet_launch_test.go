@@ -182,8 +182,9 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// commits with valid start height
 	_, msgCommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.FinalityActivationHeight, 3)
 	s.NoError(err)
+	n.WaitForNextBlock()
 	n.CommitPubRandList(
-		fp.BtcPk,
+		msgCommitPubRandList.FpBtcPk,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.NumPubRand,
 		msgCommitPubRandList.Commitment,
@@ -191,9 +192,9 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	)
 	s.Equal(fp.BtcPk.MarshalHex(), msgCommitPubRandList.FpBtcPk.MarshalHex())
 
-	n.WaitForNextBlock()
+	n.WaitForNextBlocks(3)
 
-	listByHeight = n.QueryListPubRandCommit(fp.BtcPk)
+	listByHeight = n.QueryListPubRandCommit(msgCommitPubRandList.FpBtcPk)
 	fmt.Printf("pub rand list %+v", listByHeight)
 	_, listFound = listByHeight[finalityParamsFromData.FinalityActivationHeight]
 	s.True(listFound, "this list should exists, because the msg sent is after the activation height")
