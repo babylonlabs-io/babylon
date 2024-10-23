@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
@@ -165,7 +163,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// and it should work.
 	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.FinalityActivationHeight-1, 3)
 	s.NoError(err)
-	out, errOut, errPubRand := n.CommitPubRandListOut(
+	_, _, err = n.CommitPubRandListOut(
 		fp.BtcPk,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.NumPubRand,
@@ -173,13 +171,12 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 		msgCommitPubRandList.Sig,
 		"",
 	)
-	fmt.Printf("\nCommitPubRandListOut ErrOut %s", errOut.String())
-	fmt.Printf("\nCommitPubRandListOut out %s", out.String())
-	fmt.Printf("\n Finality params %+v", finalityParamsFromData)
-	fmt.Printf("\n msg commit pub rand %+v", msgCommitPubRandList)
-
-	// check the error happened
-	s.ErrorContains(errPubRand, finalitytypes.ErrFinalityNotActivated.Error())
+	s.NoError(err)
+	// the tx does not fails, but it actually
+	// does not commits for that height.
+	listByHeight := n.QueryListPublicRandomness(fp.BtcPk)
+	_, listFound := listByHeight[finalityParamsFromData.FinalityActivationHeight]
+	s.False(listFound, "this list should not exists, because the msg should have failed")
 
 	// commits with valid start height
 	_, msgCommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.FinalityActivationHeight, 3)
@@ -191,6 +188,10 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 		msgCommitPubRandList.Commitment,
 		msgCommitPubRandList.Sig,
 	)
+
+	listByHeight = n.QueryListPublicRandomness(fp.BtcPk)
+	_, listFound = listByHeight[finalityParamsFromData.FinalityActivationHeight]
+	s.True(listFound, "this list should exists, because the msg sent is after the activation height")
 
 	// Verifies the balance differences were really executed
 	tokenDistData, err := v1.LoadTokenDistributionFromData(testnet.TokensDistributionStr)
