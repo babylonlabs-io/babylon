@@ -35,7 +35,7 @@ func (n *NodeConfig) QueryFinalityParams() *ftypes.Params {
 }
 
 func (n *NodeConfig) QueryFinalityProviders() []*bstypes.FinalityProviderResponse {
-	bz, err := n.QueryGRPCGateway("/babylon/finality/v1/finality_providers", url.Values{})
+	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/finality_providers", url.Values{})
 	require.NoError(n.t, err)
 
 	var resp bstypes.QueryFinalityProvidersResponse
