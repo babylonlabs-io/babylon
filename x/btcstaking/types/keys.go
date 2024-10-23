@@ -19,6 +19,8 @@ var (
 	FinalityProviderKey = []byte{0x02} // key prefix for the finality providers
 	BTCDelegatorKey     = []byte{0x03} // key prefix for the BTC delegators
 	BTCDelegationKey    = []byte{0x04} // key prefix for the BTC delegations
-	BTCHeightKey        = []byte{0x05} // key prefix for the BTC heights
-	PowerDistUpdateKey  = []byte{0x06} // key prefix for power distribution update events
+	// 0x05 was used for something else in the past
+	BTCHeightKey = []byte{0x06} // key prefix for the BTC heights
+	// 0x07 was used for something else in the past
+	PowerDistUpdateKey = []byte{0x08} // key prefix for power distribution update events
 )
