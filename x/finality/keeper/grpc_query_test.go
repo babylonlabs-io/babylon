@@ -185,7 +185,7 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
-				_, msg, btcDel, _, _, err := h.CreateDelegation(
+				_, msg, btcDel, _, _, _, err := h.CreateDelegation(
 					r,
 					delSK,
 					fpBTCPK.MustToBTCPK(),

@@ -228,3 +228,17 @@ message EventBTCDelegationExpired {
   // new_state of the BTC delegation
   string new_state = 2 [(amino.dont_omitempty) = true];
 }
+
+// EventUnexpectedUnbondingTx is the event emitted when an unbonding tx is
+// is different that the one registered in the BTC delegation.
+message EventUnexpectedUnbondingTx {
+  // staking_tx_hash uniquely identifies a BTC delegation being unbonded
+  string staking_tx_hash = 1 [(amino.dont_omitempty) = true];
+  // spend_stake_tx_hash has of the transactin spending staking output
+  string spend_stake_tx_hash = 2 [(amino.dont_omitempty) = true];
+  // spend_stake_tx_header_hash is the hash of the header of the block that
+  // includes the spend_stake_tx
+  string spend_stake_tx_header_hash = 3 [(amino.dont_omitempty) = true];
+  // spend_stake_tx_block_index is the spend_stake_tx index in the block
+  uint32 spend_stake_tx_block_index = 4 [(amino.dont_omitempty) = true];
+}

@@ -176,9 +176,12 @@ message MsgBTCUndelegate {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 2;
-  // unbonding_tx_sig is the signature of the staker on the unbonding tx submitted to babylon
-  // the signature follows encoding in BIP-340 spec
-  bytes unbonding_tx_sig = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340Signature" ];
+  // stake_spending_tx is a bitcoin transaction that spends the staking transaction
+  // i.e it has staking output as an input
+  bytes stake_spending_tx = 3;
+  // spend_spending_tx_inclusion_proof is the proof of inclusion of the
+  // stake_spending_tx in the BTC chain
+  InclusionProof stake_spending_tx_inclusion_proof = 4;
 }
 // MsgBTCUndelegateResponse is the response for MsgBTCUndelegate
 message MsgBTCUndelegateResponse {}

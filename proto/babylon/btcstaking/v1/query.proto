@@ -203,32 +203,37 @@ message BTCDelegationResponse {
   uint32 params_version = 17;
 }
 
+// DelegatorUnbondingInfoResponse provides all necessary info about transaction
+// which spent the staking output
+message DelegatorUnbondingInfoResponse {
+  // spend_stake_tx_hex is the transaction which spent the staking output. It is
+  // filled only if the spend_stake_tx_hex is different than the unbonding_tx_hex
+  string spend_stake_tx_hex = 1;
+}
+
 // BTCUndelegationResponse provides all necessary info about the undeleagation
 message BTCUndelegationResponse {
   // unbonding_tx is the transaction which will transfer the funds from staking
   // output to unbonding output. Unbonding output will usually have lower timelock
   // than staking output. The unbonding tx as string hex.
   string unbonding_tx_hex = 1;
-  // delegator_unbonding_sig is the signature on the unbonding tx
-  // by the delegator (i.e., SK corresponding to btc_pk).
-  // It effectively proves that the delegator wants to unbond and thus
-  // Babylon will consider this BTC delegation unbonded. Delegator's BTC
-  // on Bitcoin will be unbonded after timelock. The unbonding delegator sig as string hex.
-  string delegator_unbonding_sig_hex = 2;
   // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
   // by covenant members
-  repeated SignatureInfo covenant_unbonding_sig_list = 3;
+  repeated SignatureInfo covenant_unbonding_sig_list = 2;
   // slashingTxHex is the hex string of slashing tx
-  string slashing_tx_hex = 4;
+  string slashing_tx_hex = 3;
   // delegator_slashing_sig is the signature on the slashing tx
   // by the delegator (i.e., SK corresponding to btc_pk).
   // It will be a part of the witness for the unbonding tx output.
   // The delegator slashing sig as string hex.
-  string delegator_slashing_sig_hex = 5;
+  string delegator_slashing_sig_hex = 4;
   // covenant_slashing_sigs is a list of adaptor signatures on the
   // unbonding slashing tx by each covenant member
   // It will be a part of the witness for the staking tx output.
-  repeated CovenantAdaptorSignatures covenant_slashing_sigs = 6;
+  repeated CovenantAdaptorSignatures covenant_slashing_sigs = 5;
+  // btc_undelegation_info contains all necessary info about the transaction
+  // which spent the staking output
+  DelegatorUnbondingInfoResponse delegator_unbonding_info_response = 6;
 }
 
 // BTCDelegatorDelegationsResponse is a collection of BTC delegations responses from the same delegator.

@@ -42,6 +42,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 * [#217](https://github.com/babylonlabs-io/babylon/pull/216) move voting power table to finality module
 * [#207](https://github.com/babylonlabs-io/babylon/pull/207) Rename total voting power
 to total bonded sat
+* [#215](https://github.com/babylonlabs-io/babylon/pull/215) Implement ADR-29
+generalized unbonding handler
 
 ### Improvements
 
