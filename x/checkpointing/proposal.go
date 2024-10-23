@@ -22,7 +22,10 @@ const defaultInjectedTxIndex = 0
 type ProposalHandler struct {
 	logger                        log.Logger
 	ckptKeeper                    CheckpointingKeeper
-	txVerifier                    baseapp.ProposalTxVerifier
+	bApp                          *baseapp.BaseApp
+	txEncoder                     sdk.TxEncoder
+	txDecoder                     sdk.TxDecoder
+	txFactory                     tx.Factory
 	defaultPrepareProposalHandler sdk.PrepareProposalHandler
 	defaultProcessProposalHandler sdk.ProcessProposalHandler
 }
@@ -31,13 +34,19 @@ func NewProposalHandler(
 	logger log.Logger,
 	ckptKeeper CheckpointingKeeper,
 	mp mempool.Mempool,
-	txVerifier baseapp.ProposalTxVerifier,
+	bApp *baseapp.BaseApp,
+	encCfg *appparams.EncodingConfig,
 ) *ProposalHandler {
-	defaultHandler := baseapp.NewDefaultProposalHandler(mp, txVerifier)
+	defaultHandler := baseapp.NewDefaultProposalHandler(mp, bApp)
+	ckpttypes.RegisterInterfaces(encCfg.InterfaceRegistry)
+
 	return &ProposalHandler{
 		logger:                        logger,
 		ckptKeeper:                    ckptKeeper,
-		txVerifier:                    txVerifier,
+		bApp:                          bApp,
+		txEncoder:                     encCfg.TxConfig.TxEncoder(),
+		txDecoder:                     encCfg.TxConfig.TxDecoder(),
+		txFactory:                     tx.Factory{}.WithChainID(bApp.ChainID()).WithTxConfig(encCfg.TxConfig),
 		defaultPrepareProposalHandler: defaultHandler.PrepareProposalHandler(),
 		defaultProcessProposalHandler: defaultHandler.ProcessProposalHandler(),
 	}
@@ -92,7 +101,7 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 		}
 
 		// 3. inject a "fake" tx into the proposal s.t. validators can decode, verify the checkpoint
-		injectedCkpt := &ckpttypes.InjectedCheckpoint{
+		injectedCkpt := &ckpttypes.MsgInjectedCheckpoint{
 			Ckpt:               ckpt,
 			ExtendedCommitInfo: &req.LocalLastCommit,
 		}
@@ -361,22 +370,17 @@ func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 	}
 }
 
-func (h *ProposalHandler) buildInjectedTx(injectedCkpt *ckpttypes.InjectedCheckpoint) ([]byte, error) {
-	encCfg := appparams.DefaultEncodingConfig()
-	txCfg := encCfg.TxConfig
-	ckpttypes.RegisterInterfaces(encCfg.InterfaceRegistry)
-	txFactory := tx.Factory{}.WithChainID("test-chain").WithTxConfig(txCfg)
-	txBuilder, err := txFactory.BuildUnsignedTx(injectedCkpt)
+func (h *ProposalHandler) buildInjectedTx(injectedCkpt *ckpttypes.MsgInjectedCheckpoint) ([]byte, error) {
+	txBuilder, err := h.txFactory.BuildUnsignedTx(injectedCkpt)
 	if err != nil {
 		return nil, err
 	}
-	txEncoder := txCfg.TxEncoder()
 
-	return txEncoder(txBuilder.GetTx())
+	return h.txEncoder(txBuilder.GetTx())
 }
 
 // ExtractInjectedCheckpoint extracts the injected checkpoint from the tx set
-func (h *ProposalHandler) ExtractInjectedCheckpoint(txs [][]byte) (*ckpttypes.InjectedCheckpoint, error) {
+func (h *ProposalHandler) ExtractInjectedCheckpoint(txs [][]byte) (*ckpttypes.MsgInjectedCheckpoint, error) {
 	if len(txs) < defaultInjectedTxIndex+1 {
 		return nil, fmt.Errorf("the tx set does not contain the injected tx")
 	}
@@ -387,10 +391,7 @@ func (h *ProposalHandler) ExtractInjectedCheckpoint(txs [][]byte) (*ckpttypes.In
 		return nil, fmt.Errorf("the injected vote extensions tx is empty")
 	}
 
-	encCfg := appparams.DefaultEncodingConfig()
-	ckpttypes.RegisterInterfaces(encCfg.InterfaceRegistry)
-	txDecoder := encCfg.TxConfig.TxDecoder()
-	injectedTx, err := txDecoder(injectedTxBytes)
+	injectedTx, err := h.txDecoder(injectedTxBytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode injected vote extension tx: %w", err)
 	}
@@ -398,7 +399,7 @@ func (h *ProposalHandler) ExtractInjectedCheckpoint(txs [][]byte) (*ckpttypes.In
 	if len(msgs) != 1 {
 		return nil, fmt.Errorf("injected tx must have exact one message, got %d", len(msgs))
 	}
-	injectedCkpt := msgs[0].(*ckpttypes.InjectedCheckpoint)
+	injectedCkpt := msgs[0].(*ckpttypes.MsgInjectedCheckpoint)
 
 	return injectedCkpt, nil
 }

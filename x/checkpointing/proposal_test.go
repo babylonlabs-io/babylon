@@ -13,6 +13,8 @@ import (
 	cbftt "github.com/cometbft/cometbft/abci/types"
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	tendermintTypes "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	protoio "github.com/cosmos/gogoproto/io"
@@ -20,6 +22,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/testutil/helper"
@@ -484,11 +487,17 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 			ek.EXPECT().GetTotalVotingPower(gomock.Any(), ec.Epoch.EpochNumber).Return(scenario.TotalPower).AnyTimes()
 			ek.EXPECT().GetValidatorSet(gomock.Any(), ec.Epoch.EpochNumber).Return(et.NewSortedValidatorSet(ToValidatorSet(scenario.ValidatorSet))).AnyTimes()
 
+			logger := log.NewTestLogger(t)
+			db := dbm.NewMemDB()
+			name := t.Name()
+			encCfg := appparams.DefaultEncodingConfig()
+			bApp := baseapp.NewBaseApp(name, logger, db, encCfg.TxConfig.TxDecoder(), baseapp.SetChainID("chain-test"))
 			h := checkpointing.NewProposalHandler(
 				log.NewNopLogger(),
 				ek,
 				mem,
-				nil,
+				bApp,
+				encCfg,
 			)
 
 			commitInfo, _, cometInfo := helper.ExtendedCommitToLastCommit(cbftt.ExtendedCommitInfo{Round: 0, Votes: scenario.Extensions})
