@@ -184,11 +184,11 @@ func (ckpt RawCheckpoint) ValidateBasic() error {
 	}
 	err := ckpt.BlockHash.ValidateBasic()
 	if err != nil {
-		return ErrInvalidRawCheckpoint.Wrapf(err.Error())
+		return ErrInvalidRawCheckpoint.Wrapf("error validating block hash: %s", err.Error())
 	}
 	err = ckpt.BlsMultiSig.ValidateBasic()
 	if err != nil {
-		return ErrInvalidRawCheckpoint.Wrapf(err.Error())
+		return ErrInvalidRawCheckpoint.Wrapf("error validating BLS multi-signature: %s", err.Error())
 	}
 
 	return nil

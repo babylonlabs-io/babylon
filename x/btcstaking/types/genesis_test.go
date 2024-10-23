@@ -28,18 +28,17 @@ func TestGenesisState_Validate(t *testing.T) {
 				return &types.GenesisState{
 					Params: []*types.Params{
 						&types.Params{
-							CovenantPks:                types.DefaultParams().CovenantPks,
-							CovenantQuorum:             types.DefaultParams().CovenantQuorum,
-							MinStakingValueSat:         1000,
-							MaxStakingValueSat:         100000000,
-							MinStakingTimeBlocks:       100,
-							MaxStakingTimeBlocks:       1000,
-							SlashingPkScript:           types.DefaultParams().SlashingPkScript,
-							MinSlashingTxFeeSat:        500,
-							MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.5"),
-							SlashingRate:               sdkmath.LegacyMustNewDecFromStr("0.1"),
-							MaxActiveFinalityProviders: 100,
-							UnbondingFeeSat:            types.DefaultParams().UnbondingFeeSat,
+							CovenantPks:          types.DefaultParams().CovenantPks,
+							CovenantQuorum:       types.DefaultParams().CovenantQuorum,
+							MinStakingValueSat:   1000,
+							MaxStakingValueSat:   100000000,
+							MinStakingTimeBlocks: 100,
+							MaxStakingTimeBlocks: 1000,
+							SlashingPkScript:     types.DefaultParams().SlashingPkScript,
+							MinSlashingTxFeeSat:  500,
+							MinCommissionRate:    sdkmath.LegacyMustNewDecFromStr("0.5"),
+							SlashingRate:         sdkmath.LegacyMustNewDecFromStr("0.1"),
+							UnbondingFeeSat:      types.DefaultParams().UnbondingFeeSat,
 						},
 					},
 				}
@@ -52,14 +51,13 @@ func TestGenesisState_Validate(t *testing.T) {
 				return &types.GenesisState{
 					Params: []*types.Params{
 						&types.Params{
-							CovenantPks:                types.DefaultParams().CovenantPks,
-							CovenantQuorum:             types.DefaultParams().CovenantQuorum,
-							SlashingPkScript:           types.DefaultParams().SlashingPkScript,
-							MinSlashingTxFeeSat:        500,
-							MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.5"),
-							SlashingRate:               sdkmath.LegacyZeroDec(), // invalid slashing rate
-							MaxActiveFinalityProviders: 100,
-							UnbondingFeeSat:            types.DefaultParams().UnbondingFeeSat,
+							CovenantPks:         types.DefaultParams().CovenantPks,
+							CovenantQuorum:      types.DefaultParams().CovenantQuorum,
+							SlashingPkScript:    types.DefaultParams().SlashingPkScript,
+							MinSlashingTxFeeSat: 500,
+							MinCommissionRate:   sdkmath.LegacyMustNewDecFromStr("0.5"),
+							SlashingRate:        sdkmath.LegacyZeroDec(), // invalid slashing rate
+							UnbondingFeeSat:     types.DefaultParams().UnbondingFeeSat,
 						},
 					},
 				}

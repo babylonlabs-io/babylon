@@ -184,7 +184,7 @@ func (k Keeper) updateSigningInfo(
 }
 
 func (k Keeper) jailSluggishFinalityProvider(ctx context.Context, fpBtcPk *types.BIP340PubKey) error {
-	err := k.hooks.AfterSluggishFinalityProviderDetected(ctx, fpBtcPk)
+	err := k.BTCStakingKeeper.JailFinalityProvider(ctx, fpBtcPk.MustMarshal())
 	if err != nil {
 		return err
 	}

@@ -18,7 +18,6 @@ import (
 )
 
 const (
-	defaultMaxActiveFinalityProviders uint32 = 100
 	// TODO: need to determine a proper default value
 	defaultDelegationCreationBaseGasFee = 1000
 )
@@ -72,8 +71,7 @@ func DefaultParams() Params {
 		MinSlashingTxFeeSat:  1000,
 		MinCommissionRate:    sdkmath.LegacyZeroDec(),
 		// The Default slashing rate is 0.1 i.e., 10% of the total staked BTC will be burned.
-		SlashingRate:               sdkmath.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
-		MaxActiveFinalityProviders: defaultMaxActiveFinalityProviders,
+		SlashingRate: sdkmath.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
 		// The default minimum unbonding time is 0, which effectively defaults to checkpoint
 		// finalization timeout.
 		MinUnbondingTimeBlocks:       0,
@@ -105,15 +103,6 @@ func validateMinCommissionRate(rate sdkmath.LegacyDec) error {
 
 	if rate.GT(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("minimum commission rate cannot be greater than 100%%")
-	}
-	return nil
-}
-
-// validateMaxActiveFinalityProviders checks if the maximum number of
-// active finality providers is at least the default value
-func validateMaxActiveFinalityProviders(maxActiveFinalityProviders uint32) error {
-	if maxActiveFinalityProviders == 0 {
-		return fmt.Errorf("max finality providers must be positive")
 	}
 	return nil
 }
@@ -204,10 +193,6 @@ func (p Params) Validate() error {
 
 	if !btcstaking.IsRateValid(p.SlashingRate) {
 		return btcstaking.ErrInvalidSlashingRate
-	}
-
-	if err := validateMaxActiveFinalityProviders(p.MaxActiveFinalityProviders); err != nil {
-		return err
 	}
 
 	if err := validateMinUnbondingTime(p.MinUnbondingTimeBlocks); err != nil {

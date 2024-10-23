@@ -53,7 +53,7 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	}
 
 	for _, vpCache := range gs.VpDstCache {
-		k.setVotingPowerDistCache(ctx, vpCache.BlockHeight, vpCache.VpDistribution)
+		k.SetVotingPowerDistCache(ctx, vpCache.BlockHeight, vpCache.VpDistribution)
 	}
 
 	return nil
