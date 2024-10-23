@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 
@@ -164,15 +163,13 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// and it should work.
 	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.FinalityActivationHeight-1, finalityParamsFromData.MinPubRand)
 	s.NoError(err)
-	_, _, err = n.CommitPubRandListOut(
+	n.CommitPubRandList(
 		fp.BtcPk,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.NumPubRand,
 		msgCommitPubRandList.Commitment,
 		msgCommitPubRandList.Sig,
-		"",
 	)
-	s.NoError(err)
 	// the tx does not fails, but it actually
 	// does not commits for that height.
 	listByHeight := n.QueryListPubRandCommit(fp.BtcPk)
@@ -190,14 +187,10 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 		msgCommitPubRandList.Commitment,
 		msgCommitPubRandList.Sig,
 	)
-	s.Equal(fp.BtcPk.MarshalHex(), msgCommitPubRandList.FpBtcPk.MarshalHex())
 
-	n.WaitForNextBlocks(3)
+	n.WaitForNextBlock()
 
 	listByHeight = n.QueryListPubRandCommit(msgCommitPubRandList.FpBtcPk)
-	fmt.Printf("pub rand list %+v", listByHeight)
-	fmt.Printf("fp hex %s", fp.BtcPk.MarshalHex())
-
 	_, listFound = listByHeight[finalityParamsFromData.FinalityActivationHeight]
 	s.True(listFound, "this list should exists, because the msg sent is after the activation height")
 

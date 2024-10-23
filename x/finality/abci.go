@@ -22,7 +22,7 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 
 	// if the BTC staking protocol is activated, i.e., there exists a height where a finality provider
 	// has voting power, start indexing and tallying blocks
-	if k.ValidateActivation(ctx) {
+	if k.IsFinalityActive(ctx) {
 		// index the current block
 		k.IndexBlock(ctx)
 		// tally all non-finalised blocks
