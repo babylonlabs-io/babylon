@@ -9,7 +9,7 @@ import (
 	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 
@@ -20,12 +20,15 @@ import (
 const defaultInjectedTxIndex = 0
 
 type ProposalHandler struct {
-	logger                        log.Logger
-	ckptKeeper                    CheckpointingKeeper
-	bApp                          *baseapp.BaseApp
-	txEncoder                     sdk.TxEncoder
-	txDecoder                     sdk.TxDecoder
-	txFactory                     tx.Factory
+	logger     log.Logger
+	ckptKeeper CheckpointingKeeper
+	bApp       *baseapp.BaseApp
+
+	// used for building and parsing the injected tx
+	txEncoder sdk.TxEncoder
+	txDecoder sdk.TxDecoder
+	txBuilder client.TxBuilder
+
 	defaultPrepareProposalHandler sdk.PrepareProposalHandler
 	defaultProcessProposalHandler sdk.ProcessProposalHandler
 }
@@ -46,7 +49,7 @@ func NewProposalHandler(
 		bApp:                          bApp,
 		txEncoder:                     encCfg.TxConfig.TxEncoder(),
 		txDecoder:                     encCfg.TxConfig.TxDecoder(),
-		txFactory:                     tx.Factory{}.WithChainID(bApp.ChainID()).WithTxConfig(encCfg.TxConfig),
+		txBuilder:                     encCfg.TxConfig.NewTxBuilder(),
 		defaultPrepareProposalHandler: defaultHandler.PrepareProposalHandler(),
 		defaultProcessProposalHandler: defaultHandler.ProcessProposalHandler(),
 	}
@@ -105,7 +108,7 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 			Ckpt:               ckpt,
 			ExtendedCommitInfo: &req.LocalLastCommit,
 		}
-		injectedVoteExtTx, err := h.buildInjectedTx(injectedCkpt)
+		injectedVoteExtTx, err := h.buildInjectedTxBytes(injectedCkpt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode vote extensions into a special tx: %w", err)
 		}
@@ -370,13 +373,12 @@ func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 	}
 }
 
-func (h *ProposalHandler) buildInjectedTx(injectedCkpt *ckpttypes.MsgInjectedCheckpoint) ([]byte, error) {
-	txBuilder, err := h.txFactory.BuildUnsignedTx(injectedCkpt)
-	if err != nil {
+func (h *ProposalHandler) buildInjectedTxBytes(injectedCkpt *ckpttypes.MsgInjectedCheckpoint) ([]byte, error) {
+	if err := h.txBuilder.SetMsgs(injectedCkpt); err != nil {
 		return nil, err
 	}
 
-	return h.txEncoder(txBuilder.GetTx())
+	return h.txEncoder(h.txBuilder.GetTx())
 }
 
 // ExtractInjectedCheckpoint extracts the injected checkpoint from the tx set
