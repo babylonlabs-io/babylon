@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 
@@ -26,9 +25,6 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdFinalityProvider())
 	cmd.AddCommand(CmdFinalityProviders())
 	cmd.AddCommand(CmdBTCDelegations())
-	cmd.AddCommand(CmdFinalityProvidersAtHeight())
-	cmd.AddCommand(CmdFinalityProviderPowerAtHeight())
-	cmd.AddCommand(CmdActivatedHeight())
 	cmd.AddCommand(CmdFinalityProviderDelegations())
 	cmd.AddCommand(CmdDelegation())
 
@@ -156,99 +152,6 @@ func CmdBTCDelegations() *cobra.Command {
 
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "btc-delegations")
-
-	return cmd
-}
-
-func CmdFinalityProviderPowerAtHeight() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "finality-provider-power-at-height [fp_btc_pk_hex] [height]",
-		Short: "get the voting power of a given finality provider at a given height",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-
-			queryClient := types.NewQueryClient(clientCtx)
-
-			height, err := strconv.ParseUint(args[1], 10, 64)
-			if err != nil {
-				return err
-			}
-			res, err := queryClient.FinalityProviderPowerAtHeight(cmd.Context(), &types.QueryFinalityProviderPowerAtHeightRequest{
-				FpBtcPkHex: args[0],
-				Height:     height,
-			})
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdActivatedHeight() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "activated-height",
-		Short: "get activated height, i.e., the first height where there exists 1 finality provider with voting power",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-
-			queryClient := types.NewQueryClient(clientCtx)
-
-			res, err := queryClient.ActivatedHeight(cmd.Context(), &types.QueryActivatedHeightRequest{})
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdFinalityProvidersAtHeight() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "finality-providers-at-height [height]",
-		Short: "retrieve all finality providers at a given babylon height",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-
-			queryClient := types.NewQueryClient(clientCtx)
-
-			height, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
-
-			pageReq, err := client.ReadPageRequest(cmd.Flags())
-			if err != nil {
-				return err
-			}
-
-			res, err := queryClient.ActiveFinalityProvidersAtHeight(cmd.Context(), &types.QueryActiveFinalityProvidersAtHeightRequest{
-				Height:     height,
-				Pagination: pageReq,
-			})
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-	flags.AddPaginationFlagsToCmd(cmd, "finality-providers-at-height")
 
 	return cmd
 }

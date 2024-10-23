@@ -35,7 +35,7 @@ func (n *NodeConfig) QueryFinalityParams() *ftypes.Params {
 }
 
 func (n *NodeConfig) QueryFinalityProviders() []*bstypes.FinalityProviderResponse {
-	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/finality_providers", url.Values{})
+	bz, err := n.QueryGRPCGateway("/babylon/finality/v1/finality_providers", url.Values{})
 	require.NoError(n.t, err)
 
 	var resp bstypes.QueryFinalityProvidersResponse
@@ -45,12 +45,12 @@ func (n *NodeConfig) QueryFinalityProviders() []*bstypes.FinalityProviderRespons
 	return resp.FinalityProviders
 }
 
-func (n *NodeConfig) QueryActiveFinalityProvidersAtHeight(height uint64) []*bstypes.ActiveFinalityProvidersAtHeightResponse {
-	path := fmt.Sprintf("/babylon/btcstaking/v1/finality_providers/%d", height)
+func (n *NodeConfig) QueryActiveFinalityProvidersAtHeight(height uint64) []*ftypes.ActiveFinalityProvidersAtHeightResponse {
+	path := fmt.Sprintf("/babylon/finality/v1/finality_providers/%d", height)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
-	var resp bstypes.QueryActiveFinalityProvidersAtHeightResponse
+	var resp ftypes.QueryActiveFinalityProvidersAtHeightResponse
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
 	require.NoError(n.t, err)
 
@@ -106,12 +106,12 @@ func (n *NodeConfig) QueryActiveDelegations() []*bstypes.BTCDelegationResponse {
 }
 
 func (n *NodeConfig) QueryActivatedHeight() (uint64, error) {
-	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/activated_height", url.Values{})
+	bz, err := n.QueryGRPCGateway("/babylon/finality/v1/activated_height", url.Values{})
 	if err != nil {
 		return 0, err
 	}
 
-	var resp bstypes.QueryActivatedHeightResponse
+	var resp ftypes.QueryActivatedHeightResponse
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
 	if err != nil {
 		return 0, err

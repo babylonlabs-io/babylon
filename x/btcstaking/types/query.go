@@ -69,6 +69,5 @@ func NewFinalityProviderResponse(f *FinalityProvider, bbnBlockHeight, votingPowe
 		SlashedBtcHeight:     f.SlashedBtcHeight,
 		Jailed:               f.Jailed,
 		Height:               bbnBlockHeight,
-		VotingPower:          votingPower,
 	}
 }
