@@ -162,7 +162,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// FP tries to commit with start height before finality activation height
 	// it should fail, after commits with start height = finality activation height
 	// and it should work.
-	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.FinalityActivationHeight-1, 3)
+	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.FinalityActivationHeight-1, finalityParamsFromData.MinPubRand)
 	s.NoError(err)
 	_, _, err = n.CommitPubRandListOut(
 		fp.BtcPk,
@@ -180,7 +180,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	s.False(listFound, "this list should not exists, because the msg should have failed")
 
 	// commits with valid start height
-	_, msgCommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.FinalityActivationHeight, 3)
+	_, msgCommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.FinalityActivationHeight, finalityParamsFromData.MinPubRand)
 	s.NoError(err)
 	n.WaitForNextBlock()
 	n.CommitPubRandList(
@@ -196,6 +196,8 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 
 	listByHeight = n.QueryListPubRandCommit(msgCommitPubRandList.FpBtcPk)
 	fmt.Printf("pub rand list %+v", listByHeight)
+	fmt.Printf("fp hex %s", fp.BtcPk.MarshalHex())
+
 	_, listFound = listByHeight[finalityParamsFromData.FinalityActivationHeight]
 	s.True(listFound, "this list should exists, because the msg sent is after the activation height")
 
