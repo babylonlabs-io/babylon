@@ -354,5 +354,5 @@ func (k Keeper) RemoveVotingPowerDistCache(ctx context.Context, height uint64) {
 // value: VotingPowerDistCache
 func (k Keeper) votingPowerDistCacheStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	return prefix.NewStore(storeAdapter, types.VotingPowerDistCacheKey)
+	return prefix.NewStore(storeAdapter, ftypes.VotingPowerDistCacheKey)
 }

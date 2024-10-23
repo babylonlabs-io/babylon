@@ -8,7 +8,7 @@ import (
 
 	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
