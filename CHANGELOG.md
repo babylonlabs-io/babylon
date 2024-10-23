@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v0.14.0
+
 ### State Machine Breaking
 
 * [#224](https://github.com/babylonlabs-io/babylon/pull/224) Make injected checkpoint a standard tx
