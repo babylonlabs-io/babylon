@@ -49,46 +49,48 @@ const (
 	flagSlashingRate               = "slashing-rate"
 	flagMinCommissionRate          = "min-commission-rate"
 	flagSignedBlocksWindow         = "signed-blocks-window"
+	flagActivationHeight           = "activation-height"
 	flagMinSignedPerWindow         = "min-signed-per-window"
 	flagFinalitySigTimeout         = "finality-sig-timeout"
 	flagJailDuration               = "jail-duration"
 )
 
 type GenesisCLIArgs struct {
-	ChainID                      string
-	MaxActiveValidators          uint32
-	BtcConfirmationDepth         uint32
-	BtcFinalizationTimeout       uint32
-	CheckpointTag                string
-	EpochInterval                uint64
-	BaseBtcHeaderHex             string
-	BaseBtcHeaderHeight          uint32
-	AllowedReporterAddresses     []string
-	InflationRateChange          float64
-	InflationMax                 float64
-	InflationMin                 float64
-	GoalBonded                   float64
-	BlocksPerYear                uint64
-	GenesisTime                  time.Time
-	BlockGasLimit                int64
-	VoteExtensionEnableHeight    int64
-	CovenantPKs                  []string
-	CovenantQuorum               uint32
-	MinStakingAmtSat             int64
-	MaxStakingAmtSat             int64
-	MinStakingTimeBlocks         uint16
-	MaxStakingTimeBlocks         uint16
-	SlashingPkScript             string
-	MinSlashingTransactionFeeSat int64
-	SlashingRate                 math.LegacyDec
-	MaxActiveFinalityProviders   uint32
-	MinUnbondingTime             uint16
-	UnbondingFeeSat              int64
-	MinCommissionRate            math.LegacyDec
-	SignedBlocksWindow           int64
-	MinSignedPerWindow           math.LegacyDec
-	FinalitySigTimeout           int64
-	JailDuration                 time.Duration
+	ChainID                       string
+	MaxActiveValidators           uint32
+	BtcConfirmationDepth          uint32
+	BtcFinalizationTimeout        uint32
+	CheckpointTag                 string
+	EpochInterval                 uint64
+	BaseBtcHeaderHex              string
+	BaseBtcHeaderHeight           uint32
+	AllowedReporterAddresses      []string
+	InflationRateChange           float64
+	InflationMax                  float64
+	InflationMin                  float64
+	GoalBonded                    float64
+	BlocksPerYear                 uint64
+	GenesisTime                   time.Time
+	BlockGasLimit                 int64
+	VoteExtensionEnableHeight     int64
+	CovenantPKs                   []string
+	CovenantQuorum                uint32
+	MinStakingAmtSat              int64
+	MaxStakingAmtSat              int64
+	MinStakingTimeBlocks          uint16
+	MaxStakingTimeBlocks          uint16
+	SlashingPkScript              string
+	MinSlashingTransactionFeeSat  int64
+	SlashingRate                  math.LegacyDec
+	MaxActiveFinalityProviders    uint32
+	MinUnbondingTime              uint16
+	UnbondingFeeSat               int64
+	MinCommissionRate             math.LegacyDec
+	SignedBlocksWindow            int64
+	MinSignedPerWindow            math.LegacyDec
+	FinalitySigTimeout            int64
+	JailDuration                  time.Duration
+	FinalityActivationBlockHeight uint64
 }
 
 func addGenesisFlags(cmd *cobra.Command) {
@@ -135,6 +137,8 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().String(flagMinSignedPerWindow, ftypes.DefaultMinSignedPerWindow.String(), "Minimum number of blocks that a finality provider is required to sign within the sliding window to avoid being jailed")
 	cmd.Flags().Int64(flagFinalitySigTimeout, ftypes.DefaultFinalitySigTimeout, "How much time (in terms of blocks) finality providers have to cast a finality vote before being judged as missing their voting turn on the given block")
 	cmd.Flags().String(flagJailDuration, ftypes.DefaultJailDuration.String(), "Minimum period of time that a finality provider remains jailed")
+	// finality flags
+	cmd.Flags().Uint64(flagActivationHeight, ftypes.DefaultFinalityActivationHeight, "Finality bbn block height activation to start accepting finality vote and pub rand")
 }
 
 func parseGenesisFlags(cmd *cobra.Command) (*GenesisCLIArgs, error) {
@@ -172,6 +176,7 @@ func parseGenesisFlags(cmd *cobra.Command) (*GenesisCLIArgs, error) {
 	minSignedPerWindowStr, _ := cmd.Flags().GetString(flagMinSignedPerWindow)
 	finalitySigTimeout, _ := cmd.Flags().GetInt64(flagFinalitySigTimeout)
 	jailDurationStr, _ := cmd.Flags().GetString(flagJailDuration)
+	finalityActivationBlockHeight, _ := cmd.Flags().GetUint64(flagActivationHeight)
 
 	if chainID == "" {
 		chainID = "chain-" + tmrand.NewRand().Str(6)
@@ -195,39 +200,40 @@ func parseGenesisFlags(cmd *cobra.Command) (*GenesisCLIArgs, error) {
 	}
 
 	return &GenesisCLIArgs{
-		ChainID:                      chainID,
-		MaxActiveValidators:          maxActiveValidators,
-		BtcConfirmationDepth:         btcConfirmationDepth,
-		BtcFinalizationTimeout:       btcFinalizationTimeout,
-		CheckpointTag:                checkpointTag,
-		EpochInterval:                epochInterval,
-		BaseBtcHeaderHeight:          baseBtcHeaderHeight,
-		BaseBtcHeaderHex:             baseBtcHeaderHex,
-		AllowedReporterAddresses:     allowedReporterAddresses,
-		CovenantPKs:                  strings.Split(covenantPks, ","),
-		CovenantQuorum:               covenantQuorum,
-		MinStakingAmtSat:             minStakingAmtSat,
-		MaxStakingAmtSat:             maxStakingAmtSat,
-		MinStakingTimeBlocks:         minStakingTimeBlocks,
-		MaxStakingTimeBlocks:         maxStakingTimeBlocks,
-		SlashingPkScript:             slashingPkScript,
-		MinSlashingTransactionFeeSat: minSlashingFee,
-		MinCommissionRate:            math.LegacyMustNewDecFromStr(minCommissionRate),
-		SlashingRate:                 math.LegacyMustNewDecFromStr(slashingRate),
-		MaxActiveFinalityProviders:   maxActiveFinalityProviders,
-		MinUnbondingTime:             minUnbondingTime,
-		UnbondingFeeSat:              unbondingFeeSat,
-		GenesisTime:                  genesisTime,
-		InflationRateChange:          inflationRateChange,
-		InflationMax:                 inflationMax,
-		InflationMin:                 inflationMin,
-		GoalBonded:                   goalBonded,
-		BlocksPerYear:                blocksPerYear,
-		BlockGasLimit:                blockGasLimit,
-		VoteExtensionEnableHeight:    voteExtensionEnableHeight,
-		SignedBlocksWindow:           signedBlocksWindow,
-		MinSignedPerWindow:           minSignedPerWindow,
-		FinalitySigTimeout:           finalitySigTimeout,
-		JailDuration:                 jailDuration,
+		ChainID:                       chainID,
+		MaxActiveValidators:           maxActiveValidators,
+		BtcConfirmationDepth:          btcConfirmationDepth,
+		BtcFinalizationTimeout:        btcFinalizationTimeout,
+		CheckpointTag:                 checkpointTag,
+		EpochInterval:                 epochInterval,
+		BaseBtcHeaderHeight:           baseBtcHeaderHeight,
+		BaseBtcHeaderHex:              baseBtcHeaderHex,
+		AllowedReporterAddresses:      allowedReporterAddresses,
+		CovenantPKs:                   strings.Split(covenantPks, ","),
+		CovenantQuorum:                covenantQuorum,
+		MinStakingAmtSat:              minStakingAmtSat,
+		MaxStakingAmtSat:              maxStakingAmtSat,
+		MinStakingTimeBlocks:          minStakingTimeBlocks,
+		MaxStakingTimeBlocks:          maxStakingTimeBlocks,
+		SlashingPkScript:              slashingPkScript,
+		MinSlashingTransactionFeeSat:  minSlashingFee,
+		MinCommissionRate:             math.LegacyMustNewDecFromStr(minCommissionRate),
+		SlashingRate:                  math.LegacyMustNewDecFromStr(slashingRate),
+		MaxActiveFinalityProviders:    maxActiveFinalityProviders,
+		MinUnbondingTime:              minUnbondingTime,
+		UnbondingFeeSat:               unbondingFeeSat,
+		GenesisTime:                   genesisTime,
+		InflationRateChange:           inflationRateChange,
+		InflationMax:                  inflationMax,
+		InflationMin:                  inflationMin,
+		GoalBonded:                    goalBonded,
+		BlocksPerYear:                 blocksPerYear,
+		BlockGasLimit:                 blockGasLimit,
+		VoteExtensionEnableHeight:     voteExtensionEnableHeight,
+		SignedBlocksWindow:            signedBlocksWindow,
+		MinSignedPerWindow:            minSignedPerWindow,
+		FinalitySigTimeout:            finalitySigTimeout,
+		JailDuration:                  jailDuration,
+		FinalityActivationBlockHeight: finalityActivationBlockHeight,
 	}, nil
 }
