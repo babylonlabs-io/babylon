@@ -29,6 +29,9 @@ message GenesisState {
   repeated FinalityProviderMissedBlocks missed_blocks = 8 [(gogoproto.nullable) = false];
   // voting_powers the voting power of every finality provider at every block height.
   repeated VotingPowerFP voting_powers = 9;
+  // vp_dst_cache is the table of all providers voting power with the total at one specific block.
+  // TODO: remove this after not storing in the keeper store it anymore.
+  repeated VotingPowerDistCacheBlkHeight vp_dst_cache = 10;
 }
 
 // VoteSig the vote of an finality provider
@@ -95,4 +98,12 @@ message VotingPowerFP {
   bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   // voting_power is the power of the finality provider at this specific block height.
   uint64 voting_power = 3;
+}
+
+// VotingPowerDistCacheBlkHeight the total voting power of the finality providers at one specific block height
+message VotingPowerDistCacheBlkHeight {
+  // block_height is the height of the block the voting power distribution cached was stored.
+  uint64 block_height = 1;
+  // vp_distribution the finality providers distribution cache at that height.
+  VotingPowerDistCache vp_distribution = 2;
 }

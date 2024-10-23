@@ -52,6 +52,10 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		k.SetVotingPower(ctx, *fpVP.FpBtcPk, fpVP.BlockHeight, fpVP.VotingPower)
 	}
 
+	for _, vpCache := range gs.VpDstCache {
+		k.SetVotingPowerDistCache(ctx, vpCache.BlockHeight, vpCache.VpDistribution)
+	}
+
 	return k.SetParams(ctx, gs.Params)
 }
 
@@ -92,6 +96,11 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
+	vpDstCache, err := k.votingPowersDistCacheBlkHeight(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.GenesisState{
 		Params:           k.GetParams(ctx),
 		IndexedBlocks:    blocks,
@@ -102,6 +111,7 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		SigningInfos:     signingInfos,
 		MissedBlocks:     missedBlocks,
 		VotingPowers:     vpFps,
+		VpDstCache:       vpDstCache,
 	}, nil
 }
 
@@ -286,6 +296,25 @@ func (k Keeper) fpVotingPowers(ctx context.Context) ([]*types.VotingPowerFP, err
 	}
 
 	return vpFps, nil
+}
+
+func (k Keeper) votingPowersDistCacheBlkHeight(ctx context.Context) ([]*types.VotingPowerDistCacheBlkHeight, error) {
+	vps := make([]*types.VotingPowerDistCacheBlkHeight, 0)
+	iter := k.votingPowerDistCacheStore(ctx).Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var dc types.VotingPowerDistCache
+		if err := dc.Unmarshal(iter.Value()); err != nil {
+			return nil, err
+		}
+		vps = append(vps, &types.VotingPowerDistCacheBlkHeight{
+			BlockHeight:    sdk.BigEndianToUint64(iter.Key()),
+			VpDistribution: &dc,
+		})
+	}
+
+	return vps, nil
 }
 
 // parsePubKeyAndBlkHeightFromStoreKey expects to receive a key with

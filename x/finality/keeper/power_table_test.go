@@ -12,6 +12,7 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 func FuzzVotingPowerTable(f *testing.F) {
@@ -229,7 +230,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		h.BeginBlocker()
 
 		// assert voting power distribution cache is correct
-		dc := h.BTCStakingKeeper.GetVotingPowerDistCache(h.Ctx, babylonHeight)
+		dc := h.FinalityKeeper.GetVotingPowerDistCache(h.Ctx, babylonHeight)
 		require.NotNil(t, dc)
 		require.Equal(t, dc.TotalBondedSat, numFpsWithVotingPower*numBTCDels*stakingValue, dc.String())
 		activeFPs := dc.GetActiveFinalityProviderSet()
@@ -265,7 +266,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		h.NoError(err)
 
 		// generate a random batch of finality providers, each with a BTC delegation with random power
-		fpsWithMeta := []*types.FinalityProviderDistInfo{}
+		fpsWithMeta := []*ftypes.FinalityProviderDistInfo{}
 		numFps := datagen.RandomInt(r, 300) + 1
 		noTimestampedFps := map[string]bool{}
 		for i := uint64(0); i < numFps; i++ {
@@ -293,7 +294,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 
 			// 30 percent not have timestamped randomness, which causes
 			// zero voting power in the table
-			fpDistInfo := &types.FinalityProviderDistInfo{BtcPk: fp.BtcPk, TotalBondedSat: stakingValue}
+			fpDistInfo := &ftypes.FinalityProviderDistInfo{BtcPk: fp.BtcPk, TotalBondedSat: stakingValue}
 			if r.Intn(10) <= 2 {
 				h.CommitPubRandList(r, fpSK, fp, 1, 100, false)
 				noTimestampedFps[fp.BtcPk.MarshalHex()] = true
@@ -309,7 +310,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 
 		maxActiveFpsParam := h.FinalityKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders
 		// get a map of expected active finality providers
-		types.SortFinalityProvidersWithZeroedVotingPower(fpsWithMeta)
+		ftypes.SortFinalityProvidersWithZeroedVotingPower(fpsWithMeta)
 		expectedActiveFps := fpsWithMeta[:min(uint32(len(fpsWithMeta)-len(noTimestampedFps)), maxActiveFpsParam)]
 		expectedActiveFpsMap := map[string]uint64{}
 		for _, fp := range expectedActiveFps {

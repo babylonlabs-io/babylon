@@ -7,7 +7,9 @@ import (
 	"sort"
 
 	"cosmossdk.io/collections"
+	"cosmossdk.io/store/prefix"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -24,10 +26,10 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	btcTipHeight := k.BTCStakingKeeper.GetCurrentBTCHeight(ctx)
 
 	// get the power dist cache in the last height
-	dc := k.BTCStakingKeeper.GetVotingPowerDistCache(ctx, height-1)
+	dc := k.GetVotingPowerDistCache(ctx, height-1)
 	if dc == nil {
 		// no BTC staker at the prior height
-		dc = types.NewVotingPowerDistCache()
+		dc = ftypes.NewVotingPowerDistCache()
 	}
 
 	// get all power distribution update events during the previous tip
@@ -58,7 +60,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 // with the following consideration:
 // 1. the fp must have timestamped pub rand
 // 2. the fp must in the top x ranked by the voting power (x is given by maxActiveFps)
-func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *types.VotingPowerDistCache) {
+func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *ftypes.VotingPowerDistCache) {
 	if newDc == nil {
 		panic("the voting power distribution cache cannot be nil")
 	}
@@ -87,11 +89,11 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *types.Voti
 	}
 
 	// set the voting power distribution cache of the current height
-	k.BTCStakingKeeper.SetVotingPowerDistCache(ctx, babylonTipHeight, newDc)
+	k.SetVotingPowerDistCache(ctx, babylonTipHeight, newDc)
 }
 
 // handleFPStateUpdates emits events and triggers hooks for finality providers with state updates
-func (k Keeper) handleFPStateUpdates(ctx context.Context, prevDc, newDc *types.VotingPowerDistCache) {
+func (k Keeper) handleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.VotingPowerDistCache) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	newlyActiveFPs := newDc.FindNewActiveFinalityProviders(prevDc)
@@ -140,7 +142,7 @@ func (k Keeper) handleActivatedFinalityProvider(ctx context.Context, fpPk *bbn.B
 	return k.FinalityProviderSigningTracker.Set(ctx, fpPk.MustMarshal(), signingInfo)
 }
 
-func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache) {
+func (k Keeper) recordMetrics(dc *ftypes.VotingPowerDistCache) {
 	// number of active FPs
 	numActiveFPs := int(dc.NumActiveFps)
 	types.RecordActiveFinalityProviders(numActiveFPs)
@@ -167,9 +169,9 @@ func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache) {
 // - newly unjailed finality providers
 func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	ctx context.Context,
-	dc *types.VotingPowerDistCache,
+	dc *ftypes.VotingPowerDistCache,
 	events []*types.EventPowerDistUpdate,
-) *types.VotingPowerDistCache {
+) *ftypes.VotingPowerDistCache {
 	// a map where key is finality provider's BTC PK hex and value is a list
 	// of BTC delegations that newly become active under this provider
 	activeBTCDels := map[string][]*types.BTCDelegation{}
@@ -230,14 +232,14 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	// sub-optimal. Ideally we only need to iterate over all events above rather
 	// than the entire cache. This is made difficulty since BTC delegations are
 	// not keyed in the cache. Need to find a way to optimise this.
-	newDc := types.NewVotingPowerDistCache()
+	newDc := ftypes.NewVotingPowerDistCache()
 
 	// iterate over all finality providers and apply all events
 	for i := range dc.FinalityProviders {
 		// create a copy of the finality provider
 		fp := *dc.FinalityProviders[i]
 		fp.TotalBondedSat = 0
-		fp.BtcDels = []*types.BTCDelDistInfo{}
+		fp.BtcDels = []*ftypes.BTCDelDistInfo{}
 
 		fpBTCPKHex := fp.BtcPk.MarshalHex()
 
@@ -308,7 +310,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		if err != nil {
 			panic(err) // only programming error
 		}
-		fpDistInfo := types.NewFinalityProviderDistInfo(newFP)
+		fpDistInfo := ftypes.NewFinalityProviderDistInfo(newFP)
 
 		// add each BTC delegation
 		fpActiveBTCDels := activeBTCDels[fpBTCPKHex]
@@ -323,4 +325,34 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	}
 
 	return newDc
+}
+
+func (k Keeper) SetVotingPowerDistCache(ctx context.Context, height uint64, dc *ftypes.VotingPowerDistCache) {
+	store := k.votingPowerDistCacheStore(ctx)
+	store.Set(sdk.Uint64ToBigEndian(height), k.cdc.MustMarshal(dc))
+}
+
+func (k Keeper) GetVotingPowerDistCache(ctx context.Context, height uint64) *ftypes.VotingPowerDistCache {
+	store := k.votingPowerDistCacheStore(ctx)
+	rdcBytes := store.Get(sdk.Uint64ToBigEndian(height))
+	if len(rdcBytes) == 0 {
+		return nil
+	}
+	var dc ftypes.VotingPowerDistCache
+	k.cdc.MustUnmarshal(rdcBytes, &dc)
+	return &dc
+}
+
+func (k Keeper) RemoveVotingPowerDistCache(ctx context.Context, height uint64) {
+	store := k.votingPowerDistCacheStore(ctx)
+	store.Delete(sdk.Uint64ToBigEndian(height))
+}
+
+// votingPowerDistCacheStore returns the KVStore of the voting power distribution cache
+// prefix: VotingPowerDistCacheKey
+// key: Babylon block height
+// value: VotingPowerDistCache
+func (k Keeper) votingPowerDistCacheStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.VotingPowerDistCacheKey)
 }

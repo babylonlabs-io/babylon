@@ -150,7 +150,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		// Case 0: fail if the committed epoch is not finalized
 		lastFinalizedEpoch := datagen.RandomInt(r, int(committedEpochNum))
 		o1 := cKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(lastFinalizedEpoch).Times(1)
-		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(1)).Times(1)
+		fKeeper.SetVotingPower(ctx, fpBTCPKBytes, blockHeight, 1)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		_, err = ms.AddFinalitySig(ctx, msg)
 		require.ErrorIs(t, err, types.ErrPubRandCommitNotBTCTimestamped)
@@ -160,17 +160,17 @@ func FuzzAddFinalitySig(f *testing.F) {
 		cKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(lastFinalizedEpoch).After(o1).AnyTimes()
 
 		// Case 1: fail if the finality provider does not have voting power
-		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(0)).Times(1)
+		fKeeper.SetVotingPower(ctx, fpBTCPKBytes, blockHeight, 0)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		_, err = ms.AddFinalitySig(ctx, msg)
 		require.Error(t, err)
 
 		// mock voting power
-		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(1)).AnyTimes()
+		fKeeper.SetVotingPower(ctx, fpBTCPKBytes, blockHeight, 1)
 
 		// Case 2: fail if the finality provider has not committed public randomness at that height
 		blockHeight2 := startHeight + numPubRand + 1
-		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight2)).Return(uint64(1)).Times(1)
+		fKeeper.SetVotingPower(ctx, fpBTCPKBytes, blockHeight, 1)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		msg.BlockHeight = blockHeight2
 		_, err = ms.AddFinalitySig(ctx, msg)
@@ -353,9 +353,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: forkHash})
 	msg1, err := datagen.NewMsgAddFinalitySig(signer, btcSK, startHeight, blockHeight, randListInfo, forkHash)
 	require.NoError(t, err)
-	bsKeeper.EXPECT().GetVotingPower(gomock.Any(),
-		gomock.Eq(fpBTCPKBytes),
-		gomock.Eq(blockHeight)).Return(uint64(1)).AnyTimes()
+	fKeeper.SetVotingPower(ctx, fpBTCPKBytes, blockHeight, 1)
 	bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(),
 		gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 	_, err = ms.AddFinalitySig(ctx, msg1)
@@ -364,9 +362,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	msg, err := datagen.NewMsgAddFinalitySig(signer, btcSK, startHeight, blockHeight, randListInfo, canonicalHash)
 	ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: canonicalHash})
 	require.NoError(t, err)
-	bsKeeper.EXPECT().GetVotingPower(gomock.Any(),
-		gomock.Eq(fpBTCPKBytes),
-		gomock.Eq(blockHeight)).Return(uint64(1)).AnyTimes()
+	fKeeper.SetVotingPower(ctx, fpBTCPKBytes, blockHeight, 1)
 	bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(),
 		gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 	bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(),
@@ -435,7 +431,7 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	fKeeper.IndexBlock(ctx)
 	bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).AnyTimes()
 	// mock voting power
-	bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(1)).AnyTimes()
+	fKeeper.SetVotingPower(ctx, fpBTCPKBytes, blockHeight, 1)
 	// set the committed epoch finalized for the rest of the cases
 	lastFinalizedEpoch := datagen.GenRandomEpochNum(r) + committedEpochNum
 	cKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(lastFinalizedEpoch).AnyTimes()

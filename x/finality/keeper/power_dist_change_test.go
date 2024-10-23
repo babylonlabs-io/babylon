@@ -13,6 +13,7 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
@@ -41,7 +42,7 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 		}
 
 		// empty dist cache
-		dc := types.NewVotingPowerDistCache()
+		dc := ftypes.NewVotingPowerDistCache()
 
 		stakingValue := int64(2 * 10e8)
 

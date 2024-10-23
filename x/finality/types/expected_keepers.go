@@ -16,11 +16,8 @@ type BTCStakingKeeper interface {
 	HasFinalityProvider(ctx context.Context, fpBTCPK []byte) bool
 	SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (*bstypes.BTCDelegation, error)
-	GetVotingPowerDistCache(ctx context.Context, height uint64) *bstypes.VotingPowerDistCache
-	SetVotingPowerDistCache(ctx context.Context, height uint64, dc *bstypes.VotingPowerDistCache)
 	GetAllPowerDistUpdateEvents(ctx context.Context, lastBTCTipHeight, btcTipHeight uint32) []*bstypes.EventPowerDistUpdate
 	ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint32)
-	RemoveVotingPowerDistCache(ctx context.Context, height uint64)
 	JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	UnjailFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 }
@@ -33,6 +30,6 @@ type CheckpointingKeeper interface {
 // IncentiveKeeper defines the expected interface needed for distributing rewards
 // and refund transaction fee for finality signatures
 type IncentiveKeeper interface {
-	RewardBTCStaking(ctx context.Context, height uint64, filteredDc *bstypes.VotingPowerDistCache)
+	RewardBTCStaking(ctx context.Context, height uint64, filteredDc *VotingPowerDistCache)
 	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
 }

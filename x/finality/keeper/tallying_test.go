@@ -12,41 +12,9 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
-
-func FuzzTallying_PanicCases(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
-		iKeeper := types.NewMockIncentiveKeeper(ctrl)
-		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
-
-		// Case 1: expect to panic if tallying upon BTC staking protocol is not activated
-		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(uint64(0), bstypes.ErrBTCStakingNotActivated).Times(1)
-		require.Panics(t, func() { fKeeper.TallyBlocks(ctx) })
-
-		// Case 2: expect to panic if finalised block with nil finality provider
-		fKeeper.SetBlock(ctx, &types.IndexedBlock{
-			Height:    1,
-			AppHash:   datagen.GenRandomByteArray(r, 32),
-			Finalized: true,
-		})
-		// activate BTC staking protocol at height 1
-		ctx = datagen.WithCtxHeight(ctx, 1)
-		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(uint64(1), nil).Times(1)
-		bsKeeper.EXPECT().GetVotingPowerTable(gomock.Any(), gomock.Eq(uint64(1))).Return(nil).Times(1)
-		require.Panics(t, func() { fKeeper.TallyBlocks(ctx) })
-	})
-}
 
 func FuzzTallying_FinalizingNoBlock(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
@@ -77,9 +45,8 @@ func FuzzTallying_FinalizingNoBlock(f *testing.F) {
 			err := giveNoQCToHeight(r, ctx, bsKeeper, fKeeper, i)
 			require.NoError(t, err)
 		}
-		// add mock queries to GetBTCStakingActivatedHeight
-		ctx = datagen.WithCtxHeight(ctx, activatedHeight+10-1)
-		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(activatedHeight, nil).Times(1)
+		// mock activated height
+		fKeeper.SetVotingPower(ctx, datagen.GenRandomByteArray(r, 32), activatedHeight, 1)
 		// tally blocks and none of them should be finalised
 		fKeeper.TallyBlocks(ctx)
 		for i := activatedHeight; i < activatedHeight+10; i++ {
@@ -128,12 +95,10 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 			}
 		}
 		// we don't test incentive in this function
-		bsKeeper.EXPECT().GetVotingPowerDistCache(gomock.Any(), gomock.Any()).Return(bstypes.NewVotingPowerDistCache()).Times(int(numWithQCs))
 		iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(int(numWithQCs))
-		bsKeeper.EXPECT().RemoveVotingPowerDistCache(gomock.Any(), gomock.Any()).Return().Times(int(numWithQCs))
 		// add mock queries to GetBTCStakingActivatedHeight
-		ctx = datagen.WithCtxHeight(ctx, activatedHeight+10-1)
-		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(activatedHeight, nil).Times(1)
+		// mock activated height
+		fKeeper.SetVotingPower(ctx, datagen.GenRandomByteArray(r, 32), activatedHeight, 1)
 		// tally blocks and none of them should be finalised
 		fKeeper.TallyBlocks(ctx)
 		for i := activatedHeight; i < activatedHeight+10; i++ {
@@ -168,7 +133,15 @@ func giveQCToHeight(r *rand.Rand, ctx sdk.Context, bsKeeper *types.MockBTCStakin
 	}
 	// the rest of the finality providers do not vote
 	fpSet[hex.EncodeToString(datagen.GenRandomByteArray(r, 32))] = 1
-	bsKeeper.EXPECT().GetVotingPowerTable(gomock.Any(), gomock.Eq(height)).Return(fpSet).Times(1)
+
+	// mock voting power table
+	for fpPK, votingPower := range fpSet {
+		fpPKBytes, err := hex.DecodeString(fpPK)
+		if err != nil {
+			return err
+		}
+		fKeeper.SetVotingPower(ctx, fpPKBytes, height, votingPower)
+	}
 
 	return nil
 }
@@ -191,7 +164,15 @@ func giveNoQCToHeight(r *rand.Rand, ctx sdk.Context, bsKeeper *types.MockBTCStak
 		hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
 		hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
 	}
-	bsKeeper.EXPECT().GetVotingPowerTable(gomock.Any(), gomock.Eq(height)).Return(fpSet).MaxTimes(1)
+
+	// mock voting power table
+	for fpPK, votingPower := range fpSet {
+		fpPKBytes, err := hex.DecodeString(fpPK)
+		if err != nil {
+			return err
+		}
+		fKeeper.SetVotingPower(ctx, fpPKBytes, height, votingPower)
+	}
 
 	return nil
 }
