@@ -19,7 +19,7 @@ import (
 // but without block that has finality providers set AND does not receive QC
 func (k Keeper) TallyBlocks(ctx context.Context) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	activatedHeight, err := k.BTCStakingKeeper.GetBTCStakingActivatedHeight(ctx)
+	activatedHeight, err := k.GetBTCStakingActivatedHeight(ctx)
 	if err != nil {
 		// invoking TallyBlocks when BTC staking protocol is not activated is a programming error
 		panic(fmt.Errorf("cannot tally a block when the BTC staking protocol hasn't been activated yet, current height: %v, activated height: %v",
@@ -46,7 +46,7 @@ func (k Keeper) TallyBlocks(ctx context.Context) {
 		}
 
 		// get the finality provider set of this block
-		fpSet := k.BTCStakingKeeper.GetVotingPowerTable(ctx, ib.Height)
+		fpSet := k.GetVotingPowerTable(ctx, ib.Height)
 
 		if fpSet != nil && !ib.Finalized {
 			// has finality providers, non-finalised: tally and try to finalise the block

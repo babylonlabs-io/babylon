@@ -27,7 +27,7 @@ func FuzzActivatedHeight(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// not activated yet

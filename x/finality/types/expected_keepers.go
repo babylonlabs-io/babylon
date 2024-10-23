@@ -16,10 +16,6 @@ type BTCStakingKeeper interface {
 	HasFinalityProvider(ctx context.Context, fpBTCPK []byte) bool
 	SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (*bstypes.BTCDelegation, error)
-	GetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64) uint64
-	GetVotingPowerTable(ctx context.Context, height uint64) map[string]uint64
-	SetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64, votingPower uint64)
-	GetBTCStakingActivatedHeight(ctx context.Context) (uint64, error)
 	GetVotingPowerDistCache(ctx context.Context, height uint64) *bstypes.VotingPowerDistCache
 	SetVotingPowerDistCache(ctx context.Context, height uint64, dc *bstypes.VotingPowerDistCache)
 	GetAllPowerDistUpdateEvents(ctx context.Context, lastBTCTipHeight, btcTipHeight uint32) []*bstypes.EventPowerDistUpdate

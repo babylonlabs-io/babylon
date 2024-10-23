@@ -34,8 +34,7 @@ func (k Keeper) FinalityProviders(c context.Context, req *types.QueryFinalityPro
 			return err
 		}
 
-		votingPower := k.GetVotingPower(ctx, key, currBlockHeight)
-		resp := types.NewFinalityProviderResponse(&fp, currBlockHeight, votingPower)
+		resp := types.NewFinalityProviderResponse(&fp, currBlockHeight)
 		fpResp = append(fpResp, resp)
 		return nil
 	})
@@ -74,8 +73,7 @@ func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProv
 	}
 
 	currBlockHeight := uint64(ctx.BlockHeight())
-	votingPower := k.GetVotingPower(ctx, key, currBlockHeight)
-	fpResp := types.NewFinalityProviderResponse(fp, currBlockHeight, votingPower)
+	fpResp := types.NewFinalityProviderResponse(fp, currBlockHeight)
 	return &types.QueryFinalityProviderResponse{FinalityProvider: fpResp}, nil
 }
 

@@ -27,6 +27,8 @@ message GenesisState {
   // missed_blocks represents a map between finality provider public key and their
   // missed blocks.
   repeated FinalityProviderMissedBlocks missed_blocks = 8 [(gogoproto.nullable) = false];
+  // voting_powers the voting power of every finality provider at every block height.
+  repeated VotingPowerFP voting_powers = 9;
 }
 
 // VoteSig the vote of an finality provider
@@ -82,4 +84,15 @@ message MissedBlock {
   int64 index = 1;
   // missed is the missed status.
   bool missed = 2;
+}
+
+// VotingPowerFP contains the information about the voting power
+// of an finality provider in a specific block height.
+message VotingPowerFP {
+  // block_height is the height of the block the voting power was stored.
+  uint64 block_height = 1;
+  // fp_btc_pk the finality provider btc public key.
+  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  // voting_power is the power of the finality provider at this specific block height.
+  uint64 voting_power = 3;
 }

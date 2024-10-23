@@ -83,7 +83,7 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *types.Voti
 	// set voting power table for each active finality providers at this height
 	for i := uint32(0); i < newDc.NumActiveFps; i++ {
 		fp := newDc.FinalityProviders[i]
-		k.BTCStakingKeeper.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalBondedSat)
+		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalBondedSat)
 	}
 
 	// set the voting power distribution cache of the current height

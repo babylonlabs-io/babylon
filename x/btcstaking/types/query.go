@@ -57,8 +57,8 @@ func (ud *BTCUndelegation) ToResponse() (resp *BTCUndelegationResponse) {
 	return resp
 }
 
-// NewFinalityProviderResponse creates a new finality provider response based on the finaliny provider and his voting power.
-func NewFinalityProviderResponse(f *FinalityProvider, bbnBlockHeight, votingPower uint64) *FinalityProviderResponse {
+// NewFinalityProviderResponse creates a new finality provider response based on the finality provider
+func NewFinalityProviderResponse(f *FinalityProvider, bbnBlockHeight uint64) *FinalityProviderResponse {
 	return &FinalityProviderResponse{
 		Description:          f.Description,
 		Commission:           f.Commission,

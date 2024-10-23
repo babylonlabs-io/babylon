@@ -31,8 +31,8 @@ func (k Keeper) FinalityProviderPowerAtHeight(ctx context.Context, req *types.Qu
 		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal finality provider BTC PK hex: %v", err)
 	}
 
-	if !k.HasFinalityProvider(ctx, *fpBTCPK) {
-		return nil, types.ErrFpNotFound
+	if !k.BTCStakingKeeper.HasFinalityProvider(ctx, *fpBTCPK) {
+		return nil, bstypes.ErrFpNotFound
 	}
 
 	store := k.votingPowerBbnBlockHeightStore(ctx, req.Height)
@@ -40,7 +40,7 @@ func (k Keeper) FinalityProviderPowerAtHeight(ctx context.Context, req *types.Qu
 	defer iter.Close()
 
 	if !iter.Valid() {
-		return nil, types.ErrVotingPowerTableNotUpdated.Wrapf("height: %d", req.Height)
+		return nil, bstypes.ErrVotingPowerTableNotUpdated.Wrapf("height: %d", req.Height)
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
@@ -75,16 +75,16 @@ func (k Keeper) ActiveFinalityProvidersAtHeight(ctx context.Context, req *types.
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	store := k.votingPowerBbnBlockHeightStore(sdkCtx, req.Height)
 
-	var finalityProvidersWithMeta []*types.FinalityProviderWithMeta
+	var finalityProvidersWithMeta []*bstypes.FinalityProviderWithMeta
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
-		finalityProvider, err := k.GetFinalityProvider(sdkCtx, key)
+		finalityProvider, err := k.BTCStakingKeeper.GetFinalityProvider(sdkCtx, key)
 		if err != nil {
 			return err
 		}
 
 		votingPower := k.GetVotingPower(sdkCtx, key, req.Height)
 		if votingPower > 0 {
-			finalityProviderWithMeta := types.FinalityProviderWithMeta{
+			finalityProviderWithMeta := bstypes.FinalityProviderWithMeta{
 				BtcPk:                finalityProvider.BtcPk,
 				Height:               req.Height,
 				VotingPower:          votingPower,
