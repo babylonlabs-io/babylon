@@ -17,17 +17,21 @@ func (k Keeper) SetVotingPower(ctx context.Context, fpBTCPK []byte, height uint6
 	store.Set(fpBTCPK, sdk.Uint64ToBigEndian(power))
 }
 
-// GetVotingPower gets the voting power of a given finality provider at a given Babylon height
-func (k Keeper) GetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64) uint64 {
-	if !k.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPK) {
-		return 0
-	}
+func (k Keeper) getVotingPower(ctx context.Context, fpBTCPK []byte, height uint64) uint64 {
 	store := k.votingPowerBbnBlockHeightStore(ctx, height)
 	powerBytes := store.Get(fpBTCPK)
 	if len(powerBytes) == 0 {
 		return 0
 	}
 	return sdk.BigEndianToUint64(powerBytes)
+}
+
+// GetVotingPower gets the voting power of a given finality provider at a given Babylon height
+func (k Keeper) GetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64) uint64 {
+	if !k.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPK) {
+		return 0
+	}
+	return k.getVotingPower(ctx, fpBTCPK, height)
 }
 
 // GetCurrentVotingPower gets the voting power of a given finality provider at the current height

@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"encoding/hex"
 	"math/rand"
 	"testing"
 
@@ -42,12 +41,13 @@ func FuzzTallying_FinalizingNoBlock(f *testing.F) {
 				Finalized: false,
 			})
 			// this block does not have QC
-			err := giveNoQCToHeight(r, ctx, bsKeeper, fKeeper, i)
+			err := giveNoQCToHeight(r, ctx, fKeeper, i)
 			require.NoError(t, err)
 		}
 		// mock activated height
 		fKeeper.SetVotingPower(ctx, datagen.GenRandomByteArray(r, 32), activatedHeight, 1)
 		// tally blocks and none of them should be finalised
+		ctx = datagen.WithCtxHeight(ctx, activatedHeight+10-1)
 		fKeeper.TallyBlocks(ctx)
 		for i := activatedHeight; i < activatedHeight+10; i++ {
 			ib, err := fKeeper.GetBlock(ctx, i)
@@ -86,20 +86,18 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 			})
 			if i < activatedHeight+numWithQCs {
 				// this block has QC
-				err := giveQCToHeight(r, ctx, bsKeeper, fKeeper, i)
+				err := giveQCToHeight(r, ctx, fKeeper, i)
 				require.NoError(t, err)
 			} else {
 				// this block does not have QC
-				err := giveNoQCToHeight(r, ctx, bsKeeper, fKeeper, i)
+				err := giveNoQCToHeight(r, ctx, fKeeper, i)
 				require.NoError(t, err)
 			}
 		}
 		// we don't test incentive in this function
 		iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(int(numWithQCs))
-		// add mock queries to GetBTCStakingActivatedHeight
-		// mock activated height
-		fKeeper.SetVotingPower(ctx, datagen.GenRandomByteArray(r, 32), activatedHeight, 1)
 		// tally blocks and none of them should be finalised
+		ctx = datagen.WithCtxHeight(ctx, activatedHeight+10-1)
 		fKeeper.TallyBlocks(ctx)
 		for i := activatedHeight; i < activatedHeight+10; i++ {
 			ib, err := fKeeper.GetBlock(ctx, i)
@@ -114,65 +112,62 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 
 }
 
-func giveQCToHeight(r *rand.Rand, ctx sdk.Context, bsKeeper *types.MockBTCStakingKeeper, fKeeper *keeper.Keeper, height uint64) error {
-	// 4 finality providers
-	fpSet := map[string]uint64{}
+func giveQCToHeight(r *rand.Rand, ctx sdk.Context, fKeeper *keeper.Keeper, height uint64) error {
+	dc := types.NewVotingPowerDistCache()
 	// 3 votes
 	for i := 0; i < 3; i++ {
 		votedFpPK, err := datagen.GenRandomBIP340PubKey(r)
 		if err != nil {
 			return err
 		}
+		fKeeper.SetVotingPower(ctx, votedFpPK.MustMarshal(), height, 1)
+		dc.AddFinalityProviderDistInfo(&types.FinalityProviderDistInfo{
+			BtcPk:          votedFpPK,
+			TotalBondedSat: 1,
+		})
 		votedSig, err := bbn.NewSchnorrEOTSSig(datagen.GenRandomByteArray(r, 32))
 		if err != nil {
 			return err
 		}
 		fKeeper.SetSig(ctx, height, votedFpPK, votedSig)
-		// add finality provider
-		fpSet[votedFpPK.MarshalHex()] = 1
 	}
 	// the rest of the finality providers do not vote
-	fpSet[hex.EncodeToString(datagen.GenRandomByteArray(r, 32))] = 1
-
-	// mock voting power table
-	for fpPK, votingPower := range fpSet {
-		fpPKBytes, err := hex.DecodeString(fpPK)
-		if err != nil {
-			return err
-		}
-		fKeeper.SetVotingPower(ctx, fpPKBytes, height, votingPower)
-	}
-
+	fKeeper.SetVotingPower(ctx, datagen.GenRandomByteArray(r, 32), height, 1)
+	fKeeper.SetVotingPowerDistCache(ctx, height, dc)
 	return nil
 }
 
-func giveNoQCToHeight(r *rand.Rand, ctx sdk.Context, bsKeeper *types.MockBTCStakingKeeper, fKeeper *keeper.Keeper, height uint64) error {
+func giveNoQCToHeight(r *rand.Rand, ctx sdk.Context, fKeeper *keeper.Keeper, height uint64) error {
+	dc := types.NewVotingPowerDistCache()
 	// 1 vote
 	votedFpPK, err := datagen.GenRandomBIP340PubKey(r)
 	if err != nil {
 		return err
 	}
+	fKeeper.SetVotingPower(ctx, votedFpPK.MustMarshal(), height, 1)
+	dc.AddFinalityProviderDistInfo(&types.FinalityProviderDistInfo{
+		BtcPk:          votedFpPK,
+		TotalBondedSat: 1,
+	})
 	votedSig, err := bbn.NewSchnorrEOTSSig(datagen.GenRandomByteArray(r, 32))
 	if err != nil {
 		return err
 	}
 	fKeeper.SetSig(ctx, height, votedFpPK, votedSig)
-	// 4 finality providers
-	fpSet := map[string]uint64{
-		votedFpPK.MarshalHex():                                1,
-		hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
-		hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
-		hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
-	}
 
-	// mock voting power table
-	for fpPK, votingPower := range fpSet {
-		fpPKBytes, err := hex.DecodeString(fpPK)
+	// the other 3 finality providers
+	for i := 0; i < 3; i++ {
+		fpPK, err := datagen.GenRandomBIP340PubKey(r)
 		if err != nil {
 			return err
 		}
-		fKeeper.SetVotingPower(ctx, fpPKBytes, height, votingPower)
+		fKeeper.SetVotingPower(ctx, fpPK.MustMarshal(), height, 1)
+		dc.AddFinalityProviderDistInfo(&types.FinalityProviderDistInfo{
+			BtcPk:          fpPK,
+			TotalBondedSat: 1,
+		})
 	}
+	fKeeper.SetVotingPowerDistCache(ctx, height, dc)
 
 	return nil
 }

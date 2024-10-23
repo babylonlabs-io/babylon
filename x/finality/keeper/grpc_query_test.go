@@ -15,6 +15,7 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/x/finality/keeper"
@@ -156,13 +157,11 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := bstypes.NewMockBTCLightClientKeeper(ctrl)
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 		btccKeeper := bstypes.NewMockBtcCheckpointKeeper(ctrl)
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
-		covenantSKs, _ := h.GenAndApplyParams(r)
-
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
+		h.GenAndApplyParams(r)
 
 		// Generate a random batch of finality providers
 		var fps []*bstypes.FinalityProvider
@@ -174,33 +173,12 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 		}
 
 		// For numFpsWithVotingPower finality providers, generate a random number of BTC delegations
-		numBTCDels := datagen.RandomInt(r, 10) + 1
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		fpsWithVotingPowerMap := make(map[string]*bstypes.FinalityProvider)
 		for i := uint64(0); i < numFpsWithVotingPower; i++ {
 			fpBTCPK := fps[i].BtcPk
 			fpsWithVotingPowerMap[fpBTCPK.MarshalHex()] = fps[i]
-
-			var totalVotingPower uint64
-			for j := uint64(0); j < numBTCDels; j++ {
-				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-				require.NoError(t, err)
-				_, msg, btcDel, _, _, _, err := h.CreateDelegation(
-					r,
-					delSK,
-					fpBTCPK.MustToBTCPK(),
-					changeAddress.EncodeAddress(),
-					int64(babylonHeight),
-					uint16(1),
-					int64(1000),
-					uint16(10000),
-					false,
-				)
-				h.NoError(err)
-				h.CreateCovenantSigs(r, covenantSKs, msg, btcDel)
-
-				totalVotingPower += btcDel.TotalSat
-			}
+			h.FinalityKeeper.SetVotingPower(h.Ctx, fpBTCPK.MustMarshal(), babylonHeight, 1)
 		}
 
 		h.BeginBlocker()
@@ -221,12 +199,8 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 
 		for i := uint64(0); i < numFpsWithVotingPower; i += limit {
 			resp, err = h.FinalityKeeper.ActiveFinalityProvidersAtHeight(h.Ctx, &req)
-			if err != nil {
-				t.Errorf("Valid request led to an error %s", err)
-			}
-			if resp == nil {
-				t.Fatalf("Valid request led to a nil response")
-			}
+			h.NoError(err)
+			require.NotNil(t, resp)
 
 			for _, fp := range resp.FinalityProviders {
 				// Check if the pk exists in the map
@@ -241,9 +215,7 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 			req = types.QueryActiveFinalityProvidersAtHeightRequest{Height: babylonHeight, Pagination: pagination}
 		}
 
-		if len(fpsFound) != len(fpsWithVotingPowerMap) {
-			t.Errorf("Some finality providers were missed. Got %d while %d were expected", len(fpsFound), len(fpsWithVotingPowerMap))
-		}
+		require.Equal(t, len(fpsFound), len(fpsWithVotingPowerMap), "some finality providers were missed, got %d while %d were expected", len(fpsFound), len(fpsWithVotingPowerMap))
 	})
 }
 
