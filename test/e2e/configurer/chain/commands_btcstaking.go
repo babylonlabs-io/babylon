@@ -203,7 +203,37 @@ func (n *NodeConfig) CommitPubRandListOut(
 }
 
 func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
-	_, _, err := n.CommitPubRandListOut(fpBTCPK, startHeight, numPubrand, commitment, sig, "code: 0")
+	n.LogActionF("committing public randomness list")
+
+	cmd := []string{"babylond", "tx", "finality", "commit-pubrand-list"}
+
+	// add finality provider BTC PK to cmd
+	fpBTCPKHex := fpBTCPK.MarshalHex()
+	cmd = append(cmd, fpBTCPKHex)
+
+	// add start height to cmd
+	startHeightStr := strconv.FormatUint(startHeight, 10)
+	cmd = append(cmd, startHeightStr)
+
+	// add num_pub_rand to cmd
+	numPubRandStr := strconv.FormatUint(numPubrand, 10)
+	cmd = append(cmd, numPubRandStr)
+
+	// add commitment to cmd
+	commitmentHex := hex.EncodeToString(commitment)
+	cmd = append(cmd, commitmentHex)
+
+	// add sig to cmd
+	sigHex := sig.ToHexStr()
+	cmd = append(cmd, sigHex)
+
+	// specify used key
+	cmd = append(cmd, "--from=val")
+
+	// gas
+	cmd = append(cmd, "--gas=500000")
+
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully committed public randomness list")
 }
