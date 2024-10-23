@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -99,7 +100,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// chain is already upgraded, only checks for differences in state are expected
 	chainA := s.configurer.GetChainConfig(0)
 
-	n, err := chainA.GetDefaultNode()
+	n, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	govProp, err := s.configurer.ParseGovPropFromFile()
@@ -174,7 +175,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	s.NoError(err)
 	// the tx does not fails, but it actually
 	// does not commits for that height.
-	listByHeight := n.QueryListPublicRandomness(fp.BtcPk)
+	listByHeight := n.QueryListPubRandCommit(fp.BtcPk)
 	_, listFound := listByHeight[finalityParamsFromData.FinalityActivationHeight]
 	s.False(listFound, "this list should not exists, because the msg should have failed")
 
@@ -188,10 +189,12 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 		msgCommitPubRandList.Commitment,
 		msgCommitPubRandList.Sig,
 	)
+	s.Equal(fp.BtcPk.MarshalHex(), msgCommitPubRandList.FpBtcPk.MarshalHex())
 
 	n.WaitForNextBlock()
 
-	listByHeight = n.QueryListPublicRandomness(fp.BtcPk)
+	listByHeight = n.QueryListPubRandCommit(fp.BtcPk)
+	fmt.Printf("pub rand list %+v", listByHeight)
 	_, listFound = listByHeight[finalityParamsFromData.FinalityActivationHeight]
 	s.True(listFound, "this list should exists, because the msg sent is after the activation height")
 
