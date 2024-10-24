@@ -440,3 +440,46 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	_, err = ms.AddFinalitySig(ctx, msg)
 	require.Error(t, err)
 }
+
+func TestVerifyActivationHeight(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
+	ms := keeper.NewMsgServerImpl(*fKeeper)
+	err := fKeeper.SetParams(ctx, types.DefaultParams())
+	require.NoError(t, err)
+	activationHeight := fKeeper.GetParams(ctx).FinalityActivationHeight
+
+	// checks pub rand commit
+	btcSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	startHeight := activationHeight - 1
+	numPubRand := uint64(200)
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+	require.NoError(t, err)
+
+	_, err = ms.CommitPubRandList(ctx, msgCommitPubRandList)
+	require.EqualError(t, err, types.ErrFinalityNotActivated.Wrapf(
+		"public rand commit start block height: %d is lower than activation height %d",
+		startHeight, activationHeight,
+	).Error())
+
+	// check finality vote
+	blockHeight := activationHeight - 1
+	blockAppHash := datagen.GenRandomByteArray(r, 32)
+	signer := datagen.GenRandomAccount().Address
+	msgFinality, err := datagen.NewMsgAddFinalitySig(
+		signer,
+		btcSK,
+		startHeight,
+		blockHeight,
+		randListInfo,
+		blockAppHash,
+	)
+	require.NoError(t, err)
+
+	_, err = ms.AddFinalitySig(ctx, msgFinality)
+	require.EqualError(t, err, types.ErrFinalityNotActivated.Wrapf(
+		"finality block height: %d is lower than activation height %d",
+		blockHeight, activationHeight,
+	).Error())
+}

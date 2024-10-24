@@ -21,4 +21,5 @@ var (
 	ErrJailingPeriodNotPassed         = errorsmod.Register(ModuleName, 1112, "the jailing period is not passed")
 	ErrVotingPowerTableNotUpdated     = errorsmod.Register(ModuleName, 1113, "voting power table has not been updated")
 	ErrBTCStakingNotActivated         = errorsmod.Register(ModuleName, 1114, "the BTC staking protocol is not activated yet")
+	ErrFinalityNotActivated           = errorsmod.Register(ModuleName, 1115, "finality is not active yet")
 )

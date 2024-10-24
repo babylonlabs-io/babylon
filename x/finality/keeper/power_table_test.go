@@ -165,7 +165,6 @@ func FuzzVotingPowerTable(f *testing.F) {
 		require.Equal(t, activatedHeight, activatedHeight2)
 	})
 }
-
 func FuzzRecordVotingPowerDistCache(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 

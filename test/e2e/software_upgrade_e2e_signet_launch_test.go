@@ -1,6 +1,9 @@
 package e2e
 
 import (
+	"math/rand"
+	"time"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -9,6 +12,7 @@ import (
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
 	"github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
@@ -94,13 +98,22 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TearDownSuite() {
 func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// chain is already upgraded, only checks for differences in state are expected
 	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(30) // five blocks more than upgrade
 
-	n, err := chainA.GetDefaultNode()
+	n, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	govProp, err := s.configurer.ParseGovPropFromFile()
 	s.NoError(err)
+	chainA.WaitUntilHeight(govProp.Plan.Height + 1) // waits for chain to produce blocks
+
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	fptBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
+	fp := CreateNodeFP(
+		s.T(),
+		r,
+		fptBTCSK,
+		n,
+	)
 
 	bbnApp := app.NewTmpBabylonApp()
 
@@ -144,6 +157,42 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	finalityParamsFromData, err := v1.LoadFinalityParamsFromData(bbnApp.AppCodec(), testnet.FinalityParamStr)
 	s.NoError(err)
 	s.EqualValues(finalityParamsFromData, *finalityParams)
+
+	// FP tries to commit with start height before finality activation height
+	// it should fail, after commits with start height = finality activation height
+	// and it should work.
+	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.FinalityActivationHeight-1, finalityParamsFromData.MinPubRand)
+	s.NoError(err)
+	n.CommitPubRandList(
+		fp.BtcPk,
+		msgCommitPubRandList.StartHeight,
+		msgCommitPubRandList.NumPubRand,
+		msgCommitPubRandList.Commitment,
+		msgCommitPubRandList.Sig,
+	)
+	// the tx does not fails, but it actually
+	// does not commits for that height.
+	listByHeight := n.QueryListPubRandCommit(fp.BtcPk)
+	_, listFound := listByHeight[finalityParamsFromData.FinalityActivationHeight]
+	s.False(listFound, "this list should not exists, because the msg should have failed")
+
+	// commits with valid start height
+	_, msgCommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(r, fptBTCSK, finalityParamsFromData.FinalityActivationHeight, finalityParamsFromData.MinPubRand)
+	s.NoError(err)
+	n.WaitForNextBlock()
+	n.CommitPubRandList(
+		msgCommitPubRandList.FpBtcPk,
+		msgCommitPubRandList.StartHeight,
+		msgCommitPubRandList.NumPubRand,
+		msgCommitPubRandList.Commitment,
+		msgCommitPubRandList.Sig,
+	)
+
+	n.WaitForNextBlock()
+
+	listByHeight = n.QueryListPubRandCommit(msgCommitPubRandList.FpBtcPk)
+	_, listFound = listByHeight[finalityParamsFromData.FinalityActivationHeight]
+	s.True(listFound, "this list should exists, because the msg sent is after the activation height")
 
 	// Verifies the balance differences were really executed
 	tokenDistData, err := v1.LoadTokenDistributionFromData(testnet.TokensDistributionStr)

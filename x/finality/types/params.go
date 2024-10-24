@@ -55,6 +55,7 @@ func (p Params) String() string {
 }
 
 // Validate validates the params
+// finality activation height can be any value, even 0.
 func (p Params) Validate() error {
 	if err := validateMaxActiveFinalityProviders(p.MaxActiveFinalityProviders); err != nil {
 		return err

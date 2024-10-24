@@ -106,6 +106,7 @@ Example:
 					genesisCliArgs.MinSignedPerWindow,
 					genesisCliArgs.FinalitySigTimeout,
 					genesisCliArgs.JailDuration,
+					genesisCliArgs.FinalityActivationBlockHeight,
 				)
 			} else if network == "mainnet" {
 				panic("Mainnet params not implemented.")
@@ -302,6 +303,7 @@ func TestnetGenesisParams(
 	minSignedPerWindow sdkmath.LegacyDec,
 	finalitySigTimeout int64,
 	jailDuration time.Duration,
+	finalityActivationBlockHeight uint64,
 ) GenesisParams {
 
 	genParams := GenesisParams{}
@@ -438,6 +440,7 @@ func TestnetGenesisParams(
 	genParams.FinalityParams.MinSignedPerWindow = minSignedPerWindow
 	genParams.FinalityParams.FinalitySigTimeout = finalitySigTimeout
 	genParams.FinalityParams.JailDuration = jailDuration
+	genParams.FinalityParams.FinalityActivationHeight = finalityActivationBlockHeight
 	if err := genParams.FinalityParams.Validate(); err != nil {
 		panic(err)
 	}

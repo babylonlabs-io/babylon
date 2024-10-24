@@ -53,9 +53,13 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, err
 	}
 
-	fpPK := req.FpBtcPk
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	activationHeight, errMod := ms.validateActivationHeight(ctx, req.BlockHeight)
+	if errMod != nil {
+		return nil, errMod.Wrapf("finality block height: %d is lower than activation height %d", req.BlockHeight, activationHeight)
+	}
+
+	fpPK := req.FpBtcPk
 
 	// ensure the finality provider exists
 	fp, err := ms.BTCStakingKeeper.GetFinalityProvider(ctx, req.FpBtcPk.MustMarshal())
@@ -188,6 +192,13 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	activationHeight, errMod := ms.validateActivationHeight(ctx, req.StartHeight)
+	if errMod != nil {
+		return nil, types.ErrFinalityNotActivated.Wrapf(
+			"public rand commit start block height: %d is lower than activation height %d",
+			req.StartHeight, activationHeight,
+		)
+	}
 
 	// ensure the request contains enough number of public randomness
 	minPubRand := ms.GetParams(ctx).MinPubRand
@@ -301,4 +312,19 @@ func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340Pu
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {
 		panic(fmt.Errorf("failed to emit EventSlashedFinalityProvider event: %w", err))
 	}
+}
+
+// validateActivationHeight returns error if the height received is lower than the finality
+// activation block height
+func (ms msgServer) validateActivationHeight(ctx sdk.Context, height uint64) (uint64, *errorsmod.Error) {
+	// TODO: remove it after Phase-2 launch in a future coordinated upgrade
+	activationHeight := ms.GetParams(ctx).FinalityActivationHeight
+	if height < activationHeight {
+		ms.Logger(ctx).With(
+			"height", height,
+			"activationHeight", activationHeight,
+		).Info("BTC finality is not activated yet")
+		return activationHeight, types.ErrFinalityNotActivated
+	}
+	return activationHeight, nil
 }
