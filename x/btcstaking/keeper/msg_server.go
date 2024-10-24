@@ -183,6 +183,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, err
 	}
 
+	minUnbondingTime := types.MinimumUnbondingTime(&vp.Params, &btccParams)
+
 	// 6. If the delegation contains the inclusion proof, we need to verify the proof
 	// and set start height and end height
 	var startHeight, endHeight uint32
@@ -192,7 +194,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 			btcutil.NewTx(parsedMsg.StakingTx.Transaction),
 			btccParams.BtcConfirmationDepth,
 			uint32(parsedMsg.StakingTime),
-			uint32(parsedMsg.UnbondingTime),
+			minUnbondingTime,
 			parsedMsg.StakingTxProofOfInclusion)
 		if err != nil {
 			return nil, fmt.Errorf("invalid inclusion proof: %w", err)
@@ -285,12 +287,14 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 
 	btccParams := ms.btccKeeper.GetParams(ctx)
 
+	minUnbondingTime := types.MinimumUnbondingTime(params, &btccParams)
+
 	timeInfo, err := ms.VerifyInclusionProofAndGetHeight(
 		ctx,
 		btcutil.NewTx(stakingTx),
 		btccParams.BtcConfirmationDepth,
 		btcDel.StakingTime,
-		btcDel.UnbondingTime,
+		minUnbondingTime,
 		parsedInclusionProof,
 	)
 
@@ -332,8 +336,8 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 		NewState:      types.BTCDelegationStatus_UNBONDED,
 	})
 
-	// NOTE: we should have verified that EndHeight > btcTip.Height + btcDel.UnbondingTime
-	ms.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-btcDel.UnbondingTime, unbondedEvent)
+	// NOTE: we should have verified that EndHeight > btcTip.Height + max(w, min_unbonding_time)
+	ms.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-minUnbondingTime, unbondedEvent)
 
 	// at this point, the BTC delegation inclusion proof is verified and is not duplicated
 	// thus, we can safely consider this message as refundable
