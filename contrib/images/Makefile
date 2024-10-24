@@ -1,7 +1,7 @@
 RELAYER_TAG := $(shell grep '^ENV RELAYER_TAG' cosmos-relayer/Dockerfile | cut -f3 -d\ )
 BABYLON_FULL_PATH := $(shell git rev-parse --show-toplevel)
 BABYLON_VERSION_BEFORE_UPGRADE ?= v0.9.3
-docker pull
+
 all: babylond cosmos-relayer
 
 babylond: babylond-rmi
