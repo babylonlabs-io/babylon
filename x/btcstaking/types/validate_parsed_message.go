@@ -77,22 +77,6 @@ func ValidateParsedMessageAgainstTheParams(
 			parameters.MaxStakingValueSat,
 		)
 	}
-	// at this point we validated that pm.StakingTime >= parameters.MinStakingTimeBlocks
-	// and parameters.MinStakingTimeBlocks should always be > btcheckpointParamseters.CheckpointFinalizationTimeout
-	// and parameters.MinStakingTimeBlocks > MinUnbondingTimeBlocks
-	maxUnbondingTime := pm.StakingTime - uint16(btcheckpointParamseters.CheckpointFinalizationTimeout)
-
-	// this is necessary to avoid creating delegationd which later cannot be
-	// acitvated, as voting power of delegation is removed pm.UnbondingTime before
-	// timelock finishes
-	if pm.UnbondingTime > uint16(maxUnbondingTime) {
-		return nil, ErrInvalidUnbondingTx.Wrapf(
-			"unbonding time value %d is out of bounds. Min: %d, Max: %d",
-			pm.UnbondingTime,
-			minUnbondingTime,
-			maxUnbondingTime,
-		)
-	}
 
 	if err := btcstaking.CheckSlashingTxMatchFundingTx(
 		pm.StakingSlashingTx.Transaction,

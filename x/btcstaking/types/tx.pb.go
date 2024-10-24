@@ -274,7 +274,7 @@ type MsgCreateBTCDelegation struct {
 	// - unbonding transaction, time lock spending path
 	// - staking slashing transaction, change output
 	// - unbonding slashing transaction, change output
-	// It must be smaller than (staking_time - CheckpointFinalizationTimeout) and larger that max(MinUnbondingTime, CheckpointFinalizationTimeout)
+	// It must be smaller than math.MaxUInt16 and larger that max(MinUnbondingTime, CheckpointFinalizationTimeout)
 	UnbondingTime uint32 `protobuf:"varint,11,opt,name=unbonding_time,json=unbondingTime,proto3" json:"unbonding_time,omitempty"`
 	// fields related to unbonding transaction
 	// unbonding_tx is a bitcoin unbonding transaction i.e transaction that spends

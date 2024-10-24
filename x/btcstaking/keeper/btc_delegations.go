@@ -75,8 +75,14 @@ func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) e
 			StakingTxHash: stakingTxHash.String(),
 			NewState:      types.BTCDelegationStatus_UNBONDED,
 		})
-		// NOTE: we should have verified that EndHeight > btcTip.Height + btcDel.UnbondingTime
-		k.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-btcDel.UnbondingTime, unbondedEvent)
+
+		btccheckpointParams := k.btccKeeper.GetParams(ctx)
+		stakingParams := k.GetParamsWithVersion(ctx).Params
+
+		minUnbondingTime := types.MinimumUnbondingTime(&stakingParams, &btccheckpointParams)
+
+		// NOTE: we should have verified that EndHeight > btcTip.Height + max(w, min_unbonding_time)
+		k.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-minUnbondingTime, unbondedEvent)
 	}
 
 	return nil
