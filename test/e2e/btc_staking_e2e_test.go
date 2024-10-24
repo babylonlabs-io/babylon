@@ -261,15 +261,8 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// get activated height
-	_, err = nonValidatorNode.QueryActivatedHeight()
-	s.ErrorContains(err, bstypes.ErrBTCStakingNotActivated.Error())
-	fps := nonValidatorNode.QueryFinalityProviders()
-	s.Len(fps, 1)
-	s.Zero(fps[0].VotingPower)
-
 	/*
-		commit a number of public randomness since activatedHeight
+		commit a number of public randomness
 	*/
 	// commit public randomness list
 	numPubRand := uint64(100)

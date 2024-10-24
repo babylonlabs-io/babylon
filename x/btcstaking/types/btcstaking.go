@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"sort"
 
 	"cosmossdk.io/math"
 
@@ -40,40 +39,6 @@ func (fp *FinalityProvider) ValidateBasic() error {
 	}
 
 	return nil
-}
-
-// SortFinalityProvidersWithZeroedVotingPower sorts the finality providers slice,
-// from higher to lower voting power. In the following cases, the voting power
-// is treated as zero:
-// 1. IsTimestamped is false
-// 2. IsJailed is true
-func SortFinalityProvidersWithZeroedVotingPower(fps []*FinalityProviderDistInfo) {
-	sort.SliceStable(fps, func(i, j int) bool {
-		iShouldBeZeroed := fps[i].IsJailed || !fps[i].IsTimestamped
-		jShouldBeZeroed := fps[j].IsJailed || !fps[j].IsTimestamped
-
-		if iShouldBeZeroed && !jShouldBeZeroed {
-			return false
-		}
-
-		if !iShouldBeZeroed && jShouldBeZeroed {
-			return true
-		}
-
-		iPkHex, jPkHex := fps[i].BtcPk.MarshalHex(), fps[j].BtcPk.MarshalHex()
-
-		if iShouldBeZeroed && jShouldBeZeroed {
-			// Both have zeroed voting power, compare BTC public keys
-			return iPkHex < jPkHex
-		}
-
-		// both voting power the same, compare BTC public keys
-		if fps[i].TotalBondedSat == fps[j].TotalBondedSat {
-			return iPkHex < jPkHex
-		}
-
-		return fps[i].TotalBondedSat > fps[j].TotalBondedSat
-	})
 }
 
 func ExistsDup(btcPKs []bbn.BIP340PubKey) bool {

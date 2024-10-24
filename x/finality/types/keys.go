@@ -47,4 +47,6 @@ var (
 	NextHeightToFinalizeKey                    = []byte{0x07}             // key prefix for next height to finalise
 	FinalityProviderSigningInfoKeyPrefix       = collections.NewPrefix(8) // key prefix for signing info
 	FinalityProviderMissedBlockBitmapKeyPrefix = collections.NewPrefix(9) // key prefix for missed block bitmap
+	VotingPowerKey                             = []byte{0x10}             // key prefix for the voting power
+	VotingPowerDistCacheKey                    = []byte{0x11}             // key prefix for voting power distribution cache
 )

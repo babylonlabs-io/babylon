@@ -34,8 +34,7 @@ func (k Keeper) FinalityProviders(c context.Context, req *types.QueryFinalityPro
 			return err
 		}
 
-		votingPower := k.GetVotingPower(ctx, key, currBlockHeight)
-		resp := types.NewFinalityProviderResponse(&fp, currBlockHeight, votingPower)
+		resp := types.NewFinalityProviderResponse(&fp, currBlockHeight)
 		fpResp = append(fpResp, resp)
 		return nil
 	})
@@ -74,8 +73,7 @@ func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProv
 	}
 
 	currBlockHeight := uint64(ctx.BlockHeight())
-	votingPower := k.GetVotingPower(ctx, key, currBlockHeight)
-	fpResp := types.NewFinalityProviderResponse(fp, currBlockHeight, votingPower)
+	fpResp := types.NewFinalityProviderResponse(fp, currBlockHeight)
 	return &types.QueryFinalityProviderResponse{FinalityProvider: fpResp}, nil
 }
 
@@ -118,105 +116,6 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 		BtcDelegations: btcDels,
 		Pagination:     pageRes,
 	}, nil
-}
-
-// FinalityProviderPowerAtHeight returns the voting power of the specified finality provider
-// at the provided Babylon height
-func (k Keeper) FinalityProviderPowerAtHeight(ctx context.Context, req *types.QueryFinalityProviderPowerAtHeightRequest) (*types.QueryFinalityProviderPowerAtHeightResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "empty request")
-	}
-
-	fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal finality provider BTC PK hex: %v", err)
-	}
-
-	if !k.HasFinalityProvider(ctx, *fpBTCPK) {
-		return nil, types.ErrFpNotFound
-	}
-
-	store := k.votingPowerBbnBlockHeightStore(ctx, req.Height)
-	iter := store.ReverseIterator(nil, nil)
-	defer iter.Close()
-
-	if !iter.Valid() {
-		return nil, types.ErrVotingPowerTableNotUpdated.Wrapf("height: %d", req.Height)
-	}
-
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	power := k.GetVotingPower(sdkCtx, fpBTCPK.MustMarshal(), req.Height)
-
-	return &types.QueryFinalityProviderPowerAtHeightResponse{VotingPower: power}, nil
-}
-
-// FinalityProviderCurrentPower returns the voting power of the specified finality provider
-// at the current height
-func (k Keeper) FinalityProviderCurrentPower(ctx context.Context, req *types.QueryFinalityProviderCurrentPowerRequest) (*types.QueryFinalityProviderCurrentPowerResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "empty request")
-	}
-
-	fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal finality provider BTC PK hex: %v", err)
-	}
-
-	height, power := k.GetCurrentVotingPower(ctx, *fpBTCPK)
-
-	return &types.QueryFinalityProviderCurrentPowerResponse{Height: height, VotingPower: power}, nil
-}
-
-// ActiveFinalityProvidersAtHeight returns the active finality providers at the provided height
-func (k Keeper) ActiveFinalityProvidersAtHeight(ctx context.Context, req *types.QueryActiveFinalityProvidersAtHeightRequest) (*types.QueryActiveFinalityProvidersAtHeightResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "empty request")
-	}
-
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	store := k.votingPowerBbnBlockHeightStore(sdkCtx, req.Height)
-
-	var finalityProvidersWithMeta []*types.FinalityProviderWithMeta
-	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
-		finalityProvider, err := k.GetFinalityProvider(sdkCtx, key)
-		if err != nil {
-			return err
-		}
-
-		votingPower := k.GetVotingPower(sdkCtx, key, req.Height)
-		if votingPower > 0 {
-			finalityProviderWithMeta := types.FinalityProviderWithMeta{
-				BtcPk:                finalityProvider.BtcPk,
-				Height:               req.Height,
-				VotingPower:          votingPower,
-				SlashedBabylonHeight: finalityProvider.SlashedBabylonHeight,
-				SlashedBtcHeight:     finalityProvider.SlashedBtcHeight,
-			}
-			finalityProvidersWithMeta = append(finalityProvidersWithMeta, &finalityProviderWithMeta)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.QueryActiveFinalityProvidersAtHeightResponse{FinalityProviders: convertToActiveFinalityProvidersAtHeightResponse(finalityProvidersWithMeta), Pagination: pageRes}, nil
-}
-
-// ActivatedHeight returns the Babylon height in which the BTC Staking protocol was enabled
-// TODO: Requires investigation on whether we can enable the BTC staking protocol at genesis
-func (k Keeper) ActivatedHeight(ctx context.Context, req *types.QueryActivatedHeightRequest) (*types.QueryActivatedHeightResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "empty request")
-	}
-
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	activatedHeight, err := k.GetBTCStakingActivatedHeight(sdkCtx)
-	if err != nil {
-		return nil, err
-	}
-	return &types.QueryActivatedHeightResponse{Height: activatedHeight}, nil
 }
 
 // FinalityProviderDelegations returns all the delegations of the provided finality provider filtered by the provided status.
@@ -301,19 +200,4 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 	return &types.QueryBTCDelegationResponse{
 		BtcDelegation: types.NewBTCDelegationResponse(btcDel, status),
 	}, nil
-}
-
-func convertToActiveFinalityProvidersAtHeightResponse(finalityProvidersWithMeta []*types.FinalityProviderWithMeta) []*types.ActiveFinalityProvidersAtHeightResponse {
-	var activeFinalityProvidersAtHeightResponse []*types.ActiveFinalityProvidersAtHeightResponse
-	for _, fpWithMeta := range finalityProvidersWithMeta {
-		activeFinalityProvidersAtHeightResponse = append(activeFinalityProvidersAtHeightResponse, &types.ActiveFinalityProvidersAtHeightResponse{
-			BtcPkHex:             fpWithMeta.BtcPk,
-			Height:               fpWithMeta.Height,
-			VotingPower:          fpWithMeta.VotingPower,
-			SlashedBabylonHeight: fpWithMeta.SlashedBabylonHeight,
-			SlashedBtcHeight:     fpWithMeta.SlashedBtcHeight,
-			Jailed:               fpWithMeta.Jailed,
-		})
-	}
-	return activeFinalityProvidersAtHeightResponse
 }

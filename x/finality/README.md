@@ -22,14 +22,17 @@ providers;
 - [Concepts](#concepts)
 - [States](#states)
   - [Parameters](#parameters)
+  - [Voting power table](#voting-power-table)
   - [Public randomness](#public-randomness)
   - [Finality votes](#finality-votes)
   - [Indexed blocks with finalization status](#indexed-blocks-with-finalization-status)
   - [Equivocation evidences](#equivocation-evidences)
+  - [Signing info tracker](#signing-info-tracker)
 - [Messages](#messages)
   - [MsgCommitPubRandList](#msgcommitpubrandlist)
   - [MsgAddFinalitySig](#msgaddfinalitysig)
   - [MsgUpdateParams](#msgupdateparams)
+- [BeginBlocker](#beginblocker)
 - [EndBlocker](#endblocker)
 - [Events](#events)
 - [Queries](#queries)
@@ -82,14 +85,13 @@ participate in the finality voting round, an active finality provider with BTC
 delegations (as specified in the [BTC Staking module](../btcstaking/README.md))
 needs to interact with Babylon as follows:
 
-- **Committing EOTS public randomness.** The finality provider proactively
-  sends a merkle-tree-based commit of a list of *EOTS public randomness*
-  for future heights to the Finality module. EOTS ensures that given an EOTS
-  public randomness, a signer can only sign a single message.
-  Otherwise, anyone can extract the signer's secret key
-  by using two EOTS signatures on different messages, the corresponding EOTS
-  public randomness, and the signer's public key.
-  A public randomness commit takes effect only after it is BTC-timestamped.
+- **Committing EOTS public randomness.** The finality provider proactively sends
+  a merkle-tree-based commit of a list of *EOTS public randomness* for future
+  heights to the Finality module. EOTS ensures that given an EOTS public
+  randomness, a signer can only sign a single message. Otherwise, anyone can
+  extract the signer's secret key by using two EOTS signatures on different
+  messages, the corresponding EOTS public randomness, and the signer's public
+  key. A public randomness commit takes effect only after it is BTC-timestamped.
 - **Submitting EOTS signatures.** Upon a new block, the finality provider
   submits an EOTS signature w.r.t. the derived public randomness at that height.
   The Finality module will verify the EOTS signature, and check if there are
@@ -137,14 +139,24 @@ message Params {
 }
 ```
 
+### Voting power table
+
+The [voting power table management](./keeper/voting_power_table.go) maintains
+the voting power table of all finality providers at each height of the Babylon
+chain. The key is the block height concatenated with the finality provider's
+Bitcoin secp256k1 public key in BIP-340 format, and the value is the finality
+provider's voting power quantified in Satoshis. Voting power is assigned to top
+`N` (defined in parameters) finality providers that have BTC-timestamped public
+randomness for the height, ranked by the total delegated value.
+
 ### Public randomness
 
 The [public randomness storage](./keeper/public_randomness.go) maintains the
 EOTS public randomness commit that each finality provider commits to Babylon.
 The key is the finality provider's Bitcoin secp256k1 public key concatenated
-with the block height, and the value is a merkle tree constructed by the list
-of public randomness with starting height, and the number of public randomness.
-It also stores the epoch number at which Babylon receives the commit.
+with the block height, and the value is a merkle tree constructed by the list of
+public randomness with starting height, and the number of public randomness. It
+also stores the epoch number at which Babylon receives the commit.
 
 ```protobuf
 // PubRandCommit is a commitment to a series of public randomness
@@ -250,18 +262,17 @@ Information about finality providers' voting histories is tracked through
 
 The first mapping allows us to easily look at the recent signing info for a
 finality provider based on its public key, while the second mapping
-(`MissedBlocksBitArray`) acts as a bit-array of size `SignedBlocksWindow`
-that tells us if the finality provider missed the block for a given index in
-the bit-array. The index in the bit-array is given as little-endian uint64.
-The result is a varint that takes on 0 or 1, where 0 indicates the finality
-provider did not miss (did sign) the corresponding block, and 1 indicates
-they missed the block (did not sign).
+(`MissedBlocksBitArray`) acts as a bit-array of size `SignedBlocksWindow` that
+tells us if the finality provider missed the block for a given index in the
+bit-array. The index in the bit-array is given as little-endian uint64. The
+result is a varint that takes on 0 or 1, where 0 indicates the finality provider
+did not miss (did sign) the corresponding block, and 1 indicates they missed the
+block (did not sign).
 
 Note that the `MissedBlocksBitArray` is not explicitly initialized up-front.
-Keys are added as the first `SignedBlocksWindow` blocks
-for a newly active finality provider. The `SignedBlocksWindow` parameter
-defines the size (number of blocks) of the sliding window used to track
-finality provider liveness.
+Keys are added as the first `SignedBlocksWindow` blocks for a newly active
+finality provider. The `SignedBlocksWindow` parameter defines the size (number
+of blocks) of the sliding window used to track finality provider liveness.
 
 The information stored for tracking finality provider liveness is as follows:
 
@@ -300,9 +311,9 @@ The message handlers are defined at
 ### MsgCommitPubRandList
 
 The `MsgCommitPubRandList` message is used for committing a merkle tree
-constructed by a list of EOTS public randomness that will be used by a
-finality provider in the future. It is typically submitted by a finality
-provider via the [finality provider](https://github.com/babylonchain/finality-provider) program.
+constructed by a list of EOTS public randomness that will be used by a finality
+provider in the future. It is typically submitted by a finality provider via the
+[finality provider](https://github.com/babylonchain/finality-provider) program.
 
 ```protobuf
 // MsgCommitPubRandList defines a message for committing a list of public randomness for EOTS
@@ -410,6 +421,21 @@ message MsgUpdateParams {
 }
 ```
 
+## BeginBlocker
+
+Upon `EndBlocker`, the Finality module of each Babylon node will [execute the
+following](./abci.go):
+
+1. Record the voting power table at the current height, by reconciling the
+   voting power table at the last height with all events that affect voting
+   power distribution (including newly active BTC delegations, newly unbonded
+   BTC delegations, and slashed finality providers). Note that the voting power
+   is assigned to a finality provider if it (1) has BTC-timestamped public
+   randomness, and (2) it is ranked at top `N` by the total delegated value.
+2. If the BTC Staking protocol is activated, i.e., there exists at least 1
+   active BTC delegation, then record the voting power distribution w.r.t. the
+   active finality providers and active BTC delegations.
+
 ## EndBlocker
 
 Upon `EndBlocker`, the Finality module of each Babylon node will [execute the
@@ -435,8 +461,8 @@ been >=1 active BTC delegations)*:
          distribute rewards to the voted finality providers and their BTC
          delegations. Otherwise, none of the subsequent blocks shall be
          finalized and the loop breaks here.
-3. Update the finality provider's voting history and label it to `sluggish`
-   if the number of block it has missed has passed the parameterized threshold.
+3. Update the finality provider's voting history and label it to `sluggish` if
+   the number of block it has missed has passed the parameterized threshold.
 
 ## Events
 
