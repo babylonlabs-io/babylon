@@ -579,7 +579,8 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
 			// if the stake spending tx is the same as the registered unbonding tx,
 			// we do not need to save it in the database
-			SpendStakeTx: []byte{},
+			SpendStakeTx:    []byte{},
+			InclusionHeight: stakerSpendigTxHeader.Height,
 		}
 	} else {
 		// stakeSpendingTx is not unbonding tx, first we need to verify whether it

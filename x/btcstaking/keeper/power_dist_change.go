@@ -189,7 +189,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				}
 			} else if delEvent.NewState == types.BTCDelegationStatus_UNBONDED {
 				// emit event about this unbonded BTC delegation
-				types.EmitUnbondedBTCDelEvent(sdkCtx, delEvent.StakingTxHash, btcDel.IsUnbondedEarly())
+				types.EmitUnbondedBTCDelEvent(sdkCtx, delEvent.StakingTxHash, btcDel.BtcUndelegation)
 				// add the unbonded BTC delegation to the map
 				unbondedBTCDels[delEvent.StakingTxHash] = struct{}{}
 			}

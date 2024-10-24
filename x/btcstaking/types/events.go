@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
-	bbn "github.com/babylonlabs-io/babylon/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 func NewEventPowerDistUpdateWithBTCDel(ev *EventBTCDelegationStateUpdate) *EventPowerDistUpdate {
@@ -127,9 +128,11 @@ func NewCovenantQuorumReachedEvent(
 
 func NewDelegationUnbondedEarlyEvent(
 	stakingTxHash string,
+	startHeight uint32,
 ) *EventBTCDelgationUnbondedEarly {
 	return &EventBTCDelgationUnbondedEarly{
 		StakingTxHash: stakingTxHash,
+		StartHeight:   strconv.FormatUint(uint64(startHeight), 10),
 		NewState:      BTCDelegationStatus_UNBONDED.String(),
 	}
 }
@@ -154,10 +157,11 @@ func NewFinalityProviderStatusChangeEvent(
 }
 
 // EmitUnbondedBTCDelEvent emits events for an unbonded BTC delegations
-func EmitUnbondedBTCDelEvent(sdkCtx sdk.Context, stakingTxHash string, unbondedEarly bool) {
+func EmitUnbondedBTCDelEvent(sdkCtx sdk.Context, stakingTxHash string, undelegation *BTCUndelegation) {
 	// delegation expired and become unbonded emit block event about this information
-	if unbondedEarly {
-		unbondedEarlyEvent := NewDelegationUnbondedEarlyEvent(stakingTxHash)
+	unbondingInfo := undelegation.DelegatorUnbondingInfo
+	if unbondingInfo != nil {
+		unbondedEarlyEvent := NewDelegationUnbondedEarlyEvent(stakingTxHash, unbondingInfo.InclusionHeight)
 		if err := sdkCtx.EventManager().EmitTypedEvent(unbondedEarlyEvent); err != nil {
 			panic(fmt.Errorf("failed to emit event the new unbonded BTC delegation: %w", err))
 		}
