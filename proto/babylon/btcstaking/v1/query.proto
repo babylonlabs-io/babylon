@@ -316,8 +316,6 @@ message DelegatorUnbondingInfoResponse {
   // spend_stake_tx_hex is the transaction which spent the staking output. It is
   // filled only if the spend_stake_tx_hex is different than the unbonding_tx_hex
   string spend_stake_tx_hex = 1;
-  // inclusion_height is the BTC height in which the spend staking tx is included
-  uint32 inclusion_height = 2;
 }
 
 // BTCUndelegationResponse provides all necessary info about the undeleagation

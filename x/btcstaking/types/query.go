@@ -13,7 +13,6 @@ func delegatorUnbondingInfoToResponse(ui *DelegatorUnbondingInfo) *DelegatorUnbo
 
 	return &DelegatorUnbondingInfoResponse{
 		SpendStakeTxHex: spendStakeTxHex,
-		InclusionHeight: ui.InclusionHeight,
 	}
 }
 

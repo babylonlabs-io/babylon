@@ -112,14 +112,11 @@ message BTCDelegation {
 // DelegatorUnbondingInfo contains the information about transaction which spent
 // the staking output. It contains:
 // - spend_stake_tx: the transaction which spent the staking output
-// - inclusion_height: the height of the block in which the spend_staking_tx is included
 message DelegatorUnbondingInfo {
     // spend_stake_tx is the transaction which spent the staking output. It is
     // filled only if spend_stake_tx is different than unbonding_tx registered
     // on the Babylon chain.
     bytes spend_stake_tx = 1;
-    // inclusion_height is the height of the block in which the spend_staking_tx is included
-    uint32 inclusion_height = 2;
 }
 
 // BTCUndelegation contains the information about the early unbonding path of the BTC delegation
