@@ -8,6 +8,7 @@ type ImageConfig struct {
 	RelayerTag        string
 
 	CurrentRepository string
+	CurrentTag        string
 }
 
 //nolint:deadcode
@@ -16,7 +17,9 @@ const (
 	// name of babylon image produced by running `make build-docker`
 	BabylonContainerName = "babylonlabs-io/babylond"
 	// name of babylon image before the upgrade
-	BabylonContainerNameBeforeUpgrade = "babylonlabs/babylond:v0.9.3"
+	BabylonContainerNameBeforeUpgrade = "babylonlabs/babylond"
+	BabylonContainerTagBeforeUpgrade  = "v0.9.3"
+
 	// name of the image produced by running `make e2e-init-chain` in contrib/images
 	InitChainContainerE2E = "babylonlabs-io/babylond-e2e-init-chain"
 
@@ -34,11 +37,13 @@ const (
 func NewImageConfig(isCosmosRelayer, isUpgrade bool) (ic ImageConfig) {
 	ic = ImageConfig{
 		CurrentRepository: BabylonContainerName,
+		CurrentTag:        "latest",
 	}
 
 	if isUpgrade {
 		// starts at the older version and later upgrades it to current branch... BabylonContainerName
 		ic.CurrentRepository = BabylonContainerNameBeforeUpgrade
+		ic.CurrentTag = BabylonContainerTagBeforeUpgrade
 	}
 
 	if isCosmosRelayer {
