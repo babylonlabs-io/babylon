@@ -183,8 +183,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, err
 	}
 
-	minUnbondingTime := types.MinimumUnbondingTime(&vp.Params, &btccParams)
-
 	// 6. If the delegation contains the inclusion proof, we need to verify the proof
 	// and set start height and end height
 	var startHeight, endHeight uint32
@@ -194,7 +192,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 			btcutil.NewTx(parsedMsg.StakingTx.Transaction),
 			btccParams.BtcConfirmationDepth,
 			uint32(parsedMsg.StakingTime),
-			minUnbondingTime,
+			paramsValidationResult.MinUnbondingTime,
 			parsedMsg.StakingTxProofOfInclusion)
 		if err != nil {
 			return nil, fmt.Errorf("invalid inclusion proof: %w", err)
@@ -238,7 +236,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	// add this BTC delegation, and emit corresponding events
-	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
+	if err := ms.AddBTCDelegation(ctx, newBTCDel, paramsValidationResult.MinUnbondingTime); err != nil {
 		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
 	}
 

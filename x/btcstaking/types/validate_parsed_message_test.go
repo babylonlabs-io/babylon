@@ -759,20 +759,6 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			},
 			err: types.ErrInvalidUnbondingTx,
 		},
-		{
-			name: "Msg.UnbondingTime larger than Msg.StakingTime - CheckpointFinalizationTimeout",
-			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
-				params := testStakingParams(r, t)
-				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
-
-				maxUnbondingTime := msg.StakingTime - checkpointParams.CheckpointFinalizationTimeout
-				msg.UnbondingTime = maxUnbondingTime + 1
-
-				return msg, params, checkpointParams
-			},
-			err: types.ErrInvalidUnbondingTx,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -796,6 +782,9 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, got)
+
+				minUnbondingTime := types.MinimumUnbondingTime(params, checkpointParams)
+				require.Equal(t, minUnbondingTime, got.MinUnbondingTime)
 			}
 
 		})
