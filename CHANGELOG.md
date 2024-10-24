@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+* [#229](https://github.com/babylonlabs-io/babylon/pull/229) Remove babylond e2e
+before upgrade
+
 ## v0.14.0
 
 ### State Machine Breaking

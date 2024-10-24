@@ -433,7 +433,6 @@ build-docker: ## Build babylond Docker image
 
 build-docker-e2e:
 	$(MAKE) -C contrib/images babylond-e2e
-	$(MAKE) -C contrib/images babylond-before-upgrade
 	$(MAKE) -C contrib/images e2e-init-chain
 
 build-cosmos-relayer-docker: ## Build Docker image for the Cosmos relayer
