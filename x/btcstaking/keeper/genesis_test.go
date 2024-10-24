@@ -72,7 +72,7 @@ func TestExportGenesis(t *testing.T) {
 			totalDelegations++
 
 			// sets delegations
-			h.AddDelegation(del)
+			h.AddDelegation(del, minUnbondingTime)
 			btcDelegations = append(btcDelegations, del)
 
 			// BTC delegators idx
