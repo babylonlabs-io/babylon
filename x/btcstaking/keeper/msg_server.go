@@ -6,10 +6,14 @@ import (
 	"strings"
 	"time"
 
+	btcckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -222,9 +226,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 			UnbondingTx:              parsedMsg.UnbondingTx.TransactionBytes,
 			SlashingTx:               types.NewBtcSlashingTxFromBytes(parsedMsg.UnbondingSlashingTx.TransactionBytes),
 			DelegatorSlashingSig:     parsedMsg.StakerUnbondingSlashingSig.BIP340Signature,
-			DelegatorUnbondingSig:    nil,
 			CovenantSlashingSigs:     nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
 			CovenantUnbondingSigList: nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
+			DelegatorUnbondingInfo:   nil,
 		},
 		ParamsVersion: vp.Version, // version of the params against delegations was validated
 	}
@@ -263,7 +267,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	}
 
 	// 4. check if the delegation is already unbonded
-	if btcDel.BtcUndelegation.DelegatorUnbondingSig != nil {
+	if btcDel.BtcUndelegation.DelegatorUnbondingInfo != nil {
 		return nil, fmt.Errorf("the delegation %s is already unbonded", req.StakingTxHash)
 	}
 
@@ -495,6 +499,15 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	return &types.MsgAddCovenantSigsResponse{}, nil
 }
 
+func containsInput(tx *wire.MsgTx, inputHash *chainhash.Hash, inputIdx uint32) bool {
+	for _, txIn := range tx.TxIn {
+		if txIn.PreviousOutPoint.Hash.IsEqual(inputHash) && txIn.PreviousOutPoint.Index == inputIdx {
+			return true
+		}
+	}
+	return false
+}
+
 // BTCUndelegate adds a signature on the unbonding tx from the BTC delegator
 // this effectively proves that the BTC delegator wants to unbond and Babylon
 // will consider its BTC delegation unbonded
@@ -519,42 +532,88 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	btcDelStatus := btcDel.GetStatus(btcTip.Height, wValue, bsParams.CovenantQuorum)
 
-	if btcDelStatus == types.BTCDelegationStatus_PENDING {
-		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an pending BTC delegation")
-	}
-
 	if btcDelStatus == types.BTCDelegationStatus_UNBONDED {
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an unbonded BTC delegation")
 	}
 
-	// verify the signature on unbonding tx from delegator
-	unbondingMsgTx, err := bbn.NewBTCTxFromBytes(btcDel.BtcUndelegation.UnbondingTx)
+	stakeSpendingTx, err := bbn.NewBTCTxFromBytes(req.StakeSpendingTx)
+
 	if err != nil {
-		panic(fmt.Errorf("failed to parse unbonding tx from existing delegation with hash %s : %v", req.StakingTxHash, err))
+		return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to parse staking spending tx: %v", err)
 	}
-	stakingInfo, err := btcDel.GetStakingInfo(bsParams, ms.btcNet)
+
+	stakerSpendigTxHeader := ms.btclcKeeper.GetHeaderByHash(ctx, req.StakeSpendingTxInclusionProof.Key.Hash)
+
+	if stakerSpendigTxHeader == nil {
+		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("stake spending tx is not on BTC chain")
+	}
+
+	btcHeader := stakerSpendigTxHeader.Header.ToBlockHeader()
+
+	proofValid := btcckpttypes.VerifyInclusionProof(
+		btcutil.NewTx(stakeSpendingTx),
+		&btcHeader.MerkleRoot,
+		req.StakeSpendingTxInclusionProof.Proof,
+		req.StakeSpendingTxInclusionProof.Key.Index,
+	)
+
+	if !proofValid {
+		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("stake spending tx is not included in the Bitcoin chain: invalid inclusion proof")
+	}
+
+	registeredUnbondingTx, err := bbn.NewBTCTxFromBytes(btcDel.BtcUndelegation.UnbondingTx)
+
 	if err != nil {
-		panic(fmt.Errorf("failed to get staking info from a verified delegation: %w", err))
+		panic(fmt.Errorf("failed to parse unbonding tx from existing delegation with hash %s: %w", req.StakingTxHash, err))
 	}
-	unbondingSpendInfo, err := stakingInfo.UnbondingPathSpendInfo()
-	if err != nil {
-		// our staking info was constructed by using BuildStakingInfo constructor, so if
-		// this fails, it is a programming error
-		panic(err)
-	}
-	if err := btcstaking.VerifyTransactionSigWithOutput(
-		unbondingMsgTx,
-		stakingInfo.StakingOutput,
-		unbondingSpendInfo.GetPkScriptPath(),
-		btcDel.BtcPk.MustToBTCPK(),
-		*req.UnbondingTxSig,
-	); err != nil {
-		return nil, types.ErrInvalidCovenantSig.Wrap(err.Error())
+
+	registeredUnbondingTxHash := registeredUnbondingTx.TxHash()
+
+	spendStakeTxHash := stakeSpendingTx.TxHash()
+
+	var delegatorUnbondingInfo *types.DelegatorUnbondingInfo
+
+	// Check if stake spending tx is already registered unbonding tx. If so, we do
+	// not need to save it in database
+	if spendStakeTxHash.IsEqual(&registeredUnbondingTxHash) {
+		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
+			// if the stake spending tx is the same as the registered unbonding tx,
+			// we do not need to save it in the database
+			SpendStakeTx: []byte{},
+		}
+	} else {
+		// stakeSpendingTx is not unbonding tx, first we need to verify whether it
+		// acutally spends staking output
+		stakingTxHash, err := chainhash.NewHashFromStr(req.StakingTxHash)
+
+		if err != nil {
+			// panic as we already verified the staking tx hash in the beginning
+			panic(fmt.Errorf("failed to parse staking tx hash from existing delegation with hash %s: %w", req.StakingTxHash, err))
+		}
+
+		if !containsInput(stakeSpendingTx, stakingTxHash, btcDel.StakingOutputIdx) {
+			return nil, types.ErrInvalidBTCUndelegateReq.Wrap("stake spending tx does not spend staking output")
+		}
+
+		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
+			SpendStakeTx: req.StakeSpendingTx,
+		}
+
+		ev := &types.EventUnexpectedUnbondingTx{
+			StakingTxHash:          btcDel.MustGetStakingTxHash().String(),
+			SpendStakeTxHash:       spendStakeTxHash.String(),
+			SpendStakeTxHeaderHash: req.StakeSpendingTxInclusionProof.Key.Hash.MarshalHex(),
+			SpendStakeTxBlockIndex: req.StakeSpendingTxInclusionProof.Key.Index,
+		}
+
+		if err := ctx.EventManager().EmitTypedEvent(ev); err != nil {
+			panic(fmt.Errorf("failed to emit EventUnexpectedUnbondingTx event: %w", err))
+		}
 	}
 
 	// all good, add the signature to BTC delegation's undelegation
 	// and set back
-	ms.btcUndelegate(ctx, btcDel, req.UnbondingTxSig)
+	ms.btcUndelegate(ctx, btcDel, delegatorUnbondingInfo)
 
 	// At this point, the unbonding signature is verified.
 	// Thus, we can safely consider this message as refundable

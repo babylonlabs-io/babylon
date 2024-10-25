@@ -7,21 +7,28 @@ import (
 	"slices"
 
 	"cosmossdk.io/log"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 const defaultInjectedTxIndex = 0
 
 type ProposalHandler struct {
-	logger                        log.Logger
-	ckptKeeper                    CheckpointingKeeper
-	txVerifier                    baseapp.ProposalTxVerifier
+	logger     log.Logger
+	ckptKeeper CheckpointingKeeper
+	bApp       *baseapp.BaseApp
+
+	// used for building and parsing the injected tx
+	txEncoder sdk.TxEncoder
+	txDecoder sdk.TxDecoder
+	txBuilder client.TxBuilder
+
 	defaultPrepareProposalHandler sdk.PrepareProposalHandler
 	defaultProcessProposalHandler sdk.ProcessProposalHandler
 }
@@ -30,13 +37,19 @@ func NewProposalHandler(
 	logger log.Logger,
 	ckptKeeper CheckpointingKeeper,
 	mp mempool.Mempool,
-	txVerifier baseapp.ProposalTxVerifier,
+	bApp *baseapp.BaseApp,
+	encCfg *appparams.EncodingConfig,
 ) *ProposalHandler {
-	defaultHandler := baseapp.NewDefaultProposalHandler(mp, txVerifier)
+	defaultHandler := baseapp.NewDefaultProposalHandler(mp, bApp)
+	ckpttypes.RegisterInterfaces(encCfg.InterfaceRegistry)
+
 	return &ProposalHandler{
 		logger:                        logger,
 		ckptKeeper:                    ckptKeeper,
-		txVerifier:                    txVerifier,
+		bApp:                          bApp,
+		txEncoder:                     encCfg.TxConfig.TxEncoder(),
+		txDecoder:                     encCfg.TxConfig.TxDecoder(),
+		txBuilder:                     encCfg.TxConfig.NewTxBuilder(),
 		defaultPrepareProposalHandler: defaultHandler.PrepareProposalHandler(),
 		defaultProcessProposalHandler: defaultHandler.ProcessProposalHandler(),
 	}
@@ -91,11 +104,11 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 		}
 
 		// 3. inject a "fake" tx into the proposal s.t. validators can decode, verify the checkpoint
-		injectedCkpt := &ckpttypes.InjectedCheckpoint{
+		injectedCkpt := &ckpttypes.MsgInjectedCheckpoint{
 			Ckpt:               ckpt,
 			ExtendedCommitInfo: &req.LocalLastCommit,
 		}
-		injectedVoteExtTx, err := injectedCkpt.Marshal()
+		injectedVoteExtTx, err := h.buildInjectedTxBytes(injectedCkpt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode vote extensions into a special tx: %w", err)
 		}
@@ -268,7 +281,7 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 		// and no BLS signatures are send in epoch 0
 		if epoch.IsVoteExtensionProposal(ctx) {
 			// 1. extract the special tx containing the checkpoint
-			injectedCkpt, err := extractInjectedCheckpoint(req.Txs)
+			injectedCkpt, err := h.ExtractInjectedCheckpoint(req.Txs)
 			if err != nil {
 				h.logger.Error(
 					"processProposal: failed to extract injected checkpoint from the tx set", "err", err)
@@ -345,7 +358,7 @@ func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 		}
 
 		// 1. extract the special tx containing BLS sigs
-		injectedCkpt, err := extractInjectedCheckpoint(req.Txs)
+		injectedCkpt, err := h.ExtractInjectedCheckpoint(req.Txs)
 		if err != nil {
 			return res, fmt.Errorf(
 				"preblocker: failed to extract injected checkpoint from the tx set: %w", err)
@@ -360,24 +373,37 @@ func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 	}
 }
 
-// extractInjectedCheckpoint extracts the injected checkpoint from the tx set
-func extractInjectedCheckpoint(txs [][]byte) (*ckpttypes.InjectedCheckpoint, error) {
+func (h *ProposalHandler) buildInjectedTxBytes(injectedCkpt *ckpttypes.MsgInjectedCheckpoint) ([]byte, error) {
+	if err := h.txBuilder.SetMsgs(injectedCkpt); err != nil {
+		return nil, err
+	}
+
+	return h.txEncoder(h.txBuilder.GetTx())
+}
+
+// ExtractInjectedCheckpoint extracts the injected checkpoint from the tx set
+func (h *ProposalHandler) ExtractInjectedCheckpoint(txs [][]byte) (*ckpttypes.MsgInjectedCheckpoint, error) {
 	if len(txs) < defaultInjectedTxIndex+1 {
 		return nil, fmt.Errorf("the tx set does not contain the injected tx")
 	}
 
-	injectedTx := txs[defaultInjectedTxIndex]
+	injectedTxBytes := txs[defaultInjectedTxIndex]
 
-	if len(injectedTx) == 0 {
+	if len(injectedTxBytes) == 0 {
 		return nil, fmt.Errorf("the injected vote extensions tx is empty")
 	}
 
-	var injectedCkpt ckpttypes.InjectedCheckpoint
-	if err := injectedCkpt.Unmarshal(injectedTx); err != nil {
+	injectedTx, err := h.txDecoder(injectedTxBytes)
+	if err != nil {
 		return nil, fmt.Errorf("failed to decode injected vote extension tx: %w", err)
 	}
+	msgs := injectedTx.GetMsgs()
+	if len(msgs) != 1 {
+		return nil, fmt.Errorf("injected tx must have exact one message, got %d", len(msgs))
+	}
+	injectedCkpt := msgs[0].(*ckpttypes.MsgInjectedCheckpoint)
 
-	return &injectedCkpt, nil
+	return injectedCkpt, nil
 }
 
 // removeInjectedTx removes the injected tx from the tx set

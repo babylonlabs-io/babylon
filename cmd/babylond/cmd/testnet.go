@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	cmttime "github.com/cometbft/cometbft/types/time"
@@ -34,6 +33,8 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
+
+	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
 
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/privval"
@@ -74,7 +75,10 @@ Example:
 
 			serverCtx := server.GetServerContextFromCmd(cmd)
 			config := serverCtx.Config
-			genesisCliArgs := parseGenesisFlags(cmd)
+			genesisCliArgs, err := parseGenesisFlags(cmd)
+			if err != nil {
+				return err
+			}
 
 			outputDir, _ := cmd.Flags().GetString(flagOutputDir)
 			keyringBackend, _ := cmd.Flags().GetString(flags.FlagKeyringBackend)
@@ -118,6 +122,11 @@ Example:
 				genesisCliArgs.GenesisTime,
 				genesisCliArgs.BlockGasLimit,
 				genesisCliArgs.VoteExtensionEnableHeight,
+				genesisCliArgs.SignedBlocksWindow,
+				genesisCliArgs.MinSignedPerWindow,
+				genesisCliArgs.FinalitySigTimeout,
+				genesisCliArgs.JailDuration,
+				genesisCliArgs.FinalityActivationBlockHeight,
 			)
 
 			return InitTestnet(

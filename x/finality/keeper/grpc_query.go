@@ -178,7 +178,7 @@ func (k Keeper) Evidence(ctx context.Context, req *types.QueryEvidenceRequest) (
 	}
 
 	resp := &types.QueryEvidenceResponse{
-		Evidence: evidence,
+		Evidence: convertToEvidenceResponse(evidence),
 	}
 	return resp, nil
 }
@@ -220,7 +220,7 @@ func (k Keeper) ListEvidences(ctx context.Context, req *types.QueryListEvidences
 	}
 
 	resp := &types.QueryListEvidencesResponse{
-		Evidences:  evidences,
+		Evidences:  convertToEvidenceListResponse(evidences),
 		Pagination: pageRes,
 	}
 	return resp, nil
@@ -305,4 +305,24 @@ func convertToBlockResponseList(ibs []*types.IndexedBlock) []*types.BlockRespons
 		blockResponses = append(blockResponses, convertToBlockResponse(ib))
 	}
 	return blockResponses
+
+func convertToEvidenceResponse(evidence *types.Evidence) *types.EvidenceResponse {
+	return &types.EvidenceResponse{
+		FpBtcPkHex:           evidence.FpBtcPk.MarshalHex(),
+		BlockHeight:          evidence.BlockHeight,
+		PubRand:              evidence.PubRand,
+		CanonicalAppHash:     evidence.CanonicalAppHash,
+		ForkAppHash:          evidence.ForkAppHash,
+		CanonicalFinalitySig: evidence.CanonicalFinalitySig,
+		ForkFinalitySig:      evidence.ForkFinalitySig,
+	}
+}
+
+func convertToEvidenceListResponse(evidences []*types.Evidence) []*types.EvidenceResponse {
+	response := make([]*types.EvidenceResponse, len(evidences))
+	for i, evidence := range evidences {
+		resp := convertToEvidenceResponse(evidence)
+		response[i] = resp
+	}
+	return response
 }
