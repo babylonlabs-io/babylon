@@ -185,7 +185,7 @@ func (n *NodeConfig) QueryIndexedBlock(height uint64) *ftypes.IndexedBlock {
 	return convertToIndexedBlock(resp.Block)
 }
 
-func convertToIndexedBlock(br *ftypes.BlockResponse) *ftypes.IndexedBlock {
+func convertToIndexedBlock(br *ftypes.IndexedBlockResponse) *ftypes.IndexedBlock {
 	return &ftypes.IndexedBlock{
 		Height:    br.Height,
 		AppHash:   br.AppHash,
@@ -193,7 +193,7 @@ func convertToIndexedBlock(br *ftypes.BlockResponse) *ftypes.IndexedBlock {
 	}
 }
 
-func convertToIndexedBlockList(brs []*ftypes.BlockResponse) []*ftypes.IndexedBlock {
+func convertToIndexedBlockList(brs []*ftypes.IndexedBlockResponse) []*ftypes.IndexedBlock {
 	var ibs []*ftypes.IndexedBlock
 	for _, indexedBlock := range brs {
 		ibs = append(ibs, convertToIndexedBlock(indexedBlock))
