@@ -188,8 +188,10 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 					activeBTCDels[fpBTCPKHex] = append(activeBTCDels[fpBTCPKHex], btcDel)
 				}
 			} else if delEvent.NewState == types.BTCDelegationStatus_UNBONDED {
-				// emit event about this unbonded BTC delegation
-				types.EmitUnbondedBTCDelEvent(sdkCtx, delEvent.StakingTxHash, btcDel.IsUnbondedEarly())
+				// emit expired event if it is not early unbonding
+				if !btcDel.IsUnbondedEarly() {
+					types.EmitExpiredDelegationEvent(sdkCtx, delEvent.StakingTxHash)
+				}
 				// add the unbonded BTC delegation to the map
 				unbondedBTCDels[delEvent.StakingTxHash] = struct{}{}
 			}

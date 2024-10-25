@@ -215,8 +215,10 @@ message EventBTCDelgationUnbondedEarly {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 1 [(amino.dont_omitempty) = true];
+  // start_height is the start BTC height of the early unbonding
+  string start_height = 2 [(amino.dont_omitempty) = true];
   // new_state of the BTC delegation
-  string new_state = 2 [(amino.dont_omitempty) = true];
+  string new_state = 3 [(amino.dont_omitempty) = true];
 }
 
 // EventBTCDelegationExpired is the event emitted when a BTC delegation
