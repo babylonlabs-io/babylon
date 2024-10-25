@@ -146,8 +146,8 @@ message QueryBlockRequest {
   uint64 height = 1;
 }
 
-// BlockResponse is the necessary metadata and finalization status of a block
-message BlockResponse {
+// IndexedBlockResponse is the necessary metadata and finalization status of a block
+message IndexedBlockResponse {
     // height is the height of the block
     uint64 height = 1;
     // app_hash is the AppHash of the block
@@ -161,7 +161,7 @@ message BlockResponse {
 // Query/Block RPC method.
 message QueryBlockResponse {
   // block is the Babylon at the given height
-  BlockResponse block = 1;
+  IndexedBlockResponse block = 1;
 }
 
 // QueryListBlocksRequest is the request type for the
@@ -178,7 +178,7 @@ message QueryListBlocksRequest {
 // Query/ListBlocks RPC method.
 message QueryListBlocksResponse {
   // blocks is the list of blocks at the given status
-  repeated BlockResponse blocks = 1;
+  repeated IndexedBlockResponse blocks = 1;
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
