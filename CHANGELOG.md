@@ -52,6 +52,8 @@ to total bonded sat
 activation block height to start processing finality messages in `x/finality` params.
 * [#215](https://github.com/babylonlabs-io/babylon/pull/215) Implement ADR-29
 generalized unbonding handler
+* [#218](https://github.com/babylonlabs-io/babylon/pull/218) Fix removing voting
+power during expiry
 
 ### Improvements
 

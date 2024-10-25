@@ -20,7 +20,9 @@ func TestExportGenesis(t *testing.T) {
 
 	fps := datagen.CreateNFinalityProviders(r, t, numFps)
 	params := k.GetParams(ctx)
-	wValue := btcCheckK.GetParams(ctx).CheckpointFinalizationTimeout
+	btcckptParams := btcCheckK.GetParams(ctx)
+
+	minUnbondingTime := types.MinimumUnbondingTime(&params, &btcckptParams)
 
 	chainsHeight := make([]*types.BlockHeightBbnToBtc, 0)
 	// creates the first as it starts already with an chain height from the helper.
@@ -70,7 +72,7 @@ func TestExportGenesis(t *testing.T) {
 			totalDelegations++
 
 			// sets delegations
-			h.AddDelegation(del)
+			h.AddDelegation(del, minUnbondingTime)
 			btcDelegations = append(btcDelegations, del)
 
 			// BTC delegators idx
@@ -99,7 +101,7 @@ func TestExportGenesis(t *testing.T) {
 			idxEvent := uint64(totalDelegations - 1)
 			eventsIdx[idxEvent] = &types.EventIndex{
 				Idx:            idxEvent,
-				BlockHeightBtc: del.EndHeight - wValue,
+				BlockHeightBtc: del.EndHeight - minUnbondingTime,
 				Event:          unbondedEvent,
 			}
 		}

@@ -259,7 +259,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 		fpPK,
 		changeAddress.EncodeAddress(),
 		stakingValue,
-		1000,
+		10000,
 		stakingValue-1000,
 		uint16(customMinUnbondingTime)+1,
 		false,
@@ -976,9 +976,12 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		require.Equal(t, appHash1, appHash2)
 
 		// Default params are the same in both apps
-		covQuorum := h.App.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
-		maxFinalityProviders := int32(h.App.BTCStakingKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders)
+		stakingParams := h.App.BTCStakingKeeper.GetParams(h.Ctx)
+		covQuorum := stakingParams.CovenantQuorum
+		maxFinalityProviders := int32(stakingParams.MaxActiveFinalityProviders)
+		btcckptParams := h.App.BtcCheckpointKeeper.GetParams(h.Ctx)
 
+		minUnbondingTime := types.MinimumUnbondingTime(&stakingParams, &btcckptParams)
 		// Number of finality providers from 10 to maxFinalityProviders + 10
 		numFinalityProviders := int(r.Int31n(maxFinalityProviders) + 10)
 
@@ -1012,8 +1015,8 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 			)
 
 			for _, del := range delegations {
-				h.AddDelegation(del)
-				h1.AddDelegation(del)
+				h.AddDelegation(del, minUnbondingTime)
+				h1.AddDelegation(del, minUnbondingTime)
 			}
 		}
 
