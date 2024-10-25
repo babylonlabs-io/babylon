@@ -581,6 +581,8 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 			// we do not need to save it in the database
 			SpendStakeTx: []byte{},
 		}
+
+		types.EmitEarlyUnbondedEvent(ctx, btcDel.MustGetStakingTxHash().String(), stakerSpendigTxHeader.Height)
 	} else {
 		// stakeSpendingTx is not unbonding tx, first we need to verify whether it
 		// acutally spends staking output
@@ -599,16 +601,12 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 			SpendStakeTx: req.StakeSpendingTx,
 		}
 
-		ev := &types.EventUnexpectedUnbondingTx{
-			StakingTxHash:          btcDel.MustGetStakingTxHash().String(),
-			SpendStakeTxHash:       spendStakeTxHash.String(),
-			SpendStakeTxHeaderHash: req.StakeSpendingTxInclusionProof.Key.Hash.MarshalHex(),
-			SpendStakeTxBlockIndex: req.StakeSpendingTxInclusionProof.Key.Index,
-		}
-
-		if err := ctx.EventManager().EmitTypedEvent(ev); err != nil {
-			panic(fmt.Errorf("failed to emit EventUnexpectedUnbondingTx event: %w", err))
-		}
+		types.EmitUnexpectedUnbondingTxEvent(ctx,
+			btcDel.MustGetStakingTxHash().String(),
+			spendStakeTxHash.String(),
+			req.StakeSpendingTxInclusionProof.Key.Hash.MarshalHex(),
+			req.StakeSpendingTxInclusionProof.Key.Index,
+		)
 	}
 
 	// all good, add the signature to BTC delegation's undelegation
