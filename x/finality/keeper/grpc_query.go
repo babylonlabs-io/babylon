@@ -44,7 +44,7 @@ func (k Keeper) FinalityProviderPowerAtHeight(ctx context.Context, req *types.Qu
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	power := k.getVotingPower(sdkCtx, fpBTCPK.MustMarshal(), req.Height)
+	power := k.GetVotingPower(sdkCtx, fpBTCPK.MustMarshal(), req.Height)
 
 	return &types.QueryFinalityProviderPowerAtHeightResponse{VotingPower: power}, nil
 }
