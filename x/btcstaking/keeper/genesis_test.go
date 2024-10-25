@@ -30,7 +30,6 @@ func TestExportGenesis(t *testing.T) {
 		BlockHeightBbn: 1,
 		BlockHeightBtc: 0,
 	})
-	vpFps := make(map[string]*types.VotingPowerFP, 0)
 	btcDelegations := make([]*types.BTCDelegation, 0)
 	eventsIdx := make(map[uint64]*types.EventIndex, 0)
 	btcDelegatorIndex := make(map[string]*types.BTCDelegator, 0)
@@ -58,15 +57,6 @@ func TestExportGenesis(t *testing.T) {
 			int(numDelegations),
 			params.CovenantQuorum,
 		)
-		vp := uint64(stakingValue)
-
-		// sets voting power
-		k.SetVotingPower(ctx, *fp.BtcPk, blkHeight, vp)
-		vpFps[fp.BtcPk.MarshalHex()] = &types.VotingPowerFP{
-			BlockHeight: blkHeight,
-			FpBtcPk:     fp.BtcPk,
-			VotingPower: vp,
-		}
 
 		for _, del := range delegations {
 			totalDelegations++
@@ -150,12 +140,6 @@ func TestExportGenesis(t *testing.T) {
 		}
 	}
 	require.Equal(t, correctDels, len(btcDelegations))
-
-	// voting powers
-	for _, gsFpVp := range gs.VotingPowers {
-		vp := vpFps[gsFpVp.FpBtcPk.MarshalHex()]
-		require.Equal(t, gsFpVp, vp)
-	}
 
 	// chains height
 	require.Equal(t, chainsHeight, gs.BlockHeightChains)

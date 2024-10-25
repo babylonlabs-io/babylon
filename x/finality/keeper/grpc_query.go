@@ -13,14 +13,112 @@ import (
 	"google.golang.org/grpc/status"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 var _ types.QueryServer = Keeper{}
 
+// FinalityProviderPowerAtHeight returns the voting power of the specified finality provider
+// at the provided Babylon height
+func (k Keeper) FinalityProviderPowerAtHeight(ctx context.Context, req *types.QueryFinalityProviderPowerAtHeightRequest) (*types.QueryFinalityProviderPowerAtHeightResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal finality provider BTC PK hex: %v", err)
+	}
+
+	if !k.BTCStakingKeeper.HasFinalityProvider(ctx, *fpBTCPK) {
+		return nil, bstypes.ErrFpNotFound
+	}
+
+	store := k.votingPowerBbnBlockHeightStore(ctx, req.Height)
+	iter := store.ReverseIterator(nil, nil)
+	defer iter.Close()
+
+	if !iter.Valid() {
+		return nil, types.ErrVotingPowerTableNotUpdated.Wrapf("height: %d", req.Height)
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	power := k.GetVotingPower(sdkCtx, fpBTCPK.MustMarshal(), req.Height)
+
+	return &types.QueryFinalityProviderPowerAtHeightResponse{VotingPower: power}, nil
+}
+
+// FinalityProviderCurrentPower returns the voting power of the specified finality provider
+// at the current height
+func (k Keeper) FinalityProviderCurrentPower(ctx context.Context, req *types.QueryFinalityProviderCurrentPowerRequest) (*types.QueryFinalityProviderCurrentPowerResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal finality provider BTC PK hex: %v", err)
+	}
+
+	height, power := k.GetCurrentVotingPower(ctx, *fpBTCPK)
+
+	return &types.QueryFinalityProviderCurrentPowerResponse{Height: height, VotingPower: power}, nil
+}
+
+// ActiveFinalityProvidersAtHeight returns the active finality providers at the provided height
+func (k Keeper) ActiveFinalityProvidersAtHeight(ctx context.Context, req *types.QueryActiveFinalityProvidersAtHeightRequest) (*types.QueryActiveFinalityProvidersAtHeightResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	store := k.votingPowerBbnBlockHeightStore(sdkCtx, req.Height)
+
+	var finalityProvidersWithMeta []*bstypes.FinalityProviderWithMeta
+	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
+		finalityProvider, err := k.BTCStakingKeeper.GetFinalityProvider(sdkCtx, key)
+		if err != nil {
+			return err
+		}
+
+		votingPower := k.GetVotingPower(sdkCtx, key, req.Height)
+		if votingPower > 0 {
+			finalityProviderWithMeta := bstypes.FinalityProviderWithMeta{
+				BtcPk:                finalityProvider.BtcPk,
+				Height:               req.Height,
+				VotingPower:          votingPower,
+				SlashedBabylonHeight: finalityProvider.SlashedBabylonHeight,
+				SlashedBtcHeight:     finalityProvider.SlashedBtcHeight,
+			}
+			finalityProvidersWithMeta = append(finalityProvidersWithMeta, &finalityProviderWithMeta)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryActiveFinalityProvidersAtHeightResponse{FinalityProviders: convertToActiveFinalityProvidersAtHeightResponse(finalityProvidersWithMeta), Pagination: pageRes}, nil
+}
+
+// ActivatedHeight returns the Babylon height in which the BTC Staking protocol was enabled
+func (k Keeper) ActivatedHeight(ctx context.Context, req *types.QueryActivatedHeightRequest) (*types.QueryActivatedHeightResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	activatedHeight, err := k.GetBTCStakingActivatedHeight(sdkCtx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryActivatedHeightResponse{Height: activatedHeight}, nil
+}
+
 // ListPublicRandomness returns a list of public randomness committed by a given
 // finality provider
-// TODO: remove public randomness storage?
 func (k Keeper) ListPublicRandomness(ctx context.Context, req *types.QueryListPublicRandomnessRequest) (*types.QueryListPublicRandomnessResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -310,4 +408,19 @@ func convertToEvidenceListResponse(evidences []*types.Evidence) []*types.Evidenc
 		response[i] = resp
 	}
 	return response
+}
+
+func convertToActiveFinalityProvidersAtHeightResponse(finalityProvidersWithMeta []*bstypes.FinalityProviderWithMeta) []*types.ActiveFinalityProvidersAtHeightResponse {
+	var activeFinalityProvidersAtHeightResponse []*types.ActiveFinalityProvidersAtHeightResponse
+	for _, fpWithMeta := range finalityProvidersWithMeta {
+		activeFinalityProvidersAtHeightResponse = append(activeFinalityProvidersAtHeightResponse, &types.ActiveFinalityProvidersAtHeightResponse{
+			BtcPkHex:             fpWithMeta.BtcPk,
+			Height:               fpWithMeta.Height,
+			VotingPower:          fpWithMeta.VotingPower,
+			SlashedBabylonHeight: fpWithMeta.SlashedBabylonHeight,
+			SlashedBtcHeight:     fpWithMeta.SlashedBtcHeight,
+			Jailed:               fpWithMeta.Jailed,
+		})
+	}
+	return activeFinalityProvidersAtHeightResponse
 }

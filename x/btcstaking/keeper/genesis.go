@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 
-	btcstk "github.com/babylonlabs-io/babylon/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,10 +28,6 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		k.setBTCDelegation(ctx, btcDel)
 	}
 
-	for _, fpVP := range gs.VotingPowers {
-		k.SetVotingPower(ctx, *fpVP.FpBtcPk, fpVP.BlockHeight, fpVP.VotingPower)
-	}
-
 	for _, blocks := range gs.BlockHeightChains {
 		k.setBlockHeightChains(ctx, blocks)
 	}
@@ -52,10 +47,6 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		}
 	}
 
-	for _, vpCache := range gs.VpDstCache {
-		k.SetVotingPowerDistCache(ctx, vpCache.BlockHeight, vpCache.VpDistribution)
-	}
-
 	return nil
 }
 
@@ -71,11 +62,6 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
-	vpFps, err := k.fpVotingPowers(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	btcDels, err := k.btcDelegators(ctx)
 	if err != nil {
 		return nil, err
@@ -86,20 +72,13 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
-	vpsCache, err := k.votingPowersDistCacheBlkHeight(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	return &types.GenesisState{
 		Params:            k.GetAllParams(ctx),
 		FinalityProviders: fps,
 		BtcDelegations:    dels,
-		VotingPowers:      vpFps,
 		BlockHeightChains: k.blockHeightChains(ctx),
 		BtcDelegators:     btcDels,
 		Events:            evts,
-		VpDstCache:        vpsCache,
 	}, nil
 }
 
@@ -133,30 +112,6 @@ func (k Keeper) btcDelegations(ctx context.Context) ([]*types.BTCDelegation, err
 	}
 
 	return dels, nil
-}
-
-// fpVotingPowers gets the voting power of a given finality provider at a given Babylon height.
-func (k Keeper) fpVotingPowers(ctx context.Context) ([]*types.VotingPowerFP, error) {
-	iter := k.votingPowerStore(ctx).Iterator(nil, nil)
-	defer iter.Close()
-
-	vpFps := make([]*types.VotingPowerFP, 0)
-
-	for ; iter.Valid(); iter.Next() {
-		blkHeight, fpBTCPK, err := btcstk.ParseBlkHeightAndPubKeyFromStoreKey(iter.Key())
-		if err != nil {
-			return nil, err
-		}
-
-		vp := sdk.BigEndianToUint64(iter.Value())
-		vpFps = append(vpFps, &types.VotingPowerFP{
-			BlockHeight: blkHeight,
-			FpBtcPk:     fpBTCPK,
-			VotingPower: vp,
-		})
-	}
-
-	return vpFps, nil
 }
 
 func (k Keeper) blockHeightChains(ctx context.Context) []*types.BlockHeightBbnToBtc {
@@ -230,25 +185,6 @@ func (k Keeper) eventIdxs(
 	}
 
 	return evts, nil
-}
-
-func (k Keeper) votingPowersDistCacheBlkHeight(ctx context.Context) ([]*types.VotingPowerDistCacheBlkHeight, error) {
-	vps := make([]*types.VotingPowerDistCacheBlkHeight, 0)
-	iter := k.votingPowerDistCacheStore(ctx).Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		var dc types.VotingPowerDistCache
-		if err := dc.Unmarshal(iter.Value()); err != nil {
-			return nil, err
-		}
-		vps = append(vps, &types.VotingPowerDistCacheBlkHeight{
-			BlockHeight:    sdk.BigEndianToUint64(iter.Key()),
-			VpDistribution: &dc,
-		})
-	}
-
-	return vps, nil
 }
 
 func (k Keeper) setBlockHeightChains(ctx context.Context, blocks *types.BlockHeightBbnToBtc) {

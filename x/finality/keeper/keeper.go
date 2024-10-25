@@ -97,6 +97,6 @@ func (k Keeper) IsFinalityActive(ctx context.Context) (activated bool) {
 		return false
 	}
 
-	_, err := k.BTCStakingKeeper.GetBTCStakingActivatedHeight(ctx)
+	_, err := k.GetBTCStakingActivatedHeight(ctx)
 	return err == nil
 }

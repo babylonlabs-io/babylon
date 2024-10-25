@@ -8,36 +8,9 @@ import (
 
 	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-// IterateActiveFPs iterates over all finality providers that are not slashed
-func (k Keeper) IterateActiveFPs(ctx context.Context, handler func(fp *types.FinalityProvider) (shouldContinue bool)) {
-	k.IterateFPs(ctx, func(fp *types.FinalityProvider) (shouldContinue bool) {
-		if fp.IsSlashed() {
-			// slashed finality provider is removed from finality provider set
-			return true
-		}
-
-		return handler(fp)
-	})
-}
-
-// IterateFPs iterates over all finality providers.
-func (k Keeper) IterateFPs(ctx context.Context, handler func(fp *types.FinalityProvider) (shouldContinue bool)) {
-	// filter out all finality providers with positive voting power
-	fpIter := k.finalityProviderStore(ctx).Iterator(nil, nil)
-	defer fpIter.Close()
-	for ; fpIter.Valid(); fpIter.Next() {
-		var fp types.FinalityProvider
-		k.cdc.MustUnmarshal(fpIter.Value(), &fp)
-		shouldContinue := handler(&fp)
-		if !shouldContinue {
-			return
-		}
-	}
-}
 
 func (k Keeper) SetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64, power uint64) {
 	store := k.votingPowerBbnBlockHeightStore(ctx, height)
@@ -46,9 +19,6 @@ func (k Keeper) SetVotingPower(ctx context.Context, fpBTCPK []byte, height uint6
 
 // GetVotingPower gets the voting power of a given finality provider at a given Babylon height
 func (k Keeper) GetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64) uint64 {
-	if !k.HasFinalityProvider(ctx, fpBTCPK) {
-		return 0
-	}
 	store := k.votingPowerBbnBlockHeightStore(ctx, height)
 	powerBytes := store.Get(fpBTCPK)
 	if len(powerBytes) == 0 {
@@ -77,7 +47,7 @@ func (k Keeper) GetCurrentVotingPower(ctx context.Context, fpBTCPK []byte) (uint
 	storeAtHeight := prefix.NewStore(store, sdk.Uint64ToBigEndian(lastHeight))
 
 	// if the finality provider is not known, return 0 voting power
-	if !k.HasFinalityProvider(ctx, fpBTCPK) {
+	if !k.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPK) {
 		return lastHeight, 0
 	}
 
