@@ -459,8 +459,14 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
 		events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 		require.Len(t, events, 0)
-		// the BTC delegation will be unbonded at end height - w
-		unbondedHeight := actualDel.EndHeight - btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
+
+		btckptParams := btccKeeper.GetParams(h.Ctx)
+		stakingParams := h.BTCStakingKeeper.GetParamsWithVersion(h.Ctx).Params
+
+		minUnbondingTime := types.MinimumUnbondingTime(&stakingParams, &btckptParams)
+
+		// the BTC delegation will be unbonded at end height - max(w, min_unbonding_time)
+		unbondedHeight := actualDel.EndHeight - minUnbondingTime
 		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
 		require.Len(t, events, 1)
 		btcDelStateUpdate := events[0].GetBtcDelStateUpdate()
@@ -612,8 +618,14 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		require.NotNil(t, btcDelStateUpdate)
 		require.Equal(t, stakingTxHash, btcDelStateUpdate.StakingTxHash)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, btcDelStateUpdate.NewState)
-		// there exists 1 event that the BTC delegation becomes unbonded at end height - w
-		unbondedHeight := activatedDel.EndHeight - btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
+
+		btckptParams := btccKeeper.GetParams(h.Ctx)
+		stakingParams := h.BTCStakingKeeper.GetParamsWithVersion(h.Ctx).Params
+
+		minUnbondingTime := types.MinimumUnbondingTime(&stakingParams, &btckptParams)
+
+		// the BTC delegation will be unbonded at end height - max(w, min_unbonding_time)
+		unbondedHeight := activatedDel.EndHeight - minUnbondingTime
 		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
 		require.Len(t, events, 1)
 		btcDelStateUpdate = events[0].GetBtcDelStateUpdate()
@@ -704,8 +716,14 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 	btcTip := btclcKeeper.GetTipInfo(h.Ctx)
 	events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 	require.Len(t, events, 0)
-	// the BTC delegation will be unbonded at end height - w
-	unbondedHeight := actualDel.EndHeight - btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
+
+	btckptParams := btccKeeper.GetParams(h.Ctx)
+	stakingParams := h.BTCStakingKeeper.GetParamsWithVersion(h.Ctx).Params
+
+	minUnbondingTime := types.MinimumUnbondingTime(&stakingParams, &btckptParams)
+
+	// the BTC delegation will be unbonded at end height - max(w, min_unbonding_time)
+	unbondedHeight := actualDel.EndHeight - minUnbondingTime
 	events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
 	require.Len(t, events, 1)
 	btcDelStateUpdate := events[0].GetBtcDelStateUpdate()

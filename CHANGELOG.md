@@ -41,6 +41,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 * [#228](https://github.com/babylonlabs-io/babylon/pull/228) Add inclusion height to early unbonding event
 
+### State Machine Breaking
+
+* [#218](https://github.com/babylonlabs-io/babylon/pull/218) Fix removing voting
+power during expiry
+
 ## v0.14.0
 
 ### State Machine Breaking
