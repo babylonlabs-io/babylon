@@ -1999,7 +1999,6 @@ type QueryClient interface {
 	// NOTE: Babylon only has the knowledge of public randomness that is already revealed by
 	// finality providers, i.e., the finality provider already provides a finality signature
 	// at the corresponding height
-	// TODO: remove public randomness storage?
 	ListPublicRandomness(ctx context.Context, in *QueryListPublicRandomnessRequest, opts ...grpc.CallOption) (*QueryListPublicRandomnessResponse, error)
 	// ListPubRandCommit is a range query for public randomness commitments of a given finality provider
 	ListPubRandCommit(ctx context.Context, in *QueryListPubRandCommitRequest, opts ...grpc.CallOption) (*QueryListPubRandCommitResponse, error)
@@ -2170,7 +2169,6 @@ type QueryServer interface {
 	// NOTE: Babylon only has the knowledge of public randomness that is already revealed by
 	// finality providers, i.e., the finality provider already provides a finality signature
 	// at the corresponding height
-	// TODO: remove public randomness storage?
 	ListPublicRandomness(context.Context, *QueryListPublicRandomnessRequest) (*QueryListPublicRandomnessResponse, error)
 	// ListPubRandCommit is a range query for public randomness commitments of a given finality provider
 	ListPubRandCommit(context.Context, *QueryListPubRandCommitRequest) (*QueryListPubRandCommitResponse, error)

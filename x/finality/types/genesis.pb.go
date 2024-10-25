@@ -47,7 +47,6 @@ type GenesisState struct {
 	// voting_powers the voting power of every finality provider at every block height.
 	VotingPowers []*VotingPowerFP `protobuf:"bytes,9,rep,name=voting_powers,json=votingPowers,proto3" json:"voting_powers,omitempty"`
 	// vp_dst_cache is the table of all providers voting power with the total at one specific block.
-	// TODO: remove this after not storing in the keeper store it anymore.
 	VpDstCache []*VotingPowerDistCacheBlkHeight `protobuf:"bytes,10,rep,name=vp_dst_cache,json=vpDstCache,proto3" json:"vp_dst_cache,omitempty"`
 }
 

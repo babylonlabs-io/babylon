@@ -43,7 +43,6 @@ service Query {
   // NOTE: Babylon only has the knowledge of public randomness that is already revealed by
   // finality providers, i.e., the finality provider already provides a finality signature
   // at the corresponding height
-  // TODO: remove public randomness storage?
   rpc ListPublicRandomness(QueryListPublicRandomnessRequest) returns (QueryListPublicRandomnessResponse) {
     option (google.api.http).get = "/babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/public_randomness_list";
   }

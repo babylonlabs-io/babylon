@@ -121,7 +121,6 @@ func (n *NodeConfig) QueryActivatedHeight() (uint64, error) {
 }
 
 // TODO: pagination support
-// TODO: remove public randomness storage?
 func (n *NodeConfig) QueryListPublicRandomness(fpBTCPK *bbn.BIP340PubKey) map[uint64]*bbn.SchnorrPubRand {
 	path := fmt.Sprintf("/babylon/finality/v1/finality_providers/%s/public_randomness_list", fpBTCPK.MarshalHex())
 	bz, err := n.QueryGRPCGateway(path, url.Values{})

@@ -30,7 +30,6 @@ message GenesisState {
   // voting_powers the voting power of every finality provider at every block height.
   repeated VotingPowerFP voting_powers = 9;
   // vp_dst_cache is the table of all providers voting power with the total at one specific block.
-  // TODO: remove this after not storing in the keeper store it anymore.
   repeated VotingPowerDistCacheBlkHeight vp_dst_cache = 10;
 }
 

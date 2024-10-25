@@ -104,7 +104,6 @@ func (k Keeper) ActiveFinalityProvidersAtHeight(ctx context.Context, req *types.
 }
 
 // ActivatedHeight returns the Babylon height in which the BTC Staking protocol was enabled
-// TODO: Requires investigation on whether we can enable the BTC staking protocol at genesis
 func (k Keeper) ActivatedHeight(ctx context.Context, req *types.QueryActivatedHeightRequest) (*types.QueryActivatedHeightResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -120,7 +119,6 @@ func (k Keeper) ActivatedHeight(ctx context.Context, req *types.QueryActivatedHe
 
 // ListPublicRandomness returns a list of public randomness committed by a given
 // finality provider
-// TODO: remove public randomness storage?
 func (k Keeper) ListPublicRandomness(ctx context.Context, req *types.QueryListPublicRandomnessRequest) (*types.QueryListPublicRandomnessResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
