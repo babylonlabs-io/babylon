@@ -29,6 +29,7 @@ import (
 	blctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
 )
@@ -264,6 +265,11 @@ func initGenesis(
 		return err
 	}
 
+	err = updateModuleGenesis(appGenState, finalitytypes.ModuleName, &finalitytypes.GenesisState{}, updateFinalityGenesis)
+	if err != nil {
+		return err
+	}
+
 	bz, err := json.MarshalIndent(appGenState, "", "  ")
 	if err != nil {
 		return err
@@ -350,6 +356,11 @@ func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.Genesi
 	btccheckpointGenState.Params.BtcConfirmationDepth = BabylonBtcConfirmationPeriod
 	btccheckpointGenState.Params.CheckpointFinalizationTimeout = BabylonBtcFinalizationPeriod
 	btccheckpointGenState.Params.CheckpointTag = BabylonOpReturnTag
+}
+
+func updateFinalityGenesis(finalityGenState *finalitytypes.GenesisState) {
+	finalityGenState.Params = finalitytypes.DefaultParams()
+	finalityGenState.Params.FinalityActivationHeight = 0
 }
 
 func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {

@@ -46,7 +46,9 @@ func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types
 	ctx = ctx.WithHeaderInfo(header.Info{})
 
 	// Initialize params
-	if err := k.SetParams(ctx, types.DefaultParams()); err != nil {
+	dParams := types.DefaultParams()
+	dParams.FinalityActivationHeight = 0
+	if err := k.SetParams(ctx, dParams); err != nil {
 		panic(err)
 	}
 

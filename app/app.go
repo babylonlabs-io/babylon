@@ -488,7 +488,7 @@ func NewBabylonApp(
 
 	// set proposal extension
 	proposalHandler := checkpointing.NewProposalHandler(
-		logger, &app.CheckpointingKeeper, bApp.Mempool(), bApp)
+		logger, &app.CheckpointingKeeper, bApp.Mempool(), bApp, app.EncCfg)
 	proposalHandler.SetHandlers(bApp)
 
 	// set vote extension

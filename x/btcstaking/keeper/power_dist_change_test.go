@@ -52,7 +52,7 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 			for i := 0; i < 5; i++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				h.NoError(err)
-				_, _, del, _, _, err := h.CreateDelegation(
+				_, _, del, _, _, _, err := h.CreateDelegation(
 					r,
 					delSK,
 					fpPK,
@@ -110,7 +110,7 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -199,7 +199,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -270,7 +270,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		h.NoError(err)
 		delSK2, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash2, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+		stakingTxHash2, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 			r,
 			delSK2,
 			fpPK,
@@ -333,7 +333,7 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -438,7 +438,7 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, _, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -459,8 +459,14 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
 		events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 		require.Len(t, events, 0)
-		// the BTC delegation will be unbonded at end height - w
-		unbondedHeight := actualDel.EndHeight - btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
+
+		btckptParams := btccKeeper.GetParams(h.Ctx)
+		stakingParams := h.BTCStakingKeeper.GetParamsWithVersion(h.Ctx).Params
+
+		minUnbondingTime := types.MinimumUnbondingTime(&stakingParams, &btckptParams)
+
+		// the BTC delegation will be unbonded at end height - max(w, min_unbonding_time)
+		unbondedHeight := actualDel.EndHeight - minUnbondingTime
 		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
 		require.Len(t, events, 1)
 		btcDelStateUpdate := events[0].GetBtcDelStateUpdate()
@@ -556,7 +562,7 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 			r,
 			delSK,
 			fpPK,
@@ -612,8 +618,14 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		require.NotNil(t, btcDelStateUpdate)
 		require.Equal(t, stakingTxHash, btcDelStateUpdate.StakingTxHash)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, btcDelStateUpdate.NewState)
-		// there exists 1 event that the BTC delegation becomes unbonded at end height - w
-		unbondedHeight := activatedDel.EndHeight - btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
+
+		btckptParams := btccKeeper.GetParams(h.Ctx)
+		stakingParams := h.BTCStakingKeeper.GetParamsWithVersion(h.Ctx).Params
+
+		minUnbondingTime := types.MinimumUnbondingTime(&stakingParams, &btckptParams)
+
+		// the BTC delegation will be unbonded at end height - max(w, min_unbonding_time)
+		unbondedHeight := activatedDel.EndHeight - minUnbondingTime
 		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
 		require.Len(t, events, 1)
 		btcDelStateUpdate = events[0].GetBtcDelStateUpdate()
@@ -684,7 +696,7 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 	stakingValue := int64(2 * 10e8)
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	expectedStakingTxHash, msgCreateBTCDel, actualDel, _, _, err := h.CreateDelegation(
+	expectedStakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegation(
 		r,
 		delSK,
 		fpPK,
@@ -704,8 +716,14 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 	btcTip := btclcKeeper.GetTipInfo(h.Ctx)
 	events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 	require.Len(t, events, 0)
-	// the BTC delegation will be unbonded at end height - w
-	unbondedHeight := actualDel.EndHeight - btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
+
+	btckptParams := btccKeeper.GetParams(h.Ctx)
+	stakingParams := h.BTCStakingKeeper.GetParamsWithVersion(h.Ctx).Params
+
+	minUnbondingTime := types.MinimumUnbondingTime(&stakingParams, &btckptParams)
+
+	// the BTC delegation will be unbonded at end height - max(w, min_unbonding_time)
+	unbondedHeight := actualDel.EndHeight - minUnbondingTime
 	events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
 	require.Len(t, events, 1)
 	btcDelStateUpdate := events[0].GetBtcDelStateUpdate()

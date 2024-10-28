@@ -39,9 +39,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### State Machine Breaking
 
+* [#211](https://github.com/babylonlabs-io/babylon/pull/211) Babylon inflation module
+
+## v0.14.1
+
+### API Breaking
+
+* [#228](https://github.com/babylonlabs-io/babylon/pull/228) Add inclusion height to early unbonding event
+
+### State Machine Breaking
+
+* [#218](https://github.com/babylonlabs-io/babylon/pull/218) Fix removing voting
+power during expiry
+
+## v0.14.0
+
+### State Machine Breaking
+
+* [#224](https://github.com/babylonlabs-io/babylon/pull/224) Make injected checkpoint a standard tx
 * [#207](https://github.com/babylonlabs-io/babylon/pull/207) Rename total voting power
 to total bonded sat
-* [#211](https://github.com/babylonlabs-io/babylon/pull/211) Babylon inflation module
+* [#204](https://github.com/babylonlabs-io/babylon/pull/204) Add babylon finality
+activation block height to start processing finality messages in `x/finality` params.
+* [#215](https://github.com/babylonlabs-io/babylon/pull/215) Implement ADR-29
+generalized unbonding handler
+
+### Improvements
+
+* [#213](https://github.com/babylonlabs-io/babylon/pull/213) Bump wasmd and re-enable static linking
+* [#210](https://github.com/babylonlabs-io/babylon/pull/210) Parameterize finality parameters in prepare-genesis cmd
 
 ## v0.13.0
 
@@ -54,6 +80,7 @@ to total bonded sat
 * [#201](https://github.com/babylonlabs-io/babylon/pull/201) Adjusted handling of `ValidatorWithBlsKey` in checkpoint keeper queries to improve API security.
 * [#202](https://github.com/babylonlabs-io/babylon/pull/202) Adjusted handling of `FinalityProviderWithMeta` in btcstaking keeper queries to improve API security.
 * [#203](https://github.com/babylonlabs-io/babylon/pull/203) Adjusted handling of `RewardGauge` in incentive keeper queries to improve API security.
+* [#208](https://github.com/babylonlabs-io/babylon/pull/208) Adjusted handling of `Evidence` in finality keeper queries to improve API security.
 
 ### State Machine Breaking
 

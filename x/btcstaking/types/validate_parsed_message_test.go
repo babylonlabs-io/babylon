@@ -42,8 +42,8 @@ func testStakingParams(
 		CovenantQuorum:             3,
 		MinStakingValueSat:         100000,
 		MaxStakingValueSat:         int64(4 * 10e8),
-		MinStakingTimeBlocks:       10,
-		MaxStakingTimeBlocks:       10000,
+		MinStakingTimeBlocks:       1000,
+		MaxStakingTimeBlocks:       100000,
 		SlashingPkScript:           slashingPkScript,
 		MinSlashingTxFeeSat:        1000,
 		MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.01"),
@@ -782,6 +782,9 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, got)
+
+				minUnbondingTime := types.MinimumUnbondingTime(params, checkpointParams)
+				require.Equal(t, minUnbondingTime, got.MinUnbondingTime)
 			}
 
 		})

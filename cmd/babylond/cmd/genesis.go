@@ -8,9 +8,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
-
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	comettypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -36,8 +33,10 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.Command {
@@ -57,13 +56,16 @@ Example:
 			serverCtx := server.GetServerContextFromCmd(cmd)
 			config := serverCtx.Config
 
-			genesisCliArgs := parseGenesisFlags(cmd)
+			genesisCliArgs, err := parseGenesisFlags(cmd)
+			if err != nil {
+				return fmt.Errorf("failed to parse genesis flags: %w", err)
+			}
 
 			genFile := config.GenesisFile()
 
 			genesisState, genesis, err := genutiltypes.GenesisStateFromGenFile(genFile)
 			if err != nil {
-				return fmt.Errorf("failed to unmarshal genesis state: %s", err)
+				return fmt.Errorf("failed to unmarshal genesis state: %w", err)
 			}
 
 			network := args[0]
@@ -101,6 +103,11 @@ Example:
 					genesisCliArgs.GenesisTime,
 					genesisCliArgs.BlockGasLimit,
 					genesisCliArgs.VoteExtensionEnableHeight,
+					genesisCliArgs.SignedBlocksWindow,
+					genesisCliArgs.MinSignedPerWindow,
+					genesisCliArgs.FinalitySigTimeout,
+					genesisCliArgs.JailDuration,
+					genesisCliArgs.FinalityActivationBlockHeight,
 				)
 			} else if network == "mainnet" {
 				panic("Mainnet params not implemented.")
@@ -292,6 +299,11 @@ func TestnetGenesisParams(
 	genesisTime time.Time,
 	blockGasLimit int64,
 	voteExtensionEnableHeight int64,
+	signedBlocksWindow int64,
+	minSignedPerWindow sdkmath.LegacyDec,
+	finalitySigTimeout int64,
+	jailDuration time.Duration,
+	finalityActivationBlockHeight uint64,
 ) GenesisParams {
 
 	genParams := GenesisParams{}
@@ -414,5 +426,15 @@ func TestnetGenesisParams(
 
 	genParams.BlockGasLimit = blockGasLimit
 	genParams.VoteExtensionsEnableHeight = voteExtensionEnableHeight
+
+	genParams.FinalityParams.SignedBlocksWindow = signedBlocksWindow
+	genParams.FinalityParams.MinSignedPerWindow = minSignedPerWindow
+	genParams.FinalityParams.FinalitySigTimeout = finalitySigTimeout
+	genParams.FinalityParams.JailDuration = jailDuration
+	genParams.FinalityParams.FinalityActivationHeight = finalityActivationBlockHeight
+	if err := genParams.FinalityParams.Validate(); err != nil {
+		panic(err)
+	}
+
 	return genParams
 }
