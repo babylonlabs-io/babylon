@@ -75,12 +75,27 @@ func TestEndBlockerRewardsAccumulated(t *testing.T) {
 	require.Equal(t, math.NewInt(110_000000).String(), totalNativeStk.String())
 
 	k, ctx := NewKeeper(t, btcStk, stk)
-	require.Equal(t, k.RewardsForCurrentBlock().String(), "10000000ubbn")
+	rwdBlocks := k.RewardsForCurrentBlock()
+	require.Equal(t, rwdBlocks.String(), "10000000ubbn")
 
 	err = k.EndBlocker(ctx)
 	require.NoError(t, err)
 
 	del1Rwd, err := k.GetDelRewards(ctx, del1)
 	require.NoError(t, err)
-	require.Equal(t, "", del1Rwd.String())
+	require.Equal(t, "1818181ubbn", del1Rwd.String())
+
+	del2Rwd, err := k.GetDelRewards(ctx, del2)
+	require.NoError(t, err)
+	require.Equal(t, "7272727ubbn", del2Rwd.String())
+
+	del3Rwd, err := k.GetDelRewards(ctx, del3)
+	require.NoError(t, err)
+	require.Equal(t, "909090ubbn", del3Rwd.String())
+
+	allRwds := del1Rwd.Add(del2Rwd...).Add(del3Rwd...)
+	require.Equal(t, rwdBlocks.String(), allRwds.String())
+
+	// 10000000ubbn
+	//  9999998ubbn
 }

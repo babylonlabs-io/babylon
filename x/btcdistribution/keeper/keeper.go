@@ -127,12 +127,13 @@ func (k Keeper) EndBlocker(ctx context.Context) error {
 		}
 
 		delNativeStaked = addDecimals(delNativeStaked)
-		delBtcStaked = addDecimals(delBtcStaked)
-		weight := weightStaked(protocolNativeStaked, protocolBtcStaked, delNativeStaked, delBtcStaked)
+		delBtcStakedWithDecimals := addDecimals(delBtcStaked)
+		weight := weightStaked(protocolNativeStaked, protocolBtcStaked, delNativeStaked, delBtcStakedWithDecimals)
 		if !weight.IsPositive() {
 			return nil
 		}
 
+		weight = weight.Mul(delBtcStaked)
 		rewards := rewardRatio(totalRewards, protocolBtcStaked, weight)
 		return k.AcumulateDelRewards(ctx, del, rewards)
 	})
