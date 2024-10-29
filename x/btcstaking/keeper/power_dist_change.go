@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -187,6 +188,12 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 					fpBTCPKHex := fpBTCPK.MarshalHex()
 					activeBTCDels[fpBTCPKHex] = append(activeBTCDels[fpBTCPKHex], btcDel)
 				}
+
+				delAddr := sdk.MustAccAddressFromBech32(btcDel.StakerAddr)
+				err := k.AddDelStaking(ctx, delAddr, math.NewIntFromUint64(btcDel.TotalSat))
+				if err != nil {
+					panic(err)
+				}
 			} else if delEvent.NewState == types.BTCDelegationStatus_UNBONDED {
 				// emit expired event if it is not early unbonding
 				if !btcDel.IsUnbondedEarly() {
@@ -194,6 +201,12 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				}
 				// add the unbonded BTC delegation to the map
 				unbondedBTCDels[delEvent.StakingTxHash] = struct{}{}
+
+				delAddr := sdk.MustAccAddressFromBech32(btcDel.StakerAddr)
+				err := k.SubDelStaking(ctx, delAddr, math.NewIntFromUint64(btcDel.TotalSat))
+				if err != nil {
+					panic(err)
+				}
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
 			// record slashed fps

@@ -23,4 +23,6 @@ var (
 	BTCHeightKey            = []byte{0x06} // key prefix for the BTC heights
 	VotingPowerDistCacheKey = []byte{0x07} // key prefix for voting power distribution cache
 	PowerDistUpdateKey      = []byte{0x08} // key prefix for power distribution update events
+	DelegatorStakedBTCKey   = []byte{0x09} // key prefix for delegator active staked amount int math.Int
+	TotalStakedBTCKey       = []byte{0xA}  // key prefix for protocol active staked amount int math.Int
 )

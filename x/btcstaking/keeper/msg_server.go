@@ -135,7 +135,8 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 // CreateBTCDelegation creates a BTC delegation
 func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCreateBTCDelegation) (*types.MsgCreateBTCDelegationResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateBTCDelegation)
-
+	// total active btc staked in protocol +add
+	// total active btc staked by btc delegator +add
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// 1. Parse the message into better domain format
@@ -523,7 +524,8 @@ func containsInput(tx *wire.MsgTx, inputHash *chainhash.Hash, inputIdx uint32) b
 // will consider its BTC delegation unbonded
 func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndelegate) (*types.MsgBTCUndelegateResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyBTCUndelegate)
-
+	// total active btc staked in protocol -sub
+	// total active btc staked by btc delegator -sub
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// basic stateless checks
 	if err := req.ValidateBasic(); err != nil {

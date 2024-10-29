@@ -64,6 +64,8 @@ import (
 	owasm "github.com/babylonlabs-io/babylon/wasmbinding"
 	btccheckpointkeeper "github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btcdistributionkeeper "github.com/babylonlabs-io/babylon/x/btcdistribution/keeper"
+	btcdistributiontypes "github.com/babylonlabs-io/babylon/x/btcdistribution/types"
 	btclightclientkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	btcstakingkeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
@@ -122,6 +124,7 @@ type AppKeepers struct {
 	BtcCheckpointKeeper  btccheckpointkeeper.Keeper
 	CheckpointingKeeper  checkpointingkeeper.Keeper
 	MonitorKeeper        monitorkeeper.Keeper
+	BtcDistribution      btcdistributionkeeper.Keeper
 
 	// IBC-related modules
 	IBCKeeper      *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
@@ -187,6 +190,7 @@ func (ak *AppKeepers) InitKeepers(
 		btccheckpointtypes.StoreKey,
 		checkpointingtypes.StoreKey,
 		monitortypes.StoreKey,
+		btcdistributiontypes.StoreKey,
 		// IBC-related modules
 		ibcexported.StoreKey,
 		ibctransfertypes.StoreKey,
@@ -472,6 +476,13 @@ func (ak *AppKeepers) InitKeepers(
 		appCodec,
 		runtime.NewKVStoreService(keys[monitortypes.StoreKey]),
 		&btclightclientKeeper,
+	)
+
+	ak.BtcDistribution = btcdistributionkeeper.NewKeeper(
+		ak.BTCStakingKeeper,
+		stakingKeeper,
+		runtime.NewKVStoreService(keys[btcdistributiontypes.StoreKey]),
+		appCodec,
 	)
 
 	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
