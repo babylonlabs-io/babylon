@@ -238,11 +238,16 @@ func (k Keeper) IterateDelegators(ctx context.Context, i func(delegator sdk.AccA
 	for ; iter.Valid(); iter.Next() {
 		sdkAddrBz := iter.Key()
 		delAddr := sdk.AccAddress(sdkAddrBz)
+
 		delBtcStaked, err := ParseInt(iter.Value())
 		if err != nil {
 			return err
 		}
-		i(delAddr, delBtcStaked)
+
+		err = i(delAddr, delBtcStaked)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
