@@ -84,15 +84,15 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	//     corrupt a new finality provider and equivocate a historical block over and over again, making a previous block
 	//     unfinalisable forever
 	if fp.IsSlashed() {
-		return nil, bstypes.ErrFpAlreadySlashed.Wrapf(fmt.Sprintf("finality provider public key: %s", fpPK.MarshalHex()))
+		return nil, bstypes.ErrFpAlreadySlashed.Wrapf("finality provider public key: %s", fpPK.MarshalHex())
 	}
 
 	if fp.IsJailed() {
-		return nil, bstypes.ErrFpAlreadyJailed.Wrapf(fmt.Sprintf("finality provider public key: %s", fpPK.MarshalHex()))
+		return nil, bstypes.ErrFpAlreadyJailed.Wrapf("finality provider public key: %s", fpPK.MarshalHex())
 	}
 
 	// ensure the finality provider has voting power at this height
-	if ms.BTCStakingKeeper.GetVotingPower(ctx, fpPK.MustMarshal(), req.BlockHeight) == 0 {
+	if ms.GetVotingPower(ctx, fpPK.MustMarshal(), req.BlockHeight) == 0 {
 		return nil, types.ErrInvalidFinalitySig.Wrapf("the finality provider %s does not have voting power at height %d", fpPK.MarshalHex(), req.BlockHeight)
 	}
 
@@ -285,8 +285,7 @@ func (ms msgServer) UnjailFinalityProvider(ctx context.Context, req *types.MsgUn
 		return nil, err
 	}
 	if !jailingPeriodPassed {
-		return nil, types.ErrJailingPeriodNotPassed.Wrapf(
-			fmt.Sprintf("current block time: %v, required %v", curBlockTime, info.JailedUntil))
+		return nil, types.ErrJailingPeriodNotPassed.Wrapf("current block time: %v, required %v", curBlockTime, info.JailedUntil)
 	}
 
 	err = ms.BTCStakingKeeper.UnjailFinalityProvider(ctx, fpPk.MustMarshal())

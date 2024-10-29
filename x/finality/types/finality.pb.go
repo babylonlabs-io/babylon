@@ -4,8 +4,10 @@
 package types
 
 import (
+	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
 	github_com_babylonlabs_io_babylon_types "github.com/babylonlabs-io/babylon/types"
+	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -29,6 +31,219 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// VotingPowerDistCache is the cache for voting power distribution of finality providers
+// and their BTC delegations at a height
+type VotingPowerDistCache struct {
+	// total_sat is the total amount of bonded BTC stake (in Satoshi) of all the finality providers
+	// in the cache
+	TotalBondedSat uint64 `protobuf:"varint,1,opt,name=total_bonded_sat,json=totalBondedSat,proto3" json:"total_bonded_sat,omitempty"`
+	// finality_providers is a list of finality providers' voting power information
+	FinalityProviders []*FinalityProviderDistInfo `protobuf:"bytes,2,rep,name=finality_providers,json=finalityProviders,proto3" json:"finality_providers,omitempty"`
+	// num_active_fps is the number of finality providers that have active BTC
+	// delegations as well as timestamped public randomness
+	NumActiveFps uint32 `protobuf:"varint,3,opt,name=num_active_fps,json=numActiveFps,proto3" json:"num_active_fps,omitempty"`
+}
+
+func (m *VotingPowerDistCache) Reset()         { *m = VotingPowerDistCache{} }
+func (m *VotingPowerDistCache) String() string { return proto.CompactTextString(m) }
+func (*VotingPowerDistCache) ProtoMessage()    {}
+func (*VotingPowerDistCache) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ca5b87e52e3e6d02, []int{0}
+}
+func (m *VotingPowerDistCache) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *VotingPowerDistCache) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_VotingPowerDistCache.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *VotingPowerDistCache) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_VotingPowerDistCache.Merge(m, src)
+}
+func (m *VotingPowerDistCache) XXX_Size() int {
+	return m.Size()
+}
+func (m *VotingPowerDistCache) XXX_DiscardUnknown() {
+	xxx_messageInfo_VotingPowerDistCache.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_VotingPowerDistCache proto.InternalMessageInfo
+
+// FinalityProviderDistInfo is the reward distribution of a finality provider and its BTC delegations
+type FinalityProviderDistInfo struct {
+	// btc_pk is the Bitcoin secp256k1 PK of this finality provider
+	// the PK follows encoding in BIP-340 spec
+	BtcPk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"btc_pk,omitempty"`
+	// addr is the address to receive commission from delegations.
+	Addr string `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
+	// commission defines the commission rate of finality provider
+	Commission *cosmossdk_io_math.LegacyDec `protobuf:"bytes,3,opt,name=commission,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"commission,omitempty"`
+	// total_bonded_sat is the total amount of bonded BTC stake (in Satoshi) of the finality provider
+	TotalBondedSat uint64 `protobuf:"varint,4,opt,name=total_bonded_sat,json=totalBondedSat,proto3" json:"total_bonded_sat,omitempty"`
+	// btc_dels is a list of BTC delegations' voting power information under this finality provider
+	BtcDels []*BTCDelDistInfo `protobuf:"bytes,5,rep,name=btc_dels,json=btcDels,proto3" json:"btc_dels,omitempty"`
+	// is_timestamped indicates whether the finality provider
+	// has timestamped public randomness committed
+	// if no, it should not be assigned voting power
+	IsTimestamped bool `protobuf:"varint,6,opt,name=is_timestamped,json=isTimestamped,proto3" json:"is_timestamped,omitempty"`
+	// is_jailed indicates whether the finality provider
+	// is jailed, if so, it should not be assigned voting power
+	IsJailed bool `protobuf:"varint,7,opt,name=is_jailed,json=isJailed,proto3" json:"is_jailed,omitempty"`
+	// is_slashed indicates whether the finality provider
+	// is slashed, if so, it should not be assigned voting power
+	IsSlashed bool `protobuf:"varint,8,opt,name=is_slashed,json=isSlashed,proto3" json:"is_slashed,omitempty"`
+}
+
+func (m *FinalityProviderDistInfo) Reset()         { *m = FinalityProviderDistInfo{} }
+func (m *FinalityProviderDistInfo) String() string { return proto.CompactTextString(m) }
+func (*FinalityProviderDistInfo) ProtoMessage()    {}
+func (*FinalityProviderDistInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ca5b87e52e3e6d02, []int{1}
+}
+func (m *FinalityProviderDistInfo) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *FinalityProviderDistInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_FinalityProviderDistInfo.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *FinalityProviderDistInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FinalityProviderDistInfo.Merge(m, src)
+}
+func (m *FinalityProviderDistInfo) XXX_Size() int {
+	return m.Size()
+}
+func (m *FinalityProviderDistInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_FinalityProviderDistInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_FinalityProviderDistInfo proto.InternalMessageInfo
+
+func (m *FinalityProviderDistInfo) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+func (m *FinalityProviderDistInfo) GetTotalBondedSat() uint64 {
+	if m != nil {
+		return m.TotalBondedSat
+	}
+	return 0
+}
+
+func (m *FinalityProviderDistInfo) GetBtcDels() []*BTCDelDistInfo {
+	if m != nil {
+		return m.BtcDels
+	}
+	return nil
+}
+
+func (m *FinalityProviderDistInfo) GetIsTimestamped() bool {
+	if m != nil {
+		return m.IsTimestamped
+	}
+	return false
+}
+
+func (m *FinalityProviderDistInfo) GetIsJailed() bool {
+	if m != nil {
+		return m.IsJailed
+	}
+	return false
+}
+
+func (m *FinalityProviderDistInfo) GetIsSlashed() bool {
+	if m != nil {
+		return m.IsSlashed
+	}
+	return false
+}
+
+// BTCDelDistInfo contains the information related to voting power distribution for a BTC delegation
+type BTCDelDistInfo struct {
+	// btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
+	// the PK follows encoding in BIP-340 spec
+	BtcPk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"btc_pk,omitempty"`
+	// staker_addr is the address to receive rewards from BTC delegation.
+	StakerAddr string `protobuf:"bytes,2,opt,name=staker_addr,json=stakerAddr,proto3" json:"staker_addr,omitempty"`
+	// staking_tx_hash is the staking tx hash of the BTC delegation
+	StakingTxHash string `protobuf:"bytes,3,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
+	// total_sat is the amount of BTC stake (in Satoshi) of the BTC delegation
+	TotalSat uint64 `protobuf:"varint,4,opt,name=total_sat,json=totalSat,proto3" json:"total_sat,omitempty"`
+}
+
+func (m *BTCDelDistInfo) Reset()         { *m = BTCDelDistInfo{} }
+func (m *BTCDelDistInfo) String() string { return proto.CompactTextString(m) }
+func (*BTCDelDistInfo) ProtoMessage()    {}
+func (*BTCDelDistInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ca5b87e52e3e6d02, []int{2}
+}
+func (m *BTCDelDistInfo) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *BTCDelDistInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_BTCDelDistInfo.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *BTCDelDistInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BTCDelDistInfo.Merge(m, src)
+}
+func (m *BTCDelDistInfo) XXX_Size() int {
+	return m.Size()
+}
+func (m *BTCDelDistInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_BTCDelDistInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_BTCDelDistInfo proto.InternalMessageInfo
+
+func (m *BTCDelDistInfo) GetStakerAddr() string {
+	if m != nil {
+		return m.StakerAddr
+	}
+	return ""
+}
+
+func (m *BTCDelDistInfo) GetStakingTxHash() string {
+	if m != nil {
+		return m.StakingTxHash
+	}
+	return ""
+}
+
+func (m *BTCDelDistInfo) GetTotalSat() uint64 {
+	if m != nil {
+		return m.TotalSat
+	}
+	return 0
+}
+
 // IndexedBlock is the necessary metadata and finalization status of a block
 type IndexedBlock struct {
 	// height is the height of the block
@@ -44,7 +259,7 @@ func (m *IndexedBlock) Reset()         { *m = IndexedBlock{} }
 func (m *IndexedBlock) String() string { return proto.CompactTextString(m) }
 func (*IndexedBlock) ProtoMessage()    {}
 func (*IndexedBlock) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ca5b87e52e3e6d02, []int{0}
+	return fileDescriptor_ca5b87e52e3e6d02, []int{3}
 }
 func (m *IndexedBlock) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -113,7 +328,7 @@ func (m *PubRandCommit) Reset()         { *m = PubRandCommit{} }
 func (m *PubRandCommit) String() string { return proto.CompactTextString(m) }
 func (*PubRandCommit) ProtoMessage()    {}
 func (*PubRandCommit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ca5b87e52e3e6d02, []int{1}
+	return fileDescriptor_ca5b87e52e3e6d02, []int{4}
 }
 func (m *PubRandCommit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -197,7 +412,7 @@ func (m *Evidence) Reset()         { *m = Evidence{} }
 func (m *Evidence) String() string { return proto.CompactTextString(m) }
 func (*Evidence) ProtoMessage()    {}
 func (*Evidence) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ca5b87e52e3e6d02, []int{2}
+	return fileDescriptor_ca5b87e52e3e6d02, []int{5}
 }
 func (m *Evidence) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -265,7 +480,7 @@ func (m *FinalityProviderSigningInfo) Reset()         { *m = FinalityProviderSig
 func (m *FinalityProviderSigningInfo) String() string { return proto.CompactTextString(m) }
 func (*FinalityProviderSigningInfo) ProtoMessage()    {}
 func (*FinalityProviderSigningInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ca5b87e52e3e6d02, []int{3}
+	return fileDescriptor_ca5b87e52e3e6d02, []int{6}
 }
 func (m *FinalityProviderSigningInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -316,6 +531,9 @@ func (m *FinalityProviderSigningInfo) GetJailedUntil() time.Time {
 }
 
 func init() {
+	proto.RegisterType((*VotingPowerDistCache)(nil), "babylon.finality.v1.VotingPowerDistCache")
+	proto.RegisterType((*FinalityProviderDistInfo)(nil), "babylon.finality.v1.FinalityProviderDistInfo")
+	proto.RegisterType((*BTCDelDistInfo)(nil), "babylon.finality.v1.BTCDelDistInfo")
 	proto.RegisterType((*IndexedBlock)(nil), "babylon.finality.v1.IndexedBlock")
 	proto.RegisterType((*PubRandCommit)(nil), "babylon.finality.v1.PubRandCommit")
 	proto.RegisterType((*Evidence)(nil), "babylon.finality.v1.Evidence")
@@ -327,48 +545,274 @@ func init() {
 }
 
 var fileDescriptor_ca5b87e52e3e6d02 = []byte{
-	// 646 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x54, 0xcf, 0x6e, 0xd3, 0x4e,
-	0x10, 0x8e, 0xdb, 0xfc, 0x9a, 0x74, 0xe3, 0xea, 0x47, 0xdd, 0x52, 0x85, 0x16, 0x39, 0x21, 0xa7,
-	0x0a, 0x81, 0x4d, 0xff, 0x08, 0x21, 0x6e, 0xb8, 0x2a, 0x6a, 0x45, 0x05, 0x91, 0xd3, 0x5e, 0xb8,
-	0xac, 0xd6, 0xf6, 0xda, 0x5e, 0x62, 0xef, 0xae, 0xec, 0x75, 0xd5, 0xf0, 0x00, 0x9c, 0xcb, 0x8d,
-	0x47, 0xe0, 0xc8, 0x63, 0xf4, 0xd8, 0x23, 0xea, 0xa1, 0xa0, 0xe6, 0xc0, 0x6b, 0x20, 0xaf, 0xed,
-	0xa4, 0x39, 0x81, 0x40, 0x5c, 0x2c, 0xef, 0x37, 0xb3, 0xf3, 0xcd, 0x37, 0x33, 0x3b, 0xa0, 0xe7,
-	0x20, 0x67, 0x14, 0x31, 0x6a, 0xfa, 0x84, 0xa2, 0x88, 0x88, 0x91, 0x79, 0xba, 0x35, 0xf9, 0x37,
-	0x78, 0xc2, 0x04, 0xd3, 0x56, 0x4a, 0x1f, 0x63, 0x82, 0x9f, 0x6e, 0xad, 0xaf, 0x06, 0x2c, 0x60,
-	0xd2, 0x6e, 0xe6, 0x7f, 0x85, 0xeb, 0xfa, 0x32, 0x8a, 0x09, 0x65, 0xa6, 0xfc, 0x96, 0x50, 0x27,
-	0x60, 0x2c, 0x88, 0xb0, 0x29, 0x4f, 0x4e, 0xe6, 0x9b, 0x82, 0xc4, 0x38, 0x15, 0x28, 0xe6, 0x85,
-	0x43, 0x0f, 0x02, 0xf5, 0x90, 0x7a, 0xf8, 0x0c, 0x7b, 0x56, 0xc4, 0xdc, 0xa1, 0xb6, 0x06, 0x16,
-	0x42, 0x4c, 0x82, 0x50, 0xb4, 0x95, 0xae, 0xb2, 0x59, 0xb7, 0xcb, 0x93, 0x76, 0x0f, 0x34, 0x11,
-	0xe7, 0x30, 0x44, 0x69, 0xd8, 0x9e, 0xeb, 0x2a, 0x9b, 0xaa, 0xdd, 0x40, 0x9c, 0x1f, 0xa0, 0x34,
-	0xd4, 0xee, 0x83, 0xc5, 0x22, 0xb7, 0xf7, 0xd8, 0x6b, 0xcf, 0x77, 0x95, 0xcd, 0xa6, 0x3d, 0x05,
-	0x7a, 0x1f, 0x15, 0xb0, 0xd4, 0xcf, 0x1c, 0x1b, 0x51, 0x6f, 0x8f, 0xc5, 0x31, 0x11, 0xda, 0x03,
-	0xa0, 0xa6, 0x02, 0x25, 0x02, 0xce, 0x10, 0xb5, 0x24, 0x76, 0x50, 0xb0, 0x75, 0x81, 0x4a, 0xb3,
-	0x18, 0xf2, 0xcc, 0x81, 0x09, 0xa2, 0x9e, 0x64, 0xac, 0xdb, 0x80, 0x66, 0x71, 0x19, 0x4a, 0xd3,
-	0x01, 0x70, 0x65, 0xb8, 0x18, 0x53, 0x21, 0x59, 0x55, 0xfb, 0x16, 0xa2, 0x6d, 0x80, 0x45, 0xcc,
-	0x99, 0x1b, 0x42, 0x9a, 0xc5, 0xed, 0xba, 0xbc, 0xde, 0x94, 0xc0, 0xeb, 0x2c, 0xee, 0x7d, 0xa8,
-	0x83, 0xe6, 0xfe, 0x29, 0xf1, 0x30, 0x75, 0xb1, 0x76, 0x0c, 0x16, 0x7d, 0x0e, 0x1d, 0xe1, 0x42,
-	0x3e, 0x94, 0xb9, 0xa8, 0xd6, 0xb3, 0xab, 0xeb, 0xce, 0x6e, 0x40, 0x44, 0x98, 0x39, 0x86, 0xcb,
-	0x62, 0xb3, 0x6c, 0x41, 0x84, 0x9c, 0xf4, 0x31, 0x61, 0xd5, 0xd1, 0x14, 0x23, 0x8e, 0x53, 0xc3,
-	0x3a, 0xec, 0xef, 0xec, 0x3e, 0xe9, 0x67, 0xce, 0x2b, 0x3c, 0xb2, 0x1b, 0x3e, 0xb7, 0x84, 0xdb,
-	0x1f, 0xe6, 0x22, 0x9d, 0xbc, 0xa0, 0x95, 0xc8, 0x42, 0x41, 0x4b, 0x62, 0xa5, 0xc8, 0x13, 0xd0,
-	0x9c, 0x08, 0x94, 0x02, 0xac, 0xe7, 0x57, 0xd7, 0x9d, 0xa7, 0xbf, 0xcb, 0x3b, 0x70, 0x43, 0xca,
-	0x92, 0xa4, 0x2c, 0x88, 0xdd, 0xe0, 0x65, 0x65, 0x1e, 0x01, 0xcd, 0x45, 0x94, 0x51, 0xe2, 0xa2,
-	0x08, 0x4e, 0x7a, 0x56, 0x97, 0x15, 0xba, 0x33, 0xb1, 0xbc, 0x28, 0x9b, 0xd7, 0x03, 0x4b, 0x3e,
-	0x4b, 0x86, 0x53, 0xc7, 0xff, 0xa4, 0x63, 0x2b, 0x07, 0x2b, 0x1f, 0x0e, 0xd6, 0xa6, 0x11, 0xab,
-	0x31, 0x84, 0x29, 0x09, 0xda, 0x0b, 0x7f, 0x9c, 0xf6, 0xfe, 0x9b, 0xe3, 0xc1, 0x80, 0x04, 0xf6,
-	0xea, 0x24, 0xf2, 0xcb, 0x32, 0xf0, 0x80, 0x04, 0x9a, 0x0f, 0x96, 0x65, 0x56, 0x33, 0x64, 0x8d,
-	0xbf, 0x26, 0xfb, 0x3f, 0x0f, 0x7a, 0x8b, 0xa7, 0xf7, 0x69, 0x0e, 0x6c, 0x54, 0xe7, 0x7e, 0xc2,
-	0xf2, 0x91, 0x48, 0x06, 0x24, 0xa0, 0x84, 0x06, 0x87, 0xd4, 0x67, 0xff, 0x6e, 0x36, 0x66, 0x1e,
-	0x40, 0x3e, 0x1b, 0xf3, 0xb3, 0x0f, 0x60, 0x1b, 0xdc, 0x8d, 0x49, 0x9a, 0x62, 0x0f, 0xca, 0x89,
-	0x49, 0xa1, 0xcb, 0x32, 0x2a, 0x70, 0x22, 0x07, 0x65, 0xde, 0x5e, 0x29, 0x8c, 0xf2, 0xc9, 0xa6,
-	0x7b, 0x85, 0x49, 0x3b, 0x02, 0xea, 0x3b, 0x44, 0x22, 0xec, 0xc1, 0x8c, 0x0a, 0x12, 0xc9, 0x96,
-	0xb7, 0xb6, 0xd7, 0x8d, 0x62, 0x05, 0x18, 0xd5, 0x0a, 0x30, 0x8e, 0xab, 0x15, 0x60, 0x2d, 0x5d,
-	0x5c, 0x77, 0x6a, 0xe7, 0xdf, 0x3a, 0xca, 0xe7, 0x1f, 0x5f, 0x1e, 0x2a, 0x76, 0xab, 0xb8, 0x7e,
-	0x92, 0xdf, 0xb6, 0x8e, 0x2e, 0x6e, 0x74, 0xe5, 0xf2, 0x46, 0x57, 0xbe, 0xdf, 0xe8, 0xca, 0xf9,
-	0x58, 0xaf, 0x5d, 0x8e, 0xf5, 0xda, 0xd7, 0xb1, 0x5e, 0x7b, 0xbb, 0xfd, 0x6b, 0xf5, 0x67, 0xd3,
-	0x8d, 0x26, 0x0b, 0xe1, 0x2c, 0x48, 0xf6, 0x9d, 0x9f, 0x01, 0x00, 0x00, 0xff, 0xff, 0xa3, 0xae,
-	0x27, 0x1f, 0xf2, 0x04, 0x00, 0x00,
+	// 1008 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0xcf, 0x6f, 0x1b, 0x45,
+	0x14, 0xce, 0x26, 0x4e, 0x6c, 0x8f, 0xed, 0xb4, 0x99, 0x86, 0x6a, 0x9b, 0x80, 0xed, 0x9a, 0x1f,
+	0xb2, 0x50, 0xb3, 0xa6, 0x69, 0x85, 0xa0, 0x07, 0xa4, 0x6c, 0xd2, 0xaa, 0x81, 0x40, 0xad, 0xb5,
+	0xcb, 0x01, 0x21, 0x8d, 0x66, 0x77, 0xc7, 0xbb, 0x83, 0x77, 0x67, 0x56, 0x3b, 0xb3, 0x21, 0xe6,
+	0x0f, 0x40, 0x1c, 0xcb, 0x8d, 0x23, 0x47, 0x8e, 0x1c, 0xca, 0xff, 0x50, 0x71, 0xaa, 0x7a, 0x42,
+	0x39, 0x04, 0x48, 0x0e, 0xfc, 0x1b, 0x68, 0x67, 0xd7, 0xeb, 0xb8, 0x0a, 0xa2, 0x82, 0xf6, 0x62,
+	0xed, 0x7c, 0xf3, 0xf6, 0x7d, 0xef, 0x9b, 0xef, 0xbd, 0x59, 0x83, 0x8e, 0x8d, 0xed, 0x49, 0xc0,
+	0x59, 0x6f, 0x44, 0x19, 0x0e, 0xa8, 0x9c, 0xf4, 0x0e, 0x6f, 0x16, 0xcf, 0x46, 0x14, 0x73, 0xc9,
+	0xe1, 0x95, 0x3c, 0xc6, 0x28, 0xf0, 0xc3, 0x9b, 0x1b, 0xd7, 0x1c, 0x2e, 0x42, 0x2e, 0x90, 0x0a,
+	0xe9, 0x65, 0x8b, 0x2c, 0x7e, 0x63, 0xdd, 0xe3, 0x1e, 0xcf, 0xf0, 0xf4, 0x29, 0x47, 0xd7, 0x70,
+	0x48, 0x19, 0xef, 0xa9, 0xdf, 0x1c, 0x6a, 0x79, 0x9c, 0x7b, 0x01, 0xe9, 0xa9, 0x95, 0x9d, 0x8c,
+	0x7a, 0x92, 0x86, 0x44, 0x48, 0x1c, 0x46, 0x59, 0x40, 0xe7, 0x57, 0x0d, 0xac, 0x7f, 0xce, 0x25,
+	0x65, 0x5e, 0x9f, 0x7f, 0x4d, 0xe2, 0x3d, 0x2a, 0xe4, 0x2e, 0x76, 0x7c, 0x02, 0xbb, 0xe0, 0xb2,
+	0xe4, 0x12, 0x07, 0xc8, 0xe6, 0xcc, 0x25, 0x2e, 0x12, 0x58, 0xea, 0x5a, 0x5b, 0xeb, 0x96, 0xac,
+	0x55, 0x85, 0x9b, 0x0a, 0x1e, 0x60, 0x09, 0xbf, 0x04, 0x70, 0x5a, 0x76, 0x5a, 0xeb, 0x21, 0x75,
+	0x49, 0x2c, 0xf4, 0xc5, 0xf6, 0x52, 0xb7, 0xb6, 0xbd, 0x65, 0x5c, 0xa0, 0xcc, 0xb8, 0x97, 0x3f,
+	0xf7, 0xf3, 0xe8, 0x94, 0x75, 0x9f, 0x8d, 0xb8, 0xb5, 0x36, 0x7a, 0x6e, 0x47, 0xc0, 0xb7, 0xc0,
+	0x2a, 0x4b, 0x42, 0x84, 0x1d, 0x49, 0x0f, 0x09, 0x1a, 0x45, 0x42, 0x5f, 0x6a, 0x6b, 0xdd, 0x86,
+	0x55, 0x67, 0x49, 0xb8, 0xa3, 0xc0, 0x7b, 0x91, 0xb8, 0x53, 0xfa, 0xee, 0xc7, 0xd6, 0x42, 0xe7,
+	0x97, 0x25, 0xa0, 0xff, 0x53, 0x6e, 0xf8, 0x00, 0xac, 0xd8, 0xd2, 0x41, 0xd1, 0x58, 0xc9, 0xa8,
+	0x9b, 0x1f, 0x1c, 0x9f, 0xb4, 0x6e, 0x7b, 0x54, 0xfa, 0x89, 0x6d, 0x38, 0x3c, 0xec, 0xe5, 0x85,
+	0x06, 0xd8, 0x16, 0x5b, 0x94, 0x4f, 0x97, 0x3d, 0x39, 0x89, 0x88, 0x30, 0xcc, 0xfd, 0xfe, 0xad,
+	0xdb, 0xef, 0xf5, 0x13, 0xfb, 0x13, 0x32, 0xb1, 0x96, 0x6d, 0xe9, 0xf4, 0xc7, 0xf0, 0x06, 0x28,
+	0x61, 0xd7, 0x8d, 0xf5, 0xc5, 0xb6, 0xd6, 0xad, 0x9a, 0xfa, 0xb3, 0xc7, 0x5b, 0xeb, 0xb9, 0x49,
+	0x3b, 0xae, 0x1b, 0x13, 0x21, 0x06, 0x32, 0xa6, 0xcc, 0xb3, 0x54, 0x14, 0xfc, 0x14, 0x00, 0x87,
+	0x87, 0x21, 0x15, 0x82, 0x72, 0xa6, 0x34, 0x54, 0xcd, 0xad, 0xe3, 0x93, 0xd6, 0x66, 0xf6, 0x8e,
+	0x70, 0xc7, 0x06, 0xe5, 0xbd, 0x10, 0x4b, 0xdf, 0x38, 0x20, 0x1e, 0x76, 0x26, 0x7b, 0xc4, 0x79,
+	0xf6, 0x78, 0x0b, 0xe4, 0x29, 0xf7, 0x88, 0x63, 0x9d, 0x4b, 0x70, 0xa1, 0x3d, 0xa5, 0x0b, 0xed,
+	0xf9, 0x08, 0x54, 0x52, 0xdd, 0x2e, 0x09, 0x84, 0xbe, 0xac, 0x4c, 0x79, 0xf3, 0x42, 0x53, 0xcc,
+	0xe1, 0xee, 0x1e, 0x09, 0x0a, 0x2b, 0xca, 0xb6, 0x74, 0xf6, 0x48, 0x20, 0xe0, 0xdb, 0x60, 0x95,
+	0x0a, 0x54, 0xf4, 0x0d, 0x71, 0xf5, 0x95, 0xb6, 0xd6, 0xad, 0x58, 0x0d, 0x2a, 0x86, 0x33, 0x10,
+	0x6e, 0x82, 0x2a, 0x15, 0xe8, 0x2b, 0x4c, 0x03, 0xe2, 0xea, 0x65, 0x15, 0x51, 0xa1, 0xe2, 0x63,
+	0xb5, 0x86, 0x6f, 0x00, 0x40, 0x05, 0x12, 0x01, 0x16, 0x3e, 0x71, 0xf5, 0x8a, 0xda, 0xad, 0x52,
+	0x31, 0xc8, 0x80, 0xce, 0x9f, 0x1a, 0x58, 0x9d, 0xa7, 0x7f, 0xf9, 0x6e, 0x7d, 0x08, 0x6a, 0x42,
+	0xe2, 0x31, 0x89, 0xd1, 0x0b, 0x99, 0x06, 0xb2, 0xe0, 0x14, 0x84, 0xef, 0x80, 0x4b, 0xe9, 0x8a,
+	0x32, 0x0f, 0xc9, 0x23, 0xe4, 0x63, 0xe1, 0x67, 0xfe, 0x59, 0x8d, 0x1c, 0x1e, 0x1e, 0xdd, 0xc7,
+	0xc2, 0x4f, 0x8f, 0x20, 0xf3, 0x64, 0x66, 0x46, 0x45, 0x01, 0x03, 0x2c, 0x3b, 0x08, 0xd4, 0xf7,
+	0x99, 0x4b, 0x8e, 0x88, 0x6b, 0x06, 0xdc, 0x19, 0xc3, 0xab, 0x60, 0xc5, 0x27, 0xd4, 0xf3, 0xa7,
+	0x53, 0x95, 0xaf, 0xe0, 0x35, 0x50, 0xc1, 0x51, 0x94, 0xb1, 0xa4, 0x45, 0xd6, 0xad, 0x32, 0x8e,
+	0x22, 0x95, 0xff, 0x75, 0x50, 0xcd, 0x0c, 0xfb, 0x86, 0xb8, 0xaa, 0x82, 0x8a, 0x35, 0x03, 0x3a,
+	0xdf, 0x6b, 0xa0, 0xd1, 0x4f, 0x6c, 0x0b, 0x33, 0x77, 0x37, 0xed, 0x13, 0x09, 0xaf, 0x83, 0xba,
+	0x90, 0x38, 0x96, 0x68, 0x8e, 0xa8, 0xa6, 0xb0, 0xfb, 0x19, 0x5b, 0x1b, 0xa4, 0x73, 0x84, 0xa2,
+	0xc4, 0x46, 0x31, 0x66, 0xae, 0x62, 0x2c, 0x59, 0x80, 0x25, 0x61, 0x9e, 0x0a, 0x36, 0xf3, 0xbe,
+	0x95, 0x21, 0x61, 0x52, 0xb1, 0xd6, 0xad, 0x73, 0x48, 0x2a, 0x9a, 0x44, 0xdc, 0xf1, 0x11, 0x4b,
+	0xc2, 0xa9, 0x68, 0x05, 0x7c, 0x96, 0x84, 0x9d, 0x6f, 0x4b, 0xa0, 0x72, 0x37, 0x1d, 0x43, 0xe6,
+	0x10, 0x38, 0x04, 0xd5, 0x51, 0x84, 0x5e, 0x92, 0xab, 0xe5, 0x51, 0x64, 0x2a, 0x5f, 0xaf, 0x83,
+	0xba, 0x9d, 0x1e, 0xe8, 0x54, 0x64, 0xa6, 0xa0, 0xa6, 0xb0, 0x5c, 0xe4, 0x43, 0x50, 0x29, 0x04,
+	0x2a, 0x01, 0xe6, 0x9d, 0xe3, 0x93, 0xd6, 0xfb, 0x2f, 0xca, 0x3b, 0x70, 0x7c, 0xc6, 0xe3, 0x38,
+	0x3f, 0x10, 0xab, 0x1c, 0xe5, 0x27, 0x73, 0x03, 0x40, 0x07, 0x33, 0xce, 0xa8, 0x83, 0x03, 0x54,
+	0x78, 0x56, 0x52, 0x27, 0x74, 0xb9, 0xd8, 0xd9, 0xc9, 0xcd, 0xeb, 0x80, 0xc6, 0x88, 0xc7, 0xe3,
+	0x59, 0xe0, 0xb2, 0x0a, 0xac, 0xa5, 0xe0, 0x34, 0x26, 0x02, 0x57, 0x67, 0x19, 0x8b, 0x3b, 0x55,
+	0x50, 0x4f, 0x8d, 0xdc, 0x7f, 0x2b, 0xfb, 0xee, 0x83, 0xe1, 0x60, 0x40, 0x3d, 0x6b, 0xbd, 0xc8,
+	0x3c, 0xbd, 0x21, 0x07, 0xd4, 0x83, 0x23, 0xb0, 0xa6, 0xaa, 0x9a, 0x23, 0x2b, 0xff, 0x6f, 0xb2,
+	0x4b, 0x69, 0xd2, 0x73, 0x3c, 0x9d, 0x1f, 0x16, 0xc1, 0xe6, 0xf3, 0x37, 0xf3, 0x80, 0x7a, 0x8c,
+	0x32, 0x4f, 0x8d, 0xfb, 0x2b, 0xeb, 0x8d, 0xb9, 0x01, 0x48, 0x7b, 0x63, 0x69, 0x7e, 0x00, 0xb6,
+	0xc1, 0x6b, 0xe9, 0x95, 0x4a, 0x5c, 0xa4, 0x3a, 0x46, 0x20, 0x87, 0x27, 0x4c, 0x92, 0x58, 0x35,
+	0xca, 0x92, 0x75, 0x25, 0xdb, 0x54, 0x23, 0x2b, 0x76, 0xb3, 0x2d, 0x78, 0x00, 0xea, 0xd9, 0x3d,
+	0x87, 0x12, 0x26, 0x69, 0xa0, 0x2c, 0xaf, 0x6d, 0x6f, 0x18, 0xd9, 0xb7, 0xd6, 0x98, 0x7e, 0x6b,
+	0x8d, 0xe2, 0x7a, 0x34, 0x1b, 0x4f, 0x4e, 0x5a, 0x0b, 0x8f, 0x7e, 0x6f, 0x69, 0x3f, 0xfd, 0xf5,
+	0xf3, 0xbb, 0x9a, 0x55, 0xcb, 0x5e, 0x7f, 0x98, 0xbe, 0x6d, 0x1e, 0x3c, 0x39, 0x6d, 0x6a, 0x4f,
+	0x4f, 0x9b, 0xda, 0x1f, 0xa7, 0x4d, 0xed, 0xd1, 0x59, 0x73, 0xe1, 0xe9, 0x59, 0x73, 0xe1, 0xb7,
+	0xb3, 0xe6, 0xc2, 0x17, 0xdb, 0xff, 0xae, 0xfe, 0x68, 0xf6, 0xaf, 0x42, 0x1d, 0x84, 0xbd, 0xa2,
+	0xd8, 0x6f, 0xfd, 0x1d, 0x00, 0x00, 0xff, 0xff, 0x98, 0xec, 0xc2, 0x24, 0x76, 0x08, 0x00, 0x00,
+}
+
+func (m *VotingPowerDistCache) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *VotingPowerDistCache) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *VotingPowerDistCache) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.NumActiveFps != 0 {
+		i = encodeVarintFinality(dAtA, i, uint64(m.NumActiveFps))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.FinalityProviders) > 0 {
+		for iNdEx := len(m.FinalityProviders) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.FinalityProviders[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintFinality(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if m.TotalBondedSat != 0 {
+		i = encodeVarintFinality(dAtA, i, uint64(m.TotalBondedSat))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *FinalityProviderDistInfo) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *FinalityProviderDistInfo) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *FinalityProviderDistInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.IsSlashed {
+		i--
+		if m.IsSlashed {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x40
+	}
+	if m.IsJailed {
+		i--
+		if m.IsJailed {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.IsTimestamped {
+		i--
+		if m.IsTimestamped {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x30
+	}
+	if len(m.BtcDels) > 0 {
+		for iNdEx := len(m.BtcDels) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.BtcDels[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintFinality(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x2a
+		}
+	}
+	if m.TotalBondedSat != 0 {
+		i = encodeVarintFinality(dAtA, i, uint64(m.TotalBondedSat))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.Commission != nil {
+		{
+			size := m.Commission.Size()
+			i -= size
+			if _, err := m.Commission.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintFinality(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Addr) > 0 {
+		i -= len(m.Addr)
+		copy(dAtA[i:], m.Addr)
+		i = encodeVarintFinality(dAtA, i, uint64(len(m.Addr)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.BtcPk != nil {
+		{
+			size := m.BtcPk.Size()
+			i -= size
+			if _, err := m.BtcPk.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintFinality(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *BTCDelDistInfo) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *BTCDelDistInfo) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *BTCDelDistInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.TotalSat != 0 {
+		i = encodeVarintFinality(dAtA, i, uint64(m.TotalSat))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.StakingTxHash) > 0 {
+		i -= len(m.StakingTxHash)
+		copy(dAtA[i:], m.StakingTxHash)
+		i = encodeVarintFinality(dAtA, i, uint64(len(m.StakingTxHash)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.StakerAddr) > 0 {
+		i -= len(m.StakerAddr)
+		copy(dAtA[i:], m.StakerAddr)
+		i = encodeVarintFinality(dAtA, i, uint64(len(m.StakerAddr)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.BtcPk != nil {
+		{
+			size := m.BtcPk.Size()
+			i -= size
+			if _, err := m.BtcPk.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintFinality(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *IndexedBlock) Marshal() (dAtA []byte, err error) {
@@ -615,6 +1059,90 @@ func encodeVarintFinality(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *VotingPowerDistCache) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.TotalBondedSat != 0 {
+		n += 1 + sovFinality(uint64(m.TotalBondedSat))
+	}
+	if len(m.FinalityProviders) > 0 {
+		for _, e := range m.FinalityProviders {
+			l = e.Size()
+			n += 1 + l + sovFinality(uint64(l))
+		}
+	}
+	if m.NumActiveFps != 0 {
+		n += 1 + sovFinality(uint64(m.NumActiveFps))
+	}
+	return n
+}
+
+func (m *FinalityProviderDistInfo) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.BtcPk != nil {
+		l = m.BtcPk.Size()
+		n += 1 + l + sovFinality(uint64(l))
+	}
+	l = len(m.Addr)
+	if l > 0 {
+		n += 1 + l + sovFinality(uint64(l))
+	}
+	if m.Commission != nil {
+		l = m.Commission.Size()
+		n += 1 + l + sovFinality(uint64(l))
+	}
+	if m.TotalBondedSat != 0 {
+		n += 1 + sovFinality(uint64(m.TotalBondedSat))
+	}
+	if len(m.BtcDels) > 0 {
+		for _, e := range m.BtcDels {
+			l = e.Size()
+			n += 1 + l + sovFinality(uint64(l))
+		}
+	}
+	if m.IsTimestamped {
+		n += 2
+	}
+	if m.IsJailed {
+		n += 2
+	}
+	if m.IsSlashed {
+		n += 2
+	}
+	return n
+}
+
+func (m *BTCDelDistInfo) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.BtcPk != nil {
+		l = m.BtcPk.Size()
+		n += 1 + l + sovFinality(uint64(l))
+	}
+	l = len(m.StakerAddr)
+	if l > 0 {
+		n += 1 + l + sovFinality(uint64(l))
+	}
+	l = len(m.StakingTxHash)
+	if l > 0 {
+		n += 1 + l + sovFinality(uint64(l))
+	}
+	if m.TotalSat != 0 {
+		n += 1 + sovFinality(uint64(m.TotalSat))
+	}
+	return n
+}
+
 func (m *IndexedBlock) Size() (n int) {
 	if m == nil {
 		return 0
@@ -718,6 +1246,562 @@ func sovFinality(x uint64) (n int) {
 }
 func sozFinality(x uint64) (n int) {
 	return sovFinality(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *VotingPowerDistCache) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowFinality
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: VotingPowerDistCache: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: VotingPowerDistCache: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TotalBondedSat", wireType)
+			}
+			m.TotalBondedSat = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.TotalBondedSat |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FinalityProviders", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthFinality
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthFinality
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FinalityProviders = append(m.FinalityProviders, &FinalityProviderDistInfo{})
+			if err := m.FinalityProviders[len(m.FinalityProviders)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NumActiveFps", wireType)
+			}
+			m.NumActiveFps = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.NumActiveFps |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipFinality(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthFinality
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *FinalityProviderDistInfo) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowFinality
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: FinalityProviderDistInfo: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: FinalityProviderDistInfo: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcPk", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthFinality
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthFinality
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonlabs_io_babylon_types.BIP340PubKey
+			m.BtcPk = &v
+			if err := m.BtcPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Addr", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthFinality
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthFinality
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Addr = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Commission", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthFinality
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthFinality
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v cosmossdk_io_math.LegacyDec
+			m.Commission = &v
+			if err := m.Commission.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TotalBondedSat", wireType)
+			}
+			m.TotalBondedSat = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.TotalBondedSat |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcDels", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthFinality
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthFinality
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BtcDels = append(m.BtcDels, &BTCDelDistInfo{})
+			if err := m.BtcDels[len(m.BtcDels)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field IsTimestamped", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.IsTimestamped = bool(v != 0)
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field IsJailed", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.IsJailed = bool(v != 0)
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field IsSlashed", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.IsSlashed = bool(v != 0)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipFinality(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthFinality
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *BTCDelDistInfo) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowFinality
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: BTCDelDistInfo: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: BTCDelDistInfo: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcPk", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthFinality
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthFinality
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonlabs_io_babylon_types.BIP340PubKey
+			m.BtcPk = &v
+			if err := m.BtcPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakerAddr", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthFinality
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthFinality
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakerAddr = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthFinality
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthFinality
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakingTxHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TotalSat", wireType)
+			}
+			m.TotalSat = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFinality
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.TotalSat |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipFinality(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthFinality
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *IndexedBlock) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
