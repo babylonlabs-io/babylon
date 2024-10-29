@@ -41,6 +41,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 * [#211](https://github.com/babylonlabs-io/babylon/pull/211) Babylon inflation module
 
+### Improvements
+
+* [#235](https://github.com/babylonlabs-io/babylon/pull/235) Change default values
+for iavl cache when using `testnet` command
+
 ## v0.14.1
 
 ### API Breaking
