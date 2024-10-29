@@ -224,12 +224,12 @@ func ParseInt(bz []byte) (sdkmath.Int, error) {
 	return val, nil
 }
 
-// Iterate over all the delegators that have some active BTC delegator staked
-// and the total satoshi staked for that delegator address until an error is returned
+// IterateBTCDelegators iterates over all the delegators that have some active BTC delegator
+// staked and the total satoshi staked for that delegator address until an error is returned
 // or the iterator finishes. Stops if error is returned.
 // Should keep track of the total satoshi staked per delegator to avoid iterating over the
 // delegator delegations
-func (k Keeper) IterateDelegators(ctx context.Context, i func(delegator sdk.AccAddress, totalSatoshiStaked sdkmath.Int) error) error {
+func (k Keeper) IterateBTCDelegators(ctx context.Context, i func(delegator sdk.AccAddress, totalSatoshiStaked sdkmath.Int) error) error {
 	st := k.storeDelStaked(ctx)
 
 	iter := st.Iterator(nil, nil)

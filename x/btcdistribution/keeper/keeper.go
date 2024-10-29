@@ -15,6 +15,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// add 8 precisions point
+var decimals_precision = math.NewInt(1_00000000)
+
 type Keeper struct {
 	cdc          codec.BinaryCodec
 	btcStkK      types.BTCStakingKeeper
@@ -43,21 +46,21 @@ func (k Keeper) RewardsForCurrentBlock() sdk.Coins {
 }
 
 func (k Keeper) EndBlocker(ctx context.Context) error {
-	tBtcStaked, err := k.btcStkK.TotalSatoshiStaked(ctx)
+	protocolBtcStaked, err := k.btcStkK.TotalSatoshiStaked(ctx)
 	if err != nil {
 		return err
 	}
 
-	if !tBtcStaked.IsPositive() {
+	if !protocolBtcStaked.IsPositive() {
 		return fmt.Errorf("invalid btc staked amount")
 	}
 
-	tNativeStaked, err := k.stkK.TotalBondedTokens(ctx)
+	protocolNativeStaked, err := k.stkK.TotalBondedTokens(ctx)
 	if err != nil {
 		return err
 	}
 
-	if !tNativeStaked.IsPositive() {
+	if !protocolNativeStaked.IsPositive() {
 		return fmt.Errorf("invalid native staked amount")
 	}
 
@@ -96,6 +99,11 @@ func (k Keeper) EndBlocker(ctx context.Context) error {
 	// del1 g(C_bbn / C_btc) = 0,18181818 / 0,2 = 0,90909091
 	// del1 S_btc * g(C_bbn / C_btc) = 7 * 0,90909091 = 6,36363636
 
+	// 10_000000ubbn => 25
+	// x 						 => 6,36363636
+	// x = (6,36363636 * 10bbn) / 25
+	//
+
 	// del2 C_btc = S_btc / S_btc_total = 3/25 = 0,12
 	// del2 C_bbn = S_bbn / S_bbn_total = 80/110 = 0,72727273
 	// del2 C_btc = 0,12, C_bbn = 0,72727273
@@ -112,18 +120,21 @@ func (k Keeper) EndBlocker(ctx context.Context) error {
 
 	// fake total rewards per block
 	totalRewards := k.RewardsForCurrentBlock()
-	err = k.btcStkK.IterateDelegators(ctx, func(del sdk.AccAddress, delBtcStaked math.Int) error {
+	err = k.btcStkK.IterateBTCDelegators(ctx, func(del sdk.AccAddress, delBtcStaked math.Int) error {
 		delNativeStaked, err := k.stkK.GetDelegatorBonded(ctx, del)
 		if err != nil {
 			return nil
 		}
 
-		weight := weightStaked(tNativeStaked, tBtcStaked, delNativeStaked, delBtcStaked)
+		delNativeStaked = addDecimals(delNativeStaked)
+		delBtcStaked = addDecimals(delBtcStaked)
+		weight := weightStaked(protocolNativeStaked, protocolBtcStaked, delNativeStaked, delBtcStaked)
 		if !weight.IsPositive() {
 			return nil
 		}
 
-		rewards := rewardRatio(totalRewards, tBtcStaked, weight)
+		weight = rmvDecimals(weight)
+		rewards := rewardRatio(totalRewards, protocolBtcStaked, weight)
 		return k.AcumulateDelRewards(ctx, del, rewards)
 	})
 	if err != nil {
@@ -135,22 +146,29 @@ func (k Keeper) EndBlocker(ctx context.Context) error {
 
 // C_btc = S_btc / S_btc_total
 // C_bbn = S_bbn / S_bbn_total
+// weightStaked
 func weightStaked(
 	totalNativeStaked, totalBtcStaked math.Int,
 	delNativeStaked, delBtcStaked math.Int,
 ) math.Int {
 	ratioNativeDelToTotal := delNativeStaked.Quo(totalNativeStaked)
-	ratioBtcDelToTotal := delBtcStaked.Quo(totalBtcStaked)
+	if !totalBtcStaked.IsPositive() {
+		return math.NewInt(0)
+	}
 
-	ratioTotals := ratioBtcDelToTotal.Quo(ratioNativeDelToTotal)
-	return totalBtcStaked.Mul(ratioTotals)
+	ratioBtcDelToTotal := delBtcStaked.Quo(totalBtcStaked)
+	if !ratioNativeDelToTotal.IsPositive() {
+		return math.NewInt(0)
+	}
+	return ratioBtcDelToTotal.Quo(ratioNativeDelToTotal)
+	// return totalBtcStaked.Mul(ratioTotals)
 }
 
 func rewardRatio(totalRewards sdk.Coins, totalWeight, delWeight math.Int) sdk.Coins {
 	// totalRewards => totalWeight
 	// delRewards   => delWeight
 
-	// delTotalRewards = (totalRewards x delWeight) / totalWeight
+	// delRewards = (totalRewards x delWeight) / totalWeight
 	delTotalRewards := sdk.NewCoins()
 	for _, totalReward := range totalRewards {
 		rwdMulDelWeight := totalReward.Amount.Mul(delWeight)
@@ -158,7 +176,7 @@ func rewardRatio(totalRewards sdk.Coins, totalWeight, delWeight math.Int) sdk.Co
 		delTotalRewards = delTotalRewards.Add(delRewards)
 	}
 
-	return totalRewards
+	return delTotalRewards
 }
 
 func (k Keeper) AcumulateDelRewards(ctx context.Context, del sdk.AccAddress, coins sdk.Coins) error {
@@ -215,4 +233,12 @@ func (k Keeper) SetDelRewards(ctx context.Context, del sdk.AccAddress, coins sdk
 	}
 
 	st.Set(del, bz)
+}
+
+func addDecimals(amt math.Int) math.Int {
+	return amt.Mul(decimals_precision)
+}
+
+func rmvDecimals(amt math.Int) math.Int {
+	return amt.Quo(decimals_precision)
 }
