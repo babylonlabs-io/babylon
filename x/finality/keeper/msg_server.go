@@ -92,7 +92,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	}
 
 	// ensure the finality provider has voting power at this height
-	if ms.BTCStakingKeeper.GetVotingPower(ctx, fpPK.MustMarshal(), req.BlockHeight) == 0 {
+	if ms.GetVotingPower(ctx, fpPK.MustMarshal(), req.BlockHeight) == 0 {
 		return nil, types.ErrInvalidFinalitySig.Wrapf("the finality provider %s does not have voting power at height %d", fpPK.MarshalHex(), req.BlockHeight)
 	}
 

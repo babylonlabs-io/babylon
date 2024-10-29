@@ -403,7 +403,6 @@ func TestnetGenesisParams(
 	genParams.BtcstakingParams.MinSlashingTxFeeSat = minSlashingFee
 	genParams.BtcstakingParams.MinCommissionRate = minCommissionRate
 	genParams.BtcstakingParams.SlashingRate = slashingRate
-	genParams.BtcstakingParams.MaxActiveFinalityProviders = maxActiveFinalityProviders
 	genParams.BtcstakingParams.MinUnbondingTimeBlocks = uint32(minUnbondingTime)
 	genParams.BtcstakingParams.UnbondingFeeSat = unbondingFeeSat
 	if err := genParams.BtcstakingParams.Validate(); err != nil {
@@ -427,6 +426,7 @@ func TestnetGenesisParams(
 	genParams.BlockGasLimit = blockGasLimit
 	genParams.VoteExtensionsEnableHeight = voteExtensionEnableHeight
 
+	genParams.FinalityParams.MaxActiveFinalityProviders = maxActiveFinalityProviders
 	genParams.FinalityParams.SignedBlocksWindow = signedBlocksWindow
 	genParams.FinalityParams.MinSignedPerWindow = minSignedPerWindow
 	genParams.FinalityParams.FinalitySigTimeout = finalitySigTimeout
