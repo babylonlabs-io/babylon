@@ -25,5 +25,5 @@ func NewResumeFinalityProposalHandler(k keeper.Keeper) govtypesv1.Handler {
 
 // handleResumeFinalityProposal is a handler for jail finality provider proposals
 func handleResumeFinalityProposal(ctx sdk.Context, k keeper.Keeper, p *types.ResumeFinalityProposal) error {
-	return k.JailFinalityProvidersFromHeight(ctx, p.FpPks, p.HaltingHeight)
+	return k.HandleResumeFinalityProposal(ctx, p)
 }

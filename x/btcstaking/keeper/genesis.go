@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"math"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.
