@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"cosmossdk.io/log"
+
 	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
@@ -39,6 +41,10 @@ func NewKeeper(
 	}
 }
 
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
 func (k Keeper) RewardsForCurrentBlock() sdk.Coins {
 	return sdk.NewCoins(
 		sdk.NewCoin(appparams.BaseCoinUnit, math.NewInt(10_000000)),
@@ -46,6 +52,10 @@ func (k Keeper) RewardsForCurrentBlock() sdk.Coins {
 }
 
 func (k Keeper) EndBlocker(ctx context.Context) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	l := k.Logger(sdkCtx)
+
+	l.Info("start BTC distribution EndBlocker")
 	protocolBtcStaked, err := k.btcStkK.TotalSatoshiStaked(ctx)
 	if err != nil {
 		return err
@@ -120,6 +130,10 @@ func (k Keeper) EndBlocker(ctx context.Context) error {
 
 	// fake total rewards per block
 	totalRewards := k.RewardsForCurrentBlock()
+	l.Info("IterateOverDels",
+		"protocolNativeStaked", protocolNativeStaked,
+		"protocolBtcStaked", protocolBtcStaked,
+	)
 	err = k.btcStkK.IterateBTCDelegators(ctx, func(del sdk.AccAddress, delBtcStaked math.Int) error {
 		delNativeStaked, err := k.stkK.GetDelegatorBonded(ctx, del)
 		if err != nil {
@@ -133,8 +147,8 @@ func (k Keeper) EndBlocker(ctx context.Context) error {
 			return nil
 		}
 
-		weight = weight.Mul(delBtcStaked)
-		rewards := rewardRatio(totalRewards, protocolBtcStaked, weight)
+		weightByBtcStaked := weight.Mul(delBtcStaked)
+		rewards := rewardRatio(totalRewards, protocolBtcStaked, weightByBtcStaked)
 		return k.AcumulateDelRewards(ctx, del, rewards)
 	})
 	if err != nil {
