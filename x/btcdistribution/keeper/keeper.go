@@ -133,7 +133,6 @@ func (k Keeper) EndBlocker(ctx context.Context) error {
 			return nil
 		}
 
-		weight = rmvDecimals(weight)
 		rewards := rewardRatio(totalRewards, protocolBtcStaked, weight)
 		return k.AcumulateDelRewards(ctx, del, rewards)
 	})
@@ -146,24 +145,37 @@ func (k Keeper) EndBlocker(ctx context.Context) error {
 
 // C_btc = S_btc / S_btc_total
 // C_bbn = S_bbn / S_bbn_total
-// weightStaked
+// C_bbn / C_btc
+// weightStaked creates the ratios for each type of staking, so the ratio
+// of the protocol native staking and delegator total staked amount
+// and the protocol BTC staking and delegator total BTC staked amount
+// Note: It is expected that the delegator staked amounts have a few
+// more decimals than the totals, otherwise it will just return zero,
+// since the math.Int does not have precision points in decimals.
+// In the end returns the ratio of native staking divided by the ratio of btc
+// with the amount of precision points.
 func weightStaked(
 	totalNativeStaked, totalBtcStaked math.Int,
 	delNativeStaked, delBtcStaked math.Int,
 ) math.Int {
-	ratioNativeDelToTotal := delNativeStaked.Quo(totalNativeStaked)
 	if !totalBtcStaked.IsPositive() {
 		return math.NewInt(0)
 	}
 
+	ratioNativeDelToTotal := delNativeStaked.Quo(totalNativeStaked)
 	ratioBtcDelToTotal := delBtcStaked.Quo(totalBtcStaked)
-	if !ratioNativeDelToTotal.IsPositive() {
+	if !ratioBtcDelToTotal.IsPositive() {
 		return math.NewInt(0)
 	}
-	return ratioBtcDelToTotal.Quo(ratioNativeDelToTotal)
-	// return totalBtcStaked.Mul(ratioTotals)
+
+	ratioNativeWithDecimals := addDecimals(ratioNativeDelToTotal)
+	return ratioNativeWithDecimals.Quo(ratioBtcDelToTotal)
 }
 
+// rewardRatio calculates the ratio of the rewards based on the weight and total
+// weight received. Note: It expected to receive the delWeight with decimal precisions
+// to avoid transform it to float or Dec to handle decimals and it removes it
+// before multiplying the rewards.
 func rewardRatio(totalRewards sdk.Coins, totalWeight, delWeight math.Int) sdk.Coins {
 	// totalRewards => totalWeight
 	// delRewards   => delWeight
@@ -171,8 +183,11 @@ func rewardRatio(totalRewards sdk.Coins, totalWeight, delWeight math.Int) sdk.Co
 	// delRewards = (totalRewards x delWeight) / totalWeight
 	delTotalRewards := sdk.NewCoins()
 	for _, totalReward := range totalRewards {
-		rwdMulDelWeight := totalReward.Amount.Mul(delWeight)
-		delRewards := sdk.NewCoin(totalReward.Denom, rwdMulDelWeight.Quo(totalWeight))
+		rwdMulDelWeightWithDecimals := totalReward.Amount.Mul(delWeight)
+		rwdAmtWithDecimals := rwdMulDelWeightWithDecimals.Quo(totalWeight)
+
+		rwdAmt := rmvDecimals(rwdAmtWithDecimals)
+		delRewards := sdk.NewCoin(totalReward.Denom, rwdAmt)
 		delTotalRewards = delTotalRewards.Add(delRewards)
 	}
 

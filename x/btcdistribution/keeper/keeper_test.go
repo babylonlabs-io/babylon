@@ -83,5 +83,4 @@ func TestEndBlockerRewardsAccumulated(t *testing.T) {
 	del1Rwd, err := k.GetDelRewards(ctx, del1)
 	require.NoError(t, err)
 	require.Equal(t, "", del1Rwd.String())
-
 }
