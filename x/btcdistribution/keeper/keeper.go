@@ -235,15 +235,6 @@ func (k Keeper) storeDelRewards(ctx context.Context) prefix.Store {
 	return prefix.NewStore(storeAdapter, types.DelegatorRewardsKey)
 }
 
-// storeDelRewardsByDelegator returns the KVStore of the delegator rewards
-// prefix: (DelegatorRewardsKey)
-// key: Del addr
-// value: sdk coins rewards
-func (k Keeper) storeDelRewardsByDelegator(ctx context.Context, del sdk.AccAddress) prefix.Store {
-	st := k.storeDelRewards(ctx)
-	return prefix.NewStore(st, del)
-}
-
 func (k Keeper) GetDelRewards(ctx context.Context, del sdk.AccAddress) (sdk.Coins, error) {
 	st := k.storeDelRewards(ctx)
 	v := st.Get(del)
