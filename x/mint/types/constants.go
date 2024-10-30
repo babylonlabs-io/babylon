@@ -4,6 +4,7 @@ import (
 	"cosmossdk.io/math"
 )
 
+// TODO: should these be parameters?
 const (
 	NanosecondsPerSecond = 1_000_000_000
 	SecondsPerMinute     = 60

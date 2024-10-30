@@ -149,6 +149,6 @@ See [x/mint](../../x/mint) for the implementation of this module.
 
 1. [ADR-031](https://github.com/babylonlabs-io/pm/blob/main/adr/adr-031-mint-module.md)
 2. [Celestia's
-   ADR-019](../../docs/architecture/adr-019-strict-inflation-schedule.md)
+   ADR-019](https://github.com/celestiaorg/celestia-app/tree/main/docs/architecture/adr-019-strict-inflation-schedule.md)
 3. [Celestia's mint
    module](https://github.com/celestiaorg/celestia-app/tree/main/x/mint)

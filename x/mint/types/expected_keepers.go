@@ -1,4 +1,4 @@
-package types // noalias
+package types
 
 import (
 	context "context"
