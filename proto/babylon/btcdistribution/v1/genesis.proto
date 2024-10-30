@@ -1,0 +1,9 @@
+syntax = "proto3";
+package babylon.btcdistribution.v1;
+
+import "gogoproto/gogo.proto";
+option go_package = "github.com/babylonlabs-io/babylon/x/btcdistribution/types";
+
+// GenesisState defines the btcdistribution module's genesis state.
+message GenesisState {
+}
