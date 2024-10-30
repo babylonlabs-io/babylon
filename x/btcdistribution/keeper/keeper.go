@@ -65,7 +65,8 @@ func (k Keeper) EndBlocker(ctx context.Context) error {
 	}
 
 	if !protocolBtcStaked.IsPositive() {
-		return fmt.Errorf("invalid btc staked amount")
+		l.Info("not positive btc staked amt", protocolBtcStaked.String())
+		return nil
 	}
 
 	protocolNativeStaked, err := k.stkK.TotalBondedTokens(ctx)

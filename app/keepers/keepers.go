@@ -478,13 +478,6 @@ func (ak *AppKeepers) InitKeepers(
 		&btclightclientKeeper,
 	)
 
-	ak.BtcDistribution = btcdistributionkeeper.NewKeeper(
-		ak.BTCStakingKeeper,
-		ak.StakingKeeper,
-		runtime.NewKVStoreService(keys[btcdistributiontypes.StoreKey]),
-		appCodec,
-	)
-
 	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
 	epochingKeeper.SetMsgServiceRouter(bApp.MsgServiceRouter())
 	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
@@ -513,6 +506,13 @@ func (ak *AppKeepers) InitKeepers(
 		&ak.IncentiveKeeper,
 		btcNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	ak.BtcDistribution = btcdistributionkeeper.NewKeeper(
+		ak.BTCStakingKeeper,
+		ak.StakingKeeper,
+		runtime.NewKVStoreService(keys[btcdistributiontypes.StoreKey]),
+		appCodec,
 	)
 
 	// set up finality keeper
