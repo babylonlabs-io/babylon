@@ -160,7 +160,7 @@ func (k Keeper) EndBlocker(ctx context.Context) error {
 
 	end := time.Now()
 	k.Logger(sdkCtx).Info(fmt.Sprintf("running end blocker end %s", end.String()))
-	k.Logger(sdkCtx).Info(fmt.Sprintf("running time in secs: %d", end.Sub(start).Seconds()))
+	k.Logger(sdkCtx).Info(fmt.Sprintf("running time in secs: %f", end.Sub(start).Seconds()))
 
 	return nil
 }
