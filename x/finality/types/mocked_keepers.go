@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	math "cosmossdk.io/math"
 	types "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	types0 "github.com/babylonlabs-io/babylon/x/epoching/types"
 	types1 "github.com/cosmos/cosmos-sdk/types"
@@ -35,6 +36,20 @@ func NewMockBTCStakingKeeper(ctrl *gomock.Controller) *MockBTCStakingKeeper {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockBTCStakingKeeper) EXPECT() *MockBTCStakingKeeperMockRecorder {
 	return m.recorder
+}
+
+// AddDelStaking mocks base method.
+func (m *MockBTCStakingKeeper) AddDelStaking(ctx context.Context, del types1.AccAddress, amt math.Int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddDelStaking", ctx, del, amt)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddDelStaking indicates an expected call of AddDelStaking.
+func (mr *MockBTCStakingKeeperMockRecorder) AddDelStaking(ctx, del, amt interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddDelStaking", reflect.TypeOf((*MockBTCStakingKeeper)(nil).AddDelStaking), ctx, del, amt)
 }
 
 // ClearPowerDistUpdateEvents mocks base method.
@@ -175,6 +190,20 @@ func (m *MockBTCStakingKeeper) SlashFinalityProvider(ctx context.Context, fpBTCP
 func (mr *MockBTCStakingKeeperMockRecorder) SlashFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SlashFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).SlashFinalityProvider), ctx, fpBTCPK)
+}
+
+// SubDelStaking mocks base method.
+func (m *MockBTCStakingKeeper) SubDelStaking(ctx context.Context, del types1.AccAddress, amt math.Int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SubDelStaking", ctx, del, amt)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SubDelStaking indicates an expected call of SubDelStaking.
+func (mr *MockBTCStakingKeeperMockRecorder) SubDelStaking(ctx, del, amt interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubDelStaking", reflect.TypeOf((*MockBTCStakingKeeper)(nil).SubDelStaking), ctx, del, amt)
 }
 
 // UnjailFinalityProvider mocks base method.
