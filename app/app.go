@@ -424,6 +424,7 @@ func NewBabylonApp(
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
 		monitortypes.ModuleName,
+		btcdistributiontypes.ModuleName,
 		// IBC-related modules
 		ibcexported.ModuleName,
 		ibcwasmtypes.ModuleName,
