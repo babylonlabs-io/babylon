@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -23,6 +24,10 @@ type Keeper struct {
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
 	authority string
+
+	Schema           collections.Schema
+	MinterStore      collections.Item[types.Minter]
+	GenesisTimeStore collections.Item[types.GenesisTime]
 }
 
 // NewKeeper creates a new mint Keeper instance.
@@ -40,14 +45,25 @@ func NewKeeper(
 		panic("the mint module account has not been set")
 	}
 
-	return Keeper{
+	sb := collections.NewSchemaBuilder(storeService)
+	k := Keeper{
 		cdc:              cdc,
 		storeService:     storeService,
 		stakingKeeper:    stakingKeeper,
 		bankKeeper:       bankKeeper,
 		feeCollectorName: feeCollectorName,
 		authority:        authority,
+		MinterStore:      collections.NewItem(sb, types.MinterKey, "minter", codec.CollValue[types.Minter](cdc)),
+		GenesisTimeStore: collections.NewItem(sb, types.GenesisTimeKey, "genesis_time", codec.CollValue[types.GenesisTime](cdc)),
 	}
+
+	schema, err := sb.Build()
+	if err != nil {
+		panic(err)
+	}
+	k.Schema = schema
+
+	return k
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
@@ -55,44 +71,31 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // GetMinter returns the minter.
-func (k Keeper) GetMinter(ctx context.Context) (minter types.Minter) {
-	store := k.storeService.OpenKVStore(ctx)
-	b, err := store.Get(types.KeyMinter)
+func (k Keeper) GetMinter(ctx context.Context) types.Minter {
+	minter, err := k.MinterStore.Get(ctx)
 	if err != nil {
 		panic(err)
 	}
-
-	k.cdc.MustUnmarshal(b, &minter)
 	return minter
 }
 
 // SetMinter sets the minter.
 func (k Keeper) SetMinter(ctx context.Context, minter types.Minter) error {
-	store := k.storeService.OpenKVStore(ctx)
-	b := k.cdc.MustMarshal(&minter)
-	return store.Set(types.KeyMinter, b)
+	return k.MinterStore.Set(ctx, minter)
 }
 
 // GetGenesisTime returns the genesis time.
 func (k Keeper) GetGenesisTime(ctx context.Context) (gt types.GenesisTime) {
-	store := k.storeService.OpenKVStore(ctx)
-	b, err := store.Get(types.KeyGenesisTime)
+	genesisTime, err := k.GenesisTimeStore.Get(ctx)
 	if err != nil {
 		panic(err)
 	}
-	if b == nil {
-		panic("stored genesis time should not have been nil")
-	}
-
-	k.cdc.MustUnmarshal(b, &gt)
-	return gt
+	return genesisTime
 }
 
 // SetGenesisTime sets the genesis time.
 func (k Keeper) SetGenesisTime(ctx context.Context, gt types.GenesisTime) error {
-	store := k.storeService.OpenKVStore(ctx)
-	b := k.cdc.MustMarshal(&gt)
-	return store.Set(types.KeyGenesisTime, b)
+	return k.GenesisTimeStore.Set(ctx, gt)
 }
 
 // StakingTokenSupply implements an alias call to the underlying staking keeper's

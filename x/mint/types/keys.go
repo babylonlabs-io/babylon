@@ -1,10 +1,13 @@
 package types
 
-// KeyMinter is the key to use for the Minter in the mint store.
-var KeyMinter = []byte("Minter")
+import "cosmossdk.io/collections"
 
-// KeyGenesisTime is the key to use for GenesisTime in the mint store.
-var KeyGenesisTime = []byte("GenesisTime")
+var (
+	MinterKey = collections.NewPrefix(0)
+	//nolint:unused
+	reservedKey    = collections.NewPrefix(1) // reserved for parameters
+	GenesisTimeKey = collections.NewPrefix(2)
+)
 
 const (
 	// ModuleName is the name of the mint module.

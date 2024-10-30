@@ -14,12 +14,12 @@ import (
 func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 	return func(kvA, kvB kv.Pair) string {
 		switch {
-		case bytes.Equal(kvA.Key, types.KeyMinter):
+		case bytes.Equal(kvA.Key, types.MinterKey):
 			var minterA, minterB types.Minter
 			cdc.MustUnmarshal(kvA.Value, &minterA)
 			cdc.MustUnmarshal(kvB.Value, &minterB)
 			return fmt.Sprintf("%v\n%v", minterA, minterB)
-		case bytes.Equal(kvA.Key, types.KeyGenesisTime):
+		case bytes.Equal(kvA.Key, types.GenesisTimeKey):
 			var genesisTimeA, genesisTimeB types.GenesisTime
 			cdc.MustUnmarshal(kvA.Value, &genesisTimeA)
 			cdc.MustUnmarshal(kvB.Value, &genesisTimeB)
