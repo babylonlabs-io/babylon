@@ -15,7 +15,6 @@
 - [Implementation](#implementation)
 - [References](#references)
 
-
 ## Abstract
 
 Babylon's `x/mint` is a fork of the Cosmos SDK
