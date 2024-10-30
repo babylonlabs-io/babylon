@@ -18,11 +18,31 @@ service Query {
     option (google.api.http).get = "/babylon/finality/v1/params";
   }
 
+  // ActiveFinalityProvidersAtHeight queries finality providers with non zero voting power at given height.
+  rpc ActiveFinalityProvidersAtHeight(QueryActiveFinalityProvidersAtHeightRequest) returns (QueryActiveFinalityProvidersAtHeightResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/finality_providers/{height}";
+  }
+
+  // FinalityProviderPowerAtHeight queries the voting power of a finality provider at a given height
+  rpc FinalityProviderPowerAtHeight(QueryFinalityProviderPowerAtHeightRequest) returns (QueryFinalityProviderPowerAtHeightResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/power/{height}";
+  }
+
+  // FinalityProviderCurrentPower queries the voting power of a finality provider at the current height
+  rpc FinalityProviderCurrentPower(QueryFinalityProviderCurrentPowerRequest) returns (QueryFinalityProviderCurrentPowerResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/power";
+  }
+
+  // ActivatedHeight queries the height when BTC staking protocol is activated, i.e., the first height when
+  // there exists 1 finality provider with voting power
+  rpc ActivatedHeight(QueryActivatedHeightRequest) returns (QueryActivatedHeightResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/activated_height";
+  }
+
   // ListPublicRandomness is a range query for public randomness of a given finality provider
   // NOTE: Babylon only has the knowledge of public randomness that is already revealed by
   // finality providers, i.e., the finality provider already provides a finality signature
   // at the corresponding height
-  // TODO: remove public randomness storage?
   rpc ListPublicRandomness(QueryListPublicRandomnessRequest) returns (QueryListPublicRandomnessResponse) {
     option (google.api.http).get = "/babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/public_randomness_list";
   }
@@ -75,6 +95,92 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryFinalityProviderPowerAtHeightRequest is the request type for the
+// Query/FinalityProviderPowerAtHeight RPC method.
+message QueryFinalityProviderPowerAtHeightRequest {
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider that
+  // this BTC delegation delegates to
+  // the PK follows encoding in BIP-340 spec
+  string fp_btc_pk_hex = 1;
+
+  // height is used for querying the given finality provider's voting power at this height
+  uint64 height = 2;
+}
+
+// QueryFinalityProviderPowerAtHeightResponse is the response type for the
+// Query/FinalityProviderPowerAtHeight RPC method.
+message QueryFinalityProviderPowerAtHeightResponse {
+  // voting_power is the voting power of the finality provider
+  uint64 voting_power = 1;
+}
+
+// QueryFinalityProviderCurrentPowerRequest is the request type for the
+// Query/FinalityProviderCurrentPower RPC method.
+message QueryFinalityProviderCurrentPowerRequest {
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider that
+  // this BTC delegation delegates to
+  // the PK follows encoding in BIP-340 spec
+  string fp_btc_pk_hex = 1;
+}
+
+// QueryFinalityProviderCurrentPowerResponse is the response type for the
+// Query/FinalityProviderCurrentPower RPC method.
+message QueryFinalityProviderCurrentPowerResponse {
+  // height is the current height
+  uint64 height = 1;
+  // voting_power is the voting power of the finality provider
+  uint64 voting_power = 2;
+}
+
+// QueryActiveFinalityProvidersAtHeightRequest is the request type for the
+// Query/ActiveFinalityProvidersAtHeight RPC method.
+message QueryActiveFinalityProvidersAtHeightRequest {
+  // height defines at which Babylon height to query the finality providers info.
+  uint64 height = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// ActiveFinalityProvidersAtHeightResponse wraps the FinalityProvider with metadata.
+message ActiveFinalityProvidersAtHeightResponse {
+  // btc_pk is the Bitcoin secp256k1 PK of thisfinality provider
+  // the PK follows encoding in BIP-340 spec
+  string btc_pk_hex = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  // height is the queried Babylon height
+  uint64 height = 2;
+  // voting_power is the voting power of this finality provider at the given height
+  uint64 voting_power = 3;
+  // slashed_babylon_height indicates the Babylon height when
+  // the finality provider is slashed.
+  // if it's 0 then the finality provider is not slashed
+  uint64 slashed_babylon_height = 4;
+  // slashed_btc_height indicates the BTC height when
+  // the finality provider is slashed.
+  // if it's 0 then the finality provider is not slashed
+  uint32 slashed_btc_height = 5;
+  // jailed defines whether the finality provider is detected jailed
+  bool jailed = 6;
+}
+
+// QueryActiveFinalityProvidersAtHeightResponse is the response type for the
+// Query/ActiveFinalityProvidersAtHeight RPC method.
+message QueryActiveFinalityProvidersAtHeightResponse {
+  // finality_providers contains all the queried finality providersn.
+  repeated ActiveFinalityProvidersAtHeightResponse finality_providers = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryActivatedHeightRequest is the request type for the Query/ActivatedHeight RPC method.
+message QueryActivatedHeightRequest {}
+
+// QueryActivatedHeightResponse is the response type for the Query/ActivatedHeight RPC method.
+message QueryActivatedHeightResponse {
+  uint64 height = 1;
 }
 
 // QueryListPublicRandomnessRequest is the request type for the

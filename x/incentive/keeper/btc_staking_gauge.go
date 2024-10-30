@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/store/prefix"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +13,7 @@ import (
 // RewardBTCStaking distributes rewards to finality providers/delegations at a given height according
 // to the filtered reward distribution cache (that only contains voted finality providers)
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/x/distribution/keeper/allocation.go#L12-L64)
-func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, filteredDc *bstypes.VotingPowerDistCache) {
+func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, filteredDc *ftypes.VotingPowerDistCache) {
 	gauge := k.GetBTCStakingGauge(ctx, height)
 	if gauge == nil {
 		// failing to get a reward gauge at previous height is a programming error

@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+* [#235](https://github.com/babylonlabs-io/babylon/pull/235) Change default values
+for iavl cache when using `testnet` command
+
 ## v0.14.1
 
 ### API Breaking
@@ -53,6 +58,7 @@ power during expiry
 ### State Machine Breaking
 
 * [#224](https://github.com/babylonlabs-io/babylon/pull/224) Make injected checkpoint a standard tx
+* [#217](https://github.com/babylonlabs-io/babylon/pull/217) Move voting power table to finality module
 * [#207](https://github.com/babylonlabs-io/babylon/pull/207) Rename total voting power
 to total bonded sat
 * [#204](https://github.com/babylonlabs-io/babylon/pull/204) Add babylon finality
