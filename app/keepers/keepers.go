@@ -480,7 +480,7 @@ func (ak *AppKeepers) InitKeepers(
 
 	ak.BtcDistribution = btcdistributionkeeper.NewKeeper(
 		ak.BTCStakingKeeper,
-		stakingKeeper,
+		ak.StakingKeeper,
 		runtime.NewKVStoreService(keys[btcdistributiontypes.StoreKey]),
 		appCodec,
 	)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"cosmossdk.io/log"
 
@@ -54,8 +55,10 @@ func (k Keeper) RewardsForCurrentBlock() sdk.Coins {
 func (k Keeper) EndBlocker(ctx context.Context) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	l := k.Logger(sdkCtx)
+	start := time.Now()
 
 	l.Info("start BTC distribution EndBlocker")
+	k.Logger(sdkCtx).Info(fmt.Sprintf("running end blocker start %s", start.String()))
 	protocolBtcStaked, err := k.btcStkK.TotalSatoshiStaked(ctx)
 	if err != nil {
 		return err
@@ -154,6 +157,10 @@ func (k Keeper) EndBlocker(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	end := time.Now()
+	k.Logger(sdkCtx).Info(fmt.Sprintf("running end blocker end %s", end.String()))
+	k.Logger(sdkCtx).Info(fmt.Sprintf("running time in secs: %d", end.Sub(start).Seconds()))
 
 	return nil
 }
