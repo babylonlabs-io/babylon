@@ -23,6 +23,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/babylonlabs-io/babylon/x/btcdistribution"
 	btcdistributiontypes "github.com/babylonlabs-io/babylon/x/btcdistribution/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtos "github.com/cometbft/cometbft/libs/os"
@@ -313,6 +314,7 @@ func NewBabylonApp(
 		// Babylon modules - btc staking
 		btcstaking.NewAppModule(appCodec, app.BTCStakingKeeper),
 		finality.NewAppModule(appCodec, app.FinalityKeeper),
+		btcdistribution.NewAppModule(appCodec, app.BtcDistribution),
 		// Babylon modules - tokenomics
 		incentive.NewAppModule(appCodec, app.IncentiveKeeper, app.AccountKeeper, app.BankKeeper),
 	)
