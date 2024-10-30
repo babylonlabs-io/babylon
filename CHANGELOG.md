@@ -46,6 +46,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 * [#235](https://github.com/babylonlabs-io/babylon/pull/235) Change default values
 for iavl cache when using `testnet` command
 
+### API Breaking
+
+* [238](https://github.com/babylonlabs-io/babylon/pull/238) Add additional data
+to delegation creation event
+
 ## v0.14.1
 
 ### API Breaking

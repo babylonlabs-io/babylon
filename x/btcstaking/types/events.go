@@ -93,6 +93,8 @@ func NewBtcDelCreationEvent(
 ) *EventBTCDelegationCreated {
 	return &EventBTCDelegationCreated{
 		StakingTxHash:             stakingTxHash,
+		StakingOutputPkScript:     hex.EncodeToString(btcDel.MustGetStakingTx().TxOut[btcDel.StakingOutputIdx].PkScript),
+		StakingOutputIndex:        strconv.FormatUint(uint64(btcDel.StakingOutputIdx), 10),
 		ParamsVersion:             strconv.FormatUint(uint64(btcDel.ParamsVersion), 10),
 		FinalityProviderBtcPksHex: btcDel.FinalityProviderKeys(),
 		StakerBtcPkHex:            btcDel.BtcPk.MarshalHex(),
