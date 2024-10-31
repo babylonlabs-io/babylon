@@ -16,6 +16,8 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	mintkeeper "github.com/babylonlabs-io/babylon/x/mint/keeper"
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -35,8 +37,6 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -496,9 +496,6 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[btcstakingtypes.StoreKey]),
 		&btclightclientKeeper,
 		&btcCheckpointKeeper,
-		// setting the finality keeper as nil for now
-		// need to set it after finality keeper is initiated
-		nil,
 		&ak.IncentiveKeeper,
 		btcNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -513,11 +510,6 @@ func (ak *AppKeepers) InitKeepers(
 		ak.CheckpointingKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	ak.BTCStakingKeeper = *ak.BTCStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(ak.FinalityKeeper.Hooks()))
-	ak.FinalityKeeper = *ak.FinalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(ak.BTCStakingKeeper.Hooks()))
-	// TODO this introduces circular dependency between the finality module and
-	// the btcstaking modules, need refactoring
-	ak.BTCStakingKeeper.FinalityKeeper = ak.FinalityKeeper
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(

@@ -147,26 +147,30 @@ message EventBTCDelegationCreated {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 1 [(amino.dont_omitempty) = true];
+  // staking_output_pk_script is the hex encoded PK script of the staking output
+  string staking_output_pk_script = 2 [(amino.dont_omitempty) = true];
+  // staking_output_index is the index of the staking output in the staking tx
+  string staking_output_index = 3 [(amino.dont_omitempty) = true];
   // version of the params used to validate the delegation
-  string params_version = 2 [(amino.dont_omitempty) = true];
+  string params_version = 4 [(amino.dont_omitempty) = true];
   // finality_provider_btc_pks_hex is the list of hex str of Bitcoin secp256k1 PK of
   // the finality providers that this BTC delegation delegates to
   // the PK follows encoding in BIP-340 spec
-  repeated string finality_provider_btc_pks_hex = 3 [(amino.dont_omitempty) = true];
+  repeated string finality_provider_btc_pks_hex = 5 [(amino.dont_omitempty) = true];
   // staker_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the staker that
   // creates this BTC delegation the PK follows encoding in BIP-340 spec
-  string staker_btc_pk_hex = 4 [(amino.dont_omitempty) = true];
+  string staker_btc_pk_hex = 6 [(amino.dont_omitempty) = true];
   // staking_time is the timelock of the staking tx specified in the BTC script
-  string staking_time = 5 [(amino.dont_omitempty) = true];
+  string staking_time = 7 [(amino.dont_omitempty) = true];
   // staking_amount is the total amount of BTC stake in this delegation
   // quantified in satoshi
-  string staking_amount = 6 [(amino.dont_omitempty) = true];
+  string staking_amount = 8 [(amino.dont_omitempty) = true];
   // unbonding_time is the time is timelock on unbonding tx chosen by the staker
-  string unbonding_time = 7 [(amino.dont_omitempty) = true];
+  string unbonding_time = 9 [(amino.dont_omitempty) = true];
   // unbonding_tx is hex encoded bytes of the unsigned unbonding tx
-  string unbonding_tx = 8 [(amino.dont_omitempty) = true];
+  string unbonding_tx = 10 [(amino.dont_omitempty) = true];
   // new_state of the BTC delegation
-  string new_state = 9 [(amino.dont_omitempty) = true];
+  string new_state = 11 [(amino.dont_omitempty) = true];
 }
 
 // EventCovenantSignatureReceived is the event emitted when a covenant committee
@@ -215,8 +219,10 @@ message EventBTCDelgationUnbondedEarly {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 1 [(amino.dont_omitempty) = true];
+  // start_height is the start BTC height of the early unbonding
+  string start_height = 2 [(amino.dont_omitempty) = true];
   // new_state of the BTC delegation
-  string new_state = 2 [(amino.dont_omitempty) = true];
+  string new_state = 3 [(amino.dont_omitempty) = true];
 }
 
 // EventBTCDelegationExpired is the event emitted when a BTC delegation

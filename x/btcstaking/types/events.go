@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
-	bbn "github.com/babylonlabs-io/babylon/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 func NewEventPowerDistUpdateWithBTCDel(ev *EventBTCDelegationStateUpdate) *EventPowerDistUpdate {
@@ -92,6 +93,8 @@ func NewBtcDelCreationEvent(
 ) *EventBTCDelegationCreated {
 	return &EventBTCDelegationCreated{
 		StakingTxHash:             stakingTxHash,
+		StakingOutputPkScript:     hex.EncodeToString(btcDel.MustGetStakingTx().TxOut[btcDel.StakingOutputIdx].PkScript),
+		StakingOutputIndex:        strconv.FormatUint(uint64(btcDel.StakingOutputIdx), 10),
 		ParamsVersion:             strconv.FormatUint(uint64(btcDel.ParamsVersion), 10),
 		FinalityProviderBtcPksHex: btcDel.FinalityProviderKeys(),
 		StakerBtcPkHex:            btcDel.BtcPk.MarshalHex(),
@@ -127,9 +130,11 @@ func NewCovenantQuorumReachedEvent(
 
 func NewDelegationUnbondedEarlyEvent(
 	stakingTxHash string,
+	startHeight uint32,
 ) *EventBTCDelgationUnbondedEarly {
 	return &EventBTCDelgationUnbondedEarly{
 		StakingTxHash: stakingTxHash,
+		StartHeight:   strconv.FormatUint(uint64(startHeight), 10),
 		NewState:      BTCDelegationStatus_UNBONDED.String(),
 	}
 }
@@ -153,19 +158,43 @@ func NewFinalityProviderStatusChangeEvent(
 	}
 }
 
-// EmitUnbondedBTCDelEvent emits events for an unbonded BTC delegations
-func EmitUnbondedBTCDelEvent(sdkCtx sdk.Context, stakingTxHash string, unbondedEarly bool) {
-	// delegation expired and become unbonded emit block event about this information
-	if unbondedEarly {
-		unbondedEarlyEvent := NewDelegationUnbondedEarlyEvent(stakingTxHash)
-		if err := sdkCtx.EventManager().EmitTypedEvent(unbondedEarlyEvent); err != nil {
-			panic(fmt.Errorf("failed to emit event the new unbonded BTC delegation: %w", err))
-		}
-	} else {
-		expiredEvent := NewExpiredDelegationEvent(stakingTxHash)
-		if err := sdkCtx.EventManager().EmitTypedEvent(expiredEvent); err != nil {
-			panic(fmt.Errorf("failed to emit event for the new expired BTC delegation: %w", err))
-		}
+func NewUnexpectedUnbondingTxEvent(
+	stakingTxHash, spendStakeTxHash, spendStakeTxHeaderHash string,
+	spendStakeTxBlockIndex uint32,
+) *EventUnexpectedUnbondingTx {
+	return &EventUnexpectedUnbondingTx{
+		StakingTxHash:          stakingTxHash,
+		SpendStakeTxHash:       spendStakeTxHash,
+		SpendStakeTxHeaderHash: spendStakeTxHeaderHash,
+		SpendStakeTxBlockIndex: spendStakeTxBlockIndex,
+	}
+}
+
+// EmitUnexpectedUnbondingTxEvent emits events for an unexpected unbonding tx
+func EmitUnexpectedUnbondingTxEvent(
+	sdkCtx sdk.Context,
+	stakingTxHash, spendStakeTxHash, spendStakeTxHeaderHash string,
+	spendStakeTxBlockIndex uint32,
+) {
+	ev := NewUnexpectedUnbondingTxEvent(stakingTxHash, spendStakeTxHash, spendStakeTxHeaderHash, spendStakeTxBlockIndex)
+	if err := sdkCtx.EventManager().EmitTypedEvent(ev); err != nil {
+		panic(fmt.Errorf("failed to emit event the unexpected unbonding tx event: %w", err))
+	}
+}
+
+// EmitEarlyUnbondedEvent emits events for an early unbonded BTC delegation
+func EmitEarlyUnbondedEvent(sdkCtx sdk.Context, stakingTxHash string, inclusionHeight uint32) {
+	ev := NewDelegationUnbondedEarlyEvent(stakingTxHash, inclusionHeight)
+	if err := sdkCtx.EventManager().EmitTypedEvent(ev); err != nil {
+		panic(fmt.Errorf("failed to emit event the early unbonded BTC delegation: %w", err))
+	}
+}
+
+// EmitExpiredDelegationEvent emits events for an expired delegation
+func EmitExpiredDelegationEvent(sdkCtx sdk.Context, stakingTxHash string) {
+	ev := NewExpiredDelegationEvent(stakingTxHash)
+	if err := sdkCtx.EventManager().EmitTypedEvent(ev); err != nil {
+		panic(fmt.Errorf("failed to emit event the expired BTC delegation: %w", err))
 	}
 }
 

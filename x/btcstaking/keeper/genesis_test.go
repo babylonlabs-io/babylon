@@ -20,7 +20,9 @@ func TestExportGenesis(t *testing.T) {
 
 	fps := datagen.CreateNFinalityProviders(r, t, numFps)
 	params := k.GetParams(ctx)
-	wValue := btcCheckK.GetParams(ctx).CheckpointFinalizationTimeout
+	btcckptParams := btcCheckK.GetParams(ctx)
+
+	minUnbondingTime := types.MinimumUnbondingTime(&params, &btcckptParams)
 
 	chainsHeight := make([]*types.BlockHeightBbnToBtc, 0)
 	// creates the first as it starts already with an chain height from the helper.
@@ -28,7 +30,6 @@ func TestExportGenesis(t *testing.T) {
 		BlockHeightBbn: 1,
 		BlockHeightBtc: 0,
 	})
-	vpFps := make(map[string]*types.VotingPowerFP, 0)
 	btcDelegations := make([]*types.BTCDelegation, 0)
 	eventsIdx := make(map[uint64]*types.EventIndex, 0)
 	btcDelegatorIndex := make(map[string]*types.BTCDelegator, 0)
@@ -56,21 +57,12 @@ func TestExportGenesis(t *testing.T) {
 			int(numDelegations),
 			params.CovenantQuorum,
 		)
-		vp := uint64(stakingValue)
-
-		// sets voting power
-		k.SetVotingPower(ctx, *fp.BtcPk, blkHeight, vp)
-		vpFps[fp.BtcPk.MarshalHex()] = &types.VotingPowerFP{
-			BlockHeight: blkHeight,
-			FpBtcPk:     fp.BtcPk,
-			VotingPower: vp,
-		}
 
 		for _, del := range delegations {
 			totalDelegations++
 
 			// sets delegations
-			h.AddDelegation(del)
+			h.AddDelegation(del, minUnbondingTime)
 			btcDelegations = append(btcDelegations, del)
 
 			// BTC delegators idx
@@ -99,7 +91,7 @@ func TestExportGenesis(t *testing.T) {
 			idxEvent := uint64(totalDelegations - 1)
 			eventsIdx[idxEvent] = &types.EventIndex{
 				Idx:            idxEvent,
-				BlockHeightBtc: del.EndHeight - wValue,
+				BlockHeightBtc: del.EndHeight - minUnbondingTime,
 				Event:          unbondedEvent,
 			}
 		}
@@ -148,12 +140,6 @@ func TestExportGenesis(t *testing.T) {
 		}
 	}
 	require.Equal(t, correctDels, len(btcDelegations))
-
-	// voting powers
-	for _, gsFpVp := range gs.VotingPowers {
-		vp := vpFps[gsFpVp.FpBtcPk.MarshalHex()]
-		require.Equal(t, gsFpVp, vp)
-	}
 
 	// chains height
 	require.Equal(t, chainsHeight, gs.BlockHeightChains)

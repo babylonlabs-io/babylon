@@ -187,17 +187,19 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// and set start height and end height
 	var startHeight, endHeight uint32
 	if parsedMsg.StakingTxProofOfInclusion != nil {
-		inclusionHeight, err := ms.VerifyInclusionProofAndGetHeight(
+		timeInfo, err := ms.VerifyInclusionProofAndGetHeight(
 			ctx,
 			btcutil.NewTx(parsedMsg.StakingTx.Transaction),
+			btccParams.BtcConfirmationDepth,
 			uint32(parsedMsg.StakingTime),
+			paramsValidationResult.MinUnbondingTime,
 			parsedMsg.StakingTxProofOfInclusion)
 		if err != nil {
 			return nil, fmt.Errorf("invalid inclusion proof: %w", err)
 		}
 
-		startHeight = inclusionHeight
-		endHeight = startHeight + uint32(parsedMsg.StakingTime)
+		startHeight = timeInfo.startHeight
+		endHeight = timeInfo.endHeight
 	} else {
 		// NOTE: here we consume more gas to protect Babylon chain and covenant members against spamming
 		// i.e creating delegation that will never reach BTC
@@ -234,7 +236,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	// add this BTC delegation, and emit corresponding events
-	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
+	if err := ms.AddBTCDelegation(ctx, newBTCDel, paramsValidationResult.MinUnbondingTime); err != nil {
 		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
 	}
 
@@ -280,10 +282,17 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	if err != nil {
 		return nil, err
 	}
-	inclusionHeight, err := ms.VerifyInclusionProofAndGetHeight(
+
+	btccParams := ms.btccKeeper.GetParams(ctx)
+
+	minUnbondingTime := types.MinimumUnbondingTime(params, &btccParams)
+
+	timeInfo, err := ms.VerifyInclusionProofAndGetHeight(
 		ctx,
 		btcutil.NewTx(stakingTx),
+		btccParams.BtcConfirmationDepth,
 		btcDel.StakingTime,
+		minUnbondingTime,
 		parsedInclusionProof,
 	)
 
@@ -292,8 +301,8 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	}
 
 	// 6. set start height and end height and save it to db
-	btcDel.StartHeight = inclusionHeight
-	btcDel.EndHeight = btcDel.StartHeight + btcDel.StakingTime
+	btcDel.StartHeight = timeInfo.startHeight
+	btcDel.EndHeight = timeInfo.endHeight
 	ms.setBTCDelegation(ctx, btcDel)
 
 	// 7. emit events
@@ -324,8 +333,9 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 		StakingTxHash: req.StakingTxHash,
 		NewState:      types.BTCDelegationStatus_UNBONDED,
 	})
-	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-	ms.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-wValue, unbondedEvent)
+
+	// NOTE: we should have verified that EndHeight > btcTip.Height + max(w, min_unbonding_time)
+	ms.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-minUnbondingTime, unbondedEvent)
 
 	// at this point, the BTC delegation inclusion proof is verified and is not duplicated
 	// thus, we can safely consider this message as refundable
@@ -581,6 +591,8 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 			// we do not need to save it in the database
 			SpendStakeTx: []byte{},
 		}
+
+		types.EmitEarlyUnbondedEvent(ctx, btcDel.MustGetStakingTxHash().String(), stakerSpendigTxHeader.Height)
 	} else {
 		// stakeSpendingTx is not unbonding tx, first we need to verify whether it
 		// acutally spends staking output
@@ -599,16 +611,12 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 			SpendStakeTx: req.StakeSpendingTx,
 		}
 
-		ev := &types.EventUnexpectedUnbondingTx{
-			StakingTxHash:          btcDel.MustGetStakingTxHash().String(),
-			SpendStakeTxHash:       spendStakeTxHash.String(),
-			SpendStakeTxHeaderHash: req.StakeSpendingTxInclusionProof.Key.Hash.MarshalHex(),
-			SpendStakeTxBlockIndex: req.StakeSpendingTxInclusionProof.Key.Index,
-		}
-
-		if err := ctx.EventManager().EmitTypedEvent(ev); err != nil {
-			panic(fmt.Errorf("failed to emit EventUnexpectedUnbondingTx event: %w", err))
-		}
+		types.EmitUnexpectedUnbondingTxEvent(ctx,
+			btcDel.MustGetStakingTxHash().String(),
+			spendStakeTxHash.String(),
+			req.StakeSpendingTxInclusionProof.Key.Hash.MarshalHex(),
+			req.StakeSpendingTxInclusionProof.Key.Index,
+		)
 	}
 
 	// all good, add the signature to BTC delegation's undelegation

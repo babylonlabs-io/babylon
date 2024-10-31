@@ -10,15 +10,21 @@ import (
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
+type delegationTimeRangeInfo struct {
+	startHeight uint32
+	endHeight   uint32
+}
+
 // VerifyInclusionProofAndGetHeight verifies the inclusion proof of the given staking tx
-// and returns the inclusion height
+// and returns the start height and end height
 func (k Keeper) VerifyInclusionProofAndGetHeight(
 	ctx sdk.Context,
 	stakingTx *btcutil.Tx,
+	confirmationDepth uint32,
 	stakingTime uint32,
+	minUnbondingTime uint32,
 	inclusionProof *types.ParsedProofOfInclusion,
-) (uint32, error) {
-	btccParams := k.btccKeeper.GetParams(ctx)
+) (*delegationTimeRangeInfo, error) {
 	// Check:
 	// - timelock of staking tx
 	// - staking tx is k-deep
@@ -26,7 +32,7 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 	stakingTxHeader := k.btclcKeeper.GetHeaderByHash(ctx, inclusionProof.HeaderHash)
 
 	if stakingTxHeader == nil {
-		return 0, fmt.Errorf("header that includes the staking tx is not found")
+		return nil, fmt.Errorf("header that includes the staking tx is not found")
 	}
 
 	// no need to do more validations to the btc header as it was already
@@ -41,7 +47,7 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 	)
 
 	if !proofValid {
-		return 0, types.ErrInvalidStakingTx.Wrapf("not included in the Bitcoin chain")
+		return nil, types.ErrInvalidStakingTx.Wrapf("not included in the Bitcoin chain")
 	}
 
 	startHeight := stakingTxHeader.Height
@@ -49,13 +55,16 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	stakingTxDepth := btcTip.Height - stakingTxHeader.Height
-	if stakingTxDepth < btccParams.BtcConfirmationDepth {
-		return 0, types.ErrInvalidStakingTx.Wrapf("not k-deep: k=%d; depth=%d", btccParams.BtcConfirmationDepth, stakingTxDepth)
+	if stakingTxDepth < confirmationDepth {
+		return nil, types.ErrInvalidStakingTx.Wrapf("not k-deep: k=%d; depth=%d", confirmationDepth, stakingTxDepth)
 	}
-	// ensure staking tx's timelock has more than w BTC blocks left
-	if btcTip.Height+btccParams.CheckpointFinalizationTimeout >= endHeight {
-		return 0, types.ErrInvalidStakingTx.Wrapf("staking tx's timelock has no more than w(=%d) blocks left", btccParams.CheckpointFinalizationTimeout)
+	// ensure staking tx's timelock has more than unbonding BTC blocks left
+	if btcTip.Height+minUnbondingTime >= endHeight {
+		return nil, types.ErrInvalidStakingTx.Wrapf("staking tx's timelock has no more than unbonding(=%d) blocks left", minUnbondingTime)
 	}
 
-	return startHeight, nil
+	return &delegationTimeRangeInfo{
+		startHeight: startHeight,
+		endHeight:   endHeight,
+	}, nil
 }

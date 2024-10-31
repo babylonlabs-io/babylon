@@ -38,19 +38,18 @@ func testStakingParams(
 	require.NoError(t, err)
 
 	return &types.Params{
-		CovenantPks:                bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
-		CovenantQuorum:             3,
-		MinStakingValueSat:         100000,
-		MaxStakingValueSat:         int64(4 * 10e8),
-		MinStakingTimeBlocks:       10,
-		MaxStakingTimeBlocks:       10000,
-		SlashingPkScript:           slashingPkScript,
-		MinSlashingTxFeeSat:        1000,
-		MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.01"),
-		SlashingRate:               sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
-		MaxActiveFinalityProviders: 100,
-		MinUnbondingTimeBlocks:     200,
-		UnbondingFeeSat:            1000,
+		CovenantPks:            bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
+		CovenantQuorum:         3,
+		MinStakingValueSat:     100000,
+		MaxStakingValueSat:     int64(4 * 10e8),
+		MinStakingTimeBlocks:   1000,
+		MaxStakingTimeBlocks:   100000,
+		SlashingPkScript:       slashingPkScript,
+		MinSlashingTxFeeSat:    1000,
+		MinCommissionRate:      sdkmath.LegacyMustNewDecFromStr("0.01"),
+		SlashingRate:           sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
+		MinUnbondingTimeBlocks: 200,
+		UnbondingFeeSat:        1000,
 	}
 }
 
@@ -782,6 +781,9 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, got)
+
+				minUnbondingTime := types.MinimumUnbondingTime(params, checkpointParams)
+				require.Equal(t, minUnbondingTime, got.MinUnbondingTime)
 			}
 
 		})

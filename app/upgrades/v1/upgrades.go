@@ -19,7 +19,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	accountkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/babylonlabs-io/babylon/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
@@ -31,6 +33,8 @@ import (
 	btcstktypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	finalitykeeper "github.com/babylonlabs-io/babylon/x/finality/keeper"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	mintkeeper "github.com/babylonlabs-io/babylon/x/mint/keeper"
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 )
 
 const (
@@ -60,22 +64,65 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHand
 				return nil, err
 			}
 
-			err = upgradeParameters(
-				ctx, keepers.EncCfg.Codec,
-				&keepers.BTCStakingKeeper, &keepers.FinalityKeeper, &keepers.WasmKeeper,
-				upgradeDataStr.BtcStakingParamStr, upgradeDataStr.FinalityParamStr, upgradeDataStr.CosmWasmParamStr,
+			// Re-initialise the mint module as we have replaced Cosmos SDK's
+			// mint module with our own one.
+			err = upgradeMint(
+				ctx,
+				keepers.EncCfg.Codec,
+				&keepers.MintKeeper,
+				&keepers.AccountKeeper,
+				keepers.StakingKeeper,
 			)
 			if err != nil {
 				return nil, err
 			}
 
-			if err := upgradeLaunch(ctx, keepers.EncCfg, &keepers.BTCLightClientKeeper, keepers.BankKeeper, upgradeDataStr.NewBtcHeadersStr, upgradeDataStr.TokensDistributionStr); err != nil {
+			err = upgradeParameters(
+				ctx,
+				keepers.EncCfg.Codec,
+				&keepers.BTCStakingKeeper,
+				&keepers.FinalityKeeper,
+				&keepers.WasmKeeper,
+				upgradeDataStr.BtcStakingParamStr,
+				upgradeDataStr.FinalityParamStr,
+				upgradeDataStr.CosmWasmParamStr,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			err = upgradeLaunch(
+				ctx,
+				keepers.EncCfg,
+				&keepers.BTCLightClientKeeper,
+				keepers.BankKeeper,
+				upgradeDataStr.NewBtcHeadersStr,
+				upgradeDataStr.TokensDistributionStr,
+			)
+			if err != nil {
 				return nil, err
 			}
 
 			return migrations, nil
 		}
 	}
+}
+
+func upgradeMint(
+	ctx sdk.Context,
+	cdc codec.Codec,
+	k *mintkeeper.Keeper,
+	ak *accountkeeper.AccountKeeper,
+	stk *stakingkeeper.Keeper,
+) error {
+	bondedDenom, err := stk.BondDenom(ctx)
+	if err != nil {
+		return err
+	}
+	k.InitGenesis(ctx, ak, &minttypes.GenesisState{
+		BondDenom: bondedDenom,
+	})
+	return nil
 }
 
 func upgradeParameters(

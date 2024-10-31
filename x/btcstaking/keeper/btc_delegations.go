@@ -18,7 +18,11 @@ import (
 // - indexing the given BTC delegation in the BTC delegator store,
 // - saving it under BTC delegation store, and
 // - emit events about this BTC delegation.
-func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) error {
+func (k Keeper) AddBTCDelegation(
+	ctx sdk.Context,
+	btcDel *types.BTCDelegation,
+	minUnbondingTime uint32,
+) error {
 	if err := btcDel.ValidateBasic(); err != nil {
 		return err
 	}
@@ -39,7 +43,7 @@ func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) e
 		}
 		// index staking tx hash of this BTC delegation
 		if err := btcDelIndex.Add(stakingTxHash); err != nil {
-			return types.ErrInvalidStakingTx.Wrapf(err.Error())
+			return types.ErrInvalidStakingTx.Wrapf("error adding staking tx hash to BTC delegator index: %s", err.Error())
 		}
 		// save the index
 		k.setBTCDelegatorDelegationIndex(ctx, &fpBTCPK, btcDel.BtcPk, btcDelIndex)
@@ -75,9 +79,9 @@ func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) e
 			StakingTxHash: stakingTxHash.String(),
 			NewState:      types.BTCDelegationStatus_UNBONDED,
 		})
-		// NOTE: we should have verified that EndHeight > btcTip.Height + CheckpointFinalizationTimeout
-		wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-		k.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-wValue, unbondedEvent)
+
+		// NOTE: we should have verified that EndHeight > btcTip.Height + max(w, min_unbonding_time)
+		k.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-minUnbondingTime, unbondedEvent)
 	}
 
 	return nil
