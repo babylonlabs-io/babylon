@@ -197,6 +197,11 @@ func InitTestnet(
 	babylonConfig.GRPC.Enable = true
 	babylonConfig.GRPC.Address = "0.0.0.0:9090"
 
+	// Disable IAVL cache by default as Babylon leaf nodes can be large, and in case
+	// of big cache values, Babylon node can run out of memory.
+	babylonConfig.IAVLCacheSize = 0
+	babylonConfig.IAVLDisableFastNode = true
+
 	var (
 		genAccounts []authtypes.GenesisAccount
 		genBalances []banktypes.Balance
