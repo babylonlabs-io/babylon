@@ -94,6 +94,7 @@ import (
 	"github.com/babylonlabs-io/babylon/app/ante"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	finalityclient "github.com/babylonlabs-io/babylon/x/finality/client"
 
 	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
@@ -327,6 +328,7 @@ func NewBabylonApp(
 			govtypes.ModuleName: gov.NewAppModuleBasic(
 				[]govclient.ProposalHandler{
 					paramsclient.ProposalHandler,
+					finalityclient.ResumeFinalityHandler,
 				},
 			),
 		})
