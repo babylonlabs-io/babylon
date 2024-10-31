@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+* [#242](https://github.com/babylonlabs-io/babylon/pull/242) Add ResumeFinalityProposal and handler
+
 ## v0.15.0
 
 ### State Machine Breaking
