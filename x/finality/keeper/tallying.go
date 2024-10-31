@@ -110,11 +110,7 @@ func tally(fpSet map[string]uint64, voterBTCPKs map[string]struct{}) bool {
 		}
 	}
 
-	if votedPower*3 > totalPower*2 {
-		return true
-	}
-
-	return false
+	return votedPower*3 > totalPower*2
 }
 
 // setNextHeightToFinalize sets the next height to finalise as the given height

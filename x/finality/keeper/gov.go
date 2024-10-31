@@ -32,27 +32,31 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, p *types.ResumeFin
 		_, voted := voters[fpPk.MarshalHex()]
 		if voted {
 			// all the given finality providers should not have voted for the halting height
-			return fmt.Errorf("the finality provider has voted for height %d", p.HaltingHeight)
+			return fmt.Errorf("the finality provider %s has voted for height %d", fpHex, p.HaltingHeight)
 		}
 
 		err := k.jailSluggishFinalityProvider(ctx, &fpPk)
 		if err != nil && !errors.Is(err, bstypes.ErrFpAlreadyJailed) {
-			return fmt.Errorf("failed to jail the finality provider: %w", err)
+			return fmt.Errorf("failed to jail the finality provider %s: %w", fpHex, err)
 		}
 
 		// update signing info
 		signInfo, err := k.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
 		if err != nil {
-			return fmt.Errorf("the signing info is not created: %w", err)
+			return fmt.Errorf("the signing info of finality provider %s is not created: %w", fpHex, err)
 		}
 		signInfo.JailedUntil = currentTime.Add(params.JailDuration)
 		signInfo.MissedBlocksCounter = 0
 		if err := k.DeleteMissedBlockBitmap(ctx, &fpPk); err != nil {
-			return fmt.Errorf("failed to remove the missed block bit map: %w", err)
+			return fmt.Errorf("failed to remove the missed block bit map for finality provider %s: %w", fpHex, err)
 		}
 		err = k.FinalityProviderSigningTracker.Set(ctx, fpPk.MustMarshal(), signInfo)
+		if err != nil {
+			return fmt.Errorf("failed to set the signing info for finality provider %s: %w", fpHex, err)
+		}
+
 		k.Logger(ctx).Info(
-			"finality provider is jailed",
+			"finality provider is jailed in the proposal",
 			"height", p.HaltingHeight,
 			"public_key", fpHex,
 		)
