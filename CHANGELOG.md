@@ -42,9 +42,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 * [#229](https://github.com/babylonlabs-io/babylon/pull/229) Remove babylond
 e2e before upgrade
 
+## v0.15.0
+
 ### State Machine Breaking
 
 * [#211](https://github.com/babylonlabs-io/babylon/pull/211) Babylon inflation module
+* [#217](https://github.com/babylonlabs-io/babylon/pull/217) Move voting power table to finality module
 
 ### Improvements
 
@@ -72,7 +75,6 @@ power during expiry
 ### State Machine Breaking
 
 * [#224](https://github.com/babylonlabs-io/babylon/pull/224) Make injected checkpoint a standard tx
-* [#217](https://github.com/babylonlabs-io/babylon/pull/217) Move voting power table to finality module
 * [#207](https://github.com/babylonlabs-io/babylon/pull/207) Rename total voting power
 to total bonded sat
 * [#204](https://github.com/babylonlabs-io/babylon/pull/204) Add babylon finality
