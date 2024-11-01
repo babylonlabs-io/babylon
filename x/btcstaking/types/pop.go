@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 
@@ -103,9 +102,6 @@ func newBIP322Sig[A btcutil.Address](
 	if err != nil {
 		return nil, err
 	}
-
-	sigStr := base64.StdEncoding.EncodeToString(witnessSignture)
-	fmt.Sprintf("sig str: %s", sigStr)
 
 	bip322Sig := BIP322Sig{
 		Address: address.EncodeAddress(),

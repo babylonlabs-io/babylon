@@ -2,7 +2,6 @@ package types_test
 
 import (
 	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -82,8 +81,8 @@ func FuzzPoP_BIP322_P2WPKH(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		// generate BTC key pair
-		privKeyHex := "714f4a7c31f9eee7de7c0592ba0f7846142a35f6685c1ce80ed04f41dbb95568628240787640df"
-		privkeyBytes, err := hex.DecodeString(privKeyHex)
+		privKeyHex := "cU9KfDH57ufefAWSug94RhQqNfZoXBzoDtBPQdu5VWhigkB4dkDf"
+		privkeyBytes, err := base64.StdEncoding.DecodeString(privKeyHex)
 		require.NoError(t, err)
 		btcSK, btcPK := btcec.PrivKeyFromBytes(privkeyBytes)
 		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
@@ -95,7 +94,11 @@ func FuzzPoP_BIP322_P2WPKH(f *testing.F) {
 		// generate and verify PoP, correct case
 		pop, err := types.NewPoPBTCWithBIP322P2WPKHSig(accAddr, btcSK, net)
 		require.NoError(t, err)
-		sigBase64 := base64.StdEncoding.EncodeToString(pop.BtcSig)
+
+		var bip322Sig types.BIP322Sig
+		err = bip322Sig.Unmarshal(pop.BtcSig)
+		require.NoError(t, err)
+		sigBase64 := base64.StdEncoding.EncodeToString(bip322Sig.Sig)
 		t.Logf("sig: %s", sigBase64)
 		err = pop.VerifyBIP322(accAddr, bip340PK, net)
 		require.NoError(t, err)
