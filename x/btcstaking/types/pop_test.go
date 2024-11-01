@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	net = &chaincfg.SigNetParams
+	net = &chaincfg.MainNetParams
 )
 
 func newInvalidBIP340PoP(r *rand.Rand) *types.ProofOfPossessionBTC {
@@ -81,7 +81,7 @@ func FuzzPoP_BIP322_P2WPKH(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		// generate BTC key pair
-		privKeyHex := "cU9KfDH57ufefAWSug94RhQqNfZoXBzoDtBPQdu5VWhigkB4dkDf"
+		privKeyHex := "your-private-key"
 		privkeyBytes, err := base64.StdEncoding.DecodeString(privKeyHex)
 		require.NoError(t, err)
 		btcSK, btcPK := btcec.PrivKeyFromBytes(privkeyBytes)
