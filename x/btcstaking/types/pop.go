@@ -2,12 +2,10 @@ package types
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/crypto/bip322"
-	"github.com/babylonlabs-io/babylon/crypto/ecdsa"
-	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
@@ -16,6 +14,10 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/crypto/bip322"
+	"github.com/babylonlabs-io/babylon/crypto/ecdsa"
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 type checkStakerKey func(stakerKey *bbn.BIP340PubKey) error
@@ -101,6 +103,9 @@ func newBIP322Sig[A btcutil.Address](
 	if err != nil {
 		return nil, err
 	}
+
+	sigStr := base64.StdEncoding.EncodeToString(witnessSignture)
+	fmt.Sprintf("sig str: %s", sigStr)
 
 	bip322Sig := BIP322Sig{
 		Address: address.EncodeAddress(),

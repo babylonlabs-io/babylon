@@ -1,10 +1,13 @@
 package types_test
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"testing"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/stretchr/testify/require"
 
 	"github.com/btcsuite/btcd/chaincfg"
@@ -17,7 +20,7 @@ import (
 )
 
 var (
-	net = &chaincfg.TestNet3Params
+	net = &chaincfg.SigNetParams
 )
 
 func newInvalidBIP340PoP(r *rand.Rand) *types.ProofOfPossessionBTC {
@@ -78,18 +81,22 @@ func FuzzPoP_BIP322_P2WPKH(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-
 		// generate BTC key pair
-		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
+		privKeyHex := "714f4a7c31f9eee7de7c0592ba0f7846142a35f6685c1ce80ed04f41dbb95568628240787640df"
+		privkeyBytes, err := hex.DecodeString(privKeyHex)
 		require.NoError(t, err)
+		btcSK, btcPK := btcec.PrivKeyFromBytes(privkeyBytes)
 		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 
-		accAddr := datagen.GenRandomAccount().GetAddress()
+		bech32Addr := "bbn10vg5yf7r3g4n54zcx43phprhasnjzqlphzd4vs"
+		accAddr, err := sdk.AccAddressFromBech32(bech32Addr)
+		require.NoError(t, err)
 
 		// generate and verify PoP, correct case
 		pop, err := types.NewPoPBTCWithBIP322P2WPKHSig(accAddr, btcSK, net)
 		require.NoError(t, err)
+		sigBase64 := base64.StdEncoding.EncodeToString(pop.BtcSig)
+		t.Logf("sig: %s", sigBase64)
 		err = pop.VerifyBIP322(accAddr, bip340PK, net)
 		require.NoError(t, err)
 	})
