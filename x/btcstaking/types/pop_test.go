@@ -1,12 +1,19 @@
 package types_test
 
 import (
+	"github.com/babylonlabs-io/babylon/crypto/ecdsa"
+	"github.com/cometbft/cometbft/crypto/tmhash"
+
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/babylonlabs-io/babylon/crypto/bip322"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -72,6 +79,59 @@ func FuzzPoP_ECDSA(f *testing.F) {
 		err = pop.VerifyECDSA(accAddr, bip340PK)
 		require.NoError(t, err)
 	})
+}
+
+func TestPopFt(t *testing.T) {
+	privateKeyStr := "cUiuX4MkxHvLxpteByWDe4CAADpZMBzZFRzfiXvyf8sQFZLZH7fF"
+	privateKeyBytes, err := base64.StdEncoding.DecodeString(privateKeyStr)
+	require.NoError(t, err)
+
+	bbnAddrStr := "bbn1usyvyrep4qvkpe9pj9hku39sz6fsxkm0pd38wu"
+	bbnAddr, err := sdk.AccAddressFromBech32(bbnAddrStr)
+	require.NoError(t, err)
+
+	bbnAddrBz := bbnAddr.Bytes()
+	// require.Equal(t, "x", fmt.Sprintf("%s", bbnAddrBz))
+	bbnAddrBzHex := hex.EncodeToString(bbnAddrBz)
+	require.Equal(t, "e408c20f21a81960e4a1916f6e44b01693035b6f", bbnAddrBzHex)
+
+	bbnAddrSha256 := tmhash.Sum(bbnAddr.Bytes())
+	bbnAddrSha256Hex := hex.EncodeToString(bbnAddrSha256)
+	require.Equal(t, "765cf28f2bb99786473e892bf29588f9078625cee1a0f57edb4c0b08c868efa0", bbnAddrSha256Hex)
+
+	privKeyBtcCec, pubKeyBtcCec := btcec.PrivKeyFromBytes(privateKeyBytes)
+	signed, err := ecdsa.Sign(privKeyBtcCec, bbnAddrBzHex)
+	require.NoError(t, err)
+
+	signedHex := hex.EncodeToString(signed)
+	require.Equal(t, "207ba0d0a3f761d86573a96c08184232fbfa3ff830a04f38738069185f5518ab984870fc59e55b8861ab90881e260331977a98ee8e319e3871a4298056a9e60818", signedHex)
+
+	popEcdsaBtc, err := types.NewPoPBTCWithECDSABTCSig(bbnAddr, privKeyBtcCec)
+	require.NoError(t, err)
+
+	popEcdsaBtcHexOfMarshal, err := popEcdsaBtc.ToHexStr()
+	require.NoError(t, err)
+
+	require.Equal(t, "08021241207ba0d0a3f761d86573a96c08184232fbfa3ff830a04f38738069185f5518ab984870fc59e55b8861ab90881e260331977a98ee8e319e3871a4298056a9e60818", popEcdsaBtcHexOfMarshal)
+
+	bip322EncodedFromFront, err := base64.StdEncoding.DecodeString("AkcwRAIgVl1CWJAw3SIF7CLj1+iMnJ9mAFaVPNRgVyFPnqryQjgCIGlJEt/YwLUf81flhNcdlw3QpObk83CRgTqwHMENfGheASEDtLJdctLYE77nPGeUc9219HlWrpPkGj4WtgpxkLzLeK8=")
+	require.NoError(t, err)
+
+	pop, err := types.NewPoPBTCWithBIP322P2WPKHSig(bbnAddr, privKeyBtcCec, &chaincfg.SigNetParams)
+	require.NoError(t, err)
+	pop.BtcSig = bip322EncodedFromFront
+	err = pop.VerifyBIP322(bbnAddr, bbn.NewBIP340PubKeyFromBTCPK(pubKeyBtcCec), net)
+	require.NoError(t, err)
+
+	// schSig, err := schnorr.ParseSignature(bip322EncodedFromFront)
+	// require.NoError(t, err)
+	// require.Equal(t, "x", schSig)
+
+	bip322SignedAddrBz, err := types.NewBIP322Sig(bbnAddrSha256, privKeyBtcCec, &chaincfg.SigNetParams, bip322.SignWithP2WPKHAddress)
+	require.NoError(t, err)
+
+	bip322SignedAddrHex := hex.EncodeToString(bip322SignedAddrBz)
+	require.Equal(t, "0a2a746231713377787473743437786535636e387234766d71356c636672377874776a6c386461716b7a3861126c02483045022100cf3db1f6db234e0bb375d5ae38dd1180b7b298a12244eeadaa27a57540996ddb02206ff6a44f1ab495d799a76f4722916991718ec8c142bced33b2e28339fec5233f012103e64d9214bfdee7adabb3f4b701d2dcf8112419699ba50e8134533a8c8054f8d5", bip322SignedAddrHex)
 }
 
 func FuzzPoP_BIP322_P2WPKH(f *testing.F) {
