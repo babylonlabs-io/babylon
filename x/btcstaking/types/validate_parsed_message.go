@@ -21,11 +21,11 @@ type ParamsValidationResult struct {
 func ValidateParsedMessageAgainstTheParams(
 	pm *ParsedCreateDelegationMessage,
 	parameters *Params,
-	btcheckpointParamseters *btcckpttypes.Params,
+	btcheckpointParameters *btcckpttypes.Params,
 	net *chaincfg.Params,
 ) (*ParamsValidationResult, error) {
 	// 1. Validate unbonding time first as it will be used in other checks
-	minUnbondingTime := MinimumUnbondingTime(parameters, btcheckpointParamseters)
+	minUnbondingTime := MinimumUnbondingTime(parameters, btcheckpointParameters)
 	// Check unbonding time (staking time from unbonding tx) is larger than min unbonding time
 	// which is larger value from:
 	// - MinUnbondingTime
@@ -52,7 +52,7 @@ func ValidateParsedMessageAgainstTheParams(
 		net,
 	)
 	if err != nil {
-		return nil, ErrInvalidStakingTx.Wrapf("err: %v", err)
+		return nil, ErrInvalidStakingTx.Wrapf("failed to buid staking info: %v", err)
 	}
 
 	stakingOutputIdx, err := bbn.GetOutputIdxInBTCTx(pm.StakingTx.Transaction, stakingInfo.StakingOutput)
@@ -142,8 +142,8 @@ func ValidateParsedMessageAgainstTheParams(
 	}
 	if unbondingTx.TxOut[0].Value != unbondingInfo.UnbondingOutput.Value {
 		return nil, ErrInvalidUnbondingTx.
-			Wrapf(" the unbonding output value is not expected, expected: %d, got: %d",
-				unbondingTx.TxOut[0].Value, unbondingInfo.UnbondingOutput.Value)
+			Wrapf("the unbonding output value is not expected, expected: %d, got: %d",
+				unbondingInfo.UnbondingOutput.Value, unbondingTx.TxOut[0].Value)
 	}
 
 	err = btcstaking.CheckSlashingTxMatchFundingTx(
