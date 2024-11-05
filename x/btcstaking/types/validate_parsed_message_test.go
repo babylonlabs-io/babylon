@@ -758,6 +758,28 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			},
 			err: types.ErrInvalidUnbondingTx,
 		},
+		{
+			name: "Msg.UnbondingTx has more than one output",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				checkpointParams := testCheckpointParams()
+				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+
+				currentUnbondingTx, err := bbn.NewBTCTxFromBytes(msg.UnbondingTx)
+				require.NoError(t, err)
+
+				// add randomnes output
+				randAddrScript, err := datagen.GenRandomPubKeyHashScript(r, &chaincfg.MainNetParams)
+				require.NoError(t, err)
+				currentUnbondingTx.AddTxOut(wire.NewTxOut(10000, randAddrScript))
+
+				msg.UnbondingTx, err = bbn.SerializeBTCTx(currentUnbondingTx)
+				require.NoError(t, err)
+
+				return msg, params, checkpointParams
+			},
+			err: types.ErrInvalidUnbondingTx.Wrap("unbonding tx is not a valid pre-signed transaction: tx must have exactly 1 outputs"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
