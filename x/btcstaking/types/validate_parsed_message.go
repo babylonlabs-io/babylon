@@ -1,12 +1,14 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
+
+	"github.com/btcsuite/btcd/chaincfg"
 
 	"github.com/babylonlabs-io/babylon/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	"github.com/btcsuite/btcd/chaincfg"
 )
 
 type ParamsValidationResult struct {
@@ -19,11 +21,11 @@ type ParamsValidationResult struct {
 func ValidateParsedMessageAgainstTheParams(
 	pm *ParsedCreateDelegationMessage,
 	parameters *Params,
-	btcheckpointParamseters *btcckpttypes.Params,
+	btcheckpointParameters *btcckpttypes.Params,
 	net *chaincfg.Params,
 ) (*ParamsValidationResult, error) {
 	// 1. Validate unbonding time first as it will be used in other checks
-	minUnbondingTime := MinimumUnbondingTime(parameters, btcheckpointParamseters)
+	minUnbondingTime := MinimumUnbondingTime(parameters, btcheckpointParameters)
 	// Check unbonding time (staking time from unbonding tx) is larger than min unbonding time
 	// which is larger value from:
 	// - MinUnbondingTime
@@ -50,7 +52,7 @@ func ValidateParsedMessageAgainstTheParams(
 		net,
 	)
 	if err != nil {
-		return nil, ErrInvalidStakingTx.Wrapf("err: %v", err)
+		return nil, ErrInvalidStakingTx.Wrapf("failed to build staking info: %v", err)
 	}
 
 	stakingOutputIdx, err := bbn.GetOutputIdxInBTCTx(pm.StakingTx.Transaction, stakingInfo.StakingOutput)
@@ -129,18 +131,25 @@ func ValidateParsedMessageAgainstTheParams(
 		net,
 	)
 	if err != nil {
-		return nil, ErrInvalidUnbondingTx.Wrapf("err: %v", err)
+		return nil, ErrInvalidUnbondingTx.Wrapf("failed to build the unbonding info: %v", err)
 	}
 
-	unbondingOutputIdx, err := bbn.GetOutputIdxInBTCTx(pm.UnbondingTx.Transaction, unbondingInfo.UnbondingOutput)
-	if err != nil {
-		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding tx does not contain expected unbonding output")
+	unbondingTx := pm.UnbondingTx.Transaction
+	if !bytes.Equal(unbondingTx.TxOut[0].PkScript, unbondingInfo.UnbondingOutput.PkScript) {
+		return nil, ErrInvalidUnbondingTx.
+			Wrapf("the unbonding output script is not expected, expected: %x, got: %s",
+				unbondingInfo.UnbondingOutput.PkScript, unbondingTx.TxOut[0].PkScript)
+	}
+	if unbondingTx.TxOut[0].Value != unbondingInfo.UnbondingOutput.Value {
+		return nil, ErrInvalidUnbondingTx.
+			Wrapf("the unbonding output value is not expected, expected: %d, got: %d",
+				unbondingInfo.UnbondingOutput.Value, unbondingTx.TxOut[0].Value)
 	}
 
 	err = btcstaking.CheckSlashingTxMatchFundingTx(
 		pm.UnbondingSlashingTx.Transaction,
 		pm.UnbondingTx.Transaction,
-		unbondingOutputIdx,
+		0, // unbonding output always has only 1 output
 		parameters.MinSlashingTxFeeSat,
 		parameters.SlashingRate,
 		parameters.SlashingPkScript,
@@ -159,7 +168,7 @@ func ValidateParsedMessageAgainstTheParams(
 
 	if err := btcstaking.VerifyTransactionSigWithOutput(
 		pm.UnbondingSlashingTx.Transaction,
-		pm.UnbondingTx.Transaction.TxOut[unbondingOutputIdx],
+		pm.UnbondingTx.Transaction.TxOut[0], // unbonding output always has only 1 output
 		unbondingSlashingSpendInfo.RevealedLeaf.Script,
 		pm.StakerPK.PublicKey,
 		pm.StakerUnbondingSlashingSig.BIP340Signature.MustMarshal(),
@@ -196,7 +205,7 @@ func ValidateParsedMessageAgainstTheParams(
 
 	return &ParamsValidationResult{
 		StakingOutputIdx:   stakingOutputIdx,
-		UnbondingOutputIdx: unbondingOutputIdx,
+		UnbondingOutputIdx: 0, // unbonding output always has only 1 output
 		MinUnbondingTime:   minUnbondingTime,
 	}, nil
 }

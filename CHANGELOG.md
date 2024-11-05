@@ -41,6 +41,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 * [#229](https://github.com/babylonlabs-io/babylon/pull/229) Remove babylond
 e2e before upgrade
+* [#250](https://github.com/babylonlabs-io/babylon/pull/250) Add tests for
+unbonding value mismatch
+* [#249](https://github.com/babylonlabs-io/babylon/pull/249) Add logs to checking
+unbonding output
 
 ## v0.15.0
 
