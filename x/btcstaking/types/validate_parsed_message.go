@@ -52,7 +52,7 @@ func ValidateParsedMessageAgainstTheParams(
 		net,
 	)
 	if err != nil {
-		return nil, ErrInvalidStakingTx.Wrapf("failed to buid staking info: %v", err)
+		return nil, ErrInvalidStakingTx.Wrapf("failed to build staking info: %v", err)
 	}
 
 	stakingOutputIdx, err := bbn.GetOutputIdxInBTCTx(pm.StakingTx.Transaction, stakingInfo.StakingOutput)
@@ -131,7 +131,7 @@ func ValidateParsedMessageAgainstTheParams(
 		net,
 	)
 	if err != nil {
-		return nil, ErrInvalidUnbondingTx.Wrapf("failed to rebuid the unbonding info: %v", err)
+		return nil, ErrInvalidUnbondingTx.Wrapf("failed to build the unbonding info: %v", err)
 	}
 
 	unbondingTx := pm.UnbondingTx.Transaction
