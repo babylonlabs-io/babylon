@@ -11,16 +11,8 @@ babylond-e2e:
 	docker build --tag babylonlabs-io/babylond -f babylond/Dockerfile ${BABYLON_FULL_PATH} \
 		--build-arg BABYLON_BUILD_OPTIONS="testnet"
 
-## TODO: once release docker public versions for tags, remove this!
-babylond-before-upgrade: babylond-rmi-upgrade
-	docker build --tag babylonlabs-io/babylond-before-upgrade -f babylond/Dockerfile \
-    --build-arg VERSION="${BABYLON_VERSION_BEFORE_UPGRADE}" ${BABYLON_FULL_PATH}
-
 babylond-rmi:
 	docker rmi babylonlabs-io/babylond --force 2>/dev/null; true
-
-babylond-rmi-upgrade:
-	docker rmi babylonlabs-io/babylond-before-upgrade --force 2>/dev/null; true
 
 e2e-init-chain-rmi:
 	docker rmi babylonlabs-io/babylond-e2e-init-chain --force 2>/dev/null; true
@@ -37,4 +29,4 @@ cosmos-relayer: cosmos-relayer-rmi
 cosmos-relayer-rmi:
 	docker rmi babylonlabs-io/cosmos-relayer 2>/dev/null; true
 
-.PHONY: all babylond babylond-before-upgrade cosmos-relayer e2e-init-chain babylond-rmi babylond-rmi-upgrade cosmos-relayer-rmi
+.PHONY: all babylond cosmos-relayer e2e-init-chain babylond-rmi babylond-rmi-upgrade cosmos-relayer-rmi
