@@ -1,4 +1,4 @@
-FROM golang:1.21 AS build-env
+FROM golang:1.23 AS build-env
 
 ARG E2E_SCRIPT_NAME
 # Version to build. Default is empty
