@@ -47,6 +47,7 @@ e2e before upgrade
 unbonding value mismatch
 * [#249](https://github.com/babylonlabs-io/babylon/pull/249) Add logs to checking
 unbonding output
+* [#253](https://github.com/babylonlabs-io/babylon/pull/253) Upgrade cometbft dependency
 
 ## v0.15.0
 
