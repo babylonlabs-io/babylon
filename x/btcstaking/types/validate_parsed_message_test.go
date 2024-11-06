@@ -43,7 +43,7 @@ func testStakingParams(
 		MinStakingValueSat:     100000,
 		MaxStakingValueSat:     int64(4 * 10e8),
 		MinStakingTimeBlocks:   1000,
-		MaxStakingTimeBlocks:   100000,
+		MaxStakingTimeBlocks:   10000,
 		SlashingPkScript:       slashingPkScript,
 		MinSlashingTxFeeSat:    1000,
 		MinCommissionRate:      sdkmath.LegacyMustNewDecFromStr("0.01"),
