@@ -27,8 +27,8 @@ message FinalityProviderDistInfo {
     // btc_pk is the Bitcoin secp256k1 PK of this finality provider
     // the PK follows encoding in BIP-340 spec
     bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
-    // addr is the address to receive commission from delegations.
-    string addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+    // addr is the bytes of the address to receive commission from delegations.
+    bytes addr = 2;
     // commission defines the commission rate of finality provider
     string commission = 3  [
         (cosmos_proto.scalar)  = "cosmos.Dec",
