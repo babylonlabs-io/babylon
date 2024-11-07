@@ -5,6 +5,7 @@ import (
 	"sort"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -235,7 +236,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		activeFPs := dc.GetActiveFinalityProviderSet()
 		for _, fpDistInfo := range activeFPs {
 			require.Equal(t, fpDistInfo.TotalBondedSat, numBTCDels*stakingValue)
-			fp, ok := fpsWithVotingPowerMap[fpDistInfo.Addr]
+			fp, ok := fpsWithVotingPowerMap[sdk.AccAddress(fpDistInfo.Addr).String()]
 			require.True(t, ok)
 			require.Equal(t, fpDistInfo.Commission, fp.Commission)
 			require.Len(t, fpDistInfo.BtcDels, int(numBTCDels))

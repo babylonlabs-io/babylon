@@ -163,7 +163,7 @@ func (dc *VotingPowerDistCache) GetFinalityProviderPortion(v *FinalityProviderDi
 func NewFinalityProviderDistInfo(fp *bstypes.FinalityProvider) *FinalityProviderDistInfo {
 	return &FinalityProviderDistInfo{
 		BtcPk:          fp.BtcPk,
-		Addr:           fp.Addr,
+		Addr:           sdk.MustAccAddressFromBech32(fp.Addr),
 		Commission:     fp.Commission,
 		TotalBondedSat: 0,
 		BtcDels:        []*BTCDelDistInfo{},
@@ -171,7 +171,7 @@ func NewFinalityProviderDistInfo(fp *bstypes.FinalityProvider) *FinalityProvider
 }
 
 func (v *FinalityProviderDistInfo) GetAddress() sdk.AccAddress {
-	return sdk.MustAccAddressFromBech32(v.Addr)
+	return v.Addr
 }
 
 func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *bstypes.BTCDelegation) {

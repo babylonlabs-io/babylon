@@ -49,6 +49,11 @@ unbonding value mismatch
 unbonding output
 * [#253](https://github.com/babylonlabs-io/babylon/pull/253) Upgrade cometbft dependency
 
+### State Machine Breaking
+
+* [#254](https://github.com/babylonlabs-io/babylon/pull/254) Avoid constant
+bech-32 decoding in power table
+
 ## v0.15.0
 
 ### State Machine Breaking
