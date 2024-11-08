@@ -48,6 +48,8 @@ unbonding value mismatch
 * [#249](https://github.com/babylonlabs-io/babylon/pull/249) Add logs to checking
 unbonding output
 * [#253](https://github.com/babylonlabs-io/babylon/pull/253) Upgrade cometbft dependency
+* [#256](https://github.com/babylonlabs-io/babylon/pull/256) Removes retry library
+from core Babylon repository
 
 ### State Machine Breaking
 
