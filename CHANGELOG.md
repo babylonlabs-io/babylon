@@ -50,6 +50,8 @@ unbonding output
 * [#253](https://github.com/babylonlabs-io/babylon/pull/253) Upgrade cometbft dependency
 * [#256](https://github.com/babylonlabs-io/babylon/pull/256) Removes retry library
 from core Babylon repository
+* [#257](https://github.com/babylonlabs-io/babylon/pull/257) Fix error handling
+in checkpointing module
 
 ### State Machine Breaking
 

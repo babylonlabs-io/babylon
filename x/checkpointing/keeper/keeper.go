@@ -277,8 +277,12 @@ func (k *Keeper) SetEpochingKeeper(ek types.EpochingKeeper) {
 // and records the associated state update in lifecycle
 func (k Keeper) SetCheckpointSubmitted(ctx context.Context, epoch uint64) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	ckpt := k.setCheckpointStatus(ctx, epoch, types.Sealed, types.Submitted)
-	err := sdkCtx.EventManager().EmitTypedEvent(
+	ckpt, err := k.setCheckpointStatus(ctx, epoch, types.Sealed, types.Submitted)
+	if err != nil {
+		k.Logger(sdkCtx).Error("failed to set checkpoint status to SUBMITTED for epoch %v: %v", epoch, err)
+		return
+	}
+	err = sdkCtx.EventManager().EmitTypedEvent(
 		&types.EventCheckpointSubmitted{Checkpoint: ckpt},
 	)
 	if err != nil {
@@ -290,8 +294,12 @@ func (k Keeper) SetCheckpointSubmitted(ctx context.Context, epoch uint64) {
 // and records the associated state update in lifecycle
 func (k Keeper) SetCheckpointConfirmed(ctx context.Context, epoch uint64) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	ckpt := k.setCheckpointStatus(ctx, epoch, types.Submitted, types.Confirmed)
-	err := sdkCtx.EventManager().EmitTypedEvent(
+	ckpt, err := k.setCheckpointStatus(ctx, epoch, types.Submitted, types.Confirmed)
+	if err != nil {
+		k.Logger(sdkCtx).Error("failed to set checkpoint status to CONFIRMED for epoch %v: %v", epoch, err)
+		return
+	}
+	err = sdkCtx.EventManager().EmitTypedEvent(
 		&types.EventCheckpointConfirmed{Checkpoint: ckpt},
 	)
 	if err != nil {
@@ -308,11 +316,15 @@ func (k Keeper) SetCheckpointConfirmed(ctx context.Context, epoch uint64) {
 func (k Keeper) SetCheckpointFinalized(ctx context.Context, epoch uint64) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// set the checkpoint's status to be finalised
-	ckpt := k.setCheckpointStatus(ctx, epoch, types.Confirmed, types.Finalized)
+	ckpt, err := k.setCheckpointStatus(ctx, epoch, types.Confirmed, types.Finalized)
+	if err != nil {
+		k.Logger(sdkCtx).Error("failed to set checkpoint status to FINALIZED for epoch %v: %v", epoch, err)
+		return
+	}
 	// remember the last finalised epoch
 	k.SetLastFinalizedEpoch(ctx, epoch)
 	// emit event
-	err := sdkCtx.EventManager().EmitTypedEvent(
+	err = sdkCtx.EventManager().EmitTypedEvent(
 		&types.EventCheckpointFinalized{Checkpoint: ckpt},
 	)
 	if err != nil {
@@ -328,8 +340,12 @@ func (k Keeper) SetCheckpointFinalized(ctx context.Context, epoch uint64) {
 // and records the associated state update in lifecycle
 func (k Keeper) SetCheckpointForgotten(ctx context.Context, epoch uint64) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	ckpt := k.setCheckpointStatus(ctx, epoch, types.Submitted, types.Sealed)
-	err := sdkCtx.EventManager().EmitTypedEvent(
+	ckpt, err := k.setCheckpointStatus(ctx, epoch, types.Submitted, types.Sealed)
+	if err != nil {
+		k.Logger(sdkCtx).Error("failed to set checkpoint status to SEALED for epoch %v: %v", epoch, err)
+		return
+	}
+	err = sdkCtx.EventManager().EmitTypedEvent(
 		&types.EventCheckpointForgotten{Checkpoint: ckpt},
 	)
 	if err != nil {
@@ -339,18 +355,13 @@ func (k Keeper) SetCheckpointForgotten(ctx context.Context, epoch uint64) {
 
 // setCheckpointStatus sets a ckptWithMeta to the given state,
 // and records the state update in its lifecycle
-func (k Keeper) setCheckpointStatus(ctx context.Context, epoch uint64, from types.CheckpointStatus, to types.CheckpointStatus) *types.RawCheckpointWithMeta {
+func (k Keeper) setCheckpointStatus(ctx context.Context, epoch uint64, from types.CheckpointStatus, to types.CheckpointStatus) (*types.RawCheckpointWithMeta, error) {
 	ckptWithMeta, err := k.GetRawCheckpoint(ctx, epoch)
 	if err != nil {
-		// TODO: ignore err for now
-		return nil
+		return nil, err
 	}
 	if ckptWithMeta.Status != from {
-		err = types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be %s", from.String())
-		if err != nil {
-			// TODO: ignore err for now
-			return nil
-		}
+		return nil, types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be %s", from.String())
 	}
 	ckptWithMeta.Status = to                    // set status
 	ckptWithMeta.RecordStateUpdate(ctx, to)     // record state update to the lifecycle
@@ -360,7 +371,7 @@ func (k Keeper) setCheckpointStatus(ctx context.Context, epoch uint64, from type
 	}
 	statusChangeMsg := fmt.Sprintf("Checkpointing: checkpoint status for epoch %v successfully changed from %v to %v", epoch, from.String(), to.String())
 	k.Logger(sdk.UnwrapSDKContext(ctx)).Info(statusChangeMsg)
-	return ckptWithMeta
+	return ckptWithMeta, nil
 }
 
 func (k Keeper) UpdateCheckpoint(ctx context.Context, ckptWithMeta *types.RawCheckpointWithMeta) error {
