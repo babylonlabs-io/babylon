@@ -25,7 +25,7 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger
       - -w -s
-      - -linkmode=external
+      # - -linkmode=external
     tags:
       - netgo
       - ledger
