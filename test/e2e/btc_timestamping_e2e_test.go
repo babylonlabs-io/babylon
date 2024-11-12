@@ -13,7 +13,6 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	ct "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -105,7 +104,7 @@ func (s *BTCTimestampingTestSuite) Test3SendTx() {
 	s.Equal(tip2Depth, uint32(0))
 }
 
-func (s *BTCTimestampingTestSuite) Test4GenerateAndWithdrawReward() {
+func (s *BTCTimestampingTestSuite) Test4FinalizeEpochs() {
 	chainA := s.configurer.GetChainConfig(0)
 
 	chainA.WaitUntilHeight(35)
@@ -119,11 +118,6 @@ func (s *BTCTimestampingTestSuite) Test4GenerateAndWithdrawReward() {
 		endEpochNum   uint64 = 3
 	)
 
-	// submitter/reporter address should not have any rewards yet
-	submitterReporterAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
-	_, err = nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
-	s.Error(err)
-
 	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
 
 	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(endEpochNum)
@@ -134,61 +128,6 @@ func (s *BTCTimestampingTestSuite) Test4GenerateAndWithdrawReward() {
 	time.Sleep(20 * time.Second)
 	// Wait for next block
 	nonValidatorNode.WaitForNextBlock()
-
-	// ensure balance has increased after finalising some epochs
-	rewardGauges, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
-	s.NoError(err)
-	submitterRewardGauge, ok := rewardGauges[itypes.SubmitterType.String()]
-	s.True(ok)
-	s.True(submitterRewardGauge.Coins.IsAllPositive())
-	reporterRewardGauge, ok := rewardGauges[itypes.ReporterType.String()]
-	s.True(ok)
-	s.True(reporterRewardGauge.Coins.IsAllPositive())
-
-	// balance before withdraw
-	balance, err := nonValidatorNode.QueryBalances(submitterReporterAddr.String())
-	s.NoError(err)
-	// submitter/reporter reward gauges before withdraw should not be fully withdrawn
-	rgs, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
-	s.NoError(err)
-	submitterRg, reporterRg := rgs[itypes.SubmitterType.String()], rgs[itypes.ReporterType.String()]
-	s.T().Logf("submitter witdhrawable reward: %s, reporter witdhrawable reward: %s before withdrawing", convertToRewardGauge(submitterRg).GetWithdrawableCoins().String(), convertToRewardGauge(reporterRg).GetWithdrawableCoins().String())
-	s.False(convertToRewardGauge(submitterRg).IsFullyWithdrawn())
-	s.False(convertToRewardGauge(reporterRg).IsFullyWithdrawn())
-
-	// withdraw submitter reward
-	nonValidatorNode.WithdrawReward(itypes.SubmitterType.String(), initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
-
-	// balance after withdrawing submitter reward
-	balance2, err := nonValidatorNode.QueryBalances(submitterReporterAddr.String())
-	s.NoError(err)
-	s.T().Logf("balance2: %s; balance: %s", balance2.String(), balance.String())
-	s.True(balance2.IsAllGT(balance))
-
-	// submitter reward gauge should be fully withdrawn
-	rgs2, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
-	s.NoError(err)
-	submitterRg2 := rgs2[itypes.SubmitterType.String()]
-	s.T().Logf("submitter withdrawable reward: %s after withdrawing", convertToRewardGauge(submitterRg2).GetWithdrawableCoins().String())
-	s.True(convertToRewardGauge(submitterRg2).IsFullyWithdrawn())
-
-	// withdraw reporter reward
-	nonValidatorNode.WithdrawReward(itypes.ReporterType.String(), initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
-
-	// balance after withdrawing reporter reward
-	balance3, err := nonValidatorNode.QueryBalances(submitterReporterAddr.String())
-	s.NoError(err)
-	s.T().Logf("balance3: %s; balance2: %s", balance3.String(), balance2.String())
-	s.True(balance3.IsAllGT(balance2))
-
-	// reporter reward gauge should be fully withdrawn
-	rgs3, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
-	s.NoError(err)
-	reporterRg3 := rgs3[itypes.SubmitterType.String()]
-	s.T().Logf("reporter withdrawable reward: %s after withdrawing", convertToRewardGauge(reporterRg3).GetWithdrawableCoins().String())
-	s.True(convertToRewardGauge(reporterRg3).IsFullyWithdrawn())
 }
 
 func (s *BTCTimestampingTestSuite) Test5Wasm() {

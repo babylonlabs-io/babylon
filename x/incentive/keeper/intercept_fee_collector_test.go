@@ -8,7 +8,6 @@ import (
 
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
-	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -38,9 +37,7 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 		accountKeeper.EXPECT().GetModuleAccount(gomock.Any(), authtypes.FeeCollectorName).Return(feeCollectorAcc).Times(1)
 
 		// mock epoching keeper
-		epochNum := datagen.RandomInt(r, 100) + 1
 		epochingKeeper := types.NewMockEpochingKeeper(ctrl)
-		epochingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epochNum}).Times(1)
 
 		keeper, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, accountKeeper, epochingKeeper)
 		height := datagen.RandomInt(r, 1000)
