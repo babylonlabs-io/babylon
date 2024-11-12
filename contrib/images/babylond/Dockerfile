@@ -32,7 +32,7 @@ RUN if [ -n "${VERSION}" ]; then \
     fi
 
 # Cosmwasm - Download correct libwasmvm version
-SHELL ["/bin/ash", "-o", "pipefail", "-c"]
+SHELL ["/bin/sh", "-o", "pipefail", "-c"]
 RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm/v2 | cut -d ' ' -f 2) && \
     wget --progress=dot:giga https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc."$(uname -m)".a \
     -O /lib/libwasmvm_muslc."$(uname -m)".a && \
