@@ -33,10 +33,10 @@ RUN if [ -n "${VERSION}" ]; then \
 
 # Cosmwasm - Download correct libwasmvm version
 RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm/v2 | cut -d ' ' -f 2) && \
-    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc."$(uname -m)".a \
+    wget --progress=dot:giga https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc."$(uname -m)".a \
     -O /lib/libwasmvm_muslc."$(uname -m)".a && \
     # verify checksum
-    wget https://github.com/CosmWasm/wasmvm/releases/download/"$WASMVM_VERSION"/checksums.txt -O /tmp/checksums.txt && \
+    wget --progress=dot:giga https://github.com/CosmWasm/wasmvm/releases/download/"$WASMVM_VERSION"/checksums.txt -O /tmp/checksums.txt && \
     sha256sum /lib/libwasmvm_muslc."$(uname -m)".a | grep "$(cat /tmp/checksums.txt" | grep libwasmvm_muslc."$(uname -m)" | cut -d ' ' -f 1)
 
 RUN LEDGER_ENABLED=$LEDGER_ENABLED \
