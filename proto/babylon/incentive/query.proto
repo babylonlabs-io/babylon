@@ -68,6 +68,7 @@ message QueryBTCStakingGaugeRequest {
     uint64 height = 1;
 }
 
+// BTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC method.
 message BTCStakingGaugeResponse {
     // coins that have been in the gauge
     // can have multiple coin denoms

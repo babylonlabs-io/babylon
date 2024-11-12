@@ -309,6 +309,7 @@ func (m *QueryBTCStakingGaugeRequest) GetHeight() uint64 {
 	return 0
 }
 
+// BTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC method.
 type BTCStakingGaugeResponse struct {
 	// coins that have been in the gauge
 	// can have multiple coin denoms
