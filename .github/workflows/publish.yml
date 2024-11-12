@@ -35,3 +35,4 @@ jobs:
       repoName: babylond
       trivy_nofail: false
       docker_scan: true
+      hadolint_nofail: false
