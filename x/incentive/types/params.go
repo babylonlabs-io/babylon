@@ -18,8 +18,6 @@ func ParamKeyTable() paramtypes.KeyTable {
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
 	return Params{
-		SubmitterPortion:  math.LegacyNewDecWithPrec(5, 2), // 5 * 10^{-2} = 0.05
-		ReporterPortion:   math.LegacyNewDecWithPrec(5, 2), // 5 * 10^{-2} = 0.05
 		BtcStakingPortion: math.LegacyNewDecWithPrec(2, 1), // 2 * 10^{-1} = 0.2
 	}
 }
@@ -31,16 +29,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 
 // TotalPortion calculates the sum of portions of all stakeholders
 func (p *Params) TotalPortion() math.LegacyDec {
-	sum := p.SubmitterPortion
-	sum = sum.Add(p.ReporterPortion)
-	sum = sum.Add(p.BtcStakingPortion)
-	return sum
-}
-
-// BTCTimestampingPortion calculates the sum of portions of all BTC timestamping stakeholders
-func (p *Params) BTCTimestampingPortion() math.LegacyDec {
-	sum := p.SubmitterPortion
-	sum = sum.Add(p.ReporterPortion)
+	sum := p.BtcStakingPortion
 	return sum
 }
 
@@ -51,12 +40,6 @@ func (p *Params) BTCStakingPortion() math.LegacyDec {
 
 // Validate validates the set of params
 func (p Params) Validate() error {
-	if p.SubmitterPortion.IsNil() {
-		return fmt.Errorf("SubmitterPortion should not be nil")
-	}
-	if p.ReporterPortion.IsNil() {
-		return fmt.Errorf("ReporterPortion should not be nil")
-	}
 	if p.BtcStakingPortion.IsNil() {
 		return fmt.Errorf("BtcStakingPortion should not be nil")
 	}

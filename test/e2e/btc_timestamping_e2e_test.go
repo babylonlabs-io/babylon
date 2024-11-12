@@ -277,34 +277,10 @@ func (s *BTCTimestampingTestSuite) Test6InterceptFeeCollector() {
 		return len(btcStakingGauge.Coins) >= 1 && btcStakingGauge.Coins[0].Amount.IsPositive()
 	}, time.Second*10, time.Second)
 
-	// ensure BTC timestamping gauge at the current epoch is non-empty
-	curEpoch, err := nonValidatorNode.QueryCurrentEpoch()
-	s.NoError(err)
-	// at the 1st block of an epoch, the gauge does not exist since incentive's BeginBlock
-	// at this block accumulates rewards for BTC timestamping gauge for the previous block
-	// need to wait for a block to ensure the gauge is created
-	var btcTimestampingGauge *itypes.BTCTimestampingGaugeResponse
-	s.Eventually(func() bool {
-		btcTimestampingGauge, err = nonValidatorNode.QueryBTCTimestampingGauge(curEpoch)
-		if err != nil {
-			return false
-		}
-		s.T().Logf("BTC timestamping gauge at current epoch %d: %s", curEpoch, btcTimestampingGauge.String())
-		return !btcTimestampingGauge.Coins.Empty()
-	}, time.Second*10, time.Second)
-
-	// wait for 1 block to see if BTC timestamp gauge has accumulated
-	nonValidatorNode.WaitForNextBlock()
-	btcTimestampingGauge2, err := nonValidatorNode.QueryBTCTimestampingGauge(curEpoch)
-	s.NoError(err)
-	s.T().Logf("BTC timestamping gauge after a block at current epoch %d: %s", curEpoch, btcTimestampingGauge2.String())
-	s.NotEmpty(btcTimestampingGauge2.Coins)
-	s.True(btcTimestampingGauge2.Coins.IsAllGTE(btcTimestampingGauge.Coins))
-
 	// after 1 block, incentive's balance has to be accumulated
+	nonValidatorNode.WaitForNextBlock()
 	incentiveBalance2, err := nonValidatorNode.QueryBalances(incentiveModuleAddr.String())
 	s.NoError(err)
 	s.T().Logf("incentive module account's balance after a block: %s", incentiveBalance2.String())
 	s.True(incentiveBalance2.IsAllGTE(incentiveBalance))
 }
-

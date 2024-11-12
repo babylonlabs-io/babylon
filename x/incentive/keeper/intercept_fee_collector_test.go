@@ -50,9 +50,7 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 		// NOTE: if the actual fees are different from feesForIncentive the test will fail
 		params := keeper.GetParams(ctx)
 		feesForBTCStaking := types.GetCoinsPortion(fees, params.BTCStakingPortion())
-		feesForBTCTimestamping := types.GetCoinsPortion(fees, params.BTCTimestampingPortion())
 		bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(types.ModuleName), gomock.Eq(feesForBTCStaking)).Times(1)
-		bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(types.ModuleName), gomock.Eq(feesForBTCTimestamping)).Times(1)
 
 		// handle coins in fee collector
 		keeper.HandleCoinsInFeeCollector(ctx)
@@ -62,30 +60,5 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 		btcStakingGauge := keeper.GetBTCStakingGauge(ctx, height)
 		require.NotNil(t, btcStakingGauge)
 		require.Equal(t, btcStakingFee, btcStakingGauge.Coins)
-
-		// assert correctness of BTC timestamping gauge at epoch
-		btcTimestampingFee := types.GetCoinsPortion(fees, params.BTCTimestampingPortion())
-		btcTimestampingGauge := keeper.GetBTCTimestampingGauge(ctx, epochNum)
-		require.NotNil(t, btcTimestampingGauge)
-		require.Equal(t, btcTimestampingFee, btcTimestampingGauge.Coins)
-
-		// accumulate for this epoch again and see if the epoch's BTC timestamping gauge has accumulated or not
-		height += 1
-		ctx = datagen.WithCtxHeight(ctx, height)
-		bankKeeper.EXPECT().GetAllBalances(gomock.Any(), feeCollectorAcc.GetAddress()).Return(fees).Times(1)
-		accountKeeper.EXPECT().GetModuleAccount(gomock.Any(), authtypes.FeeCollectorName).Return(feeCollectorAcc).Times(1)
-		epochingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epochNum}).Times(1)
-		bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(types.ModuleName), gomock.Eq(feesForBTCStaking)).Times(1)
-		bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(types.ModuleName), gomock.Eq(feesForBTCTimestamping)).Times(1)
-		// handle coins in fee collector
-		keeper.HandleCoinsInFeeCollector(ctx)
-		// assert BTC timestamping gauge has doubled
-		btcTimestampingGauge2 := keeper.GetBTCTimestampingGauge(ctx, epochNum)
-		require.NotNil(t, btcTimestampingGauge2)
-		for i := range btcTimestampingGauge.Coins {
-			amount := btcTimestampingGauge.Coins[i].Amount.Uint64()
-			amount2 := btcTimestampingGauge2.Coins[i].Amount.Uint64()
-			require.Equal(t, amount*2, amount2)
-		}
 	})
 }

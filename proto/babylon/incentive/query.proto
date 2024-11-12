@@ -23,10 +23,6 @@ service Query {
     rpc BTCStakingGauge(QueryBTCStakingGaugeRequest) returns (QueryBTCStakingGaugeResponse) {
         option (google.api.http).get = "/babylon/incentive/btc_staking_gauge/{height}";
     }
-    // BTCTimestampingGauge queries the BTC timestamping gauge of a given epoch
-    rpc BTCTimestampingGauge(QueryBTCTimestampingGaugeRequest) returns (QueryBTCTimestampingGaugeResponse) {
-        option (google.api.http).get = "/babylon/incentive/btc_timestamping_gauge/{epoch_num}";
-    }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -44,7 +40,7 @@ message QueryRewardGaugesRequest {
     string address = 1;
 }
 
-// RewardGaugesResponse is an object that stores rewards distributed to a BTC staking/timestamping stakeholder
+// RewardGaugesResponse is an object that stores rewards distributed to a BTC staking stakeholder
 message RewardGaugesResponse {
     // coins are coins that have been in the gauge
     // Can have multiple coin denoms
@@ -82,30 +78,8 @@ message BTCStakingGaugeResponse {
 
 }
 
-message BTCTimestampingGaugeResponse {
-    // coins that have been in the gauge
-    // can have multiple coin denoms
-    repeated cosmos.base.v1beta1.Coin coins = 1 [
-        (gogoproto.nullable) = false,
-        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-    ];
-
-}
-
 // QueryBTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC method.
 message QueryBTCStakingGaugeResponse {
     // gauge is the BTC staking gauge at the queried height 
     BTCStakingGaugeResponse gauge = 1;
-}
-
-// QueryBTCTimestampingGaugeRequest is request type for the Query/BTCTimestampingGauge RPC method.
-message QueryBTCTimestampingGaugeRequest {
-    // epoch_num is the queried epoch number
-    uint64 epoch_num = 1;
-}
-
-// QueryBTCTimestampingGaugeResponse is response type for the Query/BTCTimestampingGauge RPC method.
-message QueryBTCTimestampingGaugeResponse {
-    // gauge is the BTC timestamping gauge at the queried epoch 
-    BTCTimestampingGaugeResponse gauge = 1;
 }
