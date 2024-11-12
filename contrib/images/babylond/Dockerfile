@@ -15,9 +15,8 @@ ARG LEDGER_ENABLED="false"
 
 
 # Install cli tools for building and final image
-RUN apk add --update --no-cache make git bash gcc linux-headers eudev-dev ncurses-dev openssh curl jq
 # hadolint ignore=DL3018
-RUN apk add --no-cache musl-dev
+RUN apk add --update --no-cache make git bash gcc linux-headers eudev-dev ncurses-dev openssh curl jq musl-dev && rm -rf /var/cache/apk/\*
 
 # Build
 WORKDIR /go/src/github.com/babylonlabs-io/babylon
