@@ -24,6 +24,11 @@ jobs:
     uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@huy/add-docker-sec
     needs: ["lint_test"]
     secrets: inherit
+    permissions:
+      # required for all workflows
+      security-events: write
+      # required to fetch internal or private CodeQL packs
+      packages: read
     with:
       publish: true
       dockerfile: ./contrib/images/babylond/Dockerfile
