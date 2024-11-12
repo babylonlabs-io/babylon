@@ -54,6 +54,7 @@ unbonding output
 from core Babylon repository
 * [#257](https://github.com/babylonlabs-io/babylon/pull/257) Fix error handling
 in checkpointing module
+* [#262](https://github.com/babylonlabs-io/babylon/pull/262) Upgrade wasmd, relayer dependencies
 
 ### State Machine Breaking
 
