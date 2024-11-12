@@ -21,7 +21,7 @@ jobs:
       run-lint: true
 
   docker_pipeline:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@huy/add-docker-sec
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v10.2.0
     needs: ["lint_test"]
     secrets: inherit
     permissions:
@@ -33,6 +33,4 @@ jobs:
       publish: true
       dockerfile: ./contrib/images/babylond/Dockerfile
       repoName: babylond
-      trivy_nofail: false
       docker_scan: true
-      hadolint_nofail: false
