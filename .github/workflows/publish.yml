@@ -5,6 +5,7 @@ on:
     branches:
     - 'main'
     - 'dev'
+    - 'devops/add-docker-sec'
     tags:
     - '*'
 
@@ -20,10 +21,12 @@ jobs:
       run-lint: true
 
   docker_pipeline:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.7.0
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@huy/add-docker-sec
     needs: ["lint_test"]
     secrets: inherit
     with:
       publish: true
       dockerfile: ./contrib/images/babylond/Dockerfile
       repoName: babylond
+      trivy_nofail: false
+      docker_scan: true
