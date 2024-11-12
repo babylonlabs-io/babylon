@@ -50,6 +50,7 @@ RUN LEDGER_ENABLED=$LEDGER_ENABLED \
 FROM alpine:3.14 AS run
 # Create a user
 RUN addgroup --gid 1137 -S babylon && adduser --uid 1137 -S babylon -G babylon
+# hadolint ignore=DL3018
 RUN apk --no-cache add bash curl jq && rm -rf /var/cache/apk/\*
 
 # Label should match your github repo
