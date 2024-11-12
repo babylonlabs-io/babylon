@@ -232,7 +232,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		// assert voting power distribution cache is correct
 		dc := h.FinalityKeeper.GetVotingPowerDistCache(h.Ctx, babylonHeight)
 		require.NotNil(t, dc)
-		require.Equal(t, dc.TotalBondedSat, numFpsWithVotingPower*numBTCDels*stakingValue, dc.String())
+		require.Equal(t, dc.TotalVotingPower, numFpsWithVotingPower*numBTCDels*stakingValue, dc.String())
 		activeFPs := dc.GetActiveFinalityProviderSet()
 		for _, fpDistInfo := range activeFPs {
 			require.Equal(t, fpDistInfo.TotalBondedSat, numBTCDels*stakingValue)
