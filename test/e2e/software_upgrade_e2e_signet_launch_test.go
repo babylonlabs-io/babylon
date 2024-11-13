@@ -158,6 +158,15 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	s.NoError(err)
 	s.EqualValues(finalityParamsFromData, *finalityParams)
 
+	// check that incentive params correctly deserialize and that they are the same
+	// as the one from the data
+	incentiveParams, err := n.QueryIncentiveParams()
+	s.NoError(err)
+
+	incentiveParamsFromData, err := v1.LoadIncentiveParamsFromData(bbnApp.AppCodec(), testnet.IncentiveParamStr)
+	s.NoError(err)
+	s.EqualValues(incentiveParamsFromData, *incentiveParams)
+
 	// FP tries to commit with start height before finality activation height
 	// it should fail, after commits with start height = finality activation height
 	// and it should work.

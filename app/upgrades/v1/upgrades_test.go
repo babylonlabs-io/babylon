@@ -47,6 +47,7 @@ var (
 	UpgradeV1DataTestnet = v1.UpgradeDataString{
 		BtcStakingParamStr:    testnetdata.BtcStakingParamStr,
 		FinalityParamStr:      testnetdata.FinalityParamStr,
+		IncentiveParamStr:     testnetdata.IncentiveParamStr,
 		CosmWasmParamStr:      testnetdata.CosmWasmParamStr,
 		NewBtcHeadersStr:      testnetdata.NewBtcHeadersStr,
 		TokensDistributionStr: testnetdata.TokensDistributionStr,
@@ -54,6 +55,7 @@ var (
 	UpgradeV1DataMainnet = v1.UpgradeDataString{
 		BtcStakingParamStr:    mainnetdata.BtcStakingParamStr,
 		FinalityParamStr:      mainnetdata.FinalityParamStr,
+		IncentiveParamStr:     mainnetdata.IncentiveParamStr,
 		CosmWasmParamStr:      mainnetdata.CosmWasmParamStr,
 		NewBtcHeadersStr:      mainnetdata.NewBtcHeadersStr,
 		TokensDistributionStr: mainnetdata.TokensDistributionStr,
@@ -257,6 +259,12 @@ func (s *UpgradeTestSuite) PostUpgrade() {
 
 	newHeadersLen := len(allBtcHeaders)
 	s.Equal(newHeadersLen, s.btcHeadersLenPreUpgrade+lenHeadersInserted)
+
+	// ensure the incentive params were set as expected
+	incentiveParamsFromUpgrade, err := v1.LoadIncentiveParamsFromData(s.app.AppCodec(), s.upgradeDataStr.IncentiveParamStr)
+	s.NoError(err)
+	incentiveParams := s.app.IncentiveKeeper.GetParams(s.ctx)
+	s.EqualValues(incentiveParamsFromUpgrade, incentiveParams)
 
 	// ensure the headers were inserted as expected
 	for i, btcHeaderInserted := range btcHeadersInserted {
