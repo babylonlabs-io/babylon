@@ -39,7 +39,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-* [#242](https://github.com/babylonlabs-io/babylon/pull/242) Add ResumeFinalityProposal and handler
+* [#242](https://github.com/babylonlabs-io/babylon/pull/242) Add
+ResumeFinalityProposal and handler
+* [#258](https://github.com/babylonlabs-io/babylon/pull/258) fix go releaser
+and trigger by github action
+* [#252](https://github.com/babylonlabs-io/babylon/pull/252) Fix
+flunky TestValidateParsedMessageAgainstTheParams
+* [#229](https://github.com/babylonlabs-io/babylon/pull/229) Remove babylond
+e2e before upgrade
+* [#250](https://github.com/babylonlabs-io/babylon/pull/250) Add tests for
+unbonding value mismatch
+* [#249](https://github.com/babylonlabs-io/babylon/pull/249) Add logs to checking
+unbonding output
+* [#253](https://github.com/babylonlabs-io/babylon/pull/253) Upgrade cometbft dependency
+* [#256](https://github.com/babylonlabs-io/babylon/pull/256) Removes retry library
+from core Babylon repository
+* [#257](https://github.com/babylonlabs-io/babylon/pull/257) Fix error handling
+in checkpointing module
+* [#262](https://github.com/babylonlabs-io/babylon/pull/262) Upgrade wasmd, relayer dependencies
+
+### State Machine Breaking
+
+* [#254](https://github.com/babylonlabs-io/babylon/pull/254) Avoid constant
+bech-32 decoding in power table
 
 ## v0.15.0
 

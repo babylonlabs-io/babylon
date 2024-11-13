@@ -43,7 +43,7 @@ func testStakingParams(
 		MinStakingValueSat:     100000,
 		MaxStakingValueSat:     int64(4 * 10e8),
 		MinStakingTimeBlocks:   1000,
-		MaxStakingTimeBlocks:   100000,
+		MaxStakingTimeBlocks:   10000,
 		SlashingPkScript:       slashingPkScript,
 		MinSlashingTxFeeSat:    1000,
 		MinCommissionRate:      sdkmath.LegacyMustNewDecFromStr("0.01"),
@@ -293,7 +293,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			err: types.ErrInvalidStakingTx,
 		},
 		{
-			name: "Msg.StakingValue do not match staking time committed in staking transaction",
+			name: "Msg.StakingValue do not match staking value committed in staking transaction",
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
@@ -303,7 +303,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidStakingTx,
+			err: types.ErrInvalidStakingTx.Wrap("staking tx does not contain expected staking output"),
 		},
 		{
 			name: "Msg.StakingValue is lower than params.MinStakingValueSat",
@@ -757,6 +757,61 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				return msg, params, checkpointParams
 			},
 			err: types.ErrInvalidUnbondingTx,
+		},
+		{
+			name: "Msg.UnbondingTx has more than one output",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				checkpointParams := testCheckpointParams()
+				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+
+				currentUnbondingTx, err := bbn.NewBTCTxFromBytes(msg.UnbondingTx)
+				require.NoError(t, err)
+
+				// add randomnes output
+				randAddrScript, err := datagen.GenRandomPubKeyHashScript(r, &chaincfg.MainNetParams)
+				require.NoError(t, err)
+				currentUnbondingTx.AddTxOut(wire.NewTxOut(10000, randAddrScript))
+
+				msg.UnbondingTx, err = bbn.SerializeBTCTx(currentUnbondingTx)
+				require.NoError(t, err)
+
+				return msg, params, checkpointParams
+			},
+			err: types.ErrInvalidUnbondingTx.Wrap("unbonding tx is not a valid pre-signed transaction: tx must have exactly 1 outputs"),
+		},
+		{
+			name: "Msg.UnbondingTx unbonding value in the msg does not match the output value in the unbonding tx",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				checkpointParams := testCheckpointParams()
+				msg, delSk := createMsgDelegationForParams(r, t, params, checkpointParams)
+
+				currentUnbondingTx, err := bbn.NewBTCTxFromBytes(msg.UnbondingTx)
+				require.NoError(t, err)
+
+				// generate unbonding info with invalid staking idx
+				newUnbondingInfdo := generateUnbondingInfo(
+					r,
+					t,
+					delSk,
+					msg.FpBtcPkList[0].MustToBTCPK(),
+					currentUnbondingTx.TxIn[0].PreviousOutPoint.Hash,
+					currentUnbondingTx.TxIn[0].PreviousOutPoint.Index,
+					uint16(msg.UnbondingTime),
+					msg.UnbondingValue,
+					params,
+				)
+
+				// to cause the unbonding value mismatch with the unbonding tx output value
+				msg.UnbondingValue = msg.UnbondingValue + 1
+				msg.UnbondingTx = newUnbondingInfdo.serializedUnbondingTx
+				msg.UnbondingSlashingTx = newUnbondingInfdo.unbondingSlashingTx
+				msg.DelegatorUnbondingSlashingSig = newUnbondingInfdo.unbondingSlashinSig
+
+				return msg, params, checkpointParams
+			},
+			err: types.ErrInvalidUnbondingTx.Wrap("the unbonding output value is not expected"),
 		},
 	}
 	for _, tt := range tests {

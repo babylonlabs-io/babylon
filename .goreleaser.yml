@@ -1,12 +1,10 @@
+version: 2
 project_name: babylon
 
 builds:
   - id: babylond-linux-amd64
     main: ./cmd/babylond/main.go
     binary: babylond
-    hooks:
-      pre:
-        - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm.x86_64.so -O /lib/libwasmvm_muslc.x86_64.so
     goos:
       - linux
     goarch:
@@ -21,14 +19,11 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
       - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc,osusergo
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger
       - -w -s
-      - -linkmode=external
     tags:
       - netgo
       - ledger
-      - muslc
-      - osusergo
 
 archives:
   - id: zipped

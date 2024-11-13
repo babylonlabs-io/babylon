@@ -35,7 +35,7 @@ that it is not highly performant or prone to crashing.
 
 ## Build and install
 
-To build and install, you need to have Go 1.21 available. Follow the
+To build and install, you need to have Go 1.23 available. Follow the
 instructions on the [Golang page](https://go.dev/doc/install) to do that.
 
 To build the binary:

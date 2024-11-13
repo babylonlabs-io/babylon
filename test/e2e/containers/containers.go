@@ -260,6 +260,7 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 	runOpts := &dockertest.RunOptions{
 		Name:       containerName,
 		Repository: m.CurrentRepository,
+		Tag:        m.CurrentTag,
 		NetworkID:  m.network.Network.ID,
 		User:       "root:root",
 		Entrypoint: []string{
