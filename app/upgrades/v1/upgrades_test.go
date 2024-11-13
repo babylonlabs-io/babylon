@@ -21,6 +21,7 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -45,20 +46,22 @@ var (
 	wasmContract []byte
 
 	UpgradeV1DataTestnet = v1.UpgradeDataString{
-		BtcStakingParamStr:    testnetdata.BtcStakingParamStr,
-		FinalityParamStr:      testnetdata.FinalityParamStr,
-		IncentiveParamStr:     testnetdata.IncentiveParamStr,
-		CosmWasmParamStr:      testnetdata.CosmWasmParamStr,
-		NewBtcHeadersStr:      testnetdata.NewBtcHeadersStr,
-		TokensDistributionStr: testnetdata.TokensDistributionStr,
+		BtcStakingParamStr:        testnetdata.BtcStakingParamStr,
+		FinalityParamStr:          testnetdata.FinalityParamStr,
+		IncentiveParamStr:         testnetdata.IncentiveParamStr,
+		CosmWasmParamStr:          testnetdata.CosmWasmParamStr,
+		NewBtcHeadersStr:          testnetdata.NewBtcHeadersStr,
+		TokensDistributionStr:     testnetdata.TokensDistributionStr,
+		AllowedStakingTxHashesStr: testnetdata.AllowedStakingTxHashesStr,
 	}
 	UpgradeV1DataMainnet = v1.UpgradeDataString{
-		BtcStakingParamStr:    mainnetdata.BtcStakingParamStr,
-		FinalityParamStr:      mainnetdata.FinalityParamStr,
-		IncentiveParamStr:     mainnetdata.IncentiveParamStr,
-		CosmWasmParamStr:      mainnetdata.CosmWasmParamStr,
-		NewBtcHeadersStr:      mainnetdata.NewBtcHeadersStr,
-		TokensDistributionStr: mainnetdata.TokensDistributionStr,
+		BtcStakingParamStr:        mainnetdata.BtcStakingParamStr,
+		FinalityParamStr:          mainnetdata.FinalityParamStr,
+		IncentiveParamStr:         mainnetdata.IncentiveParamStr,
+		CosmWasmParamStr:          mainnetdata.CosmWasmParamStr,
+		NewBtcHeadersStr:          mainnetdata.NewBtcHeadersStr,
+		TokensDistributionStr:     mainnetdata.TokensDistributionStr,
+		AllowedStakingTxHashesStr: mainnetdata.AllowedStakingTxHashesStr,
 	}
 	UpgradeV1Data = []v1.UpgradeDataString{UpgradeV1DataTestnet, UpgradeV1DataMainnet}
 )
@@ -300,4 +303,19 @@ func (s *UpgradeTestSuite) PostUpgrade() {
 	upgradeWasmParams, err := v1.LoadCosmWasmParamsFromData(s.app.AppCodec(), s.upgradeDataStr.CosmWasmParamStr)
 	s.NoError(err)
 	s.EqualValues(chainWasmParams, upgradeWasmParams)
+
+	allowedStakingTxHashes, err := v1.LoadAllowedStakingTransactionHashesFromData(s.upgradeDataStr.AllowedStakingTxHashesStr)
+	s.NoError(err)
+	s.NotNil(allowedStakingTxHashes)
+	s.Greater(len(allowedStakingTxHashes.TxHashes), 0)
+
+	for _, txHash := range allowedStakingTxHashes.TxHashes {
+		hash, err := chainhash.NewHashFromStr(txHash)
+		s.NoError(err)
+
+		s.True(s.app.BTCStakingKeeper.IsStakingTransactionAllowed(s.ctx, hash))
+	}
+
+	nonExistentTxHash := chainhash.Hash{}
+	s.False(s.app.BTCStakingKeeper.IsStakingTransactionAllowed(s.ctx, &nonExistentTxHash))
 }

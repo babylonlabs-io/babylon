@@ -16,6 +16,7 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -99,9 +100,11 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHand
 				ctx,
 				keepers.EncCfg,
 				&keepers.BTCLightClientKeeper,
+				&keepers.BTCStakingKeeper,
 				keepers.BankKeeper,
 				upgradeDataStr.NewBtcHeadersStr,
 				upgradeDataStr.TokensDistributionStr,
+				upgradeDataStr.AllowedStakingTxHashesStr,
 			)
 			if err != nil {
 				return nil, err
@@ -217,10 +220,15 @@ func upgradeLaunch(
 	ctx sdk.Context,
 	encCfg *appparams.EncodingConfig,
 	btcLigthK *btclightkeeper.Keeper,
+	btcK *btcstkkeeper.Keeper,
 	bankK bankkeeper.SendKeeper,
-	btcHeaders, tokensDistribution string,
+	btcHeaders, tokensDistribution, allowedStakingTxHashes string,
 ) error {
 	if err := upgradeTokensDistribution(ctx, bankK, tokensDistribution); err != nil {
+		return err
+	}
+
+	if err := upgradeAllowedStakingTransactions(ctx, encCfg.Codec, btcK, allowedStakingTxHashes); err != nil {
 		return err
 	}
 
@@ -248,6 +256,23 @@ func upgradeTokensDistribution(ctx sdk.Context, bankK bankkeeper.SendKeeper, tok
 		if err := bankK.SendCoins(ctx, sender, receiver, sdk.NewCoins(amount)); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func upgradeAllowedStakingTransactions(ctx sdk.Context, cdc codec.Codec, btcStakingK *btcstkkeeper.Keeper, allowedStakingTxHashes string) error {
+	data, err := LoadAllowedStakingTransactionHashesFromData(allowedStakingTxHashes)
+	if err != nil {
+		return err
+	}
+
+	for _, txHash := range data.TxHashes {
+		hash, err := chainhash.NewHashFromStr(txHash)
+		if err != nil {
+			return err
+		}
+		btcStakingK.IndexAllowedStakingTransaction(ctx, hash)
 	}
 
 	return nil
@@ -334,6 +359,18 @@ func LoadTokenDistributionFromData(data string) (DataTokenDistribution, error) {
 	}
 
 	return d, nil
+}
+
+func LoadAllowedStakingTransactionHashesFromData(data string) (*AllowedStakingTransactionHashes, error) {
+	buff := bytes.NewBufferString(data)
+
+	var d AllowedStakingTransactionHashes
+	err := json.Unmarshal(buff.Bytes(), &d)
+	if err != nil {
+		return nil, err
+	}
+
+	return &d, nil
 }
 
 func insertBtcHeaders(

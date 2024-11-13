@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
 
 	"cosmossdk.io/log"
@@ -23,6 +24,9 @@ type (
 		btccKeeper  types.BtcCheckpointKeeper
 		iKeeper     types.IncentiveKeeper
 
+		Schema                       collections.Schema
+		AllowedStakingTxHashesKeySet collections.KeySet[[]byte]
+
 		btcNet *chaincfg.Params
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
@@ -41,7 +45,9 @@ func NewKeeper(
 	btcNet *chaincfg.Params,
 	authority string,
 ) Keeper {
-	return Keeper{
+	sb := collections.NewSchemaBuilder(storeService)
+
+	k := Keeper{
 		cdc:          cdc,
 		storeService: storeService,
 
@@ -49,9 +55,23 @@ func NewKeeper(
 		btccKeeper:  btccKeeper,
 		iKeeper:     iKeeper,
 
+		AllowedStakingTxHashesKeySet: collections.NewKeySet(
+			sb,
+			types.AllowedStakingTxHashesKey,
+			"allowed_staking_tx_hashes_key_set",
+			collections.BytesKey,
+		),
 		btcNet:    btcNet,
 		authority: authority,
 	}
+
+	schema, err := sb.Build()
+	if err != nil {
+		panic(err)
+	}
+	k.Schema = schema
+
+	return k
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
