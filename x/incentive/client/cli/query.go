@@ -25,7 +25,6 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		CmdQueryParams(),
 		CmdQueryRewardGauges(),
 		CmdQueryBTCStakingGauge(),
-		CmdQueryBTCTimestampingGauge(),
 	)
 
 	return cmd
@@ -83,41 +82,6 @@ func CmdQueryBTCStakingGauge() *cobra.Command {
 				Height: height,
 			}
 			res, err := queryClient.BTCStakingGauge(cmd.Context(), req)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdQueryBTCTimestampingGauge() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "btc-timestamping-gauge [epoch]",
-		Short: "shows BTC timestamping gauge of a given epoch",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			epoch, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
-
-			queryClient := types.NewQueryClient(clientCtx)
-
-			req := &types.QueryBTCTimestampingGaugeRequest{
-				EpochNum: epoch,
-			}
-			res, err := queryClient.BTCTimestampingGauge(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

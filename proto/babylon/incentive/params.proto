@@ -13,22 +13,10 @@ option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
 message Params {
     option (gogoproto.goproto_stringer) = false;
 
-    // submitter_portion is the portion of rewards that goes to submitter
-    string submitter_portion = 1 [
-        (cosmos_proto.scalar)  = "cosmos.Dec",
-        (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-        (gogoproto.nullable)   = false
-    ];
-    // reporter_portion is the portion of rewards that goes to reporter
-    string reporter_portion = 2 [
-        (cosmos_proto.scalar)  = "cosmos.Dec",
-        (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-        (gogoproto.nullable)   = false
-    ];
     // btc_staking_portion is the portion of rewards that goes to Finality Providers/delegations
     // NOTE: the portion of each Finality Provider/delegation is calculated by using its voting
     // power and finality provider's commission
-    string btc_staking_portion = 3 [
+    string btc_staking_portion = 1 [
         (cosmos_proto.scalar)  = "cosmos.Dec",
         (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
         (gogoproto.nullable)   = false

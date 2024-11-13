@@ -58,6 +58,8 @@ in checkpointing module
 
 ### State Machine Breaking
 
+* [#260](https://github.com/babylonlabs-io/babylon/pull/260) Finish tokenomics
+implementation
 * [#254](https://github.com/babylonlabs-io/babylon/pull/254) Avoid constant
 bech-32 decoding in power table
 

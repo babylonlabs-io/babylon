@@ -17,7 +17,6 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 	// handle coins in the fee collector account, including
 	// - send a portion of coins in the fee collector account to the incentive module account
 	// - accumulate BTC staking gauge at the current height
-	// - accumulate BTC timestamping gauge at the current epoch
 	if sdk.UnwrapSDKContext(ctx).HeaderInfo().Height > 0 {
 		k.HandleCoinsInFeeCollector(ctx)
 	}

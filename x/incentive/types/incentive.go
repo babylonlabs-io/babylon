@@ -59,44 +59,34 @@ func GetCoinsPortion(coinsInt sdk.Coins, portion math.LegacyDec) sdk.Coins {
 type StakeholderType byte
 
 const (
-	SubmitterType StakeholderType = iota
-	ReporterType
-	FinalityProviderType
+	FinalityProviderType StakeholderType = iota
 	BTCDelegationType
 )
 
 func GetAllStakeholderTypes() []StakeholderType {
-	return []StakeholderType{SubmitterType, ReporterType, FinalityProviderType, BTCDelegationType}
+	return []StakeholderType{FinalityProviderType, BTCDelegationType}
 }
 
 func NewStakeHolderType(stBytes []byte) (StakeholderType, error) {
 	if len(stBytes) != 1 {
-		return SubmitterType, fmt.Errorf("invalid format for stBytes")
+		return FinalityProviderType, fmt.Errorf("invalid format for stBytes")
 	}
-	if stBytes[0] == byte(SubmitterType) {
-		return SubmitterType, nil
-	} else if stBytes[0] == byte(ReporterType) {
-		return ReporterType, nil
-	} else if stBytes[0] == byte(FinalityProviderType) {
+	if stBytes[0] == byte(FinalityProviderType) {
 		return FinalityProviderType, nil
 	} else if stBytes[0] == byte(BTCDelegationType) {
 		return BTCDelegationType, nil
 	} else {
-		return SubmitterType, fmt.Errorf("invalid stBytes")
+		return FinalityProviderType, fmt.Errorf("invalid stBytes")
 	}
 }
 
 func NewStakeHolderTypeFromString(stStr string) (StakeholderType, error) {
-	if stStr == "submitter" {
-		return SubmitterType, nil
-	} else if stStr == "reporter" {
-		return ReporterType, nil
-	} else if stStr == "finality_provider" {
+	if stStr == "finality_provider" {
 		return FinalityProviderType, nil
 	} else if stStr == "btc_delegation" {
 		return BTCDelegationType, nil
 	} else {
-		return SubmitterType, fmt.Errorf("invalid stStr")
+		return FinalityProviderType, fmt.Errorf("invalid stStr")
 	}
 }
 
@@ -105,11 +95,7 @@ func (st StakeholderType) Bytes() []byte {
 }
 
 func (st StakeholderType) String() string {
-	if st == SubmitterType {
-		return "submitter"
-	} else if st == ReporterType {
-		return "reporter"
-	} else if st == FinalityProviderType {
+	if st == FinalityProviderType {
 		return "finality_provider"
 	} else if st == BTCDelegationType {
 		return "btc_delegation"

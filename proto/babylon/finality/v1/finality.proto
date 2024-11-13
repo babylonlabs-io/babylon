@@ -12,9 +12,9 @@ import "google/protobuf/timestamp.proto";
 // and their BTC delegations at a height
 message VotingPowerDistCache {
     option (gogoproto.goproto_getters) = false;
-    // total_sat is the total amount of bonded BTC stake (in Satoshi) of all the finality providers
+    // total_voting_power is the total voting power of all (active) finality providers
     // in the cache
-    uint64 total_bonded_sat = 1;
+    uint64 total_voting_power = 1;
     // finality_providers is a list of finality providers' voting power information
     repeated FinalityProviderDistInfo finality_providers = 2;
     // num_active_fps is the number of finality providers that have active BTC

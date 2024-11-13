@@ -2,12 +2,13 @@ package keeper
 
 import (
 	"context"
-	corestoretypes "cosmossdk.io/core/store"
-	storetypes "cosmossdk.io/store/types"
 	"encoding/hex"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/runtime"
 	"math/big"
+
+	corestoretypes "cosmossdk.io/core/store"
+	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store/prefix"
@@ -405,8 +406,6 @@ func (k Keeper) checkCheckpoints(ctx context.Context) {
 		}
 
 		if currentEpoch.Status == types.Finalized {
-			// trigger incentive module to distribute rewards to submitters/reporters
-			k.rewardBTCTimestamping(ctx, epoch, &currentEpoch, epochChanges.BestSubmissionIdx)
 			// delete all submissions except best one
 			for i, sk := range currentEpoch.Keys {
 				if i != epochChanges.BestSubmissionIdx {

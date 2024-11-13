@@ -73,7 +73,7 @@ func (m *Gauge) GetCoins() github_com_cosmos_cosmos_sdk_types.Coins {
 	return nil
 }
 
-// RewardGauge is an object that stores rewards distributed to a BTC staking/timestamping stakeholder
+// RewardGauge is an object that stores rewards distributed to a BTC staking stakeholder
 // code adapted from https://github.com/osmosis-labs/osmosis/blob/v18.0.0/proto/osmosis/incentives/gauge.proto
 type RewardGauge struct {
 	// coins are coins that have been in the gauge

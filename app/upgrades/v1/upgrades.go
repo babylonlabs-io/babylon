@@ -33,6 +33,8 @@ import (
 	btcstktypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	finalitykeeper "github.com/babylonlabs-io/babylon/x/finality/keeper"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	incentivekeeper "github.com/babylonlabs-io/babylon/x/incentive/keeper"
+	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	mintkeeper "github.com/babylonlabs-io/babylon/x/mint/keeper"
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 )
@@ -82,9 +84,11 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHand
 				keepers.EncCfg.Codec,
 				&keepers.BTCStakingKeeper,
 				&keepers.FinalityKeeper,
+				&keepers.IncentiveKeeper,
 				&keepers.WasmKeeper,
 				upgradeDataStr.BtcStakingParamStr,
 				upgradeDataStr.FinalityParamStr,
+				upgradeDataStr.IncentiveParamStr,
 				upgradeDataStr.CosmWasmParamStr,
 			)
 			if err != nil {
@@ -130,8 +134,9 @@ func upgradeParameters(
 	cdc codec.Codec,
 	btcK *btcstkkeeper.Keeper,
 	finK *finalitykeeper.Keeper,
+	iK *incentivekeeper.Keeper,
 	wasmK *wasmkeeper.Keeper,
-	btcStakingParam, finalityParam, wasmParam string,
+	btcStakingParam, finalityParam, incentiveParam, wasmParam string,
 ) error {
 	// Upgrade the staking parameters as first, as other upgrades depend on it.
 	if err := upgradeBtcStakingParameters(ctx, cdc, btcK, btcStakingParam); err != nil {
@@ -140,8 +145,25 @@ func upgradeParameters(
 	if err := upgradeFinalityParameters(ctx, cdc, finK, finalityParam); err != nil {
 		return err
 	}
+	if err := upgradeIncentiveParameters(ctx, cdc, iK, incentiveParam); err != nil {
+		return err
+	}
 
 	return upgradeCosmWasmParameters(ctx, cdc, wasmK, wasmParam)
+}
+
+func upgradeIncentiveParameters(
+	ctx sdk.Context,
+	cdc codec.Codec,
+	k *incentivekeeper.Keeper,
+	incentiveParam string,
+) error {
+	params, err := LoadIncentiveParamsFromData(cdc, incentiveParam)
+	if err != nil {
+		return err
+	}
+
+	return k.SetParams(ctx, params)
 }
 
 func upgradeCosmWasmParameters(
@@ -259,6 +281,18 @@ func LoadFinalityParamsFromData(cdc codec.Codec, data string) (finalitytypes.Par
 	err := cdc.UnmarshalJSON(buff.Bytes(), &params)
 	if err != nil {
 		return finalitytypes.Params{}, err
+	}
+
+	return params, nil
+}
+
+func LoadIncentiveParamsFromData(cdc codec.Codec, data string) (incentivetypes.Params, error) {
+	buff := bytes.NewBufferString(data)
+
+	var params incentivetypes.Params
+	err := cdc.UnmarshalJSON(buff.Bytes(), &params)
+	if err != nil {
+		return incentivetypes.Params{}, err
 	}
 
 	return params, nil
