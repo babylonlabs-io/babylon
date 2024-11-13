@@ -62,6 +62,7 @@ in checkpointing module
 implementation
 * [#254](https://github.com/babylonlabs-io/babylon/pull/254) Avoid constant
 bech-32 decoding in power table
+* [#265](https://github.com/babylonlabs-io/babylon/pull/265) Add allow list for staking txs
 
 ## v0.15.0
 
