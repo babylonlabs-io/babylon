@@ -35,8 +35,10 @@ This upgrade loads 5 JSONs from strings in different files.
 - BTC Headers at `./data_btc_headers.go`
 - Tokens distribution at `./data_token_distribution.go`
 - BTC Staking Parameters `./btcstaking_params.go`
+- Incentive Parameters `./incentive.go`
 - Finality Parameters `./finality_params.go`
 - CosmWasm Parameters `./cosmwasm_params.go`
+- Allowed Staking Tx Hashes `./allowed_staking_tx_hashes.go`
 
 ### BTC Headers
 
