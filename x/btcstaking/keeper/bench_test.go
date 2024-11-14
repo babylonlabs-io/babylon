@@ -66,6 +66,7 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 				0,
 				0,
 				true,
+				false,
 			)
 			h.NoError(err)
 			// retrieve BTC delegation in DB
