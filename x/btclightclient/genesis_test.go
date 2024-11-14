@@ -55,7 +55,6 @@ func TestImportExport(t *testing.T) {
 
 	chainExtension := datagen.GenRandomValidChainStartingFrom(
 		r,
-		initTip.Height,
 		initTip.Header.ToBlockHeader(),
 		nil,
 		10,
@@ -71,7 +70,6 @@ func TestImportExport(t *testing.T) {
 
 	newChainExt := datagen.GenRandomValidChainStartingFrom(
 		r,
-		newTip.Height,
 		newTip.Header.ToBlockHeader(),
 		nil,
 		10,
@@ -94,5 +92,5 @@ func TestImportExport(t *testing.T) {
 
 	failedKVAs, failedKVBs := thelper.DiffKVStores(KvA, KvB, [][]byte{})
 	require.Equal(t, len(failedKVAs), len(failedKVBs), "unequal sets of key-values to compare btcligthclient")
-	require.Equal(t, len(failedKVAs), 0, "should not exist any difference froms states.")
+	require.Equal(t, len(failedKVAs), 0, "should not exist any difference between states.")
 }

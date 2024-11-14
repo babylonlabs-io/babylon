@@ -109,9 +109,11 @@ func (k Keeper) RecentEpochStatusCount(ctx context.Context, req *types.QueryRece
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the last checkpointed epoch")
 	}
-	targetEpoch := tipEpoch - req.EpochCount + 1
-	if targetEpoch < 0 { //nolint:staticcheck // uint64 doesn't go below zero
+	targetEpoch := tipEpoch
+	if req.EpochCount > tipEpoch {
 		targetEpoch = 0
+	} else {
+		targetEpoch -= req.EpochCount - 1
 	}
 	// iterate epochs in the reverse order and count epoch numbers for each status
 	epochStatusCount := make(map[string]uint64, 0)
@@ -146,13 +148,22 @@ func (k Keeper) LastCheckpointWithStatus(ctx context.Context, req *types.QueryLa
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the last checkpointed epoch number: %w", err)
 	}
-	for e := int(tipCheckpointedEpoch); e >= 0; e-- {
-		ckpt, err := k.GetRawCheckpoint(sdkCtx, uint64(e))
+	// This loop iterates indefinitely, as tipCheckpointedEpoch is a uint64
+	// that can only go up to 0 and not lower.
+	// Given that we want to also check epoch 0, we have this loop iterate
+	// indefinitely and specify the end-condition at the end of the loop
+	// i.e. we break if we have processed epoch 0.
+	for e := tipCheckpointedEpoch; ; e-- {
+		ckpt, err := k.GetRawCheckpoint(sdkCtx, e)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get the raw checkpoint at epoch %v: %w", e, err)
 		}
 		if ckpt.Status == req.Status || ckpt.IsMoreMatureThanStatus(req.Status) {
 			return &types.QueryLastCheckpointWithStatusResponse{RawCheckpoint: ckpt.Ckpt.ToResponse()}, nil
+		}
+		// break as there are no more epochs to process
+		if e == 0 {
+			break
 		}
 	}
 	return nil, fmt.Errorf("cannot find checkpoint with status %v", req.Status)

@@ -19,18 +19,6 @@ func TestBTCTimestampingTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCTimestampingTestSuite))
 }
 
-// TestBTCTimestampingPhase2HermesTestSuite tests BTC timestamping phase 2 protocol end-to-end,
-// with the Hermes relayer
-func TestBTCTimestampingPhase2HermesTestSuite(t *testing.T) {
-	suite.Run(t, new(BTCTimestampingPhase2HermesTestSuite))
-}
-
-// TestBTCTimestampingPhase2RlyTestSuite tests BTC timestamping phase 2 protocol end-to-end,
-// with the Go relayer
-func TestBTCTimestampingPhase2RlyTestSuite(t *testing.T) {
-	suite.Run(t, new(BTCTimestampingPhase2RlyTestSuite))
-}
-
 // TestBTCStakingTestSuite tests BTC staking protocol end-to-end
 func TestBTCStakingTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingTestSuite))
@@ -46,7 +34,11 @@ func TestBCDConsumerIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(BCDConsumerIntegrationTestSuite))
 }
 
-// TestSoftwareUpgradeSignetLaunchTestSuite tests software upgrade of signet launch end-to-end
-func TestSoftwareUpgradeSignetLaunchTestSuite(t *testing.T) {
-	suite.Run(t, new(SoftwareUpgradeSignetLaunchTestSuite))
+func TestBTCStakingPreApprovalTestSuite(t *testing.T) {
+	suite.Run(t, new(BTCStakingPreApprovalTestSuite))
+}
+
+// TestSoftwareUpgradeV1TestnetTestSuite tests software upgrade of v1 testnet end-to-end
+func TestSoftwareUpgradeV1TestnetTestSuite(t *testing.T) {
+	suite.Run(t, new(SoftwareUpgradeV1TestnetTestSuite))
 }

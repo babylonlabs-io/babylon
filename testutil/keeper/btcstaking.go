@@ -24,14 +24,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func BTCStakingKeeper(
+func BTCStakingKeeperWithStore(
 	t testing.TB,
+	db dbm.DB,
+	stateStore store.CommitMultiStore,
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
-	finalityKeeper types.FinalityKeeper,
-) (*keeper.Keeper, *bsckeeper.Keeper, sdk.Context) {
-	db := dbm.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+	iKeeper types.IncentiveKeeper,
+) (*keeper.Keeper, sdk.Context) {
+	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
+
+	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
+	require.NoError(t, stateStore.LoadLatestVersion())
 
 	registry := codectypes.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
@@ -59,8 +63,7 @@ func BTCStakingKeeper(
 		runtime.NewKVStoreService(storeKey),
 		btclcKeeper,
 		btccKeeper,
-		finalityKeeper,
-		bscKeeper,
+		iKeeper,
 		&chaincfg.SimNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -68,10 +71,24 @@ func BTCStakingKeeper(
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())
 	ctx = ctx.WithHeaderInfo(header.Info{})
 
+	return &k, ctx
+}
+
+func BTCStakingKeeper(
+	t testing.TB,
+	btclcKeeper types.BTCLightClientKeeper,
+	btccKeeper types.BtcCheckpointKeeper,
+	iKeeper types.IncentiveKeeper,
+) (*keeper.Keeper, sdk.Context) {
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+
+	k, ctx := BTCStakingKeeperWithStore(t, db, stateStore, btclcKeeper, btccKeeper, iKeeper)
+
 	// Initialize params
 	if err := k.SetParams(ctx, types.DefaultParams()); err != nil {
 		panic(err)
 	}
 
-	return &k, &bscKeeper, ctx
+	return k, ctx
 }

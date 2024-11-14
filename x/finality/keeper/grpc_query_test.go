@@ -11,13 +11,213 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
+
+func FuzzActivatedHeight(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		// Setup keeper and context
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
+		ctx = sdk.UnwrapSDKContext(ctx)
+
+		// not activated yet
+		_, err := keeper.GetBTCStakingActivatedHeight(ctx)
+		require.Error(t, err)
+
+		randomActivatedHeight := datagen.RandomInt(r, 100) + 1
+		fp, err := datagen.GenRandomFinalityProvider(r)
+		require.NoError(t, err)
+		keeper.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), randomActivatedHeight, uint64(10))
+
+		// now it's activated
+		resp, err := keeper.ActivatedHeight(ctx, &types.QueryActivatedHeightRequest{})
+		require.NoError(t, err)
+		require.Equal(t, randomActivatedHeight, resp.Height)
+	})
+}
+
+func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// Setup keeper and context
+		bk := types.NewMockBTCStakingKeeper(ctrl)
+		keeper, ctx := testkeeper.FinalityKeeper(t, bk, nil, nil)
+
+		// random finality provider
+		fp, err := datagen.GenRandomFinalityProvider(r)
+		require.NoError(t, err)
+		// set random voting power at random height
+		randomHeight := datagen.RandomInt(r, 100) + 1
+		randomPower := datagen.RandomInt(r, 100) + 1
+		keeper.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), randomHeight, randomPower)
+
+		// happy case
+		bk.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Any()).Return(true).Times(1)
+		req1 := &types.QueryFinalityProviderPowerAtHeightRequest{
+			FpBtcPkHex: fp.BtcPk.MarshalHex(),
+			Height:     randomHeight,
+		}
+		resp, err := keeper.FinalityProviderPowerAtHeight(ctx, req1)
+		require.NoError(t, err)
+		require.Equal(t, randomPower, resp.VotingPower)
+
+		// case where the voting power store is not updated in
+		// the given height
+		bk.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Any()).Return(true).Times(1)
+		requestHeight := randomHeight + datagen.RandomInt(r, 10) + 1
+		req2 := &types.QueryFinalityProviderPowerAtHeightRequest{
+			FpBtcPkHex: fp.BtcPk.MarshalHex(),
+			Height:     requestHeight,
+		}
+		_, err = keeper.FinalityProviderPowerAtHeight(ctx, req2)
+		require.ErrorIs(t, err, types.ErrVotingPowerTableNotUpdated)
+
+		// case where the given fp pk does not exist
+		bk.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Any()).Return(false).Times(1)
+		randPk, err := datagen.GenRandomBIP340PubKey(r)
+		require.NoError(t, err)
+		req3 := &types.QueryFinalityProviderPowerAtHeightRequest{
+			FpBtcPkHex: randPk.MarshalHex(),
+			Height:     randomHeight,
+		}
+		_, err = keeper.FinalityProviderPowerAtHeight(ctx, req3)
+		require.ErrorIs(t, err, bstypes.ErrFpNotFound)
+	})
+}
+
+func FuzzFinalityProviderCurrentVotingPower(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// Setup keeper and context
+		bk := types.NewMockBTCStakingKeeper(ctrl)
+		bk.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+		keeper, ctx := testkeeper.FinalityKeeper(t, bk, nil, nil)
+
+		// random finality provider
+		fp, err := datagen.GenRandomFinalityProvider(r)
+		require.NoError(t, err)
+		// set random voting power at random height
+		randomHeight := datagen.RandomInt(r, 100) + 1
+		ctx = datagen.WithCtxHeight(ctx, randomHeight)
+		randomPower := datagen.RandomInt(r, 100) + 1
+		keeper.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), randomHeight, randomPower)
+
+		// assert voting power at current height
+		req := &types.QueryFinalityProviderCurrentPowerRequest{
+			FpBtcPkHex: fp.BtcPk.MarshalHex(),
+		}
+		resp, err := keeper.FinalityProviderCurrentPower(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, randomHeight, resp.Height)
+		require.Equal(t, randomPower, resp.VotingPower)
+
+		// if height increments but voting power hasn't recorded yet, then
+		// we need to return the height and voting power at the last height
+		ctx = datagen.WithCtxHeight(ctx, randomHeight+1)
+		resp, err = keeper.FinalityProviderCurrentPower(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, randomHeight, resp.Height)
+		require.Equal(t, randomPower, resp.VotingPower)
+
+		// test the case when the finality provider has 0 voting power
+		ctx = datagen.WithCtxHeight(ctx, randomHeight+2)
+		keeper.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), randomHeight+2, 0)
+		resp, err = keeper.FinalityProviderCurrentPower(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, randomHeight+2, resp.Height)
+		require.Equal(t, uint64(0), resp.VotingPower)
+	})
+}
+
+func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := bstypes.NewMockBTCLightClientKeeper(ctrl)
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+		btccKeeper := bstypes.NewMockBtcCheckpointKeeper(ctrl)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+
+		h.GenAndApplyParams(r)
+
+		// Generate a random batch of finality providers
+		var fps []*bstypes.FinalityProvider
+		numFpsWithVotingPower := datagen.RandomInt(r, 10) + 1
+		numFps := numFpsWithVotingPower + datagen.RandomInt(r, 10)
+		for i := uint64(0); i < numFps; i++ {
+			_, _, fp := h.CreateFinalityProvider(r)
+			fps = append(fps, fp)
+		}
+
+		// For numFpsWithVotingPower finality providers, generate a random number of BTC delegations
+		babylonHeight := datagen.RandomInt(r, 10) + 1
+		fpsWithVotingPowerMap := make(map[string]*bstypes.FinalityProvider)
+		for i := uint64(0); i < numFpsWithVotingPower; i++ {
+			fpBTCPK := fps[i].BtcPk
+			fpsWithVotingPowerMap[fpBTCPK.MarshalHex()] = fps[i]
+			h.FinalityKeeper.SetVotingPower(h.Ctx, fpBTCPK.MustMarshal(), babylonHeight, 1)
+		}
+
+		h.BeginBlocker()
+
+		// Test nil request
+		resp, err := h.FinalityKeeper.ActiveFinalityProvidersAtHeight(h.Ctx, nil)
+		require.Nil(t, resp)
+		require.Error(t, err)
+
+		// Generate a page request with a limit and a nil key
+		limit := datagen.RandomInt(r, int(numFpsWithVotingPower)) + 1
+		pagination := constructRequestWithLimit(r, limit)
+		// Generate the initial query
+		req := types.QueryActiveFinalityProvidersAtHeightRequest{Height: babylonHeight, Pagination: pagination}
+		// Construct a mapping from the finality providers found to a boolean value
+		// Will be used later to evaluate whether all the finality providers were returned
+		fpsFound := make(map[string]bool, 0)
+
+		for i := uint64(0); i < numFpsWithVotingPower; i += limit {
+			resp, err = h.FinalityKeeper.ActiveFinalityProvidersAtHeight(h.Ctx, &req)
+			h.NoError(err)
+			require.NotNil(t, resp)
+
+			for _, fp := range resp.FinalityProviders {
+				// Check if the pk exists in the map
+				if _, ok := fpsWithVotingPowerMap[fp.BtcPkHex.MarshalHex()]; !ok {
+					t.Fatalf("rpc returned a finality provider that was not created")
+				}
+				fpsFound[fp.BtcPkHex.MarshalHex()] = true
+			}
+
+			// Construct the next page request
+			pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
+			req = types.QueryActiveFinalityProvidersAtHeightRequest{Height: babylonHeight, Pagination: pagination}
+		}
+
+		require.Equal(t, len(fpsFound), len(fpsWithVotingPowerMap), "some finality providers were missed, got %d while %d were expected", len(fpsFound), len(fpsWithVotingPowerMap))
+	})
+}
 
 func FuzzBlock(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
@@ -297,8 +497,8 @@ func FuzzQueryEvidence(f *testing.F) {
 			require.Nil(t, evidenceResp)
 		} else {
 			require.NoError(t, err)
-			require.Equal(t, randomFirstSlashableEvidence, evidenceResp.Evidence)
-			require.True(t, evidenceResp.Evidence.IsSlashable())
+			require.Equal(t, randomFirstSlashableEvidence, convertToEvidence(evidenceResp.Evidence))
+			require.True(t, convertToEvidence(evidenceResp.Evidence).IsSlashable())
 		}
 	})
 }
@@ -360,9 +560,10 @@ func FuzzListEvidences(f *testing.F) {
 		require.NoError(t, err)
 		require.LessOrEqual(t, len(resp.Evidences), int(limit))     // check if pagination takes effect
 		require.EqualValues(t, resp.Pagination.Total, numEvidences) // ensure evidences before startHeight are not included
-		for _, actualEvidence := range resp.Evidences {
-			require.Equal(t, evidences[actualEvidence.FpBtcPk.MarshalHex()].CanonicalAppHash, actualEvidence.CanonicalAppHash)
-			require.Equal(t, evidences[actualEvidence.FpBtcPk.MarshalHex()].ForkAppHash, actualEvidence.ForkAppHash)
+		for _, actualEvidenceResponse := range resp.Evidences {
+			actualEvidence := convertToEvidence(actualEvidenceResponse)
+			expectedEvidence := evidences[actualEvidenceResponse.FpBtcPkHex]
+			require.Equal(t, expectedEvidence, actualEvidence)
 		}
 	})
 }
@@ -404,9 +605,9 @@ func FuzzSigningInfo(f *testing.F) {
 			req := &types.QuerySigningInfoRequest{FpBtcPkHex: fpPk}
 			resp, err := fKeeper.SigningInfo(ctx, req)
 			require.NoError(t, err)
-			require.Equal(t, fpSigningInfos[fpPk].StartHeight, resp.FpSigningInfo.StartHeight)
-			require.Equal(t, fpSigningInfos[fpPk].MissedBlocksCounter, resp.FpSigningInfo.MissedBlocksCounter)
-			require.Equal(t, fpPk, resp.FpSigningInfo.FpBtcPk.MarshalHex())
+			require.Equal(t, fpSigningInfos[fpPk].StartHeight, resp.SigningInfo.StartHeight)
+			require.Equal(t, fpSigningInfos[fpPk].MissedBlocksCounter, resp.SigningInfo.MissedBlocksCounter)
+			require.Equal(t, fpPk, resp.SigningInfo.FpBtcPkHex)
 		}
 
 		// perform a query for signing info of non-exist finality provider
@@ -427,12 +628,46 @@ func FuzzSigningInfo(f *testing.F) {
 		}
 		resp, err := fKeeper.SigningInfos(ctx, req)
 		require.NoError(t, err)
-		require.LessOrEqual(t, len(resp.FpSigningInfos), int(limit))  // check if pagination takes effect
+		require.LessOrEqual(t, len(resp.SigningInfos), int(limit))    // check if pagination takes effect
 		require.EqualValues(t, resp.Pagination.Total, numSigningInfo) // ensure evidences before startHeight are not included
-		for _, si := range resp.FpSigningInfos {
-			require.Equal(t, fpSigningInfos[si.FpBtcPk.MarshalHex()].MissedBlocksCounter, si.MissedBlocksCounter)
-			require.Equal(t, fpSigningInfos[si.FpBtcPk.MarshalHex()].FpBtcPk.MarshalHex(), si.FpBtcPk.MarshalHex())
-			require.Equal(t, fpSigningInfos[si.FpBtcPk.MarshalHex()].StartHeight, si.StartHeight)
+		for _, si := range resp.SigningInfos {
+			require.Equal(t, fpSigningInfos[si.FpBtcPkHex].MissedBlocksCounter, si.MissedBlocksCounter)
+			require.Equal(t, fpSigningInfos[si.FpBtcPkHex].StartHeight, si.StartHeight)
 		}
 	})
+}
+
+func convertToEvidence(er *types.EvidenceResponse) *types.Evidence {
+	fpBtcPk, err := bbn.NewBIP340PubKeyFromHex(er.FpBtcPkHex)
+	if err != nil {
+		return nil
+	}
+	return &types.Evidence{
+		FpBtcPk:              fpBtcPk,
+		BlockHeight:          er.BlockHeight,
+		PubRand:              er.PubRand,
+		CanonicalAppHash:     er.CanonicalAppHash,
+		ForkAppHash:          er.ForkAppHash,
+		CanonicalFinalitySig: er.CanonicalFinalitySig,
+		ForkFinalitySig:      er.ForkFinalitySig,
+	}
+}
+
+// Constructors for PageRequest objects
+func constructRequestWithKeyAndLimit(r *rand.Rand, key []byte, limit uint64) *query.PageRequest {
+	// If limit is 0, set one randomly
+	if limit == 0 {
+		limit = uint64(r.Int63() + 1) // Use Int63 instead of Uint64 to avoid overflows
+	}
+	return &query.PageRequest{
+		Key:        key,
+		Offset:     0, // only offset or key is set
+		Limit:      limit,
+		CountTotal: false, // only used when offset is used
+		Reverse:    false,
+	}
+}
+
+func constructRequestWithLimit(r *rand.Rand, limit uint64) *query.PageRequest {
+	return constructRequestWithKeyAndLimit(r, nil, limit)
 }

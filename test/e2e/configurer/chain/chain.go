@@ -190,7 +190,7 @@ func (c *Config) TxGovVoteFromAllNodes(propID int, option govv1.VoteOption, over
 
 // BTCHeaderBytesHexJoined join all the btc headers as byte string hex
 func (c *Config) BTCHeaderBytesHexJoined() string {
-	if c.BTCHeaders == nil || len(c.BTCHeaders) == 0 {
+	if len(c.BTCHeaders) == 0 {
 		return ""
 	}
 

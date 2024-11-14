@@ -1,12 +1,11 @@
 # Release Process
 
-- [Release Process](#release-process)
-  - [Breaking Changes](#breaking-changes)
-  - [Release Procedure](#release-procedure)
-    - [Creating a new release branch](#creating-a-new-release-branch)
-    - [Cutting a new release](#cutting-a-new-release)
-    - [Tagging Procedure](#tagging-procedure)
-  - [Patch release Procedure](#patch-release-procedure)
+- [Breaking Changes](#breaking-changes)
+- [Release Procedure](#release-procedure)
+  - [Creating a new release branch](#creating-a-new-release-branch)
+  - [Cutting a new release](#cutting-a-new-release)
+  - [Tagging Procedure](#tagging-procedure)
+- [Patch Release Procedure](#patch-release-procedure)
 
 This document outlines the release process for the Babylon node (babylond)
 
@@ -111,6 +110,10 @@ git pull --tags
 
 git tag -s -a v0.10.0-rc.0 -m "Version v0.10.0-rc.0"
 ```
+
+With every tag, the Github action will use the `goreleaser` tool to create a
+release, including artifacts and their checksums.
+
 ## Patch Release Procedure
 
 A _patch release_ is an increment of the patch number (eg: `v10.0.0` → `v10.0.1`).
@@ -119,10 +122,13 @@ A _patch release_ is an increment of the patch number (eg: `v10.0.0` → `v10.0.
 circumstances .**_
 
 Updates to the release branch should come from `main` by backporting PRs
-(usually done by automatic cherry pick followed by a PRs to the release branch).
-The backports must be marked using `backport/Y` label in PR for main.
-It is the PR author's responsibility to fix merge conflicts and
-ensure CI passes.
+(usually done by automatic cherry pick followed by a PR to the release branch).
+The backports must be marked using `backport release/v0.Y.x` label in PR for
+`main`, where `release/v0.Y.x` is the name of the release branch. It is the PR
+author's responsibility to fix merge conflicts, update changelog entries, and
+ensure CI passes. If a PR originates from an external contributor, a member of
+the stewarding team assumes responsibility to perform this process instead of
+the original author.
 
 After the release branch has all commits required for the next patch release:
 * Create a new annotated git tag in the release

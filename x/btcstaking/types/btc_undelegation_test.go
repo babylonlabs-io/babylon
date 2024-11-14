@@ -5,14 +5,15 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
+	"github.com/stretchr/testify/require"
+
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 	btctest "github.com/babylonlabs-io/babylon/testutil/bitcoin"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/txscript"
-	"github.com/stretchr/testify/require"
 )
 
 func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
@@ -47,9 +48,9 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			CovenantPks:    bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
 			CovenantQuorum: covenantQuorum,
 		}
-		covenantSigners := covenantSKs[:covenantQuorum]
+		covenantSigners := covenantSKs
 
-		stakingTimeBlocks := uint16(5)
+		stakingTimeBlocks := uint32(5)
 		stakingValue := int64(2 * 10e8)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
@@ -72,8 +73,9 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			covenantPKs,
 			covenantQuorum,
 			slashingPkScript,
+			stakingTimeBlocks,
 			1000,
-			uint64(1000+stakingTimeBlocks),
+			uint32(stakingTimeBlocks)+1000,
 			uint64(stakingValue),
 			slashingRate,
 			slashingChangeLockTime,

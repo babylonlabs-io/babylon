@@ -40,7 +40,7 @@ func (s headersState) insertHeader(h *types.BTCHeaderInfo) {
 
 	// save concrete object
 	s.headers.Set(headersKey, s.cdc.MustMarshal(h))
-	s.hashToHeight.Set(heightKey, sdk.Uint64ToBigEndian(h.Height))
+	s.hashToHeight.Set(heightKey, sdk.Uint64ToBigEndian(uint64(h.Height)))
 }
 
 func (s headersState) deleteHeader(h *types.BTCHeaderInfo) {
@@ -53,7 +53,7 @@ func (s headersState) deleteHeader(h *types.BTCHeaderInfo) {
 	s.hashToHeight.Delete(heightKey)
 }
 
-func (s headersState) rollBackHeadersUpTo(height uint64) {
+func (s headersState) rollBackHeadersUpTo(height uint32) {
 	headersToDelete := make([]*types.BTCHeaderInfo, 0)
 
 	handleInfoFn := func(header *types.BTCHeaderInfo) bool {
@@ -80,7 +80,7 @@ func (s headersState) rollBackHeadersUpTo(height uint64) {
 }
 
 // GetHeaderByHeight Retrieve a header by its height and hash
-func (s headersState) GetHeaderByHeight(height uint64) (*types.BTCHeaderInfo, error) {
+func (s headersState) GetHeaderByHeight(height uint32) (*types.BTCHeaderInfo, error) {
 	headersKey := types.HeadersObjectKey(height)
 
 	// Retrieve the raw bytes
@@ -165,7 +165,7 @@ func (s headersState) IterateReverseHeaders(fn func(*types.BTCHeaderInfo) bool) 
 // - if startPoint is lower that the lowest height, it will start from the lowest height
 // - if startPoint is higher than the highest height, it will not iterate at all i.e provided
 // callback will not be called
-func (s headersState) IterateForwardHeaders(startPoint uint64, fn func(*types.BTCHeaderInfo) bool) {
+func (s headersState) IterateForwardHeaders(startPoint uint32, fn func(*types.BTCHeaderInfo) bool) {
 	// Iterate it in increasing order to get lowest heights first
 	var startKey []byte = nil
 	if startPoint != 0 {

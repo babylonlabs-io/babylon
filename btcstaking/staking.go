@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
@@ -14,8 +15,15 @@ import (
 	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+)
 
-	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+const (
+	// MaxTxVersion is the maximum transaction version allowed in Babylon system.
+	// Changing that constant will require upgrade in the future, if we ever need
+	// to support v3 transactions.
+	MaxTxVersion = 2
+
+	MaxStandardTxWeight = 400000
 )
 
 // buildSlashingTxFromOutpoint builds a valid slashing transaction by creating a new Bitcoin transaction that slashes a portion
@@ -78,7 +86,7 @@ func buildSlashingTxFromOutpoint(
 	// Create a new btc transaction
 	tx := wire.NewMsgTx(wire.TxVersion)
 	// TODO: this builds input with sequence number equal to MaxTxInSequenceNum, which
-	// means this tx is not replacable.
+	// means this tx is not replaceable.
 	input := wire.NewTxIn(&stakingOutput, nil, nil)
 	tx.AddTxIn(input)
 	tx.AddTxOut(wire.NewTxOut(int64(slashingAmount), slashingPkScript))
@@ -102,7 +110,7 @@ func getPossibleStakingOutput(
 		return nil, fmt.Errorf("provided staking transaction must not be nil")
 	}
 
-	if stakingOutputIdx >= uint32(len(stakingTx.TxOut)) {
+	if int(stakingOutputIdx) >= len(stakingTx.TxOut) {
 		return nil, fmt.Errorf("invalid staking output index %d, tx has %d outputs", stakingOutputIdx, len(stakingTx.TxOut))
 	}
 
@@ -157,7 +165,7 @@ func BuildSlashingTxFromStakingTxStrict(
 	stakingTxHash := stakingTx.TxHash()
 	stakingOutpoint := wire.NewOutPoint(&stakingTxHash, stakingOutputIdx)
 
-	// Create taproot address commiting to timelock script
+	// Create taproot address committing to timelock script
 	si, err := BuildRelativeTimelockTaprootScript(
 		stakerPk,
 		slashChangeLockTime,
@@ -198,21 +206,104 @@ func IsTransferTx(tx *wire.MsgTx) error {
 // IsSimpleTransfer Simple transfer transaction is a transaction which:
 // - has exactly one input
 // - has exactly one output
-// - is not replacable
+// - is not replaceable
 // - does not have any locktime
 func IsSimpleTransfer(tx *wire.MsgTx) error {
 	if err := IsTransferTx(tx); err != nil {
-		return fmt.Errorf("invalid simple tansfer tx: %w", err)
+		return fmt.Errorf("invalid simple transfer tx: %w", err)
 	}
 
 	if tx.TxIn[0].Sequence != wire.MaxTxInSequenceNum {
-		return fmt.Errorf("simple transfer tx must not be replacable")
+		return fmt.Errorf("simple transfer tx must not be replaceable")
 	}
 
 	if tx.LockTime != 0 {
 		return fmt.Errorf("simple transfer tx must not have locktime")
 	}
 	return nil
+}
+
+// CheckPreSignedTxSanity performs basic checks on a pre-signed transaction:
+// - the transaction is not nil.
+// - the transaction obeys basic BTC rules.
+// - the transaction has exactly numInputs inputs.
+// - the transaction has exactly numOutputs outputs.
+// - the transaction lock time is 0.
+// - the transaction version is between 1 and maxTxVersion.
+// - each input has a sequence number equal to MaxTxInSequenceNum.
+// - each input has an empty signature script.
+// - each input has an empty witness.
+func CheckPreSignedTxSanity(
+	tx *wire.MsgTx,
+	numInputs, numOutputs uint32,
+	maxTxVersion int32,
+) error {
+	if tx == nil {
+		return fmt.Errorf("tx must not be nil")
+	}
+
+	transaction := btcutil.NewTx(tx)
+
+	if err := blockchain.CheckTransactionSanity(transaction); err != nil {
+		return fmt.Errorf("btc transaction do not obey BTC rules: %w", err)
+	}
+
+	if len(tx.TxIn) != int(numInputs) {
+		return fmt.Errorf("tx must have exactly %d inputs", numInputs)
+	}
+
+	if len(tx.TxOut) != int(numOutputs) {
+		return fmt.Errorf("tx must have exactly %d outputs", numOutputs)
+	}
+
+	// this requirement makes every pre-signed tx final
+	if tx.LockTime != 0 {
+		return fmt.Errorf("pre-signed tx must not have locktime")
+	}
+
+	if tx.Version > maxTxVersion || tx.Version < 1 {
+		return fmt.Errorf("tx version must be between 1 and %d", maxTxVersion)
+	}
+
+	txWeight := blockchain.GetTransactionWeight(transaction)
+
+	// Check that the transaction weight does not exceed the maximum standard tx weight
+	// alternative would be to require len(in.Witness) == 0 for all inptus.
+	if txWeight > MaxStandardTxWeight {
+		return fmt.Errorf("tx weight must not exceed %d", MaxStandardTxWeight)
+	}
+
+	for _, in := range tx.TxIn {
+		if in.Sequence != wire.MaxTxInSequenceNum {
+			return fmt.Errorf("pre-signed tx must not be replaceable")
+		}
+
+		// We require this to be 0, as all babylon pre-signed transactions use
+		// witness
+		if len(in.SignatureScript) != 0 {
+			return fmt.Errorf("pre-signed tx must not have signature script")
+		}
+	}
+
+	return nil
+}
+
+func CheckPreSignedUnbondingTxSanity(tx *wire.MsgTx) error {
+	return CheckPreSignedTxSanity(
+		tx,
+		1,
+		1,
+		MaxTxVersion,
+	)
+}
+
+func CheckPreSignedSlashingTxSanity(tx *wire.MsgTx) error {
+	return CheckPreSignedTxSanity(
+		tx,
+		1,
+		2,
+		MaxTxVersion,
+	)
 }
 
 // validateSlashingTx performs basic checks on a slashing transaction:
@@ -235,29 +326,9 @@ func validateSlashingTx(
 	slashingChangeLockTime uint16,
 	net *chaincfg.Params,
 ) error {
-	// Verify that the slashing transaction is not nil.
-	if slashingTx == nil {
-		return fmt.Errorf("slashing transaction must not be nil")
-	}
 
-	// Verify that the slashing transaction has exactly one input.
-	if len(slashingTx.TxIn) != 1 {
-		return fmt.Errorf("slashing transaction must have exactly one input")
-	}
-
-	// Verify that the slashing transaction is non-replaceable.
-	if slashingTx.TxIn[0].Sequence != wire.MaxTxInSequenceNum {
-		return fmt.Errorf("slashing transaction must not be replaceable")
-	}
-
-	// Verify that lock time of the slashing transaction is 0.
-	if slashingTx.LockTime != 0 {
-		return fmt.Errorf("slashing tx must not have locktime")
-	}
-
-	// Verify that the slashing transaction has exactly two outputs.
-	if len(slashingTx.TxOut) != 2 {
-		return fmt.Errorf("slashing transaction must have exactly 2 outputs")
+	if err := CheckPreSignedSlashingTxSanity(slashingTx); err != nil {
+		return fmt.Errorf("invalid slashing tx: %w", err)
 	}
 
 	// Verify that at least staking output value * slashing rate is slashed.
@@ -324,13 +395,13 @@ func validateSlashingTx(
 	return nil
 }
 
-// CheckTransactions validates all relevant data of slashing and funding transaction.
+// CheckSlashingTxMatchFundingTx validates all relevant data of slashing and funding transaction.
 // - both transactions are valid from pov of BTC rules
 // - funding transaction has output committing to the provided script
 // - slashing transaction is valid
 // - slashing transaction input hash is pointing to funding transaction hash
-// - slashing transaction input index is pointing to funding transaction output commiting to the script
-func CheckTransactions(
+// - slashing transaction input index is pointing to funding transaction output committing to the script
+func CheckSlashingTxMatchFundingTx(
 	slashingTx *wire.MsgTx,
 	fundingTransaction *wire.MsgTx,
 	fundingOutputIdx uint32,
@@ -343,10 +414,6 @@ func CheckTransactions(
 ) error {
 	if slashingTx == nil || fundingTransaction == nil {
 		return fmt.Errorf("slashing and funding transactions must not be nil")
-	}
-
-	if err := blockchain.CheckTransactionSanity(btcutil.NewTx(slashingTx)); err != nil {
-		return fmt.Errorf("slashing transaction does not obey BTC rules: %w", err)
 	}
 
 	if err := blockchain.CheckTransactionSanity(btcutil.NewTx(fundingTransaction)); err != nil {
@@ -363,7 +430,7 @@ func CheckTransactions(
 		return ErrInvalidSlashingRate
 	}
 
-	if fundingOutputIdx >= uint32(len(fundingTransaction.TxOut)) {
+	if int(fundingOutputIdx) >= len(fundingTransaction.TxOut) {
 		return fmt.Errorf("invalid funding output index %d, tx has %d outputs", fundingOutputIdx, len(fundingTransaction.TxOut))
 	}
 
@@ -552,7 +619,7 @@ func checkTxBeforeSigning(txToSign *wire.MsgTx, fundingTx *wire.MsgTx, fundingOu
 		return fmt.Errorf("tx to sign must have exactly one input")
 	}
 
-	if fundingOutputIdx >= uint32(len(fundingTx.TxOut)) {
+	if int(fundingOutputIdx) >= len(fundingTx.TxOut) {
 		return fmt.Errorf("invalid funding output index %d, tx has %d outputs", fundingOutputIdx, len(fundingTx.TxOut))
 	}
 

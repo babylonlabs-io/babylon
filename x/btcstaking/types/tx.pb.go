@@ -8,7 +8,6 @@ import (
 	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
 	github_com_babylonlabs_io_babylon_types "github.com/babylonlabs-io/babylon/types"
-	types1 "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
 	types "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -269,34 +268,36 @@ type MsgCreateBTCDelegation struct {
 	StakingTime uint32 `protobuf:"varint,5,opt,name=staking_time,json=stakingTime,proto3" json:"staking_time,omitempty"`
 	// staking_value  is the amount of satoshis locked in staking output
 	StakingValue int64 `protobuf:"varint,6,opt,name=staking_value,json=stakingValue,proto3" json:"staking_value,omitempty"`
-	// staking_tx is the staking tx along with the merkle proof of inclusion in btc block
-	StakingTx *types1.TransactionInfo `protobuf:"bytes,7,opt,name=staking_tx,json=stakingTx,proto3" json:"staking_tx,omitempty"`
+	// staking_tx is a bitcoin staking transaction i.e transaction that locks funds
+	StakingTx []byte `protobuf:"bytes,7,opt,name=staking_tx,json=stakingTx,proto3" json:"staking_tx,omitempty"`
+	// staking_tx_inclusion_proof is the inclusion proof of the staking tx in BTC chain
+	StakingTxInclusionProof *InclusionProof `protobuf:"bytes,8,opt,name=staking_tx_inclusion_proof,json=stakingTxInclusionProof,proto3" json:"staking_tx_inclusion_proof,omitempty"`
 	// slashing_tx is the slashing tx
 	// Note that the tx itself does not contain signatures, which are off-chain.
-	SlashingTx *BTCSlashingTx `protobuf:"bytes,8,opt,name=slashing_tx,json=slashingTx,proto3,customtype=BTCSlashingTx" json:"slashing_tx,omitempty"`
+	SlashingTx *BTCSlashingTx `protobuf:"bytes,9,opt,name=slashing_tx,json=slashingTx,proto3,customtype=BTCSlashingTx" json:"slashing_tx,omitempty"`
 	// delegator_slashing_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk).
 	// It will be a part of the witness for the staking tx output.
 	// The staking tx output further needs signatures from covenant and finality provider in
 	// order to be spendable.
-	DelegatorSlashingSig *github_com_babylonlabs_io_babylon_types.BIP340Signature `protobuf:"bytes,9,opt,name=delegator_slashing_sig,json=delegatorSlashingSig,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340Signature" json:"delegator_slashing_sig,omitempty"`
+	DelegatorSlashingSig *github_com_babylonlabs_io_babylon_types.BIP340Signature `protobuf:"bytes,10,opt,name=delegator_slashing_sig,json=delegatorSlashingSig,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340Signature" json:"delegator_slashing_sig,omitempty"`
 	// unbonding_time is the time lock used when funds are being unbonded. It is be used in:
 	// - unbonding transaction, time lock spending path
 	// - staking slashing transaction, change output
 	// - unbonding slashing transaction, change output
 	// It must be smaller than math.MaxUInt16 and larger that max(MinUnbondingTime, CheckpointFinalizationTimeout)
-	UnbondingTime uint32 `protobuf:"varint,10,opt,name=unbonding_time,json=unbondingTime,proto3" json:"unbonding_time,omitempty"`
+	UnbondingTime uint32 `protobuf:"varint,11,opt,name=unbonding_time,json=unbondingTime,proto3" json:"unbonding_time,omitempty"`
 	// fields related to unbonding transaction
 	// unbonding_tx is a bitcoin unbonding transaction i.e transaction that spends
 	// staking output and sends it to the unbonding output
-	UnbondingTx []byte `protobuf:"bytes,11,opt,name=unbonding_tx,json=unbondingTx,proto3" json:"unbonding_tx,omitempty"`
+	UnbondingTx []byte `protobuf:"bytes,12,opt,name=unbonding_tx,json=unbondingTx,proto3" json:"unbonding_tx,omitempty"`
 	// unbonding_value is amount of satoshis locked in unbonding output.
 	// NOTE: staking_value and unbonding_value could be different because of the difference between the fee for staking tx and that for unbonding
-	UnbondingValue int64 `protobuf:"varint,12,opt,name=unbonding_value,json=unbondingValue,proto3" json:"unbonding_value,omitempty"`
+	UnbondingValue int64 `protobuf:"varint,13,opt,name=unbonding_value,json=unbondingValue,proto3" json:"unbonding_value,omitempty"`
 	// unbonding_slashing_tx is the slashing tx which slash unbonding contract
 	// Note that the tx itself does not contain signatures, which are off-chain.
-	UnbondingSlashingTx *BTCSlashingTx `protobuf:"bytes,13,opt,name=unbonding_slashing_tx,json=unbondingSlashingTx,proto3,customtype=BTCSlashingTx" json:"unbonding_slashing_tx,omitempty"`
+	UnbondingSlashingTx *BTCSlashingTx `protobuf:"bytes,14,opt,name=unbonding_slashing_tx,json=unbondingSlashingTx,proto3,customtype=BTCSlashingTx" json:"unbonding_slashing_tx,omitempty"`
 	// delegator_unbonding_slashing_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk).
-	DelegatorUnbondingSlashingSig *github_com_babylonlabs_io_babylon_types.BIP340Signature `protobuf:"bytes,14,opt,name=delegator_unbonding_slashing_sig,json=delegatorUnbondingSlashingSig,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340Signature" json:"delegator_unbonding_slashing_sig,omitempty"`
+	DelegatorUnbondingSlashingSig *github_com_babylonlabs_io_babylon_types.BIP340Signature `protobuf:"bytes,15,opt,name=delegator_unbonding_slashing_sig,json=delegatorUnbondingSlashingSig,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340Signature" json:"delegator_unbonding_slashing_sig,omitempty"`
 }
 
 func (m *MsgCreateBTCDelegation) Reset()         { *m = MsgCreateBTCDelegation{} }
@@ -360,9 +361,16 @@ func (m *MsgCreateBTCDelegation) GetStakingValue() int64 {
 	return 0
 }
 
-func (m *MsgCreateBTCDelegation) GetStakingTx() *types1.TransactionInfo {
+func (m *MsgCreateBTCDelegation) GetStakingTx() []byte {
 	if m != nil {
 		return m.StakingTx
+	}
+	return nil
+}
+
+func (m *MsgCreateBTCDelegation) GetStakingTxInclusionProof() *InclusionProof {
+	if m != nil {
+		return m.StakingTxInclusionProof
 	}
 	return nil
 }
@@ -425,6 +433,111 @@ func (m *MsgCreateBTCDelegationResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgCreateBTCDelegationResponse proto.InternalMessageInfo
 
+// MsgAddBTCDelegationInclusionProof is the message for adding proof of inclusion of BTC delegation on BTC chain
+type MsgAddBTCDelegationInclusionProof struct {
+	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
+	// staking_tx_hash is the hash of the staking tx.
+	// It uniquely identifies a BTC delegation
+	StakingTxHash string `protobuf:"bytes,2,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
+	// staking_tx_inclusion_proof is the inclusion proof of the staking tx in BTC chain
+	StakingTxInclusionProof *InclusionProof `protobuf:"bytes,3,opt,name=staking_tx_inclusion_proof,json=stakingTxInclusionProof,proto3" json:"staking_tx_inclusion_proof,omitempty"`
+}
+
+func (m *MsgAddBTCDelegationInclusionProof) Reset()         { *m = MsgAddBTCDelegationInclusionProof{} }
+func (m *MsgAddBTCDelegationInclusionProof) String() string { return proto.CompactTextString(m) }
+func (*MsgAddBTCDelegationInclusionProof) ProtoMessage()    {}
+func (*MsgAddBTCDelegationInclusionProof) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4baddb53e97f38f2, []int{6}
+}
+func (m *MsgAddBTCDelegationInclusionProof) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgAddBTCDelegationInclusionProof) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgAddBTCDelegationInclusionProof.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgAddBTCDelegationInclusionProof) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddBTCDelegationInclusionProof.Merge(m, src)
+}
+func (m *MsgAddBTCDelegationInclusionProof) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgAddBTCDelegationInclusionProof) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddBTCDelegationInclusionProof.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgAddBTCDelegationInclusionProof proto.InternalMessageInfo
+
+func (m *MsgAddBTCDelegationInclusionProof) GetSigner() string {
+	if m != nil {
+		return m.Signer
+	}
+	return ""
+}
+
+func (m *MsgAddBTCDelegationInclusionProof) GetStakingTxHash() string {
+	if m != nil {
+		return m.StakingTxHash
+	}
+	return ""
+}
+
+func (m *MsgAddBTCDelegationInclusionProof) GetStakingTxInclusionProof() *InclusionProof {
+	if m != nil {
+		return m.StakingTxInclusionProof
+	}
+	return nil
+}
+
+// MsgAddBTCDelegationInclusionProofResponse is the response for MsgAddBTCDelegationInclusionProof
+type MsgAddBTCDelegationInclusionProofResponse struct {
+}
+
+func (m *MsgAddBTCDelegationInclusionProofResponse) Reset() {
+	*m = MsgAddBTCDelegationInclusionProofResponse{}
+}
+func (m *MsgAddBTCDelegationInclusionProofResponse) String() string {
+	return proto.CompactTextString(m)
+}
+func (*MsgAddBTCDelegationInclusionProofResponse) ProtoMessage() {}
+func (*MsgAddBTCDelegationInclusionProofResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4baddb53e97f38f2, []int{7}
+}
+func (m *MsgAddBTCDelegationInclusionProofResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgAddBTCDelegationInclusionProofResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgAddBTCDelegationInclusionProofResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgAddBTCDelegationInclusionProofResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddBTCDelegationInclusionProofResponse.Merge(m, src)
+}
+func (m *MsgAddBTCDelegationInclusionProofResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgAddBTCDelegationInclusionProofResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddBTCDelegationInclusionProofResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgAddBTCDelegationInclusionProofResponse proto.InternalMessageInfo
+
 // MsgAddCovenantSigs is the message for handling signatures from a covenant member
 type MsgAddCovenantSigs struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
@@ -451,7 +564,7 @@ func (m *MsgAddCovenantSigs) Reset()         { *m = MsgAddCovenantSigs{} }
 func (m *MsgAddCovenantSigs) String() string { return proto.CompactTextString(m) }
 func (*MsgAddCovenantSigs) ProtoMessage()    {}
 func (*MsgAddCovenantSigs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_4baddb53e97f38f2, []int{6}
+	return fileDescriptor_4baddb53e97f38f2, []int{8}
 }
 func (m *MsgAddCovenantSigs) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -516,7 +629,7 @@ func (m *MsgAddCovenantSigsResponse) Reset()         { *m = MsgAddCovenantSigsRe
 func (m *MsgAddCovenantSigsResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgAddCovenantSigsResponse) ProtoMessage()    {}
 func (*MsgAddCovenantSigsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_4baddb53e97f38f2, []int{7}
+	return fileDescriptor_4baddb53e97f38f2, []int{9}
 }
 func (m *MsgAddCovenantSigsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -553,16 +666,19 @@ type MsgBTCUndelegate struct {
 	// staking_tx_hash is the hash of the staking tx.
 	// It uniquely identifies a BTC delegation
 	StakingTxHash string `protobuf:"bytes,2,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
-	// unbonding_tx_sig is the signature of the staker on the unbonding tx submitted to babylon
-	// the signature follows encoding in BIP-340 spec
-	UnbondingTxSig *github_com_babylonlabs_io_babylon_types.BIP340Signature `protobuf:"bytes,3,opt,name=unbonding_tx_sig,json=unbondingTxSig,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340Signature" json:"unbonding_tx_sig,omitempty"`
+	// stake_spending_tx is a bitcoin transaction that spends the staking transaction
+	// i.e it has staking output as an input
+	StakeSpendingTx []byte `protobuf:"bytes,3,opt,name=stake_spending_tx,json=stakeSpendingTx,proto3" json:"stake_spending_tx,omitempty"`
+	// spend_spending_tx_inclusion_proof is the proof of inclusion of the
+	// stake_spending_tx in the BTC chain
+	StakeSpendingTxInclusionProof *InclusionProof `protobuf:"bytes,4,opt,name=stake_spending_tx_inclusion_proof,json=stakeSpendingTxInclusionProof,proto3" json:"stake_spending_tx_inclusion_proof,omitempty"`
 }
 
 func (m *MsgBTCUndelegate) Reset()         { *m = MsgBTCUndelegate{} }
 func (m *MsgBTCUndelegate) String() string { return proto.CompactTextString(m) }
 func (*MsgBTCUndelegate) ProtoMessage()    {}
 func (*MsgBTCUndelegate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_4baddb53e97f38f2, []int{8}
+	return fileDescriptor_4baddb53e97f38f2, []int{10}
 }
 func (m *MsgBTCUndelegate) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -605,6 +721,20 @@ func (m *MsgBTCUndelegate) GetStakingTxHash() string {
 	return ""
 }
 
+func (m *MsgBTCUndelegate) GetStakeSpendingTx() []byte {
+	if m != nil {
+		return m.StakeSpendingTx
+	}
+	return nil
+}
+
+func (m *MsgBTCUndelegate) GetStakeSpendingTxInclusionProof() *InclusionProof {
+	if m != nil {
+		return m.StakeSpendingTxInclusionProof
+	}
+	return nil
+}
+
 // MsgBTCUndelegateResponse is the response for MsgBTCUndelegate
 type MsgBTCUndelegateResponse struct {
 }
@@ -613,7 +743,7 @@ func (m *MsgBTCUndelegateResponse) Reset()         { *m = MsgBTCUndelegateRespon
 func (m *MsgBTCUndelegateResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgBTCUndelegateResponse) ProtoMessage()    {}
 func (*MsgBTCUndelegateResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_4baddb53e97f38f2, []int{9}
+	return fileDescriptor_4baddb53e97f38f2, []int{11}
 }
 func (m *MsgBTCUndelegateResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -660,7 +790,7 @@ func (m *MsgSelectiveSlashingEvidence) Reset()         { *m = MsgSelectiveSlashi
 func (m *MsgSelectiveSlashingEvidence) String() string { return proto.CompactTextString(m) }
 func (*MsgSelectiveSlashingEvidence) ProtoMessage()    {}
 func (*MsgSelectiveSlashingEvidence) Descriptor() ([]byte, []int) {
-	return fileDescriptor_4baddb53e97f38f2, []int{10}
+	return fileDescriptor_4baddb53e97f38f2, []int{12}
 }
 func (m *MsgSelectiveSlashingEvidence) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -718,7 +848,7 @@ func (m *MsgSelectiveSlashingEvidenceResponse) Reset()         { *m = MsgSelecti
 func (m *MsgSelectiveSlashingEvidenceResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgSelectiveSlashingEvidenceResponse) ProtoMessage()    {}
 func (*MsgSelectiveSlashingEvidenceResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_4baddb53e97f38f2, []int{11}
+	return fileDescriptor_4baddb53e97f38f2, []int{13}
 }
 func (m *MsgSelectiveSlashingEvidenceResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -764,7 +894,7 @@ func (m *MsgUpdateParams) Reset()         { *m = MsgUpdateParams{} }
 func (m *MsgUpdateParams) String() string { return proto.CompactTextString(m) }
 func (*MsgUpdateParams) ProtoMessage()    {}
 func (*MsgUpdateParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_4baddb53e97f38f2, []int{12}
+	return fileDescriptor_4baddb53e97f38f2, []int{14}
 }
 func (m *MsgUpdateParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -815,7 +945,7 @@ func (m *MsgUpdateParamsResponse) Reset()         { *m = MsgUpdateParamsResponse
 func (m *MsgUpdateParamsResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgUpdateParamsResponse) ProtoMessage()    {}
 func (*MsgUpdateParamsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_4baddb53e97f38f2, []int{13}
+	return fileDescriptor_4baddb53e97f38f2, []int{15}
 }
 func (m *MsgUpdateParamsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -851,6 +981,8 @@ func init() {
 	proto.RegisterType((*MsgEditFinalityProviderResponse)(nil), "babylon.btcstaking.v1.MsgEditFinalityProviderResponse")
 	proto.RegisterType((*MsgCreateBTCDelegation)(nil), "babylon.btcstaking.v1.MsgCreateBTCDelegation")
 	proto.RegisterType((*MsgCreateBTCDelegationResponse)(nil), "babylon.btcstaking.v1.MsgCreateBTCDelegationResponse")
+	proto.RegisterType((*MsgAddBTCDelegationInclusionProof)(nil), "babylon.btcstaking.v1.MsgAddBTCDelegationInclusionProof")
+	proto.RegisterType((*MsgAddBTCDelegationInclusionProofResponse)(nil), "babylon.btcstaking.v1.MsgAddBTCDelegationInclusionProofResponse")
 	proto.RegisterType((*MsgAddCovenantSigs)(nil), "babylon.btcstaking.v1.MsgAddCovenantSigs")
 	proto.RegisterType((*MsgAddCovenantSigsResponse)(nil), "babylon.btcstaking.v1.MsgAddCovenantSigsResponse")
 	proto.RegisterType((*MsgBTCUndelegate)(nil), "babylon.btcstaking.v1.MsgBTCUndelegate")
@@ -864,88 +996,93 @@ func init() {
 func init() { proto.RegisterFile("babylon/btcstaking/v1/tx.proto", fileDescriptor_4baddb53e97f38f2) }
 
 var fileDescriptor_4baddb53e97f38f2 = []byte{
-	// 1284 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x57, 0xcf, 0x6f, 0x13, 0xc7,
-	0x17, 0xcf, 0xc6, 0x89, 0xf9, 0xe6, 0x39, 0x4e, 0xf2, 0x5d, 0x42, 0xd8, 0x6c, 0xc1, 0x76, 0x0c,
-	0x85, 0x40, 0xc9, 0x9a, 0x04, 0x4a, 0x69, 0xa2, 0x1e, 0x70, 0x12, 0x04, 0x2a, 0x2e, 0xd6, 0xda,
-	0xe9, 0xa1, 0x52, 0x65, 0xad, 0x77, 0x27, 0xeb, 0x91, 0xed, 0x9d, 0xed, 0xce, 0xd8, 0x72, 0x54,
-	0xa9, 0xaa, 0xaa, 0x5e, 0x2b, 0xf5, 0xd4, 0x43, 0xfb, 0x4f, 0x70, 0xe0, 0x6f, 0xa8, 0x38, 0x55,
-	0x88, 0x53, 0x95, 0x43, 0x54, 0x41, 0x25, 0xfe, 0x86, 0x9e, 0x5a, 0xed, 0xec, 0x4f, 0xa7, 0xde,
-	0x92, 0x60, 0x6e, 0xde, 0x99, 0xcf, 0xfb, 0xbc, 0xf7, 0x3e, 0xef, 0xbd, 0x99, 0x31, 0xe4, 0x9a,
-	0x5a, 0xf3, 0xa0, 0x43, 0xac, 0x52, 0x93, 0xe9, 0x94, 0x69, 0x6d, 0x6c, 0x99, 0xa5, 0xfe, 0x7a,
-	0x89, 0x0d, 0x14, 0xdb, 0x21, 0x8c, 0x88, 0xe7, 0xfc, 0x7d, 0x25, 0xda, 0x57, 0xfa, 0xeb, 0xf2,
-	0xa2, 0x49, 0x4c, 0xc2, 0x11, 0x25, 0xf7, 0x97, 0x07, 0x96, 0x97, 0x75, 0x42, 0xbb, 0x84, 0x36,
-	0xbc, 0x0d, 0xef, 0xc3, 0xdf, 0x3a, 0xef, 0x7d, 0x95, 0xba, 0x94, 0xf3, 0x77, 0xa9, 0xe9, 0x6f,
-	0x14, 0x47, 0x07, 0x60, 0x6b, 0x8e, 0xd6, 0x0d, 0x8c, 0x6f, 0xc4, 0x30, 0x7a, 0x0b, 0xe9, 0x6d,
-	0x9b, 0x60, 0x8b, 0xb9, 0xb0, 0xa1, 0x05, 0x1f, 0x7d, 0xd9, 0x77, 0x15, 0xb1, 0x35, 0x11, 0xd3,
-	0xd6, 0x83, 0x6f, 0x1f, 0x95, 0x4f, 0xf0, 0x4b, 0x6c, 0x0f, 0x50, 0xfc, 0x25, 0x05, 0xcb, 0x15,
-	0x6a, 0x6e, 0x3b, 0x48, 0x63, 0xe8, 0x3e, 0xb6, 0xb4, 0x0e, 0x66, 0x07, 0x55, 0x87, 0xf4, 0xb1,
-	0x81, 0x1c, 0xf1, 0x06, 0x4c, 0x69, 0x86, 0xe1, 0x48, 0x42, 0x41, 0x58, 0x9d, 0x29, 0x4b, 0x2f,
-	0x9e, 0xae, 0x2d, 0xfa, 0xf9, 0xde, 0x33, 0x0c, 0x07, 0x51, 0x5a, 0x63, 0x0e, 0xb6, 0x4c, 0x95,
-	0xa3, 0xc4, 0x5d, 0xc8, 0x18, 0x88, 0xea, 0x0e, 0xb6, 0x19, 0x26, 0x96, 0x34, 0x59, 0x10, 0x56,
-	0x33, 0x1b, 0x97, 0x14, 0xdf, 0x22, 0xd2, 0x95, 0x07, 0xaa, 0xec, 0x44, 0x50, 0x35, 0x6e, 0x27,
-	0x56, 0x00, 0x74, 0xd2, 0xed, 0x62, 0x4a, 0x5d, 0x96, 0x14, 0x77, 0xbd, 0x76, 0x78, 0x94, 0x7f,
-	0xcf, 0x23, 0xa2, 0x46, 0x5b, 0xc1, 0xa4, 0xd4, 0xd5, 0x58, 0x4b, 0x79, 0x84, 0x4c, 0x4d, 0x3f,
-	0xd8, 0x41, 0xfa, 0x8b, 0xa7, 0x6b, 0xe0, 0xfb, 0xd9, 0x41, 0xba, 0x1a, 0x23, 0x10, 0x1f, 0x43,
-	0xba, 0xc9, 0xf4, 0x86, 0xdd, 0x96, 0xa6, 0x0a, 0xc2, 0xea, 0x6c, 0xf9, 0xee, 0xe1, 0x51, 0xfe,
-	0xb6, 0x89, 0x59, 0xab, 0xd7, 0x54, 0x74, 0xd2, 0x2d, 0xf9, 0x0a, 0x75, 0xb4, 0x26, 0x5d, 0xc3,
-	0x24, 0xf8, 0x2c, 0xb1, 0x03, 0x1b, 0x51, 0xa5, 0xfc, 0xb0, 0x7a, 0xeb, 0xf6, 0xcd, 0x6a, 0xaf,
-	0xf9, 0x29, 0x3a, 0x50, 0xa7, 0x9b, 0x4c, 0xaf, 0xb6, 0xc5, 0x4f, 0x20, 0x65, 0x13, 0x5b, 0x9a,
-	0xe6, 0xe9, 0x7d, 0xa0, 0x8c, 0x6c, 0x1d, 0xa5, 0xea, 0x10, 0xb2, 0xff, 0x78, 0xbf, 0x4a, 0x28,
-	0x45, 0x3c, 0x8e, 0x72, 0x7d, 0x5b, 0x75, 0xed, 0xc4, 0x3c, 0x64, 0x74, 0x62, 0xd1, 0x5e, 0x17,
-	0x39, 0x0d, 0x6c, 0x48, 0x67, 0xdc, 0xfc, 0xdc, 0x80, 0xbd, 0xa5, 0x87, 0xc6, 0xe6, 0xcc, 0x77,
-	0xaf, 0x9f, 0x5c, 0xe7, 0x8a, 0x16, 0x2f, 0xc1, 0x4a, 0x62, 0x71, 0x54, 0x44, 0x6d, 0x62, 0x51,
-	0x54, 0xfc, 0x5b, 0x80, 0xf3, 0x15, 0x6a, 0xee, 0x1a, 0x98, 0x8d, 0x59, 0xc0, 0x73, 0xa1, 0x54,
-	0x6e, 0xed, 0x66, 0x83, 0x84, 0x8f, 0xd5, 0x35, 0xf5, 0x4e, 0xea, 0x3a, 0x35, 0x66, 0x5d, 0xe3,
-	0x32, 0xad, 0x40, 0x3e, 0x41, 0x80, 0x50, 0xa4, 0xdf, 0xce, 0xc0, 0x52, 0x28, 0x65, 0xb9, 0xbe,
-	0xbd, 0x83, 0x3a, 0xc8, 0xd4, 0x78, 0x5c, 0x1f, 0x43, 0xc6, 0xcd, 0x01, 0x39, 0x8d, 0x13, 0x49,
-	0x05, 0x1e, 0xd8, 0x5d, 0x0c, 0x5a, 0x61, 0xf2, 0x2d, 0x5b, 0x21, 0x6a, 0xcd, 0xd4, 0xbb, 0x69,
-	0xcd, 0x2f, 0x61, 0x6e, 0xdf, 0x6e, 0x78, 0x9c, 0x8d, 0x0e, 0xa6, 0x4c, 0x9a, 0x2a, 0xa4, 0xc6,
-	0x22, 0xce, 0xec, 0xdb, 0x65, 0x97, 0xfa, 0x11, 0xa6, 0x4c, 0x5c, 0x81, 0x59, 0x3f, 0xaf, 0x06,
-	0xc3, 0x5d, 0xc4, 0x47, 0x20, 0xab, 0x66, 0xfc, 0xb5, 0x3a, 0xee, 0x22, 0xf1, 0x12, 0x64, 0x03,
-	0x48, 0x5f, 0xeb, 0xf4, 0x90, 0x94, 0x2e, 0x08, 0xab, 0x29, 0x35, 0xb0, 0xfb, 0xdc, 0x5d, 0x13,
-	0x1f, 0x00, 0x84, 0x3c, 0x03, 0x3e, 0x01, 0x99, 0x8d, 0x6b, 0x71, 0xf5, 0x62, 0xa7, 0x5d, 0x7f,
-	0x5d, 0xa9, 0x3b, 0x9a, 0x45, 0x35, 0xdd, 0x2d, 0xd6, 0x43, 0x6b, 0x9f, 0xa8, 0x33, 0x81, 0xc3,
-	0x81, 0xb8, 0x01, 0x19, 0xda, 0xd1, 0x68, 0xcb, 0xa7, 0xfa, 0x1f, 0x97, 0xf1, 0xff, 0x87, 0x47,
-	0xf9, 0x6c, 0xb9, 0xbe, 0x5d, 0xf3, 0x77, 0xea, 0x03, 0x15, 0x68, 0xf8, 0x5b, 0xfc, 0x0a, 0x96,
-	0x0c, 0xaf, 0xfa, 0xc4, 0x69, 0x84, 0xd6, 0x14, 0x9b, 0xd2, 0x0c, 0x37, 0xdf, 0x3a, 0x3c, 0xca,
-	0x7f, 0x74, 0x3a, 0xb1, 0x6a, 0xd8, 0xb4, 0x34, 0xd6, 0x73, 0x90, 0xba, 0x18, 0x52, 0x07, 0xde,
-	0x6b, 0xd8, 0x14, 0xdf, 0x87, 0xb9, 0x9e, 0xd5, 0x24, 0x96, 0x11, 0x4a, 0x07, 0x5c, 0xba, 0x6c,
-	0xb8, 0xca, 0xc5, 0x5b, 0x81, 0xd9, 0x18, 0x6c, 0x20, 0x65, 0xf8, 0x14, 0x66, 0x22, 0xd0, 0x40,
-	0xbc, 0x0a, 0xf3, 0x11, 0xc4, 0x53, 0x78, 0x96, 0x2b, 0x1c, 0x39, 0xf0, 0x34, 0xde, 0x85, 0x73,
-	0x11, 0x30, 0xae, 0x51, 0x36, 0x49, 0xa3, 0xb3, 0x21, 0x3e, 0x5a, 0x14, 0xbf, 0x17, 0xa0, 0x10,
-	0xa9, 0x35, 0x82, 0xd1, 0xd5, 0x6d, 0x6e, 0x7c, 0xdd, 0x2e, 0x86, 0x4e, 0xf6, 0x8e, 0x47, 0x51,
-	0xc3, 0xe6, 0xe6, 0x82, 0x3b, 0xec, 0xf1, 0x31, 0x2d, 0x16, 0x20, 0x37, 0x7a, 0x9e, 0xc3, 0x91,
-	0xff, 0x6b, 0x12, 0xc4, 0x0a, 0x35, 0xef, 0x19, 0xc6, 0x36, 0xe9, 0x23, 0x4b, 0xb3, 0x58, 0x0d,
-	0x9b, 0x54, 0x5c, 0x82, 0x34, 0xc5, 0xa6, 0x85, 0xfc, 0x49, 0x57, 0xfd, 0x2f, 0xf1, 0x01, 0x4c,
-	0x06, 0x07, 0xdf, 0x18, 0xf3, 0x32, 0x69, 0xb7, 0xc5, 0x2b, 0x30, 0x1f, 0xb5, 0x77, 0xa3, 0xa5,
-	0xd1, 0x96, 0x77, 0x8b, 0xa9, 0xd9, 0xb0, 0x71, 0x1f, 0x68, 0xb4, 0x25, 0xae, 0xc2, 0x42, 0xac,
-	0x30, 0xae, 0x92, 0xd4, 0x9b, 0x57, 0x75, 0x2e, 0x6a, 0x57, 0x1e, 0x33, 0x82, 0x85, 0x78, 0x63,
-	0x70, 0xd1, 0xa7, 0xc7, 0x17, 0x7d, 0x2e, 0xd6, 0x59, 0x6e, 0x9b, 0x6e, 0x81, 0x1c, 0x06, 0x74,
-	0xdc, 0x1f, 0x95, 0xd2, 0x3c, 0xb4, 0xf3, 0x01, 0x62, 0x6f, 0xc8, 0x96, 0x6e, 0x66, 0xdc, 0x12,
-	0xf9, 0x62, 0x16, 0x2f, 0x80, 0xfc, 0x6f, 0xe9, 0xc3, 0xca, 0xfc, 0x2a, 0xc0, 0x42, 0x85, 0x9a,
-	0xe5, 0xfa, 0xf6, 0x9e, 0xe5, 0xd7, 0x1d, 0x25, 0xd6, 0x65, 0x84, 0x9a, 0x93, 0xa3, 0xd4, 0x1c,
-	0xa5, 0x51, 0xea, 0x9d, 0x6b, 0x34, 0x9c, 0xa6, 0x0c, 0xd2, 0xf1, 0x3c, 0xc2, 0x24, 0x7f, 0x16,
-	0xe0, 0x42, 0x85, 0x9a, 0x35, 0xd4, 0x41, 0x3a, 0xc3, 0x7d, 0x14, 0xb4, 0xf3, 0xae, 0x7b, 0x31,
-	0x59, 0xfa, 0xf8, 0x09, 0xaf, 0xc1, 0x59, 0x07, 0xe9, 0xa4, 0x8f, 0x1c, 0x64, 0x34, 0xfc, 0x63,
-	0x9f, 0xfa, 0x57, 0x89, 0xba, 0x10, 0x6e, 0xdd, 0x77, 0x0f, 0xf0, 0x5a, 0x7b, 0x38, 0xf0, 0x2b,
-	0x70, 0xf9, 0xbf, 0x62, 0x0b, 0x93, 0xf8, 0x49, 0x80, 0xf9, 0x0a, 0x35, 0xf7, 0x6c, 0x43, 0x63,
-	0xa8, 0xca, 0x5f, 0xab, 0xe2, 0x1d, 0x98, 0xd1, 0x7a, 0xac, 0x45, 0x1c, 0xcc, 0x0e, 0xde, 0x78,
-	0x5b, 0x46, 0x50, 0x71, 0x0b, 0xd2, 0xde, 0x7b, 0xd7, 0xbf, 0x2f, 0x2f, 0x26, 0xdd, 0x97, 0x1c,
-	0x54, 0x9e, 0x7a, 0x76, 0x94, 0x9f, 0x50, 0x7d, 0x93, 0xcd, 0x39, 0x37, 0xfa, 0x88, 0xac, 0xb8,
-	0xcc, 0xdf, 0x3c, 0xf1, 0xb8, 0x82, 0x98, 0x37, 0xfe, 0x4c, 0x43, 0xaa, 0x42, 0x4d, 0xf7, 0xe8,
-	0x5a, 0x4a, 0x78, 0xd7, 0xde, 0x4c, 0x70, 0x9d, 0xf8, 0xd8, 0x92, 0xef, 0x9e, 0xd6, 0x22, 0x08,
-	0x47, 0xfc, 0x06, 0x16, 0x47, 0x3e, 0xcd, 0x94, 0x64, 0xc6, 0x51, 0x78, 0xf9, 0xce, 0xe9, 0xf0,
-	0xa1, 0xff, 0xaf, 0xe1, 0xec, 0xa8, 0x57, 0xcf, 0xda, 0x9b, 0x12, 0x1a, 0x82, 0xcb, 0x1f, 0x9e,
-	0x0a, 0x1e, 0x3a, 0x27, 0x30, 0x7f, 0xfc, 0xfc, 0xbd, 0x96, 0xcc, 0x74, 0x0c, 0x2a, 0xaf, 0x9f,
-	0x18, 0x1a, 0x3a, 0xc4, 0x90, 0x1d, 0x3e, 0x56, 0xae, 0x26, 0x73, 0x0c, 0x01, 0xe5, 0xd2, 0x09,
-	0x81, 0xa1, 0xab, 0x1f, 0x04, 0x58, 0x4e, 0x9e, 0xee, 0x5b, 0xc9, 0x74, 0x89, 0x46, 0xf2, 0xd6,
-	0x5b, 0x18, 0x85, 0xf1, 0xec, 0xc3, 0xec, 0xd0, 0x9c, 0x5e, 0x49, 0x26, 0x8b, 0xe3, 0x64, 0xe5,
-	0x64, 0xb8, 0xc0, 0x8f, 0x3c, 0xfd, 0xed, 0xeb, 0x27, 0xd7, 0x85, 0xf2, 0x67, 0xcf, 0x5e, 0xe6,
-	0x84, 0xe7, 0x2f, 0x73, 0xc2, 0x1f, 0x2f, 0x73, 0xc2, 0x8f, 0xaf, 0x72, 0x13, 0xcf, 0x5f, 0xe5,
-	0x26, 0x7e, 0x7f, 0x95, 0x9b, 0xf8, 0xe2, 0x04, 0x37, 0xe7, 0x20, 0xfe, 0x87, 0x94, 0x1f, 0xbc,
-	0xcd, 0x34, 0xff, 0x43, 0x7a, 0xeb, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xf0, 0x32, 0xb3, 0x35,
-	0xac, 0x0f, 0x00, 0x00,
+	// 1365 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x58, 0x4f, 0x6f, 0x13, 0x47,
+	0x14, 0xcf, 0xc6, 0x49, 0x4a, 0x9e, 0xed, 0x24, 0x2c, 0x21, 0x71, 0xb6, 0xc4, 0x76, 0x0c, 0x84,
+	0x00, 0x8d, 0x4d, 0x80, 0x52, 0x9a, 0xa8, 0x52, 0x71, 0x12, 0x04, 0x2a, 0x2e, 0xd6, 0xda, 0xe9,
+	0xa1, 0x52, 0x65, 0xad, 0x77, 0x27, 0xeb, 0x51, 0xec, 0x9d, 0xed, 0xce, 0xda, 0x72, 0x54, 0xa9,
+	0xaa, 0xda, 0x4a, 0x3d, 0x55, 0xea, 0xa9, 0x87, 0xb6, 0x1f, 0x82, 0x03, 0x1f, 0x82, 0x23, 0x42,
+	0x3d, 0x54, 0x39, 0x44, 0x15, 0x1c, 0xf8, 0x0c, 0x95, 0x2a, 0xb5, 0xda, 0xd9, 0xdd, 0xd9, 0xb5,
+	0xf1, 0xe6, 0x0f, 0xe6, 0xe6, 0x99, 0xf7, 0x7b, 0xff, 0x7e, 0xef, 0xcd, 0x9b, 0x59, 0x43, 0xba,
+	0xae, 0xd4, 0xf7, 0x9b, 0xc4, 0x28, 0xd4, 0x6d, 0x95, 0xda, 0xca, 0x1e, 0x36, 0xf4, 0x42, 0x67,
+	0xad, 0x60, 0x77, 0xf3, 0xa6, 0x45, 0x6c, 0x22, 0x9e, 0xf7, 0xe4, 0xf9, 0x40, 0x9e, 0xef, 0xac,
+	0x49, 0xb3, 0x3a, 0xd1, 0x09, 0x43, 0x14, 0x9c, 0x5f, 0x2e, 0x58, 0x5a, 0x50, 0x09, 0x6d, 0x11,
+	0x5a, 0x73, 0x05, 0xee, 0xc2, 0x13, 0xcd, 0xbb, 0xab, 0x42, 0x8b, 0x32, 0xfb, 0x2d, 0xaa, 0x7b,
+	0x82, 0xdc, 0xe0, 0x00, 0x4c, 0xc5, 0x52, 0x5a, 0xbe, 0xf2, 0x25, 0x4f, 0x39, 0x90, 0xd7, 0x91,
+	0xad, 0xac, 0xf9, 0x6b, 0x0f, 0x95, 0x89, 0xb0, 0x44, 0x4c, 0x0f, 0xb0, 0x3c, 0x18, 0x10, 0xca,
+	0x8c, 0xe1, 0x72, 0xbf, 0xc7, 0x60, 0xa1, 0x44, 0xf5, 0x4d, 0x0b, 0x29, 0x36, 0xba, 0x8f, 0x0d,
+	0xa5, 0x89, 0xed, 0xfd, 0xb2, 0x45, 0x3a, 0x58, 0x43, 0x96, 0xf8, 0x01, 0x8c, 0x29, 0x9a, 0x66,
+	0xa5, 0x84, 0xac, 0xb0, 0x32, 0x59, 0x4c, 0xbd, 0x78, 0xba, 0x3a, 0xeb, 0x65, 0x7a, 0x4f, 0xd3,
+	0x2c, 0x44, 0x69, 0xc5, 0xb6, 0xb0, 0xa1, 0xcb, 0x0c, 0x25, 0x6e, 0x43, 0x5c, 0x43, 0x54, 0xb5,
+	0xb0, 0x69, 0x63, 0x62, 0xa4, 0x46, 0xb3, 0xc2, 0x4a, 0xfc, 0xe6, 0xc5, 0xbc, 0xa7, 0x11, 0x30,
+	0xca, 0x12, 0xca, 0x6f, 0x05, 0x50, 0x39, 0xac, 0x27, 0x96, 0x00, 0x54, 0xd2, 0x6a, 0x61, 0x4a,
+	0x1d, 0x2b, 0x31, 0xe6, 0x7a, 0xf5, 0xe0, 0x30, 0xf3, 0xbe, 0x6b, 0x88, 0x6a, 0x7b, 0x79, 0x4c,
+	0x0a, 0x2d, 0xc5, 0x6e, 0xe4, 0x1f, 0x21, 0x5d, 0x51, 0xf7, 0xb7, 0x90, 0xfa, 0xe2, 0xe9, 0x2a,
+	0x78, 0x7e, 0xb6, 0x90, 0x2a, 0x87, 0x0c, 0x88, 0x8f, 0x61, 0xa2, 0x6e, 0xab, 0x35, 0x73, 0x2f,
+	0x35, 0x96, 0x15, 0x56, 0x12, 0xc5, 0xbb, 0x07, 0x87, 0x99, 0xdb, 0x3a, 0xb6, 0x1b, 0xed, 0x7a,
+	0x5e, 0x25, 0xad, 0x82, 0x47, 0x54, 0x53, 0xa9, 0xd3, 0x55, 0x4c, 0xfc, 0x65, 0xc1, 0xde, 0x37,
+	0x11, 0xcd, 0x17, 0x1f, 0x96, 0x6f, 0xdd, 0xbe, 0x51, 0x6e, 0xd7, 0x3f, 0x43, 0xfb, 0xf2, 0x78,
+	0xdd, 0x56, 0xcb, 0x7b, 0xe2, 0x27, 0x10, 0x33, 0x89, 0x99, 0x1a, 0x67, 0xe9, 0x5d, 0xcf, 0x0f,
+	0x6c, 0x9a, 0x7c, 0xd9, 0x22, 0x64, 0xf7, 0xf1, 0x6e, 0x99, 0x50, 0x8a, 0x58, 0x1c, 0xc5, 0xea,
+	0xa6, 0xec, 0xe8, 0x89, 0x19, 0x88, 0xab, 0xc4, 0xa0, 0xed, 0x16, 0xb2, 0x6a, 0x58, 0x4b, 0xbd,
+	0xe7, 0xe4, 0xe7, 0x04, 0xec, 0x6e, 0x3d, 0xd4, 0xd6, 0x27, 0xbf, 0x7f, 0xfd, 0xe4, 0x1a, 0x63,
+	0x34, 0x77, 0x11, 0x96, 0x22, 0x8b, 0x23, 0x23, 0x6a, 0x12, 0x83, 0xa2, 0xdc, 0x7f, 0x02, 0xcc,
+	0x97, 0xa8, 0xbe, 0xad, 0x61, 0x7b, 0xc8, 0x02, 0x9e, 0xe7, 0x54, 0x39, 0xb5, 0x4b, 0xf8, 0x09,
+	0xf7, 0xd5, 0x35, 0xf6, 0x4e, 0xea, 0x3a, 0x36, 0x64, 0x5d, 0xc3, 0x34, 0x2d, 0x41, 0x26, 0x82,
+	0x00, 0x4e, 0xd2, 0x4f, 0x67, 0x60, 0x8e, 0x53, 0x59, 0xac, 0x6e, 0x6e, 0xa1, 0x26, 0xd2, 0x15,
+	0x16, 0xd7, 0xc7, 0x10, 0x77, 0x72, 0x40, 0x56, 0xed, 0x44, 0x54, 0x81, 0x0b, 0x76, 0x36, 0xfd,
+	0x56, 0x18, 0x7d, 0xcb, 0x56, 0x08, 0x5a, 0x33, 0xf6, 0x6e, 0x5a, 0xf3, 0x2b, 0x98, 0xda, 0x35,
+	0x6b, 0xae, 0xcd, 0x5a, 0x13, 0x53, 0x3b, 0x35, 0x96, 0x8d, 0x0d, 0x65, 0x38, 0xbe, 0x6b, 0x16,
+	0x1d, 0xd3, 0x8f, 0x30, 0xb5, 0xc5, 0x25, 0x48, 0x78, 0x79, 0xd5, 0x6c, 0xdc, 0x42, 0xec, 0x08,
+	0x24, 0xe5, 0xb8, 0xb7, 0x57, 0xc5, 0x2d, 0x24, 0x5e, 0x84, 0xa4, 0x0f, 0xe9, 0x28, 0xcd, 0x36,
+	0x4a, 0x4d, 0x64, 0x85, 0x95, 0x98, 0xec, 0xeb, 0x7d, 0xe1, 0xec, 0x89, 0x8b, 0x00, 0xdc, 0x4e,
+	0x97, 0x9d, 0x80, 0x84, 0x3c, 0xe9, 0x5b, 0xe9, 0x8a, 0x75, 0x90, 0x02, 0x71, 0x0d, 0x1b, 0x6a,
+	0xb3, 0xed, 0xd0, 0xe6, 0x8c, 0x5a, 0xb2, 0x9b, 0x3a, 0xc3, 0xc8, 0xbe, 0x1c, 0x41, 0xf6, 0x43,
+	0x1f, 0xcd, 0x58, 0x97, 0xe7, 0xb9, 0xd5, 0x5e, 0x81, 0x78, 0x13, 0xe2, 0xb4, 0xa9, 0xd0, 0x86,
+	0x17, 0xc3, 0x24, 0xe3, 0xff, 0xec, 0xc1, 0x61, 0x26, 0x59, 0xac, 0x6e, 0x56, 0x3c, 0x49, 0xb5,
+	0x2b, 0x03, 0xe5, 0xbf, 0xc5, 0xaf, 0x61, 0x4e, 0x73, 0xdb, 0x86, 0x58, 0x35, 0xae, 0x4d, 0xb1,
+	0x9e, 0x02, 0xa6, 0xbe, 0x71, 0x70, 0x98, 0xf9, 0xe8, 0x74, 0x2c, 0x57, 0xb0, 0x6e, 0x28, 0x76,
+	0xdb, 0x42, 0xf2, 0x2c, 0x37, 0xed, 0x7b, 0xaf, 0x60, 0x5d, 0xbc, 0x0c, 0x53, 0x6d, 0xa3, 0x4e,
+	0x0c, 0x8d, 0x73, 0x1e, 0x67, 0x9c, 0x27, 0xf9, 0x2e, 0x63, 0x7d, 0x09, 0x12, 0x21, 0x58, 0x37,
+	0x95, 0x60, 0x94, 0xc6, 0x03, 0x50, 0x57, 0xbc, 0x02, 0xd3, 0x01, 0xc4, 0x2d, 0x4d, 0x92, 0x95,
+	0x26, 0x70, 0xe0, 0x16, 0x67, 0x1b, 0xce, 0x07, 0xc0, 0x30, 0x47, 0x53, 0x51, 0x1c, 0x9d, 0xe3,
+	0xf8, 0x60, 0x53, 0xfc, 0x51, 0x80, 0x6c, 0xc0, 0xd6, 0x00, 0x8b, 0x0e, 0x6f, 0xd3, 0xc3, 0xf3,
+	0xb6, 0xc8, 0x9d, 0xec, 0xf4, 0x47, 0x51, 0xc1, 0xfa, 0xfa, 0x8c, 0x33, 0x25, 0xc2, 0xe7, 0x3b,
+	0x97, 0x85, 0xf4, 0xe0, 0x41, 0xc0, 0x67, 0xc5, 0x9f, 0x02, 0x1b, 0xbb, 0xf7, 0x34, 0xad, 0x47,
+	0xde, 0xd7, 0x41, 0x73, 0x30, 0x41, 0xb1, 0x6e, 0x20, 0x6f, 0x62, 0xc8, 0xde, 0x4a, 0x5c, 0x86,
+	0xe9, 0x50, 0xf7, 0x36, 0x14, 0xda, 0x60, 0xf3, 0x61, 0x52, 0x4e, 0xf2, 0x5e, 0x7c, 0xa0, 0xd0,
+	0xc6, 0x31, 0x5d, 0x1e, 0x7b, 0x17, 0x5d, 0xbe, 0x1e, 0x77, 0xb2, 0xf7, 0x02, 0xcb, 0x5d, 0x87,
+	0xab, 0xc7, 0x66, 0xc5, 0x39, 0xf8, 0x67, 0x14, 0x44, 0x17, 0xbd, 0x49, 0x3a, 0xc8, 0x50, 0x0c,
+	0xbb, 0x82, 0x75, 0x1a, 0x99, 0xf4, 0x03, 0x18, 0xf5, 0x6f, 0x8d, 0x21, 0x86, 0xcd, 0xa8, 0xb9,
+	0x37, 0x88, 0xbe, 0xd8, 0x20, 0xfa, 0x56, 0x60, 0x26, 0xd4, 0x9c, 0x4e, 0x37, 0x51, 0x77, 0xd8,
+	0xc9, 0x53, 0xc1, 0x91, 0x65, 0x31, 0x23, 0x98, 0x09, 0x1f, 0x0e, 0xd6, 0x78, 0xe3, 0xc3, 0x37,
+	0xde, 0x54, 0xe8, 0x74, 0x39, 0x47, 0x75, 0x03, 0x24, 0x1e, 0x50, 0xbf, 0x3f, 0x9a, 0x9a, 0x60,
+	0xa1, 0xcd, 0xfb, 0x88, 0x9d, 0x1e, 0x5d, 0xda, 0x5b, 0xa8, 0x0b, 0x20, 0xbd, 0x49, 0x3d, 0xaf,
+	0xcc, 0xbf, 0x02, 0xcc, 0x94, 0xa8, 0x5e, 0xac, 0x6e, 0xee, 0x18, 0x5e, 0xef, 0xa3, 0xa1, 0x9b,
+	0xf1, 0x1a, 0x9c, 0x65, 0x67, 0xa4, 0x46, 0x4d, 0xc4, 0xa7, 0x08, 0xbb, 0x94, 0x64, 0x66, 0x00,
+	0x55, 0xbc, 0xfd, 0x6a, 0x57, 0x24, 0xb0, 0xf4, 0x06, 0xf6, 0x8d, 0xfe, 0x1d, 0x3b, 0x4d, 0xff,
+	0x2e, 0xf6, 0xb9, 0x38, 0xaa, 0x8b, 0x25, 0x48, 0xf5, 0x67, 0xcf, 0xa9, 0xf9, 0x4d, 0x80, 0x0b,
+	0x25, 0xaa, 0x57, 0x50, 0x13, 0xa9, 0x36, 0xee, 0x20, 0x7f, 0x10, 0x6c, 0x3b, 0x6f, 0x01, 0x43,
+	0x1d, 0x9e, 0xa6, 0x55, 0x38, 0x67, 0x21, 0x95, 0x74, 0x90, 0x85, 0xb4, 0x9a, 0x77, 0xd3, 0x52,
+	0xef, 0xf6, 0x96, 0x67, 0xb8, 0xe8, 0xbe, 0x73, 0x67, 0x56, 0xf6, 0x7a, 0x03, 0x5f, 0x86, 0x4b,
+	0x47, 0xc5, 0xc6, 0x93, 0xf8, 0x55, 0x80, 0xe9, 0x12, 0xd5, 0x77, 0x4c, 0x4d, 0xb1, 0x51, 0x99,
+	0x7d, 0x1a, 0x88, 0x77, 0x60, 0x52, 0x69, 0xdb, 0x0d, 0x62, 0x61, 0x7b, 0xff, 0xd8, 0x07, 0x4a,
+	0x00, 0x15, 0x37, 0x60, 0xc2, 0xfd, 0xb8, 0xf0, 0x9e, 0x28, 0x8b, 0x51, 0x4f, 0x14, 0x06, 0x2a,
+	0x8e, 0x3d, 0x3b, 0xcc, 0x8c, 0xc8, 0x9e, 0xca, 0xfa, 0x94, 0x13, 0x7d, 0x60, 0x2c, 0xb7, 0xc0,
+	0x9e, 0x99, 0xe1, 0xb8, 0xfc, 0x98, 0x6f, 0xfe, 0x70, 0x06, 0x62, 0x25, 0xaa, 0x3b, 0x43, 0x7f,
+	0x2e, 0xe2, 0x53, 0xe2, 0x46, 0x84, 0xeb, 0xc8, 0xf7, 0xad, 0x74, 0xf7, 0xb4, 0x1a, 0x7e, 0x38,
+	0xe2, 0xb7, 0x30, 0x3b, 0xf0, 0x35, 0x9c, 0x8f, 0xb6, 0x38, 0x08, 0x2f, 0xdd, 0x39, 0x1d, 0x9e,
+	0xfb, 0xff, 0x06, 0xce, 0x0d, 0x7a, 0x68, 0xae, 0x1e, 0x97, 0x50, 0x0f, 0x5c, 0xfa, 0xf0, 0x54,
+	0x70, 0xee, 0xfc, 0x0f, 0x01, 0xd2, 0xc7, 0x5c, 0x5d, 0x47, 0x30, 0x7b, 0xb4, 0xa6, 0xf4, 0xe9,
+	0xdb, 0x6a, 0xf2, 0xf0, 0x08, 0x4c, 0xf7, 0x5f, 0x2a, 0x57, 0x8f, 0x34, 0x1a, 0x86, 0x4a, 0x6b,
+	0x27, 0x86, 0x72, 0x87, 0x18, 0x92, 0xbd, 0xb3, 0xf2, 0x4a, 0xb4, 0x8d, 0x1e, 0xa0, 0x54, 0x38,
+	0x21, 0x90, 0xbb, 0xfa, 0x59, 0x80, 0x85, 0xe8, 0xe1, 0x73, 0x2b, 0xda, 0x5c, 0xa4, 0x92, 0xb4,
+	0xf1, 0x16, 0x4a, 0x3c, 0x9e, 0x5d, 0x48, 0xf4, 0x8c, 0x91, 0xe5, 0x68, 0x63, 0x61, 0x9c, 0x94,
+	0x3f, 0x19, 0xce, 0xf7, 0x23, 0x8d, 0x7f, 0xf7, 0xfa, 0xc9, 0x35, 0xa1, 0xf8, 0xf9, 0xb3, 0x97,
+	0x69, 0xe1, 0xf9, 0xcb, 0xb4, 0xf0, 0xf7, 0xcb, 0xb4, 0xf0, 0xcb, 0xab, 0xf4, 0xc8, 0xf3, 0x57,
+	0xe9, 0x91, 0xbf, 0x5e, 0xa5, 0x47, 0xbe, 0x3c, 0xc1, 0x73, 0xa0, 0x1b, 0xfe, 0xa7, 0x82, 0xdd,
+	0xb8, 0xf5, 0x09, 0xf6, 0x17, 0xc5, 0xad, 0xff, 0x03, 0x00, 0x00, 0xff, 0xff, 0x37, 0x44, 0x0c,
+	0x6e, 0xb8, 0x11, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -966,6 +1103,8 @@ type MsgClient interface {
 	EditFinalityProvider(ctx context.Context, in *MsgEditFinalityProvider, opts ...grpc.CallOption) (*MsgEditFinalityProviderResponse, error)
 	// CreateBTCDelegation creates a new BTC delegation
 	CreateBTCDelegation(ctx context.Context, in *MsgCreateBTCDelegation, opts ...grpc.CallOption) (*MsgCreateBTCDelegationResponse, error)
+	// AddBTCDelegationInclusionProof adds inclusion proof of a given delegation on BTC chain
+	AddBTCDelegationInclusionProof(ctx context.Context, in *MsgAddBTCDelegationInclusionProof, opts ...grpc.CallOption) (*MsgAddBTCDelegationInclusionProofResponse, error)
 	// AddCovenantSigs handles signatures from a covenant member
 	AddCovenantSigs(ctx context.Context, in *MsgAddCovenantSigs, opts ...grpc.CallOption) (*MsgAddCovenantSigsResponse, error)
 	// BTCUndelegate handles a signature on unbonding tx from its delegator
@@ -1006,6 +1145,15 @@ func (c *msgClient) EditFinalityProvider(ctx context.Context, in *MsgEditFinalit
 func (c *msgClient) CreateBTCDelegation(ctx context.Context, in *MsgCreateBTCDelegation, opts ...grpc.CallOption) (*MsgCreateBTCDelegationResponse, error) {
 	out := new(MsgCreateBTCDelegationResponse)
 	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Msg/CreateBTCDelegation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) AddBTCDelegationInclusionProof(ctx context.Context, in *MsgAddBTCDelegationInclusionProof, opts ...grpc.CallOption) (*MsgAddBTCDelegationInclusionProofResponse, error) {
+	out := new(MsgAddBTCDelegationInclusionProofResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Msg/AddBTCDelegationInclusionProof", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1056,6 +1204,8 @@ type MsgServer interface {
 	EditFinalityProvider(context.Context, *MsgEditFinalityProvider) (*MsgEditFinalityProviderResponse, error)
 	// CreateBTCDelegation creates a new BTC delegation
 	CreateBTCDelegation(context.Context, *MsgCreateBTCDelegation) (*MsgCreateBTCDelegationResponse, error)
+	// AddBTCDelegationInclusionProof adds inclusion proof of a given delegation on BTC chain
+	AddBTCDelegationInclusionProof(context.Context, *MsgAddBTCDelegationInclusionProof) (*MsgAddBTCDelegationInclusionProofResponse, error)
 	// AddCovenantSigs handles signatures from a covenant member
 	AddCovenantSigs(context.Context, *MsgAddCovenantSigs) (*MsgAddCovenantSigsResponse, error)
 	// BTCUndelegate handles a signature on unbonding tx from its delegator
@@ -1079,6 +1229,9 @@ func (*UnimplementedMsgServer) EditFinalityProvider(ctx context.Context, req *Ms
 }
 func (*UnimplementedMsgServer) CreateBTCDelegation(ctx context.Context, req *MsgCreateBTCDelegation) (*MsgCreateBTCDelegationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateBTCDelegation not implemented")
+}
+func (*UnimplementedMsgServer) AddBTCDelegationInclusionProof(ctx context.Context, req *MsgAddBTCDelegationInclusionProof) (*MsgAddBTCDelegationInclusionProofResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddBTCDelegationInclusionProof not implemented")
 }
 func (*UnimplementedMsgServer) AddCovenantSigs(ctx context.Context, req *MsgAddCovenantSigs) (*MsgAddCovenantSigsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddCovenantSigs not implemented")
@@ -1147,6 +1300,24 @@ func _Msg_CreateBTCDelegation_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).CreateBTCDelegation(ctx, req.(*MsgCreateBTCDelegation))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_AddBTCDelegationInclusionProof_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAddBTCDelegationInclusionProof)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).AddBTCDelegationInclusionProof(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.btcstaking.v1.Msg/AddBTCDelegationInclusionProof",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).AddBTCDelegationInclusionProof(ctx, req.(*MsgAddBTCDelegationInclusionProof))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1238,6 +1409,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateBTCDelegation",
 			Handler:    _Msg_CreateBTCDelegation_Handler,
+		},
+		{
+			MethodName: "AddBTCDelegationInclusionProof",
+			Handler:    _Msg_AddBTCDelegationInclusionProof_Handler,
 		},
 		{
 			MethodName: "AddCovenantSigs",
@@ -1482,7 +1657,7 @@ func (m *MsgCreateBTCDelegation) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 			i = encodeVarintTx(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x72
+		dAtA[i] = 0x7a
 	}
 	if m.UnbondingSlashingTx != nil {
 		{
@@ -1494,24 +1669,24 @@ func (m *MsgCreateBTCDelegation) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 			i = encodeVarintTx(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x6a
+		dAtA[i] = 0x72
 	}
 	if m.UnbondingValue != 0 {
 		i = encodeVarintTx(dAtA, i, uint64(m.UnbondingValue))
 		i--
-		dAtA[i] = 0x60
+		dAtA[i] = 0x68
 	}
 	if len(m.UnbondingTx) > 0 {
 		i -= len(m.UnbondingTx)
 		copy(dAtA[i:], m.UnbondingTx)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.UnbondingTx)))
 		i--
-		dAtA[i] = 0x5a
+		dAtA[i] = 0x62
 	}
 	if m.UnbondingTime != 0 {
 		i = encodeVarintTx(dAtA, i, uint64(m.UnbondingTime))
 		i--
-		dAtA[i] = 0x50
+		dAtA[i] = 0x58
 	}
 	if m.DelegatorSlashingSig != nil {
 		{
@@ -1523,7 +1698,7 @@ func (m *MsgCreateBTCDelegation) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 			i = encodeVarintTx(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x4a
+		dAtA[i] = 0x52
 	}
 	if m.SlashingTx != nil {
 		{
@@ -1535,17 +1710,24 @@ func (m *MsgCreateBTCDelegation) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 			i = encodeVarintTx(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x42
+		dAtA[i] = 0x4a
 	}
-	if m.StakingTx != nil {
+	if m.StakingTxInclusionProof != nil {
 		{
-			size, err := m.StakingTx.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.StakingTxInclusionProof.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
 			i -= size
 			i = encodeVarintTx(dAtA, i, uint64(size))
 		}
+		i--
+		dAtA[i] = 0x42
+	}
+	if len(m.StakingTx) > 0 {
+		i -= len(m.StakingTx)
+		copy(dAtA[i:], m.StakingTx)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.StakingTx)))
 		i--
 		dAtA[i] = 0x3a
 	}
@@ -1623,6 +1805,78 @@ func (m *MsgCreateBTCDelegationResponse) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *MsgCreateBTCDelegationResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgAddBTCDelegationInclusionProof) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgAddBTCDelegationInclusionProof) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgAddBTCDelegationInclusionProof) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.StakingTxInclusionProof != nil {
+		{
+			size, err := m.StakingTxInclusionProof.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.StakingTxHash) > 0 {
+		i -= len(m.StakingTxHash)
+		copy(dAtA[i:], m.StakingTxHash)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.StakingTxHash)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Signer) > 0 {
+		i -= len(m.Signer)
+		copy(dAtA[i:], m.Signer)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Signer)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgAddBTCDelegationInclusionProofResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgAddBTCDelegationInclusionProofResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgAddBTCDelegationInclusionProofResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1752,15 +2006,22 @@ func (m *MsgBTCUndelegate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.UnbondingTxSig != nil {
+	if m.StakeSpendingTxInclusionProof != nil {
 		{
-			size := m.UnbondingTxSig.Size()
-			i -= size
-			if _, err := m.UnbondingTxSig.MarshalTo(dAtA[i:]); err != nil {
+			size, err := m.StakeSpendingTxInclusionProof.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
 				return 0, err
 			}
+			i -= size
 			i = encodeVarintTx(dAtA, i, uint64(size))
 		}
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.StakeSpendingTx) > 0 {
+		i -= len(m.StakeSpendingTx)
+		copy(dAtA[i:], m.StakeSpendingTx)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.StakeSpendingTx)))
 		i--
 		dAtA[i] = 0x1a
 	}
@@ -2051,8 +2312,12 @@ func (m *MsgCreateBTCDelegation) Size() (n int) {
 	if m.StakingValue != 0 {
 		n += 1 + sovTx(uint64(m.StakingValue))
 	}
-	if m.StakingTx != nil {
-		l = m.StakingTx.Size()
+	l = len(m.StakingTx)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.StakingTxInclusionProof != nil {
+		l = m.StakingTxInclusionProof.Size()
 		n += 1 + l + sovTx(uint64(l))
 	}
 	if m.SlashingTx != nil {
@@ -2085,6 +2350,36 @@ func (m *MsgCreateBTCDelegation) Size() (n int) {
 }
 
 func (m *MsgCreateBTCDelegationResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgAddBTCDelegationInclusionProof) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Signer)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.StakingTxHash)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.StakingTxInclusionProof != nil {
+		l = m.StakingTxInclusionProof.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgAddBTCDelegationInclusionProofResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2153,8 +2448,12 @@ func (m *MsgBTCUndelegate) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	if m.UnbondingTxSig != nil {
-		l = m.UnbondingTxSig.Size()
+	l = len(m.StakeSpendingTx)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.StakeSpendingTxInclusionProof != nil {
+		l = m.StakeSpendingTxInclusionProof.Size()
 		n += 1 + l + sovTx(uint64(l))
 	}
 	return n
@@ -2983,6 +3282,40 @@ func (m *MsgCreateBTCDelegation) Unmarshal(dAtA []byte) error {
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field StakingTx", wireType)
 			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakingTx = append(m.StakingTx[:0], dAtA[iNdEx:postIndex]...)
+			if m.StakingTx == nil {
+				m.StakingTx = []byte{}
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxInclusionProof", wireType)
+			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
@@ -3008,14 +3341,14 @@ func (m *MsgCreateBTCDelegation) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.StakingTx == nil {
-				m.StakingTx = &types1.TransactionInfo{}
+			if m.StakingTxInclusionProof == nil {
+				m.StakingTxInclusionProof = &InclusionProof{}
 			}
-			if err := m.StakingTx.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.StakingTxInclusionProof.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		case 8:
+		case 9:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SlashingTx", wireType)
 			}
@@ -3050,7 +3383,7 @@ func (m *MsgCreateBTCDelegation) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 9:
+		case 10:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field DelegatorSlashingSig", wireType)
 			}
@@ -3085,7 +3418,7 @@ func (m *MsgCreateBTCDelegation) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 10:
+		case 11:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingTime", wireType)
 			}
@@ -3104,7 +3437,7 @@ func (m *MsgCreateBTCDelegation) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 11:
+		case 12:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingTx", wireType)
 			}
@@ -3138,7 +3471,7 @@ func (m *MsgCreateBTCDelegation) Unmarshal(dAtA []byte) error {
 				m.UnbondingTx = []byte{}
 			}
 			iNdEx = postIndex
-		case 12:
+		case 13:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingValue", wireType)
 			}
@@ -3157,7 +3490,7 @@ func (m *MsgCreateBTCDelegation) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 13:
+		case 14:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingSlashingTx", wireType)
 			}
@@ -3192,7 +3525,7 @@ func (m *MsgCreateBTCDelegation) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 14:
+		case 15:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field DelegatorUnbondingSlashingSig", wireType)
 			}
@@ -3275,6 +3608,206 @@ func (m *MsgCreateBTCDelegationResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgCreateBTCDelegationResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgAddBTCDelegationInclusionProof) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgAddBTCDelegationInclusionProof: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgAddBTCDelegationInclusionProof: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Signer", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Signer = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakingTxHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxInclusionProof", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.StakingTxInclusionProof == nil {
+				m.StakingTxInclusionProof = &InclusionProof{}
+			}
+			if err := m.StakingTxInclusionProof.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgAddBTCDelegationInclusionProofResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgAddBTCDelegationInclusionProofResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgAddBTCDelegationInclusionProofResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -3691,7 +4224,7 @@ func (m *MsgBTCUndelegate) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingTxSig", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field StakeSpendingTx", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -3718,9 +4251,44 @@ func (m *MsgBTCUndelegate) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_babylonlabs_io_babylon_types.BIP340Signature
-			m.UnbondingTxSig = &v
-			if err := m.UnbondingTxSig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.StakeSpendingTx = append(m.StakeSpendingTx[:0], dAtA[iNdEx:postIndex]...)
+			if m.StakeSpendingTx == nil {
+				m.StakeSpendingTx = []byte{}
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakeSpendingTxInclusionProof", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.StakeSpendingTxInclusionProof == nil {
+				m.StakeSpendingTxInclusionProof = &InclusionProof{}
+			}
+			if err := m.StakeSpendingTxInclusionProof.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

@@ -15,7 +15,6 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	ct "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -69,7 +68,7 @@ func (s *BTCTimestampingTestSuite) Test1ConnectIbc() {
 
 func (s *BTCTimestampingTestSuite) Test2BTCBaseHeader() {
 	hardcodedHeader, _ := bbn.NewBTCHeaderBytesFromHex("0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000")
-	hardcodedHeaderHeight := uint64(0)
+	hardcodedHeaderHeight := uint32(0)
 
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
@@ -99,45 +98,27 @@ func (s *BTCTimestampingTestSuite) Test3SendTx() {
 	// check that light client properly updates its state
 	tip1Depth, err := nonValidatorNode.QueryHeaderDepth(tip1.HashHex)
 	s.NoError(err)
-	s.Equal(tip1Depth, uint64(1))
+	s.Equal(tip1Depth, uint32(1))
 
 	tip2Depth, err := nonValidatorNode.QueryHeaderDepth(tip2.HashHex)
 	s.NoError(err)
 	// tip should have 0 depth
-	s.Equal(tip2Depth, uint64(0))
+	s.Equal(tip2Depth, uint32(0))
 }
 
-func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
+func (s *BTCTimestampingTestSuite) Test4FinalizeEpochs() {
 	chainA := s.configurer.GetChainConfig(0)
+
 	chainA.WaitUntilHeight(35)
 
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// Query open IBC channels and assert there is only one
-	channels, err := nonValidatorNode.QueryIBCChannels()
-	s.NoError(err)
-	s.Equal(1, len(channels.Channels), "Expected only one open IBC channel")
-	// Get the client ID under this IBC channel
-	channelClientState, err := nonValidatorNode.QueryChannelClientState(channels.Channels[0].ChannelId, channels.Channels[0].PortId)
-	s.NoError(err)
-	clientID := channelClientState.IdentifiedClientState.ClientId
-
-	// Query checkpoint chain info for opposing chain
-	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{clientID})
-	s.NoError(err)
-	s.Equal(chainsInfo[0].ConsumerId, clientID)
-
-	// Finalize epoch 1, 2, 3, as first headers of opposing chain are in epoch 3
+	// Finalize epoch 1, 2, 3
 	var (
 		startEpochNum uint64 = 1
 		endEpochNum   uint64 = 3
 	)
-
-	// submitter/reporter address should not have any rewards yet
-	submitterReporterAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
-	_, err = nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
-	s.Error(err)
 
 	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
 
@@ -149,103 +130,9 @@ func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	time.Sleep(20 * time.Second)
 	// Wait for next block
 	nonValidatorNode.WaitForNextBlock()
-
-	// Check we have epoch info for opposing chain and some basic assertions
-	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(endEpochNum, []string{clientID})
-	s.NoError(err)
-	s.Equal(epochChainsInfo[0].ConsumerId, clientID)
-	s.Equal(epochChainsInfo[0].LatestHeader.BabylonEpoch, endEpochNum)
-
-	// Check we have finalized epoch info for opposing chain and some basic assertions
-	finalizedChainsInfo, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{clientID})
-	s.NoError(err)
-
-	// TODO Add more assertion here. Maybe check proofs ?
-	s.Equal(finalizedChainsInfo[0].FinalizedChainInfo.ConsumerId, clientID)
-	s.Equal(finalizedChainsInfo[0].EpochInfo.EpochNumber, endEpochNum)
-
-	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
-	s.NoError(err)
-
-	heightAtEndedEpoch, err := nonValidatorNode.QueryLightClientHeightEpochEnd(currEpoch - 1)
-	s.NoError(err)
-
-	if heightAtEndedEpoch == 0 {
-		// we can only assert, that btc lc height is larger than 0.
-		s.FailNow(fmt.Sprintf("Light client height should be  > 0 on epoch %d", currEpoch-1))
-	}
-
-	// ensure balance has increased after finalising some epochs
-	rewardGauges, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
-	s.NoError(err)
-	submitterRewardGauge, ok := rewardGauges[itypes.SubmitterType.String()]
-	s.True(ok)
-	s.True(submitterRewardGauge.Coins.IsAllPositive())
-	reporterRewardGauge, ok := rewardGauges[itypes.ReporterType.String()]
-	s.True(ok)
-	s.True(reporterRewardGauge.Coins.IsAllPositive())
-
-	chainB := s.configurer.GetChainConfig(1)
-	_, err = chainB.GetDefaultNode()
-	s.NoError(err)
 }
 
-func (s *BTCTimestampingTestSuite) Test5WithdrawReward() {
-	chainA := s.configurer.GetChainConfig(0)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
-	s.NoError(err)
-
-	// NOTE: nonValidatorNode.PublicAddress is the address associated with key name `val`
-	// and is both the submitter and reporter
-	submitterReporterAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
-
-	// balance before withdraw
-	balance, err := nonValidatorNode.QueryBalances(submitterReporterAddr.String())
-	s.NoError(err)
-	// submitter/reporter reward gauges before withdraw should not be fully withdrawn
-	rgs, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
-	s.NoError(err)
-	submitterRg, reporterRg := rgs[itypes.SubmitterType.String()], rgs[itypes.ReporterType.String()]
-	s.T().Logf("submitter witdhrawable reward: %s, reporter witdhrawable reward: %s before withdrawing", submitterRg.GetWithdrawableCoins().String(), reporterRg.GetWithdrawableCoins().String())
-	s.False(submitterRg.IsFullyWithdrawn())
-	s.False(reporterRg.IsFullyWithdrawn())
-
-	// withdraw submitter reward
-	nonValidatorNode.WithdrawReward(itypes.SubmitterType.String(), initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
-
-	// balance after withdrawing submitter reward
-	balance2, err := nonValidatorNode.QueryBalances(submitterReporterAddr.String())
-	s.NoError(err)
-	s.T().Logf("balance2: %s; balance: %s", balance2.String(), balance.String())
-	s.True(balance2.IsAllGT(balance))
-
-	// submitter reward gauge should be fully withdrawn
-	rgs2, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
-	s.NoError(err)
-	submitterRg2 := rgs2[itypes.SubmitterType.String()]
-	s.T().Logf("submitter withdrawable reward: %s after withdrawing", submitterRg2.GetWithdrawableCoins().String())
-	s.True(rgs2[itypes.SubmitterType.String()].IsFullyWithdrawn())
-
-	// withdraw reporter reward
-	nonValidatorNode.WithdrawReward(itypes.ReporterType.String(), initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
-
-	// balance after withdrawing reporter reward
-	balance3, err := nonValidatorNode.QueryBalances(submitterReporterAddr.String())
-	s.NoError(err)
-	s.T().Logf("balance3: %s; balance2: %s", balance3.String(), balance2.String())
-	s.True(balance3.IsAllGT(balance2))
-
-	// reporter reward gauge should be fully withdrawn
-	rgs3, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
-	s.NoError(err)
-	reporterRg3 := rgs3[itypes.SubmitterType.String()]
-	s.T().Logf("reporter withdrawable reward: %s after withdrawing", reporterRg3.GetWithdrawableCoins().String())
-	s.True(rgs3[itypes.ReporterType.String()].IsFullyWithdrawn())
-}
-
-func (s *BTCTimestampingTestSuite) Test6Wasm() {
+func (s *BTCTimestampingTestSuite) Test5Wasm() {
 	contractPath := "/bytecode/storage_contract.wasm"
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
@@ -309,7 +196,7 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 	s.Greater(saveEpoch, latestFinalizedEpoch)
 }
 
-func (s *BTCTimestampingTestSuite) Test7InterceptFeeCollector() {
+func (s *BTCTimestampingTestSuite) Test6InterceptFeeCollector() {
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
@@ -337,31 +224,8 @@ func (s *BTCTimestampingTestSuite) Test7InterceptFeeCollector() {
 		return len(btcStakingGauge.Coins) >= 1 && btcStakingGauge.Coins[0].Amount.IsPositive()
 	}, time.Second*10, time.Second)
 
-	// ensure BTC timestamping gauge at the current epoch is non-empty
-	curEpoch, err := nonValidatorNode.QueryCurrentEpoch()
-	s.NoError(err)
-	// at the 1st block of an epoch, the gauge does not exist since incentive's BeginBlock
-	// at this block accumulates rewards for BTC timestamping gauge for the previous block
-	// need to wait for a block to ensure the gauge is created
-	var btcTimestampingGauge *itypes.Gauge
-	s.Eventually(func() bool {
-		btcTimestampingGauge, err = nonValidatorNode.QueryBTCTimestampingGauge(curEpoch)
-		if err != nil {
-			return false
-		}
-		s.T().Logf("BTC timestamping gauge at current epoch %d: %s", curEpoch, btcTimestampingGauge.String())
-		return !btcTimestampingGauge.Coins.Empty()
-	}, time.Second*10, time.Second)
-
-	// wait for 1 block to see if BTC timestamp gauge has accumulated
-	nonValidatorNode.WaitForNextBlock()
-	btcTimestampingGauge2, err := nonValidatorNode.QueryBTCTimestampingGauge(curEpoch)
-	s.NoError(err)
-	s.T().Logf("BTC timestamping gauge after a block at current epoch %d: %s", curEpoch, btcTimestampingGauge2.String())
-	s.NotEmpty(btcTimestampingGauge2.Coins)
-	s.True(btcTimestampingGauge2.Coins.IsAllGTE(btcTimestampingGauge.Coins))
-
 	// after 1 block, incentive's balance has to be accumulated
+	nonValidatorNode.WaitForNextBlock()
 	incentiveBalance2, err := nonValidatorNode.QueryBalances(incentiveModuleAddr.String())
 	s.NoError(err)
 	s.T().Logf("incentive module account's balance after a block: %s", incentiveBalance2.String())

@@ -6,10 +6,11 @@ import (
 
 	txformat "github.com/babylonlabs-io/babylon/btctxformatter"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type MockBTCLightClientKeeper struct {
-	headers map[string]uint64
+	headers map[string]uint32
 }
 
 type MockCheckpointingKeeper struct {
@@ -21,7 +22,7 @@ type MockIncentiveKeeper struct {
 
 func NewMockBTCLightClientKeeper() *MockBTCLightClientKeeper {
 	lc := MockBTCLightClientKeeper{
-		headers: make(map[string]uint64),
+		headers: make(map[string]uint32),
 	}
 	return &lc
 }
@@ -45,7 +46,7 @@ func (mc *MockCheckpointingKeeper) ReturnSuccess() {
 	mc.returnError = false
 }
 
-func (mc *MockBTCLightClientKeeper) SetDepth(header *bbn.BTCHeaderHashBytes, dd uint64) {
+func (mc *MockBTCLightClientKeeper) SetDepth(header *bbn.BTCHeaderHashBytes, dd uint32) {
 	mc.headers[header.String()] = dd
 }
 
@@ -53,12 +54,12 @@ func (mc *MockBTCLightClientKeeper) DeleteHeader(header *bbn.BTCHeaderHashBytes)
 	delete(mc.headers, header.String())
 }
 
-func (mb MockBTCLightClientKeeper) BlockHeight(ctx context.Context, header *bbn.BTCHeaderHashBytes) (uint64, error) {
+func (mb MockBTCLightClientKeeper) BlockHeight(ctx context.Context, header *bbn.BTCHeaderHashBytes) (uint32, error) {
 	// todo not used
-	return uint64(10), nil
+	return uint32(10), nil
 }
 
-func (ck MockBTCLightClientKeeper) MainChainDepth(ctx context.Context, headerBytes *bbn.BTCHeaderHashBytes) (uint64, error) {
+func (ck MockBTCLightClientKeeper) MainChainDepth(ctx context.Context, headerBytes *bbn.BTCHeaderHashBytes) (uint32, error) {
 	depth, ok := ck.headers[headerBytes.String()]
 	if ok {
 		return depth, nil
@@ -96,4 +97,7 @@ func (ck MockCheckpointingKeeper) SetCheckpointForgotten(ctx context.Context, ep
 }
 
 func (ik *MockIncentiveKeeper) RewardBTCTimestamping(ctx context.Context, epoch uint64, rewardDistInfo *RewardDistInfo) {
+}
+
+func (ik *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg sdk.Msg) {
 }

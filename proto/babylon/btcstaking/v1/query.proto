@@ -35,28 +35,7 @@ service Query {
 
   // BTCDelegations queries all BTC delegations under a given status
   rpc BTCDelegations(QueryBTCDelegationsRequest) returns (QueryBTCDelegationsResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegations";
-  }
-
-  // ActiveFinalityProvidersAtHeight queries finality providers with non zero voting power at given height.
-  rpc ActiveFinalityProvidersAtHeight(QueryActiveFinalityProvidersAtHeightRequest) returns (QueryActiveFinalityProvidersAtHeightResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers/{height}";
-  }
-
-  // FinalityProviderPowerAtHeight queries the voting power of a finality provider at a given height
-  rpc FinalityProviderPowerAtHeight(QueryFinalityProviderPowerAtHeightRequest) returns (QueryFinalityProviderPowerAtHeightResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/power/{height}";
-  }
-
-  // FinalityProviderCurrentPower queries the voting power of a finality provider at the current height
-  rpc FinalityProviderCurrentPower(QueryFinalityProviderCurrentPowerRequest) returns (QueryFinalityProviderCurrentPowerResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/power";
-  }
-
-  // ActivatedHeight queries the height when BTC staking protocol is activated, i.e., the first height when
-  // there exists 1 finality provider with voting power
-  rpc ActivatedHeight(QueryActivatedHeightRequest) returns (QueryActivatedHeightResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/activated_height";
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegations/{status}";
   }
 
   // FinalityProviderDelegations queries all BTC delegations of the given finality provider
@@ -66,7 +45,7 @@ service Query {
 
   // BTCDelegation retrieves delegation by corresponding staking tx hash
   rpc BTCDelegation(QueryBTCDelegationRequest) returns (QueryBTCDelegationResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegations/{staking_tx_hash_hex}";
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegation/{staking_tx_hash_hex}";
   }
 }
 
@@ -140,71 +119,6 @@ message QueryBTCDelegationsResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// QueryFinalityProviderPowerAtHeightRequest is the request type for the
-// Query/FinalityProviderPowerAtHeight RPC method.
-message QueryFinalityProviderPowerAtHeightRequest {
-  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider that
-  // this BTC delegation delegates to
-  // the PK follows encoding in BIP-340 spec
-  string fp_btc_pk_hex = 1;
-
-  // height is used for querying the given finality provider's voting power at this height
-  uint64 height = 2;
-}
-
-// QueryFinalityProviderPowerAtHeightResponse is the response type for the
-// Query/FinalityProviderPowerAtHeight RPC method.
-message QueryFinalityProviderPowerAtHeightResponse {
-  // voting_power is the voting power of the finality provider
-  uint64 voting_power = 1;
-}
-
-// QueryFinalityProviderCurrentPowerRequest is the request type for the
-// Query/FinalityProviderCurrentPower RPC method.
-message QueryFinalityProviderCurrentPowerRequest {
-  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider that
-  // this BTC delegation delegates to
-  // the PK follows encoding in BIP-340 spec
-  string fp_btc_pk_hex = 1;
-}
-
-// QueryFinalityProviderCurrentPowerResponse is the response type for the
-// Query/FinalityProviderCurrentPower RPC method.
-message QueryFinalityProviderCurrentPowerResponse {
-  // height is the current height
-  uint64 height = 1;
-  // voting_power is the voting power of the finality provider
-  uint64 voting_power = 2;
-}
-
-// QueryActiveFinalityProvidersAtHeightRequest is the request type for the
-// Query/ActiveFinalityProvidersAtHeight RPC method.
-message QueryActiveFinalityProvidersAtHeightRequest {
-  // height defines at which Babylon height to query the finality providers info.
-  uint64 height = 1;
-
-  // pagination defines an optional pagination for the request.
-  cosmos.base.query.v1beta1.PageRequest pagination = 2;
-}
-
-// QueryActiveFinalityProvidersAtHeightResponse is the response type for the
-// Query/ActiveFinalityProvidersAtHeight RPC method.
-message QueryActiveFinalityProvidersAtHeightResponse {
-  // finality_providers contains all the queried finality providersn.
-  repeated FinalityProviderWithMeta finality_providers = 1;
-
-  // pagination defines the pagination in the response.
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
-}
-
-// QueryActivatedHeightRequest is the request type for the Query/ActivatedHeight RPC method.
-message QueryActivatedHeightRequest {}
-
-// QueryActivatedHeightResponse is the response type for the Query/ActivatedHeight RPC method.
-message QueryActivatedHeightResponse {
-  uint64 height = 1;
-}
-
 // QueryFinalityProviderDelegationsRequest is the request type for the
 // Query/FinalityProviderDelegations RPC method.
 message QueryFinalityProviderDelegationsRequest {
@@ -251,40 +165,50 @@ message BTCDelegationResponse {
   // fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
   // this BTC delegation delegates to
   repeated bytes fp_btc_pk_list = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  // staking_time is the number of blocks for which the delegation is locked on BTC chain
+  uint32 staking_time = 4;
   // start_height is the start BTC height of the BTC delegation
   // it is the start BTC height of the timelock
-  uint64 start_height = 4;
+  uint32 start_height = 5;
   // end_height is the end height of the BTC delegation
   // it is the end BTC height of the timelock - w
-  uint64 end_height = 5;
+  uint32 end_height = 6;
   // total_sat is the total amount of BTC stakes in this delegation
   // quantified in satoshi
-  uint64 total_sat = 6;
+  uint64 total_sat = 7;
   // staking_tx_hex is the hex string of staking tx
-  string staking_tx_hex = 7;
+  string staking_tx_hex = 8;
   // slashing_tx_hex is the hex string of slashing tx
-  string slashing_tx_hex = 8;
+  string slashing_tx_hex = 9;
   // delegator_slash_sig_hex is the signature on the slashing tx
   // by the delegator (i.e., SK corresponding to btc_pk) as string hex.
   // It will be a part of the witness for the staking tx output.
-  string delegator_slash_sig_hex = 9;
+  string delegator_slash_sig_hex = 10;
   // covenant_sigs is a list of adaptor signatures on the slashing tx
   // by each covenant member
   // It will be a part of the witness for the staking tx output.
-  repeated CovenantAdaptorSignatures covenant_sigs = 10;
+  repeated CovenantAdaptorSignatures covenant_sigs = 11;
   // staking_output_idx is the index of the staking output in the staking tx
-  uint32 staking_output_idx = 11;
+  uint32 staking_output_idx = 12;
   // whether this delegation is active
-  bool active = 12;
+  bool active = 13;
   // descriptive status of current delegation.
-  string status_desc = 13;
+  string status_desc = 14;
   // unbonding_time used in unbonding output timelock path and in slashing transactions
   // change outputs
-  uint32 unbonding_time = 14;
+  uint32 unbonding_time = 15;
   // undelegation_response is the undelegation info of this delegation.
-  BTCUndelegationResponse undelegation_response = 15;
+  BTCUndelegationResponse undelegation_response = 16;
   // params version used to validate delegation
-  uint32 params_version = 16;
+  uint32 params_version = 17;
+}
+
+// DelegatorUnbondingInfoResponse provides all necessary info about transaction
+// which spent the staking output
+message DelegatorUnbondingInfoResponse {
+  // spend_stake_tx_hex is the transaction which spent the staking output. It is
+  // filled only if the spend_stake_tx_hex is different than the unbonding_tx_hex
+  string spend_stake_tx_hex = 1;
 }
 
 // BTCUndelegationResponse provides all necessary info about the undeleagation
@@ -293,26 +217,23 @@ message BTCUndelegationResponse {
   // output to unbonding output. Unbonding output will usually have lower timelock
   // than staking output. The unbonding tx as string hex.
   string unbonding_tx_hex = 1;
-  // delegator_unbonding_sig is the signature on the unbonding tx
-  // by the delegator (i.e., SK corresponding to btc_pk).
-  // It effectively proves that the delegator wants to unbond and thus
-  // Babylon will consider this BTC delegation unbonded. Delegator's BTC
-  // on Bitcoin will be unbonded after timelock. The unbonding delegator sig as string hex.
-  string delegator_unbonding_sig_hex = 2;
   // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
   // by covenant members
-  repeated SignatureInfo covenant_unbonding_sig_list = 3;
+  repeated SignatureInfo covenant_unbonding_sig_list = 2;
   // slashingTxHex is the hex string of slashing tx
-  string slashing_tx_hex = 4;
+  string slashing_tx_hex = 3;
   // delegator_slashing_sig is the signature on the slashing tx
   // by the delegator (i.e., SK corresponding to btc_pk).
   // It will be a part of the witness for the unbonding tx output.
   // The delegator slashing sig as string hex.
-  string delegator_slashing_sig_hex = 5;
+  string delegator_slashing_sig_hex = 4;
   // covenant_slashing_sigs is a list of adaptor signatures on the
   // unbonding slashing tx by each covenant member
   // It will be a part of the witness for the staking tx output.
-  repeated CovenantAdaptorSignatures covenant_slashing_sigs = 6;
+  repeated CovenantAdaptorSignatures covenant_slashing_sigs = 5;
+  // btc_undelegation_info contains all necessary info about the transaction
+  // which spent the staking output
+  DelegatorUnbondingInfoResponse delegator_unbonding_info_response = 6;
 }
 
 // BTCDelegatorDelegationsResponse is a collection of BTC delegations responses from the same delegator.
@@ -344,11 +265,9 @@ message FinalityProviderResponse {
   // slashed_btc_height indicates the BTC height when
   // the finality provider is slashed.
   // if it's 0 then the finality provider is not slashed
-  uint64 slashed_btc_height = 7;
+  uint32 slashed_btc_height = 7;
   // height is the queried Babylon height
   uint64 height = 8;
-  // voting_power is the voting power of this finality provider at the given height
-  uint64 voting_power = 9;
   // jailed defines whether the finality provider is jailed
-  bool jailed = 10;
+  bool jailed = 9;
 }

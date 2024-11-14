@@ -1,0 +1,57 @@
+version: 2
+project_name: babylon
+
+builds:
+  - id: babylond-linux-amd64
+    main: ./cmd/babylond/main.go
+    binary: babylond
+    goos:
+      - linux
+    goarch:
+      - amd64
+    env:
+      - GO111MODULE=on
+    flags:
+      - -mod=readonly
+      - -trimpath
+    ldflags:
+      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
+      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
+      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
+      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger
+      - -w -s
+    tags:
+      - netgo
+      - ledger
+
+archives:
+  - id: zipped
+    builds:
+      - babylond-linux-amd64
+    name_template: "{{.ProjectName}}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    format: tar.gz
+    files:
+      - none*
+  - id: binaries
+    builds:
+      - babylond-linux-amd64
+    name_template: "{{.ProjectName}}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    format: binary
+    files:
+      - none*
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  algorithm: sha256
+
+release:
+  github:
+    owner: babylonlabs-io
+    name: babylon
+
+# Docs: https://goreleaser.com/customization/changelog/
+changelog:
+  disable: true
+
+dist: dist

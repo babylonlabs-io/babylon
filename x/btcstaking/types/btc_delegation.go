@@ -3,25 +3,28 @@ package types
 import (
 	"bytes"
 	"fmt"
-	math "math"
+	"math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/btcstaking"
-	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
+
+	"github.com/babylonlabs-io/babylon/btcstaking"
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, error) {
 	switch statusStr {
 	case "pending":
 		return BTCDelegationStatus_PENDING, nil
+	case "verified":
+		return BTCDelegationStatus_VERIFIED, nil
 	case "active":
 		return BTCDelegationStatus_ACTIVE, nil
 	case "unbonded":
@@ -29,19 +32,20 @@ func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, er
 	case "any":
 		return BTCDelegationStatus_ANY, nil
 	default:
-		return -1, fmt.Errorf("invalid status string; should be one of {pending, active, unbonding, unbonded, any}")
+		return -1, fmt.Errorf("invalid status string; should be one of {pending, verified, active, unbonded, any}")
 	}
 }
 
-func (d *BTCDelegation) GetStakingTime() uint16 {
-	diff := d.EndHeight - d.StartHeight
-
-	if diff > math.MaxUint16 {
-		// In valid delegation, EndHeight is always greater than StartHeight and it is always uint16 value
+func (d *BTCDelegation) MustGetValidStakingTime() uint16 {
+	if d.StakingTime > math.MaxUint16 {
 		panic("invalid delegation in database")
 	}
 
-	return uint16(diff)
+	return uint16(d.StakingTime)
+}
+
+func (d *BTCDelegation) HasInclusionProof() bool {
+	return d.StartHeight > 0 && d.EndHeight > 0
 }
 
 // GetFpIdx returns the index of the finality provider in the list of finality providers
@@ -80,40 +84,58 @@ func (d *BTCDelegation) GetCovSlashingAdaptorSig(
 // Signing unbonding signature means the delegator wants to unbond early, and
 // Babylon will consider this BTC delegation unbonded directly
 func (d *BTCDelegation) IsUnbondedEarly() bool {
-	return d.BtcUndelegation.DelegatorUnbondingSig != nil
+	return d.BtcUndelegation.DelegatorUnbondingInfo != nil
+}
+
+func (d *BTCDelegation) FinalityProviderKeys() []string {
+	var fpPks = make([]string, len(d.FpBtcPkList))
+
+	for i, fpPk := range d.FpBtcPkList {
+		fpPks[i] = fpPk.MarshalHex()
+	}
+
+	return fpPks
 }
 
 // GetStatus returns the status of the BTC Delegation based on BTC height, w value, and covenant quorum
 // Pending: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation does not have covenant signatures
 // Active: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation has quorum number of signatures over slashing tx, unbonding tx, and slashing unbonding tx from covenant committee
 // Unbonded: the BTC height is larger than `endHeight-w` or the BTC delegation has received a signature on unbonding tx from the delegator
-func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64, covenantQuorum uint32) BTCDelegationStatus {
+func (d *BTCDelegation) GetStatus(btcHeight uint32, w uint32, covenantQuorum uint32) BTCDelegationStatus {
 	if d.IsUnbondedEarly() {
 		return BTCDelegationStatus_UNBONDED
 	}
 
+	// we are still pending covenant quorum
+	if !d.HasCovenantQuorums(covenantQuorum) {
+		return BTCDelegationStatus_PENDING
+	}
+
+	// we are still pending activation by inclusion proof
+	if !d.HasInclusionProof() {
+		// staking tx has not been included in a block yet
+		return BTCDelegationStatus_VERIFIED
+	}
+
+	// At this point we already have covenant quorum and inclusion proof,
+	// we can check the status based on the BTC height
 	if btcHeight < d.StartHeight || btcHeight+w > d.EndHeight {
 		// staking tx's timelock has not begun, or is less than w BTC
 		// blocks left, or is expired
 		return BTCDelegationStatus_UNBONDED
 	}
 
-	// at this point, BTC delegation has an active timelock, and Babylon is not
-	// aware of unbonding tx with delegator's signature
-	if d.HasCovenantQuorums(covenantQuorum) {
-		// this BTC delegation receives covenant quorums on
-		// {slashing/unbonding/unbondingslashing} txs, thus is active
-		return BTCDelegationStatus_ACTIVE
-	}
-
-	// no covenant quorum yet, pending
-	return BTCDelegationStatus_PENDING
+	// - we have covenant quorum
+	// - we have inclusion proof
+	// - we are not unbonded early
+	// - we are not expired
+	return BTCDelegationStatus_ACTIVE
 }
 
 // VotingPower returns the voting power of the BTC delegation at a given BTC height
 // and a given w value.
 // The BTC delegation d has voting power iff it is active.
-func (d *BTCDelegation) VotingPower(btcHeight uint64, w uint64, covenantQuorum uint32) uint64 {
+func (d *BTCDelegation) VotingPower(btcHeight uint32, w uint32, covenantQuorum uint32) uint64 {
 	if d.GetStatus(btcHeight, w, covenantQuorum) != BTCDelegationStatus_ACTIVE {
 		return 0
 	}
@@ -138,6 +160,16 @@ func (d *BTCDelegation) MustGetStakingTxHash() chainhash.Hash {
 	}
 
 	return txHash
+}
+
+func (d *BTCDelegation) MustGetStakingTx() *wire.MsgTx {
+	stakingTx, err := bbn.NewBTCTxFromBytes(d.StakingTx)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return stakingTx
 }
 
 func (d *BTCDelegation) ValidateBasic() error {
@@ -174,13 +206,13 @@ func (d *BTCDelegation) ValidateBasic() error {
 	return nil
 }
 
-// HasCovenantQuorum returns whether a BTC delegation has a quorum number of signatures
+// HasCovenantQuorums returns whether a BTC delegation has a quorum number of signatures
 // from covenant members, including
 // - adaptor signatures on slashing tx
 // - Schnorr signatures on unbonding tx
 // - adaptor signatrues on unbonding slashing tx
 func (d *BTCDelegation) HasCovenantQuorums(quorum uint32) bool {
-	return uint32(len(d.CovenantSigs)) >= quorum && d.BtcUndelegation.HasCovenantQuorums(quorum)
+	return len(d.CovenantSigs) >= int(quorum) && d.BtcUndelegation.HasCovenantQuorums(quorum)
 }
 
 // IsSignedByCovMember checks whether the given covenant PK has signed the delegation
@@ -233,7 +265,7 @@ func (d *BTCDelegation) GetStakingInfo(bsParams *Params, btcNet *chaincfg.Params
 		fpBtcPkList,
 		covenantBtcPkList,
 		bsParams.CovenantQuorum,
-		d.GetStakingTime(),
+		d.MustGetValidStakingTime(),
 		btcutil.Amount(d.TotalSat),
 		btcNet,
 	)
@@ -360,6 +392,7 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 		d.StakingOutputIdx,
 		d.DelegatorSig,
 		covAdaptorSigs,
+		bsParams.CovenantQuorum,
 		slashingSpendInfo,
 	)
 	if err != nil {
@@ -411,6 +444,7 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 		0,
 		d.BtcUndelegation.DelegatorSlashingSig,
 		covAdaptorSigs,
+		bsParams.CovenantQuorum,
 		slashingSpendInfo,
 	)
 	if err != nil {
@@ -454,7 +488,7 @@ func (i *BTCDelegatorDelegationIndex) Add(stakingTxHash chainhash.Hash) error {
 }
 
 // VotingPower calculates the total voting power of all BTC delegations
-func (dels *BTCDelegatorDelegations) VotingPower(btcHeight uint64, w uint64, covenantQuorum uint32) uint64 {
+func (dels *BTCDelegatorDelegations) VotingPower(btcHeight uint32, w uint32, covenantQuorum uint32) uint64 {
 	power := uint64(0)
 	for _, del := range dels.Dels {
 		power += del.VotingPower(btcHeight, w, covenantQuorum)

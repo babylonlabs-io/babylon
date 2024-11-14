@@ -19,12 +19,10 @@ type (
 		cdc          codec.BinaryCodec
 		storeService corestoretypes.KVStoreService
 
-		btclcKeeper    types.BTCLightClientKeeper
-		btccKeeper     types.BtcCheckpointKeeper
-		FinalityKeeper types.FinalityKeeper
-		bscKeeper      types.BTCStkConsumerKeeper
-
-		hooks types.BtcStakingHooks
+		btclcKeeper types.BTCLightClientKeeper
+		btccKeeper  types.BtcCheckpointKeeper
+		bscKeeper   types.BTCStkConsumerKeeper
+		iKeeper     types.IncentiveKeeper
 
 		btcNet *chaincfg.Params
 		// the address capable of executing a MsgUpdateParams message. Typically, this
@@ -39,8 +37,8 @@ func NewKeeper(
 
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
-	finalityKeeper types.FinalityKeeper,
 	bscKeeper types.BTCStkConsumerKeeper,
+	iKeeper types.IncentiveKeeper,
 
 	btcNet *chaincfg.Params,
 	authority string,
@@ -49,27 +47,14 @@ func NewKeeper(
 		cdc:          cdc,
 		storeService: storeService,
 
-		btclcKeeper:    btclcKeeper,
-		btccKeeper:     btccKeeper,
-		FinalityKeeper: finalityKeeper,
-		bscKeeper:      bscKeeper,
-
-		hooks: nil,
+		btclcKeeper: btclcKeeper,
+		btccKeeper:  btccKeeper,
+		bscKeeper:   bscKeeper,
+		iKeeper:     iKeeper,
 
 		btcNet:    btcNet,
 		authority: authority,
 	}
-}
-
-// SetHooks sets the BTC staking hooks
-func (k *Keeper) SetHooks(sh types.BtcStakingHooks) *Keeper {
-	if k.hooks != nil {
-		panic("cannot set BTC staking hooks twice")
-	}
-
-	k.hooks = sh
-
-	return k
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
@@ -84,8 +69,6 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 func (k Keeper) BeginBlocker(ctx context.Context) error {
 	// index BTC height at the current height
 	k.IndexBTCHeight(ctx)
-	// update voting power distribution
-	k.UpdatePowerDist(ctx)
 
 	return nil
 }

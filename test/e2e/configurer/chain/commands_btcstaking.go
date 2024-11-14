@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
@@ -19,7 +18,6 @@ import (
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 	"github.com/babylonlabs-io/babylon/test/e2e/containers"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -45,8 +43,9 @@ func (n *NodeConfig) CreateFinalityProvider(walletAddrOrName string, btcPK *bbn.
 func (n *NodeConfig) CreateBTCDelegation(
 	btcPKs []bbn.BIP340PubKey,
 	pop *bstypes.ProofOfPossessionBTC,
-	stakingTxInfo *btcctypes.TransactionInfo,
-	fpPKs []*bbn.BIP340PubKey,
+	stakingTx []byte,
+	inclusionProof *bstypes.InclusionProof,
+	fpPK *bbn.BIP340PubKey,
 	stakingTimeBlocks uint16,
 	stakingValue btcutil.Amount,
 	slashingTx *bstypes.BTCSlashingTx,
@@ -74,8 +73,15 @@ func (n *NodeConfig) CreateBTCDelegation(
 	require.NoError(n.t, err)
 
 	// get staking tx info hex
-	stakingTxInfoHex, err := stakingTxInfo.ToHexStr()
-	require.NoError(n.t, err)
+	stakingTxHex := hex.EncodeToString(stakingTx)
+
+	// get inclusion proof hex
+	var inclusionProofHex string
+
+	if inclusionProof != nil {
+		inclusionProofHex, err = inclusionProof.MarshalHex()
+		require.NoError(n.t, err)
+	}
 
 	fpPKHexList := make([]string, len(fpPKs))
 	for i, fpPK := range fpPKs {
@@ -102,13 +108,21 @@ func (n *NodeConfig) CreateBTCDelegation(
 
 	cmd := []string{
 		"babylond", "tx", "btcstaking", "create-btc-delegation",
-		btcPKHexListStr, popHex, stakingTxInfoHex, fpPKHexes, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
+		btcPkHex, popHex, stakingTxHex, inclusionProofHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
 		fmt.Sprintf("--from=%s", fromWalletName), containers.FlagHome, flagKeyringTest,
 		n.FlagChainID(), "--log_format=json",
 	}
 
+	// gas price
+	cmd = append(cmd, "--gas-prices=0.002ubbn")
+
 	if generateOnly {
 		cmd = append(cmd, "--generate-only")
+	} else {
+		// gas
+		cmd = append(cmd, "--gas=auto", "--gas-adjustment=1.3")
+		// broadcast stuff
+		cmd = append(cmd, "-b=sync", "--yes")
 	}
 	//cmd = append(cmd, fmt.Sprintf("--chain-id=%s", n.chainId), "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata")
 	cmd = append(cmd, fmt.Sprintf("--chain-id=%s", n.chainId), "-b=sync", "--yes")
@@ -146,7 +160,7 @@ func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash stri
 	// used key
 	cmd = append(cmd, "--from=val")
 	// gas
-	cmd = append(cmd, "--gas=auto", "--gas-prices=1ubbn", "--gas-adjustment=1.3")
+	cmd = append(cmd, "--gas=auto", "--gas-adjustment=2")
 
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
@@ -227,13 +241,35 @@ func (n *NodeConfig) AddCovenantUnbondingSigs(
 	n.LogActionF("successfully added covenant unbonding sigs")
 }
 
-func (n *NodeConfig) BTCUndelegate(stakingTxHash *chainhash.Hash, delUnbondingSig *schnorr.Signature) {
+func (n *NodeConfig) BTCUndelegate(
+	stakingTxHash *chainhash.Hash,
+	spendStakeTx *wire.MsgTx,
+	spendStakeTxInclusionProof *bstypes.InclusionProof,
+) {
 	n.LogActionF("undelegate by using signature on unbonding tx from delegator")
 
-	sigHex := bbn.NewBIP340SignatureFromBTCSig(delUnbondingSig).ToHexStr()
-	cmd := []string{"babylond", "tx", "btcstaking", "btc-undelegate", stakingTxHash.String(), sigHex, "--from=val"}
+	spendStakeTxBytes, err := bbn.SerializeBTCTx(spendStakeTx)
+	require.NoError(n.t, err)
+	spendStakeTxHex := hex.EncodeToString(spendStakeTxBytes)
+	inclusionProofHex, err := spendStakeTxInclusionProof.MarshalHex()
+	require.NoError(n.t, err)
 
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	cmd := []string{"babylond", "tx", "btcstaking", "btc-undelegate", stakingTxHash.String(), spendStakeTxHex, inclusionProofHex, "--from=val"}
+
+	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added signature on unbonding tx from delegator")
+}
+
+func (n *NodeConfig) AddBTCDelegationInclusionProof(
+	stakingTxHash *chainhash.Hash,
+	inclusionProof *bstypes.InclusionProof) {
+	n.LogActionF("activate delegation by adding inclusion proof")
+	inclusionProofHex, err := inclusionProof.MarshalHex()
+	require.NoError(n.t, err)
+
+	cmd := []string{"babylond", "tx", "btcstaking", "add-btc-inclusion-proof", stakingTxHash.String(), inclusionProofHex, "--from=val"}
+	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully added inclusion proof")
 }

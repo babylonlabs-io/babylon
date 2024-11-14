@@ -19,6 +19,51 @@ func (c *QueryClient) QueryFinality(f func(ctx context.Context, queryClient fina
 	return f(ctx, queryClient)
 }
 
+// ActiveFinalityProvidersAtHeight queries the BTCStaking module for all finality providers
+// with non-zero voting power at a given height
+func (c *QueryClient) ActiveFinalityProvidersAtHeight(height uint64, pagination *sdkquerytypes.PageRequest) (*finalitytypes.QueryActiveFinalityProvidersAtHeightResponse, error) {
+	var resp *finalitytypes.QueryActiveFinalityProvidersAtHeightResponse
+	err := c.QueryFinality(func(ctx context.Context, queryClient finalitytypes.QueryClient) error {
+		var err error
+		req := &finalitytypes.QueryActiveFinalityProvidersAtHeightRequest{
+			Height:     height,
+			Pagination: pagination,
+		}
+		resp, err = queryClient.ActiveFinalityProvidersAtHeight(ctx, req)
+		return err
+	})
+
+	return resp, err
+}
+
+// FinalityProviderPowerAtHeight queries the BTCStaking module for the power of a finality provider at a given height
+func (c *QueryClient) FinalityProviderPowerAtHeight(fpBtcPkHex string, height uint64) (*finalitytypes.QueryFinalityProviderPowerAtHeightResponse, error) {
+	var resp *finalitytypes.QueryFinalityProviderPowerAtHeightResponse
+	err := c.QueryFinality(func(ctx context.Context, queryClient finalitytypes.QueryClient) error {
+		var err error
+		req := &finalitytypes.QueryFinalityProviderPowerAtHeightRequest{
+			FpBtcPkHex: fpBtcPkHex,
+			Height:     height,
+		}
+		resp, err = queryClient.FinalityProviderPowerAtHeight(ctx, req)
+		return err
+	})
+
+	return resp, err
+}
+
+func (c *QueryClient) ActivatedHeight() (*finalitytypes.QueryActivatedHeightResponse, error) {
+	var resp *finalitytypes.QueryActivatedHeightResponse
+	err := c.QueryFinality(func(ctx context.Context, queryClient finalitytypes.QueryClient) error {
+		var err error
+		req := &finalitytypes.QueryActivatedHeightRequest{}
+		resp, err = queryClient.ActivatedHeight(ctx, req)
+		return err
+	})
+
+	return resp, err
+}
+
 // FinalityParams queries the finality module parameters
 func (c *QueryClient) FinalityParams() (*finalitytypes.Params, error) {
 	var resp *finalitytypes.QueryParamsResponse

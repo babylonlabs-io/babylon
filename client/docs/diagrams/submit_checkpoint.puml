@@ -64,7 +64,7 @@ loop
 Bitcoin --> submitter : Wait for previous checkpoint carrier BTC block to embed
 note right
   Even a light client can do this,
-  becuase the BTC block to observe
+  because the BTC block to observe
   is part of the Event from Babylon.
 
   Waiting ensures the checkpoint

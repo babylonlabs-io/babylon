@@ -17,7 +17,7 @@ import (
 	"github.com/babylonlabs-io/babylon/wasmbinding/bindings"
 )
 
-// TODO consider doing it by enviromental variables as currently it may fail on some
+// TODO consider doing it by environmental variables as currently it may fail on some
 // weird architectures
 func getArtifactPath() string {
 	if runtime.GOARCH == "amd64" {

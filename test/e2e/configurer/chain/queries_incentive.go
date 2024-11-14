@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func (n *NodeConfig) QueryBTCStakingGauge(height uint64) (*incentivetypes.Gauge, error) {
+func (n *NodeConfig) QueryBTCStakingGauge(height uint64) (*incentivetypes.BTCStakingGaugeResponse, error) {
 	path := fmt.Sprintf("/babylon/incentive/btc_staking_gauge/%d", height)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	if err != nil {
@@ -38,7 +38,7 @@ func (n *NodeConfig) QueryIncentiveParams() (*incentivetypes.Params, error) {
 	return &resp.Params, nil
 }
 
-func (n *NodeConfig) QueryRewardGauge(sAddr sdk.AccAddress) (map[string]*incentivetypes.RewardGauge, error) {
+func (n *NodeConfig) QueryRewardGauge(sAddr sdk.AccAddress) (map[string]*incentivetypes.RewardGaugesResponse, error) {
 	path := fmt.Sprintf("/babylon/incentive/address/%s/reward_gauge", sAddr.String())
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	if err != nil {
@@ -50,19 +50,4 @@ func (n *NodeConfig) QueryRewardGauge(sAddr sdk.AccAddress) (map[string]*incenti
 	}
 
 	return resp.RewardGauges, nil
-}
-
-func (n *NodeConfig) QueryBTCTimestampingGauge(epoch uint64) (*incentivetypes.Gauge, error) {
-	path := fmt.Sprintf("/babylon/incentive/btc_timestamping_gauge/%d", epoch)
-	bz, err := n.QueryGRPCGateway(path, url.Values{})
-	if err != nil {
-		return nil, err
-	}
-
-	var resp incentivetypes.QueryBTCTimestampingGaugeResponse
-	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
-		return nil, err
-	}
-
-	return resp.Gauge, nil
 }

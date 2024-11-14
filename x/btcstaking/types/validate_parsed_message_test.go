@@ -6,11 +6,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/btcstaking"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	btcckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -19,6 +14,12 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/btcstaking"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 // testStakingParams generates valid staking parameters with randomized
@@ -37,19 +38,18 @@ func testStakingParams(
 	require.NoError(t, err)
 
 	return &types.Params{
-		CovenantPks:                bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
-		CovenantQuorum:             3,
-		MinStakingValueSat:         100000,
-		MaxStakingValueSat:         int64(4 * 10e8),
-		MinStakingTimeBlocks:       10,
-		MaxStakingTimeBlocks:       10000,
-		SlashingPkScript:           slashingPkScript,
-		MinSlashingTxFeeSat:        1000,
-		MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.01"),
-		SlashingRate:               sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
-		MaxActiveFinalityProviders: 100,
-		MinUnbondingTimeBlocks:     200,
-		UnbondingFeeSat:            1000,
+		CovenantPks:            bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
+		CovenantQuorum:         3,
+		MinStakingValueSat:     100000,
+		MaxStakingValueSat:     int64(4 * 10e8),
+		MinStakingTimeBlocks:   1000,
+		MaxStakingTimeBlocks:   10000,
+		SlashingPkScript:       slashingPkScript,
+		MinSlashingTxFeeSat:    1000,
+		MinCommissionRate:      sdkmath.LegacyMustNewDecFromStr("0.01"),
+		SlashingRate:           sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
+		MinUnbondingTimeBlocks: 200,
+		UnbondingFeeSat:        1000,
 	}
 }
 
@@ -188,9 +188,8 @@ func createMsgDelegationForParams(
 	serializedStakingTx, err := bbn.SerializeBTCTx(testStakingInfo.StakingTx)
 	require.NoError(t, err)
 
-	txInfo := btcckpttypes.NewTransactionInfo(
+	txInclusionProof := types.NewInclusionProof(
 		&btcckpttypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()},
-		serializedStakingTx,
 		btcHeaderWithProof.SpvProof.MerkleNodes,
 	)
 
@@ -218,7 +217,8 @@ func createMsgDelegationForParams(
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
 		StakingValue:                  stakingValue,
-		StakingTx:                     txInfo,
+		StakingTx:                     serializedStakingTx,
+		StakingTxInclusionProof:       txInclusionProof,
 		SlashingTx:                    testStakingInfo.SlashingTx,
 		DelegatorSlashingSig:          delegatorSig,
 		UnbondingTx:                   unbondingInfo.serializedUnbondingTx,
@@ -280,7 +280,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			err: types.ErrInvalidStakingTx,
 		},
 		{
-			name: "Msg.StakingTime do not match staking time commited in staking transaction",
+			name: "Msg.StakingTime do not match staking time committed in staking transaction",
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
@@ -293,7 +293,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			err: types.ErrInvalidStakingTx,
 		},
 		{
-			name: "Msg.StakingValue do not match staking time commited in staking transaction",
+			name: "Msg.StakingValue do not match staking value committed in staking transaction",
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
@@ -303,7 +303,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidStakingTx,
+			err: types.ErrInvalidStakingTx.Wrap("staking tx does not contain expected staking output"),
 		},
 		{
 			name: "Msg.StakingValue is lower than params.MinStakingValueSat",
@@ -340,7 +340,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				// modify staking output so that staking output is valid but it will have
 				// invalid time
-				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx.Transaction)
+				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx)
 				require.NoError(t, err)
 
 				invalidStakingTime := uint16(params.MinStakingTimeBlocks - 1)
@@ -365,7 +365,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				require.NoError(t, err)
 
 				msg.StakingTime = uint32(invalidStakingTime)
-				msg.StakingTx.Transaction = serializedNewStakingTx
+				msg.StakingTx = serializedNewStakingTx
 
 				return msg, params, checkpointParams
 			},
@@ -380,7 +380,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				// modify staking output so that staking output is valid but it will have
 				// invalid time
-				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx.Transaction)
+				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx)
 				require.NoError(t, err)
 
 				invalidStakingTime := uint16(params.MaxStakingTimeBlocks + 1)
@@ -405,7 +405,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				require.NoError(t, err)
 
 				msg.StakingTime = uint32(invalidStakingTime)
-				msg.StakingTx.Transaction = serializedNewStakingTx
+				msg.StakingTx = serializedNewStakingTx
 
 				return msg, params, checkpointParams
 			},
@@ -420,7 +420,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				// modify staking output so that staking output is valid but it will have
 				// invalid time
-				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx.Transaction)
+				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx)
 				require.NoError(t, err)
 
 				invalidStakingValue := params.MinStakingValueSat - 1
@@ -431,7 +431,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				require.NoError(t, err)
 
 				msg.StakingValue = invalidStakingValue
-				msg.StakingTx.Transaction = serializedNewStakingTx
+				msg.StakingTx = serializedNewStakingTx
 
 				return msg, params, checkpointParams
 			},
@@ -446,7 +446,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				// modify staking output so that staking output is valid but it will have
 				// invalid time
-				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx.Transaction)
+				currentStakingTx, err := bbn.NewBTCTxFromBytes(msg.StakingTx)
 				require.NoError(t, err)
 
 				invalidStakingValue := params.MaxStakingValueSat + 1
@@ -457,7 +457,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				require.NoError(t, err)
 
 				msg.StakingValue = invalidStakingValue
-				msg.StakingTx.Transaction = serializedNewStakingTx
+				msg.StakingTx = serializedNewStakingTx
 
 				return msg, params, checkpointParams
 			},
@@ -758,6 +758,61 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			},
 			err: types.ErrInvalidUnbondingTx,
 		},
+		{
+			name: "Msg.UnbondingTx has more than one output",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				checkpointParams := testCheckpointParams()
+				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+
+				currentUnbondingTx, err := bbn.NewBTCTxFromBytes(msg.UnbondingTx)
+				require.NoError(t, err)
+
+				// add randomnes output
+				randAddrScript, err := datagen.GenRandomPubKeyHashScript(r, &chaincfg.MainNetParams)
+				require.NoError(t, err)
+				currentUnbondingTx.AddTxOut(wire.NewTxOut(10000, randAddrScript))
+
+				msg.UnbondingTx, err = bbn.SerializeBTCTx(currentUnbondingTx)
+				require.NoError(t, err)
+
+				return msg, params, checkpointParams
+			},
+			err: types.ErrInvalidUnbondingTx.Wrap("unbonding tx is not a valid pre-signed transaction: tx must have exactly 1 outputs"),
+		},
+		{
+			name: "Msg.UnbondingTx unbonding value in the msg does not match the output value in the unbonding tx",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				checkpointParams := testCheckpointParams()
+				msg, delSk := createMsgDelegationForParams(r, t, params, checkpointParams)
+
+				currentUnbondingTx, err := bbn.NewBTCTxFromBytes(msg.UnbondingTx)
+				require.NoError(t, err)
+
+				// generate unbonding info with invalid staking idx
+				newUnbondingInfdo := generateUnbondingInfo(
+					r,
+					t,
+					delSk,
+					msg.FpBtcPkList[0].MustToBTCPK(),
+					currentUnbondingTx.TxIn[0].PreviousOutPoint.Hash,
+					currentUnbondingTx.TxIn[0].PreviousOutPoint.Index,
+					uint16(msg.UnbondingTime),
+					msg.UnbondingValue,
+					params,
+				)
+
+				// to cause the unbonding value mismatch with the unbonding tx output value
+				msg.UnbondingValue = msg.UnbondingValue + 1
+				msg.UnbondingTx = newUnbondingInfdo.serializedUnbondingTx
+				msg.UnbondingSlashingTx = newUnbondingInfdo.unbondingSlashingTx
+				msg.DelegatorUnbondingSlashingSig = newUnbondingInfdo.unbondingSlashinSig
+
+				return msg, params, checkpointParams
+			},
+			err: types.ErrInvalidUnbondingTx.Wrap("the unbonding output value is not expected"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -781,6 +836,9 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, got)
+
+				minUnbondingTime := types.MinimumUnbondingTime(params, checkpointParams)
+				require.Equal(t, minUnbondingTime, got.MinUnbondingTime)
 			}
 
 		})

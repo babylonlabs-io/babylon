@@ -29,10 +29,13 @@ type UpgradeSettings struct {
 	ForkHeight int64 // non-zero height implies that this is a fork upgrade.
 }
 
+type PreUpgradeFunc func([]*chain.Config)
+
 type UpgradeConfigurer struct {
 	baseConfigurer
 	upgradeJsonFilePath string
 	forkHeight          int64 // forkHeight > 0 implies that this is a fork upgrade. Otherwise, proposal upgrade.
+	preUpgradeFunc      PreUpgradeFunc
 }
 
 var _ Configurer = (*UpgradeConfigurer)(nil)
@@ -40,7 +43,7 @@ var _ Configurer = (*UpgradeConfigurer)(nil)
 // NewUpgradeConfigurer returns a upgrade configurer, if forkHeight is bigger
 // than 0 it implies that it is a fork upgrade that does not pass by a gov prop
 // if it is set to zero it runs the upgrade by the gov prop.
-func NewUpgradeConfigurer(t *testing.T, chainConfigs []*chain.Config, setupTests setupFn, containerManager *containers.Manager, upgradePlanFilePath string, forkHeight int64) *UpgradeConfigurer {
+func NewUpgradeConfigurer(t *testing.T, chainConfigs []*chain.Config, setupTests setupFn, containerManager *containers.Manager, upgradePlanFilePath string, forkHeight int64, preUpgradeFunc PreUpgradeFunc) *UpgradeConfigurer {
 	t.Helper()
 	return &UpgradeConfigurer{
 		baseConfigurer: baseConfigurer{
@@ -52,6 +55,7 @@ func NewUpgradeConfigurer(t *testing.T, chainConfigs []*chain.Config, setupTests
 		},
 		forkHeight:          forkHeight,
 		upgradeJsonFilePath: upgradePlanFilePath,
+		preUpgradeFunc:      preUpgradeFunc,
 	}
 }
 
@@ -151,6 +155,7 @@ func (uc *UpgradeConfigurer) CreatePreUpgradeState() error {
 		firstNode.BankMultiSendFromNode(addresses, amountToSend.String())
 	}
 
+	uc.preUpgradeFunc(uc.chainConfigs)
 	return nil
 }
 
@@ -248,6 +253,7 @@ func (uc *UpgradeConfigurer) upgradeContainers(chainConfig *chain.Config, propHe
 	// upgrade containers to the locally compiled daemon
 	uc.t.Logf("starting upgrade for chain-id: %s...", chainConfig.Id)
 	uc.containerManager.CurrentRepository = containers.BabylonContainerName
+	uc.containerManager.CurrentTag = "latest"
 
 	for _, node := range chainConfig.NodeConfigs {
 		if err := node.Run(); err != nil {

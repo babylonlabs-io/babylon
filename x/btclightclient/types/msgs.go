@@ -40,7 +40,7 @@ func NewMsgInsertHeaders(signer sdk.AccAddress, headersHex string) (*MsgInsertHe
 }
 
 func (msg *MsgInsertHeaders) ValidateHeaders(powLimit *big.Int) error {
-	// TOOD: Limit number of headers in message?
+	// TODO: Limit number of headers in message?
 	for _, header := range msg.Headers {
 		err := bbn.ValidateBTCHeader(header.ToBlockHeader(), powLimit)
 		if err != nil {

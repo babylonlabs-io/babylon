@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"testing"
 
 	"cosmossdk.io/core/header"
@@ -26,6 +27,10 @@ import (
 	btclightclientt "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
 
+type MockIncentiveKeeper struct{}
+
+func (mik MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg sdk.Msg) {}
+
 func BTCLightClientKeeper(t testing.TB) (*btclightclientk.Keeper, sdk.Context) {
 	k, ctx, _ := BTCLightClientKeeperWithCustomParams(t, btclightclientt.DefaultParams())
 	return k, ctx
@@ -40,7 +45,10 @@ func NewBTCHeaderBytesList(chain []*wire.BlockHeader) []bbn.BTCHeaderBytes {
 	return chainBytes
 }
 
-func BTCLightClientKeeperWithCustomParams(t testing.TB, p btclightclientt.Params) (*btclightclientk.Keeper, sdk.Context, corestore.KVStoreService) {
+func BTCLightClientKeeperWithCustomParams(
+	t testing.TB,
+	p btclightclientt.Params,
+) (*btclightclientk.Keeper, sdk.Context, corestore.KVStoreService) {
 	storeKey := storetypes.NewKVStoreKey(btclightclientt.StoreKey)
 
 	db := dbm.NewMemDB()
@@ -52,12 +60,12 @@ func BTCLightClientKeeperWithCustomParams(t testing.TB, p btclightclientt.Params
 	cdc := codec.NewProtoCodec(registry)
 
 	testCfg := bbn.ParseBtcOptionsFromConfig(bapp.TmpAppOptions())
-
 	stServ := runtime.NewKVStoreService(storeKey)
 	k := btclightclientk.NewKeeper(
 		cdc,
 		stServ,
 		testCfg,
+		&MockIncentiveKeeper{},
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 

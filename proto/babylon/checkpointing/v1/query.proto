@@ -122,10 +122,21 @@ message QueryBlsPublicKeyListRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
+// BlsPublicKeyListResponse couples validator address, voting power, and its bls
+// public key
+message BlsPublicKeyListResponse {
+  // validator_address is the address of the validator
+  string validator_address = 1;
+  // bls_pub_key is the BLS public key of the validator
+  string bls_pub_key_hex = 2;
+  // voting_power is the voting power of the validator at the given epoch
+  uint64 voting_power = 3;
+}
+
 // QueryBlsPublicKeyListResponse is the response type for the
 // Query/BlsPublicKeys RPC method.
 message QueryBlsPublicKeyListResponse {
-  repeated ValidatorWithBlsKey validator_with_bls_keys = 1;
+  repeated BlsPublicKeyListResponse validator_with_bls_keys = 1;
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -185,7 +196,7 @@ message RawCheckpointResponse {
 message CheckpointStateUpdateResponse {
   // state defines the event of a state transition towards this state
   CheckpointStatus state = 1;
-  // status_desc respresents the description of status enum.
+  // status_desc represents the description of status enum.
   string status_desc = 2;
   // block_height is the height of the Babylon block that triggers the state
   // update
@@ -200,7 +211,7 @@ message RawCheckpointWithMetaResponse {
   RawCheckpointResponse ckpt = 1;
   // status defines the status of the checkpoint
   CheckpointStatus status = 2;
-  // status_desc respresents the description of status enum.
+  // status_desc represents the description of status enum.
   string status_desc = 3;
   // bls_aggr_pk defines the aggregated BLS public key
   bytes bls_aggr_pk = 4

@@ -1,33 +1,36 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
+
+	"github.com/btcsuite/btcd/chaincfg"
 
 	"github.com/babylonlabs-io/babylon/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	"github.com/btcsuite/btcd/chaincfg"
 )
 
 type ParamsValidationResult struct {
 	StakingOutputIdx   uint32
 	UnbondingOutputIdx uint32
+	MinUnbondingTime   uint32
 }
 
 // ValidateParsedMessageAgainstTheParams validates parsed message against parameters
 func ValidateParsedMessageAgainstTheParams(
 	pm *ParsedCreateDelegationMessage,
 	parameters *Params,
-	btcheckpointParamseters *btcckpttypes.Params,
+	btcheckpointParameters *btcckpttypes.Params,
 	net *chaincfg.Params,
 ) (*ParamsValidationResult, error) {
 	// 1. Validate unbonding time first as it will be used in other checks
-	minUnbondingTime := MinimumUnbondingTime(parameters, btcheckpointParamseters)
+	minUnbondingTime := MinimumUnbondingTime(parameters, btcheckpointParameters)
 	// Check unbonding time (staking time from unbonding tx) is larger than min unbonding time
 	// which is larger value from:
 	// - MinUnbondingTime
 	// - CheckpointFinalizationTimeout
-	if uint64(pm.UnbondingTime) <= minUnbondingTime {
+	if uint32(pm.UnbondingTime) <= minUnbondingTime {
 		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding time %d must be larger than %d", pm.UnbondingTime, minUnbondingTime)
 	}
 
@@ -37,7 +40,7 @@ func ValidateParsedMessageAgainstTheParams(
 	// 2. Validate all data related to staking tx:
 	// - it has valid staking output
 	// - that staking time and value are correct
-	// - slashing tx is relevent to staking tx
+	// - slashing tx is relevant to staking tx
 	// - slashing tx signature is valid
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		pm.StakerPK.PublicKey,
@@ -49,7 +52,7 @@ func ValidateParsedMessageAgainstTheParams(
 		net,
 	)
 	if err != nil {
-		return nil, ErrInvalidStakingTx.Wrapf("err: %v", err)
+		return nil, ErrInvalidStakingTx.Wrapf("failed to build staking info: %v", err)
 	}
 
 	stakingOutputIdx, err := bbn.GetOutputIdxInBTCTx(pm.StakingTx.Transaction, stakingInfo.StakingOutput)
@@ -78,7 +81,7 @@ func ValidateParsedMessageAgainstTheParams(
 		)
 	}
 
-	if err := btcstaking.CheckTransactions(
+	if err := btcstaking.CheckSlashingTxMatchFundingTx(
 		pm.StakingSlashingTx.Transaction,
 		pm.StakingTx.Transaction,
 		stakingOutputIdx,
@@ -108,9 +111,16 @@ func ValidateParsedMessageAgainstTheParams(
 	}
 
 	// 3. Validate all data related to unbonding tx:
+	// - it is valid BTC pre-signed transaction
 	// - it has valid unbonding output
-	// - slashing tx is relevent to unbonding tx
+	// - slashing tx is relevant to unbonding tx
 	// - slashing tx signature is valid
+	if err := btcstaking.CheckPreSignedUnbondingTxSanity(
+		pm.UnbondingTx.Transaction,
+	); err != nil {
+		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding tx is not a valid pre-signed transaction: %v", err)
+	}
+
 	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
 		pm.StakerPK.PublicKey,
 		pm.FinalityProviderKeys.PublicKeys,
@@ -121,18 +131,25 @@ func ValidateParsedMessageAgainstTheParams(
 		net,
 	)
 	if err != nil {
-		return nil, ErrInvalidUnbondingTx.Wrapf("err: %v", err)
+		return nil, ErrInvalidUnbondingTx.Wrapf("failed to build the unbonding info: %v", err)
 	}
 
-	unbondingOutputIdx, err := bbn.GetOutputIdxInBTCTx(pm.UnbondingTx.Transaction, unbondingInfo.UnbondingOutput)
-	if err != nil {
-		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding tx does not contain expected unbonding output")
+	unbondingTx := pm.UnbondingTx.Transaction
+	if !bytes.Equal(unbondingTx.TxOut[0].PkScript, unbondingInfo.UnbondingOutput.PkScript) {
+		return nil, ErrInvalidUnbondingTx.
+			Wrapf("the unbonding output script is not expected, expected: %x, got: %s",
+				unbondingInfo.UnbondingOutput.PkScript, unbondingTx.TxOut[0].PkScript)
+	}
+	if unbondingTx.TxOut[0].Value != unbondingInfo.UnbondingOutput.Value {
+		return nil, ErrInvalidUnbondingTx.
+			Wrapf("the unbonding output value is not expected, expected: %d, got: %d",
+				unbondingInfo.UnbondingOutput.Value, unbondingTx.TxOut[0].Value)
 	}
 
-	err = btcstaking.CheckTransactions(
+	err = btcstaking.CheckSlashingTxMatchFundingTx(
 		pm.UnbondingSlashingTx.Transaction,
 		pm.UnbondingTx.Transaction,
-		unbondingOutputIdx,
+		0, // unbonding output always has only 1 output
 		parameters.MinSlashingTxFeeSat,
 		parameters.SlashingRate,
 		parameters.SlashingPkScript,
@@ -151,7 +168,7 @@ func ValidateParsedMessageAgainstTheParams(
 
 	if err := btcstaking.VerifyTransactionSigWithOutput(
 		pm.UnbondingSlashingTx.Transaction,
-		pm.UnbondingTx.Transaction.TxOut[unbondingOutputIdx],
+		pm.UnbondingTx.Transaction.TxOut[0], // unbonding output always has only 1 output
 		unbondingSlashingSpendInfo.RevealedLeaf.Script,
 		pm.StakerPK.PublicKey,
 		pm.StakerUnbondingSlashingSig.BIP340Signature.MustMarshal(),
@@ -169,10 +186,10 @@ func ValidateParsedMessageAgainstTheParams(
 	}
 	// 5. Check unbonding tx fees against staking tx.
 	// - fee is larger than 0
-	// - ubonding output value is is at leat `MinUnbondingValue` percent of staking output value
+	// - ubonding output value is at least `MinUnbondingValue` percent of staking output value
 	if pm.UnbondingTx.Transaction.TxOut[0].Value >= pm.StakingTx.Transaction.TxOut[stakingOutputIdx].Value {
-		// Note: we do not enfore any minimum fee for unbonding tx, we only require that it is larger than 0
-		// Given that unbonding tx must not be replacable and we do not allow sending it second time, it places
+		// Note: we do not enforce any minimum fee for unbonding tx, we only require that it is larger than 0
+		// Given that unbonding tx must not be replaceable, and we do not allow sending it second time, it places
 		// burden on staker to choose right fee.
 		// Unbonding tx should not be replaceable at babylon level (and by extension on btc level), as this would
 		// allow staker to spam the network with unbonding txs, which would force covenant and finality provider to send signatures.
@@ -188,6 +205,7 @@ func ValidateParsedMessageAgainstTheParams(
 
 	return &ParamsValidationResult{
 		StakingOutputIdx:   stakingOutputIdx,
-		UnbondingOutputIdx: unbondingOutputIdx,
+		UnbondingOutputIdx: 0, // unbonding output always has only 1 output
+		MinUnbondingTime:   minUnbondingTime,
 	}, nil
 }

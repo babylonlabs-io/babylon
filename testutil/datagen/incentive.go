@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 )
 
@@ -29,7 +29,7 @@ func GenRandomDenom(r *rand.Rand) string {
 }
 
 func GenRandomStakeholderType(r *rand.Rand) itypes.StakeholderType {
-	stBytes := []byte{byte(RandomInt(r, 4))}
+	stBytes := []byte{byte(RandomInt(r, 2))}
 	st, err := itypes.NewStakeHolderType(stBytes)
 	if err != nil {
 		panic(err) // only programming error is possible
@@ -77,26 +77,26 @@ func GenRandomGauge(r *rand.Rand) *itypes.Gauge {
 	return itypes.NewGauge(coins...)
 }
 
-func GenRandomBTCDelDistInfo(r *rand.Rand) (*bstypes.BTCDelDistInfo, error) {
+func GenRandomBTCDelDistInfo(r *rand.Rand) (*ftypes.BTCDelDistInfo, error) {
 	btcPK, err := GenRandomBIP340PubKey(r)
 	if err != nil {
 		return nil, err
 	}
-	return &bstypes.BTCDelDistInfo{
-		BtcPk:       btcPK,
-		StakerAddr:  GenRandomAccount().Address,
-		VotingPower: RandomInt(r, 1000) + 1,
+	return &ftypes.BTCDelDistInfo{
+		BtcPk:      btcPK,
+		StakerAddr: GenRandomAccount().Address,
+		TotalSat:   RandomInt(r, 1000) + 1,
 	}, nil
 }
 
-func GenRandomFinalityProviderDistInfo(r *rand.Rand) (*bstypes.FinalityProviderDistInfo, error) {
+func GenRandomFinalityProviderDistInfo(r *rand.Rand) (*ftypes.FinalityProviderDistInfo, error) {
 	// create finality provider with random commission
 	fp, err := GenRandomFinalityProvider(r)
 	if err != nil {
 		return nil, err
 	}
 	// create finality provider distribution info
-	fpDistInfo := bstypes.NewFinalityProviderDistInfo(fp)
+	fpDistInfo := ftypes.NewFinalityProviderDistInfo(fp)
 	// add a random number of BTC delegation distribution info
 	numBTCDels := RandomInt(r, 100) + 1
 	for i := uint64(0); i < numBTCDels; i++ {
@@ -105,14 +105,14 @@ func GenRandomFinalityProviderDistInfo(r *rand.Rand) (*bstypes.FinalityProviderD
 			return nil, err
 		}
 		fpDistInfo.BtcDels = append(fpDistInfo.BtcDels, btcDelDistInfo)
-		fpDistInfo.TotalVotingPower += btcDelDistInfo.VotingPower
+		fpDistInfo.TotalBondedSat += btcDelDistInfo.TotalSat
 		fpDistInfo.IsTimestamped = true
 	}
 	return fpDistInfo, nil
 }
 
-func GenRandomVotingPowerDistCache(r *rand.Rand, maxFPs uint32) (*bstypes.VotingPowerDistCache, error) {
-	dc := bstypes.NewVotingPowerDistCache()
+func GenRandomVotingPowerDistCache(r *rand.Rand, maxFPs uint32) (*ftypes.VotingPowerDistCache, error) {
+	dc := ftypes.NewVotingPowerDistCache()
 	// a random number of finality providers
 	numFps := RandomInt(r, 10) + 1
 	for i := uint64(0); i < numFps; i++ {

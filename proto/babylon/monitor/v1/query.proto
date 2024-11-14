@@ -30,7 +30,7 @@ message QueryEndedEpochBtcHeightRequest { uint64 epoch_num = 1; }
 // EndedEpochBtcHeight RPC method
 message QueryEndedEpochBtcHeightResponse {
   // height of btc light client when epoch ended
-  uint64 btc_light_client_height = 1;
+  uint32 btc_light_client_height = 1;
 }
 
 // QueryReportedCheckpointBtcHeightRequest defines a query type for
@@ -44,5 +44,5 @@ message QueryReportedCheckpointBtcHeightRequest {
 // ReportedCheckpointBtcHeight RPC method
 message QueryReportedCheckpointBtcHeightResponse {
   // height of btc light client when checkpoint is reported
-  uint64 btc_light_client_height = 1;
+  uint32 btc_light_client_height = 1;
 }

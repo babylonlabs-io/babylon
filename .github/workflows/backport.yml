@@ -1,0 +1,38 @@
+# Adapted from https://github.com/marketplace/actions/backporting
+#
+# Usage: 
+#   - Let's say you want to backport a pull request on a branch named `production`.
+#   - Then label it with `backport production`.
+#   - That's it! When the pull request gets merged, it will be backported to 
+#     the `production` branch. If the pull request cannot be backported, a comment 
+#     explaining why will automatically be posted.
+#
+# Note: multiple backport labels can be added. For example, if a pull request 
+#       has the labels `backport staging` and `backport production` it will be 
+#       backported to both branches: `staging` and `production`.
+name: Backport
+on:
+  pull_request_target:
+    types:
+      - closed
+      - labeled
+
+jobs:
+  backport:
+    name: Backport
+    runs-on: ubuntu-latest
+    # Only react to merged PRs for security reasons.
+    # See https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target.
+    if: >
+      github.event.pull_request.merged
+      && (
+        github.event.action == 'closed'
+        || (
+          github.event.action == 'labeled'
+          && contains(github.event.label.name, 'backport')
+        )
+      )
+    steps:
+      - uses: tibdex/backport@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/stretchr/testify/require"
+
+	bbn "github.com/babylonlabs-io/babylon/types"
 
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 	btctest "github.com/babylonlabs-io/babylon/testutil/bitcoin"
@@ -50,12 +51,12 @@ func FuzzBTCDelegation(f *testing.F) {
 		}
 
 		// randomise start height and end height
-		btcDel.StartHeight = datagen.RandomInt(r, 100)
-		btcDel.EndHeight = btcDel.StartHeight + datagen.RandomInt(r, 100)
+		btcDel.StartHeight = uint32(datagen.RandomInt(r, 100)) + 1
+		btcDel.EndHeight = btcDel.StartHeight + uint32(datagen.RandomInt(r, 100)) + 1
 
 		// randomise BTC tip and w
-		btcHeight := btcDel.StartHeight + datagen.RandomInt(r, 50)
-		w := datagen.RandomInt(r, 50)
+		btcHeight := btcDel.StartHeight + uint32(datagen.RandomInt(r, 50))
+		w := uint32(datagen.RandomInt(r, 50))
 
 		// test expected voting power
 		hasVotingPower := hasCovenantSig && btcDel.StartHeight <= btcHeight && btcHeight+w <= btcDel.EndHeight
@@ -97,7 +98,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 			CovenantQuorum: covenantQuorum,
 		}
 
-		stakingTimeBlocks := uint16(5)
+		stakingTimeBlocks := uint32(5)
 		stakingValue := int64(2 * 10e8)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
@@ -109,8 +110,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		slashingChangeLockTime := unbondingTime
 
 		// only the quorum of signers provided the signatures
-		covenantSigners := covenantSKs[:covenantQuorum]
-
+		covenantSigners := covenantSKs
 		// construct the BTC delegation with everything
 		btcDel, err := datagen.GenRandomBTCDelegation(
 			r,
@@ -122,8 +122,9 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 			covenantPKs,
 			covenantQuorum,
 			slashingPkScript,
+			stakingTimeBlocks,
 			1000,
-			uint64(1000+stakingTimeBlocks),
+			1000+stakingTimeBlocks,
 			uint64(stakingValue),
 			slashingRate,
 			slashingChangeLockTime,

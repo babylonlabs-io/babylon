@@ -59,7 +59,7 @@ func FuzzKeeperMainChainDepth(f *testing.F) {
 			blcKeeper,
 			ctx,
 			0,
-			datagen.RandomInt(r, 50)+10,
+			uint32(datagen.RandomInt(r, 50))+10,
 		)
 		randomHeader := chain.GetRandomHeaderInfo(r)
 		depth, err = blcKeeper.MainChainDepth(ctx, randomHeader.Hash)
@@ -112,7 +112,7 @@ func FuzzKeeperBlockHeight(f *testing.F) {
 			blcKeeper,
 			ctx,
 			0,
-			datagen.RandomInt(r, 50)+10,
+			uint32(datagen.RandomInt(r, 50))+10,
 		)
 
 		header := chain.GetRandomHeaderInfo(r)
@@ -137,8 +137,8 @@ func FuzzKeeperInsertValidChainExtension(f *testing.F) {
 			r,
 			blcKeeper,
 			ctx,
-			datagen.RandomInt(r, 50)+10,
-			datagen.RandomInt(r, 50)+10,
+			uint32(datagen.RandomInt(r, 50))+10,
+			uint32(datagen.RandomInt(r, 50))+10,
 		)
 
 		mockHooks := NewMockHooks()
@@ -148,7 +148,6 @@ func FuzzKeeperInsertValidChainExtension(f *testing.F) {
 
 		chainToInsert := datagen.GenRandomValidChainStartingFrom(
 			r,
-			chain.GetTipInfo().Height,
 			chain.GetTipInfo().Header.ToBlockHeader(),
 			nil,
 			newChainLength,
@@ -158,7 +157,7 @@ func FuzzKeeperInsertValidChainExtension(f *testing.F) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		oldTip := blcKeeper.HeadersState(ctx).GetTip()
 		extendedChainWork := oldTip.Work.Add(*chainExtensionWork)
-		extendedChainHeight := uint64(uint32(oldTip.Height) + newChainLength)
+		extendedChainHeight := oldTip.Height + newChainLength
 
 		err := blcKeeper.InsertHeadersWithHookAndEvents(ctx, keepertest.NewBTCHeaderBytesList(chainToInsert))
 		require.NoError(t, err)
@@ -219,8 +218,8 @@ func FuzzKeeperInsertValidBetterChain(f *testing.F) {
 			r,
 			blcKeeper,
 			ctx,
-			datagen.RandomInt(r, 50)+10,
-			datagen.RandomInt(r, 50)+10,
+			uint32(datagen.RandomInt(r, 50))+10,
+			uint32(datagen.RandomInt(r, 50))+10,
 		)
 
 		mockHooks := NewMockHooks()
@@ -231,7 +230,6 @@ func FuzzKeeperInsertValidBetterChain(f *testing.F) {
 		newChainLength := uint32(chain.ChainLength() + 1)
 		chainToInsert := datagen.GenRandomValidChainStartingFrom(
 			r,
-			forkHeaderParent.Height,
 			forkHeaderParent.Header.ToBlockHeader(),
 			nil,
 			newChainLength,
@@ -240,7 +238,7 @@ func FuzzKeeperInsertValidBetterChain(f *testing.F) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		extendedChainWork := forkHeaderParent.Work.Add(*chainExtensionWork)
-		extendedChainHeight := uint64(uint32(forkHeaderParent.Height) + newChainLength)
+		extendedChainHeight := forkHeaderParent.Height + newChainLength
 
 		oldTip := blcKeeper.HeadersState(ctx).GetTip()
 		removedBranch := blcKeeper.GetMainChainFrom(ctx, forkHeaderParent.Height+1)
@@ -326,7 +324,7 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 			blcKeeper,
 			ctx,
 			0,
-			datagen.RandomInt(r, 50)+10,
+			uint32(datagen.RandomInt(r, 50))+10,
 		)
 		currentTip := blcKeeper.GetTipInfo(ctx)
 		require.NotNil(t, currentTip)
@@ -350,7 +348,6 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 		// valid chain with at least 5 headers
 		chainToInsert := datagen.GenRandomValidChainStartingFrom(
 			r,
-			chain.GetTipInfo().Height,
 			chain.GetTipInfo().Header.ToBlockHeader(),
 			nil,
 			newChainLength,
@@ -369,7 +366,6 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 		require.NotNil(t, headerBeforeTip)
 		worseChain := datagen.GenRandomValidChainStartingFrom(
 			r,
-			headerBeforeTip.Height,
 			headerBeforeTip.Header.ToBlockHeader(),
 			nil,
 			1,
@@ -420,7 +416,7 @@ func FuzzKeeperValdateHeaderAtDifficultyAdjustmentBoundaries(f *testing.F) {
 
 		currentTip := blcKeeper.GetTipInfo(ctx)
 		require.NotNil(t, currentTip)
-		require.Equal(t, currentTip.Height, uint64(numBlockPerRetarget)-1)
+		require.Equal(t, currentTip.Height, uint32(numBlockPerRetarget)-1)
 
 		invalidAdjustedHeader := datagen.GenRandomBtcdValidHeader(
 			r,
@@ -439,7 +435,7 @@ func FuzzKeeperValdateHeaderAtDifficultyAdjustmentBoundaries(f *testing.F) {
 		}
 		validAdjustedHeader := datagen.GenRandomBtcdValidHeader(
 			r,
-			// current tip heigh is 2015
+			// current tip height is 2015
 			currentTip.Header.ToBlockHeader(),
 			nil,
 			&rt,
@@ -452,7 +448,7 @@ func FuzzKeeperValdateHeaderAtDifficultyAdjustmentBoundaries(f *testing.F) {
 		newTip := blcKeeper.GetTipInfo(ctx)
 		require.NotNil(t, newTip)
 		// tip should be at adjustment boundary now
-		require.Equal(t, newTip.Height, uint64(numBlockPerRetarget))
+		require.Equal(t, newTip.Height, uint32(numBlockPerRetarget))
 		require.True(t, newTip.Header.Eq(&validAdjustedHeaderBytes))
 		require.True(t, types.IsRetargetBlock(newTip, &chaincfg.SimNetParams))
 	})

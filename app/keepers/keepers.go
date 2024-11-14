@@ -3,7 +3,6 @@ package keepers
 import (
 	"path/filepath"
 
-	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	circuitkeeper "cosmossdk.io/x/circuit/keeper"
@@ -17,11 +16,12 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	mintkeeper "github.com/babylonlabs-io/babylon/x/mint/keeper"
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -37,8 +37,6 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -82,9 +80,6 @@ import (
 	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	monitorkeeper "github.com/babylonlabs-io/babylon/x/monitor/keeper"
 	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
-	"github.com/babylonlabs-io/babylon/x/zoneconcierge"
-	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 // Capabilities of the IBC wasm contracts
@@ -298,7 +293,6 @@ func (ak *AppKeepers) InitKeepers(
 	// grant capabilities for the ibc and ibc-transfer modules
 	scopedIBCKeeper := ak.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	scopedTransferKeeper := ak.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-	scopedZoneConciergeKeeper := ak.CapabilityKeeper.ScopeToModule(zctypes.ModuleName)
 	scopedWasmKeeper := ak.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
@@ -447,6 +441,7 @@ func (ak *AppKeepers) InitKeepers(
 		appCodec,
 		runtime.NewKVStoreService(keys[btclightclienttypes.StoreKey]),
 		*btcConfig,
+		&ak.IncentiveKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -460,12 +455,6 @@ func (ak *AppKeepers) InitKeepers(
 		&powLimit,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-
-	// create querier for KVStore
-	storeQuerier, ok := bApp.CommitMultiStore().(storetypes.Queryable)
-	if !ok {
-		panic(errorsmod.Wrap(sdkerrors.ErrUnknownRequest, "multistore doesn't support queries"))
-	}
 
 	ak.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
 		appCodec, keys[ibcfeetypes.StoreKey],
@@ -496,16 +485,29 @@ func (ak *AppKeepers) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
+	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
+	epochingKeeper.SetMsgServiceRouter(bApp.MsgServiceRouter())
+	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
+	ak.EpochingKeeper = *epochingKeeper.SetHooks(
+		epochingtypes.NewMultiEpochingHooks(ak.MonitorKeeper.Hooks()),
+	)
+
+	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
+	ak.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
+		checkpointingtypes.NewMultiCheckpointingHooks(ak.EpochingKeeper.Hooks(), ak.MonitorKeeper.Hooks()),
+	)
+	ak.BtcCheckpointKeeper = btcCheckpointKeeper
+	ak.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
+		btclightclienttypes.NewMultiBTCLightClientHooks(ak.BtcCheckpointKeeper.Hooks()),
+	)
+
 	// set up BTC staking keeper
 	btcStakingKeeper := btcstakingkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[btcstakingtypes.StoreKey]),
 		&btclightclientKeeper,
 		&btcCheckpointKeeper,
-		// setting the finality keeper as nil for now
-		// need to set it after finality keeper is initiated
-		nil,
-		&ak.BTCStkConsumerKeeper,
+		&ak.IncentiveKeeper,
 		btcNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -568,14 +570,6 @@ func (ak *AppKeepers) InitKeepers(
 	ak.MonitorKeeper = monitorKeeper
 	ak.ZoneConciergeKeeper = *zcKeeper
 
-	// TODO: this introduces circular dependency between the finality module and
-	// the btcstaking modules, need refactoring
-	btcStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(finalityKeeper.Hooks()))
-	finalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(btcStakingKeeper.Hooks()))
-	btcStakingKeeper.FinalityKeeper = finalityKeeper
-	ak.BTCStakingKeeper = btcStakingKeeper
-	ak.FinalityKeeper = finalityKeeper
-
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec,
@@ -588,7 +582,7 @@ func (ak *AppKeepers) InitKeepers(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	ak.EvidenceKeeper = *evidenceKeeper
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.ZoneConciergeKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
+	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.CheckpointingKeeper, &ak.ZoneConciergeKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
 	wasmOpts = append(owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(
@@ -636,10 +630,6 @@ func (ak *AppKeepers) InitKeepers(
 	transferStack = transfer.NewIBCModule(ak.TransferKeeper)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, ak.IBCFeeKeeper)
 
-	var zoneConciergeStack porttypes.IBCModule
-	zoneConciergeStack = zoneconcierge.NewIBCModule(ak.ZoneConciergeKeeper)
-	zoneConciergeStack = ibcfee.NewIBCMiddleware(zoneConciergeStack, ak.IBCFeeKeeper)
-
 	var wasmStack porttypes.IBCModule
 	wasmStack = wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCFeeKeeper)
 	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, ak.IBCFeeKeeper)
@@ -647,7 +637,6 @@ func (ak *AppKeepers) InitKeepers(
 	// Create static IBC router, add ibc-transfer module route, then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
-		AddRoute(zctypes.ModuleName, zoneConciergeStack).
 		AddRoute(wasmtypes.ModuleName, wasmStack)
 
 	// Setting Router will finalize all routes by sealing router
@@ -664,7 +653,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// whole usage of params module
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
-	paramsKeeper.Subspace(zctypes.ModuleName)
 
 	return paramsKeeper
 }

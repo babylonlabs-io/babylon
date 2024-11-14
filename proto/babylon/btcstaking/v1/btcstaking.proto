@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/staking/v1beta1/staking.proto";
 import "babylon/btcstaking/v1/pop.proto";
+import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 
@@ -32,7 +33,7 @@ message FinalityProvider {
     // slashed_btc_height indicates the BTC height when
     // the finality provider is slashed.
     // if it's 0 then the finality provider is not slashed
-    uint64 slashed_btc_height = 7;
+    uint32 slashed_btc_height = 7;
     // jailed defines whether the finality provider is jailed
     bool jailed = 8;
     // consumer_id is the ID of the consumer the finality provider is operating on.
@@ -56,7 +57,7 @@ message FinalityProviderWithMeta {
     // slashed_btc_height indicates the BTC height when
     // the finality provider is slashed.
     // if it's 0 then the finality provider is not slashed
-    uint64 slashed_btc_height = 5;
+    uint32 slashed_btc_height = 5;
     // jailed defines whether the finality provider is detected jailed
     bool jailed = 6;
 }
@@ -75,38 +76,50 @@ message BTCDelegation {
     // If there is more than 1 PKs, then this means the delegation is restaked
     // to multiple finality providers
     repeated bytes fp_btc_pk_list = 4 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+    // staking_time is the number of blocks for which the delegation is locked on BTC chain
+    uint32 staking_time = 5;
     // start_height is the start BTC height of the BTC delegation
     // it is the start BTC height of the timelock
-    uint64 start_height = 5;
+    uint32 start_height = 6;
     // end_height is the end height of the BTC delegation
-    // it is the end BTC height of the timelock - w
-    uint64 end_height = 6;
+    // it is calculated by end_height = start_height + staking_time
+    uint32 end_height = 7;
     // total_sat is the total amount of BTC stakes in this delegation
     // quantified in satoshi
-    uint64 total_sat = 7;
+    uint64 total_sat = 8;
     // staking_tx is the staking tx
-    bytes staking_tx  = 8;
+    bytes staking_tx  = 9;
     // staking_output_idx is the index of the staking output in the staking tx
-    uint32 staking_output_idx = 9;
+    uint32 staking_output_idx = 10;
     // slashing_tx is the slashing tx
     // It is partially signed by SK corresponding to btc_pk, but not signed by
     // finality provider or covenant yet.
-    bytes slashing_tx = 10 [ (gogoproto.customtype) = "BTCSlashingTx" ];
+    bytes slashing_tx = 11 [ (gogoproto.customtype) = "BTCSlashingTx" ];
     // delegator_sig is the signature on the slashing tx
     // by the delegator (i.e., SK corresponding to btc_pk).
     // It will be a part of the witness for the staking tx output.
-    bytes delegator_sig = 11 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340Signature" ];
+    bytes delegator_sig = 12 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340Signature" ];
     // covenant_sigs is a list of adaptor signatures on the slashing tx
     // by each covenant member
     // It will be a part of the witness for the staking tx output.
-    repeated CovenantAdaptorSignatures covenant_sigs = 12;
+    repeated CovenantAdaptorSignatures covenant_sigs = 13;
     // unbonding_time describes how long the funds will be locked either in unbonding output
     // or slashing change output
-    uint32 unbonding_time = 13;
+    uint32 unbonding_time = 14;
     // btc_undelegation is the information about the early unbonding path of the BTC delegation
-    BTCUndelegation btc_undelegation = 14;
+    BTCUndelegation btc_undelegation = 15;
     // version of the params used to validate the delegation
-    uint32 params_version = 15;
+    uint32 params_version = 16;
+}
+
+// DelegatorUnbondingInfo contains the information about transaction which spent
+// the staking output. It contains:
+// - spend_stake_tx: the transaction which spent the staking output
+message DelegatorUnbondingInfo {
+    // spend_stake_tx is the transaction which spent the staking output. It is
+    // filled only if spend_stake_tx is different than unbonding_tx registered
+    // on the Babylon chain.
+    bytes spend_stake_tx = 1;
 }
 
 // BTCUndelegation contains the information about the early unbonding path of the BTC delegation
@@ -119,24 +132,21 @@ message BTCUndelegation {
     // It is partially signed by SK corresponding to btc_pk, but not signed by
     // finality provider or covenant yet.
     bytes slashing_tx = 2 [ (gogoproto.customtype) = "BTCSlashingTx" ];
-    // delegator_unbonding_sig is the signature on the unbonding tx
-    // by the delegator (i.e., SK corresponding to btc_pk).
-    // It effectively proves that the delegator wants to unbond and thus
-    // Babylon will consider this BTC delegation unbonded. Delegator's BTC
-    // on Bitcoin will be unbonded after timelock
-    bytes delegator_unbonding_sig = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340Signature" ];
     // delegator_slashing_sig is the signature on the slashing tx
     // by the delegator (i.e., SK corresponding to btc_pk).
     // It will be a part of the witness for the unbonding tx output.
-    bytes delegator_slashing_sig = 4 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340Signature" ];
+    bytes delegator_slashing_sig = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340Signature" ];
     // covenant_slashing_sigs is a list of adaptor signatures on the slashing tx
     // by each covenant member
     // It will be a part of the witness for the staking tx output.
-    repeated CovenantAdaptorSignatures covenant_slashing_sigs = 5;
+    repeated CovenantAdaptorSignatures covenant_slashing_sigs = 4;
     // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
     // by covenant members
     // It must be provided after processing undelegate message by Babylon
-    repeated SignatureInfo covenant_unbonding_sig_list = 6;
+    repeated SignatureInfo covenant_unbonding_sig_list = 5;
+    // delegator_unbonding_info is the information about transaction which spent
+    // the staking output
+    DelegatorUnbondingInfo delegator_unbonding_info = 6;
 }
 
 // BTCDelegatorDelegations is a collection of BTC delegations from the same delegator.
@@ -149,21 +159,30 @@ message BTCDelegatorDelegationIndex {
     repeated bytes staking_tx_hash_list = 1;
 }
 
-// BTCDelegationStatus is the status of a delegation. The state transition path is
-// PENDING -> ACTIVE -> UNBONDED with two possibilities:
-// 1. the typical path when timelock of staking transaction expires.
-// 2. the path when staker requests early undelegation through MsgBTCUndelegate message.
+// BTCDelegationStatus is the status of a delegation.
+// There are two possible valid state transition paths for a BTC delegation:
+// - PENDING -> ACTIVE -> UNBONDED
+// - PENDING -> VERIFIED -> ACTIVE -> UNBONDED
+// and one invalid state transition path:
+// - PENDING -> VERIFIED -> UNBONDED i.e the staker unbonded before
+// activating delegation on Babylon chain.
+// In valid transition paths, the delegation becomes UNBONDED when:
+// - either the staking transaction timelock expires
+// - or the staker requests early undelegation through MsgBTCUndelegate message.
 enum BTCDelegationStatus {
-    // PENDING defines a delegation that is waiting for covenant signatures to become active.
+    // PENDING defines a delegation that is waiting for covenant signatures.
     PENDING = 0;
+    // VERIFIED defines a delegation that has covenant signatures but is not yet
+    // included in the BTC chain.
+    VERIFIED = 1;
     // ACTIVE defines a delegation that has voting power
-    ACTIVE = 1;
+    ACTIVE = 2;
     // UNBONDED defines a delegation no longer has voting power:
     // - either reaching the end of staking transaction timelock
     // - or receiving unbonding tx with signatures from staker and covenant committee
-    UNBONDED = 2;
+    UNBONDED = 3;
     // ANY is any of the above status
-    ANY = 3;
+    ANY = 4;
 }
 
 // SignatureInfo is a BIP-340 signature together with its signer's BIP-340 PK
@@ -198,4 +217,15 @@ message SelectiveSlashingEvidence {
     // the covenant adaptor/Schnorr signature pair. It is the consequence
     // of selective slashing.
     bytes recovered_fp_btc_sk = 3;
-  }
+}
+
+// InclusionProof proves the existence of tx on BTC blockchain
+// including
+// - the position of the tx on BTC blockchain
+// - the Merkle proof that this tx is on the above position
+message InclusionProof {
+    // key is the position (txIdx, blockHash) of this tx on BTC blockchain
+    babylon.btccheckpoint.v1.TransactionKey key = 1;
+    // proof is the Merkle proof that this tx is included in the position in `key`
+    bytes proof = 2;
+}

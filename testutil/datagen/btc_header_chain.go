@@ -16,19 +16,19 @@ var initHeader = chaincfg.SimNetParams.GenesisBlock.Header
 type BTCHeaderPartialChain struct {
 	// slice of Headers forming valid chain
 	Headers                  []*wire.BlockHeader
-	initialHeaderHeight      uint64
+	initialHeaderHeight      uint32
 	inititialHeaderTotalWork sdkmath.Uint
 }
 
 func NewBTCHeaderChainWithLength(
 	r *rand.Rand,
-	initialHeaderHeight uint64,
-	initialHeaderTotalWork uint64,
+	initialHeaderHeight uint32,
+	initialHeaderTotalWork uint32,
 	length uint32) *BTCHeaderPartialChain {
 	return NewBTCHeaderChainFromParent(
 		r,
 		initialHeaderHeight,
-		sdkmath.NewUint(initialHeaderTotalWork),
+		sdkmath.NewUint(uint64(initialHeaderTotalWork)),
 		&initHeader,
 		length,
 	)
@@ -50,14 +50,13 @@ func NewBTCHeaderChainFromParentInfo(
 
 func NewBTCHeaderChainFromParent(
 	r *rand.Rand,
-	initialHeaderHeight uint64,
+	initialHeaderHeight uint32,
 	initialHeaderTotalWork sdkmath.Uint,
 	parent *wire.BlockHeader,
 	length uint32,
 ) *BTCHeaderPartialChain {
 	headers := GenRandomValidChainStartingFrom(
 		r,
-		initialHeaderHeight,
 		parent,
 		nil,
 		length,
