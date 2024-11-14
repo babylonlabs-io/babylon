@@ -45,6 +45,20 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 	return &types.MsgUpdateParamsResponse{}, nil
 }
 
+// ResumeFinalityProposal handles the proposal for resuming finality from halting
+func (ms msgServer) ResumeFinalityProposal(goCtx context.Context, req *types.MsgResumeFinalityProposal) (*types.MsgResumeFinalityProposalResponse, error) {
+	if ms.authority != req.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, req.Authority)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := ms.HandleResumeFinalityProposal(ctx, req.FpPks, req.HaltingHeight); err != nil {
+		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("failed to handle resume finality proposal: %v", err)
+	}
+
+	return &types.MsgResumeFinalityProposalResponse{}, nil
+}
+
 // AddFinalitySig adds a new vote to a given block
 func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinalitySig) (*types.MsgAddFinalitySigResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddFinalitySig)

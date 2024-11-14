@@ -68,11 +68,7 @@ func TestHandleResumeFinalityProposal(t *testing.T) {
 
 	// create a resume finality proposal to jail the last fp
 	bsKeeper.EXPECT().JailFinalityProvider(ctx, gomock.Any()).Return(nil).AnyTimes()
-	resumeProposal := &types.ResumeFinalityProposal{
-		FpPks:         activeFpPks[1:],
-		HaltingHeight: uint32(haltingHeight),
-	}
-	err := fKeeper.HandleResumeFinalityProposal(ctx, resumeProposal)
+	err := fKeeper.HandleResumeFinalityProposal(ctx, activeFpPks[1:], uint32(haltingHeight))
 	require.NoError(t, err)
 
 	for i := haltingHeight; i < currentHeight; i++ {

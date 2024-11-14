@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	types2 "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 // HandleResumeFinalityProposal handles the resume finality proposal in the following steps:
@@ -15,7 +15,7 @@ import (
 //  2. jail the finality providers from the list and adjust the voting power cache from the
 //     halting height to the current height
 //  3. tally blocks to ensure finality is resumed
-func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, p *types.ResumeFinalityProposal) error {
+func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPks []types2.BIP340PubKey, haltingHeight uint32) error {
 	// a valid proposal should be
 	// 1. the halting height along with some parameterized future heights should be indeed non-finalized
 	// 2. all the fps from the proposal should have missed the vote for the halting height
@@ -26,13 +26,13 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, p *types.ResumeFin
 	currentTime := ctx.HeaderInfo().Time
 
 	// jail the given finality providers
-	for _, fpPk := range p.FpPks {
+	for _, fpPk := range fpPks {
 		fpHex := fpPk.MarshalHex()
-		voters := k.GetVoters(ctx, uint64(p.HaltingHeight))
+		voters := k.GetVoters(ctx, uint64(haltingHeight))
 		_, voted := voters[fpPk.MarshalHex()]
 		if voted {
 			// all the given finality providers should not have voted for the halting height
-			return fmt.Errorf("the finality provider %s has voted for height %d", fpHex, p.HaltingHeight)
+			return fmt.Errorf("the finality provider %s has voted for height %d", fpHex, haltingHeight)
 		}
 
 		err := k.jailSluggishFinalityProvider(ctx, &fpPk)
@@ -57,16 +57,16 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, p *types.ResumeFin
 
 		k.Logger(ctx).Info(
 			"finality provider is jailed in the proposal",
-			"height", p.HaltingHeight,
+			"height", haltingHeight,
 			"public_key", fpHex,
 		)
 	}
 
 	// set the all the given finality providers voting power to 0
-	for h := uint64(p.HaltingHeight); h <= uint64(currentHeight); h++ {
+	for h := uint64(haltingHeight); h <= uint64(currentHeight); h++ {
 		distCache := k.GetVotingPowerDistCache(ctx, h)
 		activeFps := distCache.GetActiveFinalityProviderSet()
-		for _, fpToJail := range p.FpPks {
+		for _, fpToJail := range fpPks {
 			if fp, exists := activeFps[fpToJail.MarshalHex()]; exists {
 				fp.IsJailed = true
 				k.SetVotingPower(ctx, fpToJail, h, 0)

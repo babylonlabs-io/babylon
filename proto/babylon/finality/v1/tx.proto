@@ -23,6 +23,8 @@ service Msg {
     // UnjailFinalityProvider defines a method for unjailing a jailed
     // finality provider, thus it can receive voting power
     rpc UnjailFinalityProvider(MsgUnjailFinalityProvider) returns (MsgUnjailFinalityProviderResponse);
+    // ResumeFinalityProposal handles the proposal of resuming finality.
+    rpc ResumeFinalityProposal(MsgResumeFinalityProposal) returns (MsgResumeFinalityProposalResponse);
 }
 
 // MsgCommitPubRandList defines a message for committing a list of public randomness for EOTS
@@ -103,3 +105,22 @@ message MsgUnjailFinalityProvider {
 
 // MsgUnjailFinalityProviderResponse defines the Msg/UnjailFinalityProvider response type
 message MsgUnjailFinalityProviderResponse {}
+
+// MsgResumeFinalityProposal is a governance proposal to resume finality from halting
+message MsgResumeFinalityProposal {
+    option (cosmos.msg.v1.signer) = "authority";
+
+    // authority is the address of the governance account.
+    // just FYI: cosmos.AddressString marks that this field should use type alias
+    // for AddressString instead of string, but the functionality is not yet implemented
+    // in cosmos-proto
+    string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+    // fp_pks is a list of finality provider public keys to jail
+    // the public key follows encoding in BIP-340 spec
+    repeated bytes fp_pks = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+    // halting_height is the height where the finality halting begins
+    uint32 halting_height = 3;
+}
+
+// MsgResumeFinalityProposalResponse is the response to the MsgResumeFinalityProposal message.
+message MsgResumeFinalityProposalResponse {}
