@@ -174,6 +174,7 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 			0,
 			0,
 			usePreApproval,
+			false,
 		)
 		h.NoError(err)
 
@@ -233,6 +234,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 		0,
 		0,
 		false,
+		false,
 	)
 	h.NoError(err)
 
@@ -262,6 +264,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 		10000,
 		stakingValue-1000,
 		uint16(customMinUnbondingTime)+1,
+		false,
 		false,
 	)
 	h.NoError(err)
@@ -311,6 +314,7 @@ func FuzzAddCovenantSigs(f *testing.F) {
 			0,
 			0,
 			usePreApproval,
+			false,
 		)
 		h.NoError(err)
 
@@ -393,6 +397,7 @@ func FuzzAddBTCDelegationInclusionProof(f *testing.F) {
 			0,
 			0,
 			true,
+			false,
 		)
 		h.NoError(err)
 
@@ -465,6 +470,7 @@ func FuzzBTCUndelegate(f *testing.F) {
 			0,
 			0,
 			true,
+			false,
 		)
 		h.NoError(err)
 
@@ -543,6 +549,7 @@ func FuzzSelectiveSlashing(f *testing.F) {
 			0,
 			0,
 			true,
+			false,
 		)
 		h.NoError(err)
 
@@ -619,6 +626,7 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 			0,
 			0,
 			true,
+			false,
 		)
 		h.NoError(err)
 
@@ -847,7 +855,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 			// set all parameters
-			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.minUnbondingTime)
+			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.minUnbondingTime, 0)
 
 			changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 			require.NoError(t, err)
@@ -869,6 +877,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 				stakingValue-1000,
 				tt.unbondingTimeInDelegation,
 				true,
+				false,
 			)
 			if tt.err != nil {
 				require.Error(t, err)
@@ -882,6 +891,88 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAllowList(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+
+	allowListExpirationHeight := uint64(10)
+	// set all parameters, use the allow list
+	h.GenAndApplyCustomParams(r, 100, 0, allowListExpirationHeight)
+
+	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+	require.NoError(t, err)
+
+	// generate and insert new finality provider
+	_, fpPK, _ := h.CreateFinalityProvider(r)
+
+	usePreApproval := datagen.OneInN(r, 2)
+
+	// generate and insert new BTC delegation
+	stakingValue := int64(2 * 10e8)
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	_, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegation(
+		r,
+		delSK,
+		fpPK,
+		changeAddress.EncodeAddress(),
+		stakingValue,
+		1000,
+		0,
+		0,
+		usePreApproval,
+		// add delegation to the allow list, it should succeed
+		true,
+	)
+	h.NoError(err)
+	require.NotNil(t, msgCreateBTCDel)
+
+	delSK1, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	_, msgCreateBTCDel1, _, _, _, _, err := h.CreateDelegation(
+		r,
+		delSK1,
+		fpPK,
+		changeAddress.EncodeAddress(),
+		stakingValue,
+		1000,
+		0,
+		0,
+		usePreApproval,
+		// do not add delegation to the allow list, it should fail
+		false,
+	)
+	require.Error(t, err)
+	require.ErrorIs(t, err, types.ErrInvalidStakingTx)
+	require.Nil(t, msgCreateBTCDel1)
+
+	// move forward in the block height, allow list should be expired
+	h.Ctx = h.Ctx.WithBlockHeight(int64(allowListExpirationHeight))
+	delSK2, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	_, msgCreateBTCDel2, _, _, _, _, err := h.CreateDelegation(
+		r,
+		delSK2,
+		fpPK,
+		changeAddress.EncodeAddress(),
+		stakingValue,
+		1000,
+		0,
+		0,
+		usePreApproval,
+		// do not add delegation to the allow list, it should succeed as allow list is expired
+		false,
+	)
+	h.NoError(err)
+	require.NotNil(t, msgCreateBTCDel2)
 }
 
 func createNDelegationsForFinalityProvider(

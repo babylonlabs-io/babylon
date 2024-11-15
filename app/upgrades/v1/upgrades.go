@@ -16,6 +16,7 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -33,6 +34,8 @@ import (
 	btcstktypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	finalitykeeper "github.com/babylonlabs-io/babylon/x/finality/keeper"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	incentivekeeper "github.com/babylonlabs-io/babylon/x/incentive/keeper"
+	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	mintkeeper "github.com/babylonlabs-io/babylon/x/mint/keeper"
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 )
@@ -61,7 +64,7 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHand
 
 			migrations, err := mm.RunMigrations(ctx, cfg, fromVM)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to run migrations: %w", err)
 			}
 
 			// Re-initialise the mint module as we have replaced Cosmos SDK's
@@ -74,7 +77,7 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHand
 				keepers.StakingKeeper,
 			)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to upgrade mint module: %w", err)
 			}
 
 			err = upgradeParameters(
@@ -82,25 +85,29 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHand
 				keepers.EncCfg.Codec,
 				&keepers.BTCStakingKeeper,
 				&keepers.FinalityKeeper,
+				&keepers.IncentiveKeeper,
 				&keepers.WasmKeeper,
 				upgradeDataStr.BtcStakingParamStr,
 				upgradeDataStr.FinalityParamStr,
+				upgradeDataStr.IncentiveParamStr,
 				upgradeDataStr.CosmWasmParamStr,
 			)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to upgrade parameters: %w", err)
 			}
 
 			err = upgradeLaunch(
 				ctx,
 				keepers.EncCfg,
 				&keepers.BTCLightClientKeeper,
+				&keepers.BTCStakingKeeper,
 				keepers.BankKeeper,
 				upgradeDataStr.NewBtcHeadersStr,
 				upgradeDataStr.TokensDistributionStr,
+				upgradeDataStr.AllowedStakingTxHashesStr,
 			)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to upgrade inserting additional data: %w", err)
 			}
 
 			return migrations, nil
@@ -130,18 +137,40 @@ func upgradeParameters(
 	cdc codec.Codec,
 	btcK *btcstkkeeper.Keeper,
 	finK *finalitykeeper.Keeper,
+	iK *incentivekeeper.Keeper,
 	wasmK *wasmkeeper.Keeper,
-	btcStakingParam, finalityParam, wasmParam string,
+	btcStakingParam, finalityParam, incentiveParam, wasmParam string,
 ) error {
 	// Upgrade the staking parameters as first, as other upgrades depend on it.
 	if err := upgradeBtcStakingParameters(ctx, cdc, btcK, btcStakingParam); err != nil {
-		return err
+		return fmt.Errorf("failed to upgrade btc staking parameters: %w", err)
 	}
 	if err := upgradeFinalityParameters(ctx, cdc, finK, finalityParam); err != nil {
+		return fmt.Errorf("failed to upgrade finality parameters: %w", err)
+	}
+	if err := upgradeIncentiveParameters(ctx, cdc, iK, incentiveParam); err != nil {
 		return err
 	}
 
-	return upgradeCosmWasmParameters(ctx, cdc, wasmK, wasmParam)
+	if err := upgradeCosmWasmParameters(ctx, cdc, wasmK, wasmParam); err != nil {
+		return fmt.Errorf("failed to upgrade cosmwasm parameters: %w", err)
+	}
+
+	return nil
+}
+
+func upgradeIncentiveParameters(
+	ctx sdk.Context,
+	cdc codec.Codec,
+	k *incentivekeeper.Keeper,
+	incentiveParam string,
+) error {
+	params, err := LoadIncentiveParamsFromData(cdc, incentiveParam)
+	if err != nil {
+		return err
+	}
+
+	return k.SetParams(ctx, params)
 }
 
 func upgradeCosmWasmParameters(
@@ -195,14 +224,23 @@ func upgradeLaunch(
 	ctx sdk.Context,
 	encCfg *appparams.EncodingConfig,
 	btcLigthK *btclightkeeper.Keeper,
+	btcK *btcstkkeeper.Keeper,
 	bankK bankkeeper.SendKeeper,
-	btcHeaders, tokensDistribution string,
+	btcHeaders, tokensDistribution, allowedStakingTxHashes string,
 ) error {
 	if err := upgradeTokensDistribution(ctx, bankK, tokensDistribution); err != nil {
-		return err
+		return fmt.Errorf("failed to upgrade tokens distribution: %w", err)
 	}
 
-	return upgradeBTCHeaders(ctx, encCfg.Codec, btcLigthK, btcHeaders)
+	if err := upgradeAllowedStakingTransactions(ctx, encCfg.Codec, btcK, allowedStakingTxHashes); err != nil {
+		return fmt.Errorf("failed to upgrade allowed staking transactions: %w", err)
+	}
+
+	if err := upgradeBTCHeaders(ctx, encCfg.Codec, btcLigthK, btcHeaders); err != nil {
+		return fmt.Errorf("failed to upgrade btc headers: %w", err)
+	}
+
+	return nil
 }
 
 func upgradeTokensDistribution(ctx sdk.Context, bankK bankkeeper.SendKeeper, tokensDistribution string) error {
@@ -226,6 +264,23 @@ func upgradeTokensDistribution(ctx sdk.Context, bankK bankkeeper.SendKeeper, tok
 		if err := bankK.SendCoins(ctx, sender, receiver, sdk.NewCoins(amount)); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func upgradeAllowedStakingTransactions(ctx sdk.Context, cdc codec.Codec, btcStakingK *btcstkkeeper.Keeper, allowedStakingTxHashes string) error {
+	data, err := LoadAllowedStakingTransactionHashesFromData(allowedStakingTxHashes)
+	if err != nil {
+		return fmt.Errorf("failed to load allowed staking transaction hashes from string %s: %w", allowedStakingTxHashes, err)
+	}
+
+	for _, txHash := range data.TxHashes {
+		hash, err := chainhash.NewHashFromStr(txHash)
+		if err != nil {
+			return fmt.Errorf("failed to parse tx hash: %w", err)
+		}
+		btcStakingK.IndexAllowedStakingTransaction(ctx, hash)
 	}
 
 	return nil
@@ -259,6 +314,18 @@ func LoadFinalityParamsFromData(cdc codec.Codec, data string) (finalitytypes.Par
 	err := cdc.UnmarshalJSON(buff.Bytes(), &params)
 	if err != nil {
 		return finalitytypes.Params{}, err
+	}
+
+	return params, nil
+}
+
+func LoadIncentiveParamsFromData(cdc codec.Codec, data string) (incentivetypes.Params, error) {
+	buff := bytes.NewBufferString(data)
+
+	var params incentivetypes.Params
+	err := cdc.UnmarshalJSON(buff.Bytes(), &params)
+	if err != nil {
+		return incentivetypes.Params{}, err
 	}
 
 	return params, nil
@@ -300,6 +367,18 @@ func LoadTokenDistributionFromData(data string) (DataTokenDistribution, error) {
 	}
 
 	return d, nil
+}
+
+func LoadAllowedStakingTransactionHashesFromData(data string) (*AllowedStakingTransactionHashes, error) {
+	buff := bytes.NewBufferString(data)
+
+	var d AllowedStakingTransactionHashes
+	err := json.Unmarshal(buff.Bytes(), &d)
+	if err != nil {
+		return nil, err
+	}
+
+	return &d, nil
 }
 
 func insertBtcHeaders(

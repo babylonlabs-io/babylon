@@ -29,7 +29,7 @@ func GenRandomDenom(r *rand.Rand) string {
 }
 
 func GenRandomStakeholderType(r *rand.Rand) itypes.StakeholderType {
-	stBytes := []byte{byte(RandomInt(r, 4))}
+	stBytes := []byte{byte(RandomInt(r, 2))}
 	st, err := itypes.NewStakeHolderType(stBytes)
 	if err != nil {
 		panic(err) // only programming error is possible

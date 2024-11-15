@@ -51,18 +51,3 @@ func (n *NodeConfig) QueryRewardGauge(sAddr sdk.AccAddress) (map[string]*incenti
 
 	return resp.RewardGauges, nil
 }
-
-func (n *NodeConfig) QueryBTCTimestampingGauge(epoch uint64) (*incentivetypes.BTCTimestampingGaugeResponse, error) {
-	path := fmt.Sprintf("/babylon/incentive/btc_timestamping_gauge/%d", epoch)
-	bz, err := n.QueryGRPCGateway(path, url.Values{})
-	if err != nil {
-		return nil, err
-	}
-
-	var resp incentivetypes.QueryBTCTimestampingGaugeResponse
-	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
-		return nil, err
-	}
-
-	return resp.Gauge, nil
-}

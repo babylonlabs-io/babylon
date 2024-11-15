@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v0.16.0
+
 ### Improvements
 
 * [#242](https://github.com/babylonlabs-io/babylon/pull/242) Add
@@ -60,8 +62,11 @@ in checkpointing module
 
 ### State Machine Breaking
 
+* [#260](https://github.com/babylonlabs-io/babylon/pull/260) Finish tokenomics
+implementation
 * [#254](https://github.com/babylonlabs-io/babylon/pull/254) Avoid constant
 bech-32 decoding in power table
+* [#265](https://github.com/babylonlabs-io/babylon/pull/265) Add allow list for staking txs
 
 ## v0.15.0
 

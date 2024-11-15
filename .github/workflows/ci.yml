@@ -191,3 +191,6 @@ jobs:
       - name: Run e2e TestSoftwareUpgradeV1TestnetTestSuite
         run: |
           sudo make test-e2e-cache-upgrade-v1
+      - name: Dump docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v2

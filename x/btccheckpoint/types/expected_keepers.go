@@ -41,6 +41,5 @@ type CheckpointingKeeper interface {
 }
 
 type IncentiveKeeper interface {
-	RewardBTCTimestamping(ctx context.Context, epoch uint64, rewardDistInfo *RewardDistInfo)
 	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
 }

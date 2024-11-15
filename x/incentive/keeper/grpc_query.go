@@ -57,29 +57,8 @@ func (k Keeper) BTCStakingGauge(goCtx context.Context, req *types.QueryBTCStakin
 	return &types.QueryBTCStakingGaugeResponse{Gauge: convertGaugeToBTCStakingResponse(*gauge)}, nil
 }
 
-func (k Keeper) BTCTimestampingGauge(goCtx context.Context, req *types.QueryBTCTimestampingGaugeRequest) (*types.QueryBTCTimestampingGaugeResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// find gauge
-	gauge := k.GetBTCTimestampingGauge(ctx, req.EpochNum)
-	if gauge == nil {
-		return nil, types.ErrBTCTimestampingGaugeNotFound
-	}
-
-	return &types.QueryBTCTimestampingGaugeResponse{Gauge: convertGaugeToBTCTimestampingResponse(*gauge)}, nil
-}
-
 func convertGaugeToBTCStakingResponse(gauge types.Gauge) *types.BTCStakingGaugeResponse {
 	return &types.BTCStakingGaugeResponse{
-		Coins: gauge.Coins,
-	}
-}
-
-func convertGaugeToBTCTimestampingResponse(gauge types.Gauge) *types.BTCTimestampingGaugeResponse {
-	return &types.BTCTimestampingGaugeResponse{
 		Coins: gauge.Coins,
 	}
 }

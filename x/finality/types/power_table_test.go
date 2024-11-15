@@ -179,7 +179,7 @@ func TestVotingPowerDistCache(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			dc := types.NewVotingPowerDistCacheWithFinalityProviders(tc.fps)
 			dc.ApplyActiveFinalityProviders(tc.maxActiveFPs)
-			require.Equal(t, tc.totalVotingPower, dc.TotalBondedSat)
+			require.Equal(t, tc.totalVotingPower, dc.TotalVotingPower)
 			require.Equal(t, tc.numActiveFps, dc.NumActiveFps)
 
 			newActiveFps := dc.FindNewActiveFinalityProviders(tc.prevDistCache)

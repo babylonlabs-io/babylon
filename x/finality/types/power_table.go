@@ -10,7 +10,7 @@ import (
 
 func NewVotingPowerDistCache() *VotingPowerDistCache {
 	return &VotingPowerDistCache{
-		TotalBondedSat:    0,
+		TotalVotingPower:  0,
 		FinalityProviders: []*FinalityProviderDistInfo{},
 	}
 }
@@ -89,13 +89,13 @@ func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(maxActiveFPs uint32
 		numActiveFPs++
 	}
 
-	TotalBondedSat := uint64(0)
+	totalVotingPower := uint64(0)
 
 	for i := uint32(0); i < numActiveFPs; i++ {
-		TotalBondedSat += dc.FinalityProviders[i].TotalBondedSat
+		totalVotingPower += dc.FinalityProviders[i].TotalBondedSat
 	}
 
-	dc.TotalBondedSat = TotalBondedSat
+	dc.TotalVotingPower = totalVotingPower
 	dc.NumActiveFps = numActiveFPs
 }
 
@@ -135,29 +135,9 @@ func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*Fin
 	return inactiveFps
 }
 
-// FilterVotedDistCache filters out a voting power distribution cache
-// with finality providers that have voted according to a map of given
-// voters, and their total voted power.
-func (dc *VotingPowerDistCache) FilterVotedDistCache(voterBTCPKs map[string]struct{}) *VotingPowerDistCache {
-	activeFPs := dc.GetActiveFinalityProviderSet()
-	var filteredFps []*FinalityProviderDistInfo
-	TotalBondedSat := uint64(0)
-	for k, v := range activeFPs {
-		if _, ok := voterBTCPKs[k]; ok {
-			filteredFps = append(filteredFps, v)
-			TotalBondedSat += v.TotalBondedSat
-		}
-	}
-
-	return &VotingPowerDistCache{
-		FinalityProviders: filteredFps,
-		TotalBondedSat:    TotalBondedSat,
-	}
-}
-
 // GetFinalityProviderPortion returns the portion of a finality provider's voting power out of the total voting power
 func (dc *VotingPowerDistCache) GetFinalityProviderPortion(v *FinalityProviderDistInfo) sdkmath.LegacyDec {
-	return sdkmath.LegacyNewDec(int64(v.TotalBondedSat)).QuoTruncate(sdkmath.LegacyNewDec(int64(dc.TotalBondedSat)))
+	return sdkmath.LegacyNewDec(int64(v.TotalBondedSat)).QuoTruncate(sdkmath.LegacyNewDec(int64(dc.TotalVotingPower)))
 }
 
 func NewFinalityProviderDistInfo(fp *bstypes.FinalityProvider) *FinalityProviderDistInfo {
