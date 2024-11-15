@@ -48,6 +48,8 @@ var (
 	randListInfo1                       *datagen.RandListInfo
 	// TODO: get consumer id from ibc client-state query
 	consumerID = "07-tendermint-0"
+
+	czDelBtcSk, czDelBtcPk, _ = datagen.GenRandomBTCKeyPair(r)
 )
 
 type BCDConsumerIntegrationTestSuite struct {
@@ -337,8 +339,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
 			return false
 		}
 		return fp != nil &&
-			fp.FinalityProvider.SlashedBtcHeight > 0 &&
-			fp.FinalityProvider.VotingPower == 0
+			fp.FinalityProvider.SlashedBtcHeight > 0
 	}, time.Minute, time.Second*5)
 
 	// query consumer finality providers
@@ -480,7 +481,6 @@ func (s *BCDConsumerIntegrationTestSuite) Test7ConsumerFPCascadedSlashing() {
 			return false
 		}
 		return fp != nil &&
-			fp.FinalityProvider.VotingPower == 0 && // as there is only 1 delegation which got slashed
 			fp.FinalityProvider.SlashedBtcHeight == 0 // should not be slashed
 	}, time.Minute, time.Second*5)
 
@@ -712,14 +712,14 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 	s.NoError(err)
 
 	// submit the message for creating BTC delegation
-	delBTCPKs := []bbntypes.BIP340PubKey{*bbntypes.NewBIP340PubKeyFromBTCPK(czDelBtcPk)}
+	delBTCPK := *bbntypes.NewBIP340PubKeyFromBTCPK(czDelBtcPk)
 
 	serializedUnbondingTx, err := bbntypes.SerializeBTCTx(testUnbondingInfo.UnbondingTx)
 	s.NoError(err)
 
 	// submit the BTC delegation to Babylon
 	_, err = s.babylonController.CreateBTCDelegation(
-		&delBTCPKs[0],
+		&delBTCPK,
 		[]*btcec.PublicKey{babylonFp.BtcPk.MustToBTCPK(), consumerFp.BtcPk.MustToBTCPK()},
 		pop,
 		uint32(stakingTimeBlocks),

@@ -242,8 +242,8 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 			}
 			restakedToBabylon = true
 			continue
-		} else if consumerID, err := k.bscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
-			fp, err := k.bscKeeper.GetConsumerFinalityProvider(ctx, consumerID, &fpBTCPK)
+		} else if consumerID, err := k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
+			fp, err := k.BscKeeper.GetConsumerFinalityProvider(ctx, consumerID, &fpBTCPK)
 			if err != nil {
 				return false, err
 			}
@@ -272,7 +272,7 @@ func (k Keeper) restakedFPConsumerIDs(ctx context.Context, fpBTCPKs []bbn.BIP340
 		fpBTCPK := fpBTCPKs[i]
 		if _, err := k.GetFinalityProvider(ctx, fpBTCPK); err == nil {
 			continue
-		} else if consumerID, err := k.bscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
+		} else if consumerID, err := k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
 			consumerIDMap[consumerID] = struct{}{}
 		} else {
 			return nil, types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPK.MarshalHex())

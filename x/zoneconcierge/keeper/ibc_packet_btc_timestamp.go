@@ -102,7 +102,7 @@ func (k Keeper) createBTCTimestamp(
 	var btcHeaders []*btclctypes.BTCHeaderInfo
 	if k.isChannelUninitialized(ctx, channel) {
 		w := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-		depth := w + 1 + uint64(len(finalizedInfo.BTCHeaders))
+		depth := w + 1 + uint32(len(finalizedInfo.BTCHeaders))
 
 		btcHeaders = k.btclcKeeper.GetMainChainUpTo(ctx, depth)
 		if btcHeaders == nil {

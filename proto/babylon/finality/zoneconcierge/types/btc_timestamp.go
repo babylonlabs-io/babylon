@@ -261,7 +261,7 @@ func VerifyEpochSubmitted(rawCkpt *checkpointingtypes.RawCheckpoint, txsInfo []*
 func (ts *BTCTimestamp) Verify(
 	ctx context.Context,
 	btclcKeeper *btclckeeper.Keeper,
-	wValue uint64,
+	wValue uint32,
 	ckptTag txformat.BabylonTag,
 ) error {
 	// BTC net

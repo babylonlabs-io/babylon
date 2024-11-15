@@ -55,7 +55,7 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 				_, _, del, _, _, _, err := h.CreateDelegation(
 					r,
 					delSK,
-					fpPK,
+					[]*btcec.PublicKey{fpPK},
 					changeAddress.EncodeAddress(),
 					stakingValue,
 					1000,
@@ -112,7 +112,7 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 			r,
 			delSK,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
@@ -198,7 +198,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 			r,
 			delSK,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
@@ -267,7 +267,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		stakingTxHash2, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 			r,
 			delSK2,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
@@ -328,7 +328,7 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 			r,
 			delSK,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
@@ -429,7 +429,7 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		stakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegation(
 			r,
 			delSK,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
@@ -547,7 +547,7 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 			r,
 			delSK,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
@@ -674,7 +674,7 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 	expectedStakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegation(
 		r,
 		delSK,
-		fpPK,
+		[]*btcec.PublicKey{fpPK},
 		changeAddress.EncodeAddress(),
 		stakingValue,
 		1000,

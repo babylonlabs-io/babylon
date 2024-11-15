@@ -29,4 +29,6 @@ var (
 	ErrFpAlreadyJailed          = errorsmod.Register(ModuleName, 1120, "the finality provider has already been jailed")
 	ErrFpNotJailed              = errorsmod.Register(ModuleName, 1121, "the finality provider is not jailed")
 	ErrDuplicatedCovenantSig    = errorsmod.Register(ModuleName, 1122, "the covenant signature is already submitted")
+	ErrConsumerIDNotRegistered  = errorsmod.Register(ModuleName, 1123, "Consumer is not registered")
+	ErrNoBabylonFPRestaked      = errorsmod.Register(ModuleName, 1124, "the BTC delegation request does not restake to any Babylon finality provider")
 )

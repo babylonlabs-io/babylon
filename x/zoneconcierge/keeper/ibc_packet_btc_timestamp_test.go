@@ -23,8 +23,8 @@ func genRandomChain(
 	r *rand.Rand,
 	k *btclckeeper.Keeper,
 	ctx context.Context,
-	initialHeight uint64,
-	chainLength uint64,
+	initialHeight uint32,
+	chainLength uint32,
 ) *datagen.BTCHeaderPartialChain {
 	initHeader := k.GetHeaderByHeight(ctx, initialHeight)
 	randomChain := datagen.NewBTCHeaderChainFromParentInfo(
@@ -55,7 +55,7 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 
 		// insert a random number of BTC headers to BTC light client
 		wValue := babylonApp.BtcCheckpointKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-		chainLength := datagen.RandomInt(r, 10) + wValue
+		chainLength := uint32(datagen.RandomInt(r, 10)) + wValue
 		genRandomChain(
 			t,
 			r,
@@ -80,7 +80,7 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 
 		// finalise another epoch, during which a small number of new BTC headers are inserted
 		epochNum += 1
-		chainLength = datagen.RandomInt(r, 10) + 1
+		chainLength = uint32(datagen.RandomInt(r, 10)) + 1
 		genRandomChain(
 			t,
 			r,
@@ -107,10 +107,10 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		// reorg at a super random point
 		// NOTE: it's possible that the last segment is totally reverted. We want to be resilient against
 		// this, by sending the BTC headers since the last reorg point
-		reorgPoint := datagen.RandomInt(r, int(btcTip.Height))
-		revertedChainLength := btcTip.Height - reorgPoint
+		reorgPoint := uint32(datagen.RandomInt(r, int(btcTip.Height)))
+		revertedChainLength := btcTip.Height - uint32(reorgPoint)
 		// the fork chain needs to be longer than the canonical one
-		forkChainLength := revertedChainLength + datagen.RandomInt(r, 10) + 1
+		forkChainLength := revertedChainLength + uint32(datagen.RandomInt(r, 10)) + 1
 		genRandomChain(
 			t,
 			r,

@@ -12,6 +12,7 @@ import (
 	lcKeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
 	epochingkeeper "github.com/babylonlabs-io/babylon/x/epoching/keeper"
+	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,6 +22,7 @@ type QueryPlugin struct {
 	epochingKeeper      *epochingkeeper.Keeper
 	checkpointingkeeper *checkpointingkeeper.Keeper
 	lcKeeper            *lcKeeper.Keeper
+	zcKeeper            *zckeeper.Keeper
 }
 
 // NewQueryPlugin returns a reference to a new QueryPlugin.
@@ -28,11 +30,13 @@ func NewQueryPlugin(
 	ek *epochingkeeper.Keeper,
 	ch *checkpointingkeeper.Keeper,
 	lcKeeper *lcKeeper.Keeper,
+	zcKeeper *zckeeper.Keeper,
 ) *QueryPlugin {
 	return &QueryPlugin{
 		epochingKeeper:      ek,
 		checkpointingkeeper: ch,
 		lcKeeper:            lcKeeper,
+		zcKeeper:            zcKeeper,
 	}
 }
 
@@ -159,8 +163,9 @@ func RegisterCustomPlugins(
 	ek *epochingkeeper.Keeper,
 	ck *checkpointingkeeper.Keeper,
 	lcKeeper *lcKeeper.Keeper,
+	zcKeeper *zckeeper.Keeper,
 ) []wasmkeeper.Option {
-	wasmQueryPlugin := NewQueryPlugin(ek, ck, lcKeeper)
+	wasmQueryPlugin := NewQueryPlugin(ek, ck, lcKeeper, zcKeeper)
 
 	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
 		Custom: CustomQuerier(wasmQueryPlugin),

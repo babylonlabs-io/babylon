@@ -121,7 +121,7 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 // SlashConsumerFinalityProvider slashes a consumer finality provider with the given PK
 func (k Keeper) SlashConsumerFinalityProvider(ctx context.Context, consumerID string, fpBTCPK *bbn.BIP340PubKey) error {
 	// Get consumer finality provider
-	fp, err := k.bscKeeper.GetConsumerFinalityProvider(ctx, consumerID, fpBTCPK)
+	fp, err := k.BscKeeper.GetConsumerFinalityProvider(ctx, consumerID, fpBTCPK)
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (k Keeper) SlashConsumerFinalityProvider(ctx context.Context, consumerID st
 		return fmt.Errorf("failed to get current BTC tip")
 	}
 	fp.SlashedBtcHeight = btcTip.Height
-	k.bscKeeper.SetConsumerFinalityProvider(ctx, fp)
+	k.BscKeeper.SetConsumerFinalityProvider(ctx, fp)
 
 	// Get all delegations for this consumer finality provider
 	btcDels, err := k.GetFPBTCDelegations(ctx, fpBTCPK)
@@ -229,7 +229,7 @@ func (k Keeper) collectSlashedConsumerEvents(ctx context.Context, delegations []
 				// If not in map, check if it's a Babylon FP or get its consumer
 				if _, err := k.GetFinalityProvider(ctx, delegationFPBTCPK); err == nil {
 					continue // It's a Babylon FP, skip
-				} else if consumerID, err = k.bscKeeper.GetConsumerOfFinalityProvider(ctx, &delegationFPBTCPK); err == nil {
+				} else if consumerID, err = k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &delegationFPBTCPK); err == nil {
 					// Found consumer, add to map
 					fpToConsumerMap[fpBTCPKHex] = consumerID
 				} else {

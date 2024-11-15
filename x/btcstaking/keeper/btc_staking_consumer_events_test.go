@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
@@ -24,7 +25,7 @@ func FuzzSetBTCStakingEventStore_NewFp(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, nil)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 		h.GenAndApplyParams(r)
 
 		// register a random consumer on Babylon
@@ -81,7 +82,7 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, nil)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -98,19 +99,25 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 
 		// generate and insert new BTC delegation, restake to 1 consumer fp and 1 babylon fp
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, _, _, msgCreateBTCDel, _, err := h.CreateDelegation(
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingTxHash, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegation(
 			r,
+			delSK,
 			[]*btcec.PublicKey{consumerFpPK, babylonFpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
+			0,
+			0,
+			false,
 		)
 		h.NoError(err)
 
 		// delegation related assertions
 		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		require.False(h.t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		require.False(t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 		// create cov sigs to activate the delegation
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
 		bogusMsg := *msgs[0]
@@ -127,8 +134,8 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		// ensure the BTC delegation now has voting power as it has been activated
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		require.True(h.t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
-		require.True(h.t, actualDel.BtcUndelegation.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		require.True(t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		require.True(t, actualDel.BtcUndelegation.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 		votingPower := actualDel.VotingPower(h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height, h.BTCCheckpointKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout, h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum)
 		require.Equal(t, uint64(stakingValue), votingPower)
 
@@ -167,7 +174,7 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, nil)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -187,12 +194,18 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		stakingTxHash, delSK, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegation(
 			r,
+			delSK,
 			[]*btcec.PublicKey{consumerFpPK, babylonFpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
+			0,
+			0,
+			false,
 		)
 		h.NoError(err)
 
@@ -262,7 +275,7 @@ func FuzzDeleteBTCStakingEventStore(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, nil)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 		h.GenAndApplyParams(r)
 
 		// register random number of consumers on Babylon
@@ -300,7 +313,7 @@ func FuzzDeleteBTCStakingEventStore(f *testing.F) {
 }
 
 // helper function: register a random consumer on Babylon and verify the registration
-func registerAndVerifyConsumer(t *testing.T, r *rand.Rand, h *Helper) *bsctypes.ConsumerRegister {
+func registerAndVerifyConsumer(t *testing.T, r *rand.Rand, h *testutil.Helper) *bsctypes.ConsumerRegister {
 	// Generate a random consumer register
 	randomConsumer := datagen.GenRandomConsumerRegister(r)
 

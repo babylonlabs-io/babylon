@@ -1,6 +1,7 @@
 package keepers
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"cosmossdk.io/log"
@@ -80,6 +81,8 @@ import (
 	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	monitorkeeper "github.com/babylonlabs-io/babylon/x/monitor/keeper"
 	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
+	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 // Capabilities of the IBC wasm contracts
@@ -293,6 +296,7 @@ func (ak *AppKeepers) InitKeepers(
 	// grant capabilities for the ibc and ibc-transfer modules
 	scopedIBCKeeper := ak.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	scopedTransferKeeper := ak.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
+	scopedZoneConciergeKeeper := ak.CapabilityKeeper.ScopeToModule(zctypes.ModuleName)
 	scopedWasmKeeper := ak.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
@@ -502,21 +506,22 @@ func (ak *AppKeepers) InitKeepers(
 	)
 
 	// set up BTC staking keeper
-	btcStakingKeeper := btcstakingkeeper.NewKeeper(
+	ak.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[btcstakingtypes.StoreKey]),
 		&btclightclientKeeper,
 		&btcCheckpointKeeper,
+		&ak.BTCStkConsumerKeeper,
 		&ak.IncentiveKeeper,
 		btcNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	// set up finality keeper
-	finalityKeeper := finalitykeeper.NewKeeper(
+	ak.FinalityKeeper = finalitykeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[finalitytypes.StoreKey]),
-		btcStakingKeeper,
+		ak.BTCStakingKeeper,
 		ak.IncentiveKeeper,
 		checkpointingKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -527,6 +532,12 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[monitortypes.StoreKey]),
 		&btclightclientKeeper,
 	)
+
+	// create querier for KVStore
+	storeQuerier, ok := bApp.CommitMultiStore().(storetypes.Queryable)
+	if !ok {
+		panic(fmt.Errorf("multistore doesn't support queries"))
+	}
 
 	zcKeeper := zckeeper.NewKeeper(
 		appCodec,
@@ -582,7 +593,7 @@ func (ak *AppKeepers) InitKeepers(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	ak.EvidenceKeeper = *evidenceKeeper
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.CheckpointingKeeper, &ak.ZoneConciergeKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
+	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper, &ak.ZoneConciergeKeeper), wasmOpts...)
 	wasmOpts = append(owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(

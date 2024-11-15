@@ -82,7 +82,9 @@ func NewHelper(
 
 	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btclcKeeper, btccKeeper, iKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
-	btcStkConsumerMsgServer := bsckeeper.NewMsgServerImpl(*bscKeeper)
+
+	bscKeeper := k.BscKeeper.(bsckeeper.Keeper)
+	btcStkConsumerMsgServer := bsckeeper.NewMsgServerImpl(bscKeeper)
 
 	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, iKeeper, ckptKeeper)
 	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
@@ -102,7 +104,7 @@ func NewHelper(
 		BTCStakingKeeper: k,
 		MsgServer:        msgSrvr,
 
-		BTCStkConsumerKeeper:    bscKeeper,
+		BTCStkConsumerKeeper:    &bscKeeper,
 		BtcStkConsumerMsgServer: btcStkConsumerMsgServer,
 
 		FinalityKeeper: fk,
@@ -244,7 +246,7 @@ func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string)
 func (h *Helper) CreateDelegation(
 	r *rand.Rand,
 	delSK *btcec.PrivateKey,
-	fpPK *btcec.PublicKey,
+	fpPKs []*btcec.PublicKey,
 	changeAddress string,
 	stakingValue int64,
 	stakingTime uint16,
@@ -386,13 +388,13 @@ func (h *Helper) CreateDelegation(
 		return "", nil, nil, nil, nil, nil, err
 	}
 
-	stakingMsgTx, err := bbn.NewBTCTxFromBytes(msgCreateBTCDel.StakingTx.Transaction)
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(msgCreateBTCDel.StakingTx)
 	if err != nil {
-		return "", nil, nil, nil, nil, err
+		return "", nil, nil, nil, nil, nil, err
 	}
 	btcDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingMsgTx.TxHash().String())
 	if err != nil {
-		return "", nil, nil, nil, nil, err
+		return "", nil, nil, nil, nil, nil, err
 	}
 
 	// ensure the delegation is still pending

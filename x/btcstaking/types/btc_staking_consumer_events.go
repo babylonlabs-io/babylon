@@ -35,8 +35,8 @@ func CreateActiveBTCDelegationEvent(activeDel *BTCDelegation) (*BTCStakingConsum
 		return nil, fmt.Errorf("failed to marshal DelegatorSig: %w", err)
 	}
 
-	if activeDel.BtcUndelegation.DelegatorUnbondingSig != nil {
-		return nil, fmt.Errorf("unexpected DelegatorUnbondingSig in active delegation")
+	if activeDel.BtcUndelegation.DelegatorUnbondingInfo != nil {
+		return nil, fmt.Errorf("unexpected DelegatorUnbondingInfo in active delegation")
 	}
 
 	unbondingSlashingTxBytes, err := activeDel.BtcUndelegation.SlashingTx.Marshal()
@@ -79,8 +79,8 @@ func CreateActiveBTCDelegationEvent(activeDel *BTCDelegation) (*BTCStakingConsum
 }
 
 func CreateUnbondedBTCDelegationEvent(unbondedDel *BTCDelegation) (*BTCStakingConsumerEvent, error) {
-	if unbondedDel.BtcUndelegation.DelegatorUnbondingSig == nil {
-		return nil, fmt.Errorf("missing DelegatorUnbondingSig in unbonded delegation")
+	if unbondedDel.BtcUndelegation.DelegatorUnbondingInfo == nil {
+		return nil, fmt.Errorf("missing DelegatorUnbondingInfo in unbonded delegation")
 	}
 
 	unbondingTxSigBytes, err := unbondedDel.BtcUndelegation.DelegatorUnbondingSig.Marshal()

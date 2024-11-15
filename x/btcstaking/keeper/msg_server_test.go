@@ -386,7 +386,7 @@ func FuzzAddBTCDelegationInclusionProof(f *testing.F) {
 		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 			r,
 			delSK,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,

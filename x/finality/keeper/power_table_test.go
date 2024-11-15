@@ -210,7 +210,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 				stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 					r,
 					delSK,
-					fp.BtcPk.MustToBTCPK(),
+					[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
 					changeAddress.EncodeAddress(),
 					int64(stakingValue),
 					1000,
@@ -281,7 +281,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 				r,
 				delSK,
-				[]*btcec.PublicKey{fps[i].BtcPk.MustToBTCPK()},
+				[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
 				changeAddress.EncodeAddress(),
 				int64(stakingValue),
 				1000,
@@ -387,7 +387,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		for i := uint64(0); i < numFps; i++ {
 			// generate finality provider
 			// generate and insert new finality provider
-			fpSK, fpPK, fp := h.CreateFinalityProvider(r)
+			fpSK, _, fp := h.CreateFinalityProvider(r)
 			h.CommitPubRandList(r, fpSK, fp, 1, 100, true)
 
 			// create BTC delegation and add covenant signatures to activate it
@@ -397,7 +397,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 				r,
 				delSK,
-				[]*btcec.PublicKey{fps[i].BtcPk.MustToBTCPK()},
+				[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
 				changeAddress.EncodeAddress(),
 				int64(stakingValue),
 				1000,
@@ -453,7 +453,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 				r,
 				delSK,
-				[]*btcec.PublicKey{fps[i].BtcPk.MustToBTCPK()},
+				[]*btcec.PublicKey{fpBTCPK.MustToBTCPK()},
 				changeAddress.EncodeAddress(),
 				int64(stakingValue),
 				1000,
@@ -487,7 +487,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 				r,
 				delSK,
-				[]*btcec.PublicKey{fps[i].BtcPk.MustToBTCPK()},
+				[]*btcec.PublicKey{fpPK},
 				changeAddress.EncodeAddress(),
 				int64(stakingValue),
 				1000,

@@ -21,7 +21,7 @@ type (
 
 		btclcKeeper types.BTCLightClientKeeper
 		btccKeeper  types.BtcCheckpointKeeper
-		bscKeeper   types.BTCStkConsumerKeeper
+		BscKeeper   types.BTCStkConsumerKeeper
 		iKeeper     types.IncentiveKeeper
 
 		btcNet *chaincfg.Params
@@ -49,7 +49,7 @@ func NewKeeper(
 
 		btclcKeeper: btclcKeeper,
 		btccKeeper:  btccKeeper,
-		bscKeeper:   bscKeeper,
+		BscKeeper:   bscKeeper,
 		iKeeper:     iKeeper,
 
 		btcNet:    btcNet,

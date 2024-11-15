@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"testing"
 
+	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
@@ -23,7 +24,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, nil)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -35,6 +36,10 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 
 		// generate and insert new Babylon finality provider
 		_, fpPK, _ := h.CreateFinalityProvider(r)
+
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+
 		/*
 			ensure that registering a consumer finality provider with non-existing
 			consumer ID will fail
@@ -61,12 +66,16 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		_, randomFPPK, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		_, _, _, _, _, err = h.CreateDelegation(
+		_, _, _, _, _, _, err = h.CreateDelegation(
 			r,
+			delSK,
 			[]*btcec.PublicKey{fpPK, randomFPPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
+			0,
+			0,
+			false,
 		)
 		h.Error(err)
 		require.True(t, errors.Is(err, types.ErrFpNotFound))
@@ -74,12 +83,16 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		/*
 			ensure BTC delegation request will fail if no PK corresponds to a Babylon fp
 		*/
-		_, _, _, _, _, err = h.CreateDelegation(
+		_, _, _, _, _, _, err = h.CreateDelegation(
 			r,
+			delSK,
 			[]*btcec.PublicKey{czFPPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
+			0,
+			0,
+			false,
 		)
 		h.Error(err)
 		require.True(t, errors.Is(err, types.ErrNoBabylonFPRestaked), err)
@@ -87,12 +100,16 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		/*
 			happy case -- restaking to a Babylon fp and a consumer fp
 		*/
-		_, _, _, msgBTCDel, actualDel, err := h.CreateDelegation(
+		_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegation(
 			r,
+			delSK,
 			[]*btcec.PublicKey{fpPK, czFPPK},
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
+			0,
+			0,
+			false,
 		)
 		h.NoError(err)
 
@@ -119,7 +136,7 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper, nil)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
 		h.GenAndApplyParams(r)
@@ -142,12 +159,18 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 		expectedBtcDelsMap := make(map[string]*types.BTCDelegation)
 		stakingValue := int64(2 * 10e8)
 		for j := uint64(0); j < numBTCDels; j++ {
-			_, _, _, _, btcDel, err := h.CreateDelegation(
+			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			h.NoError(err)
+			_, _, btcDel, _, _, _, err := h.CreateDelegation(
 				r,
+				delSK,
 				[]*btcec.PublicKey{fpPK, czFPPK},
 				changeAddress.EncodeAddress(),
 				stakingValue,
 				1000,
+				0,
+				0,
+				false,
 			)
 			h.NoError(err)
 			expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel

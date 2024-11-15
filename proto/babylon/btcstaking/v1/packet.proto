@@ -67,10 +67,10 @@ message ActiveBTCDelegation {
   repeated string fp_btc_pk_list = 2;
   // start_height is the start BTC height of the BTC delegation
   // it is the start BTC height of the timelock
-  uint64 start_height = 3;
+  uint32 start_height = 3;
   // end_height is the end height of the BTC delegation
   // it is the end BTC height of the timelock - w
-  uint64 end_height = 4;
+  uint32 end_height = 4;
   // total_sat is the total amount of BTC stakes in this delegation
   // quantified in satoshi
   uint64 total_sat = 5;

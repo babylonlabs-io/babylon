@@ -11,6 +11,8 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 )
 
 type Configurer interface {
@@ -100,6 +102,16 @@ var (
 			SnapshotKeepRecent: 2,
 			IsValidator:        false,
 		},
+	}
+	ibcConfigChainA = &ibctesting.ChannelConfig{
+		PortID:  zctypes.PortID,
+		Order:   zctypes.Ordering,
+		Version: zctypes.Version,
+	}
+	ibcConfigChainB = &ibctesting.ChannelConfig{
+		PortID:  zctypes.PortID, // Will be replaced by the contract address in Phase 2 tests
+		Order:   zctypes.Ordering,
+		Version: zctypes.Version,
 	}
 )
 

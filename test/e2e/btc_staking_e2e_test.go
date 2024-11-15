@@ -18,8 +18,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/babylonlabs-io/babylon/crypto/eots"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
@@ -30,12 +28,7 @@ import (
 	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
 )
 
 type BTCStakingTestSuite struct {
@@ -114,13 +107,13 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	s.NoError(err)
 
 	// submit the message for creating BTC delegation
-	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(delBTCPK)}
+	btcPK := bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey())
 	nonValidatorNode.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey()),
+		*btcPK,
 		pop,
 		stakingTx,
 		inclusionProof,
-		s.cacheFP.BtcPk,
+		[]*bbn.BIP340PubKey{s.cacheFP.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(s.stakingValue),
 		testStakingInfo.SlashingTx,
@@ -541,13 +534,13 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	s.NoError(err)
 
 	// submit the message for only generate the Tx to create BTC delegation
-	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(delBTCPK)}
+	btcPK := bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey())
 	jsonTx := nonValidatorNode.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey()),
+		*btcPK,
 		pop,
 		stakingTx,
 		inclusionProof,
-		s.cacheFP.BtcPk,
+		[]*bbn.BIP340PubKey{s.cacheFP.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(s.stakingValue),
 		testStakingInfo.SlashingTx,
@@ -622,13 +615,13 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 	s.True(stakerBalances.IsZero())
 
 	// submit the message to create BTC delegation
-	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(delBTCPK)}
+	btcPK := bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey())
 	nonValidatorNode.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey()),
+		*btcPK,
 		pop,
 		stakingTx,
 		inclusionProof,
-		s.cacheFP.BtcPk,
+		[]*bbn.BIP340PubKey{s.cacheFP.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(s.stakingValue),
 		testStakingInfo.SlashingTx,
@@ -757,13 +750,13 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	// s.Require().Contains(output, feegrant.ErrFeeLimitExceeded.Error())
 
 	// submit the message to create BTC delegation using the fee grant at the max of spend limit
-	btcPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(delBTCPK)}
+	btcPK := bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey())
 	node.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey()),
+		*btcPK,
 		pop,
 		stakingTx,
 		inclusionProof,
-		s.cacheFP.BtcPk,
+		[]*bbn.BIP340PubKey{s.cacheFP.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(s.stakingValue),
 		testStakingInfo.SlashingTx,
@@ -912,7 +905,7 @@ func CreateNodeFP(
 	nodeAddr, err := sdk.AccAddressFromBech32(node.PublicAddress)
 	require.NoError(t, err)
 
-	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpSk, nodeAddr)
+	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, nodeAddr, "")
 	require.NoError(t, err)
 
 	// use a higher commission to ensure the reward is more than tx fee of a finality sig
