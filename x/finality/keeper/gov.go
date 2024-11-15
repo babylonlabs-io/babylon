@@ -6,7 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	types2 "github.com/babylonlabs-io/babylon/types"
+	bbntypes "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -15,7 +15,7 @@ import (
 //  2. jail the finality providers from the list and adjust the voting power cache from the
 //     halting height to the current height
 //  3. tally blocks to ensure finality is resumed
-func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPks []types2.BIP340PubKey, haltingHeight uint32) error {
+func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPks []bbntypes.BIP340PubKey, haltingHeight uint32) error {
 	// a valid proposal should be
 	// 1. the halting height along with some parameterized future heights should be indeed non-finalized
 	// 2. all the fps from the proposal should have missed the vote for the halting height
