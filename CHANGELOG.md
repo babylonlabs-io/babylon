@@ -42,6 +42,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#270](https://github.com/babylonlabs-io/babylon/pull/270) Validate there is only
 one finality provider key in the staking request
+- [#270](https://github.com/babylonlabs-io/babylon/pull/277) Panic due to possible
+nil params response
 
 ## v0.16.1
 
