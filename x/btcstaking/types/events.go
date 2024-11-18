@@ -88,18 +88,15 @@ func NewInclusionProofEvent(
 }
 
 func NewBtcDelCreationEvent(
-	stakingTxHash string,
 	btcDel *BTCDelegation,
 ) *EventBTCDelegationCreated {
 	return &EventBTCDelegationCreated{
-		StakingTxHash:             stakingTxHash,
-		StakingOutputPkScript:     hex.EncodeToString(btcDel.MustGetStakingTx().TxOut[btcDel.StakingOutputIdx].PkScript),
+		StakingTxHex:              hex.EncodeToString(btcDel.StakingTx),
 		StakingOutputIndex:        strconv.FormatUint(uint64(btcDel.StakingOutputIdx), 10),
 		ParamsVersion:             strconv.FormatUint(uint64(btcDel.ParamsVersion), 10),
 		FinalityProviderBtcPksHex: btcDel.FinalityProviderKeys(),
 		StakerBtcPkHex:            btcDel.BtcPk.MarshalHex(),
 		StakingTime:               strconv.FormatUint(uint64(btcDel.StakingTime), 10),
-		StakingAmount:             strconv.FormatUint(btcDel.TotalSat, 10),
 		UnbondingTime:             strconv.FormatUint(uint64(btcDel.UnbondingTime), 10),
 		UnbondingTx:               hex.EncodeToString(btcDel.BtcUndelegation.UnbondingTx),
 		NewState:                  BTCDelegationStatus_PENDING.String(),
