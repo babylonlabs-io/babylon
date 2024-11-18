@@ -62,6 +62,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 					0,
 					0,
 					true,
+					false,
 				)
 				h.NoError(err)
 				h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
@@ -217,6 +218,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 					0,
 					0,
 					true,
+					false,
 				)
 				h.NoError(err)
 				h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
@@ -288,6 +290,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 				0,
 				0,
 				true,
+				false,
 			)
 			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
@@ -404,6 +407,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 				0,
 				0,
 				true,
+				false,
 			)
 			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
@@ -460,6 +464,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 				0,
 				0,
 				true,
+				false,
 			)
 			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
@@ -494,6 +499,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 				0,
 				0,
 				true,
+				false,
 			)
 			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)

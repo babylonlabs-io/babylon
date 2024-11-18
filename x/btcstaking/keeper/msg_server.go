@@ -132,11 +132,20 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 	return &types.MsgEditFinalityProviderResponse{}, nil
 }
 
+// isAllowListEnabled checks if the allow list is enabled at the given height
+// allow list is enabled if AllowListExpirationHeight is larger than 0,
+// and current block height is less than AllowListExpirationHeight
+func (ms msgServer) isAllowListEnabled(ctx sdk.Context, p *types.Params) bool {
+	return p.AllowListExpirationHeight > 0 && uint64(ctx.BlockHeight()) < p.AllowListExpirationHeight
+}
+
 // CreateBTCDelegation creates a BTC delegation
 func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCreateBTCDelegation) (*types.MsgCreateBTCDelegationResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateBTCDelegation)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	vp := ms.GetParamsWithVersion(ctx)
 
 	// 1. Parse the message into better domain format
 	parsedMsg, err := types.ParseCreateDelegationMessage(req)
@@ -176,9 +185,15 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, err
 	}
 
-	// 5. Validate parsed message against parameters
-	vp := ms.GetParamsWithVersion(ctx)
+	// 5. if allow list is enabled we need to check whether staking transactions hash
+	// is in the allow list
+	if ms.isAllowListEnabled(ctx, &vp.Params) {
+		if !ms.IsStakingTransactionAllowed(ctx, &stakingTxHash) {
+			return nil, types.ErrInvalidStakingTx.Wrapf("staking tx hash: %s, is not in the allow list", stakingTxHash.String())
+		}
+	}
 
+	// 6. Validate parsed message against parameters
 	btccParams := ms.btccKeeper.GetParams(ctx)
 
 	paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, &vp.Params, &btccParams, ms.btcNet)
@@ -187,7 +202,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, err
 	}
 
-	// 6. If the delegation contains the inclusion proof, we need to verify the proof
+	// 7. If the delegation contains the inclusion proof, we need to verify the proof
 	// and set start height and end height
 	var startHeight, endHeight uint32
 	if parsedMsg.StakingTxProofOfInclusion != nil {
@@ -210,7 +225,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		ctx.GasMeter().ConsumeGas(vp.Params.DelegationCreationBaseGasFee, "delegation creation fee")
 	}
 
-	// 7.all good, construct BTCDelegation and insert BTC delegation
+	// 8.all good, construct BTCDelegation and insert BTC delegation
 	// NOTE: the BTC delegation does not have voting power yet. It will
 	// have voting power only when it receives a covenant signatures
 	newBTCDel := &types.BTCDelegation{

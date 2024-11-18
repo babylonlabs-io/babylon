@@ -62,6 +62,7 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 					0,
 					0,
 					false,
+					false,
 				)
 				h.NoError(err)
 				event := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
@@ -119,6 +120,7 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 			0,
 			0,
 			true,
+			false,
 		)
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
@@ -205,6 +207,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 			0,
 			0,
 			true,
+			false,
 		)
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
@@ -274,6 +277,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 			0,
 			0,
 			true,
+			false,
 		)
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
@@ -335,6 +339,7 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 			0,
 			0,
 			true,
+			false,
 		)
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
@@ -435,6 +440,7 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 			1000,
 			0,
 			0,
+			false,
 			false,
 		)
 		h.NoError(err)
@@ -554,6 +560,7 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 			0,
 			0,
 			true,
+			false,
 		)
 		h.NoError(err)
 
@@ -680,6 +687,7 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 		1000,
 		0,
 		0,
+		false,
 		false,
 	)
 	h.NoError(err)

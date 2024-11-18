@@ -65,6 +65,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+
+### Bug fixes
+
+- [#270](https://github.com/babylonlabs-io/babylon/pull/270) Validate there is only
+one finality provider key in the staking request
+
+### API Breaking
+
+- [#273](https://github.com/babylonlabs-io/babylon/pull/273) Add full staking tx to BTC delegation creation event
+## v0.16.0
+
 ### Improvements
 
 * [#258](https://github.com/babylonlabs-io/babylon/pull/258) fix go releaser
@@ -90,6 +101,7 @@ in checkpointing module
 implementation
 * [#254](https://github.com/babylonlabs-io/babylon/pull/254) Avoid constant
 bech-32 decoding in power table
+* [#265](https://github.com/babylonlabs-io/babylon/pull/265) Add allow list for staking txs
 
 ## v0.15.0
 

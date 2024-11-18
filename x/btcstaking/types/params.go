@@ -77,6 +77,9 @@ func DefaultParams() Params {
 		MinUnbondingTimeBlocks:       0,
 		UnbondingFeeSat:              1000,
 		DelegationCreationBaseGasFee: defaultDelegationCreationBaseGasFee,
+		// The default allow list expiration height is 0, which effectively disables the allow list.
+		// Allow list can only be enabled by upgrade
+		AllowListExpirationHeight: 0,
 	}
 }
 

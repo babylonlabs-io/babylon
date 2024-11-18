@@ -810,33 +810,27 @@ func (m *EventFinalityProviderStatusChange) GetNewState() string {
 // EventBTCDelegationCreated is the event emitted when a BTC delegation is created
 // on the Babylon chain
 type EventBTCDelegationCreated struct {
-	// staking_tx_hash is the hash of the staking tx.
-	// It uniquely identifies a BTC delegation
-	StakingTxHash string `protobuf:"bytes,1,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
-	// staking_output_pk_script is the hex encoded PK script of the staking output
-	StakingOutputPkScript string `protobuf:"bytes,2,opt,name=staking_output_pk_script,json=stakingOutputPkScript,proto3" json:"staking_output_pk_script,omitempty"`
+	// staking_tx_hex is the hex encoded staking tx
+	StakingTxHex string `protobuf:"bytes,1,opt,name=staking_tx_hex,json=stakingTxHex,proto3" json:"staking_tx_hex,omitempty"`
 	// staking_output_index is the index of the staking output in the staking tx
-	StakingOutputIndex string `protobuf:"bytes,3,opt,name=staking_output_index,json=stakingOutputIndex,proto3" json:"staking_output_index,omitempty"`
+	StakingOutputIndex string `protobuf:"bytes,2,opt,name=staking_output_index,json=stakingOutputIndex,proto3" json:"staking_output_index,omitempty"`
 	// version of the params used to validate the delegation
-	ParamsVersion string `protobuf:"bytes,4,opt,name=params_version,json=paramsVersion,proto3" json:"params_version,omitempty"`
+	ParamsVersion string `protobuf:"bytes,3,opt,name=params_version,json=paramsVersion,proto3" json:"params_version,omitempty"`
 	// finality_provider_btc_pks_hex is the list of hex str of Bitcoin secp256k1 PK of
 	// the finality providers that this BTC delegation delegates to
 	// the PK follows encoding in BIP-340 spec
-	FinalityProviderBtcPksHex []string `protobuf:"bytes,5,rep,name=finality_provider_btc_pks_hex,json=finalityProviderBtcPksHex,proto3" json:"finality_provider_btc_pks_hex,omitempty"`
+	FinalityProviderBtcPksHex []string `protobuf:"bytes,4,rep,name=finality_provider_btc_pks_hex,json=finalityProviderBtcPksHex,proto3" json:"finality_provider_btc_pks_hex,omitempty"`
 	// staker_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the staker that
 	// creates this BTC delegation the PK follows encoding in BIP-340 spec
-	StakerBtcPkHex string `protobuf:"bytes,6,opt,name=staker_btc_pk_hex,json=stakerBtcPkHex,proto3" json:"staker_btc_pk_hex,omitempty"`
+	StakerBtcPkHex string `protobuf:"bytes,5,opt,name=staker_btc_pk_hex,json=stakerBtcPkHex,proto3" json:"staker_btc_pk_hex,omitempty"`
 	// staking_time is the timelock of the staking tx specified in the BTC script
-	StakingTime string `protobuf:"bytes,7,opt,name=staking_time,json=stakingTime,proto3" json:"staking_time,omitempty"`
-	// staking_amount is the total amount of BTC stake in this delegation
-	// quantified in satoshi
-	StakingAmount string `protobuf:"bytes,8,opt,name=staking_amount,json=stakingAmount,proto3" json:"staking_amount,omitempty"`
+	StakingTime string `protobuf:"bytes,6,opt,name=staking_time,json=stakingTime,proto3" json:"staking_time,omitempty"`
 	// unbonding_time is the time is timelock on unbonding tx chosen by the staker
-	UnbondingTime string `protobuf:"bytes,9,opt,name=unbonding_time,json=unbondingTime,proto3" json:"unbonding_time,omitempty"`
+	UnbondingTime string `protobuf:"bytes,7,opt,name=unbonding_time,json=unbondingTime,proto3" json:"unbonding_time,omitempty"`
 	// unbonding_tx is hex encoded bytes of the unsigned unbonding tx
-	UnbondingTx string `protobuf:"bytes,10,opt,name=unbonding_tx,json=unbondingTx,proto3" json:"unbonding_tx,omitempty"`
+	UnbondingTx string `protobuf:"bytes,8,opt,name=unbonding_tx,json=unbondingTx,proto3" json:"unbonding_tx,omitempty"`
 	// new_state of the BTC delegation
-	NewState string `protobuf:"bytes,11,opt,name=new_state,json=newState,proto3" json:"new_state,omitempty"`
+	NewState string `protobuf:"bytes,9,opt,name=new_state,json=newState,proto3" json:"new_state,omitempty"`
 }
 
 func (m *EventBTCDelegationCreated) Reset()         { *m = EventBTCDelegationCreated{} }
@@ -872,16 +866,9 @@ func (m *EventBTCDelegationCreated) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_EventBTCDelegationCreated proto.InternalMessageInfo
 
-func (m *EventBTCDelegationCreated) GetStakingTxHash() string {
+func (m *EventBTCDelegationCreated) GetStakingTxHex() string {
 	if m != nil {
-		return m.StakingTxHash
-	}
-	return ""
-}
-
-func (m *EventBTCDelegationCreated) GetStakingOutputPkScript() string {
-	if m != nil {
-		return m.StakingOutputPkScript
+		return m.StakingTxHex
 	}
 	return ""
 }
@@ -917,13 +904,6 @@ func (m *EventBTCDelegationCreated) GetStakerBtcPkHex() string {
 func (m *EventBTCDelegationCreated) GetStakingTime() string {
 	if m != nil {
 		return m.StakingTime
-	}
-	return ""
-}
-
-func (m *EventBTCDelegationCreated) GetStakingAmount() string {
-	if m != nil {
-		return m.StakingAmount
 	}
 	return ""
 }
@@ -2056,42 +2036,35 @@ func (m *EventBTCDelegationCreated) MarshalToSizedBuffer(dAtA []byte) (int, erro
 		copy(dAtA[i:], m.NewState)
 		i = encodeVarintEvents(dAtA, i, uint64(len(m.NewState)))
 		i--
-		dAtA[i] = 0x5a
+		dAtA[i] = 0x4a
 	}
 	if len(m.UnbondingTx) > 0 {
 		i -= len(m.UnbondingTx)
 		copy(dAtA[i:], m.UnbondingTx)
 		i = encodeVarintEvents(dAtA, i, uint64(len(m.UnbondingTx)))
 		i--
-		dAtA[i] = 0x52
+		dAtA[i] = 0x42
 	}
 	if len(m.UnbondingTime) > 0 {
 		i -= len(m.UnbondingTime)
 		copy(dAtA[i:], m.UnbondingTime)
 		i = encodeVarintEvents(dAtA, i, uint64(len(m.UnbondingTime)))
 		i--
-		dAtA[i] = 0x4a
-	}
-	if len(m.StakingAmount) > 0 {
-		i -= len(m.StakingAmount)
-		copy(dAtA[i:], m.StakingAmount)
-		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakingAmount)))
-		i--
-		dAtA[i] = 0x42
+		dAtA[i] = 0x3a
 	}
 	if len(m.StakingTime) > 0 {
 		i -= len(m.StakingTime)
 		copy(dAtA[i:], m.StakingTime)
 		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakingTime)))
 		i--
-		dAtA[i] = 0x3a
+		dAtA[i] = 0x32
 	}
 	if len(m.StakerBtcPkHex) > 0 {
 		i -= len(m.StakerBtcPkHex)
 		copy(dAtA[i:], m.StakerBtcPkHex)
 		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakerBtcPkHex)))
 		i--
-		dAtA[i] = 0x32
+		dAtA[i] = 0x2a
 	}
 	if len(m.FinalityProviderBtcPksHex) > 0 {
 		for iNdEx := len(m.FinalityProviderBtcPksHex) - 1; iNdEx >= 0; iNdEx-- {
@@ -2099,7 +2072,7 @@ func (m *EventBTCDelegationCreated) MarshalToSizedBuffer(dAtA []byte) (int, erro
 			copy(dAtA[i:], m.FinalityProviderBtcPksHex[iNdEx])
 			i = encodeVarintEvents(dAtA, i, uint64(len(m.FinalityProviderBtcPksHex[iNdEx])))
 			i--
-			dAtA[i] = 0x2a
+			dAtA[i] = 0x22
 		}
 	}
 	if len(m.ParamsVersion) > 0 {
@@ -2107,26 +2080,19 @@ func (m *EventBTCDelegationCreated) MarshalToSizedBuffer(dAtA []byte) (int, erro
 		copy(dAtA[i:], m.ParamsVersion)
 		i = encodeVarintEvents(dAtA, i, uint64(len(m.ParamsVersion)))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x1a
 	}
 	if len(m.StakingOutputIndex) > 0 {
 		i -= len(m.StakingOutputIndex)
 		copy(dAtA[i:], m.StakingOutputIndex)
 		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakingOutputIndex)))
 		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.StakingOutputPkScript) > 0 {
-		i -= len(m.StakingOutputPkScript)
-		copy(dAtA[i:], m.StakingOutputPkScript)
-		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakingOutputPkScript)))
-		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.StakingTxHash) > 0 {
-		i -= len(m.StakingTxHash)
-		copy(dAtA[i:], m.StakingTxHash)
-		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakingTxHash)))
+	if len(m.StakingTxHex) > 0 {
+		i -= len(m.StakingTxHex)
+		copy(dAtA[i:], m.StakingTxHex)
+		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakingTxHex)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -2673,11 +2639,7 @@ func (m *EventBTCDelegationCreated) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.StakingTxHash)
-	if l > 0 {
-		n += 1 + l + sovEvents(uint64(l))
-	}
-	l = len(m.StakingOutputPkScript)
+	l = len(m.StakingTxHex)
 	if l > 0 {
 		n += 1 + l + sovEvents(uint64(l))
 	}
@@ -2700,10 +2662,6 @@ func (m *EventBTCDelegationCreated) Size() (n int) {
 		n += 1 + l + sovEvents(uint64(l))
 	}
 	l = len(m.StakingTime)
-	if l > 0 {
-		n += 1 + l + sovEvents(uint64(l))
-	}
-	l = len(m.StakingAmount)
 	if l > 0 {
 		n += 1 + l + sovEvents(uint64(l))
 	}
@@ -4413,7 +4371,7 @@ func (m *EventBTCDelegationCreated) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxHash", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxHex", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4441,41 +4399,9 @@ func (m *EventBTCDelegationCreated) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.StakingTxHash = string(dAtA[iNdEx:postIndex])
+			m.StakingTxHex = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field StakingOutputPkScript", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvents
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.StakingOutputPkScript = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field StakingOutputIndex", wireType)
 			}
@@ -4507,7 +4433,7 @@ func (m *EventBTCDelegationCreated) Unmarshal(dAtA []byte) error {
 			}
 			m.StakingOutputIndex = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ParamsVersion", wireType)
 			}
@@ -4539,7 +4465,7 @@ func (m *EventBTCDelegationCreated) Unmarshal(dAtA []byte) error {
 			}
 			m.ParamsVersion = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field FinalityProviderBtcPksHex", wireType)
 			}
@@ -4571,7 +4497,7 @@ func (m *EventBTCDelegationCreated) Unmarshal(dAtA []byte) error {
 			}
 			m.FinalityProviderBtcPksHex = append(m.FinalityProviderBtcPksHex, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 6:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field StakerBtcPkHex", wireType)
 			}
@@ -4603,7 +4529,7 @@ func (m *EventBTCDelegationCreated) Unmarshal(dAtA []byte) error {
 			}
 			m.StakerBtcPkHex = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 7:
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field StakingTime", wireType)
 			}
@@ -4635,39 +4561,7 @@ func (m *EventBTCDelegationCreated) Unmarshal(dAtA []byte) error {
 			}
 			m.StakingTime = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 8:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field StakingAmount", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvents
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.StakingAmount = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 9:
+		case 7:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingTime", wireType)
 			}
@@ -4699,7 +4593,7 @@ func (m *EventBTCDelegationCreated) Unmarshal(dAtA []byte) error {
 			}
 			m.UnbondingTime = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 10:
+		case 8:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingTx", wireType)
 			}
@@ -4731,7 +4625,7 @@ func (m *EventBTCDelegationCreated) Unmarshal(dAtA []byte) error {
 			}
 			m.UnbondingTx = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 11:
+		case 9:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field NewState", wireType)
 			}
