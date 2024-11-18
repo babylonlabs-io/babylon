@@ -421,6 +421,29 @@ message MsgUpdateParams {
 }
 ```
 
+### MsgResumeFinalityProposal
+
+The `MsgResumeFinalityProposal` message is used for resuming finality in case
+of finality halting. It can only be executed via a governance proposal.
+
+```protobuf
+// MsgResumeFinalityProposal is a governance proposal to resume finality from halting
+message MsgResumeFinalityProposal {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // authority is the address of the governance account.
+  // just FYI: cosmos.AddressString marks that this field should use type alias
+  // for AddressString instead of string, but the functionality is not yet implemented
+  // in cosmos-proto
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // fp_pks_hex is a list of finality provider public keys to jail
+  // the public key follows encoding in BIP-340 spec
+  repeated string fp_pks_hex = 2;
+  // halting_height is the height where the finality halting begins
+  uint32 halting_height = 3;
+}
+```
+
 ## BeginBlocker
 
 Upon `EndBlocker`, the Finality module of each Babylon node will [execute the

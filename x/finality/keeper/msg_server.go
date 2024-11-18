@@ -52,7 +52,7 @@ func (ms msgServer) ResumeFinalityProposal(goCtx context.Context, req *types.Msg
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if err := ms.HandleResumeFinalityProposal(ctx, req.FpPks, req.HaltingHeight); err != nil {
+	if err := ms.HandleResumeFinalityProposal(ctx, req.FpPksHex, req.HaltingHeight); err != nil {
 		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("failed to handle resume finality proposal: %v", err)
 	}
 

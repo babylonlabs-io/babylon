@@ -22,6 +22,4 @@ var (
 	ErrVotingPowerTableNotUpdated     = errorsmod.Register(ModuleName, 1113, "voting power table has not been updated")
 	ErrBTCStakingNotActivated         = errorsmod.Register(ModuleName, 1114, "the BTC staking protocol is not activated yet")
 	ErrFinalityNotActivated           = errorsmod.Register(ModuleName, 1115, "finality is not active yet")
-	ErrEmptyProposalFinalityProviders = errorsmod.Register(ModuleName, 1116, "the finality provider list in the ResumeFinality is empty")
-	ErrEmptyProposalHaltingHeight     = errorsmod.Register(ModuleName, 1117, "the halting height in the ResumeFinality is empty")
 )

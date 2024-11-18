@@ -115,9 +115,9 @@ message MsgResumeFinalityProposal {
     // for AddressString instead of string, but the functionality is not yet implemented
     // in cosmos-proto
     string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-    // fp_pks is a list of finality provider public keys to jail
+    // fp_pks_hex is a list of finality provider public keys to jail
     // the public key follows encoding in BIP-340 spec
-    repeated bytes fp_pks = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+    repeated string fp_pks_hex = 2;
     // halting_height is the height where the finality halting begins
     uint32 halting_height = 3;
 }

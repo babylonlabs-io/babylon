@@ -68,7 +68,7 @@ func TestHandleResumeFinalityProposal(t *testing.T) {
 
 	// create a resume finality proposal to jail the last fp
 	bsKeeper.EXPECT().JailFinalityProvider(ctx, gomock.Any()).Return(nil).AnyTimes()
-	err := fKeeper.HandleResumeFinalityProposal(ctx, activeFpPks[1:], uint32(haltingHeight))
+	err := fKeeper.HandleResumeFinalityProposal(ctx, publicKeysToHex(activeFpPks[1:]), uint32(haltingHeight))
 	require.NoError(t, err)
 
 	for i := haltingHeight; i < currentHeight; i++ {
@@ -79,7 +79,7 @@ func TestHandleResumeFinalityProposal(t *testing.T) {
 }
 
 func generateNFpPks(t *testing.T, r *rand.Rand, n int) []bbntypes.BIP340PubKey {
-	fpPks := make([]bbntypes.BIP340PubKey, 0)
+	fpPks := make([]bbntypes.BIP340PubKey, 0, n)
 	for i := 0; i < n; i++ {
 		fpPk, err := datagen.GenRandomBIP340PubKey(r)
 		require.NoError(t, err)
@@ -87,6 +87,14 @@ func generateNFpPks(t *testing.T, r *rand.Rand, n int) []bbntypes.BIP340PubKey {
 	}
 
 	return fpPks
+}
+
+func publicKeysToHex(pks []bbntypes.BIP340PubKey) []string {
+	hexPks := make([]string, len(pks))
+	for i, pk := range pks {
+		hexPks[i] = pk.MarshalHex()
+	}
+	return hexPks
 }
 
 func setupActiveFps(t *testing.T, fpPks []bbntypes.BIP340PubKey, height uint64, fKeeper *keeper.Keeper, ctx sdk.Context) {
