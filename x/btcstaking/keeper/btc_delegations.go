@@ -53,7 +53,6 @@ func (k Keeper) AddBTCDelegation(
 	k.setBTCDelegation(ctx, btcDel)
 
 	if err := ctx.EventManager().EmitTypedEvents(types.NewBtcDelCreationEvent(
-		stakingTxHash.String(),
 		btcDel,
 	)); err != nil {
 		panic(fmt.Errorf("failed to emit events for the new pending BTC delegation: %w", err))
