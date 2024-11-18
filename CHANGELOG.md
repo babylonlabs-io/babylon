@@ -43,9 +43,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#270](https://github.com/babylonlabs-io/babylon/pull/270) Validate there is only
 one finality provider key in the staking request
 
+## v0.16.1
+
 ### API Breaking
 
 - [#273](https://github.com/babylonlabs-io/babylon/pull/273) Add full staking tx to BTC delegation creation event
+
 ## v0.16.0
 
 ### Improvements
