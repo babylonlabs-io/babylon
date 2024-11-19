@@ -3,9 +3,10 @@ package query
 import (
 	"context"
 
-	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
+
+	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 // QueryFinality queries the Finality module of the Babylon node according to the given function
@@ -65,7 +66,7 @@ func (c *QueryClient) ActivatedHeight() (*finalitytypes.QueryActivatedHeightResp
 }
 
 // FinalityParams queries the finality module parameters
-func (c *QueryClient) FinalityParams() (*finalitytypes.Params, error) {
+func (c *QueryClient) FinalityParams() (*finalitytypes.QueryParamsResponse, error) {
 	var resp *finalitytypes.QueryParamsResponse
 	err := c.QueryFinality(func(ctx context.Context, queryClient finalitytypes.QueryClient) error {
 		var err error
@@ -74,7 +75,7 @@ func (c *QueryClient) FinalityParams() (*finalitytypes.Params, error) {
 		return err
 	})
 
-	return &resp.Params, err
+	return resp, err
 }
 
 // VotesAtHeight queries the Finality module to get signature set at a given babylon block height
