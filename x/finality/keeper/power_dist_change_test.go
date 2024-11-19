@@ -441,7 +441,7 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 			stakingValue,
 			1000,
 			0,
-			uint16(stakingParams.MinUnbondingTimeBlocks),
+			0,
 			false,
 			false,
 		)
@@ -679,7 +679,7 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 		stakingValue,
 		1000,
 		0,
-		uint16(stakingParams.MinUnbondingTimeBlocks),
+		0,
 		false,
 		false,
 	)
