@@ -4,9 +4,10 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 )
 
 var _ types.MsgServer = msgServer{}
@@ -110,6 +111,10 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if req.Params.CheckpointFinalizationTimeout != ms.k.GetParams(ctx).CheckpointFinalizationTimeout {
+		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("the checkpoint finalization timeout cannot be changed")
+	}
+
 	if err := ms.k.SetParams(ctx, req.Params); err != nil {
 		return nil, err
 	}

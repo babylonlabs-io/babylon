@@ -7,8 +7,9 @@ import (
 
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
+
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 // cosmos-sdk does not have utils for uint32

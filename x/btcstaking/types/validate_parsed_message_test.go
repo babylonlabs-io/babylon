@@ -153,7 +153,7 @@ func createMsgDelegationForParams(
 	stakingValue := int64(randRange(r, int(p.MinStakingValueSat), int(p.MaxStakingValueSat)))
 
 	// always chose minimum unbonding time possible
-	unbondingTime := uint16(types.MinimumUnbondingTime(p, cp)) + 1
+	unbondingTime := p.MinUnbondingTimeBlocks
 
 	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
 		r,
@@ -167,7 +167,7 @@ func createMsgDelegationForParams(
 		stakingValue,
 		p.SlashingPkScript,
 		p.SlashingRate,
-		unbondingTime,
+		uint16(unbondingTime),
 	)
 
 	slashingSpendInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
@@ -205,7 +205,7 @@ func createMsgDelegationForParams(
 		fpPk,
 		stkTxHash,
 		stkOutputIdx,
-		unbondingTime,
+		uint16(unbondingTime),
 		unbondingValue,
 		p,
 	)
@@ -871,7 +871,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := rand.New(rand.NewSource(time.Now().Unix()))
 
-			msg, params, checkpointParams := tt.fn(r, t)
+			msg, params, _ := tt.fn(r, t)
 
 			parsed, err := types.ParseCreateDelegationMessage(msg)
 
@@ -885,7 +885,6 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			got, err := types.ValidateParsedMessageAgainstTheParams(
 				parsed,
 				params,
-				checkpointParams,
 				&chaincfg.MainNetParams,
 			)
 
@@ -895,9 +894,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, got)
-
-				minUnbondingTime := types.MinimumUnbondingTime(params, checkpointParams)
-				require.Equal(t, minUnbondingTime, got.MinUnbondingTime)
+				require.Equal(t, params.MinUnbondingTimeBlocks, got.MinUnbondingTime)
 			}
 
 		})

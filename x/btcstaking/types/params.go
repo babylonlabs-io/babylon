@@ -72,9 +72,8 @@ func DefaultParams() Params {
 		MinCommissionRate:    sdkmath.LegacyZeroDec(),
 		// The Default slashing rate is 0.1 i.e., 10% of the total staked BTC will be burned.
 		SlashingRate: sdkmath.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
-		// The default minimum unbonding time is 0, which effectively defaults to checkpoint
-		// finalization timeout.
-		MinUnbondingTimeBlocks:       0,
+		// min unbonding time should be always larger than the checkpoint finalization timeout
+		MinUnbondingTimeBlocks:       200,
 		UnbondingFeeSat:              1000,
 		DelegationCreationBaseGasFee: defaultDelegationCreationBaseGasFee,
 		// The default allow list expiration height is 0, which effectively disables the allow list.

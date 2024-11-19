@@ -690,14 +690,10 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	// set covenant PK to params
 	_, covenantPKs := h.GenAndApplyParams(r)
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
-	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
 
-	minUnbondingTime := types.MinimumUnbondingTime(
-		&bsParams,
-		&bcParams,
-	)
+	minUnbondingTime := bsParams.MinUnbondingTimeBlocks
 
-	slashingChangeLockTime := uint16(minUnbondingTime) + 1
+	slashingChangeLockTime := uint16(minUnbondingTime)
 
 	// We only generate a finality provider, but not insert it into KVStore. So later
 	// insertion of delegation should fail.
@@ -821,13 +817,6 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			err:                       nil,
 		},
 		{
-			name:                      "failed delegation when ubonding time in delegation is not larger than finalization time when min unbonding time is lower than finalization timeout",
-			unbondingTimeInDelegation: 100,
-			minUnbondingTime:          99,
-			finalizationTimeout:       100,
-			err:                       types.ErrInvalidUnbondingTx,
-		},
-		{
 			name:                      "successful delegation when ubonding time ubonding time in delegation is larger than min unbonding time when min unbonding time is larger than finalization timeout",
 			unbondingTimeInDelegation: 151,
 			minUnbondingTime:          150,
@@ -835,11 +824,11 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			err:                       nil,
 		},
 		{
-			name:                      "failed delegation when ubonding time in delegation is not larger than minUnbondingTime when min unbonding time is larger than finalization timeout",
+			name:                      "successful delegation when ubonding time in delegation is equal to minUnbondingTime when min unbonding time is larger than finalization timeout",
 			unbondingTimeInDelegation: 150,
 			minUnbondingTime:          150,
 			finalizationTimeout:       100,
-			err:                       types.ErrInvalidUnbondingTx,
+			err:                       nil,
 		},
 	}
 
@@ -1063,9 +1052,8 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		stakingParams := h.App.BTCStakingKeeper.GetParams(h.Ctx)
 		covQuorum := stakingParams.CovenantQuorum
 		maxFinalityProviders := int32(h.App.FinalityKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders)
-		btcckptParams := h.App.BtcCheckpointKeeper.GetParams(h.Ctx)
 
-		minUnbondingTime := types.MinimumUnbondingTime(&stakingParams, &btcckptParams)
+		minUnbondingTime := stakingParams.MinUnbondingTimeBlocks
 		// Number of finality providers from 10 to maxFinalityProviders + 10
 		numFinalityProviders := int(r.Int31n(maxFinalityProviders) + 10)
 

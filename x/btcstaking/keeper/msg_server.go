@@ -46,7 +46,16 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("invalid parameter: %v", err)
 	}
 
+	// ensure the min unbonding time is always larger than the checkpoint finalization timeout
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	ckptFinalizationTime := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+	minUnbondingTime := req.Params.MinUnbondingTimeBlocks
+	if minUnbondingTime <= ckptFinalizationTime {
+		return nil, govtypes.ErrInvalidProposalMsg.
+			Wrapf("the min unbonding time %d must be larger than the checkpoint finalization timeout %d",
+				minUnbondingTime, ckptFinalizationTime)
+	}
+
 	if err := ms.SetParams(ctx, req.Params); err != nil {
 		return nil, err
 	}
@@ -190,9 +199,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	// 6. Validate parsed message against parameters
-	btccParams := ms.btccKeeper.GetParams(ctx)
-
-	paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, &vp.Params, &btccParams, ms.btcNet)
+	paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, &vp.Params, ms.btcNet)
 
 	if err != nil {
 		return nil, err
@@ -200,6 +207,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	// 7. If the delegation contains the inclusion proof, we need to verify the proof
 	// and set start height and end height
+	btccParams := ms.btccKeeper.GetParams(ctx)
 	var startHeight, endHeight uint32
 	if parsedMsg.StakingTxProofOfInclusion != nil {
 		timeInfo, err := ms.VerifyInclusionProofAndGetHeight(
@@ -300,7 +308,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 
 	btccParams := ms.btccKeeper.GetParams(ctx)
 
-	minUnbondingTime := types.MinimumUnbondingTime(params, &btccParams)
+	minUnbondingTime := params.MinUnbondingTimeBlocks
 
 	timeInfo, err := ms.VerifyInclusionProofAndGetHeight(
 		ctx,
@@ -349,7 +357,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 		NewState:      types.BTCDelegationStatus_UNBONDED,
 	})
 
-	// NOTE: we should have verified that EndHeight > btcTip.Height + max(w, min_unbonding_time)
+	// NOTE: we should have verified that EndHeight > btcTip.Height + min_unbonding_time
 	ms.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-minUnbondingTime, unbondedEvent)
 
 	// at this point, the BTC delegation inclusion proof is verified and is not duplicated
