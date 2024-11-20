@@ -17,8 +17,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
-	appparams "github.com/babylonlabs-io/babylon/app/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 
 	"github.com/babylonlabs-io/babylon/crypto/eots"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
@@ -93,7 +94,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	params := nonValidatorNode.QueryBTCStakingParams()
 
 	// minimal required unbonding time
-	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+	unbondingTime := params.MinUnbondingTimeBlocks
 
 	// NOTE: we use the node's address for the BTC delegation
 	stakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
@@ -508,7 +509,7 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	params := nonValidatorNode.QueryBTCStakingParams()
 
 	// minimal required unbonding time
-	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+	unbondingTime := params.MinUnbondingTimeBlocks
 
 	// NOTE: we use the multisig address for the BTC delegation
 	multisigStakerAddr := sdk.MustAccAddressFromBech32(multisigAddr)
@@ -579,7 +580,7 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 	btcStkParams := nonValidatorNode.QueryBTCStakingParams()
 
 	// minimal required unbonding time
-	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+	unbondingTime := btcStkParams.MinUnbondingTimeBlocks
 
 	// NOTE: we use the grantee staker address for the BTC delegation PoP
 	pop, err := bstypes.NewPoPBTC(granteeStakerAddr, s.delBTCSK)
@@ -670,7 +671,7 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	btcStkParams := node.QueryBTCStakingParams()
 
 	// minimal required unbonding time
-	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+	unbondingTime := btcStkParams.MinUnbondingTimeBlocks
 
 	// NOTE: we use the grantee staker address for the BTC delegation PoP
 	pop, err := bstypes.NewPoPBTC(granteeStakerAddr, s.delBTCSK)
@@ -936,7 +937,7 @@ func (s *BTCStakingTestSuite) BTCStakingUnbondSlashInfo(
 ) {
 	covenantBTCPKs := CovenantBTCPKs(params)
 	// minimal required unbonding time
-	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+	unbondingTime := params.MinUnbondingTimeBlocks
 
 	testStakingInfo = datagen.GenBTCStakingSlashingInfo(
 		s.r,
@@ -950,7 +951,7 @@ func (s *BTCStakingTestSuite) BTCStakingUnbondSlashInfo(
 		s.stakingValue,
 		params.SlashingPkScript,
 		params.SlashingRate,
-		unbondingTime,
+		uint16(unbondingTime),
 	)
 
 	// submit staking tx to Bitcoin and get inclusion proof
@@ -985,7 +986,7 @@ func (s *BTCStakingTestSuite) BTCStakingUnbondSlashInfo(
 		unbondingValue,
 		params.SlashingPkScript,
 		params.SlashingRate,
-		unbondingTime,
+		uint16(unbondingTime),
 	)
 
 	stakingSlashingPathInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()

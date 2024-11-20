@@ -124,7 +124,8 @@ func (h *Helper) BeginBlocker() {
 }
 
 func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
-	return h.GenAndApplyCustomParams(r, 100, 0, 0)
+	// ensure that minUnbondingTime is larger than finalizationTimeout
+	return h.GenAndApplyCustomParams(r, 100, 200, 0)
 }
 
 func (h *Helper) SetCtxHeight(height uint64) {
@@ -228,7 +229,7 @@ func (h *Helper) CreateDelegation(
 	if unbondingValue == 0 {
 		unbondingValue = defaultUnbondingValue
 	}
-	defaultUnbondingTime := types.MinimumUnbondingTime(&bsParams, &bcParams) + 1
+	defaultUnbondingTime := bsParams.MinUnbondingTimeBlocks
 	if unbondingTime == 0 {
 		unbondingTime = uint16(defaultUnbondingTime)
 	}

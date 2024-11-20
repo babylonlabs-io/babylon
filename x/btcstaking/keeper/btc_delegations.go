@@ -79,7 +79,7 @@ func (k Keeper) AddBTCDelegation(
 			NewState:      types.BTCDelegationStatus_UNBONDED,
 		})
 
-		// NOTE: we should have verified that EndHeight > btcTip.Height + max(w, min_unbonding_time)
+		// NOTE: we should have verified that EndHeight > btcTip.Height + min_unbonding_time
 		k.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-minUnbondingTime, unbondedEvent)
 	}
 
