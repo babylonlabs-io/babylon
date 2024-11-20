@@ -141,6 +141,9 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 			)
 			btcTip := k.btclcKeeper.GetTipInfo(ctx)
 			k.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
+
+			// notify consumer chains about the active BTC delegation
+			k.notifyConsumersOnActiveBTCDel(ctx, btcDel)
 		} else {
 			quorumReachedEvent := types.NewCovenantQuorumReachedEvent(
 				btcDel,
@@ -151,25 +154,22 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 				panic(fmt.Errorf("failed to emit emit for the new verified BTC delegation: %w", err))
 			}
 		}
+	}
+}
 
-		// record event that the BTC delegation becomes active at this height
-		activeEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
-		btcTip := k.btclcKeeper.GetTipInfo(ctx)
-		k.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
-
-		// get consumer ids of only non-Babylon finality providers
-		restakedFPConsumerIDs, err := k.restakedFPConsumerIDs(ctx, btcDel.FpBtcPkList)
-		if err != nil {
-			panic(fmt.Errorf("failed to get consumer ids for the restaked BTC delegation: %w", err))
-		}
-		consumerEvent, err := types.CreateActiveBTCDelegationEvent(btcDel)
-		if err != nil {
-			panic(fmt.Errorf("failed to create active BTC delegation event: %w", err))
-		}
-		for _, consumerID := range restakedFPConsumerIDs {
-			if err := k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
-				panic(fmt.Errorf("failed to add active BTC delegation event: %w", err))
-			}
+func (k Keeper) notifyConsumersOnActiveBTCDel(ctx context.Context, btcDel *types.BTCDelegation) {
+	// get consumer ids of only non-Babylon finality providers
+	restakedFPConsumerIDs, err := k.restakedFPConsumerIDs(ctx, btcDel.FpBtcPkList)
+	if err != nil {
+		panic(fmt.Errorf("failed to get consumer ids for the restaked BTC delegation: %w", err))
+	}
+	consumerEvent, err := types.CreateActiveBTCDelegationEvent(btcDel)
+	if err != nil {
+		panic(fmt.Errorf("failed to create active BTC delegation event: %w", err))
+	}
+	for _, consumerID := range restakedFPConsumerIDs {
+		if err := k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
+			panic(fmt.Errorf("failed to add active BTC delegation event: %w", err))
 		}
 	}
 }
@@ -180,6 +180,8 @@ func (k Keeper) btcUndelegate(
 	ctx sdk.Context,
 	btcDel *types.BTCDelegation,
 	u *types.DelegatorUnbondingInfo,
+	stakeSpendingTx []byte,
+	proof *types.InclusionProof,
 ) {
 	btcDel.BtcUndelegation.DelegatorUnbondingInfo = u
 	k.setBTCDelegation(ctx, btcDel)
@@ -205,7 +207,7 @@ func (k Keeper) btcUndelegate(
 		panic(fmt.Errorf("failed to get consumer ids for the restaked BTC delegation: %w", err))
 	}
 	// create consumer event for unbonded BTC delegation and add it to the consumer's event store
-	consumerEvent, err := types.CreateUnbondedBTCDelegationEvent(btcDel)
+	consumerEvent, err := types.CreateUnbondedBTCDelegationEvent(btcDel, stakeSpendingTx, proof)
 	if err != nil {
 		panic(fmt.Errorf("failed to create unbonded BTC delegation event: %w", err))
 	}

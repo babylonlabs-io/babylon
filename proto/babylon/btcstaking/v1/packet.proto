@@ -144,6 +144,10 @@ message UnbondedBTCDelegation {
   // unbonding_tx_sig is the signature on the unbonding tx signed by the BTC delegator
   // It proves that the BTC delegator wants to unbond
   bytes unbonding_tx_sig = 2;
+  // stake_spending_tx is the stake spending tx
+  bytes stake_spending_tx = 3;
+  // proof is the inclusion proof for the stake spending tx
+  InclusionProof proof = 4;
 }
 
 // BTCStakingConsumerEvent defines the structure for storing BTC staking events

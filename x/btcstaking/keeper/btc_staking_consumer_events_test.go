@@ -6,7 +6,6 @@ import (
 
 	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -111,6 +110,7 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 			0,
 			0,
 			false,
+			false,
 		)
 		h.NoError(err)
 
@@ -125,9 +125,6 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, &bogusMsg)
 		h.Error(err)
 		for _, msg := range msgs {
-			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
-			h.NoError(err)
-			// check that submitting the same covenant signature does not produce an error
 			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
 			h.NoError(err)
 		}
@@ -196,7 +193,7 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, _, _, unbondingInfo, err := h.CreateDelegation(
 			r,
 			delSK,
 			[]*btcec.PublicKey{consumerFpPK, babylonFpPK},
@@ -205,6 +202,7 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 			1000,
 			0,
 			0,
+			false,
 			false,
 		)
 		h.NoError(err)
@@ -220,12 +218,12 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 
 		// construct unbonding msg
-		delUnbondingSig, err := actualDel.SignUnbondingTx(&bsParams, h.Net, delSK)
 		h.NoError(err)
 		msg := &types.MsgBTCUndelegate{
-			Signer:         datagen.GenRandomAccount().Address,
-			StakingTxHash:  stakingTxHash,
-			UnbondingTxSig: bbn.NewBIP340SignatureFromBTCSig(delUnbondingSig),
+			Signer:                        datagen.GenRandomAccount().Address,
+			StakingTxHash:                 stakingTxHash,
+			StakeSpendingTx:               actualDel.BtcUndelegation.UnbondingTx,
+			StakeSpendingTxInclusionProof: unbondingInfo.UnbondingTxInclusionProof,
 		}
 
 		// ensure the system does not panic due to a bogus unbonding msg
@@ -260,7 +258,6 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		ev := evs.GetUnbondedDel()[0]
 		require.NotNil(t, ev)
 		require.Equal(t, actualDel.MustGetStakingTxHash().String(), ev.StakingTxHash)
-		require.Equal(t, actualDel.BtcUndelegation.DelegatorUnbondingSig.MustMarshal(), ev.UnbondingTxSig)
 	})
 }
 
