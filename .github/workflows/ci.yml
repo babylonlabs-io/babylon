@@ -247,3 +247,10 @@ jobs:
       - name: Run BCD consumer integration test
         run: |
           sudo make test-e2e-cache-bcd-consumer-integration
+      - name: Dump docker logs
+        run: |
+          docker ps -a
+          for container in $(docker ps -a -q); do
+            echo "=== Logs for container $container ==="
+            docker logs $container
+          done
