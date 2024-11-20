@@ -92,7 +92,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegatio
 	params := nonValidatorNode.QueryBTCStakingParams()
 
 	// minimal required unbonding time
-	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+	unbondingTime := params.MinUnbondingTimeBlocks
 
 	// NOTE: we use the node's address for the BTC delegation
 	stakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
@@ -535,7 +535,7 @@ func (s *BTCStakingPreApprovalTestSuite) BTCStakingUnbondSlashInfo(
 ) {
 	covenantBTCPKs := CovenantBTCPKs(params)
 	// minimal required unbonding time
-	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+	unbondingTime := params.MinUnbondingTimeBlocks
 
 	testStakingInfo = datagen.GenBTCStakingSlashingInfo(
 		s.r,
@@ -549,7 +549,7 @@ func (s *BTCStakingPreApprovalTestSuite) BTCStakingUnbondSlashInfo(
 		s.stakingValue,
 		params.SlashingPkScript,
 		params.SlashingRate,
-		unbondingTime,
+		uint16(unbondingTime),
 	)
 
 	// submit staking tx to Bitcoin and get inclusion proof
@@ -584,7 +584,7 @@ func (s *BTCStakingPreApprovalTestSuite) BTCStakingUnbondSlashInfo(
 		unbondingValue,
 		params.SlashingPkScript,
 		params.SlashingRate,
-		unbondingTime,
+		uint16(unbondingTime),
 	)
 
 	stakingSlashingPathInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()

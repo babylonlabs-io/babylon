@@ -8,14 +8,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/stretchr/testify/require"
+
 	dg "github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bkeeper "github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	"github.com/btcsuite/btcd/chaincfg"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 )
 
 type TestKeepers struct {
@@ -76,6 +79,27 @@ func (k *TestKeepers) getSubmissionData(key btcctypes.SubmissionKey) *btcctypes.
 
 func (k *TestKeepers) onTipChange() {
 	k.BTCCheckpoint.OnTipChange(k.SdkCtx)
+}
+
+func TestUpdateParams(t *testing.T) {
+	tk := InitTestKeepers(t)
+
+	// Try to update params with a different checkpoint finalization timeout
+	msg := &btcctypes.MsgUpdateParams{
+		Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		Params: btcctypes.Params{
+			CheckpointFinalizationTimeout: btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1,
+		},
+	}
+
+	_, err := tk.MsgSrv.UpdateParams(tk.Ctx, msg)
+	require.ErrorIs(t, err, govtypes.ErrInvalidProposalMsg,
+		"should not be able to change CheckpointFinalizationTimeout parameter")
+
+	// Verify params were not changed
+	params := tk.BTCCheckpoint.GetParams(tk.SdkCtx)
+	require.Equal(t, btcctypes.DefaultParams().CheckpointFinalizationTimeout, params.CheckpointFinalizationTimeout,
+		"minUnbondingTime should remain unchanged")
 }
 
 func TestRejectDuplicatedSubmission(t *testing.T) {

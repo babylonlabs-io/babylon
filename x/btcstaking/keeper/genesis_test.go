@@ -6,23 +6,23 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/testutil/helper"
 	btclightclientt "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestExportGenesis(t *testing.T) {
 	r, h := rand.New(rand.NewSource(11)), helper.NewHelper(t)
-	k, btclcK, btcCheckK, ctx := h.App.BTCStakingKeeper, h.App.BTCLightClientKeeper, h.App.BtcCheckpointKeeper, h.Ctx
+	k, btclcK, ctx := h.App.BTCStakingKeeper, h.App.BTCLightClientKeeper, h.Ctx
 	numFps := 3
 
 	fps := datagen.CreateNFinalityProviders(r, t, numFps)
 	params := k.GetParams(ctx)
-	btcckptParams := btcCheckK.GetParams(ctx)
 
-	minUnbondingTime := types.MinimumUnbondingTime(&params, &btcckptParams)
+	minUnbondingTime := params.MinUnbondingTimeBlocks
 
 	chainsHeight := make([]*types.BlockHeightBbnToBtc, 0)
 	// creates the first as it starts already with an chain height from the helper.
