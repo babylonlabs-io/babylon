@@ -922,7 +922,7 @@ func TestAllowList(t *testing.T) {
 	_, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegation(
 		r,
 		delSK,
-		fpPK,
+		[]*btcec.PublicKey{fpPK},
 		changeAddress.EncodeAddress(),
 		stakingValue,
 		1000,
@@ -940,7 +940,7 @@ func TestAllowList(t *testing.T) {
 	_, msgCreateBTCDel1, _, _, _, _, err := h.CreateDelegation(
 		r,
 		delSK1,
-		fpPK,
+		[]*btcec.PublicKey{fpPK},
 		changeAddress.EncodeAddress(),
 		stakingValue,
 		1000,
@@ -961,7 +961,7 @@ func TestAllowList(t *testing.T) {
 	_, msgCreateBTCDel2, _, _, _, _, err := h.CreateDelegation(
 		r,
 		delSK2,
-		fpPK,
+		[]*btcec.PublicKey{fpPK},
 		changeAddress.EncodeAddress(),
 		stakingValue,
 		1000,

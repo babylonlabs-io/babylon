@@ -76,6 +76,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 			0,
 			0,
 			false,
+			false,
 		)
 		h.Error(err)
 		require.True(t, errors.Is(err, types.ErrFpNotFound))
@@ -93,6 +94,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 			0,
 			0,
 			false,
+			false,
 		)
 		h.Error(err)
 		require.True(t, errors.Is(err, types.ErrNoBabylonFPRestaked), err)
@@ -109,6 +111,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 			1000,
 			0,
 			0,
+			false,
 			false,
 		)
 		h.NoError(err)
@@ -170,6 +173,7 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 				1000,
 				0,
 				0,
+				false,
 				false,
 			)
 			h.NoError(err)

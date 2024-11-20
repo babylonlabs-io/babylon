@@ -231,10 +231,6 @@ func ParseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDel
 		return nil, ErrDuplicatedFp
 	}
 
-	if len(fpPKs.PublicKeysBbnFormat) != 1 {
-		return nil, ErrTooManyFpKeys
-	}
-
 	// 7. Parse staker public key
 	stakerPK, err := NewParsedPublicKey(msg.BtcPk)
 
