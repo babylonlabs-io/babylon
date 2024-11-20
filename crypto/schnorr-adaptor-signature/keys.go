@@ -43,7 +43,7 @@ func NewDecyptionKeyFromBytes(decKeyBytes []byte) (*DecryptionKey, error) {
 	}
 
 	var decKeyScalar btcec.ModNScalar
-	decKeyScalar.SetByteSlice(decKeyBytes) //nolint:errcheck
+	decKeyScalar.SetByteSlice(decKeyBytes)
 
 	return NewDecyptionKeyFromModNScalar(&decKeyScalar)
 }

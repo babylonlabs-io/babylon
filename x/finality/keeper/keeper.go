@@ -25,8 +25,6 @@ type (
 		// should be the x/gov module account.
 		authority string
 
-		hooks types.FinalityHooks
-
 		// FinalityProviderSigningTracker key: BIP340PubKey bytes | value: FinalityProviderSigningInfo
 		FinalityProviderSigningTracker collections.Map[[]byte, types.FinalityProviderSigningInfo]
 		// FinalityProviderMissedBlockBitmap key: BIP340PubKey bytes | value: byte key for a finality provider's missed block bitmap chunk
@@ -68,15 +66,11 @@ func NewKeeper(
 	}
 }
 
-// SetHooks sets the finality hooks
-func (k *Keeper) SetHooks(sh types.FinalityHooks) *Keeper {
-	if k.hooks != nil {
-		panic("cannot set finality hooks twice")
-	}
+func (k Keeper) BeginBlocker(ctx context.Context) error {
+	// update voting power distribution
+	k.UpdatePowerDist(ctx)
 
-	k.hooks = sh
-
-	return k
+	return nil
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
@@ -94,4 +88,15 @@ func (k Keeper) GetCurrentEpoch(ctx context.Context) uint64 {
 	}
 
 	return currentEpoch.EpochNumber
+}
+
+// IsFinalityActive returns true if the finality is activated and ready
+// to start handling liveness, tally and index blocks.
+func (k Keeper) IsFinalityActive(ctx context.Context) (activated bool) {
+	if uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height) < k.GetParams(ctx).FinalityActivationHeight {
+		return false
+	}
+
+	_, err := k.GetBTCStakingActivatedHeight(ctx)
+	return err == nil
 }

@@ -4,12 +4,25 @@ import (
 	"encoding/hex"
 )
 
+func delegatorUnbondingInfoToResponse(ui *DelegatorUnbondingInfo) *DelegatorUnbondingInfoResponse {
+	var spendStakeTxHex = ""
+
+	if len(ui.SpendStakeTx) > 0 {
+		spendStakeTxHex = hex.EncodeToString(ui.SpendStakeTx)
+	}
+
+	return &DelegatorUnbondingInfoResponse{
+		SpendStakeTxHex: spendStakeTxHex,
+	}
+}
+
 // NewBTCDelegationResponse returns a new delegation response structure.
 func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus) (resp *BTCDelegationResponse) {
 	resp = &BTCDelegationResponse{
 		StakerAddr:           btcDel.StakerAddr,
 		BtcPk:                btcDel.BtcPk,
 		FpBtcPkList:          btcDel.FpBtcPkList,
+		StakingTime:          btcDel.StakingTime,
 		StartHeight:          btcDel.StartHeight,
 		EndHeight:            btcDel.EndHeight,
 		TotalSat:             btcDel.TotalSat,
@@ -43,8 +56,8 @@ func (ud *BTCUndelegation) ToResponse() (resp *BTCUndelegationResponse) {
 		CovenantSlashingSigs:     ud.CovenantSlashingSigs,
 	}
 
-	if ud.DelegatorUnbondingSig != nil {
-		resp.DelegatorUnbondingSigHex = ud.DelegatorUnbondingSig.ToHexStr()
+	if ud.DelegatorUnbondingInfo != nil {
+		resp.DelegatorUnbondingInfoResponse = delegatorUnbondingInfoToResponse(ud.DelegatorUnbondingInfo)
 	}
 	if ud.SlashingTx != nil {
 		resp.SlashingTxHex = ud.SlashingTx.ToHexStr()
@@ -56,8 +69,8 @@ func (ud *BTCUndelegation) ToResponse() (resp *BTCUndelegationResponse) {
 	return resp
 }
 
-// NewFinalityProviderResponse creates a new finality provider response based on the finality provider and his voting power.
-func NewFinalityProviderResponse(f *FinalityProvider, bbnBlockHeight, votingPower uint64) *FinalityProviderResponse {
+// NewFinalityProviderResponse creates a new finality provider response based on the finality provider
+func NewFinalityProviderResponse(f *FinalityProvider, bbnBlockHeight uint64) *FinalityProviderResponse {
 	return &FinalityProviderResponse{
 		Description:          f.Description,
 		Commission:           f.Commission,
@@ -68,6 +81,5 @@ func NewFinalityProviderResponse(f *FinalityProvider, bbnBlockHeight, votingPowe
 		SlashedBtcHeight:     f.SlashedBtcHeight,
 		Jailed:               f.Jailed,
 		Height:               bbnBlockHeight,
-		VotingPower:          votingPower,
 	}
 }

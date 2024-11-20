@@ -11,6 +11,7 @@ import (
 	types "github.com/babylonlabs-io/babylon/types"
 	types0 "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	types1 "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	types2 "github.com/cosmos/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -246,39 +247,37 @@ func (mr *MockBTCStkConsumerKeeperMockRecorder) SetConsumerFinalityProvider(ctx,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetConsumerFinalityProvider", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).SetConsumerFinalityProvider), ctx, fp)
 }
 
-// MockBtcStakingHooks is a mock of BtcStakingHooks interface.
-type MockBtcStakingHooks struct {
+// MockIncentiveKeeper is a mock of IncentiveKeeper interface.
+type MockIncentiveKeeper struct {
 	ctrl     *gomock.Controller
-	recorder *MockBtcStakingHooksMockRecorder
+	recorder *MockIncentiveKeeperMockRecorder
 }
 
-// MockBtcStakingHooksMockRecorder is the mock recorder for MockBtcStakingHooks.
-type MockBtcStakingHooksMockRecorder struct {
-	mock *MockBtcStakingHooks
+// MockIncentiveKeeperMockRecorder is the mock recorder for MockIncentiveKeeper.
+type MockIncentiveKeeperMockRecorder struct {
+	mock *MockIncentiveKeeper
 }
 
-// NewMockBtcStakingHooks creates a new mock instance.
-func NewMockBtcStakingHooks(ctrl *gomock.Controller) *MockBtcStakingHooks {
-	mock := &MockBtcStakingHooks{ctrl: ctrl}
-	mock.recorder = &MockBtcStakingHooksMockRecorder{mock}
+// NewMockIncentiveKeeper creates a new mock instance.
+func NewMockIncentiveKeeper(ctrl *gomock.Controller) *MockIncentiveKeeper {
+	mock := &MockIncentiveKeeper{ctrl: ctrl}
+	mock.recorder = &MockIncentiveKeeperMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockBtcStakingHooks) EXPECT() *MockBtcStakingHooksMockRecorder {
+func (m *MockIncentiveKeeper) EXPECT() *MockIncentiveKeeperMockRecorder {
 	return m.recorder
 }
 
-// AfterFinalityProviderActivated mocks base method.
-func (m *MockBtcStakingHooks) AfterFinalityProviderActivated(ctx context.Context, fpPk *types.BIP340PubKey) error {
+// IndexRefundableMsg mocks base method.
+func (m *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg types2.Msg) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AfterFinalityProviderActivated", ctx, fpPk)
-	ret0, _ := ret[0].(error)
-	return ret0
+	m.ctrl.Call(m, "IndexRefundableMsg", ctx, msg)
 }
 
-// AfterFinalityProviderActivated indicates an expected call of AfterFinalityProviderActivated.
-func (mr *MockBtcStakingHooksMockRecorder) AfterFinalityProviderActivated(ctx, fpPk interface{}) *gomock.Call {
+// IndexRefundableMsg indicates an expected call of IndexRefundableMsg.
+func (mr *MockIncentiveKeeperMockRecorder) IndexRefundableMsg(ctx, msg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterFinalityProviderActivated", reflect.TypeOf((*MockBtcStakingHooks)(nil).AfterFinalityProviderActivated), ctx, fpPk)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexRefundableMsg", reflect.TypeOf((*MockIncentiveKeeper)(nil).IndexRefundableMsg), ctx, msg)
 }

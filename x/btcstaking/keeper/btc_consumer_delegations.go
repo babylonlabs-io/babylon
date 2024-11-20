@@ -31,7 +31,7 @@ func (k Keeper) IndexBTCConsumerDelegation(ctx sdk.Context, btcDel *bstypes.BTCD
 		fpBTCPK := btcDel.FpBtcPkList[i]
 
 		// skip Babylon finality providers
-		if !k.bscKeeper.HasConsumerFinalityProvider(ctx, &fpBTCPK) {
+		if !k.BscKeeper.HasConsumerFinalityProvider(ctx, &fpBTCPK) {
 			continue
 		}
 
@@ -42,7 +42,7 @@ func (k Keeper) IndexBTCConsumerDelegation(ctx sdk.Context, btcDel *bstypes.BTCD
 		}
 		// index staking tx hash of this BTC delegation
 		if err := btcDelIndex.Add(stakingTxHash); err != nil {
-			return bstypes.ErrInvalidStakingTx.Wrapf(err.Error())
+			return bstypes.ErrInvalidStakingTx.Wrapf("%s", err.Error())
 		}
 		// save the index
 		k.setBTCConsumerDelegatorDelegationIndex(ctx, &fpBTCPK, btcDel.BtcPk, btcDelIndex)
@@ -58,8 +58,8 @@ func (k Keeper) GetBTCConsumerDelegatorDelegationsResponses(
 	ctx sdk.Context,
 	fpBTCPK *bbn.BIP340PubKey,
 	pagination *query.PageRequest,
-	wValue uint64,
-	btcHeight uint64,
+	wValue uint32,
+	btcHeight uint32,
 	covenantQuorum uint32,
 ) ([]*bstypes.BTCDelegatorDelegationsResponse, *query.PageResponse, error) {
 	btcDelStore := k.btcConsumerDelegatorStore(ctx, fpBTCPK)
@@ -97,15 +97,15 @@ func (k Keeper) GetBTCConsumerDelegatorDelegationsResponses(
 // SetConsumerFinalityProvider checks conditions and sets a new finality provider for a consumer.
 func (k Keeper) SetConsumerFinalityProvider(ctx context.Context, fp *bstypes.FinalityProvider, consumerID string) error {
 	// check if the finality provider already exists to prevent duplicates
-	if k.bscKeeper.HasConsumerFinalityProvider(ctx, fp.BtcPk) {
+	if k.BscKeeper.HasConsumerFinalityProvider(ctx, fp.BtcPk) {
 		return bstypes.ErrFpRegistered
 	}
 	// verify that the consumer is registered within the btcstkconsumer module
-	if !k.bscKeeper.IsConsumerRegistered(ctx, consumerID) {
+	if !k.BscKeeper.IsConsumerRegistered(ctx, consumerID) {
 		return bstypes.ErrConsumerIDNotRegistered
 	}
 	// set the finality provider in btcstkconsumer module
-	k.bscKeeper.SetConsumerFinalityProvider(ctx, fp)
+	k.BscKeeper.SetConsumerFinalityProvider(ctx, fp)
 
 	// record the event in btc staking consumer event store
 	if err := k.AddBTCStakingConsumerEvent(ctx, consumerID, bstypes.CreateNewFinalityProviderEvent(fp)); err != nil {
@@ -118,7 +118,7 @@ func (k Keeper) SetConsumerFinalityProvider(ctx context.Context, fp *bstypes.Fin
 // getBTCConsumerDelegatorDelegationIndex gets the BTC delegation index with a given BTC PK under a given finality provider
 func (k Keeper) getBTCConsumerDelegatorDelegationIndex(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) *bstypes.BTCDelegatorDelegationIndex {
 	// ensure the finality provider exists
-	if !k.bscKeeper.HasConsumerFinalityProvider(ctx, fpBTCPK) {
+	if !k.BscKeeper.HasConsumerFinalityProvider(ctx, fpBTCPK) {
 		return nil
 	}
 

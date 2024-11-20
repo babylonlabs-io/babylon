@@ -35,7 +35,6 @@ func FuzzQueryEndedEpochBtcHeight(f *testing.F) {
 		root := lck.GetBaseBTCHeader(ctx)
 		chain := datagen.GenRandomValidChainStartingFrom(
 			r,
-			0,
 			root.Header.ToBlockHeader(),
 			nil,
 			10,
@@ -92,7 +91,6 @@ func FuzzQueryReportedCheckpointBtcHeight(f *testing.F) {
 		root := lck.GetBaseBTCHeader(ctx)
 		chain := datagen.GenRandomValidChainStartingFrom(
 			r,
-			0,
 			root.Header.ToBlockHeader(),
 			nil,
 			10,

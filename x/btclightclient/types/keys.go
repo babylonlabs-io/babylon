@@ -28,8 +28,8 @@ var (
 	ParamsKey           = []byte{0x03} // key for params
 )
 
-func HeadersObjectKey(height uint64) []byte {
-	return sdk.Uint64ToBigEndian(height)
+func HeadersObjectKey(height uint32) []byte {
+	return sdk.Uint64ToBigEndian(uint64(height))
 }
 
 func HeadersObjectHeightKey(hash *bbn.BTCHeaderHashBytes) []byte {

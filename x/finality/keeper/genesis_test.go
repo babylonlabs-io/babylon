@@ -36,6 +36,7 @@ func FuzzTestExportGenesis(f *testing.F) {
 		allBlocks := make([]*types.IndexedBlock, numPubRand)
 		allEvidences := make([]*types.Evidence, numPubRand)
 		allPublicRandomness := make([]*types.PublicRandomness, numPubRand)
+
 		for i := 0; i < int(numPubRand); i++ {
 			// Votes
 			vt := &types.VoteSig{
@@ -78,7 +79,7 @@ func FuzzTestExportGenesis(f *testing.F) {
 			}
 			allPublicRandomness[i] = randomness
 
-			// updates the block everytime to make sure something is different.
+			// updates the block every time to make sure something is different.
 			blkHeight++
 		}
 
@@ -109,6 +110,20 @@ func FuzzTestExportGenesis(f *testing.F) {
 			fpSigningInfos[fpPk.MarshalHex()] = &signingInfo
 		}
 
+		numFps := datagen.RandomInt(r, 10) + 1
+		fps := datagen.CreateNFinalityProviders(r, t, int(numFps))
+		vpFps := make(map[string]*types.VotingPowerFP, 0)
+		for _, fp := range fps {
+			vp := uint64(datagen.RandomInt(r, 1000000))
+			// sets voting power
+			k.SetVotingPower(ctx, *fp.BtcPk, blkHeight, vp)
+			vpFps[fp.BtcPk.MarshalHex()] = &types.VotingPowerFP{
+				BlockHeight: blkHeight,
+				FpBtcPk:     fp.BtcPk,
+				VotingPower: vp,
+			}
+		}
+
 		require.Equal(t, len(allVotes), int(numPubRand))
 		require.Equal(t, len(allBlocks), int(numPubRand))
 		require.Equal(t, len(allEvidences), int(numPubRand))
@@ -127,6 +142,11 @@ func FuzzTestExportGenesis(f *testing.F) {
 		for _, info := range gs.SigningInfos {
 			require.Equal(t, fpSigningInfos[info.FpBtcPk.MarshalHex()].MissedBlocksCounter, info.FpSigningInfo.MissedBlocksCounter)
 			require.Equal(t, fpSigningInfos[info.FpBtcPk.MarshalHex()].StartHeight, info.FpSigningInfo.StartHeight)
+		}
+
+		require.Equal(t, len(vpFps), len(gs.VotingPowers))
+		for _, fpVp := range gs.VotingPowers {
+			require.Equal(t, vpFps[fpVp.FpBtcPk.MarshalHex()], fpVp)
 		}
 	})
 }

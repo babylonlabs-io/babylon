@@ -19,7 +19,7 @@ import (
 // but without block that has finality providers set AND does not receive QC
 func (k Keeper) TallyBlocks(ctx context.Context) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	activatedHeight, err := k.BTCStakingKeeper.GetBTCStakingActivatedHeight(ctx)
+	activatedHeight, err := k.GetBTCStakingActivatedHeight(ctx)
 	if err != nil {
 		// invoking TallyBlocks when BTC staking protocol is not activated is a programming error
 		panic(fmt.Errorf("cannot tally a block when the BTC staking protocol hasn't been activated yet, current height: %v, activated height: %v",
@@ -46,14 +46,14 @@ func (k Keeper) TallyBlocks(ctx context.Context) {
 		}
 
 		// get the finality provider set of this block
-		fpSet := k.BTCStakingKeeper.GetVotingPowerTable(ctx, ib.Height)
+		fpSet := k.GetVotingPowerTable(ctx, ib.Height)
 
 		if fpSet != nil && !ib.Finalized {
 			// has finality providers, non-finalised: tally and try to finalise the block
 			voterBTCPKs := k.GetVoters(ctx, ib.Height)
 			if tally(fpSet, voterBTCPKs) {
 				// if this block gets >2/3 votes, finalise it
-				k.finalizeBlock(ctx, ib, voterBTCPKs)
+				k.finalizeBlock(ctx, ib)
 			} else {
 				// if not, then this block and all subsequent blocks should not be finalised
 				// thus, we need to break here
@@ -77,24 +77,22 @@ func (k Keeper) TallyBlocks(ctx context.Context) {
 
 // finalizeBlock sets a block to be finalised in KVStore and distributes rewards to
 // finality providers and delegations
-func (k Keeper) finalizeBlock(ctx context.Context, block *types.IndexedBlock, voterBTCPKs map[string]struct{}) {
+func (k Keeper) finalizeBlock(ctx context.Context, block *types.IndexedBlock) {
 	// set block to be finalised in KVStore
 	block.Finalized = true
 	k.SetBlock(ctx, block)
 	// set next height to finalise as height+1
 	k.setNextHeightToFinalize(ctx, block.Height+1)
 	// distribute rewards to BTC staking stakeholders w.r.t. the voting power distribution cache
-	dc, err := k.BTCStakingKeeper.GetVotingPowerDistCache(ctx, block.Height)
-	if err != nil {
+	dc := k.GetVotingPowerDistCache(ctx, block.Height)
+	if dc == nil {
 		// failing to get a voting power distribution cache before distributing reward is a programming error
-		panic(err)
+		panic(fmt.Errorf("voting power distribution cache not found at height %d", block.Height))
 	}
-	// filter out voted finality providers
-	filteredDc := dc.FilterVotedDistCache(voterBTCPKs)
-	// reward voted finality providers
-	k.IncentiveKeeper.RewardBTCStaking(ctx, block.Height, filteredDc)
+	// reward active finality providers
+	k.IncentiveKeeper.RewardBTCStaking(ctx, block.Height, dc)
 	// remove reward distribution cache afterwards
-	k.BTCStakingKeeper.RemoveVotingPowerDistCache(ctx, block.Height)
+	k.RemoveVotingPowerDistCache(ctx, block.Height)
 	// record the last finalized height metric
 	types.RecordLastFinalizedHeight(block.Height)
 }

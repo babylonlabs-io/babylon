@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"encoding/hex"
 	"math/rand"
 	"testing"
 
@@ -34,7 +35,7 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 		types.RegisterQueryServer(queryHelper, ck)
 		queryClient := types.NewQueryClient(queryHelper)
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
-		genesisVal := ek.GetValidatorSet(helper.Ctx, 0)[0]
+		genesisVal := ek.GetValidatorSet(helper.Ctx, 1)[0]
 		genesisBLSPubkey, err := ck.GetBlsPubKey(helper.Ctx, genesisVal.Addr)
 		require.NoError(t, err)
 
@@ -48,7 +49,7 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 		res, err := queryClient.BlsPublicKeyList(ctx, queryRequest)
 		require.NoError(t, err)
 		require.Len(t, res.ValidatorWithBlsKeys, 1)
-		require.Equal(t, res.ValidatorWithBlsKeys[0].BlsPubKey, genesisBLSPubkey.Bytes())
+		require.Equal(t, res.ValidatorWithBlsKeys[0].BlsPubKeyHex, hex.EncodeToString(genesisBLSPubkey.Bytes()))
 		require.Equal(t, res.ValidatorWithBlsKeys[0].VotingPower, uint64(1000))
 		require.Equal(t, res.ValidatorWithBlsKeys[0].ValidatorAddress, genesisVal.GetValAddressStr())
 

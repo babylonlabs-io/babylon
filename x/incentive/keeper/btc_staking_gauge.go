@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/store/prefix"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,16 +13,23 @@ import (
 // RewardBTCStaking distributes rewards to finality providers/delegations at a given height according
 // to the filtered reward distribution cache (that only contains voted finality providers)
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/x/distribution/keeper/allocation.go#L12-L64)
-func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, filteredDc *bstypes.VotingPowerDistCache) {
+func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.VotingPowerDistCache) {
 	gauge := k.GetBTCStakingGauge(ctx, height)
 	if gauge == nil {
 		// failing to get a reward gauge at previous height is a programming error
 		panic("failed to get a reward gauge at previous height")
 	}
 	// reward each of the finality provider and its BTC delegations in proportion
-	for _, fp := range filteredDc.FinalityProviders {
+	for i, fp := range dc.FinalityProviders {
+		// only reward the first NumActiveFps finality providers
+		// note that ApplyActiveFinalityProviders is called before saving `dc`
+		// in DB so that the top dc.NumActiveFps ones in dc.FinalityProviders
+		// are the active finality providers
+		if i >= int(dc.NumActiveFps) {
+			break
+		}
 		// get coins that will be allocated to the finality provider and its BTC delegations
-		fpPortion := filteredDc.GetFinalityProviderPortion(fp)
+		fpPortion := dc.GetFinalityProviderPortion(fp)
 		coinsForFpsAndDels := gauge.GetCoinsPortion(fpPortion)
 		// reward the finality provider with commission
 		coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
@@ -35,8 +42,6 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, filteredDc 
 			k.accumulateRewardGauge(ctx, types.BTCDelegationType, btcDel.GetAddress(), coinsForDel)
 		}
 	}
-
-	// TODO: handle the change in the gauge due to the truncating operations
 }
 
 func (k Keeper) accumulateBTCStakingReward(ctx context.Context, btcStakingReward sdk.Coins) {

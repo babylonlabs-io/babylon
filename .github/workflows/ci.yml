@@ -11,15 +11,17 @@ concurrency:
 
 jobs:
   lint_test:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@v0.5.0
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@v0.7.0
     secrets: inherit
     with:
+     go-version: '1.23'
+     go-lint-version: 'v1.60.2'
      run-unit-tests: true
      run-integration-tests: false
      run-lint: true
 
   docker_pipeline:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.5.0
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.7.0
     secrets: inherit
     with:
      publish: false
@@ -46,29 +48,6 @@ jobs:
         with:
           name: babylond-${{ github.sha }} # so it renovates at every new sha
           path: /tmp/docker-babylond.tar.gz
-
-  e2e-docker-build-babylon-before-upgrade:
-    runs-on: ubuntu-22.04
-    steps:
-      # - name: Artifact babylond-before-upgrade exists # TODO: check why it doesn't work to load from older workflow runs .-.
-      #   uses: xSAVIKx/artifact-exists-action@v0
-      #   id: check-babylond-before-upgrade
-      #   with:
-      #     name: babylond-before-upgrade
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Build docker babylond-before-upgrade
-        run: |
-          make -C contrib/images babylond-before-upgrade
-      - name: Docker save babylond-before-upgrade
-        run: |
-          docker save -o /tmp/docker-babylond-before-upgrade.tar.gz babylonlabs-io/babylond-before-upgrade:latest
-      - name: Upload babylond-before-upgrade artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: babylond-before-upgrade
-          path: /tmp/docker-babylond-before-upgrade.tar.gz
-          # retention-days: 90 active this back if artifact-exists-action works
 
   e2e-docker-build-e2e-init-chain:
     runs-on: ubuntu-22.04
@@ -127,7 +106,7 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.21
+          go-version: 1.23
       - name: Run e2e TestIBCTranferTestSuite
         run: |
           make test-e2e-cache-ibc-transfer
@@ -149,64 +128,10 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.21
+          go-version: 1.23
       - name: Run e2e TestBTCTimestampingTestSuite
         run: |
           make test-e2e-cache-btc-timestamping
-
-  e2e-run-btc-timestamping-phase-2-hermes:
-    needs: [e2e-docker-build-babylon]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Download babylon artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: babylond-${{ github.sha }}
-          path: /tmp
-      - name: Docker load babylond
-        run: |
-          docker load < /tmp/docker-babylond.tar.gz
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Cache Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.21
-      - name: Run e2e TestBTCTimestampingPhase2HermesTestSuite
-        run: |
-          make test-e2e-cache-btc-timestamping-phase-2-hermes
-
-  e2e-run-btc-timestamping-phase-2-rly:
-    needs: [e2e-docker-build-babylon]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Download babylon artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: babylond-${{ github.sha }}
-          path: /tmp
-      - name: Docker load babylond
-        run: |
-          docker load < /tmp/docker-babylond.tar.gz
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Cache Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.21
-      - name: Run e2e TestBTCTimestampingPhase2RlyTestSuite
-        run: |
-          make test-e2e-cache-btc-timestamping-phase-2-rly
 
   e2e-run-btc-staking:
     needs: [e2e-docker-build-babylon]
@@ -225,13 +150,13 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.21
+          go-version: 1.23
       - name: Run e2e TestBTCStakingTestSuite
         run: |
           make test-e2e-cache-btc-staking
 
-  e2e-run-upgrade-signet:
-    needs: [e2e-docker-build-babylon, e2e-docker-build-babylon-before-upgrade, e2e-docker-build-e2e-init-chain]
+  e2e-run-btc-staking-pre-approval:
+    needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
@@ -241,10 +166,30 @@ jobs:
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
-      - name: Download babylond-before-upgrade artifact
+      - name: Docker load babylond
+        run: |
+          docker load < /tmp/docker-babylond.tar.gz
+      - name: Cache Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23
+      - name: Run e2e TestBTCStakingPreApprovalTestSuite
+        run: |
+          make test-e2e-cache-btc-staking-pre-approval
+
+  # Disable this test because v1 upgrade does not cover integration features
+  # TODO: Reenable this test after having v2 upgrade
+  e2e-run-upgrade-v1:
+    if: false
+    needs: [e2e-docker-build-babylon, e2e-docker-build-e2e-init-chain]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Download babylon artifact
         uses: actions/download-artifact@v4
         with:
-          name: babylond-before-upgrade
+          name: babylond-${{ github.sha }}
           path: /tmp
       - name: Download init-chain artifact
         uses: actions/download-artifact@v4
@@ -255,10 +200,6 @@ jobs:
         run: |
           docker load < /tmp/docker-babylond.tar.gz
 
-      - name: Docker load babylond-before-upgrade
-        run: |
-          docker load < /tmp/docker-babylond-before-upgrade.tar.gz
-
       - name: Docker load init chain
         run: |
           docker load < /tmp/docker-init-chain.tar.gz
@@ -266,10 +207,13 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.21
-      - name: Run e2e TestSoftwareUpgradeSignetLaunchTestSuite
+          go-version: 1.23
+      - name: Run e2e TestSoftwareUpgradeV1TestnetTestSuite
         run: |
-          sudo make test-e2e-cache-upgrade-signet
+          sudo make test-e2e-cache-upgrade-v1
+      - name: Dump docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v2
 
   e2e-run-bcd-consumer-integration-test:
     needs: [e2e-docker-build-babylon, e2e-docker-build-ibcsim-bcd]

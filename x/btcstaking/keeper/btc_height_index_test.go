@@ -23,12 +23,12 @@ func FuzzBTCHeightIndex(f *testing.F) {
 
 		// mock BTC light client
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
-		keeper, _, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, nil, nil)
+		keeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, nil, nil)
 
 		// randomise Babylon height and BTC height
 		babylonHeight := datagen.RandomInt(r, 100)
 		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
-		btcHeight := datagen.RandomInt(r, 100)
+		btcHeight := uint32(datagen.RandomInt(r, 100))
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: btcHeight}).Times(1)
 		keeper.IndexBTCHeight(ctx)
 

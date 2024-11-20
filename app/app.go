@@ -20,10 +20,10 @@ import (
 	feegrantmodule "cosmossdk.io/x/feegrant/module"
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	wasmapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/babylonlabs-io/babylon/app/ante"
 	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
@@ -40,16 +40,17 @@ import (
 	"github.com/babylonlabs-io/babylon/x/checkpointing"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/x/epoching"
-	epochingkeeper "github.com/babylonlabs-io/babylon/x/epoching/keeper"
 	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/x/finality"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/babylonlabs-io/babylon/x/incentive"
+	incentivekeeper "github.com/babylonlabs-io/babylon/x/incentive/keeper"
 	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/x/mint"
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	"github.com/babylonlabs-io/babylon/x/monitor"
 	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
 	"github.com/babylonlabs-io/babylon/x/zoneconcierge"
-	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtos "github.com/cometbft/cometbft/libs/os"
@@ -74,7 +75,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -96,8 +96,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/mint"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -289,7 +287,7 @@ func NewBabylonApp(
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
-		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, app.GetSubspace(minttypes.ModuleName)),
+		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(slashingtypes.ModuleName), app.interfaceRegistry),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
 		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
@@ -353,7 +351,7 @@ func NewBabylonApp(
 	app.ModuleManager.SetOrderBeginBlockers(
 		upgradetypes.ModuleName, capabilitytypes.ModuleName,
 		// NOTE: incentive module's BeginBlock has to be after mint but before distribution
-		// so that it can intercept a part of new inflation to reward BTC staking/timestamping stakeholders
+		// so that it can intercept a part of new inflation to reward BTC staking stakeholders
 		minttypes.ModuleName, incentivetypes.ModuleName, distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName, stakingtypes.ModuleName,
@@ -486,43 +484,25 @@ func NewBabylonApp(
 	app.MountTransientStores(app.GetTransientStoreKeys())
 	app.MountMemoryStores(app.GetMemoryStoreKeys())
 
-	// initialize AnteHandler, which includes
-	// - authAnteHandler
-	// - custom wasm ante handler NewLimitSimulationGasDecorator and NewCountTXDecorator
-	// - Extra decorators introduced in Babylon, such as DropValidatorMsgDecorator that delays validator-related messages
-	//
-	// We are using constructor from wasmapp as it introduces custom wasm ante handle decorators
-	// early in chain of ante handlers.
-	authAnteHandler, err := wasmapp.NewAnteHandler(
-		wasmapp.HandlerOptions{
-			HandlerOptions: ante.HandlerOptions{
-				AccountKeeper:   app.AccountKeeper,
-				BankKeeper:      app.BankKeeper,
-				SignModeHandler: txConfig.SignModeHandler(),
-				FeegrantKeeper:  app.FeeGrantKeeper,
-				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
-			},
-			IBCKeeper:             app.IBCKeeper,
-			WasmConfig:            &wasmConfig,
-			TXCounterStoreService: runtime.NewKVStoreService(app.AppKeepers.GetKey(wasmtypes.StoreKey)),
-			WasmKeeper:            &app.WasmKeeper,
-			CircuitKeeper:         &app.CircuitKeeper,
-		},
-	)
-
-	if err != nil {
-		panic(err)
-	}
-
-	anteHandler := sdk.ChainAnteDecorators(
-		NewWrappedAnteHandler(authAnteHandler),
-		epochingkeeper.NewDropValidatorMsgDecorator(app.EpochingKeeper),
-		NewBtcValidationDecorator(btcConfig, &app.BtcCheckpointKeeper),
+	// initialize AnteHandler for the app
+	anteHandler := ante.NewAnteHandler(
+		&app.AccountKeeper,
+		app.BankKeeper,
+		&app.FeeGrantKeeper,
+		txConfig.SignModeHandler(),
+		app.IBCKeeper,
+		&wasmConfig,
+		&app.WasmKeeper,
+		&app.CircuitKeeper,
+		&app.EpochingKeeper,
+		&btcConfig,
+		&app.BtcCheckpointKeeper,
+		runtime.NewKVStoreService(app.AppKeepers.GetKey(wasmtypes.StoreKey)),
 	)
 
 	// set proposal extension
 	proposalHandler := checkpointing.NewProposalHandler(
-		logger, &app.CheckpointingKeeper, bApp.Mempool(), bApp)
+		logger, &app.CheckpointingKeeper, bApp.Mempool(), bApp, app.EncCfg)
 	proposalHandler.SetHandlers(bApp)
 
 	// set vote extension
@@ -550,7 +530,7 @@ func NewBabylonApp(
 
 	// set postHandler
 	postHandler := sdk.ChainPostDecorators(
-		zckeeper.NewIBCHeaderDecorator(app.ZoneConciergeKeeper),
+		incentivekeeper.NewRefundTxDecorator(&app.IncentiveKeeper),
 	)
 	app.SetPostHandler(postHandler)
 

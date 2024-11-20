@@ -8,9 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
-
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	comettypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -26,16 +24,19 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	ibctypes "github.com/cosmos/ibc-go/v8/modules/core/types"
 	"github.com/spf13/cobra"
 
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.Command {
@@ -55,13 +56,16 @@ Example:
 			serverCtx := server.GetServerContextFromCmd(cmd)
 			config := serverCtx.Config
 
-			genesisCliArgs := parseGenesisFlags(cmd)
+			genesisCliArgs, err := parseGenesisFlags(cmd)
+			if err != nil {
+				return fmt.Errorf("failed to parse genesis flags: %w", err)
+			}
 
 			genFile := config.GenesisFile()
 
 			genesisState, genesis, err := genutiltypes.GenesisStateFromGenFile(genFile)
 			if err != nil {
-				return fmt.Errorf("failed to unmarshal genesis state: %s", err)
+				return fmt.Errorf("failed to unmarshal genesis state: %w", err)
 			}
 
 			network := args[0]
@@ -99,9 +103,13 @@ Example:
 					genesisCliArgs.GenesisTime,
 					genesisCliArgs.BlockGasLimit,
 					genesisCliArgs.VoteExtensionEnableHeight,
+					genesisCliArgs.SignedBlocksWindow,
+					genesisCliArgs.MinSignedPerWindow,
+					genesisCliArgs.FinalitySigTimeout,
+					genesisCliArgs.JailDuration,
+					genesisCliArgs.FinalityActivationBlockHeight,
 				)
 			} else if network == "mainnet" {
-				// TODO: mainnet genesis params
 				panic("Mainnet params not implemented.")
 			} else {
 				return fmt.Errorf("please choose testnet or mainnet")
@@ -193,7 +201,7 @@ func PrepareGenesis(
 
 	// mint module genesis
 	mintGenState := minttypes.DefaultGenesisState()
-	mintGenState.Params = genesisParams.MintParams
+	mintGenState.BondDenom = genesisParams.StakingParams.BondDenom
 	genesisState[minttypes.ModuleName] = cdc.MustMarshalJSON(mintGenState)
 
 	// distribution module genesis
@@ -224,6 +232,8 @@ func PrepareGenesis(
 	}
 	genesisState[banktypes.ModuleName] = cdc.MustMarshalJSON(bankGenState)
 
+	genesisState[ibcexported.ModuleName] = clientCtx.Codec.MustMarshalJSON(ibctypes.DefaultGenesisState())
+
 	appGenStateJSON, err := json.MarshalIndent(genesisState, "", "  ")
 
 	if err != nil {
@@ -241,7 +251,6 @@ type GenesisParams struct {
 	NativeCoinMetadatas []banktypes.Metadata
 
 	StakingParams      stakingtypes.Params
-	MintParams         minttypes.Params
 	DistributionParams distributiontypes.Params
 	GovParams          govv1.Params
 
@@ -262,12 +271,12 @@ type GenesisParams struct {
 
 func TestnetGenesisParams(
 	maxActiveValidators uint32,
-	btcConfirmationDepth uint64,
-	btcFinalizationTimeout uint64,
+	btcConfirmationDepth uint32,
+	btcFinalizationTimeout uint32,
 	checkpointTag string,
 	epochInterval uint64,
 	baseBtcHeaderHex string,
-	baseBtcHeaderHeight uint64,
+	baseBtcHeaderHeight uint32,
 	allowedReporters []string,
 	covenantPKs []string,
 	covenantQuorum uint32,
@@ -290,6 +299,11 @@ func TestnetGenesisParams(
 	genesisTime time.Time,
 	blockGasLimit int64,
 	voteExtensionEnableHeight int64,
+	signedBlocksWindow int64,
+	minSignedPerWindow sdkmath.LegacyDec,
+	finalitySigTimeout int64,
+	jailDuration time.Duration,
+	finalityActivationBlockHeight uint64,
 ) GenesisParams {
 
 	genParams := GenesisParams{}
@@ -323,17 +337,7 @@ func TestnetGenesisParams(
 	genParams.StakingParams.MaxValidators = maxActiveValidators
 	genParams.StakingParams.BondDenom = genParams.NativeCoinMetadatas[0].Base
 
-	genParams.MintParams = minttypes.DefaultParams()
-	genParams.MintParams.MintDenom = genParams.NativeCoinMetadatas[0].Base
-	genParams.MintParams.BlocksPerYear = blocksPerYear
-	// This should always work as inflation rate is already a float64
-	genParams.MintParams.InflationRateChange = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", inflationRateChange))
-	genParams.MintParams.InflationMin = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", inflationMin))
-	genParams.MintParams.InflationMax = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", inflationMax))
-	genParams.MintParams.GoalBonded = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", goalBonded))
-
 	genParams.GovParams = govv1.DefaultParams()
-	// TODO investigate those numbers
 	genParams.GovParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(
 		genParams.NativeCoinMetadatas[0].Base,
 		sdkmath.NewInt(2_500_000_000),
@@ -399,7 +403,6 @@ func TestnetGenesisParams(
 	genParams.BtcstakingParams.MinSlashingTxFeeSat = minSlashingFee
 	genParams.BtcstakingParams.MinCommissionRate = minCommissionRate
 	genParams.BtcstakingParams.SlashingRate = slashingRate
-	genParams.BtcstakingParams.MaxActiveFinalityProviders = maxActiveFinalityProviders
 	genParams.BtcstakingParams.MinUnbondingTimeBlocks = uint32(minUnbondingTime)
 	genParams.BtcstakingParams.UnbondingFeeSat = unbondingFeeSat
 	if err := genParams.BtcstakingParams.Validate(); err != nil {
@@ -422,5 +425,16 @@ func TestnetGenesisParams(
 
 	genParams.BlockGasLimit = blockGasLimit
 	genParams.VoteExtensionsEnableHeight = voteExtensionEnableHeight
+
+	genParams.FinalityParams.MaxActiveFinalityProviders = maxActiveFinalityProviders
+	genParams.FinalityParams.SignedBlocksWindow = signedBlocksWindow
+	genParams.FinalityParams.MinSignedPerWindow = minSignedPerWindow
+	genParams.FinalityParams.FinalitySigTimeout = finalitySigTimeout
+	genParams.FinalityParams.JailDuration = jailDuration
+	genParams.FinalityParams.FinalityActivationHeight = finalityActivationBlockHeight
+	if err := genParams.FinalityParams.Validate(); err != nil {
+		panic(err)
+	}
+
 	return genParams
 }

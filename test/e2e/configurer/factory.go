@@ -129,8 +129,8 @@ func NewBTCTimestampingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configu
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), ibcConfigChainA),
-			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), ibcConfigChainB),
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
+			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), nil),
 		},
 		withIBC(baseSetup), // base set up with IBC
 		containerManager,
@@ -146,8 +146,8 @@ func NewIBCTransferConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer,
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), ibcConfigChainA),
-			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), ibcConfigChainB),
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
+			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), nil),
 		},
 		withIBCTransferChannel(baseSetup), // base set up with IBC
 		containerManager,
@@ -164,8 +164,8 @@ func NewBTCTimestampingPhase2Configurer(t *testing.T, isDebugLogEnabled bool) (C
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), ibcConfigChainA),
-			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), ibcConfigChainB),
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
+			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), nil),
 		},
 		withPhase2HermesIBC(baseSetup, false), // IBC setup (requires contract address)
 		containerManager,
@@ -182,8 +182,8 @@ func NewBTCTimestampingPhase2RlyConfigurer(t *testing.T, isDebugLogEnabled bool)
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), ibcConfigChainA),
-			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), ibcConfigChainB),
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
+			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), nil),
 		},
 		withPhase2GoRlyIBC(baseSetup), // IBC setup with wasmd and Go relayer
 		containerManager,
@@ -226,7 +226,7 @@ func NewBTCStakingIntegrationConfigurer(t *testing.T, isDebugLogEnabled bool) (C
 }
 
 // NewSoftwareUpgradeConfigurer returns a new Configurer for Software Upgrade testing
-func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, btcHeaders []*btclighttypes.BTCHeaderInfo) (*UpgradeConfigurer, error) {
+func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, btcHeaders []*btclighttypes.BTCHeaderInfo, preUpgradeFunc PreUpgradeFunc) (*UpgradeConfigurer, error) {
 	identifier := identifierName(t)
 	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, true)
 	if err != nil {
@@ -247,6 +247,7 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 		containerManager,
 		upgradePath,
 		0,
+		preUpgradeFunc,
 	), nil
 }
 

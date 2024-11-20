@@ -466,7 +466,7 @@ func getRandomCheckpointDataForEpoch(r *rand.Rand, e uint64) testCheckpointData 
 	}
 }
 
-// both f and s must be parts retrived from txformat.Encode
+// both f and s must be parts retrieved from txformat.Encode
 func getExpectedOpReturn(tag txformat.BabylonTag, f []byte, s []byte) []byte {
 	firstPartNoHeader, err := txformat.GetCheckpointData(
 		tag,
@@ -533,7 +533,7 @@ func EncodeRawCkptToTestData(rawBTCCkpt *txformat.RawBtcCheckpoint) *TestRawChec
 // test helper to generate random number int in range, min and max must be non-negative
 func numInRange(r *rand.Rand, min int, max int) int {
 	if min < 0 || max < 0 || min >= max {
-		panic("min and max maust be positve numbers. min must be smaller than max")
+		panic("min and max maust be positive numbers. min must be smaller than max")
 	}
 
 	return r.Intn(max-min) + min

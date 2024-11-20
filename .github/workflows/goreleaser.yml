@@ -1,0 +1,13 @@
+name: goreleaser
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_releaser.yml@v0.7.0
+    secrets: inherit

@@ -4,6 +4,7 @@ import (
 	"context"
 	corestoretypes "cosmossdk.io/core/store"
 	"fmt"
+	"math"
 
 	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 
@@ -37,18 +38,23 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func bytesToUint64(bytes []byte) (uint64, error) {
-	if len(bytes) != 8 {
-		return 0, fmt.Errorf("epoch bytes must have exactly 8 bytes")
+func bytesToBtcHeight(heightBytes []byte) (uint32, error) {
+	if len(heightBytes) != 8 {
+		return 0, fmt.Errorf("height bytes must have exactly 8 bytes")
 	}
 
-	return sdk.BigEndianToUint64(bytes), nil
+	heightUint64 := sdk.BigEndianToUint64(heightBytes)
+	if heightUint64 > math.MaxUint32 {
+		return 0, fmt.Errorf("height should not be higher than math.MaxUint32")
+	}
+
+	return uint32(heightUint64), nil
 }
 
 func (k Keeper) updateBtcLightClientHeightForEpoch(ctx context.Context, epoch uint64) {
 	store := k.storeService.OpenKVStore(ctx)
 	currentTipHeight := k.btcLightClientKeeper.GetTipInfo(ctx).Height
-	if err := store.Set(types.GetEpochEndLightClientHeightKey(epoch), sdk.Uint64ToBigEndian(currentTipHeight)); err != nil {
+	if err := store.Set(types.GetEpochEndLightClientHeightKey(epoch), sdk.Uint64ToBigEndian(uint64(currentTipHeight))); err != nil {
 		panic(err)
 	}
 }
@@ -74,7 +80,7 @@ func (k Keeper) updateBtcLightClientHeightForCheckpoint(ctx context.Context, ckp
 	}
 
 	currentTipHeight := k.btcLightClientKeeper.GetTipInfo(ctx).Height
-	return store.Set(storeKey, sdk.Uint64ToBigEndian(currentTipHeight))
+	return store.Set(storeKey, sdk.Uint64ToBigEndian(uint64(currentTipHeight)))
 }
 
 func (k Keeper) removeCheckpointRecord(ctx context.Context, ckpt *ckpttypes.RawCheckpoint) error {
@@ -92,7 +98,7 @@ func (k Keeper) removeCheckpointRecord(ctx context.Context, ckpt *ckpttypes.RawC
 	return nil
 }
 
-func (k Keeper) LightclientHeightAtEpochEnd(ctx context.Context, epoch uint64) (uint64, error) {
+func (k Keeper) LightclientHeightAtEpochEnd(ctx context.Context, epoch uint64) (uint32, error) {
 	if epoch == 0 {
 		return k.btcLightClientKeeper.GetBaseBTCHeader(ctx).Height, nil
 	}
@@ -110,7 +116,7 @@ func (k Keeper) LightclientHeightAtEpochEnd(ctx context.Context, epoch uint64) (
 		return 0, types.ErrEpochNotEnded.Wrapf("epoch %d", epoch)
 	}
 
-	btcHeight, err := bytesToUint64(btcHeightBytes)
+	btcHeight, err := bytesToBtcHeight(btcHeightBytes)
 
 	if err != nil {
 		panic("Invalid data in database")
@@ -119,7 +125,7 @@ func (k Keeper) LightclientHeightAtEpochEnd(ctx context.Context, epoch uint64) (
 	return btcHeight, nil
 }
 
-func (k Keeper) LightclientHeightAtCheckpointReported(ctx context.Context, hashString string) (uint64, error) {
+func (k Keeper) LightclientHeightAtCheckpointReported(ctx context.Context, hashString string) (uint32, error) {
 	store := k.storeService.OpenKVStore(ctx)
 
 	storeKey, err := types.GetCheckpointReportedLightClientHeightKey(hashString)
@@ -136,7 +142,7 @@ func (k Keeper) LightclientHeightAtCheckpointReported(ctx context.Context, hashS
 		return 0, types.ErrCheckpointNotReported.Wrapf("checkpoint hash: %s", hashString)
 	}
 
-	btcHeight, err := bytesToUint64(btcHeightBytes)
+	btcHeight, err := bytesToBtcHeight(btcHeightBytes)
 	if err != nil {
 		panic("invalid data in database")
 	}

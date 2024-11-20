@@ -49,12 +49,17 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinalitySig) (*types.MsgAddFinalitySigResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddFinalitySig)
 
-	if req.FpBtcPk == nil {
-		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")
+	if err := req.ValidateBasic(); err != nil {
+		return nil, err
 	}
-	fpPK := req.FpBtcPk
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	activationHeight, errMod := ms.validateActivationHeight(ctx, req.BlockHeight)
+	if errMod != nil {
+		return nil, errMod.Wrapf("finality block height: %d is lower than activation height %d", req.BlockHeight, activationHeight)
+	}
+
+	fpPK := req.FpBtcPk
 
 	// ensure the finality provider exists
 	fp, err := ms.BTCStakingKeeper.GetFinalityProvider(ctx, req.FpBtcPk.MustMarshal())
@@ -79,27 +84,24 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	//     corrupt a new finality provider and equivocate a historical block over and over again, making a previous block
 	//     unfinalisable forever
 	if fp.IsSlashed() {
-		return nil, bstypes.ErrFpAlreadySlashed.Wrapf(fmt.Sprintf("finality provider public key: %s", fpPK.MarshalHex()))
+		return nil, bstypes.ErrFpAlreadySlashed.Wrapf("finality provider public key: %s", fpPK.MarshalHex())
 	}
 
 	if fp.IsJailed() {
-		return nil, bstypes.ErrFpAlreadyJailed.Wrapf(fmt.Sprintf("finality provider public key: %s", fpPK.MarshalHex()))
+		return nil, bstypes.ErrFpAlreadyJailed.Wrapf("finality provider public key: %s", fpPK.MarshalHex())
 	}
 
 	// ensure the finality provider has voting power at this height
-	if ms.BTCStakingKeeper.GetVotingPower(ctx, fpPK.MustMarshal(), req.BlockHeight) == 0 {
+	if ms.GetVotingPower(ctx, fpPK.MustMarshal(), req.BlockHeight) == 0 {
 		return nil, types.ErrInvalidFinalitySig.Wrapf("the finality provider %s does not have voting power at height %d", fpPK.MarshalHex(), req.BlockHeight)
 	}
 
-	// ensure the finality provider has not cast the same vote yet
-	if req.FinalitySig == nil {
-		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality signature")
-	}
 	existingSig, err := ms.GetSig(ctx, req.BlockHeight, fpPK)
 	if err == nil && existingSig.Equals(req.FinalitySig) {
 		ms.Logger(ctx).Debug("Received duplicated finality vote", "block height", req.BlockHeight, "finality provider", req.FpBtcPk)
-		// exactly same vote alreay exists, return success to the provider
-		return &types.MsgAddFinalitySigResponse{}, nil
+		// exactly same vote already exists, return error
+		// this is to secure the tx refunding against duplicated messages
+		return nil, types.ErrDuplicatedFinalitySig
 	}
 
 	// find the timestamped public randomness commitment for this height from this finality provider
@@ -177,6 +179,11 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
 	}
 
+	// at this point, the finality signature is 1) valid, 2) over a canonical block,
+	// and 3) not duplicated.
+	// Thus, we can safely consider this message as refundable
+	ms.IncentiveKeeper.IndexRefundableMsg(ctx, req)
+
 	return &types.MsgAddFinalitySigResponse{}, nil
 }
 
@@ -185,6 +192,13 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	activationHeight, errMod := ms.validateActivationHeight(ctx, req.StartHeight)
+	if errMod != nil {
+		return nil, types.ErrFinalityNotActivated.Wrapf(
+			"public rand commit start block height: %d is lower than activation height %d",
+			req.StartHeight, activationHeight,
+		)
+	}
 
 	// ensure the request contains enough number of public randomness
 	minPubRand := ms.GetParams(ctx).MinPubRand
@@ -271,8 +285,7 @@ func (ms msgServer) UnjailFinalityProvider(ctx context.Context, req *types.MsgUn
 		return nil, err
 	}
 	if !jailingPeriodPassed {
-		return nil, types.ErrJailingPeriodNotPassed.Wrapf(
-			fmt.Sprintf("current block time: %v, required %v", curBlockTime, info.JailedUntil))
+		return nil, types.ErrJailingPeriodNotPassed.Wrapf("current block time: %v, required %v", curBlockTime, info.JailedUntil)
 	}
 
 	err = ms.BTCStakingKeeper.UnjailFinalityProvider(ctx, fpPk.MustMarshal())
@@ -304,4 +317,19 @@ func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340Pu
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {
 		panic(fmt.Errorf("failed to emit EventSlashedFinalityProvider event: %w", err))
 	}
+}
+
+// validateActivationHeight returns error if the height received is lower than the finality
+// activation block height
+func (ms msgServer) validateActivationHeight(ctx sdk.Context, height uint64) (uint64, *errorsmod.Error) {
+	// TODO: remove it after Phase-2 launch in a future coordinated upgrade
+	activationHeight := ms.GetParams(ctx).FinalityActivationHeight
+	if height < activationHeight {
+		ms.Logger(ctx).With(
+			"height", height,
+			"activationHeight", activationHeight,
+		).Info("BTC finality is not activated yet")
+		return activationHeight, types.ErrFinalityNotActivated
+	}
+	return activationHeight, nil
 }

@@ -44,8 +44,10 @@ message RawCheckpointWithMeta {
   repeated CheckpointStateUpdate lifecycle = 5;
 }
 
-// InjectedCheckpoint wraps the checkpoint and the extended votes
-message InjectedCheckpoint {
+// MsgInjectedCheckpoint wraps the checkpoint and the extended votes
+// Note: this is a special message type that is only for internal ABCI++ usage
+// for inserting checkpoint into the block
+message MsgInjectedCheckpoint {
   RawCheckpointWithMeta ckpt = 1;
   // extended_commit_info is the commit info including the vote extensions
   // from the previous proposal

@@ -14,7 +14,7 @@ import (
 // including jailing sluggish finality providers and applying punishment (TBD)
 func (k Keeper) HandleLiveness(ctx context.Context, height int64) {
 	// get all the active finality providers for the height
-	fpSet := k.BTCStakingKeeper.GetVotingPowerTable(ctx, uint64(height))
+	fpSet := k.GetVotingPowerTable(ctx, uint64(height))
 	// get all the voters for the height
 	voterBTCPKs := k.GetVoters(ctx, uint64(height))
 
@@ -184,7 +184,7 @@ func (k Keeper) updateSigningInfo(
 }
 
 func (k Keeper) jailSluggishFinalityProvider(ctx context.Context, fpBtcPk *types.BIP340PubKey) error {
-	err := k.hooks.AfterSluggishFinalityProviderDetected(ctx, fpBtcPk)
+	err := k.BTCStakingKeeper.JailFinalityProvider(ctx, fpBtcPk.MustMarshal())
 	if err != nil {
 		return err
 	}

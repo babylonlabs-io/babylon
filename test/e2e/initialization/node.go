@@ -32,6 +32,7 @@ import (
 	"github.com/spf13/viper"
 
 	babylonApp "github.com/babylonlabs-io/babylon/app"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/privval"
@@ -120,7 +121,7 @@ func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 	// set application configuration
 	appCfgPath := filepath.Join(n.configDir(), "config", "app.toml")
 
-	appConfig := cmd.DefaultBabylonConfig()
+	appConfig := cmd.DefaultBabylonAppConfig()
 
 	appConfig.BaseConfig.Pruning = nodeConfig.Pruning
 	appConfig.BaseConfig.PruningKeepRecent = nodeConfig.PruningKeepRecent
@@ -396,7 +397,7 @@ func (n *internalNode) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 	}
 
 	txBuilder.SetMemo(fmt.Sprintf("%s@%s:26656", n.nodeKey.ID(), n.moniker))
-	txBuilder.SetFeeAmount(sdk.NewCoins())
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(20000))))
 	txBuilder.SetGasLimit(uint64(200000 * len(msgs)))
 
 	addr, err := n.keyInfo.GetAddress()

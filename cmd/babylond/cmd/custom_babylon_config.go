@@ -1,9 +1,13 @@
 package cmd
 
 import (
+	"fmt"
+
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
@@ -25,9 +29,13 @@ type BabylonAppConfig struct {
 	BtcConfig BtcConfig `mapstructure:"btc-config"`
 }
 
-func DefaultBabylonConfig() *BabylonAppConfig {
+func DefaultBabylonAppConfig() *BabylonAppConfig {
+	baseConfig := *serverconfig.DefaultConfig()
+	// The SDK's default minimum gas price is set to "0.002ubbn" (empty value) inside
+	// app.toml, in order to avoid spamming attacks due to transactions with 0 gas price.
+	baseConfig.MinGasPrices = fmt.Sprintf("%f%s", appparams.GlobalMinGasPrice, appparams.BaseCoinUnit)
 	return &BabylonAppConfig{
-		Config:    *serverconfig.DefaultConfig(),
+		Config:    baseConfig,
 		Wasm:      wasmtypes.DefaultWasmConfig(),
 		BtcConfig: defaultBabylonBtcConfig(),
 	}

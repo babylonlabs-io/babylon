@@ -3,6 +3,7 @@ package e2e
 import (
 	"encoding/hex"
 	"math"
+	"math/rand"
 	"time"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
@@ -10,11 +11,11 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -23,7 +24,14 @@ import (
 )
 
 var (
-	czDelBtcSk, czDelBtcPk, _ = datagen.GenRandomBTCKeyPair(r)
+	r   = rand.New(rand.NewSource(time.Now().Unix()))
+	net = &chaincfg.SimNetParams
+	// BTC delegation
+	delBTCSK, delBTCPK, _ = datagen.GenRandomBTCKeyPair(r)
+	// covenant
+	covenantSKs, _, covenantQuorum = bstypes.DefaultCovenantCommittee()
+
+	stakingValue = int64(2 * 10e8)
 )
 
 type BTCStakingIntegrationTestSuite struct {
@@ -283,13 +291,20 @@ func (s *BTCStakingIntegrationTestSuite) Test5UnbondDelegation() {
 	s.NoError(err)
 	stakingTxHash := stakingMsgTx.TxHash()
 
-	// delegator signs unbonding tx
-	params := nonValidatorNode.QueryBTCStakingParams()
-	delUnbondingSig, err := activeDel.SignUnbondingTx(params, net, czDelBtcSk)
+	// get unbonding tx
+	unbondingTx := activeDel.BtcUndelegation.UnbondingTx
+	unbondingTxMsg, err := bbn.NewBTCTxFromBytes(unbondingTx)
 	s.NoError(err)
-
+	// get inclusion proof of the unbonding tx
+	currentBtcTipResp, err := nonValidatorNode.QueryTip()
+	s.NoError(err)
+	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+	s.NoError(err)
+	blockWithUnbondingTx := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), unbondingTxMsg)
+	nonValidatorNode.InsertHeader(&blockWithUnbondingTx.HeaderBytes)
+	inclusionProof := bstypes.NewInclusionProofFromSpvProof(blockWithUnbondingTx.SpvProof)
 	// submit the message for creating BTC undelegation
-	nonValidatorNode.BTCUndelegate(&stakingTxHash, delUnbondingSig)
+	nonValidatorNode.BTCUndelegate(&stakingTxHash, unbondingTxMsg, inclusionProof)
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
 
@@ -512,7 +527,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		covenantBTCPKs = append(covenantBTCPKs, covenantPK.MustToBTCPK())
 	}
 	// NOTE: we use the node's secret key as Babylon secret key for the BTC delegation
-	pop, err := bstypes.NewPoPBTC(delBabylonAddr, czDelBtcSk)
+	pop, err := bstypes.NewPoPBTC(delBabylonAddr, delBTCSK)
 	s.NoError(err)
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
@@ -520,7 +535,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		r,
 		s.T(),
 		net,
-		czDelBtcSk,
+		delBTCSK,
 		[]*btcec.PublicKey{babylonFp.BtcPk.MustToBTCPK(), consumerFp.BtcPk.MustToBTCPK()},
 		covenantBTCPKs,
 		covenantQuorum,
@@ -532,6 +547,8 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 	)
 
 	stakingMsgTx := testStakingInfo.StakingTx
+	stakingMsgTxBytes, err := bbn.SerializeBTCTx(stakingMsgTx)
+	s.NoError(err)
 	stakingTxHash := stakingMsgTx.TxHash().String()
 	stakingSlashingPathInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
 	s.NoError(err)
@@ -541,7 +558,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		stakingMsgTx,
 		datagen.StakingOutIdx,
 		stakingSlashingPathInfo.GetPkScriptPath(),
-		czDelBtcSk,
+		delBTCSK,
 	)
 	s.NoError(err)
 
@@ -557,7 +574,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 	for i := 0; i < initialization.BabylonBtcConfirmationPeriod; i++ {
 		nonValidatorNode.InsertNewEmptyBtcHeader(r)
 	}
-	stakingTxInfo := btcctypes.NewTransactionInfoFromSpvProof(blockWithStakingTx.SpvProof)
+	inclusionProof := bstypes.NewInclusionProofFromSpvProof(blockWithStakingTx.SpvProof)
 
 	// generate BTC undelegation stuff
 	stkTxHash := testStakingInfo.StakingTx.TxHash()
@@ -566,7 +583,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		r,
 		s.T(),
 		net,
-		czDelBtcSk,
+		delBTCSK,
 		[]*btcec.PublicKey{babylonFp.BtcPk.MustToBTCPK(), consumerFp.BtcPk.MustToBTCPK()},
 		covenantBTCPKs,
 		covenantQuorum,
@@ -577,15 +594,16 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 		params.SlashingRate,
 		unbondingTime,
 	)
-	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(czDelBtcSk)
+	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
 	s.NoError(err)
 
 	// submit the message for creating BTC delegation
-	delBTCPKs := []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(czDelBtcPk)}
+	delBtcPK := bbn.NewBIP340PubKeyFromBTCPK(delBTCPK)
 	nonValidatorNode.CreateBTCDelegation(
-		delBTCPKs,
+		*delBtcPK,
 		pop,
-		stakingTxInfo,
+		stakingMsgTxBytes,
+		inclusionProof,
 		[]*bbn.BIP340PubKey{babylonFp.BtcPk, consumerFp.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
@@ -604,7 +622,7 @@ func (s *BTCStakingIntegrationTestSuite) createBabylonDelegation(nonValidatorNod
 	nonValidatorNode.WaitForNextBlock()
 	nonValidatorNode.WaitForNextBlock()
 
-	return czDelBtcPk, stakingTxHash
+	return delBTCPK, stakingTxHash
 }
 
 // helper function: verify if the ibc channels are open and get the ibc client id of the CZ node

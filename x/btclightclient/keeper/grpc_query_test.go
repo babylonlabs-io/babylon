@@ -65,7 +65,7 @@ func FuzzHashesQuery(f *testing.F) {
 			blcKeeper,
 			ctx,
 			0,
-			datagen.RandomInt(r, 50)+100,
+			uint32(datagen.RandomInt(r, 50))+100,
 		)
 
 		// Get the headers map
@@ -74,17 +74,17 @@ func FuzzHashesQuery(f *testing.F) {
 
 		// + 1 is necessary to account for the base header
 		totalChainLength := chain.ChainLength() + 1
-		chainSize := uint64(totalChainLength)
-		limit := uint64(r.Int63n(int64(totalChainLength)) + 1)
+		chainSize := uint32(totalChainLength)
+		limit := uint32(r.Int31n(int32(totalChainLength))) + 1
 		// Generate a page request with a limit and a nil key
-		pagination = constructRequestWithLimit(r, limit)
+		pagination = constructRequestWithLimit(r, uint64(limit))
 		// Generate the initial query
 		hashesRequest = types.NewQueryHashesRequest(pagination)
 		// Construct a mapping from the hashes found to a boolean value
 		// Will be used later to evaluate whether all the hashes were returned
 		hashesFound := make(map[string]bool, 0)
 
-		for headersRetrieved := uint64(0); headersRetrieved < chainSize; headersRetrieved += limit {
+		for headersRetrieved := uint32(0); headersRetrieved < chainSize; headersRetrieved += limit {
 			resp, err = blcKeeper.Hashes(ctx, hashesRequest)
 			if err != nil {
 				t.Errorf("Valid request led to an error %s", err)
@@ -93,11 +93,11 @@ func FuzzHashesQuery(f *testing.F) {
 				t.Fatalf("Valid request led to a nil response")
 			}
 			// If we are on the last page the elements retrieved should be equal to the remaining ones
-			if headersRetrieved+limit >= chainSize && uint64(len(resp.Hashes)) != chainSize-headersRetrieved {
+			if headersRetrieved+uint32(limit) >= chainSize && uint32(len(resp.Hashes)) != chainSize-headersRetrieved {
 				t.Fatalf("On the last page expected %d elements but got %d", chainSize-headersRetrieved, len(resp.Hashes))
 			}
 			// Otherwise, the elements retrieved should be equal to the limit
-			if headersRetrieved+limit < chainSize && uint64(len(resp.Hashes)) != limit {
+			if headersRetrieved+uint32(limit) < chainSize && uint32(len(resp.Hashes)) != limit {
 				t.Fatalf("On an intermediate page expected %d elements but got %d", limit, len(resp.Hashes))
 			}
 
@@ -110,7 +110,7 @@ func FuzzHashesQuery(f *testing.F) {
 			}
 
 			// Construct the next page request
-			pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
+			pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, uint64(limit))
 			hashesRequest = types.NewQueryHashesRequest(pagination)
 		}
 
@@ -151,7 +151,7 @@ func FuzzContainsQuery(f *testing.F) {
 			blcKeeper,
 			ctx,
 			0,
-			datagen.RandomInt(r, 50)+100,
+			uint32(datagen.RandomInt(r, 50))+100,
 		)
 
 		// Test with a non-existent header
@@ -232,7 +232,7 @@ func FuzzMainChainQuery(f *testing.F) {
 			blcKeeper,
 			ctx,
 			0,
-			datagen.RandomInt(r, 50)+100,
+			uint32(datagen.RandomInt(r, 50))+100,
 		)
 
 		// Check whether the key being set to an element that does not exist leads to an error
@@ -261,12 +261,12 @@ func FuzzMainChainQuery(f *testing.F) {
 		// Index into the current element of mainchain that we are iterating
 		mcIdx := 0
 		// Generate a random limit
-		mcSize := uint64(len(mainchain))
-		limit := uint64(r.Int63n(int64(len(mainchain))) + 1)
+		mcSize := uint32(len(mainchain))
+		limit := uint32(r.Int31n(int32(len(mainchain))) + 1)
 
 		// 50% of the time, do a reverse request
 		// Generate a page request with a limit and a nil key
-		pagination = constructRequestWithLimit(r, limit)
+		pagination = constructRequestWithLimit(r, uint64(limit))
 		reverse := false
 		if datagen.OneInN(r, 2) {
 			reverse = true
@@ -274,7 +274,7 @@ func FuzzMainChainQuery(f *testing.F) {
 		}
 		// Generate the initial query
 		mainchainRequest = types.NewQueryMainChainRequest(pagination)
-		for headersRetrieved := uint64(0); headersRetrieved < mcSize; headersRetrieved += limit {
+		for headersRetrieved := uint32(0); headersRetrieved < mcSize; headersRetrieved += limit {
 			resp, err = blcKeeper.MainChain(ctx, mainchainRequest)
 			if err != nil {
 				t.Errorf("Valid request led to an error %s", err)
@@ -283,11 +283,11 @@ func FuzzMainChainQuery(f *testing.F) {
 				t.Fatalf("Valid request led to nil response")
 			}
 			// If we are on the last page the elements retrieved should be equal to the remaining ones
-			if headersRetrieved+limit >= mcSize && uint64(len(resp.Headers)) != mcSize-headersRetrieved {
+			if headersRetrieved+limit >= mcSize && uint32(len(resp.Headers)) != mcSize-headersRetrieved {
 				t.Fatalf("On the last page expected %d elements but got %d", mcSize-headersRetrieved, len(resp.Headers))
 			}
 			// Otherwise, the elements retrieved should be equal to the limit
-			if headersRetrieved+limit < mcSize && uint64(len(resp.Headers)) != limit {
+			if headersRetrieved+limit < mcSize && uint32(len(resp.Headers)) != limit {
 				t.Fatalf("On an intermediate page expected %d elements but got %d", limit, len(resp.Headers))
 			}
 
@@ -306,7 +306,7 @@ func FuzzMainChainQuery(f *testing.F) {
 			}
 
 			// Construct the next page request
-			pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
+			pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, uint64(limit))
 			if reverse {
 				pagination.Reverse = true
 			}
@@ -345,7 +345,7 @@ func FuzzTipQuery(f *testing.F) {
 			blcKeeper,
 			ctx,
 			0,
-			datagen.RandomInt(r, 50)+100,
+			uint32(datagen.RandomInt(r, 50))+100,
 		)
 
 		resp, err = blcKeeper.Tip(ctx, types.NewQueryTipRequest())
@@ -391,7 +391,7 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 			blcKeeper,
 			ctx,
 			0,
-			datagen.RandomInt(r, 50)+100,
+			uint32(datagen.RandomInt(r, 50))+100,
 		)
 
 		resp, err = blcKeeper.BaseHeader(ctx, types.NewQueryBaseHeaderRequest())
@@ -411,7 +411,7 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 func constructRequestWithKeyAndLimit(r *rand.Rand, key []byte, limit uint64) *query.PageRequest {
 	// If limit is 0, set one randomly
 	if limit == 0 {
-		limit = uint64(r.Int63() + 1) // Use Int63 instead of Uint64 to avoid overflows
+		limit = uint64(r.Int31n(100) + 1) // Use Int31 instead to avoid overflows
 	}
 	return &query.PageRequest{
 		Key:        key,

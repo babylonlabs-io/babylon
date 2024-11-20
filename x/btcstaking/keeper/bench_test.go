@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	bsmodule "github.com/babylonlabs-io/babylon/x/btcstaking"
@@ -24,8 +25,7 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 	defer ctrl.Finish()
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-	finalityKeeper := types.NewMockFinalityKeeper(ctrl)
-	h := NewHelper(b, btclcKeeper, btccKeeper, finalityKeeper)
+	h := testutil.NewHelper(b, btclcKeeper, btccKeeper)
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
 	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
@@ -54,19 +54,28 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 		for i := 0; i < numDelsUnderFP; i++ {
 			// generate and insert new BTC delegation
 			stakingValue := int64(2 * 10e8)
-			stakingTxHash, _, _, msgCreateBTCDel, actualDel, err := h.CreateDelegation(
+			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			h.NoError(err)
+			stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
 				r,
+				delSK,
 				[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
 				changeAddress.EncodeAddress(),
 				stakingValue,
 				1000,
+				0,
+				0,
+				true,
+				false,
 			)
 			h.NoError(err)
 			// retrieve BTC delegation in DB
 			btcDelMap[stakingTxHash] = append(btcDelMap[stakingTxHash], actualDel)
 			// generate and insert new covenant signatures
-			// after that, all BTC delegations will have voting power
 			h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+			// activate BTC delegation
+			// after that, all BTC delegations will have voting power
+			h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
 		}
 	}
 

@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"sort"
 
 	"cosmossdk.io/math"
 
@@ -40,28 +39,6 @@ func (fp *FinalityProvider) ValidateBasic() error {
 	}
 
 	return nil
-}
-
-// SortFinalityProvidersWithZeroedVotingPower sorts the finality providers slice,
-// from higher to lower voting power. In the following cases, the voting power
-// is treated as zero:
-// 1. IsTimestamped is false
-// 2. IsJailed is true
-func SortFinalityProvidersWithZeroedVotingPower(fps []*FinalityProviderDistInfo) {
-	sort.SliceStable(fps, func(i, j int) bool {
-		iShouldBeZeroed := fps[i].IsJailed || !fps[i].IsTimestamped
-		jShouldBeZeroed := fps[j].IsJailed || !fps[j].IsTimestamped
-
-		if iShouldBeZeroed && !jShouldBeZeroed {
-			return false
-		}
-
-		if !iShouldBeZeroed && jShouldBeZeroed {
-			return true
-		}
-
-		return fps[i].TotalVotingPower > fps[j].TotalVotingPower
-	})
 }
 
 func ExistsDup(btcPKs []bbn.BIP340PubKey) bool {
@@ -112,7 +89,7 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 		covSigsMap[covSigs.CovPk.MarshalHex()] = covSig
 	}
 
-	// sort covenant PKs in reverse reverse lexicographical order
+	// sort covenant PKs in reverse lexicographical order
 	orderedCovenantPKs := bbn.SortBIP340PKs(params.CovenantPks)
 
 	// get ordered list of covenant signatures w.r.t. the order of sorted covenant PKs
@@ -134,9 +111,9 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 // - CheckpointFinalizationTimeout
 func MinimumUnbondingTime(
 	stakingParams *Params,
-	checkpointingParams *btcctypes.Params) uint64 {
-	return math.Max[uint64](
-		uint64(stakingParams.MinUnbondingTimeBlocks),
+	checkpointingParams *btcctypes.Params) uint32 {
+	return math.Max[uint32](
+		stakingParams.MinUnbondingTimeBlocks,
 		checkpointingParams.CheckpointFinalizationTimeout,
 	)
 }

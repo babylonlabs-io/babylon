@@ -160,9 +160,6 @@ func (bc *baseConfigurer) RunHermesRelayerIBC() error {
 			if err := bc.runHermesIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
 				return err
 			}
-			if err := bc.createBabylonPhase2Channel(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
-				return err
-			}
 		}
 	}
 	return nil
@@ -175,9 +172,6 @@ func (bc *baseConfigurer) RunCosmosRelayerIBC() error {
 			if err := bc.runCosmosIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
 				return err
 			}
-			//if err := bc.createBabylonPhase2Channel(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
-			//	return err
-			//}
 		}
 	}
 	// Launches a relayer between chain A (babylond) and chain B (wasmd)
@@ -328,27 +322,6 @@ func (bc *baseConfigurer) runCosmosIBCRelayer(chainConfigA *chain.Config, chainC
 
 	bc.t.Logf("started Cosmos relayer container: %s", rlyResource.Container.ID)
 
-	return nil
-}
-
-func (bc *baseConfigurer) createBabylonPhase2Channel(chainA *chain.Config, chainB *chain.Config) error {
-	bc.t.Logf("connecting %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
-	require.Equal(bc.t, chainA.IBCConfig.Order, chainB.IBCConfig.Order)
-	require.Equal(bc.t, chainA.IBCConfig.Version, chainB.IBCConfig.Version)
-	cmd := []string{"hermes", "create", "channel",
-		"--a-chain", chainA.ChainMeta.Id, "--b-chain", chainB.ChainMeta.Id, // channel ID
-		"--a-port", chainA.IBCConfig.PortID, "--b-port", chainB.IBCConfig.PortID, // port
-		"--order", chainA.IBCConfig.Order.String(),
-		"--channel-version", chainA.IBCConfig.Version,
-		"--new-client-connection", "--yes",
-	}
-	_, _, err := bc.containerManager.ExecHermesCmd(bc.t, cmd, "SUCCESS")
-	if err != nil {
-		return err
-	}
-	bc.t.Logf("connected %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
-	bc.t.Logf("chainA's IBC config: %v", chainA.IBCConfig)
-	bc.t.Logf("chainB's IBC config: %v", chainB.IBCConfig)
 	return nil
 }
 

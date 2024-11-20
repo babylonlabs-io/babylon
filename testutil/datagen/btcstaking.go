@@ -79,7 +79,7 @@ func GenCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, fpAddr sdk
 	}, nil
 }
 
-// TODO: accomodate presign unbonding flow
+// TODO: accommodate presign unbonding flow
 func GenRandomBTCDelegation(
 	r *rand.Rand,
 	t *testing.T,
@@ -90,7 +90,8 @@ func GenRandomBTCDelegation(
 	covenantPks []*btcec.PublicKey,
 	covenantQuorum uint32,
 	slashingPkScript []byte,
-	startHeight, endHeight, totalSat uint64,
+	stakingTime, startHeight, endHeight uint32,
+	totalSat uint64,
 	slashingRate sdkmath.LegacyDec,
 	slashingChangeLockTime uint16,
 ) (*bstypes.BTCDelegation, error) {
@@ -113,7 +114,7 @@ func GenRandomBTCDelegation(
 		fpPKs,
 		covenantPks,
 		covenantQuorum,
-		uint16(endHeight-startHeight),
+		uint16(stakingTime),
 		int64(totalSat),
 		slashingPkScript,
 		slashingRate,
@@ -154,6 +155,7 @@ func GenRandomBTCDelegation(
 		BtcPk:            delBTCPK,
 		Pop:              pop,
 		FpBtcPkList:      fpBTCPKs,
+		StakingTime:      uint32(stakingTime),
 		StartHeight:      startHeight,
 		EndHeight:        endHeight,
 		TotalSat:         totalSat,

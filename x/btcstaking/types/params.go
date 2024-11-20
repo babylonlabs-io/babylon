@@ -5,8 +5,6 @@ import (
 	"math"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/btcstaking"
-	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -14,10 +12,14 @@ import (
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
+
+	"github.com/babylonlabs-io/babylon/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 const (
-	defaultMaxActiveFinalityProviders uint32 = 100
+	// TODO: need to determine a proper default value
+	defaultDelegationCreationBaseGasFee = 1000
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -69,12 +71,15 @@ func DefaultParams() Params {
 		MinSlashingTxFeeSat:  1000,
 		MinCommissionRate:    sdkmath.LegacyZeroDec(),
 		// The Default slashing rate is 0.1 i.e., 10% of the total staked BTC will be burned.
-		SlashingRate:               sdkmath.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
-		MaxActiveFinalityProviders: defaultMaxActiveFinalityProviders,
+		SlashingRate: sdkmath.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
 		// The default minimum unbonding time is 0, which effectively defaults to checkpoint
 		// finalization timeout.
-		MinUnbondingTimeBlocks: 0,
-		UnbondingFeeSat:        1000,
+		MinUnbondingTimeBlocks:       0,
+		UnbondingFeeSat:              1000,
+		DelegationCreationBaseGasFee: defaultDelegationCreationBaseGasFee,
+		// The default allow list expiration height is 0, which effectively disables the allow list.
+		// Allow list can only be enabled by upgrade
+		AllowListExpirationHeight: 0,
 	}
 }
 
@@ -101,15 +106,6 @@ func validateMinCommissionRate(rate sdkmath.LegacyDec) error {
 
 	if rate.GT(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("minimum commission rate cannot be greater than 100%%")
-	}
-	return nil
-}
-
-// validateMaxActiveFinalityProviders checks if the maximum number of
-// active finality providers is at least the default value
-func validateMaxActiveFinalityProviders(maxActiveFinalityProviders uint32) error {
-	if maxActiveFinalityProviders == 0 {
-		return fmt.Errorf("max finality providers must be positive")
 	}
 	return nil
 }
@@ -175,7 +171,7 @@ func (p Params) Validate() error {
 	if p.CovenantQuorum == 0 {
 		return fmt.Errorf("covenant quorum size has to be positive")
 	}
-	if p.CovenantQuorum*2 <= uint32(len(p.CovenantPks)) {
+	if int(p.CovenantQuorum)*2 <= len(p.CovenantPks) {
 		return fmt.Errorf("covenant quorum size has to be more than 1/2 of the covenant committee size")
 	}
 
@@ -200,10 +196,6 @@ func (p Params) Validate() error {
 
 	if !btcstaking.IsRateValid(p.SlashingRate) {
 		return btcstaking.ErrInvalidSlashingRate
-	}
-
-	if err := validateMaxActiveFinalityProviders(p.MaxActiveFinalityProviders); err != nil {
-		return err
 	}
 
 	if err := validateMinUnbondingTime(p.MinUnbondingTimeBlocks); err != nil {

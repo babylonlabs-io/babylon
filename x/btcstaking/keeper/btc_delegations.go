@@ -5,19 +5,24 @@ import (
 	"fmt"
 
 	"cosmossdk.io/store/prefix"
-	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 // AddBTCDelegation adds a BTC delegation post verification to the system, including
 // - indexing the given BTC delegation in the BTC delegator store,
 // - saving it under BTC delegation store, and
 // - emit events about this BTC delegation.
-func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) error {
+func (k Keeper) AddBTCDelegation(
+	ctx sdk.Context,
+	btcDel *types.BTCDelegation,
+	minUnbondingTime uint32,
+) error {
 	if err := btcDel.ValidateBasic(); err != nil {
 		return err
 	}
@@ -38,7 +43,7 @@ func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) e
 		}
 		// index staking tx hash of this BTC delegation
 		if err := btcDelIndex.Add(stakingTxHash); err != nil {
-			return types.ErrInvalidStakingTx.Wrapf(err.Error())
+			return types.ErrInvalidStakingTx.Wrapf("error adding staking tx hash to BTC delegator index: %s", err.Error())
 		}
 		// save the index
 		k.setBTCDelegatorDelegationIndex(ctx, &fpBTCPK, btcDel.BtcPk, btcDelIndex)
@@ -47,25 +52,36 @@ func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) e
 	// save this BTC delegation
 	k.setBTCDelegation(ctx, btcDel)
 
-	// notify subscriber
-	event := &types.EventBTCDelegationStateUpdate{
-		StakingTxHash: stakingTxHash.String(),
-		NewState:      types.BTCDelegationStatus_PENDING,
-	}
-	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new pending BTC delegation: %w", err))
+	if err := ctx.EventManager().EmitTypedEvents(types.NewBtcDelCreationEvent(
+		btcDel,
+	)); err != nil {
+		panic(fmt.Errorf("failed to emit events for the new pending BTC delegation: %w", err))
 	}
 
 	// NOTE: we don't need to record events for pending BTC delegations since these
 	// do not affect voting power distribution
+	// NOTE: we only insert unbonded event if the delegation already has inclusion proof
+	if btcDel.HasInclusionProof() {
+		if err := ctx.EventManager().EmitTypedEvent(types.NewInclusionProofEvent(
+			stakingTxHash.String(),
+			btcDel.StartHeight,
+			btcDel.EndHeight,
+			types.BTCDelegationStatus_PENDING,
+		)); err != nil {
+			panic(fmt.Errorf("failed to emit EventBTCDelegationInclusionProofReceived for the new pending BTC delegation: %w", err))
+		}
 
-	// record event that the BTC delegation will become unbonded at endHeight-w
-	unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
-		StakingTxHash: stakingTxHash.String(),
-		NewState:      types.BTCDelegationStatus_UNBONDED,
-	})
-	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-	k.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-wValue, unbondedEvent)
+		// record event that the BTC delegation will become unbonded at endHeight-w
+		// This event will be generated to subscribers as block event, when the
+		// btc light client block height will reach btcDel.EndHeight-wValue
+		unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+			StakingTxHash: stakingTxHash.String(),
+			NewState:      types.BTCDelegationStatus_UNBONDED,
+		})
+
+		// NOTE: we should have verified that EndHeight > btcTip.Height + max(w, min_unbonding_time)
+		k.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-minUnbondingTime, unbondedEvent)
+	}
 
 	return nil
 }
@@ -81,6 +97,8 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	parsedUnbondingSlashingAdaptorSignatures []asig.AdaptorSignature,
 	params *types.Params,
 ) {
+	hadQuorum := btcDel.HasCovenantQuorums(params.CovenantQuorum)
+
 	// All is fine add received signatures to the BTC delegation and BtcUndelegation
 	btcDel.AddCovenantSigs(
 		covPK,
@@ -92,36 +110,66 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	// set BTC delegation back to KV store
 	k.setBTCDelegation(ctx, btcDel)
 
+	if err := ctx.EventManager().EmitTypedEvent(types.NewCovenantSignatureReceivedEvent(
+		btcDel,
+		covPK,
+		unbondingTxSig,
+	)); err != nil {
+		panic(fmt.Errorf("failed to emit EventCovenantSignatureRecevied for the new active BTC delegation: %w", err))
+	}
+
 	// If reaching the covenant quorum after this msg, the BTC delegation becomes
 	// active. Then, record and emit this event
-	if len(btcDel.CovenantSigs) == int(params.CovenantQuorum) {
-		// notify subscriber
-		event := &types.EventBTCDelegationStateUpdate{
-			StakingTxHash: btcDel.MustGetStakingTxHash().String(),
-			NewState:      types.BTCDelegationStatus_ACTIVE,
-		}
-		if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-			panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
-		}
-
-		// record event that the BTC delegation becomes active at this height
-		activeEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
-		btcTip := k.btclcKeeper.GetTipInfo(ctx)
-		k.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
-
-		// get consumer ids of only non-Babylon finality providers
-		restakedFPConsumerIDs, err := k.restakedFPConsumerIDs(ctx, btcDel.FpBtcPkList)
-		if err != nil {
-			panic(fmt.Errorf("failed to get consumer ids for the restaked BTC delegation: %w", err))
-		}
-		consumerEvent, err := types.CreateActiveBTCDelegationEvent(btcDel)
-		if err != nil {
-			panic(fmt.Errorf("failed to create active BTC delegation event: %w", err))
-		}
-		for _, consumerID := range restakedFPConsumerIDs {
-			if err := k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
-				panic(fmt.Errorf("failed to add active BTC delegation event: %w", err))
+	// We only emit power distribution events, and external quorum events if it
+	// is the first time the quorum is reached
+	if !hadQuorum && btcDel.HasCovenantQuorums(params.CovenantQuorum) {
+		if btcDel.HasInclusionProof() {
+			quorumReachedEvent := types.NewCovenantQuorumReachedEvent(
+				btcDel,
+				types.BTCDelegationStatus_ACTIVE,
+			)
+			if err := ctx.EventManager().EmitTypedEvent(quorumReachedEvent); err != nil {
+				panic(fmt.Errorf("failed to emit emit for the new verified BTC delegation: %w", err))
 			}
+
+			// record event that the BTC delegation becomes active at this height
+			activeEvent := types.NewEventPowerDistUpdateWithBTCDel(
+				&types.EventBTCDelegationStateUpdate{
+					StakingTxHash: btcDel.MustGetStakingTxHash().String(),
+					NewState:      types.BTCDelegationStatus_ACTIVE,
+				},
+			)
+			btcTip := k.btclcKeeper.GetTipInfo(ctx)
+			k.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
+
+			// notify consumer chains about the active BTC delegation
+			k.notifyConsumersOnActiveBTCDel(ctx, btcDel)
+		} else {
+			quorumReachedEvent := types.NewCovenantQuorumReachedEvent(
+				btcDel,
+				types.BTCDelegationStatus_VERIFIED,
+			)
+
+			if err := ctx.EventManager().EmitTypedEvent(quorumReachedEvent); err != nil {
+				panic(fmt.Errorf("failed to emit emit for the new verified BTC delegation: %w", err))
+			}
+		}
+	}
+}
+
+func (k Keeper) notifyConsumersOnActiveBTCDel(ctx context.Context, btcDel *types.BTCDelegation) {
+	// get consumer ids of only non-Babylon finality providers
+	restakedFPConsumerIDs, err := k.restakedFPConsumerIDs(ctx, btcDel.FpBtcPkList)
+	if err != nil {
+		panic(fmt.Errorf("failed to get consumer ids for the restaked BTC delegation: %w", err))
+	}
+	consumerEvent, err := types.CreateActiveBTCDelegationEvent(btcDel)
+	if err != nil {
+		panic(fmt.Errorf("failed to create active BTC delegation event: %w", err))
+	}
+	for _, consumerID := range restakedFPConsumerIDs {
+		if err := k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
+			panic(fmt.Errorf("failed to add active BTC delegation event: %w", err))
 		}
 	}
 }
@@ -131,21 +179,21 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 func (k Keeper) btcUndelegate(
 	ctx sdk.Context,
 	btcDel *types.BTCDelegation,
-	unbondingTxSig *bbn.BIP340Signature,
+	u *types.DelegatorUnbondingInfo,
+	stakeSpendingTx []byte,
+	proof *types.InclusionProof,
 ) {
-	btcDel.BtcUndelegation.DelegatorUnbondingSig = unbondingTxSig
-
-	// set BTC delegation back to KV store
+	btcDel.BtcUndelegation.DelegatorUnbondingInfo = u
 	k.setBTCDelegation(ctx, btcDel)
+
+	if !btcDel.HasInclusionProof() {
+		return
+	}
 
 	// notify subscriber about this unbonded BTC delegation
 	event := &types.EventBTCDelegationStateUpdate{
 		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
 		NewState:      types.BTCDelegationStatus_UNBONDED,
-	}
-
-	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new unbonded BTC delegation: %w", err))
 	}
 
 	// record event that the BTC delegation becomes unbonded at this height
@@ -159,7 +207,7 @@ func (k Keeper) btcUndelegate(
 		panic(fmt.Errorf("failed to get consumer ids for the restaked BTC delegation: %w", err))
 	}
 	// create consumer event for unbonded BTC delegation and add it to the consumer's event store
-	consumerEvent, err := types.CreateUnbondedBTCDelegationEvent(btcDel)
+	consumerEvent, err := types.CreateUnbondedBTCDelegationEvent(btcDel, stakeSpendingTx, proof)
 	if err != nil {
 		panic(fmt.Errorf("failed to create unbonded BTC delegation event: %w", err))
 	}
@@ -195,8 +243,8 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 			}
 			restakedToBabylon = true
 			continue
-		} else if consumerID, err := k.bscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
-			fp, err := k.bscKeeper.GetConsumerFinalityProvider(ctx, consumerID, &fpBTCPK)
+		} else if consumerID, err := k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
+			fp, err := k.BscKeeper.GetConsumerFinalityProvider(ctx, consumerID, &fpBTCPK)
 			if err != nil {
 				return false, err
 			}
@@ -225,7 +273,7 @@ func (k Keeper) restakedFPConsumerIDs(ctx context.Context, fpBTCPKs []bbn.BIP340
 		fpBTCPK := fpBTCPKs[i]
 		if _, err := k.GetFinalityProvider(ctx, fpBTCPK); err == nil {
 			continue
-		} else if consumerID, err := k.bscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
+		} else if consumerID, err := k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
 			consumerIDMap[consumerID] = struct{}{}
 		} else {
 			return nil, types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPK.MarshalHex())

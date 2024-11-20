@@ -18,9 +18,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Sanity test checking mostly btcd code, that we can realy parse bitcoin transaction
+// Sanity test checking mostly btcd code, that we can really parse bitcoin transaction
 func TestBtcTransactionParsing(t *testing.T) {
-	// Few randomly chosed btc valid btc transactions
+	// Few randomly chosen btc valid btc transactions
 	tests := []struct {
 		bitcoinTransactionHex string
 		txHash                string

@@ -232,9 +232,13 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 		tx2 := datagen.CreatOpReturnTransaction(r, p2)
 		opReturn2 := datagen.CreateBlockWithTransaction(r, opReturn1.HeaderBytes.ToBlockHeader(), tx2)
 
-		n.InsertHeader(&opReturn1.HeaderBytes)
-		n.InsertHeader(&opReturn2.HeaderBytes)
-		n.InsertProofs(opReturn1.SpvProof, opReturn2.SpvProof)
+		n.SubmitRefundableTxWithAssertion(func() {
+			n.InsertHeader(&opReturn1.HeaderBytes)
+			n.InsertHeader(&opReturn2.HeaderBytes)
+		}, true)
+		n.SubmitRefundableTxWithAssertion(func() {
+			n.InsertProofs(opReturn1.SpvProof, opReturn2.SpvProof)
+		}, true)
 
 		n.WaitForCondition(func() bool {
 			ckpt, err := n.QueryRawCheckpoint(checkpoint.Ckpt.EpochNum)
@@ -258,8 +262,8 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 
 func (n *NodeConfig) StoreWasmCode(wasmFile, from string) {
 	n.LogActionF("storing wasm code from file %s", wasmFile)
-	cmd := []string{"babylond", "tx", "wasm", "store", wasmFile, fmt.Sprintf("--from=%s", from), "--gas=auto", "--gas-prices=1ubbn", "--gas-adjustment=1.3"}
-	n.LogActionF(strings.Join(cmd, " "))
+	cmd := []string{"babylond", "tx", "wasm", "store", wasmFile, fmt.Sprintf("--from=%s", from), "--gas=auto", "--gas-adjustment=1.3"}
+	n.LogActionF("Executing command: %s", strings.Join(cmd, " "))
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully stored")
@@ -267,8 +271,8 @@ func (n *NodeConfig) StoreWasmCode(wasmFile, from string) {
 
 func (n *NodeConfig) InstantiateWasmContract(codeId, initMsg, from string) {
 	n.LogActionF("instantiating wasm contract %s with %s", codeId, initMsg)
-	cmd := []string{"babylond", "tx", "wasm", "instantiate", codeId, initMsg, fmt.Sprintf("--from=%s", from), "--no-admin", "--label=contract", "--gas=auto", "--gas-prices=1ubbn", "--gas-adjustment=1.3"}
-	n.LogActionF(strings.Join(cmd, " "))
+	cmd := []string{"babylond", "tx", "wasm", "instantiate", codeId, initMsg, fmt.Sprintf("--from=%s", from), "--no-admin", "--label=contract", "--gas=auto", "--gas-adjustment=1.3"}
+	n.LogActionF("Executing command: %s", strings.Join(cmd, " "))
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully initialized")
@@ -277,7 +281,7 @@ func (n *NodeConfig) InstantiateWasmContract(codeId, initMsg, from string) {
 func (n *NodeConfig) WasmExecute(contract, execMsg, from string) {
 	n.LogActionF("executing %s on wasm contract %s from %s", execMsg, contract, from)
 	cmd := []string{"babylond", "tx", "wasm", "execute", contract, execMsg, fmt.Sprintf("--from=%s", from)}
-	n.LogActionF(strings.Join(cmd, " "))
+	n.LogActionF("Executing command: %s", strings.Join(cmd, " "))
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully executed")
@@ -287,7 +291,7 @@ func (n *NodeConfig) WasmExecute(contract, execMsg, from string) {
 func (n *NodeConfig) WithdrawReward(sType, from string) {
 	n.LogActionF("withdraw rewards of type %s for tx signer %s", sType, from)
 	cmd := []string{"babylond", "tx", "incentive", "withdraw-reward", sType, fmt.Sprintf("--from=%s", from)}
-	n.LogActionF(strings.Join(cmd, " "))
+	n.LogActionF("Executing command: %s", strings.Join(cmd, " "))
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully withdrawn")
@@ -443,4 +447,27 @@ func (n *NodeConfig) TxGovVote(from string, propID int, option govv1.VoteOption,
 	require.NoError(n.t, err)
 
 	n.LogActionF("successfully submitted vote %s to prop %d", option, propID)
+}
+
+// submitRefundableTxWithAssertion submits a refundable transaction,
+// and asserts that the tx fee is refunded
+func (n *NodeConfig) SubmitRefundableTxWithAssertion(
+	f func(),
+	shouldBeRefunded bool,
+) {
+	// balance before submitting the refundable tx
+	submitterBalanceBefore, err := n.QueryBalances(n.PublicAddress)
+	require.NoError(n.t, err)
+
+	// submit refundable tx
+	f()
+
+	// ensure the tx fee is refunded and the balance is not changed
+	submitterBalanceAfter, err := n.QueryBalances(n.PublicAddress)
+	require.NoError(n.t, err)
+	if shouldBeRefunded {
+		require.Equal(n.t, submitterBalanceBefore, submitterBalanceAfter)
+	} else {
+		require.True(n.t, submitterBalanceBefore.IsAllGT(submitterBalanceAfter))
+	}
 }

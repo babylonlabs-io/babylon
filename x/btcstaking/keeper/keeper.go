@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
 
 	"cosmossdk.io/log"
@@ -19,12 +20,13 @@ type (
 		cdc          codec.BinaryCodec
 		storeService corestoretypes.KVStoreService
 
-		btclcKeeper    types.BTCLightClientKeeper
-		btccKeeper     types.BtcCheckpointKeeper
-		FinalityKeeper types.FinalityKeeper
-		bscKeeper      types.BTCStkConsumerKeeper
+		btclcKeeper types.BTCLightClientKeeper
+		btccKeeper  types.BtcCheckpointKeeper
+		BscKeeper   types.BTCStkConsumerKeeper
+		iKeeper     types.IncentiveKeeper
 
-		hooks types.BtcStakingHooks
+		Schema                       collections.Schema
+		AllowedStakingTxHashesKeySet collections.KeySet[[]byte]
 
 		btcNet *chaincfg.Params
 		// the address capable of executing a MsgUpdateParams message. Typically, this
@@ -39,35 +41,38 @@ func NewKeeper(
 
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
-	finalityKeeper types.FinalityKeeper,
 	bscKeeper types.BTCStkConsumerKeeper,
+	iKeeper types.IncentiveKeeper,
 
 	btcNet *chaincfg.Params,
 	authority string,
 ) Keeper {
-	return Keeper{
+	sb := collections.NewSchemaBuilder(storeService)
+
+	k := Keeper{
 		cdc:          cdc,
 		storeService: storeService,
 
-		btclcKeeper:    btclcKeeper,
-		btccKeeper:     btccKeeper,
-		FinalityKeeper: finalityKeeper,
-		bscKeeper:      bscKeeper,
+		btclcKeeper: btclcKeeper,
+		btccKeeper:  btccKeeper,
+		BscKeeper:   bscKeeper,
+		iKeeper:     iKeeper,
 
-		hooks: nil,
-
+		AllowedStakingTxHashesKeySet: collections.NewKeySet(
+			sb,
+			types.AllowedStakingTxHashesKey,
+			"allowed_staking_tx_hashes_key_set",
+			collections.BytesKey,
+		),
 		btcNet:    btcNet,
 		authority: authority,
 	}
-}
 
-// SetHooks sets the BTC staking hooks
-func (k *Keeper) SetHooks(sh types.BtcStakingHooks) *Keeper {
-	if k.hooks != nil {
-		panic("cannot set BTC staking hooks twice")
+	schema, err := sb.Build()
+	if err != nil {
+		panic(err)
 	}
-
-	k.hooks = sh
+	k.Schema = schema
 
 	return k
 }
@@ -84,8 +89,6 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 func (k Keeper) BeginBlocker(ctx context.Context) error {
 	// index BTC height at the current height
 	k.IndexBTCHeight(ctx)
-	// update voting power distribution
-	k.UpdatePowerDist(ctx)
 
 	return nil
 }

@@ -7,11 +7,12 @@ import (
 
 // performance oriented metrics measuring the execution time of each message
 const (
-	MetricsKeyCreateFinalityProvider    = "create_finality_provider"
-	MetricsKeyCreateBTCDelegation       = "create_btc_delegation"
-	MetricsKeyAddCovenantSigs           = "add_covenant_sigs"
-	MetricsKeyBTCUndelegate             = "btc_undelegate"
-	MetricsKeySelectiveSlashingEvidence = "selective_slashing_evidence"
+	MetricsKeyCreateFinalityProvider         = "create_finality_provider"
+	MetricsKeyCreateBTCDelegation            = "create_btc_delegation"
+	MetricsKeyAddCovenantSigs                = "add_covenant_sigs"
+	MetricsKeyAddBTCDelegationInclusionProof = "add_btc_delegation_inclusion_proof"
+	MetricsKeyBTCUndelegate                  = "btc_undelegate"
+	MetricsKeySelectiveSlashingEvidence      = "selective_slashing_evidence"
 )
 
 // Metrics for monitoring finality providers and BTC delegations

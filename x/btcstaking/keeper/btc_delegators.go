@@ -77,7 +77,7 @@ func (k Keeper) GetFPBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubK
 	if k.HasFinalityProvider(ctx, *fpBTCPK) {
 		// Babylon finality provider
 		store = k.btcDelegatorFpStore(ctx, fpBTCPK)
-	} else if k.bscKeeper.HasConsumerFinalityProvider(ctx, fpBTCPK) {
+	} else if k.BscKeeper.HasConsumerFinalityProvider(ctx, fpBTCPK) {
 		// Consumer finality provider
 		store = k.btcConsumerDelegatorStore(ctx, fpBTCPK)
 	} else {

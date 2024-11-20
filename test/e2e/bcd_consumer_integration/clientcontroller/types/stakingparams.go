@@ -8,9 +8,9 @@ import (
 
 type StakingParams struct {
 	// K-deep
-	ComfirmationTimeBlocks uint64
+	ComfirmationTimeBlocks uint32
 	// W-deep
-	FinalizationTimeoutBlocks uint64
+	FinalizationTimeoutBlocks uint32
 
 	// Minimum amount of tx fee (quantified in Satoshi) needed for the pre-signed slashing tx
 	MinSlashingTxFeeSat btcutil.Amount
@@ -34,9 +34,9 @@ type StakingParams struct {
 // MinimumUnbondingTime returns the minimum unbonding time. It is the bigger value from:
 // - MinUnbondingTime
 // - CheckpointFinalizationTimeout
-func (p *StakingParams) MinimumUnbondingTime() uint64 {
-	return sdkmath.Max[uint64](
-		uint64(p.MinUnbondingTime),
+func (p *StakingParams) MinimumUnbondingTime() uint32 {
+	return sdkmath.Max[uint32](
+		p.MinUnbondingTime,
 		p.FinalizationTimeoutBlocks,
 	)
 }

@@ -14,7 +14,6 @@ import (
 
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -45,6 +44,7 @@ func GetTxCmd() *cobra.Command {
 		NewAddCovenantSigsCmd(),
 		NewBTCUndelegateCmd(),
 		NewSelectiveSlashingEvidenceCmd(),
+		NewAddBTCDelegationInclusionProofCmd(),
 	)
 
 	return cmd
@@ -163,7 +163,7 @@ func NewEditFinalityProviderCmd() *cobra.Command {
 			}
 
 			// get BTC PK
-			btcPK, err := hex.DecodeString(args[1])
+			btcPK, err := hex.DecodeString(args[0])
 			if err != nil {
 				return err
 			}
@@ -194,8 +194,8 @@ func NewEditFinalityProviderCmd() *cobra.Command {
 
 func NewCreateBTCDelegationCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-btc-delegation [btc_pk] [pop_hex] [staking_tx_info] [fp_pk1],[fp_pk2],... [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig]",
-		Args:  cobra.ExactArgs(13),
+		Use:   "create-btc-delegation [btc_pk] [pop_hex] [staking_tx] [inclusion_proof] [fp_pk1],[fp_pk2],... [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig]",
+		Args:  cobra.ExactArgs(14),
 		Short: "Create a BTC delegation",
 		Long: strings.TrimSpace(
 			`Create a BTC delegation.`, // TODO: example
@@ -219,14 +219,23 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				return err
 			}
 
-			// get staking tx info
-			stakingTxInfo, err := btcctypes.NewTransactionInfoFromHex(args[2])
+			// get staking tx bytes
+			stakingTx, err := hex.DecodeString(args[2])
 			if err != nil {
 				return err
 			}
 
+			var inclusionProof *types.InclusionProof
+			// inclusionProof can be nil if empty argument is provided
+			if len(args[3]) > 0 {
+				inclusionProof, err = types.NewInclusionProofFromHex(args[3])
+				if err != nil {
+					return err
+				}
+			}
+
 			// get finality provider PKs
-			fpPKStrs := strings.Split(args[3], ",")
+			fpPKStrs := strings.Split(args[4], ",")
 			fpPKs := make([]bbn.BIP340PubKey, len(fpPKStrs))
 			for i := range fpPKStrs {
 				fpPK, err := bbn.NewBIP340PubKeyFromHex(fpPKStrs[i])
@@ -237,53 +246,53 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 			}
 
 			// get staking time
-			stakingTime, err := parseLockTime(args[4])
+			stakingTime, err := parseLockTime(args[5])
 			if err != nil {
 				return err
 			}
 
-			stakingValue, err := parseBtcAmount(args[5])
+			stakingValue, err := parseBtcAmount(args[6])
 			if err != nil {
 				return err
 			}
 
 			// get slashing tx
-			slashingTx, err := types.NewBTCSlashingTxFromHex(args[6])
+			slashingTx, err := types.NewBTCSlashingTxFromHex(args[7])
 			if err != nil {
 				return err
 			}
 
 			// get delegator sig on slashing tx
-			delegatorSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[7])
+			delegatorSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[8])
 			if err != nil {
 				return err
 			}
 
 			// get unbonding tx
-			_, unbondingTxBytes, err := bbn.NewBTCTxFromHex(args[8])
+			_, unbondingTxBytes, err := bbn.NewBTCTxFromHex(args[9])
 			if err != nil {
 				return err
 			}
 
 			// get unbonding slashing tx
-			unbondingSlashingTx, err := types.NewBTCSlashingTxFromHex(args[9])
+			unbondingSlashingTx, err := types.NewBTCSlashingTxFromHex(args[10])
 			if err != nil {
 				return err
 			}
 
 			// get staking time
-			unbondingTime, err := parseLockTime(args[10])
+			unbondingTime, err := parseLockTime(args[11])
 			if err != nil {
 				return err
 			}
 
-			unbondingValue, err := parseBtcAmount(args[11])
+			unbondingValue, err := parseBtcAmount(args[12])
 			if err != nil {
 				return err
 			}
 
 			// get delegator sig on unbonding slashing tx
-			delegatorUnbondingSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[12])
+			delegatorUnbondingSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[13])
 			if err != nil {
 				return err
 			}
@@ -295,7 +304,8 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				Pop:                           pop,
 				StakingTime:                   uint32(stakingTime),
 				StakingValue:                  int64(stakingValue),
-				StakingTx:                     stakingTxInfo,
+				StakingTx:                     stakingTx,
+				StakingTxInclusionProof:       inclusionProof,
 				SlashingTx:                    slashingTx,
 				DelegatorSlashingSig:          delegatorSlashingSig,
 				UnbondingTx:                   unbondingTxBytes,
@@ -303,6 +313,43 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				UnbondingValue:                int64(unbondingValue),
 				UnbondingSlashingTx:           unbondingSlashingTx,
 				DelegatorUnbondingSlashingSig: delegatorUnbondingSlashingSig,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewAddBTCDelegationInclusionProofCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "add-btc-inclusion-proof [staking_tx_hash] [inclusion_proof]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Add a signature on the unbonding tx of a BTC delegation identified by a given staking tx hash. ",
+		Long: strings.TrimSpace(
+			`Add a signature on the unbonding tx of a BTC delegation identified by a given staking tx hash signed by the delegator. The signature proves that delegator wants to unbond, and Babylon will consider the BTC delegation unbonded.`, // TODO: example
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			// get staking tx hash
+			stakingTxHash := args[0]
+
+			inclusionProof, err := types.NewInclusionProofFromHex(args[1])
+			if err != nil {
+				return err
+			}
+
+			msg := types.MsgAddBTCDelegationInclusionProof{
+				Signer:                  clientCtx.FromAddress.String(),
+				StakingTxHash:           stakingTxHash,
+				StakingTxInclusionProof: inclusionProof,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
@@ -382,11 +429,11 @@ func NewAddCovenantSigsCmd() *cobra.Command {
 
 func NewBTCUndelegateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "btc-undelegate [staking_tx_hash] [unbonding_tx_sig]",
-		Args:  cobra.ExactArgs(2),
-		Short: "Add a signature on the unbonding tx of a BTC delegation identified by a given staking tx hash. ",
+		Use:   "btc-undelegate [staking_tx_hash] [spend_stake_tx] [spend_stake_tx_inclusion_proof]",
+		Args:  cobra.ExactArgs(3),
+		Short: "Add unbonding information about a BTC delegation identified by a given staking tx hash.",
 		Long: strings.TrimSpace(
-			`Add a signature on the unbonding tx of a BTC delegation identified by a given staking tx hash signed by the delegator. The signature proves that delegator wants to unbond, and Babylon will consider the BTC delegation unbonded.`, // TODO: example
+			`Add unbonding information about a BTC delegation identified by a given staking tx hash. Proof of inclusion proves stake was spent on BTC chain`, // TODO: example
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -397,16 +444,21 @@ func NewBTCUndelegateCmd() *cobra.Command {
 			// get staking tx hash
 			stakingTxHash := args[0]
 
-			// get delegator signature for unbonding tx
-			unbondingTxSig, err := bbn.NewBIP340SignatureFromHex(args[1])
+			_, bytes, err := bbn.NewBTCTxFromHex(args[1])
+			if err != nil {
+				return err
+			}
+
+			inclusionProof, err := types.NewInclusionProofFromHex(args[2])
 			if err != nil {
 				return err
 			}
 
 			msg := types.MsgBTCUndelegate{
-				Signer:         clientCtx.FromAddress.String(),
-				StakingTxHash:  stakingTxHash,
-				UnbondingTxSig: unbondingTxSig,
+				Signer:                        clientCtx.FromAddress.String(),
+				StakingTxHash:                 stakingTxHash,
+				StakeSpendingTx:               bytes,
+				StakeSpendingTxInclusionProof: inclusionProof,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

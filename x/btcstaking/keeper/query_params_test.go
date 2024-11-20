@@ -10,7 +10,7 @@ import (
 )
 
 func TestParamsQuery(t *testing.T) {
-	keeper, _, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
 	params := types.DefaultParams()
 
 	err := keeper.SetParams(ctx, params)
@@ -22,7 +22,7 @@ func TestParamsQuery(t *testing.T) {
 }
 
 func TestParamsByVersionQuery(t *testing.T) {
-	keeper, _, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
 
 	// starting with `1` as BTCStakingKeeper creates params with version 0
 	params1 := types.DefaultParams()
@@ -32,7 +32,7 @@ func TestParamsByVersionQuery(t *testing.T) {
 	params3 := types.DefaultParams()
 	params3.MinUnbondingTimeBlocks = 30000
 
-	// Check that after update we always return the latest version of params throuh Params query
+	// Check that after update we always return the latest version of params through Params query
 	err := keeper.SetParams(ctx, params1)
 	require.NoError(t, err)
 	response, err := keeper.Params(ctx, &types.QueryParamsRequest{})

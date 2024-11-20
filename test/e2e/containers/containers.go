@@ -69,7 +69,7 @@ func (m *Manager) ExecTxCmd(t *testing.T, chainId string, nodeName string, comma
 // namely adding flags `--chain-id={chain-id} -b=block --yes --keyring-backend=test "--log_format=json"`,
 // and searching for `successStr`
 func (m *Manager) ExecTxCmdWithSuccessString(t *testing.T, chainId string, containerName string, command []string, successStr string) (bytes.Buffer, bytes.Buffer, error) {
-	allTxArgs := []string{fmt.Sprintf("--chain-id=%s", chainId), "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
+	allTxArgs := []string{fmt.Sprintf("--chain-id=%s", chainId), "--gas-prices=0.002ubbn", "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
 	txCommand := append(command, allTxArgs...)
 	return m.ExecCmd(t, containerName, txCommand, successStr)
 }
@@ -132,6 +132,9 @@ func (m *Manager) ExecCmd(t *testing.T, fullContainerName string, command []stri
 			// Note that this does not match all errors.
 			// This only works if CLI outputs "Error" or "error"
 			// to stderr.
+			fmt.Printf("\n Debug: errOut %s", errBufString)
+			fmt.Printf("\n Debug: output %s", outBuf.String())
+
 			if (errRegex.MatchString(errBufString) || m.isDebugLogEnabled) && maxDebugLogTriesLeft > 0 {
 				t.Log("\nstderr:")
 				t.Log(errBufString)
@@ -246,7 +249,7 @@ func (m *Manager) RunRlyResource(chainAID, osmoARelayerNodeName, osmoAValMnemoni
 	return rlyResource, nil
 }
 
-// RunNodeResource runs a node container. Assings containerName to the container.
+// RunNodeResource runs a node container. Assigns containerName to the container.
 // Mounts the container on valConfigDir volume on the running host. Returns the container resource and error if any.
 func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir string) (*dockertest.Resource, error) {
 	pwd, err := os.Getwd()
@@ -257,6 +260,7 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 	runOpts := &dockertest.RunOptions{
 		Name:       containerName,
 		Repository: m.CurrentRepository,
+		Tag:        m.CurrentTag,
 		NetworkID:  m.network.Network.ID,
 		User:       "root:root",
 		Entrypoint: []string{

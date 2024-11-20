@@ -79,6 +79,13 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=babylon \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
+# Handles the inclusion of upgrade in binary
+ifeq (testnet,$(findstring testnet,$(BABYLON_BUILD_OPTIONS)))
+  BUILD_TAGS += testnet
+else
+  BUILD_TAGS += mainnet
+endif
+
 # DB backend selection
 ifeq (cleveldb,$(findstring cleveldb,$(BABYLON_BUILD_OPTIONS)))
   ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=cleveldb
@@ -131,9 +138,6 @@ help: ## Print this help message
 
 all: tools build lint test ## Run build, lint, and test
 
-# The below include contains the tools and runsim targets.
-# TODO: Fix following make file so it will work on linux
-# include contrib/devtools/Makefile
 
 ###############################################################################
 ###                                  Build                                  ###
@@ -153,7 +157,10 @@ $(BUILD_TARGETS): $(BUILDDIR)/
 $(BUILDDIR)/:
 	mkdir -p $(BUILDDIR)/
 
-.PHONY: build build-linux
+build-testnet:
+	BABYLON_BUILD_OPTIONS=testnet make build
+
+.PHONY: build build-linux build-testnet
 
 mockgen_cmd=go run github.com/golang/mock/mockgen@v1.6.0
 
@@ -278,8 +285,11 @@ test-e2e-cache-btc-timestamping-phase-2-rly:
 test-e2e-cache-btc-staking:
 	go test -run TestBTCStakingTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
-test-e2e-cache-upgrade-signet:
-	go test -run TestSoftwareUpgradeSignetLaunchTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+test-e2e-cache-btc-staking-pre-approval:
+	go test -run TestBTCStakingPreApprovalTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-cache-upgrade-v1:
+	go test -run TestSoftwareUpgradeV1TestnetTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
@@ -373,10 +383,11 @@ lint-go:
 
 .PHONY: lint lint-fix
 
-format: ## Run code formater
+format: ## Run code formatter
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -name '*.pb.go' | xargs gofmt -w -s
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -name '*.pb.go' | xargs misspell -w
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -name '*.pb.go' | xargs goimports -w -local github.com/babylonlabs-io/babylon
+
 .PHONY: format
 
 ###############################################################################
@@ -390,32 +401,6 @@ gosec-local: ## Run local security checkss
 	gosec -exclude-generated -exclude-dir=$(CURDIR)/testutil -exclude-dir=$(CURDIR)/test -conf $(CURDIR)/gosec.json $(CURDIR)/...
 
 .PHONY: gosec gosec-local
-
-###############################################################################
-###                                 Devdoc                                  ###
-###############################################################################
-
-DEVDOC_SAVE = docker commit `docker ps -a -n 1 -q` devdoc:local
-
-devdoc-init: ## Initialize documentation
-	$(DOCKER) run -it -v "$(CURDIR):/go/src/github.com/babylonlabs-io/babylon" -w "/go/src/github.com/babylonlabs-io/babylon" tendermint/devdoc echo
-	# TODO make this safer
-	$(call DEVDOC_SAVE)
-
-devdoc: ## Generate documentation
-	$(DOCKER) run -it -v "$(CURDIR):/go/src/github.com/babylonlabs-io/babylon" -w "/go/src/github.com/babylonlabs-io/babylon" devdoc:local bash
-
-devdoc-save: ## Save documentation changes
-	# TODO make this safer
-	$(call DEVDOC_SAVE)
-
-devdoc-clean: ## Clean up documentation artifacts
-	docker rmi -f $$(docker images -f "dangling=true" -q)
-
-devdoc-update: ## Update documentation tools
-	docker pull tendermint/devdoc
-
-.PHONY: devdoc devdoc-clean devdoc-init devdoc-save devdoc-update
 
 ###############################################################################
 ###                                Protobuf                                 ###
@@ -453,7 +438,6 @@ build-docker: ## Build babylond Docker image
 
 build-docker-e2e:
 	$(MAKE) -C contrib/images babylond-e2e
-	$(MAKE) -C contrib/images babylond-before-upgrade
 	$(MAKE) -C contrib/images e2e-init-chain
 	$(MAKE) -C contrib/images build-bcd-consumer-integration
 
@@ -463,53 +447,73 @@ build-cosmos-relayer-docker: ## Build Docker image for the Cosmos relayer
 clean-docker-network:
 	$(DOCKER) network rm ${dockerNetworkList}
 
-.PHONY: build-docker build-docker-e2e build-cosmos-relayer-docker clean-docker-network
-
-###############################################################################
-###                                Localnet                                 ###
-###############################################################################
-
-init-testnet-dirs: ## Initialize directories for testnet, creates a ./.testnets directory containing configuration for 4 Babylon nodes
-	# need to create the dir before hand so that the docker container has write access to the `.testnets` dir
-	# regardless of the user it uses
-	mkdir -p $(CURDIR)/.testnets && chmod o+w $(CURDIR)/.testnets
-	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/home/babylon/.testnets:Z babylonlabs-io/babylond \
-			  babylond testnet init-files --v 4 -o /home/babylon/.testnets \
-			  --starting-ip-address 192.168.10.2 --keyring-backend=test \
-			  --chain-id chain-test --btc-confirmation-depth 2 --additional-sender-account true \
-			  --epoch-interval 5
-
-localnet-start-nodes: init-testnet-dirs ## Boot the nodes described in the docker-compose.yml file
-	docker-compose up -d
-
-localnet-start: localnet-stop build-docker localnet-start-nodes ## Run with 4 nodes, a bitcoin instance, and a vigilante instance
-
-# localnet-stop will clean up and stop all localnets running
-localnet-stop:
-	rm -rf $(CURDIR)/.testnets
-	docker-compose down
-
 build-test-wasm: ## Build WASM bindings for testing
-	docker run --rm -v "$(WASM_DIR)":/code \
+	$(DOCKER) run --rm -v "$(WASM_DIR)":/code \
 		--mount type=volume,source="$(WASM_DIR_BASE_NAME)_cache",target=/code/target \
 		--mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
 		cosmwasm/rust-optimizer-arm64:0.12.13
-	docker run --rm -v "$(WASM_DIR)":/code \
+	$(DOCKER) run --rm -v "$(WASM_DIR)":/code \
 		--mount type=volume,source="$(WASM_DIR_BASE_NAME)_cache",target=/code/target \
 		--mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
 		cosmwasm/rust-optimizer:0.12.13
 
-.PHONY: \
-init-testnet-dirs \
-localnet-start-nodes \
-localnet-start \
-localnet-stop
+.PHONY: build-docker build-docker-e2e build-cosmos-relayer-docker clean-docker-network build-test-wasm
 
-.PHONY: diagrams
 diagrams: ## Generate diagrams for documentation
 	$(MAKE) -C client/docs/diagrams
 
-.PHONY: update-changelog
-update-changelog: ## Update the project changelog
-	@echo ./scripts/update_changelog.sh $(since_tag) $(upcoming_tag)
-	./scripts/update_changelog.sh $(since_tag) $(upcoming_tag)
+.PHONY: diagrams
+
+###############################################################################
+###                                Release                                  ###
+###############################################################################
+
+# The below is adapted from https://github.com/osmosis-labs/osmosis/blob/main/Makefile
+GO_VERSION := $(shell grep -E '^go [0-9]+\.[0-9]+' go.mod | awk '{print $$2}')
+GORELEASER_IMAGE := ghcr.io/goreleaser/goreleaser-cross:v$(GO_VERSION)
+COSMWASM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm/v2 | sed 's/.* //')
+
+.PHONY: release-dry-run release-snapshot release
+release-dry-run:
+	docker run \
+		--rm \
+		-e COSMWASM_VERSION=$(COSMWASM_VERSION) \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v `pwd`:/go/src/babylon \
+		-w /go/src/babylon \
+		$(GORELEASER_IMAGE) \
+		release \
+		--clean \
+		--skip=publish
+
+release-snapshot:
+	docker run \
+		--rm \
+		-e COSMWASM_VERSION=$(COSMWASM_VERSION) \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v `pwd`:/go/src/babylon \
+		-w /go/src/babylon \
+		$(GORELEASER_IMAGE) \
+		release \
+		--clean \
+		--snapshot \
+		--skip=publish,validate
+
+# NOTE: By default, the CI will handle the release process.
+# this is for manually releasing.
+ifdef GITHUB_TOKEN
+release:
+	docker run \
+		--rm \
+		-e GITHUB_TOKEN=$(GITHUB_TOKEN) \
+		-e COSMWASM_VERSION=$(COSMWASM_VERSION) \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v `pwd`:/go/src/babylon \
+		-w /go/src/babylon \
+		$(GORELEASER_IMAGE) \
+		release \
+		--clean
+else
+release:
+	@echo "Error: GITHUB_TOKEN is not defined. Please define it before running 'make release'."
+endif

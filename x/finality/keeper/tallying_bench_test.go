@@ -14,7 +14,6 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
@@ -32,7 +31,6 @@ func benchmarkTallyBlocks(b *testing.B, numFPs int) {
 	activatedHeight := uint64(1)
 	// add mock queries to GetBTCStakingActivatedHeight
 	ctx = datagen.WithCtxHeight(ctx, uint64(activatedHeight))
-	bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(activatedHeight, nil).AnyTimes()
 
 	// simulate fp set
 	fpSet := map[string]uint64{}
@@ -40,13 +38,11 @@ func benchmarkTallyBlocks(b *testing.B, numFPs int) {
 		votedFpPK, err := datagen.GenRandomBIP340PubKey(r)
 		require.NoError(b, err)
 		fpSet[votedFpPK.MarshalHex()] = 1
+		fKeeper.SetVotingPower(ctx, []byte(votedFpPK.MarshalHex()), activatedHeight, 1)
 	}
-	bsKeeper.EXPECT().GetVotingPowerTable(gomock.Any(), gomock.Any()).Return(fpSet).AnyTimes()
 
 	// TODO: test incentive
-	bsKeeper.EXPECT().GetVotingPowerDistCache(gomock.Any(), gomock.Any()).Return(bstypes.NewVotingPowerDistCache(), nil).AnyTimes()
 	iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any()).Return().AnyTimes()
-	bsKeeper.EXPECT().RemoveVotingPowerDistCache(gomock.Any(), gomock.Any()).Return().AnyTimes()
 	// Start the CPU profiler
 	cpuProfileFile := fmt.Sprintf("/tmp/finality-tally-blocks-%d-cpu.pprof", numFPs)
 	f, err := os.Create(cpuProfileFile)

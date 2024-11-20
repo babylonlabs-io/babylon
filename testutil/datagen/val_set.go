@@ -29,6 +29,10 @@ func GenRandomValidatorAddress() sdk.ValAddress {
 	return sdk.ValAddress(ed25519.GenPrivKey().PubKey().Address())
 }
 
+func GenRandomAddress() sdk.AccAddress {
+	return sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+}
+
 func GenRandomPubkeysAndSigs(n int, msg []byte) ([]bls12381.PublicKey, []bls12381.Signature) {
 	var blsPubkeys []bls12381.PublicKey
 	var blsSigs []bls12381.Signature

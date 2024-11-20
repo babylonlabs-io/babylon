@@ -67,10 +67,10 @@ message ActiveBTCDelegation {
   repeated string fp_btc_pk_list = 2;
   // start_height is the start BTC height of the BTC delegation
   // it is the start BTC height of the timelock
-  uint64 start_height = 3;
+  uint32 start_height = 3;
   // end_height is the end height of the BTC delegation
   // it is the end BTC height of the timelock - w
-  uint64 end_height = 4;
+  uint32 end_height = 4;
   // total_sat is the total amount of BTC stakes in this delegation
   // quantified in satoshi
   uint64 total_sat = 5;
@@ -144,6 +144,10 @@ message UnbondedBTCDelegation {
   // unbonding_tx_sig is the signature on the unbonding tx signed by the BTC delegator
   // It proves that the BTC delegator wants to unbond
   bytes unbonding_tx_sig = 2;
+  // stake_spending_tx is the stake spending tx
+  bytes stake_spending_tx = 3;
+  // proof is the inclusion proof for the stake spending tx
+  InclusionProof proof = 4;
 }
 
 // BTCStakingConsumerEvent defines the structure for storing BTC staking events

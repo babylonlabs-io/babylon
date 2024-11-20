@@ -8,6 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -19,7 +20,6 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
@@ -29,11 +29,12 @@ import (
 	blctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
 )
 
-// NodeConfig is a confiuration for the node supplied from the test runner
+// NodeConfig is a configuration for the node supplied from the test runner
 // to initialization scripts. It should be backwards compatible with earlier
 // versions. If this struct is updated, the change must be backported to earlier
 // branches that might be used for upgrade testing.
@@ -50,7 +51,7 @@ type NodeConfig struct {
 const (
 	// common
 	BabylonDenom        = "ubbn"
-	MinGasPrice         = "0.000"
+	MinGasPrice         = "0.002"
 	ValidatorWalletName = "val"
 	BabylonOpReturnTag  = "01020304"
 
@@ -58,11 +59,11 @@ const (
 	BabylonBtcFinalizationPeriod = 4
 	// chainA
 	ChainAID        = "bbn-test-a"
-	BabylonBalanceA = 200000000000
+	BabylonBalanceA = 3000000000000
 	StakeAmountA    = 100000000000
 	// chainB
 	ChainBID        = "bbn-test-b"
-	BabylonBalanceB = 500000000000
+	BabylonBalanceB = 5000000000000
 	StakeAmountB    = 400000000000
 
 	EpochDuration         = time.Second * 60
@@ -264,6 +265,11 @@ func initGenesis(
 		return err
 	}
 
+	err = updateModuleGenesis(appGenState, finalitytypes.ModuleName, &finalitytypes.GenesisState{}, updateFinalityGenesis)
+	if err != nil {
+		return err
+	}
+
 	bz, err := json.MarshalIndent(appGenState, "", "  ")
 	if err != nil {
 		return err
@@ -310,7 +316,7 @@ func updateGovGenesis(votingPeriod, expeditedVotingPeriod time.Duration) func(go
 }
 
 func updateMintGenesis(mintGenState *minttypes.GenesisState) {
-	mintGenState.Params.MintDenom = BabylonDenom
+	mintGenState.BondDenom = BabylonDenom
 }
 
 func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
@@ -350,6 +356,11 @@ func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.Genesi
 	btccheckpointGenState.Params.BtcConfirmationDepth = BabylonBtcConfirmationPeriod
 	btccheckpointGenState.Params.CheckpointFinalizationTimeout = BabylonBtcFinalizationPeriod
 	btccheckpointGenState.Params.CheckpointTag = BabylonOpReturnTag
+}
+
+func updateFinalityGenesis(finalityGenState *finalitytypes.GenesisState) {
+	finalityGenState.Params = finalitytypes.DefaultParams()
+	finalityGenState.Params.FinalityActivationHeight = 0
 }
 
 func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {

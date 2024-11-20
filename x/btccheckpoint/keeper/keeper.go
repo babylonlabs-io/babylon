@@ -2,12 +2,13 @@ package keeper
 
 import (
 	"context"
-	corestoretypes "cosmossdk.io/core/store"
-	storetypes "cosmossdk.io/store/types"
 	"encoding/hex"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/runtime"
 	"math/big"
+
+	corestoretypes "cosmossdk.io/core/store"
+	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store/prefix"
@@ -102,24 +103,24 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) GetBlockHeight(ctx context.Context, b *bbn.BTCHeaderHashBytes) (uint64, error) {
+func (k Keeper) GetBlockHeight(ctx context.Context, b *bbn.BTCHeaderHashBytes) (uint32, error) {
 	return k.btcLightClientKeeper.BlockHeight(ctx, b)
 }
 
-func (k Keeper) headerDepth(ctx context.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error) {
+func (k Keeper) headerDepth(ctx context.Context, headerHash *bbn.BTCHeaderHashBytes) (uint32, error) {
 	blockDepth, err := k.btcLightClientKeeper.MainChainDepth(ctx, headerHash)
 
 	if err != nil {
 		// one of blocks is not known to light client
 		return 0, submissionUnknownErr
 	}
-	return uint64(blockDepth), nil
+	return blockDepth, nil
 }
 
 // checkAncestors checks if there is at least one ancestor in previous epoch submissions
 // previous epoch submission is considered ancestor when:
 // - it is on main chain
-// - its lowest depth is larger than highest depth of new submission
+// - its lowest depth is larger than the highest depth of new submission
 func (k Keeper) checkAncestors(
 	ctx context.Context,
 	submisionEpoch uint64,
@@ -155,7 +156,7 @@ func (k Keeper) checkAncestors(
 
 		if err != nil {
 			// Previous epoch submission block either landed on fork or was pruned
-			// Submission will be pruned, so it should not be treated vaiable ancestor
+			// Submission will be pruned, so it should not be treated variable ancestor
 			continue
 		}
 
@@ -182,7 +183,7 @@ func (k Keeper) setBtcLightClientUpdated(ctx context.Context) {
 
 // BtcLightClientUpdated checks if btc light client was updated during block execution
 func (k Keeper) BtcLightClientUpdated(ctx context.Context) bool {
-	// transient store is cleared after each block execution, therfore if
+	// transient store is cleared after each block execution, therefore if
 	// BtcLightClientKey is set, it means setBtcLightClientUpdated was called during
 	// current block execution
 	store := sdk.UnwrapSDKContext(ctx).TransientStore(k.tsKey)
@@ -230,7 +231,7 @@ func (k Keeper) getEpochChanges(
 
 		if err != nil {
 			// submission no longer on main chain, mark it as to delete, and do not count
-			// it as vaiable submission
+			// it as variable submission
 			submissionsToDelete = append(submissionsToDelete, sk)
 			continue
 		}
@@ -405,8 +406,6 @@ func (k Keeper) checkCheckpoints(ctx context.Context) {
 		}
 
 		if currentEpoch.Status == types.Finalized {
-			// trigger incentive module to distribute rewards to submitters/reporters
-			k.rewardBTCTimestamping(ctx, epoch, &currentEpoch, epochChanges.BestSubmissionIdx)
 			// delete all submissions except best one
 			for i, sk := range currentEpoch.Keys {
 				if i != epochChanges.BestSubmissionIdx {

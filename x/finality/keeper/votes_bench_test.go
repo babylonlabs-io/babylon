@@ -40,8 +40,6 @@ func benchmarkAddFinalitySig(b *testing.B) {
 	// register the finality provider
 	bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
 	bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).AnyTimes()
-	// mock voting power
-	bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Any()).Return(uint64(1)).AnyTimes()
 
 	// commit enough public randomness
 	// TODO: generalise commit public randomness to allow arbitrary benchtime

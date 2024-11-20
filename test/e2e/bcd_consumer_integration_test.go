@@ -48,6 +48,8 @@ var (
 	randListInfo1                       *datagen.RandListInfo
 	// TODO: get consumer id from ibc client-state query
 	consumerID = "07-tendermint-0"
+
+	czDelBtcSk, czDelBtcPk, _ = datagen.GenRandomBTCKeyPair(r)
 )
 
 type BCDConsumerIntegrationTestSuite struct {
@@ -337,8 +339,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
 			return false
 		}
 		return fp != nil &&
-			fp.FinalityProvider.SlashedBtcHeight > 0 &&
-			fp.FinalityProvider.VotingPower == 0
+			fp.FinalityProvider.SlashedBtcHeight > 0
 	}, time.Minute, time.Second*5)
 
 	// query consumer finality providers
@@ -480,7 +481,6 @@ func (s *BCDConsumerIntegrationTestSuite) Test7ConsumerFPCascadedSlashing() {
 			return false
 		}
 		return fp != nil &&
-			fp.FinalityProvider.VotingPower == 0 && // as there is only 1 delegation which got slashed
 			fp.FinalityProvider.SlashedBtcHeight == 0 // should not be slashed
 	}, time.Minute, time.Second*5)
 
@@ -588,19 +588,31 @@ func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctype
 		s.Require().NotNil(tx)
 	}
 
-	// ensure the BTC delegation has covenant sigs now
-	activeDelsSet, err := s.babylonController.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex(), 1)
-	s.NoError(err)
-	s.Len(activeDelsSet, 1)
-	s.Len(activeDelsSet[0].Dels, 1)
-	s.True(activeDelsSet[0].Dels[0].Active)
+	// ensure the BTC delegation has covenant sigs and is active now
+	s.Eventually(func() bool {
+		activeDelsSet, err := s.babylonController.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex(), 1)
+		s.NoError(err)
+		if len(activeDelsSet) != 1 {
+			return false
+		}
+		if len(activeDelsSet[0].Dels) != 1 {
+			return false
+		}
+		if !activeDelsSet[0].Dels[0].Active {
+			return false
+		}
 
-	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
-	s.NoError(err)
-	s.NotNil(activeDels)
-	s.Len(activeDels.Dels, 1)
-	activeDel := activeDels.Dels[0]
-	s.True(activeDel.HasCovenantQuorums(1))
+		activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
+		s.NoError(err)
+		s.NotNil(activeDels)
+		if len(activeDels.Dels) != 1 {
+			return false
+		}
+		if !activeDels.Dels[0].HasCovenantQuorums(1) {
+			return false
+		}
+		return true
+	}, time.Minute, time.Second*5, "BTC staking was not activated within the expected time")
 
 	// ensure BTC staking is activated
 	s.Eventually(func() bool {
@@ -609,12 +621,8 @@ func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctype
 			s.T().Logf("Error querying activated height: %v", err)
 			return false
 		}
-		if activatedHeight == nil {
-			s.T().Log("Activated height is nil")
-			return false
-		}
-		return activatedHeight.Height > 0
-	}, time.Minute, time.Second*15, "BTC staking was not activated within the expected time")
+		return activatedHeight != nil && activatedHeight.Height > 0
+	}, time.Minute, time.Second*5)
 }
 
 // helper function: createBabylonDelegation creates a random BTC delegation restaking to Babylon and consumer finality providers
@@ -649,6 +657,8 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 	)
 
 	stakingMsgTx := testStakingInfo.StakingTx
+	stakingTxBytes, err := bbntypes.SerializeBTCTx(stakingMsgTx)
+	s.NoError(err)
 	stakingTxHash := stakingMsgTx.TxHash().String()
 	stakingSlashingPathInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
 	s.NoError(err)
@@ -685,10 +695,7 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 	}
 	_, err = s.babylonController.InsertBtcBlockHeaders(headers)
 	s.NoError(err)
-	btcHeader := blockWithStakingTx.HeaderBytes
-	serializedStakingTx, err := bbntypes.SerializeBTCTx(testStakingInfo.StakingTx)
-	s.NoError(err)
-	stakingTxInfo := btcctypes.NewTransactionInfo(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, serializedStakingTx, blockWithStakingTx.SpvProof.MerkleNodes)
+	inclusionProof := bstypes.NewInclusionProofFromSpvProof(blockWithStakingTx.SpvProof)
 
 	// generate BTC undelegation stuff
 	stkTxHash := testStakingInfo.StakingTx.TxHash()
@@ -712,26 +719,28 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 	s.NoError(err)
 
 	// submit the message for creating BTC delegation
-	delBTCPKs := []bbntypes.BIP340PubKey{*bbntypes.NewBIP340PubKeyFromBTCPK(czDelBtcPk)}
+	delBTCPK := *bbntypes.NewBIP340PubKeyFromBTCPK(czDelBtcPk)
 
 	serializedUnbondingTx, err := bbntypes.SerializeBTCTx(testUnbondingInfo.UnbondingTx)
 	s.NoError(err)
 
 	// submit the BTC delegation to Babylon
 	_, err = s.babylonController.CreateBTCDelegation(
-		&delBTCPKs[0],
+		&delBTCPK,
 		[]*btcec.PublicKey{babylonFp.BtcPk.MustToBTCPK(), consumerFp.BtcPk.MustToBTCPK()},
 		pop,
 		uint32(stakingTimeBlocks),
 		stakingValue,
-		stakingTxInfo,
+		stakingTxBytes,
+		inclusionProof,
 		testStakingInfo.SlashingTx,
 		delegatorSig,
 		serializedUnbondingTx,
 		uint32(unbondingTime),
 		unbondingValue,
 		testUnbondingInfo.SlashingTx,
-		delUnbondingSlashingSig)
+		delUnbondingSlashingSig,
+	)
 	s.NoError(err)
 
 	return czDelBtcPk, stakingTxHash

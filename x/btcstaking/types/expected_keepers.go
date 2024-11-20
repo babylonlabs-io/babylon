@@ -6,6 +6,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type BTCLightClientKeeper interface {
@@ -30,6 +31,6 @@ type BTCStkConsumerKeeper interface {
 	SetConsumerFinalityProvider(ctx context.Context, fp *FinalityProvider)
 }
 
-type BtcStakingHooks interface {
-	AfterFinalityProviderActivated(ctx context.Context, fpPk *bbn.BIP340PubKey) error
+type IncentiveKeeper interface {
+	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
 }

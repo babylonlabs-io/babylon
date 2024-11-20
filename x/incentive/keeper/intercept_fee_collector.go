@@ -2,11 +2,12 @@ package keeper
 
 import (
 	"context"
+
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 )
 
 // HandleCoinsInFeeCollector intercepts a portion of coins in fee collector, and distributes
-// them to BTC staking gauge and BTC timestamping gauge of the current height and epoch, respectively.
+// them to BTC staking gauge of the current height.
 // It is invoked upon every `BeginBlock`.
 // adapted from https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/x/distribution/keeper/allocation.go#L15-L26
 func (k Keeper) HandleCoinsInFeeCollector(ctx context.Context) {
@@ -31,10 +32,4 @@ func (k Keeper) HandleCoinsInFeeCollector(ctx context.Context) {
 	btcStakingPortion := params.BTCStakingPortion()
 	btcStakingReward := types.GetCoinsPortion(feesCollectedInt, btcStakingPortion)
 	k.accumulateBTCStakingReward(ctx, btcStakingReward)
-
-	// record BTC timestamping gauge for the current epoch, and transfer corresponding amount
-	// from fee collector account to incentive module account
-	btcTimestampingPortion := params.BTCTimestampingPortion()
-	btcTimestampingReward := types.GetCoinsPortion(feesCollectedInt, btcTimestampingPortion)
-	k.accumulateBTCTimestampingReward(ctx, btcTimestampingReward)
 }

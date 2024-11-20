@@ -13,6 +13,9 @@ func BlocksPerRetarget(params *chaincfg.Params) int32 {
 }
 
 func IsRetargetBlock(info *BTCHeaderInfo, params *chaincfg.Params) bool {
-	hI32 := int32(info.Height)
-	return hI32%BlocksPerRetarget(params) == 0
+	blocksPerRetarget := BlocksPerRetarget(params)
+	if blocksPerRetarget < 0 {
+		panic("Invalid blocks per retarget value")
+	}
+	return info.Height%uint32(blocksPerRetarget) == 0
 }

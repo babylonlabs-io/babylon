@@ -279,7 +279,8 @@ func (bc *BabylonController) CreateBTCDelegation(
 	pop *btcstakingtypes.ProofOfPossessionBTC,
 	stakingTime uint32,
 	stakingValue int64,
-	stakingTxInfo *btcctypes.TransactionInfo,
+	stakingTx []byte,
+	stakingTxInclusionProof *btcstakingtypes.InclusionProof,
 	slashingTx *btcstakingtypes.BTCSlashingTx,
 	delSlashingSig *bbntypes.BIP340Signature,
 	unbondingTx []byte,
@@ -299,7 +300,8 @@ func (bc *BabylonController) CreateBTCDelegation(
 		FpBtcPkList:                   fpBtcPks,
 		StakingTime:                   stakingTime,
 		StakingValue:                  stakingValue,
-		StakingTx:                     stakingTxInfo,
+		StakingTx:                     stakingTx,
+		StakingTxInclusionProof:       stakingTxInclusionProof,
 		SlashingTx:                    slashingTx,
 		DelegatorSlashingSig:          delSlashingSig,
 		UnbondingTx:                   unbondingTx,
@@ -471,7 +473,7 @@ func (bc *BabylonController) QueryFinalityProviderDelegations(fpBtcPkHex string,
 	return resp.BtcDelegatorDelegations, nil
 }
 
-func (bc *BabylonController) QueryActivatedHeight() (*btcstakingtypes.QueryActivatedHeightResponse, error) {
+func (bc *BabylonController) QueryActivatedHeight() (*finalitytypes.QueryActivatedHeightResponse, error) {
 	resp, err := bc.bbnClient.QueryClient.ActivatedHeight()
 	if err != nil {
 		return nil, fmt.Errorf("failed to query activated height: %w", err)

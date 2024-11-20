@@ -20,17 +20,20 @@ func FuzzRewardGaugesQuery(f *testing.F) {
 
 		// generate a list of random RewardGauge map and insert them to KVStore
 		// where in each map, key is stakeholder type and address is the reward gauge
-		rgMaps := []map[string]*types.RewardGauge{}
+		rgMaps := []map[string]*types.RewardGaugesResponse{}
 		sAddrList := []sdk.AccAddress{}
 		numRgMaps := datagen.RandomInt(r, 100)
 		for i := uint64(0); i < numRgMaps; i++ {
-			rgMap := map[string]*types.RewardGauge{}
+			rgMap := map[string]*types.RewardGaugesResponse{}
 			sAddr := datagen.GenRandomAccount().GetAddress()
 			sAddrList = append(sAddrList, sAddr)
 			for i := uint64(0); i <= datagen.RandomInt(r, 4); i++ {
 				sType := datagen.GenRandomStakeholderType(r)
 				rg := datagen.GenRandomRewardGauge(r)
-				rgMap[sType.String()] = rg
+				rgMap[sType.String()] = &types.RewardGaugesResponse{
+					Coins:          rg.Coins,
+					WithdrawnCoins: rg.WithdrawnCoins,
+				}
 
 				keeper.SetRewardGauge(ctx, sType, sAddr, rg)
 			}
@@ -80,46 +83,6 @@ func FuzzBTCStakingGaugeQuery(f *testing.F) {
 			resp, err := keeper.BTCStakingGauge(ctx, req)
 			require.NoError(t, err)
 			require.True(t, resp.Gauge.Coins.Equal(gaugeList[i].Coins))
-		}
-	})
-}
-
-func FuzzBTCTimestampingGaugeQuery(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-
-		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
-
-		// initialise the 1st gauge
-		epochList := []uint64{datagen.RandomInt(r, 1000) + 1}
-		gaugeList := []*types.Gauge{datagen.GenRandomGauge(r)}
-		keeper.SetBTCTimestampingGauge(ctx, epochList[0], gaugeList[0])
-
-		// generate a list of random gauges at random heights, then insert them to KVStore
-		numGauges := datagen.RandomInt(r, 100) + 1
-		for i := uint64(1); i < numGauges; i++ {
-			// increment a random number of epochs
-			epoch := epochList[i-1] + datagen.RandomInt(r, 1000) + 1
-			epochList = append(epochList, epoch)
-			gauge := datagen.GenRandomGauge(r)
-			gaugeList = append(gaugeList, gauge)
-			keeper.SetBTCTimestampingGauge(ctx, epoch, gauge)
-		}
-
-		// query existence and assert consistency
-		for i := range gaugeList {
-			req := &types.QueryBTCTimestampingGaugeRequest{
-				EpochNum: epochList[i],
-			}
-			resp, err := keeper.BTCTimestampingGauge(ctx, req)
-			require.NoError(t, err)
-			require.True(t, resp.Gauge.Coins.Equal(gaugeList[i].Coins),
-				"epoch: %d\nresp.Gauge.Coins: %s\ngaugeList[i].Coins: %s\n",
-				epochList[i],
-				resp.Gauge.Coins.Sort().String(),
-				gaugeList[i].Coins.Sort().String(),
-			)
 		}
 	})
 }

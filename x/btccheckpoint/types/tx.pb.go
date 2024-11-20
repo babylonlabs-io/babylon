@@ -30,7 +30,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgInsertBTCSpvProof defines resquest to insert a new checkpoint into the
+// MsgInsertBTCSpvProof defines request to insert a new checkpoint into the
 // store
 type MsgInsertBTCSpvProof struct {
 	Submitter string         `protobuf:"bytes,1,opt,name=submitter,proto3" json:"submitter,omitempty"`

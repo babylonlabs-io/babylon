@@ -14,7 +14,8 @@ import (
 
 func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
-	return nil
+
+	return k.BeginBlocker(ctx)
 }
 
 func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, error) {
@@ -22,7 +23,7 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 
 	// if the BTC staking protocol is activated, i.e., there exists a height where a finality provider
 	// has voting power, start indexing and tallying blocks
-	if _, err := k.BTCStakingKeeper.GetBTCStakingActivatedHeight(ctx); err == nil {
+	if k.IsFinalityActive(ctx) {
 		// index the current block
 		k.IndexBlock(ctx)
 		// tally all non-finalised blocks

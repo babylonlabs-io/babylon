@@ -10,6 +10,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/wasmbinding/bindings"
 	lcKeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
 	epochingkeeper "github.com/babylonlabs-io/babylon/x/epoching/keeper"
 	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -18,21 +19,24 @@ import (
 )
 
 type QueryPlugin struct {
-	epochingKeeper *epochingkeeper.Keeper
-	zcKeeper       *zckeeper.Keeper
-	lcKeeper       *lcKeeper.Keeper
+	epochingKeeper      *epochingkeeper.Keeper
+	checkpointingkeeper *checkpointingkeeper.Keeper
+	lcKeeper            *lcKeeper.Keeper
+	zcKeeper            *zckeeper.Keeper
 }
 
 // NewQueryPlugin returns a reference to a new QueryPlugin.
 func NewQueryPlugin(
 	ek *epochingkeeper.Keeper,
-	zcKeeper *zckeeper.Keeper,
+	ch *checkpointingkeeper.Keeper,
 	lcKeeper *lcKeeper.Keeper,
+	zcKeeper *zckeeper.Keeper,
 ) *QueryPlugin {
 	return &QueryPlugin{
-		epochingKeeper: ek,
-		zcKeeper:       zcKeeper,
-		lcKeeper:       lcKeeper,
+		epochingKeeper:      ek,
+		checkpointingkeeper: ch,
+		lcKeeper:            lcKeeper,
+		zcKeeper:            zcKeeper,
 	}
 }
 
@@ -57,8 +61,10 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 			}
 
 			return bz, nil
+
 		case contractQuery.LatestFinalizedEpochInfo != nil:
-			epoch := qp.zcKeeper.GetLastFinalizedEpoch(ctx)
+			epoch := qp.checkpointingkeeper.GetLastFinalizedEpoch(ctx)
+
 			epochInfo, err := qp.epochingKeeper.GetHistoricalEpoch(ctx, epoch)
 
 			if err != nil {
@@ -155,10 +161,11 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 
 func RegisterCustomPlugins(
 	ek *epochingkeeper.Keeper,
-	zcKeeper *zckeeper.Keeper,
+	ck *checkpointingkeeper.Keeper,
 	lcKeeper *lcKeeper.Keeper,
+	zcKeeper *zckeeper.Keeper,
 ) []wasmkeeper.Option {
-	wasmQueryPlugin := NewQueryPlugin(ek, zcKeeper, lcKeeper)
+	wasmQueryPlugin := NewQueryPlugin(ek, ck, lcKeeper, zcKeeper)
 
 	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
 		Custom: CustomQuerier(wasmQueryPlugin),
