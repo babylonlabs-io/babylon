@@ -598,7 +598,7 @@ func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctype
 			return false
 		}
 		if !activeDelsSet[0].Dels[0].Active {
-			s.T().Log("%s", activeDelsSet[0].Dels[0].String())
+			s.T().Log(activeDelsSet[0].Dels[0].String())
 			return false
 		}
 
