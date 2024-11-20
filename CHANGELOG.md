@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+* [#264](https://github.com/babylonlabs-io/babylon/pull/264) bump docker workflow 
+version to 0.10.2, fix some Dockerfile issues
 * [#258](https://github.com/babylonlabs-io/babylon/pull/258) fix go releaser
 and trigger by github action
 * [#252](https://github.com/babylonlabs-io/babylon/pull/252) Fix
