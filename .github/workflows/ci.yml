@@ -247,8 +247,6 @@ jobs:
       - name: Run BCD consumer integration test and dump logs
         run: |
           sudo make test-e2e-cache-bcd-consumer-integration
-          docker ps -a
-          for container in $(docker ps -a -q); do
-            echo "=== Logs for container $container ==="
-            docker logs $container
-          done
+      - name: Dump docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v2
