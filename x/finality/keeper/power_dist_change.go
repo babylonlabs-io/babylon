@@ -310,7 +310,8 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		}
 		newFP, err := k.BTCStakingKeeper.GetFinalityProvider(ctx, *fpBTCPK)
 		if err != nil {
-			panic(err) // only programming error
+			// this is a consumer FP, skip
+			continue
 		}
 		fpDistInfo := ftypes.NewFinalityProviderDistInfo(newFP)
 
