@@ -653,6 +653,8 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 	)
 
 	stakingMsgTx := testStakingInfo.StakingTx
+	stakingTxBytes, err := bbntypes.SerializeBTCTx(stakingMsgTx)
+	s.NoError(err)
 	stakingTxHash := stakingMsgTx.TxHash().String()
 	stakingSlashingPathInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
 	s.NoError(err)
@@ -689,10 +691,7 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 	}
 	_, err = s.babylonController.InsertBtcBlockHeaders(headers)
 	s.NoError(err)
-	btcHeader := blockWithStakingTx.HeaderBytes
-	serializedStakingTx, err := bbntypes.SerializeBTCTx(testStakingInfo.StakingTx)
-	s.NoError(err)
-	stakingTxInfo := btcctypes.NewTransactionInfo(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, serializedStakingTx, blockWithStakingTx.SpvProof.MerkleNodes)
+	inclusionProof := bstypes.NewInclusionProofFromSpvProof(blockWithStakingTx.SpvProof)
 
 	// generate BTC undelegation stuff
 	stkTxHash := testStakingInfo.StakingTx.TxHash()
@@ -728,14 +727,16 @@ func (s *BCDConsumerIntegrationTestSuite) createBabylonDelegation(babylonFp *bst
 		pop,
 		uint32(stakingTimeBlocks),
 		stakingValue,
-		stakingTxInfo,
+		stakingTxBytes,
+		inclusionProof,
 		testStakingInfo.SlashingTx,
 		delegatorSig,
 		serializedUnbondingTx,
 		uint32(unbondingTime),
 		unbondingValue,
 		testUnbondingInfo.SlashingTx,
-		delUnbondingSlashingSig)
+		delUnbondingSlashingSig,
+	)
 	s.NoError(err)
 
 	return czDelBtcPk, stakingTxHash
