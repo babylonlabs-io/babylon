@@ -19,6 +19,7 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	mintkeeper "github.com/babylonlabs-io/babylon/x/mint/keeper"
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -625,6 +626,10 @@ func (ak *AppKeepers) InitKeepers(
 	transferStack = transfer.NewIBCModule(ak.TransferKeeper)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, ak.IBCFeeKeeper)
 
+	var zoneConciergeStack porttypes.IBCModule
+	zoneConciergeStack = zoneconcierge.NewIBCModule(ak.ZoneConciergeKeeper)
+	zoneConciergeStack = ibcfee.NewIBCMiddleware(zoneConciergeStack, ak.IBCFeeKeeper)
+
 	var wasmStack porttypes.IBCModule
 	wasmStack = wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCFeeKeeper)
 	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, ak.IBCFeeKeeper)
@@ -632,6 +637,7 @@ func (ak *AppKeepers) InitKeepers(
 	// Create static IBC router, add ibc-transfer module route, then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
+		AddRoute(zctypes.ModuleName, zoneConciergeStack).
 		AddRoute(wasmtypes.ModuleName, wasmStack)
 
 	// Setting Router will finalize all routes by sealing router
