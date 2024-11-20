@@ -3,8 +3,9 @@ package keeper
 import (
 	"context"
 	"fmt"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -123,11 +124,11 @@ func (k Keeper) checkSubmissionStatus(ctx context.Context, info *types.Submissio
 	subDepth := info.SubmissionDepth()
 	if subDepth >= k.GetParams(ctx).CheckpointFinalizationTimeout {
 		return types.Finalized
-	} else if subDepth >= k.GetParams(ctx).BtcConfirmationDepth {
-		return types.Confirmed
-	} else {
-		return types.Submitted
 	}
+	if subDepth >= k.GetParams(ctx).BtcConfirmationDepth {
+		return types.Confirmed
+	}
+	return types.Submitted
 }
 
 func (k Keeper) GetSubmissionBtcInfo(ctx context.Context, sk types.SubmissionKey) (*types.SubmissionBtcInfo, error) {
