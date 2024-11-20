@@ -26,7 +26,6 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 // TODO emit some events for external consumers. Those should be probably emitted
 // at EndBlockerCallback
 func (ms msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBTCSpvProof) (*types.MsgInsertBTCSpvProofResponse, error) {
-
 	// Get the SDK wrapped context
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 

@@ -150,7 +150,6 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 				panic(fmt.Errorf("failed to emit emit for the new verified BTC delegation: %w", err))
 			}
 		}
-
 	}
 }
 

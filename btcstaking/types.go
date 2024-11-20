@@ -65,7 +65,6 @@ func DeriveTaprootAddress(
 	tapScriptTree *txscript.IndexedTapScriptTree,
 	internalPubKey *btcec.PublicKey,
 	net *chaincfg.Params) (*btcutil.AddressTaproot, error) {
-
 	tapScriptRootHash := tapScriptTree.RootNode.TapHash()
 
 	outputKey := txscript.ComputeTaprootOutputKey(
@@ -222,7 +221,6 @@ func SpendInfoFromRevealedScript(
 	revealedScript []byte,
 	internalKey *btcec.PublicKey,
 	tree *txscript.IndexedTapScriptTree) (*SpendInfo, error) {
-
 	revealedLeaf := txscript.NewBaseTapLeaf(revealedScript)
 	leafHash := revealedLeaf.TapHash()
 
