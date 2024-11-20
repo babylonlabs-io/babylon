@@ -489,22 +489,6 @@ func (ak *AppKeepers) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
-	epochingKeeper.SetMsgServiceRouter(bApp.MsgServiceRouter())
-	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
-	ak.EpochingKeeper = *epochingKeeper.SetHooks(
-		epochingtypes.NewMultiEpochingHooks(ak.MonitorKeeper.Hooks()),
-	)
-
-	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
-	ak.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
-		checkpointingtypes.NewMultiCheckpointingHooks(ak.EpochingKeeper.Hooks(), ak.MonitorKeeper.Hooks()),
-	)
-	ak.BtcCheckpointKeeper = btcCheckpointKeeper
-	ak.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
-		btclightclienttypes.NewMultiBTCLightClientHooks(ak.BtcCheckpointKeeper.Hooks()),
-	)
-
 	// set up BTC staking keeper
 	ak.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
 		appCodec,

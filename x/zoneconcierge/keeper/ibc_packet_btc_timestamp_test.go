@@ -75,7 +75,7 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		lastSegment := zcKeeper.GetLastSentSegment(ctx)
 		require.Len(t, lastSegment.BtcHeaders, int(wValue)+1)
 		for i := range lastSegment.BtcHeaders {
-			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, btcTip.Height-wValue+uint64(i)), lastSegment.BtcHeaders[i])
+			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, btcTip.Height-wValue+uint32(i)), lastSegment.BtcHeaders[i])
 		}
 
 		// finalise another epoch, during which a small number of new BTC headers are inserted
@@ -95,12 +95,12 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		lastSegment = zcKeeper.GetLastSentSegment(ctx)
 		require.Len(t, lastSegment.BtcHeaders, int(chainLength))
 		for i := range lastSegment.BtcHeaders {
-			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, uint64(i)+btcTip.Height+1), lastSegment.BtcHeaders[i])
+			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, uint32(i)+btcTip.Height+1), lastSegment.BtcHeaders[i])
 		}
 
 		// remember the current tip and the segment length
 		btcTip = btclcKeeper.GetTipInfo(ctx)
-		lastSegmentLength := uint64(len(lastSegment.BtcHeaders))
+		lastSegmentLength := uint32(len(lastSegment.BtcHeaders))
 
 		// finalise another epoch, during which a number of new BTC headers with reorg are inserted
 		epochNum += 1
@@ -130,7 +130,7 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 			require.Len(t, lastSegment.BtcHeaders, int(wValue)+1)
 			// assert the consistency of w+1 sent BTC headers
 			for i := range lastSegment.BtcHeaders {
-				expectedHeight := btcTip.Height - wValue + uint64(i)
+				expectedHeight := btcTip.Height - wValue + uint32(i)
 				require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, expectedHeight), lastSegment.BtcHeaders[i])
 			}
 		} else {
@@ -138,7 +138,7 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 			require.Len(t, lastSegment.BtcHeaders, int(forkChainLength))
 			// assert the consistency of the sent fork BTC headers
 			for i := range lastSegment.BtcHeaders {
-				expectedHeight := btcTip.Height - forkChainLength + 1 + uint64(i)
+				expectedHeight := btcTip.Height - forkChainLength + 1 + uint32(i)
 				require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, expectedHeight), lastSegment.BtcHeaders[i])
 			}
 		}
