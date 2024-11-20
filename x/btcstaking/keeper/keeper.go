@@ -28,7 +28,8 @@ type (
 		AllowedStakingTxHashesKeySet collections.KeySet[[]byte]
 
 		btcNet *chaincfg.Params
-		// the address capable of executing a MsgUpdateParams message. Typically, this
+		// the address capable of executing a MsgUpdateParams or
+		// MsgResumeFinalityProposal message. Typically, this
 		// should be the x/gov module account.
 		authority string
 	}

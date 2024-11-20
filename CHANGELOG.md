@@ -58,6 +58,8 @@ nil params response
 
 ### Improvements
 
+* [#242](https://github.com/babylonlabs-io/babylon/pull/242) Add
+ResumeFinalityProposal and handler
 * [#258](https://github.com/babylonlabs-io/babylon/pull/258) fix go releaser
 and trigger by github action
 * [#252](https://github.com/babylonlabs-io/babylon/pull/252) Fix

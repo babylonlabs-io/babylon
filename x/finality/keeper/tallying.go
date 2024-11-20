@@ -107,6 +107,7 @@ func tally(fpSet map[string]uint64, voterBTCPKs map[string]struct{}) bool {
 			votedPower += power
 		}
 	}
+
 	return votedPower*3 > totalPower*2
 }
 
