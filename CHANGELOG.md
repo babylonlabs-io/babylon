@@ -41,6 +41,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [278](https://github.com/babylonlabs-io/babylon/pull/278) Allow unbonding time to be min unbonding value
 
+### Improvements
+
+- [284](https://github.com/babylonlabs-io/babylon/pull/284) Update cosmos sdk math dependency
+
+
 ### Bug fixes
 
 - [#270](https://github.com/babylonlabs-io/babylon/pull/270) Validate there is only
