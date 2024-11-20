@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -70,26 +69,26 @@ func (s *BCDConsumerIntegrationTestSuite) SetupSuite() {
 }
 
 func (s *BCDConsumerIntegrationTestSuite) TearDownSuite() {
-	s.T().Log("tearing down e2e integration test suite...")
+	// s.T().Log("tearing down e2e integration test suite...")
 
-	// Get the current working directory
-	currentDir, err := os.Getwd()
-	if err != nil {
-		s.T().Errorf("Failed to get current working directory: %v", err)
-		return
-	}
+	// // Get the current working directory
+	// currentDir, err := os.Getwd()
+	// if err != nil {
+	// 	s.T().Errorf("Failed to get current working directory: %v", err)
+	// 	return
+	// }
 
-	// Construct the path to the Makefile directory
-	makefileDir := filepath.Join(currentDir, "../../contrib/images")
+	// // Construct the path to the Makefile directory
+	// makefileDir := filepath.Join(currentDir, "../../contrib/images")
 
-	// Run the stop-bcd-consumer-integration make target
-	cmd := exec.Command("make", "-C", makefileDir, "stop-bcd-consumer-integration")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		s.T().Errorf("Failed to run stop-bcd-consumer-integration: %v\nOutput: %s", err, output)
-	} else {
-		s.T().Log("Successfully stopped integration test")
-	}
+	// // Run the stop-bcd-consumer-integration make target
+	// cmd := exec.Command("make", "-C", makefileDir, "stop-bcd-consumer-integration")
+	// output, err := cmd.CombinedOutput()
+	// if err != nil {
+	// 	s.T().Errorf("Failed to run stop-bcd-consumer-integration: %v\nOutput: %s", err, output)
+	// } else {
+	// 	s.T().Log("Successfully stopped integration test")
+	// }
 }
 
 func (s *BCDConsumerIntegrationTestSuite) Test1ChainStartup() {
