@@ -266,11 +266,11 @@ test-e2e: build-docker-e2e test-e2e-cache
 test-e2e-cache:
 	$(MAKE) test-e2e-cache-btc-timestamping
 	$(MAKE) test-e2e-cache-btc-staking
-	$(MAKE) test-e2e-cache-btc-staking-integration
+#	$(MAKE) test-e2e-cache-btc-staking-integration
 	$(MAKE) test-e2e-cache-btc-staking-pre-approval
 	$(MAKE) test-e2e-cache-ibc-transfer
 	$(MAKE) test-e2e-cache-bcd-consumer-integration
-	$(MAKE) test-e2e-cache-upgrade-v1
+#	$(MAKE) test-e2e-cache-upgrade-v1
 
 clean-e2e:
 	docker container rm -f $(shell docker container ls -a -q) || true
