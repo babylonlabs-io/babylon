@@ -8,10 +8,8 @@ babylond: babylond-rmi
 	docker build --tag babylonlabs-io/babylond -f babylond/Dockerfile ${BABYLON_FULL_PATH}
 
 babylond-e2e:
-	docker buildx build --platform linux/arm64 \
-	  --tag babylonlabs-io/babylond:latest \
-	  -f babylond/Dockerfile ${BABYLON_FULL_PATH} \
-	  --build-arg BABYLON_BUILD_OPTIONS="testnet"
+	docker build --tag babylonlabs-io/babylond -f babylond/Dockerfile ${BABYLON_FULL_PATH} \
+		--build-arg BABYLON_BUILD_OPTIONS="testnet"
 
 babylond-rmi:
 	docker rmi babylonlabs-io/babylond --force 2>/dev/null; true
