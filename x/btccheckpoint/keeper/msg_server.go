@@ -110,6 +110,8 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("invalid parameter: %v", err)
 	}
 
+	// CheckpointFinalizationTimeout must remain immutable as changing it
+	// breaks a lot of system assumption
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if req.Params.CheckpointFinalizationTimeout != ms.k.GetParams(ctx).CheckpointFinalizationTimeout {
 		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("the checkpoint finalization timeout cannot be changed")
