@@ -263,11 +263,10 @@ endif
 
 test-e2e: build-docker-e2e test-e2e-cache
 
-
 test-e2e-cache:
 	go test -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
-test-e2e-cache-bcd-consumer-integration:
+test-e2e-cache-bcd-consumer-integration: start-bcd-consumer-integration
 	go test -run TestBCDConsumerIntegrationTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-ibc-transfer:
@@ -443,6 +442,9 @@ build-docker-e2e:
 
 build-cosmos-relayer-docker: ## Build Docker image for the Cosmos relayer
 	$(MAKE) -C contrib/images cosmos-relayer
+
+start-bcd-consumer-integration:
+	$(MAKE) -C contrib/images start-bcd-consumer-integration
 
 clean-docker-network:
 	$(DOCKER) network rm ${dockerNetworkList}
