@@ -42,7 +42,7 @@ func (k Keeper) IndexBTCConsumerDelegation(ctx sdk.Context, btcDel *bstypes.BTCD
 		}
 		// index staking tx hash of this BTC delegation
 		if err := btcDelIndex.Add(stakingTxHash); err != nil {
-			return bstypes.ErrInvalidStakingTx.Wrapf(err.Error())
+			return bstypes.ErrInvalidStakingTx.Wrapf("%s", err.Error())
 		}
 		// save the index
 		k.setBTCConsumerDelegatorDelegationIndex(ctx, &fpBTCPK, btcDel.BtcPk, btcDelIndex)

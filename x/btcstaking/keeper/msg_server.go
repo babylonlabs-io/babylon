@@ -354,6 +354,9 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
 	ms.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
 
+	// notify consumer chains about the active BTC delegation
+	ms.notifyConsumersOnActiveBTCDel(ctx, btcDel)
+
 	// record event that the BTC delegation will become unbonded at endHeight-w
 	unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 		StakingTxHash: req.StakingTxHash,
@@ -659,7 +662,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	// all good, add the signature to BTC delegation's undelegation
 	// and set back
-	ms.btcUndelegate(ctx, btcDel, delegatorUnbondingInfo)
+	ms.btcUndelegate(ctx, btcDel, delegatorUnbondingInfo, req.StakeSpendingTx, req.StakeSpendingTxInclusionProof)
 
 	// At this point, the unbonding signature is verified.
 	// Thus, we can safely consider this message as refundable
