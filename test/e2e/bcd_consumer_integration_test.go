@@ -587,33 +587,37 @@ func (s *BCDConsumerIntegrationTestSuite) submitCovenantSigs(consumerFp *bsctype
 		s.Require().NotNil(tx)
 	}
 
-	// ensure the BTC delegation has covenant sigs now
-	activeDelsSet, err := s.babylonController.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex(), 1)
-	s.NoError(err)
-	s.Len(activeDelsSet, 1)
-	s.Len(activeDelsSet[0].Dels, 1)
-	s.True(activeDelsSet[0].Dels[0].Active)
+	s.Eventually(func() bool {
+		// ensure the BTC delegation has covenant sigs now
+		activeDelsSet, err := s.babylonController.QueryFinalityProviderDelegations(consumerFp.BtcPk.MarshalHex(), 1)
+		s.NoError(err)
+		if len(activeDelsSet) != 1 {
+			return false
+		}
+		if len(activeDelsSet[0].Dels) != 1 {
+			return false
+		}
+		if !activeDelsSet[0].Dels[0].Active {
+			return false
+		}
 
-	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
-	s.NoError(err)
-	s.NotNil(activeDels)
-	s.Len(activeDels.Dels, 1)
-	activeDel := activeDels.Dels[0]
-	s.True(activeDel.HasCovenantQuorums(1))
+		activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
+		s.NoError(err)
+		s.NotNil(activeDels)
+		if len(activeDels.Dels) != 1 {
+			return false
+		}
+		if !activeDels.Dels[0].HasCovenantQuorums(1) {
+			return false
+		}
+		return true
+	}, time.Minute, time.Second*5, "BTC staking was not activated within the expected time")
 
 	// ensure BTC staking is activated
-	s.Eventually(func() bool {
-		activatedHeight, err := s.babylonController.QueryActivatedHeight()
-		if err != nil {
-			s.T().Logf("Error querying activated height: %v", err)
-			return false
-		}
-		if activatedHeight == nil {
-			s.T().Log("Activated height is nil")
-			return false
-		}
-		return activatedHeight.Height > 0
-	}, time.Minute, time.Second*15, "BTC staking was not activated within the expected time")
+	activatedHeight, err := s.babylonController.QueryActivatedHeight()
+	s.NoError(err)
+	s.NotNil(activatedHeight)
+	s.Positive(activatedHeight.Height)
 }
 
 // helper function: createBabylonDelegation creates a random BTC delegation restaking to Babylon and consumer finality providers
