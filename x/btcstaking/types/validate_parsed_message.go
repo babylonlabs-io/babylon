@@ -13,7 +13,6 @@ import (
 type ParamsValidationResult struct {
 	StakingOutputIdx   uint32
 	UnbondingOutputIdx uint32
-	MinUnbondingTime   uint32
 }
 
 // ValidateParsedMessageAgainstTheParams validates parsed message against parameters
@@ -201,6 +200,5 @@ func ValidateParsedMessageAgainstTheParams(
 	return &ParamsValidationResult{
 		StakingOutputIdx:   stakingOutputIdx,
 		UnbondingOutputIdx: 0, // unbonding output always has only 1 output
-		MinUnbondingTime:   parameters.MinUnbondingTimeBlocks,
 	}, nil
 }

@@ -894,9 +894,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, got)
-				require.Equal(t, params.MinUnbondingTimeBlocks, got.MinUnbondingTime)
 			}
-
 		})
 	}
 }

@@ -686,7 +686,7 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 	h.NoError(err)
 	/*
 		at this point, there should be 1 event that BTC delegation
-		will become expired at end height - w
+		will become expired at end height - min_unbonding_time
 	*/
 	// there exists no event at the current BTC tip
 	btcTip := btclcKeeper.GetTipInfo(h.Ctx)
