@@ -1,0 +1,3 @@
+[submodule "babylon-sdk"]
+	path = babylon-sdk
+	url = https://github.com/babylonlabs-io/babylon-sdk
