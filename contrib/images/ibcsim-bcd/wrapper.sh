@@ -7,12 +7,7 @@ CONSUMER_KEY="bcd-key"
 CONSUMER_CHAIN_ID="bcd-test"
 
 # 1. Create a bcd testnet with Babylon contract
-# CONSUMER_NAME="Test Consumer"
-# CONSUMER_DESCRIPTION="Test Consumer Description"
-# BABYLON_TAG="01020304"
-# BTC_STAKING_CODE_ID=2
-
-./setup-bcd.sh $CONSUMER_CHAIN_ID $CONSUMER_CONF 26657 26656 6060 9090 ./babylon_contract.wasm ./btc_staking.wasm '{
+./setup-bcd.sh $CONSUMER_CHAIN_ID $CONSUMER_CONF 26657 26656 6060 9090 ./babylon_contract.wasm ./btc_staking.wasm ./btc_finality.wasm '{
     "network": "regtest",
     "babylon_tag": "01020304",
     "btc_confirmation_depth": 1,
@@ -20,7 +15,8 @@ CONSUMER_CHAIN_ID="bcd-test"
     "notify_cosmos_zone": false,
     "btc_staking_code_id": 2,
     "consumer_name": "Test Consumer",
-    "consumer_description": "Test Consumer Description"
+    "consumer_description": "Test Consumer Description",
+    "btc_finality_code_id": 3
 }'
 
 sleep 10

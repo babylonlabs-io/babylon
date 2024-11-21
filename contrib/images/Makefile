@@ -30,7 +30,10 @@ cosmos-relayer-rmi:
 	docker rmi babylonlabs-io/cosmos-relayer 2>/dev/null; true
 
 build-ibcsim-bcd:
-	docker build --tag babylonlabs-io/ibcsim-bcd -f ibcsim-bcd/Dockerfile ${BABYLON_FULL_PATH}
+	cp -a $(BABYLON_FULL_PATH)/babylon-sdk/ $(BABYLON_FULL_PATH)/contrib/images/ibcsim-bcd
+	docker build --tag babylonlabs-io/ibcsim-bcd -f ibcsim-bcd/Dockerfile \
+		$(BABYLON_FULL_PATH)/contrib/images/ibcsim-bcd
+	rm -rf $(BABYLON_FULL_PATH)/contrib/images/ibcsim-bcd/babylon-sdk
 
 ibcsim-bcd-rmi:
 	docker rmi babylonlabs-io/ibcsim-bcd 2>/dev/null; true
