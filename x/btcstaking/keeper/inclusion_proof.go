@@ -10,9 +10,9 @@ import (
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
-type delegationTimeRangeInfo struct {
-	startHeight uint32
-	endHeight   uint32
+type DelegationTimeRangeInfo struct {
+	StartHeight uint32
+	EndHeight   uint32
 }
 
 // VerifyInclusionProofAndGetHeight verifies the inclusion proof of the given staking tx
@@ -22,9 +22,8 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 	stakingTx *btcutil.Tx,
 	confirmationDepth uint32,
 	stakingTime uint32,
-	minUnbondingTime uint32,
 	inclusionProof *types.ParsedProofOfInclusion,
-) (*delegationTimeRangeInfo, error) {
+) (*DelegationTimeRangeInfo, error) {
 	// Check:
 	// - timelock of staking tx
 	// - staking tx is k-deep
@@ -58,13 +57,16 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 	if stakingTxDepth < confirmationDepth {
 		return nil, types.ErrInvalidStakingTx.Wrapf("not k-deep: k=%d; depth=%d", confirmationDepth, stakingTxDepth)
 	}
+
 	// ensure staking tx's timelock has more than unbonding BTC blocks left
+	minUnbondingTime := k.GetParamsWithVersion(ctx).Params.MinUnbondingTimeBlocks
 	if btcTip.Height+minUnbondingTime >= endHeight {
-		return nil, types.ErrInvalidStakingTx.Wrapf("staking tx's timelock has no more than unbonding(=%d) blocks left", minUnbondingTime)
+		return nil, types.ErrInvalidStakingTx.
+			Wrapf("staking tx's timelock has no more than unbonding(=%d) blocks left", minUnbondingTime)
 	}
 
-	return &delegationTimeRangeInfo{
-		startHeight: startHeight,
-		endHeight:   endHeight,
+	return &DelegationTimeRangeInfo{
+		StartHeight: startHeight,
+		EndHeight:   endHeight,
 	}, nil
 }

@@ -71,7 +71,7 @@ func (k Keeper) AddBTCDelegation(
 			panic(fmt.Errorf("failed to emit EventBTCDelegationInclusionProofReceived for the new pending BTC delegation: %w", err))
 		}
 
-		// record event that the BTC delegation will become unbonded at endHeight-w
+		// record event that the BTC delegation will become unbonded at EndHeight-w
 		// This event will be generated to subscribers as block event, when the
 		// btc light client block height will reach btcDel.EndHeight-wValue
 		unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{

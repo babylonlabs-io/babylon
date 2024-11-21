@@ -215,14 +215,13 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 			btcutil.NewTx(parsedMsg.StakingTx.Transaction),
 			btccParams.BtcConfirmationDepth,
 			uint32(parsedMsg.StakingTime),
-			vp.Params.MinStakingTimeBlocks,
 			parsedMsg.StakingTxProofOfInclusion)
 		if err != nil {
 			return nil, fmt.Errorf("invalid inclusion proof: %w", err)
 		}
 
-		startHeight = timeInfo.startHeight
-		endHeight = timeInfo.endHeight
+		startHeight = timeInfo.StartHeight
+		endHeight = timeInfo.EndHeight
 	} else {
 		// NOTE: here we consume more gas to protect Babylon chain and covenant members against spamming
 		// i.e creating delegation that will never reach BTC
@@ -315,7 +314,6 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 		btcutil.NewTx(stakingTx),
 		btccParams.BtcConfirmationDepth,
 		btcDel.StakingTime,
-		minUnbondingTime,
 		parsedInclusionProof,
 	)
 
@@ -324,8 +322,8 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	}
 
 	// 6. set start height and end height and save it to db
-	btcDel.StartHeight = timeInfo.startHeight
-	btcDel.EndHeight = timeInfo.endHeight
+	btcDel.StartHeight = timeInfo.StartHeight
+	btcDel.EndHeight = timeInfo.EndHeight
 	ms.setBTCDelegation(ctx, btcDel)
 
 	// 7. emit events
@@ -351,7 +349,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
 	ms.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
 
-	// record event that the BTC delegation will become unbonded at endHeight-w
+	// record event that the BTC delegation will become unbonded at EndHeight-w
 	unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 		StakingTxHash: req.StakingTxHash,
 		NewState:      types.BTCDelegationStatus_UNBONDED,
