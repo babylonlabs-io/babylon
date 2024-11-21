@@ -30,19 +30,16 @@ func (ms msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertB
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	rawSubmission, err := types.ParseSubmission(req, ms.k.GetPowLimit(), ms.k.GetExpectedTag(sdkCtx))
-
 	if err != nil {
 		return nil, types.ErrInvalidCheckpointProof.Wrap(err.Error())
 	}
 
 	submissionKey := rawSubmission.GetSubmissionKey()
-
 	if ms.k.HasSubmission(sdkCtx, submissionKey) {
 		return nil, types.ErrDuplicatedSubmission
 	}
 
 	newSubmissionOldestHeaderDepth, err := ms.k.GetSubmissionBtcInfo(sdkCtx, submissionKey)
-
 	if err != nil {
 		return nil, types.ErrInvalidHeader.Wrap(err.Error())
 	}
@@ -54,7 +51,6 @@ func (ms msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertB
 	// - this is new checkpoint submission
 	// Verify if this is expected checkpoint
 	err = ms.k.checkpointingKeeper.VerifyCheckpoint(sdkCtx, rawSubmission.CheckpointData)
-
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +60,6 @@ func (ms msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertB
 	epochNum := rawSubmission.CheckpointData.Epoch
 
 	err = ms.k.checkAncestors(sdkCtx, epochNum, newSubmissionOldestHeaderDepth)
-
 	if err != nil {
 		return nil, err
 	}

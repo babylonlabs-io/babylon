@@ -11,6 +11,7 @@ import (
 )
 
 func TestKeeper_GetSubmissionBtcInfo(t *testing.T) {
+	t.Parallel()
 	type TxKeyDesc struct {
 		TxIdx uint32
 		Depth uint32
@@ -37,6 +38,7 @@ func TestKeeper_GetSubmissionBtcInfo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			r := rand.New(rand.NewSource(time.Now().Unix()))
 
 			k := InitTestKeepers(t)
@@ -77,7 +79,7 @@ func FuzzGetSubmissionBtcInfo(f *testing.F) {
 		if txidx1 == txidx2 {
 			// transaction indexes must be different to cover the case where transactions are
 			// in the same block.
-			txidx1 = txidx1 + 1
+			txidx1++
 		}
 
 		k := InitTestKeepers(t)

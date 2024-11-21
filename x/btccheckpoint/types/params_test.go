@@ -8,6 +8,7 @@ import (
 )
 
 func TestParamsEqual(t *testing.T) {
+	t.Parallel()
 	p1 := types.DefaultParams()
 	p2 := types.DefaultParams()
 

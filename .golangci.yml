@@ -37,9 +37,9 @@ linters:
     - misspell
     - nakedret
     - nilerr
-#    - nlreturn # Style wise I personally like this one, todo(lazar): unlax at somepoint, good practice
+    # - nlreturn # Style wise I personally like this one, todo(lazar): unlax at somepoint, good practice
     - noctx
-    - nonamedreturns
+    # - nonamedreturns # Named returns in functions help understand what they do
     - nosprintfhostport
     - paralleltest
     - reassign

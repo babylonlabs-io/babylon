@@ -8,6 +8,8 @@ import (
 )
 
 func TestGenesisState_Validate(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range []struct {
 		desc     string
 		genState *types.GenesisState
@@ -31,6 +33,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
 			err := tc.genState.Validate()
 			if tc.valid {
 				require.NoError(t, err)

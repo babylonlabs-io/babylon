@@ -2,7 +2,7 @@ package keeper_test
 
 import (
 	"bytes"
-	"context"
+	"errors"
 	"math"
 	"math/rand"
 	"testing"
@@ -23,7 +23,6 @@ import (
 
 type TestKeepers struct {
 	SdkCtx         sdk.Context
-	Ctx            context.Context
 	BTCLightClient *btcctypes.MockBTCLightClientKeeper
 	Checkpointing  *btcctypes.MockCheckpointingKeeper
 	Incentive      *btcctypes.MockIncentiveKeeper
@@ -51,12 +50,10 @@ func InitTestKeepers(
 	ic := btcctypes.NewMockIncentiveKeeper()
 
 	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, ic, chaincfg.SimNetParams.PowLimit)
-
 	srv := bkeeper.NewMsgServerImpl(*k)
 
 	return &TestKeepers{
 		SdkCtx:         ctx,
-		Ctx:            ctx,
 		BTCLightClient: lc,
 		Checkpointing:  cc,
 		Incentive:      ic,
@@ -66,7 +63,7 @@ func InitTestKeepers(
 }
 
 func (k *TestKeepers) insertProofMsg(msg *btcctypes.MsgInsertBTCSpvProof) (*btcctypes.MsgInsertBTCSpvProofResponse, error) {
-	return k.MsgSrv.InsertBTCSpvProof(k.Ctx, msg)
+	return k.MsgSrv.InsertBTCSpvProof(k.SdkCtx, msg)
 }
 
 func (k *TestKeepers) GetEpochData(e uint64) *btcctypes.EpochData {
@@ -82,6 +79,7 @@ func (k *TestKeepers) onTipChange() {
 }
 
 func TestUpdateParams(t *testing.T) {
+	t.Parallel()
 	tk := InitTestKeepers(t)
 
 	// Try to update params with a different checkpoint finalization timeout
@@ -92,7 +90,7 @@ func TestUpdateParams(t *testing.T) {
 		},
 	}
 
-	_, err := tk.MsgSrv.UpdateParams(tk.Ctx, msg)
+	_, err := tk.MsgSrv.UpdateParams(tk.SdkCtx, msg)
 	require.ErrorIs(t, err, govtypes.ErrInvalidProposalMsg,
 		"should not be able to change CheckpointFinalizationTimeout parameter")
 
@@ -103,6 +101,7 @@ func TestUpdateParams(t *testing.T) {
 }
 
 func TestRejectDuplicatedSubmission(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	epoch := uint64(1)
 	raw, _ := dg.RandomRawCheckpointDataForEpoch(r, epoch)
@@ -132,12 +131,13 @@ func TestRejectDuplicatedSubmission(t *testing.T) {
 		t.Fatalf("Submission should have failed due to duplicated submission")
 	}
 
-	if err != btcctypes.ErrDuplicatedSubmission {
+	if !errors.Is(err, btcctypes.ErrDuplicatedSubmission) {
 		t.Fatalf("Error should indicate duplicated submissions")
 	}
 }
 
 func TestRejectUnknownToBtcLightClient(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	epoch := uint64(1)
 	raw, _ := dg.RandomRawCheckpointDataForEpoch(r, epoch)
@@ -162,6 +162,7 @@ func TestRejectUnknownToBtcLightClient(t *testing.T) {
 }
 
 func TestSubmitValidNewCheckpoint(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	epoch := uint64(1)
 	raw, rawBtcCheckpoint := dg.RandomRawCheckpointDataForEpoch(r, epoch)
@@ -228,6 +229,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 }
 
 func TestRejectSubmissionWithoutSubmissionsForPreviousEpoch(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	epoch := uint64(2)
 	raw, _ := dg.RandomRawCheckpointDataForEpoch(r, epoch)
@@ -254,6 +256,7 @@ func TestRejectSubmissionWithoutSubmissionsForPreviousEpoch(t *testing.T) {
 }
 
 func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	epoch := uint64(1)
 	raw, _ := dg.RandomRawCheckpointDataForEpoch(r, epoch)
@@ -322,12 +325,11 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 	tk.BTCLightClient.SetDepth(epoch2Block2.HeaderBytes.Hash(), uint32(2))
 
 	_, err = tk.insertProofMsg(msg2)
-
 	require.NoErrorf(t, err, "Unexpected message processing error: %v", err)
-
 }
 
 func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	tk := InitTestKeepers(t)
 
@@ -412,6 +414,7 @@ func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 }
 
 func TestLeaveOnlyBestSubmissionWhenEpochFinalized(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	tk := InitTestKeepers(t)
 	defaultParams := btcctypes.DefaultParams()
@@ -461,6 +464,7 @@ func TestLeaveOnlyBestSubmissionWhenEpochFinalized(t *testing.T) {
 }
 
 func TestTxIdxShouldBreakTies(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	tk := InitTestKeepers(t)
 	defaultParams := btcctypes.DefaultParams()
@@ -510,6 +514,7 @@ func TestTxIdxShouldBreakTies(t *testing.T) {
 }
 
 func TestStateTransitionOfValidSubmission(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	epoch := uint64(1)
 	defaultParams := btcctypes.DefaultParams()
@@ -612,32 +617,32 @@ func FuzzConfirmAndDinalizeManyEpochs(f *testing.F) {
 
 				if epoch <= uint64(numFinalizedEpochs) {
 					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint32(finalizationDepth))
-					finalizationDepth = finalizationDepth - 1
+					finalizationDepth--
 					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), uint32(finalizationDepth))
 
 					// first submission is always deepest one, and second block is the most recent one
 					if j == 1 {
 						bestSumbissionInfos[epoch] = uint32(finalizationDepth)
 					}
-					finalizationDepth = finalizationDepth - 1
+					finalizationDepth--
 				} else if epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs) {
 					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), confirmationDepth)
-					confirmationDepth = confirmationDepth - 1
+					confirmationDepth--
 					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), confirmationDepth)
 					// first submission is always deepest one, and second block is the most recent one
 					if j == 1 {
 						bestSumbissionInfos[epoch] = confirmationDepth
 					}
-					confirmationDepth = confirmationDepth - 1
+					confirmationDepth--
 				} else {
 					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), sumbissionDepth)
-					sumbissionDepth = sumbissionDepth - 1
+					sumbissionDepth--
 					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), sumbissionDepth)
 					// first submission is always deepest one, and second block is the most recent one
 					if j == 1 {
 						bestSumbissionInfos[epoch] = sumbissionDepth
 					}
-					sumbissionDepth = sumbissionDepth - 1
+					sumbissionDepth--
 				}
 
 				_, err := tk.insertProofMsg(msg)

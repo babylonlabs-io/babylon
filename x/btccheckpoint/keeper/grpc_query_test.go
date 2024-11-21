@@ -14,6 +14,7 @@ import (
 )
 
 func TestBtcCheckpointInfo(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	epoch := uint64(1)
 	raw, btcRaw := dg.RandomRawCheckpointDataForEpoch(r, epoch)
@@ -40,7 +41,7 @@ func TestBtcCheckpointInfo(t *testing.T) {
 
 	// gather info for verifying with response.
 	btcInfo := resp.Info
-	blkHeight, err := tk.BTCLightClient.BlockHeight(tk.Ctx, nil)
+	blkHeight, err := tk.BTCLightClient.BlockHeight(tk.SdkCtx, nil)
 	require.NoErrorf(t, err, "Unexpected message processing error: %v", err)
 
 	rawSubmission, err := types.ParseSubmission(msg, tk.BTCCheckpoint.GetPowLimit(), tk.BTCCheckpoint.GetExpectedTag(tk.SdkCtx))

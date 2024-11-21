@@ -38,29 +38,29 @@ func NewMockIncentiveKeeper() *MockIncentiveKeeper {
 	return &MockIncentiveKeeper{}
 }
 
-func (mc *MockCheckpointingKeeper) ReturnError() {
-	mc.returnError = true
+func (m *MockCheckpointingKeeper) ReturnError() {
+	m.returnError = true
 }
 
-func (mc *MockCheckpointingKeeper) ReturnSuccess() {
-	mc.returnError = false
+func (m *MockCheckpointingKeeper) ReturnSuccess() {
+	m.returnError = false
 }
 
-func (mc *MockBTCLightClientKeeper) SetDepth(header *bbn.BTCHeaderHashBytes, dd uint32) {
-	mc.headers[header.String()] = dd
+func (m *MockBTCLightClientKeeper) SetDepth(header *bbn.BTCHeaderHashBytes, dd uint32) {
+	m.headers[header.String()] = dd
 }
 
-func (mc *MockBTCLightClientKeeper) DeleteHeader(header *bbn.BTCHeaderHashBytes) {
-	delete(mc.headers, header.String())
+func (m *MockBTCLightClientKeeper) DeleteHeader(header *bbn.BTCHeaderHashBytes) {
+	delete(m.headers, header.String())
 }
 
-func (mb MockBTCLightClientKeeper) BlockHeight(ctx context.Context, header *bbn.BTCHeaderHashBytes) (uint32, error) {
+func (m MockBTCLightClientKeeper) BlockHeight(ctx context.Context, header *bbn.BTCHeaderHashBytes) (uint32, error) {
 	// todo not used
 	return uint32(10), nil
 }
 
-func (ck MockBTCLightClientKeeper) MainChainDepth(ctx context.Context, headerBytes *bbn.BTCHeaderHashBytes) (uint32, error) {
-	depth, ok := ck.headers[headerBytes.String()]
+func (m MockBTCLightClientKeeper) MainChainDepth(ctx context.Context, headerBytes *bbn.BTCHeaderHashBytes) (uint32, error) {
+	depth, ok := m.headers[headerBytes.String()]
 	if ok {
 		return depth, nil
 	} else {
@@ -68,8 +68,8 @@ func (ck MockBTCLightClientKeeper) MainChainDepth(ctx context.Context, headerByt
 	}
 }
 
-func (ck MockCheckpointingKeeper) VerifyCheckpoint(ctx context.Context, checkpoint txformat.RawBtcCheckpoint) error {
-	if ck.returnError {
+func (m MockCheckpointingKeeper) VerifyCheckpoint(ctx context.Context, checkpoint txformat.RawBtcCheckpoint) error {
+	if m.returnError {
 		return errors.New("bad checkpoints")
 	}
 
@@ -78,26 +78,26 @@ func (ck MockCheckpointingKeeper) VerifyCheckpoint(ctx context.Context, checkpoi
 
 // SetCheckpointSubmitted Informs checkpointing module that checkpoint was
 // successfully submitted on btc chain.
-func (ck MockCheckpointingKeeper) SetCheckpointSubmitted(ctx context.Context, epoch uint64) {
+func (m MockCheckpointingKeeper) SetCheckpointSubmitted(ctx context.Context, epoch uint64) {
 }
 
 // SetCheckpointConfirmed Informs checkpointing module that checkpoint was
 // successfully submitted on btc chain, and it is at least K-deep on the main chain
-func (ck MockCheckpointingKeeper) SetCheckpointConfirmed(ctx context.Context, epoch uint64) {
+func (m MockCheckpointingKeeper) SetCheckpointConfirmed(ctx context.Context, epoch uint64) {
 }
 
 // SetCheckpointFinalized Informs checkpointing module that checkpoint was
 // successfully submitted on btc chain, and it is at least W-deep on the main chain
-func (ck MockCheckpointingKeeper) SetCheckpointFinalized(ctx context.Context, epoch uint64) {
+func (m MockCheckpointingKeeper) SetCheckpointFinalized(ctx context.Context, epoch uint64) {
 }
 
 // SetCheckpointForgotten Informs checkpointing module that was in submitted state
 // lost all its checkpoints and is checkpoint empty
-func (ck MockCheckpointingKeeper) SetCheckpointForgotten(ctx context.Context, epoch uint64) {
+func (m MockCheckpointingKeeper) SetCheckpointForgotten(ctx context.Context, epoch uint64) {
 }
 
-func (ik *MockIncentiveKeeper) RewardBTCTimestamping(ctx context.Context, epoch uint64, rewardDistInfo *RewardDistInfo) {
+func (m *MockIncentiveKeeper) RewardBTCTimestamping(ctx context.Context, epoch uint64, rewardDistInfo *RewardDistInfo) {
 }
 
-func (ik *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg sdk.Msg) {
+func (m *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg sdk.Msg) {
 }
