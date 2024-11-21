@@ -140,19 +140,19 @@ func (submission *SubmissionBtcInfo) SubmissionDepth() uint32 {
 	return submission.YoungestBlockDepth
 }
 
-func (newSubmission *SubmissionBtcInfo) IsBetterThan(currentBestSubmission *SubmissionBtcInfo) bool {
-	if newSubmission.SubmissionDepth() > currentBestSubmission.SubmissionDepth() {
+func (submission *SubmissionBtcInfo) IsBetterThan(currentBestSubmission *SubmissionBtcInfo) bool {
+	if submission.SubmissionDepth() > currentBestSubmission.SubmissionDepth() {
 		return true
 	}
 
-	if newSubmission.SubmissionDepth() < currentBestSubmission.SubmissionDepth() {
+	if submission.SubmissionDepth() < currentBestSubmission.SubmissionDepth() {
 		return false
 	}
 
 	// at this point we know that both submissions youngest part happens to be in
 	// the same block. To resolve the tie we need to take into account index of
 	// latest transaction of the submissions
-	return newSubmission.YoungestBlockLowestTxIdx < currentBestSubmission.YoungestBlockLowestTxIdx
+	return submission.YoungestBlockLowestTxIdx < currentBestSubmission.YoungestBlockLowestTxIdx
 }
 
 func NewTransactionInfo(txKey *TransactionKey, txBytes []byte, proof []byte) *TransactionInfo {
