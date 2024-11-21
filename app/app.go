@@ -23,8 +23,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/babylonlabs-io/babylon/x/mint"
-	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -91,13 +89,15 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
-	"github.com/babylonlabs-io/babylon/app/ante"
-	"github.com/babylonlabs-io/babylon/app/upgrades"
-	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/mint"
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 
+	"github.com/babylonlabs-io/babylon/app/ante"
 	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/app/upgrades"
 	"github.com/babylonlabs-io/babylon/client/docs"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btccheckpoint"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	"github.com/babylonlabs-io/babylon/x/btclightclient"
@@ -346,7 +346,7 @@ func NewBabylonApp(
 	app.ModuleManager.SetOrderBeginBlockers(
 		upgradetypes.ModuleName, capabilitytypes.ModuleName,
 		// NOTE: incentive module's BeginBlock has to be after mint but before distribution
-		// so that it can intercept a part of new inflation to reward BTC staking/timestamping stakeholders
+		// so that it can intercept a part of new inflation to reward BTC staking stakeholders
 		minttypes.ModuleName, incentivetypes.ModuleName, distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName, stakingtypes.ModuleName,

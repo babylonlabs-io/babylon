@@ -1,11 +1,13 @@
 package v1
 
 type UpgradeDataString struct {
-	BtcStakingParamStr    string
-	FinalityParamStr      string
-	CosmWasmParamStr      string
-	NewBtcHeadersStr      string
-	TokensDistributionStr string
+	BtcStakingParamStr        string
+	FinalityParamStr          string
+	IncentiveParamStr         string
+	CosmWasmParamStr          string
+	NewBtcHeadersStr          string
+	TokensDistributionStr     string
+	AllowedStakingTxHashesStr string
 }
 
 type DataTokenDistribution struct {
@@ -14,4 +16,8 @@ type DataTokenDistribution struct {
 		AddressReceiver string `json:"address_receiver"`
 		Amount          int64  `json:"amount"`
 	} `json:"token_distribution"`
+}
+
+type AllowedStakingTransactionHashes struct {
+	TxHashes []string `json:"tx_hashes"`
 }

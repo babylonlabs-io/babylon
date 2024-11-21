@@ -19,7 +19,7 @@ const (
 var (
 	ParamsKey                 = []byte{0x01}             // key prefix for the parameters
 	BTCStakingGaugeKey        = []byte{0x02}             // key prefix for BTC staking gauge at each height
-	BTCTimestampingGaugeKey   = []byte{0x03}             // key prefix for BTC timestamping gauge at each height
+	ReservedKey               = []byte{0x03}             // reserved //nolint:unused
 	RewardGaugeKey            = []byte{0x04}             // key prefix for reward gauge for a given stakeholder in a given type
 	RefundableMsgKeySetPrefix = collections.NewPrefix(5) // key prefix for refundable msg key set
 )

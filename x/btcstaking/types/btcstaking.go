@@ -3,13 +3,10 @@ package types
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 )
 
 func (fp *FinalityProvider) IsSlashed() bool {
@@ -104,16 +101,4 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 	}
 
 	return orderedCovSigs, nil
-}
-
-// MinimumUnbondingTime returns the minimum unbonding time. It is the bigger value from:
-// - MinUnbondingTime
-// - CheckpointFinalizationTimeout
-func MinimumUnbondingTime(
-	stakingParams *Params,
-	checkpointingParams *btcctypes.Params) uint32 {
-	return math.Max[uint32](
-		stakingParams.MinUnbondingTimeBlocks,
-		checkpointingParams.CheckpointFinalizationTimeout,
-	)
 }

@@ -61,6 +61,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 					0,
 					0,
 					true,
+					false,
 				)
 				h.NoError(err)
 				h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
@@ -216,6 +217,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 					0,
 					0,
 					true,
+					false,
 				)
 				h.NoError(err)
 				h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
@@ -232,7 +234,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		// assert voting power distribution cache is correct
 		dc := h.FinalityKeeper.GetVotingPowerDistCache(h.Ctx, babylonHeight)
 		require.NotNil(t, dc)
-		require.Equal(t, dc.TotalBondedSat, numFpsWithVotingPower*numBTCDels*stakingValue, dc.String())
+		require.Equal(t, dc.TotalVotingPower, numFpsWithVotingPower*numBTCDels*stakingValue, dc.String())
 		activeFPs := dc.GetActiveFinalityProviderSet()
 		for _, fpDistInfo := range activeFPs {
 			require.Equal(t, fpDistInfo.TotalBondedSat, numBTCDels*stakingValue)
@@ -287,6 +289,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 				0,
 				0,
 				true,
+				false,
 			)
 			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
@@ -403,6 +406,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 				0,
 				0,
 				true,
+				false,
 			)
 			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
@@ -459,6 +463,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 				0,
 				0,
 				true,
+				false,
 			)
 			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
@@ -493,6 +498,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 				0,
 				0,
 				true,
+				false,
 			)
 			h.NoError(err)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)

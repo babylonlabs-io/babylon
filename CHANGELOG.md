@@ -37,10 +37,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### State Breaking
+
+- [278](https://github.com/babylonlabs-io/babylon/pull/278) Allow unbonding time to be min unbonding value
+
+### Improvements
+- [#264](https://github.com/babylonlabs-io/babylon/pull/264) bump docker workflow 
+version to 0.10.2, fix some Dockerfile issues
+- [#284](https://github.com/babylonlabs-io/babylon/pull/284) Update cosmos sdk math dependency
+- [#285](https://github.com/babylonlabs-io/babylon/pull/285) Update cometbft dependency
+version
+
+### Bug fixes
+
+- [#270](https://github.com/babylonlabs-io/babylon/pull/270) Validate there is only
+one finality provider key in the staking request
+- [#270](https://github.com/babylonlabs-io/babylon/pull/277) Panic due to possible
+nil params response
+
+## v0.16.1
+
+### API Breaking
+
+- [#273](https://github.com/babylonlabs-io/babylon/pull/273) Add full staking tx to BTC delegation creation event
+
+## v0.16.0
+
 ### Improvements
 
-* [#264](https://github.com/babylonlabs-io/babylon/pull/264) bump docker workflow 
-version to 0.10.2, fix some Dockerfile issues
+* [#242](https://github.com/babylonlabs-io/babylon/pull/242) Add
+ResumeFinalityProposal and handler
 * [#258](https://github.com/babylonlabs-io/babylon/pull/258) fix go releaser
 and trigger by github action
 * [#252](https://github.com/babylonlabs-io/babylon/pull/252) Fix
@@ -56,11 +82,15 @@ unbonding output
 from core Babylon repository
 * [#257](https://github.com/babylonlabs-io/babylon/pull/257) Fix error handling
 in checkpointing module
+* [#262](https://github.com/babylonlabs-io/babylon/pull/262) Upgrade wasmd, relayer dependencies
 
 ### State Machine Breaking
 
+* [#260](https://github.com/babylonlabs-io/babylon/pull/260) Finish tokenomics
+implementation
 * [#254](https://github.com/babylonlabs-io/babylon/pull/254) Avoid constant
 bech-32 decoding in power table
+* [#265](https://github.com/babylonlabs-io/babylon/pull/265) Add allow list for staking txs
 
 ## v0.15.0
 

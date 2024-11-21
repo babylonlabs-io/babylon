@@ -153,7 +153,7 @@ func createMsgDelegationForParams(
 	stakingValue := int64(randRange(r, int(p.MinStakingValueSat), int(p.MaxStakingValueSat)))
 
 	// always chose minimum unbonding time possible
-	unbondingTime := uint16(types.MinimumUnbondingTime(p, cp)) + 1
+	unbondingTime := p.MinUnbondingTimeBlocks
 
 	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
 		r,
@@ -167,7 +167,7 @@ func createMsgDelegationForParams(
 		stakingValue,
 		p.SlashingPkScript,
 		p.SlashingRate,
-		unbondingTime,
+		uint16(unbondingTime),
 	)
 
 	slashingSpendInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
@@ -205,7 +205,7 @@ func createMsgDelegationForParams(
 		fpPk,
 		stkTxHash,
 		stkOutputIdx,
-		unbondingTime,
+		uint16(unbondingTime),
 		unbondingValue,
 		p,
 	)
@@ -233,9 +233,10 @@ func createMsgDelegationForParams(
 
 func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 	tests := []struct {
-		name string
-		fn   func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params)
-		err  error
+		name          string
+		fn            func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params)
+		errParsing    error
+		errValidation error
 	}{
 		{
 			name: "valid create delegation message",
@@ -246,7 +247,36 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: nil,
+			errParsing:    nil,
+			errValidation: nil,
+		},
+		{
+			name: "empty finality provider list",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				checkpointParams := testCheckpointParams()
+				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+
+				msg.FpBtcPkList = []bbn.BIP340PubKey{}
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    types.ErrEmptyFpList,
+			errValidation: nil,
+		},
+		{
+			name: "too many finality providers",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				checkpointParams := testCheckpointParams()
+				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+
+				msg.FpBtcPkList = append(msg.FpBtcPkList, *msg.BtcPk)
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    types.ErrTooManyFpKeys,
+			errValidation: nil,
 		},
 		{
 			name: "too low unbonding time",
@@ -259,7 +289,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidUnbondingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidUnbondingTx,
 		},
 		{
 			name: "Msg.BtcPk do not match pk in staking transaction",
@@ -277,7 +308,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidStakingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidStakingTx,
 		},
 		{
 			name: "Msg.StakingTime do not match staking time committed in staking transaction",
@@ -290,7 +322,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidStakingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidStakingTx,
 		},
 		{
 			name: "Msg.StakingValue do not match staking value committed in staking transaction",
@@ -303,7 +336,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidStakingTx.Wrap("staking tx does not contain expected staking output"),
+			errParsing:    nil,
+			errValidation: types.ErrInvalidStakingTx.Wrap("staking tx does not contain expected staking output"),
 		},
 		{
 			name: "Msg.StakingValue is lower than params.MinStakingValueSat",
@@ -316,7 +350,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidStakingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidStakingTx,
 		},
 		{
 			name: "Msg.StakingValue is higher than params.MinStakingValueSat",
@@ -329,7 +364,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidStakingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidStakingTx,
 		},
 		{
 			name: "Msg.StakingTime is lower than params.MinStakingTimeBlocks",
@@ -369,7 +405,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidStakingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidStakingTx,
 		},
 		{
 			name: "Msg.StakingTime is higher than params.MinStakingTimeBlocks",
@@ -409,7 +446,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidStakingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidStakingTx,
 		},
 		{
 			name: "Msg.StakingValue is lower than params.MinStakingValueSat",
@@ -435,7 +473,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidStakingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidStakingTx,
 		},
 		{
 			name: "Msg.StakingValue is higher than params.MaxStakingValueSat",
@@ -461,7 +500,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidStakingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidStakingTx,
 		},
 		{
 			name: "Msg.SlashingTx have invalid pk script",
@@ -487,7 +527,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidStakingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidStakingTx,
 		},
 		{
 			name: "Msg.SlashingTx does not point to staking tx hash",
@@ -514,7 +555,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidStakingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidStakingTx,
 		},
 		{
 			name: "Msg.SlashingTx does not point to staking tx output index",
@@ -534,7 +576,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidStakingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidStakingTx,
 		},
 		{
 			name: "Msg.DelegatorSlashingSig is invalid signature",
@@ -557,7 +600,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidSlashingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidSlashingTx,
 		},
 		{
 			name: "Msg.UnbondingSlashingTx does not point to unbonding tx hash",
@@ -584,7 +628,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidUnbondingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidUnbondingTx,
 		},
 		{
 			name: "Msg.UnbondingSlashingTx does not point to unbonding tx output index",
@@ -604,7 +649,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidUnbondingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidUnbondingTx,
 		},
 		{
 			name: "Msg.UnbondingSlashingTx have invalid pk script",
@@ -630,7 +676,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidUnbondingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidUnbondingTx,
 		},
 		{
 			name: "Msg.DelegatorUnbondingSlashingSig is invalid signature",
@@ -653,7 +700,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidSlashingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidSlashingTx,
 		},
 		{
 			name: "Msg.UnbondingTx does not point to staking tx hash",
@@ -691,7 +739,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidUnbondingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidUnbondingTx,
 		},
 		{
 			name: "Msg.UnbondingTx does not point to staking tx output index",
@@ -722,7 +771,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidUnbondingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidUnbondingTx,
 		},
 		{
 			name: "Msg.UnbondingTx does not have required fee",
@@ -756,7 +806,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidUnbondingTx,
+			errParsing:    nil,
+			errValidation: types.ErrInvalidUnbondingTx,
 		},
 		{
 			name: "Msg.UnbondingTx has more than one output",
@@ -778,7 +829,8 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidUnbondingTx.Wrap("unbonding tx is not a valid pre-signed transaction: tx must have exactly 1 outputs"),
+			errParsing:    nil,
+			errValidation: types.ErrInvalidUnbondingTx.Wrap("unbonding tx is not a valid pre-signed transaction: tx must have exactly 1 outputs"),
 		},
 		{
 			name: "Msg.UnbondingTx unbonding value in the msg does not match the output value in the unbonding tx",
@@ -811,36 +863,38 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				return msg, params, checkpointParams
 			},
-			err: types.ErrInvalidUnbondingTx.Wrap("the unbonding output value is not expected"),
+			errParsing:    nil,
+			errValidation: types.ErrInvalidUnbondingTx.Wrap("the unbonding output value is not expected"),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := rand.New(rand.NewSource(time.Now().Unix()))
 
-			msg, params, checkpointParams := tt.fn(r, t)
+			msg, params, _ := tt.fn(r, t)
 
 			parsed, err := types.ParseCreateDelegationMessage(msg)
-			require.NoError(t, err)
 
+			if tt.errParsing != nil {
+				require.Error(t, err)
+				require.ErrorAs(t, err, &tt.errParsing)
+				return
+			}
+
+			require.NoError(t, err)
 			got, err := types.ValidateParsedMessageAgainstTheParams(
 				parsed,
 				params,
-				checkpointParams,
 				&chaincfg.MainNetParams,
 			)
 
-			if tt.err != nil {
+			if tt.errValidation != nil {
 				require.Error(t, err)
-				require.ErrorAs(t, err, &tt.err)
+				require.ErrorAs(t, err, &tt.errValidation)
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, got)
-
-				minUnbondingTime := types.MinimumUnbondingTime(params, checkpointParams)
-				require.Equal(t, minUnbondingTime, got.MinUnbondingTime)
 			}
-
 		})
 	}
 }

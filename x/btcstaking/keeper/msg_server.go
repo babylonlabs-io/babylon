@@ -46,7 +46,16 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("invalid parameter: %v", err)
 	}
 
+	// ensure the min unbonding time is always larger than the checkpoint finalization timeout
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	ckptFinalizationTime := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+	minUnbondingTime := req.Params.MinUnbondingTimeBlocks
+	if minUnbondingTime <= ckptFinalizationTime {
+		return nil, govtypes.ErrInvalidProposalMsg.
+			Wrapf("the min unbonding time %d must be larger than the checkpoint finalization timeout %d",
+				minUnbondingTime, ckptFinalizationTime)
+	}
+
 	if err := ms.SetParams(ctx, req.Params); err != nil {
 		return nil, err
 	}
@@ -132,11 +141,20 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 	return &types.MsgEditFinalityProviderResponse{}, nil
 }
 
+// isAllowListEnabled checks if the allow list is enabled at the given height
+// allow list is enabled if AllowListExpirationHeight is larger than 0,
+// and current block height is less than AllowListExpirationHeight
+func (ms msgServer) isAllowListEnabled(ctx sdk.Context, p *types.Params) bool {
+	return p.AllowListExpirationHeight > 0 && uint64(ctx.BlockHeight()) < p.AllowListExpirationHeight
+}
+
 // CreateBTCDelegation creates a BTC delegation
 func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCreateBTCDelegation) (*types.MsgCreateBTCDelegationResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateBTCDelegation)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	vp := ms.GetParamsWithVersion(ctx)
 
 	// 1. Parse the message into better domain format
 	parsedMsg, err := types.ParseCreateDelegationMessage(req)
@@ -172,19 +190,24 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		}
 	}
 
-	// 5. Validate parsed message against parameters
-	vp := ms.GetParamsWithVersion(ctx)
+	// 5. if allow list is enabled we need to check whether staking transactions hash
+	// is in the allow list
+	if ms.isAllowListEnabled(ctx, &vp.Params) {
+		if !ms.IsStakingTransactionAllowed(ctx, &stakingTxHash) {
+			return nil, types.ErrInvalidStakingTx.Wrapf("staking tx hash: %s, is not in the allow list", stakingTxHash.String())
+		}
+	}
 
-	btccParams := ms.btccKeeper.GetParams(ctx)
-
-	paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, &vp.Params, &btccParams, ms.btcNet)
+	// 6. Validate parsed message against parameters
+	paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, &vp.Params, ms.btcNet)
 
 	if err != nil {
 		return nil, err
 	}
 
-	// 6. If the delegation contains the inclusion proof, we need to verify the proof
+	// 7. If the delegation contains the inclusion proof, we need to verify the proof
 	// and set start height and end height
+	btccParams := ms.btccKeeper.GetParams(ctx)
 	var startHeight, endHeight uint32
 	if parsedMsg.StakingTxProofOfInclusion != nil {
 		timeInfo, err := ms.VerifyInclusionProofAndGetHeight(
@@ -192,7 +215,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 			btcutil.NewTx(parsedMsg.StakingTx.Transaction),
 			btccParams.BtcConfirmationDepth,
 			uint32(parsedMsg.StakingTime),
-			paramsValidationResult.MinUnbondingTime,
+			vp.Params.MinStakingTimeBlocks,
 			parsedMsg.StakingTxProofOfInclusion)
 		if err != nil {
 			return nil, fmt.Errorf("invalid inclusion proof: %w", err)
@@ -206,7 +229,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		ctx.GasMeter().ConsumeGas(vp.Params.DelegationCreationBaseGasFee, "delegation creation fee")
 	}
 
-	// 7.all good, construct BTCDelegation and insert BTC delegation
+	// 8.all good, construct BTCDelegation and insert BTC delegation
 	// NOTE: the BTC delegation does not have voting power yet. It will
 	// have voting power only when it receives a covenant signatures
 	newBTCDel := &types.BTCDelegation{
@@ -236,7 +259,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	// add this BTC delegation, and emit corresponding events
-	if err := ms.AddBTCDelegation(ctx, newBTCDel, paramsValidationResult.MinUnbondingTime); err != nil {
+	if err := ms.AddBTCDelegation(ctx, newBTCDel, vp.Params.MinUnbondingTimeBlocks); err != nil {
 		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
 	}
 
@@ -285,7 +308,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 
 	btccParams := ms.btccKeeper.GetParams(ctx)
 
-	minUnbondingTime := types.MinimumUnbondingTime(params, &btccParams)
+	minUnbondingTime := params.MinUnbondingTimeBlocks
 
 	timeInfo, err := ms.VerifyInclusionProofAndGetHeight(
 		ctx,
@@ -334,7 +357,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 		NewState:      types.BTCDelegationStatus_UNBONDED,
 	})
 
-	// NOTE: we should have verified that EndHeight > btcTip.Height + max(w, min_unbonding_time)
+	// NOTE: we should have verified that EndHeight > btcTip.Height + min_unbonding_time
 	ms.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-minUnbondingTime, unbondedEvent)
 
 	// at this point, the BTC delegation inclusion proof is verified and is not duplicated

@@ -13,6 +13,8 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -26,6 +28,43 @@ import (
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
+
+func FuzzMsgServer_UpdateParams(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 500)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+
+		// set all parameters
+		h.GenAndApplyParams(r)
+
+		params := h.BTCStakingKeeper.GetParams(h.Ctx)
+		ckptFinalizationTimeout := btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
+		params.MinUnbondingTimeBlocks = uint32(r.Intn(int(ckptFinalizationTimeout))) + 1
+
+		// Try to update params with minUnbondingTime less than or equal to checkpointFinalizationTimeout
+		msg := &types.MsgUpdateParams{
+			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+			Params:    params,
+		}
+
+		_, err := h.MsgServer.UpdateParams(h.Ctx, msg)
+		require.ErrorIs(t, err, govtypes.ErrInvalidProposalMsg,
+			"should not set minUnbondingTime to be less than checkpointFinalizationTimeout")
+
+		// Try to update params with minUnbondingTime larger than checkpointFinalizationTimeout
+		msg.Params.MinUnbondingTimeBlocks = uint32(r.Intn(1000)) + ckptFinalizationTimeout + 1
+		_, err = h.MsgServer.UpdateParams(h.Ctx, msg)
+		require.NoError(t, err)
+	})
+}
 
 func FuzzMsgCreateFinalityProvider(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
@@ -174,6 +213,7 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 			0,
 			0,
 			usePreApproval,
+			false,
 		)
 		h.NoError(err)
 
@@ -233,6 +273,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 		0,
 		0,
 		false,
+		false,
 	)
 	h.NoError(err)
 
@@ -262,6 +303,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 		10000,
 		stakingValue-1000,
 		uint16(customMinUnbondingTime)+1,
+		false,
 		false,
 	)
 	h.NoError(err)
@@ -311,6 +353,7 @@ func FuzzAddCovenantSigs(f *testing.F) {
 			0,
 			0,
 			usePreApproval,
+			false,
 		)
 		h.NoError(err)
 
@@ -393,6 +436,7 @@ func FuzzAddBTCDelegationInclusionProof(f *testing.F) {
 			0,
 			0,
 			true,
+			false,
 		)
 		h.NoError(err)
 
@@ -465,6 +509,7 @@ func FuzzBTCUndelegate(f *testing.F) {
 			0,
 			0,
 			true,
+			false,
 		)
 		h.NoError(err)
 
@@ -543,6 +588,7 @@ func FuzzSelectiveSlashing(f *testing.F) {
 			0,
 			0,
 			true,
+			false,
 		)
 		h.NoError(err)
 
@@ -619,6 +665,7 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 			0,
 			0,
 			true,
+			false,
 		)
 		h.NoError(err)
 
@@ -682,14 +729,10 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	// set covenant PK to params
 	_, covenantPKs := h.GenAndApplyParams(r)
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
-	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
 
-	minUnbondingTime := types.MinimumUnbondingTime(
-		&bsParams,
-		&bcParams,
-	)
+	minUnbondingTime := bsParams.MinUnbondingTimeBlocks
 
-	slashingChangeLockTime := uint16(minUnbondingTime) + 1
+	slashingChangeLockTime := uint16(minUnbondingTime)
 
 	// We only generate a finality provider, but not insert it into KVStore. So later
 	// insertion of delegation should fail.
@@ -813,13 +856,6 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			err:                       nil,
 		},
 		{
-			name:                      "failed delegation when ubonding time in delegation is not larger than finalization time when min unbonding time is lower than finalization timeout",
-			unbondingTimeInDelegation: 100,
-			minUnbondingTime:          99,
-			finalizationTimeout:       100,
-			err:                       types.ErrInvalidUnbondingTx,
-		},
-		{
 			name:                      "successful delegation when ubonding time ubonding time in delegation is larger than min unbonding time when min unbonding time is larger than finalization timeout",
 			unbondingTimeInDelegation: 151,
 			minUnbondingTime:          150,
@@ -827,11 +863,11 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			err:                       nil,
 		},
 		{
-			name:                      "failed delegation when ubonding time in delegation is not larger than minUnbondingTime when min unbonding time is larger than finalization timeout",
+			name:                      "successful delegation when ubonding time in delegation is equal to minUnbondingTime when min unbonding time is larger than finalization timeout",
 			unbondingTimeInDelegation: 150,
 			minUnbondingTime:          150,
 			finalizationTimeout:       100,
-			err:                       types.ErrInvalidUnbondingTx,
+			err:                       nil,
 		},
 	}
 
@@ -847,7 +883,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 			// set all parameters
-			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.minUnbondingTime)
+			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.minUnbondingTime, 0)
 
 			changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 			require.NoError(t, err)
@@ -869,6 +905,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 				stakingValue-1000,
 				tt.unbondingTimeInDelegation,
 				true,
+				false,
 			)
 			if tt.err != nil {
 				require.Error(t, err)
@@ -882,6 +919,88 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAllowList(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+
+	allowListExpirationHeight := uint64(10)
+	// set all parameters, use the allow list
+	h.GenAndApplyCustomParams(r, 100, 0, allowListExpirationHeight)
+
+	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+	require.NoError(t, err)
+
+	// generate and insert new finality provider
+	_, fpPK, _ := h.CreateFinalityProvider(r)
+
+	usePreApproval := datagen.OneInN(r, 2)
+
+	// generate and insert new BTC delegation
+	stakingValue := int64(2 * 10e8)
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	_, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegation(
+		r,
+		delSK,
+		fpPK,
+		changeAddress.EncodeAddress(),
+		stakingValue,
+		1000,
+		0,
+		0,
+		usePreApproval,
+		// add delegation to the allow list, it should succeed
+		true,
+	)
+	h.NoError(err)
+	require.NotNil(t, msgCreateBTCDel)
+
+	delSK1, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	_, msgCreateBTCDel1, _, _, _, _, err := h.CreateDelegation(
+		r,
+		delSK1,
+		fpPK,
+		changeAddress.EncodeAddress(),
+		stakingValue,
+		1000,
+		0,
+		0,
+		usePreApproval,
+		// do not add delegation to the allow list, it should fail
+		false,
+	)
+	require.Error(t, err)
+	require.ErrorIs(t, err, types.ErrInvalidStakingTx)
+	require.Nil(t, msgCreateBTCDel1)
+
+	// move forward in the block height, allow list should be expired
+	h.Ctx = h.Ctx.WithBlockHeight(int64(allowListExpirationHeight))
+	delSK2, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	_, msgCreateBTCDel2, _, _, _, _, err := h.CreateDelegation(
+		r,
+		delSK2,
+		fpPK,
+		changeAddress.EncodeAddress(),
+		stakingValue,
+		1000,
+		0,
+		0,
+		usePreApproval,
+		// do not add delegation to the allow list, it should succeed as allow list is expired
+		false,
+	)
+	h.NoError(err)
+	require.NotNil(t, msgCreateBTCDel2)
 }
 
 func createNDelegationsForFinalityProvider(
@@ -972,9 +1091,8 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		stakingParams := h.App.BTCStakingKeeper.GetParams(h.Ctx)
 		covQuorum := stakingParams.CovenantQuorum
 		maxFinalityProviders := int32(h.App.FinalityKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders)
-		btcckptParams := h.App.BtcCheckpointKeeper.GetParams(h.Ctx)
 
-		minUnbondingTime := types.MinimumUnbondingTime(&stakingParams, &btcckptParams)
+		minUnbondingTime := stakingParams.MinUnbondingTimeBlocks
 		// Number of finality providers from 10 to maxFinalityProviders + 10
 		numFinalityProviders := int(r.Int31n(maxFinalityProviders) + 10)
 

@@ -1,5 +1,7 @@
 package types
 
+import "cosmossdk.io/collections"
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "btcstaking"
@@ -22,5 +24,6 @@ var (
 	// 0x05 was used for something else in the past
 	BTCHeightKey = []byte{0x06} // key prefix for the BTC heights
 	// 0x07 was used for something else in the past
-	PowerDistUpdateKey = []byte{0x08} // key prefix for power distribution update events
+	PowerDistUpdateKey        = []byte{0x08}             // key prefix for power distribution update events
+	AllowedStakingTxHashesKey = collections.NewPrefix(9) // key prefix for allowed staking tx hashes
 )

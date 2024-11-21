@@ -21,5 +21,7 @@ const BtcStakingParamStr = `
   "slashing_rate": "0.100000000000000000",
   "min_unbonding_time_blocks": 0,
   "unbonding_fee_sat": "1000",
-  "min_commission_rate": "0.03"
+  "min_commission_rate": "0.03",
+  "delegation_creation_base_gas_fee": 1000,
+  "allow_list_expiration_height": 0
 }`
