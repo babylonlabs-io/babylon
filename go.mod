@@ -9,7 +9,7 @@ require (
 	github.com/cometbft/cometbft-db v0.15.0 // indirect
 	github.com/cosmos/cosmos-sdk v0.50.9
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.0.0-20240429153234-e1e6da7e4ead
-	github.com/cosmos/relayer/v2 v2.5.2
+	github.com/cosmos/relayer/v2 v2.6.0-rc.1
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/pkg/errors v0.9.1
@@ -177,7 +177,7 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/emicklei/dot v1.6.1 // indirect
 	github.com/ethereum/c-kzg-4844 v0.4.0 // indirect
-	github.com/ethereum/go-ethereum v1.13.14 // indirect
+	github.com/ethereum/go-ethereum v1.13.15 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
