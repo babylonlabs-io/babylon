@@ -111,7 +111,7 @@ func (wc *CosmwasmConsumerController) CommitPubRandList(
 		return nil, err
 	}
 
-	res, err := wc.ExecuteContract(msgBytes)
+	res, err := wc.ExecuteFinalityContract(msgBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func (wc *CosmwasmConsumerController) SubmitFinalitySig(
 		return nil, err
 	}
 
-	res, err := wc.ExecuteContract(msgBytes)
+	res, err := wc.ExecuteFinalityContract(msgBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +210,7 @@ func (wc *CosmwasmConsumerController) SubmitInvalidFinalitySig(
 		return nil, err
 	}
 
-	res, err := wc.ExecuteContract(msgBytes)
+	res, err := wc.ExecuteFinalityContract(msgBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +256,7 @@ func (wc *CosmwasmConsumerController) SubmitBatchFinalitySigs(
 
 		execMsg := &wasmdtypes.MsgExecuteContract{
 			Sender:   wc.cwClient.MustGetAddr(),
-			Contract: sdk.MustAccAddressFromBech32(wc.cfg.BtcStakingContractAddress).String(),
+			Contract: sdk.MustAccAddressFromBech32(wc.cfg.BtcFinalityContractAddress).String(),
 			Msg:      msgBytes,
 		}
 		msgs = append(msgs, execMsg)
@@ -405,7 +405,7 @@ func (wc *CosmwasmConsumerController) QueryLastPublicRandCommit(fpPk *btcec.Publ
 	}
 
 	// Query the smart contract state
-	dataFromContract, err := wc.QuerySmartContractState(wc.cfg.BtcStakingContractAddress, string(queryMsgBytes))
+	dataFromContract, err := wc.QuerySmartContractState(wc.cfg.BtcFinalityContractAddress, string(queryMsgBytes))
 	if err != nil {
 		return nil, fmt.Errorf("failed to query smart contract state: %w", err)
 	}
@@ -491,7 +491,7 @@ func (wc *CosmwasmConsumerController) QueryFinalitySignature(fpBtcPkHex string, 
 		return nil, fmt.Errorf("failed to marshal query message: %v", err)
 	}
 
-	dataFromContract, err := wc.QuerySmartContractState(wc.cfg.BtcStakingContractAddress, string(queryMsgBytes))
+	dataFromContract, err := wc.QuerySmartContractState(wc.cfg.BtcFinalityContractAddress, string(queryMsgBytes))
 	if err != nil {
 		return nil, err
 	}
@@ -597,7 +597,7 @@ func (wc *CosmwasmConsumerController) queryLatestBlocks(startAfter, limit *uint6
 	}
 
 	// Query the smart contract state
-	dataFromContract, err := wc.QuerySmartContractState(wc.cfg.BtcStakingContractAddress, string(queryMsgBytes))
+	dataFromContract, err := wc.QuerySmartContractState(wc.cfg.BtcFinalityContractAddress, string(queryMsgBytes))
 	if err != nil {
 		return nil, fmt.Errorf("failed to query smart contract state: %w", err)
 	}
@@ -681,10 +681,25 @@ func (wc *CosmwasmConsumerController) Close() error {
 	return wc.cwClient.Stop()
 }
 
-func (wc *CosmwasmConsumerController) ExecuteContract(msgBytes []byte) (*provider.RelayerTxResponse, error) {
+func (wc *CosmwasmConsumerController) ExecuteStakingContract(msgBytes []byte) (*provider.RelayerTxResponse, error) {
 	execMsg := &wasmdtypes.MsgExecuteContract{
 		Sender:   wc.cwClient.MustGetAddr(),
 		Contract: wc.cfg.BtcStakingContractAddress,
+		Msg:      msgBytes,
+	}
+
+	res, err := wc.reliablySendMsg(execMsg, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (wc *CosmwasmConsumerController) ExecuteFinalityContract(msgBytes []byte) (*provider.RelayerTxResponse, error) {
+	execMsg := &wasmdtypes.MsgExecuteContract{
+		Sender:   wc.cwClient.MustGetAddr(),
+		Contract: wc.cfg.BtcFinalityContractAddress,
 		Msg:      msgBytes,
 	}
 
@@ -732,6 +747,12 @@ func (wc *CosmwasmConsumerController) SetBtcStakingContractAddress(newAddress st
 	wc.cfg.BtcStakingContractAddress = newAddress
 }
 
+// SetBtcFinalityContractAddress updates the BtcFinalityContractAddress in the configuration
+// NOTE: this function is only meant to be used in tests.
+func (wc *CosmwasmConsumerController) SetBtcFinalityContractAddress(newAddress string) {
+	wc.cfg.BtcFinalityContractAddress = newAddress
+}
+
 // MustGetValidatorAddress gets the validator address of the consumer chain
 // NOTE: this function is only meant to be used in tests.
 func (wc *CosmwasmConsumerController) MustGetValidatorAddress() string {
@@ -765,7 +786,7 @@ func (wc *CosmwasmConsumerController) QueryIndexedBlock(height uint64) (*Indexed
 	}
 
 	// Query the smart contract state
-	dataFromContract, err := wc.QuerySmartContractState(wc.cfg.BtcStakingContractAddress, string(queryMsgBytes))
+	dataFromContract, err := wc.QuerySmartContractState(wc.cfg.BtcFinalityContractAddress, string(queryMsgBytes))
 	if err != nil {
 		return nil, fmt.Errorf("failed to query smart contract state: %w", err)
 	}

@@ -889,6 +889,7 @@ func (s *BCDConsumerIntegrationTestSuite) initCosmwasmController() error {
 	}
 
 	cfg.BtcStakingContractAddress = "bbnc1nc5tatafv6eyq7llkr2gv50ff9e22mnf70qgjlv737ktmt4eswrqgn0kq0"
+	cfg.BtcFinalityContractAddress = "bbnc17p9rzwnnfxcjp32un9ug7yhhzgtkhvl9jfksztgw5uh69wac2pgssg3nft"
 	cfg.ChainID = "bcd-test"
 	cfg.KeyDirectory = filepath.Join(currentDir, "../../contrib/images/ibcsim-bcd/.testnets/bcd/bcd-test")
 	cfg.AccountPrefix = "bbnc"
