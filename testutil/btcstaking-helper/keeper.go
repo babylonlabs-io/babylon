@@ -159,7 +159,7 @@ func (h *Helper) GenAndApplyCustomParams(
 		CovenantQuorum:            3,
 		MinStakingValueSat:        1000,
 		MaxStakingValueSat:        int64(4 * 10e8),
-		MinStakingTimeBlocks:      10,
+		MinStakingTimeBlocks:      400,
 		MaxStakingTimeBlocks:      10000,
 		SlashingPkScript:          slashingPkScript,
 		MinSlashingTxFeeSat:       10,
