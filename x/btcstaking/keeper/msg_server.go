@@ -215,6 +215,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 			btcutil.NewTx(parsedMsg.StakingTx.Transaction),
 			btccParams.BtcConfirmationDepth,
 			uint32(parsedMsg.StakingTime),
+			vp.Params.MinUnbondingTimeBlocks,
 			parsedMsg.StakingTxProofOfInclusion)
 		if err != nil {
 			return nil, fmt.Errorf("invalid inclusion proof: %w", err)
@@ -314,6 +315,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 		btcutil.NewTx(stakingTx),
 		btccParams.BtcConfirmationDepth,
 		btcDel.StakingTime,
+		minUnbondingTime,
 		parsedInclusionProof,
 	)
 

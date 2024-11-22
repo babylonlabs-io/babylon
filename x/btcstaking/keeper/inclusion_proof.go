@@ -17,11 +17,14 @@ type DelegationTimeRangeInfo struct {
 
 // VerifyInclusionProofAndGetHeight verifies the inclusion proof of the given staking tx
 // and returns the start height and end height
+// Note: the `minUnbondingTime` passed here should be from the corresponding params
+// of the staking tx
 func (k Keeper) VerifyInclusionProofAndGetHeight(
 	ctx sdk.Context,
 	stakingTx *btcutil.Tx,
 	confirmationDepth uint32,
 	stakingTime uint32,
+	minUnbondingTime uint32,
 	inclusionProof *types.ParsedProofOfInclusion,
 ) (*DelegationTimeRangeInfo, error) {
 	// Check:
@@ -59,7 +62,6 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 	}
 
 	// ensure staking tx's timelock has more than unbonding BTC blocks left
-	minUnbondingTime := k.GetParamsWithVersion(ctx).Params.MinUnbondingTimeBlocks
 	if btcTip.Height+minUnbondingTime >= endHeight {
 		return nil, types.ErrInvalidStakingTx.
 			Wrapf("staking tx's timelock has no more than unbonding(=%d) blocks left", minUnbondingTime)

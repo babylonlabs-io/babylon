@@ -16,7 +16,7 @@ import (
 )
 
 func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -77,6 +77,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 				stakingTx,
 				confirmationDepth,
 				stakingTime,
+				params.MinUnbondingTimeBlocks,
 				proof,
 			)
 
@@ -95,6 +96,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 				stakingTx,
 				confirmationDepth,
 				stakingTime,
+				params.MinUnbondingTimeBlocks,
 				proof,
 			)
 
@@ -112,6 +114,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 				stakingTx,
 				confirmationDepth,
 				stakingTime,
+				params.MinUnbondingTimeBlocks,
 				&copyProof,
 			)
 
@@ -131,6 +134,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 				stakingTx,
 				confirmationDepth,
 				stakingTime,
+				params.MinUnbondingTimeBlocks,
 				proof,
 			)
 
@@ -150,6 +154,30 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 				stakingTx,
 				confirmationDepth,
 				stakingTime,
+				params.MinUnbondingTimeBlocks,
+				proof,
+			)
+
+			require.ErrorContains(t, err, "staking tx's timelock has no more than unbonding")
+		})
+
+		t.Run("invalid min unbonding time", func(t *testing.T) {
+			// Set the tip height to be in the range of valid min and max tip height
+			tipHeight := datagen.RandomInt(r, int(maxValidTipHeight)-int(minValidTipHeight)+1) + uint64(minValidTipHeight)
+			mockTipHeaderInfo := &btclctypes.BTCHeaderInfo{Height: uint32(tipHeight)}
+
+			btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), headerHash).Return(inclusionHeader).Times(1)
+			btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockTipHeaderInfo).Times(1)
+
+			// an invalid min_unbonding_time should be >= end_height - tip_height
+			invalidMinUnbondingTime := uint32(datagen.RandomInt(r, 1000)) + inclusionHeight + stakingTime - uint32(tipHeight)
+
+			_, err = h.BTCStakingKeeper.VerifyInclusionProofAndGetHeight(
+				h.Ctx,
+				stakingTx,
+				confirmationDepth,
+				stakingTime,
+				invalidMinUnbondingTime,
 				proof,
 			)
 
