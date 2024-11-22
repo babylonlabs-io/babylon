@@ -45,7 +45,7 @@ func FuzzFPRegistry(f *testing.F) {
 		}
 
 		// Register the consumer
-		bscKeeper.SetConsumerRegister(ctx, consumerRegister)
+		bscKeeper.RegisterConsumer(ctx, consumerRegister)
 
 		// Now add a finality provider for the consumer to the registry
 		fp := btcstaking.FinalityProvider{

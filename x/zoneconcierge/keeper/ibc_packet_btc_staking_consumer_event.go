@@ -59,20 +59,21 @@ func (k Keeper) HandleConsumerRegistration(
 	ctx sdk.Context,
 	destinationPort string,
 	destinationChannel string,
-	consumerRegister *types.ConsumerRegisterIBCPacket,
+	packet *types.ConsumerRegisterIBCPacket,
 ) error {
 	clientID, _, err := k.channelKeeper.GetChannelClientState(ctx, destinationPort, destinationChannel)
 	if err != nil {
 		return fmt.Errorf("failed to get client state: %w", err)
 	}
 
-	consumerRegisterData := &btcstkconsumertypes.ConsumerRegister{
-		ConsumerId:          clientID,
-		ConsumerName:        consumerRegister.ConsumerName,
-		ConsumerDescription: consumerRegister.ConsumerDescription,
-	}
+	consumerRegister := btcstkconsumertypes.NewCosmosConsumerRegister(
+		clientID,
+		packet.ConsumerName,
+		packet.ConsumerDescription,
+		clientID,
+	)
 
-	return k.btcStkKeeper.RegisterConsumer(ctx, consumerRegisterData)
+	return k.btcStkKeeper.RegisterConsumer(ctx, consumerRegister)
 }
 
 func (k Keeper) HandleConsumerSlashing(

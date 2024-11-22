@@ -2,23 +2,56 @@ package types
 
 import (
 	"fmt"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ sdk.Msg = &MsgRegisterConsumer{}
-
-// Validate validates the set of params
-func (cr *ConsumerRegister) Validate() error {
-	if len(cr.ConsumerId) == 0 {
+func (m *MsgRegisterConsumer) ValidateBasic() error {
+	if len(m.ConsumerId) == 0 {
 		return fmt.Errorf("ConsumerId must be non-empty")
 	}
-	if len(cr.ConsumerName) == 0 {
+	if len(m.ConsumerName) == 0 {
 		return fmt.Errorf("ConsumerName must be non-empty")
 	}
-	if len(cr.ConsumerDescription) == 0 {
+	if len(m.ConsumerDescription) == 0 {
 		return fmt.Errorf("ConsumerDescription must be non-empty")
 	}
-
+	if len(m.CosmosIbcClientId) == 0 && len(m.EthL2FinalityContractAddress) == 0 {
+		return fmt.Errorf("either CosmosIbcClientId or EthL2FinalityContractAddress must be non-empty")
+	}
+	if len(m.CosmosIbcClientId) != 0 && len(m.EthL2FinalityContractAddress) != 0 {
+		return fmt.Errorf("both CosmosIbcClientId and EthL2FinalityContractAddress cannot be set simultaneously")
+	}
 	return nil
+}
+
+func NewCosmosConsumerRegister(consumerId, consumerName, consumerDescription string, cosmosIbcClientId string) *ConsumerRegister {
+	return &ConsumerRegister{
+		ConsumerId:          consumerId,
+		ConsumerName:        consumerName,
+		ConsumerDescription: consumerDescription,
+		ConsumerMetadata: &ConsumerRegister_CosmosConsumerMetadata{
+			CosmosConsumerMetadata: &CosmosConsumerMetadata{
+				ClientId: cosmosIbcClientId,
+			},
+		},
+	}
+}
+
+func NewETHL2ConsumerRegister(consumerId, consumerName, consumerDescription string, ethL2FinalityContractAddress string) *ConsumerRegister {
+	return &ConsumerRegister{
+		ConsumerId:          consumerId,
+		ConsumerName:        consumerName,
+		ConsumerDescription: consumerDescription,
+		ConsumerMetadata: &ConsumerRegister_EthL2ConsumerMetadata{
+			EthL2ConsumerMetadata: &ETHL2ConsumerMetadata{
+				FinalityContractAddress: ethL2FinalityContractAddress,
+			},
+		},
+	}
+}
+
+func (cr *ConsumerRegister) Type() ConsumerType {
+	if _, ok := cr.ConsumerMetadata.(*ConsumerRegister_CosmosConsumerMetadata); ok {
+		return ConsumerType_COSMOS
+	}
+	return ConsumerType_ETH_L2
 }

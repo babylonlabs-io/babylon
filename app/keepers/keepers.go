@@ -487,6 +487,9 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[bsctypes.StoreKey]),
 		ak.AccountKeeper,
 		ak.BankKeeper,
+		ak.IBCKeeper.ClientKeeper,
+		ak.IBCKeeper.ChannelKeeper,
+		ak.WasmKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 

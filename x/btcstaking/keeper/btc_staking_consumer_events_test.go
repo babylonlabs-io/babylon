@@ -324,7 +324,7 @@ func registerAndVerifyConsumer(t *testing.T, r *rand.Rand, h *testutil.Helper) *
 	require.Nil(t, dbConsumer)
 
 	// Register the consumer
-	h.BTCStkConsumerKeeper.SetConsumerRegister(h.Ctx, randomConsumer)
+	h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, randomConsumer)
 
 	// Verify that the consumer is now registered
 	dbConsumer, err = h.BTCStkConsumerKeeper.GetConsumerRegister(h.Ctx, randomConsumer.ConsumerId)

@@ -9,7 +9,15 @@ import (
 	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 )
 
-func (k Keeper) SetConsumerRegister(ctx context.Context, consumerRegister *types.ConsumerRegister) {
+func (k Keeper) RegisterConsumer(ctx context.Context, consumerRegister *types.ConsumerRegister) error {
+	if k.IsConsumerRegistered(ctx, consumerRegister.ConsumerId) {
+		return types.ErrConsumerAlreadyRegistered
+	}
+	k.setConsumerRegister(ctx, consumerRegister)
+	return nil
+}
+
+func (k Keeper) setConsumerRegister(ctx context.Context, consumerRegister *types.ConsumerRegister) {
 	store := k.consumerRegistryStore(ctx)
 	store.Set([]byte(consumerRegister.ConsumerId), k.cdc.MustMarshal(consumerRegister))
 }
@@ -45,20 +53,6 @@ func (k Keeper) GetAllRegisteredConsumerIDs(ctx context.Context) []string {
 		consumerIDs = append(consumerIDs, consumerID)
 	}
 	return consumerIDs
-}
-
-// RegisterConsumer validates and registers a new consumer
-func (k Keeper) RegisterConsumer(ctx context.Context, consumerRegister *types.ConsumerRegister) error {
-	if err := consumerRegister.Validate(); err != nil {
-		return types.ErrInvalidConsumerRegister.Wrapf("invalid consumer: %v", err)
-	}
-
-	if k.IsConsumerRegistered(ctx, consumerRegister.ConsumerId) {
-		return types.ErrConsumerAlreadyRegistered
-	}
-
-	k.SetConsumerRegister(ctx, consumerRegister)
-	return nil
 }
 
 // consumerRegistryStore stores the information of registered CZ consumers

@@ -37,7 +37,7 @@ func FuzzConsumerRegistryList(f *testing.F) {
 			var consumerID = datagen.GenRandomHexStr(r, 30)
 			allConsumerIDs = append(allConsumerIDs, consumerID)
 
-			bscKeeper.SetConsumerRegister(ctx, &types.ConsumerRegister{
+			bscKeeper.RegisterConsumer(ctx, &types.ConsumerRegister{
 				ConsumerId:   consumerID,
 				ConsumerName: datagen.GenRandomHexStr(r, 5),
 			})
@@ -85,7 +85,7 @@ func FuzzConsumersRegistry(f *testing.F) {
 				consumerID: consumerID,
 			})
 
-			bscKeeper.SetConsumerRegister(ctx, &types.ConsumerRegister{
+			bscKeeper.RegisterConsumer(ctx, &types.ConsumerRegister{
 				ConsumerId:   consumerID,
 				ConsumerName: datagen.GenRandomHexStr(r, 5),
 			})

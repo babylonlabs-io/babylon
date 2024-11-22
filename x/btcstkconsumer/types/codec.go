@@ -7,6 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
+var _ sdk.Msg = &MsgRegisterConsumer{}
+
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgUpdateParams{}, "btcstkconsumer/MsgUpdateParams", nil)
 	cdc.RegisterConcrete(&MsgRegisterConsumer{}, "btcstkconsumer/MsgRegisterConsumer", nil)
