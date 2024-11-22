@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"math"
 	"math/rand"
 	"runtime"
@@ -331,13 +332,39 @@ func CreateBlockWithTransaction(
 	proof, err := btcctypes.SpvProofFromHeaderAndTransactions(&headerBytes, txBytes, 1)
 
 	if err != nil {
-		panic("could not calculate proof")
+		panic(fmt.Errorf("could not calculate proof: %w", err))
 	}
 
 	return &BtcHeaderWithProof{
 		HeaderBytes: headerBytes,
 		SpvProof:    proof,
 	}
+}
+
+func CreateDummyTx() *wire.MsgTx {
+	// Create a witness transaction instead of empty transaction
+	msgTx := wire.NewMsgTx(wire.TxVersion)
+
+	// Add a dummy input
+	prevOut := wire.NewOutPoint(&chainhash.Hash{}, 0)
+	txIn := wire.NewTxIn(prevOut, nil, [][]byte{
+		{0x01}, // Simple witness script
+	})
+	msgTx.AddTxIn(txIn)
+
+	// Add a dummy output
+	pkScript := []byte{
+		0x00,                         // Version 0 witness program
+		0x14,                         // Push 20 bytes
+		0x01, 0x02, 0x03, 0x04, 0x05, // Dummy public key hash (20 bytes)
+		0x06, 0x07, 0x08, 0x09, 0x0a,
+		0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+		0x10, 0x11, 0x12, 0x13, 0x14,
+	}
+	txOut := wire.NewTxOut(100000, pkScript)
+	msgTx.AddTxOut(txOut)
+
+	return msgTx
 }
 
 func GenRandomTx(r *rand.Rand) *wire.MsgTx {
