@@ -267,6 +267,7 @@ test-e2e-cache:
 	$(MAKE) test-e2e-cache-btc-timestamping
 	$(MAKE) test-e2e-cache-btc-staking
 #	$(MAKE) test-e2e-cache-btc-staking-integration
+	$(MAKE) clean-e2e
 	$(MAKE) test-e2e-cache-btc-staking-pre-approval
 	$(MAKE) test-e2e-cache-ibc-transfer
 	$(MAKE) test-e2e-cache-bcd-consumer-integration
