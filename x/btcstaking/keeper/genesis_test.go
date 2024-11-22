@@ -81,7 +81,7 @@ func TestExportGenesis(t *testing.T) {
 				DelBtcPk: del.BtcPk,
 			}
 
-			// record event that the BTC delegation will become unbonded at endHeight-w
+			// record event that the BTC delegation will become unbonded at EndHeight-w
 			unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 				StakingTxHash: stakingTxHash.String(),
 				NewState:      types.BTCDelegationStatus_UNBONDED,
