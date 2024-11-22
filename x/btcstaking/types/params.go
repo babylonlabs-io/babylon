@@ -65,7 +65,7 @@ func DefaultParams() Params {
 		CovenantQuorum:       quorum,
 		MinStakingValueSat:   1000,
 		MaxStakingValueSat:   10 * 10e8,
-		MinStakingTimeBlocks: 10,
+		MinStakingTimeBlocks: 400, // this should be larger than minUnbonding
 		MaxStakingTimeBlocks: math.MaxUint16,
 		SlashingPkScript:     defaultSlashingPkScript(),
 		MinSlashingTxFeeSat:  1000,

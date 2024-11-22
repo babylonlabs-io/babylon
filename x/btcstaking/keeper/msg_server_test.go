@@ -26,6 +26,7 @@ import (
 	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -736,7 +737,8 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 
 	// We only generate a finality provider, but not insert it into KVStore. So later
 	// insertion of delegation should fail.
-	_, fpPK, err := datagen.GenRandomBTCKeyPair(r)
+
+	fp, err := datagen.GenRandomFinalityProvider(r)
 	require.NoError(t, err)
 
 	/*
@@ -744,17 +746,17 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	*/
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	stakingTimeBlocks := uint16(5)
+	stakingTimeBlocks := bsParams.MinStakingTimeBlocks
 	stakingValue := int64(2 * 10e8)
 	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
 		r,
 		t,
 		h.Net,
 		delSK,
-		[]*btcec.PublicKey{fpPK},
+		[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
 		covenantPKs,
 		bsParams.CovenantQuorum,
-		stakingTimeBlocks,
+		uint16(stakingTimeBlocks),
 		stakingValue,
 		bsParams.SlashingPkScript,
 		bsParams.SlashingRate,
@@ -793,14 +795,14 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	require.NoError(t, err)
 
 	stkTxHash := testStakingInfo.StakingTx.TxHash()
-	unbondingTime := 100 + 1
+	unbondingTime := bsParams.MinUnbondingTimeBlocks
 	unbondingValue := stakingValue - datagen.UnbondingTxFee // TODO: parameterise fee
 	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
 		r,
 		t,
 		h.Net,
 		delSK,
-		[]*btcec.PublicKey{fpPK},
+		[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
 		covenantPKs,
 		bsParams.CovenantQuorum,
 		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
@@ -816,10 +818,9 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	h.NoError(err)
 
 	// all good, construct and send MsgCreateBTCDelegation message
-	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
 	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
 		StakerAddr:                    stakerAddr.String(),
-		FpBtcPkList:                   []bbn.BIP340PubKey{*fpBTCPK},
+		FpBtcPkList:                   []bbn.BIP340PubKey{*fp.BtcPk},
 		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey()),
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
@@ -838,6 +839,19 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	require.Error(t, err)
 	require.True(t, errors.Is(err, types.ErrFpNotFound))
+
+	AddFinalityProvider(t, h.Ctx, *h.BTCStakingKeeper, fp)
+	inclusionHeight := uint32(100)
+	inclusionHeader := &btclctypes.BTCHeaderInfo{
+		Header: &btcHeader,
+		Height: inclusionHeight,
+	}
+	tipHeight := 150
+	mockTipHeaderInfo := &btclctypes.BTCHeaderInfo{Height: uint32(tipHeight)}
+	btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), btcHeader.Hash()).Return(inclusionHeader).Times(1)
+	btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockTipHeaderInfo).Times(1)
+	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
+	require.NoError(t, err)
 }
 
 func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
