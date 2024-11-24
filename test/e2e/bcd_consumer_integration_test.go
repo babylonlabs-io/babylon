@@ -260,11 +260,14 @@ func (s *BCDConsumerIntegrationTestSuite) Test5ActivateDelegation() {
 	}, time.Minute, time.Second*5)
 }
 
-// Test6ConsumerRewardsGeneration
-// 1. Submits a Consumer FP valid finality sig to Consumer.
-// 2. The block is finalized.
-// 3. Block rewards are generated.
-func (s *BCDConsumerIntegrationTestSuite) Test6ConsumerRewardsGeneration() {
+// Test6BabylonFPCascadedSlashing
+// 1. Submits a Babylon FP valid finality sig to Babylon
+// 2. Block is finalized.
+// 3. Equivocates/ Submits a invalid finality sig to Babylon
+// 4. Babylon FP is slashed
+// 4. Babylon notifies involved consumer about the delegations.
+// 5. Consumer discounts the voting power of other involved consumer FP's in the affected delegations
+func (s *BCDConsumerIntegrationTestSuite) Test6BabylonFPCascadedSlashing() {
 	// get the activated height
 	activatedHeight, err := s.babylonController.QueryActivatedHeight()
 	s.NoError(err)
@@ -294,7 +297,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test6ConsumerRewardsGeneration() {
 	s.NoError(err)
 	s.NotNil(txResp)
 
-	// ensure the vote is eventually cast
+	// ensure vote is eventually cast
 	var votes []bbntypes.BIP340PubKey
 	s.Eventually(func() bool {
 		votes, err = s.babylonController.QueryVotesAtHeight(activatedHeight.Height)
@@ -307,54 +310,15 @@ func (s *BCDConsumerIntegrationTestSuite) Test6ConsumerRewardsGeneration() {
 	s.Equal(1, len(votes))
 	s.Equal(votes[0].MarshalHex(), babylonFpBIP340PK.MarshalHex())
 
-	// once the vote is cast, ensure the block is finalised
+	// once the vote is cast, ensure block is finalised
 	finalizedBlock, err := s.babylonController.QueryIndexedBlock(activatedHeight.Height)
 	s.NoError(err)
 	s.NotEmpty(finalizedBlock)
 	s.Equal(strings.ToUpper(hex.EncodeToString(finalizedBlock.AppHash)), activatedHeightBlock.Block.AppHash.String())
 	s.True(finalizedBlock.Finalized)
 
-	// Ensure block rewards are generated (sent to the btc-staking contract)
-	/*
-		s.Eventually(func() bool {
-			rewards, err := s.cosmwasmController.QueryBalances(wc.btcStakingContractAddr)
-			if err != nil {
-				s.T().Logf("Error querying staking contract balance: %v", err)
-				return false
-			}
-			return rewards != nil && len(rewards) > 0
-		}, time.Minute, time.Second*5)
-	*/
-}
-
-// Test7BabylonFPCascadedSlashing
-// 1. Submits a Babylon FP valid finality sig to Babylon.
-// 2. Block is finalized.
-// 3. Equivocates/ Submits a invalid finality sig to Babylon
-// 4. Babylon FP is slashed.
-// 4. Babylon notifies involved consumer about the delegations.
-// 5. Consumer discounts the voting power of other involved consumer FP's in the affected delegations.
-func (s *BCDConsumerIntegrationTestSuite) Test7BabylonFPCascadedSlashing() {
-	// get the activated height
-	activatedHeight, err := s.babylonController.QueryActivatedHeight()
-	s.NoError(err)
-	s.NotNil(activatedHeight)
-
-	// get the block at the activated height
-	activatedHeightBlock, err := s.babylonController.QueryCometBlock(activatedHeight.Height)
-	s.NoError(err)
-	s.NotNil(activatedHeightBlock)
-
-	// get the babylon finality provider
-	babylonFp, err := s.babylonController.QueryFinalityProviders()
-	s.NoError(err)
-	s.NotNil(babylonFp)
-
-	babylonFpBIP340PK := bbntypes.NewBIP340PubKeyFromBTCPK(babylonFpBTCPK)
-	randIdx := activatedHeight.Height - 1 // pub rand was committed from height 1-100
-
 	// equivocate by submitting invalid finality signature
-	txResp, err := s.babylonController.SubmitInvalidFinalitySignature(
+	txResp, err = s.babylonController.SubmitInvalidFinalitySignature(
 		r,
 		babylonFpBTCSK,
 		babylonFpBIP340PK,
@@ -396,14 +360,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test7BabylonFPCascadedSlashing() {
 	}, time.Minute, time.Second*5)
 }
 
-// Test8ConsumerFPCascadedSlashing
-// 1. Submits a Consumer FP valid finality sig to Consumer.
-// 2. The block is finalized.
-// 3. Equivocates/ Submits an invalid finality sig to Consumer.
-// 4. Consumer FP is slashed.
-// 5. Babylon discounts the voting power of the Consumer FP in the affected delegations (including Babylon FP).
-// 6. Consumer FP record in Babylon is updated.
-func (s *BCDConsumerIntegrationTestSuite) Test8ConsumerFPCascadedSlashing() {
+func (s *BCDConsumerIntegrationTestSuite) Test7ConsumerFPCascadedSlashing() {
 	// create a new consumer finality provider
 	resp, czFpBTCSK, czFpBTCPK := s.createVerifyConsumerFP()
 	consumerFp, err := s.babylonController.QueryConsumerFinalityProvider(consumerID, resp.BtcPk.MarshalHex())
