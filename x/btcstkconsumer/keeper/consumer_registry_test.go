@@ -20,7 +20,7 @@ func FuzzConsumerRegistry(f *testing.F) {
 		ctx := babylonApp.NewContext(false)
 
 		// generate a random consumer register
-		consumerRegister := datagen.GenRandomConsumerRegister(r)
+		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
 
 		// check that the consumer is not registered
 		isRegistered := bscKeeper.IsConsumerRegistered(ctx, consumerRegister.ConsumerId)

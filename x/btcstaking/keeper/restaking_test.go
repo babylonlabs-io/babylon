@@ -51,7 +51,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 			register a new consumer and create a new finality provider under it
 			ensure it's correctly generated
 		*/
-		consumerRegister := datagen.GenRandomConsumerRegister(r)
+		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
 		h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
 		_, czFPPK, czFP, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
 		h.NoError(err)
@@ -147,7 +147,7 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 		h.NoError(err)
 
 		// register a new consumer
-		consumerRegister := datagen.GenRandomConsumerRegister(r)
+		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
 		h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
 
 		// generate and insert new Babylon finality provider
