@@ -12,7 +12,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/codec"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"google.golang.org/grpc"
 	"math/rand"
+	"net/url"
 	"sort"
 	"strings"
 
@@ -579,6 +583,50 @@ func (cc *CosmwasmConsumerController) QueryDelegations() (*ConsumerDelegationsRe
 	return &resp, nil
 }
 
+func (cc *CosmwasmConsumerController) QueryStakingContractBalances() (sdk.Coins, error) {
+	return cc.QueryBalances(cc.cfg.BtcStakingContractAddress)
+}
+
+func (cc *CosmwasmConsumerController) QueryBalance(address string, denom string) (*sdk.Coin, error) {
+	grpcConn, err := cc.createGrpcConnection()
+	if err != nil {
+		return nil, err
+	}
+	defer grpcConn.Close()
+
+	// create a gRPC client to query the x/bank service
+	bankClient := banktypes.NewQueryClient(grpcConn)
+	bankRes, err := bankClient.Balance(
+		context.Background(),
+		&banktypes.QueryBalanceRequest{Address: address, Denom: denom},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return bankRes.GetBalance(), nil
+}
+
+// QueryBalances returns balances at the address
+func (cc *CosmwasmConsumerController) QueryBalances(address string) (sdk.Coins, error) {
+	grpcConn, err := cc.createGrpcConnection()
+	if err != nil {
+		return nil, err
+	}
+	defer grpcConn.Close()
+
+	// create a gRPC client to query the x/bank service.
+	bankClient := banktypes.NewQueryClient(grpcConn)
+	bankRes, err := bankClient.AllBalances(
+		context.Background(),
+		&banktypes.QueryAllBalancesRequest{Address: address},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return bankRes.GetBalances(), nil
+}
+
 func (cc *CosmwasmConsumerController) queryLatestBlocks(startAfter, limit *uint64, finalized, reverse *bool) ([]*types.BlockInfo, error) {
 	// Construct the query message
 	queryMsg := QueryMsgBlocks{
@@ -845,4 +893,24 @@ func (cc *CosmwasmConsumerController) QueryNextSequenceReceive(channelID, portID
 // IBCChannels queries the IBC channels
 func (cc *CosmwasmConsumerController) IBCChannels() (*channeltypes.QueryChannelsResponse, error) {
 	return cc.cwClient.IBCChannels()
+}
+
+func (cc *CosmwasmConsumerController) createGrpcConnection() (*grpc.ClientConn, error) {
+	// Create a connection to the gRPC server.
+	parsedUrl, err := url.Parse(cc.cfg.GRPCAddr)
+	if err != nil {
+		return nil, fmt.Errorf("grpc-address is not correctly formatted: %w", err)
+	}
+	endpoint := fmt.Sprintf("%s:%s", parsedUrl.Hostname(), parsedUrl.Port())
+	grpcConn, err := grpc.Dial(
+		endpoint,
+		grpc.WithInsecure(), // The Cosmos SDK doesn't support any transport security mechanism.
+		// This instantiates a general gRPC codec which handles proto bytes. We pass in a nil interface registry
+		// if the request/response types contain interface instead of 'nil' you should pass the application specific codec.
+		grpc.WithDefaultCallOptions(grpc.ForceCodec(codec.NewProtoCodec(nil).GRPCCodec())),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return grpcConn, nil
 }

@@ -31,7 +31,11 @@ type CosmwasmConfig struct {
 
 func (cfg *CosmwasmConfig) Validate() error {
 	if _, err := url.Parse(cfg.RPCAddr); err != nil {
-		return fmt.Errorf("rpc-addr is not correctly formatted: %w", err)
+		return fmt.Errorf("rpc-address is not correctly formatted: %w", err)
+	}
+
+	if _, err := url.Parse(cfg.GRPCAddr); err != nil {
+		return fmt.Errorf("grpc-address is not correctly formatted: %w", err)
 	}
 
 	if cfg.Timeout <= 0 {
@@ -65,7 +69,7 @@ func DefaultCosmwasmConfig() *CosmwasmConfig {
 		Key:                        "validator",
 		ChainID:                    "wasmd-test",
 		RPCAddr:                    "http://localhost:26677",
-		GRPCAddr:                   "https://localhost:9092",
+		GRPCAddr:                   "http://localhost:9092",
 		AccountPrefix:              "wasm",
 		KeyringBackend:             "test",
 		GasAdjustment:              1.3,
@@ -85,6 +89,7 @@ func (cfg *CosmwasmConfig) ToQueryClientConfig() *config.CosmwasmConfig {
 		Key:              cfg.Key,
 		ChainID:          cfg.ChainID,
 		RPCAddr:          cfg.RPCAddr,
+		GRPCAddr:         cfg.GRPCAddr,
 		AccountPrefix:    cfg.AccountPrefix,
 		KeyringBackend:   cfg.KeyringBackend,
 		GasAdjustment:    cfg.GasAdjustment,
