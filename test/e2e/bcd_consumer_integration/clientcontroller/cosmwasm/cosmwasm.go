@@ -129,14 +129,14 @@ func (cc *CosmwasmConsumerController) SubmitFinalitySig(
 	privateRand *eots.PrivateRand,
 	pubRand *bbntypes.SchnorrPubRand,
 	proof *cmtcrypto.Proof,
-	heightToVote int64,
+	heightToVote uint64,
 ) (*types.TxResponse, error) {
-	block, err := cc.GetCometBlock(heightToVote)
+	block, err := cc.GetCometBlock(int64(heightToVote))
 	if err != nil {
 		return nil, err
 	}
 
-	msgToSign := append(sdk.Uint64ToBigEndian(uint64(heightToVote)), block.Block.AppHash...)
+	msgToSign := append(sdk.Uint64ToBigEndian(heightToVote), block.Block.AppHash...)
 	sig, err := eots.Sign(fpSK, privateRand, msgToSign)
 	if err != nil {
 		return nil, err
@@ -145,7 +145,7 @@ func (cc *CosmwasmConsumerController) SubmitFinalitySig(
 
 	submitFinalitySig := &SubmitFinalitySignature{
 		FpPubkeyHex: bbntypes.NewBIP340PubKeyFromBTCPK(fpBtcPk).MarshalHex(),
-		Height:      uint64(heightToVote),
+		Height:      heightToVote,
 		PubRand:     pubRand.MustMarshal(),
 		Proof: Proof{
 			Total:    proof.Total,
