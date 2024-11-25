@@ -280,6 +280,11 @@ func (s *BCDConsumerIntegrationTestSuite) Test6ConsumerFPRewardsGeneration() {
 	s.NoError(err)
 	s.NotNil(czActivatedBlock)
 
+	// Ensure the staking contract balance is initially empty
+	rewards, err := s.cosmwasmController.QueryStakingContractBalances()
+	s.NoError(err)
+	s.Empty(rewards)
+
 	// Commit public randomness at the activated block height on the consumer chain
 	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, czFpBTCSK, uint64(czActivatedHeight), 100)
 	s.NoError(err)
