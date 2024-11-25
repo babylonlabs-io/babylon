@@ -319,21 +319,6 @@ func (s *BCDConsumerIntegrationTestSuite) Test6ConsumerFPRewardsGeneration() {
 		return true
 	}, time.Minute, time.Second*5)
 
-	// TODO: Ensure the vote is eventually cast
-	/*
-		var votes []bbntypes.BIP340PubKey
-		s.Eventually(func() bool {
-			votes, err = s.cosmwasmController.QueryVotesAtHeight(uint64(czActivatedHeight))
-			if err != nil {
-				s.T().Logf("Error querying votes: %v", err)
-				return false
-			}
-			return len(votes) > 0
-		}, time.Minute, time.Second*5)
-		s.Equal(1, len(votes))
-		s.Equal(votes[0].MarshalHex(), consumerFp.BtcPk.MarshalHex())
-	*/
-
 	// Once the vote is cast, ensure the block is finalised
 	finalizedBlock, err := s.cosmwasmController.QueryIndexedBlock(uint64(czActivatedHeight))
 	s.NoError(err)
