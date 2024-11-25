@@ -1,0 +1,17 @@
+name: Create Sync PR from main to base/consumer-chain-support
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+permissions:
+  pull-requests: write
+
+jobs:
+  call_sync_branch:
+    uses: babylonlabs-io/.github/.github/workflows/reusable_sync_branch.yml@v0.7.0
+    with:
+      base_branch: "main"
+      target_branch: "base/consumer-chain-support"
+      reviewers: "SebastianElvis,maurolacy,gusin13"
+    secrets: inherit
