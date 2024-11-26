@@ -32,8 +32,8 @@ func FuzzConsumerRegistry(f *testing.F) {
 		require.Nil(t, consumerRegister2)
 
 		// Register the consumer
-		bscKeeper.RegisterConsumer(ctx, consumerRegister)
-
+		err = bscKeeper.RegisterConsumer(ctx, consumerRegister)
+		require.NoError(t, err)
 		// check that the consumer is registered
 		consumerRegister2, err = bscKeeper.GetConsumerRegister(ctx, consumerRegister.ConsumerId)
 		require.NoError(t, err)

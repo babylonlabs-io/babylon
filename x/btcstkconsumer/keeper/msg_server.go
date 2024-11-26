@@ -3,8 +3,10 @@ package keeper
 import (
 	"context"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 type msgServer struct {
@@ -21,6 +23,12 @@ var _ types.MsgServer = msgServer{}
 
 // RegisterConsumer registers a consumer
 func (ms msgServer) RegisterConsumer(ctx context.Context, req *types.MsgRegisterConsumer) (*types.MsgRegisterConsumerResponse, error) {
+	// if the permissioned integration is enabled and the signer is not the authority
+	// then this is not an authorised registration request, reject
+	if ms.GetParams(ctx).PermissionedIntegration && ms.authority != req.Signer {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, req.Signer)
+	}
+
 	if err := req.ValidateBasic(); err != nil {
 		return nil, err
 	}
@@ -42,7 +50,9 @@ func (ms msgServer) RegisterConsumer(ctx context.Context, req *types.MsgRegister
 			req.ConsumerDescription,
 			req.CosmosIbcClientId,
 		)
-		ms.Keeper.RegisterConsumer(ctx, consumerRegister)
+		if err := ms.Keeper.RegisterConsumer(ctx, consumerRegister); err != nil {
+			return nil, err
+		}
 	}
 
 	if len(req.EthL2FinalityContractAddress) > 0 {
@@ -51,7 +61,7 @@ func (ms msgServer) RegisterConsumer(ctx context.Context, req *types.MsgRegister
 		// ensure the ETH L2 finality contract exists
 		contractAddr, err := sdk.AccAddressFromBech32(req.EthL2FinalityContractAddress)
 		if err != nil {
-			return nil, types.ErrInvalidETHL2ConsumerRequest.Wrapf(err.Error())
+			return nil, types.ErrInvalidETHL2ConsumerRequest.Wrapf("%s", err.Error())
 		}
 		contractInfo := ms.wasmKeeper.GetContractInfo(ctx, contractAddr)
 		if contractInfo == nil {
@@ -65,7 +75,9 @@ func (ms msgServer) RegisterConsumer(ctx context.Context, req *types.MsgRegister
 			req.ConsumerDescription,
 			req.EthL2FinalityContractAddress,
 		)
-		ms.Keeper.RegisterConsumer(ctx, consumerRegister)
+		if err := ms.Keeper.RegisterConsumer(ctx, consumerRegister); err != nil {
+			return nil, err
+		}
 	}
 
 	return &types.MsgRegisterConsumerResponse{}, nil
