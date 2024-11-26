@@ -2,7 +2,7 @@
 set -o errexit -o nounset -o pipefail
 command -v shellcheck >/dev/null && shellcheck "$0"
 
-CONTRACTS="babylon_contract btc_staking"
+CONTRACTS="babylon_contract btc_staking btc_finality"
 OUTPUT_FOLDER="$(dirname "$0")/../bytecode"
 
 echo "DEV-only: copy from local built instead of downloading"
