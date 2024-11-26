@@ -333,7 +333,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test6ConsumerFPRewardsGeneration() {
 			s.T().Logf("failed to query rewards: %s", err.Error())
 			return false
 		}
-		if rewards == nil || len(rewards) == 0 {
+		if len(rewards) == 0 {
 			return false
 		}
 		fmt.Println("Consumer rewards: ", rewards)
