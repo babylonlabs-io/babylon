@@ -65,7 +65,7 @@ func MintCoinsTo(
 	return bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, amounts)
 }
 
-func StoreTestCodeCode(
+func StoreTestCode(
 	t *testing.T,
 	ctx sdk.Context,
 	babylonApp *app.BabylonApp,
@@ -80,4 +80,30 @@ func StoreTestCodeCode(
 	id, checksum, err := permKeeper.Create(ctx, addr, wasmCode, nil)
 	require.NoError(t, err)
 	return id, checksum
+}
+
+func DeployTestContract(
+	t *testing.T,
+	ctx sdk.Context,
+	bbn *app.BabylonApp,
+	deployer sdk.AccAddress,
+	codePath string,
+) sdk.AccAddress {
+	codeId, _ := StoreTestCode(t, ctx, bbn, deployer, codePath)
+	contractAddr := InstantiateContract(t, ctx, bbn, deployer, codeId)
+	return contractAddr
+}
+
+func InstantiateContract(
+	t *testing.T,
+	ctx sdk.Context,
+	bbn *app.BabylonApp,
+	funder sdk.AccAddress,
+	codeId uint64,
+) sdk.AccAddress {
+	initMsgBz := []byte("{}")
+	contractKeeper := keeper.NewDefaultPermissionKeeper(bbn.WasmKeeper)
+	addr, _, err := contractKeeper.Instantiate(ctx, codeId, funder, funder, initMsgBz, "demo contract", nil)
+	require.NoError(t, err)
+	return addr
 }

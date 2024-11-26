@@ -56,7 +56,7 @@ func deployGrpcContract(
 	deployer sdk.AccAddress,
 	codePath string,
 ) sdk.AccAddress {
-	codeId, _ := StoreTestCodeCode(t, ctx, bbn, deployer, codePath)
+	codeId, _ := StoreTestCode(t, ctx, bbn, deployer, codePath)
 	contractAddr := instantiateGrpcContract(t, ctx, bbn, deployer, codeId)
 	return contractAddr
 }

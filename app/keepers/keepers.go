@@ -410,6 +410,30 @@ func (ak *AppKeepers) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
+	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper, &ak.ZoneConciergeKeeper), wasmOpts...)
+	wasmOpts = append(owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
+
+	ak.WasmKeeper = wasmkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
+		ak.AccountKeeper,
+		ak.BankKeeper,
+		ak.StakingKeeper,
+		distrkeeper.NewQuerier(ak.DistrKeeper),
+		ak.IBCFeeKeeper,
+		ak.IBCKeeper.ChannelKeeper,
+		ak.IBCKeeper.PortKeeper,
+		scopedWasmKeeper,
+		ak.TransferKeeper,
+		bApp.MsgServiceRouter(),
+		bApp.GRPCQueryRouter(),
+		homePath,
+		wasmConfig,
+		WasmCapabilities(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		wasmOpts...,
+	)
+
 	// register the proposal types
 	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
 	// by granting the governance module the right to execute the message.
@@ -580,30 +604,6 @@ func (ak *AppKeepers) InitKeepers(
 	)
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	ak.EvidenceKeeper = *evidenceKeeper
-
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper, &ak.ZoneConciergeKeeper), wasmOpts...)
-	wasmOpts = append(owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
-
-	ak.WasmKeeper = wasmkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
-		ak.AccountKeeper,
-		ak.BankKeeper,
-		ak.StakingKeeper,
-		distrkeeper.NewQuerier(ak.DistrKeeper),
-		ak.IBCFeeKeeper,
-		ak.IBCKeeper.ChannelKeeper,
-		ak.IBCKeeper.PortKeeper,
-		scopedWasmKeeper,
-		ak.TransferKeeper,
-		bApp.MsgServiceRouter(),
-		bApp.GRPCQueryRouter(),
-		homePath,
-		wasmConfig,
-		WasmCapabilities(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		wasmOpts...,
-	)
 
 	ibcWasmConfig :=
 		ibcwasmtypes.WasmConfig{

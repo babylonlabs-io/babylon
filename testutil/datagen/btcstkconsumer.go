@@ -20,9 +20,8 @@ func GenRandomCosmosConsumerRegister(r *rand.Rand) *bsctypes.ConsumerRegister {
 	}
 }
 
-func GenRandomETHL2Register(r *rand.Rand) *bsctypes.ConsumerRegister {
+func GenRandomETHL2Register(r *rand.Rand, contractAddress string) *bsctypes.ConsumerRegister {
 	clientID := "test-" + GenRandomHexStr(r, 10)
-	contractAddress := GenRandomAccount().Address
 	return &bsctypes.ConsumerRegister{
 		ConsumerId:          clientID,
 		ConsumerName:        GenRandomHexStr(r, 5),
