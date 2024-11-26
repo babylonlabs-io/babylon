@@ -113,16 +113,18 @@ func (s *BCDConsumerIntegrationTestSuite) Test1ChainStartup() {
 	}, time.Minute, time.Second, "Failed to query Consumer node status", err)
 	s.T().Logf("Consumer node status: %v", consumerStatus.SyncInfo.LatestBlockHeight)
 
+	// register the consumer after the
+
 	// Wait till IBC connection/channel b/w babylon<->bcd is established
 	s.waitForIBCConnection()
 }
 
-// Test2AutoRegisterAndVerifyNewConsumer
+// Test2RegisterAndVerifyNewConsumer registers a new consumer and
 // 1. Verifies that an IBC connection is established between the consumer chain and Babylon
-// 2. Checks that the consumer is automatically registered in Babylon's consumer registry
+// 2. Checks that the consumer is registered in Babylon's consumer registry
 // 3. Validates the consumer registration details in Babylon
-func (s *BCDConsumerIntegrationTestSuite) Test2AutoRegisterAndVerifyNewConsumer() {
-	s.verifyConsumerRegistration()
+func (s *BCDConsumerIntegrationTestSuite) Test2RegisterAndVerifyNewConsumer() {
+	s.registerVerifyConsumer()
 }
 
 // Test3CreateConsumerFinalityProvider
@@ -966,19 +968,35 @@ func (s *BCDConsumerIntegrationTestSuite) waitForIBCConnection() {
 
 // helper function: verifyConsumerRegistration verifies the automatic registration of a consumer
 // and returns the consumer details.
-func (s *BCDConsumerIntegrationTestSuite) verifyConsumerRegistration() *bsctypes.ConsumerRegister {
-	var consumerRegistryResp *bsctypes.QueryConsumersRegistryResponse
+func (s *BCDConsumerIntegrationTestSuite) registerVerifyConsumer() *bsctypes.ConsumerRegister {
+	var registeredConsumer *bsctypes.ConsumerRegister
+	var err error
 
+	// wait until the consumer is registered
 	s.Eventually(func() bool {
-		var err error
-		consumerRegistryResp, err = s.babylonController.QueryConsumerRegistry(consumerID)
+		// Register a random consumer on Babylon
+		registeredConsumer = &bsctypes.ConsumerRegister{
+			ConsumerId:          consumerID,
+			ConsumerName:        datagen.GenRandomHexStr(r, 5),
+			ConsumerDescription: "Chain description: " + datagen.GenRandomHexStr(r, 15),
+		}
+		_, err = s.babylonController.RegisterConsumerChain(registeredConsumer.ConsumerId, registeredConsumer.ConsumerName, registeredConsumer.ConsumerDescription)
 		if err != nil {
 			return false
 		}
-		return consumerRegistryResp != nil && len(consumerRegistryResp.GetConsumersRegister()) == 1
-	}, time.Minute, 5*time.Second, "Consumer was not registered within the expected time")
 
-	registeredConsumer := consumerRegistryResp.GetConsumersRegister()[0]
+		consumerRegistryResp, err := s.babylonController.QueryConsumerRegistry(consumerID)
+		if err != nil {
+			return false
+		}
+		s.Require().NotNil(consumerRegistryResp)
+		s.Require().Len(consumerRegistryResp.GetConsumersRegister(), 1)
+		s.Require().Equal(registeredConsumer.ConsumerId, consumerRegistryResp.GetConsumersRegister()[0].ConsumerId)
+		s.Require().Equal(registeredConsumer.ConsumerName, consumerRegistryResp.GetConsumersRegister()[0].ConsumerName)
+		s.Require().Equal(registeredConsumer.ConsumerDescription, consumerRegistryResp.GetConsumersRegister()[0].ConsumerDescription)
+
+		return true
+	}, time.Minute, 5*time.Second, "Consumer was not registered within the expected time")
 
 	s.T().Logf("Consumer registered: ID=%s, Name=%s, Description=%s",
 		registeredConsumer.ConsumerId,
