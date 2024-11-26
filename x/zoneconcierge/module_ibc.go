@@ -161,12 +161,6 @@ func (im IBCModule) OnRecvPacket(
 	}
 
 	switch packet := packetData.Packet.(type) {
-	case *types.ZoneconciergePacketData_ConsumerRegister:
-		err := im.keeper.HandleConsumerRegistration(ctx, modulePacket.DestinationPort, modulePacket.DestinationChannel, packet.ConsumerRegister)
-		if err != nil {
-			return channeltypes.NewErrorAcknowledgement(err)
-		}
-		return channeltypes.NewResultAcknowledgement([]byte("Consumer registered successfully"))
 	case *types.ZoneconciergePacketData_ConsumerSlashing:
 		err := im.keeper.HandleConsumerSlashing(ctx, modulePacket.DestinationPort, modulePacket.DestinationChannel, packet.ConsumerSlashing)
 		if err != nil {
