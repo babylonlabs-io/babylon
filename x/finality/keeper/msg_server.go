@@ -172,6 +172,15 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	// this signature is good, add vote to DB
 	ms.SetSig(ctx, req.BlockHeight, fpPK, req.FinalitySig)
 
+	// update `HighestVotedHeight` if needed
+	if fp.HighestVotedHeight < uint32(req.BlockHeight) {
+		fp.HighestVotedHeight = uint32(req.BlockHeight)
+		err := ms.BTCStakingKeeper.UpdateFinalityProvider(ctx, fp)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update the finality provider: %w", err)
+		}
+	}
+
 	// if this finality provider has signed the canonical block before,
 	// slash it via extracting its secret key, and emit an event
 	if ms.HasEvidence(ctx, req.FpBtcPk, req.BlockHeight) {

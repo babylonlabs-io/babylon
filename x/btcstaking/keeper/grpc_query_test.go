@@ -107,6 +107,9 @@ func FuzzFinalityProvider(f *testing.F) {
 			require.NoError(t, err)
 
 			AddFinalityProvider(t, ctx, *keeper, fp)
+			fp.HighestVotedHeight = uint32(datagen.RandomInt(r, 1000) + 1)
+			err = keeper.UpdateFinalityProvider(ctx, fp)
+			require.NoError(t, err)
 			fpsMap[fp.BtcPk.MarshalHex()] = fp
 		}
 
@@ -129,6 +132,7 @@ func FuzzFinalityProvider(f *testing.F) {
 			// check keys from map matches those in returned response
 			require.Equal(t, v.BtcPk.MarshalHex(), resp.FinalityProvider.BtcPk.MarshalHex())
 			require.Equal(t, v.Addr, resp.FinalityProvider.Addr)
+			require.Equal(t, v.HighestVotedHeight, resp.FinalityProvider.HighestVotedHeight)
 		}
 
 		// check some random non-existing guy
