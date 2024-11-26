@@ -15,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"math/rand"
 	"net/url"
 	"sort"
@@ -902,9 +903,9 @@ func (cc *CosmwasmConsumerController) createGrpcConnection() (*grpc.ClientConn, 
 		return nil, fmt.Errorf("grpc-address is not correctly formatted: %w", err)
 	}
 	endpoint := fmt.Sprintf("%s:%s", parsedUrl.Hostname(), parsedUrl.Port())
-	grpcConn, err := grpc.Dial(
+	grpcConn, err := grpc.NewClient(
 		endpoint,
-		grpc.WithInsecure(), // The Cosmos SDK doesn't support any transport security mechanism.
+		grpc.WithTransportCredentials(insecure.NewCredentials()), // The Cosmos SDK doesn't support any transport security mechanism.
 		// This instantiates a general gRPC codec which handles proto bytes. We pass in a nil interface registry
 		// if the request/response types contain interface instead of 'nil' you should pass the application specific codec.
 		grpc.WithDefaultCallOptions(grpc.ForceCodec(codec.NewProtoCodec(nil).GRPCCodec())),
