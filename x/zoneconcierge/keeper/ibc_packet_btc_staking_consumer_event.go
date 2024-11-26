@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
+	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -71,14 +72,22 @@ func (k Keeper) HandleIBCChannelCreation(
 		return fmt.Errorf("client ID %s is not registered as a consumer: %w", clientID, err)
 	}
 
-	// Update the consumer metadata with the new channel ID
+	// Ensure the consumer is a Cosmos consumer
 	cosmosMetadata := consumerRegister.GetCosmosConsumerMetadata()
 	if cosmosMetadata == nil {
 		return fmt.Errorf("consumer %s is not a Cosmos consumer", clientID)
 	}
 
-	// all good, update the channel ID
+	// Ensure the client ID hasn't integrated yet, i.e., the channel ID is not set
+	if len(cosmosMetadata.ChannelId) > 0 {
+		return fmt.Errorf("consumer %s has already integrated with channel %s", clientID, cosmosMetadata.ChannelId)
+	}
+
+	// all good, update the channel ID in the consumer register
 	cosmosMetadata.ChannelId = channelID
+	consumerRegister.ConsumerMetadata = &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
+		CosmosConsumerMetadata: cosmosMetadata,
+	}
 	if err := k.btcStkKeeper.UpdateConsumer(ctx, consumerRegister); err != nil {
 		return fmt.Errorf("failed to update consumer register: %w", err)
 	}

@@ -395,8 +395,12 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		mockBTCHeaderInfo := datagen.GenRandomBTCHeaderInfo(r)
 		btclcKeeper.EXPECT().GetMainChainFrom(gomock.Any(), gomock.Any()).Return([]*btclightclienttypes.BTCHeaderInfo{mockBTCHeaderInfo}).AnyTimes()
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockBTCHeaderInfo).AnyTimes()
+		// mock channel/port keeper
+		channelKeeper := zctypes.NewMockChannelKeeper(ctrl)
+		channelKeeper.EXPECT().GetAllChannels(gomock.Any()).Return(nil).AnyTimes()
+		portKeeper := zctypes.NewMockPortKeeper(ctrl)
 
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, nil)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, portKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, nil)
 		hooks := zcKeeper.Hooks()
 
 		var (

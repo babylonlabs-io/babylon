@@ -18,44 +18,11 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
 	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
-
-// zoneconciergeChannelKeeper is a stub of ChannelKeeper
-type zoneconciergeChannelKeeper struct{}
-
-func (zoneconciergeChannelKeeper) GetChannel(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
-	return channeltypes.Channel{}, false
-}
-func (zoneconciergeChannelKeeper) GetNextSequenceSend(ctx sdk.Context, portID, channelID string) (uint64, bool) {
-	return 0, false
-}
-func (zoneconciergeChannelKeeper) SendPacket(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
-	return nil
-}
-func (zoneconciergeChannelKeeper) ChanCloseInit(ctx sdk.Context, portID, channelID string, chanCap *capabilitytypes.Capability) error {
-	return nil
-}
-
-func (zoneconciergeChannelKeeper) GetAllChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
-	return nil
-}
-func (zoneconciergeChannelKeeper) GetChannelClientState(ctx sdk.Context, portID, channelID string) (string, ibcexported.ClientState, error) {
-	return "", nil, nil
-}
-
-// zoneconciergeportKeeper is a stub of PortKeeper
-type zoneconciergePortKeeper struct{}
-
-func (zoneconciergePortKeeper) BindPort(ctx sdk.Context, portID string) *capabilitytypes.Capability {
-	return &capabilitytypes.Capability{}
-}
 
 type zoneconciergeStoreQuerier struct{}
 
@@ -69,7 +36,17 @@ func (zoneconciergeStoreQuerier) Query(req *storetypes.RequestQuery) (*storetype
 	}, nil
 }
 
-func ZoneConciergeKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, checkpointingKeeper types.CheckpointingKeeper, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper, bsKeeper types.BTCStakingKeeper, btcStkKeeper types.BTCStkConsumerKeeper) (*keeper.Keeper, sdk.Context) {
+func ZoneConciergeKeeper(
+	t testing.TB,
+	channelKeeper types.ChannelKeeper,
+	portKeeper types.PortKeeper,
+	btclcKeeper types.BTCLightClientKeeper,
+	checkpointingKeeper types.CheckpointingKeeper,
+	btccKeeper types.BtcCheckpointKeeper,
+	epochingKeeper types.EpochingKeeper,
+	bsKeeper types.BTCStakingKeeper,
+	btcStkKeeper types.BTCStkConsumerKeeper,
+) (*keeper.Keeper, sdk.Context) {
 	logger := log.NewTestLogger(t)
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
@@ -88,8 +65,8 @@ func ZoneConciergeKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, c
 		runtime.NewKVStoreService(storeKey),
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
-		zoneconciergeChannelKeeper{},
-		zoneconciergePortKeeper{},
+		channelKeeper,
+		portKeeper,
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
 		btclcKeeper,
