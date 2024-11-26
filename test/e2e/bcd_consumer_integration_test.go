@@ -267,12 +267,6 @@ func (s *BCDConsumerIntegrationTestSuite) Test5ActivateDelegation() {
 }
 
 func (s *BCDConsumerIntegrationTestSuite) Test6ConsumerFPRewardsGeneration() {
-	// Query consumer finality providers
-	consumerFps, err := s.babylonController.QueryConsumerFinalityProviders(consumerID)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(consumerFps)
-	consumerFp := consumerFps[0]
-
 	// Get the activated block height and block on the consumer chain
 	czActivatedHeight, err := s.cosmwasmController.QueryActivatedHeight()
 	s.NoError(err)
@@ -308,7 +302,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test6ConsumerFPRewardsGeneration() {
 
 	// Ensure consumer finality provider's finality signature is received and stored in the smart contract
 	s.Eventually(func() bool {
-		fpSigsResponse, err := s.cosmwasmController.QueryFinalitySignature(consumerFp.BtcPk.MarshalHex(), uint64(czActivatedHeight))
+		fpSigsResponse, err := s.cosmwasmController.QueryFinalitySignature(bbntypes.NewBIP340PubKeyFromBTCPK(czFpBTCPK).MarshalHex(), uint64(czActivatedHeight))
 		if err != nil {
 			s.T().Logf("failed to query finality signature: %s", err.Error())
 			return false
@@ -443,7 +437,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test7BabylonFPCascadedSlashing() {
 
 func (s *BCDConsumerIntegrationTestSuite) Test8ConsumerFPCascadedSlashing() {
 	// create a new consumer finality provider
-	resp, czFpBTCSK, czFpBTCPK := s.createVerifyConsumerFP()
+	resp, czFpBTCSK2, czFpBTCPK2 := s.createVerifyConsumerFP()
 	consumerFp, err := s.babylonController.QueryConsumerFinalityProvider(consumerID, resp.BtcPk.MarshalHex())
 	s.NoError(err)
 
@@ -490,18 +484,18 @@ func (s *BCDConsumerIntegrationTestSuite) Test8ConsumerFPCascadedSlashing() {
 	s.NotNil(czLatestBlock)
 
 	// commit public randomness at the latest block height on the consumer chain
-	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, czFpBTCSK, uint64(czlatestBlockHeight), 100)
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, czFpBTCSK2, uint64(czlatestBlockHeight), 100)
 	s.NoError(err)
 
 	// submit the public randomness to the consumer chain
-	txResp, err := s.cosmwasmController.CommitPubRandList(czFpBTCPK, uint64(czlatestBlockHeight), 100, randListInfo.Commitment, msgCommitPubRandList.Sig.MustToBTCSig())
+	txResp, err := s.cosmwasmController.CommitPubRandList(czFpBTCPK2, uint64(czlatestBlockHeight), 100, randListInfo.Commitment, msgCommitPubRandList.Sig.MustToBTCSig())
 	s.NoError(err)
 	s.NotNil(txResp)
 
 	// consumer finality provider submits finality signature
 	txResp, err = s.cosmwasmController.SubmitFinalitySig(
-		czFpBTCSK,
-		czFpBTCPK,
+		czFpBTCSK2,
+		czFpBTCPK2,
 		randListInfo.SRList[0],
 		&randListInfo.PRList[0],
 		randListInfo.ProofList[0].ToProto(),
@@ -526,8 +520,8 @@ func (s *BCDConsumerIntegrationTestSuite) Test8ConsumerFPCascadedSlashing() {
 	// consumer finality provider submits invalid finality signature
 	txResp, err = s.cosmwasmController.SubmitInvalidFinalitySig(
 		r,
-		czFpBTCSK,
-		czFpBTCPK,
+		czFpBTCSK2,
+		czFpBTCPK2,
 		randListInfo.SRList[0],
 		&randListInfo.PRList[0],
 		randListInfo.ProofList[0].ToProto(),
@@ -896,12 +890,12 @@ func (s *BCDConsumerIntegrationTestSuite) createVerifyConsumerFP() (*bstypes.Fin
 		create a random consumer finality provider on Babylon
 	*/
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
-	czFpBTCSK, czFpBTCPK, _ := datagen.GenRandomBTCKeyPair(r)
+	czFpBTCSecretKey, czFpBTCPublicKey, _ := datagen.GenRandomBTCKeyPair(r)
 	sdk.SetAddrCacheEnabled(false)
 	bbnparams.SetAddressPrefixes()
 	fpBabylonAddr, err := sdk.AccAddressFromBech32(s.babylonController.MustGetTxSigner())
 	s.NoError(err)
-	czFp, err := datagen.GenCustomFinalityProvider(r, czFpBTCSK, fpBabylonAddr, consumerID)
+	czFp, err := datagen.GenCustomFinalityProvider(r, czFpBTCSecretKey, fpBabylonAddr, consumerID)
 	s.NoError(err)
 	czFp.Commission = &minCommissionRate
 	czFpPop, err := czFp.Pop.Marshal()
@@ -928,7 +922,7 @@ func (s *BCDConsumerIntegrationTestSuite) createVerifyConsumerFP() (*bstypes.Fin
 	s.Equal(czFp.SlashedBabylonHeight, actualFp.SlashedBabylonHeight)
 	s.Equal(czFp.SlashedBtcHeight, actualFp.SlashedBtcHeight)
 	s.Equal(consumerID, actualFp.ConsumerId)
-	return czFp, czFpBTCSK, czFpBTCPK
+	return czFp, czFpBTCSecretKey, czFpBTCPublicKey
 }
 
 // helper function: initBabylonController initializes the Babylon controller with the default configuration.
