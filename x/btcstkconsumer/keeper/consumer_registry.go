@@ -9,9 +9,19 @@ import (
 	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 )
 
+// RegisterConsumer registers a new consumer
 func (k Keeper) RegisterConsumer(ctx context.Context, consumerRegister *types.ConsumerRegister) error {
 	if k.IsConsumerRegistered(ctx, consumerRegister.ConsumerId) {
 		return types.ErrConsumerAlreadyRegistered
+	}
+	k.setConsumerRegister(ctx, consumerRegister)
+	return nil
+}
+
+// UpdateConsumer updates the consumer register for a given consumer ID
+func (k Keeper) UpdateConsumer(ctx context.Context, consumerRegister *types.ConsumerRegister) error {
+	if !k.IsConsumerRegistered(ctx, consumerRegister.ConsumerId) {
+		return types.ErrConsumerNotRegistered
 	}
 	k.setConsumerRegister(ctx, consumerRegister)
 	return nil

@@ -53,13 +53,46 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 	}
 }
 
+// HandleIBCChannelCreation processes the IBC handshake request. The handshake is successful
+// only if the client ID is registered as a consumer in the ZoneConcierge
+func (k Keeper) HandleIBCChannelCreation(
+	ctx sdk.Context,
+	portID string,
+	channelID string,
+) error {
+	clientID, _, err := k.channelKeeper.GetChannelClientState(ctx, portID, channelID)
+	if err != nil {
+		return fmt.Errorf("failed to get client state: %w", err)
+	}
+
+	// Check if the client ID is registered as a consumer
+	consumerRegister, err := k.btcStkKeeper.GetConsumerRegister(ctx, clientID)
+	if err != nil {
+		return fmt.Errorf("client ID %s is not registered as a consumer: %w", clientID, err)
+	}
+
+	// Update the consumer metadata with the new channel ID
+	cosmosMetadata := consumerRegister.GetCosmosConsumerMetadata()
+	if cosmosMetadata == nil {
+		return fmt.Errorf("consumer %s is not a Cosmos consumer", clientID)
+	}
+
+	// all good, update the channel ID
+	cosmosMetadata.ChannelId = channelID
+	if err := k.btcStkKeeper.UpdateConsumer(ctx, consumerRegister); err != nil {
+		return fmt.Errorf("failed to update consumer register: %w", err)
+	}
+
+	return nil
+}
+
 func (k Keeper) HandleConsumerSlashing(
 	ctx sdk.Context,
-	destinationPort string,
-	destinationChannel string,
+	portID string,
+	channelID string,
 	consumerSlashing *types.ConsumerSlashingIBCPacket,
 ) error {
-	clientID, _, err := k.channelKeeper.GetChannelClientState(ctx, destinationPort, destinationChannel)
+	clientID, _, err := k.channelKeeper.GetChannelClientState(ctx, portID, channelID)
 	if err != nil {
 		return fmt.Errorf("failed to get client state: %w", err)
 	}

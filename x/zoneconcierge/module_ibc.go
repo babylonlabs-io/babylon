@@ -52,6 +52,12 @@ func (im IBCModule) OnChanOpenInit(
 		return "", errorsmod.Wrapf(types.ErrInvalidVersion, "got %s, expected %s", version, types.Version)
 	}
 
+	// Handle the IBC handshake request, i.e., ensuring the client ID is registered as
+	// a Cosmos consumer
+	if err := im.keeper.HandleIBCChannelCreation(ctx, portID, channelID); err != nil {
+		return "", err
+	}
+
 	// Claim channel capability passed back by IBC module
 	if err := im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
 		return "", err
@@ -85,6 +91,12 @@ func (im IBCModule) OnChanOpenTry(
 	// ensure consistency of the protocol version
 	if counterpartyVersion != types.Version {
 		return "", errorsmod.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: got: %s, expected %s", counterpartyVersion, types.Version)
+	}
+
+	// Handle the IBC handshake request, i.e., ensuring the client ID is registered as
+	// a Cosmos consumer
+	if err := im.keeper.HandleIBCChannelCreation(ctx, portID, channelID); err != nil {
+		return "", err
 	}
 
 	// Module may have already claimed capability in OnChanOpenInit in the case of crossing hellos
