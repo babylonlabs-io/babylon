@@ -268,7 +268,7 @@ func (h *Helper) CreateDelegation(
 	txInclusionProof := types.NewInclusionProof(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, btcHeaderWithProof.SpvProof.MerkleNodes)
 
 	// mock for testing k-deep stuff
-	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Hash())).Return(btcHeaderInfo).AnyTimes()
+	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Hash())).Return(btcHeaderInfo, nil).AnyTimes()
 	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: btcTipHeight}).AnyTimes()
 
 	slashingSpendInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
@@ -323,7 +323,7 @@ func (h *Helper) CreateDelegation(
 		&btcctypes.TransactionKey{Index: 1, Hash: btcUnbondingHeader.Hash()},
 		btcUnbondingHeaderWithProof.SpvProof.MerkleNodes,
 	)
-	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcUnbondingHeader.Hash())).Return(btcUnbondingHeaderInfo).AnyTimes()
+	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcUnbondingHeader.Hash())).Return(btcUnbondingHeaderInfo, nil).AnyTimes()
 
 	// all good, construct and send MsgCreateBTCDelegation message
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
@@ -520,7 +520,7 @@ func (h *Helper) AddInclusionProof(
 	}
 
 	// mock BTC header that includes the staking tx
-	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Header.Hash())).Return(btcHeader).AnyTimes()
+	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Header.Hash())).Return(btcHeader, nil).AnyTimes()
 
 	// Call the AddBTCDelegationInclusionProof handler
 	_, err = h.MsgServer.AddBTCDelegationInclusionProof(h.Ctx, msg)

@@ -2,6 +2,7 @@ package wasmbinding
 
 import (
 	"encoding/json"
+	"errors"
 	"math/rand"
 	"os"
 	"runtime"
@@ -49,13 +50,13 @@ func TestQueryEpoch(t *testing.T) {
 		Epoch: &struct{}{},
 	}
 	resp := bindings.CurrentEpochResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 	require.Equal(t, resp.Epoch, uint64(1))
 
 	newEpoch := babylonApp.EpochingKeeper.IncEpoch(ctx)
 
 	resp = bindings.CurrentEpochResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 	require.Equal(t, resp.Epoch, newEpoch.EpochNumber)
 }
 
@@ -73,7 +74,7 @@ func TestFinalizedEpoch(t *testing.T) {
 
 	// Only epoch 0 is finalised at genesis
 	resp := bindings.LatestFinalizedEpochInfoResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 	require.Equal(t, resp.EpochInfo.EpochNumber, uint64(0))
 	require.Equal(t, resp.EpochInfo.LastBlockHeight, uint64(0))
 
@@ -81,7 +82,7 @@ func TestFinalizedEpoch(t *testing.T) {
 	babylonApp.CheckpointingKeeper.SetCheckpointFinalized(ctx, epoch.EpochNumber)
 
 	resp = bindings.LatestFinalizedEpochInfoResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 	require.Equal(t, resp.EpochInfo.EpochNumber, epoch.EpochNumber)
 	require.Equal(t, resp.EpochInfo.LastBlockHeight, epoch.GetLastBlockHeight())
 }
@@ -98,7 +99,7 @@ func TestQueryBtcTip(t *testing.T) {
 	}
 
 	resp := bindings.BtcTipResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 
 	tip := babylonApp.BTCLightClientKeeper.GetTipInfo(ctx)
 	tipAsInfo := bindings.AsBtcBlockHeaderInfo(tip)
@@ -119,7 +120,7 @@ func TestQueryBtcBase(t *testing.T) {
 	}
 
 	resp := bindings.BtcBaseHeaderResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 
 	base := babylonApp.BTCLightClientKeeper.GetBaseBTCHeader(ctx)
 	baseAsInfo := bindings.AsBtcBlockHeaderInfo(base)
@@ -143,7 +144,7 @@ func TestQueryBtcByHash(t *testing.T) {
 
 	headerAsInfo := bindings.AsBtcBlockHeaderInfo(tip)
 	resp := bindings.BtcHeaderQueryResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 
 	require.Equal(t, resp.HeaderInfo, headerAsInfo)
 }
@@ -164,7 +165,7 @@ func TestQueryBtcByNumber(t *testing.T) {
 
 	headerAsInfo := bindings.AsBtcBlockHeaderInfo(tip)
 	resp := bindings.BtcHeaderQueryResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 
 	require.Equal(t, resp.HeaderInfo, headerAsInfo)
 }
@@ -182,7 +183,7 @@ func TestQueryNonExistingHeader(t *testing.T) {
 		},
 	}
 	resp := bindings.BtcHeaderQueryResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHeight, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHeight, &resp, nil)
 	require.Nil(t, resp.HeaderInfo)
 
 	// Random source for the generation of BTC hash
@@ -193,7 +194,7 @@ func TestQueryNonExistingHeader(t *testing.T) {
 		},
 	}
 	resp1 := bindings.BtcHeaderQueryResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHash, &resp1)
+	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHash, &resp1, errors.New("Generic error: Querier contract error: codespace: btclightclient, code: 1100: query wasm contract failed"))
 	require.Nil(t, resp1.HeaderInfo)
 }
 
@@ -308,6 +309,7 @@ func queryCustom(
 	contract sdk.AccAddress,
 	request bindings.BabylonQuery,
 	response interface{},
+	expectedError error,
 ) {
 	msgBz, err := json.Marshal(request)
 	require.NoError(t, err)
@@ -321,6 +323,11 @@ func queryCustom(
 	require.NoError(t, err)
 
 	resBz, err := bbn.WasmKeeper.QuerySmart(ctx, contract, queryBz)
+	if expectedError != nil {
+		require.EqualError(t, expectedError, err.Error())
+		return
+	}
+
 	require.NoError(t, err)
 	var resp ChainResponse
 	err = json.Unmarshal(resBz, &resp)
