@@ -989,14 +989,16 @@ func (mr *MockBTCStkConsumerKeeperMockRecorder) SetConsumerFinalityProvider(ctx,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetConsumerFinalityProvider", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).SetConsumerFinalityProvider), ctx, fp)
 }
 
-// SetConsumerRegister mocks base method.
-func (m *MockBTCStkConsumerKeeper) SetConsumerRegister(ctx context.Context, consumerRegister *types3.ConsumerRegister) {
+// UpdateConsumer mocks base method.
+func (m *MockBTCStkConsumerKeeper) UpdateConsumer(ctx context.Context, consumerRegister *types3.ConsumerRegister) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetConsumerRegister", ctx, consumerRegister)
+	ret := m.ctrl.Call(m, "UpdateConsumer", ctx, consumerRegister)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// SetConsumerRegister indicates an expected call of SetConsumerRegister.
-func (mr *MockBTCStkConsumerKeeperMockRecorder) SetConsumerRegister(ctx, consumerRegister interface{}) *gomock.Call {
+// UpdateConsumer indicates an expected call of UpdateConsumer.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) UpdateConsumer(ctx, consumerRegister interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetConsumerRegister", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).SetConsumerRegister), ctx, consumerRegister)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateConsumer", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).UpdateConsumer), ctx, consumerRegister)
 }

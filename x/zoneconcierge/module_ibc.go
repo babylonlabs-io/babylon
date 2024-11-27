@@ -52,9 +52,15 @@ func (im IBCModule) OnChanOpenInit(
 		return "", errorsmod.Wrapf(types.ErrInvalidVersion, "got %s, expected %s", version, types.Version)
 	}
 
+	// Get the first connection ID from the channel's connection hops
+	if len(connectionHops) == 0 {
+		return "", fmt.Errorf("no connection hops found for channel")
+	}
+	connectionID := connectionHops[0]
+
 	// Handle the IBC handshake request, i.e., ensuring the client ID is registered as
 	// a Cosmos consumer
-	if err := im.keeper.HandleIBCChannelCreation(ctx, portID, channelID); err != nil {
+	if err := im.keeper.HandleIBCChannelCreation(ctx, connectionID, channelID); err != nil {
 		return "", err
 	}
 
@@ -93,9 +99,15 @@ func (im IBCModule) OnChanOpenTry(
 		return "", errorsmod.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: got: %s, expected %s", counterpartyVersion, types.Version)
 	}
 
+	// Get the first connection ID from the channel's connection hops
+	if len(connectionHops) == 0 {
+		return "", fmt.Errorf("no connection hops found for channel")
+	}
+	connectionID := connectionHops[0]
+
 	// Handle the IBC handshake request, i.e., ensuring the client ID is registered as
 	// a Cosmos consumer
-	if err := im.keeper.HandleIBCChannelCreation(ctx, portID, channelID); err != nil {
+	if err := im.keeper.HandleIBCChannelCreation(ctx, connectionID, channelID); err != nil {
 		return "", err
 	}
 

@@ -16,14 +16,15 @@ import (
 
 type (
 	Keeper struct {
-		cdc           codec.BinaryCodec
-		storeService  corestoretypes.KVStoreService
-		ics4Wrapper   types.ICS4Wrapper
-		clientKeeper  types.ClientKeeper
-		channelKeeper types.ChannelKeeper
-		portKeeper    types.PortKeeper
-		authKeeper    types.AccountKeeper
-		bankKeeper    types.BankKeeper
+		cdc              codec.BinaryCodec
+		storeService     corestoretypes.KVStoreService
+		ics4Wrapper      types.ICS4Wrapper
+		clientKeeper     types.ClientKeeper
+		connectionKeeper types.ConnectionKeeper
+		channelKeeper    types.ChannelKeeper
+		portKeeper       types.PortKeeper
+		authKeeper       types.AccountKeeper
+		bankKeeper       types.BankKeeper
 		// used in BTC timestamping
 		btclcKeeper         types.BTCLightClientKeeper
 		checkpointingKeeper types.CheckpointingKeeper
@@ -45,6 +46,7 @@ func NewKeeper(
 	storeService corestoretypes.KVStoreService,
 	ics4Wrapper types.ICS4Wrapper,
 	clientKeeper types.ClientKeeper,
+	connectionKeeper types.ConnectionKeeper,
 	channelKeeper types.ChannelKeeper,
 	portKeeper types.PortKeeper,
 	authKeeper types.AccountKeeper,
@@ -64,6 +66,7 @@ func NewKeeper(
 		storeService:        storeService,
 		ics4Wrapper:         ics4Wrapper,
 		clientKeeper:        clientKeeper,
+		connectionKeeper:    connectionKeeper,
 		channelKeeper:       channelKeeper,
 		portKeeper:          portKeeper,
 		authKeeper:          authKeeper,

@@ -33,28 +33,6 @@ func (ms msgServer) RegisterConsumer(ctx context.Context, req *types.MsgRegister
 		return nil, err
 	}
 
-	if len(req.CosmosIbcClientId) > 0 {
-		// this is a Cosmos consumer
-
-		// ensure the IBC light client exists
-		sdkCtx := sdk.UnwrapSDKContext(ctx)
-		_, exist := ms.clientKeeper.GetClientState(sdkCtx, req.CosmosIbcClientId)
-		if !exist {
-			return nil, types.ErrInvalidCosmosConsumerRequest.Wrapf("IBC light client does not exist")
-		}
-
-		// all good, register this Cosmos consumer
-		consumerRegister := types.NewCosmosConsumerRegister(
-			req.ConsumerId,
-			req.ConsumerName,
-			req.ConsumerDescription,
-			req.CosmosIbcClientId,
-		)
-		if err := ms.Keeper.RegisterConsumer(ctx, consumerRegister); err != nil {
-			return nil, err
-		}
-	}
-
 	if len(req.EthL2FinalityContractAddress) > 0 {
 		// this is a ETH L2 consumer
 
@@ -74,6 +52,25 @@ func (ms msgServer) RegisterConsumer(ctx context.Context, req *types.MsgRegister
 			req.ConsumerName,
 			req.ConsumerDescription,
 			req.EthL2FinalityContractAddress,
+		)
+		if err := ms.Keeper.RegisterConsumer(ctx, consumerRegister); err != nil {
+			return nil, err
+		}
+	} else {
+		// this is a Cosmos consumer
+
+		// ensure the IBC light client exists
+		sdkCtx := sdk.UnwrapSDKContext(ctx)
+		_, exist := ms.clientKeeper.GetClientState(sdkCtx, req.ConsumerId)
+		if !exist {
+			return nil, types.ErrInvalidCosmosConsumerRequest.Wrapf("IBC light client does not exist")
+		}
+
+		// all good, register this Cosmos consumer
+		consumerRegister := types.NewCosmosConsumerRegister(
+			req.ConsumerId,
+			req.ConsumerName,
+			req.ConsumerDescription,
 		)
 		if err := ms.Keeper.RegisterConsumer(ctx, consumerRegister); err != nil {
 			return nil, err

@@ -58,13 +58,15 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 // only if the client ID is registered as a consumer in the ZoneConcierge
 func (k Keeper) HandleIBCChannelCreation(
 	ctx sdk.Context,
-	portID string,
+	connectionID string,
 	channelID string,
 ) error {
-	clientID, _, err := k.channelKeeper.GetChannelClientState(ctx, portID, channelID)
-	if err != nil {
-		return fmt.Errorf("failed to get client state: %w", err)
+	// get the client ID from the connection
+	conn, found := k.connectionKeeper.GetConnection(ctx, connectionID)
+	if !found {
+		return fmt.Errorf("connection %s not found", connectionID)
 	}
+	clientID := conn.ClientId
 
 	// Check if the client ID is registered as a consumer
 	consumerRegister, err := k.btcStkKeeper.GetConsumerRegister(ctx, clientID)

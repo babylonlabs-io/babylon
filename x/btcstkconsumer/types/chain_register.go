@@ -14,23 +14,17 @@ func (m *MsgRegisterConsumer) ValidateBasic() error {
 	if len(m.ConsumerDescription) == 0 {
 		return fmt.Errorf("ConsumerDescription must be non-empty")
 	}
-	if len(m.CosmosIbcClientId) == 0 && len(m.EthL2FinalityContractAddress) == 0 {
-		return fmt.Errorf("either CosmosIbcClientId or EthL2FinalityContractAddress must be non-empty")
-	}
-	if len(m.CosmosIbcClientId) != 0 && len(m.EthL2FinalityContractAddress) != 0 {
-		return fmt.Errorf("both CosmosIbcClientId and EthL2FinalityContractAddress cannot be set simultaneously")
-	}
 	return nil
 }
 
-func NewCosmosConsumerRegister(consumerId, consumerName, consumerDescription string, cosmosIbcClientId string) *ConsumerRegister {
+func NewCosmosConsumerRegister(consumerId, consumerName, consumerDescription string) *ConsumerRegister {
 	return &ConsumerRegister{
 		ConsumerId:          consumerId,
 		ConsumerName:        consumerName,
 		ConsumerDescription: consumerDescription,
 		ConsumerMetadata: &ConsumerRegister_CosmosConsumerMetadata{
 			CosmosConsumerMetadata: &CosmosConsumerMetadata{
-				ClientId: cosmosIbcClientId,
+				ClientId: consumerId,
 			},
 		},
 	}

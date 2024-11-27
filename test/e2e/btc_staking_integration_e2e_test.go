@@ -425,11 +425,11 @@ func (s *BTCStakingIntegrationTestSuite) Test6ContractQueries() {
 // helper function: register a random consumer on Babylon and verify it
 func (s *BTCStakingIntegrationTestSuite) registerVerifyConsumer(babylonNode *chain.NodeConfig, consumerID string) *bsctypes.ConsumerRegister {
 	// Register a random consumer on Babylon
-	randomConsumer := &bsctypes.ConsumerRegister{
-		ConsumerId:          consumerID,
-		ConsumerName:        datagen.GenRandomHexStr(r, 5),
-		ConsumerDescription: "Chain description: " + datagen.GenRandomHexStr(r, 15),
-	}
+	randomConsumer := bsctypes.NewCosmosConsumerRegister(
+		consumerID,
+		datagen.GenRandomHexStr(r, 5),
+		"Chain description: "+datagen.GenRandomHexStr(r, 15),
+	)
 	babylonNode.RegisterConsumer(randomConsumer.ConsumerId, randomConsumer.ConsumerName, randomConsumer.ConsumerDescription)
 	babylonNode.WaitForNextBlock()
 

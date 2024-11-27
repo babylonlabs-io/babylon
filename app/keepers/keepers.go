@@ -556,6 +556,7 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
 		ak.IBCFeeKeeper,
 		ak.IBCKeeper.ClientKeeper,
+		ak.IBCKeeper.ConnectionKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper,
 		ak.AccountKeeper,

@@ -55,7 +55,6 @@ func FuzzRegisterConsumer(f *testing.F) {
 			ConsumerId:          consumerRegister.ConsumerId,
 			ConsumerName:        consumerRegister.ConsumerName,
 			ConsumerDescription: consumerRegister.ConsumerDescription,
-			CosmosIbcClientId:   consumerRegister.ConsumerId,
 		})
 		require.Error(t, err)
 		require.ErrorIs(t, err, govtypes.ErrInvalidSigner)
@@ -77,7 +76,6 @@ func FuzzRegisterConsumer(f *testing.F) {
 			ConsumerId:          consumerRegister.ConsumerId,
 			ConsumerName:        consumerRegister.ConsumerName,
 			ConsumerDescription: consumerRegister.ConsumerDescription,
-			CosmosIbcClientId:   consumerRegister.ConsumerId,
 		})
 		require.NoError(t, err)
 		// check that the consumer is registered
