@@ -58,43 +58,43 @@ message NewFinalityProvider {
 // upon a BTC delegation newly receives covenant signatures and thus becomes active
 message ActiveBTCDelegation {
   // staker_addr is the address to receive rewards from BTC delegation.
-  string staker_addr = 11;
+  string staker_addr = 1;
   // btc_pk_hex is the Bitcoin secp256k1 PK of this BTC delegation
   // the PK follows encoding in BIP-340 spec in hex format
-  string btc_pk_hex = 1;
+  string btc_pk_hex = 2;
   // fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
   // this BTC delegation delegates to
-  repeated string fp_btc_pk_list = 2;
+  repeated string fp_btc_pk_list = 3;
   // start_height is the start BTC height of the BTC delegation
   // it is the start BTC height of the timelock
-  uint32 start_height = 3;
+  uint32 start_height = 4;
   // end_height is the end height of the BTC delegation
   // it is the end BTC height of the timelock - w
-  uint32 end_height = 4;
+  uint32 end_height = 5;
   // total_sat is the total amount of BTC stakes in this delegation
   // quantified in satoshi
-  uint64 total_sat = 5;
+  uint64 total_sat = 6;
   // staking_tx is the staking tx
-  bytes staking_tx = 6;
+  bytes staking_tx = 7;
   // slashing_tx is the slashing tx
-  bytes slashing_tx = 7;
+  bytes slashing_tx = 8;
   // delegator_slashing_sig is the signature on the slashing tx
   // by the delegator (i.e., SK corresponding to btc_pk) as string hex.
   // It will be a part of the witness for the staking tx output.
-  bytes delegator_slashing_sig = 8;
+  bytes delegator_slashing_sig = 9;
   // covenant_sigs is a list of adaptor signatures on the slashing tx
   // by each covenant member
   // It will be a part of the witness for the staking tx output.
-  repeated CovenantAdaptorSignatures covenant_sigs = 9;
+  repeated CovenantAdaptorSignatures covenant_sigs = 10;
   // staking_output_idx is the index of the staking output in the staking tx
-  uint32 staking_output_idx = 10;
+  uint32 staking_output_idx = 11;
   // unbonding_time used in unbonding output timelock path and in slashing transactions
   // change outputs
-  uint32 unbonding_time = 13;
+  uint32 unbonding_time = 12;
   // undelegation_info is the undelegation info of this delegation.
-  BTCUndelegationInfo undelegation_info = 14;
+  BTCUndelegationInfo undelegation_info = 13;
   // params version used to validate delegation
-  uint32 params_version = 15;
+  uint32 params_version = 14;
 }
 
 // BTCUndelegationInfo provides all necessary info about the undeleagation
