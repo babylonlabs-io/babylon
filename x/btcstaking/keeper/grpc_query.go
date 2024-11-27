@@ -67,6 +67,8 @@ func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProv
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
+	currBlockHeight := uint64(ctx.BlockHeight())
+
 	fp, err := k.GetFinalityProvider(ctx, key)
 	if err != nil {
 		// Try in the btcstkconsumer module
@@ -80,13 +82,12 @@ func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProv
 				return nil, err
 			}
 			// FPs for consumers are not stored in the voting power table
-			fpResp := types.NewFinalityProviderResponse(fp, 0)
+			fpResp := types.NewFinalityProviderResponse(fp, currBlockHeight)
 			return &types.QueryFinalityProviderResponse{FinalityProvider: fpResp}, nil
 		}
 		return nil, err
 	}
 
-	currBlockHeight := uint64(ctx.BlockHeight())
 	fpResp := types.NewFinalityProviderResponse(fp, currBlockHeight)
 	return &types.QueryFinalityProviderResponse{FinalityProvider: fpResp}, nil
 }

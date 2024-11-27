@@ -69,6 +69,7 @@ func CreateActiveBTCDelegationEvent(activeDel *BTCDelegation) (*BTCStakingConsum
 					DelegatorSlashingSig:     delegatorUnbondingSlashingSigBytes,
 					CovenantUnbondingSigList: activeDel.BtcUndelegation.CovenantUnbondingSigList,
 					CovenantSlashingSigs:     activeDel.BtcUndelegation.CovenantSlashingSigs,
+					DelegatorUnbondingInfo:   activeDel.BtcUndelegation.DelegatorUnbondingInfo,
 				},
 				ParamsVersion: activeDel.ParamsVersion,
 			},

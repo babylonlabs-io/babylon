@@ -99,29 +99,29 @@ message ActiveBTCDelegation {
 
 // BTCUndelegationInfo provides all necessary info about the undeleagation
 message BTCUndelegationInfo {
-  // unbonding_tx is the transaction which will transfer the funds from staking
-  // output to unbonding output. Unbonding output will usually have lower timelock
-  // than staking output.
-  bytes unbonding_tx = 1;
-  // delegator_unbonding_sig is the signature on the unbonding tx
-  // by the delegator (i.e., SK corresponding to btc_pk).
-  // It effectively proves that the delegator wants to unbond and thus
-  // Babylon will consider this BTC delegation unbonded. Delegator's BTC
-  // on Bitcoin will be unbonded after timelock.
-  bytes delegator_unbonding_sig = 2;
-  // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
-  // by covenant members
-  repeated SignatureInfo covenant_unbonding_sig_list = 3;
-  // slashing_tx is the unbonding slashing tx
-  bytes slashing_tx = 4;
-  // delegator_slashing_sig is the signature on the slashing tx
-  // by the delegator (i.e., SK corresponding to btc_pk).
-  // It will be a part of the witness for the unbonding tx output.
-  bytes delegator_slashing_sig = 5;
-  // covenant_slashing_sigs is a list of adaptor signatures on the
-  // unbonding slashing tx by each covenant member
-  // It will be a part of the witness for the staking tx output.
-  repeated CovenantAdaptorSignatures covenant_slashing_sigs = 6;
+    // unbonding_tx is the transaction which will transfer the funds from staking
+    // output to unbonding output. Unbonding output will usually have lower timelock
+    // than staking output.
+    bytes unbonding_tx = 1;
+    // slashing_tx is the slashing tx for unbonding transactions
+    // It is partially signed by SK corresponding to btc_pk, but not signed by
+    // finality provider or covenant yet.
+    bytes slashing_tx = 2;
+    // delegator_slashing_sig is the signature on the slashing tx
+    // by the delegator (i.e., SK corresponding to btc_pk).
+    // It will be a part of the witness for the unbonding tx output.
+    bytes delegator_slashing_sig = 3;
+    // covenant_slashing_sigs is a list of adaptor signatures on the slashing tx
+    // by each covenant member
+    // It will be a part of the witness for the staking tx output.
+    repeated CovenantAdaptorSignatures covenant_slashing_sigs = 4;
+    // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
+    // by covenant members
+    // It must be provided after processing undelegate message by Babylon
+    repeated SignatureInfo covenant_unbonding_sig_list = 5;
+    // delegator_unbonding_info is the information about transaction which spent
+    // the staking output
+    DelegatorUnbondingInfo delegator_unbonding_info = 6;
 }
 
 // SlashedBTCDelegation is an IBC packet sent from Babylon to consumer
