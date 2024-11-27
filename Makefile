@@ -263,30 +263,37 @@ endif
 
 test-e2e: build-docker-e2e test-e2e-cache
 
-
 test-e2e-cache:
-	go test -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+	$(MAKE) test-e2e-cache-btc-timestamping
+	$(MAKE) test-e2e-cache-btc-staking
+#	$(MAKE) test-e2e-cache-btc-staking-integration
+	$(MAKE) clean-e2e
+	$(MAKE) test-e2e-cache-btc-staking-pre-approval
+	$(MAKE) test-e2e-cache-ibc-transfer
+	$(MAKE) test-e2e-cache-bcd-consumer-integration
+#	$(MAKE) test-e2e-cache-upgrade-v1
 
-test-e2e-cache-bcd-consumer-integration:
+clean-e2e:
+	docker container rm -f $(shell docker container ls -a -q) || true
+	docker network prune -f || true
+
+test-e2e-cache-bcd-consumer-integration: start-bcd-consumer-integration
 	go test -run TestBCDConsumerIntegrationTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
-
-test-e2e-cache-ibc-transfer:
-	go test -run TestIBCTranferTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-btc-timestamping:
 	go test -run TestBTCTimestampingTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
-test-e2e-cache-btc-timestamping-phase-2-hermes:
-	go test -run TestBTCTimestampingPhase2HermesTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
-
-test-e2e-cache-btc-timestamping-phase-2-rly:
-	go test -run TestBTCTimestampingPhase2RlyTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
-
 test-e2e-cache-btc-staking:
 	go test -run TestBTCStakingTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
+test-e2e-cache-btc-staking-integration:
+	go test -run TestBTCStakingIntegrationTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
 test-e2e-cache-btc-staking-pre-approval:
 	go test -run TestBTCStakingPreApprovalTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-cache-ibc-transfer:
+	go test -run TestIBCTranferTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-upgrade-v1:
 	go test -run TestSoftwareUpgradeV1TestnetTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
@@ -444,8 +451,11 @@ build-docker-e2e:
 build-cosmos-relayer-docker: ## Build Docker image for the Cosmos relayer
 	$(MAKE) -C contrib/images cosmos-relayer
 
+start-bcd-consumer-integration:
+	$(MAKE) -C contrib/images start-bcd-consumer-integration
+
 clean-docker-network:
-	$(DOCKER) network rm ${dockerNetworkList}
+	$(DOCKER) network rm ${dockerNetworkList} || true
 
 build-test-wasm: ## Build WASM bindings for testing
 	$(DOCKER) run --rm -v "$(WASM_DIR)":/code \
