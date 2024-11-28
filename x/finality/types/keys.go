@@ -49,4 +49,5 @@ var (
 	FinalityProviderMissedBlockBitmapKeyPrefix = collections.NewPrefix(9) // key prefix for missed block bitmap
 	VotingPowerKey                             = []byte{0x10}             // key prefix for the voting power
 	VotingPowerDistCacheKey                    = []byte{0x11}             // key prefix for voting power distribution cache
+	VotingPowerAsListKey                       = []byte{0x12}             // key prefix for voting power as a list
 )

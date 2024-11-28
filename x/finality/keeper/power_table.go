@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 
@@ -134,4 +135,56 @@ func (k Keeper) votingPowerBbnBlockHeightStore(ctx context.Context, height uint6
 func (k Keeper) votingPowerStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return prefix.NewStore(storeAdapter, types.VotingPowerKey)
+}
+
+func (k Keeper) newVotingPowerStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.VotingPowerAsListKey)
+}
+
+func (k Keeper) SetVotingPowerAsList(ctx context.Context, height uint64, activeFPs []*types.ActiveFinalityProvider) {
+	store := k.newVotingPowerStore(ctx)
+	activeList := types.ActiveFinalityProvidersList{Fps: activeFPs}
+	activeListBytes := k.cdc.MustMarshal(&activeList)
+
+	store.Set(sdk.Uint64ToBigEndian(height), activeListBytes)
+}
+
+func (k Keeper) GetVotingPowerAsList(ctx context.Context, height uint64) map[string]uint64 {
+	store := k.newVotingPowerStore(ctx)
+	activeListBytes := store.Get(sdk.Uint64ToBigEndian(height))
+
+	if activeListBytes == nil {
+		return nil
+	}
+
+	activeList := types.ActiveFinalityProvidersList{}
+	k.cdc.MustUnmarshal(activeListBytes, &activeList)
+
+	fpSet := make(map[string]uint64)
+	for _, fp := range activeList.Fps {
+		fpSet[fp.FpBtcPk.MarshalHex()] = fp.VotingPower
+	}
+
+	return fpSet
+}
+
+func (k Keeper) GetVotingPowerNew(ctx context.Context, fpBTCPK []byte, height uint64) uint64 {
+	store := k.newVotingPowerStore(ctx)
+	activeListBytes := store.Get(sdk.Uint64ToBigEndian(height))
+
+	if activeListBytes == nil {
+		return 0
+	}
+
+	activeList := types.ActiveFinalityProvidersList{}
+	k.cdc.MustUnmarshal(activeListBytes, &activeList)
+
+	for _, fp := range activeList.Fps {
+		if bytes.Equal(fp.FpBtcPk.MustMarshal(), fpBTCPK) {
+			return fp.VotingPower
+		}
+	}
+
+	return 0
 }

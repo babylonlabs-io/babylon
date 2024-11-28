@@ -63,7 +63,6 @@ func FinalityKeeper(
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
 	k, ctx := FinalityKeeperWithStore(t, db, stateStore, bsKeeper, iKeeper, ckptKeeper)
-
 	// Initialize params
 	dParams := types.DefaultParams()
 	dParams.FinalityActivationHeight = 0
@@ -72,4 +71,44 @@ func FinalityKeeper(
 	}
 
 	return k, ctx
+}
+
+func FinalityKeeperWithDb(
+	t testing.TB,
+	dbPath string,
+	bsKeeper types.BTCStakingKeeper,
+	iKeeper types.IncentiveKeeper,
+	ckptKeeper types.CheckpointingKeeper,
+) (*keeper.Keeper, func(), func(), func(), sdk.Context) {
+	db, err := dbm.NewGoLevelDB("test", dbPath, nil)
+	require.NoError(t, err)
+
+	dbClose := func() {
+		db.Close()
+	}
+
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+
+	commit := func() {
+		// commit state to disk, required to actually write db to disk
+		stateStore.Commit()
+	}
+
+	dbWriteAlot := func() {
+		bytes := [64000000]byte{}
+		bytes[0] = 1
+		db.Set([]byte("test"), bytes[:])
+	}
+
+	// Set sync to true to ensure that the db is written to disk
+
+	k, ctx := FinalityKeeperWithStore(t, db, stateStore, bsKeeper, iKeeper, ckptKeeper)
+	// Initialize params
+	dParams := types.DefaultParams()
+	dParams.FinalityActivationHeight = 0
+	if err := k.SetParams(ctx, dParams); err != nil {
+		panic(err)
+	}
+
+	return k, dbClose, commit, dbWriteAlot, ctx
 }
