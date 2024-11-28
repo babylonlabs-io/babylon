@@ -23,3 +23,12 @@ message FinalityProviderRewards {
     // TODO(rafilx): add reference count for state prunning
     // https://github.com/cosmos/cosmos-sdk/blob/d9c53bfefc1e75a3c6b09065ea8b3a836cda0d18/x/distribution/types/distribution.pb.go#L98
 }
+
+// BTCDelegationRewardsTracker represents the structure that holds information
+// from the last time this BTC delegator withdraw the rewards from the finality provider
+// The finality provider address is ommitted here but should be part of the key used
+// to store this structure together with the BTC delegator address.
+message BTCDelegationRewardsTracker {
+    uint64 StartPeriodCumulativeRewardFP = 1;
+    uint64 DelegationTotalActiveSat = 2;
+}
