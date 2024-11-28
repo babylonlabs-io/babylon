@@ -53,6 +53,17 @@ func (k Keeper) setFinalityProvider(ctx context.Context, fp *types.FinalityProvi
 	store.Set(fp.BtcPk.MustMarshal(), fpBytes)
 }
 
+// UpdateFinalityProvider update the given finality provider to KVStore
+func (k Keeper) UpdateFinalityProvider(ctx context.Context, fp *types.FinalityProvider) error {
+	if !k.HasFinalityProvider(ctx, fp.BtcPk.MustMarshal()) {
+		return types.ErrFpNotFound
+	}
+
+	k.setFinalityProvider(ctx, fp)
+
+	return nil
+}
+
 // HasFinalityProvider checks if the finality provider exists
 func (k Keeper) HasFinalityProvider(ctx context.Context, fpBTCPK []byte) bool {
 	store := k.finalityProviderStore(ctx)
