@@ -246,7 +246,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test5ActivateDelegation() {
 	}, time.Second*30, time.Second)
 
 	// Assert delegation details
-	s.Empty(dataFromContract.Delegations[0].UndelegationInfo)
+	s.Empty(dataFromContract.Delegations[0].UndelegationInfo.DelegatorUnbondingInfo)
 	s.Equal(activeDel.BtcPk.MarshalHex(), dataFromContract.Delegations[0].BtcPkHex)
 	s.Len(dataFromContract.Delegations[0].FpBtcPkList, 2)
 	s.Equal(activeDel.FpBtcPkList[0].MarshalHex(), dataFromContract.Delegations[0].FpBtcPkList[0])
