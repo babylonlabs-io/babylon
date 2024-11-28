@@ -1,0 +1,25 @@
+syntax = "proto3";
+package babylon.incentive;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
+
+// FinalityProviderRewards represents the cumulative rewards ratio of the
+// finality provider per sat in that period.
+// The period is ommited here and should be part of the key used to store this structure.
+message FinalityProviderRewards {
+    // The cumulative rewards of that finality provider at some specific period
+    // This coins will aways increase the value, never be reduced due to keep acumulation
+    // and when the cumulative rewards will be used to distribute rewards, 2 periods will
+    // be interpolated and calculate the difference and multiplied by the total sat amount delegated
+    // https://github.com/cosmos/cosmos-sdk/blob/e76102f885b71fd6e1c1efb692052173c4b3c3a3/x/distribution/keeper/delegation.go#L47
+    // This is also not considering slash of the rewards.
+    repeated cosmos.base.v1beta1.Coin CumulativeRewardsPerSat = 1 [
+        (gogoproto.nullable) = false,
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    ];
+    // TODO(rafilx): add reference count for state prunning
+    // https://github.com/cosmos/cosmos-sdk/blob/d9c53bfefc1e75a3c6b09065ea8b3a836cda0d18/x/distribution/types/distribution.pb.go#L98
+}

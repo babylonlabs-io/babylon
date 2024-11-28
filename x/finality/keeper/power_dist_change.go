@@ -203,6 +203,10 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 					fpBTCPKHex := fpBTCPK.MarshalHex()
 					activeBTCDels[fpBTCPKHex] = append(activeBTCDels[fpBTCPKHex], btcDel)
 				}
+				// Becomes active, it should withdraw the rewards available
+				// and create a new BTCDelegationRewardsInfo.
+				// TODO: research how can we charge the gas for this process during
+				// the withdraw of rewards.
 			} else if delEvent.NewState == types.BTCDelegationStatus_UNBONDED {
 				// emit expired event if it is not early unbonding
 				if !btcDel.IsUnbondedEarly() {
@@ -210,6 +214,9 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				}
 				// add the unbonded BTC delegation to the map
 				unbondedBTCDels[delEvent.StakingTxHash] = struct{}{}
+				// Becomes unbonded, it should withdraw the rewards available
+				// and create a new BTCDelegationRewardsInfo or delete it if does not have more sats
+				// for this finality provider.
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
 			// record slashed fps
