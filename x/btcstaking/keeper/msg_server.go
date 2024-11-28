@@ -575,10 +575,9 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to parse staking spending tx: %v", err)
 	}
 
-	stakerSpendigTxHeader := ms.btclcKeeper.GetHeaderByHash(ctx, req.StakeSpendingTxInclusionProof.Key.Hash)
-
-	if stakerSpendigTxHeader == nil {
-		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("stake spending tx is not on BTC chain")
+	stakerSpendigTxHeader, err := ms.btclcKeeper.GetHeaderByHash(ctx, req.StakeSpendingTxInclusionProof.Key.Hash)
+	if err != nil {
+		return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("stake spending tx is not on BTC chain: %v", err)
 	}
 
 	btcHeader := stakerSpendigTxHeader.Header.ToBlockHeader()

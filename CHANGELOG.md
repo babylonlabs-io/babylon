@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#305](https://github.com/babylonlabs-io/babylon/pull/305) chore: add more error logs to `VerifyInclusionProofAndGetHeight`
 - [#304](https://github.com/babylonlabs-io/babylon/pull/304) Add highest voted height to finality provider
 
 ## v0.17.1
@@ -55,7 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-- [#264](https://github.com/babylonlabs-io/babylon/pull/264) bump docker workflow 
+- [#264](https://github.com/babylonlabs-io/babylon/pull/264) bump docker workflow
 version to 0.10.2, fix some Dockerfile issues
 - [#284](https://github.com/babylonlabs-io/babylon/pull/284) Update cosmos sdk math dependency
 - [#285](https://github.com/babylonlabs-io/babylon/pull/285) Update cometbft dependency
