@@ -112,6 +112,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		defer ctrl.Finish()
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+		bsKeeper.EXPECT().UpdateFinalityProvider(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
@@ -310,6 +311,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+	bsKeeper.EXPECT().UpdateFinalityProvider(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
@@ -381,6 +383,7 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	defer ctrl.Finish()
 
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+	bsKeeper.EXPECT().UpdateFinalityProvider(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
