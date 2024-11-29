@@ -241,3 +241,66 @@ func BenchmarkGetOneFpVotingPowerNew80(b *testing.B) {
 func BenchmarkGetOneFpVotingPowerNew160(b *testing.B) {
 	getOneFpVotingPowerNew(160, height, b)
 }
+
+// ************************************************************************************ New new
+
+func saveFinalityProvidersNew1(
+	numFinalityProvidersPerBlock int,
+	lastBlockHeight int,
+	t *testing.B) (*keeper.Keeper, sdk.Context, []byte, func()) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	tempDir, err := os.MkdirTemp("", "bench-fin")
+	fmt.Printf("tempDir: %s\n", tempDir)
+	require.NoError(t, err)
+	k, closeDb, commit, dbWriteAlot, ctx := kt.FinalityKeeperWithDb(t, tempDir, nil, nil, nil)
+	randIdx := r.Intn(numFinalityProvidersPerBlock)
+
+	var activeFPs []*keeper.ActiveFp
+
+	var randKey []byte
+
+	for i := 0; i < numFinalityProvidersPerBlock; i++ {
+		key, err := datagen.GenRandomBIP340PubKey(r)
+		require.NoError(t, err)
+		randVotingPower := uint64(r.Intn(1000000)) + 10
+		activeFPs = append(activeFPs, &keeper.ActiveFp{FPBTCPK: key.MustMarshal(), VotingPower: randVotingPower})
+
+		if i == randIdx {
+			randKey = key.MustMarshal()
+		}
+	}
+
+	for block := 1; block <= lastBlockHeight; block++ {
+		k.SetVotingPowerAsListNew1(ctx, uint64(block), activeFPs)
+	}
+
+	// first write to disk, this will actually flush the data to memory table
+	// of the underlaying golang level db
+	commit()
+
+	// write a lot of data to db directly, this will force golab level db
+	// to flush the data to disk
+	dbWriteAlot()
+
+	cleanup := func() {
+		closeDb()
+		os.RemoveAll(tempDir)
+	}
+
+	return k, ctx, randKey, cleanup
+}
+
+func getOneFpVotingPowerNew1(numFinalityProviders int, lastBlockHeight int, b *testing.B) {
+	k, ctx, fpKey, cleanup := saveFinalityProvidersNew1(numFinalityProviders, lastBlockHeight, b)
+	defer cleanup()
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		vp := k.GetVotingPowerNew1(ctx, fpKey, height)
+		require.NotZero(b, vp)
+	}
+}
+
+func BenchmarkGetOneFpVotingPowerNew160New1(b *testing.B) {
+	getOneFpVotingPowerNew1(160, height, b)
+}
