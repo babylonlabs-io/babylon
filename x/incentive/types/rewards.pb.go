@@ -25,10 +25,10 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// FinalityProviderRewards represents the cumulative rewards ratio of the
+// FinalityProviderHistoricalRewards represents the cumulative rewards ratio of the
 // finality provider per sat in that period.
 // The period is ommited here and should be part of the key used to store this structure.
-type FinalityProviderRewards struct {
+type FinalityProviderHistoricalRewards struct {
 	// The cumulative rewards of that finality provider at some specific period
 	// This coins will aways increase the value, never be reduced due to keep acumulation
 	// and when the cumulative rewards will be used to distribute rewards, 2 periods will
@@ -38,18 +38,18 @@ type FinalityProviderRewards struct {
 	CumulativeRewardsPerSat github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=CumulativeRewardsPerSat,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"CumulativeRewardsPerSat"`
 }
 
-func (m *FinalityProviderRewards) Reset()         { *m = FinalityProviderRewards{} }
-func (m *FinalityProviderRewards) String() string { return proto.CompactTextString(m) }
-func (*FinalityProviderRewards) ProtoMessage()    {}
-func (*FinalityProviderRewards) Descriptor() ([]byte, []int) {
+func (m *FinalityProviderHistoricalRewards) Reset()         { *m = FinalityProviderHistoricalRewards{} }
+func (m *FinalityProviderHistoricalRewards) String() string { return proto.CompactTextString(m) }
+func (*FinalityProviderHistoricalRewards) ProtoMessage()    {}
+func (*FinalityProviderHistoricalRewards) Descriptor() ([]byte, []int) {
 	return fileDescriptor_fa5a587351117eb0, []int{0}
 }
-func (m *FinalityProviderRewards) XXX_Unmarshal(b []byte) error {
+func (m *FinalityProviderHistoricalRewards) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *FinalityProviderRewards) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *FinalityProviderHistoricalRewards) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_FinalityProviderRewards.Marshal(b, m, deterministic)
+		return xxx_messageInfo_FinalityProviderHistoricalRewards.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -59,23 +59,86 @@ func (m *FinalityProviderRewards) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
-func (m *FinalityProviderRewards) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_FinalityProviderRewards.Merge(m, src)
+func (m *FinalityProviderHistoricalRewards) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FinalityProviderHistoricalRewards.Merge(m, src)
 }
-func (m *FinalityProviderRewards) XXX_Size() int {
+func (m *FinalityProviderHistoricalRewards) XXX_Size() int {
 	return m.Size()
 }
-func (m *FinalityProviderRewards) XXX_DiscardUnknown() {
-	xxx_messageInfo_FinalityProviderRewards.DiscardUnknown(m)
+func (m *FinalityProviderHistoricalRewards) XXX_DiscardUnknown() {
+	xxx_messageInfo_FinalityProviderHistoricalRewards.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_FinalityProviderRewards proto.InternalMessageInfo
+var xxx_messageInfo_FinalityProviderHistoricalRewards proto.InternalMessageInfo
 
-func (m *FinalityProviderRewards) GetCumulativeRewardsPerSat() github_com_cosmos_cosmos_sdk_types.Coins {
+func (m *FinalityProviderHistoricalRewards) GetCumulativeRewardsPerSat() github_com_cosmos_cosmos_sdk_types.Coins {
 	if m != nil {
 		return m.CumulativeRewardsPerSat
 	}
 	return nil
+}
+
+// FinalityProviderCurrentRewards represents the current rewards of the pool of
+// BTC delegations that this finality provider is entitled to.
+// Note: This rewards are for the BTC delegators that delegated to this FP
+// the FP itself is not the owner or can withdraw this rewards.
+type FinalityProviderCurrentRewards struct {
+	// CurrentRewards is the current rewards that the finality provider have and it was not
+	// yet stored inside the FinalityProviderHistoricalRewards. Once something happens that
+	// modifies the amount of satoshis delegated to this finality provider (activation, unbonding, slash)
+	// a new period must be created, accumulate this rewards to FinalityProviderHistoricalRewards
+	// with a new period and zero out the Current Rewards.
+	CurrentRewards github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=CurrentRewards,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"CurrentRewards"`
+	// Period stores the current period that serves as a reference for
+	// creating new historical rewards.
+	Period uint64 `protobuf:"varint,2,opt,name=period,proto3" json:"period,omitempty"`
+}
+
+func (m *FinalityProviderCurrentRewards) Reset()         { *m = FinalityProviderCurrentRewards{} }
+func (m *FinalityProviderCurrentRewards) String() string { return proto.CompactTextString(m) }
+func (*FinalityProviderCurrentRewards) ProtoMessage()    {}
+func (*FinalityProviderCurrentRewards) Descriptor() ([]byte, []int) {
+	return fileDescriptor_fa5a587351117eb0, []int{1}
+}
+func (m *FinalityProviderCurrentRewards) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *FinalityProviderCurrentRewards) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_FinalityProviderCurrentRewards.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *FinalityProviderCurrentRewards) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FinalityProviderCurrentRewards.Merge(m, src)
+}
+func (m *FinalityProviderCurrentRewards) XXX_Size() int {
+	return m.Size()
+}
+func (m *FinalityProviderCurrentRewards) XXX_DiscardUnknown() {
+	xxx_messageInfo_FinalityProviderCurrentRewards.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_FinalityProviderCurrentRewards proto.InternalMessageInfo
+
+func (m *FinalityProviderCurrentRewards) GetCurrentRewards() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.CurrentRewards
+	}
+	return nil
+}
+
+func (m *FinalityProviderCurrentRewards) GetPeriod() uint64 {
+	if m != nil {
+		return m.Period
+	}
+	return 0
 }
 
 // BTCDelegationRewardsTracker represents the structure that holds information
@@ -91,7 +154,7 @@ func (m *BTCDelegationRewardsTracker) Reset()         { *m = BTCDelegationReward
 func (m *BTCDelegationRewardsTracker) String() string { return proto.CompactTextString(m) }
 func (*BTCDelegationRewardsTracker) ProtoMessage()    {}
 func (*BTCDelegationRewardsTracker) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fa5a587351117eb0, []int{1}
+	return fileDescriptor_fa5a587351117eb0, []int{2}
 }
 func (m *BTCDelegationRewardsTracker) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -135,39 +198,43 @@ func (m *BTCDelegationRewardsTracker) GetDelegationTotalActiveSat() uint64 {
 }
 
 func init() {
-	proto.RegisterType((*FinalityProviderRewards)(nil), "babylon.incentive.FinalityProviderRewards")
+	proto.RegisterType((*FinalityProviderHistoricalRewards)(nil), "babylon.incentive.FinalityProviderHistoricalRewards")
+	proto.RegisterType((*FinalityProviderCurrentRewards)(nil), "babylon.incentive.FinalityProviderCurrentRewards")
 	proto.RegisterType((*BTCDelegationRewardsTracker)(nil), "babylon.incentive.BTCDelegationRewardsTracker")
 }
 
 func init() { proto.RegisterFile("babylon/incentive/rewards.proto", fileDescriptor_fa5a587351117eb0) }
 
 var fileDescriptor_fa5a587351117eb0 = []byte{
-	// 337 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x91, 0xb1, 0x4e, 0x02, 0x31,
-	0x1c, 0xc6, 0xaf, 0x6a, 0x1c, 0xce, 0xc9, 0x8b, 0x09, 0x88, 0xb1, 0x10, 0x26, 0x16, 0x5a, 0x91,
-	0xcd, 0x4d, 0x20, 0x6c, 0x26, 0x17, 0x60, 0x72, 0x6b, 0xef, 0x9a, 0xb3, 0xe1, 0xe8, 0x9f, 0xb4,
-	0x05, 0xe5, 0x01, 0xdc, 0x7d, 0x03, 0xe3, 0xea, 0x93, 0x30, 0x32, 0x3a, 0xa9, 0x81, 0x17, 0x31,
-	0x77, 0x57, 0x95, 0x98, 0xe0, 0x74, 0xd7, 0x7e, 0x5f, 0x7f, 0x5f, 0xff, 0xfd, 0xfc, 0x2a, 0x67,
-	0x7c, 0x91, 0x82, 0xa2, 0x52, 0x45, 0x42, 0x59, 0x39, 0x17, 0x54, 0x8b, 0x7b, 0xa6, 0x63, 0x43,
-	0xa6, 0x1a, 0x2c, 0x04, 0xc7, 0xce, 0x40, 0x7e, 0x0c, 0x95, 0x93, 0x04, 0x12, 0xc8, 0x55, 0x9a,
-	0xfd, 0x15, 0xc6, 0x0a, 0x8e, 0xc0, 0x4c, 0xc0, 0x50, 0xce, 0x8c, 0xa0, 0xf3, 0x16, 0x17, 0x96,
-	0xb5, 0x68, 0x04, 0x52, 0x15, 0x7a, 0xfd, 0x05, 0xf9, 0xa5, 0xbe, 0x54, 0x2c, 0x95, 0x76, 0x11,
-	0x6a, 0x98, 0xcb, 0x58, 0xe8, 0x41, 0x11, 0x15, 0x3c, 0x22, 0xbf, 0xd4, 0x9d, 0x4d, 0x66, 0x29,
-	0xcb, 0x02, 0xdc, 0x6e, 0x28, 0xf4, 0x90, 0xd9, 0x32, 0xaa, 0xed, 0x37, 0x8e, 0x2e, 0x4f, 0x49,
-	0x81, 0x27, 0x19, 0x9e, 0x38, 0x3c, 0xe9, 0x82, 0x54, 0x9d, 0x8b, 0xe5, 0x7b, 0xd5, 0x7b, 0xfd,
-	0xa8, 0x36, 0x12, 0x69, 0xef, 0x66, 0x9c, 0x44, 0x30, 0xa1, 0xee, 0x2e, 0xc5, 0xa7, 0x69, 0xe2,
-	0x31, 0xb5, 0x8b, 0xa9, 0x30, 0xf9, 0x01, 0x33, 0xd8, 0x95, 0x55, 0x7f, 0x46, 0xfe, 0x59, 0x67,
-	0xd4, 0xed, 0x89, 0x54, 0x24, 0xcc, 0x4a, 0x50, 0x4e, 0x1e, 0x69, 0x16, 0x8d, 0x85, 0x0e, 0x7a,
-	0xfe, 0xf9, 0xd0, 0x32, 0x6d, 0x43, 0xa1, 0x25, 0xc4, 0x7f, 0x29, 0xfd, 0xb0, 0x8c, 0x6a, 0xa8,
-	0x71, 0x30, 0xf8, 0xdf, 0x14, 0x5c, 0xf9, 0xe5, 0xdf, 0x84, 0x11, 0x58, 0x96, 0x5e, 0x47, 0x99,
-	0x21, 0x9b, 0x76, 0x2f, 0x07, 0xec, 0xd4, 0x3b, 0x37, 0xcb, 0x35, 0x46, 0xab, 0x35, 0x46, 0x9f,
-	0x6b, 0x8c, 0x9e, 0x36, 0xd8, 0x5b, 0x6d, 0xb0, 0xf7, 0xb6, 0xc1, 0xde, 0x6d, 0x7b, 0x6b, 0x7c,
-	0xd7, 0x59, 0xca, 0xb8, 0x69, 0x4a, 0xf8, 0x5e, 0xd2, 0x87, 0xad, 0x96, 0xf3, 0xf7, 0xe0, 0x87,
-	0x79, 0x37, 0xed, 0xaf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x82, 0xc4, 0x0e, 0x11, 0x07, 0x02, 0x00,
-	0x00,
+	// 387 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x92, 0xbf, 0x6e, 0xe2, 0x40,
+	0x10, 0xc6, 0xbd, 0x77, 0x27, 0x8a, 0x3d, 0xe9, 0xa4, 0xb3, 0x4e, 0x77, 0x3e, 0x4e, 0xb7, 0x70,
+	0x54, 0x34, 0x78, 0x8f, 0xd0, 0xa5, 0x0b, 0x46, 0x28, 0x4d, 0x24, 0x0b, 0xa8, 0xd2, 0xad, 0xed,
+	0x95, 0xb3, 0xc2, 0xec, 0xa0, 0xdd, 0x35, 0x09, 0x0f, 0x90, 0x3e, 0x6f, 0x90, 0x3e, 0x51, 0xde,
+	0x83, 0x92, 0x32, 0x55, 0x12, 0xc1, 0x8b, 0x44, 0xfe, 0x43, 0x42, 0x90, 0x48, 0x97, 0xca, 0x9e,
+	0x99, 0x6f, 0xf6, 0xf7, 0xed, 0xec, 0xe0, 0x5a, 0xc0, 0x82, 0x79, 0x02, 0x92, 0x0a, 0x19, 0x72,
+	0x69, 0xc4, 0x8c, 0x53, 0xc5, 0xcf, 0x99, 0x8a, 0xb4, 0x3b, 0x55, 0x60, 0xc0, 0xfe, 0x5e, 0x0a,
+	0xdc, 0x17, 0x41, 0xf5, 0x47, 0x0c, 0x31, 0xe4, 0x55, 0x9a, 0xfd, 0x15, 0xc2, 0x2a, 0x09, 0x41,
+	0x4f, 0x40, 0xd3, 0x80, 0x69, 0x4e, 0x67, 0xed, 0x80, 0x1b, 0xd6, 0xa6, 0x21, 0x08, 0x59, 0xd4,
+	0x1b, 0xb7, 0x08, 0xff, 0xeb, 0x0b, 0xc9, 0x12, 0x61, 0xe6, 0xbe, 0x82, 0x99, 0x88, 0xb8, 0x3a,
+	0x16, 0xda, 0x80, 0x12, 0x21, 0x4b, 0x06, 0x05, 0xd4, 0xbe, 0x44, 0xf8, 0x97, 0x97, 0x4e, 0xd2,
+	0x84, 0x65, 0xa8, 0x32, 0xeb, 0x73, 0x35, 0x64, 0xc6, 0x41, 0xf5, 0xcf, 0xcd, 0xaf, 0x07, 0xbf,
+	0xdd, 0x02, 0xe4, 0x66, 0x20, 0xb7, 0x04, 0xb9, 0x1e, 0x08, 0xd9, 0xfd, 0xbf, 0x78, 0xa8, 0x59,
+	0x37, 0x8f, 0xb5, 0x66, 0x2c, 0xcc, 0x59, 0x1a, 0xb8, 0x21, 0x4c, 0x68, 0xe9, 0xaa, 0xf8, 0xb4,
+	0x74, 0x34, 0xa6, 0x66, 0x3e, 0xe5, 0x3a, 0x6f, 0xd0, 0x83, 0x7d, 0xac, 0xc6, 0x1d, 0xc2, 0x64,
+	0xd7, 0xad, 0x97, 0x2a, 0xc5, 0xa5, 0xd9, 0x58, 0xd5, 0xf8, 0xdb, 0xdb, 0xcc, 0x47, 0x18, 0xdc,
+	0x41, 0xd8, 0x3f, 0x71, 0x65, 0xca, 0x95, 0x80, 0xc8, 0xf9, 0x54, 0x47, 0xcd, 0x2f, 0x83, 0x32,
+	0x6a, 0x5c, 0x23, 0xfc, 0xa7, 0x3b, 0xf2, 0x7a, 0x3c, 0xe1, 0x31, 0x33, 0x02, 0x64, 0xd9, 0x30,
+	0x52, 0x2c, 0x1c, 0x73, 0x65, 0xf7, 0xf0, 0xdf, 0xa1, 0x61, 0xca, 0xf8, 0xb9, 0x7c, 0xf7, 0xd6,
+	0x7d, 0xdf, 0x41, 0xf9, 0x71, 0xef, 0x8b, 0xec, 0x43, 0xec, 0xbc, 0x12, 0x46, 0x60, 0x58, 0x72,
+	0x14, 0x66, 0x82, 0xec, 0x75, 0x0a, 0x3f, 0x7b, 0xeb, 0xdd, 0x93, 0xc5, 0x8a, 0xa0, 0xe5, 0x8a,
+	0xa0, 0xa7, 0x15, 0x41, 0x57, 0x6b, 0x62, 0x2d, 0xd7, 0xc4, 0xba, 0x5f, 0x13, 0xeb, 0xb4, 0xb3,
+	0x35, 0x8d, 0x72, 0xdb, 0x12, 0x16, 0xe8, 0x96, 0x80, 0x4d, 0x48, 0x2f, 0xb6, 0xf6, 0x33, 0x1f,
+	0x4f, 0x50, 0xc9, 0xb7, 0xaa, 0xf3, 0x1c, 0x00, 0x00, 0xff, 0xff, 0x96, 0x0b, 0x56, 0x59, 0xc1,
+	0x02, 0x00, 0x00,
 }
 
-func (m *FinalityProviderRewards) Marshal() (dAtA []byte, err error) {
+func (m *FinalityProviderHistoricalRewards) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -177,12 +244,12 @@ func (m *FinalityProviderRewards) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *FinalityProviderRewards) MarshalTo(dAtA []byte) (int, error) {
+func (m *FinalityProviderHistoricalRewards) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *FinalityProviderRewards) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *FinalityProviderHistoricalRewards) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -191,6 +258,48 @@ func (m *FinalityProviderRewards) MarshalToSizedBuffer(dAtA []byte) (int, error)
 		for iNdEx := len(m.CumulativeRewardsPerSat) - 1; iNdEx >= 0; iNdEx-- {
 			{
 				size, err := m.CumulativeRewardsPerSat[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintRewards(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *FinalityProviderCurrentRewards) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *FinalityProviderCurrentRewards) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *FinalityProviderCurrentRewards) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Period != 0 {
+		i = encodeVarintRewards(dAtA, i, uint64(m.Period))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.CurrentRewards) > 0 {
+		for iNdEx := len(m.CurrentRewards) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.CurrentRewards[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -248,7 +357,7 @@ func encodeVarintRewards(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *FinalityProviderRewards) Size() (n int) {
+func (m *FinalityProviderHistoricalRewards) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -259,6 +368,24 @@ func (m *FinalityProviderRewards) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovRewards(uint64(l))
 		}
+	}
+	return n
+}
+
+func (m *FinalityProviderCurrentRewards) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.CurrentRewards) > 0 {
+		for _, e := range m.CurrentRewards {
+			l = e.Size()
+			n += 1 + l + sovRewards(uint64(l))
+		}
+	}
+	if m.Period != 0 {
+		n += 1 + sovRewards(uint64(m.Period))
 	}
 	return n
 }
@@ -284,7 +411,7 @@ func sovRewards(x uint64) (n int) {
 func sozRewards(x uint64) (n int) {
 	return sovRewards(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *FinalityProviderRewards) Unmarshal(dAtA []byte) error {
+func (m *FinalityProviderHistoricalRewards) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -307,10 +434,10 @@ func (m *FinalityProviderRewards) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: FinalityProviderRewards: wiretype end group for non-group")
+			return fmt.Errorf("proto: FinalityProviderHistoricalRewards: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: FinalityProviderRewards: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: FinalityProviderHistoricalRewards: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -347,6 +474,109 @@ func (m *FinalityProviderRewards) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipRewards(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthRewards
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *FinalityProviderCurrentRewards) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRewards
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: FinalityProviderCurrentRewards: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: FinalityProviderCurrentRewards: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CurrentRewards", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRewards
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRewards
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthRewards
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CurrentRewards = append(m.CurrentRewards, types.Coin{})
+			if err := m.CurrentRewards[len(m.CurrentRewards)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Period", wireType)
+			}
+			m.Period = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRewards
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Period |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipRewards(dAtA[iNdEx:])

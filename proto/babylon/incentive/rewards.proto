@@ -6,10 +6,10 @@ import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
 
-// FinalityProviderRewards represents the cumulative rewards ratio of the
+// FinalityProviderHistoricalRewards represents the cumulative rewards ratio of the
 // finality provider per sat in that period.
 // The period is ommited here and should be part of the key used to store this structure.
-message FinalityProviderRewards {
+message FinalityProviderHistoricalRewards {
     // The cumulative rewards of that finality provider at some specific period
     // This coins will aways increase the value, never be reduced due to keep acumulation
     // and when the cumulative rewards will be used to distribute rewards, 2 periods will
@@ -22,6 +22,25 @@ message FinalityProviderRewards {
     ];
     // TODO(rafilx): add reference count for state prunning
     // https://github.com/cosmos/cosmos-sdk/blob/d9c53bfefc1e75a3c6b09065ea8b3a836cda0d18/x/distribution/types/distribution.pb.go#L98
+}
+
+// FinalityProviderCurrentRewards represents the current rewards of the pool of
+// BTC delegations that this finality provider is entitled to.
+// Note: This rewards are for the BTC delegators that delegated to this FP
+// the FP itself is not the owner or can withdraw this rewards.
+message FinalityProviderCurrentRewards {
+    // CurrentRewards is the current rewards that the finality provider have and it was not
+    // yet stored inside the FinalityProviderHistoricalRewards. Once something happens that
+    // modifies the amount of satoshis delegated to this finality provider (activation, unbonding, slash)
+    // a new period must be created, accumulate this rewards to FinalityProviderHistoricalRewards
+    // with a new period and zero out the Current Rewards.
+    repeated cosmos.base.v1beta1.Coin CurrentRewards = 1 [
+        (gogoproto.nullable) = false,
+        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    ];
+    // Period stores the current period that serves as a reference for
+    // creating new historical rewards.
+    uint64 period = 2;
 }
 
 // BTCDelegationRewardsTracker represents the structure that holds information

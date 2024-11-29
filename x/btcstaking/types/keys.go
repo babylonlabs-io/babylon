@@ -26,4 +26,6 @@ var (
 	// 0x07 was used for something else in the past
 	PowerDistUpdateKey        = []byte{0x08}             // key prefix for power distribution update events
 	AllowedStakingTxHashesKey = collections.NewPrefix(9) // key prefix for allowed staking tx hashes
+	DelegatorStakedBTCKey     = []byte{0xA}              // key prefix for delegator active staked amount int math.Int
+	TotalStakedBTCKey         = []byte{0xB}              // key prefix for protocol active staked amount int math.Int
 )

@@ -35,8 +35,10 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 		// reward the finality provider with commission
 		coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
 		k.accumulateRewardGauge(ctx, types.FinalityProviderType, fp.GetAddress(), coinsForCommission)
+
 		// reward the rest of coins to each BTC delegation proportional to its voting power portion
 		coinsForBTCDels := coinsForFpsAndDels.Sub(coinsForCommission...)
+		// TODO(rafilx): add the coins entitled to the BTC delegations to the FinalityProviderCurrentRewards
 
 		// TODO: remove this iteration. It could be avoided by using accumulated rewards per period
 		// for each finality provider, and for each delegation (fp, delegator) keep track of last period
