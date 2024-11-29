@@ -90,6 +90,7 @@ func (k Keeper) ActiveFinalityProvidersAtHeight(ctx context.Context, req *types.
 				VotingPower:          votingPower,
 				SlashedBabylonHeight: finalityProvider.SlashedBabylonHeight,
 				SlashedBtcHeight:     finalityProvider.SlashedBtcHeight,
+				HighestVotedHeight:   finalityProvider.HighestVotedHeight,
 			}
 			finalityProvidersWithMeta = append(finalityProvidersWithMeta, &finalityProviderWithMeta)
 		}
@@ -420,6 +421,7 @@ func convertToActiveFinalityProvidersAtHeightResponse(finalityProvidersWithMeta 
 			SlashedBabylonHeight: fpWithMeta.SlashedBabylonHeight,
 			SlashedBtcHeight:     fpWithMeta.SlashedBtcHeight,
 			Jailed:               fpWithMeta.Jailed,
+			HighestVotedHeight:   fpWithMeta.HighestVotedHeight,
 		})
 	}
 	return activeFinalityProvidersAtHeightResponse

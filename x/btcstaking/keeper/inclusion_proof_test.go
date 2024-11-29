@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 
@@ -68,7 +69,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 			tipHeight := datagen.RandomInt(r, int(maxValidTipHeight)-int(minValidTipHeight)+1) + uint64(minValidTipHeight)
 			mockTipHeaderInfo := &btclctypes.BTCHeaderInfo{Height: uint32(tipHeight)}
 
-			btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), headerHash).Return(inclusionHeader).Times(1)
+			btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), headerHash).Return(inclusionHeader, nil).Times(1)
 			btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockTipHeaderInfo).Times(1)
 
 			// Verify inclusion proof
@@ -88,7 +89,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 
 		t.Run("nil inclusion header", func(t *testing.T) {
 			// set the returned inclusion header as nil
-			btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), headerHash).Return(nil).Times(1)
+			btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), headerHash).Return(nil, btclctypes.ErrHeaderDoesNotExist.Wrap("no header with provided hash")).Times(1)
 
 			// Verify inclusion proof
 			_, err := h.BTCStakingKeeper.VerifyInclusionProofAndGetHeight(
@@ -100,11 +101,12 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 				proof,
 			)
 
-			require.ErrorContains(t, err, "header that includes the staking tx is not found")
+			expErr := fmt.Errorf("staking tx inclusion proof header %s is not found in BTC light client state: %v", proof.HeaderHash.MarshalHex(), btclctypes.ErrHeaderDoesNotExist.Wrap("no header with provided hash"))
+			require.EqualError(t, err, expErr.Error())
 		})
 
 		t.Run("invalid proof", func(t *testing.T) {
-			btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), headerHash).Return(inclusionHeader).Times(1)
+			btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), headerHash).Return(inclusionHeader, nil).Times(1)
 
 			copyProof := *proof
 			// make the proof invalid by setting the index to a different value
@@ -125,7 +127,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 			tipHeight := inclusionHeight + uint32(datagen.RandomInt(r, int(confirmationDepth)))
 			mockTipHeaderInfo := &btclctypes.BTCHeaderInfo{Height: tipHeight}
 
-			btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), headerHash).Return(inclusionHeader).Times(1)
+			btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), headerHash).Return(inclusionHeader, nil).Times(1)
 			btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockTipHeaderInfo).Times(1)
 
 			// Verify inclusion proof
@@ -145,7 +147,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 			tipHeight := datagen.RandomInt(r, 1000) + uint64(maxValidTipHeight) + 1
 			mockTipHeaderInfo := &btclctypes.BTCHeaderInfo{Height: uint32(tipHeight)}
 
-			btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), headerHash).Return(inclusionHeader).Times(1)
+			btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), headerHash).Return(inclusionHeader, nil).Times(1)
 			btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockTipHeaderInfo).Times(1)
 
 			// Verify inclusion proof
@@ -166,7 +168,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 			tipHeight := datagen.RandomInt(r, int(maxValidTipHeight)-int(minValidTipHeight)+1) + uint64(minValidTipHeight)
 			mockTipHeaderInfo := &btclctypes.BTCHeaderInfo{Height: uint32(tipHeight)}
 
-			btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), headerHash).Return(inclusionHeader).Times(1)
+			btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), headerHash).Return(inclusionHeader, nil).Times(1)
 			btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockTipHeaderInfo).Times(1)
 
 			// an invalid min_unbonding_time should be >= end_height - tip_height

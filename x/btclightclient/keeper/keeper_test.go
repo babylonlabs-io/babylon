@@ -178,7 +178,8 @@ func FuzzKeeperInsertValidChainExtension(f *testing.F) {
 		for _, header := range chainToInsert {
 			headerHash := header.BlockHash()
 			hash := bbn.NewBTCHeaderHashBytesFromChainhash(&headerHash)
-			headerInfoByHash := blcKeeper.GetHeaderByHash(ctx, &hash)
+			headerInfoByHash, err := blcKeeper.GetHeaderByHash(ctx, &hash)
+			require.NoError(t, err)
 			require.NotNil(t, headerInfoByHash)
 			headerInfoByHeight := blcKeeper.GetHeaderByHeight(ctx, headerInfoByHash.Height)
 			require.NotNil(t, headerInfoByHeight)
@@ -263,7 +264,8 @@ func FuzzKeeperInsertValidBetterChain(f *testing.F) {
 
 		// check all headers from removed branch were removed
 		for _, headerInfo := range removedBranch {
-			headerInfoByHash := blcKeeper.GetHeaderByHash(ctx, headerInfo.Hash)
+			headerInfoByHash, err := blcKeeper.GetHeaderByHash(ctx, headerInfo.Hash)
+			require.Error(t, err)
 			require.Nil(t, headerInfoByHash)
 		}
 
@@ -271,7 +273,8 @@ func FuzzKeeperInsertValidBetterChain(f *testing.F) {
 		for _, header := range chainToInsert {
 			headerHash := header.BlockHash()
 			hash := bbn.NewBTCHeaderHashBytesFromChainhash(&headerHash)
-			headerInfoByHash := blcKeeper.GetHeaderByHash(ctx, &hash)
+			headerInfoByHash, err := blcKeeper.GetHeaderByHash(ctx, &hash)
+			require.NoError(t, err)
 			require.NotNil(t, headerInfoByHash)
 			headerInfoByHeight := blcKeeper.GetHeaderByHeight(ctx, headerInfoByHash.Height)
 			require.NotNil(t, headerInfoByHeight)

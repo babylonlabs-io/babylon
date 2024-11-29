@@ -230,14 +230,8 @@ func (k Keeper) GetTipInfo(ctx context.Context) *types.BTCHeaderInfo {
 }
 
 // GetHeaderByHash returns header with given hash, if it does not exists returns nil
-func (k Keeper) GetHeaderByHash(ctx context.Context, hash *bbn.BTCHeaderHashBytes) *types.BTCHeaderInfo {
-	info, err := k.headersState(ctx).GetHeaderByHash(hash)
-
-	if err != nil {
-		return nil
-	}
-
-	return info
+func (k Keeper) GetHeaderByHash(ctx context.Context, hash *bbn.BTCHeaderHashBytes) (*types.BTCHeaderInfo, error) {
+	return k.headersState(ctx).GetHeaderByHash(hash)
 }
 
 // GetHeaderByHeight returns header with given height from main chain, returns nil if such header is not found

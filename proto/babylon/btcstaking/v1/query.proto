@@ -270,4 +270,7 @@ message FinalityProviderResponse {
   uint64 height = 8;
   // jailed defines whether the finality provider is jailed
   bool jailed = 9;
+  // highest_voted_height is the highest height for which the
+  // finality provider has voted
+  uint32 highest_voted_height = 10;
 }

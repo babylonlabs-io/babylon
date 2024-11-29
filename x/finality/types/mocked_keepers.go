@@ -191,6 +191,20 @@ func (mr *MockBTCStakingKeeperMockRecorder) UnjailFinalityProvider(ctx, fpBTCPK 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnjailFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).UnjailFinalityProvider), ctx, fpBTCPK)
 }
 
+// UpdateFinalityProvider mocks base method.
+func (m *MockBTCStakingKeeper) UpdateFinalityProvider(ctx context.Context, fp *types.FinalityProvider) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateFinalityProvider", ctx, fp)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateFinalityProvider indicates an expected call of UpdateFinalityProvider.
+func (mr *MockBTCStakingKeeperMockRecorder) UpdateFinalityProvider(ctx, fp interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).UpdateFinalityProvider), ctx, fp)
+}
+
 // MockCheckpointingKeeper is a mock of CheckpointingKeeper interface.
 type MockCheckpointingKeeper struct {
 	ctrl     *gomock.Controller
