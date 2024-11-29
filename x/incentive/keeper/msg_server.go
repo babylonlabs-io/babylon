@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -64,4 +63,23 @@ func (ms msgServer) WithdrawReward(goCtx context.Context, req *types.MsgWithdraw
 	return &types.MsgWithdrawRewardResponse{
 		Coins: withdrawnCoins,
 	}, nil
+}
+
+func (ms msgServer) SetWithdrawAddress(ctx context.Context, msg *types.MsgSetWithdrawAddress) (*types.MsgSetWithdrawAddressResponse, error) {
+	delegatorAddress, err := sdk.AccAddressFromBech32(msg.DelegatorAddress)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	withdrawAddress, err := sdk.AccAddressFromBech32(msg.WithdrawAddress)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	err = ms.SetWithdrawAddr(ctx, delegatorAddress, withdrawAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgSetWithdrawAddressResponse{}, nil
 }
