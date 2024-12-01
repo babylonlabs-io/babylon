@@ -17,10 +17,14 @@ const (
 )
 
 var (
-	ParamsKey                         = []byte{0x01}             // key prefix for the parameters
-	BTCStakingGaugeKey                = []byte{0x02}             // key prefix for BTC staking gauge at each height
-	ReservedKey                       = []byte{0x03}             // reserved //nolint:unused
-	RewardGaugeKey                    = []byte{0x04}             // key prefix for reward gauge for a given stakeholder in a given type
-	RefundableMsgKeySetPrefix         = collections.NewPrefix(5) // key prefix for refundable msg key set
-	FinalityProviderCurrentRewardsKey = []byte{0x06}             // key prefix for storing the Current rewards of finality provider by addr
+	ParamsKey                            = []byte{0x01}             // key prefix for the parameters
+	BTCStakingGaugeKey                   = []byte{0x02}             // key prefix for BTC staking gauge at each height
+	ReservedKey                          = []byte{0x03}             // reserved //nolint:unused
+	RewardGaugeKey                       = []byte{0x04}             // key prefix for reward gauge for a given stakeholder in a given type
+	RefundableMsgKeySetPrefix            = collections.NewPrefix(5) // key prefix for refundable msg key set
+	FinalityProviderCurrentRewardsKey    = []byte{0x06}             // key prefix for storing the Current rewards of finality provider by addr
+	FinalityProviderHistoricalRewardsKey = []byte{0x07}             // key prefix for storing the Historical rewards of finality provider by addr and period
+	DelegationStakedBTCKey               = []byte{0x8}              // key prefix for BTC delegation (del,fp) active staked math.Int
+	FinalityProviderStakedBTCKey         = []byte{0x9}              // key prefix for BTC finality provider active staked math.Int
+	TotalStakedBTCKey                    = []byte{0xA}              // key prefix for protocol active staked amount int math.Int
 )

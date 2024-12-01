@@ -276,6 +276,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			btcDel := *dc.FinalityProviders[i].BtcDels[j]
 			if _, ok := unbondedBTCDels[btcDel.StakingTxHash]; !ok {
 				fp.AddBTCDelDistInfo(&btcDel)
+
+				err := k.IncentiveKeeper.BtcDelegationUnbonded(ctx, fp.GetAddress(), sdk.MustAccAddressFromBech32(btcDel.StakerAddr), btcDel.TotalSat)
+				if err != nil {
+					panic(err) // check if it should panic
+				}
 			}
 		}
 
@@ -325,6 +330,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		fpActiveBTCDels := activeBTCDels[fpBTCPKHex]
 		for _, d := range fpActiveBTCDels {
 			fpDistInfo.AddBTCDel(d)
+
+			err := k.IncentiveKeeper.BtcDelegationActivated(ctx, sdk.MustAccAddressFromBech32(newFP.Addr), sdk.MustAccAddressFromBech32(d.StakerAddr), d.TotalSat)
+			if err != nil {
+				panic(err) // check if it should panic
+			}
 		}
 
 		// add this finality provider to the new cache if it has voting power
