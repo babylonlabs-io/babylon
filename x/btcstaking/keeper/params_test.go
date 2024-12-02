@@ -16,6 +16,8 @@ func TestGetParams(t *testing.T) {
 	k, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
 	params := types.DefaultParams()
 
+	currParams := k.GetParams(ctx)
+	params.BtcActivationHeight = currParams.BtcActivationHeight + 1
 	err := k.SetParams(ctx, params)
 	require.NoError(t, err)
 
@@ -33,6 +35,7 @@ func TestGetParamsVersions(t *testing.T) {
 
 	params1 := types.DefaultParams()
 	params1.MinSlashingTxFeeSat = 23400
+	params1.BtcActivationHeight = pv.Params.BtcActivationHeight + 1
 
 	err := k.SetParams(ctx, params1)
 	require.NoError(t, err)

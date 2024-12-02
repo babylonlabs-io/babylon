@@ -13,6 +13,8 @@ func TestParamsQuery(t *testing.T) {
 	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
 	params := types.DefaultParams()
 
+	currParams := keeper.GetParams(ctx)
+	params.BtcActivationHeight = currParams.BtcActivationHeight + 1
 	err := keeper.SetParams(ctx, params)
 	require.NoError(t, err)
 
@@ -24,14 +26,20 @@ func TestParamsQuery(t *testing.T) {
 func TestParamsByVersionQuery(t *testing.T) {
 	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
 
+	currParams := keeper.GetParams(ctx)
+
 	// starting with `1` as BTCStakingKeeper creates params with version 0
 	params1 := types.DefaultParams()
 	params1.MinUnbondingTimeBlocks = 10000
+	params1.BtcActivationHeight = currParams.BtcActivationHeight + 1
+
 	params2 := types.DefaultParams()
 	params2.MinUnbondingTimeBlocks = 20000
+	params2.BtcActivationHeight = currParams.BtcActivationHeight + 2
+
 	params3 := types.DefaultParams()
 	params3.MinUnbondingTimeBlocks = 30000
-
+	params3.BtcActivationHeight = currParams.BtcActivationHeight + 3
 	// Check that after update we always return the latest version of params through Params query
 	err := keeper.SetParams(ctx, params1)
 	require.NoError(t, err)

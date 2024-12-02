@@ -49,6 +49,7 @@ func FuzzMsgServer_UpdateParams(f *testing.F) {
 		params := h.BTCStakingKeeper.GetParams(h.Ctx)
 		ckptFinalizationTimeout := btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
 		params.MinUnbondingTimeBlocks = uint32(r.Intn(int(ckptFinalizationTimeout))) + 1
+		params.BtcActivationHeight = params.BtcActivationHeight + 1
 
 		// Try to update params with minUnbondingTime less than or equal to checkpointFinalizationTimeout
 		msg := &types.MsgUpdateParams{
@@ -291,6 +292,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	customMinUnbondingTime := uint32(2000)
 	currentParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	currentParams.MinUnbondingTimeBlocks = 2000
+	currentParams.BtcActivationHeight = currentParams.BtcActivationHeight + 1
 	// Update new params
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
 	require.NoError(t, err)
