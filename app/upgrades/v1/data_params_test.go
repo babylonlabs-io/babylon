@@ -11,11 +11,12 @@ import (
 )
 
 func TestHardCodedBtcStakingParamsAreValid(t *testing.T) {
-	bbnApp := app.NewTmpBabylonApp()
 	for _, upgradeData := range UpgradeV1Data {
-		params, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec(), upgradeData.BtcStakingParamStr)
+		params, err := v1.LoadBtcStakingParamsFromData(upgradeData.BtcStakingParamsStr)
 		require.NoError(t, err)
-		require.NoError(t, params.Validate())
+		for _, p := range params {
+			require.NoError(t, p.Validate())
+		}
 	}
 }
 

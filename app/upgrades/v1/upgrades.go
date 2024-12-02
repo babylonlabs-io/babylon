@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 
 	sdkmath "cosmossdk.io/math"
 	store "cosmossdk.io/store/types"
@@ -87,7 +88,7 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHand
 				&keepers.FinalityKeeper,
 				&keepers.IncentiveKeeper,
 				&keepers.WasmKeeper,
-				upgradeDataStr.BtcStakingParamStr,
+				upgradeDataStr.BtcStakingParamsStr,
 				upgradeDataStr.FinalityParamStr,
 				upgradeDataStr.IncentiveParamStr,
 				upgradeDataStr.CosmWasmParamStr,
@@ -142,7 +143,7 @@ func upgradeParameters(
 	btcStakingParam, finalityParam, incentiveParam, wasmParam string,
 ) error {
 	// Upgrade the staking parameters as first, as other upgrades depend on it.
-	if err := upgradeBtcStakingParameters(ctx, cdc, btcK, btcStakingParam); err != nil {
+	if err := upgradeBtcStakingParameters(ctx, btcK, btcStakingParam); err != nil {
 		return fmt.Errorf("failed to upgrade btc staking parameters: %w", err)
 	}
 	if err := upgradeFinalityParameters(ctx, cdc, finK, finalityParam); err != nil {
@@ -189,18 +190,22 @@ func upgradeCosmWasmParameters(
 
 func upgradeBtcStakingParameters(
 	ctx sdk.Context,
-	cdc codec.Codec,
 	k *btcstkkeeper.Keeper,
 	btcStakingParam string,
 ) error {
-	params, err := LoadBtcStakingParamsFromData(cdc, btcStakingParam)
+	// params should be already sorted by their btc activation
+	// block height in ascending order
+	params, err := LoadBtcStakingParamsFromData(btcStakingParam)
 	if err != nil {
 		return err
 	}
 
-	// We are overwriting the params at version 0, as the upgrade is happening from
-	// TGE chain so there should be only one version of the params
-	return k.OverwriteParamsAtVersion(ctx, 0, params)
+	for _, p := range params {
+		if err := k.SetParams(ctx, p); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func upgradeFinalityParameters(
@@ -295,14 +300,19 @@ func upgradeBTCHeaders(ctx sdk.Context, cdc codec.Codec, btcLigthK *btclightkeep
 	return insertBtcHeaders(ctx, btcLigthK, newHeaders)
 }
 
-func LoadBtcStakingParamsFromData(cdc codec.Codec, data string) (btcstktypes.Params, error) {
+func LoadBtcStakingParamsFromData(data string) ([]btcstktypes.Params, error) {
 	buff := bytes.NewBufferString(data)
 
-	var params btcstktypes.Params
-	err := cdc.UnmarshalJSON(buff.Bytes(), &params)
+	var params []btcstktypes.Params
+	err := json.Unmarshal(buff.Bytes(), &params)
 	if err != nil {
-		return btcstktypes.Params{}, err
+		return []btcstktypes.Params{}, err
 	}
+
+	// sort params by the BTC activation height ascending order 100, 150, 200...
+	sort.Slice(params, func(i, j int) bool {
+		return params[i].BtcActivationHeight < params[j].BtcActivationHeight
+	})
 
 	return params, nil
 }
