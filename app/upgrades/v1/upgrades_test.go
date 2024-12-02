@@ -284,14 +284,11 @@ func (s *UpgradeTestSuite) PostUpgrade() {
 	lastParamInUpgradeData := bsParamsFromUpgrade[len(bsParamsFromUpgrade)-1]
 	s.EqualValues(bsModuleParams, lastParamInUpgradeData)
 
-	// expected version starts at 1 due to the chain already initialized with some btc staking params as version 0
-	expVersion := uint32(0)
-	for _, paramsInUpgradeData := range bsParamsFromUpgrade {
+	for expVersion, paramsInUpgradeData := range bsParamsFromUpgrade {
 		bsParamsAtBtcHeight, version, err := s.app.BTCStakingKeeper.GetParamsForBtcHeight(s.ctx, uint64(paramsInUpgradeData.BtcActivationHeight))
 		s.NoError(err)
-		s.Equal(expVersion, version)
+		s.Equal(uint32(expVersion), version)
 		s.Equal(*bsParamsAtBtcHeight, paramsInUpgradeData)
-		expVersion++
 	}
 
 	fParamsFromUpgrade, err := v1.LoadFinalityParamsFromData(s.app.AppCodec(), s.upgradeDataStr.FinalityParamStr)
