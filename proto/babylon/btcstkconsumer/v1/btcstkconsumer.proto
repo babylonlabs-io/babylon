@@ -35,10 +35,8 @@ message ConsumerRegister {
 
 // CosmosConsumerMetadata is the metadata for the Cosmos integration
 message CosmosConsumerMetadata {
-  // client_id defines the IBC client ID for the consumer chain
-  string client_id = 1;
   // channel_id defines the IBC channel ID for the consumer chain
-  string channel_id = 2;
+  string channel_id = 1;
 }
 
 // ETHL2ConsumerMetadata is the metadata for the ETH L2 integration

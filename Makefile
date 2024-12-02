@@ -270,14 +270,14 @@ test-e2e-cache:
 	$(MAKE) clean-e2e
 	$(MAKE) test-e2e-cache-btc-staking-pre-approval
 	$(MAKE) test-e2e-cache-ibc-transfer
-	$(MAKE) test-e2e-cache-bcd-consumer-integration
+	$(MAKE) test-e2e-bcd-consumer-integration
 #	$(MAKE) test-e2e-cache-upgrade-v1
 
 clean-e2e:
 	docker container rm -f $(shell docker container ls -a -q) || true
 	docker network prune -f || true
 
-test-e2e-cache-bcd-consumer-integration:
+test-e2e-bcd-consumer-integration: start-bcd-consumer-integration
 	go test -run TestBCDConsumerIntegrationTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-btc-timestamping:
