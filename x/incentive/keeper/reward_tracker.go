@@ -26,6 +26,8 @@ func (k Keeper) BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddre
 	// if btc delegations does not exists
 	//   BeforeDelegationCreated
 	//     IncrementValidatorPeriod
+	//   		initializeDelegation
+	//      AddDelegationStaking
 
 	// if btc delegations exists
 	//   BeforeDelegationSharesModified
@@ -41,16 +43,16 @@ func (k Keeper) BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddre
 		return err
 	}
 
-	// rewardsRaw, err := k.CalculateDelegationRewards(ctx, val, del, endingPeriod)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	if err := k.AddDelegationStaking(ctx, fp, del, amtSat); err != nil {
+	rewards, err := k.CalculateDelegationRewards(ctx, fp, del, endedPeriod)
+	if err != nil {
 		return err
 	}
 
-	return nil
+	if !rewards.IsZero() { // there is some rewards
+		k.accumulateRewardGauge(ctx, types.BTCDelegationType, del, rewards)
+	}
+
+	return k.AddDelegationStaking(ctx, fp, del, amtSat)
 }
 
 func (k Keeper) BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sat uint64) error {
@@ -75,27 +77,36 @@ func (k Keeper) CalculateDelegationRewards(ctx context.Context, fp, del sdk.AccA
 		return sdk.NewCoins(), nil
 	}
 
+	btcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
+	if err != nil {
+		if errors.Is(err, types.ErrBTCDelegationRewardsTrackerNotFound) {
+
+		}
+		return sdk.Coins{}, err
+	}
+
+	return k.calculateDelegationRewardsBetween(ctx, fp, del, btcDelRwdTracker, endPeriod)
 }
 
 // calculate the rewards accrued by a delegation between two periods
 func (k Keeper) calculateDelegationRewardsBetween(
 	ctx context.Context,
 	fp, del sdk.AccAddress,
-	startingPeriod, endingPeriod uint64,
-	delActiveStakedSat sdkmath.Int,
+	btcDelRwdTracker types.BTCDelegationRewardsTracker,
+	endingPeriod uint64,
 ) (sdk.Coins, error) {
 	// sanity check
-	if startingPeriod > endingPeriod {
+	if btcDelRwdTracker.StartPeriodCumulativeReward > endingPeriod {
 		panic("startingPeriod cannot be greater than endingPeriod")
 	}
 
 	// sanity check
-	if delActiveStakedSat.IsNegative() {
-		panic("BTC delegation active stake should not be negative")
-	}
+	// if btcDelRwdTracker..IsNegative() {
+	// 	panic("BTC delegation active stake should not be negative")
+	// }
 
 	// return staking * (ending - starting)
-	starting, err := k.getFinalityProviderHistoricalRewards(ctx, fp, startingPeriod)
+	starting, err := k.getFinalityProviderHistoricalRewards(ctx, fp, btcDelRwdTracker.StartPeriodCumulativeReward)
 	if err != nil {
 		return sdk.Coins{}, err
 	}
@@ -113,7 +124,7 @@ func (k Keeper) calculateDelegationRewardsBetween(
 	}
 
 	// note: necessary to truncate so we don't allow withdrawing more rewards than owed
-	rewards := difference.MulInt(delActiveStakedSat)
+	rewards := difference.MulInt(btcDelRwdTracker.TotalActiveSat)
 	return rewards, nil
 }
 
@@ -124,25 +135,20 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 	//    sets new empty current rewards with new period
 	fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
 	if err != nil {
-		if errors.Is(err, types.ErrFPCurrentRewardsNotFound) {
-			// initialize Validator
-			err := k.initializeFinalityProvider(ctx, fp)
-			if err != nil {
-				return 0, err
-			}
-			return 1, nil
+		if !errors.Is(err, types.ErrFPCurrentRewardsNotFound) {
+			return 0, err
 		}
-		return 0, err
-	}
 
-	fpAmtStaked, err := k.getFinalityProviderStaked(ctx, fp)
-	if err != nil {
-		return 0, err
+		// initialize Validator and return 1 as ended period
+		if err := k.initializeFinalityProvider(ctx, fp); err != nil {
+			return 0, err
+		}
+		return 1, nil
 	}
 
 	currentRewardsPerSat := sdk.NewCoins()
-	if !fpAmtStaked.IsZero() {
-		currentRewardsPerSat = fpCurrentRwd.CurrentRewards.QuoInt(fpAmtStaked)
+	if !fpCurrentRwd.TotalActiveSat.IsZero() {
+		currentRewardsPerSat = fpCurrentRwd.CurrentRewards.QuoInt(fpCurrentRwd.TotalActiveSat)
 	}
 
 	fpHistoricalRwd, err := k.getFinalityProviderHistoricalRewards(ctx, fp, fpCurrentRwd.Period-1)
@@ -155,8 +161,8 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 		return 0, err
 	}
 
-	// initiates a new period with empty rewards
-	newCurrentRwd := types.NewFinalityProviderCurrentRewards(sdk.NewCoins(), fpCurrentRwd.Period+1)
+	// initiates a new period with empty rewards and the same amount of active sat (this value should be updated latter if needed)
+	newCurrentRwd := types.NewFinalityProviderCurrentRewards(sdk.NewCoins(), fpCurrentRwd.Period+1, fpCurrentRwd.TotalActiveSat)
 	if err := k.setFinalityProviderCurrentRewards(ctx, fp, newCurrentRwd); err != nil {
 		return 0, err
 	}
@@ -218,6 +224,20 @@ func (k Keeper) GetFinalityProviderCurrentRewards(ctx context.Context, fp sdk.Ac
 	return value, nil
 }
 
+func (k Keeper) GetBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.AccAddress) (types.BTCDelegationRewardsTracker, error) {
+	key := del.Bytes()
+	bz := k.storeBTCDelegationRewardsTracker(ctx, fp).Get(key)
+	if bz == nil {
+		return types.BTCDelegationRewardsTracker{}, types.ErrBTCDelegationRewardsTrackerNotFound
+	}
+
+	var value types.BTCDelegationRewardsTracker
+	if err := k.cdc.Unmarshal(bz, &value); err != nil {
+		return types.BTCDelegationRewardsTracker{}, err
+	}
+	return value, nil
+}
+
 func (k Keeper) setFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress, rwd types.FinalityProviderCurrentRewards) error {
 	key := fp.Bytes()
 	bz, err := rwd.Marshal()
@@ -256,6 +276,15 @@ func (k Keeper) setFinalityProviderHistoricalRewards(ctx context.Context, fp sdk
 
 	k.storeFpHistoricalRewards(ctx, fp).Set(key, bz)
 	return nil
+}
+
+// storeBTCDelegationRewardsTracker returns the KVStore of the FP current rewards
+// prefix: BTCDelegationRewardsTrackerKey
+// key: (FpAddr, DelAddr)
+// value: BTCDelegationRewardsTracker
+func (k Keeper) storeBTCDelegationRewardsTracker(ctx context.Context, fp sdk.AccAddress) prefix.Store {
+	storeAdaptor := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdaptor, types.BTCDelegationRewardsTrackerKey)
 }
 
 // storeFpCurrentRewards returns the KVStore of the FP current rewards

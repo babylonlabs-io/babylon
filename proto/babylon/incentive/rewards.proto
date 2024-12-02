@@ -3,6 +3,7 @@ package babylon.incentive;
 
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
 
@@ -16,7 +17,7 @@ message FinalityProviderHistoricalRewards {
     // be interpolated and calculate the difference and multiplied by the total sat amount delegated
     // https://github.com/cosmos/cosmos-sdk/blob/e76102f885b71fd6e1c1efb692052173c4b3c3a3/x/distribution/keeper/delegation.go#L47
     // This is also not considering slash of the rewards.
-    repeated cosmos.base.v1beta1.Coin CumulativeRewardsPerSat = 1 [
+    repeated cosmos.base.v1beta1.Coin cumulative_rewards_per_sat = 1 [
         (gogoproto.nullable) = false,
         (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
     ];
@@ -34,13 +35,18 @@ message FinalityProviderCurrentRewards {
     // modifies the amount of satoshis delegated to this finality provider (activation, unbonding, slash)
     // a new period must be created, accumulate this rewards to FinalityProviderHistoricalRewards
     // with a new period and zero out the Current Rewards.
-    repeated cosmos.base.v1beta1.Coin CurrentRewards = 1 [
+    repeated cosmos.base.v1beta1.Coin current_rewards = 1 [
         (gogoproto.nullable) = false,
         (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
     ];
     // Period stores the current period that serves as a reference for
     // creating new historical rewards.
     uint64 period = 2;
+    bytes total_active_sat = 3 [
+        (cosmos_proto.scalar)  = "cosmos.Int",
+        (gogoproto.customtype) = "cosmossdk.io/math.Int",
+        (gogoproto.nullable)   = false
+    ];
 }
 
 // BTCDelegationRewardsTracker represents the structure that holds information
@@ -48,6 +54,10 @@ message FinalityProviderCurrentRewards {
 // The finality provider address is ommitted here but should be part of the key used
 // to store this structure together with the BTC delegator address.
 message BTCDelegationRewardsTracker {
-    uint64 StartPeriodCumulativeRewardFP = 1;
-    uint64 DelegationTotalActiveSat = 2;
+    uint64 start_period_cumulative_reward = 1;
+    bytes total_active_sat = 2 [
+        (cosmos_proto.scalar)  = "cosmos.Int",
+        (gogoproto.customtype) = "cosmossdk.io/math.Int",
+        (gogoproto.nullable)   = false
+    ];
 }
