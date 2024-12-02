@@ -40,11 +40,6 @@ func (k Keeper) paramsStore(ctx context.Context) prefix.Store {
 	return prefix.NewStore(storeAdapter, types.ParamsKey)
 }
 
-func (k Keeper) heightToVersionStore(ctx context.Context) prefix.Store {
-	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	return prefix.NewStore(storeAdapter, types.HeightToVersionMapKey)
-}
-
 func (k Keeper) nextParamsVersion(ctx context.Context) uint32 {
 	paramsStore := k.paramsStore(ctx)
 	it := paramsStore.ReverseIterator(nil, nil)
@@ -97,8 +92,7 @@ func (k Keeper) SetParams(ctx context.Context, p types.Params) error {
 	}
 
 	paramsStore.Set(uint32ToBytes(nextVersion), k.cdc.MustMarshal(&sp))
-	k.SetHeightToVersionMap(ctx, heightToVersionMap)
-	return nil
+	return k.SetHeightToVersionMap(ctx, heightToVersionMap)
 }
 
 func (k Keeper) OverwriteParamsAtVersion(ctx context.Context, v uint32, p types.Params) error {
