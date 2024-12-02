@@ -62,14 +62,17 @@ func FuzzParamsVersioning(f *testing.F) {
 		var generatedParams []*types.Params
 		generatedParams = append(generatedParams, &params0)
 
+		var btcActivationHeights []uint32
 		for i := 0; i < numVersionsToGenerate; i++ {
 			params := types.DefaultParams()
 			// randomize two parameters so each params are slightly different
 			params.MinSlashingTxFeeSat = r.Int63()
 			params.MinUnbondingTimeBlocks = uint32(r.Intn(math.MaxUint16))
+			params.BtcActivationHeight = uint32(i) + 1
 			err := k.SetParams(ctx, params)
 			require.NoError(t, err)
 			generatedParams = append(generatedParams, &params)
+			btcActivationHeights = append(btcActivationHeights, params.BtcActivationHeight)
 		}
 
 		allParams := k.GetAllParams(ctx)
@@ -90,5 +93,22 @@ func FuzzParamsVersioning(f *testing.F) {
 		lastVer := k.GetParamsByVersion(ctx, uint32(len(generatedParams)-1))
 		require.EqualValues(t, *generatedParams[len(generatedParams)-1], lastParams)
 		require.EqualValues(t, lastParams, *lastVer)
+
+		heightToVersionMap := k.GetHeightToVersionMap(ctx)
+		require.NotNil(t, heightToVersionMap)
+		require.EqualValues(t, len(generatedParams), len(heightToVersionMap.Pairs))
+
+		// Check that params by version and by activation heights are consistent
+		var initVersion uint32 = 1
+		for _, btcActivationHeight := range btcActivationHeights {
+			paramsBTCActivation, err := k.GetParamsForBtcHeight(ctx, uint64(btcActivationHeight))
+			require.NoError(t, err)
+			require.NotNil(t, paramsBTCActivation)
+
+			paramsByVersion := k.GetParamsByVersion(ctx, initVersion)
+			require.NotNil(t, paramsByVersion)
+			require.EqualValues(t, *paramsBTCActivation, *paramsByVersion)
+			initVersion++
+		}
 	})
 }

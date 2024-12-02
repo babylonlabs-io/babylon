@@ -262,6 +262,13 @@ func (m *HeightToVersionMap) GetLastPair() *HeightVersionPair {
 	return m.Pairs[len(m.Pairs)-1]
 }
 
+func (m *HeightToVersionMap) AddNewPair(startHeight uint64, version uint32) error {
+	return m.AddPair(&HeightVersionPair{
+		StartHeight: startHeight,
+		Version:     version,
+	})
+}
+
 func (m *HeightToVersionMap) AddPair(newPair *HeightVersionPair) error {
 	if len(m.Pairs) == 0 && newPair.Version != 0 {
 		return fmt.Errorf("version must be 0 for the first pair")
@@ -324,4 +331,35 @@ func (m *HeightToVersionMap) GetVersionForHeight(height uint64) (uint32, error) 
 	}
 
 	return m.Pairs[idx].Version, nil
+}
+
+func (m *HeightToVersionMap) Validate() error {
+	if len(m.Pairs) == 0 {
+		return fmt.Errorf("height to version map is empty")
+	}
+
+	if len(m.Pairs) == 1 {
+		if m.Pairs[0].Version != 0 {
+			return fmt.Errorf("version must be 0 for the first pair")
+		}
+		return nil
+	}
+
+	for i, pair := range m.Pairs {
+		if i == 0 {
+			continue
+		}
+
+		if pair.StartHeight <= m.Pairs[i-1].StartHeight {
+			return fmt.Errorf("pairs must be sorted by start height in ascending order, got %d <= %d",
+				pair.StartHeight, m.Pairs[i-1].StartHeight)
+		}
+
+		if pair.Version != m.Pairs[i-1].Version+1 {
+			return fmt.Errorf("versions must be strictly increasing, got %d != %d + 1",
+				pair.Version, m.Pairs[i-1].Version)
+		}
+	}
+
+	return nil
 }
