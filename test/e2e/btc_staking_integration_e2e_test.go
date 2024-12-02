@@ -420,8 +420,6 @@ func (s *BTCStakingIntegrationTestSuite) Test6ContractQueries() {
 	s.Equal(nodefpDel.MustGetStakingTxHash().String(), contractDelsByFp.StakingTxHashes[0])
 }
 
-// TODO: add test for slashing when its supported in smart contract
-
 // helper function: register a random consumer on Babylon and verify it
 func (s *BTCStakingIntegrationTestSuite) registerVerifyConsumer(babylonNode *chain.NodeConfig, consumerID string) *bsctypes.ConsumerRegister {
 	// Register a random consumer on Babylon

@@ -512,7 +512,6 @@ func (ak *AppKeepers) InitKeepers(
 		ak.AccountKeeper,
 		ak.BankKeeper,
 		ak.IBCKeeper.ClientKeeper,
-		ak.IBCKeeper.ChannelKeeper,
 		ak.WasmKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)

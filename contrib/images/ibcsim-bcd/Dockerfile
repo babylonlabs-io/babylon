@@ -18,7 +18,7 @@ ENV PATH $GOPATH/bin:$PATH
 
 ENV GO111MODULE on
 ENV RELAYER_TAG v2.5.2
-ENV BABYLON_SDK_VERSION main
+ENV BABYLON_SDK_VERSION v0.6.0-rc.1
 
 # Install the relayer
 RUN git clone https://github.com/cosmos/relayer.git

@@ -102,6 +102,7 @@ func FuzzRegisterConsumer(f *testing.F) {
 		consumerRegister2, err = bscKeeper.GetConsumerRegister(ctx, consumerRegister.ConsumerId)
 		require.NoError(t, err)
 		require.Equal(t, consumerRegister.String(), consumerRegister2.String())
+		require.Equal(t, types.ConsumerType_ETH_L2, consumerRegister2.Type())
 	})
 }
 

@@ -18,7 +18,6 @@ type Keeper struct {
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
 	clientKeeper  types.ClientKeeper
-	channelKeeper types.ChannelKeeper
 	wasmKeeper    types.WasmKeeper
 
 	// the address capable of executing a MsgUpdateParams message. Typically, this
@@ -32,7 +31,6 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	clientKeeper types.ClientKeeper,
-	channelKeeper types.ChannelKeeper,
 	wasmKeeper types.WasmKeeper,
 	authority string,
 ) Keeper {
@@ -46,7 +44,6 @@ func NewKeeper(
 		bankKeeper:    bankKeeper,
 		accountKeeper: accountKeeper,
 		clientKeeper:  clientKeeper,
-		channelKeeper: channelKeeper,
 		wasmKeeper:    wasmKeeper,
 		authority:     authority,
 	}
