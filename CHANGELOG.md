@@ -41,6 +41,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#305](https://github.com/babylonlabs-io/babylon/pull/305) chore: add more error logs to `VerifyInclusionProofAndGetHeight`
 - [#304](https://github.com/babylonlabs-io/babylon/pull/304) Add highest voted height to finality provider
+
+
+## v0.17.2
+
+### Improvements
+
 - [#311](https://github.com/babylonlabs-io/babylon/pull/311) Enforce version 2
 for unbonding transactions
 
