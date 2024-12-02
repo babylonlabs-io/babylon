@@ -13,9 +13,7 @@ func GenRandomCosmosConsumerRegister(r *rand.Rand) *bsctypes.ConsumerRegister {
 		ConsumerName:        GenRandomHexStr(r, 5),
 		ConsumerDescription: "Chain description: " + GenRandomHexStr(r, 15),
 		ConsumerMetadata: &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
-			CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{
-				ClientId: clientID,
-			},
+			CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{},
 		},
 	}
 }

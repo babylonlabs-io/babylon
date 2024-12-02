@@ -23,9 +23,7 @@ func NewCosmosConsumerRegister(consumerId, consumerName, consumerDescription str
 		ConsumerName:        consumerName,
 		ConsumerDescription: consumerDescription,
 		ConsumerMetadata: &ConsumerRegister_CosmosConsumerMetadata{
-			CosmosConsumerMetadata: &CosmosConsumerMetadata{
-				ClientId: consumerId,
-			},
+			CosmosConsumerMetadata: &CosmosConsumerMetadata{},
 		},
 	}
 }
