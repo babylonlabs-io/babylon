@@ -229,14 +229,14 @@ func IsSimpleTransfer(tx *wire.MsgTx) error {
 // - the transaction has exactly numInputs inputs.
 // - the transaction has exactly numOutputs outputs.
 // - the transaction lock time is 0.
-// - the transaction version is between 1 and maxTxVersion.
+// - the transaction version is between minTxVersion and maxTxVersion.
 // - each input has a sequence number equal to MaxTxInSequenceNum.
 // - each input has an empty signature script.
 // - each input has an empty witness.
 func CheckPreSignedTxSanity(
 	tx *wire.MsgTx,
 	numInputs, numOutputs uint32,
-	maxTxVersion int32,
+	minTxVersion, maxTxVersion int32,
 ) error {
 	if tx == nil {
 		return fmt.Errorf("tx must not be nil")
@@ -261,8 +261,8 @@ func CheckPreSignedTxSanity(
 		return fmt.Errorf("pre-signed tx must not have locktime")
 	}
 
-	if tx.Version > maxTxVersion || tx.Version < 1 {
-		return fmt.Errorf("tx version must be between 1 and %d", maxTxVersion)
+	if tx.Version > maxTxVersion || tx.Version < minTxVersion {
+		return fmt.Errorf("tx version must be between %d and %d", minTxVersion, maxTxVersion)
 	}
 
 	txWeight := blockchain.GetTransactionWeight(transaction)
@@ -293,6 +293,8 @@ func CheckPreSignedUnbondingTxSanity(tx *wire.MsgTx) error {
 		tx,
 		1,
 		1,
+		// Unbonding tx is always version 2
+		MaxTxVersion,
 		MaxTxVersion,
 	)
 }
@@ -302,6 +304,8 @@ func CheckPreSignedSlashingTxSanity(tx *wire.MsgTx) error {
 		tx,
 		1,
 		2,
+		// slashing tx version can be between 1 and 2
+		1,
 		MaxTxVersion,
 	)
 }
