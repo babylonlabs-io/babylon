@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"testing"
@@ -22,6 +23,22 @@ func TestGetParams(t *testing.T) {
 	require.NoError(t, err)
 
 	require.EqualValues(t, params, k.GetParams(ctx))
+}
+
+func TestAddNewPairParams(t *testing.T) {
+	htvm := types.NewHeightToVersionMap()
+	// btc start height, version of params
+	err := htvm.AddNewPair(10, 0)
+	require.NoError(t, err)
+
+	err = htvm.AddNewPair(11, 1)
+	require.NoError(t, err)
+
+	err = htvm.AddNewPair(11, 2)
+	require.EqualError(t, err, fmt.Errorf("pairs must be sorted by start height in ascending order, got %d <= %d", 11, 11).Error())
+
+	err = htvm.AddNewPair(15, 1)
+	require.EqualError(t, err, fmt.Errorf("versions must be strictly increasing, got %d != %d + 1", 1, 1).Error())
 }
 
 func TestGetParamsVersions(t *testing.T) {
