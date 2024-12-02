@@ -8,6 +8,7 @@ import (
 
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/core/header"
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
@@ -23,6 +24,9 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/babylonlabs-io/babylon/app"
