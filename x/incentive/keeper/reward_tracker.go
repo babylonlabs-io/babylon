@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	corestoretypes "cosmossdk.io/core/store"
 	sdkmath "cosmossdk.io/math"
 )
 
@@ -68,21 +67,16 @@ func (k Keeper) BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddres
 }
 
 func (k Keeper) CalculateDelegationRewards(ctx context.Context, fp, del sdk.AccAddress, endPeriod uint64) (sdk.Coins, error) {
-	delActiveStakedSat, err := k.getDelegationStaking(ctx, fp, del)
-	if err != nil {
-		return sdk.Coins{}, err
-	}
-
-	if delActiveStakedSat.IsZero() {
-		return sdk.NewCoins(), nil
-	}
-
 	btcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
 	if err != nil {
 		if errors.Is(err, types.ErrBTCDelegationRewardsTrackerNotFound) {
 
 		}
 		return sdk.Coins{}, err
+	}
+
+	if btcDelRwdTracker.TotalActiveSat.IsZero() {
+		return sdk.NewCoins(), nil
 	}
 
 	return k.calculateDelegationRewardsBetween(ctx, fp, del, btcDelRwdTracker, endPeriod)
@@ -177,7 +171,7 @@ func (k Keeper) initializeFinalityProvider(ctx context.Context, fp sdk.AccAddres
 		return err
 	}
 	// set current rewards (starting at period 1)
-	return k.setFinalityProviderCurrentRewards(ctx, fp, types.NewFinalityProviderCurrentRewards(sdk.NewCoins(), 1))
+	return k.setFinalityProviderCurrentRewards(ctx, fp, types.NewFinalityProviderCurrentRewards(sdk.NewCoins(), 1, sdkmath.ZeroInt()))
 }
 
 // initializeBTCDelegation creates a new BTCDelegationRewardsTracker from the previous acumulative rewards
@@ -205,7 +199,7 @@ func (k Keeper) initializeBTCDelegation(ctx context.Context, fp, del sdk.AccAddr
 	// }
 
 	// sdkCtx := sdk.UnwrapSDKContext(ctx)
-	types.NewBTCDelegationRewardsTracker(previousPeriod, 0)
+	types.NewBTCDelegationRewardsTracker(previousPeriod, sdkmath.ZeroInt())
 	return nil
 	// return k.SetDelegatorStartingInfo(ctx, fp, del, dstrtypes.NewDelegatorStartingInfo(previousPeriod, stake, uint64(sdkCtx.BlockHeight())))
 }
@@ -236,6 +230,17 @@ func (k Keeper) GetBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.
 		return types.BTCDelegationRewardsTracker{}, err
 	}
 	return value, nil
+}
+
+func (k Keeper) setBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.AccAddress, rwd types.BTCDelegationRewardsTracker) error {
+	key := del.Bytes()
+	bz, err := rwd.Marshal()
+	if err != nil {
+		return err
+	}
+
+	k.storeBTCDelegationRewardsTracker(ctx, fp).Set(key, bz)
+	return nil
 }
 
 func (k Keeper) setFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress, rwd types.FinalityProviderCurrentRewards) error {
@@ -306,65 +311,34 @@ func (k Keeper) storeFpHistoricalRewards(ctx context.Context, fp sdk.AccAddress)
 	return prefix.NewStore(st, fp.Bytes())
 }
 
-// storeFinalityProviderStaked returns the KVStore of the finality provider amount active staked
-// prefix: (DelegatorStakedBTCKey)
-// key: (FinalityProviderStakedBTCKey)
-// value: sdk math Int
-func (k Keeper) storeFinalityProviderStaked(ctx context.Context) prefix.Store {
-	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	return prefix.NewStore(storeAdapter, types.FinalityProviderStakedBTCKey)
-}
-
-// storeDelegationFpStaked returns the KVStore of the delegator amount staked
-// prefix: (DelegatorStakedBTCKey)
-// key: (FpAddr, DelAddr)
-// value: sdk math Int
-func (k Keeper) storeDelegationFpStaked(ctx context.Context, fp sdk.AccAddress) prefix.Store {
-	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	st := prefix.NewStore(storeAdapter, types.DelegationStakedBTCKey)
-	return prefix.NewStore(st, fp.Bytes())
-}
-
 func (k Keeper) addFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress, amt sdkmath.Int) error {
-	st := k.storeFinalityProviderStaked(ctx)
-	key := fp.Bytes()
+	fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
+	if err != nil {
+		return err
+	}
 
-	return OperationWithInt(st, key, func(currentFpStaked sdkmath.Int) sdkmath.Int {
-		return currentFpStaked.Add(amt)
-	})
-}
-
-func (k Keeper) getFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress) (amt sdkmath.Int, err error) {
-	st := k.storeFinalityProviderStaked(ctx)
-	key := fp.Bytes()
-
-	return PrefixStoreGetInt(st, key)
+	fpCurrentRwd.AddTotalActiveSat(amt)
+	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
 
 func (k Keeper) subFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress, amt sdkmath.Int) error {
-	st := k.storeFinalityProviderStaked(ctx)
-	key := fp.Bytes()
+	fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
+	if err != nil {
+		return err
+	}
 
-	return OperationWithInt(st, key, func(currentFpStaked sdkmath.Int) sdkmath.Int {
-		return currentFpStaked.Sub(amt)
-	})
-}
-
-func (k Keeper) getDelegationStaking(ctx context.Context, fp, del sdk.AccAddress) (sdkmath.Int, error) {
-	st := k.storeDelegationFpStaked(ctx, fp)
-	key := del.Bytes()
-
-	return PrefixStoreGetInt(st, key)
+	fpCurrentRwd.SubTotalActiveSat(amt)
+	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
 
 func (k Keeper) AddDelegationStaking(ctx context.Context, fp, del sdk.AccAddress, amt sdkmath.Int) error {
-	st := k.storeDelegationFpStaked(ctx, fp)
-	key := del.Bytes()
-
-	err := OperationWithInt(st, key, func(currenDelegationStaked sdkmath.Int) sdkmath.Int {
-		return currenDelegationStaked.Add(amt)
-	})
+	btcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
 	if err != nil {
+		return err
+	}
+
+	btcDelRwdTracker.AddTotalActiveSat(amt)
+	if err := k.setBTCDelegationRewardsTracker(ctx, fp, del, btcDelRwdTracker); err != nil {
 		return err
 	}
 
@@ -372,88 +346,17 @@ func (k Keeper) AddDelegationStaking(ctx context.Context, fp, del sdk.AccAddress
 }
 
 func (k Keeper) SubDelegationStaking(ctx context.Context, fp, del sdk.AccAddress, amt sdkmath.Int) error {
-	st := k.storeDelegationFpStaked(ctx, fp)
-	key := fp.Bytes()
-
-	err := OperationWithInt(st, key, func(currenDelegationStaked sdkmath.Int) sdkmath.Int {
-		return currenDelegationStaked.Sub(amt)
-	})
+	btcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
 	if err != nil {
+		return err
+	}
+
+	btcDelRwdTracker.SubTotalActiveSat(amt)
+	if err := k.setBTCDelegationRewardsTracker(ctx, fp, del, btcDelRwdTracker); err != nil {
 		return err
 	}
 
 	return k.subFinalityProviderStaked(ctx, fp, amt)
-}
-
-func OperationWithInt(st prefix.Store, key []byte, update func(vIntFromStore sdkmath.Int) (updatedValue sdkmath.Int)) (err error) {
-	currentValue, err := PrefixStoreGetInt(st, key)
-	if err != nil {
-		return err
-	}
-
-	currentValue = update(currentValue)
-	bz, err := currentValue.Marshal()
-	if err != nil {
-		return err
-	}
-
-	st.Set(key, bz)
-	return nil
-}
-
-func PrefixStoreGetInt(st prefix.Store, key []byte) (vInt sdkmath.Int, err error) {
-	if !st.Has(key) {
-		return sdkmath.NewInt(0), nil
-	}
-
-	bz := st.Get(key)
-	vInt, err = ParseInt(bz)
-	if err != nil {
-		return sdkmath.Int{}, err
-	}
-
-	return vInt, nil
-}
-
-// StoreSetInt stores an sdkmath.Int from the KVStore.
-func StoreSetInt(kv corestoretypes.KVStore, key []byte, vInt sdkmath.Int) (err error) {
-	bz, err := vInt.Marshal()
-	if err != nil {
-		return err
-	}
-	return kv.Set(key, bz)
-}
-
-// StoreGetInt retrieves an sdkmath.Int from the KVStore. It returns zero int if not found.
-func StoreGetInt(kv corestoretypes.KVStore, key []byte) (vInt sdkmath.Int, err error) {
-	exists, err := kv.Has(key)
-	if err != nil {
-		return sdkmath.Int{}, err
-	}
-
-	if !exists {
-		return sdkmath.NewInt(0), nil
-	}
-
-	bz, err := kv.Get(key)
-	if err != nil {
-		return sdkmath.Int{}, err
-	}
-
-	vInt, err = ParseInt(bz)
-	if err != nil {
-		return sdkmath.Int{}, err
-	}
-	return vInt, nil
-}
-
-// ParseInt parses an sdkmath.Int from bytes.
-func ParseInt(bz []byte) (sdkmath.Int, error) {
-	var val sdkmath.Int
-	if err := val.Unmarshal(bz); err != nil {
-		return val, err
-	}
-	return val, nil
 }
 
 // IterateBTCDelegators iterates over all the delegators that have some active BTC delegator

@@ -25,3 +25,27 @@ func NewFinalityProviderHistoricalRewards(cumulativeRewardsPerSat sdk.Coins) Fin
 		CumulativeRewardsPerSat: cumulativeRewardsPerSat,
 	}
 }
+
+func (f *FinalityProviderCurrentRewards) AddRewards(coinsToAdd sdk.Coins) {
+	f.CurrentRewards = f.CurrentRewards.Add(coinsToAdd...)
+}
+
+func (f *FinalityProviderCurrentRewards) SubRewards(coinsToSubtract sdk.Coins) {
+	f.CurrentRewards = f.CurrentRewards.Sub(coinsToSubtract...)
+}
+
+func (f *FinalityProviderCurrentRewards) AddTotalActiveSat(amt sdkmath.Int) {
+	f.TotalActiveSat = f.TotalActiveSat.Add(amt)
+}
+
+func (f *FinalityProviderCurrentRewards) SubTotalActiveSat(amt sdkmath.Int) {
+	f.TotalActiveSat = f.TotalActiveSat.Sub(amt)
+}
+
+func (f *BTCDelegationRewardsTracker) AddTotalActiveSat(amt sdkmath.Int) {
+	f.TotalActiveSat = f.TotalActiveSat.Add(amt)
+}
+
+func (f *BTCDelegationRewardsTracker) SubTotalActiveSat(amt sdkmath.Int) {
+	f.TotalActiveSat = f.TotalActiveSat.Sub(amt)
+}
