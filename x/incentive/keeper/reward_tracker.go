@@ -44,14 +44,21 @@ func (k Keeper) BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddre
 
 	rewards, err := k.CalculateDelegationRewards(ctx, fp, del, endedPeriod)
 	if err != nil {
-		return err
+		if !errors.Is(err, types.ErrBTCDelegationRewardsTrackerNotFound) {
+			return err
+		}
+		rewards = sdk.NewCoins()
 	}
 
-	if !rewards.IsZero() { // there is some rewards
+	if !rewards.IsZero() {
 		k.accumulateRewardGauge(ctx, types.BTCDelegationType, del, rewards)
 	}
 
-	return k.AddDelegationStaking(ctx, fp, del, amtSat)
+	if err := k.AddDelegationSat(ctx, fp, del, amtSat); err != nil {
+		return err
+	}
+
+	return k.initializeBTCDelegation(ctx, fp, del)
 }
 
 func (k Keeper) BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sat uint64) error {
@@ -69,9 +76,6 @@ func (k Keeper) BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddres
 func (k Keeper) CalculateDelegationRewards(ctx context.Context, fp, del sdk.AccAddress, endPeriod uint64) (sdk.Coins, error) {
 	btcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
 	if err != nil {
-		if errors.Is(err, types.ErrBTCDelegationRewardsTrackerNotFound) {
-
-		}
 		return sdk.Coins{}, err
 	}
 
@@ -188,20 +192,13 @@ func (k Keeper) initializeBTCDelegation(ctx context.Context, fp, del sdk.AccAddr
 	}
 	previousPeriod := valCurrentRewards.Period - 1
 
-	// validator, err := k.stakingKeeper.Validator(ctx, fp)
-	// if err != nil {
-	// 	return err
-	// }
+	btcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
+	if err != nil {
+		return err
+	}
 
-	// delegation, err := k.stakingKeeper.Delegation(ctx, del, fp)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// sdkCtx := sdk.UnwrapSDKContext(ctx)
-	types.NewBTCDelegationRewardsTracker(previousPeriod, sdkmath.ZeroInt())
-	return nil
-	// return k.SetDelegatorStartingInfo(ctx, fp, del, dstrtypes.NewDelegatorStartingInfo(previousPeriod, stake, uint64(sdkCtx.BlockHeight())))
+	rwd := types.NewBTCDelegationRewardsTracker(previousPeriod, btcDelRwdTracker.TotalActiveSat)
+	return k.setBTCDelegationRewardsTracker(ctx, fp, del, rwd)
 }
 
 func (k Keeper) GetFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress) (types.FinalityProviderCurrentRewards, error) {
@@ -331,10 +328,16 @@ func (k Keeper) subFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress
 	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
 
-func (k Keeper) AddDelegationStaking(ctx context.Context, fp, del sdk.AccAddress, amt sdkmath.Int) error {
+func (k Keeper) AddDelegationSat(ctx context.Context, fp, del sdk.AccAddress, amt sdkmath.Int) error {
 	btcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
 	if err != nil {
-		return err
+		if !errors.Is(err, types.ErrBTCDelegationRewardsTrackerNotFound) {
+			return err
+		}
+
+		// first delegation to this pair (fp, del), can start as 0 previous period as it
+		// will be updated soon as initilize btc delegation
+		btcDelRwdTracker = types.NewBTCDelegationRewardsTracker(0, sdkmath.ZeroInt())
 	}
 
 	btcDelRwdTracker.AddTotalActiveSat(amt)
