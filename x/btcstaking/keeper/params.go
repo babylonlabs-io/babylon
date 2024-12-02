@@ -155,3 +155,6 @@ func (k Keeper) GetParamsWithVersion(ctx context.Context) types.StoredParams {
 func (k Keeper) MinCommissionRate(ctx context.Context) math.LegacyDec {
 	return k.GetParams(ctx).MinCommissionRate
 }
+
+
+

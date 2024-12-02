@@ -59,6 +59,22 @@ message Params {
   // i.e all staking transactions are allowed to enter Babylon chain afterwards
   // setting it to 0 means allow list is disabled
   uint64 allow_list_expiration_height = 14;
+  // btc_activation_height is the btc height from which parameters are activated (inclusive)
+  uint32 btc_activation_height = 15;
+}
+
+// HeightVersionPair pairs a btc height with a version of the parameters
+message HeightVersionPair {
+  // start_height is the height from which the parameters are activated (inclusive)
+  uint64 start_height = 1;
+  // version is the version of the parameters
+  uint32 version = 2;
+}
+
+// HeightToVersionMap maps a btc height to a version of the parameters
+message HeightToVersionMap {
+  // Pairs must be sorted by `start_height` in ascending order, without duplicates
+  repeated HeightVersionPair pairs = 1;
 }
 
 // StoredParams attach information about the version of stored parameters

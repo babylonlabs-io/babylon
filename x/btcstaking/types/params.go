@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"math"
+	"sort"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -79,6 +80,7 @@ func DefaultParams() Params {
 		// The default allow list expiration height is 0, which effectively disables the allow list.
 		// Allow list can only be enabled by upgrade
 		AllowListExpirationHeight: 0,
+		BtcActivationHeight:       0,
 	}
 }
 
@@ -235,4 +237,91 @@ func (p Params) MustGetCovenantPks() []*btcec.PublicKey {
 	}
 
 	return covenantKeys
+}
+
+func NewHeightVersionPair(
+	startHeight uint64,
+	version uint32,
+) *HeightVersionPair {
+	return &HeightVersionPair{
+		StartHeight: startHeight,
+		Version:     version,
+	}
+}
+
+func NewHeightToVersionMap() *HeightToVersionMap {
+	return &HeightToVersionMap{
+		Pairs: []*HeightVersionPair{},
+	}
+}
+
+func (m *HeightToVersionMap) GetLastPair() *HeightVersionPair {
+	if m.IsEmpty() {
+		return nil
+	}
+	return m.Pairs[len(m.Pairs)-1]
+}
+
+func (m *HeightToVersionMap) AddPair(newPair *HeightVersionPair) error {
+	if len(m.Pairs) == 0 && newPair.Version != 0 {
+		return fmt.Errorf("version must be 0 for the first pair")
+	}
+
+	if len(m.Pairs) == 0 && newPair.Version == 0 {
+		m.Pairs = append(m.Pairs, newPair)
+		return nil
+	}
+
+	// we already checked `m.Pairs` is not empty, so this won't be nil
+	lastPair := m.GetLastPair()
+
+	if newPair.StartHeight <= lastPair.StartHeight {
+		return fmt.Errorf("pairs must be sorted by start height in ascending order, got %d <= %d",
+			newPair.StartHeight, lastPair.StartHeight)
+	}
+
+	if newPair.Version != lastPair.Version+1 {
+		return fmt.Errorf("versions must be strictly increasing, got %d != %d + 1",
+			newPair.Version, lastPair.Version)
+	}
+
+	m.Pairs = append(m.Pairs, newPair)
+	return nil
+}
+
+func NewHeightToVersionMapFromPairs(pairs []*HeightVersionPair) (*HeightToVersionMap, error) {
+	if len(pairs) == 0 {
+		return nil, fmt.Errorf("can't construct HeightToVersionMap from empty list of HeightVersionPair")
+	}
+
+	heightToVersionMap := NewHeightToVersionMap()
+
+	for _, pair := range pairs {
+		if err := heightToVersionMap.AddPair(pair); err != nil {
+			return nil, err
+		}
+	}
+
+	return heightToVersionMap, nil
+}
+
+func (m *HeightToVersionMap) IsEmpty() bool {
+	return len(m.Pairs) == 0
+}
+
+func (m *HeightToVersionMap) GetVersionForHeight(height uint64) (uint32, error) {
+	if m.IsEmpty() {
+		return 0, fmt.Errorf("height to version map is empty")
+	}
+
+	// Binary search to find the applicable version of the parameters
+	idx := sort.Search(len(m.Pairs), func(i int) bool {
+		return m.Pairs[i].StartHeight > height
+	}) - 1
+
+	if idx < 0 {
+		return 0, fmt.Errorf("no parameters found for block height %d", height)
+	}
+
+	return m.Pairs[idx].Version, nil
 }
