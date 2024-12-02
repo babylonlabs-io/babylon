@@ -94,8 +94,8 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TearDownSuite() {
 	}
 }
 
-// TestUpgradeSignetLaunch Checks if the BTC Headers were inserted.
-func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
+// TestUpgradeV1 Checks if the BTC Headers were inserted.
+func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeV1() {
 	// chain is already upgraded, only checks for differences in state are expected
 	chainA := s.configurer.GetChainConfig(0)
 
@@ -145,7 +145,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// as the one from the data
 	stakingParams := n.QueryBTCStakingParams()
 
-	stakingParamsFromData, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec(), testnet.BtcStakingParamStr)
+	stakingParamsFromData, err := v1.LoadBtcStakingParamsFromData(testnet.BtcStakingParamsStr)
 	s.NoError(err)
 
 	s.EqualValues(stakingParamsFromData, *stakingParams)

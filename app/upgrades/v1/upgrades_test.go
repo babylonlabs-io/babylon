@@ -46,7 +46,7 @@ var (
 	wasmContract []byte
 
 	UpgradeV1DataTestnet = v1.UpgradeDataString{
-		BtcStakingParamStr:        testnetdata.BtcStakingParamStr,
+		BtcStakingParamsStr:       testnetdata.BtcStakingParamsStr,
 		FinalityParamStr:          testnetdata.FinalityParamStr,
 		IncentiveParamStr:         testnetdata.IncentiveParamStr,
 		CosmWasmParamStr:          testnetdata.CosmWasmParamStr,
@@ -55,7 +55,7 @@ var (
 		AllowedStakingTxHashesStr: testnetdata.AllowedStakingTxHashesStr,
 	}
 	UpgradeV1DataMainnet = v1.UpgradeDataString{
-		BtcStakingParamStr:        mainnetdata.BtcStakingParamStr,
+		BtcStakingParamsStr:       mainnetdata.BtcStakingParamsStr,
 		FinalityParamStr:          mainnetdata.FinalityParamStr,
 		IncentiveParamStr:         mainnetdata.IncentiveParamStr,
 		CosmWasmParamStr:          mainnetdata.CosmWasmParamStr,
@@ -203,7 +203,7 @@ func (s *UpgradeTestSuite) PreUpgrade() {
 	s.btcHeadersLenPreUpgrade = len(allBtcHeaders)
 
 	// Before upgrade, the params should be different
-	bsParamsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.app.AppCodec(), s.upgradeDataStr.BtcStakingParamStr)
+	bsParamsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.upgradeDataStr.BtcStakingParamsStr)
 	s.NoError(err)
 	bsModuleParams := s.app.BTCStakingKeeper.GetParams(s.ctx)
 	s.NotEqualValues(bsModuleParams, bsParamsFromUpgrade)
@@ -277,10 +277,23 @@ func (s *UpgradeTestSuite) PostUpgrade() {
 	}
 
 	// After upgrade, the params should be the same
-	bsParamsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.app.AppCodec(), s.upgradeDataStr.BtcStakingParamStr)
+	bsParamsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(s.upgradeDataStr.BtcStakingParamsStr)
 	s.NoError(err)
+
 	bsModuleParams := s.app.BTCStakingKeeper.GetParams(s.ctx)
-	s.EqualValues(bsModuleParams, bsParamsFromUpgrade)
+	lastParamInUpgradeData := bsParamsFromUpgrade[len(bsParamsFromUpgrade)-1]
+	s.EqualValues(bsModuleParams, lastParamInUpgradeData)
+
+	// expected version starts at 1 due to the chain already initialized with some btc staking params as version 0
+	expVersion := uint32(1)
+	for _, paramsInUpgradeData := range bsParamsFromUpgrade {
+		bsParamsAtBtcHeight, version, err := s.app.BTCStakingKeeper.GetParamsForBtcHeight(s.ctx, uint64(paramsInUpgradeData.BtcActivationHeight))
+		s.NoError(err)
+		s.Equal(expVersion, version)
+		s.Equal(*bsParamsAtBtcHeight, paramsInUpgradeData)
+		expVersion++
+	}
+
 	fParamsFromUpgrade, err := v1.LoadFinalityParamsFromData(s.app.AppCodec(), s.upgradeDataStr.FinalityParamStr)
 	s.NoError(err)
 	fModuleParams := s.app.FinalityKeeper.GetParams(s.ctx)
