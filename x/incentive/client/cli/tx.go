@@ -73,7 +73,7 @@ func NewSetWithdrawAddressCmd() *cobra.Command {
 
 			msg := &types.MsgSetWithdrawAddress{
 				DelegatorAddress: delAddr.String(),
-				WithdrawAddress:  string(withdrawAddr),
+				WithdrawAddress:  withdrawAddr.String(),
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
