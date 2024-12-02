@@ -145,10 +145,19 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeV1() {
 	// as the one from the data
 	stakingParams := n.QueryBTCStakingParams()
 
-	stakingParamsFromData, err := v1.LoadBtcStakingParamsFromData(testnet.BtcStakingParamsStr)
+	bsParamsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(testnet.BtcStakingParamsStr)
 	s.NoError(err)
 
-	s.EqualValues(stakingParamsFromData, *stakingParams)
+	lastParamInUpgradeData := bsParamsFromUpgrade[len(bsParamsFromUpgrade)-1]
+	s.EqualValues(lastParamInUpgradeData, *stakingParams)
+
+	// expected version starts at 1 due to the chain already initialized with some btc staking params as version 0
+	expVersion := uint32(1)
+	for _, paramsInUpgradeData := range bsParamsFromUpgrade {
+		bsParamsAtBtcHeight := n.QueryBTCStakingParamsByVersion(expVersion)
+		s.Equal(*bsParamsAtBtcHeight, paramsInUpgradeData)
+		expVersion++
+	}
 
 	// check that finality params correctly deserialize and that they are the same
 	// as the one from the data

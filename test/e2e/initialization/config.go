@@ -28,6 +28,7 @@ import (
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	blctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 
@@ -250,6 +251,11 @@ func initGenesis(
 		return err
 	}
 
+	err = updateModuleGenesis(appGenState, btcstakingtypes.ModuleName, &btcstakingtypes.GenesisState{}, updateBtcStakingGenesis)
+	if err != nil {
+		return err
+	}
+
 	err = updateModuleGenesis(appGenState, checkpointingtypes.ModuleName, checkpointingtypes.DefaultGenesis(), updateCheckpointingGenesis(chain))
 	if err != nil {
 		return err
@@ -356,6 +362,10 @@ func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.Genesi
 	btccheckpointGenState.Params.BtcConfirmationDepth = BabylonBtcConfirmationPeriod
 	btccheckpointGenState.Params.CheckpointFinalizationTimeout = BabylonBtcFinalizationPeriod
 	btccheckpointGenState.Params.CheckpointTag = BabylonOpReturnTag
+}
+
+func updateBtcStakingGenesis(btcstakingGenState *btcstakingtypes.GenesisState) {
+	btcstakingGenState = btcstakingtypes.DefaultGenesis()
 }
 
 func updateFinalityGenesis(finalityGenState *finalitytypes.GenesisState) {
