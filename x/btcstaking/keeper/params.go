@@ -198,7 +198,7 @@ func (k Keeper) GetHeightToVersionMap(ctx context.Context) *types.HeightToVersio
 	return &p
 }
 
-func (k Keeper) GetParamsForBtcHeight(ctx context.Context, height uint64) (*types.Params, error) {
+func (k Keeper) GetParamsForBtcHeight(ctx context.Context, height uint64) (*types.Params, uint32, error) {
 	heightToVersionMap := k.GetHeightToVersionMap(ctx)
 	if heightToVersionMap == nil {
 		panic("height to version map not found")
@@ -206,8 +206,8 @@ func (k Keeper) GetParamsForBtcHeight(ctx context.Context, height uint64) (*type
 
 	version, err := heightToVersionMap.GetVersionForHeight(height)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return k.GetParamsByVersion(ctx, version), nil
+	return k.GetParamsByVersion(ctx, version), version, nil
 }

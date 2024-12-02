@@ -101,17 +101,14 @@ func FuzzParamsVersioning(f *testing.F) {
 		require.NotNil(t, heightToVersionMap)
 		require.EqualValues(t, len(generatedParams), len(heightToVersionMap.Pairs))
 
-		// Check that params by version and by activation heights are consistent
-		var initVersion uint32 = 1
 		for _, btcActivationHeight := range btcActivationHeights {
-			paramsBTCActivation, err := k.GetParamsForBtcHeight(ctx, uint64(btcActivationHeight))
+			paramsBTCActivation, version, err := k.GetParamsForBtcHeight(ctx, uint64(btcActivationHeight))
 			require.NoError(t, err)
 			require.NotNil(t, paramsBTCActivation)
 
-			paramsByVersion := k.GetParamsByVersion(ctx, initVersion)
+			paramsByVersion := k.GetParamsByVersion(ctx, version)
 			require.NotNil(t, paramsByVersion)
 			require.EqualValues(t, *paramsBTCActivation, *paramsByVersion)
-			initVersion++
 		}
 	})
 }

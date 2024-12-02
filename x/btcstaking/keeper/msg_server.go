@@ -154,8 +154,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	vp := ms.GetParamsWithVersion(ctx)
-
 	// 1. Parse the message into better domain format
 	parsedMsg, err := types.ParseCreateDelegationMessage(req)
 
@@ -190,6 +188,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		}
 	}
 
+	// get latest params with version
+	vp := ms.GetParamsWithVersion(ctx)
+
 	// 5. if allow list is enabled we need to check whether staking transactions hash
 	// is in the allow list
 	if ms.isAllowListEnabled(ctx, &vp.Params) {
@@ -198,17 +199,12 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		}
 	}
 
-	// 6. Validate parsed message against parameters
-	paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, &vp.Params, ms.btcNet)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// 7. If the delegation contains the inclusion proof, we need to verify the proof
-	// and set start height and end height
+	// 6. If the delegation contains the inclusion proof, we need to verify the proof
+	// and set start height and end height. We also need to validate delegation
+	// against correct parameters version
 	btccParams := ms.btccKeeper.GetParams(ctx)
-	var startHeight, endHeight uint32
+	var pvr *types.ParamsValidationResult
+	var paramsVersion, startHeight, endHeight uint32
 	if parsedMsg.StakingTxProofOfInclusion != nil {
 		timeInfo, err := ms.VerifyInclusionProofAndGetHeight(
 			ctx,
@@ -221,15 +217,43 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 			return nil, fmt.Errorf("invalid inclusion proof: %w", err)
 		}
 
+		// staking transaction is already included in BTC chain, retrieve parameters
+		// based on the btc light client height
+		paramsByHeight, version, err := ms.GetParamsForBtcHeight(ctx, uint64(timeInfo.StartHeight))
+		if err != nil {
+			// this error can happen if we receive delegations which is included before
+			// first activation height we support
+			return nil, err
+		}
+
+		paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, paramsByHeight, ms.btcNet)
+
+		if err != nil {
+			return nil, err
+		}
+
+		pvr = paramsValidationResult
 		startHeight = timeInfo.StartHeight
 		endHeight = timeInfo.EndHeight
+		paramsVersion = version
 	} else {
+		// this is delegation that is not included in BTC chain yet, we need to validate
+		// it against the latest parameters
+		paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, &vp.Params, ms.btcNet)
+
+		if err != nil {
+			return nil, err
+		}
+
+		pvr = paramsValidationResult
+		paramsVersion = vp.Version
+
 		// NOTE: here we consume more gas to protect Babylon chain and covenant members against spamming
 		// i.e creating delegation that will never reach BTC
 		ctx.GasMeter().ConsumeGas(vp.Params.DelegationCreationBaseGasFee, "delegation creation fee")
 	}
 
-	// 8.all good, construct BTCDelegation and insert BTC delegation
+	// 7.all good, construct BTCDelegation and insert BTC delegation
 	// NOTE: the BTC delegation does not have voting power yet. It will
 	// have voting power only when it receives a covenant signatures
 	newBTCDel := &types.BTCDelegation{
@@ -242,7 +266,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		EndHeight:        endHeight,
 		TotalSat:         uint64(parsedMsg.StakingValue),
 		StakingTx:        parsedMsg.StakingTx.TransactionBytes,
-		StakingOutputIdx: paramsValidationResult.StakingOutputIdx,
+		StakingOutputIdx: pvr.StakingOutputIdx,
 		SlashingTx:       types.NewBtcSlashingTxFromBytes(parsedMsg.StakingSlashingTx.TransactionBytes),
 		DelegatorSig:     parsedMsg.StakerStakingSlashingTxSig.BIP340Signature,
 		UnbondingTime:    uint32(parsedMsg.UnbondingTime),
@@ -255,7 +279,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 			CovenantUnbondingSigList: nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
 			DelegatorUnbondingInfo:   nil,
 		},
-		ParamsVersion: vp.Version, // version of the params against delegations was validated
+		ParamsVersion: paramsVersion, // version of the params against which delegation was validated
 	}
 
 	// add this BTC delegation, and emit corresponding events
