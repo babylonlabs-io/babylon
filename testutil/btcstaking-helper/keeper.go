@@ -219,6 +219,26 @@ func (h *Helper) CreateDelegation(
 	usePreApproval bool,
 	addToAllowList bool,
 ) (string, *types.MsgCreateBTCDelegation, *types.BTCDelegation, *btclctypes.BTCHeaderInfo, *types.InclusionProof, *UnbondingTxInfo, error) {
+	return h.CreateDelegationWithBtcBlockHeight(
+		r, delSK, fpPK, changeAddress, stakingValue,
+		stakingTime, unbondingValue, unbondingTime,
+		usePreApproval, addToAllowList, 10,
+	)
+}
+
+func (h *Helper) CreateDelegationWithBtcBlockHeight(
+	r *rand.Rand,
+	delSK *btcec.PrivateKey,
+	fpPK *btcec.PublicKey,
+	changeAddress string,
+	stakingValue int64,
+	stakingTime uint16,
+	unbondingValue int64,
+	unbondingTime uint16,
+	usePreApproval bool,
+	addToAllowList bool,
+	btcBlockHeight uint32,
+) (string, *types.MsgCreateBTCDelegation, *types.BTCDelegation, *btclctypes.BTCHeaderInfo, *types.InclusionProof, *UnbondingTxInfo, error) {
 	stakingTimeBlocks := stakingTime
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
@@ -262,7 +282,7 @@ func (h *Helper) CreateDelegation(
 	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
 	btcHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlock.Header, testStakingInfo.StakingTx)
 	btcHeader := btcHeaderWithProof.HeaderBytes
-	btcHeaderInfo := &btclctypes.BTCHeaderInfo{Header: &btcHeader, Height: 10}
+	btcHeaderInfo := &btclctypes.BTCHeaderInfo{Header: &btcHeader, Height: btcBlockHeight}
 	serializedStakingTx, err := bbn.SerializeBTCTx(testStakingInfo.StakingTx)
 	h.NoError(err)
 

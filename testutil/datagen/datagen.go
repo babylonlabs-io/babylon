@@ -24,6 +24,10 @@ func RandomInt(r *rand.Rand, rng int) uint64 {
 	return uint64(r.Intn(rng))
 }
 
+func RandomUInt32(r *rand.Rand, rng uint32) uint32 {
+	return uint32(r.Intn(int(rng)))
+}
+
 func RandomIntOtherThan(r *rand.Rand, x int, rng int) uint64 {
 	if rng == 1 && x == 0 {
 		panic("There is no other int")
