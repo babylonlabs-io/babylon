@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"sort"
 
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
@@ -101,21 +102,31 @@ func (k Keeper) OverwriteParamsAtVersion(ctx context.Context, v uint32, p types.
 	}
 
 	paramsStore := k.paramsStore(ctx)
-
-	// check if the params at version v exists
-	spBytes := paramsStore.Get(uint32ToBytes(v))
-
-	if len(spBytes) == 0 {
-		return fmt.Errorf("params at version %d not found", v)
-	}
-
 	sp := types.StoredParams{
 		Params:  p,
 		Version: v,
 	}
 
+	heightToVersionMap := k.GetHeightToVersionMap(ctx)
+	if heightToVersionMap == nil {
+		heightToVersionMap = types.NewHeightToVersionMap()
+	}
+
+	// makes sure it is ordered by the version
+	sort.Slice(heightToVersionMap.Pairs, func(i, j int) bool {
+		return heightToVersionMap.Pairs[i].Version < heightToVersionMap.Pairs[j].Version
+	})
+
+	if v >= uint32(len(heightToVersionMap.Pairs)) {
+		if err := heightToVersionMap.AddNewPair(uint64(p.BtcActivationHeight), v); err != nil {
+			return err
+		}
+	} else {
+		heightToVersionMap.Pairs[v] = types.NewHeightVersionPair(uint64(p.BtcActivationHeight), v)
+	}
+
 	paramsStore.Set(uint32ToBytes(v), k.cdc.MustMarshal(&sp))
-	return nil
+	return k.SetHeightToVersionMap(ctx, heightToVersionMap)
 }
 
 func (k Keeper) GetAllParams(ctx context.Context) []*types.Params {

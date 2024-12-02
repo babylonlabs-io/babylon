@@ -3,19 +3,31 @@ package v1_test
 import (
 	"testing"
 
+	"cosmossdk.io/log"
+	"cosmossdk.io/store"
+	storemetrics "cosmossdk.io/store/metrics"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/app"
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
+	testutilk "github.com/babylonlabs-io/babylon/testutil/keeper"
 )
 
 func TestHardCodedBtcStakingParamsAreValid(t *testing.T) {
 	for _, upgradeData := range UpgradeV1Data {
+		db := dbm.NewMemDB()
+		stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+		k, ctx := testutilk.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, nil)
+
 		params, err := v1.LoadBtcStakingParamsFromData(upgradeData.BtcStakingParamsStr)
 		require.NoError(t, err)
+
 		for _, p := range params {
-			require.NoError(t, p.Validate())
+			// using set Params here makes sure the parameters in the upgrade string are consistent
+			err = k.SetParams(ctx, p)
+			require.NoError(t, err)
 		}
 	}
 }

@@ -200,8 +200,8 @@ func upgradeBtcStakingParameters(
 		return err
 	}
 
-	for _, p := range params {
-		if err := k.SetParams(ctx, p); err != nil {
+	for version, p := range params {
+		if err := k.OverwriteParamsAtVersion(ctx, uint32(version), p); err != nil {
 			return err
 		}
 	}
