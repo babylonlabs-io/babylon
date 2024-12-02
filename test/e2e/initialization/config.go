@@ -365,7 +365,12 @@ func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.Genesi
 }
 
 func updateBtcStakingGenesis(btcstakingGenState *btcstakingtypes.GenesisState) {
-	btcstakingGenState = btcstakingtypes.DefaultGenesis()
+	btcstakingGenState.Params = btcstakingtypes.DefaultGenesis().Params
+	btcstakingGenState.FinalityProviders = []*btcstakingtypes.FinalityProvider{}
+	btcstakingGenState.BtcDelegations = []*btcstakingtypes.BTCDelegation{}
+	btcstakingGenState.BlockHeightChains = []*btcstakingtypes.BlockHeightBbnToBtc{}
+	btcstakingGenState.BtcDelegators = []*btcstakingtypes.BTCDelegator{}
+	btcstakingGenState.Events = []*btcstakingtypes.EventIndex{}
 }
 
 func updateFinalityGenesis(finalityGenState *finalitytypes.GenesisState) {
