@@ -108,21 +108,21 @@ func (h Hooks) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddre
 	return h.k.RecordNewDelegationState(sdk.UnwrapSDKContext(ctx), delAddr, valAddr, nil, types.BondState_REMOVED)
 }
 
-func (h Hooks) AfterUnbondingInitiated(ctx context.Context, id uint64) error {
+func (h Hooks) AfterUnbondingInitiated(_ context.Context, _ uint64) error {
 	return nil
 }
 
 // Other hooks that are not used in the epoching module
-func (h Hooks) BeforeValidatorModified(ctx context.Context, valAddr sdk.ValAddress) error {
+func (h Hooks) BeforeValidatorModified(_ context.Context, _ sdk.ValAddress) error {
 	return nil
 }
-func (h Hooks) BeforeDelegationCreated(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+func (h Hooks) BeforeDelegationCreated(_ context.Context, _ sdk.AccAddress, _ sdk.ValAddress) error {
 	return nil
 }
-func (h Hooks) BeforeDelegationSharesModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+func (h Hooks) BeforeDelegationSharesModified(_ context.Context, _ sdk.AccAddress, _ sdk.ValAddress) error {
 	return nil
 }
-func (h Hooks) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+func (h Hooks) AfterDelegationModified(_ context.Context, _ sdk.AccAddress, _ sdk.ValAddress) error {
 	return nil
 }
 
@@ -133,14 +133,14 @@ func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) er
 	return nil
 }
 
-func (h Hooks) AfterBlsKeyRegistered(ctx context.Context, valAddr sdk.ValAddress) error { return nil }
+func (h Hooks) AfterBlsKeyRegistered(_ context.Context, _ sdk.ValAddress) error { return nil }
 
-func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error    { return nil }
-func (h Hooks) AfterRawCheckpointConfirmed(ctx context.Context, epoch uint64) error { return nil }
-func (h Hooks) AfterRawCheckpointForgotten(ctx context.Context, ckpt *checkpointingtypes.RawCheckpoint) error {
+func (h Hooks) AfterRawCheckpointSealed(_ context.Context, _ uint64) error    { return nil }
+func (h Hooks) AfterRawCheckpointConfirmed(_ context.Context, _ uint64) error { return nil }
+func (h Hooks) AfterRawCheckpointForgotten(_ context.Context, _ *checkpointingtypes.RawCheckpoint) error {
 	return nil
 }
 
-func (h Hooks) AfterRawCheckpointBlsSigVerified(ctx context.Context, ckpt *checkpointingtypes.RawCheckpoint) error {
+func (h Hooks) AfterRawCheckpointBlsSigVerified(_ context.Context, _ *checkpointingtypes.RawCheckpoint) error {
 	return nil
 }

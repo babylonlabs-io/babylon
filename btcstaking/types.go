@@ -75,7 +75,7 @@ func DeriveTaprootAddress(
 		schnorr.SerializePubKey(outputKey), net)
 
 	if err != nil {
-		return nil, fmt.Errorf("error encoding Taproot address: %v", err)
+		return nil, fmt.Errorf("error encoding Taproot address: %w", err)
 	}
 
 	return address, nil
@@ -400,7 +400,7 @@ func BuildStakingInfo(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
+		return nil, fmt.Errorf("%w: %w", errBuildingStakingInfo, err)
 	}
 
 	var unbondingPaths [][]byte

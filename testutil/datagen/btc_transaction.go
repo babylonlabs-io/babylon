@@ -95,7 +95,6 @@ func SolveBlock(header *wire.BlockHeader) bool {
 				hash := hdr.BlockHash()
 				if blockchain.HashToBig(&hash).Cmp(
 					targetDifficulty) <= 0 {
-
 					results <- sbResult{true, i}
 					return
 				}
@@ -245,7 +244,6 @@ func CreateBlock(
 	babylonOpReturnIdx uint32,
 	babylonData []byte,
 ) *BlockCreationResult {
-
 	if babylonOpReturnIdx > numTx {
 		panic("babylon tx index should be less than number of transasactions and greater than 0")
 	}
@@ -305,7 +303,6 @@ func CreateBlockWithTransaction(
 	ph *wire.BlockHeader,
 	tx *wire.MsgTx,
 ) *BtcHeaderWithProof {
-
 	var transactions []*wire.MsgTx
 	// height does not matter here, as it is used only for calculation of reward
 	transactions = append(transactions, createCoinbaseTx(int32(889), &chaincfg.SimNetParams))

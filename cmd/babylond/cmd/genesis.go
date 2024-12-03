@@ -154,7 +154,6 @@ func PrepareGenesis(
 
 	if genesis.Consensus == nil {
 		genesis.Consensus = genutiltypes.NewConsensusGenesis(comettypes.DefaultConsensusParams().ToProto(), nil)
-
 	}
 
 	// Set gas limit
@@ -305,7 +304,6 @@ func TestnetGenesisParams(
 	jailDuration time.Duration,
 	finalityActivationBlockHeight uint64,
 ) GenesisParams {
-
 	genParams := GenesisParams{}
 
 	genParams.GenesisTime = genesisTime

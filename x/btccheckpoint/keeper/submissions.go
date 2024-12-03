@@ -50,7 +50,6 @@ func (k Keeper) addEpochSubmission(
 	sk types.SubmissionKey,
 	sd types.SubmissionData,
 ) error {
-
 	ed := k.GetEpochData(ctx, epochNum)
 
 	// TODO: SaveEpochData and SaveSubmission should be done in one transaction.
@@ -132,7 +131,6 @@ func (k Keeper) checkSubmissionStatus(ctx context.Context, info *types.Submissio
 }
 
 func (k Keeper) GetSubmissionBtcInfo(ctx context.Context, sk types.SubmissionKey) (*types.SubmissionBtcInfo, error) {
-
 	var youngestBlockDepth uint32 = math.MaxUint32
 	var youngestBlockHash *bbn.BTCHeaderHashBytes
 

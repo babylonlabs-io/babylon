@@ -9,7 +9,6 @@ import (
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/codec"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -63,7 +62,7 @@ func GenesisValidatorSet(numVals int) (*GenesisValidators, error) {
 		if err != nil {
 			return nil, err
 		}
-		valPubkey, err := cryptocodec.FromCmtPubKeyInterface(valKeys.ValPubkey)
+		valPubkey, err := codec.FromCmtPubKeyInterface(valKeys.ValPubkey)
 		if err != nil {
 			return nil, err
 		}

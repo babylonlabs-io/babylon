@@ -117,7 +117,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 				BtcPk:       (*bbntypes.BIP340PubKey)(&bigBtcPK),
 				Pop:         fp.Pop,
 			},
-			fmt.Errorf("invalid BTC public key: %v", fmt.Errorf("bad pubkey byte string size (want %v, have %v)", 32, len(bigBtcPK))),
+			fmt.Errorf("invalid BTC public key: %w", fmt.Errorf("bad pubkey byte string size (want %v, have %v)", 32, len(bigBtcPK))),
 		},
 		{
 			"invalid: empty PoP",

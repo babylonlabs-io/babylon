@@ -200,7 +200,7 @@ func (tx *BTCSlashingTx) ParseEncVerifyAdaptorSignatures(
 	valPKs []bbn.BIP340PubKey,
 	sigs [][]byte,
 ) ([]asig.AdaptorSignature, error) {
-	var adaptorSigs []asig.AdaptorSignature = make([]asig.AdaptorSignature, len(sigs))
+	adaptorSigs := make([]asig.AdaptorSignature, len(sigs))
 	for i := range sigs {
 		sig := sigs[i]
 		adaptorSig, err := asig.NewAdaptorSignatureFromBytes(sig)

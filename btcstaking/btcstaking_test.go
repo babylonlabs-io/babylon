@@ -194,7 +194,6 @@ func GenerateSignatures(
 	stakingOutput *wire.TxOut,
 	leaf txscript.TapLeaf,
 ) []*schnorr.Signature {
-
 	var si []*SignatureInfo
 
 	for _, key := range keys {
@@ -216,7 +215,7 @@ func GenerateSignatures(
 	// sort signatures by public key
 	sortedSigInfo := sortSignatureInfo(si)
 
-	var sigs []*schnorr.Signature = make([]*schnorr.Signature, len(sortedSigInfo))
+	sigs := make([]*schnorr.Signature, len(sortedSigInfo))
 
 	for i, sigInfo := range sortedSigInfo {
 		sig := sigInfo

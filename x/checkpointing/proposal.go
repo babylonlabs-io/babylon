@@ -215,7 +215,7 @@ func (h *ProposalHandler) findLastBlockHash(extendedVotes []abci.ExtendedVoteInf
 	blockHashes := make(map[string]int64, 0)
 	// Iterate over vote extensions and if they have a valid structure
 	// increase the voting power of the block hash they commit to
-	var totalPower int64 = 0
+	var totalPower int64
 	for _, vote := range extendedVotes {
 		// accumulate voting power from all the votes
 		totalPower += vote.Validator.Power
@@ -237,7 +237,7 @@ func (h *ProposalHandler) findLastBlockHash(extendedVotes []abci.ExtendedVoteInf
 		blockHashes[hex.EncodeToString(bHash)] += vote.Validator.Power
 	}
 	var (
-		maxPower     int64 = 0
+		maxPower     int64
 		resBlockHash string
 	)
 	// Find the block hash that has the maximum voting power committed to it

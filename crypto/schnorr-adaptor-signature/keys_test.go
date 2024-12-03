@@ -15,7 +15,7 @@ func FuzzKeyGen(f *testing.F) {
 	f.Add([]byte("1234567892!@#$%^&*()"))
 	f.Add([]byte("1234567893!@#$%^&*()"))
 
-	f.Fuzz(func(t *testing.T, seed []byte) {
+	f.Fuzz(func(t *testing.T, _ []byte) {
 		encKey, decKey, err := asig.GenKeyPair()
 		require.NoError(t, err)
 
@@ -49,7 +49,7 @@ func FuzzKeySerialization(f *testing.F) {
 	f.Add([]byte("1234567892!@#$%^&*()"))
 	f.Add([]byte("1234567893!@#$%^&*()"))
 
-	f.Fuzz(func(t *testing.T, seed []byte) {
+	f.Fuzz(func(t *testing.T, _ []byte) {
 		encKey, decKey, err := asig.GenKeyPair()
 		require.NoError(t, err)
 

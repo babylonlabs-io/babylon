@@ -54,12 +54,12 @@ func (m *MockBTCLightClientKeeper) DeleteHeader(header *bbn.BTCHeaderHashBytes) 
 	delete(m.headers, header.String())
 }
 
-func (m MockBTCLightClientKeeper) BlockHeight(ctx context.Context, header *bbn.BTCHeaderHashBytes) (uint32, error) {
+func (m MockBTCLightClientKeeper) BlockHeight(_ context.Context, _ *bbn.BTCHeaderHashBytes) (uint32, error) {
 	// todo not used
 	return uint32(10), nil
 }
 
-func (m MockBTCLightClientKeeper) MainChainDepth(ctx context.Context, headerBytes *bbn.BTCHeaderHashBytes) (uint32, error) {
+func (m MockBTCLightClientKeeper) MainChainDepth(_ context.Context, headerBytes *bbn.BTCHeaderHashBytes) (uint32, error) {
 	depth, ok := m.headers[headerBytes.String()]
 	if ok {
 		return depth, nil
@@ -68,7 +68,7 @@ func (m MockBTCLightClientKeeper) MainChainDepth(ctx context.Context, headerByte
 	}
 }
 
-func (m MockCheckpointingKeeper) VerifyCheckpoint(ctx context.Context, checkpoint txformat.RawBtcCheckpoint) error {
+func (m MockCheckpointingKeeper) VerifyCheckpoint(_ context.Context, _ txformat.RawBtcCheckpoint) error {
 	if m.returnError {
 		return errors.New("bad checkpoints")
 	}
@@ -78,26 +78,26 @@ func (m MockCheckpointingKeeper) VerifyCheckpoint(ctx context.Context, checkpoin
 
 // SetCheckpointSubmitted Informs checkpointing module that checkpoint was
 // successfully submitted on btc chain.
-func (m MockCheckpointingKeeper) SetCheckpointSubmitted(ctx context.Context, epoch uint64) {
+func (m MockCheckpointingKeeper) SetCheckpointSubmitted(_ context.Context, _ uint64) {
 }
 
 // SetCheckpointConfirmed Informs checkpointing module that checkpoint was
 // successfully submitted on btc chain, and it is at least K-deep on the main chain
-func (m MockCheckpointingKeeper) SetCheckpointConfirmed(ctx context.Context, epoch uint64) {
+func (m MockCheckpointingKeeper) SetCheckpointConfirmed(_ context.Context, _ uint64) {
 }
 
 // SetCheckpointFinalized Informs checkpointing module that checkpoint was
 // successfully submitted on btc chain, and it is at least W-deep on the main chain
-func (m MockCheckpointingKeeper) SetCheckpointFinalized(ctx context.Context, epoch uint64) {
+func (m MockCheckpointingKeeper) SetCheckpointFinalized(_ context.Context, _ uint64) {
 }
 
 // SetCheckpointForgotten Informs checkpointing module that was in submitted state
 // lost all its checkpoints and is checkpoint empty
-func (m MockCheckpointingKeeper) SetCheckpointForgotten(ctx context.Context, epoch uint64) {
+func (m MockCheckpointingKeeper) SetCheckpointForgotten(_ context.Context, _ uint64) {
 }
 
-func (m *MockIncentiveKeeper) RewardBTCTimestamping(ctx context.Context, epoch uint64, rewardDistInfo *RewardDistInfo) {
+func (m *MockIncentiveKeeper) RewardBTCTimestamping(_ context.Context, _ uint64, _ *RewardDistInfo) {
 }
 
-func (m *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg sdk.Msg) {
+func (m *MockIncentiveKeeper) IndexRefundableMsg(_ context.Context, _ sdk.Msg) {
 }

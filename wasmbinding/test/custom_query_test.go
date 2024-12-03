@@ -238,7 +238,6 @@ func fundAccount(
 	ctx sdk.Context,
 	bbn *app.BabylonApp,
 	acc sdk.AccAddress) {
-
 	err := mintCoinsTo(bbn.BankKeeper, ctx, acc, sdk.NewCoins(
 		sdk.NewCoin("ubbn", math.NewInt(10000000000)),
 	))
@@ -282,7 +281,6 @@ func deployTestContract(
 	deployer sdk.AccAddress,
 	codePath string,
 ) sdk.AccAddress {
-
 	codeId, _ := storeTestCodeCode(t, ctx, bbn, deployer, codePath)
 
 	contractAddr := instantiateExampleContract(t, ctx, bbn, deployer, codeId)
