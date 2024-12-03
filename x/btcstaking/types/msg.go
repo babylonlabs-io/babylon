@@ -38,13 +38,13 @@ func (m *MsgCreateFinalityProvider) ValidateBasic() error {
 		return fmt.Errorf("empty BTC public key")
 	}
 	if _, err := m.BtcPk.ToBTCPK(); err != nil {
-		return fmt.Errorf("invalid BTC public key: %v", err)
+		return fmt.Errorf("invalid BTC public key: %w", err)
 	}
 	if m.Pop == nil {
 		return fmt.Errorf("empty proof of possession")
 	}
 	if _, err := sdk.AccAddressFromBech32(m.Addr); err != nil {
-		return fmt.Errorf("invalid FP addr: %s - %v", m.Addr, err)
+		return fmt.Errorf("invalid FP addr: %s - %w", m.Addr, err)
 	}
 	return m.Pop.ValidateBasic()
 }
@@ -85,7 +85,7 @@ func (m *MsgAddCovenantSigs) ValidateBasic() error {
 		return fmt.Errorf("empty BTC covenant public key")
 	}
 	if _, err := m.Pk.ToBTCPK(); err != nil {
-		return fmt.Errorf("invalid BTC public key: %v", err)
+		return fmt.Errorf("invalid BTC public key: %w", err)
 	}
 	if m.SlashingTxSigs == nil {
 		return fmt.Errorf("empty covenant signatures on slashing tx")
@@ -158,7 +158,7 @@ func (m *MsgAddBTCDelegationInclusionProof) ValidateBasic() error {
 	}
 
 	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
-		return fmt.Errorf("invalid signer addr: %s - %v", m.Signer, err)
+		return fmt.Errorf("invalid signer addr: %s - %w", m.Signer, err)
 	}
 
 	return nil

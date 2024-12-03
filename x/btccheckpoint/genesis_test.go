@@ -11,6 +11,7 @@ import (
 )
 
 func TestExportGenesis(t *testing.T) {
+	t.Parallel()
 	app := simapp.Setup(t, false)
 	ctx := app.BaseApp.NewContext(false)
 
@@ -23,6 +24,7 @@ func TestExportGenesis(t *testing.T) {
 }
 
 func TestInitGenesis(t *testing.T) {
+	t.Parallel()
 	app := simapp.Setup(t, false)
 	ctx := app.BaseApp.NewContext(false)
 

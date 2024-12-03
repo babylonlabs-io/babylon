@@ -34,7 +34,6 @@ func NewStakingScriptData(
 	fpKey,
 	covenantKey *btcec.PublicKey,
 	stakingTime uint16) (*StakingScriptData, error) {
-
 	if stakerKey == nil || fpKey == nil || covenantKey == nil {
 		return nil, fmt.Errorf("staker, finality provider and covenant keys cannot be nil")
 	}
@@ -253,6 +252,7 @@ func FuzzGeneratingSignatureValidation(f *testing.F) {
 }
 
 func TestSlashingTxWithOverflowMustNotAccepted(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	// we do not care for inputs in staking tx
 	stakingTx := wire.NewMsgTx(2)

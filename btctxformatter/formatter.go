@@ -103,7 +103,6 @@ func encodeFirstOpRetrun(
 	bitMap []byte,
 	submitterAddress []byte,
 ) []byte {
-
 	var serializedBytes = []byte{}
 
 	serializedBytes = append(serializedBytes, encodeHeader(tag, version, firstPartIndex)...)
@@ -148,7 +147,6 @@ func EncodeCheckpointData(
 	version FormatVersion,
 	rawBTCCheckpoint *RawBtcCheckpoint,
 ) ([]byte, []byte, error) {
-
 	if len(tag) != TagLength {
 		return nil, nil, errors.New("tag should have 4 bytes")
 	}
@@ -247,7 +245,6 @@ func GetCheckpointData(
 	partIndex uint8,
 	data []byte,
 ) ([]byte, error) {
-
 	if partIndex > 1 {
 		return nil, errors.New("invalid part index")
 	}
@@ -290,7 +287,6 @@ func IsBabylonCheckpointData(
 	version FormatVersion,
 	data []byte,
 ) (*BabylonData, error) {
-
 	var idx uint8 = 0
 
 	for idx < NumberOfParts {

@@ -200,7 +200,7 @@ func (tx *BTCSlashingTx) ParseEncVerifyAdaptorSignatures(
 	valPKs []bbn.BIP340PubKey,
 	sigs [][]byte,
 ) ([]asig.AdaptorSignature, error) {
-	var adaptorSigs []asig.AdaptorSignature = make([]asig.AdaptorSignature, len(sigs))
+	adaptorSigs := make([]asig.AdaptorSignature, len(sigs))
 	for i := range sigs {
 		sig := sigs[i]
 		adaptorSig, err := asig.NewAdaptorSignatureFromBytes(sig)
@@ -237,14 +237,12 @@ func (tx *BTCSlashingTx) EncVerifyAdaptorSignatures(
 	valPKs []bbn.BIP340PubKey,
 	sigs [][]byte,
 ) error {
-
 	_, err := tx.ParseEncVerifyAdaptorSignatures(fundingOut, slashingSpendInfo, pk, valPKs, sigs)
 	if err != nil {
 		return err
 	}
 
 	return nil
-
 }
 
 // findFPIdxInWitness returns the index of the finality provider's signature

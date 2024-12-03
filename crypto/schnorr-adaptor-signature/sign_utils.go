@@ -15,7 +15,7 @@ const (
 	AdaptorSignatureSize = JacobianPointSize + ModNScalarSize + 1
 )
 
-func encSign(privKey, nonce *btcec.ModNScalar, pubKey *btcec.PublicKey, m []byte, T *btcec.JacobianPoint) (*AdaptorSignature, error) {
+func encSign(privKey, nonce *btcec.ModNScalar, pubKey *btcec.PublicKey, m []byte, t *btcec.JacobianPoint) (*AdaptorSignature, error) {
 	// R' = kG
 	var RHat btcec.JacobianPoint
 	k := *nonce
@@ -23,7 +23,7 @@ func encSign(privKey, nonce *btcec.ModNScalar, pubKey *btcec.PublicKey, m []byte
 
 	// get R = R'+T
 	var R btcec.JacobianPoint
-	btcec.AddNonConst(&RHat, T, &R)
+	btcec.AddNonConst(&RHat, t, &R)
 	// negate k and R if R.y is odd
 	affineRWithEvenY, needNegation := intoPointWithEvenY(&R)
 	R = *affineRWithEvenY
@@ -52,7 +52,7 @@ func encSign(privKey, nonce *btcec.ModNScalar, pubKey *btcec.PublicKey, m []byte
 	// can only be because of bad nonces. The caller function `EncSign` will
 	// keep trying `encSign` until finding a nonce that generates correct
 	// signature
-	if err := encVerify(sig, m, pBytes, T); err != nil {
+	if err := encVerify(sig, m, pBytes, t); err != nil {
 		return nil, fmt.Errorf("the provided nonce does not work: %w", err)
 	}
 

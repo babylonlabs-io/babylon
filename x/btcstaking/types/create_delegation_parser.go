@@ -154,32 +154,32 @@ func ParseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDel
 	stakingTxProofOfInclusion, err := NewParsedProofOfInclusion(msg.StakingTxInclusionProof)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse staking tx proof of inclusion: %v", err)
+		return nil, fmt.Errorf("failed to parse staking tx proof of inclusion: %w", err)
 	}
 
 	// 1. Parse all transactions
 	stakingTx, err := NewBtcTransaction(msg.StakingTx)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to deserialize staking tx: %v", err)
+		return nil, fmt.Errorf("failed to deserialize staking tx: %w", err)
 	}
 
 	stakingSlashingTx, err := NewBtcTransaction(msg.SlashingTx.MustMarshal())
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to deserialize staking slashing tx: %v", err)
+		return nil, fmt.Errorf("failed to deserialize staking slashing tx: %w", err)
 	}
 
 	unbondingTx, err := NewBtcTransaction(msg.UnbondingTx)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to deserialize unbonding tx: %v", err)
+		return nil, fmt.Errorf("failed to deserialize unbonding tx: %w", err)
 	}
 
 	unbondingSlashingTx, err := NewBtcTransaction(msg.UnbondingSlashingTx.MustMarshal())
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to deserialize unbonding slashing tx: %v", err)
+		return nil, fmt.Errorf("failed to deserialize unbonding slashing tx: %w", err)
 	}
 
 	// 2. Check all timelocks
@@ -195,7 +195,7 @@ func ParseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDel
 	stakerAddr, err := sdk.AccAddressFromBech32(msg.StakerAddr)
 
 	if err != nil {
-		return nil, fmt.Errorf("invalid staker address %s: %v", msg.StakerAddr, err)
+		return nil, fmt.Errorf("invalid staker address %s: %w", msg.StakerAddr, err)
 	}
 
 	// 4. Parse proof of possession
@@ -211,20 +211,20 @@ func ParseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDel
 	stakerStakingSlashingTxSig, err := NewParsedBIP340Signature(msg.DelegatorSlashingSig)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse staker staking slashing signature: %v", err)
+		return nil, fmt.Errorf("failed to parse staker staking slashing signature: %w", err)
 	}
 
 	stakerUnbondingSlashingSig, err := NewParsedBIP340Signature(msg.DelegatorUnbondingSlashingSig)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse staker unbonding slashing signature: %v", err)
+		return nil, fmt.Errorf("failed to parse staker unbonding slashing signature: %w", err)
 	}
 
 	// 6. Parse finality provider public keys and check for duplicates
 	fpPKs, err := NewParsedPublicKeyList(msg.FpBtcPkList)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse finality provider public keys: %v", err)
+		return nil, fmt.Errorf("failed to parse finality provider public keys: %w", err)
 	}
 
 	if ExistsDup(fpPKs.PublicKeysBbnFormat) {
@@ -239,7 +239,7 @@ func ParseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDel
 	stakerPK, err := NewParsedPublicKey(msg.BtcPk)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse staker public key: %v", err)
+		return nil, fmt.Errorf("failed to parse staker public key: %w", err)
 	}
 
 	// 8. Parse staking and unbonding value

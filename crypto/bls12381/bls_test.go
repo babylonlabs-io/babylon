@@ -8,6 +8,7 @@ import (
 
 // Tests single BLS sig verification
 func TestVerifyBlsSig(t *testing.T) {
+	t.Parallel()
 	msga := []byte("aaaaaaaa")
 	msgb := []byte("bbbbbbbb")
 	sk, pk := GenKeyPair()
@@ -26,6 +27,7 @@ func TestVerifyBlsSig(t *testing.T) {
 
 // Tests BLS multi sig verification
 func TestVerifyBlsMultiSig(t *testing.T) {
+	t.Parallel()
 	msga := []byte("aaaaaaaa")
 	msgb := []byte("bbbbbbbb")
 	n := 100
@@ -47,6 +49,7 @@ func TestVerifyBlsMultiSig(t *testing.T) {
 // Tests BLS multi sig verification
 // insert an invalid BLS sig in aggregation
 func TestVerifyBlsMultiSig2(t *testing.T) {
+	t.Parallel()
 	msga := []byte("aaaaaaaa")
 	msgb := []byte("bbbbbbbb")
 	n := 100
@@ -67,6 +70,7 @@ func TestVerifyBlsMultiSig2(t *testing.T) {
 }
 
 func TestAccumulativeAggregation(t *testing.T) {
+	t.Parallel()
 	msga := []byte("aaaaaaaa")
 	msgb := []byte("bbbbbbbb")
 	n := 100
@@ -96,6 +100,7 @@ func TestAccumulativeAggregation(t *testing.T) {
 }
 
 func TestSKToPK(t *testing.T) {
+	t.Parallel()
 	n := 100
 	sks, pks := generateBatchTestKeyPairs(n)
 	for i := 0; i < n; i++ {

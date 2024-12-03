@@ -195,7 +195,6 @@ func (k Keeper) BaseHeader(ctx context.Context, req *types.QueryBaseHeaderReques
 }
 
 func (k Keeper) HeaderDepth(ctx context.Context, req *types.QueryHeaderDepthRequest) (*types.QueryHeaderDepthResponse, error) {
-
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}

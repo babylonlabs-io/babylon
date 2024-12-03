@@ -26,7 +26,6 @@ import (
 	"github.com/babylonlabs-io/babylon/privval"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	blctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
@@ -255,7 +254,7 @@ func initGenesis(
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, blctypes.ModuleName, blctypes.DefaultGenesis(), updateBtcLightClientGenesis(btcHeaders))
+	err = updateModuleGenesis(appGenState, btclighttypes.ModuleName, btclighttypes.DefaultGenesis(), updateBtcLightClientGenesis(btcHeaders))
 	if err != nil {
 		return err
 	}
@@ -286,7 +285,6 @@ func initGenesis(
 		if err = genutil.ExportGenesisFile(genDoc, path); err != nil {
 			return fmt.Errorf("failed to export app genesis state: %w", err)
 		}
-
 	}
 	return nil
 }
@@ -334,7 +332,7 @@ func updateCrisisGenesis(crisisGenState *crisistypes.GenesisState) {
 	crisisGenState.ConstantFee.Denom = BabylonDenom
 }
 
-func updateBtcLightClientGenesis(btcHeaders []*btclighttypes.BTCHeaderInfo) func(blcGenState *blctypes.GenesisState) {
+func updateBtcLightClientGenesis(btcHeaders []*btclighttypes.BTCHeaderInfo) func(blcGenState *btclighttypes.GenesisState) {
 	return func(blcGenState *btclighttypes.GenesisState) {
 		if len(btcHeaders) > 0 {
 			blcGenState.BtcHeaders = btcHeaders
@@ -346,8 +344,8 @@ func updateBtcLightClientGenesis(btcHeaders []*btclighttypes.BTCHeaderInfo) func
 		if err != nil {
 			panic(err)
 		}
-		work := blctypes.CalcWork(&baseBtcHeader)
-		blcGenState.BtcHeaders = []*blctypes.BTCHeaderInfo{blctypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)}
+		work := btclighttypes.CalcWork(&baseBtcHeader)
+		blcGenState.BtcHeaders = []*btclighttypes.BTCHeaderInfo{btclighttypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)}
 	}
 }
 

@@ -33,7 +33,7 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 	// - staking tx inclusion proof
 	stakingTxHeader, err := k.btclcKeeper.GetHeaderByHash(ctx, inclusionProof.HeaderHash)
 	if err != nil {
-		return nil, fmt.Errorf("staking tx inclusion proof header %s is not found in BTC light client state: %v", inclusionProof.HeaderHash.MarshalHex(), err)
+		return nil, fmt.Errorf("staking tx inclusion proof header %s is not found in BTC light client state: %w", inclusionProof.HeaderHash.MarshalHex(), err)
 	}
 
 	// no need to do more validations to the btc header as it was already

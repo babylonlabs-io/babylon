@@ -528,14 +528,14 @@ func NewBabylonApp(
 			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.WasmKeeper),
 		)
 		if err != nil {
-			panic(fmt.Errorf("failed to register snapshot extension: %s", err))
+			panic(fmt.Errorf("failed to register snapshot extension: %w", err))
 		}
 
 		err = manager.RegisterExtensions(
 			ibcwasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.IBCWasmKeeper),
 		)
 		if err != nil {
-			panic(fmt.Errorf("failed to register snapshot extension: %s", err))
+			panic(fmt.Errorf("failed to register snapshot extension: %w", err))
 		}
 	}
 
@@ -722,8 +722,8 @@ func (app *BabylonApp) RegisterNodeService(clientCtx client.Context, cfg config.
 }
 
 // DefaultGenesis returns a default genesis from the registered AppModuleBasic's.
-func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
-	return a.BasicModuleManager.DefaultGenesis(a.appCodec)
+func (app *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
+	return app.BasicModuleManager.DefaultGenesis(app.appCodec)
 }
 
 func (app *BabylonApp) TxConfig() client.TxConfig {

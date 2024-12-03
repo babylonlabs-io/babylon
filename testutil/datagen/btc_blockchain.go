@@ -19,7 +19,7 @@ import (
 // When numBabylonTxs == 2, the function will return the BTC raw checkpoint as well.
 func GenRandomBtcdBlock(r *rand.Rand, numBabylonTxs int, prevHash *chainhash.Hash) (*wire.MsgBlock, *btctxformatter.RawBtcCheckpoint) {
 	var (
-		randomTxs []*wire.MsgTx                    = []*wire.MsgTx{GenRandomTx(r), GenRandomTx(r)}
+		randomTxs                                  = []*wire.MsgTx{GenRandomTx(r), GenRandomTx(r)}
 		rawCkpt   *btctxformatter.RawBtcCheckpoint = nil
 	)
 

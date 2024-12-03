@@ -19,7 +19,6 @@ func FuzzEncodingDecoding(f *testing.F) {
 	f.Add(uint64(2000), randNBytes(TagLength), randNBytes(BlockHashLength), randNBytes(BitMapLength), randNBytes(BlsSigLength), randNBytes(AddressLength))
 
 	f.Fuzz(func(t *testing.T, epoch uint64, tag []byte, appHash []byte, bitMap []byte, blsSig []byte, address []byte) {
-
 		if len(tag) < TagLength {
 			t.Skip("Tag should have 4 bytes")
 		}

@@ -101,7 +101,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 				proof,
 			)
 
-			expErr := fmt.Errorf("staking tx inclusion proof header %s is not found in BTC light client state: %v", proof.HeaderHash.MarshalHex(), btclctypes.ErrHeaderDoesNotExist.Wrap("no header with provided hash"))
+			expErr := fmt.Errorf("staking tx inclusion proof header %s is not found in BTC light client state: %w", proof.HeaderHash.MarshalHex(), btclctypes.ErrHeaderDoesNotExist.Wrap("no header with provided hash"))
 			require.EqualError(t, err, expErr.Error())
 		})
 

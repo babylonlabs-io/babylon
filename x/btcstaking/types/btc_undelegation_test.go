@@ -75,7 +75,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			slashingPkScript,
 			stakingTimeBlocks,
 			1000,
-			uint32(stakingTimeBlocks)+1000,
+			stakingTimeBlocks+1000,
 			uint64(stakingValue),
 			slashingRate,
 			slashingChangeLockTime,

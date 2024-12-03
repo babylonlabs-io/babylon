@@ -30,7 +30,7 @@ func benchmarkTallyBlocks(b *testing.B, numFPs int) {
 	// activate BTC staking protocol at a random height
 	activatedHeight := uint64(1)
 	// add mock queries to GetBTCStakingActivatedHeight
-	ctx = datagen.WithCtxHeight(ctx, uint64(activatedHeight))
+	ctx = datagen.WithCtxHeight(ctx, activatedHeight)
 
 	// simulate fp set
 	fpSet := map[string]uint64{}

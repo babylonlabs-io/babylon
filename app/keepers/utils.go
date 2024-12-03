@@ -77,11 +77,11 @@ func saveClientConfig(homePath string, cliConf *config.ClientConfig) error {
 	configPath := filepath.Join(homePath, "config")
 	configFilePath := filepath.Join(configPath, "client.toml")
 	if err = ensureConfigPath(configPath); err != nil {
-		return fmt.Errorf("couldn't make client config: %v", err)
+		return fmt.Errorf("couldn't make client config: %w", err)
 	}
 
 	if err = writeConfigToFile(configFilePath, cliConf); err != nil {
-		return fmt.Errorf("could not write client config to the file: %v", err)
+		return fmt.Errorf("could not write client config to the file: %w", err)
 	}
 
 	return nil

@@ -12,7 +12,6 @@ type BIP340Signature []byte
 const BIP340SignatureLen = schnorr.SignatureSize
 
 func NewBIP340Signature(data []byte) (*BIP340Signature, error) {
-
 	var sig BIP340Signature
 	err := sig.Unmarshal(data)
 

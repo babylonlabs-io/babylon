@@ -330,7 +330,6 @@ func validateSlashingTx(
 	slashingChangeLockTime uint16,
 	net *chaincfg.Params,
 ) error {
-
 	if err := CheckPreSignedSlashingTxSanity(slashingTx); err != nil {
 		return fmt.Errorf("invalid slashing tx: %w", err)
 	}
@@ -470,7 +469,6 @@ func signTxWithOneScriptSpendInputFromTapLeafInternal(
 	fundingOutput *wire.TxOut,
 	privKey *btcec.PrivateKey,
 	tapLeaf txscript.TapLeaf) (*schnorr.Signature, error) {
-
 	inputFetcher := txscript.NewCannedPrevOutputFetcher(
 		fundingOutput.PkScript,
 		fundingOutput.Value,
@@ -558,7 +556,6 @@ func SignTxWithOneScriptSpendInputStrict(
 	signedScriptPath []byte,
 	privKey *btcec.PrivateKey,
 ) (*schnorr.Signature, error) {
-
 	if err := checkTxBeforeSigning(txToSign, fundingTx, fundingOutputIdx); err != nil {
 		return nil, fmt.Errorf("invalid tx: %w", err)
 	}
@@ -579,7 +576,6 @@ func EncSignTxWithOneScriptSpendInputStrict(
 	privKey *btcec.PrivateKey,
 	encKey *asig.EncryptionKey,
 ) (*asig.AdaptorSignature, error) {
-
 	if err := checkTxBeforeSigning(txToSign, fundingTx, fundingOutputIdx); err != nil {
 		return nil, fmt.Errorf("invalid tx: %w", err)
 	}
@@ -650,7 +646,6 @@ func VerifyTransactionSigWithOutput(
 	script []byte,
 	pubKey *btcec.PublicKey,
 	signature []byte) error {
-
 	if fundingOutput == nil {
 		return fmt.Errorf("funding output must not be nil")
 	}

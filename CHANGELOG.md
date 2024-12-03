@@ -61,6 +61,7 @@ for unbonding transactions
 - [#289](https://github.com/babylonlabs-io/babylon/pull/289) hotfix: Invalid minUnbondingTime for verifying inclusion proof
 
 ## v0.17.0
+- [#282](https://github.com/babylonlabs-io/babylon/pull/282) Fix linter config and issues
 
 ### State Breaking
 

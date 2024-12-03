@@ -65,7 +65,6 @@ func DeriveTaprootAddress(
 	tapScriptTree *txscript.IndexedTapScriptTree,
 	internalPubKey *btcec.PublicKey,
 	net *chaincfg.Params) (*btcutil.AddressTaproot, error) {
-
 	tapScriptRootHash := tapScriptTree.RootNode.TapHash()
 
 	outputKey := txscript.ComputeTaprootOutputKey(
@@ -76,7 +75,7 @@ func DeriveTaprootAddress(
 		schnorr.SerializePubKey(outputKey), net)
 
 	if err != nil {
-		return nil, fmt.Errorf("error encoding Taproot address: %v", err)
+		return nil, fmt.Errorf("error encoding Taproot address: %w", err)
 	}
 
 	return address, nil
@@ -222,7 +221,6 @@ func SpendInfoFromRevealedScript(
 	revealedScript []byte,
 	internalKey *btcec.PublicKey,
 	tree *txscript.IndexedTapScriptTree) (*SpendInfo, error) {
-
 	revealedLeaf := txscript.NewBaseTapLeaf(revealedScript)
 	leafHash := revealedLeaf.TapHash()
 
@@ -402,7 +400,7 @@ func BuildStakingInfo(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
+		return nil, fmt.Errorf("%w: %w", errBuildingStakingInfo, err)
 	}
 
 	var unbondingPaths [][]byte
@@ -420,13 +418,13 @@ func BuildStakingInfo(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
+		return nil, fmt.Errorf("%w: %w", errBuildingStakingInfo, err)
 	}
 
 	taprootPkScript, err := sh.taprootPkScript(net)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
+		return nil, fmt.Errorf("%w: %w", errBuildingStakingInfo, err)
 	}
 
 	stakingOutput := wire.NewTxOut(int64(stakingAmount), taprootPkScript)
@@ -488,7 +486,7 @@ func BuildUnbondingInfo(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
+		return nil, fmt.Errorf("%w: %w", errBuildingUnbondingInfo, err)
 	}
 
 	var unbondingPaths [][]byte
@@ -504,13 +502,13 @@ func BuildUnbondingInfo(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
+		return nil, fmt.Errorf("%w: %w", errBuildingUnbondingInfo, err)
 	}
 
 	taprootPkScript, err := sh.taprootPkScript(net)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
+		return nil, fmt.Errorf("%w: %w", errBuildingUnbondingInfo, err)
 	}
 
 	unbondingOutput := wire.NewTxOut(int64(unbondingAmount), taprootPkScript)

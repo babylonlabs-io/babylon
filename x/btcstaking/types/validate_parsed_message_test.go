@@ -88,7 +88,6 @@ func generateUnbondingInfo(
 	unbondingValue int64,
 	p *types.Params,
 ) *unbondingInfo {
-
 	covPKs, err := bbn.NewBTCPKsFromBIP340PKs(p.CovenantPks)
 	require.NoError(t, err)
 
@@ -222,7 +221,7 @@ func createMsgDelegationForParams(
 		SlashingTx:                    testStakingInfo.SlashingTx,
 		DelegatorSlashingSig:          delegatorSig,
 		UnbondingTx:                   unbondingInfo.serializedUnbondingTx,
-		UnbondingTime:                 uint32(unbondingTime),
+		UnbondingTime:                 unbondingTime,
 		UnbondingValue:                unbondingValue,
 		UnbondingSlashingTx:           unbondingInfo.unbondingSlashingTx,
 		DelegatorUnbondingSlashingSig: unbondingInfo.unbondingSlashinSig,
@@ -318,7 +317,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				checkpointParams := testCheckpointParams()
 				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
 
-				msg.StakingTime = msg.StakingTime + 1
+				msg.StakingTime++
 
 				return msg, params, checkpointParams
 			},
@@ -332,7 +331,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				checkpointParams := testCheckpointParams()
 				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
 
-				msg.StakingValue = msg.StakingValue + 1
+				msg.StakingValue++
 
 				return msg, params, checkpointParams
 			},
@@ -516,7 +515,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				invalidSlashingPkScript := make([]byte, len(params.SlashingPkScript))
 				copy(invalidSlashingPkScript, params.SlashingPkScript)
 				// change one byte in the pk script
-				invalidSlashingPkScript[0] = invalidSlashingPkScript[0] + 1
+				invalidSlashingPkScript[0]++
 
 				// slashing output must always be first output
 				currentSlashingTx.TxOut[0].PkScript = invalidSlashingPkScript
@@ -542,7 +541,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				invalidHashBytes := currentSlashingTx.TxIn[0].PreviousOutPoint.Hash.CloneBytes()
 				// change one byte in the hash
-				invalidHashBytes[0] = invalidHashBytes[0] + 1
+				invalidHashBytes[0]++
 
 				invalidHash, err := chainhash.NewHash(invalidHashBytes)
 				require.NoError(t, err)
@@ -591,7 +590,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				invalidSlashingSig := make([]byte, len(sigInMessage))
 				copy(invalidSlashingSig, sigInMessage)
 				// change last byte is sig
-				invalidSlashingSig[63] = invalidSlashingSig[63] + 1
+				invalidSlashingSig[63]++
 
 				newSig, err := bbn.NewBIP340Signature(invalidSlashingSig)
 				require.NoError(t, err)
@@ -615,7 +614,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				invalidHashBytes := currentSlashingTx.TxIn[0].PreviousOutPoint.Hash.CloneBytes()
 				// change one byte in the hash
-				invalidHashBytes[0] = invalidHashBytes[0] + 1
+				invalidHashBytes[0]++
 
 				invalidHash, err := chainhash.NewHash(invalidHashBytes)
 				require.NoError(t, err)
@@ -665,7 +664,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				invalidSlashingPkScript := make([]byte, len(params.SlashingPkScript))
 				copy(invalidSlashingPkScript, params.SlashingPkScript)
 				// change one byte in the pk script
-				invalidSlashingPkScript[0] = invalidSlashingPkScript[0] + 1
+				invalidSlashingPkScript[0]++
 
 				// slashing output must always be first output
 				currentUnbondingSlashingTx.TxOut[0].PkScript = invalidSlashingPkScript
@@ -691,7 +690,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				invalidSlashingSig := make([]byte, len(sigInMessage))
 				copy(invalidSlashingSig, sigInMessage)
 				// change last byte is sig
-				invalidSlashingSig[63] = invalidSlashingSig[63] + 1
+				invalidSlashingSig[63]++
 
 				newSig, err := bbn.NewBIP340Signature(invalidSlashingSig)
 				require.NoError(t, err)
@@ -715,7 +714,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 				invalidHashBytes := currentUnbondingTx.TxIn[0].PreviousOutPoint.Hash.CloneBytes()
 				// change one byte in the hash
-				invalidHashBytes[0] = invalidHashBytes[0] + 1
+				invalidHashBytes[0]++
 
 				invalidHash, err := chainhash.NewHash(invalidHashBytes)
 				require.NoError(t, err)
@@ -799,7 +798,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 					params,
 				)
 
-				msg.UnbondingValue = msg.UnbondingValue + 1
+				msg.UnbondingValue++
 				msg.UnbondingTx = newUnbondingInfdo.serializedUnbondingTx
 				msg.UnbondingSlashingTx = newUnbondingInfdo.unbondingSlashingTx
 				msg.DelegatorUnbondingSlashingSig = newUnbondingInfdo.unbondingSlashinSig
@@ -856,7 +855,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				)
 
 				// to cause the unbonding value mismatch with the unbonding tx output value
-				msg.UnbondingValue = msg.UnbondingValue + 1
+				msg.UnbondingValue++
 				msg.UnbondingTx = newUnbondingInfdo.serializedUnbondingTx
 				msg.UnbondingSlashingTx = newUnbondingInfdo.unbondingSlashingTx
 				msg.DelegatorUnbondingSlashingSig = newUnbondingInfdo.unbondingSlashinSig

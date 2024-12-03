@@ -13,6 +13,7 @@ import (
 )
 
 func TestBabylonBlockedAddrs(t *testing.T) {
+	t.Parallel()
 	db := dbm.NewMemDB()
 	signer, _ := SetupTestPrivSigner()
 	logger := log.NewTestLogger(t)
@@ -65,11 +66,13 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 }
 
 func TestGetMaccPerms(t *testing.T) {
+	t.Parallel()
 	dup := GetMaccPerms()
 	require.Equal(t, maccPerms, dup, "duplicated module account permissions differed from actual module account permissions")
 }
 
 func TestUpgradeStateOnGenesis(t *testing.T) {
+	t.Parallel()
 	db := dbm.NewMemDB()
 	privSigner, err := SetupTestPrivSigner()
 	require.NoError(t, err)
