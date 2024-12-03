@@ -241,9 +241,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: 1.21
-      - name: Start BCD consumer integration containers
-        run: |
-          sudo make -C contrib/images start-bcd-consumer-integration
       - name: Run BCD consumer integration test
         run: |
-          sudo make test-e2e-cache-bcd-consumer-integration
+          sudo make test-e2e-bcd-consumer-integration

@@ -5,6 +5,8 @@ package types
 
 import (
 	fmt "fmt"
+	_ "github.com/cosmos/cosmos-proto"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
 	math "math"
@@ -22,15 +24,52 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// ConsumerType defines the type of consumer chain
+type ConsumerType int32
+
+const (
+	// COSMOS represents a Cosmos SDK chain consumer
+	ConsumerType_COSMOS ConsumerType = 0
+	// ETH_L2 represents an Ethereum L2 chain consumer
+	ConsumerType_ETH_L2 ConsumerType = 1
+)
+
+var ConsumerType_name = map[int32]string{
+	0: "COSMOS",
+	1: "ETH_L2",
+}
+
+var ConsumerType_value = map[string]int32{
+	"COSMOS": 0,
+	"ETH_L2": 1,
+}
+
+func (x ConsumerType) String() string {
+	return proto.EnumName(ConsumerType_name, int32(x))
+}
+
+func (ConsumerType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_de3ccd621fe1efd4, []int{0}
+}
+
 // ConsumerRegister is the registration information of a consumer
 type ConsumerRegister struct {
 	// consumer_id is the ID of the consumer
 	// - for Cosmos SDK chains, the consumer ID will be the IBC client ID
+	// - for ETH L2 chains, the consumer ID will be the chain ID of the ETH L2
+	//   chain
 	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
 	// consumer_name is the name of the consumer
 	ConsumerName string `protobuf:"bytes,2,opt,name=consumer_name,json=consumerName,proto3" json:"consumer_name,omitempty"`
 	// consumer_description is a description for the consumer (can be empty)
 	ConsumerDescription string `protobuf:"bytes,3,opt,name=consumer_description,json=consumerDescription,proto3" json:"consumer_description,omitempty"`
+	// consumer_metadata is necessary metadata of the consumer, and the data
+	// depends on the type of integration
+	//
+	// Types that are valid to be assigned to ConsumerMetadata:
+	//	*ConsumerRegister_CosmosConsumerMetadata
+	//	*ConsumerRegister_EthL2ConsumerMetadata
+	ConsumerMetadata isConsumerRegister_ConsumerMetadata `protobuf_oneof:"consumer_metadata"`
 }
 
 func (m *ConsumerRegister) Reset()         { *m = ConsumerRegister{} }
@@ -66,6 +105,29 @@ func (m *ConsumerRegister) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ConsumerRegister proto.InternalMessageInfo
 
+type isConsumerRegister_ConsumerMetadata interface {
+	isConsumerRegister_ConsumerMetadata()
+	MarshalTo([]byte) (int, error)
+	Size() int
+}
+
+type ConsumerRegister_CosmosConsumerMetadata struct {
+	CosmosConsumerMetadata *CosmosConsumerMetadata `protobuf:"bytes,4,opt,name=cosmos_consumer_metadata,json=cosmosConsumerMetadata,proto3,oneof" json:"cosmos_consumer_metadata,omitempty"`
+}
+type ConsumerRegister_EthL2ConsumerMetadata struct {
+	EthL2ConsumerMetadata *ETHL2ConsumerMetadata `protobuf:"bytes,5,opt,name=eth_l2_consumer_metadata,json=ethL2ConsumerMetadata,proto3,oneof" json:"eth_l2_consumer_metadata,omitempty"`
+}
+
+func (*ConsumerRegister_CosmosConsumerMetadata) isConsumerRegister_ConsumerMetadata() {}
+func (*ConsumerRegister_EthL2ConsumerMetadata) isConsumerRegister_ConsumerMetadata()  {}
+
+func (m *ConsumerRegister) GetConsumerMetadata() isConsumerRegister_ConsumerMetadata {
+	if m != nil {
+		return m.ConsumerMetadata
+	}
+	return nil
+}
+
 func (m *ConsumerRegister) GetConsumerId() string {
 	if m != nil {
 		return m.ConsumerId
@@ -87,8 +149,126 @@ func (m *ConsumerRegister) GetConsumerDescription() string {
 	return ""
 }
 
+func (m *ConsumerRegister) GetCosmosConsumerMetadata() *CosmosConsumerMetadata {
+	if x, ok := m.GetConsumerMetadata().(*ConsumerRegister_CosmosConsumerMetadata); ok {
+		return x.CosmosConsumerMetadata
+	}
+	return nil
+}
+
+func (m *ConsumerRegister) GetEthL2ConsumerMetadata() *ETHL2ConsumerMetadata {
+	if x, ok := m.GetConsumerMetadata().(*ConsumerRegister_EthL2ConsumerMetadata); ok {
+		return x.EthL2ConsumerMetadata
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*ConsumerRegister) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*ConsumerRegister_CosmosConsumerMetadata)(nil),
+		(*ConsumerRegister_EthL2ConsumerMetadata)(nil),
+	}
+}
+
+// CosmosConsumerMetadata is the metadata for the Cosmos integration
+type CosmosConsumerMetadata struct {
+	// channel_id defines the IBC channel ID for the consumer chain
+	ChannelId string `protobuf:"bytes,1,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
+}
+
+func (m *CosmosConsumerMetadata) Reset()         { *m = CosmosConsumerMetadata{} }
+func (m *CosmosConsumerMetadata) String() string { return proto.CompactTextString(m) }
+func (*CosmosConsumerMetadata) ProtoMessage()    {}
+func (*CosmosConsumerMetadata) Descriptor() ([]byte, []int) {
+	return fileDescriptor_de3ccd621fe1efd4, []int{1}
+}
+func (m *CosmosConsumerMetadata) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CosmosConsumerMetadata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CosmosConsumerMetadata.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CosmosConsumerMetadata) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CosmosConsumerMetadata.Merge(m, src)
+}
+func (m *CosmosConsumerMetadata) XXX_Size() int {
+	return m.Size()
+}
+func (m *CosmosConsumerMetadata) XXX_DiscardUnknown() {
+	xxx_messageInfo_CosmosConsumerMetadata.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CosmosConsumerMetadata proto.InternalMessageInfo
+
+func (m *CosmosConsumerMetadata) GetChannelId() string {
+	if m != nil {
+		return m.ChannelId
+	}
+	return ""
+}
+
+// ETHL2ConsumerMetadata is the metadata for the ETH L2 integration
+type ETHL2ConsumerMetadata struct {
+	// finality_contract_address is the address of the finality contract for
+	// the ETH L2 integration
+	FinalityContractAddress string `protobuf:"bytes,1,opt,name=finality_contract_address,json=finalityContractAddress,proto3" json:"finality_contract_address,omitempty"`
+}
+
+func (m *ETHL2ConsumerMetadata) Reset()         { *m = ETHL2ConsumerMetadata{} }
+func (m *ETHL2ConsumerMetadata) String() string { return proto.CompactTextString(m) }
+func (*ETHL2ConsumerMetadata) ProtoMessage()    {}
+func (*ETHL2ConsumerMetadata) Descriptor() ([]byte, []int) {
+	return fileDescriptor_de3ccd621fe1efd4, []int{2}
+}
+func (m *ETHL2ConsumerMetadata) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ETHL2ConsumerMetadata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ETHL2ConsumerMetadata.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ETHL2ConsumerMetadata) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ETHL2ConsumerMetadata.Merge(m, src)
+}
+func (m *ETHL2ConsumerMetadata) XXX_Size() int {
+	return m.Size()
+}
+func (m *ETHL2ConsumerMetadata) XXX_DiscardUnknown() {
+	xxx_messageInfo_ETHL2ConsumerMetadata.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ETHL2ConsumerMetadata proto.InternalMessageInfo
+
+func (m *ETHL2ConsumerMetadata) GetFinalityContractAddress() string {
+	if m != nil {
+		return m.FinalityContractAddress
+	}
+	return ""
+}
+
 func init() {
+	proto.RegisterEnum("babylon.btcstkconsumer.v1.ConsumerType", ConsumerType_name, ConsumerType_value)
 	proto.RegisterType((*ConsumerRegister)(nil), "babylon.btcstkconsumer.v1.ConsumerRegister")
+	proto.RegisterType((*CosmosConsumerMetadata)(nil), "babylon.btcstkconsumer.v1.CosmosConsumerMetadata")
+	proto.RegisterType((*ETHL2ConsumerMetadata)(nil), "babylon.btcstkconsumer.v1.ETHL2ConsumerMetadata")
 }
 
 func init() {
@@ -96,21 +276,35 @@ func init() {
 }
 
 var fileDescriptor_de3ccd621fe1efd4 = []byte{
-	// 219 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xd2, 0x4b, 0x4a, 0x4c, 0xaa,
-	0xcc, 0xc9, 0xcf, 0xd3, 0x4f, 0x2a, 0x49, 0x2e, 0x2e, 0xc9, 0x4e, 0xce, 0xcf, 0x2b, 0x2e, 0xcd,
-	0x4d, 0x2d, 0xd2, 0x2f, 0x33, 0x44, 0x13, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x92, 0x84,
-	0xaa, 0xd7, 0x43, 0x93, 0x2d, 0x33, 0x54, 0xea, 0x66, 0xe4, 0x12, 0x70, 0x86, 0xf2, 0x83, 0x52,
-	0xd3, 0x33, 0x8b, 0x4b, 0x52, 0x8b, 0x84, 0xe4, 0xb9, 0xb8, 0x61, 0x6a, 0xe2, 0x33, 0x53, 0x24,
-	0x18, 0x15, 0x18, 0x35, 0x38, 0x83, 0xb8, 0x60, 0x42, 0x9e, 0x29, 0x42, 0xca, 0x5c, 0xbc, 0x70,
-	0x05, 0x79, 0x89, 0xb9, 0xa9, 0x12, 0x4c, 0x60, 0x25, 0x3c, 0x30, 0x41, 0xbf, 0xc4, 0xdc, 0x54,
-	0x21, 0x43, 0x2e, 0x11, 0xb8, 0xa2, 0x94, 0xd4, 0xe2, 0xe4, 0xa2, 0xcc, 0x82, 0x92, 0xcc, 0xfc,
-	0x3c, 0x09, 0x66, 0xb0, 0x5a, 0x61, 0x98, 0x9c, 0x0b, 0x42, 0xca, 0x29, 0xe8, 0xc4, 0x23, 0x39,
-	0xc6, 0x0b, 0x8f, 0xe4, 0x18, 0x1f, 0x3c, 0x92, 0x63, 0x9c, 0xf0, 0x58, 0x8e, 0xe1, 0xc2, 0x63,
-	0x39, 0x86, 0x1b, 0x8f, 0xe5, 0x18, 0xa2, 0x2c, 0xd2, 0x33, 0x4b, 0x32, 0x4a, 0x93, 0xf4, 0x92,
-	0xf3, 0x73, 0xf5, 0xa1, 0xbe, 0xc9, 0x49, 0x4c, 0x2a, 0xd6, 0xcd, 0xcc, 0x87, 0x71, 0xf5, 0x2b,
-	0xd0, 0x83, 0xa3, 0xa4, 0xb2, 0x20, 0xb5, 0x38, 0x89, 0x0d, 0x1c, 0x06, 0xc6, 0x80, 0x00, 0x00,
-	0x00, 0xff, 0xff, 0xa1, 0x3e, 0x58, 0x17, 0x35, 0x01, 0x00, 0x00,
+	// 438 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x93, 0xc1, 0x6e, 0xd3, 0x30,
+	0x18, 0xc7, 0x93, 0x01, 0x93, 0xf6, 0x6d, 0x48, 0xc5, 0xeb, 0x46, 0x3a, 0x89, 0x30, 0x15, 0x09,
+	0x4d, 0x48, 0x4b, 0x68, 0x39, 0xc0, 0x95, 0x96, 0x49, 0x9d, 0xb4, 0x31, 0x29, 0xed, 0x89, 0x4b,
+	0xe4, 0x38, 0x26, 0xb5, 0x16, 0xdb, 0x55, 0xec, 0x4d, 0xe4, 0x2d, 0x78, 0x18, 0x1e, 0x82, 0xe3,
+	0xc4, 0x89, 0x23, 0x6a, 0x5f, 0x83, 0x03, 0x6a, 0x62, 0x77, 0x52, 0x1b, 0x76, 0xb3, 0xbf, 0xdf,
+	0xff, 0xff, 0xfd, 0xfd, 0x25, 0x36, 0x04, 0x09, 0x4e, 0xca, 0x5c, 0x8a, 0x30, 0xd1, 0x44, 0xe9,
+	0x6b, 0x22, 0x85, 0xba, 0xe1, 0xb4, 0x08, 0x6f, 0x7b, 0x6b, 0x95, 0x60, 0x56, 0x48, 0x2d, 0x51,
+	0xc7, 0xe8, 0x83, 0x35, 0x7a, 0xdb, 0x3b, 0x6a, 0x67, 0x32, 0x93, 0x95, 0x2a, 0x5c, 0xae, 0x6a,
+	0xc3, 0x51, 0x87, 0x48, 0xc5, 0xa5, 0x8a, 0x6b, 0x50, 0x6f, 0x6a, 0xd4, 0xfd, 0xbb, 0x05, 0xad,
+	0xa1, 0x69, 0x10, 0xd1, 0x8c, 0x29, 0x4d, 0x0b, 0xf4, 0x12, 0x76, 0x6d, 0xd3, 0x98, 0xa5, 0x9e,
+	0x7b, 0xec, 0x9e, 0xec, 0x44, 0x60, 0x4b, 0xe7, 0x29, 0x7a, 0x05, 0x4f, 0x57, 0x02, 0x81, 0x39,
+	0xf5, 0xb6, 0x2a, 0xc9, 0x9e, 0x2d, 0x7e, 0xc6, 0x9c, 0xa2, 0x1e, 0xb4, 0x57, 0xa2, 0x94, 0x2a,
+	0x52, 0xb0, 0x99, 0x66, 0x52, 0x78, 0x8f, 0x2a, 0xed, 0xbe, 0x65, 0x9f, 0xee, 0x11, 0xe2, 0xe0,
+	0x99, 0xa3, 0xae, 0x9c, 0x9c, 0x6a, 0x9c, 0x62, 0x8d, 0xbd, 0xc7, 0xc7, 0xee, 0xc9, 0x6e, 0xbf,
+	0x17, 0xfc, 0x77, 0xf8, 0x60, 0x58, 0x59, 0xed, 0x34, 0x97, 0xc6, 0x38, 0x72, 0xa2, 0x43, 0xd2,
+	0x48, 0xd0, 0x35, 0x78, 0x54, 0x4f, 0xe3, 0xbc, 0xdf, 0x10, 0xf7, 0xa4, 0x8a, 0x7b, 0xfb, 0x40,
+	0xdc, 0xd9, 0x64, 0x74, 0xd1, 0x6f, 0x48, 0x3b, 0xa0, 0x7a, 0xba, 0x09, 0x06, 0xfb, 0xf0, 0x6c,
+	0x23, 0xa5, 0xfb, 0x1e, 0x0e, 0x9b, 0x4f, 0x8d, 0x5e, 0x00, 0x90, 0x29, 0x16, 0x82, 0xe6, 0xf7,
+	0xbf, 0x60, 0xc7, 0x54, 0xce, 0xd3, 0x2e, 0x87, 0x83, 0xc6, 0x7c, 0x34, 0x81, 0xce, 0x57, 0x26,
+	0x70, 0xce, 0x74, 0xb9, 0x9c, 0x4a, 0x17, 0x98, 0xe8, 0x18, 0xa7, 0x69, 0x41, 0x95, 0xaa, 0xdb,
+	0x0c, 0xbc, 0x5f, 0x3f, 0x4e, 0xdb, 0xe6, 0x16, 0x7c, 0xac, 0xc9, 0x58, 0x17, 0x4c, 0x64, 0xd1,
+	0x73, 0x6b, 0x1d, 0x1a, 0xa7, 0xc1, 0x6f, 0x5e, 0xc3, 0x9e, 0x4d, 0x9a, 0x94, 0x33, 0x8a, 0x00,
+	0xb6, 0x87, 0x57, 0xe3, 0xcb, 0xab, 0x71, 0xcb, 0x59, 0xae, 0xcf, 0x26, 0xa3, 0xf8, 0xa2, 0xdf,
+	0x72, 0x07, 0xd1, 0xcf, 0xb9, 0xef, 0xde, 0xcd, 0x7d, 0xf7, 0xcf, 0xdc, 0x77, 0xbf, 0x2f, 0x7c,
+	0xe7, 0x6e, 0xe1, 0x3b, 0xbf, 0x17, 0xbe, 0xf3, 0xe5, 0x43, 0xc6, 0xf4, 0xf4, 0x26, 0x09, 0x88,
+	0xe4, 0xa1, 0xf9, 0xa6, 0x39, 0x4e, 0xd4, 0x29, 0x93, 0x76, 0x1b, 0x7e, 0x5b, 0x7f, 0x00, 0xba,
+	0x9c, 0x51, 0x95, 0x6c, 0x57, 0x37, 0xf5, 0xdd, 0xbf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x2d, 0x58,
+	0x3e, 0x87, 0x27, 0x03, 0x00, 0x00,
 }
 
 func (m *ConsumerRegister) Marshal() (dAtA []byte, err error) {
@@ -133,6 +327,15 @@ func (m *ConsumerRegister) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.ConsumerMetadata != nil {
+		{
+			size := m.ConsumerMetadata.Size()
+			i -= size
+			if _, err := m.ConsumerMetadata.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+		}
+	}
 	if len(m.ConsumerDescription) > 0 {
 		i -= len(m.ConsumerDescription)
 		copy(dAtA[i:], m.ConsumerDescription)
@@ -151,6 +354,108 @@ func (m *ConsumerRegister) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= len(m.ConsumerId)
 		copy(dAtA[i:], m.ConsumerId)
 		i = encodeVarintBtcstkconsumer(dAtA, i, uint64(len(m.ConsumerId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ConsumerRegister_CosmosConsumerMetadata) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ConsumerRegister_CosmosConsumerMetadata) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.CosmosConsumerMetadata != nil {
+		{
+			size, err := m.CosmosConsumerMetadata.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintBtcstkconsumer(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
+	return len(dAtA) - i, nil
+}
+func (m *ConsumerRegister_EthL2ConsumerMetadata) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ConsumerRegister_EthL2ConsumerMetadata) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.EthL2ConsumerMetadata != nil {
+		{
+			size, err := m.EthL2ConsumerMetadata.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintBtcstkconsumer(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x2a
+	}
+	return len(dAtA) - i, nil
+}
+func (m *CosmosConsumerMetadata) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CosmosConsumerMetadata) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CosmosConsumerMetadata) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ChannelId) > 0 {
+		i -= len(m.ChannelId)
+		copy(dAtA[i:], m.ChannelId)
+		i = encodeVarintBtcstkconsumer(dAtA, i, uint64(len(m.ChannelId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ETHL2ConsumerMetadata) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ETHL2ConsumerMetadata) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ETHL2ConsumerMetadata) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.FinalityContractAddress) > 0 {
+		i -= len(m.FinalityContractAddress)
+		copy(dAtA[i:], m.FinalityContractAddress)
+		i = encodeVarintBtcstkconsumer(dAtA, i, uint64(len(m.FinalityContractAddress)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -183,6 +488,59 @@ func (m *ConsumerRegister) Size() (n int) {
 		n += 1 + l + sovBtcstkconsumer(uint64(l))
 	}
 	l = len(m.ConsumerDescription)
+	if l > 0 {
+		n += 1 + l + sovBtcstkconsumer(uint64(l))
+	}
+	if m.ConsumerMetadata != nil {
+		n += m.ConsumerMetadata.Size()
+	}
+	return n
+}
+
+func (m *ConsumerRegister_CosmosConsumerMetadata) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.CosmosConsumerMetadata != nil {
+		l = m.CosmosConsumerMetadata.Size()
+		n += 1 + l + sovBtcstkconsumer(uint64(l))
+	}
+	return n
+}
+func (m *ConsumerRegister_EthL2ConsumerMetadata) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.EthL2ConsumerMetadata != nil {
+		l = m.EthL2ConsumerMetadata.Size()
+		n += 1 + l + sovBtcstkconsumer(uint64(l))
+	}
+	return n
+}
+func (m *CosmosConsumerMetadata) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ChannelId)
+	if l > 0 {
+		n += 1 + l + sovBtcstkconsumer(uint64(l))
+	}
+	return n
+}
+
+func (m *ETHL2ConsumerMetadata) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.FinalityContractAddress)
 	if l > 0 {
 		n += 1 + l + sovBtcstkconsumer(uint64(l))
 	}
@@ -319,6 +677,240 @@ func (m *ConsumerRegister) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.ConsumerDescription = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CosmosConsumerMetadata", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowBtcstkconsumer
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthBtcstkconsumer
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthBtcstkconsumer
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &CosmosConsumerMetadata{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.ConsumerMetadata = &ConsumerRegister_CosmosConsumerMetadata{v}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EthL2ConsumerMetadata", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowBtcstkconsumer
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthBtcstkconsumer
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthBtcstkconsumer
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &ETHL2ConsumerMetadata{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.ConsumerMetadata = &ConsumerRegister_EthL2ConsumerMetadata{v}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipBtcstkconsumer(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthBtcstkconsumer
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CosmosConsumerMetadata) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowBtcstkconsumer
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CosmosConsumerMetadata: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CosmosConsumerMetadata: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChannelId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowBtcstkconsumer
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthBtcstkconsumer
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthBtcstkconsumer
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ChannelId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipBtcstkconsumer(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthBtcstkconsumer
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ETHL2ConsumerMetadata) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowBtcstkconsumer
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ETHL2ConsumerMetadata: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ETHL2ConsumerMetadata: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FinalityContractAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowBtcstkconsumer
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthBtcstkconsumer
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthBtcstkconsumer
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FinalityContractAddress = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

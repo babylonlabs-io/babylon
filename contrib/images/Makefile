@@ -35,8 +35,6 @@ build-ibcsim-bcd:
 ibcsim-bcd-rmi:
 	docker rmi babylonlabs-io/ibcsim-bcd 2>/dev/null; true
 
-build-bcd-consumer-integration: babylond-e2e build-ibcsim-bcd
-
 start-bcd-consumer-integration: stop-bcd-consumer-integration
 	ibcsim-bcd/pre-deployment.sh
 	docker compose -f ibcsim-bcd/docker-compose.yml up -d
@@ -45,4 +43,4 @@ stop-bcd-consumer-integration:
 	docker compose -f ibcsim-bcd/docker-compose.yml down
 	rm -rf ibcsim-bcd/.testnets
 
-.PHONY: all babylond babylond-before-upgrade cosmos-relayer e2e-init-chain babylond-rmi babylond-rmi-upgrade cosmos-relayer-rmi build-ibcsim-bcd ibcsim-bcd-rmi build-bcd-consumer-integration-test start-bcd-consumer-integration-test stop-bcd-consumer-integration-test
+.PHONY: all babylond babylond-before-upgrade cosmos-relayer e2e-init-chain babylond-rmi babylond-rmi-upgrade cosmos-relayer-rmi build-ibcsim-bcd ibcsim-bcd-rmi start-bcd-consumer-integration-test stop-bcd-consumer-integration-test

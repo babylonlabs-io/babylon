@@ -115,6 +115,8 @@ type BTCStakingKeeper interface {
 
 type BTCStkConsumerKeeper interface {
 	RegisterConsumer(ctx context.Context, consumerRegister *btcstkconsumertypes.ConsumerRegister) error
+	UpdateConsumer(ctx context.Context, consumerRegister *btcstkconsumertypes.ConsumerRegister) error
+	GetConsumerRegister(ctx context.Context, consumerID string) (*btcstkconsumertypes.ConsumerRegister, error)
 	GetConsumerOfFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (string, error)
 	GetConsumerFinalityProvider(ctx context.Context, consumerID string, fpBTCPK *bbn.BIP340PubKey) (*bstypes.FinalityProvider, error)
 	SetConsumerFinalityProvider(ctx context.Context, fp *bstypes.FinalityProvider)

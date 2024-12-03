@@ -92,12 +92,16 @@ type SignatureInfo struct {
 }
 
 type BtcUndelegationInfo struct {
-	UnbondingTx           []byte                      `json:"unbonding_tx"`
-	DelegatorUnbondingSig []byte                      `json:"delegator_unbonding_sig"`
-	CovenantUnbondingSigs []SignatureInfo             `json:"covenant_unbonding_sig_list"`
-	SlashingTx            []byte                      `json:"slashing_tx"`
-	DelegatorSlashingSig  []byte                      `json:"delegator_slashing_sig"`
-	CovenantSlashingSigs  []CovenantAdaptorSignatures `json:"covenant_slashing_sigs"`
+	UnbondingTx              []byte                       `json:"unbonding_tx"`
+	SlashingTx               []byte                       `json:"slashing_tx"`
+	DelegatorSlashingSig     []byte                       `json:"delegator_slashing_sig"`
+	CovenantSlashingSigs     []*CovenantAdaptorSignatures `json:"covenant_slashing_sigs"`
+	CovenantUnbondingSigList []*SignatureInfo             `json:"covenant_unbonding_sig_list"`
+	DelegatorUnbondingInfo   *DelegatorUnbondingInfo      `json:"delegator_unbonding_info"`
+}
+
+type DelegatorUnbondingInfo struct {
+	SpendStakeTx []byte `json:"spend_stake_tx"`
 }
 
 type ActiveBtcDelegation struct {

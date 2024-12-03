@@ -115,16 +115,20 @@ func (s *BCDConsumerIntegrationTestSuite) Test1ChainStartup() {
 	}, time.Minute, time.Second, "Failed to query Consumer node status", err)
 	s.T().Logf("Consumer node status: %v", consumerStatus.SyncInfo.LatestBlockHeight)
 
-	// Wait till IBC connection/channel b/w babylon<->bcd is established
-	s.waitForIBCConnection()
 }
 
-// Test2AutoRegisterAndVerifyNewConsumer
+// Test2RegisterAndIntegrateConsumer registers a new consumer and
 // 1. Verifies that an IBC connection is established between the consumer chain and Babylon
-// 2. Checks that the consumer is automatically registered in Babylon's consumer registry
+// 2. Checks that the consumer is registered in Babylon's consumer registry
 // 3. Validates the consumer registration details in Babylon
-func (s *BCDConsumerIntegrationTestSuite) Test2AutoRegisterAndVerifyNewConsumer() {
-	s.verifyConsumerRegistration()
+// Then, it waits until the IBC channel between babylon<->bcd is established
+func (s *BCDConsumerIntegrationTestSuite) Test2RegisterAndIntegrateConsumer() {
+	// register and verify consumer
+	s.registerVerifyConsumer()
+
+	// after the consumer is registered, wait till IBC connection/channel
+	// between babylon<->bcd is established
+	s.waitForIBCConnection()
 }
 
 // Test3CreateConsumerFinalityProvider
@@ -239,10 +243,10 @@ func (s *BCDConsumerIntegrationTestSuite) Test5ActivateDelegation() {
 	s.Eventually(func() bool {
 		dataFromContract, err = s.cosmwasmController.QueryDelegations()
 		return err == nil && dataFromContract != nil && len(dataFromContract.Delegations) == 1
-	}, time.Second*20, time.Second)
+	}, time.Second*30, time.Second)
 
 	// Assert delegation details
-	s.Empty(dataFromContract.Delegations[0].UndelegationInfo.DelegatorUnbondingSig)
+	s.Empty(dataFromContract.Delegations[0].UndelegationInfo.DelegatorUnbondingInfo)
 	s.Equal(activeDel.BtcPk.MarshalHex(), dataFromContract.Delegations[0].BtcPkHex)
 	s.Len(dataFromContract.Delegations[0].FpBtcPkList, 2)
 	s.Equal(activeDel.FpBtcPkList[0].MarshalHex(), dataFromContract.Delegations[0].FpBtcPkList[0])
@@ -440,7 +444,7 @@ func (s *BCDConsumerIntegrationTestSuite) Test7BabylonFPCascadedSlashing() {
 
 func (s *BCDConsumerIntegrationTestSuite) Test8ConsumerFPCascadedSlashing() {
 	// create a new consumer finality provider
-	resp, czFpBTCSK, czFpBTCPK := s.createVerifyConsumerFP()
+	resp, czFpBTCSK2, czFpBTCPK2 := s.createVerifyConsumerFP()
 	consumerFp, err := s.babylonController.QueryConsumerFinalityProvider(consumerID, resp.BtcPk.MarshalHex())
 	s.NoError(err)
 
@@ -487,18 +491,18 @@ func (s *BCDConsumerIntegrationTestSuite) Test8ConsumerFPCascadedSlashing() {
 	s.NotNil(czLatestBlock)
 
 	// commit public randomness at the latest block height on the consumer chain
-	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, czFpBTCSK, uint64(czlatestBlockHeight), 100)
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, czFpBTCSK2, uint64(czlatestBlockHeight), 100)
 	s.NoError(err)
 
 	// submit the public randomness to the consumer chain
-	txResp, err := s.cosmwasmController.CommitPubRandList(czFpBTCPK, uint64(czlatestBlockHeight), 100, randListInfo.Commitment, msgCommitPubRandList.Sig.MustToBTCSig())
+	txResp, err := s.cosmwasmController.CommitPubRandList(czFpBTCPK2, uint64(czlatestBlockHeight), 100, randListInfo.Commitment, msgCommitPubRandList.Sig.MustToBTCSig())
 	s.NoError(err)
 	s.NotNil(txResp)
 
 	// consumer finality provider submits finality signature
 	txResp, err = s.cosmwasmController.SubmitFinalitySig(
-		czFpBTCSK,
-		czFpBTCPK,
+		czFpBTCSK2,
+		czFpBTCPK2,
 		randListInfo.SRList[0],
 		&randListInfo.PRList[0],
 		randListInfo.ProofList[0].ToProto(),
@@ -523,8 +527,8 @@ func (s *BCDConsumerIntegrationTestSuite) Test8ConsumerFPCascadedSlashing() {
 	// consumer finality provider submits invalid finality signature
 	txResp, err = s.cosmwasmController.SubmitInvalidFinalitySig(
 		r,
-		czFpBTCSK,
-		czFpBTCPK,
+		czFpBTCSK2,
+		czFpBTCPK2,
 		randListInfo.SRList[0],
 		&randListInfo.PRList[0],
 		randListInfo.ProofList[0].ToProto(),
@@ -893,12 +897,12 @@ func (s *BCDConsumerIntegrationTestSuite) createVerifyConsumerFP() (*bstypes.Fin
 		create a random consumer finality provider on Babylon
 	*/
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
-	czFpBTCSK, czFpBTCPK, _ := datagen.GenRandomBTCKeyPair(r)
+	czFpBTCSecretKey, czFpBTCPublicKey, _ := datagen.GenRandomBTCKeyPair(r)
 	sdk.SetAddrCacheEnabled(false)
 	bbnparams.SetAddressPrefixes()
 	fpBabylonAddr, err := sdk.AccAddressFromBech32(s.babylonController.MustGetTxSigner())
 	s.NoError(err)
-	czFp, err := datagen.GenCustomFinalityProvider(r, czFpBTCSK, fpBabylonAddr, consumerID)
+	czFp, err := datagen.GenCustomFinalityProvider(r, czFpBTCSecretKey, fpBabylonAddr, consumerID)
 	s.NoError(err)
 	czFp.Commission = &minCommissionRate
 	czFpPop, err := czFp.Pop.Marshal()
@@ -925,7 +929,7 @@ func (s *BCDConsumerIntegrationTestSuite) createVerifyConsumerFP() (*bstypes.Fin
 	s.Equal(czFp.SlashedBabylonHeight, actualFp.SlashedBabylonHeight)
 	s.Equal(czFp.SlashedBtcHeight, actualFp.SlashedBtcHeight)
 	s.Equal(consumerID, actualFp.ConsumerId)
-	return czFp, czFpBTCSK, czFpBTCPK
+	return czFp, czFpBTCSecretKey, czFpBTCPublicKey
 }
 
 // helper function: initBabylonController initializes the Babylon controller with the default configuration.
@@ -1045,19 +1049,35 @@ func (s *BCDConsumerIntegrationTestSuite) waitForIBCConnection() {
 
 // helper function: verifyConsumerRegistration verifies the automatic registration of a consumer
 // and returns the consumer details.
-func (s *BCDConsumerIntegrationTestSuite) verifyConsumerRegistration() *bsctypes.ConsumerRegister {
-	var consumerRegistryResp *bsctypes.QueryConsumersRegistryResponse
+func (s *BCDConsumerIntegrationTestSuite) registerVerifyConsumer() *bsctypes.ConsumerRegister {
+	var registeredConsumer *bsctypes.ConsumerRegister
+	var err error
 
+	// wait until the consumer is registered
 	s.Eventually(func() bool {
-		var err error
-		consumerRegistryResp, err = s.babylonController.QueryConsumerRegistry(consumerID)
+		// Register a random consumer on Babylon
+		registeredConsumer = bsctypes.NewCosmosConsumerRegister(
+			consumerID,
+			datagen.GenRandomHexStr(r, 5),
+			"Chain description: "+datagen.GenRandomHexStr(r, 15),
+		)
+		_, err = s.babylonController.RegisterConsumerChain(registeredConsumer.ConsumerId, registeredConsumer.ConsumerName, registeredConsumer.ConsumerDescription)
 		if err != nil {
 			return false
 		}
-		return consumerRegistryResp != nil && len(consumerRegistryResp.GetConsumersRegister()) == 1
-	}, time.Minute, 5*time.Second, "Consumer was not registered within the expected time")
 
-	registeredConsumer := consumerRegistryResp.GetConsumersRegister()[0]
+		consumerRegistryResp, err := s.babylonController.QueryConsumerRegistry(consumerID)
+		if err != nil {
+			return false
+		}
+		s.Require().NotNil(consumerRegistryResp)
+		s.Require().Len(consumerRegistryResp.GetConsumersRegister(), 1)
+		s.Require().Equal(registeredConsumer.ConsumerId, consumerRegistryResp.GetConsumersRegister()[0].ConsumerId)
+		s.Require().Equal(registeredConsumer.ConsumerName, consumerRegistryResp.GetConsumersRegister()[0].ConsumerName)
+		s.Require().Equal(registeredConsumer.ConsumerDescription, consumerRegistryResp.GetConsumersRegister()[0].ConsumerDescription)
+
+		return true
+	}, 2*time.Minute, 5*time.Second, "Consumer was not registered within the expected time")
 
 	s.T().Logf("Consumer registered: ID=%s, Name=%s, Description=%s",
 		registeredConsumer.ConsumerId,

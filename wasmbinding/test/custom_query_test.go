@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -36,7 +35,7 @@ func TestQueryEpoch(t *testing.T) {
 	babylonApp, ctx := SetupAppWithContext(t)
 	FundAccount(t, ctx, babylonApp, acc)
 
-	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	contractAddress := DeployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
 	query := bindings.BabylonQuery{
 		Epoch: &struct{}{},
@@ -58,7 +57,7 @@ func TestFinalizedEpoch(t *testing.T) {
 	FundAccount(t, ctx, babylonApp, acc)
 
 	// babylonApp.ZoneConciergeKeeper
-	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	contractAddress := DeployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
 	query := bindings.BabylonQuery{
 		LatestFinalizedEpochInfo: &struct{}{},
@@ -84,7 +83,7 @@ func TestQueryBtcTip(t *testing.T) {
 	babylonApp, ctx := SetupAppWithContext(t)
 	FundAccount(t, ctx, babylonApp, acc)
 
-	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	contractAddress := DeployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
 	query := bindings.BabylonQuery{
 		BtcTip: &struct{}{},
@@ -105,7 +104,7 @@ func TestQueryBtcBase(t *testing.T) {
 	babylonApp, ctx := SetupAppWithContext(t)
 	FundAccount(t, ctx, babylonApp, acc)
 
-	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	contractAddress := DeployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
 	query := bindings.BabylonQuery{
 		BtcBaseHeader: &struct{}{},
@@ -125,7 +124,7 @@ func TestQueryBtcByHash(t *testing.T) {
 	babylonApp, ctx := SetupAppWithContext(t)
 	FundAccount(t, ctx, babylonApp, acc)
 
-	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	contractAddress := DeployTestContract(t, ctx, babylonApp, acc, pathToContract)
 	tip := babylonApp.BTCLightClientKeeper.GetTipInfo(ctx)
 
 	query := bindings.BabylonQuery{
@@ -146,7 +145,7 @@ func TestQueryBtcByNumber(t *testing.T) {
 	babylonApp, ctx := SetupAppWithContext(t)
 	FundAccount(t, ctx, babylonApp, acc)
 
-	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	contractAddress := DeployTestContract(t, ctx, babylonApp, acc, pathToContract)
 	tip := babylonApp.BTCLightClientKeeper.GetTipInfo(ctx)
 
 	query := bindings.BabylonQuery{
@@ -167,7 +166,7 @@ func TestQueryNonExistingHeader(t *testing.T) {
 	babylonApp, ctx := SetupAppWithContext(t)
 	FundAccount(t, ctx, babylonApp, acc)
 
-	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	contractAddress := DeployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
 	queryNonExisitingHeight := bindings.BabylonQuery{
 		BtcHeaderByHeight: &bindings.BtcHeaderByHeight{
@@ -188,35 +187,6 @@ func TestQueryNonExistingHeader(t *testing.T) {
 	resp1 := bindings.BtcHeaderQueryResponse{}
 	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHash, &resp1)
 	require.Nil(t, resp1.HeaderInfo)
-}
-
-func instantiateExampleContract(
-	t *testing.T,
-	ctx sdk.Context,
-	bbn *app.BabylonApp,
-	funder sdk.AccAddress,
-	codeId uint64,
-) sdk.AccAddress {
-	initMsgBz := []byte("{}")
-	contractKeeper := keeper.NewDefaultPermissionKeeper(bbn.WasmKeeper)
-	addr, _, err := contractKeeper.Instantiate(ctx, codeId, funder, funder, initMsgBz, "demo contract", nil)
-	require.NoError(t, err)
-	return addr
-}
-
-func deployTestContract(
-	t *testing.T,
-	ctx sdk.Context,
-	bbn *app.BabylonApp,
-	deployer sdk.AccAddress,
-	codePath string,
-) sdk.AccAddress {
-
-	codeId, _ := StoreTestCodeCode(t, ctx, bbn, deployer, codePath)
-
-	contractAddr := instantiateExampleContract(t, ctx, bbn, deployer, codeId)
-
-	return contractAddr
 }
 
 type ExampleQuery struct {

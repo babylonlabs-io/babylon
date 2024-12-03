@@ -16,26 +16,26 @@ func FuzzConsumerRegistry(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		babylonApp := app.Setup(t, false)
-		zcKeeper := babylonApp.BTCStkConsumerKeeper
+		bscKeeper := babylonApp.BTCStkConsumerKeeper
 		ctx := babylonApp.NewContext(false)
 
 		// generate a random consumer register
-		consumerRegister := datagen.GenRandomConsumerRegister(r)
+		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
 
 		// check that the consumer is not registered
-		isRegistered := zcKeeper.IsConsumerRegistered(ctx, consumerRegister.ConsumerId)
+		isRegistered := bscKeeper.IsConsumerRegistered(ctx, consumerRegister.ConsumerId)
 		require.False(t, isRegistered)
 
 		// Check that the consumer is not registered
-		consumerRegister2, err := zcKeeper.GetConsumerRegister(ctx, consumerRegister.ConsumerId)
+		consumerRegister2, err := bscKeeper.GetConsumerRegister(ctx, consumerRegister.ConsumerId)
 		require.Error(t, err)
 		require.Nil(t, consumerRegister2)
 
 		// Register the consumer
-		zcKeeper.SetConsumerRegister(ctx, consumerRegister)
-
+		err = bscKeeper.RegisterConsumer(ctx, consumerRegister)
+		require.NoError(t, err)
 		// check that the consumer is registered
-		consumerRegister2, err = zcKeeper.GetConsumerRegister(ctx, consumerRegister.ConsumerId)
+		consumerRegister2, err = bscKeeper.GetConsumerRegister(ctx, consumerRegister.ConsumerId)
 		require.NoError(t, err)
 		require.Equal(t, consumerRegister.ConsumerId, consumerRegister2.ConsumerId)
 		require.Equal(t, consumerRegister.ConsumerName, consumerRegister2.ConsumerName)

@@ -52,6 +52,18 @@ func (im IBCModule) OnChanOpenInit(
 		return "", errorsmod.Wrapf(types.ErrInvalidVersion, "got %s, expected %s", version, types.Version)
 	}
 
+	// Get the first connection ID from the channel's connection hops
+	if len(connectionHops) == 0 {
+		return "", fmt.Errorf("no connection hops found for channel")
+	}
+	connectionID := connectionHops[0]
+
+	// Handle the IBC handshake request, i.e., ensuring the client ID is registered as
+	// a Cosmos consumer
+	if err := im.keeper.HandleIBCChannelCreation(ctx, connectionID, channelID); err != nil {
+		return "", err
+	}
+
 	// Claim channel capability passed back by IBC module
 	if err := im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
 		return "", err
@@ -85,6 +97,18 @@ func (im IBCModule) OnChanOpenTry(
 	// ensure consistency of the protocol version
 	if counterpartyVersion != types.Version {
 		return "", errorsmod.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: got: %s, expected %s", counterpartyVersion, types.Version)
+	}
+
+	// Get the first connection ID from the channel's connection hops
+	if len(connectionHops) == 0 {
+		return "", fmt.Errorf("no connection hops found for channel")
+	}
+	connectionID := connectionHops[0]
+
+	// Handle the IBC handshake request, i.e., ensuring the client ID is registered as
+	// a Cosmos consumer
+	if err := im.keeper.HandleIBCChannelCreation(ctx, connectionID, channelID); err != nil {
+		return "", err
 	}
 
 	// Module may have already claimed capability in OnChanOpenInit in the case of crossing hellos
@@ -161,12 +185,6 @@ func (im IBCModule) OnRecvPacket(
 	}
 
 	switch packet := packetData.Packet.(type) {
-	case *types.ZoneconciergePacketData_ConsumerRegister:
-		err := im.keeper.HandleConsumerRegistration(ctx, modulePacket.DestinationPort, modulePacket.DestinationChannel, packet.ConsumerRegister)
-		if err != nil {
-			return channeltypes.NewErrorAcknowledgement(err)
-		}
-		return channeltypes.NewResultAcknowledgement([]byte("Consumer registered successfully"))
 	case *types.ZoneconciergePacketData_ConsumerSlashing:
 		err := im.keeper.HandleConsumerSlashing(ctx, modulePacket.DestinationPort, modulePacket.DestinationChannel, packet.ConsumerSlashing)
 		if err != nil {

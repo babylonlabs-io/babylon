@@ -51,6 +51,8 @@ func BTCStakingKeeperWithStore(
 		runtime.NewKVStoreService(bscStoreKey),
 		nil,
 		nil,
+		nil,
+		nil,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 

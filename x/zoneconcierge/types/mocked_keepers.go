@@ -948,6 +948,21 @@ func (mr *MockBTCStkConsumerKeeperMockRecorder) GetConsumerOfFinalityProvider(ct
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConsumerOfFinalityProvider", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).GetConsumerOfFinalityProvider), ctx, fpBTCPK)
 }
 
+// GetConsumerRegister mocks base method.
+func (m *MockBTCStkConsumerKeeper) GetConsumerRegister(ctx context.Context, consumerID string) (*types3.ConsumerRegister, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConsumerRegister", ctx, consumerID)
+	ret0, _ := ret[0].(*types3.ConsumerRegister)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetConsumerRegister indicates an expected call of GetConsumerRegister.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) GetConsumerRegister(ctx, consumerID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConsumerRegister", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).GetConsumerRegister), ctx, consumerID)
+}
+
 // RegisterConsumer mocks base method.
 func (m *MockBTCStkConsumerKeeper) RegisterConsumer(ctx context.Context, consumerRegister *types3.ConsumerRegister) error {
 	m.ctrl.T.Helper()
@@ -972,4 +987,18 @@ func (m *MockBTCStkConsumerKeeper) SetConsumerFinalityProvider(ctx context.Conte
 func (mr *MockBTCStkConsumerKeeperMockRecorder) SetConsumerFinalityProvider(ctx, fp interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetConsumerFinalityProvider", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).SetConsumerFinalityProvider), ctx, fp)
+}
+
+// UpdateConsumer mocks base method.
+func (m *MockBTCStkConsumerKeeper) UpdateConsumer(ctx context.Context, consumerRegister *types3.ConsumerRegister) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateConsumer", ctx, consumerRegister)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateConsumer indicates an expected call of UpdateConsumer.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) UpdateConsumer(ctx, consumerRegister interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateConsumer", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).UpdateConsumer), ctx, consumerRegister)
 }

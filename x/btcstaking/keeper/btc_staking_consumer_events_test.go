@@ -312,7 +312,7 @@ func FuzzDeleteBTCStakingEventStore(f *testing.F) {
 // helper function: register a random consumer on Babylon and verify the registration
 func registerAndVerifyConsumer(t *testing.T, r *rand.Rand, h *testutil.Helper) *bsctypes.ConsumerRegister {
 	// Generate a random consumer register
-	randomConsumer := datagen.GenRandomConsumerRegister(r)
+	randomConsumer := datagen.GenRandomCosmosConsumerRegister(r)
 
 	// Check that the consumer is not already registered
 	isRegistered := h.BTCStkConsumerKeeper.IsConsumerRegistered(h.Ctx, randomConsumer.ConsumerId)
@@ -324,7 +324,8 @@ func registerAndVerifyConsumer(t *testing.T, r *rand.Rand, h *testutil.Helper) *
 	require.Nil(t, dbConsumer)
 
 	// Register the consumer
-	h.BTCStkConsumerKeeper.SetConsumerRegister(h.Ctx, randomConsumer)
+	err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, randomConsumer)
+	require.NoError(t, err)
 
 	// Verify that the consumer is now registered
 	dbConsumer, err = h.BTCStkConsumerKeeper.GetConsumerRegister(h.Ctx, randomConsumer.ConsumerId)

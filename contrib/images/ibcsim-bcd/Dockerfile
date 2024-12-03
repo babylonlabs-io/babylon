@@ -18,7 +18,7 @@ ENV PATH $GOPATH/bin:$PATH
 
 ENV GO111MODULE on
 ENV RELAYER_TAG v2.5.2
-ENV BABYLON_SDK_TAG v0.6.0-rc.0
+ENV BABYLON_SDK_VERSION v0.6.0-rc.1
 
 # Install the relayer
 RUN git clone https://github.com/cosmos/relayer.git
@@ -27,7 +27,7 @@ RUN cd relayer && git fetch origin && git checkout ${RELAYER_TAG} && make instal
 # Install bcd
 RUN git clone https://github.com/babylonlabs-io/babylon-sdk.git && \
     cd babylon-sdk && \
-    git checkout ${BABYLON_SDK_TAG} && \
+    git checkout ${BABYLON_SDK_VERSION} && \
     make install && \
     cd -
 

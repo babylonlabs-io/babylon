@@ -67,14 +67,14 @@ func (s *BTCStakingIntegrationTestSuite) TearDownSuite() {
 }
 
 // Test1RegisterNewConsumer registers a new consumer on Babylon
-func (s *BTCStakingIntegrationTestSuite) Test1AutoRegisterAndVerifyNewConsumer() {
+func (s *BTCStakingIntegrationTestSuite) Test1RegisterNewConsumer() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	babylonNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	consumerID := s.getIBCClientID()
-	s.verifyConsumerRegistration(babylonNode, consumerID)
+	s.registerVerifyConsumer(babylonNode, consumerID)
 }
 
 // Test2CreateConsumerFinalityProvider -
@@ -420,27 +420,24 @@ func (s *BTCStakingIntegrationTestSuite) Test6ContractQueries() {
 	s.Equal(nodefpDel.MustGetStakingTxHash().String(), contractDelsByFp.StakingTxHashes[0])
 }
 
-// TODO: add test for slashing when its supported in smart contract
-
 // helper function: register a random consumer on Babylon and verify it
-func (s *BTCStakingIntegrationTestSuite) verifyConsumerRegistration(babylonNode *chain.NodeConfig, consumerID string) *bsctypes.ConsumerRegister {
-	var consumerRegistry []*bsctypes.ConsumerRegister
+func (s *BTCStakingIntegrationTestSuite) registerVerifyConsumer(babylonNode *chain.NodeConfig, consumerID string) *bsctypes.ConsumerRegister {
+	// Register a random consumer on Babylon
+	randomConsumer := bsctypes.NewCosmosConsumerRegister(
+		consumerID,
+		datagen.GenRandomHexStr(r, 5),
+		"Chain description: "+datagen.GenRandomHexStr(r, 15),
+	)
+	babylonNode.RegisterConsumer(randomConsumer.ConsumerId, randomConsumer.ConsumerName, randomConsumer.ConsumerDescription)
+	babylonNode.WaitForNextBlock()
 
-	s.Eventually(func() bool {
-		consumerRegistry = babylonNode.QueryConsumerRegistry(consumerID)
-		return len(consumerRegistry) == 1
-	}, time.Minute, 5*time.Second, "Consumer was not registered within the expected time")
-
+	// Query the consumer registry to verify the consumer was registered
+	consumerRegistry := babylonNode.QueryConsumerRegistry(randomConsumer.ConsumerId)
 	s.Require().Len(consumerRegistry, 1)
-	registeredConsumer := consumerRegistry[0]
-
-	//s.Require().Equal(consumerID, registeredConsumer.ConsumerId)
-	s.T().Logf("Consumer registered: ID=%s, Name=%s, Description=%s",
-		registeredConsumer.ConsumerId,
-		registeredConsumer.ConsumerName,
-		registeredConsumer.ConsumerDescription)
-
-	return registeredConsumer
+	s.Require().Equal(randomConsumer.ConsumerId, consumerRegistry[0].ConsumerId)
+	s.Require().Equal(randomConsumer.ConsumerName, consumerRegistry[0].ConsumerName)
+	s.Require().Equal(randomConsumer.ConsumerDescription, consumerRegistry[0].ConsumerDescription)
+	return randomConsumer
 }
 
 // helper function: create a random consumer finality provider on Babylon and verify it
