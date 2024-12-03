@@ -32,3 +32,20 @@ func (k Keeper) ParamsByVersion(goCtx context.Context, req *types.QueryParamsByV
 
 	return &types.QueryParamsByVersionResponse{Params: *pv}, nil
 }
+
+func (k Keeper) ParamsByBTCHeight(
+	goCtx context.Context,
+	req *types.QueryParamsByBTCHeightRequest,
+) (*types.QueryParamsByBTCHeightResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	p, _, err := k.GetParamsForBtcHeight(ctx, uint64(req.BtcHeight))
+	if err != nil {
+		return nil, types.ErrParamsNotFound.Wrapf("params for btc height %d not found", req.BtcHeight)
+	}
+
+	return &types.QueryParamsByBTCHeightResponse{Params: *p}, nil
+}

@@ -72,3 +72,38 @@ func TestParamsByVersionQuery(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryParamsByVersionResponse{Params: params3}, resp2)
 }
+
+func TestParamsByBTCHeightQuery(t *testing.T) {
+	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+	currParams := keeper.GetParams(ctx)
+
+	// starting with `1` as BTCStakingKeeper creates params with version 0
+	params1 := types.DefaultParams()
+	params1.MinUnbondingTimeBlocks = 10000
+	params1.BtcActivationHeight = currParams.BtcActivationHeight + 1
+
+	params2 := types.DefaultParams()
+	params2.MinUnbondingTimeBlocks = 20000
+	params2.BtcActivationHeight = currParams.BtcActivationHeight + 2
+
+	// Check that after update we always return the latest version of params through Params query
+	err := keeper.SetParams(ctx, params1)
+	require.NoError(t, err)
+	response, err := keeper.Params(ctx, &types.QueryParamsRequest{})
+	require.NoError(t, err)
+	require.Equal(t, &types.QueryParamsResponse{Params: params1}, response)
+
+	err = keeper.SetParams(ctx, params2)
+	require.NoError(t, err)
+	response, err = keeper.Params(ctx, &types.QueryParamsRequest{})
+	require.NoError(t, err)
+	require.Equal(t, &types.QueryParamsResponse{Params: params2}, response)
+
+	resp0, err := keeper.ParamsByBTCHeight(ctx, &types.QueryParamsByBTCHeightRequest{BtcHeight: params1.BtcActivationHeight})
+	require.NoError(t, err)
+	require.Equal(t, &types.QueryParamsByBTCHeightResponse{Params: params1}, resp0)
+
+	resp1, err := keeper.ParamsByBTCHeight(ctx, &types.QueryParamsByBTCHeightRequest{BtcHeight: params2.BtcActivationHeight})
+	require.NoError(t, err)
+	require.Equal(t, &types.QueryParamsByBTCHeightResponse{Params: params2}, resp1)
+}
