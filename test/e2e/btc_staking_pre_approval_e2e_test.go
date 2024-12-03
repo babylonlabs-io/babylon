@@ -91,8 +91,8 @@ func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegatio
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := nonValidatorNode.QueryBTCStakingParams()
 
-	// minimal required unbonding time
-	unbondingTime := params.MinUnbondingTimeBlocks
+	// required unbonding time
+	unbondingTime := params.UnbondingTimeBlocks
 
 	// NOTE: we use the node's address for the BTC delegation
 	stakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
@@ -534,8 +534,8 @@ func (s *BTCStakingPreApprovalTestSuite) BTCStakingUnbondSlashInfo(
 	delegatorSig *bbn.BIP340Signature,
 ) {
 	covenantBTCPKs := CovenantBTCPKs(params)
-	// minimal required unbonding time
-	unbondingTime := params.MinUnbondingTimeBlocks
+	// required unbonding time
+	unbondingTime := params.UnbondingTimeBlocks
 
 	testStakingInfo = datagen.GenBTCStakingSlashingInfo(
 		s.r,

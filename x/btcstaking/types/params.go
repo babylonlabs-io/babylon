@@ -73,8 +73,8 @@ func DefaultParams() Params {
 		MinCommissionRate:    sdkmath.LegacyZeroDec(),
 		// The Default slashing rate is 0.1 i.e., 10% of the total staked BTC will be burned.
 		SlashingRate: sdkmath.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
-		// min unbonding time should be always larger than the checkpoint finalization timeout
-		MinUnbondingTimeBlocks:       200,
+		// unbonding time should be always larger than the checkpoint finalization timeout
+		UnbondingTimeBlocks:          200,
 		UnbondingFeeSat:              1000,
 		DelegationCreationBaseGasFee: defaultDelegationCreationBaseGasFee,
 		// The default allow list expiration height is 0, which effectively disables the allow list.
@@ -119,8 +119,8 @@ func validateCovenantPks(covenantPks []bbn.BIP340PubKey) error {
 	return nil
 }
 
-func validateMinUnbondingTime(minUnbondingTimeBlocks uint32) error {
-	if minUnbondingTimeBlocks > math.MaxUint16 {
+func validateUnbondingTime(unbondingTimeBlocks uint32) error {
+	if unbondingTimeBlocks > math.MaxUint16 {
 		return fmt.Errorf("minimum unbonding time blocks cannot be greater than %d", math.MaxUint16)
 	}
 
@@ -199,7 +199,7 @@ func (p Params) Validate() error {
 		return btcstaking.ErrInvalidSlashingRate
 	}
 
-	if err := validateMinUnbondingTime(p.MinUnbondingTimeBlocks); err != nil {
+	if err := validateUnbondingTime(p.UnbondingTimeBlocks); err != nil {
 		return err
 	}
 

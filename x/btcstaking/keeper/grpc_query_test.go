@@ -205,7 +205,7 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 			)
 			require.NoError(t, err)
 			expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
-			err = keeper.AddBTCDelegation(ctx, btcDel, btcDel.UnbondingTime-1)
+			err = keeper.AddBTCDelegation(ctx, btcDel)
 			require.NoError(t, err)
 		}
 
@@ -336,7 +336,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 					btcDel.CovenantSigs = nil
 					pendingBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
 				}
-				err = keeper.AddBTCDelegation(ctx, btcDel, btcDel.UnbondingTime-1)
+				err = keeper.AddBTCDelegation(ctx, btcDel)
 				require.NoError(t, err)
 
 				txHash := btcDel.MustGetStakingTxHash().String()

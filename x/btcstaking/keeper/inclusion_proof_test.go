@@ -60,7 +60,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 		}
 
 		// indicates the staking tx has room for unbonding
-		maxValidTipHeight := inclusionHeight + stakingTime - params.MinUnbondingTimeBlocks - 1
+		maxValidTipHeight := inclusionHeight + stakingTime - params.UnbondingTimeBlocks - 1
 		// indicates the staking tx is k-deep
 		minValidTipHeight := inclusionHeight + confirmationDepth
 
@@ -78,7 +78,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 				stakingTx,
 				confirmationDepth,
 				stakingTime,
-				params.MinUnbondingTimeBlocks,
+				params.UnbondingTimeBlocks,
 				proof,
 			)
 
@@ -97,7 +97,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 				stakingTx,
 				confirmationDepth,
 				stakingTime,
-				params.MinUnbondingTimeBlocks,
+				params.UnbondingTimeBlocks,
 				proof,
 			)
 
@@ -116,7 +116,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 				stakingTx,
 				confirmationDepth,
 				stakingTime,
-				params.MinUnbondingTimeBlocks,
+				params.UnbondingTimeBlocks,
 				&copyProof,
 			)
 
@@ -136,7 +136,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 				stakingTx,
 				confirmationDepth,
 				stakingTime,
-				params.MinUnbondingTimeBlocks,
+				params.UnbondingTimeBlocks,
 				proof,
 			)
 
@@ -156,7 +156,7 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 				stakingTx,
 				confirmationDepth,
 				stakingTime,
-				params.MinUnbondingTimeBlocks,
+				params.UnbondingTimeBlocks,
 				proof,
 			)
 

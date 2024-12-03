@@ -87,7 +87,7 @@ func FuzzParamsVersioning(f *testing.F) {
 			params := types.DefaultParams()
 			// randomize two parameters so each params are slightly different
 			params.MinSlashingTxFeeSat = r.Int63()
-			params.MinUnbondingTimeBlocks = uint32(r.Intn(math.MaxUint16))
+			params.UnbondingTimeBlocks = uint32(r.Intn(math.MaxUint16))
 			params.BtcActivationHeight = uint32(i) + 1
 			err := k.SetParams(ctx, params)
 			require.NoError(t, err)

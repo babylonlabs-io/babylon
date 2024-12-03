@@ -24,7 +24,7 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 	stakingTx *btcutil.Tx,
 	confirmationDepth uint32,
 	stakingTime uint32,
-	minUnbondingTime uint32,
+	unbondingTime uint32,
 	inclusionProof *types.ParsedProofOfInclusion,
 ) (*DelegationTimeRangeInfo, error) {
 	// Check:
@@ -61,9 +61,9 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 	}
 
 	// ensure staking tx's timelock has more than unbonding BTC blocks left
-	if btcTip.Height+minUnbondingTime >= endHeight {
+	if btcTip.Height+unbondingTime >= endHeight {
 		return nil, types.ErrInvalidStakingTx.
-			Wrapf("staking tx's timelock has no more than unbonding(=%d) blocks left", minUnbondingTime)
+			Wrapf("staking tx's timelock has no more than unbonding(=%d) blocks left", unbondingTime)
 	}
 
 	return &DelegationTimeRangeInfo{
