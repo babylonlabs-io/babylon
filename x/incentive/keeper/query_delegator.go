@@ -13,10 +13,6 @@ func (k Keeper) DelegatorWithdrawAddress(goCtx context.Context, req *types.Query
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	if req.DelegatorAddress == "" {
-		return nil, status.Error(codes.InvalidArgument, "empty delegator address")
-	}
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	delegatorAddress, err := sdk.AccAddressFromBech32(req.DelegatorAddress)
 	if err != nil {

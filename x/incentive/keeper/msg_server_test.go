@@ -97,6 +97,10 @@ func FuzzSetWithdrawAddr(f *testing.F) {
 		})
 		require.NoError(t, err)
 
+		rgauge := ik.GetRewardGauge(ctx, sType, sAddr)
+		require.NotNil(t, rgauge)
+		require.False(t, rgauge.IsFullyWithdrawn())
+
 		// invoke withdraw and assert consistency
 		resp, err := ms.WithdrawReward(ctx, &types.MsgWithdrawReward{
 			Type:    sType.String(),
