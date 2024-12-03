@@ -21,7 +21,6 @@ import (
 func (k Keeper) AddBTCDelegation(
 	ctx sdk.Context,
 	btcDel *types.BTCDelegation,
-	minUnbondingTime uint32,
 ) error {
 	if err := btcDel.ValidateBasic(); err != nil {
 		return err
@@ -79,8 +78,8 @@ func (k Keeper) AddBTCDelegation(
 			NewState:      types.BTCDelegationStatus_UNBONDED,
 		})
 
-		// NOTE: we should have verified that EndHeight > btcTip.Height + min_unbonding_time
-		k.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-minUnbondingTime, unbondedEvent)
+		// NOTE: we should have verified that EndHeight > btcTip.Height + unbonding_time
+		k.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-btcDel.UnbondingTime, unbondedEvent)
 	}
 
 	return nil

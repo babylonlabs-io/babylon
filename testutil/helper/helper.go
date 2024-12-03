@@ -307,8 +307,8 @@ func (h *Helper) CheckDelegator(delegator sdk.AccAddress, val sdk.ValAddress, fo
 	require.Equal(h.t, ok, found)
 }
 
-func (h *Helper) AddDelegation(del *btcstakingtypes.BTCDelegation, minUnbondingTime uint32) {
-	err := h.App.BTCStakingKeeper.AddBTCDelegation(h.Ctx, del, minUnbondingTime)
+func (h *Helper) AddDelegation(del *btcstakingtypes.BTCDelegation) {
+	err := h.App.BTCStakingKeeper.AddBTCDelegation(h.Ctx, del)
 	h.NoError(err)
 }
 

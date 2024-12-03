@@ -49,11 +49,11 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 	// ensure the min unbonding time is always larger than the checkpoint finalization timeout
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	ckptFinalizationTime := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-	minUnbondingTime := req.Params.MinUnbondingTimeBlocks
-	if minUnbondingTime <= ckptFinalizationTime {
+	unbondingTime := req.Params.UnbondingTimeBlocks
+	if unbondingTime <= ckptFinalizationTime {
 		return nil, govtypes.ErrInvalidProposalMsg.
-			Wrapf("the min unbonding time %d must be larger than the checkpoint finalization timeout %d",
-				minUnbondingTime, ckptFinalizationTime)
+			Wrapf("the unbonding time %d must be larger than the checkpoint finalization timeout %d",
+				unbondingTime, ckptFinalizationTime)
 	}
 
 	if err := ms.SetParams(ctx, req.Params); err != nil {
@@ -211,7 +211,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 			btcutil.NewTx(parsedMsg.StakingTx.Transaction),
 			btccParams.BtcConfirmationDepth,
 			uint32(parsedMsg.StakingTime),
-			vp.Params.MinUnbondingTimeBlocks,
+			uint32(parsedMsg.UnbondingTime),
 			parsedMsg.StakingTxProofOfInclusion)
 		if err != nil {
 			return nil, fmt.Errorf("invalid inclusion proof: %w", err)
@@ -283,7 +283,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	// add this BTC delegation, and emit corresponding events
-	if err := ms.AddBTCDelegation(ctx, newBTCDel, vp.Params.MinUnbondingTimeBlocks); err != nil {
+	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
 		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
 	}
 
@@ -332,14 +332,12 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 
 	btccParams := ms.btccKeeper.GetParams(ctx)
 
-	minUnbondingTime := params.MinUnbondingTimeBlocks
-
 	timeInfo, err := ms.VerifyInclusionProofAndGetHeight(
 		ctx,
 		btcutil.NewTx(stakingTx),
 		btccParams.BtcConfirmationDepth,
 		btcDel.StakingTime,
-		minUnbondingTime,
+		params.UnbondingTimeBlocks,
 		parsedInclusionProof,
 	)
 
@@ -382,7 +380,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	})
 
 	// NOTE: we should have verified that EndHeight > btcTip.Height + min_unbonding_time
-	ms.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-minUnbondingTime, unbondedEvent)
+	ms.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-params.UnbondingTimeBlocks, unbondedEvent)
 
 	// at this point, the BTC delegation inclusion proof is verified and is not duplicated
 	// thus, we can safely consider this message as refundable

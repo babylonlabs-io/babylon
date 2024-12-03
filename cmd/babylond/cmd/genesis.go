@@ -93,7 +93,7 @@ Example:
 					genesisCliArgs.MinCommissionRate,
 					genesisCliArgs.SlashingRate,
 					genesisCliArgs.MaxActiveFinalityProviders,
-					genesisCliArgs.MinUnbondingTime,
+					genesisCliArgs.UnbondingTime,
 					genesisCliArgs.UnbondingFeeSat,
 					genesisCliArgs.InflationRateChange,
 					genesisCliArgs.InflationMin,
@@ -289,7 +289,7 @@ func TestnetGenesisParams(
 	minCommissionRate sdkmath.LegacyDec,
 	slashingRate sdkmath.LegacyDec,
 	maxActiveFinalityProviders uint32,
-	minUnbondingTime uint16,
+	unbondingTime uint16,
 	unbondingFeeSat int64,
 	inflationRateChange float64,
 	inflationMin float64,
@@ -403,7 +403,7 @@ func TestnetGenesisParams(
 	genParams.BtcstakingParams.MinSlashingTxFeeSat = minSlashingFee
 	genParams.BtcstakingParams.MinCommissionRate = minCommissionRate
 	genParams.BtcstakingParams.SlashingRate = slashingRate
-	genParams.BtcstakingParams.MinUnbondingTimeBlocks = uint32(minUnbondingTime)
+	genParams.BtcstakingParams.UnbondingTimeBlocks = uint32(unbondingTime)
 	genParams.BtcstakingParams.UnbondingFeeSat = unbondingFeeSat
 	if err := genParams.BtcstakingParams.Validate(); err != nil {
 		panic(err)
