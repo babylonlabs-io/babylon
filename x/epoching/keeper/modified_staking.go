@@ -179,7 +179,7 @@ func (k Keeper) getAllMatureValidators(ctx sdk.Context) []sdk.ValAddress {
 	// over are not ready to unbond, so an explicit check is required.
 	unbondingValIterator, err := k.stk.ValidatorQueueIterator(ctx, blockTime, blockHeight)
 	if err != nil {
-		panic(fmt.Errorf("could not get iterator to validator's queue: %s", err))
+		panic(fmt.Errorf("could not get iterator to validator's queue: %w", err))
 	}
 	defer unbondingValIterator.Close()
 

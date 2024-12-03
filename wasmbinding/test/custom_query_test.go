@@ -40,6 +40,7 @@ func getArtifactPath() string {
 var pathToContract = getArtifactPath()
 
 func TestQueryEpoch(t *testing.T) {
+	t.Parallel()
 	acc := randomAccountAddress()
 	babylonApp, ctx := setupAppWithContext(t)
 	fundAccount(t, ctx, babylonApp, acc)
@@ -61,6 +62,7 @@ func TestQueryEpoch(t *testing.T) {
 }
 
 func TestFinalizedEpoch(t *testing.T) {
+	t.Parallel()
 	acc := randomAccountAddress()
 	babylonApp, ctx := setupAppWithContext(t)
 	fundAccount(t, ctx, babylonApp, acc)
@@ -88,6 +90,7 @@ func TestFinalizedEpoch(t *testing.T) {
 }
 
 func TestQueryBtcTip(t *testing.T) {
+	t.Parallel()
 	acc := randomAccountAddress()
 	babylonApp, ctx := setupAppWithContext(t)
 	fundAccount(t, ctx, babylonApp, acc)
@@ -109,6 +112,7 @@ func TestQueryBtcTip(t *testing.T) {
 }
 
 func TestQueryBtcBase(t *testing.T) {
+	t.Parallel()
 	acc := randomAccountAddress()
 	babylonApp, ctx := setupAppWithContext(t)
 	fundAccount(t, ctx, babylonApp, acc)
@@ -129,6 +133,7 @@ func TestQueryBtcBase(t *testing.T) {
 }
 
 func TestQueryBtcByHash(t *testing.T) {
+	t.Parallel()
 	acc := randomAccountAddress()
 	babylonApp, ctx := setupAppWithContext(t)
 	fundAccount(t, ctx, babylonApp, acc)
@@ -150,6 +155,7 @@ func TestQueryBtcByHash(t *testing.T) {
 }
 
 func TestQueryBtcByNumber(t *testing.T) {
+	t.Parallel()
 	acc := randomAccountAddress()
 	babylonApp, ctx := setupAppWithContext(t)
 	fundAccount(t, ctx, babylonApp, acc)
@@ -171,6 +177,7 @@ func TestQueryBtcByNumber(t *testing.T) {
 }
 
 func TestQueryNonExistingHeader(t *testing.T) {
+	t.Parallel()
 	acc := randomAccountAddress()
 	babylonApp, ctx := setupAppWithContext(t)
 	fundAccount(t, ctx, babylonApp, acc)

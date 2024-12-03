@@ -150,7 +150,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 				BtcPk:       fp.BtcPk,
 				Pop:         fp.Pop,
 			},
-			fmt.Errorf("invalid FP addr: %s - %v", invalidAddr, fmt.Errorf("decoding bech32 failed: invalid separator index -1")),
+			fmt.Errorf("invalid FP addr: %s - %w", invalidAddr, fmt.Errorf("decoding bech32 failed: invalid separator index -1")),
 		},
 		{
 			"invalid: bad PoP empty sig",

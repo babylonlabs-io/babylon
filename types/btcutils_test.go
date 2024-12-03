@@ -1,13 +1,14 @@
 package types_test
 
 import (
+	"math/big"
+	"testing"
+	"time"
+
 	"github.com/babylonlabs-io/babylon/types"
 	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/suite"
-	"math/big"
-	"testing"
-	"time"
 )
 
 type btcutilsTestSuite struct {

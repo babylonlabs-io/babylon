@@ -252,6 +252,7 @@ func FuzzGeneratingSignatureValidation(f *testing.F) {
 }
 
 func TestSlashingTxWithOverflowMustNotAccepted(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	// we do not care for inputs in staking tx
 	stakingTx := wire.NewMsgTx(2)

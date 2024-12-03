@@ -61,8 +61,8 @@ func NewManager(identifier string, isDebugLogEnabled bool, isCosmosRelayer, isUp
 }
 
 // ExecTxCmd Runs ExecTxCmdWithSuccessString searching for `code: 0`
-func (m *Manager) ExecTxCmd(t *testing.T, chainId string, nodeName string, command []string) (bytes.Buffer, bytes.Buffer, error) {
-	return m.ExecTxCmdWithSuccessString(t, chainId, nodeName, command, "code: 0")
+func (m *Manager) ExecTxCmd(t *testing.T, chainID string, nodeName string, command []string) (bytes.Buffer, bytes.Buffer, error) {
+	return m.ExecTxCmdWithSuccessString(t, chainID, nodeName, command, "code: 0")
 }
 
 // ExecTxCmdWithSuccessString Runs ExecCmd, with flags for txs added.
@@ -88,7 +88,7 @@ func (m *Manager) ExecCmd(t *testing.T, fullContainerName string, command []stri
 	if _, ok := m.resources[fullContainerName]; !ok {
 		return bytes.Buffer{}, bytes.Buffer{}, fmt.Errorf("no resource %s found", fullContainerName)
 	}
-	containerId := m.resources[fullContainerName].Container.ID
+	containerID := m.resources[fullContainerName].Container.ID
 
 	var (
 		outBuf bytes.Buffer
@@ -112,7 +112,7 @@ func (m *Manager) ExecCmd(t *testing.T, fullContainerName string, command []stri
 				Context:      ctx,
 				AttachStdout: true,
 				AttachStderr: true,
-				Container:    containerId,
+				Container:    containerID,
 				User:         "root",
 				Cmd:          command,
 			})
@@ -251,7 +251,7 @@ func (m *Manager) RunRlyResource(chainAID, osmoARelayerNodeName, osmoAValMnemoni
 
 // RunNodeResource runs a node container. Assigns containerName to the container.
 // Mounts the container on valConfigDir volume on the running host. Returns the container resource and error if any.
-func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir string) (*dockertest.Resource, error) {
+func (m *Manager) RunNodeResource(chainID string, containerName, valCondifDir string) (*dockertest.Resource, error) {
 	pwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
@@ -304,12 +304,12 @@ func (m *Manager) GetNodeResource(containerName string) (*dockertest.Resource, e
 // necessary to connect to the portId exposed inside the container.
 // The container is determined by containerName.
 // Returns the host-port or error if any.
-func (m *Manager) GetHostPort(nodeName string, portId string) (string, error) {
+func (m *Manager) GetHostPort(nodeName string, portID string) (string, error) {
 	resource, err := m.GetNodeResource(nodeName)
 	if err != nil {
 		return "", err
 	}
-	return resource.GetHostPort(portId), nil
+	return resource.GetHostPort(portID), nil
 }
 
 // RemoveNodeResource removes a node container specified by containerName.
@@ -362,7 +362,7 @@ func noRestart(config *docker.HostConfig) {
 // Returns the container resource and error if any. This method does not Purge the container. The caller
 // must deal with removing the resource.
 func (m *Manager) RunChainInitResource(
-	chainId string,
+	chainID string,
 	chainVotingPeriod, chainExpeditedVotingPeriod int,
 	validatorConfigBytes []byte,
 	mountDir string,
@@ -374,12 +374,12 @@ func (m *Manager) RunChainInitResource(
 
 	initResource, err := m.pool.RunWithOptions(
 		&dockertest.RunOptions{
-			Name:       chainId,
+			Name:       chainID,
 			Repository: InitChainContainerE2E,
 			NetworkID:  m.network.Network.ID,
 			Cmd: []string{
 				fmt.Sprintf("--data-dir=%s", mountDir),
-				fmt.Sprintf("--chain-id=%s", chainId),
+				fmt.Sprintf("--chain-id=%s", chainID),
 				fmt.Sprintf("--config=%s", validatorConfigBytes),
 				fmt.Sprintf("--voting-period=%v", votingPeriodDuration),
 				fmt.Sprintf("--expedited-voting-period=%v", expeditedVotingPeriodDuration),

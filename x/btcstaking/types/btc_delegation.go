@@ -397,7 +397,7 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to build witness for BTC delegation of %s under finality provider %s: %v",
+			"failed to build witness for BTC delegation of %s under finality provider %s: %w",
 			d.BtcPk.MarshalHex(),
 			bbn.NewBIP340PubKeyFromBTCPK(fpSK.PubKey()).MarshalHex(),
 			err,

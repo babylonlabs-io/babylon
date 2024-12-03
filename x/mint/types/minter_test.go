@@ -14,6 +14,7 @@ import (
 )
 
 func TestCalculateInflationRate(t *testing.T) {
+	t.Parallel()
 	minter := DefaultMinter()
 	genesisTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 
@@ -78,6 +79,7 @@ func TestCalculateInflationRate(t *testing.T) {
 }
 
 func TestCalculateBlockProvision(t *testing.T) {
+	t.Parallel()
 	minter := DefaultMinter()
 	current := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
 	blockInterval := 15 * time.Second
@@ -133,6 +135,7 @@ func TestCalculateBlockProvision(t *testing.T) {
 // TestCalculateBlockProvisionError verifies that the error for total block
 // provisions in a year is less than .01
 func TestCalculateBlockProvisionError(t *testing.T) {
+	t.Parallel()
 	minter := DefaultMinter()
 	current := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
 	oneYear := time.Duration(NanosecondsPerYear)

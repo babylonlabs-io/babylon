@@ -21,21 +21,21 @@ type Hooks struct {
 // Hooks Create new distribution hooks
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
-func (h Hooks) AfterEpochBegins(ctx context.Context, epoch uint64) {}
+func (h Hooks) AfterEpochBegins(_ context.Context, _ uint64) {}
 
 func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	h.k.updateBtcLightClientHeightForEpoch(ctx, epoch)
 }
 
-func (h Hooks) BeforeSlashThreshold(ctx context.Context, valSet etypes.ValidatorSet) {}
+func (h Hooks) BeforeSlashThreshold(_ context.Context, _ etypes.ValidatorSet) {}
 
-func (h Hooks) AfterBlsKeyRegistered(ctx context.Context, valAddr sdk.ValAddress) error {
+func (h Hooks) AfterBlsKeyRegistered(_ context.Context, _ sdk.ValAddress) error {
 	return nil
 }
-func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error {
+func (h Hooks) AfterRawCheckpointSealed(_ context.Context, _ uint64) error {
 	return nil
 }
-func (h Hooks) AfterRawCheckpointConfirmed(ctx context.Context, epoch uint64) error {
+func (h Hooks) AfterRawCheckpointConfirmed(_ context.Context, _ uint64) error {
 	return nil
 }
 
@@ -43,7 +43,7 @@ func (h Hooks) AfterRawCheckpointForgotten(ctx context.Context, ckpt *checkpoint
 	return h.k.removeCheckpointRecord(ctx, ckpt)
 }
 
-func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) error {
+func (h Hooks) AfterRawCheckpointFinalized(_ context.Context, _ uint64) error {
 	return nil
 }
 

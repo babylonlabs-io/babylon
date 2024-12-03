@@ -292,7 +292,6 @@ func TestSpendingUnbondingPathCovenant35MultiSig(t *testing.T) {
 		)
 	}
 	btctest.AssertEngineExecution(t, 0, true, newEngine)
-
 }
 
 func TestSpendingUnbondingPathSingleKeyCovenant(t *testing.T) {

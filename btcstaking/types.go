@@ -418,13 +418,13 @@ func BuildStakingInfo(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
+		return nil, fmt.Errorf("%w: %w", errBuildingStakingInfo, err)
 	}
 
 	taprootPkScript, err := sh.taprootPkScript(net)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
+		return nil, fmt.Errorf("%w: %w", errBuildingStakingInfo, err)
 	}
 
 	stakingOutput := wire.NewTxOut(int64(stakingAmount), taprootPkScript)
@@ -486,7 +486,7 @@ func BuildUnbondingInfo(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
+		return nil, fmt.Errorf("%w: %w", errBuildingUnbondingInfo, err)
 	}
 
 	var unbondingPaths [][]byte
@@ -502,13 +502,13 @@ func BuildUnbondingInfo(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
+		return nil, fmt.Errorf("%w: %w", errBuildingUnbondingInfo, err)
 	}
 
 	taprootPkScript, err := sh.taprootPkScript(net)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
+		return nil, fmt.Errorf("%w: %w", errBuildingUnbondingInfo, err)
 	}
 
 	unbondingOutput := wire.NewTxOut(int64(unbondingAmount), taprootPkScript)

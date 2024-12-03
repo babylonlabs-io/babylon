@@ -207,7 +207,7 @@ func extractFromHashes(pubKey *PublicKey, r *PublicRand, hash1 [32]byte, sig1 *S
 	pBytes := pubKey.SerializeCompressed()[1:]
 
 	if sig1.Equals(sig2) {
-		return nil, errors.New("The two signatures need to be different in order to extract")
+		return nil, errors.New("the two signatures need to be different in order to extract")
 	}
 
 	commitment1 := chainhash.TaggedHash(chainhash.TagBIP0340Challenge, rBytes[:], pBytes, hash1[:])
@@ -238,6 +238,6 @@ func extractFromHashes(pubKey *PublicKey, r *PublicRand, hash1 [32]byte, sig1 *S
 	if privKey.PubKey().IsEqual(pubKey) {
 		return privKey, nil
 	} else {
-		return privKey, errors.New("Extracted private key does not match public key")
+		return privKey, errors.New("extracted private key does not match public key")
 	}
 }

@@ -14,6 +14,7 @@ import (
 )
 
 func TestParseGovPropFromFile(t *testing.T) {
+	t.Parallel()
 	cdc := app.NewTmpBabylonApp().AppCodec()
 
 	pwd, err := os.Getwd()
@@ -27,6 +28,7 @@ func TestParseGovPropFromFile(t *testing.T) {
 }
 
 func TestWriteGovPropToFile(t *testing.T) {
+	t.Parallel()
 	cdc := app.NewTmpBabylonApp().AppCodec()
 
 	pwd, err := os.Getwd()

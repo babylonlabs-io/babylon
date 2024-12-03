@@ -47,7 +47,7 @@ var _ checkpointingtypes.CheckpointingHooks = Hooks{}
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 // BeforeValidatorSlashed records the slash event
-func (h Hooks) BeforeValidatorSlashed(ctx context.Context, valAddr sdk.ValAddress, fraction math.LegacyDec) error {
+func (h Hooks) BeforeValidatorSlashed(ctx context.Context, valAddr sdk.ValAddress, _ math.LegacyDec) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	thresholds := []float64{float64(1) / float64(3), float64(2) / float64(3)}
 
@@ -92,15 +92,15 @@ func (h Hooks) AfterValidatorCreated(ctx context.Context, valAddr sdk.ValAddress
 	return h.k.RecordNewValState(sdk.UnwrapSDKContext(ctx), valAddr, types.BondState_CREATED)
 }
 
-func (h Hooks) AfterValidatorRemoved(ctx context.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error {
+func (h Hooks) AfterValidatorRemoved(ctx context.Context, _ sdk.ConsAddress, valAddr sdk.ValAddress) error {
 	return h.k.RecordNewValState(sdk.UnwrapSDKContext(ctx), valAddr, types.BondState_REMOVED)
 }
 
-func (h Hooks) AfterValidatorBonded(ctx context.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error {
+func (h Hooks) AfterValidatorBonded(ctx context.Context, _ sdk.ConsAddress, valAddr sdk.ValAddress) error {
 	return h.k.RecordNewValState(sdk.UnwrapSDKContext(ctx), valAddr, types.BondState_BONDED)
 }
 
-func (h Hooks) AfterValidatorBeginUnbonding(ctx context.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error {
+func (h Hooks) AfterValidatorBeginUnbonding(ctx context.Context, _ sdk.ConsAddress, valAddr sdk.ValAddress) error {
 	return h.k.RecordNewValState(sdk.UnwrapSDKContext(ctx), valAddr, types.BondState_UNBONDING)
 }
 
