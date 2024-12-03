@@ -20,8 +20,19 @@ func (k Keeper) withdrawReward(ctx context.Context, sType types.StakeholderType,
 	if !withdrawableCoins.IsAllPositive() {
 		return nil, types.ErrNoWithdrawableCoins
 	}
+
+	withdrawAddr, err := k.GetWithdrawAddr(ctx, addr)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fallback to the stakeholder's address if no specific withdrawal address is set
+	if withdrawAddr == nil {
+		withdrawAddr = addr
+	}
+
 	// transfer withdrawable coins from incentive module account to the stakeholder's address
-	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, withdrawableCoins); err != nil {
+	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, withdrawAddr, withdrawableCoins); err != nil {
 		return nil, err
 	}
 	// empty reward gauge

@@ -6,6 +6,7 @@ import "google/api/annotations.proto";
 import "babylon/incentive/params.proto";
 import "babylon/incentive/incentive.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
 
@@ -22,6 +23,11 @@ service Query {
     // BTCStakingGauge queries the BTC staking gauge of a given height
     rpc BTCStakingGauge(QueryBTCStakingGaugeRequest) returns (QueryBTCStakingGaugeResponse) {
         option (google.api.http).get = "/babylon/incentive/btc_staking_gauge/{height}";
+    }
+
+    // DelegatorWithdrawAddress queries withdraw address of a delegator.
+    rpc DelegatorWithdrawAddress(QueryDelegatorWithdrawAddressRequest) returns (QueryDelegatorWithdrawAddressResponse) {
+        option (google.api.http).get = "/babylon/incentive/delegators/{delegator_address}/withdraw_address";
     }
 }
 
@@ -83,4 +89,24 @@ message BTCStakingGaugeResponse {
 message QueryBTCStakingGaugeResponse {
     // gauge is the BTC staking gauge at the queried height 
     BTCStakingGaugeResponse gauge = 1;
+}
+
+// QueryDelegatorWithdrawAddressRequest is the request type for the
+// Query/DelegatorWithdrawAddress RPC method.
+message QueryDelegatorWithdrawAddressRequest {
+    option (gogoproto.equal)           = false;
+    option (gogoproto.goproto_getters) = false;
+
+    // delegator_address defines the delegator address to query for.
+    string delegator_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// QueryDelegatorWithdrawAddressResponse is the response type for the
+// Query/DelegatorWithdrawAddress RPC method.
+message QueryDelegatorWithdrawAddressResponse {
+    option (gogoproto.equal)           = false;
+    option (gogoproto.goproto_getters) = false;
+
+    // withdraw_address defines the delegator address to query for.
+    string withdraw_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
