@@ -23,6 +23,11 @@ service Query {
     option (google.api.http).get = "/babylon/btcstaking/v1/params/{version}";
   }
 
+  // ParamsByBTCHeight queries the parameters of the module for a specific BTC height
+  rpc ParamsByBTCHeight(QueryParamsByBTCHeightRequest) returns (QueryParamsByBTCHeightResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/params/btc_height/{btc_height}";
+  }
+
   // FinalityProviders queries all finality providers
   rpc FinalityProviders(QueryFinalityProvidersRequest) returns (QueryFinalityProvidersResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers";
@@ -67,6 +72,20 @@ message QueryParamsByVersionRequest {
 message QueryParamsByVersionResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryParamsByBTCHeightRequest is request type for the Query/ParamsByBTCHeight RPC method.
+message QueryParamsByBTCHeightRequest {
+  uint32 btc_height = 1;
+}
+
+// QueryParamsByBTCHeightResponse is response type for the Query/QueryParamsByBTCHeightResponse RPC method.
+message QueryParamsByBTCHeightResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
+
+  // version is the version of the params for the given BTC height
+  uint32 version = 2;
 }
 
 // QueryFinalityProvidersRequest is the request type for the

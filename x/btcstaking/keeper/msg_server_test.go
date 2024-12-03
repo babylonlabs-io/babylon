@@ -49,6 +49,7 @@ func FuzzMsgServer_UpdateParams(f *testing.F) {
 		params := h.BTCStakingKeeper.GetParams(h.Ctx)
 		ckptFinalizationTimeout := btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
 		params.MinUnbondingTimeBlocks = uint32(r.Intn(int(ckptFinalizationTimeout))) + 1
+		params.BtcActivationHeight = params.BtcActivationHeight + 1
 
 		// Try to update params with minUnbondingTime less than or equal to checkpointFinalizationTimeout
 		msg := &types.MsgUpdateParams{
@@ -241,6 +242,75 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 	})
 }
 
+func FuzzCreateBTCDelegationWithParamsFromBtcHeight(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(time.Now().Unix()))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+
+		// set all parameters
+		h.GenAndApplyParams(r)
+		ctx, k := h.Ctx, h.BTCStakingKeeper
+
+		versionedParams := k.GetParamsWithVersion(ctx)
+		currentParams := versionedParams.Params
+
+		maxGapBlocksBetweenParams := datagen.RandomUInt32(r, 100) + 100
+		expectedParamsBlockHeight := datagen.RandomUInt32(r, maxGapBlocksBetweenParams) + currentParams.BtcActivationHeight + 1
+		expectedParamsVersion := versionedParams.Version + 1
+
+		currentParams.BtcActivationHeight = expectedParamsBlockHeight
+		err := k.SetParams(ctx, currentParams)
+		require.NoError(t, err)
+
+		nextBtcActivationHeight := datagen.RandomUInt32(r, maxGapBlocksBetweenParams) + currentParams.BtcActivationHeight + 1
+		currentParams.BtcActivationHeight = nextBtcActivationHeight
+		err = k.SetParams(ctx, currentParams)
+		require.NoError(t, err)
+
+		// makes sure that at the BTC block height 300 will use the expected param
+		p, version, err := k.GetParamsForBtcHeight(ctx, uint64(nextBtcActivationHeight-1))
+		h.NoError(err)
+		require.Equal(t, p.BtcActivationHeight, expectedParamsBlockHeight)
+		require.Equal(t, version, expectedParamsVersion)
+
+		// creates one BTC delegation with BTC block height between expectedParamsBlockHeight and 500
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		h.NoError(err)
+
+		// generate and insert new finality provider
+		_, fpPK, _ := h.CreateFinalityProvider(r)
+
+		btcBlockHeight := datagen.RandomUInt32(r, nextBtcActivationHeight-expectedParamsBlockHeight) + expectedParamsBlockHeight
+		// generate and insert new BTC delegation
+		stakingValue := int64(2 * 10e8)
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		_, _, btcDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			fpPK,
+			changeAddress.EncodeAddress(),
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			btcBlockHeight,
+		)
+		h.NoError(err)
+		require.NotNil(t, btcDel.ParamsVersion, expectedParamsVersion)
+	})
+}
+
 func TestProperVersionInDelegation(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	ctrl := gomock.NewController(t)
@@ -291,6 +361,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	customMinUnbondingTime := uint32(2000)
 	currentParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	currentParams.MinUnbondingTimeBlocks = 2000
+	currentParams.BtcActivationHeight = currentParams.BtcActivationHeight + 1
 	// Update new params
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
 	require.NoError(t, err)

@@ -45,6 +45,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#311](https://github.com/babylonlabs-io/babylon/pull/311) Enforce version 2
 for unbonding transactions
 
+### State Machine Breaking
+
+- [#310](https://github.com/babylonlabs-io/babylon/pull/310) implement adr-37 -
+making params valid for btc light client ranges
+
 ## v0.17.1
 
 ### Bug fixes

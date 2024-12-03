@@ -26,4 +26,5 @@ var (
 	// 0x07 was used for something else in the past
 	PowerDistUpdateKey        = []byte{0x08}             // key prefix for power distribution update events
 	AllowedStakingTxHashesKey = collections.NewPrefix(9) // key prefix for allowed staking tx hashes
+	HeightToVersionMapKey     = []byte{0x10}             // key prefix for height to version map
 )
