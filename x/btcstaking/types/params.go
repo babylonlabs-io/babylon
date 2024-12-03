@@ -262,6 +262,10 @@ func (m *HeightToVersionMap) GetLastPair() *HeightVersionPair {
 	return m.Pairs[len(m.Pairs)-1]
 }
 
+// AddNewPair adds a new pair to the map it preserves the following invariants:
+// 1. pairs are sorted by start height in ascending order
+// 2. versions are strictly increasing by increments of 1
+// If newPair breaks any of the invariants, it returns an error
 func (m *HeightToVersionMap) AddNewPair(startHeight uint64, version uint32) error {
 	return m.AddPair(&HeightVersionPair{
 		StartHeight: startHeight,
@@ -269,6 +273,10 @@ func (m *HeightToVersionMap) AddNewPair(startHeight uint64, version uint32) erro
 	})
 }
 
+// AddPair adds a new pair to the map it preserves the following invariants:
+// 1. pairs are sorted by start height in ascending order
+// 2. versions are strictly increasing by increments of 1
+// If newPair breaks any of the invariants, it returns an error
 func (m *HeightToVersionMap) AddPair(newPair *HeightVersionPair) error {
 	if len(m.Pairs) == 0 && newPair.Version != 0 {
 		return fmt.Errorf("version must be 0 for the first pair")

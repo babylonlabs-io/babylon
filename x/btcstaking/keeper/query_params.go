@@ -42,10 +42,10 @@ func (k Keeper) ParamsByBTCHeight(
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	p, _, err := k.GetParamsForBtcHeight(ctx, uint64(req.BtcHeight))
+	p, version, err := k.GetParamsForBtcHeight(ctx, uint64(req.BtcHeight))
 	if err != nil {
 		return nil, types.ErrParamsNotFound.Wrapf("params for btc height %d not found", req.BtcHeight)
 	}
 
-	return &types.QueryParamsByBTCHeightResponse{Params: *p}, nil
+	return &types.QueryParamsByBTCHeightResponse{Params: *p, Version: version}, nil
 }

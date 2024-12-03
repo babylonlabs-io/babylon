@@ -101,9 +101,9 @@ func TestParamsByBTCHeightQuery(t *testing.T) {
 
 	resp0, err := keeper.ParamsByBTCHeight(ctx, &types.QueryParamsByBTCHeightRequest{BtcHeight: params1.BtcActivationHeight})
 	require.NoError(t, err)
-	require.Equal(t, &types.QueryParamsByBTCHeightResponse{Params: params1}, resp0)
+	require.Equal(t, &types.QueryParamsByBTCHeightResponse{Params: params1, Version: 1}, resp0)
 
 	resp1, err := keeper.ParamsByBTCHeight(ctx, &types.QueryParamsByBTCHeightRequest{BtcHeight: params2.BtcActivationHeight})
 	require.NoError(t, err)
-	require.Equal(t, &types.QueryParamsByBTCHeightResponse{Params: params2}, resp1)
+	require.Equal(t, &types.QueryParamsByBTCHeightResponse{Params: params2, Version: 2}, resp1)
 }

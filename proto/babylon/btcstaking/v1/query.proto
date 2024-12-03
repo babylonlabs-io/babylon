@@ -83,6 +83,9 @@ message QueryParamsByBTCHeightRequest {
 message QueryParamsByBTCHeightResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+
+  // version is the version of the params for the given BTC height
+  uint32 version = 2;
 }
 
 // QueryFinalityProvidersRequest is the request type for the
