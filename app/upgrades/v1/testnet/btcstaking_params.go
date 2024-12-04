@@ -3,8 +3,8 @@ package testnet
 // The BTC staking parameters should be compatible with the global-parameters
 // used in the BTC staking caps on bbn-test-4
 // ref: https://github.com/babylonchain/networks/blob/main/bbn-test-4/parameters/global-params.json
-// allow_list_expiration_height set to close to seven days of blocks 100800 producing
-// each babylon block in 6 seconds.
+// allow_list_expiration_height set to close to 72 hours of blocks 25920 + ~200 blocks of TGE
+// producing each babylon block in 10 seconds = 26120.
 // In global params version 2,3,4 we inserted the cap_height: 201385, at the moment we don't
 // have a good way of specifyng the cap to avoid overflow to join as valid BTC staking,
 // so this will be filtered out by the allow list of transactions
@@ -34,7 +34,7 @@ const BtcStakingParamsStr = `[
     "unbonding_fee_sat": 2000,
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1000,
-    "allow_list_expiration_height": 28800,
+    "allow_list_expiration_height": 26120,
     "btc_activation_height": 197535
   },
   {
@@ -61,7 +61,7 @@ const BtcStakingParamsStr = `[
     "unbonding_fee_sat": 10000,
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1000,
-    "allow_list_expiration_height": 28800,
+    "allow_list_expiration_height": 26120,
     "btc_activation_height": 198665
   },
   {
@@ -88,7 +88,7 @@ const BtcStakingParamsStr = `[
     "unbonding_fee_sat": 10000,
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1000,
-    "allow_list_expiration_height": 28800,
+    "allow_list_expiration_height": 26120,
     "btc_activation_height": 200665
   },
   {
@@ -115,7 +115,7 @@ const BtcStakingParamsStr = `[
     "unbonding_fee_sat": 5000,
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1000,
-    "allow_list_expiration_height": 28800,
+    "allow_list_expiration_height": 26120,
     "btc_activation_height": 215968
   },
   {
@@ -142,7 +142,7 @@ const BtcStakingParamsStr = `[
     "unbonding_fee_sat": 5000,
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1000,
-    "allow_list_expiration_height": 28800,
+    "allow_list_expiration_height": 26120,
     "btc_activation_height": 220637
   }
 ]`
