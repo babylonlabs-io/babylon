@@ -66,6 +66,8 @@ func NewHelper(
 	// mock refundable messages
 	iKeeper := ftypes.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+	iKeeper.EXPECT().BtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	iKeeper.EXPECT().BtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(timestampedEpoch).AnyTimes()
