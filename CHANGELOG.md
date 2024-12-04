@@ -49,6 +49,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#310](https://github.com/babylonlabs-io/babylon/pull/310) implement adr-37 -
 making params valid for btc light client ranges
 
+### Bug fixes
+
+- [#318](https://github.com/babylonlabs-io/babylon/pull/318) Fix BTC delegation status check
+to relay on UnbondingTime in delegation
+
 ## v0.17.2
 
 ### Improvements
