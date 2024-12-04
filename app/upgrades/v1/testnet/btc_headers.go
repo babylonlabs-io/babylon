@@ -1,5 +1,13 @@
 package testnet
 
+// Collect all the block headers since the first retarget block prior
+// to the first block activation height.
+// Activation block height: 197535
+// Retarget block: 195552
+// Use staking indexer to generate signet blocks until the most recent
+// block possible prior to the upgrade launch.
+// sid btc-headers 195552 {latestTipBlockHeight} --home ... --output file/to/btc-headers.json
+// script how to generate https://github.com/babylonlabs-io/babylon-deployment/blob/9f39a715e54eedf4842632bbbfbdd353fd16951f/deployments/local/upgrades/write-upgrade-btc-headers.sh#L36
 const NewBtcHeadersStr = `{
   "btc_headers": [
     {
