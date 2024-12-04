@@ -104,12 +104,12 @@ func (k Keeper) calculateDelegationRewardsBetween(
 	// }
 
 	// return staking * (ending - starting)
-	starting, err := k.getFinalityProviderHistoricalRewards(ctx, fp, btcDelRwdTracker.StartPeriodCumulativeReward)
+	starting, err := k.GetFinalityProviderHistoricalRewards(ctx, fp, btcDelRwdTracker.StartPeriodCumulativeReward)
 	if err != nil {
 		return sdk.Coins{}, err
 	}
 
-	ending, err := k.getFinalityProviderHistoricalRewards(ctx, fp, endingPeriod)
+	ending, err := k.GetFinalityProviderHistoricalRewards(ctx, fp, endingPeriod)
 	if err != nil {
 		return sdk.Coins{}, err
 	}
@@ -138,6 +138,7 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 		}
 
 		// initialize Validator and return 1 as ended period
+		// the ended period is 1 because the just created historical sits at 0
 		if _, err := k.initializeFinalityProvider(ctx, fp); err != nil {
 			return 0, err
 		}
@@ -149,7 +150,7 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 		currentRewardsPerSat = fpCurrentRwd.CurrentRewards.QuoInt(fpCurrentRwd.TotalActiveSat)
 	}
 
-	fpHistoricalRwd, err := k.getFinalityProviderHistoricalRewards(ctx, fp, fpCurrentRwd.Period-1)
+	fpHistoricalRwd, err := k.GetFinalityProviderHistoricalRewards(ctx, fp, fpCurrentRwd.Period-1)
 	if err != nil {
 		return 0, err
 	}
@@ -253,7 +254,7 @@ func (k Keeper) setFinalityProviderCurrentRewards(ctx context.Context, fp sdk.Ac
 	return nil
 }
 
-func (k Keeper) getFinalityProviderHistoricalRewards(ctx context.Context, fp sdk.AccAddress, period uint64) (types.FinalityProviderHistoricalRewards, error) {
+func (k Keeper) GetFinalityProviderHistoricalRewards(ctx context.Context, fp sdk.AccAddress, period uint64) (types.FinalityProviderHistoricalRewards, error) {
 	key := make([]byte, 8)
 	binary.LittleEndian.PutUint64(key, period)
 
@@ -336,6 +337,16 @@ func (k Keeper) subFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress
 	}
 
 	fpCurrentRwd.SubTotalActiveSat(amt)
+	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+}
+
+func (k Keeper) AddFinalityProviderRewardsForDelegationsBTC(ctx context.Context, fp sdk.AccAddress, rwd sdk.Coins) error {
+	fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
+	if err != nil {
+		return err
+	}
+
+	fpCurrentRwd.AddRewards(rwd)
 	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
 
