@@ -67,7 +67,7 @@ func (k Keeper) BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddres
 	// withdraw rewards
 	//
 
-	if err := k.SubDelegationStaking(ctx, fp, del, amtSat); err != nil {
+	if err := k.SubDelegationSat(ctx, fp, del, amtSat); err != nil {
 		return err
 	}
 	return nil
@@ -359,7 +359,10 @@ func (k Keeper) AddDelegationSat(ctx context.Context, fp, del sdk.AccAddress, am
 	return k.addFinalityProviderStaked(ctx, fp, amt)
 }
 
-func (k Keeper) SubDelegationStaking(ctx context.Context, fp, del sdk.AccAddress, amt sdkmath.Int) error {
+// SubDelegationSat there is no need to check if the fp or delegation exists, because they should exist
+// otherwise it is probably a programming error calling to subtract the amount of active sat without
+// having any sat added in the first place.
+func (k Keeper) SubDelegationSat(ctx context.Context, fp, del sdk.AccAddress, amt sdkmath.Int) error {
 	btcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
 	if err != nil {
 		return err
