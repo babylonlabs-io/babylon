@@ -345,12 +345,28 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 		return nil, fmt.Errorf("invalid inclusion proof: %w", err)
 	}
 
-	// 6. set start height and end height and save it to db
+	// 6. Check if parameters used the validate /create the delegation are the same
+	// as the one in the BTC light client
+	_, version, err := ms.GetParamsForBtcHeight(ctx, uint64(timeInfo.StartHeight))
+	if err != nil {
+		return nil, err
+	}
+
+	if btcDel.ParamsVersion != version {
+		return nil, types.ErrParamsVersionMismatch.Wrapf(
+			"params version in BTC delegation: %d, params version at height %d: %d",
+			btcDel.ParamsVersion,
+			timeInfo.StartHeight,
+			version,
+		)
+	}
+
+	// 7. set start height and end height and save it to db
 	btcDel.StartHeight = timeInfo.StartHeight
 	btcDel.EndHeight = timeInfo.EndHeight
 	ms.setBTCDelegation(ctx, btcDel)
 
-	// 7. emit events
+	// 8. emit events
 	stakingTxHash := btcDel.MustGetStakingTxHash()
 
 	newInclusionProofEvent := types.NewInclusionProofEvent(
