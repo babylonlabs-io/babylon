@@ -30,4 +30,5 @@ var (
 	ErrFpAlreadyJailed          = errorsmod.Register(ModuleName, 1121, "the finality provider has already been jailed")
 	ErrFpNotJailed              = errorsmod.Register(ModuleName, 1122, "the finality provider is not jailed")
 	ErrDuplicatedCovenantSig    = errorsmod.Register(ModuleName, 1123, "the covenant signature is already submitted")
+	ErrParamsVersionMismatch    = errorsmod.Register(ModuleName, 1124, "the parameters version in the BTC delegation is different from the parameters active at staking transaction inclusion height")
 )
