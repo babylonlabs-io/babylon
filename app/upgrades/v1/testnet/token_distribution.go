@@ -1,5 +1,7 @@
 package testnet
 
+// TODO(rafilx): Filipos generate 1000 addresses to send tokens to
+// and build this data.
 const TokensDistributionStr = `{
   "token_distribution": [
     {

@@ -1,7 +1,11 @@
 package testnet
 
-// TODO Some default parameters. Consider how to switch those depending on network:
-// mainnet, testnet, devnet etc.
+// The finality parameters are in the upgrade just because his structure
+// had an update and it is possible to overwrite during the upgrade.
+// The finality activation height is when the FP need to have their
+// program ready to start send finality signatures and it could be
+// the same block height where the allow list is expired in this case
+// babylon block height: 100800
 const FinalityParamStr = `{
   "max_active_finality_providers": 100,
   "signed_blocks_window": 100,
@@ -9,5 +13,5 @@ const FinalityParamStr = `{
   "min_signed_per_window": "0.1",
   "min_pub_rand": 100,
   "jail_duration": "86400s",
-  "finality_activation_height": 75
+  "finality_activation_height": 100800
 }`
