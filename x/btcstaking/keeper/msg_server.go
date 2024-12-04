@@ -436,8 +436,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 
 	// ensure BTC delegation is still pending, i.e., not unbonded
 	btcTipHeight := ms.btclcKeeper.GetTipInfo(ctx).Height
-	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-	status := btcDel.GetStatus(btcTipHeight, wValue, params.CovenantQuorum)
+	status := btcDel.GetStatus(btcTipHeight, params.CovenantQuorum)
 	if status == types.BTCDelegationStatus_UNBONDED {
 		ms.Logger(ctx).Debug("Received covenant signature after the BTC delegation is already unbonded", "covenant pk", req.Pk.MarshalHex())
 		return nil, types.ErrInvalidCovenantSig.Wrap("the BTC delegation is already unbonded")
@@ -583,9 +582,11 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	// ensure the BTC delegation with the given staking tx hash is active
 	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
-	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
-	btcDelStatus := btcDel.GetStatus(btcTip.Height, wValue, bsParams.CovenantQuorum)
+	btcDelStatus := btcDel.GetStatus(
+		btcTip.Height,
+		bsParams.CovenantQuorum,
+	)
 
 	if btcDelStatus == types.BTCDelegationStatus_UNBONDED {
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an unbonded BTC delegation")
@@ -690,9 +691,8 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 	// ensure the BTC delegation is active, or its BTC undelegation receives an
 	// unbonding signature from the staker
 	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
-	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 	covQuorum := bsParams.CovenantQuorum
-	if btcDel.GetStatus(btcTip.Height, wValue, covQuorum) != types.BTCDelegationStatus_ACTIVE && !btcDel.IsUnbondedEarly() {
+	if btcDel.GetStatus(btcTip.Height, covQuorum) != types.BTCDelegationStatus_ACTIVE && !btcDel.IsUnbondedEarly() {
 		return nil, types.ErrBTCDelegationNotFound.Wrap("a BTC delegation that is not active or unbonding early cannot be slashed")
 	}
 
