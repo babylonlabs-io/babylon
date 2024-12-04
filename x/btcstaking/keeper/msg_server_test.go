@@ -454,10 +454,9 @@ func TestRejectActivationOfTheDelegationCreatedWithOldParams(t *testing.T) {
 	require.NotNil(t, actualDel)
 
 	tipHeight := h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height
-	checkpointTimeout := h.BTCCheckpointKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
 	covenantQuorum := h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
 
-	status := actualDel.GetStatus(tipHeight, checkpointTimeout, covenantQuorum)
+	status := actualDel.GetStatus(tipHeight, covenantQuorum)
 	require.Equal(t, types.BTCDelegationStatus_VERIFIED, status)
 
 	msg := &types.MsgAddBTCDelegationInclusionProof{
