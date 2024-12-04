@@ -7,6 +7,7 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestXxx(t *testing.T) {
@@ -16,5 +17,6 @@ func TestXxx(t *testing.T) {
 	fpAddr, delAddr := datagen.GenRandomAddress(), datagen.GenRandomAddress()
 
 	k, ctx := keepertest.IncentiveKeeper(t, nil, nil, nil)
-	k.AddDelegationSat(ctx, fpAddr, delAddr, math.NewInt(2000))
+	err := k.AddDelegationSat(ctx, fpAddr, delAddr, math.NewInt(2000))
+	require.NoError(t, err)
 }
