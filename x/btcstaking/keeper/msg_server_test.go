@@ -545,10 +545,9 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		require.True(h.T(), actualDel.BtcUndelegation.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 
 		tipHeight := h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height
-		checkpointTimeout := h.BTCCheckpointKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
 		covenantQuorum := h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
-		status := actualDel.GetStatus(tipHeight, checkpointTimeout, covenantQuorum)
-		votingPower := actualDel.VotingPower(tipHeight, checkpointTimeout, covenantQuorum)
+		status := actualDel.GetStatus(tipHeight, covenantQuorum)
+		votingPower := actualDel.VotingPower(tipHeight, covenantQuorum)
 
 		if usePreApproval {
 			require.Equal(t, status, types.BTCDelegationStatus_VERIFIED)
@@ -607,10 +606,9 @@ func FuzzAddBTCDelegationInclusionProof(f *testing.F) {
 
 		// ensure the BTC delegation is now verified and does not have voting power
 		tipHeight := h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height
-		checkpointTimeout := h.BTCCheckpointKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
 		covenantQuorum := h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
-		status := actualDel.GetStatus(tipHeight, checkpointTimeout, covenantQuorum)
-		votingPower := actualDel.VotingPower(tipHeight, checkpointTimeout, covenantQuorum)
+		status := actualDel.GetStatus(tipHeight, covenantQuorum)
+		votingPower := actualDel.VotingPower(tipHeight, covenantQuorum)
 
 		require.Equal(t, status, types.BTCDelegationStatus_VERIFIED)
 		require.Zero(t, votingPower)
@@ -621,8 +619,8 @@ func FuzzAddBTCDelegationInclusionProof(f *testing.F) {
 
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		status = actualDel.GetStatus(tipHeight, checkpointTimeout, covenantQuorum)
-		votingPower = actualDel.VotingPower(tipHeight, checkpointTimeout, covenantQuorum)
+		status = actualDel.GetStatus(tipHeight, covenantQuorum)
+		votingPower = actualDel.VotingPower(tipHeight, covenantQuorum)
 
 		require.Equal(t, status, types.BTCDelegationStatus_ACTIVE)
 		require.Equal(t, uint64(stakingValue), votingPower)
@@ -646,7 +644,6 @@ func FuzzBTCUndelegate(f *testing.F) {
 		covenantSKs, _ := h.GenAndApplyParams(r)
 
 		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
-		wValue := h.BTCCheckpointKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
 
 		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 		require.NoError(t, err)
@@ -681,7 +678,7 @@ func FuzzBTCUndelegate(f *testing.F) {
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
 		btcTip := h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height
-		status := actualDel.GetStatus(btcTip, wValue, bsParams.CovenantQuorum)
+		status := actualDel.GetStatus(btcTip, bsParams.CovenantQuorum)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 
 		msg := &types.MsgBTCUndelegate{
@@ -704,7 +701,7 @@ func FuzzBTCUndelegate(f *testing.F) {
 		// ensure the BTC delegation is unbonded
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		status = actualDel.GetStatus(btcTip, wValue, bsParams.CovenantQuorum)
+		status = actualDel.GetStatus(btcTip, bsParams.CovenantQuorum)
 		require.Equal(t, types.BTCDelegationStatus_UNBONDED, status)
 	})
 }
