@@ -62,7 +62,7 @@ const BtcStakingParamsStr = `[
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1000,
     "allow_list_expiration_height": 28800,
-    "btc_activation_height": 197535
+    "btc_activation_height": 198665
   },
   {
     "covenant_pks": [
@@ -85,7 +85,7 @@ const BtcStakingParamsStr = `[
     "min_slashing_tx_fee_sat": 1000,
     "slashing_rate": "0.100000000000000000",
     "unbonding_time_blocks": 1008,
-    "unbonding_fee_sat": 1000,
+    "unbonding_fee_sat": 10000,
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1000,
     "allow_list_expiration_height": 28800,
