@@ -138,7 +138,7 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 		}
 
 		// initialize Validator and return 1 as ended period
-		if err := k.initializeFinalityProvider(ctx, fp); err != nil {
+		if _, err := k.initializeFinalityProvider(ctx, fp); err != nil {
 			return 0, err
 		}
 		return 1, nil
@@ -168,14 +168,16 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 	return fpCurrentRwd.Period, nil
 }
 
-func (k Keeper) initializeFinalityProvider(ctx context.Context, fp sdk.AccAddress) error {
+func (k Keeper) initializeFinalityProvider(ctx context.Context, fp sdk.AccAddress) (types.FinalityProviderCurrentRewards, error) {
 	// historical rewards starts at the period 0
 	err := k.setFinalityProviderHistoricalRewards(ctx, fp, 0, types.NewFinalityProviderHistoricalRewards(sdk.NewCoins()))
 	if err != nil {
-		return err
+		return types.FinalityProviderCurrentRewards{}, err
 	}
+
 	// set current rewards (starting at period 1)
-	return k.setFinalityProviderCurrentRewards(ctx, fp, types.NewFinalityProviderCurrentRewards(sdk.NewCoins(), 1, sdkmath.ZeroInt()))
+	newFp := types.NewFinalityProviderCurrentRewards(sdk.NewCoins(), 1, sdkmath.ZeroInt())
+	return newFp, k.setFinalityProviderCurrentRewards(ctx, fp, newFp)
 }
 
 // initializeBTCDelegation creates a new BTCDelegationRewardsTracker from the previous acumulative rewards
@@ -286,7 +288,8 @@ func (k Keeper) setFinalityProviderHistoricalRewards(ctx context.Context, fp sdk
 // value: BTCDelegationRewardsTracker
 func (k Keeper) storeBTCDelegationRewardsTracker(ctx context.Context, fp sdk.AccAddress) prefix.Store {
 	storeAdaptor := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	return prefix.NewStore(storeAdaptor, types.BTCDelegationRewardsTrackerKey)
+	st := prefix.NewStore(storeAdaptor, types.BTCDelegationRewardsTrackerKey)
+	return prefix.NewStore(st, fp.Bytes())
 }
 
 // storeFpCurrentRewards returns the KVStore of the FP current rewards
@@ -311,7 +314,15 @@ func (k Keeper) storeFpHistoricalRewards(ctx context.Context, fp sdk.AccAddress)
 func (k Keeper) addFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress, amt sdkmath.Int) error {
 	fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
 	if err != nil {
-		return err
+		if !errors.Is(err, types.ErrFPCurrentRewardsNotFound) {
+			return err
+		}
+
+		// this is needed as the amount of sats for the FP is inside the FpCurrentRewards
+		fpCurrentRwd, err = k.initializeFinalityProvider(ctx, fp)
+		if err != nil {
+			return err
+		}
 	}
 
 	fpCurrentRwd.AddTotalActiveSat(amt)
