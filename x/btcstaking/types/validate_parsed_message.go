@@ -23,9 +23,9 @@ func ValidateParsedMessageAgainstTheParams(
 ) (*ParamsValidationResult, error) {
 	// 1. Validate unbonding time first as it will be used in other checks
 	// Check unbonding time (staking time from unbonding tx) is not less than min unbonding time
-	if uint32(pm.UnbondingTime) < parameters.MinUnbondingTimeBlocks {
-		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding time %d must not be less than %d",
-			pm.UnbondingTime, parameters.MinUnbondingTimeBlocks)
+	if uint32(pm.UnbondingTime) != parameters.UnbondingTimeBlocks {
+		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding time %d must be equal to %d",
+			pm.UnbondingTime, parameters.UnbondingTimeBlocks)
 	}
 
 	stakingTxHash := pm.StakingTx.Transaction.TxHash()

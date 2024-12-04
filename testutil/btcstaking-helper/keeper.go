@@ -124,7 +124,7 @@ func (h *Helper) BeginBlocker() {
 }
 
 func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
-	// ensure that minUnbondingTime is larger than finalizationTimeout
+	// ensure that unbonding_time is larger than finalizationTimeout
 	return h.GenAndApplyCustomParams(r, 100, 200, 0)
 }
 
@@ -135,7 +135,7 @@ func (h *Helper) SetCtxHeight(height uint64) {
 func (h *Helper) GenAndApplyCustomParams(
 	r *rand.Rand,
 	finalizationTimeout uint32,
-	minUnbondingTime uint32,
+	unbondingTime uint32,
 	allowListExpirationHeight uint64,
 ) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
 	// mock base header
@@ -165,9 +165,10 @@ func (h *Helper) GenAndApplyCustomParams(
 		MinSlashingTxFeeSat:       10,
 		MinCommissionRate:         sdkmath.LegacyMustNewDecFromStr("0.01"),
 		SlashingRate:              sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
-		MinUnbondingTimeBlocks:    minUnbondingTime,
+		UnbondingTimeBlocks:       unbondingTime,
 		UnbondingFeeSat:           1000,
 		AllowListExpirationHeight: allowListExpirationHeight,
+		BtcActivationHeight:       1,
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs
@@ -218,6 +219,26 @@ func (h *Helper) CreateDelegation(
 	usePreApproval bool,
 	addToAllowList bool,
 ) (string, *types.MsgCreateBTCDelegation, *types.BTCDelegation, *btclctypes.BTCHeaderInfo, *types.InclusionProof, *UnbondingTxInfo, error) {
+	return h.CreateDelegationWithBtcBlockHeight(
+		r, delSK, fpPK, changeAddress, stakingValue,
+		stakingTime, unbondingValue, unbondingTime,
+		usePreApproval, addToAllowList, 10,
+	)
+}
+
+func (h *Helper) CreateDelegationWithBtcBlockHeight(
+	r *rand.Rand,
+	delSK *btcec.PrivateKey,
+	fpPK *btcec.PublicKey,
+	changeAddress string,
+	stakingValue int64,
+	stakingTime uint16,
+	unbondingValue int64,
+	unbondingTime uint16,
+	usePreApproval bool,
+	addToAllowList bool,
+	btcBlockHeight uint32,
+) (string, *types.MsgCreateBTCDelegation, *types.BTCDelegation, *btclctypes.BTCHeaderInfo, *types.InclusionProof, *UnbondingTxInfo, error) {
 	stakingTimeBlocks := stakingTime
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
@@ -229,7 +250,7 @@ func (h *Helper) CreateDelegation(
 	if unbondingValue == 0 {
 		unbondingValue = defaultUnbondingValue
 	}
-	defaultUnbondingTime := bsParams.MinUnbondingTimeBlocks
+	defaultUnbondingTime := bsParams.UnbondingTimeBlocks
 	if unbondingTime == 0 {
 		unbondingTime = uint16(defaultUnbondingTime)
 	}
@@ -261,7 +282,7 @@ func (h *Helper) CreateDelegation(
 	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
 	btcHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlock.Header, testStakingInfo.StakingTx)
 	btcHeader := btcHeaderWithProof.HeaderBytes
-	btcHeaderInfo := &btclctypes.BTCHeaderInfo{Header: &btcHeader, Height: 10}
+	btcHeaderInfo := &btclctypes.BTCHeaderInfo{Header: &btcHeader, Height: btcBlockHeight}
 	serializedStakingTx, err := bbn.SerializeBTCTx(testStakingInfo.StakingTx)
 	h.NoError(err)
 

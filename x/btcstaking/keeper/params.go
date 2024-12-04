@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"sort"
 
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
@@ -71,7 +72,19 @@ func (k Keeper) SetParams(ctx context.Context, p types.Params) error {
 		return err
 	}
 
+	heightToVersionMap := k.GetHeightToVersionMap(ctx)
+
+	if heightToVersionMap == nil {
+		heightToVersionMap = types.NewHeightToVersionMap()
+	}
+
 	nextVersion := k.nextParamsVersion(ctx)
+
+	err := heightToVersionMap.AddNewPair(uint64(p.BtcActivationHeight), nextVersion)
+	if err != nil {
+		return err
+	}
+
 	paramsStore := k.paramsStore(ctx)
 
 	sp := types.StoredParams{
@@ -80,7 +93,7 @@ func (k Keeper) SetParams(ctx context.Context, p types.Params) error {
 	}
 
 	paramsStore.Set(uint32ToBytes(nextVersion), k.cdc.MustMarshal(&sp))
-	return nil
+	return k.SetHeightToVersionMap(ctx, heightToVersionMap)
 }
 
 func (k Keeper) OverwriteParamsAtVersion(ctx context.Context, v uint32, p types.Params) error {
@@ -89,21 +102,31 @@ func (k Keeper) OverwriteParamsAtVersion(ctx context.Context, v uint32, p types.
 	}
 
 	paramsStore := k.paramsStore(ctx)
-
-	// check if the params at version v exists
-	spBytes := paramsStore.Get(uint32ToBytes(v))
-
-	if len(spBytes) == 0 {
-		return fmt.Errorf("params at version %d not found", v)
-	}
-
 	sp := types.StoredParams{
 		Params:  p,
 		Version: v,
 	}
 
+	heightToVersionMap := k.GetHeightToVersionMap(ctx)
+	if heightToVersionMap == nil {
+		heightToVersionMap = types.NewHeightToVersionMap()
+	}
+
+	// makes sure it is ordered by the version
+	sort.Slice(heightToVersionMap.Pairs, func(i, j int) bool {
+		return heightToVersionMap.Pairs[i].Version < heightToVersionMap.Pairs[j].Version
+	})
+
+	if v >= uint32(len(heightToVersionMap.Pairs)) {
+		if err := heightToVersionMap.AddNewPair(uint64(p.BtcActivationHeight), v); err != nil {
+			return err
+		}
+	} else {
+		heightToVersionMap.Pairs[v] = types.NewHeightVersionPair(uint64(p.BtcActivationHeight), v)
+	}
+
 	paramsStore.Set(uint32ToBytes(v), k.cdc.MustMarshal(&sp))
-	return nil
+	return k.SetHeightToVersionMap(ctx, heightToVersionMap)
 }
 
 func (k Keeper) GetAllParams(ctx context.Context) []*types.Params {
@@ -154,4 +177,42 @@ func (k Keeper) GetParamsWithVersion(ctx context.Context) types.StoredParams {
 // MinCommissionRate returns the minimal commission rate of finality providers
 func (k Keeper) MinCommissionRate(ctx context.Context) math.LegacyDec {
 	return k.GetParams(ctx).MinCommissionRate
+}
+
+func (k Keeper) SetHeightToVersionMap(ctx context.Context, p *types.HeightToVersionMap) error {
+	if err := p.Validate(); err != nil {
+		return err
+	}
+	store := k.storeService.OpenKVStore(ctx)
+	bz := k.cdc.MustMarshal(p)
+	return store.Set(types.HeightToVersionMapKey, bz)
+}
+
+// GetParams returns the current x/btccheckpoint module parameters.
+func (k Keeper) GetHeightToVersionMap(ctx context.Context) *types.HeightToVersionMap {
+	store := k.storeService.OpenKVStore(ctx)
+	bz, err := store.Get(types.HeightToVersionMapKey)
+	if err != nil {
+		panic(err)
+	}
+	if bz == nil {
+		return nil
+	}
+	var p types.HeightToVersionMap
+	k.cdc.MustUnmarshal(bz, &p)
+	return &p
+}
+
+func (k Keeper) GetParamsForBtcHeight(ctx context.Context, height uint64) (*types.Params, uint32, error) {
+	heightToVersionMap := k.GetHeightToVersionMap(ctx)
+	if heightToVersionMap == nil {
+		panic("height to version map not found")
+	}
+
+	version, err := heightToVersionMap.GetVersionForHeight(height)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return k.GetParamsByVersion(ctx, version), version, nil
 }

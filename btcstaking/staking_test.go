@@ -421,6 +421,7 @@ func TestCheckPreSignedTxSanity(t *testing.T) {
 		genTx          func() *wire.MsgTx
 		numInputs      uint32
 		numOutputs     uint32
+		minTxVersion   int32
 		maxTxVersion   int32
 		wantErr        bool
 		expectedErrMsg string
@@ -435,8 +436,38 @@ func TestCheckPreSignedTxSanity(t *testing.T) {
 			},
 			numInputs:    1,
 			numOutputs:   1,
+			minTxVersion: 1,
 			maxTxVersion: 2,
 			wantErr:      false,
+		},
+		{
+			name: "valid tx with required specific version 2",
+			genTx: func() *wire.MsgTx {
+				tx := wire.NewMsgTx(2)
+				tx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(&chainhash.Hash{}, 0), nil, nil))
+				tx.AddTxOut(wire.NewTxOut(1000, nil))
+				return tx
+			},
+			numInputs:    1,
+			numOutputs:   1,
+			minTxVersion: 2,
+			maxTxVersion: 2,
+			wantErr:      false,
+		},
+		{
+			name: "invalid tx when requireing specific version 2",
+			genTx: func() *wire.MsgTx {
+				tx := wire.NewMsgTx(3)
+				tx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(&chainhash.Hash{}, 0), nil, nil))
+				tx.AddTxOut(wire.NewTxOut(1000, nil))
+				return tx
+			},
+			numInputs:      1,
+			numOutputs:     1,
+			minTxVersion:   2,
+			maxTxVersion:   2,
+			wantErr:        true,
+			expectedErrMsg: "tx version must be between 2 and 2",
 		},
 		{
 			name: "non standard version tx",
@@ -448,6 +479,7 @@ func TestCheckPreSignedTxSanity(t *testing.T) {
 			},
 			numInputs:      1,
 			numOutputs:     1,
+			minTxVersion:   1,
 			maxTxVersion:   2,
 			wantErr:        true,
 			expectedErrMsg: "tx version must be between 1 and 2",
@@ -463,6 +495,7 @@ func TestCheckPreSignedTxSanity(t *testing.T) {
 			},
 			numInputs:      1,
 			numOutputs:     1,
+			minTxVersion:   1,
 			maxTxVersion:   2,
 			wantErr:        true,
 			expectedErrMsg: "pre-signed tx must not have locktime",
@@ -478,6 +511,7 @@ func TestCheckPreSignedTxSanity(t *testing.T) {
 			},
 			numInputs:      1,
 			numOutputs:     1,
+			minTxVersion:   1,
 			maxTxVersion:   2,
 			wantErr:        true,
 			expectedErrMsg: "pre-signed tx must not have signature script",
@@ -493,6 +527,7 @@ func TestCheckPreSignedTxSanity(t *testing.T) {
 			},
 			numInputs:      1,
 			numOutputs:     1,
+			minTxVersion:   1,
 			maxTxVersion:   2,
 			wantErr:        true,
 			expectedErrMsg: "tx must have exactly 1 inputs",
@@ -508,6 +543,7 @@ func TestCheckPreSignedTxSanity(t *testing.T) {
 			},
 			numInputs:      1,
 			numOutputs:     1,
+			minTxVersion:   1,
 			maxTxVersion:   2,
 			wantErr:        true,
 			expectedErrMsg: "tx must have exactly 1 outputs",
@@ -523,6 +559,7 @@ func TestCheckPreSignedTxSanity(t *testing.T) {
 			},
 			numInputs:      1,
 			numOutputs:     1,
+			minTxVersion:   1,
 			maxTxVersion:   2,
 			wantErr:        true,
 			expectedErrMsg: "pre-signed tx must not be replaceable",
@@ -539,6 +576,7 @@ func TestCheckPreSignedTxSanity(t *testing.T) {
 			},
 			numInputs:      1,
 			numOutputs:     1,
+			minTxVersion:   1,
 			maxTxVersion:   2,
 			wantErr:        true,
 			expectedErrMsg: "tx weight must not exceed 400000",
@@ -549,7 +587,7 @@ func TestCheckPreSignedTxSanity(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			err := btcstaking.CheckPreSignedTxSanity(
-				tt.genTx(), tt.numInputs, tt.numOutputs, tt.maxTxVersion,
+				tt.genTx(), tt.numInputs, tt.numOutputs, tt.minTxVersion, tt.maxTxVersion,
 			)
 
 			if tt.wantErr {

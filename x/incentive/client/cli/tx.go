@@ -2,7 +2,7 @@ package cli
 
 import (
 	"fmt"
-
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
@@ -23,6 +23,7 @@ func GetTxCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		NewWithdrawRewardCmd(),
+		NewSetWithdrawAddressCmd(),
 	)
 
 	return cmd
@@ -45,6 +46,37 @@ func NewWithdrawRewardCmd() *cobra.Command {
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewSetWithdrawAddressCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set-withdraw-addr [withdraw-addr]",
+		Short: "change the default withdraw address for rewards",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			delAddr := clientCtx.GetFromAddress()
+			withdrawAddr, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgSetWithdrawAddress{
+				DelegatorAddress: delAddr.String(),
+				WithdrawAddress:  withdrawAddr.String(),
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 

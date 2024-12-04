@@ -93,8 +93,8 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := nonValidatorNode.QueryBTCStakingParams()
 
-	// minimal required unbonding time
-	unbondingTime := params.MinUnbondingTimeBlocks
+	// required unbonding time
+	unbondingTime := params.UnbondingTimeBlocks
 
 	// NOTE: we use the node's address for the BTC delegation
 	stakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
@@ -508,8 +508,8 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := nonValidatorNode.QueryBTCStakingParams()
 
-	// minimal required unbonding time
-	unbondingTime := params.MinUnbondingTimeBlocks
+	// required unbonding time
+	unbondingTime := params.UnbondingTimeBlocks
 
 	// NOTE: we use the multisig address for the BTC delegation
 	multisigStakerAddr := sdk.MustAccAddressFromBech32(multisigAddr)
@@ -579,8 +579,8 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 	// BTC staking btcStkParams, BTC delegation key pairs and PoP
 	btcStkParams := nonValidatorNode.QueryBTCStakingParams()
 
-	// minimal required unbonding time
-	unbondingTime := btcStkParams.MinUnbondingTimeBlocks
+	// required unbonding time
+	unbondingTime := btcStkParams.UnbondingTimeBlocks
 
 	// NOTE: we use the grantee staker address for the BTC delegation PoP
 	pop, err := bstypes.NewPoPBTC(granteeStakerAddr, s.delBTCSK)
@@ -670,8 +670,8 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	// BTC staking btcStkParams, BTC delegation key pairs and PoP
 	btcStkParams := node.QueryBTCStakingParams()
 
-	// minimal required unbonding time
-	unbondingTime := btcStkParams.MinUnbondingTimeBlocks
+	// required unbonding time
+	unbondingTime := btcStkParams.UnbondingTimeBlocks
 
 	// NOTE: we use the grantee staker address for the BTC delegation PoP
 	pop, err := bstypes.NewPoPBTC(granteeStakerAddr, s.delBTCSK)
@@ -936,8 +936,8 @@ func (s *BTCStakingTestSuite) BTCStakingUnbondSlashInfo(
 	delegatorSig *bbn.BIP340Signature,
 ) {
 	covenantBTCPKs := CovenantBTCPKs(params)
-	// minimal required unbonding time
-	unbondingTime := params.MinUnbondingTimeBlocks
+	// required unbonding time
+	unbondingTime := params.UnbondingTimeBlocks
 
 	testStakingInfo = datagen.GenBTCStakingSlashingInfo(
 		s.r,

@@ -456,8 +456,8 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 		require.Len(t, events, 0)
 
-		// the BTC delegation will be unbonded at end height - min_unbonding_time
-		unbondedHeight := actualDel.EndHeight - stakingParams.MinUnbondingTimeBlocks
+		// the BTC delegation will be unbonded at end height - unbonding_time
+		unbondedHeight := actualDel.EndHeight - stakingParams.UnbondingTimeBlocks
 		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
 		require.Len(t, events, 1)
 		btcDelStateUpdate := events[0].GetBtcDelStateUpdate()
@@ -603,8 +603,8 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		require.Equal(t, stakingTxHash, btcDelStateUpdate.StakingTxHash)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, btcDelStateUpdate.NewState)
 
-		// the BTC delegation will be unbonded at end height - minUnbondingTime
-		unbondedHeight := activatedDel.EndHeight - h.BTCStakingKeeper.GetParams(h.Ctx).MinUnbondingTimeBlocks
+		// the BTC delegation will be unbonded at end height - unbonding_time
+		unbondedHeight := activatedDel.EndHeight - h.BTCStakingKeeper.GetParams(h.Ctx).UnbondingTimeBlocks
 		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
 		require.Len(t, events, 1)
 		btcDelStateUpdate = events[0].GetBtcDelStateUpdate()
@@ -693,8 +693,8 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 	events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 	require.Len(t, events, 0)
 
-	// the BTC delegation will be unbonded at end height - min_unbonding_time
-	unbondedHeight := actualDel.EndHeight - stakingParams.MinUnbondingTimeBlocks
+	// the BTC delegation will be unbonded at end height - unbonding_time
+	unbondedHeight := actualDel.EndHeight - stakingParams.UnbondingTimeBlocks
 	events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
 	require.Len(t, events, 1)
 	btcDelStateUpdate := events[0].GetBtcDelStateUpdate()

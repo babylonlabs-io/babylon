@@ -134,9 +134,9 @@ message Params {
       (gogoproto.nullable)   = false
   ];
   // PARAMETERS COVERING UNBONDING
-  // min_unbonding_time is the minimum time for unbonding transaction timelock in BTC blocks
-  uint32 min_unbonding_time_blocks = 10;
-  // unbonding_fee exact fee required for unbonding transaction
+  // unbonding_time_blocks is the required timelock on unbonding transaction in BTC blocks
+  uint32 unbonding_time_blocks = 10;
+  // unbonding_fee_sat is the exact fee required for unbonding transaction
   int64 unbonding_fee_sat = 11;
   // PARAMETERS COVERING FINALITY PROVIDERS
   // min_commission_rate is the chain-wide minimum commission rate that a finality provider

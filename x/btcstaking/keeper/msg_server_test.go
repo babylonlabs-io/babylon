@@ -48,7 +48,8 @@ func FuzzMsgServer_UpdateParams(f *testing.F) {
 
 		params := h.BTCStakingKeeper.GetParams(h.Ctx)
 		ckptFinalizationTimeout := btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
-		params.MinUnbondingTimeBlocks = uint32(r.Intn(int(ckptFinalizationTimeout))) + 1
+		params.UnbondingTimeBlocks = uint32(r.Intn(int(ckptFinalizationTimeout))) + 1
+		params.BtcActivationHeight = params.BtcActivationHeight + 1
 
 		// Try to update params with minUnbondingTime less than or equal to checkpointFinalizationTimeout
 		msg := &types.MsgUpdateParams{
@@ -61,7 +62,7 @@ func FuzzMsgServer_UpdateParams(f *testing.F) {
 			"should not set minUnbondingTime to be less than checkpointFinalizationTimeout")
 
 		// Try to update params with minUnbondingTime larger than checkpointFinalizationTimeout
-		msg.Params.MinUnbondingTimeBlocks = uint32(r.Intn(1000)) + ckptFinalizationTimeout + 1
+		msg.Params.UnbondingTimeBlocks = uint32(r.Intn(1000)) + ckptFinalizationTimeout + 1
 		_, err = h.MsgServer.UpdateParams(h.Ctx, msg)
 		require.NoError(t, err)
 	})
@@ -241,6 +242,75 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 	})
 }
 
+func FuzzCreateBTCDelegationWithParamsFromBtcHeight(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(time.Now().Unix()))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+
+		// set all parameters
+		h.GenAndApplyParams(r)
+		ctx, k := h.Ctx, h.BTCStakingKeeper
+
+		versionedParams := k.GetParamsWithVersion(ctx)
+		currentParams := versionedParams.Params
+
+		maxGapBlocksBetweenParams := datagen.RandomUInt32(r, 100) + 100
+		expectedParamsBlockHeight := datagen.RandomUInt32(r, maxGapBlocksBetweenParams) + currentParams.BtcActivationHeight + 1
+		expectedParamsVersion := versionedParams.Version + 1
+
+		currentParams.BtcActivationHeight = expectedParamsBlockHeight
+		err := k.SetParams(ctx, currentParams)
+		require.NoError(t, err)
+
+		nextBtcActivationHeight := datagen.RandomUInt32(r, maxGapBlocksBetweenParams) + currentParams.BtcActivationHeight + 1
+		currentParams.BtcActivationHeight = nextBtcActivationHeight
+		err = k.SetParams(ctx, currentParams)
+		require.NoError(t, err)
+
+		// makes sure that at the BTC block height 300 will use the expected param
+		p, version, err := k.GetParamsForBtcHeight(ctx, uint64(nextBtcActivationHeight-1))
+		h.NoError(err)
+		require.Equal(t, p.BtcActivationHeight, expectedParamsBlockHeight)
+		require.Equal(t, version, expectedParamsVersion)
+
+		// creates one BTC delegation with BTC block height between expectedParamsBlockHeight and 500
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		h.NoError(err)
+
+		// generate and insert new finality provider
+		_, fpPK, _ := h.CreateFinalityProvider(r)
+
+		btcBlockHeight := datagen.RandomUInt32(r, nextBtcActivationHeight-expectedParamsBlockHeight) + expectedParamsBlockHeight
+		// generate and insert new BTC delegation
+		stakingValue := int64(2 * 10e8)
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		_, _, btcDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			fpPK,
+			changeAddress.EncodeAddress(),
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			btcBlockHeight,
+		)
+		h.NoError(err)
+		require.NotNil(t, btcDel.ParamsVersion, expectedParamsVersion)
+	})
+}
+
 func TestProperVersionInDelegation(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	ctrl := gomock.NewController(t)
@@ -290,7 +360,8 @@ func TestProperVersionInDelegation(t *testing.T) {
 
 	customMinUnbondingTime := uint32(2000)
 	currentParams := h.BTCStakingKeeper.GetParams(h.Ctx)
-	currentParams.MinUnbondingTimeBlocks = 2000
+	currentParams.UnbondingTimeBlocks = customMinUnbondingTime
+	currentParams.BtcActivationHeight = currentParams.BtcActivationHeight + 1
 	// Update new params
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
 	require.NoError(t, err)
@@ -303,7 +374,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 		stakingValue,
 		10000,
 		stakingValue-1000,
-		uint16(customMinUnbondingTime)+1,
+		uint16(customMinUnbondingTime),
 		false,
 		false,
 	)
@@ -731,9 +802,9 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	_, covenantPKs := h.GenAndApplyParams(r)
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 
-	minUnbondingTime := bsParams.MinUnbondingTimeBlocks
+	unbondingTime := bsParams.UnbondingTimeBlocks
 
-	slashingChangeLockTime := uint16(minUnbondingTime)
+	slashingChangeLockTime := uint16(unbondingTime)
 
 	// We only generate a finality provider, but not insert it into KVStore. So later
 	// insertion of delegation should fail.
@@ -795,7 +866,6 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	require.NoError(t, err)
 
 	stkTxHash := testStakingInfo.StakingTx.TxHash()
-	unbondingTime := bsParams.MinUnbondingTimeBlocks
 	unbondingValue := stakingValue - datagen.UnbondingTxFee // TODO: parameterise fee
 	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
 		r,
@@ -858,30 +928,23 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 	tests := []struct {
 		name                      string
 		finalizationTimeout       uint32
-		minUnbondingTime          uint32
+		unbondingTimeInParams     uint32
 		unbondingTimeInDelegation uint16
 		err                       error
 	}{
 		{
-			name:                      "successful delegation when ubonding time in delegation is larger than finalization timeout when finalization timeout is larger than min unbonding time",
+			name:                      "successful delegation if unbonding time in delegation is equal to unbonding time in params",
 			unbondingTimeInDelegation: 101,
-			minUnbondingTime:          99,
+			unbondingTimeInParams:     101,
 			finalizationTimeout:       100,
 			err:                       nil,
 		},
 		{
-			name:                      "successful delegation when ubonding time ubonding time in delegation is larger than min unbonding time when min unbonding time is larger than finalization timeout",
-			unbondingTimeInDelegation: 151,
-			minUnbondingTime:          150,
+			name:                      "invalid delegation if unbonding time is different from unbonding time in params",
+			unbondingTimeInDelegation: 102,
+			unbondingTimeInParams:     101,
 			finalizationTimeout:       100,
-			err:                       nil,
-		},
-		{
-			name:                      "successful delegation when ubonding time in delegation is equal to minUnbondingTime when min unbonding time is larger than finalization timeout",
-			unbondingTimeInDelegation: 150,
-			minUnbondingTime:          150,
-			finalizationTimeout:       100,
-			err:                       nil,
+			err:                       types.ErrInvalidUnbondingTx,
 		},
 	}
 
@@ -897,7 +960,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 			// set all parameters
-			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.minUnbondingTime, 0)
+			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.unbondingTimeInParams, 0)
 
 			changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 			require.NoError(t, err)
@@ -1106,7 +1169,6 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		covQuorum := stakingParams.CovenantQuorum
 		maxFinalityProviders := int32(h.App.FinalityKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders)
 
-		minUnbondingTime := stakingParams.MinUnbondingTimeBlocks
 		// Number of finality providers from 10 to maxFinalityProviders + 10
 		numFinalityProviders := int(r.Int31n(maxFinalityProviders) + 10)
 
@@ -1140,8 +1202,8 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 			)
 
 			for _, del := range delegations {
-				h.AddDelegation(del, minUnbondingTime)
-				h1.AddDelegation(del, minUnbondingTime)
+				h.AddDelegation(del)
+				h1.AddDelegation(del)
 			}
 		}
 

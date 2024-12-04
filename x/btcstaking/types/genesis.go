@@ -22,11 +22,19 @@ func (gs GenesisState) Validate() error {
 		return fmt.Errorf("params cannot be empty")
 	}
 
+	heightToVersionMap := NewHeightToVersionMap()
 	// TODO: add validation to other properties of genstate.
-	for _, params := range gs.Params {
+	for i, params := range gs.Params {
 		if err := params.Validate(); err != nil {
 			return err
 		}
+
+		err := heightToVersionMap.AddNewPair(uint64(i), params.BtcActivationHeight)
+
+		if err != nil {
+			return err
+		}
+
 	}
 	return nil
 }
