@@ -13,6 +13,14 @@ import (
 	sdkmath "cosmossdk.io/math"
 )
 
+var (
+	// it is needed to add decimal points when reducing the rewards amount
+	// per sat to latter when giving out the rewards to the gauge, reduce
+	// the decimal points back, currently 20 decimal points are being added
+	// the sdkmath.Int holds a big int which support up to 2^256 integers
+	DecimalAccumulatedRewards, _ = sdkmath.NewIntFromString("100000000000000000000")
+)
+
 func (k Keeper) FpSlashed(ctx context.Context, fp sdk.AccAddress) error {
 	// withdrawDelegationRewards
 	// Delete all the delegations reward tracker associated with this FP
@@ -73,6 +81,27 @@ func (k Keeper) BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddres
 	return nil
 }
 
+func (k Keeper) WithdrawDelegationRewardsToGauge(ctx context.Context, fp, del sdk.AccAddress) error {
+	endedPeriod, err := k.IncrementFinalityProviderPeriod(ctx, fp)
+	if err != nil {
+		return err
+	}
+
+	rewards, err := k.CalculateDelegationRewards(ctx, fp, del, endedPeriod)
+	if err != nil {
+		if !errors.Is(err, types.ErrBTCDelegationRewardsTrackerNotFound) {
+			return err
+		}
+		rewards = sdk.NewCoins()
+	}
+
+	if !rewards.IsZero() {
+		k.accumulateRewardGauge(ctx, types.BTCDelegationType, del, rewards)
+	}
+
+	return k.initializeBTCDelegation(ctx, fp, del)
+}
+
 func (k Keeper) CalculateDelegationRewards(ctx context.Context, fp, del sdk.AccAddress, endPeriod uint64) (sdk.Coins, error) {
 	btcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
 	if err != nil {
@@ -114,15 +143,16 @@ func (k Keeper) calculateDelegationRewardsBetween(
 		return sdk.Coins{}, err
 	}
 
-	// creates the difference amount of rewards (ending - starting) periods
-	// this difference is the amount of rewards entitled per satoshi active stake
-	difference := ending.CumulativeRewardsPerSat.Sub(starting.CumulativeRewardsPerSat...)
-	if difference.IsAnyNegative() {
+	// creates the differenceWithDecimals amount of rewards (ending - starting) periods
+	// this differenceWithDecimals is the amount of rewards entitled per satoshi active stake
+	differenceWithDecimals := ending.CumulativeRewardsPerSat.Sub(starting.CumulativeRewardsPerSat...)
+	if differenceWithDecimals.IsAnyNegative() {
 		panic("negative rewards should not be possible")
 	}
 
-	// note: necessary to truncate so we don't allow withdrawing more rewards than owed
-	rewards := difference.MulInt(btcDelRwdTracker.TotalActiveSat)
+	// note: necessary to truncate so we don't allow withdrawing more rewardsWithDecimals than owed
+	rewardsWithDecimals := differenceWithDecimals.MulInt(btcDelRwdTracker.TotalActiveSat)
+	rewards := rewardsWithDecimals.QuoInt(DecimalAccumulatedRewards)
 	return rewards, nil
 }
 
@@ -147,7 +177,10 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 
 	currentRewardsPerSat := sdk.NewCoins()
 	if !fpCurrentRwd.TotalActiveSat.IsZero() {
-		currentRewardsPerSat = fpCurrentRwd.CurrentRewards.QuoInt(fpCurrentRwd.TotalActiveSat)
+		// 1000 ubbn / 200
+		// 1 sat = 5 ubbn
+		currentRewardsPerSatWithDecimals := fpCurrentRwd.CurrentRewards.MulInt(DecimalAccumulatedRewards)
+		currentRewardsPerSat = currentRewardsPerSatWithDecimals.QuoInt(fpCurrentRwd.TotalActiveSat)
 	}
 
 	fpHistoricalRwd, err := k.GetFinalityProviderHistoricalRewards(ctx, fp, fpCurrentRwd.Period-1)
@@ -155,6 +188,7 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 		return 0, err
 	}
 
+	// Due to lost in precision point if the rewards are too low, it could become zero
 	newFpHistoricalRwd := types.NewFinalityProviderHistoricalRewards(fpHistoricalRwd.CumulativeRewardsPerSat.Add(currentRewardsPerSat...))
 	if err := k.setFinalityProviderHistoricalRewards(ctx, fp, fpCurrentRwd.Period, newFpHistoricalRwd); err != nil {
 		return 0, err

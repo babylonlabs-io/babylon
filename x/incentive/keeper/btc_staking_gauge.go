@@ -45,6 +45,7 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 		// TODO: remove this iteration. It could be avoided by using accumulated rewards per period
 		// for each finality provider, and for each delegation (fp, delegator) keep track of last period
 		// TODO(rafilx): Add acumulative rewards for each validator
+
 		// for _, btcDel := range fp.BtcDels {
 		// 	btcDelPortion := fp.GetBTCDelPortion(btcDel)
 		// 	coinsForDel := types.GetCoinsPortion(coinsForBTCDels, btcDelPortion)
