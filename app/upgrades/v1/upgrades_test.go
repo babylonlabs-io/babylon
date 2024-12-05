@@ -139,25 +139,25 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				s.NotNil(respInst.Address)
 			},
 		},
-		// {
-		// 	"Test launch software upgrade v1 testnet",
-		// 	UpgradeV1DataTestnet,
-		// 	s.PreUpgrade,
-		// 	s.Upgrade,
-		// 	func() {
-		// 		s.PostUpgrade()
+		{
+			"Test launch software upgrade v1 testnet",
+			UpgradeV1DataTestnet,
+			s.PreUpgrade,
+			s.Upgrade,
+			func() {
+				s.PostUpgrade()
 
-		// 		// checks that anyone can instantiate a contract
-		// 		wasmMsgServer := wasmkeeper.NewMsgServerImpl(&s.app.WasmKeeper)
-		// 		resp, err := wasmMsgServer.StoreCode(s.ctx, &wasmtypes.MsgStoreCode{
-		// 			Sender:       datagen.GenRandomAddress().String(),
-		// 			WASMByteCode: wasmContract,
-		// 		})
-		// 		s.NoError(err)
-		// 		s.EqualValues(resp.CodeID, 1)
-		// 		s.Equal(stakingWasmChecksum[:], wasmvmtypes.Checksum(resp.Checksum))
-		// 	},
-		// },
+				// checks that anyone can instantiate a contract
+				wasmMsgServer := wasmkeeper.NewMsgServerImpl(&s.app.WasmKeeper)
+				resp, err := wasmMsgServer.StoreCode(s.ctx, &wasmtypes.MsgStoreCode{
+					Sender:       datagen.GenRandomAddress().String(),
+					WASMByteCode: wasmContract,
+				})
+				s.NoError(err)
+				s.EqualValues(resp.CodeID, 1)
+				s.Equal(stakingWasmChecksum[:], wasmvmtypes.Checksum(resp.Checksum))
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -181,10 +181,13 @@ func (s *UpgradeTestSuite) SetupTest(upgradeDataStr v1.UpgradeDataString) {
 	app.Upgrades = []upgrades.Upgrade{v1.CreateUpgrade(upgradeDataStr)}
 
 	// set up app
-	s.app = app.Setup(s.T(), false)
+	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
 	s.preModule = upgrade.NewAppModule(s.app.UpgradeKeeper, s.app.AccountKeeper.AddressCodec())
 
+	// Note: for mainnet upgrade testing a new function needs to be created and
+	// probably split the upgrade test suite in 2, since the btc config
+	// will be different for testnet and for mainnet.
 	baseBtcHeader := SignetBtcHeader195552(s.T())
 
 	k := s.app.BTCLightClientKeeper
@@ -340,7 +343,7 @@ func (s *UpgradeTestSuite) PostUpgrade() {
 func SignetBtcHeader195552(t *testing.T) *btclighttypes.BTCHeaderInfo {
 	var btcHeader btclighttypes.BTCHeaderInfo
 	// signet btc header 0
-	btcHeaderHash, err := types.NewBTCHeaderBytesFromHex(`00000020c8710c5662ab0a4680963697765a390cba4814f95f0556fc5fb3b446b2000000fa9b80e52653455e5d4a4648fbe1f62854a07dbec0633a42ef595431de9be36dccb64366934f011ef3d98200`)
+	btcHeaderHash, err := types.NewBTCHeaderBytesFromHex("00000020c8710c5662ab0a4680963697765a390cba4814f95f0556fc5fb3b446b2000000fa9b80e52653455e5d4a4648fbe1f62854a07dbec0633a42ef595431de9be36dccb64366934f011ef3d98200")
 	require.NoError(t, err)
 
 	wireHeaders := btclightck.BtcHeadersBytesToBlockHeader([]types.BTCHeaderBytes{btcHeaderHash})
@@ -348,8 +351,7 @@ func SignetBtcHeader195552(t *testing.T) *btclighttypes.BTCHeaderInfo {
 
 	blockHash := wireHeader.BlockHash()
 	headerHash := bbn.NewBTCHeaderHashBytesFromChainhash(&blockHash)
-
-	work := sdkmath.NewUint(2979921237501018)
+	work := btclighttypes.CalcWork(&btcHeaderHash)
 	btcHeader = btclighttypes.BTCHeaderInfo{
 		Header: &btcHeaderHash,
 		Height: uint32(195552),
