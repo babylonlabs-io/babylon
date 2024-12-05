@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Bug fixes
+
+- [#324](https://github.com/babylonlabs-io/babylon/pull/324) Fix decrementing
+jailed fp counter
+
 ## v0.18.0
 
 ### Improvements
