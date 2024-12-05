@@ -43,6 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#305](https://github.com/babylonlabs-io/babylon/pull/305) chore: add more error logs to `VerifyInclusionProofAndGetHeight`
 - [#304](https://github.com/babylonlabs-io/babylon/pull/304) Add highest voted height to finality provider
 - [#314](https://github.com/babylonlabs-io/babylon/pull/314) Require exact unbonding time in delegation
+- [#316](https://github.com/babylonlabs-io/babylon/pull/316) Add testnet upgrade data
 
 ### State Machine Breaking
 
