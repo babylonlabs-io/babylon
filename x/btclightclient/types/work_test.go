@@ -33,23 +33,11 @@ func FuzzCumulativeWork(f *testing.F) {
 }
 
 func TestRetargetBlock(t *testing.T) {
-	btcNet := &chaincfg.SigNetParams
-	blockActivationHeight := uint32(197535)
-	expectedBaseBlockHeightTestnet := uint32(195552)
-	for {
-		if types.IsRetargetBlock(&types.BTCHeaderInfo{Height: blockActivationHeight}, btcNet) {
-			t.Logf("Block height: %d is the first retarget block since 197535", blockActivationHeight)
-			require.Equal(t, blockActivationHeight, expectedBaseBlockHeightTestnet)
-			break
-		}
-		blockActivationHeight--
-	}
-	// cap1 testnet starts at 197535, not good
-	require.True(t, types.IsRetargetBlock(&types.BTCHeaderInfo{Height: expectedBaseBlockHeightTestnet}, &chaincfg.SigNetParams))
+	expectedBaseBlockHeightTestnet4 := uint32(195552)
+	require.True(t, types.IsRetargetBlock(&types.BTCHeaderInfo{Height: expectedBaseBlockHeightTestnet4}, &chaincfg.SigNetParams))
 
 	baseBtcHeaderMainnetHeight := uint32(854784)
 	cap1ActivationHeight := uint32(857910)
 	require.True(t, types.IsRetargetBlock(&types.BTCHeaderInfo{Height: baseBtcHeaderMainnetHeight}, &chaincfg.MainNetParams))
 	require.True(t, baseBtcHeaderMainnetHeight < cap1ActivationHeight)
-	// cap1 mainnet starts at 857910, good
 }

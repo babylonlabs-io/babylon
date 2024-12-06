@@ -22,7 +22,8 @@ func AccAddress() string {
 // SignetBtcHeader195552 returns the BTC Header block 195552 from signet bbn-test-4.
 func SignetBtcHeader195552(t *testing.T) *btclighttypes.BTCHeaderInfo {
 	var btcHeader btclighttypes.BTCHeaderInfo
-	// signet btc header 0
+
+	// signet btc header of height 195552
 	btcHeaderHash, err := types.NewBTCHeaderBytesFromHex("00000020c8710c5662ab0a4680963697765a390cba4814f95f0556fc5fb3b446b2000000fa9b80e52653455e5d4a4648fbe1f62854a07dbec0633a42ef595431de9be36dccb64366934f011ef3d98200")
 	require.NoError(t, err)
 

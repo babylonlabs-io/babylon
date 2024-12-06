@@ -48,16 +48,15 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) SetupSuite() {
 	// func only runs right before the upgrade proposal is sent
 	preUpgradeFunc := func(chains []*chain.Config) {
 		node := chains[0].NodeConfigs[1]
-		uniqueAddrs := make(map[string]any)
-		uniqueAddrsToMint := make(map[string]any)
+		uniqueAddrsTokenReceivers := make(map[string]any)
 
 		for addr, amountToMint := range balanceToMintByAddr {
-			uniqueAddrs[addr] = struct{}{}
+			s.balancesBeforeUpgrade[addr] = sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.ZeroInt())
 			if amountToMint <= 0 {
 				continue
 			}
 
-			uniqueAddrsToMint[addr] = struct{}{}
+			uniqueAddrsTokenReceivers[addr] = struct{}{}
 			amountToSend := sdk.NewCoin(appparams.BaseCoinUnit, sdkmath.NewInt(amountToMint))
 			node.BankSendFromNode(addr, amountToSend.String())
 		}
@@ -66,14 +65,9 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) SetupSuite() {
 		// it queries the real balances before upgrade.
 		node.WaitForNextBlock()
 
-		// This does not work for 50k addresses
-		for addr := range uniqueAddrs {
-			// assume that the balance prior to upgrade of each addr is zero.
-			s.balancesBeforeUpgrade[addr] = sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.ZeroInt())
-		}
-
-		// only verifies the ones that did received something
-		for addr := range uniqueAddrsToMint {
+		// only verifies the balances of the ones that had to receive something
+		// from the node and all the others should be zero
+		for addr := range uniqueAddrsTokenReceivers {
 			balance, err := node.QueryBalance(addr, appparams.DefaultBondDenom)
 			s.NoError(err)
 			s.balancesBeforeUpgrade[addr] = *balance
