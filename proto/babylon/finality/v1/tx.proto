@@ -110,8 +110,11 @@ message MsgUnjailFinalityProviderResponse {}
 
 // MsgEquivocationEvidence is the message for handling evidence of equivocation
 message MsgEquivocationEvidence {
+    option (cosmos.msg.v1.signer) = "signer";
+
+    string signer = 1;
     // evidence is the evidence of equivocation
-    Evidence evidence = 1 [(gogoproto.nullable) = false];
+    Evidence evidence = 2 [(gogoproto.nullable) = false];
 }
 
 // MsgEquivocationEvidenceResponse is the response for MsgEquivocationEvidence
