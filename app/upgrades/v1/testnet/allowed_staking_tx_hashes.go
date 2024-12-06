@@ -1,7 +1,7 @@
 package testnet
 
-// TODO: Specify allowed staking tx hashes for v1 upgrade for testnet
-// TODO(rafilx): get with filippos testnet-4 tx hash from cap1
+// Specifies all the cap1 testnet-4 allowed staking tx hashes to migrate
+// to BTC delegation
 const AllowedStakingTxHashesStr = `{
   "tx_hashes": [
     "5748f9a245ec52e04a312ec0433da7ecbb769af0a1dc6ae26ad34ed151a0e526",
