@@ -335,9 +335,9 @@ func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
 }
 
 func updateEpochGenesis(gs *epochingtypes.GenesisState) {
-	gs.Params = epochingtypes.Params{
-		EpochInterval: 200,
-	}
+	// gs.Params = epochingtypes.Params{
+	// 	EpochInterval: 200,
+	// }
 }
 
 func updateCrisisGenesis(crisisGenState *crisistypes.GenesisState) {
