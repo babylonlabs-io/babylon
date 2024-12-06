@@ -316,7 +316,7 @@ func (ms msgServer) UnjailFinalityProvider(ctx context.Context, req *types.MsgUn
 		return nil, fmt.Errorf("failed to unjail finality provider %s: %w", fpPk.MarshalHex(), err)
 	}
 
-	types.DecrementJailedFinalityProviderCounter()
+	types.IncrementUnjailedFinalityProviderCounter()
 
 	return &types.MsgUnjailFinalityProviderResponse{}, nil
 }

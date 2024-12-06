@@ -24,9 +24,14 @@ const (
 
 	/* Metrics for monitoring finality provider liveness */
 
-	// MetricsKeyJailedFinalityProviderCounter is the number of finality providers
-	// that are being labeled as jailed
+	// MetricsKeyJailedFinalityProviderCounter is the total number of finality providers
+	// that are labeled as jailed
 	MetricsKeyJailedFinalityProviderCounter = "jailed_finality_provider_counter"
+	// MetricsKeyUnjailedFinalityProviderCounter is the total number of finality providers
+	// that are unjailed
+	// the number of finality providers that are being jailed can be calculated by
+	// jailed_finality_provider_counter - unjailed_finality_provider_counter
+	MetricsKeyUnjailedFinalityProviderCounter = "unjailed_finality_provider_counter"
 )
 
 // RecordLastHeight records the last height. It is triggered upon `IndexBlock`
@@ -64,14 +69,14 @@ func IncrementJailedFinalityProviderCounter() {
 	)
 }
 
-// DecrementJailedFinalityProviderCounter decrements the counter for the jailed
+// IncrementUnjailedFinalityProviderCounter increments the counter for the unjailed
 // finality providers
-func DecrementJailedFinalityProviderCounter() {
-	keys := []string{MetricsKeyJailedFinalityProviderCounter}
+func IncrementUnjailedFinalityProviderCounter() {
+	keys := []string{MetricsKeyUnjailedFinalityProviderCounter}
 	labels := []metrics.Label{telemetry.NewLabel(telemetry.MetricLabelNameModule, ModuleName)}
 	telemetry.IncrCounterWithLabels(
 		keys,
-		-1,
+		1,
 		labels,
 	)
 }

@@ -37,6 +37,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Bug fixes
+
+- [#324](https://github.com/babylonlabs-io/babylon/pull/324) Fix decrementing
+jailed fp counter
+
+## v0.18.0
+
 ### Improvements
 
 - [#306](https://github.com/babylonlabs-io/babylon/pull/306) feat: improve BTC reward distribution with
@@ -45,11 +52,18 @@ virtual block periods for each finality provider that has delegations and reward
 - [#305](https://github.com/babylonlabs-io/babylon/pull/305) chore: add more error logs to `VerifyInclusionProofAndGetHeight`
 - [#304](https://github.com/babylonlabs-io/babylon/pull/304) Add highest voted height to finality provider
 - [#314](https://github.com/babylonlabs-io/babylon/pull/314) Require exact unbonding time in delegation
+- [#317](https://github.com/babylonlabs-io/babylon/pull/317) Enforce that EOI
+delegations using correct parameters version
 
 ### State Machine Breaking
 
 - [#310](https://github.com/babylonlabs-io/babylon/pull/310) implement adr-37 -
 making params valid for btc light client ranges
+
+### Bug fixes
+
+- [#318](https://github.com/babylonlabs-io/babylon/pull/318) Fix BTC delegation status check
+to relay on UnbondingTime in delegation
 
 ## v0.17.2
 
