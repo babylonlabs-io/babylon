@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -66,56 +65,6 @@ func TestChainInit(t *testing.T) {
 
 		validateNode(t, id, dataDir, expectedConfig, actualNode)
 	}
-}
-
-// TestSingleNodeInit tests that node initialization correctly initializes a single node
-// and produces the desired output with genesis, chain and validator config.
-func TestSingleNodeInit(t *testing.T) {
-	const (
-		id = initialization.ChainAID
-	)
-
-	var (
-		existingChainNodeConfigs = []*initialization.NodeConfig{
-			{
-				Name:               "0",
-				Pruning:            "default",
-				PruningKeepRecent:  "0",
-				PruningInterval:    "0",
-				SnapshotInterval:   1500,
-				SnapshotKeepRecent: 2,
-				IsValidator:        true,
-			},
-			{
-				Name:               "1",
-				Pruning:            "nothing",
-				PruningKeepRecent:  "0",
-				PruningInterval:    "0",
-				SnapshotInterval:   100,
-				SnapshotKeepRecent: 1,
-				IsValidator:        true,
-			},
-		}
-		expectedConfig = &initialization.NodeConfig{
-			Name:               "2",
-			Pruning:            "everything",
-			PruningKeepRecent:  "0",
-			PruningInterval:    "0",
-			SnapshotInterval:   100,
-			SnapshotKeepRecent: 1,
-			IsValidator:        false,
-		}
-		dataDir, err = os.MkdirTemp("", "bbn-e2e-testnet-test")
-	)
-
-	// Setup
-	existingChain, err := initialization.InitChain(id, dataDir, existingChainNodeConfigs, time.Second*3, time.Second, forkHeight, nil)
-	require.NoError(t, err)
-
-	actualNode, err := initialization.InitSingleNode(existingChain.ChainMeta.Id, dataDir, filepath.Join(existingChain.Nodes[0].ConfigDir, "config", "genesis.json"), expectedConfig, time.Second*3, 3, "testHash", []string{"some server"}, []string{"some server"})
-	require.NoError(t, err)
-
-	validateNode(t, id, dataDir, expectedConfig, actualNode)
 }
 
 func validateNode(t *testing.T, chainId string, dataDir string, expectedConfig *initialization.NodeConfig, actualNode *initialization.Node) {

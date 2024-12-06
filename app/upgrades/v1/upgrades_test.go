@@ -20,6 +20,8 @@ import (
 	"github.com/babylonlabs-io/babylon/app/upgrades"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/testutil/sample"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -174,17 +176,19 @@ func (s *UpgradeTestSuite) SetupTest(upgradeDataStr v1.UpgradeDataString) {
 	app.Upgrades = []upgrades.Upgrade{v1.CreateUpgrade(upgradeDataStr)}
 
 	// set up app
-	s.app = app.Setup(s.T(), false)
+	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
 	s.preModule = upgrade.NewAppModule(s.app.UpgradeKeeper, s.app.AccountKeeper.AddressCodec())
 
-	btcHeaderGenesis, err := app.SignetBtcHeaderGenesis(s.app.EncodingConfig().Codec)
-	s.NoError(err)
+	// Note: for mainnet upgrade testing a new function needs to be created and
+	// probably split the upgrade test suite in 2, since the btc config
+	// will be different for testnet and for mainnet.
+	baseBtcHeader := sample.SignetBtcHeader195552(s.T())
 
 	k := s.app.BTCLightClientKeeper
 	btclightclient.InitGenesis(s.ctx, s.app.BTCLightClientKeeper, btclighttypes.GenesisState{
 		Params:     k.GetParams(s.ctx),
-		BtcHeaders: []*btclighttypes.BTCHeaderInfo{btcHeaderGenesis},
+		BtcHeaders: []*btclighttypes.BTCHeaderInfo{baseBtcHeader},
 	})
 
 	tokenDistData, err := v1.LoadTokenDistributionFromData(upgradeDataStr.TokensDistributionStr)

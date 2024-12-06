@@ -28,6 +28,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/x/epoching/keeper"
 	"github.com/babylonlabs-io/babylon/x/epoching/types"
@@ -70,7 +71,7 @@ func NewHelperWithValSet(t *testing.T, valSet *datagen.GenesisValidators, privSi
 	GenAccs := []authtypes.GenesisAccount{acc}
 
 	// setup the app and ctx
-	app := app.SetupWithGenesisValSet(t, valSet.GetGenesisKeys(), privSigner, GenAccs, balance)
+	app := app.SetupWithGenesisValSet(t, bbn.BtcSimnet, valSet.GetGenesisKeys(), privSigner, GenAccs, balance)
 	ctx := app.BaseApp.NewContext(false).WithBlockHeight(1).WithHeaderInfo(header.Info{Height: 1}) // NOTE: height is 1
 
 	// get necessary subsets of the app/keeper
@@ -109,7 +110,7 @@ func NewHelperWithValSetNoSigner(t *testing.T, valSet *datagen.GenesisValidators
 	GenAccs := []authtypes.GenesisAccount{acc}
 
 	// setup the app and ctx
-	app := app.SetupWithGenesisValSet(t, valSet.GetGenesisKeys(), privSigner, GenAccs, balance)
+	app := app.SetupWithGenesisValSet(t, bbn.BtcSimnet, valSet.GetGenesisKeys(), privSigner, GenAccs, balance)
 	ctx := app.BaseApp.NewContext(false).WithBlockHeight(1).WithHeaderInfo(header.Info{Height: 1}) // NOTE: height is 1
 
 	// get necessary subsets of the app/keeper

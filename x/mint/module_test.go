@@ -15,4 +15,7 @@ func TestItCreatesModuleAccountOnInitBlock(t *testing.T) {
 
 	acc := app.AccountKeeper.GetAccount(ctx, authtypes.NewModuleAddress(types.ModuleName))
 	require.NotNil(t, acc)
+
+	feeColl := app.AccountKeeper.GetAccount(ctx, authtypes.NewModuleAddress(authtypes.FeeCollectorName))
+	require.Equal(t, "bbn17xpfvakm2amg962yls6f84z3kell8c5l88j35y", feeColl.GetAddress().String())
 }

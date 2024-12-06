@@ -10,6 +10,7 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
 
@@ -34,6 +35,10 @@ type Configurer interface {
 	RunIBCTransferChannel() error
 }
 
+const (
+	btcNetworkStr = string(bbn.BtcSimnet)
+)
+
 var (
 	// Last nodes are non validator nodes to serve as the ones using relayer. Out
 	// validators are constantly sending bls transactions which make relayer operations
@@ -52,6 +57,7 @@ var (
 			SnapshotInterval:   25,
 			SnapshotKeepRecent: 10,
 			IsValidator:        true,
+			BtcNetwork:         btcNetworkStr,
 		},
 		{
 			Name:               "babylon-default-a-2",
@@ -61,6 +67,7 @@ var (
 			SnapshotInterval:   1500,
 			SnapshotKeepRecent: 2,
 			IsValidator:        true,
+			BtcNetwork:         btcNetworkStr,
 		},
 		{
 			Name:               "babylon-default-a-3",
@@ -70,6 +77,7 @@ var (
 			SnapshotInterval:   1500,
 			SnapshotKeepRecent: 2,
 			IsValidator:        false,
+			BtcNetwork:         btcNetworkStr,
 		},
 	}
 	validatorConfigsChainB = []*initialization.NodeConfig{
@@ -81,6 +89,7 @@ var (
 			SnapshotInterval:   1500,
 			SnapshotKeepRecent: 2,
 			IsValidator:        true,
+			BtcNetwork:         btcNetworkStr,
 		},
 		{
 			Name:               "babylon-default-b-2",
@@ -90,6 +99,7 @@ var (
 			SnapshotInterval:   1500,
 			SnapshotKeepRecent: 2,
 			IsValidator:        true,
+			BtcNetwork:         btcNetworkStr,
 		},
 		{
 			Name:               "babylon-default-b-3",
@@ -99,6 +109,7 @@ var (
 			SnapshotInterval:   1500,
 			SnapshotKeepRecent: 2,
 			IsValidator:        false,
+			BtcNetwork:         btcNetworkStr,
 		},
 	}
 )
@@ -204,7 +215,20 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 		return nil, err
 	}
 
-	chainA := chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil)
+	cfgs := updateNodeConfigs(validatorConfigsChainA, func(cfg *initialization.NodeConfig) *initialization.NodeConfig {
+		return &initialization.NodeConfig{
+			Name:               fmt.Sprintf("%s-%s", cfg.Name, identifier),
+			Pruning:            cfg.Pruning,
+			PruningKeepRecent:  cfg.PruningKeepRecent,
+			PruningInterval:    cfg.PruningInterval,
+			SnapshotInterval:   cfg.SnapshotInterval,
+			SnapshotKeepRecent: cfg.SnapshotKeepRecent,
+			IsValidator:        cfg.IsValidator,
+			BtcNetwork:         string(bbn.BtcSignet),
+		}
+	})
+
+	chainA := chain.New(t, containerManager, initialization.ChainAID, cfgs, nil)
 	if btcHeaders != nil {
 		chainA.BTCHeaders = btcHeaders
 	}
@@ -234,9 +258,8 @@ func identifierName(t *testing.T) string {
 }
 
 func updateNodeConfigNameWithIdentifier(cfgs []*initialization.NodeConfig, identifier string) []*initialization.NodeConfig {
-	result := make([]*initialization.NodeConfig, len(cfgs))
-	for i, cfg := range cfgs {
-		result[i] = &initialization.NodeConfig{
+	return updateNodeConfigs(cfgs, func(cfg *initialization.NodeConfig) *initialization.NodeConfig {
+		return &initialization.NodeConfig{
 			Name:               fmt.Sprintf("%s-%s", cfg.Name, identifier),
 			Pruning:            cfg.Pruning,
 			PruningKeepRecent:  cfg.PruningKeepRecent,
@@ -244,7 +267,15 @@ func updateNodeConfigNameWithIdentifier(cfgs []*initialization.NodeConfig, ident
 			SnapshotInterval:   cfg.SnapshotInterval,
 			SnapshotKeepRecent: cfg.SnapshotKeepRecent,
 			IsValidator:        cfg.IsValidator,
+			BtcNetwork:         cfg.BtcNetwork,
 		}
+	})
+}
+
+func updateNodeConfigs(cfgs []*initialization.NodeConfig, f func(cfg *initialization.NodeConfig) *initialization.NodeConfig) []*initialization.NodeConfig {
+	result := make([]*initialization.NodeConfig, len(cfgs))
+	for i, cfg := range cfgs {
+		result[i] = f(cfg)
 	}
 	return result
 }
