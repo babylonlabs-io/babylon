@@ -94,7 +94,7 @@ func (uc *UpgradeConfigurer) ConfigureChain(chainConfig *chain.Config) error {
 		return err
 	}
 
-	validatorConfigBytes, err := json.Marshal(chainConfig.ValidatorInitConfigs)
+	validatorInitConfigBytes, err := json.Marshal(chainConfig.ValidatorInitConfigs)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (uc *UpgradeConfigurer) ConfigureChain(chainConfig *chain.Config) error {
 
 	chainInitResource, err := uc.containerManager.RunChainInitResource(
 		chainConfig.Id, int(chainConfig.VotingPeriod), int(chainConfig.ExpeditedVotingPeriod),
-		validatorConfigBytes, tmpDir, int(forkHeight), chainConfig.BTCHeaderBytesHexJoined(),
+		validatorInitConfigBytes, tmpDir, int(forkHeight), chainConfig.BTCHeaderBytesHexJoined(),
 	)
 	if err != nil {
 		return err

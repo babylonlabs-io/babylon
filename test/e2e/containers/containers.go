@@ -364,7 +364,7 @@ func noRestart(config *docker.HostConfig) {
 func (m *Manager) RunChainInitResource(
 	chainId string,
 	chainVotingPeriod, chainExpeditedVotingPeriod int,
-	validatorConfigBytes []byte,
+	validatorInitConfigBytes []byte,
 	mountDir string,
 	forkHeight int,
 	btcHeaders string,
@@ -380,7 +380,7 @@ func (m *Manager) RunChainInitResource(
 			Cmd: []string{
 				fmt.Sprintf("--data-dir=%s", mountDir),
 				fmt.Sprintf("--chain-id=%s", chainId),
-				fmt.Sprintf("--config=%s", validatorConfigBytes),
+				fmt.Sprintf("--config=%s", validatorInitConfigBytes),
 				fmt.Sprintf("--voting-period=%v", votingPeriodDuration),
 				fmt.Sprintf("--expedited-voting-period=%v", expeditedVotingPeriodDuration),
 				fmt.Sprintf("--fork-height=%v", forkHeight),
