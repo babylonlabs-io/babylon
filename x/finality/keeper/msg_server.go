@@ -333,3 +333,9 @@ func (ms msgServer) validateActivationHeight(ctx sdk.Context, height uint64) (ui
 	}
 	return activationHeight, nil
 }
+
+// EquivocationEvidence handles the evidence of equivocation message sent from the finality gadget cw contract
+func (ms msgServer) EquivocationEvidence(goCtx context.Context, req *types.MsgEquivocationEvidence) (*types.MsgEquivocationEvidenceResponse, error) {
+	// TODO: implement this
+	return &types.MsgEquivocationEvidenceResponse{Success: true}, nil
+}
