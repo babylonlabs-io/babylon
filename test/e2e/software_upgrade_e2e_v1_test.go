@@ -13,6 +13,7 @@ import (
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
 	"github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/testutil/sample"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
@@ -33,8 +34,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) SetupSuite() {
 	var err error
 	s.balancesBeforeUpgrade = make(map[string]sdk.Coin)
 
-	btcHeaderGenesis, err := app.SignetBtcHeaderGenesis(app.NewTmpBabylonApp().AppCodec())
-	s.NoError(err)
+	btcHeaderGenesis := sample.SignetBtcHeader195552(s.T())
 
 	tokenDistData, err := v1.LoadTokenDistributionFromData(testnet.TokensDistributionStr)
 	s.NoError(err)

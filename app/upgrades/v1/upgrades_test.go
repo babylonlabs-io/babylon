@@ -20,7 +20,7 @@ import (
 	"github.com/babylonlabs-io/babylon/app/upgrades"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/testutil/sample"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -29,7 +29,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/babylonlabs-io/babylon/app"
@@ -37,7 +36,6 @@ import (
 	mainnetdata "github.com/babylonlabs-io/babylon/app/upgrades/v1/mainnet"
 	testnetdata "github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
 	"github.com/babylonlabs-io/babylon/x/btclightclient"
-	btclightck "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
 
@@ -188,7 +186,7 @@ func (s *UpgradeTestSuite) SetupTest(upgradeDataStr v1.UpgradeDataString) {
 	// Note: for mainnet upgrade testing a new function needs to be created and
 	// probably split the upgrade test suite in 2, since the btc config
 	// will be different for testnet and for mainnet.
-	baseBtcHeader := SignetBtcHeader195552(s.T())
+	baseBtcHeader := sample.SignetBtcHeader195552(s.T())
 
 	k := s.app.BTCLightClientKeeper
 	btclightclient.InitGenesis(s.ctx, s.app.BTCLightClientKeeper, btclighttypes.GenesisState{
@@ -337,27 +335,4 @@ func (s *UpgradeTestSuite) PostUpgrade() {
 
 	nonExistentTxHash := chainhash.Hash{}
 	s.False(s.app.BTCStakingKeeper.IsStakingTransactionAllowed(s.ctx, &nonExistentTxHash))
-}
-
-// SignetBtcHeader195552 returns the BTC Header block 195552 from signet bbn-test-4.
-func SignetBtcHeader195552(t *testing.T) *btclighttypes.BTCHeaderInfo {
-	var btcHeader btclighttypes.BTCHeaderInfo
-	// signet btc header 0
-	btcHeaderHash, err := types.NewBTCHeaderBytesFromHex("00000020c8710c5662ab0a4680963697765a390cba4814f95f0556fc5fb3b446b2000000fa9b80e52653455e5d4a4648fbe1f62854a07dbec0633a42ef595431de9be36dccb64366934f011ef3d98200")
-	require.NoError(t, err)
-
-	wireHeaders := btclightck.BtcHeadersBytesToBlockHeader([]types.BTCHeaderBytes{btcHeaderHash})
-	wireHeader := wireHeaders[0]
-
-	blockHash := wireHeader.BlockHash()
-	headerHash := bbn.NewBTCHeaderHashBytesFromChainhash(&blockHash)
-	work := btclighttypes.CalcWork(&btcHeaderHash)
-	btcHeader = btclighttypes.BTCHeaderInfo{
-		Header: &btcHeaderHash,
-		Height: uint32(195552),
-		Hash:   &headerHash,
-		Work:   &work,
-	}
-
-	return &btcHeader
 }
