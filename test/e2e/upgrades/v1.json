@@ -6,7 +6,7 @@
       "plan": {
         "name": "v1",
         "time": "0001-01-01T00:00:00Z",
-        "height": "31",
+        "height": "25",
         "info": "Msg info",
         "upgraded_client_state": null
       }

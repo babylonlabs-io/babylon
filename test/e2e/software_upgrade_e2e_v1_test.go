@@ -131,7 +131,8 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeV1() {
 	lenHeadersInserted := len(btcHeadersInserted)
 	oldHeadersStoredLen := 1 // only block zero is set by default in genesis for e2e test
 
-	storedBtcHeadersResp := n.QueryBtcLightClientMainchain()
+	// needs to do pagination as the default query only returns the first 100
+	storedBtcHeadersResp := n.QueryBtcLightClientMainchainAll()
 	storedHeadersLen := len(storedBtcHeadersResp)
 	s.Equal(storedHeadersLen, oldHeadersStoredLen+lenHeadersInserted)
 
