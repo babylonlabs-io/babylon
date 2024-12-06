@@ -37,7 +37,6 @@ import (
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
-	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 type internalNode struct {
@@ -131,7 +130,7 @@ func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 	appConfig.MinGasPrices = fmt.Sprintf("%s%s", MinGasPrice, BabylonDenom)
 	appConfig.StateSync.SnapshotInterval = nodeConfig.SnapshotInterval
 	appConfig.StateSync.SnapshotKeepRecent = nodeConfig.SnapshotKeepRecent
-	appConfig.BtcConfig.Network = string(bbn.BtcSimnet)
+	appConfig.BtcConfig.Network = nodeConfig.BtcNetwork
 	appConfig.GRPC.Enable = true
 	appConfig.GRPC.Address = "0.0.0.0:9090"
 
