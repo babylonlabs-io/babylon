@@ -143,7 +143,8 @@ func TestIncrementFinalityProviderPeriod(t *testing.T) {
 
 	// needs to add some voting power so it can calculate the amount of rewards per share
 	satsDelegated := math.NewInt(500)
-	k.AddDelegationSat(ctx, fp1, del1, satsDelegated)
+	err = k.AddDelegationSat(ctx, fp1, del1, satsDelegated)
+	require.NoError(t, err)
 
 	fp1EndedPeriod, err = k.IncrementFinalityProviderPeriod(ctx, fp1)
 	require.NoError(t, err)
