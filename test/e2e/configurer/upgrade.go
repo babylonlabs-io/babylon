@@ -1,6 +1,7 @@
 package configurer
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -106,7 +107,7 @@ func (uc *UpgradeConfigurer) ConfigureChain(chainConfig *chain.Config) error {
 
 	chainInitResource, err := uc.containerManager.RunChainInitResource(
 		chainConfig.Id, int(chainConfig.VotingPeriod), int(chainConfig.ExpeditedVotingPeriod),
-		validatorInitConfigBytes, tmpDir, int(forkHeight), chainConfig.BTCHeaderBytesHexJoined(),
+		hex.EncodeToString(validatorInitConfigBytes), tmpDir, int(forkHeight), chainConfig.BTCHeaderBytesHexJoined(),
 	)
 	if err != nil {
 		return err
