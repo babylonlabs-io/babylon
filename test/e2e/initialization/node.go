@@ -364,30 +364,6 @@ func (n *internalNode) initNodeConfigs(persistentPeers []string) error {
 	return nil
 }
 
-func (n *internalNode) initStateSyncConfig(trustHeight int64, trustHash string, stateSyncRPCServers []string) error {
-	cmtCfgPath := filepath.Join(n.configDir(), "config", "config.toml")
-
-	vpr := viper.New()
-	vpr.SetConfigFile(cmtCfgPath)
-	if err := vpr.ReadInConfig(); err != nil {
-		return err
-	}
-
-	valConfig := cmtconfig.DefaultConfig()
-	if err := vpr.Unmarshal(valConfig); err != nil {
-		return err
-	}
-
-	valConfig.StateSync = cmtconfig.DefaultStateSyncConfig()
-	valConfig.StateSync.Enable = true
-	valConfig.StateSync.TrustHeight = trustHeight
-	valConfig.StateSync.TrustHash = trustHash
-	valConfig.StateSync.RPCServers = stateSyncRPCServers
-
-	cmtconfig.WriteConfigFile(cmtCfgPath, valConfig)
-	return nil
-}
-
 // signMsg returns a signed tx of the provided messages,
 // signed by the validator, using 0 fees, a high gas limit, and a common memo.
 func (n *internalNode) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
