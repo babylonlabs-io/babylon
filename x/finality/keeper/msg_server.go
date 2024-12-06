@@ -336,6 +336,21 @@ func (ms msgServer) validateActivationHeight(ctx sdk.Context, height uint64) (ui
 
 // EquivocationEvidence handles the evidence of equivocation message sent from the finality gadget cw contract
 func (ms msgServer) EquivocationEvidence(goCtx context.Context, req *types.MsgEquivocationEvidence) (*types.MsgEquivocationEvidenceResponse, error) {
-	// TODO: implement this
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	evidence := req.Evidence
+
+	// check if the evidence is slashable
+	if !evidence.IsSlashable() {
+		err := fmt.Errorf("the evidence lacks some fields")
+		return &types.MsgEquivocationEvidenceResponse{Success: false}, err
+	}
+
+	// slash this finality provider, including setting its voting power to
+	// zero, extracting its BTC SK, and emit an event
+	ms.slashFinalityProvider(ctx, evidence.FpBtcPk, &evidence)
+
+	// save evidence
+	ms.SetEvidence(ctx, &evidence)
+
 	return &types.MsgEquivocationEvidenceResponse{Success: true}, nil
 }
