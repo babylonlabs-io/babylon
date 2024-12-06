@@ -41,12 +41,12 @@ providers and BTC delegations under them. This includes:
 ## Concepts
 
 Babylon's Bitcoin Staking protocol allows bitcoin holders to _trustlessly_ stake
-their bitcoins for providing economic security to the Babylon chain and other
-Proof-of-Stake (PoS) blockchains, _without bridging their bitcoins elsewhere_.
+their bitcoin for providing economic security to the Babylon chain and other
+Proof-of-Stake (PoS) blockchains, _without bridging their bitcoin elsewhere_.
 
 ### Actors
 The following actors interact with the BTC staking module: 
-- **BTC stakers (aka delegators)** delegate their bitcoins to a finality
+- **BTC stakers (aka delegators)** delegate their bitcoin to a finality
   provider in order to obtain provide economic security to the PoS system.
   They interact with the `x/btcstaking` module to express their
   interest to stake, notify about their staking receiving relevant confirmations,
@@ -59,7 +59,7 @@ The following actors interact with the BTC staking module:
   remainder of their operations (voting, submitting public randomness),
   finality providers interact with the [`x/finality`](../x/finality) module.
 - **Covenant emulators** who serve as
-  [covenants](https://covenants.info) to enforce spending conditions on bitcoins
+  [covenants](https://covenants.info) to enforce spending conditions on bitcoin
   staked on Babylon.
   [Covenant emulators](https://github.com/babylonlabs-io/covenant-emulator)
   interact with the `x/btcstaking` module to submit covenant signatures for the
@@ -76,7 +76,7 @@ The following actors interact with the BTC staking module:
 A Bitcoin staker can receive voting power through their Bitcoin stake delegation
 by following this process:
 1. Create a Bitcoin staking transaction and submit it to Bitcoin. The
-   staking transaction locks the staker's bitcoins for a pre-determined
+   staking transaction locks the staker's bitcoin for a pre-determined
    timelock and specifies slashing conditions.
 2. The BTC staker constructs the following transactions (whose specifications
    can be found [here](../../docs/staking-script.md)):
@@ -473,7 +473,7 @@ Upon `MsgEditFinalityProvider`, a Babylon node will execute as follows:
 
 ### MsgCreateBTCDelegation
 
-The `MsgCreateBTCDelegation` message is used for delegating some bitcoins to a
+The `MsgCreateBTCDelegation` message is used for delegating some bitcoin to a
 finality provider. It is typically submitted by a BTC delegator via the [BTC
 staker](https://github.com/babylonchain/btc-staker) program.
 
@@ -559,7 +559,7 @@ CheckpointFinalizationTimeout)`, where `MinUnbondingTime` and
    ownership of the Bitcoin secret key over the Babylon staker address.
 5. Ensure the staking transaction is not duplicated with an existing BTC
    delegation known to Babylon.
-6. Ensure the finality providers that the bitcoins are delegated to are known to
+6. Ensure the finality providers that the bitcoin are delegated to are known to
    Babylon.
 7. If the allow-list is enabled, ensure that the staking transaction is
    in the allow-list.
@@ -653,7 +653,7 @@ Upon `AddCovenantSigs`, a Babylon node will execute as follows:
 
 ### MsgBTCUndelegate
 
-The `MsgBTCUndelegate` message is used for unbonding bitcoins from a given
+The `MsgBTCUndelegate` message is used for unbonding bitcoin from a given
 finality provider. It is typically reported by the [BTC staking
 tracker](https://github.com/babylonchain/vigilante/tree/dev/btcstaking-tracker)
 program which proactively monitors unbonding transactions on Bitcoin.
