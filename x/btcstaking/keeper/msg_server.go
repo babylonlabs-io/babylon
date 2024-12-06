@@ -249,7 +249,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		paramsVersion = vp.Version
 
 		// NOTE: here we consume more gas to protect Babylon chain and covenant members against spamming
-		// i.e creating delegation that will never reach BTC
+		// i.e. creating delegation that will never reach BTC
 		ctx.GasMeter().ConsumeGas(vp.Params.DelegationCreationBaseGasFee, "delegation creation fee")
 	}
 

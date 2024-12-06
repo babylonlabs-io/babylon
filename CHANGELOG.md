@@ -47,6 +47,11 @@ virtual block periods for each finality provider that has delegations and reward
 - [#324](https://github.com/babylonlabs-io/babylon/pull/324) Fix decrementing
 jailed fp counter
 
+### Improvements
+
+- [#326](https://github.com/babylonlabs-io/babylon/pull/326) docs: btcstaking:
+Update btcstaking module docs to include EOI
+
 ## v0.18.0
 
 ### Improvements
