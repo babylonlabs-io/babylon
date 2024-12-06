@@ -42,12 +42,15 @@ func (n *NodeConfig) QueryBtcLightClientMainchainAll() []*btclighttypes.BTCHeade
 	}
 	for {
 		resp, err := n.QueryBtcLightClientMainchain(pagination)
-		if err != nil || len(resp.Headers) != int(limit) {
+		if err != nil {
 			// err could come as {"code":3,"message":"header specified by key does not exist","details":[]}
 			return headers
 		}
 
 		headers = append(headers, resp.Headers...)
+		if len(resp.Headers) != int(limit) {
+			return headers
+		}
 		pagination.Key = resp.Pagination.NextKey
 	}
 }
