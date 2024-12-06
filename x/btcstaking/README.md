@@ -14,6 +14,10 @@ providers and BTC delegations under them. This includes:
 
 - [Table of contents](#table-of-contents)
 - [Concepts](#concepts)
+  - [Actors](#actors)
+  - [Stake Creation](#stake-creation)
+  - [Voting Power and Finality](#voting-power-and-finality)
+  - [On-Demand Unbonding Tracking](#on-demand-unbonding-tracking)
 - [States](#states)
   - [Parameters](#parameters)
   - [Finality providers](#finality-providers)
@@ -23,6 +27,7 @@ providers and BTC delegations under them. This includes:
   - [MsgCreateFinalityProvider](#msgcreatefinalityprovider)
   - [MsgEditFinalityProvider](#msgeditfinalityprovider)
   - [MsgCreateBTCDelegation](#msgcreatebtcdelegation)
+  - [MsgAddBTCDelegationInclusionProof](#msgaddbtcdelegationinclusionproof)
   - [MsgAddCovenantSigs](#msgaddcovenantsigs)
   - [MsgBTCUndelegate](#msgbtcundelegate)
   - [MsgUpdateParams](#msgupdateparams)
@@ -36,51 +41,101 @@ providers and BTC delegations under them. This includes:
 ## Concepts
 
 Babylon's Bitcoin Staking protocol allows bitcoin holders to _trustlessly_ stake
-their bitcoins for providing economic security to the Babylon chain and other
-Proof-of-Stake (PoS) blockchains, _without bridging their bitcoins elsewhere_.
-The protocol consists of the following participants:
+their bitcoin for providing economic security to the Babylon chain and other
+Proof-of-Stake (PoS) blockchains, _without bridging their bitcoin elsewhere_.
 
-- **BTC staker (aka delegator)** who delegates their bitcoins to a finality
-  provider in order to obtain staking reward.
-- **Finality provider** who receives bitcoin delegations and participates in the
+### Actors
+The following actors interact with the BTC staking module: 
+- **BTC stakers (aka delegators)** delegate their bitcoin to a finality
+  provider in order to obtain provide economic security to the PoS system.
+  They interact with the `x/btcstaking` module to express their
+  interest to stake, notify about their staking receiving relevant confirmations,
+  or performing both of the previous steps (staking + staking confirmation notification)
+  at once.
+- **Finality providers** receive bitcoin delegations and participate in the
   _finality vote round_ on top of the CometBFT consensus.
-- **Covenant emulation committee** who serves as the
-  [covenants](https://covenants.info) to enforce spending conditions on bitcoins
+  They interact with the `x/btcstaking` module in order
+  to register or update their finality provider keys and information. For the
+  remainder of their operations (voting, submitting public randomness),
+  finality providers interact with the [`x/finality`](../x/finality) module.
+- **Covenant emulators** who serve as
+  [covenants](https://covenants.info) to enforce spending conditions on bitcoin
   staked on Babylon.
+  [Covenant emulators](https://github.com/babylonlabs-io/covenant-emulator)
+  interact with the `x/btcstaking` module to submit covenant signatures for the
+  slashing, unbonding, and unbonding slashing transactions.
+- **Vigilantes**: [Vigilante BTC Staking Trackers](https://github.com/babylonlabs-io/vigilante)
+  monitor the Bitcoin staking ledger to identify whether staking transactions have been unbonded
+  or whether a staking transaction the staker intended to create has been included and confirmed
+  in the Bitcoin ledger.
 
-The BTC Staking module is a major component in Babylon's BTC Staking protocol.
-At a high level, the participants interact with the BTC Staking module as
-follows:
 
-1. A finality provider registers itself on the BTC Staking module.
-2. A BTC staker delegates some bitcoins to the finality provider. This involves
-   the following steps:
-   1. The BTC staker submits a _staking transaction_ to Bitcoin. The staking
-      transaction locks its bitcoins for a long period of time and specifies
-      slashing conditions.
-   2. The BTC staker constructs the following transactions (whose specifications
-      can be found [here](../../docs/staking-script.md)):
-      - a _slashing transaction_ that can spend the staking transaction once the
-        finality provider is slashed,
-      - an _unbonding transaction_ that spends the staking transaction to start
-        the early unbonding process, and
-      - an _unbonding slashing transaction_ that can spend the unbonding
-        transaction once the finality provider is slashed. The BTC staker
-        pre-signs the slashing transaction and unbonding slashing transaction.
-   3. Once the staking transaction is confirmed on Bitcoin, the BTC staker sends
-      the staking transaction, its inclusion proof, slashing transaction,
-      unbonding transaction, and unbonding slashing transaction to Babylon.
-3. The covenant committee verifies spending conditions of the staking
-   transaction, and submits its signatures on the BTC staker's transactions. At
-   this point, the finality provider receives voting power
-   from the BTC delegation.
-4. Upon each new block, the BTC Staking module will record the voting power
-   table of finality providers.
+### Stake Creation
+
+#### Single Step Delegation
+A Bitcoin staker can receive voting power through their Bitcoin stake delegation
+by following this process:
+1. Create a Bitcoin staking transaction and submit it to Bitcoin. The
+   staking transaction locks the staker's bitcoin for a pre-determined
+   timelock and specifies slashing conditions.
+2. The BTC staker constructs the following transactions (whose specifications
+   can be found [here](../../docs/staking-script.md)):
+    - a pre-signed _slashing transaction_ that can spend the staking transaction once the
+      finality provider is slashed,
+    - an unsigned _unbonding transaction_ that spends the staking transaction to start
+      the early unbonding process, and
+    - a pre-signed _unbonding slashing transaction_ that can spend the unbonding
+      transaction once the finality provider is slashed.
+3. Once the staking transaction is confirmed on Bitcoin, the BTC staker sends
+   the staking transaction, its inclusion proof, slashing transaction,
+   unbonding transaction, and unbonding slashing transaction to Babylon.
+   This happens by the submission of a [MsgCreateBTCDelegation](#msgcreatebtcdelegation) message.
+4. The covenant emulators verify the transactions and submit their pre-signatures
+   for the slashing transactions and unbonding transaction.
+   The BTC Delegation is now activated.
+
+#### Expression of Interest Delegation (EOI)
+
+The above mechanism requires the staker to first lock their funds
+and then request the Babylon blockchain to activate the stake.
+For stakers that want to avoid this and prefer to first receive confirmation
+and then lock their funds on Bitcoin, the Expression of Interest (EOI) procedure
+can be used.
+
+The EOI procedure works as follows:
+
+1. The BTC staker constructs the following transactions (whose specifications
+   can be found [here](../../docs/staking-script.md)) and sends them on Babylon
+   through the [MsgCreateBTCDelegation](#msgcreatebtcdelegation) message with the
+   inclusion proof not set:
+    - an unsigned _staking transaction_ committing their funds.
+    - a pre-signed _slashing transaction_ that can spend the staking transaction once the
+      finality provider is slashed,
+    - an unsigned _unbonding transaction_ that spends the staking transaction to start
+      the early unbonding process, and
+    - a pre-signed _unbonding slashing transaction_ that can spend the unbonding
+      transaction once the finality provider is slashed. The BTC staker
+      pre-signs the slashing transaction and unbonding slashing transaction.
+2. The covenant committee verifies the above transactions and add the
+   required signatures for the slashing transactions.
+3. The BTC staker views the above confirmation and can now feel confident in submitting
+   the transaction to Bitcoin.
+4. Once the transaction is on Bitcoin and with sufficient confirmations
+   the staker can send a
+   [MsgAddBTCDelegationInclusionProof](#msgaddbtcdelegationinclusionproof)
+   with the inclusion proof for the stake receiving sufficient confirmations.
+   The stake is now active. In the case the staker does not monitor the Bitcoin
+   ledger for confirmation, the [Vigilante BTC Staking Tracker](https://github.com/babylonlabs-io/vigilante)
+   will pick it up and submit the inclusion proof to Babylon.
+ 
+### Voting Power and Finality
 
 Babylon's [Finality module](../finality) will make use of the voting power table
 maintained in the BTC Staking module to determine the finalization status of
 each block, identify equivocations of finality providers, and slash BTC
 delegations under culpable finality providers.
+
+### On-Demand Unbonding Tracking
 
 A BTC staker can unbond early by signing the unbonding transaction and
 submitting it to Bitcoin. The BTC Staking module identifies unbonding requests
@@ -418,7 +473,7 @@ Upon `MsgEditFinalityProvider`, a Babylon node will execute as follows:
 
 ### MsgCreateBTCDelegation
 
-The `MsgCreateBTCDelegation` message is used for delegating some bitcoins to a
+The `MsgCreateBTCDelegation` message is used for delegating some bitcoin to a
 finality provider. It is typically submitted by a BTC delegator via the [BTC
 staker](https://github.com/babylonchain/btc-staker) program.
 
@@ -439,34 +494,36 @@ message MsgCreateBTCDelegation {
   uint32 staking_time = 5;
   // staking_value  is the amount of satoshis locked in staking output
   int64 staking_value = 6;
-  // staking_tx is the staking tx along with the merkle proof of inclusion in btc block
-  babylon.btccheckpoint.v1.TransactionInfo staking_tx = 7;
+  // staking_tx is a bitcoin staking transaction i.e transaction that locks funds
+  bytes staking_tx = 7 ;
+  // staking_tx_inclusion_proof is the inclusion proof of the staking tx in BTC chain
+  InclusionProof staking_tx_inclusion_proof = 8;
   // slashing_tx is the slashing tx
   // Note that the tx itself does not contain signatures, which are off-chain.
-  bytes slashing_tx = 8 [ (gogoproto.customtype) = "BTCSlashingTx" ];
+  bytes slashing_tx = 9 [ (gogoproto.customtype) = "BTCSlashingTx" ];
   // delegator_slashing_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk).
   // It will be a part of the witness for the staking tx output.
   // The staking tx output further needs signatures from covenant and finality provider in
   // order to be spendable.
-  bytes delegator_slashing_sig = 9 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340Signature" ];
+  bytes delegator_slashing_sig = 10 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340Signature" ];
   // unbonding_time is the time lock used when funds are being unbonded. It is be used in:
   // - unbonding transaction, time lock spending path
   // - staking slashing transaction, change output
   // - unbonding slashing transaction, change output
   // It must be smaller than math.MaxUInt16 and larger that max(MinUnbondingTime, CheckpointFinalizationTimeout)
-  uint32 unbonding_time = 10;
+  uint32 unbonding_time = 11;
   // fields related to unbonding transaction
   // unbonding_tx is a bitcoin unbonding transaction i.e transaction that spends
   // staking output and sends it to the unbonding output
-  bytes unbonding_tx = 11;
+  bytes unbonding_tx = 12;
   // unbonding_value is amount of satoshis locked in unbonding output.
   // NOTE: staking_value and unbonding_value could be different because of the difference between the fee for staking tx and that for unbonding
-  int64 unbonding_value = 12;
+  int64 unbonding_value = 13;
   // unbonding_slashing_tx is the slashing tx which slash unbonding contract
   // Note that the tx itself does not contain signatures, which are off-chain.
-  bytes unbonding_slashing_tx = 13 [ (gogoproto.customtype) = "BTCSlashingTx" ];
+  bytes unbonding_slashing_tx = 14 [ (gogoproto.customtype) = "BTCSlashingTx" ];
   // delegator_unbonding_slashing_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk).
-  bytes delegator_unbonding_slashing_sig = 14 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340Signature" ];
+  bytes delegator_unbonding_slashing_sig = 15 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340Signature" ];
 }
 ```
 
@@ -475,40 +532,78 @@ Upon `MsgCreateBTCDelegation`, a Babylon node will execute as follows:
 1. Ensure the given unbonding time is larger than `max(MinUnbondingTime,
 CheckpointFinalizationTimeout)`, where `MinUnbondingTime` and
    `CheckpointFinalizationTimeout` are module parameters from BTC Staking module
-   and BTC Checkpoint module, respectively.
-2. Verify a [proof of
+   and B
+2. Verify the staking transaction and slashing transaction, including
+    1. Ensure the information provided in the request is consistent with the
+       staking transaction's BTC script.
+    2. Ensure the staking transaction's timelock has more than
+       `CheckpointFinalizationTimeout` BTC blocks left.
+    3. Verify the Merkle proof of inclusion of the staking transaction against
+       the BTC light client. <!-- TODO: add a  link to btccheckpoint doc -->
+    4. Ensure the staking transaction and slashing transaction are valid and
+       consistent, as per the [specification](../../docs/staking-script.md) of
+       their formats.
+    5. Verify the Schnorr signature on the slashing transaction signed by the BTC
+       delegator.
+3. Verify the unbonding transaction and unbonding slashing transaction,
+   including
+    1. Ensure the unbonding transaction's input points to the staking
+       transaction.
+    2. Verify the Schnorr signature on the slashing path of the unbonding
+       transaction by the BTC delegator.
+    3. Verify the unbonding transaction and the unbonding path's slashing
+       transaction are valid and consistent, as per the
+       [specification](../../docs/staking-script.md) of their formats.
+4. Verify a [proof of
    possession](https://rist.tech.cornell.edu/papers/pkreg.pdf) indicating the
    ownership of the Bitcoin secret key over the Babylon staker address.
-3. Ensure the finality providers that the bitcoins are delegated to are known to
+5. Ensure the staking transaction is not duplicated with an existing BTC
+   delegation known to Babylon.
+6. Ensure the finality providers that the bitcoin are delegated to are known to
    Babylon.
-4. Verify the staking transaction and slashing transaction, including
-   1. Ensure the staking transaction is not duplicated with an existing BTC
-      delegation known to Babylon.
-   2. Ensure the information provided in the request is consistent with the
-      staking transaction's BTC script.
-   3. Ensure the staking transaction is `BTCConfirmationDepth`-deep in Bitcoin,
-      where `BTCConfirmationDepth` is a module parameter specified in the BTC
-      Checkpoint module. <!-- TODO: add a  link to btccheckpoint doc -->
-   4. Ensure the staking transaction's timelock has more than
-      `CheckpointFinalizationTimeout` BTC blocks left.
-   5. Verify the Merkle proof of inclusion of the staking transaction against
-      the BTC light client. <!-- TODO: add a  link to btccheckpoint doc -->
-   6. Ensure the staking transaction and slashing transaction are valid and
-      consistent, as per the [specification](../../docs/staking-script.md) of
-      their formats.
-   7. Verify the Schnorr signature on the slashing transaction signed by the BTC
-      delegator.
-5. Verify the unbonding transaction and unbonding slashing transaction,
-   including
-   1. Ensure the unbonding transaction's input points to the staking
-      transaction.
-   2. Verify the Schnorr signature on the slashing path of the unbonding
-      transaction by the BTC delegator.
-   3. Verify the unbonding transaction and the unbonding path's slashing
-      transaction are valid and consistent, as per the
-      [specification](../../docs/staking-script.md) of their formats.
-6. Create a `BTCDelegation` object and save it to the BTC delegation storage and
+7. If the allow-list is enabled, ensure that the staking transaction is
+   in the allow-list.
+8. If the delegation contains an inclusion proof (it is optional due to EOI),
+   verify the inclusion proof and ensure that it is `BTCConfirmationDepth`-deep in the Bitcoin
+   blockchain, where `BTCConfirmationDepth` is a module parameter specified in the BTC
+   Checkpoint module. <!-- TODO: add a  link to btccheckpoint doc -->
+9. Create a `BTCDelegation` object and save it to the BTC delegation storage and
    the BTC delegation index storage.
+
+
+### MsgAddBTCDelegationInclusionProof
+
+The `MsgAddBTCDelegationInclusionProof` message is used for submitting
+the proof of inclusion of a Bitcoin Stake delegation on the
+Bitcoin blockchain.
+This message is utilised for notifying the Babylon blockchain
+that a staking transaction that was previously submitted through
+the EOI process is now on Bitcoin and has received sufficient
+confirmations to become active.
+
+```protobuf
+// MsgAddBTCDelegationInclusionProof is the message for adding proof of inclusion of BTC delegation on BTC chain
+message MsgAddBTCDelegationInclusionProof {
+  option (cosmos.msg.v1.signer) = "signer";
+
+  string signer = 1;
+  // staking_tx_hash is the hash of the staking tx.
+  // It uniquely identifies a BTC delegation
+  string staking_tx_hash = 2;
+  // staking_tx_inclusion_proof is the inclusion proof of the staking tx in BTC chain
+  InclusionProof staking_tx_inclusion_proof = 3;
+}
+```
+
+Upon `MsgAddBTCDelegationInclusionProof`, a Babylon
+node will execute as follows:
+1. Ensure that the staking transaction is tracked by Babylon.
+2. Check whether the delegation has an inclusion proof. If yes, exit.
+3. Check whether the delegation has not received a quorum of covenant sigs.
+   If not, exist.
+4. Check whether the delegation has been unbonded. If yes, exit.
+5. Verify the inclusion proof in conjunction with the on-chain BTC light client.
+6. Activate the transaction.
 
 ### MsgAddCovenantSigs
 
@@ -558,7 +653,7 @@ Upon `AddCovenantSigs`, a Babylon node will execute as follows:
 
 ### MsgBTCUndelegate
 
-The `MsgBTCUndelegate` message is used for unbonding bitcoins from a given
+The `MsgBTCUndelegate` message is used for unbonding bitcoin from a given
 finality provider. It is typically reported by the [BTC staking
 tracker](https://github.com/babylonchain/vigilante/tree/dev/btcstaking-tracker)
 program which proactively monitors unbonding transactions on Bitcoin.
