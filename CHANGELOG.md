@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#306](https://github.com/babylonlabs-io/babylon/pull/306) feat: improve BTC reward distribution with
+virtual block periods for each finality provider that has delegations and reward tracker structures.
+
 ### Bug fixes
 
 - [#324](https://github.com/babylonlabs-io/babylon/pull/324) Fix decrementing
@@ -71,6 +76,7 @@ to relay on UnbondingTime in delegation
 ## v0.17.2
 
 ### Improvements
+
 - [#311](https://github.com/babylonlabs-io/babylon/pull/311) Enforce version 2
 for unbonding transactions
 

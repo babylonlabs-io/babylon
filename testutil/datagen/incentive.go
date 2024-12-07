@@ -42,7 +42,7 @@ func GenRandomCoins(r *rand.Rand) sdk.Coins {
 	coins := sdk.NewCoins()
 	for i := int32(0); i < numCoins; i++ {
 		demon := GenRandomDenom(r)
-		amount := r.Int63n(10000) + 1
+		amount := r.Int63n(10_000000) + 10_000000
 		coin := sdk.NewInt64Coin(demon, amount)
 		coins = coins.Add(coin)
 	}

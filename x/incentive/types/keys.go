@@ -21,11 +21,14 @@ const (
 )
 
 var (
-	ParamsKey                   = []byte{0x01}             // key prefix for the parameters
-	BTCStakingGaugeKey          = []byte{0x02}             // key prefix for BTC staking gauge at each height
-	DelegatorWithdrawAddrPrefix = []byte{0x03}             // key for delegator withdraw address
-	RewardGaugeKey              = []byte{0x04}             // key prefix for reward gauge for a given stakeholder in a given type
-	RefundableMsgKeySetPrefix   = collections.NewPrefix(5) // key prefix for refundable msg key set
+	ParamsKey                            = []byte{0x01}             // key prefix for the parameters
+	BTCStakingGaugeKey                   = []byte{0x02}             // key prefix for BTC staking gauge at each height
+	DelegatorWithdrawAddrPrefix          = []byte{0x03}             // key for delegator withdraw address
+	RewardGaugeKey                       = []byte{0x04}             // key prefix for reward gauge for a given stakeholder in a given type
+	RefundableMsgKeySetPrefix            = collections.NewPrefix(5) // key prefix for refundable msg key set
+	FinalityProviderCurrentRewardsKey    = []byte{0x06}             // key prefix for storing the Current rewards of finality provider by addr
+	FinalityProviderHistoricalRewardsKey = []byte{0x07}             // key prefix for storing the Historical rewards of finality provider by addr and period
+	BTCDelegationRewardsTrackerKey       = []byte{0x8}              // key prefix for BTC delegation rewards tracker info (del,fp) => BTCDelegationRewardsTracker
 )
 
 // GetWithdrawAddrKey creates the key for a delegator's withdraw addr.

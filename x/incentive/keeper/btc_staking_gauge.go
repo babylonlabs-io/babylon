@@ -19,6 +19,7 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 		// failing to get a reward gauge at previous height is a programming error
 		panic("failed to get a reward gauge at previous height")
 	}
+	// TODO(rafilx): Finality providers also use the available rewards instead of reward gauge.
 	// reward each of the finality provider and its BTC delegations in proportion
 	for i, fp := range dc.FinalityProviders {
 		// only reward the first NumActiveFps finality providers
@@ -34,14 +35,24 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 		// reward the finality provider with commission
 		coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
 		k.accumulateRewardGauge(ctx, types.FinalityProviderType, fp.GetAddress(), coinsForCommission)
+
 		// reward the rest of coins to each BTC delegation proportional to its voting power portion
 		coinsForBTCDels := coinsForFpsAndDels.Sub(coinsForCommission...)
-		for _, btcDel := range fp.BtcDels {
-			btcDelPortion := fp.GetBTCDelPortion(btcDel)
-			coinsForDel := types.GetCoinsPortion(coinsForBTCDels, btcDelPortion)
-			k.accumulateRewardGauge(ctx, types.BTCDelegationType, btcDel.GetAddress(), coinsForDel)
+		// TODO(rafilx): add the coins entitled to the BTC delegations to the FinalityProviderCurrentRewards
+		if err := k.AddFinalityProviderRewardsForDelegationsBTC(ctx, fp.GetAddress(), coinsForBTCDels); err != nil {
+			panic(err)
 		}
+		// TODO: remove this iteration. It could be avoided by using accumulated rewards per period
+		// for each finality provider, and for each delegation (fp, delegator) keep track of last period
+		// TODO(rafilx): Add acumulative rewards for each validator
+
+		// for _, btcDel := range fp.BtcDels {
+		// 	btcDelPortion := fp.GetBTCDelPortion(btcDel)
+		// 	coinsForDel := types.GetCoinsPortion(coinsForBTCDels, btcDelPortion)
+		// 	k.accumulateRewardGauge(ctx, types.BTCDelegationType, btcDel.GetAddress(), coinsForDel)
+		// }
 	}
+	// TODO: prune unnecessary state (delete BTCStakingGauge after the amount is used)
 }
 
 func (k Keeper) accumulateBTCStakingReward(ctx context.Context, btcStakingReward sdk.Coins) {
