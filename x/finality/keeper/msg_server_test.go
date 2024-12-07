@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"cosmossdk.io/core/header"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -486,4 +487,115 @@ func TestVerifyActivationHeight(t *testing.T) {
 		"finality block height: %d is lower than activation height %d",
 		blockHeight, activationHeight,
 	).Error())
+}
+
+func FuzzEquivocationEvidence(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		iKeeper := types.NewMockIncentiveKeeper(ctrl)
+		iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+		ms := keeper.NewMsgServerImpl(*fKeeper)
+
+		// set params with activation height
+		err := fKeeper.SetParams(ctx, types.DefaultParams())
+		require.NoError(t, err)
+		activationHeight := fKeeper.GetParams(ctx).FinalityActivationHeight
+
+		// create and register a random finality provider
+		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, "")
+		require.NoError(t, err)
+		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+		fpBTCPKBytes := fpBTCPK.MustMarshal()
+
+		// test invalid case - without PubRand field in MsgEquivocationEvidence
+		invalidMsg := &types.MsgEquivocationEvidence{
+			Signer:               datagen.GenRandomAccount().Address,
+			FpBtcPk:              fpBTCPK,
+			BlockHeight:          activationHeight,
+			CanonicalAppHash:     datagen.GenRandomByteArray(r, 32),
+			ForkAppHash:          datagen.GenRandomByteArray(r, 32),
+			CanonicalFinalitySig: &bbn.SchnorrEOTSSig{},
+			ForkFinalitySig:      &bbn.SchnorrEOTSSig{},
+		}
+
+		_, err = ms.EquivocationEvidence(ctx, invalidMsg)
+		require.ErrorContains(t, err, "empty PubRand")
+
+		// test valid case
+		blockHeight := activationHeight + uint64(datagen.RandomInt(r, 100))
+
+		// generate proper pub rand data
+		startHeight := blockHeight
+		numPubRand := uint64(200)
+		randListInfo, _, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+		require.NoError(t, err)
+
+		// mock pub rand for evidence
+		pubRand := &randListInfo.PRList[0]
+
+		// mock canonical and fork app hash
+		canonicalAppHash := datagen.GenRandomByteArray(r, 32)
+		forkAppHash := datagen.GenRandomByteArray(r, 32)
+
+		// mock canonical signature
+		canonicalBytes := datagen.GenRandomByteArray(r, 32)
+		var canonicalModNScalar btcec.ModNScalar
+		overflowed := canonicalModNScalar.SetByteSlice(canonicalBytes)
+		require.False(t, overflowed)
+		canonicalSig := bbn.NewSchnorrEOTSSigFromModNScalar(&canonicalModNScalar)
+
+		// mock fork signature
+		forkBytes := datagen.GenRandomByteArray(r, 32)
+		var forkModNScalar btcec.ModNScalar
+		overflowed = forkModNScalar.SetByteSlice(forkBytes)
+		require.False(t, overflowed)
+		forkSig := bbn.NewSchnorrEOTSSigFromModNScalar(&forkModNScalar)
+
+		msg := &types.MsgEquivocationEvidence{
+			Signer:               datagen.GenRandomAccount().Address,
+			FpBtcPk:              fpBTCPK,
+			BlockHeight:          blockHeight,
+			PubRand:              pubRand,
+			CanonicalAppHash:     canonicalAppHash,
+			ForkAppHash:          forkAppHash,
+			CanonicalFinalitySig: canonicalSig,
+			ForkFinalitySig:      forkSig,
+		}
+
+		// set block height in context to be >= evidence height
+		blockAppHash := datagen.GenRandomByteArray(r, 32)
+		ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: blockAppHash})
+		fKeeper.IndexBlock(ctx)
+		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).AnyTimes()
+
+		// mock voting power
+		fKeeper.SetVotingPower(ctx, fpBTCPKBytes, blockHeight, 1)
+
+		// mock slashing interface
+		bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(nil)
+		bsKeeper.EXPECT().PropagateFPSlashingToConsumers(gomock.Any(), gomock.Eq(fpBTCPK)).Return(nil)
+
+		_, err = ms.EquivocationEvidence(ctx, msg)
+		require.NoError(t, err)
+
+		storedEvidence, err := fKeeper.GetEvidence(ctx, fpBTCPK, blockHeight)
+		require.NoError(t, err)
+		require.Equal(t, msg.FpBtcPk, storedEvidence.FpBtcPk)
+		require.Equal(t, msg.BlockHeight, storedEvidence.BlockHeight)
+		require.Equal(t, msg.PubRand, storedEvidence.PubRand)
+		require.Equal(t, msg.CanonicalAppHash, storedEvidence.CanonicalAppHash)
+		require.Equal(t, msg.ForkAppHash, storedEvidence.ForkAppHash)
+		require.Equal(t, msg.CanonicalFinalitySig, storedEvidence.CanonicalFinalitySig)
+		require.Equal(t, msg.ForkFinalitySig, storedEvidence.ForkFinalitySig)
+	})
 }
