@@ -221,7 +221,7 @@ func createMsgDelegationForParams(
 		SlashingTx:                    testStakingInfo.SlashingTx,
 		DelegatorSlashingSig:          delegatorSig,
 		UnbondingTx:                   unbondingInfo.serializedUnbondingTx,
-		UnbondingTime:                 uint32(unbondingTime),
+		UnbondingTime:                 unbondingTime,
 		UnbondingValue:                unbondingValue,
 		UnbondingSlashingTx:           unbondingInfo.unbondingSlashingTx,
 		DelegatorUnbondingSlashingSig: unbondingInfo.unbondingSlashinSig,

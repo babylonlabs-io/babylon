@@ -20,7 +20,7 @@ func generateTxFromOutputs(r *rand.Rand, info *btcstaking.IdentifiableStakingInf
 	numOutputs := r.Int31n(18) + 2
 
 	stakingOutputIdx := int(r.Int31n(numOutputs))
-	opReturnOutputIdx := int(datagen.RandomIntOtherThan(r, int(stakingOutputIdx), int(numOutputs)))
+	opReturnOutputIdx := int(datagen.RandomIntOtherThan(r, stakingOutputIdx, int(numOutputs)))
 
 	tx := wire.NewMsgTx(2)
 	for i := 0; i < int(numOutputs); i++ {

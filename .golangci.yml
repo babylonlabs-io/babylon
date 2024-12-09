@@ -51,7 +51,7 @@ linters:
     - testableexamples
     # - tparallel
     - typecheck
-    # - unconvert
+    - unconvert
     # - unparam
     - usestdlibvars
     - unused

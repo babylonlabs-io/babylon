@@ -88,7 +88,7 @@ func (e Epoch) IsFirstBlockOfNextEpoch(ctx context.Context) bool {
 
 // WithinBoundary checks whether the given height is within this epoch or not
 func (e Epoch) WithinBoundary(height uint64) bool {
-	if height < e.FirstBlockHeight || height > uint64(e.GetLastBlockHeight()) {
+	if height < e.FirstBlockHeight || height > e.GetLastBlockHeight() {
 		return false
 	} else {
 		return true
