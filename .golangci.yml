@@ -1,12 +1,12 @@
 run:
   timeout: 5m
-# TODO: enable linter
+# TODO: enable all linters
 linters:
   disable-all: true
   enable:
-    # - asasalint
-    # - asciicheck
-    # - bidichk
+    - asasalint
+    - asciicheck
+    - bidichk
     # - bodyclose
     # - containedctx
     # - contextcheck
@@ -20,13 +20,13 @@ linters:
     # - exhaustive
     # - forbidigo
     # - forcetypeassert
-    # - goconst
+    - goconst
     # - gocritic
     # - gocyclo
     # - goheader
     # - gomodguard
-    # - goprintffuncname
-    # - gosimple
+    - goprintffuncname
+    - gosimple
     - govet
     # - grouper
     # - importas
@@ -45,19 +45,19 @@ linters:
     # - revive
     # - rowserrcheck
     # - sqlclosecheck
-    # - staticcheck
+    - staticcheck
     # - stylecheck
     # - tenv
     # - testableexamples
     # - tparallel
-    # - typecheck
+    - typecheck
     # - unconvert
     # - unparam
     # - usestdlibvars
-    # - unused
+    - unused
     # - wastedassign
     - whitespace
-    # - wrapcheck #
+    # - wrapcheck
 
 issues:
   max-same-issues: 0
