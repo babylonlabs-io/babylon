@@ -13,7 +13,7 @@ import (
 // storeBTCDelegatorToFp returns the KVStore of the mapping del => fp
 // note: it stores the finality provider as key and sets a one byte as value
 // so each BTC delegator address can have multiple finality providers.
-// Usefull to iterate over all the pairs (fp,del) by filtering the
+// Useful to iterate over all the pairs (fp,del) by filtering the
 // delegator address.
 // prefix: BTCDelegatorToFPKey
 // key: (DelAddr, FpAddr)
@@ -53,6 +53,7 @@ func (k Keeper) storeFpHistoricalRewards(ctx context.Context, fp sdk.AccAddress)
 	return prefix.NewStore(st, fp.Bytes())
 }
 
+// setBTCDelegatorToFP sets a new delegator to finality provider record.
 func (k Keeper) setBTCDelegatorToFP(ctx context.Context, del, fp sdk.AccAddress) {
 	st := k.storeBTCDelegatorToFp(ctx, del)
 	st.Set(fp.Bytes(), []byte{0x00})
@@ -169,18 +170,18 @@ func (k Keeper) setFinalityProviderCurrentRewards(ctx context.Context, fp sdk.Ac
 // deleteAllFromFinalityProviderRwd deletes all the data related to Finality Provider Rewards
 // Historical and current from a fp address key.
 func (k Keeper) deleteAllFromFinalityProviderRwd(ctx context.Context, fp sdk.AccAddress) {
-	st := k.storeFpHistoricalRewards(ctx, fp)
+	stHistoricalRwd := k.storeFpHistoricalRewards(ctx, fp)
+
+	iter := stHistoricalRwd.Iterator(nil, nil)
+	defer iter.Close()
 
 	keys := make([][]byte, 0)
-
-	iter := st.Iterator(nil, nil)
-	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		keys = append(keys, iter.Key())
 	}
 
 	for _, key := range keys {
-		st.Delete(key)
+		stHistoricalRwd.Delete(key)
 	}
 
 	k.deleteFinalityProviderCurrentRewards(ctx, fp)
@@ -192,13 +193,15 @@ func (k Keeper) deleteFinalityProviderCurrentRewards(ctx context.Context, fp sdk
 	k.storeFpCurrentRewards(ctx).Delete(key)
 }
 
+// GetFinalityProviderHistoricalRewards returns the FinalityProviderHistoricalRewards based on the key (fp, period)
+// It returns an error if the key is not found inside the store.
 func (k Keeper) GetFinalityProviderHistoricalRewards(ctx context.Context, fp sdk.AccAddress, period uint64) (types.FinalityProviderHistoricalRewards, error) {
 	key := make([]byte, 8)
 	binary.LittleEndian.PutUint64(key, period)
 
 	bz := k.storeFpHistoricalRewards(ctx, fp).Get(key)
 	if bz == nil {
-		return types.FinalityProviderHistoricalRewards{}, types.ErrFPCurrentRewardsNotFound
+		return types.FinalityProviderHistoricalRewards{}, types.ErrFPHistoricalRewardsNotFound
 	}
 
 	var value types.FinalityProviderHistoricalRewards
@@ -208,6 +211,8 @@ func (k Keeper) GetFinalityProviderHistoricalRewards(ctx context.Context, fp sdk
 	return value, nil
 }
 
+// setFinalityProviderHistoricalRewards sets a new value inside the store, it returns an error
+// if the marshal of the `rwd` fails.
 func (k Keeper) setFinalityProviderHistoricalRewards(ctx context.Context, fp sdk.AccAddress, period uint64, rwd types.FinalityProviderHistoricalRewards) error {
 	key := make([]byte, 8)
 	binary.LittleEndian.PutUint64(key, period)

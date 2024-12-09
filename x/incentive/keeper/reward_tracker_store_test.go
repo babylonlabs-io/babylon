@@ -213,6 +213,57 @@ func FuzzCheckFinalityProviderCurrentRewards(f *testing.F) {
 	})
 }
 
+func FuzzCheckFinalityProviderHistoricalRewards(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+		fp1, fp2 := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+
+		fp1Period1 := datagen.RandomInt(r, 10)
+		_, err := k.GetFinalityProviderHistoricalRewards(ctx, fp1, fp1Period1)
+		require.EqualError(t, err, types.ErrFPHistoricalRewardsNotFound.Error())
+
+		expectedHistRwdFp1 := datagen.GenRandomFinalityProviderHistoricalRewards(r)
+		err = k.setFinalityProviderHistoricalRewards(ctx, fp1, fp1Period1, expectedHistRwdFp1)
+		require.NoError(t, err)
+
+		fp1Period1Historical, err := k.GetFinalityProviderHistoricalRewards(ctx, fp1, fp1Period1)
+		require.NoError(t, err)
+		require.Equal(t, expectedHistRwdFp1.CumulativeRewardsPerSat.String(), fp1Period1Historical.CumulativeRewardsPerSat.String())
+
+		// sets multiple historical for fp2
+		fp2Period1Historical := datagen.RandomInt(r, 10)
+		err = k.setFinalityProviderHistoricalRewards(ctx, fp2, fp2Period1Historical, datagen.GenRandomFinalityProviderHistoricalRewards(r))
+		require.NoError(t, err)
+		fp2Period2Historical := datagen.RandomInt(r, 10)
+		err = k.setFinalityProviderHistoricalRewards(ctx, fp2, fp2Period2Historical, datagen.GenRandomFinalityProviderHistoricalRewards(r))
+		require.NoError(t, err)
+
+		// sets a new current fp rwd to check the delete all
+		err = k.setFinalityProviderCurrentRewards(ctx, fp2, datagen.GenRandomFinalityProviderCurrentRewards(r))
+		require.NoError(t, err)
+
+		_, err = k.GetFinalityProviderCurrentRewards(ctx, fp2)
+		require.NoError(t, err)
+
+		// deleted all from fp2
+		k.deleteAllFromFinalityProviderRwd(ctx, fp2)
+
+		_, err = k.GetFinalityProviderCurrentRewards(ctx, fp2)
+		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
+
+		_, err = k.GetFinalityProviderHistoricalRewards(ctx, fp2, fp2Period1Historical)
+		require.EqualError(t, err, types.ErrFPHistoricalRewardsNotFound.Error())
+
+		_, err = k.GetFinalityProviderHistoricalRewards(ctx, fp2, fp2Period2Historical)
+		require.EqualError(t, err, types.ErrFPHistoricalRewardsNotFound.Error())
+	})
+}
+
 func NewKeeperWithCtx(t *testing.T) (Keeper, sdk.Context) {
 	encConf := appparams.DefaultEncodingConfig()
 	ctx, kvStore := store.NewStoreWithCtx(t, types.ModuleName)

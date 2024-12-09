@@ -31,7 +31,7 @@ func (k Keeper) FpSlashed(ctx context.Context, fp sdk.AccAddress) error {
 	keysBtcDelRwdTracker := make([][]byte, 0)
 	if err := k.IterateBTCDelegationRewardsTracker(ctx, fp, func(fp, del sdk.AccAddress) error {
 		keysBtcDelRwdTracker = append(keysBtcDelRwdTracker, del.Bytes())
-		return k.CalculateBTCDelegationRewardsAndSend(ctx, fp, del, endedPeriod)
+		return k.CalculateBTCDelegationRewardsAndSendToGauge(ctx, fp, del, endedPeriod)
 	}); err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (k Keeper) btcDelegationModifiedWithPreInitDel(
 		return err
 	}
 
-	if err := k.CalculateBTCDelegationRewardsAndSend(ctx, fp, del, endedPeriod); err != nil {
+	if err := k.CalculateBTCDelegationRewardsAndSendToGauge(ctx, fp, del, endedPeriod); err != nil {
 		return err
 	}
 
@@ -101,7 +101,7 @@ func (k Keeper) btcDelegationModifiedWithPreInitDel(
 	return k.initializeBTCDelegation(ctx, fp, del)
 }
 
-func (k Keeper) CalculateBTCDelegationRewardsAndSend(ctx context.Context, fp, del sdk.AccAddress, endPeriod uint64) error {
+func (k Keeper) CalculateBTCDelegationRewardsAndSendToGauge(ctx context.Context, fp, del sdk.AccAddress, endPeriod uint64) error {
 	rewards, err := k.CalculateBTCDelegationRewards(ctx, fp, del, endPeriod)
 	if err != nil {
 		if !errors.Is(err, types.ErrBTCDelegationRewardsTrackerNotFound) {

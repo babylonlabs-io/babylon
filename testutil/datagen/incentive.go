@@ -150,3 +150,8 @@ func GenRandomFinalityProviderCurrentRewards(r *rand.Rand) types.FinalityProvide
 	activeSatoshi := RandomMathInt(r, 10000)
 	return types.NewFinalityProviderCurrentRewards(rwd, period, activeSatoshi)
 }
+
+func GenRandomFinalityProviderHistoricalRewards(r *rand.Rand) types.FinalityProviderHistoricalRewards {
+	rwd := GenRandomCoins(r)
+	return types.NewFinalityProviderHistoricalRewards(rwd)
+}
