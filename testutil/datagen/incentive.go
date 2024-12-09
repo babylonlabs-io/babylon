@@ -8,6 +8,7 @@ import (
 
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 )
 
@@ -141,4 +142,11 @@ func GenRandomBTCTimestampingRewardDistInfo(r *rand.Rand) *btcctypes.RewardDistI
 		others = append(others, GenRandomCheckpointAddressPair(r))
 	}
 	return btcctypes.NewRewardDistInfo(best, others...)
+}
+
+func GenRandomFinalityProviderCurrentRewards(r *rand.Rand) types.FinalityProviderCurrentRewards {
+	rwd := GenRandomCoins(r)
+	period := RandomInt(r, 100)
+	activeSatoshi := RandomMathInt(r, 10000)
+	return types.NewFinalityProviderCurrentRewards(rwd, period, activeSatoshi)
 }

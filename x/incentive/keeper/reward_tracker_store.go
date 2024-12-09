@@ -125,6 +125,8 @@ func (k Keeper) deleteKeysFromBTCDelegationRewardsTracker(ctx context.Context, f
 	}
 }
 
+// GetBTCDelegationRewardsTracker returns the BTCDelegationRewardsTracker based on the delegation key (fp, del)
+// It returns an error in case the key is not found.
 func (k Keeper) GetBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.AccAddress) (types.BTCDelegationRewardsTracker, error) {
 	key := del.Bytes()
 	bz := k.storeBTCDelegationRewardsTracker(ctx, fp).Get(key)
@@ -139,6 +141,7 @@ func (k Keeper) GetBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.
 	return value, nil
 }
 
+// setBTCDelegationRewardsTracker sets a new structure in the store, it fails and returns an error if the rwd fails to marshal.
 func (k Keeper) setBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.AccAddress, rwd types.BTCDelegationRewardsTracker) error {
 	key := del.Bytes()
 	bz, err := rwd.Marshal()
@@ -151,6 +154,7 @@ func (k Keeper) setBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.
 	return nil
 }
 
+// setFinalityProviderCurrentRewards sets a new structure in the store, it fails and returns an error if the rwd fails to marshal.
 func (k Keeper) setFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress, rwd types.FinalityProviderCurrentRewards) error {
 	key := fp.Bytes()
 	bz, err := rwd.Marshal()
@@ -162,6 +166,8 @@ func (k Keeper) setFinalityProviderCurrentRewards(ctx context.Context, fp sdk.Ac
 	return nil
 }
 
+// deleteAllFromFinalityProviderRwd deletes all the data related to Finality Provider Rewards
+// Historical and current from a fp address key.
 func (k Keeper) deleteAllFromFinalityProviderRwd(ctx context.Context, fp sdk.AccAddress) {
 	st := k.storeFpHistoricalRewards(ctx, fp)
 
@@ -180,6 +186,7 @@ func (k Keeper) deleteAllFromFinalityProviderRwd(ctx context.Context, fp sdk.Acc
 	k.deleteFinalityProviderCurrentRewards(ctx, fp)
 }
 
+// deleteFinalityProviderCurrentRewards deletes the current FP reward based on the key received
 func (k Keeper) deleteFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress) {
 	key := fp.Bytes()
 	k.storeFpCurrentRewards(ctx).Delete(key)

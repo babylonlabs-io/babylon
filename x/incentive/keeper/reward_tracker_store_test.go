@@ -173,6 +173,46 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 	})
 }
 
+func FuzzCheckFinalityProviderCurrentRewards(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+		fp1, fp2 := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+
+		_, err := k.GetFinalityProviderCurrentRewards(ctx, fp1)
+		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
+
+		expectedCurrentRwdFp1 := datagen.GenRandomFinalityProviderCurrentRewards(r)
+		err = k.setFinalityProviderCurrentRewards(ctx, fp1, expectedCurrentRwdFp1)
+		require.NoError(t, err)
+
+		currentRwdFp1, err := k.GetFinalityProviderCurrentRewards(ctx, fp1)
+		require.NoError(t, err)
+		require.Equal(t, expectedCurrentRwdFp1.CurrentRewards.String(), currentRwdFp1.CurrentRewards.String())
+		require.Equal(t, expectedCurrentRwdFp1.TotalActiveSat.String(), currentRwdFp1.TotalActiveSat.String())
+		require.Equal(t, expectedCurrentRwdFp1.Period, currentRwdFp1.Period)
+
+		k.deleteAllFromFinalityProviderRwd(ctx, fp1)
+		_, err = k.GetFinalityProviderCurrentRewards(ctx, fp1)
+		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
+
+		// sets a new fp
+		err = k.setFinalityProviderCurrentRewards(ctx, fp2, datagen.GenRandomFinalityProviderCurrentRewards(r))
+		require.NoError(t, err)
+
+		_, err = k.GetFinalityProviderCurrentRewards(ctx, fp2)
+		require.NoError(t, err)
+
+		k.deleteFinalityProviderCurrentRewards(ctx, fp2)
+		_, err = k.GetFinalityProviderCurrentRewards(ctx, fp2)
+		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
+	})
+}
+
 func NewKeeperWithCtx(t *testing.T) (Keeper, sdk.Context) {
 	encConf := appparams.DefaultEncodingConfig()
 	ctx, kvStore := store.NewStoreWithCtx(t, types.ModuleName)
