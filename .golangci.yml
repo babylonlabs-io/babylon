@@ -1,103 +1,77 @@
 run:
   timeout: 5m
+# TODO: enable all linters
+linters:
   disable-all: true
   enable:
     - asasalint
     - asciicheck
     - bidichk
-    - bodyclose
-    - containedctx
-    - contextcheck
-    - cyclop
+    # - bodyclose
+    # - containedctx
+    # - contextcheck
     - decorder
-    - depguard
-    - dogsled
-    - dupl
+    # - dogsled
     - durationcheck
     - errcheck
     - errchkjson
     - errname
-    - errorlint
-    - execinquery
-    - exhaustive
-    - exhaustivestruct
-    - exhaustruct
-    - exportloopref
-    - forbidigo
-    - forcetypeassert
-    - funlen
-    - gci
-    - gochecknoglobals
-    - gochecknoinits
-    - gocognit
+    # - errorlint
+    # - exhaustive
+    # - forbidigo
+    # - forcetypeassert
     - goconst
-    - gocritic
-    - gocyclo
-    - godot
-    - godox
-    - goerr113
-    - gofumpt
+    # - gocritic
+    # - gocyclo
     - goheader
-    - golint
-    - gomnd
-    - gomoddirectives
     - gomodguard
     - goprintffuncname
-    - gosec
     - gosimple
     - govet
     - grouper
-    - ifshort
     - importas
     - ineffassign
-    - interfacebloat
-    - interfacer
-    - ireturn
-    - lll
     - loggercheck
-    - maintidx
-    - makezero
-    - maligned
+    # - maintidx
+    # - makezero
     - misspell
     - nakedret
-    - nestif
     - nilerr
-    - nilnil
-    - nlreturn
+    # - nlreturn
     - noctx
-    - nolintlint
-    - nonamedreturns
-    - nosnakecase
     - nosprintfhostport
-    - paralleltest
-    - prealloc
-    - predeclared
-    - promlinter
+    # - paralleltest
     - reassign
-    - revive
+    # - revive
     - rowserrcheck
-    - scopelint
     - sqlclosecheck
     - staticcheck
-    - structcheck
-    - stylecheck
-    - tagliatelle
+    # - stylecheck
     - tenv
     - testableexamples
-    - testpackage
-    - thelper
-    - tparallel
+    # - tparallel
     - typecheck
     - unconvert
-    - unparam
-    - unused
+    # - unparam
     - usestdlibvars
-    - varcheck
-    - varnamelen
+    - unused
     - wastedassign
     - whitespace
-    - wrapcheck
-    - wsl
+    # - wrapcheck
 
 issues:
   max-same-issues: 0
+  # Default: https://golangci-lint.run/usage/false-positives/#default-exclusions
+  exclude-dirs:
+    - e2etest
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+    - path-except: _test\.go
+      linters:
+        - forbidigo

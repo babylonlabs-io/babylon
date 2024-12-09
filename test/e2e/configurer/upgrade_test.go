@@ -37,7 +37,7 @@ func TestWriteGovPropToFile(t *testing.T) {
 	require.NoError(t, err)
 
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	newPropHeight := int64(r.Int63())
+	newPropHeight := r.Int63()
 	msgProp.Plan.Height = newPropHeight
 
 	tempFilePath := filepath.Join(t.TempDir(), filepath.Base(config.UpgradeSignetLaunchFilePath))

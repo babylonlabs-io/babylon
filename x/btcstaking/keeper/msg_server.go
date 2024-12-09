@@ -656,7 +656,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		types.EmitEarlyUnbondedEvent(ctx, btcDel.MustGetStakingTxHash().String(), stakerSpendigTxHeader.Height)
 	} else {
 		// stakeSpendingTx is not unbonding tx, first we need to verify whether it
-		// acutally spends staking output
+		// actually spends staking output
 		stakingTxHash, err := chainhash.NewHashFromStr(req.StakingTxHash)
 
 		if err != nil {

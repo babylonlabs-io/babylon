@@ -39,7 +39,12 @@ func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]by
 
 	var resp *http.Response
 	require.Eventually(n.t, func() bool {
-		req, err := http.NewRequest("GET", fullQueryPath, nil)
+		req, err := http.NewRequestWithContext(
+			context.Background(),
+			http.MethodGet,
+			fullQueryPath,
+			nil,
+		)
 		if err != nil {
 			return false
 		}

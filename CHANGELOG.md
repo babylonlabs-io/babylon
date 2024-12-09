@@ -41,6 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#306](https://github.com/babylonlabs-io/babylon/pull/306) feat: improve BTC reward distribution with
 virtual block periods for each finality provider that has delegations and reward tracker structures.
+- [#316](https://github.com/babylonlabs-io/babylon/pull/316) Add testnet upgrade data
 
 ### Bug fixes
 
@@ -51,6 +52,10 @@ jailed fp counter
 
 - [#326](https://github.com/babylonlabs-io/babylon/pull/326) docs: btcstaking:
 Update btcstaking module docs to include EOI
+
+## v0.18.1
+
+- [#328](https://github.com/babylonlabs-io/babylon/pull/328) Fix btc activation height validation in genesis
 
 ## v0.18.0
 

@@ -21,8 +21,6 @@ func FuzzMsgInsertHeader(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		errorKind := 0
-
 		addressBytes := datagen.GenRandomByteArray(r, 1+uint64(r.Intn(255)))
 		headerBytes := datagen.GenRandomBTCHeaderInfo(r).Header
 		headerHex := headerBytes.MarshalHex()
@@ -33,7 +31,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		require.NoError(t, err)
 
 		// Perform modifications on the header
-		errorKind = r.Intn(2)
+		errorKind := r.Intn(2)
 		var bitsBig sdkmath.Uint
 		switch errorKind {
 		case 0:

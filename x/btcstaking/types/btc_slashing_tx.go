@@ -237,14 +237,12 @@ func (tx *BTCSlashingTx) EncVerifyAdaptorSignatures(
 	valPKs []bbn.BIP340PubKey,
 	sigs [][]byte,
 ) error {
-
 	_, err := tx.ParseEncVerifyAdaptorSignatures(fundingOut, slashingSpendInfo, pk, valPKs, sigs)
 	if err != nil {
 		return err
 	}
 
 	return nil
-
 }
 
 // findFPIdxInWitness returns the index of the finality provider's signature

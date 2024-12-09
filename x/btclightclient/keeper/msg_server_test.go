@@ -129,7 +129,7 @@ func FuzzMsgServerReorgChain(f *testing.F) {
 			r,
 			forkHeader.Header.ToBlockHeader(),
 			nil,
-			uint32(forkChainLen),
+			forkChainLen,
 		)
 		chainExtensionWork := chainWork(chainExtension)
 		msg := &types.MsgInsertHeaders{Signer: address.String(), Headers: keepertest.NewBTCHeaderBytesList(chainExtension)}

@@ -178,7 +178,6 @@ func InitTestnet(
 	valAddrCodec runtime.ValidatorAddressCodec,
 	genesisParams GenesisParams,
 ) error {
-
 	nodeIDs := make([]string, numValidators)
 	valKeys := make([]*privval.ValidatorKeys, numValidators)
 
@@ -398,7 +397,6 @@ func InitTestnet(
 
 			genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
 			genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
-
 		}
 	}
 
@@ -424,7 +422,6 @@ func initGenFiles(
 	genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance,
 	genFiles []string, genKeys []*checkpointingtypes.GenesisKey, numValidators int, genesisParams GenesisParams,
 ) error {
-
 	appGenState := mbm.DefaultGenesis(clientCtx.Codec)
 
 	// set the accounts in the genesis state
@@ -465,7 +462,6 @@ func collectGenFiles(
 	nodeIDs []string, genKeys []*checkpointingtypes.GenesisKey, numValidators int,
 	outputDir, nodeDirPrefix, nodeDaemonHome string, genBalIterator banktypes.GenesisBalancesIterator,
 ) error {
-
 	var appState json.RawMessage
 	genTime := cmttime.Now()
 

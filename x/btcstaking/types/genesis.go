@@ -29,12 +29,14 @@ func (gs GenesisState) Validate() error {
 			return err
 		}
 
-		err := heightToVersionMap.AddNewPair(uint64(i), params.BtcActivationHeight)
+		err := heightToVersionMap.AddNewPair(
+			uint64(params.BtcActivationHeight),
+			uint32(i),
+		)
 
 		if err != nil {
 			return err
 		}
-
 	}
 	return nil
 }

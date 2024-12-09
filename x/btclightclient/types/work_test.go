@@ -1,11 +1,14 @@
 package types_test
 
 import (
+	"math/rand"
+	"testing"
+
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	"math/rand"
-	"testing"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/stretchr/testify/require"
 )
 
 func FuzzCumulativeWork(f *testing.F) {
@@ -27,4 +30,14 @@ func FuzzCumulativeWork(f *testing.F) {
 			t.Errorf("Cumulative work does not correspond to actual one")
 		}
 	})
+}
+
+func TestRetargetBlock(t *testing.T) {
+	expectedBaseBlockHeightTestnet4 := uint32(195552)
+	require.True(t, types.IsRetargetBlock(&types.BTCHeaderInfo{Height: expectedBaseBlockHeightTestnet4}, &chaincfg.SigNetParams))
+
+	baseBtcHeaderMainnetHeight := uint32(854784)
+	cap1ActivationHeight := uint32(857910)
+	require.True(t, types.IsRetargetBlock(&types.BTCHeaderInfo{Height: baseBtcHeaderMainnetHeight}, &chaincfg.MainNetParams))
+	require.True(t, baseBtcHeaderMainnetHeight < cap1ActivationHeight)
 }

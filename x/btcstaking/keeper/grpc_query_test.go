@@ -258,7 +258,6 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 			}
 		}
 		require.Equal(t, len(btcDelsFound), len(expectedBtcDelsMap))
-
 	})
 }
 
