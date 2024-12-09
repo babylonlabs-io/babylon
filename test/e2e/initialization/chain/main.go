@@ -54,7 +54,11 @@ func main() {
 		panic(err)
 	}
 
-	b, _ := json.Marshal(createdChain)
+	b, err := json.Marshal(createdChain)
+	if err != nil {
+		panic(err)
+	}
+
 	fileName := fmt.Sprintf("%v/%v-encode", dataDir, chainId)
 	if err = os.WriteFile(fileName, b, 0o777); err != nil {
 		panic(err)

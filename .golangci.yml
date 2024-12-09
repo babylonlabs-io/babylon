@@ -13,9 +13,9 @@ linters:
     - decorder
     # - dogsled
     # - durationcheck
-    # - errcheck
-    # - errchkjson
-    # - errname
+    - errcheck
+    - errchkjson
+    - errname
     # - errorlint
     # - exhaustive
     # - forbidigo
@@ -38,17 +38,17 @@ linters:
     - nakedret
     - nilerr
     # - nlreturn
-    # - noctx
+    - noctx
     - nosprintfhostport
     # - paralleltest
-    # - reassign
+    - reassign
     # - revive
     - rowserrcheck
     - sqlclosecheck
     - staticcheck
     # - stylecheck
-    # - tenv
-    # - testableexamples
+    - tenv
+    - testableexamples
     # - tparallel
     - typecheck
     # - unconvert

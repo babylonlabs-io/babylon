@@ -51,7 +51,7 @@ func (e submissionBtcError) Error() string {
 }
 
 const (
-	submissionUnknownErr submissionBtcError = submissionBtcError(
+	errSubmissionUnknown submissionBtcError = submissionBtcError(
 		"One of submission blocks is not known to btclightclient",
 	)
 )
@@ -111,7 +111,7 @@ func (k Keeper) headerDepth(ctx context.Context, headerHash *bbn.BTCHeaderHashBy
 
 	if err != nil {
 		// one of blocks is not known to light client
-		return 0, submissionUnknownErr
+		return 0, errSubmissionUnknown
 	}
 	return blockDepth, nil
 }
