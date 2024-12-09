@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -224,4 +225,35 @@ func (k Keeper) setFinalityProviderHistoricalRewards(ctx context.Context, fp sdk
 
 	k.storeFpHistoricalRewards(ctx, fp).Set(key, bz)
 	return nil
+}
+
+// subDelegationSat subtracts an amount of active stake from the BTCDelegationRewardsTracker
+// and the FinalityProviderCurrentRewards.
+// There is no need to check if the fp or delegation exists, because they should exist
+// otherwise it is probably a programming error calling to subtract the amount of active sat without
+// having any sat added in the first place that created the structures.
+func (k Keeper) subDelegationSat(ctx context.Context, fp, del sdk.AccAddress, amt sdkmath.Int) error {
+	btcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
+	if err != nil {
+		return err
+	}
+
+	btcDelRwdTracker.SubTotalActiveSat(amt)
+	if err := k.setBTCDelegationRewardsTracker(ctx, fp, del, btcDelRwdTracker); err != nil {
+		return err
+	}
+
+	return k.subFinalityProviderStaked(ctx, fp, amt)
+}
+
+// subFinalityProviderStaked subtracts an amount of active stake from the
+// FinalityProviderCurrentRewards, it errors out if the finality provider does not exist.
+func (k Keeper) subFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress, amt sdkmath.Int) error {
+	fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
+	if err != nil {
+		return err
+	}
+
+	fpCurrentRwd.SubTotalActiveSat(amt)
+	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }

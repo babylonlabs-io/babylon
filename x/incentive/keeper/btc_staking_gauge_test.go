@@ -24,14 +24,14 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		// mock bank keeper
 		bankKeeper := types.NewMockBankKeeper(ctrl)
 
-		// create incentive keeper
-		keeper, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, nil, nil)
+		// create incentive k
+		k, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, nil, nil)
 		height := datagen.RandomInt(r, 1000)
 		ctx = datagen.WithCtxHeight(ctx, height)
 
 		// set a random gauge
 		gauge := datagen.GenRandomGauge(r)
-		keeper.SetBTCStakingGauge(ctx, height, gauge)
+		k.SetBTCStakingGauge(ctx, height, gauge)
 
 		// generate a random voting power distribution cache
 		dc, err := datagen.GenRandomVotingPowerDistCache(r, 100)
@@ -57,7 +57,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 			fpAddr := fp.GetAddress()
 
 			for _, btcDel := range fp.BtcDels {
-				err := keeper.BtcDelegationActivated(ctx, fpAddr, btcDel.GetAddress(), btcDel.TotalSat)
+				err := k.BtcDelegationActivated(ctx, fpAddr, btcDel.GetAddress(), btcDel.TotalSat)
 				require.NoError(t, err)
 
 				btcDelPortion := fp.GetBTCDelPortion(btcDel)
@@ -70,21 +70,21 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		}
 
 		// distribute rewards in the gauge to finality providers/delegations
-		keeper.RewardBTCStaking(ctx, height, dc)
+		k.RewardBTCStaking(ctx, height, dc)
 
 		for _, fp := range dc.FinalityProviders {
 			fpAddr := fp.GetAddress()
 			for _, btcDel := range fp.BtcDels {
 				delAddr := btcDel.GetAddress()
-				delRwd, err := keeper.GetBTCDelegationRewardsTracker(ctx, fpAddr, delAddr)
+				delRwd, err := k.GetBTCDelegationRewardsTracker(ctx, fpAddr, delAddr)
 				require.NoError(t, err)
 				require.Equal(t, delRwd.TotalActiveSat.Uint64(), btcDel.TotalSat)
 
 				// makes sure the rewards added reach the delegation gauge
-				err = keeper.SendBtcDelegationRewardsToGauge(ctx, fpAddr, delAddr)
+				err = k.SendBtcDelegationRewardsToGauge(ctx, fpAddr, delAddr)
 				require.NoError(t, err)
 			}
-			fpCurrentRwd, err := keeper.GetFinalityProviderCurrentRewards(ctx, fpAddr)
+			fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fpAddr)
 			require.NoError(t, err)
 			require.Equal(t, fpCurrentRwd.TotalActiveSat.Uint64(), fp.TotalBondedSat)
 		}
@@ -93,7 +93,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		for addrStr, reward := range fpRewardMap {
 			addr, err := sdk.AccAddressFromBech32(addrStr)
 			require.NoError(t, err)
-			rg := keeper.GetRewardGauge(ctx, types.FinalityProviderType, addr)
+			rg := k.GetRewardGauge(ctx, types.FinalityProviderType, addr)
 			require.NotNil(t, rg)
 			require.Equal(t, reward, rg.Coins)
 		}
@@ -102,13 +102,14 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		for addrStr, reward := range btcDelRewardMap {
 			addr, err := sdk.AccAddressFromBech32(addrStr)
 			require.NoError(t, err)
-			rg := keeper.GetRewardGauge(ctx, types.BTCDelegationType, addr)
+			rg := k.GetRewardGauge(ctx, types.BTCDelegationType, addr)
 			require.NotNil(t, rg)
 
 			// A little bit of rewards could be lost in the process due to precision points
 			// so 0.1% difference can be considered okay
 			allowedMarginError := CalculatePointOnePercent(reward)
-			require.Truef(t, reward.Sub(rg.Coins...).IsAllLT(allowedMarginError),
+			diff, _ := reward.SafeSub(rg.Coins...)
+			require.Truef(t, diff.IsAllLT(allowedMarginError),
 				"BTC delegation failed within the margin of error: %s\nRewards: %s\nGauge: %s",
 				allowedMarginError.String(), reward.String(), rg.Coins.String(),
 			)

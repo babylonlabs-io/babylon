@@ -264,9 +264,121 @@ func FuzzCheckFinalityProviderHistoricalRewards(f *testing.F) {
 	})
 }
 
-func NewKeeperWithCtx(t *testing.T) (Keeper, sdk.Context) {
+func TestAddSubDelegationSat(t *testing.T) {
+	k, ctx := NewKeeperWithCtx(t)
+
+	fp1, del1 := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+	fp2, del2 := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+	amtFp1Del1, amtFp1Del2, amtFp2Del2, amtFp2Del1 := math.NewInt(2000), math.NewInt(4000), math.NewInt(500), math.NewInt(700)
+
+	_, err := k.GetBTCDelegationRewardsTracker(ctx, fp1, del1)
+	require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNotFound.Error())
+
+	// adds 2000 for fp1, del1
+	// fp1       => 2000
+	// fp1, del1 => 2000
+	err = k.AddDelegationSat(ctx, fp1, del1, amtFp1Del1)
+	require.NoError(t, err)
+	checkFpTotalSat(t, ctx, k, fp1, amtFp1Del1)
+	checkFpDelTotalSat(t, ctx, k, fp1, del1, amtFp1Del1)
+
+	btcDelRwdFp1Del1, err := k.GetBTCDelegationRewardsTracker(ctx, fp1, del1)
+	require.NoError(t, err)
+	// if the normal flow with initilize BTC delegation would have been called,
+	// it would start as 1.
+	require.Equal(t, btcDelRwdFp1Del1.StartPeriodCumulativeReward, uint64(0))
+
+	// adds 4000 for fp1, del2
+	// fp1       => 6000
+	// fp1, del1 => 2000
+	// fp1, del2 => 4000
+	err = k.AddDelegationSat(ctx, fp1, del2, amtFp1Del2)
+	require.NoError(t, err)
+
+	checkFpTotalSat(t, ctx, k, fp1, amtFp1Del1.Add(amtFp1Del2))
+	checkFpDelTotalSat(t, ctx, k, fp1, del2, amtFp1Del2)
+	checkFpDelTotalSat(t, ctx, k, fp1, del1, amtFp1Del1)
+
+	// adds 500 for fp2, del2
+	// fp1       => 6000
+	// fp2       =>  500
+	// fp1, del1 => 2000
+	// fp1, del2 => 4000
+	// fp2, del2 =>  500
+	err = k.AddDelegationSat(ctx, fp2, del2, amtFp2Del2)
+	require.NoError(t, err)
+	checkFpTotalSat(t, ctx, k, fp1, amtFp1Del1.Add(amtFp1Del2))
+	checkFpTotalSat(t, ctx, k, fp2, amtFp2Del2)
+	checkFpDelTotalSat(t, ctx, k, fp1, del1, amtFp1Del1)
+	checkFpDelTotalSat(t, ctx, k, fp1, del2, amtFp1Del2)
+	checkFpDelTotalSat(t, ctx, k, fp2, del2, amtFp2Del2)
+
+	// adds 700 for fp2, del1
+	// fp1       => 6000
+	// fp2       => 1200
+	// fp1, del1 => 2000
+	// fp1, del2 => 4000
+	// fp2, del1 =>  700
+	// fp2, del2 =>  500
+	err = k.AddDelegationSat(ctx, fp2, del1, amtFp2Del1)
+	require.NoError(t, err)
+	checkFpTotalSat(t, ctx, k, fp1, amtFp1Del1.Add(amtFp1Del2))
+	checkFpTotalSat(t, ctx, k, fp2, amtFp2Del2.Add(amtFp2Del1))
+	checkFpDelTotalSat(t, ctx, k, fp1, del1, amtFp1Del1)
+	checkFpDelTotalSat(t, ctx, k, fp1, del2, amtFp1Del2)
+	checkFpDelTotalSat(t, ctx, k, fp2, del1, amtFp2Del1)
+	checkFpDelTotalSat(t, ctx, k, fp2, del2, amtFp2Del2)
+
+	lastAmtFp1Del2 := math.NewInt(2000)
+	// adds 2000 for fp1, del2
+	// fp1       => 8000
+	// fp2       => 1200
+	// fp1, del1 => 2000
+	// fp1, del2 => 6000
+	// fp2, del1 =>  700
+	// fp2, del2 =>  500
+	err = k.AddDelegationSat(ctx, fp1, del2, lastAmtFp1Del2)
+	require.NoError(t, err)
+	checkFpTotalSat(t, ctx, k, fp1, amtFp1Del1.Add(amtFp1Del2).Add(lastAmtFp1Del2))
+	checkFpTotalSat(t, ctx, k, fp2, amtFp2Del2.Add(amtFp2Del1))
+	checkFpDelTotalSat(t, ctx, k, fp1, del1, amtFp1Del1)
+	checkFpDelTotalSat(t, ctx, k, fp1, del2, amtFp1Del2.Add(lastAmtFp1Del2))
+	checkFpDelTotalSat(t, ctx, k, fp2, del1, amtFp2Del1)
+	checkFpDelTotalSat(t, ctx, k, fp2, del2, amtFp2Del2)
+
+	subAmtFp2Del2 := math.NewInt(350)
+	// subtract 350 for fp2, del2
+	// fp1       => 8000
+	// fp2       =>  850
+	// fp1, del1 => 2000
+	// fp1, del2 => 6000
+	// fp2, del1 =>  700
+	// fp2, del2 =>  150
+	err = k.subDelegationSat(ctx, fp2, del2, subAmtFp2Del2)
+	require.NoError(t, err)
+	checkFpTotalSat(t, ctx, k, fp1, amtFp1Del1.Add(amtFp1Del2).Add(lastAmtFp1Del2))
+	checkFpTotalSat(t, ctx, k, fp2, amtFp2Del2.Add(amtFp2Del1).Sub(subAmtFp2Del2))
+	checkFpDelTotalSat(t, ctx, k, fp1, del1, amtFp1Del1)
+	checkFpDelTotalSat(t, ctx, k, fp1, del2, amtFp1Del2.Add(lastAmtFp1Del2))
+	checkFpDelTotalSat(t, ctx, k, fp2, del1, amtFp2Del1)
+	checkFpDelTotalSat(t, ctx, k, fp2, del2, amtFp2Del2.Sub(subAmtFp2Del2))
+}
+
+func checkFpTotalSat(t *testing.T, ctx sdk.Context, k *Keeper, fp sdk.AccAddress, expectedSat math.Int) {
+	rwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
+	require.NoError(t, err)
+	require.Equal(t, expectedSat.String(), rwd.TotalActiveSat.String())
+}
+
+func checkFpDelTotalSat(t *testing.T, ctx sdk.Context, k *Keeper, fp, del sdk.AccAddress, expectedSat math.Int) {
+	rwd, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
+	require.NoError(t, err)
+	require.Equal(t, expectedSat.String(), rwd.TotalActiveSat.String())
+}
+
+func NewKeeperWithCtx(t *testing.T) (*Keeper, sdk.Context) {
 	encConf := appparams.DefaultEncodingConfig()
 	ctx, kvStore := store.NewStoreWithCtx(t, types.ModuleName)
 	k := NewKeeper(encConf.Codec, kvStore, nil, nil, nil, addr.AccGov.String(), addr.AccFeeCollector.String())
-	return k, ctx
+	return &k, ctx
 }
