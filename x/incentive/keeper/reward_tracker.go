@@ -57,23 +57,30 @@ func (k Keeper) BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddre
 	//    gets the current rewards and send to historical the current period (the rewards are stored as "shares" which means the amount of rewards per satoshi)
 	//    sets new empty current rewards with new period
 	amtSat := sdkmath.NewIntFromUint64(sat)
-	return k.btcDelegationModified(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error {
+	return k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error {
 		return k.AddDelegationSat(ctx, fp, del, amtSat)
 	})
 }
 
 func (k Keeper) BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sat uint64) error {
 	amtSat := sdkmath.NewIntFromUint64(sat)
-	return k.btcDelegationModified(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error {
+	return k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error {
 		return k.SubDelegationSat(ctx, fp, del, amtSat)
 	})
 }
 
 func (k Keeper) WithdrawDelegationRewardsToGauge(ctx context.Context, fp, del sdk.AccAddress) error {
-	return k.btcDelegationModified(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error { return nil })
+	return k.btcDelegationModified(ctx, fp, del)
 }
 
 func (k Keeper) btcDelegationModified(
+	ctx context.Context,
+	fp, del sdk.AccAddress,
+) error {
+	return k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error { return nil })
+}
+
+func (k Keeper) btcDelegationModifiedWithPreInitDel(
 	ctx context.Context,
 	fp, del sdk.AccAddress,
 	preInitializeDelegation func(ctx context.Context, fp, del sdk.AccAddress) error,
@@ -202,6 +209,12 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 	}
 
 	return fpCurrentRwd.Period, nil
+}
+
+func (k Keeper) sendAllRewardsToGauge(ctx context.Context, del sdk.AccAddress) error {
+	return k.iterBtcDelegatorToFP(ctx, del, func(del, fp sdk.AccAddress) error {
+		return k.WithdrawDelegationRewardsToGauge(ctx, fp, del)
+	})
 }
 
 func (k Keeper) initializeFinalityProvider(ctx context.Context, fp sdk.AccAddress) (types.FinalityProviderCurrentRewards, error) {

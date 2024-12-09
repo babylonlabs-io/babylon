@@ -10,6 +10,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// storeBTCDelegatorToFp returns the KVStore of the mapping del => fp
+// prefix: BTCDelegatorToFPKey
+// key: (DelAddr, FpAddr)
+// value: 0x00
+func (k Keeper) storeBTCDelegatorToFp(ctx context.Context, del sdk.AccAddress) prefix.Store {
+	storeAdaptor := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	st := prefix.NewStore(storeAdaptor, types.BTCDelegatorToFPKey)
+	return prefix.NewStore(st, del.Bytes())
+}
+
 // storeBTCDelegationRewardsTracker returns the KVStore of the FP current rewards
 // prefix: BTCDelegationRewardsTrackerKey
 // key: (FpAddr, DelAddr)
@@ -37,6 +47,30 @@ func (k Keeper) storeFpHistoricalRewards(ctx context.Context, fp sdk.AccAddress)
 	storeAdaptor := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	st := prefix.NewStore(storeAdaptor, types.FinalityProviderHistoricalRewardsKey)
 	return prefix.NewStore(st, fp.Bytes())
+}
+
+func (k Keeper) setBTCDelegatorToFP(ctx context.Context, del, fp sdk.AccAddress) {
+	st := k.storeBTCDelegatorToFp(ctx, del)
+	st.Set(fp.Bytes(), []byte{0x00})
+}
+
+func (k Keeper) iterBtcDelegatorToFP(ctx context.Context, del sdk.AccAddress, it func(del, fp sdk.AccAddress) error) error {
+	st := k.storeBTCDelegatorToFp(ctx, del)
+
+	iter := st.Iterator(nil, nil)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		fp := sdk.AccAddress(iter.Key())
+		if err := it(del, fp); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (k Keeper) deleteBTCDelegatorToFP(ctx context.Context, del, fp sdk.AccAddress) {
+	st := k.storeBTCDelegatorToFp(ctx, del)
+	st.Delete(fp.Bytes())
 }
 
 func (k Keeper) GetFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress) (types.FinalityProviderCurrentRewards, error) {
@@ -71,9 +105,10 @@ func (k Keeper) IterateBTCDelegationRewardsTracker(ctx context.Context, fp sdk.A
 
 // deleteKeysFromBTCDelegationRewardsTracker iterates over all the BTC delegation rewards tracker by the finality provider and deletes it.
 func (k Keeper) deleteKeysFromBTCDelegationRewardsTracker(ctx context.Context, fp sdk.AccAddress, delKeys [][]byte) {
-	st := k.storeBTCDelegationRewardsTracker(ctx, fp)
-	for _, key := range delKeys {
-		st.Delete(key)
+	stDelRwdTracker := k.storeBTCDelegationRewardsTracker(ctx, fp)
+	for _, delKey := range delKeys {
+		stDelRwdTracker.Delete(delKey)
+		k.deleteBTCDelegatorToFP(ctx, sdk.AccAddress(delKey), fp)
 	}
 }
 
@@ -98,6 +133,7 @@ func (k Keeper) setBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.
 		return err
 	}
 
+	k.setBTCDelegatorToFP(ctx, del, fp)
 	k.storeBTCDelegationRewardsTracker(ctx, fp).Set(key, bz)
 	return nil
 }

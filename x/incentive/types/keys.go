@@ -29,6 +29,7 @@ var (
 	FinalityProviderCurrentRewardsKey    = []byte{0x06}             // key prefix for storing the Current rewards of finality provider by addr
 	FinalityProviderHistoricalRewardsKey = []byte{0x07}             // key prefix for storing the Historical rewards of finality provider by addr and period
 	BTCDelegationRewardsTrackerKey       = []byte{0x8}              // key prefix for BTC delegation rewards tracker info (del,fp) => BTCDelegationRewardsTracker
+	BTCDelegatorToFPKey                  = []byte{0x9}              // key prefix for storing the map reference from delegation to finality provider (del) => fp
 )
 
 // GetWithdrawAddrKey creates the key for a delegator's withdraw addr.
