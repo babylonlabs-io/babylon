@@ -37,7 +37,6 @@ import (
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
-	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 type internalNode struct {
@@ -131,7 +130,7 @@ func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 	appConfig.MinGasPrices = fmt.Sprintf("%s%s", MinGasPrice, BabylonDenom)
 	appConfig.StateSync.SnapshotInterval = nodeConfig.SnapshotInterval
 	appConfig.StateSync.SnapshotKeepRecent = nodeConfig.SnapshotKeepRecent
-	appConfig.BtcConfig.Network = string(bbn.BtcSimnet)
+	appConfig.BtcConfig.Network = nodeConfig.BtcNetwork
 	appConfig.GRPC.Enable = true
 	appConfig.GRPC.Address = "0.0.0.0:9090"
 
@@ -358,30 +357,6 @@ func (n *internalNode) initNodeConfigs(persistentPeers []string) error {
 	valConfig.LogLevel = "debug"
 	valConfig.P2P.PersistentPeers = strings.Join(persistentPeers, ",")
 	valConfig.Storage.DiscardABCIResponses = false
-
-	cmtconfig.WriteConfigFile(cmtCfgPath, valConfig)
-	return nil
-}
-
-func (n *internalNode) initStateSyncConfig(trustHeight int64, trustHash string, stateSyncRPCServers []string) error {
-	cmtCfgPath := filepath.Join(n.configDir(), "config", "config.toml")
-
-	vpr := viper.New()
-	vpr.SetConfigFile(cmtCfgPath)
-	if err := vpr.ReadInConfig(); err != nil {
-		return err
-	}
-
-	valConfig := cmtconfig.DefaultConfig()
-	if err := vpr.Unmarshal(valConfig); err != nil {
-		return err
-	}
-
-	valConfig.StateSync = cmtconfig.DefaultStateSyncConfig()
-	valConfig.StateSync.Enable = true
-	valConfig.StateSync.TrustHeight = trustHeight
-	valConfig.StateSync.TrustHash = trustHash
-	valConfig.StateSync.RPCServers = stateSyncRPCServers
 
 	cmtconfig.WriteConfigFile(cmtCfgPath, valConfig)
 	return nil

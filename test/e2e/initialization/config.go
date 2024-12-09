@@ -46,6 +46,7 @@ type NodeConfig struct {
 	SnapshotInterval   uint64 // statesync snapshot every Nth block (0 to disable)
 	SnapshotKeepRecent uint32 // number of recent snapshots to keep and serve (0 to keep all)
 	IsValidator        bool   // flag indicating whether a node should be a validator
+	BtcNetwork         string // The Bitcoin network used
 }
 
 const (
@@ -65,9 +66,6 @@ const (
 	ChainBID        = "bbn-test-b"
 	BabylonBalanceB = 5000000000000
 	StakeAmountB    = 400000000000
-
-	EpochDuration         = time.Second * 60
-	TWAPPruningKeepPeriod = EpochDuration / 4
 )
 
 var (

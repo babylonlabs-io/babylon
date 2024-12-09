@@ -165,7 +165,7 @@ func (k Keeper) InsertHeadersWithHookAndEvents(ctx context.Context, headers []bb
 		return types.ErrEmptyMessage
 	}
 
-	blockHeaders := btcHeadersBytesToBlockHeader(headers)
+	blockHeaders := BtcHeadersBytesToBlockHeader(headers)
 	return k.insertHeadersWithHookAndEvents(ctx, blockHeaders)
 }
 
@@ -174,11 +174,11 @@ func (k Keeper) InsertHeaders(ctx context.Context, headers []bbn.BTCHeaderBytes)
 		return types.ErrEmptyMessage
 	}
 
-	blockHeaders := btcHeadersBytesToBlockHeader(headers)
+	blockHeaders := BtcHeadersBytesToBlockHeader(headers)
 	return k.insertHeaders(ctx, blockHeaders)
 }
 
-func btcHeadersBytesToBlockHeader(headers []bbn.BTCHeaderBytes) []*wire.BlockHeader {
+func BtcHeadersBytesToBlockHeader(headers []bbn.BTCHeaderBytes) []*wire.BlockHeader {
 	blockHeaders := make([]*wire.BlockHeader, len(headers))
 	for i, header := range headers {
 		blockHeaders[i] = header.ToBlockHeader()
