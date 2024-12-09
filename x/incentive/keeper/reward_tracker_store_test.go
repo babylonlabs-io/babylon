@@ -30,6 +30,8 @@ func FuzzCheckSetBTCDelegatorToFP(f *testing.F) {
 		fp1, fp2 := datagen.GenRandomAddress(), datagen.GenRandomAddress()
 		del1, del2 := datagen.GenRandomAddress(), datagen.GenRandomAddress()
 
+		// only one set
+		// del1 -> fp1
 		k.setBTCDelegatorToFP(ctx, del1, fp1)
 		count := 0
 		err := k.iterBtcDelegatorToFP(ctx, del1, func(del, fp sdk.AccAddress) error {
@@ -41,9 +43,36 @@ func FuzzCheckSetBTCDelegatorToFP(f *testing.F) {
 		require.Equal(t, 1, count)
 		require.NoError(t, err)
 
+		// restart count every time
+		// del1 -> fp1, fp2
 		k.setBTCDelegatorToFP(ctx, del1, fp2)
+		count = 0
+		err = k.iterBtcDelegatorToFP(ctx, del1, func(del, fp sdk.AccAddress) error {
+			count++
+			require.Equal(t, del.String(), del1.String())
+			if fp.Equals(fp1) {
+				require.Equal(t, fp1.String(), fp.String())
+				return nil
+			}
 
+			require.Equal(t, fp2.String(), fp.String())
+			return nil
+		})
+		require.Equal(t, 2, count)
+		require.NoError(t, err)
+
+		// new delegator
+		// del2 -> fp2
 		k.setBTCDelegatorToFP(ctx, del2, fp2)
+		count = 0
+		err = k.iterBtcDelegatorToFP(ctx, del2, func(del, fp sdk.AccAddress) error {
+			count++
+			require.Equal(t, del.String(), del2.String())
+			require.Equal(t, fp2.String(), fp.String())
+			return nil
+		})
+		require.Equal(t, 1, count)
+		require.NoError(t, err)
 	})
 }
 
