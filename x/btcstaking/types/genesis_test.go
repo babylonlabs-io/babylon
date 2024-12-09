@@ -84,6 +84,56 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid: false,
 		},
+		{
+			desc: "parameters with btc activation height > 0 as initial params are valid",
+			genState: func() *types.GenesisState {
+				params1 := types.DefaultParams()
+				params1.BtcActivationHeight = 100
+
+				return &types.GenesisState{
+					Params: []*types.Params{
+						&params1,
+					},
+				}
+			},
+			valid: true,
+		},
+		{
+			desc: "parameters with btc activation height not in ascending order are invalid",
+			genState: func() *types.GenesisState {
+				params1 := types.DefaultParams()
+				params1.BtcActivationHeight = 100
+
+				params2 := types.DefaultParams()
+				params2.BtcActivationHeight = 101
+
+				return &types.GenesisState{
+					Params: []*types.Params{
+						&params2,
+						&params1,
+					},
+				}
+			},
+			valid: false,
+		},
+		{
+			desc: "parameters with btc activation height in ascending order are valid",
+			genState: func() *types.GenesisState {
+				params1 := types.DefaultParams()
+				params1.BtcActivationHeight = 100
+
+				params2 := types.DefaultParams()
+				params2.BtcActivationHeight = 101
+
+				return &types.GenesisState{
+					Params: []*types.Params{
+						&params1,
+						&params2,
+					},
+				}
+			},
+			valid: true,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
