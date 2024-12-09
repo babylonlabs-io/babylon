@@ -80,6 +80,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 				require.NoError(t, err)
 				require.Equal(t, delRwd.TotalActiveSat.Uint64(), btcDel.TotalSat)
 
+				// makes sure the rewards added reach the delegation gauge
 				err = keeper.WithdrawDelegationRewardsToGauge(ctx, fpAddr, delAddr)
 				require.NoError(t, err)
 			}
@@ -96,6 +97,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 			require.NotNil(t, rg)
 			require.Equal(t, reward, rg.Coins)
 		}
+
 		sumRewards := sdk.NewCoins()
 		for addrStr, reward := range btcDelRewardMap {
 			addr, err := sdk.AccAddressFromBech32(addrStr)
@@ -115,7 +117,8 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		}
 
 		allowedMarginError := CalculatePointOnePercent(sumCoinsForDels)
-		require.Truef(t, sumCoinsForDels.Sub(sumRewards...).IsAllLT(allowedMarginError),
+		diff, _ := sumCoinsForDels.SafeSub(sumRewards...)
+		require.Truef(t, diff.IsAllLT(allowedMarginError),
 			"Sum of total rewards failed within the margin of error: %s\nRewards: %s\nGauge: %s",
 			allowedMarginError.String(), sumCoinsForDels.String(), sumRewards.String(),
 		)

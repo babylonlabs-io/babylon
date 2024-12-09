@@ -255,6 +255,9 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// if this finality provider is slashed, continue to avoid
 		// assigning delegation to it
 		if _, ok := slashedFPs[fpBTCPKHex]; ok {
+			if err := k.IncentiveKeeper.FpSlashed(ctx, fp.GetAddress()); err != nil {
+				panic(err)
+			}
 			fp.IsSlashed = true
 			continue
 		}
@@ -327,11 +330,14 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		fpDistInfo := ftypes.NewFinalityProviderDistInfo(newFP)
 
 		// add each BTC delegation
+		fpAddr := sdk.MustAccAddressFromBech32(newFP.Addr)
 		fpActiveBTCDels := activeBTCDels[fpBTCPKHex]
 		for _, d := range fpActiveBTCDels {
 			fpDistInfo.AddBTCDel(d)
 
-			err := k.IncentiveKeeper.BtcDelegationActivated(ctx, sdk.MustAccAddressFromBech32(newFP.Addr), sdk.MustAccAddressFromBech32(d.StakerAddr), d.TotalSat)
+			// TODO: maybe use a hook to the activated btc delegation to add new stake
+			delAddr := sdk.MustAccAddressFromBech32(d.StakerAddr)
+			err := k.IncentiveKeeper.BtcDelegationActivated(ctx, fpAddr, delAddr, d.TotalSat)
 			if err != nil {
 				panic(err) // check if it should panic
 			}
