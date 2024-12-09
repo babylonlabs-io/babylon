@@ -264,7 +264,7 @@ func FuzzCheckFinalityProviderHistoricalRewards(f *testing.F) {
 	})
 }
 
-func FuzzChecksubFinalityProviderStaked(f *testing.F) {
+func FuzzCheckSubFinalityProviderStaked(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -288,6 +288,44 @@ func FuzzChecksubFinalityProviderStaked(f *testing.F) {
 		fp2CurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp2)
 		require.NoError(t, err)
 		require.True(t, fp2CurrentRwd.TotalActiveSat.IsZero())
+	})
+}
+
+func FuzzCheckSubDelegationSat(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+		fp, del := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+
+		amtToSub := datagen.RandomMathInt(r, 10000).AddRaw(10)
+		err := k.subDelegationSat(ctx, fp, del, amtToSub)
+		require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNotFound.Error())
+
+		amtInRwd := amtToSub.AddRaw(120)
+		err = k.setBTCDelegationRewardsTracker(ctx, fp, del, types.NewBTCDelegationRewardsTracker(1, amtInRwd))
+		require.NoError(t, err)
+
+		fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
+		fpCurrentRwd.TotalActiveSat = amtInRwd
+		err = k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+		require.NoError(t, err)
+
+		err = k.subDelegationSat(ctx, fp, del, amtToSub)
+		require.NoError(t, err)
+
+		expectedAmt := amtInRwd.Sub(amtToSub)
+
+		delRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
+		require.NoError(t, err)
+		require.Equal(t, expectedAmt.String(), delRwdTracker.TotalActiveSat.String())
+
+		fpCurrentRwd, err = k.GetFinalityProviderCurrentRewards(ctx, fp)
+		require.NoError(t, err)
+		require.Equal(t, expectedAmt.String(), fpCurrentRwd.TotalActiveSat.String())
 	})
 }
 
