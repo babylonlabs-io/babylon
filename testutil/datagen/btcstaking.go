@@ -248,7 +248,6 @@ func GenBTCStakingSlashingInfoWithOutPoint(
 	slashingRate sdkmath.LegacyDec,
 	slashingChangeLockTime uint16,
 ) *TestStakingSlashingInfo {
-
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		stakerSK.PubKey(),
 		fpPKs,
@@ -342,7 +341,6 @@ func GenBTCUnbondingSlashingInfo(
 	slashingRate sdkmath.LegacyDec,
 	slashingChangeLockTime uint16,
 ) *TestUnbondingSlashingInfo {
-
 	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
 		stakerSK.PubKey(),
 		fpPKs,

@@ -286,7 +286,6 @@ func initGenesis(
 		if err = genutil.ExportGenesisFile(genDoc, path); err != nil {
 			return fmt.Errorf("failed to export app genesis state: %w", err)
 		}
-
 	}
 	return nil
 }

@@ -31,7 +31,6 @@ var _ blockchain.ChainCtx = (*lightChainCtx)(nil)
 
 func newLightChainCtx(params *chaincfg.Params, blocksPerRetarget int32,
 	minRetargetTimespan, maxRetargetTimespan int64) *lightChainCtx {
-
 	return &lightChainCtx{
 		params:              params,
 		blocksPerRetarget:   blocksPerRetarget,
@@ -90,7 +89,6 @@ func newLocalHeaderInfo(
 	header *wire.BlockHeader,
 	height uint32,
 	totalWork sdkmath.Uint) *localHeaderInfo {
-
 	return &localHeaderInfo{
 		header:    header,
 		height:    height,
@@ -142,7 +140,6 @@ var _ blockchain.HeaderCtx = (*lightHeaderCtx)(nil)
 
 func newLightHeaderCtx(height uint32, header *wire.BlockHeader,
 	store *storeWithExtensionChain) *lightHeaderCtx {
-
 	return &lightHeaderCtx{
 		height:    height,
 		bits:      header.Bits,
@@ -176,9 +173,7 @@ func (l *lightHeaderCtx) Parent() blockchain.HeaderCtx {
 
 func (l *lightHeaderCtx) RelativeAncestorCtx(
 	distance int32) blockchain.HeaderCtx {
-
 	ancestorHeight := l.Height() - distance
-
 	if ancestorHeight < 0 {
 		// We don't have this header.
 		return nil
@@ -273,7 +268,6 @@ func newStoreWithExtensionChain(
 	store BtcChainReadStore,
 	maxExentsionHeaders int,
 ) *storeWithExtensionChain {
-
 	return &storeWithExtensionChain{
 		// large capacity to avoid reallocation
 		headers: make([]*localHeaderInfo, 0, maxExentsionHeaders),
