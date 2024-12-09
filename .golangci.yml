@@ -12,7 +12,7 @@ linters:
     # - contextcheck
     - decorder
     # - dogsled
-    # - durationcheck
+    - durationcheck
     - errcheck
     - errchkjson
     - errname
@@ -28,8 +28,8 @@ linters:
     - goprintffuncname
     - gosimple
     - govet
-    # - grouper
-    # - importas
+    - grouper
+    - importas
     - ineffassign
     - loggercheck
     # - maintidx
