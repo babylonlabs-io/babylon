@@ -118,8 +118,6 @@ func (n *internalNode) createConfig() error {
 
 func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 	// set application configuration
-	fmt.Printf("\n n *internalNode) createAppConfig %+v", nodeConfig)
-	fmt.Printf("\n current btc network %+v", nodeConfig.BtcNetwork)
 	appCfgPath := filepath.Join(n.configDir(), "config", "app.toml")
 
 	appConfig := cmd.DefaultBabylonAppConfig()
