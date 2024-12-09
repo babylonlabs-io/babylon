@@ -29,7 +29,6 @@ import (
 	blctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
@@ -254,11 +253,6 @@ func initGenesis(
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, epochingtypes.ModuleName, &epochingtypes.GenesisState{}, updateEpochGenesis)
-	if err != nil {
-		return err
-	}
-
 	err = updateModuleGenesis(appGenState, blctypes.ModuleName, blctypes.DefaultGenesis(), updateBtcLightClientGenesis(btcHeaders))
 	if err != nil {
 		return err
@@ -332,12 +326,6 @@ func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
 		UnbondingTime:     staketypes.DefaultUnbondingTime,
 		MinCommissionRate: sdkmath.LegacyZeroDec(),
 	}
-}
-
-func updateEpochGenesis(gs *epochingtypes.GenesisState) {
-	// gs.Params = epochingtypes.Params{
-	// 	EpochInterval: 200,
-	// }
 }
 
 func updateCrisisGenesis(crisisGenState *crisistypes.GenesisState) {
