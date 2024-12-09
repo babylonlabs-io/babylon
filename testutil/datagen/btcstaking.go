@@ -154,7 +154,7 @@ func GenRandomBTCDelegation(
 		BtcPk:            delBTCPK,
 		Pop:              pop,
 		FpBtcPkList:      fpBTCPKs,
-		StakingTime:      uint32(stakingTime),
+		StakingTime:      stakingTime,
 		StartHeight:      startHeight,
 		EndHeight:        endHeight,
 		TotalSat:         totalSat,

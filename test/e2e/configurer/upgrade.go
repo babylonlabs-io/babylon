@@ -379,7 +379,7 @@ func parseSubmitProposal(cdc codec.Codec, path string) (proposal, []sdk.Msg, sdk
 }
 
 // writeProposalToFile marshal the prop as json to the file.
-func writeProposalToFile(cdc codec.Codec, path string, prop proposal) error {
+func writeProposalToFile(_ codec.Codec, path string, prop proposal) error {
 	bz, err := json.MarshalIndent(&prop, "", "  ")
 	if err != nil {
 		return err

@@ -10,12 +10,12 @@ linters:
     # - bodyclose
     # - containedctx
     # - contextcheck
-    # - decorder
+    - decorder
     # - dogsled
-    # - durationcheck
-    # - errcheck
-    # - errchkjson
-    # - errname
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - errname
     # - errorlint
     # - exhaustive
     # - forbidigo
@@ -23,39 +23,39 @@ linters:
     - goconst
     # - gocritic
     # - gocyclo
-    # - goheader
-    # - gomodguard
+    - goheader
+    - gomodguard
     - goprintffuncname
     - gosimple
     - govet
-    # - grouper
-    # - importas
-    # - ineffassign
-    # - loggercheck
+    - grouper
+    - importas
+    - ineffassign
+    - loggercheck
     # - maintidx
     # - makezero
     - misspell
-    # - nakedret
-    # - nilerr
+    - nakedret
+    - nilerr
     # - nlreturn
-    # - noctx
-    # - nosprintfhostport
+    - noctx
+    - nosprintfhostport
     # - paralleltest
-    # - reassign
+    - reassign
     # - revive
-    # - rowserrcheck
-    # - sqlclosecheck
+    - rowserrcheck
+    - sqlclosecheck
     - staticcheck
     # - stylecheck
-    # - tenv
-    # - testableexamples
+    - tenv
+    - testableexamples
     # - tparallel
     - typecheck
-    # - unconvert
+    - unconvert
     # - unparam
-    # - usestdlibvars
+    - usestdlibvars
     - unused
-    # - wastedassign
+    - wastedassign
     - whitespace
     # - wrapcheck
 

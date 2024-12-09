@@ -93,11 +93,11 @@ func FuzzHashesQuery(f *testing.F) {
 				t.Fatalf("Valid request led to a nil response")
 			}
 			// If we are on the last page the elements retrieved should be equal to the remaining ones
-			if headersRetrieved+uint32(limit) >= chainSize && uint32(len(resp.Hashes)) != chainSize-headersRetrieved {
+			if headersRetrieved+limit >= chainSize && uint32(len(resp.Hashes)) != chainSize-headersRetrieved {
 				t.Fatalf("On the last page expected %d elements but got %d", chainSize-headersRetrieved, len(resp.Hashes))
 			}
 			// Otherwise, the elements retrieved should be equal to the limit
-			if headersRetrieved+uint32(limit) < chainSize && uint32(len(resp.Hashes)) != limit {
+			if headersRetrieved+limit < chainSize && uint32(len(resp.Hashes)) != limit {
 				t.Fatalf("On an intermediate page expected %d elements but got %d", limit, len(resp.Hashes))
 			}
 
