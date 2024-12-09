@@ -37,7 +37,6 @@ func (gs GenesisState) Validate() error {
 		if err != nil {
 			return err
 		}
-
 	}
 	return nil
 }

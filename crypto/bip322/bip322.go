@@ -144,7 +144,6 @@ func Verify(
 	witness wire.TxWitness,
 	address btcutil.Address,
 	net *chaincfg.Params) error {
-
 	toSpend, err := GetToSpendTx(msg, address)
 	if err != nil {
 		return err

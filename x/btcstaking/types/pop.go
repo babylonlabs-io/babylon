@@ -92,7 +92,6 @@ func newBIP322Sig[A btcutil.Address](
 	net *chaincfg.Params,
 	bip322SignFn bip322Sign[A],
 ) ([]byte, error) {
-
 	address, witnessSignture, err := bip322SignFn(
 		msgToSign,
 		btcSK,
@@ -259,7 +258,6 @@ func isSupportedAddressAndWitness(
 			}
 
 			return nil
-
 		}, nil
 	}
 

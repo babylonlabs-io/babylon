@@ -88,7 +88,6 @@ func generateUnbondingInfo(
 	unbondingValue int64,
 	p *types.Params,
 ) *unbondingInfo {
-
 	covPKs, err := bbn.NewBTCPKsFromBIP340PKs(p.CovenantPks)
 	require.NoError(t, err)
 

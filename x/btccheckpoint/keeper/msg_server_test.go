@@ -324,7 +324,6 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 	_, err = tk.insertProofMsg(msg2)
 
 	require.NoErrorf(t, err, "Unexpected message processing error: %v", err)
-
 }
 
 func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {

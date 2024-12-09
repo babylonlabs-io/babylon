@@ -58,7 +58,6 @@ func checkTip(
 	expectedWork sdkmath.Uint,
 	expectedHeight uint32,
 	expectedTipHeader *wire.BlockHeader) {
-
 	currentTip := blcKeeper.GetTipInfo(ctx)
 	blockByHeight := blcKeeper.GetHeaderByHeight(ctx, currentTip.Height)
 	blockByHash, err := blcKeeper.GetHeaderByHash(ctx, currentTip.Hash)

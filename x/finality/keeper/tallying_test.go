@@ -55,7 +55,6 @@ func FuzzTallying_FinalizingNoBlock(f *testing.F) {
 			require.False(t, ib.Finalized)
 		}
 	})
-
 }
 
 func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
@@ -109,7 +108,6 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 			}
 		}
 	})
-
 }
 
 func giveQCToHeight(r *rand.Rand, ctx sdk.Context, fKeeper *keeper.Keeper, height uint64) error {

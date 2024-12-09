@@ -57,7 +57,6 @@ func min(a, b uint) uint {
 // of the leaf which supposed to be proven
 // it returns list of hashes required to prove given index
 func createBranch(nodes []*chainhash.Hash, numfLeafs uint, idx uint) []*chainhash.Hash {
-
 	var branch []*chainhash.Hash
 
 	// size represents number of merkle nodes at given level. At 0 level, number of
@@ -71,7 +70,6 @@ func createBranch(nodes []*chainhash.Hash, numfLeafs uint, idx uint) []*chainhas
 	var i uint = 0
 
 	for size > 1 {
-
 		// index^1 means we want to get sibling of the node we are proving
 		// ie. for index=2, index^1 = 3 and for index=3 index^1=2
 		// so xoring last bit by 1, select node opposite to the node we want the proof

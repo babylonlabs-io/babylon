@@ -48,7 +48,6 @@ func TestBtcTransactionParsing(t *testing.T) {
 		if !tx.Hash().IsEqual(hashBytes) {
 			t.Errorf("Hash of decoded transaction does not match provided hash %d", i)
 		}
-
 	}
 }
 
@@ -132,7 +131,6 @@ func TestParsingCorrectBtcProofs(t *testing.T) {
 	}
 
 	for i, test := range tests {
-
 		headerBytes, _ := bbn.NewBTCHeaderBytesFromHex(test.header)
 
 		var transactionBytes [][]byte
