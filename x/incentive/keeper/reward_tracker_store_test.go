@@ -264,6 +264,33 @@ func FuzzCheckFinalityProviderHistoricalRewards(f *testing.F) {
 	})
 }
 
+func FuzzChecksubFinalityProviderStaked(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+		fp1, fp2 := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+
+		amtSub := datagen.RandomMathInt(r, 100)
+		err := k.subFinalityProviderStaked(ctx, fp1, amtSub)
+		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
+
+		fp2Set := datagen.GenRandomFinalityProviderCurrentRewards(r)
+		err = k.setFinalityProviderCurrentRewards(ctx, fp2, fp2Set)
+		require.NoError(t, err)
+
+		err = k.subFinalityProviderStaked(ctx, fp2, fp2Set.TotalActiveSat)
+		require.NoError(t, err)
+
+		fp2CurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp2)
+		require.NoError(t, err)
+		require.True(t, fp2CurrentRwd.TotalActiveSat.IsZero())
+	})
+}
+
 func TestAddSubDelegationSat(t *testing.T) {
 	k, ctx := NewKeeperWithCtx(t)
 
