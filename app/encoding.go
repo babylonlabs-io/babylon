@@ -10,6 +10,7 @@ import (
 	simsutils "github.com/cosmos/cosmos-sdk/testutil/sims"
 
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/testutil/signer"
 	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
@@ -27,7 +28,7 @@ func TmpAppOptions() simsutils.AppOptionsMap {
 }
 
 func NewTmpBabylonApp() *BabylonApp {
-	signer, _ := SetupTestPrivSigner()
+	signer, _ := signer.SetupTestPrivSigner()
 	return NewBabylonApp(
 		log.NewNopLogger(),
 		dbm.NewMemDB(),
