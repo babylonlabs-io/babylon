@@ -20,6 +20,7 @@ func FuzzCheckBTCDelegatorToFP(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
 		k, ctx := NewKeeperWithCtx(t)
 		fp1, fp2 := datagen.GenRandomAddress(), datagen.GenRandomAddress()
 		del1, del2 := datagen.GenRandomAddress(), datagen.GenRandomAddress()
@@ -87,6 +88,7 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
 
 		k, ctx := NewKeeperWithCtx(t)
@@ -145,6 +147,29 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 		})
 		require.Equal(t, 1, count)
 		require.NoError(t, err)
+
+		// check delete fp2
+		k.deleteKeysFromBTCDelegationRewardsTracker(ctx, fp2, [][]byte{del1.Bytes()})
+		count = 0
+		err = k.IterateBTCDelegationRewardsTracker(ctx, fp2, func(fp, del sdk.AccAddress) error {
+			count++
+			return nil
+		})
+		require.Equal(t, 0, count)
+		require.NoError(t, err)
+
+		// check delete all from fp1
+		k.deleteKeysFromBTCDelegationRewardsTracker(ctx, fp1, [][]byte{del1.Bytes(), del2.Bytes()})
+		count = 0
+		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress) error {
+			count++
+			return nil
+		})
+		require.Equal(t, 0, count)
+		require.NoError(t, err)
+
+		_, err = k.GetBTCDelegationRewardsTracker(ctx, fp2, del1)
+		require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNotFound.Error())
 	})
 }
 
