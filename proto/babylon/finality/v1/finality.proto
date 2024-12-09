@@ -126,3 +126,13 @@ message FinalityProviderSigningInfo {
     google.protobuf.Timestamp jailed_until = 4
     [(gogoproto.stdtime) = true, (gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
+
+message ActiveFinalityProvider {
+    bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+    uint64 voting_power = 2;
+}
+
+message ActiveFinalityProvidersList {
+    repeated ActiveFinalityProvider fps = 1;
+}
+
