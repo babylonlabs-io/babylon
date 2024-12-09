@@ -2,11 +2,13 @@ package chain
 
 import (
 	"encoding/base64"
+	"errors"
 	"net/url"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/types/query"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
@@ -43,8 +45,11 @@ func (n *NodeConfig) QueryBtcLightClientMainchainAll() []*btclighttypes.BTCHeade
 	for {
 		resp, err := n.QueryBtcLightClientMainchain(pagination)
 		if err != nil {
-			// err could come as {"code":3,"message":"header specified by key does not exist","details":[]}
-			return headers
+			if errors.As(err, "header specified by key does not exist") {
+				// err could come as {"code":3,"message":"header specified by key does not exist","details":[]}
+				return headers
+			}
+			require.NoError(n.t, err)
 		}
 
 		headers = append(headers, resp.Headers...)
