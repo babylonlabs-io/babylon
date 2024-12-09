@@ -54,7 +54,7 @@ func (ms msgServer) WithdrawReward(goCtx context.Context, req *types.MsgWithdraw
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := ms.sendAllBtcRewardsToGauge(ctx, sType, addr); err != nil {
+	if err := ms.sendAllBtcDelegatorRewardsToGauge(ctx, sType, addr); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 

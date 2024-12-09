@@ -69,7 +69,7 @@ func (k Keeper) BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddres
 	})
 }
 
-func (k Keeper) WithdrawDelegationRewardsToGauge(ctx context.Context, fp, del sdk.AccAddress) error {
+func (k Keeper) SendBtcDelegationRewardsToGauge(ctx context.Context, fp, del sdk.AccAddress) error {
 	return k.btcDelegationModified(ctx, fp, del)
 }
 
@@ -211,9 +211,9 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 	return fpCurrentRwd.Period, nil
 }
 
-func (k Keeper) sendAllRewardsToGauge(ctx context.Context, del sdk.AccAddress) error {
-	return k.iterBtcDelegatorToFP(ctx, del, func(del, fp sdk.AccAddress) error {
-		return k.WithdrawDelegationRewardsToGauge(ctx, fp, del)
+func (k Keeper) sendAllBtcRewardsToGauge(ctx context.Context, del sdk.AccAddress) error {
+	return k.iterBtcDelegationsByDelegator(ctx, del, func(del, fp sdk.AccAddress) error {
+		return k.SendBtcDelegationRewardsToGauge(ctx, fp, del)
 	})
 }
 

@@ -11,6 +11,10 @@ import (
 )
 
 // storeBTCDelegatorToFp returns the KVStore of the mapping del => fp
+// note: it stores the finality provider as key and sets a one byte as value
+// so each BTC delegator address can have multiple finality providers.
+// Usefull to iterate over all the pairs (fp,del) by filtering the
+// delegator address.
 // prefix: BTCDelegatorToFPKey
 // key: (DelAddr, FpAddr)
 // value: 0x00
@@ -42,7 +46,7 @@ func (k Keeper) storeFpCurrentRewards(ctx context.Context) prefix.Store {
 // storeFpHistoricalRewards returns the KVStore of the FP historical rewards
 // prefix: FinalityProviderHistoricalRewardsKey
 // key: (finality provider cosmos address, period)
-// value: FinalityProviderCurrentRewards
+// value: FinalityProviderHistoricalRewards
 func (k Keeper) storeFpHistoricalRewards(ctx context.Context, fp sdk.AccAddress) prefix.Store {
 	storeAdaptor := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	st := prefix.NewStore(storeAdaptor, types.FinalityProviderHistoricalRewardsKey)
@@ -54,11 +58,15 @@ func (k Keeper) setBTCDelegatorToFP(ctx context.Context, del, fp sdk.AccAddress)
 	st.Set(fp.Bytes(), []byte{0x00})
 }
 
-func (k Keeper) iterBtcDelegatorToFP(ctx context.Context, del sdk.AccAddress, it func(del, fp sdk.AccAddress) error) error {
+// iterBtcDelegationsByDelegator iterates over all the possible BTC delegations
+// filtering by the delegator address (uses the BTCDelegatorToFPKey keystore)
+// It stops if the `it` function returns an error
+func (k Keeper) iterBtcDelegationsByDelegator(ctx context.Context, del sdk.AccAddress, it func(del, fp sdk.AccAddress) error) error {
 	st := k.storeBTCDelegatorToFp(ctx, del)
 
 	iter := st.Iterator(nil, nil)
 	defer iter.Close()
+
 	for ; iter.Valid(); iter.Next() {
 		fp := sdk.AccAddress(iter.Key())
 		if err := it(del, fp); err != nil {
@@ -68,11 +76,15 @@ func (k Keeper) iterBtcDelegatorToFP(ctx context.Context, del sdk.AccAddress, it
 	return nil
 }
 
+// deleteBTCDelegatorToFP deletes one key (del, fp) from the store
+// without checking if it exists.
 func (k Keeper) deleteBTCDelegatorToFP(ctx context.Context, del, fp sdk.AccAddress) {
 	st := k.storeBTCDelegatorToFp(ctx, del)
 	st.Delete(fp.Bytes())
 }
 
+// GetFinalityProviderCurrentRewards returns the Finality Provider current rewards
+// based on the FP address key
 func (k Keeper) GetFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress) (types.FinalityProviderCurrentRewards, error) {
 	key := fp.Bytes()
 	bz := k.storeFpCurrentRewards(ctx).Get(key)
@@ -88,6 +100,7 @@ func (k Keeper) GetFinalityProviderCurrentRewards(ctx context.Context, fp sdk.Ac
 }
 
 // IterateBTCDelegationRewardsTracker iterates over all the delegation rewards tracker by the finality provider.
+// It stops if the function `it` returns an error.
 func (k Keeper) IterateBTCDelegationRewardsTracker(ctx context.Context, fp sdk.AccAddress, it func(fp, del sdk.AccAddress) error) error {
 	st := k.storeBTCDelegationRewardsTracker(ctx, fp)
 
