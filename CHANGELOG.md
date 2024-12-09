@@ -42,6 +42,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#324](https://github.com/babylonlabs-io/babylon/pull/324) Fix decrementing
 jailed fp counter
 
+- [#328](https://github.com/babylonlabs-io/babylon/pull/328) Fix btc activation height validation in genesis
+
 ### Improvements
 
 - [#326](https://github.com/babylonlabs-io/babylon/pull/326) docs: btcstaking:
