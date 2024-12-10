@@ -19,8 +19,7 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 		// failing to get a reward gauge at previous height is a programming error
 		panic("failed to get a reward gauge at previous height")
 	}
-	// TODO(rafilx): Finality providers also use the available rewards instead of reward gauge.
-	// reward each of the finality provider and its BTC delegations in proportion
+
 	for i, fp := range dc.FinalityProviders {
 		// only reward the first NumActiveFps finality providers
 		// note that ApplyActiveFinalityProviders is called before saving `dc`
