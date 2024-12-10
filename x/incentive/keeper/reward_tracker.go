@@ -21,7 +21,7 @@ var (
 func (k Keeper) BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sat uint64) error {
 	amtSat := sdkmath.NewIntFromUint64(sat)
 	return k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error {
-		return k.AddDelegationSat(ctx, fp, del, amtSat)
+		return k.addDelegationSat(ctx, fp, del, amtSat)
 	})
 }
 
@@ -244,24 +244,4 @@ func (k Keeper) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context,
 
 	fpCurrentRwd.AddRewards(rwd)
 	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
-}
-
-func (k Keeper) AddDelegationSat(ctx context.Context, fp, del sdk.AccAddress, amt sdkmath.Int) error {
-	btcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
-	if err != nil {
-		if !errors.Is(err, types.ErrBTCDelegationRewardsTrackerNotFound) {
-			return err
-		}
-
-		// first delegation to this pair (fp, del), can start as 0 previous period as it
-		// will be updated soon as initilize btc delegation
-		btcDelRwdTracker = types.NewBTCDelegationRewardsTracker(0, sdkmath.ZeroInt())
-	}
-
-	btcDelRwdTracker.AddTotalActiveSat(amt)
-	if err := k.setBTCDelegationRewardsTracker(ctx, fp, del, btcDelRwdTracker); err != nil {
-		return err
-	}
-
-	return k.addFinalityProviderStaked(ctx, fp, amt)
 }

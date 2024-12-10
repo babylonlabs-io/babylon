@@ -279,3 +279,26 @@ func (k Keeper) addFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress
 	fpCurrentRwd.AddTotalActiveSat(amt)
 	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
+
+// addDelegationSat it increases the amount of satoshi staked for the delegation (fp, del)
+// and for the finality provider as well, it initializes the finality provider and the
+// BTC delegation rewards tracker if it does not exist.
+func (k Keeper) addDelegationSat(ctx context.Context, fp, del sdk.AccAddress, amt sdkmath.Int) error {
+	btcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
+	if err != nil {
+		if !errors.Is(err, types.ErrBTCDelegationRewardsTrackerNotFound) {
+			return err
+		}
+
+		// first delegation to this pair (fp, del), can start as 0 previous period as it
+		// it should be updated afterwards with initilize btc delegation
+		btcDelRwdTracker = types.NewBTCDelegationRewardsTracker(0, sdkmath.ZeroInt())
+	}
+
+	btcDelRwdTracker.AddTotalActiveSat(amt)
+	if err := k.setBTCDelegationRewardsTracker(ctx, fp, del, btcDelRwdTracker); err != nil {
+		return err
+	}
+
+	return k.addFinalityProviderStaked(ctx, fp, amt)
+}

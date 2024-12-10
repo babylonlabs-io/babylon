@@ -392,7 +392,7 @@ func FuzzCheckAddDelegationSat(f *testing.F) {
 		fp2 := datagen.GenRandomAddress()
 
 		amtAdded := datagen.RandomMathInt(r, 1000)
-		err := k.AddDelegationSat(ctx, fp1, del, amtAdded)
+		err := k.addDelegationSat(ctx, fp1, del, amtAdded)
 		require.NoError(t, err)
 
 		rwdTrackerFp1Del1, err := k.GetBTCDelegationRewardsTracker(ctx, fp1, del)
@@ -411,7 +411,7 @@ func FuzzCheckAddDelegationSat(f *testing.F) {
 		require.Equal(t, sdk.NewCoins().String(), currentHistRwdFp1Del1.CumulativeRewardsPerSat.String())
 
 		// add delegation again
-		err = k.AddDelegationSat(ctx, fp1, del, amtAdded)
+		err = k.addDelegationSat(ctx, fp1, del, amtAdded)
 		require.NoError(t, err)
 
 		// just verifies that the amount duplicated, without modifying the periods
@@ -442,7 +442,7 @@ func FuzzCheckAddDelegationSat(f *testing.F) {
 		err = k.initializeBTCDelegation(ctx, fp2, del)
 		require.NoError(t, err)
 
-		err = k.AddDelegationSat(ctx, fp2, del, amtAdded)
+		err = k.addDelegationSat(ctx, fp2, del, amtAdded)
 		require.NoError(t, err)
 
 		// verifies the amount added
@@ -478,7 +478,7 @@ func TestAddSubDelegationSat(t *testing.T) {
 	// adds 2000 for fp1, del1
 	// fp1       => 2000
 	// fp1, del1 => 2000
-	err = k.AddDelegationSat(ctx, fp1, del1, amtFp1Del1)
+	err = k.addDelegationSat(ctx, fp1, del1, amtFp1Del1)
 	require.NoError(t, err)
 	checkFpTotalSat(t, ctx, k, fp1, amtFp1Del1)
 	checkFpDelTotalSat(t, ctx, k, fp1, del1, amtFp1Del1)
@@ -493,7 +493,7 @@ func TestAddSubDelegationSat(t *testing.T) {
 	// fp1       => 6000
 	// fp1, del1 => 2000
 	// fp1, del2 => 4000
-	err = k.AddDelegationSat(ctx, fp1, del2, amtFp1Del2)
+	err = k.addDelegationSat(ctx, fp1, del2, amtFp1Del2)
 	require.NoError(t, err)
 
 	checkFpTotalSat(t, ctx, k, fp1, amtFp1Del1.Add(amtFp1Del2))
@@ -506,7 +506,7 @@ func TestAddSubDelegationSat(t *testing.T) {
 	// fp1, del1 => 2000
 	// fp1, del2 => 4000
 	// fp2, del2 =>  500
-	err = k.AddDelegationSat(ctx, fp2, del2, amtFp2Del2)
+	err = k.addDelegationSat(ctx, fp2, del2, amtFp2Del2)
 	require.NoError(t, err)
 	checkFpTotalSat(t, ctx, k, fp1, amtFp1Del1.Add(amtFp1Del2))
 	checkFpTotalSat(t, ctx, k, fp2, amtFp2Del2)
@@ -521,7 +521,7 @@ func TestAddSubDelegationSat(t *testing.T) {
 	// fp1, del2 => 4000
 	// fp2, del1 =>  700
 	// fp2, del2 =>  500
-	err = k.AddDelegationSat(ctx, fp2, del1, amtFp2Del1)
+	err = k.addDelegationSat(ctx, fp2, del1, amtFp2Del1)
 	require.NoError(t, err)
 	checkFpTotalSat(t, ctx, k, fp1, amtFp1Del1.Add(amtFp1Del2))
 	checkFpTotalSat(t, ctx, k, fp2, amtFp2Del2.Add(amtFp2Del1))
@@ -538,7 +538,7 @@ func TestAddSubDelegationSat(t *testing.T) {
 	// fp1, del2 => 6000
 	// fp2, del1 =>  700
 	// fp2, del2 =>  500
-	err = k.AddDelegationSat(ctx, fp1, del2, lastAmtFp1Del2)
+	err = k.addDelegationSat(ctx, fp1, del2, lastAmtFp1Del2)
 	require.NoError(t, err)
 	checkFpTotalSat(t, ctx, k, fp1, amtFp1Del1.Add(amtFp1Del2).Add(lastAmtFp1Del2))
 	checkFpTotalSat(t, ctx, k, fp2, amtFp2Del2.Add(amtFp2Del1))
