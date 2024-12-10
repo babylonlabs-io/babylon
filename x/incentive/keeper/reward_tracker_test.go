@@ -1,14 +1,50 @@
 package keeper
 
 import (
+	"math/rand"
 	"testing"
 
 	"cosmossdk.io/math"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
+
+func FuzzCheckAddFinalityProviderRewardsForBtcDelegations(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+		fp := datagen.GenRandomAddress()
+
+		coinsAdded := datagen.GenRandomCoins(r)
+		// add rewards without initiliaze should error out
+		err := k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, coinsAdded)
+		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
+
+		_, err = k.initializeFinalityProvider(ctx, fp)
+		require.NoError(t, err)
+		err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, coinsAdded)
+		require.NoError(t, err)
+
+		currentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
+		require.NoError(t, err)
+		require.Equal(t, coinsAdded.String(), currentRwd.CurrentRewards.String())
+
+		// adds again the same amounts
+		err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, coinsAdded)
+		require.NoError(t, err)
+
+		currentRwd, err = k.GetFinalityProviderCurrentRewards(ctx, fp)
+		require.NoError(t, err)
+		require.Equal(t, coinsAdded.MulInt(math.NewInt(2)).String(), currentRwd.CurrentRewards.String())
+	})
+}
 
 func TestIncrementFinalityProviderPeriod(t *testing.T) {
 	k, ctx := NewKeeperWithCtx(t)
