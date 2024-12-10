@@ -18,6 +18,22 @@ var (
 	DecimalAccumulatedRewards, _ = sdkmath.NewIntFromString("100000000000000000000")
 )
 
+// AddFinalityProviderRewardsForBtcDelegations gets the current finality provider rewards
+// and adds rewards to it, without increasing the finality provider period
+// it also does not initiliaze the FP, so it must have been initialized prior
+// to adding rewards. In the sense that a FP would first receive active delegations sats
+// be properly initialized (creates current and historical reward structures in the store)
+// than will start to receive rewards for contributing.
+func (k Keeper) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context, fp sdk.AccAddress, rwd sdk.Coins) error {
+	fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
+	if err != nil {
+		return err
+	}
+
+	fpCurrentRwd.AddRewards(rwd)
+	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+}
+
 func (k Keeper) BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sat uint64) error {
 	amtSat := sdkmath.NewIntFromUint64(sat)
 	return k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error {
@@ -237,20 +253,4 @@ func (k Keeper) initializeBTCDelegation(ctx context.Context, fp, del sdk.AccAddr
 
 	rwd := types.NewBTCDelegationRewardsTracker(previousPeriod, btcDelRwdTracker.TotalActiveSat)
 	return k.setBTCDelegationRewardsTracker(ctx, fp, del, rwd)
-}
-
-// AddFinalityProviderRewardsForBtcDelegations gets the current finality provider rewards
-// and adds rewards to it, without increasing the finality provider period
-// it also does not initiliaze the FP, so it must have been initialized prior
-// to adding rewards. In the sense that a FP would first receive active delegations sats
-// be properly initialized (creates current and historical reward structures in the store)
-// than will start to receive rewards for contributing.
-func (k Keeper) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context, fp sdk.AccAddress, rwd sdk.Coins) error {
-	fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
-	if err != nil {
-		return err
-	}
-
-	fpCurrentRwd.AddRewards(rwd)
-	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
