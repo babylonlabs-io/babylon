@@ -201,6 +201,9 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 	return fpCurrentRwd.Period, nil
 }
 
+// initializeFinalityProvider initializes a new finality provider current rewards at period 1, empty rewards and zero sats
+// and also a historical rewards at period 0 and zero rewards as well.
+// It does not verifies if it exists prior to overwrite, who calls it needs to verify.
 func (k Keeper) initializeFinalityProvider(ctx context.Context, fp sdk.AccAddress) (types.FinalityProviderCurrentRewards, error) {
 	// historical rewards starts at the period 0
 	err := k.setFinalityProviderHistoricalRewards(ctx, fp, 0, types.NewFinalityProviderHistoricalRewards(sdk.NewCoins()))

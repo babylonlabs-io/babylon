@@ -46,6 +46,38 @@ func FuzzCheckAddFinalityProviderRewardsForBtcDelegations(f *testing.F) {
 	})
 }
 
+func FuzzCheckInitializeFinalityProvider(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+
+		k, ctx := NewKeeperWithCtx(t)
+		fp := datagen.GenRandomAddress()
+
+		currentRwdFp, err := k.initializeFinalityProvider(ctx, fp)
+		require.NoError(t, err)
+		require.Equal(t, currentRwdFp.CurrentRewards.String(), sdk.NewCoins().String())
+		require.Equal(t, currentRwdFp.TotalActiveSat.String(), math.ZeroInt().String())
+		require.Equal(t, currentRwdFp.Period, uint64(1))
+
+		histRwdFp, err := k.GetFinalityProviderHistoricalRewards(ctx, fp, 0)
+		require.NoError(t, err)
+		require.Equal(t, histRwdFp.CumulativeRewardsPerSat.String(), sdk.NewCoins().String())
+
+		// if initializes it again, the values should be the same
+		currentRwdFp, err = k.initializeFinalityProvider(ctx, fp)
+		require.NoError(t, err)
+		require.Equal(t, currentRwdFp.CurrentRewards.String(), sdk.NewCoins().String())
+		require.Equal(t, currentRwdFp.TotalActiveSat.String(), math.ZeroInt().String())
+		require.Equal(t, currentRwdFp.Period, uint64(1))
+
+		histRwdFp, err = k.GetFinalityProviderHistoricalRewards(ctx, fp, 0)
+		require.NoError(t, err)
+		require.Equal(t, histRwdFp.CumulativeRewardsPerSat.String(), sdk.NewCoins().String())
+	})
+}
+
 func TestIncrementFinalityProviderPeriod(t *testing.T) {
 	k, ctx := NewKeeperWithCtx(t)
 
