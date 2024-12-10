@@ -146,5 +146,4 @@ func coinsAtLeastMinAmount(value sdk.Coins, minAmt math.Int) sdk.Coins {
 		ret = ret.Add(sdk.NewCoin(v.Denom, minAmt))
 	}
 	return ret
-
 }
