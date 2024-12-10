@@ -203,6 +203,10 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 					fpBTCPKHex := fpBTCPK.MarshalHex()
 					activeBTCDels[fpBTCPKHex] = append(activeBTCDels[fpBTCPKHex], btcDel)
 				}
+				// Becomes active, it should withdraw the rewards available
+				// and create a new BTCDelegationRewardsInfo.
+				// TODO: research how can we charge the gas for this process during
+				// the withdraw of rewards.
 			} else if delEvent.NewState == types.BTCDelegationStatus_UNBONDED {
 				// emit expired event if it is not early unbonding
 				if !btcDel.IsUnbondedEarly() {
@@ -210,6 +214,9 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				}
 				// add the unbonded BTC delegation to the map
 				unbondedBTCDels[delEvent.StakingTxHash] = struct{}{}
+				// Becomes unbonded, it should withdraw the rewards available
+				// and create a new BTCDelegationRewardsInfo or delete it if does not have more sats
+				// for this finality provider.
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
 			// record slashed fps
@@ -248,6 +255,9 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// if this finality provider is slashed, continue to avoid
 		// assigning delegation to it
 		if _, ok := slashedFPs[fpBTCPKHex]; ok {
+			if err := k.IncentiveKeeper.FpSlashed(ctx, fp.GetAddress()); err != nil {
+				panic(err)
+			}
 			fp.IsSlashed = true
 			continue
 		}
@@ -269,6 +279,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			btcDel := *dc.FinalityProviders[i].BtcDels[j]
 			if _, ok := unbondedBTCDels[btcDel.StakingTxHash]; !ok {
 				fp.AddBTCDelDistInfo(&btcDel)
+
+				err := k.IncentiveKeeper.BtcDelegationUnbonded(ctx, fp.GetAddress(), sdk.MustAccAddressFromBech32(btcDel.StakerAddr), btcDel.TotalSat)
+				if err != nil {
+					panic(err) // check if it should panic
+				}
 			}
 		}
 
@@ -315,9 +330,17 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		fpDistInfo := ftypes.NewFinalityProviderDistInfo(newFP)
 
 		// add each BTC delegation
+		fpAddr := sdk.MustAccAddressFromBech32(newFP.Addr)
 		fpActiveBTCDels := activeBTCDels[fpBTCPKHex]
 		for _, d := range fpActiveBTCDels {
 			fpDistInfo.AddBTCDel(d)
+
+			// TODO: maybe use a hook to the activated btc delegation to add new stake
+			delAddr := sdk.MustAccAddressFromBech32(d.StakerAddr)
+			err := k.IncentiveKeeper.BtcDelegationActivated(ctx, fpAddr, delAddr, d.TotalSat)
+			if err != nil {
+				panic(err) // check if it should panic
+			}
 		}
 
 		// add this finality provider to the new cache if it has voting power

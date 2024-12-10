@@ -25,6 +25,7 @@ import (
 	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
 	"github.com/babylonlabs-io/babylon/privval"
+	"github.com/babylonlabs-io/babylon/testutil/signer"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
@@ -34,7 +35,7 @@ func Test_CmdCreateBls(t *testing.T) {
 	cfg, err := genutiltest.CreateDefaultCometConfig(home)
 	require.NoError(t, err)
 
-	signer, err := app.SetupTestPrivSigner()
+	signer, err := signer.SetupTestPrivSigner()
 	require.NoError(t, err)
 	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
 		Logger:             logger,
