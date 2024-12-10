@@ -146,9 +146,15 @@ func GenRandomBTCTimestampingRewardDistInfo(r *rand.Rand) *btcctypes.RewardDistI
 
 func GenRandomFinalityProviderCurrentRewards(r *rand.Rand) types.FinalityProviderCurrentRewards {
 	rwd := GenRandomCoins(r)
+	period := RandomInt(r, 100) + 3
+	activeSatoshi := RandomMathInt(r, 10000).AddRaw(10)
+	return types.NewFinalityProviderCurrentRewards(rwd, period, activeSatoshi)
+}
+
+func GenRandomBTCDelegationRewardsTracker(r *rand.Rand) types.BTCDelegationRewardsTracker {
 	period := RandomInt(r, 100)
 	activeSatoshi := RandomMathInt(r, 10000)
-	return types.NewFinalityProviderCurrentRewards(rwd, period, activeSatoshi)
+	return types.NewBTCDelegationRewardsTracker(period, activeSatoshi)
 }
 
 func GenRandomFinalityProviderHistoricalRewards(r *rand.Rand) types.FinalityProviderHistoricalRewards {

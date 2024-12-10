@@ -46,9 +46,41 @@ func FuzzCheckAddFinalityProviderRewardsForBtcDelegations(f *testing.F) {
 	})
 }
 
+func FuzzCheckInitializeBTCDelegation(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+		fp, del := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+
+		err := k.initializeBTCDelegation(ctx, fp, del)
+		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
+
+		fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
+		err = k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+		require.NoError(t, err)
+
+		err = k.initializeBTCDelegation(ctx, fp, del)
+		require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNotFound.Error())
+
+		delBtcRwdTrackerBeforeInitialize := datagen.GenRandomBTCDelegationRewardsTracker(r)
+		err = k.setBTCDelegationRewardsTracker(ctx, fp, del, delBtcRwdTrackerBeforeInitialize)
+		require.NoError(t, err)
+
+		err = k.initializeBTCDelegation(ctx, fp, del)
+		require.NoError(t, err)
+
+		actBtcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
+		require.NoError(t, err)
+		require.Equal(t, fpCurrentRwd.Period-1, actBtcDelRwdTracker.StartPeriodCumulativeReward)
+		require.Equal(t, delBtcRwdTrackerBeforeInitialize.TotalActiveSat, actBtcDelRwdTracker.TotalActiveSat)
+	})
+}
+
 func FuzzCheckInitializeFinalityProvider(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
-
 	f.Fuzz(func(t *testing.T, seed int64) {
 		t.Parallel()
 
