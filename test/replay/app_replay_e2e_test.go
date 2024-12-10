@@ -16,7 +16,7 @@ import (
 	"cosmossdk.io/log"
 	"github.com/babylonlabs-io/babylon/app"
 	babylonApp "github.com/babylonlabs-io/babylon/app"
-	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
+	"github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	dbmc "github.com/cometbft/cometbft-db"
@@ -96,7 +96,7 @@ type FinalizedBlock struct {
 
 type BabylonAppDriver struct {
 	App        *app.BabylonApp
-	PrivSigner *appkeepers.PrivSigner
+	PrivSigner *signer.PrivSigner
 	BlockExec  *sm.BlockExecutor
 	BlockStore *store.BlockStore
 	StateStore *sm.Store
@@ -152,7 +152,7 @@ func NewBabylonAppDriver(
 		panic(err)
 	}
 
-	signer, err := appkeepers.InitPrivSigner(chain.Nodes[0].ConfigDir)
+	signer, err := signer.InitPrivSigner(chain.Nodes[0].ConfigDir)
 	require.NoError(t, err)
 	require.NotNil(t, signer)
 	signerValAddress := signer.WrappedPV.GetAddress()
@@ -383,7 +383,7 @@ func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
 		panic(err)
 	}
 
-	signer, err := appkeepers.InitPrivSigner(nodeDir)
+	signer, err := signer.InitPrivSigner(nodeDir)
 	require.NoError(t, err)
 	require.NotNil(t, signer)
 	signerValAddress := signer.WrappedPV.GetAddress()
