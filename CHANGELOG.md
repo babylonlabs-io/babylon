@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#338](https://github.com/babylonlabs-io/babylon/pull/338) Add print BIP-340 in
+`debug pubkey-raw` subcommand
 - [#316](https://github.com/babylonlabs-io/babylon/pull/316) Add testnet upgrade data
 
 ### Bug fixes
