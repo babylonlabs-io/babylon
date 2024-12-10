@@ -446,7 +446,7 @@ message MsgResumeFinalityProposal {
 
 ## BeginBlocker
 
-Upon `EndBlocker`, the Finality module of each Babylon node will [execute the
+Upon `BeginBlocker`, the Finality module of each Babylon node will [execute the
 following](./abci.go):
 
 1. Record the voting power table at the current height, by reconciling the
