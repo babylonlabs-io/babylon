@@ -1,4 +1,4 @@
-package e2e
+package replay
 
 import (
 	"bytes"
@@ -474,7 +474,8 @@ func TestReplayBlocks(t *testing.T) {
 	replayer := NewBlockReplayer(t, replayerTempDir)
 
 	replayer.ReplayBlocks(t, driver.FinalizedBlocks)
-
+	t.Logf("driver last state height: %d\n", driver.LastState.LastBlockHeight)
+	t.Logf("replayer last state height: %d\n", replayer.LastState.LastBlockHeight)
 	// after replay we should have the same apphash
 	require.Equal(t, driver.LastState.LastBlockHeight, replayer.LastState.LastBlockHeight)
 	require.Equal(t, driver.LastState.AppHash, replayer.LastState.AppHash)
