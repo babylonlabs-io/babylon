@@ -18,44 +18,7 @@ var (
 	DecimalAccumulatedRewards, _ = sdkmath.NewIntFromString("100000000000000000000")
 )
 
-func (k Keeper) FpSlashed(ctx context.Context, fp sdk.AccAddress) error {
-	// withdrawDelegationRewards
-	// Delete all the delegations reward tracker associated with this FP
-	// Delete the FP reward tracker
-
-	endedPeriod, err := k.IncrementFinalityProviderPeriod(ctx, fp)
-	if err != nil {
-		return err
-	}
-
-	keysBtcDelRwdTracker := make([][]byte, 0)
-	if err := k.IterateBTCDelegationRewardsTracker(ctx, fp, func(fp, del sdk.AccAddress) error {
-		keysBtcDelRwdTracker = append(keysBtcDelRwdTracker, del.Bytes())
-		return k.CalculateBTCDelegationRewardsAndSendToGauge(ctx, fp, del, endedPeriod)
-	}); err != nil {
-		return err
-	}
-
-	k.deleteKeysFromBTCDelegationRewardsTracker(ctx, fp, keysBtcDelRwdTracker)
-	k.deleteAllFromFinalityProviderRwd(ctx, fp)
-	return nil
-}
-
 func (k Keeper) BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sat uint64) error {
-	// if btc delegations does not exists
-	//   BeforeDelegationCreated
-	//     IncrementValidatorPeriod
-	//   		initializeDelegation
-	//      AddDelegationStaking
-
-	// if btc delegations exists
-	//   BeforeDelegationSharesModified
-	//     withdrawDelegationRewards
-	//       IncrementValidatorPeriod
-
-	// IncrementValidatorPeriod
-	//    gets the current rewards and send to historical the current period (the rewards are stored as "shares" which means the amount of rewards per satoshi)
-	//    sets new empty current rewards with new period
 	amtSat := sdkmath.NewIntFromUint64(sat)
 	return k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error {
 		return k.AddDelegationSat(ctx, fp, del, amtSat)
@@ -69,8 +32,35 @@ func (k Keeper) BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddres
 	})
 }
 
+func (k Keeper) FpSlashed(ctx context.Context, fp sdk.AccAddress) error {
+	endedPeriod, err := k.IncrementFinalityProviderPeriod(ctx, fp)
+	if err != nil {
+		return err
+	}
+
+	// remove all the rewards available from the ended periods
+	keysBtcDelRwdTracker := make([][]byte, 0)
+	if err := k.IterateBTCDelegationRewardsTracker(ctx, fp, func(fp, del sdk.AccAddress) error {
+		keysBtcDelRwdTracker = append(keysBtcDelRwdTracker, del.Bytes())
+		return k.CalculateBTCDelegationRewardsAndSendToGauge(ctx, fp, del, endedPeriod)
+	}); err != nil {
+		return err
+	}
+
+	// delete all reward tracer that correlates with the slashed finality provider.
+	k.deleteKeysFromBTCDelegationRewardsTracker(ctx, fp, keysBtcDelRwdTracker)
+	k.deleteAllFromFinalityProviderRwd(ctx, fp)
+	return nil
+}
+
 func (k Keeper) SendBtcDelegationRewardsToGauge(ctx context.Context, fp, del sdk.AccAddress) error {
 	return k.btcDelegationModified(ctx, fp, del)
+}
+
+func (k Keeper) sendAllBtcRewardsToGauge(ctx context.Context, del sdk.AccAddress) error {
+	return k.iterBtcDelegationsByDelegator(ctx, del, func(del, fp sdk.AccAddress) error {
+		return k.SendBtcDelegationRewardsToGauge(ctx, fp, del)
+	})
 }
 
 func (k Keeper) btcDelegationModified(
@@ -209,12 +199,6 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 	}
 
 	return fpCurrentRwd.Period, nil
-}
-
-func (k Keeper) sendAllBtcRewardsToGauge(ctx context.Context, del sdk.AccAddress) error {
-	return k.iterBtcDelegationsByDelegator(ctx, del, func(del, fp sdk.AccAddress) error {
-		return k.SendBtcDelegationRewardsToGauge(ctx, fp, del)
-	})
 }
 
 func (k Keeper) initializeFinalityProvider(ctx context.Context, fp sdk.AccAddress) (types.FinalityProviderCurrentRewards, error) {

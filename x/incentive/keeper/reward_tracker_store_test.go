@@ -380,6 +380,91 @@ func FuzzCheckAddFinalityProviderStaked(f *testing.F) {
 	})
 }
 
+func FuzzCheckAddDelegationSat(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+		fp1, del := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+		fp2 := datagen.GenRandomAddress()
+
+		amtAdded := datagen.RandomMathInt(r, 1000)
+		err := k.AddDelegationSat(ctx, fp1, del, amtAdded)
+		require.NoError(t, err)
+
+		rwdTrackerFp1Del1, err := k.GetBTCDelegationRewardsTracker(ctx, fp1, del)
+		require.NoError(t, err)
+		require.Equal(t, amtAdded.String(), rwdTrackerFp1Del1.TotalActiveSat.String())
+		require.Equal(t, uint64(0), rwdTrackerFp1Del1.StartPeriodCumulativeReward)
+
+		currentRwdFp1, err := k.GetFinalityProviderCurrentRewards(ctx, fp1)
+		require.NoError(t, err)
+		require.Equal(t, amtAdded.String(), currentRwdFp1.TotalActiveSat.String())
+		require.Equal(t, uint64(1), currentRwdFp1.Period)
+		require.Equal(t, sdk.NewCoins().String(), currentRwdFp1.CurrentRewards.String())
+
+		currentHistRwdFp1Del1, err := k.GetFinalityProviderHistoricalRewards(ctx, fp1, 0)
+		require.NoError(t, err)
+		require.Equal(t, sdk.NewCoins().String(), currentHistRwdFp1Del1.CumulativeRewardsPerSat.String())
+
+		// add delegation again
+		err = k.AddDelegationSat(ctx, fp1, del, amtAdded)
+		require.NoError(t, err)
+
+		// just verifies that the amount duplicated, without modifying the periods
+		rwdTrackerFp1Del1, err = k.GetBTCDelegationRewardsTracker(ctx, fp1, del)
+		require.NoError(t, err)
+		require.Equal(t, amtAdded.MulRaw(2).String(), rwdTrackerFp1Del1.TotalActiveSat.String())
+		require.Equal(t, uint64(0), rwdTrackerFp1Del1.StartPeriodCumulativeReward)
+
+		currentRwdFp1, err = k.GetFinalityProviderCurrentRewards(ctx, fp1)
+		require.NoError(t, err)
+		require.Equal(t, amtAdded.MulRaw(2).String(), currentRwdFp1.TotalActiveSat.String())
+		require.Equal(t, uint64(1), currentRwdFp1.Period)
+		require.Equal(t, sdk.NewCoins().String(), currentRwdFp1.CurrentRewards.String())
+
+		currentHistRwdFp1Del1, err = k.GetFinalityProviderHistoricalRewards(ctx, fp1, 0)
+		require.NoError(t, err)
+		require.Equal(t, sdk.NewCoins().String(), currentHistRwdFp1Del1.CumulativeRewardsPerSat.String())
+
+		// adds delegation sat to already initilialized FP and delegation
+		// needs to initialize the FP first, then the delegation
+		fp2CurrentRwd, err := k.initializeFinalityProvider(ctx, fp2)
+		require.NoError(t, err)
+
+		startingActiveAmt := datagen.RandomMathInt(r, 100)
+		err = k.setBTCDelegationRewardsTracker(ctx, fp2, del, types.NewBTCDelegationRewardsTracker(fp2CurrentRwd.Period, startingActiveAmt))
+		require.NoError(t, err)
+
+		err = k.initializeBTCDelegation(ctx, fp2, del)
+		require.NoError(t, err)
+
+		err = k.AddDelegationSat(ctx, fp2, del, amtAdded)
+		require.NoError(t, err)
+
+		// verifies the amount added
+		rwdTrackerFp2Del1, err := k.GetBTCDelegationRewardsTracker(ctx, fp2, del)
+		require.NoError(t, err)
+		require.Equal(t, amtAdded.Add(startingActiveAmt).String(), rwdTrackerFp2Del1.TotalActiveSat.String())
+		require.Equal(t, uint64(0), rwdTrackerFp2Del1.StartPeriodCumulativeReward)
+
+		currentRwdFp2, err := k.GetFinalityProviderCurrentRewards(ctx, fp2)
+		require.NoError(t, err)
+		// since it was artificially set the starting amount of the delegation
+		// the FP should only have the amount added.
+		require.Equal(t, amtAdded.String(), currentRwdFp2.TotalActiveSat.String())
+		require.Equal(t, uint64(1), currentRwdFp2.Period)
+		require.Equal(t, sdk.NewCoins().String(), currentRwdFp2.CurrentRewards.String())
+
+		currentHistRwdFp2Del1, err := k.GetFinalityProviderHistoricalRewards(ctx, fp2, 0)
+		require.NoError(t, err)
+		require.Equal(t, sdk.NewCoins().String(), currentHistRwdFp2Del1.CumulativeRewardsPerSat.String())
+	})
+}
+
 func TestAddSubDelegationSat(t *testing.T) {
 	k, ctx := NewKeeperWithCtx(t)
 
