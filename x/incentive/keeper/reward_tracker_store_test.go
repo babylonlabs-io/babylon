@@ -329,6 +329,57 @@ func FuzzCheckSubDelegationSat(f *testing.F) {
 	})
 }
 
+func FuzzCheckAddFinalityProviderStaked(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+		fp1, fp2 := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+
+		amtAdded := datagen.RandomMathInt(r, 1000)
+		err := k.addFinalityProviderStaked(ctx, fp1, amtAdded)
+		require.NoError(t, err)
+
+		currentRwdFp1, err := k.GetFinalityProviderCurrentRewards(ctx, fp1)
+		require.NoError(t, err)
+		require.Equal(t, currentRwdFp1.TotalActiveSat, amtAdded)
+		require.Equal(t, currentRwdFp1.Period, uint64(1))
+		require.Equal(t, currentRwdFp1.CurrentRewards.String(), sdk.NewCoins().String())
+
+		err = k.addFinalityProviderStaked(ctx, fp1, amtAdded)
+		require.NoError(t, err)
+		currentRwdFp1, err = k.GetFinalityProviderCurrentRewards(ctx, fp1)
+		require.NoError(t, err)
+		require.Equal(t, currentRwdFp1.TotalActiveSat, amtAdded.MulRaw(2))
+		require.Equal(t, currentRwdFp1.Period, uint64(1))
+		require.Equal(t, currentRwdFp1.CurrentRewards.String(), sdk.NewCoins().String())
+
+		currentRwdFp2, err := k.initializeFinalityProvider(ctx, fp2)
+		require.NoError(t, err)
+
+		rwdOnFp2 := datagen.GenRandomCoins(r)
+		err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp2, rwdOnFp2)
+		require.NoError(t, err)
+
+		require.Equal(t, currentRwdFp2.TotalActiveSat, math.ZeroInt())
+		require.Equal(t, currentRwdFp2.Period, uint64(1))
+		require.Equal(t, currentRwdFp2.CurrentRewards.String(), sdk.NewCoins().String())
+
+		amtAddedToFp2 := datagen.RandomMathInt(r, 1000)
+		err = k.addFinalityProviderStaked(ctx, fp2, amtAddedToFp2)
+		require.NoError(t, err)
+
+		currentRwdFp2, err = k.GetFinalityProviderCurrentRewards(ctx, fp2)
+		require.NoError(t, err)
+		require.Equal(t, currentRwdFp2.TotalActiveSat.String(), amtAddedToFp2.String())
+		require.Equal(t, currentRwdFp2.Period, uint64(1))
+		require.Equal(t, currentRwdFp2.CurrentRewards.String(), rwdOnFp2.String())
+	})
+}
+
 func TestAddSubDelegationSat(t *testing.T) {
 	k, ctx := NewKeeperWithCtx(t)
 
