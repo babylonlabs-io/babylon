@@ -24,7 +24,7 @@ func TestIncrementFinalityProviderPeriod(t *testing.T) {
 	checkFpHistoricalRwd(t, ctx, k, fp1, 0, sdk.NewCoins())
 
 	rwdAddedToPeriod1 := newBaseCoins(2_000000) // 2bbn
-	err = k.AddFinalityProviderRewardsForDelegationsBTC(ctx, fp1, rwdAddedToPeriod1)
+	err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp1, rwdAddedToPeriod1)
 	require.NoError(t, err)
 
 	// historical should not modify the rewards for the period already created

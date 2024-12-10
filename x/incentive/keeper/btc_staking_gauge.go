@@ -38,7 +38,7 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 
 		// reward the rest of coins to each BTC delegation proportional to its voting power portion
 		coinsForBTCDels := coinsForFpsAndDels.Sub(coinsForCommission...)
-		if err := k.AddFinalityProviderRewardsForDelegationsBTC(ctx, fp.GetAddress(), coinsForBTCDels); err != nil {
+		if err := k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp.GetAddress(), coinsForBTCDels); err != nil {
 			panic(err)
 		}
 	}

@@ -252,25 +252,7 @@ func (k Keeper) initializeBTCDelegation(ctx context.Context, fp, del sdk.AccAddr
 	return k.setBTCDelegationRewardsTracker(ctx, fp, del, rwd)
 }
 
-func (k Keeper) addFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress, amt sdkmath.Int) error {
-	fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
-	if err != nil {
-		if !errors.Is(err, types.ErrFPCurrentRewardsNotFound) {
-			return err
-		}
-
-		// this is needed as the amount of sats for the FP is inside the FpCurrentRewards
-		fpCurrentRwd, err = k.initializeFinalityProvider(ctx, fp)
-		if err != nil {
-			return err
-		}
-	}
-
-	fpCurrentRwd.AddTotalActiveSat(amt)
-	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
-}
-
-func (k Keeper) AddFinalityProviderRewardsForDelegationsBTC(ctx context.Context, fp sdk.AccAddress, rwd sdk.Coins) error {
+func (k Keeper) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context, fp sdk.AccAddress, rwd sdk.Coins) error {
 	fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
 	if err != nil {
 		return err

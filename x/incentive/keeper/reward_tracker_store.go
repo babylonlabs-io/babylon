@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
@@ -255,5 +256,26 @@ func (k Keeper) subFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress
 	}
 
 	fpCurrentRwd.SubTotalActiveSat(amt)
+	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+}
+
+// addFinalityProviderStaked increases the total amount of active satoshi to a finality provider
+// if it does not exist one current reward in the store, it initializes a new one
+// The initialization of a finality provider also stores one historical fp reward.
+func (k Keeper) addFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress, amt sdkmath.Int) error {
+	fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
+	if err != nil {
+		if !errors.Is(err, types.ErrFPCurrentRewardsNotFound) {
+			return err
+		}
+
+		// this is needed as the amount of sats for the FP is inside the FpCurrentRewards
+		fpCurrentRwd, err = k.initializeFinalityProvider(ctx, fp)
+		if err != nil {
+			return err
+		}
+	}
+
+	fpCurrentRwd.AddTotalActiveSat(amt)
 	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }

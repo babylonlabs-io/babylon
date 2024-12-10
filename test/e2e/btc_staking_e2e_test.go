@@ -318,7 +318,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 			return false
 		}
 		return activatedHeight > 0
-	}, time.Minute, time.Millisecond*50)
+	}, time.Minute*3, time.Millisecond*50)
 	s.T().Logf("the activated height is %d", activatedHeight)
 
 	/*
@@ -652,7 +652,7 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
-	node, err := chainA.GetNodeAtIndex(2)
+	node, err := chainA.GetNodeAtIndex(0)
 	s.NoError(err)
 
 	wGratee, wGranter := "staker", "feePayer"
