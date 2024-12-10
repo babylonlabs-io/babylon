@@ -382,7 +382,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 		s.NoError(err)
 		btcPK := bbn.NewBIP340PubKeyFromBTCPK(pk)
 		nonValidatorNode.AddFinalitySig(btcPK, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
-		nonValidatorNode.WaitForNextBlock()
+		nonValidatorNode.WaitForNextBlocks(2)
 	}, false)
 
 	// ensure finality provider has received rewards after the block is finalised

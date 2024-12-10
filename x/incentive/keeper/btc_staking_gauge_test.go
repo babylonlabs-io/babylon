@@ -133,5 +133,18 @@ func CalculatePointOnePercent(value sdk.Coins) sdk.Coins {
 	numerator := math.NewInt(1)      // 0.1% as numerator
 	denominator := math.NewInt(1000) // 0.1% denominator
 	result := value.MulInt(numerator).QuoInt(denominator)
-	return result
+	return coinsAtLeastMinAmount(result, math.OneInt())
+}
+
+func coinsAtLeastMinAmount(value sdk.Coins, minAmt math.Int) sdk.Coins {
+	ret := sdk.NewCoins()
+	for _, v := range value {
+		if v.Amount.GT(minAmt) {
+			ret = ret.Add(v)
+			continue
+		}
+		ret = ret.Add(sdk.NewCoin(v.Denom, minAmt))
+	}
+	return ret
+
 }
