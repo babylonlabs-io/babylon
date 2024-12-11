@@ -24,16 +24,6 @@ func TestBTCStakingTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingTestSuite))
 }
 
-// TestBTCStakingIntegrationTestSuite includes btc staking integration related tests
-func TestBTCStakingIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, new(BTCStakingIntegrationTestSuite))
-}
-
-// TestBCDConsumerIntegrationTestSuite includes babylon<->bcd integration related tests
-func TestBCDConsumerIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, new(BCDConsumerIntegrationTestSuite))
-}
-
 func TestBTCStakingPreApprovalTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingPreApprovalTestSuite))
 }

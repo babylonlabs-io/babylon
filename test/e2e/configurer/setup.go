@@ -28,44 +28,6 @@ func withIBC(setupHandler setupFn) setupFn {
 	}
 }
 
-func withPhase2HermesIBC(setupHandler setupFn, enableBTCStaking bool) setupFn {
-	return func(configurer Configurer) error {
-		if err := setupHandler(configurer); err != nil {
-			return err
-		}
-		time.Sleep(5 * time.Second)
-		// Instantiate contract on (CZ-like) chain B
-		if err := configurer.InstantiateBabylonContract(enableBTCStaking); err != nil {
-			return err
-		}
-
-		if err := configurer.RunHermesRelayerIBC(); err != nil {
-			return err
-		}
-
-		return nil
-	}
-}
-
-func withPhase2GoRlyIBC(setupHandler setupFn) setupFn {
-	return func(configurer Configurer) error {
-		if err := setupHandler(configurer); err != nil {
-			return err
-		}
-		time.Sleep(5 * time.Second)
-		// Instantiate contract on (CZ-like) chain B
-		if err := configurer.InstantiateBabylonContract(false); err != nil {
-			return err
-		}
-
-		if err := configurer.RunCosmosRelayerIBC(); err != nil {
-			return err
-		}
-
-		return nil
-	}
-}
-
 func withIBCTransferChannel(setupHandler setupFn) setupFn {
 	return func(configurer Configurer) error {
 		if err := setupHandler(configurer); err != nil {
