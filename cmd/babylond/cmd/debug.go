@@ -7,12 +7,14 @@ import (
 	"strings"
 
 	"github.com/babylonlabs-io/babylon/types"
+	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 
-	"github.com/cosmos/cosmos-sdk/client/debug"
-	legacybech32 "github.com/cosmos/cosmos-sdk/types/bech32/legacybech32" //nolint:staticcheck // we do old keys, they're keys after all.
+	// this pkg was deprecated but still needs support
+	bech32 "github.com/cosmos/cosmos-sdk/types/bech32/legacybech32" //nolint:staticcheck
+
 	"github.com/spf13/cobra"
 )
 
@@ -97,17 +99,17 @@ func getPubKeyFromRawString(pkstr, keytype string) (cryptotypes.PubKey, error) {
 		}
 	}
 
-	pk, err := legacybech32.UnmarshalPubKey(legacybech32.AccPK, pkstr) //nolint:staticcheck // we do old keys, they're keys after all.
+	pk, err := bech32.UnmarshalPubKey(bech32.AccPK, pkstr) //nolint:staticcheck
 	if err == nil {
 		return pk, nil
 	}
 
-	pk, err = legacybech32.UnmarshalPubKey(legacybech32.ValPK, pkstr) //nolint:staticcheck // we do old keys, they're keys after all.
+	pk, err = bech32.UnmarshalPubKey(bech32.ValPK, pkstr) //nolint:staticcheck
 	if err == nil {
 		return pk, nil
 	}
 
-	pk, err = legacybech32.UnmarshalPubKey(legacybech32.ConsPK, pkstr) //nolint:staticcheck // we do old keys, they're keys after all.
+	pk, err = bech32.UnmarshalPubKey(bech32.ConsPK, pkstr) //nolint:staticcheck
 	if err == nil {
 		return pk, nil
 	}
