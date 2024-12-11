@@ -47,6 +47,20 @@ func FuzzCheckCalculateBTCDelegationRewards(f *testing.F) {
 		})
 
 		// Creates a correct and expected historical periods with start and ending properly set
+		startHist, endHist := datagen.GenRandomFPHistRwdStartAndEnd(r)
+		err = k.setFinalityProviderHistoricalRewards(ctx, fp, btcRwd.StartPeriodCumulativeReward, startHist)
+		require.NoError(t, err)
+		endPeriod := btcRwd.StartPeriodCumulativeReward + datagen.RandomInt(r, 10)
+		err = k.setFinalityProviderHistoricalRewards(ctx, fp, endPeriod, endHist)
+		require.NoError(t, err)
+
+		expectedRwd := endHist.CumulativeRewardsPerSat.Sub(startHist.CumulativeRewardsPerSat...)
+		expectedRwd = expectedRwd.MulInt(btcRwd.TotalActiveSat)
+		expectedRwd = expectedRwd.QuoInt(types.DecimalAccumulatedRewards)
+
+		rwd, err = k.CalculateBTCDelegationRewards(ctx, fp, del, endPeriod)
+		require.NoError(t, err)
+		require.Equal(t, rwd.String(), expectedRwd.String())
 	})
 }
 

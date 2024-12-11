@@ -99,6 +99,8 @@ func (k Keeper) btcDelegationModifiedWithPreInitDel(
 	return k.initializeBTCDelegation(ctx, fp, del)
 }
 
+// CalculateBTCDelegationRewardsAndSendToGauge calculates the rewards of the delegator based on the
+// StartPeriodCumulativeReward and the received endPeriod and sends to the delegator gauge.
 func (k Keeper) CalculateBTCDelegationRewardsAndSendToGauge(ctx context.Context, fp, del sdk.AccAddress, endPeriod uint64) error {
 	rewards, err := k.CalculateBTCDelegationRewards(ctx, fp, del, endPeriod)
 	if err != nil {
