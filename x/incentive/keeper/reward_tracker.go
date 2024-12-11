@@ -124,6 +124,9 @@ func (k Keeper) CalculateBTCDelegationRewardsAndSendToGauge(ctx context.Context,
 	return nil
 }
 
+// CalculateBTCDelegationRewards calculates the rewards entitled for this delegation
+// from the starting period cumulative reward and the ending period received as parameter
+// It returns the amount of rewards without decimals (it removes the DecimalAccumulatedRewards).
 func (k Keeper) CalculateBTCDelegationRewards(ctx context.Context, fp, del sdk.AccAddress, endPeriod uint64) (sdk.Coins, error) {
 	btcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
 	if err != nil {
