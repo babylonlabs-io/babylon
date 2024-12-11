@@ -8,7 +8,6 @@ import (
 
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
-	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 )
 
@@ -144,20 +143,26 @@ func GenRandomBTCTimestampingRewardDistInfo(r *rand.Rand) *btcctypes.RewardDistI
 	return btcctypes.NewRewardDistInfo(best, others...)
 }
 
-func GenRandomFinalityProviderCurrentRewards(r *rand.Rand) types.FinalityProviderCurrentRewards {
+func GenRandomFinalityProviderCurrentRewards(r *rand.Rand) itypes.FinalityProviderCurrentRewards {
 	rwd := GenRandomCoins(r)
 	period := RandomInt(r, 100) + 3
 	activeSatoshi := RandomMathInt(r, 10000).AddRaw(10)
-	return types.NewFinalityProviderCurrentRewards(rwd, period, activeSatoshi)
+	return itypes.NewFinalityProviderCurrentRewards(rwd, period, activeSatoshi)
 }
 
-func GenRandomBTCDelegationRewardsTracker(r *rand.Rand) types.BTCDelegationRewardsTracker {
+func GenRandomBTCDelegationRewardsTracker(r *rand.Rand) itypes.BTCDelegationRewardsTracker {
 	period := RandomInt(r, 100) + 2
 	activeSatoshi := RandomMathInt(r, 10000)
-	return types.NewBTCDelegationRewardsTracker(period, activeSatoshi)
+	return itypes.NewBTCDelegationRewardsTracker(period, activeSatoshi)
 }
 
-func GenRandomFinalityProviderHistoricalRewards(r *rand.Rand) types.FinalityProviderHistoricalRewards {
+func GenRandomFPHistRwd(r *rand.Rand) itypes.FinalityProviderHistoricalRewards {
 	rwd := GenRandomCoins(r)
-	return types.NewFinalityProviderHistoricalRewards(rwd)
+	return itypes.NewFinalityProviderHistoricalRewards(rwd)
+}
+
+func GenRandomFPHistRwdWithDecimals(r *rand.Rand) itypes.FinalityProviderHistoricalRewards {
+	rwd := GenRandomFPHistRwd(r)
+	rwd.CumulativeRewardsPerSat = rwd.CumulativeRewardsPerSat.MulInt(itypes.DecimalAccumulatedRewards)
+	return rwd
 }

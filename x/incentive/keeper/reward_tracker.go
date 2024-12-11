@@ -10,14 +10,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 )
 
-var (
-	// it is needed to add decimal points when reducing the rewards amount
-	// per sat to latter when giving out the rewards to the gauge, reduce
-	// the decimal points back, currently 20 decimal points are being added
-	// the sdkmath.Int holds a big int which support up to 2^256 integers
-	DecimalAccumulatedRewards, _ = sdkmath.NewIntFromString("100000000000000000000")
-)
-
 // AddFinalityProviderRewardsForBtcDelegations gets the current finality provider rewards
 // and adds rewards to it, without increasing the finality provider period
 // it also does not initiliaze the FP, so it must have been initialized prior
@@ -180,7 +172,7 @@ func (k Keeper) calculateDelegationRewardsBetween(
 	rewardsWithDecimals := differenceWithDecimals.MulInt(btcDelRwdTracker.TotalActiveSat)
 	// note: necessary to truncate so we don't allow withdrawing more rewardsWithDecimals than owed
 	// QuoInt already truncates
-	rewards := rewardsWithDecimals.QuoInt(DecimalAccumulatedRewards)
+	rewards := rewardsWithDecimals.QuoInt(types.DecimalAccumulatedRewards)
 	return rewards, nil
 }
 
@@ -213,7 +205,7 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 
 	currentRewardsPerSat := sdk.NewCoins()
 	if !fpCurrentRwd.TotalActiveSat.IsZero() {
-		currentRewardsPerSatWithDecimals := fpCurrentRwd.CurrentRewards.MulInt(DecimalAccumulatedRewards)
+		currentRewardsPerSatWithDecimals := fpCurrentRwd.CurrentRewards.MulInt(types.DecimalAccumulatedRewards)
 		currentRewardsPerSat = currentRewardsPerSatWithDecimals.QuoInt(fpCurrentRwd.TotalActiveSat)
 	}
 

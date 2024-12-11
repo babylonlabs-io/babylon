@@ -227,7 +227,7 @@ func FuzzCheckFinalityProviderHistoricalRewards(f *testing.F) {
 		_, err := k.GetFinalityProviderHistoricalRewards(ctx, fp1, fp1Period1)
 		require.EqualError(t, err, types.ErrFPHistoricalRewardsNotFound.Error())
 
-		expectedHistRwdFp1 := datagen.GenRandomFinalityProviderHistoricalRewards(r)
+		expectedHistRwdFp1 := datagen.GenRandomFPHistRwd(r)
 		err = k.setFinalityProviderHistoricalRewards(ctx, fp1, fp1Period1, expectedHistRwdFp1)
 		require.NoError(t, err)
 
@@ -237,10 +237,10 @@ func FuzzCheckFinalityProviderHistoricalRewards(f *testing.F) {
 
 		// sets multiple historical for fp2
 		fp2Period1Historical := datagen.RandomInt(r, 10)
-		err = k.setFinalityProviderHistoricalRewards(ctx, fp2, fp2Period1Historical, datagen.GenRandomFinalityProviderHistoricalRewards(r))
+		err = k.setFinalityProviderHistoricalRewards(ctx, fp2, fp2Period1Historical, datagen.GenRandomFPHistRwd(r))
 		require.NoError(t, err)
 		fp2Period2Historical := datagen.RandomInt(r, 10)
-		err = k.setFinalityProviderHistoricalRewards(ctx, fp2, fp2Period2Historical, datagen.GenRandomFinalityProviderHistoricalRewards(r))
+		err = k.setFinalityProviderHistoricalRewards(ctx, fp2, fp2Period2Historical, datagen.GenRandomFPHistRwd(r))
 		require.NoError(t, err)
 
 		// sets a new current fp rwd to check the delete all

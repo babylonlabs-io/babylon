@@ -5,6 +5,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+var (
+	// it is needed to add decimal points when reducing the rewards amount
+	// per sat to latter when giving out the rewards to the gauge, reduce
+	// the decimal points back, currently 20 decimal points are being added
+	// the sdkmath.Int holds a big int which support up to 2^256 integers
+	DecimalAccumulatedRewards, _ = sdkmath.NewIntFromString("100000000000000000000")
+)
+
 func NewBTCDelegationRewardsTracker(startPeriod uint64, totalSat sdkmath.Int) BTCDelegationRewardsTracker {
 	return BTCDelegationRewardsTracker{
 		StartPeriodCumulativeReward: startPeriod,
