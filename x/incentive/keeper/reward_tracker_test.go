@@ -12,6 +12,42 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func FuzzCheckCalculateBTCDelegationRewardsAndSendToGauge(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+		fp, del := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+
+		btcRwd := datagen.GenRandomBTCDelegationRewardsTracker(r)
+		err := k.setBTCDelegationRewardsTracker(ctx, fp, del, btcRwd)
+		require.NoError(t, err)
+
+		startHist, endHist := datagen.GenRandomFPHistRwdStartAndEnd(r)
+		err = k.setFinalityProviderHistoricalRewards(ctx, fp, btcRwd.StartPeriodCumulativeReward, startHist)
+		require.NoError(t, err)
+		endPeriod := btcRwd.StartPeriodCumulativeReward + datagen.RandomInt(r, 10) + 1
+		err = k.setFinalityProviderHistoricalRewards(ctx, fp, endPeriod, endHist)
+		require.NoError(t, err)
+
+		expectedRwd := endHist.CumulativeRewardsPerSat.Sub(startHist.CumulativeRewardsPerSat...)
+		expectedRwd = expectedRwd.MulInt(btcRwd.TotalActiveSat)
+		expectedRwd = expectedRwd.QuoInt(types.DecimalAccumulatedRewards)
+
+		rwdGauge := datagen.GenRandomRewardGauge(r)
+		k.SetRewardGauge(ctx, types.BTCDelegationType, del, rwdGauge)
+
+		err = k.CalculateBTCDelegationRewardsAndSendToGauge(ctx, fp, del, endPeriod)
+		require.NoError(t, err)
+
+		delRwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del)
+		require.Equal(t, rwdGauge.Coins.Add(expectedRwd...).String(), delRwdGauge.Coins.String())
+	})
+}
+
 func FuzzCheckCalculateBTCDelegationRewards(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
