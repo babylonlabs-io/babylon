@@ -173,7 +173,15 @@ func (k Keeper) calculateDelegationRewardsBetween(
 	return rewards, nil
 }
 
-// IncrementFinalityProviderPeriod
+// IncrementFinalityProviderPeriod gets or initializes the finality provider,
+// increases the period from the current FP rewards and empty the rewards.
+// It also creates a new historical with the ended period and sets the rewards
+// of the newly historical period as the amount from the previous historical
+// plus the amount of rewards that each satoshi staked is entitled to receive.
+// The rewards in the historical are stored with multiplied decimals
+// (DecimalAccumulatedRewards) to increase precision, and need to be
+// reduced when the rewards are calculated in calculateDelegationRewardsBetween
+// prior to send out to the delegator gauge.
 func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccAddress) (endedPeriod uint64, err error) {
 	// IncrementValidatorPeriod
 	//    gets the current rewards and send to historical the current period (the rewards are stored as "shares" which means the amount of rewards per satoshi)
@@ -184,8 +192,8 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 			return 0, err
 		}
 
-		// initialize Validator and return 1 as ended period
-		// the ended period is 1 because the just created historical sits at 0
+		// initialize Validator and return 1 as ended period due
+		// to the created historical FP rewards starts at period 0
 		if _, err := k.initializeFinalityProvider(ctx, fp); err != nil {
 			return 0, err
 		}

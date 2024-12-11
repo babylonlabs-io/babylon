@@ -46,6 +46,47 @@ func FuzzCheckAddFinalityProviderRewardsForBtcDelegations(f *testing.F) {
 	})
 }
 
+func FuzzCheckIncrementFinalityProviderPeriod(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+		fp := datagen.GenRandomAddress()
+
+		// increment without initializing the FP
+		endedPeriod, err := k.IncrementFinalityProviderPeriod(ctx, fp)
+		require.NoError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
+		require.Equal(t, endedPeriod, uint64(1))
+
+		fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
+		err = k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+		require.NoError(t, err)
+
+		amtRwdInHistorical := fpCurrentRwd.CurrentRewards.MulInt(DecimalAccumulatedRewards).QuoInt(math.NewInt(2))
+		err = k.setFinalityProviderHistoricalRewards(ctx, fp, fpCurrentRwd.Period-1, types.NewFinalityProviderHistoricalRewards(amtRwdInHistorical))
+		require.NoError(t, err)
+
+		endedPeriod, err = k.IncrementFinalityProviderPeriod(ctx, fp)
+		require.NoError(t, err)
+		require.Equal(t, endedPeriod, fpCurrentRwd.Period)
+
+		historicalEndedPeriod, err := k.GetFinalityProviderHistoricalRewards(ctx, fp, endedPeriod)
+		require.NoError(t, err)
+
+		expectedHistoricalRwd := amtRwdInHistorical.Add(fpCurrentRwd.CurrentRewards.MulInt(DecimalAccumulatedRewards).QuoInt(fpCurrentRwd.TotalActiveSat)...)
+		require.Equal(t, historicalEndedPeriod.CumulativeRewardsPerSat.String(), expectedHistoricalRwd.String())
+
+		newFPCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
+		require.NoError(t, err)
+		require.Equal(t, newFPCurrentRwd.CurrentRewards.String(), sdk.NewCoins().String())
+		require.Equal(t, newFPCurrentRwd.Period, fpCurrentRwd.Period+1)
+		require.Equal(t, newFPCurrentRwd.TotalActiveSat, fpCurrentRwd.TotalActiveSat)
+	})
+}
+
 func FuzzCheckInitializeBTCDelegation(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
