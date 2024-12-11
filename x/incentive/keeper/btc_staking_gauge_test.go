@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/testutil/coins"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
@@ -107,43 +107,20 @@ func FuzzRewardBTCStaking(f *testing.F) {
 
 			// A little bit of rewards could be lost in the process due to precision points
 			// so 0.1% difference can be considered okay
-			allowedMarginError := CalculatePointOnePercent(reward)
-			diff, _ := reward.SafeSub(rg.Coins...)
-			require.Truef(t, diff.IsAllLT(allowedMarginError),
-				"BTC delegation failed within the margin of error: %s\nRewards: %s\nGauge: %s",
-				allowedMarginError.String(), reward.String(), rg.Coins.String(),
+			require.Truef(t, coins.CoinsDiffInPointOnePercentMargin(reward, rg.Coins),
+				"BTC delegation failed within the margin of error 0.1%\nRewards: %s\nGauge: %s",
+				reward.String(), rg.Coins.String(),
 			)
 
 			sumRewards = sumRewards.Add(reward...)
 		}
 
-		allowedMarginError := CalculatePointOnePercent(sumCoinsForDels)
-		diff, _ := sumCoinsForDels.SafeSub(sumRewards...)
-		require.Truef(t, diff.IsAllLT(allowedMarginError),
-			"Sum of total rewards failed within the margin of error: %s\nRewards: %s\nGauge: %s",
-			allowedMarginError.String(), sumCoinsForDels.String(), sumRewards.String(),
+		require.Truef(t, coins.CoinsDiffInPointOnePercentMargin(sumCoinsForDels, sumRewards),
+			"Sum of total rewards failed within the margin of error 0.1%\nRewards: %s\nGauge: %s",
+			sumCoinsForDels.String(), sumRewards.String(),
 		)
 
 		// assert distributedCoins is a subset of coins in gauge
 		require.True(t, gauge.Coins.IsAllGTE(distributedCoins))
 	})
-}
-
-func CalculatePointOnePercent(value sdk.Coins) sdk.Coins {
-	numerator := math.NewInt(1)      // 0.1% as numerator
-	denominator := math.NewInt(1000) // 0.1% denominator
-	result := value.MulInt(numerator).QuoInt(denominator)
-	return coinsAtLeastMinAmount(result, math.OneInt())
-}
-
-func coinsAtLeastMinAmount(value sdk.Coins, minAmt math.Int) sdk.Coins {
-	ret := sdk.NewCoins()
-	for _, v := range value {
-		if v.Amount.GT(minAmt) {
-			ret = ret.Add(v)
-			continue
-		}
-		ret = ret.Add(sdk.NewCoin(v.Denom, minAmt))
-	}
-	return ret
 }

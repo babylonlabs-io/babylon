@@ -1,16 +1,62 @@
 package keeper
 
 import (
+	"context"
 	"math/rand"
 	"testing"
 
 	"cosmossdk.io/math"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/testutil/coins"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
+
+func FuzzCheckBtcDelegationModifiedWithPreInitDel(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+		fp, del := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+
+		count := 0
+		fCount := func(ctx context.Context, fp, del sdk.AccAddress) error {
+			count++
+			return nil
+		}
+		require.Equal(t, count, 0)
+
+		err := k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, fCount)
+		require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNotFound.Error())
+
+		err = k.BtcDelegationActivated(ctx, fp, del, datagen.RandomInt(r, 1000)+10)
+		require.NoError(t, err)
+
+		delRwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del)
+		require.Nil(t, delRwdGauge)
+
+		coinsToDel := datagen.GenRandomCoins(r)
+		err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, coinsToDel)
+		require.NoError(t, err)
+
+		err = k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, fCount)
+		require.NoError(t, err)
+		require.Equal(t, count, 2)
+
+		delRwdGauge = k.GetRewardGauge(ctx, types.BTCDelegationType, del)
+		coins.RequireCoinsDiffInPointOnePercentMargin(t, delRwdGauge.Coins, coinsToDel)
+		// note: the difference here in one micro coin value is expected due to the loss of precision in the BTC reward tracking mechanism
+		// that needs to keep track of how much rewards 1 satoshi is entitled to receive.
+		// expected: "10538986AnIGK,10991059BQZFY,19858803DTFwK,18591052NPLYN,11732268RmOWl,17440819TMPYN,17161570WfgTh,17743833aMJHg,19321764evLoF,17692017eysTF,15763155fbRbV,15691503jtkIM,15782745onTeQ,19076817pycDX,10059521tfcfY,13053824tgYdv,16164439ufZLL,15295587xvzKC"
+		// actual  : "10538987AnIGK,10991060BQZFY,19858804DTFwK,18591053NPLYN,11732269RmOWl,17440820TMPYN,17161571WfgTh,17743834aMJHg,19321765evLoF,17692018eysTF,15763156fbRbV,15691504jtkIM,15782746onTeQ,19076818pycDX,10059522tfcfY,13053825tgYdv,16164440ufZLL,15295588xvzKC"
+		// require.Equal(t, delRwdGauge.Coins.String(), coinsToDel.String())
+	})
+}
 
 func FuzzCheckCalculateBTCDelegationRewardsAndSendToGauge(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)

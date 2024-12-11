@@ -71,6 +71,8 @@ func (k Keeper) sendAllBtcRewardsToGauge(ctx context.Context, del sdk.AccAddress
 	})
 }
 
+// btcDelegationModified just calls the BTC delegation modified without
+// any action to modify the delegation prior to initialization.
 func (k Keeper) btcDelegationModified(
 	ctx context.Context,
 	fp, del sdk.AccAddress,
@@ -78,6 +80,13 @@ func (k Keeper) btcDelegationModified(
 	return k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error { return nil })
 }
 
+// btcDelegationModifiedWithPreInitDel does the procedure when a BTC delegation has
+// some modification in its total amount of active satoshi staked. This function
+// increments the finality provider period (that creates a new historical) with
+// the ended period, calculates the delegation reward and send to the gauge
+// and calls a function prior (preInitializeDelegation) to initialize a new
+// BTC delegation, which is useful to apply subtract or add the total
+// amount staked by the delegation and FP.
 func (k Keeper) btcDelegationModifiedWithPreInitDel(
 	ctx context.Context,
 	fp, del sdk.AccAddress,
