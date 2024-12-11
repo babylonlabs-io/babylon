@@ -137,7 +137,15 @@ func (k Keeper) CalculateBTCDelegationRewards(ctx context.Context, fp, del sdk.A
 	return k.calculateDelegationRewardsBetween(ctx, fp, del, btcDelRwdTracker, endPeriod)
 }
 
-// calculate the rewards accrued by a delegation between two periods
+// calculateDelegationRewardsBetween calculate the rewards accured of a delegation between
+// two period, the endingPeriod received in param and the StartPeriodCumulativeReward of
+// the BTCDelegationRewardsTracker. It gets the CumulativeRewardsPerSat of the ending
+// period and subtracts the CumulativeRewardsPerSat of the starting period
+// that give the total amount of rewards that one satoshi is entitle to receive
+// in rewards between those two period. To get the amount this delegation should
+// receive, it multiplies by the total amount of active satoshi this delegation has.
+// One note, before give out the rewards it quotes by the DecimalAccumulatedRewards
+// to get it ready to be sent out to the delegator reward gauge.
 func (k Keeper) calculateDelegationRewardsBetween(
 	ctx context.Context,
 	fp, del sdk.AccAddress,

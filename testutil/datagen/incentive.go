@@ -152,7 +152,7 @@ func GenRandomFinalityProviderCurrentRewards(r *rand.Rand) types.FinalityProvide
 }
 
 func GenRandomBTCDelegationRewardsTracker(r *rand.Rand) types.BTCDelegationRewardsTracker {
-	period := RandomInt(r, 100)
+	period := RandomInt(r, 100) + 2
 	activeSatoshi := RandomMathInt(r, 10000)
 	return types.NewBTCDelegationRewardsTracker(period, activeSatoshi)
 }
