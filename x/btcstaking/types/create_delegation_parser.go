@@ -269,3 +269,7 @@ func ParseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDel
 		ParsedPop:                  msg.Pop,
 	}, nil
 }
+
+func (msg *ParsedCreateDelegationMessage) IsIncludedOnBTC() bool {
+	return msg.StakingTxProofOfInclusion != nil
+}

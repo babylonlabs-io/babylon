@@ -148,6 +148,55 @@ func (ms msgServer) isAllowListEnabled(ctx sdk.Context, p *types.Params) bool {
 	return p.AllowListExpirationHeight > 0 && uint64(ctx.BlockHeight()) < p.AllowListExpirationHeight
 }
 
+func (ms msgServer) getTimeInfoAndParams(
+	ctx sdk.Context,
+	parsedMsg *types.ParsedCreateDelegationMessage,
+) (*DelegationTimeRangeInfo, *types.Params, uint32, error) {
+	if parsedMsg.IsIncludedOnBTC() {
+		// staking tx is already included on BTC
+		// 1. Validate inclusion proof and retrieve inclusion height
+		// 2. Get params for the validated inclusion height
+		btccParams := ms.btccKeeper.GetParams(ctx)
+
+		timeInfo, err := ms.VerifyInclusionProofAndGetHeight(
+			ctx,
+			btcutil.NewTx(parsedMsg.StakingTx.Transaction),
+			btccParams.BtcConfirmationDepth,
+			uint32(parsedMsg.StakingTime),
+			uint32(parsedMsg.UnbondingTime),
+			parsedMsg.StakingTxProofOfInclusion,
+		)
+
+		if err != nil {
+			return nil, nil, 0, fmt.Errorf("invalid inclusion proof: %w", err)
+		}
+
+		paramsByHeight, version, err := ms.GetParamsForBtcHeight(ctx, uint64(timeInfo.StartHeight))
+		if err != nil {
+			// this error can happen if we receive delegations which is included before
+			// first activation height we support
+			return nil, nil, 0, err
+		}
+
+		return timeInfo, paramsByHeight, version, nil
+	} else {
+		// staking tx is not included on BTC, retrieve params for the current tip height
+		// and return info about the tip
+		btcTip := ms.btclcKeeper.GetTipInfo(ctx)
+
+		paramsByHeight, version, err := ms.GetParamsForBtcHeight(ctx, uint64(btcTip.Height))
+		if err != nil {
+			return nil, nil, 0, err
+		}
+
+		return &DelegationTimeRangeInfo{
+			StartHeight: 0,
+			EndHeight:   0,
+			TipHeight:   btcTip.Height,
+		}, paramsByHeight, version, nil
+	}
+}
+
 // CreateBTCDelegation creates a BTC delegation
 func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCreateBTCDelegation) (*types.MsgCreateBTCDelegationResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateBTCDelegation)
@@ -188,69 +237,31 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		}
 	}
 
-	// get latest params with version
-	vp := ms.GetParamsWithVersion(ctx)
+	// 5. Get params for the validated inclusion height either tip or inclusion height
+	timeInfo, params, paramsVersion, err := ms.getTimeInfoAndParams(ctx, parsedMsg)
+	if err != nil {
+		return nil, err
+	}
 
-	// 5. if allow list is enabled we need to check whether staking transactions hash
+	// 6. Validate the staking tx against the params
+	paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, params, ms.btcNet)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// 7. if allow list is enabled we need to check whether staking transactions hash
 	// is in the allow list
-	if ms.isAllowListEnabled(ctx, &vp.Params) {
+	if ms.isAllowListEnabled(ctx, params) {
 		if !ms.IsStakingTransactionAllowed(ctx, &stakingTxHash) {
 			return nil, types.ErrInvalidStakingTx.Wrapf("staking tx hash: %s, is not in the allow list", stakingTxHash.String())
 		}
 	}
 
-	// 6. If the delegation contains the inclusion proof, we need to verify the proof
-	// and set start height and end height. We also need to validate delegation
-	// against correct parameters version
-	btccParams := ms.btccKeeper.GetParams(ctx)
-	var pvr *types.ParamsValidationResult
-	var paramsVersion, startHeight, endHeight uint32
-	if parsedMsg.StakingTxProofOfInclusion != nil {
-		timeInfo, err := ms.VerifyInclusionProofAndGetHeight(
-			ctx,
-			btcutil.NewTx(parsedMsg.StakingTx.Transaction),
-			btccParams.BtcConfirmationDepth,
-			uint32(parsedMsg.StakingTime),
-			uint32(parsedMsg.UnbondingTime),
-			parsedMsg.StakingTxProofOfInclusion)
-		if err != nil {
-			return nil, fmt.Errorf("invalid inclusion proof: %w", err)
-		}
-
-		// staking transaction is already included in BTC chain, retrieve parameters
-		// based on the btc light client height
-		paramsByHeight, version, err := ms.GetParamsForBtcHeight(ctx, uint64(timeInfo.StartHeight))
-		if err != nil {
-			// this error can happen if we receive delegations which is included before
-			// first activation height we support
-			return nil, err
-		}
-
-		paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, paramsByHeight, ms.btcNet)
-
-		if err != nil {
-			return nil, err
-		}
-
-		pvr = paramsValidationResult
-		startHeight = timeInfo.StartHeight
-		endHeight = timeInfo.EndHeight
-		paramsVersion = version
-	} else {
-		// this is delegation that is not included in BTC chain yet, we need to validate
-		// it against the latest parameters
-		paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, &vp.Params, ms.btcNet)
-
-		if err != nil {
-			return nil, err
-		}
-
-		pvr = paramsValidationResult
-		paramsVersion = vp.Version
-
-		// NOTE: here we consume more gas to protect Babylon chain and covenant members against spamming
-		// i.e. creating delegation that will never reach BTC
-		ctx.GasMeter().ConsumeGas(vp.Params.DelegationCreationBaseGasFee, "delegation creation fee")
+	// everything is good, if the staking tx is not included on BTC consume additinal
+	// gas
+	if !parsedMsg.IsIncludedOnBTC() {
+		ctx.GasMeter().ConsumeGas(params.DelegationCreationBaseGasFee, "delegation creation fee")
 	}
 
 	// 7.all good, construct BTCDelegation and insert BTC delegation
@@ -262,11 +273,11 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		Pop:              parsedMsg.ParsedPop,
 		FpBtcPkList:      parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat,
 		StakingTime:      uint32(parsedMsg.StakingTime),
-		StartHeight:      startHeight,
-		EndHeight:        endHeight,
+		StartHeight:      timeInfo.StartHeight,
+		EndHeight:        timeInfo.EndHeight,
 		TotalSat:         uint64(parsedMsg.StakingValue),
 		StakingTx:        parsedMsg.StakingTx.TransactionBytes,
-		StakingOutputIdx: pvr.StakingOutputIdx,
+		StakingOutputIdx: paramsValidationResult.StakingOutputIdx,
 		SlashingTx:       types.NewBtcSlashingTxFromBytes(parsedMsg.StakingSlashingTx.TransactionBytes),
 		DelegatorSig:     parsedMsg.StakerStakingSlashingTxSig.BIP340Signature,
 		UnbondingTime:    uint32(parsedMsg.UnbondingTime),
@@ -279,7 +290,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 			CovenantUnbondingSigList: nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
 			DelegatorUnbondingInfo:   nil,
 		},
-		ParamsVersion: paramsVersion, // version of the params against which delegation was validated
+		ParamsVersion: paramsVersion,      // version of the params against which delegation was validated
+		BtcTipHeight:  timeInfo.TipHeight, // height of the BTC light client tip at the time of the delegation creation
 	}
 
 	// add this BTC delegation, and emit corresponding events
@@ -345,19 +357,12 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 		return nil, fmt.Errorf("invalid inclusion proof: %w", err)
 	}
 
-	// 6. Check if parameters used the validate /create the delegation are the same
-	// as the one in the BTC light client
-	_, version, err := ms.GetParamsForBtcHeight(ctx, uint64(timeInfo.StartHeight))
-	if err != nil {
-		return nil, err
-	}
-
-	if btcDel.ParamsVersion != version {
-		return nil, types.ErrParamsVersionMismatch.Wrapf(
-			"params version in BTC delegation: %d, params version at height %d: %d",
-			btcDel.ParamsVersion,
+	// 6. check if the staking tx is included after the BTC tip height at the time of the delegation creation
+	if timeInfo.StartHeight < btcDel.BtcTipHeight {
+		return nil, types.ErrStakingTxIncludedTooEarly.Wrapf(
+			"btc tip height at the time of the delegation creation: %d, staking tx inclusion height: %d",
+			btcDel.BtcTipHeight,
 			timeInfo.StartHeight,
-			version,
 		)
 	}
 
