@@ -60,6 +60,7 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/app/signer"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	owasm "github.com/babylonlabs-io/babylon/wasmbinding"
 	btccheckpointkeeper "github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
@@ -162,7 +163,7 @@ func (ak *AppKeepers) InitKeepers(
 	homePath string,
 	invCheckPeriod uint,
 	skipUpgradeHeights map[int64]bool,
-	privSigner *PrivSigner,
+	privSigner *signer.PrivSigner,
 	appOpts servertypes.AppOptions,
 	wasmConfig wasmtypes.WasmConfig,
 	wasmOpts []wasmkeeper.Option,

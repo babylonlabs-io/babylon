@@ -35,6 +35,7 @@ import (
 	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/testutil/cli"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/testutil/signer"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
@@ -75,7 +76,7 @@ func Test_CmdCreateAddWithoutGentx(t *testing.T) {
 	require.NoError(t, err)
 
 	db := dbm.NewMemDB()
-	signer, err := app.SetupTestPrivSigner()
+	signer, err := signer.SetupTestPrivSigner()
 	require.NoError(t, err)
 	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
 		Logger:             logger,
@@ -117,7 +118,7 @@ func Test_CmdCreateAddWithoutGentx(t *testing.T) {
 // error is expected if adding duplicate
 func Test_CmdAddBlsWithGentx(t *testing.T) {
 	db := dbm.NewMemDB()
-	signer, err := app.SetupTestPrivSigner()
+	signer, err := signer.SetupTestPrivSigner()
 	require.NoError(t, err)
 	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
 		Logger:             log.NewNopLogger(),

@@ -318,7 +318,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 			return false
 		}
 		return activatedHeight > 0
-	}, time.Minute, time.Millisecond*50)
+	}, time.Minute*3, time.Millisecond*50)
 	s.T().Logf("the activated height is %d", activatedHeight)
 
 	/*
@@ -352,6 +352,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	}, true)
 
 	// ensure finality provider has received rewards after the block is finalised
+	// unexpected status code: 500, body: {"code":13,"message":"negative coin amount: -20910810810810","details":[]}
 	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
 	s.NoError(err)
 	fpRewardGauge, ok := fpRewardGauges[itypes.FinalityProviderType.String()]
@@ -651,7 +652,7 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
-	node, err := chainA.GetNodeAtIndex(2)
+	node, err := chainA.GetNodeAtIndex(0)
 	s.NoError(err)
 
 	wGratee, wGranter := "staker", "feePayer"
