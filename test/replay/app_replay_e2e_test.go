@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 
 	"cosmossdk.io/log"
@@ -19,6 +21,7 @@ import (
 	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	dbmc "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cs "github.com/cometbft/cometbft/consensus"
@@ -66,7 +69,9 @@ const (
 )
 
 var (
-	defaultFeeCoin = sdk.NewCoin("ubbn", math.NewInt(defaultFee))
+	defaultFeeCoin                 = sdk.NewCoin("ubbn", math.NewInt(defaultFee))
+	BtcParams                      = &chaincfg.SimNetParams
+	CovenantSKs, _, CovenantQuorum = bstypes.DefaultCovenantCommittee()
 )
 
 func getGenDoc(
@@ -264,14 +269,14 @@ type senderInfo struct {
 	accountNumber  uint64
 }
 
-func (d *BabylonAppDriver) CreateTx(
+func createTx(
 	t *testing.T,
+	txConfig client.TxConfig,
 	senderInfo *senderInfo,
 	gas uint64,
 	fee sdk.Coin,
 	msgs ...sdk.Msg,
 ) []byte {
-	txConfig := d.App.TxConfig()
 	txBuilder := txConfig.NewTxBuilder()
 	txBuilder.SetGasLimit(gas)
 	txBuilder.SetFeeAmount(sdk.NewCoins(fee))
@@ -313,6 +318,16 @@ func (d *BabylonAppDriver) CreateTx(
 	require.NoError(t, err)
 
 	return txBytes
+}
+
+func (d *BabylonAppDriver) CreateTx(
+	t *testing.T,
+	senderInfo *senderInfo,
+	gas uint64,
+	fee sdk.Coin,
+	msgs ...sdk.Msg,
+) []byte {
+	return createTx(t, d.App.TxConfig(), senderInfo, gas, fee, msgs...)
 }
 
 // SendTxWithMessagesSuccess sends tx with msgs to the mempool and asserts that
