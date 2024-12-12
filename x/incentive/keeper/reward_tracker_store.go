@@ -240,6 +240,9 @@ func (k Keeper) subDelegationSat(ctx context.Context, fp, del sdk.AccAddress, am
 	}
 
 	btcDelRwdTracker.SubTotalActiveSat(amt)
+	if btcDelRwdTracker.TotalActiveSat.IsNegative() {
+		return types.ErrBTCDelegationRewardsTrackerNegativeAmount
+	}
 	if err := k.setBTCDelegationRewardsTracker(ctx, fp, del, btcDelRwdTracker); err != nil {
 		return err
 	}

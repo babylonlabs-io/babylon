@@ -16,6 +16,49 @@ import (
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 )
 
+func FuzzCheckBtcDelegationActivated(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+		fp1, fp2, del1 := datagen.GenRandomAddress(), datagen.GenRandomAddress(), datagen.GenRandomAddress()
+
+		amtToActivate := datagen.RandomInt(r, 10) + 5
+		fp1Del1ToUnbond := datagen.RandomInt(r, int(amtToActivate)-1) + 1
+		err := k.BtcDelegationUnbonded(ctx, fp1, del1, fp1Del1ToUnbond)
+		require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNotFound.Error())
+
+		// delegates for both pairs (fp1, del1) (fp2, del1)
+		err = k.BtcDelegationActivated(ctx, fp1, del1, amtToActivate)
+		require.NoError(t, err)
+		err = k.BtcDelegationActivated(ctx, fp2, del1, amtToActivate)
+		require.NoError(t, err)
+
+		// unbonds more than it has, should error
+		err = k.BtcDelegationUnbonded(ctx, fp1, del1, amtToActivate+1)
+		require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNegativeAmount.Error())
+
+		// normally unbonds only part of it
+		err = k.BtcDelegationUnbonded(ctx, fp1, del1, fp1Del1ToUnbond)
+		require.NoError(t, err)
+
+		fp1Del1RwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp1, del1)
+		require.NoError(t, err)
+		require.Equal(t, fp1Del1RwdTracker.TotalActiveSat.Uint64(), amtToActivate-fp1Del1ToUnbond)
+
+		// unbonds all
+		err = k.BtcDelegationUnbonded(ctx, fp2, del1, amtToActivate)
+		require.NoError(t, err)
+
+		fp2Del1RwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp2, del1)
+		require.NoError(t, err)
+		require.True(t, fp2Del1RwdTracker.TotalActiveSat.IsZero())
+	})
+}
+
 func FuzzCheckBTCDelegatorToFP(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
