@@ -10,14 +10,16 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/coins"
 )
 
+const (
+	denom = "xsss"
+)
+
 func TestCalculatePointOnePercent(t *testing.T) {
-	denom := "xsss"
 	result := coins.CalculatePointOnePercentOrMinOne(sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(10000))))
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(10))).String(), result.String())
 }
 
 func TestCalculatePercentageOfCoins(t *testing.T) {
-	denom := "xsss"
 	result := coins.CalculatePercentageOfCoins(sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(100))), 30)
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(30))).String(), result.String())
 
@@ -26,7 +28,6 @@ func TestCalculatePercentageOfCoins(t *testing.T) {
 }
 
 func TestCoinsDiffInPointOnePercentMargin(t *testing.T) {
-	denom := "xsss"
 	c1 := sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(10000)))
 	c2 := sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(9999)))
 	require.True(t, coins.CoinsDiffInPointOnePercentMargin(c1, c2))
