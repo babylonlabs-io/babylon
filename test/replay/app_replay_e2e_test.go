@@ -5,22 +5,26 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	cmtcrypto "github.com/cometbft/cometbft/crypto"
-	"github.com/otiai10/copy"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 
 	"cosmossdk.io/log"
+	"cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/app"
 	babylonApp "github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/app/signer"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	dbmc "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
 	cs "github.com/cometbft/cometbft/consensus"
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	cometlog "github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/mempool"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -30,10 +34,18 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	gogoprotoio "github.com/cosmos/gogoproto/io"
+	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/require"
 )
 
@@ -47,9 +59,20 @@ var validatorConfig = &initialization.NodeConfig{
 	IsValidator:        true,
 }
 
-const chainID = initialization.ChainAID
+const (
+	chainID      = initialization.ChainAID
+	testPartSize = 65536
 
-const testPartSize = 65536
+	defaultGasLimit = 500000
+	defaultFee      = 500000
+	epochLength     = 10
+)
+
+var (
+	defaultFeeCoin                 = sdk.NewCoin("ubbn", math.NewInt(defaultFee))
+	BtcParams                      = &chaincfg.SimNetParams
+	CovenantSKs, _, CovenantQuorum = bstypes.DefaultCovenantCommittee()
+)
 
 func getGenDoc(
 	t *testing.T, nodeDir string) (map[string]json.RawMessage, *genutiltypes.AppGenesis) {
@@ -95,21 +118,21 @@ type FinalizedBlock struct {
 }
 
 type BabylonAppDriver struct {
-	App        *app.BabylonApp
-	PrivSigner *signer.PrivSigner
-	BlockExec  *sm.BlockExecutor
-	BlockStore *store.BlockStore
-	StateStore *sm.Store
-	NodeDir    string
-
-	ValidatorAddress []byte
-
-	FinalizedBlocks []FinalizedBlock
-	LastState       sm.State
+	App                  *app.BabylonApp
+	PrivSigner           *appsigner.PrivSigner
+	DriverAccountPrivKey cryptotypes.PrivKey
+	DriverAccountSeqNr   uint64
+	DriverAccountAccNr   uint64
+	BlockExec            *sm.BlockExecutor
+	BlockStore           *store.BlockStore
+	StateStore           sm.Store
+	NodeDir              string
+	ValidatorAddress     []byte
+	FinalizedBlocks      []FinalizedBlock
+	LastState            sm.State
 }
 
 // Inititializes Babylon driver for block creation
-// TODO: Add option to send txs to app
 func NewBabylonAppDriver(
 	t *testing.T,
 	dir string,
@@ -152,7 +175,7 @@ func NewBabylonAppDriver(
 		panic(err)
 	}
 
-	signer, err := signer.InitPrivSigner(chain.Nodes[0].ConfigDir)
+	signer, err := appsigner.InitPrivSigner(chain.Nodes[0].ConfigDir)
 	require.NoError(t, err)
 	require.NotNil(t, signer)
 	signerValAddress := signer.WrappedPV.GetAddress()
@@ -210,16 +233,25 @@ func NewBabylonAppDriver(
 	require.NotNil(t, state)
 	validatorAddress, _ := state.Validators.GetByIndex(0)
 
+	validatorPrivKey := secp256k1.PrivKey{
+		Key: chain.Nodes[0].PrivateKey,
+	}
+
 	return &BabylonAppDriver{
-		App:              tmpApp,
-		PrivSigner:       signer,
-		BlockExec:        blockExec,
-		BlockStore:       blockStore,
-		StateStore:       &stateStore,
-		NodeDir:          chain.Nodes[0].ConfigDir,
-		ValidatorAddress: validatorAddress,
-		FinalizedBlocks:  []FinalizedBlock{},
-		LastState:        state.Copy(),
+		App:                  tmpApp,
+		PrivSigner:           signer,
+		DriverAccountPrivKey: &validatorPrivKey,
+		// Driver account always start from 1, as we executed tx for creating validator
+		// in genesis block
+		DriverAccountSeqNr: 1,
+		DriverAccountAccNr: 0,
+		BlockExec:          blockExec,
+		BlockStore:         blockStore,
+		StateStore:         stateStore,
+		NodeDir:            chain.Nodes[0].ConfigDir,
+		ValidatorAddress:   validatorAddress,
+		FinalizedBlocks:    []FinalizedBlock{},
+		LastState:          state.Copy(),
 	}
 }
 
@@ -229,6 +261,92 @@ func (d *BabylonAppDriver) GetLastFinalizedBlock() *FinalizedBlock {
 	}
 
 	return &d.FinalizedBlocks[len(d.FinalizedBlocks)-1]
+}
+
+type senderInfo struct {
+	privKey        cryptotypes.PrivKey
+	sequenceNumber uint64
+	accountNumber  uint64
+}
+
+func createTx(
+	t *testing.T,
+	txConfig client.TxConfig,
+	senderInfo *senderInfo,
+	gas uint64,
+	fee sdk.Coin,
+	msgs ...sdk.Msg,
+) []byte {
+	txBuilder := txConfig.NewTxBuilder()
+	txBuilder.SetGasLimit(gas)
+	txBuilder.SetFeeAmount(sdk.NewCoins(fee))
+	txBuilder.SetMsgs(msgs...)
+
+	sigV2 := signing.SignatureV2{
+		PubKey: senderInfo.privKey.PubKey(),
+		Data: &signing.SingleSignatureData{
+			SignMode:  signing.SignMode(txConfig.SignModeHandler().DefaultMode()),
+			Signature: nil,
+		},
+		Sequence: senderInfo.sequenceNumber,
+	}
+
+	err := txBuilder.SetSignatures(sigV2)
+	require.NoError(t, err)
+
+	signerData := xauthsigning.SignerData{
+		ChainID:       chainID,
+		AccountNumber: senderInfo.accountNumber,
+		Sequence:      senderInfo.sequenceNumber,
+	}
+
+	sigV2, err = tx.SignWithPrivKey(
+		context.Background(),
+		signing.SignMode(txConfig.SignModeHandler().DefaultMode()),
+		signerData,
+		txBuilder,
+		senderInfo.privKey,
+		txConfig,
+		senderInfo.sequenceNumber,
+	)
+	require.NoError(t, err)
+
+	err = txBuilder.SetSignatures(sigV2)
+	require.NoError(t, err)
+
+	txBytes, err := txConfig.TxEncoder()(txBuilder.GetTx())
+	require.NoError(t, err)
+
+	return txBytes
+}
+
+func (d *BabylonAppDriver) CreateTx(
+	t *testing.T,
+	senderInfo *senderInfo,
+	gas uint64,
+	fee sdk.Coin,
+	msgs ...sdk.Msg,
+) []byte {
+	return createTx(t, d.App.TxConfig(), senderInfo, gas, fee, msgs...)
+}
+
+// SendTxWithMessagesSuccess sends tx with msgs to the mempool and asserts that
+// execution was successful
+func (d *BabylonAppDriver) SendTxWithMessagesSuccess(
+	t *testing.T,
+	senderInfo *senderInfo,
+	gas uint64,
+	fee sdk.Coin,
+	msgs ...sdk.Msg,
+) {
+	txBytes := d.CreateTx(t, senderInfo, gas, fee, msgs...)
+
+	result, err := d.App.CheckTx(&abci.RequestCheckTx{
+		Tx:   txBytes,
+		Type: abci.CheckTxType_New,
+	})
+	require.NoError(t, err)
+	require.Equal(t, result.Code, uint32(0))
 }
 
 func signVoteExtension(
@@ -254,7 +372,7 @@ func signVoteExtension(
 	return extensionSig
 }
 
-func (d *BabylonAppDriver) GenerateNewBlock(t *testing.T) {
+func (d *BabylonAppDriver) GenerateNewBlock(t *testing.T) *abci.ResponseFinalizeBlock {
 	if len(d.FinalizedBlocks) == 0 {
 		extCommitFirsBlock := &cmttypes.ExtendedCommit{}
 		block1, err := d.BlockExec.CreateProposalBlock(
@@ -282,6 +400,11 @@ func (d *BabylonAppDriver) GenerateNewBlock(t *testing.T) {
 			Block:  block1,
 		})
 		d.LastState = state.Copy()
+
+		lastResponse, err := d.StateStore.LoadFinalizeBlockResponse(1)
+		require.NoError(t, err)
+		require.NotNil(t, lastResponse)
+		return lastResponse
 	} else {
 		lastFinalizedBlock := d.GetLastFinalizedBlock()
 
@@ -358,7 +481,53 @@ func (d *BabylonAppDriver) GenerateNewBlock(t *testing.T) {
 			Block:  block1,
 		})
 		d.LastState = state.Copy()
+
+		lastResponse, err := d.StateStore.LoadFinalizeBlockResponse(state.LastBlockHeight)
+		require.NoError(t, err)
+		require.NotNil(t, lastResponse)
+		return lastResponse
 	}
+}
+
+func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess(
+	t *testing.T,
+	expectedTxNumber int,
+) {
+	response := d.GenerateNewBlock(t)
+
+	require.Equal(t, len(response.TxResults), expectedTxNumber)
+	for _, tx := range response.TxResults {
+		require.Equal(t, tx.Code, uint32(0))
+	}
+}
+
+func (d *BabylonAppDriver) GetDriverAccountAddress() sdk.AccAddress {
+	return sdk.AccAddress(d.DriverAccountPrivKey.PubKey().Address())
+}
+
+func (d *BabylonAppDriver) GetDriverAccountSenderInfo() *senderInfo {
+	return &senderInfo{
+		privKey:        d.DriverAccountPrivKey,
+		sequenceNumber: d.DriverAccountSeqNr,
+		accountNumber:  d.DriverAccountAccNr,
+	}
+}
+
+// SendTxWithMsgsFromDriverAccount sends tx with msgs from driver account and asserts that
+// execution was successful. It assumes that there will only be one tx in the block.
+func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
+	t *testing.T,
+	msgs ...sdk.Msg) {
+	d.SendTxWithMessagesSuccess(
+		t,
+		d.GetDriverAccountSenderInfo(),
+		defaultGasLimit,
+		defaultFeeCoin,
+		msgs...,
+	)
+	d.GenerateNewBlockAssertExecutionSuccess(t, 1)
+
+	d.DriverAccountSeqNr++
 }
 
 type BlockReplayer struct {
@@ -383,7 +552,7 @@ func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
 		panic(err)
 	}
 
-	signer, err := signer.InitPrivSigner(nodeDir)
+	signer, err := appsigner.InitPrivSigner(nodeDir)
 	require.NoError(t, err)
 	require.NotNil(t, signer)
 	signerValAddress := signer.WrappedPV.GetAddress()
@@ -457,20 +626,47 @@ func (r *BlockReplayer) ReplayBlocks(t *testing.T, blocks []FinalizedBlock) {
 }
 
 func TestReplayBlocks(t *testing.T) {
-	driverTempDir, err := os.MkdirTemp("", "test-app-event")
-	require.NoError(t, err)
-
-	replayerTempDir, err := os.MkdirTemp("", "test-app-event")
-	require.NoError(t, err)
-
-	defer os.RemoveAll(driverTempDir)
-	defer os.RemoveAll(replayerTempDir)
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
 	driver := NewBabylonAppDriver(t, driverTempDir, replayerTempDir)
 
 	for i := 0; i < 100; i++ {
 		driver.GenerateNewBlock(t)
 	}
 
+	replayer := NewBlockReplayer(t, replayerTempDir)
+	replayer.ReplayBlocks(t, driver.FinalizedBlocks)
+
+	// after replay we should have the same apphash
+	require.Equal(t, driver.LastState.LastBlockHeight, replayer.LastState.LastBlockHeight)
+	require.Equal(t, driver.LastState.AppHash, replayer.LastState.AppHash)
+}
+
+func TestSendingTxFromDriverAccount(t *testing.T) {
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(t, driverTempDir, replayerTempDir)
+
+	// go over epoch boundary
+	for i := 0; i < 1+epochLength; i++ {
+		driver.GenerateNewBlock(t)
+	}
+
+	_, _, addr1 := testdata.KeyTestPubAddr()
+	toAddr := addr1.String()
+
+	transferMsg := &banktypes.MsgSend{
+		FromAddress: driver.GetDriverAccountAddress().String(),
+		ToAddress:   toAddr,
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin("ubbn", 10000)),
+	}
+
+	driver.SendTxWithMsgsFromDriverAccount(t, transferMsg)
+	driver.SendTxWithMsgsFromDriverAccount(t, transferMsg)
+	driver.SendTxWithMsgsFromDriverAccount(t, transferMsg)
+	driver.SendTxWithMsgsFromDriverAccount(t, transferMsg)
+
+	// check that replayer has the same state as driver, as we replayed all blocks
 	replayer := NewBlockReplayer(t, replayerTempDir)
 	replayer.ReplayBlocks(t, driver.FinalizedBlocks)
 

@@ -249,6 +249,7 @@ func (n *internalNode) export() *Node {
 		PublicAddress: addr.String(),
 		WalletName:    n.keyInfo.Name,
 		PublicKey:     pub.Bytes(),
+		PrivateKey:    n.privateKey.Bytes(),
 		PeerId:        n.peerId,
 		IsValidator:   n.isValidator,
 	}
