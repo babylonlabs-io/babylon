@@ -391,8 +391,8 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 			NewState:      types.BTCDelegationStatus_ACTIVE,
 		},
 	)
-	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
-	ms.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
+
+	ms.addPowerDistUpdateEvent(ctx, timeInfo.TipHeight, activeEvent)
 
 	// record event that the BTC delegation will become unbonded at EndHeight-w
 	unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
