@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -9,6 +10,7 @@ import (
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ibctransfer "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 )
 
 // BroadcastBTCStakingConsumerEvents retrieves all BTC staking consumer events from the event store,
@@ -150,6 +152,44 @@ func (k Keeper) HandleConsumerSlashing(
 	eventSlashing := finalitytypes.NewEventSlashedFinalityProvider(evidence)
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {
 		return fmt.Errorf("failed to emit EventSlashedFinalityProvider event: %w", err)
+	}
+
+	return nil
+}
+
+type RewardsDistribution struct {
+	FpPubkeyHex string `json:"fp_pubkey_hex"`
+	Reward      string `json:"reward"`
+}
+
+func (k Keeper) HandleConsumerDistribution(
+	ctx sdk.Context,
+	portID string,
+	channelID string,
+	consumerDistribution *ibctransfer.FungibleTokenPacketData,
+) error {
+	// clientID, _, err := k.channelKeeper.GetChannelClientState(ctx, portID, channelID)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to get client state: %w", err)
+	// }
+
+	// Deserialize the memo
+	var rewardsDistribution []RewardsDistribution
+	if err := json.Unmarshal([]byte(consumerDistribution.Memo), &rewardsDistribution); err != nil {
+		return fmt.Errorf("failed to unmarshal memo: %w", err)
+	}
+
+	// Process the distribution list
+	for _, reward := range rewardsDistribution {
+		fpPubkey, err := bbn.NewBIP340PubKeyFromHex(reward.FpPubkeyHex)
+		if err != nil {
+			return fmt.Errorf("failed to create BIP340 public key: %w", err)
+		}
+		fmt.Println("FP pubkey:", fpPubkey, ", Reward:", reward.Reward)
+
+		// Apply the finality provider commission
+
+		// Distribute the rewards to the delegators
 	}
 
 	return nil
