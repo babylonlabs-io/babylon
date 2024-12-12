@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -66,6 +65,7 @@ const (
 
 	defaultGasLimit = 500000
 	defaultFee      = 500000
+	epochLength     = 10
 )
 
 var (
@@ -518,7 +518,6 @@ func (d *BabylonAppDriver) GetDriverAccountSenderInfo() *senderInfo {
 func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	t *testing.T,
 	msgs ...sdk.Msg) {
-
 	d.SendTxWithMessagesSuccess(
 		t,
 		d.GetDriverAccountSenderInfo(),
@@ -627,14 +626,8 @@ func (r *BlockReplayer) ReplayBlocks(t *testing.T, blocks []FinalizedBlock) {
 }
 
 func TestReplayBlocks(t *testing.T) {
-	driverTempDir, err := os.MkdirTemp("", "test-app-event")
-	require.NoError(t, err)
-
-	replayerTempDir, err := os.MkdirTemp("", "test-app-event")
-	require.NoError(t, err)
-
-	defer os.RemoveAll(driverTempDir)
-	defer os.RemoveAll(replayerTempDir)
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
 	driver := NewBabylonAppDriver(t, driverTempDir, replayerTempDir)
 
 	for i := 0; i < 100; i++ {
@@ -650,17 +643,12 @@ func TestReplayBlocks(t *testing.T) {
 }
 
 func TestSendingTxFromDriverAccount(t *testing.T) {
-	driverTempDir, err := os.MkdirTemp("", "test-app-event")
-	require.NoError(t, err)
-
-	replayerTempDir, err := os.MkdirTemp("", "test-app-event")
-	require.NoError(t, err)
-
-	defer os.RemoveAll(driverTempDir)
-	defer os.RemoveAll(replayerTempDir)
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
 	driver := NewBabylonAppDriver(t, driverTempDir, replayerTempDir)
 
-	for i := 0; i < 11; i++ {
+	// go over epoch boundary
+	for i := 0; i < 1+epochLength; i++ {
 		driver.GenerateNewBlock(t)
 	}
 
