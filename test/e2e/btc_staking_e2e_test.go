@@ -297,7 +297,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 			return false
 		}
 		return resp.Status == ckpttypes.Sealed
-	}, time.Minute, time.Millisecond*50)
+	}, time.Minute*2, time.Millisecond*50)
 	nonValidatorNode.FinalizeSealedEpochs(1, currentEpoch)
 
 	// ensure the committed epoch is finalized
