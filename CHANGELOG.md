@@ -42,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#338](https://github.com/babylonlabs-io/babylon/pull/338) Add print BIP-340 in
 `debug pubkey-raw` subcommand
 - [#316](https://github.com/babylonlabs-io/babylon/pull/316) Add testnet upgrade data
+- [#334](https://github.com/babylonlabs-io/babylon/pull/334) Default IAVL cache size
 
 - [#326](https://github.com/babylonlabs-io/babylon/pull/326) docs: btcstaking:
 Update btcstaking module docs to include EOI
