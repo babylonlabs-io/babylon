@@ -8,6 +8,7 @@ import "babylon/checkpointing/v1/checkpoint.proto";
 import "babylon/epoching/v1/epoching.proto";
 import "babylon/zoneconcierge/v1/zoneconcierge.proto";
 import "babylon/finality/v1/finality.proto";
+import "ibc/applications/transfer/v2/packet.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/zoneconcierge/types";
 
@@ -19,6 +20,7 @@ message ZoneconciergePacketData {
     BTCTimestamp btc_timestamp = 1;
     babylon.btcstaking.v1.BTCStakingIBCPacket btc_staking = 2;
     ConsumerSlashingIBCPacket consumer_slashing = 3;
+    ibc.applications.transfer.v2.FungibleTokenPacketData consumer_fp_distribution = 4;
   }
 }
 

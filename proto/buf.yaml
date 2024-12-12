@@ -5,7 +5,7 @@ deps:
   - buf.build/cosmos/cosmos-proto:1935555c206d4afb9e94615dfd0fad31
   - buf.build/cosmos/gogo-proto:a14993478f40695898ed8a86931094b6656e8a5d
   - buf.build/googleapis/googleapis:8d7204855ec14631a499bd7393ce1970
-  - buf.build/cosmos/ibc
+  - buf.build/cosmos/ibc:6b221c7d310545198c1dafe70287d254 # Corresponds to ibc-go v8
 breaking:
   use:
     - FILE
