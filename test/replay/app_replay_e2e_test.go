@@ -9,9 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
+	"math/rand"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -19,8 +17,12 @@ import (
 	babylonApp "github.com/babylonlabs-io/babylon/app"
 	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
 	dbmc "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cs "github.com/cometbft/cometbft/consensus"
@@ -33,12 +35,14 @@ import (
 	"github.com/cometbft/cometbft/store"
 	cmttypes "github.com/cometbft/cometbft/types"
 	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
@@ -261,6 +265,11 @@ func (d *BabylonAppDriver) GetLastFinalizedBlock() *FinalizedBlock {
 	}
 
 	return &d.FinalizedBlocks[len(d.FinalizedBlocks)-1]
+}
+
+func (d *BabylonAppDriver) GetContextForLastFinalizedBlock() sdk.Context {
+	lastFinalizedBlock := d.GetLastFinalizedBlock()
+	return d.App.NewUncachedContext(false, *lastFinalizedBlock.Block.Header.ToProto())
 }
 
 type senderInfo struct {
@@ -513,6 +522,11 @@ func (d *BabylonAppDriver) GetDriverAccountSenderInfo() *senderInfo {
 	}
 }
 
+func (d *BabylonAppDriver) GetBTCLCTip() (*wire.BlockHeader, uint32) {
+	tipInfo := d.App.BTCLightClientKeeper.GetTipInfo(d.GetContextForLastFinalizedBlock())
+	return tipInfo.Header.ToBlockHeader(), tipInfo.Height
+}
+
 // SendTxWithMsgsFromDriverAccount sends tx with msgs from driver account and asserts that
 // execution was successful. It assumes that there will only be one tx in the block.
 func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
@@ -673,4 +687,49 @@ func TestSendingTxFromDriverAccount(t *testing.T) {
 	// after replay we should have the same apphash
 	require.Equal(t, driver.LastState.LastBlockHeight, replayer.LastState.LastBlockHeight)
 	require.Equal(t, driver.LastState.AppHash, replayer.LastState.AppHash)
+}
+
+func blocksToHeaderBytes(blocks []*wire.MsgBlock) []bbn.BTCHeaderBytes {
+	headerBytes := []bbn.BTCHeaderBytes{}
+	for _, block := range blocks {
+		headerBytes = append(headerBytes, bbn.NewBTCHeaderBytesFromBlockHeader(&block.Header))
+	}
+	return headerBytes
+}
+
+func TestFoo(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(t, driverTempDir, replayerTempDir)
+
+	// go over epoch boundary
+	for i := 0; i < 1+epochLength; i++ {
+		driver.GenerateNewBlock(t)
+	}
+
+	tip, tipHeight := driver.GetBTCLCTip()
+	numbBlocks := uint64(10)
+	blocks := datagen.GenNEmptyBlocks(r, numbBlocks, tip)
+	headers := blocksToHeaderBytes(blocks)
+
+	driver.SendTxWithMsgsFromDriverAccount(t, &btclighttypes.MsgInsertHeaders{
+		Signer:  driver.GetDriverAccountAddress().String(),
+		Headers: headers,
+	})
+
+	_, newTipHeight := driver.GetBTCLCTip()
+	require.Equal(t, newTipHeight, tipHeight+uint32(numbBlocks))
+
+	// lastFinalizedBlock := driver.GetLastFinalizedBlock()
+	params := driver.App.BTCStakingKeeper.GetParams(
+		driver.GetContextForLastFinalizedBlock(),
+	)
+	fmt.Printf("params: %+v\n", params)
+
+	prv, _, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	msg, err := datagen.GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(r, prv, driver.GetDriverAccountAddress())
+	require.NoError(t, err)
+	driver.SendTxWithMsgsFromDriverAccount(t, msg)
 }

@@ -56,7 +56,11 @@ func GenRandomDescription(r *rand.Rand) *stakingtypes.Description {
 	return &stakingtypes.Description{Moniker: GenRandomHexStr(r, 10)}
 }
 
-func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKey, fpAddr sdk.AccAddress) (*bstypes.FinalityProvider, error) {
+func GenRandomFinalityProviderWithBTCBabylonSKs(
+	r *rand.Rand,
+	btcSK *btcec.PrivateKey,
+	fpAddr sdk.AccAddress,
+) (*bstypes.FinalityProvider, error) {
 	// commission
 	commission := GenRandomCommission(r)
 	// description
@@ -75,6 +79,24 @@ func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.Priva
 		BtcPk:       bip340PK,
 		Addr:        fpAddr.String(),
 		Pop:         pop,
+	}, nil
+}
+
+func GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(
+	r *rand.Rand,
+	btcSK *btcec.PrivateKey,
+	fpAddr sdk.AccAddress,
+) (*bstypes.MsgCreateFinalityProvider, error) {
+	fp, err := GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, fpAddr)
+	if err != nil {
+		return nil, err
+	}
+	return &bstypes.MsgCreateFinalityProvider{
+		Addr:        fp.Addr,
+		Description: fp.Description,
+		Commission:  fp.Commission,
+		BtcPk:       fp.BtcPk,
+		Pop:         fp.Pop,
 	}, nil
 }
 
@@ -219,6 +241,33 @@ func GenRandomBTCDelegation(
 	del.BtcUndelegation.CovenantUnbondingSigList = covUnbondingSigs
 
 	return del, nil
+}
+
+func GenRandomMsgCreateBtcDelegationFromDelegation(
+	r *rand.Rand,
+	t *testing.T,
+	stakerAddr sdk.AccAddress,
+	del *bstypes.BTCDelegation,
+	inclusionProof *bstypes.InclusionProof,
+	unbondingFee uint64,
+) (*bstypes.MsgCreateBTCDelegation, error) {
+	return &bstypes.MsgCreateBTCDelegation{
+		StakerAddr:                    stakerAddr.String(),
+		Pop:                           del.Pop,
+		BtcPk:                         del.BtcPk,
+		FpBtcPkList:                   del.FpBtcPkList,
+		StakingTime:                   del.StakingTime,
+		StakingValue:                  int64(del.TotalSat),
+		StakingTx:                     del.StakingTx,
+		StakingTxInclusionProof:       inclusionProof,
+		SlashingTx:                    del.SlashingTx,
+		DelegatorSlashingSig:          del.DelegatorSig,
+		UnbondingValue:                int64(del.TotalSat - unbondingFee),
+		UnbondingTime:                 del.UnbondingTime,
+		UnbondingTx:                   del.BtcUndelegation.UnbondingTx,
+		UnbondingSlashingTx:           del.BtcUndelegation.SlashingTx,
+		DelegatorUnbondingSlashingSig: del.BtcUndelegation.DelegatorSlashingSig,
+	}, nil
 }
 
 type TestStakingSlashingInfo struct {

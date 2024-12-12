@@ -3,6 +3,7 @@ package datagen
 import (
 	"math/big"
 	"math/rand"
+	"time"
 
 	"github.com/babylonlabs-io/babylon/btctxformatter"
 	"github.com/btcsuite/btcd/blockchain"
@@ -54,6 +55,67 @@ func GenRandomBtcdBlock(r *rand.Rand, numBabylonTxs int, prevHash *chainhash.Has
 		Transactions: msgTxs,
 	}
 	return block, rawCkpt
+}
+
+func GenRandomBtcdBlockWithTransactions(
+	r *rand.Rand,
+	txs []*wire.MsgTx,
+	prevHeader *wire.BlockHeader,
+) *wire.MsgBlock {
+	coinbaseTx := createCoinbaseTx(r.Int31(), &chaincfg.SimNetParams)
+	msgTxs := []*wire.MsgTx{coinbaseTx}
+	msgTxs = append(msgTxs, txs...)
+
+	// calculate correct Merkle root
+	merkleRoot := calcMerkleRoot(msgTxs)
+	// don't apply any difficulty
+	difficulty, _ := new(big.Int).SetString("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16)
+	workBits := blockchain.BigToCompact(difficulty)
+
+	header := GenRandomBtcdHeader(r)
+	header.MerkleRoot = merkleRoot
+	header.Bits = workBits
+	if prevHeader != nil {
+		prevHash := prevHeader.BlockHash()
+		header.PrevBlock = prevHash
+		header.Timestamp = prevHeader.Timestamp.Add(time.Minute * 10)
+	}
+	// find a nonce that satisfies difficulty
+	SolveBlock(header)
+
+	block := &wire.MsgBlock{
+		Header:       *header,
+		Transactions: msgTxs,
+	}
+	return block
+}
+
+func GenChainFromListsOfTransactions(
+	r *rand.Rand,
+	txs [][]*wire.MsgTx,
+	initHeader *wire.BlockHeader) []*wire.MsgBlock {
+	if initHeader == nil {
+		panic("initHeader is required")
+	}
+
+	if len(txs) == 0 {
+		panic("txs is required")
+	}
+
+	var parentHeader *wire.BlockHeader = initHeader
+	var createdBlocks []*wire.MsgBlock = []*wire.MsgBlock{}
+	for _, txs := range txs {
+		msgBlock := GenRandomBtcdBlockWithTransactions(r, txs, parentHeader)
+		parentHeader = &msgBlock.Header
+		createdBlocks = append(createdBlocks, msgBlock)
+	}
+
+	return createdBlocks
+}
+
+func GenNEmptyBlocks(r *rand.Rand, n uint64, prevHeader *wire.BlockHeader) []*wire.MsgBlock {
+	var txs [][]*wire.MsgTx = make([][]*wire.MsgTx, n)
+	return GenChainFromListsOfTransactions(r, txs, prevHeader)
 }
 
 // GenRandomBtcdBlockchainWithBabylonTx generates a blockchain of `n` blocks, in which each block has some probability of including some Babylon txs
