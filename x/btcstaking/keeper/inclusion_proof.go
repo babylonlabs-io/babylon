@@ -13,6 +13,7 @@ import (
 type DelegationTimeRangeInfo struct {
 	StartHeight uint32
 	EndHeight   uint32
+	TipHeight   uint32
 }
 
 // VerifyInclusionProofAndGetHeight verifies the inclusion proof of the given staking tx
@@ -69,5 +70,6 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 	return &DelegationTimeRangeInfo{
 		StartHeight: startHeight,
 		EndHeight:   endHeight,
+		TipHeight:   btcTip.Height,
 	}, nil
 }

@@ -20,6 +20,7 @@ func TestBTCTimestampingTestSuite(t *testing.T) {
 }
 
 // TestBTCStakingTestSuite tests BTC staking protocol end-to-end
+
 func TestBTCStakingTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingTestSuite))
 }
