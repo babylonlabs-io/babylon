@@ -26,7 +26,11 @@ func (k Keeper) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context,
 	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
 
-// BtcDelegationActivated adds new amount of active satoshi to the delegation and finality provider
+// BtcDelegationActivated adds new amount of active satoshi to the delegation
+// and finality provider. Since it modifies the amount staked, it triggers
+// the creation of a new period, which initializes the FP, creates
+// historical reward tracker, withdraw the BTC delegation rewards to gauge
+// and initializes a new delegation with the just ended period.
 func (k Keeper) BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sat uint64) error {
 	amtSat := sdkmath.NewIntFromUint64(sat)
 	return k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error {
@@ -39,6 +43,7 @@ func (k Keeper) BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddre
 // Since it modifies the active amount it triggers the increment of fp period,
 // creationg of new historical reward, withdraw of rewards to gauge
 // and initialization of a new delegation.
+// It errors out if the unbond amount is higher than the total amount staked.
 func (k Keeper) BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sat uint64) error {
 	amtSat := sdkmath.NewIntFromUint64(sat)
 	return k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error {
