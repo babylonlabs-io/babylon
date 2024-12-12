@@ -179,22 +179,21 @@ func (ms msgServer) getTimeInfoAndParams(
 		}
 
 		return timeInfo, paramsByHeight, version, nil
-	} else {
-		// staking tx is not included on BTC, retrieve params for the current tip height
-		// and return info about the tip
-		btcTip := ms.btclcKeeper.GetTipInfo(ctx)
-
-		paramsByHeight, version, err := ms.GetParamsForBtcHeight(ctx, uint64(btcTip.Height))
-		if err != nil {
-			return nil, nil, 0, err
-		}
-
-		return &DelegationTimeRangeInfo{
-			StartHeight: 0,
-			EndHeight:   0,
-			TipHeight:   btcTip.Height,
-		}, paramsByHeight, version, nil
 	}
+	// staking tx is not included on BTC, retrieve params for the current tip height
+	// and return info about the tip
+	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
+
+	paramsByHeight, version, err := ms.GetParamsForBtcHeight(ctx, uint64(btcTip.Height))
+	if err != nil {
+		return nil, nil, 0, err
+	}
+
+	return &DelegationTimeRangeInfo{
+		StartHeight: 0,
+		EndHeight:   0,
+		TipHeight:   btcTip.Height,
+	}, paramsByHeight, version, nil
 }
 
 // CreateBTCDelegation creates a BTC delegation
