@@ -75,7 +75,7 @@ func (s *BTCStakingPreApprovalTestSuite) TearDownSuite() {
 func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	s.cacheFP = CreateNodeFP(
@@ -147,7 +147,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegatio
 func (s *BTCStakingPreApprovalTestSuite) Test2SubmitCovenantSignature() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	// get last BTC delegation
@@ -253,7 +253,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test2SubmitCovenantSignature() {
 func (s *BTCStakingPreApprovalTestSuite) Test3SendStakingTransctionInclusionProof() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	verifiedDelegations := nonValidatorNode.QueryVerifiedDelegations()
@@ -285,7 +285,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test3SendStakingTransctionInclusionProo
 func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFinalitySignature() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	/*
@@ -402,7 +402,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 
 func (s *BTCStakingPreApprovalTestSuite) Test4WithdrawReward() {
 	chainA := s.configurer.GetChainConfig(0)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	// finality provider balance before withdraw
@@ -466,7 +466,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4WithdrawReward() {
 func (s *BTCStakingPreApprovalTestSuite) Test5SubmitStakerUnbonding() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()

@@ -652,7 +652,7 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
-	node, err := chainA.GetNodeAtIndex(0)
+	node, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	wGratee, wGranter := "staker", "feePayer"
