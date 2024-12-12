@@ -222,6 +222,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	s.NoError(err)
 
 	for i := 0; i < int(s.covenantQuorum); i++ {
+		// after adding the covenant signatures it panics with "BTC delegation rewards tracker has a negative amount of TotalActiveSat"
 		nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
 			// add covenant sigs
 			nonValidatorNode.AddCovenantSigs(
@@ -237,8 +238,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	}
 
 	// wait for a block so that above txs take effect
-	nonValidatorNode.WaitForNextBlock()
-	nonValidatorNode.WaitForNextBlock()
+	nonValidatorNode.WaitForNextBlocks(2)
 
 	// ensure the BTC delegation has covenant sigs now
 	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(s.cacheFP.BtcPk.MarshalHex())

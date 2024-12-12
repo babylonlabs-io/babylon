@@ -270,14 +270,19 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// add all BTC delegations that are not unbonded to the new finality provider
 		for j := range dc.FinalityProviders[i].BtcDels {
 			btcDel := *dc.FinalityProviders[i].BtcDels[j]
-			if _, ok := unbondedBTCDels[btcDel.StakingTxHash]; !ok {
-				fp.AddBTCDelDistInfo(&btcDel)
 
+			_, isUnbondedBtcDelegation := unbondedBTCDels[btcDel.StakingTxHash]
+			if isUnbondedBtcDelegation {
+				// btc delegation being unbonded
 				err := k.IncentiveKeeper.BtcDelegationUnbonded(ctx, fp.GetAddress(), sdk.MustAccAddressFromBech32(btcDel.StakerAddr), btcDel.TotalSat)
 				if err != nil {
 					panic(err)
 				}
+				continue
 			}
+
+			// if it is not unbonded add to the del dist info
+			fp.AddBTCDelDistInfo(&btcDel)
 		}
 
 		// process all new BTC delegations under this finality provider
