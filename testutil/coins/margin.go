@@ -9,7 +9,13 @@ import (
 )
 
 func RequireCoinsDiffInPointOnePercentMargin(t *testing.T, c1, c2 sdk.Coins) {
-	require.True(t, CoinsDiffInPointOnePercentMargin(c1, c2))
+	inMargin := CoinsDiffInPointOnePercentMargin(c1, c2)
+	if !inMargin {
+		t.Log("Coins are not in 0.1% margin")
+		t.Logf("c1: %s", c1.String())
+		t.Logf("c2: %s", c2.String())
+	}
+	require.True(t, inMargin)
 }
 
 func CoinsDiffInPointOnePercentMargin(c1, c2 sdk.Coins) bool {

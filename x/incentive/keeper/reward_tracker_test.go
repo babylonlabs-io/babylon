@@ -14,6 +14,100 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func FuzzCheckFpSlashed(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+		fp1, fp2, del1, del2 := datagen.GenRandomAddress(), datagen.GenRandomAddress(), datagen.GenRandomAddress(), datagen.GenRandomAddress()
+
+		// should not error even without any data in the trackers
+		// because there is no delegation pair (fp, del1) to iterate
+		err := k.FpSlashed(ctx, fp1)
+		require.NoError(t, err)
+
+		// for fp1 30% for del1 and 70% for del 2
+		del1Fp1Percentage := uint64(30)
+		del2Fp1Percentage := uint64(70)
+		err = k.BtcDelegationActivated(ctx, fp1, del1, del1Fp1Percentage)
+		require.NoError(t, err)
+		err = k.BtcDelegationActivated(ctx, fp1, del2, del2Fp1Percentage)
+		require.NoError(t, err)
+
+		// for fp2 50/50% for each del
+		eachDelFp2Percentage := uint64(50)
+		err = k.BtcDelegationActivated(ctx, fp2, del1, eachDelFp2Percentage)
+		require.NoError(t, err)
+		err = k.BtcDelegationActivated(ctx, fp2, del2, eachDelFp2Percentage)
+		require.NoError(t, err)
+
+		rwdFp1 := datagen.GenRandomCoins(r)
+		err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp1, rwdFp1)
+		require.NoError(t, err)
+
+		rwdFp2 := datagen.GenRandomCoins(r)
+		err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp2, rwdFp2)
+		require.NoError(t, err)
+
+		// slashes the fp1
+		err = k.FpSlashed(ctx, fp1)
+		require.NoError(t, err)
+
+		del1Fp1Rwds := coins.CalculatePercentageOfCoins(rwdFp1, del1Fp1Percentage)
+		del1RwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del1)
+		coins.RequireCoinsDiffInPointOnePercentMargin(t, del1Fp1Rwds, del1RwdGauge.Coins)
+
+		del2Fp1Rwds := coins.CalculatePercentageOfCoins(rwdFp1, del2Fp1Percentage)
+		del2RwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del2)
+		coins.RequireCoinsDiffInPointOnePercentMargin(t, del2Fp1Rwds, del2RwdGauge.Coins)
+
+		// verifies that everything was deleted
+		_, err = k.GetBTCDelegationRewardsTracker(ctx, fp1, del1)
+		require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNotFound.Error())
+		_, err = k.GetBTCDelegationRewardsTracker(ctx, fp1, del2)
+		require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNotFound.Error())
+		_, err = k.GetFinalityProviderCurrentRewards(ctx, fp1)
+		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
+		_, err = k.GetFinalityProviderHistoricalRewards(ctx, fp1, 1)
+		require.EqualError(t, err, types.ErrFPHistoricalRewardsNotFound.Error())
+
+		count := 0
+		err = k.iterBtcDelegationsByDelegator(ctx, del1, func(del, fp sdk.AccAddress) error {
+			count++
+			return nil
+		})
+		require.NoError(t, err)
+		require.Equal(t, count, 1)
+
+		count = 0
+		err = k.iterBtcDelegationsByDelegator(ctx, del2, func(del, fp sdk.AccAddress) error {
+			count++
+			return nil
+		})
+		require.NoError(t, err)
+		require.Equal(t, count, 1)
+
+		// checks that nothing affected the rewards related to the other finality provider
+		// that wasn't slashed.
+		err = k.sendAllBtcRewardsToGauge(ctx, del1)
+		require.NoError(t, err)
+
+		fp2RwdForEachDel := coins.CalculatePercentageOfCoins(rwdFp2, eachDelFp2Percentage)
+
+		lastDel1RwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del1)
+		coins.RequireCoinsDiffInPointOnePercentMargin(t, del1Fp1Rwds.Add(fp2RwdForEachDel...), lastDel1RwdGauge.Coins)
+
+		err = k.sendAllBtcRewardsToGauge(ctx, del2)
+		require.NoError(t, err)
+
+		lastDel2RwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del2)
+		coins.RequireCoinsDiffInPointOnePercentMargin(t, del2Fp1Rwds.Add(fp2RwdForEachDel...), lastDel2RwdGauge.Coins)
+	})
+}
+
 func FuzzCheckSendAllBtcRewardsToGauge(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
@@ -39,9 +133,9 @@ func FuzzCheckSendAllBtcRewardsToGauge(f *testing.F) {
 
 		// for fp2 50/50% for each del
 		eachDelFp2Percentage := uint64(50)
-		err = k.BtcDelegationActivated(ctx, fp2, del1, 50)
+		err = k.BtcDelegationActivated(ctx, fp2, del1, eachDelFp2Percentage)
 		require.NoError(t, err)
-		err = k.BtcDelegationActivated(ctx, fp2, del2, 50)
+		err = k.BtcDelegationActivated(ctx, fp2, del2, eachDelFp2Percentage)
 		require.NoError(t, err)
 
 		rwdFp1 := datagen.GenRandomCoins(r)
