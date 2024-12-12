@@ -56,7 +56,7 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 			stakingValue := int64(2 * 10e8)
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			h.NoError(err)
-			stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
+			stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 				r,
 				delSK,
 				fp.BtcPk.MustToBTCPK(),
@@ -67,15 +67,17 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 				0,
 				true,
 				false,
+				10,
+				10,
 			)
 			h.NoError(err)
 			// retrieve BTC delegation in DB
 			btcDelMap[stakingTxHash] = append(btcDelMap[stakingTxHash], actualDel)
 			// generate and insert new covenant signatures
-			h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+			h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
 			// activate BTC delegation
 			// after that, all BTC delegations will have voting power
-			h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
+			h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
 		}
 	}
 

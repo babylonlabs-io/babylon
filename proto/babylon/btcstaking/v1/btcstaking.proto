@@ -113,6 +113,9 @@ message BTCDelegation {
     BTCUndelegation btc_undelegation = 15;
     // version of the params used to validate the delegation
     uint32 params_version = 16;
+    // btc_tip_height is the height of the BTC light client tip at the time of
+    // the delegation creation
+    uint32 btc_tip_height = 17;
 }
 
 // DelegatorUnbondingInfo contains the information about transaction which spent

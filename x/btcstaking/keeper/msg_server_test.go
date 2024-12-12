@@ -205,19 +205,42 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegation(
-			r,
-			delSK,
-			fpPK,
-			changeAddress.EncodeAddress(),
-			stakingValue,
-			1000,
-			0,
-			0,
-			usePreApproval,
-			false,
-		)
-		h.NoError(err)
+
+		var stakingTxHash string
+		var msgCreateBTCDel *types.MsgCreateBTCDelegation
+		if usePreApproval {
+			stakingTxHash, msgCreateBTCDel, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+				r,
+				delSK,
+				fpPK,
+				changeAddress.EncodeAddress(),
+				stakingValue,
+				1000,
+				0,
+				0,
+				usePreApproval,
+				false,
+				10,
+				10,
+			)
+			h.NoError(err)
+		} else {
+			stakingTxHash, msgCreateBTCDel, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+				r,
+				delSK,
+				fpPK,
+				changeAddress.EncodeAddress(),
+				stakingValue,
+				1000,
+				0,
+				0,
+				usePreApproval,
+				false,
+				10,
+				30,
+			)
+			h.NoError(err)
+		}
 
 		// ensure consistency between the msg and the BTC delegation in DB
 		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
@@ -305,6 +328,7 @@ func FuzzCreateBTCDelegationWithParamsFromBtcHeight(f *testing.F) {
 			false,
 			false,
 			btcBlockHeight,
+			30,
 		)
 		h.NoError(err)
 		require.NotNil(t, btcDel.ParamsVersion, expectedParamsVersion)
@@ -334,7 +358,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	stakingValue := int64(2 * 10e8)
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	stakingTxHash, _, _, _, _, _, err := h.CreateDelegation(
+	stakingTxHash, _, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
 		fpPK,
@@ -345,6 +369,8 @@ func TestProperVersionInDelegation(t *testing.T) {
 		0,
 		false,
 		false,
+		10,
+		30,
 	)
 	h.NoError(err)
 
@@ -366,7 +392,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
 	require.NoError(t, err)
 	// create new delegation
-	stakingTxHash1, _, _, _, _, _, err := h.CreateDelegation(
+	stakingTxHash1, _, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
 		fpPK,
@@ -377,6 +403,8 @@ func TestProperVersionInDelegation(t *testing.T) {
 		uint16(customMinUnbondingTime),
 		false,
 		false,
+		10,
+		30,
 	)
 	h.NoError(err)
 	actualDel1, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash1)
@@ -387,7 +415,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	require.Equal(t, uint32(2), actualDel1.ParamsVersion)
 }
 
-func TestRejectActivationOfTheDelegationCreatedWithOldParams(t *testing.T) {
+func TestRejectActivationThatShouldNotUsePreApprovalFlow(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -432,6 +460,8 @@ func TestRejectActivationOfTheDelegationCreatedWithOldParams(t *testing.T) {
 		false,
 		// staking tx will be included in BTC block height 1, which is before the activation of the new params
 		1,
+		// current tip is 10
+		10,
 	)
 	h.NoError(err)
 	require.NotNil(t, headerInfo)
@@ -444,6 +474,7 @@ func TestRejectActivationOfTheDelegationCreatedWithOldParams(t *testing.T) {
 
 	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
 	for _, msg := range msgs {
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 10})
 		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
 		h.NoError(err)
 	}
@@ -453,7 +484,7 @@ func TestRejectActivationOfTheDelegationCreatedWithOldParams(t *testing.T) {
 	h.NoError(err)
 	require.NotNil(t, actualDel)
 
-	tipHeight := h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height
+	tipHeight := uint32(1)
 	covenantQuorum := h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
 
 	status := actualDel.GetStatus(tipHeight, covenantQuorum)
@@ -466,11 +497,11 @@ func TestRejectActivationOfTheDelegationCreatedWithOldParams(t *testing.T) {
 
 	// mock BTC header that includes the staking tx
 	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(headerInfo.Header.Hash())).Return(headerInfo, nil).AnyTimes()
-
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 30})
 	// Call the AddBTCDelegationInclusionProof handler
 	_, err = h.MsgServer.AddBTCDelegationInclusionProof(h.Ctx, msg)
 	h.Error(err)
-	require.ErrorAs(t, err, &types.ErrBTCDelegationNotFound)
+	require.ErrorAs(t, err, &types.ErrStakingTxIncludedTooEarly)
 }
 
 func FuzzAddCovenantSigs(f *testing.F) {
@@ -501,19 +532,42 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegation(
-			r,
-			delSK,
-			fpPK,
-			changeAddress.EncodeAddress(),
-			stakingValue,
-			1000,
-			0,
-			0,
-			usePreApproval,
-			false,
-		)
-		h.NoError(err)
+
+		var stakingTxHash string
+		var msgCreateBTCDel *types.MsgCreateBTCDelegation
+		if usePreApproval {
+			stakingTxHash, msgCreateBTCDel, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+				r,
+				delSK,
+				fpPK,
+				changeAddress.EncodeAddress(),
+				stakingValue,
+				1000,
+				0,
+				0,
+				usePreApproval,
+				false,
+				10,
+				30,
+			)
+			h.NoError(err)
+		} else {
+			stakingTxHash, msgCreateBTCDel, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+				r,
+				delSK,
+				fpPK,
+				changeAddress.EncodeAddress(),
+				stakingValue,
+				1000,
+				0,
+				0,
+				usePreApproval,
+				false,
+				10,
+				30,
+			)
+			h.NoError(err)
+		}
 
 		// ensure consistency between the msg and the BTC delegation in DB
 		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
@@ -522,7 +576,7 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		require.False(h.T(), actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
-
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 		// ensure the system does not panick due to a bogus covenant sig request
 		bogusMsg := *msgs[0]
 		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
@@ -543,7 +597,7 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		require.True(h.T(), actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 		require.True(h.T(), actualDel.BtcUndelegation.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 
-		tipHeight := h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height
+		tipHeight := uint32(30)
 		covenantQuorum := h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
 		status := actualDel.GetStatus(tipHeight, covenantQuorum)
 		votingPower := actualDel.VotingPower(tipHeight, covenantQuorum)
@@ -583,7 +637,7 @@ func FuzzAddBTCDelegationInclusionProof(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			fpPK,
@@ -594,17 +648,20 @@ func FuzzAddBTCDelegationInclusionProof(f *testing.F) {
 			0,
 			true,
 			false,
+			10,
+			10,
 		)
 		h.NoError(err)
 
 		// add covenant signatures to this BTC delegation
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
 
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
 
 		// ensure the BTC delegation is now verified and does not have voting power
-		tipHeight := h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height
+		tipHeight := uint32(10)
+
 		covenantQuorum := h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
 		status := actualDel.GetStatus(tipHeight, covenantQuorum)
 		votingPower := actualDel.VotingPower(tipHeight, covenantQuorum)
@@ -614,7 +671,8 @@ func FuzzAddBTCDelegationInclusionProof(f *testing.F) {
 
 		// activate the BTC delegation, such that the BTC delegation becomes active
 		// and has voting power
-		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
+		newTipHeight := uint32(30)
+		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, newTipHeight)
 
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
@@ -654,7 +712,7 @@ func FuzzBTCUndelegate(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, unbondingInfo, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, unbondingInfo, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			fpPK,
@@ -665,18 +723,20 @@ func FuzzBTCUndelegate(f *testing.F) {
 			0,
 			true,
 			false,
+			10,
+			10,
 		)
 		h.NoError(err)
 
 		// add covenant signatures to this BTC delegation
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
 		// activate the BTC delegation
-		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
+		btcTip := uint32(30)
+		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, btcTip)
 
 		// ensure the BTC delegation is bonded right now
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		btcTip := h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height
 		status := actualDel.GetStatus(btcTip, bsParams.CovenantQuorum)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 
@@ -690,6 +750,7 @@ func FuzzBTCUndelegate(f *testing.F) {
 		// ensure the system does not panick due to a bogus unbonding msg
 		bogusMsg := *msg
 		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 		_, err = h.MsgServer.BTCUndelegate(h.Ctx, &bogusMsg)
 		h.Error(err)
 
@@ -733,7 +794,7 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			fpPK,
@@ -744,14 +805,16 @@ func FuzzSelectiveSlashing(f *testing.F) {
 			0,
 			true,
 			false,
+			10,
+			10,
 		)
 		h.NoError(err)
 
 		// add covenant signatures to this BTC delegation
 		// so that the BTC delegation becomes bonded
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
 		// activate the BTC delegation
-		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
+		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
 
 		// now BTC delegation has all covenant signatures
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
@@ -768,6 +831,7 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		// ensure the system does not panick due to a bogus unbonding msg
 		bogusMsg := *msg
 		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, &bogusMsg)
 		h.Error(err)
 
@@ -810,7 +874,7 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			fpPK,
@@ -821,14 +885,16 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 			0,
 			true,
 			false,
+			10,
+			10,
 		)
 		h.NoError(err)
 
 		// add covenant signatures to this BTC delegation
 		// so that the BTC delegation becomes bonded
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
 		// activate the BTC delegation
-		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
+		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
 		// now BTC delegation has all covenant signatures
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
@@ -860,6 +926,8 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 			StakingTxHash:    actualDel.MustGetStakingTxHash().String(),
 			RecoveredFpBtcSk: recoveredFPSK.Serialize(),
 		}
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+
 		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
 		h.NoError(err)
 
@@ -1107,7 +1175,7 @@ func TestAllowList(t *testing.T) {
 	stakingValue := int64(2 * 10e8)
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	_, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegation(
+	_, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
 		fpPK,
@@ -1119,13 +1187,15 @@ func TestAllowList(t *testing.T) {
 		usePreApproval,
 		// add delegation to the allow list, it should succeed
 		true,
+		10,
+		30,
 	)
 	h.NoError(err)
 	require.NotNil(t, msgCreateBTCDel)
 
 	delSK1, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	_, msgCreateBTCDel1, _, _, _, _, err := h.CreateDelegation(
+	_, msgCreateBTCDel1, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK1,
 		fpPK,
@@ -1137,6 +1207,8 @@ func TestAllowList(t *testing.T) {
 		usePreApproval,
 		// do not add delegation to the allow list, it should fail
 		false,
+		10,
+		30,
 	)
 	require.Error(t, err)
 	require.ErrorIs(t, err, types.ErrInvalidStakingTx)
@@ -1146,7 +1218,7 @@ func TestAllowList(t *testing.T) {
 	h.Ctx = h.Ctx.WithBlockHeight(int64(allowListExpirationHeight))
 	delSK2, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	_, msgCreateBTCDel2, _, _, _, _, err := h.CreateDelegation(
+	_, msgCreateBTCDel2, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK2,
 		fpPK,
@@ -1158,6 +1230,8 @@ func TestAllowList(t *testing.T) {
 		usePreApproval,
 		// do not add delegation to the allow list, it should succeed as allow list is expired
 		false,
+		10,
+		30,
 	)
 	h.NoError(err)
 	require.NotNil(t, msgCreateBTCDel2)

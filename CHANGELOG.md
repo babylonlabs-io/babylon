@@ -45,15 +45,19 @@ virtual block periods for each finality provider that has delegations and reward
 `debug pubkey-raw` subcommand
 - [#316](https://github.com/babylonlabs-io/babylon/pull/316) Add testnet upgrade data
 
+- [#326](https://github.com/babylonlabs-io/babylon/pull/326) docs: btcstaking:
+Update btcstaking module docs to include EOI
+
+
 ### Bug fixes
 
 - [#324](https://github.com/babylonlabs-io/babylon/pull/324) Fix decrementing
 jailed fp counter
 
-### Improvements
+### State Machine Breaking
 
-- [#326](https://github.com/babylonlabs-io/babylon/pull/326) docs: btcstaking:
-Update btcstaking module docs to include EOI
+- [#341](https://github.com/babylonlabs-io/babylon/pull/341) Select parameters
+for pre-approval flow based on BTC LC tip height
 
 ## v0.18.1
 
