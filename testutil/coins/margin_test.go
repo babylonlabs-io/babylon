@@ -16,6 +16,15 @@ func TestCalculatePointOnePercent(t *testing.T) {
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(10))).String(), result.String())
 }
 
+func TestCalculatePercentageOfCoins(t *testing.T) {
+	denom := "xsss"
+	result := coins.CalculatePercentageOfCoins(sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(100))), 30)
+	require.Equal(t, sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(30))).String(), result.String())
+
+	result = coins.CalculatePercentageOfCoins(sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(1560))), 30)
+	require.Equal(t, sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(468))).String(), result.String())
+}
+
 func TestCoinsDiffInPointOnePercentMargin(t *testing.T) {
 	denom := "xsss"
 	c1 := sdk.NewCoins(sdk.NewCoin(denom, math.NewInt(10000)))

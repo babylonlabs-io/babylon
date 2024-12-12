@@ -27,7 +27,7 @@ func (k Keeper) RewardGauges(goCtx context.Context, req *types.QueryRewardGauges
 
 	// find reward gauge
 	for _, sType := range types.GetAllStakeholderTypes() {
-		if err := k.sendAllBtcDelegatorRewardsToGauge(ctx, sType, address); err != nil {
+		if err := k.sendAllBtcDelegationTypeToRewardsToGauge(ctx, sType, address); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 

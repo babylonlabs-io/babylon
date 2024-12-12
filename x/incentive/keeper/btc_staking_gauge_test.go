@@ -81,7 +81,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 				require.Equal(t, delRwd.TotalActiveSat.Uint64(), btcDel.TotalSat)
 
 				// makes sure the rewards added reach the delegation gauge
-				err = k.SendBtcDelegationRewardsToGauge(ctx, fpAddr, delAddr)
+				err = k.BtcDelegationActivated(ctx, fpAddr, delAddr, 0)
 				require.NoError(t, err)
 			}
 			fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fpAddr)

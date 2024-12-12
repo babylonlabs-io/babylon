@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) sendAllBtcDelegatorRewardsToGauge(ctx context.Context, sType types.StakeholderType, del sdk.AccAddress) error {
+func (k Keeper) sendAllBtcDelegationTypeToRewardsToGauge(ctx context.Context, sType types.StakeholderType, del sdk.AccAddress) error {
 	if sType != types.BTCDelegationType {
 		return nil
 	}

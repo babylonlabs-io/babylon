@@ -46,7 +46,7 @@ func (k Keeper) FpSlashed(ctx context.Context, fp sdk.AccAddress) error {
 		return err
 	}
 
-	// remove all the rewards available from the ended periods
+	// remove all the rewards available from the just ended period
 	keysBtcDelRwdTracker := make([][]byte, 0)
 	if err := k.IterateBTCDelegationRewardsTracker(ctx, fp, func(fp, del sdk.AccAddress) error {
 		keysBtcDelRwdTracker = append(keysBtcDelRwdTracker, del.Bytes())
@@ -61,18 +61,18 @@ func (k Keeper) FpSlashed(ctx context.Context, fp sdk.AccAddress) error {
 	return nil
 }
 
-func (k Keeper) SendBtcDelegationRewardsToGauge(ctx context.Context, fp, del sdk.AccAddress) error {
-	return k.btcDelegationModified(ctx, fp, del)
-}
-
+// sendAllBtcRewardsToGauge iterates over all the finality providers associated
+// with the delegator and withdraw the rewards available to the gauge.
+// This creates new periods for each delegation and finality provider.
 func (k Keeper) sendAllBtcRewardsToGauge(ctx context.Context, del sdk.AccAddress) error {
 	return k.iterBtcDelegationsByDelegator(ctx, del, func(del, fp sdk.AccAddress) error {
-		return k.SendBtcDelegationRewardsToGauge(ctx, fp, del)
+		return k.btcDelegationModified(ctx, fp, del)
 	})
 }
 
 // btcDelegationModified just calls the BTC delegation modified without
 // any action to modify the delegation prior to initialization.
+// this could also be called SendBtcDelegationRewardsToGauge.
 func (k Keeper) btcDelegationModified(
 	ctx context.Context,
 	fp, del sdk.AccAddress,
