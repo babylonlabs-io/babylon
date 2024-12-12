@@ -268,6 +268,11 @@ func (s *BTCStakingPreApprovalTestSuite) Test3SendStakingTransctionInclusionProo
 	s.NoError(err)
 	stakingTxHash := stakingMsgTx.TxHash()
 
+	// make staking transacion inclusion block k-deep before submitting the inclusion proof
+	for i := 0; i < initialization.BabylonBtcConfirmationPeriod; i++ {
+		nonValidatorNode.InsertNewEmptyBtcHeader(s.r)
+	}
+
 	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
 		nonValidatorNode.AddBTCDelegationInclusionProof(
 			&stakingTxHash,
@@ -562,10 +567,7 @@ func (s *BTCStakingPreApprovalTestSuite) BTCStakingUnbondSlashInfo(
 
 	blockWithStakingTx := datagen.CreateBlockWithTransaction(s.r, currentBtcTip.Header.ToBlockHeader(), stakingMsgTx)
 	node.InsertHeader(&blockWithStakingTx.HeaderBytes)
-	// make block k-deep
-	for i := 0; i < initialization.BabylonBtcConfirmationPeriod; i++ {
-		node.InsertNewEmptyBtcHeader(s.r)
-	}
+
 	inclusionProof := bstypes.NewInclusionProofFromSpvProof(blockWithStakingTx.SpvProof)
 
 	// generate BTC undelegation stuff
