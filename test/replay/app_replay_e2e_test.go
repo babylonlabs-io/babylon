@@ -502,11 +502,9 @@ func (d *BabylonAppDriver) GenerateNewBlock(t *testing.T) *abci.ResponseFinalize
 
 func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess(
 	t *testing.T,
-	expectedTxNumber int,
 ) {
 	response := d.GenerateNewBlock(t)
 
-	require.Equal(t, len(response.TxResults), expectedTxNumber)
 	for _, tx := range response.TxResults {
 		require.Equal(t, tx.Code, uint32(0))
 	}
@@ -549,6 +547,10 @@ func (d *BabylonAppDriver) GetVerifiedBTCDelegations(t *testing.T) []*bstypes.BT
 	return d.getDelegationWithStatus(t, bstypes.BTCDelegationStatus_VERIFIED)
 }
 
+func (d *BabylonAppDriver) GetActiveBTCDelegations(t *testing.T) []*bstypes.BTCDelegationResponse {
+	return d.getDelegationWithStatus(t, bstypes.BTCDelegationStatus_ACTIVE)
+}
+
 // SendTxWithMsgsFromDriverAccount sends tx with msgs from driver account and asserts that
 // SendTxWithMsgsFromDriverAccount sends tx with msgs from driver account and asserts that
 // execution was successful. It assumes that there will only be one tx in the block.
@@ -562,7 +564,13 @@ func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 		defaultFeeCoin,
 		msgs...,
 	)
-	d.GenerateNewBlockAssertExecutionSuccess(t, 1)
+
+	result := d.GenerateNewBlock(t)
+
+	for _, rs := range result.TxResults {
+		// all executions should be successful
+		require.Equal(t, rs.Code, uint32(0))
+	}
 
 	d.DriverAccountSeqNr++
 }
@@ -712,12 +720,18 @@ func TestSendingTxFromDriverAccount(t *testing.T) {
 	require.Equal(t, driver.LastState.AppHash, replayer.LastState.AppHash)
 }
 
-func blocksToHeaderBytes(blocks []*wire.MsgBlock) []bbn.BTCHeaderBytes {
+func blocksWithProofsToHeaderBytes(blocks []*datagen.BlockWithProofs) []bbn.BTCHeaderBytes {
 	headerBytes := []bbn.BTCHeaderBytes{}
 	for _, block := range blocks {
-		headerBytes = append(headerBytes, bbn.NewBTCHeaderBytesFromBlockHeader(&block.Header))
+		headerBytes = append(headerBytes, bbn.NewBTCHeaderBytesFromBlockHeader(&block.Block.Header))
 	}
 	return headerBytes
+}
+
+func txFromBytes(t *testing.T, txBytes []byte) *wire.MsgTx {
+	tx, err := bbn.NewBTCTxFromBytes(txBytes)
+	require.NoError(t, err)
+	return tx
 }
 
 func TestFoo(t *testing.T) {
@@ -734,7 +748,7 @@ func TestFoo(t *testing.T) {
 	tip, tipHeight := driver.GetBTCLCTip()
 	numbBlocks := uint64(10)
 	blocks := datagen.GenNEmptyBlocks(r, numbBlocks, tip)
-	headers := blocksToHeaderBytes(blocks)
+	headers := blocksWithProofsToHeaderBytes(blocks)
 
 	driver.SendTxWithMsgsFromDriverAccount(t, &btclighttypes.MsgInsertHeaders{
 		Signer:  driver.GetDriverAccountAddress().String(),
@@ -788,4 +802,38 @@ func TestFoo(t *testing.T) {
 	verifiedDelegations := driver.GetVerifiedBTCDelegations(t)
 	require.Equal(t, len(verifiedDelegations), 1)
 
+	// Get current tip
+	tip, tipHeight = driver.GetBTCLCTip()
+
+	// staking tx will have index 1 in block (first after coinbase)
+	blockWithStakingTx := datagen.GenRandomBtcdBlockWithTransactions(
+		r,
+		[]*wire.MsgTx{txFromBytes(t, createDelegationMsg.StakingTx)},
+		tip,
+	)
+	newHeaders := blocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{blockWithStakingTx})
+	driver.SendTxWithMsgsFromDriverAccount(t, &btclighttypes.MsgInsertHeaders{
+		Signer:  driver.GetDriverAccountAddress().String(),
+		Headers: newHeaders,
+	})
+
+	// make it K deep
+	tip, tipHeight = driver.GetBTCLCTip()
+	numbBlocks = uint64(10)
+	blocks = datagen.GenNEmptyBlocks(r, numbBlocks, tip)
+	headers = blocksWithProofsToHeaderBytes(blocks)
+	driver.SendTxWithMsgsFromDriverAccount(t, &btclighttypes.MsgInsertHeaders{
+		Signer:  driver.GetDriverAccountAddress().String(),
+		Headers: headers,
+	})
+
+	// activate the delegation
+	driver.SendTxWithMsgsFromDriverAccount(t, &bstypes.MsgAddBTCDelegationInclusionProof{
+		Signer:                  driver.GetDriverAccountAddress().String(),
+		StakingTxHash:           covenantMsgs[0].StakingTxHash,
+		StakingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithStakingTx.Proofs[1]),
+	})
+
+	activeDelegations := driver.GetActiveBTCDelegations(t)
+	require.Equal(t, len(activeDelegations), 1)
 }

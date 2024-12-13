@@ -1,11 +1,14 @@
 package datagen
 
 import (
+	"bytes"
 	"math/big"
 	"math/rand"
 	"time"
 
 	"github.com/babylonlabs-io/babylon/btctxformatter"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -57,11 +60,19 @@ func GenRandomBtcdBlock(r *rand.Rand, numBabylonTxs int, prevHash *chainhash.Has
 	return block, rawCkpt
 }
 
+// BTC block with proofs of each tx. Index of txs in the block is the same as the index of proofs.
+type BlockWithProofs struct {
+	Block  *wire.MsgBlock
+	Proofs []*btcctypes.BTCSpvProof
+}
+
 func GenRandomBtcdBlockWithTransactions(
 	r *rand.Rand,
 	txs []*wire.MsgTx,
 	prevHeader *wire.BlockHeader,
-) *wire.MsgBlock {
+) *BlockWithProofs {
+	// we allways add coinbase tx to the block, to make sure merkle root is different
+	// every time
 	coinbaseTx := createCoinbaseTx(r.Int31(), &chaincfg.SimNetParams)
 	msgTxs := []*wire.MsgTx{coinbaseTx}
 	msgTxs = append(msgTxs, txs...)
@@ -83,17 +94,39 @@ func GenRandomBtcdBlockWithTransactions(
 	// find a nonce that satisfies difficulty
 	SolveBlock(header)
 
+	var txBytes [][]byte
+	for _, tx := range msgTxs {
+		buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
+		_ = tx.Serialize(buf)
+		txBytes = append(txBytes, buf.Bytes())
+	}
+
+	var proofs []*btcctypes.BTCSpvProof
+
+	for i, _ := range msgTxs {
+		headerBytes := bbn.NewBTCHeaderBytesFromBlockHeader(header)
+		proof, err := btcctypes.SpvProofFromHeaderAndTransactions(&headerBytes, txBytes, uint(i))
+		if err != nil {
+			panic(err)
+		}
+
+		proofs = append(proofs, proof)
+	}
+
 	block := &wire.MsgBlock{
 		Header:       *header,
 		Transactions: msgTxs,
 	}
-	return block
+	return &BlockWithProofs{
+		Block:  block,
+		Proofs: proofs,
+	}
 }
 
 func GenChainFromListsOfTransactions(
 	r *rand.Rand,
 	txs [][]*wire.MsgTx,
-	initHeader *wire.BlockHeader) []*wire.MsgBlock {
+	initHeader *wire.BlockHeader) []*BlockWithProofs {
 	if initHeader == nil {
 		panic("initHeader is required")
 	}
@@ -103,17 +136,17 @@ func GenChainFromListsOfTransactions(
 	}
 
 	var parentHeader *wire.BlockHeader = initHeader
-	var createdBlocks []*wire.MsgBlock = []*wire.MsgBlock{}
+	var createdBlocks []*BlockWithProofs = []*BlockWithProofs{}
 	for _, txs := range txs {
 		msgBlock := GenRandomBtcdBlockWithTransactions(r, txs, parentHeader)
-		parentHeader = &msgBlock.Header
+		parentHeader = &msgBlock.Block.Header
 		createdBlocks = append(createdBlocks, msgBlock)
 	}
 
 	return createdBlocks
 }
 
-func GenNEmptyBlocks(r *rand.Rand, n uint64, prevHeader *wire.BlockHeader) []*wire.MsgBlock {
+func GenNEmptyBlocks(r *rand.Rand, n uint64, prevHeader *wire.BlockHeader) []*BlockWithProofs {
 	var txs [][]*wire.MsgTx = make([][]*wire.MsgTx, n)
 	return GenChainFromListsOfTransactions(r, txs, prevHeader)
 }
