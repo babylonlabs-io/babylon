@@ -243,31 +243,125 @@ func GenRandomBTCDelegation(
 	return del, nil
 }
 
-func GenRandomMsgCreateBtcDelegationFromDelegation(
+// GenRandomMsgCreateBtcDelegation generates a random MsgCreateBTCDelegation message
+// valid for the given parameters.
+func GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
 	r *rand.Rand,
 	t *testing.T,
+	btcNet *chaincfg.Params,
 	stakerAddr sdk.AccAddress,
-	del *bstypes.BTCDelegation,
-	inclusionProof *bstypes.InclusionProof,
-	unbondingFee uint64,
-) (*bstypes.MsgCreateBTCDelegation, error) {
-	return &bstypes.MsgCreateBTCDelegation{
-		StakerAddr:                    stakerAddr.String(),
-		Pop:                           del.Pop,
-		BtcPk:                         del.BtcPk,
-		FpBtcPkList:                   del.FpBtcPkList,
-		StakingTime:                   del.StakingTime,
-		StakingValue:                  int64(del.TotalSat),
-		StakingTx:                     del.StakingTx,
-		StakingTxInclusionProof:       inclusionProof,
-		SlashingTx:                    del.SlashingTx,
-		DelegatorSlashingSig:          del.DelegatorSig,
-		UnbondingValue:                int64(del.TotalSat - unbondingFee),
-		UnbondingTime:                 del.UnbondingTime,
-		UnbondingTx:                   del.BtcUndelegation.UnbondingTx,
-		UnbondingSlashingTx:           del.BtcUndelegation.SlashingTx,
-		DelegatorUnbondingSlashingSig: del.BtcUndelegation.DelegatorSlashingSig,
-	}, nil
+	fpBTCPKs []bbn.BIP340PubKey,
+	delSK *btcec.PrivateKey,
+	covenantSKs []*btcec.PrivateKey,
+	params *bstypes.Params,
+) *bstypes.MsgCreateBTCDelegation {
+	require.Positive(t, params.CovenantQuorum)
+	require.Positive(t, len(fpBTCPKs))
+	require.Positive(t, len(covenantSKs))
+	require.Equal(t, len(params.CovenantPks), len(covenantSKs))
+
+	delPK := delSK.PubKey()
+
+	delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(delPK)
+	// list of finality provider PKs
+	fpPKs, err := bbn.NewBTCPKsFromBIP340PKs(fpBTCPKs)
+	require.NoError(t, err)
+	var covenantPks []*btcec.PublicKey
+	for _, sk := range covenantSKs {
+		covenantPks = append(covenantPks, sk.PubKey())
+	}
+
+	stakingTime := RandomInRange(
+		r,
+		int(params.MinStakingTimeBlocks),
+		int(params.MaxStakingTimeBlocks),
+	)
+
+	totalSat := RandomInRange(
+		r,
+		// add 10000 just in case
+		int(params.MinStakingValueSat)+10000,
+		int(params.MaxStakingValueSat),
+	)
+
+	// staking/slashing tx
+	stakingSlashingInfo := GenBTCStakingSlashingInfo(
+		r,
+		t,
+		btcNet,
+		delSK,
+		fpPKs,
+		covenantPks,
+		params.CovenantQuorum,
+		uint16(stakingTime),
+		int64(totalSat),
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+	)
+
+	slashingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+
+	// delegator pre-signs slashing tx
+	delegatorSig, err := stakingSlashingInfo.SlashingTx.Sign(
+		stakingSlashingInfo.StakingTx,
+		StakingOutIdx,
+		slashingPathSpendInfo.GetPkScriptPath(),
+		delSK,
+	)
+	require.NoError(t, err)
+
+	serializedStakingTx, err := bbn.SerializeBTCTx(stakingSlashingInfo.StakingTx)
+	require.NoError(t, err)
+
+	stkTxHash := stakingSlashingInfo.StakingTx.TxHash()
+	unbondingValue := uint64(totalSat) - uint64(params.UnbondingFeeSat)
+
+	unbondingSlashingInfo := GenBTCUnbondingSlashingInfo(
+		r,
+		t,
+		btcNet,
+		delSK,
+		fpPKs,
+		covenantPks,
+		params.CovenantQuorum,
+		wire.NewOutPoint(&stkTxHash, StakingOutIdx),
+		uint16(params.UnbondingTimeBlocks),
+		int64(unbondingValue),
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+	)
+
+	unbondingTxBytes, err := bbn.SerializeBTCTx(unbondingSlashingInfo.UnbondingTx)
+	require.NoError(t, err)
+	delSlashingTxSig, err := unbondingSlashingInfo.GenDelSlashingTxSig(delSK)
+	require.NoError(t, err)
+
+	pop, err := bstypes.NewPoPBTC(sdk.MustAccAddressFromBech32(stakerAddr.String()), delSK)
+	require.NoError(t, err)
+
+	msg := &bstypes.MsgCreateBTCDelegation{
+		StakerAddr:   stakerAddr.String(),
+		Pop:          pop,
+		BtcPk:        delBTCPK,
+		FpBtcPkList:  fpBTCPKs,
+		StakingTime:  uint32(stakingTime),
+		StakingValue: int64(totalSat),
+		StakingTx:    serializedStakingTx,
+		// By defualt it is nil it is up to the caller to set it
+		StakingTxInclusionProof:       nil,
+		SlashingTx:                    stakingSlashingInfo.SlashingTx,
+		DelegatorSlashingSig:          delegatorSig,
+		UnbondingValue:                int64(unbondingValue),
+		UnbondingTime:                 uint32(params.UnbondingTimeBlocks),
+		UnbondingTx:                   unbondingTxBytes,
+		UnbondingSlashingTx:           unbondingSlashingInfo.SlashingTx,
+		DelegatorUnbondingSlashingSig: delSlashingTxSig,
+	}
+
+	return msg
 }
 
 type TestStakingSlashingInfo struct {

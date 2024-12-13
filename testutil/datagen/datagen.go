@@ -49,3 +49,8 @@ func ValidHex(hexStr string, length int) bool {
 	}
 	return true
 }
+
+// RandomInRange returns a random integer in the range [min, max).
+func RandomInRange(r *rand.Rand, min, max int) int {
+	return r.Intn(max-min) + min
+}

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	goMath "math"
 	"math/rand"
 
 	"cosmossdk.io/log"
@@ -44,6 +45,7 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -75,7 +77,7 @@ const (
 var (
 	defaultFeeCoin                 = sdk.NewCoin("ubbn", math.NewInt(defaultFee))
 	BtcParams                      = &chaincfg.SimNetParams
-	CovenantSKs, _, CovenantQuorum = bstypes.DefaultCovenantCommittee()
+	covenantSKs, _, CovenantQuorum = bstypes.DefaultCovenantCommittee()
 )
 
 func getGenDoc(
@@ -527,6 +529,19 @@ func (d *BabylonAppDriver) GetBTCLCTip() (*wire.BlockHeader, uint32) {
 	return tipInfo.Header.ToBlockHeader(), tipInfo.Height
 }
 
+func (d *BabylonAppDriver) GetAllBTCDelegations(t *testing.T) []*bstypes.BTCDelegationResponse {
+	pagination := &query.PageRequest{}
+	pagination.Limit = goMath.MaxUint32
+
+	delegations, err := d.App.BTCStakingKeeper.BTCDelegations(d.GetContextForLastFinalizedBlock(), &bstypes.QueryBTCDelegationsRequest{
+		Status:     bstypes.BTCDelegationStatus_ANY,
+		Pagination: pagination,
+	})
+	require.NoError(t, err)
+	return delegations.BtcDelegations
+}
+
+// SendTxWithMsgsFromDriverAccount sends tx with msgs from driver account and asserts that
 // SendTxWithMsgsFromDriverAccount sends tx with msgs from driver account and asserts that
 // execution was successful. It assumes that there will only be one tx in the block.
 func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
@@ -729,7 +744,29 @@ func TestFoo(t *testing.T) {
 
 	prv, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	msg, err := datagen.GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(r, prv, driver.GetDriverAccountAddress())
+	msg, err := datagen.GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(
+		r,
+		prv,
+		driver.GetDriverAccountAddress(),
+	)
 	require.NoError(t, err)
 	driver.SendTxWithMsgsFromDriverAccount(t, msg)
+
+	stakerPrv, _, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	createDelegationMsg := datagen.GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
+		r,
+		t,
+		BtcParams,
+		driver.GetDriverAccountAddress(),
+		[]bbn.BIP340PubKey{*msg.BtcPk},
+		stakerPrv,
+		covenantSKs,
+		&params,
+	)
+
+	driver.SendTxWithMsgsFromDriverAccount(t, createDelegationMsg)
+	delegations := driver.GetAllBTCDelegations(t)
+	// There should be one delegation
+	require.Equal(t, len(delegations), 1)
 }
