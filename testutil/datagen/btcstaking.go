@@ -56,7 +56,11 @@ func GenRandomDescription(r *rand.Rand) *stakingtypes.Description {
 	return &stakingtypes.Description{Moniker: GenRandomHexStr(r, 10)}
 }
 
-func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKey, fpAddr sdk.AccAddress) (*bstypes.FinalityProvider, error) {
+func GenRandomFinalityProviderWithBTCBabylonSKs(
+	r *rand.Rand,
+	btcSK *btcec.PrivateKey,
+	fpAddr sdk.AccAddress,
+) (*bstypes.FinalityProvider, error) {
 	// commission
 	commission := GenRandomCommission(r)
 	// description
@@ -75,6 +79,24 @@ func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.Priva
 		BtcPk:       bip340PK,
 		Addr:        fpAddr.String(),
 		Pop:         pop,
+	}, nil
+}
+
+func GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(
+	r *rand.Rand,
+	btcSK *btcec.PrivateKey,
+	fpAddr sdk.AccAddress,
+) (*bstypes.MsgCreateFinalityProvider, error) {
+	fp, err := GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, fpAddr)
+	if err != nil {
+		return nil, err
+	}
+	return &bstypes.MsgCreateFinalityProvider{
+		Addr:        fp.Addr,
+		Description: fp.Description,
+		Commission:  fp.Commission,
+		BtcPk:       fp.BtcPk,
+		Pop:         fp.Pop,
 	}, nil
 }
 
@@ -219,6 +241,174 @@ func GenRandomBTCDelegation(
 	del.BtcUndelegation.CovenantUnbondingSigList = covUnbondingSigs
 
 	return del, nil
+}
+
+type CreateDelegationInfo struct {
+	MsgCreateBTCDelegation *bstypes.MsgCreateBTCDelegation
+	MsgAddCovenantSigs     []*bstypes.MsgAddCovenantSigs
+	StakingTxHash          string
+	StakingTx              *wire.MsgTx
+}
+
+// GenRandomMsgCreateBtcDelegation generates a random MsgCreateBTCDelegation message
+// valid for the given parameters.
+func GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
+	r *rand.Rand,
+	t *testing.T,
+	btcNet *chaincfg.Params,
+	stakerAddr sdk.AccAddress,
+	fpBTCPKs []bbn.BIP340PubKey,
+	delSK *btcec.PrivateKey,
+	covenantSKs []*btcec.PrivateKey,
+	params *bstypes.Params,
+) *CreateDelegationInfo {
+	require.Positive(t, params.CovenantQuorum)
+	require.Positive(t, len(fpBTCPKs))
+	require.Positive(t, len(covenantSKs))
+	require.Equal(t, len(params.CovenantPks), len(covenantSKs))
+
+	delPK := delSK.PubKey()
+
+	delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(delPK)
+	// list of finality provider PKs
+	fpPKs, err := bbn.NewBTCPKsFromBIP340PKs(fpBTCPKs)
+	require.NoError(t, err)
+	var covenantPks []*btcec.PublicKey
+	for _, sk := range covenantSKs {
+		covenantPks = append(covenantPks, sk.PubKey())
+	}
+
+	stakingTime := RandomInRange(
+		r,
+		int(params.MinStakingTimeBlocks),
+		int(params.MaxStakingTimeBlocks),
+	)
+
+	totalSat := RandomInRange(
+		r,
+		// add 10000 just in case
+		int(params.MinStakingValueSat)+10000,
+		int(params.MaxStakingValueSat),
+	)
+
+	// staking/slashing tx
+	stakingSlashingInfo := GenBTCStakingSlashingInfo(
+		r,
+		t,
+		btcNet,
+		delSK,
+		fpPKs,
+		covenantPks,
+		params.CovenantQuorum,
+		uint16(stakingTime),
+		int64(totalSat),
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+	)
+
+	slashingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+
+	// delegator pre-signs slashing tx
+	delegatorSig, err := stakingSlashingInfo.SlashingTx.Sign(
+		stakingSlashingInfo.StakingTx,
+		StakingOutIdx,
+		slashingPathSpendInfo.GetPkScriptPath(),
+		delSK,
+	)
+	require.NoError(t, err)
+
+	serializedStakingTx, err := bbn.SerializeBTCTx(stakingSlashingInfo.StakingTx)
+	require.NoError(t, err)
+
+	stkTxHash := stakingSlashingInfo.StakingTx.TxHash()
+	unbondingValue := uint64(totalSat) - uint64(params.UnbondingFeeSat)
+
+	unbondingSlashingInfo := GenBTCUnbondingSlashingInfo(
+		r,
+		t,
+		btcNet,
+		delSK,
+		fpPKs,
+		covenantPks,
+		params.CovenantQuorum,
+		wire.NewOutPoint(&stkTxHash, StakingOutIdx),
+		uint16(params.UnbondingTimeBlocks),
+		int64(unbondingValue),
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+	)
+
+	unbondingTxBytes, err := bbn.SerializeBTCTx(unbondingSlashingInfo.UnbondingTx)
+	require.NoError(t, err)
+	delSlashingTxSig, err := unbondingSlashingInfo.GenDelSlashingTxSig(delSK)
+	require.NoError(t, err)
+
+	pop, err := bstypes.NewPoPBTC(sdk.MustAccAddressFromBech32(stakerAddr.String()), delSK)
+	require.NoError(t, err)
+
+	msg := &bstypes.MsgCreateBTCDelegation{
+		StakerAddr:   stakerAddr.String(),
+		Pop:          pop,
+		BtcPk:        delBTCPK,
+		FpBtcPkList:  fpBTCPKs,
+		StakingTime:  uint32(stakingTime),
+		StakingValue: int64(totalSat),
+		StakingTx:    serializedStakingTx,
+		// By default it is nil it is up to the caller to set it
+		StakingTxInclusionProof:       nil,
+		SlashingTx:                    stakingSlashingInfo.SlashingTx,
+		DelegatorSlashingSig:          delegatorSig,
+		UnbondingValue:                int64(unbondingValue),
+		UnbondingTime:                 params.UnbondingTimeBlocks,
+		UnbondingTx:                   unbondingTxBytes,
+		UnbondingSlashingTx:           unbondingSlashingInfo.SlashingTx,
+		DelegatorUnbondingSlashingSig: delSlashingTxSig,
+	}
+
+	// covenant pre-signs slashing tx for staking tx
+	covenantSigs, err := GenCovenantAdaptorSigs(
+		covenantSKs,
+		fpPKs,
+		stakingSlashingInfo.StakingTx,
+		slashingPathSpendInfo.GetPkScriptPath(),
+		stakingSlashingInfo.SlashingTx,
+	)
+	require.NoError(t, err)
+
+	// covenant pre-signs slashing tx and unbonding tx
+	unbondingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+	covUnbondingSlashingSigs, covUnbondingSigs, err := unbondingSlashingInfo.GenCovenantSigs(
+		covenantSKs,
+		fpPKs,
+		stakingSlashingInfo.StakingTx,
+		unbondingPathSpendInfo.GetPkScriptPath(),
+	)
+	require.NoError(t, err)
+
+	msgs := make([]*bstypes.MsgAddCovenantSigs, len(covenantPks))
+
+	for i := 0; i < len(covenantPks); i++ {
+		msgAddCovenantSig := &bstypes.MsgAddCovenantSigs{
+			Signer:                  stakerAddr.String(),
+			Pk:                      covenantSigs[i].CovPk,
+			StakingTxHash:           stkTxHash.String(),
+			SlashingTxSigs:          covenantSigs[i].AdaptorSigs,
+			UnbondingTxSig:          covUnbondingSigs[i].Sig,
+			SlashingUnbondingTxSigs: covUnbondingSlashingSigs[i].AdaptorSigs,
+		}
+		msgs[i] = msgAddCovenantSig
+	}
+
+	return &CreateDelegationInfo{
+		MsgCreateBTCDelegation: msg,
+		MsgAddCovenantSigs:     msgs,
+		StakingTxHash:          stkTxHash.String(),
+		StakingTx:              stakingSlashingInfo.StakingTx,
+	}
 }
 
 type TestStakingSlashingInfo struct {
