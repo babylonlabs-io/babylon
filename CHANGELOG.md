@@ -54,6 +54,11 @@ jailed fp counter
 
 - [#341](https://github.com/babylonlabs-io/babylon/pull/341) Select parameters
 for pre-approval flow based on BTC LC tip height
+
+## v0.18.2
+
+### Bug fixes
+
 - [#342](https://github.com/babylonlabs-io/babylon/pull/342) Fix non-determinism while jailing
 
 ## v0.18.1
