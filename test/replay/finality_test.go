@@ -28,13 +28,11 @@ func TestVoting(t *testing.T) {
 	registerMsgs := FpInfosToMsgs(fpInfos)
 	driver.SendTxWithMsgsFromDriverAccount(t, registerMsgs...)
 
-	var randInfoList []*datagen.RandListInfo
 	var msgList []*ftypes.MsgCommitPubRandList
 	for _, fpInfo := range fpInfos {
-		list, msg, err := datagen.GenRandomMsgCommitPubRandList(r, fpInfo.BTCPrivateKey, 1, 1000)
+		_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, fpInfo.BTCPrivateKey, 1, 1000)
 		require.NoError(t, err)
 		msg.Signer = driver.GetDriverAccountAddress().String()
-		randInfoList = append(randInfoList, list)
 		msgList = append(msgList, msg)
 	}
 	// send all commit randomness messages in one block
@@ -80,7 +78,6 @@ func TestVoting(t *testing.T) {
 	require.Equal(t, 0, len(activeFps))
 
 	driver.SendTxWithMsgsFromDriverAccount(t, activationMsgs...)
-	activeFps = driver.GetActiveFpsAtCurrentHeight(t)
 
 	// on the last block all power events were queued for execution
 	// after this block execution they should be processed and our fps should
@@ -123,13 +120,11 @@ func FuzzJailing(f *testing.F) {
 		registerMsgs := FpInfosToMsgs(fpInfos)
 		driver.SendTxWithMsgsFromDriverAccount(t, registerMsgs...)
 
-		var randInfoList []*datagen.RandListInfo
 		var msgList []*ftypes.MsgCommitPubRandList
 		for _, fpInfo := range fpInfos {
-			list, msg, err := datagen.GenRandomMsgCommitPubRandList(r, fpInfo.BTCPrivateKey, 1, 1000)
+			_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, fpInfo.BTCPrivateKey, 1, 1000)
 			require.NoError(t, err)
 			msg.Signer = driver.GetDriverAccountAddress().String()
-			randInfoList = append(randInfoList, list)
 			msgList = append(msgList, msg)
 		}
 		// send all commit randomness messages in one block
@@ -175,7 +170,6 @@ func FuzzJailing(f *testing.F) {
 		require.Equal(t, 0, len(activeFps))
 
 		driver.SendTxWithMsgsFromDriverAccount(t, activationMsgs...)
-		activeFps = driver.GetActiveFpsAtCurrentHeight(t)
 
 		// on the last block all power events were queued for execution
 		// after this block execution they should be processed and our fps should
