@@ -76,10 +76,26 @@ func NewHelper(
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
-	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btclcKeeper, btccKeeper, iKeeper)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, iKeeper)
+}
+
+func NewHelperWithStoreAndIncentive(
+	t testing.TB,
+	db dbm.DB,
+	stateStore store.CommitMultiStore,
+	btclcKeeper *types.MockBTCLightClientKeeper,
+	btccKeeper *types.MockBtcCheckpointKeeper,
+	ictvKeeper ftypes.IncentiveKeeper,
+) *Helper {
+	ctrl := gomock.NewController(t)
+
+	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
+	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(timestampedEpoch).AnyTimes()
+
+	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btclcKeeper, btccKeeper, ictvKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
-	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, iKeeper, ckptKeeper)
+	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, ckptKeeper)
 	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
 
 	// set all parameters

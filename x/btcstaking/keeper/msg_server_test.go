@@ -13,7 +13,6 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -21,6 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	"github.com/babylonlabs-io/babylon/testutil/addr"
 	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
@@ -53,7 +53,7 @@ func FuzzMsgServer_UpdateParams(f *testing.F) {
 
 		// Try to update params with minUnbondingTime less than or equal to checkpointFinalizationTimeout
 		msg := &types.MsgUpdateParams{
-			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+			Authority: addr.AccGov.String(),
 			Params:    params,
 		}
 

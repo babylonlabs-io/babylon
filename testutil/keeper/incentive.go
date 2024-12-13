@@ -15,18 +15,23 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/babylonlabs-io/babylon/testutil/addr"
 	"github.com/babylonlabs-io/babylon/x/incentive/keeper"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 )
 
-func IncentiveKeeper(t testing.TB, bankKeeper types.BankKeeper, accountKeeper types.AccountKeeper, epochingKeeper types.EpochingKeeper) (*keeper.Keeper, sdk.Context) {
+func IncentiveKeeperWithStore(
+	t testing.TB,
+	db dbm.DB,
+	stateStore store.CommitMultiStore,
+	bankKeeper types.BankKeeper,
+	accountKeeper types.AccountKeeper,
+	epochingKeeper types.EpochingKeeper,
+) (*keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 
-	db := dbm.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, stateStore.LoadLatestVersion())
 
@@ -39,17 +44,26 @@ func IncentiveKeeper(t testing.TB, bankKeeper types.BankKeeper, accountKeeper ty
 		bankKeeper,
 		accountKeeper,
 		epochingKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())
 	ctx = ctx.WithHeaderInfo(header.Info{})
 
+	return &k, ctx
+}
+
+func IncentiveKeeper(t testing.TB, bankKeeper types.BankKeeper, accountKeeper types.AccountKeeper, epochingKeeper types.EpochingKeeper) (*keeper.Keeper, sdk.Context) {
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+
+	k, ctx := IncentiveKeeperWithStore(t, db, stateStore, bankKeeper, accountKeeper, epochingKeeper)
+
 	// Initialize params
 	if err := k.SetParams(ctx, types.DefaultParams()); err != nil {
 		panic(err)
 	}
 
-	return &k, ctx
+	return k, ctx
 }

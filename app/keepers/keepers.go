@@ -16,6 +16,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/babylonlabs-io/babylon/testutil/addr"
 	mintkeeper "github.com/babylonlabs-io/babylon/x/mint/keeper"
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -218,7 +219,7 @@ func (ak *AppKeepers) InitKeepers(
 		maccPerms,
 		authcodec.NewBech32Codec(appparams.Bech32PrefixAccAddr),
 		appparams.Bech32PrefixAccAddr,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 	)
 
 	bankKeeper := bankkeeper.NewBaseKeeper(
@@ -226,7 +227,7 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[banktypes.StoreKey]),
 		accountKeeper,
 		blockedAddress,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 		logger,
 	)
 
@@ -235,7 +236,7 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[stakingtypes.StoreKey]),
 		accountKeeper,
 		bankKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 		authcodec.NewBech32Codec(appparams.Bech32PrefixValAddr),
 		authcodec.NewBech32Codec(appparams.Bech32PrefixConsAddr),
 	)
@@ -246,7 +247,7 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[epochingtypes.StoreKey]),
 		bankKeeper,
 		stakingKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 	)
 
 	checkpointingKeeper := checkpointingkeeper.NewKeeper(
@@ -271,7 +272,7 @@ func (ak *AppKeepers) InitKeepers(
 	ak.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[consensusparamtypes.StoreKey]),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 		runtime.EventService{},
 	)
 	bApp.SetParamStore(ak.ConsensusParamsKeeper.ParamsStore)
@@ -301,7 +302,7 @@ func (ak *AppKeepers) InitKeepers(
 	ak.CircuitKeeper = circuitkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[circuittypes.StoreKey]),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 		ak.AccountKeeper.AddressCodec(),
 	)
 	bApp.SetCircuitBreaker(&ak.CircuitKeeper)
@@ -313,7 +314,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.AccountKeeper,
 		ak.BankKeeper,
 		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 	)
 
 	ak.DistrKeeper = distrkeeper.NewKeeper(
@@ -323,7 +324,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.BankKeeper,
 		ak.StakingKeeper,
 		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 	)
 
 	// set up incentive keeper
@@ -333,7 +334,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.BankKeeper,
 		ak.AccountKeeper,
 		&epochingKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)
 
@@ -342,7 +343,7 @@ func (ak *AppKeepers) InitKeepers(
 		encodingConfig.Amino,
 		runtime.NewKVStoreService(keys[slashingtypes.StoreKey]),
 		ak.StakingKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 	)
 
 	ak.CrisisKeeper = crisiskeeper.NewKeeper(
@@ -351,7 +352,7 @@ func (ak *AppKeepers) InitKeepers(
 		invCheckPeriod,
 		ak.BankKeeper,
 		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 		ak.AccountKeeper.AddressCodec(),
 	)
 
@@ -373,7 +374,7 @@ func (ak *AppKeepers) InitKeepers(
 		appCodec,
 		homePath,
 		bApp,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 	)
 
 	ak.AuthzKeeper = authzkeeper.NewKeeper(
@@ -394,7 +395,7 @@ func (ak *AppKeepers) InitKeepers(
 		// `MsgIBCSoftwareUpgrade` and `MsgRecoverClient`
 		// https://github.com/cosmos/ibc-go/releases/tag/v8.0.0
 		// Gov is the proper authority for those types of messages
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 	)
 
 	// register the proposal types
@@ -421,7 +422,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.DistrKeeper,
 		bApp.MsgServiceRouter(),
 		govConfig,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String())
+		addr.AccGov.String())
 
 	ak.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
@@ -434,7 +435,7 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[btclightclienttypes.StoreKey]),
 		*btcConfig,
 		&ak.IncentiveKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 	)
 
 	btcCheckpointKeeper := btccheckpointkeeper.NewKeeper(
@@ -445,7 +446,7 @@ func (ak *AppKeepers) InitKeepers(
 		&checkpointingKeeper,
 		&ak.IncentiveKeeper,
 		&powLimit,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 	)
 
 	ak.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
@@ -466,7 +467,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.AccountKeeper,
 		ak.BankKeeper,
 		scopedTransferKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 	)
 
 	ak.MonitorKeeper = monitorkeeper.NewKeeper(
@@ -499,7 +500,7 @@ func (ak *AppKeepers) InitKeepers(
 		&btcCheckpointKeeper,
 		&ak.IncentiveKeeper,
 		btcNetParams,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 	)
 
 	// set up finality keeper
@@ -509,7 +510,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.BTCStakingKeeper,
 		ak.IncentiveKeeper,
 		ak.CheckpointingKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 	)
 
 	// create evidence keeper with router
@@ -543,7 +544,7 @@ func (ak *AppKeepers) InitKeepers(
 		homePath,
 		wasmConfig,
 		WasmCapabilities(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 		wasmOpts...,
 	)
 
@@ -558,7 +559,7 @@ func (ak *AppKeepers) InitKeepers(
 		appCodec,
 		runtime.NewKVStoreService(keys[ibcwasmtypes.StoreKey]),
 		ak.IBCKeeper.ClientKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 		ibcWasmConfig,
 		bApp.GRPCQueryRouter(),
 	)

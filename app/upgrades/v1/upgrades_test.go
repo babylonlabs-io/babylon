@@ -19,6 +19,7 @@ import (
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/testutil/addr"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/testutil/sample"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -27,8 +28,6 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/babylonlabs-io/babylon/app"
@@ -118,7 +117,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 				// onlu gov account can store new contracts
 				respFromGov, err := wasmMsgServer.StoreCode(s.ctx, &wasmtypes.MsgStoreCode{
-					Sender:       authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+					Sender:       addr.AccGov.String(),
 					WASMByteCode: wasmContract,
 				})
 				s.NoError(err)

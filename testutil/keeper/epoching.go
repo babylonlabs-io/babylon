@@ -14,10 +14,9 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/babylonlabs-io/babylon/testutil/addr"
 	"github.com/babylonlabs-io/babylon/x/epoching/keeper"
 	"github.com/babylonlabs-io/babylon/x/epoching/types"
 )
@@ -39,7 +38,7 @@ func EpochingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		// TODO: make this compile at the moment, will fix for integrated testing
 		nil,
 		nil,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		addr.AccGov.String(),
 	)
 
 	// TODO: add msgServiceRouter?
