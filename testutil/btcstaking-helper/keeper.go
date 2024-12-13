@@ -586,3 +586,14 @@ func (h *Helper) CommitPubRandList(
 
 	return randListInfo
 }
+
+func (h *Helper) AddFinalityProvider(fp *types.FinalityProvider) {
+	err := h.BTCStakingKeeper.AddFinalityProvider(h.Ctx, &types.MsgCreateFinalityProvider{
+		Addr:        fp.Addr,
+		Description: fp.Description,
+		Commission:  fp.Commission,
+		BtcPk:       fp.BtcPk,
+		Pop:         fp.Pop,
+	})
+	h.NoError(err)
+}

@@ -7,9 +7,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (k Keeper) SetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64, power uint64) {

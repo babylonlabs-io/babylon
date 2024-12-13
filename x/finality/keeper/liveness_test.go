@@ -82,7 +82,8 @@ func FuzzHandleLiveness(f *testing.F) {
 }
 
 // FuzzHandleLivenessDeterminism tests the property of determinism of
-// HandleLiveness
+// HandleLiveness by creating two helpers with the same steps to jailing
+// and asserting the jailing events should be with the same order
 func FuzzHandleLivenessDeterminism(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
@@ -94,26 +95,33 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := bstypes.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := bstypes.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		h1 := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		h2 := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
-		covenantSKs, _ := h.GenAndApplyParams(r)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		covenantSKs, _ := h1.GenAndApplyParams(r)
+		params := h1.BTCStakingKeeper.GetParams(h1.Ctx)
+		err := h2.BTCStakingKeeper.SetParams(h2.Ctx, params)
+		require.NoError(t, err)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h1.Net)
 		require.NoError(t, err)
 
 		// Generate multiple finality providers
 		numFPs := 5 // Can be adjusted or randomized
 		fps := make([]*bstypes.FinalityProvider, numFPs)
 		for i := 0; i < numFPs; i++ {
-			fpSK, fpPK, fp := h.CreateFinalityProvider(r)
-			h.CommitPubRandList(r, fpSK, fp, 1, 1000, true)
+			fpSK, fpPK, fp := h1.CreateFinalityProvider(r)
+			require.NoError(t, err)
+			h2.AddFinalityProvider(fp)
+			h1.CommitPubRandList(r, fpSK, fp, 1, 1000, true)
+			h2.CommitPubRandList(r, fpSK, fp, 1, 1000, true)
 			fps[i] = fp
 
 			// Create delegation for each FP
 			stakingValue := int64(2 * 10e8)
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-			h.NoError(err)
-			stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
+			require.NoError(t, err)
+			stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h1.CreateDelegationWithBtcBlockHeight(
 				r,
 				delSK,
 				fpPK,
@@ -127,17 +135,34 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 				10,
 				10,
 			)
-			h.NoError(err)
+			require.NoError(t, err)
+			stakingTxHash2, msgCreateBTCDel2, actualDel2, btcHeaderInfo2, inclusionProof2, _, err := h2.CreateDelegationWithBtcBlockHeight(
+				r,
+				delSK,
+				fpPK,
+				changeAddress.EncodeAddress(),
+				stakingValue,
+				1000,
+				0,
+				0,
+				true,
+				false,
+				10,
+				10,
+			)
+			require.NoError(t, err)
 			// generate and insert new covenant signatures
-			h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
+			h1.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
+			h2.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel2, actualDel2, 10)
 			// activate BTC delegation
 			// after that, all BTC delegations will have voting power
-			h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
+			h1.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
+			h2.AddInclusionProof(stakingTxHash2, btcHeaderInfo2, inclusionProof2, 30)
 		}
 
-		params := h.FinalityKeeper.GetParams(h.Ctx)
-		minSignedPerWindow := params.MinSignedPerWindowInt()
-		maxMissed := params.SignedBlocksWindow - minSignedPerWindow
+		fParams := h1.FinalityKeeper.GetParams(h1.Ctx)
+		minSignedPerWindow := fParams.MinSignedPerWindowInt()
+		maxMissed := fParams.SignedBlocksWindow - minSignedPerWindow
 
 		nextHeight := datagen.RandomInt(r, 10) + 2 + uint64(minSignedPerWindow)
 
@@ -145,27 +170,35 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 		// for blocks up to the inactivity boundary, mark the finality provider as having not signed
 		sluggishDetectedHeight := nextHeight + uint64(maxMissed)
 		for ; nextHeight < sluggishDetectedHeight; nextHeight++ {
-			h.SetCtxHeight(nextHeight)
-			h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
-			h.BeginBlocker()
-			h.FinalityKeeper.HandleLiveness(h.Ctx, int64(nextHeight))
+			h1.SetCtxHeight(nextHeight)
+			h1.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h1.Ctx)).Return(btcTip).AnyTimes()
+			h1.BeginBlocker()
+			h1.FinalityKeeper.HandleLiveness(h1.Ctx, int64(nextHeight))
+
+			h2.SetCtxHeight(nextHeight)
+			h2.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h2.Ctx)).Return(btcTip).AnyTimes()
+			h2.BeginBlocker()
+			h2.FinalityKeeper.HandleLiveness(h2.Ctx, int64(nextHeight))
 		}
 
 		// after next height, the fp will be jailed
-		h.SetCtxHeight(nextHeight)
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
-		h.BeginBlocker()
+		h1.SetCtxHeight(nextHeight)
+		h1.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h1.Ctx)).Return(btcTip).AnyTimes()
+		h1.BeginBlocker()
 
-		h.FinalityKeeper.HandleLiveness(h.Ctx, int64(nextHeight))
-		events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
+		h1.FinalityKeeper.HandleLiveness(h1.Ctx, int64(nextHeight))
+		events := h1.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h1.Ctx, btcTip.Height, btcTip.Height)
 		require.Equal(t, numFPs, len(events))
 
-		err = h.StateStore.RollbackToVersion(int64(nextHeight) - 1)
-		require.NoError(t, err)
-		h.FinalityKeeper.HandleLiveness(h.Ctx, int64(nextHeight))
-		events2 := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
+		h2.SetCtxHeight(nextHeight)
+		h2.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h2.Ctx)).Return(btcTip).AnyTimes()
+		h2.BeginBlocker()
+
+		h2.FinalityKeeper.HandleLiveness(h2.Ctx, int64(nextHeight))
+		events2 := h2.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h2.Ctx, btcTip.Height, btcTip.Height)
 		require.Equal(t, numFPs, len(events))
 
+		// ensure the jailing events are in the same order in two different runs
 		for i, e := range events {
 			e1, ok := e.Ev.(*bstypes.EventPowerDistUpdate_JailedFp)
 			require.True(t, ok)

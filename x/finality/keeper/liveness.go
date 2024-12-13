@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -21,7 +22,15 @@ func (k Keeper) HandleLiveness(ctx context.Context, height int64) {
 	// Iterate over all the finality providers which *should* have signed this block
 	// store whether or not they have actually signed it, identify sluggish
 	// ones, and apply punishment (TBD)
+	// Create a sorted slice of keys for deterministic iteration
+	fpPkHexes := make([]string, 0, len(fpSet))
 	for fpPkHex := range fpSet {
+		fpPkHexes = append(fpPkHexes, fpPkHex)
+	}
+	sort.Strings(fpPkHexes)
+
+	// Iterate over all the finality providers in sorted order
+	for _, fpPkHex := range fpPkHexes {
 		fpPk, err := types.NewBIP340PubKeyFromHex(fpPkHex)
 		if err != nil {
 			panic(fmt.Errorf("invalid finality provider public key %s: %w", fpPkHex, err))
