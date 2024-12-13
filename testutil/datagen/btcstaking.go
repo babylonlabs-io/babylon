@@ -243,6 +243,13 @@ func GenRandomBTCDelegation(
 	return del, nil
 }
 
+type CreateDelegationInfo struct {
+	MsgCreateBTCDelegation *bstypes.MsgCreateBTCDelegation
+	MsgAddCovenantSigs     []*bstypes.MsgAddCovenantSigs
+	StakingTxHash          string
+	StakingTx              *wire.MsgTx
+}
+
 // GenRandomMsgCreateBtcDelegation generates a random MsgCreateBTCDelegation message
 // valid for the given parameters.
 func GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
@@ -254,7 +261,7 @@ func GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
 	delSK *btcec.PrivateKey,
 	covenantSKs []*btcec.PrivateKey,
 	params *bstypes.Params,
-) (*bstypes.MsgCreateBTCDelegation, []*bstypes.MsgAddCovenantSigs) {
+) *CreateDelegationInfo {
 	require.Positive(t, params.CovenantQuorum)
 	require.Positive(t, len(fpBTCPKs))
 	require.Positive(t, len(covenantSKs))
@@ -396,7 +403,12 @@ func GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
 		msgs[i] = msgAddCovenantSig
 	}
 
-	return msg, msgs
+	return &CreateDelegationInfo{
+		MsgCreateBTCDelegation: msg,
+		MsgAddCovenantSigs:     msgs,
+		StakingTxHash:          stkTxHash.String(),
+		StakingTx:              stakingSlashingInfo.StakingTx,
+	}
 }
 
 type TestStakingSlashingInfo struct {
