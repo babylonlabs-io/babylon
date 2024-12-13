@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v0.18.2
+
 ### Bug fixes
 
 - [#342](https://github.com/babylonlabs-io/babylon/pull/342) Fix non-determinism while jailing
