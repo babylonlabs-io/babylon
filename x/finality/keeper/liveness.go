@@ -14,23 +14,20 @@ import (
 // including jailing sluggish finality providers and applying punishment (TBD)
 func (k Keeper) HandleLiveness(ctx context.Context, height int64) {
 	// get all the active finality providers for the height
-	fpSet := k.GetVotingPowerTable(ctx, uint64(height))
+	vpTableOrdered := k.GetVotingPowerTableOrdered(ctx, uint64(height))
 	// get all the voters for the height
 	voterBTCPKs := k.GetVoters(ctx, uint64(height))
 
 	// Iterate over all the finality providers which *should* have signed this block
 	// store whether or not they have actually signed it, identify sluggish
 	// ones, and apply punishment (TBD)
-	for fpPkHex := range fpSet {
-		fpPk, err := types.NewBIP340PubKeyFromHex(fpPkHex)
-		if err != nil {
-			panic(fmt.Errorf("invalid finality provider public key %s: %w", fpPkHex, err))
-		}
-
+	// Iterate over all the finality providers in sorted order by the voting power
+	for _, fpWithVp := range vpTableOrdered {
+		fpPkHex := fpWithVp.FpPk.MarshalHex()
 		_, ok := voterBTCPKs[fpPkHex]
 		missed := !ok
 
-		err = k.HandleFinalityProviderLiveness(ctx, fpPk, missed, height)
+		err := k.HandleFinalityProviderLiveness(ctx, fpWithVp.FpPk, missed, height)
 		if err != nil {
 			panic(fmt.Errorf("failed to handle liveness of finality provider %s: %w", fpPkHex, err))
 		}
