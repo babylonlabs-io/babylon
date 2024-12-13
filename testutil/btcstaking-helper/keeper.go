@@ -44,6 +44,7 @@ type Helper struct {
 
 	FinalityKeeper *fkeeper.Keeper
 	FMsgServer     ftypes.MsgServer
+	StateStore     store.CommitMultiStore
 
 	BTCLightClientKeeper *types.MockBTCLightClientKeeper
 	BTCCheckpointKeeper  *types.MockBtcCheckpointKeeper
@@ -96,6 +97,8 @@ func NewHelper(
 
 		FinalityKeeper: fk,
 		FMsgServer:     fMsgSrvr,
+
+		StateStore: stateStore,
 
 		BTCLightClientKeeper: btclcKeeper,
 		BTCCheckpointKeeper:  btccKeeper,

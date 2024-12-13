@@ -149,13 +149,14 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 		h.SetCtxHeight(nextHeight)
 		h.BeginBlocker()
 
-		h2 := *h
 		h.FinalityKeeper.HandleLiveness(h.Ctx, int64(nextHeight))
 		events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 		require.Equal(t, numFPs, len(events))
 
-		h2.FinalityKeeper.HandleLiveness(h2.Ctx, int64(nextHeight))
-		events2 := h2.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h2.Ctx, btcTip.Height, btcTip.Height)
+		err = h.StateStore.RollbackToVersion(int64(nextHeight) - 1)
+		require.NoError(t, err)
+		h.FinalityKeeper.HandleLiveness(h.Ctx, int64(nextHeight))
+		events2 := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 		require.Equal(t, numFPs, len(events))
 
 		for i, e := range events {
