@@ -11,8 +11,6 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 )
 
 type Configurer interface {
@@ -25,8 +23,6 @@ type Configurer interface {
 	RunSetup() error
 
 	RunValidators() error
-
-	InstantiateBabylonContract(enableBTCStaking bool) error
 
 	RunHermesRelayerIBC() error
 
@@ -103,16 +99,6 @@ var (
 			IsValidator:        false,
 		},
 	}
-	ibcConfigChainA = &ibctesting.ChannelConfig{
-		PortID:  zctypes.PortID,
-		Order:   zctypes.Ordering,
-		Version: zctypes.Version,
-	}
-	ibcConfigChainB = &ibctesting.ChannelConfig{
-		PortID:  zctypes.PortID, // Will be replaced by the contract address in Phase 2 tests
-		Order:   zctypes.Ordering,
-		Version: zctypes.Version,
-	}
 )
 
 const MaxIndetifierSize = 10
@@ -154,42 +140,6 @@ func NewIBCTransferConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer,
 	), nil
 }
 
-// NewBTCTimestampingPhase2Configurer returns a new Configurer for BTC timestamping service (phase 2).
-func NewBTCTimestampingPhase2Configurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
-	identifier := identifierName(t)
-	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, false)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewCurrentBranchConfigurer(t,
-		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
-			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), nil),
-		},
-		withPhase2HermesIBC(baseSetup, false), // IBC setup (requires contract address)
-		containerManager,
-	), nil
-}
-
-// NewBTCTimestampingPhase2RlyConfigurer returns a new Configurer for BTC timestamping service (phase 2), using the Go relayer (rly).
-func NewBTCTimestampingPhase2RlyConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
-	identifier := identifierName(t)
-	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, true, false)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewCurrentBranchConfigurer(t,
-		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
-			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), nil),
-		},
-		withPhase2GoRlyIBC(baseSetup), // IBC setup with wasmd and Go relayer
-		containerManager,
-	), nil
-}
-
 // NewBTCStakingConfigurer returns a new Configurer for BTC staking service
 func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
 	identifier := identifierName(t)
@@ -204,23 +154,6 @@ func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, 
 			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
 		},
 		baseSetup, // base set up
-		containerManager,
-	), nil
-}
-
-func NewBTCStakingIntegrationConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
-	identifier := identifierName(t)
-	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, false)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewCurrentBranchConfigurer(t,
-		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, ibcConfigChainA),
-			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB, ibcConfigChainB),
-		},
-		withPhase2HermesIBC(baseSetup, true), // IBC setup (requires contract address)
 		containerManager,
 	), nil
 }
