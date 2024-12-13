@@ -3,6 +3,7 @@ package replay
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	goMath "math"
@@ -11,7 +12,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/babylonlabs-io/babylon/btctxformatter"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	btckckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	et "github.com/babylonlabs-io/babylon/x/epoching/types"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -605,6 +610,78 @@ func (d *BabylonAppDriver) GetActiveBTCDelegations(t *testing.T) []*bstypes.BTCD
 func (d *BabylonAppDriver) GetBTCStakingParams(t *testing.T) *bstypes.Params {
 	params := d.App.BTCStakingKeeper.GetParams(d.GetContextForLastFinalizedBlock())
 	return &params
+}
+
+func (d *BabylonAppDriver) GetEpochingParams() et.Params {
+	return d.App.EpochingKeeper.GetParams(d.GetContextForLastFinalizedBlock())
+}
+
+func (d *BabylonAppDriver) GetEpoch() *et.Epoch {
+	return d.App.EpochingKeeper.GetEpoch(d.GetContextForLastFinalizedBlock())
+}
+
+func (d *BabylonAppDriver) GetCheckpoint(
+	t *testing.T,
+	epochNumber uint64,
+) *ckpttypes.RawCheckpointWithMeta {
+	checkpoint, err := d.App.CheckpointingKeeper.GetRawCheckpoint(d.GetContextForLastFinalizedBlock(), epochNumber)
+	require.NoError(t, err)
+	return checkpoint
+}
+
+func (d *BabylonAppDriver) GetLastFinalizedEpoch() uint64 {
+	return d.App.CheckpointingKeeper.GetLastFinalizedEpoch(d.GetContextForLastFinalizedBlock())
+}
+
+func (d *BabylonAppDriver) SetParams(params et.Params) {
+	d.App.EpochingKeeper.SetParams(d.GetContextForLastFinalizedBlock(), params)
+}
+
+func (d *BabylonAppDriver) GenCkptForEpoch(r *rand.Rand, t *testing.T, epochNumber uint64) {
+	ckptWithMeta := d.GetCheckpoint(t, epochNumber)
+	subAddress := d.GetDriverAccountAddress()
+	subAddressBytes := subAddress.Bytes()
+
+	rawCkpt, err := ckpttypes.FromRawCkptToBTCCkpt(ckptWithMeta.Ckpt, subAddressBytes)
+	require.NoError(t, err)
+
+	tagBytes, err := hex.DecodeString(initialization.BabylonOpReturnTag)
+	require.NoError(t, err)
+
+	data1, data2 := btctxformatter.MustEncodeCheckpointData(
+		btctxformatter.BabylonTag(tagBytes),
+		btctxformatter.CurrentVersion,
+		rawCkpt,
+	)
+
+	tx1 := datagen.CreatOpReturnTransaction(r, data1)
+	tx2 := datagen.CreatOpReturnTransaction(r, data2)
+
+	blockWithProofs := d.GenBlockWithTransactions(r, t, []*wire.MsgTx{tx1, tx2})
+
+	msg := btckckpttypes.MsgInsertBTCSpvProof{
+		Submitter: subAddress.String(),
+		Proofs:    blockWithProofs.Proofs[1:],
+	}
+
+	d.SendTxWithMsgsFromDriverAccount(t, &msg)
+}
+
+func (d *BabylonAppDriver) FinializeCkptForEpoch(r *rand.Rand, t *testing.T, epochNumber uint64) {
+	lastFinalizedEpoch := d.GetLastFinalizedEpoch()
+	require.Equal(t, lastFinalizedEpoch+1, epochNumber)
+
+	btckptParams := d.GetBTCCkptParams(t)
+	d.GenCkptForEpoch(r, t, epochNumber)
+
+	_, _ = d.ExtendBTCLcWithNEmptyBlocks(r, t, uint32(btckptParams.CheckpointFinalizationTimeout))
+
+	lastFinalizedEpoch = d.GetLastFinalizedEpoch()
+	require.Equal(t, lastFinalizedEpoch, epochNumber)
+}
+
+func (d *BabylonAppDriver) GetBTCCkptParams(t *testing.T) btckckpttypes.Params {
+	return d.App.BtcCheckpointKeeper.GetParams(d.GetContextForLastFinalizedBlock())
 }
 
 // SendTxWithMsgsFromDriverAccount sends tx with msgs from driver account and asserts that

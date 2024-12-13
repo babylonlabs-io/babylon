@@ -3,11 +3,35 @@ package replay
 import (
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/stretchr/testify/require"
 )
+
+// TestEpochFinalization checks whether we can finalize some epochs
+func TestEpochFinalization(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(t, driverTempDir, replayerTempDir)
+	// first finalize at least one block
+	driver.GenerateNewBlock(t)
+	epochingParams := driver.GetEpochingParams()
+
+	epoch1 := driver.GetEpoch()
+	require.Equal(t, epoch1.EpochNumber, uint64(1))
+
+	for i := 0; i < int(epochingParams.EpochInterval); i++ {
+		driver.GenerateNewBlock(t)
+	}
+
+	epoch2 := driver.GetEpoch()
+	require.Equal(t, epoch2.EpochNumber, uint64(2))
+
+	driver.FinializeCkptForEpoch(r, t, epoch1.EpochNumber)
+}
 
 func FuzzCreatingAndActivatingDelegations(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 3)
