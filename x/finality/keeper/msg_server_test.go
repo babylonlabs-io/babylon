@@ -487,6 +487,8 @@ func TestVerifyActivationHeight(t *testing.T) {
 	).Error())
 }
 
-func TestBtcDelegationRewards(t *testing.T) {
+// func TestBtcDelegationRewards(t *testing.T) {
+// 	r := rand.New(rand.NewSource(time.Now().Unix()))
+// 	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
 
-}
+// }

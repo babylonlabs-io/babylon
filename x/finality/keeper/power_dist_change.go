@@ -330,7 +330,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	// for each new finality provider, apply the new BTC delegations to the new dist cache
 	for _, fpBTCPKHex := range fpActiveBtcPkHexList {
 		// get the finality provider and initialise its dist info
-		newFP := k.getOrLoadFp(ctx, cacheFpByBtcPkHex, fpBTCPKHex)
+		newFP := k.loadFP(ctx, cacheFpByBtcPkHex, fpBTCPKHex)
 		fpDistInfo := ftypes.NewFinalityProviderDistInfo(newFP)
 
 		// add each BTC delegation
@@ -392,6 +392,9 @@ func (k Keeper) votingPowerDistCacheStore(ctx context.Context) prefix.Store {
 	return prefix.NewStore(storeAdapter, ftypes.VotingPowerDistCacheKey)
 }
 
+// processBtcDelegations sorts the btc delegations and
+// executed the function by passing the fp, delegator address
+// and the total amount of satoshi in that delegation.
 func (k Keeper) processBtcDelegations(
 	ctx context.Context,
 	cacheFpByBtcPkHex map[string]*types.FinalityProvider,
@@ -406,7 +409,7 @@ func (k Keeper) processBtcDelegations(
 		delAddr := sdk.MustAccAddressFromBech32(btcDel.StakerAddr)
 		for _, fpBTCPK := range btcDel.FpBtcPkList {
 			fpBTCPKHex := fpBTCPK.MarshalHex()
-			fp := k.getOrLoadFp(ctx, cacheFpByBtcPkHex, fpBTCPKHex)
+			fp := k.loadFP(ctx, cacheFpByBtcPkHex, fpBTCPKHex)
 			fpAddr := sdk.MustAccAddressFromBech32(fp.Addr)
 
 			f(fpAddr, delAddr, btcDel.TotalSat)
@@ -414,7 +417,7 @@ func (k Keeper) processBtcDelegations(
 	}
 }
 
-func (k Keeper) getOrLoadFp(
+func (k Keeper) loadFP(
 	ctx context.Context,
 	cacheFpByBtcPkHex map[string]*types.FinalityProvider,
 	fpBTCPKHex string,
