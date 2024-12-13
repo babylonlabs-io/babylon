@@ -39,13 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Bug fixes
 
-- [#324](https://github.com/babylonlabs-io/babylon/pull/324) Fix decrementing
-jailed fp counter
-
-### Improvements
-
-- [#326](https://github.com/babylonlabs-io/babylon/pull/326) docs: btcstaking:
-Update btcstaking module docs to include EOI
+- [#342](https://github.com/babylonlabs-io/babylon/pull/342) Fix non-determinism while jailing
 
 ## v0.18.1
 
