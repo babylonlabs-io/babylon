@@ -52,7 +52,7 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 			for i := 0; i < 5; i++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				h.NoError(err)
-				_, _, del, _, _, _, err := h.CreateDelegation(
+				_, _, del, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 					r,
 					delSK,
 					fpPK,
@@ -63,6 +63,8 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 					0,
 					false,
 					false,
+					10,
+					30,
 				)
 				h.NoError(err)
 				event := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
@@ -110,7 +112,7 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			fpPK,
@@ -121,15 +123,17 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 			0,
 			true,
 			false,
+			10,
+			10,
 		)
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
 		// activate the BTC delegation
-		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
+		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
 
 		// execute BeginBlock
-		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
+		btcTip := &btclctypes.BTCHeaderInfo{Height: 30}
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		h.SetCtxHeight(babylonHeight)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
@@ -197,7 +201,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			fpPK,
@@ -208,18 +212,21 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 			0,
 			true,
 			false,
+			10,
+			10,
 		)
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
 		// activate the BTC delegation
-		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
+		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
 
 		// execute BeginBlock
-		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
+		btcTip := &btclctypes.BTCHeaderInfo{Height: 30}
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		h.SetCtxHeight(babylonHeight)
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(btcTip)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(btcTip)
 		h.BeginBlocker()
 		// ensure the finality provider is not jailed and has voting power at this height
 
@@ -244,7 +251,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		require.True(t, fpAfterJailing.IsJailed())
 
 		// at this point, there should be only 1 event that the finality provider is jailed
-		btcTipHeight := btclcKeeper.GetTipInfo(h.Ctx).Height
+		btcTipHeight := uint32(30)
 		events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTipHeight, btcTipHeight)
 		require.Len(t, events, 1)
 		jailedFPEvent := events[0].GetJailedFp()
@@ -254,7 +261,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		// execute BeginBlock
 		babylonHeight += 1
 		h.SetCtxHeight(babylonHeight)
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip)
 		h.BeginBlocker()
 		// ensure the finality provider does not have voting power anymore
 		require.Zero(t, h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
@@ -267,7 +274,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		h.NoError(err)
 		delSK2, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash2, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
+		stakingTxHash2, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK2,
 			fpPK,
@@ -278,15 +285,17 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 			0,
 			true,
 			false,
+			10,
+			10,
 		)
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
 		// activate the BTC delegation
-		h.AddInclusionProof(stakingTxHash2, btcHeaderInfo, inclusionProof)
+		h.AddInclusionProof(stakingTxHash2, btcHeaderInfo, inclusionProof, 30)
 
 		// execute BeginBlock
-		btcTip = btclcKeeper.GetTipInfo(h.Ctx)
+		btcTip = &btclctypes.BTCHeaderInfo{Height: 30}
 		babylonHeight += 1
 		h.SetCtxHeight(babylonHeight)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
@@ -329,7 +338,7 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			fpPK,
@@ -340,15 +349,17 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 			0,
 			true,
 			false,
+			10,
+			10,
 		)
 		h.NoError(err)
 		// give it a quorum number of covenant signatures
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
 		// activate the BTC delegation
-		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
+		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
 
 		// execute BeginBlock
-		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
+		btcTip := &btclctypes.BTCHeaderInfo{Height: 30}
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		h.SetCtxHeight(babylonHeight)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
@@ -433,7 +444,7 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		h.NoError(err)
 
 		stakingParams := h.BTCStakingKeeper.GetParamsWithVersion(h.Ctx).Params
-		stakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			fpPK,
@@ -444,6 +455,8 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 			0,
 			false,
 			false,
+			10,
+			30,
 		)
 		h.NoError(err)
 
@@ -452,7 +465,7 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 			will become expired at end height - w
 		*/
 		// there exists no event at the current BTC tip
-		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
+		btcTip := &btclctypes.BTCHeaderInfo{Height: 30}
 		events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 		require.Len(t, events, 0)
 
@@ -468,7 +481,7 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		// ensure this finality provider does not have voting power at the current height
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		h.SetCtxHeight(babylonHeight)
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).Times(2)
 		h.BeginBlocker()
 		require.Zero(t, h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
 
@@ -477,7 +490,7 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 			Then, there should be an event that the BTC delegation becomes
 			active at the current height
 		*/
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, btcTip.Height)
 
 		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 		require.Len(t, events, 1)
@@ -490,14 +503,14 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		// due to no timestamped randomness
 		babylonHeight += 1
 		h.SetCtxHeight(babylonHeight)
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip)
 		h.BeginBlocker()
 		require.Zero(t, h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
 
 		// ensure this finality provider has voting power at the current height after having timestamped pub rand
 		babylonHeight += 1
 		h.SetCtxHeight(babylonHeight)
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip)
 		h.CommitPubRandList(r, fpSK, fp, 1, 100, true)
 		h.BeginBlocker()
 		require.Equal(t, uint64(stakingValue), h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
@@ -547,7 +560,7 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			fpPK,
@@ -558,6 +571,8 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 			0,
 			true,
 			false,
+			10,
+			10,
 		)
 		h.NoError(err)
 
@@ -566,14 +581,14 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		// ensure this finality provider does not have voting power at the current height
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		h.SetCtxHeight(babylonHeight)
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btcTip).AnyTimes()
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btcTip)
 		h.BeginBlocker()
 		require.Zero(t, h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
 
 		/*
 			Generate a quorum number of covenant signatures
 		*/
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, btcTip.Height)
 		// no event will be emitted to the event bus upon an verified BTC delegation
 		// since it does not affect voting power distribution
 		events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
@@ -582,7 +597,7 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		// ensure this finality provider does not have voting power at the current height
 		babylonHeight += 1
 		h.SetCtxHeight(babylonHeight)
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btcTip).AnyTimes()
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btcTip)
 		h.BeginBlocker()
 		require.Zero(t, h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
 
@@ -592,7 +607,7 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 			- 1 event that BTC delegation becomes active at the current height
 			- 1 event that BTC delegation will become expired at end height - w
 		*/
-		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
+		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, btcTip.Height)
 		activatedDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
 		// there exists 1 event that the BTC delegation becomes active
@@ -616,14 +631,14 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		// due to no timestamped randomness
 		babylonHeight += 1
 		h.SetCtxHeight(babylonHeight)
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btcTip).AnyTimes()
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btcTip)
 		h.BeginBlocker()
 		require.Zero(t, h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
 
 		// ensure this finality provider has voting power at the current height after having timestamped pub rand
 		babylonHeight += 1
 		h.SetCtxHeight(babylonHeight)
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btcTip).AnyTimes()
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btcTip)
 		h.CommitPubRandList(r, fpSK, fp, 1, 100, true)
 		h.BeginBlocker()
 		require.Equal(t, uint64(stakingValue), h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
@@ -671,7 +686,7 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
 	stakingParams := h.BTCStakingKeeper.GetParamsWithVersion(h.Ctx).Params
-	expectedStakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegation(
+	expectedStakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
 		fpPK,
@@ -682,6 +697,8 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 		0,
 		false,
 		false,
+		10,
+		30,
 	)
 	h.NoError(err)
 	/*
@@ -689,7 +706,7 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 		will become expired at end height - min_unbonding_time
 	*/
 	// there exists no event at the current BTC tip
-	btcTip := btclcKeeper.GetTipInfo(h.Ctx)
+	btcTip := &btclctypes.BTCHeaderInfo{Height: 30}
 	events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
 	require.Len(t, events, 0)
 
@@ -714,6 +731,7 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 	// Generate and report covenant signatures from all covenant members.
 	for _, m := range msgs {
 		mCopy := m
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
 		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, mCopy)
 		h.NoError(err)
 	}
