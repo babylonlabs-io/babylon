@@ -486,3 +486,7 @@ func TestVerifyActivationHeight(t *testing.T) {
 		blockHeight, activationHeight,
 	).Error())
 }
+
+func TestBtcDelegationRewards(t *testing.T) {
+
+}
