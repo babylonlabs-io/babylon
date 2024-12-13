@@ -62,8 +62,9 @@ func GenRandomBtcdBlock(r *rand.Rand, numBabylonTxs int, prevHash *chainhash.Has
 
 // BTC block with proofs of each tx. Index of txs in the block is the same as the index of proofs.
 type BlockWithProofs struct {
-	Block  *wire.MsgBlock
-	Proofs []*btcctypes.BTCSpvProof
+	Block        *wire.MsgBlock
+	Proofs       []*btcctypes.BTCSpvProof
+	Transactions []*wire.MsgTx
 }
 
 func GenRandomBtcdBlockWithTransactions(
@@ -118,8 +119,9 @@ func GenRandomBtcdBlockWithTransactions(
 		Transactions: msgTxs,
 	}
 	return &BlockWithProofs{
-		Block:  block,
-		Proofs: proofs,
+		Block:        block,
+		Proofs:       proofs,
+		Transactions: msgTxs,
 	}
 }
 
