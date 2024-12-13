@@ -357,12 +357,12 @@ func GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
 		StakingTime:  uint32(stakingTime),
 		StakingValue: int64(totalSat),
 		StakingTx:    serializedStakingTx,
-		// By defualt it is nil it is up to the caller to set it
+		// By default it is nil it is up to the caller to set it
 		StakingTxInclusionProof:       nil,
 		SlashingTx:                    stakingSlashingInfo.SlashingTx,
 		DelegatorSlashingSig:          delegatorSig,
 		UnbondingValue:                int64(unbondingValue),
-		UnbondingTime:                 uint32(params.UnbondingTimeBlocks),
+		UnbondingTime:                 params.UnbondingTimeBlocks,
 		UnbondingTx:                   unbondingTxBytes,
 		UnbondingSlashingTx:           unbondingSlashingInfo.SlashingTx,
 		DelegatorUnbondingSlashingSig: delSlashingTxSig,

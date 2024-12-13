@@ -298,7 +298,8 @@ func createTx(
 	txBuilder := txConfig.NewTxBuilder()
 	txBuilder.SetGasLimit(gas)
 	txBuilder.SetFeeAmount(sdk.NewCoins(fee))
-	txBuilder.SetMsgs(msgs...)
+	err := txBuilder.SetMsgs(msgs...)
+	require.NoError(t, err)
 
 	sigV2 := signing.SignatureV2{
 		PubKey: senderInfo.privKey.PubKey(),
@@ -309,7 +310,7 @@ func createTx(
 		Sequence: senderInfo.sequenceNumber,
 	}
 
-	err := txBuilder.SetSignatures(sigV2)
+	err = txBuilder.SetSignatures(sigV2)
 	require.NoError(t, err)
 
 	signerData := xauthsigning.SignerData{
