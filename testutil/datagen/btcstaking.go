@@ -254,7 +254,7 @@ func GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
 	delSK *btcec.PrivateKey,
 	covenantSKs []*btcec.PrivateKey,
 	params *bstypes.Params,
-) *bstypes.MsgCreateBTCDelegation {
+) (*bstypes.MsgCreateBTCDelegation, []*bstypes.MsgAddCovenantSigs) {
 	require.Positive(t, params.CovenantQuorum)
 	require.Positive(t, len(fpBTCPKs))
 	require.Positive(t, len(covenantSKs))
@@ -361,7 +361,42 @@ func GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
 		DelegatorUnbondingSlashingSig: delSlashingTxSig,
 	}
 
-	return msg
+	// covenant pre-signs slashing tx for staking tx
+	covenantSigs, err := GenCovenantAdaptorSigs(
+		covenantSKs,
+		fpPKs,
+		stakingSlashingInfo.StakingTx,
+		slashingPathSpendInfo.GetPkScriptPath(),
+		stakingSlashingInfo.SlashingTx,
+	)
+	require.NoError(t, err)
+
+	// covenant pre-signs slashing tx and unbonding tx
+	unbondingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+	covUnbondingSlashingSigs, covUnbondingSigs, err := unbondingSlashingInfo.GenCovenantSigs(
+		covenantSKs,
+		fpPKs,
+		stakingSlashingInfo.StakingTx,
+		unbondingPathSpendInfo.GetPkScriptPath(),
+	)
+	require.NoError(t, err)
+
+	msgs := make([]*bstypes.MsgAddCovenantSigs, len(covenantPks))
+
+	for i := 0; i < len(covenantPks); i++ {
+		msgAddCovenantSig := &bstypes.MsgAddCovenantSigs{
+			Signer:                  stakerAddr.String(),
+			Pk:                      covenantSigs[i].CovPk,
+			StakingTxHash:           stkTxHash.String(),
+			SlashingTxSigs:          covenantSigs[i].AdaptorSigs,
+			UnbondingTxSig:          covUnbondingSigs[i].Sig,
+			SlashingUnbondingTxSigs: covUnbondingSlashingSigs[i].AdaptorSigs,
+		}
+		msgs[i] = msgAddCovenantSig
+	}
+
+	return msg, msgs
 }
 
 type TestStakingSlashingInfo struct {

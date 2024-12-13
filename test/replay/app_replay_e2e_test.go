@@ -529,16 +529,24 @@ func (d *BabylonAppDriver) GetBTCLCTip() (*wire.BlockHeader, uint32) {
 	return tipInfo.Header.ToBlockHeader(), tipInfo.Height
 }
 
-func (d *BabylonAppDriver) GetAllBTCDelegations(t *testing.T) []*bstypes.BTCDelegationResponse {
+func (d *BabylonAppDriver) getDelegationWithStatus(t *testing.T, status bstypes.BTCDelegationStatus) []*bstypes.BTCDelegationResponse {
 	pagination := &query.PageRequest{}
 	pagination.Limit = goMath.MaxUint32
 
 	delegations, err := d.App.BTCStakingKeeper.BTCDelegations(d.GetContextForLastFinalizedBlock(), &bstypes.QueryBTCDelegationsRequest{
-		Status:     bstypes.BTCDelegationStatus_ANY,
+		Status:     status,
 		Pagination: pagination,
 	})
 	require.NoError(t, err)
 	return delegations.BtcDelegations
+}
+
+func (d *BabylonAppDriver) GetAllBTCDelegations(t *testing.T) []*bstypes.BTCDelegationResponse {
+	return d.getDelegationWithStatus(t, bstypes.BTCDelegationStatus_ANY)
+}
+
+func (d *BabylonAppDriver) GetVerifiedBTCDelegations(t *testing.T) []*bstypes.BTCDelegationResponse {
+	return d.getDelegationWithStatus(t, bstypes.BTCDelegationStatus_VERIFIED)
 }
 
 // SendTxWithMsgsFromDriverAccount sends tx with msgs from driver account and asserts that
@@ -754,7 +762,7 @@ func TestFoo(t *testing.T) {
 
 	stakerPrv, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	createDelegationMsg := datagen.GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
+	createDelegationMsg, covenantMsgs := datagen.GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
 		r,
 		t,
 		BtcParams,
@@ -769,4 +777,15 @@ func TestFoo(t *testing.T) {
 	delegations := driver.GetAllBTCDelegations(t)
 	// There should be one delegation
 	require.Equal(t, len(delegations), 1)
+
+	msgs := make([]sdk.Msg, len(covenantMsgs))
+	for i, msg := range covenantMsgs {
+		msgs[i] = msg
+	}
+	driver.SendTxWithMsgsFromDriverAccount(t, msgs...)
+
+	// now we should have one verified delegation
+	verifiedDelegations := driver.GetVerifiedBTCDelegations(t)
+	require.Equal(t, len(verifiedDelegations), 1)
+
 }
