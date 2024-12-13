@@ -12,6 +12,7 @@ import (
 	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
@@ -112,7 +113,7 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 			stakingValue := int64(2 * 10e8)
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			h.NoError(err)
-			stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegation(
+			stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 				r,
 				delSK,
 				fpPK,
@@ -123,30 +124,36 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 				0,
 				true,
 				false,
+				10,
+				10,
 			)
 			h.NoError(err)
-			h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
-			h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
+			// generate and insert new covenant signatures
+			h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
+			// activate BTC delegation
+			// after that, all BTC delegations will have voting power
+			h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
 		}
 
 		params := h.FinalityKeeper.GetParams(h.Ctx)
 		minSignedPerWindow := params.MinSignedPerWindowInt()
 		maxMissed := params.SignedBlocksWindow - minSignedPerWindow
 
-		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
 		nextHeight := datagen.RandomInt(r, 10) + 2 + uint64(minSignedPerWindow)
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(btcTip).AnyTimes()
 
+		btcTip := &btclctypes.BTCHeaderInfo{Height: 30}
 		// for blocks up to the inactivity boundary, mark the finality provider as having not signed
 		sluggishDetectedHeight := nextHeight + uint64(maxMissed)
 		for ; nextHeight < sluggishDetectedHeight; nextHeight++ {
 			h.SetCtxHeight(nextHeight)
+			h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
 			h.BeginBlocker()
 			h.FinalityKeeper.HandleLiveness(h.Ctx, int64(nextHeight))
 		}
 
 		// after next height, the fp will be jailed
 		h.SetCtxHeight(nextHeight)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
 		h.BeginBlocker()
 
 		h.FinalityKeeper.HandleLiveness(h.Ctx, int64(nextHeight))
