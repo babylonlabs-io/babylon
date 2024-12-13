@@ -633,10 +633,6 @@ func (d *BabylonAppDriver) GetLastFinalizedEpoch() uint64 {
 	return d.App.CheckpointingKeeper.GetLastFinalizedEpoch(d.GetContextForLastFinalizedBlock())
 }
 
-func (d *BabylonAppDriver) SetParams(params et.Params) {
-	d.App.EpochingKeeper.SetParams(d.GetContextForLastFinalizedBlock(), params)
-}
-
 func (d *BabylonAppDriver) GenCkptForEpoch(r *rand.Rand, t *testing.T, epochNumber uint64) {
 	ckptWithMeta := d.GetCheckpoint(t, epochNumber)
 	subAddress := d.GetDriverAccountAddress()
@@ -674,7 +670,7 @@ func (d *BabylonAppDriver) FinializeCkptForEpoch(r *rand.Rand, t *testing.T, epo
 	btckptParams := d.GetBTCCkptParams(t)
 	d.GenCkptForEpoch(r, t, epochNumber)
 
-	_, _ = d.ExtendBTCLcWithNEmptyBlocks(r, t, uint32(btckptParams.CheckpointFinalizationTimeout))
+	_, _ = d.ExtendBTCLcWithNEmptyBlocks(r, t, btckptParams.CheckpointFinalizationTimeout)
 
 	lastFinalizedEpoch = d.GetLastFinalizedEpoch()
 	require.Equal(t, lastFinalizedEpoch, epochNumber)
