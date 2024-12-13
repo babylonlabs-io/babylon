@@ -133,7 +133,6 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 				true,
 				false,
 				10,
-				10,
 			)
 			require.NoError(t, err)
 			stakingTxHash2, msgCreateBTCDel2, actualDel2, btcHeaderInfo2, inclusionProof2, _, err := h2.CreateDelegationWithBtcBlockHeight(
@@ -148,16 +147,15 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 				true,
 				false,
 				10,
-				10,
 			)
 			require.NoError(t, err)
 			// generate and insert new covenant signatures
-			h1.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
-			h2.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel2, actualDel2, 10)
+			h1.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+			h2.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel2, actualDel2)
 			// activate BTC delegation
 			// after that, all BTC delegations will have voting power
-			h1.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
-			h2.AddInclusionProof(stakingTxHash2, btcHeaderInfo2, inclusionProof2, 30)
+			h1.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof)
+			h2.AddInclusionProof(stakingTxHash2, btcHeaderInfo2, inclusionProof2)
 		}
 
 		fParams := h1.FinalityKeeper.GetParams(h1.Ctx)
