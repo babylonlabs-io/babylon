@@ -68,7 +68,7 @@ func FuzzCreatingAndActivatingDelegations(f *testing.F) {
 				stakingParams,
 			)
 			allDelegationInfos = append(allDelegationInfos, delInfos...)
-			msgs := DelegationInfosToCreateBTCDelegationMsgs(delInfos)
+			msgs := ToCreateBTCDelegationMsgs(delInfos)
 			driver.SendTxWithMsgsFromDriverAccount(t, msgs...)
 		}
 
