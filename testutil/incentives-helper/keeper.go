@@ -24,13 +24,10 @@ func NewHelper(
 	btclcKeeper *types.MockBTCLightClientKeeper,
 	btccKeeper *types.MockBtcCheckpointKeeper,
 ) *Helper {
-	// ctrl := gomock.NewController(t)
-
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
 	ictvK, _ := keepertest.IncentiveKeeperWithStore(t, db, stateStore, nil, nil, nil)
-
 	btcstkH := btcstkhelper.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ictvK)
 
 	return &Helper{
