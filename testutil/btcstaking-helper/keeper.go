@@ -45,10 +45,10 @@ type Helper struct {
 	FinalityKeeper *fkeeper.Keeper
 	FMsgServer     ftypes.MsgServer
 
-	BTCLightClientKeeper *types.MockBTCLightClientKeeper
-	BTCCheckpointKeeper  *types.MockBtcCheckpointKeeper
-	CheckpointingKeeper  *ftypes.MockCheckpointingKeeper
-	Net                  *chaincfg.Params
+	BTCLightClientKeeper             *types.MockBTCLightClientKeeper
+	CheckpointingKeeperForBtcStaking *types.MockBtcCheckpointKeeper
+	CheckpointingKeeperForFinality   *ftypes.MockCheckpointingKeeper
+	Net                              *chaincfg.Params
 }
 
 type UnbondingTxInfo struct {
@@ -70,13 +70,13 @@ func NewHelper(
 	iKeeper.EXPECT().BtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	iKeeper.EXPECT().FpSlashed(gomock.Any(), gomock.Any()).AnyTimes()
 
-	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
-	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(timestampedEpoch).AnyTimes()
-
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, iKeeper)
+	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
+	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(timestampedEpoch).AnyTimes()
+
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, iKeeper)
 }
 
 func NewHelperWithStoreAndIncentive(
@@ -84,18 +84,14 @@ func NewHelperWithStoreAndIncentive(
 	db dbm.DB,
 	stateStore store.CommitMultiStore,
 	btclcKeeper *types.MockBTCLightClientKeeper,
-	btccKeeper *types.MockBtcCheckpointKeeper,
+	btccKForBtcStaking *types.MockBtcCheckpointKeeper,
+	btccKForFinality *ftypes.MockCheckpointingKeeper,
 	ictvKeeper ftypes.IncentiveKeeper,
 ) *Helper {
-	ctrl := gomock.NewController(t)
-
-	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
-	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(timestampedEpoch).AnyTimes()
-
-	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btclcKeeper, btccKeeper, ictvKeeper)
+	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btclcKeeper, btccKForBtcStaking, ictvKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
-	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, ckptKeeper)
+	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality)
 	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
 
 	// set all parameters
@@ -116,10 +112,10 @@ func NewHelperWithStoreAndIncentive(
 		FinalityKeeper: fk,
 		FMsgServer:     fMsgSrvr,
 
-		BTCLightClientKeeper: btclcKeeper,
-		BTCCheckpointKeeper:  btccKeeper,
-		CheckpointingKeeper:  ckptKeeper,
-		Net:                  &chaincfg.SimNetParams,
+		BTCLightClientKeeper:             btclcKeeper,
+		CheckpointingKeeperForBtcStaking: btccKForBtcStaking,
+		CheckpointingKeeperForFinality:   btccKForFinality,
+		Net:                              &chaincfg.SimNetParams,
 	}
 }
 
@@ -164,7 +160,7 @@ func (h *Helper) GenAndApplyCustomParams(
 	params := btcctypes.DefaultParams()
 	params.CheckpointFinalizationTimeout = finalizationTimeout
 
-	h.BTCCheckpointKeeper.EXPECT().GetParams(gomock.Any()).Return(params).AnyTimes()
+	h.CheckpointingKeeperForBtcStaking.EXPECT().GetParams(gomock.Any()).Return(params).AnyTimes()
 
 	// randomise covenant committee
 	covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
@@ -595,7 +591,7 @@ func (h *Helper) CommitPubRandList(
 		epoch = timestampedEpoch + 1
 	}
 
-	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epoch}).Times(1)
+	h.CheckpointingKeeperForFinality.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epoch}).Times(1)
 
 	_, err = h.FMsgServer.CommitPubRandList(h.Ctx, msg)
 	h.NoError(err)

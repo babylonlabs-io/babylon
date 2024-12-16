@@ -59,6 +59,11 @@ func (d *BTCDelegation) GetFpIdx(fpBTCPK *bbn.BIP340PubKey) int {
 	return -1
 }
 
+// Address returns the bech32 fp address
+func (d *BTCDelegation) Address() sdk.AccAddress {
+	return sdk.MustAccAddressFromBech32(d.StakerAddr)
+}
+
 func (d *BTCDelegation) GetCovSlashingAdaptorSig(
 	covBTCPK *bbn.BIP340PubKey,
 	valIdx int,

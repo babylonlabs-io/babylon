@@ -3,27 +3,27 @@ package keeper
 import (
 	"testing"
 
-	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	storetypes "cosmossdk.io/store/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
-	bankk "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
+	accountk "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 )
 
-func BankKeeper(
+func AccountKeeper(
 	t testing.TB,
 	db dbm.DB,
 	stateStore store.CommitMultiStore,
-	accountKeeper banktypes.AccountKeeper,
-) bankk.Keeper {
-	storeKey := storetypes.NewKVStoreKey(banktypes.StoreKey)
+) accountk.AccountKeeper {
+	storeKey := storetypes.NewKVStoreKey(authtypes.StoreKey)
 
 	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, stateStore.LoadLatestVersion())
@@ -31,13 +31,14 @@ func BankKeeper(
 	registry := codectypes.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
 
-	k := bankk.NewBaseKeeper(
+	k := accountk.NewAccountKeeper(
 		cdc,
 		runtime.NewKVStoreService(storeKey),
-		accountKeeper,
-		map[string]bool{},
+		authtypes.ProtoBaseAccount,
+		app.MaccPerms,
+		authcodec.NewBech32Codec(appparams.Bech32PrefixAccAddr),
+		appparams.Bech32PrefixAccAddr,
 		appparams.AccGov.String(),
-		log.NewNopLogger(),
 	)
 
 	return k

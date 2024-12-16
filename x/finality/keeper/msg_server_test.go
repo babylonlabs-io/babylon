@@ -12,8 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	testutil "github.com/babylonlabs-io/babylon/testutil/incentives-helper"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/x/finality/keeper"
@@ -492,3 +494,151 @@ func TestVerifyActivationHeight(t *testing.T) {
 // 	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
 
 // }
+
+func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	btclcKeeper := bstypes.NewMockBTCLightClientKeeper(ctrl)
+	btccKForBtcStaking := bstypes.NewMockBtcCheckpointKeeper(ctrl)
+
+	btccKForFinality := types.NewMockCheckpointingKeeper(ctrl)
+	epochNumber := uint64(10)
+
+	btccKForFinality.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epochNumber}).AnyTimes()
+	btccKForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epochNumber).AnyTimes()
+	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality)
+	// set all parameters
+	covenantSKs, _ := h.GenAndApplyParams(r)
+	covenantQuorum := h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
+
+	// commit some public randomness
+	finalityParams := h.FinalityKeeper.GetParams(h.Ctx)
+	finalityParams.FinalityActivationHeight = 0
+	err := h.FinalityKeeper.SetParams(h.Ctx, finalityParams)
+	h.NoError(err)
+
+	// generate and insert new finality provider
+	usePreApproval := false
+	stakingValue := int64(2 * 10e8)
+
+	fpSK, fpPK, fp := h.CreateFinalityProvider(r)
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+
+	startHeight := uint64(0)
+	numPubRand := uint64(200)
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fpSK, startHeight, numPubRand)
+	require.NoError(t, err)
+
+	_, err = h.FMsgServer.CommitPubRandList(h.Ctx, msgCommitPubRandList)
+	require.NoError(t, err)
+
+	// generate a vote
+	blockHeight := startHeight + uint64(1)
+	blockAppHash := datagen.GenRandomByteArray(r, 32)
+	signer := datagen.GenRandomAccount().Address
+	msg, err := datagen.NewMsgAddFinalitySig(
+		signer,
+		fpSK,
+		startHeight,
+		blockHeight,
+		randListInfo,
+		blockAppHash,
+	)
+	require.NoError(t, err)
+
+	// add vote and it should work
+	_, err = h.FMsgServer.AddFinalitySig(h.Ctx, msg)
+	require.Error(t, err)
+
+	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+	require.NoError(t, err)
+
+	stakingTxHash, msgCreateBTCDel, _, _, _, unbondingInfo, err := h.CreateDelegationWithBtcBlockHeight(
+		r,
+		delSK,
+		fpPK,
+		changeAddress.EncodeAddress(),
+		stakingValue,
+		1000,
+		0,
+		0,
+		usePreApproval,
+		false,
+		10,
+		30,
+	)
+	h.NoError(err)
+
+	// ensure consistency between the msg and the BTC delegation in DB
+	actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+	h.NoError(err)
+
+	require.Equal(h.T(), msgCreateBTCDel.StakerAddr, actualDel.StakerAddr)
+	require.Equal(h.T(), msgCreateBTCDel.Pop, actualDel.Pop)
+	require.Equal(h.T(), msgCreateBTCDel.StakingTx, actualDel.StakingTx)
+	require.Equal(h.T(), msgCreateBTCDel.SlashingTx, actualDel.SlashingTx)
+
+	// add covenant signatures to activate delegation
+	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+
+	tipHeight := uint32(30)
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: tipHeight}).AnyTimes()
+
+	for _, msg := range msgs {
+		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
+		h.NoError(err)
+	}
+
+	actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+	h.NoError(err)
+
+	status := actualDel.GetStatus(tipHeight, covenantQuorum)
+	require.Equal(t, status, bstypes.BTCDelegationStatus_ACTIVE)
+
+	// process the events as active btc delegation
+	h.BTCStakingKeeper.IndexBTCHeight(h.Ctx)
+	h.FinalityKeeper.UpdatePowerDist(h.Ctx)
+
+	btcDel, err := h.IncentivesKeeper.GetBTCDelegationRewardsTracker(h.Ctx, fp.Address(), actualDel.Address())
+	h.NoError(err)
+	require.Equal(t, btcDel.TotalActiveSat.Uint64(), uint64(stakingValue))
+
+	// Unbond with early unbonding
+	tipHeight = uint32(45)
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: tipHeight}).AnyTimes()
+
+	msgUndelegate := &bstypes.MsgBTCUndelegate{
+		Signer:                        datagen.GenRandomAccount().Address,
+		StakingTxHash:                 stakingTxHash,
+		StakeSpendingTx:               actualDel.BtcUndelegation.UnbondingTx,
+		StakeSpendingTxInclusionProof: unbondingInfo.UnbondingTxInclusionProof,
+	}
+
+	// early unbond
+	_, err = h.MsgServer.BTCUndelegate(h.Ctx, msgUndelegate)
+	h.NoError(err)
+
+	// ensure the BTC delegation is unbonded
+	actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+	h.NoError(err)
+	status = actualDel.GetStatus(tipHeight, covenantQuorum)
+	require.Equal(t, bstypes.BTCDelegationStatus_UNBONDED, status)
+
+	// increases one bbn block
+	headerInfo := h.Ctx.HeaderInfo()
+	headerInfo.Height += 1
+	h.Ctx = h.Ctx.WithHeaderInfo(headerInfo)
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: tipHeight}).AnyTimes()
+
+	// process the events as early unbonding btc delegation
+	h.BTCStakingKeeper.IndexBTCHeight(h.Ctx)
+	h.FinalityKeeper.UpdatePowerDist(h.Ctx)
+
+	btcDel, err = h.IncentivesKeeper.GetBTCDelegationRewardsTracker(h.Ctx, fp.Address(), actualDel.Address())
+	h.NoError(err)
+	require.True(t, btcDel.TotalActiveSat.IsZero())
+
+}
