@@ -44,6 +44,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#316](https://github.com/babylonlabs-io/babylon/pull/316) Add testnet upgrade data
 - [#326](https://github.com/babylonlabs-io/babylon/pull/326) docs: btcstaking:
 Update btcstaking module docs to include EOI
+- [#348](https://github.com/babylonlabs-io/babylon/pull/348) refactory `PrivateSigner`
+and module account vars in appparams
 
 ### Bug fixes
 

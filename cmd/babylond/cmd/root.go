@@ -8,7 +8,7 @@ import (
 	confixcmd "cosmossdk.io/tools/confix/cmd"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
+	"github.com/babylonlabs-io/babylon/app/signer"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	dbm "github.com/cosmos/cosmos-db"
@@ -260,7 +260,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	}
 
 	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
-	privSigner, err := appkeepers.InitPrivSigner(homeDir)
+	privSigner, err := signer.InitPrivSigner(homeDir)
 	if err != nil {
 		panic(err)
 	}
@@ -298,7 +298,7 @@ func appExport(
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
-	privSigner, err := appkeepers.InitPrivSigner(homePath)
+	privSigner, err := signer.InitPrivSigner(homePath)
 	if err != nil {
 		panic(err)
 	}
