@@ -16,7 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/testutil/addr"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/x/epoching/keeper"
 	"github.com/babylonlabs-io/babylon/x/epoching/types"
 )
@@ -38,7 +38,7 @@ func EpochingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		// TODO: make this compile at the moment, will fix for integrated testing
 		nil,
 		nil,
-		addr.AccGov.String(),
+		appparams.AccGov.String(),
 	)
 
 	// TODO: add msgServiceRouter?

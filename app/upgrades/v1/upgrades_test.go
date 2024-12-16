@@ -19,7 +19,6 @@ import (
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
-	"github.com/babylonlabs-io/babylon/testutil/addr"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/testutil/sample"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -117,7 +116,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 				// onlu gov account can store new contracts
 				respFromGov, err := wasmMsgServer.StoreCode(s.ctx, &wasmtypes.MsgStoreCode{
-					Sender:       addr.AccGov.String(),
+					Sender:       appparams.AccGov.String(),
 					WASMByteCode: wasmContract,
 				})
 				s.NoError(err)

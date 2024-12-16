@@ -13,7 +13,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/testutil/addr"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	dg "github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -86,7 +86,7 @@ func TestUpdateParams(t *testing.T) {
 
 	// Try to update params with a different checkpoint finalization timeout
 	msg := &btcctypes.MsgUpdateParams{
-		Authority: addr.AccGov.String(),
+		Authority: appparams.AccGov.String(),
 		Params: btcctypes.Params{
 			CheckpointFinalizationTimeout: btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1,
 		},

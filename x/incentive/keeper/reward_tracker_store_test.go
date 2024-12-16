@@ -10,7 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/testutil/addr"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/testutil/store"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
@@ -669,6 +668,6 @@ func checkFpDelTotalSat(t *testing.T, ctx sdk.Context, k *Keeper, fp, del sdk.Ac
 func NewKeeperWithCtx(t *testing.T) (*Keeper, sdk.Context) {
 	encConf := appparams.DefaultEncodingConfig()
 	ctx, kvStore := store.NewStoreWithCtx(t, types.ModuleName)
-	k := NewKeeper(encConf.Codec, kvStore, nil, nil, nil, addr.AccGov.String(), addr.AccFeeCollector.String())
+	k := NewKeeper(encConf.Codec, kvStore, nil, nil, nil, appparams.AccGov.String(), appparams.AccFeeCollector.String())
 	return &k, ctx
 }

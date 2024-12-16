@@ -19,8 +19,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
-	"github.com/babylonlabs-io/babylon/testutil/addr"
 	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
@@ -53,7 +53,7 @@ func FuzzMsgServer_UpdateParams(f *testing.F) {
 
 		// Try to update params with minUnbondingTime less than or equal to checkpointFinalizationTimeout
 		msg := &types.MsgUpdateParams{
-			Authority: addr.AccGov.String(),
+			Authority: appparams.AccGov.String(),
 			Params:    params,
 		}
 

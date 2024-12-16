@@ -89,7 +89,6 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
-	"github.com/babylonlabs-io/babylon/testutil/addr"
 	"github.com/babylonlabs-io/babylon/x/mint"
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 
@@ -802,7 +801,7 @@ func BlockedAddresses() map[string]bool {
 	}
 
 	// allow the following addresses to receive funds
-	delete(modAccAddrs, addr.AccGov.String())
+	delete(modAccAddrs, appparams.AccGov.String())
 
 	return modAccAddrs
 }

@@ -1,4 +1,4 @@
-package addr
+package params
 
 import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"

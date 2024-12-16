@@ -14,7 +14,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/testutil/addr"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 )
 
@@ -37,7 +37,7 @@ func BankKeeper(
 		runtime.NewKVStoreService(storeKey),
 		accountKeeper,
 		map[string]bool{},
-		addr.AccGov.String(),
+		appparams.AccGov.String(),
 		log.NewNopLogger(),
 	)
 

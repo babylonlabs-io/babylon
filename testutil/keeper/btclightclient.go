@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	bapp "github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/testutil/addr"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btclightclientk "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	btclightclientt "github.com/babylonlabs-io/babylon/x/btclightclient/types"
@@ -65,7 +65,7 @@ func BTCLightClientKeeperWithCustomParams(
 		stServ,
 		testCfg,
 		&MockIncentiveKeeper{},
-		addr.AccGov.String(),
+		appparams.AccGov.String(),
 	)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())

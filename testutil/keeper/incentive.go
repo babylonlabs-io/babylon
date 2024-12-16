@@ -17,7 +17,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/testutil/addr"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/x/incentive/keeper"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 )
@@ -44,7 +44,7 @@ func IncentiveKeeperWithStore(
 		bankKeeper,
 		accountKeeper,
 		epochingKeeper,
-		addr.AccGov.String(),
+		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)
 
