@@ -1,8 +1,7 @@
 package types
 
 import (
-	"fmt"
-
+	"errors"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -105,14 +104,14 @@ func (m *MsgCommitPubRandList) VerifySig() error {
 		return err
 	}
 	if m.Sig == nil {
-		return fmt.Errorf("empty signature")
+		return errors.New("empty signature")
 	}
 	schnorrSig, err := m.Sig.ToBTCSig()
 	if err != nil {
 		return err
 	}
 	if !schnorrSig.Verify(msgHash, pk) {
-		return fmt.Errorf("failed to verify signature")
+		return errors.New("failed to verify signature")
 	}
 	return nil
 }

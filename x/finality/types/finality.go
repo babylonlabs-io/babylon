@@ -2,8 +2,7 @@ package types
 
 import (
 	"bytes"
-	"fmt"
-
+	"errors"
 	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -72,19 +71,19 @@ func (e *Evidence) forkMsgToSign() []byte {
 
 func (e *Evidence) ValidateBasic() error {
 	if e.FpBtcPk == nil {
-		return fmt.Errorf("empty FpBtcPk")
+		return errors.New("empty FpBtcPk")
 	}
 	if e.PubRand == nil {
-		return fmt.Errorf("empty PubRand")
+		return errors.New("empty PubRand")
 	}
 	if len(e.CanonicalAppHash) != 32 {
-		return fmt.Errorf("malformed CanonicalAppHash")
+		return errors.New("malformed CanonicalAppHash")
 	}
 	if len(e.ForkAppHash) != 32 {
-		return fmt.Errorf("malformed ForkAppHash")
+		return errors.New("malformed ForkAppHash")
 	}
 	if e.ForkFinalitySig == nil {
-		return fmt.Errorf("empty ForkFinalitySig")
+		return errors.New("empty ForkFinalitySig")
 	}
 	return nil
 }
@@ -102,7 +101,7 @@ func (e *Evidence) IsSlashable() bool {
 // ExtractBTCSK extracts the BTC SK given the data in the evidence
 func (e *Evidence) ExtractBTCSK() (*btcec.PrivateKey, error) {
 	if !e.IsSlashable() {
-		return nil, fmt.Errorf("the evidence lacks some fields so does not allow extracting BTC SK")
+		return nil, errors.New("the evidence lacks some fields so does not allow extracting BTC SK")
 	}
 	btcPK, err := e.FpBtcPk.ToBTCPK()
 	if err != nil {

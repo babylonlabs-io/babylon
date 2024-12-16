@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -51,7 +52,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 
 func validateMinPubRand(minPubRand uint64) error {
 	if minPubRand == 0 {
-		return fmt.Errorf("min Pub Rand cannot be 0")
+		return errors.New("min Pub Rand cannot be 0")
 	}
 	return nil
 }
@@ -92,7 +93,7 @@ func (p Params) Validate() error {
 // active finality providers is at least the default value
 func validateMaxActiveFinalityProviders(maxActiveFinalityProviders uint32) error {
 	if maxActiveFinalityProviders == 0 {
-		return fmt.Errorf("max finality providers must be positive")
+		return errors.New("max finality providers must be positive")
 	}
 	return nil
 }
