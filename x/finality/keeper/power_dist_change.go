@@ -176,7 +176,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	// of BTC delegations that newly become active under this provider
 	activeBTCDels := map[string][]*types.BTCDelegation{}
 	// a map where key is unbonded BTC delegation's staking tx hash
-	unbondedBTCDels := map[string]struct{}{}
+	unbondedBTCDels := map[string]*btcDelWithStkTxHash{}
 	// a map where key is slashed finality providers' BTC PK
 	slashedFPs := map[string]struct{}{}
 	// a map where key is jailed finality providers' BTC PK
@@ -222,8 +222,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				}
 
 				// add the unbonded BTC delegation to the map
-				unbondedBTCDels[delStkTxHash] = struct{}{}
-				newUnbondedBtcDels = append(newUnbondedBtcDels, btcDelWithStkTxHash)
+				unbondedBTCDels[delStkTxHash] = btcDelWithStkTxHash
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
 			// record slashed fps
@@ -286,8 +285,14 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		for j := range dc.FinalityProviders[i].BtcDels {
 			btcDel := *dc.FinalityProviders[i].BtcDels[j]
 
-			_, isUnbondedBtcDelegation := unbondedBTCDels[btcDel.StakingTxHash]
+			btcDelUnbondedWithStkTxHash, isUnbondedBtcDelegation := unbondedBTCDels[btcDel.StakingTxHash]
 			if isUnbondedBtcDelegation {
+				// the list of new unbonded BTC delegations needs to be added
+				// at this point, due to possible duplication of Unbonding BTC events
+				// Early unbond and expiration. When the unbonded BTC delegation is
+				// processed the seccond time, the FP already doesn't have this delegation
+				// inside their FinalityProviderDistInfo.BtcDels list.
+				newUnbondedBtcDels = append(newUnbondedBtcDels, btcDelUnbondedWithStkTxHash)
 				continue
 			}
 			// if it is not unbonded add to the del dist info
