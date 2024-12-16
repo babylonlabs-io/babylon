@@ -28,7 +28,7 @@ func TestVerifyBlsSig(t *testing.T) {
 func TestVerifyBlsMultiSig(t *testing.T) {
 	msga := []byte("aaaaaaaa")
 	msgb := []byte("bbbbbbbb")
-	n := 100
+	n := 105
 	sks, pks := generateBatchTestKeyPairs(n)
 	sigs := make([]Signature, n)
 	for i := 0; i < n; i++ {

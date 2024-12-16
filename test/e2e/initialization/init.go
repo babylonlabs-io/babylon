@@ -15,10 +15,7 @@ func InitChain(
 	forkHeight int,
 	btcHeaders []*btclighttypes.BTCHeaderInfo,
 ) (*Chain, error) {
-	chain, err := new(id, dataDir)
-	if err != nil {
-		return nil, err
-	}
+	chain := new(id, dataDir)
 
 	for _, nodeConfig := range nodeConfigs {
 		newNode, err := newNode(chain, nodeConfig)
