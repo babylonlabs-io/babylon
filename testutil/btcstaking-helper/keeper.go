@@ -127,6 +127,10 @@ func (h *Helper) NoError(err error) {
 	require.NoError(h.t, err)
 }
 
+func (h *Helper) Equal(expected, actual interface{}) {
+	require.Equal(h.t, expected, actual)
+}
+
 func (h *Helper) Error(err error, msgAndArgs ...any) {
 	require.Error(h.t, err, msgAndArgs...)
 }
