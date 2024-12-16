@@ -17,6 +17,7 @@ import (
 	btckckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	et "github.com/babylonlabs-io/babylon/x/epoching/types"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -680,6 +681,42 @@ func (d *BabylonAppDriver) GetBTCCkptParams(t *testing.T) btckckpttypes.Params {
 	return d.App.BtcCheckpointKeeper.GetParams(d.GetContextForLastFinalizedBlock())
 }
 
+func (d *BabylonAppDriver) ProgressTillFirstBlockTheNextEpoch(t *testing.T) {
+	currnetEpochNunber := d.GetEpoch().EpochNumber
+	nextEpochNumber := currnetEpochNunber + 1
+
+	for currnetEpochNunber < nextEpochNumber {
+		d.GenerateNewBlock(t)
+		currnetEpochNunber = d.GetEpoch().EpochNumber
+	}
+}
+
+func (d *BabylonAppDriver) GetActiveFpsAtHeight(t *testing.T, height uint64) []*ftypes.ActiveFinalityProvidersAtHeightResponse {
+	res, err := d.App.FinalityKeeper.ActiveFinalityProvidersAtHeight(
+		d.GetContextForLastFinalizedBlock(),
+		&ftypes.QueryActiveFinalityProvidersAtHeightRequest{
+			Height:     height,
+			Pagination: &query.PageRequest{},
+		},
+	)
+	require.NoError(t, err)
+	return res.FinalityProviders
+}
+
+func (d *BabylonAppDriver) GetActiveFpsAtCurrentHeight(t *testing.T) []*ftypes.ActiveFinalityProvidersAtHeightResponse {
+	return d.GetActiveFpsAtHeight(t, d.GetLastFinalizedBlock().Height)
+}
+
+func (d *BabylonAppDriver) WaitTillAllFpsJailed(t *testing.T) {
+	for {
+		activeFps := d.GetActiveFpsAtCurrentHeight(t)
+		if len(activeFps) == 0 {
+			break
+		}
+		d.GenerateNewBlock(t)
+	}
+}
+
 // SendTxWithMsgsFromDriverAccount sends tx with msgs from driver account and asserts that
 // SendTxWithMsgsFromDriverAccount sends tx with msgs from driver account and asserts that
 // execution was successful. It assumes that there will only be one tx in the block.
@@ -838,6 +875,14 @@ func GenerateNFinalityProviders(
 	return infos
 }
 
+func FpInfosToMsgs(fpInfos []*FinalityProviderInfo) []sdk.Msg {
+	msgs := []sdk.Msg{}
+	for _, fpInfo := range fpInfos {
+		msgs = append(msgs, fpInfo.MsgCreateFinalityProvider)
+	}
+	return msgs
+}
+
 func GenerateNBTCDelegationsForFinalityProvider(
 	r *rand.Rand,
 	t *testing.T,
@@ -868,12 +913,22 @@ func GenerateNBTCDelegationsForFinalityProvider(
 	return delInfos
 }
 
-func DelegationInfosToCreateBTCDelegationMsgs(
+func ToCreateBTCDelegationMsgs(
 	delInfos []*datagen.CreateDelegationInfo,
 ) []sdk.Msg {
 	msgs := []sdk.Msg{}
 	for _, delInfo := range delInfos {
 		msgs = append(msgs, delInfo.MsgCreateBTCDelegation)
+	}
+	return msgs
+}
+
+func ToCovenantSignaturesMsgs(
+	delInfos []*datagen.CreateDelegationInfo,
+) []sdk.Msg {
+	msgs := []sdk.Msg{}
+	for _, delInfo := range delInfos {
+		msgs = append(msgs, MsgsToSdkMsg(delInfo.MsgAddCovenantSigs)...)
 	}
 	return msgs
 }
