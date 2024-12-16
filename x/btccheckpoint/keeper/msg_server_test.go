@@ -10,10 +10,10 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	dg "github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -86,7 +86,7 @@ func TestUpdateParams(t *testing.T) {
 
 	// Try to update params with a different checkpoint finalization timeout
 	msg := &btcctypes.MsgUpdateParams{
-		Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		Authority: appparams.AccGov.String(),
 		Params: btcctypes.Params{
 			CheckpointFinalizationTimeout: btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1,
 		},
