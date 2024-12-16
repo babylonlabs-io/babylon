@@ -49,7 +49,7 @@ func FuzzMsgServer_UpdateParams(f *testing.F) {
 		params := h.BTCStakingKeeper.GetParams(h.Ctx)
 		ckptFinalizationTimeout := btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
 		params.UnbondingTimeBlocks = uint32(r.Intn(int(ckptFinalizationTimeout))) + 1
-		params.BtcActivationHeight = params.BtcActivationHeight + 1
+		params.BtcActivationHeight++
 
 		// Try to update params with minUnbondingTime less than or equal to checkpointFinalizationTimeout
 		msg := &types.MsgUpdateParams{
@@ -387,7 +387,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	customMinUnbondingTime := uint32(2000)
 	currentParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	currentParams.UnbondingTimeBlocks = customMinUnbondingTime
-	currentParams.BtcActivationHeight = currentParams.BtcActivationHeight + 1
+	currentParams.BtcActivationHeight++
 	// Update new params
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
 	require.NoError(t, err)
@@ -437,7 +437,7 @@ func TestRejectActivationThatShouldNotUsePreApprovalFlow(t *testing.T) {
 	// create fresh version of params
 	currentParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	// params will be activate at block height 2
-	currentParams.BtcActivationHeight = currentParams.BtcActivationHeight + 1
+	currentParams.BtcActivationHeight++
 	// Update new params
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
 	require.NoError(t, err)
@@ -535,39 +535,22 @@ func FuzzAddCovenantSigs(f *testing.F) {
 
 		var stakingTxHash string
 		var msgCreateBTCDel *types.MsgCreateBTCDelegation
-		if usePreApproval {
-			stakingTxHash, msgCreateBTCDel, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
-				r,
-				delSK,
-				fpPK,
-				changeAddress.EncodeAddress(),
-				stakingValue,
-				1000,
-				0,
-				0,
-				usePreApproval,
-				false,
-				10,
-				30,
-			)
-			h.NoError(err)
-		} else {
-			stakingTxHash, msgCreateBTCDel, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
-				r,
-				delSK,
-				fpPK,
-				changeAddress.EncodeAddress(),
-				stakingValue,
-				1000,
-				0,
-				0,
-				usePreApproval,
-				false,
-				10,
-				30,
-			)
-			h.NoError(err)
-		}
+
+		stakingTxHash, msgCreateBTCDel, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			fpPK,
+			changeAddress.EncodeAddress(),
+			stakingValue,
+			1000,
+			0,
+			0,
+			usePreApproval,
+			false,
+			10,
+			30,
+		)
+		h.NoError(err)
 
 		// ensure consistency between the msg and the BTC delegation in DB
 		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)

@@ -609,34 +609,35 @@ func FuzzConfirmAndDinalizeManyEpochs(f *testing.F) {
 
 				msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
 
-				if epoch <= uint64(numFinalizedEpochs) {
+				switch {
+				case epoch <= uint64(numFinalizedEpochs):
 					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint32(finalizationDepth))
-					finalizationDepth = finalizationDepth - 1
+					finalizationDepth--
 					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), uint32(finalizationDepth))
 
 					// first submission is always deepest one, and second block is the most recent one
 					if j == 1 {
 						bestSumbissionInfos[epoch] = uint32(finalizationDepth)
 					}
-					finalizationDepth = finalizationDepth - 1
-				} else if epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs) {
+					finalizationDepth--
+				case epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs):
 					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), confirmationDepth)
-					confirmationDepth = confirmationDepth - 1
+					confirmationDepth--
 					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), confirmationDepth)
 					// first submission is always deepest one, and second block is the most recent one
 					if j == 1 {
 						bestSumbissionInfos[epoch] = confirmationDepth
 					}
-					confirmationDepth = confirmationDepth - 1
-				} else {
+					confirmationDepth--
+				default:
 					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), sumbissionDepth)
-					sumbissionDepth = sumbissionDepth - 1
+					sumbissionDepth--
 					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), sumbissionDepth)
 					// first submission is always deepest one, and second block is the most recent one
 					if j == 1 {
 						bestSumbissionInfos[epoch] = sumbissionDepth
 					}
-					sumbissionDepth = sumbissionDepth - 1
+					sumbissionDepth--
 				}
 
 				_, err := tk.insertProofMsg(msg)
@@ -660,13 +661,14 @@ func FuzzConfirmAndDinalizeManyEpochs(f *testing.F) {
 			ed := tk.GetEpochData(epoch)
 			require.NotNil(t, ed)
 
-			if epoch <= uint64(numFinalizedEpochs) {
+			switch {
+			case epoch <= uint64(numFinalizedEpochs):
 				require.Equal(t, ed.Status, btcctypes.Finalized)
 				// finalized epochs should have only best submission
 				require.Equal(t, len(ed.Keys), 1)
-			} else if epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs) {
+			case epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs):
 				require.Equal(t, ed.Status, btcctypes.Confirmed)
-			} else {
+			default:
 				require.Equal(t, ed.Status, btcctypes.Submitted)
 			}
 

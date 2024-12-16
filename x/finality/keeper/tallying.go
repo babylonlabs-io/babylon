@@ -48,7 +48,8 @@ func (k Keeper) TallyBlocks(ctx context.Context) {
 		// get the finality provider set of this block
 		fpSet := k.GetVotingPowerTable(ctx, ib.Height)
 
-		if fpSet != nil && !ib.Finalized {
+		switch {
+		case fpSet != nil && !ib.Finalized:
 			// has finality providers, non-finalised: tally and try to finalise the block
 			voterBTCPKs := k.GetVoters(ctx, ib.Height)
 			if tally(fpSet, voterBTCPKs) {
@@ -59,16 +60,16 @@ func (k Keeper) TallyBlocks(ctx context.Context) {
 				// thus, we need to break here
 				break
 			}
-		} else if fpSet == nil && !ib.Finalized {
+		case fpSet == nil && !ib.Finalized:
 			// does not have finality providers, non-finalised: not finalisable,
 			// increment the next height to finalise and continue
 			k.setNextHeightToFinalize(ctx, ib.Height+1)
 			continue
-		} else if fpSet != nil && ib.Finalized {
+		case fpSet != nil && ib.Finalized:
 			// has finality providers and the block has finalised
 			// this can only be a programming error
 			panic(fmt.Errorf("block %d is finalized, but last finalized height in DB does not reach here", ib.Height))
-		} else if fpSet == nil && ib.Finalized {
+		case fpSet == nil && ib.Finalized:
 			// does not have finality providers, finalised: impossible to happen, panic
 			panic(fmt.Errorf("block %d is finalized, but does not have a finality provider set", ib.Height))
 		}

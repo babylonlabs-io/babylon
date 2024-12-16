@@ -21,7 +21,7 @@ linters:
     # - forbidigo
     # - forcetypeassert
     - goconst
-    # - gocritic
+    - gocritic
     # - gocyclo
     - goheader
     - gomodguard

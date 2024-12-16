@@ -20,7 +20,7 @@ const (
 // r is a regular expression that matched the store key prefix
 // we cannot use modules names directly as sometimes module key != store key
 // for example account module has store key "acc" and module key "auth"
-var r, _ = regexp.Compile("s/k:[A-Za-z]+/")
+var r = regexp.MustCompile("s/k:[A-Za-z]+/")
 
 func OpenDB(dir string) (dbm.DB, error) {
 	fmt.Printf("Opening database at: %s\n", dir)
