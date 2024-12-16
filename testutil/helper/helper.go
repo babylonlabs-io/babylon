@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/core/header"
-	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
+	"github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
@@ -57,7 +57,7 @@ func NewHelper(t *testing.T) *Helper {
 
 // NewHelperWithValSet is same as NewHelper, except that it creates a set of validators
 // the privSigner is the 0th validator in valSet
-func NewHelperWithValSet(t *testing.T, valSet *datagen.GenesisValidators, privSigner *appkeepers.PrivSigner) *Helper {
+func NewHelperWithValSet(t *testing.T, valSet *datagen.GenesisValidators, privSigner *signer.PrivSigner) *Helper {
 	// generate the genesis account
 	signerPubKey := privSigner.WrappedPV.Key.PubKey
 	acc := authtypes.NewBaseAccount(signerPubKey.Address().Bytes(), &cosmosed.PubKey{Key: signerPubKey.Bytes()}, 0, 0)
@@ -95,7 +95,7 @@ func NewHelperWithValSet(t *testing.T, valSet *datagen.GenesisValidators, privSi
 
 // NewHelperWithValSetNoSigner is same as NewHelperWithValSet, except that the privSigner is not
 // included in the validator set
-func NewHelperWithValSetNoSigner(t *testing.T, valSet *datagen.GenesisValidators, privSigner *appkeepers.PrivSigner) *Helper {
+func NewHelperWithValSetNoSigner(t *testing.T, valSet *datagen.GenesisValidators, privSigner *signer.PrivSigner) *Helper {
 	// generate the genesis account
 	signerPubKey := privSigner.WrappedPV.Key.PubKey
 	acc := authtypes.NewBaseAccount(signerPubKey.Address().Bytes(), &cosmosed.PubKey{Key: signerPubKey.Bytes()}, 0, 0)

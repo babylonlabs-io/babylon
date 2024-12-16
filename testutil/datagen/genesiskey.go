@@ -2,7 +2,7 @@ package datagen
 
 import (
 	"github.com/babylonlabs-io/babylon/app"
-	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
+	"github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/privval"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
@@ -88,7 +88,7 @@ func GenesisValidatorSet(numVals int) (*GenesisValidators, error) {
 
 // GenesisValidatorSetWithPrivSigner generates a set with `numVals` genesis validators
 // along with the privSigner, which will be in the 0th position of the return validator set
-func GenesisValidatorSetWithPrivSigner(numVals int) (*GenesisValidators, *appkeepers.PrivSigner, error) {
+func GenesisValidatorSetWithPrivSigner(numVals int) (*GenesisValidators, *signer.PrivSigner, error) {
 	ps, err := app.SetupTestPrivSigner()
 	if err != nil {
 		return nil, nil, err
