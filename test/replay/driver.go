@@ -913,7 +913,7 @@ func GenerateNBTCDelegationsForFinalityProvider(
 	return delInfos
 }
 
-func DelegationInfosToCreateBTCDelegationMsgs(
+func ToCreateBTCDelegationMsgs(
 	delInfos []*datagen.CreateDelegationInfo,
 ) []sdk.Msg {
 	msgs := []sdk.Msg{}
@@ -923,7 +923,7 @@ func DelegationInfosToCreateBTCDelegationMsgs(
 	return msgs
 }
 
-func DelegationInfosToCovenantSignaturesMsgs(
+func ToCovenantSignaturesMsgs(
 	delInfos []*datagen.CreateDelegationInfo,
 ) []sdk.Msg {
 	msgs := []sdk.Msg{}
