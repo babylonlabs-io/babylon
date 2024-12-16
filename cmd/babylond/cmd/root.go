@@ -81,9 +81,12 @@ func NewRootCmd() *cobra.Command {
 			}
 
 			if !initClientCtx.Offline {
-				enabledSignModes := append(tx.DefaultSignModes, signing.SignMode_SIGN_MODE_TEXTUAL)
+				var modes []signing.SignMode
+				modes = append(modes, tx.DefaultSignModes...)
+				modes = append(modes, signing.SignMode_SIGN_MODE_TEXTUAL)
+
 				txConfigOpts := tx.ConfigOptions{
-					EnabledSignModes:           enabledSignModes,
+					EnabledSignModes:           modes,
 					TextualCoinMetadataQueryFn: authtxconfig.NewGRPCCoinMetadataQueryFn(initClientCtx),
 				}
 				txConfig, err := tx.NewTxConfigWithOptions(

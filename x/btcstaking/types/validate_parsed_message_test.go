@@ -131,7 +131,6 @@ func createMsgDelegationForParams(
 	r *rand.Rand,
 	t *testing.T,
 	p *types.Params,
-	cp *btcckpttypes.Params,
 ) (*types.MsgCreateBTCDelegation, *btcec.PrivateKey) {
 	// staker related date
 	delSK, delPK, err := datagen.GenRandomBTCKeyPair(r)
@@ -242,7 +241,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				return msg, params, checkpointParams
 			},
@@ -254,7 +253,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				msg.FpBtcPkList = []bbn.BIP340PubKey{}
 
@@ -268,7 +267,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				msg.FpBtcPkList = append(msg.FpBtcPkList, *msg.BtcPk)
 
@@ -282,7 +281,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				msg.UnbondingTime = msg.StakingTime - 1
 
@@ -296,7 +295,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				_, delPK, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
@@ -315,9 +314,9 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
-				msg.StakingTime = msg.StakingTime + 1
+				msg.StakingTime++
 
 				return msg, params, checkpointParams
 			},
@@ -329,9 +328,9 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
-				msg.StakingValue = msg.StakingValue + 1
+				msg.StakingValue++
 
 				return msg, params, checkpointParams
 			},
@@ -343,7 +342,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				msg.StakingValue = params.MinStakingValueSat - 1
 
@@ -357,7 +356,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				msg.StakingValue = params.MaxStakingValueSat + 1
 
@@ -371,7 +370,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				// modify staking output so that staking output is valid but it will have
 				// invalid time
@@ -412,7 +411,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				// modify staking output so that staking output is valid but it will have
 				// invalid time
@@ -453,7 +452,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				// modify staking output so that staking output is valid but it will have
 				// invalid time
@@ -480,7 +479,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				// modify staking output so that staking output is valid but it will have
 				// invalid time
@@ -507,7 +506,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				currentSlashingTx, err := bbn.NewBTCTxFromBytes(*msg.SlashingTx)
 				require.NoError(t, err)
@@ -515,7 +514,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				invalidSlashingPkScript := make([]byte, len(params.SlashingPkScript))
 				copy(invalidSlashingPkScript, params.SlashingPkScript)
 				// change one byte in the pk script
-				invalidSlashingPkScript[0] = invalidSlashingPkScript[0] + 1
+				invalidSlashingPkScript[0]++
 
 				// slashing output must always be first output
 				currentSlashingTx.TxOut[0].PkScript = invalidSlashingPkScript
@@ -534,14 +533,14 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				currentSlashingTx, err := bbn.NewBTCTxFromBytes(*msg.SlashingTx)
 				require.NoError(t, err)
 
 				invalidHashBytes := currentSlashingTx.TxIn[0].PreviousOutPoint.Hash.CloneBytes()
 				// change one byte in the hash
-				invalidHashBytes[0] = invalidHashBytes[0] + 1
+				invalidHashBytes[0]++
 
 				invalidHash, err := chainhash.NewHash(invalidHashBytes)
 				require.NoError(t, err)
@@ -562,12 +561,12 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				currentSlashingTx, err := bbn.NewBTCTxFromBytes(*msg.SlashingTx)
 				require.NoError(t, err)
 
-				currentSlashingTx.TxIn[0].PreviousOutPoint.Index = currentSlashingTx.TxIn[0].PreviousOutPoint.Index + 1
+				currentSlashingTx.TxIn[0].PreviousOutPoint.Index++
 
 				serializedNewSlashingTx, err := bbn.SerializeBTCTx(currentSlashingTx)
 				require.NoError(t, err)
@@ -583,14 +582,14 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				sigInMessage := msg.DelegatorSlashingSig.MustMarshal()
 
 				invalidSlashingSig := make([]byte, len(sigInMessage))
 				copy(invalidSlashingSig, sigInMessage)
 				// change last byte is sig
-				invalidSlashingSig[63] = invalidSlashingSig[63] + 1
+				invalidSlashingSig[63]++
 
 				newSig, err := bbn.NewBIP340Signature(invalidSlashingSig)
 				require.NoError(t, err)
@@ -607,14 +606,14 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				currentSlashingTx, err := bbn.NewBTCTxFromBytes(*msg.UnbondingSlashingTx)
 				require.NoError(t, err)
 
 				invalidHashBytes := currentSlashingTx.TxIn[0].PreviousOutPoint.Hash.CloneBytes()
 				// change one byte in the hash
-				invalidHashBytes[0] = invalidHashBytes[0] + 1
+				invalidHashBytes[0]++
 
 				invalidHash, err := chainhash.NewHash(invalidHashBytes)
 				require.NoError(t, err)
@@ -635,12 +634,12 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				currentSlashingTx, err := bbn.NewBTCTxFromBytes(*msg.UnbondingSlashingTx)
 				require.NoError(t, err)
 
-				currentSlashingTx.TxIn[0].PreviousOutPoint.Index = currentSlashingTx.TxIn[0].PreviousOutPoint.Index + 1
+				currentSlashingTx.TxIn[0].PreviousOutPoint.Index++
 
 				serializedNewSlashingTx, err := bbn.SerializeBTCTx(currentSlashingTx)
 				require.NoError(t, err)
@@ -656,7 +655,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				currentUnbondingSlashingTx, err := bbn.NewBTCTxFromBytes(*msg.UnbondingSlashingTx)
 				require.NoError(t, err)
@@ -664,7 +663,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				invalidSlashingPkScript := make([]byte, len(params.SlashingPkScript))
 				copy(invalidSlashingPkScript, params.SlashingPkScript)
 				// change one byte in the pk script
-				invalidSlashingPkScript[0] = invalidSlashingPkScript[0] + 1
+				invalidSlashingPkScript[0]++
 
 				// slashing output must always be first output
 				currentUnbondingSlashingTx.TxOut[0].PkScript = invalidSlashingPkScript
@@ -683,14 +682,14 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				sigInMessage := msg.DelegatorUnbondingSlashingSig.MustMarshal()
 
 				invalidSlashingSig := make([]byte, len(sigInMessage))
 				copy(invalidSlashingSig, sigInMessage)
 				// change last byte is sig
-				invalidSlashingSig[63] = invalidSlashingSig[63] + 1
+				invalidSlashingSig[63]++
 
 				newSig, err := bbn.NewBIP340Signature(invalidSlashingSig)
 				require.NoError(t, err)
@@ -707,14 +706,14 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, delSk := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, delSk := createMsgDelegationForParams(r, t, params)
 
 				currentUnbondingTx, err := bbn.NewBTCTxFromBytes(msg.UnbondingTx)
 				require.NoError(t, err)
 
 				invalidHashBytes := currentUnbondingTx.TxIn[0].PreviousOutPoint.Hash.CloneBytes()
 				// change one byte in the hash
-				invalidHashBytes[0] = invalidHashBytes[0] + 1
+				invalidHashBytes[0]++
 
 				invalidHash, err := chainhash.NewHash(invalidHashBytes)
 				require.NoError(t, err)
@@ -746,7 +745,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, delSk := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, delSk := createMsgDelegationForParams(r, t, params)
 
 				currentUnbondingTx, err := bbn.NewBTCTxFromBytes(msg.UnbondingTx)
 				require.NoError(t, err)
@@ -778,7 +777,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, delSk := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, delSk := createMsgDelegationForParams(r, t, params)
 
 				currentUnbondingTx, err := bbn.NewBTCTxFromBytes(msg.UnbondingTx)
 				require.NoError(t, err)
@@ -798,7 +797,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 					params,
 				)
 
-				msg.UnbondingValue = msg.UnbondingValue + 1
+				msg.UnbondingValue++
 				msg.UnbondingTx = newUnbondingInfdo.serializedUnbondingTx
 				msg.UnbondingSlashingTx = newUnbondingInfdo.unbondingSlashingTx
 				msg.DelegatorUnbondingSlashingSig = newUnbondingInfdo.unbondingSlashinSig
@@ -813,7 +812,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, _ := createMsgDelegationForParams(r, t, params)
 
 				currentUnbondingTx, err := bbn.NewBTCTxFromBytes(msg.UnbondingTx)
 				require.NoError(t, err)
@@ -836,7 +835,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				checkpointParams := testCheckpointParams()
-				msg, delSk := createMsgDelegationForParams(r, t, params, checkpointParams)
+				msg, delSk := createMsgDelegationForParams(r, t, params)
 
 				currentUnbondingTx, err := bbn.NewBTCTxFromBytes(msg.UnbondingTx)
 				require.NoError(t, err)
@@ -855,7 +854,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 				)
 
 				// to cause the unbonding value mismatch with the unbonding tx output value
-				msg.UnbondingValue = msg.UnbondingValue + 1
+				msg.UnbondingValue++
 				msg.UnbondingTx = newUnbondingInfdo.serializedUnbondingTx
 				msg.UnbondingSlashingTx = newUnbondingInfdo.unbondingSlashingTx
 				msg.DelegatorUnbondingSlashingSig = newUnbondingInfdo.unbondingSlashinSig

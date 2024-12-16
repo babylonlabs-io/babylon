@@ -72,7 +72,6 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHand
 			// mint module with our own one.
 			err = upgradeMint(
 				ctx,
-				keepers.EncCfg.Codec,
 				&keepers.MintKeeper,
 				&keepers.AccountKeeper,
 				keepers.StakingKeeper,
@@ -118,7 +117,6 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHand
 
 func upgradeMint(
 	ctx sdk.Context,
-	cdc codec.Codec,
 	k *mintkeeper.Keeper,
 	ak *accountkeeper.AccountKeeper,
 	stk *stakingkeeper.Keeper,
@@ -237,7 +235,7 @@ func upgradeLaunch(
 		return fmt.Errorf("failed to upgrade tokens distribution: %w", err)
 	}
 
-	if err := upgradeAllowedStakingTransactions(ctx, encCfg.Codec, btcK, allowedStakingTxHashes); err != nil {
+	if err := upgradeAllowedStakingTransactions(ctx, btcK, allowedStakingTxHashes); err != nil {
 		return fmt.Errorf("failed to upgrade allowed staking transactions: %w", err)
 	}
 
@@ -274,7 +272,7 @@ func upgradeTokensDistribution(ctx sdk.Context, bankK bankkeeper.SendKeeper, tok
 	return nil
 }
 
-func upgradeAllowedStakingTransactions(ctx sdk.Context, cdc codec.Codec, btcStakingK *btcstkkeeper.Keeper, allowedStakingTxHashes string) error {
+func upgradeAllowedStakingTransactions(ctx sdk.Context, btcStakingK *btcstkkeeper.Keeper, allowedStakingTxHashes string) error {
 	data, err := LoadAllowedStakingTransactionHashesFromData(allowedStakingTxHashes)
 	if err != nil {
 		return fmt.Errorf("failed to load allowed staking transaction hashes from string %s: %w", allowedStakingTxHashes, err)

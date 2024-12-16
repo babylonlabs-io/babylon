@@ -102,7 +102,7 @@ func (uc *UpgradeConfigurer) ConfigureChain(chainConfig *chain.Config) error {
 
 	forkHeight := uc.forkHeight
 	if forkHeight > 0 {
-		forkHeight = forkHeight - config.ForkHeightPreUpgradeOffset
+		forkHeight -= config.ForkHeightPreUpgradeOffset
 	}
 
 	chainInitResource, err := uc.containerManager.RunChainInitResource(

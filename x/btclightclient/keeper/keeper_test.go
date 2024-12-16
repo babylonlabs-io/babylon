@@ -357,7 +357,7 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 		)
 
 		// bump the nonce, it should fail validation and tip should not change
-		chainToInsert[3].Nonce = chainToInsert[3].Nonce + 1
+		chainToInsert[3].Nonce++
 		errInvalidHeader := blcKeeper.InsertHeadersWithHookAndEvents(ctx, keepertest.NewBTCHeaderBytesList(chainToInsert))
 		require.Error(t, errInvalidHeader)
 		newTip := blcKeeper.GetTipInfo(ctx)

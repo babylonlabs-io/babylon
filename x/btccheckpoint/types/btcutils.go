@@ -81,11 +81,11 @@ func createBranch(nodes []*chainhash.Hash, numfLeafs uint, idx uint) []*chainhas
 		branch = append(branch, nodes[i+j])
 
 		// divide index by 2 as there are two times less nodes on second level
-		index = index >> 1
+		index >>= 1
 
 		// after getting node at this level we move to next one by advancing i by
 		// the size of the current level
-		i = i + size
+		i += size
 
 		// update the size to the next level size i.e (current level size / 2)
 		// + 1 is needed to correctly account for cases that the last node of the level

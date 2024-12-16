@@ -35,17 +35,18 @@ func getParams(opts servertypes.AppOptions) *chaincfg.Params {
 		panic("Bitcoin network config should be valid string")
 	}
 
-	if network == string(BtcMainnet) {
+	switch network {
+	case string(BtcMainnet):
 		return &chaincfg.MainNetParams
-	} else if network == string(BtcTestnet) {
+	case string(BtcTestnet):
 		return &chaincfg.TestNet3Params
-	} else if network == string(BtcSimnet) {
+	case string(BtcSimnet):
 		return &chaincfg.SimNetParams
-	} else if network == string(BtcRegtest) {
+	case string(BtcRegtest):
 		return &chaincfg.RegressionNetParams
-	} else if network == string(BtcSignet) {
+	case string(BtcSignet):
 		return &chaincfg.SigNetParams
-	} else {
+	default:
 		panic("Bitcoin network should be one of [mainet, testnet, simnet, regtest, signet]")
 	}
 }
