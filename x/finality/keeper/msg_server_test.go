@@ -522,6 +522,7 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	// generate and insert new finality provider
 	usePreApproval := false
 	stakingValue := int64(2 * 10e8)
+	stakingTime := uint16(1000)
 
 	fpSK, fpPK, fp := h.CreateFinalityProvider(r)
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
@@ -562,7 +563,7 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 		fpPK,
 		changeAddress.EncodeAddress(),
 		stakingValue,
-		1000,
+		stakingTime,
 		0,
 		0,
 		usePreApproval,
@@ -627,7 +628,8 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	status = actualDel.GetStatus(tipHeight, covenantQuorum)
 	require.Equal(t, bstypes.BTCDelegationStatus_UNBONDED, status)
 
-	// increases one bbn block
+	// increases one bbn block to get the voting power distribution cache
+	// from the previous block
 	headerInfo := h.Ctx.HeaderInfo()
 	headerInfo.Height += 1
 	h.Ctx = h.Ctx.WithHeaderInfo(headerInfo)
@@ -641,4 +643,21 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	h.NoError(err)
 	require.True(t, btcDel.TotalActiveSat.IsZero())
 
+	// reaches the btc block of expire
+	// an unbond event will be processed
+	// but should not reduce the TotalActiveSat again
+	headerInfo = h.Ctx.HeaderInfo()
+	headerInfo.Height += 1
+	h.Ctx = h.Ctx.WithHeaderInfo(headerInfo)
+
+	tipHeight += uint32(stakingTime)
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: tipHeight}).AnyTimes()
+
+	// process the events as expired btc delegation
+	h.BTCStakingKeeper.IndexBTCHeight(h.Ctx)
+	h.FinalityKeeper.UpdatePowerDist(h.Ctx)
+
+	btcDel, err = h.IncentivesKeeper.GetBTCDelegationRewardsTracker(h.Ctx, fp.Address(), actualDel.Address())
+	h.NoError(err)
+	require.True(t, btcDel.TotalActiveSat.IsZero())
 }
