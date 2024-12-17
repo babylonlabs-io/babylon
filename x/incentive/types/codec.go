@@ -23,6 +23,10 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
+
+	registry.RegisterImplementations((*sdk.Msg)(nil),
+		&MsgWithdrawReward{},
+	)
 }
 
 var (
