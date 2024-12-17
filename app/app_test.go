@@ -67,7 +67,7 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 
 func TestGetMaccPerms(t *testing.T) {
 	dup := GetMaccPerms()
-	require.Equal(t, MaccPerms, dup, "duplicated module account permissions differed from actual module account permissions")
+	require.Equal(t, maccPerms, dup, "duplicated module account permissions differed from actual module account permissions")
 }
 
 func TestUpgradeStateOnGenesis(t *testing.T) {

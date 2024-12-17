@@ -142,7 +142,7 @@ var (
 	// DefaultNodeHome default home directories for the application daemon
 	DefaultNodeHome string
 	// fee collector account, module accounts and their permissions
-	MaccPerms = map[string][]string{
+	maccPerms = map[string][]string{
 		authtypes.FeeCollectorName:     nil, // fee collector account
 		distrtypes.ModuleName:          nil,
 		minttypes.ModuleName:           {authtypes.Minter},
@@ -254,7 +254,7 @@ func NewBabylonApp(
 		&btcConfig,
 		encCfg,
 		bApp,
-		MaccPerms,
+		maccPerms,
 		homePath,
 		invCheckPeriod,
 		skipUpgradeHeights,
@@ -639,7 +639,7 @@ func (app *BabylonApp) LoadHeight(height int64) error {
 // ModuleAccountAddrs returns all the app's module account addresses.
 func (app *BabylonApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
-	for acc := range MaccPerms {
+	for acc := range maccPerms {
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 
@@ -787,7 +787,7 @@ func (app *BabylonApp) setupUpgradeHandlers() {
 // GetMaccPerms returns a copy of the module account permissions
 func GetMaccPerms() map[string][]string {
 	dupMaccPerms := make(map[string][]string)
-	for k, v := range MaccPerms {
+	for k, v := range maccPerms {
 		dupMaccPerms[k] = v
 	}
 	return dupMaccPerms

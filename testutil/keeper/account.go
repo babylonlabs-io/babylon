@@ -35,7 +35,7 @@ func AccountKeeper(
 		cdc,
 		runtime.NewKVStoreService(storeKey),
 		authtypes.ProtoBaseAccount,
-		app.MaccPerms,
+		app.GetMaccPerms(),
 		authcodec.NewBech32Codec(appparams.Bech32PrefixAccAddr),
 		appparams.Bech32PrefixAccAddr,
 		appparams.AccGov.String(),
