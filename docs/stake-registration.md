@@ -1,10 +1,10 @@
-# Transition of Existing Stakes to the Babylon Chain
+# Registration of Existing Stakes to the Babylon Chain
 
 This document is intended for Bitcoin stakers who have
 submitted confirmed Bitcoin staking transactions
 on the Bitcoin blockchain before the launch of
 the phase-2 Babylon blockchain (e.g., via participation
-in one of the phase-1 networks).
+in one of the Phase-1 networks).
 It outlines the eligibility criteria for the registration of
 the stakes, as well as the required data to submit to the
 Babylon blockchain to gain voting power and start earning
@@ -18,12 +18,12 @@ rewards.
 > assume that you are registering a stake that
 > has been created on the corresponding Bitcoin network
 > with the expected parameters (e.g.,
-> for phase-2 testnet, registering stakes from phase-1 testnet).
+> for phase-2 testnet, registering stakes from Phase-1 testnet).
 
 ## Registration Eligibility
 
 Bitcoin stakers can hold multiple stakes. The following
-flowchart outlines the criteria for each stake's transition.
+flowchart outlines the criteria for each stake's registration.
 Note that eligibility is assessed on a
 *per-stake* basis, meaning that some stakes
 may be eligible for registration while others are not.
@@ -48,12 +48,12 @@ it meets the following criteria:
    defined by the Babylon blockchain, which are consistent with those of
    the Phase-1 system (e.g., covenant keys, and minimum and maximum stake requirements).
    Valid stakes include:
-   1. **Active stakes**: As classified by the phase-1 system.
-   2. **Overflow stakes**: Stakes that were valid but did not fit within phase-1
+   1. **Active stakes**: As classified by the Phase-1 system.
+   2. **Overflow stakes**: Stakes that were valid but did not fit within Phase-1
       staking caps will be accepted in phase-2.
-   3. **Stakes with malformed OP_RETURN**: Transactions rejected in phase-1
+   3. **Stakes with malformed OP_RETURN**: Transactions rejected in Phase-1
       due to malformed `OP_RETURN` outputs are still valid for the Babylon blockchain
-      if they meet all other criteria. Unlike phase-1, the Babylon blockchain
+      if they meet all other criteria. Unlike Phase-1, the Babylon blockchain
       does not require or check `OP_RETURN` outputs.
 
 #### Stake in the Allow-List
@@ -68,18 +68,18 @@ It has two important properties:
 * **Hardcoded Allow-List**: This list is embedded in the Babylon blockchain
   codebase and is visible to all users.
 * **Automatic Expiration**: The allow-list functionality has a fixed expiration
-  date to prevent abuse.
+  Babylon chain block height to prevent abuse.
 
-The allow-list contents and its expiration date will be chosen
-according to the network policies (e.g., test environments
+The allow-list contents and its expiration Babylon chain block height
+will be chosen according to the network policies (e.g., test environments
 might have different policies than mainnet ones).
 
 #### Finality Provider Registration
 
 The Babylon blockchain only accepts stakes that delegate to finality
-providers registered on the chain. Finality providers from phase-1
+providers registered on the chain. Finality providers from Phase-1
 must register anew in phase-2 before their delegators' stakes
-can transition.
+can register.
 
 If that is you, learn how to set up your Babylon blockchain
 finality provider stack and how to register
@@ -140,7 +140,7 @@ to on-demand unbond any time.
 
 Yes, you can create and register new stakes post-launch after
 the allow-list has expired.
-Unlike phase-1 staking, Babylon now offers an option
+Unlike Phase-1 staking, Babylon now offers an option
 to verify a stake's validity *before* locking it on Bitcoin.
 This avoids locking funds without proper verification by
 the chain. For more details, see the
