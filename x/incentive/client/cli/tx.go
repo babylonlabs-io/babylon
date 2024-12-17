@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -66,8 +65,6 @@ func NewSetWithdrawAddressCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			clientCtx = clientCtx.WithAccountRetriever(authtypes.AccountRetriever{})
 
 			delAddr := clientCtx.GetFromAddress()
 			withdrawAddr, err := sdk.AccAddressFromBech32(args[0])
