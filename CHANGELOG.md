@@ -49,6 +49,8 @@ Update btcstaking module docs to include EOI
 
 - [#324](https://github.com/babylonlabs-io/babylon/pull/324) Fix decrementing
 jailed fp counter
+- [#352](https://github.com/babylonlabs-io/babylon/pull/352) Fix: withdrawal cli 
+for rewards
 
 ### State Machine Breaking
 
