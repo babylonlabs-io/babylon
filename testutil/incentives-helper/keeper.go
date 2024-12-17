@@ -65,6 +65,7 @@ func (h *IncentiveHelper) CreateBtcDelegation(
 	fpPK *secp256k1.PublicKey,
 	stakingValue int64,
 	stakingTime uint16,
+	btcLightClientTipHeight uint32,
 ) (
 	stakingTxHash string, msgCreateBTCDel *bstypes.MsgCreateBTCDelegation, actualDel *bstypes.BTCDelegation, unbondingInfo *btcstkhelper.UnbondingTxInfo,
 ) {
@@ -86,7 +87,7 @@ func (h *IncentiveHelper) CreateBtcDelegation(
 		false,
 		false,
 		10,
-		30,
+		btcLightClientTipHeight,
 	)
 	h.NoError(err)
 
@@ -112,9 +113,10 @@ func (h *IncentiveHelper) CreateActiveBtcDelegation(
 ) (
 	stakingTxHash string, actualDel *bstypes.BTCDelegation, unbondingInfo *btcstkhelper.UnbondingTxInfo,
 ) {
-	stakingTxHash, msgCreateBTCDel, actualDel, unbondingInfo := h.CreateBtcDelegation(r, fpPK, stakingValue, stakingTime)
+	stakingTxHash, msgCreateBTCDel, actualDel, unbondingInfo := h.CreateBtcDelegation(r, fpPK, stakingValue, stakingTime, btcLightClientTipHeight)
 
-	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: btcLightClientTipHeight}).AnyTimes()
+	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: btcLightClientTipHeight}).MaxTimes(len(bsParams.CovenantPks) * 2)
 
 	h.GenerateAndSendCovenantSignatures(r, covenantSKs, msgCreateBTCDel, actualDel)
 	h.EqualBtcDelegationStatus(stakingTxHash, btcLightClientTipHeight, bstypes.BTCDelegationStatus_ACTIVE)
@@ -188,25 +190,4 @@ func (h *IncentiveHelper) FpAddPubRand(r *rand.Rand, sk *btcec.PrivateKey, start
 	_, err = h.FMsgServer.CommitPubRandList(h.Ctx, msgCommitPubRandList)
 	h.NoError(err)
 	return randListInfo
-}
-
-func (h *IncentiveHelper) FpAddPubRandAndFinalitySig(r *rand.Rand, sk *btcec.PrivateKey, startHeight uint64) {
-	randListInfo := h.FpAddPubRand(r, sk, startHeight)
-
-	// generate a vote
-	blockHeight := startHeight + uint64(1)
-	blockAppHash := datagen.GenRandomByteArray(r, 32)
-	signer := datagen.GenRandomAccount().Address
-	msg, err := datagen.NewMsgAddFinalitySig(
-		signer,
-		sk,
-		startHeight,
-		blockHeight,
-		randListInfo,
-		blockAppHash,
-	)
-	h.NoError(err)
-
-	_, err = h.FMsgServer.AddFinalitySig(h.Ctx, msg)
-	h.NoError(err)
 }
