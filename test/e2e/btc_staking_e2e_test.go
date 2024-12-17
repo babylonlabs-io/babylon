@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
@@ -225,7 +226,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 		// after adding the covenant signatures it panics with "BTC delegation rewards tracker has a negative amount of TotalActiveSat"
 		nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
 			// add covenant sigs
-			nonValidatorNode.AddCovenantSigs(
+			nonValidatorNode.AddCovenantSigsFromVal(
 				covenantSlashingSigs[i].CovPk,
 				stakingTxHash,
 				covenantSlashingSigs[i].AdaptorSigs,
@@ -888,13 +889,16 @@ func CreateNodeFP(
 	t *testing.T,
 	r *rand.Rand,
 	fpSk *btcec.PrivateKey,
-	node *chain.NodeConfig) (newFP *bstypes.FinalityProvider) {
+	node *chain.NodeConfig,
+) (newFP *bstypes.FinalityProvider) {
 	// the node is the new FP
 	nodeAddr, err := sdk.AccAddressFromBech32(node.PublicAddress)
 	require.NoError(t, err)
 
 	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpSk, nodeAddr)
 	require.NoError(t, err)
+
+	previousFps := node.QueryFinalityProviders()
 
 	// use a higher commission to ensure the reward is more than tx fee of a finality sig
 	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
@@ -906,11 +910,17 @@ func CreateNodeFP(
 
 	// query the existence of finality provider and assert equivalence
 	actualFps := node.QueryFinalityProviders()
-	require.Len(t, actualFps, 1)
+	require.Len(t, actualFps, len(previousFps)+1)
 
-	equalFinalityProviderResp(t, newFP, actualFps[0])
+	for _, fpResp := range actualFps {
+		if !strings.EqualFold(fpResp.Addr, newFP.Addr) {
+			continue
+		}
+		equalFinalityProviderResp(t, newFP, fpResp)
+		return newFP
+	}
 
-	return newFP
+	return nil
 }
 
 // CovenantBTCPKs returns the covenantBTCPks as slice from parameters

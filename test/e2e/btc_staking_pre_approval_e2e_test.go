@@ -221,7 +221,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test2SubmitCovenantSignature() {
 
 	for i := 0; i < int(s.covenantQuorum); i++ {
 		nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
-			nonValidatorNode.AddCovenantSigs(
+			nonValidatorNode.AddCovenantSigsFromVal(
 				covenantSlashingSigs[i].CovPk,
 				stakingTxHash,
 				covenantSlashingSigs[i].AdaptorSigs,
