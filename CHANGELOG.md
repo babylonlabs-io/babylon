@@ -46,6 +46,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 Update btcstaking module docs to include EOI
 - [#348](https://github.com/babylonlabs-io/babylon/pull/348) refactory `PrivateSigner`
 and module account vars in appparams
+- [#351](https://github.com/babylonlabs-io/babylon/pull/351) docs: Add state
+transition docs.
 
 ### Bug fixes
 
