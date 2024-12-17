@@ -8,4 +8,5 @@ import (
 var (
 	_ sdk.Msg = &MsgWithdrawReward{}
 	_ sdk.Msg = &MsgUpdateParams{}
+	_ sdk.Msg = &MsgSetWithdrawAddress{}
 )
