@@ -26,8 +26,7 @@ func TestECDSA(t *testing.T) {
 	require.NotNil(t, sk)
 	require.NotNil(t, pk)
 	// sign
-	sig, err := ecdsa.Sign(sk, testMsg)
-	require.NoError(t, err)
+	sig := ecdsa.Sign(sk, testMsg)
 	testSigBytes, err := base64.StdEncoding.DecodeString(testSigBase64)
 	require.NoError(t, err)
 	// ensure sig is same as that in test vector
