@@ -59,7 +59,7 @@ func (d *BTCDelegation) GetFpIdx(fpBTCPK *bbn.BIP340PubKey) int {
 	return -1
 }
 
-// Address returns the bech32 fp address
+// Address returns the bech32 BTC staker address
 func (d *BTCDelegation) Address() sdk.AccAddress {
 	return sdk.MustAccAddressFromBech32(d.StakerAddr)
 }

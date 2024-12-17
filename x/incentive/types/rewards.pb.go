@@ -32,7 +32,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // The period is ommited here and should be part of the key used to store this structure.
 // Key: Prefix + Finality provider bech32 address + Period.
 type FinalityProviderHistoricalRewards struct {
-	// The cumulative rewards of that finality provider at some specific period
+	// The cumulative rewards of that finality provider per sat until that period
 	// This coins will aways increase the value, never be reduced due to keep acumulation
 	// and when the cumulative rewards will be used to distribute rewards, 2 periods will
 	// be loaded, calculate the difference and multiplied by the total sat amount delegated
