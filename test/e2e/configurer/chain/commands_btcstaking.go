@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/stretchr/testify/require"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -17,9 +18,11 @@ import (
 	"github.com/btcsuite/btcd/wire"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/cometbft/cometbft/libs/bytes"
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/babylonlabs-io/babylon/crypto/eots"
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 	"github.com/babylonlabs-io/babylon/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
@@ -418,6 +421,37 @@ func (n *NodeConfig) CreateBTCDelegationAndCheck(
 	require.NotNil(t, btcDelegationResp)
 	require.Equal(t, btcDelegationResp.BtcDelegation.StakerAddr, delAddr)
 	require.Equal(t, btcStakerSK.PubKey().SerializeCompressed()[1:], btcDelegationResp.BtcDelegation.BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+}
+
+func (n *NodeConfig) AddFinalitySignatureToBlock(
+	fpBTCSK *secp256k1.PrivateKey,
+	fpBTCPK *bbn.BIP340PubKey,
+	blockHeight uint64,
+	privateRand *secp256k1.ModNScalar,
+	pubRand *bbn.SchnorrPubRand,
+	proof cmtcrypto.Proof,
+) (blockVotedAppHash bytes.HexBytes) {
+	blockToVote, err := n.QueryBlock(int64(blockHeight))
+	require.NoError(n.t, err)
+	appHash := blockToVote.AppHash
+
+	msgToSign := append(sdk.Uint64ToBigEndian(blockHeight), appHash...)
+	// generate EOTS signature
+	fp1Sig, err := eots.Sign(fpBTCSK, privateRand, msgToSign)
+	require.NoError(n.t, err)
+
+	finalitySig := bbn.NewSchnorrEOTSSigFromModNScalar(fp1Sig)
+
+	// submit finality signature
+	n.AddFinalitySig(
+		fpBTCPK,
+		blockHeight,
+		pubRand,
+		proof,
+		appHash,
+		finalitySig,
+	)
+	return appHash
 }
 
 // CovenantBTCPKs returns the covenantBTCPks as slice from parameters

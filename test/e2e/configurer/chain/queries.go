@@ -408,3 +408,43 @@ func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) sdk.TxRespon
 
 	return txResp
 }
+
+func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized() {
+	// finalize epochs from 1 to the current epoch
+	currentEpoch, err := n.QueryCurrentEpoch()
+	require.NoError(n.t, err)
+
+	// wait until the end epoch is sealed
+	require.Eventually(n.t, func() bool {
+		resp, err := n.QueryRawCheckpoint(currentEpoch)
+		if err != nil {
+			return false
+		}
+		return resp.Status == ct.Sealed
+	}, time.Minute*2, time.Millisecond*50)
+	n.FinalizeSealedEpochs(1, currentEpoch)
+
+	// ensure the committed epoch is finalized
+	lastFinalizedEpoch := uint64(0)
+	require.Eventually(n.t, func() bool {
+		lastFinalizedEpoch, err = n.QueryLastFinalizedEpoch()
+		if err != nil {
+			return false
+		}
+		return lastFinalizedEpoch >= currentEpoch
+	}, time.Minute, time.Millisecond*50)
+}
+
+func (n *NodeConfig) WaitFinalityIsActivated() (activatedHeight uint64) {
+	var err error
+	require.Eventually(n.t, func() bool {
+		activatedHeight, err = n.QueryActivatedHeight()
+		if err != nil {
+			return false
+		}
+		// TODO: check why never becomes active with fps and commited pub rand
+		return activatedHeight > 0
+	}, time.Minute*5, time.Millisecond*50)
+	n.t.Logf("the activated height is %d", activatedHeight)
+	return activatedHeight
+}
