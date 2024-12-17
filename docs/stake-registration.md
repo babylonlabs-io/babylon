@@ -91,7 +91,10 @@ to set up your finality provider stack and register on the Babylon blockchain.
 ## Stake Registration Process
 
 Registering an eligible stake involves submitting your Bitcoin staking
-transaction and supplementary data to the Babylon blockchain.
+transaction together **with a merkle proof of inclusion** and
+supplementary data to the Babylon blockchain. The data submitted
+should be compliant to the Bitcoin Staking parameters for the
+Bitcoin block height the staking transaction has been included.
 Key data include:
 1. **Staking Transaction and Merkle Proof**: Proof that the staking 
    transaction was confirmed in a valid Bitcoin block.
@@ -114,6 +117,13 @@ Key data include:
    A proof of possession associating the Bitcoin key that controls your stake
    with the Babylon chain account which you would like to receive the network
    rewards in.
+
+> **⚠️  Important**: Always include a Merkle Proof when registering your
+> Phase-1 staking transaction. Without it, the Babylon system will treat
+> your stake as a new one subject to the latest Bitcoin Staking Parameters.
+> If these parameters differ from those used to create your stake, the system
+> will permanently reject it. In this case, your only option would be to
+> on-demand unbond and stake again.
 
 This data is submitted as a transaction on the Babylon blockchain,
 requiring native Babylon blockchain funds for transaction fees.
