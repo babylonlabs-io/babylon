@@ -77,6 +77,11 @@ type BtcRewardsDistribution struct {
 	covenantSKs     []*btcec.PrivateKey
 	covenantWallets []string
 
+	finalityIdx              uint64
+	finalityBlockHeightVoted uint64
+	fp1RandListInfo          *datagen.RandListInfo
+	fp2RandListInfo          *datagen.RandListInfo
+
 	configurer configurer.Configurer
 }
 
@@ -217,8 +222,11 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 
 	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitStartHeight, numPubRand)
 	s.NoError(err)
+	s.fp1RandListInfo = fp1RandListInfo
+
 	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, commitStartHeight, numPubRand)
 	s.NoError(err)
+	s.fp2RandListInfo = fp2RandListInfo
 
 	n1.CommitPubRandList(
 		fp1CommitPubRandList.FpBtcPk,
@@ -239,27 +247,27 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 	n1.WaitUntilCurrentEpochIsSealedAndFinalized()
 
 	// activated height is never returned
-	activatedHeight := n1.WaitFinalityIsActivated()
+	s.finalityBlockHeightVoted = n1.WaitFinalityIsActivated()
 
 	// submit finality signature
-	idx := activatedHeight - commitStartHeight
+	s.finalityIdx = s.finalityBlockHeightVoted - commitStartHeight
 
 	appHash := n1.AddFinalitySignatureToBlock(
 		s.fp1BTCSK,
 		s.fp1.BtcPk,
-		activatedHeight,
-		fp1RandListInfo.SRList[idx],
-		&fp1RandListInfo.PRList[idx],
-		*fp1RandListInfo.ProofList[idx].ToProto(),
+		s.finalityBlockHeightVoted,
+		s.fp1RandListInfo.SRList[s.finalityIdx],
+		&s.fp1RandListInfo.PRList[s.finalityIdx],
+		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
 	)
 
 	n2.AddFinalitySignatureToBlock(
 		s.fp2BTCSK,
 		s.fp2.BtcPk,
-		activatedHeight,
-		fp2RandListInfo.SRList[idx],
-		&fp2RandListInfo.PRList[idx],
-		*fp2RandListInfo.ProofList[idx].ToProto(),
+		s.finalityBlockHeightVoted,
+		s.fp2RandListInfo.SRList[s.finalityIdx],
+		&s.fp2RandListInfo.PRList[s.finalityIdx],
+		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
 	)
 
 	// ensure vote is eventually cast
@@ -269,9 +277,11 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 		return len(finalizedBlocks) > 0
 	}, time.Minute, time.Millisecond*50)
 
-	s.Equal(activatedHeight, finalizedBlocks[0].Height)
+	n2.WaitForNextBlocks(2)
+
+	s.Equal(s.finalityBlockHeightVoted, finalizedBlocks[0].Height)
 	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
-	s.T().Logf("the block %d is finalized", activatedHeight)
+	s.T().Logf("the block %d is finalized", s.finalityBlockHeightVoted)
 }
 
 // Test5CheckRewardsFirstDelegations verifies the rewards independent of mint amounts
@@ -337,6 +347,9 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	s.Equal(del2BalanceAfterWithdraw.String(), del2BalanceBeforeWithdraw.Add(btcDel2RewardGauge.Coins...).String())
 }
 
+// Test6ActiveLastDelegation creates a new btc delegation
+// (fp2, del2) with 6_00000000 sats and sends the covenant signatures
+// needed.
 func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 	chainA := s.configurer.GetChainConfig(0)
 	n2, err := chainA.GetNodeAtIndex(2)
@@ -374,8 +387,57 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 	}
 }
 
+// Test7FinalityVoteBlock votes in one more block from both finality providers
 func (s *BtcRewardsDistribution) Test7FinalityVoteBlock() {
+	chainA := s.configurer.GetChainConfig(0)
+	n2, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+	// covenants are at n1
+	n1, err := chainA.GetNodeAtIndex(1)
+	s.NoError(err)
+
+	n1.WaitUntilCurrentEpochIsSealedAndFinalized()
+
+	// submit finality signature
+	s.finalityIdx++
+	s.finalityBlockHeightVoted++
+
+	appHash := n1.AddFinalitySignatureToBlock(
+		s.fp1BTCSK,
+		s.fp1.BtcPk,
+		s.finalityBlockHeightVoted,
+		s.fp1RandListInfo.SRList[s.finalityIdx],
+		&s.fp1RandListInfo.PRList[s.finalityIdx],
+		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+	)
+
+	n2.AddFinalitySignatureToBlock(
+		s.fp2BTCSK,
+		s.fp2.BtcPk,
+		s.finalityBlockHeightVoted,
+		s.fp2RandListInfo.SRList[s.finalityIdx],
+		&s.fp2RandListInfo.PRList[s.finalityIdx],
+		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+	)
+
+	// ensure vote is eventually cast
+	var finalizedBlocks []*ftypes.IndexedBlock
+	s.Eventually(func() bool {
+		finalizedBlocks = n1.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
+		return len(finalizedBlocks) > 0
+	}, time.Minute, time.Millisecond*50)
+
+	n2.WaitForNextBlocks(2)
+
+	s.Equal(s.finalityBlockHeightVoted, finalizedBlocks[0].Height)
+	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
+	s.T().Logf("the block %d is finalized", s.finalityBlockHeightVoted)
 }
+
+func (s *BtcRewardsDistribution) Test8CheckRewards() {
+}
+
+// TODO(rafilx): Slash a FP and expect rewards to be withdraw.
 
 func (s *BtcRewardsDistribution) CreateBTCDelegationAndCheck(
 	n *chain.NodeConfig,
