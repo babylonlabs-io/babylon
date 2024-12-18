@@ -3,6 +3,7 @@ package chain
 import (
 	"encoding/hex"
 	"fmt"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -76,6 +77,9 @@ func (c *Config) CreateNode(initNode *initialization.Node) *NodeConfig {
 		t:                c.t,
 	}
 	c.NodeConfigs = append(c.NodeConfigs, nodeConfig)
+	sort.Slice(c.NodeConfigs, func(i, j int) bool {
+		return c.NodeConfigs[i].Name > c.NodeConfigs[j].Name
+	})
 	return nodeConfig
 }
 

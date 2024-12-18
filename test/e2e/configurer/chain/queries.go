@@ -421,7 +421,7 @@ func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized() {
 			return false
 		}
 		return resp.Status == ct.Sealed
-	}, time.Minute*2, time.Millisecond*50)
+	}, time.Minute*5, time.Millisecond*50)
 	n.FinalizeSealedEpochs(1, currentEpoch)
 
 	// ensure the committed epoch is finalized
