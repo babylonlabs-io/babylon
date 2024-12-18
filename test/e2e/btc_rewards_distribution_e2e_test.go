@@ -11,6 +11,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/cometbft/cometbft/libs/bytes"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -354,6 +355,8 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 	// fp2Del2
 	s.CreateBTCDelegationAndCheck(n2, wDel2, s.fp2, s.del2BTCSK, s.del2Addr, s.fp2Del2StakingAmt)
 
+	s.AddFinalityVote()
+
 	allDelegations := n2.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
 	s.Equal(len(allDelegations), 4)
 
@@ -373,6 +376,8 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 
 	// wait for a block so that above txs take effect
 	n1.WaitForNextBlock()
+
+	s.AddFinalityVote()
 
 	// ensure the BTC delegation has covenant sigs now
 	allDelegations = n1.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
@@ -397,11 +402,10 @@ func (s *BtcRewardsDistribution) Test7FinalityVoteBlock() {
 	n1, err := chainA.GetNodeAtIndex(1)
 	s.NoError(err)
 
-	lastFinalizedEpoch, err := n1.QueryLastFinalizedEpoch()
-	s.NoError(err)
-	lastFinalizedEpoch++
-
-	n1.WaitUntilCurrentEpochIsSealedAndFinalized(lastFinalizedEpoch)
+	// lastFinalizedEpoch, err := n1.QueryLastFinalizedEpoch()
+	// s.NoError(err)
+	// lastFinalizedEpoch++
+	// n1.WaitUntilCurrentEpochIsSealedAndFinalized(lastFinalizedEpoch)
 
 	// submit finality signature
 	s.finalityIdx++
@@ -507,6 +511,37 @@ func (s *BtcRewardsDistribution) Test8CheckRewards() {
 }
 
 // TODO(rafilx): Slash a FP and expect rewards to be withdraw.
+
+func (s *BtcRewardsDistribution) AddFinalityVote() (appHash bytes.HexBytes) {
+	chainA := s.configurer.GetChainConfig(0)
+	n2, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+	n1, err := chainA.GetNodeAtIndex(1)
+	s.NoError(err)
+
+	s.finalityIdx++
+	s.finalityBlockHeightVoted++
+
+	appHash = n1.AddFinalitySignatureToBlock(
+		s.fp1BTCSK,
+		s.fp1.BtcPk,
+		s.finalityBlockHeightVoted,
+		s.fp1RandListInfo.SRList[s.finalityIdx],
+		&s.fp1RandListInfo.PRList[s.finalityIdx],
+		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+	)
+
+	n2.AddFinalitySignatureToBlock(
+		s.fp2BTCSK,
+		s.fp2.BtcPk,
+		s.finalityBlockHeightVoted,
+		s.fp2RandListInfo.SRList[s.finalityIdx],
+		&s.fp2RandListInfo.PRList[s.finalityIdx],
+		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+	)
+
+	return appHash
+}
 
 // UpdateRewardGauges update the current reward gauges on the test suite
 func (s *BtcRewardsDistribution) UpdateRewardGauges(n *chain.NodeConfig) {
