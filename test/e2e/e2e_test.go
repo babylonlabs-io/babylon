@@ -24,9 +24,9 @@ func TestBTCStakingTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingTestSuite))
 }
 
-// TestRewardsDistributionBTC tests BTC staking rewards distribution end-to-end
+// TestBTCRewardsDistribution tests BTC staking rewards distribution end-to-end
 // that involves x/btcstaking, x/finality, x/incentives and x/mint to give out rewards.
-func TestRewardsDistributionBTC(t *testing.T) {
+func TestBTCRewardsDistribution(t *testing.T) {
 	suite.Run(t, new(BtcRewardsDistribution))
 }
 
