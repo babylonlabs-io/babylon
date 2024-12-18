@@ -7,17 +7,21 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/testutil/coins"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 )
 
 type BtcRewardsDistribution struct {
@@ -73,7 +77,7 @@ func (s *BtcRewardsDistribution) SetupSuite() {
 	s.del1BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
 	s.del2BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
 
-	s.fp1Del1StakingAmt = int64(9 * 10e8)
+	s.fp1Del1StakingAmt = int64(2 * 10e8)
 	s.fp1Del2StakingAmt = int64(4 * 10e8)
 	s.fp2Del1StakingAmt = int64(2 * 10e8)
 	s.fp2Del2StakingAmt = int64(6 * 10e8)
@@ -200,6 +204,9 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 
 	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitStartHeight, numPubRand)
 	s.NoError(err)
+	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, commitStartHeight, numPubRand)
+	s.NoError(err)
+
 	n1.CommitPubRandList(
 		fp1CommitPubRandList.FpBtcPk,
 		fp1CommitPubRandList.StartHeight,
@@ -208,13 +215,6 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 		fp1CommitPubRandList.Sig,
 	)
 
-	n1.WaitUntilCurrentEpochIsSealedAndFinalized()
-
-	// activated height is never returned
-	activatedHeight := n1.WaitFinalityIsActivated()
-
-	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, commitStartHeight, numPubRand)
-	s.NoError(err)
 	n2.CommitPubRandList(
 		fp2CommitPubRandList.FpBtcPk,
 		fp2CommitPubRandList.StartHeight,
@@ -222,10 +222,13 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 		fp2CommitPubRandList.Commitment,
 		fp2CommitPubRandList.Sig,
 	)
-	// latestBlock := n1.LatestBlockNumber()
-	/*
-		submit finality signature
-	*/
+
+	n1.WaitUntilCurrentEpochIsSealedAndFinalized()
+
+	// activated height is never returned
+	activatedHeight := n1.WaitFinalityIsActivated()
+
+	// submit finality signature
 	idx := activatedHeight - commitStartHeight
 
 	appHash := n1.AddFinalitySignatureToBlock(
@@ -256,20 +259,78 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 	s.Equal(activatedHeight, finalizedBlocks[0].Height)
 	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 	s.T().Logf("the block %d is finalized", activatedHeight)
+}
 
-	// // ensure finality provider has received rewards after the block is finalised
-	// fpRewardGauges, err := n1.QueryRewardGauge(fpBabylonAddr)
-	// s.NoError(err)
-	// fpRewardGauge, ok := fpRewardGauges[itypes.FinalityProviderType.String()]
-	// s.True(ok)
-	// s.True(fpRewardGauge.Coins.IsAllPositive())
-	// // ensure BTC delegation has received rewards after the block is finalised
-	// btcDelRewardGauges, err := n1.QueryRewardGauge(delBabylonAddr)
-	// s.NoError(err)
-	// btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTCDelegationType.String()]
-	// s.True(ok)
-	// s.True(btcDelRewardGauge.Coins.IsAllPositive())
-	// s.T().Logf("the finality provider received rewards for providing finality")
+// Test5CheckRewardsFirstDelegations verifies the rewards independent of mint amounts
+func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
+	n1, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(1)
+	s.NoError(err)
+
+	// comments on ubbn amounts are for the following mint config
+	// babylond q mint  inflation
+	// 0.080000000000000000
+	// babylond q mint annual-provisions
+	// 720000000000.000000000000000000
+
+	// Current setup of voting power
+	// (fp1, del1) => 2_00000000
+	// (fp1, del2) => 4_00000000
+	// (fp2, del1) => 2_00000000
+
+	// The sum per bech32 address will be
+	// (fp1)  => 6_00000000
+	// (fp2)  => 2_00000000
+	// (del1) => 4_00000000
+	// (del2) => 4_00000000
+
+	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
+	fp1RewardGauges, err := n1.QueryRewardGauge(s.fp1.Address())
+	s.NoError(err)
+	fp1RewardGauge, ok := fp1RewardGauges[itypes.FinalityProviderType.String()]
+	s.True(ok)
+	s.True(fp1RewardGauge.Coins.IsAllPositive()) // 2674ubbn
+
+	fp2RewardGauges, err := n1.QueryRewardGauge(s.fp2.Address())
+	s.NoError(err)
+	fp2RewardGauge, ok := fp2RewardGauges[itypes.FinalityProviderType.String()]
+	s.True(ok)
+	s.True(fp2RewardGauge.Coins.IsAllPositive()) // 891ubbn
+
+	coins.RequireCoinsDiffInPointOnePercentMargin(
+		s.T(),
+		fp2RewardGauge.Coins.MulInt(sdkmath.NewIntFromUint64(3)), // 2673
+		fp1RewardGauge.Coins,
+	)
+
+	// The rewards distributed to the delegators should be the same for each delegator
+	btcDel1RewardGauges, err := n1.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
+	s.NoError(err)
+	btcDel1RewardGauge, ok := btcDel1RewardGauges[itypes.BTCDelegationType.String()]
+	s.True(ok)
+	s.True(btcDel1RewardGauge.Coins.IsAllPositive()) // 7130ubbn
+
+	btcDel2RewardGauges, err := n1.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
+	s.NoError(err)
+	btcDel2RewardGauge, ok := btcDel2RewardGauges[itypes.BTCDelegationType.String()]
+	s.True(ok)
+	s.True(btcDel2RewardGauge.Coins.IsAllPositive()) // 7130ubbn
+
+	s.Equal(btcDel1RewardGauge.Coins.String(), btcDel2RewardGauge.Coins.String())
+
+	// Withdraw the reward just for del2
+	del2BalanceBeforeWithdraw, err := n1.QueryBalances(s.del2Addr)
+	s.NoError(err)
+
+	n1.WithdrawReward(itypes.BTCDelegationType.String(), s.del2Addr)
+	n1.WaitForNextBlock()
+
+	del2BalanceAfterWithdraw, err := n1.QueryBalances(s.del2Addr)
+	s.NoError(err)
+
+	s.Equal(del2BalanceAfterWithdraw.String(), del2BalanceBeforeWithdraw.Add(btcDel2RewardGauge.Coins...).String())
+}
+
+func (s *BtcRewardsDistribution) Test6WithdrawReward() {
 }
 
 // func (s *BtcRewardsDistribution) Test4WithdrawReward() {
