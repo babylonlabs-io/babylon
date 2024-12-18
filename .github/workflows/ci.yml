@@ -20,6 +20,15 @@ jobs:
      run-integration-tests: false
      run-lint: true
 
+  proto_lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run proto lint
+        run: |
+          make proto-lint
+
   docker_pipeline:
     uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.7.0
     secrets: inherit
