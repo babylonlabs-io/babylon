@@ -29,6 +29,8 @@ func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, er
 		return BTCDelegationStatus_ACTIVE, nil
 	case "unbonded":
 		return BTCDelegationStatus_UNBONDED, nil
+	case "expired":
+		return BTCDelegationStatus_EXPIRED, nil
 	case "any":
 		return BTCDelegationStatus_ANY, nil
 	default:
@@ -132,10 +134,16 @@ func (d *BTCDelegation) GetStatus(
 
 	// At this point we already have covenant quorum and inclusion proof,
 	// we can check the status based on the BTC height
-	if btcHeight < d.StartHeight || btcHeight+d.UnbondingTime > d.EndHeight {
+	if btcHeight < d.StartHeight {
 		// staking tx's timelock has not begun, or is less than unbonding time BTC
-		// blocks left, or is expired
+		// blocks left
 		return BTCDelegationStatus_UNBONDED
+	}
+
+	// if the endheight is lower than the btc height + unbonding time
+	// the btc delegation should be considered expired
+	if btcHeight+d.UnbondingTime > d.EndHeight {
+		return BTCDelegationStatus_EXPIRED
 	}
 
 	// - we have covenant quorum

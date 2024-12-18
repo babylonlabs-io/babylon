@@ -176,7 +176,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	// of BTC delegations that newly become active under this provider
 	activeBTCDels := map[string][]*types.BTCDelegation{}
 	// a map where key is unbonded BTC delegation's staking tx hash
-	unbondedBTCDels := map[string]*btcDelWithStkTxHash{}
+	unbondedBTCDels := map[string]struct{}{}
 	// a map where key is slashed finality providers' BTC PK
 	slashedFPs := map[string]struct{}{}
 	// a map where key is jailed finality providers' BTC PK
@@ -216,13 +216,18 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				}
 				newActiveBtcDels = append(newActiveBtcDels, btcDelWithStkTxHash)
 			case types.BTCDelegationStatus_UNBONDED:
-				// emit expired event if it is not early unbonding
-				if !btcDel.IsUnbondedEarly() {
-					types.EmitExpiredDelegationEvent(sdkCtx, delStkTxHash)
-				}
-
+				newUnbondedBtcDels = append(newUnbondedBtcDels, btcDelWithStkTxHash)
 				// add the unbonded BTC delegation to the map
-				unbondedBTCDels[delStkTxHash] = btcDelWithStkTxHash
+				unbondedBTCDels[delStkTxHash] = struct{}{}
+			case types.BTCDelegationStatus_EXPIRED:
+				types.EmitExpiredDelegationEvent(sdkCtx, delStkTxHash)
+
+				if !btcDel.IsUnbondedEarly() {
+					// only adds to the new unbonded list if it hasn't
+					// previously unbonded with types.BTCDelegationStatus_UNBONDED
+					newUnbondedBtcDels = append(newUnbondedBtcDels, btcDelWithStkTxHash)
+					unbondedBTCDels[delStkTxHash] = struct{}{}
+				}
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
 			// record slashed fps
@@ -285,14 +290,8 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		for j := range dc.FinalityProviders[i].BtcDels {
 			btcDel := *dc.FinalityProviders[i].BtcDels[j]
 
-			btcDelUnbondedWithStkTxHash, isUnbondedBtcDelegation := unbondedBTCDels[btcDel.StakingTxHash]
+			_, isUnbondedBtcDelegation := unbondedBTCDels[btcDel.StakingTxHash]
 			if isUnbondedBtcDelegation {
-				// the list of new unbonded BTC delegations needs to be added
-				// at this point, due to possible duplication of Unbonding BTC events
-				// Early unbond and expiration. When the unbonded BTC delegation is
-				// processed the seccond time, the FP already doesn't have this delegation
-				// inside their FinalityProviderDistInfo.BtcDels list.
-				newUnbondedBtcDels = append(newUnbondedBtcDels, btcDelUnbondedWithStkTxHash)
 				continue
 			}
 			// if it is not unbonded add to the del dist info
