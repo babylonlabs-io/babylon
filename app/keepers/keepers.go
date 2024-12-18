@@ -84,7 +84,18 @@ import (
 	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
 	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
+
+	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
+	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 )
+
+var tokenFactoryCapabilities = []string{
+	tokenfactorytypes.EnableBurnFrom,
+	tokenfactorytypes.EnableForceTransfer,
+	tokenfactorytypes.EnableSetMetadata,
+	tokenfactorytypes.EnableSudoMint,
+	tokenfactorytypes.EnableCommunityPoolFeeFunding,
+}
 
 // Capabilities of the IBC wasm contracts
 func WasmCapabilities() []string {
@@ -121,6 +132,8 @@ type AppKeepers struct {
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
 	CircuitKeeper         circuitkeeper.Keeper
+
+	TokenFactoryKeeper tokenfactorykeeper.Keeper
 
 	// Babylon modules
 	EpochingKeeper       epochingkeeper.Keeper
@@ -191,6 +204,7 @@ func (ak *AppKeepers) InitKeepers(
 		govtypes.StoreKey, paramstypes.StoreKey, consensusparamtypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, circuittypes.StoreKey, capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
+		tokenfactorytypes.StoreKey,
 		// Babylon modules
 		epochingtypes.StoreKey,
 		btclightclienttypes.StoreKey,
@@ -410,7 +424,20 @@ func (ak *AppKeepers) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper, &ak.ZoneConciergeKeeper), wasmOpts...)
+	// Create the TokenFactory Keeper
+	ak.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
+		appCodec,
+		ak.keys[tokenfactorytypes.StoreKey],
+		maccPerms,
+		ak.AccountKeeper,
+		ak.BankKeeper,
+		ak.DistrKeeper,
+		tokenFactoryCapabilities,
+		tokenfactorykeeper.DefaultIsSudoAdminFunc,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.TokenFactoryKeeper, &ak.EpochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper, &ak.ZoneConciergeKeeper), wasmOpts...)
 	wasmOpts = append(owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(
@@ -657,6 +684,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// whole usage of params module
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
+	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)
 
 	return paramsKeeper
 }
