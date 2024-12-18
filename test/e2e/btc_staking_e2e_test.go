@@ -262,7 +262,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.ErrorContains(err, itypes.ErrRewardGaugeNotFound.Error())
 	delBabylonAddr := fpBabylonAddr
 
-	nonValidatorNode.WaitUntilCurrentEpochIsSealedAndFinalized()
+	nonValidatorNode.WaitUntilCurrentEpochIsSealedAndFinalized(1)
 
 	// ensure btc staking is activated
 	// check how this does not errors out

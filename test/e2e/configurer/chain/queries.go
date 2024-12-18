@@ -409,7 +409,7 @@ func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) sdk.TxRespon
 	return txResp
 }
 
-func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized() {
+func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch uint64) (lastFinalizedEpoch uint64) {
 	// finalize epochs from 1 to the current epoch
 	currentEpoch, err := n.QueryCurrentEpoch()
 	require.NoError(n.t, err)
@@ -422,10 +422,9 @@ func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized() {
 		}
 		return resp.Status == ct.Sealed
 	}, time.Minute*5, time.Millisecond*50)
-	n.FinalizeSealedEpochs(1, currentEpoch)
+	n.FinalizeSealedEpochs(startEpoch, currentEpoch)
 
 	// ensure the committed epoch is finalized
-	lastFinalizedEpoch := uint64(0)
 	require.Eventually(n.t, func() bool {
 		lastFinalizedEpoch, err = n.QueryLastFinalizedEpoch()
 		if err != nil {
@@ -433,6 +432,7 @@ func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized() {
 		}
 		return lastFinalizedEpoch >= currentEpoch
 	}, time.Minute, time.Millisecond*50)
+	return lastFinalizedEpoch
 }
 
 func (n *NodeConfig) WaitFinalityIsActivated() (activatedHeight uint64) {

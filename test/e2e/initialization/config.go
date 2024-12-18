@@ -358,6 +358,7 @@ func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.Genesi
 func updateFinalityGenesis(finalityGenState *finalitytypes.GenesisState) {
 	finalityGenState.Params = finalitytypes.DefaultParams()
 	finalityGenState.Params.FinalityActivationHeight = 0
+	finalityGenState.Params.SignedBlocksWindow = 2000
 }
 
 func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {

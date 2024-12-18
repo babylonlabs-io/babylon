@@ -29,6 +29,7 @@ const (
 	stakingTimeBlocks = uint16(math.MaxUint16)
 	wDel1             = "del1"
 	wDel2             = "del2"
+	numPubRand        = uint64(250)
 )
 
 type BtcRewardsDistribution struct {
@@ -74,13 +75,21 @@ type BtcRewardsDistribution struct {
 	del1Addr string
 	del2Addr string
 
+	// covenant helpers
 	covenantSKs     []*btcec.PrivateKey
 	covenantWallets []string
 
+	// finality helpers
 	finalityIdx              uint64
 	finalityBlockHeightVoted uint64
 	fp1RandListInfo          *datagen.RandListInfo
 	fp2RandListInfo          *datagen.RandListInfo
+
+	// reward helpers
+	fp1LastRewardGauge     *itypes.RewardGaugesResponse
+	fp2LastRewardGauge     *itypes.RewardGaugesResponse
+	btcDel2LastRewardGauge *itypes.RewardGaugesResponse
+	btcDel1LastRewardGauge *itypes.RewardGaugesResponse
 
 	configurer configurer.Configurer
 }
@@ -181,6 +190,9 @@ func (s *BtcRewardsDistribution) Test3SubmitCovenantSignature() {
 
 	n1.BankMultiSendFromNode(covAddrs, "100000ubbn")
 
+	// tx bank send needs to take effect
+	n1.WaitForNextBlock()
+
 	pendingDelsResp := n1.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
 	s.Equal(len(pendingDelsResp), 3)
 
@@ -217,7 +229,6 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 		commit a number of public randomness
 	*/
 	// commit public randomness list
-	numPubRand := uint64(150)
 	commitStartHeight := uint64(1)
 
 	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitStartHeight, numPubRand)
@@ -244,7 +255,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 		fp2CommitPubRandList.Sig,
 	)
 
-	n1.WaitUntilCurrentEpochIsSealedAndFinalized()
+	n1.WaitUntilCurrentEpochIsSealedAndFinalized(1)
 
 	// activated height is never returned
 	s.finalityBlockHeightVoted = n1.WaitFinalityIsActivated()
@@ -270,14 +281,14 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
 	)
 
+	n2.WaitForNextBlocks(2)
+
 	// ensure vote is eventually cast
 	var finalizedBlocks []*ftypes.IndexedBlock
 	s.Eventually(func() bool {
 		finalizedBlocks = n1.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
 		return len(finalizedBlocks) > 0
 	}, time.Minute, time.Millisecond*50)
-
-	n2.WaitForNextBlocks(2)
 
 	s.Equal(s.finalityBlockHeightVoted, finalizedBlocks[0].Height)
 	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
@@ -301,40 +312,22 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	// (del2) => 4_00000000
 
 	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
-	fp1RewardGauges, err := n2.QueryRewardGauge(s.fp1.Address())
-	s.NoError(err)
-	fp1RewardGauge, ok := fp1RewardGauges[itypes.FinalityProviderType.String()]
-	s.True(ok)
-	s.True(fp1RewardGauge.Coins.IsAllPositive()) // 2674ubbn
-
-	fp2RewardGauges, err := n2.QueryRewardGauge(s.fp2.Address())
-	s.NoError(err)
-	fp2RewardGauge, ok := fp2RewardGauges[itypes.FinalityProviderType.String()]
-	s.True(ok)
-	s.True(fp2RewardGauge.Coins.IsAllPositive()) // 891ubbn
-
+	s.UpdateRewardGauges(n2)
+	// fp1 ~2674ubbn
+	// fp2 ~891ubbn
 	coins.RequireCoinsDiffInPointOnePercentMargin(
 		s.T(),
-		fp2RewardGauge.Coins.MulInt(sdkmath.NewIntFromUint64(3)), // 2673ubbn
-		fp1RewardGauge.Coins,
+		s.fp2LastRewardGauge.Coins.MulInt(sdkmath.NewIntFromUint64(3)), // ~2673ubbn
+		s.fp1LastRewardGauge.Coins,
 	)
 
 	// The rewards distributed to the delegators should be the same for each delegator
-	btcDel1RewardGauges, err := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
-	s.NoError(err)
-	btcDel1RewardGauge, ok := btcDel1RewardGauges[itypes.BTCDelegationType.String()]
-	s.True(ok)
-	s.True(btcDel1RewardGauge.Coins.IsAllPositive()) // 7130ubbn
+	// del1 ~7130ubbn
+	// del2 ~7130ubbn
+	s.Equal(s.btcDel1LastRewardGauge.Coins.String(), s.btcDel2LastRewardGauge.Coins.String())
+	// note that the rewards will not be precise as more or less blocks were produced and given out rewards.
 
-	btcDel2RewardGauges, err := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
-	s.NoError(err)
-	btcDel2RewardGauge, ok := btcDel2RewardGauges[itypes.BTCDelegationType.String()]
-	s.True(ok)
-	s.True(btcDel2RewardGauge.Coins.IsAllPositive()) // 7130ubbn
-
-	s.Equal(btcDel1RewardGauge.Coins.String(), btcDel2RewardGauge.Coins.String())
-
-	// Withdraw the reward just for del2
+	// Withdraw the reward just for del2 to check it is possible
 	del2BalanceBeforeWithdraw, err := n2.QueryBalances(s.del2Addr)
 	s.NoError(err)
 
@@ -344,7 +337,7 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	del2BalanceAfterWithdraw, err := n2.QueryBalances(s.del2Addr)
 	s.NoError(err)
 
-	s.Equal(del2BalanceAfterWithdraw.String(), del2BalanceBeforeWithdraw.Add(btcDel2RewardGauge.Coins...).String())
+	s.Equal(del2BalanceAfterWithdraw.String(), del2BalanceBeforeWithdraw.Add(s.btcDel2LastRewardGauge.Coins...).String())
 }
 
 // Test6ActiveLastDelegation creates a new btc delegation
@@ -364,17 +357,19 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 	allDelegations := n2.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
 	s.Equal(len(allDelegations), 4)
 
+	pendingDels := make([]*bstypes.BTCDelegationResponse, 0)
 	for _, delegation := range allDelegations {
 		if !strings.EqualFold(delegation.StatusDesc, bstypes.BTCDelegationStatus_PENDING.String()) {
 			continue
 		}
-		pendingDel, err := ParseRespBTCDelToBTCDel(delegation)
-		s.NoError(err)
-
-		SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
-
-		n1.WaitForNextBlock()
+		pendingDels = append(pendingDels, delegation)
 	}
+
+	s.Equal(len(pendingDels), 1)
+	pendingDel, err := ParseRespBTCDelToBTCDel(pendingDels[0])
+	s.NoError(err)
+
+	SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
 
 	// wait for a block so that above txs take effect
 	n1.WaitForNextBlock()
@@ -385,6 +380,12 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 	for _, activeDel := range allDelegations {
 		s.True(activeDel.Active)
 	}
+
+	// cache the reward gauges prior to the BTC delegation is active, so it
+	// can calculate the rewards properly based on the difference
+	// even then it could be that a block is mined between the query of this
+	// 4 address, but the difference would be very small
+	// s.UpdateRewardGauges()
 }
 
 // Test7FinalityVoteBlock votes in one more block from both finality providers
@@ -396,7 +397,11 @@ func (s *BtcRewardsDistribution) Test7FinalityVoteBlock() {
 	n1, err := chainA.GetNodeAtIndex(1)
 	s.NoError(err)
 
-	n1.WaitUntilCurrentEpochIsSealedAndFinalized()
+	lastFinalizedEpoch, err := n1.QueryLastFinalizedEpoch()
+	s.NoError(err)
+	lastFinalizedEpoch++
+
+	n1.WaitUntilCurrentEpochIsSealedAndFinalized(lastFinalizedEpoch)
 
 	// submit finality signature
 	s.finalityIdx++
@@ -420,24 +425,127 @@ func (s *BtcRewardsDistribution) Test7FinalityVoteBlock() {
 		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
 	)
 
+	n2.WaitForNextBlocks(2)
+
 	// ensure vote is eventually cast
 	var finalizedBlocks []*ftypes.IndexedBlock
 	s.Eventually(func() bool {
 		finalizedBlocks = n1.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
-		return len(finalizedBlocks) > 0
+		return len(finalizedBlocks) > 1
 	}, time.Minute, time.Millisecond*50)
 
-	n2.WaitForNextBlocks(2)
-
-	s.Equal(s.finalityBlockHeightVoted, finalizedBlocks[0].Height)
-	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
+	lastFinalizedBlock := finalizedBlocks[len(finalizedBlocks)-1]
+	s.Equal(s.finalityBlockHeightVoted, lastFinalizedBlock.Height)
+	s.Equal(appHash.Bytes(), lastFinalizedBlock.AppHash)
 	s.T().Logf("the block %d is finalized", s.finalityBlockHeightVoted)
 }
 
+// Test8CheckRewards verifies the rewards of all the delegations
+// and finality provider
 func (s *BtcRewardsDistribution) Test8CheckRewards() {
+	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// updates the cache of the suite
+	// s.UpdateRewardGauges(n2)
+
+	// Current setup of voting power
+	// (fp1, del1) => 2_00000000
+	// (fp1, del2) => 4_00000000
+	// (fp2, del1) => 2_00000000
+	// (fp2, del2) => 6_00000000
+
+	// The sum per bech32 address will be
+	// (fp1)  => 6_00000000
+	// (fp2)  => 8_00000000
+	// (del1) => 4_00000000
+	// (del2) => 10_00000000
+
+	// Current rewards for each FP
+	// fp1 ~5364ubbn
+	// fp2 ~1787ubbn
+	// del1 ~11625ubbn
+	// del2 ~16989ubbn
+	fp1RewardGaugePrev, fp2RewardGaugePrev, btcDel1RewardGaugePrev, btcDel2RewardGaugePrev := s.QueryRewardGauges(n2)
+	// wait a few block of rewards
+	n2.WaitForNextBlocks(20)
+	fp1RewardGauge, fp2RewardGauge, btcDel1RewardGauge, btcDel2RewardGauge := s.QueryRewardGauges(n2)
+
+	// since varius block were created, it is needed to get the difference
+	// from a certain point where all the delegations were active to properly
+	// calculate the distribution with the voting power structure with 4 BTC delegations active
+	// Note: if a new block is mined during the query of reward gauges, the calculation might be a
+	// bit off by some ubbn
+	fp1DiffRewards := fp1RewardGauge.Coins.Sub(fp1RewardGaugePrev.Coins...)
+	fp2DiffRewards := fp2RewardGauge.Coins.Sub(fp2RewardGaugePrev.Coins...)
+	del1DiffRewards := btcDel1RewardGauge.Coins.Sub(btcDel1RewardGaugePrev.Coins...)
+	del2DiffRewards := btcDel2RewardGauge.Coins.Sub(btcDel2RewardGaugePrev.Coins...)
+
+	fp1DiffRewardsStr := fp1DiffRewards.String()
+	fp2DiffRewardsStr := fp2DiffRewards.String()
+	del1DiffRewardsStr := del1DiffRewards.String()
+	del2DiffRewardsStr := del2DiffRewards.String()
+
+	s.NotEmpty(fp1DiffRewardsStr)
+	s.NotEmpty(fp2DiffRewardsStr)
+	s.NotEmpty(del1DiffRewardsStr)
+	s.NotEmpty(del2DiffRewardsStr)
+
+	// s.Equal(btcDel1RewardGauge.Coins.String(), btcDel2RewardGauge.Coins.String())
+
+	// // Withdraw the reward just for del2
+	// del2BalanceBeforeWithdraw, err := n2.QueryBalances(s.del2Addr)
+	// s.NoError(err)
+
+	// n2.WithdrawReward(itypes.BTCDelegationType.String(), wDel2)
+	// n2.WaitForNextBlock()
+
+	// del2BalanceAfterWithdraw, err := n2.QueryBalances(s.del2Addr)
+	// s.NoError(err)
+
+	// s.Equal(del2BalanceAfterWithdraw.String(), del2BalanceBeforeWithdraw.Add(btcDel2RewardGauge.Coins...).String())
 }
 
 // TODO(rafilx): Slash a FP and expect rewards to be withdraw.
+
+// UpdateRewardGauges update the current reward gauges on the test suite
+func (s *BtcRewardsDistribution) UpdateRewardGauges(n *chain.NodeConfig) {
+	s.fp1LastRewardGauge, s.fp2LastRewardGauge, s.btcDel1LastRewardGauge, s.btcDel2LastRewardGauge = s.QueryRewardGauges(n)
+}
+
+func (s *BtcRewardsDistribution) QueryRewardGauges(n *chain.NodeConfig) (
+	fp1, fp2, del1, del2 *itypes.RewardGaugesResponse,
+) {
+	n.WaitForNextBlockWithSleep50ms()
+
+	// tries to query all in the same block
+	fp1RewardGauges, errFp1 := n.QueryRewardGauge(s.fp1.Address())
+	fp2RewardGauges, errFp2 := n.QueryRewardGauge(s.fp2.Address())
+	btcDel1RewardGauges, errDel1 := n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
+	btcDel2RewardGauges, errDel2 := n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
+	s.NoError(errFp1)
+	s.NoError(errFp2)
+	s.NoError(errDel1)
+	s.NoError(errDel2)
+
+	fp1RewardGauge, ok := fp1RewardGauges[itypes.FinalityProviderType.String()]
+	s.True(ok)
+	s.True(fp1RewardGauge.Coins.IsAllPositive())
+
+	fp2RewardGauge, ok := fp2RewardGauges[itypes.FinalityProviderType.String()]
+	s.True(ok)
+	s.True(fp2RewardGauge.Coins.IsAllPositive())
+
+	btcDel1RewardGauge, ok := btcDel1RewardGauges[itypes.BTCDelegationType.String()]
+	s.True(ok)
+	s.True(btcDel1RewardGauge.Coins.IsAllPositive())
+
+	btcDel2RewardGauge, ok := btcDel2RewardGauges[itypes.BTCDelegationType.String()]
+	s.True(ok)
+	s.True(btcDel2RewardGauge.Coins.IsAllPositive())
+
+	return fp1RewardGauge, fp2RewardGauge, btcDel1RewardGauge, btcDel2RewardGauge
+}
 
 func (s *BtcRewardsDistribution) CreateBTCDelegationAndCheck(
 	n *chain.NodeConfig,

@@ -144,7 +144,7 @@ func (n *NodeConfig) AddCovenantSigs(
 	unbondingSig *bbn.BIP340Signature,
 	unbondingSlashingSigs [][]byte,
 ) {
-	n.LogActionF("adding covenant signature")
+	n.LogActionF("adding covenant signature from nodeName: %s", n.Name)
 
 	covPKHex := covPK.MarshalHex()
 
