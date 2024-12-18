@@ -8,7 +8,6 @@ import "tendermint/crypto/proof.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/msg/v1/msg.proto";
 import "babylon/finality/v1/params.proto";
-import "babylon/finality/v1/finality.proto";
 
 // Msg defines the Msg service.
 service Msg {
