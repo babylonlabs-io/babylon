@@ -360,14 +360,14 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 
 		SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
 
-		n2.WaitForNextBlock()
+		n1.WaitForNextBlock()
 	}
 
 	// wait for a block so that above txs take effect
-	n2.WaitForNextBlock()
+	n1.WaitForNextBlock()
 
 	// ensure the BTC delegation has covenant sigs now
-	allDelegations = n2.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
+	allDelegations = n1.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
 	s.Len(allDelegations, 4)
 	for _, activeDel := range allDelegations {
 		s.True(activeDel.Active)
