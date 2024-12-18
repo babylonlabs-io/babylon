@@ -252,7 +252,7 @@ func (d *DisableHeaderInTheFutureValidationTimeSource) AdjustedTime() time.Time 
 }
 
 func (d *DisableHeaderInTheFutureValidationTimeSource) AddTimeSample(_ string, _ time.Time) {
-	//no op
+	// no op
 }
 
 func (d *DisableHeaderInTheFutureValidationTimeSource) Offset() time.Duration {

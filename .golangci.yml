@@ -18,10 +18,10 @@ linters:
     - errname
     # - errorlint
     # - exhaustive
-    # - forbidigo
+    - forbidigo
     # - forcetypeassert
     - goconst
-    # - gocritic
+    - gocritic
     # - gocyclo
     - goheader
     - gomodguard
@@ -33,7 +33,7 @@ linters:
     - ineffassign
     - loggercheck
     # - maintidx
-    # - makezero
+    - makezero
     - misspell
     - nakedret
     - nilerr
@@ -52,7 +52,7 @@ linters:
     # - tparallel
     - typecheck
     - unconvert
-    # - unparam
+    - unparam
     - usestdlibvars
     - unused
     - wastedassign

@@ -181,13 +181,15 @@ func GenRandomBtcdBlockchainWithBabylonTx(r *rand.Rand, n uint64, oneTxThreshold
 	for i := uint64(1); i < n; i++ {
 		var msgBlock *wire.MsgBlock
 		prevHash := blocks[len(blocks)-1].BlockHash()
-		if r.Float32() < oneTxThreshold {
+
+		switch {
+		case r.Float32() < oneTxThreshold:
 			msgBlock, rawCkpt = GenRandomBtcdBlock(r, 1, &prevHash)
 			numCkptSegs += 1
-		} else if r.Float32() < twoTxThreshold {
+		case r.Float32() < twoTxThreshold:
 			msgBlock, rawCkpt = GenRandomBtcdBlock(r, 2, &prevHash)
 			numCkptSegs += 2
-		} else {
+		default:
 			msgBlock, rawCkpt = GenRandomBtcdBlock(r, 0, &prevHash)
 		}
 

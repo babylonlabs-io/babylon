@@ -72,7 +72,8 @@ Example:
 			chainID := args[1]
 
 			var genesisParams GenesisParams
-			if network == "testnet" {
+			switch network {
+			case "testnet":
 				genesisParams = TestnetGenesisParams(
 					genesisCliArgs.MaxActiveValidators,
 					genesisCliArgs.BtcConfirmationDepth,
@@ -109,9 +110,9 @@ Example:
 					genesisCliArgs.JailDuration,
 					genesisCliArgs.FinalityActivationBlockHeight,
 				)
-			} else if network == "mainnet" {
+			case "mainnet":
 				panic("Mainnet params not implemented.")
-			} else {
+			default:
 				return fmt.Errorf("please choose testnet or mainnet")
 			}
 

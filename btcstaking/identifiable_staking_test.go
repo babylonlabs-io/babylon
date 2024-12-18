@@ -24,11 +24,12 @@ func generateTxFromOutputs(r *rand.Rand, info *btcstaking.IdentifiableStakingInf
 
 	tx := wire.NewMsgTx(2)
 	for i := 0; i < int(numOutputs); i++ {
-		if i == stakingOutputIdx {
+		switch {
+		case i == stakingOutputIdx:
 			tx.AddTxOut(info.StakingOutput)
-		} else if i == opReturnOutputIdx {
+		case i == opReturnOutputIdx:
 			tx.AddTxOut(info.OpReturnOutput)
-		} else {
+		default:
 			tx.AddTxOut(wire.NewTxOut((r.Int63n(1000000000) + 10000), datagen.GenRandomByteArray(r, 32)))
 		}
 	}

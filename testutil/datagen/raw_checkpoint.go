@@ -73,13 +73,14 @@ func GenRandomSequenceRawCheckpointsWithMeta(r *rand.Rand) []*types.RawCheckpoin
 	var topEpoch, finalEpoch uint64
 	epoch1 := GenRandomEpochNum(r)
 	epoch2 := GenRandomEpochNum(r)
-	if epoch1 > epoch2 {
+	switch {
+	case epoch1 > epoch2:
 		topEpoch = epoch1
 		finalEpoch = epoch2
-	} else if epoch1 < epoch2 {
+	case epoch1 < epoch2:
 		topEpoch = epoch2
 		finalEpoch = epoch1
-	} else { // In the case they are equal, make the topEpoch one more
+	default:
 		topEpoch = epoch1 + 1
 		finalEpoch = epoch2
 	}

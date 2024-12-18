@@ -57,7 +57,7 @@ func FuzzNewHeaderInfo(f *testing.F) {
 
 		gotWork := headerInfo.Work
 		if *gotWork != work {
-			t.Errorf("Expected work %d got work %d", work.Uint64(), (*gotWork).Uint64())
+			t.Errorf("Expected work %d got work %d", work.Uint64(), gotWork.Uint64())
 		}
 	})
 }

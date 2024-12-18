@@ -48,11 +48,15 @@ virtual block periods for each finality provider that has delegations and reward
 Update btcstaking module docs to include EOI
 - [#348](https://github.com/babylonlabs-io/babylon/pull/348) refactory `PrivateSigner`
 and module account vars in appparams
+- [#351](https://github.com/babylonlabs-io/babylon/pull/351) docs: Add state
+transition docs.
 
 ### Bug fixes
 
 - [#324](https://github.com/babylonlabs-io/babylon/pull/324) Fix decrementing
 jailed fp counter
+- [#352](https://github.com/babylonlabs-io/babylon/pull/352) Fix: withdrawal cli 
+for rewards
 
 ### State Machine Breaking
 

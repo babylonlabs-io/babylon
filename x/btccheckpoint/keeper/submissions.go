@@ -121,11 +121,12 @@ func (k Keeper) GetSubmissionData(ctx context.Context, sk types.SubmissionKey) *
 
 func (k Keeper) checkSubmissionStatus(ctx context.Context, info *types.SubmissionBtcInfo) types.BtcStatus {
 	subDepth := info.SubmissionDepth()
-	if subDepth >= k.GetParams(ctx).CheckpointFinalizationTimeout {
+	switch {
+	case subDepth >= k.GetParams(ctx).CheckpointFinalizationTimeout:
 		return types.Finalized
-	} else if subDepth >= k.GetParams(ctx).BtcConfirmationDepth {
+	case subDepth >= k.GetParams(ctx).BtcConfirmationDepth:
 		return types.Confirmed
-	} else {
+	default:
 		return types.Submitted
 	}
 }

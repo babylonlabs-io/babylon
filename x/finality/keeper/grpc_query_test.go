@@ -481,10 +481,8 @@ func FuzzQueryEvidence(f *testing.F) {
 			require.NoError(t, err)
 			if datagen.RandomInt(r, 2) == 1 {
 				evidence.CanonicalFinalitySig = nil // not slashable
-			} else {
-				if randomFirstSlashableEvidence == nil {
-					randomFirstSlashableEvidence = evidence // first slashable
-				}
+			} else if randomFirstSlashableEvidence == nil {
+				randomFirstSlashableEvidence = evidence // first slashable
 			}
 			keeper.SetEvidence(ctx, evidence)
 

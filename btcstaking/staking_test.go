@@ -184,13 +184,14 @@ func testSlashingTx(
 		slashingOutput := outputFromAddressAndValue(t, slashingAddress, slashingAmount)
 		changeOutput := taprootOutputWithValue(t, r, changeAmount)
 
-		if changeAmount <= 0 {
+		switch {
+		case changeAmount <= 0:
 			require.Error(t, err)
 			require.ErrorIs(t, err, btcstaking.ErrInsufficientChangeAmount)
-		} else if mempool.IsDust(slashingOutput, mempool.DefaultMinRelayTxFee) || mempool.IsDust(changeOutput, mempool.DefaultMinRelayTxFee) {
+		case mempool.IsDust(slashingOutput, mempool.DefaultMinRelayTxFee) || mempool.IsDust(changeOutput, mempool.DefaultMinRelayTxFee):
 			require.Error(t, err)
 			require.ErrorIs(t, err, btcstaking.ErrDustOutputFound)
-		} else {
+		default:
 			require.NoError(t, err)
 			err = btcstaking.CheckSlashingTxMatchFundingTx(
 				slashingTx,

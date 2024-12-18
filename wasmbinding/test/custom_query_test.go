@@ -28,11 +28,12 @@ import (
 // TODO consider doing it by environmental variables as currently it may fail on some
 // weird architectures
 func getArtifactPath() string {
-	if runtime.GOARCH == "amd64" {
+	switch runtime.GOARCH {
+	case "amd64":
 		return "../testdata/artifacts/testdata.wasm"
-	} else if runtime.GOARCH == "arm64" {
+	case "arm64":
 		return "../testdata/artifacts/testdata-aarch64.wasm"
-	} else {
+	default:
 		panic("Unsupported architecture")
 	}
 }

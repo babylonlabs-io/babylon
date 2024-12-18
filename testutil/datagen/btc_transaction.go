@@ -251,14 +251,15 @@ func CreateBlock(
 	var transactions []*wire.MsgTx
 
 	for i := uint32(0); i <= numTx; i++ {
-		if i == 0 {
+		switch {
+		case i == 0:
 			tx := createCoinbaseTx(int32(height), &chaincfg.SimNetParams)
 			transactions = append(transactions, tx)
-		} else if i == babylonOpReturnIdx {
+		case i == babylonOpReturnIdx:
 			out := makeSpendableOutWithRandOutPoint(r, 1000)
 			tx := createSpendOpReturnTx(&out, lowFee, babylonData)
 			transactions = append(transactions, tx)
-		} else {
+		default:
 			out := makeSpendableOutWithRandOutPoint(r, 1000)
 			tx := createSpendTx(r, &out, lowFee)
 			transactions = append(transactions, tx)
