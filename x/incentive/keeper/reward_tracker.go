@@ -157,7 +157,7 @@ func (k Keeper) CalculateBTCDelegationRewards(ctx context.Context, fp, del sdk.A
 		return sdk.NewCoins(), nil
 	}
 
-	return k.calculateDelegationRewardsBetween(ctx, fp, del, btcDelRwdTracker, endPeriod)
+	return k.calculateDelegationRewardsBetween(ctx, fp, btcDelRwdTracker, endPeriod)
 }
 
 // calculateDelegationRewardsBetween calculate the rewards accured of a delegation between
@@ -171,7 +171,7 @@ func (k Keeper) CalculateBTCDelegationRewards(ctx context.Context, fp, del sdk.A
 // to get it ready to be sent out to the delegator reward gauge.
 func (k Keeper) calculateDelegationRewardsBetween(
 	ctx context.Context,
-	fp, del sdk.AccAddress,
+	fp sdk.AccAddress,
 	btcDelRwdTracker types.BTCDelegationRewardsTracker,
 	endingPeriod uint64,
 ) (sdk.Coins, error) {

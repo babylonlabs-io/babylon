@@ -332,12 +332,12 @@ func FuzzCheckCalculateDelegationRewardsBetween(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		k, ctx := NewKeeperWithCtx(t)
-		fp, del := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+		fp := datagen.GenRandomAddress()
 
 		btcRwd := datagen.GenRandomBTCDelegationRewardsTracker(r)
 		badEndedPeriod := btcRwd.StartPeriodCumulativeReward - 1
 		require.Panics(t, func() {
-			_, _ = k.calculateDelegationRewardsBetween(ctx, fp, del, btcRwd, badEndedPeriod)
+			_, _ = k.calculateDelegationRewardsBetween(ctx, fp, btcRwd, badEndedPeriod)
 		})
 
 		historicalStartPeriod := datagen.GenRandomFPHistRwd(r)
@@ -351,7 +351,7 @@ func FuzzCheckCalculateDelegationRewardsBetween(f *testing.F) {
 		err = k.setFinalityProviderHistoricalRewards(ctx, fp, endingPeriod, types.NewFinalityProviderHistoricalRewards(historicalStartPeriod.CumulativeRewardsPerSat.QuoInt(math.NewInt(2))))
 		require.NoError(t, err)
 		require.Panics(t, func() {
-			_, _ = k.calculateDelegationRewardsBetween(ctx, fp, del, btcRwd, endingPeriod)
+			_, _ = k.calculateDelegationRewardsBetween(ctx, fp, btcRwd, endingPeriod)
 		})
 
 		// creates a correct historical rewards that has more rewards than the historical
@@ -365,7 +365,7 @@ func FuzzCheckCalculateDelegationRewardsBetween(f *testing.F) {
 		expectedRewards = expectedRewards.MulInt(btcRwd.TotalActiveSat)
 		expectedRewards = expectedRewards.QuoInt(types.DecimalAccumulatedRewards)
 
-		delRewards, err := k.calculateDelegationRewardsBetween(ctx, fp, del, btcRwd, endingPeriod)
+		delRewards, err := k.calculateDelegationRewardsBetween(ctx, fp, btcRwd, endingPeriod)
 		require.NoError(t, err)
 		require.Equal(t, expectedRewards.String(), delRewards.String())
 	})

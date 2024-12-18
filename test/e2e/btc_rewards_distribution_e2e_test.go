@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
@@ -22,6 +23,10 @@ import (
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
+)
+
+const (
+	stakingTimeBlocks = uint16(math.MaxUint16)
 )
 
 type BtcRewardsDistribution struct {
@@ -47,13 +52,20 @@ type BtcRewardsDistribution struct {
 	// (fp2, del1) fp2Del2StakingAmt => 2_00000000
 	// for this top configure the reward distribution should
 	// be 25%, 50%, 25% respectively (if they will be processed in the same block)
+	// since the rewards distribution is by their bech32 address the delegations
+	// are combined the voting power and each delegator should receive the same
+	// amount of rewards, finality providers on the other hand will have different amounts
+	// fp2 with 2_00000000 and fp1 with 6_00000000. This means the fp1 will
+	// receive 3x the amount of rewards then fp2.
 	fp1Del1StakingAmt int64
 	fp1Del2StakingAmt int64
 	fp2Del1StakingAmt int64
 
-	// The lastet delegation will come right after (fp1, del2) and (fp2, del1)
-	// had withdraw his rewards, and stake 6_00000000 to (fp2, del2) receive the same
-	// amount of rewards as the sum of rewards (fp1, del2) and (fp2, del1)
+	// The lastet delegation will come right after (del2) had withdraw his rewards
+	// and stake 6_00000000 to (fp2, del2). Since the rewards are combined by
+	// their bech32 address, del2 will have 10_00000000 and del1 will have 4_00000000
+	// as voting power, meaning that del1 will receive only 40% of the amount of rewards
+	// that del2 will receive once every delegation is active
 	fp2Del2StakingAmt int64
 
 	// bech32 address of the delegators
@@ -135,14 +147,12 @@ func (s *BtcRewardsDistribution) Test2CreateFirstBtcDelegations() {
 
 	n0.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "100000ubbn")
 
-	stakingTimeBlocks := uint16(math.MaxUint16)
-
 	// fp1Del1
-	s.CreateBTCDelegationAndCheck(n0, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, stakingTimeBlocks, s.fp1Del1StakingAmt)
+	s.CreateBTCDelegationAndCheck(n0, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, s.fp1Del1StakingAmt)
 	// fp1Del2
-	s.CreateBTCDelegationAndCheck(n0, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, stakingTimeBlocks, s.fp1Del2StakingAmt)
+	s.CreateBTCDelegationAndCheck(n0, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, s.fp1Del2StakingAmt)
 	// fp2Del1
-	s.CreateBTCDelegationAndCheck(n0, wDel1, s.fp2, s.del1BTCSK, s.del1Addr, stakingTimeBlocks, s.fp2Del1StakingAmt)
+	s.CreateBTCDelegationAndCheck(n0, wDel1, s.fp2, s.del1BTCSK, s.del1Addr, s.fp2Del1StakingAmt)
 }
 
 // Test3SubmitCovenantSignature covenant approves all the 3 BTC delegation
@@ -266,12 +276,6 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	n1, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(1)
 	s.NoError(err)
 
-	// comments on ubbn amounts are for the following mint config
-	// babylond q mint  inflation
-	// 0.080000000000000000
-	// babylond q mint annual-provisions
-	// 720000000000.000000000000000000
-
 	// Current setup of voting power
 	// (fp1, del1) => 2_00000000
 	// (fp1, del2) => 4_00000000
@@ -298,7 +302,7 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 
 	coins.RequireCoinsDiffInPointOnePercentMargin(
 		s.T(),
-		fp2RewardGauge.Coins.MulInt(sdkmath.NewIntFromUint64(3)), // 2673
+		fp2RewardGauge.Coins.MulInt(sdkmath.NewIntFromUint64(3)), // 2673ubbn
 		fp1RewardGauge.Coins,
 	)
 
@@ -330,70 +334,39 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	s.Equal(del2BalanceAfterWithdraw.String(), del2BalanceBeforeWithdraw.Add(btcDel2RewardGauge.Coins...).String())
 }
 
-func (s *BtcRewardsDistribution) Test6WithdrawReward() {
+func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
+	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
+	s.NoError(err)
+
+	wDel2 := "del2"
+	// fp2Del2
+	s.CreateBTCDelegationAndCheck(n2, wDel2, s.fp2, s.del2BTCSK, s.del2Addr, s.fp2Del2StakingAmt)
+
+	allDelegations := n2.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
+	s.Equal(len(allDelegations), 4)
+
+	for _, delegation := range allDelegations {
+		if !strings.EqualFold(delegation.StatusDesc, bstypes.BTCDelegationStatus_PENDING.String()) {
+			continue
+		}
+		pendingDel, err := ParseRespBTCDelToBTCDel(delegation)
+		s.NoError(err)
+
+		SendCovenantSigsToPendingDel(s.r, s.T(), n2, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
+
+		n2.WaitForNextBlock()
+	}
+
+	// wait for a block so that above txs take effect
+	n2.WaitForNextBlock()
+
+	// ensure the BTC delegation has covenant sigs now
+	allDelegations = n2.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
+	s.Len(allDelegations, 4)
+	for _, activeDel := range allDelegations {
+		s.True(activeDel.Active)
+	}
 }
-
-// func (s *BtcRewardsDistribution) Test4WithdrawReward() {
-// 	chainA := s.configurer.GetChainConfig(0)
-// 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
-// 	s.NoError(err)
-
-// 	// finality provider balance before withdraw
-// 	fpBabylonAddr, err := sdk.AccAddressFromBech32(s.fp1.Addr)
-// 	s.NoError(err)
-// 	delBabylonAddr := fpBabylonAddr
-
-// 	fpBalance, err := nonValidatorNode.QueryBalances(fpBabylonAddr.String())
-// 	s.NoError(err)
-// 	// finality provider reward gauge should not be fully withdrawn
-// 	fpRgs, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
-// 	s.NoError(err)
-// 	fpRg := fpRgs[itypes.FinalityProviderType.String()]
-// 	s.T().Logf("finality provider's withdrawable reward before withdrawing: %s", convertToRewardGauge(fpRg).GetWithdrawableCoins().String())
-// 	s.False(convertToRewardGauge(fpRg).IsFullyWithdrawn())
-
-// 	// withdraw finality provider reward
-// 	nonValidatorNode.WithdrawReward(itypes.FinalityProviderType.String(), initialization.ValidatorWalletName)
-// 	nonValidatorNode.WaitForNextBlock()
-
-// 	// balance after withdrawing finality provider reward
-// 	fpBalance2, err := nonValidatorNode.QueryBalances(fpBabylonAddr.String())
-// 	s.NoError(err)
-// 	s.T().Logf("fpBalance2: %s; fpBalance: %s", fpBalance2.String(), fpBalance.String())
-// 	s.True(fpBalance2.IsAllGT(fpBalance))
-// 	// finality provider reward gauge should be fully withdrawn now
-// 	fpRgs2, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
-// 	s.NoError(err)
-// 	fpRg2 := fpRgs2[itypes.FinalityProviderType.String()]
-// 	s.T().Logf("finality provider's withdrawable reward after withdrawing: %s", convertToRewardGauge(fpRg2).GetWithdrawableCoins().String())
-// 	s.True(convertToRewardGauge(fpRg2).IsFullyWithdrawn())
-
-// 	// BTC delegation balance before withdraw
-// 	btcDelBalance, err := nonValidatorNode.QueryBalances(delBabylonAddr.String())
-// 	s.NoError(err)
-// 	// BTC delegation reward gauge should not be fully withdrawn
-// 	btcDelRgs, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
-// 	s.NoError(err)
-// 	btcDelRg := btcDelRgs[itypes.BTCDelegationType.String()]
-// 	s.T().Logf("BTC delegation's withdrawable reward before withdrawing: %s", convertToRewardGauge(btcDelRg).GetWithdrawableCoins().String())
-// 	s.False(convertToRewardGauge(btcDelRg).IsFullyWithdrawn())
-
-// 	// withdraw BTC delegation reward
-// 	nonValidatorNode.WithdrawReward(itypes.BTCDelegationType.String(), initialization.ValidatorWalletName)
-// 	nonValidatorNode.WaitForNextBlock()
-
-// 	// balance after withdrawing BTC delegation reward
-// 	btcDelBalance2, err := nonValidatorNode.QueryBalances(delBabylonAddr.String())
-// 	s.NoError(err)
-// 	s.T().Logf("btcDelBalance2: %s; btcDelBalance: %s", btcDelBalance2.String(), btcDelBalance.String())
-// 	s.True(btcDelBalance2.IsAllGT(btcDelBalance))
-// 	// BTC delegation reward gauge should be fully withdrawn now
-// 	btcDelRgs2, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
-// 	s.NoError(err)
-// 	btcDelRg2 := btcDelRgs2[itypes.BTCDelegationType.String()]
-// 	s.T().Logf("BTC delegation's withdrawable reward after withdrawing: %s", convertToRewardGauge(btcDelRg2).GetWithdrawableCoins().String())
-// 	s.True(convertToRewardGauge(btcDelRg2).IsFullyWithdrawn())
-// }
 
 func (s *BtcRewardsDistribution) CreateBTCDelegationAndCheck(
 	n *chain.NodeConfig,
@@ -401,7 +374,6 @@ func (s *BtcRewardsDistribution) CreateBTCDelegationAndCheck(
 	fp *bstypes.FinalityProvider,
 	btcStakerSK *btcec.PrivateKey,
 	delAddr string,
-	stakingTimeBlocks uint16,
 	stakingSatAmt int64,
 ) {
 	n.CreateBTCDelegationAndCheck(s.r, s.T(), s.net, wDel, fp, btcStakerSK, delAddr, stakingTimeBlocks, stakingSatAmt)
