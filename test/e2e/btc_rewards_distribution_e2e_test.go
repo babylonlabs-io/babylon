@@ -59,8 +59,7 @@ type BtcRewardsDistribution struct {
 	covenantSKs     []*btcec.PrivateKey
 	covenantWallets []string
 
-	covenantQuorum uint32
-	configurer     configurer.Configurer
+	configurer configurer.Configurer
 }
 
 func (s *BtcRewardsDistribution) SetupSuite() {
@@ -74,14 +73,13 @@ func (s *BtcRewardsDistribution) SetupSuite() {
 	s.del1BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
 	s.del2BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
 
-	s.fp1Del1StakingAmt = int64(2 * 10e8)
+	s.fp1Del1StakingAmt = int64(9 * 10e8)
 	s.fp1Del2StakingAmt = int64(4 * 10e8)
 	s.fp2Del1StakingAmt = int64(2 * 10e8)
 	s.fp2Del2StakingAmt = int64(6 * 10e8)
 
-	covenantSKs, _, covenantQuorum := bstypes.DefaultCovenantCommittee()
+	covenantSKs, _, _ := bstypes.DefaultCovenantCommittee()
 	s.covenantSKs = covenantSKs
-	s.covenantQuorum = covenantQuorum
 
 	s.configurer, err = configurer.NewBTCStakingConfigurer(s.T(), true)
 	s.NoError(err)
@@ -107,6 +105,7 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 		s.fp1BTCSK,
 		n1,
 	)
+	s.NotNil(s.fp1)
 
 	s.fp2 = CreateNodeFP(
 		s.T(),
@@ -114,68 +113,69 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 		s.fp2BTCSK,
 		n2,
 	)
+	s.NotNil(s.fp2)
+
+	actualFps := n2.QueryFinalityProviders()
+	s.Len(actualFps, 2)
 }
 
 // Test2CreateFinalityProviders creates the first 3 btc delegations
 // with the same values, but different satoshi staked amounts
 func (s *BtcRewardsDistribution) Test2CreateFirstBtcDelegations() {
-	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(1)
-
-	n1, err := chainA.GetNodeAtIndex(1)
+	n0, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(0)
 	s.NoError(err)
 
 	wDel1, wDel2 := "del1", "del2"
-	s.del1Addr = n1.KeysAdd(wDel1)
-	s.del2Addr = n1.KeysAdd(wDel2)
+	s.del1Addr = n0.KeysAdd(wDel1)
+	s.del2Addr = n0.KeysAdd(wDel2)
 
-	n1.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "100000ubbn")
+	n0.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "100000ubbn")
 
 	stakingTimeBlocks := uint16(math.MaxUint16)
 
 	// fp1Del1
-	s.CreateBTCDelegationAndCheck(n1, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, stakingTimeBlocks, s.fp1Del1StakingAmt)
+	s.CreateBTCDelegationAndCheck(n0, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, stakingTimeBlocks, s.fp1Del1StakingAmt)
 	// fp1Del2
-	s.CreateBTCDelegationAndCheck(n1, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, stakingTimeBlocks, s.fp1Del2StakingAmt)
+	s.CreateBTCDelegationAndCheck(n0, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, stakingTimeBlocks, s.fp1Del2StakingAmt)
 	// fp2Del1
-	s.CreateBTCDelegationAndCheck(n1, wDel1, s.fp2, s.del1BTCSK, s.del1Addr, stakingTimeBlocks, s.fp2Del1StakingAmt)
+	s.CreateBTCDelegationAndCheck(n0, wDel1, s.fp2, s.del1BTCSK, s.del1Addr, stakingTimeBlocks, s.fp2Del1StakingAmt)
 }
 
 // Test3SubmitCovenantSignature covenant approves all the 3 BTC delegation
 func (s *BtcRewardsDistribution) Test3SubmitCovenantSignature() {
-	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
+	n1, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(1)
 	s.NoError(err)
 
-	params := n2.QueryBTCStakingParams()
+	params := n1.QueryBTCStakingParams()
 
 	covAddrs := make([]string, params.CovenantQuorum)
 	covWallets := make([]string, params.CovenantQuorum)
 	for i := 0; i < int(params.CovenantQuorum); i++ {
 		covWallet := fmt.Sprintf("cov%d", i)
 		covWallets[i] = covWallet
-		covAddrs[i] = n2.KeysAdd(covWallet)
+		covAddrs[i] = n1.KeysAdd(covWallet)
 	}
 	s.covenantWallets = covWallets
 
-	n2.BankMultiSendFromNode(covAddrs, "100000ubbn")
+	n1.BankMultiSendFromNode(covAddrs, "100000ubbn")
 
-	pendingDelsResp := n2.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
+	pendingDelsResp := n1.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
 	s.Equal(len(pendingDelsResp), 3)
 
 	for _, pendingDelResp := range pendingDelsResp {
 		pendingDel, err := ParseRespBTCDelToBTCDel(pendingDelResp)
 		s.NoError(err)
 
-		SendCovenantSigsToPendingDel(s.r, s.T(), n2, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
+		SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
 
-		n2.WaitForNextBlock()
+		n1.WaitForNextBlock()
 	}
 
 	// wait for a block so that above txs take effect
-	n2.WaitForNextBlock()
+	n1.WaitForNextBlock()
 
 	// ensure the BTC delegation has covenant sigs now
-	activeDelsSet := n2.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
+	activeDelsSet := n1.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
 	s.Len(activeDelsSet, 3)
 	for _, activeDel := range activeDelsSet {
 		s.True(activeDel.Active)
@@ -195,14 +195,11 @@ func (s *BtcRewardsDistribution) Test3CommitPublicRandomnessAndSealed() {
 		commit a number of public randomness
 	*/
 	// commit public randomness list
-	numPubRand := uint64(100)
+	numPubRand := uint64(150)
 	commitStartHeight := uint64(1)
 
 	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitStartHeight, numPubRand)
 	s.NoError(err)
-	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, commitStartHeight, numPubRand)
-	s.NoError(err)
-
 	n1.CommitPubRandList(
 		fp1CommitPubRandList.FpBtcPk,
 		fp1CommitPubRandList.StartHeight,
@@ -210,6 +207,14 @@ func (s *BtcRewardsDistribution) Test3CommitPublicRandomnessAndSealed() {
 		fp1CommitPubRandList.Commitment,
 		fp1CommitPubRandList.Sig,
 	)
+
+	n1.WaitUntilCurrentEpochIsSealedAndFinalized()
+
+	// activated height is never returned
+	activatedHeight := n1.WaitFinalityIsActivated()
+
+	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, commitStartHeight, numPubRand)
+	s.NoError(err)
 	n2.CommitPubRandList(
 		fp2CommitPubRandList.FpBtcPk,
 		fp2CommitPubRandList.StartHeight,
@@ -217,16 +222,13 @@ func (s *BtcRewardsDistribution) Test3CommitPublicRandomnessAndSealed() {
 		fp2CommitPubRandList.Commitment,
 		fp2CommitPubRandList.Sig,
 	)
-
-	n1.WaitUntilCurrentEpochIsSealedAndFinalized()
-	activatedHeight := n1.WaitFinalityIsActivated()
-
+	// latestBlock := n1.LatestBlockNumber()
 	/*
 		submit finality signature
 	*/
 	idx := activatedHeight - commitStartHeight
 
-	n1.AddFinalitySignatureToBlock(
+	appHash := n1.AddFinalitySignatureToBlock(
 		s.fp1BTCSK,
 		s.fp1.BtcPk,
 		activatedHeight,
@@ -235,7 +237,7 @@ func (s *BtcRewardsDistribution) Test3CommitPublicRandomnessAndSealed() {
 		*fp1RandListInfo.ProofList[idx].ToProto(),
 	)
 
-	appHash := n2.AddFinalitySignatureToBlock(
+	n2.AddFinalitySignatureToBlock(
 		s.fp2BTCSK,
 		s.fp2.BtcPk,
 		activatedHeight,

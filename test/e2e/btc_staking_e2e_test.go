@@ -29,7 +29,6 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 )
@@ -91,46 +90,22 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	/*
 		create a random BTC delegation under this finality provider
 	*/
-	// BTC staking params, BTC delegation key pairs and PoP
-	params := nonValidatorNode.QueryBTCStakingParams()
-
-	// required unbonding time
-	unbondingTime := params.UnbondingTimeBlocks
-
-	// NOTE: we use the node's address for the BTC delegation
-	stakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
-	pop, err := bstypes.NewPoPBTC(stakerAddr, s.delBTCSK)
-	s.NoError(err)
 
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
-	testStakingInfo, stakingTx, inclusionProof, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, params, stakingTimeBlocks, s.cacheFP)
 
-	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(s.delBTCSK)
-	s.NoError(err)
-
-	// submit the message for creating BTC delegation
-	nonValidatorNode.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey()),
-		pop,
-		stakingTx,
-		inclusionProof,
-		s.cacheFP.BtcPk,
-		stakingTimeBlocks,
-		btcutil.Amount(s.stakingValue),
-		testStakingInfo.SlashingTx,
-		delegatorSig,
-		testUnbondingInfo.UnbondingTx,
-		testUnbondingInfo.SlashingTx,
-		uint16(unbondingTime),
-		btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
-		delUnbondingSlashingSig,
+	// NOTE: we use the node's address for the BTC delegation
+	testStakingInfo := nonValidatorNode.CreateBTCDelegationAndCheck(
+		s.r,
+		s.T(),
+		s.net,
 		nonValidatorNode.WalletName,
-		false,
+		s.cacheFP,
+		s.delBTCSK,
+		nonValidatorNode.PublicAddress,
+		stakingTimeBlocks,
+		s.stakingValue,
 	)
-
-	// wait for a block so that above txs take effect
-	nonValidatorNode.WaitForNextBlock()
 
 	pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(s.cacheFP.BtcPk.MarshalHex())
 	s.Len(pendingDelSet, 1)
@@ -287,40 +262,11 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.ErrorContains(err, itypes.ErrRewardGaugeNotFound.Error())
 	delBabylonAddr := fpBabylonAddr
 
-	// finalize epochs from 1 to the current epoch
-	currentEpoch, err := nonValidatorNode.QueryCurrentEpoch()
-	s.NoError(err)
-
-	// wait until the end epoch is sealed
-	s.Eventually(func() bool {
-		resp, err := nonValidatorNode.QueryRawCheckpoint(currentEpoch)
-		if err != nil {
-			return false
-		}
-		return resp.Status == ckpttypes.Sealed
-	}, time.Minute*2, time.Millisecond*50)
-	nonValidatorNode.FinalizeSealedEpochs(1, currentEpoch)
-
-	// ensure the committed epoch is finalized
-	lastFinalizedEpoch := uint64(0)
-	s.Eventually(func() bool {
-		lastFinalizedEpoch, err = nonValidatorNode.QueryLastFinalizedEpoch()
-		if err != nil {
-			return false
-		}
-		return lastFinalizedEpoch >= currentEpoch
-	}, time.Minute, time.Millisecond*50)
+	nonValidatorNode.WaitUntilCurrentEpochIsSealedAndFinalized()
 
 	// ensure btc staking is activated
-	var activatedHeight uint64
-	s.Eventually(func() bool {
-		activatedHeight, err = nonValidatorNode.QueryActivatedHeight()
-		if err != nil {
-			return false
-		}
-		return activatedHeight > 0
-	}, time.Minute*3, time.Millisecond*50)
-	s.T().Logf("the activated height is %d", activatedHeight)
+	// check how this does not errors out
+	activatedHeight := nonValidatorNode.WaitFinalityIsActivated()
 
 	/*
 		submit finality signature

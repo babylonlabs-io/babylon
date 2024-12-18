@@ -442,9 +442,9 @@ func (n *NodeConfig) WaitFinalityIsActivated() (activatedHeight uint64) {
 		if err != nil {
 			return false
 		}
-		// TODO: check why never becomes active with fps and commited pub rand
+		// TODO: check why never becomes active with fps and committed pub rand
 		return activatedHeight > 0
-	}, time.Minute*5, time.Millisecond*50)
+	}, time.Minute*3, time.Millisecond*50)
 	n.t.Logf("the activated height is %d", activatedHeight)
 	return activatedHeight
 }

@@ -379,7 +379,7 @@ func (n *NodeConfig) CreateBTCDelegationAndCheck(
 	delAddr string,
 	stakingTimeBlocks uint16,
 	stakingSatAmt int64,
-) {
+) (testStakingInfo *datagen.TestStakingSlashingInfo) {
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := n.QueryBTCStakingParams()
 
@@ -421,6 +421,8 @@ func (n *NodeConfig) CreateBTCDelegationAndCheck(
 	require.NotNil(t, btcDelegationResp)
 	require.Equal(t, btcDelegationResp.BtcDelegation.StakerAddr, delAddr)
 	require.Equal(t, btcStakerSK.PubKey().SerializeCompressed()[1:], btcDelegationResp.BtcDelegation.BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+
+	return testStakingInfo
 }
 
 func (n *NodeConfig) AddFinalitySignatureToBlock(
