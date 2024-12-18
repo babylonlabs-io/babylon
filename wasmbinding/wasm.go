@@ -16,9 +16,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
 )
 
 type QueryPlugin struct {
+	tokenfactorykeeper  *tokenfactorykeeper.Keeper
 	epochingKeeper      *epochingkeeper.Keeper
 	checkpointingkeeper *checkpointingkeeper.Keeper
 	lcKeeper            *lcKeeper.Keeper
@@ -27,12 +29,14 @@ type QueryPlugin struct {
 
 // NewQueryPlugin returns a reference to a new QueryPlugin.
 func NewQueryPlugin(
+	tk *tokenfactorykeeper.Keeper,
 	ek *epochingkeeper.Keeper,
 	ch *checkpointingkeeper.Keeper,
 	lcKeeper *lcKeeper.Keeper,
 	zcKeeper *zckeeper.Keeper,
 ) *QueryPlugin {
 	return &QueryPlugin{
+		tokenfactorykeeper:  tk,
 		epochingKeeper:      ek,
 		checkpointingkeeper: ch,
 		lcKeeper:            lcKeeper,
@@ -160,12 +164,13 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 }
 
 func RegisterCustomPlugins(
+	tk *tokenfactorykeeper.Keeper,
 	ek *epochingkeeper.Keeper,
 	ck *checkpointingkeeper.Keeper,
 	lcKeeper *lcKeeper.Keeper,
 	zcKeeper *zckeeper.Keeper,
 ) []wasmkeeper.Option {
-	wasmQueryPlugin := NewQueryPlugin(ek, ck, lcKeeper, zcKeeper)
+	wasmQueryPlugin := NewQueryPlugin(tk, ek, ck, lcKeeper, zcKeeper)
 
 	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
 		Custom: CustomQuerier(wasmQueryPlugin),

@@ -28,7 +28,7 @@ require (
 	cosmossdk.io/api v0.7.5
 	cosmossdk.io/client/v2 v2.0.0-beta.1
 	cosmossdk.io/collections v0.4.0
-	cosmossdk.io/core v0.11.1
+	cosmossdk.io/core v0.12.0
 	cosmossdk.io/depinject v1.0.0
 	cosmossdk.io/errors v1.0.1
 	cosmossdk.io/log v1.4.1
@@ -60,6 +60,7 @@ require (
 	github.com/jsternberg/zap-logfmt v1.3.0
 	github.com/juju/fslock v0.0.0-20160525022230-4d5c94c67b4b
 	github.com/ory/dockertest/v3 v3.9.1
+	github.com/strangelove-ventures/tokenfactory v0.50.3-wasmvm2
 	github.com/vulpine-io/io-test v1.0.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0
@@ -130,7 +131,7 @@ require (
 	golang.org/x/term v0.25.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	nhooyr.io/websocket v1.8.6 // indirect
+	nhooyr.io/websocket v1.8.10 // indirect
 )
 
 require (
@@ -183,9 +184,9 @@ require (
 	github.com/getsentry/sentry-go v0.27.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/gobwas/ws v1.1.0 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/gogo/status v1.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/flatbuffers v2.0.8+incompatible // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
@@ -223,7 +224,7 @@ require (
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/onsi/gomega v1.27.10 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0-rc2 // indirect
+	github.com/opencontainers/image-spec v1.1.0-rc5 // indirect
 	github.com/opencontainers/runc v1.1.12 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
@@ -266,6 +267,8 @@ require (
 // Long lived replaces of Cosmos SDK
 // see: https://github.com/cosmos/cosmos-sdk/blob/v0.50.3/go.mod
 replace (
+
+	cosmossdk.io/core => cosmossdk.io/core v0.11.0
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 
