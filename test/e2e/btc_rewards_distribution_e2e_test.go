@@ -182,9 +182,9 @@ func (s *BtcRewardsDistribution) Test3SubmitCovenantSignature() {
 	}
 }
 
-// Test3CommitPublicRandomnessAndSealed commits public randomness for
+// Test4CommitPublicRandomnessAndSealed commits public randomness for
 // each finality provider and seals the epoch.
-func (s *BtcRewardsDistribution) Test3CommitPublicRandomnessAndSealed() {
+func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 	chainA := s.configurer.GetChainConfig(0)
 	n1, err := chainA.GetNodeAtIndex(1)
 	s.NoError(err)
