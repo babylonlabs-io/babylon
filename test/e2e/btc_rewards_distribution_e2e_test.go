@@ -140,20 +140,22 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 // Test2CreateFinalityProviders creates the first 3 btc delegations
 // with the same values, but different satoshi staked amounts
 func (s *BtcRewardsDistribution) Test2CreateFirstBtcDelegations() {
-	n0, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(0)
+	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	s.NoError(err)
 
-	s.del1Addr = n0.KeysAdd(wDel1)
-	s.del2Addr = n0.KeysAdd(wDel2)
+	s.del1Addr = n2.KeysAdd(wDel1)
+	s.del2Addr = n2.KeysAdd(wDel2)
 
-	n0.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "100000ubbn")
+	n2.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "100000ubbn")
 
 	// fp1Del1
-	s.CreateBTCDelegationAndCheck(n0, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, s.fp1Del1StakingAmt)
+	s.CreateBTCDelegationAndCheck(n2, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, s.fp1Del1StakingAmt)
 	// fp1Del2
-	s.CreateBTCDelegationAndCheck(n0, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, s.fp1Del2StakingAmt)
+	s.CreateBTCDelegationAndCheck(n2, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, s.fp1Del2StakingAmt)
 	// fp2Del1
-	s.CreateBTCDelegationAndCheck(n0, wDel1, s.fp2, s.del1BTCSK, s.del1Addr, s.fp2Del1StakingAmt)
+	s.CreateBTCDelegationAndCheck(n2, wDel1, s.fp2, s.del1BTCSK, s.del1Addr, s.fp2Del1StakingAmt)
+
+	n2.WaitForNextBlock()
 }
 
 // Test3SubmitCovenantSignature covenant approves all the 3 BTC delegation
@@ -274,7 +276,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 
 // Test5CheckRewardsFirstDelegations verifies the rewards independent of mint amounts
 func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
-	n0, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(0)
+	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	s.NoError(err)
 
 	// Current setup of voting power
@@ -289,13 +291,13 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	// (del2) => 4_00000000
 
 	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
-	fp1RewardGauges, err := n0.QueryRewardGauge(s.fp1.Address())
+	fp1RewardGauges, err := n2.QueryRewardGauge(s.fp1.Address())
 	s.NoError(err)
 	fp1RewardGauge, ok := fp1RewardGauges[itypes.FinalityProviderType.String()]
 	s.True(ok)
 	s.True(fp1RewardGauge.Coins.IsAllPositive()) // 2674ubbn
 
-	fp2RewardGauges, err := n0.QueryRewardGauge(s.fp2.Address())
+	fp2RewardGauges, err := n2.QueryRewardGauge(s.fp2.Address())
 	s.NoError(err)
 	fp2RewardGauge, ok := fp2RewardGauges[itypes.FinalityProviderType.String()]
 	s.True(ok)
@@ -308,13 +310,13 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	)
 
 	// The rewards distributed to the delegators should be the same for each delegator
-	btcDel1RewardGauges, err := n0.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
+	btcDel1RewardGauges, err := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
 	s.NoError(err)
 	btcDel1RewardGauge, ok := btcDel1RewardGauges[itypes.BTCDelegationType.String()]
 	s.True(ok)
 	s.True(btcDel1RewardGauge.Coins.IsAllPositive()) // 7130ubbn
 
-	btcDel2RewardGauges, err := n0.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
+	btcDel2RewardGauges, err := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
 	s.NoError(err)
 	btcDel2RewardGauge, ok := btcDel2RewardGauges[itypes.BTCDelegationType.String()]
 	s.True(ok)
@@ -323,20 +325,24 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	s.Equal(btcDel1RewardGauge.Coins.String(), btcDel2RewardGauge.Coins.String())
 
 	// Withdraw the reward just for del2
-	del2BalanceBeforeWithdraw, err := n0.QueryBalances(s.del2Addr)
+	del2BalanceBeforeWithdraw, err := n2.QueryBalances(s.del2Addr)
 	s.NoError(err)
 
-	n0.WithdrawReward(itypes.BTCDelegationType.String(), wDel2)
-	n0.WaitForNextBlock()
+	n2.WithdrawReward(itypes.BTCDelegationType.String(), wDel2)
+	n2.WaitForNextBlock()
 
-	del2BalanceAfterWithdraw, err := n0.QueryBalances(s.del2Addr)
+	del2BalanceAfterWithdraw, err := n2.QueryBalances(s.del2Addr)
 	s.NoError(err)
 
 	s.Equal(del2BalanceAfterWithdraw.String(), del2BalanceBeforeWithdraw.Add(btcDel2RewardGauge.Coins...).String())
 }
 
 func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
-	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
+	chainA := s.configurer.GetChainConfig(0)
+	n2, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+	// covenants are at n1
+	n1, err := chainA.GetNodeAtIndex(1)
 	s.NoError(err)
 
 	// fp2Del2
@@ -352,7 +358,7 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 		pendingDel, err := ParseRespBTCDelToBTCDel(delegation)
 		s.NoError(err)
 
-		SendCovenantSigsToPendingDel(s.r, s.T(), n2, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
+		SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
 
 		n2.WaitForNextBlock()
 	}
