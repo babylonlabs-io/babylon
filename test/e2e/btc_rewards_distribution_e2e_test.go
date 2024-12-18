@@ -27,6 +27,8 @@ import (
 
 const (
 	stakingTimeBlocks = uint16(math.MaxUint16)
+	wDel1             = "del1"
+	wDel2             = "del2"
 )
 
 type BtcRewardsDistribution struct {
@@ -141,7 +143,6 @@ func (s *BtcRewardsDistribution) Test2CreateFirstBtcDelegations() {
 	n0, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(0)
 	s.NoError(err)
 
-	wDel1, wDel2 := "del1", "del2"
 	s.del1Addr = n0.KeysAdd(wDel1)
 	s.del2Addr = n0.KeysAdd(wDel2)
 
@@ -273,7 +274,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 
 // Test5CheckRewardsFirstDelegations verifies the rewards independent of mint amounts
 func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
-	n1, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(1)
+	n0, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(0)
 	s.NoError(err)
 
 	// Current setup of voting power
@@ -288,13 +289,13 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	// (del2) => 4_00000000
 
 	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
-	fp1RewardGauges, err := n1.QueryRewardGauge(s.fp1.Address())
+	fp1RewardGauges, err := n0.QueryRewardGauge(s.fp1.Address())
 	s.NoError(err)
 	fp1RewardGauge, ok := fp1RewardGauges[itypes.FinalityProviderType.String()]
 	s.True(ok)
 	s.True(fp1RewardGauge.Coins.IsAllPositive()) // 2674ubbn
 
-	fp2RewardGauges, err := n1.QueryRewardGauge(s.fp2.Address())
+	fp2RewardGauges, err := n0.QueryRewardGauge(s.fp2.Address())
 	s.NoError(err)
 	fp2RewardGauge, ok := fp2RewardGauges[itypes.FinalityProviderType.String()]
 	s.True(ok)
@@ -307,13 +308,13 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	)
 
 	// The rewards distributed to the delegators should be the same for each delegator
-	btcDel1RewardGauges, err := n1.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
+	btcDel1RewardGauges, err := n0.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
 	s.NoError(err)
 	btcDel1RewardGauge, ok := btcDel1RewardGauges[itypes.BTCDelegationType.String()]
 	s.True(ok)
 	s.True(btcDel1RewardGauge.Coins.IsAllPositive()) // 7130ubbn
 
-	btcDel2RewardGauges, err := n1.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
+	btcDel2RewardGauges, err := n0.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
 	s.NoError(err)
 	btcDel2RewardGauge, ok := btcDel2RewardGauges[itypes.BTCDelegationType.String()]
 	s.True(ok)
@@ -322,13 +323,13 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	s.Equal(btcDel1RewardGauge.Coins.String(), btcDel2RewardGauge.Coins.String())
 
 	// Withdraw the reward just for del2
-	del2BalanceBeforeWithdraw, err := n1.QueryBalances(s.del2Addr)
+	del2BalanceBeforeWithdraw, err := n0.QueryBalances(s.del2Addr)
 	s.NoError(err)
 
-	n1.WithdrawReward(itypes.BTCDelegationType.String(), s.del2Addr)
-	n1.WaitForNextBlock()
+	n0.WithdrawReward(itypes.BTCDelegationType.String(), wDel2)
+	n0.WaitForNextBlock()
 
-	del2BalanceAfterWithdraw, err := n1.QueryBalances(s.del2Addr)
+	del2BalanceAfterWithdraw, err := n0.QueryBalances(s.del2Addr)
 	s.NoError(err)
 
 	s.Equal(del2BalanceAfterWithdraw.String(), del2BalanceBeforeWithdraw.Add(btcDel2RewardGauge.Coins...).String())
@@ -338,7 +339,6 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	s.NoError(err)
 
-	wDel2 := "del2"
 	// fp2Del2
 	s.CreateBTCDelegationAndCheck(n2, wDel2, s.fp2, s.del2BTCSK, s.del2Addr, s.fp2Del2StakingAmt)
 
@@ -366,6 +366,9 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 	for _, activeDel := range allDelegations {
 		s.True(activeDel.Active)
 	}
+}
+
+func (s *BtcRewardsDistribution) Test7FinalityVoteBlock() {
 }
 
 func (s *BtcRewardsDistribution) CreateBTCDelegationAndCheck(
