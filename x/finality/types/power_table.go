@@ -153,12 +153,12 @@ func (v *FinalityProviderDistInfo) GetAddress() sdk.AccAddress {
 	return v.Addr
 }
 
-func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *bstypes.BTCDelegation) {
-	v.TotalBondedSat += btcDel.TotalSat
+func (v *FinalityProviderDistInfo) AddBondedSats(sats uint64) {
+	v.TotalBondedSat += sats
 }
 
-func (v *FinalityProviderDistInfo) UnbondBTCDel(btcDel *bstypes.BTCDelegation) {
-	v.TotalBondedSat -= btcDel.TotalSat
+func (v *FinalityProviderDistInfo) RemoveBondedSats(sats uint64) {
+	v.TotalBondedSat -= sats
 }
 
 // GetBTCDelPortion returns the portion of a BTC delegation's voting power out of
