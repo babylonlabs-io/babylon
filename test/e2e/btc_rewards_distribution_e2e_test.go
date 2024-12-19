@@ -329,14 +329,15 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	// The rewards distributed to the delegators should be the same for each delegator
 	// del1 ~7130ubbn
 	// del2 ~7130ubbn
-	s.Equal(btcDel1LastRewardGauge.Coins.String(), btcDel2LastRewardGauge.Coins.String())
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), btcDel1LastRewardGauge.Coins, btcDel2LastRewardGauge.Coins)
+
 	// note that the rewards will not be precise as more or less blocks were produced and given out rewards.
-
 	// Withdraw the reward just for del2 to check it is possible
-	del2BalanceBeforeWithdraw, err := n2.QueryBalances(s.del2Addr)
-	s.NoError(err)
-
+	n2.WaitForNextBlockWithSleep50ms()
+	del2BalanceBeforeWithdraw, errQueryB := n2.QueryBalances(s.del2Addr)
 	n2.WithdrawReward(itypes.BTCDelegationType.String(), wDel2)
+
+	s.NoError(errQueryB)
 	n2.WaitForNextBlock()
 
 	del2BalanceAfterWithdraw, err := n2.QueryBalances(s.del2Addr)
