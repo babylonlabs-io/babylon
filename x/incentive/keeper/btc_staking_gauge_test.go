@@ -37,18 +37,33 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		dc, err := datagen.GenRandomVotingPowerDistCache(r, 100)
 		require.NoError(t, err)
 
+		// create voter map from a random subset of finality providers
+		voterMap := make(map[string]struct{})
+		for i, fp := range dc.FinalityProviders {
+			// randomly decide if this FP voted (skip some FPs)
+			if i < int(dc.NumActiveFps) && datagen.OneInN(r, 2) {
+				voterMap[fp.BtcPk.MarshalHex()] = struct{}{}
+			}
+		}
+
 		// expected values
 		distributedCoins := sdk.NewCoins()
 		fpRewardMap := map[string]sdk.Coins{}     // key: address, value: reward
 		btcDelRewardMap := map[string]sdk.Coins{} // key: address, value: reward
 
+		// calculate expected rewards only for FPs who voted
 		for _, fp := range dc.FinalityProviders {
+			// skip if not active or didn't vote
+			if _, ok := voterMap[fp.BtcPk.MarshalHex()]; !ok {
+				continue
+			}
+
 			fpPortion := dc.GetFinalityProviderPortion(fp)
 			coinsForFpsAndDels := gauge.GetCoinsPortion(fpPortion)
 			coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
 			if coinsForCommission.IsAllPositive() {
 				fpRewardMap[fp.GetAddress().String()] = coinsForCommission
-				distributedCoins.Add(coinsForCommission...)
+				distributedCoins = distributedCoins.Add(coinsForCommission...)
 			}
 			coinsForBTCDels := coinsForFpsAndDels.Sub(coinsForCommission...)
 			for _, btcDel := range fp.BtcDels {
@@ -56,15 +71,9 @@ func FuzzRewardBTCStaking(f *testing.F) {
 				coinsForDel := types.GetCoinsPortion(coinsForBTCDels, btcDelPortion)
 				if coinsForDel.IsAllPositive() {
 					btcDelRewardMap[btcDel.GetAddress().String()] = coinsForDel
-					distributedCoins.Add(coinsForDel...)
+					distributedCoins = distributedCoins.Add(coinsForDel...)
 				}
 			}
-		}
-
-		// create voter map from the voting power cache
-		voterMap := make(map[string]struct{})
-		for _, fp := range dc.FinalityProviders {
-			voterMap[fp.BtcPk.MarshalHex()] = struct{}{}
 		}
 
 		// distribute rewards in the gauge to finality providers/delegations
@@ -88,5 +97,25 @@ func FuzzRewardBTCStaking(f *testing.F) {
 
 		// assert distributedCoins is a subset of coins in gauge
 		require.True(t, gauge.Coins.IsAllGTE(distributedCoins))
+
+		// verify that FPs who didn't vote got no rewards
+		for _, fp := range dc.FinalityProviders {
+			if _, voted := voterMap[fp.BtcPk.MarshalHex()]; !voted {
+				rg := keeper.GetRewardGauge(ctx, types.FinalityProviderType, fp.GetAddress())
+				if rg != nil {
+					require.True(t, rg.Coins.IsZero(),
+						"non-voting FP %s should not receive rewards", fp.GetAddress())
+				}
+
+				// their delegators should also not receive rewards
+				for _, btcDel := range fp.BtcDels {
+					rg := keeper.GetRewardGauge(ctx, types.BTCDelegationType, btcDel.GetAddress())
+					if rg != nil {
+						require.True(t, rg.Coins.IsZero(),
+							"delegator %s of non-voting FP should not receive rewards", btcDel.GetAddress())
+					}
+				}
+			}
+		}
 	})
 }
