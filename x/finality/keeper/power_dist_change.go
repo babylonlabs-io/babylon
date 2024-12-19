@@ -438,8 +438,3 @@ func (k Keeper) loadFP(
 
 	return fp
 }
-
-type btcDelWithStkTxHash struct {
-	StakingTxHash string
-	*types.BTCDelegation
-}
