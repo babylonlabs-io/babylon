@@ -516,13 +516,11 @@ func (s *BtcRewardsDistribution) AddFinalityVoteUntilCurrentHeight() {
 
 	for s.finalityBlockHeightVoted < currentBlock {
 		n1Flags := []string{
-			"--from=val",
 			"--offline",
 			fmt.Sprintf("--account-number=%d", accNumberN1),
 			fmt.Sprintf("--sequence=%d", accSequenceN1),
 		}
 		n2Flags := []string{
-			"--from=val",
 			"--offline",
 			fmt.Sprintf("--account-number=%d", accNumberN2),
 			fmt.Sprintf("--sequence=%d", accSequenceN2),
