@@ -2,11 +2,11 @@ package client
 
 import (
 	"context"
+	"github.com/babylonlabs-io/babylon/client/config"
+	"github.com/babylonlabs-io/babylon/client/query"
 	"time"
 
 	bbn "github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/client/config"
-	"github.com/babylonlabs-io/babylon/client/query"
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	"github.com/cosmos/relayer/v2/relayer/chains/cosmos"
 	"go.uber.org/zap"

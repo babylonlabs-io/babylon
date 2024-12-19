@@ -97,7 +97,6 @@ import (
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
-	"github.com/babylonlabs-io/babylon/client/docs"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btccheckpoint"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
@@ -697,10 +696,11 @@ func (app *BabylonApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.AP
 	// Register grpc-gateway routes for all modules.
 	app.BasicModuleManager.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
+	// todo(lazar): either remove the corresponding code or move it to a different pkg within bbn repo
 	// register swagger API from root so that other applications can override easily
-	if apiConfig.Swagger {
-		docs.RegisterOpenAPIService(apiSvr.Router)
-	}
+	// if apiConfig.Swagger {
+	//	docs.RegisterOpenAPIService(apiSvr.Router)
+	// }
 }
 
 // RegisterTxService implements the Application.RegisterTxService method.

@@ -34,7 +34,7 @@ func magicHash(msg string) chainhash.Hash {
 	return chainhash.DoubleHashH(bytes)
 }
 
-func Sign(sk *btcec.PrivateKey, msg string) ([]byte, error) {
+func Sign(sk *btcec.PrivateKey, msg string) []byte {
 	msgHash := magicHash(msg)
 	return ecdsa.SignCompact(sk, msgHash[:], true)
 }
