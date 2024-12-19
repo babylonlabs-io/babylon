@@ -464,7 +464,7 @@ func (n *NodeConfig) WaitFinalityIsActivated() (activatedHeight uint64) {
 			return false
 		}
 		return activatedHeight > 0
-	}, time.Minute*4, time.Millisecond*50)
+	}, time.Minute*4, time.Second*1)
 	n.t.Logf("the activated height is %d", activatedHeight)
 	return activatedHeight
 }
