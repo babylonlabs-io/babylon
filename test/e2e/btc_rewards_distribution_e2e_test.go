@@ -602,7 +602,9 @@ func CheckWithdrawReward(
 	require.True(t, ok)
 	require.True(t, delRewardGauge.Coins.IsAllPositive())
 
-	require.Equal(t, delBalanceAfterWithdraw.Sub(txResp.AuthInfo.Fee.Amount...).String(), delBalanceBeforeWithdraw.Add(delRewardGauge.WithdrawnCoins...).String())
+	actualAmt := delBalanceAfterWithdraw.String()
+	expectedAmt := delBalanceBeforeWithdraw.Add(delRewardGauge.WithdrawnCoins...).Add(txResp.AuthInfo.Fee.Amount...).String()
+	require.Equal(t, expectedAmt, actualAmt)
 }
 
 func SendCovenantSigsToPendingDel(
