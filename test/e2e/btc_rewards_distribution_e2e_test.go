@@ -333,6 +333,8 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), btcDel1LastRewardGauge.Coins, btcDel2LastRewardGauge.Coins)
 
 	CheckWithdrawReward(s.T(), n2, wDel2, s.del2Addr)
+
+	s.AddFinalityVoteUntilCurrentHeight()
 }
 
 // Test6ActiveLastDelegation creates a new btc delegation
@@ -580,15 +582,16 @@ func CheckWithdrawReward(
 	accDelAddr := sdk.MustAccAddressFromBech32(delAddr)
 	n.WaitForNextBlockWithSleep50ms()
 
-	// does the withdraw right after the query to avoid new blocks rewarded
+	txHash := n.WithdrawReward(itypes.BTCDelegationType.String(), delWallet)
 	delBalanceBeforeWithdraw, errQueryB := n.QueryBalances(delAddr)
-	n.WithdrawReward(itypes.BTCDelegationType.String(), wDel2)
-	delRwdGauge, errRwdGauge := n.QueryRewardGauge(accDelAddr)
-
-	require.NoError(t, errQueryB)
-	require.NoError(t, errRwdGauge)
 
 	n.WaitForNextBlock()
+
+	_, txResp := n.QueryTx(txHash)
+	require.NoError(t, errQueryB)
+
+	delRwdGauge, errRwdGauge := n.QueryRewardGauge(accDelAddr)
+	require.NoError(t, errRwdGauge)
 
 	delBalanceAfterWithdraw, err := n.QueryBalances(delAddr)
 	require.NoError(t, err)
@@ -599,7 +602,7 @@ func CheckWithdrawReward(
 	require.True(t, ok)
 	require.True(t, delRewardGauge.Coins.IsAllPositive())
 
-	require.Equal(t, delBalanceAfterWithdraw.String(), delBalanceBeforeWithdraw.Add(delRewardGauge.WithdrawnCoins...).String())
+	require.Equal(t, delBalanceAfterWithdraw.Sub(txResp.AuthInfo.Fee.Amount...).String(), delBalanceBeforeWithdraw.Add(delRewardGauge.WithdrawnCoins...).String())
 }
 
 func SendCovenantSigsToPendingDel(

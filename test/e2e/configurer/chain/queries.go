@@ -18,6 +18,7 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -412,7 +413,7 @@ func (n *NodeConfig) QueryAppliedPlan(planName string) upgradetypes.QueryApplied
 	return resp
 }
 
-func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) sdk.TxResponse {
+func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) (sdk.TxResponse, sdktx.Tx) {
 	cmd := []string{
 		"babylond", "q", "tx", "--type=hash", txHash, "--output=json",
 		n.FlagChainID(),
@@ -425,7 +426,11 @@ func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) sdk.TxRespon
 	err = util.Cdc.UnmarshalJSON(out.Bytes(), &txResp)
 	require.NoError(n.t, err)
 
-	return txResp
+	var txAuth sdktx.Tx
+	err = util.Cdc.UnpackAny(txResp.Tx, &txAuth)
+	require.NoError(n.t, err)
+
+	return txResp, txAuth
 }
 
 func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch uint64) (lastFinalizedEpoch uint64) {
