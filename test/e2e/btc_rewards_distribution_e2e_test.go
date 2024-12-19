@@ -391,9 +391,9 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 	}
 }
 
-// Test8CheckRewards verifies the rewards of all the delegations
+// Test7CheckRewards verifies the rewards of all the delegations
 // and finality provider
-func (s *BtcRewardsDistribution) Test8CheckRewards() {
+func (s *BtcRewardsDistribution) Test7CheckRewards() {
 	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	s.NoError(err)
 
