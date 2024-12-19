@@ -4,16 +4,17 @@ import (
 	"context"
 
 	"cosmossdk.io/store/prefix"
-	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
-	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/x/incentive/types"
 )
 
 // RewardBTCStaking distributes rewards to finality providers/delegations at a given height according
 // to the filtered reward distribution cache (that only contains voted finality providers)
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/x/distribution/keeper/allocation.go#L12-L64)
-func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.VotingPowerDistCache) {
+func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.VotingPowerDistCache, voters map[string]struct{}) {
 	gauge := k.GetBTCStakingGauge(ctx, height)
 	if gauge == nil {
 		// failing to get a reward gauge at previous height is a programming error
@@ -28,6 +29,12 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 		if i >= int(dc.NumActiveFps) {
 			break
 		}
+
+		// skip if finality provider didn't vote
+		if _, ok := voters[fp.BtcPk.MarshalHex()]; !ok {
+			continue
+		}
+
 		// get coins that will be allocated to the finality provider and its BTC delegations
 		fpPortion := dc.GetFinalityProviderPortion(fp)
 		coinsForFpsAndDels := gauge.GetCoinsPortion(fpPortion)

@@ -4,12 +4,13 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/x/incentive/types"
 )
 
 func FuzzRewardBTCStaking(f *testing.F) {
@@ -60,8 +61,14 @@ func FuzzRewardBTCStaking(f *testing.F) {
 			}
 		}
 
+		// create voter map from the voting power cache
+		voterMap := make(map[string]struct{})
+		for _, fp := range dc.FinalityProviders {
+			voterMap[fp.BtcPk.MarshalHex()] = struct{}{}
+		}
+
 		// distribute rewards in the gauge to finality providers/delegations
-		keeper.RewardBTCStaking(ctx, height, dc)
+		keeper.RewardBTCStaking(ctx, height, dc, voterMap)
 
 		// assert consistency between reward map and reward gauge
 		for addrStr, reward := range fpRewardMap {
