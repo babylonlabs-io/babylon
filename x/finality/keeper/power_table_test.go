@@ -246,10 +246,6 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 			fp, ok := fpsWithVotingPowerMap[sdk.AccAddress(fpDistInfo.Addr).String()]
 			require.True(t, ok)
 			require.Equal(t, fpDistInfo.Commission, fp.Commission)
-			require.Len(t, fpDistInfo.BtcDels, int(numBTCDels))
-			for _, delDistInfo := range fpDistInfo.BtcDels {
-				require.Equal(t, delDistInfo.TotalSat, stakingValue)
-			}
 		}
 	})
 }

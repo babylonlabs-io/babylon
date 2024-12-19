@@ -78,53 +78,55 @@ func GenRandomGauge(r *rand.Rand) *itypes.Gauge {
 	return itypes.NewGauge(coins...)
 }
 
-func GenRandomBTCDelDistInfo(r *rand.Rand) (*ftypes.BTCDelDistInfo, error) {
-	btcPK, err := GenRandomBIP340PubKey(r)
-	if err != nil {
-		return nil, err
-	}
-	return &ftypes.BTCDelDistInfo{
-		BtcPk:      btcPK,
-		StakerAddr: GenRandomAccount().Address,
-		TotalSat:   RandomInt(r, 1000) + 1,
-	}, nil
+func GenRandomAddrAndSat(r *rand.Rand) (string, uint64) {
+	return GenRandomAccount().Address, RandomInt(r, 1000) + 1
 }
 
-func GenRandomFinalityProviderDistInfo(r *rand.Rand) (*ftypes.FinalityProviderDistInfo, error) {
+func GenRandomFinalityProviderDistInfo(r *rand.Rand) (
+	fpDistInfo *ftypes.FinalityProviderDistInfo,
+	btcTotalSatByAddress map[string]uint64,
+	err error,
+) {
 	// create finality provider with random commission
 	fp, err := GenRandomFinalityProvider(r)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	// create finality provider distribution info
-	fpDistInfo := ftypes.NewFinalityProviderDistInfo(fp)
+	fpDistInfo = ftypes.NewFinalityProviderDistInfo(fp)
 	// add a random number of BTC delegation distribution info
 	numBTCDels := RandomInt(r, 100) + 1
+	btcTotalSatByAddress = make(map[string]uint64, numBTCDels)
 	for i := uint64(0); i < numBTCDels; i++ {
-		btcDelDistInfo, err := GenRandomBTCDelDistInfo(r)
-		if err != nil {
-			return nil, err
-		}
-		fpDistInfo.BtcDels = append(fpDistInfo.BtcDels, btcDelDistInfo)
-		fpDistInfo.TotalBondedSat += btcDelDistInfo.TotalSat
+		btcAddr, totalSat := GenRandomAddrAndSat(r)
+		btcTotalSatByAddress[btcAddr] += totalSat
+		fpDistInfo.TotalBondedSat += totalSat
 		fpDistInfo.IsTimestamped = true
 	}
-	return fpDistInfo, nil
+	return fpDistInfo, btcTotalSatByAddress, nil
 }
 
-func GenRandomVotingPowerDistCache(r *rand.Rand, maxFPs uint32) (*ftypes.VotingPowerDistCache, error) {
-	dc := ftypes.NewVotingPowerDistCache()
+func GenRandomVotingPowerDistCache(r *rand.Rand, maxFPs uint32) (
+	dc *ftypes.VotingPowerDistCache,
+	// fpAddr => delAddr => totalSat
+	btcTotalSatByDelAddressByFpAddress map[string]map[string]uint64,
+	err error,
+) {
+	dc = ftypes.NewVotingPowerDistCache()
 	// a random number of finality providers
 	numFps := RandomInt(r, 10) + 1
+
+	btcTotalSatByDelAddressByFpAddress = make(map[string]map[string]uint64, numFps)
 	for i := uint64(0); i < numFps; i++ {
-		v, err := GenRandomFinalityProviderDistInfo(r)
+		v, btcTotalSatByAddress, err := GenRandomFinalityProviderDistInfo(r)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+		btcTotalSatByDelAddressByFpAddress[v.GetAddress().String()] = btcTotalSatByAddress
 		dc.AddFinalityProviderDistInfo(v)
 	}
 	dc.ApplyActiveFinalityProviders(maxFPs)
-	return dc, nil
+	return dc, btcTotalSatByDelAddressByFpAddress, nil
 }
 
 func GenRandomCheckpointAddressPair(r *rand.Rand) *btcctypes.CheckpointAddressPair {

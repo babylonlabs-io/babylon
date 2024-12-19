@@ -36,31 +36,16 @@ message FinalityProviderDistInfo {
     ];
     // total_bonded_sat is the total amount of bonded BTC stake (in Satoshi) of the finality provider
     uint64 total_bonded_sat = 4;
-    // btc_dels is a list of BTC delegations' voting power information under this finality provider
-    repeated BTCDelDistInfo btc_dels = 5;
     // is_timestamped indicates whether the finality provider
     // has timestamped public randomness committed
     // if no, it should not be assigned voting power
-    bool is_timestamped = 6;
+    bool is_timestamped = 5;
     // is_jailed indicates whether the finality provider
     // is jailed, if so, it should not be assigned voting power
-    bool is_jailed = 7;
+    bool is_jailed = 6;
     // is_slashed indicates whether the finality provider
     // is slashed, if so, it should not be assigned voting power
-    bool is_slashed = 8;
-}
-
-// BTCDelDistInfo contains the information related to voting power distribution for a BTC delegation
-message BTCDelDistInfo {
-    // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
-    // the PK follows encoding in BIP-340 spec
-    bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
-    // staker_addr is the address to receive rewards from BTC delegation.
-    string staker_addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-    // staking_tx_hash is the staking tx hash of the BTC delegation
-    string staking_tx_hash = 3;
-    // total_sat is the amount of BTC stake (in Satoshi) of the BTC delegation
-    uint64 total_sat = 4;
+    bool is_slashed = 7;
 }
 
 // IndexedBlock is the necessary metadata and finalization status of a block

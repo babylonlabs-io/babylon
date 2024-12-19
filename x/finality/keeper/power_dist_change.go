@@ -175,8 +175,10 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	// a map where key is finality provider's BTC PK hex and value is a list
 	// of BTC delegations that newly become active under this provider
 	activeBTCDels := map[string][]*types.BTCDelegation{}
-	// a map where key is unbonded BTC delegation's staking tx hash
-	unbondedBTCDels := map[string]struct{}{}
+	// a map where key is finality provider's BTC PK hex and value is a list
+	// of BTC delegations that were unbonded or expired without previously
+	// being unbonded
+	unbondedBTCDels := map[string][]*types.BTCDelegation{}
 	// a map where key is slashed finality providers' BTC PK
 	slashedFPs := map[string]struct{}{}
 	// a map where key is jailed finality providers' BTC PK
@@ -216,7 +218,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				})
 			case types.BTCDelegationStatus_UNBONDED:
 				// add the unbonded BTC delegation to the map
-				unbondedBTCDels[delStkTxHash] = struct{}{}
+				// unbondedBTCDels[delStkTxHash] = struct{}{}
+				for _, fpBTCPK := range btcDel.FpBtcPkList {
+					fpBTCPKHex := fpBTCPK.MarshalHex()
+					unbondedBTCDels[fpBTCPKHex] = append(unbondedBTCDels[fpBTCPKHex], btcDel)
+				}
 				k.processRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
 					k.MustProcessBtcDelegationUnbonded(ctx, fp, del, sats)
 				})
@@ -226,7 +232,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				if !btcDel.IsUnbondedEarly() {
 					// only adds to the new unbonded list if it hasn't
 					// previously unbonded with types.BTCDelegationStatus_UNBONDED
-					unbondedBTCDels[delStkTxHash] = struct{}{}
+					// unbondedBTCDels[delStkTxHash] = struct{}{}
+					for _, fpBTCPK := range btcDel.FpBtcPkList {
+						fpBTCPKHex := fpBTCPK.MarshalHex()
+						unbondedBTCDels[fpBTCPKHex] = append(unbondedBTCDels[fpBTCPKHex], btcDel)
+					}
 					k.processRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
 						k.MustProcessBtcDelegationUnbonded(ctx, fp, del, sats)
 					})
@@ -261,9 +271,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	for i := range dc.FinalityProviders {
 		// create a copy of the finality provider
 		fp := *dc.FinalityProviders[i]
-		fp.TotalBondedSat = 0
-		fp.BtcDels = []*ftypes.BTCDelDistInfo{}
-
 		fpBTCPKHex := fp.BtcPk.MarshalHex()
 
 		// if this finality provider is slashed, continue to avoid
@@ -289,16 +296,17 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			fp.IsJailed = false
 		}
 
-		// add all BTC delegations that are not unbonded to the new finality provider
-		for j := range dc.FinalityProviders[i].BtcDels {
-			btcDel := *dc.FinalityProviders[i].BtcDels[j]
-
-			_, isUnbondedBtcDelegation := unbondedBTCDels[btcDel.StakingTxHash]
-			if isUnbondedBtcDelegation {
-				continue
+		// process all new BTC delegations under this finality provider
+		if fpUnbondedBTCDels, ok := unbondedBTCDels[fpBTCPKHex]; ok {
+			// handle unbonded delegations for this finality provider
+			for _, d := range fpUnbondedBTCDels {
+				fp.UnbondBTCDel(d)
 			}
-			// if it is not unbonded add to the del dist info
-			fp.AddBTCDelDistInfo(&btcDel)
+			// remove the finality provider entry in unbondedBTCDels map, so that
+			// after the for loop the rest entries in unbondedBTCDels belongs to new
+			// finality providers that might have btc delegations entries
+			// that activated and unbonded in the same slice of events
+			delete(unbondedBTCDels, fpBTCPKHex)
 		}
 
 		// process all new BTC delegations under this finality provider
@@ -341,6 +349,16 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		fpActiveBTCDels := activeBTCDels[fpBTCPKHex]
 		for _, d := range fpActiveBTCDels {
 			fpDistInfo.AddBTCDel(d)
+		}
+
+		// edge case where we might be processing an unbonded event
+		// from a newly active finality provider in the same slice
+		// of events received.
+		fpUnbondedBTCDels, ok := unbondedBTCDels[fpBTCPKHex]
+		if ok {
+			for _, d := range fpUnbondedBTCDels {
+				fpDistInfo.UnbondBTCDel(d)
+			}
 		}
 
 		// add this finality provider to the new cache if it has voting power

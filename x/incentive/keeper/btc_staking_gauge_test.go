@@ -34,7 +34,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		k.SetBTCStakingGauge(ctx, height, gauge)
 
 		// generate a random voting power distribution cache
-		dc, err := datagen.GenRandomVotingPowerDistCache(r, 100)
+		dc, btcTotalSatByDelAddressByFpAddress, err := datagen.GenRandomVotingPowerDistCache(r, 100)
 		require.NoError(t, err)
 
 		// expected values
@@ -56,14 +56,15 @@ func FuzzRewardBTCStaking(f *testing.F) {
 			sumCoinsForDels = sumCoinsForDels.Add(coinsForBTCDels...)
 			fpAddr := fp.GetAddress()
 
-			for _, btcDel := range fp.BtcDels {
-				err := k.BtcDelegationActivated(ctx, fpAddr, btcDel.GetAddress(), btcDel.TotalSat)
+			for delAddrStr, delSat := range btcTotalSatByDelAddressByFpAddress[fpAddr.String()] {
+				btcDelAddr := sdk.MustAccAddressFromBech32(delAddrStr)
+				err := k.BtcDelegationActivated(ctx, fpAddr, btcDelAddr, delSat)
 				require.NoError(t, err)
 
-				btcDelPortion := fp.GetBTCDelPortion(btcDel)
+				btcDelPortion := fp.GetBTCDelPortion(delSat)
 				coinsForDel := types.GetCoinsPortion(coinsForBTCDels, btcDelPortion)
 				if coinsForDel.IsAllPositive() {
-					btcDelRewardMap[btcDel.GetAddress().String()] = coinsForDel
+					btcDelRewardMap[delAddrStr] = coinsForDel
 					distributedCoins.Add(coinsForDel...)
 				}
 			}
@@ -74,11 +75,11 @@ func FuzzRewardBTCStaking(f *testing.F) {
 
 		for _, fp := range dc.FinalityProviders {
 			fpAddr := fp.GetAddress()
-			for _, btcDel := range fp.BtcDels {
-				delAddr := btcDel.GetAddress()
+			for delAddrStr, delSat := range btcTotalSatByDelAddressByFpAddress[fpAddr.String()] {
+				delAddr := sdk.MustAccAddressFromBech32(delAddrStr)
 				delRwd, err := k.GetBTCDelegationRewardsTracker(ctx, fpAddr, delAddr)
 				require.NoError(t, err)
-				require.Equal(t, delRwd.TotalActiveSat.Uint64(), btcDel.TotalSat)
+				require.Equal(t, delRwd.TotalActiveSat.Uint64(), delSat)
 
 				// makes sure the rewards added reach the delegation gauge
 				err = k.BtcDelegationActivated(ctx, fpAddr, delAddr, 0)
