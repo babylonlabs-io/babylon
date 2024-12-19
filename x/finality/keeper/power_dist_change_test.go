@@ -83,6 +83,62 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 	})
 }
 
+func FuzzProcessAllPowerDistUpdateEvents_ActiveAndUnbondTogether(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+
+		// set all parameters
+		h.GenAndApplyParams(r)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		require.NoError(t, err)
+
+		// empty dist cache
+		dc := ftypes.NewVotingPowerDistCache()
+
+		_, fpPK, _ := h.CreateFinalityProvider(r)
+
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		_, _, del, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			fpPK,
+			changeAddress.EncodeAddress(),
+			int64(2*10e8),
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.NoError(err)
+
+		eventActive := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+			StakingTxHash: del.MustGetStakingTxHash().String(),
+			NewState:      types.BTCDelegationStatus_ACTIVE,
+		})
+		eventUnbond := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+			StakingTxHash: del.MustGetStakingTxHash().String(),
+			NewState:      types.BTCDelegationStatus_UNBONDED,
+		})
+		events := []*types.EventPowerDistUpdate{eventActive, eventUnbond}
+
+		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, events)
+		require.Zero(t, newDc.TotalVotingPower)
+	})
+}
+
 func FuzzSlashFinalityProviderEvent(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
