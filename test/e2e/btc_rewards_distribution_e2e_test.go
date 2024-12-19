@@ -49,29 +49,22 @@ type BtcRewardsDistribution struct {
 	fp1 *bstypes.FinalityProvider
 	fp2 *bstypes.FinalityProvider
 
-	// Staking amount of each delegation
 	// 3 Delegations will start closely and possibly in the same block
 	// (fp1, del1), (fp1, del2), (fp2, del1)
 
 	// (fp1, del1) fp1Del1StakingAmt => 2_00000000
 	// (fp1, del2) fp1Del2StakingAmt => 4_00000000
 	// (fp2, del1) fp2Del2StakingAmt => 2_00000000
-	// for this top configure the reward distribution should
-	// be 25%, 50%, 25% respectively (if they will be processed in the same block)
-	// since the rewards distribution is by their bech32 address the delegations
-	// are combined the voting power and each delegator should receive the same
-	// amount of rewards, finality providers on the other hand will have different amounts
-	// fp2 with 2_00000000 and fp1 with 6_00000000. This means the fp1 will
-	// receive 3x the amount of rewards then fp2.
 	fp1Del1StakingAmt int64
 	fp1Del2StakingAmt int64
 	fp2Del1StakingAmt int64
 
-	// The lastet delegation will come right after (del2) had withdraw his rewards
-	// and stake 6_00000000 to (fp2, del2). Since the rewards are combined by
-	// their bech32 address, del2 will have 10_00000000 and del1 will have 4_00000000
-	// as voting power, meaning that del1 will receive only 40% of the amount of rewards
-	// that del2 will receive once every delegation is active
+	// The lastet delegation will stake 6_00000000 to (fp2, del2).
+	// Since the rewards are combined by their bech32 address, del2
+	// will have 10_00000000 and del1 will have 4_00000000 as voting power,
+	// meaning that del1 will receive only 40% of the amount of rewards
+	// that del2 will receive once every delegation is active and blocks
+	// are being rewarded.
 	fp2Del2StakingAmt int64
 
 	// bech32 address of the delegators
