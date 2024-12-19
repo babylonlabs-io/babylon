@@ -4,7 +4,6 @@ package babylon.checkpointing.v1;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
-import "babylon/checkpointing/v1/bls_key.proto";
 import "babylon/checkpointing/v1/checkpoint.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 

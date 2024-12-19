@@ -407,7 +407,7 @@ protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(pro
 
 proto-all: proto-gen proto-swagger-gen ## Generate all protobuf related files
 
-proto-gen: ## Generate protobuf files
+proto-gen: proto-lint ## Generate protobuf files
 	@echo "Generating Protobuf files"
 	@$(protoImage) sh ./proto/scripts/protocgen.sh
 
@@ -421,7 +421,7 @@ proto-format: ## Format protobuf files
 proto-lint: ## Lint protobuf files
 	@$(protoImage) buf lint --error-format=json
 
-.PHONY: proto-gen proto-swagger-gen proto-format prot-lint
+.PHONY: proto-gen proto-swagger-gen proto-format proto-lint
 
 ###############################################################################
 ###                                Docker                                   ###

@@ -2,9 +2,7 @@ syntax = "proto3";
 package babylon.btcstaking.v1;
 
 import "gogoproto/gogo.proto";
-import "cosmos/staking/v1beta1/staking.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
-import "cosmos_proto/cosmos.proto";
 import "amino/amino.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";

@@ -48,6 +48,7 @@ Update btcstaking module docs to include EOI
 and module account vars in appparams
 - [#351](https://github.com/babylonlabs-io/babylon/pull/351) docs: Add state
 transition docs.
+- [#358](https://github.com/babylonlabs-io/babylon/pull/358) Remove unused deps in `.proto` files
 
 ### Bug fixes
 
