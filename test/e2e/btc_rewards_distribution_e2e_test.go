@@ -319,11 +319,6 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
 	fp1LastRewardGauge, fp2LastRewardGauge, btcDel1LastRewardGauge, btcDel2LastRewardGauge := s.QueryRewardGauges(n2)
 
-	// does the withdraw right after the query to avoid new blocks rewarded
-	del2BalanceBeforeWithdraw, errQueryB := n2.QueryBalances(s.del2Addr)
-	n2.WithdrawReward(itypes.BTCDelegationType.String(), wDel2)
-	s.NoError(errQueryB)
-
 	// fp1 ~2674ubbn
 	// fp2 ~891ubbn
 	coins.RequireCoinsDiffInPointOnePercentMargin(
@@ -337,14 +332,7 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	// del2 ~7130ubbn
 	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), btcDel1LastRewardGauge.Coins, btcDel2LastRewardGauge.Coins)
 
-	// note that the rewards might not be precise as more or less blocks were produced and given out rewards.
-	// Withdraw the reward just for del2 to check it is possible
-	n2.WaitForNextBlock()
-
-	del2BalanceAfterWithdraw, err := n2.QueryBalances(s.del2Addr)
-	s.NoError(err)
-
-	s.Equal(del2BalanceAfterWithdraw.String(), del2BalanceBeforeWithdraw.Add(btcDel2LastRewardGauge.Coins...).String())
+	CheckWithdrawReward(s.T(), n2, wDel2, s.del2Addr)
 }
 
 // Test6ActiveLastDelegation creates a new btc delegation
@@ -581,6 +569,37 @@ func (s *BtcRewardsDistribution) CreateBTCDelegationAndCheck(
 	stakingSatAmt int64,
 ) {
 	n.CreateBTCDelegationAndCheck(s.r, s.T(), s.net, wDel, fp, btcStakerSK, delAddr, stakingTimeBlocks, stakingSatAmt)
+}
+
+// CheckWithdrawReward withdraw rewards for one delegation and check the balance
+func CheckWithdrawReward(
+	t testing.TB,
+	n *chain.NodeConfig,
+	delWallet, delAddr string,
+) {
+	accDelAddr := sdk.MustAccAddressFromBech32(delAddr)
+	n.WaitForNextBlockWithSleep50ms()
+
+	// does the withdraw right after the query to avoid new blocks rewarded
+	delRwdGauge, err := n.QueryRewardGauge(accDelAddr)
+	n.WithdrawReward(itypes.BTCDelegationType.String(), wDel2)
+	delBalanceBeforeWithdraw, errQueryB := n.QueryBalances(delAddr)
+
+	require.NoError(t, err)
+	require.NoError(t, errQueryB)
+
+	n.WaitForNextBlock()
+
+	delBalanceAfterWithdraw, err := n.QueryBalances(delAddr)
+	require.NoError(t, err)
+
+	// note that the rewards might not be precise as more or less blocks were produced and given out rewards.
+	// Withdraw the reward just for del2 to check it is possible
+	delRewardGauge, ok := delRwdGauge[itypes.BTCDelegationType.String()]
+	require.True(t, ok)
+	require.True(t, delRewardGauge.Coins.IsAllPositive())
+
+	require.Equal(t, delBalanceAfterWithdraw.String(), delBalanceBeforeWithdraw.Add(delRewardGauge.Coins...).String())
 }
 
 func SendCovenantSigsToPendingDel(
