@@ -368,7 +368,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
 	// submit finality signature
 	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
-		nonValidatorNode.AddFinalitySig(s.cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+		nonValidatorNode.AddFinalitySigFromVal(s.cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
 		// ensure vote is eventually cast
 		var finalizedBlocks []*ftypes.IndexedBlock
@@ -386,7 +386,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 		_, pk, err := datagen.GenRandomBTCKeyPair(s.r)
 		s.NoError(err)
 		btcPK := bbn.NewBIP340PubKeyFromBTCPK(pk)
-		nonValidatorNode.AddFinalitySig(btcPK, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+		nonValidatorNode.AddFinalitySigFromVal(btcPK, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 		nonValidatorNode.WaitForNextBlock()
 	}, false)
 

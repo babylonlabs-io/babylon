@@ -93,6 +93,25 @@ func (n *NodeConfig) QueryModuleAddress(name string) (sdk.AccAddress, error) {
 	return account.GetAddress(), nil
 }
 
+// QueryAccount returns the account given the address
+func (n *NodeConfig) QueryAccount(address string) (sdk.AccountI, error) {
+	path := fmt.Sprintf("/cosmos/auth/v1beta1/accounts/%s", address)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var resp authtypes.QueryAccountResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	var account sdk.AccountI
+	if err := util.EncodingConfig.InterfaceRegistry.UnpackAny(resp.Account, &account); err != nil {
+		return nil, err
+	}
+
+	return account, nil
+}
+
 // QueryBalances returns balances at the address.
 func (n *NodeConfig) QueryBalances(address string) (sdk.Coins, error) {
 	path := fmt.Sprintf("cosmos/bank/v1beta1/balances/%s", address)

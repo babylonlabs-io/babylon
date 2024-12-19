@@ -285,7 +285,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 
 	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
 		// submit finality signature
-		nonValidatorNode.AddFinalitySig(s.cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+		nonValidatorNode.AddFinalitySigFromVal(s.cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
 		// ensure vote is eventually cast
 		var finalizedBlocks []*ftypes.IndexedBlock

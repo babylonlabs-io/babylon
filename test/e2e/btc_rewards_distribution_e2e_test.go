@@ -285,7 +285,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 	)
 
 	n2.WaitForNextBlocks(2)
-	s.AddFinalityVote()
+	s.AddFinalityVote([]string{}, []string{})
 
 	// ensure vote is eventually cast
 	var finalizedBlocks []*ftypes.IndexedBlock
@@ -410,7 +410,7 @@ func (s *BtcRewardsDistribution) Test7FinalityVoteBlock() {
 	// lastFinalizedEpoch++
 	// n1.WaitUntilCurrentEpochIsSealedAndFinalized(lastFinalizedEpoch)
 
-	appHash := s.AddFinalityVote()
+	appHash := s.AddFinalityVote([]string{}, []string{})
 	n1.WaitForNextBlock()
 
 	// ensure vote is eventually cast
@@ -496,16 +496,45 @@ func (s *BtcRewardsDistribution) Test8CheckRewards() {
 
 func (s *BtcRewardsDistribution) AddFinalityVoteUntilCurrentHeight() {
 	chainA := s.configurer.GetChainConfig(0)
+	n1, err := chainA.GetNodeAtIndex(1)
+	s.NoError(err)
 	n2, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
+
 	currentBlock := n2.LatestBlockNumber()
 
+	accN1, err := n1.QueryAccount(s.fp1.Addr)
+	s.NoError(err)
+	accN2, err := n1.QueryAccount(s.fp2.Addr)
+	s.NoError(err)
+
+	accNumberN1 := accN1.GetAccountNumber()
+	accSequenceN1 := accN1.GetSequence()
+
+	accNumberN2 := accN2.GetAccountNumber()
+	accSequenceN2 := accN2.GetSequence()
+
 	for s.finalityBlockHeightVoted < currentBlock {
-		s.AddFinalityVote()
+		n1Flags := []string{
+			"--from=val",
+			"--offline",
+			fmt.Sprintf("--account-number=%d", accNumberN1),
+			fmt.Sprintf("--sequence=%d", accSequenceN1),
+		}
+		n2Flags := []string{
+			"--from=val",
+			"--offline",
+			fmt.Sprintf("--account-number=%d", accNumberN2),
+			fmt.Sprintf("--sequence=%d", accSequenceN2),
+		}
+		s.AddFinalityVote(n1Flags, n2Flags)
+
+		accSequenceN1++
+		accSequenceN2++
 	}
 }
 
-func (s *BtcRewardsDistribution) AddFinalityVote() (appHash bytes.HexBytes) {
+func (s *BtcRewardsDistribution) AddFinalityVote(flagsN1, flagsN2 []string) (appHash bytes.HexBytes) {
 	chainA := s.configurer.GetChainConfig(0)
 	n2, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
@@ -522,6 +551,7 @@ func (s *BtcRewardsDistribution) AddFinalityVote() (appHash bytes.HexBytes) {
 		s.fp1RandListInfo.SRList[s.finalityIdx],
 		&s.fp1RandListInfo.PRList[s.finalityIdx],
 		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		flagsN1...,
 	)
 
 	n2.AddFinalitySignatureToBlock(
@@ -531,6 +561,7 @@ func (s *BtcRewardsDistribution) AddFinalityVote() (appHash bytes.HexBytes) {
 		s.fp2RandListInfo.SRList[s.finalityIdx],
 		&s.fp2RandListInfo.PRList[s.finalityIdx],
 		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		flagsN2...,
 	)
 
 	return appHash
