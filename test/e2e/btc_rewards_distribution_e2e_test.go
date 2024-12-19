@@ -318,6 +318,12 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 
 	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
 	fp1LastRewardGauge, fp2LastRewardGauge, btcDel1LastRewardGauge, btcDel2LastRewardGauge := s.QueryRewardGauges(n2)
+
+	// does the withdraw right after the query to avoid new blocks rewarded
+	del2BalanceBeforeWithdraw, errQueryB := n2.QueryBalances(s.del2Addr)
+	n2.WithdrawReward(itypes.BTCDelegationType.String(), wDel2)
+	s.NoError(errQueryB)
+
 	// fp1 ~2674ubbn
 	// fp2 ~891ubbn
 	coins.RequireCoinsDiffInPointOnePercentMargin(
@@ -331,13 +337,8 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	// del2 ~7130ubbn
 	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), btcDel1LastRewardGauge.Coins, btcDel2LastRewardGauge.Coins)
 
-	// note that the rewards will not be precise as more or less blocks were produced and given out rewards.
+	// note that the rewards might not be precise as more or less blocks were produced and given out rewards.
 	// Withdraw the reward just for del2 to check it is possible
-	n2.WaitForNextBlockWithSleep50ms()
-	del2BalanceBeforeWithdraw, errQueryB := n2.QueryBalances(s.del2Addr)
-	n2.WithdrawReward(itypes.BTCDelegationType.String(), wDel2)
-
-	s.NoError(errQueryB)
 	n2.WaitForNextBlock()
 
 	del2BalanceAfterWithdraw, err := n2.QueryBalances(s.del2Addr)
