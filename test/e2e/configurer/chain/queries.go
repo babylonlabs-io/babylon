@@ -413,7 +413,7 @@ func (n *NodeConfig) QueryAppliedPlan(planName string) upgradetypes.QueryApplied
 	return resp
 }
 
-func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) (sdk.TxResponse, sdktx.Tx) {
+func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) (sdk.TxResponse, *sdktx.Tx) {
 	cmd := []string{
 		"babylond", "q", "tx", "--type=hash", txHash, "--output=json",
 		n.FlagChainID(),
@@ -426,10 +426,7 @@ func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) (sdk.TxRespo
 	err = util.Cdc.UnmarshalJSON(out.Bytes(), &txResp)
 	require.NoError(n.t, err)
 
-	var txAuth sdktx.Tx
-	err = util.Cdc.UnpackAny(txResp.Tx, &txAuth)
-	require.NoError(n.t, err)
-
+	txAuth := txResp.Tx.GetCachedValue().(*sdktx.Tx)
 	return txResp, txAuth
 }
 
