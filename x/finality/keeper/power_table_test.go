@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/rand"
 	"sort"
 	"testing"
@@ -535,7 +536,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		})
 		for i := 0; i < numActiveFPs; i++ {
 			votingPower := h.FinalityKeeper.GetVotingPower(h.Ctx, *fpsWithMeta[i].BtcPk, babylonHeight)
-			require.Equal(t, fpsWithMeta[i].VotingPower, votingPower)
+			require.Equal(t, fmt.Sprintf("%d", fpsWithMeta[i].VotingPower), fmt.Sprintf("%d", votingPower))
 		}
 		for i := numActiveFPs; i < int(numFps); i++ {
 			votingPower := h.FinalityKeeper.GetVotingPower(h.Ctx, *fpsWithMeta[i].BtcPk, babylonHeight)

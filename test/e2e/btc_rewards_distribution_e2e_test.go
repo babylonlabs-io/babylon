@@ -581,14 +581,15 @@ func CheckWithdrawReward(
 	n.WaitForNextBlockWithSleep50ms()
 
 	// does the withdraw right after the query to avoid new blocks rewarded
-	delRwdGauge, err := n.QueryRewardGauge(accDelAddr)
 	delBalanceBeforeWithdraw, errQueryB := n.QueryBalances(delAddr)
 	n.WithdrawReward(itypes.BTCDelegationType.String(), wDel2)
 
-	require.NoError(t, err)
 	require.NoError(t, errQueryB)
 
 	n.WaitForNextBlock()
+
+	delRwdGauge, err := n.QueryRewardGauge(accDelAddr)
+	require.NoError(t, err)
 
 	delBalanceAfterWithdraw, err := n.QueryBalances(delAddr)
 	require.NoError(t, err)
@@ -599,7 +600,7 @@ func CheckWithdrawReward(
 	require.True(t, ok)
 	require.True(t, delRewardGauge.Coins.IsAllPositive())
 
-	require.Equal(t, delBalanceAfterWithdraw.String(), delBalanceBeforeWithdraw.Add(delRewardGauge.Coins...).String())
+	require.Equal(t, delBalanceAfterWithdraw.String(), delBalanceBeforeWithdraw.Add(delRewardGauge.WithdrawnCoins...).String())
 }
 
 func SendCovenantSigsToPendingDel(

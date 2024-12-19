@@ -165,6 +165,10 @@ func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *bstypes.BTCDelegation) {
 	v.TotalBondedSat += btcDelDistInfo.TotalSat
 }
 
+func (v *FinalityProviderDistInfo) UnbondBTCDel(btcDel *bstypes.BTCDelegation) {
+	v.TotalBondedSat = v.TotalBondedSat - btcDel.TotalSat
+}
+
 func (v *FinalityProviderDistInfo) AddBTCDelDistInfo(d *BTCDelDistInfo) {
 	v.BtcDels = append(v.BtcDels, d)
 	v.TotalBondedSat += d.TotalSat
