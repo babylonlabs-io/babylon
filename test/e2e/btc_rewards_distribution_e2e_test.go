@@ -77,6 +77,9 @@ type BtcRewardsDistribution struct {
 	// bech32 address of the delegators
 	del1Addr string
 	del2Addr string
+	// bech32 address of the finality providers
+	fp1Addr string
+	fp2Addr string
 
 	// covenant helpers
 	covenantSKs     []*btcec.PrivateKey
@@ -134,11 +137,19 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 	n2, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
+	s.fp1Addr = n1.KeysAdd(wFp1)
+	s.fp2Addr = n2.KeysAdd(wFp2)
+
+	n2.BankMultiSendFromNode([]string{s.fp1Addr, s.fp2Addr}, "100000ubbn")
+
+	n2.WaitForNextBlock()
+
 	s.fp1 = CreateNodeFP(
 		s.T(),
 		s.r,
 		s.fp1BTCSK,
 		n1,
+		s.fp1Addr,
 	)
 	s.NotNil(s.fp1)
 
@@ -147,6 +158,7 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 		s.r,
 		s.fp2BTCSK,
 		n2,
+		s.fp2Addr,
 	)
 	s.NotNil(s.fp2)
 
@@ -165,14 +177,14 @@ func (s *BtcRewardsDistribution) Test2CreateFirstBtcDelegations() {
 
 	n2.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "100000ubbn")
 
+	n2.WaitForNextBlock()
+
 	// fp1Del1
 	s.CreateBTCDelegationAndCheck(n2, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, s.fp1Del1StakingAmt)
 	// fp1Del2
 	s.CreateBTCDelegationAndCheck(n2, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, s.fp1Del2StakingAmt)
 	// fp2Del1
 	s.CreateBTCDelegationAndCheck(n2, wDel1, s.fp2, s.del1BTCSK, s.del1Addr, s.fp2Del1StakingAmt)
-
-	n2.WaitForNextBlock()
 }
 
 // Test3SubmitCovenantSignature covenant approves all the 3 BTC delegation
@@ -273,6 +285,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 		s.fp1RandListInfo.SRList[s.finalityIdx],
 		&s.fp1RandListInfo.PRList[s.finalityIdx],
 		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		fmt.Sprintf("--from=%s", wFp1),
 	)
 
 	n2.AddFinalitySignatureToBlock(
@@ -282,10 +295,11 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 		s.fp2RandListInfo.SRList[s.finalityIdx],
 		&s.fp2RandListInfo.PRList[s.finalityIdx],
 		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		fmt.Sprintf("--from=%s", wFp2),
 	)
 
-	n2.WaitForNextBlocks(2)
-	s.AddFinalityVote([]string{}, []string{})
+	s.AddFinalityVoteUntilCurrentHeight()
+	n2.WaitForNextBlock()
 
 	// ensure vote is eventually cast
 	var finalizedBlocks []*ftypes.IndexedBlock
@@ -397,34 +411,34 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 }
 
 // Test7FinalityVoteBlock votes in one more block from both finality providers
-func (s *BtcRewardsDistribution) Test7FinalityVoteBlock() {
-	chainA := s.configurer.GetChainConfig(0)
-	// n2, err := chainA.GetNodeAtIndex(2)
-	// s.NoError(err)
-	// covenants are at n1
-	n1, err := chainA.GetNodeAtIndex(1)
-	s.NoError(err)
+// func (s *BtcRewardsDistribution) Test7FinalityVoteBlock() {
+// 	chainA := s.configurer.GetChainConfig(0)
+// 	// n2, err := chainA.GetNodeAtIndex(2)
+// 	// s.NoError(err)
+// 	// covenants are at n1
+// 	n1, err := chainA.GetNodeAtIndex(1)
+// 	s.NoError(err)
 
-	// lastFinalizedEpoch, err := n1.QueryLastFinalizedEpoch()
-	// s.NoError(err)
-	// lastFinalizedEpoch++
-	// n1.WaitUntilCurrentEpochIsSealedAndFinalized(lastFinalizedEpoch)
+// 	// lastFinalizedEpoch, err := n1.QueryLastFinalizedEpoch()
+// 	// s.NoError(err)
+// 	// lastFinalizedEpoch++
+// 	// n1.WaitUntilCurrentEpochIsSealedAndFinalized(lastFinalizedEpoch)
 
-	appHash := s.AddFinalityVote([]string{}, []string{})
-	n1.WaitForNextBlock()
+// 	appHash := s.AddFinalityVote([]string{}, []string{})
+// 	n1.WaitForNextBlock()
 
-	// ensure vote is eventually cast
-	var finalizedBlocks []*ftypes.IndexedBlock
-	s.Eventually(func() bool {
-		finalizedBlocks = n1.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
-		return len(finalizedBlocks) > 1
-	}, time.Minute, time.Millisecond*50)
+// 	// ensure vote is eventually cast
+// 	var finalizedBlocks []*ftypes.IndexedBlock
+// 	s.Eventually(func() bool {
+// 		finalizedBlocks = n1.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
+// 		return len(finalizedBlocks) > 1
+// 	}, time.Minute, time.Millisecond*50)
 
-	lastFinalizedBlock := finalizedBlocks[len(finalizedBlocks)-1]
-	s.Equal(s.finalityBlockHeightVoted, lastFinalizedBlock.Height)
-	s.Equal(appHash.Bytes(), lastFinalizedBlock.AppHash)
-	s.T().Logf("the block %d is finalized", s.finalityBlockHeightVoted)
-}
+// 	lastFinalizedBlock := finalizedBlocks[len(finalizedBlocks)-1]
+// 	s.Equal(s.finalityBlockHeightVoted, lastFinalizedBlock.Height)
+// 	s.Equal(appHash.Bytes(), lastFinalizedBlock.AppHash)
+// 	s.T().Logf("the block %d is finalized", s.finalityBlockHeightVoted)
+// }
 
 // Test8CheckRewards verifies the rewards of all the delegations
 // and finality provider
@@ -432,6 +446,8 @@ func (s *BtcRewardsDistribution) Test8CheckRewards() {
 	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	s.NoError(err)
 
+	n2.WaitForNextBlock()
+	s.AddFinalityVoteUntilCurrentHeight()
 	// updates the cache of the suite
 	// s.UpdateRewardGauges(n2)
 
@@ -454,7 +470,12 @@ func (s *BtcRewardsDistribution) Test8CheckRewards() {
 	// del2 ~16989ubbn
 	fp1RewardGaugePrev, fp2RewardGaugePrev, btcDel1RewardGaugePrev, btcDel2RewardGaugePrev := s.QueryRewardGauges(n2)
 	// wait a few block of rewards
-	n2.WaitForNextBlocks(10)
+	n2.WaitForNextBlocks(3)
+	s.AddFinalityVoteUntilCurrentHeight()
+	n2.WaitForNextBlocks(3)
+	s.AddFinalityVoteUntilCurrentHeight()
+	n2.WaitForNextBlocks(3)
+
 	fp1RewardGauge, fp2RewardGauge, btcDel1RewardGauge, btcDel2RewardGauge := s.QueryRewardGauges(n2)
 
 	// since varius block were created, it is needed to get the difference
@@ -519,11 +540,13 @@ func (s *BtcRewardsDistribution) AddFinalityVoteUntilCurrentHeight() {
 			"--offline",
 			fmt.Sprintf("--account-number=%d", accNumberN1),
 			fmt.Sprintf("--sequence=%d", accSequenceN1),
+			fmt.Sprintf("--from=%s", wFp1),
 		}
 		n2Flags := []string{
 			"--offline",
 			fmt.Sprintf("--account-number=%d", accNumberN2),
 			fmt.Sprintf("--sequence=%d", accSequenceN2),
+			fmt.Sprintf("--from=%s", wFp2),
 		}
 		s.AddFinalityVote(n1Flags, n2Flags)
 

@@ -80,7 +80,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	s.cacheFP = CreateNodeFP(
+	s.cacheFP = CreateNodeFPFromNodeAddr(
 		s.T(),
 		s.r,
 		s.fptBTCSK,
@@ -829,8 +829,8 @@ func equalFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpRes
 	require.Equal(t, fp.SlashedBtcHeight, fpResp.SlashedBtcHeight)
 }
 
-// CreateNodeFP creates a random finality provider.
-func CreateNodeFP(
+// CreateNodeFPFromNodeAddr creates a random finality provider.
+func CreateNodeFPFromNodeAddr(
 	t *testing.T,
 	r *rand.Rand,
 	fpSk *btcec.PrivateKey,
@@ -838,6 +838,46 @@ func CreateNodeFP(
 ) (newFP *bstypes.FinalityProvider) {
 	// the node is the new FP
 	nodeAddr, err := sdk.AccAddressFromBech32(node.PublicAddress)
+	require.NoError(t, err)
+
+	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpSk, nodeAddr)
+	require.NoError(t, err)
+
+	previousFps := node.QueryFinalityProviders()
+
+	// use a higher commission to ensure the reward is more than tx fee of a finality sig
+	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
+	newFP.Commission = &commission
+	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission)
+
+	// wait for a block so that above txs take effect
+	node.WaitForNextBlock()
+
+	// query the existence of finality provider and assert equivalence
+	actualFps := node.QueryFinalityProviders()
+	require.Len(t, actualFps, len(previousFps)+1)
+
+	for _, fpResp := range actualFps {
+		if !strings.EqualFold(fpResp.Addr, newFP.Addr) {
+			continue
+		}
+		equalFinalityProviderResp(t, newFP, fpResp)
+		return newFP
+	}
+
+	return nil
+}
+
+// CreateNodeFP creates a random finality provider.
+func CreateNodeFP(
+	t *testing.T,
+	r *rand.Rand,
+	fpSk *btcec.PrivateKey,
+	node *chain.NodeConfig,
+	fpAddr string,
+) (newFP *bstypes.FinalityProvider) {
+	// the node is the new FP
+	nodeAddr, err := sdk.AccAddressFromBech32(fpAddr)
 	require.NoError(t, err)
 
 	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpSk, nodeAddr)

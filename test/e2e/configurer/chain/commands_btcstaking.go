@@ -469,7 +469,7 @@ func (n *NodeConfig) AddFinalitySignatureToBlock(
 	finalitySig := bbn.NewSchnorrEOTSSigFromModNScalar(fp1Sig)
 
 	// submit finality signature
-	n.AddFinalitySigFromVal(
+	n.AddFinalitySig(
 		fpBTCPK,
 		blockHeight,
 		pubRand,

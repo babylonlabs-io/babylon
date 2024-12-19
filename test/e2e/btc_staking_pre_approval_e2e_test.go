@@ -78,7 +78,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegatio
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	s.cacheFP = CreateNodeFP(
+	s.cacheFP = CreateNodeFPFromNodeAddr(
 		s.T(),
 		s.r,
 		s.fptBTCSK,
