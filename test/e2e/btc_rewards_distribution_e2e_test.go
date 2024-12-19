@@ -583,13 +583,12 @@ func CheckWithdrawReward(
 	// does the withdraw right after the query to avoid new blocks rewarded
 	delBalanceBeforeWithdraw, errQueryB := n.QueryBalances(delAddr)
 	n.WithdrawReward(itypes.BTCDelegationType.String(), wDel2)
+	delRwdGauge, errRwdGauge := n.QueryRewardGauge(accDelAddr)
 
 	require.NoError(t, errQueryB)
+	require.NoError(t, errRwdGauge)
 
 	n.WaitForNextBlock()
-
-	delRwdGauge, err := n.QueryRewardGauge(accDelAddr)
-	require.NoError(t, err)
 
 	delBalanceAfterWithdraw, err := n.QueryBalances(delAddr)
 	require.NoError(t, err)
