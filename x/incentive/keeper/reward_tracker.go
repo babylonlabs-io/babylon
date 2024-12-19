@@ -247,7 +247,7 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 		return 0, err
 	}
 
-	// initiates a new period with empty rewards and the same amount of active sat (this value should be updated latter if needed)
+	// initiates a new period with empty rewards and the same amount of active sat
 	newCurrentRwd := types.NewFinalityProviderCurrentRewards(sdk.NewCoins(), fpCurrentRwd.Period+1, fpCurrentRwd.TotalActiveSat)
 	if err := k.setFinalityProviderCurrentRewards(ctx, fp, newCurrentRwd); err != nil {
 		return 0, err
@@ -257,7 +257,7 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 }
 
 // initializeFinalityProvider initializes a new finality provider current rewards at period 1, empty rewards and zero sats
-// and also a historical rewards at period 0 and zero rewards as well.
+// and also creates a new historical rewards at period 0 and zero rewards as well.
 // It does not verifies if it exists prior to overwrite, who calls it needs to verify.
 func (k Keeper) initializeFinalityProvider(ctx context.Context, fp sdk.AccAddress) (types.FinalityProviderCurrentRewards, error) {
 	// historical rewards starts at the period 0
@@ -271,14 +271,18 @@ func (k Keeper) initializeFinalityProvider(ctx context.Context, fp sdk.AccAddres
 	return newFp, k.setFinalityProviderCurrentRewards(ctx, fp, newFp)
 }
 
-// initializeBTCDelegation creates a new BTCDelegationRewardsTracker from the previous acumulative rewards
-// period of the finality provider and it should be called right after a BTC delegator withdraw his rewards
-// (in our case send the rewards to the reward gauge). Reminder that at every new modification to the amount
-// of satoshi staked from this btc delegator to this finality provider (activivation or unbonding) of BTC
-// delegations, it should withdraw all rewards (send to gauge) and initialize a new BTCDelegationRewardsTracker.
+// initializeBTCDelegation creates a new BTCDelegationRewardsTracker from the
+// previous acumulative rewards period of the finality provider. This function
+// should be called right after a BTC delegator withdraw his rewards (in our
+// case send the rewards to the reward gauge). Reminder that at every new
+// modification to the amount of satoshi staked from this btc delegator to
+// this finality provider (activivation or unbonding) of BTC delegations, it
+// should withdraw all rewards (send to gauge) and initialize a new BTCDelegationRewardsTracker.
 // TODO: add reference count to keep track of possible prunning state of val rewards
 func (k Keeper) initializeBTCDelegation(ctx context.Context, fp, del sdk.AccAddress) error {
-	// period has already been incremented - we want to store the period ended by this delegation action
+	// period has already been incremented prior to call this function
+	// it is needed to store the period ended by this delegation action
+	// as a starting point of the delegation rewards calculation
 	valCurrentRewards, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
 	if err != nil {
 		return err

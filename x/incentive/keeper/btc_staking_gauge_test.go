@@ -24,7 +24,6 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		// mock bank keeper
 		bankKeeper := types.NewMockBankKeeper(ctrl)
 
-		// create incentive k
 		k, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, nil, nil)
 		height := datagen.RandomInt(r, 1000)
 		ctx = datagen.WithCtxHeight(ctx, height)

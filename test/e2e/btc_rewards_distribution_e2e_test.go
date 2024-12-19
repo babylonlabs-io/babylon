@@ -227,9 +227,6 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 	n2, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	/*
-		commit a number of public randomness
-	*/
 	// commit public randomness list
 	commitStartHeight := uint64(1)
 
@@ -259,7 +256,6 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 
 	n1.WaitUntilCurrentEpochIsSealedAndFinalized(1)
 
-	// activated height is never returned
 	s.finalityBlockHeightVoted = n1.WaitFinalityIsActivated()
 
 	// submit finality signature
@@ -403,12 +399,6 @@ func (s *BtcRewardsDistribution) Test7CheckRewards() {
 	// (fp2)  => 8_00000000
 	// (del1) => 4_00000000
 	// (del2) => 10_00000000
-
-	// Current rewards for each addr
-	// fp1 ~5364ubbn
-	// fp2 ~1787ubbn
-	// del1 ~11625ubbn
-	// del2 ~16989ubbn
 	fp1RewardGaugePrev, fp2RewardGaugePrev, btcDel1RewardGaugePrev, btcDel2RewardGaugePrev := s.QueryRewardGauges(n2)
 	// wait a few block of rewards to calculate the difference
 	n2.WaitForNextBlocks(2)

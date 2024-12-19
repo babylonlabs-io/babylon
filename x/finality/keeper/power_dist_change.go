@@ -187,7 +187,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	unjailedFPs := map[string]struct{}{}
 
 	// simple cache to load fp by his btc pk hex
-	cacheFpByBtcPkHex := map[string]*types.FinalityProvider{}
+	fpByBtcPkHex := map[string]*types.FinalityProvider{}
 
 	/*
 		filter and classify all events into new/expired BTC delegations and jailed/slashed FPs
@@ -213,39 +213,30 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 					activedSatsByFpBtcPk[fpBTCPKHex] = append(activedSatsByFpBtcPk[fpBTCPKHex], btcDel.TotalSat)
 				}
 
-				k.processRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
+				k.processRewardTracker(ctx, fpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
 					k.MustProcessBtcDelegationActivated(ctx, fp, del, sats)
 				})
 			case types.BTCDelegationStatus_UNBONDED:
 				// add the unbonded BTC delegation to the map
-				// unbondedBTCDels[delStkTxHash] = struct{}{}
-				for _, fpBTCPK := range btcDel.FpBtcPkList {
-					fpBTCPKHex := fpBTCPK.MarshalHex()
-					unbondedSatsByFpBtcPk[fpBTCPKHex] = append(unbondedSatsByFpBtcPk[fpBTCPKHex], btcDel.TotalSat)
-				}
-				k.processRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
-					k.MustProcessBtcDelegationUnbonded(ctx, fp, del, sats)
-				})
+				k.processPowerDistUpdateEventUnbond(ctx, fpByBtcPkHex, btcDel, unbondedSatsByFpBtcPk)
 			case types.BTCDelegationStatus_EXPIRED:
 				types.EmitExpiredDelegationEvent(sdkCtx, delStkTxHash)
 
 				if !btcDel.IsUnbondedEarly() {
 					// only adds to the new unbonded list if it hasn't
 					// previously unbonded with types.BTCDelegationStatus_UNBONDED
-					// unbondedBTCDels[delStkTxHash] = struct{}{}
-					for _, fpBTCPK := range btcDel.FpBtcPkList {
-						fpBTCPKHex := fpBTCPK.MarshalHex()
-						unbondedSatsByFpBtcPk[fpBTCPKHex] = append(unbondedSatsByFpBtcPk[fpBTCPKHex], btcDel.TotalSat)
-					}
-					k.processRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
-						k.MustProcessBtcDelegationUnbonded(ctx, fp, del, sats)
-					})
+					k.processPowerDistUpdateEventUnbond(ctx, fpByBtcPkHex, btcDel, unbondedSatsByFpBtcPk)
 				}
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
 			// record slashed fps
 			types.EmitSlashedFPEvent(sdkCtx, typedEvent.SlashedFp.Pk)
-			slashedFPs[typedEvent.SlashedFp.Pk.MarshalHex()] = struct{}{}
+			fpBTCPKHex := typedEvent.SlashedFp.Pk.MarshalHex()
+			slashedFPs[fpBTCPKHex] = struct{}{}
+			fp := k.loadFP(ctx, fpByBtcPkHex, fpBTCPKHex)
+			if err := k.IncentiveKeeper.FpSlashed(ctx, fp.Address()); err != nil {
+				panic(err)
+			}
 		case *types.EventPowerDistUpdate_JailedFp:
 			// record jailed fps
 			types.EmitJailedFPEvent(sdkCtx, typedEvent.JailedFp.Pk)
@@ -276,9 +267,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// assigning delegation to it
 		_, isSlashed := slashedFPs[fpBTCPKHex]
 		if isSlashed {
-			if err := k.IncentiveKeeper.FpSlashed(ctx, fp.GetAddress()); err != nil {
-				panic(err)
-			}
 			fp.IsSlashed = true
 			continue
 		}
@@ -341,7 +329,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	// for each new finality provider, apply the new BTC delegations to the new dist cache
 	for _, fpBTCPKHex := range fpActiveBtcPkHexList {
 		// get the finality provider and initialise its dist info
-		newFP := k.loadFP(ctx, cacheFpByBtcPkHex, fpBTCPKHex)
+		newFP := k.loadFP(ctx, fpByBtcPkHex, fpBTCPKHex)
 		fpDistInfo := ftypes.NewFinalityProviderDistInfo(newFP)
 
 		// add each BTC delegation
@@ -367,6 +355,21 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	}
 
 	return newDc
+}
+
+func (k Keeper) processPowerDistUpdateEventUnbond(
+	ctx context.Context,
+	cacheFpByBtcPkHex map[string]*types.FinalityProvider,
+	btcDel *types.BTCDelegation,
+	unbondedSatsByFpBtcPk map[string][]uint64,
+) {
+	for _, fpBTCPK := range btcDel.FpBtcPkList {
+		fpBTCPKHex := fpBTCPK.MarshalHex()
+		unbondedSatsByFpBtcPk[fpBTCPKHex] = append(unbondedSatsByFpBtcPk[fpBTCPKHex], btcDel.TotalSat)
+	}
+	k.processRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
+		k.MustProcessBtcDelegationUnbonded(ctx, fp, del, sats)
+	})
 }
 
 func (k Keeper) SetVotingPowerDistCache(ctx context.Context, height uint64, dc *ftypes.VotingPowerDistCache) {
@@ -404,16 +407,14 @@ func (k Keeper) votingPowerDistCacheStore(ctx context.Context) prefix.Store {
 // and satoshi amounts.
 func (k Keeper) processRewardTracker(
 	ctx context.Context,
-	cacheFpByBtcPkHex map[string]*types.FinalityProvider,
+	fpByBtcPkHex map[string]*types.FinalityProvider,
 	btcDel *types.BTCDelegation,
 	f func(fp, del sdk.AccAddress, sats uint64),
 ) {
 	delAddr := sdk.MustAccAddressFromBech32(btcDel.StakerAddr)
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
-		fp := k.loadFP(ctx, cacheFpByBtcPkHex, fpBTCPK.MarshalHex())
-		fpAddr := sdk.MustAccAddressFromBech32(fp.Addr)
-
-		f(fpAddr, delAddr, btcDel.TotalSat)
+		fp := k.loadFP(ctx, fpByBtcPkHex, fpBTCPK.MarshalHex())
+		f(fp.Address(), delAddr, btcDel.TotalSat)
 	}
 }
 
