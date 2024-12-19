@@ -9,6 +9,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func (k Keeper) sendAllBtcDelegationTypeToRewardsGauge(ctx context.Context, sType types.StakeholderType, del sdk.AccAddress) error {
+	if sType != types.BTCDelegationType {
+		return nil
+	}
+	return k.sendAllBtcRewardsToGauge(ctx, del)
+}
+
 func (k Keeper) withdrawReward(ctx context.Context, sType types.StakeholderType, addr sdk.AccAddress) (sdk.Coins, error) {
 	// retrieve reward gauge of the given stakeholder
 	rg := k.GetRewardGauge(ctx, sType, addr)

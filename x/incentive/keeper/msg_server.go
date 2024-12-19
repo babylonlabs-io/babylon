@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -51,6 +52,10 @@ func (ms msgServer) WithdrawReward(goCtx context.Context, req *types.MsgWithdraw
 	addr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if err := ms.sendAllBtcDelegationTypeToRewardsGauge(ctx, sType, addr); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// withdraw reward, i.e., send withdrawable reward to the stakeholder address and clear the reward gauge

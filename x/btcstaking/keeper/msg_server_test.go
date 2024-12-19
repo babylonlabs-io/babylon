@@ -749,6 +749,76 @@ func FuzzBTCUndelegate(f *testing.F) {
 	})
 }
 
+func FuzzBTCUndelegateExpired(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+
+		// set all parameters
+		covenantSKs, _ := h.GenAndApplyParams(r)
+
+		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		require.NoError(t, err)
+
+		// generate and insert new finality provider
+		_, fpPK, _ := h.CreateFinalityProvider(r)
+
+		// generate and insert new BTC delegation
+		stakingValue := int64(2 * 10e8)
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, unbondingInfo, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			fpPK,
+			changeAddress.EncodeAddress(),
+			stakingValue,
+			1000,
+			0,
+			0,
+			true,
+			false,
+			10,
+			10,
+		)
+		h.NoError(err)
+
+		// add covenant signatures to this BTC delegation
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
+		// activate the BTC delegation
+		btcTip := uint32(30)
+		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, btcTip)
+
+		// ensure the BTC delegation is bonded right now
+		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+		h.NoError(err)
+		status := actualDel.GetStatus(btcTip, bsParams.CovenantQuorum)
+		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
+
+		msg := &types.MsgBTCUndelegate{
+			Signer:                        datagen.GenRandomAccount().Address,
+			StakingTxHash:                 stakingTxHash,
+			StakeSpendingTx:               actualDel.BtcUndelegation.UnbondingTx,
+			StakeSpendingTxInclusionProof: unbondingInfo.UnbondingTxInclusionProof,
+		}
+
+		// expires the delegation
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 2000}).AnyTimes()
+		_, err = h.MsgServer.BTCUndelegate(h.Ctx, msg)
+		require.EqualError(t, err, types.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an unbonded BTC delegation").Error())
+	})
+}
+
 func FuzzSelectiveSlashing(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 

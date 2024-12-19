@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/babylonlabs-io/babylon/testutil/coins"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
@@ -15,25 +16,24 @@ import (
 func FuzzRewardBTCStaking(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
-
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		// mock bank keeper
 		bankKeeper := types.NewMockBankKeeper(ctrl)
 
-		// create incentive keeper
-		keeper, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, nil, nil)
+		k, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, nil, nil)
 		height := datagen.RandomInt(r, 1000)
 		ctx = datagen.WithCtxHeight(ctx, height)
 
 		// set a random gauge
 		gauge := datagen.GenRandomGauge(r)
-		keeper.SetBTCStakingGauge(ctx, height, gauge)
+		k.SetBTCStakingGauge(ctx, height, gauge)
 
 		// generate a random voting power distribution cache
-		dc, err := datagen.GenRandomVotingPowerDistCache(r, 100)
+		dc, btcTotalSatByDelAddressByFpAddress, err := datagen.GenRandomVotingPowerDistCache(r, 100)
 		require.NoError(t, err)
 
 		// expected values
@@ -41,6 +41,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		fpRewardMap := map[string]sdk.Coins{}     // key: address, value: reward
 		btcDelRewardMap := map[string]sdk.Coins{} // key: address, value: reward
 
+		sumCoinsForDels := sdk.NewCoins()
 		for _, fp := range dc.FinalityProviders {
 			fpPortion := dc.GetFinalityProviderPortion(fp)
 			coinsForFpsAndDels := gauge.GetCoinsPortion(fpPortion)
@@ -49,35 +50,75 @@ func FuzzRewardBTCStaking(f *testing.F) {
 				fpRewardMap[fp.GetAddress().String()] = coinsForCommission
 				distributedCoins.Add(coinsForCommission...)
 			}
+
 			coinsForBTCDels := coinsForFpsAndDels.Sub(coinsForCommission...)
-			for _, btcDel := range fp.BtcDels {
-				btcDelPortion := fp.GetBTCDelPortion(btcDel)
+			sumCoinsForDels = sumCoinsForDels.Add(coinsForBTCDels...)
+			fpAddr := fp.GetAddress()
+
+			for delAddrStr, delSat := range btcTotalSatByDelAddressByFpAddress[fpAddr.String()] {
+				btcDelAddr := sdk.MustAccAddressFromBech32(delAddrStr)
+				err := k.BtcDelegationActivated(ctx, fpAddr, btcDelAddr, delSat)
+				require.NoError(t, err)
+
+				btcDelPortion := fp.GetBTCDelPortion(delSat)
 				coinsForDel := types.GetCoinsPortion(coinsForBTCDels, btcDelPortion)
 				if coinsForDel.IsAllPositive() {
-					btcDelRewardMap[btcDel.GetAddress().String()] = coinsForDel
+					btcDelRewardMap[delAddrStr] = coinsForDel
 					distributedCoins.Add(coinsForDel...)
 				}
 			}
 		}
 
 		// distribute rewards in the gauge to finality providers/delegations
-		keeper.RewardBTCStaking(ctx, height, dc)
+		k.RewardBTCStaking(ctx, height, dc)
+
+		for _, fp := range dc.FinalityProviders {
+			fpAddr := fp.GetAddress()
+			for delAddrStr, delSat := range btcTotalSatByDelAddressByFpAddress[fpAddr.String()] {
+				delAddr := sdk.MustAccAddressFromBech32(delAddrStr)
+				delRwd, err := k.GetBTCDelegationRewardsTracker(ctx, fpAddr, delAddr)
+				require.NoError(t, err)
+				require.Equal(t, delRwd.TotalActiveSat.Uint64(), delSat)
+
+				// makes sure the rewards added reach the delegation gauge
+				err = k.BtcDelegationActivated(ctx, fpAddr, delAddr, 0)
+				require.NoError(t, err)
+			}
+			fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fpAddr)
+			require.NoError(t, err)
+			require.Equal(t, fpCurrentRwd.TotalActiveSat.Uint64(), fp.TotalBondedSat)
+		}
 
 		// assert consistency between reward map and reward gauge
 		for addrStr, reward := range fpRewardMap {
 			addr, err := sdk.AccAddressFromBech32(addrStr)
 			require.NoError(t, err)
-			rg := keeper.GetRewardGauge(ctx, types.FinalityProviderType, addr)
+			rg := k.GetRewardGauge(ctx, types.FinalityProviderType, addr)
 			require.NotNil(t, rg)
 			require.Equal(t, reward, rg.Coins)
 		}
+
+		sumRewards := sdk.NewCoins()
 		for addrStr, reward := range btcDelRewardMap {
 			addr, err := sdk.AccAddressFromBech32(addrStr)
 			require.NoError(t, err)
-			rg := keeper.GetRewardGauge(ctx, types.BTCDelegationType, addr)
+			rg := k.GetRewardGauge(ctx, types.BTCDelegationType, addr)
 			require.NotNil(t, rg)
-			require.Equal(t, reward, rg.Coins)
+
+			// A little bit of rewards could be lost in the process due to precision points
+			// so 0.1% difference can be considered okay
+			require.Truef(t, coins.CoinsDiffInPointOnePercentMargin(reward, rg.Coins),
+				"BTC delegation failed within the margin of error 0.1%\nRewards: %s\nGauge: %s",
+				reward.String(), rg.Coins.String(),
+			)
+
+			sumRewards = sumRewards.Add(reward...)
 		}
+
+		require.Truef(t, coins.CoinsDiffInPointOnePercentMargin(sumCoinsForDels, sumRewards),
+			"Sum of total rewards failed within the margin of error 0.1%\nRewards: %s\nGauge: %s",
+			sumCoinsForDels.String(), sumRewards.String(),
+		)
 
 		// assert distributedCoins is a subset of coins in gauge
 		require.True(t, gauge.Coins.IsAllGTE(distributedCoins))
