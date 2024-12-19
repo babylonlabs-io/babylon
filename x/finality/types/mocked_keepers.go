@@ -242,6 +242,20 @@ func (mr *MockCheckpointingKeeperMockRecorder) GetEpoch(ctx interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpoch", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetEpoch), ctx)
 }
 
+// GetEpochByHeight mocks base method.
+func (m *MockCheckpointingKeeper) GetEpochByHeight(ctx context.Context, height uint64) uint64 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEpochByHeight", ctx, height)
+	ret0, _ := ret[0].(uint64)
+	return ret0
+}
+
+// GetEpochByHeight indicates an expected call of GetEpochByHeight.
+func (mr *MockCheckpointingKeeperMockRecorder) GetEpochByHeight(ctx, height interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpochByHeight", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetEpochByHeight), ctx, height)
+}
+
 // GetLastFinalizedEpoch mocks base method.
 func (m *MockCheckpointingKeeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
 	m.ctrl.T.Helper()

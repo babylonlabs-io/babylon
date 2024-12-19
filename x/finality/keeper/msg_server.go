@@ -73,6 +73,14 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, errMod.Wrapf("finality block height: %d is lower than activation height %d", req.BlockHeight, activationHeight)
 	}
 
+	should, err := ms.ShouldAcceptSigForHeight(ctx, req.BlockHeight)
+	if err != nil {
+		return nil, err
+	}
+	if !should {
+		return nil, types.ErrSigHeightOutdated.Wrapf("height: %d", req.BlockHeight)
+	}
+
 	fpPK := req.FpBtcPk
 
 	// ensure the finality provider exists
@@ -208,6 +216,24 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	ms.IncentiveKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgAddFinalitySigResponse{}, nil
+}
+
+func (ms msgServer) ShouldAcceptSigForHeight(ctx context.Context, height uint64) (bool, error) {
+	// check if the block is finalized and timestamped
+	indexedBlock, err := ms.GetBlock(ctx, height)
+	if err != nil {
+		return false, err
+	}
+
+	epochNum := ms.CheckpointingKeeper.GetEpochByHeight(ctx, height)
+	lastFinalizedEpoch := ms.GetLastFinalizedEpoch(ctx)
+	timestamped := lastFinalizedEpoch >= epochNum
+
+	// should NOT accept sig for height is the block is already and finalized by the BTC-timestamping
+	// protocol
+	should := !(indexedBlock.Finalized && timestamped)
+
+	return should, nil
 }
 
 // CommitPubRandList commits a list of EOTS public randomness

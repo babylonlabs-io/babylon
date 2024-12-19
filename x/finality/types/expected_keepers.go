@@ -25,6 +25,7 @@ type BTCStakingKeeper interface {
 }
 
 type CheckpointingKeeper interface {
+	GetEpochByHeight(ctx context.Context, height uint64) uint64
 	GetEpoch(ctx context.Context) *etypes.Epoch
 	GetLastFinalizedEpoch(ctx context.Context) uint64
 }
