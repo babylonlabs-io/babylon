@@ -582,13 +582,13 @@ func CheckWithdrawReward(
 	accDelAddr := sdk.MustAccAddressFromBech32(delAddr)
 	n.WaitForNextBlockWithSleep50ms()
 
+	delBalanceBeforeWithdraw, err := n.QueryBalances(delAddr)
 	txHash := n.WithdrawReward(itypes.BTCDelegationType.String(), delWallet)
-	delBalanceBeforeWithdraw, errQueryB := n.QueryBalances(delAddr)
 
 	n.WaitForNextBlock()
 
 	_, txResp := n.QueryTx(txHash)
-	require.NoError(t, errQueryB)
+	require.NoError(t, err)
 
 	delRwdGauge, errRwdGauge := n.QueryRewardGauge(accDelAddr)
 	require.NoError(t, errRwdGauge)
