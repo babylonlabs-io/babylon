@@ -29,6 +29,10 @@ type (
 		authority string
 		// name of the FeeCollector ModuleAccount
 		feeCollectorName string
+
+		// Collections structures
+		// BTCDelegationRewardsTracker maps (FpAddr, DelAddr) => BTCDelegationRewardsTracker
+		BTCDelegationRewardsTracker collections.Map[collections.Pair[[]byte, []byte], types.BTCDelegationRewardsTracker]
 	}
 )
 
@@ -54,6 +58,14 @@ func NewKeeper(
 			types.RefundableMsgKeySetPrefix,
 			"refundable_msg_key_set",
 			collections.BytesKey,
+		),
+		BTCDelegationRewardsTracker: collections.NewMap(
+			sb,
+			types.BTCDelegationRewardsTrackerKeyPrefix,
+			"btc_delegation_rewards_tracker",
+			// keys: (FpAddr, DelAddr)
+			collections.PairKeyCodec(collections.BytesKey, collections.BytesKey),
+			codec.CollValue[types.BTCDelegationRewardsTracker](cdc),
 		),
 		authority:        authority,
 		feeCollectorName: feeCollectorName,

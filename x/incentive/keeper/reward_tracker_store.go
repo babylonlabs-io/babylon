@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 
+	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
@@ -24,16 +25,6 @@ func (k Keeper) storeBTCDelegatorToFp(ctx context.Context, del sdk.AccAddress) p
 	storeAdaptor := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	st := prefix.NewStore(storeAdaptor, types.BTCDelegatorToFPKey)
 	return prefix.NewStore(st, del.Bytes())
-}
-
-// storeBTCDelegationRewardsTracker returns the KVStore of the FP current rewards
-// prefix: BTCDelegationRewardsTrackerKey
-// key: (FpAddr, DelAddr)
-// value: BTCDelegationRewardsTracker
-func (k Keeper) storeBTCDelegationRewardsTracker(ctx context.Context, fp sdk.AccAddress) prefix.Store {
-	storeAdaptor := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	st := prefix.NewStore(storeAdaptor, types.BTCDelegationRewardsTrackerKey)
-	return prefix.NewStore(st, fp.Bytes())
 }
 
 // storeFpCurrentRewards returns the KVStore of the FP current rewards
@@ -105,25 +96,24 @@ func (k Keeper) GetFinalityProviderCurrentRewards(ctx context.Context, fp sdk.Ac
 // IterateBTCDelegationRewardsTracker iterates over all the delegation rewards tracker by the finality provider.
 // It stops if the function `it` returns an error.
 func (k Keeper) IterateBTCDelegationRewardsTracker(ctx context.Context, fp sdk.AccAddress, it func(fp, del sdk.AccAddress) error) error {
-	st := k.storeBTCDelegationRewardsTracker(ctx, fp)
-
-	iter := st.Iterator(nil, nil)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		del := sdk.AccAddress(iter.Key())
+	rng := collections.NewPrefixedPairRange[[]byte, []byte](fp.Bytes())
+	return k.BTCDelegationRewardsTracker.Walk(ctx, rng, func(key collections.Pair[[]byte, []byte], value types.BTCDelegationRewardsTracker) (stop bool, err error) {
+		del := sdk.AccAddress(key.K2())
 		if err := it(fp, del); err != nil {
-			return err
+			return err != nil, err
 		}
-	}
-
-	return nil
+		return false, nil
+	})
 }
 
 // deleteKeysFromBTCDelegationRewardsTracker iterates over all the BTC delegation rewards tracker by the finality provider and deletes it.
 func (k Keeper) deleteKeysFromBTCDelegationRewardsTracker(ctx context.Context, fp sdk.AccAddress, delKeys [][]byte) {
-	stDelRwdTracker := k.storeBTCDelegationRewardsTracker(ctx, fp)
+	rng := collections.NewPrefixedPairRange[[]byte, []byte](fp.Bytes())
+	err := k.BTCDelegationRewardsTracker.Clear(ctx, rng)
+	if err != nil {
+		k.Logger(sdk.UnwrapSDKContext(ctx)).Error("error deleting BTCDelegationRewardsTracker", "error", err)
+	}
 	for _, delKey := range delKeys {
-		stDelRwdTracker.Delete(delKey)
 		k.deleteBTCDelegatorToFP(ctx, sdk.AccAddress(delKey), fp)
 	}
 }
@@ -131,30 +121,17 @@ func (k Keeper) deleteKeysFromBTCDelegationRewardsTracker(ctx context.Context, f
 // GetBTCDelegationRewardsTracker returns the BTCDelegationRewardsTracker based on the delegation key (fp, del)
 // It returns an error in case the key is not found.
 func (k Keeper) GetBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.AccAddress) (types.BTCDelegationRewardsTracker, error) {
-	key := del.Bytes()
-	bz := k.storeBTCDelegationRewardsTracker(ctx, fp).Get(key)
-	if bz == nil {
+	value, err := k.BTCDelegationRewardsTracker.Get(ctx, collections.Join(fp.Bytes(), del.Bytes()))
+	if err != nil {
 		return types.BTCDelegationRewardsTracker{}, types.ErrBTCDelegationRewardsTrackerNotFound
-	}
-
-	var value types.BTCDelegationRewardsTracker
-	if err := k.cdc.Unmarshal(bz, &value); err != nil {
-		return types.BTCDelegationRewardsTracker{}, err
 	}
 	return value, nil
 }
 
 // setBTCDelegationRewardsTracker sets a new structure in the store, it fails and returns an error if the rwd fails to marshal.
 func (k Keeper) setBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.AccAddress, rwd types.BTCDelegationRewardsTracker) error {
-	key := del.Bytes()
-	bz, err := rwd.Marshal()
-	if err != nil {
-		return err
-	}
-
 	k.setBTCDelegatorToFP(ctx, del, fp)
-	k.storeBTCDelegationRewardsTracker(ctx, fp).Set(key, bz)
-	return nil
+	return k.BTCDelegationRewardsTracker.Set(ctx, collections.Join(fp.Bytes(), del.Bytes()), rwd)
 }
 
 // setFinalityProviderCurrentRewards sets a new structure in the store, it fails and returns an error if the rwd fails to marshal.
