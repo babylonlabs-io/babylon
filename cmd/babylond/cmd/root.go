@@ -162,6 +162,7 @@ func initAppConfig() (string, interface{}) {
 
 func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basicManager module.BasicManager) {
 	cfg := sdk.GetConfig()
+	cfg.SetCoinType(60)
 	cfg.Seal()
 
 	gentxModule := basicManager[genutiltypes.ModuleName].(genutil.AppModuleBasic)
