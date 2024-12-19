@@ -603,7 +603,7 @@ func CheckWithdrawReward(
 	require.True(t, delRewardGauge.Coins.IsAllPositive())
 
 	actualAmt := delBalanceAfterWithdraw.String()
-	expectedAmt := delBalanceBeforeWithdraw.Add(delRewardGauge.WithdrawnCoins...).Add(txResp.AuthInfo.Fee.Amount...).String()
+	expectedAmt := delBalanceBeforeWithdraw.Add(delRewardGauge.WithdrawnCoins...).Sub(txResp.AuthInfo.Fee.Amount...).String()
 	require.Equal(t, expectedAmt, actualAmt)
 }
 
