@@ -455,7 +455,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	// ensure BTC delegation is still pending, i.e., not unbonded
 	btcTipHeight := ms.btclcKeeper.GetTipInfo(ctx).Height
 	status := btcDel.GetStatus(btcTipHeight, params.CovenantQuorum)
-	if status == types.BTCDelegationStatus_UNBONDED {
+	if status == types.BTCDelegationStatus_UNBONDED || status == types.BTCDelegationStatus_EXPIRED {
 		ms.Logger(ctx).Debug("Received covenant signature after the BTC delegation is already unbonded", "covenant pk", req.Pk.MarshalHex())
 		return nil, types.ErrInvalidCovenantSig.Wrap("the BTC delegation is already unbonded")
 	}
@@ -606,7 +606,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		bsParams.CovenantQuorum,
 	)
 
-	if btcDelStatus == types.BTCDelegationStatus_UNBONDED {
+	if btcDelStatus == types.BTCDelegationStatus_UNBONDED || btcDelStatus == types.BTCDelegationStatus_EXPIRED {
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an unbonded BTC delegation")
 	}
 
