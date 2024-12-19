@@ -110,8 +110,6 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 		return nil, types.ErrCommissionGTMaxRate
 	}
 
-	// TODO: check to index the finality provider by his address instead of the BTC pk
-	// find the finality provider with the given BTC PK
 	fp, err := ms.GetFinalityProvider(goCtx, req.BtcPk)
 	if err != nil {
 		return nil, err
