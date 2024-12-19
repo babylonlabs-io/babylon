@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 
@@ -168,4 +169,133 @@ func (k Keeper) votingPowerBbnBlockHeightStore(ctx context.Context, height uint6
 func (k Keeper) votingPowerStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return prefix.NewStore(storeAdapter, types.VotingPowerKey)
+}
+
+func (k Keeper) newVotingPowerStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.VotingPowerAsListKey)
+}
+
+type ActiveFp struct {
+	FPBTCPK     []byte
+	VotingPower uint64
+}
+
+func (afp *ActiveFp) Marshal() []byte {
+	var buf bytes.Buffer
+	buf.Write(afp.FPBTCPK)
+	buf.Write(sdk.Uint64ToBigEndian(afp.VotingPower))
+	return buf.Bytes()
+}
+
+func (afp *ActiveFp) Unmarshal(data []byte) error {
+	buf := bytes.NewBuffer(data)
+	afp.FPBTCPK = buf.Next(32)
+	afp.VotingPower = sdk.BigEndianToUint64(buf.Next(8))
+	return nil
+}
+
+type ActiveFpList struct {
+	Fps []*ActiveFp
+}
+
+func (afl *ActiveFpList) Marshal() []byte {
+	var buf bytes.Buffer
+	for _, fp := range afl.Fps {
+		buf.Write(fp.Marshal())
+	}
+	return buf.Bytes()
+}
+
+func (afl *ActiveFpList) Unmarshal(data []byte) error {
+	fps := []*ActiveFp{}
+	buf := bytes.NewBuffer(data)
+	for buf.Len() > 0 {
+		fp := &ActiveFp{}
+		if err := fp.Unmarshal(buf.Next(40)); err != nil {
+			return err
+		}
+		fps = append(fps, fp)
+	}
+	afl.Fps = fps
+	return nil
+}
+
+func (k Keeper) SetVotingPowerAsList(ctx context.Context, height uint64, activeFPs []*types.ActiveFinalityProvider) {
+	store := k.newVotingPowerStore(ctx)
+	activeList := types.ActiveFinalityProvidersList{Fps: activeFPs}
+	activeListBytes := k.cdc.MustMarshal(&activeList)
+
+	store.Set(sdk.Uint64ToBigEndian(height), activeListBytes)
+}
+
+func (k Keeper) SetVotingPowerAsListNew1(ctx context.Context, height uint64, activeFPs []*ActiveFp) {
+	store := k.newVotingPowerStore(ctx)
+	activeList := ActiveFpList{Fps: activeFPs}
+	activeListBytes := activeList.Marshal()
+
+	store.Set(sdk.Uint64ToBigEndian(height), activeListBytes)
+}
+
+func (k Keeper) GetVotingPowerAsList(ctx context.Context, height uint64) map[string]uint64 {
+	store := k.newVotingPowerStore(ctx)
+	activeListBytes := store.Get(sdk.Uint64ToBigEndian(height))
+
+	if activeListBytes == nil {
+		return nil
+	}
+
+	activeList := types.ActiveFinalityProvidersList{}
+	k.cdc.MustUnmarshal(activeListBytes, &activeList)
+
+	fpSet := make(map[string]uint64)
+	for _, fp := range activeList.Fps {
+		fpSet[fp.FpBtcPk.MarshalHex()] = fp.VotingPower
+	}
+
+	return fpSet
+}
+
+func (k Keeper) GetVotingPowerNew(ctx context.Context, fpBTCPK []byte, height uint64) uint64 {
+	store := k.newVotingPowerStore(ctx)
+	activeListBytes := store.Get(sdk.Uint64ToBigEndian(height))
+
+	if activeListBytes == nil {
+		return 0
+	}
+
+	activeList := types.ActiveFinalityProvidersList{}
+	k.cdc.MustUnmarshal(activeListBytes, &activeList)
+
+	for _, fp := range activeList.Fps {
+		if bytes.Equal(fp.FpBtcPk.MustMarshal(), fpBTCPK) {
+			return fp.VotingPower
+		}
+	}
+
+	return 0
+}
+
+func (k Keeper) GetVotingPowerNew1(ctx context.Context, fpBTCPK []byte, height uint64) uint64 {
+	store := k.newVotingPowerStore(ctx)
+	activeListBytes := store.Get(sdk.Uint64ToBigEndian(height))
+
+	if activeListBytes == nil {
+		return 0
+	}
+
+	buf := bytes.NewBuffer(activeListBytes)
+
+	for buf.Len() > 0 {
+		fp := &ActiveFp{}
+		if err := fp.Unmarshal(buf.Next(40)); err != nil {
+			return 0
+		}
+
+		if bytes.Equal(fp.FPBTCPK, fpBTCPK) {
+			return fp.VotingPower
+		}
+	}
+
+	return 0
 }
