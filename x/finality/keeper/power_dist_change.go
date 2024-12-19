@@ -261,10 +261,9 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		Then, construct a voting power dist cache by reconciling the previous
 		cache and all the new events.
 	*/
-	// TODO: the algorithm needs to iterate over all BTC delegations so remains
+	// TODO: the algorithm needs to iterate over all the finality providers so remains
 	// sub-optimal. Ideally we only need to iterate over all events above rather
-	// than the entire cache. This is made difficulty since BTC delegations are
-	// not keyed in the cache. Need to find a way to optimise this.
+	// than the entire cache.
 	newDc := ftypes.NewVotingPowerDistCache()
 
 	// iterate over all finality providers and apply all events
