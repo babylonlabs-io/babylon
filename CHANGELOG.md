@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#306](https://github.com/babylonlabs-io/babylon/pull/306) feat: improve BTC reward distribution with
+virtual block periods for each finality provider that has delegations and reward tracker structures.
 - [#338](https://github.com/babylonlabs-io/babylon/pull/338) Add print BIP-340 in
 `debug pubkey-raw` subcommand
 - [#316](https://github.com/babylonlabs-io/babylon/pull/316) Add testnet upgrade data
@@ -96,6 +98,7 @@ to relay on UnbondingTime in delegation
 ## v0.17.2
 
 ### Improvements
+
 - [#311](https://github.com/babylonlabs-io/babylon/pull/311) Enforce version 2
 for unbonding transactions
 

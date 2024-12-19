@@ -279,6 +279,48 @@ func (m *MockIncentiveKeeper) EXPECT() *MockIncentiveKeeperMockRecorder {
 	return m.recorder
 }
 
+// BtcDelegationActivated mocks base method.
+func (m *MockIncentiveKeeper) BtcDelegationActivated(ctx context.Context, fp, del types1.AccAddress, sat uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BtcDelegationActivated", ctx, fp, del, sat)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BtcDelegationActivated indicates an expected call of BtcDelegationActivated.
+func (mr *MockIncentiveKeeperMockRecorder) BtcDelegationActivated(ctx, fp, del, sat interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BtcDelegationActivated", reflect.TypeOf((*MockIncentiveKeeper)(nil).BtcDelegationActivated), ctx, fp, del, sat)
+}
+
+// BtcDelegationUnbonded mocks base method.
+func (m *MockIncentiveKeeper) BtcDelegationUnbonded(ctx context.Context, fp, del types1.AccAddress, sat uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BtcDelegationUnbonded", ctx, fp, del, sat)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BtcDelegationUnbonded indicates an expected call of BtcDelegationUnbonded.
+func (mr *MockIncentiveKeeperMockRecorder) BtcDelegationUnbonded(ctx, fp, del, sat interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BtcDelegationUnbonded", reflect.TypeOf((*MockIncentiveKeeper)(nil).BtcDelegationUnbonded), ctx, fp, del, sat)
+}
+
+// FpSlashed mocks base method.
+func (m *MockIncentiveKeeper) FpSlashed(ctx context.Context, fp types1.AccAddress) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FpSlashed", ctx, fp)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// FpSlashed indicates an expected call of FpSlashed.
+func (mr *MockIncentiveKeeperMockRecorder) FpSlashed(ctx, fp interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FpSlashed", reflect.TypeOf((*MockIncentiveKeeper)(nil).FpSlashed), ctx, fp)
+}
+
 // IndexRefundableMsg mocks base method.
 func (m *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg types1.Msg) {
 	m.ctrl.T.Helper()

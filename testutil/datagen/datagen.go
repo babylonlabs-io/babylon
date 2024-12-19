@@ -3,6 +3,8 @@ package datagen
 import (
 	"encoding/hex"
 	"math/rand"
+
+	"cosmossdk.io/math"
 )
 
 func GenRandomByteArray(r *rand.Rand, length uint64) []byte {
@@ -22,6 +24,10 @@ func OneInN(r *rand.Rand, n int) bool {
 
 func RandomInt(r *rand.Rand, rng int) uint64 {
 	return uint64(r.Intn(rng))
+}
+
+func RandomMathInt(r *rand.Rand, rng int) math.Int {
+	return math.NewIntFromUint64(RandomInt(r, rng))
 }
 
 func RandomUInt32(r *rand.Rand, rng uint32) uint32 {

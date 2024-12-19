@@ -167,8 +167,8 @@ message BTCDelegatorDelegationIndex {
 
 // BTCDelegationStatus is the status of a delegation.
 // There are two possible valid state transition paths for a BTC delegation:
-// - PENDING -> ACTIVE -> UNBONDED
-// - PENDING -> VERIFIED -> ACTIVE -> UNBONDED
+// - PENDING -> ACTIVE -> UNBONDED -> EXPIRED
+// - PENDING -> VERIFIED -> ACTIVE -> UNBONDED/EXPIRED
 // and one invalid state transition path:
 // - PENDING -> VERIFIED -> UNBONDED i.e the staker unbonded before
 // activating delegation on Babylon chain.
@@ -183,12 +183,14 @@ enum BTCDelegationStatus {
     VERIFIED = 1;
     // ACTIVE defines a delegation that has voting power
     ACTIVE = 2;
-    // UNBONDED defines a delegation no longer has voting power:
-    // - either reaching the end of staking transaction timelock
-    // - or receiving unbonding tx with signatures from staker and covenant committee
+    // UNBONDED defines a delegation no longer has voting power
+    // by receiving unbonding tx with signatures from staker and covenant committee
     UNBONDED = 3;
+    // EXPIRED defines a delegation no longer has voting power
+    // for reaching the end of staking transaction timelock
+    EXPIRED = 4;
     // ANY is any of the above status
-    ANY = 4;
+    ANY = 5;
 }
 
 // SignatureInfo is a BIP-340 signature together with its signer's BIP-340 PK

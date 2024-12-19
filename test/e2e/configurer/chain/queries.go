@@ -93,6 +93,25 @@ func (n *NodeConfig) QueryModuleAddress(name string) (sdk.AccAddress, error) {
 	return account.GetAddress(), nil
 }
 
+// QueryAccount returns the account given the address
+func (n *NodeConfig) QueryAccount(address string) (sdk.AccountI, error) {
+	path := fmt.Sprintf("/cosmos/auth/v1beta1/accounts/%s", address)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var resp authtypes.QueryAccountResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	var account sdk.AccountI
+	if err := util.EncodingConfig.InterfaceRegistry.UnpackAny(resp.Account, &account); err != nil {
+		return nil, err
+	}
+
+	return account, nil
+}
+
 // QueryBalances returns balances at the address.
 func (n *NodeConfig) QueryBalances(address string) (sdk.Coins, error) {
 	path := fmt.Sprintf("cosmos/bank/v1beta1/balances/%s", address)
@@ -407,4 +426,43 @@ func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) sdk.TxRespon
 	require.NoError(n.t, err)
 
 	return txResp
+}
+
+func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch uint64) (lastFinalizedEpoch uint64) {
+	// finalize epochs from 1 to the current epoch
+	currentEpoch, err := n.QueryCurrentEpoch()
+	require.NoError(n.t, err)
+
+	// wait until the end epoch is sealed
+	require.Eventually(n.t, func() bool {
+		resp, err := n.QueryRawCheckpoint(currentEpoch)
+		if err != nil {
+			return false
+		}
+		return resp.Status == ct.Sealed
+	}, time.Minute*5, time.Millisecond*50)
+	n.FinalizeSealedEpochs(startEpoch, currentEpoch)
+
+	// ensure the committed epoch is finalized
+	require.Eventually(n.t, func() bool {
+		lastFinalizedEpoch, err = n.QueryLastFinalizedEpoch()
+		if err != nil {
+			return false
+		}
+		return lastFinalizedEpoch >= currentEpoch
+	}, time.Minute, time.Millisecond*50)
+	return lastFinalizedEpoch
+}
+
+func (n *NodeConfig) WaitFinalityIsActivated() (activatedHeight uint64) {
+	var err error
+	require.Eventually(n.t, func() bool {
+		activatedHeight, err = n.QueryActivatedHeight()
+		if err != nil {
+			return false
+		}
+		return activatedHeight > 0
+	}, time.Minute*4, time.Millisecond*50)
+	n.t.Logf("the activated height is %d", activatedHeight)
+	return activatedHeight
 }

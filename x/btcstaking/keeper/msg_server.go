@@ -394,13 +394,13 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	ms.addPowerDistUpdateEvent(ctx, timeInfo.TipHeight, activeEvent)
 
 	// record event that the BTC delegation will become unbonded at EndHeight-w
-	unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+	expiredEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 		StakingTxHash: req.StakingTxHash,
-		NewState:      types.BTCDelegationStatus_UNBONDED,
+		NewState:      types.BTCDelegationStatus_EXPIRED,
 	})
 
 	// NOTE: we should have verified that EndHeight > btcTip.Height + min_unbonding_time
-	ms.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-params.UnbondingTimeBlocks, unbondedEvent)
+	ms.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-params.UnbondingTimeBlocks, expiredEvent)
 
 	// at this point, the BTC delegation inclusion proof is verified and is not duplicated
 	// thus, we can safely consider this message as refundable

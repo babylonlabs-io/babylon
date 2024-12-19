@@ -20,10 +20,16 @@ func TestBTCTimestampingTestSuite(t *testing.T) {
 }
 
 // TestBTCStakingTestSuite tests BTC staking protocol end-to-end
-
 func TestBTCStakingTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingTestSuite))
 }
+
+// TestBTCRewardsDistribution tests BTC staking rewards distribution end-to-end
+// that involves x/btcstaking, x/finality, x/incentives and x/mint to give out rewards.
+func TestBTCRewardsDistribution(t *testing.T) {
+	suite.Run(t, new(BtcRewardsDistribution))
+}
+
 func TestBTCStakingPreApprovalTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingPreApprovalTestSuite))
 }
