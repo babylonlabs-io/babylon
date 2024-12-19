@@ -351,6 +351,9 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		s.T().Logf("the block %d is finalized", activatedHeight)
 	}, true)
 
+	finalityParams := nonValidatorNode.QueryFinalityParams()
+	nonValidatorNode.WaitForNextBlocks(uint64(finalityParams.FinalitySigTimeout))
+
 	// ensure finality provider has received rewards after the block is finalised
 	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
 	s.NoError(err)

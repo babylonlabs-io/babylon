@@ -93,8 +93,6 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 				require.NoError(t, err)
 			}
 		}
-		// we don't test incentive in this function
-		iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(int(numWithQCs))
 		// tally blocks and none of them should be finalised
 		ctx = datagen.WithCtxHeight(ctx, activatedHeight+10-1)
 		fKeeper.TallyBlocks(ctx)
