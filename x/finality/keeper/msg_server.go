@@ -73,7 +73,11 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, errMod.Wrapf("finality block height: %d is lower than activation height %d", req.BlockHeight, activationHeight)
 	}
 
-	should, err := ms.ShouldAcceptSigForHeight(ctx, req.BlockHeight)
+	indexedBlock, err := ms.GetBlock(ctx, req.BlockHeight)
+	if err != nil {
+		return nil, err
+	}
+	should, err := ms.ShouldAcceptSigForHeight(ctx, indexedBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -141,10 +145,6 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	ms.SetPubRand(ctx, req.FpBtcPk, req.BlockHeight, *req.PubRand)
 
 	// verify whether the voted block is a fork or not
-	indexedBlock, err := ms.GetBlock(ctx, req.BlockHeight)
-	if err != nil {
-		return nil, err
-	}
 	if !bytes.Equal(indexedBlock.AppHash, req.BlockAppHash) {
 		// the finality provider votes for a fork!
 
@@ -218,20 +218,14 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	return &types.MsgAddFinalitySigResponse{}, nil
 }
 
-func (ms msgServer) ShouldAcceptSigForHeight(ctx context.Context, height uint64) (bool, error) {
-	// check if the block is finalized and timestamped
-	indexedBlock, err := ms.GetBlock(ctx, height)
-	if err != nil {
-		return false, err
-	}
-
-	epochNum := ms.CheckpointingKeeper.GetEpochByHeight(ctx, height)
+func (ms msgServer) ShouldAcceptSigForHeight(ctx context.Context, block *types.IndexedBlock) (bool, error) {
+	epochNum := ms.CheckpointingKeeper.GetEpochByHeight(ctx, block.Height)
 	lastFinalizedEpoch := ms.GetLastFinalizedEpoch(ctx)
 	timestamped := lastFinalizedEpoch >= epochNum
 
 	// should NOT accept sig for height is the block is already and finalized by the BTC-timestamping
 	// protocol
-	should := !(indexedBlock.Finalized && timestamped)
+	should := !(block.Finalized && timestamped)
 
 	return should, nil
 }
