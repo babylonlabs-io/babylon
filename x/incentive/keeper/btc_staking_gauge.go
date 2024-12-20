@@ -19,6 +19,7 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 		// failing to get a reward gauge at previous height is a programming error
 		panic("failed to get a reward gauge at previous height")
 	}
+
 	// reward each of the finality provider and its BTC delegations in proportion
 	for i, fp := range dc.FinalityProviders {
 		// only reward the first NumActiveFps finality providers
@@ -34,14 +35,14 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 		// reward the finality provider with commission
 		coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
 		k.accumulateRewardGauge(ctx, types.FinalityProviderType, fp.GetAddress(), coinsForCommission)
+
 		// reward the rest of coins to each BTC delegation proportional to its voting power portion
 		coinsForBTCDels := coinsForFpsAndDels.Sub(coinsForCommission...)
-		for _, btcDel := range fp.BtcDels {
-			btcDelPortion := fp.GetBTCDelPortion(btcDel)
-			coinsForDel := types.GetCoinsPortion(coinsForBTCDels, btcDelPortion)
-			k.accumulateRewardGauge(ctx, types.BTCDelegationType, btcDel.GetAddress(), coinsForDel)
+		if err := k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp.GetAddress(), coinsForBTCDels); err != nil {
+			panic(err)
 		}
 	}
+	// TODO: prune unnecessary state (delete BTCStakingGauge after the amount is used)
 }
 
 func (k Keeper) accumulateBTCStakingReward(ctx context.Context, btcStakingReward sdk.Coins) {

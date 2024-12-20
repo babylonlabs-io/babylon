@@ -35,4 +35,7 @@ type CheckpointingKeeper interface {
 type IncentiveKeeper interface {
 	RewardBTCStaking(ctx context.Context, height uint64, filteredDc *VotingPowerDistCache)
 	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
+	BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sat uint64) error
+	BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sat uint64) error
+	FpSlashed(ctx context.Context, fp sdk.AccAddress) error
 }

@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/rand"
 	"sort"
 	"testing"
@@ -245,10 +246,6 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 			fp, ok := fpsWithVotingPowerMap[sdk.AccAddress(fpDistInfo.Addr).String()]
 			require.True(t, ok)
 			require.Equal(t, fpDistInfo.Commission, fp.Commission)
-			require.Len(t, fpDistInfo.BtcDels, int(numBTCDels))
-			for _, delDistInfo := range fpDistInfo.BtcDels {
-				require.Equal(t, delDistInfo.TotalSat, stakingValue)
-			}
 		}
 	})
 }
@@ -535,7 +532,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		})
 		for i := 0; i < numActiveFPs; i++ {
 			votingPower := h.FinalityKeeper.GetVotingPower(h.Ctx, *fpsWithMeta[i].BtcPk, babylonHeight)
-			require.Equal(t, fpsWithMeta[i].VotingPower, votingPower)
+			require.Equal(t, fmt.Sprintf("%d", fpsWithMeta[i].VotingPower), fmt.Sprintf("%d", votingPower))
 		}
 		for i := numActiveFPs; i < int(numFps); i++ {
 			votingPower := h.FinalityKeeper.GetVotingPower(h.Ctx, *fpsWithMeta[i].BtcPk, babylonHeight)
