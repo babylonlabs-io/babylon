@@ -3,6 +3,7 @@ package v1_test
 import (
 	_ "embed"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -92,6 +93,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	testCases := []struct {
 		msg            string
 		upgradeDataStr v1.UpgradeDataString
+		upgradeParams  v1.ParamUpgradeFn
 		preUpgrade     func()
 		upgrade        func()
 		postUpgrade    func()
@@ -99,6 +101,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		{
 			"Test launch software upgrade v1 mainnet",
 			UpgradeV1DataMainnet,
+			nil,
 			s.PreUpgrade,
 			s.Upgrade,
 			func() {
@@ -138,6 +141,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		{
 			"Test launch software upgrade v1 testnet",
 			UpgradeV1DataTestnet,
+			testnetdata.TestnetParamUpgrade,
 			s.PreUpgrade,
 			s.Upgrade,
 			func() {
@@ -152,13 +156,44 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				s.NoError(err)
 				s.EqualValues(resp.CodeID, 1)
 				s.Equal(stakingWasmChecksum[:], wasmvmtypes.Checksum(resp.Checksum))
+
+				// check that the gov params were updated
+				govParams, err := s.app.GovKeeper.Params.Get(s.ctx)
+				s.NoError(err)
+				s.EqualValues(testnetdata.TestnetVotingPeriod, *govParams.VotingPeriod)
+				s.EqualValues(testnetdata.TestnetExpeditedVotingPeriod, *govParams.ExpeditedVotingPeriod)
+				s.EqualValues([]sdk.Coin{testnetdata.TestnetMinDeposit}, govParams.MinDeposit)
+				s.EqualValues([]sdk.Coin{testnetdata.TestnetExpeditedMinDeposit}, govParams.ExpeditedMinDeposit)
+
+				// check that the consensus params were updated
+				consensusParams, err := s.app.ConsensusParamsKeeper.ParamsStore.Get(s.ctx)
+				s.NoError(err)
+				s.EqualValues(testnetdata.TestnetBlockGasLimit, consensusParams.Block.MaxGas)
+
+				// check that the staking params were updated
+				stakingParams, err := s.app.StakingKeeper.GetParams(s.ctx)
+				s.NoError(err)
+				s.EqualValues(testnetdata.TestnetMinCommissionRate, stakingParams.MinCommissionRate)
+
+				// check that the distribution params were updated
+				distributionParams, err := s.app.DistrKeeper.Params.Get(s.ctx)
+				s.NoError(err)
+				s.EqualValues(testnetdata.TestnetCommunityTax, distributionParams.CommunityTax)
+
+				// check that the btc checkpoint params were updated
+				btcCheckpointParams := s.app.BtcCheckpointKeeper.GetParams(s.ctx)
+				s.EqualValues(testnetdata.TestnetBTCCheckpointTag, btcCheckpointParams.CheckpointTag)
+
+				// check that the btc light client params were updated
+				btcLCParams := s.app.BTCLightClientKeeper.GetParams(s.ctx)
+				s.True(slices.Contains(btcLCParams.InsertHeadersAllowList, testnetdata.TestnetReporterAllowAddress))
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
-			s.SetupTest(tc.upgradeDataStr) // reset
+			s.SetupTest(tc.upgradeDataStr, tc.upgradeParams) // reset
 
 			tc.preUpgrade()
 			tc.upgrade()
@@ -167,11 +202,11 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	}
 }
 
-func (s *UpgradeTestSuite) SetupTest(upgradeDataStr v1.UpgradeDataString) {
+func (s *UpgradeTestSuite) SetupTest(upgradeDataStr v1.UpgradeDataString, upgradeParams v1.ParamUpgradeFn) {
 	s.upgradeDataStr = upgradeDataStr
 
 	// add the upgrade plan
-	app.Upgrades = []upgrades.Upgrade{v1.CreateUpgrade(upgradeDataStr)}
+	app.Upgrades = []upgrades.Upgrade{v1.CreateUpgrade(upgradeDataStr, upgradeParams)}
 
 	// set up app
 	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)

@@ -19,5 +19,5 @@ func init() {
 		NewBtcHeadersStr:          testnet.NewBtcHeadersStr,
 		TokensDistributionStr:     testnet.TokensDistributionStr,
 		AllowedStakingTxHashesStr: testnet.AllowedStakingTxHashesStr,
-	})}
+	}, testnet.TestnetParamUpgrade)}
 }

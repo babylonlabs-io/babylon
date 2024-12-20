@@ -41,15 +41,17 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 )
 
+type ParamUpgradeFn func(ctx sdk.Context, k *keepers.AppKeepers) error
+
 const (
 	ZoneConciergeStoreKey = "zoneconcierge"
 	UpgradeName           = "v1"
 )
 
-func CreateUpgrade(upgradeDataStr UpgradeDataString) upgrades.Upgrade {
+func CreateUpgrade(upgradeDataStr UpgradeDataString, parmUpgradeFn ParamUpgradeFn) upgrades.Upgrade {
 	return upgrades.Upgrade{
 		UpgradeName:          UpgradeName,
-		CreateUpgradeHandler: CreateUpgradeHandler(upgradeDataStr),
+		CreateUpgradeHandler: CreateUpgradeHandler(upgradeDataStr, parmUpgradeFn),
 		// Upgrade necessary for deletions of `zoneconcierge`
 		StoreUpgrades: store.StoreUpgrades{
 			Deleted: []string{ZoneConciergeStoreKey},
@@ -58,7 +60,7 @@ func CreateUpgrade(upgradeDataStr UpgradeDataString) upgrades.Upgrade {
 }
 
 // CreateUpgradeHandler upgrade handler for launch.
-func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHandlerCreator {
+func CreateUpgradeHandler(upgradeDataStr UpgradeDataString, parmUpgradeFn ParamUpgradeFn) upgrades.UpgradeHandlerCreator {
 	return func(mm *module.Manager, cfg module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
 		return func(context context.Context, _plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 			ctx := sdk.UnwrapSDKContext(context)
@@ -108,6 +110,14 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString) upgrades.UpgradeHand
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to upgrade inserting additional data: %w", err)
+			}
+
+			// if there is hardcoded upgrade for parameters, run it
+			if parmUpgradeFn != nil {
+				err = parmUpgradeFn(ctx, keepers)
+				if err != nil {
+					return nil, fmt.Errorf("failed to upgrade parameters: %w", err)
+				}
 			}
 
 			return migrations, nil
