@@ -442,7 +442,7 @@ func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch uint64
 			return false
 		}
 		return resp.Status == ct.Sealed
-	}, time.Minute*5, time.Millisecond*50)
+	}, time.Minute*5, time.Millisecond*200)
 	n.FinalizeSealedEpochs(startEpoch, currentEpoch)
 
 	// ensure the committed epoch is finalized
@@ -452,7 +452,7 @@ func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch uint64
 			return false
 		}
 		return lastFinalizedEpoch >= currentEpoch
-	}, time.Minute, time.Millisecond*50)
+	}, time.Minute, time.Millisecond*200)
 	return lastFinalizedEpoch
 }
 
@@ -464,7 +464,7 @@ func (n *NodeConfig) WaitFinalityIsActivated() (activatedHeight uint64) {
 			return false
 		}
 		return activatedHeight > 0
-	}, time.Minute*4, time.Second*1)
+	}, time.Minute*4, time.Second)
 	n.t.Logf("the activated height is %d", activatedHeight)
 	return activatedHeight
 }

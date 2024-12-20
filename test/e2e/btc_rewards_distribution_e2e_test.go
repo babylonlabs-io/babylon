@@ -281,7 +281,6 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 		fmt.Sprintf("--from=%s", wFp2),
 	)
 
-	s.AddFinalityVoteUntilCurrentHeight()
 	n2.WaitForNextBlock()
 
 	// ensure vote is eventually cast
@@ -294,6 +293,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 	s.Equal(s.finalityBlockHeightVoted, finalizedBlocks[0].Height)
 	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 	s.T().Logf("the block %d is finalized", s.finalityBlockHeightVoted)
+	s.AddFinalityVoteUntilCurrentHeight()
 }
 
 // Test5CheckRewardsFirstDelegations verifies the rewards independent of mint amounts
