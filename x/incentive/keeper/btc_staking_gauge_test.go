@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -51,6 +52,17 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		fpRewardMap := map[string]sdk.Coins{}     // key: address, value: reward
 		btcDelRewardMap := map[string]sdk.Coins{} // key: address, value: reward
 
+		// calculate total voting power of voters
+		var totalVotingPowerOfVoters uint64
+		for i, fp := range dc.FinalityProviders {
+			if i >= int(dc.NumActiveFps) {
+				break
+			}
+			if _, ok := voterMap[fp.BtcPk.MarshalHex()]; ok {
+				totalVotingPowerOfVoters += fp.TotalBondedSat
+			}
+		}
+
 		// calculate expected rewards only for FPs who voted
 		for _, fp := range dc.FinalityProviders {
 			// skip if not active or didn't vote
@@ -58,13 +70,17 @@ func FuzzRewardBTCStaking(f *testing.F) {
 				continue
 			}
 
-			fpPortion := dc.GetFinalityProviderPortion(fp)
+			fpPortion := sdkmath.LegacyNewDec(int64(fp.TotalBondedSat)).
+				QuoTruncate(sdkmath.LegacyNewDec(int64(totalVotingPowerOfVoters)))
+			// Adjust portion to include share of non-voters
 			coinsForFpsAndDels := gauge.GetCoinsPortion(fpPortion)
+
 			coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
 			if coinsForCommission.IsAllPositive() {
 				fpRewardMap[fp.GetAddress().String()] = coinsForCommission
 				distributedCoins = distributedCoins.Add(coinsForCommission...)
 			}
+
 			coinsForBTCDels := coinsForFpsAndDels.Sub(coinsForCommission...)
 			for _, btcDel := range fp.BtcDels {
 				btcDelPortion := fp.GetBTCDelPortion(btcDel)

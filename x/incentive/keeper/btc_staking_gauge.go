@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,24 +21,33 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 		// failing to get a reward gauge at previous height is a programming error
 		panic("failed to get a reward gauge at previous height")
 	}
-	// reward each of the finality provider and its BTC delegations in proportion
+
+	// calculate total voting power of voters
+	var totalVotingPowerOfVoters uint64
 	for i, fp := range dc.FinalityProviders {
-		// only reward the first NumActiveFps finality providers
-		// note that ApplyActiveFinalityProviders is called before saving `dc`
-		// in DB so that the top dc.NumActiveFps ones in dc.FinalityProviders
-		// are the active finality providers
+		if i >= int(dc.NumActiveFps) {
+			break
+		}
+		if _, ok := voters[fp.BtcPk.MarshalHex()]; ok {
+			totalVotingPowerOfVoters += fp.TotalBondedSat
+		}
+	}
+
+	// distribute rewards according to voting power portions for voters
+	for i, fp := range dc.FinalityProviders {
 		if i >= int(dc.NumActiveFps) {
 			break
 		}
 
-		// skip if finality provider didn't vote
 		if _, ok := voters[fp.BtcPk.MarshalHex()]; !ok {
 			continue
 		}
 
-		// get coins that will be allocated to the finality provider and its BTC delegations
-		fpPortion := dc.GetFinalityProviderPortion(fp)
+		// calculate the portion of a finality provider's voting power out of the total voting power of the voters
+		fpPortion := sdkmath.LegacyNewDec(int64(fp.TotalBondedSat)).
+			QuoTruncate(sdkmath.LegacyNewDec(int64(totalVotingPowerOfVoters)))
 		coinsForFpsAndDels := gauge.GetCoinsPortion(fpPortion)
+
 		// reward the finality provider with commission
 		coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
 		k.accumulateRewardGauge(ctx, types.FinalityProviderType, fp.GetAddress(), coinsForCommission)
