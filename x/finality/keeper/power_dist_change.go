@@ -173,10 +173,10 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	events []*types.EventPowerDistUpdate,
 ) *ftypes.VotingPowerDistCache {
 	// a map where key is finality provider's BTC PK hex and value is a list
-	// of BTC delegations that newly become active under this provider
+	// of BTC delegations satoshis amount that newly become active under this provider
 	activedSatsByFpBtcPk := map[string][]uint64{}
 	// a map where key is finality provider's BTC PK hex and value is a list
-	// of BTC delegations that were unbonded or expired without previously
+	// of BTC delegations satoshis that were unbonded or expired without previously
 	// being unbonded
 	unbondedSatsByFpBtcPk := map[string][]uint64{}
 	// a map where key is slashed finality providers' BTC PK
@@ -284,6 +284,18 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		}
 
 		// process all new BTC delegations under this finality provider
+		if fpActiveBTCDels, ok := activedSatsByFpBtcPk[fpBTCPKHex]; ok {
+			// handle new BTC delegations for this finality provider
+			for _, activatedSats := range fpActiveBTCDels {
+				fp.AddBondedSats(activatedSats)
+			}
+			// remove the finality provider entry in activeBTCDels map, so that
+			// after the for loop the rest entries in activeBTCDels belongs to new
+			// finality providers with new BTC delegations
+			delete(activedSatsByFpBtcPk, fpBTCPKHex)
+		}
+
+		// process all new unbonding BTC delegations under this finality provider
 		if fpUnbondedBTCDels, ok := unbondedSatsByFpBtcPk[fpBTCPKHex]; ok {
 			// handle unbonded delegations for this finality provider
 			for _, unbodedSats := range fpUnbondedBTCDels {
@@ -294,18 +306,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			// finality providers that might have btc delegations entries
 			// that activated and unbonded in the same slice of events
 			delete(unbondedSatsByFpBtcPk, fpBTCPKHex)
-		}
-
-		// process all new BTC delegations under this finality provider
-		if fpActiveBTCDels, ok := activedSatsByFpBtcPk[fpBTCPKHex]; ok {
-			// handle new BTC delegations for this finality provider
-			for _, activatedSats := range fpActiveBTCDels {
-				fp.AddBondedSats(activatedSats)
-			}
-			// remove the finality provider entry in activeBTCDels map, so that
-			// after the for loop the rest entries in activeBTCDels belongs to new
-			// finality providers with new BTC delegations
-			delete(activedSatsByFpBtcPk, fpBTCPKHex)
 		}
 
 		// add this finality provider to the new cache if it has voting power
@@ -333,19 +333,17 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		fpDistInfo := ftypes.NewFinalityProviderDistInfo(newFP)
 
 		// add each BTC delegation
-		fpActiveBTCDels := activedSatsByFpBtcPk[fpBTCPKHex]
-		for _, activatedSats := range fpActiveBTCDels {
+		fpActiveSats := activedSatsByFpBtcPk[fpBTCPKHex]
+		for _, activatedSats := range fpActiveSats {
 			fpDistInfo.AddBondedSats(activatedSats)
 		}
 
 		// edge case where we might be processing an unbonded event
 		// from a newly active finality provider in the same slice
 		// of events received.
-		fpUnbondedBTCDels, ok := unbondedSatsByFpBtcPk[fpBTCPKHex]
-		if ok {
-			for _, unbodedSats := range fpUnbondedBTCDels {
-				fpDistInfo.RemoveBondedSats(unbodedSats)
-			}
+		fpUnbondedSats := unbondedSatsByFpBtcPk[fpBTCPKHex]
+		for _, unbodedSats := range fpUnbondedSats {
+			fpDistInfo.RemoveBondedSats(unbodedSats)
 		}
 
 		// add this finality provider to the new cache if it has voting power
