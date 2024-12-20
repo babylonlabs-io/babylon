@@ -64,6 +64,7 @@ for rewards
 - [#341](https://github.com/babylonlabs-io/babylon/pull/341) Select parameters
 for pre-approval flow based on BTC LC tip height
 - [#360](https://github.com/babylonlabs-io/babylon/pull/360) Refactor rewarding
+- [#365](https://github.com/babylonlabs-io/babylon/pull/365) Reject outdated finality votes
 
 ## v0.18.2
 
