@@ -13,6 +13,7 @@ import (
 // EpochingKeeper defines the expected interface needed to retrieve epoch info
 type EpochingKeeper interface {
 	GetEpoch(ctx context.Context) *epochingtypes.Epoch
+	GetEpochNumByHeight(ctx context.Context, height uint64) uint64
 	EnqueueMsg(ctx context.Context, msg epochingtypes.QueuedMessage)
 	GetValidatorSet(ctx context.Context, epochNumer uint64) epochingtypes.ValidatorSet
 	GetTotalVotingPower(ctx context.Context, epochNumber uint64) int64
