@@ -334,13 +334,13 @@ func (mr *MockIncentiveKeeperMockRecorder) IndexRefundableMsg(ctx, msg interface
 }
 
 // RewardBTCStaking mocks base method.
-func (m *MockIncentiveKeeper) RewardBTCStaking(ctx context.Context, height uint64, filteredDc *VotingPowerDistCache) {
+func (m *MockIncentiveKeeper) RewardBTCStaking(ctx context.Context, height uint64, filteredDc *VotingPowerDistCache, voters map[string]struct{}) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RewardBTCStaking", ctx, height, filteredDc)
+	m.ctrl.Call(m, "RewardBTCStaking", ctx, height, filteredDc, voters)
 }
 
 // RewardBTCStaking indicates an expected call of RewardBTCStaking.
-func (mr *MockIncentiveKeeperMockRecorder) RewardBTCStaking(ctx, height, filteredDc interface{}) *gomock.Call {
+func (mr *MockIncentiveKeeperMockRecorder) RewardBTCStaking(ctx, height, filteredDc, voters interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RewardBTCStaking", reflect.TypeOf((*MockIncentiveKeeper)(nil).RewardBTCStaking), ctx, height, filteredDc)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RewardBTCStaking", reflect.TypeOf((*MockIncentiveKeeper)(nil).RewardBTCStaking), ctx, height, filteredDc, voters)
 }

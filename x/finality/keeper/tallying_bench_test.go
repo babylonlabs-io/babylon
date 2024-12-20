@@ -42,7 +42,7 @@ func benchmarkTallyBlocks(b *testing.B, numFPs int) {
 	}
 
 	// TODO: test incentive
-	iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any()).Return().AnyTimes()
+	iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return().AnyTimes()
 	// Start the CPU profiler
 	cpuProfileFile := fmt.Sprintf("/tmp/finality-tally-blocks-%d-cpu.pprof", numFPs)
 	f, err := os.Create(cpuProfileFile)

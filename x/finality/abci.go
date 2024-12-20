@@ -36,8 +36,11 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 		// bit in a bit array of size params.SignedBlocksWindow)
 		// once this height is judged as `missed`, the judgement is irreversible
 		heightToExamine := sdk.UnwrapSDKContext(ctx).HeaderInfo().Height - k.GetParams(ctx).FinalitySigTimeout
+
 		if heightToExamine >= 1 {
 			k.HandleLiveness(ctx, heightToExamine)
+
+			k.HandleRewarding(ctx, heightToExamine)
 		}
 	}
 
