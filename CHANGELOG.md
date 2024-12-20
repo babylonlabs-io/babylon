@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v1.0.0-rc1
+
 ### Improvements
 
 - [#306](https://github.com/babylonlabs-io/babylon/pull/306) feat: improve BTC reward distribution with
