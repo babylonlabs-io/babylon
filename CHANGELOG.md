@@ -51,12 +51,13 @@ and module account vars in appparams
 - [#351](https://github.com/babylonlabs-io/babylon/pull/351) docs: Add state
 transition docs.
 - [#358](https://github.com/babylonlabs-io/babylon/pull/358) Remove unused deps in `.proto` files
+- [#364](https://github.com/babylonlabs-io/babylon/pull/364) Add testnet upgrade data
 
 ### Bug fixes
 
 - [#324](https://github.com/babylonlabs-io/babylon/pull/324) Fix decrementing
 jailed fp counter
-- [#352](https://github.com/babylonlabs-io/babylon/pull/352) Fix: withdrawal cli 
+- [#352](https://github.com/babylonlabs-io/babylon/pull/352) Fix: withdrawal cli
 for rewards
 
 ### State Machine Breaking
