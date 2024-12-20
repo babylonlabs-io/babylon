@@ -61,7 +61,10 @@ func NewManager(identifier string, isDebugLogEnabled bool, isCosmosRelayer, isUp
 }
 
 // ExecTxCmd Runs ExecTxCmdWithSuccessString searching for `code: 0`
-func (m *Manager) ExecTxCmd(t *testing.T, chainId string, nodeName string, command []string) (bytes.Buffer, bytes.Buffer, error) {
+func (m *Manager) ExecTxCmd(t *testing.T, chainId string, nodeName string, command []string) (
+	outBuf, errBuf bytes.Buffer,
+	err error,
+) {
 	return m.ExecTxCmdWithSuccessString(t, chainId, nodeName, command, "code: 0")
 }
 

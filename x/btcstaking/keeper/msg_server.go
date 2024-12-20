@@ -110,8 +110,6 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 		return nil, types.ErrCommissionGTMaxRate
 	}
 
-	// TODO: check to index the finality provider by his address instead of the BTC pk
-	// find the finality provider with the given BTC PK
 	fp, err := ms.GetFinalityProvider(goCtx, req.BtcPk)
 	if err != nil {
 		return nil, err
@@ -394,13 +392,13 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	ms.addPowerDistUpdateEvent(ctx, timeInfo.TipHeight, activeEvent)
 
 	// record event that the BTC delegation will become unbonded at EndHeight-w
-	unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+	expiredEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 		StakingTxHash: req.StakingTxHash,
-		NewState:      types.BTCDelegationStatus_UNBONDED,
+		NewState:      types.BTCDelegationStatus_EXPIRED,
 	})
 
 	// NOTE: we should have verified that EndHeight > btcTip.Height + min_unbonding_time
-	ms.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-params.UnbondingTimeBlocks, unbondedEvent)
+	ms.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-params.UnbondingTimeBlocks, expiredEvent)
 
 	// at this point, the BTC delegation inclusion proof is verified and is not duplicated
 	// thus, we can safely consider this message as refundable
@@ -457,7 +455,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	// ensure BTC delegation is still pending, i.e., not unbonded
 	btcTipHeight := ms.btclcKeeper.GetTipInfo(ctx).Height
 	status := btcDel.GetStatus(btcTipHeight, params.CovenantQuorum)
-	if status == types.BTCDelegationStatus_UNBONDED {
+	if status == types.BTCDelegationStatus_UNBONDED || status == types.BTCDelegationStatus_EXPIRED {
 		ms.Logger(ctx).Debug("Received covenant signature after the BTC delegation is already unbonded", "covenant pk", req.Pk.MarshalHex())
 		return nil, types.ErrInvalidCovenantSig.Wrap("the BTC delegation is already unbonded")
 	}
@@ -608,7 +606,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		bsParams.CovenantQuorum,
 	)
 
-	if btcDelStatus == types.BTCDelegationStatus_UNBONDED {
+	if btcDelStatus == types.BTCDelegationStatus_UNBONDED || btcDelStatus == types.BTCDelegationStatus_EXPIRED {
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an unbonded BTC delegation")
 	}
 

@@ -3,7 +3,6 @@ package babylon.mint.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "babylon/mint/v1/mint.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/mint/types";

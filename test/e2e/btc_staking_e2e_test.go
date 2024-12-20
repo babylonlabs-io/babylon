@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
@@ -28,7 +29,6 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 )
@@ -80,7 +80,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	s.cacheFP = CreateNodeFP(
+	s.cacheFP = CreateNodeFPFromNodeAddr(
 		s.T(),
 		s.r,
 		s.fptBTCSK,
@@ -90,46 +90,22 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	/*
 		create a random BTC delegation under this finality provider
 	*/
-	// BTC staking params, BTC delegation key pairs and PoP
-	params := nonValidatorNode.QueryBTCStakingParams()
-
-	// required unbonding time
-	unbondingTime := params.UnbondingTimeBlocks
-
-	// NOTE: we use the node's address for the BTC delegation
-	stakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
-	pop, err := bstypes.NewPoPBTC(stakerAddr, s.delBTCSK)
-	s.NoError(err)
 
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
-	testStakingInfo, stakingTx, inclusionProof, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, params, stakingTimeBlocks, s.cacheFP)
 
-	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(s.delBTCSK)
-	s.NoError(err)
-
-	// submit the message for creating BTC delegation
-	nonValidatorNode.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey()),
-		pop,
-		stakingTx,
-		inclusionProof,
-		s.cacheFP.BtcPk,
-		stakingTimeBlocks,
-		btcutil.Amount(s.stakingValue),
-		testStakingInfo.SlashingTx,
-		delegatorSig,
-		testUnbondingInfo.UnbondingTx,
-		testUnbondingInfo.SlashingTx,
-		uint16(unbondingTime),
-		btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
-		delUnbondingSlashingSig,
+	// NOTE: we use the node's address for the BTC delegation
+	testStakingInfo := nonValidatorNode.CreateBTCDelegationAndCheck(
+		s.r,
+		s.T(),
+		s.net,
 		nonValidatorNode.WalletName,
-		false,
+		s.cacheFP,
+		s.delBTCSK,
+		nonValidatorNode.PublicAddress,
+		stakingTimeBlocks,
+		s.stakingValue,
 	)
-
-	// wait for a block so that above txs take effect
-	nonValidatorNode.WaitForNextBlock()
 
 	pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(s.cacheFP.BtcPk.MarshalHex())
 	s.Len(pendingDelSet, 1)
@@ -222,9 +198,10 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	s.NoError(err)
 
 	for i := 0; i < int(s.covenantQuorum); i++ {
+		// after adding the covenant signatures it panics with "BTC delegation rewards tracker has a negative amount of TotalActiveSat"
 		nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
 			// add covenant sigs
-			nonValidatorNode.AddCovenantSigs(
+			nonValidatorNode.AddCovenantSigsFromVal(
 				covenantSlashingSigs[i].CovPk,
 				stakingTxHash,
 				covenantSlashingSigs[i].AdaptorSigs,
@@ -237,8 +214,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	}
 
 	// wait for a block so that above txs take effect
-	nonValidatorNode.WaitForNextBlock()
-	nonValidatorNode.WaitForNextBlock()
+	nonValidatorNode.WaitForNextBlocks(2)
 
 	// ensure the BTC delegation has covenant sigs now
 	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(s.cacheFP.BtcPk.MarshalHex())
@@ -286,40 +262,11 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.ErrorContains(err, itypes.ErrRewardGaugeNotFound.Error())
 	delBabylonAddr := fpBabylonAddr
 
-	// finalize epochs from 1 to the current epoch
-	currentEpoch, err := nonValidatorNode.QueryCurrentEpoch()
-	s.NoError(err)
-
-	// wait until the end epoch is sealed
-	s.Eventually(func() bool {
-		resp, err := nonValidatorNode.QueryRawCheckpoint(currentEpoch)
-		if err != nil {
-			return false
-		}
-		return resp.Status == ckpttypes.Sealed
-	}, time.Minute, time.Millisecond*50)
-	nonValidatorNode.FinalizeSealedEpochs(1, currentEpoch)
-
-	// ensure the committed epoch is finalized
-	lastFinalizedEpoch := uint64(0)
-	s.Eventually(func() bool {
-		lastFinalizedEpoch, err = nonValidatorNode.QueryLastFinalizedEpoch()
-		if err != nil {
-			return false
-		}
-		return lastFinalizedEpoch >= currentEpoch
-	}, time.Minute, time.Millisecond*50)
+	nonValidatorNode.WaitUntilCurrentEpochIsSealedAndFinalized(1)
 
 	// ensure btc staking is activated
-	var activatedHeight uint64
-	s.Eventually(func() bool {
-		activatedHeight, err = nonValidatorNode.QueryActivatedHeight()
-		if err != nil {
-			return false
-		}
-		return activatedHeight > 0
-	}, time.Minute, time.Millisecond*50)
-	s.T().Logf("the activated height is %d", activatedHeight)
+	// check how this does not errors out
+	activatedHeight := nonValidatorNode.WaitFinalityIsActivated()
 
 	/*
 		submit finality signature
@@ -338,7 +285,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 
 	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
 		// submit finality signature
-		nonValidatorNode.AddFinalitySig(s.cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+		nonValidatorNode.AddFinalitySigFromVal(s.cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
 		// ensure vote is eventually cast
 		var finalizedBlocks []*ftypes.IndexedBlock
@@ -885,18 +832,21 @@ func equalFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpRes
 	require.Equal(t, fp.SlashedBtcHeight, fpResp.SlashedBtcHeight)
 }
 
-// CreateNodeFP creates a random finality provider.
-func CreateNodeFP(
+// CreateNodeFPFromNodeAddr creates a random finality provider.
+func CreateNodeFPFromNodeAddr(
 	t *testing.T,
 	r *rand.Rand,
 	fpSk *btcec.PrivateKey,
-	node *chain.NodeConfig) (newFP *bstypes.FinalityProvider) {
+	node *chain.NodeConfig,
+) (newFP *bstypes.FinalityProvider) {
 	// the node is the new FP
 	nodeAddr, err := sdk.AccAddressFromBech32(node.PublicAddress)
 	require.NoError(t, err)
 
 	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpSk, nodeAddr)
 	require.NoError(t, err)
+
+	previousFps := node.QueryFinalityProviders()
 
 	// use a higher commission to ensure the reward is more than tx fee of a finality sig
 	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
@@ -908,11 +858,57 @@ func CreateNodeFP(
 
 	// query the existence of finality provider and assert equivalence
 	actualFps := node.QueryFinalityProviders()
-	require.Len(t, actualFps, 1)
+	require.Len(t, actualFps, len(previousFps)+1)
 
-	equalFinalityProviderResp(t, newFP, actualFps[0])
+	for _, fpResp := range actualFps {
+		if !strings.EqualFold(fpResp.Addr, newFP.Addr) {
+			continue
+		}
+		equalFinalityProviderResp(t, newFP, fpResp)
+		return newFP
+	}
 
-	return newFP
+	return nil
+}
+
+// CreateNodeFP creates a random finality provider.
+func CreateNodeFP(
+	t *testing.T,
+	r *rand.Rand,
+	fpSk *btcec.PrivateKey,
+	node *chain.NodeConfig,
+	fpAddr string,
+) (newFP *bstypes.FinalityProvider) {
+	// the node is the new FP
+	nodeAddr, err := sdk.AccAddressFromBech32(fpAddr)
+	require.NoError(t, err)
+
+	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpSk, nodeAddr)
+	require.NoError(t, err)
+
+	previousFps := node.QueryFinalityProviders()
+
+	// use a higher commission to ensure the reward is more than tx fee of a finality sig
+	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
+	newFP.Commission = &commission
+	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission)
+
+	// wait for a block so that above txs take effect
+	node.WaitForNextBlock()
+
+	// query the existence of finality provider and assert equivalence
+	actualFps := node.QueryFinalityProviders()
+	require.Len(t, actualFps, len(previousFps)+1)
+
+	for _, fpResp := range actualFps {
+		if !strings.EqualFold(fpResp.Addr, newFP.Addr) {
+			continue
+		}
+		equalFinalityProviderResp(t, newFP, fpResp)
+		return newFP
+	}
+
+	return nil
 }
 
 // CovenantBTCPKs returns the covenantBTCPks as slice from parameters

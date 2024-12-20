@@ -78,7 +78,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegatio
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	s.cacheFP = CreateNodeFP(
+	s.cacheFP = CreateNodeFPFromNodeAddr(
 		s.T(),
 		s.r,
 		s.fptBTCSK,
@@ -221,7 +221,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test2SubmitCovenantSignature() {
 
 	for i := 0; i < int(s.covenantQuorum); i++ {
 		nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
-			nonValidatorNode.AddCovenantSigs(
+			nonValidatorNode.AddCovenantSigsFromVal(
 				covenantSlashingSigs[i].CovPk,
 				stakingTxHash,
 				covenantSlashingSigs[i].AdaptorSigs,
@@ -368,7 +368,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
 	// submit finality signature
 	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
-		nonValidatorNode.AddFinalitySig(s.cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+		nonValidatorNode.AddFinalitySigFromVal(s.cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
 		// ensure vote is eventually cast
 		var finalizedBlocks []*ftypes.IndexedBlock
@@ -386,7 +386,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 		_, pk, err := datagen.GenRandomBTCKeyPair(s.r)
 		s.NoError(err)
 		btcPK := bbn.NewBIP340PubKeyFromBTCPK(pk)
-		nonValidatorNode.AddFinalitySig(btcPK, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+		nonValidatorNode.AddFinalitySigFromVal(btcPK, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 		nonValidatorNode.WaitForNextBlock()
 	}, false)
 

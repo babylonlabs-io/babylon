@@ -111,7 +111,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeV1() {
 
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	fptBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
-	fp := CreateNodeFP(
+	fp := CreateNodeFPFromNodeAddr(
 		s.T(),
 		r,
 		fptBTCSK,
