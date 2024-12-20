@@ -4,8 +4,9 @@ import (
 	"sort"
 
 	sdkmath "cosmossdk.io/math"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 func NewVotingPowerDistCache() *VotingPowerDistCache {
@@ -133,11 +134,6 @@ func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*Fin
 	}
 
 	return inactiveFps
-}
-
-// GetFinalityProviderPortion returns the portion of a finality provider's voting power out of the total voting power
-func (dc *VotingPowerDistCache) GetFinalityProviderPortion(v *FinalityProviderDistInfo) sdkmath.LegacyDec {
-	return sdkmath.LegacyNewDec(int64(v.TotalBondedSat)).QuoTruncate(sdkmath.LegacyNewDec(int64(dc.TotalVotingPower)))
 }
 
 func NewFinalityProviderDistInfo(fp *bstypes.FinalityProvider) *FinalityProviderDistInfo {
