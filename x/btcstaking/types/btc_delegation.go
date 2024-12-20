@@ -29,6 +29,8 @@ func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, er
 		return BTCDelegationStatus_ACTIVE, nil
 	case "unbonded":
 		return BTCDelegationStatus_UNBONDED, nil
+	case "expired":
+		return BTCDelegationStatus_EXPIRED, nil
 	case "any":
 		return BTCDelegationStatus_ANY, nil
 	default:
@@ -57,6 +59,11 @@ func (d *BTCDelegation) GetFpIdx(fpBTCPK *bbn.BIP340PubKey) int {
 		}
 	}
 	return -1
+}
+
+// Address returns the bech32 BTC staker address
+func (d *BTCDelegation) Address() sdk.AccAddress {
+	return sdk.MustAccAddressFromBech32(d.StakerAddr)
 }
 
 func (d *BTCDelegation) GetCovSlashingAdaptorSig(
@@ -127,10 +134,16 @@ func (d *BTCDelegation) GetStatus(
 
 	// At this point we already have covenant quorum and inclusion proof,
 	// we can check the status based on the BTC height
-	if btcHeight < d.StartHeight || btcHeight+d.UnbondingTime > d.EndHeight {
+	if btcHeight < d.StartHeight {
 		// staking tx's timelock has not begun, or is less than unbonding time BTC
-		// blocks left, or is expired
+		// blocks left
 		return BTCDelegationStatus_UNBONDED
+	}
+
+	// if the endheight is lower than the btc height + unbonding time
+	// the btc delegation should be considered expired
+	if btcHeight+d.UnbondingTime > d.EndHeight {
+		return BTCDelegationStatus_EXPIRED
 	}
 
 	// - we have covenant quorum
@@ -347,7 +360,6 @@ func (d *BTCDelegation) GetUnbondingInfo(bsParams *Params, btcNet *chaincfg.Para
 	return unbondingInfo, nil
 }
 
-// TODO: verify to remove, not used in babylon, only for tests
 // findFPIdx returns the index of the given finality provider
 // among all restaked finality providers
 func (d *BTCDelegation) findFPIdx(fpBTCPK *bbn.BIP340PubKey) (int, error) {
@@ -363,7 +375,6 @@ func (d *BTCDelegation) findFPIdx(fpBTCPK *bbn.BIP340PubKey) (int, error) {
 // the signatures on the slashing tx, such that the slashing tx obtains full
 // witness and can be submitted to Bitcoin.
 // This happens after the finality provider is slashed and its SK is extracted.
-// TODO: verify not used
 func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *chaincfg.Params, fpSK *btcec.PrivateKey) (*wire.MsgTx, error) {
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(d.StakingTx)
 	if err != nil {
@@ -414,7 +425,6 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 	return slashingMsgTxWithWitness, nil
 }
 
-// TODO: verify to remove, func not used by babylon, used in side car processes.
 func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, btcNet *chaincfg.Params, fpSK *btcec.PrivateKey) (*wire.MsgTx, error) {
 	unbondingMsgTx, err := bbn.NewBTCTxFromBytes(d.BtcUndelegation.UnbondingTx)
 	if err != nil {

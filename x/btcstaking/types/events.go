@@ -141,7 +141,7 @@ func NewExpiredDelegationEvent(
 ) *EventBTCDelegationExpired {
 	return &EventBTCDelegationExpired{
 		StakingTxHash: stakingTxHash,
-		NewState:      BTCDelegationStatus_UNBONDED.String(),
+		NewState:      BTCDelegationStatus_EXPIRED.String(),
 	}
 }
 

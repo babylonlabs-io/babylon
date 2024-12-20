@@ -3,6 +3,7 @@ package datagen
 import (
 	"math/rand"
 
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -42,7 +43,7 @@ func GenRandomCoins(r *rand.Rand) sdk.Coins {
 	coins := sdk.NewCoins()
 	for i := int32(0); i < numCoins; i++ {
 		demon := GenRandomDenom(r)
-		amount := r.Int63n(10000) + 1
+		amount := r.Int63n(10_000000) + 10_000000
 		coin := sdk.NewInt64Coin(demon, amount)
 		coins = coins.Add(coin)
 	}
@@ -77,53 +78,55 @@ func GenRandomGauge(r *rand.Rand) *itypes.Gauge {
 	return itypes.NewGauge(coins...)
 }
 
-func GenRandomBTCDelDistInfo(r *rand.Rand) (*ftypes.BTCDelDistInfo, error) {
-	btcPK, err := GenRandomBIP340PubKey(r)
-	if err != nil {
-		return nil, err
-	}
-	return &ftypes.BTCDelDistInfo{
-		BtcPk:      btcPK,
-		StakerAddr: GenRandomAccount().Address,
-		TotalSat:   RandomInt(r, 1000) + 1,
-	}, nil
+func GenRandomAddrAndSat(r *rand.Rand) (string, uint64) {
+	return GenRandomAccount().Address, RandomInt(r, 1000) + 1
 }
 
-func GenRandomFinalityProviderDistInfo(r *rand.Rand) (*ftypes.FinalityProviderDistInfo, error) {
+func GenRandomFinalityProviderDistInfo(r *rand.Rand) (
+	fpDistInfo *ftypes.FinalityProviderDistInfo,
+	btcTotalSatByAddress map[string]uint64,
+	err error,
+) {
 	// create finality provider with random commission
 	fp, err := GenRandomFinalityProvider(r)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	// create finality provider distribution info
-	fpDistInfo := ftypes.NewFinalityProviderDistInfo(fp)
+	fpDistInfo = ftypes.NewFinalityProviderDistInfo(fp)
 	// add a random number of BTC delegation distribution info
 	numBTCDels := RandomInt(r, 100) + 1
+	btcTotalSatByAddress = make(map[string]uint64, numBTCDels)
 	for i := uint64(0); i < numBTCDels; i++ {
-		btcDelDistInfo, err := GenRandomBTCDelDistInfo(r)
-		if err != nil {
-			return nil, err
-		}
-		fpDistInfo.BtcDels = append(fpDistInfo.BtcDels, btcDelDistInfo)
-		fpDistInfo.TotalBondedSat += btcDelDistInfo.TotalSat
+		btcAddr, totalSat := GenRandomAddrAndSat(r)
+		btcTotalSatByAddress[btcAddr] += totalSat
+		fpDistInfo.TotalBondedSat += totalSat
 		fpDistInfo.IsTimestamped = true
 	}
-	return fpDistInfo, nil
+	return fpDistInfo, btcTotalSatByAddress, nil
 }
 
-func GenRandomVotingPowerDistCache(r *rand.Rand, maxFPs uint32) (*ftypes.VotingPowerDistCache, error) {
-	dc := ftypes.NewVotingPowerDistCache()
+func GenRandomVotingPowerDistCache(r *rand.Rand, maxFPs uint32) (
+	dc *ftypes.VotingPowerDistCache,
+	// fpAddr => delAddr => totalSat
+	btcTotalSatByDelAddressByFpAddress map[string]map[string]uint64,
+	err error,
+) {
+	dc = ftypes.NewVotingPowerDistCache()
 	// a random number of finality providers
 	numFps := RandomInt(r, 10) + 1
+
+	btcTotalSatByDelAddressByFpAddress = make(map[string]map[string]uint64, numFps)
 	for i := uint64(0); i < numFps; i++ {
-		v, err := GenRandomFinalityProviderDistInfo(r)
+		v, btcTotalSatByAddress, err := GenRandomFinalityProviderDistInfo(r)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+		btcTotalSatByDelAddressByFpAddress[v.GetAddress().String()] = btcTotalSatByAddress
 		dc.AddFinalityProviderDistInfo(v)
 	}
 	dc.ApplyActiveFinalityProviders(maxFPs)
-	return dc, nil
+	return dc, btcTotalSatByDelAddressByFpAddress, nil
 }
 
 func GenRandomCheckpointAddressPair(r *rand.Rand) *btcctypes.CheckpointAddressPair {
@@ -141,4 +144,35 @@ func GenRandomBTCTimestampingRewardDistInfo(r *rand.Rand) *btcctypes.RewardDistI
 		others = append(others, GenRandomCheckpointAddressPair(r))
 	}
 	return btcctypes.NewRewardDistInfo(best, others...)
+}
+
+func GenRandomFinalityProviderCurrentRewards(r *rand.Rand) itypes.FinalityProviderCurrentRewards {
+	rwd := GenRandomCoins(r)
+	period := RandomInt(r, 100) + 3
+	activeSatoshi := RandomMathInt(r, 10000).AddRaw(10)
+	return itypes.NewFinalityProviderCurrentRewards(rwd, period, activeSatoshi)
+}
+
+func GenRandomBTCDelegationRewardsTracker(r *rand.Rand) itypes.BTCDelegationRewardsTracker {
+	period := RandomInt(r, 100) + 2
+	activeSatoshi := RandomMathInt(r, 10000).Add(math.NewInt(100))
+	return itypes.NewBTCDelegationRewardsTracker(period, activeSatoshi)
+}
+
+func GenRandomFPHistRwd(r *rand.Rand) itypes.FinalityProviderHistoricalRewards {
+	rwd := GenRandomCoins(r)
+	return itypes.NewFinalityProviderHistoricalRewards(rwd)
+}
+
+func GenRandomFPHistRwdWithDecimals(r *rand.Rand) itypes.FinalityProviderHistoricalRewards {
+	rwd := GenRandomFPHistRwd(r)
+	rwd.CumulativeRewardsPerSat = rwd.CumulativeRewardsPerSat.MulInt(itypes.DecimalAccumulatedRewards)
+	return rwd
+}
+
+func GenRandomFPHistRwdStartAndEnd(r *rand.Rand) (start, end itypes.FinalityProviderHistoricalRewards) {
+	start = GenRandomFPHistRwdWithDecimals(r)
+	end = GenRandomFPHistRwdWithDecimals(r)
+	end.CumulativeRewardsPerSat = end.CumulativeRewardsPerSat.Add(start.CumulativeRewardsPerSat...)
+	return start, end
 }

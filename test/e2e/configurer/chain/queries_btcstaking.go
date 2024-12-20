@@ -195,3 +195,14 @@ func (n *NodeConfig) QueryIndexedBlock(height uint64) *ftypes.IndexedBlock {
 
 	return resp.Block
 }
+
+func (n *NodeConfig) QueryFinalityProvidersDelegations(fpsBTCPK ...string) []*bstypes.BTCDelegationResponse {
+	pendingDelsResp := make([]*bstypes.BTCDelegationResponse, 0)
+	for _, fpBTCPK := range fpsBTCPK {
+		fpDelsResp := n.QueryFinalityProviderDelegations(fpBTCPK)
+		for _, fpDel := range fpDelsResp {
+			pendingDelsResp = append(pendingDelsResp, fpDel.Dels...)
+		}
+	}
+	return pendingDelsResp
+}
