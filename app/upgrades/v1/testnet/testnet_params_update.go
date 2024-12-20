@@ -29,8 +29,7 @@ var (
 	// BTC checkpoint params
 	TestnetBTCCheckpointTag = hex.EncodeToString([]byte("bbt5"))
 	// Additional allow address to BTC light client
-	// TODO: Set real address
-	TestnetReporterAllowAddress = "bbn1mzghl5csl75wz86e70j6ggdll4huazgfmeucyx"
+	TestnetReporterAllowAddress = "bbn1cferwuxd95mdnyh4qnptahmzym0xt9sp9asqnw"
 )
 
 // TestnetParamUpgrade make updates to specific params of specific modules
