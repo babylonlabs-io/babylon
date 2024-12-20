@@ -26,15 +26,6 @@ func (k Keeper) storeBTCDelegatorToFp(ctx context.Context, del sdk.AccAddress) p
 	return prefix.NewStore(st, del.Bytes())
 }
 
-// storeFpCurrentRewards returns the KVStore of the FP current rewards
-// prefix: FinalityProviderCurrentRewardsKey
-// key: (finality provider cosmos address)
-// value: FinalityProviderCurrentRewards
-func (k Keeper) storeFpCurrentRewards(ctx context.Context) prefix.Store {
-	storeAdaptor := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	return prefix.NewStore(storeAdaptor, types.FinalityProviderCurrentRewardsKey)
-}
-
 // setBTCDelegatorToFP sets a new delegator to finality provider record.
 func (k Keeper) setBTCDelegatorToFP(ctx context.Context, del, fp sdk.AccAddress) {
 	st := k.storeBTCDelegatorToFp(ctx, del)
@@ -69,15 +60,9 @@ func (k Keeper) deleteBTCDelegatorToFP(ctx context.Context, del, fp sdk.AccAddre
 // GetFinalityProviderCurrentRewards returns the Finality Provider current rewards
 // based on the FP address key
 func (k Keeper) GetFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress) (types.FinalityProviderCurrentRewards, error) {
-	key := fp.Bytes()
-	bz := k.storeFpCurrentRewards(ctx).Get(key)
-	if bz == nil {
+	value, err := k.FinalityProviderCurrentRewards.Get(ctx, fp.Bytes())
+	if err != nil {
 		return types.FinalityProviderCurrentRewards{}, types.ErrFPCurrentRewardsNotFound
-	}
-
-	var value types.FinalityProviderCurrentRewards
-	if err := k.cdc.Unmarshal(bz, &value); err != nil {
-		return types.FinalityProviderCurrentRewards{}, err
 	}
 	return value, nil
 }
@@ -125,14 +110,7 @@ func (k Keeper) setBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.
 
 // setFinalityProviderCurrentRewards sets a new structure in the store, it fails and returns an error if the rwd fails to marshal.
 func (k Keeper) setFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress, rwd types.FinalityProviderCurrentRewards) error {
-	key := fp.Bytes()
-	bz, err := rwd.Marshal()
-	if err != nil {
-		return err
-	}
-
-	k.storeFpCurrentRewards(ctx).Set(key, bz)
-	return nil
+	return k.FinalityProviderCurrentRewards.Set(ctx, fp.Bytes(), rwd)
 }
 
 // deleteAllFromFinalityProviderRwd deletes all the data related to Finality Provider Rewards
@@ -149,8 +127,9 @@ func (k Keeper) deleteAllFromFinalityProviderRwd(ctx context.Context, fp sdk.Acc
 
 // deleteFinalityProviderCurrentRewards deletes the current FP reward based on the key received
 func (k Keeper) deleteFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress) {
-	key := fp.Bytes()
-	k.storeFpCurrentRewards(ctx).Delete(key)
+	if err := k.FinalityProviderCurrentRewards.Remove(ctx, fp.Bytes()); err != nil {
+		k.Logger(sdk.UnwrapSDKContext(ctx)).Error("error deleting FinalityProviderCurrentRewards", "error", err)
+	}
 }
 
 // GetFinalityProviderHistoricalRewards returns the FinalityProviderHistoricalRewards based on the key (fp, period)

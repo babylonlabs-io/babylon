@@ -36,6 +36,8 @@ type (
 		BTCDelegationRewardsTracker collections.Map[collections.Pair[[]byte, []byte], types.BTCDelegationRewardsTracker]
 		// FinalityProviderHistoricalRewards maps (FpAddr, period) => FinalityProviderHistoricalRewards
 		FinalityProviderHistoricalRewards collections.Map[collections.Pair[[]byte, uint64], types.FinalityProviderHistoricalRewards]
+		// FinalityProviderCurrentRewards maps (FpAddr) => FinalityProviderCurrentRewards
+		FinalityProviderCurrentRewards collections.Map[[]byte, types.FinalityProviderCurrentRewards]
 	}
 )
 
@@ -79,6 +81,14 @@ func NewKeeper(
 			// keys: (FpAddr, period)
 			collections.PairKeyCodec(collections.BytesKey, collections.Uint64Key),
 			codec.CollValue[types.FinalityProviderHistoricalRewards](cdc),
+		),
+		FinalityProviderCurrentRewards: collections.NewMap(
+			sb,
+			types.FinalityProviderCurrentRewardsKeyPrefix,
+			"fp_current_rewards",
+			// key: (FpAddr)
+			collections.BytesKey,
+			codec.CollValue[types.FinalityProviderCurrentRewards](cdc),
 		),
 		authority:        authority,
 		feeCollectorName: feeCollectorName,
