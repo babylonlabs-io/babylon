@@ -61,7 +61,7 @@ func (k Keeper) getIBCClientID(ctx context.Context, channel channeltypes.Identif
 	return clientID, nil
 }
 
-// isChannelUninitialized checks whether the channel is not initilialised yet
+// isChannelUninitialized checks whether the channel is not uninitialised yet
 // it's done by checking whether the packet sequence number is 1 (the first sequence number) or not
 func (k Keeper) isChannelUninitialized(ctx context.Context, channel channeltypes.IdentifiedChannel) bool {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
