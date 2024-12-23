@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/babylonlabs-io/babylon/crypto/eots"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/testutil/coins"
@@ -442,7 +443,50 @@ func (s *BtcRewardsDistribution) Test7CheckRewards() {
 	s.NotEmpty(del2DiffRewardsStr)
 }
 
-// TODO(rafilx): Slash a FP and expect rewards to be withdraw.
+// Test8SlashFp slashes the finality provider, but should continue to produce blocks
+func (s *BtcRewardsDistribution) Test8SlashFp() {
+	chainA := s.configurer.GetChainConfig(0)
+	n2, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	badBlockHeightToVote := s.finalityBlockHeightVoted + 1
+
+	blockToVote, err := n2.QueryBlock(int64(badBlockHeightToVote))
+	s.NoError(err)
+	appHash := blockToVote.AppHash
+
+	// generate bad EOTS signature with a diff block height to vote
+	msgToSign := append(sdk.Uint64ToBigEndian(s.finalityBlockHeightVoted), appHash...)
+	fp1Sig, err := eots.Sign(s.fp2BTCSK, s.fp2RandListInfo.SRList[s.finalityIdx], msgToSign)
+	s.NoError(err)
+
+	finalitySig := bbn.NewSchnorrEOTSSigFromModNScalar(fp1Sig)
+
+	// submit finality signature to slash
+	n2.AddFinalitySigFromVal(
+		s.fp2.BtcPk,
+		s.finalityBlockHeightVoted,
+		&s.fp2RandListInfo.PRList[s.finalityIdx],
+		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		appHash,
+		finalitySig,
+	)
+
+	n2.WaitForNextBlocks(2)
+
+	fps := n2.QueryFinalityProviders()
+	require.Len(s.T(), fps, 2)
+	for _, fp := range fps {
+		if strings.EqualFold(fp.Addr, s.fp1Addr) {
+			require.Zero(s.T(), fp.SlashedBabylonHeight)
+			continue
+		}
+		require.NotZero(s.T(), fp.SlashedBabylonHeight)
+	}
+
+	// wait a few blocks to check if it doesn't panic when rewards are being produced
+	n2.WaitForNextBlocks(5)
+}
 
 func (s *BtcRewardsDistribution) AddFinalityVoteUntilCurrentHeight() {
 	chainA := s.configurer.GetChainConfig(0)
