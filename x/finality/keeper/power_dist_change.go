@@ -240,10 +240,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			// If the data is deleted at the slash event, when slashed fps are
 			// receveing rewards from a few blocks behind HandleRewarding
 			// verifies the next block height to be rewarded.
-			// fp := k.loadFP(ctx, fpByBtcPkHex, fpBTCPKHex)
-			// if err := k.IncentiveKeeper.FpSlashed(ctx, fp.Address()); err != nil {
-			// 	panic(err)
-			// }
 		case *types.EventPowerDistUpdate_JailedFp:
 			// record jailed fps
 			types.EmitJailedFPEvent(sdkCtx, typedEvent.JailedFp.Pk)
