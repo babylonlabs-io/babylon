@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	corestoretypes "cosmossdk.io/core/store"
+	"errors"
 	"fmt"
 	"math"
 
@@ -40,12 +41,12 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 func bytesToBtcHeight(heightBytes []byte) (uint32, error) {
 	if len(heightBytes) != 8 {
-		return 0, fmt.Errorf("height bytes must have exactly 8 bytes")
+		return 0, errors.New("height bytes must have exactly 8 bytes")
 	}
 
 	heightUint64 := sdk.BigEndianToUint64(heightBytes)
 	if heightUint64 > math.MaxUint32 {
-		return 0, fmt.Errorf("height should not be higher than math.MaxUint32")
+		return 0, errors.New("height should not be higher than math.MaxUint32")
 	}
 
 	return uint32(heightUint64), nil
