@@ -402,13 +402,15 @@ func (s *BtcRewardsDistribution) Test7CheckRewards() {
 	// (del2) => 10_00000000
 	fp1RewardGaugePrev, fp2RewardGaugePrev, btcDel1RewardGaugePrev, btcDel2RewardGaugePrev := s.QueryRewardGauges(n2)
 	// wait a few block of rewards to calculate the difference
-	n2.WaitForNextBlocks(2)
 	s.AddFinalityVoteUntilCurrentHeight()
 	n2.WaitForNextBlocks(2)
 	s.AddFinalityVoteUntilCurrentHeight()
 	n2.WaitForNextBlocks(2)
 	s.AddFinalityVoteUntilCurrentHeight()
 	n2.WaitForNextBlocks(2)
+	s.AddFinalityVoteUntilCurrentHeight()
+	n2.WaitForNextBlocks(2)
+	s.AddFinalityVoteUntilCurrentHeight()
 
 	fp1RewardGauge, fp2RewardGauge, btcDel1RewardGauge, btcDel2RewardGauge := s.QueryRewardGauges(n2)
 
