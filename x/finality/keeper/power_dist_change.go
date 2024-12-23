@@ -320,6 +320,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	// sort new finality providers in activeBTCDels to ensure determinism
 	fpActiveBtcPkHexList := make([]string, 0, len(activedSatsByFpBtcPk))
 	for fpBTCPKHex := range activedSatsByFpBtcPk {
+		// if the fp was slashed, should not even be added to the list
+		_, isSlashed := slashedFPs[fpBTCPKHex]
+		if isSlashed {
+			continue
+		}
 		fpActiveBtcPkHexList = append(fpActiveBtcPkHexList, fpBTCPKHex)
 	}
 	sort.SliceStable(fpActiveBtcPkHexList, func(i, j int) bool {
@@ -331,6 +336,14 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// get the finality provider and initialise its dist info
 		newFP := k.loadFP(ctx, fpByBtcPkHex, fpBTCPKHex)
 		fpDistInfo := ftypes.NewFinalityProviderDistInfo(newFP)
+
+		// check for jailing cases
+		if _, ok := jailedFPs[fpBTCPKHex]; ok {
+			fpDistInfo.IsJailed = true
+		}
+		if _, ok := unjailedFPs[fpBTCPKHex]; ok {
+			fpDistInfo.IsJailed = false
+		}
 
 		// add each BTC delegation
 		fpActiveSats := activedSatsByFpBtcPk[fpBTCPKHex]
