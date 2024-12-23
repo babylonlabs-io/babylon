@@ -37,5 +37,4 @@ type IncentiveKeeper interface {
 	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
 	BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sat uint64) error
 	BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sat uint64) error
-	FpSlashed(ctx context.Context, fp sdk.AccAddress) error
 }

@@ -233,10 +233,17 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			types.EmitSlashedFPEvent(sdkCtx, typedEvent.SlashedFp.Pk)
 			fpBTCPKHex := typedEvent.SlashedFp.Pk.MarshalHex()
 			slashedFPs[fpBTCPKHex] = struct{}{}
-			fp := k.loadFP(ctx, fpByBtcPkHex, fpBTCPKHex)
-			if err := k.IncentiveKeeper.FpSlashed(ctx, fp.Address()); err != nil {
-				panic(err)
-			}
+			// TODO(rafilx): handle slashed fps prunning
+			// It is not possible to slash fp and delete all of his data at the
+			// babylon block height that is being processed, because
+			// the function RewardBTCStaking is called a few blocks behind.
+			// If the data is deleted at the slash event, when slashed fps are
+			// receveing rewards from a few blocks behind HandleRewarding
+			// verifies the next block height to be rewarded.
+			// fp := k.loadFP(ctx, fpByBtcPkHex, fpBTCPKHex)
+			// if err := k.IncentiveKeeper.FpSlashed(ctx, fp.Address()); err != nil {
+			// 	panic(err)
+			// }
 		case *types.EventPowerDistUpdate_JailedFp:
 			// record jailed fps
 			types.EmitJailedFPEvent(sdkCtx, typedEvent.JailedFp.Pk)
