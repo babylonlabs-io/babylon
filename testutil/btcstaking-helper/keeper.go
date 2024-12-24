@@ -230,7 +230,6 @@ func (h *Helper) CreateDelegation(
 	r *rand.Rand,
 	delSK *btcec.PrivateKey,
 	fpPK *btcec.PublicKey,
-	changeAddress string,
 	stakingValue int64,
 	stakingTime uint16,
 	unbondingValue int64,
@@ -239,7 +238,7 @@ func (h *Helper) CreateDelegation(
 	addToAllowList bool,
 ) (string, *types.MsgCreateBTCDelegation, *types.BTCDelegation, *btclctypes.BTCHeaderInfo, *types.InclusionProof, *UnbondingTxInfo, error) {
 	return h.CreateDelegationWithBtcBlockHeight(
-		r, delSK, fpPK, changeAddress, stakingValue,
+		r, delSK, fpPK, stakingValue,
 		stakingTime, unbondingValue, unbondingTime,
 		usePreApproval, addToAllowList, 10, 10,
 	)
@@ -249,7 +248,6 @@ func (h *Helper) CreateDelegationWithBtcBlockHeight(
 	r *rand.Rand,
 	delSK *btcec.PrivateKey,
 	fpPK *btcec.PublicKey,
-	changeAddress string,
 	stakingValue int64,
 	stakingTime uint16,
 	unbondingValue int64,

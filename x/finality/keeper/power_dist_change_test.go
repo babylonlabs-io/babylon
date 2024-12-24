@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -31,8 +32,6 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 
 		// set all parameters
 		h.GenAndApplyParams(r)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
 
 		// generate and insert a number of new finality providers
 		fpPKs := []*btcec.PublicKey{}
@@ -56,7 +55,6 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 					r,
 					delSK,
 					fpPK,
-					changeAddress.EncodeAddress(),
 					stakingValue,
 					1000,
 					0,
@@ -83,46 +81,52 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 	})
 }
 
+func CreateFpAndBtcDel(
+	t *testing.T,
+	r *rand.Rand,
+) (
+	h *testutil.Helper,
+	del *types.BTCDelegation,
+	covenantSKs []*secp256k1.PrivateKey,
+) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	h = testutil.NewHelper(t, btclcKeeper, btccKeeper)
+
+	// set all parameters
+	covenantSKs, _ = h.GenAndApplyParams(r)
+
+	_, fpPK, _ := h.CreateFinalityProvider(r)
+
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	_, _, del, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+		r,
+		delSK,
+		fpPK,
+		int64(2*10e8),
+		1000,
+		0,
+		0,
+		false,
+		false,
+		10,
+		30,
+	)
+	h.NoError(err)
+	return h, del, covenantSKs
+}
+
 func FuzzProcessAllPowerDistUpdateEvents_ActiveAndUnbondTogether(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		// mock BTC light client and BTC checkpoint modules
-		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
-		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
-
-		// set all parameters
-		h.GenAndApplyParams(r)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
-
-		// empty dist cache
-		dc := ftypes.NewVotingPowerDistCache()
-
-		_, fpPK, _ := h.CreateFinalityProvider(r)
-
-		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-		h.NoError(err)
-		_, _, del, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
-			r,
-			delSK,
-			fpPK,
-			changeAddress.EncodeAddress(),
-			int64(2*10e8),
-			1000,
-			0,
-			0,
-			false,
-			false,
-			10,
-			30,
-		)
-		h.NoError(err)
+		h, del, _ := CreateFpAndBtcDel(t, r)
 
 		eventActive := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 			StakingTxHash: del.MustGetStakingTxHash().String(),
@@ -134,8 +138,169 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndUnbondTogether(f *testing.F) {
 		})
 		events := []*types.EventPowerDistUpdate{eventActive, eventUnbond}
 
+		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), events)
+		require.Len(t, newDc.FinalityProviders, 0)
+	})
+}
+
+func FuzzProcessAllPowerDistUpdateEvents_ActiveAndSlashTogether(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		h, del, _ := CreateFpAndBtcDel(t, r)
+
+		eventActive := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+			StakingTxHash: del.MustGetStakingTxHash().String(),
+			NewState:      types.BTCDelegationStatus_ACTIVE,
+		})
+		eventSlash := types.NewEventPowerDistUpdateWithSlashedFP(&del.FpBtcPkList[0])
+		events := []*types.EventPowerDistUpdate{eventActive, eventSlash}
+
+		dc := ftypes.NewVotingPowerDistCache()
 		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, events)
+		require.Len(t, newDc.FinalityProviders, 0)
+	})
+}
+
+func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		h, delNoPreApproval, covenantSKs := CreateFpAndBtcDel(t, r)
+
+		// activates one delegation to the finality provider without preapproval
+		eventActive := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+			StakingTxHash: delNoPreApproval.MustGetStakingTxHash().String(),
+			NewState:      types.BTCDelegationStatus_ACTIVE,
+		})
+
+		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), []*types.EventPowerDistUpdate{eventActive})
+		// updates as if that fp is timestamping
+		for _, fp := range newDc.FinalityProviders {
+			fp.IsTimestamped = true
+		}
+		// FP is active and has voting power.
+		newDc.ApplyActiveFinalityProviders(100)
+		require.Len(t, newDc.FinalityProviders, 1)
+		require.Equal(t, newDc.TotalVotingPower, delNoPreApproval.TotalSat)
+
+		// simulating a new BTC delegation with preapproval coming
+		delSKPreApproval, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+
+		stakingTxHash, msgCreateBTCDelPreApproval, delPreApproval, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSKPreApproval,
+			delNoPreApproval.FpBtcPkList[0].MustToBTCPK(),
+			int64(2*10e8),
+			1000,
+			0,
+			0,
+			true,
+			false,
+			10,
+			10,
+		)
+		h.NoError(err)
+
+		// should not modify the amount of voting power
+		newDc.ApplyActiveFinalityProviders(100)
+		require.Len(t, newDc.FinalityProviders, 1)
+		require.Equal(t, newDc.TotalVotingPower, delPreApproval.TotalSat)
+
+		// slash the fp
+		slashEvent := types.NewEventPowerDistUpdateWithSlashedFP(&delPreApproval.FpBtcPkList[0])
+		newDc = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, []*types.EventPowerDistUpdate{slashEvent})
+
+		// fp should have be erased from the list
+		newDc.ApplyActiveFinalityProviders(100)
+		require.Len(t, newDc.FinalityProviders, 0)
 		require.Zero(t, newDc.TotalVotingPower)
+
+		// activates the preapproval delegation
+		btcTip := btclctypes.BTCHeaderInfo{Height: 30}
+
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDelPreApproval, delPreApproval, btcTip.Height)
+		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, btcTip.Height)
+
+		activatedDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+		h.NoError(err)
+		h.Equal(activatedDel.TotalSat, uint64(msgCreateBTCDelPreApproval.StakingValue))
+
+		// simulates the del tx getting activated
+		eventActive = types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+			StakingTxHash: delPreApproval.MustGetStakingTxHash().String(),
+			NewState:      types.BTCDelegationStatus_ACTIVE,
+		})
+		// it will get included in the new vp dist, but will not have voting power after ApplyActiveFinalityProviders
+		newDc = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, []*types.EventPowerDistUpdate{eventActive})
+		require.Len(t, newDc.FinalityProviders, 1)
+
+		for _, fp := range newDc.FinalityProviders {
+			fp.IsTimestamped = true
+			fp.IsSlashed = true
+		}
+		newDc.ApplyActiveFinalityProviders(100)
+		require.Equal(t, newDc.TotalVotingPower, uint64(0))
+		require.Equal(t, newDc.NumActiveFps, uint32(0))
+	})
+}
+
+func FuzzProcessAllPowerDistUpdateEvents_ActiveAndJailTogether(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		h, del, _ := CreateFpAndBtcDel(t, r)
+
+		eventActive := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+			StakingTxHash: del.MustGetStakingTxHash().String(),
+			NewState:      types.BTCDelegationStatus_ACTIVE,
+		})
+		eventJailed := types.NewEventPowerDistUpdateWithJailedFP(&del.FpBtcPkList[0])
+		events := []*types.EventPowerDistUpdate{eventActive, eventJailed}
+
+		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), events)
+		for _, fp := range newDc.FinalityProviders {
+			fp.IsTimestamped = true
+		}
+		newDc.ApplyActiveFinalityProviders(100)
+		require.Len(t, newDc.FinalityProviders, 1)
+		require.Zero(t, newDc.TotalVotingPower)
+	})
+}
+
+func FuzzProcessAllPowerDistUpdateEvents_SlashActiveFp(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+		h, del, _ := CreateFpAndBtcDel(t, r)
+
+		eventActive := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+			StakingTxHash: del.MustGetStakingTxHash().String(),
+			NewState:      types.BTCDelegationStatus_ACTIVE,
+		})
+		events := []*types.EventPowerDistUpdate{eventActive}
+
+		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), events)
+		for _, fp := range newDc.FinalityProviders {
+			fp.IsTimestamped = true
+		}
+		newDc.ApplyActiveFinalityProviders(100)
+		require.Equal(t, newDc.TotalVotingPower, del.TotalSat)
+
+		// afer the fp has some active voting power slash it
+		eventSlash := types.NewEventPowerDistUpdateWithSlashedFP(&del.FpBtcPkList[0])
+		events = []*types.EventPowerDistUpdate{eventSlash}
+
+		newDc = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, events)
+		newDc.ApplyActiveFinalityProviders(100)
+		require.Len(t, newDc.FinalityProviders, 0)
+		require.Equal(t, newDc.TotalVotingPower, uint64(0))
 	})
 }
 
@@ -154,8 +319,6 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
 
 		// generate and insert new finality provider
 		fpSK, fpPK, fp := h.CreateFinalityProvider(r)
@@ -172,7 +335,6 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 			r,
 			delSK,
 			fpPK,
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
@@ -243,8 +405,6 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
 
 		// generate and insert new finality provider
 		fpSK, fpPK, fp := h.CreateFinalityProvider(r)
@@ -261,7 +421,6 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 			r,
 			delSK,
 			fpPK,
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
@@ -334,7 +493,6 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 			r,
 			delSK2,
 			fpPK,
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
@@ -380,8 +538,6 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
 
 		// generate and insert new finality provider
 		fpSK, fpPK, fp := h.CreateFinalityProvider(r)
@@ -398,7 +554,6 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 			r,
 			delSK,
 			fpPK,
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
@@ -489,8 +644,6 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
 
 		// generate and insert new finality provider
 		fpSK, fpPK, fp := h.CreateFinalityProvider(r)
@@ -505,7 +658,6 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 			r,
 			delSK,
 			fpPK,
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
@@ -607,8 +759,6 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
 
 		// generate and insert new finality provider
 		fpSK, fpPK, fp := h.CreateFinalityProvider(r)
@@ -621,7 +771,6 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 			r,
 			delSK,
 			fpPK,
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
@@ -733,8 +882,6 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
-	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-	require.NoError(t, err)
 
 	// generate and insert new finality provider
 	_, fpPK, fp := h.CreateFinalityProvider(r)
@@ -748,7 +895,6 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 		r,
 		delSK,
 		fpPK,
-		changeAddress.EncodeAddress(),
 		stakingValue,
 		1000,
 		0,

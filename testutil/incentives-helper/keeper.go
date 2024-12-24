@@ -69,9 +69,6 @@ func (h *IncentiveHelper) CreateBtcDelegation(
 ) (
 	stakingTxHash string, msgCreateBTCDel *bstypes.MsgCreateBTCDelegation, actualDel *bstypes.BTCDelegation, unbondingInfo *btcstkhelper.UnbondingTxInfo,
 ) {
-	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-	h.NoError(err)
-
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
 
@@ -79,7 +76,6 @@ func (h *IncentiveHelper) CreateBtcDelegation(
 		r,
 		delSK,
 		fpPK,
-		changeAddress.EncodeAddress(),
 		stakingValue,
 		stakingTime,
 		0,
