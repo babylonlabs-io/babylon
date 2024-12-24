@@ -317,8 +317,8 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	s.Len(fps, 2)
 	s.Equal(fps[0].Commission.String(), fps[1].Commission.String())
 	for _, fp := range fps {
-		s.Equal(fp.SlashedBabylonHeight, 0)
-		s.Equal(fp.SlashedBtcHeight, 0)
+		s.Equal(fp.SlashedBabylonHeight, uint64(0))
+		s.Equal(fp.SlashedBtcHeight, uint32(0))
 	}
 
 	dels := n2.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
