@@ -64,7 +64,7 @@ func FuzzCheckFpSlashed(f *testing.F) {
 		del2RwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del2)
 		coins.RequireCoinsDiffInPointOnePercentMargin(t, del2Fp1Rwds, del2RwdGauge.Coins)
 
-		// verifies that everything was deleted
+		// verifies that everything was deleted for fp1
 		_, err = k.GetBTCDelegationRewardsTracker(ctx, fp1, del1)
 		require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNotFound.Error())
 		_, err = k.GetBTCDelegationRewardsTracker(ctx, fp1, del2)
@@ -73,6 +73,12 @@ func FuzzCheckFpSlashed(f *testing.F) {
 		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
 		_, err = k.GetFinalityProviderHistoricalRewards(ctx, fp1, 1)
 		require.EqualError(t, err, types.ErrFPHistoricalRewardsNotFound.Error())
+
+		// verifies that for fp2 is all there
+		_, err = k.GetFinalityProviderCurrentRewards(ctx, fp2)
+		require.NoError(t, err)
+		_, err = k.GetFinalityProviderHistoricalRewards(ctx, fp2, 1)
+		require.NoError(t, err)
 
 		count := 0
 		err = k.iterBtcDelegationsByDelegator(ctx, del1, func(del, fp sdk.AccAddress) error {

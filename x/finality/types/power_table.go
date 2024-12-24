@@ -87,6 +87,10 @@ func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(maxActiveFPs uint32
 		if fp.IsJailed {
 			break
 		}
+		if fp.IsSlashed {
+			break
+		}
+
 		numActiveFPs++
 	}
 
@@ -170,8 +174,8 @@ func (v *FinalityProviderDistInfo) GetBTCDelPortion(totalSatDelegation uint64) s
 // 2. IsJailed is true
 func SortFinalityProvidersWithZeroedVotingPower(fps []*FinalityProviderDistInfo) {
 	sort.SliceStable(fps, func(i, j int) bool {
-		iShouldBeZeroed := fps[i].IsJailed || !fps[i].IsTimestamped
-		jShouldBeZeroed := fps[j].IsJailed || !fps[j].IsTimestamped
+		iShouldBeZeroed := fps[i].IsJailed || !fps[i].IsTimestamped || fps[i].IsSlashed
+		jShouldBeZeroed := fps[j].IsJailed || !fps[j].IsTimestamped || fps[j].IsSlashed
 
 		if iShouldBeZeroed && !jShouldBeZeroed {
 			return false
