@@ -193,9 +193,6 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		// set all parameters
 		h.GenAndApplyParams(r)
 
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
-
 		// generate and insert new finality provider
 		_, fpPK, _ := h.CreateFinalityProvider(r)
 
@@ -213,7 +210,6 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 				r,
 				delSK,
 				fpPK,
-				changeAddress.EncodeAddress(),
 				stakingValue,
 				1000,
 				0,
@@ -229,7 +225,6 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 				r,
 				delSK,
 				fpPK,
-				changeAddress.EncodeAddress(),
 				stakingValue,
 				1000,
 				0,
@@ -305,9 +300,6 @@ func FuzzCreateBTCDelegationWithParamsFromBtcHeight(f *testing.F) {
 		require.Equal(t, version, expectedParamsVersion)
 
 		// creates one BTC delegation with BTC block height between expectedParamsBlockHeight and 500
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		h.NoError(err)
-
 		// generate and insert new finality provider
 		_, fpPK, _ := h.CreateFinalityProvider(r)
 
@@ -320,7 +312,6 @@ func FuzzCreateBTCDelegationWithParamsFromBtcHeight(f *testing.F) {
 			r,
 			delSK,
 			fpPK,
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
@@ -348,9 +339,6 @@ func TestProperVersionInDelegation(t *testing.T) {
 	// set all parameters
 	h.GenAndApplyParams(r)
 
-	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-	require.NoError(t, err)
-
 	// generate and insert new finality provider
 	_, fpPK, _ := h.CreateFinalityProvider(r)
 
@@ -362,7 +350,6 @@ func TestProperVersionInDelegation(t *testing.T) {
 		r,
 		delSK,
 		fpPK,
-		changeAddress.EncodeAddress(),
 		stakingValue,
 		1000,
 		0,
@@ -396,7 +383,6 @@ func TestProperVersionInDelegation(t *testing.T) {
 		r,
 		delSK,
 		fpPK,
-		changeAddress.EncodeAddress(),
 		stakingValue,
 		10000,
 		stakingValue-1000,
@@ -428,9 +414,6 @@ func TestRejectActivationThatShouldNotUsePreApprovalFlow(t *testing.T) {
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
 
-	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-	require.NoError(t, err)
-
 	// generate and insert new finality provider
 	_, fpPK, _ := h.CreateFinalityProvider(r)
 
@@ -439,7 +422,7 @@ func TestRejectActivationThatShouldNotUsePreApprovalFlow(t *testing.T) {
 	// params will be activate at block height 2
 	currentParams.BtcActivationHeight++
 	// Update new params
-	err = h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
+	err := h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
 	require.NoError(t, err)
 
 	// generate and insert new BTC delegation
@@ -450,7 +433,6 @@ func TestRejectActivationThatShouldNotUsePreApprovalFlow(t *testing.T) {
 		r,
 		delSK,
 		fpPK,
-		changeAddress.EncodeAddress(),
 		stakingValue,
 		1000,
 		0,
@@ -520,9 +502,6 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
 
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
-
 		// generate and insert new finality provider
 		_, fpPK, _ := h.CreateFinalityProvider(r)
 
@@ -540,7 +519,6 @@ func FuzzAddCovenantSigs(f *testing.F) {
 			r,
 			delSK,
 			fpPK,
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
@@ -610,8 +588,6 @@ func FuzzAddBTCDelegationInclusionProof(f *testing.F) {
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
 
 		// generate and insert new finality provider
 		_, fpPK, _ := h.CreateFinalityProvider(r)
@@ -624,7 +600,6 @@ func FuzzAddBTCDelegationInclusionProof(f *testing.F) {
 			r,
 			delSK,
 			fpPK,
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
@@ -685,9 +660,6 @@ func FuzzBTCUndelegate(f *testing.F) {
 
 		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
-
 		// generate and insert new finality provider
 		_, fpPK, _ := h.CreateFinalityProvider(r)
 
@@ -699,7 +671,6 @@ func FuzzBTCUndelegate(f *testing.F) {
 			r,
 			delSK,
 			fpPK,
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
@@ -767,9 +738,6 @@ func FuzzBTCUndelegateExpired(f *testing.F) {
 
 		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
-
 		// generate and insert new finality provider
 		_, fpPK, _ := h.CreateFinalityProvider(r)
 
@@ -781,7 +749,6 @@ func FuzzBTCUndelegateExpired(f *testing.F) {
 			r,
 			delSK,
 			fpPK,
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
@@ -836,9 +803,6 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		covenantSKs, _ := h.GenAndApplyParams(r)
 		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
-
 		// generate and insert new finality provider
 		fpSK, fpPK, _ := h.CreateFinalityProvider(r)
 		fpBtcPk := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
@@ -851,7 +815,6 @@ func FuzzSelectiveSlashing(f *testing.F) {
 			r,
 			delSK,
 			fpPK,
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
@@ -916,9 +879,6 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		covenantSKs, _ := h.GenAndApplyParams(r)
 		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		require.NoError(t, err)
-
 		// generate and insert new finality provider
 		fpSK, fpPK, _ := h.CreateFinalityProvider(r)
 		fpBtcPk := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
@@ -931,7 +891,6 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 			r,
 			delSK,
 			fpPK,
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
@@ -1166,9 +1125,6 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			// set all parameters
 			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.unbondingTimeInParams, 0)
 
-			changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-			require.NoError(t, err)
-
 			// generate and insert new finality provider
 			_, fpPK, _ := h.CreateFinalityProvider(r)
 
@@ -1180,7 +1136,6 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 				r,
 				delSK,
 				fpPK,
-				changeAddress.EncodeAddress(),
 				stakingValue,
 				1000,
 				stakingValue-1000,
@@ -1216,9 +1171,6 @@ func TestAllowList(t *testing.T) {
 	// set all parameters, use the allow list
 	h.GenAndApplyCustomParams(r, 100, 0, allowListExpirationHeight)
 
-	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-	require.NoError(t, err)
-
 	// generate and insert new finality provider
 	_, fpPK, _ := h.CreateFinalityProvider(r)
 
@@ -1232,7 +1184,6 @@ func TestAllowList(t *testing.T) {
 		r,
 		delSK,
 		fpPK,
-		changeAddress.EncodeAddress(),
 		stakingValue,
 		1000,
 		0,
@@ -1252,7 +1203,6 @@ func TestAllowList(t *testing.T) {
 		r,
 		delSK1,
 		fpPK,
-		changeAddress.EncodeAddress(),
 		stakingValue,
 		1000,
 		0,
@@ -1275,7 +1225,6 @@ func TestAllowList(t *testing.T) {
 		r,
 		delSK2,
 		fpPK,
-		changeAddress.EncodeAddress(),
 		stakingValue,
 		1000,
 		0,

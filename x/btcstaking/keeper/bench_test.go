@@ -28,8 +28,6 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 	h := testutil.NewHelper(b, btclcKeeper, btccKeeper)
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
-	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-	h.NoError(err)
 
 	// generate new finality providers
 	fps := []*types.FinalityProvider{}
@@ -60,7 +58,6 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 				r,
 				delSK,
 				fp.BtcPk.MustToBTCPK(),
-				changeAddress.EncodeAddress(),
 				stakingValue,
 				1000,
 				0,
