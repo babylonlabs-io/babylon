@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -83,7 +84,11 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 func CreateFpAndBtcDel(
 	t *testing.T,
 	r *rand.Rand,
-) (h *testutil.Helper, del *types.BTCDelegation) {
+) (
+	h *testutil.Helper,
+	del *types.BTCDelegation,
+	covenantSKs []*secp256k1.PrivateKey,
+) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -93,7 +98,7 @@ func CreateFpAndBtcDel(
 	h = testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 	// set all parameters
-	h.GenAndApplyParams(r)
+	covenantSKs, _ = h.GenAndApplyParams(r)
 
 	_, fpPK, _ := h.CreateFinalityProvider(r)
 
@@ -113,7 +118,7 @@ func CreateFpAndBtcDel(
 		30,
 	)
 	h.NoError(err)
-	return h, del
+	return h, del, covenantSKs
 }
 
 func FuzzProcessAllPowerDistUpdateEvents_ActiveAndUnbondTogether(f *testing.F) {
@@ -121,7 +126,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndUnbondTogether(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h, del := CreateFpAndBtcDel(t, r)
+		h, del, _ := CreateFpAndBtcDel(t, r)
 
 		eventActive := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 			StakingTxHash: del.MustGetStakingTxHash().String(),
@@ -143,7 +148,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndSlashTogether(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h, del := CreateFpAndBtcDel(t, r)
+		h, del, _ := CreateFpAndBtcDel(t, r)
 
 		eventActive := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 			StakingTxHash: del.MustGetStakingTxHash().String(),
@@ -163,7 +168,7 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h, delNoPreApproval := CreateFpAndBtcDel(t, r)
+		h, delNoPreApproval, covenantSKs := CreateFpAndBtcDel(t, r)
 
 		// activates one delegation to the finality provider without preapproval
 		eventActive := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
@@ -176,27 +181,68 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 		for _, fp := range newDc.FinalityProviders {
 			fp.IsTimestamped = true
 		}
+		// FP is active and has voting power.
 		newDc.ApplyActiveFinalityProviders(100)
 		require.Len(t, newDc.FinalityProviders, 1)
 		require.Equal(t, newDc.TotalVotingPower, delNoPreApproval.TotalSat)
 
-		// delSKPreApproval, _, err := datagen.GenRandomBTCKeyPair(r)
-		// h.NoError(err)
-		// _, _, delPreApproval, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
-		// 	r,
-		// 	delSKPreApproval,
-		// 	delNoPreApproval.FpBtcPkList[0].MustToBTCPK(),
-		// 	int64(2*10e8),
-		// 	1000,
-		// 	0,
-		// 	0,
-		// 	true,
-		// 	false,
-		// 	10,
-		// 	30,
-		// )
+		// simulating a new BTC delegation with preapproval comming
+		delSKPreApproval, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingTxHash, msgCreateBTCDelPreApproval, delPreApproval, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSKPreApproval,
+			delNoPreApproval.FpBtcPkList[0].MustToBTCPK(),
+			int64(2*10e8),
+			1000,
+			0,
+			0,
+			true,
+			false,
+			10,
+			10,
+		)
 
-		// require.Equal(t, newDc.TotalVotingPower, delPreApproval.TotalSat)
+		// should not modify the amount of voting power
+		newDc.ApplyActiveFinalityProviders(100)
+		require.Len(t, newDc.FinalityProviders, 1)
+		require.Equal(t, newDc.TotalVotingPower, delPreApproval.TotalSat)
+
+		// slash the fp
+		slashEvent := types.NewEventPowerDistUpdateWithSlashedFP(&delPreApproval.FpBtcPkList[0])
+		newDc = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, []*types.EventPowerDistUpdate{slashEvent})
+
+		// fp should have be erased from the list
+		newDc.ApplyActiveFinalityProviders(100)
+		require.Len(t, newDc.FinalityProviders, 0)
+		require.Zero(t, newDc.TotalVotingPower)
+
+		// activates the preapproval delegation
+		btcTip := btclctypes.BTCHeaderInfo{Height: 30}
+
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDelPreApproval, delPreApproval, btcTip.Height)
+		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, btcTip.Height)
+
+		activatedDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+		h.NoError(err)
+		h.Equal(activatedDel.TotalSat, uint64(msgCreateBTCDelPreApproval.StakingValue))
+
+		// simulates the del tx getting activated
+		eventActive = types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+			StakingTxHash: delPreApproval.MustGetStakingTxHash().String(),
+			NewState:      types.BTCDelegationStatus_ACTIVE,
+		})
+		// it will get included in the new vp dist, but will not have voting power after ApplyActiveFinalityProviders
+		newDc = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, []*types.EventPowerDistUpdate{eventActive})
+		require.Len(t, newDc.FinalityProviders, 1)
+
+		for _, fp := range newDc.FinalityProviders {
+			fp.IsTimestamped = true
+			fp.IsSlashed = true
+		}
+		newDc.ApplyActiveFinalityProviders(100)
+		require.Equal(t, newDc.TotalVotingPower, uint64(0))
+		require.Equal(t, newDc.NumActiveFps, uint32(0))
 	})
 }
 
@@ -205,7 +251,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndJailTogether(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h, del := CreateFpAndBtcDel(t, r)
+		h, del, _ := CreateFpAndBtcDel(t, r)
 
 		eventActive := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 			StakingTxHash: del.MustGetStakingTxHash().String(),
@@ -230,7 +276,7 @@ func FuzzProcessAllPowerDistUpdateEvents_SlashActiveFp(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
-		h, del := CreateFpAndBtcDel(t, r)
+		h, del, _ := CreateFpAndBtcDel(t, r)
 
 		eventActive := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 			StakingTxHash: del.MustGetStakingTxHash().String(),
