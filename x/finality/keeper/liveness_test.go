@@ -103,8 +103,6 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 		params := h1.BTCStakingKeeper.GetParams(h1.Ctx)
 		err := h2.BTCStakingKeeper.SetParams(h2.Ctx, params)
 		require.NoError(t, err)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h1.Net)
-		require.NoError(t, err)
 
 		// Generate multiple finality providers
 		numFPs := 5 // Can be adjusted or randomized
@@ -125,7 +123,6 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 				r,
 				delSK,
 				fpPK,
-				changeAddress.EncodeAddress(),
 				stakingValue,
 				1000,
 				0,
@@ -140,7 +137,6 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 				r,
 				delSK,
 				fpPK,
-				changeAddress.EncodeAddress(),
 				stakingValue,
 				1000,
 				0,
