@@ -186,9 +186,10 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 		require.Len(t, newDc.FinalityProviders, 1)
 		require.Equal(t, newDc.TotalVotingPower, delNoPreApproval.TotalSat)
 
-		// simulating a new BTC delegation with preapproval comming
+		// simulating a new BTC delegation with preapproval coming
 		delSKPreApproval, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
+
 		stakingTxHash, msgCreateBTCDelPreApproval, delPreApproval, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSKPreApproval,
@@ -202,6 +203,7 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 			10,
 			10,
 		)
+		h.NoError(err)
 
 		// should not modify the amount of voting power
 		newDc.ApplyActiveFinalityProviders(100)
