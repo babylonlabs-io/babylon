@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Bug fixes
+
+- [#374](https://github.com/babylonlabs-io/babylon/pull/374) Fix non-consecutive finalization
+of the block in `TallyBlocks` function
+
 ## v1.0.0-rc2
 
 ### Bug fixes

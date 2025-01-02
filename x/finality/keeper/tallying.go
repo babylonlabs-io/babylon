@@ -39,6 +39,7 @@ func (k Keeper) TallyBlocks(ctx context.Context) {
 	// - has finality providers, finalised: impossible to happen, panic
 	// - does not have finality providers, finalised: impossible to happen, panic
 	// After this for loop, the blocks since earliest activated height are either finalised or non-finalisable
+finalizationLoop:
 	for i := startHeight; i <= uint64(sdkCtx.HeaderInfo().Height); i++ {
 		ib, err := k.GetBlock(ctx, i)
 		if err != nil {
@@ -58,7 +59,7 @@ func (k Keeper) TallyBlocks(ctx context.Context) {
 			} else {
 				// if not, then this block and all subsequent blocks should not be finalised
 				// thus, we need to break here
-				break
+				break finalizationLoop
 			}
 		case fpSet == nil && !ib.Finalized:
 			// does not have finality providers, non-finalised: not finalisable,
