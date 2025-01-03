@@ -132,8 +132,9 @@ func TestHandleRewardingWithGapsOfUnfinalizedBlocks(t *testing.T) {
 	fKeeper.SetBlock(ctx, &types.IndexedBlock{
 		Height:    1,
 		AppHash:   datagen.GenRandomByteArray(r, 32),
-		Finalized: false,
+		Finalized: true,
 	})
+
 	fKeeper.SetBlock(ctx, &types.IndexedBlock{
 		Height:    2,
 		AppHash:   datagen.GenRandomByteArray(r, 32),
@@ -151,12 +152,13 @@ func TestHandleRewardingWithGapsOfUnfinalizedBlocks(t *testing.T) {
 		BtcPk:          fpPK,
 		TotalBondedSat: 1,
 	})
+	fKeeper.SetVotingPowerDistCache(ctx, 1, dc)
 	fKeeper.SetVotingPowerDistCache(ctx, 3, dc)
 
 	iKeeper.EXPECT().
 		RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return().
-		Times(1) // number of finalized blocks processed
+		Times(2) // number of finalized blocks processed
 
 	fKeeper.HandleRewarding(ctx, 3)
 
