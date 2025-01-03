@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -57,8 +58,8 @@ func FuzzHandleRewarding(f *testing.F) {
 		fKeeper.HandleRewarding(ctx, int64(targetHeight))
 
 		nextHeight := fKeeper.GetNextHeightToReward(ctx)
-		require.Equal(t, uint64(0), nextHeight,
-			"next height is not updated when no blocks finalized")
+		require.Zero(t, nextHeight,
+			"next height is not updated when no blocks finalized. Act: %d", nextHeight)
 
 		// Second phase: Finalize some blocks
 		firstBatchFinalized := datagen.RandomInt(r, 5) + 1
@@ -81,7 +82,7 @@ func FuzzHandleRewarding(f *testing.F) {
 		nextHeight = fKeeper.GetNextHeightToReward(ctx)
 		expectedNextHeight := activatedHeight + firstBatchFinalized
 		require.Equal(t, expectedNextHeight, nextHeight,
-			"next height should be after first batch of finalized blocks")
+			"next height should be after first batch of finalized blocks. Exp: %d, Act: %d", expectedNextHeight, nextHeight)
 
 		// Third phase: Finalize more blocks
 		secondBatchFinalized := datagen.RandomInt(r, int(totalBlocks-firstBatchFinalized)) + 1
@@ -107,4 +108,60 @@ func FuzzHandleRewarding(f *testing.F) {
 		require.Equal(t, expectedFinalHeight, finalNextHeight,
 			"next height should be after second batch of finalized blocks")
 	})
+}
+
+func TestHandleRewardingWithGapsOfUnfinalizedBlocks(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+
+	// Setup keepers
+	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+	iKeeper := types.NewMockIncentiveKeeper(ctrl)
+	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+
+	fpPK, err := datagen.GenRandomBIP340PubKey(r)
+	require.NoError(t, err)
+	fKeeper.SetVotingPower(ctx, fpPK.MustMarshal(), 1, 1)
+
+	// starts rewarding at block 1
+	fKeeper.SetNextHeightToReward(ctx, 1)
+
+	fKeeper.SetBlock(ctx, &types.IndexedBlock{
+		Height:    1,
+		AppHash:   datagen.GenRandomByteArray(r, 32),
+		Finalized: true,
+	})
+
+	fKeeper.SetBlock(ctx, &types.IndexedBlock{
+		Height:    2,
+		AppHash:   datagen.GenRandomByteArray(r, 32),
+		Finalized: false,
+	})
+
+	// adds the latest finalized block
+	fKeeper.SetBlock(ctx, &types.IndexedBlock{
+		Height:    3,
+		AppHash:   datagen.GenRandomByteArray(r, 32),
+		Finalized: true,
+	})
+	dc := types.NewVotingPowerDistCache()
+	dc.AddFinalityProviderDistInfo(&types.FinalityProviderDistInfo{
+		BtcPk:          fpPK,
+		TotalBondedSat: 1,
+	})
+	fKeeper.SetVotingPowerDistCache(ctx, 1, dc)
+	fKeeper.SetVotingPowerDistCache(ctx, 3, dc)
+
+	iKeeper.EXPECT().
+		RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return().
+		Times(2) // number of finalized blocks processed
+
+	fKeeper.HandleRewarding(ctx, 3)
+
+	actNextBlockToBeRewarded := fKeeper.GetNextHeightToReward(ctx)
+	require.Equal(t, uint64(4), actNextBlockToBeRewarded)
 }
