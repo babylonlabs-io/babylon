@@ -153,8 +153,13 @@ func TestHandleRewardingWithGapsOfUnfinalizedBlocks(t *testing.T) {
 	})
 	fKeeper.SetVotingPowerDistCache(ctx, 3, dc)
 
+	iKeeper.EXPECT().
+		RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return().
+		Times(1) // number of finalized blocks processed
+
 	fKeeper.HandleRewarding(ctx, 3)
 
 	actNextBlockToBeRewarded := fKeeper.GetNextHeightToReward(ctx)
-	require.Equal(t, 4, actNextBlockToBeRewarded)
+	require.Equal(t, uint64(4), actNextBlockToBeRewarded)
 }
