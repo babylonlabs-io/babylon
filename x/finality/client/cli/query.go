@@ -41,6 +41,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		CmdListEvidences(),
 		CmdSigningInfo(),
 		CmdAllSigningInfo(),
+		CmdNextRewardHeight(),
 	)
 
 	return cmd
@@ -405,6 +406,33 @@ func CmdAllSigningInfo() *cobra.Command {
 
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "all-signing-info")
+
+	return cmd
+}
+
+func CmdNextRewardHeight() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "next-reward-height",
+		Short: "Returns the next block height to be BTC rewarded",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.NextRewardHeight(
+				cmd.Context(),
+				&types.QueryNextRewardHeightRequest{},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }

@@ -373,6 +373,14 @@ func (k Keeper) SigningInfos(ctx context.Context, req *types.QuerySigningInfosRe
 	return &types.QuerySigningInfosResponse{SigningInfos: convertToSigningInfosResponse(signInfos), Pagination: pageRes}, nil
 }
 
+// NextRewardHeight returns the next block height to be rewarded
+func (k Keeper) NextRewardHeight(ctx context.Context, _ *types.QueryNextRewardHeightRequest) (*types.QueryNextRewardHeightResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	return &types.QueryNextRewardHeightResponse{
+		NextRewardHeight: k.GetNextHeightToReward(sdkCtx),
+	}, nil
+}
+
 func convertToSigningInfoResponse(info types.FinalityProviderSigningInfo) types.SigningInfoResponse {
 	return types.SigningInfoResponse{
 		FpBtcPkHex:          info.FpBtcPk.MarshalHex(),

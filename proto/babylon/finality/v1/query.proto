@@ -86,6 +86,11 @@ service Query {
   rpc SigningInfos(QuerySigningInfosRequest) returns (QuerySigningInfosResponse) {
     option (google.api.http).get = "/babylon/finality/v1/signing_infos";
   }
+
+  // NextRewardHeight queries the next block height to reward
+  rpc NextRewardHeight(QueryNextRewardHeightRequest) returns (QueryNextRewardHeightResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/next_reward_height";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -395,4 +400,16 @@ message QuerySigningInfosResponse {
   // info is the signing info of all finality providers with signing info
   repeated SigningInfoResponse signing_infos = 1 [(gogoproto.nullable) = false];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryNextRewardHeightRequest is the request type for the Query/NextRewardHeight RPC
+// method
+message QueryNextRewardHeightRequest {
+}
+
+// QueryNextRewardHeightResponse is the response type for the Query/NextRewardHeight RPC
+// method
+message QueryNextRewardHeightResponse {
+  // NextRewardHeight is the next block height which will be rewarded
+  uint64 next_reward_height = 2;
 }
