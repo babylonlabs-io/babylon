@@ -9,6 +9,7 @@ import (
 	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
+// HandleRewarding calls the reward to stakers if the block is finalized
 func (k Keeper) HandleRewarding(ctx context.Context, targetHeight int64) {
 	// rewarding is executed in a range of [nextHeightToReward, heightToExamine]
 	// this is we don't know when a block will be finalized and we need ensure

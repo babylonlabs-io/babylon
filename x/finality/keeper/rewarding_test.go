@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -107,4 +108,53 @@ func FuzzHandleRewarding(f *testing.F) {
 		require.Equal(t, expectedFinalHeight, finalNextHeight,
 			"next height should be after second batch of finalized blocks")
 	})
+}
+
+func TestHandleRewardingWithGapsOfUnfinalizedBlocks(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+
+	// Setup keepers
+	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+	iKeeper := types.NewMockIncentiveKeeper(ctrl)
+	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+
+	fpPK, err := datagen.GenRandomBIP340PubKey(r)
+	require.NoError(t, err)
+	fKeeper.SetVotingPower(ctx, fpPK.MustMarshal(), 1, 1)
+
+	// starts rewarding at block 1
+	fKeeper.SetNextHeightToReward(ctx, 1)
+
+	fKeeper.SetBlock(ctx, &types.IndexedBlock{
+		Height:    1,
+		AppHash:   datagen.GenRandomByteArray(r, 32),
+		Finalized: false,
+	})
+	fKeeper.SetBlock(ctx, &types.IndexedBlock{
+		Height:    2,
+		AppHash:   datagen.GenRandomByteArray(r, 32),
+		Finalized: false,
+	})
+
+	// adds the latest finalized block
+	fKeeper.SetBlock(ctx, &types.IndexedBlock{
+		Height:    3,
+		AppHash:   datagen.GenRandomByteArray(r, 32),
+		Finalized: true,
+	})
+	dc := types.NewVotingPowerDistCache()
+	dc.AddFinalityProviderDistInfo(&types.FinalityProviderDistInfo{
+		BtcPk:          fpPK,
+		TotalBondedSat: 1,
+	})
+	fKeeper.SetVotingPowerDistCache(ctx, 3, dc)
+
+	fKeeper.HandleRewarding(ctx, 3)
+
+	actNextBlockToBeRewarded := fKeeper.GetNextHeightToReward(ctx)
+	require.Equal(t, 4, actNextBlockToBeRewarded)
 }
