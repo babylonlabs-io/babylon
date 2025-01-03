@@ -58,8 +58,8 @@ func FuzzHandleRewarding(f *testing.F) {
 		fKeeper.HandleRewarding(ctx, int64(targetHeight))
 
 		nextHeight := fKeeper.GetNextHeightToReward(ctx)
-		require.Equal(t, uint64(0), nextHeight,
-			"next height is not updated when no blocks finalized")
+		require.Zero(t, nextHeight,
+			"next height is not updated when no blocks finalized. Act: %d", nextHeight)
 
 		// Second phase: Finalize some blocks
 		firstBatchFinalized := datagen.RandomInt(r, 5) + 1
@@ -82,7 +82,7 @@ func FuzzHandleRewarding(f *testing.F) {
 		nextHeight = fKeeper.GetNextHeightToReward(ctx)
 		expectedNextHeight := activatedHeight + firstBatchFinalized
 		require.Equal(t, expectedNextHeight, nextHeight,
-			"next height should be after first batch of finalized blocks")
+			"next height should be after first batch of finalized blocks. Exp: %d, Act: %d", expectedNextHeight, nextHeight)
 
 		// Third phase: Finalize more blocks
 		secondBatchFinalized := datagen.RandomInt(r, int(totalBlocks-firstBatchFinalized)) + 1

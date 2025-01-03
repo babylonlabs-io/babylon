@@ -30,9 +30,10 @@ func (k Keeper) HandleRewarding(ctx context.Context, targetHeight int64) {
 		if err != nil {
 			panic(err)
 		}
-		if block.Finalized {
-			k.rewardBTCStaking(ctx, height)
+		if !block.Finalized {
+			continue
 		}
+		k.rewardBTCStaking(ctx, height)
 		nextHeightToReward = height + 1
 	}
 
