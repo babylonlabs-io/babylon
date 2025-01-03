@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#377](https://github.com/babylonlabs-io/babylon/pull/377) Query to get next
+block height to be rewarded
+
 ### Bug fixes
 
 - [#374](https://github.com/babylonlabs-io/babylon/pull/374) Fix non-consecutive finalization
