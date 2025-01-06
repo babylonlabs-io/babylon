@@ -178,24 +178,24 @@ func TestQueryNonExistingHeader(t *testing.T) {
 
 	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
-	queryNonExisitingHeight := bindings.BabylonQuery{
+	queryNonExistingHeight := bindings.BabylonQuery{
 		BtcHeaderByHeight: &bindings.BtcHeaderByHeight{
 			Height: 1,
 		},
 	}
 	resp := bindings.BtcHeaderQueryResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHeight, &resp, nil)
+	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExistingHeight, &resp, nil)
 	require.Nil(t, resp.HeaderInfo)
 
 	// Random source for the generation of BTC hash
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	queryNonExisitingHash := bindings.BabylonQuery{
+	queryNonExistingHash := bindings.BabylonQuery{
 		BtcHeaderByHash: &bindings.BtcHeaderByHash{
 			Hash: datagen.GenRandomBtcdHash(r).String(),
 		},
 	}
 	resp1 := bindings.BtcHeaderQueryResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHash, &resp1, errors.New("Generic error: Querier contract error: codespace: btclightclient, code: 1100: query wasm contract failed"))
+	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExistingHash, &resp1, errors.New("Generic error: Querier contract error: codespace: btclightclient, code: 1100: query wasm contract failed"))
 	require.Nil(t, resp1.HeaderInfo)
 }
 
