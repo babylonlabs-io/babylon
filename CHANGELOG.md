@@ -43,6 +43,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 of the block in `TallyBlocks` function
 - [#378](https://github.com/babylonlabs-io/babylon/pull/378) Fix give out rewards
 with gaps of unfinalized blocks
+- [#385](https://github.com/babylonlabs-io/babylon/pull/385) Fix epoching module
+ante handler to return from antehandler chain only in case of error
 
 ## v1.0.0-rc2
 
