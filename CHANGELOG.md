@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v1.0.0-rc3
+
 ### Bug fixes
 
 - [#374](https://github.com/babylonlabs-io/babylon/pull/374) Fix non-consecutive finalization
