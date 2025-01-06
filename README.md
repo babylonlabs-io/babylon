@@ -7,7 +7,7 @@ Unlocking 21 Million ₿ to Secure the Decentralized Economy
 [![Discord](https://badgen.net/badge/icon/discord?icon=discord&label)](https://discord.com/invite/babylonglobal)
 [![Medium](https://badgen.net/badge/icon/medium?icon=medium&label)](https://medium.com/babylonchain-io)
 
-[Babylon](https://babylonchain.io) provides a suite of security-sharing
+[Babylon](https://babylonlabs.io) provides a suite of security-sharing
 protocols between Bitcoin and the PoS world. It provides two inter-connected
 protocols:
 
@@ -55,7 +55,7 @@ make install
 ## Documentation
 
 For user-facing documents, please visit
-[docs.babylonchain.io](https://docs.babylonchain.io). For technical documents
+[docs.babylonchain.io](https://docs.babylonlabs.io). For technical documents
 about high-level designs of Babylon, please visit
 [docs/README.md](./docs/README.md). Each module under `x/` also contains a
 document about its design and implementation.
@@ -63,7 +63,7 @@ document about its design and implementation.
 ## Joining the testnet
 
 Please follow the instructions on the [User
-Guides](https://docs.babylonchain.io/docs/user-guides/overview).
+Guides](https://docs.babylonlabs.io/docs/user-guides/overview).
 
 ## Contributing
 
