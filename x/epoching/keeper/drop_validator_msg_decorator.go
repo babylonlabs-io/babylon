@@ -33,8 +33,9 @@ func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	}
 	// after genesis, if validator-related message, reject msg
 	for _, msg := range tx.GetMsgs() {
-		err := qmd.ValidateMsg(msg)
-		return ctx, err
+		if err := qmd.ValidateMsg(msg); err != nil {
+			return sdk.Context{}, err
+		}
 	}
 
 	return next(ctx, tx, simulate)
