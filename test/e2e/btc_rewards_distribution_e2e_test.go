@@ -15,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/babylonlabs-io/babylon/crypto/eots"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
@@ -592,15 +593,32 @@ func (s *BtcRewardsDistribution) QueryRewardGauges(n *chain.NodeConfig) (
 ) {
 	n.WaitForNextBlockWithSleep50ms()
 
-	// tries to query all in the same block
-	fp1RewardGauges, errFp1 := n.QueryRewardGauge(s.fp1.Address())
-	fp2RewardGauges, errFp2 := n.QueryRewardGauge(s.fp2.Address())
-	btcDel1RewardGauges, errDel1 := n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
-	btcDel2RewardGauges, errDel2 := n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
-	s.NoError(errFp1)
-	s.NoError(errFp2)
-	s.NoError(errDel1)
-	s.NoError(errDel2)
+	g := new(errgroup.Group)
+	var (
+		err                 error
+		fp1RewardGauges     map[string]*itypes.RewardGaugesResponse
+		fp2RewardGauges     map[string]*itypes.RewardGaugesResponse
+		btcDel1RewardGauges map[string]*itypes.RewardGaugesResponse
+		btcDel2RewardGauges map[string]*itypes.RewardGaugesResponse
+	)
+
+	g.Go(func() error {
+		fp1RewardGauges, err = n.QueryRewardGauge(s.fp1.Address())
+		return err
+	})
+	g.Go(func() error {
+		fp2RewardGauges, err = n.QueryRewardGauge(s.fp2.Address())
+		return err
+	})
+	g.Go(func() error {
+		btcDel1RewardGauges, err = n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
+		return err
+	})
+	g.Go(func() error {
+		btcDel2RewardGauges, err = n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
+		return err
+	})
+	s.NoError(g.Wait())
 
 	fp1RewardGauge, ok := fp1RewardGauges[itypes.FinalityProviderType.String()]
 	s.True(ok)
