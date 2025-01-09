@@ -63,7 +63,7 @@ document about its design and implementation.
 ## Joining the testnet
 
 Please follow the instructions on the [User
-Guides](https://docs.babylonchain.io/docs/user-guides/overview).
+Guides](https://github.com/babylonlabs-io/networks/blob/main/bbn-test-5/README.md).
 
 ## Contributing
 
