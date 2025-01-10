@@ -39,7 +39,7 @@ func FuzzEncodingDecoding(f *testing.F) {
 		)
 
 		if err != nil {
-			// if encoding failed we cannod check anything else
+			// if encoding failed we cannot check anything else
 			t.Skip("Encoding should be correct")
 		}
 
