@@ -59,7 +59,7 @@ func NewHelper(t *testing.T) *Helper {
 // the privSigner is the 0th validator in valSet
 func NewHelperWithValSet(t *testing.T, valSet *datagen.GenesisValidators, privSigner *signer.PrivSigner) *Helper {
 	// generate the genesis account
-	signerPubKey := privSigner.WrappedPV.Key.PubKey
+	signerPubKey := privSigner.WrappedPV.Key.CometPVKey.PubKey
 	acc := authtypes.NewBaseAccount(signerPubKey.Address().Bytes(), &cosmosed.PubKey{Key: signerPubKey.Bytes()}, 0, 0)
 	privSigner.WrappedPV.Key.DelegatorAddress = acc.Address
 	valSet.Keys[0].ValidatorAddress = privSigner.WrappedPV.GetAddress().String()
@@ -97,7 +97,7 @@ func NewHelperWithValSet(t *testing.T, valSet *datagen.GenesisValidators, privSi
 // included in the validator set
 func NewHelperWithValSetNoSigner(t *testing.T, valSet *datagen.GenesisValidators, privSigner *signer.PrivSigner) *Helper {
 	// generate the genesis account
-	signerPubKey := privSigner.WrappedPV.Key.PubKey
+	signerPubKey := privSigner.WrappedPV.Key.CometPVKey.PubKey
 	acc := authtypes.NewBaseAccount(signerPubKey.Address().Bytes(), &cosmosed.PubKey{Key: signerPubKey.Bytes()}, 0, 0)
 	privSigner.WrappedPV.Key.DelegatorAddress = acc.Address
 	// set a random validator address instead of the privSigner's

@@ -84,7 +84,7 @@ func Test_CmdCreateBls(t *testing.T) {
 	genKey, err := types.LoadGenesisKeyFromFile(outputFilePath)
 	require.NoError(t, err)
 	require.Equal(t, sdk.ValAddress(addr).String(), genKey.ValidatorAddress)
-	require.True(t, filePV.Key.BlsPubKey.Equal(*genKey.BlsKey.Pubkey))
-	require.Equal(t, filePV.Key.PubKey.Bytes(), genKey.ValPubkey.Bytes())
+	require.True(t, filePV.Key.BlsPVKey.PubKey.Equal(*genKey.BlsKey.Pubkey))
+	require.Equal(t, filePV.Key.CometPVKey.PubKey.Bytes(), genKey.ValPubkey.Bytes())
 	require.True(t, genKey.BlsKey.Pop.IsValid(*genKey.BlsKey.Pubkey, genKey.ValPubkey))
 }

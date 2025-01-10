@@ -13,7 +13,6 @@ import (
 	"github.com/cometbft/cometbft/libs/tempfile"
 	"github.com/cometbft/cometbft/privval"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -47,52 +46,40 @@ func voteToStep(vote *cmtproto.Vote) int8 {
 
 // WrappedFilePVKey wraps FilePVKey with BLS keys.
 type WrappedFilePVKey struct {
-	DelegatorAddress string              `json:"acc_address"`
-	Address          types.Address       `json:"address"`
-	PubKey           cmtcrypto.PubKey    `json:"pub_key"`
-	PrivKey          cmtcrypto.PrivKey   `json:"priv_key"`
-	BlsPubKey        bls12381.PublicKey  `json:"bls_pub_key"`
-	BlsPrivKey       bls12381.PrivateKey `json:"bls_priv_key"`
+	// wonjoon/feat: separate cometPvKey and blsPvKey
+	CometPVKey privval.FilePVKey
+	BlsPVKey   BlsPVKey
 
-	filePath string
+	// wonjoon/todo: remove
+	DelegatorAddress string `json:"acc_address"`
 }
 
-// Save persists the FilePVKey to its filePath.
+// wonjoon/todo: remove or refactoring
 func (pvKey WrappedFilePVKey) Save() {
-	outFile := pvKey.filePath
-	if outFile == "" {
-		panic("cannot save PrivValidator key: filePath not set")
-	}
-
-	jsonBytes, err := cmtjson.MarshalIndent(pvKey, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-
-	if err := tempfile.WriteFileAtomic(outFile, jsonBytes, 0600); err != nil {
-		panic(err)
-	}
+	pvKey.CometPVKey.Save()
+	pvKey.BlsPVKey.Save("")
 }
 
-// -------------------------------------------------------------------------------
-
-// WrappedFilePV wraps FilePV with WrappedFilePVKey.
 type WrappedFilePV struct {
 	Key           WrappedFilePVKey
 	LastSignState privval.FilePVLastSignState
 }
 
-// NewWrappedFilePV wraps FilePV
-func NewWrappedFilePV(privKey cmtcrypto.PrivKey, blsPrivKey bls12381.PrivateKey, keyFilePath, stateFilePath string) *WrappedFilePV {
-	filePV := privval.NewFilePV(privKey, keyFilePath, stateFilePath)
+// wonjoon/todo: refactoring
+func NewWrappedFilePV(
+	cometPrivKey cmtcrypto.PrivKey,
+	blsPrivKey bls12381.PrivateKey,
+	cometKeyFilePath, cometStateFilePath string,
+	// blsKeyFilePath string,
+) *WrappedFilePV {
+	filePV := privval.NewFilePV(cometPrivKey, cometKeyFilePath, cometStateFilePath)
 	return &WrappedFilePV{
 		Key: WrappedFilePVKey{
-			Address:    privKey.PubKey().Address(),
-			PubKey:     privKey.PubKey(),
-			PrivKey:    privKey,
-			BlsPubKey:  blsPrivKey.PubKey(),
-			BlsPrivKey: blsPrivKey,
-			filePath:   keyFilePath,
+			CometPVKey: filePV.Key,
+			BlsPVKey: NewBlsPV(
+				blsPrivKey,
+				DefaultBlsConfig().BlsKeyFile(), // blsKeyFilePath,
+			).Key,
 		},
 		LastSignState: filePV.LastSignState,
 	}
@@ -100,88 +87,110 @@ func NewWrappedFilePV(privKey cmtcrypto.PrivKey, blsPrivKey bls12381.PrivateKey,
 
 // GenWrappedFilePV generates a new validator with randomly generated private key
 // and sets the filePaths, but does not call Save().
-func GenWrappedFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
-	return NewWrappedFilePV(ed25519.GenPrivKey(), bls12381.GenPrivKey(), keyFilePath, stateFilePath)
+// wonjoon/todo: refactoring
+func GenWrappedFilePV(
+	cometKeyFilePath, cometStateFilePath string,
+	//blsKeyFilePath string,
+) *WrappedFilePV {
+	return NewWrappedFilePV(
+		ed25519.GenPrivKey(),
+		bls12381.GenPrivKey(),
+		cometKeyFilePath,
+		cometStateFilePath,
+		//blsKeyFilePath,
+	)
 }
 
 // LoadWrappedFilePV loads a FilePV from the filePaths.  The FilePV handles double
 // signing prevention by persisting data to the stateFilePath.  If either file path
 // does not exist, the program will exit.
-func LoadWrappedFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
-	return loadWrappedFilePV(keyFilePath, stateFilePath, true)
+// wonjoon/todo: refactoring
+func LoadWrappedFilePV(
+	cometKeyFilePath, cometStateFilePath string,
+	//  blsKeyFilePath, blsPassword string
+) *WrappedFilePV {
+	return loadWrappedFilePV(
+		cometKeyFilePath,
+		cometStateFilePath,
+		DefaultBlsConfig().BlsKeyFile(), // blsKeyFilePath,
+		"",                              // blsPassword,
+		true,
+	)
 }
 
 // LoadWrappedFilePVEmptyState loads a FilePV from the given keyFilePath, with an empty LastSignState.
 // If the keyFilePath does not exist, the program will exit.
-func LoadWrappedFilePVEmptyState(keyFilePath, stateFilePath string) *WrappedFilePV {
-	return loadWrappedFilePV(keyFilePath, stateFilePath, false)
+// wonjoon/todo: refactoring
+func LoadWrappedFilePVEmptyState(
+	cometKeyFilePath, cometStateFilePath string,
+	//  blsKeyFilePath, blsPassword string
+) *WrappedFilePV {
+	return loadWrappedFilePV(
+		cometKeyFilePath,
+		cometStateFilePath,
+		DefaultBlsConfig().BlsKeyFile(), // blsKeyFilePath,
+		"",                              // blsPassword,
+		false,
+	)
 }
 
 // If loadState is true, we load from the stateFilePath. Otherwise, we use an empty LastSignState.
-func loadWrappedFilePV(keyFilePath, stateFilePath string, loadState bool) *WrappedFilePV {
-	keyFilePath = filepath.Clean(keyFilePath)
-	keyJSONBytes, err := os.ReadFile(keyFilePath)
-	if err != nil {
-		cmtos.Exit(err.Error())
-	}
-	pvKey := WrappedFilePVKey{}
-	err = cmtjson.Unmarshal(keyJSONBytes, &pvKey)
-	if err != nil {
-		cmtos.Exit(fmt.Sprintf("Error reading PrivValidator key from %v: %v\n", keyFilePath, err))
-	}
+func loadWrappedFilePV(cometKeyFilePath, cometStateFilePath, blsKeyFilePath, blsPassword string, loadState bool) *WrappedFilePV {
 
-	// overwrite pubkey and address for convenience
-	pvKey.PubKey = pvKey.PrivKey.PubKey()
-	pvKey.Address = pvKey.PubKey.Address()
-	pvKey.BlsPubKey = pvKey.BlsPrivKey.PubKey()
-	pvKey.filePath = keyFilePath
-
-	pvState := privval.FilePVLastSignState{}
-
+	// comet
+	var cometPv *privval.FilePV
 	if loadState {
-		stateFilePath := filepath.Clean(stateFilePath)
-		stateJSONBytes, err := os.ReadFile(stateFilePath)
-		if err != nil {
-			cmtos.Exit(err.Error())
-		}
-		err = cmtjson.Unmarshal(stateJSONBytes, &pvState)
-		if err != nil {
-			cmtos.Exit(fmt.Sprintf("Error reading PrivValidator state from %v: %v\n", stateFilePath, err))
-		}
+		cometPv = privval.LoadFilePV(cometKeyFilePath, cometStateFilePath)
+	} else {
+		cometPv = privval.LoadFilePVEmptyState(cometKeyFilePath, cometStateFilePath)
 	}
 
-	// adding path is not needed
-	// pvState.filePath = stateFilePath
+	// bls
+	blsPv := LoadBlsPV(blsKeyFilePath, blsPassword)
 
 	return &WrappedFilePV{
-		Key:           pvKey,
-		LastSignState: pvState,
+		Key: WrappedFilePVKey{
+			CometPVKey: cometPv.Key,
+			BlsPVKey:   blsPv.Key,
+		},
+		LastSignState: cometPv.LastSignState,
 	}
 }
 
 // LoadOrGenWrappedFilePV loads a FilePV from the given filePaths
 // or else generates a new one and saves it to the filePaths.
-func LoadOrGenWrappedFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
-	var pv *WrappedFilePV
-	if cmtos.FileExists(keyFilePath) {
-		pv = LoadWrappedFilePV(keyFilePath, stateFilePath)
-	} else {
-		pv = GenWrappedFilePV(keyFilePath, stateFilePath)
-		pv.Save()
+// wonjoon/todo: refactoring
+func LoadOrGenWrappedFilePV(
+	cometKeyFilePath, cometStateFilePath string,
+	// blsKeyFilePath, blsPassword string,
+) *WrappedFilePV {
+	cometPv := privval.LoadOrGenFilePV(cometKeyFilePath, cometStateFilePath)
+	blsPv := LoadOrGenBlsPV(
+		DefaultBlsConfig().BlsKeyFile(), // blsKeyFilePath,
+		"",                              // blsPassword,
+	)
+	return &WrappedFilePV{
+		Key: WrappedFilePVKey{
+			CometPVKey: cometPv.Key,
+			BlsPVKey:   blsPv.Key,
+		},
+		LastSignState: cometPv.LastSignState,
 	}
-	return pv
 }
 
 // ExportGenBls writes a {address, bls_pub_key, pop, and pub_key} into a json file
 func (pv *WrappedFilePV) ExportGenBls(filePath string) (outputFileName string, err error) {
+	// file check
 	if !cmtos.FileExists(filePath) {
 		return outputFileName, errors.New("export file path does not exist")
 	}
 
+	// ---- Should be removed ---//
 	valAddress := pv.GetAddress()
 	if valAddress.Empty() {
 		return outputFileName, errors.New("validator address should not be empty")
 	}
+	//-------------------------//
 
 	validatorKey, err := NewValidatorKeys(pv.GetValPrivKey(), pv.GetBlsPrivKey())
 	if err != nil {
@@ -229,15 +238,15 @@ func (pv *WrappedFilePV) SetAccAddress(addr sdk.AccAddress) {
 // GetPubKey returns the public key of the validator.
 // Implements PrivValidator.
 func (pv *WrappedFilePV) GetPubKey() (cmtcrypto.PubKey, error) {
-	return pv.Key.PubKey, nil
+	return pv.Key.CometPVKey.PubKey, nil
 }
 
 func (pv *WrappedFilePV) GetValPrivKey() cmtcrypto.PrivKey {
-	return pv.Key.PrivKey
+	return pv.Key.CometPVKey.PrivKey
 }
 
 func (pv *WrappedFilePV) GetBlsPrivKey() bls12381.PrivateKey {
-	return pv.Key.BlsPrivKey
+	return pv.Key.BlsPVKey.PrivKey
 }
 
 func (pv *WrappedFilePV) SignMsgWithBls(msg []byte) (bls12381.Signature, error) {
@@ -260,11 +269,14 @@ func (pv *WrappedFilePV) GetValidatorPubkey() (cmtcrypto.PubKey, error) {
 	return pv.GetPubKey()
 }
 
+// ---- Should be removed ---//₩
 // Save persists the FilePV to disk.
 func (pv *WrappedFilePV) Save() {
 	pv.Key.Save()
 	pv.LastSignState.Save()
 }
+
+//-------------------------//
 
 // Reset resets all fields in the FilePV.
 // NOTE: Unsafe!

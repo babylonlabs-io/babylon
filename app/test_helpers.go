@@ -239,7 +239,7 @@ func SetupWithBitcoinConf(t *testing.T, isCheckTx bool, btcConf bbn.SupportedBtc
 
 	ps, err := signer.SetupTestPrivSigner()
 	require.NoError(t, err)
-	valPubKey := ps.WrappedPV.Key.PubKey
+	valPubKey := ps.WrappedPV.Key.CometPVKey.PubKey
 	// generate genesis account
 	acc := authtypes.NewBaseAccount(valPubKey.Address().Bytes(), &cosmosed.PubKey{Key: valPubKey.Bytes()}, 0, 0)
 	balance := banktypes.Balance{

@@ -12,11 +12,12 @@ func TestEncryptBLS(t *testing.T) {
 	t.Run("create bls key", func(t *testing.T) {
 		// TODO
 		blsPrivKey := bls12381.GenPrivKey()
+		blsPubKey := blsPrivKey.PubKey().Bytes()
 		password := "password"
 
 		t.Run("encrypt bls key", func(t *testing.T) {
 			// TODO
-			encryptedBlsKey, err := EncryptBLS(&blsPrivKey, password)
+			encryptedBlsKey, err := EncryptBLS(blsPrivKey, blsPubKey, password)
 			require.NoError(t, err)
 			t.Logf("encrypted bls key: %s", encryptedBlsKey)
 
@@ -24,7 +25,7 @@ func TestEncryptBLS(t *testing.T) {
 				// TODO
 				decryptedBlsKey, err := DecryptBLS(encryptedBlsKey, password)
 				require.NoError(t, err)
-				require.Equal(t, blsPrivKey, decryptedBlsKey)
+				require.Equal(t, blsPrivKey, bls12381.PrivateKey(decryptedBlsKey))
 			})
 
 			t.Run("decrypt bls key with wrong password", func(t *testing.T) {

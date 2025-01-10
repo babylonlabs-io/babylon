@@ -188,7 +188,7 @@ func FuzzExtendVote_EmptyBLSPrivKey(f *testing.F) {
 		require.NoError(t, err)
 
 		// set the BLS private key to be nil to trigger panic
-		ps.WrappedPV.Key.BlsPrivKey = nil
+		ps.WrappedPV.Key.BlsPVKey.PrivKey = nil
 		helper := testhelper.NewHelperWithValSet(t, genesisValSet, ps)
 		ek := helper.App.EpochingKeeper
 

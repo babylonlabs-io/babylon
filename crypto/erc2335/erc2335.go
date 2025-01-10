@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/pkg/errors"
 	keystorev4 "github.com/wealdtech/go-eth2-wallet-encryptor-keystorev4"
 )
@@ -17,19 +16,18 @@ type Erc2335KeyStore struct {
 	Pubkey  string                 `json:"pubkey"`
 }
 
-// Encrypt encrypts a BLS private key using the EIP-2335 format
-func EncryptBLS(privKey *bls12381.PrivateKey, password string) ([]byte, error) {
+// wonjoon: encrypt key pair to erc2335 keystore
+// available to handle all keys in []byte format
+func EncryptBLS(privKey, pubKey []byte, password string) ([]byte, error) {
 	if privKey == nil {
 		return nil, errors.New("private key cannot be nil")
 	}
 
 	encryptor := keystorev4.New()
-	cryptoFields, err := encryptor.Encrypt(*privKey, password)
+	cryptoFields, err := encryptor.Encrypt(privKey, password)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to encrypt private key")
 	}
-
-	pubKey := privKey.PubKey().Bytes()
 
 	// Create the keystore json structure
 	keystoreJSON := Erc2335KeyStore{
@@ -41,8 +39,8 @@ func EncryptBLS(privKey *bls12381.PrivateKey, password string) ([]byte, error) {
 	return json.Marshal(keystoreJSON)
 }
 
-// Decrypt decrypts an EIP-2335 keystore JSON and returns the BLS private key
-func DecryptBLS(keystoreJSON []byte, password string) (bls12381.PrivateKey, error) {
+// decrypt private key from erc2335 keystore
+func DecryptBLS(keystoreJSON []byte, password string) ([]byte, error) {
 	// Parse the keystore json
 	var keystore Erc2335KeyStore
 
@@ -56,10 +54,5 @@ func DecryptBLS(keystoreJSON []byte, password string) (bls12381.PrivateKey, erro
 	}
 
 	encryptor := keystorev4.New()
-	privateKeyBytes, err := encryptor.Decrypt(keystore.Crypto, password)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to decrypt keystore")
-	}
-	return bls12381.PrivateKey(privateKeyBytes), nil
-
+	return encryptor.Decrypt(keystore.Crypto, password)
 }
