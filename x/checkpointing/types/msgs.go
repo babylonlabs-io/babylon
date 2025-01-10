@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	// Ensure that MsgInsertHeader implements all functions of the Msg interface
+	// Ensure that these message types implement all functions of the Msg interface
 	_ sdk.Msg = (*MsgWrappedCreateValidator)(nil)
+	_ sdk.Msg = (*MsgInjectedCheckpoint)(nil)
 )
 
 func NewMsgWrappedCreateValidator(msgCreateVal *stakingtypes.MsgCreateValidator, blsPK *bls12381.PublicKey, pop *ProofOfPossession) (*MsgWrappedCreateValidator, error) {
