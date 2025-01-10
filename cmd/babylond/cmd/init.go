@@ -68,30 +68,34 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 				}
 			}
 
-			// wonjoon: make config for bls
-			blsCfg := privval.BlsConfig{
-				RootDir:         config.RootDir,
-				BlsKeyPath:      filepath.Join(config.RootDir, cfg.DefaultConfigDir, privval.DefaultBlsKeyName),
-				BlsPasswordPath: filepath.Join(config.RootDir, cfg.DefaultConfigDir, privval.DefaultBlsPasswordName),
-			}
-
-			// Get BLS password
-			blsPassword := privval.LoadOrGenBlsPassword(blsCfg.BlsPasswordFile())
-
 			// Get initial height
 			initHeight, _ := cmd.Flags().GetInt64(flags.FlagInitHeight)
 			if initHeight < 1 {
 				initHeight = 1
 			}
 
-			// InitializeNodeValidatorFilesFromMnemonic from cosmos-sdk/x/genutil/utils.go
-			nodeID, _, err := genutil.InitializeNodeValidatorFilesFromMnemonic(config, mnemonic)
+			// Get bls password
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			blsPassword, err := input.GetString("Enter your bls password", inBuf)
 			if err != nil {
 				return err
 			}
 
-			// InitializeNodeValidatorBlsFilesFromMnemonic from babylon/x/privval/bls.go
-			_, err = privval.InitializeNodeValidatorBlsFilesFromMnemonic(&blsCfg, mnemonic, blsPassword)
+			// Initialize bls key
+			blsCfg := privval.BlsConfig{
+				RootDir:         config.RootDir,
+				BlsKeyPath:      filepath.Join(config.RootDir, cfg.DefaultConfigDir, privval.DefaultBlsKeyName),
+				BlsPasswordPath: filepath.Join(config.RootDir, cfg.DefaultConfigDir, privval.DefaultBlsPasswordName),
+			}
+
+			// Initialize BLS key and save to file
+			_, err = privval.InitializeBlsFileFromMnemonic(&blsCfg, blsPassword, mnemonic)
+			if err != nil {
+				return err
+			}
+
+			// InitializeNodeValidatorFilesFromMnemonic from cosmos-sdk/x/genutil/utils.go
+			nodeID, _, err := genutil.InitializeNodeValidatorFilesFromMnemonic(config, mnemonic)
 			if err != nil {
 				return err
 			}

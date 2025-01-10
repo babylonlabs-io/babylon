@@ -5,13 +5,11 @@ import (
 	"path/filepath"
 
 	cfg "github.com/cometbft/cometbft/config"
-	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/p2p"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/go-bip39"
 
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/privval"
 )
 
@@ -42,13 +40,15 @@ func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic strin
 		return "", nil, err
 	}
 
+	// add bls config and set root same as config
+	blsCfg := privval.DefaultBlsConfig()
+	blsCfg.SetRoot(config.RootDir)
+
 	var filePV *privval.WrappedFilePV
 	if len(mnemonic) == 0 {
-		filePV = privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile)
+		filePV = privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile, blsCfg.BlsKeyFile(), blsCfg.BlsPasswordFile())
 	} else {
-		privKey := cmted25519.GenPrivKeyFromSecret([]byte(mnemonic))
-		blsPrivKey := bls12381.GenPrivKeyFromSecret([]byte(mnemonic))
-		filePV = privval.NewWrappedFilePV(privKey, blsPrivKey, pvKeyFile, pvStateFile)
+		filePV = privval.GenWrappedFilePVWithMnemonic(mnemonic, pvKeyFile, pvStateFile, blsCfg.BlsKeyFile(), blsCfg.BlsPasswordFile())
 	}
 	filePV.SetAccAddress(addr)
 

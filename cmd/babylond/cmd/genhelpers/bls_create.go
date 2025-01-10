@@ -1,12 +1,11 @@
 package genhelpers
 
 import (
-	"errors"
+	"log"
 	"path/filepath"
 	"strings"
 
 	cmtconfig "github.com/cometbft/cometbft/config"
-	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
@@ -35,13 +34,15 @@ $ babylond genbls --home ./
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
 
 			nodeCfg := cmtconfig.DefaultConfig()
+			blsCfg := privval.DefaultBlsConfig()
 			keyPath := filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
 			statePath := filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
-			if !cmtos.FileExists(keyPath) {
-				return errors.New("validator key file does not exist")
-			}
+			blsKeyPath := filepath.Join(homeDir, blsCfg.BlsKeyFile())
+			blsPasswordPath := filepath.Join(homeDir, blsCfg.BlsPasswordFile())
 
-			wrappedPV := privval.LoadWrappedFilePV(keyPath, statePath)
+			wrappedPV := privval.LoadWrappedFilePV(keyPath, statePath, blsKeyPath, blsPasswordPath)
+
+			log.Printf("Loaded delegator address in wrapperPv: %s", wrappedPV.Key.DelegatorAddress)
 
 			outputFileName, err := wrappedPV.ExportGenBls(filepath.Dir(keyPath))
 			if err != nil {

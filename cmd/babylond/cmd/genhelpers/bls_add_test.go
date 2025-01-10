@@ -152,7 +152,12 @@ func Test_CmdAddBlsWithGentx(t *testing.T) {
 		nodeCfg.SetRoot(homeDir)
 		keyPath := nodeCfg.PrivValidatorKeyFile()
 		statePath := nodeCfg.PrivValidatorStateFile()
-		filePV := privval.GenWrappedFilePV(keyPath, statePath)
+
+		blsCfg := privval.DefaultBlsConfig()
+		blsCfg.SetRoot(homeDir)
+		blsKeyFile := blsCfg.BlsKeyFile()
+		blsPasswordFile := blsCfg.BlsPasswordFile()
+		filePV := privval.GenWrappedFilePV(keyPath, statePath, blsKeyFile, blsPasswordFile)
 		filePV.SetAccAddress(v.Address)
 		_, err = cli.ExecTestCLICmd(v.ClientCtx, genBlsCmd, []string{fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir)})
 		require.NoError(t, err)
@@ -175,6 +180,6 @@ func Test_CmdAddBlsWithGentx(t *testing.T) {
 		require.NotEmpty(t, checkpointingGenState.GenesisKeys)
 		gks := checkpointingGenState.GetGenesisKeys()
 		require.Equal(t, genKey, gks[i])
-		filePV.Clean(keyPath, statePath)
+		filePV.Clean(keyPath, statePath, blsKeyFile, blsPasswordFile)
 	}
 }

@@ -1,17 +1,24 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"log"
+	"os"
 	"path/filepath"
 	"strings"
 
 	cmtconfig "github.com/cometbft/cometbft/config"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/input"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
 	"github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/crypto/erc2335"
 	"github.com/babylonlabs-io/babylon/privval"
 	cmtprivval "github.com/cometbft/cometbft/privval"
 )
@@ -55,28 +62,42 @@ $ babylond create-bls-key %s1f5tnl46mk4dfp4nx3n2vnrvyw2h2ydz6ykhk3r --home ./
 }
 
 func CreateBlsKey(home string, addr sdk.AccAddress) error {
-	// comet
 	nodeCfg := cmtconfig.DefaultConfig()
 	keyPath := filepath.Join(home, nodeCfg.PrivValidatorKeyFile())
 	statePath := filepath.Join(home, nodeCfg.PrivValidatorStateFile())
+	cmtPv := cmtprivval.LoadFilePV(keyPath, statePath)
 
-	// bls
 	blsCfg := privval.DefaultBlsConfig()
-	blsKeyFilePath := filepath.Join(home, blsCfg.BlsKeyFile())
-	blsPasswordPath := filepath.Join(home, blsCfg.BlsPasswordFile())
+	blsKeyPath := filepath.Join(home, blsCfg.BlsKeyFile())
+	blsPasswordFile := filepath.Join(home, blsCfg.BlsPasswordFile())
 
-	cometPv := cmtprivval.LoadOrGenFilePV(keyPath, statePath)
-	blsPv := privval.LoadOrGenBlsPV(blsKeyFilePath, blsPasswordPath)
+	var blsPassword string
+	var err error
+	if !cmtos.FileExists(blsPasswordFile) {
+		log.Printf("BLS password file don't exists in file: %v", blsPasswordFile)
+		inBuf := bufio.NewReader(os.Stdin)
+		blsPassword, err = input.GetString("Enter your bls password", inBuf)
+		if err != nil {
+			return err
+		}
+		err = erc2335.SavePasswordToFile(blsPassword, blsPasswordFile)
+		if err != nil {
+			return err
+		}
+	}
+	blsPv := privval.NewBlsPV(bls12381.GenPrivKey(), blsKeyPath, blsPasswordFile)
+	blsPv.Key.Save(blsPassword)
 
-	// wrappedFilePv
-	wrappedFilePv := privval.WrappedFilePV{
+	wrappedPv := privval.WrappedFilePV{
 		Key: privval.WrappedFilePVKey{
-			CometPVKey: cometPv.Key,
+			CometPVKey: cmtPv.Key,
 			BlsPVKey:   blsPv.Key,
 		},
-		LastSignState: cometPv.LastSignState,
+		LastSignState: cmtPv.LastSignState,
 	}
-	wrappedFilePv.SetAccAddress(addr)
 
+	wrappedPv.SetAccAddress(addr)
+	log.Printf("Saved delegator address: %s", addr.String())
+	log.Printf("Saved delegator address in wrapperPv: %s", wrappedPv.Key.DelegatorAddress)
 	return nil
 }

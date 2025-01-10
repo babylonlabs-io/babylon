@@ -72,8 +72,12 @@ func Test_CmdCreateBls(t *testing.T) {
 	nodeCfg := cmtconfig.DefaultConfig()
 	keyPath := filepath.Join(home, nodeCfg.PrivValidatorKeyFile())
 	statePath := filepath.Join(home, nodeCfg.PrivValidatorStateFile())
-	filePV := privval.GenWrappedFilePV(keyPath, statePath)
-	defer filePV.Clean(keyPath, statePath)
+
+	blsCfg := privval.DefaultBlsConfig()
+	blsKeyFile := filepath.Join(home, blsCfg.BlsKeyFile())
+	blsPasswordFile := filepath.Join(home, blsCfg.BlsPasswordFile())
+	filePV := privval.GenWrappedFilePV(keyPath, statePath, blsKeyFile, blsPasswordFile)
+	defer filePV.Clean(keyPath, statePath, blsKeyFile, blsPasswordFile)
 	filePV.SetAccAddress(addr)
 
 	// execute the gen-bls cmd

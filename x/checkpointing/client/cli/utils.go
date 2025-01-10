@@ -209,7 +209,14 @@ func getValKeyFromFile(homeDir string) (*privval.ValidatorKeys, error) {
 	if !cmtos.FileExists(keyPath) {
 		return nil, errors.New("validator key file does not exist")
 	}
-	wrappedPV := privval.LoadWrappedFilePV(keyPath, statePath)
+
+	blsCfg := privval.DefaultBlsConfig()
+	blsKeyPath := filepath.Join(homeDir, blsCfg.BlsKeyFile())
+	blsPasswordPath := filepath.Join(homeDir, blsCfg.BlsPasswordFile())
+	if !cmtos.FileExists(blsKeyPath) {
+		return nil, errors.New("validator bls key file does not exist")
+	}
+	wrappedPV := privval.LoadWrappedFilePV(keyPath, statePath, blsKeyPath, blsPasswordPath)
 
 	return privval.NewValidatorKeys(wrappedPV.GetValPrivKey(), wrappedPV.GetBlsPrivKey())
 }

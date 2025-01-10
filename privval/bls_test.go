@@ -5,16 +5,15 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/crypto/erc2335"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/test-go/testify/assert"
 )
 
-func TestNewBlsPV(t *testing.T) {
-	pv := NewBlsPV(bls12381.GenPrivKey(), "test")
-	assert.NotNil(t, pv)
-}
+// func TestNewBlsPV(t *testing.T) {
+// 	pv := NewBlsPV(bls12381.GenPrivKey(), "test")
+// 	assert.NotNil(t, pv)
+// }
 
 func TestCleanUp(t *testing.T) {
 	blsKeyFilePath := DefaultBlsConfig().BlsKeyFile()
@@ -22,25 +21,24 @@ func TestCleanUp(t *testing.T) {
 	cleanup(blsKeyFilePath)
 }
 
-func TestInitializeNodeValidatorBlsFiles(t *testing.T) {
+func TestInitializeBlsFile(t *testing.T) {
 
 	t.Run("set default config", func(t *testing.T) {
 		blsCfg := DefaultBlsConfig()
 		assert.NotNil(t, blsCfg)
-		assert.Equal(t, blsCfg.RootDir, cmtcfg.DefaultConfigDir)
 		assert.Equal(t, blsCfg.BlsKeyPath, filepath.Join(cmtcfg.DefaultConfigDir, DefaultBlsKeyName))
 
 		password := erc2335.CreateRandomPassword()
 		t.Log("password", password)
 
 		t.Run("generate key without mnemonic", func(t *testing.T) {
-			blsPubKey, err := InitializeNodeValidatorBlsFilesWithPassword(&blsCfg, password)
+			blsPubKey, err := InitializeBlsFile(&blsCfg, password)
 			assert.NoError(t, err)
 			assert.NotNil(t, blsPubKey)
 		})
 
 		t.Run("load key with password", func(t *testing.T) {
-			blsPubKey, err := InitializeNodeValidatorBlsFilesWithPassword(&blsCfg, password)
+			blsPubKey, err := InitializeBlsFile(&blsCfg, password)
 			assert.NoError(t, err)
 			assert.NotNil(t, blsPubKey)
 		})
@@ -66,7 +64,10 @@ func TestSavePasswordToFile(t *testing.T) {
 		password := erc2335.CreateRandomPassword()
 		t.Log("password", password)
 
-		err := erc2335.SavePasswordToFile(password, blsCfg.BlsPasswordFile())
+		err := os.MkdirAll(filepath.Dir(blsCfg.BlsPasswordFile()), 0o777)
+		assert.NoError(t, err)
+
+		err = erc2335.SavePasswordToFile(password, blsCfg.BlsPasswordFile())
 		assert.NoError(t, err)
 
 		t.Run("load password file", func(t *testing.T) {

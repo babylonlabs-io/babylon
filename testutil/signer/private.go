@@ -21,7 +21,7 @@ func SetupTestPrivSigner() (*signer.PrivSigner, error) {
 	defer func() {
 		_ = os.RemoveAll(nodeDir)
 	}()
-	privSigner, _ := signer.InitPrivSigner(nodeDir)
+	privSigner, _ := signer.InitTestPrivSigner(nodeDir)
 	return privSigner, nil
 }
 

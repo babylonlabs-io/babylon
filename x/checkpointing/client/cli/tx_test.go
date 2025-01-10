@@ -110,7 +110,16 @@ func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 	pvStateFile := filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
 	err = cmtos.EnsureDir(filepath.Dir(pvStateFile), 0777)
 	require.NoError(err)
-	wrappedPV := privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile)
+
+	blsCfg := privval.DefaultBlsConfig()
+	blsKeyFile := filepath.Join(homeDir, blsCfg.BlsKeyFile())
+	err = cmtos.EnsureDir(filepath.Dir(blsKeyFile), 0777)
+	require.NoError(err)
+	blsPasswordFile := filepath.Join(homeDir, blsCfg.BlsPasswordFile())
+	err = cmtos.EnsureDir(filepath.Dir(blsPasswordFile), 0777)
+	require.NoError(err)
+
+	wrappedPV := privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile)
 	cmd := checkpointcli.CmdWrappedCreateValidator(authcodec.NewBech32Codec("cosmosvaloper"))
 
 	consPrivKey := wrappedPV.GetValPrivKey()

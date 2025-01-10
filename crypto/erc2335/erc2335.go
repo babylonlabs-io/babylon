@@ -12,11 +12,12 @@ import (
 )
 
 type Erc2335KeyStore struct {
-	Crypto  map[string]interface{} `json:"crypto"`
-	Version uint                   `json:"version"`
-	UUID    string                 `json:"uuid"`
-	Path    string                 `json:"path"`
-	Pubkey  string                 `json:"pubkey"`
+	Crypto      map[string]interface{} `json:"crypto"`
+	Version     uint                   `json:"version"`
+	UUID        string                 `json:"uuid"`
+	Path        string                 `json:"path"`
+	Pubkey      string                 `json:"pubkey"`
+	Description string                 `json:"description"`
 }
 
 // wonjoon: encrypt key pair to erc2335 keystore

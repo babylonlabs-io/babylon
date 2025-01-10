@@ -1,6 +1,7 @@
 package signer
 
 import (
+	"fmt"
 	"path/filepath"
 
 	cmtconfig "github.com/cometbft/cometbft/config"
@@ -15,8 +16,6 @@ type PrivSigner struct {
 }
 
 func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
-
-	// cometPv
 	nodeCfg := cmtconfig.DefaultConfig()
 	pvKeyFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorKeyFile())
 	err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
@@ -28,11 +27,9 @@ func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
 	if err != nil {
 		return nil, err
 	}
-	cometPv := cmtprivval.LoadOrGenFilePV(pvKeyFile, pvStateFile)
 
-	// blsPv
 	blsCfg := privval.DefaultBlsConfig()
-	blsCfg.RootDir = nodeCfg.RootDir
+	blsCfg.SetRoot(nodeCfg.RootDir)
 	blsKeyFile := filepath.Join(nodeDir, blsCfg.BlsKeyFile())
 	err = cmtos.EnsureDir(filepath.Dir(blsKeyFile), 0777)
 	if err != nil {
@@ -44,16 +41,59 @@ func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
 		return nil, err
 	}
 
-	password := privval.LoadOrGenBlsPassword(blsPasswordFile)
-	blsPv := privval.LoadOrGenBlsPV(blsKeyFile, password)
+	if !cmtos.FileExists(blsKeyFile) {
+		return nil, fmt.Errorf("BLS key file does not exist: %v", blsKeyFile)
+	}
+
+	if !cmtos.FileExists(blsPasswordFile) {
+		return nil, fmt.Errorf("BLS password file does not exist: %v", blsPasswordFile)
+	}
+
+	blsPv := privval.LoadBlsPV(blsKeyFile, blsPasswordFile)
+	cmtPv := cmtprivval.LoadFilePV(pvKeyFile, pvStateFile)
+	wrappedPvKey := privval.WrappedFilePVKey{
+		CometPVKey: cmtPv.Key,
+		BlsPVKey:   blsPv.Key,
+	}
+	wrappedPV := &privval.WrappedFilePV{
+		Key:           wrappedPvKey,
+		LastSignState: cmtPv.LastSignState,
+	}
 
 	return &PrivSigner{
-		WrappedPV: &privval.WrappedFilePV{
-			Key: privval.WrappedFilePVKey{
-				CometPVKey: cometPv.Key,
-				BlsPVKey:   blsPv.Key,
-			},
-			LastSignState: cometPv.LastSignState,
-		},
+		WrappedPV: wrappedPV,
+	}, nil
+}
+
+func InitTestPrivSigner(nodeDir string) (*PrivSigner, error) {
+	nodeCfg := cmtconfig.DefaultConfig()
+	pvKeyFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorKeyFile())
+	err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
+	if err != nil {
+		return nil, err
+	}
+	pvStateFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorStateFile())
+	err = cmtos.EnsureDir(filepath.Dir(pvStateFile), 0777)
+	if err != nil {
+		return nil, err
+	}
+
+	blsCfg := privval.DefaultBlsConfig()
+	blsCfg.SetRoot(nodeCfg.RootDir)
+	blsKeyFile := filepath.Join(nodeDir, blsCfg.BlsKeyFile())
+	err = cmtos.EnsureDir(filepath.Dir(blsKeyFile), 0777)
+	if err != nil {
+		return nil, err
+	}
+	blsPasswordFile := filepath.Join(nodeDir, blsCfg.BlsPasswordFile())
+	err = cmtos.EnsureDir(filepath.Dir(blsPasswordFile), 0777)
+	if err != nil {
+		return nil, err
+	}
+
+	wrappedPV := privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile)
+
+	return &PrivSigner{
+		WrappedPV: wrappedPV,
 	}, nil
 }

@@ -10,7 +10,6 @@ import (
 
 	"cosmossdk.io/math"
 	cmtconfig "github.com/cometbft/cometbft/config"
-	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/p2p"
 	cmttypes "github.com/cometbft/cometbft/types"
@@ -34,7 +33,7 @@ import (
 	babylonApp "github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/crypto/erc2335"
 	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
 )
@@ -173,12 +172,26 @@ func (n *internalNode) createConsensusKey() error {
 		return err
 	}
 
-	privKey := cmted25519.GenPrivKeyFromSecret([]byte(n.mnemonic))
-	blsPrivKey := bls12381.GenPrivKeyFromSecret([]byte(n.mnemonic))
-	filePV := privval.NewWrappedFilePV(privKey, blsPrivKey, pvKeyFile, pvStateFile)
+	blsCfg := privval.DefaultBlsConfig()
+	blsCfg.SetRoot(config.RootDir)
+	blsKeyFile := blsCfg.BlsKeyFile()
+	if err := cmtos.EnsureDir(filepath.Dir(blsKeyFile), 0o777); err != nil {
+		return err
+	}
+
+	blsPasswordFile := blsCfg.BlsPasswordFile()
+	if err := cmtos.EnsureDir(filepath.Dir(blsPasswordFile), 0o777); err != nil {
+		return err
+	}
+
+	// for test e2e
+	// bls-password is random generated
+	blsPassword := erc2335.CreateRandomPassword()
+
+	filePV := privval.GenWrappedFilePVWithMnemonic(n.mnemonic, pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile)
+	filePV.Save(blsPassword)
 
 	accAddress, _ := n.keyInfo.GetAddress()
-	filePV.Save()
 	filePV.SetAccAddress(accAddress)
 
 	n.consensusKey = filePV.Key
