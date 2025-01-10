@@ -51,5 +51,11 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 
 	m.k.epochingKeeper.EnqueueMsg(ctx, queueMsg)
 
-	return &types.MsgWrappedCreateValidatorResponse{}, err
+	return &types.MsgWrappedCreateValidatorResponse{}, nil
+}
+
+// InjectedCheckpoint is a dummy msg handler as MsgInjectedCheckpoint is an internal message handled in
+// PreBlocker. This is to avoid errors from the explorers
+func (m msgServer) InjectedCheckpoint(_ context.Context, _ *types.MsgInjectedCheckpoint) (*types.MsgInjectedCheckpointResponse, error) {
+	return &types.MsgInjectedCheckpointResponse{}, nil
 }

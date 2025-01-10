@@ -3,8 +3,10 @@ package babylon.checkpointing.v1;
 
 import "gogoproto/gogo.proto";
 import "babylon/checkpointing/v1/bls_key.proto";
+import "babylon/checkpointing/v1/checkpoint.proto";
 import "cosmos/staking/v1beta1/tx.proto";
 import "cosmos/msg/v1/msg.proto";
+import "tendermint/abci/types.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/checkpointing/types";
 
@@ -15,6 +17,10 @@ service Msg {
   // WrappedCreateValidator defines a method for registering a new validator
   rpc WrappedCreateValidator(MsgWrappedCreateValidator)
       returns (MsgWrappedCreateValidatorResponse);
+
+  // InjectedCheckpoint defines a dummy method for handling an injected checkpoint
+  rpc InjectedCheckpoint(MsgInjectedCheckpoint)
+      returns (MsgInjectedCheckpointResponse);
 }
 
 // MsgWrappedCreateValidator defines a wrapped message to create a validator
@@ -30,3 +36,17 @@ message MsgWrappedCreateValidator {
 // MsgWrappedCreateValidatorResponse defines the MsgWrappedCreateValidator
 // response type
 message MsgWrappedCreateValidatorResponse {}
+
+// MsgInjectedCheckpoint wraps the checkpoint and the extended votes
+// Note: this is a special message type that is only for internal ABCI++ usage
+// for inserting checkpoint into the block
+message MsgInjectedCheckpoint {
+  RawCheckpointWithMeta ckpt = 1;
+  // extended_commit_info is the commit info including the vote extensions
+  // from the previous proposal
+  tendermint.abci.ExtendedCommitInfo extended_commit_info = 2;
+}
+
+// MsgInjectedCheckpointResponse defines the MsgInjectedCheckpoint
+// response type
+message MsgInjectedCheckpointResponse {}

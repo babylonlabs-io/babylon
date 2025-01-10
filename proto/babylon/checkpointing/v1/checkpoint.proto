@@ -3,7 +3,6 @@ package babylon.checkpointing.v1;
 
 import "google/protobuf/timestamp.proto";
 import "gogoproto/gogo.proto";
-import "tendermint/abci/types.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/checkpointing/types";
 
@@ -42,16 +41,6 @@ message RawCheckpointWithMeta {
   // transition and the time (in both timestamp and block height) of this
   // transition.
   repeated CheckpointStateUpdate lifecycle = 5;
-}
-
-// MsgInjectedCheckpoint wraps the checkpoint and the extended votes
-// Note: this is a special message type that is only for internal ABCI++ usage
-// for inserting checkpoint into the block
-message MsgInjectedCheckpoint {
-  RawCheckpointWithMeta ckpt = 1;
-  // extended_commit_info is the commit info including the vote extensions
-  // from the previous proposal
-  tendermint.abci.ExtendedCommitInfo extended_commit_info = 2;
 }
 
 // CheckpointStatus is the status of a checkpoint.
