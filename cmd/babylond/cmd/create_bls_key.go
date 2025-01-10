@@ -1,26 +1,17 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
-	"log"
-	"os"
 	"path/filepath"
 	"strings"
 
-	cmtconfig "github.com/cometbft/cometbft/config"
-	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/input"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
 	"github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/crypto/erc2335"
 	"github.com/babylonlabs-io/babylon/privval"
-	cmtprivval "github.com/cometbft/cometbft/privval"
 )
 
 func CreateBlsKeyCmd() *cobra.Command {
@@ -62,42 +53,13 @@ $ babylond create-bls-key %s1f5tnl46mk4dfp4nx3n2vnrvyw2h2ydz6ykhk3r --home ./
 }
 
 func CreateBlsKey(home string, addr sdk.AccAddress) error {
-	nodeCfg := cmtconfig.DefaultConfig()
-	keyPath := filepath.Join(home, nodeCfg.PrivValidatorKeyFile())
-	statePath := filepath.Join(home, nodeCfg.PrivValidatorStateFile())
-	cmtPv := cmtprivval.LoadFilePV(keyPath, statePath)
 
 	blsCfg := privval.DefaultBlsConfig()
-	blsKeyPath := filepath.Join(home, blsCfg.BlsKeyFile())
-	blsPasswordFile := filepath.Join(home, blsCfg.BlsPasswordFile())
+	keyPath := filepath.Join(home, blsCfg.BlsKeyFile())
+	passwordPath := filepath.Join(home, blsCfg.BlsPasswordFile())
 
-	var blsPassword string
-	var err error
-	if !cmtos.FileExists(blsPasswordFile) {
-		log.Printf("BLS password file don't exists in file: %v", blsPasswordFile)
-		inBuf := bufio.NewReader(os.Stdin)
-		blsPassword, err = input.GetString("Enter your bls password", inBuf)
-		if err != nil {
-			return err
-		}
-		err = erc2335.SavePasswordToFile(blsPassword, blsPasswordFile)
-		if err != nil {
-			return err
-		}
-	}
-	blsPv := privval.NewBlsPV(bls12381.GenPrivKey(), blsKeyPath, blsPasswordFile)
-	blsPv.Key.Save(blsPassword)
+	password := privval.GetBlsPassword()
 
-	wrappedPv := privval.WrappedFilePV{
-		Key: privval.WrappedFilePVKey{
-			CometPVKey: cmtPv.Key,
-			BlsPVKey:   blsPv.Key,
-		},
-		LastSignState: cmtPv.LastSignState,
-	}
-
-	wrappedPv.SetAccAddress(addr)
-	log.Printf("Saved delegator address: %s", addr.String())
-	log.Printf("Saved delegator address in wrapperPv: %s", wrappedPv.Key.DelegatorAddress)
+	privval.GenBlsPV(keyPath, passwordPath, password, addr.String())
 	return nil
 }

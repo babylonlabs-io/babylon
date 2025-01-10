@@ -11,7 +11,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	cmtconfig "github.com/cometbft/cometbft/config"
-	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -25,6 +24,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	cmtprivval "github.com/cometbft/cometbft/privval"
 )
 
 // validator struct to define the fields of the validator
@@ -204,19 +204,19 @@ func buildCommissionRates(rateStr, maxRateStr, maxChangeRateStr string) (commiss
 
 func getValKeyFromFile(homeDir string) (*privval.ValidatorKeys, error) {
 	nodeCfg := cmtconfig.DefaultConfig()
+	blsCfg := privval.DefaultBlsConfig()
+
 	keyPath := filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
 	statePath := filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
-	if !cmtos.FileExists(keyPath) {
-		return nil, errors.New("validator key file does not exist")
-	}
-
-	blsCfg := privval.DefaultBlsConfig()
 	blsKeyPath := filepath.Join(homeDir, blsCfg.BlsKeyFile())
 	blsPasswordPath := filepath.Join(homeDir, blsCfg.BlsPasswordFile())
-	if !cmtos.FileExists(blsKeyPath) {
-		return nil, errors.New("validator bls key file does not exist")
-	}
-	wrappedPV := privval.LoadWrappedFilePV(keyPath, statePath, blsKeyPath, blsPasswordPath)
 
-	return privval.NewValidatorKeys(wrappedPV.GetValPrivKey(), wrappedPV.GetBlsPrivKey())
+	if err := privval.IsValidFilePath(keyPath, statePath, blsKeyPath, blsPasswordPath); err != nil {
+		return nil, err
+	}
+
+	filePV := cmtprivval.LoadFilePV(keyPath, statePath)
+	blsPV := privval.LoadBlsPV(blsKeyPath, blsPasswordPath)
+
+	return privval.NewValidatorKeys(filePV.Key.PrivKey, blsPV.Key.PrivKey)
 }

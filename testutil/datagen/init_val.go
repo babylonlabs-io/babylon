@@ -2,15 +2,16 @@ package datagen
 
 import (
 	"fmt"
-	"path/filepath"
 
 	cfg "github.com/cometbft/cometbft/config"
-	cmtos "github.com/cometbft/cometbft/libs/os"
+	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/p2p"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/go-bip39"
 
 	"github.com/babylonlabs-io/babylon/privval"
+	cmtos "github.com/cometbft/cometbft/libs/os"
+	cmtprivval "github.com/cometbft/cometbft/privval"
 )
 
 // InitializeNodeValidatorFiles creates private validator and p2p configuration files.
@@ -31,30 +32,51 @@ func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic strin
 	nodeID = string(nodeKey.ID())
 
 	pvKeyFile := config.PrivValidatorKeyFile()
-	if err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0777); err != nil {
-		return "", nil, err
-	}
-
 	pvStateFile := config.PrivValidatorStateFile()
-	if err := cmtos.EnsureDir(filepath.Dir(pvStateFile), 0777); err != nil {
+
+	if err := privval.IsValidFilePath(pvKeyFile, pvStateFile); err != nil {
 		return "", nil, err
 	}
 
-	// add bls config and set root same as config
+	// bls config
 	blsCfg := privval.DefaultBlsConfig()
 	blsCfg.SetRoot(config.RootDir)
 
-	var filePV *privval.WrappedFilePV
-	if len(mnemonic) == 0 {
-		filePV = privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile, blsCfg.BlsKeyFile(), blsCfg.BlsPasswordFile())
-	} else {
-		filePV = privval.GenWrappedFilePVWithMnemonic(mnemonic, pvKeyFile, pvStateFile, blsCfg.BlsKeyFile(), blsCfg.BlsPasswordFile())
+	blsKeyFile := blsCfg.BlsKeyFile()
+	blsPasswordFile := blsCfg.BlsPasswordFile()
+	if err := privval.IsValidFilePath(blsKeyFile, blsPasswordFile); err != nil {
+		return "", nil, err
 	}
-	filePV.SetAccAddress(addr)
 
-	valPrivkey := filePV.GetValPrivKey()
-	blsPrivkey := filePV.GetBlsPrivKey()
-	valKeys, err = privval.NewValidatorKeys(valPrivkey, blsPrivkey)
+	// load or generate private validator
+	var filePV *cmtprivval.FilePV
+	if cmtos.FileExists(pvKeyFile) {
+		filePV = cmtprivval.LoadFilePV(pvKeyFile, pvStateFile)
+	} else {
+		var privKey ed25519.PrivKey
+		if len(mnemonic) == 0 {
+			privKey = ed25519.GenPrivKey()
+		} else {
+			privKey = ed25519.GenPrivKeyFromSecret([]byte(mnemonic))
+		}
+		filePV = cmtprivval.NewFilePV(privKey, pvKeyFile, pvStateFile)
+		filePV.Key.Save()
+		filePV.LastSignState.Save()
+	}
+
+	// load or generate BLS private validator
+	var blsPV *privval.BlsPV
+	if cmtos.FileExists(blsKeyFile) {
+		// if key file exists but password file does not exist -> error
+		if !cmtos.FileExists(blsPasswordFile) {
+			cmtos.Exit(fmt.Sprintf("BLS password file does not exist: %v", blsPasswordFile))
+		}
+		blsPV = privval.LoadBlsPV(blsKeyFile, blsPasswordFile)
+	} else {
+		blsPV = privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password", addr.String())
+	}
+
+	valKeys, err = privval.NewValidatorKeys(filePV.Key.PrivKey, blsPV.Key.PrivKey)
 	if err != nil {
 		return "", nil, err
 	}

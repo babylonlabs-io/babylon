@@ -416,7 +416,7 @@ func updateCheckpointingGenesis(c *internalChain) func(*checkpointingtypes.Genes
 				panic("It should be possible to retrieve validator public key")
 			}
 
-			da, err := sdk.AccAddressFromBech32(node.consensusKey.DelegatorAddress)
+			da, err := sdk.AccAddressFromBech32(node.consensusKey.BlsPVKey.DelegatorAddress)
 
 			if err != nil {
 				panic("It should be possible to get validator address from delegator address")

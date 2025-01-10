@@ -8,9 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cometbft/cometbft/crypto/ed25519"
+
 	"cosmossdk.io/math"
 	cmtconfig "github.com/cometbft/cometbft/config"
-	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/p2p"
 	cmttypes "github.com/cometbft/cometbft/types"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
@@ -33,9 +34,9 @@ import (
 	babylonApp "github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
-	"github.com/babylonlabs-io/babylon/crypto/erc2335"
 	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
+	cmtprivval "github.com/cometbft/cometbft/privval"
 )
 
 type internalNode struct {
@@ -158,44 +159,45 @@ func (n *internalNode) createNodeKey() error {
 func (n *internalNode) createConsensusKey() error {
 	serverCtx := server.NewDefaultContext()
 	config := serverCtx.Config
-
 	config.SetRoot(n.configDir())
+
 	config.Moniker = n.moniker
 
-	pvKeyFile := config.PrivValidatorKeyFile()
-	if err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0o777); err != nil {
-		return err
-	}
-
-	pvStateFile := config.PrivValidatorStateFile()
-	if err := cmtos.EnsureDir(filepath.Dir(pvStateFile), 0o777); err != nil {
-		return err
-	}
-
 	blsCfg := privval.DefaultBlsConfig()
-	blsCfg.SetRoot(config.RootDir)
+	blsCfg.SetRoot(n.configDir())
+
+	pvKeyFile := config.PrivValidatorKeyFile()
+	pvStateFile := config.PrivValidatorStateFile()
 	blsKeyFile := blsCfg.BlsKeyFile()
-	if err := cmtos.EnsureDir(filepath.Dir(blsKeyFile), 0o777); err != nil {
-		return err
-	}
-
 	blsPasswordFile := blsCfg.BlsPasswordFile()
-	if err := cmtos.EnsureDir(filepath.Dir(blsPasswordFile), 0o777); err != nil {
+
+	if err := privval.IsValidFilePath(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
 		return err
 	}
 
-	// for test e2e
-	// bls-password is random generated
-	blsPassword := erc2335.CreateRandomPassword()
-
-	filePV := privval.GenWrappedFilePVWithMnemonic(n.mnemonic, pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile)
-	filePV.Save(blsPassword)
-
+	// delegator address
 	accAddress, _ := n.keyInfo.GetAddress()
-	filePV.SetAccAddress(accAddress)
 
-	n.consensusKey = filePV.Key
+	// create new key for consensus
+	// file pv
+	var privKey ed25519.PrivKey
+	if n.mnemonic == "" {
+		privKey = ed25519.GenPrivKey()
+	} else {
+		privKey = ed25519.GenPrivKeyFromSecret([]byte(n.mnemonic))
+	}
+	filePV := cmtprivval.NewFilePV(privKey, pvKeyFile, pvStateFile)
+	filePV.Key.Save()
+	filePV.LastSignState.Save()
 
+	// bls pv
+	blsPV := privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password", accAddress.String())
+
+	// n.consensusKey = filePV.Key
+	n.consensusKey = privval.WrappedFilePVKey{
+		CometPVKey: filePV.Key,
+		BlsPVKey:   blsPV.Key,
+	}
 	return nil
 }
 

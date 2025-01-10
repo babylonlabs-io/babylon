@@ -5,86 +5,55 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/cometbft/cometbft/crypto/ed25519"
+
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/crypto/erc2335"
-	cmtcfg "github.com/cometbft/cometbft/config"
+	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/test-go/testify/assert"
 )
 
-// func TestNewBlsPV(t *testing.T) {
-// 	pv := NewBlsPV(bls12381.GenPrivKey(), "test")
-// 	assert.NotNil(t, pv)
-// }
+func TestNewBlsPV(t *testing.T) {
+	tempDir := t.TempDir()
+	defer os.RemoveAll(tempDir)
 
-func TestCleanUp(t *testing.T) {
-	blsKeyFilePath := DefaultBlsConfig().BlsKeyFile()
-	t.Log("bls key file path", blsKeyFilePath)
-	cleanup(blsKeyFilePath)
-}
+	cfg := DefaultBlsConfig()
 
-func TestInitializeBlsFile(t *testing.T) {
+	keyFilePath := filepath.Join(tempDir, cfg.BlsKeyFile())
+	passwordFilePath := filepath.Join(tempDir, cfg.BlsPasswordFile())
 
-	t.Run("set default config", func(t *testing.T) {
-		blsCfg := DefaultBlsConfig()
-		assert.NotNil(t, blsCfg)
-		assert.Equal(t, blsCfg.BlsKeyPath, filepath.Join(cmtcfg.DefaultConfigDir, DefaultBlsKeyName))
+	t.Run("save bls key to file without delegator address", func(t *testing.T) {
+		pv := NewBlsPV(bls12381.GenPrivKey(), keyFilePath, passwordFilePath, "")
+		assert.NotNil(t, pv)
 
 		password := erc2335.CreateRandomPassword()
-		t.Log("password", password)
+		pv.Key.Save(password, "")
 
-		t.Run("generate key without mnemonic", func(t *testing.T) {
-			blsPubKey, err := InitializeBlsFile(&blsCfg, password)
-			assert.NoError(t, err)
-			assert.NotNil(t, blsPubKey)
-		})
+		t.Run("load bls key from file", func(t *testing.T) {
+			loadedPv := LoadBlsPV(keyFilePath, passwordFilePath)
+			assert.NotNil(t, loadedPv)
 
-		t.Run("load key with password", func(t *testing.T) {
-			blsPubKey, err := InitializeBlsFile(&blsCfg, password)
-			assert.NoError(t, err)
-			assert.NotNil(t, blsPubKey)
-		})
-
-		t.Run("clean file path", func(t *testing.T) {
-			blsKeyFilePath := DefaultBlsConfig().BlsKeyFile()
-			t.Log("bls key file path", blsKeyFilePath)
-			cleanup(blsKeyFilePath)
+			assert.Equal(t, pv.Key.PrivKey, loadedPv.Key.PrivKey)
+			assert.Equal(t, pv.Key.PubKey.Bytes(), loadedPv.Key.PubKey.Bytes())
 		})
 	})
-}
 
-func TestSavePasswordToFile(t *testing.T) {
+	t.Run("save bls key to file with delegator address", func(t *testing.T) {
+		pv := NewBlsPV(bls12381.GenPrivKey(), keyFilePath, passwordFilePath, "")
+		assert.NotNil(t, pv)
 
-	blsCfg := DefaultBlsConfig()
-
-	t.Run("failed to load unsaved file", func(t *testing.T) {
-		_, err := erc2335.LoadPaswordFromFile(blsCfg.BlsPasswordFile())
-		assert.Error(t, err)
-	})
-
-	t.Run("create password file", func(t *testing.T) {
 		password := erc2335.CreateRandomPassword()
-		t.Log("password", password)
 
-		err := os.MkdirAll(filepath.Dir(blsCfg.BlsPasswordFile()), 0o777)
-		assert.NoError(t, err)
+		delegatorAddress := types.AccAddress(ed25519.GenPrivKey().PubKey().Address()).String()
+		pv.Key.Save(password, delegatorAddress)
 
-		err = erc2335.SavePasswordToFile(password, blsCfg.BlsPasswordFile())
-		assert.NoError(t, err)
+		t.Run("load bls key from file", func(t *testing.T) {
+			loadedPv := LoadBlsPV(keyFilePath, passwordFilePath)
+			assert.NotNil(t, loadedPv)
 
-		t.Run("load password file", func(t *testing.T) {
-
-			loadPassword, err := erc2335.LoadPaswordFromFile(blsCfg.BlsPasswordFile())
-			assert.NoError(t, err)
-			assert.Equal(t, password, loadPassword)
+			assert.Equal(t, pv.Key.PrivKey, loadedPv.Key.PrivKey)
+			assert.Equal(t, pv.Key.PubKey.Bytes(), loadedPv.Key.PubKey.Bytes())
+			assert.Equal(t, delegatorAddress, loadedPv.Key.DelegatorAddress)
 		})
 	})
-
-	t.Run("clean file path", func(t *testing.T) {
-		blsPasswordFilePath := DefaultBlsConfig().BlsPasswordFile()
-		t.Log("bls passwordd file path", blsPasswordFilePath)
-		cleanup(blsPasswordFilePath)
-	})
-}
-
-func cleanup(blsKeyPath string) {
-	_ = os.RemoveAll(filepath.Dir(blsKeyPath))
 }

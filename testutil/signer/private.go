@@ -2,6 +2,7 @@ package signer
 
 import (
 	"os"
+	"path/filepath"
 
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -9,6 +10,8 @@ import (
 	"github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/privval"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	cmtconfig "github.com/cometbft/cometbft/config"
+	cmtprivval "github.com/cometbft/cometbft/privval"
 )
 
 // SetupTestPrivSigner sets up a PrivSigner for testing
@@ -21,7 +24,13 @@ func SetupTestPrivSigner() (*signer.PrivSigner, error) {
 	defer func() {
 		_ = os.RemoveAll(nodeDir)
 	}()
-	privSigner, _ := signer.InitTestPrivSigner(nodeDir)
+
+	// generate a privSigner
+	if err := GeneratePrivSigner(nodeDir); err != nil {
+		return nil, err
+	}
+
+	privSigner, _ := signer.InitPrivSigner(nodeDir)
 	return privSigner, nil
 }
 
@@ -40,4 +49,25 @@ func GenesisKeyFromPrivSigner(ps *signer.PrivSigner) (*checkpointingtypes.Genesi
 		valKeys.PoP,
 		&cosmosed.PubKey{Key: valPubkey.Bytes()},
 	)
+}
+
+func GeneratePrivSigner(nodeDir string) error {
+	nodeCfg := cmtconfig.DefaultConfig()
+	blsCfg := privval.DefaultBlsConfig()
+
+	pvKeyFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorKeyFile())
+	pvStateFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorStateFile())
+	blsKeyFile := filepath.Join(nodeDir, blsCfg.BlsKeyFile())
+	blsPasswordFile := filepath.Join(nodeDir, blsCfg.BlsPasswordFile())
+
+	if err := privval.IsValidFilePath(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
+		return err
+	}
+
+	cometPV := cmtprivval.GenFilePV(pvKeyFile, pvStateFile)
+	cometPV.Key.Save()
+	cometPV.LastSignState.Save()
+
+	privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password", "")
+	return nil
 }

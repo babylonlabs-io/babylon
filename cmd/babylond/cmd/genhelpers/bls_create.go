@@ -1,7 +1,6 @@
 package genhelpers
 
 import (
-	"log"
 	"path/filepath"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/privval"
+	cmtprivval "github.com/cometbft/cometbft/privval"
 )
 
 // CmdCreateBls CLI command to create BLS file with proof of possession.
@@ -35,14 +35,26 @@ $ babylond genbls --home ./
 
 			nodeCfg := cmtconfig.DefaultConfig()
 			blsCfg := privval.DefaultBlsConfig()
+
 			keyPath := filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
 			statePath := filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
 			blsKeyPath := filepath.Join(homeDir, blsCfg.BlsKeyFile())
 			blsPasswordPath := filepath.Join(homeDir, blsCfg.BlsPasswordFile())
 
-			wrappedPV := privval.LoadWrappedFilePV(keyPath, statePath, blsKeyPath, blsPasswordPath)
+			if err := privval.IsValidFilePath(keyPath, statePath, blsKeyPath, blsPasswordPath); err != nil {
+				return err
+			}
 
-			log.Printf("Loaded delegator address in wrapperPv: %s", wrappedPV.Key.DelegatorAddress)
+			filePV := cmtprivval.LoadFilePV(keyPath, statePath)
+			blsPV := privval.LoadBlsPV(blsKeyPath, blsPasswordPath)
+
+			wrappedPV := &privval.WrappedFilePV{
+				Key: privval.WrappedFilePVKey{
+					CometPVKey: filePV.Key,
+					BlsPVKey:   blsPV.Key,
+				},
+				LastSignState: filePV.LastSignState,
+			}
 
 			outputFileName, err := wrappedPV.ExportGenBls(filepath.Dir(keyPath))
 			if err != nil {

@@ -43,20 +43,23 @@ func Encrypt(privKey, pubKey []byte, password string) ([]byte, error) {
 	return json.Marshal(keystoreJSON)
 }
 
-// decrypt private key from erc2335 keystore
-func Decrypt(keystoreJSON []byte, password string) ([]byte, error) {
-	// Parse the keystore json
+func LoadKeyStore(filePath string) (Erc2335KeyStore, error) {
 	var keystore Erc2335KeyStore
 
-	if err := json.Unmarshal(keystoreJSON, &keystore); err != nil {
-		return nil, errors.Wrap(err, "failed to parse keystore json")
+	keyJSONBytes, err := os.ReadFile(filePath)
+	if err != nil {
+		return Erc2335KeyStore{}, err
 	}
 
-	// Verify version
-	if keystore.Version != 4 {
-		return nil, fmt.Errorf("invalid keystore version: %d", keystore.Version)
+	if err := json.Unmarshal(keyJSONBytes, &keystore); err != nil {
+		return Erc2335KeyStore{}, err
 	}
 
+	return keystore, nil
+}
+
+// decrypt private key from erc2335 keystore
+func Decrypt(keystore Erc2335KeyStore, password string) ([]byte, error) {
 	encryptor := keystorev4.New()
 	return encryptor.Decrypt(keystore.Crypto, password)
 }
