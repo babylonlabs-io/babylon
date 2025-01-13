@@ -302,6 +302,7 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			err = baseapp.ValidateVoteExtensions(ctx, h.ckptKeeper, req.Height, ctx.ChainID(), *injectedCkpt.ExtendedCommitInfo)
 			if err != nil {
 				// the returned err will lead to panic as something very wrong happened during consensus
+				h.logger.Error("invalid vote extensions by ValidateVoteExtensions: %w", err)
 				return resReject, nil
 			}
 

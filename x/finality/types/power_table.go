@@ -4,8 +4,9 @@ import (
 	"sort"
 
 	sdkmath "cosmossdk.io/math"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 func NewVotingPowerDistCache() *VotingPowerDistCache {
@@ -86,6 +87,10 @@ func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(maxActiveFPs uint32
 		if fp.IsJailed {
 			break
 		}
+		if fp.IsSlashed {
+			break
+		}
+
 		numActiveFPs++
 	}
 
@@ -135,18 +140,12 @@ func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*Fin
 	return inactiveFps
 }
 
-// GetFinalityProviderPortion returns the portion of a finality provider's voting power out of the total voting power
-func (dc *VotingPowerDistCache) GetFinalityProviderPortion(v *FinalityProviderDistInfo) sdkmath.LegacyDec {
-	return sdkmath.LegacyNewDec(int64(v.TotalBondedSat)).QuoTruncate(sdkmath.LegacyNewDec(int64(dc.TotalVotingPower)))
-}
-
 func NewFinalityProviderDistInfo(fp *bstypes.FinalityProvider) *FinalityProviderDistInfo {
 	return &FinalityProviderDistInfo{
 		BtcPk:          fp.BtcPk,
 		Addr:           sdk.MustAccAddressFromBech32(fp.Addr),
 		Commission:     fp.Commission,
 		TotalBondedSat: 0,
-		BtcDels:        []*BTCDelDistInfo{},
 	}
 }
 
@@ -154,30 +153,18 @@ func (v *FinalityProviderDistInfo) GetAddress() sdk.AccAddress {
 	return v.Addr
 }
 
-func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *bstypes.BTCDelegation) {
-	btcDelDistInfo := &BTCDelDistInfo{
-		BtcPk:         btcDel.BtcPk,
-		StakerAddr:    btcDel.StakerAddr,
-		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
-		TotalSat:      btcDel.TotalSat,
-	}
-	v.BtcDels = append(v.BtcDels, btcDelDistInfo)
-	v.TotalBondedSat += btcDelDistInfo.TotalSat
+func (v *FinalityProviderDistInfo) AddBondedSats(sats uint64) {
+	v.TotalBondedSat += sats
 }
 
-func (v *FinalityProviderDistInfo) AddBTCDelDistInfo(d *BTCDelDistInfo) {
-	v.BtcDels = append(v.BtcDels, d)
-	v.TotalBondedSat += d.TotalSat
+func (v *FinalityProviderDistInfo) RemoveBondedSats(sats uint64) {
+	v.TotalBondedSat -= sats
 }
 
 // GetBTCDelPortion returns the portion of a BTC delegation's voting power out of
 // the finality provider's total voting power
-func (v *FinalityProviderDistInfo) GetBTCDelPortion(d *BTCDelDistInfo) sdkmath.LegacyDec {
-	return sdkmath.LegacyNewDec(int64(d.TotalSat)).QuoTruncate(sdkmath.LegacyNewDec(int64(v.TotalBondedSat)))
-}
-
-func (d *BTCDelDistInfo) GetAddress() sdk.AccAddress {
-	return sdk.MustAccAddressFromBech32(d.StakerAddr)
+func (v *FinalityProviderDistInfo) GetBTCDelPortion(totalSatDelegation uint64) sdkmath.LegacyDec {
+	return sdkmath.LegacyNewDec(int64(totalSatDelegation)).QuoTruncate(sdkmath.LegacyNewDec(int64(v.TotalBondedSat)))
 }
 
 // SortFinalityProvidersWithZeroedVotingPower sorts the finality providers slice,
@@ -187,8 +174,8 @@ func (d *BTCDelDistInfo) GetAddress() sdk.AccAddress {
 // 2. IsJailed is true
 func SortFinalityProvidersWithZeroedVotingPower(fps []*FinalityProviderDistInfo) {
 	sort.SliceStable(fps, func(i, j int) bool {
-		iShouldBeZeroed := fps[i].IsJailed || !fps[i].IsTimestamped
-		jShouldBeZeroed := fps[j].IsJailed || !fps[j].IsTimestamped
+		iShouldBeZeroed := fps[i].IsJailed || !fps[i].IsTimestamped || fps[i].IsSlashed
+		jShouldBeZeroed := fps[j].IsJailed || !fps[j].IsTimestamped || fps[j].IsSlashed
 
 		if iShouldBeZeroed && !jShouldBeZeroed {
 			return false

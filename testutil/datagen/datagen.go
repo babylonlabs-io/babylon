@@ -3,6 +3,8 @@ package datagen
 import (
 	"encoding/hex"
 	"math/rand"
+
+	"cosmossdk.io/math"
 )
 
 func GenRandomByteArray(r *rand.Rand, length uint64) []byte {
@@ -22,6 +24,14 @@ func OneInN(r *rand.Rand, n int) bool {
 
 func RandomInt(r *rand.Rand, rng int) uint64 {
 	return uint64(r.Intn(rng))
+}
+
+func RandomMathInt(r *rand.Rand, rng int) math.Int {
+	return math.NewIntFromUint64(RandomInt(r, rng))
+}
+
+func RandomUInt32(r *rand.Rand, rng uint32) uint32 {
+	return uint32(r.Intn(int(rng)))
 }
 
 func RandomIntOtherThan(r *rand.Rand, x int, rng int) uint64 {
@@ -44,4 +54,9 @@ func ValidHex(hexStr string, length int) bool {
 		return false
 	}
 	return true
+}
+
+// RandomInRange returns a random integer in the range [min, max).
+func RandomInRange(r *rand.Rand, min, max int) int {
+	return r.Intn(max-min) + min
 }

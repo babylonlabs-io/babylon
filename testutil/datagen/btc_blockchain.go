@@ -1,10 +1,14 @@
 package datagen
 
 import (
+	"bytes"
 	"math/big"
 	"math/rand"
+	"time"
 
 	"github.com/babylonlabs-io/babylon/btctxformatter"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -56,6 +60,99 @@ func GenRandomBtcdBlock(r *rand.Rand, numBabylonTxs int, prevHash *chainhash.Has
 	return block, rawCkpt
 }
 
+// BTC block with proofs of each tx. Index of txs in the block is the same as the index of proofs.
+type BlockWithProofs struct {
+	Block        *wire.MsgBlock
+	Proofs       []*btcctypes.BTCSpvProof
+	Transactions []*wire.MsgTx
+}
+
+func GenRandomBtcdBlockWithTransactions(
+	r *rand.Rand,
+	txs []*wire.MsgTx,
+	prevHeader *wire.BlockHeader,
+) *BlockWithProofs {
+	// we allways add coinbase tx to the block, to make sure merkle root is different
+	// every time
+	coinbaseTx := createCoinbaseTx(r.Int31(), &chaincfg.SimNetParams)
+	msgTxs := []*wire.MsgTx{coinbaseTx}
+	msgTxs = append(msgTxs, txs...)
+
+	// calculate correct Merkle root
+	merkleRoot := calcMerkleRoot(msgTxs)
+	// don't apply any difficulty
+	difficulty, _ := new(big.Int).SetString("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16)
+	workBits := blockchain.BigToCompact(difficulty)
+
+	header := GenRandomBtcdHeader(r)
+	header.MerkleRoot = merkleRoot
+	header.Bits = workBits
+	if prevHeader != nil {
+		prevHash := prevHeader.BlockHash()
+		header.PrevBlock = prevHash
+		header.Timestamp = prevHeader.Timestamp.Add(time.Minute * 10)
+	}
+	// find a nonce that satisfies difficulty
+	SolveBlock(header)
+
+	var txBytes [][]byte
+	for _, tx := range msgTxs {
+		buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
+		_ = tx.Serialize(buf)
+		txBytes = append(txBytes, buf.Bytes())
+	}
+
+	var proofs []*btcctypes.BTCSpvProof
+
+	for i, _ := range msgTxs {
+		headerBytes := bbn.NewBTCHeaderBytesFromBlockHeader(header)
+		proof, err := btcctypes.SpvProofFromHeaderAndTransactions(&headerBytes, txBytes, uint(i))
+		if err != nil {
+			panic(err)
+		}
+
+		proofs = append(proofs, proof)
+	}
+
+	block := &wire.MsgBlock{
+		Header:       *header,
+		Transactions: msgTxs,
+	}
+	return &BlockWithProofs{
+		Block:        block,
+		Proofs:       proofs,
+		Transactions: msgTxs,
+	}
+}
+
+func GenChainFromListsOfTransactions(
+	r *rand.Rand,
+	txs [][]*wire.MsgTx,
+	initHeader *wire.BlockHeader) []*BlockWithProofs {
+	if initHeader == nil {
+		panic("initHeader is required")
+	}
+
+	if len(txs) == 0 {
+		panic("txs is required")
+	}
+
+	var parentHeader *wire.BlockHeader = initHeader
+	var createdBlocks []*BlockWithProofs = []*BlockWithProofs{}
+	for _, txs := range txs {
+		msgBlock := GenRandomBtcdBlockWithTransactions(r, txs, parentHeader)
+		parentHeader = &msgBlock.Block.Header
+		createdBlocks = append(createdBlocks, msgBlock)
+	}
+
+	return createdBlocks
+}
+
+func GenNEmptyBlocks(r *rand.Rand, n uint64, prevHeader *wire.BlockHeader) []*BlockWithProofs {
+	var txs [][]*wire.MsgTx = make([][]*wire.MsgTx, n)
+	return GenChainFromListsOfTransactions(r, txs, prevHeader)
+}
+
 // GenRandomBtcdBlockchainWithBabylonTx generates a blockchain of `n` blocks, in which each block has some probability of including some Babylon txs
 // Specifically, each block
 // - has `oneTxThreshold` probability of including 1 Babylon tx that does not has any match
@@ -84,13 +181,15 @@ func GenRandomBtcdBlockchainWithBabylonTx(r *rand.Rand, n uint64, oneTxThreshold
 	for i := uint64(1); i < n; i++ {
 		var msgBlock *wire.MsgBlock
 		prevHash := blocks[len(blocks)-1].BlockHash()
-		if r.Float32() < oneTxThreshold {
+
+		switch {
+		case r.Float32() < oneTxThreshold:
 			msgBlock, rawCkpt = GenRandomBtcdBlock(r, 1, &prevHash)
 			numCkptSegs += 1
-		} else if r.Float32() < twoTxThreshold {
+		case r.Float32() < twoTxThreshold:
 			msgBlock, rawCkpt = GenRandomBtcdBlock(r, 2, &prevHash)
 			numCkptSegs += 2
-		} else {
+		default:
 			msgBlock, rawCkpt = GenRandomBtcdBlock(r, 0, &prevHash)
 		}
 

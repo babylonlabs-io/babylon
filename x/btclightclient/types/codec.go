@@ -11,7 +11,6 @@ func RegisterCodec(_ *codec.LegacyAmino) {
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
-
 	// Register messages
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgInsertHeaders{},

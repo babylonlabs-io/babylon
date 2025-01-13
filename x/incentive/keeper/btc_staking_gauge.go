@@ -2,46 +2,64 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
-	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
-	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/x/incentive/types"
 )
 
 // RewardBTCStaking distributes rewards to finality providers/delegations at a given height according
 // to the filtered reward distribution cache (that only contains voted finality providers)
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/x/distribution/keeper/allocation.go#L12-L64)
-func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.VotingPowerDistCache) {
+func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.VotingPowerDistCache, voters map[string]struct{}) {
 	gauge := k.GetBTCStakingGauge(ctx, height)
 	if gauge == nil {
 		// failing to get a reward gauge at previous height is a programming error
 		panic("failed to get a reward gauge at previous height")
 	}
-	// reward each of the finality provider and its BTC delegations in proportion
+
+	// calculate total voting power of voters
+	var totalVotingPowerOfVoters uint64
 	for i, fp := range dc.FinalityProviders {
-		// only reward the first NumActiveFps finality providers
-		// note that ApplyActiveFinalityProviders is called before saving `dc`
-		// in DB so that the top dc.NumActiveFps ones in dc.FinalityProviders
-		// are the active finality providers
 		if i >= int(dc.NumActiveFps) {
 			break
 		}
-		// get coins that will be allocated to the finality provider and its BTC delegations
-		fpPortion := dc.GetFinalityProviderPortion(fp)
+		if _, ok := voters[fp.BtcPk.MarshalHex()]; ok {
+			totalVotingPowerOfVoters += fp.TotalBondedSat
+		}
+	}
+
+	// distribute rewards according to voting power portions for voters
+	for i, fp := range dc.FinalityProviders {
+		if i >= int(dc.NumActiveFps) {
+			break
+		}
+
+		if _, ok := voters[fp.BtcPk.MarshalHex()]; !ok {
+			continue
+		}
+
+		// calculate the portion of a finality provider's voting power out of the total voting power of the voters
+		fpPortion := sdkmath.LegacyNewDec(int64(fp.TotalBondedSat)).
+			QuoTruncate(sdkmath.LegacyNewDec(int64(totalVotingPowerOfVoters)))
 		coinsForFpsAndDels := gauge.GetCoinsPortion(fpPortion)
+
 		// reward the finality provider with commission
 		coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
 		k.accumulateRewardGauge(ctx, types.FinalityProviderType, fp.GetAddress(), coinsForCommission)
+
 		// reward the rest of coins to each BTC delegation proportional to its voting power portion
 		coinsForBTCDels := coinsForFpsAndDels.Sub(coinsForCommission...)
-		for _, btcDel := range fp.BtcDels {
-			btcDelPortion := fp.GetBTCDelPortion(btcDel)
-			coinsForDel := types.GetCoinsPortion(coinsForBTCDels, btcDelPortion)
-			k.accumulateRewardGauge(ctx, types.BTCDelegationType, btcDel.GetAddress(), coinsForDel)
+		if err := k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp.GetAddress(), coinsForBTCDels); err != nil {
+			panic(fmt.Errorf("failed to add fp rewards for btc delegation %s at height %d: %w", fp.GetAddress().String(), height, err))
 		}
 	}
+	// TODO: prune unnecessary state (delete BTCStakingGauge after the amount is used)
 }
 
 func (k Keeper) accumulateBTCStakingReward(ctx context.Context, btcStakingReward sdk.Coins) {

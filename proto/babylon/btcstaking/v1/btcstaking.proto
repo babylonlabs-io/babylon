@@ -36,9 +36,12 @@ message FinalityProvider {
     uint32 slashed_btc_height = 7;
     // jailed defines whether the finality provider is jailed
     bool jailed = 8;
+    // highest_voted_height is the highest height for which the
+    // finality provider has voted
+    uint32 highest_voted_height = 9;
     // consumer_id is the ID of the consumer the finality provider is operating on.
     // If it's missing / empty, it's assumed the finality provider is operating in the Babylon chain.
-    string consumer_id = 9;
+    string consumer_id = 10;
 }
 
 // FinalityProviderWithMeta wraps the FinalityProvider with metadata.
@@ -60,6 +63,9 @@ message FinalityProviderWithMeta {
     uint32 slashed_btc_height = 5;
     // jailed defines whether the finality provider is detected jailed
     bool jailed = 6;
+    // highest_voted_height is the highest height for which the
+    // finality provider has voted
+    uint32 highest_voted_height = 7;
 }
 
 // BTCDelegation defines a BTC delegation
@@ -110,6 +116,9 @@ message BTCDelegation {
     BTCUndelegation btc_undelegation = 15;
     // version of the params used to validate the delegation
     uint32 params_version = 16;
+    // btc_tip_height is the height of the BTC light client tip at the time of
+    // the delegation creation
+    uint32 btc_tip_height = 17;
 }
 
 // DelegatorUnbondingInfo contains the information about transaction which spent
@@ -161,8 +170,8 @@ message BTCDelegatorDelegationIndex {
 
 // BTCDelegationStatus is the status of a delegation.
 // There are two possible valid state transition paths for a BTC delegation:
-// - PENDING -> ACTIVE -> UNBONDED
-// - PENDING -> VERIFIED -> ACTIVE -> UNBONDED
+// - PENDING -> VERIFIED -> ACTIVE -> UNBONDED -> EXPIRED
+// - PENDING -> VERIFIED -> ACTIVE -> UNBONDED/EXPIRED
 // and one invalid state transition path:
 // - PENDING -> VERIFIED -> UNBONDED i.e the staker unbonded before
 // activating delegation on Babylon chain.
@@ -177,12 +186,14 @@ enum BTCDelegationStatus {
     VERIFIED = 1;
     // ACTIVE defines a delegation that has voting power
     ACTIVE = 2;
-    // UNBONDED defines a delegation no longer has voting power:
-    // - either reaching the end of staking transaction timelock
-    // - or receiving unbonding tx with signatures from staker and covenant committee
+    // UNBONDED defines a delegation no longer has voting power
+    // by receiving unbonding tx with signatures from staker and covenant committee
     UNBONDED = 3;
+    // EXPIRED defines a delegation no longer has voting power
+    // for reaching the end of staking transaction timelock
+    EXPIRED = 4;
     // ANY is any of the above status
-    ANY = 4;
+    ANY = 5;
 }
 
 // SignatureInfo is a BIP-340 signature together with its signer's BIP-340 PK

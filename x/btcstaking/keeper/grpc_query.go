@@ -102,8 +102,6 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 
 	// get current BTC height
 	btcTipHeight := k.btclcKeeper.GetTipInfo(ctx).Height
-	// get value of w
-	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
 	store := k.btcDelegationStore(ctx)
 	var btcDels []*types.BTCDelegationResponse
@@ -112,7 +110,7 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 		k.cdc.MustUnmarshal(value, &btcDel)
 
 		// hit if the queried status is ANY or matches the BTC delegation status
-		status := btcDel.GetStatus(btcTipHeight, wValue, covenantQuorum)
+		status := btcDel.GetStatus(btcTipHeight, covenantQuorum)
 		if req.Status == types.BTCDelegationStatus_ANY || status == req.Status {
 			if accumulate {
 				resp := types.NewBTCDelegationResponse(&btcDel, status)
@@ -174,7 +172,6 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 			for i, btcDel := range curBTCDels.Dels {
 				status := btcDel.GetStatus(
 					btcHeight,
-					currentWValue,
 					covenantQuorum,
 				)
 				btcDelsResp[i] = types.NewBTCDelegationResponse(btcDel, status)
@@ -220,10 +217,8 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 		return nil, types.ErrBTCDelegationNotFound
 	}
 
-	currentWValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 	status := btcDel.GetStatus(
 		k.btclcKeeper.GetTipInfo(ctx).Height,
-		currentWValue,
 		k.GetParams(ctx).CovenantQuorum,
 	)
 

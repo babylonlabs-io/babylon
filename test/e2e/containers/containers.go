@@ -61,7 +61,10 @@ func NewManager(identifier string, isDebugLogEnabled bool, isCosmosRelayer, isUp
 }
 
 // ExecTxCmd Runs ExecTxCmdWithSuccessString searching for `code: 0`
-func (m *Manager) ExecTxCmd(t *testing.T, chainId string, nodeName string, command []string) (bytes.Buffer, bytes.Buffer, error) {
+func (m *Manager) ExecTxCmd(t *testing.T, chainId string, nodeName string, command []string) (
+	outBuf, errBuf bytes.Buffer,
+	err error,
+) {
 	return m.ExecTxCmdWithSuccessString(t, chainId, nodeName, command, "code: 0")
 }
 
@@ -69,9 +72,12 @@ func (m *Manager) ExecTxCmd(t *testing.T, chainId string, nodeName string, comma
 // namely adding flags `--chain-id={chain-id} -b=block --yes --keyring-backend=test "--log_format=json"`,
 // and searching for `successStr`
 func (m *Manager) ExecTxCmdWithSuccessString(t *testing.T, chainId string, containerName string, command []string, successStr string) (bytes.Buffer, bytes.Buffer, error) {
-	allTxArgs := []string{fmt.Sprintf("--chain-id=%s", chainId), "--gas-prices=0.002ubbn", "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
-	txCommand := append(command, allTxArgs...)
-	return m.ExecCmd(t, containerName, txCommand, successStr)
+	additionalArgs := []string{fmt.Sprintf("--chain-id=%s", chainId), "--gas-prices=0.002ubbn", "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
+
+	cmd := command
+	cmd = append(cmd, additionalArgs...)
+
+	return m.ExecCmd(t, containerName, cmd, successStr)
 }
 
 // ExecHermesCmd executes command on the hermes relaer container.
@@ -364,7 +370,7 @@ func noRestart(config *docker.HostConfig) {
 func (m *Manager) RunChainInitResource(
 	chainId string,
 	chainVotingPeriod, chainExpeditedVotingPeriod int,
-	validatorConfigBytes []byte,
+	validatorInitConfigBytesHexEncoded string,
 	mountDir string,
 	forkHeight int,
 	btcHeaders string,
@@ -372,6 +378,11 @@ func (m *Manager) RunChainInitResource(
 	votingPeriodDuration := time.Duration(chainVotingPeriod * 1000000000)
 	expeditedVotingPeriodDuration := time.Duration(chainExpeditedVotingPeriod * 1000000000)
 
+	// Note: any change that needs to take effect in older releases, lets say
+	// that it is needed to update the config of some node in the TGE chain
+	// for software upgrade testing, it is needed to also update the version
+	// from that babylon node, probably a new tag will need to be pushed in
+	// older releases branches increasing the minor patch.
 	initResource, err := m.pool.RunWithOptions(
 		&dockertest.RunOptions{
 			Name:       chainId,
@@ -380,7 +391,7 @@ func (m *Manager) RunChainInitResource(
 			Cmd: []string{
 				fmt.Sprintf("--data-dir=%s", mountDir),
 				fmt.Sprintf("--chain-id=%s", chainId),
-				fmt.Sprintf("--config=%s", validatorConfigBytes),
+				fmt.Sprintf("--config=%s", validatorInitConfigBytesHexEncoded),
 				fmt.Sprintf("--voting-period=%v", votingPeriodDuration),
 				fmt.Sprintf("--expedited-voting-period=%v", expeditedVotingPeriodDuration),
 				fmt.Sprintf("--fork-height=%v", forkHeight),

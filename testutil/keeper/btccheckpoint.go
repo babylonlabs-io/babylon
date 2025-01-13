@@ -15,10 +15,9 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 )
@@ -48,7 +47,7 @@ func NewBTCCheckpointKeeper(
 		ek,
 		ik,
 		powLimit,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		appparams.AccGov.String(),
 	)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())

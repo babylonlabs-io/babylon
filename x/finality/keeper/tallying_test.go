@@ -55,7 +55,6 @@ func FuzzTallying_FinalizingNoBlock(f *testing.F) {
 			require.False(t, ib.Finalized)
 		}
 	})
-
 }
 
 func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
@@ -94,8 +93,6 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 				require.NoError(t, err)
 			}
 		}
-		// we don't test incentive in this function
-		iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(int(numWithQCs))
 		// tally blocks and none of them should be finalised
 		ctx = datagen.WithCtxHeight(ctx, activatedHeight+10-1)
 		fKeeper.TallyBlocks(ctx)
@@ -109,7 +106,6 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 			}
 		}
 	})
-
 }
 
 func giveQCToHeight(r *rand.Rand, ctx sdk.Context, fKeeper *keeper.Keeper, height uint64) error {
@@ -170,4 +166,62 @@ func giveNoQCToHeight(r *rand.Rand, ctx sdk.Context, fKeeper *keeper.Keeper, hei
 	fKeeper.SetVotingPowerDistCache(ctx, height, dc)
 
 	return nil
+}
+
+func FuzzConsecutiveFinalization(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+		iKeeper := types.NewMockIncentiveKeeper(ctrl)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+
+		// activate BTC staking protocol at a random height
+		activatedHeight := datagen.RandomInt(r, 10) + 1
+		numBlockToInspect := uint64(30)
+		// There will be a block in between activatedHeight and activatedHeight + numBlockToInspect
+		// that woud not get necessary votes to be finalised
+		firstNonFinalizedBlock := activatedHeight + 1 + datagen.RandomInt(r, 20)
+
+		for i := activatedHeight; i < activatedHeight+numBlockToInspect; i++ {
+			// index blocks
+			fKeeper.SetBlock(ctx, &types.IndexedBlock{
+				Height:    i,
+				AppHash:   datagen.GenRandomByteArray(r, 32),
+				Finalized: false,
+			})
+
+			if i == firstNonFinalizedBlock {
+				// this block does not have QC
+				err := giveNoQCToHeight(r, ctx, fKeeper, i)
+				require.NoError(t, err)
+			} else {
+				// this block has QC
+				err := giveQCToHeight(r, ctx, fKeeper, i)
+				require.NoError(t, err)
+			}
+		}
+
+		ctx = datagen.WithCtxHeight(ctx, activatedHeight+numBlockToInspect-1)
+		fKeeper.TallyBlocks(ctx)
+
+		// all blocks up to firstNonFinalizedBlock must be finalised
+		for i := activatedHeight; i < firstNonFinalizedBlock; i++ {
+			ib, err := fKeeper.GetBlock(ctx, i)
+			require.NoError(t, err)
+			require.True(t, ib.Finalized)
+		}
+
+		// all blocks from the firstNonFinalizedBlock must not be finalised
+		for i := firstNonFinalizedBlock; i < activatedHeight+numBlockToInspect; i++ {
+			ib, err := fKeeper.GetBlock(ctx, i)
+			require.NoError(t, err)
+			require.False(t, ib.Finalized)
+		}
+	})
 }

@@ -26,6 +26,7 @@ import (
 	"github.com/babylonlabs-io/babylon/app/ante"
 	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
 	"github.com/babylonlabs-io/babylon/client/docs"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -208,7 +209,7 @@ func NewBabylonApp(
 	loadLatest bool,
 	skipUpgradeHeights map[int64]bool,
 	invCheckPeriod uint,
-	privSigner *appkeepers.PrivSigner,
+	privSigner *signer.PrivSigner,
 	appOpts servertypes.AppOptions,
 	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
@@ -815,7 +816,7 @@ func BlockedAddresses() map[string]bool {
 	}
 
 	// allow the following addresses to receive funds
-	delete(modAccAddrs, authtypes.NewModuleAddress(govtypes.ModuleName).String())
+	delete(modAccAddrs, appparams.AccGov.String())
 
 	return modAccAddrs
 }

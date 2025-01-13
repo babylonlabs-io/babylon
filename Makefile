@@ -281,6 +281,9 @@ test-e2e-cache-btc-timestamping:
 test-e2e-cache-btc-staking:
 	go test -run TestBTCStakingTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
+test-e2e-cache-btc-rewards:
+	go test -run TestBTCRewardsDistribution -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
 test-e2e-cache-btc-staking-pre-approval:
 	go test -run TestBTCStakingPreApprovalTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 

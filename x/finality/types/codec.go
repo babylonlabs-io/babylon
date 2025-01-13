@@ -11,6 +11,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCommitPubRandList{}, "finality/MsgCommitPubRandList", nil)
 	cdc.RegisterConcrete(&MsgAddFinalitySig{}, "finality/MsgAddFinalitySig", nil)
 	cdc.RegisterConcrete(&MsgUpdateParams{}, "finality/MsgUpdateParams", nil)
+	cdc.RegisterConcrete(&MsgResumeFinalityProposal{}, "finality/MsgResumeFinalityProposal", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -20,6 +21,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgCommitPubRandList{},
 		&MsgAddFinalitySig{},
 		&MsgUpdateParams{},
+		&MsgResumeFinalityProposal{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

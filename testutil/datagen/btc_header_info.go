@@ -33,7 +33,6 @@ func calculateAdjustedDifficulty(
 	lastRetargetHeader *wire.BlockHeader,
 	currentHeaderTimestamp time.Time,
 	params *chaincfg.Params) uint32 {
-
 	targetTimespan := int64(params.TargetTimespan / time.Second)
 	adjustmentFactor := params.RetargetAdjustmentFactor
 	minRetargetTimespan := targetTimespan / adjustmentFactor

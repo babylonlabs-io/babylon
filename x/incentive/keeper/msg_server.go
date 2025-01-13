@@ -54,6 +54,10 @@ func (ms msgServer) WithdrawReward(goCtx context.Context, req *types.MsgWithdraw
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	if err := ms.sendAllBtcDelegationTypeToRewardsGauge(ctx, sType, addr); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
 	// withdraw reward, i.e., send withdrawable reward to the stakeholder address and clear the reward gauge
 	withdrawnCoins, err := ms.withdrawReward(ctx, sType, addr)
 	if err != nil {
@@ -64,4 +68,23 @@ func (ms msgServer) WithdrawReward(goCtx context.Context, req *types.MsgWithdraw
 	return &types.MsgWithdrawRewardResponse{
 		Coins: withdrawnCoins,
 	}, nil
+}
+
+func (ms msgServer) SetWithdrawAddress(ctx context.Context, msg *types.MsgSetWithdrawAddress) (*types.MsgSetWithdrawAddressResponse, error) {
+	delegatorAddress, err := sdk.AccAddressFromBech32(msg.DelegatorAddress)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	withdrawAddress, err := sdk.AccAddressFromBech32(msg.WithdrawAddress)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	err = ms.SetWithdrawAddr(ctx, delegatorAddress, withdrawAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgSetWithdrawAddressResponse{}, nil
 }

@@ -45,6 +45,20 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 	return &types.MsgUpdateParamsResponse{}, nil
 }
 
+// ResumeFinalityProposal handles the proposal for resuming finality from halting
+func (ms msgServer) ResumeFinalityProposal(goCtx context.Context, req *types.MsgResumeFinalityProposal) (*types.MsgResumeFinalityProposalResponse, error) {
+	if ms.authority != req.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, req.Authority)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := ms.HandleResumeFinalityProposal(ctx, req.FpPksHex, req.HaltingHeight); err != nil {
+		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("failed to handle resume finality proposal: %v", err)
+	}
+
+	return &types.MsgResumeFinalityProposalResponse{}, nil
+}
+
 // AddFinalitySig adds a new vote to a given block
 func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinalitySig) (*types.MsgAddFinalitySigResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddFinalitySig)
@@ -57,6 +71,18 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	activationHeight, errMod := ms.validateActivationHeight(ctx, req.BlockHeight)
 	if errMod != nil {
 		return nil, errMod.Wrapf("finality block height: %d is lower than activation height %d", req.BlockHeight, activationHeight)
+	}
+
+	indexedBlock, err := ms.GetBlock(ctx, req.BlockHeight)
+	if err != nil {
+		return nil, err
+	}
+	should, err := ms.ShouldAcceptSigForHeight(ctx, indexedBlock)
+	if err != nil {
+		return nil, err
+	}
+	if !should {
+		return nil, types.ErrSigHeightOutdated.Wrapf("height: %d", req.BlockHeight)
 	}
 
 	fpPK := req.FpBtcPk
@@ -119,10 +145,6 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	ms.SetPubRand(ctx, req.FpBtcPk, req.BlockHeight, *req.PubRand)
 
 	// verify whether the voted block is a fork or not
-	indexedBlock, err := ms.GetBlock(ctx, req.BlockHeight)
-	if err != nil {
-		return nil, err
-	}
 	if !bytes.Equal(indexedBlock.AppHash, req.BlockAppHash) {
 		// the finality provider votes for a fork!
 
@@ -158,6 +180,15 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	// this signature is good, add vote to DB
 	ms.SetSig(ctx, req.BlockHeight, fpPK, req.FinalitySig)
 
+	// update `HighestVotedHeight` if needed
+	if fp.HighestVotedHeight < uint32(req.BlockHeight) {
+		fp.HighestVotedHeight = uint32(req.BlockHeight)
+		err := ms.BTCStakingKeeper.UpdateFinalityProvider(ctx, fp)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update the finality provider: %w", err)
+		}
+	}
+
 	// if this finality provider has signed the canonical block before,
 	// slash it via extracting its secret key, and emit an event
 	if ms.HasEvidence(ctx, req.FpBtcPk, req.BlockHeight) {
@@ -185,6 +216,18 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	ms.IncentiveKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgAddFinalitySigResponse{}, nil
+}
+
+func (ms msgServer) ShouldAcceptSigForHeight(ctx context.Context, block *types.IndexedBlock) (bool, error) {
+	epochNum := ms.CheckpointingKeeper.GetEpochByHeight(ctx, block.Height)
+	lastFinalizedEpoch := ms.GetLastFinalizedEpoch(ctx)
+	timestamped := lastFinalizedEpoch >= epochNum
+
+	// should NOT accept sig for height is the block is already and finalized by the BTC-timestamping
+	// protocol
+	should := !(block.Finalized && timestamped)
+
+	return should, nil
 }
 
 // CommitPubRandList commits a list of EOTS public randomness
@@ -293,7 +336,7 @@ func (ms msgServer) UnjailFinalityProvider(ctx context.Context, req *types.MsgUn
 		return nil, fmt.Errorf("failed to unjail finality provider %s: %w", fpPk.MarshalHex(), err)
 	}
 
-	types.DecrementJailedFinalityProviderCounter()
+	types.IncrementUnjailedFinalityProviderCounter()
 
 	return &types.MsgUnjailFinalityProviderResponse{}, nil
 }

@@ -21,7 +21,6 @@ import (
 func (k Keeper) AddBTCDelegation(
 	ctx sdk.Context,
 	btcDel *types.BTCDelegation,
-	minUnbondingTime uint32,
 ) error {
 	if err := btcDel.ValidateBasic(); err != nil {
 		return err
@@ -71,16 +70,16 @@ func (k Keeper) AddBTCDelegation(
 			panic(fmt.Errorf("failed to emit EventBTCDelegationInclusionProofReceived for the new pending BTC delegation: %w", err))
 		}
 
-		// record event that the BTC delegation will become unbonded at endHeight-w
+		// record event that the BTC delegation will become expired (unbonded) at EndHeight-w
 		// This event will be generated to subscribers as block event, when the
 		// btc light client block height will reach btcDel.EndHeight-wValue
-		unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+		expiredEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 			StakingTxHash: stakingTxHash.String(),
-			NewState:      types.BTCDelegationStatus_UNBONDED,
+			NewState:      types.BTCDelegationStatus_EXPIRED,
 		})
 
-		// NOTE: we should have verified that EndHeight > btcTip.Height + max(w, min_unbonding_time)
-		k.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-minUnbondingTime, unbondedEvent)
+		// NOTE: we should have verified that EndHeight > btcTip.Height + unbonding_time
+		k.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-btcDel.UnbondingTime, expiredEvent)
 	}
 
 	return nil

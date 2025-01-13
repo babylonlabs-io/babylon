@@ -1,7 +1,7 @@
 package v1
 
 type UpgradeDataString struct {
-	BtcStakingParamStr        string
+	BtcStakingParamsStr       string
 	FinalityParamStr          string
 	IncentiveParamStr         string
 	CosmWasmParamStr          string

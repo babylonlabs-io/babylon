@@ -1,6 +1,7 @@
 package configurer
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -94,19 +95,19 @@ func (uc *UpgradeConfigurer) ConfigureChain(chainConfig *chain.Config) error {
 		return err
 	}
 
-	validatorConfigBytes, err := json.Marshal(chainConfig.ValidatorInitConfigs)
+	validatorInitConfigBytes, err := json.Marshal(chainConfig.ValidatorInitConfigs)
 	if err != nil {
 		return err
 	}
 
 	forkHeight := uc.forkHeight
 	if forkHeight > 0 {
-		forkHeight = forkHeight - config.ForkHeightPreUpgradeOffset
+		forkHeight -= config.ForkHeightPreUpgradeOffset
 	}
 
 	chainInitResource, err := uc.containerManager.RunChainInitResource(
 		chainConfig.Id, int(chainConfig.VotingPeriod), int(chainConfig.ExpeditedVotingPeriod),
-		validatorConfigBytes, tmpDir, int(forkHeight), chainConfig.BTCHeaderBytesHexJoined(),
+		hex.EncodeToString(validatorInitConfigBytes), tmpDir, int(forkHeight), chainConfig.BTCHeaderBytesHexJoined(),
 	)
 	if err != nil {
 		return err
@@ -379,7 +380,7 @@ func parseSubmitProposal(cdc codec.Codec, path string) (proposal, []sdk.Msg, sdk
 }
 
 // writeProposalToFile marshal the prop as json to the file.
-func writeProposalToFile(cdc codec.Codec, path string, prop proposal) error {
+func writeProposalToFile(_ codec.Codec, path string, prop proposal) error {
 	bz, err := json.MarshalIndent(&prop, "", "  ")
 	if err != nil {
 		return err

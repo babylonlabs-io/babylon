@@ -5,8 +5,8 @@ module github.com/babylonlabs-io/babylon
 require (
 	github.com/CosmWasm/wasmd v0.53.0
 	github.com/btcsuite/btcd v0.24.2
-	github.com/cometbft/cometbft v0.38.14
-	github.com/cometbft/cometbft-db v0.15.0 // indirect
+	github.com/cometbft/cometbft v0.38.15
+	github.com/cometbft/cometbft-db v0.15.0
 	github.com/cosmos/cosmos-sdk v0.50.9
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.0.0-20240429153234-e1e6da7e4ead
 	github.com/cosmos/relayer/v2 v2.5.2
@@ -32,7 +32,7 @@ require (
 	cosmossdk.io/depinject v1.0.0
 	cosmossdk.io/errors v1.0.1
 	cosmossdk.io/log v1.4.1
-	cosmossdk.io/math v1.3.0
+	cosmossdk.io/math v1.4.0
 	cosmossdk.io/store v1.1.0
 	cosmossdk.io/tools/confix v0.1.2
 	cosmossdk.io/x/circuit v0.1.1
@@ -60,6 +60,7 @@ require (
 	github.com/jsternberg/zap-logfmt v1.3.0
 	github.com/juju/fslock v0.0.0-20160525022230-4d5c94c67b4b
 	github.com/ory/dockertest/v3 v3.9.1
+	github.com/otiai10/copy v1.14.0
 	github.com/vulpine-io/io-test v1.0.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0

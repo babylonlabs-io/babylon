@@ -4,9 +4,10 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 )
 
 var _ types.MsgServer = msgServer{}
@@ -25,7 +26,6 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 // TODO emit some events for external consumers. Those should be probably emitted
 // at EndBlockerCallback
 func (ms msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBTCSpvProof) (*types.MsgInsertBTCSpvProofResponse, error) {
-
 	// Get the SDK wrapped context
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
@@ -109,7 +109,13 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("invalid parameter: %v", err)
 	}
 
+	// CheckpointFinalizationTimeout must remain immutable as changing it
+	// breaks a lot of system assumption
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if req.Params.CheckpointFinalizationTimeout != ms.k.GetParams(ctx).CheckpointFinalizationTimeout {
+		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("the checkpoint finalization timeout cannot be changed")
+	}
+
 	if err := ms.k.SetParams(ctx, req.Params); err != nil {
 		return nil, err
 	}

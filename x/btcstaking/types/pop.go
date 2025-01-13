@@ -92,7 +92,6 @@ func newBIP322Sig[A btcutil.Address](
 	net *chaincfg.Params,
 	bip322SignFn bip322Sign[A],
 ) ([]byte, error) {
-
 	address, witnessSignture, err := bip322SignFn(
 		msgToSign,
 		btcSK,
@@ -259,7 +258,6 @@ func isSupportedAddressAndWitness(
 			}
 
 			return nil
-
 		}, nil
 	}
 
@@ -338,7 +336,7 @@ func VerifyBIP322(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubK
 	// unmarshal pop.BtcSig to bip322Sig
 	var bip322Sig BIP322Sig
 	if err := bip322Sig.Unmarshal(btcSigRaw); err != nil {
-		return nil
+		return err
 	}
 
 	btcKeyBytes, err := bip340PK.Marshal()

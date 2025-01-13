@@ -11,12 +11,12 @@ import (
 // init is used to include v1 upgrade for mainnet data
 func init() {
 	Upgrades = []upgrades.Upgrade{v1.CreateUpgrade(v1.UpgradeDataString{
-		BtcStakingParamStr:        mainnet.BtcStakingParamStr,
+		BtcStakingParamsStr:       mainnet.BtcStakingParamsStr,
 		FinalityParamStr:          mainnet.FinalityParamStr,
 		IncentiveParamStr:         mainnet.IncentiveParamStr,
 		CosmWasmParamStr:          mainnet.CosmWasmParamStr,
 		NewBtcHeadersStr:          mainnet.NewBtcHeadersStr,
 		TokensDistributionStr:     mainnet.TokensDistributionStr,
 		AllowedStakingTxHashesStr: mainnet.AllowedStakingTxHashesStr,
-	})}
+	}, nil)}
 }

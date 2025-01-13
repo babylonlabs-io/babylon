@@ -22,7 +22,7 @@ different block headers. So, the upgrade data will be divided into 2
 
 Devnets that are only for internal testing should just replace the upgrade
 data files in testnet and build the binary with `make build-testnet`. No need
-to push the devenet data into the github repository.
+to push the devnet data into the github repository.
 
 ## Upgrade data as string
 
@@ -47,7 +47,7 @@ This upgrade accepts insertion of multiple
 due to Babylon Phase-1 and Phase-2 launch will be a few months apart, so
 during Phase-1 Babylon accepts BTC delegations without Babylonchain running.
 At the time of launching the Babylonchain it is needed all the BTC block
-headers that has passed since babylon started to accept BTC staking messages,
+headers that have passed since babylon started to accept BTC staking messages,
 and to avoid giving too much work for
 [vigilante](https://github.com/babylonlabs-io/vigilante)
 to submit all of those missing headers.

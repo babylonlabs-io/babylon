@@ -65,19 +65,138 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
+check of rewards
+
+## v1.0.0-rc3
+
+### Bug fixes
+
+- [#374](https://github.com/babylonlabs-io/babylon/pull/374) Fix non-consecutive finalization
+of the block in `TallyBlocks` function
+- [#378](https://github.com/babylonlabs-io/babylon/pull/378) Fix give out rewards
+with gaps of unfinalized blocks
+- [#385](https://github.com/babylonlabs-io/babylon/pull/385) Fix epoching module
+ante handler to return from antehandler chain only in case of error
+
+## v1.0.0-rc2
+
+### Bug fixes
+
+- [#371](https://github.com/babylonlabs-io/babylon/pull/371) Do not prune BTC
+reward tracker structures at the slash of finality provider.
+
+## v1.0.0-rc.1
+
+### Improvements
+
+- [#306](https://github.com/babylonlabs-io/babylon/pull/306) feat: improve BTC reward distribution with
+virtual block periods for each finality provider that has delegations and reward tracker structures.
+- [#338](https://github.com/babylonlabs-io/babylon/pull/338) Add print BIP-340 in
+`debug pubkey-raw` subcommand
+- [#316](https://github.com/babylonlabs-io/babylon/pull/316) Add testnet upgrade data
+- [#326](https://github.com/babylonlabs-io/babylon/pull/326) docs: btcstaking:
+Update btcstaking module docs to include EOI
+- [#348](https://github.com/babylonlabs-io/babylon/pull/348) refactory `PrivateSigner`
+and module account vars in appparams
+- [#351](https://github.com/babylonlabs-io/babylon/pull/351) docs: Add state
+transition docs.
+- [#358](https://github.com/babylonlabs-io/babylon/pull/358) Remove unused deps in `.proto` files
+- [#364](https://github.com/babylonlabs-io/babylon/pull/364) Add testnet upgrade data
+
+### Bug fixes
+
+- [#324](https://github.com/babylonlabs-io/babylon/pull/324) Fix decrementing
+jailed fp counter
+- [#352](https://github.com/babylonlabs-io/babylon/pull/352) Fix: withdrawal cli
+for rewards
+
+### State Machine Breaking
+
+- [#341](https://github.com/babylonlabs-io/babylon/pull/341) Select parameters
+for pre-approval flow based on BTC LC tip height
+- [#360](https://github.com/babylonlabs-io/babylon/pull/360) Refactor rewarding
+- [#365](https://github.com/babylonlabs-io/babylon/pull/365) Reject outdated finality votes
+
+## v0.18.2
+
+### Bug fixes
+
+- [#342](https://github.com/babylonlabs-io/babylon/pull/342) Fix non-determinism while jailing
+
+## v0.18.1
+
+- [#328](https://github.com/babylonlabs-io/babylon/pull/328) Fix btc activation height validation in genesis
+
+## v0.18.0
+
+### Improvements
+
+- [#309](https://github.com/babylonlabs-io/babylon/pull/309) feat(adr-036): custom withdrawal address
+- [#305](https://github.com/babylonlabs-io/babylon/pull/305) chore: add more error logs to `VerifyInclusionProofAndGetHeight`
+- [#304](https://github.com/babylonlabs-io/babylon/pull/304) Add highest voted height to finality provider
+- [#314](https://github.com/babylonlabs-io/babylon/pull/314) Require exact unbonding time in delegation
+- [#317](https://github.com/babylonlabs-io/babylon/pull/317) Enforce that EOI
+delegations using correct parameters version
+
+### State Machine Breaking
+
+- [#310](https://github.com/babylonlabs-io/babylon/pull/310) implement adr-37 -
+making params valid for btc light client ranges
+
+### Bug fixes
+
+- [#318](https://github.com/babylonlabs-io/babylon/pull/318) Fix BTC delegation status check
+to relay on UnbondingTime in delegation
+
+## v0.17.2
+
+### Improvements
+
+- [#311](https://github.com/babylonlabs-io/babylon/pull/311) Enforce version 2
+for unbonding transactions
+
+## v0.17.1
+
+### Bug fixes
+
+- [#289](https://github.com/babylonlabs-io/babylon/pull/289) hotfix: Invalid minUnbondingTime for verifying inclusion proof
+
+## v0.17.0
+
+### State Breaking
+
+- [278](https://github.com/babylonlabs-io/babylon/pull/278) Allow unbonding time to be min unbonding value
+
+### Improvements
+
+- [#264](https://github.com/babylonlabs-io/babylon/pull/264) bump docker workflow
+version to 0.10.2, fix some Dockerfile issues
+- [#284](https://github.com/babylonlabs-io/babylon/pull/284) Update cosmos sdk math dependency
+- [#285](https://github.com/babylonlabs-io/babylon/pull/285) Update cometbft dependency
+version
 
 ### Bug fixes
 
 - [#270](https://github.com/babylonlabs-io/babylon/pull/270) Validate there is only
 one finality provider key in the staking request
+- [#270](https://github.com/babylonlabs-io/babylon/pull/277) Panic due to possible
+nil params response
+
+## v0.16.1
 
 ### API Breaking
 
 - [#273](https://github.com/babylonlabs-io/babylon/pull/273) Add full staking tx to BTC delegation creation event
+
 ## v0.16.0
 
 ### Improvements
 
+* [#242](https://github.com/babylonlabs-io/babylon/pull/242) Add
+ResumeFinalityProposal and handler
 * [#258](https://github.com/babylonlabs-io/babylon/pull/258) fix go releaser
 and trigger by github action
 * [#252](https://github.com/babylonlabs-io/babylon/pull/252) Fix

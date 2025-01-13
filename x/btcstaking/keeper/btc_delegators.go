@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
+
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 
 	bbn "github.com/babylonlabs-io/babylon/types"

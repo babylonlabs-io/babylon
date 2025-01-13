@@ -55,6 +55,27 @@ func (k Keeper) GetEpoch(ctx context.Context) *types.Epoch {
 	return &epoch
 }
 
+func (k Keeper) GetEpochNumByHeight(ctx context.Context, height uint64) uint64 {
+	return CalculateEpochNumber(height, k.GetParams(ctx).EpochInterval)
+}
+
+// CalculateEpochNumber returns the epoch number for a given height
+// For height 0, it returns epoch 0
+// For all other heights, it calculates based on the epoch interval
+// Example with interval 5:
+// Height: 0  | 1  2  3  4  5 | 6  7  8  9  10 | 11 12 13 14 15 |
+// Epoch:  0  |       1       |        2        |        3        |
+func CalculateEpochNumber(height uint64, epochInterval uint64) uint64 {
+	if height == 0 {
+		return 0
+	}
+
+	// Subtract 1 from height since epoch 1 starts at height 1
+	height--
+	// Add interval to ensure we round up for partial epochs
+	return (height / epochInterval) + 1
+}
+
 func (k Keeper) GetHistoricalEpoch(ctx context.Context, epochNumber uint64) (*types.Epoch, error) {
 	epoch, err := k.getEpochInfo(ctx, epochNumber)
 	return epoch, err

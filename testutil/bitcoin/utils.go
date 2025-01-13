@@ -14,7 +14,6 @@ import (
 // https://github.com/lightningnetwork/lnd/blob/master/input/script_utils_test.go#L24
 func AssertEngineExecution(t *testing.T, testNum int, valid bool,
 	newEngine func() (*txscript.Engine, error)) {
-
 	t.Helper()
 
 	// Get a new VM to execute.

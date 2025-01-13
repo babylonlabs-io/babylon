@@ -23,6 +23,18 @@ func (n *NodeConfig) QueryBTCStakingParams() *bstypes.Params {
 	return &resp.Params
 }
 
+func (n *NodeConfig) QueryBTCStakingParamsByVersion(version uint32) *bstypes.Params {
+	path := fmt.Sprintf("/babylon/btcstaking/v1/params/%d", version)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var resp bstypes.QueryParamsByVersionResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return &resp.Params
+}
+
 func (n *NodeConfig) QueryFinalityParams() *ftypes.Params {
 	bz, err := n.QueryGRPCGateway("/babylon/finality/v1/params", url.Values{})
 	require.NoError(n.t, err)
@@ -182,4 +194,15 @@ func (n *NodeConfig) QueryIndexedBlock(height uint64) *ftypes.IndexedBlock {
 	require.NoError(n.t, err)
 
 	return resp.Block
+}
+
+func (n *NodeConfig) QueryFinalityProvidersDelegations(fpsBTCPK ...string) []*bstypes.BTCDelegationResponse {
+	pendingDelsResp := make([]*bstypes.BTCDelegationResponse, 0)
+	for _, fpBTCPK := range fpsBTCPK {
+		fpDelsResp := n.QueryFinalityProviderDelegations(fpBTCPK)
+		for _, fpDel := range fpDelsResp {
+			pendingDelsResp = append(pendingDelsResp, fpDel.Dels...)
+		}
+	}
+	return pendingDelsResp
 }

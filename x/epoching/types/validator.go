@@ -73,11 +73,12 @@ func (vs ValidatorSet) binarySearch(targetAddr sdk.ValAddress) int {
 		var mid = lo + (hi-lo)/2
 		midAddr := vs[mid].Addr
 
-		if bytes.Equal(midAddr, targetAddr) {
+		switch {
+		case bytes.Equal(midAddr, targetAddr):
 			return mid
-		} else if sdk.BigEndianToUint64(midAddr) > sdk.BigEndianToUint64(targetAddr) {
+		case sdk.BigEndianToUint64(midAddr) > sdk.BigEndianToUint64(targetAddr):
 			hi = mid - 1
-		} else {
+		default:
 			lo = mid + 1
 		}
 	}

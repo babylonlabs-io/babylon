@@ -18,7 +18,7 @@ func main() {
 		valConfig             []*initialization.NodeConfig
 		dataDir               string
 		chainId               string
-		config                string
+		configHexEncoded      string
 		btcHeadersBytesHexStr string
 		votingPeriod          time.Duration
 		expeditedVotingPeriod time.Duration
@@ -27,7 +27,7 @@ func main() {
 
 	flag.StringVar(&dataDir, "data-dir", "", "chain data directory")
 	flag.StringVar(&chainId, "chain-id", "", "chain ID")
-	flag.StringVar(&config, "config", "", "serialized config")
+	flag.StringVar(&configHexEncoded, "config", "", "serialized config hex config")
 	flag.StringVar(&btcHeadersBytesHexStr, "btc-headers", "", "btc header bytes comma separated")
 	flag.DurationVar(&votingPeriod, "voting-period", 30000000000, "voting period")
 	flag.DurationVar(&expeditedVotingPeriod, "expedited-voting-period", 20000000000, "expedited voting period")
@@ -35,7 +35,12 @@ func main() {
 
 	flag.Parse()
 
-	err := json.Unmarshal([]byte(config), &valConfig)
+	configBz, err := hex.DecodeString(configHexEncoded)
+	if err != nil {
+		panic(err)
+	}
+
+	err = json.Unmarshal(configBz, &valConfig)
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +59,11 @@ func main() {
 		panic(err)
 	}
 
-	b, _ := json.Marshal(createdChain)
+	b, err := json.Marshal(createdChain)
+	if err != nil {
+		panic(err)
+	}
+
 	fileName := fmt.Sprintf("%v/%v-encode", dataDir, chainId)
 	if err = os.WriteFile(fileName, b, 0o777); err != nil {
 		panic(err)

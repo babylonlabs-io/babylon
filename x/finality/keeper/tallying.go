@@ -39,6 +39,7 @@ func (k Keeper) TallyBlocks(ctx context.Context) {
 	// - has finality providers, finalised: impossible to happen, panic
 	// - does not have finality providers, finalised: impossible to happen, panic
 	// After this for loop, the blocks since earliest activated height are either finalised or non-finalisable
+finalizationLoop:
 	for i := startHeight; i <= uint64(sdkCtx.HeaderInfo().Height); i++ {
 		ib, err := k.GetBlock(ctx, i)
 		if err != nil {
@@ -48,7 +49,8 @@ func (k Keeper) TallyBlocks(ctx context.Context) {
 		// get the finality provider set of this block
 		fpSet := k.GetVotingPowerTable(ctx, ib.Height)
 
-		if fpSet != nil && !ib.Finalized {
+		switch {
+		case fpSet != nil && !ib.Finalized:
 			// has finality providers, non-finalised: tally and try to finalise the block
 			voterBTCPKs := k.GetVoters(ctx, ib.Height)
 			if tally(fpSet, voterBTCPKs) {
@@ -57,18 +59,18 @@ func (k Keeper) TallyBlocks(ctx context.Context) {
 			} else {
 				// if not, then this block and all subsequent blocks should not be finalised
 				// thus, we need to break here
-				break
+				break finalizationLoop
 			}
-		} else if fpSet == nil && !ib.Finalized {
+		case fpSet == nil && !ib.Finalized:
 			// does not have finality providers, non-finalised: not finalisable,
 			// increment the next height to finalise and continue
 			k.setNextHeightToFinalize(ctx, ib.Height+1)
 			continue
-		} else if fpSet != nil && ib.Finalized {
+		case fpSet != nil && ib.Finalized:
 			// has finality providers and the block has finalised
 			// this can only be a programming error
 			panic(fmt.Errorf("block %d is finalized, but last finalized height in DB does not reach here", ib.Height))
-		} else if fpSet == nil && ib.Finalized {
+		case fpSet == nil && ib.Finalized:
 			// does not have finality providers, finalised: impossible to happen, panic
 			panic(fmt.Errorf("block %d is finalized, but does not have a finality provider set", ib.Height))
 		}
@@ -83,16 +85,6 @@ func (k Keeper) finalizeBlock(ctx context.Context, block *types.IndexedBlock) {
 	k.SetBlock(ctx, block)
 	// set next height to finalise as height+1
 	k.setNextHeightToFinalize(ctx, block.Height+1)
-	// distribute rewards to BTC staking stakeholders w.r.t. the voting power distribution cache
-	dc := k.GetVotingPowerDistCache(ctx, block.Height)
-	if dc == nil {
-		// failing to get a voting power distribution cache before distributing reward is a programming error
-		panic(fmt.Errorf("voting power distribution cache not found at height %d", block.Height))
-	}
-	// reward active finality providers
-	k.IncentiveKeeper.RewardBTCStaking(ctx, block.Height, dc)
-	// remove reward distribution cache afterwards
-	k.RemoveVotingPowerDistCache(ctx, block.Height)
 	// record the last finalized height metric
 	types.RecordLastFinalizedHeight(block.Height)
 }
@@ -107,6 +99,7 @@ func tally(fpSet map[string]uint64, voterBTCPKs map[string]struct{}) bool {
 			votedPower += power
 		}
 	}
+
 	return votedPower*3 > totalPower*2
 }
 

@@ -42,7 +42,7 @@ const (
 	flagMinStakingTimeBlocks       = "min-staking-time-blocks"
 	flagMaxStakingTimeBlocks       = "max-staking-time-blocks"
 	flagMaxActiveFinalityProviders = "max-active-finality-providers"
-	flagMinUnbondingTime           = "min-unbonding-time"
+	flagUnbondingTime              = "unbonding-time"
 	flagUnbondingFeeSat            = "unbonding-fee-sat"
 	flagSlashingPkScript           = "slashing-pk-script"
 	flagMinSlashingFee             = "min-slashing-fee-sat"
@@ -83,7 +83,7 @@ type GenesisCLIArgs struct {
 	MinSlashingTransactionFeeSat  int64
 	SlashingRate                  math.LegacyDec
 	MaxActiveFinalityProviders    uint32
-	MinUnbondingTime              uint16
+	UnbondingTime                 uint16
 	UnbondingFeeSat               int64
 	MinCommissionRate             math.LegacyDec
 	SignedBlocksWindow            int64
@@ -120,7 +120,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().String(flagMinCommissionRate, "0", "Bitcoin staking validator minimum commission rate")
 	cmd.Flags().String(flagSlashingRate, "0.1", "Bitcoin staking slashing rate")
 	cmd.Flags().Uint32(flagMaxActiveFinalityProviders, 100, "Bitcoin staking maximum active finality providers")
-	cmd.Flags().Uint16(flagMinUnbondingTime, 0, "Min timelock on unbonding transaction in btc blocks")
+	cmd.Flags().Uint16(flagUnbondingTime, 21, "Required timelock on unbonding transaction in btc blocks. Must be larger than btc-finalization-timeout")
 	cmd.Flags().Int64(flagUnbondingFeeSat, 1000, "Required fee for unbonding transaction in satoshis")
 	// inflation args
 	cmd.Flags().Float64(flagInflationRateChange, 0.13, "Inflation rate change")
@@ -162,7 +162,7 @@ func parseGenesisFlags(cmd *cobra.Command) (*GenesisCLIArgs, error) {
 	minCommissionRate, _ := cmd.Flags().GetString(flagMinCommissionRate)
 	slashingRate, _ := cmd.Flags().GetString(flagSlashingRate)
 	maxActiveFinalityProviders, _ := cmd.Flags().GetUint32(flagMaxActiveFinalityProviders)
-	minUnbondingTime, _ := cmd.Flags().GetUint16(flagMinUnbondingTime)
+	unbondingTime, _ := cmd.Flags().GetUint16(flagUnbondingTime)
 	unbondingFeeSat, _ := cmd.Flags().GetInt64(flagUnbondingFeeSat)
 	genesisTimeUnix, _ := cmd.Flags().GetInt64(flagGenesisTime)
 	inflationRateChange, _ := cmd.Flags().GetFloat64(flagInflationRateChange)
@@ -220,7 +220,7 @@ func parseGenesisFlags(cmd *cobra.Command) (*GenesisCLIArgs, error) {
 		MinCommissionRate:             math.LegacyMustNewDecFromStr(minCommissionRate),
 		SlashingRate:                  math.LegacyMustNewDecFromStr(slashingRate),
 		MaxActiveFinalityProviders:    maxActiveFinalityProviders,
-		MinUnbondingTime:              minUnbondingTime,
+		UnbondingTime:                 unbondingTime,
 		UnbondingFeeSat:               unbondingFeeSat,
 		GenesisTime:                   genesisTime,
 		InflationRateChange:           inflationRateChange,

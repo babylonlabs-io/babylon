@@ -194,7 +194,6 @@ func GenerateSignatures(
 	stakingOutput *wire.TxOut,
 	leaf txscript.TapLeaf,
 ) []*schnorr.Signature {
-
 	var si []*SignatureInfo
 
 	for _, key := range keys {
@@ -293,7 +292,6 @@ func TestSpendingUnbondingPathCovenant35MultiSig(t *testing.T) {
 		)
 	}
 	btctest.AssertEngineExecution(t, 0, true, newEngine)
-
 }
 
 func TestSpendingUnbondingPathSingleKeyCovenant(t *testing.T) {

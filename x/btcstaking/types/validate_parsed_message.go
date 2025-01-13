@@ -8,30 +8,24 @@ import (
 
 	"github.com/babylonlabs-io/babylon/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	btcckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 )
 
 type ParamsValidationResult struct {
 	StakingOutputIdx   uint32
 	UnbondingOutputIdx uint32
-	MinUnbondingTime   uint32
 }
 
 // ValidateParsedMessageAgainstTheParams validates parsed message against parameters
 func ValidateParsedMessageAgainstTheParams(
 	pm *ParsedCreateDelegationMessage,
 	parameters *Params,
-	btcheckpointParameters *btcckpttypes.Params,
 	net *chaincfg.Params,
 ) (*ParamsValidationResult, error) {
 	// 1. Validate unbonding time first as it will be used in other checks
-	minUnbondingTime := MinimumUnbondingTime(parameters, btcheckpointParameters)
-	// Check unbonding time (staking time from unbonding tx) is larger than min unbonding time
-	// which is larger value from:
-	// - MinUnbondingTime
-	// - CheckpointFinalizationTimeout
-	if uint32(pm.UnbondingTime) <= minUnbondingTime {
-		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding time %d must be larger than %d", pm.UnbondingTime, minUnbondingTime)
+	// Check unbonding time (staking time from unbonding tx) is not less than min unbonding time
+	if uint32(pm.UnbondingTime) != parameters.UnbondingTimeBlocks {
+		return nil, ErrInvalidUnbondingTx.Wrapf("unbonding time %d must be equal to %d",
+			pm.UnbondingTime, parameters.UnbondingTimeBlocks)
 	}
 
 	stakingTxHash := pm.StakingTx.Transaction.TxHash()
@@ -206,6 +200,5 @@ func ValidateParsedMessageAgainstTheParams(
 	return &ParamsValidationResult{
 		StakingOutputIdx:   stakingOutputIdx,
 		UnbondingOutputIdx: 0, // unbonding output always has only 1 output
-		MinUnbondingTime:   minUnbondingTime,
 	}, nil
 }

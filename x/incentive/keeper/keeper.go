@@ -29,6 +29,15 @@ type (
 		authority string
 		// name of the FeeCollector ModuleAccount
 		feeCollectorName string
+
+		// Collections structures for rewards
+
+		// BTCDelegationRewardsTracker maps (FpAddr, DelAddr) => BTCDelegationRewardsTracker
+		BTCDelegationRewardsTracker collections.Map[collections.Pair[[]byte, []byte], types.BTCDelegationRewardsTracker]
+		// FinalityProviderHistoricalRewards maps (FpAddr, period) => FinalityProviderHistoricalRewards
+		FinalityProviderHistoricalRewards collections.Map[collections.Pair[[]byte, uint64], types.FinalityProviderHistoricalRewards]
+		// FinalityProviderCurrentRewards maps (FpAddr) => FinalityProviderCurrentRewards
+		FinalityProviderCurrentRewards collections.Map[[]byte, types.FinalityProviderCurrentRewards]
 	}
 )
 
@@ -54,6 +63,32 @@ func NewKeeper(
 			types.RefundableMsgKeySetPrefix,
 			"refundable_msg_key_set",
 			collections.BytesKey,
+		),
+
+		// Collections structures for rewards
+		BTCDelegationRewardsTracker: collections.NewMap(
+			sb,
+			types.BTCDelegationRewardsTrackerKeyPrefix,
+			"btc_delegation_rewards_tracker",
+			// keys: (FpAddr, DelAddr)
+			collections.PairKeyCodec(collections.BytesKey, collections.BytesKey),
+			codec.CollValue[types.BTCDelegationRewardsTracker](cdc),
+		),
+		FinalityProviderHistoricalRewards: collections.NewMap(
+			sb,
+			types.FinalityProviderHistoricalRewardsKeyPrefix,
+			"fp_historical_rewards",
+			// keys: (FpAddr, period)
+			collections.PairKeyCodec(collections.BytesKey, collections.Uint64Key),
+			codec.CollValue[types.FinalityProviderHistoricalRewards](cdc),
+		),
+		FinalityProviderCurrentRewards: collections.NewMap(
+			sb,
+			types.FinalityProviderCurrentRewardsKeyPrefix,
+			"fp_current_rewards",
+			// key: (FpAddr)
+			collections.BytesKey,
+			codec.CollValue[types.FinalityProviderCurrentRewards](cdc),
 		),
 		authority:        authority,
 		feeCollectorName: feeCollectorName,

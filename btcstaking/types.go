@@ -65,7 +65,6 @@ func DeriveTaprootAddress(
 	tapScriptTree *txscript.IndexedTapScriptTree,
 	internalPubKey *btcec.PublicKey,
 	net *chaincfg.Params) (*btcutil.AddressTaproot, error) {
-
 	tapScriptRootHash := tapScriptTree.RootNode.TapHash()
 
 	outputKey := txscript.ComputeTaprootOutputKey(
@@ -181,7 +180,7 @@ func (t *taprootScriptHolder) taprootPkScript(net *chaincfg.Params) ([]byte, err
 // Package responsible for different kinds of btc scripts used by babylon
 // Staking script has 3 spending paths:
 // 1. Staker can spend after relative time lock - staking
-// 2. Staker can spend with covenat cooperation any time
+// 2. Staker can spend with covenant cooperation any time
 // 3. Staker can spend with finality provider and covenant cooperation any time.
 type StakingInfo struct {
 	StakingOutput         *wire.TxOut
@@ -222,7 +221,6 @@ func SpendInfoFromRevealedScript(
 	revealedScript []byte,
 	internalKey *btcec.PublicKey,
 	tree *txscript.IndexedTapScriptTree) (*SpendInfo, error) {
-
 	revealedLeaf := txscript.NewBaseTapLeaf(revealedScript)
 	leafHash := revealedLeaf.TapHash()
 

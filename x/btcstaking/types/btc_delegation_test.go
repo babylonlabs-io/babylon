@@ -23,12 +23,12 @@ func FuzzBTCDelegation(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-
+		unbondingTime := uint32(datagen.RandomInt(r, 50))
 		btcDel := &types.BTCDelegation{}
 		// randomise voting power
 		btcDel.TotalSat = datagen.RandomInt(r, 100000)
 		btcDel.BtcUndelegation = &types.BTCUndelegation{}
-
+		btcDel.UnbondingTime = unbondingTime
 		// randomise covenant sig
 		hasCovenantSig := datagen.RandomInt(r, 2) == 0
 		if hasCovenantSig {
@@ -56,11 +56,10 @@ func FuzzBTCDelegation(f *testing.F) {
 
 		// randomise BTC tip and w
 		btcHeight := btcDel.StartHeight + uint32(datagen.RandomInt(r, 50))
-		w := uint32(datagen.RandomInt(r, 50))
 
 		// test expected voting power
-		hasVotingPower := hasCovenantSig && btcDel.StartHeight <= btcHeight && btcHeight+w <= btcDel.EndHeight
-		actualVotingPower := btcDel.VotingPower(btcHeight, w, 1)
+		hasVotingPower := hasCovenantSig && btcDel.StartHeight <= btcHeight && btcHeight+unbondingTime <= btcDel.EndHeight
+		actualVotingPower := btcDel.VotingPower(btcHeight, 1)
 		if hasVotingPower {
 			require.Equal(t, btcDel.TotalSat, actualVotingPower)
 		} else {

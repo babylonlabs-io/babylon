@@ -8,14 +8,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/stretchr/testify/require"
+
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	dg "github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bkeeper "github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	"github.com/btcsuite/btcd/chaincfg"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 )
 
 type TestKeepers struct {
@@ -76,6 +79,27 @@ func (k *TestKeepers) getSubmissionData(key btcctypes.SubmissionKey) *btcctypes.
 
 func (k *TestKeepers) onTipChange() {
 	k.BTCCheckpoint.OnTipChange(k.SdkCtx)
+}
+
+func TestUpdateParams(t *testing.T) {
+	tk := InitTestKeepers(t)
+
+	// Try to update params with a different checkpoint finalization timeout
+	msg := &btcctypes.MsgUpdateParams{
+		Authority: appparams.AccGov.String(),
+		Params: btcctypes.Params{
+			CheckpointFinalizationTimeout: btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1,
+		},
+	}
+
+	_, err := tk.MsgSrv.UpdateParams(tk.Ctx, msg)
+	require.ErrorIs(t, err, govtypes.ErrInvalidProposalMsg,
+		"should not be able to change CheckpointFinalizationTimeout parameter")
+
+	// Verify params were not changed
+	params := tk.BTCCheckpoint.GetParams(tk.SdkCtx)
+	require.Equal(t, btcctypes.DefaultParams().CheckpointFinalizationTimeout, params.CheckpointFinalizationTimeout,
+		"minUnbondingTime should remain unchanged")
 }
 
 func TestRejectDuplicatedSubmission(t *testing.T) {
@@ -300,7 +324,6 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 	_, err = tk.insertProofMsg(msg2)
 
 	require.NoErrorf(t, err, "Unexpected message processing error: %v", err)
-
 }
 
 func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
@@ -586,34 +609,35 @@ func FuzzConfirmAndDinalizeManyEpochs(f *testing.F) {
 
 				msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
 
-				if epoch <= uint64(numFinalizedEpochs) {
+				switch {
+				case epoch <= uint64(numFinalizedEpochs):
 					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint32(finalizationDepth))
-					finalizationDepth = finalizationDepth - 1
+					finalizationDepth--
 					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), uint32(finalizationDepth))
 
 					// first submission is always deepest one, and second block is the most recent one
 					if j == 1 {
 						bestSumbissionInfos[epoch] = uint32(finalizationDepth)
 					}
-					finalizationDepth = finalizationDepth - 1
-				} else if epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs) {
+					finalizationDepth--
+				case epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs):
 					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), confirmationDepth)
-					confirmationDepth = confirmationDepth - 1
+					confirmationDepth--
 					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), confirmationDepth)
 					// first submission is always deepest one, and second block is the most recent one
 					if j == 1 {
 						bestSumbissionInfos[epoch] = confirmationDepth
 					}
-					confirmationDepth = confirmationDepth - 1
-				} else {
+					confirmationDepth--
+				default:
 					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), sumbissionDepth)
-					sumbissionDepth = sumbissionDepth - 1
+					sumbissionDepth--
 					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), sumbissionDepth)
 					// first submission is always deepest one, and second block is the most recent one
 					if j == 1 {
 						bestSumbissionInfos[epoch] = sumbissionDepth
 					}
-					sumbissionDepth = sumbissionDepth - 1
+					sumbissionDepth--
 				}
 
 				_, err := tk.insertProofMsg(msg)
@@ -637,13 +661,14 @@ func FuzzConfirmAndDinalizeManyEpochs(f *testing.F) {
 			ed := tk.GetEpochData(epoch)
 			require.NotNil(t, ed)
 
-			if epoch <= uint64(numFinalizedEpochs) {
+			switch {
+			case epoch <= uint64(numFinalizedEpochs):
 				require.Equal(t, ed.Status, btcctypes.Finalized)
 				// finalized epochs should have only best submission
 				require.Equal(t, len(ed.Keys), 1)
-			} else if epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs) {
+			case epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs):
 				require.Equal(t, ed.Status, btcctypes.Confirmed)
-			} else {
+			default:
 				require.Equal(t, ed.Status, btcctypes.Submitted)
 			}
 

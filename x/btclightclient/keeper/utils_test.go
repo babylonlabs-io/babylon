@@ -58,10 +58,10 @@ func checkTip(
 	expectedWork sdkmath.Uint,
 	expectedHeight uint32,
 	expectedTipHeader *wire.BlockHeader) {
-
 	currentTip := blcKeeper.GetTipInfo(ctx)
 	blockByHeight := blcKeeper.GetHeaderByHeight(ctx, currentTip.Height)
-	blockByHash := blcKeeper.GetHeaderByHash(ctx, currentTip.Hash)
+	blockByHash, err := blcKeeper.GetHeaderByHash(ctx, currentTip.Hash)
+	require.NoError(t, err)
 
 	// Consistency check between tip and block by height and block by hash
 	require.NotNil(t, blockByHeight)
