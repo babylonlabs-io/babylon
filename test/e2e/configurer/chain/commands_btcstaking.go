@@ -129,7 +129,7 @@ func (n *NodeConfig) CreateBTCDelegation(
 		// broadcast stuff
 		cmd = append(cmd, "-b=sync", "--yes")
 	}
-	//cmd = append(cmd, fmt.Sprintf("--chain-id=%s", n.chainId), "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata")
+	// cmd = append(cmd, fmt.Sprintf("--chain-id=%s", n.chainId), "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata")
 	cmd = append(cmd, fmt.Sprintf("--chain-id=%s", n.chainId), "-b=sync", "--yes")
 	outBuff, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 

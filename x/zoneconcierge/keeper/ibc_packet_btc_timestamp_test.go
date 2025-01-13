@@ -25,7 +25,7 @@ func genRandomChain(
 	ctx context.Context,
 	initialHeight uint32,
 	chainLength uint32,
-) *datagen.BTCHeaderPartialChain {
+) *datagen.BTCHeaderPartialChain { //nolint:unparam // randomChain is used for test setup
 	initHeader := k.GetHeaderByHeight(ctx, initialHeight)
 	randomChain := datagen.NewBTCHeaderChainFromParentInfo(
 		r,

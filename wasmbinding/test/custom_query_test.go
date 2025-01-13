@@ -199,10 +199,12 @@ func TestQueryNonExistingHeader(t *testing.T) {
 	require.Nil(t, resp1.HeaderInfo)
 }
 
+//nolint:unused
 func setupAppWithContext(t *testing.T) (*app.BabylonApp, sdk.Context) {
 	return setupAppWithContextAndCustomHeight(t, 1)
 }
 
+//nolint:unused
 func setupAppWithContextAndCustomHeight(t *testing.T, height int64) (*app.BabylonApp, sdk.Context) {
 	babylonApp := app.Setup(t, false)
 	ctx := babylonApp.BaseApp.NewContext(false).
@@ -210,6 +212,7 @@ func setupAppWithContextAndCustomHeight(t *testing.T, height int64) (*app.Babylo
 	return babylonApp, ctx
 }
 
+//nolint:unused
 func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	key := ed25519.GenPrivKey()
 	pub := key.PubKey()
@@ -217,11 +220,13 @@ func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	return key, pub, addr
 }
 
+//nolint:unused
 func randomAccountAddress() sdk.AccAddress {
 	_, _, addr := keyPubAddr()
 	return addr
 }
 
+//nolint:unused
 func mintCoinsTo(
 	bankKeeper bankkeeper.Keeper,
 	ctx sdk.Context,
@@ -234,6 +239,7 @@ func mintCoinsTo(
 	return bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, amounts)
 }
 
+//nolint:unused
 func fundAccount(
 	t *testing.T,
 	ctx sdk.Context,
@@ -245,6 +251,7 @@ func fundAccount(
 	require.NoError(t, err)
 }
 
+//nolint:unused
 func storeTestCodeCode(
 	t *testing.T,
 	ctx sdk.Context,
@@ -261,6 +268,7 @@ func storeTestCodeCode(
 	return id, checksum
 }
 
+//nolint:unused
 func instantiateExampleContract(
 	t *testing.T,
 	ctx sdk.Context,
@@ -275,6 +283,7 @@ func instantiateExampleContract(
 	return addr
 }
 
+//nolint:unused
 func deployTestContract(
 	t *testing.T,
 	ctx sdk.Context,

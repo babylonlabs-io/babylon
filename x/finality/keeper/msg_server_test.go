@@ -557,7 +557,7 @@ func FuzzEquivocationEvidence(f *testing.F) {
 		require.ErrorContains(t, err, "empty PubRand")
 
 		// test valid case
-		blockHeight := activationHeight + uint64(datagen.RandomInt(r, 100))
+		blockHeight := activationHeight + datagen.RandomInt(r, 100)
 
 		// generate proper pub rand data
 		startHeight := blockHeight

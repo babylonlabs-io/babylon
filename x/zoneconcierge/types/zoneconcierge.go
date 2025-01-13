@@ -33,13 +33,14 @@ func VerifyStore(root []byte, moduleStoreKey string, key []byte, value []byte, p
 }
 
 func (p *ProofEpochSealed) ValidateBasic() error {
-	if p.ValidatorSet == nil {
+	switch {
+	case p.ValidatorSet == nil:
 		return ErrInvalidProofEpochSealed.Wrap("ValidatorSet is nil")
-	} else if len(p.ValidatorSet) == 0 {
+	case len(p.ValidatorSet) == 0:
 		return ErrInvalidProofEpochSealed.Wrap("ValidatorSet is empty")
-	} else if p.ProofEpochInfo == nil {
+	case p.ProofEpochInfo == nil:
 		return ErrInvalidProofEpochSealed.Wrap("ProofEpochInfo is nil")
-	} else if p.ProofEpochValSet == nil {
+	case p.ProofEpochValSet == nil:
 		return ErrInvalidProofEpochSealed.Wrap("ProofEpochValSet is nil")
 	}
 	return nil
@@ -110,11 +111,12 @@ func (ci *ChainInfo) Equal(ci2 *ChainInfo) bool {
 }
 
 func (ci *ChainInfo) ValidateBasic() error {
-	if len(ci.ConsumerId) == 0 {
+	switch {
+	case len(ci.ConsumerId) == 0:
 		return ErrInvalidChainInfo.Wrap("ConsumerId is empty")
-	} else if ci.LatestHeader == nil {
+	case ci.LatestHeader == nil:
 		return ErrInvalidChainInfo.Wrap("LatestHeader is nil")
-	} else if ci.LatestForks == nil {
+	case ci.LatestForks == nil:
 		return ErrInvalidChainInfo.Wrap("LatestForks is nil")
 	}
 	if err := ci.LatestHeader.ValidateBasic(); err != nil {

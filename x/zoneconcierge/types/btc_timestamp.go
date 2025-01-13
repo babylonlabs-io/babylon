@@ -80,11 +80,12 @@ func VerifyValSet(epoch *epochingtypes.Epoch, valSet *checkpointingtypes.Validat
 // - The validator set is committed to the sealer_app_hash of the sealed epoch
 func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.RawCheckpoint, proof *ProofEpochSealed) error {
 	// nil check
-	if epoch == nil {
+	switch {
+	case epoch == nil:
 		return fmt.Errorf("epoch is nil")
-	} else if rawCkpt == nil {
+	case rawCkpt == nil:
 		return fmt.Errorf("rawCkpt is nil")
-	} else if proof == nil {
+	case proof == nil:
 		return fmt.Errorf("proof is nil")
 	}
 
@@ -151,11 +152,12 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 
 func VerifyCZHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, proof *cmtcrypto.ProofOps) error {
 	// nil check
-	if header == nil {
+	switch {
+	case header == nil:
 		return fmt.Errorf("header is nil")
-	} else if epoch == nil {
+	case epoch == nil:
 		return fmt.Errorf("epoch is nil")
-	} else if proof == nil {
+	case proof == nil:
 		return fmt.Errorf("proof is nil")
 	}
 
@@ -194,11 +196,12 @@ func VerifyCZHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, pr
 // - the raw ckpt decoded from txsInfo is same as the expected rawCkpt
 func VerifyEpochSubmitted(rawCkpt *checkpointingtypes.RawCheckpoint, txsInfo []*btcctypes.TransactionInfo, btcHeaders []*wire.BlockHeader, powLimit *big.Int, babylonTag txformat.BabylonTag) error {
 	// basic sanity check
-	if rawCkpt == nil {
+	switch {
+	case rawCkpt == nil:
 		return fmt.Errorf("rawCkpt is nil")
-	} else if len(txsInfo) != txformat.NumberOfParts {
+	case len(txsInfo) != txformat.NumberOfParts:
 		return fmt.Errorf("txsInfo contains %d parts rather than %d", len(txsInfo), txformat.NumberOfParts)
-	} else if len(btcHeaders) != txformat.NumberOfParts {
+	case len(btcHeaders) != txformat.NumberOfParts:
 		return fmt.Errorf("btcHeaders contains %d parts rather than %d", len(btcHeaders), txformat.NumberOfParts)
 	}
 

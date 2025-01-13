@@ -20,7 +20,6 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		babylonApp := app.Setup(t, false)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 		ctx := babylonApp.NewContext(false)
-		consumerID := "test-consumerid"
 
 		hooks := zcKeeper.Hooks()
 
@@ -57,7 +56,6 @@ func FuzzGetEpochHeaders(f *testing.F) {
 		babylonApp := app.Setup(t, false)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 		ctx := babylonApp.NewContext(false)
-		consumerID := "test-consumerid"
 
 		hooks := zcKeeper.Hooks()
 

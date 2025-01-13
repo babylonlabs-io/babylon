@@ -156,8 +156,8 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 		btcDels []*types.BTCDelegatorDelegationsResponse
 		pageRes *query.PageResponse
 	)
-
-	if k.HasFinalityProvider(ctx, *fpPK) {
+	switch {
+	case k.HasFinalityProvider(ctx, *fpPK):
 		// this is a Babylon finality provider
 		btcDelStore := k.btcDelegatorFpStore(sdkCtx, fpPK)
 		pageRes, err = query.Paginate(btcDelStore, req.Pagination, func(key, value []byte) error {
@@ -185,13 +185,15 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 		if err != nil {
 			return nil, err
 		}
-	} else if k.BscKeeper.HasConsumerFinalityProvider(ctx, fpPK) {
+
+	case k.BscKeeper.HasConsumerFinalityProvider(ctx, fpPK):
 		// this is a consumer finality provider
 		btcDels, pageRes, err = k.GetBTCConsumerDelegatorDelegationsResponses(sdkCtx, fpPK, req.Pagination, currentWValue, btcHeight, covenantQuorum)
 		if err != nil {
 			return nil, err
 		}
-	} else {
+
+	default:
 		// the given finality provider is not found
 		return nil, types.ErrFpNotFound
 	}

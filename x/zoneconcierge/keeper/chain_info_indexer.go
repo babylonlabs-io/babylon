@@ -98,18 +98,19 @@ func (k Keeper) tryToUpdateLatestForkHeader(ctx context.Context, consumerId stri
 		return errorsmod.Wrapf(types.ErrChainInfoNotFound, "cannot insert fork header when chain info is not initialized")
 	}
 
-	if len(chainInfo.LatestForks.Headers) == 0 {
+	switch {
+	case len(chainInfo.LatestForks.Headers) == 0:
 		// no fork at the moment, add this fork header as the latest one
 		chainInfo.LatestForks.Headers = append(chainInfo.LatestForks.Headers, header)
-	} else if chainInfo.LatestForks.Headers[0].Height == header.Height {
+	case chainInfo.LatestForks.Headers[0].Height == header.Height:
 		// there exists fork headers at the same height, add this fork header to the set of latest fork headers
 		chainInfo.LatestForks.Headers = append(chainInfo.LatestForks.Headers, header)
-	} else if chainInfo.LatestForks.Headers[0].Height < header.Height {
+	case chainInfo.LatestForks.Headers[0].Height < header.Height:
 		// this fork header is newer than the previous one, replace the old fork headers with this fork header
 		chainInfo.LatestForks = &types.Forks{
 			Headers: []*types.IndexedHeader{header},
 		}
-	} else {
+	default:
 		// this fork header is older than the current latest fork, don't record this fork header in chain info
 		return nil
 	}
