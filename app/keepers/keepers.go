@@ -535,7 +535,7 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[finalitytypes.StoreKey]),
 		ak.BTCStakingKeeper,
 		ak.IncentiveKeeper,
-		ak.CheckpointingKeeper,
+		&checkpointingKeeper,
 		appparams.AccGov.String(),
 	)
 

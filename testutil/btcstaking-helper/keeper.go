@@ -550,7 +550,7 @@ func (h *Helper) CreateCovenantSigs(
 	covenantMsgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, del)
 	for _, m := range covenantMsgs {
 		msgCopy := m
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: lightClientTipHeight})
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: lightClientTipHeight}).MaxTimes(1)
 		_, err := h.MsgServer.AddCovenantSigs(h.Ctx, msgCopy)
 		h.NoError(err)
 	}

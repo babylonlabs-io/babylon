@@ -77,7 +77,6 @@ func (k Keeper) GetBTCConsumerDelegatorDelegationsResponses(
 		for i, btcDel := range curBTCDels.Dels {
 			status := btcDel.GetStatus(
 				btcHeight,
-				wValue,
 				covenantQuorum,
 			)
 			btcDelsResp[i] = bstypes.NewBTCDelegationResponse(btcDel, status)

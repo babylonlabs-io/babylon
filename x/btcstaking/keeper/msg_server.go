@@ -578,6 +578,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		req.UnbondingTxSig,
 		parsedUnbondingSlashingAdaptorSignatures,
 		params,
+		btcTipHeight,
 	)
 
 	// at this point, the covenant signatures are verified and are not duplicated.

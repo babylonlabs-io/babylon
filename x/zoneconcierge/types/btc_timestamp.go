@@ -281,9 +281,9 @@ func (ts *BTCTimestamp) Verify(
 	btcHeadersWithCkpt := []*wire.BlockHeader{}
 	wDeep := false
 	for _, key := range ts.BtcSubmissionKey.Key {
-		header := btclcKeeper.GetHeaderByHash(ctx, key.Hash)
-		if header == nil {
-			return fmt.Errorf("header corresponding to the inclusion proof is not on BTC light client")
+		header, err := btclcKeeper.GetHeaderByHash(ctx, key.Hash)
+		if err == nil {
+			return fmt.Errorf("header corresponding to the inclusion proof is not on BTC light client: %v", err)
 		}
 		btcHeadersWithCkpt = append(btcHeadersWithCkpt, header.Header.ToBlockHeader())
 

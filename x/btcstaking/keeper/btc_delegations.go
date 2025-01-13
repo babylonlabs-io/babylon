@@ -95,6 +95,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	unbondingTxSig *bbn.BIP340Signature,
 	parsedUnbondingSlashingAdaptorSignatures []asig.AdaptorSignature,
 	params *types.Params,
+	btcTipHeight uint32,
 ) {
 	hadQuorum := btcDel.HasCovenantQuorums(params.CovenantQuorum)
 
@@ -138,8 +139,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 					NewState:      types.BTCDelegationStatus_ACTIVE,
 				},
 			)
-			btcTip := k.btclcKeeper.GetTipInfo(ctx)
-			k.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
+			k.addPowerDistUpdateEvent(ctx, btcTipHeight, activeEvent)
 
 			// notify consumer chains about the active BTC delegation
 			k.notifyConsumersOnActiveBTCDel(ctx, btcDel)

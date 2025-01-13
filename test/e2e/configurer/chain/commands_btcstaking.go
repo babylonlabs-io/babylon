@@ -51,11 +51,11 @@ func (n *NodeConfig) CreateFinalityProvider(walletAddrOrName string, btcPK *bbn.
 }
 
 func (n *NodeConfig) CreateBTCDelegation(
-	btcPK bbn.BIP340PubKey,
+	btcPK *bbn.BIP340PubKey,
 	pop *bstypes.ProofOfPossessionBTC,
 	stakingTx []byte,
 	inclusionProof *bstypes.InclusionProof,
-	fpPKs []*bbn.BIP340PubKey,
+	fpPKs []bbn.BIP340PubKey,
 	stakingTimeBlocks uint16,
 	stakingValue btcutil.Amount,
 	slashingTx *bstypes.BTCSlashingTx,
@@ -428,7 +428,7 @@ func (n *NodeConfig) CreateBTCDelegationAndCheck(
 		popDel1,
 		stakingTx,
 		inclusionProof,
-		fp.BtcPk,
+		bbn.NewBIP340PKsFromBTCPKs([]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()}),
 		stakingTimeBlocks,
 		btcutil.Amount(stakingSatAmt),
 		testStakingInfo.SlashingTx,
