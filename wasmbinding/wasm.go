@@ -128,7 +128,10 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 				return nil, errorsmod.Wrap(err, "failed to parse header hash")
 			}
 
-			headerInfo := qp.lcKeeper.GetHeaderByHash(ctx, &headerHash)
+			headerInfo, err := qp.lcKeeper.GetHeaderByHash(ctx, &headerHash)
+			if err != nil {
+				return nil, errorsmod.Wrapf(err, "failed to get header hash: %s", err.Error())
+			}
 
 			res := bindings.BtcHeaderQueryResponse{
 				HeaderInfo: bindings.AsBtcBlockHeaderInfo(headerInfo),

@@ -288,13 +288,14 @@ func (n *NodeConfig) WasmExecute(contract, execMsg, from string) {
 }
 
 // WithdrawReward will withdraw the rewards of the address associated with the tx signer `from`
-func (n *NodeConfig) WithdrawReward(sType, from string) {
+func (n *NodeConfig) WithdrawReward(sType, from string) (txHash string) {
 	n.LogActionF("withdraw rewards of type %s for tx signer %s", sType, from)
 	cmd := []string{"babylond", "tx", "incentive", "withdraw-reward", sType, fmt.Sprintf("--from=%s", from)}
 	n.LogActionF("Executing command: %s", strings.Join(cmd, " "))
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
-	n.LogActionF("successfully withdrawn")
+	n.LogActionF("successfully withdrawn: %s", outBuf.String())
+	return GetTxHashFromOutput(outBuf.String())
 }
 
 // TxMultisigSign sign a tx in a file with one wallet for a multisig address.
@@ -470,4 +471,19 @@ func (n *NodeConfig) SubmitRefundableTxWithAssertion(
 	} else {
 		require.True(n.t, submitterBalanceBefore.IsAllGT(submitterBalanceAfter))
 	}
+}
+
+func GetTxHashFromOutput(txOutput string) (txHash string) {
+	// Define the regex pattern to match txhash
+	re := regexp.MustCompile(`txhash:\s*([A-Fa-f0-9]+)`)
+
+	// Find the first match
+	match := re.FindStringSubmatch(txOutput)
+
+	if len(match) > 1 {
+		// The first capture group contains the txhash value
+		txHash := match[1]
+		return txHash
+	}
+	return ""
 }

@@ -7,11 +7,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	cmtconfig "github.com/cometbft/cometbft/config"
-	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client/config"
-
-	"github.com/babylonlabs-io/babylon/privval"
 )
 
 const defaultConfigTemplate = `# This is a TOML config file.
@@ -32,29 +28,6 @@ node = "{{ .Node }}"
 # Transaction broadcasting mode (sync|async|block)
 broadcast-mode = "{{ .BroadcastMode }}"
 `
-
-type PrivSigner struct {
-	WrappedPV *privval.WrappedFilePV
-}
-
-func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
-	nodeCfg := cmtconfig.DefaultConfig()
-	pvKeyFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorKeyFile())
-	err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
-	if err != nil {
-		return nil, err
-	}
-	pvStateFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorStateFile())
-	err = cmtos.EnsureDir(filepath.Dir(pvStateFile), 0777)
-	if err != nil {
-		return nil, err
-	}
-	wrappedPV := privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile)
-
-	return &PrivSigner{
-		WrappedPV: wrappedPV,
-	}, nil
-}
 
 func CreateClientConfig(chainID string, backend string, homePath string) (*config.ClientConfig, error) {
 	cliConf := &config.ClientConfig{

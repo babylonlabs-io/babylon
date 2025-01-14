@@ -51,7 +51,7 @@ func (e submissionBtcError) Error() string {
 }
 
 const (
-	submissionUnknownErr submissionBtcError = submissionBtcError(
+	errSubmissionUnknown submissionBtcError = submissionBtcError(
 		"One of submission blocks is not known to btclightclient",
 	)
 )
@@ -66,7 +66,6 @@ func NewKeeper(
 	powLimit *big.Int,
 	authority string,
 ) Keeper {
-
 	return Keeper{
 		cdc:                  cdc,
 		storeService:         storeService,
@@ -112,7 +111,7 @@ func (k Keeper) headerDepth(ctx context.Context, headerHash *bbn.BTCHeaderHashBy
 
 	if err != nil {
 		// one of blocks is not known to light client
-		return 0, submissionUnknownErr
+		return 0, errSubmissionUnknown
 	}
 	return blockDepth, nil
 }
@@ -126,7 +125,6 @@ func (k Keeper) checkAncestors(
 	submisionEpoch uint64,
 	newSubmissionInfo *types.SubmissionBtcInfo,
 ) error {
-
 	if submisionEpoch <= 1 {
 		// do not need to check ancestors for epoch 0 and 1
 		return nil
@@ -215,7 +213,6 @@ func (k Keeper) getEpochChanges(
 	ctx context.Context,
 	parentEpochBestSubmission *types.SubmissionBtcInfo,
 	ed *types.EpochData) *epochChangesSummary {
-
 	var submissionsToKeep []*types.SubmissionKey
 	var submissionsToDelete []*types.SubmissionKey
 	var currentEpochBestSubmission *types.SubmissionBtcInfo

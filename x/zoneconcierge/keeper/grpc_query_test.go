@@ -121,7 +121,6 @@ func FuzzHeader(f *testing.F) {
 		babylonApp := app.Setup(t, false)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 		ctx := babylonApp.NewContext(false)
-		consumerID := "test-consumerid"
 
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(r, 100) + 2
@@ -214,7 +213,6 @@ func FuzzEpochChainsInfo(f *testing.F) {
 
 				actualHeight := epochToChainInfo[epochNum][info.ConsumerId].headerStartHeight + (epochToChainInfo[epochNum][info.ConsumerId].numHeaders - 1)
 				require.Equal(t, actualHeight, info.LatestHeader.Height)
-
 			}
 		}
 
@@ -253,7 +251,6 @@ func FuzzListHeaders(f *testing.F) {
 		babylonApp := app.Setup(t, false)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 		ctx := babylonApp.NewContext(false)
-		consumerID := "test-consumerid"
 
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(r, 100) + 1
@@ -287,7 +284,6 @@ func FuzzListEpochHeaders(f *testing.F) {
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 		epochingKeeper := babylonApp.EpochingKeeper
 		ctx := babylonApp.NewContext(false)
-		consumerID := "test-consumerid"
 
 		hooks := zcKeeper.Hooks()
 

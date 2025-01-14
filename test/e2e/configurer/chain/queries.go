@@ -18,6 +18,7 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -39,7 +40,12 @@ func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]by
 
 	var resp *http.Response
 	require.Eventually(n.t, func() bool {
-		req, err := http.NewRequest("GET", fullQueryPath, nil)
+		req, err := http.NewRequestWithContext(
+			context.Background(),
+			http.MethodGet,
+			fullQueryPath,
+			nil,
+		)
 		if err != nil {
 			return false
 		}
@@ -86,6 +92,25 @@ func (n *NodeConfig) QueryModuleAddress(name string) (sdk.AccAddress, error) {
 	}
 
 	return account.GetAddress(), nil
+}
+
+// QueryAccount returns the account given the address
+func (n *NodeConfig) QueryAccount(address string) (sdk.AccountI, error) {
+	path := fmt.Sprintf("/cosmos/auth/v1beta1/accounts/%s", address)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var resp authtypes.QueryAccountResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	var account sdk.AccountI
+	if err := util.EncodingConfig.InterfaceRegistry.UnpackAny(resp.Account, &account); err != nil {
+		return nil, err
+	}
+
+	return account, nil
 }
 
 // QueryBalances returns balances at the address.
@@ -376,7 +401,7 @@ func (n *NodeConfig) QueryAppliedPlan(planName string) upgradetypes.QueryApplied
 	return resp
 }
 
-func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) sdk.TxResponse {
+func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) (sdk.TxResponse, *sdktx.Tx) {
 	cmd := []string{
 		"babylond", "q", "tx", "--type=hash", txHash, "--output=json",
 		n.FlagChainID(),
@@ -389,5 +414,45 @@ func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) sdk.TxRespon
 	err = util.Cdc.UnmarshalJSON(out.Bytes(), &txResp)
 	require.NoError(n.t, err)
 
-	return txResp
+	txAuth := txResp.Tx.GetCachedValue().(*sdktx.Tx)
+	return txResp, txAuth
+}
+
+func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch uint64) (lastFinalizedEpoch uint64) {
+	// finalize epochs from 1 to the current epoch
+	currentEpoch, err := n.QueryCurrentEpoch()
+	require.NoError(n.t, err)
+
+	// wait until the end epoch is sealed
+	require.Eventually(n.t, func() bool {
+		resp, err := n.QueryRawCheckpoint(currentEpoch)
+		if err != nil {
+			return false
+		}
+		return resp.Status == ct.Sealed
+	}, time.Minute*5, time.Millisecond*200)
+	n.FinalizeSealedEpochs(startEpoch, currentEpoch)
+
+	// ensure the committed epoch is finalized
+	require.Eventually(n.t, func() bool {
+		lastFinalizedEpoch, err = n.QueryLastFinalizedEpoch()
+		if err != nil {
+			return false
+		}
+		return lastFinalizedEpoch >= currentEpoch
+	}, time.Minute, time.Millisecond*200)
+	return lastFinalizedEpoch
+}
+
+func (n *NodeConfig) WaitFinalityIsActivated() (activatedHeight uint64) {
+	var err error
+	require.Eventually(n.t, func() bool {
+		activatedHeight, err = n.QueryActivatedHeight()
+		if err != nil {
+			return false
+		}
+		return activatedHeight > 0
+	}, time.Minute*4, time.Second)
+	n.t.Logf("the activated height is %d", activatedHeight)
+	return activatedHeight
 }

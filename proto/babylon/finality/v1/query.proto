@@ -163,6 +163,9 @@ message ActiveFinalityProvidersAtHeightResponse {
   uint32 slashed_btc_height = 5;
   // jailed defines whether the finality provider is detected jailed
   bool jailed = 6;
+  // highest_voted_height is the highest height for which the
+  // finality provider has voted
+  uint32 highest_voted_height = 7;
 }
 
 // QueryActiveFinalityProvidersAtHeightResponse is the response type for the

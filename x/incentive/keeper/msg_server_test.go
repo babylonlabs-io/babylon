@@ -63,3 +63,55 @@ func FuzzWithdrawReward(f *testing.F) {
 		require.True(t, newRg.IsFullyWithdrawn())
 	})
 }
+
+func FuzzSetWithdrawAddr(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock bank keeper
+		bk := types.NewMockBankKeeper(ctrl)
+
+		ik, ctx := testkeeper.IncentiveKeeper(t, bk, nil, nil)
+		ms := keeper.NewMsgServerImpl(*ik)
+
+		// generate and set a random reward gauge with a random set of withdrawable coins
+		rg := datagen.GenRandomRewardGauge(r)
+		rg.WithdrawnCoins = datagen.GenRandomWithdrawnCoins(r, rg.Coins)
+		sType := datagen.GenRandomStakeholderType(r)
+		sAddr := datagen.GenRandomAccount().GetAddress()
+		withdrawalAddr := datagen.GenRandomAccount().GetAddress()
+
+		ik.SetRewardGauge(ctx, sType, sAddr, rg)
+
+		// mock transfer of withdrawable coins
+		withdrawableCoins := rg.GetWithdrawableCoins()
+		bk.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), gomock.Eq(types.ModuleName), gomock.Eq(withdrawalAddr), gomock.Eq(withdrawableCoins)).Times(1)
+
+		_, err := ms.SetWithdrawAddress(ctx, &types.MsgSetWithdrawAddress{
+			DelegatorAddress: sAddr.String(),
+			WithdrawAddress:  withdrawalAddr.String(),
+		})
+		require.NoError(t, err)
+
+		rgauge := ik.GetRewardGauge(ctx, sType, sAddr)
+		require.NotNil(t, rgauge)
+		require.False(t, rgauge.IsFullyWithdrawn())
+
+		// invoke withdraw and assert consistency
+		resp, err := ms.WithdrawReward(ctx, &types.MsgWithdrawReward{
+			Type:    sType.String(),
+			Address: sAddr.String(),
+		})
+		require.NoError(t, err)
+		require.Equal(t, withdrawableCoins, resp.Coins)
+
+		// ensure reward gauge is now empty
+		newRg := ik.GetRewardGauge(ctx, sType, sAddr)
+		require.NotNil(t, newRg)
+		require.True(t, newRg.IsFullyWithdrawn())
+	})
+}

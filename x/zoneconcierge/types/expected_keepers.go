@@ -83,7 +83,7 @@ type BTCLightClientKeeper interface {
 	GetTipInfo(ctx context.Context) *btclctypes.BTCHeaderInfo
 	GetMainChainFrom(ctx context.Context, startHeight uint32) []*btclctypes.BTCHeaderInfo
 	GetMainChainUpTo(ctx context.Context, depth uint32) []*btclctypes.BTCHeaderInfo
-	GetHeaderByHash(ctx context.Context, hash *bbn.BTCHeaderHashBytes) *btclctypes.BTCHeaderInfo
+	GetHeaderByHash(ctx context.Context, hash *bbn.BTCHeaderHashBytes) (*btclctypes.BTCHeaderInfo, error)
 }
 
 type BtcCheckpointKeeper interface {

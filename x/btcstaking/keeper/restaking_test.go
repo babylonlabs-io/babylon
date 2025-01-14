@@ -8,6 +8,7 @@ import (
 	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/golang/mock/gomock"
@@ -28,11 +29,8 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		h.NoError(err)
 
 		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
-		wValue := h.BTCCheckpointKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
 
 		// generate and insert new Babylon finality provider
 		_, fpPK, _ := h.CreateFinalityProvider(r)
@@ -67,17 +65,18 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		_, randomFPPK, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		_, _, _, _, _, _, err = h.CreateDelegation(
+		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			[]*btcec.PublicKey{fpPK, randomFPPK},
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
 			0,
 			false,
 			false,
+			10,
+			30,
 		)
 		h.Error(err)
 		require.True(t, errors.Is(err, types.ErrFpNotFound))
@@ -85,17 +84,18 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		/*
 			ensure BTC delegation request will fail if no PK corresponds to a Babylon fp
 		*/
-		_, _, _, _, _, _, err = h.CreateDelegation(
+		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			[]*btcec.PublicKey{czFPPK},
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
 			0,
 			false,
 			false,
+			10,
+			30,
 		)
 		h.Error(err)
 		require.True(t, errors.Is(err, types.ErrNoBabylonFPRestaked), err)
@@ -103,29 +103,31 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		/*
 			happy case -- restaking to a Babylon fp and a consumer fp
 		*/
-		_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegation(
+
+		_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			[]*btcec.PublicKey{fpPK, czFPPK},
-			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 			0,
 			0,
 			false,
 			false,
+			10,
+			30,
 		)
 		h.NoError(err)
 
 		// add covenant signatures to this restaked BTC delegation
-		h.CreateCovenantSigs(r, covenantSKs, msgBTCDel, actualDel)
+		h.CreateCovenantSigs(r, covenantSKs, msgBTCDel, actualDel, 10)
 
 		// ensure the restaked BTC delegation is bonded right now
 		stakingTxHash := actualDel.MustGetStakingTxHash()
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash.String())
 		h.NoError(err)
 		btcTip := h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height
-		status := actualDel.GetStatus(btcTip, wValue, bsParams.CovenantQuorum)
+		status := actualDel.GetStatus(btcTip, bsParams.CovenantQuorum)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 	})
 }
@@ -144,12 +146,10 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 
 		// set all parameters
 		h.GenAndApplyParams(r)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-		h.NoError(err)
 
 		// register a new consumer
 		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
-		err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+		err := h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
 		require.NoError(t, err)
 
 		// generate and insert new Babylon finality provider
@@ -166,21 +166,24 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 		for j := uint64(0); j < numBTCDels; j++ {
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			h.NoError(err)
-			_, _, btcDel, _, _, _, err := h.CreateDelegation(
+			_, _, btcDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 				r,
 				delSK,
 				[]*btcec.PublicKey{fpPK, czFPPK},
-				changeAddress.EncodeAddress(),
 				stakingValue,
 				1000,
 				0,
 				0,
 				false,
 				false,
+				10,
+				30,
 			)
 			h.NoError(err)
 			expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
 		}
+
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 
 		// Test nil request
 		resp, err := h.BTCStakingKeeper.FinalityProviderDelegations(h.Ctx, nil)

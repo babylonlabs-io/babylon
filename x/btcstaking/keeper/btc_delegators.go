@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
+
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -74,13 +75,14 @@ func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP
 func (k Keeper) GetFPBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) ([]*types.BTCDelegation, error) {
 	var store prefix.Store
 	// Determine which store to use based on the finality provider type
-	if k.HasFinalityProvider(ctx, *fpBTCPK) {
+	switch {
+	case k.HasFinalityProvider(ctx, *fpBTCPK):
 		// Babylon finality provider
 		store = k.btcDelegatorFpStore(ctx, fpBTCPK)
-	} else if k.BscKeeper.HasConsumerFinalityProvider(ctx, fpBTCPK) {
+	case k.BscKeeper.HasConsumerFinalityProvider(ctx, fpBTCPK):
 		// Consumer finality provider
 		store = k.btcConsumerDelegatorStore(ctx, fpBTCPK)
-	} else {
+	default:
 		// if not found in either store, return error
 		return nil, types.ErrFpNotFound
 	}

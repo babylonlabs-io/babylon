@@ -57,7 +57,6 @@ func (cm *RawCheckpointWithMeta) Accumulate(
 	signerBlsKey bls12381.PublicKey,
 	sig bls12381.Signature,
 	totalPower int64) error {
-
 	// the checkpoint should be accumulating
 	if cm.Status != Accumulating {
 		return ErrCkptNotAccumulating

@@ -1,6 +1,7 @@
 package configurer
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -156,7 +157,17 @@ func (bc *baseConfigurer) runHermesIBCRelayer(chainConfigA *chain.Config, chainC
 	endpoint := fmt.Sprintf("http://%s/state", hermesResource.GetHostPort("3031/tcp"))
 
 	require.Eventually(bc.t, func() bool {
-		resp, err := http.Get(endpoint)
+		req, err := http.NewRequestWithContext(
+			context.Background(),
+			http.MethodGet,
+			endpoint,
+			nil,
+		)
+		if err != nil {
+			return false
+		}
+
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			return false
 		}

@@ -8,6 +8,7 @@ import (
 
 	dbm "github.com/cosmos/cosmos-db"
 
+	"github.com/babylonlabs-io/babylon/testutil/signer"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 
 	"github.com/cosmos/cosmos-sdk/x/genutil"
@@ -89,7 +90,7 @@ func generateTestGenesisState(t *testing.T, home string, n int) (*app.BabylonApp
 	logger := log.NewNopLogger()
 	cfg, _ := genutiltest.CreateDefaultCometConfig(home)
 
-	signer, err := app.SetupTestPrivSigner()
+	signer, err := signer.SetupTestPrivSigner()
 	require.NoError(t, err)
 	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
 		Logger:             logger,

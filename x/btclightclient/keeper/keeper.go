@@ -165,7 +165,7 @@ func (k Keeper) InsertHeadersWithHookAndEvents(ctx context.Context, headers []bb
 		return types.ErrEmptyMessage
 	}
 
-	blockHeaders := btcHeadersBytesToBlockHeader(headers)
+	blockHeaders := BtcHeadersBytesToBlockHeader(headers)
 	return k.insertHeadersWithHookAndEvents(ctx, blockHeaders)
 }
 
@@ -174,11 +174,11 @@ func (k Keeper) InsertHeaders(ctx context.Context, headers []bbn.BTCHeaderBytes)
 		return types.ErrEmptyMessage
 	}
 
-	blockHeaders := btcHeadersBytesToBlockHeader(headers)
+	blockHeaders := BtcHeadersBytesToBlockHeader(headers)
 	return k.insertHeaders(ctx, blockHeaders)
 }
 
-func btcHeadersBytesToBlockHeader(headers []bbn.BTCHeaderBytes) []*wire.BlockHeader {
+func BtcHeadersBytesToBlockHeader(headers []bbn.BTCHeaderBytes) []*wire.BlockHeader {
 	blockHeaders := make([]*wire.BlockHeader, len(headers))
 	for i, header := range headers {
 		blockHeaders[i] = header.ToBlockHeader()
@@ -230,14 +230,8 @@ func (k Keeper) GetTipInfo(ctx context.Context) *types.BTCHeaderInfo {
 }
 
 // GetHeaderByHash returns header with given hash, if it does not exists returns nil
-func (k Keeper) GetHeaderByHash(ctx context.Context, hash *bbn.BTCHeaderHashBytes) *types.BTCHeaderInfo {
-	info, err := k.headersState(ctx).GetHeaderByHash(hash)
-
-	if err != nil {
-		return nil
-	}
-
-	return info
+func (k Keeper) GetHeaderByHash(ctx context.Context, hash *bbn.BTCHeaderHashBytes) (*types.BTCHeaderInfo, error) {
+	return k.headersState(ctx).GetHeaderByHash(hash)
 }
 
 // GetHeaderByHeight returns header with given height from main chain, returns nil if such header is not found

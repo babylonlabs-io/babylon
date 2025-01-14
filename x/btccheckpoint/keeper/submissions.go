@@ -3,8 +3,9 @@ package keeper
 import (
 	"context"
 	"fmt"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -49,7 +50,6 @@ func (k Keeper) addEpochSubmission(
 	sk types.SubmissionKey,
 	sd types.SubmissionData,
 ) error {
-
 	ed := k.GetEpochData(ctx, epochNum)
 
 	// TODO: SaveEpochData and SaveSubmission should be done in one transaction.
@@ -121,17 +121,17 @@ func (k Keeper) GetSubmissionData(ctx context.Context, sk types.SubmissionKey) *
 
 func (k Keeper) checkSubmissionStatus(ctx context.Context, info *types.SubmissionBtcInfo) types.BtcStatus {
 	subDepth := info.SubmissionDepth()
-	if subDepth >= k.GetParams(ctx).CheckpointFinalizationTimeout {
+	switch {
+	case subDepth >= k.GetParams(ctx).CheckpointFinalizationTimeout:
 		return types.Finalized
-	} else if subDepth >= k.GetParams(ctx).BtcConfirmationDepth {
+	case subDepth >= k.GetParams(ctx).BtcConfirmationDepth:
 		return types.Confirmed
-	} else {
+	default:
 		return types.Submitted
 	}
 }
 
 func (k Keeper) GetSubmissionBtcInfo(ctx context.Context, sk types.SubmissionKey) (*types.SubmissionBtcInfo, error) {
-
 	var youngestBlockDepth uint32 = math.MaxUint32
 	var youngestBlockHash *bbn.BTCHeaderHashBytes
 

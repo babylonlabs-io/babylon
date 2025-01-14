@@ -266,7 +266,7 @@ func (c *Client) SendMessageWithSigner(
 		return nil, err
 	}
 
-	//txf ready
+	// txf ready
 	_, adjusted, err := c.CalculateGas(ctx, txf, signerPvKey.PubKey(), cMsgs...)
 	if err != nil {
 		return nil, err

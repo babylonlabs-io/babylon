@@ -2,13 +2,22 @@ package wasmbinding
 
 import (
 	"encoding/json"
+	"errors"
 	"math/rand"
+	"os"
 	"runtime"
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	"github.com/cometbft/cometbft/crypto"
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/app"
@@ -19,11 +28,12 @@ import (
 // TODO consider doing it by environmental variables as currently it may fail on some
 // weird architectures
 func getArtifactPath() string {
-	if runtime.GOARCH == "amd64" {
+	switch runtime.GOARCH {
+	case "amd64":
 		return "../testdata/artifacts/testdata.wasm"
-	} else if runtime.GOARCH == "arm64" {
+	case "arm64":
 		return "../testdata/artifacts/testdata-aarch64.wasm"
-	} else {
+	default:
 		panic("Unsupported architecture")
 	}
 }
@@ -41,13 +51,13 @@ func TestQueryEpoch(t *testing.T) {
 		Epoch: &struct{}{},
 	}
 	resp := bindings.CurrentEpochResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 	require.Equal(t, resp.Epoch, uint64(1))
 
 	newEpoch := babylonApp.EpochingKeeper.IncEpoch(ctx)
 
 	resp = bindings.CurrentEpochResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 	require.Equal(t, resp.Epoch, newEpoch.EpochNumber)
 }
 
@@ -65,7 +75,7 @@ func TestFinalizedEpoch(t *testing.T) {
 
 	// Only epoch 0 is finalised at genesis
 	resp := bindings.LatestFinalizedEpochInfoResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 	require.Equal(t, resp.EpochInfo.EpochNumber, uint64(0))
 	require.Equal(t, resp.EpochInfo.LastBlockHeight, uint64(0))
 
@@ -73,7 +83,7 @@ func TestFinalizedEpoch(t *testing.T) {
 	babylonApp.CheckpointingKeeper.SetCheckpointFinalized(ctx, epoch.EpochNumber)
 
 	resp = bindings.LatestFinalizedEpochInfoResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 	require.Equal(t, resp.EpochInfo.EpochNumber, epoch.EpochNumber)
 	require.Equal(t, resp.EpochInfo.LastBlockHeight, epoch.GetLastBlockHeight())
 }
@@ -90,7 +100,7 @@ func TestQueryBtcTip(t *testing.T) {
 	}
 
 	resp := bindings.BtcTipResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 
 	tip := babylonApp.BTCLightClientKeeper.GetTipInfo(ctx)
 	tipAsInfo := bindings.AsBtcBlockHeaderInfo(tip)
@@ -111,7 +121,7 @@ func TestQueryBtcBase(t *testing.T) {
 	}
 
 	resp := bindings.BtcBaseHeaderResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 
 	base := babylonApp.BTCLightClientKeeper.GetBaseBTCHeader(ctx)
 	baseAsInfo := bindings.AsBtcBlockHeaderInfo(base)
@@ -135,7 +145,7 @@ func TestQueryBtcByHash(t *testing.T) {
 
 	headerAsInfo := bindings.AsBtcBlockHeaderInfo(tip)
 	resp := bindings.BtcHeaderQueryResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 
 	require.Equal(t, resp.HeaderInfo, headerAsInfo)
 }
@@ -156,7 +166,7 @@ func TestQueryBtcByNumber(t *testing.T) {
 
 	headerAsInfo := bindings.AsBtcBlockHeaderInfo(tip)
 	resp := bindings.BtcHeaderQueryResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
 
 	require.Equal(t, resp.HeaderInfo, headerAsInfo)
 }
@@ -174,7 +184,7 @@ func TestQueryNonExistingHeader(t *testing.T) {
 		},
 	}
 	resp := bindings.BtcHeaderQueryResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHeight, &resp)
+	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHeight, &resp, nil)
 	require.Nil(t, resp.HeaderInfo)
 
 	// Random source for the generation of BTC hash
@@ -185,8 +195,107 @@ func TestQueryNonExistingHeader(t *testing.T) {
 		},
 	}
 	resp1 := bindings.BtcHeaderQueryResponse{}
-	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHash, &resp1)
+	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHash, &resp1, errors.New("Generic error: Querier contract error: codespace: btclightclient, code: 1100: query wasm contract failed"))
 	require.Nil(t, resp1.HeaderInfo)
+}
+
+//nolint:unused
+func setupAppWithContext(t *testing.T) (*app.BabylonApp, sdk.Context) {
+	return setupAppWithContextAndCustomHeight(t, 1)
+}
+
+//nolint:unused
+func setupAppWithContextAndCustomHeight(t *testing.T, height int64) (*app.BabylonApp, sdk.Context) {
+	babylonApp := app.Setup(t, false)
+	ctx := babylonApp.BaseApp.NewContext(false).
+		WithBlockHeader(cmtproto.Header{Height: height, Time: time.Now().UTC()})
+	return babylonApp, ctx
+}
+
+//nolint:unused
+func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
+	key := ed25519.GenPrivKey()
+	pub := key.PubKey()
+	addr := sdk.AccAddress(pub.Address())
+	return key, pub, addr
+}
+
+//nolint:unused
+func randomAccountAddress() sdk.AccAddress {
+	_, _, addr := keyPubAddr()
+	return addr
+}
+
+//nolint:unused
+func mintCoinsTo(
+	bankKeeper bankkeeper.Keeper,
+	ctx sdk.Context,
+	addr sdk.AccAddress,
+	amounts sdk.Coins) error {
+	if err := bankKeeper.MintCoins(ctx, minttypes.ModuleName, amounts); err != nil {
+		return err
+	}
+
+	return bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, amounts)
+}
+
+//nolint:unused
+func fundAccount(
+	t *testing.T,
+	ctx sdk.Context,
+	bbn *app.BabylonApp,
+	acc sdk.AccAddress) {
+	err := mintCoinsTo(bbn.BankKeeper, ctx, acc, sdk.NewCoins(
+		sdk.NewCoin("ubbn", math.NewInt(10000000000)),
+	))
+	require.NoError(t, err)
+}
+
+//nolint:unused
+func storeTestCodeCode(
+	t *testing.T,
+	ctx sdk.Context,
+	babylonApp *app.BabylonApp,
+	addr sdk.AccAddress,
+	codePath string,
+) (uint64, []byte) {
+	wasmCode, err := os.ReadFile(codePath)
+
+	require.NoError(t, err)
+	permKeeper := keeper.NewPermissionedKeeper(babylonApp.WasmKeeper, keeper.DefaultAuthorizationPolicy{})
+	id, checksum, err := permKeeper.Create(ctx, addr, wasmCode, nil)
+	require.NoError(t, err)
+	return id, checksum
+}
+
+//nolint:unused
+func instantiateExampleContract(
+	t *testing.T,
+	ctx sdk.Context,
+	bbn *app.BabylonApp,
+	funder sdk.AccAddress,
+	codeId uint64,
+) sdk.AccAddress {
+	initMsgBz := []byte("{}")
+	contractKeeper := keeper.NewDefaultPermissionKeeper(bbn.WasmKeeper)
+	addr, _, err := contractKeeper.Instantiate(ctx, codeId, funder, funder, initMsgBz, "demo contract", nil)
+	require.NoError(t, err)
+	return addr
+}
+
+//nolint:unused
+func deployTestContract(
+	t *testing.T,
+	ctx sdk.Context,
+	bbn *app.BabylonApp,
+	deployer sdk.AccAddress,
+	codePath string,
+) sdk.AccAddress {
+	codeId, _ := storeTestCodeCode(t, ctx, bbn, deployer, codePath)
+
+	contractAddr := instantiateExampleContract(t, ctx, bbn, deployer, codeId)
+
+	return contractAddr
 }
 
 type ExampleQuery struct {
@@ -208,6 +317,7 @@ func queryCustom(
 	contract sdk.AccAddress,
 	request bindings.BabylonQuery,
 	response interface{},
+	expectedError error,
 ) {
 	msgBz, err := json.Marshal(request)
 	require.NoError(t, err)
@@ -221,6 +331,11 @@ func queryCustom(
 	require.NoError(t, err)
 
 	resBz, err := bbn.WasmKeeper.QuerySmart(ctx, contract, queryBz)
+	if expectedError != nil {
+		require.EqualError(t, expectedError, err.Error())
+		return
+	}
+
 	require.NoError(t, err)
 	var resp ChainResponse
 	err = json.Unmarshal(resBz, &resp)

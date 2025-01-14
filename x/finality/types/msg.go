@@ -1,17 +1,19 @@
 package types
 
 import (
-	fmt "fmt"
+	"fmt"
 
-	"github.com/babylonlabs-io/babylon/crypto/eots"
-	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/crypto/eots"
+	bbn "github.com/babylonlabs-io/babylon/types"
 )
 
 // ensure that these message types implement the sdk.Msg interface
 var (
+	_ sdk.Msg = &MsgResumeFinalityProposal{}
 	_ sdk.Msg = &MsgUpdateParams{}
 	_ sdk.Msg = &MsgAddFinalitySig{}
 	_ sdk.Msg = &MsgCommitPubRandList{}

@@ -16,6 +16,7 @@ type Node struct {
 	PublicAddress string `json:"publicAddress"`
 	WalletName    string `json:"walletName"`
 	PublicKey     []byte `json:"publicKey"`
+	PrivateKey    []byte `json:"privateKey"`
 	PeerId        string `json:"peerId"`
 	IsValidator   bool   `json:"isValidator"`
 }

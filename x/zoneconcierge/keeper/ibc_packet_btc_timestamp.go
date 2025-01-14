@@ -163,7 +163,6 @@ func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHe
 // - either the whole known chain if we did not broadcast any headers yet
 // - headers from the child of the most recent header we sent which is still in the main chain up to the current tip
 func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHeaderInfo {
-
 	lastSegment := k.GetLastSentSegment(ctx)
 
 	if lastSegment == nil {
@@ -180,7 +179,7 @@ func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHead
 	var initHeader *btclctypes.BTCHeaderInfo
 	for i := len(lastSegment.BtcHeaders) - 1; i >= 0; i-- {
 		header := lastSegment.BtcHeaders[i]
-		if k.btclcKeeper.GetHeaderByHash(ctx, header.Hash) != nil {
+		if header, err := k.btclcKeeper.GetHeaderByHash(ctx, header.Hash); err == nil && header != nil {
 			initHeader = header
 			break
 		}

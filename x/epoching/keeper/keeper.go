@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	corestoretypes "cosmossdk.io/core/store"
@@ -32,7 +33,6 @@ func NewKeeper(
 	stk types.StakingKeeper,
 	authority string,
 ) Keeper {
-
 	return Keeper{
 		cdc:          cdc,
 		storeService: storeService,

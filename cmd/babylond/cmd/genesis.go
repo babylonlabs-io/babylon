@@ -72,7 +72,8 @@ Example:
 			chainID := args[1]
 
 			var genesisParams GenesisParams
-			if network == "testnet" {
+			switch network {
+			case "testnet":
 				genesisParams = TestnetGenesisParams(
 					genesisCliArgs.MaxActiveValidators,
 					genesisCliArgs.BtcConfirmationDepth,
@@ -93,7 +94,7 @@ Example:
 					genesisCliArgs.MinCommissionRate,
 					genesisCliArgs.SlashingRate,
 					genesisCliArgs.MaxActiveFinalityProviders,
-					genesisCliArgs.MinUnbondingTime,
+					genesisCliArgs.UnbondingTime,
 					genesisCliArgs.UnbondingFeeSat,
 					genesisCliArgs.InflationRateChange,
 					genesisCliArgs.InflationMin,
@@ -109,9 +110,9 @@ Example:
 					genesisCliArgs.JailDuration,
 					genesisCliArgs.FinalityActivationBlockHeight,
 				)
-			} else if network == "mainnet" {
+			case "mainnet":
 				panic("Mainnet params not implemented.")
-			} else {
+			default:
 				return fmt.Errorf("please choose testnet or mainnet")
 			}
 
@@ -154,7 +155,6 @@ func PrepareGenesis(
 
 	if genesis.Consensus == nil {
 		genesis.Consensus = genutiltypes.NewConsensusGenesis(comettypes.DefaultConsensusParams().ToProto(), nil)
-
 	}
 
 	// Set gas limit
@@ -289,7 +289,7 @@ func TestnetGenesisParams(
 	minCommissionRate sdkmath.LegacyDec,
 	slashingRate sdkmath.LegacyDec,
 	maxActiveFinalityProviders uint32,
-	minUnbondingTime uint16,
+	unbondingTime uint16,
 	unbondingFeeSat int64,
 	inflationRateChange float64,
 	inflationMin float64,
@@ -305,7 +305,6 @@ func TestnetGenesisParams(
 	jailDuration time.Duration,
 	finalityActivationBlockHeight uint64,
 ) GenesisParams {
-
 	genParams := GenesisParams{}
 
 	genParams.GenesisTime = genesisTime
@@ -403,7 +402,7 @@ func TestnetGenesisParams(
 	genParams.BtcstakingParams.MinSlashingTxFeeSat = minSlashingFee
 	genParams.BtcstakingParams.MinCommissionRate = minCommissionRate
 	genParams.BtcstakingParams.SlashingRate = slashingRate
-	genParams.BtcstakingParams.MinUnbondingTimeBlocks = uint32(minUnbondingTime)
+	genParams.BtcstakingParams.UnbondingTimeBlocks = uint32(unbondingTime)
 	genParams.BtcstakingParams.UnbondingFeeSat = unbondingFeeSat
 	if err := genParams.BtcstakingParams.Validate(); err != nil {
 		panic(err)

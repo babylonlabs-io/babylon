@@ -79,6 +79,20 @@ func (mr *MockEpochingKeeperMockRecorder) GetEpoch(ctx interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpoch", reflect.TypeOf((*MockEpochingKeeper)(nil).GetEpoch), ctx)
 }
 
+// GetEpochNumByHeight mocks base method.
+func (m *MockEpochingKeeper) GetEpochNumByHeight(ctx context.Context, height uint64) uint64 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEpochNumByHeight", ctx, height)
+	ret0, _ := ret[0].(uint64)
+	return ret0
+}
+
+// GetEpochNumByHeight indicates an expected call of GetEpochNumByHeight.
+func (mr *MockEpochingKeeperMockRecorder) GetEpochNumByHeight(ctx, height interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpochNumByHeight", reflect.TypeOf((*MockEpochingKeeper)(nil).GetEpochNumByHeight), ctx, height)
+}
+
 // GetPubKeyByConsAddr mocks base method.
 func (m *MockEpochingKeeper) GetPubKeyByConsAddr(ctx context.Context, consAddr types1.ConsAddress) (crypto.PublicKey, error) {
 	m.ctrl.T.Helper()

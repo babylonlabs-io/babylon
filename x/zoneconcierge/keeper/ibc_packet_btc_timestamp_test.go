@@ -25,12 +25,12 @@ func genRandomChain(
 	ctx context.Context,
 	initialHeight uint32,
 	chainLength uint32,
-) *datagen.BTCHeaderPartialChain {
+) *datagen.BTCHeaderPartialChain { //nolint:unparam // randomChain is used for test setup
 	initHeader := k.GetHeaderByHeight(ctx, initialHeight)
 	randomChain := datagen.NewBTCHeaderChainFromParentInfo(
 		r,
 		initHeader,
-		uint32(chainLength),
+		chainLength,
 	)
 	err := k.InsertHeadersWithHookAndEvents(ctx, randomChain.ChainToBytes())
 	require.NoError(t, err)
@@ -108,7 +108,7 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		// NOTE: it's possible that the last segment is totally reverted. We want to be resilient against
 		// this, by sending the BTC headers since the last reorg point
 		reorgPoint := uint32(datagen.RandomInt(r, int(btcTip.Height)))
-		revertedChainLength := btcTip.Height - uint32(reorgPoint)
+		revertedChainLength := btcTip.Height - reorgPoint
 		// the fork chain needs to be longer than the canonical one
 		forkChainLength := revertedChainLength + uint32(datagen.RandomInt(r, 10)) + 1
 		genRandomChain(

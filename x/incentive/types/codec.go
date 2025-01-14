@@ -10,6 +10,7 @@ import (
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgWithdrawReward{}, "incentive/MsgWithdrawReward", nil)
 	cdc.RegisterConcrete(&MsgUpdateParams{}, "incentive/MsgUpdateParams", nil)
+	cdc.RegisterConcrete(&MsgSetWithdrawAddress{}, "incentive/MsgSetWithdrawAddress", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -18,6 +19,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		(*sdk.Msg)(nil),
 		&MsgWithdrawReward{},
 		&MsgUpdateParams{},
+		&MsgSetWithdrawAddress{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

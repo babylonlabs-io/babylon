@@ -45,8 +45,8 @@ func FundAccount(
 	t *testing.T,
 	ctx sdk.Context,
 	bbn *app.BabylonApp,
-	acc sdk.AccAddress) {
-
+	acc sdk.AccAddress,
+) {
 	err := MintCoinsTo(bbn.BankKeeper, ctx, acc, sdk.NewCoins(
 		sdk.NewCoin("ubbn", math.NewInt(10000000000)),
 	))

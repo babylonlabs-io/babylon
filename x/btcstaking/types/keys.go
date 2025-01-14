@@ -26,6 +26,7 @@ var (
 	// 0x07 was used for something else in the past
 	PowerDistUpdateKey        = []byte{0x08}             // key prefix for power distribution update events
 	AllowedStakingTxHashesKey = collections.NewPrefix(9) // key prefix for allowed staking tx hashes
-	BTCConsumerDelegatorKey   = []byte{0x10}             // key prefix for the Consumer BTC delegators
-	BTCStakingEventKey        = []byte{0x11}             // key prefix for the BTC staking events
+	HeightToVersionMapKey     = []byte{0x10}             // key prefix for height to version map
+	BTCConsumerDelegatorKey   = []byte{0x11}             // key prefix for the Consumer BTC delegators
+	BTCStakingEventKey        = []byte{0x12}             // key prefix for the BTC staking events
 )

@@ -13,6 +13,7 @@ import (
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
 	"github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/testutil/sample"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
@@ -33,8 +34,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) SetupSuite() {
 	var err error
 	s.balancesBeforeUpgrade = make(map[string]sdk.Coin)
 
-	btcHeaderGenesis, err := app.SignetBtcHeaderGenesis(app.NewTmpBabylonApp().AppCodec())
-	s.NoError(err)
+	btcHeaderGenesis := sample.SignetBtcHeader195552(s.T())
 
 	tokenDistData, err := v1.LoadTokenDistributionFromData(testnet.TokensDistributionStr)
 	s.NoError(err)
@@ -48,14 +48,15 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) SetupSuite() {
 	// func only runs right before the upgrade proposal is sent
 	preUpgradeFunc := func(chains []*chain.Config) {
 		node := chains[0].NodeConfigs[1]
-		uniqueAddrs := make(map[string]any)
+		uniqueAddrsTokenReceivers := make(map[string]any)
 
 		for addr, amountToMint := range balanceToMintByAddr {
-			uniqueAddrs[addr] = struct{}{}
+			s.balancesBeforeUpgrade[addr] = sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.ZeroInt())
 			if amountToMint <= 0 {
 				continue
 			}
 
+			uniqueAddrsTokenReceivers[addr] = struct{}{}
 			amountToSend := sdk.NewCoin(appparams.BaseCoinUnit, sdkmath.NewInt(amountToMint))
 			node.BankSendFromNode(addr, amountToSend.String())
 		}
@@ -63,10 +64,12 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) SetupSuite() {
 		// needs to wait for a block to make sure the send tx was processed and
 		// it queries the real balances before upgrade.
 		node.WaitForNextBlock()
-		for addr := range uniqueAddrs {
+
+		// only verifies the balances of the ones that had to receive something
+		// from the node and all the others should be zero
+		for addr := range uniqueAddrsTokenReceivers {
 			balance, err := node.QueryBalance(addr, appparams.DefaultBondDenom)
 			s.NoError(err)
-
 			s.balancesBeforeUpgrade[addr] = *balance
 		}
 	}
@@ -94,8 +97,8 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TearDownSuite() {
 	}
 }
 
-// TestUpgradeSignetLaunch Checks if the BTC Headers were inserted.
-func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
+// TestUpgradeV1 Checks if the BTC Headers were inserted.
+func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeV1() {
 	// chain is already upgraded, only checks for differences in state are expected
 	chainA := s.configurer.GetChainConfig(0)
 
@@ -108,7 +111,7 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	fptBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
-	fp := CreateNodeFP(
+	fp := CreateNodeFPFromNodeAddr(
 		s.T(),
 		r,
 		fptBTCSK,
@@ -128,7 +131,8 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	lenHeadersInserted := len(btcHeadersInserted)
 	oldHeadersStoredLen := 1 // only block zero is set by default in genesis for e2e test
 
-	storedBtcHeadersResp := n.QueryBtcLightClientMainchain()
+	// needs to do pagination as the default query only returns the first 100
+	storedBtcHeadersResp := n.QueryBtcLightClientMainchainAll()
 	storedHeadersLen := len(storedBtcHeadersResp)
 	s.Equal(storedHeadersLen, oldHeadersStoredLen+lenHeadersInserted)
 
@@ -145,10 +149,17 @@ func (s *SoftwareUpgradeV1TestnetTestSuite) TestUpgradeSignetLaunch() {
 	// as the one from the data
 	stakingParams := n.QueryBTCStakingParams()
 
-	stakingParamsFromData, err := v1.LoadBtcStakingParamsFromData(bbnApp.AppCodec(), testnet.BtcStakingParamStr)
+	bsParamsFromUpgrade, err := v1.LoadBtcStakingParamsFromData(testnet.BtcStakingParamsStr)
 	s.NoError(err)
 
-	s.EqualValues(stakingParamsFromData, *stakingParams)
+	lastParamInUpgradeData := bsParamsFromUpgrade[len(bsParamsFromUpgrade)-1]
+	s.EqualValues(lastParamInUpgradeData, *stakingParams)
+
+	// expected version starts at 0 since the upgrade overwrites the params
+	for expVersion, paramsInUpgradeData := range bsParamsFromUpgrade {
+		bsParamsAtBtcHeight := n.QueryBTCStakingParamsByVersion(uint32(expVersion))
+		s.Equal(*bsParamsAtBtcHeight, paramsInUpgradeData)
+	}
 
 	// check that finality params correctly deserialize and that they are the same
 	// as the one from the data

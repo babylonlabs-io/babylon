@@ -433,6 +433,10 @@ func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
 	return sdk.BigEndianToUint64(epochNumberBytes)
 }
 
+func (k Keeper) GetEpochByHeight(ctx context.Context, height uint64) uint64 {
+	return k.epochingKeeper.GetEpochNumByHeight(ctx, height)
+}
+
 // SetLastFinalizedEpoch sets the last finalised epoch
 func (k Keeper) SetLastFinalizedEpoch(ctx context.Context, epochNumber uint64) {
 	store := k.storeService.OpenKVStore(ctx)

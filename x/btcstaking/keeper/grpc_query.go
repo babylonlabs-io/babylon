@@ -102,8 +102,6 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 
 	// get current BTC height
 	btcTipHeight := k.btclcKeeper.GetTipInfo(ctx).Height
-	// get value of w
-	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
 	store := k.btcDelegationStore(ctx)
 	var btcDels []*types.BTCDelegationResponse
@@ -112,7 +110,7 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 		k.cdc.MustUnmarshal(value, &btcDel)
 
 		// hit if the queried status is ANY or matches the BTC delegation status
-		status := btcDel.GetStatus(btcTipHeight, wValue, covenantQuorum)
+		status := btcDel.GetStatus(btcTipHeight, covenantQuorum)
 		if req.Status == types.BTCDelegationStatus_ANY || status == req.Status {
 			if accumulate {
 				resp := types.NewBTCDelegationResponse(&btcDel, status)
@@ -158,8 +156,8 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 		btcDels []*types.BTCDelegatorDelegationsResponse
 		pageRes *query.PageResponse
 	)
-
-	if k.HasFinalityProvider(ctx, *fpPK) {
+	switch {
+	case k.HasFinalityProvider(ctx, *fpPK):
 		// this is a Babylon finality provider
 		btcDelStore := k.btcDelegatorFpStore(sdkCtx, fpPK)
 		pageRes, err = query.Paginate(btcDelStore, req.Pagination, func(key, value []byte) error {
@@ -174,7 +172,6 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 			for i, btcDel := range curBTCDels.Dels {
 				status := btcDel.GetStatus(
 					btcHeight,
-					currentWValue,
 					covenantQuorum,
 				)
 				btcDelsResp[i] = types.NewBTCDelegationResponse(btcDel, status)
@@ -188,13 +185,15 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 		if err != nil {
 			return nil, err
 		}
-	} else if k.BscKeeper.HasConsumerFinalityProvider(ctx, fpPK) {
+
+	case k.BscKeeper.HasConsumerFinalityProvider(ctx, fpPK):
 		// this is a consumer finality provider
 		btcDels, pageRes, err = k.GetBTCConsumerDelegatorDelegationsResponses(sdkCtx, fpPK, req.Pagination, currentWValue, btcHeight, covenantQuorum)
 		if err != nil {
 			return nil, err
 		}
-	} else {
+
+	default:
 		// the given finality provider is not found
 		return nil, types.ErrFpNotFound
 	}
@@ -220,10 +219,8 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 		return nil, types.ErrBTCDelegationNotFound
 	}
 
-	currentWValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 	status := btcDel.GetStatus(
 		k.btclcKeeper.GetTipInfo(ctx).Height,
-		currentWValue,
 		k.GetParams(ctx).CovenantQuorum,
 	)
 

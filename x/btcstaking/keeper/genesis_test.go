@@ -6,23 +6,45 @@ import (
 	"strings"
 	"testing"
 
+	"cosmossdk.io/log"
+	"cosmossdk.io/store"
+	storemetrics "cosmossdk.io/store/metrics"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/stretchr/testify/require"
+
+	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
+	testnetdata "github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/testutil/helper"
+	testutilk "github.com/babylonlabs-io/babylon/testutil/keeper"
 	btclightclientt "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/stretchr/testify/require"
 )
+
+func TestInitGenesisWithSetParams(t *testing.T) {
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+	k, ctx := testutilk.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, nil)
+
+	err := k.InitGenesis(ctx, *types.DefaultGenesis())
+	require.NoError(t, err)
+
+	params, err := v1.LoadBtcStakingParamsFromData(testnetdata.BtcStakingParamsStr)
+	require.NoError(t, err)
+
+	for _, p := range params {
+		err = k.SetParams(ctx, p)
+		require.NoError(t, err)
+	}
+}
 
 func TestExportGenesis(t *testing.T) {
 	r, h := rand.New(rand.NewSource(11)), helper.NewHelper(t)
-	k, btclcK, btcCheckK, ctx := h.App.BTCStakingKeeper, h.App.BTCLightClientKeeper, h.App.BtcCheckpointKeeper, h.Ctx
+	k, btclcK, ctx := h.App.BTCStakingKeeper, h.App.BTCLightClientKeeper, h.Ctx
 	numFps := 3
 
 	fps := datagen.CreateNFinalityProviders(r, t, numFps)
 	params := k.GetParams(ctx)
-	btcckptParams := btcCheckK.GetParams(ctx)
-
-	minUnbondingTime := types.MinimumUnbondingTime(&params, &btcckptParams)
 
 	chainsHeight := make([]*types.BlockHeightBbnToBtc, 0)
 	// creates the first as it starts already with an chain height from the helper.
@@ -62,7 +84,7 @@ func TestExportGenesis(t *testing.T) {
 			totalDelegations++
 
 			// sets delegations
-			h.AddDelegation(del, minUnbondingTime)
+			h.AddDelegation(del)
 			btcDelegations = append(btcDelegations, del)
 
 			// BTC delegators idx
@@ -81,17 +103,17 @@ func TestExportGenesis(t *testing.T) {
 				DelBtcPk: del.BtcPk,
 			}
 
-			// record event that the BTC delegation will become unbonded at endHeight-w
+			// record event that the BTC delegation will become expired (unbonded) at EndHeight-w
 			unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 				StakingTxHash: stakingTxHash.String(),
-				NewState:      types.BTCDelegationStatus_UNBONDED,
+				NewState:      types.BTCDelegationStatus_EXPIRED,
 			})
 
 			// events
 			idxEvent := uint64(totalDelegations - 1)
 			eventsIdx[idxEvent] = &types.EventIndex{
 				Idx:            idxEvent,
-				BlockHeightBtc: del.EndHeight - minUnbondingTime,
+				BlockHeightBtc: del.EndHeight - del.UnbondingTime,
 				Event:          unbondedEvent,
 			}
 		}

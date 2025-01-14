@@ -4,13 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/runtime"
-
 	"cosmossdk.io/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+type FpWithVotingPower struct {
+	FpPk        *bbn.BIP340PubKey
+	VotingPower uint64
+}
 
 func (k Keeper) SetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64, power uint64) {
 	store := k.votingPowerBbnBlockHeightStore(ctx, height)
@@ -91,6 +96,35 @@ func (k Keeper) GetVotingPowerTable(ctx context.Context, height uint64) map[stri
 	}
 
 	return fpSet
+}
+
+// GetVotingPowerTableOrdered gets the voting power table ordered by the voting power
+func (k Keeper) GetVotingPowerTableOrdered(ctx context.Context, height uint64) []*FpWithVotingPower {
+	store := k.votingPowerBbnBlockHeightStore(ctx, height)
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+
+	// if no finality provider at this height, return nil
+	if !iter.Valid() {
+		return nil
+	}
+
+	// get all finality providers at this height assuming the fps
+	// are already ordered by the voting power
+	fps := make([]*FpWithVotingPower, 0, k.GetParams(ctx).MaxActiveFinalityProviders)
+	for ; iter.Valid(); iter.Next() {
+		fpBTCPK, err := bbn.NewBIP340PubKey(iter.Key())
+		if err != nil {
+			// failing to unmarshal finality provider BTC PK in KVStore is a programming error
+			panic(fmt.Errorf("%w: %w", bbn.ErrUnmarshal, err))
+		}
+		fps = append(fps, &FpWithVotingPower{
+			FpPk:        fpBTCPK,
+			VotingPower: sdk.BigEndianToUint64(iter.Value()),
+		})
+	}
+
+	return fps
 }
 
 // GetBTCStakingActivatedHeight returns the height when the BTC staking protocol is activated

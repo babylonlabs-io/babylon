@@ -71,21 +71,23 @@ func NewStakeHolderType(stBytes []byte) (StakeholderType, error) {
 	if len(stBytes) != 1 {
 		return FinalityProviderType, fmt.Errorf("invalid format for stBytes")
 	}
-	if stBytes[0] == byte(FinalityProviderType) {
+	switch stBytes[0] {
+	case byte(FinalityProviderType):
 		return FinalityProviderType, nil
-	} else if stBytes[0] == byte(BTCDelegationType) {
+	case byte(BTCDelegationType):
 		return BTCDelegationType, nil
-	} else {
+	default:
 		return FinalityProviderType, fmt.Errorf("invalid stBytes")
 	}
 }
 
 func NewStakeHolderTypeFromString(stStr string) (StakeholderType, error) {
-	if stStr == "finality_provider" {
+	switch stStr {
+	case "finality_provider":
 		return FinalityProviderType, nil
-	} else if stStr == "btc_delegation" {
+	case "btc_delegation":
 		return BTCDelegationType, nil
-	} else {
+	default:
 		return FinalityProviderType, fmt.Errorf("invalid stStr")
 	}
 }

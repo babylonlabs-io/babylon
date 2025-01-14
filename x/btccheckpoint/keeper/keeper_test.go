@@ -77,7 +77,7 @@ func FuzzGetSubmissionBtcInfo(f *testing.F) {
 		if txidx1 == txidx2 {
 			// transaction indexes must be different to cover the case where transactions are
 			// in the same block.
-			txidx1 = txidx1 + 1
+			txidx1++
 		}
 
 		k := InitTestKeepers(t)
@@ -100,15 +100,16 @@ func FuzzGetSubmissionBtcInfo(f *testing.F) {
 		var expectedYoungestDepth uint32
 		var expectedTxIdx uint32
 
-		if depth1 > depth2 {
+		switch {
+		case depth1 > depth2:
 			expectedOldestDepth = depth1
 			expectedYoungestDepth = depth2
 			expectedTxIdx = txidx2
-		} else if depth1 < depth2 {
+		case depth1 < depth2:
 			expectedOldestDepth = depth2
 			expectedYoungestDepth = depth1
 			expectedTxIdx = txidx1
-		} else {
+		default:
 			if txidx1 > txidx2 {
 				expectedTxIdx = txidx2
 			} else {
