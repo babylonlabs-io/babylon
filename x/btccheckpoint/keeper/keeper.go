@@ -274,7 +274,7 @@ func (k Keeper) OnTipChange(ctx context.Context) {
 // checkCheckpoints is the main function checking status of all submissions
 // on btc chain as viewed through btc light client.
 // Check works roughly as follows:
-// 1. Iterate over epochs either from last finalized epoch or first epoch epoch
+// 1. Iterate over epochs either from last finalized epoch or first epoch
 // ever, as for those epochs we do not need to check status of subbmissions of parent epoch.
 //
 // 2. For each epoch check status of every submissions:

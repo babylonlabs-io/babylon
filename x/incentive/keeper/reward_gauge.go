@@ -49,7 +49,7 @@ func (k Keeper) withdrawReward(ctx context.Context, sType types.StakeholderType,
 	return withdrawableCoins, nil
 }
 
-// accumulateRewardGauge accumulates the given reward of of a given stakeholder in a given type
+// accumulateRewardGauge accumulates the given reward of a given stakeholder in a given type
 func (k Keeper) accumulateRewardGauge(ctx context.Context, sType types.StakeholderType, addr sdk.AccAddress, reward sdk.Coins) {
 	// if reward contains nothing, do nothing
 	if !reward.IsAllPositive() {

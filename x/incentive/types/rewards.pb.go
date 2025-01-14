@@ -157,7 +157,7 @@ func (m *FinalityProviderCurrentRewards) GetPeriod() uint64 {
 // The finality provider address is ommitted here but should be part of the
 // key used to store this structure together with the BTC delegator address.
 type BTCDelegationRewardsTracker struct {
-	// StartPeriodCumulativeReward the starting period the the BTC delegator
+	// StartPeriodCumulativeReward the starting period the BTC delegator
 	// made his last withdraw of rewards or modified his active staking amount
 	// of satoshis.
 	StartPeriodCumulativeReward uint64 `protobuf:"varint,1,opt,name=start_period_cumulative_reward,json=startPeriodCumulativeReward,proto3" json:"start_period_cumulative_reward,omitempty"`
