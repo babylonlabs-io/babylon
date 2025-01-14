@@ -2,6 +2,7 @@ package schnorr_adaptor_signature
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 
@@ -160,6 +161,26 @@ func (sig *AdaptorSignature) Equals(sig2 AdaptorSignature) bool {
 	return bytes.Equal(sig.MustMarshal(), sig2.MustMarshal())
 }
 
+// appendAndHash appends the given data and hashes the result
+// Expected input is:
+//   - msgHash: 32 bytes
+//   - signerPubKeyBytes: 33 bytes
+//   - encKeyBytes: 33 bytes
+//
+// The output is 32 bytes and is result of sha256(m || P || T)
+func appendAndHash(
+	msgHash []byte,
+	signerPubKeyBytes []byte,
+	encKeyBytes []byte,
+) []byte {
+	combinedData := make([]byte, 98)
+	copy(combinedData[0:32], msgHash)
+	copy(combinedData[32:65], signerPubKeyBytes)
+	copy(combinedData[65:98], encKeyBytes)
+	hash := sha256.Sum256(combinedData)
+	return hash[:]
+}
+
 // EncSign generates an adaptor signature by using the given secret key,
 // encryption key (noted by `T` in the paper) and message hash
 func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*AdaptorSignature, error) {
@@ -188,12 +209,17 @@ func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*Adap
 
 	var privKeyBytes [chainhash.HashSize]byte
 	skScalar.PutBytes(&privKeyBytes)
+
+	encKeyBytes := encKey.ToBTCPK().SerializeCompressed()
+	// hashForNonce is sha256(m || P || T)
+	hashForNonce := appendAndHash(msgHash, pubKeyBytes, encKeyBytes)
+
 	for iteration := uint32(0); ; iteration++ {
 		// Use RFC6979 to generate a deterministic nonce in [1, n-1]
 		// parameterized by the private key, message being signed, extra data
 		// that identifies the scheme, and an iteration count
 		nonce := btcec.NonceRFC6979(
-			privKeyBytes[:], msgHash, rfc6979ExtraDataV0[:], nil, iteration,
+			privKeyBytes[:], hashForNonce, rfc6979ExtraDataV0[:], nil, iteration,
 		)
 
 		// try to generate adaptor signature
