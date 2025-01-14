@@ -37,6 +37,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v1.0.0-rc4
+
+### Bug fixes
+
+- [#353](https://github.com/babylonlabs-io/babylon/pull/353) Bump to SDK
+  0.50.11
+
 ## v1.0.0-rc3
 
 ### Bug fixes
