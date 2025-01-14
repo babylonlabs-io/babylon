@@ -1,8 +1,6 @@
 package signer
 
 import (
-	"path/filepath"
-
 	cmtconfig "github.com/cometbft/cometbft/config"
 
 	"github.com/babylonlabs-io/babylon/privval"
@@ -15,14 +13,14 @@ type PrivSigner struct {
 
 func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
 	nodeCfg := cmtconfig.DefaultConfig()
-	blsCfg := privval.DefaultBlsConfig()
+	nodeCfg.SetRoot(nodeDir)
 
-	pvKeyFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorKeyFile())
-	pvStateFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorStateFile())
-	blsKeyFile := filepath.Join(nodeDir, blsCfg.BlsKeyFile())
-	blsPasswordFile := filepath.Join(nodeDir, blsCfg.BlsPasswordFile())
+	pvKeyFile := nodeCfg.PrivValidatorKeyFile()
+	pvStateFile := nodeCfg.PrivValidatorStateFile()
+	blsKeyFile := privval.DefaultBlsKeyFile(nodeDir)
+	blsPasswordFile := privval.DefaultBlsPasswordFile(nodeDir)
 
-	if err := privval.IsValidFilePath(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
+	if err := privval.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
 		return nil, err
 	}
 

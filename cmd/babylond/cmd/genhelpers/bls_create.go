@@ -1,10 +1,12 @@
 package genhelpers
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
 	cmtconfig "github.com/cometbft/cometbft/config"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
@@ -34,29 +36,35 @@ $ babylond genbls --home ./
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
 
 			nodeCfg := cmtconfig.DefaultConfig()
-			blsCfg := privval.DefaultBlsConfig()
+			nodeCfg.SetRoot(homeDir)
+			cmtPvKeyFile := nodeCfg.PrivValidatorKeyFile()
+			cmtPvStateFile := nodeCfg.PrivValidatorStateFile()
+			blsKeyFile := privval.DefaultBlsKeyFile(homeDir)
+			blsPasswordFile := privval.DefaultBlsPasswordFile(homeDir)
 
-			keyPath := filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
-			statePath := filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
-			blsKeyPath := filepath.Join(homeDir, blsCfg.BlsKeyFile())
-			blsPasswordPath := filepath.Join(homeDir, blsCfg.BlsPasswordFile())
-
-			if err := privval.IsValidFilePath(keyPath, statePath, blsKeyPath, blsPasswordPath); err != nil {
+			if err := func(paths ...string) error {
+				for _, path := range paths {
+					if !cmtos.FileExists(path) {
+						return fmt.Errorf("file does not exist in %s", path)
+					}
+				}
+				return nil
+			}(cmtPvKeyFile, cmtPvStateFile, blsKeyFile, blsPasswordFile); err != nil {
 				return err
 			}
 
-			filePV := cmtprivval.LoadFilePV(keyPath, statePath)
-			blsPV := privval.LoadBlsPV(blsKeyPath, blsPasswordPath)
+			cmtPV := cmtprivval.LoadFilePV(cmtPvKeyFile, cmtPvStateFile)
+			blsPV := privval.LoadBlsPV(blsKeyFile, blsPasswordFile)
 
 			wrappedPV := &privval.WrappedFilePV{
 				Key: privval.WrappedFilePVKey{
-					CometPVKey: filePV.Key,
+					CometPVKey: cmtPV.Key,
 					BlsPVKey:   blsPV.Key,
 				},
-				LastSignState: filePV.LastSignState,
+				LastSignState: cmtPV.LastSignState,
 			}
 
-			outputFileName, err := wrappedPV.ExportGenBls(filepath.Dir(keyPath))
+			outputFileName, err := wrappedPV.ExportGenBls(filepath.Dir(cmtPvKeyFile))
 			if err != nil {
 				return err
 			}

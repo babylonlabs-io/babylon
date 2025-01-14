@@ -2,7 +2,6 @@ package signer
 
 import (
 	"os"
-	"path/filepath"
 
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -53,18 +52,18 @@ func GenesisKeyFromPrivSigner(ps *signer.PrivSigner) (*checkpointingtypes.Genesi
 
 func GeneratePrivSigner(nodeDir string) error {
 	nodeCfg := cmtconfig.DefaultConfig()
-	blsCfg := privval.DefaultBlsConfig()
+	nodeCfg.SetRoot(nodeDir)
 
-	pvKeyFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorKeyFile())
-	pvStateFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorStateFile())
-	blsKeyFile := filepath.Join(nodeDir, blsCfg.BlsKeyFile())
-	blsPasswordFile := filepath.Join(nodeDir, blsCfg.BlsPasswordFile())
+	cmtKeyFile := nodeCfg.PrivValidatorKeyFile()
+	cmtStateFile := nodeCfg.PrivValidatorStateFile()
+	blsKeyFile := privval.DefaultBlsKeyFile(nodeDir)
+	blsPasswordFile := privval.DefaultBlsPasswordFile(nodeDir)
 
-	if err := privval.IsValidFilePath(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
+	if err := privval.EnsureDirs(cmtKeyFile, cmtStateFile, blsKeyFile, blsPasswordFile); err != nil {
 		return err
 	}
 
-	cometPV := cmtprivval.GenFilePV(pvKeyFile, pvStateFile)
+	cometPV := cmtprivval.GenFilePV(cmtKeyFile, cmtStateFile)
 	cometPV.Key.Save()
 	cometPV.LastSignState.Save()
 

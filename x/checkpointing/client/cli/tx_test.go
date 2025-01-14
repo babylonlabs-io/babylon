@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"path/filepath"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -106,17 +105,17 @@ func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 
 	// create BLS keys
 	nodeCfg := cmtconfig.DefaultConfig()
-	blsCfg := privval.DefaultBlsConfig()
+	nodeCfg.SetRoot(homeDir)
 
-	keyPath := filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
-	statePath := filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
-	blsKeyFile := filepath.Join(homeDir, blsCfg.BlsKeyFile())
-	blsPasswordFile := filepath.Join(homeDir, blsCfg.BlsPasswordFile())
+	cmtKeyPath := nodeCfg.PrivValidatorKeyFile()
+	cmtStatePath := nodeCfg.PrivValidatorStateFile()
+	blsKeyFile := privval.DefaultBlsKeyFile(homeDir)
+	blsPasswordFile := privval.DefaultBlsPasswordFile(homeDir)
 
-	err := privval.IsValidFilePath(keyPath, statePath, blsKeyFile, blsPasswordFile)
+	err := privval.EnsureDirs(cmtKeyPath, cmtStatePath, blsKeyFile, blsPasswordFile)
 	require.NoError(err)
 
-	filePV := cmtprivval.GenFilePV(keyPath, statePath)
+	filePV := cmtprivval.GenFilePV(cmtKeyPath, cmtStatePath)
 	filePV.Key.Save()
 	filePV.LastSignState.Save()
 

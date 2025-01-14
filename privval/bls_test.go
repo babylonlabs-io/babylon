@@ -2,7 +2,6 @@ package privval
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/cometbft/cometbft/crypto/ed25519"
@@ -17,10 +16,11 @@ func TestNewBlsPV(t *testing.T) {
 	tempDir := t.TempDir()
 	defer os.RemoveAll(tempDir)
 
-	cfg := DefaultBlsConfig()
+	keyFilePath := DefaultBlsKeyFile(tempDir)
+	passwordFilePath := DefaultBlsPasswordFile(tempDir)
 
-	keyFilePath := filepath.Join(tempDir, cfg.BlsKeyFile())
-	passwordFilePath := filepath.Join(tempDir, cfg.BlsPasswordFile())
+	err := EnsureDirs(keyFilePath, passwordFilePath)
+	assert.NoError(t, err)
 
 	t.Run("save bls key to file without delegator address", func(t *testing.T) {
 		pv := NewBlsPV(bls12381.GenPrivKey(), keyFilePath, passwordFilePath, "")

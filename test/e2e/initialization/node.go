@@ -160,26 +160,19 @@ func (n *internalNode) createConsensusKey() error {
 	serverCtx := server.NewDefaultContext()
 	config := serverCtx.Config
 	config.SetRoot(n.configDir())
-
 	config.Moniker = n.moniker
-
-	blsCfg := privval.DefaultBlsConfig()
-	blsCfg.SetRoot(n.configDir())
 
 	pvKeyFile := config.PrivValidatorKeyFile()
 	pvStateFile := config.PrivValidatorStateFile()
-	blsKeyFile := blsCfg.BlsKeyFile()
-	blsPasswordFile := blsCfg.BlsPasswordFile()
+	blsKeyFile := privval.DefaultBlsKeyFile(n.configDir())
+	blsPasswordFile := privval.DefaultBlsPasswordFile(n.configDir())
 
-	if err := privval.IsValidFilePath(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
+	if err := privval.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
 		return err
 	}
-
-	// delegator address
 	accAddress, _ := n.keyInfo.GetAddress()
 
-	// create new key for consensus
-	// file pv
+	// create file pv
 	var privKey ed25519.PrivKey
 	if n.mnemonic == "" {
 		privKey = ed25519.GenPrivKey()
@@ -190,10 +183,9 @@ func (n *internalNode) createConsensusKey() error {
 	filePV.Key.Save()
 	filePV.LastSignState.Save()
 
-	// bls pv
+	// create bls pv
 	blsPV := privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password", accAddress.String())
 
-	// n.consensusKey = filePV.Key
 	n.consensusKey = privval.WrappedFilePVKey{
 		CometPVKey: filePV.Key,
 		BlsPVKey:   blsPV.Key,

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -12,6 +11,10 @@ import (
 	"github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/privval"
+)
+
+const (
+	FlagPassword = "bls-password"
 )
 
 func CreateBlsKeyCmd() *cobra.Command {
@@ -43,23 +46,26 @@ $ babylond create-bls-key %s1f5tnl46mk4dfp4nx3n2vnrvyw2h2ydz6ykhk3r --home ./
 				return err
 			}
 
-			return CreateBlsKey(homeDir, addr)
+			var password string
+			password, _ = cmd.Flags().GetString(FlagPassword)
+			if password == "" {
+				password = privval.NewBlsPassword()
+			}
+			return CreateBlsKey(homeDir, password, addr)
 		},
 	}
 
 	cmd.Flags().String(flags.FlagHome, app.DefaultNodeHome, "The node home directory")
-
+	cmd.Flags().String(FlagPassword, "", "The password for the BLS key. If a flag is set, the non-empty password should be provided. If a flag is not set, the password will be read from the prompt.")
 	return cmd
 }
 
-func CreateBlsKey(home string, addr sdk.AccAddress) error {
-
-	blsCfg := privval.DefaultBlsConfig()
-	keyPath := filepath.Join(home, blsCfg.BlsKeyFile())
-	passwordPath := filepath.Join(home, blsCfg.BlsPasswordFile())
-
-	password := privval.GetBlsPassword()
-
-	privval.GenBlsPV(keyPath, passwordPath, password, addr.String())
+func CreateBlsKey(home, password string, addr sdk.AccAddress) error {
+	privval.GenBlsPV(
+		privval.DefaultBlsKeyFile(home),
+		privval.DefaultBlsPasswordFile(home),
+		password,
+		addr.String(),
+	)
 	return nil
 }

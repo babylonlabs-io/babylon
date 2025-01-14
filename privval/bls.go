@@ -20,6 +20,11 @@ const (
 	DefaultBlsPasswordName = "bls_password.txt"
 )
 
+var (
+	defaultBlsKeyFilePath  = filepath.Join(cmtcfg.DefaultConfigDir, DefaultBlsKeyName)
+	defaultBlsPasswordPath = filepath.Join(cmtcfg.DefaultConfigDir, DefaultBlsPasswordName)
+)
+
 type BlsPV struct {
 	Key BlsPVKey
 }
@@ -81,7 +86,7 @@ func LoadBlsPV(keyFilePath, passwordFilePath string) *BlsPV {
 	}
 }
 
-func GetBlsPassword() string {
+func NewBlsPassword() string {
 	inBuf := bufio.NewReader(os.Stdin)
 	password, err := input.GetString("Enter your bls password", inBuf)
 	if err != nil {
@@ -93,11 +98,6 @@ func GetBlsPassword() string {
 // Save bls key using password
 // Check both paths of bls key and password inside function
 func (k *BlsPVKey) Save(password, addr string) {
-	// check file path is valid
-	if err := IsValidFilePath(k.filePath, k.passwordPath); err != nil {
-		panic(err)
-	}
-
 	// encrypt the bls12381 key to erc2335 type
 	erc2335BlsPvKey, err := erc2335.Encrypt(k.PrivKey, k.PubKey.Bytes(), password)
 	if err != nil {
@@ -131,41 +131,10 @@ func (k *BlsPVKey) Save(password, addr string) {
 	}
 }
 
-// -------------------------------------------------------------------------------
-// ---------------------------- BLS Config ---------------------------------------
-// -------------------------------------------------------------------------------
-
-type BlsConfig struct {
-	RootDir         string `mapstructure:"home"`
-	BlsKeyPath      string `mapstructure:"bls_key_file"`
-	BlsPasswordPath string `mapstructure:"bls_password_file"`
+func DefaultBlsKeyFile(home string) string {
+	return filepath.Join(home, defaultBlsKeyFilePath)
 }
 
-func DefaultBlsConfig() BlsConfig {
-	return BlsConfig{
-		BlsKeyPath:      filepath.Join(cmtcfg.DefaultConfigDir, DefaultBlsKeyName),
-		BlsPasswordPath: filepath.Join(cmtcfg.DefaultConfigDir, DefaultBlsPasswordName),
-	}
-}
-
-func (cfg *BlsConfig) SetRoot(root string) *BlsConfig {
-	cfg.RootDir = root
-	return cfg
-}
-
-func (cfg BlsConfig) BlsKeyFile() string {
-	return rootify(cfg.BlsKeyPath, cfg.RootDir)
-}
-
-func (cfg BlsConfig) BlsPasswordFile() string {
-	return rootify(cfg.BlsPasswordPath, cfg.RootDir)
-}
-
-// helper function to make config creation independent of root dir
-// copied from https://github.com/cometbft/cometbft/blob/v0.38.15/config/config.go
-func rootify(path, root string) string {
-	if filepath.IsAbs(path) {
-		return path
-	}
-	return filepath.Join(root, path)
+func DefaultBlsPasswordFile(home string) string {
+	return filepath.Join(home, defaultBlsPasswordPath)
 }

@@ -31,27 +31,17 @@ func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic strin
 
 	nodeID = string(nodeKey.ID())
 
-	pvKeyFile := config.PrivValidatorKeyFile()
-	pvStateFile := config.PrivValidatorStateFile()
-
-	if err := privval.IsValidFilePath(pvKeyFile, pvStateFile); err != nil {
+	cmtKeyFile := config.PrivValidatorKeyFile()
+	cmtStateFile := config.PrivValidatorStateFile()
+	blsKeyFile := privval.DefaultBlsKeyFile(config.RootDir)
+	blsPasswordFile := privval.DefaultBlsPasswordFile(config.RootDir)
+	if err := privval.EnsureDirs(cmtKeyFile, cmtStateFile, blsKeyFile, blsPasswordFile); err != nil {
 		return "", nil, err
 	}
 
-	// bls config
-	blsCfg := privval.DefaultBlsConfig()
-	blsCfg.SetRoot(config.RootDir)
-
-	blsKeyFile := blsCfg.BlsKeyFile()
-	blsPasswordFile := blsCfg.BlsPasswordFile()
-	if err := privval.IsValidFilePath(blsKeyFile, blsPasswordFile); err != nil {
-		return "", nil, err
-	}
-
-	// load or generate private validator
 	var filePV *cmtprivval.FilePV
-	if cmtos.FileExists(pvKeyFile) {
-		filePV = cmtprivval.LoadFilePV(pvKeyFile, pvStateFile)
+	if cmtos.FileExists(cmtKeyFile) {
+		filePV = cmtprivval.LoadFilePV(cmtKeyFile, cmtStateFile)
 	} else {
 		var privKey ed25519.PrivKey
 		if len(mnemonic) == 0 {
@@ -59,12 +49,11 @@ func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic strin
 		} else {
 			privKey = ed25519.GenPrivKeyFromSecret([]byte(mnemonic))
 		}
-		filePV = cmtprivval.NewFilePV(privKey, pvKeyFile, pvStateFile)
+		filePV = cmtprivval.NewFilePV(privKey, cmtKeyFile, cmtStateFile)
 		filePV.Key.Save()
 		filePV.LastSignState.Save()
 	}
 
-	// load or generate BLS private validator
 	var blsPV *privval.BlsPV
 	if cmtos.FileExists(blsKeyFile) {
 		// if key file exists but password file does not exist -> error

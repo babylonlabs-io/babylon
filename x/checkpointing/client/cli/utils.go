@@ -204,18 +204,18 @@ func buildCommissionRates(rateStr, maxRateStr, maxChangeRateStr string) (commiss
 
 func getValKeyFromFile(homeDir string) (*privval.ValidatorKeys, error) {
 	nodeCfg := cmtconfig.DefaultConfig()
-	blsCfg := privval.DefaultBlsConfig()
+	nodeCfg.SetRoot(homeDir)
 
-	keyPath := filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
-	statePath := filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
-	blsKeyPath := filepath.Join(homeDir, blsCfg.BlsKeyFile())
-	blsPasswordPath := filepath.Join(homeDir, blsCfg.BlsPasswordFile())
+	cmtKeyPath := nodeCfg.PrivValidatorKeyFile()
+	cmtStatePath := nodeCfg.PrivValidatorStateFile()
+	blsKeyPath := privval.DefaultBlsKeyFile(homeDir)
+	blsPasswordPath := privval.DefaultBlsPasswordFile(homeDir)
 
-	if err := privval.IsValidFilePath(keyPath, statePath, blsKeyPath, blsPasswordPath); err != nil {
+	if err := privval.EnsureDirs(cmtKeyPath, cmtStatePath, blsKeyPath, blsPasswordPath); err != nil {
 		return nil, err
 	}
 
-	filePV := cmtprivval.LoadFilePV(keyPath, statePath)
+	filePV := cmtprivval.LoadFilePV(cmtKeyPath, cmtStatePath)
 	blsPV := privval.LoadBlsPV(blsKeyPath, blsPasswordPath)
 
 	return privval.NewValidatorKeys(filePV.Key.PrivKey, blsPV.Key.PrivKey)

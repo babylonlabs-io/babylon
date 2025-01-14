@@ -153,15 +153,13 @@ func Test_CmdAddBlsWithGentx(t *testing.T) {
 
 		nodeCfg := cmtconfig.DefaultConfig()
 		nodeCfg.SetRoot(homeDir)
-		blsCfg := privval.DefaultBlsConfig()
-		blsCfg.SetRoot(homeDir)
 
 		keyPath := nodeCfg.PrivValidatorKeyFile()
 		statePath := nodeCfg.PrivValidatorStateFile()
-		blsKeyFile := blsCfg.BlsKeyFile()
-		blsPasswordFile := blsCfg.BlsPasswordFile()
+		blsKeyFile := privval.DefaultBlsKeyFile(homeDir)
+		blsPasswordFile := privval.DefaultBlsPasswordFile(homeDir)
 
-		err := privval.IsValidFilePath(keyPath, statePath, blsKeyFile, blsPasswordFile)
+		err := privval.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
 		require.NoError(t, err)
 
 		filePV := cmtprivval.GenFilePV(keyPath, statePath)

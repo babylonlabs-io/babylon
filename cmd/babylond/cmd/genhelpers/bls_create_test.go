@@ -71,14 +71,14 @@ func Test_CmdCreateBls(t *testing.T) {
 
 	// create BLS keys
 	nodeCfg := cmtconfig.DefaultConfig()
-	blsCfg := privval.DefaultBlsConfig()
+	nodeCfg.SetRoot(home)
 
-	keyPath := filepath.Join(home, nodeCfg.PrivValidatorKeyFile())
-	statePath := filepath.Join(home, nodeCfg.PrivValidatorStateFile())
-	blsKeyFile := filepath.Join(home, blsCfg.BlsKeyFile())
-	blsPasswordFile := filepath.Join(home, blsCfg.BlsPasswordFile())
+	keyPath := nodeCfg.PrivValidatorKeyFile()
+	statePath := nodeCfg.PrivValidatorStateFile()
+	blsKeyFile := privval.DefaultBlsKeyFile(home)
+	blsPasswordFile := privval.DefaultBlsPasswordFile(home)
 
-	err = privval.IsValidFilePath(keyPath, statePath, blsKeyFile, blsPasswordFile)
+	err = privval.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
 	require.NoError(t, err)
 
 	filePV := cmtprivval.GenFilePV(keyPath, statePath)

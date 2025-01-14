@@ -7,7 +7,7 @@ import (
 	cmtos "github.com/cometbft/cometbft/libs/os"
 )
 
-func IsValidFilePath(paths ...string) error {
+func EnsureDirs(paths ...string) error {
 	// Check file path of bls key
 	for _, path := range paths {
 		if path == "" {
