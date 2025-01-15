@@ -142,7 +142,7 @@ var xxx_messageInfo_MsgCreateFinalityProviderResponse proto.InternalMessageInfo
 
 // MsgEditFinalityProvider is the message for editing an existing finality provider
 type MsgEditFinalityProvider struct {
-	// addr the address of the finality provider that whishes to edit his information.
+	// addr the address of the finality provider that wishes to edit his information.
 	Addr string `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
 	// btc_pk is the Bitcoin secp256k1 PK of the finality provider to be edited
 	BtcPk []byte `protobuf:"bytes,2,opt,name=btc_pk,json=btcPk,proto3" json:"btc_pk,omitempty"`
@@ -274,7 +274,7 @@ type MsgCreateBTCDelegation struct {
 	// - unbonding transaction, time lock spending path
 	// - staking slashing transaction, change output
 	// - unbonding slashing transaction, change output
-	// It must be smaller than math.MaxUInt16 and larger that max(MinUnbondingTime, CheckpointFinalizationTimeout)
+	// It must be smaller than math.MaxUInt16 and larger than max(MinUnbondingTime, CheckpointFinalizationTimeout)
 	UnbondingTime uint32 `protobuf:"varint,11,opt,name=unbonding_time,json=unbondingTime,proto3" json:"unbonding_time,omitempty"`
 	// fields related to unbonding transaction
 	// unbonding_tx is a bitcoin unbonding transaction i.e transaction that spends

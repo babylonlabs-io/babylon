@@ -61,7 +61,7 @@ message MsgCreateFinalityProviderResponse {}
 // MsgEditFinalityProvider is the message for editing an existing finality provider
 message MsgEditFinalityProvider {
   option (cosmos.msg.v1.signer) = "addr";
-  // addr the address of the finality provider that whishes to edit his information.
+  // addr the address of the finality provider that wishes to edit his information.
   string addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // btc_pk is the Bitcoin secp256k1 PK of the finality provider to be edited
   bytes btc_pk = 2;
@@ -108,7 +108,7 @@ message MsgCreateBTCDelegation {
   // - unbonding transaction, time lock spending path
   // - staking slashing transaction, change output
   // - unbonding slashing transaction, change output
-  // It must be smaller than math.MaxUInt16 and larger that max(MinUnbondingTime, CheckpointFinalizationTimeout)
+  // It must be smaller than math.MaxUInt16 and larger than max(MinUnbondingTime, CheckpointFinalizationTimeout)
   uint32 unbonding_time = 11;
   // fields related to unbonding transaction
   // unbonding_tx is a bitcoin unbonding transaction i.e transaction that spends
