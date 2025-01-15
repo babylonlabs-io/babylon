@@ -46,6 +46,8 @@ check of rewards
 
 - [#353](https://github.com/babylonlabs-io/babylon/pull/353) Bump to SDK
   0.50.11
+- [#404](https://github.com/babylonlabs-io/babylon/pull/404) Improve adaptor
+signature nonce generation to match reference implementation
 
 ## v1.0.0-rc3
 

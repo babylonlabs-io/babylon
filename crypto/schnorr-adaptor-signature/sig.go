@@ -2,6 +2,7 @@ package schnorr_adaptor_signature
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 
@@ -12,17 +13,17 @@ import (
 )
 
 var (
-	// rfc6979ExtraDataV0 is the extra data to feed to RFC6979 when
-	// generating the deterministic nonce for the BIP-340 scheme.  This
-	// ensures the same nonce is not generated for the same message and key
+	// CustomBabylonrfc6979ExtraDataV0 is the extra data to feed to RFC6979 when
+	// generating the deterministic nonce for the BIP-340 Babylon adaptor signature scheme.
+	// This ensures the same nonce is not generated for the same message and key
 	// as for other signing algorithms such as ECDSA.
 	//
-	// It is equal to SHA-256([]byte("BIP-340")).
-	rfc6979ExtraDataV0 = [chainhash.HashSize]uint8{
-		0xa3, 0xeb, 0x4c, 0x18, 0x2f, 0xae, 0x7e, 0xf4,
-		0xe8, 0x10, 0xc6, 0xee, 0x13, 0xb0, 0xe9, 0x26,
-		0x68, 0x6d, 0x71, 0xe8, 0x7f, 0x39, 0x4f, 0x79,
-		0x9c, 0x00, 0xa5, 0x21, 0x03, 0xcb, 0x4e, 0x17,
+	// It is equal to SHA-256([]byte("BIP-340/babylon-adaptor-signature")).
+	customBabylonRFC6979ExtraDataV0 = [chainhash.HashSize]uint8{
+		0xcd, 0x36, 0xb5, 0x97, 0xbd, 0x59, 0x08, 0xfc,
+		0x48, 0x5c, 0xe9, 0xa2, 0xc0, 0xc2, 0x8b, 0xce,
+		0xd0, 0xda, 0xdb, 0x7f, 0xac, 0x7b, 0xf9, 0x4c,
+		0x19, 0x68, 0x51, 0xfb, 0x23, 0x27, 0x07, 0x09,
 	}
 )
 
@@ -160,6 +161,26 @@ func (sig *AdaptorSignature) Equals(sig2 AdaptorSignature) bool {
 	return bytes.Equal(sig.MustMarshal(), sig2.MustMarshal())
 }
 
+// appendAndHash appends the given data and hashes the result
+// Expected input is:
+//   - msgHash: 32 bytes
+//   - signerPubKeyBytes: 33 bytes
+//   - encKeyBytes: 33 bytes
+//
+// The output is 32 bytes and is result of sha256(m || P || T)
+func appendAndHash(
+	msgHash []byte,
+	signerPubKeyBytes []byte,
+	encKeyBytes []byte,
+) []byte {
+	combinedData := make([]byte, 98)
+	copy(combinedData[0:32], msgHash)
+	copy(combinedData[32:65], signerPubKeyBytes)
+	copy(combinedData[65:98], encKeyBytes)
+	hash := sha256.Sum256(combinedData)
+	return hash[:]
+}
+
 // EncSign generates an adaptor signature by using the given secret key,
 // encryption key (noted by `T` in the paper) and message hash
 func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*AdaptorSignature, error) {
@@ -188,12 +209,17 @@ func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*Adap
 
 	var privKeyBytes [chainhash.HashSize]byte
 	skScalar.PutBytes(&privKeyBytes)
+
+	encKeyBytes := encKey.ToBTCPK().SerializeCompressed()
+	// hashForNonce is sha256(m || P || T)
+	hashForNonce := appendAndHash(msgHash, pubKeyBytes, encKeyBytes)
+
 	for iteration := uint32(0); ; iteration++ {
 		// Use RFC6979 to generate a deterministic nonce in [1, n-1]
 		// parameterized by the private key, message being signed, extra data
 		// that identifies the scheme, and an iteration count
 		nonce := btcec.NonceRFC6979(
-			privKeyBytes[:], msgHash, rfc6979ExtraDataV0[:], nil, iteration,
+			privKeyBytes[:], hashForNonce, customBabylonRFC6979ExtraDataV0[:], nil, iteration,
 		)
 
 		// try to generate adaptor signature
