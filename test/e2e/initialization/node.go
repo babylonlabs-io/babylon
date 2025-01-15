@@ -168,7 +168,7 @@ func (n *internalNode) createConsensusKey() error {
 	blsPasswordFile := privval.DefaultBlsPasswordFile(n.configDir())
 
 	if err := privval.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
-		return err
+		return fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 	accAddress, _ := n.keyInfo.GetAddress()
 

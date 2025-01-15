@@ -36,7 +36,7 @@ func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic strin
 	blsKeyFile := privval.DefaultBlsKeyFile(config.RootDir)
 	blsPasswordFile := privval.DefaultBlsPasswordFile(config.RootDir)
 	if err := privval.EnsureDirs(cmtKeyFile, cmtStateFile, blsKeyFile, blsPasswordFile); err != nil {
-		return "", nil, err
+		return "", nil, fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 
 	var filePV *cmtprivval.FilePV

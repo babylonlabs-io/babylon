@@ -1,6 +1,8 @@
 package signer
 
 import (
+	"fmt"
+
 	cmtconfig "github.com/cometbft/cometbft/config"
 
 	"github.com/babylonlabs-io/babylon/privval"
@@ -21,7 +23,7 @@ func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
 	blsPasswordFile := privval.DefaultBlsPasswordFile(nodeDir)
 
 	if err := privval.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 
 	cometPV := cmtprivval.LoadFilePV(pvKeyFile, pvStateFile)

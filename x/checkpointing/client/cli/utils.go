@@ -212,7 +212,7 @@ func getValKeyFromFile(homeDir string) (*privval.ValidatorKeys, error) {
 	blsPasswordPath := privval.DefaultBlsPasswordFile(homeDir)
 
 	if err := privval.EnsureDirs(cmtKeyPath, cmtStatePath, blsKeyPath, blsPasswordPath); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 
 	filePV := cmtprivval.LoadFilePV(cmtKeyPath, cmtStatePath)

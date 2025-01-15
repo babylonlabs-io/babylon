@@ -7,7 +7,6 @@ import (
 	"github.com/cometbft/cometbft/crypto/ed25519"
 
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/crypto/erc2335"
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/test-go/testify/assert"
 )
@@ -26,7 +25,7 @@ func TestNewBlsPV(t *testing.T) {
 		pv := NewBlsPV(bls12381.GenPrivKey(), keyFilePath, passwordFilePath, "")
 		assert.NotNil(t, pv)
 
-		password := erc2335.CreateRandomPassword()
+		password := "password"
 		pv.Key.Save(password, "")
 
 		t.Run("load bls key from file", func(t *testing.T) {
@@ -42,7 +41,7 @@ func TestNewBlsPV(t *testing.T) {
 		pv := NewBlsPV(bls12381.GenPrivKey(), keyFilePath, passwordFilePath, "")
 		assert.NotNil(t, pv)
 
-		password := erc2335.CreateRandomPassword()
+		password := "password"
 
 		delegatorAddress := types.AccAddress(ed25519.GenPrivKey().PubKey().Address()).String()
 		pv.Key.Save(password, delegatorAddress)

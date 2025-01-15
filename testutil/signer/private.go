@@ -1,6 +1,7 @@
 package signer
 
 import (
+	"fmt"
 	"os"
 
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -60,7 +61,7 @@ func GeneratePrivSigner(nodeDir string) error {
 	blsPasswordFile := privval.DefaultBlsPasswordFile(nodeDir)
 
 	if err := privval.EnsureDirs(cmtKeyFile, cmtStateFile, blsKeyFile, blsPasswordFile); err != nil {
-		return err
+		return fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 
 	cometPV := cmtprivval.GenFilePV(cmtKeyFile, cmtStateFile)

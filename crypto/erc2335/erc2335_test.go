@@ -6,8 +6,11 @@ import (
 	"testing"
 
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/cometbft/cometbft/libs/tempfile"
 	"github.com/test-go/testify/require"
 )
+
+const password string = "password"
 
 func TestEncryptBLS(t *testing.T) {
 	t.Run("create bls key", func(t *testing.T) {
@@ -15,8 +18,6 @@ func TestEncryptBLS(t *testing.T) {
 		blsPubKey := blsPrivKey.PubKey().Bytes()
 
 		t.Run("encrypt bls key", func(t *testing.T) {
-			password := CreateRandomPassword()
-			t.Logf("password: %s", password)
 			encryptedBlsKey, err := Encrypt(blsPrivKey, blsPubKey, password)
 			require.NoError(t, err)
 			t.Logf("encrypted bls key: %s", encryptedBlsKey)
@@ -41,18 +42,16 @@ func TestEncryptBLS(t *testing.T) {
 		})
 
 		t.Run("save password and encrypt bls key", func(t *testing.T) {
-			password := CreateRandomPassword()
-			t.Logf("password: %s", password)
-
 			encryptedBlsKey, err := Encrypt(blsPrivKey, blsPubKey, password)
 			require.NoError(t, err)
 			t.Logf("encrypted bls key: %s", encryptedBlsKey)
-			err = SavePasswordToFile(password, "password.txt")
+			err = tempfile.WriteFileAtomic("password.txt", []byte(password), 0600)
 			require.NoError(t, err)
 
 			t.Run("load password and decrypt bls key", func(t *testing.T) {
-				password, err := LoadPaswordFromFile("password.txt")
+				passwordBytes, err := os.ReadFile("password.txt")
 				require.NoError(t, err)
+				password := string(passwordBytes)
 
 				var keystore Erc2335KeyStore
 				err = json.Unmarshal(encryptedBlsKey, &keystore)
@@ -64,15 +63,15 @@ func TestEncryptBLS(t *testing.T) {
 			})
 
 			t.Run("save new password into same file", func(t *testing.T) {
-				newPassword := CreateRandomPassword()
-				t.Logf("new password: %s", newPassword)
-				err = SavePasswordToFile(newPassword, "password.txt")
+				newPassword := "new password"
+				err = tempfile.WriteFileAtomic("password.txt", []byte(newPassword), 0600)
 				require.NoError(t, err)
 			})
 
 			t.Run("failed when load different password and decrypt bls key", func(t *testing.T) {
-				password, err := LoadPaswordFromFile("password.txt")
+				passwordBytes, err := os.ReadFile("password.txt")
 				require.NoError(t, err)
+				password := string(passwordBytes)
 
 				var keystore Erc2335KeyStore
 				err = json.Unmarshal(encryptedBlsKey, &keystore)
@@ -83,7 +82,7 @@ func TestEncryptBLS(t *testing.T) {
 			})
 
 			t.Run("failed when password file don't exist", func(t *testing.T) {
-				_, err := LoadPaswordFromFile("nopassword.txt")
+				_, err := os.ReadFile("nopassword.txt")
 				require.Error(t, err)
 			})
 		})

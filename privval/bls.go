@@ -16,29 +16,34 @@ import (
 )
 
 const (
-	DefaultBlsKeyName      = "bls_key.json"
-	DefaultBlsPasswordName = "bls_password.txt"
+	DefaultBlsKeyName      = "bls_key.json"     // Default file name for BLS key
+	DefaultBlsPasswordName = "bls_password.txt" // Default file name for BLS password
 )
 
 var (
-	defaultBlsKeyFilePath  = filepath.Join(cmtcfg.DefaultConfigDir, DefaultBlsKeyName)
-	defaultBlsPasswordPath = filepath.Join(cmtcfg.DefaultConfigDir, DefaultBlsPasswordName)
+	defaultBlsKeyFilePath  = filepath.Join(cmtcfg.DefaultConfigDir, DefaultBlsKeyName)      // Default file path for BLS key
+	defaultBlsPasswordPath = filepath.Join(cmtcfg.DefaultConfigDir, DefaultBlsPasswordName) // Default file path for BLS password
 )
 
+// BlsPV is a wrapper around BlsPVKey
 type BlsPV struct {
+	// Key is a structure containing bls12381 keys,
+	// paths of both key and password files,
+	// and delegator address
 	Key BlsPVKey
 }
 
+// BlsPVKey is a wrapper containing bls12381 keys,
+// paths of both key and password files, and delegator address.
 type BlsPVKey struct {
-	PubKey  bls12381.PublicKey  `json:"bls_pub_key"`
-	PrivKey bls12381.PrivateKey `json:"bls_priv_key"`
-
-	DelegatorAddress string
-
-	filePath     string
-	passwordPath string
+	PubKey           bls12381.PublicKey  `json:"bls_pub_key"`       // Public Key of BLS
+	PrivKey          bls12381.PrivateKey `json:"bls_priv_key"`      // Private Key of BLS
+	DelegatorAddress string              `json:"delegator_address"` // Delegate Address
+	filePath         string              // File Path of BLS Key
+	passwordPath     string              // File Path of BLS Password
 }
 
+// NewBlsPV returns a new BlsPV.
 func NewBlsPV(privKey bls12381.PrivateKey, keyFilePath, passwordFilePath, delegatorAddress string) *BlsPV {
 	return &BlsPV{
 		Key: BlsPVKey{
@@ -51,17 +56,21 @@ func NewBlsPV(privKey bls12381.PrivateKey, keyFilePath, passwordFilePath, delega
 	}
 }
 
+// GenBlsPV returns a new BlsPV after saving it to the file.
 func GenBlsPV(keyFilePath, passwordFilePath, password, delegatorAddress string) *BlsPV {
 	pv := NewBlsPV(bls12381.GenPrivKey(), keyFilePath, passwordFilePath, delegatorAddress)
 	pv.Key.Save(password, delegatorAddress)
 	return pv
 }
 
+// LoadBlsPV returns a BlsPV after loading the erc2335 type of structure
+// from the file and decrypt it using a password.
 func LoadBlsPV(keyFilePath, passwordFilePath string) *BlsPV {
-	password, err := erc2335.LoadPaswordFromFile(passwordFilePath)
+	passwordBytes, err := os.ReadFile(passwordFilePath)
 	if err != nil {
 		cmtos.Exit(fmt.Sprintf("failed to read BLS password file: %v", err.Error()))
 	}
+	password := string(passwordBytes)
 
 	keystore, err := erc2335.LoadKeyStore(keyFilePath)
 	if err != nil {
@@ -86,6 +95,7 @@ func LoadBlsPV(keyFilePath, passwordFilePath string) *BlsPV {
 	}
 }
 
+// NewBlsPassword returns a password from the user prompt.
 func NewBlsPassword() string {
 	inBuf := bufio.NewReader(os.Stdin)
 	password, err := input.GetString("Enter your bls password", inBuf)
@@ -95,8 +105,8 @@ func NewBlsPassword() string {
 	return password
 }
 
-// Save bls key using password
-// Check both paths of bls key and password inside function
+// Save saves the bls12381 key to the file.
+// The file stores an erc2335 structure containing the encrypted bls private key.
 func (k *BlsPVKey) Save(password, addr string) {
 	// encrypt the bls12381 key to erc2335 type
 	erc2335BlsPvKey, err := erc2335.Encrypt(k.PrivKey, k.PubKey.Bytes(), password)
@@ -125,16 +135,17 @@ func (k *BlsPVKey) Save(password, addr string) {
 	}
 
 	// save used password to file
-	err = erc2335.SavePasswordToFile(password, k.passwordPath)
-	if err != nil {
+	if err := tempfile.WriteFileAtomic(k.passwordPath, []byte(password), 0600); err != nil {
 		panic(err)
 	}
 }
 
+// DefaultBlsKeyFile returns the default BLS key file path.
 func DefaultBlsKeyFile(home string) string {
 	return filepath.Join(home, defaultBlsKeyFilePath)
 }
 
+// DefaultBlsPasswordFile returns the default BLS password file path.
 func DefaultBlsPasswordFile(home string) string {
 	return filepath.Join(home, defaultBlsPasswordPath)
 }
