@@ -1,7 +1,7 @@
 package genhelpers
 
 import (
-	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -12,6 +12,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/privval"
+	cmtprivval "github.com/cometbft/cometbft/privval"
 )
 
 // CmdCreateBls CLI command to create BLS file with proof of possession.
@@ -35,15 +36,35 @@ $ babylond genbls --home ./
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
 
 			nodeCfg := cmtconfig.DefaultConfig()
-			keyPath := filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
-			statePath := filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
-			if !cmtos.FileExists(keyPath) {
-				return errors.New("validator key file does not exist")
+			nodeCfg.SetRoot(homeDir)
+			cmtPvKeyFile := nodeCfg.PrivValidatorKeyFile()
+			cmtPvStateFile := nodeCfg.PrivValidatorStateFile()
+			blsKeyFile := privval.DefaultBlsKeyFile(homeDir)
+			blsPasswordFile := privval.DefaultBlsPasswordFile(homeDir)
+
+			if err := func(paths ...string) error {
+				for _, path := range paths {
+					if !cmtos.FileExists(path) {
+						return fmt.Errorf("file does not exist in %s", path)
+					}
+				}
+				return nil
+			}(cmtPvKeyFile, cmtPvStateFile, blsKeyFile, blsPasswordFile); err != nil {
+				return err
 			}
 
-			wrappedPV := privval.LoadWrappedFilePV(keyPath, statePath)
+			cmtPV := cmtprivval.LoadFilePV(cmtPvKeyFile, cmtPvStateFile)
+			blsPV := privval.LoadBlsPV(blsKeyFile, blsPasswordFile)
 
-			outputFileName, err := wrappedPV.ExportGenBls(filepath.Dir(keyPath))
+			wrappedPV := &privval.WrappedFilePV{
+				Key: privval.WrappedFilePVKey{
+					CometPVKey: cmtPV.Key,
+					BlsPVKey:   blsPV.Key,
+				},
+				LastSignState: cmtPV.LastSignState,
+			}
+
+			outputFileName, err := wrappedPV.ExportGenBls(filepath.Dir(cmtPvKeyFile))
 			if err != nil {
 				return err
 			}

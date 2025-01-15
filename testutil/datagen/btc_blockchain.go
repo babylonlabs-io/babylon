@@ -104,7 +104,7 @@ func GenRandomBtcdBlockWithTransactions(
 
 	var proofs []*btcctypes.BTCSpvProof
 
-	for i, _ := range msgTxs {
+	for i := range msgTxs {
 		headerBytes := bbn.NewBTCHeaderBytesFromBlockHeader(header)
 		proof, err := btcctypes.SpvProofFromHeaderAndTransactions(&headerBytes, txBytes, uint(i))
 		if err != nil {

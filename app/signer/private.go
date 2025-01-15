@@ -1,12 +1,12 @@
 package signer
 
 import (
-	"path/filepath"
+	"fmt"
 
 	cmtconfig "github.com/cometbft/cometbft/config"
-	cmtos "github.com/cometbft/cometbft/libs/os"
 
 	"github.com/babylonlabs-io/babylon/privval"
+	cmtprivval "github.com/cometbft/cometbft/privval"
 )
 
 type PrivSigner struct {
@@ -15,17 +15,27 @@ type PrivSigner struct {
 
 func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
 	nodeCfg := cmtconfig.DefaultConfig()
-	pvKeyFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorKeyFile())
-	err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
-	if err != nil {
-		return nil, err
+	nodeCfg.SetRoot(nodeDir)
+
+	pvKeyFile := nodeCfg.PrivValidatorKeyFile()
+	pvStateFile := nodeCfg.PrivValidatorStateFile()
+	blsKeyFile := privval.DefaultBlsKeyFile(nodeDir)
+	blsPasswordFile := privval.DefaultBlsPasswordFile(nodeDir)
+
+	if err := privval.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
+		return nil, fmt.Errorf("failed to ensure dirs: %w", err)
 	}
-	pvStateFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorStateFile())
-	err = cmtos.EnsureDir(filepath.Dir(pvStateFile), 0777)
-	if err != nil {
-		return nil, err
+
+	cometPV := cmtprivval.LoadFilePV(pvKeyFile, pvStateFile)
+	blsPV := privval.LoadBlsPV(blsKeyFile, blsPasswordFile)
+
+	wrappedPV := &privval.WrappedFilePV{
+		Key: privval.WrappedFilePVKey{
+			CometPVKey: cometPV.Key,
+			BlsPVKey:   blsPV.Key,
+		},
+		LastSignState: cometPV.LastSignState,
 	}
-	wrappedPV := privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile)
 
 	return &PrivSigner{
 		WrappedPV: wrappedPV,

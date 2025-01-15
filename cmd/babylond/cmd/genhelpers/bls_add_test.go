@@ -3,6 +3,7 @@ package genhelpers_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -20,6 +21,7 @@ import (
 	cmtconfig "github.com/cometbft/cometbft/config"
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cometbft/cometbft/libs/tempfile"
+	cmtprivval "github.com/cometbft/cometbft/privval"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -147,13 +149,24 @@ func Test_CmdAddBlsWithGentx(t *testing.T) {
 		v := testNetwork.Validators[i]
 		// build and create genesis BLS key
 		genBlsCmd := genhelpers.CmdCreateBls()
-		nodeCfg := cmtconfig.DefaultConfig()
 		homeDir := filepath.Join(v.Dir, "simd")
+
+		nodeCfg := cmtconfig.DefaultConfig()
 		nodeCfg.SetRoot(homeDir)
+
 		keyPath := nodeCfg.PrivValidatorKeyFile()
 		statePath := nodeCfg.PrivValidatorStateFile()
-		filePV := privval.GenWrappedFilePV(keyPath, statePath)
-		filePV.SetAccAddress(v.Address)
+		blsKeyFile := privval.DefaultBlsKeyFile(homeDir)
+		blsPasswordFile := privval.DefaultBlsPasswordFile(homeDir)
+
+		err := privval.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
+		require.NoError(t, err)
+
+		filePV := cmtprivval.GenFilePV(keyPath, statePath)
+		filePV.Key.Save()
+		filePV.LastSignState.Save()
+		privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password", v.Address.String())
+
 		_, err = cli.ExecTestCLICmd(v.ClientCtx, genBlsCmd, []string{fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir)})
 		require.NoError(t, err)
 		genKeyFileName := filepath.Join(filepath.Dir(keyPath), fmt.Sprintf("gen-bls-%s.json", v.ValAddress))
@@ -175,6 +188,13 @@ func Test_CmdAddBlsWithGentx(t *testing.T) {
 		require.NotEmpty(t, checkpointingGenState.GenesisKeys)
 		gks := checkpointingGenState.GetGenesisKeys()
 		require.Equal(t, genKey, gks[i])
-		filePV.Clean(keyPath, statePath)
+		Clean(keyPath, statePath, blsKeyFile, blsPasswordFile)
+	}
+}
+
+// Clean removes PVKey file and PVState file
+func Clean(paths ...string) {
+	for _, path := range paths {
+		_ = os.RemoveAll(filepath.Dir(path))
 	}
 }

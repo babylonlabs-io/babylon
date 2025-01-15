@@ -99,8 +99,8 @@ func GenesisValidatorSetWithPrivSigner(numVals int) (*GenesisValidators, *appsig
 	}
 	signerVal := &GenesisKeyWithBLS{
 		GenesisKey: *signerGenesisKey,
-		PrivateKey: ps.WrappedPV.Key.BlsPrivKey,
-		PrivKey:    ps.WrappedPV.Key.PrivKey,
+		PrivateKey: ps.WrappedPV.Key.BlsPVKey.PrivKey,
+		PrivKey:    ps.WrappedPV.Key.CometPVKey.PrivKey,
 	}
 	genesisVals, err := GenesisValidatorSet(numVals)
 	if err != nil {

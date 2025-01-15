@@ -27,6 +27,7 @@ import (
 	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/testutil/signer"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	cmtprivval "github.com/cometbft/cometbft/privval"
 )
 
 func Test_CmdCreateBls(t *testing.T) {
@@ -70,11 +71,21 @@ func Test_CmdCreateBls(t *testing.T) {
 
 	// create BLS keys
 	nodeCfg := cmtconfig.DefaultConfig()
-	keyPath := filepath.Join(home, nodeCfg.PrivValidatorKeyFile())
-	statePath := filepath.Join(home, nodeCfg.PrivValidatorStateFile())
-	filePV := privval.GenWrappedFilePV(keyPath, statePath)
-	defer filePV.Clean(keyPath, statePath)
-	filePV.SetAccAddress(addr)
+	nodeCfg.SetRoot(home)
+
+	keyPath := nodeCfg.PrivValidatorKeyFile()
+	statePath := nodeCfg.PrivValidatorStateFile()
+	blsKeyFile := privval.DefaultBlsKeyFile(home)
+	blsPasswordFile := privval.DefaultBlsPasswordFile(home)
+
+	err = privval.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
+	require.NoError(t, err)
+
+	filePV := cmtprivval.GenFilePV(keyPath, statePath)
+	filePV.Key.Save()
+
+	blsPV := privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password", addr.String())
+	defer Clean(keyPath, statePath, blsKeyFile, blsPasswordFile)
 
 	// execute the gen-bls cmd
 	err = genBlsCmd.ExecuteContext(ctx)
@@ -82,9 +93,11 @@ func Test_CmdCreateBls(t *testing.T) {
 	outputFilePath := filepath.Join(filepath.Dir(keyPath), fmt.Sprintf("gen-bls-%s.json", sdk.ValAddress(addr).String()))
 	require.NoError(t, err)
 	genKey, err := types.LoadGenesisKeyFromFile(outputFilePath)
+
 	require.NoError(t, err)
 	require.Equal(t, sdk.ValAddress(addr).String(), genKey.ValidatorAddress)
-	require.True(t, filePV.Key.BlsPubKey.Equal(*genKey.BlsKey.Pubkey))
 	require.Equal(t, filePV.Key.PubKey.Bytes(), genKey.ValPubkey.Bytes())
+	require.True(t, blsPV.Key.PubKey.Equal(*genKey.BlsKey.Pubkey))
+
 	require.True(t, genKey.BlsKey.Pop.IsValid(*genKey.BlsKey.Pubkey, genKey.ValPubkey))
 }

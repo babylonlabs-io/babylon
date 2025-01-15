@@ -1,21 +1,20 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
-	"path/filepath"
 	"strings"
 
-	cmtconfig "github.com/cometbft/cometbft/config"
-	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
 	"github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/privval"
+)
+
+const (
+	FlagPassword = "bls-password"
 )
 
 func CreateBlsKeyCmd() *cobra.Command {
@@ -47,38 +46,26 @@ $ babylond create-bls-key %s1f5tnl46mk4dfp4nx3n2vnrvyw2h2ydz6ykhk3r --home ./
 				return err
 			}
 
-			return CreateBlsKey(homeDir, addr)
+			var password string
+			password, _ = cmd.Flags().GetString(FlagPassword)
+			if password == "" {
+				password = privval.NewBlsPassword()
+			}
+			return CreateBlsKey(homeDir, password, addr)
 		},
 	}
 
 	cmd.Flags().String(flags.FlagHome, app.DefaultNodeHome, "The node home directory")
-
+	cmd.Flags().String(FlagPassword, "", "The password for the BLS key. If a flag is set, the non-empty password should be provided. If a flag is not set, the password will be read from the prompt.")
 	return cmd
 }
 
-func CreateBlsKey(home string, addr sdk.AccAddress) error {
-	nodeCfg := cmtconfig.DefaultConfig()
-	keyPath := filepath.Join(home, nodeCfg.PrivValidatorKeyFile())
-	statePath := filepath.Join(home, nodeCfg.PrivValidatorStateFile())
-
-	pv, err := LoadWrappedFilePV(keyPath, statePath)
-	if err != nil {
-		return err
-	}
-
-	wrappedPV := privval.NewWrappedFilePV(pv.GetValPrivKey(), bls12381.GenPrivKey(), keyPath, statePath)
-	wrappedPV.SetAccAddress(addr)
-
+func CreateBlsKey(home, password string, addr sdk.AccAddress) error {
+	privval.GenBlsPV(
+		privval.DefaultBlsKeyFile(home),
+		privval.DefaultBlsPasswordFile(home),
+		password,
+		addr.String(),
+	)
 	return nil
-}
-
-// LoadWrappedFilePV loads the wrapped file private key from the file path.
-func LoadWrappedFilePV(keyPath, statePath string) (*privval.WrappedFilePV, error) {
-	if !cmtos.FileExists(keyPath) {
-		return nil, errors.New("validator key file does not exist")
-	}
-	if !cmtos.FileExists(statePath) {
-		return nil, errors.New("validator state file does not exist")
-	}
-	return privval.LoadWrappedFilePV(keyPath, statePath), nil
 }

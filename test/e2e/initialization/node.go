@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cometbft/cometbft/crypto/ed25519"
+
 	"cosmossdk.io/math"
 	cmtconfig "github.com/cometbft/cometbft/config"
-	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
-	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/p2p"
 	cmttypes "github.com/cometbft/cometbft/types"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
@@ -34,9 +34,9 @@ import (
 	babylonApp "github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
+	cmtprivval "github.com/cometbft/cometbft/privval"
 )
 
 type internalNode struct {
@@ -90,7 +90,7 @@ func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error)
 	// get the initial validator min self delegation
 	minSelfDelegation, _ := math.NewIntFromString("1")
 
-	valPubKey, err := cryptocodec.FromCmtPubKeyInterface(n.consensusKey.PubKey)
+	valPubKey, err := cryptocodec.FromCmtPubKeyInterface(n.consensusKey.CometPVKey.PubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -159,30 +159,37 @@ func (n *internalNode) createNodeKey() error {
 func (n *internalNode) createConsensusKey() error {
 	serverCtx := server.NewDefaultContext()
 	config := serverCtx.Config
-
 	config.SetRoot(n.configDir())
 	config.Moniker = n.moniker
 
 	pvKeyFile := config.PrivValidatorKeyFile()
-	if err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0o777); err != nil {
-		return err
-	}
-
 	pvStateFile := config.PrivValidatorStateFile()
-	if err := cmtos.EnsureDir(filepath.Dir(pvStateFile), 0o777); err != nil {
-		return err
+	blsKeyFile := privval.DefaultBlsKeyFile(n.configDir())
+	blsPasswordFile := privval.DefaultBlsPasswordFile(n.configDir())
+
+	if err := privval.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
+		return fmt.Errorf("failed to ensure dirs: %w", err)
 	}
-
-	privKey := cmted25519.GenPrivKeyFromSecret([]byte(n.mnemonic))
-	blsPrivKey := bls12381.GenPrivKeyFromSecret([]byte(n.mnemonic))
-	filePV := privval.NewWrappedFilePV(privKey, blsPrivKey, pvKeyFile, pvStateFile)
-
 	accAddress, _ := n.keyInfo.GetAddress()
-	filePV.Save()
-	filePV.SetAccAddress(accAddress)
 
-	n.consensusKey = filePV.Key
+	// create file pv
+	var privKey ed25519.PrivKey
+	if n.mnemonic == "" {
+		privKey = ed25519.GenPrivKey()
+	} else {
+		privKey = ed25519.GenPrivKeyFromSecret([]byte(n.mnemonic))
+	}
+	filePV := cmtprivval.NewFilePV(privKey, pvKeyFile, pvStateFile)
+	filePV.Key.Save()
+	filePV.LastSignState.Save()
 
+	// create bls pv
+	blsPV := privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password", accAddress.String())
+
+	n.consensusKey = privval.WrappedFilePVKey{
+		CometPVKey: filePV.Key,
+		BlsPVKey:   blsPV.Key,
+	}
 	return nil
 }
 
