@@ -48,6 +48,8 @@ check of rewards
   0.50.11
 - [#404](https://github.com/babylonlabs-io/babylon/pull/404) Improve adaptor
 signature nonce generation to match reference implementation
+- [#413](https://github.com/babylonlabs-io/babylon/pull/413) Fix adaptor
+signature R verification
 
 ## v1.0.0-rc3
 
