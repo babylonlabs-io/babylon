@@ -165,9 +165,9 @@ func Test_CmdAddBlsWithGentx(t *testing.T) {
 		filePV := cmtprivval.GenFilePV(keyPath, statePath)
 		filePV.Key.Save()
 		filePV.LastSignState.Save()
-		privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password", v.Address.String())
+		privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password")
 
-		_, err = cli.ExecTestCLICmd(v.ClientCtx, genBlsCmd, []string{fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir)})
+		_, err = cli.ExecTestCLICmd(v.ClientCtx, genBlsCmd, []string{v.Address.String(), fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir)})
 		require.NoError(t, err)
 		genKeyFileName := filepath.Join(filepath.Dir(keyPath), fmt.Sprintf("gen-bls-%s.json", v.ValAddress))
 		genKey, err := types.LoadGenesisKeyFromFile(genKeyFileName)

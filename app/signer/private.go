@@ -6,11 +6,12 @@ import (
 	cmtconfig "github.com/cometbft/cometbft/config"
 
 	"github.com/babylonlabs-io/babylon/privval"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	cmtprivval "github.com/cometbft/cometbft/privval"
 )
 
 type PrivSigner struct {
-	WrappedPV *privval.WrappedFilePV
+	PV *privval.WrappedFilePV
 }
 
 func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
@@ -26,18 +27,18 @@ func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
 		return nil, fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 
+	if !cmtos.FileExists(pvKeyFile) {
+		return nil, fmt.Errorf("validator key file does not exist. create file using `babylond init`: %s", pvKeyFile)
+	}
+
+	if !cmtos.FileExists(blsKeyFile) || !cmtos.FileExists(blsPasswordFile) {
+		return nil, fmt.Errorf("BLS key file does not exist. create file using `babylond init` or `babylond create-bls-key`: %s", blsKeyFile)
+	}
+
 	cometPV := cmtprivval.LoadFilePV(pvKeyFile, pvStateFile)
 	blsPV := privval.LoadBlsPV(blsKeyFile, blsPasswordFile)
 
-	wrappedPV := &privval.WrappedFilePV{
-		Key: privval.WrappedFilePVKey{
-			CometPVKey: cometPV.Key,
-			BlsPVKey:   blsPV.Key,
-		},
-		LastSignState: cometPV.LastSignState,
-	}
-
 	return &PrivSigner{
-		WrappedPV: wrappedPV,
+		PV: privval.NewWrappedFilePV(cometPV.Key, blsPV.Key),
 	}, nil
 }

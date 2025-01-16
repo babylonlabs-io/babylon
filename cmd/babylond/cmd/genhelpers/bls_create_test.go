@@ -58,7 +58,6 @@ func Test_CmdCreateBls(t *testing.T) {
 	ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 	ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
 	genBlsCmd := genhelpers.CmdCreateBls()
-	genBlsCmd.SetArgs([]string{fmt.Sprintf("--%s=%s", flags.FlagHome, home)})
 
 	// create keyring to get the validator address
 	kb, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendTest, home, bufio.NewReader(genBlsCmd.InOrStdin()), clientCtx.Codec)
@@ -84,8 +83,13 @@ func Test_CmdCreateBls(t *testing.T) {
 	filePV := cmtprivval.GenFilePV(keyPath, statePath)
 	filePV.Key.Save()
 
-	blsPV := privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password", addr.String())
+	blsPV := privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password")
 	defer Clean(keyPath, statePath, blsKeyFile, blsPasswordFile)
+
+	genBlsCmd.SetArgs([]string{
+		addr.String(),
+		fmt.Sprintf("--%s=%s", flags.FlagHome, home),
+	})
 
 	// execute the gen-bls cmd
 	err = genBlsCmd.ExecuteContext(ctx)

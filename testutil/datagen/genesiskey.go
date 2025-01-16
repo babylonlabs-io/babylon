@@ -1,6 +1,8 @@
 package datagen
 
 import (
+	"fmt"
+
 	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/privval"
@@ -91,20 +93,22 @@ func GenesisValidatorSet(numVals int) (*GenesisValidators, error) {
 func GenesisValidatorSetWithPrivSigner(numVals int) (*GenesisValidators, *appsigner.PrivSigner, error) {
 	ps, err := signer.SetupTestPrivSigner()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to setup test priv signer: %w", err)
 	}
-	signerGenesisKey, err := signer.GenesisKeyFromPrivSigner(ps)
+
+	validatorAddress := sdk.AccAddress(ps.PV.Comet.PrivKey.PubKey().Address())
+	signerGenesisKey, err := signer.GenesisKeyFromPrivSigner(ps, sdk.ValAddress(validatorAddress))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to get genesis key from priv signer: %w", err)
 	}
 	signerVal := &GenesisKeyWithBLS{
 		GenesisKey: *signerGenesisKey,
-		PrivateKey: ps.WrappedPV.Key.BlsPVKey.PrivKey,
-		PrivKey:    ps.WrappedPV.Key.CometPVKey.PrivKey,
+		PrivateKey: ps.PV.Bls.PrivKey,
+		PrivKey:    ps.PV.Comet.PrivKey,
 	}
 	genesisVals, err := GenesisValidatorSet(numVals)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to get genesis validators: %w", err)
 	}
 	genesisVals.Keys[0] = signerVal
 

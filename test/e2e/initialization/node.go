@@ -33,6 +33,7 @@ import (
 
 	babylonApp "github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
 	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
@@ -45,7 +46,7 @@ type internalNode struct {
 	mnemonic     string
 	keyInfo      *keyring.Record
 	privateKey   cryptotypes.PrivKey
-	consensusKey privval.WrappedFilePVKey
+	consensusKey signer.PrivSigner
 	nodeKey      p2p.NodeKey
 	peerId       string
 	isValidator  bool
@@ -90,7 +91,7 @@ func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error)
 	// get the initial validator min self delegation
 	minSelfDelegation, _ := math.NewIntFromString("1")
 
-	valPubKey, err := cryptocodec.FromCmtPubKeyInterface(n.consensusKey.CometPVKey.PubKey)
+	valPubKey, err := cryptocodec.FromCmtPubKeyInterface(n.consensusKey.PV.Comet.PubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +171,6 @@ func (n *internalNode) createConsensusKey() error {
 	if err := privval.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
 		return fmt.Errorf("failed to ensure dirs: %w", err)
 	}
-	accAddress, _ := n.keyInfo.GetAddress()
 
 	// create file pv
 	var privKey ed25519.PrivKey
@@ -184,11 +184,10 @@ func (n *internalNode) createConsensusKey() error {
 	filePV.LastSignState.Save()
 
 	// create bls pv
-	blsPV := privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password", accAddress.String())
+	blsPV := privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password")
 
-	n.consensusKey = privval.WrappedFilePVKey{
-		CometPVKey: filePV.Key,
-		BlsPVKey:   blsPV.Key,
+	n.consensusKey = signer.PrivSigner{
+		PV: privval.NewWrappedFilePV(filePV.Key, blsPV.Key),
 	}
 	return nil
 }

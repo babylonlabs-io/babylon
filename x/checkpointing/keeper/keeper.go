@@ -18,6 +18,7 @@ import (
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 type (
@@ -419,6 +420,10 @@ func (k Keeper) GetTotalVotingPower(ctx context.Context, epochNumber uint64) int
 
 func (k Keeper) GetPubKeyByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (cmtprotocrypto.PublicKey, error) {
 	return k.epochingKeeper.GetPubKeyByConsAddr(ctx, consAddr)
+}
+
+func (k Keeper) GetValidatorByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (stakingtypes.Validator, error) {
+	return k.epochingKeeper.GetValidatorByConsAddr(ctx, consAddr)
 }
 
 // GetLastFinalizedEpoch gets the last finalised epoch

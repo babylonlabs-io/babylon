@@ -53,15 +53,17 @@ func (h *VoteExtensionHandler) ExtendVote() sdk.ExtendVoteHandler {
 
 		// 1. check if itself is the validator as the BLS sig is only signed
 		// when the node itself is a validator
-		signer := k.GetBLSSignerAddress()
-		curValSet := k.GetValidatorSet(ctx, epoch.EpochNumber)
-		_, _, err := curValSet.FindValidatorWithIndex(signer)
+
+		valConsAddr := k.GetConAddressFromPubkey()
+		val, err := k.GetValidatorByConsAddr(ctx, valConsAddr)
 		if err != nil {
-			// NOTE: this indicates programmatic error because ExtendVote
-			// should not be invoked if the validator is not in the
-			// active set according to:
-			// https://github.com/cometbft/cometbft/blob/a17290f6905ef714761f12c1f82409b0731e3838/consensus/state.go#L2434
-			panic(fmt.Errorf("the BLS signer %s is not in the validator set", signer.String()))
+			panic(fmt.Errorf("the BLS signer's consensus address %s is not in the validator set", valConsAddr.String()))
+		}
+
+		// get signer (delegator address)
+		signer, err := sdk.ValAddressFromBech32(val.GetOperator())
+		if err != nil {
+			panic(fmt.Errorf("the BLS signer's operator %s is not in the validator set", val.GetOperator()))
 		}
 
 		// 2. sign BLS signature
@@ -81,7 +83,7 @@ func (h *VoteExtensionHandler) ExtendVote() sdk.ExtendVoteHandler {
 		// 3. build vote extension
 		ve := &ckpttypes.VoteExtension{
 			Signer:           signer.String(),
-			ValidatorAddress: k.GetValidatorAddress().String(),
+			ValidatorAddress: k.GetValAddressFromPubkey().String(),
 			BlockHash:        &bhash,
 			EpochNum:         epoch.EpochNumber,
 			Height:           uint64(req.Height),

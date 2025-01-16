@@ -119,7 +119,7 @@ func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 	filePV.Key.Save()
 	filePV.LastSignState.Save()
 
-	privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password", "")
+	privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password")
 	cmd := checkpointcli.CmdWrappedCreateValidator(authcodec.NewBech32Codec("cosmosvaloper"))
 
 	consPrivKey := filePV.Key.PrivKey

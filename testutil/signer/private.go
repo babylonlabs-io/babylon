@@ -12,6 +12,7 @@ import (
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	cmtprivval "github.com/cometbft/cometbft/privval"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // SetupTestPrivSigner sets up a PrivSigner for testing
@@ -34,8 +35,12 @@ func SetupTestPrivSigner() (*signer.PrivSigner, error) {
 	return privSigner, nil
 }
 
-func GenesisKeyFromPrivSigner(ps *signer.PrivSigner) (*checkpointingtypes.GenesisKey, error) {
-	valKeys, err := privval.NewValidatorKeys(ps.WrappedPV.GetValPrivKey(), ps.WrappedPV.GetBlsPrivKey())
+// func GenesisKeyFromPrivSigner(ps *signer.PrivSigner, delegatorAddress sdk.ValAddress) (*checkpointingtypes.GenesisKey, error) {
+func GenesisKeyFromPrivSigner(ps *signer.PrivSigner, delegatorAddress sdk.ValAddress) (*checkpointingtypes.GenesisKey, error) {
+	valKeys, err := privval.NewValidatorKeys(
+		ps.PV.Comet.PrivKey,
+		ps.PV.Bls.PrivKey,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +49,7 @@ func GenesisKeyFromPrivSigner(ps *signer.PrivSigner) (*checkpointingtypes.Genesi
 		return nil, err
 	}
 	return checkpointingtypes.NewGenesisKey(
-		ps.WrappedPV.GetAddress(),
+		delegatorAddress,
 		&valKeys.BlsPubkey,
 		valKeys.PoP,
 		&cosmosed.PubKey{Key: valPubkey.Bytes()},
@@ -68,6 +73,6 @@ func GeneratePrivSigner(nodeDir string) error {
 	cometPV.Key.Save()
 	cometPV.LastSignState.Save()
 
-	privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password", "")
+	privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password")
 	return nil
 }

@@ -9,10 +9,10 @@ import (
 )
 
 type BlsSigner interface {
-	GetAddress() sdk.ValAddress
+	// GetAddress() sdk.ValAddress
 	SignMsgWithBls(msg []byte) (bls12381.Signature, error)
 	GetBlsPubkey() (bls12381.PublicKey, error)
-	GetValidatorPubkey() (crypto.PubKey, error)
+	GetValidatorPubkey() crypto.PubKey
 }
 
 // SignBLS signs a BLS signature over the given information
@@ -22,14 +22,14 @@ func (k Keeper) SignBLS(epochNum uint64, blockHash types.BlockHash) (bls12381.Si
 	return k.blsSigner.SignMsgWithBls(signBytes)
 }
 
-func (k Keeper) GetBLSSignerAddress() sdk.ValAddress {
-	return k.blsSigner.GetAddress()
+// GetConAddressFromPubkey returns the consensus address
+func (k Keeper) GetConAddressFromPubkey() sdk.ConsAddress {
+	pk := k.blsSigner.GetValidatorPubkey()
+	return sdk.ConsAddress(pk.Address())
 }
 
-func (k Keeper) GetValidatorAddress() sdk.ValAddress {
-	pk, err := k.blsSigner.GetValidatorPubkey()
-	if err != nil {
-		panic(err)
-	}
+// GetValAddressFromPubkey returns the validator address
+func (k Keeper) GetValAddressFromPubkey() sdk.ValAddress {
+	pk := k.blsSigner.GetValidatorPubkey()
 	return sdk.ValAddress(pk.Address())
 }
