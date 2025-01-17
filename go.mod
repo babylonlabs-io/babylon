@@ -9,7 +9,7 @@ require (
 	github.com/cometbft/cometbft-db v0.15.0
 	github.com/cosmos/cosmos-sdk v0.50.11
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.0.0-20240429153234-e1e6da7e4ead
-	github.com/cosmos/relayer/v2 v2.5.2
+	github.com/cosmos/relayer/v2 v2.5.3
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/pkg/errors v0.9.1
@@ -274,8 +274,4 @@ replace (
 
 	// Downgraded to stable version see: https://github.com/cosmos/cosmos-sdk/pull/14952
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
-
-	// avoid v1.66 that has a breaking change for protobuf. That change breaks the relayer.
-	// https://github.com/grpc/grpc-go/issues/7569
-	google.golang.org/grpc => google.golang.org/grpc v1.65.0
 )
