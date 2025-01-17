@@ -151,19 +151,15 @@ func (k Keeper) SlashConsumerFinalityProvider(ctx context.Context, consumerID st
 	fp.SlashedBtcHeight = btcTip.Height
 	k.BscKeeper.SetConsumerFinalityProvider(ctx, fp)
 
-	// Get all delegations for this consumer finality provider
-	btcDels, err := k.GetFPBTCDelegations(ctx, fpBTCPK)
-	if err != nil {
-		return fmt.Errorf("failed to get BTC delegations: %w", err)
-	}
-
-	// Record slashed BTC delegation events for each affected delegation
-	// These events will be processed in the next `BeginBlock` to update
-	// the power distribution of the involved Babylon FPs
-	for _, btcDel := range btcDels {
+	// Process all delegations for this consumer finality provider and record slashed events
+	err = k.HandleFPBTCDelegations(ctx, fpBTCPK, func(btcDel *types.BTCDelegation) error {
 		stakingTxHash := btcDel.MustGetStakingTxHash().String()
 		eventSlashedBTCDelegation := types.NewEventPowerDistUpdateWithSlashedBTCDelegation(stakingTxHash)
 		k.addPowerDistUpdateEvent(ctx, btcTip.Height, eventSlashedBTCDelegation)
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to handle BTC delegations: %w", err)
 	}
 
 	return nil
@@ -187,51 +183,19 @@ func (k Keeper) SlashConsumerFinalityProvider(ctx context.Context, consumerID st
 // Returns:
 // - An error if any operation fails, nil otherwise.
 func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) error {
-	// Get all delegations for this finality provider
-	delegations, err := k.GetFPBTCDelegations(ctx, fpBTCPK)
-	if err != nil {
-		return err
-	}
-
-	// Collect slashed events for each consumer
-	consumerEvents, err := k.collectSlashedConsumerEvents(ctx, delegations)
-	if err != nil {
-		return err
-	}
-
-	// Send collected events to each involved consumer chain
-	for consumerID, events := range consumerEvents {
-		if err := k.AddBTCStakingConsumerEvents(ctx, consumerID, events); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// collectSlashedConsumerEvents processes delegations and collects slashing events for each consumer chain.
-// It ensures that each consumer receives only one event per delegation, even if multiple finality providers
-// in the delegation belong to the same consumer.
-//
-// Parameters:
-// - ctx: The context for the operation.
-// - delegations: A slice of BTCDelegation objects to process.
-//
-// Returns:
-// - A map where the key is the consumer ID and the value is a slice of BTCStakingConsumerEvents.
-// - An error if any operation fails, nil otherwise.
-func (k Keeper) collectSlashedConsumerEvents(ctx context.Context, delegations []*types.BTCDelegation) (map[string][]*types.BTCStakingConsumerEvent, error) {
+	// Map to collect events for each consumer
+	consumerEvents := make(map[string][]*types.BTCStakingConsumerEvent)
 	// Create a map to store FP to consumer ID mappings
 	fpToConsumerMap := make(map[string]string)
 
-	// Map to collect events for each consumer
-	consumerEvents := make(map[string][]*types.BTCStakingConsumerEvent)
-
-	for _, delegation := range delegations {
+	// Process all delegations for this finality provider and collect slashing events
+	// for each consumer chain. Ensures that each consumer receives only one event per
+	// delegation, even if multiple finality providers in the delegation belong to the same consumer.
+	err := k.HandleFPBTCDelegations(ctx, fpBTCPK, func(delegation *types.BTCDelegation) error {
 		consumerEvent := types.CreateSlashedBTCDelegationEvent(delegation)
 
 		// Track consumers seen for this delegation
-		seenConsumers := make(map[string]bool)
+		seenConsumers := make(map[string]struct{})
 
 		for _, delegationFPBTCPK := range delegation.FpBtcPkList {
 			fpBTCPKHex := delegationFPBTCPK.MarshalHex()
@@ -244,19 +208,30 @@ func (k Keeper) collectSlashedConsumerEvents(ctx context.Context, delegations []
 					// Found consumer, add to map
 					fpToConsumerMap[fpBTCPKHex] = consumerID
 				} else {
-					return nil, types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPKHex)
+					return types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPKHex)
 				}
 			}
 
-			// Add event to the consumer's event list only if not seen for this delegation
-			if !seenConsumers[consumerID] {
+			// Only add event once per consumer per delegation
+			if _, ok := seenConsumers[consumerID]; !ok {
 				consumerEvents[consumerID] = append(consumerEvents[consumerID], consumerEvent)
-				seenConsumers[consumerID] = true
+				seenConsumers[consumerID] = struct{}{}
 			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Send collected events to each involved consumer chain
+	for consumerID, events := range consumerEvents {
+		if err := k.AddBTCStakingConsumerEvents(ctx, consumerID, events); err != nil {
+			return err
 		}
 	}
 
-	return consumerEvents, nil
+	return nil
 }
 
 // JailFinalityProvider jails a finality provider with the given PK
