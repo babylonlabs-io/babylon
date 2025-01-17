@@ -853,21 +853,6 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetAllBTCStakingConsumerIBCPackets(c
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllBTCStakingConsumerIBCPackets", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetAllBTCStakingConsumerIBCPackets), ctx)
 }
 
-// GetFPBTCDelegations mocks base method.
-func (m *MockBTCStakingKeeper) GetFPBTCDelegations(ctx context.Context, fpBTCPK *types.BIP340PubKey) ([]*types2.BTCDelegation, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFPBTCDelegations", ctx, fpBTCPK)
-	ret0, _ := ret[0].([]*types2.BTCDelegation)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetFPBTCDelegations indicates an expected call of GetFPBTCDelegations.
-func (mr *MockBTCStakingKeeperMockRecorder) GetFPBTCDelegations(ctx, fpBTCPK interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFPBTCDelegations", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetFPBTCDelegations), ctx, fpBTCPK)
-}
-
 // PropagateFPSlashingToConsumers mocks base method.
 func (m *MockBTCStakingKeeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *types.BIP340PubKey) error {
 	m.ctrl.T.Helper()

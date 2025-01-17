@@ -55,7 +55,7 @@ message MsgCreateFinalityProvider {
   ProofOfPossessionBTC pop = 5;
   // consumer_id is the ID of the consumer
   // If it's empty, it's assumed to be Babylon's chain id
-  string consumer_id = 7;
+  string consumer_id = 6;
 }
 
 // MsgCreateFinalityProviderResponse is the response for MsgCreateFinalityProvider

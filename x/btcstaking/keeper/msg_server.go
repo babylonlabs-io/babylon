@@ -220,11 +220,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrReusedStakingTx.Wrapf("duplicated tx hash: %s", stakingTxHash.String())
 	}
 
-	// verify proof of possession
-	if err := req.Pop.Verify(parsedMsg.StakerAddress, req.BtcPk, ms.btcNet); err != nil {
-		return nil, types.ErrInvalidProofOfPossession.Wrapf("error while validating proof of possession: %v", err)
-	}
-
 	// Ensure all finality providers
 	// - are known to Babylon,
 	// - at least 1 one of them is a Babylon finality provider,
@@ -233,7 +228,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// and then check whether the BTC stake is restaked to FPs of consumers
 	// TODO: ensure the BTC delegation does not restake to too many finality providers
 	// (pending concrete design)
-	restakedToConsumers, err := ms.validateRestakedFPs(ctx, req.FpBtcPkList)
+	restakedToConsumers, err := ms.validateRestakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
 	if err != nil {
 		return nil, err
 	}
@@ -454,12 +449,6 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, err
 	}
 
-	// check whether the BTC stake is restaked to FPs of consumers
-	_, err = ms.validateRestakedFPs(ctx, btcDel.FpBtcPkList)
-	if err != nil {
-		panic(err) // btcDel has passed verification and this can only be programming error
-	}
-
 	// ensure that the given covenant PK is in the parameter
 	if !params.HasCovenantPK(req.Pk) {
 		return nil, types.ErrInvalidCovenantPK.Wrapf("covenant pk: %s", req.Pk.MarshalHex())
@@ -617,12 +606,6 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	if err != nil {
 		return nil, err
-	}
-
-	// check whether the BTC stake is restaked to FPs of consumers
-	_, err = ms.validateRestakedFPs(ctx, btcDel.FpBtcPkList)
-	if err != nil {
-		panic(err) // btcDel has passed verification and this can only be programming error
 	}
 
 	// ensure the BTC delegation with the given staking tx hash is active
