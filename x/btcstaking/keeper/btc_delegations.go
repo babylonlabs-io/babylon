@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"cosmossdk.io/store/prefix"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -283,6 +284,9 @@ func (k Keeper) restakedFPConsumerIDs(ctx context.Context, fpBTCPKs []bbn.BIP340
 	for consumerID := range consumerIDMap {
 		uniqueConsumerIDs = append(uniqueConsumerIDs, consumerID)
 	}
+
+	// Sort consumer IDs for deterministic ordering
+	slices.Sort(uniqueConsumerIDs)
 
 	return uniqueConsumerIDs, nil
 }
