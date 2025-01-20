@@ -2,20 +2,20 @@ package client
 
 import (
 	"context"
+	relayerclient "github.com/babylonlabs-io/babylon/client/relayer"
 	"time"
 
 	bbn "github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/client/config"
 	"github.com/babylonlabs-io/babylon/client/query"
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
-	"github.com/cosmos/relayer/v2/relayer/chains/cosmos"
 	"go.uber.org/zap"
 )
 
 type Client struct {
 	*query.QueryClient
 
-	provider *cosmos.CosmosProvider
+	provider *relayerclient.CosmosProvider
 	timeout  time.Duration
 	logger   *zap.Logger
 	cfg      *config.BabylonConfig
@@ -44,20 +44,19 @@ func New(cfg *config.BabylonConfig, logger *zap.Logger) (*Client, error) {
 	provider, err := cfg.ToCosmosProviderConfig().NewProvider(
 		zapLogger,
 		"", // TODO: set home path
-		true,
 		"babylon",
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	cp := provider.(*cosmos.CosmosProvider)
+	cp := provider.(*relayerclient.CosmosProvider)
 	cp.PCfg.KeyDirectory = cfg.KeyDirectory
 
 	// Create tmp Babylon app to retrieve and register codecs
 	// Need to override this manually as otherwise option from config is ignored
 	encCfg := bbn.GetEncodingConfig()
-	cp.Cdc = cosmos.Codec{
+	cp.Cdc = relayerclient.Codec{
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		Marshaler:         encCfg.Codec,
 		TxConfig:          encCfg.TxConfig,

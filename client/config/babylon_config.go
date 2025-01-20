@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/cosmos/relayer/v2/relayer/chains/cosmos"
+	relayerclient "github.com/babylonlabs-io/babylon/client/relayer"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -42,8 +42,8 @@ func (cfg *BabylonConfig) Validate() error {
 	return nil
 }
 
-func (cfg *BabylonConfig) ToCosmosProviderConfig() cosmos.CosmosProviderConfig {
-	return cosmos.CosmosProviderConfig{
+func (cfg *BabylonConfig) ToCosmosProviderConfig() relayerclient.CosmosProviderConfig {
+	return relayerclient.CosmosProviderConfig{
 		Key:            cfg.Key,
 		ChainID:        cfg.ChainID,
 		RPCAddr:        cfg.RPCAddr,
