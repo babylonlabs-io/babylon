@@ -22,7 +22,8 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
 			password, _ := cmd.Flags().GetString(flagBlsPassword)
-			return CreateBlsKey(homeDir, password)
+			createBlsKeyAndSave(homeDir, password)
+			return nil
 		},
 	}
 	cmd.Flags().AddFlagSet(cosmosInitCmd.Flags())

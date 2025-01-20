@@ -28,7 +28,8 @@ $ babylond create-bls-key --home ./
 		RunE: func(cmd *cobra.Command, args []string) error {
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
 			password, _ := cmd.Flags().GetString(flagBlsPassword)
-			return CreateBlsKey(homeDir, password)
+			createBlsKeyAndSave(homeDir, password)
+			return nil
 		},
 	}
 
@@ -37,15 +38,10 @@ $ babylond create-bls-key --home ./
 	return cmd
 }
 
-func CreateBlsKey(homeDir, password string) error {
+// createBlsKeyAndSave creates a pair of BLS keys and saves them to files
+func createBlsKeyAndSave(homeDir, password string) {
 	if password == "" {
 		password = privval.NewBlsPassword()
 	}
-
-	privval.GenBlsPV(
-		privval.DefaultBlsKeyFile(homeDir),
-		privval.DefaultBlsPasswordFile(homeDir),
-		password,
-	)
-	return nil
+	privval.GenBlsPV(privval.DefaultBlsKeyFile(homeDir), privval.DefaultBlsPasswordFile(homeDir), password)
 }
