@@ -27,7 +27,7 @@ func (cc *CosmosProvider) GetTxFeeGrant() (txSignerKey string, feeGranterKeyOrAd
 		txSignerKey = cc.PCfg.FeeGrants.ManagedGrantees[lastGranteeIdx]
 		cc.PCfg.FeeGrants.GranteeLastSignerIndex = cc.PCfg.FeeGrants.GranteeLastSignerIndex + 1
 
-		// Restart the round robin at 0 if we reached the end of the list of grantees
+		// Restart the round-robin at 0 if we reached the end of the list of grantees
 		if cc.PCfg.FeeGrants.GranteeLastSignerIndex == len(cc.PCfg.FeeGrants.ManagedGrantees) {
 			cc.PCfg.FeeGrants.GranteeLastSignerIndex = 0
 		}

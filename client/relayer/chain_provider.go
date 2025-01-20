@@ -198,25 +198,6 @@ func (h TendermintIBCHeader) NextValidatorsHash() []byte {
 	return h.SignedHeader.NextValidatorsHash
 }
 
-func (h TendermintIBCHeader) TMHeader() (*tendermint.Header, error) {
-	valSet, err := h.ValidatorSet.ToProto()
-	if err != nil {
-		return nil, err
-	}
-
-	trustedVals, err := h.TrustedValidators.ToProto()
-	if err != nil {
-		return nil, err
-	}
-
-	return &tendermint.Header{
-		SignedHeader:      h.SignedHeader.ToProto(),
-		ValidatorSet:      valSet,
-		TrustedHeight:     h.TrustedHeight,
-		TrustedValidators: trustedVals,
-	}, nil
-}
-
 type ExtensionOption struct {
 	Type  string `json:"type"`
 	Value string `json:"value"`
