@@ -2,15 +2,9 @@ package relayerclient
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	"github.com/cometbft/cometbft/types"
 	"github.com/cosmos/gogoproto/proto"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v8/modules/core/23-commitment/types"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
-	tendermint "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -129,73 +123,6 @@ type QueryProvider interface {
 type KeyOutput struct {
 	Mnemonic string `json:"mnemonic" yaml:"mnemonic"`
 	Address  string `json:"address" yaml:"address"`
-}
-
-// TimeoutHeightError is used during packet validation to inform the PathProcessor
-// that the current chain height has exceeded the packet height timeout so that
-// a MsgTimeout can be assembled for the counterparty chain.
-type TimeoutHeightError struct {
-	latestHeight  uint64
-	timeoutHeight uint64
-}
-
-func (t *TimeoutHeightError) Error() string {
-	return fmt.Sprintf("latest height %d is greater than expiration height: %d", t.latestHeight, t.timeoutHeight)
-}
-
-func NewTimeoutHeightError(latestHeight, timeoutHeight uint64) *TimeoutHeightError {
-	return &TimeoutHeightError{latestHeight, timeoutHeight}
-}
-
-// TimeoutTimestampError is used during packet validation to inform the PathProcessor
-// that current block timestamp has exceeded the packet timestamp timeout so that
-// a MsgTimeout can be assembled for the counterparty chain.
-type TimeoutTimestampError struct {
-	latestTimestamp  uint64
-	timeoutTimestamp uint64
-}
-
-func (t *TimeoutTimestampError) Error() string {
-	return fmt.Sprintf("latest block timestamp %d is greater than expiration timestamp: %d", t.latestTimestamp, t.timeoutTimestamp)
-}
-
-func NewTimeoutTimestampError(latestTimestamp, timeoutTimestamp uint64) *TimeoutTimestampError {
-	return &TimeoutTimestampError{latestTimestamp, timeoutTimestamp}
-}
-
-type TimeoutOnCloseError struct {
-	msg string
-}
-
-func (t *TimeoutOnCloseError) Error() string {
-	return fmt.Sprintf("packet timeout on close error: %s", t.msg)
-}
-
-func NewTimeoutOnCloseError(msg string) *TimeoutOnCloseError {
-	return &TimeoutOnCloseError{msg}
-}
-
-type TendermintIBCHeader struct {
-	SignedHeader      *types.SignedHeader
-	ValidatorSet      *types.ValidatorSet
-	TrustedValidators *types.ValidatorSet
-	TrustedHeight     clienttypes.Height
-}
-
-func (h TendermintIBCHeader) Height() uint64 {
-	return uint64(h.SignedHeader.Height)
-}
-
-func (h TendermintIBCHeader) ConsensusState() ibcexported.ConsensusState {
-	return &tendermint.ConsensusState{
-		Timestamp:          h.SignedHeader.Time,
-		Root:               commitmenttypes.NewMerkleRoot(h.SignedHeader.AppHash),
-		NextValidatorsHash: h.SignedHeader.NextValidatorsHash,
-	}
-}
-
-func (h TendermintIBCHeader) NextValidatorsHash() []byte {
-	return h.SignedHeader.NextValidatorsHash
 }
 
 type ExtensionOption struct {

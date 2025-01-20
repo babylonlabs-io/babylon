@@ -108,10 +108,8 @@ func (cc *CosmosProvider) QueryABCI(ctx context.Context, req abci.RequestQuery) 
 // If there is no error broadcasting, the asyncCallback will be called with success/failure of the wait for block inclusion.
 func (cc *CosmosProvider) broadcastTx(
 	ctx context.Context, // context for tx broadcast
-	tx []byte, // raw tx to be broadcasted
+	tx []byte, // raw tx to be broadcast
 	msgs []RelayerMessage, // used for logging only
-	fees sdk.Coins, // used for metrics
-
 	asyncCtx context.Context, // context for async wait for block inclusion after successful tx broadcast
 	asyncTimeout time.Duration, // timeout for waiting for block inclusion
 	asyncCallbacks []func(*RelayerTxResponse, error), // callback for success/fail of the wait for block inclusion
@@ -287,7 +285,7 @@ func isQueryStoreWithProof(path string) bool {
 // sdkError will return the Cosmos SDK registered error for a given codespace/code combo if registered, otherwise nil.
 func (cc *CosmosProvider) sdkError(codespace string, code uint32) error {
 	// ABCIError will return an error other than "unknown" if syncRes.Code is a registered error in syncRes.Codespace
-	// This catches all of the sdk errors https://github.com/cosmos/cosmos-sdk/blob/f10f5e5974d2ecbf9efc05bc0bfe1c99fdeed4b6/types/errors/errors.go
+	// This catches all the sdk errors https://github.com/cosmos/cosmos-sdk/blob/f10f5e5974d2ecbf9efc05bc0bfe1c99fdeed4b6/types/errors/errors.go
 	err := errors.Unwrap(sdkerrors.ABCIError(codespace, code, "error broadcasting transaction"))
 	if err.Error() != errUnknown {
 		return err
@@ -373,7 +371,7 @@ func (cc *CosmosProvider) SendMessagesToMempool(
 	sequenceGuard.Mu.Lock()
 	defer sequenceGuard.Mu.Unlock()
 
-	txBytes, sequence, fees, err := cc.buildMessages(ctx, msgs, memo, 0, txSignerKey, feegranterKeyOrAddr, sequenceGuard)
+	txBytes, sequence, _, err := cc.buildMessages(ctx, msgs, memo, 0, txSignerKey, feegranterKeyOrAddr, sequenceGuard)
 	if err != nil {
 		// Account sequence mismatch errors can happen on the simulated transaction also.
 		if strings.Contains(err.Error(), legacyerrors.ErrWrongSequence.Error()) {
@@ -383,7 +381,7 @@ func (cc *CosmosProvider) SendMessagesToMempool(
 		return err
 	}
 
-	if err := cc.broadcastTx(ctx, txBytes, msgs, fees, asyncCtx, defaultBroadcastWaitTimeout, asyncCallbacks); err != nil {
+	if err := cc.broadcastTx(ctx, txBytes, msgs, asyncCtx, defaultBroadcastWaitTimeout, asyncCallbacks); err != nil {
 		if strings.Contains(err.Error(), legacyerrors.ErrWrongSequence.Error()) {
 			cc.handleAccountSequenceMismatchError(sequenceGuard, err)
 		}
