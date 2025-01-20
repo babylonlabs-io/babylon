@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#419](https://github.com/babylonlabs-io/babylon/pull/419) Add new modules to swagger config
+
 ### Bug fixes
 
 - [#353](https://github.com/babylonlabs-io/babylon/pull/353) Bump to SDK

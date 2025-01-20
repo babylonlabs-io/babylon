@@ -31,6 +31,23 @@
       }
     },
     {
+      "url":  "./tmp-swagger-gen/babylon/btcstaking/v1/query.swagger.json"
+    },
+    {
+      "url":  "./tmp-swagger-gen/babylon/finality/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "FinalityParams"
+        }
+      }
+    },
+    {
+      "url":  "./tmp-swagger-gen/babylon/mint/v1/query.swagger.json"
+    },
+    {
+      "url":  "./tmp-swagger-gen/babylon/monitor/v1/query.swagger.json"
+    },
+    {
       "url":  "./tmp-swagger-gen/babylon/checkpointing/v1/query.swagger.json",
       "operationIds": {
         "rename": {
