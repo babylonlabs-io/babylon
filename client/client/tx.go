@@ -219,7 +219,7 @@ func (c *Client) SendMessageWithSigner(
 	cliCtx := client.Context{}.WithClient(cc.RPCClient).
 		WithInterfaceRegistry(cc.Cdc.InterfaceRegistry).
 		WithChainID(cc.PCfg.ChainID).
-		WithCodec(cc.Cdc.Marshaler).
+		WithCodec(cc.Cdc.Marshaller).
 		WithFromAddress(signerAddr)
 
 	txf := cc.TxFactory()
@@ -260,10 +260,6 @@ func (c *Client) SendMessageWithSigner(
 	if cc.PCfg.MaxGasAmount != 0 {
 		txf = txf.WithGas(cc.PCfg.MaxGasAmount)
 	}
-	txf, err = cc.SetWithExtensionOptions(txf)
-	if err != nil {
-		return nil, err
-	}
 
 	// txf ready
 	_, adjusted, err := c.CalculateGas(ctx, txf, signerPvKey.PubKey(), cMsgs...)
@@ -284,7 +280,7 @@ func (c *Client) SendMessageWithSigner(
 	// c.LogFailedTx(nil, err, msgs)
 	// Force encoding in the chain specific address
 	for _, msg := range cMsgs {
-		cc.Cdc.Marshaler.MustMarshalJSON(msg)
+		cc.Cdc.Marshaller.MustMarshalJSON(msg)
 	}
 	if err := Sign(ctx, txf, signerPvKey, txb, cc.Cdc.TxConfig.SignModeHandler(), false); err != nil {
 		return nil, err

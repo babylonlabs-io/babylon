@@ -3,7 +3,6 @@ package relayerclient
 import (
 	"context"
 	sdkerrors "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/rootmulti"
 	"errors"
 	"fmt"
@@ -12,7 +11,6 @@ import (
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -20,7 +18,6 @@ import (
 	legacyerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	"github.com/cosmos/relayer/v2/relayer/ethermint"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -560,7 +557,7 @@ func (cc *CosmosProvider) PrepareFactory(txf tx.Factory, signingKey string) (tx.
 	cliCtx := client.Context{}.WithClient(cc.RPCClient).
 		WithInterfaceRegistry(cc.Cdc.InterfaceRegistry).
 		WithChainID(cc.PCfg.ChainID).
-		WithCodec(cc.Cdc.Marshaler).
+		WithCodec(cc.Cdc.Marshaller).
 		WithFromAddress(from)
 
 	// Set the account number and sequence on the transaction factory and retry if fail
@@ -602,40 +599,8 @@ func (cc *CosmosProvider) PrepareFactory(txf tx.Factory, signingKey string) (tx.
 	if cc.PCfg.MaxGasAmount != 0 {
 		txf = txf.WithGas(cc.PCfg.MaxGasAmount)
 	}
-	txf, err = cc.SetWithExtensionOptions(txf)
-	if err != nil {
-		return tx.Factory{}, err
-	}
-	return txf, nil
-}
 
-// SetWithExtensionOptions sets the dynamic fee extension options on the given
-// transaction factory using the configuration options from the CosmosProvider.
-// The function creates an extension option for each configuration option and
-// serializes it into a byte slice before adding it to the list of extension
-// options. The function returns the updated transaction factory with the new
-// extension options or an error if the serialization fails or an invalid option
-// value is encountered.
-func (cc *CosmosProvider) SetWithExtensionOptions(txf tx.Factory) (tx.Factory, error) {
-	extOpts := make([]*types.Any, 0, len(cc.PCfg.ExtensionOptions))
-	for _, opt := range cc.PCfg.ExtensionOptions {
-		max, ok := sdkmath.NewIntFromString(opt.Value)
-		if !ok {
-			return txf, fmt.Errorf("invalid opt value")
-		}
-		extensionOption := ethermint.ExtensionOptionDynamicFeeTx{
-			MaxPriorityPrice: max,
-		}
-		extBytes, err := extensionOption.Marshal()
-		if err != nil {
-			return txf, err
-		}
-		extOpts = append(extOpts, &types.Any{
-			TypeUrl: "/ethermint.types.v1.ExtensionOptionDynamicFeeTx",
-			Value:   extBytes,
-		})
-	}
-	return txf.WithExtensionOptions(extOpts...), nil
+	return txf, nil
 }
 
 // TxFactory instantiates a new tx factory with the appropriate configuration settings for this chain.

@@ -58,7 +58,7 @@ func New(cfg *config.BabylonConfig, logger *zap.Logger) (*Client, error) {
 	encCfg := bbn.GetEncodingConfig()
 	cp.Cdc = relayerclient.Codec{
 		InterfaceRegistry: encCfg.InterfaceRegistry,
-		Marshaler:         encCfg.Codec,
+		Marshaller:        encCfg.Codec,
 		TxConfig:          encCfg.TxConfig,
 		Amino:             encCfg.Amino,
 	}

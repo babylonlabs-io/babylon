@@ -218,14 +218,14 @@ func (cc *CosmosProvider) AccountFromKeyOrAddress(keyOrAddress string) (out sdk.
 
 // Sprint returns the json representation of the specified proto message.
 func (cc *CosmosProvider) Sprint(toPrint proto.Message) (string, error) {
-	out, err := cc.Cdc.Marshaler.MarshalJSON(toPrint)
+	out, err := cc.Cdc.Marshaller.MarshalJSON(toPrint)
 	if err != nil {
 		return "", err
 	}
 	return string(out), nil
 }
 
-// SetPCAddr sets the rpc-addr for the chain.
+// SetRpcAddr sets the rpc-addr for the chain.
 // It will fail if the rpcAddr is invalid(not a url).
 func (cc *CosmosProvider) SetRpcAddr(rpcAddr string) error {
 	cc.PCfg.RPCAddr = rpcAddr
@@ -241,7 +241,7 @@ func (cc *CosmosProvider) Init(ctx context.Context) error {
 		cc.PCfg.KeyringBackend,
 		cc.PCfg.KeyDirectory,
 		cc.Input,
-		cc.Cdc.Marshaler,
+		cc.Cdc.Marshaller,
 		cc.KeyringOptions...,
 	)
 	if err != nil {
