@@ -1,0 +1,835 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "babylon/epoching/v1/query.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/babylon/epoching/v1/current_epoch": {
+      "get": {
+        "summary": "CurrentEpoch queries the current epoch",
+        "operationId": "CurrentEpoch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.epoching.v1.QueryCurrentEpochResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/epoching/v1/delegation_lifecycle/{del_addr}": {
+      "get": {
+        "summary": "DelegationLifecycle queries the lifecycle of a given delegation",
+        "operationId": "DelegationLifecycle",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.epoching.v1.QueryDelegationLifecycleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "del_addr",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/epoching/v1/epochs": {
+      "get": {
+        "summary": "EpochsInfo queries the metadata of epochs in a given range, depending on\nthe parameters in the pagination request. Th main use case will be querying\nthe latest epochs in time order.",
+        "operationId": "EpochsInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.epoching.v1.QueryEpochsInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "pagination.key",
+            "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "pagination.offset",
+            "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.limit",
+            "description": "limit is the total number of results to be returned in the result page.\nIf left empty it will default to a value to be set by each app.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.count_total",
+            "description": "count_total is set to true  to indicate that the result set should include\na count of the total number of items available for pagination in UIs.\ncount_total is only respected when offset is used. It is ignored when key\nis set.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "pagination.reverse",
+            "description": "reverse is set to true if results are to be returned in the descending order.\n\nSince: cosmos-sdk 0.43",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/epoching/v1/epochs/{epoch_num}": {
+      "get": {
+        "summary": "EpochInfo queries the information of a given epoch",
+        "operationId": "EpochInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.epoching.v1.QueryEpochInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "epoch_num",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/epoching/v1/epochs/{epoch_num}/messages": {
+      "get": {
+        "summary": "EpochMsgs queries the messages of a given epoch",
+        "operationId": "EpochMsgs",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.epoching.v1.QueryEpochMsgsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "epoch_num",
+            "description": "epoch_num is the number of epoch of the requested msg queue",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.key",
+            "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "pagination.offset",
+            "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.limit",
+            "description": "limit is the total number of results to be returned in the result page.\nIf left empty it will default to a value to be set by each app.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.count_total",
+            "description": "count_total is set to true  to indicate that the result set should include\na count of the total number of items available for pagination in UIs.\ncount_total is only respected when offset is used. It is ignored when key\nis set.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "pagination.reverse",
+            "description": "reverse is set to true if results are to be returned in the descending order.\n\nSince: cosmos-sdk 0.43",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/epoching/v1/epochs/{epoch_num}/validator_set": {
+      "get": {
+        "summary": "EpochValSet queries the validator set of a given epoch",
+        "operationId": "EpochValSet",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.epoching.v1.QueryEpochValSetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "epoch_num",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.key",
+            "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "pagination.offset",
+            "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.limit",
+            "description": "limit is the total number of results to be returned in the result page.\nIf left empty it will default to a value to be set by each app.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.count_total",
+            "description": "count_total is set to true  to indicate that the result set should include\na count of the total number of items available for pagination in UIs.\ncount_total is only respected when offset is used. It is ignored when key\nis set.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "pagination.reverse",
+            "description": "reverse is set to true if results are to be returned in the descending order.\n\nSince: cosmos-sdk 0.43",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/epoching/v1/epochs:latest/messages": {
+      "get": {
+        "summary": "LatestEpochMsgs queries the messages within a given number of most recent\nepochs",
+        "operationId": "LatestEpochMsgs",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.epoching.v1.QueryLatestEpochMsgsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "end_epoch",
+            "description": "end_epoch is the number of the last epoch to query.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "epoch_count",
+            "description": "epoch_count is the number of epochs to query.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.key",
+            "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "pagination.offset",
+            "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.limit",
+            "description": "limit is the total number of results to be returned in the result page.\nIf left empty it will default to a value to be set by each app.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.count_total",
+            "description": "count_total is set to true  to indicate that the result set should include\na count of the total number of items available for pagination in UIs.\ncount_total is only respected when offset is used. It is ignored when key\nis set.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "pagination.reverse",
+            "description": "reverse is set to true if results are to be returned in the descending order.\n\nSince: cosmos-sdk 0.43",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/epoching/v1/params": {
+      "get": {
+        "summary": "Params queries the parameters of the module.",
+        "operationId": "Params",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.epoching.v1.QueryParamsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/epoching/v1/validator_lifecycle/{val_addr}": {
+      "get": {
+        "summary": "ValidatorLifecycle queries the lifecycle of a given validator",
+        "operationId": "ValidatorLifecycle",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.epoching.v1.QueryValidatorLifecycleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "val_addr",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "babylon.epoching.v1.BondState": {
+      "type": "string",
+      "enum": [
+        "CREATED",
+        "BONDED",
+        "UNBONDING",
+        "UNBONDED",
+        "REMOVED"
+      ],
+      "default": "CREATED",
+      "description": "- CREATED: CREATED is when the validator/delegation has been created\n - BONDED: CREATED is when the validator/delegation has become bonded\n - UNBONDING: CREATED is when the validator/delegation has become unbonding\n - UNBONDED: CREATED is when the validator/delegation has become unbonded\n - REMOVED: CREATED is when the validator/delegation has been removed",
+      "title": "BondState is the bond state of a validator or delegation"
+    },
+    "babylon.epoching.v1.DelegationLifecycle": {
+      "type": "object",
+      "properties": {
+        "del_addr": {
+          "type": "string"
+        },
+        "del_life": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/babylon.epoching.v1.DelegationStateUpdate"
+          }
+        }
+      },
+      "title": "ValidatorLifecycle is a message that records the lifecycle of\na delegation"
+    },
+    "babylon.epoching.v1.DelegationStateUpdate": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "$ref": "#/definitions/babylon.epoching.v1.BondState"
+        },
+        "val_addr": {
+          "type": "string"
+        },
+        "amount": {
+          "$ref": "#/definitions/cosmos.base.v1beta1.Coin"
+        },
+        "block_height": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "block_time": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "DelegationStateUpdate is the message that records a state update of a\ndelegation"
+    },
+    "babylon.epoching.v1.EpochResponse": {
+      "type": "object",
+      "properties": {
+        "epoch_number": {
+          "type": "string",
+          "format": "uint64",
+          "title": "epoch_number is the number of this epoch"
+        },
+        "current_epoch_interval": {
+          "type": "string",
+          "format": "uint64",
+          "title": "current_epoch_interval is the epoch interval at the time of this epoch"
+        },
+        "first_block_height": {
+          "type": "string",
+          "format": "uint64",
+          "title": "first_block_height is the height of the first block in this epoch"
+        },
+        "last_block_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "last_block_time is the time of the last block in this epoch.\nBabylon needs to remember the last header's time of each epoch to complete\nunbonding validators/delegations when a previous epoch's checkpoint is\nfinalised. The last_block_time field is nil in the epoch's beginning, and\nis set upon the end of this epoch."
+        },
+        "sealer_app_hash_hex": {
+          "type": "string",
+          "description": "sealer is the last block of the sealed epoch\nsealer_app_hash points to the sealer but stored in the 1st header\nof the next epoch as hex string."
+        },
+        "sealer_block_hash": {
+          "type": "string",
+          "description": "sealer_block_hash is the hash of the sealer\nthe validator set has generated a BLS multisig on the hash,\ni.e., hash of the last block in the epoch as hex string."
+        }
+      },
+      "title": "EpochResponse is a structure that contains the metadata of an epoch"
+    },
+    "babylon.epoching.v1.Params": {
+      "type": "object",
+      "properties": {
+        "epoch_interval": {
+          "type": "string",
+          "format": "uint64",
+          "title": "epoch_interval is the number of consecutive blocks to form an epoch"
+        }
+      },
+      "description": "Params defines the parameters for the module."
+    },
+    "babylon.epoching.v1.QueryCurrentEpochResponse": {
+      "type": "object",
+      "properties": {
+        "current_epoch": {
+          "type": "string",
+          "format": "uint64",
+          "title": "current_epoch is the current epoch number"
+        },
+        "epoch_boundary": {
+          "type": "string",
+          "format": "uint64",
+          "title": "epoch_boundary is the height of this epoch's last block"
+        }
+      },
+      "title": "QueryCurrentEpochResponse is the response type for the Query/CurrentEpoch RPC\nmethod"
+    },
+    "babylon.epoching.v1.QueryDelegationLifecycleResponse": {
+      "type": "object",
+      "properties": {
+        "del_life": {
+          "$ref": "#/definitions/babylon.epoching.v1.DelegationLifecycle"
+        }
+      },
+      "title": "QueryDelegationLifecycleRequest is the response type for the\nQuery/DelegationLifecycle RPC method"
+    },
+    "babylon.epoching.v1.QueryEpochInfoResponse": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "$ref": "#/definitions/babylon.epoching.v1.EpochResponse"
+        }
+      },
+      "title": "QueryEpochInfoRequest is the response type for the Query/EpochInfo method"
+    },
+    "babylon.epoching.v1.QueryEpochMsgsResponse": {
+      "type": "object",
+      "properties": {
+        "msgs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/babylon.epoching.v1.QueuedMessageResponse"
+          },
+          "title": "msgs is the list of messages queued in the current epoch"
+        },
+        "pagination": {
+          "$ref": "#/definitions/cosmos.base.query.v1beta1.PageResponse",
+          "title": "pagination defines the pagination in the response"
+        }
+      },
+      "title": "QueryEpochMsgsResponse is the response type for the Query/EpochMsgs RPC\nmethod"
+    },
+    "babylon.epoching.v1.QueryEpochValSetResponse": {
+      "type": "object",
+      "properties": {
+        "validators": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/babylon.epoching.v1.Validator"
+          }
+        },
+        "total_voting_power": {
+          "type": "string",
+          "format": "int64"
+        },
+        "pagination": {
+          "$ref": "#/definitions/cosmos.base.query.v1beta1.PageResponse"
+        }
+      },
+      "title": "QueryEpochValSetRequest is the response type for the Query/EpochValSet RPC\nmethod"
+    },
+    "babylon.epoching.v1.QueryEpochsInfoResponse": {
+      "type": "object",
+      "properties": {
+        "epochs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/babylon.epoching.v1.EpochResponse"
+          }
+        },
+        "pagination": {
+          "$ref": "#/definitions/cosmos.base.query.v1beta1.PageResponse",
+          "title": "pagination defines the pagination in the response"
+        }
+      },
+      "title": "QueryEpochsInfoResponse is the response type for the Query/EpochInfos method"
+    },
+    "babylon.epoching.v1.QueryLatestEpochMsgsResponse": {
+      "type": "object",
+      "properties": {
+        "latest_epoch_msgs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/babylon.epoching.v1.QueuedMessageList"
+          },
+          "title": "latest_epoch_msgs is a list of QueuedMessageList\neach QueuedMessageList has a field identifying the epoch number"
+        },
+        "pagination": {
+          "$ref": "#/definitions/cosmos.base.query.v1beta1.PageResponse"
+        }
+      },
+      "title": "QueryLatestEpochMsgsResponse is the response type for the\nQuery/LatestEpochMsgs RPC method"
+    },
+    "babylon.epoching.v1.QueryParamsResponse": {
+      "type": "object",
+      "properties": {
+        "params": {
+          "$ref": "#/definitions/babylon.epoching.v1.Params",
+          "description": "params holds all the parameters of this module."
+        }
+      },
+      "description": "QueryParamsResponse is the response type for the Query/Params RPC method."
+    },
+    "babylon.epoching.v1.QueryValidatorLifecycleResponse": {
+      "type": "object",
+      "properties": {
+        "val_addr": {
+          "type": "string"
+        },
+        "val_life": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/babylon.epoching.v1.ValStateUpdateResponse"
+          }
+        }
+      },
+      "title": "QueryValidatorLifecycleResponse is the response type for the\nQuery/ValidatorLifecycle RPC method"
+    },
+    "babylon.epoching.v1.QueuedMessageList": {
+      "type": "object",
+      "properties": {
+        "epoch_number": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "msgs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/babylon.epoching.v1.QueuedMessageResponse"
+          }
+        }
+      },
+      "title": "QueuedMessageList is a message that contains a list of staking-related\nmessages queued for an epoch"
+    },
+    "babylon.epoching.v1.QueuedMessageResponse": {
+      "type": "object",
+      "properties": {
+        "tx_id": {
+          "type": "string",
+          "description": "tx_id is the ID of the tx that contains the message as hex."
+        },
+        "msg_id": {
+          "type": "string",
+          "description": "msg_id is the original message ID, i.e., hash of the marshaled message as hex."
+        },
+        "block_height": {
+          "type": "string",
+          "format": "uint64",
+          "title": "block_height is the height when this msg is submitted to Babylon"
+        },
+        "block_time": {
+          "type": "string",
+          "format": "date-time",
+          "title": "block_time is the timestamp when this msg is submitted to Babylon"
+        },
+        "msg": {
+          "type": "string",
+          "description": "msg is the actual message that is sent by a user and is queued by the\nepoching module as string."
+        }
+      },
+      "title": "QueuedMessageResponse is a message that can change the validator set and is delayed\nto the end of an epoch"
+    },
+    "babylon.epoching.v1.ValStateUpdateResponse": {
+      "type": "object",
+      "properties": {
+        "state_desc": {
+          "type": "string",
+          "description": "StateDesc defines the descriptive state."
+        },
+        "block_height": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "block_time": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "ValStateUpdateResponse is a message response that records a state update of a validator."
+    },
+    "babylon.epoching.v1.Validator": {
+      "type": "object",
+      "properties": {
+        "addr": {
+          "type": "string",
+          "format": "byte",
+          "title": "addr is the validator's address (in sdk.ValAddress)"
+        },
+        "power": {
+          "type": "string",
+          "format": "int64",
+          "title": "power is the validator's voting power"
+        }
+      },
+      "title": "Validator is a message that denotes a validator"
+    },
+    "cosmos.base.query.v1beta1.PageRequest": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "format": "byte",
+          "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set."
+        },
+        "offset": {
+          "type": "string",
+          "format": "uint64",
+          "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set."
+        },
+        "limit": {
+          "type": "string",
+          "format": "uint64",
+          "description": "limit is the total number of results to be returned in the result page.\nIf left empty it will default to a value to be set by each app."
+        },
+        "count_total": {
+          "type": "boolean",
+          "description": "count_total is set to true  to indicate that the result set should include\na count of the total number of items available for pagination in UIs.\ncount_total is only respected when offset is used. It is ignored when key\nis set."
+        },
+        "reverse": {
+          "type": "boolean",
+          "description": "reverse is set to true if results are to be returned in the descending order.\n\nSince: cosmos-sdk 0.43"
+        }
+      },
+      "description": "message SomeRequest {\n         Foo some_parameter = 1;\n         PageRequest pagination = 2;\n }",
+      "title": "PageRequest is to be embedded in gRPC request messages for efficient\npagination. Ex:"
+    },
+    "cosmos.base.query.v1beta1.PageResponse": {
+      "type": "object",
+      "properties": {
+        "next_key": {
+          "type": "string",
+          "format": "byte",
+          "description": "next_key is the key to be passed to PageRequest.key to\nquery the next page most efficiently. It will be empty if\nthere are no more results."
+        },
+        "total": {
+          "type": "string",
+          "format": "uint64",
+          "title": "total is total number of results available if PageRequest.count_total\nwas set, its value is undefined otherwise"
+        }
+      },
+      "description": "PageResponse is to be embedded in gRPC response messages where the\ncorresponding request message has used PageRequest.\n\n message SomeResponse {\n         repeated Bar results = 1;\n         PageResponse page = 2;\n }"
+    },
+    "cosmos.base.v1beta1.Coin": {
+      "type": "object",
+      "properties": {
+        "denom": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        }
+      },
+      "description": "Coin defines a token with a denomination and an amount.\n\nNOTE: The amount field is an Int which implements the custom method\nsignatures required by gogoproto."
+    },
+    "google.protobuf.Any": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string",
+          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+        },
+        "value": {
+          "type": "string",
+          "format": "byte",
+          "description": "Must be a valid serialized protocol buffer of the above specified type."
+        }
+      },
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+    },
+    "grpc.gateway.runtime.Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/google.protobuf.Any"
+          }
+        }
+      }
+    }
+  }
+}

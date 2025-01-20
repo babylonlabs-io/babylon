@@ -266,6 +266,7 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 }
 
 // restakedFPConsumerIDs returns the unique consumer IDs of non-Babylon finality providers
+// The returned list is sorted in order to make sure the function is deterministic
 func (k Keeper) restakedFPConsumerIDs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) ([]string, error) {
 	consumerIDMap := make(map[string]struct{})
 

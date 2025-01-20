@@ -1,0 +1,136 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "babylon/monitor/v1/query.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/babylon/monitor/v1/checkpoints/{ckpt_hash}": {
+      "get": {
+        "summary": "ReportedCheckpointBtcHeight returns the BTC light client height at which\nthe checkpoint with the given hash is reported back to Babylon",
+        "operationId": "ReportedCheckpointBtcHeight",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.monitor.v1.QueryReportedCheckpointBtcHeightResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ckpt_hash",
+            "description": "ckpt_hash is hex encoded byte string of the hash of the checkpoint",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/monitor/v1/epochs/{epoch_num}": {
+      "get": {
+        "summary": "EndedEpochBtcHeight returns the BTC light client height at provided epoch\nfinish",
+        "operationId": "EndedEpochBtcHeight",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.monitor.v1.QueryEndedEpochBtcHeightResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "epoch_num",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "babylon.monitor.v1.QueryEndedEpochBtcHeightResponse": {
+      "type": "object",
+      "properties": {
+        "btc_light_client_height": {
+          "type": "integer",
+          "format": "int64",
+          "title": "height of btc light client when epoch ended"
+        }
+      },
+      "title": "QueryEndedEpochBtcHeightResponse defines a response type for\nEndedEpochBtcHeight RPC method"
+    },
+    "babylon.monitor.v1.QueryReportedCheckpointBtcHeightResponse": {
+      "type": "object",
+      "properties": {
+        "btc_light_client_height": {
+          "type": "integer",
+          "format": "int64",
+          "title": "height of btc light client when checkpoint is reported"
+        }
+      },
+      "title": "QueryReportedCheckpointBtcHeightResponse defines a response type for\nReportedCheckpointBtcHeight RPC method"
+    },
+    "google.protobuf.Any": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "grpc.gateway.runtime.Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/google.protobuf.Any"
+          }
+        }
+      }
+    }
+  }
+}

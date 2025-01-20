@@ -431,7 +431,7 @@ func (ak *AppKeepers) InitKeepers(
 		homePath,
 		wasmConfig,
 		WasmCapabilities(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		appparams.AccGov.String(),
 		wasmOpts...,
 	)
 
@@ -514,7 +514,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.BankKeeper,
 		ak.IBCKeeper.ClientKeeper,
 		ak.WasmKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		appparams.AccGov.String(),
 	)
 
 	// set up BTC staking keeper
@@ -569,7 +569,7 @@ func (ak *AppKeepers) InitKeepers(
 		&ak.BTCStakingKeeper,
 		&ak.BTCStkConsumerKeeper,
 		scopedZoneConciergeKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		appparams.AccGov.String(),
 	)
 
 	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module

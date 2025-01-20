@@ -36,7 +36,7 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 	// default consumer ID is Babylon's chain ID
 	consumerID := msg.GetConsumerId()
 	if consumerID == "" {
-		// canonical chain id
+		// Babylon chain ID
 		consumerID = ctx.ChainID()
 	}
 

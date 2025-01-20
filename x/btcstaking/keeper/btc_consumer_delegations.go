@@ -12,14 +12,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 )
 
-// IndexBTCConsumerDelegation indexes a BTC delegation into the BTC consumer delegator store
+// indexBTCConsumerDelegation indexes a BTC delegation into the BTC consumer delegator store
 // CONTRACT: this function only takes BTC delegations that have passed verifications
 // imposed in `x/btcstaking/msg_server.go`
-func (k Keeper) IndexBTCConsumerDelegation(ctx sdk.Context, btcDel *bstypes.BTCDelegation) error {
-	if err := btcDel.ValidateBasic(); err != nil {
-		return err
-	}
-
+func (k Keeper) indexBTCConsumerDelegation(ctx sdk.Context, btcDel *bstypes.BTCDelegation) error {
 	// get staking tx hash
 	stakingTxHash, err := btcDel.GetStakingTxHash()
 	if err != nil {
@@ -58,7 +54,6 @@ func (k Keeper) GetBTCConsumerDelegatorDelegationsResponses(
 	ctx sdk.Context,
 	fpBTCPK *bbn.BIP340PubKey,
 	pagination *query.PageRequest,
-	wValue uint32,
 	btcHeight uint32,
 	covenantQuorum uint32,
 ) ([]*bstypes.BTCDelegatorDelegationsResponse, *query.PageResponse, error) {

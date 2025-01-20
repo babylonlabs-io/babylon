@@ -272,7 +272,7 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		Entrypoint: []string{
 			"sh",
 			"-c",
-			"babylond start " + FlagHome + " --log_level trace --trace",
+			"babylond start " + FlagHome,
 		},
 		ExposedPorts: []string{"26656", "26657", "1317", "9090"},
 		Mounts: []string{

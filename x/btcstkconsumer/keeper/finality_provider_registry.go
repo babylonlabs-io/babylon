@@ -5,7 +5,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/runtime"
 
-	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -69,41 +68,6 @@ func (k Keeper) IterateFPs(ctx context.Context, chainId string, handler func(fp 
 			return
 		}
 	}
-}
-
-// HasFPs checks if the FPs list exists for a given chain id
-func (k Keeper) HasFPs(ctx context.Context, chainID string) bool {
-	store := k.finalityProviderStore(ctx, chainID)
-	iter := store.Iterator(nil, nil)
-	defer iter.Close()
-	return iter.Valid()
-}
-
-// GetFPs gets the list of FPs, i.e., the finality provider set for a given chain id
-func (k Keeper) GetFPs(ctx context.Context, chainID string) map[string]btcstaking.FinalityProvider {
-	store := k.finalityProviderStore(ctx, chainID)
-	iter := store.Iterator(nil, nil)
-	defer iter.Close()
-
-	// if no finality provider for this chain id, return nil
-	if !iter.Valid() {
-		return nil
-	}
-
-	// get all finality providers for this chain id
-	fpSet := map[string]btcstaking.FinalityProvider{}
-	for ; iter.Valid(); iter.Next() {
-		fpBTCPK, err := bbn.NewBIP340PubKey(iter.Key())
-		if err != nil {
-			// failing to unmarshal finality provider BTC PK in KVStore is a programming error
-			panic(errorsmod.Wrapf(bbn.ErrUnmarshal, "Failed to unmarshall FP BTC PK %s: %v", iter.Key(), err))
-		}
-		var fp btcstaking.FinalityProvider
-		k.cdc.MustUnmarshal(iter.Value(), &fp)
-		fpSet[fpBTCPK.MarshalHex()] = fp
-	}
-
-	return fpSet
 }
 
 // finalityProviderStore returns the KVStore of the finality provider set per chain

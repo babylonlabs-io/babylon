@@ -297,7 +297,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// if this BTC delegation is restaked to consumers' FPs, add it to btcstkconsumer indexes
 	// TODO: revisit the relationship between BTC staking module and BTC staking consumer module
 	if restakedToConsumers {
-		if err := ms.IndexBTCConsumerDelegation(ctx, newBTCDel); err != nil {
+		if err := ms.indexBTCConsumerDelegation(ctx, newBTCDel); err != nil {
 			panic(fmt.Errorf("failed to add BTC delegation restaked to consumers' finality providers despite it has passed verification: %w", err))
 		}
 	}

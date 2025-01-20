@@ -1,0 +1,409 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "babylon/btccheckpoint/v1/query.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/babylon/btccheckpoint/v1": {
+      "get": {
+        "summary": "BtcCheckpointsInfo returns checkpoint info for a range of epochs",
+        "operationId": "BtcCheckpointsInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.btccheckpoint.v1.QueryBtcCheckpointsInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "pagination.key",
+            "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "pagination.offset",
+            "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.limit",
+            "description": "limit is the total number of results to be returned in the result page.\nIf left empty it will default to a value to be set by each app.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.count_total",
+            "description": "count_total is set to true  to indicate that the result set should include\na count of the total number of items available for pagination in UIs.\ncount_total is only respected when offset is used. It is ignored when key\nis set.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "pagination.reverse",
+            "description": "reverse is set to true if results are to be returned in the descending order.\n\nSince: cosmos-sdk 0.43",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/btccheckpoint/v1/params": {
+      "get": {
+        "summary": "Parameters queries the parameters of the module.",
+        "operationId": "Params",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.btccheckpoint.v1.QueryParamsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/btccheckpoint/v1/{epoch_num}": {
+      "get": {
+        "summary": "BtcCheckpointInfo returns checkpoint info for a given epoch",
+        "operationId": "BtcCheckpointInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.btccheckpoint.v1.QueryBtcCheckpointInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "epoch_num",
+            "description": "Number of epoch for which the earliest checkpointing btc height is\nrequested",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/btccheckpoint/v1/{epoch_num}/submissions": {
+      "get": {
+        "summary": "EpochSubmissions returns all submissions for a given epoch",
+        "operationId": "EpochSubmissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.btccheckpoint.v1.QueryEpochSubmissionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "epoch_num",
+            "description": "Number of epoch for which submissions are requested",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "babylon.btccheckpoint.v1.BTCCheckpointInfoResponse": {
+      "type": "object",
+      "properties": {
+        "epoch_number": {
+          "type": "string",
+          "format": "uint64",
+          "description": "EpochNumber of this checkpoint."
+        },
+        "best_submission_btc_block_height": {
+          "type": "integer",
+          "format": "int64",
+          "title": "btc height of the best submission of the epoch"
+        },
+        "best_submission_btc_block_hash": {
+          "type": "string",
+          "title": "hash of the btc block which determines checkpoint btc block height i.e.\nyoungest block of best submission Hexadecimal"
+        },
+        "best_submission_transactions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/babylon.btccheckpoint.v1.TransactionInfoResponse"
+          },
+          "title": "the BTC checkpoint transactions of the best submission"
+        },
+        "best_submission_vigilante_address_list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/babylon.btccheckpoint.v1.CheckpointAddressesResponse"
+          },
+          "title": "list of vigilantes' addresses of the best submission"
+        }
+      },
+      "description": "BTCCheckpointInfoResponse contains all data about best submission of checkpoint for\ngiven epoch. Best submission is the submission which is deeper in btc ledger."
+    },
+    "babylon.btccheckpoint.v1.CheckpointAddressesResponse": {
+      "type": "object",
+      "properties": {
+        "submitter": {
+          "type": "string",
+          "description": "submitter is the address of the checkpoint submitter to BTC, extracted from\nthe checkpoint itself."
+        },
+        "reporter": {
+          "type": "string",
+          "title": "reporter is the address of the reporter who reported the submissions,\ncalculated from submission message MsgInsertBTCSpvProof itself"
+        }
+      },
+      "title": "CheckpointAddressesResponse contains the addresses of the submitter and reporter of a\ngiven checkpoint"
+    },
+    "babylon.btccheckpoint.v1.Params": {
+      "type": "object",
+      "properties": {
+        "btc_confirmation_depth": {
+          "type": "integer",
+          "format": "int64",
+          "title": "btc_confirmation_depth is the confirmation depth in BTC.\nA block is considered irreversible only when it is at least k-deep in BTC\n(k in research paper)"
+        },
+        "checkpoint_finalization_timeout": {
+          "type": "integer",
+          "format": "int64",
+          "title": "checkpoint_finalization_timeout is the maximum time window (measured in BTC\nblocks) between a checkpoint\n- being submitted to BTC, and\n- being reported back to BBN\nIf a checkpoint has not been reported back within w BTC blocks, then BBN\nhas dishonest majority and is stalling checkpoints (w in research paper)"
+        },
+        "checkpoint_tag": {
+          "type": "string",
+          "title": "4byte tag in hex format, required to be present in the OP_RETURN transaction\nrelated to babylon"
+        }
+      },
+      "description": "Params defines the parameters for the module."
+    },
+    "babylon.btccheckpoint.v1.QueryBtcCheckpointInfoResponse": {
+      "type": "object",
+      "properties": {
+        "info": {
+          "$ref": "#/definitions/babylon.btccheckpoint.v1.BTCCheckpointInfoResponse"
+        }
+      },
+      "title": "QueryBtcCheckpointInfoResponse is response type for the\nQuery/BtcCheckpointInfo RPC method"
+    },
+    "babylon.btccheckpoint.v1.QueryBtcCheckpointsInfoResponse": {
+      "type": "object",
+      "properties": {
+        "info_list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/babylon.btccheckpoint.v1.BTCCheckpointInfoResponse"
+          }
+        },
+        "pagination": {
+          "$ref": "#/definitions/cosmos.base.query.v1beta1.PageResponse",
+          "title": "pagination defines the pagination in the response"
+        }
+      },
+      "title": "QueryBtcCheckpointsInfoResponse is response type for the\nQuery/BtcCheckpointsInfo RPC method"
+    },
+    "babylon.btccheckpoint.v1.QueryEpochSubmissionsResponse": {
+      "type": "object",
+      "properties": {
+        "keys": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/babylon.btccheckpoint.v1.SubmissionKeyResponse"
+          },
+          "description": "Keys All submissions transactions key saved during an epoch."
+        }
+      },
+      "title": "QueryEpochSubmissionsResponse defines a response to get all submissions in\ngiven epoch (QueryEpochSubmissionsRequest)"
+    },
+    "babylon.btccheckpoint.v1.QueryParamsResponse": {
+      "type": "object",
+      "properties": {
+        "params": {
+          "$ref": "#/definitions/babylon.btccheckpoint.v1.Params",
+          "description": "params holds all the parameters of this module."
+        }
+      },
+      "description": "QueryParamsResponse is response type for the Query/Params RPC method."
+    },
+    "babylon.btccheckpoint.v1.SubmissionKeyResponse": {
+      "type": "object",
+      "properties": {
+        "first_tx_block_hash": {
+          "type": "string",
+          "description": "FirstTxBlockHash is the BTCHeaderHashBytes in hex."
+        },
+        "first_tx_index": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "second_tx_block_hash": {
+          "type": "string",
+          "description": "SecondBlockHash is the BTCHeaderHashBytes in hex."
+        },
+        "second_tx_index": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "SubmissionKeyResponse Checkpoint can be composed from multiple transactions,\nso to identify whole submission we need list of transaction keys.\nEach submission can generally be identified by this list of (txIdx,\nblockHash) tuples. Note: this could possibly be optimized as if transactions\nwere in one block they would have the same block hash and different indexes,\nbut each blockhash is only 33 (1  byte for prefix encoding and 32 byte hash),\nso there should be other strong arguments for this optimization"
+    },
+    "babylon.btccheckpoint.v1.TransactionInfoResponse": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Index Bitcoin Transaction index in block."
+        },
+        "hash": {
+          "type": "string",
+          "description": "Hash BTC Header hash as hex."
+        },
+        "transaction": {
+          "type": "string",
+          "description": "transaction is the full transaction data as str hex."
+        },
+        "proof": {
+          "type": "string",
+          "title": "proof is the Merkle proof that this tx is included in the position in `key`"
+        }
+      },
+      "title": "TransactionInfoResponse is the info of a tx on Bitcoin,\nincluding\n- the position of the tx on BTC blockchain\n- the full tx content\n- the Merkle proof that this tx is on the above position"
+    },
+    "cosmos.base.query.v1beta1.PageRequest": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "format": "byte",
+          "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set."
+        },
+        "offset": {
+          "type": "string",
+          "format": "uint64",
+          "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set."
+        },
+        "limit": {
+          "type": "string",
+          "format": "uint64",
+          "description": "limit is the total number of results to be returned in the result page.\nIf left empty it will default to a value to be set by each app."
+        },
+        "count_total": {
+          "type": "boolean",
+          "description": "count_total is set to true  to indicate that the result set should include\na count of the total number of items available for pagination in UIs.\ncount_total is only respected when offset is used. It is ignored when key\nis set."
+        },
+        "reverse": {
+          "type": "boolean",
+          "description": "reverse is set to true if results are to be returned in the descending order.\n\nSince: cosmos-sdk 0.43"
+        }
+      },
+      "description": "message SomeRequest {\n         Foo some_parameter = 1;\n         PageRequest pagination = 2;\n }",
+      "title": "PageRequest is to be embedded in gRPC request messages for efficient\npagination. Ex:"
+    },
+    "cosmos.base.query.v1beta1.PageResponse": {
+      "type": "object",
+      "properties": {
+        "next_key": {
+          "type": "string",
+          "format": "byte",
+          "description": "next_key is the key to be passed to PageRequest.key to\nquery the next page most efficiently. It will be empty if\nthere are no more results."
+        },
+        "total": {
+          "type": "string",
+          "format": "uint64",
+          "title": "total is total number of results available if PageRequest.count_total\nwas set, its value is undefined otherwise"
+        }
+      },
+      "description": "PageResponse is to be embedded in gRPC response messages where the\ncorresponding request message has used PageRequest.\n\n message SomeResponse {\n         repeated Bar results = 1;\n         PageResponse page = 2;\n }"
+    },
+    "google.protobuf.Any": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "grpc.gateway.runtime.Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/google.protobuf.Any"
+          }
+        }
+      }
+    }
+  }
+}

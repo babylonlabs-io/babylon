@@ -1,0 +1,152 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "babylon/mint/v1/query.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/cosmos/mint/v1beta1/annual_provisions": {
+      "get": {
+        "summary": "AnnualProvisions returns the current annual provisions.",
+        "operationId": "AnnualProvisions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.mint.v1.QueryAnnualProvisionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/cosmos/mint/v1beta1/genesis_time": {
+      "get": {
+        "summary": "GenesisTime returns the genesis time.",
+        "operationId": "GenesisTime",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.mint.v1.QueryGenesisTimeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/cosmos/mint/v1beta1/inflation_rate": {
+      "get": {
+        "summary": "InflationRate returns the current inflation rate.",
+        "operationId": "InflationRate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.mint.v1.QueryInflationRateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "tags": [
+          "Query"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "babylon.mint.v1.QueryAnnualProvisionsResponse": {
+      "type": "object",
+      "properties": {
+        "annual_provisions": {
+          "type": "string",
+          "format": "byte",
+          "description": "AnnualProvisions is the current annual provisions."
+        }
+      },
+      "description": "QueryAnnualProvisionsResponse is the response type for the\nQuery/AnnualProvisions RPC method."
+    },
+    "babylon.mint.v1.QueryGenesisTimeResponse": {
+      "type": "object",
+      "properties": {
+        "genesis_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "GenesisTime is the timestamp associated with the first block."
+        }
+      },
+      "description": "QueryGenesisTimeResponse is the response type for the Query/GenesisTime RPC\nmethod."
+    },
+    "babylon.mint.v1.QueryInflationRateResponse": {
+      "type": "object",
+      "properties": {
+        "inflation_rate": {
+          "type": "string",
+          "format": "byte",
+          "description": "InflationRate is the current inflation rate."
+        }
+      },
+      "description": "QueryInflationRateResponse is the response type for the Query/InflationRate\nRPC method."
+    },
+    "google.protobuf.Any": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "grpc.gateway.runtime.Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/google.protobuf.Any"
+          }
+        }
+      }
+    }
+  }
+}

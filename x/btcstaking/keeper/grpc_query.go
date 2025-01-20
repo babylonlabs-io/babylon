@@ -143,7 +143,6 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	currentWValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 	btcHeight := k.btclcKeeper.GetTipInfo(ctx).Height
 	covenantQuorum := k.GetParams(ctx).CovenantQuorum
 
@@ -188,7 +187,7 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 
 	case k.BscKeeper.HasConsumerFinalityProvider(ctx, fpPK):
 		// this is a consumer finality provider
-		btcDels, pageRes, err = k.GetBTCConsumerDelegatorDelegationsResponses(sdkCtx, fpPK, req.Pagination, currentWValue, btcHeight, covenantQuorum)
+		btcDels, pageRes, err = k.GetBTCConsumerDelegatorDelegationsResponses(sdkCtx, fpPK, req.Pagination, btcHeight, covenantQuorum)
 		if err != nil {
 			return nil, err
 		}

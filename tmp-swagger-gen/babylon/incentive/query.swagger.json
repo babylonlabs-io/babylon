@@ -1,0 +1,268 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "babylon/incentive/query.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/babylon/incentive/address/{address}/reward_gauge": {
+      "get": {
+        "summary": "RewardGauge queries the reward gauge of a given stakeholder address",
+        "operationId": "RewardGauges",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.incentive.QueryRewardGaugesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "address",
+            "description": "address is the address of the stakeholder in bech32 string",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/incentive/btc_staking_gauge/{height}": {
+      "get": {
+        "summary": "BTCStakingGauge queries the BTC staking gauge of a given height",
+        "operationId": "BTCStakingGauge",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.incentive.QueryBTCStakingGaugeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "height",
+            "description": "height is the queried Babylon height",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/incentive/delegators/{delegator_address}/withdraw_address": {
+      "get": {
+        "summary": "DelegatorWithdrawAddress queries withdraw address of a delegator.",
+        "operationId": "DelegatorWithdrawAddress",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.incentive.QueryDelegatorWithdrawAddressResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "delegator_address",
+            "description": "delegator_address defines the delegator address to query for.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/babylon/incentive/params": {
+      "get": {
+        "summary": "Parameters queries the parameters of the module.",
+        "operationId": "Params",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/babylon.incentive.QueryParamsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "tags": [
+          "Query"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "babylon.incentive.BTCStakingGaugeResponse": {
+      "type": "object",
+      "properties": {
+        "coins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cosmos.base.v1beta1.Coin"
+          },
+          "title": "coins that have been in the gauge\ncan have multiple coin denoms"
+        }
+      },
+      "description": "BTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC method."
+    },
+    "babylon.incentive.Params": {
+      "type": "object",
+      "properties": {
+        "btc_staking_portion": {
+          "type": "string",
+          "title": "btc_staking_portion is the portion of rewards that goes to Finality Providers/delegations\nNOTE: the portion of each Finality Provider/delegation is calculated by using its voting\npower and finality provider's commission"
+        }
+      },
+      "title": "Params defines the parameters for the module, including portions of rewards\ndistributed to each type of stakeholder. Note that sum of the portions should\nbe strictly less than 1 so that the rest will go to Comet validators/delegations\nadapted from https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/proto/cosmos/distribution/v1beta1/distribution.proto"
+    },
+    "babylon.incentive.QueryBTCStakingGaugeResponse": {
+      "type": "object",
+      "properties": {
+        "gauge": {
+          "$ref": "#/definitions/babylon.incentive.BTCStakingGaugeResponse",
+          "title": "gauge is the BTC staking gauge at the queried height"
+        }
+      },
+      "description": "QueryBTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC method."
+    },
+    "babylon.incentive.QueryDelegatorWithdrawAddressResponse": {
+      "type": "object",
+      "properties": {
+        "withdraw_address": {
+          "type": "string",
+          "description": "withdraw_address defines the delegator address to query for."
+        }
+      },
+      "description": "QueryDelegatorWithdrawAddressResponse is the response type for the\nQuery/DelegatorWithdrawAddress RPC method."
+    },
+    "babylon.incentive.QueryParamsResponse": {
+      "type": "object",
+      "properties": {
+        "params": {
+          "$ref": "#/definitions/babylon.incentive.Params",
+          "description": "params holds all the parameters of this module."
+        }
+      },
+      "description": "QueryParamsResponse is response type for the Query/Params RPC method."
+    },
+    "babylon.incentive.QueryRewardGaugesResponse": {
+      "type": "object",
+      "properties": {
+        "reward_gauges": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/babylon.incentive.RewardGaugesResponse"
+          },
+          "title": "reward_gauges is the map of reward gauges, where key is the stakeholder type\nand value is the reward gauge holding all rewards for the stakeholder in that type"
+        }
+      },
+      "description": "QueryRewardGaugesResponse is response type for the Query/RewardGauges RPC method."
+    },
+    "babylon.incentive.RewardGaugesResponse": {
+      "type": "object",
+      "properties": {
+        "coins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cosmos.base.v1beta1.Coin"
+          },
+          "title": "coins are coins that have been in the gauge\nCan have multiple coin denoms"
+        },
+        "withdrawn_coins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cosmos.base.v1beta1.Coin"
+          },
+          "title": "withdrawn_coins are coins that have been withdrawn by the stakeholder already"
+        }
+      },
+      "title": "RewardGaugesResponse is an object that stores rewards distributed to a BTC staking stakeholder"
+    },
+    "cosmos.base.v1beta1.Coin": {
+      "type": "object",
+      "properties": {
+        "denom": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        }
+      },
+      "description": "Coin defines a token with a denomination and an amount.\n\nNOTE: The amount field is an Int which implements the custom method\nsignatures required by gogoproto."
+    },
+    "google.protobuf.Any": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "grpc.gateway.runtime.Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/google.protobuf.Any"
+          }
+        }
+      }
+    }
+  }
+}
