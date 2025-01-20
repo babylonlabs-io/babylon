@@ -2,8 +2,6 @@ package relayerclient
 
 import (
 	"context"
-	"encoding/hex"
-	"errors"
 	"fmt"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/x/params/types/proposal"
@@ -62,64 +60,6 @@ func (cc *CosmosProvider) QueryUnbondingPeriod(ctx context.Context) (time.Durati
 
 	return 0,
 		fmt.Errorf("failed to query unbonding period from ccvconsumer, staking & fallback : %w: %s : %s", consumerErr, stakingParamsErr.Error(), err.Error())
-}
-
-// QueryTx takes a transaction hash and returns the transaction
-func (cc *CosmosProvider) QueryTx(ctx context.Context, hashHex string) (*RelayerTxResponse, error) {
-	hash, err := hex.DecodeString(hashHex)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := cc.RPCClient.Tx(ctx, hash, true)
-	if err != nil {
-		return nil, err
-	}
-
-	events := parseEventsFromResponseDeliverTx(resp.TxResult.Events)
-
-	return &RelayerTxResponse{
-		Height: resp.Height,
-		TxHash: string(hash),
-		Code:   resp.TxResult.Code,
-		Data:   string(resp.TxResult.Data),
-		Events: events,
-	}, nil
-}
-
-// QueryTxs returns an array of transactions given a tag
-func (cc *CosmosProvider) QueryTxs(ctx context.Context, page, limit int, events []string) ([]*RelayerTxResponse, error) {
-	if len(events) == 0 {
-		return nil, errors.New("must declare at least one event to search")
-	}
-
-	if page <= 0 {
-		return nil, errors.New("page must greater than 0")
-	}
-
-	if limit <= 0 {
-		return nil, errors.New("limit must greater than 0")
-	}
-
-	res, err := cc.RPCClient.TxSearch(ctx, strings.Join(events, " AND "), true, &page, &limit, "")
-	if err != nil {
-		return nil, err
-	}
-
-	// Currently, we only call QueryTxs() in two spots and in both of them we are expecting there to only be,
-	// at most, one tx in the response. Because of this we don't want to initialize the slice with an initial size.
-	var txResps []*RelayerTxResponse
-	for _, tx := range res.Txs {
-		relayerEvents := parseEventsFromResponseDeliverTx(tx.TxResult.Events)
-		txResps = append(txResps, &RelayerTxResponse{
-			Height: tx.Height,
-			TxHash: string(tx.Hash),
-			Code:   tx.TxResult.Code,
-			Data:   string(tx.TxResult.Data),
-			Events: relayerEvents,
-		})
-	}
-	return txResps, nil
 }
 
 // parseEventsFromResponseDeliverTx parses the events from a ResponseDeliverTx and builds a slice

@@ -2,9 +2,6 @@ package relayerclient
 
 import (
 	"context"
-	"time"
-
-	"github.com/cosmos/gogoproto/proto"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -74,24 +71,13 @@ func (r RelayerTxResponse) MarshalLogObject(enc zapcore.ObjectEncoder) error {
 }
 
 type KeyProvider interface {
-	CreateKeystore(path string) error
-	KeystoreCreated(path string) bool
-	AddKey(name string, coinType uint32, signingAlgorithm string) (output *KeyOutput, err error)
-	UseKey(key string) error
-	RestoreKey(name, mnemonic string, coinType uint32, signingAlgorithm string) (address string, err error)
-	ShowAddress(name string) (address string, err error)
-	ListAddresses() (map[string]string, error)
-	DeleteKey(name string) error
 	KeyExists(name string) bool
-	ExportPrivKeyArmor(keyName string) (armor string, err error)
 }
 
 type ChainProvider interface {
-	QueryProvider
 	KeyProvider
 
 	Init(ctx context.Context) error
-
 	SendMessagesToMempool(
 		ctx context.Context,
 		msgs []RelayerMessage,
@@ -107,25 +93,5 @@ type ChainProvider interface {
 	Key() string
 	Address() (string, error)
 	Timeout() string
-	WaitForNBlocks(ctx context.Context, n int64) error
-	Sprint(toPrint proto.Message) (string, error)
-
 	SetRpcAddr(rpcAddr string) error
-}
-
-type QueryProvider interface {
-	BlockTime(ctx context.Context, height int64) (time.Time, error)
-	QueryTx(ctx context.Context, hashHex string) (*RelayerTxResponse, error)
-	QueryTxs(ctx context.Context, page, limit int, events []string) ([]*RelayerTxResponse, error)
-}
-
-// KeyOutput contains mnemonic and address of key
-type KeyOutput struct {
-	Mnemonic string `json:"mnemonic" yaml:"mnemonic"`
-	Address  string `json:"address" yaml:"address"`
-}
-
-type ExtensionOption struct {
-	Type  string `json:"type"`
-	Value string `json:"value"`
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/gogoproto/proto"
 	commitmenttypes "github.com/cosmos/ibc-go/v8/modules/core/23-commitment/types"
 	"github.com/cosmos/relayer/v2/relayer/codecs/ethermint"
 	"github.com/strangelove-ventures/cometbft-client/client"
@@ -41,7 +40,6 @@ type CosmosProviderConfig struct {
 	SigningAlgorithm string                  `json:"signing-algorithm" yaml:"signing-algorithm"`
 	Broadcast        BroadcastMode           `json:"broadcast-mode" yaml:"broadcast-mode"`
 	MinLoopDuration  time.Duration           `json:"min-loop-duration" yaml:"min-loop-duration"`
-	ExtensionOptions []ExtensionOption       `json:"extension-options" yaml:"extension-options"`
 
 	// If FeeGrantConfiguration is set, TXs submitted by the ChainClient will be signed by the FeeGrantees in a round-robin fashion by default.
 	FeeGrants *FeeGrantConfiguration `json:"feegrants" yaml:"feegrants"`
@@ -216,15 +214,6 @@ func (cc *CosmosProvider) AccountFromKeyOrAddress(keyOrAddress string) (out sdk.
 	return
 }
 
-// Sprint returns the json representation of the specified proto message.
-func (cc *CosmosProvider) Sprint(toPrint proto.Message) (string, error) {
-	out, err := cc.Cdc.Marshaller.MarshalJSON(toPrint)
-	if err != nil {
-		return "", err
-	}
-	return string(out), nil
-}
-
 // SetRpcAddr sets the rpc-addr for the chain.
 // It will fail if the rpcAddr is invalid(not a url).
 func (cc *CosmosProvider) SetRpcAddr(rpcAddr string) error {
@@ -271,40 +260,4 @@ func (cc *CosmosProvider) Init(ctx context.Context) error {
 	cc.Keybase = keybase
 
 	return nil
-}
-
-// WaitForNBlocks blocks until the next block on a given chain
-func (cc *CosmosProvider) WaitForNBlocks(ctx context.Context, n int64) error {
-	var initial int64
-	h, err := cc.RPCClient.Status(ctx)
-	if err != nil {
-		return err
-	}
-	if h.SyncInfo.CatchingUp {
-		return fmt.Errorf("chain catching up")
-	}
-	initial = h.SyncInfo.LatestBlockHeight
-	for {
-		h, err = cc.RPCClient.Status(ctx)
-		if err != nil {
-			return err
-		}
-		if h.SyncInfo.LatestBlockHeight > initial+n {
-			return nil
-		}
-		select {
-		case <-time.After(10 * time.Millisecond):
-			// Nothing to do.
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
-}
-
-func (cc *CosmosProvider) BlockTime(ctx context.Context, height int64) (time.Time, error) {
-	resultBlock, err := cc.RPCClient.Block(ctx, &height)
-	if err != nil {
-		return time.Time{}, err
-	}
-	return resultBlock.Block.Time, nil
 }
