@@ -65,7 +65,6 @@ type CosmosProvider struct {
 	Input          io.Reader
 	Output         io.Writer
 	Cdc            Codec
-	feegrantMu     sync.Mutex
 
 	// the map key is the TX signer (provider key)
 	// the purpose of the map is to lock on the signer from TX creation through submission,
