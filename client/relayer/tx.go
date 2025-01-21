@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	legacyerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -182,7 +181,7 @@ func (cc *CosmosProvider) waitForTx(
 
 	if len(callbacks) > 0 {
 		for _, cb := range callbacks {
-			//Call each callback in order since waitForTx is already invoked asyncronously
+			// Call each callback in order since waitForTx is already invoked asyncronously
 			cb(rlyResp, nil)
 		}
 	}
@@ -382,18 +381,13 @@ func (cc *CosmosProvider) updateNextAccountSequence(sequenceGuard *WalletState, 
 	}
 }
 
-func (cc *CosmosProvider) buildSignerConfig(msgs []RelayerMessage) (
-	txSignerKey string,
-	feegranterKeyOrAddr string,
-	err error,
-) {
+func (cc *CosmosProvider) buildSignerConfig(msgs []RelayerMessage) (string, string, error) {
 	// Guard against race conditions when choosing a signer/feegranter
 	cc.feegrantMu.Lock()
 	defer cc.feegrantMu.Unlock()
 
-	// Some messages have feegranting disabled. If any message in the TX disables feegrants, then the TX will not be feegranted.
+	// Check if fee grants are eligible
 	isFeegrantEligible := cc.PCfg.FeeGrants != nil
-
 	for _, curr := range msgs {
 		if cMsg, ok := curr.(CosmosMessage); ok {
 			if cMsg.FeegrantDisabled {
@@ -402,34 +396,32 @@ func (cc *CosmosProvider) buildSignerConfig(msgs []RelayerMessage) (
 		}
 	}
 
-	// By default, we should sign TXs with the provider's default key
-	txSignerKey = cc.PCfg.Key
+	// Default signer key
+	txSignerKey := cc.PCfg.Key
+	feegranterKeyOrAddr := ""
 
 	if isFeegrantEligible {
 		txSignerKey, feegranterKeyOrAddr = cc.GetTxFeeGrant()
+
 		signerAcc, addrErr := cc.GetKeyAddressForKey(txSignerKey)
 		if addrErr != nil {
-			err = addrErr
-			return
+			return "", "", addrErr
 		}
 
 		signerAccAddr, encodeErr := cc.EncodeBech32AccAddr(signerAcc)
 		if encodeErr != nil {
-			err = encodeErr
-			return
+			return "", "", encodeErr
 		}
 
-		// Overwrite the 'Signer' field in any Msgs that provide an 'optionalSetSigner' callback
+		// Update the 'Signer' field in any Msgs that provide an 'optionalSetSigner' callback
 		for _, curr := range msgs {
-			if cMsg, ok := curr.(CosmosMessage); ok {
-				if cMsg.SetSigner != nil {
-					cMsg.SetSigner(signerAccAddr)
-				}
+			if cMsg, ok := curr.(CosmosMessage); ok && cMsg.SetSigner != nil {
+				cMsg.SetSigner(signerAccAddr)
 			}
 		}
 	}
 
-	return
+	return txSignerKey, feegranterKeyOrAddr, nil
 }
 
 func (cc *CosmosProvider) buildMessages(
@@ -665,7 +657,7 @@ func BuildSimTx(info *keyring.Record, txf tx.Factory, msgs ...sdk.Msg) ([]byte, 
 		return nil, err
 	}
 
-	var pk cryptotypes.PubKey = &secp256k1.PubKey{} // use default public key type
+	var pk cryptotypes.PubKey // use default public key type
 
 	pk, err = info.GetPubKey()
 	if err != nil {

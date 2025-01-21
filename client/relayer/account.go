@@ -48,7 +48,7 @@ func (cc *CosmosProvider) GetAccountWithHeight(_ client.Context, addr sdk.AccAdd
 		return nil, 0, fmt.Errorf("failed to parse block height: %w", err)
 	}
 
-	var acc authtypes.AccountI
+	var acc sdk.AccountI
 	if err := cc.Cdc.InterfaceRegistry.UnpackAny(res.Account, &acc); err != nil {
 		return nil, 0, err
 	}

@@ -111,7 +111,6 @@ func (cc *CosmosProvider) RunGRPCQuery(ctx context.Context, method string, req i
 				legacyerrors.ErrInvalidRequest,
 				"client.Context.Invoke: height (%d) from %q must be >= 0", height, grpctypes.GRPCBlockHeightHeader)
 		}
-
 	}
 
 	height, err := GetHeightFromMetadata(md)
