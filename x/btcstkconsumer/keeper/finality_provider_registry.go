@@ -54,22 +54,6 @@ func (k Keeper) GetConsumerOfFinalityProvider(ctx context.Context, fpBTCPK *bbn.
 	return string(chainID), nil
 }
 
-// IterateFPs iterates over all finality providers for a given chain
-func (k Keeper) IterateFPs(ctx context.Context, chainId string, handler func(fp *btcstaking.FinalityProvider) bool) {
-	// filter out all finality providers with positive voting power
-	fpIter := k.finalityProviderStore(ctx, chainId).Iterator(nil, nil)
-	defer fpIter.Close()
-	for ; fpIter.Valid(); fpIter.Next() {
-		var fp btcstaking.FinalityProvider
-		k.cdc.MustUnmarshal(fpIter.Value(), &fp)
-
-		shouldContinue := handler(&fp)
-		if !shouldContinue {
-			return
-		}
-	}
-}
-
 // finalityProviderStore returns the KVStore of the finality provider set per chain
 // prefix: ConsumerFinalityProviderKey || chain id
 // key: Bitcoin PubKey

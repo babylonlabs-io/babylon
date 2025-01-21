@@ -217,16 +217,10 @@ func (im IBCModule) OnAcknowledgementPacket(
 		}
 	}
 
-	// // TODO (Babylon): Dispatch and process packet
-	// switch packet := modulePacketData.Packet.(type) {
-	// default:
-	// 	errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
-	// 	return errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-	// }
-
 	switch resp := ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
 		im.keeper.Logger(ctx).Info("received an Acknowledgement message", "result", string(resp.Result))
+		// TODO: emit typed event
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeAck,
@@ -236,6 +230,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		)
 	case *channeltypes.Acknowledgement_Error:
 		im.keeper.Logger(ctx).Error("received an Acknowledgement error message", "error", resp.Error)
+		// TODO: emit typed event
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeAck,
@@ -258,13 +253,6 @@ func (im IBCModule) OnTimeoutPacket(
 	if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
 	}
-
-	// // TODO (Babylon): Dispatch and process packet
-	// switch packet := modulePacketData.Packet.(type) {
-	// default:
-	// 	errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
-	// 	return errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-	// }
 
 	// TODO: close channel upon timeout
 
