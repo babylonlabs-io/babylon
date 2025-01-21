@@ -3,7 +3,6 @@ package relayerclient
 import (
 	"context"
 	"fmt"
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"strconv"
@@ -60,24 +59,4 @@ func (cc *CosmosProvider) QueryUnbondingPeriod(ctx context.Context) (time.Durati
 
 	return 0,
 		fmt.Errorf("failed to query unbonding period from ccvconsumer, staking & fallback : %w: %s : %s", consumerErr, stakingParamsErr.Error(), err.Error())
-}
-
-// parseEventsFromResponseDeliverTx parses the events from a ResponseDeliverTx and builds a slice
-// of provider.RelayerEvent's.
-func parseEventsFromResponseDeliverTx(events []abci.Event) []RelayerEvent {
-	var rlyEvents []RelayerEvent
-
-	for _, event := range events {
-		attributes := make(map[string]string)
-		for _, attribute := range event.Attributes {
-			attributes[attribute.Key] = attribute.Value
-		}
-
-		rlyEvents = append(rlyEvents, RelayerEvent{
-			EventType:  event.Type,
-			Attributes: attributes,
-		})
-	}
-
-	return rlyEvents
 }

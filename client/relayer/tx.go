@@ -29,7 +29,6 @@ import (
 	"time"
 
 	"github.com/avast/retry-go/v4"
-	commitmenttypes "github.com/cosmos/ibc-go/v8/modules/core/23-commitment/types"
 )
 
 // Variables used for retries
@@ -43,15 +42,8 @@ var (
 	errUnknown                  = "unknown"
 )
 
-// Default IBC settings
-var (
-	defaultChainPrefix = commitmenttypes.NewMerklePrefix([]byte("ibc"))
-)
-
 // Strings for parsing events
 var (
-	spTag      = "send_packet"
-	waTag      = "write_acknowledgement"
 	srcChanTag = "packet_src_channel"
 	dstChanTag = "packet_dst_channel"
 )

@@ -52,7 +52,6 @@ var ModuleBasics = []module.AppModuleBasic{
 	upgrade.AppModuleBasic{},
 	transfer.AppModuleBasic{},
 	ibc.AppModuleBasic{},
-	AppModuleBasic{},
 	stride.AppModuleBasic{},
 	ibcfee.AppModuleBasic{},
 }
@@ -64,7 +63,7 @@ type Codec struct {
 	Amino             *codec.LegacyAmino
 }
 
-func MakeCodec(moduleBasics []module.AppModuleBasic, extraCodecs []string, accBech32Prefix, valBech32Prefix string) Codec {
+func MakeCodec(moduleBasics []module.AppModuleBasic, accBech32Prefix, valBech32Prefix string) Codec {
 	modBasic := module.NewBasicManager(moduleBasics...)
 	encodingConfig := MakeCodecConfig(accBech32Prefix, valBech32Prefix)
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)

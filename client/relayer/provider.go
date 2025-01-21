@@ -6,7 +6,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	commitmenttypes "github.com/cosmos/ibc-go/v8/modules/core/23-commitment/types"
 	"github.com/cosmos/relayer/v2/relayer/codecs/ethermint"
 	"github.com/strangelove-ventures/cometbft-client/client"
 	"go.uber.org/zap"
@@ -68,28 +67,15 @@ type CosmosProvider struct {
 	Keybase        keyring.Keyring
 	KeyringOptions []keyring.Option
 	RPCClient      RPCClient
-	//LightProvider  provtypes.Provider
-	Input  io.Reader
-	Output io.Writer
-	Cdc    Codec
-
-	//nextAccountSeq uint64
-	feegrantMu sync.Mutex
+	Input          io.Reader
+	Output         io.Writer
+	Cdc            Codec
+	feegrantMu     sync.Mutex
 
 	// the map key is the TX signer, which can either be 'default' (provider key) or a feegrantee
 	// the purpose of the map is to lock on the signer from TX creation through submission,
 	// thus making TX sequencing errors less likely.
 	walletStateMap map[string]*WalletState
-
-	// metrics to monitor the provider
-	TotalFees   sdk.Coins
-	totalFeesMu sync.Mutex
-
-	// for comet < v0.37, decode tm events as base64 todo remove this
-	cometLegacyEncoding bool
-
-	// for comet < v0.38, use legacy RPC client for ResultsBlockResults todo remove this
-	cometLegacyBlockResults bool
 }
 
 func (pc CosmosProviderConfig) BroadcastMode() BroadcastMode {
@@ -125,7 +111,7 @@ func (pc CosmosProviderConfig) NewProvider(log *zap.Logger, homepath string, cha
 		walletStateMap: map[string]*WalletState{},
 
 		// TODO: this is a bit of a hack, we should probably have a better way to inject modules
-		Cdc: MakeCodec(pc.Modules, pc.ExtraCodecs, pc.AccountPrefix, pc.AccountPrefix+"valoper"),
+		Cdc: MakeCodec(pc.Modules, pc.AccountPrefix, pc.AccountPrefix+"valoper"),
 	}
 
 	return cp, nil
@@ -167,11 +153,6 @@ func (cc *CosmosProvider) Timeout() string {
 	return cc.PCfg.Timeout
 }
 
-// CommitmentPrefix returns the commitment prefix for Cosmos
-func (cc *CosmosProvider) CommitmentPrefix() commitmenttypes.MerklePrefix {
-	return defaultChainPrefix
-}
-
 // Address returns the chains configured address as a string
 func (cc *CosmosProvider) Address() (string, error) {
 	info, err := cc.Keybase.Key(cc.PCfg.Key)
@@ -198,20 +179,6 @@ func (cc *CosmosProvider) MustEncodeAccAddr(addr sdk.AccAddress) string {
 		panic(err)
 	}
 	return enc
-}
-
-// AccountFromKeyOrAddress returns an account from either a key or an address.
-// If 'keyOrAddress' is the empty string, this returns the default key's address.
-func (cc *CosmosProvider) AccountFromKeyOrAddress(keyOrAddress string) (out sdk.AccAddress, err error) {
-	switch {
-	case keyOrAddress == "":
-		out, err = cc.GetKeyAddress(cc.PCfg.Key)
-	case cc.KeyExists(keyOrAddress):
-		out, err = cc.GetKeyAddress(keyOrAddress)
-	default:
-		out, err = sdk.GetFromBech32(keyOrAddress, cc.PCfg.AccountPrefix)
-	}
-	return
 }
 
 // SetRpcAddr sets the rpc-addr for the chain.
@@ -248,15 +215,9 @@ func (cc *CosmosProvider) Init(ctx context.Context) error {
 		return err
 	}
 
-	//lightprovider, err := prov.New(cc.PCfg.ChainID, cc.PCfg.RPCAddr) todo check if needed
-	//if err != nil {
-	//	return err
-	//}
-
 	rpcClient := NewRPCClient(c)
 
 	cc.RPCClient = rpcClient
-	//cc.LightProvider = lightprovider
 	cc.Keybase = keybase
 
 	return nil
