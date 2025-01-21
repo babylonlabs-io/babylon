@@ -12,7 +12,6 @@ type _err string
 
 func (e _err) Error() string { return string(e) }
 
-// todo(lazar) remove this
 type intoAny interface {
 	AsAny() *codectypes.Any
 }

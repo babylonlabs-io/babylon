@@ -18,7 +18,6 @@ import (
 	legacyerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"math"
@@ -98,7 +97,6 @@ func (cc *CosmosProvider) QueryABCI(ctx context.Context, req abci.RequestQuery) 
 func (cc *CosmosProvider) broadcastTx(
 	ctx context.Context, // context for tx broadcast
 	tx []byte, // raw tx to be broadcast
-	msgs []RelayerMessage, // used for logging only
 	asyncCtx context.Context, // context for async wait for block inclusion after successful tx broadcast
 	asyncTimeout time.Duration, // timeout for waiting for block inclusion
 	asyncCallbacks []func(*RelayerTxResponse, error), // callback for success/fail of the wait for block inclusion
@@ -112,26 +110,19 @@ func (cc *CosmosProvider) broadcastTx(
 			// ResultBroadcastTx will be nil.
 			return err
 		}
-		rlyResp := &RelayerTxResponse{
-			TxHash:    res.Hash.String(),
-			Codespace: res.Codespace,
-			Code:      res.Code,
-			Data:      res.Data.String(),
-		}
 		if isFailed {
 			err = cc.sdkError(res.Codespace, res.Code)
 			if err == nil {
 				err = fmt.Errorf("transaction failed to execute: codespace: %s, code: %d, log: %s", res.Codespace, res.Code, res.Log)
 			}
 		}
-		cc.LogFailedTx(rlyResp, err, msgs)
 		return err
 	}
 
 	// TODO: maybe we need to check if the node has tx indexing enabled?
 	// if not, we need to find a new way to block until inclusion in a block
 
-	go cc.waitForTx(asyncCtx, res.Hash, msgs, asyncTimeout, asyncCallbacks)
+	go cc.waitForTx(asyncCtx, res.Hash, asyncTimeout, asyncCallbacks)
 
 	return nil
 }
@@ -141,13 +132,11 @@ func (cc *CosmosProvider) broadcastTx(
 func (cc *CosmosProvider) waitForTx(
 	ctx context.Context,
 	txHash []byte,
-	msgs []RelayerMessage, // used for logging only
 	waitTimeout time.Duration,
 	callbacks []func(*RelayerTxResponse, error),
 ) {
 	res, err := cc.waitForBlockInclusion(ctx, txHash, waitTimeout)
 	if err != nil {
-		cc.log.Error("Failed to wait for block inclusion", zap.Error(err))
 		if len(callbacks) > 0 {
 			for _, cb := range callbacks {
 				// Call each callback in order since waitForTx is already invoked asynchronously
@@ -182,7 +171,6 @@ func (cc *CosmosProvider) waitForTx(
 				cb(nil, err)
 			}
 		}
-		cc.LogFailedTx(rlyResp, nil, msgs)
 		return
 	}
 
@@ -192,7 +180,6 @@ func (cc *CosmosProvider) waitForTx(
 			cb(rlyResp, nil)
 		}
 	}
-	cc.LogSuccessTx(res, msgs)
 }
 
 // waitForBlockInclusion will wait for a transaction to be included in a block, up to waitTimeout or context cancellation.
@@ -370,7 +357,7 @@ func (cc *CosmosProvider) SendMessagesToMempool(
 		return err
 	}
 
-	if err := cc.broadcastTx(ctx, txBytes, msgs, asyncCtx, defaultBroadcastWaitTimeout, asyncCallbacks); err != nil {
+	if err := cc.broadcastTx(ctx, txBytes, asyncCtx, defaultBroadcastWaitTimeout, asyncCallbacks); err != nil {
 		if strings.Contains(err.Error(), legacyerrors.ErrWrongSequence.Error()) {
 			cc.handleAccountSequenceMismatchError(sequenceGuard, err)
 		}

@@ -61,8 +61,6 @@ type FeeGrantConfiguration struct {
 }
 
 type CosmosProvider struct {
-	log *zap.Logger
-
 	PCfg           CosmosProviderConfig
 	Keybase        keyring.Keyring
 	KeyringOptions []keyring.Option
@@ -103,7 +101,6 @@ func (pc CosmosProviderConfig) NewProvider(log *zap.Logger, homepath string, cha
 	}
 
 	cp := &CosmosProvider{
-		log:            log,
 		PCfg:           pc,
 		KeyringOptions: []keyring.Option{ethermint.EthSecp256k1Option()},
 		Input:          os.Stdin,
