@@ -65,8 +65,7 @@ func New(cfg *config.BabylonConfig, logger *zap.Logger) (*Client, error) {
 	// NOTE: this will create a RPC client. The RPC client will be used for
 	// submitting txs and making ad hoc queries. It won't create WebSocket
 	// connection with Babylon node
-	err = cp.Init()
-	if err != nil {
+	if err = cp.Init(); err != nil {
 		return nil, err
 	}
 

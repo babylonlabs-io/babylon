@@ -5,7 +5,6 @@ import (
 	"github.com/cometbft/cometbft/rpc/client/http"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	"io"
 	"os"
 	"path"
@@ -14,47 +13,23 @@ import (
 )
 
 type CosmosProviderConfig struct {
-	KeyDirectory     string                  `json:"key-directory" yaml:"key-directory"`
-	Key              string                  `json:"key" yaml:"key"`
-	ChainName        string                  `json:"-" yaml:"-"`
-	ChainID          string                  `json:"chain-id" yaml:"chain-id"`
-	RPCAddr          string                  `json:"rpc-addr" yaml:"rpc-addr"`
-	AccountPrefix    string                  `json:"account-prefix" yaml:"account-prefix"`
-	KeyringBackend   string                  `json:"keyring-backend" yaml:"keyring-backend"`
-	GasAdjustment    float64                 `json:"gas-adjustment" yaml:"gas-adjustment"`
-	GasPrices        string                  `json:"gas-prices" yaml:"gas-prices"`
-	MinGasAmount     uint64                  `json:"min-gas-amount" yaml:"min-gas-amount"`
-	MaxGasAmount     uint64                  `json:"max-gas-amount" yaml:"max-gas-amount"`
-	Debug            bool                    `json:"debug" yaml:"debug"`
-	Timeout          string                  `json:"timeout" yaml:"timeout"`
-	BlockTimeout     string                  `json:"block-timeout" yaml:"block-timeout"`
-	OutputFormat     string                  `json:"output-format" yaml:"output-format"`
-	SignModeStr      string                  `json:"sign-mode" yaml:"sign-mode"`
-	ExtraCodecs      []string                `json:"extra-codecs" yaml:"extra-codecs"`
-	Modules          []module.AppModuleBasic `json:"-" yaml:"-"`
-	Slip44           *int                    `json:"coin-type" yaml:"coin-type"`
-	SigningAlgorithm string                  `json:"signing-algorithm" yaml:"signing-algorithm"`
-	Broadcast        BroadcastMode           `json:"broadcast-mode" yaml:"broadcast-mode"`
-	MinLoopDuration  time.Duration           `json:"min-loop-duration" yaml:"min-loop-duration"`
-
-	// If FeeGrantConfiguration is set, TXs submitted by the ChainClient will be signed by the FeeGrantees in a round-robin fashion by default.
-	FeeGrants *FeeGrantConfiguration `json:"feegrants" yaml:"feegrants"`
-}
-
-// FeeGrantConfiguration By default, TXs will be signed by the feegrantees 'ManagedGrantees' keys in a round-robin fashion.
-// Clients can use other signing keys by invoking 'tx.SendMsgsWith' and specifying the signing key.
-type FeeGrantConfiguration struct {
-	GranteesWanted int `json:"num_grantees" yaml:"num_grantees"`
-	// Normally this is the default ChainClient key
-	GranterKeyOrAddr string `json:"granter" yaml:"granter"`
-	// Whether we control the granter private key (if not, someone else must authorize our feegrants)
-	IsExternalGranter bool `json:"external_granter" yaml:"external_granter"`
-	// List of keys (by name) that this FeeGranter manages
-	ManagedGrantees []string `json:"grantees" yaml:"grantees"`
-	// Last checked on chain (0 means grants never checked and may not exist)
-	BlockHeightVerified int64 `json:"block_last_verified" yaml:"block_last_verified"`
-	// Index of the last ManagedGrantee used as a TX signer
-	GranteeLastSignerIndex int
+	KeyDirectory   string        `json:"key-directory" yaml:"key-directory"`
+	Key            string        `json:"key" yaml:"key"`
+	ChainName      string        `json:"-" yaml:"-"`
+	ChainID        string        `json:"chain-id" yaml:"chain-id"`
+	RPCAddr        string        `json:"rpc-addr" yaml:"rpc-addr"`
+	AccountPrefix  string        `json:"account-prefix" yaml:"account-prefix"`
+	KeyringBackend string        `json:"keyring-backend" yaml:"keyring-backend"`
+	GasAdjustment  float64       `json:"gas-adjustment" yaml:"gas-adjustment"`
+	GasPrices      string        `json:"gas-prices" yaml:"gas-prices"`
+	MinGasAmount   uint64        `json:"min-gas-amount" yaml:"min-gas-amount"`
+	MaxGasAmount   uint64        `json:"max-gas-amount" yaml:"max-gas-amount"`
+	Debug          bool          `json:"debug" yaml:"debug"`
+	Timeout        string        `json:"timeout" yaml:"timeout"`
+	BlockTimeout   string        `json:"block-timeout" yaml:"block-timeout"`
+	OutputFormat   string        `json:"output-format" yaml:"output-format"`
+	SignModeStr    string        `json:"sign-mode" yaml:"sign-mode"`
+	Broadcast      BroadcastMode `json:"broadcast-mode" yaml:"broadcast-mode"`
 }
 
 type CosmosProvider struct {
