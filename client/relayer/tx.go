@@ -100,10 +100,10 @@ func (cc *CosmosProvider) QueryABCI(ctx context.Context, req abci.RequestQuery) 
 // The wait will end after either the asyncTimeout has run out or the asyncCtx exits.
 // If there is no error broadcasting, the asyncCallback will be called with success/failure of the wait for block inclusion.
 func (cc *CosmosProvider) broadcastTx(
-	ctx context.Context, // context for tx broadcast
-	tx []byte, // raw tx to be broadcast
-	asyncCtx context.Context, // context for async wait for block inclusion after successful tx broadcast
-	asyncTimeout time.Duration, // timeout for waiting for block inclusion
+	ctx context.Context,                              // context for tx broadcast
+	tx []byte,                                        // raw tx to be broadcast
+	asyncCtx context.Context,                         // context for async wait for block inclusion after successful tx broadcast
+	asyncTimeout time.Duration,                       // timeout for waiting for block inclusion
 	asyncCallbacks []func(*RelayerTxResponse, error), // callback for success/fail of the wait for block inclusion
 ) error {
 	res, err := cc.RPCClient.BroadcastTxSync(ctx, tx)
@@ -116,17 +116,19 @@ func (cc *CosmosProvider) broadcastTx(
 			return err
 		}
 		if isFailed {
-			err = cc.sdkError(res.Codespace, res.Code)
-			if err == nil {
+			if err = cc.sdkError(res.Codespace, res.Code); err == nil {
 				err = fmt.Errorf("transaction failed to execute: codespace: %s, code: %d, log: %s", res.Codespace, res.Code, res.Log)
 			}
 		}
 		return err
 	}
 
+	if res == nil {
+		return fmt.Errorf("unexpected nil response from BroadcastTxSync")
+	}
+
 	// TODO: maybe we need to check if the node has tx indexing enabled?
 	// if not, we need to find a new way to block until inclusion in a block
-
 	go cc.waitForTx(asyncCtx, res.Hash, asyncTimeout, asyncCallbacks)
 
 	return nil
@@ -160,10 +162,8 @@ func (cc *CosmosProvider) waitForTx(
 		Events:    parseEventsFromTxResponse(res),
 	}
 
-	// transaction was executed, log the success or failure using the tx response code
 	// NOTE: error is nil, logic should use the returned error to determine if the
 	// transaction was successfully executed.
-
 	if res.Code != 0 {
 		// Check for any registered SDK errors
 		err := cc.sdkError(res.Codespace, res.Code)
@@ -181,7 +181,7 @@ func (cc *CosmosProvider) waitForTx(
 
 	if len(callbacks) > 0 {
 		for _, cb := range callbacks {
-			// Call each callback in order since waitForTx is already invoked asyncronously
+			// Call each callback in order since waitForTx is already invoked asynchronously
 			cb(rlyResp, nil)
 		}
 	}
@@ -215,18 +215,17 @@ func (cc *CosmosProvider) waitForBlockInclusion(
 
 // mkTxResult decodes a comet transaction into an SDK TxResponse.
 func (cc *CosmosProvider) mkTxResult(resTx *coretypes.ResultTx) (*sdk.TxResponse, error) {
-	txbz, err := cc.Cdc.TxConfig.TxDecoder()(resTx.Tx)
+	txBz, err := cc.Cdc.TxConfig.TxDecoder()(resTx.Tx)
 	if err != nil {
 		return nil, err
 	}
 
-	p, ok := txbz.(intoAny)
+	p, ok := txBz.(intoAny)
 	if !ok {
-		return nil, fmt.Errorf("expecting a type implementing intoAny, got: %T", txbz)
+		return nil, fmt.Errorf("expecting a type implementing intoAny, got: %T", txBz)
 	}
 
-	any := p.AsAny()
-	return sdk.NewResponseResultTx(resTx, any, ""), nil
+	return sdk.NewResponseResultTx(resTx, p.AsAny(), ""), nil
 }
 
 func sdkErrorToGRPCError(resp abci.ResponseQuery) error {
@@ -242,8 +241,8 @@ func sdkErrorToGRPCError(resp abci.ResponseQuery) error {
 	}
 }
 
-// isQueryStoreWithProof expects a format like /<queryType>/<storeName>/<subpath>
-// queryType must be "store" and subpath must be "key" to require a proof.
+// isQueryStoreWithProof expects a format like /<queryType>/<storeName>/<subPath>
+// queryType must be "store" and subPath must be "key" to require a proof.
 func isQueryStoreWithProof(path string) bool {
 	if !strings.HasPrefix(path, "/") {
 		return false
@@ -263,11 +262,15 @@ func isQueryStoreWithProof(path string) bool {
 	return false
 }
 
-// sdkError will return the Cosmos SDK registered error for a given codespace/code combo if registered, otherwise nil.
-func (cc *CosmosProvider) sdkError(codespace string, code uint32) error {
-	// ABCIError will return an error other than "unknown" if syncRes.Code is a registered error in syncRes.Codespace
+// sdkError will return the Cosmos SDK registered error for a given codeSpace/code combo if registered, otherwise nil.
+func (cc *CosmosProvider) sdkError(codeSpace string, code uint32) error {
+	// ABCIError will return an error other than "unknown" if syncRes.Code is a registered error in syncRes.CodeSpace
 	// This catches all the sdk errors https://github.com/cosmos/cosmos-sdk/blob/f10f5e5974d2ecbf9efc05bc0bfe1c99fdeed4b6/types/errors/errors.go
-	err := errors.Unwrap(sdkerrors.ABCIError(codespace, code, "error broadcasting transaction"))
+	err := errors.Unwrap(sdkerrors.ABCIError(codeSpace, code, "error broadcasting transaction"))
+	if err == nil {
+		return nil
+	}
+
 	if err.Error() != errUnknown {
 		return err
 	}
@@ -343,7 +346,7 @@ func (cc *CosmosProvider) SendMessagesToMempool(
 	asyncCtx context.Context,
 	asyncCallbacks []func(*RelayerTxResponse, error),
 ) error {
-	txSignerKey, feegranterKeyOrAddr, err := cc.buildSignerConfig(msgs)
+	txSignerKey, feeGranterKeyOrAddr, err := cc.buildSignerConfig(msgs)
 	if err != nil {
 		return err
 	}
@@ -352,7 +355,7 @@ func (cc *CosmosProvider) SendMessagesToMempool(
 	sequenceGuard.Mu.Lock()
 	defer sequenceGuard.Mu.Unlock()
 
-	txBytes, sequence, _, err := cc.buildMessages(ctx, msgs, memo, 0, txSignerKey, feegranterKeyOrAddr, sequenceGuard)
+	txBytes, sequence, _, err := cc.buildMessages(ctx, msgs, memo, 0, txSignerKey, feeGranterKeyOrAddr, sequenceGuard)
 	if err != nil {
 		// Account sequence mismatch errors can happen on the simulated transaction also.
 		if strings.Contains(err.Error(), legacyerrors.ErrWrongSequence.Error()) {
@@ -382,26 +385,26 @@ func (cc *CosmosProvider) updateNextAccountSequence(sequenceGuard *WalletState, 
 }
 
 func (cc *CosmosProvider) buildSignerConfig(msgs []RelayerMessage) (string, string, error) {
-	// Guard against race conditions when choosing a signer/feegranter
+	// Guard against race conditions when choosing a signer/feeGranter
 	cc.feegrantMu.Lock()
 	defer cc.feegrantMu.Unlock()
 
 	// Check if fee grants are eligible
-	isFeegrantEligible := cc.PCfg.FeeGrants != nil
+	isFeeGrantEligible := cc.PCfg.FeeGrants != nil
 	for _, curr := range msgs {
 		if cMsg, ok := curr.(CosmosMessage); ok {
 			if cMsg.FeegrantDisabled {
-				isFeegrantEligible = false
+				isFeeGrantEligible = false
 			}
 		}
 	}
 
 	// Default signer key
 	txSignerKey := cc.PCfg.Key
-	feegranterKeyOrAddr := ""
+	feeGranterKeyOrAddr := ""
 
-	if isFeegrantEligible {
-		txSignerKey, feegranterKeyOrAddr = cc.GetTxFeeGrant()
+	if isFeeGrantEligible {
+		txSignerKey, feeGranterKeyOrAddr = cc.GetTxFeeGrant()
 
 		signerAcc, addrErr := cc.GetKeyAddressForKey(txSignerKey)
 		if addrErr != nil {
@@ -421,7 +424,7 @@ func (cc *CosmosProvider) buildSignerConfig(msgs []RelayerMessage) (string, stri
 		}
 	}
 
-	return txSignerKey, feegranterKeyOrAddr, nil
+	return txSignerKey, feeGranterKeyOrAddr, nil
 }
 
 func (cc *CosmosProvider) buildMessages(
@@ -430,7 +433,7 @@ func (cc *CosmosProvider) buildMessages(
 	memo string,
 	gas uint64,
 	txSignerKey string,
-	feegranterKeyOrAddr string,
+	feeGranterKeyOrAddr string,
 	sequenceGuard *WalletState,
 ) (
 	txBytes []byte,
@@ -459,16 +462,16 @@ func (cc *CosmosProvider) buildMessages(
 		txf = txf.WithSequence(sequence)
 	}
 
-	// Cannot feegrant your own TX
-	if txSignerKey != feegranterKeyOrAddr && feegranterKeyOrAddr != "" {
+	// Cannot feeGrant your own TX
+	if txSignerKey != feeGranterKeyOrAddr && feeGranterKeyOrAddr != "" {
 		var granterAddr sdk.AccAddress
 		if cc.PCfg.FeeGrants != nil && cc.PCfg.FeeGrants.IsExternalGranter {
-			granterAddr, err = cc.DecodeBech32AccAddr(feegranterKeyOrAddr)
+			granterAddr, err = cc.DecodeBech32AccAddr(feeGranterKeyOrAddr)
 			if err != nil {
 				return nil, 0, sdk.Coins{}, err
 			}
 		} else {
-			granterAddr, err = cc.GetKeyAddressForKey(feegranterKeyOrAddr)
+			granterAddr, err = cc.GetKeyAddressForKey(feeGranterKeyOrAddr)
 			if err != nil {
 				return nil, 0, sdk.Coins{}, err
 			}
@@ -665,7 +668,7 @@ func BuildSimTx(info *keyring.Record, txf tx.Factory, msgs ...sdk.Msg) ([]byte, 
 	}
 
 	// Create an empty signature literal as the ante handler will populate with a
-	// sentinel pubkey.
+	// sentinel pubKey.
 	sig := signing.SignatureV2{
 		PubKey: pk,
 		Data: &signing.SingleSignatureData{
