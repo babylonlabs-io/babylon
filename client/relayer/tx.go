@@ -342,20 +342,16 @@ func (cc *CosmosProvider) SendMessagesToMempool(
 	ctx context.Context,
 	msgs []RelayerMessage,
 	memo string,
-
 	asyncCtx context.Context,
 	asyncCallbacks []func(*RelayerTxResponse, error),
 ) error {
-	txSignerKey, feeGranterKeyOrAddr, err := cc.buildSignerConfig(msgs)
-	if err != nil {
-		return err
-	}
+	txSignerKey := cc.PCfg.Key
 
 	sequenceGuard := ensureSequenceGuard(cc, txSignerKey)
 	sequenceGuard.Mu.Lock()
 	defer sequenceGuard.Mu.Unlock()
 
-	txBytes, sequence, _, err := cc.buildMessages(ctx, msgs, memo, 0, txSignerKey, feeGranterKeyOrAddr, sequenceGuard)
+	txBytes, sequence, _, err := cc.buildMessages(ctx, msgs, memo, 0, txSignerKey, sequenceGuard)
 	if err != nil {
 		// Account sequence mismatch errors can happen on the simulated transaction also.
 		if strings.Contains(err.Error(), legacyerrors.ErrWrongSequence.Error()) {
@@ -384,56 +380,12 @@ func (cc *CosmosProvider) updateNextAccountSequence(sequenceGuard *WalletState, 
 	}
 }
 
-func (cc *CosmosProvider) buildSignerConfig(msgs []RelayerMessage) (string, string, error) {
-	// Guard against race conditions when choosing a signer/feeGranter
-	cc.feegrantMu.Lock()
-	defer cc.feegrantMu.Unlock()
-
-	// Check if fee grants are eligible
-	isFeeGrantEligible := cc.PCfg.FeeGrants != nil
-	for _, curr := range msgs {
-		if cMsg, ok := curr.(CosmosMessage); ok {
-			if cMsg.FeegrantDisabled {
-				isFeeGrantEligible = false
-			}
-		}
-	}
-
-	// Default signer key
-	txSignerKey := cc.PCfg.Key
-	feeGranterKeyOrAddr := ""
-
-	if isFeeGrantEligible {
-		txSignerKey, feeGranterKeyOrAddr = cc.GetTxFeeGrant()
-
-		signerAcc, addrErr := cc.GetKeyAddressForKey(txSignerKey)
-		if addrErr != nil {
-			return "", "", addrErr
-		}
-
-		signerAccAddr, encodeErr := cc.EncodeBech32AccAddr(signerAcc)
-		if encodeErr != nil {
-			return "", "", encodeErr
-		}
-
-		// Update the 'Signer' field in any Msgs that provide an 'optionalSetSigner' callback
-		for _, curr := range msgs {
-			if cMsg, ok := curr.(CosmosMessage); ok && cMsg.SetSigner != nil {
-				cMsg.SetSigner(signerAccAddr)
-			}
-		}
-	}
-
-	return txSignerKey, feeGranterKeyOrAddr, nil
-}
-
 func (cc *CosmosProvider) buildMessages(
 	ctx context.Context,
 	msgs []RelayerMessage,
 	memo string,
 	gas uint64,
 	txSignerKey string,
-	feeGranterKeyOrAddr string,
 	sequenceGuard *WalletState,
 ) (
 	txBytes []byte,
@@ -460,24 +412,6 @@ func (cc *CosmosProvider) buildMessages(
 	if sequence < sequenceGuard.NextAccountSequence {
 		sequence = sequenceGuard.NextAccountSequence
 		txf = txf.WithSequence(sequence)
-	}
-
-	// Cannot feeGrant your own TX
-	if txSignerKey != feeGranterKeyOrAddr && feeGranterKeyOrAddr != "" {
-		var granterAddr sdk.AccAddress
-		if cc.PCfg.FeeGrants != nil && cc.PCfg.FeeGrants.IsExternalGranter {
-			granterAddr, err = cc.DecodeBech32AccAddr(feeGranterKeyOrAddr)
-			if err != nil {
-				return nil, 0, sdk.Coins{}, err
-			}
-		} else {
-			granterAddr, err = cc.GetKeyAddressForKey(feeGranterKeyOrAddr)
-			if err != nil {
-				return nil, 0, sdk.Coins{}, err
-			}
-		}
-
-		txf = txf.WithFeeGranter(granterAddr)
 	}
 
 	adjusted := gas

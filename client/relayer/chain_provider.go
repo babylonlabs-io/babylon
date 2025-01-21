@@ -47,7 +47,6 @@ type ChainProvider interface {
 	) error
 	ChainName() string
 	ChainId() string
-	Type() string
 	ProviderConfig() ProviderConfig
 	Key() string
 	Address() (string, error)

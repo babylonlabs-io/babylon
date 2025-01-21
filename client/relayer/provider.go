@@ -67,7 +67,7 @@ type CosmosProvider struct {
 	Cdc            Codec
 	feegrantMu     sync.Mutex
 
-	// the map key is the TX signer, which can either be 'default' (provider key) or a feegrantee
+	// the map key is the TX signer (provider key)
 	// the purpose of the map is to lock on the signer from TX creation through submission,
 	// thus making TX sequencing errors less likely.
 	walletStateMap map[string]*WalletState
@@ -128,10 +128,6 @@ func (cc *CosmosProvider) ChainId() string {
 
 func (cc *CosmosProvider) ChainName() string {
 	return cc.PCfg.ChainName
-}
-
-func (cc *CosmosProvider) Type() string {
-	return "cosmos"
 }
 
 func (cc *CosmosProvider) Key() string {
