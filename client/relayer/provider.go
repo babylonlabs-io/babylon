@@ -2,10 +2,10 @@ package relayerclient
 
 import (
 	"fmt"
+	"github.com/cometbft/cometbft/rpc/client/http"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/strangelove-ventures/cometbft-client/client"
 	"io"
 	"os"
 	"path"
@@ -194,7 +194,7 @@ func (cc *CosmosProvider) Init() error {
 		return err
 	}
 
-	c, err := client.NewClient(cc.PCfg.RPCAddr, timeout)
+	c, err := http.NewWithTimeout(cc.PCfg.RPCAddr, "/websocket", uint(timeout.Seconds()))
 	if err != nil {
 		return err
 	}
