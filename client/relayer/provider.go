@@ -1,14 +1,11 @@
 package relayerclient
 
 import (
-	"context"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/relayer/v2/relayer/codecs/ethermint"
 	"github.com/strangelove-ventures/cometbft-client/client"
-	"go.uber.org/zap"
 	"io"
 	"os"
 	"path"
@@ -44,7 +41,7 @@ type CosmosProviderConfig struct {
 	FeeGrants *FeeGrantConfiguration `json:"feegrants" yaml:"feegrants"`
 }
 
-// FeeGrantConfiguration By default, TXs will be signed by the feegrantees 'ManagedGrantees' keys in a round robin fashion.
+// FeeGrantConfiguration By default, TXs will be signed by the feegrantees 'ManagedGrantees' keys in a round-robin fashion.
 // Clients can use other signing keys by invoking 'tx.SendMsgsWith' and specifying the signing key.
 type FeeGrantConfiguration struct {
 	GranteesWanted int `json:"num_grantees" yaml:"num_grantees"`
@@ -86,15 +83,13 @@ type WalletState struct {
 }
 
 // NewProvider validates the CosmosProviderConfig, instantiates a ChainClient and then instantiates a CosmosProvider
-func (pc CosmosProviderConfig) NewProvider(log *zap.Logger, homepath string, chainName string) (ChainProvider, error) {
+func (pc CosmosProviderConfig) NewProvider(homepath string, chainName string) (ChainProvider, error) {
 	if err := pc.Validate(); err != nil {
 		return nil, err
 	}
 
 	pc.KeyDirectory = keysDir(homepath, pc.ChainID)
-
 	pc.ChainName = chainName
-	pc.Modules = append([]module.AppModuleBasic{}, ModuleBasics...)
 
 	if pc.Broadcast == "" {
 		pc.Broadcast = BroadcastModeBatch
@@ -102,13 +97,10 @@ func (pc CosmosProviderConfig) NewProvider(log *zap.Logger, homepath string, cha
 
 	cp := &CosmosProvider{
 		PCfg:           pc,
-		KeyringOptions: []keyring.Option{ethermint.EthSecp256k1Option()},
+		KeyringOptions: []keyring.Option{},
 		Input:          os.Stdin,
 		Output:         os.Stdout,
 		walletStateMap: map[string]*WalletState{},
-
-		// TODO: this is a bit of a hack, we should probably have a better way to inject modules
-		Cdc: MakeCodec(pc.Modules, pc.AccountPrefix, pc.AccountPrefix+"valoper"),
 	}
 
 	return cp, nil
@@ -188,7 +180,7 @@ func (cc *CosmosProvider) SetRpcAddr(rpcAddr string) error {
 // Init initializes the keystore, RPC client, amd light client provider.
 // Once initialization is complete an attempt to query the underlying node's tendermint version is performed.
 // NOTE: Init must be called after creating a new instance of CosmosProvider.
-func (cc *CosmosProvider) Init(ctx context.Context) error {
+func (cc *CosmosProvider) Init() error {
 	keybase, err := keyring.New(
 		cc.PCfg.ChainID,
 		cc.PCfg.KeyringBackend,
@@ -212,9 +204,7 @@ func (cc *CosmosProvider) Init(ctx context.Context) error {
 		return err
 	}
 
-	rpcClient := NewRPCClient(c)
-
-	cc.RPCClient = rpcClient
+	cc.RPCClient = NewRPCClient(c)
 	cc.Keybase = keybase
 
 	return nil

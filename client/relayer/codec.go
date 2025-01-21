@@ -1,99 +1,14 @@
 package relayerclient
 
 import (
-	feegrant "cosmossdk.io/x/feegrant/module"
-	"cosmossdk.io/x/tx/signing"
-	"cosmossdk.io/x/upgrade"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/std"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/tx"
-	authz "github.com/cosmos/cosmos-sdk/x/authz/module"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/gov"
-	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
-	"github.com/cosmos/cosmos-sdk/x/mint"
-	"github.com/cosmos/cosmos-sdk/x/params"
-	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
-	"github.com/cosmos/cosmos-sdk/x/slashing"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/cosmos/gogoproto/proto"
-	"github.com/cosmos/ibc-go/modules/capability"
-	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee"
-	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
-	ibc "github.com/cosmos/ibc-go/v8/modules/core"
-
-	"github.com/cosmos/relayer/v2/relayer/chains/cosmos/stride"
 )
-
-var ModuleBasics = []module.AppModuleBasic{
-	auth.AppModuleBasic{},
-	authz.AppModuleBasic{},
-	bank.AppModuleBasic{},
-	capability.AppModuleBasic{},
-	gov.NewAppModuleBasic(
-		[]govclient.ProposalHandler{
-			paramsclient.ProposalHandler,
-		},
-	),
-	crisis.AppModuleBasic{},
-	distribution.AppModuleBasic{},
-	feegrant.AppModuleBasic{},
-	mint.AppModuleBasic{},
-	params.AppModuleBasic{},
-	slashing.AppModuleBasic{},
-	staking.AppModuleBasic{},
-	upgrade.AppModuleBasic{},
-	transfer.AppModuleBasic{},
-	ibc.AppModuleBasic{},
-	stride.AppModuleBasic{},
-	ibcfee.AppModuleBasic{},
-}
 
 type Codec struct {
 	InterfaceRegistry types.InterfaceRegistry
 	Marshaller        codec.Codec
 	TxConfig          client.TxConfig
 	Amino             *codec.LegacyAmino
-}
-
-func MakeCodec(moduleBasics []module.AppModuleBasic, accBech32Prefix, valBech32Prefix string) Codec {
-	modBasic := module.NewBasicManager(moduleBasics...)
-	encodingConfig := MakeCodecConfig(accBech32Prefix, valBech32Prefix)
-	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	modBasic.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	modBasic.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-
-	return encodingConfig
-}
-
-func MakeCodecConfig(accBech32Prefix, valBech32Prefix string) Codec {
-	interfaceRegistry, err := types.NewInterfaceRegistryWithOptions(types.InterfaceRegistryOptions{
-		ProtoFiles: proto.HybridResolver,
-		SigningOptions: signing.Options{
-			AddressCodec:          address.NewBech32Codec(accBech32Prefix),
-			ValidatorAddressCodec: address.NewBech32Codec(valBech32Prefix),
-		},
-	})
-	if err != nil {
-		panic(err)
-	}
-	marshaller := codec.NewProtoCodec(interfaceRegistry)
-
-	done := SetSDKConfigContext(accBech32Prefix)
-	defer done()
-
-	return Codec{
-		InterfaceRegistry: interfaceRegistry,
-		Marshaller:        marshaller,
-		TxConfig:          tx.NewTxConfig(marshaller, tx.DefaultSignModes),
-		Amino:             codec.NewLegacyAmino(),
-	}
 }

@@ -4,17 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// KeyExists returns true if a key with the specified name exists in the keystore, it returns false otherwise.
-func (cc *CosmosProvider) KeyExists(name string) bool {
-	k, err := cc.Keybase.Key(name)
-	if err != nil {
-		return false
-	}
-
-	return k.Name == name
-
-}
-
 // GetKeyAddress returns the account address representation for the currently configured key.
 func (cc *CosmosProvider) GetKeyAddress(key string) (sdk.AccAddress, error) {
 	info, err := cc.Keybase.Key(key)

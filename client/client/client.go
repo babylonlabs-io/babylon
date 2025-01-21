@@ -1,7 +1,6 @@
 package client
 
 import (
-	"context"
 	relayerclient "github.com/babylonlabs-io/babylon/client/relayer"
 	"time"
 
@@ -42,7 +41,6 @@ func New(cfg *config.BabylonConfig, logger *zap.Logger) (*Client, error) {
 	}
 
 	provider, err := cfg.ToCosmosProviderConfig().NewProvider(
-		zapLogger,
 		"", // TODO: set home path
 		"babylon",
 	)
@@ -67,7 +65,7 @@ func New(cfg *config.BabylonConfig, logger *zap.Logger) (*Client, error) {
 	// NOTE: this will create a RPC client. The RPC client will be used for
 	// submitting txs and making ad hoc queries. It won't create WebSocket
 	// connection with Babylon node
-	err = cp.Init(context.Background())
+	err = cp.Init()
 	if err != nil {
 		return nil, err
 	}

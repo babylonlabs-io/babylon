@@ -11,6 +11,7 @@ import (
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -30,7 +31,6 @@ import (
 	"github.com/avast/retry-go/v4"
 )
 
-// Variables used for retries
 var (
 	rtyAttNum                   = uint(5)
 	rtyAtt                      = retry.Attempts(rtyAttNum)
@@ -41,11 +41,17 @@ var (
 	errUnknown                  = "unknown"
 )
 
-// Strings for parsing events
-var (
-	srcChanTag = "packet_src_channel"
-	dstChanTag = "packet_dst_channel"
+const (
+	ErrTimeoutAfterWaitingForTxBroadcast _err = "timed out after waiting for tx to get included in the block"
 )
+
+type _err string
+
+func (e _err) Error() string { return string(e) }
+
+type intoAny interface {
+	AsAny() *codectypes.Any
+}
 
 var seqGuardSingleton sync.Mutex
 

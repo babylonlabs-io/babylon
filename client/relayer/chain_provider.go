@@ -2,7 +2,6 @@ package relayerclient
 
 import (
 	"context"
-	"go.uber.org/zap"
 )
 
 type BroadcastMode string
@@ -13,7 +12,7 @@ const (
 )
 
 type ProviderConfig interface {
-	NewProvider(log *zap.Logger, homepath string, chainName string) (ChainProvider, error)
+	NewProvider(homepath string, chainName string) (ChainProvider, error)
 	Validate() error
 	BroadcastMode() BroadcastMode
 }
@@ -37,14 +36,8 @@ type RelayerEvent struct {
 	Attributes map[string]string
 }
 
-type KeyProvider interface {
-	KeyExists(name string) bool
-}
-
 type ChainProvider interface {
-	KeyProvider
-
-	Init(ctx context.Context) error
+	Init() error
 	SendMessagesToMempool(
 		ctx context.Context,
 		msgs []RelayerMessage,
@@ -52,7 +45,6 @@ type ChainProvider interface {
 		asyncCtx context.Context,
 		asyncCallbacks []func(*RelayerTxResponse, error),
 	) error
-
 	ChainName() string
 	ChainId() string
 	Type() string
