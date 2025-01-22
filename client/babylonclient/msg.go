@@ -6,10 +6,8 @@ package babylonclient
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
-	"go.uber.org/zap/zapcore"
 )
 
 type CosmosMessage struct {
@@ -43,16 +41,4 @@ func (cm CosmosMessage) Type() string {
 
 func (cm CosmosMessage) MsgBytes() ([]byte, error) {
 	return proto.Marshal(cm.Msg)
-}
-
-// MarshalLogObject is used to encode cm to a zap logger with the zap.Object field type.
-func (cm CosmosMessage) MarshalLogObject(enc zapcore.ObjectEncoder) error {
-	// Using plain json.Marshal or calling cm.Msg.String() both fail miserably here.
-	// There is probably a better way to encode the message than this.
-	j, err := codec.NewLegacyAmino().MarshalJSON(cm.Msg)
-	if err != nil {
-		return err
-	}
-	enc.AddByteString("msg_json", j)
-	return nil
 }
