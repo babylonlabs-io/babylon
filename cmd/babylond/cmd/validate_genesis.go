@@ -10,10 +10,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 const chainUpgradeGuide = "https://github.com/cosmos/cosmos-sdk/blob/a51aa517c46c70df04a06f586c67fb765e45322a/UPGRADING.md"
@@ -86,7 +85,7 @@ func validateGenDoc(importGenesisFile string) (*cmttypes.GenesisDoc, error) {
 // CheckCorrespondence checks that each genesis tx/BLS key should have one
 // corresponding BLS key/genesis tx
 func CheckCorrespondence(ctx client.Context, genesis map[string]json.RawMessage, validator genutiltypes.MessageValidator) error {
-	checkpointingGenState := types.GetGenesisStateFromAppState(ctx.Codec, genesis)
+	checkpointingGenState := checkpointingtypes.GetGenesisStateFromAppState(ctx.Codec, genesis)
 	gks := checkpointingGenState.GetGenesisKeys()
 	genTxState := genutiltypes.GetGenesisStateFromAppState(ctx.Codec, genesis)
 	addresses := make(map[string]struct{}, 0)
@@ -112,8 +111,8 @@ func CheckCorrespondence(ctx client.Context, genesis map[string]json.RawMessage,
 		if len(msgs) == 0 {
 			return errors.New("invalid genesis transaction")
 		}
-		msgCreateValidator := msgs[0].(*stakingtypes.MsgCreateValidator)
-		if _, exists := addresses[msgCreateValidator.ValidatorAddress]; !exists {
+		msgCreateValidator := msgs[0].(*checkpointingtypes.MsgWrappedCreateValidator)
+		if _, exists := addresses[msgCreateValidator.MsgCreateValidator.ValidatorAddress]; !exists {
 			return errors.New("cannot find a corresponding BLS key for a genesis tx")
 		}
 	}

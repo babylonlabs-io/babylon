@@ -322,8 +322,13 @@ func InitTestnet(
 			return err
 		}
 
+		wrappedCreateVal, err := checkpointingtypes.NewMsgWrappedCreateValidator(createValMsg, genKey.BlsKey.Pubkey, genKey.BlsKey.Pop)
+		if err != nil {
+			return err
+		}
+
 		txBuilder := clientCtx.TxConfig.NewTxBuilder()
-		if err = txBuilder.SetMsgs(createValMsg); err != nil {
+		if err = txBuilder.SetMsgs(wrappedCreateVal); err != nil {
 			return err
 		}
 
