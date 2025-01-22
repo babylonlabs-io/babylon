@@ -1,7 +1,7 @@
 // This file is derived from the Cosmos Relayer repository (https://github.com/cosmos/relayer),
 // originally licensed under the Apache License, Version 2.0.
 
-package relayerclient
+package babylonclient
 
 import (
 	"github.com/cosmos/cosmos-sdk/client"
