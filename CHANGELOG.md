@@ -31,49 +31,16 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
-## [Unreleased](https://github.com/babylonchain/babylon-private/tree/HEAD)
-
-[Full Changelog](https://github.com/babylonchain/babylon-private/compare/euphrates-0.2.0-rc.0...HEAD)
-
-
-## [euphrates-v0.2.0-rc.0](https://github.com/babylonchain/babylon-private/tree/euphrates-v0.2.0-rc.0) (2024-05-17)
-
-[Full Changelog](https://github.com/babylonchain/babylon-private/compare/euphrates-0.1.0-rc.1...euphrates-v0.2.0-rc.0)
-
-## [euphrates-0.1.0-rc.1](https://github.com/babylonchain/babylon-private/tree/euphrates-0.1.0-rc.1) (2024-03-25)
-
-[Full Changelog](https://github.com/babylonchain/babylon-private/compare/euphrates-0.1.0-rc.0...euphrates-0.1.0-rc.1)
-
-**Fixed bugs:**
-
-- Fix: only calculating Babylon FPs for FP set rotation (#223)
-
-## [euphrates-0.1.0-rc.0](https://github.com/babylonchain/babylon-private/tree/euphrates-0.1.0-rc.0) (2024-03-22)
-
-[Full Changelog](https://github.com/babylonchain/babylon-private/compare/v0.8.5...euphrates-0.1.0-rc.0)
-
-**Closed issues:**
-
-- handler for registering consumer chain finality providers [\#211](https://github.com/babylonchain/babylon-private/issues/211)
-- restaking support and tests [\#208](https://github.com/babylonchain/babylon-private/issues/208)
-- New module for BTC staking integration [\#204](https://github.com/babylonchain/babylon-private/issues/204)
-- Consumer chain finality provider registry [\#203](https://github.com/babylonchain/babylon-private/issues/203)
-
-## [v0.8.0](https://github.com/babylonchain/babylon/tree/v0.8.0) (2024-02-08)
+All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-### Improvements
+### State Machine Breaking
 
-- [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
-check of rewards
-
-### Bug fixes
-
-- [#353](https://github.com/babylonlabs-io/babylon/pull/353) Bump to SDK
-  0.50.11
+- [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
+This PR contains a series of PRs on multi-staking support and BTC stakingintegration.
 
 ## v1.0.0-rc3
 
