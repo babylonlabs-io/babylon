@@ -173,7 +173,7 @@ $ %s gentx my-key-name 1000000stake --home=/path/to/home/dir --keyring-backend=o
 			}
 
 			// bls load/create
-			privValKeyFilePath, statePath := pathsNodeCfg(clientCtx.HomeDir)
+			privValKeyFilePath, statePath := PathsNodeCfg(clientCtx.HomeDir)
 			wrappedPV := privval.LoadWrappedFilePV(privValKeyFilePath, statePath)
 			if wrappedPV.Key.DelegatorAddress == "" {
 				cmd.PrintErrf("failed to read bls keys in %q. You probably forgot to run `babylond create-bls-key`, creating...\n", privValKeyFilePath)
@@ -268,7 +268,7 @@ $ %s gentx my-key-name 1000000stake --home=/path/to/home/dir --keyring-backend=o
 	return cmd
 }
 
-func pathsNodeCfg(homeDir string) (keyPath, statePath string) {
+func PathsNodeCfg(homeDir string) (keyPath, statePath string) {
 	nodeCfg := cmtconfig.DefaultConfig()
 	keyPath = filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
 	statePath = filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
