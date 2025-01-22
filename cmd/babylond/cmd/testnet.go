@@ -35,6 +35,7 @@ import (
 	"github.com/spf13/cobra"
 
 	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
+	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
 
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/privval"
@@ -481,14 +482,14 @@ func collectGenFiles(
 			return err
 		}
 
-		nodeAppState, err := genutil.GenAppStateFromConfig(
+		nodeAppState, err := genhelpers.GenAppStateFromConfig(
 			clientCtx.Codec,
 			clientCtx.TxConfig,
 			nodeConfig,
 			initCfg,
 			genesis,
 			genBalIterator,
-			genutiltypes.DefaultMessageValidator,
+			checkpointingtypes.GenTxMessageValidatorWrappedCreateValidator,
 			authcodec.NewBech32Codec(appparams.Bech32PrefixValAddr),
 		)
 		if err != nil {

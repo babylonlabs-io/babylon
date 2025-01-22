@@ -246,6 +246,7 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[epochingtypes.StoreKey]),
 		bankKeeper,
 		stakingKeeper,
+		stakingkeeper.NewMsgServerImpl(stakingKeeper),
 		appparams.AccGov.String(),
 	)
 

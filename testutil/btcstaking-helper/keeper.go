@@ -68,7 +68,6 @@ func NewHelper(
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
 	iKeeper.EXPECT().BtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	iKeeper.EXPECT().BtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	iKeeper.EXPECT().FpSlashed(gomock.Any(), gomock.Any()).AnyTimes()
 
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
