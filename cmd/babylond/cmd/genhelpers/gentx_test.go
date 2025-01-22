@@ -97,7 +97,7 @@ func Test_CmdGenTx(t *testing.T) {
 	err = genTxCmd.ExecuteContext(ctx)
 	require.NoError(t, err)
 
-	// verifies if the BLS was sucessfully created with gentx
+	// verifies if the BLS was successfully created with gentx
 	keyPath, statePath := genhelpers.PathsNodeCfg(home)
 	filePV := privval.LoadWrappedFilePV(keyPath, statePath)
 	outputFilePath := filepath.Join(filepath.Dir(keyPath), fmt.Sprintf("gen-bls-%s.json", sdk.ValAddress(addr).String()))
