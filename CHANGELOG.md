@@ -42,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
 check of rewards
 - [#419](https://github.com/babylonlabs-io/babylon/pull/419) Add new modules to swagger config
+- [#435](https://github.com/babylonlabs-io/babylon/pull/435) Modify gentx to generate `MsgWrappedCreateValidator`
 
 ### Bug fixes
 
