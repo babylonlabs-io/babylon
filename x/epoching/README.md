@@ -278,7 +278,7 @@ The Epoching module implements the epoched staking mechanism by using an
 to intercept messages that affect the validator set's stake distribution, and
 implements the messages' epoched counterparts.
 
-### Disabling Staking module messages via AnteHandler
+### Disabling Staking module messages by not registering in the router
 
 In Cosmos SDK, the
 [AnteHandler](https://docs.cosmos.network/main/learn/advanced/baseapp#antehandler)
