@@ -126,11 +126,9 @@ func encVerify(
 
 	expRHat.ToAffine()
 
-	// fail if expected R'.y is odd
-	if expRHat.Y.IsOdd() {
-		return fmt.Errorf("expected R'.y is odd")
+	if R.Y.IsOdd() {
+		return fmt.Errorf("expected R.y is odd")
 	}
-
 	// ensure R' is same as the expected R' = s'*G - e*P
 	if !expRHat.X.Equals(&RHat.X) {
 		return fmt.Errorf("expected R' = s'*G - e*P is different from the actual R'")
