@@ -41,6 +41,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC stakingintegration.
+- [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
+check of rewards
+- [#419](https://github.com/babylonlabs-io/babylon/pull/419) Add new modules to swagger config
+
+### Bug fixes
+
+- [#353](https://github.com/babylonlabs-io/babylon/pull/353) Bump to SDK
+  0.50.11
+- [#404](https://github.com/babylonlabs-io/babylon/pull/404) Improve adaptor
+signature nonce generation to match reference implementation
+- [#413](https://github.com/babylonlabs-io/babylon/pull/413) Fix adaptor
+signature R verification
 
 ## v1.0.0-rc3
 
