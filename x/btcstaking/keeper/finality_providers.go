@@ -36,7 +36,7 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 	// default consumer ID is Babylon's chain ID
 	consumerID := msg.GetConsumerId()
 	if consumerID == "" {
-		// canonical chain id
+		// Babylon chain ID
 		consumerID = ctx.ChainID()
 	}
 
@@ -202,6 +202,8 @@ func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn
 			consumerID, exists := fpToConsumerMap[fpBTCPKHex]
 			if !exists {
 				// If not in map, check if it's a Babylon FP or get its consumer
+				// TODO: avoid querying GetFinalityProvider again by passing the result
+				// https://github.com/babylonlabs-io/babylon/blob/873f1232365573a97032037af4ac99b5e3fcada8/x/btcstaking/keeper/btc_delegators.go#L79 to this function
 				if _, err := k.GetFinalityProvider(ctx, delegationFPBTCPK); err == nil {
 					continue // It's a Babylon FP, skip
 				} else if consumerID, err = k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &delegationFPBTCPK); err == nil {

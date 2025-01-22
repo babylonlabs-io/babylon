@@ -37,8 +37,6 @@ var (
 	timestampedEpoch = uint64(10)
 )
 
-// TODO: move this to keeper package rather than keeper_test so that
-// it can be inherited to test other modules?
 type Helper struct {
 	t testing.TB
 

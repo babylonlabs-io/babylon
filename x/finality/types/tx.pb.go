@@ -766,7 +766,6 @@ type MsgClient interface {
 	CommitPubRandList(ctx context.Context, in *MsgCommitPubRandList, opts ...grpc.CallOption) (*MsgCommitPubRandListResponse, error)
 	// AddFinalitySig adds a finality signature to a given block
 	AddFinalitySig(ctx context.Context, in *MsgAddFinalitySig, opts ...grpc.CallOption) (*MsgAddFinalitySigResponse, error)
-	// TODO: msg for evidence of equivocation. this is not specified yet
 	// UpdateParams updates the finality module parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 	// UnjailFinalityProvider defines a method for unjailing a jailed
@@ -847,7 +846,6 @@ type MsgServer interface {
 	CommitPubRandList(context.Context, *MsgCommitPubRandList) (*MsgCommitPubRandListResponse, error)
 	// AddFinalitySig adds a finality signature to a given block
 	AddFinalitySig(context.Context, *MsgAddFinalitySig) (*MsgAddFinalitySigResponse, error)
-	// TODO: msg for evidence of equivocation. this is not specified yet
 	// UpdateParams updates the finality module parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 	// UnjailFinalityProvider defines a method for unjailing a jailed

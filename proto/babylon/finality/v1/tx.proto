@@ -17,7 +17,6 @@ service Msg {
     rpc CommitPubRandList(MsgCommitPubRandList) returns (MsgCommitPubRandListResponse);
     // AddFinalitySig adds a finality signature to a given block
     rpc AddFinalitySig(MsgAddFinalitySig) returns (MsgAddFinalitySigResponse);
-    // TODO: msg for evidence of equivocation. this is not specified yet
     // UpdateParams updates the finality module parameters.
     rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
     // UnjailFinalityProvider defines a method for unjailing a jailed

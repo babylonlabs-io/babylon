@@ -28,6 +28,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(
 		NewCommitPubRandListCmd(),
 		NewAddFinalitySigCmd(),
+		NewUnjailFinalityProviderCmd(),
 	)
 
 	return cmd
@@ -155,6 +156,40 @@ func NewAddFinalitySigCmd() *cobra.Command {
 				Proof:        &proof,
 				BlockAppHash: appHash,
 				FinalitySig:  finalitySig,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewUnjailFinalityProviderCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "unjail-finality-provider [fp_btc_pk]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Unjail a jailed finality provider",
+		Long: strings.TrimSpace(
+			`Unjail a jailed finality provider.`,
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			// get finality provider BTC PK
+			fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
+			if err != nil {
+				return err
+			}
+
+			msg := types.MsgUnjailFinalityProvider{
+				Signer:  clientCtx.FromAddress.String(),
+				FpBtcPk: fpBTCPK,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

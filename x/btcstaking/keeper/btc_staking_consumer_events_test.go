@@ -18,6 +18,8 @@ func FuzzSetBTCStakingEventStore_NewFp(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+
 		r := rand.New(rand.NewSource(seed))
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
@@ -75,6 +77,8 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+
 		r := rand.New(rand.NewSource(seed))
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
@@ -169,6 +173,8 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+
 		r := rand.New(rand.NewSource(seed))
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
@@ -270,6 +276,8 @@ func FuzzDeleteBTCStakingEventStore(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+
 		r := rand.New(rand.NewSource(seed))
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()

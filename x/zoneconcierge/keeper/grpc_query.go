@@ -72,6 +72,7 @@ func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest)
 
 	ctx := sdk.UnwrapSDKContext(c)
 	var chainsInfo []*types.ChainInfo
+	// TODO: paginate this for loop
 	for _, ConsumerId := range req.ConsumerIds {
 		chainInfo, err := k.GetChainInfo(ctx, ConsumerId)
 		if err != nil {
@@ -133,6 +134,7 @@ func (k Keeper) EpochChainsInfo(c context.Context, req *types.QueryEpochChainsIn
 
 	ctx := sdk.UnwrapSDKContext(c)
 	var chainsInfo []*types.ChainInfo
+	// TODO: paginate this for loop
 	for _, ConsumerId := range req.ConsumerIds {
 		// check if chain ID is valid
 		if !k.HasChainInfo(ctx, ConsumerId) {
@@ -239,6 +241,7 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 
 	// find the last finalised epoch
 	lastFinalizedEpoch := k.GetLastFinalizedEpoch(ctx)
+	// TODO: paginate this for loop
 	for _, ConsumerId := range req.ConsumerIds {
 		// check if chain ID is valid
 		if !k.HasChainInfo(ctx, ConsumerId) {

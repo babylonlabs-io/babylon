@@ -22,6 +22,7 @@ func NewIBCHeaderDecorator(k Keeper) *IBCHeaderDecorator {
 	}
 }
 
+// getHeaderAndClientState extracts the header info and client state from an IBC update client message
 func (d *IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg) (*types.HeaderInfo, *ibctmtypes.ClientState) {
 	// ensure the message is MsgUpdateClient
 	msgUpdateClient, ok := m.(*clienttypes.MsgUpdateClient)
@@ -62,6 +63,12 @@ func (d *IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg)
 	return headerInfo, cmtClientState
 }
 
+// PostHandle processes IBC client update messages after they are executed. For each message:
+// - Extracts header info and client state if it's a valid IBC client update message
+// - Determines if the header is a fork header by checking if client is frozen
+// - Handles the header appropriately via HandleHeaderWithValidCommit
+// - Unfreezes client if it was frozen due to a fork header
+// Only runs during block finalization or tx simulation, and only for successful txs.
 func (d *IBCHeaderDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, success bool, next sdk.PostHandler) (sdk.Context, error) {
 	// only do this when finalizing a block or simulating the current tx
 	if ctx.ExecMode() != sdk.ExecModeFinalize && !simulate {

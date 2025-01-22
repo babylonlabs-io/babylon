@@ -210,6 +210,10 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				// add the BTC delegation to each restaked finality provider
 				for _, fpBTCPK := range btcDel.FpBtcPkList {
 					fpBTCPKHex := fpBTCPK.MarshalHex()
+					if !k.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPK) {
+						// This is a consumer FP rather than Babylon FP, skip it
+						continue
+					}
 					activedSatsByFpBtcPk[fpBTCPKHex] = append(activedSatsByFpBtcPk[fpBTCPKHex], btcDel.TotalSat)
 				}
 
@@ -338,6 +342,10 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	for _, fpBTCPKHex := range fpActiveBtcPkHexList {
 		// get the finality provider and initialise its dist info
 		newFP := k.loadFP(ctx, fpByBtcPkHex, fpBTCPKHex)
+		if newFP == nil {
+			// This is a consumer FP rather than Babylon FP, skip it
+			continue
+		}
 		fpDistInfo := ftypes.NewFinalityProviderDistInfo(newFP)
 
 		// check for jailing cases
@@ -379,6 +387,10 @@ func (k Keeper) processPowerDistUpdateEventUnbond(
 ) {
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
 		fpBTCPKHex := fpBTCPK.MarshalHex()
+		if !k.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPK) {
+			// This is a consumer FP rather than Babylon FP, skip it
+			continue
+		}
 		unbondedSatsByFpBtcPk[fpBTCPKHex] = append(unbondedSatsByFpBtcPk[fpBTCPKHex], btcDel.TotalSat)
 	}
 	k.processRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
@@ -416,9 +428,13 @@ func (k Keeper) votingPowerDistCacheStore(ctx context.Context) prefix.Store {
 	return prefix.NewStore(storeAdapter, ftypes.VotingPowerDistCacheKey)
 }
 
-// processRewardTracker loads the fps from inside the btc delegation
-// with cache and executes the function by passing the fp, delegator address
+// processRewardTracker loads Babylon FPs from the given BTC delegation
+// and executes the given function over each Babylon FP, delegator address
 // and satoshi amounts.
+// NOTE:
+//   - The function will only be executed over Babylon FPs but not consumer FPs
+//   - The function makes uses of the fpByBtcPkHex cache, and the cache only
+//     contains Babylon FPs but not consumer FPs
 func (k Keeper) processRewardTracker(
 	ctx context.Context,
 	fpByBtcPkHex map[string]*types.FinalityProvider,
@@ -428,6 +444,10 @@ func (k Keeper) processRewardTracker(
 	delAddr := sdk.MustAccAddressFromBech32(btcDel.StakerAddr)
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
 		fp := k.loadFP(ctx, fpByBtcPkHex, fpBTCPK.MarshalHex())
+		if fp == nil {
+			// This is a consumer FP rather than Babylon FP, skip it
+			continue
+		}
 		f(fp.Address(), delAddr, btcDel.TotalSat)
 	}
 }
@@ -463,7 +483,9 @@ func (k Keeper) loadFP(
 		}
 		fp, err = k.BTCStakingKeeper.GetFinalityProvider(ctx, *fpBTCPK)
 		if err != nil {
-			panic(err) // only programming error
+			// This is a consumer FP, return nil and the caller shall
+			// skip it
+			return nil
 		}
 		cacheFpByBtcPkHex[fpBTCPKHex] = fp
 	}
