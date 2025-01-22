@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#434](https://github.com/babylonlabs-io/babylon/pull/434) Removal of delegator address, change init cmd and add migration cmd
 - [#396](https://github.com/babylonlabs-io/babylon/pull/396) BLS Key Separation and ERC2335 Implementation
 - [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
 check of rewards
