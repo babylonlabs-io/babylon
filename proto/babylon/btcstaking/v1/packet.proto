@@ -1,0 +1,168 @@
+syntax = "proto3";
+package babylon.btcstaking.v1;
+
+import "cosmos/staking/v1beta1/staking.proto";
+import "babylon/btcstaking/v1/pop.proto";
+import "babylon/btcstaking/v1/btcstaking.proto";
+
+option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
+
+// ConsumerIBCPacket is an IBC packet sent from consumer to Babylon
+// upon a finality provider being slashed on the consumer
+message ConsumerIBCPacket {
+  repeated SlashedFinalityProvider slashed_fp = 1;
+}
+
+// SlashedFinalityProvider carries a slashed finality provider on a consumer
+message SlashedFinalityProvider {
+  // btc_pk_hex is the Bitcoin secp256k1 PK of this finality provider
+  // the PK follows encoding in BIP-340 spec in hex format
+  string btc_pk_hex = 1;
+  // recovered_fp_btc_sk is the finality provider's BTC SK extracted due to slashing
+  // this allows the consumer to verify the BTC delegation is indeed slashed
+  string recovered_fp_btc_sk = 2;
+}
+
+// BTCStakingIBCPacket is an IBC packet sent from Babylon to a consumer
+// It carries a set of events related to BTC staking for a given consumer
+// It will be constructed and sent upon `EndBlock` of ZoneConcierge
+// (if there are any BTC staking events for a consumer)
+message BTCStakingIBCPacket {
+  repeated NewFinalityProvider new_fp = 1;
+  repeated ActiveBTCDelegation active_del = 2;
+  repeated SlashedBTCDelegation slashed_del = 3;
+  repeated UnbondedBTCDelegation unbonded_del = 4;
+}
+
+// NewFinalityProvider is an IBC packet sent from Babylon to consumer
+// upon a newly registered finality provider on this consumer
+message NewFinalityProvider {
+  // description defines the description terms for the finality provider.
+  cosmos.staking.v1beta1.Description description = 1;
+  // commission defines the commission rate of the finality provider.
+  // It forms as a string converted from "cosmossdk.io/math.LegacyDec"
+  string commission = 2;
+  // addr is the bech32 address identifier of the finality provider.
+  string addr = 3;
+  // btc_pk_hex is the Bitcoin secp256k1 PK of this finality provider
+  // the PK follows encoding in BIP-340 spec in hex format
+  string btc_pk_hex = 4;
+  // pop is the proof of possession of babylon_pk and btc_pk
+  ProofOfPossessionBTC pop = 5;
+  // consumer_id is the ID of the consumer the finality provider is operating on.
+  // If it's missing / empty, it's assumed the finality provider is operating in Babylon.
+  string consumer_id = 8;
+}
+
+// ActiveBTCDelegation is an IBC packet sent from Babylon to consumer
+// upon a BTC delegation newly receives covenant signatures and thus becomes active
+message ActiveBTCDelegation {
+  // staker_addr is the address to receive rewards from BTC delegation.
+  string staker_addr = 1;
+  // btc_pk_hex is the Bitcoin secp256k1 PK of this BTC delegation
+  // the PK follows encoding in BIP-340 spec in hex format
+  string btc_pk_hex = 2;
+  // fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
+  // this BTC delegation delegates to
+  repeated string fp_btc_pk_list = 3;
+  // start_height is the start BTC height of the BTC delegation
+  // it is the start BTC height of the timelock
+  uint32 start_height = 4;
+  // end_height is the end height of the BTC delegation
+  // it is the end BTC height of the timelock - w
+  uint32 end_height = 5;
+  // total_sat is the total amount of BTC stakes in this delegation
+  // quantified in satoshi
+  uint64 total_sat = 6;
+  // staking_tx is the staking tx
+  bytes staking_tx = 7;
+  // slashing_tx is the slashing tx
+  bytes slashing_tx = 8;
+  // delegator_slashing_sig is the signature on the slashing tx
+  // by the delegator (i.e., SK corresponding to btc_pk) as string hex.
+  // It will be a part of the witness for the staking tx output.
+  bytes delegator_slashing_sig = 9;
+  // covenant_sigs is a list of adaptor signatures on the slashing tx
+  // by each covenant member
+  // It will be a part of the witness for the staking tx output.
+  repeated CovenantAdaptorSignatures covenant_sigs = 10;
+  // staking_output_idx is the index of the staking output in the staking tx
+  uint32 staking_output_idx = 11;
+  // unbonding_time used in unbonding output timelock path and in slashing transactions
+  // change outputs
+  uint32 unbonding_time = 12;
+  // undelegation_info is the undelegation info of this delegation.
+  BTCUndelegationInfo undelegation_info = 13;
+  // params version used to validate delegation
+  uint32 params_version = 14;
+}
+
+// BTCUndelegationInfo provides all necessary info about the undeleagation
+message BTCUndelegationInfo {
+    // unbonding_tx is the transaction which will transfer the funds from staking
+    // output to unbonding output. Unbonding output will usually have lower timelock
+    // than staking output.
+    bytes unbonding_tx = 1;
+    // slashing_tx is the slashing tx for unbonding transactions
+    // It is partially signed by SK corresponding to btc_pk, but not signed by
+    // finality provider or covenant yet.
+    bytes slashing_tx = 2;
+    // delegator_slashing_sig is the signature on the slashing tx
+    // by the delegator (i.e., SK corresponding to btc_pk).
+    // It will be a part of the witness for the unbonding tx output.
+    bytes delegator_slashing_sig = 3;
+    // covenant_slashing_sigs is a list of adaptor signatures on the slashing tx
+    // by each covenant member
+    // It will be a part of the witness for the staking tx output.
+    repeated CovenantAdaptorSignatures covenant_slashing_sigs = 4;
+    // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
+    // by covenant members
+    // It must be provided after processing undelegate message by Babylon
+    repeated SignatureInfo covenant_unbonding_sig_list = 5;
+    // delegator_unbonding_info is the information about transaction which spent
+    // the staking output
+    DelegatorUnbondingInfo delegator_unbonding_info = 6;
+}
+
+// SlashedBTCDelegation is an IBC packet sent from Babylon to consumer
+// about a slashed BTC delegation restaked to >=1 of this consumer's 
+// finality provider
+message SlashedBTCDelegation {
+  // staking tx hash of the BTC delegation. It uniquely identifies a BTC delegation
+  string staking_tx_hash = 1;
+  // recovered_fp_btc_sk is the extracted BTC SK of the finality provider on
+  // this consumer
+  // this allows the consumer to verify the BTC delegation is indeed slashed
+  string recovered_fp_btc_sk = 2;
+}
+
+// UnbondedBTCDelegation is an IBC packet sent from Babylon to consumer
+// upon an early unbonded BTC delegation
+message UnbondedBTCDelegation {
+  // staking tx hash of the BTC delegation. It uniquely identifies a BTC delegation
+  string staking_tx_hash = 1;
+  // unbonding_tx_sig is the signature on the unbonding tx signed by the BTC delegator
+  // It proves that the BTC delegator wants to unbond
+  bytes unbonding_tx_sig = 2;
+  // stake_spending_tx is the stake spending tx
+  bytes stake_spending_tx = 3;
+  // proof is the inclusion proof for the stake spending tx
+  InclusionProof proof = 4;
+}
+
+// BTCStakingConsumerEvent defines the structure for storing BTC staking events
+// which will be later sent to consumer chains as IBC packets.
+message BTCStakingConsumerEvent {
+  // oneof event represents a mutually exclusive choice among different event types.
+  // Only one event type can be set within each BTCStakingEvent message instance.
+  oneof event {
+    // NewFinalityProvider represents the event of a new finality provider being created.
+    NewFinalityProvider new_fp = 1;
+    // ActiveBTCDelegation represents the event of an active BTC delegation.
+    ActiveBTCDelegation active_del = 2;
+    // SlashedBTCDelegation represents the event of a slashed BTC delegation.
+    SlashedBTCDelegation slashed_del = 3;
+    // UnbondedBTCDelegation represents the event of an unbonded BTC delegation.
+    UnbondedBTCDelegation unbonded_del = 4;
+  }
+}

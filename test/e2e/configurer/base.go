@@ -9,7 +9,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
 	"testing"
 	"time"
 
@@ -17,8 +16,6 @@ import (
 	"github.com/babylonlabs-io/babylon/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
-	"github.com/babylonlabs-io/babylon/types"
-	types2 "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 )
@@ -75,49 +72,6 @@ func (bc *baseConfigurer) runValidators(chainConfig *chain.Config) error {
 			return err
 		}
 	}
-	return nil
-}
-
-func (bc *baseConfigurer) InstantiateBabylonContract() error {
-	// Store the contract on the second chain (B)
-	chainConfig := bc.chainConfigs[1]
-	contractPath := "/bytecode/babylon_contract.wasm"
-	nonValidatorNode, err := chainConfig.GetNodeAtIndex(2)
-	if err != nil {
-		bc.t.Logf("error getting non-validator node: %v", err)
-		return err
-	}
-	nonValidatorNode.StoreWasmCode(contractPath, initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
-	nonValidatorNode.WaitForNextBlock()
-
-	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
-
-	// Instantiate the contract
-	initMsg := fmt.Sprintf(`{ "network": %q, "babylon_tag": %q, "btc_confirmation_depth": %d, "checkpoint_finalization_timeout": %d, "notify_cosmos_zone": %s }`,
-		types.BtcRegtest,
-		types2.DefaultCheckpointTag,
-		1,
-		2,
-		"false",
-	)
-	nonValidatorNode.InstantiateWasmContract(
-		strconv.Itoa(latestWasmId),
-		initMsg,
-		initialization.ValidatorWalletName,
-	)
-	nonValidatorNode.WaitForNextBlock()
-	contracts, err := nonValidatorNode.QueryContractsFromId(1)
-	if err != nil {
-		bc.t.Logf("error querying contracts from id: %v", err)
-		return err
-	}
-	require.Len(bc.t, contracts, 1, "Wrong number of contracts for the counter")
-	contractAddr := contracts[0]
-
-	// Set the contract address in the IBC chain config port id.
-	chainConfig.IBCConfig.PortID = fmt.Sprintf("wasm.%s", contractAddr)
-
 	return nil
 }
 

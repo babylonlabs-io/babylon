@@ -15,11 +15,15 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	bsckeeper "github.com/babylonlabs-io/babylon/x/btcstkconsumer/keeper"
+	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 )
 
 func BTCStakingKeeperWithStore(
@@ -38,11 +42,27 @@ func BTCStakingKeeperWithStore(
 	registry := codectypes.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
 
+	// mount KV store for BTC staking consumer keeper
+	bscStoreKey := storetypes.NewKVStoreKey(bsctypes.StoreKey)
+	stateStore.MountStoreWithDB(bscStoreKey, storetypes.StoreTypeIAVL, db)
+	require.NoError(t, stateStore.LoadLatestVersion())
+	// create BTC staking consumer keeper
+	bscKeeper := bsckeeper.NewKeeper(
+		cdc,
+		runtime.NewKVStoreService(bscStoreKey),
+		nil,
+		nil,
+		nil,
+		nil,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	k := keeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(storeKey),
 		btclcKeeper,
 		btccKeeper,
+		bscKeeper,
 		iKeeper,
 		&chaincfg.SimNetParams,
 		appparams.AccGov.String(),

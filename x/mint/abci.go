@@ -82,6 +82,7 @@ func mintBlockProvision(ctx context.Context, k keeper.Keeper) {
 		defer telemetry.ModuleSetGauge(types.ModuleName, float32(toMintCoin.Amount.Int64()), "minted_tokens")
 	}
 
+	// TODO: emit typed event
 	sdkCtx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeMint,

@@ -350,6 +350,11 @@ func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340Pu
 		panic(fmt.Errorf("failed to slash finality provider: %v", err))
 	}
 
+	// Propagate slashing information to consumer chains
+	if err := k.BTCStakingKeeper.PropagateFPSlashingToConsumers(ctx, fpBtcPk); err != nil {
+		panic(fmt.Errorf("failed to propagate finality provider slashing to consumers: %w", err))
+	}
+
 	// emit slashing event
 	eventSlashing := types.NewEventSlashedFinalityProvider(evidence)
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {
@@ -370,4 +375,57 @@ func (ms msgServer) validateActivationHeight(ctx sdk.Context, height uint64) (ui
 		return activationHeight, types.ErrFinalityNotActivated
 	}
 	return activationHeight, nil
+}
+
+// EquivocationEvidence handles the evidence of equivocation message sent from the finality gadget cw contract
+func (ms msgServer) EquivocationEvidence(goCtx context.Context, req *types.MsgEquivocationEvidence) (*types.MsgEquivocationEvidenceResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// validate the evidence
+	if err := validateEvidence(req); err != nil {
+		return &types.MsgEquivocationEvidenceResponse{}, err
+	}
+
+	// construct the evidence
+	evidence := &types.Evidence{
+		FpBtcPk:              req.FpBtcPk,
+		BlockHeight:          req.BlockHeight,
+		PubRand:              req.PubRand,
+		CanonicalAppHash:     req.CanonicalAppHash,
+		CanonicalFinalitySig: req.CanonicalFinalitySig,
+		ForkAppHash:          req.ForkAppHash,
+		ForkFinalitySig:      req.ForkFinalitySig,
+	}
+
+	// slash this finality provider, including setting its voting power to
+	// zero, extracting its BTC SK, and emit an event
+	ms.slashFinalityProvider(ctx, evidence.FpBtcPk, evidence)
+
+	// save evidence
+	ms.SetEvidence(ctx, evidence)
+
+	return &types.MsgEquivocationEvidenceResponse{}, nil
+}
+
+// Helper function
+func validateEvidence(req *types.MsgEquivocationEvidence) error {
+	if req.FpBtcPk == nil {
+		return fmt.Errorf("empty FpBtcPk")
+	}
+	if req.PubRand == nil {
+		return fmt.Errorf("empty PubRand")
+	}
+	if len(req.CanonicalAppHash) != 32 {
+		return fmt.Errorf("malformed CanonicalAppHash")
+	}
+	if len(req.ForkAppHash) != 32 {
+		return fmt.Errorf("malformed ForkAppHash")
+	}
+	if req.ForkFinalitySig == nil {
+		return fmt.Errorf("empty ForkFinalitySig")
+	}
+	if req.CanonicalFinalitySig == nil {
+		return fmt.Errorf("empty CanonicalFinalitySig")
+	}
+	return nil
 }

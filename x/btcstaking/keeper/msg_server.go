@@ -220,18 +220,17 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrReusedStakingTx.Wrapf("duplicated tx hash: %s", stakingTxHash.String())
 	}
 
-	// 4. Check finality providers to which message delegate
-	// Ensure all finality providers are known to Babylon, are not slashed
-	for _, fpBTCPK := range parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat {
-		// get this finality provider
-		fp, err := ms.GetFinalityProvider(ctx, fpBTCPK)
-		if err != nil {
-			return nil, err
-		}
-		// ensure the finality provider is not slashed
-		if fp.IsSlashed() {
-			return nil, types.ErrFpAlreadySlashed.Wrapf("finality key: %s", fpBTCPK.MarshalHex())
-		}
+	// Ensure all finality providers
+	// - are known to Babylon,
+	// - at least 1 one of them is a Babylon finality provider,
+	// - are not slashed, and
+	// - their registered epochs are finalised
+	// and then check whether the BTC stake is restaked to FPs of consumers
+	// TODO: ensure the BTC delegation does not restake to too many finality providers
+	// (pending concrete design)
+	restakedToConsumers, err := ms.validateRestakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
+	if err != nil {
+		return nil, err
 	}
 
 	// 5. Get params for the validated inclusion height either tip or inclusion height
@@ -294,6 +293,13 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// add this BTC delegation, and emit corresponding events
 	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
 		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
+	}
+	// if this BTC delegation is restaked to consumers' FPs, add it to btcstkconsumer indexes
+	// TODO: revisit the relationship between BTC staking module and BTC staking consumer module
+	if restakedToConsumers {
+		if err := ms.indexBTCConsumerDelegation(ctx, newBTCDel); err != nil {
+			panic(fmt.Errorf("failed to add BTC delegation restaked to consumers' finality providers despite it has passed verification: %w", err))
+		}
 	}
 
 	return &types.MsgCreateBTCDelegationResponse{}, nil
@@ -388,6 +394,9 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 			NewState:      types.BTCDelegationStatus_ACTIVE,
 		},
 	)
+
+	// notify consumer chains about the active BTC delegation
+	ms.notifyConsumersOnActiveBTCDel(ctx, btcDel)
 
 	ms.addPowerDistUpdateEvent(ctx, timeInfo.TipHeight, activeEvent)
 
@@ -558,6 +567,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		req.UnbondingTxSig,
 		parsedUnbondingSlashingAdaptorSignatures,
 		params,
+		btcTipHeight,
 	)
 
 	// at this point, the covenant signatures are verified and are not duplicated.
@@ -684,7 +694,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	// all good, add the signature to BTC delegation's undelegation
 	// and set back
-	ms.btcUndelegate(ctx, btcDel, delegatorUnbondingInfo)
+	ms.btcUndelegate(ctx, btcDel, delegatorUnbondingInfo, req.StakeSpendingTx, req.StakeSpendingTxInclusionProof)
 
 	// At this point, the unbonding signature is verified.
 	// Thus, we can safely consider this message as refundable
