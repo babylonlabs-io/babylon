@@ -4,7 +4,9 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strings"
 
+	"cosmossdk.io/client/v2/autocli"
 	confixcmd "cosmossdk.io/tools/confix/cmd"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -129,11 +131,46 @@ func NewRootCmd() *cobra.Command {
 		TextualCoinMetadataQueryFn: authtxconfig.NewGRPCCoinMetadataQueryFn(initClientCtx),
 	}
 
+	EnhanceRootCommandWithoutTxStaking(autoCliOpts, rootCmd)
+
+	return rootCmd
+}
+
+// EnhanceRootCommandWithoutTxStaking excludes staking tx commands
+func EnhanceRootCommandWithoutTxStaking(autoCliOpts autocli.AppOptions, rootCmd *cobra.Command) {
 	if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
 		panic(err)
 	}
 
-	return rootCmd
+	txCmd := FindSubCommand(rootCmd, "tx")
+	if txCmd == nil {
+		panic("failed to find tx subcommand")
+	}
+
+	stkTxCmd := FindSubCommand(txCmd, "staking")
+	if stkTxCmd == nil {
+		panic("failed to find tx staking subcommand")
+	}
+	txCmd.RemoveCommand(stkTxCmd)
+}
+
+// FindSubCommand finds a sub-command of the provided command whose Use
+// string is or begins with the provided subCmdName.
+// It verifies the command's aliases as well.
+func FindSubCommand(cmd *cobra.Command, subCmdName string) *cobra.Command {
+	for _, subCmd := range cmd.Commands() {
+		use := subCmd.Use
+		if use == subCmdName || strings.HasPrefix(use, subCmdName+" ") {
+			return subCmd
+		}
+
+		for _, alias := range subCmd.Aliases {
+			if alias == subCmdName || strings.HasPrefix(alias, subCmdName+" ") {
+				return subCmd
+			}
+		}
+	}
+	return nil
 }
 
 // initCometConfig helps to override default Comet Config values.

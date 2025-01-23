@@ -585,6 +585,8 @@ func NewBabylonApp(
 	return app
 }
 
+// RegisterServicesWithoutStaking calls the module manager
+// registration services without the staking module.
 func (app *BabylonApp) RegisterServicesWithoutStaking() {
 	// removes the staking module from the register services
 	stkModTemp := app.ModuleManager.Modules[stakingtypes.ModuleName]
