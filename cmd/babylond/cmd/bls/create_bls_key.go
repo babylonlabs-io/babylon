@@ -57,7 +57,7 @@ $ babylond create-bls-key %s1f5tnl46mk4dfp4nx3n2vnrvyw2h2ydz6ykhk3r --home ./
 	return cmd
 }
 
-func CreateBlsKey(home string, addr sdk.AccAddress) (wrappedPV *privval.WrappedFilePV, err error) {
+func CreateBlsKey(home string, addr sdk.AccAddress) (*privval.WrappedFilePV, error) {
 	nodeCfg := cmtconfig.DefaultConfig()
 	keyPath := filepath.Join(home, nodeCfg.PrivValidatorKeyFile())
 	statePath := filepath.Join(home, nodeCfg.PrivValidatorStateFile())
@@ -67,7 +67,7 @@ func CreateBlsKey(home string, addr sdk.AccAddress) (wrappedPV *privval.WrappedF
 		return nil, err
 	}
 
-	wrappedPV = privval.NewWrappedFilePV(pv.GetValPrivKey(), bls12381.GenPrivKey(), keyPath, statePath)
+	wrappedPV := privval.NewWrappedFilePV(pv.GetValPrivKey(), bls12381.GenPrivKey(), keyPath, statePath)
 	wrappedPV.SetAccAddress(addr)
 
 	return wrappedPV, nil

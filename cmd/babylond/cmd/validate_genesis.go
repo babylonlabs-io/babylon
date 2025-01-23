@@ -111,7 +111,11 @@ func CheckCorrespondence(ctx client.Context, genesis map[string]json.RawMessage,
 		if len(msgs) == 0 {
 			return errors.New("invalid genesis transaction")
 		}
-		msgCreateValidator := msgs[0].(*checkpointingtypes.MsgWrappedCreateValidator)
+		msgCreateValidator, ok := msgs[0].(*checkpointingtypes.MsgWrappedCreateValidator)
+		if !ok {
+			return fmt.Errorf("not able to parse msg zero as MsgWrappedCreateValidator")
+		}
+
 		if _, exists := addresses[msgCreateValidator.MsgCreateValidator.ValidatorAddress]; !exists {
 			return errors.New("cannot find a corresponding BLS key for a genesis tx")
 		}

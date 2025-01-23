@@ -72,8 +72,13 @@ func CollectGenTxsCmd(genBalIterator types.GenesisBalancesIterator, defaultNodeH
 			}
 
 			toPrint.AppMessage = appMessage
+			bzOut, err := json.MarshalIndent(toPrint, "", " ")
+			if err != nil {
+				return err
+			}
 
-			return displayInfo(toPrint)
+			cmd.PrintErrf("%s\n", bzOut)
+			return nil
 		},
 	}
 
@@ -258,15 +263,4 @@ func newPrintInfo(moniker, chainID, nodeID, genTxsDir string, appMessage json.Ra
 		GenTxsDir:  genTxsDir,
 		AppMessage: appMessage,
 	}
-}
-
-func displayInfo(info printInfo) error {
-	out, err := json.MarshalIndent(info, "", " ")
-	if err != nil {
-		return err
-	}
-
-	_, err = fmt.Fprintf(os.Stderr, "%s\n", out)
-
-	return err
 }
