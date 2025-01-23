@@ -1,0 +1,155 @@
+syntax = "proto3";
+package babylon.btcstkconsumer.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/staking/v1beta1/staking.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "babylon/btcstaking/v1/btcstaking.proto";
+import "babylon/btcstaking/v1/pop.proto";
+import "babylon/btcstkconsumer/v1/btcstkconsumer.proto";
+import "babylon/btcstkconsumer/v1/params.proto";
+
+option go_package = "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/params";
+  }
+  // ConsumerRegistryList queries the list of consumers that are registered to Babylon
+  rpc ConsumerRegistryList(QueryConsumerRegistryListRequest) returns (QueryConsumerRegistryListResponse) {
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/consumer_registry_list";
+  }
+  // ConsumersRegistry queries the latest info for a given list of consumers in Babylon's view
+  rpc ConsumersRegistry(QueryConsumersRegistryRequest) returns (QueryConsumersRegistryResponse) {
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/consumers_registry/{consumer_ids}";
+  }
+
+  // FinalityProviderConsumer info about one finality provider's consumer id
+  rpc FinalityProviderConsumer(QueryFinalityProviderConsumerRequest) returns (QueryFinalityProviderConsumerResponse) {
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/finality_provider_consumer/{fp_btc_pk_hex}";
+  }
+
+  // FinalityProviders queries all finality providers for a given consumer
+  rpc FinalityProviders(QueryFinalityProvidersRequest) returns (QueryFinalityProvidersResponse) {
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/finality_providers/{consumer_id}";
+  }
+
+  // FinalityProvider info about one finality provider
+  rpc FinalityProvider(QueryFinalityProviderRequest) returns (QueryFinalityProviderResponse) {
+    option (google.api.http).get = "/babylon/btcstkconsumer/v1/finality_provider/{consumer_id}/{fp_btc_pk_hex}";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+// QueryConsumerRegistryListRequest is request type for the Query/ConsumerRegistryList RPC method
+message QueryConsumerRegistryListRequest {
+  // pagination defines whether to have the pagination in the request
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryConsumerRegistryListResponse is response type for the Query/ConsumerRegistryList RPC method
+message QueryConsumerRegistryListResponse {
+  // consumer_ids are IDs of the consumers in ascending alphabetical order
+  repeated string consumer_ids = 1;
+  // pagination defines the pagination in the response
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryConsumersRegistryRequest is request type for the Query/ConsumersRegistry RPC method.
+message QueryConsumersRegistryRequest { repeated string consumer_ids = 1; }
+
+// QueryConsumersRegistryResponse is response type for the Query/ConsumersRegistry RPC method.
+message QueryConsumersRegistryResponse {
+  repeated babylon.btcstkconsumer.v1.ConsumerRegister consumers_register = 1;
+}
+
+// QueryFinalityProvidersRequest is the request type for the
+// Query/FinalityProviders RPC method.
+message QueryFinalityProvidersRequest {
+  string consumer_id = 1;
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryFinalityProvidersResponse is the response type for the
+// Query/FinalityProviders RPC method.
+message QueryFinalityProvidersResponse {
+  // finality_providers contains all the finality providers
+  repeated FinalityProviderResponse finality_providers = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryFinalityProviderRequest requests information about a finality provider
+message QueryFinalityProviderRequest {
+  // consumer id is the consumer id this finality provider is registered to
+  string consumer_id = 1;
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
+  string fp_btc_pk_hex = 2;
+}
+
+// QueryFinalityProviderResponse contains information about a finality provider
+message QueryFinalityProviderResponse {
+  // finality_provider contains the FinalityProvider
+  FinalityProviderResponse finality_provider = 1;
+}
+
+// FinalityProviderResponse defines a finality provider with voting power information.
+message FinalityProviderResponse {
+  // description defines the description terms for the finality provider.
+  cosmos.staking.v1beta1.Description description = 1;
+  // commission defines the commission rate of the finality provider.
+  string commission = 2 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
+  ];
+  // babylon_pk is the Babylon secp256k1 PK of this finality provider
+  string addr = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // btc_pk is the Bitcoin secp256k1 PK of this finality provider
+  // the PK follows encoding in BIP-340 spec
+  bytes btc_pk = 4 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  // pop is the proof of possession of babylon_pk and btc_pk
+  btcstaking.v1.ProofOfPossessionBTC pop = 5;
+  // slashed_babylon_height indicates the Babylon height when
+  // the finality provider is slashed.
+  // if it's 0 then the finality provider is not slashed
+  uint64 slashed_babylon_height = 6;
+  // slashed_btc_height indicates the BTC height when
+  // the finality provider is slashed.
+  // if it's 0 then the finality provider is not slashed
+  uint32 slashed_btc_height = 7;
+  // height is the queried Babylon height
+  uint64 height = 8;
+  // voting_power is the voting power of this finality provider at the given height
+  uint64 voting_power = 9;
+  // consumer_id is the consumer id this finality provider is registered to
+  string consumer_id = 10;
+}
+
+// QueryFinalityProviderConsumerRequest requests the consumer a CZ finality provider belongs to
+message QueryFinalityProviderConsumerRequest {
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
+  string fp_btc_pk_hex = 1;
+}
+
+// QueryFinalityProviderConsumerResponse returns the CZ finality provier consumer id
+message QueryFinalityProviderConsumerResponse {
+  string consumer_id = 1;
+}

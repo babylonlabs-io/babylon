@@ -37,8 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-### Improvements
+### State Machine Breaking
 
+- [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
+This PR contains a series of PRs on multi-staking support and BTC stakingintegration.
 - [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
 check of rewards
 - [#419](https://github.com/babylonlabs-io/babylon/pull/419) Add new modules to swagger config
@@ -372,8 +374,6 @@ by add ibc default gen state and min gas price specification of `1ubbn`
 
 ### State Machine Breaking
 
-* [#80](https://github.com/babylonlabs-io/babylon/pull/80) Implement ADR-25 and
-enable jailing/unjailing finality providers
 * [#45](https://github.com/babylonlabs-io/babylon/pull/45) Implement ADR-23 and improve
 BTC staking parameters
 * [#51](https://github.com/babylonlabs-io/babylon/pull/51) Implement ADR-24 and
@@ -384,11 +384,6 @@ with `client-id` to identify consumer chains in `zoneconcierge` module
 processes `MsgCreateFinalityProvider` message during upgrade execution
 * [#4](https://github.com/babylonlabs-io/babylon/pull/4) Add upgrade that
 Insert BTC headers into `btclightclient` module state during upgrade execution
-
-### Misc Improvements
-
-* [#84](https://github.com/babylonlabs-io/babylon/pull/84) Add `unjail-finality-provider`
-cmd to `finality` module CLI.
 
 ## v0.9.3
 

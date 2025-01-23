@@ -25,8 +25,6 @@ type Configurer interface {
 
 	RunValidators() error
 
-	InstantiateBabylonContract() error
-
 	RunHermesRelayerIBC() error
 
 	// RunCosmosRelayerIBC configures IBC with Go relayer
@@ -149,42 +147,6 @@ func NewIBCTransferConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer,
 			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), nil),
 		},
 		withIBCTransferChannel(baseSetup), // base set up with IBC
-		containerManager,
-	), nil
-}
-
-// NewBTCTimestampingPhase2Configurer returns a new Configurer for BTC timestamping service (phase 2).
-func NewBTCTimestampingPhase2Configurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
-	identifier := identifierName(t)
-	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, false)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewCurrentBranchConfigurer(t,
-		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
-			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), nil),
-		},
-		withPhase2IBC(baseSetup), // IBC setup (requires contract address)
-		containerManager,
-	), nil
-}
-
-// NewBTCTimestampingPhase2RlyConfigurer returns a new Configurer for BTC timestamping service (phase 2), using the Go relayer (rly).
-func NewBTCTimestampingPhase2RlyConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
-	identifier := identifierName(t)
-	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, true, false)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewCurrentBranchConfigurer(t,
-		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
-			chain.New(t, containerManager, initialization.ChainBID, updateNodeConfigNameWithIdentifier(validatorConfigsChainB, identifier), nil),
-		},
-		withPhase2RlyIBC(baseSetup), // IBC setup with wasmd and Go relayer
 		containerManager,
 	), nil
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"cosmossdk.io/core/header"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -122,7 +123,7 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 			stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h1.CreateDelegationWithBtcBlockHeight(
 				r,
 				delSK,
-				fpPK,
+				[]*btcec.PublicKey{fpPK},
 				stakingValue,
 				1000,
 				0,
@@ -136,7 +137,7 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 			stakingTxHash2, msgCreateBTCDel2, actualDel2, btcHeaderInfo2, inclusionProof2, _, err := h2.CreateDelegationWithBtcBlockHeight(
 				r,
 				delSK,
-				fpPK,
+				[]*btcec.PublicKey{fpPK},
 				stakingValue,
 				1000,
 				0,
