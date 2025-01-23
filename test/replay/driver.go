@@ -21,13 +21,6 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/app"
-	babylonApp "github.com/babylonlabs-io/babylon/app"
-	appsigner "github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
@@ -58,6 +51,14 @@ import (
 	gogoprotoio "github.com/cosmos/gogoproto/io"
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/app"
+	babylonApp "github.com/babylonlabs-io/babylon/app"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
+	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 var validatorConfig = &initialization.NodeConfig{
@@ -212,6 +213,7 @@ func NewBabylonAppDriver(
 		map[int64]bool{},
 		0,
 		signer,
+		nil,
 		appOptions,
 		babylonApp.EmptyWasmOpts,
 		baseAppOptions...,
@@ -786,6 +788,7 @@ func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
 		map[int64]bool{},
 		0,
 		signer,
+		nil,
 		appOptions,
 		babylonApp.EmptyWasmOpts,
 		baseAppOptions...,

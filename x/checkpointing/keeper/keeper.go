@@ -15,17 +15,18 @@ import (
 
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 type (
 	Keeper struct {
 		cdc            codec.BinaryCodec
 		storeService   corestoretypes.KVStoreService
-		blsSigner      BlsSigner
+		blsSigner      types.BlsSigner
 		epochingKeeper types.EpochingKeeper
 		hooks          types.CheckpointingHooks
 	}
@@ -34,7 +35,7 @@ type (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService corestoretypes.KVStoreService,
-	signer BlsSigner,
+	signer types.BlsSigner,
 	ek types.EpochingKeeper,
 ) Keeper {
 	return Keeper{

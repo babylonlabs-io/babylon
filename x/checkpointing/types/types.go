@@ -22,6 +22,12 @@ const (
 	BitmapBits = txformat.BitMapLength * 8 // 104 bits for 104 validators at top
 )
 
+// BlsSigner is an interface for signing BLS messages
+type BlsSigner interface {
+	SignMsgWithBls(msg []byte) (bls12381.Signature, error)
+	GetBlsPubkey() (bls12381.PublicKey, error)
+}
+
 type BlockHash []byte
 
 type BlsSigHash []byte

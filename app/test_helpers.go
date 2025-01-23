@@ -9,8 +9,6 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	pruningtypes "cosmossdk.io/store/pruning/types"
-	"github.com/babylonlabs-io/babylon/testutil/signer"
-	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	tmjson "github.com/cometbft/cometbft/libs/json"
@@ -30,6 +28,9 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/testutil/signer"
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	appsigner "github.com/babylonlabs-io/babylon/app/signer"
@@ -69,6 +70,7 @@ func setup(t *testing.T, ps *appsigner.PrivSigner, withGenesis bool, invCheckPer
 		map[int64]bool{},
 		invCheckPeriod,
 		ps,
+		nil,
 		appOptions,
 		EmptyWasmOpts,
 		baseAppOpts...,
@@ -113,6 +115,7 @@ func NewBabylonAppWithCustomOptions(t *testing.T, isCheckTx bool, privSigner *ap
 		options.SkipUpgradeHeights,
 		options.InvCheckPeriod,
 		privSigner,
+		nil,
 		options.AppOpts,
 		EmptyWasmOpts,
 	)

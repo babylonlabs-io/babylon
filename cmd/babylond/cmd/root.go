@@ -9,7 +9,6 @@ import (
 	confixcmd "cosmossdk.io/tools/confix/cmd"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/babylonlabs-io/babylon/app/signer"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	dbm "github.com/cosmos/cosmos-db"
@@ -21,6 +20,8 @@ import (
 	authtxconfig "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+
+	"github.com/babylonlabs-io/babylon/app/signer"
 
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -269,7 +270,11 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	// auto migrate when build tag is set to "e2e_upgrade"
 	automigrate_e2e_upgrade(logger, homeDir)
 
-	privSigner, err := signer.InitPrivSigner(homeDir)
+	//privSigner, err := signer.InitPrivSigner(homeDir)
+	//if err != nil {
+	//	panic(err)
+	//}
+	blsSigner, err := signer.InitBlsSigner(homeDir)
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize priv signer: %w", err))
 	}
@@ -282,7 +287,8 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	return app.NewBabylonApp(
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
-		privSigner,
+		nil,
+		blsSigner,
 		appOpts,
 		wasmOpts,
 		baseappOptions...,
@@ -312,13 +318,13 @@ func appExport(
 		panic(fmt.Errorf("failed to initialize priv signer: %w", err))
 	}
 	if height != -1 {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, uint(1), privSigner, appOpts, app.EmptyWasmOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, uint(1), privSigner, nil, appOpts, app.EmptyWasmOpts)
 
 		if err = babylonApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, fmt.Errorf("failed to load height: %w", err)
 		}
 	} else {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, uint(1), privSigner, appOpts, app.EmptyWasmOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, uint(1), privSigner, nil, appOpts, app.EmptyWasmOpts)
 	}
 
 	return babylonApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)

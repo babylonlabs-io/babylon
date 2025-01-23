@@ -208,6 +208,7 @@ func NewBabylonApp(
 	skipUpgradeHeights map[int64]bool,
 	invCheckPeriod uint,
 	privSigner *signer.PrivSigner,
+	blsSigner *checkpointingtypes.BlsSigner,
 	appOpts servertypes.AppOptions,
 	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
@@ -249,6 +250,12 @@ func NewBabylonApp(
 		invCheckPeriod:    invCheckPeriod,
 	}
 
+	// TODO: PoC, add detailed exception handling logic
+	if blsSigner == nil {
+		tmpBlsSigner := checkpointingtypes.BlsSigner(&privSigner.PV.Bls)
+		blsSigner = &tmpBlsSigner
+	}
+
 	app.AppKeepers.InitKeepers(
 		logger,
 		&btcConfig,
@@ -258,7 +265,7 @@ func NewBabylonApp(
 		homePath,
 		invCheckPeriod,
 		skipUpgradeHeights,
-		privSigner,
+		*blsSigner,
 		appOpts,
 		wasmConfig,
 		wasmOpts,

@@ -37,6 +37,7 @@ func NewTmpBabylonApp() *BabylonApp {
 		map[int64]bool{},
 		0,
 		signer,
+		nil,
 		TmpAppOptions(),
 		[]wasmkeeper.Option{})
 }

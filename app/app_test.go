@@ -5,12 +5,13 @@ import (
 	"testing"
 
 	"cosmossdk.io/log"
-	"github.com/babylonlabs-io/babylon/testutil/signer"
 	abci "github.com/cometbft/cometbft/abci/types"
 	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/testutil/signer"
 )
 
 func TestBabylonBlockedAddrs(t *testing.T) {
@@ -58,6 +59,7 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		map[int64]bool{},
 		0,
 		signer,
+		nil,
 		TmpAppOptions(),
 		EmptyWasmOpts,
 	)

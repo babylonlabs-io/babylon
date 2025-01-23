@@ -7,12 +7,13 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 
-	"github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/babylonlabs-io/babylon/privval"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	cmtprivval "github.com/cometbft/cometbft/privval"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/app/signer"
+	"github.com/babylonlabs-io/babylon/privval"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 // SetupTestPrivSigner sets up a PrivSigner for testing
