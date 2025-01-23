@@ -198,5 +198,5 @@ func (k *BlsPVKey) GetBlsPubkey() (bls12381.PublicKey, error) {
 	if k.PrivKey == nil {
 		return nil, checkpointingtypes.ErrBlsPrivKeyDoesNotExist
 	}
-	return k.PrivKey.PubKey(), nil
+	return k.PubKey, nil
 }

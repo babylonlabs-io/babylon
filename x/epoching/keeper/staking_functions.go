@@ -116,6 +116,6 @@ func (k Keeper) GetPubKeyByConsAddr(ctx context.Context, consAddr sdk.ConsAddres
 	return k.stk.GetPubKeyByConsAddr(ctx, consAddr)
 }
 
-func (k Keeper) GetValidatorByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (stakingtypes.Validator, error) {
-	return k.stk.GetValidatorByConsAddr(ctx, consAddr)
+func (k Keeper) GetValidator(ctx context.Context, addr sdk.ValAddress) (stakingtypes.Validator, error) {
+	return k.stk.GetValidator(ctx, addr)
 }

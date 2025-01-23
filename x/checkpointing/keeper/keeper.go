@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	corestoretypes "cosmossdk.io/core/store"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	txformat "github.com/babylonlabs-io/babylon/btctxformatter"
 
@@ -14,8 +15,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
-
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
@@ -403,28 +402,39 @@ func (k Keeper) GetBLSPubKeySet(ctx context.Context, epochNumber uint64) ([]*typ
 	return valWithblsKeys, nil
 }
 
+// GetBlsPubKey returns the BLS public key of the validator
 func (k Keeper) GetBlsPubKey(ctx context.Context, address sdk.ValAddress) (bls12381.PublicKey, error) {
 	return k.RegistrationState(ctx).GetBlsPubKey(address)
 }
 
+// GetValAddr returns the validator address of the BLS public key
+func (k Keeper) GetValAddr(ctx context.Context, key bls12381.PublicKey) (sdk.ValAddress, error) {
+	return k.RegistrationState(ctx).GetValAddr(key)
+}
+
+// GetEpoch returns the current epoch
 func (k Keeper) GetEpoch(ctx context.Context) *epochingtypes.Epoch {
 	return k.epochingKeeper.GetEpoch(ctx)
 }
 
+// GetValidatorSet returns the validator set for a given epoch
 func (k Keeper) GetValidatorSet(ctx context.Context, epochNumber uint64) epochingtypes.ValidatorSet {
 	return k.epochingKeeper.GetValidatorSet(ctx, epochNumber)
 }
 
+// GetTotalVotingPower returns the total voting power for a given epoch
 func (k Keeper) GetTotalVotingPower(ctx context.Context, epochNumber uint64) int64 {
 	return k.epochingKeeper.GetTotalVotingPower(ctx, epochNumber)
 }
 
+// GetPubKeyByConsAddr returns the public key of a validator by consensus address
 func (k Keeper) GetPubKeyByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (cmtprotocrypto.PublicKey, error) {
 	return k.epochingKeeper.GetPubKeyByConsAddr(ctx, consAddr)
 }
 
-func (k Keeper) GetValidatorByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (stakingtypes.Validator, error) {
-	return k.epochingKeeper.GetValidatorByConsAddr(ctx, consAddr)
+// GetValidatorByConsAddr returns the validator by consensus address
+func (k Keeper) GetValidator(ctx context.Context, addr sdk.ValAddress) (stakingtypes.Validator, error) {
+	return k.epochingKeeper.GetValidator(ctx, addr)
 }
 
 // GetLastFinalizedEpoch gets the last finalised epoch
@@ -439,6 +449,7 @@ func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
 	return sdk.BigEndianToUint64(epochNumberBytes)
 }
 
+// GetEpochByHeight returns the epoch number for a given height
 func (k Keeper) GetEpochByHeight(ctx context.Context, height uint64) uint64 {
 	return k.epochingKeeper.GetEpochNumByHeight(ctx, height)
 }
