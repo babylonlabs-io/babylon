@@ -440,10 +440,7 @@ func NewBabylonApp(
 
 	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	if err := app.ModuleManager.RegisterServices(app.configurator); err != nil {
-		panic(err)
-	}
-
+	app.RegisterServicesWithoutStaking()
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
 
 	reflectionSvc, err := runtimeservices.NewReflectionService()
@@ -571,6 +568,19 @@ func NewBabylonApp(
 	}
 
 	return app
+}
+
+func (app *BabylonApp) RegisterServicesWithoutStaking() {
+	// removes the staking module from the register services
+	stkModTemp := app.ModuleManager.Modules[stakingtypes.ModuleName]
+	delete(app.ModuleManager.Modules, stakingtypes.ModuleName)
+
+	if err := app.ModuleManager.RegisterServices(app.configurator); err != nil {
+		panic(err)
+	}
+
+	// adds the staking module back it back
+	app.ModuleManager.Modules[stakingtypes.ModuleName] = stkModTemp
 }
 
 // GetBaseApp returns the BaseApp of BabylonApp
