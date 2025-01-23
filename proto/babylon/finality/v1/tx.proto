@@ -17,7 +17,6 @@ service Msg {
     rpc CommitPubRandList(MsgCommitPubRandList) returns (MsgCommitPubRandListResponse);
     // AddFinalitySig adds a finality signature to a given block
     rpc AddFinalitySig(MsgAddFinalitySig) returns (MsgAddFinalitySigResponse);
-    // TODO: msg for evidence of equivocation. this is not specified yet
     // UpdateParams updates the finality module parameters.
     rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
     // UnjailFinalityProvider defines a method for unjailing a jailed
@@ -25,6 +24,9 @@ service Msg {
     rpc UnjailFinalityProvider(MsgUnjailFinalityProvider) returns (MsgUnjailFinalityProviderResponse);
     // ResumeFinalityProposal handles the proposal of resuming finality.
     rpc ResumeFinalityProposal(MsgResumeFinalityProposal) returns (MsgResumeFinalityProposalResponse);
+    // EquivocationEvidence handles the evidence of equivocation message sent from
+    // the finality gadget cw contract
+    rpc EquivocationEvidence(MsgEquivocationEvidence) returns (MsgEquivocationEvidenceResponse);
 }
 
 // MsgCommitPubRandList defines a message for committing a list of public randomness for EOTS
@@ -105,6 +107,34 @@ message MsgUnjailFinalityProvider {
 
 // MsgUnjailFinalityProviderResponse defines the Msg/UnjailFinalityProvider response type
 message MsgUnjailFinalityProviderResponse {}
+
+// MsgEquivocationEvidence is the message for handling evidence of equivocation
+message MsgEquivocationEvidence {
+    option (cosmos.msg.v1.signer) = "signer";
+
+    string signer = 1;
+    // fp_btc_pk is the BTC PK of the finality provider that casts this vote
+    bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+    // block_height is the height of the conflicting blocks
+    uint64 block_height = 3;
+    // pub_rand is the public randomness the finality provider has committed to
+    bytes pub_rand = 4 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrPubRand" ];
+    // canonical_app_hash is the AppHash of the canonical block
+    bytes canonical_app_hash = 5;
+    // fork_app_hash is the AppHash of the fork block
+    bytes fork_app_hash = 6;
+    // canonical_finality_sig is the finality signature to the canonical block
+    // where finality signature is an EOTS signature, i.e.,
+    // the `s` in a Schnorr signature `(r, s)`
+    // `r` is the public randomness that is already committed by the finality provider
+    bytes canonical_finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrEOTSSig" ];
+    // fork_finality_sig is the finality signature to the fork block
+    // where finality signature is an EOTS signature
+    bytes fork_finality_sig = 8 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrEOTSSig" ];
+}
+
+// MsgEquivocationEvidenceResponse is the response for MsgEquivocationEvidence
+message MsgEquivocationEvidenceResponse {}
 
 // MsgResumeFinalityProposal is a governance proposal to resume finality from halting
 message MsgResumeFinalityProposal {

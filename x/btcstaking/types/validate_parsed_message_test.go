@@ -263,20 +263,6 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			errValidation: nil,
 		},
 		{
-			name: "too many finality providers",
-			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
-				params := testStakingParams(r, t)
-				checkpointParams := testCheckpointParams()
-				msg, _ := createMsgDelegationForParams(r, t, params)
-
-				msg.FpBtcPkList = append(msg.FpBtcPkList, *msg.BtcPk)
-
-				return msg, params, checkpointParams
-			},
-			errParsing:    types.ErrTooManyFpKeys,
-			errValidation: nil,
-		},
-		{
 			name: "too low unbonding time",
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)

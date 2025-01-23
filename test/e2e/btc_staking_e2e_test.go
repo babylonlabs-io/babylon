@@ -9,18 +9,15 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-
-	sdkmath "cosmossdk.io/math"
-	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	appparams "github.com/babylonlabs-io/babylon/app/params"
 
 	"github.com/babylonlabs-io/babylon/crypto/eots"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
@@ -31,6 +28,7 @@ import (
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type BTCStakingTestSuite struct {
@@ -254,6 +252,21 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		msgCommitPubRandList.Sig,
 	)
 
+	// Query the public randomness commitment for the finality provider
+	var commitEpoch uint64
+	s.Eventually(func() bool {
+		pubRandCommitMap := nonValidatorNode.QueryListPubRandCommit(msgCommitPubRandList.FpBtcPk)
+		if len(pubRandCommitMap) == 0 {
+			return false
+		}
+		for _, commit := range pubRandCommitMap {
+			commitEpoch = commit.EpochNum
+		}
+		return true
+	}, time.Minute, time.Second)
+
+	s.T().Logf("Successfully queried public randomness commitment for finality provider at epoch %d", commitEpoch)
+
 	// no reward gauge for finality provider and delegation yet
 	fpBabylonAddr, err := sdk.AccAddressFromBech32(s.cacheFP.Addr)
 	s.NoError(err)
@@ -474,12 +487,13 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	s.NoError(err)
 
 	// submit the message for only generate the Tx to create BTC delegation
+	btcPK := bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey())
 	jsonTx := nonValidatorNode.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey()),
+		btcPK,
 		pop,
 		stakingTx,
 		inclusionProof,
-		s.cacheFP.BtcPk,
+		[]bbn.BIP340PubKey{*s.cacheFP.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(s.stakingValue),
 		testStakingInfo.SlashingTx,
@@ -554,12 +568,13 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 	s.True(stakerBalances.IsZero())
 
 	// submit the message to create BTC delegation
+	btcPK := bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey())
 	nonValidatorNode.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey()),
+		btcPK,
 		pop,
 		stakingTx,
 		inclusionProof,
-		s.cacheFP.BtcPk,
+		[]bbn.BIP340PubKey{*s.cacheFP.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(s.stakingValue),
 		testStakingInfo.SlashingTx,
@@ -688,12 +703,13 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	// s.Require().Contains(output, feegrant.ErrFeeLimitExceeded.Error())
 
 	// submit the message to create BTC delegation using the fee grant at the max of spend limit
+	btcPK := bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey())
 	node.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey()),
+		btcPK,
 		pop,
 		stakingTx,
 		inclusionProof,
-		s.cacheFP.BtcPk,
+		[]bbn.BIP340PubKey{*s.cacheFP.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(s.stakingValue),
 		testStakingInfo.SlashingTx,
@@ -711,7 +727,7 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	// wait for a block so that above txs take effect
 	node.WaitForNextBlock()
 
-	// check the delegation was success.
+	// check that the delegation succeeded
 	delegation := node.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
 	s.NotNil(delegation)
 	s.Equal(granteeStakerAddr.String(), delegation.BtcDelegation.StakerAddr)
@@ -843,7 +859,7 @@ func CreateNodeFPFromNodeAddr(
 	nodeAddr, err := sdk.AccAddressFromBech32(node.PublicAddress)
 	require.NoError(t, err)
 
-	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpSk, nodeAddr)
+	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, nodeAddr, "")
 	require.NoError(t, err)
 
 	previousFps := node.QueryFinalityProviders()
@@ -883,7 +899,7 @@ func CreateNodeFP(
 	nodeAddr, err := sdk.AccAddressFromBech32(fpAddr)
 	require.NoError(t, err)
 
-	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpSk, nodeAddr)
+	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, nodeAddr, "")
 	require.NoError(t, err)
 
 	previousFps := node.QueryFinalityProviders()
