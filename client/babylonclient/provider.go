@@ -5,6 +5,7 @@ package babylonclient
 
 import (
 	"fmt"
+	"github.com/babylonlabs-io/babylon/app/params"
 	"github.com/cometbft/cometbft/rpc/client/http"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -42,7 +43,7 @@ type CosmosProvider struct {
 	RPCClient      RPCClient
 	Input          io.Reader
 	Output         io.Writer
-	Cdc            Codec
+	Cdc            *params.EncodingConfig
 
 	// the map key is the TX signer (provider key)
 	// the purpose of the map is to lock on the signer from TX creation through submission,
@@ -159,14 +160,13 @@ func (cc *CosmosProvider) Init() error {
 		cc.PCfg.KeyringBackend,
 		cc.PCfg.KeyDirectory,
 		cc.Input,
-		cc.Cdc.Marshaller,
+		cc.Cdc.Codec,
 		cc.KeyringOptions...,
 	)
 	if err != nil {
 		return err
 	}
 	// TODO: figure out how to deal with input or maybe just make all keyring backends test?
-
 	timeout, err := time.ParseDuration(cc.PCfg.Timeout)
 	if err != nil {
 		return err

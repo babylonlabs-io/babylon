@@ -474,7 +474,7 @@ func (cc *CosmosProvider) PrepareFactory(txf tx.Factory, signingKey string) (tx.
 	cliCtx := client.Context{}.WithClient(cc.RPCClient).
 		WithInterfaceRegistry(cc.Cdc.InterfaceRegistry).
 		WithChainID(cc.PCfg.ChainID).
-		WithCodec(cc.Cdc.Marshaller).
+		WithCodec(cc.Cdc.Codec).
 		WithFromAddress(from)
 
 	// Set the account number and sequence on the transaction factory and retry if fail

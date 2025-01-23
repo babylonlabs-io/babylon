@@ -8,7 +8,6 @@ import (
 	"github.com/babylonlabs-io/babylon/client/config"
 	"github.com/babylonlabs-io/babylon/client/query"
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
-	"go.uber.org/zap"
 )
 
 type Client struct {
@@ -16,28 +15,17 @@ type Client struct {
 
 	provider *babylonclient.CosmosProvider
 	timeout  time.Duration
-	logger   *zap.Logger
 	cfg      *config.BabylonConfig
 }
 
-func New(cfg *config.BabylonConfig, logger *zap.Logger) (*Client, error) {
-	var (
-		zapLogger *zap.Logger
-		err       error
-	)
+func (c *Client) Provider() *babylonclient.CosmosProvider {
+	return c.provider
+}
 
+func New(cfg *config.BabylonConfig) (*Client, error) {
 	// ensure cfg is valid
 	if err := cfg.Validate(); err != nil {
 		return nil, err
-	}
-
-	// use the existing logger or create a new one if not given
-	zapLogger = logger
-	if zapLogger == nil {
-		zapLogger, err = newRootLogger("console", true)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	provider, err := cfg.ToCosmosProviderConfig().NewProvider(
@@ -53,13 +41,7 @@ func New(cfg *config.BabylonConfig, logger *zap.Logger) (*Client, error) {
 
 	// Create tmp Babylon app to retrieve and register codecs
 	// Need to override this manually as otherwise option from config is ignored
-	encCfg := bbn.GetEncodingConfig()
-	cp.Cdc = babylonclient.Codec{
-		InterfaceRegistry: encCfg.InterfaceRegistry,
-		Marshaller:        encCfg.Codec,
-		TxConfig:          encCfg.TxConfig,
-		Amino:             encCfg.Amino,
-	}
+	cp.Cdc = bbn.GetEncodingConfig()
 
 	// initialise Cosmos provider
 	// NOTE: this will create a RPC client. The RPC client will be used for
@@ -86,7 +68,6 @@ func New(cfg *config.BabylonConfig, logger *zap.Logger) (*Client, error) {
 		queryClient,
 		cp,
 		cfg.Timeout,
-		zapLogger,
 		cfg,
 	}, nil
 }

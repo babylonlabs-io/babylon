@@ -82,7 +82,7 @@ func (cc *CosmosProvider) Invoke(ctx context.Context, method string, req, reply 
 	}
 
 	if cc.Cdc.InterfaceRegistry != nil {
-		return types.UnpackInterfaces(reply, cc.Cdc.Marshaller)
+		return types.UnpackInterfaces(reply, cc.Cdc.Codec)
 	}
 
 	return nil
