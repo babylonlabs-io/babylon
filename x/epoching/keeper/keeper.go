@@ -10,6 +10,7 @@ import (
 	"github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 type (
@@ -20,6 +21,7 @@ type (
 		bk           types.BankKeeper
 		stk          types.StakingKeeper
 		router       *baseapp.MsgServiceRouter
+		stkMsgServer stktypes.MsgServer
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
 		authority string
@@ -31,6 +33,7 @@ func NewKeeper(
 	storeService corestoretypes.KVStoreService,
 	bk types.BankKeeper,
 	stk types.StakingKeeper,
+	stkMsgServer stktypes.MsgServer,
 	authority string,
 ) Keeper {
 	return Keeper{
@@ -39,6 +42,7 @@ func NewKeeper(
 		hooks:        nil,
 		bk:           bk,
 		stk:          stk,
+		stkMsgServer: stkMsgServer,
 		authority:    authority,
 	}
 }

@@ -107,13 +107,14 @@ func (k Keeper) GetCurrentEpochMsgs(ctx context.Context) []*types.QueuedMessage 
 }
 
 // HandleQueuedMsg unwraps a QueuedMessage and forwards it to the staking module
-func (k Keeper) HandleQueuedMsg(ctx context.Context, msg *types.QueuedMessage) (*sdk.Result, error) {
+func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage) (*sdk.Result, error) {
 	var (
 		unwrappedMsgWithType sdk.Msg
 		err                  error
 	)
 	unwrappedMsgWithType = msg.UnwrapToSdkMsg()
 
+	ctx := sdk.UnwrapSDKContext(goCtx)
 	// failed to decode validator address
 	if err != nil {
 		panic(err)
@@ -124,7 +125,7 @@ func (k Keeper) HandleQueuedMsg(ctx context.Context, msg *types.QueuedMessage) (
 
 	// Create a new Context based off of the existing Context with a MultiStore branch
 	// in case message processing fails. At this point, the MultiStore is a branch of a branch.
-	handlerCtx, msCache := cacheTxContext(sdk.UnwrapSDKContext(ctx), msg.TxId, msg.MsgId, msg.BlockHeight)
+	handlerCtx, msCache := cacheTxContext(ctx, msg.TxId, msg.MsgId, msg.BlockHeight)
 
 	// handle the unwrapped message
 	result, err := handler(handlerCtx, unwrappedMsgWithType)
@@ -138,6 +139,11 @@ func (k Keeper) HandleQueuedMsg(ctx context.Context, msg *types.QueuedMessage) (
 	// record lifecycle for delegation
 	switch unwrappedMsg := msg.Msg.(type) {
 	case *types.QueuedMessage_MsgCreateValidator:
+		_, err := k.stkMsgServer.CreateValidator(ctx, unwrappedMsg.MsgCreateValidator)
+		if err != nil {
+			return nil, err
+		}
+
 		// handle self-delegation
 		// Delegator and Validator address are the same
 		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgCreateValidator.ValidatorAddress)
@@ -150,10 +156,10 @@ func (k Keeper) HandleQueuedMsg(ctx context.Context, msg *types.QueuedMessage) (
 		}
 		amount := &unwrappedMsg.MsgCreateValidator.Value
 		// self-bonded to the created validator
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_CREATED); err != nil {
+		if err := k.RecordNewDelegationState(goCtx, delAddr, valAddr, amount, types.BondState_CREATED); err != nil {
 			return nil, err
 		}
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_BONDED); err != nil {
+		if err := k.RecordNewDelegationState(goCtx, delAddr, valAddr, amount, types.BondState_BONDED); err != nil {
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgDelegate:
@@ -167,10 +173,10 @@ func (k Keeper) HandleQueuedMsg(ctx context.Context, msg *types.QueuedMessage) (
 		}
 		amount := &unwrappedMsg.MsgDelegate.Amount
 		// created and bonded to the validator
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_CREATED); err != nil {
+		if err := k.RecordNewDelegationState(goCtx, delAddr, valAddr, amount, types.BondState_CREATED); err != nil {
 			return nil, err
 		}
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_BONDED); err != nil {
+		if err := k.RecordNewDelegationState(goCtx, delAddr, valAddr, amount, types.BondState_BONDED); err != nil {
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgUndelegate:
@@ -185,7 +191,7 @@ func (k Keeper) HandleQueuedMsg(ctx context.Context, msg *types.QueuedMessage) (
 		amount := &unwrappedMsg.MsgUndelegate.Amount
 		// unbonding from the validator
 		// (in `ApplyMatureUnbonding`) AFTER mature, unbonded from the validator
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_UNBONDING); err != nil {
+		if err := k.RecordNewDelegationState(goCtx, delAddr, valAddr, amount, types.BondState_UNBONDING); err != nil {
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgBeginRedelegate:
@@ -200,7 +206,7 @@ func (k Keeper) HandleQueuedMsg(ctx context.Context, msg *types.QueuedMessage) (
 		amount := &unwrappedMsg.MsgBeginRedelegate.Amount
 		// unbonding from the source validator
 		// (in `ApplyMatureUnbonding`) AFTER mature, unbonded from the source validator, created/bonded to the destination validator
-		if err := k.RecordNewDelegationState(ctx, delAddr, srcValAddr, amount, types.BondState_UNBONDING); err != nil {
+		if err := k.RecordNewDelegationState(goCtx, delAddr, srcValAddr, amount, types.BondState_UNBONDING); err != nil {
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgCancelUnbondingDelegation:
@@ -214,7 +220,7 @@ func (k Keeper) HandleQueuedMsg(ctx context.Context, msg *types.QueuedMessage) (
 		}
 		amount := &unwrappedMsg.MsgCancelUnbondingDelegation.Amount
 		// this delegation is now bonded again
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_BONDED); err != nil {
+		if err := k.RecordNewDelegationState(goCtx, delAddr, valAddr, amount, types.BondState_BONDED); err != nil {
 			return nil, err
 		}
 	default:
@@ -239,7 +245,7 @@ func cacheTxContext(ctx sdk.Context, txid []byte, msgid []byte, height uint64) (
 		).(storetypes.CacheMultiStore)
 	}
 
-	return ctx.WithMultiStore(msCache), msCache
+	return goCtx.WithMultiStore(msCache), msCache
 }
 
 // msgQueueStore returns the queue of msgs of a given epoch
