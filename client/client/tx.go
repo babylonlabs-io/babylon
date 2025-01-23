@@ -219,7 +219,7 @@ func (c *Client) SendMessageWithSigner(
 	cliCtx := client.Context{}.WithClient(cc.RPCClient).
 		WithInterfaceRegistry(cc.Cdc.InterfaceRegistry).
 		WithChainID(cc.PCfg.ChainID).
-		WithCodec(cc.Cdc.Marshaller).
+		WithCodec(cc.Cdc.Codec).
 		WithFromAddress(signerAddr)
 
 	txf := cc.TxFactory()
@@ -280,7 +280,7 @@ func (c *Client) SendMessageWithSigner(
 	// c.LogFailedTx(nil, err, msgs)
 	// Force encoding in the chain specific address
 	for _, msg := range cMsgs {
-		cc.Cdc.Marshaller.MustMarshalJSON(msg)
+		cc.Cdc.Codec.MustMarshalJSON(msg)
 	}
 	if err := Sign(ctx, txf, signerPvKey, txb, cc.Cdc.TxConfig.SignModeHandler(), false); err != nil {
 		return nil, err
