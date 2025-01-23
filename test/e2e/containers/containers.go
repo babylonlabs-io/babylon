@@ -272,6 +272,9 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		Entrypoint: []string{
 			"sh",
 			"-c",
+			// one can use the following for debugging purposes
+			// "babylond start " + FlagHome + " --log_level trace --trace",
+			// TODO: parameterise the log level
 			"babylond start " + FlagHome,
 		},
 		ExposedPorts: []string{"26656", "26657", "1317", "9090"},

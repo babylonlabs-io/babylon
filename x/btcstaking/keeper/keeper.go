@@ -22,6 +22,7 @@ type (
 
 		btclcKeeper types.BTCLightClientKeeper
 		btccKeeper  types.BtcCheckpointKeeper
+		BscKeeper   types.BTCStkConsumerKeeper
 		iKeeper     types.IncentiveKeeper
 
 		Schema                       collections.Schema
@@ -41,6 +42,7 @@ func NewKeeper(
 
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
+	bscKeeper types.BTCStkConsumerKeeper,
 	iKeeper types.IncentiveKeeper,
 
 	btcNet *chaincfg.Params,
@@ -54,6 +56,7 @@ func NewKeeper(
 
 		btclcKeeper: btclcKeeper,
 		btccKeeper:  btccKeeper,
+		BscKeeper:   bscKeeper,
 		iKeeper:     iKeeper,
 
 		AllowedStakingTxHashesKeySet: collections.NewKeySet(

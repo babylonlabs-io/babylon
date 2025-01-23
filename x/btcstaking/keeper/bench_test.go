@@ -8,13 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
-
 	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	bsmodule "github.com/babylonlabs-io/babylon/x/btcstaking"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/golang/mock/gomock"
 )
 
 func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
@@ -57,7 +57,7 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 			stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 				r,
 				delSK,
-				fp.BtcPk.MustToBTCPK(),
+				[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
 				stakingValue,
 				1000,
 				0,

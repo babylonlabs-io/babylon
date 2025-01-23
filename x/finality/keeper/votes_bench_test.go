@@ -33,7 +33,8 @@ func benchmarkAddFinalitySig(b *testing.B) {
 	require.NoError(b, err)
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
+	require.NoError(b, err)
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, "")
 	require.NoError(b, err)
 
 	// register the finality provider
