@@ -12,12 +12,12 @@ import (
 	"cosmossdk.io/math"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/app"
@@ -41,11 +41,11 @@ func getArtifactPath() string {
 var pathToContract = getArtifactPath()
 
 func TestQueryEpoch(t *testing.T) {
-	acc := randomAccountAddress()
-	babylonApp, ctx := setupAppWithContext(t)
-	fundAccount(t, ctx, babylonApp, acc)
+	acc := RandomAccountAddress()
+	babylonApp, ctx := SetupAppWithContext(t)
+	FundAccount(t, ctx, babylonApp, acc)
 
-	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	contractAddress := DeployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
 	query := bindings.BabylonQuery{
 		Epoch: &struct{}{},
@@ -62,12 +62,12 @@ func TestQueryEpoch(t *testing.T) {
 }
 
 func TestFinalizedEpoch(t *testing.T) {
-	acc := randomAccountAddress()
-	babylonApp, ctx := setupAppWithContext(t)
-	fundAccount(t, ctx, babylonApp, acc)
+	acc := RandomAccountAddress()
+	babylonApp, ctx := SetupAppWithContext(t)
+	FundAccount(t, ctx, babylonApp, acc)
 
 	// babylonApp.ZoneConciergeKeeper
-	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	contractAddress := DeployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
 	query := bindings.BabylonQuery{
 		LatestFinalizedEpochInfo: &struct{}{},
@@ -89,11 +89,11 @@ func TestFinalizedEpoch(t *testing.T) {
 }
 
 func TestQueryBtcTip(t *testing.T) {
-	acc := randomAccountAddress()
-	babylonApp, ctx := setupAppWithContext(t)
-	fundAccount(t, ctx, babylonApp, acc)
+	acc := RandomAccountAddress()
+	babylonApp, ctx := SetupAppWithContext(t)
+	FundAccount(t, ctx, babylonApp, acc)
 
-	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	contractAddress := DeployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
 	query := bindings.BabylonQuery{
 		BtcTip: &struct{}{},
@@ -110,11 +110,11 @@ func TestQueryBtcTip(t *testing.T) {
 }
 
 func TestQueryBtcBase(t *testing.T) {
-	acc := randomAccountAddress()
-	babylonApp, ctx := setupAppWithContext(t)
-	fundAccount(t, ctx, babylonApp, acc)
+	acc := RandomAccountAddress()
+	babylonApp, ctx := SetupAppWithContext(t)
+	FundAccount(t, ctx, babylonApp, acc)
 
-	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	contractAddress := DeployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
 	query := bindings.BabylonQuery{
 		BtcBaseHeader: &struct{}{},
@@ -130,11 +130,11 @@ func TestQueryBtcBase(t *testing.T) {
 }
 
 func TestQueryBtcByHash(t *testing.T) {
-	acc := randomAccountAddress()
-	babylonApp, ctx := setupAppWithContext(t)
-	fundAccount(t, ctx, babylonApp, acc)
+	acc := RandomAccountAddress()
+	babylonApp, ctx := SetupAppWithContext(t)
+	FundAccount(t, ctx, babylonApp, acc)
 
-	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	contractAddress := DeployTestContract(t, ctx, babylonApp, acc, pathToContract)
 	tip := babylonApp.BTCLightClientKeeper.GetTipInfo(ctx)
 
 	query := bindings.BabylonQuery{
@@ -151,11 +151,11 @@ func TestQueryBtcByHash(t *testing.T) {
 }
 
 func TestQueryBtcByNumber(t *testing.T) {
-	acc := randomAccountAddress()
-	babylonApp, ctx := setupAppWithContext(t)
-	fundAccount(t, ctx, babylonApp, acc)
+	acc := RandomAccountAddress()
+	babylonApp, ctx := SetupAppWithContext(t)
+	FundAccount(t, ctx, babylonApp, acc)
 
-	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	contractAddress := DeployTestContract(t, ctx, babylonApp, acc, pathToContract)
 	tip := babylonApp.BTCLightClientKeeper.GetTipInfo(ctx)
 
 	query := bindings.BabylonQuery{
@@ -172,11 +172,11 @@ func TestQueryBtcByNumber(t *testing.T) {
 }
 
 func TestQueryNonExistingHeader(t *testing.T) {
-	acc := randomAccountAddress()
-	babylonApp, ctx := setupAppWithContext(t)
-	fundAccount(t, ctx, babylonApp, acc)
+	acc := RandomAccountAddress()
+	babylonApp, ctx := SetupAppWithContext(t)
+	FundAccount(t, ctx, babylonApp, acc)
 
-	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	contractAddress := DeployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
 	queryNonExisitingHeight := bindings.BabylonQuery{
 		BtcHeaderByHeight: &bindings.BtcHeaderByHeight{
@@ -199,10 +199,12 @@ func TestQueryNonExistingHeader(t *testing.T) {
 	require.Nil(t, resp1.HeaderInfo)
 }
 
+//nolint:unused
 func setupAppWithContext(t *testing.T) (*app.BabylonApp, sdk.Context) {
 	return setupAppWithContextAndCustomHeight(t, 1)
 }
 
+//nolint:unused
 func setupAppWithContextAndCustomHeight(t *testing.T, height int64) (*app.BabylonApp, sdk.Context) {
 	babylonApp := app.Setup(t, false)
 	ctx := babylonApp.BaseApp.NewContext(false).
@@ -210,6 +212,7 @@ func setupAppWithContextAndCustomHeight(t *testing.T, height int64) (*app.Babylo
 	return babylonApp, ctx
 }
 
+//nolint:unused
 func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	key := ed25519.GenPrivKey()
 	pub := key.PubKey()
@@ -217,11 +220,13 @@ func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	return key, pub, addr
 }
 
+//nolint:unused
 func randomAccountAddress() sdk.AccAddress {
 	_, _, addr := keyPubAddr()
 	return addr
 }
 
+//nolint:unused
 func mintCoinsTo(
 	bankKeeper bankkeeper.Keeper,
 	ctx sdk.Context,
@@ -234,6 +239,7 @@ func mintCoinsTo(
 	return bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, amounts)
 }
 
+//nolint:unused
 func fundAccount(
 	t *testing.T,
 	ctx sdk.Context,
@@ -245,6 +251,7 @@ func fundAccount(
 	require.NoError(t, err)
 }
 
+//nolint:unused
 func storeTestCodeCode(
 	t *testing.T,
 	ctx sdk.Context,
@@ -261,6 +268,7 @@ func storeTestCodeCode(
 	return id, checksum
 }
 
+//nolint:unused
 func instantiateExampleContract(
 	t *testing.T,
 	ctx sdk.Context,
@@ -275,6 +283,7 @@ func instantiateExampleContract(
 	return addr
 }
 
+//nolint:unused
 func deployTestContract(
 	t *testing.T,
 	ctx sdk.Context,

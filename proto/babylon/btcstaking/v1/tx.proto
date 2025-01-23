@@ -53,6 +53,9 @@ message MsgCreateFinalityProvider {
   bytes btc_pk = 4 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   // pop is the proof of possession of btc_pk over the FP signer address.
   ProofOfPossessionBTC pop = 5;
+  // consumer_id is the ID of the consumer
+  // If it's empty, it's assumed to be Babylon's chain id
+  string consumer_id = 6;
 }
 
 // MsgCreateFinalityProviderResponse is the response for MsgCreateFinalityProvider

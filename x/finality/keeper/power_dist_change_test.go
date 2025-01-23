@@ -54,7 +54,7 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 				_, _, del, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 					r,
 					delSK,
-					fpPK,
+					[]*btcec.PublicKey{fpPK},
 					stakingValue,
 					1000,
 					0,
@@ -107,7 +107,7 @@ func CreateFpAndBtcDel(
 	_, _, del, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
-		fpPK,
+		[]*btcec.PublicKey{fpPK},
 		int64(2*10e8),
 		1000,
 		0,
@@ -193,7 +193,7 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 		stakingTxHash, msgCreateBTCDelPreApproval, delPreApproval, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSKPreApproval,
-			delNoPreApproval.FpBtcPkList[0].MustToBTCPK(),
+			[]*btcec.PublicKey{delNoPreApproval.FpBtcPkList[0].MustToBTCPK()},
 			int64(2*10e8),
 			1000,
 			0,
@@ -334,7 +334,7 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			stakingValue,
 			1000,
 			0,
@@ -420,7 +420,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			stakingValue,
 			1000,
 			0,
@@ -492,7 +492,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		stakingTxHash2, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK2,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			stakingValue,
 			1000,
 			0,
@@ -553,7 +553,7 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			stakingValue,
 			1000,
 			0,
@@ -657,7 +657,7 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		stakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			stakingValue,
 			1000,
 			0,
@@ -712,7 +712,7 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		// due to no timestamped randomness
 		babylonHeight += 1
 		h.SetCtxHeight(babylonHeight)
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
 		h.BeginBlocker()
 		require.Zero(t, h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
 
@@ -770,7 +770,7 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
-			fpPK,
+			[]*btcec.PublicKey{fpPK},
 			stakingValue,
 			1000,
 			0,
@@ -894,7 +894,7 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 	expectedStakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
-		fpPK,
+		[]*btcec.PublicKey{fpPK},
 		stakingValue,
 		1000,
 		0,

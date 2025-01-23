@@ -51,11 +51,11 @@ func (n *NodeConfig) CreateFinalityProvider(walletAddrOrName string, btcPK *bbn.
 }
 
 func (n *NodeConfig) CreateBTCDelegation(
-	btcPk *bbn.BIP340PubKey,
+	btcPK *bbn.BIP340PubKey,
 	pop *bstypes.ProofOfPossessionBTC,
 	stakingTx []byte,
 	inclusionProof *bstypes.InclusionProof,
-	fpPK *bbn.BIP340PubKey,
+	fpPKs []bbn.BIP340PubKey,
 	stakingTimeBlocks uint16,
 	stakingValue btcutil.Amount,
 	slashingTx *bstypes.BTCSlashingTx,
@@ -71,7 +71,7 @@ func (n *NodeConfig) CreateBTCDelegation(
 ) (outStr string) {
 	n.LogActionF("creating BTC delegation")
 
-	btcPkHex := btcPk.MarshalHex()
+	btcPKHex := btcPK.MarshalHex()
 
 	// get pop hex
 	popHex, err := pop.ToHexStr()
@@ -88,7 +88,11 @@ func (n *NodeConfig) CreateBTCDelegation(
 		require.NoError(n.t, err)
 	}
 
-	fpPKHex := fpPK.MarshalHex()
+	fpPKHexList := make([]string, len(fpPKs))
+	for i, fpPK := range fpPKs {
+		fpPKHexList[i] = fpPK.MarshalHex()
+	}
+	fpPKHexes := strings.Join(fpPKHexList, ",")
 
 	stakingTimeString := sdkmath.NewUint(uint64(stakingTimeBlocks)).String()
 	stakingValueString := sdkmath.NewInt(int64(stakingValue)).String()
@@ -109,7 +113,7 @@ func (n *NodeConfig) CreateBTCDelegation(
 
 	cmd := []string{
 		"babylond", "tx", "btcstaking", "create-btc-delegation",
-		btcPkHex, popHex, stakingTxHex, inclusionProofHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
+		btcPKHex, popHex, stakingTxHex, inclusionProofHex, fpPKHexes, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
 		fmt.Sprintf("--from=%s", fromWalletName), containers.FlagHome, flagKeyringTest,
 		n.FlagChainID(), "--log_format=json",
 	}
@@ -126,7 +130,9 @@ func (n *NodeConfig) CreateBTCDelegation(
 		cmd = append(cmd, "-b=sync", "--yes")
 	}
 
+	cmd = append(cmd, fmt.Sprintf("--chain-id=%s", n.chainId), "-b=sync", "--yes")
 	outBuff, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
+
 	require.NoError(n.t, err)
 	n.LogActionF("successfully created BTC delegation")
 	return outBuff.String()
@@ -422,7 +428,7 @@ func (n *NodeConfig) CreateBTCDelegationAndCheck(
 		popDel1,
 		stakingTx,
 		inclusionProof,
-		fp.BtcPk,
+		bbn.NewBIP340PKsFromBTCPKs([]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()}),
 		stakingTimeBlocks,
 		btcutil.Amount(stakingSatAmt),
 		testStakingInfo.SlashingTx,
