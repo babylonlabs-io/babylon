@@ -12,6 +12,7 @@ import (
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	cmtprivval "github.com/cometbft/cometbft/privval"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // SetupTestPrivSigner sets up a PrivSigner for testing
@@ -19,7 +20,7 @@ func SetupTestPrivSigner() (*signer.PrivSigner, error) {
 	// Create a temporary node directory
 	nodeDir, err := os.MkdirTemp("", "tmp-signer")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create temporary node directory: %w", err)
 	}
 	defer func() {
 		_ = os.RemoveAll(nodeDir)
@@ -27,30 +28,35 @@ func SetupTestPrivSigner() (*signer.PrivSigner, error) {
 
 	// generate a privSigner
 	if err := GeneratePrivSigner(nodeDir); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate priv signer: %w", err)
 	}
 
 	privSigner, _ := signer.InitPrivSigner(nodeDir)
 	return privSigner, nil
 }
 
-func GenesisKeyFromPrivSigner(ps *signer.PrivSigner) (*checkpointingtypes.GenesisKey, error) {
-	valKeys, err := privval.NewValidatorKeys(ps.WrappedPV.GetValPrivKey(), ps.WrappedPV.GetBlsPrivKey())
+// GenesisKeyFromPrivSigner generates a genesis key from a priv signer
+func GenesisKeyFromPrivSigner(ps *signer.PrivSigner, delegatorAddress sdk.ValAddress) (*checkpointingtypes.GenesisKey, error) {
+	valKeys, err := privval.NewValidatorKeys(
+		ps.PV.Comet.PrivKey,
+		ps.PV.Bls.PrivKey,
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate validator keys: %w", err)
 	}
 	valPubkey, err := cryptocodec.FromCmtPubKeyInterface(valKeys.ValPubkey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to convert validator public key: %w", err)
 	}
 	return checkpointingtypes.NewGenesisKey(
-		ps.WrappedPV.GetAddress(),
+		delegatorAddress,
 		&valKeys.BlsPubkey,
 		valKeys.PoP,
 		&cosmosed.PubKey{Key: valPubkey.Bytes()},
 	)
 }
 
+// GeneratePrivSigner generates a priv signer
 func GeneratePrivSigner(nodeDir string) error {
 	nodeCfg := cmtconfig.DefaultConfig()
 	nodeCfg.SetRoot(nodeDir)
@@ -68,6 +74,6 @@ func GeneratePrivSigner(nodeDir string) error {
 	cometPV.Key.Save()
 	cometPV.LastSignState.Save()
 
-	privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password", "")
+	privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password")
 	return nil
 }

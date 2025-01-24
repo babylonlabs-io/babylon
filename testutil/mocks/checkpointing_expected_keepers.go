@@ -122,6 +122,21 @@ func (mr *MockEpochingKeeperMockRecorder) GetTotalVotingPower(ctx, epochNumber i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalVotingPower", reflect.TypeOf((*MockEpochingKeeper)(nil).GetTotalVotingPower), ctx, epochNumber)
 }
 
+// GetValidatorByConsAddr mocks base method.
+func (m *MockEpochingKeeper) GetValidatorByConsAddr(ctx context.Context, consAddr types1.ConsAddress) (types2.Validator, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetValidatorByConsAddr", ctx, consAddr)
+	ret0, _ := ret[0].(types2.Validator)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetValidatorByConsAddr indicates an expected call of GetValidatorByConsAddr.
+func (mr *MockEpochingKeeperMockRecorder) GetValidatorByConsAddr(ctx, consAddr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorByConsAddr", reflect.TypeOf((*MockEpochingKeeper)(nil).GetValidatorByConsAddr), ctx, consAddr)
+}
+
 // GetValidatorSet mocks base method.
 func (m *MockEpochingKeeper) GetValidatorSet(ctx context.Context, epochNumer uint64) types0.ValidatorSet {
 	m.ctrl.T.Helper()

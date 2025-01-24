@@ -59,10 +59,10 @@ func NewHelper(t *testing.T) *Helper {
 // the privSigner is the 0th validator in valSet
 func NewHelperWithValSet(t *testing.T, valSet *datagen.GenesisValidators, privSigner *signer.PrivSigner) *Helper {
 	// generate the genesis account
-	signerPubKey := privSigner.WrappedPV.Key.CometPVKey.PubKey
+	signerPubKey := privSigner.PV.Comet.PubKey
 	acc := authtypes.NewBaseAccount(signerPubKey.Address().Bytes(), &cosmosed.PubKey{Key: signerPubKey.Bytes()}, 0, 0)
-	privSigner.WrappedPV.Key.BlsPVKey.DelegatorAddress = acc.Address
-	valSet.Keys[0].ValidatorAddress = privSigner.WrappedPV.GetAddress().String()
+
+	valSet.Keys[0].ValidatorAddress = sdk.ValAddress(acc.GetAddress()).String()
 	// ensure the genesis account has a sufficient amount of tokens
 	balance := banktypes.Balance{
 		Address: acc.GetAddress().String(),
@@ -97,9 +97,8 @@ func NewHelperWithValSet(t *testing.T, valSet *datagen.GenesisValidators, privSi
 // included in the validator set
 func NewHelperWithValSetNoSigner(t *testing.T, valSet *datagen.GenesisValidators, privSigner *signer.PrivSigner) *Helper {
 	// generate the genesis account
-	signerPubKey := privSigner.WrappedPV.Key.CometPVKey.PubKey
+	signerPubKey := privSigner.PV.Comet.PubKey
 	acc := authtypes.NewBaseAccount(signerPubKey.Address().Bytes(), &cosmosed.PubKey{Key: signerPubKey.Bytes()}, 0, 0)
-	privSigner.WrappedPV.Key.BlsPVKey.DelegatorAddress = acc.Address
 	// set a random validator address instead of the privSigner's
 	valSet.Keys[0].ValidatorAddress = datagen.GenRandomValidatorAddress().String()
 	// ensure the genesis account has a sufficient amount of tokens

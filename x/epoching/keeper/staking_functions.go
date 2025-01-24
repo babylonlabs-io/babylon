@@ -115,3 +115,7 @@ func (k Keeper) CheckMsgCreateValidator(ctx context.Context, msg *stakingtypes.M
 func (k Keeper) GetPubKeyByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (cmtprotocrypto.PublicKey, error) {
 	return k.stk.GetPubKeyByConsAddr(ctx, consAddr)
 }
+
+func (k Keeper) GetValidatorByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (stakingtypes.Validator, error) {
+	return k.stk.GetValidatorByConsAddr(ctx, consAddr)
+}

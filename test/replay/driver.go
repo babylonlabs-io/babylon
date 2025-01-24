@@ -149,6 +149,7 @@ type BabylonAppDriver struct {
 	ValidatorAddress     []byte
 	FinalizedBlocks      []FinalizedBlock
 	LastState            sm.State
+	DelegatorAddress     sdk.ValAddress
 }
 
 // Inititializes Babylon driver for block creation
@@ -197,7 +198,8 @@ func NewBabylonAppDriver(
 	signer, err := appsigner.InitPrivSigner(chain.Nodes[0].ConfigDir)
 	require.NoError(t, err)
 	require.NotNil(t, signer)
-	signerValAddress := signer.WrappedPV.GetAddress()
+	signerValAddress := sdk.ValAddress(chain.Nodes[0].PublicAddress)
+	require.NoError(t, err)
 	fmt.Printf("signer val address: %s\n", signerValAddress.String())
 
 	appOptions := NewAppOptionsWithFlagHome(chain.Nodes[0].ConfigDir)
@@ -271,6 +273,7 @@ func NewBabylonAppDriver(
 		ValidatorAddress:   validatorAddress,
 		FinalizedBlocks:    []FinalizedBlock{},
 		LastState:          state.Copy(),
+		DelegatorAddress:   signerValAddress,
 	}
 }
 
@@ -455,7 +458,7 @@ func (d *BabylonAppDriver) GenerateNewBlock(t *testing.T) *abci.ResponseFinalize
 			t,
 			extension,
 			lastFinalizedBlock.Height,
-			d.PrivSigner.WrappedPV.GetValPrivKey(),
+			d.PrivSigner.PV.Comet.PrivKey,
 		)
 
 		// We are adding invalid signatures here as we are not validating them in
@@ -772,8 +775,6 @@ func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
 	signer, err := appsigner.InitPrivSigner(nodeDir)
 	require.NoError(t, err)
 	require.NotNil(t, signer)
-	signerValAddress := signer.WrappedPV.GetAddress()
-	fmt.Printf("signer val address: %s\n", signerValAddress.String())
 
 	appOptions := NewAppOptionsWithFlagHome(nodeDir)
 	baseAppOptions := server.DefaultBaseappOptions(appOptions)

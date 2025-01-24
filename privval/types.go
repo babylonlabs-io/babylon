@@ -1,7 +1,7 @@
 package privval
 
 import (
-	"errors"
+	"fmt"
 
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
 
@@ -21,7 +21,7 @@ type ValidatorKeys struct {
 func NewValidatorKeys(valPrivkey cmtcrypto.PrivKey, blsPrivKey bls12381.PrivateKey) (*ValidatorKeys, error) {
 	pop, err := BuildPoP(valPrivkey, blsPrivKey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to build PoP: %w", err)
 	}
 	return &ValidatorKeys{
 		ValPubkey:  valPrivkey.PubKey(),
@@ -36,14 +36,14 @@ func NewValidatorKeys(valPrivkey cmtcrypto.PrivKey, blsPrivKey bls12381.PrivateK
 // where valPrivKey is Ed25519_sk and blsPrivkey is BLS_sk
 func BuildPoP(valPrivKey cmtcrypto.PrivKey, blsPrivkey bls12381.PrivateKey) (*types.ProofOfPossession, error) {
 	if valPrivKey == nil {
-		return nil, errors.New("validator private key is empty")
+		return nil, fmt.Errorf("validator private key is empty")
 	}
 	if blsPrivkey == nil {
-		return nil, errors.New("BLS private key is empty")
+		return nil, fmt.Errorf("BLS private key is empty")
 	}
 	data, err := valPrivKey.Sign(blsPrivkey.PubKey().Bytes())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error while building PoP: %w", err)
 	}
 	pop := bls12381.Sign(blsPrivkey, data)
 	return &types.ProofOfPossession{

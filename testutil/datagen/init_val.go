@@ -62,7 +62,7 @@ func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic strin
 		}
 		blsPV = privval.LoadBlsPV(blsKeyFile, blsPasswordFile)
 	} else {
-		blsPV = privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password", addr.String())
+		blsPV = privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password")
 	}
 
 	valKeys, err = privval.NewValidatorKeys(filePV.Key.PrivKey, blsPV.Key.PrivKey)

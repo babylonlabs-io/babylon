@@ -1,116 +1,48 @@
 package privval
 
 import (
-	"errors"
 	"fmt"
-	"path/filepath"
-
-	cmtcrypto "github.com/cometbft/cometbft/crypto"
-	cmtjson "github.com/cometbft/cometbft/libs/json"
-	cmtos "github.com/cometbft/cometbft/libs/os"
-	"github.com/cometbft/cometbft/libs/tempfile"
-	"github.com/cometbft/cometbft/privval"
-	"github.com/cosmos/cosmos-sdk/crypto/codec"
 
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
+	cmtprivval "github.com/cometbft/cometbft/privval"
 )
 
-// WrappedFilePVKey wraps FilePVKey with BLS keys.
-type WrappedFilePVKey struct {
-	CometPVKey privval.FilePVKey
-	BlsPVKey   BlsPVKey
-}
+var _ keeper.BlsSigner = &WrappedFilePV{}
 
-// WrappedFilePV wraps FilePV with WrappedFilePVKey.
+// WrappedFilePV is a wrapper around cmtprivval.FilePV
 type WrappedFilePV struct {
-	Key           WrappedFilePVKey
-	LastSignState privval.FilePVLastSignState
+	Comet cmtprivval.FilePVKey
+	Bls   BlsPVKey
 }
 
-// ExportGenBls writes a {address, bls_pub_key, pop, and pub_key} into a json file
-func (pv *WrappedFilePV) ExportGenBls(filePath string) (outputFileName string, err error) {
-	if !cmtos.FileExists(filePath) {
-		return outputFileName, errors.New("export file path does not exist")
+// NewWrappedFilePV creates a new WrappedFilePV
+func NewWrappedFilePV(comet cmtprivval.FilePVKey, bls BlsPVKey) *WrappedFilePV {
+	return &WrappedFilePV{
+		Comet: comet,
+		Bls:   bls,
 	}
-
-	valAddress := pv.GetAddress()
-	if valAddress.Empty() {
-		return outputFileName, errors.New("validator address should not be empty")
-	}
-
-	validatorKey, err := NewValidatorKeys(pv.GetValPrivKey(), pv.GetBlsPrivKey())
-	if err != nil {
-		return outputFileName, err
-	}
-
-	pubkey, err := codec.FromCmtPubKeyInterface(validatorKey.ValPubkey)
-	if err != nil {
-		return outputFileName, err
-	}
-
-	genbls, err := checkpointingtypes.NewGenesisKey(valAddress, &validatorKey.BlsPubkey, validatorKey.PoP, pubkey)
-	if err != nil {
-		return outputFileName, err
-	}
-
-	jsonBytes, err := cmtjson.MarshalIndent(genbls, "", "  ")
-	if err != nil {
-		return outputFileName, err
-	}
-
-	outputFileName = filepath.Join(filePath, fmt.Sprintf("gen-bls-%s.json", valAddress.String()))
-	err = tempfile.WriteFileAtomic(outputFileName, jsonBytes, 0600)
-	return outputFileName, err
 }
 
-// GetAddress returns the delegator address of the validator.
-// Implements PrivValidator.
-func (pv *WrappedFilePV) GetAddress() sdk.ValAddress {
-	if pv.Key.BlsPVKey.DelegatorAddress == "" {
-		return sdk.ValAddress{}
-	}
-	addr, err := sdk.AccAddressFromBech32(pv.Key.BlsPVKey.DelegatorAddress)
-	if err != nil {
-		cmtos.Exit(err.Error())
-	}
-	return sdk.ValAddress(addr)
-}
-
-// GetPubKey returns the public key of the validator.
-func (pv *WrappedFilePV) GetPubKey() (cmtcrypto.PubKey, error) {
-	return pv.Key.CometPVKey.PubKey, nil
-}
-
-// GetValPrivKey returns the private key of the validator.
-func (pv *WrappedFilePV) GetValPrivKey() cmtcrypto.PrivKey {
-	return pv.Key.CometPVKey.PrivKey
-}
-
-// GetBlsPrivKey returns the private key of the BLS.
-func (pv *WrappedFilePV) GetBlsPrivKey() bls12381.PrivateKey {
-	return pv.Key.BlsPVKey.PrivKey
-}
-
-// GetBlsPubkey returns the public key of the BLS
-func (pv *WrappedFilePV) GetBlsPubkey() (bls12381.PublicKey, error) {
-	blsPrivKey := pv.GetBlsPrivKey()
-	if blsPrivKey == nil {
-		return nil, checkpointingtypes.ErrBlsPrivKeyDoesNotExist
-	}
-	return blsPrivKey.PubKey(), nil
-}
-
-func (pv *WrappedFilePV) GetValidatorPubkey() (cmtcrypto.PubKey, error) {
-	return pv.GetPubKey()
-}
-
-// SignMsgWithBls signs a message with BLS
+// SignMsgWithBls signs a message with BLS, implementing the BlsSigner interface
 func (pv *WrappedFilePV) SignMsgWithBls(msg []byte) (bls12381.Signature, error) {
-	blsPrivKey := pv.GetBlsPrivKey()
-	if blsPrivKey == nil {
-		return nil, checkpointingtypes.ErrBlsPrivKeyDoesNotExist
+	if pv.Bls.PrivKey == nil {
+		return nil, fmt.Errorf("BLS private key does not exist: %w", checkpointingtypes.ErrBlsPrivKeyDoesNotExist)
 	}
-	return bls12381.Sign(blsPrivKey, msg), nil
+	return bls12381.Sign(pv.Bls.PrivKey, msg), nil
+}
+
+// GetBlsPubkey returns the public key of the BLS, implementing the BlsSigner interface
+func (pv *WrappedFilePV) GetBlsPubkey() (bls12381.PublicKey, error) {
+	if pv.Bls.PrivKey == nil {
+		return nil, fmt.Errorf("Error while getting BLS public key: %w", checkpointingtypes.ErrBlsPrivKeyDoesNotExist)
+	}
+	return pv.Bls.PrivKey.PubKey(), nil
+}
+
+// GetValidatorPubkey returns the public key of the validator, implementing the BlsSigner interface
+func (pv *WrappedFilePV) GetValidatorPubkey() cmtcrypto.PubKey {
+	return pv.Comet.PrivKey.PubKey()
 }

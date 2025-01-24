@@ -19,6 +19,7 @@ type EpochingKeeper interface {
 	GetTotalVotingPower(ctx context.Context, epochNumber uint64) int64
 	CheckMsgCreateValidator(ctx context.Context, msg *stakingtypes.MsgCreateValidator) error
 	GetPubKeyByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (cmtprotocrypto.PublicKey, error)
+	GetValidatorByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (stakingtypes.Validator, error)
 }
 
 // Event Hooks

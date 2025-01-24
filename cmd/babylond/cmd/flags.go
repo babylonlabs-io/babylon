@@ -53,6 +53,7 @@ const (
 	flagMinSignedPerWindow         = "min-signed-per-window"
 	flagFinalitySigTimeout         = "finality-sig-timeout"
 	flagJailDuration               = "jail-duration"
+	flagBlsPassword                = "bls-password"
 )
 
 type GenesisCLIArgs struct {

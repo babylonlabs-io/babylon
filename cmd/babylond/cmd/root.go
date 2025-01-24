@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 
@@ -72,12 +73,12 @@ func NewRootCmd() *cobra.Command {
 			initClientCtx = initClientCtx.WithCmdContext(cmd.Context())
 			initClientCtx, err := client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to read command flags: %w", err)
 			}
 
 			initClientCtx, err = config.ReadFromClientConfig(initClientCtx)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to read client config: %w", err)
 			}
 
 			if !initClientCtx.Offline {
@@ -94,14 +95,14 @@ func NewRootCmd() *cobra.Command {
 					txConfigOpts,
 				)
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to create tx config: %w", err)
 				}
 
 				initClientCtx = initClientCtx.WithTxConfig(txConfig)
 			}
 
 			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
-				return err
+				return fmt.Errorf("failed to set cmd client context handler: %w", err)
 			}
 
 			customAppTemplate, customAppConfig := initAppConfig()
@@ -110,7 +111,7 @@ func NewRootCmd() *cobra.Command {
 			err = server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig, customCometConfig)
 
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to intercept configs: %w", err)
 			}
 
 			return nil
@@ -130,7 +131,7 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to enhance root command: %w", err))
 	}
 
 	return rootCmd
@@ -167,7 +168,7 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 	gentxModule := basicManager[genutiltypes.ModuleName].(genutil.AppModuleBasic)
 
 	rootCmd.AddCommand(
-		genutilcli.InitCmd(basicManager, app.DefaultNodeHome),
+		InitCmd(basicManager, app.DefaultNodeHome),
 		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome, gentxModule.GenTxValidator, authcodec.NewBech32Codec(params.Bech32PrefixValAddr)),
 		genutilcli.MigrateGenesisCmd(genutilcli.MigrationMap),
 		genutilcli.GenTxCmd(basicManager, txConfig, banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome, authcodec.NewBech32Codec(params.Bech32PrefixValAddr)),
@@ -178,6 +179,7 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		TestnetCmd(basicManager, banktypes.GenesisBalancesIterator{}),
 		genhelpers.CmdGenHelpers(gentxModule.GenTxValidator),
 		CreateBlsKeyCmd(),
+		MigrateBlsKeyCmd(),
 		ModuleSizeCmd(),
 		DebugCmd(),
 		confixcmd.ConfigCommand(),
@@ -263,9 +265,13 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	}
 
 	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
+
+	// auto migrate when build tag is set to "e2e_upgrade"
+	automigrate_e2e_upgrade(logger, homeDir)
+
 	privSigner, err := signer.InitPrivSigner(homeDir)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to initialize priv signer: %w", err))
 	}
 
 	var wasmOpts []wasmkeeper.Option
@@ -303,17 +309,36 @@ func appExport(
 
 	privSigner, err := signer.InitPrivSigner(homePath)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to initialize priv signer: %w", err))
 	}
 	if height != -1 {
 		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, uint(1), privSigner, appOpts, app.EmptyWasmOpts)
 
 		if err = babylonApp.LoadHeight(height); err != nil {
-			return servertypes.ExportedApp{}, err
+			return servertypes.ExportedApp{}, fmt.Errorf("failed to load height: %w", err)
 		}
 	} else {
 		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, uint(1), privSigner, appOpts, app.EmptyWasmOpts)
 	}
 
 	return babylonApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
+}
+
+// automigrate_e2e_upgrade_test runs when the build tag is set to "e2e_upgrade".
+// It always checks if the key structure is the previous version
+// and migrates into a separate version of the divided key files
+func automigrate_e2e_upgrade(logger log.Logger, homeDir string) {
+	if app.IsE2EUpgradeBuildFlag {
+		logger.Debug(
+			"***************************************************************************\n" +
+				"NOTE: In testnet mode, it will automatically migrate the key file\n" +
+				"if priv_validator_key.json contains both the comet and bls keys,\n" +
+				"used in previous version.\n" +
+				"Do not run it in a production environment, as it may cause problems.\n" +
+				"***************************************************************************\n",
+		)
+		if err := migrate(homeDir, "password"); err != nil {
+			logger.Debug(err.Error())
+		}
+	}
 }

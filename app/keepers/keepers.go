@@ -252,7 +252,7 @@ func (ak *AppKeepers) InitKeepers(
 	checkpointingKeeper := checkpointingkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[checkpointingtypes.StoreKey]),
-		privSigner.WrappedPV,
+		privSigner.PV,
 		epochingKeeper,
 	)
 
