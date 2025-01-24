@@ -38,6 +38,7 @@ func EpochingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		// TODO: make this compile at the moment, will fix for integrated testing
 		nil,
 		nil,
+		nil,
 		appparams.AccGov.String(),
 	)
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
@@ -20,6 +21,7 @@ type (
 		bk           types.BankKeeper
 		stk          types.StakingKeeper
 		router       *baseapp.MsgServiceRouter
+		stkMsgServer stktypes.MsgServer
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
 		authority string
@@ -31,6 +33,7 @@ func NewKeeper(
 	storeService corestoretypes.KVStoreService,
 	bk types.BankKeeper,
 	stk types.StakingKeeper,
+	stkMsgServer stktypes.MsgServer,
 	authority string,
 ) Keeper {
 	return Keeper{
@@ -39,6 +42,7 @@ func NewKeeper(
 		hooks:        nil,
 		bk:           bk,
 		stk:          stk,
+		stkMsgServer: stkMsgServer,
 		authority:    authority,
 	}
 }
