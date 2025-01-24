@@ -54,6 +54,8 @@ check of rewards
 signature nonce generation to match reference implementation
 - [#413](https://github.com/babylonlabs-io/babylon/pull/413) Fix adaptor
 signature R verification
+- [#443](https://github.com/babylonlabs-io/babylon/pull/443) Fix swagger generation for incentive missing
+`v1` in path
 
 ## v1.0.0-rc3
 
