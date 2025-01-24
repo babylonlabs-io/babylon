@@ -245,7 +245,7 @@ func cacheTxContext(ctx sdk.Context, txid []byte, msgid []byte, height uint64) (
 		).(storetypes.CacheMultiStore)
 	}
 
-	return goCtx.WithMultiStore(msCache), msCache
+	return ctx.WithMultiStore(msCache), msCache
 }
 
 // msgQueueStore returns the queue of msgs of a given epoch
