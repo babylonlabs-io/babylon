@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// BabylonConfig defines configuration for the Babylon query client
+// BabylonQueryConfig defines configuration for the Babylon query client
 type BabylonQueryConfig struct {
 	RPCAddr string        `mapstructure:"rpc-addr"`
 	Timeout time.Duration `mapstructure:"timeout"`
