@@ -3,15 +3,14 @@ package keeper
 import (
 	"fmt"
 
+	corestoretypes "cosmossdk.io/core/store"
+	"cosmossdk.io/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	corestoretypes "cosmossdk.io/core/store"
-	"cosmossdk.io/log"
 	"github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
-	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 type (
