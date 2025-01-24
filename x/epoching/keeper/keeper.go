@@ -9,7 +9,6 @@ import (
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/babylonlabs-io/babylon/x/epoching/types"
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
@@ -20,7 +19,6 @@ type (
 		hooks        types.EpochingHooks
 		bk           types.BankKeeper
 		stk          types.StakingKeeper
-		router       *baseapp.MsgServiceRouter
 		stkMsgServer stktypes.MsgServer
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
@@ -59,11 +57,5 @@ func (k *Keeper) SetHooks(eh types.EpochingHooks) *Keeper {
 
 	k.hooks = eh
 
-	return k
-}
-
-// SetMsgServiceRouter sets the msgServiceRouter
-func (k *Keeper) SetMsgServiceRouter(router *baseapp.MsgServiceRouter) *Keeper {
-	k.router = router
 	return k
 }

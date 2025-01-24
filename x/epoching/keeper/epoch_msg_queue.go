@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	storetypes "cosmossdk.io/store/types"
-	"github.com/cosmos/cosmos-sdk/runtime"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonlabs-io/babylon/x/epoching/types"
+	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/proto"
+
+	"github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
 // InitMsgQueue initialises the msg queue length of the current epoch to 0
@@ -109,37 +110,15 @@ func (k Keeper) GetCurrentEpochMsgs(ctx context.Context) []*types.QueuedMessage 
 // HandleQueuedMsg unwraps a QueuedMessage and forwards it to the staking module
 func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage) (*sdk.Result, error) {
 	var (
-		unwrappedMsgWithType sdk.Msg
-		err                  error
+		res proto.Message
+		err error
 	)
-	unwrappedMsgWithType = msg.UnwrapToSdkMsg()
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	// failed to decode validator address
-	if err != nil {
-		panic(err)
-	}
-
-	// get the handler function from router
-	handler := k.router.Handler(unwrappedMsgWithType)
-
-	// Create a new Context based off of the existing Context with a MultiStore branch
-	// in case message processing fails. At this point, the MultiStore is a branch of a branch.
-	handlerCtx, msCache := cacheTxContext(ctx, msg.TxId, msg.MsgId, msg.BlockHeight)
-
-	// handle the unwrapped message
-	result, err := handler(handlerCtx, unwrappedMsgWithType)
-	if err != nil {
-		return result, err
-	}
-
-	// release the cache
-	msCache.Write()
 
 	// record lifecycle for delegation
 	switch unwrappedMsg := msg.Msg.(type) {
 	case *types.QueuedMessage_MsgCreateValidator:
-		_, err := k.stkMsgServer.CreateValidator(ctx, unwrappedMsg.MsgCreateValidator)
+		res, err = k.stkMsgServer.CreateValidator(ctx, unwrappedMsg.MsgCreateValidator)
 		if err != nil {
 			return nil, err
 		}
@@ -162,7 +141,7 @@ func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage)
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgDelegate:
-		_, err := k.stkMsgServer.Delegate(ctx, unwrappedMsg.MsgDelegate)
+		res, err = k.stkMsgServer.Delegate(ctx, unwrappedMsg.MsgDelegate)
 		if err != nil {
 			return nil, err
 		}
@@ -183,7 +162,7 @@ func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage)
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgUndelegate:
-		_, err := k.stkMsgServer.Undelegate(ctx, unwrappedMsg.MsgUndelegate)
+		res, err = k.stkMsgServer.Undelegate(ctx, unwrappedMsg.MsgUndelegate)
 		if err != nil {
 			return nil, err
 		}
@@ -202,7 +181,7 @@ func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage)
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgBeginRedelegate:
-		_, err := k.stkMsgServer.BeginRedelegate(ctx, unwrappedMsg.MsgBeginRedelegate)
+		res, err = k.stkMsgServer.BeginRedelegate(ctx, unwrappedMsg.MsgBeginRedelegate)
 		if err != nil {
 			return nil, err
 		}
@@ -221,7 +200,7 @@ func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage)
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgCancelUnbondingDelegation:
-		_, err := k.stkMsgServer.CancelUnbondingDelegation(ctx, unwrappedMsg.MsgCancelUnbondingDelegation)
+		res, err = k.stkMsgServer.CancelUnbondingDelegation(ctx, unwrappedMsg.MsgCancelUnbondingDelegation)
 		if err != nil {
 			return nil, err
 		}
@@ -239,12 +218,12 @@ func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage)
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgEditValidator:
-		_, err := k.stkMsgServer.EditValidator(ctx, unwrappedMsg.MsgEditValidator)
+		res, err = k.stkMsgServer.EditValidator(ctx, unwrappedMsg.MsgEditValidator)
 		if err != nil {
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgUpdateParams:
-		_, err := k.stkMsgServer.UpdateParams(ctx, unwrappedMsg.MsgUpdateParams)
+		res, err = k.stkMsgServer.UpdateParams(ctx, unwrappedMsg.MsgUpdateParams)
 		if err != nil {
 			return nil, err
 		}
@@ -253,7 +232,7 @@ func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage)
 		panic(errorsmod.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
 	}
 
-	return result, nil
+	return sdk.WrapServiceResult(ctx, res, err)
 }
 
 // based on a function with the same name in `baseapp.go`

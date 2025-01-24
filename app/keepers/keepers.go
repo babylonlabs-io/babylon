@@ -573,8 +573,6 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
-	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
-	epochingKeeper.SetMsgServiceRouter(bApp.MsgServiceRouter())
 	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
 	epochingKeeper.SetHooks(
 		epochingtypes.NewMultiEpochingHooks(zcKeeper.Hooks(), monitorKeeper.Hooks()),
