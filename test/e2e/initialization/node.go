@@ -46,7 +46,7 @@ type internalNode struct {
 	mnemonic     string
 	keyInfo      *keyring.Record
 	privateKey   cryptotypes.PrivKey
-	consensusKey signer.PrivSigner
+	consensusKey signer.ConsensusKey
 	nodeKey      p2p.NodeKey
 	peerId       string
 	isValidator  bool
@@ -91,7 +91,7 @@ func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error)
 	// get the initial validator min self delegation
 	minSelfDelegation, _ := math.NewIntFromString("1")
 
-	valPubKey, err := cryptocodec.FromCmtPubKeyInterface(n.consensusKey.PV.Comet.PubKey)
+	valPubKey, err := cryptocodec.FromCmtPubKeyInterface(n.consensusKey.Comet.PubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -186,8 +186,9 @@ func (n *internalNode) createConsensusKey() error {
 	// create bls pv
 	blsPV := privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password")
 
-	n.consensusKey = signer.PrivSigner{
-		PV: privval.NewWrappedFilePV(filePV.Key, blsPV.Key),
+	n.consensusKey = signer.ConsensusKey{
+		Comet: &filePV.Key,
+		Bls:   &blsPV.Key,
 	}
 	return nil
 }
@@ -258,6 +259,7 @@ func (n *internalNode) export() *Node {
 		PrivateKey:    n.privateKey.Bytes(),
 		PeerId:        n.peerId,
 		IsValidator:   n.isValidator,
+		CometPrivKey:  n.consensusKey.Comet.PrivKey,
 	}
 }
 

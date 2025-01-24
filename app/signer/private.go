@@ -8,14 +8,18 @@ import (
 	cmtprivval "github.com/cometbft/cometbft/privval"
 
 	"github.com/babylonlabs-io/babylon/privval"
+
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
-type PrivSigner struct {
-	PV *privval.WrappedFilePV
+type ConsensusKey struct {
+	Comet *cmtprivval.FilePVKey
+	Bls   *privval.BlsPVKey
 }
 
-func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
+// LoadConsensusKey loads the private key from the node directory
+// Only requires in appExport, which requires key files located in local.
+func LoadConsensusKey(nodeDir string) (*ConsensusKey, error) {
 	nodeCfg := cmtconfig.DefaultConfig()
 	nodeCfg.SetRoot(nodeDir)
 
@@ -36,14 +40,16 @@ func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
 		return nil, fmt.Errorf("BLS key file does not exist. create file using `babylond init` or `babylond create-bls-key`: %s", blsKeyFile)
 	}
 
-	cometPV := cmtprivval.LoadFilePV(pvKeyFile, pvStateFile)
+	filePV := cmtprivval.LoadFilePV(pvKeyFile, pvStateFile)
 	blsPV := privval.LoadBlsPV(blsKeyFile, blsPasswordFile)
 
-	return &PrivSigner{
-		PV: privval.NewWrappedFilePV(cometPV.Key, blsPV.Key),
+	return &ConsensusKey{
+		Comet: &filePV.Key,
+		Bls:   &blsPV.Key,
 	}, nil
 }
 
+// InitBlsSigner initializes the bls signer
 func InitBlsSigner(nodeDir string) (*checkpointingtypes.BlsSigner, error) {
 	nodeCfg := cmtconfig.DefaultConfig()
 	nodeCfg.SetRoot(nodeDir)

@@ -36,7 +36,7 @@ func Test_CmdCreateBls(t *testing.T) {
 	cfg, err := genutiltest.CreateDefaultCometConfig(home)
 	require.NoError(t, err)
 
-	signer, err := signer.SetupTestPrivSigner()
+	signer, err := signer.SetupTestBlsSigner()
 	require.NoError(t, err)
 	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
 		Logger:             logger,

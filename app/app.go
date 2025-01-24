@@ -95,7 +95,6 @@ import (
 	"github.com/babylonlabs-io/babylon/app/ante"
 	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
 	"github.com/babylonlabs-io/babylon/client/docs"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -207,7 +206,6 @@ func NewBabylonApp(
 	loadLatest bool,
 	skipUpgradeHeights map[int64]bool,
 	invCheckPeriod uint,
-	privSigner *signer.PrivSigner,
 	blsSigner *checkpointingtypes.BlsSigner,
 	appOpts servertypes.AppOptions,
 	wasmOpts []wasmkeeper.Option,
@@ -248,12 +246,6 @@ func NewBabylonApp(
 		txConfig:          txConfig,
 		interfaceRegistry: interfaceRegistry,
 		invCheckPeriod:    invCheckPeriod,
-	}
-
-	// TODO: PoC, add detailed exception handling logic
-	if blsSigner == nil {
-		tmpBlsSigner := checkpointingtypes.BlsSigner(&privSigner.PV.Bls)
-		blsSigner = &tmpBlsSigner
 	}
 
 	app.AppKeepers.InitKeepers(

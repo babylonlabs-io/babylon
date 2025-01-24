@@ -406,12 +406,12 @@ func updateCheckpointingGenesis(c *internalChain) func(*checkpointingtypes.Genes
 
 			ck := node.consensusKey
 
-			proofOfPossession, err := privval.BuildPoP(ck.PV.Comet.PrivKey, ck.PV.Bls.PrivKey)
+			proofOfPossession, err := privval.BuildPoP(ck.Comet.PrivKey, ck.Bls.PrivKey)
 			if err != nil {
 				panic("It should be possible to build proof of possession from validator private keys")
 			}
 
-			valPubKey, err := cryptocodec.FromCmtPubKeyInterface(ck.PV.Comet.PubKey)
+			valPubKey, err := cryptocodec.FromCmtPubKeyInterface(ck.Comet.PubKey)
 			if err != nil {
 				panic("It should be possible to retrieve validator public key")
 			}
@@ -425,7 +425,7 @@ func updateCheckpointingGenesis(c *internalChain) func(*checkpointingtypes.Genes
 			genKey := &checkpointingtypes.GenesisKey{
 				ValidatorAddress: sdk.ValAddress(accAddr).String(),
 				BlsKey: &checkpointingtypes.BlsKey{
-					Pubkey: &ck.PV.Bls.PubKey,
+					Pubkey: &ck.Bls.PubKey,
 					Pop:    proofOfPossession,
 				},
 				ValPubkey: valPubKey.(*ed25519.PubKey),

@@ -39,6 +39,7 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/testutil/signer"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 func newConfig() depinject.Config {
@@ -78,9 +79,12 @@ func Test_CmdCreateAddWithoutGentx(t *testing.T) {
 	require.NoError(t, err)
 
 	db := dbm.NewMemDB()
-	signer, err := signer.SetupTestPrivSigner()
+
+	tbs, err := signer.SetupTestBlsSigner()
 	require.NoError(t, err)
-	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
+	blsSigner := checkpointingtypes.BlsSigner(tbs)
+
+	bbn := app.NewBabylonAppWithCustomOptions(t, false, blsSigner, app.SetupOptions{
 		Logger:             logger,
 		DB:                 db,
 		InvCheckPeriod:     0,
@@ -120,9 +124,12 @@ func Test_CmdCreateAddWithoutGentx(t *testing.T) {
 // error is expected if adding duplicate
 func Test_CmdAddBlsWithGentx(t *testing.T) {
 	db := dbm.NewMemDB()
-	signer, err := signer.SetupTestPrivSigner()
+
+	tbs, err := signer.SetupTestBlsSigner()
 	require.NoError(t, err)
-	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
+	blsSigner := checkpointingtypes.BlsSigner(tbs)
+
+	bbn := app.NewBabylonAppWithCustomOptions(t, false, blsSigner, app.SetupOptions{
 		Logger:             log.NewNopLogger(),
 		DB:                 db,
 		InvCheckPeriod:     0,

@@ -44,6 +44,7 @@ import (
 	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 // NewRootCmd creates a new root command for babylond. It is called once in the
@@ -287,7 +288,6 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	return app.NewBabylonApp(
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
-		nil,
 		blsSigner,
 		appOpts,
 		wasmOpts,
@@ -313,18 +313,21 @@ func appExport(
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
-	privSigner, err := signer.InitPrivSigner(homePath)
+	ck, err := signer.LoadConsensusKey(homePath)
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize priv signer: %w", err))
 	}
+
+	blsSigner := checkpointingtypes.BlsSigner(ck.Bls)
+
 	if height != -1 {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, uint(1), privSigner, nil, appOpts, app.EmptyWasmOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, uint(1), &blsSigner, appOpts, app.EmptyWasmOpts)
 
 		if err = babylonApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, fmt.Errorf("failed to load height: %w", err)
 		}
 	} else {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, uint(1), privSigner, nil, appOpts, app.EmptyWasmOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, uint(1), &blsSigner, appOpts, app.EmptyWasmOpts)
 	}
 
 	return babylonApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
