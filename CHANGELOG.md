@@ -45,6 +45,7 @@ This PR contains a series of PRs on multi-staking support and BTC stakingintegra
 check of rewards
 - [#419](https://github.com/babylonlabs-io/babylon/pull/419) Add new modules to swagger config
 - [#436](https://github.com/babylonlabs-io/babylon/pull/436) Remove staking msg server to handle at epoch
+- [#435](https://github.com/babylonlabs-io/babylon/pull/435) Modify gentx to generate `MsgWrappedCreateValidator`
 
 ### Bug fixes
 
