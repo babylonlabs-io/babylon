@@ -173,39 +173,39 @@ func LoadOrGenWrappedFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
 }
 
 // ExportGenBls writes a {address, bls_pub_key, pop, and pub_key} into a json file
-func (pv *WrappedFilePV) ExportGenBls(filePath string) (outputFileName string, err error) {
+func (pv *WrappedFilePV) ExportGenBls(filePath string) (genbls *checkpointingtypes.GenesisKey, outputFileName string, err error) {
 	if !cmtos.FileExists(filePath) {
-		return outputFileName, errors.New("export file path does not exist")
+		return nil, outputFileName, errors.New("export file path does not exist")
 	}
 
 	valAddress := pv.GetAddress()
 	if valAddress.Empty() {
-		return outputFileName, errors.New("validator address should not be empty")
+		return nil, outputFileName, errors.New("validator address should not be empty")
 	}
 
 	validatorKey, err := NewValidatorKeys(pv.GetValPrivKey(), pv.GetBlsPrivKey())
 	if err != nil {
-		return outputFileName, err
+		return nil, outputFileName, err
 	}
 
 	pubkey, err := codec.FromCmtPubKeyInterface(validatorKey.ValPubkey)
 	if err != nil {
-		return outputFileName, err
+		return nil, outputFileName, err
 	}
 
-	genbls, err := checkpointingtypes.NewGenesisKey(valAddress, &validatorKey.BlsPubkey, validatorKey.PoP, pubkey)
+	genbls, err = checkpointingtypes.NewGenesisKey(valAddress, &validatorKey.BlsPubkey, validatorKey.PoP, pubkey)
 	if err != nil {
-		return outputFileName, err
+		return nil, outputFileName, err
 	}
 
 	jsonBytes, err := cmtjson.MarshalIndent(genbls, "", "  ")
 	if err != nil {
-		return outputFileName, err
+		return nil, outputFileName, err
 	}
 
 	outputFileName = filepath.Join(filePath, fmt.Sprintf("gen-bls-%s.json", valAddress.String()))
 	err = tempfile.WriteFileAtomic(outputFileName, jsonBytes, 0600)
-	return outputFileName, err
+	return genbls, outputFileName, err
 }
 
 // GetAddress returns the delegator address of the validator.
