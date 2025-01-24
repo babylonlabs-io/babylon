@@ -24,14 +24,15 @@ type PrevWrappedFilePV struct {
 	BlsPrivKey bls12381.PrivateKey `json:"bls_priv_key"`
 }
 
+// MigrateBlsKeyCmd returns a command to migrate the bls keys
 func MigrateBlsKeyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "migrate-bls-key",
 		Short: "Migrate the contents of the priv_validator_key.json file into separate files of bls and comet",
-		Long: strings.TrimSpace(`migrate splits the contents of the priv_validator_key.json file, 
+		Long: strings.TrimSpace(`Migration splits the contents of the priv_validator_key.json file, 
 		which contained both the bls and comet keys used in previous versions, into separate files.
 
-BLS keys are stored along with other validator keys in priv_validator_key.json in previous version,
+BLS keys are stored along with the Ed25519 validator key in priv_validator_key.json in the previous version,
 which should exist before running the command (via babylond init or babylond testnet).
 
 NOTE: Before proceeding with the migration, ensure you back up the priv_validator_key.json file to a secure location.
@@ -55,7 +56,8 @@ $ babylond migrate-bls-key --home ./
 }
 
 // migrate splits the contents of the priv_validator_key.json file,
-// which contained both the bls and comet keys used in previous versions, into separate files
+// which contained both the bls and comet keys used in previous versions, into separate files.
+// After saving keys to separate files, it verifies if the migrated keys match
 func migrate(homeDir, password string) error {
 	cmtcfg := cmtcfg.DefaultConfig()
 	cmtcfg.SetRoot(homeDir)
@@ -63,12 +65,12 @@ func migrate(homeDir, password string) error {
 	filepath := cmtcfg.PrivValidatorKeyFile()
 
 	if !cmtos.FileExists(filepath) {
-		return fmt.Errorf("priv_validator_key.json of previous version not found")
+		return fmt.Errorf("priv_validator_key.json of previous version not found in %s", filepath)
 	}
 
 	pv, err := loadPrevWrappedFilePV(filepath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load previous version of priv_validator_key.json in %s", filepath)
 	}
 
 	prevCmtPrivKey := pv.PrivKey
@@ -82,22 +84,25 @@ func migrate(homeDir, password string) error {
 		password = privval.NewBlsPassword()
 	}
 
-	cmtPv := cmtprivval.NewFilePV(prevCmtPrivKey, cmtcfg.PrivValidatorKeyFile(), cmtcfg.PrivValidatorStateFile())
-	blsPv := privval.NewBlsPV(prevBlsPrivKey, privval.DefaultBlsKeyFile(homeDir), privval.DefaultBlsPasswordFile(homeDir))
+	cmtKeyFilePath := cmtcfg.PrivValidatorKeyFile()
+	cmtStateFilePath := cmtcfg.PrivValidatorStateFile()
+	blsKeyFilePath := privval.DefaultBlsKeyFile(homeDir)
+	blsPasswordFilePath := privval.DefaultBlsPasswordFile(homeDir)
 
-	// before saving keys to files, verify that the migrated keys match
-	if err := verifyAfterMigration(
-		prevCmtPrivKey,
-		cmtPv.Key.PrivKey,
-		prevBlsPrivKey,
-		blsPv.Key.PrivKey,
-	); err != nil {
-		return fmt.Errorf("failed to verify after migration: %w", err)
-	}
+	cmtPv := cmtprivval.NewFilePV(prevCmtPrivKey, cmtKeyFilePath, cmtStateFilePath)
+	blsPv := privval.NewBlsPV(prevBlsPrivKey, blsKeyFilePath, blsPasswordFilePath)
 
 	// save key to files after verification
 	cmtPv.Save()
 	blsPv.Key.Save(password)
+
+	if err := verifySeparateFiles(
+		cmtKeyFilePath, cmtStateFilePath, blsKeyFilePath, blsPasswordFilePath,
+		prevCmtPrivKey, prevBlsPrivKey,
+	); err != nil {
+		return fmt.Errorf("failed to verify separate files: %w", err)
+	}
+
 	return nil
 }
 
@@ -115,9 +120,17 @@ func loadPrevWrappedFilePV(filePath string) (*PrevWrappedFilePV, error) {
 	return &pvKey, nil
 }
 
-// verifyAfterMigration checks if the migrated keys match
-func verifyAfterMigration(prevCmtPrivKey, newCmtPrivKey cmtcrypto.PrivKey, prevBlsPrivKey, newBlsPrivKey bls12381.PrivateKey) error {
-	if bytes.Equal(prevCmtPrivKey.Bytes(), newCmtPrivKey.Bytes()) && bytes.Equal(prevBlsPrivKey, newBlsPrivKey) {
+// verifySeparateFiles checks if the migrated keys match
+// after saving keys to separate files
+func verifySeparateFiles(
+	cmtKeyFilePath, cmtStateFilePath, blsKeyFilePath, blsPasswordFilePath string,
+	prevCmtPrivKey cmtcrypto.PrivKey,
+	prevBlsPrivKey bls12381.PrivateKey,
+) error {
+	cmtPv := cmtprivval.LoadFilePV(cmtKeyFilePath, cmtStateFilePath)
+	blsPv := privval.LoadBlsPV(blsKeyFilePath, blsPasswordFilePath)
+
+	if bytes.Equal(prevCmtPrivKey.Bytes(), cmtPv.Key.PrivKey.Bytes()) && bytes.Equal(prevBlsPrivKey, blsPv.Key.PrivKey) {
 		return nil
 	}
 	return fmt.Errorf("migrated keys do not match")

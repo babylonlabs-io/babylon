@@ -20,7 +20,7 @@ func SetupTestPrivSigner() (*signer.PrivSigner, error) {
 	// Create a temporary node directory
 	nodeDir, err := os.MkdirTemp("", "tmp-signer")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create temporary node directory: %w", err)
 	}
 	defer func() {
 		_ = os.RemoveAll(nodeDir)
@@ -28,25 +28,25 @@ func SetupTestPrivSigner() (*signer.PrivSigner, error) {
 
 	// generate a privSigner
 	if err := GeneratePrivSigner(nodeDir); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate priv signer: %w", err)
 	}
 
 	privSigner, _ := signer.InitPrivSigner(nodeDir)
 	return privSigner, nil
 }
 
-// func GenesisKeyFromPrivSigner(ps *signer.PrivSigner, delegatorAddress sdk.ValAddress) (*checkpointingtypes.GenesisKey, error) {
+// GenesisKeyFromPrivSigner generates a genesis key from a priv signer
 func GenesisKeyFromPrivSigner(ps *signer.PrivSigner, delegatorAddress sdk.ValAddress) (*checkpointingtypes.GenesisKey, error) {
 	valKeys, err := privval.NewValidatorKeys(
 		ps.PV.Comet.PrivKey,
 		ps.PV.Bls.PrivKey,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate validator keys: %w", err)
 	}
 	valPubkey, err := cryptocodec.FromCmtPubKeyInterface(valKeys.ValPubkey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to convert validator public key: %w", err)
 	}
 	return checkpointingtypes.NewGenesisKey(
 		delegatorAddress,
@@ -56,6 +56,7 @@ func GenesisKeyFromPrivSigner(ps *signer.PrivSigner, delegatorAddress sdk.ValAdd
 	)
 }
 
+// GeneratePrivSigner generates a priv signer
 func GeneratePrivSigner(nodeDir string) error {
 	nodeCfg := cmtconfig.DefaultConfig()
 	nodeCfg.SetRoot(nodeDir)

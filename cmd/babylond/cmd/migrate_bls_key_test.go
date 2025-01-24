@@ -6,10 +6,8 @@ import (
 	"testing"
 
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	cmtjson "github.com/cometbft/cometbft/libs/json"
-	cmtprivval "github.com/cometbft/cometbft/privval"
 	"github.com/stretchr/testify/require"
 )
 
@@ -35,7 +33,6 @@ func TestMigrate(t *testing.T) {
 
 		err = migrate(tempDir, "")
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "Error reading PrivValidator key")
 	})
 
 	t.Run("missing keys", func(t *testing.T) {
@@ -92,16 +89,11 @@ func TestMigrate(t *testing.T) {
 		require.FileExists(t, newBlsKeyFile)
 		require.FileExists(t, newBlsPasswordFile)
 
-		t.Run("verify after migration", func(t *testing.T) {
-			newCmtPv := cmtprivval.LoadFilePV(newPvKeyFile, newPvStateFile)
-			newBlsPv := privval.LoadBlsPV(newBlsKeyFile, newBlsPasswordFile)
-			err := verifyAfterMigration(
-				pvKey.PrivKey,
-				newCmtPv.Key.PrivKey,
-				pvKey.BlsPrivKey,
-				newBlsPv.Key.PrivKey,
+		t.Run("verify separated files", func(t *testing.T) {
+			verifySeparateFiles(
+				newPvKeyFile, newPvStateFile, newBlsKeyFile, newBlsPasswordFile,
+				pvKey.PrivKey, pvKey.BlsPrivKey,
 			)
-			require.NoError(t, err)
 		})
 	})
 }
@@ -138,35 +130,5 @@ func TestLoadPrevWrappedFilePV(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, loadedPvKey.PrivKey)
 		require.NotNil(t, loadedPvKey.BlsPrivKey)
-	})
-}
-
-func TestVerifyAfterMigration(t *testing.T) {
-	t.Run("matching keys", func(t *testing.T) {
-		cmtKey := ed25519.GenPrivKey()
-		blsKey := bls12381.GenPrivKey()
-
-		err := verifyAfterMigration(cmtKey, cmtKey, blsKey, blsKey)
-		require.NoError(t, err)
-	})
-
-	t.Run("non-matching comet keys", func(t *testing.T) {
-		cmtKey1 := ed25519.GenPrivKey()
-		cmtKey2 := ed25519.GenPrivKey()
-		blsKey := bls12381.GenPrivKey()
-
-		err := verifyAfterMigration(cmtKey1, cmtKey2, blsKey, blsKey)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "migrated keys do not match")
-	})
-
-	t.Run("non-matching bls keys", func(t *testing.T) {
-		cmtKey := ed25519.GenPrivKey()
-		blsKey1 := bls12381.GenPrivKey()
-		blsKey2 := bls12381.GenPrivKey()
-
-		err := verifyAfterMigration(cmtKey, cmtKey, blsKey1, blsKey2)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "migrated keys do not match")
 	})
 }

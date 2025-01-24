@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 
@@ -72,12 +73,12 @@ func NewRootCmd() *cobra.Command {
 			initClientCtx = initClientCtx.WithCmdContext(cmd.Context())
 			initClientCtx, err := client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to read command flags: %w", err)
 			}
 
 			initClientCtx, err = config.ReadFromClientConfig(initClientCtx)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to read client config: %w", err)
 			}
 
 			if !initClientCtx.Offline {
@@ -94,14 +95,14 @@ func NewRootCmd() *cobra.Command {
 					txConfigOpts,
 				)
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to create tx config: %w", err)
 				}
 
 				initClientCtx = initClientCtx.WithTxConfig(txConfig)
 			}
 
 			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
-				return err
+				return fmt.Errorf("failed to set cmd client context handler: %w", err)
 			}
 
 			customAppTemplate, customAppConfig := initAppConfig()
@@ -110,7 +111,7 @@ func NewRootCmd() *cobra.Command {
 			err = server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig, customCometConfig)
 
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to intercept configs: %w", err)
 			}
 
 			return nil
@@ -130,7 +131,7 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to enhance root command: %w", err))
 	}
 
 	return rootCmd
@@ -270,7 +271,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 
 	privSigner, err := signer.InitPrivSigner(homeDir)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to initialize priv signer: %w", err))
 	}
 
 	var wasmOpts []wasmkeeper.Option
@@ -308,13 +309,13 @@ func appExport(
 
 	privSigner, err := signer.InitPrivSigner(homePath)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to initialize priv signer: %w", err))
 	}
 	if height != -1 {
 		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, uint(1), privSigner, appOpts, app.EmptyWasmOpts)
 
 		if err = babylonApp.LoadHeight(height); err != nil {
-			return servertypes.ExportedApp{}, err
+			return servertypes.ExportedApp{}, fmt.Errorf("failed to load height: %w", err)
 		}
 	} else {
 		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, uint(1), privSigner, appOpts, app.EmptyWasmOpts)

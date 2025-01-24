@@ -58,7 +58,7 @@ $ babylond gen-helpers create-bls %s1f5tnl46mk4dfp4nx3n2vnrvyw2h2ydz6ykhk3r --ho
 				}
 				return nil
 			}(cmtPvKeyFile, cmtPvStateFile, blsKeyFile, blsPasswordFile); err != nil {
-				return err
+				return fmt.Errorf("failed to check files: %w", err)
 			}
 
 			cmtPV := cmtprivval.LoadFilePV(cmtPvKeyFile, cmtPvStateFile)

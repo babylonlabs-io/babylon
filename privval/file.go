@@ -4,10 +4,13 @@ import (
 	"fmt"
 
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	cmtprivval "github.com/cometbft/cometbft/privval"
 )
+
+var _ keeper.BlsSigner = &WrappedFilePV{}
 
 // WrappedFilePV is a wrapper around cmtprivval.FilePV
 type WrappedFilePV struct {
@@ -34,7 +37,7 @@ func (pv *WrappedFilePV) SignMsgWithBls(msg []byte) (bls12381.Signature, error) 
 // GetBlsPubkey returns the public key of the BLS, implementing the BlsSigner interface
 func (pv *WrappedFilePV) GetBlsPubkey() (bls12381.PublicKey, error) {
 	if pv.Bls.PrivKey == nil {
-		return nil, checkpointingtypes.ErrBlsPrivKeyDoesNotExist
+		return nil, fmt.Errorf("Error while getting BLS public key: %w", checkpointingtypes.ErrBlsPrivKeyDoesNotExist)
 	}
 	return pv.Bls.PrivKey.PubKey(), nil
 }
