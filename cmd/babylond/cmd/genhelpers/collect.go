@@ -1,3 +1,6 @@
+// This file is derived from the Cosmos SDK repository (https://github.com/cosmos/cosmos-sdk),
+// originally licensed under the Apache License, Version 2.0.
+
 package genhelpers
 
 import (
