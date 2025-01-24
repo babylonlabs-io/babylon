@@ -143,7 +143,6 @@ func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage)
 		if err != nil {
 			return nil, err
 		}
-
 		// handle self-delegation
 		// Delegator and Validator address are the same
 		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgCreateValidator.ValidatorAddress)
@@ -163,6 +162,10 @@ func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage)
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgDelegate:
+		_, err := k.stkMsgServer.Delegate(ctx, unwrappedMsg.MsgDelegate)
+		if err != nil {
+			return nil, err
+		}
 		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgDelegate.DelegatorAddress)
 		if err != nil {
 			return nil, err
@@ -180,6 +183,10 @@ func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage)
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgUndelegate:
+		_, err := k.stkMsgServer.Undelegate(ctx, unwrappedMsg.MsgUndelegate)
+		if err != nil {
+			return nil, err
+		}
 		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgUndelegate.DelegatorAddress)
 		if err != nil {
 			return nil, err
@@ -195,6 +202,10 @@ func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage)
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgBeginRedelegate:
+		_, err := k.stkMsgServer.BeginRedelegate(ctx, unwrappedMsg.MsgBeginRedelegate)
+		if err != nil {
+			return nil, err
+		}
 		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgBeginRedelegate.DelegatorAddress)
 		if err != nil {
 			return nil, err
@@ -210,6 +221,10 @@ func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage)
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgCancelUnbondingDelegation:
+		_, err := k.stkMsgServer.CancelUnbondingDelegation(ctx, unwrappedMsg.MsgCancelUnbondingDelegation)
+		if err != nil {
+			return nil, err
+		}
 		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgCancelUnbondingDelegation.DelegatorAddress)
 		if err != nil {
 			return nil, err
@@ -223,6 +238,17 @@ func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage)
 		if err := k.RecordNewDelegationState(goCtx, delAddr, valAddr, amount, types.BondState_BONDED); err != nil {
 			return nil, err
 		}
+	case *types.QueuedMessage_MsgEditValidator:
+		_, err := k.stkMsgServer.EditValidator(ctx, unwrappedMsg.MsgEditValidator)
+		if err != nil {
+			return nil, err
+		}
+	case *types.QueuedMessage_MsgUpdateParams:
+		_, err := k.stkMsgServer.UpdateParams(ctx, unwrappedMsg.MsgUpdateParams)
+		if err != nil {
+			return nil, err
+		}
+
 	default:
 		panic(errorsmod.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
 	}
