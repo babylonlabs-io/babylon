@@ -58,6 +58,8 @@ signature R verification`
 `CreateBTCDelegationWithParamsFromBtcHeight`
 - [#443](https://github.com/babylonlabs-io/babylon/pull/443) Fix swagger generation for incentive missing
 `v1` in path
+- [#445](https://github.com/babylonlabs-io/babylon/pull/445) Reject BTC headers
+forks starting with already known header
 
 ## v1.0.0-rc3
 

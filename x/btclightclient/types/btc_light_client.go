@@ -13,7 +13,9 @@ import (
 )
 
 type BtcChainReadStore interface {
+	// Contract: in case of non-existent header, return error
 	GetHeaderByHash(hash *bbn.BTCHeaderHashBytes) (*BTCHeaderInfo, error)
+	// Contract: in case of non-existent header, return error
 	GetHeaderByHeight(height uint32) (*BTCHeaderInfo, error)
 	GetTip() *BTCHeaderInfo
 }
@@ -367,6 +369,15 @@ func (l *BtcLightClient) InsertHeaders(readStore BtcChainReadStore, headers []*w
 			RollbackInfo:    nil,
 		}, nil
 	} else {
+		firstExtHeader := firstHeaderOfExtensionChain.BlockHash()
+		firstExtHeaderHash := bbn.NewBTCHeaderHashBytesFromChainhash(&firstExtHeader)
+
+		_, err := readStore.GetHeaderByHash(&firstExtHeaderHash)
+
+		if err == nil {
+			return nil, ErrForkStartWithKnownHeader.Wrapf("first header of extension chain is known header: %s", firstExtHeaderHash.String())
+		}
+
 		// here we received potential new fork
 		parentHash := bbn.NewBTCHeaderHashBytesFromChainhash(&firstHeaderOfExtensionChain.PrevBlock)
 		forkParent, err := readStore.GetHeaderByHash(&parentHash)
