@@ -53,7 +53,7 @@ check of rewards
 - [#404](https://github.com/babylonlabs-io/babylon/pull/404) Improve adaptor
 signature nonce generation to match reference implementation
 - [#413](https://github.com/babylonlabs-io/babylon/pull/413) Fix adaptor
-signature R verification
+signature R verification`
 - [#441](https://github.com/babylonlabs-io/babylon/pull/441) Fix fuzzing test for
 `CreateBTCDelegationWithParamsFromBtcHeight`
 - [#443](https://github.com/babylonlabs-io/babylon/pull/443) Fix swagger generation for incentive missing
