@@ -54,6 +54,8 @@ check of rewards
 signature nonce generation to match reference implementation
 - [#413](https://github.com/babylonlabs-io/babylon/pull/413) Fix adaptor
 signature R verification
+- [#441](https://github.com/babylonlabs-io/babylon/pull/441) Fix fuzzing test for
+`CreateBTCDelegationWithParamsFromBtcHeight`
 
 ## v1.0.0-rc3
 
