@@ -412,7 +412,7 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper, &ak.ZoneConciergeKeeper), wasmOpts...)
+	wasmOpts = append(owasm.RegisterCustomPlugins(&epochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper, &ak.ZoneConciergeKeeper), wasmOpts...)
 	wasmOpts = append(owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(

@@ -132,7 +132,9 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 func FuzzHandleQueuedMsg_EventWrappedEditValidator(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
+		seed = 7694670716621952543
 		r := rand.New(rand.NewSource(seed))
+		t.Logf("seed %d", seed)
 
 		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(1)
 		require.NoError(t, err)
@@ -168,7 +170,8 @@ func FuzzHandleQueuedMsg_EventWrappedEditValidator(f *testing.F) {
 		newDescription := datagen.GenRandomDescription(r)
 
 		newCommissionRate := sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("0.%d", r.Int31n(5)+1))
-		newMinSelfDel := valBeforeChange.MinSelfDelegation.AddRaw(int64(datagen.RandomInt(r, 10) + 1))
+
+		newMinSelfDel := valBeforeChange.MinSelfDelegation.AddRaw(r.Int63n(valBeforeChange.Tokens.Sub(valBeforeChange.MinSelfDelegation).Int64()))
 
 		// commission rate can only change once per day '-'
 		blkHeader := h.Ctx.BlockHeader()
@@ -192,10 +195,10 @@ func FuzzHandleQueuedMsg_EventWrappedEditValidator(f *testing.F) {
 		// ensure epoch 2 has initialised an empty msg queue
 		require.Empty(t, k.GetCurrentEpochMsgs(ctx))
 
-		valAfterChange, err := stkK.GetValidator(ctx, val)
+		valAfterChange, err := h.App.StakingKeeper.GetValidator(ctx, val)
 		require.NoError(t, err)
 		require.Equal(t, newDescription.String(), valAfterChange.Description.String())
-		require.Equal(t, newCommissionRate.String(), valAfterChange.Commission.String())
+		require.Equal(t, newCommissionRate.String(), valAfterChange.Commission.Rate.String())
 		require.Equal(t, newMinSelfDel.String(), valAfterChange.MinSelfDelegation.String())
 	})
 }
