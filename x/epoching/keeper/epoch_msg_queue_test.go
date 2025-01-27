@@ -127,9 +127,9 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 	})
 }
 
-// FuzzHandleQueuedMsg_EventWrappedEditValidator tests HandleQueueMsg over EventWrappedEditValidator.
+// FuzzHandleQueuedMsg_MsgWrappedEditValidator tests HandleQueueMsg over MsgWrappedEditValidator.
 // It enqueues some EventWrappedEditValidator, enters a new epoch (which triggers HandleQueueMsg), and check if the validator data was modified
-func FuzzHandleQueuedMsg_EventWrappedEditValidator(f *testing.F) {
+func FuzzHandleQueuedMsg_MsgWrappedEditValidator(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		seed = 7694670716621952543
