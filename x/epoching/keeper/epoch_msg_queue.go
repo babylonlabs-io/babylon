@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
@@ -233,24 +232,6 @@ func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage)
 	}
 
 	return sdk.WrapServiceResult(ctx, res, err)
-}
-
-// based on a function with the same name in `baseapp.go`
-func cacheTxContext(ctx sdk.Context, txid []byte, msgid []byte, height uint64) (sdk.Context, storetypes.CacheMultiStore) {
-	ms := ctx.MultiStore()
-	// TODO: https://github.com/cosmos/cosmos-sdk/issues/2824
-	msCache := ms.CacheMultiStore()
-	if msCache.TracingEnabled() {
-		msCache = msCache.SetTracingContext(
-			map[string]interface{}{
-				"txHash":  fmt.Sprintf("%X", txid),
-				"msgHash": fmt.Sprintf("%X", msgid),
-				"height":  fmt.Sprintf("%d", height),
-			},
-		).(storetypes.CacheMultiStore)
-	}
-
-	return ctx.WithMultiStore(msCache), msCache
 }
 
 // msgQueueStore returns the queue of msgs of a given epoch
