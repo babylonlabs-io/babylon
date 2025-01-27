@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
@@ -107,31 +108,33 @@ func (k Keeper) GetCurrentEpochMsgs(ctx context.Context) []*types.QueuedMessage 
 }
 
 // HandleQueuedMsg unwraps a QueuedMessage and forwards it to the staking module
-func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage) (*sdk.Result, error) {
-	var (
-		res proto.Message
-		err error
-	)
+func (k Keeper) HandleQueuedMsg(goCtx context.Context, qMsg *types.QueuedMessage) (*sdk.Result, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	res, err := k.runUnwrappedMsg(ctx, qMsg)
+
+	return sdk.WrapServiceResult(ctx, res, err)
+}
+
+func (k Keeper) runUnwrappedMsg(ctx sdk.Context, qMsg *types.QueuedMessage) (proto.Message, error) {
+	msgSvrCtx, msCache := cacheTxContext(ctx, qMsg.TxId, qMsg.MsgId, qMsg.BlockHeight)
+
 	// record lifecycle for delegation
-	switch unwrappedMsg := msg.Msg.(type) {
+	switch msg := qMsg.Msg.(type) {
 	case *types.QueuedMessage_MsgCreateValidator:
-		res, err = k.stkMsgServer.CreateValidator(ctx, unwrappedMsg.MsgCreateValidator)
+		res, err := k.stkMsgServer.CreateValidator(msgSvrCtx, msg.MsgCreateValidator)
 		if err != nil {
-			return nil, err
+			return res, err
 		}
+		msCache.Write()
+
 		// handle self-delegation
 		// Delegator and Validator address are the same
-		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgCreateValidator.ValidatorAddress)
+		delAddr, valAddr, err := parseDelValAddr(msg.MsgCreateValidator.ValidatorAddress, msg.MsgCreateValidator.ValidatorAddress)
 		if err != nil {
 			return nil, err
 		}
-		valAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgCreateValidator.ValidatorAddress)
-		if err != nil {
-			return nil, err
-		}
-		amount := &unwrappedMsg.MsgCreateValidator.Value
+		amount := &msg.MsgCreateValidator.Value
 		// self-bonded to the created validator
 		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_CREATED); err != nil {
 			return nil, err
@@ -139,99 +142,116 @@ func (k Keeper) HandleQueuedMsg(goCtx context.Context, msg *types.QueuedMessage)
 		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_BONDED); err != nil {
 			return nil, err
 		}
+		return res, nil
+
 	case *types.QueuedMessage_MsgDelegate:
-		res, err = k.stkMsgServer.Delegate(ctx, unwrappedMsg.MsgDelegate)
+		res, err := k.stkMsgServer.Delegate(msgSvrCtx, msg.MsgDelegate)
 		if err != nil {
 			return nil, err
 		}
-		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgDelegate.DelegatorAddress)
+		msCache.Write()
+
+		del, val, err := parseDelValAddr(msg.MsgDelegate.DelegatorAddress, msg.MsgDelegate.ValidatorAddress)
 		if err != nil {
 			return nil, err
 		}
-		valAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgDelegate.ValidatorAddress)
-		if err != nil {
-			return nil, err
-		}
-		amount := &unwrappedMsg.MsgDelegate.Amount
+		amount := &msg.MsgDelegate.Amount
 		// created and bonded to the validator
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_CREATED); err != nil {
+		if err := k.RecordNewDelegationState(ctx, del, val, amount, types.BondState_CREATED); err != nil {
 			return nil, err
 		}
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_BONDED); err != nil {
+		if err := k.RecordNewDelegationState(ctx, del, val, amount, types.BondState_BONDED); err != nil {
 			return nil, err
 		}
+		return res, nil
+
 	case *types.QueuedMessage_MsgUndelegate:
-		res, err = k.stkMsgServer.Undelegate(ctx, unwrappedMsg.MsgUndelegate)
+		res, err := k.stkMsgServer.Undelegate(msgSvrCtx, msg.MsgUndelegate)
 		if err != nil {
 			return nil, err
 		}
-		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgUndelegate.DelegatorAddress)
+		msCache.Write()
+
+		del, val, err := parseDelValAddr(msg.MsgUndelegate.DelegatorAddress, msg.MsgUndelegate.ValidatorAddress)
 		if err != nil {
 			return nil, err
 		}
-		valAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgUndelegate.ValidatorAddress)
-		if err != nil {
-			return nil, err
-		}
-		amount := &unwrappedMsg.MsgUndelegate.Amount
+		amount := &msg.MsgUndelegate.Amount
 		// unbonding from the validator
 		// (in `ApplyMatureUnbonding`) AFTER mature, unbonded from the validator
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_UNBONDING); err != nil {
+		if err := k.RecordNewDelegationState(ctx, del, val, amount, types.BondState_UNBONDING); err != nil {
 			return nil, err
 		}
+		return res, nil
+
 	case *types.QueuedMessage_MsgBeginRedelegate:
-		res, err = k.stkMsgServer.BeginRedelegate(ctx, unwrappedMsg.MsgBeginRedelegate)
+		res, err := k.stkMsgServer.BeginRedelegate(msgSvrCtx, msg.MsgBeginRedelegate)
 		if err != nil {
 			return nil, err
 		}
-		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgBeginRedelegate.DelegatorAddress)
+		msCache.Write()
+
+		del, srcVal, err := parseDelValAddr(msg.MsgBeginRedelegate.DelegatorAddress, msg.MsgBeginRedelegate.ValidatorSrcAddress)
 		if err != nil {
 			return nil, err
 		}
-		srcValAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgBeginRedelegate.ValidatorSrcAddress)
-		if err != nil {
-			return nil, err
-		}
-		amount := &unwrappedMsg.MsgBeginRedelegate.Amount
+		amount := &msg.MsgBeginRedelegate.Amount
 		// unbonding from the source validator
 		// (in `ApplyMatureUnbonding`) AFTER mature, unbonded from the source validator, created/bonded to the destination validator
-		if err := k.RecordNewDelegationState(ctx, delAddr, srcValAddr, amount, types.BondState_UNBONDING); err != nil {
+		if err := k.RecordNewDelegationState(ctx, del, srcVal, amount, types.BondState_UNBONDING); err != nil {
 			return nil, err
 		}
+		return res, nil
+
 	case *types.QueuedMessage_MsgCancelUnbondingDelegation:
-		res, err = k.stkMsgServer.CancelUnbondingDelegation(ctx, unwrappedMsg.MsgCancelUnbondingDelegation)
+		res, err := k.stkMsgServer.CancelUnbondingDelegation(msgSvrCtx, msg.MsgCancelUnbondingDelegation)
 		if err != nil {
 			return nil, err
 		}
-		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgCancelUnbondingDelegation.DelegatorAddress)
+		msCache.Write()
+
+		del, val, err := parseDelValAddr(msg.MsgCancelUnbondingDelegation.DelegatorAddress, msg.MsgCancelUnbondingDelegation.ValidatorAddress)
 		if err != nil {
 			return nil, err
 		}
-		valAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgCancelUnbondingDelegation.ValidatorAddress)
-		if err != nil {
-			return nil, err
-		}
-		amount := &unwrappedMsg.MsgCancelUnbondingDelegation.Amount
+		amount := &msg.MsgCancelUnbondingDelegation.Amount
 		// this delegation is now bonded again
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_BONDED); err != nil {
+		if err := k.RecordNewDelegationState(ctx, del, val, amount, types.BondState_BONDED); err != nil {
 			return nil, err
 		}
+		return res, nil
+
 	case *types.QueuedMessage_MsgEditValidator:
-		res, err = k.stkMsgServer.EditValidator(ctx, unwrappedMsg.MsgEditValidator)
+		res, err := k.stkMsgServer.EditValidator(msgSvrCtx, msg.MsgEditValidator)
 		if err != nil {
-			return nil, err
+			return res, err
 		}
+		msCache.Write()
+		return res, nil
+
 	case *types.QueuedMessage_MsgUpdateParams:
-		res, err = k.stkMsgServer.UpdateParams(ctx, unwrappedMsg.MsgUpdateParams)
+		res, err := k.stkMsgServer.UpdateParams(msgSvrCtx, msg.MsgUpdateParams)
 		if err != nil {
-			return nil, err
+			return res, err
 		}
+		msCache.Write()
+		return res, nil
 
 	default:
-		panic(errorsmod.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
+		panic(errorsmod.Wrap(types.ErrInvalidQueuedMessageType, qMsg.String()))
 	}
+}
 
-	return sdk.WrapServiceResult(ctx, res, err)
+func parseDelValAddr(delAddr, valAddr string) (sdk.AccAddress, sdk.ValAddress, error) {
+	del, err := sdk.AccAddressFromBech32(delAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	val, err := sdk.ValAddressFromBech32(valAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return del, val, nil
 }
 
 // msgQueueStore returns the queue of msgs of a given epoch
@@ -252,4 +272,22 @@ func (k Keeper) msgQueueStore(ctx context.Context, epochNumber uint64) prefix.St
 func (k Keeper) msgQueueLengthStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return prefix.NewStore(storeAdapter, types.QueueLengthKey)
+}
+
+// based on a function with the same name in `baseapp.go`
+func cacheTxContext(ctx sdk.Context, txid []byte, msgid []byte, height uint64) (sdk.Context, storetypes.CacheMultiStore) {
+	ms := ctx.MultiStore()
+	// TODO: https://github.com/cosmos/cosmos-sdk/issues/2824
+	msCache := ms.CacheMultiStore()
+	if msCache.TracingEnabled() {
+		msCache = msCache.SetTracingContext(
+			map[string]interface{}{
+				"txHash":  fmt.Sprintf("%X", txid),
+				"msgHash": fmt.Sprintf("%X", msgid),
+				"height":  fmt.Sprintf("%d", height),
+			},
+		).(storetypes.CacheMultiStore)
+	}
+
+	return ctx.WithMultiStore(msCache), msCache
 }
