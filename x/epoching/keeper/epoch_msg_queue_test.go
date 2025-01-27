@@ -1,9 +1,12 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
 	"github.com/babylonlabs-io/babylon/x/epoching/types"
@@ -121,6 +124,79 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		require.NoError(t, err)
 		addedPower := helper.App.StakingKeeper.TokensToConsensusPower(ctx, coinWithOnePower.Amount.MulRaw(numNewDels))
 		require.Equal(t, valPower+addedPower, valPower2)
+	})
+}
+
+// FuzzHandleQueuedMsg_EventWrappedEditValidator tests HandleQueueMsg over EventWrappedEditValidator.
+// It enqueues some EventWrappedEditValidator, enters a new epoch (which triggers HandleQueueMsg), and check if the validator data was modified
+func FuzzHandleQueuedMsg_EventWrappedEditValidator(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(1)
+		require.NoError(t, err)
+		h := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
+		ctx, k, stkK, genAccs := h.Ctx, h.App.EpochingKeeper, h.App.StakingKeeper, h.GenAccs
+		params := k.GetParams(ctx)
+
+		// get genesis account's address, whose holder will be the delegator
+		require.NotNil(t, genAccs)
+		require.NotEmpty(t, genAccs)
+
+		// at epoch 1 right now
+		epoch := k.GetEpoch(ctx)
+		require.Equal(t, uint64(1), epoch.EpochNumber)
+
+		// get validator to be undelegated
+		valSet := k.GetCurrentValidatorSet(ctx)
+		val := sdk.ValAddress(valSet[0].Addr)
+
+		// ensure the validator's lifecycle data is generated
+		lc := k.GetValLifecycle(ctx, val)
+		require.NotNil(t, lc)
+		require.Equal(t, 1, len(lc.ValLife))
+		require.Equal(t, types.BondState_CREATED, lc.ValLife[0].State)
+		require.Equal(t, uint64(0), lc.ValLife[0].BlockHeight)
+
+		// stkP, err := stkK.GetParams(ctx)
+		// require.NoError(t, err)
+
+		valBeforeChange, err := stkK.GetValidator(ctx, val)
+		require.NoError(t, err)
+
+		newDescription := datagen.GenRandomDescription(r)
+
+		newCommissionRate := sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("0.%d", r.Int31n(5)+1))
+		newMinSelfDel := valBeforeChange.MinSelfDelegation.AddRaw(int64(datagen.RandomInt(r, 10) + 1))
+
+		// commission rate can only change once per day '-'
+		blkHeader := h.Ctx.BlockHeader()
+		blkHeader.Time = valBeforeChange.Commission.UpdateTime.Add(time.Hour * 25)
+		h.Ctx = h.Ctx.WithBlockHeader(blkHeader)
+
+		h.WrappedEditValidator(val, *newDescription, &newCommissionRate, &newMinSelfDel)
+
+		// ensure the msgs are queued
+		epochMsgs := k.GetCurrentEpochMsgs(ctx)
+		require.Len(t, epochMsgs, 1)
+
+		// go to BeginBlock of block 11, and thus entering epoch 2
+		for i := uint64(0); i < params.EpochInterval; i++ {
+			ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
+			require.NoError(t, err)
+		}
+		epoch = k.GetEpoch(ctx)
+		require.Equal(t, uint64(2), epoch.EpochNumber)
+
+		// ensure epoch 2 has initialised an empty msg queue
+		require.Empty(t, k.GetCurrentEpochMsgs(ctx))
+
+		valAfterChange, err := stkK.GetValidator(ctx, val)
+		require.NoError(t, err)
+		require.Equal(t, newDescription.String(), valAfterChange.Description.String())
+		require.Equal(t, newCommissionRate.String(), valAfterChange.Commission.String())
+		require.Equal(t, newMinSelfDel.String(), valAfterChange.MinSelfDelegation.String())
 	})
 }
 

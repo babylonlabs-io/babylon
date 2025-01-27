@@ -64,7 +64,6 @@ func NewAnteHandler(
 
 	anteHandler := sdk.ChainAnteDecorators(
 		NewWrappedAnteHandler(authAnteHandler),
-		epochingkeeper.NewDropValidatorMsgDecorator(epochingKeeper),
 		NewBtcValidationDecorator(btcConfig, btccKeeper),
 	)
 

@@ -8,6 +8,7 @@ import (
 // ensure that these message types implement the sdk.Msg interface
 var (
 	_ sdk.Msg = &MsgWrappedDelegate{}
+	_ sdk.Msg = &MsgWrappedEditValidator{}
 	_ sdk.Msg = &MsgWrappedUndelegate{}
 	_ sdk.Msg = &MsgWrappedBeginRedelegate{}
 	_ sdk.Msg = &MsgWrappedCancelUnbondingDelegation{}
@@ -17,6 +18,13 @@ var (
 // NewMsgWrappedDelegate creates a new MsgWrappedDelegate instance.
 func NewMsgWrappedDelegate(msg *stakingtypes.MsgDelegate) *MsgWrappedDelegate {
 	return &MsgWrappedDelegate{
+		Msg: msg,
+	}
+}
+
+// NewMsgWrappedEditValidator creates a new MsgWrappedDelegate instance.
+func NewMsgWrappedEditValidator(msg *stakingtypes.MsgEditValidator) *MsgWrappedEditValidator {
+	return &MsgWrappedEditValidator{
 		Msg: msg,
 	}
 }

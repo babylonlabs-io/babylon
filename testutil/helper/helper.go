@@ -240,6 +240,16 @@ func (h *Helper) WrappedDelegate(delegator sdk.AccAddress, val sdk.ValAddress, a
 	})
 }
 
+// WrappedEditValidator calls handler to edit the validator data
+func (h *Helper) WrappedEditValidator(val sdk.ValAddress, description stakingtypes.Description, newRate *math.LegacyDec, newMinSelfDelegation *math.Int) *sdk.Result {
+	h.t.Helper()
+	msg := stakingtypes.NewMsgEditValidator(val.String(), description, newRate, newMinSelfDelegation)
+	wmsg := types.NewMsgWrappedEditValidator(msg)
+	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
+		return h.MsgSrvr.WrappedEditValidator(ctx, wmsg)
+	})
+}
+
 // WrappedDelegateWithPower calls handler to delegate stake for a validator
 func (h *Helper) WrappedDelegateWithPower(delegator sdk.AccAddress, val sdk.ValAddress, power int64) *sdk.Result {
 	coin := sdk.NewCoin(appparams.DefaultBondDenom, h.App.StakingKeeper.TokensFromConsensusPower(h.Ctx, power))
@@ -287,7 +297,6 @@ func (h *Helper) Handle(action func(sdk.Context) (proto.Message, error)) *sdk.Re
 	r, err := sdk.WrapServiceResult(h.Ctx, res, err)
 	require.NoError(h.t, err)
 	require.NotNil(h.t, r)
-	require.NoError(h.t, err)
 	return r
 }
 

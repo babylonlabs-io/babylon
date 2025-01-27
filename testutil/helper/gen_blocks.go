@@ -129,10 +129,12 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 		LastBlockID: cmttypes.BlockID{
 			Hash: datagen.GenRandomByteArray(r, 32),
 		},
+		Time: h.Ctx.BlockTime(),
 	}
 	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
 		Height: newHeader.Height,
 		Hash:   newHeader.Hash(),
+		Time:   newHeader.Time,
 	}).WithBlockHeader(*newHeader.ToProto()).WithCometInfo(cometInfo)
 
 	// 3. prepare proposal with previous BLS sigs
@@ -166,6 +168,7 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 		Height:             newHeader.Height,
 		NextValidatorsHash: newHeader.NextValidatorsHash,
 		Hash:               newHeader.Hash(),
+		Time:               h.Ctx.BlockTime(),
 	})
 	if err != nil {
 		return emptyCtx, err
@@ -175,6 +178,7 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
 		Height:  newHeader.Height,
 		AppHash: resp.AppHash,
+		Time:    h.Ctx.BlockTime(),
 	})
 
 	_, err = h.App.Commit()
