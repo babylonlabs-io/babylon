@@ -123,11 +123,9 @@ module will invoke the Staking module's functionality that unbonds mature
 validators.
 
 **Disabling messages of the Staking module.** In order to keep the validator set
-unchanged during each epoch, the Epoching module intercepts and rejects
-staking-related messages that affect the validator set's stake distribution via
-the
-[AnteHandler](https://docs.cosmos.network/main/learn/advanced/baseapp#antehandler),
-Instead, the Epoching module defines wrapped versions of them and forwards their
+unchanged during each epoch, the routing of messages to Staking module is disabled.
+Instead, of sending the messages to the Staking module, the Epoching and Checkpointing
+modules defines wrapped versions of those messages and forwards their
 unwrapped forms to the Staking module upon the end of an epoch. In the [Staking
 module](https://github.com/cosmos/cosmos-sdk/blob/v0.50.3/proto/cosmos/staking/v1beta1/tx.proto),
 these messages include
@@ -139,13 +137,15 @@ these messages include
 - `MsgUndelegate` for undelegating from a delegator and a validator.
 - `MsgCancelUnbondingDelegation` for cancelling an unbonding delegation of a
   delegator.
+- `MsgEditValidator` for editing validator descriptions and commission.
+- `MsgUpdateParams` to update parameters of staking module.
 
-The above messages affect the validator set's stake distribution. The Epoching
-module implements an `AnteHandler` to reject these messages, while also
-implementing wrapped versions of them together with the Checkpointing module:
-`MsgWrappedCreateValidator`, `MsgWrappedDelegate`, `MsgWrappedBeginRedelegate`,
-and `MsgWrappedUndelegate`. The Epoching module receives these messages at any
-time, but will only process them at the end of each epoch.
+The above messages were received by the Staking message server, which now
+is being called at the end of an epoch. The routes of the above messages
+were never registered by the app router so if anyone tries to send it
+to a node it will error out. Since there is no message to be received
+by the Staking module, all of commands under `babylond tx staking` were
+removed.
 
 **Delaying wrapped messages to the end of epochs.** The Epoching module
 maintains a message queue for each epoch. Upon each wrapped message, the
@@ -254,14 +254,17 @@ message QueuedMessage {
     cosmos.staking.v1beta1.MsgUndelegate msg_undelegate = 7;
     cosmos.staking.v1beta1.MsgBeginRedelegate msg_begin_redelegate = 8;
     cosmos.staking.v1beta1.MsgCancelUnbondingDelegation msg_cancel_unbonding_delegation = 9;
+    cosmos.staking.v1beta1.MsgEditValidator msg_edit_validator = 10;
+    cosmos.staking.v1beta1.MsgUpdateParams msg_update_params = 11;
   }
 }
 ```
 
 In the Cosmos SDK, the `MsgCreateValidator`, `MsgDelegate`, `MsgUndelegate`,
-`MsgBeginRedelegate`, `MsgCancelUnbondingDelegation` messages of the Staking
-module might affect the validator set, and are thus wrapped into `QueuedMessage`
-objects. Their execution is delayed to the end of an epoch for execution.
+`MsgBeginRedelegate`, `MsgCancelUnbondingDelegation`, `MsgEditValidator` and
+`MsgUpdateParams` messages of the Staking. So here they are wrapped into
+`QueuedMessage` objects. Their execution is delayed to the end of an epoch
+for execution.
 
 ### Epoch validator set
 
@@ -271,30 +274,13 @@ same throughout the epoch, unless some validators get slashed during this epoch.
 The key is the epoch number concatenated with the validator's address, and the
 value is this validator's voting power (in `sdk.Int`) at this epoch.
 
-## Messages
-
-The Epoching module implements the epoched staking mechanism by using an
-[AnteHandler](https://docs.cosmos.network/main/learn/advanced/baseapp#antehandler)
-to intercept messages that affect the validator set's stake distribution, and
-implements the messages' epoched counterparts.
-
 ### Disabling Staking module messages by not registering in the router
 
-In Cosmos SDK, the
-[AnteHandler](https://docs.cosmos.network/main/learn/advanced/baseapp#antehandler)
-is a component responsible for pre-processing transactions. It functions prior
-to the execution of transaction logic, performing crucial tasks such as
-validating signatures, ensuring sufficient account funds for transaction fees,
-and setting up the necessary context for transaction processing. This offers
-flexibility in the sense that developers can customize AnteHandlers to suit the
-specific needs and rules of their applications.
-
-The Epoching module implements an
-[AnteHandler](./keeper/drop_validator_msg_decorator.go)
-`DropValidatorMsgDecorator` in order to intercept messages that affect the
-validator set's stake distribution in Cosmos SDK's Staking module. The messages
-include `MsgCreateValidator`, `MsgDelegate`, `MsgUndelegate`,
-`MsgBeginRedelegate`, `MsgCancelUnbondingDelegation`.
+In Cosmos SDK, the routing of messages is registered by each `AppModule`,
+to avoid bypassing the epoching validator set update by some special case
+like CosmWasm or `x/authz` module `MsgExec` the entire routing of `x/staking`
+is never registered, this is done at
+[RegisterServicesWithoutStaking](https://github.com/babylonlabs-io/babylon/blob/b9ac09b85b904816167741039e2e27ddb876429d/app/app.go#L590).
 
 ### Epoched staking messages
 
@@ -337,6 +323,23 @@ message MsgWrappedCancelUnbondingDelegation {
   option (cosmos.msg.v1.signer) = "msg";
 
   cosmos.staking.v1beta1.MsgCancelUnbondingDelegation msg = 1;
+}
+// MsgWrappedEditValidator defines a message for updating validator description
+// and commission rate.
+message MsgWrappedEditValidator {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  option (cosmos.msg.v1.signer) = "msg";
+
+  cosmos.staking.v1beta1.MsgEditValidator msg = 1;
+}
+// MsgWrappedStakingUpdateParams defines a message for updating x/staking module parameters.
+message MsgWrappedStakingUpdateParams {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  option (cosmos.msg.v1.signer) = "msg";
+
+  cosmos.staking.v1beta1.MsgUpdateParams msg = 1;
 }
 ```
 
@@ -519,6 +522,27 @@ message EventWrappedCancelUnbondingDelegation {
   uint64 amount = 3;
   int64 creation_height = 4;
   uint64 epoch_boundary = 5;
+}
+// EventWrappedEditValidator is the event emitted when a MsgWrappedEditValidator has been queued
+message EventWrappedEditValidator {
+  string validator_address = 1;
+  uint64 epoch_boundary = 2;
+}
+// EventWrappedStakingUpdateParams is the event emitted when a MsgWrappedStakingUpdateParams has been queued
+message EventWrappedStakingUpdateParams {
+  // unbonding_time is the time duration of unbonding.
+  string unbonding_time = 1;
+  // max_validators is the maximum number of validators.
+  uint32 max_validators = 2;
+  // max_entries is the max entries for either unbonding delegation or redelegation (per pair/trio).
+  uint32 max_entries = 3;
+  // historical_entries is the number of historical entries to persist.
+  uint32 historical_entries = 4;
+  // bond_denom defines the bondable coin denomination.
+  string bond_denom = 5;
+  // min_commission_rate is the chain-wide minimum commission rate that a validator can charge their delegators
+  string min_commission_rate = 6;
+  uint64 epoch_boundary = 7;
 }
 ```
 
