@@ -267,7 +267,7 @@ func FuzzCreateBTCDelegationWithParamsFromBtcHeight(f *testing.F) {
 		r := rand.New(rand.NewSource(time.Now().Unix()))
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
-
+		btcTipHeight := uint32(30)
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
@@ -281,14 +281,16 @@ func FuzzCreateBTCDelegationWithParamsFromBtcHeight(f *testing.F) {
 		currentParams := versionedParams.Params
 
 		maxGapBlocksBetweenParams := datagen.RandomUInt32(r, 100) + 100
-		expectedParamsBlockHeight := datagen.RandomUInt32(r, maxGapBlocksBetweenParams) + currentParams.BtcActivationHeight + 1
+		// we are adding btcTipHeight so that delegation will always be included
+		// after the initial tip height
+		expectedParamsBlockHeight := btcTipHeight + datagen.RandomUInt32(r, maxGapBlocksBetweenParams) + currentParams.BtcActivationHeight + 1
 		expectedParamsVersion := versionedParams.Version + 1
 
 		currentParams.BtcActivationHeight = expectedParamsBlockHeight
 		err := k.SetParams(ctx, currentParams)
 		require.NoError(t, err)
 
-		nextBtcActivationHeight := datagen.RandomUInt32(r, maxGapBlocksBetweenParams) + currentParams.BtcActivationHeight + 1
+		nextBtcActivationHeight := btcTipHeight + datagen.RandomUInt32(r, maxGapBlocksBetweenParams) + currentParams.BtcActivationHeight + 1
 		currentParams.BtcActivationHeight = nextBtcActivationHeight
 		err = k.SetParams(ctx, currentParams)
 		require.NoError(t, err)
@@ -319,7 +321,7 @@ func FuzzCreateBTCDelegationWithParamsFromBtcHeight(f *testing.F) {
 			false,
 			false,
 			btcBlockHeight,
-			30,
+			btcTipHeight,
 		)
 		h.NoError(err)
 		require.NotNil(t, btcDel.ParamsVersion, expectedParamsVersion)
