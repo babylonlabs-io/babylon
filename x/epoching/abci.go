@@ -111,7 +111,6 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 				// skip this failed msg
 				continue
 			}
-			// fmt.Printf("\nprinting end blocker res %+v", res)
 			// for each event, emit an wrapped event EventTypeHandleQueuedMsg, which attaches the original attributes plus the original event type, the epoch number, txid and msgid to the event here
 			for _, event := range res.Events {
 				err := sdkCtx.EventManager().EmitTypedEvent(
