@@ -58,6 +58,7 @@ func NewHelper(t *testing.T) *Helper {
 // NewHelperWithValSet is same as NewHelper, except that it creates a set of validators
 // the privSigner is the 0th validator in valSet
 func NewHelperWithValSet(t *testing.T, valSet *datagen.GenesisValidators, privSigner *signer.PrivSigner) *Helper {
+	t.Helper()
 	// generate the genesis account
 	signerPubKey := privSigner.WrappedPV.Key.PubKey
 	acc := authtypes.NewBaseAccount(signerPubKey.Address().Bytes(), &cosmosed.PubKey{Key: signerPubKey.Bytes()}, 0, 0)

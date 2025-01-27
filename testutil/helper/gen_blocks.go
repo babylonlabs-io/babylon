@@ -94,6 +94,7 @@ func (h *Helper) genAndApplyEmptyBlock() error {
 }
 
 func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, error) {
+	h.t.Helper()
 	emptyCtx := sdk.Context{}
 	if h.App.LastBlockHeight() == 0 {
 		if err := h.genAndApplyEmptyBlock(); err != nil {
