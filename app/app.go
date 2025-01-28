@@ -597,12 +597,32 @@ func (app *BabylonApp) RegisterServicesWithoutStaking() {
 		panic(err)
 	}
 
-	// still register the staking queries
-	stkq := stakingkeeper.NewQuerier(app.StakingKeeper)
-	stakingtypes.RegisterQueryServer(app.configurator.QueryServer(), stkq)
-
 	// adds the staking module back it back
 	app.ModuleManager.Modules[stakingtypes.ModuleName] = stkModTemp
+}
+
+// RegisterStakingQueryAndMigrations registrates in the configurator
+// the x/staking query server and its migrations
+func (app *BabylonApp) RegisterStakingQueryAndMigrations() {
+	cfg, stkK := app.configurator, app.StakingKeeper
+	stkq := stakingkeeper.NewQuerier(stkK)
+
+	stakingtypes.RegisterQueryServer(cfg.QueryServer(), stkq)
+
+	ls := app.GetSubspace(stakingtypes.ModuleName)
+	m := stakingkeeper.NewMigrator(stkK, ls)
+	if err := cfg.RegisterMigration(stakingtypes.ModuleName, 1, m.Migrate1to2); err != nil {
+		panic(fmt.Sprintf("failed to migrate x/%s from version 1 to 2: %v", stakingtypes.ModuleName, err))
+	}
+	if err := cfg.RegisterMigration(stakingtypes.ModuleName, 2, m.Migrate2to3); err != nil {
+		panic(fmt.Sprintf("failed to migrate x/%s from version 2 to 3: %v", stakingtypes.ModuleName, err))
+	}
+	if err := cfg.RegisterMigration(stakingtypes.ModuleName, 3, m.Migrate3to4); err != nil {
+		panic(fmt.Sprintf("failed to migrate x/%s from version 3 to 4: %v", stakingtypes.ModuleName, err))
+	}
+	if err := cfg.RegisterMigration(stakingtypes.ModuleName, 4, m.Migrate4to5); err != nil {
+		panic(fmt.Sprintf("failed to migrate x/%s from version 4 to 5: %v", stakingtypes.ModuleName, err))
+	}
 }
 
 // GetBaseApp returns the BaseApp of BabylonApp
