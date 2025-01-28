@@ -204,7 +204,7 @@ func FuzzMsgWrappedUpdateStakingParams(f *testing.F) {
 
 		ctx, k, stkK := h.Ctx, h.App.EpochingKeeper, h.App.StakingKeeper
 
-		newUnbondingTime := time.Duration(time.Hour * time.Duration(r.Intn(100)+1))
+		newUnbondingTime := time.Hour * time.Duration(r.Intn(100)+1)
 		newMaxValidators := r.Uint32() + 1
 		newMaxEntries := r.Uint32() + 1
 		newHistoricalEntries := r.Uint32() + 1
