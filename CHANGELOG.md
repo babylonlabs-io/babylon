@@ -43,6 +43,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 This PR contains a series of PRs on multi-staking support and BTC stakingintegration.
 - [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
 check of rewards
+
+### Bug fixes
+
+- [#443](https://github.com/babylonlabs-io/babylon/pull/443) Fix swagger generation for incentive missing
+`v1` in path
+- [#445](https://github.com/babylonlabs-io/babylon/pull/445) Reject BTC headers
+forks starting with already known header
+
+## v1.0.0-rc4
+
+### Improvements
+
 - [#419](https://github.com/babylonlabs-io/babylon/pull/419) Add new modules to swagger config
 - [#429](https://github.com/babylonlabs-io/babylon/pull/429) chore: remove cosmos/relayer dependency
 
@@ -53,13 +65,9 @@ check of rewards
 - [#404](https://github.com/babylonlabs-io/babylon/pull/404) Improve adaptor
 signature nonce generation to match reference implementation
 - [#413](https://github.com/babylonlabs-io/babylon/pull/413) Fix adaptor
-signature R verification`
+signature R verification
 - [#441](https://github.com/babylonlabs-io/babylon/pull/441) Fix fuzzing test for
 `CreateBTCDelegationWithParamsFromBtcHeight`
-- [#443](https://github.com/babylonlabs-io/babylon/pull/443) Fix swagger generation for incentive missing
-`v1` in path
-- [#445](https://github.com/babylonlabs-io/babylon/pull/445) Reject BTC headers
-forks starting with already known header
 
 ## v1.0.0-rc3
 
