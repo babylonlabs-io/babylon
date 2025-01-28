@@ -49,3 +49,10 @@ func NewMsgWrappedCancelUnbondingDelegation(msg *stakingtypes.MsgCancelUnbonding
 		Msg: msg,
 	}
 }
+
+// NewMsgWrappedStakingUpdateParams creates a new MsgWrappedStakingUpdateParams instance.
+func NewMsgWrappedStakingUpdateParams(msg *stakingtypes.MsgUpdateParams) *MsgWrappedStakingUpdateParams {
+	return &MsgWrappedStakingUpdateParams{
+		Msg: msg,
+	}
+}

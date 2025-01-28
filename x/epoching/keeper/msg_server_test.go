@@ -11,6 +11,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
 	"github.com/babylonlabs-io/babylon/x/epoching"
@@ -191,5 +192,57 @@ func FuzzMsgWrappedEditValidator(f *testing.F) {
 		require.Equal(t, newDescription.String(), valAfterChange.Description.String())
 		require.Equal(t, newCommissionRate.String(), valAfterChange.Commission.Rate.String())
 		require.Equal(t, newMinSelfDel.String(), valAfterChange.MinSelfDelegation.String())
+	})
+}
+
+func FuzzMsgWrappedUpdateStakingParams(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		h := testhelper.NewHelper(t)
+
+		ctx, k, stkK := h.Ctx, h.App.EpochingKeeper, h.App.StakingKeeper
+
+		newUnbondingTime := time.Duration(time.Hour * time.Duration(r.Intn(100)+1))
+		newMaxValidators := r.Uint32() + 1
+		newMaxEntries := r.Uint32() + 1
+		newHistoricalEntries := r.Uint32() + 1
+		newBondDenom := datagen.GenRandomDenom(r)
+		newMinCommissionRate := datagen.GenRandomCommission(r)
+
+		newParams := stakingtypes.NewParams(newUnbondingTime, newMaxValidators, newMaxEntries, newHistoricalEntries, newBondDenom, newMinCommissionRate)
+
+		msg := &stakingtypes.MsgUpdateParams{
+			Authority: appparams.AccGov.String(),
+			Params:    newParams,
+		}
+		wMsg := types.NewMsgWrappedStakingUpdateParams(msg)
+
+		res, err := h.MsgSrvr.WrappedStakingUpdateParams(ctx, wMsg)
+		h.NoError(err)
+		require.NotNil(t, res)
+
+		epochMsgs := k.GetCurrentEpochMsgs(ctx)
+		require.Len(t, epochMsgs, 1)
+
+		epoch := k.GetEpoch(ctx)
+		info := ctx.HeaderInfo()
+		info.Height = int64(epoch.GetLastBlockHeight())
+
+		ctx = ctx.WithHeaderInfo(info)
+
+		valsetUpdate, err := epoching.EndBlocker(ctx, k)
+		h.NoError(err)
+		require.Len(t, valsetUpdate, 0)
+
+		stakingParamsAfterChange, err := stkK.GetParams(ctx)
+		h.NoError(err)
+		require.Equal(t, newUnbondingTime, stakingParamsAfterChange.UnbondingTime)
+		require.Equal(t, newMaxValidators, stakingParamsAfterChange.MaxValidators)
+		require.Equal(t, newMaxEntries, stakingParamsAfterChange.MaxEntries)
+		require.Equal(t, newHistoricalEntries, stakingParamsAfterChange.HistoricalEntries)
+		require.Equal(t, newBondDenom, stakingParamsAfterChange.BondDenom)
+		require.Equal(t, newMinCommissionRate.String(), stakingParamsAfterChange.MinCommissionRate.String())
 	})
 }
