@@ -103,6 +103,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/cosmos/ibc-go/modules/capability"
@@ -595,6 +596,10 @@ func (app *BabylonApp) RegisterServicesWithoutStaking() {
 	if err := app.ModuleManager.RegisterServices(app.configurator); err != nil {
 		panic(err)
 	}
+
+	// still register the staking queries
+	stkq := stakingkeeper.NewQuerier(app.StakingKeeper)
+	stakingtypes.RegisterQueryServer(app.configurator.QueryServer(), stkq)
 
 	// adds the staking module back it back
 	app.ModuleManager.Modules[stakingtypes.ModuleName] = stkModTemp
