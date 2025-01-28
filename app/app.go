@@ -597,6 +597,8 @@ func (app *BabylonApp) RegisterServicesWithoutStaking() {
 		panic(err)
 	}
 
+	app.RegisterStakingQueryAndMigrations()
+
 	// adds the staking module back it back
 	app.ModuleManager.Modules[stakingtypes.ModuleName] = stkModTemp
 }
