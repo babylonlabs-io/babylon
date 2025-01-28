@@ -59,12 +59,14 @@
       "url": "./tmp-swagger-gen/babylon/btcstkconsumer/v1/query.swagger.json",
       "operationIds": {
         "rename": {
-          "Params": "BtcStkConsumerParams"
+          "Params": "BtcStkConsumerParams",
+          "FinalityProviders": "FinalityProvidersConsumer",
+          "FinalityProvider": "FinalityProviderConsumer"
         }
       }
     },
     {
-      "url": "./tmp-swagger-gen/babylon/incentive/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/babylon/incentive/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "IncentiveParams"
