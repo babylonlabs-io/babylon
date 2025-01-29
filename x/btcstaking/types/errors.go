@@ -31,4 +31,6 @@ var (
 	ErrFpNotJailed               = errorsmod.Register(ModuleName, 1122, "the finality provider is not jailed")
 	ErrDuplicatedCovenantSig     = errorsmod.Register(ModuleName, 1123, "the covenant signature is already submitted")
 	ErrStakingTxIncludedTooEarly = errorsmod.Register(ModuleName, 1124, "the staking transaction is included too early in BTC chain")
+	ErrConsumerIDNotRegistered   = errorsmod.Register(ModuleName, 1125, "Consumer is not registered")
+	ErrNoBabylonFPRestaked       = errorsmod.Register(ModuleName, 1126, "the BTC delegation request does not restake to any Babylon finality provider")
 )

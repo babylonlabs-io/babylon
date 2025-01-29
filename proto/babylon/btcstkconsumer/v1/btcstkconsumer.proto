@@ -1,0 +1,46 @@
+syntax = "proto3";
+package babylon.btcstkconsumer.v1;
+
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types";
+
+// ConsumerType defines the type of consumer chain
+enum ConsumerType {
+  // COSMOS represents a Cosmos SDK chain consumer
+  COSMOS = 0;
+  // ETH_L2 represents an Ethereum L2 chain consumer
+  ETH_L2 = 1;
+}
+
+// ConsumerRegister is the registration information of a consumer
+message ConsumerRegister {
+  // consumer_id is the ID of the consumer
+  // - for Cosmos SDK chains, the consumer ID will be the IBC client ID
+  // - for ETH L2 chains, the consumer ID will be the chain ID of the ETH L2
+  //   chain
+  string consumer_id = 1;
+  // consumer_name is the name of the consumer
+  string consumer_name = 2;
+  // consumer_description is a description for the consumer (can be empty)
+  string consumer_description = 3;
+  // consumer_metadata is necessary metadata of the consumer, and the data
+  // depends on the type of integration
+  oneof consumer_metadata {
+    CosmosConsumerMetadata cosmos_consumer_metadata = 4;
+    ETHL2ConsumerMetadata eth_l2_consumer_metadata = 5;
+  };
+}
+
+// CosmosConsumerMetadata is the metadata for the Cosmos integration
+message CosmosConsumerMetadata {
+  // channel_id defines the IBC channel ID for the consumer chain
+  string channel_id = 1;
+}
+
+// ETHL2ConsumerMetadata is the metadata for the ETH L2 integration
+message ETHL2ConsumerMetadata {
+  // finality_contract_address is the address of the finality contract for
+  // the ETH L2 integration
+  string finality_contract_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}

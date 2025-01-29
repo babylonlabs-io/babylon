@@ -18,6 +18,7 @@ import (
 )
 
 const (
+	FlagConsumerId      = "consumer-id"
 	FlagMoniker         = "moniker"
 	FlagIdentity        = "identity"
 	FlagWebsite         = "website"
@@ -55,7 +56,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		Short: "Create a finality provider",
 		Long: strings.TrimSpace(
-			`Create a finality provider.`, // TODO: example
+			`Creates a finality provider for Babylon or a Consumer chain.`, // TODO: example
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -66,6 +67,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 			fs := cmd.Flags()
 
 			// get description
+			consumerID, _ := fs.GetString(FlagConsumerId)
 			moniker, _ := fs.GetString(FlagMoniker)
 			identity, _ := fs.GetString(FlagIdentity)
 			website, _ := fs.GetString(FlagWebsite)
@@ -103,6 +105,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 				Commission:  &rate,
 				BtcPk:       btcPK,
 				Pop:         pop,
+				ConsumerId:  consumerID,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
@@ -110,6 +113,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 	}
 
 	fs := cmd.Flags()
+	fs.String(FlagConsumerId, "", "The finality provider's consumer ID, if any")
 	fs.String(FlagMoniker, "", "The finality provider's (optional) moniker")
 	fs.String(FlagWebsite, "", "The finality provider's (optional) website")
 	fs.String(FlagSecurityContact, "", "The finality provider's (optional) security contact email")
@@ -190,7 +194,7 @@ func NewEditFinalityProviderCmd() *cobra.Command {
 
 func NewCreateBTCDelegationCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-btc-delegation [btc_pk] [pop_hex] [staking_tx] [inclusion_proof] [fp_pk] [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig]",
+		Use:   "create-btc-delegation [btc_pk] [pop_hex] [staking_tx] [inclusion_proof] [fp_pk1],[fp_pk2],... [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig]",
 		Args:  cobra.ExactArgs(14),
 		Short: "Create a BTC delegation",
 		Long: strings.TrimSpace(
@@ -230,11 +234,15 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				}
 			}
 
-			// TODO: Support multiple finality providers
-			// get finality provider PK
-			fpPK, err := bbn.NewBIP340PubKeyFromHex(args[4])
-			if err != nil {
-				return err
+			// get finality provider PKs
+			fpPKStrs := strings.Split(args[4], ",")
+			fpPKs := make([]bbn.BIP340PubKey, len(fpPKStrs))
+			for i := range fpPKStrs {
+				fpPK, err := bbn.NewBIP340PubKeyFromHex(fpPKStrs[i])
+				if err != nil {
+					return err
+				}
+				fpPKs[i] = *fpPK
 			}
 
 			// get staking time
@@ -292,7 +300,7 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 			msg := types.MsgCreateBTCDelegation{
 				StakerAddr:                    clientCtx.FromAddress.String(),
 				BtcPk:                         btcPK,
-				FpBtcPkList:                   []bbn.BIP340PubKey{*fpPK},
+				FpBtcPkList:                   fpPKs,
 				Pop:                           pop,
 				StakingTime:                   uint32(stakingTime),
 				StakingValue:                  int64(stakingValue),

@@ -81,6 +81,7 @@ func (k Keeper) ApplyMatureUnbonding(ctx context.Context, epochNumber uint64) {
 			panic(err)
 		}
 
+		// TODO: emit typed event
 		currentSdkCtx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				stakingtypes.EventTypeCompleteUnbonding,
@@ -135,6 +136,7 @@ func (k Keeper) ApplyMatureUnbonding(ctx context.Context, epochNumber uint64) {
 			panic(err)
 		}
 
+		// TODO: emit typed event
 		currentSdkCtx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				stakingtypes.EventTypeCompleteRedelegation,

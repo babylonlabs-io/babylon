@@ -347,35 +347,23 @@ func (n *NodeConfig) QueryContractsFromId(codeId int) ([]string, error) {
 	return contractsResponse.Contracts, nil
 }
 
-func (n *NodeConfig) QueryWasmSmart(contract string, msg string, result any) error {
-	// base64-encode the msg
-	encodedMsg := base64.StdEncoding.EncodeToString([]byte(msg))
+func (n *NodeConfig) QueryWasmSmart(contract string, queryMsg string) (*wasmtypes.QuerySmartContractStateResponse, error) {
+	// base64-encode the queryMsg
+	encodedMsg := base64.StdEncoding.EncodeToString([]byte(queryMsg))
 	path := fmt.Sprintf("/cosmwasm/wasm/v1/contract/%s/smart/%s", contract, encodedMsg)
 
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var response wasmtypes.QuerySmartContractStateResponse
 	err = util.Cdc.UnmarshalJSON(bz, &response)
 	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(response.Data, &result)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (n *NodeConfig) QueryWasmSmartObject(contract string, msg string) (resultObject map[string]interface{}, err error) {
-	err = n.QueryWasmSmart(contract, msg, &resultObject)
-	if err != nil {
 		return nil, err
 	}
-	return resultObject, nil
+
+	return &response, nil
 }
 
 func (n *NodeConfig) QueryProposal(proposalNumber int) govtypesv1.QueryProposalResponse {

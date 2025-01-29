@@ -7,6 +7,11 @@ import "amino/amino.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 
+// EventNewFinalityProvider is the event emitted when new finality provider is created
+message EventNewFinalityProvider {
+  FinalityProvider fp = 1;
+}
+
 // EventFinalityProviderCreated is the event emitted when a finality provider is created
 message EventFinalityProviderCreated {
   // btc_pk_hex is the hex string of Bitcoin secp256k1 PK of this finality provider
@@ -73,19 +78,27 @@ message EventPowerDistUpdate {
   // is slashed
   // TODO: unify with existing slashing events
   message EventSlashedFinalityProvider {
-    bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+    bytes pk = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey"];
+  }
+
+  // EventSlashedBTCDelegation is emitted for each BTC delegation that restakes to a slashed consumer finality provider.
+  // It indicates that the voting power of affected Babylon finality providers will be discounted for this delegation.
+  message EventSlashedBTCDelegation {
+    // staking_tx_hash is the hash of the staking tx.
+    // It uniquely identifies a BTC delegation
+    string staking_tx_hash = 1;
   }
 
   // EventJailedFinalityProvider defines an event that a finality provider
   // is jailed after being detected sluggish
   message EventJailedFinalityProvider {
-    bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+    bytes pk = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey"];
   }
 
   // EventUnjailedFinalityProvider defines an event that a jailed finality provider
   // is unjailed after the jailing period is passed
   message EventUnjailedFinalityProvider {
-    bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+    bytes pk = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey"];
   }
 
   // ev is the event that affects voting power distribution
@@ -98,6 +111,8 @@ message EventPowerDistUpdate {
     EventUnjailedFinalityProvider unjailed_fp = 3;
     // btc_del_state_update means a BTC delegation's state is updated
     EventBTCDelegationStateUpdate btc_del_state_update = 4;
+    // slashed_btc_delegation represents the affected BTC delegation when a consumer FP is slashed
+    EventSlashedBTCDelegation slashed_btc_delegation = 5;
   }
 }
 
