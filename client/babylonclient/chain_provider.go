@@ -5,6 +5,11 @@ package babylonclient
 
 import (
 	"context"
+	"time"
+
+	"github.com/cosmos/cosmos-sdk/client/tx"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 )
 
 type BroadcastMode string
@@ -48,6 +53,25 @@ type ChainProvider interface {
 		asyncCtx context.Context,
 		asyncCallbacks []func(*RelayerTxResponse, error),
 	) error
+	CalculateGas(ctx context.Context, txf tx.Factory, signingKey string, msgs ...sdk.Msg) (txtypes.SimulateResponse, uint64, error)
+	BroadcastTx(
+		ctx context.Context, // context for tx broadcast
+		tx []byte, // raw tx to be broadcast
+		asyncCtx context.Context, // context for async wait for block inclusion after successful tx broadcast
+		asyncTimeout time.Duration, // timeout for waiting for block inclusion
+		asyncCallbacks []func(*RelayerTxResponse, error), // callback for success/fail of the wait for block inclusion
+	) error
+	WaitForTx(
+		ctx context.Context,
+		txHash []byte,
+		waitTimeout time.Duration,
+		callbacks []func(*RelayerTxResponse, error),
+	)
+	WaitForBlockInclusion(
+		ctx context.Context,
+		txHash []byte,
+		waitTimeout time.Duration,
+	) (*sdk.TxResponse, error)
 	ChainName() string
 	ChainId() string
 	ProviderConfig() ProviderConfig
