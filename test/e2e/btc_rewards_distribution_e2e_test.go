@@ -126,6 +126,9 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 	n2, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
+	n1.WaitForNextBlock()
+	n2.WaitForNextBlock()
+
 	s.fp1Addr = n1.KeysAdd(wFp1)
 	s.fp2Addr = n2.KeysAdd(wFp2)
 
@@ -174,6 +177,9 @@ func (s *BtcRewardsDistribution) Test2CreateFirstBtcDelegations() {
 	s.CreateBTCDelegationAndCheck(n2, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, s.fp1Del2StakingAmt)
 	// fp2Del1
 	s.CreateBTCDelegationAndCheck(n2, wDel1, s.fp2, s.del1BTCSK, s.del1Addr, s.fp2Del1StakingAmt)
+
+	resp := n2.QueryBtcDelegations(bstypes.BTCDelegationStatus_ANY)
+	require.Len(s.T(), resp.BtcDelegations, 3)
 }
 
 // Test3SubmitCovenantSignature covenant approves all the 3 BTC delegation
@@ -198,7 +204,7 @@ func (s *BtcRewardsDistribution) Test3SubmitCovenantSignature() {
 	n1.WaitForNextBlock()
 
 	pendingDelsResp := n1.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
-	s.Equal(len(pendingDelsResp), 3)
+	s.Require().Equal(len(pendingDelsResp), 3)
 
 	for _, pendingDelResp := range pendingDelsResp {
 		pendingDel, err := ParseRespBTCDelToBTCDel(pendingDelResp)
@@ -211,9 +217,9 @@ func (s *BtcRewardsDistribution) Test3SubmitCovenantSignature() {
 
 	// ensure the BTC delegation has covenant sigs now
 	activeDelsSet := n1.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
-	s.Len(activeDelsSet, 3)
+	s.Require().Len(activeDelsSet, 3)
 	for _, activeDel := range activeDelsSet {
-		s.True(activeDel.Active)
+		s.Require().True(activeDel.Active)
 	}
 }
 
@@ -252,6 +258,14 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 		fp2CommitPubRandList.Commitment,
 		fp2CommitPubRandList.Sig,
 	)
+
+	n1.WaitForNextBlock()
+	n2.WaitForNextBlock()
+
+	fp1CommitPubRand := n1.QueryListPubRandCommit(fp1CommitPubRandList.FpBtcPk)
+	s.Require().Len(fp1CommitPubRand, int(numPubRand))
+	fp2CommitPubRand := n2.QueryListPubRandCommit(fp2CommitPubRandList.FpBtcPk)
+	s.Require().Len(fp2CommitPubRand, int(numPubRand))
 
 	n1.WaitUntilCurrentEpochIsSealedAndFinalized(1)
 

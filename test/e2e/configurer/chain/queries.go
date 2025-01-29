@@ -440,7 +440,7 @@ func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch uint64
 			return false
 		}
 		return lastFinalizedEpoch >= currentEpoch
-	}, time.Minute, time.Millisecond*200)
+	}, time.Minute*2, time.Millisecond*200)
 	return lastFinalizedEpoch
 }
 
