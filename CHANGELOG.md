@@ -41,13 +41,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#421](https://github.com/babylonlabs-io/babylon/pull/421) Add checks to public
 randomness commit at `TestBTCRewardsDistribution`.
+- [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
+check of rewards
+- [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public
 
 ### State Machine Breaking
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC stakingintegration.
-- [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
-check of rewards
 
 ### Bug fixes
 
