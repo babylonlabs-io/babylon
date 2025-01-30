@@ -5,7 +5,10 @@ import (
 	"io"
 	"os"
 
+	"github.com/babylonlabs-io/babylon/cmd/babylond/opendb"
+
 	confixcmd "cosmossdk.io/tools/confix/cmd"
+
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/babylonlabs-io/babylon/app/signer"
@@ -24,7 +27,6 @@ import (
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -42,6 +44,10 @@ import (
 	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
+	ethermintclient "github.com/evmos/ethermint/client"
+	"github.com/evmos/ethermint/crypto/hd"
+	ethermintserver "github.com/evmos/ethermint/server"
+	srvflags "github.com/evmos/ethermint/server/flags"
 )
 
 // NewRootCmd creates a new root command for babylond. It is called once in the
@@ -58,8 +64,10 @@ func NewRootCmd() *cobra.Command {
 		WithLegacyAmino(tempApp.LegacyAmino()).
 		WithInput(os.Stdin).
 		WithAccountRetriever(types.AccountRetriever{}).
+		WithBroadcastMode(flags.BroadcastSync).
 		WithHomeDir(app.DefaultNodeHome).
-		WithViper("") // In app, we don't use any prefix for env variables.
+		WithKeyringOptions(hd.EthSecp256k1Option()).
+		WithViper("")
 
 	rootCmd := &cobra.Command{
 		Use:   "babylond",
@@ -133,6 +141,28 @@ func NewRootCmd() *cobra.Command {
 		panic(err)
 	}
 
+	// Add Ethermint server commands (this already includes the JSON-RPC flags)
+	opts := ethermintserver.StartOptions{
+		AppCreator:      newApp,
+		DefaultNodeHome: app.DefaultNodeHome,
+		DBOpener:        opendb.OpenDB,
+	}
+	ethermintserver.AddCommands(rootCmd, opts, appExport, addModuleInitFlags)
+
+	// Add Ethermint client commands
+	rootCmd.AddCommand(
+		ethermintclient.ValidateChainID(
+			genutilcli.InitCmd(tempApp.BasicModuleManager, app.DefaultNodeHome),
+		),
+		ethermintclient.KeyCommands(app.DefaultNodeHome),
+	)
+
+	// Add global server flags
+	rootCmd, err := srvflags.AddTxFlags(rootCmd)
+	if err != nil {
+		panic(err)
+	}
+
 	return rootCmd
 }
 
@@ -151,22 +181,23 @@ func initCometConfig() *cmtcfg.Config {
 // initAppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
 func initAppConfig() (string, interface{}) {
-	// The following code snippet is just for reference.
-
-	// Optionally allow the chain developer to overwrite the SDK's default
-	// server config.
 	babylonConfig := DefaultBabylonAppConfig()
-	babylonTemplate := DefaultBabylonTemplate()
-	return babylonTemplate, babylonConfig
+	combinedTemplate := DefaultBabylonTemplate()
+
+	return combinedTemplate, babylonConfig
 }
 
 func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basicManager module.BasicManager) {
 	cfg := sdk.GetConfig()
+	// TODO: This add the Coin Type that will change the HD paths
+	// cmdcfg.SetBip44CoinType(cfg)
+
 	cfg.Seal()
 
 	gentxModule := basicManager[genutiltypes.ModuleName].(genutil.AppModuleBasic)
 
 	rootCmd.AddCommand(
+		ethermintclient.ValidateChainID(genutilcli.InitCmd(basicManager, app.DefaultNodeHome)),
 		genutilcli.InitCmd(basicManager, app.DefaultNodeHome),
 		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome, gentxModule.GenTxValidator, authcodec.NewBech32Codec(params.Bech32PrefixValAddr)),
 		genutilcli.MigrateGenesisCmd(genutilcli.MigrationMap),
@@ -183,14 +214,13 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		confixcmd.ConfigCommand(),
 	)
 
-	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
-
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
 		server.StatusCommand(),
 		queryCommand(),
 		txCommand(),
-		keys.Commands(),
+		// keys.Commands(),
+		ethermintclient.KeyCommands(app.DefaultNodeHome),
 	)
 }
 

@@ -3,6 +3,14 @@ package keepers
 import (
 	"path/filepath"
 
+	srvflags "github.com/evmos/ethermint/server/flags"
+	ethermint "github.com/evmos/ethermint/types"
+	evmkeeper "github.com/evmos/ethermint/x/evm/keeper"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	feemarketkeeper "github.com/evmos/ethermint/x/feemarket/keeper"
+	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
+	"github.com/spf13/cast"
+
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	circuitkeeper "cosmossdk.io/x/circuit/keeper"
@@ -16,8 +24,28 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/app/signer"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	owasm "github.com/babylonlabs-io/babylon/wasmbinding"
+	btccheckpointkeeper "github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclightclientkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	btcstakingkeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	epochingkeeper "github.com/babylonlabs-io/babylon/x/epoching/keeper"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	finalitykeeper "github.com/babylonlabs-io/babylon/x/finality/keeper"
+	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	incentivekeeper "github.com/babylonlabs-io/babylon/x/incentive/keeper"
+	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	mintkeeper "github.com/babylonlabs-io/babylon/x/mint/keeper"
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
+	monitorkeeper "github.com/babylonlabs-io/babylon/x/monitor/keeper"
+	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -58,27 +86,6 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types" // ibc module puts types under `ibchost` rather than `ibctypes`
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/app/signer"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	owasm "github.com/babylonlabs-io/babylon/wasmbinding"
-	btccheckpointkeeper "github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	btclightclientkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	btcstakingkeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	epochingkeeper "github.com/babylonlabs-io/babylon/x/epoching/keeper"
-	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
-	finalitykeeper "github.com/babylonlabs-io/babylon/x/finality/keeper"
-	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
-	incentivekeeper "github.com/babylonlabs-io/babylon/x/incentive/keeper"
-	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
-	monitorkeeper "github.com/babylonlabs-io/babylon/x/monitor/keeper"
-	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
 )
 
 // Capabilities of the IBC wasm contracts
@@ -146,6 +153,10 @@ type AppKeepers struct {
 	ScopedZoneConciergeKeeper capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
 
+	// EVM keepers
+	EVMKeeper       *evmkeeper.Keeper
+	FeemarketKeeper feemarketkeeper.Keeper
+
 	// keys to access the substores
 	keys    map[string]*storetypes.KVStoreKey
 	tkeys   map[string]*storetypes.TransientStoreKey
@@ -200,11 +211,14 @@ func (ak *AppKeepers) InitKeepers(
 		wasmtypes.StoreKey,
 		// tokenomics-related modules
 		incentivetypes.StoreKey,
+		// EVM
+		evmtypes.StoreKey,
+		feemarkettypes.StoreKey,
 	)
 	ak.keys = keys
 
 	// set transient store keys
-	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey)
+	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
 
 	// set memory store keys
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
@@ -214,7 +228,7 @@ func (ak *AppKeepers) InitKeepers(
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[authtypes.StoreKey]),
-		authtypes.ProtoBaseAccount,
+		ethermint.ProtoAccount,
 		maccPerms,
 		authcodec.NewBech32Codec(appparams.Bech32PrefixAccAddr),
 		appparams.Bech32PrefixAccAddr,
@@ -397,6 +411,45 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
+	// First initialize the EVM keeper (move this up before any ante handler setup)
+	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
+
+	feeMarketKeeper := feemarketkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[feemarkettypes.ModuleName]),
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		keys[feemarkettypes.StoreKey],
+		ak.tkeys[feemarkettypes.TransientKey],
+	)
+
+	allKeys := make(map[string]storetypes.StoreKey, len(keys)+len(ak.tkeys)+len(ak.memKeys))
+	for k, v := range keys {
+		allKeys[k] = v
+	}
+	for k, v := range ak.tkeys {
+		allKeys[k] = v
+	}
+
+	for k, v := range ak.memKeys {
+		allKeys[k] = v
+	}
+
+	ak.EVMKeeper = evmkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[evmtypes.ModuleName]),
+		keys[evmtypes.ModuleName],
+		ak.tkeys[evmtypes.TransientKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		accountKeeper,
+		bankKeeper,
+		stakingKeeper,
+		feeMarketKeeper,
+		tracer,
+		[]evmkeeper.CustomContractFn{},
+		allKeys,
+	)
+
+	ak.FeemarketKeeper = feeMarketKeeper
 	// register the proposal types
 	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
 	// by granting the governance module the right to execute the message.
@@ -547,12 +600,11 @@ func (ak *AppKeepers) InitKeepers(
 		wasmOpts...,
 	)
 
-	ibcWasmConfig :=
-		ibcwasmtypes.WasmConfig{
-			DataDir:               filepath.Join(homePath, "ibc_08-wasm"),
-			SupportedCapabilities: WasmCapabilities(),
-			ContractDebugMode:     false,
-		}
+	ibcWasmConfig := ibcwasmtypes.WasmConfig{
+		DataDir:               filepath.Join(homePath, "ibc_08-wasm"),
+		SupportedCapabilities: WasmCapabilities(),
+		ContractDebugMode:     false,
+	}
 
 	ak.IBCWasmKeeper = ibcwasmkeeper.NewKeeperWithConfig(
 		appCodec,
@@ -594,6 +646,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// whole usage of params module
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
+	// paramsKeeper.Subspace(evmtypes.ModuleName).WithKeyTable(v0evmtypes.ParamKeyTable()) //nolint: staticcheck
 
 	return paramsKeeper
 }
