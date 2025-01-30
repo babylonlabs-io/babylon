@@ -9,6 +9,7 @@ import (
 var (
 	_ sdk.Msg = &MsgWrappedDelegate{}
 	_ sdk.Msg = &MsgWrappedEditValidator{}
+	_ sdk.Msg = &MsgWrappedStakingUpdateParams{}
 	_ sdk.Msg = &MsgWrappedUndelegate{}
 	_ sdk.Msg = &MsgWrappedBeginRedelegate{}
 	_ sdk.Msg = &MsgWrappedCancelUnbondingDelegation{}
