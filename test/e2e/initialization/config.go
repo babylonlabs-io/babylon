@@ -358,8 +358,8 @@ func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.Genesi
 
 func updateFinalityGenesis(finalityGenState *finalitytypes.GenesisState) {
 	finalityGenState.Params = finalitytypes.DefaultParams()
-	finalityGenState.Params.FinalityActivationHeight = 1
-	finalityGenState.Params.FinalitySigTimeout = 5
+	finalityGenState.Params.FinalityActivationHeight = 0
+	finalityGenState.Params.FinalitySigTimeout = 4
 	finalityGenState.Params.SignedBlocksWindow = 300
 }
 

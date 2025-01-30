@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -259,42 +260,53 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 		fp2CommitPubRandList.Sig,
 	)
 
-	n1.WaitForNextBlock()
-	n2.WaitForNextBlock()
+	n1.WaitUntilCurrentEpochIsSealedAndFinalized(1)
 
 	fp1CommitPubRand := n1.QueryListPubRandCommit(fp1CommitPubRandList.FpBtcPk)
 	s.Require().Equal(fp1CommitPubRand[commitStartHeight].NumPubRand, numPubRand)
 	fp2CommitPubRand := n2.QueryListPubRandCommit(fp2CommitPubRandList.FpBtcPk)
 	s.Require().Equal(fp2CommitPubRand[commitStartHeight].NumPubRand, numPubRand)
 
-	n1.WaitUntilCurrentEpochIsSealedAndFinalized(1)
-
 	s.finalityBlockHeightVoted = n1.WaitFinalityIsActivated()
 
 	// submit finality signature
 	s.finalityIdx = s.finalityBlockHeightVoted - commitStartHeight
 
-	appHash := n1.AddFinalitySignatureToBlock(
-		s.fp1BTCSK,
-		s.fp1.BtcPk,
-		s.finalityBlockHeightVoted,
-		s.fp1RandListInfo.SRList[s.finalityIdx],
-		&s.fp1RandListInfo.PRList[s.finalityIdx],
-		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
-		fmt.Sprintf("--from=%s", wFp1),
+	n1.WaitForNextBlockWithSleep50ms()
+	var (
+		wg      sync.WaitGroup
+		appHash bytes.HexBytes
 	)
+	wg.Add(2)
 
-	n2.AddFinalitySignatureToBlock(
-		s.fp2BTCSK,
-		s.fp2.BtcPk,
-		s.finalityBlockHeightVoted,
-		s.fp2RandListInfo.SRList[s.finalityIdx],
-		&s.fp2RandListInfo.PRList[s.finalityIdx],
-		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
-		fmt.Sprintf("--from=%s", wFp2),
-	)
+	go func() {
+		defer wg.Done()
+		appHash = n1.AddFinalitySignatureToBlock(
+			s.fp1BTCSK,
+			s.fp1.BtcPk,
+			s.finalityBlockHeightVoted,
+			s.fp1RandListInfo.SRList[s.finalityIdx],
+			&s.fp1RandListInfo.PRList[s.finalityIdx],
+			*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+			fmt.Sprintf("--from=%s", wFp1),
+		)
+	}()
 
-	n2.WaitForNextBlock()
+	go func() {
+		defer wg.Done()
+		n2.AddFinalitySignatureToBlock(
+			s.fp2BTCSK,
+			s.fp2.BtcPk,
+			s.finalityBlockHeightVoted,
+			s.fp2RandListInfo.SRList[s.finalityIdx],
+			&s.fp2RandListInfo.PRList[s.finalityIdx],
+			*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+			fmt.Sprintf("--from=%s", wFp2),
+		)
+	}()
+
+	wg.Wait()
+	n1.WaitForNextBlockWithSleep50ms()
 
 	// ensure vote is eventually cast
 	var finalizedBlocks []*ftypes.IndexedBlock
