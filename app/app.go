@@ -7,6 +7,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/evmos/ethermint/x/evm"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	"github.com/evmos/ethermint/x/feemarket"
+	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
+
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	"cosmossdk.io/client/v2/autocli"
@@ -69,7 +74,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -154,6 +158,8 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         nil,
 		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
+		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
+		feemarkettypes.ModuleName:      nil,
 	}
 
 	// software upgrades and forks
@@ -227,8 +233,6 @@ func NewBabylonApp(
 	appCodec := encCfg.Codec
 	legacyAmino := encCfg.Amino
 	txConfig := encCfg.TxConfig
-	std.RegisterLegacyAminoCodec(legacyAmino)
-	std.RegisterInterfaces(interfaceRegistry)
 
 	bApp := baseapp.NewBaseApp(appName, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
@@ -271,7 +275,7 @@ func NewBabylonApp(
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
 	// we prefer to be more strict in what arguments the modules expect.
-	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
+	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -320,6 +324,9 @@ func NewBabylonApp(
 		finality.NewAppModule(appCodec, app.FinalityKeeper),
 		// Babylon modules - tokenomics
 		incentive.NewAppModule(appCodec, app.IncentiveKeeper, app.AccountKeeper, app.BankKeeper),
+		// feemarket.NewAppModule(app.FeeMarketKeeper, app.GetSubspace(feemarkettypes.ModuleName)),
+		evm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.GetSubspace(evmtypes.ModuleName)),
+		feemarket.NewAppModule(app.FeemarketKeeper, app.GetSubspace(feemarkettypes.ModuleName)),
 	)
 
 	// BasicModuleManager defines the module BasicManager which is in charge of setting up basic,
@@ -377,6 +384,8 @@ func NewBabylonApp(
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
+		feemarkettypes.ModuleName,
+		evmtypes.ModuleName,
 	)
 	// TODO: there will be an architecture design on whether to modify slashing/evidence, specifically
 	// - how many validators can we slash in a single epoch and
@@ -410,6 +419,8 @@ func NewBabylonApp(
 		finalitytypes.ModuleName,
 		// tokenomics related modules
 		incentivetypes.ModuleName, // EndBlock of incentive module does not matter
+		feemarkettypes.ModuleName,
+		evmtypes.ModuleName,
 	)
 	// Babylon does not want EndBlock processing in staking
 	app.ModuleManager.OrderEndBlockers = append(app.ModuleManager.OrderEndBlockers[:2], app.ModuleManager.OrderEndBlockers[2+1:]...) // remove stakingtypes.ModuleName
@@ -445,6 +456,8 @@ func NewBabylonApp(
 		finalitytypes.ModuleName,
 		// tokenomics-related modules
 		incentivetypes.ModuleName,
+		feemarkettypes.ModuleName,
+		evmtypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
@@ -485,8 +498,8 @@ func NewBabylonApp(
 	app.MountTransientStores(app.GetTransientStoreKeys())
 	app.MountMemoryStores(app.GetMemoryStoreKeys())
 
-	// initialize AnteHandler for the app
-	anteHandler := ante.NewAnteHandler(
+	// Set up the regular ante handler
+	regularAnteHandler := ante.NewAnteHandler(
 		&app.AccountKeeper,
 		app.BankKeeper,
 		&app.FeeGrantKeeper,
@@ -496,10 +509,15 @@ func NewBabylonApp(
 		&app.WasmKeeper,
 		&app.CircuitKeeper,
 		&app.EpochingKeeper,
+		app.EVMKeeper,
+		app.FeemarketKeeper,
 		&btcConfig,
 		&app.BtcCheckpointKeeper,
 		runtime.NewKVStoreService(app.AppKeepers.GetKey(wasmtypes.StoreKey)),
 	)
+
+	// Set the combined ante handler
+	app.SetAnteHandler(regularAnteHandler)
 
 	// set proposal extension
 	proposalHandler := checkpointing.NewProposalHandler(
@@ -527,7 +545,6 @@ func NewBabylonApp(
 	})
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-	app.SetAnteHandler(anteHandler)
 
 	// set postHandler
 	postHandler := sdk.ChainPostDecorators(

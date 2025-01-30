@@ -4,6 +4,14 @@ import (
 	"fmt"
 	"path/filepath"
 
+	srvflags "github.com/evmos/ethermint/server/flags"
+	ethermint "github.com/evmos/ethermint/types"
+	evmkeeper "github.com/evmos/ethermint/x/evm/keeper"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	feemarketkeeper "github.com/evmos/ethermint/x/feemarket/keeper"
+	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
+	"github.com/spf13/cast"
+
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	circuitkeeper "cosmossdk.io/x/circuit/keeper"
@@ -156,6 +164,10 @@ type AppKeepers struct {
 	ScopedZoneConciergeKeeper capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
 
+	// EVM keepers
+	EVMKeeper       *evmkeeper.Keeper
+	FeemarketKeeper feemarketkeeper.Keeper
+
 	// keys to access the substores
 	keys    map[string]*storetypes.KVStoreKey
 	tkeys   map[string]*storetypes.TransientStoreKey
@@ -213,11 +225,14 @@ func (ak *AppKeepers) InitKeepers(
 		wasmtypes.StoreKey,
 		// tokenomics-related modules
 		incentivetypes.StoreKey,
+		// EVM
+		evmtypes.StoreKey,
+		feemarkettypes.StoreKey,
 	)
 	ak.keys = keys
 
 	// set transient store keys
-	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey)
+	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
 
 	// set memory store keys
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
@@ -227,7 +242,7 @@ func (ak *AppKeepers) InitKeepers(
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[authtypes.StoreKey]),
-		authtypes.ProtoBaseAccount,
+		ethermint.ProtoAccount,
 		maccPerms,
 		authcodec.NewBech32Codec(appparams.Bech32PrefixAccAddr),
 		appparams.Bech32PrefixAccAddr,
@@ -435,6 +450,45 @@ func (ak *AppKeepers) InitKeepers(
 		wasmOpts...,
 	)
 
+	// First initialize the EVM keeper (move this up before any ante handler setup)
+	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
+
+	feeMarketKeeper := feemarketkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[feemarkettypes.ModuleName]),
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		keys[feemarkettypes.StoreKey],
+		ak.tkeys[feemarkettypes.TransientKey],
+	)
+
+	allKeys := make(map[string]storetypes.StoreKey, len(keys)+len(ak.tkeys)+len(ak.memKeys))
+	for k, v := range keys {
+		allKeys[k] = v
+	}
+	for k, v := range ak.tkeys {
+		allKeys[k] = v
+	}
+
+	for k, v := range ak.memKeys {
+		allKeys[k] = v
+	}
+
+	ak.EVMKeeper = evmkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[evmtypes.ModuleName]),
+		keys[evmtypes.ModuleName],
+		ak.tkeys[evmtypes.TransientKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		accountKeeper,
+		bankKeeper,
+		stakingKeeper,
+		feeMarketKeeper,
+		tracer,
+		[]evmkeeper.CustomContractFn{},
+		allKeys,
+	)
+
+	ak.FeemarketKeeper = feeMarketKeeper
 	// register the proposal types
 	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
 	// by granting the governance module the right to execute the message.
@@ -606,12 +660,11 @@ func (ak *AppKeepers) InitKeepers(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	ak.EvidenceKeeper = *evidenceKeeper
 
-	ibcWasmConfig :=
-		ibcwasmtypes.WasmConfig{
-			DataDir:               filepath.Join(homePath, "ibc_08-wasm"),
-			SupportedCapabilities: WasmCapabilities(),
-			ContractDebugMode:     false,
-		}
+	ibcWasmConfig := ibcwasmtypes.WasmConfig{
+		DataDir:               filepath.Join(homePath, "ibc_08-wasm"),
+		SupportedCapabilities: WasmCapabilities(),
+		ContractDebugMode:     false,
+	}
 
 	ak.IBCWasmKeeper = ibcwasmkeeper.NewKeeperWithConfig(
 		appCodec,

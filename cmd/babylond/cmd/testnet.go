@@ -4,10 +4,14 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"net"
 	"os"
 	"path/filepath"
 	"time"
+
+	ethermint "github.com/evmos/ethermint/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 
 	"cosmossdk.io/math"
 	cmtconfig "github.com/cometbft/cometbft/config"
@@ -32,6 +36,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	etherminthd "github.com/evmos/ethermint/crypto/hd"
 	"github.com/spf13/cobra"
 
 	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
@@ -41,6 +46,7 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	servercfg "github.com/evmos/ethermint/server/config"
 )
 
 var (
@@ -69,6 +75,7 @@ Example:
 	`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
+			clientCtx = clientCtx.WithKeyringOptions(etherminthd.EthSecp256k1Option())
 			if err != nil {
 				return err
 			}
@@ -149,6 +156,7 @@ Example:
 	cmd.Flags().String(flagBtcNetwork, string(bbn.BtcSimnet), "Bitcoin network to use. Available networks: simnet, testnet, regtest, mainnet")
 	cmd.Flags().Bool(flagAdditionalSenderAccount, false, "If there should be additional pre funded account per validator")
 	cmd.Flags().Uint64(flagTimeBetweenBlocks, 5, "Time between blocks in seconds")
+
 	addGenesisFlags(cmd)
 
 	return cmd
@@ -196,6 +204,10 @@ func InitTestnet(
 	babylonConfig.GRPC.Enable = true
 	babylonConfig.GRPC.Address = "0.0.0.0:9090"
 
+	// Update babylonConfig to include Ethereum JSON-RPC settings
+	babylonConfig.EVM = *servercfg.DefaultEVMConfig()
+	babylonConfig.JSONRPC = *servercfg.DefaultJSONRPCConfig()
+
 	// Disable IAVL cache by default as Babylon leaf nodes can be large, and in case
 	// of big cache values, Babylon node can run out of memory.
 	babylonConfig.IAVLCacheSize = 0
@@ -242,8 +254,7 @@ func InitTestnet(
 		}
 
 		// generate account key
-		kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf, clientCtx.Codec)
-
+		kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf, clientCtx.Codec, etherminthd.EthSecp256k1Option())
 		if err != nil {
 			return err
 		}
@@ -309,6 +320,7 @@ func InitTestnet(
 		if err != nil {
 			return err
 		}
+
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
 			valStr,
 			valPubkey,
@@ -400,12 +412,56 @@ func InitTestnet(
 		}
 	}
 
+	nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, 0)
+	nodeDir := filepath.Join(outputDir, nodeDirName, nodeDaemonHome)
+	// Create keyring for the custom account
+	kb, err := keyring.New(
+		sdk.KeyringServiceName(),
+		keyringBackend,
+		nodeDir, // Use main output dir for this key
+		inBuf,
+		clientCtx.Codec,
+		etherminthd.EthSecp256k1Option(),
+	)
+	if err != nil {
+		return err
+	}
+
+	keyringAlgos, _ := kb.SupportedAlgorithms()
+	algo, err := keyring.NewSigningAlgoFromString("eth_secp256k1", keyringAlgos)
+	if err != nil {
+		return err
+	}
+
+	addr, _, err := testutil.GenerateSaveCoinKey(
+		kb,
+		"dev0",
+		"copper push brief egg scan entry inform record adjust fossil boss egg comic alien upon aspect dry avoid interest fury window hint race symptom",
+		true,
+		algo,
+	)
+
+	if err != nil {
+		_ = os.RemoveAll(outputDir)
+		return err
+	}
+
+	coins := sdk.Coins{
+		sdk.NewCoin("ubbn", math.NewInt(1e18)),
+	}
+
+	genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
+	genAccounts = append(genAccounts, &ethermint.EthAccount{
+		BaseAccount: authtypes.NewBaseAccount(addr, nil, 0, 0),
+		CodeHash:    common.BytesToHash(evmtypes.EmptyCodeHash).Hex(),
+	})
+
 	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles,
 		genKeys, numValidators, genesisParams); err != nil {
 		return err
 	}
 
-	err := collectGenFiles(
+	err = collectGenFiles(
 		clientCtx, nodeConfig, chainID, nodeIDs, genKeys, numValidators,
 		outputDir, nodeDirPrefix, nodeDaemonHome, genBalIterator,
 	)
