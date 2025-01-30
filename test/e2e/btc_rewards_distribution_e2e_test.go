@@ -342,11 +342,14 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 		s.True(del.Active)
 	}
 
-	// makes sure at least one has rewards
+	// makes sure there is some reward there
 	s.Eventually(func() bool {
-		_, err = n2.QueryRewardGauge(s.fp1.Address())
-		return err == nil
-	}, time.Minute, time.Second)
+		_, errFp1 := n2.QueryRewardGauge(s.fp1.Address())
+		_, errFp2 := n2.QueryRewardGauge(s.fp2.Address())
+		_, errDel1 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
+		_, errDel2 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
+		return errFp1 == nil && errFp2 == nil && errDel1 == nil && errDel2 == nil
+	}, time.Minute, time.Second, "wait to have some rewards available in the gauge")
 
 	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
 	fp1DiffRewards, fp2DiffRewards, del1DiffRewards, del2DiffRewards := s.QueryRewardGauges(n2)
@@ -624,19 +627,19 @@ func (s *BtcRewardsDistribution) QueryRewardGauges(n *chain.NodeConfig) (
 
 	g.Go(func() error {
 		fp1RewardGauges, err = n.QueryRewardGauge(s.fp1.Address())
-		return err
+		return fmt.Errorf("failed to query rewards for fp1: %w", err)
 	})
 	g.Go(func() error {
 		fp2RewardGauges, err = n.QueryRewardGauge(s.fp2.Address())
-		return err
+		return fmt.Errorf("failed to query rewards for fp2: %w", err)
 	})
 	g.Go(func() error {
 		btcDel1RewardGauges, err = n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
-		return err
+		return fmt.Errorf("failed to query rewards for del1: %w", err)
 	})
 	g.Go(func() error {
 		btcDel2RewardGauges, err = n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
-		return err
+		return fmt.Errorf("failed to query rewards for del2: %w", err)
 	})
 	s.NoError(g.Wait())
 
