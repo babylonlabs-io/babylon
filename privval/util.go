@@ -7,6 +7,7 @@ import (
 	cmtos "github.com/cometbft/cometbft/libs/os"
 )
 
+// EnsureDirs ensures the directories of the given paths exist.
 func EnsureDirs(paths ...string) error {
 	// Check file path of bls key
 	for _, path := range paths {

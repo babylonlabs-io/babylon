@@ -10,7 +10,6 @@ import (
 	"cosmossdk.io/core/address"
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	cmtconfig "github.com/cometbft/cometbft/config"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -22,9 +21,9 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	flag "github.com/spf13/pflag"
 
+	"github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	cmtprivval "github.com/cometbft/cometbft/privval"
 )
 
 // validator struct to define the fields of the validator
@@ -202,21 +201,14 @@ func buildCommissionRates(rateStr, maxRateStr, maxChangeRateStr string) (commiss
 	return commission, nil
 }
 
+// getValKeyFromFile loads the validator key from the node directory
+// Both FilePV from priv_validator_key.json and BlsPV should be present in the node directory
+// befor function is called.
 func getValKeyFromFile(homeDir string) (*privval.ValidatorKeys, error) {
-	nodeCfg := cmtconfig.DefaultConfig()
-	nodeCfg.SetRoot(homeDir)
-
-	cmtKeyPath := nodeCfg.PrivValidatorKeyFile()
-	cmtStatePath := nodeCfg.PrivValidatorStateFile()
-	blsKeyPath := privval.DefaultBlsKeyFile(homeDir)
-	blsPasswordPath := privval.DefaultBlsPasswordFile(homeDir)
-
-	if err := privval.EnsureDirs(cmtKeyPath, cmtStatePath, blsKeyPath, blsPasswordPath); err != nil {
-		return nil, fmt.Errorf("failed to ensure dirs: %w", err)
+	ck, err := signer.LoadConsensusKey(homeDir)
+	if err != nil {
+		return nil, err
 	}
 
-	filePV := cmtprivval.LoadFilePV(cmtKeyPath, cmtStatePath)
-	blsPV := privval.LoadBlsPV(blsKeyPath, blsPasswordPath)
-
-	return privval.NewValidatorKeys(filePV.Key.PrivKey, blsPV.Key.PrivKey)
+	return privval.NewValidatorKeys(ck.Comet.PrivKey, ck.Bls.PrivKey)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
+// ValidatorKeys represents a validator keys.
 type ValidatorKeys struct {
 	ValPubkey cmtcrypto.PubKey
 	BlsPubkey bls12381.PublicKey
@@ -18,6 +19,7 @@ type ValidatorKeys struct {
 	blsPrivkey bls12381.PrivateKey
 }
 
+// NewValidatorKeys creates a new instance including validator keys.
 func NewValidatorKeys(valPrivkey cmtcrypto.PrivKey, blsPrivKey bls12381.PrivateKey) (*ValidatorKeys, error) {
 	pop, err := BuildPoP(valPrivkey, blsPrivKey)
 	if err != nil {
