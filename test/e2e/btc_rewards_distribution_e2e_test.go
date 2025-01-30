@@ -263,9 +263,9 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 	n2.WaitForNextBlock()
 
 	fp1CommitPubRand := n1.QueryListPubRandCommit(fp1CommitPubRandList.FpBtcPk)
-	s.Require().Equal(fp1CommitPubRand[commitStartHeight], numPubRand)
+	s.Require().Equal(fp1CommitPubRand[commitStartHeight].NumPubRand, numPubRand)
 	fp2CommitPubRand := n2.QueryListPubRandCommit(fp2CommitPubRandList.FpBtcPk)
-	s.Require().Equal(fp2CommitPubRand[commitStartHeight], numPubRand)
+	s.Require().Equal(fp2CommitPubRand[commitStartHeight].NumPubRand, numPubRand)
 
 	n1.WaitUntilCurrentEpochIsSealedAndFinalized(1)
 
