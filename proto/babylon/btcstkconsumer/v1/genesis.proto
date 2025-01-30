@@ -1,0 +1,17 @@
+syntax = "proto3";
+package babylon.btcstkconsumer.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "babylon/btcstkconsumer/v1/params.proto";
+
+option go_package = "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types";
+
+// GenesisState defines the btcstkconsumer module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}

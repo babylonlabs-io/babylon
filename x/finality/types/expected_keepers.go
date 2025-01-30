@@ -3,10 +3,10 @@ package types
 import (
 	"context"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	etypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type BTCStakingKeeper interface {
@@ -16,6 +16,7 @@ type BTCStakingKeeper interface {
 	GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*bstypes.FinalityProvider, error)
 	HasFinalityProvider(ctx context.Context, fpBTCPK []byte) bool
 	SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
+	PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) error
 	GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (*bstypes.BTCDelegation, error)
 	GetAllPowerDistUpdateEvents(ctx context.Context, lastBTCTipHeight, btcTipHeight uint32) []*bstypes.EventPowerDistUpdate
 	ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint32)

@@ -191,7 +191,10 @@ jobs:
         run: |
           make test-e2e-cache-btc-staking-pre-approval
 
+  # Disable this test because v1 upgrade does not cover integration features
+  # TODO: Reenable this test after having v2 upgrade
   e2e-run-upgrade-v1:
+    if: false
     needs: [e2e-docker-build-babylon, e2e-docker-build-e2e-init-chain]
     runs-on: ubuntu-22.04
     steps:

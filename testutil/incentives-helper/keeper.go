@@ -75,7 +75,7 @@ func (h *IncentiveHelper) CreateBtcDelegation(
 	stakingTxHash, msgCreateBTCDel, _, _, _, unbondingInfo, err = h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
-		fpPK,
+		[]*btcec.PublicKey{fpPK},
 		stakingValue,
 		stakingTime,
 		0,

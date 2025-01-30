@@ -1,6 +1,7 @@
 package keepers
 
 import (
+	"fmt"
 	"path/filepath"
 
 	srvflags "github.com/evmos/ethermint/server/flags"
@@ -24,28 +25,9 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/app/signer"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	owasm "github.com/babylonlabs-io/babylon/wasmbinding"
-	btccheckpointkeeper "github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	btclightclientkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	btcstakingkeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	epochingkeeper "github.com/babylonlabs-io/babylon/x/epoching/keeper"
-	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
-	finalitykeeper "github.com/babylonlabs-io/babylon/x/finality/keeper"
-	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
-	incentivekeeper "github.com/babylonlabs-io/babylon/x/incentive/keeper"
-	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	mintkeeper "github.com/babylonlabs-io/babylon/x/mint/keeper"
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
-	monitorkeeper "github.com/babylonlabs-io/babylon/x/monitor/keeper"
-	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -86,6 +68,31 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types" // ibc module puts types under `ibchost` rather than `ibctypes`
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+
+	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/app/signer"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	owasm "github.com/babylonlabs-io/babylon/wasmbinding"
+	btccheckpointkeeper "github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btclightclientkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	btcstakingkeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	bsckeeper "github.com/babylonlabs-io/babylon/x/btcstkconsumer/keeper"
+	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	epochingkeeper "github.com/babylonlabs-io/babylon/x/epoching/keeper"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	finalitykeeper "github.com/babylonlabs-io/babylon/x/finality/keeper"
+	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	incentivekeeper "github.com/babylonlabs-io/babylon/x/incentive/keeper"
+	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
+	monitorkeeper "github.com/babylonlabs-io/babylon/x/monitor/keeper"
+	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
+	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 // Capabilities of the IBC wasm contracts
@@ -136,6 +143,10 @@ type AppKeepers struct {
 	IBCFeeKeeper   ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
 	TransferKeeper ibctransferkeeper.Keeper // for cross-chain fungible token transfers
 	IBCWasmKeeper  ibcwasmkeeper.Keeper     // for IBC wasm light clients
+
+	// Integration-related modules
+	BTCStkConsumerKeeper bsckeeper.Keeper
+	ZoneConciergeKeeper  zckeeper.Keeper
 
 	// BTC staking related modules
 	BTCStakingKeeper btcstakingkeeper.Keeper
@@ -204,6 +215,9 @@ func (ak *AppKeepers) InitKeepers(
 		ibctransfertypes.StoreKey,
 		ibcfeetypes.StoreKey,
 		ibcwasmtypes.StoreKey,
+		// Integration related modules
+		bsctypes.ModuleName,
+		zctypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.StoreKey,
 		finalitytypes.StoreKey,
@@ -299,6 +313,7 @@ func (ak *AppKeepers) InitKeepers(
 	// grant capabilities for the ibc and ibc-transfer modules
 	scopedIBCKeeper := ak.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	scopedTransferKeeper := ak.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
+	scopedZoneConciergeKeeper := ak.CapabilityKeeper.ScopeToModule(zctypes.ModuleName)
 	scopedWasmKeeper := ak.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
@@ -409,6 +424,30 @@ func (ak *AppKeepers) InitKeepers(
 		// https://github.com/cosmos/ibc-go/releases/tag/v8.0.0
 		// Gov is the proper authority for those types of messages
 		appparams.AccGov.String(),
+	)
+
+	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper, &ak.ZoneConciergeKeeper), wasmOpts...)
+	wasmOpts = append(owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
+
+	ak.WasmKeeper = wasmkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
+		ak.AccountKeeper,
+		ak.BankKeeper,
+		ak.StakingKeeper,
+		distrkeeper.NewQuerier(ak.DistrKeeper),
+		ak.IBCFeeKeeper,
+		ak.IBCKeeper.ChannelKeeper,
+		ak.IBCKeeper.PortKeeper,
+		scopedWasmKeeper,
+		ak.TransferKeeper,
+		bApp.MsgServiceRouter(),
+		bApp.GRPCQueryRouter(),
+		homePath,
+		wasmConfig,
+		WasmCapabilities(),
+		appparams.AccGov.String(),
+		wasmOpts...,
 	)
 
 	// First initialize the EVM keeper (move this up before any ante handler setup)
@@ -522,26 +561,14 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
-	ak.MonitorKeeper = monitorkeeper.NewKeeper(
+	ak.BTCStkConsumerKeeper = bsckeeper.NewKeeper(
 		appCodec,
-		runtime.NewKVStoreService(keys[monitortypes.StoreKey]),
-		&btclightclientKeeper,
-	)
-
-	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
-	epochingKeeper.SetMsgServiceRouter(bApp.MsgServiceRouter())
-	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
-	ak.EpochingKeeper = *epochingKeeper.SetHooks(
-		epochingtypes.NewMultiEpochingHooks(ak.MonitorKeeper.Hooks()),
-	)
-
-	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
-	ak.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
-		checkpointingtypes.NewMultiCheckpointingHooks(ak.EpochingKeeper.Hooks(), ak.MonitorKeeper.Hooks()),
-	)
-	ak.BtcCheckpointKeeper = btcCheckpointKeeper
-	ak.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
-		btclightclienttypes.NewMultiBTCLightClientHooks(ak.BtcCheckpointKeeper.Hooks()),
+		runtime.NewKVStoreService(keys[bsctypes.StoreKey]),
+		ak.AccountKeeper,
+		ak.BankKeeper,
+		ak.IBCKeeper.ClientKeeper,
+		ak.WasmKeeper,
+		appparams.AccGov.String(),
 	)
 
 	// set up BTC staking keeper
@@ -550,6 +577,7 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[btcstakingtypes.StoreKey]),
 		&btclightclientKeeper,
 		&btcCheckpointKeeper,
+		&ak.BTCStkConsumerKeeper,
 		&ak.IncentiveKeeper,
 		btcNetParams,
 		appparams.AccGov.String(),
@@ -561,9 +589,64 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[finalitytypes.StoreKey]),
 		ak.BTCStakingKeeper,
 		ak.IncentiveKeeper,
-		ak.CheckpointingKeeper,
+		&checkpointingKeeper,
 		appparams.AccGov.String(),
 	)
+
+	monitorKeeper := monitorkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[monitortypes.StoreKey]),
+		&btclightclientKeeper,
+	)
+
+	// create querier for KVStore
+	storeQuerier, ok := bApp.CommitMultiStore().(storetypes.Queryable)
+	if !ok {
+		panic(fmt.Errorf("multistore doesn't support queries"))
+	}
+
+	zcKeeper := zckeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
+		ak.IBCFeeKeeper,
+		ak.IBCKeeper.ClientKeeper,
+		ak.IBCKeeper.ConnectionKeeper,
+		ak.IBCKeeper.ChannelKeeper,
+		ak.IBCKeeper.PortKeeper,
+		ak.AccountKeeper,
+		ak.BankKeeper,
+		&btclightclientKeeper,
+		&checkpointingKeeper,
+		&btcCheckpointKeeper,
+		epochingKeeper,
+		storeQuerier,
+		&ak.BTCStakingKeeper,
+		&ak.BTCStkConsumerKeeper,
+		scopedZoneConciergeKeeper,
+		appparams.AccGov.String(),
+	)
+
+	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
+	epochingKeeper.SetMsgServiceRouter(bApp.MsgServiceRouter())
+	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
+	epochingKeeper.SetHooks(
+		epochingtypes.NewMultiEpochingHooks(zcKeeper.Hooks(), monitorKeeper.Hooks()),
+	)
+	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
+	checkpointingKeeper.SetHooks(
+		checkpointingtypes.NewMultiCheckpointingHooks(epochingKeeper.Hooks(), zcKeeper.Hooks(), monitorKeeper.Hooks()),
+	)
+	btclightclientKeeper.SetHooks(
+		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks()),
+	)
+
+	// wire the keepers with hooks to the app
+	ak.EpochingKeeper = epochingKeeper
+	ak.BTCLightClientKeeper = btclightclientKeeper
+	ak.CheckpointingKeeper = checkpointingKeeper
+	ak.BtcCheckpointKeeper = btcCheckpointKeeper
+	ak.MonitorKeeper = monitorKeeper
+	ak.ZoneConciergeKeeper = *zcKeeper
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -576,29 +659,6 @@ func (ak *AppKeepers) InitKeepers(
 	)
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	ak.EvidenceKeeper = *evidenceKeeper
-
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
-
-	ak.WasmKeeper = wasmkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
-		ak.AccountKeeper,
-		ak.BankKeeper,
-		ak.StakingKeeper,
-		distrkeeper.NewQuerier(ak.DistrKeeper),
-		ak.IBCFeeKeeper,
-		ak.IBCKeeper.ChannelKeeper,
-		ak.IBCKeeper.PortKeeper,
-		scopedWasmKeeper,
-		ak.TransferKeeper,
-		bApp.MsgServiceRouter(),
-		bApp.GRPCQueryRouter(),
-		homePath,
-		wasmConfig,
-		WasmCapabilities(),
-		appparams.AccGov.String(),
-		wasmOpts...,
-	)
 
 	ibcWasmConfig := ibcwasmtypes.WasmConfig{
 		DataDir:               filepath.Join(homePath, "ibc_08-wasm"),
@@ -623,6 +683,10 @@ func (ak *AppKeepers) InitKeepers(
 	transferStack = transfer.NewIBCModule(ak.TransferKeeper)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, ak.IBCFeeKeeper)
 
+	var zoneConciergeStack porttypes.IBCModule
+	zoneConciergeStack = zoneconcierge.NewIBCModule(ak.ZoneConciergeKeeper)
+	zoneConciergeStack = ibcfee.NewIBCMiddleware(zoneConciergeStack, ak.IBCFeeKeeper)
+
 	var wasmStack porttypes.IBCModule
 	wasmStack = wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCFeeKeeper)
 	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, ak.IBCFeeKeeper)
@@ -630,6 +694,7 @@ func (ak *AppKeepers) InitKeepers(
 	// Create static IBC router, add ibc-transfer module route, then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
+		AddRoute(zctypes.ModuleName, zoneConciergeStack).
 		AddRoute(wasmtypes.ModuleName, wasmStack)
 
 	// Setting Router will finalize all routes by sealing router
@@ -646,7 +711,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// whole usage of params module
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
-	// paramsKeeper.Subspace(evmtypes.ModuleName).WithKeyTable(v0evmtypes.ParamKeyTable()) //nolint: staticcheck
 
 	return paramsKeeper
 }

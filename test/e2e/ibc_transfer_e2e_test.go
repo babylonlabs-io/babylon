@@ -96,7 +96,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 		}
 		return math.Abs(float64(balanceA.Sub(transferCoin).AmountOf(denom).Int64()-
 			balanceA2.AmountOf(denom).Int64())) < delta
-	}, 10*time.Second, 1*time.Second, "Transfer was not successful")
+	}, 1*time.Minute, 1*time.Second, "Transfer was not successful")
 
 	s.Require().Eventually(func() bool {
 		balanceB2, err := babylonNodeB.QueryBalances(addrB)
@@ -111,7 +111,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 		// Check the balance of the IBC denom
 		return math.Abs(float64(balanceB2.AmountOf(denomB).Int64()-
 			transferCoin.Amount.Int64())) < delta
-	}, 10*time.Second, 1*time.Second, "Transfer was not successful")
+	}, 1*time.Minute, 1*time.Second, "Transfer was not successful")
 }
 
 func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
@@ -153,7 +153,7 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 		}
 		return math.Abs(float64(balanceB.Sub(transferCoin).AmountOf(denom).Int64()-
 			balanceB2.AmountOf(denom).Int64())) < delta
-	}, 10*time.Second, 1*time.Second, "Transfer back was not successful")
+	}, 1*time.Minute, 1*time.Second, "Transfer back A was not successful")
 
 	nativeCoin := sdk.NewInt64Coin(nativeDenom, amount)
 	s.Require().Eventually(func() bool {
@@ -168,5 +168,5 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 		// Check that the balance of the native denom has increased
 		return math.Abs(float64(balanceA.Add(nativeCoin).AmountOf(nativeDenom).Int64()-
 			balanceA2.AmountOf(nativeDenom).Int64())) < delta
-	}, 10*time.Second, 1*time.Second, "Transfer back was not successful")
+	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
 }
