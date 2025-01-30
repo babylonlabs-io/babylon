@@ -28,6 +28,7 @@ import (
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	blctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 
@@ -357,8 +358,8 @@ func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.Genesi
 
 func updateFinalityGenesis(finalityGenState *finalitytypes.GenesisState) {
 	finalityGenState.Params = finalitytypes.DefaultParams()
-	finalityGenState.Params.FinalityActivationHeight = 0
-	finalityGenState.Params.FinalitySigTimeout = 3
+	finalityGenState.Params.FinalityActivationHeight = 1
+	finalityGenState.Params.FinalitySigTimeout = 5
 	finalityGenState.Params.SignedBlocksWindow = 300
 }
 
