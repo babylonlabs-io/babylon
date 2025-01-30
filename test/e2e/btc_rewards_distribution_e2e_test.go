@@ -433,8 +433,8 @@ func (s *BtcRewardsDistribution) Test7CheckRewards() {
 	// (del1) => 4_00000000
 	// (del2) => 10_00000000
 
-	// gets the difference in rewards in 8 blocks range
-	fp1DiffRewards, fp2DiffRewards, del1DiffRewards, del2DiffRewards := s.GetRewardDifferences(8)
+	// gets the difference in rewards in 4 blocks range
+	fp1DiffRewards, fp2DiffRewards, del1DiffRewards, del2DiffRewards := s.GetRewardDifferences(4)
 
 	// Check the difference in the finality providers
 	// fp1 should receive ~75% of the rewards received by fp2
