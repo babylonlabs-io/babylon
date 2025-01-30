@@ -342,6 +342,12 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 		s.True(del.Active)
 	}
 
+	// makes sure at least one has rewards
+	s.Eventually(func() bool {
+		_, err = n2.QueryRewardGauge(s.fp1.Address())
+		return err == nil
+	}, time.Minute, time.Second)
+
 	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
 	fp1DiffRewards, fp2DiffRewards, del1DiffRewards, del2DiffRewards := s.QueryRewardGauges(n2)
 	s.AddFinalityVoteUntilCurrentHeight()
