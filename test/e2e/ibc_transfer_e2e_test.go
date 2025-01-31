@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"math"
 	"strings"
 	"time"
 
@@ -109,7 +108,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 
 		if !strings.EqualFold(expectedAmt, actualAmt) {
 			s.T().Logf(
-				"BalanceBeforeSendAddrA: %s; BalanceBeforeSendAddrA: %s, txFees: %s, coinTransfer: %s",
+				"BalanceBeforeSendAddrA: %s; BalanceAfterSendAddrA: %s, txFees: %s, coinTransfer: %s",
 				balanceBeforeSendAddrA.String(), balanceAfterSendAddrA.String(), txFeesPaid.String(), transferCoin.String(),
 			)
 			return false
@@ -144,53 +143,77 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 
 func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 	nativeDenom := "ubbn"
-	delta := float64(10000) // Tolerance to account for gas fees
 
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
-	babylonNodeA, err := bbnChainA.GetNodeAtIndex(0)
+	nA, err := bbnChainA.GetNodeAtIndex(0)
 	s.NoError(err)
-	babylonNodeB, err := bbnChainB.GetNodeAtIndex(2)
+	nB, err := bbnChainB.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	balanceB, err := babylonNodeB.QueryBalances(s.addrB)
+	balanceBeforeSendBackB, err := nB.QueryBalances(s.addrB)
 	s.Require().NoError(err)
 	// Two denoms in B
-	s.Require().Len(balanceB, 2)
+	s.Require().Len(balanceBeforeSendBackB, 2)
 	// Look for the ugly IBC one
-	denom := getFirstIBCDenom(balanceB)
-	amount := balanceB.AmountOf(denom).Int64() - int64(delta) // have to pay gas fees
+	denom := getFirstIBCDenom(balanceBeforeSendBackB)
+	amount := balanceBeforeSendBackB.AmountOf(denom).Int64() // have to pay gas fees
 
 	transferCoin := sdk.NewInt64Coin(denom, amount)
 
 	// Send transfer from val in chain-B (Node 3) to val in chain-A (Node 1)
-	balanceA, err := babylonNodeA.QueryBalances(s.addrA)
+	balanceBeforeReceivingSendBackA, err := nA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
 
-	babylonNodeB.SendIBCTransfer(s.addrB, s.addrA, "transfer back", transferCoin)
+	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, "transfer back", transferCoin)
+
+	_, txResp := nA.QueryTx(txHash)
+	txFeesPaid := txResp.AuthInfo.Fee.Amount
 
 	s.Require().Eventually(func() bool {
-		balanceB2, err := babylonNodeB.QueryBalances(s.addrB)
+		balanceAfterSendBackB, err := nB.QueryBalances(s.addrB)
 		if err != nil {
+			s.T().Logf("failed to query balances: %s", err.Error())
 			return false
 		}
-		return math.Abs(float64(balanceB.Sub(transferCoin).AmountOf(denom).Int64()-
-			balanceB2.AmountOf(denom).Int64())) < delta
+		expectedAmt := balanceBeforeSendBackB.Sub(transferCoin).Sub(txFeesPaid...).String()
+		actualAmt := balanceAfterSendBackB.String()
+
+		if !strings.EqualFold(expectedAmt, actualAmt) {
+			s.T().Logf(
+				"BalanceBeforeSendBackB: %s; BalanceAfterSendBackB: %s, txFees: %s, coinTransfer: %s",
+				balanceBeforeSendBackB.String(), balanceAfterSendBackB.String(), txFeesPaid.String(), transferCoin.String(),
+			)
+			return false
+		}
+
+		return true
 	}, 1*time.Minute, 1*time.Second, "Transfer back A was not successful")
 
 	nativeCoin := sdk.NewInt64Coin(nativeDenom, amount)
 	s.Require().Eventually(func() bool {
-		balanceA2, err := babylonNodeA.QueryBalances(s.addrA)
+		balanceAfterReceivingSendBackA, err := nA.QueryBalances(s.addrA)
 		if err != nil {
 			return false
 		}
 		// Check that there's still one denom in A
-		if len(balanceA2) != 1 {
+		if len(balanceAfterReceivingSendBackA) != 1 {
 			return false
 		}
+
+		expectedAmt := balanceBeforeReceivingSendBackA.Add(nativeCoin).String()
+		actualAmt := balanceAfterReceivingSendBackA.String()
+
 		// Check that the balance of the native denom has increased
-		return math.Abs(float64(balanceA.Add(nativeCoin).AmountOf(nativeDenom).Int64()-
-			balanceA2.AmountOf(nativeDenom).Int64())) < delta
+		if !strings.EqualFold(expectedAmt, actualAmt) {
+			s.T().Logf(
+				"BalanceBeforeReceivingSendBackA: %s; BalanceAfterReceivingSendBackA: %s, coinTransfer: %s",
+				balanceBeforeReceivingSendBackA.String(), balanceAfterReceivingSendBackA.String(), nativeCoin.String(),
+			)
+			return false
+		}
+
+		return true
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
 }
