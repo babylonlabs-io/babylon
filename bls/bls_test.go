@@ -1,4 +1,4 @@
-package privval
+package bls
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 	"github.com/test-go/testify/assert"
 )
 
-func TestNewBlsPV(t *testing.T) {
+func TestNewBls(t *testing.T) {
 	tempDir := t.TempDir()
 	defer os.RemoveAll(tempDir)
 
@@ -20,19 +20,19 @@ func TestNewBlsPV(t *testing.T) {
 
 	t.Run("failed when private key is nil", func(t *testing.T) {
 		assert.Panics(t, func() {
-			NewBlsPV(nil, keyFilePath, passwordFilePath)
+			NewBls(nil, keyFilePath, passwordFilePath)
 		})
 	})
 
 	t.Run("save bls key to file without delegator address", func(t *testing.T) {
-		pv := NewBlsPV(bls12381.GenPrivKey(), keyFilePath, passwordFilePath)
+		pv := NewBls(bls12381.GenPrivKey(), keyFilePath, passwordFilePath)
 		assert.NotNil(t, pv)
 
 		password := "password"
 		pv.Key.Save(password)
 
 		t.Run("load bls key from file", func(t *testing.T) {
-			loadedPv := LoadBlsPV(keyFilePath, passwordFilePath)
+			loadedPv := LoadBls(keyFilePath, passwordFilePath)
 			assert.NotNil(t, loadedPv)
 
 			assert.Equal(t, pv.Key.PrivKey, loadedPv.Key.PrivKey)
@@ -41,14 +41,14 @@ func TestNewBlsPV(t *testing.T) {
 	})
 
 	t.Run("save bls key to file with delegator address", func(t *testing.T) {
-		pv := NewBlsPV(bls12381.GenPrivKey(), keyFilePath, passwordFilePath)
+		pv := NewBls(bls12381.GenPrivKey(), keyFilePath, passwordFilePath)
 		assert.NotNil(t, pv)
 
 		password := "password"
 		pv.Key.Save(password)
 
 		t.Run("load bls key from file", func(t *testing.T) {
-			loadedPv := LoadBlsPV(keyFilePath, passwordFilePath)
+			loadedPv := LoadBls(keyFilePath, passwordFilePath)
 			assert.NotNil(t, loadedPv)
 
 			assert.Equal(t, pv.Key.PrivKey, loadedPv.Key.PrivKey)

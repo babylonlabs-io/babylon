@@ -22,7 +22,7 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/babylonlabs-io/babylon/privval"
+	bb "github.com/babylonlabs-io/babylon/bls"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
@@ -202,13 +202,13 @@ func buildCommissionRates(rateStr, maxRateStr, maxChangeRateStr string) (commiss
 }
 
 // getValKeyFromFile loads the validator key from the node directory
-// Both FilePV from priv_validator_key.json and BlsPV should be present in the node directory
+// Both FilePV from priv_validator_key.json and Bls should be present in the node directory
 // befor function is called.
-func getValKeyFromFile(homeDir string) (*privval.ValidatorKeys, error) {
+func getValKeyFromFile(homeDir string) (*bb.ValidatorKeys, error) {
 	ck, err := signer.LoadConsensusKey(homeDir)
 	if err != nil {
 		return nil, err
 	}
 
-	return privval.NewValidatorKeys(ck.Comet.PrivKey, ck.Bls.PrivKey)
+	return bb.NewValidatorKeys(ck.Comet.PrivKey, ck.Bls.PrivKey)
 }

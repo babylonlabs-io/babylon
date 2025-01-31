@@ -1,4 +1,4 @@
-package privval
+package bls
 
 import (
 	"fmt"

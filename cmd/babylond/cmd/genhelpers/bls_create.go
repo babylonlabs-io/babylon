@@ -11,7 +11,7 @@ import (
 	"github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/babylonlabs-io/babylon/privval"
+	bb "github.com/babylonlabs-io/babylon/bls"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -52,7 +52,7 @@ $ babylond gen-helpers create-bls %s1f5tnl46mk4dfp4nx3n2vnrvyw2h2ydz6ykhk3r --ho
 				return fmt.Errorf("invalid address: %w", err)
 			}
 
-			outputFileName, err := privval.ExportGenBls(
+			outputFileName, err := bb.ExportGenBls(
 				sdk.ValAddress(addr),
 				ck.Comet.PrivKey,
 				ck.Bls.PrivKey,

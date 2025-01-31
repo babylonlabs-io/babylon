@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/privval"
+	bb "github.com/babylonlabs-io/babylon/bls"
 )
 
 func CreateBlsKeyCmd() *cobra.Command {
@@ -41,7 +41,7 @@ $ babylond create-bls-key --home ./
 // createBlsKeyAndSave creates a pair of BLS keys and saves them to files
 func createBlsKeyAndSave(homeDir, password string) {
 	if password == "" {
-		password = privval.NewBlsPassword()
+		password = bb.NewBlsPassword()
 	}
-	privval.GenBlsPV(privval.DefaultBlsKeyFile(homeDir), privval.DefaultBlsPasswordFile(homeDir), password)
+	bb.GenBls(bb.DefaultBlsKeyFile(homeDir), bb.DefaultBlsPasswordFile(homeDir), password)
 }

@@ -21,7 +21,7 @@ import (
 	cmtconfig "github.com/cometbft/cometbft/config"
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cometbft/cometbft/libs/tempfile"
-	cmtprivval "github.com/cometbft/cometbft/privval"
+	"github.com/cometbft/cometbft/privval"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -33,8 +33,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/app"
+	bb "github.com/babylonlabs-io/babylon/bls"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
-	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/testutil/cli"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/testutil/signer"
@@ -163,16 +163,16 @@ func Test_CmdAddBlsWithGentx(t *testing.T) {
 
 		keyPath := nodeCfg.PrivValidatorKeyFile()
 		statePath := nodeCfg.PrivValidatorStateFile()
-		blsKeyFile := privval.DefaultBlsKeyFile(homeDir)
-		blsPasswordFile := privval.DefaultBlsPasswordFile(homeDir)
+		blsKeyFile := bb.DefaultBlsKeyFile(homeDir)
+		blsPasswordFile := bb.DefaultBlsPasswordFile(homeDir)
 
-		err := privval.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
+		err := bb.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
 		require.NoError(t, err)
 
-		filePV := cmtprivval.GenFilePV(keyPath, statePath)
+		filePV := privval.GenFilePV(keyPath, statePath)
 		filePV.Key.Save()
 		filePV.LastSignState.Save()
-		privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password")
+		bb.GenBls(blsKeyFile, blsPasswordFile, "password")
 
 		_, err = cli.ExecTestCLICmd(v.ClientCtx, genBlsCmd, []string{v.Address.String(), fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir)})
 		require.NoError(t, err)

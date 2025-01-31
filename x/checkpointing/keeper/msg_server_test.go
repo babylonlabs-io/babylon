@@ -13,8 +13,8 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	bb "github.com/babylonlabs-io/babylon/bls"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
@@ -225,7 +225,7 @@ func buildMsgWrappedCreateValidatorWithAmount(addr sdk.AccAddress, bondTokens ma
 		return nil, err
 	}
 	blsPrivKey := bls12381.GenPrivKey()
-	pop, err := privval.BuildPoP(cmtValPrivkey, blsPrivKey)
+	pop, err := bb.BuildPoP(cmtValPrivkey, blsPrivKey)
 	if err != nil {
 		return nil, err
 	}

@@ -5,8 +5,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	bb "github.com/babylonlabs-io/babylon/bls"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -71,7 +71,7 @@ func buildMsgWrappedCreateValidatorWithAmount(addr sdk.AccAddress, bondTokens sd
 		return nil, err
 	}
 	blsPrivKey := bls12381.GenPrivKey()
-	pop, err := privval.BuildPoP(tmValPrivkey, blsPrivKey)
+	pop, err := bb.BuildPoP(tmValPrivkey, blsPrivKey)
 	if err != nil {
 		return nil, err
 	}

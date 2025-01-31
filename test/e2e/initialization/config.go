@@ -23,7 +23,7 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/babylonlabs-io/babylon/privval"
+	bb "github.com/babylonlabs-io/babylon/bls"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	blctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
@@ -406,7 +406,7 @@ func updateCheckpointingGenesis(c *internalChain) func(*checkpointingtypes.Genes
 
 			ck := node.consensusKey
 
-			proofOfPossession, err := privval.BuildPoP(ck.Comet.PrivKey, ck.Bls.PrivKey)
+			proofOfPossession, err := bb.BuildPoP(ck.Comet.PrivKey, ck.Bls.PrivKey)
 			if err != nil {
 				panic("It should be possible to build proof of possession from validator private keys")
 			}

@@ -33,8 +33,8 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	bb "github.com/babylonlabs-io/babylon/bls"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/privval"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
@@ -87,7 +87,7 @@ func setup(t *testing.T, blsSigner checkpointingtypes.BlsSigner, withGenesis boo
 func NewBabylonAppWithCustomOptions(t *testing.T, isCheckTx bool, blsSigner checkpointingtypes.BlsSigner, options SetupOptions) *BabylonApp {
 	t.Helper()
 	// create validator set with single validator
-	valKeys, err := privval.NewValidatorKeys(ed25519.GenPrivKey(), bls12381.GenPrivKey())
+	valKeys, err := bb.NewValidatorKeys(ed25519.GenPrivKey(), bls12381.GenPrivKey())
 	require.NoError(t, err)
 	valPubkey, err := cryptocodec.FromCmtPubKeyInterface(valKeys.ValPubkey)
 	require.NoError(t, err)

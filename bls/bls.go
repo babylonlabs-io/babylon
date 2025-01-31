@@ -1,4 +1,4 @@
-package privval
+package bls
 
 import (
 	"bufio"
@@ -21,7 +21,7 @@ import (
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
-var _ checkpointingtypes.BlsSigner = &BlsPVKey{}
+var _ checkpointingtypes.BlsSigner = &BlsKey{}
 
 const (
 	DefaultBlsKeyName      = "bls_key.json"     // Default file name for BLS key
@@ -33,31 +33,31 @@ var (
 	defaultBlsPasswordPath = filepath.Join(cmtcfg.DefaultConfigDir, DefaultBlsPasswordName) // Default file path for BLS password
 )
 
-// BlsPV is a wrapper around BlsPVKey
-type BlsPV struct {
+// Bls is a wrapper around BlsKey
+type Bls struct {
 	// Key is a structure containing bls12381 keys,
 	// paths of both key and password files,
 	// and delegator address
-	Key BlsPVKey
+	Key BlsKey
 }
 
-// BlsPVKey is a wrapper containing bls12381 keys,
+// BlsKey is a wrapper containing bls12381 keys,
 // paths of both key and password files, and delegator address.
-type BlsPVKey struct {
+type BlsKey struct {
 	PubKey       bls12381.PublicKey  `json:"bls_pub_key"`  // Public Key of BLS
 	PrivKey      bls12381.PrivateKey `json:"bls_priv_key"` // Private Key of BLS
 	filePath     string              // File Path of BLS Key
 	passwordPath string              // File Path of BLS Password
 }
 
-// NewBlsPV returns a new BlsPV.
+// NewBls returns a new Bls.
 // if private key is nil, it will panic
-func NewBlsPV(privKey bls12381.PrivateKey, keyFilePath, passwordFilePath string) *BlsPV {
+func NewBls(privKey bls12381.PrivateKey, keyFilePath, passwordFilePath string) *Bls {
 	if privKey == nil {
 		panic("BLS private key should not be nil")
 	}
-	return &BlsPV{
-		Key: BlsPVKey{
+	return &Bls{
+		Key: BlsKey{
 			PubKey:       privKey.PubKey(),
 			PrivKey:      privKey,
 			filePath:     keyFilePath,
@@ -66,16 +66,16 @@ func NewBlsPV(privKey bls12381.PrivateKey, keyFilePath, passwordFilePath string)
 	}
 }
 
-// GenBlsPV returns a new BlsPV after saving it to the file.
-func GenBlsPV(keyFilePath, passwordFilePath, password string) *BlsPV {
-	pv := NewBlsPV(bls12381.GenPrivKey(), keyFilePath, passwordFilePath)
+// GenBls returns a new Bls after saving it to the file.
+func GenBls(keyFilePath, passwordFilePath, password string) *Bls {
+	pv := NewBls(bls12381.GenPrivKey(), keyFilePath, passwordFilePath)
 	pv.Key.Save(password)
 	return pv
 }
 
-// LoadBlsPV returns a BlsPV after loading the erc2335 type of structure
+// LoadBls returns a Bls after loading the erc2335 type of structure
 // from the file and decrypt it using a password.
-func LoadBlsPV(keyFilePath, passwordFilePath string) *BlsPV {
+func LoadBls(keyFilePath, passwordFilePath string) *Bls {
 	passwordBytes, err := os.ReadFile(passwordFilePath)
 	if err != nil {
 		cmtos.Exit(fmt.Sprintf("failed to read BLS password file: %v", err.Error()))
@@ -94,8 +94,8 @@ func LoadBlsPV(keyFilePath, passwordFilePath string) *BlsPV {
 	}
 
 	blsPrivKey := bls12381.PrivateKey(privKey)
-	return &BlsPV{
-		Key: BlsPVKey{
+	return &Bls{
+		Key: BlsKey{
 			PubKey:       blsPrivKey.PubKey(),
 			PrivKey:      blsPrivKey,
 			filePath:     keyFilePath,
@@ -116,16 +116,16 @@ func NewBlsPassword() string {
 
 // Save saves the bls12381 key to the file.
 // The file stores an erc2335 structure containing the encrypted bls private key.
-func (k *BlsPVKey) Save(password string) {
+func (k *BlsKey) Save(password string) {
 	// encrypt the bls12381 key to erc2335 type
-	erc2335BlsPvKey, err := erc2335.Encrypt(k.PrivKey, k.PubKey.Bytes(), password)
+	erc2335BlsKey, err := erc2335.Encrypt(k.PrivKey, k.PubKey.Bytes(), password)
 	if err != nil {
 		panic(fmt.Errorf("failed to encrypt BLS key: %w", err))
 	}
 
 	// Parse the encrypted key back to Erc2335KeyStore structure
 	var keystore erc2335.Erc2335KeyStore
-	if err := json.Unmarshal(erc2335BlsPvKey, &keystore); err != nil {
+	if err := json.Unmarshal(erc2335BlsKey, &keystore); err != nil {
 		panic(fmt.Errorf("failed to unmarshal BLS key: %w", err))
 	}
 
@@ -190,7 +190,7 @@ func DefaultBlsPasswordFile(home string) string {
 }
 
 // SignMsgWithBls signs a message with BLS, implementing the BlsSigner interface
-func (k *BlsPVKey) SignMsgWithBls(msg []byte) (bls12381.Signature, error) {
+func (k *BlsKey) SignMsgWithBls(msg []byte) (bls12381.Signature, error) {
 	if k.PrivKey == nil {
 		return nil, fmt.Errorf("BLS private key does not exist: %w", checkpointingtypes.ErrBlsPrivKeyDoesNotExist)
 	}
@@ -198,7 +198,7 @@ func (k *BlsPVKey) SignMsgWithBls(msg []byte) (bls12381.Signature, error) {
 }
 
 // GetBlsPubkey returns the public key of the BLS, implementing the BlsSigner interface
-func (k *BlsPVKey) GetBlsPubkey() (bls12381.PublicKey, error) {
+func (k *BlsKey) GetBlsPubkey() (bls12381.PublicKey, error) {
 	if k.PrivKey == nil {
 		return nil, checkpointingtypes.ErrBlsPrivKeyDoesNotExist
 	}

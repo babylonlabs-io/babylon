@@ -34,10 +34,10 @@ import (
 	babylonApp "github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/app/signer"
+	bb "github.com/babylonlabs-io/babylon/bls"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
-	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
-	cmtprivval "github.com/cometbft/cometbft/privval"
+	"github.com/cometbft/cometbft/privval"
 )
 
 type internalNode struct {
@@ -165,10 +165,10 @@ func (n *internalNode) createConsensusKey() error {
 
 	pvKeyFile := config.PrivValidatorKeyFile()
 	pvStateFile := config.PrivValidatorStateFile()
-	blsKeyFile := privval.DefaultBlsKeyFile(n.configDir())
-	blsPasswordFile := privval.DefaultBlsPasswordFile(n.configDir())
+	blsKeyFile := bb.DefaultBlsKeyFile(n.configDir())
+	blsPasswordFile := bb.DefaultBlsPasswordFile(n.configDir())
 
-	if err := privval.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
+	if err := bb.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
 		return fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 
@@ -179,16 +179,16 @@ func (n *internalNode) createConsensusKey() error {
 	} else {
 		privKey = ed25519.GenPrivKeyFromSecret([]byte(n.mnemonic))
 	}
-	filePV := cmtprivval.NewFilePV(privKey, pvKeyFile, pvStateFile)
+	filePV := privval.NewFilePV(privKey, pvKeyFile, pvStateFile)
 	filePV.Key.Save()
 	filePV.LastSignState.Save()
 
 	// create bls pv
-	blsPV := privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password")
+	bls := bb.GenBls(blsKeyFile, blsPasswordFile, "password")
 
 	n.consensusKey = signer.ConsensusKey{
 		Comet: &filePV.Key,
-		Bls:   &blsPV.Key,
+		Bls:   &bls.Key,
 	}
 	return nil
 }
