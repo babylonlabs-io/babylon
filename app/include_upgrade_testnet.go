@@ -1,5 +1,3 @@
-//go:build testnet
-
 package app
 
 import (

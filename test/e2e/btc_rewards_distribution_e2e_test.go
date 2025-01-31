@@ -260,12 +260,46 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 		fp2CommitPubRandList.Sig,
 	)
 
-	n1.WaitUntilCurrentEpochIsSealedAndFinalized(1)
+	// needs to wait for a block to make sure the pub rand is committed
+	// prior to epoch finalization
+	n2.WaitForNextBlockWithSleep50ms()
+
+	// check all FPs requirement to be active
+	// TotalBondedSat > 0
+	// IsTimestamped
+	// !IsJailed
+	// !IsSlashed
 
 	fp1CommitPubRand := n1.QueryListPubRandCommit(fp1CommitPubRandList.FpBtcPk)
-	s.Require().Equal(fp1CommitPubRand[commitStartHeight].NumPubRand, numPubRand)
+	fp1PubRand := fp1CommitPubRand[commitStartHeight]
+	s.Require().Equal(fp1PubRand.NumPubRand, numPubRand)
+
 	fp2CommitPubRand := n2.QueryListPubRandCommit(fp2CommitPubRandList.FpBtcPk)
-	s.Require().Equal(fp2CommitPubRand[commitStartHeight].NumPubRand, numPubRand)
+	fp2PubRand := fp2CommitPubRand[commitStartHeight]
+	s.Require().Equal(fp2PubRand.NumPubRand, numPubRand)
+
+	finalizedEpoch := n1.WaitUntilCurrentEpochIsSealedAndFinalized(1)
+	s.Require().GreaterOrEqual(finalizedEpoch, fp1PubRand.EpochNum)
+	s.Require().GreaterOrEqual(finalizedEpoch, fp2PubRand.EpochNum)
+
+	fps := n2.QueryFinalityProviders()
+	s.Require().Len(fps, 2)
+	for _, fp := range fps {
+		s.Require().False(fp.Jailed, "fp is jailed")
+		s.Require().Zero(fp.SlashedBabylonHeight, "fp is slashed")
+		fpDels := n2.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
+		if fp.BtcPk.Equals(s.fp1.BtcPk) {
+			s.Require().Len(fpDels, 2)
+		} else {
+			s.Require().Len(fpDels, 1)
+		}
+		for _, fpDelStaker := range fpDels {
+			for _, fpDel := range fpDelStaker.Dels {
+				s.Require().True(fpDel.Active)
+				s.Require().GreaterOrEqual(fpDel.TotalSat, uint64(0))
+			}
+		}
+	}
 
 	s.finalityBlockHeightVoted = n1.WaitFinalityIsActivated()
 
