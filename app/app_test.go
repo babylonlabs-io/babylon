@@ -109,8 +109,18 @@ func TestStakingRouterDisabled(t *testing.T) {
 		AppOpts:            TmpAppOptions(),
 	})
 
-	msg := &stktypes.MsgCreateValidator{}
+	msgs := []sdk.Msg{
+		&stktypes.MsgCreateValidator{},
+		&stktypes.MsgBeginRedelegate{},
+		&stktypes.MsgCancelUnbondingDelegation{},
+		&stktypes.MsgDelegate{},
+		&stktypes.MsgEditValidator{},
+		&stktypes.MsgUndelegate{},
+		&stktypes.MsgUpdateParams{},
+	}
 
-	msgHandler := app.MsgServiceRouter().HandlerByTypeURL(sdk.MsgTypeURL(msg))
-	require.Nil(t, msgHandler)
+	for _, msg := range msgs {
+		msgHandler := app.MsgServiceRouter().HandlerByTypeURL(sdk.MsgTypeURL(msg))
+		require.Nil(t, msgHandler)
+	}
 }

@@ -147,6 +147,13 @@ to a node it will error out. Since there is no message to be received
 by the Staking module, all of commands under `babylond tx staking` were
 removed.
 
+**Staking module Migrations.** Since the staking module msg server
+was not registered in the app routes, the function of staking `AppModule`
+that register the migrations and the query server are in the
+[`app.go`](https://github.com/babylonlabs-io/babylon/blob/cf6c0e3873133331d95267a58da06c04a3e2c601/app/app.go#L608). If a new
+version of the cosmos-sdk is released and there is a new migration,
+it is needed to register the migration there too.
+
 **Delaying wrapped messages to the end of epochs.** The Epoching module
 maintains a message queue for each epoch. Upon each wrapped message, the
 Epoching module performs basic sanity checks, then enqueues the message to the
