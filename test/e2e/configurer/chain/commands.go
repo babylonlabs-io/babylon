@@ -300,13 +300,14 @@ func (n *NodeConfig) WithdrawReward(sType, from string) (txHash string) {
 
 // WithdrawRewardCheckingBalances will withdraw the rewards and verify the amount was correctly withdraw
 func (n *NodeConfig) WithdrawRewardCheckingBalances(sType, fromAddr string) {
+	n.t.Helper()
 	balanceBeforeRwdWithdraw, err := n.QueryBalances(fromAddr)
 	require.NoError(n.t, err)
 
 	rewardGauge, err := n.QueryRewardGauge(sdk.MustAccAddressFromBech32(fromAddr))
 	require.NoError(n.t, err)
 
-	fpRg := rewardGauge[sType]
+	fpRg := rewardGauge[sType].ToRewardGauge()
 	n.t.Logf("address: %s withdrawable reward before withdrawing: %s", fromAddr, fpRg.WithdrawnCoins.String())
 	require.False(n.t, fpRg.Coins.Equal(fpRg.WithdrawnCoins))
 
@@ -321,10 +322,12 @@ func (n *NodeConfig) WithdrawRewardCheckingBalances(sType, fromAddr string) {
 	require.NoError(n.t, err)
 
 	actualAmt := balanceAfterRwdWithdraw.String()
-	expectedAmt := balanceBeforeRwdWithdraw.Add(fpRg.WithdrawnCoins...).Sub(txResp.AuthInfo.Fee.Amount...).String()
+
+	coinsReceivedWithdraw := fpRg.GetWithdrawableCoins()
+	expectedAmt := balanceBeforeRwdWithdraw.Add(coinsReceivedWithdraw...).Sub(txResp.AuthInfo.Fee.Amount...).String()
 	require.Equal(n.t, expectedAmt, actualAmt, "Expected(after withdraw): %s, actual(before withdraw + withdraw - TxFees): %s", expectedAmt, actualAmt)
 
-	n.t.Logf("BalanceAfterRwdWithdraw: %s; BalanceBeforeRwdWithdraw: %s", balanceAfterRwdWithdraw.String(), balanceBeforeRwdWithdraw.String())
+	n.t.Logf("BalanceAfterRwdWithdraw: %s; BalanceBeforeRwdWithdraw: %s, txFees: %s, CoinsReceivedWithdraw", balanceAfterRwdWithdraw.String(), balanceBeforeRwdWithdraw.String(), txResp.AuthInfo.Fee.Amount.String(), coinsReceivedWithdraw.String())
 }
 
 // TxMultisigSign sign a tx in a file with one wallet for a multisig address.

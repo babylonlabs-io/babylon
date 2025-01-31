@@ -10,3 +10,11 @@ func HashMsg(msg sdk.Msg) []byte {
 	msgHash := tmhash.Sum(msgBytes)
 	return msgHash
 }
+
+// ToRewardGauge parses to RewardGauge
+func (rgr RewardGaugesResponse) ToRewardGauge() RewardGauge {
+	return RewardGauge{
+		Coins:          rgr.Coins,
+		WithdrawnCoins: rgr.WithdrawnCoins,
+	}
+}
