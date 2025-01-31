@@ -146,6 +146,20 @@ func NewQueuedMessage(blockHeight uint64, blockTime time.Time, txid []byte, msg 
 		qmsg = &QueuedMessage_MsgCreateValidator{
 			MsgCreateValidator: msgWithType,
 		}
+	case *stakingtypes.MsgEditValidator:
+		if msgBytes, err = msgWithType.Marshal(); err != nil {
+			return QueuedMessage{}, err
+		}
+		qmsg = &QueuedMessage_MsgEditValidator{
+			MsgEditValidator: msgWithType,
+		}
+	case *stakingtypes.MsgUpdateParams:
+		if msgBytes, err = msgWithType.Marshal(); err != nil {
+			return QueuedMessage{}, err
+		}
+		qmsg = &QueuedMessage_MsgUpdateParams{
+			MsgUpdateParams: msgWithType,
+		}
 	default:
 		return QueuedMessage{}, ErrUnwrappedMsgType
 	}
@@ -183,6 +197,10 @@ func (qm *QueuedMessage) UnwrapToSdkMsg() sdk.Msg {
 		unwrappedMsgWithType = unwrappedMsg.MsgBeginRedelegate
 	case *QueuedMessage_MsgCancelUnbondingDelegation:
 		unwrappedMsgWithType = unwrappedMsg.MsgCancelUnbondingDelegation
+	case *QueuedMessage_MsgEditValidator:
+		unwrappedMsgWithType = unwrappedMsg.MsgEditValidator
+	case *QueuedMessage_MsgUpdateParams:
+		unwrappedMsgWithType = unwrappedMsg.MsgUpdateParams
 	default:
 		panic(errorsmod.Wrap(ErrInvalidQueuedMessageType, qm.String()))
 	}
