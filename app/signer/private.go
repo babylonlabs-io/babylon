@@ -12,6 +12,7 @@ import (
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
+// ConsensusKey represents the consensus keys
 type ConsensusKey struct {
 	Comet *cmtprivval.FilePVKey
 	Bls   *privval.BlsPVKey

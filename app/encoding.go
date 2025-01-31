@@ -28,6 +28,7 @@ func TmpAppOptions() simsutils.AppOptionsMap {
 	return appOpts
 }
 
+// NewTmpBabylonApp returns a new BabylonApp
 func NewTmpBabylonApp() *BabylonApp {
 	tbs, _ := signer.SetupTestBlsSigner()
 	blsSigner := checkpointingtypes.BlsSigner(tbs)
