@@ -82,7 +82,7 @@ voting power is cast on it.
 The voting power of each finality provider is based on
 its Bitcoin stake retrieved from the BTC Staking module.
 Finality votes are performed using
-[Extractable-One-Time-Signatures (EOTS)](https://docs.babylonchain.io/assets/files/btc_staking_litepaper-32bfea0c243773f0bfac63e148387aef.pdf)
+[Extractable-One-Time-Signatures (EOTS)](https://docs.babylonlabs.io/assets/files/btc_staking_litepaper-32bfea0c243773f0bfac63e148387aef.pdf)
 and verified using
 the finality providers' committed public randomness.
 
@@ -177,7 +177,7 @@ has been developed to enable these functionalities:
 A standalone program that allows the registration and
 maintenance of a finality provider.
 It monitors for a finality provider's inclusion in the active set, commits
-[Extractable One Time Signature (EOTS)](https://docs.babylonchain.io/assets/files/btc_staking_litepaper-32bfea0c243773f0bfac63e148387aef.pdf)
+[Extractable One Time Signature (EOTS)](https://docs.babylonlabs.io/assets/files/btc_staking_litepaper-32bfea0c243773f0bfac63e148387aef.pdf)
 public randomness, and
 submits finality votes for blocks.
 Finality votes are created through a connection to a standalone

@@ -221,4 +221,4 @@ Description: Retrieves checkpoint information for multiple epochs with paginatio
 Endpoint: `/babylon/btccheckpoint/v1/{epoch_num}/submissions`\
 Description: Retrieves all submissions for a given epoch.
 
-Additional Information: For further details on how to use these queries and additional documentation, please refer to docs.babylonchain.io.
+Additional Information: For further details on how to use these queries and additional documentation, please refer to docs.babylonlabs.io.

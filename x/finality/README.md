@@ -56,7 +56,7 @@ maintaining the finality voting round.
 the CometBFT ledger receives *finality votes* from a set of finality providers.
 A finality vote is a signature under the [*Extractable One-Time Signature
 (EOTS)*
-primitive](https://docs.babylonchain.io/assets/files/btc_staking_litepaper-32bfea0c243773f0bfac63e148387aef.pdf).
+primitive](https://docs.babylonlabs.io/assets/files/btc_staking_litepaper-32bfea0c243773f0bfac63e148387aef.pdf).
 A block is considered finalized if it receives a quorum, i.e., votes from
 finality providers with more than 2/3 voting power at its height.
 
@@ -519,5 +519,5 @@ string public_key = 1;
 
 The Finality module provides a set of queries about finality signatures on each
 block, listed at
-[docs.babylonchain.io](https://docs.babylonchain.io/docs/developer-guides/grpcrestapi#tag/Finality).
+[docs.babylonlabs.io](https://docs.babylonlabs.io/docs/developer-guides/grpcrestapi#tag/Finality).
 <!-- TODO: update Babylon doc website -->

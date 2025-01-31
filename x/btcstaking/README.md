@@ -977,6 +977,6 @@ Endpoint: `/babylon/btcstaking/v1/btc_delegation/{staking_tx_hash_hex}`
 Description: Retrieves a specific BTC delegation by its corresponding staking transaction hash.
 
 Additional Information:
-For further details on how to use these queries and additional documentation, please refer to docs.babylonchain.io.
+For further details on how to use these queries and additional documentation, please refer to docs.babylonlabs.io.
 
 <!-- TODO: update Babylon doc website -->
