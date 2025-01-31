@@ -101,7 +101,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 		// Amounts have been discounted from val in chain-A and added (as a wrapped denom) to val in chain-B
 		balanceAfterSendAddrA, err := nA.QueryBalances(addrA)
 		if err != nil {
-			s.T().Logf("failed to query balances: %w", err)
+			s.T().Logf("failed to query balances: %s", err.Error())
 			return false
 		}
 
@@ -122,6 +122,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	s.Require().Eventually(func() bool {
 		balanceAfterSendAddrB, err := nB.QueryBalances(addrB)
 		if err != nil {
+			s.T().Logf("failed to query balances: %s", err.Error())
 			return false
 		}
 		// Check that there are now two denoms in B
