@@ -741,6 +741,8 @@ func CheckWithdrawReward(
 	n.WaitForNextBlockWithSleep50ms()
 
 	delBalanceBeforeWithdraw, err := n.QueryBalances(delAddr)
+	require.NoError(t, err)
+
 	txHash := n.WithdrawReward(itypes.BTCDelegationType.String(), delWallet)
 
 	n.WaitForNextBlock()
