@@ -73,7 +73,7 @@ func (rs RegistrationState) GetBlsPubKey(addr sdk.ValAddress) (bls12381.PublicKe
 	return *pk, err
 }
 
-// GetBlsPubKey retrieves BLS public key by validator's address
+// GetValAddr returns the validator address of the BLS public key
 func (rs RegistrationState) GetValAddr(key bls12381.PublicKey) (sdk.ValAddress, error) {
 	pkKey := types.BlsKeyToAddrKey(key)
 	rawBytes := rs.blsKeysToAddr.Get(pkKey)

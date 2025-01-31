@@ -18,6 +18,12 @@ func TestNewBlsPV(t *testing.T) {
 	err := EnsureDirs(keyFilePath, passwordFilePath)
 	assert.NoError(t, err)
 
+	t.Run("failed when private key is nil", func(t *testing.T) {
+		assert.Panics(t, func() {
+			NewBlsPV(nil, keyFilePath, passwordFilePath)
+		})
+	})
+
 	t.Run("save bls key to file without delegator address", func(t *testing.T) {
 		pv := NewBlsPV(bls12381.GenPrivKey(), keyFilePath, passwordFilePath)
 		assert.NotNil(t, pv)

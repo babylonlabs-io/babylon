@@ -51,7 +51,11 @@ type BlsPVKey struct {
 }
 
 // NewBlsPV returns a new BlsPV.
+// if private key is nil, it will panic
 func NewBlsPV(privKey bls12381.PrivateKey, keyFilePath, passwordFilePath string) *BlsPV {
+	if privKey == nil {
+		panic("BLS private key should not be nil")
+	}
 	return &BlsPV{
 		Key: BlsPVKey{
 			PubKey:       privKey.PubKey(),
@@ -116,29 +120,29 @@ func (k *BlsPVKey) Save(password string) {
 	// encrypt the bls12381 key to erc2335 type
 	erc2335BlsPvKey, err := erc2335.Encrypt(k.PrivKey, k.PubKey.Bytes(), password)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to encrypt BLS key: %w", err))
 	}
 
 	// Parse the encrypted key back to Erc2335KeyStore structure
 	var keystore erc2335.Erc2335KeyStore
 	if err := json.Unmarshal(erc2335BlsPvKey, &keystore); err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to unmarshal BLS key: %w", err))
 	}
 
 	// convert keystore to json
 	jsonBytes, err := json.MarshalIndent(keystore, "", "  ")
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to marshal BLS key: %w", err))
 	}
 
 	// write generated erc2335 keystore to file
 	if err := tempfile.WriteFileAtomic(k.filePath, jsonBytes, 0600); err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to write BLS key: %w", err))
 	}
 
 	// save used password to file
 	if err := tempfile.WriteFileAtomic(k.passwordPath, []byte(password), 0600); err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to write BLS password: %w", err))
 	}
 }
 
@@ -197,6 +201,9 @@ func (k *BlsPVKey) SignMsgWithBls(msg []byte) (bls12381.Signature, error) {
 func (k *BlsPVKey) GetBlsPubkey() (bls12381.PublicKey, error) {
 	if k.PrivKey == nil {
 		return nil, checkpointingtypes.ErrBlsPrivKeyDoesNotExist
+	}
+	if k.PubKey == nil {
+		return nil, checkpointingtypes.ErrBlsKeyDoesNotExist
 	}
 	return k.PubKey, nil
 }

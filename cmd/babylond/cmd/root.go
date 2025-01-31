@@ -271,10 +271,6 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	// auto migrate when build tag is set to "e2e_upgrade"
 	automigrate_e2e_upgrade(logger, homeDir)
 
-	//privSigner, err := signer.InitPrivSigner(homeDir)
-	//if err != nil {
-	//	panic(err)
-	//}
 	blsSigner, err := signer.InitBlsSigner(homeDir)
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize priv signer: %w", err))
