@@ -119,7 +119,7 @@ func (n *NodeConfig) CreateBTCDelegation(
 	}
 
 	// gas price
-	cmd = append(cmd, "--gas-prices=1ubbn")
+	cmd = append(cmd, "--gas-prices=0.1ubbn")
 
 	if generateOnly {
 		cmd = append(cmd, "--generate-only")
@@ -238,7 +238,7 @@ func (n *NodeConfig) AddFinalitySig(
 	finalitySigHex := finalitySig.ToHexStr()
 
 	cmd := []string{"babylond", "tx", "finality", "add-finality-sig", fpBTCPKHex, blockHeightStr, pubRandHex, proofHex, appHashHex, finalitySigHex, "--gas=500000"}
-	additionalArgs := []string{fmt.Sprintf("--chain-id=%s", n.chainId), "--gas-prices=1ubbn", "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
+	additionalArgs := []string{fmt.Sprintf("--chain-id=%s", n.chainId), "--gas-prices=0.1ubbn", "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
 	cmd = append(cmd, additionalArgs...)
 
 	outBuff, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "code: 0")

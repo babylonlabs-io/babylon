@@ -465,7 +465,7 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	nonValidatorNode.KeysAdd(w2)
 	// creates and fund multisig
 	multisigAddr := nonValidatorNode.KeysAdd(wMultisig, []string{fmt.Sprintf("--multisig=%s,%s", w1, w2), "--multisig-threshold=2"}...)
-	nonValidatorNode.BankSendFromNode(multisigAddr, "100000ubbn")
+	nonValidatorNode.BankSendFromNode(multisigAddr, "1000000ubbn")
 
 	// create a random BTC delegation under the cached finality provider
 	// BTC staking params, BTC delegation key pairs and PoP

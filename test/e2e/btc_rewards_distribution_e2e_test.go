@@ -133,7 +133,7 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 	s.fp1Addr = n1.KeysAdd(wFp1)
 	s.fp2Addr = n2.KeysAdd(wFp2)
 
-	n2.BankMultiSendFromNode([]string{s.fp1Addr, s.fp2Addr}, "100000ubbn")
+	n2.BankMultiSendFromNode([]string{s.fp1Addr, s.fp2Addr}, "1000000ubbn")
 
 	n2.WaitForNextBlock()
 
@@ -168,7 +168,7 @@ func (s *BtcRewardsDistribution) Test2CreateFirstBtcDelegations() {
 	s.del1Addr = n2.KeysAdd(wDel1)
 	s.del2Addr = n2.KeysAdd(wDel2)
 
-	n2.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "100000ubbn")
+	n2.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "1000000ubbn")
 
 	n2.WaitForNextBlock()
 
@@ -199,7 +199,7 @@ func (s *BtcRewardsDistribution) Test3SubmitCovenantSignature() {
 	}
 	s.covenantWallets = covWallets
 
-	n1.BankMultiSendFromNode(covAddrs, "100000ubbn")
+	n1.BankMultiSendFromNode(covAddrs, "1000000ubbn")
 
 	// tx bank send needs to take effect
 	n1.WaitForNextBlock()
