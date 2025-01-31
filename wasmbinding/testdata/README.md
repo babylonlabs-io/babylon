@@ -1,7 +1,7 @@
 # Stub test contract
 
 This folder contains bogus test contract which just exposes public api from
-example contract from babylon bindings repo - https://github.com/babylonchain/bindings/tree/main/contracts/example
+example contract from babylon bindings repo - https://github.com/babylonlabs-io/bindings/tree/main/contracts/example
 
 This approach enables us to specify which branch from bindings library we want to test/use.
 
