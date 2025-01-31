@@ -57,60 +57,88 @@ func getFirstIBCDenom(balance sdk.Coins) string {
 func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	denom := "ubbn"
 	amount := int64(1_000_000)
-	delta := float64(10000) // Tolerance to account for gas fees
 
 	transferCoin := sdk.NewInt64Coin(denom, amount)
 
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
-	babylonNodeA, err := bbnChainA.GetNodeAtIndex(2)
+	nA, err := bbnChainA.GetNodeAtIndex(2)
 	s.NoError(err)
-	babylonNodeB, err := bbnChainB.GetNodeAtIndex(2)
+	nB, err := bbnChainB.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	val := initialization.ValidatorWalletName
 
 	// Check balance of val in chain-A (Node 3)
-	addrA := babylonNodeA.GetWallet(val)
-	balanceA, err := babylonNodeA.QueryBalances(addrA)
+	addrA := nA.KeysAdd("addr-A")
+	nA.BankSendFromNode(addrA, "10000000ubbn")
+
+	addrB := nB.KeysAdd("addr-B")
+	nB.BankSendFromNode(addrB, "10000000ubbn")
+
+	nB.WaitForNextBlock()
+	nA.WaitForNextBlock()
+
+	balanceBeforeSendAddrA, err := nA.QueryBalances(addrA)
 	s.Require().NoError(err)
 	// Confirm val on A has enough funds
-	s.Assert().GreaterOrEqual(balanceA.AmountOf(denom).Int64(), amount)
+	s.Assert().GreaterOrEqual(balanceBeforeSendAddrA.AmountOf(denom).Int64(), amount)
 
-	addrB := babylonNodeB.GetWallet(val)
-	balanceB, err := babylonNodeB.QueryBalances(addrB)
+	balanceBeforeSendAddrB, err := nB.QueryBalances(addrB)
 	s.Require().NoError(err)
 	// Only one denom in B
-	s.Require().Len(balanceB, 1)
+	s.Require().Len(balanceBeforeSendAddrB, 1)
 
 	// Send transfer from val in chain-A (Node 3) to val in chain-B (Node 3)
-	babylonNodeA.SendIBCTransfer(val, addrB, "transfer", transferCoin)
+	txHash := nA.SendIBCTransfer(val, addrB, "transfer", transferCoin)
+	nA.WaitForNextBlock()
 
+	_, txResp := nA.QueryTx(txHash)
+	txFeesPaid := txResp.AuthInfo.Fee.Amount
 	s.Require().Eventually(func() bool {
 		// Check that the transfer is successful.
 		// Amounts have been discounted from val in chain-A and added (as a wrapped denom) to val in chain-B
-		balanceA2, err := babylonNodeA.QueryBalances(addrA)
+		balanceAfterSendAddrA, err := nA.QueryBalances(addrA)
 		if err != nil {
+			s.T().Logf("failed to query balances: %w", err)
 			return false
 		}
-		return math.Abs(float64(balanceA.Sub(transferCoin).AmountOf(denom).Int64()-
-			balanceA2.AmountOf(denom).Int64())) < delta
+
+		expectedAmt := balanceBeforeSendAddrA.Sub(transferCoin).Sub(txFeesPaid...).String()
+		actualAmt := balanceAfterSendAddrA.String()
+
+		if !strings.EqualFold(expectedAmt, actualAmt) {
+			s.T().Logf(
+				"BalanceBeforeSendAddrA: %s; BalanceBeforeSendAddrA: %s, txFees: %s, coinTransfer: %s",
+				balanceBeforeSendAddrA.String(), balanceAfterSendAddrA.String(), txFeesPaid.String(), transferCoin.String(),
+			)
+			return false
+		}
+
+		return true
 	}, 1*time.Minute, 1*time.Second, "Transfer was not successful")
 
 	s.Require().Eventually(func() bool {
-		balanceB2, err := babylonNodeB.QueryBalances(addrB)
+		balanceAfterSendAddrB, err := nB.QueryBalances(addrB)
 		if err != nil {
 			return false
 		}
 		// Check that there are now two denoms in B
-		if len(balanceB2) != 2 {
+		if len(balanceAfterSendAddrB) != 2 {
 			return false
 		}
-		denomB := getFirstIBCDenom(balanceB2)
-		// Check the balance of the IBC denom
-		return math.Abs(float64(balanceB2.AmountOf(denomB).Int64()-
-			transferCoin.Amount.Int64())) < delta
+
+		denomB := getFirstIBCDenom(balanceAfterSendAddrB)
+		if !balanceAfterSendAddrB.AmountOf(denomB).Equal(transferCoin.Amount) {
+			s.T().Logf(
+				"BalanceBeforeSendAddrB: %s; BalanceBeforeSendAddrB: %s, txFees: %s, coinTransfer: %s",
+				balanceBeforeSendAddrB.String(), balanceAfterSendAddrB.String(), txFeesPaid.String(), transferCoin.String(),
+			)
+			return false
+		}
+
+		return true
 	}, 1*time.Minute, 1*time.Second, "Transfer was not successful")
 }
 

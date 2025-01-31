@@ -70,14 +70,15 @@ func (n *NodeConfig) QueryParams(subspace, key string, result any) {
 	require.NoError(n.t, err)
 }
 
-func (n *NodeConfig) SendIBCTransfer(from, recipient, memo string, token sdk.Coin) {
+func (n *NodeConfig) SendIBCTransfer(from, recipient, memo string, token sdk.Coin) (txHash string) {
 	n.LogActionF("IBC sending %s from %s to %s. memo: %s", token.Amount.String(), from, recipient, memo)
 
 	cmd := []string{"babylond", "tx", "ibc-transfer", "transfer", "transfer", "channel-0", recipient, token.String(), fmt.Sprintf("--from=%s", from), "--memo", memo}
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 
-	n.LogActionF("successfully submitted sent IBC transfer")
+	n.LogActionF("successfully submitted sent IBC transfer: out %s", outBuf.String())
+	return GetTxHashFromOutput(outBuf.String())
 }
 
 func (n *NodeConfig) FailIBCTransfer(from, recipient, amount string) {
@@ -315,7 +316,6 @@ func (n *NodeConfig) WithdrawRewardCheckingBalances(sType, fromAddr string) {
 	n.WaitForNextBlock()
 
 	_, txResp := n.QueryTx(txHash)
-	require.NoError(n.t, err)
 
 	// balance after withdrawing reward
 	balanceAfterRwdWithdraw, err := n.QueryBalances(fromAddr)
