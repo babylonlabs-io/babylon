@@ -15,6 +15,7 @@ type IBCTransferTestSuite struct {
 	suite.Suite
 
 	configurer configurer.Configurer
+	addrA      string
 }
 
 func (s *IBCTransferTestSuite) SetupSuite() {
@@ -68,11 +69,9 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	nB, err := bbnChainB.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	val := initialization.ValidatorWalletName
-
 	// Check balance of val in chain-A (Node 3)
-	addrA := nA.KeysAdd("addr-A")
-	nA.BankSendFromNode(addrA, "10000000ubbn")
+	s.addrA = nA.KeysAdd("addr-A")
+	nA.BankSendFromNode(s.addrA, "10000000ubbn")
 
 	addrB := nB.KeysAdd("addr-B")
 	nB.BankSendFromNode(addrB, "10000000ubbn")
@@ -80,7 +79,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	nB.WaitForNextBlock()
 	nA.WaitForNextBlock()
 
-	balanceBeforeSendAddrA, err := nA.QueryBalances(addrA)
+	balanceBeforeSendAddrA, err := nA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
 	// Confirm val on A has enough funds
 	s.Assert().GreaterOrEqual(balanceBeforeSendAddrA.AmountOf(denom).Int64(), amount)
@@ -91,7 +90,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	s.Require().Len(balanceBeforeSendAddrB, 1)
 
 	// Send transfer from val in chain-A (Node 3) to val in chain-B (Node 3)
-	txHash := nA.SendIBCTransfer(val, addrB, "transfer", transferCoin)
+	txHash := nA.SendIBCTransfer(s.addrA, addrB, "transfer", transferCoin)
 	nA.WaitForNextBlock()
 
 	_, txResp := nA.QueryTx(txHash)
@@ -99,7 +98,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	s.Require().Eventually(func() bool {
 		// Check that the transfer is successful.
 		// Amounts have been discounted from val in chain-A and added (as a wrapped denom) to val in chain-B
-		balanceAfterSendAddrA, err := nA.QueryBalances(addrA)
+		balanceAfterSendAddrA, err := nA.QueryBalances(s.addrA)
 		if err != nil {
 			s.T().Logf("failed to query balances: %s", err.Error())
 			return false
@@ -169,11 +168,10 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 	transferCoin := sdk.NewInt64Coin(denom, amount)
 
 	// Send transfer from val in chain-B (Node 3) to val in chain-A (Node 1)
-	addrA := babylonNodeA.GetWallet(val)
-	balanceA, err := babylonNodeA.QueryBalances(addrA)
+	balanceA, err := babylonNodeA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
 
-	babylonNodeB.SendIBCTransfer(val, addrA, "transfer back", transferCoin)
+	babylonNodeB.SendIBCTransfer(addrB, s.addrA, "transfer back", transferCoin)
 
 	s.Require().Eventually(func() bool {
 		balanceB2, err := babylonNodeB.QueryBalances(addrB)
@@ -186,7 +184,7 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 
 	nativeCoin := sdk.NewInt64Coin(nativeDenom, amount)
 	s.Require().Eventually(func() bool {
-		balanceA2, err := babylonNodeA.QueryBalances(addrA)
+		balanceA2, err := babylonNodeA.QueryBalances(s.addrA)
 		if err != nil {
 			return false
 		}
