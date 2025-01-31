@@ -3,13 +3,13 @@ package client
 import (
 	"context"
 	"fmt"
-	"github.com/babylonlabs-io/babylon/client/babylonclient"
 	"sync"
 
 	signingv1beta1 "cosmossdk.io/api/cosmos/tx/signing/v1beta1"
 	"cosmossdk.io/errors"
 	txsigning "cosmossdk.io/x/tx/signing"
 	"github.com/avast/retry-go/v4"
+	"github.com/babylonlabs-io/babylon/client/babylonclient"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -222,7 +222,7 @@ func (c *Client) SendMessageWithSigner(
 		WithCodec(cc.Cdc.Codec).
 		WithFromAddress(signerAddr)
 
-	txf := cc.TxFactory()
+	txf := cc.NewTxFactory()
 	if err := retry.Do(func() error {
 		if err := txf.AccountRetriever().EnsureExists(cliCtx, signerAddr); err != nil {
 			return err

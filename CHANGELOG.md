@@ -43,6 +43,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 This PR contains a series of PRs on multi-staking support and BTC stakingintegration.
 - [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
 check of rewards
+- [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public
+- [#457](https://github.com/babylonlabs-io/babylon/pull/457) Remove staking msg server and update gentx to generate
+`MsgWrappedCreateValidator`
 
 ### Bug fixes
 
@@ -56,8 +59,6 @@ forks starting with already known header
 ### Improvements
 
 - [#419](https://github.com/babylonlabs-io/babylon/pull/419) Add new modules to swagger config
-- [#436](https://github.com/babylonlabs-io/babylon/pull/436) Remove staking msg server to handle at epoch
-- [#435](https://github.com/babylonlabs-io/babylon/pull/435) Modify gentx to generate `MsgWrappedCreateValidator`
 - [#429](https://github.com/babylonlabs-io/babylon/pull/429) chore: remove cosmos/relayer dependency
 
 ### Bug fixes
