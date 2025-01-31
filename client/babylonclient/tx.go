@@ -16,7 +16,6 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/store/rootmulti"
-
 	abci "github.com/cometbft/cometbft/abci/types"
 	client2 "github.com/cometbft/cometbft/rpc/client"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
