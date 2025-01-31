@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#445](https://github.com/babylonlabs-io/babylon/pull/445) Reject BTC headers
 forks starting with already known header
 - [#435](https://github.com/babylonlabs-io/babylon/pull/435) Modify gentx to generate `MsgWrappedCreateValidator`
+- [#436](https://github.com/babylonlabs-io/babylon/pull/436) Remove staking msg server to handle at epoch
 
 ## v1.0.0-rc4
 

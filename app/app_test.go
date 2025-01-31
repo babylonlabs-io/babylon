@@ -10,6 +10,7 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -92,5 +93,34 @@ func TestUpgradeStateOnGenesis(t *testing.T) {
 		if i, ok := i.(module.HasConsensusVersion); ok {
 			require.Equal(t, vm[v], i.ConsensusVersion())
 		}
+	}
+}
+
+func TestStakingRouterDisabled(t *testing.T) {
+	db := dbm.NewMemDB()
+	signer, _ := signer.SetupTestPrivSigner()
+	logger := log.NewTestLogger(t)
+
+	app := NewBabylonAppWithCustomOptions(t, false, signer, SetupOptions{
+		Logger:             logger,
+		DB:                 db,
+		InvCheckPeriod:     0,
+		SkipUpgradeHeights: map[int64]bool{},
+		AppOpts:            TmpAppOptions(),
+	})
+
+	msgs := []sdk.Msg{
+		&stktypes.MsgCreateValidator{},
+		&stktypes.MsgBeginRedelegate{},
+		&stktypes.MsgCancelUnbondingDelegation{},
+		&stktypes.MsgDelegate{},
+		&stktypes.MsgEditValidator{},
+		&stktypes.MsgUndelegate{},
+		&stktypes.MsgUpdateParams{},
+	}
+
+	for _, msg := range msgs {
+		msgHandler := app.MsgServiceRouter().HandlerByTypeURL(sdk.MsgTypeURL(msg))
+		require.Nil(t, msgHandler)
 	}
 }

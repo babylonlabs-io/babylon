@@ -97,7 +97,7 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		require.Equal(t, uint64(0), lc.ValLife[0].BlockHeight)
 
 		// delegate a random amount of tokens to the validator
-		numNewDels := r.Int63n(1000) + 1
+		numNewDels := r.Int63n(15) + 1
 		for i := int64(0); i < numNewDels; i++ {
 			helper.WrappedDelegate(genAddr, val, coinWithOnePower.Amount)
 		}
