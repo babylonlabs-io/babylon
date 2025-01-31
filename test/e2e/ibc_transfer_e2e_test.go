@@ -168,6 +168,8 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 
 	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, "transfer back", transferCoin)
 
+	nB.WaitForNextBlock()
+
 	_, txResp := nB.QueryTx(txHash)
 	txFeesPaid := txResp.AuthInfo.Fee.Amount
 
