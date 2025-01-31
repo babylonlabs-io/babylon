@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 )
@@ -16,6 +15,7 @@ type IBCTransferTestSuite struct {
 
 	configurer configurer.Configurer
 	addrA      string
+	addrB      string
 }
 
 func (s *IBCTransferTestSuite) SetupSuite() {
@@ -73,8 +73,8 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	s.addrA = nA.KeysAdd("addr-A")
 	nA.BankSendFromNode(s.addrA, "10000000ubbn")
 
-	addrB := nB.KeysAdd("addr-B")
-	nB.BankSendFromNode(addrB, "10000000ubbn")
+	s.addrB = nB.KeysAdd("addr-B")
+	nB.BankSendFromNode(s.addrB, "10000000ubbn")
 
 	nB.WaitForNextBlock()
 	nA.WaitForNextBlock()
@@ -84,13 +84,13 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	// Confirm val on A has enough funds
 	s.Assert().GreaterOrEqual(balanceBeforeSendAddrA.AmountOf(denom).Int64(), amount)
 
-	balanceBeforeSendAddrB, err := nB.QueryBalances(addrB)
+	balanceBeforeSendAddrB, err := nB.QueryBalances(s.addrB)
 	s.Require().NoError(err)
 	// Only one denom in B
 	s.Require().Len(balanceBeforeSendAddrB, 1)
 
 	// Send transfer from val in chain-A (Node 3) to val in chain-B (Node 3)
-	txHash := nA.SendIBCTransfer(s.addrA, addrB, "transfer", transferCoin)
+	txHash := nA.SendIBCTransfer(s.addrA, s.addrB, "transfer", transferCoin)
 	nA.WaitForNextBlock()
 
 	_, txResp := nA.QueryTx(txHash)
@@ -119,7 +119,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	}, 1*time.Minute, 1*time.Second, "Transfer was not successful")
 
 	s.Require().Eventually(func() bool {
-		balanceAfterSendAddrB, err := nB.QueryBalances(addrB)
+		balanceAfterSendAddrB, err := nB.QueryBalances(s.addrB)
 		if err != nil {
 			s.T().Logf("failed to query balances: %s", err.Error())
 			return false
@@ -154,10 +154,7 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 	babylonNodeB, err := bbnChainB.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	val := initialization.ValidatorWalletName
-
-	addrB := babylonNodeB.GetWallet(val)
-	balanceB, err := babylonNodeB.QueryBalances(addrB)
+	balanceB, err := babylonNodeB.QueryBalances(s.addrB)
 	s.Require().NoError(err)
 	// Two denoms in B
 	s.Require().Len(balanceB, 2)
@@ -171,10 +168,10 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 	balanceA, err := babylonNodeA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
 
-	babylonNodeB.SendIBCTransfer(addrB, s.addrA, "transfer back", transferCoin)
+	babylonNodeB.SendIBCTransfer(s.addrB, s.addrA, "transfer back", transferCoin)
 
 	s.Require().Eventually(func() bool {
-		balanceB2, err := babylonNodeB.QueryBalances(addrB)
+		balanceB2, err := babylonNodeB.QueryBalances(s.addrB)
 		if err != nil {
 			return false
 		}
