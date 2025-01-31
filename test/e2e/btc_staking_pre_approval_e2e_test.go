@@ -397,12 +397,17 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	fpRewardGauge, ok := fpRewardGauges[itypes.FinalityProviderType.String()]
 	s.True(ok)
 	s.True(fpRewardGauge.Coins.IsAllPositive())
+	s.Require().Len(fpRewardGauge.Coins, 1)
+	s.Require().True(!fpRewardGauge.Coins[0].IsZero())
+
 	// ensure BTC delegation has received rewards after the block is finalised
 	btcDelRewardGauges, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
 	s.NoError(err)
 	btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTCDelegationType.String()]
 	s.True(ok)
 	s.True(btcDelRewardGauge.Coins.IsAllPositive())
+	s.Require().Len(btcDelRewardGauge.Coins, 1)
+	s.Require().True(!btcDelRewardGauge.Coins[0].IsZero())
 	s.T().Logf("the finality provider received rewards for providing finality")
 }
 
