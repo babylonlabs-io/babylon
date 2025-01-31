@@ -13,8 +13,5 @@ func HashMsg(msg sdk.Msg) []byte {
 
 // ToRewardGauge parses to RewardGauge
 func (rgr RewardGaugesResponse) ToRewardGauge() RewardGauge {
-	return RewardGauge{
-		Coins:          rgr.Coins,
-		WithdrawnCoins: rgr.WithdrawnCoins,
-	}
+	return RewardGauge(rgr)
 }

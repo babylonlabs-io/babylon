@@ -327,7 +327,7 @@ func (n *NodeConfig) WithdrawRewardCheckingBalances(sType, fromAddr string) {
 	expectedAmt := balanceBeforeRwdWithdraw.Add(coinsReceivedWithdraw...).Sub(txResp.AuthInfo.Fee.Amount...).String()
 	require.Equal(n.t, expectedAmt, actualAmt, "Expected(after withdraw): %s, actual(before withdraw + withdraw - TxFees): %s", expectedAmt, actualAmt)
 
-	n.t.Logf("BalanceAfterRwdWithdraw: %s; BalanceBeforeRwdWithdraw: %s, txFees: %s, CoinsReceivedWithdraw", balanceAfterRwdWithdraw.String(), balanceBeforeRwdWithdraw.String(), txResp.AuthInfo.Fee.Amount.String(), coinsReceivedWithdraw.String())
+	n.t.Logf("BalanceAfterRwdWithdraw: %s; BalanceBeforeRwdWithdraw: %s, txFees: %s, CoinsReceivedWithdraw: %s", balanceAfterRwdWithdraw.String(), balanceBeforeRwdWithdraw.String(), txResp.AuthInfo.Fee.Amount.String(), coinsReceivedWithdraw.String())
 }
 
 // TxMultisigSign sign a tx in a file with one wallet for a multisig address.
