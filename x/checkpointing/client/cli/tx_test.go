@@ -26,7 +26,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/app/params"
-	bb "github.com/babylonlabs-io/babylon/bls"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	testutilcli "github.com/babylonlabs-io/babylon/testutil/cli"
 	checkpointcli "github.com/babylonlabs-io/babylon/x/checkpointing/client/cli"
 	"github.com/cometbft/cometbft/privval"
@@ -109,17 +109,17 @@ func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 
 	cmtKeyPath := nodeCfg.PrivValidatorKeyFile()
 	cmtStatePath := nodeCfg.PrivValidatorStateFile()
-	blsKeyFile := bb.DefaultBlsKeyFile(homeDir)
-	blsPasswordFile := bb.DefaultBlsPasswordFile(homeDir)
+	blsKeyFile := appsigner.DefaultBlsKeyFile(homeDir)
+	blsPasswordFile := appsigner.DefaultBlsPasswordFile(homeDir)
 
-	err := bb.EnsureDirs(cmtKeyPath, cmtStatePath, blsKeyFile, blsPasswordFile)
+	err := appsigner.EnsureDirs(cmtKeyPath, cmtStatePath, blsKeyFile, blsPasswordFile)
 	require.NoError(err)
 
 	filePV := privval.GenFilePV(cmtKeyPath, cmtStatePath)
 	filePV.Key.Save()
 	filePV.LastSignState.Save()
 
-	bb.GenBls(blsKeyFile, blsPasswordFile, "password")
+	appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
 	cmd := checkpointcli.CmdWrappedCreateValidator(authcodec.NewBech32Codec("cosmosvaloper"))
 
 	consPrivKey := filePV.Key.PrivKey

@@ -33,8 +33,7 @@ import (
 
 	babylonApp "github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/app/signer"
-	bb "github.com/babylonlabs-io/babylon/bls"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
 	"github.com/cometbft/cometbft/privval"
@@ -46,7 +45,7 @@ type internalNode struct {
 	mnemonic     string
 	keyInfo      *keyring.Record
 	privateKey   cryptotypes.PrivKey
-	consensusKey signer.ConsensusKey
+	consensusKey appsigner.ConsensusKey
 	nodeKey      p2p.NodeKey
 	peerId       string
 	isValidator  bool
@@ -165,10 +164,10 @@ func (n *internalNode) createConsensusKey() error {
 
 	pvKeyFile := config.PrivValidatorKeyFile()
 	pvStateFile := config.PrivValidatorStateFile()
-	blsKeyFile := bb.DefaultBlsKeyFile(n.configDir())
-	blsPasswordFile := bb.DefaultBlsPasswordFile(n.configDir())
+	blsKeyFile := appsigner.DefaultBlsKeyFile(n.configDir())
+	blsPasswordFile := appsigner.DefaultBlsPasswordFile(n.configDir())
 
-	if err := bb.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
+	if err := appsigner.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
 		return fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 
@@ -184,9 +183,9 @@ func (n *internalNode) createConsensusKey() error {
 	filePV.LastSignState.Save()
 
 	// create bls pv
-	bls := bb.GenBls(blsKeyFile, blsPasswordFile, "password")
+	bls := appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
 
-	n.consensusKey = signer.ConsensusKey{
+	n.consensusKey = appsigner.ConsensusKey{
 		Comet: &filePV.Key,
 		Bls:   &bls.Key,
 	}

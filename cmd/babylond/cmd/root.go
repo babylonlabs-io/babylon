@@ -21,7 +21,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	"github.com/babylonlabs-io/babylon/app/signer"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -271,7 +271,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	// auto migrate when build tag is set to "e2e_upgrade"
 	automigrate_e2e_upgrade(logger, homeDir)
 
-	blsSigner, err := signer.InitBlsSigner(homeDir)
+	blsSigner, err := appsigner.InitBlsSigner(homeDir)
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize priv signer: %w", err))
 	}
@@ -309,7 +309,7 @@ func appExport(
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
-	ck, err := signer.LoadConsensusKey(homePath)
+	ck, err := appsigner.LoadConsensusKey(homePath)
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize priv signer: %w", err))
 	}

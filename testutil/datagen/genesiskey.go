@@ -3,7 +3,7 @@ package datagen
 import (
 	"fmt"
 
-	bb "github.com/babylonlabs-io/babylon/bls"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/testutil/signer"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
@@ -60,7 +60,7 @@ func GenesisValidatorSet(numVals int) (*GenesisValidators, error) {
 		blsPrivKey := bls12381.GenPrivKey()
 		// create validator set with single validator
 		valPrivKey := cmted25519.GenPrivKey()
-		valKeys, err := bb.NewValidatorKeys(valPrivKey, blsPrivKey)
+		valKeys, err := appsigner.NewValidatorKeys(valPrivKey, blsPrivKey)
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +129,7 @@ func GenerateGenesisKey() *checkpointingtypes.GenesisKey {
 
 	blsPubKey := blsPrivKey.PubKey()
 	address := sdk.ValAddress(accPrivKey.PubKey().Address())
-	pop, err := bb.BuildPoP(tmValPrivKey, blsPrivKey)
+	pop, err := appsigner.BuildPoP(tmValPrivKey, blsPrivKey)
 	if err != nil {
 		panic(err)
 	}

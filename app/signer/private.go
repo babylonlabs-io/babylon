@@ -7,14 +7,13 @@ import (
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/privval"
 
-	bb "github.com/babylonlabs-io/babylon/bls"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 // ConsensusKey represents the consensus keys
 type ConsensusKey struct {
 	Comet *privval.FilePVKey
-	Bls   *bb.BlsKey
+	Bls   *BlsKey
 }
 
 // LoadConsensusKey loads the consensus keys from the node directory
@@ -54,7 +53,7 @@ func loadFilePV(homeDir string) (*privval.FilePV, error) {
 	pvKeyFile := nodeCfg.PrivValidatorKeyFile()
 	pvStateFile := nodeCfg.PrivValidatorStateFile()
 
-	if err := bb.EnsureDirs(pvKeyFile, pvStateFile); err != nil {
+	if err := EnsureDirs(pvKeyFile, pvStateFile); err != nil {
 		return nil, fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 
@@ -67,14 +66,14 @@ func loadFilePV(homeDir string) (*privval.FilePV, error) {
 }
 
 // loadBls loads the private key from the node directory in local
-func loadBls(homeDir string) (*bb.Bls, error) {
+func loadBls(homeDir string) (*Bls, error) {
 	nodeCfg := cmtconfig.DefaultConfig()
 	nodeCfg.SetRoot(homeDir)
 
-	blsKeyFile := bb.DefaultBlsKeyFile(homeDir)
-	blsPasswordFile := bb.DefaultBlsPasswordFile(homeDir)
+	blsKeyFile := DefaultBlsKeyFile(homeDir)
+	blsPasswordFile := DefaultBlsPasswordFile(homeDir)
 
-	if err := bb.EnsureDirs(blsKeyFile, blsPasswordFile); err != nil {
+	if err := EnsureDirs(blsKeyFile, blsPasswordFile); err != nil {
 		return nil, fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 
@@ -82,6 +81,6 @@ func loadBls(homeDir string) (*bb.Bls, error) {
 		return nil, fmt.Errorf("BLS key file does not exist. create file using `babylond init` or `babylond create-bls-key`: %s", blsKeyFile)
 	}
 
-	bls := bb.LoadBls(blsKeyFile, blsPasswordFile)
+	bls := LoadBls(blsKeyFile, blsPasswordFile)
 	return bls, nil
 }

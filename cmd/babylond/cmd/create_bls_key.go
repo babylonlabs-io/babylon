@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/babylonlabs-io/babylon/app"
-	bb "github.com/babylonlabs-io/babylon/bls"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 )
 
 func CreateBlsKeyCmd() *cobra.Command {
@@ -41,7 +41,7 @@ $ babylond create-bls-key --home ./
 // createBlsKeyAndSave creates a pair of BLS keys and saves them to files
 func createBlsKeyAndSave(homeDir, password string) {
 	if password == "" {
-		password = bb.NewBlsPassword()
+		password = appsigner.NewBlsPassword()
 	}
-	bb.GenBls(bb.DefaultBlsKeyFile(homeDir), bb.DefaultBlsPasswordFile(homeDir), password)
+	appsigner.GenBls(appsigner.DefaultBlsKeyFile(homeDir), appsigner.DefaultBlsPasswordFile(homeDir), password)
 }

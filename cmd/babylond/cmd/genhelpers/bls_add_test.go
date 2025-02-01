@@ -33,7 +33,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/app"
-	bb "github.com/babylonlabs-io/babylon/bls"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
 	"github.com/babylonlabs-io/babylon/testutil/cli"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
@@ -163,16 +163,16 @@ func Test_CmdAddBlsWithGentx(t *testing.T) {
 
 		keyPath := nodeCfg.PrivValidatorKeyFile()
 		statePath := nodeCfg.PrivValidatorStateFile()
-		blsKeyFile := bb.DefaultBlsKeyFile(homeDir)
-		blsPasswordFile := bb.DefaultBlsPasswordFile(homeDir)
+		blsKeyFile := appsigner.DefaultBlsKeyFile(homeDir)
+		blsPasswordFile := appsigner.DefaultBlsPasswordFile(homeDir)
 
-		err := bb.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
+		err := appsigner.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
 		require.NoError(t, err)
 
 		filePV := privval.GenFilePV(keyPath, statePath)
 		filePV.Key.Save()
 		filePV.LastSignState.Save()
-		bb.GenBls(blsKeyFile, blsPasswordFile, "password")
+		appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
 
 		_, err = cli.ExecTestCLICmd(v.ClientCtx, genBlsCmd, []string{v.Address.String(), fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir)})
 		require.NoError(t, err)

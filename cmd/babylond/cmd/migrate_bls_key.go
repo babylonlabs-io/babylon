@@ -7,7 +7,8 @@ import (
 	"strings"
 
 	"github.com/babylonlabs-io/babylon/app"
-	bb "github.com/babylonlabs-io/babylon/bls"
+
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
@@ -81,16 +82,16 @@ func migrate(homeDir, password string) error {
 	}
 
 	if password == "" {
-		password = bb.NewBlsPassword()
+		password = appsigner.NewBlsPassword()
 	}
 
 	cmtKeyFilePath := cmtcfg.PrivValidatorKeyFile()
 	cmtStateFilePath := cmtcfg.PrivValidatorStateFile()
-	blsKeyFilePath := bb.DefaultBlsKeyFile(homeDir)
-	blsPasswordFilePath := bb.DefaultBlsPasswordFile(homeDir)
+	blsKeyFilePath := appsigner.DefaultBlsKeyFile(homeDir)
+	blsPasswordFilePath := appsigner.DefaultBlsPasswordFile(homeDir)
 
 	cmtPv := privval.NewFilePV(prevCmtPrivKey, cmtKeyFilePath, cmtStateFilePath)
-	bls := bb.NewBls(prevBlsPrivKey, blsKeyFilePath, blsPasswordFilePath)
+	bls := appsigner.NewBls(prevBlsPrivKey, blsKeyFilePath, blsPasswordFilePath)
 
 	// save key to files after verification
 	cmtPv.Save()
@@ -128,7 +129,7 @@ func verifySeparateFiles(
 	prevBlsPrivKey bls12381.PrivateKey,
 ) error {
 	cmtPv := privval.LoadFilePV(cmtKeyFilePath, cmtStateFilePath)
-	bls := bb.LoadBls(blsKeyFilePath, blsPasswordFilePath)
+	bls := appsigner.LoadBls(blsKeyFilePath, blsPasswordFilePath)
 
 	if bytes.Equal(prevCmtPrivKey.Bytes(), cmtPv.Key.PrivKey.Bytes()) && bytes.Equal(prevBlsPrivKey, bls.Key.PrivKey) {
 		return nil

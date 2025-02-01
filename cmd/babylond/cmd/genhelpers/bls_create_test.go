@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/app"
-	bb "github.com/babylonlabs-io/babylon/bls"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
 	"github.com/babylonlabs-io/babylon/testutil/signer"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
@@ -74,16 +74,16 @@ func Test_CmdCreateBls(t *testing.T) {
 
 	keyPath := nodeCfg.PrivValidatorKeyFile()
 	statePath := nodeCfg.PrivValidatorStateFile()
-	blsKeyFile := bb.DefaultBlsKeyFile(home)
-	blsPasswordFile := bb.DefaultBlsPasswordFile(home)
+	blsKeyFile := appsigner.DefaultBlsKeyFile(home)
+	blsPasswordFile := appsigner.DefaultBlsPasswordFile(home)
 
-	err = bb.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
+	err = appsigner.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
 	require.NoError(t, err)
 
 	filePV := privval.GenFilePV(keyPath, statePath)
 	filePV.Key.Save()
 
-	bls := bb.GenBls(blsKeyFile, blsPasswordFile, "password")
+	bls := appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
 	defer Clean(keyPath, statePath, blsKeyFile, blsPasswordFile)
 
 	genBlsCmd.SetArgs([]string{

@@ -10,8 +10,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/app/signer"
-	bb "github.com/babylonlabs-io/babylon/bls"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -42,7 +41,7 @@ $ babylond gen-helpers create-bls %s1f5tnl46mk4dfp4nx3n2vnrvyw2h2ydz6ykhk3r --ho
 		RunE: func(cmd *cobra.Command, args []string) error {
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
 
-			ck, err := signer.LoadConsensusKey(homeDir)
+			ck, err := appsigner.LoadConsensusKey(homeDir)
 			if err != nil {
 				return fmt.Errorf("failed to load key from %s: %w", homeDir, err)
 			}
@@ -52,7 +51,7 @@ $ babylond gen-helpers create-bls %s1f5tnl46mk4dfp4nx3n2vnrvyw2h2ydz6ykhk3r --ho
 				return fmt.Errorf("invalid address: %w", err)
 			}
 
-			outputFileName, err := bb.ExportGenBls(
+			outputFileName, err := appsigner.ExportGenBls(
 				sdk.ValAddress(addr),
 				ck.Comet.PrivKey,
 				ck.Bls.PrivKey,

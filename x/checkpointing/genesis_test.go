@@ -3,7 +3,6 @@ package checkpointing_test
 import (
 	"testing"
 
-	bb "github.com/babylonlabs-io/babylon/bls"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/x/checkpointing"
 	"github.com/cometbft/cometbft/crypto/ed25519"
@@ -13,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	simapp "github.com/babylonlabs-io/babylon/app"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
@@ -24,7 +24,7 @@ func TestInitGenesis(t *testing.T) {
 	valNum := 10
 	genKeys := make([]*types.GenesisKey, valNum)
 	for i := 0; i < valNum; i++ {
-		valKeys, err := bb.NewValidatorKeys(ed25519.GenPrivKey(), bls12381.GenPrivKey())
+		valKeys, err := appsigner.NewValidatorKeys(ed25519.GenPrivKey(), bls12381.GenPrivKey())
 		require.NoError(t, err)
 		valPubkey, err := cryptocodec.FromCmtPubKeyInterface(valKeys.ValPubkey)
 		require.NoError(t, err)

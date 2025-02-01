@@ -11,7 +11,7 @@ import (
 	"github.com/cometbft/cometbft/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bb "github.com/babylonlabs-io/babylon/bls"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
@@ -19,7 +19,7 @@ import (
 const TestPassword string = "password"
 
 // SetupTestPrivSigner sets up a PrivSigner for testing
-func SetupTestBlsSigner() (*bb.BlsKey, error) {
+func SetupTestBlsSigner() (*appsigner.BlsKey, error) {
 	// Create a temporary node directory
 	nodeDir, err := os.MkdirTemp("", "tmp-signer")
 	if err != nil {
@@ -32,20 +32,20 @@ func SetupTestBlsSigner() (*bb.BlsKey, error) {
 	nodeCfg := cmtconfig.DefaultConfig()
 	nodeCfg.SetRoot(nodeDir)
 
-	blsKeyFile := bb.DefaultBlsKeyFile(nodeDir)
-	blsPasswordFile := bb.DefaultBlsPasswordFile(nodeDir)
+	blsKeyFile := appsigner.DefaultBlsKeyFile(nodeDir)
+	blsPasswordFile := appsigner.DefaultBlsPasswordFile(nodeDir)
 
-	if err := bb.EnsureDirs(blsKeyFile, blsPasswordFile); err != nil {
+	if err := appsigner.EnsureDirs(blsKeyFile, blsPasswordFile); err != nil {
 		return nil, fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 
-	bls := bb.GenBls(blsKeyFile, blsPasswordFile, TestPassword)
+	bls := appsigner.GenBls(blsKeyFile, blsPasswordFile, TestPassword)
 	return &bls.Key, nil
 }
 
 // GenesisKeyFromPrivSigner generates a genesis key from a priv signer
 func GenesisKeyFromPrivSigner(cmtPrivKey crypto.PrivKey, blsPrivKey bls12381.PrivateKey, delegatorAddress sdk.ValAddress) (*checkpointingtypes.GenesisKey, error) {
-	valKeys, err := bb.NewValidatorKeys(
+	valKeys, err := appsigner.NewValidatorKeys(
 		cmtPrivKey,
 		blsPrivKey,
 	)
