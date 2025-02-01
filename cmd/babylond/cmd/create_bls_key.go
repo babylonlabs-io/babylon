@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -75,10 +74,10 @@ func CreateBlsKey(home string, addr sdk.AccAddress) error {
 // LoadWrappedFilePV loads the wrapped file private key from the file path.
 func LoadWrappedFilePV(keyPath, statePath string) (*privval.WrappedFilePV, error) {
 	if !cmtos.FileExists(keyPath) {
-		return nil, errors.New("validator key file does not exist")
+		return nil, fmt.Errorf("validator key file does not exist: %s", keyPath)
 	}
 	if !cmtos.FileExists(statePath) {
-		return nil, errors.New("validator state file does not exist")
+		return nil, fmt.Errorf("validator state file does not exist: %s", statePath)
 	}
 	return privval.LoadWrappedFilePV(keyPath, statePath), nil
 }
