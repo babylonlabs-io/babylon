@@ -148,7 +148,7 @@ func (n *NodeConfig) QueryBankSendEnabled(denoms ...string) ([]*banktypes.SendEn
 	path := fmt.Sprintf("cosmos/bank/v1beta1/send_enabled")
 
 	params := url.Values{}
-	params.Set("denoms", strings.Join(denoms, ","))
+	params.Set("denoms", strings.Join(denoms, " "))
 	bz, err := n.QueryGRPCGateway(path, params)
 	require.NoError(n.t, err)
 
