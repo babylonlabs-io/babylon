@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#466](https://github.com/babylonlabs-io/babylon/pull/466) Add e2e test to
+block bank send and still BTC stake
 - [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
 check of rewards
 - [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public
