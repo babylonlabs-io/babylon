@@ -145,7 +145,7 @@ func (n *NodeConfig) QueryBalance(address, denom string) (*sdk.Coin, error) {
 
 // QueryBankSendEnabled returns the status of the denom if it is possible to send bank tx transactions.
 func (n *NodeConfig) QueryBankSendEnabled(denoms ...string) ([]*banktypes.SendEnabled, error) {
-	path := fmt.Sprintf("cosmos/bank/v1beta1/send_enabled")
+	path := "cosmos/bank/v1beta1/send_enabled"
 
 	params := url.Values{}
 	params.Set("denoms", strings.Join(denoms, " "))
