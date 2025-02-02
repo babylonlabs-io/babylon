@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -140,6 +141,22 @@ func (n *NodeConfig) QueryBalance(address, denom string) (*sdk.Coin, error) {
 		return nil, err
 	}
 	return balancesResp.GetBalance(), nil
+}
+
+// QueryBankSendEnabled returns the status of the denom if it is possible to send bank tx transactions.
+func (n *NodeConfig) QueryBankSendEnabled(denoms ...string) ([]*banktypes.SendEnabled, error) {
+	path := fmt.Sprintf("cosmos/bank/v1beta1/send_enabled")
+
+	params := url.Values{}
+	params.Set("denoms", strings.Join(denoms, ","))
+	bz, err := n.QueryGRPCGateway(path, params)
+	require.NoError(n.t, err)
+
+	var resp banktypes.QuerySendEnabledResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+	return resp.SendEnabled, nil
 }
 
 func (n *NodeConfig) QuerySupplyOf(denom string) (sdkmath.Int, error) {
