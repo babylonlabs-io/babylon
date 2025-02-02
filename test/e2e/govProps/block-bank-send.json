@@ -13,5 +13,8 @@
       ],
       "use_default_for": []
     }
-  ]
+  ],
+  "deposit": "5000000ubbn",
+  "initial_deposit": "5000000ubbn",
+  "initialDeposit": "5000000ubbn"
 }
