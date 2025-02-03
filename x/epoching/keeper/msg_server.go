@@ -4,10 +4,12 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/babylonlabs-io/babylon/x/epoching/types"
 )
@@ -16,13 +18,135 @@ type msgServer struct {
 	Keeper
 }
 
+var _ types.MsgServer = msgServer{}
+
 // NewMsgServerImpl returns an implementation of the MsgServer interface
 // for the provided Keeper.
 func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{Keeper: keeper}
 }
 
-var _ types.MsgServer = msgServer{}
+// WrappedEditValidator handles the MsgWrappedEditValidator request
+func (ms msgServer) WrappedEditValidator(goCtx context.Context, msgWrapped *types.MsgWrappedEditValidator) (*types.MsgWrappedEditValidatorResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msgWrapped.Msg == nil {
+		return nil, types.ErrNoWrappedMsg
+	}
+	msg := msgWrapped.Msg
+
+	// verification rules ported from staking module
+	valAddr, valErr := sdk.ValAddressFromBech32(msg.ValidatorAddress)
+	if valErr != nil {
+		return nil, valErr
+	}
+
+	if msg.Description == (stktypes.Description{}) {
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "empty description")
+	}
+
+	if msg.MinSelfDelegation != nil && !msg.MinSelfDelegation.IsPositive() {
+		return nil, errorsmod.Wrap(
+			sdkerrors.ErrInvalidRequest,
+			"minimum self delegation must be a positive integer",
+		)
+	}
+
+	if msg.CommissionRate != nil {
+		if msg.CommissionRate.GT(math.LegacyOneDec()) || msg.CommissionRate.IsNegative() {
+			return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "commission rate must be between 0 and 1 (inclusive)")
+		}
+
+		stkParams, err := ms.stk.GetParams(ctx)
+		if err != nil {
+			return nil, errorsmod.Wrap(sdkerrors.ErrLogic, err.Error())
+		}
+
+		minCommissionRate := stkParams.MinCommissionRate
+
+		if msg.CommissionRate.LT(minCommissionRate) {
+			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "commission rate cannot be less than the min commission rate %s", minCommissionRate.String())
+		}
+	}
+
+	// validator must already be registered
+	_, err := ms.stk.GetValidator(ctx, valAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	blockHeight := uint64(ctx.HeaderInfo().Height)
+	if blockHeight == 0 {
+		return nil, types.ErrZeroEpochMsg
+	}
+	blockTime := ctx.HeaderInfo().Time
+
+	txid := tmhash.Sum(ctx.TxBytes())
+	queuedMsg, err := types.NewQueuedMessage(blockHeight, blockTime, txid, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	ms.EnqueueMsg(ctx, queuedMsg)
+
+	err = ctx.EventManager().EmitTypedEvents(
+		&types.EventWrappedEditValidator{
+			ValidatorAddress: msg.ValidatorAddress,
+			EpochBoundary:    ms.GetEpoch(ctx).GetLastBlockHeight(),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgWrappedEditValidatorResponse{}, nil
+}
+
+// WrappedStakingUpdateParams handles the MsgWrappedStakingUpdateParams request
+func (ms msgServer) WrappedStakingUpdateParams(goCtx context.Context, msgWrapped *types.MsgWrappedStakingUpdateParams) (*types.MsgWrappedStakingUpdateParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msgWrapped.Msg == nil {
+		return nil, types.ErrNoWrappedMsg
+	}
+	msg := msgWrapped.Msg
+	if ms.authority != msg.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
+	}
+
+	if err := msg.Params.Validate(); err != nil {
+		return nil, err
+	}
+
+	blockHeight := uint64(ctx.HeaderInfo().Height)
+	if blockHeight == 0 {
+		return nil, types.ErrZeroEpochMsg
+	}
+	blockTime := ctx.HeaderInfo().Time
+
+	txid := tmhash.Sum(ctx.TxBytes())
+	queuedMsg, err := types.NewQueuedMessage(blockHeight, blockTime, txid, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	ms.EnqueueMsg(ctx, queuedMsg)
+
+	err = ctx.EventManager().EmitTypedEvents(
+		&types.EventWrappedStakingUpdateParams{
+			UnbondingTime:     msg.Params.UnbondingTime.String(),
+			MaxValidators:     msg.Params.MaxValidators,
+			MaxEntries:        msg.Params.MaxEntries,
+			HistoricalEntries: msg.Params.HistoricalEntries,
+			BondDenom:         msg.Params.BondDenom,
+			MinCommissionRate: msg.Params.MinCommissionRate.String(),
+			EpochBoundary:     ms.GetEpoch(ctx).GetLastBlockHeight(),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgWrappedStakingUpdateParamsResponse{}, nil
+}
 
 // WrappedDelegate handles the MsgWrappedDelegate request
 func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedDelegate) (*types.MsgWrappedDelegateResponse, error) {

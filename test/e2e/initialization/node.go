@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"cosmossdk.io/math"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	cmtos "github.com/cometbft/cometbft/libs/os"
@@ -79,7 +80,7 @@ func (n *internalNode) configDir() string {
 	return fmt.Sprintf("%s/%s", n.chain.chainMeta.configDir(), n.moniker)
 }
 
-func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error) {
+func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin, consensusKey privval.WrappedFilePVKey) (sdk.Msg, error) {
 	description := stakingtypes.NewDescription(n.moniker, "", "", "", "")
 	commissionRates := stakingtypes.CommissionRates{
 		Rate:          math.LegacyMustNewDecFromStr("0.1"),
@@ -96,12 +97,11 @@ func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error)
 	}
 
 	addr, err := n.keyInfo.GetAddress()
-
 	if err != nil {
 		return nil, err
 	}
 
-	return stakingtypes.NewMsgCreateValidator(
+	stkMsgCreateVal, err := stakingtypes.NewMsgCreateValidator(
 		sdk.ValAddress(addr).String(),
 		valPubKey,
 		amount,
@@ -109,6 +109,16 @@ func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error)
 		commissionRates,
 		minSelfDelegation,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	proofOfPossession, err := privval.BuildPoP(consensusKey.PrivKey, consensusKey.BlsPrivKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return checkpointingtypes.NewMsgWrappedCreateValidator(stkMsgCreateVal, &consensusKey.BlsPubKey, proofOfPossession)
 }
 
 func (n *internalNode) createConfig() error {
