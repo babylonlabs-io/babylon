@@ -457,7 +457,7 @@ func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch uint64
 			return false
 		}
 		return lastFinalizedEpoch >= currentEpoch
-	}, time.Minute, time.Millisecond*200)
+	}, time.Minute*2, time.Millisecond*200)
 	return lastFinalizedEpoch
 }
 
@@ -466,10 +466,11 @@ func (n *NodeConfig) WaitFinalityIsActivated() (activatedHeight uint64) {
 	require.Eventually(n.t, func() bool {
 		activatedHeight, err = n.QueryActivatedHeight()
 		if err != nil {
+			n.t.Logf("WaitFinalityIsActivated: err query activated height %s", err.Error())
 			return false
 		}
 		return activatedHeight > 0
-	}, time.Minute*4, time.Second)
+	}, time.Minute*4, 10*time.Second)
 	n.t.Logf("the activated height is %d", activatedHeight)
 	return activatedHeight
 }

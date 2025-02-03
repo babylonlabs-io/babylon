@@ -334,64 +334,11 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 
 func (s *BTCStakingTestSuite) Test4WithdrawReward() {
 	chainA := s.configurer.GetChainConfig(0)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	n, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// finality provider balance before withdraw
-	fpBabylonAddr, err := sdk.AccAddressFromBech32(s.cacheFP.Addr)
-	s.NoError(err)
-	delBabylonAddr := fpBabylonAddr
-
-	fpBalance, err := nonValidatorNode.QueryBalances(fpBabylonAddr.String())
-	s.NoError(err)
-	// finality provider reward gauge should not be fully withdrawn
-	fpRgs, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
-	s.NoError(err)
-	fpRg := fpRgs[itypes.FinalityProviderType.String()]
-	s.T().Logf("finality provider's withdrawable reward before withdrawing: %s", convertToRewardGauge(fpRg).GetWithdrawableCoins().String())
-	s.False(convertToRewardGauge(fpRg).IsFullyWithdrawn())
-
-	// withdraw finality provider reward
-	nonValidatorNode.WithdrawReward(itypes.FinalityProviderType.String(), initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
-
-	// balance after withdrawing finality provider reward
-	fpBalance2, err := nonValidatorNode.QueryBalances(fpBabylonAddr.String())
-	s.NoError(err)
-	s.T().Logf("fpBalance2: %s; fpBalance: %s", fpBalance2.String(), fpBalance.String())
-	s.True(fpBalance2.IsAllGT(fpBalance))
-	// finality provider reward gauge should be fully withdrawn now
-	fpRgs2, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
-	s.NoError(err)
-	fpRg2 := fpRgs2[itypes.FinalityProviderType.String()]
-	s.T().Logf("finality provider's withdrawable reward after withdrawing: %s", convertToRewardGauge(fpRg2).GetWithdrawableCoins().String())
-	s.True(convertToRewardGauge(fpRg2).IsFullyWithdrawn())
-
-	// BTC delegation balance before withdraw
-	btcDelBalance, err := nonValidatorNode.QueryBalances(delBabylonAddr.String())
-	s.NoError(err)
-	// BTC delegation reward gauge should not be fully withdrawn
-	btcDelRgs, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
-	s.NoError(err)
-	btcDelRg := btcDelRgs[itypes.BTCDelegationType.String()]
-	s.T().Logf("BTC delegation's withdrawable reward before withdrawing: %s", convertToRewardGauge(btcDelRg).GetWithdrawableCoins().String())
-	s.False(convertToRewardGauge(btcDelRg).IsFullyWithdrawn())
-
-	// withdraw BTC delegation reward
-	nonValidatorNode.WithdrawReward(itypes.BTCDelegationType.String(), initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
-
-	// balance after withdrawing BTC delegation reward
-	btcDelBalance2, err := nonValidatorNode.QueryBalances(delBabylonAddr.String())
-	s.NoError(err)
-	s.T().Logf("btcDelBalance2: %s; btcDelBalance: %s", btcDelBalance2.String(), btcDelBalance.String())
-	s.True(btcDelBalance2.IsAllGT(btcDelBalance))
-	// BTC delegation reward gauge should be fully withdrawn now
-	btcDelRgs2, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
-	s.NoError(err)
-	btcDelRg2 := btcDelRgs2[itypes.BTCDelegationType.String()]
-	s.T().Logf("BTC delegation's withdrawable reward after withdrawing: %s", convertToRewardGauge(btcDelRg2).GetWithdrawableCoins().String())
-	s.True(convertToRewardGauge(btcDelRg2).IsFullyWithdrawn())
+	n.WithdrawRewardCheckingBalances(itypes.FinalityProviderType.String(), s.cacheFP.Addr)
+	n.WithdrawRewardCheckingBalances(itypes.BTCDelegationType.String(), s.cacheFP.Addr)
 }
 
 // Test5SubmitStakerUnbonding is an end-to-end test for user unbonding
@@ -468,7 +415,7 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	nonValidatorNode.KeysAdd(w2)
 	// creates and fund multisig
 	multisigAddr := nonValidatorNode.KeysAdd(wMultisig, []string{fmt.Sprintf("--multisig=%s,%s", w1, w2), "--multisig-threshold=2"}...)
-	nonValidatorNode.BankSendFromNode(multisigAddr, "100000ubbn")
+	nonValidatorNode.BankSendFromNode(multisigAddr, "10000000ubbn")
 
 	// create a random BTC delegation under the cached finality provider
 	// BTC staking params, BTC delegation key pairs and PoP
@@ -537,7 +484,7 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 	feePayerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.KeysAdd(wGranter))
 	granteeStakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.KeysAdd(wGratee))
 
-	feePayerBalanceBeforeBTCDel := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100000))
+	feePayerBalanceBeforeBTCDel := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(5000000))
 
 	// fund the granter
 	nonValidatorNode.BankSendFromNode(feePayerAddr.String(), feePayerBalanceBeforeBTCDel.String())
@@ -627,9 +574,9 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	feePayerAddr := sdk.MustAccAddressFromBech32(s.feePayerAddr)
 	granteeStakerAddr := sdk.MustAccAddressFromBech32(node.KeysAdd(wGratee))
 
-	feePayerBalanceBeforeBTCDel := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100000))
-	stakerBalance := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100))
-	fees := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(50000))
+	feePayerBalanceBeforeBTCDel := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(4000000))
+	stakerBalance := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1000))
+	fees := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(500000))
 
 	// fund the granter and the staker
 	node.BankSendFromNode(feePayerAddr.String(), feePayerBalanceBeforeBTCDel.String())
@@ -1107,11 +1054,4 @@ func (s *BTCStakingTestSuite) BTCStakingUnbondSlashInfo(
 	s.NoError(err)
 
 	return testStakingInfo, blockWithStakingTx.SpvProof.BtcTransaction, inclusionProof, testUnbondingInfo, delegatorSig
-}
-
-func convertToRewardGauge(rg *itypes.RewardGaugesResponse) *itypes.RewardGauge {
-	return &itypes.RewardGauge{
-		Coins:          rg.Coins,
-		WithdrawnCoins: rg.WithdrawnCoins,
-	}
 }

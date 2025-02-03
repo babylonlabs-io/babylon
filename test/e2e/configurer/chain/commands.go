@@ -70,14 +70,15 @@ func (n *NodeConfig) QueryParams(subspace, key string, result any) {
 	require.NoError(n.t, err)
 }
 
-func (n *NodeConfig) SendIBCTransfer(from, recipient, memo string, token sdk.Coin) {
+func (n *NodeConfig) SendIBCTransfer(from, recipient, memo string, token sdk.Coin) (txHash string) {
 	n.LogActionF("IBC sending %s from %s to %s. memo: %s", token.Amount.String(), from, recipient, memo)
 
 	cmd := []string{"babylond", "tx", "ibc-transfer", "transfer", "transfer", "channel-0", recipient, token.String(), fmt.Sprintf("--from=%s", from), "--memo", memo}
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 
-	n.LogActionF("successfully submitted sent IBC transfer")
+	n.LogActionF("successfully submitted sent IBC transfer: out %s", outBuf.String())
+	return GetTxHashFromOutput(outBuf.String())
 }
 
 func (n *NodeConfig) FailIBCTransfer(from, recipient, amount string) {
@@ -271,7 +272,7 @@ func (n *NodeConfig) StoreWasmCode(wasmFile, from string) {
 
 func (n *NodeConfig) InstantiateWasmContract(codeId, initMsg, from string) {
 	n.LogActionF("instantiating wasm contract %s with %s", codeId, initMsg)
-	cmd := []string{"babylond", "tx", "wasm", "instantiate", codeId, initMsg, fmt.Sprintf("--from=%s", from), "--no-admin", "--label=contract", "--gas=auto", "--gas-adjustment=1.3"}
+	cmd := []string{"babylond", "tx", "wasm", "instantiate", codeId, initMsg, fmt.Sprintf("--from=%s", from), "--no-admin", "--label=contract", "--gas-adjustment=1.3"}
 	n.LogActionF("Executing command: %s", strings.Join(cmd, " "))
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
@@ -296,6 +297,37 @@ func (n *NodeConfig) WithdrawReward(sType, from string) (txHash string) {
 	require.NoError(n.t, err)
 	n.LogActionF("successfully withdrawn: %s", outBuf.String())
 	return GetTxHashFromOutput(outBuf.String())
+}
+
+// WithdrawRewardCheckingBalances will withdraw the rewards and verify the amount was correctly withdraw
+func (n *NodeConfig) WithdrawRewardCheckingBalances(sType, fromAddr string) {
+	n.t.Helper()
+	balanceBeforeRwdWithdraw, err := n.QueryBalances(fromAddr)
+	require.NoError(n.t, err)
+
+	rewardGauge, err := n.QueryRewardGauge(sdk.MustAccAddressFromBech32(fromAddr))
+	require.NoError(n.t, err)
+
+	fpRg := rewardGauge[sType].ToRewardGauge()
+	n.t.Logf("address: %s withdrawable reward before withdrawing: %s", fromAddr, fpRg.WithdrawnCoins.String())
+	require.False(n.t, fpRg.Coins.Equal(fpRg.WithdrawnCoins))
+
+	txHash := n.WithdrawReward(sType, fromAddr)
+	n.WaitForNextBlock()
+
+	_, txResp := n.QueryTx(txHash)
+
+	// balance after withdrawing reward
+	balanceAfterRwdWithdraw, err := n.QueryBalances(fromAddr)
+	require.NoError(n.t, err)
+
+	actualAmt := balanceAfterRwdWithdraw.String()
+
+	coinsReceivedWithdraw := fpRg.GetWithdrawableCoins()
+	expectedAmt := balanceBeforeRwdWithdraw.Add(coinsReceivedWithdraw...).Sub(txResp.AuthInfo.Fee.Amount...).String()
+	require.Equal(n.t, expectedAmt, actualAmt, "Expected(after withdraw): %s, actual(before withdraw + withdraw - TxFees): %s", expectedAmt, actualAmt)
+
+	n.t.Logf("BalanceAfterRwdWithdraw: %s; BalanceBeforeRwdWithdraw: %s, txFees: %s, CoinsReceivedWithdraw: %s", balanceAfterRwdWithdraw.String(), balanceBeforeRwdWithdraw.String(), txResp.AuthInfo.Fee.Amount.String(), coinsReceivedWithdraw.String())
 }
 
 // TxMultisigSign sign a tx in a file with one wallet for a multisig address.

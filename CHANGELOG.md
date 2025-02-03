@@ -40,7 +40,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#466](https://github.com/babylonlabs-io/babylon/pull/466) Add e2e test to
-block bank send and still BTC stake
+block bank send and still create BTC delegations
+- [#421](https://github.com/babylonlabs-io/babylon/pull/421) Add checks to public
+randomness commit at `TestBTCRewardsDistribution`.
 - [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
 check of rewards
 - [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public
@@ -49,6 +51,8 @@ check of rewards
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC stakingintegration.
+- [#457](https://github.com/babylonlabs-io/babylon/pull/457) Remove staking msg server and update gentx to generate
+`MsgWrappedCreateValidator`
 
 ### Bug fixes
 
