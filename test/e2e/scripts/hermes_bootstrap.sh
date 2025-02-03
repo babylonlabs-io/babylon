@@ -48,7 +48,7 @@ account_prefix = 'bbn'
 key_name = 'val01-bbn-a'
 store_prefix = 'ibc'
 max_gas = 50000000
-gas_price = { price = 0.01, denom = 'ubbn' }
+gas_price = { price = 0.1, denom = 'ubbn' }
 gas_multiplier = 1.5
 clock_drift = '1m' # to accommodate docker containers
 trusting_period = '14days'
@@ -64,7 +64,7 @@ account_prefix = 'bbn'
 key_name = 'val01-bbn-b'
 store_prefix = 'ibc'
 max_gas = 50000000
-gas_price = { price = 0.01, denom = 'ubbn' }
+gas_price = { price = 0.1, denom = 'ubbn' }
 gas_multiplier = 1.5
 clock_drift = '1m' # to accommodate docker containers
 trusting_period = '14days'
