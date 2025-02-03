@@ -1,4 +1,4 @@
-package cmd
+package bls
 
 import (
 	"errors"
@@ -47,7 +47,8 @@ $ babylond create-bls-key %s1f5tnl46mk4dfp4nx3n2vnrvyw2h2ydz6ykhk3r --home ./
 				return err
 			}
 
-			return CreateBlsKey(homeDir, addr)
+			_, err = CreateBlsKey(homeDir, addr)
+			return err
 		},
 	}
 
@@ -56,20 +57,20 @@ $ babylond create-bls-key %s1f5tnl46mk4dfp4nx3n2vnrvyw2h2ydz6ykhk3r --home ./
 	return cmd
 }
 
-func CreateBlsKey(home string, addr sdk.AccAddress) error {
+func CreateBlsKey(home string, addr sdk.AccAddress) (*privval.WrappedFilePV, error) {
 	nodeCfg := cmtconfig.DefaultConfig()
 	keyPath := filepath.Join(home, nodeCfg.PrivValidatorKeyFile())
 	statePath := filepath.Join(home, nodeCfg.PrivValidatorStateFile())
 
 	pv, err := LoadWrappedFilePV(keyPath, statePath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	wrappedPV := privval.NewWrappedFilePV(pv.GetValPrivKey(), bls12381.GenPrivKey(), keyPath, statePath)
 	wrappedPV.SetAccAddress(addr)
 
-	return nil
+	return wrappedPV, nil
 }
 
 // LoadWrappedFilePV loads the wrapped file private key from the file path.

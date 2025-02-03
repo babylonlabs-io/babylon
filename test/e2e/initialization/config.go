@@ -9,8 +9,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -23,13 +21,11 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/babylonlabs-io/babylon/privval"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	blctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
 
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
@@ -249,11 +245,6 @@ func initGenesis(
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, checkpointingtypes.ModuleName, checkpointingtypes.DefaultGenesis(), updateCheckpointingGenesis(chain))
-	if err != nil {
-		return err
-	}
-
 	err = updateModuleGenesis(appGenState, blctypes.ModuleName, blctypes.DefaultGenesis(), updateBtcLightClientGenesis(btcHeaders))
 	if err != nil {
 		return err
@@ -376,7 +367,7 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 			if c.chainMeta.Id != ChainAID {
 				stakeAmountCoin = StakeAmountCoinB
 			}
-			createValmsg, err := node.buildCreateValidatorMsg(stakeAmountCoin)
+			createValmsg, err := node.buildCreateValidatorMsg(stakeAmountCoin, node.consensusKey)
 			if err != nil {
 				panic("genutil genesis setup failed: " + err.Error())
 			}
@@ -393,50 +384,5 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 			genTxs = append(genTxs, txRaw)
 		}
 		genUtilGenState.GenTxs = genTxs
-	}
-}
-
-func updateCheckpointingGenesis(c *internalChain) func(*checkpointingtypes.GenesisState) {
-	return func(checkpointingGenState *checkpointingtypes.GenesisState) {
-		var genKeys []*checkpointingtypes.GenesisKey
-
-		for _, node := range c.nodes {
-			if !node.isValidator {
-				continue
-			}
-
-			proofOfPossession, err := privval.BuildPoP(node.consensusKey.PrivKey, node.consensusKey.BlsPrivKey)
-
-			if err != nil {
-				panic("It should be possible to build proof of possession from validator private keys")
-			}
-
-			valPubKey, err := cryptocodec.FromCmtPubKeyInterface(node.consensusKey.PubKey)
-
-			if err != nil {
-				panic("It should be possible to retrieve validator public key")
-			}
-
-			da, err := sdk.AccAddressFromBech32(node.consensusKey.DelegatorAddress)
-
-			if err != nil {
-				panic("It should be possible to get validator address from delegator address")
-			}
-
-			va := sdk.ValAddress(da)
-
-			genKey := &checkpointingtypes.GenesisKey{
-				ValidatorAddress: va.String(),
-				BlsKey: &checkpointingtypes.BlsKey{
-					Pubkey: &node.consensusKey.BlsPubKey,
-					Pop:    proofOfPossession,
-				},
-				ValPubkey: valPubKey.(*ed25519.PubKey),
-			}
-
-			genKeys = append(genKeys, genKey)
-		}
-
-		checkpointingGenState.GenesisKeys = genKeys
 	}
 }

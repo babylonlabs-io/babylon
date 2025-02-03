@@ -51,6 +51,8 @@ message QueuedMessage {
     cosmos.staking.v1beta1.MsgUndelegate msg_undelegate = 7;
     cosmos.staking.v1beta1.MsgBeginRedelegate msg_begin_redelegate = 8;
     cosmos.staking.v1beta1.MsgCancelUnbondingDelegation msg_cancel_unbonding_delegation = 9;
+    cosmos.staking.v1beta1.MsgEditValidator msg_edit_validator = 10;
+    cosmos.staking.v1beta1.MsgUpdateParams msg_update_params = 11;
   }
 }
 

@@ -103,6 +103,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/cosmos/ibc-go/modules/capability"
@@ -329,7 +330,7 @@ func NewBabylonApp(
 	app.BasicModuleManager = module.NewBasicManagerFromManager(
 		app.ModuleManager,
 		map[string]module.AppModuleBasic{
-			genutiltypes.ModuleName: genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+			genutiltypes.ModuleName: genutil.NewAppModuleBasic(checkpointingtypes.GenTxMessageValidatorWrappedCreateValidator),
 			govtypes.ModuleName: gov.NewAppModuleBasic(
 				[]govclient.ProposalHandler{
 					paramsclient.ProposalHandler,
@@ -454,10 +455,7 @@ func NewBabylonApp(
 
 	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	if err := app.ModuleManager.RegisterServices(app.configurator); err != nil {
-		panic(err)
-	}
-
+	app.RegisterServicesWithoutStaking()
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
 
 	reflectionSvc, err := runtimeservices.NewReflectionService()
@@ -586,6 +584,47 @@ func NewBabylonApp(
 	}
 
 	return app
+}
+
+// RegisterServicesWithoutStaking calls the module manager
+// registration services without the staking module.
+func (app *BabylonApp) RegisterServicesWithoutStaking() {
+	// removes the staking module from the register services
+	stkModTemp := app.ModuleManager.Modules[stakingtypes.ModuleName]
+	delete(app.ModuleManager.Modules, stakingtypes.ModuleName)
+
+	if err := app.ModuleManager.RegisterServices(app.configurator); err != nil {
+		panic(err)
+	}
+
+	app.RegisterStakingQueryAndMigrations()
+
+	// adds the staking module back it back
+	app.ModuleManager.Modules[stakingtypes.ModuleName] = stkModTemp
+}
+
+// RegisterStakingQueryAndMigrations registrates in the configurator
+// the x/staking query server and its migrations
+func (app *BabylonApp) RegisterStakingQueryAndMigrations() {
+	cfg, stkK := app.configurator, app.StakingKeeper
+	stkq := stakingkeeper.NewQuerier(stkK)
+
+	stakingtypes.RegisterQueryServer(cfg.QueryServer(), stkq)
+
+	ls := app.GetSubspace(stakingtypes.ModuleName)
+	m := stakingkeeper.NewMigrator(stkK, ls)
+	if err := cfg.RegisterMigration(stakingtypes.ModuleName, 1, m.Migrate1to2); err != nil {
+		panic(fmt.Sprintf("failed to migrate x/%s from version 1 to 2: %v", stakingtypes.ModuleName, err))
+	}
+	if err := cfg.RegisterMigration(stakingtypes.ModuleName, 2, m.Migrate2to3); err != nil {
+		panic(fmt.Sprintf("failed to migrate x/%s from version 2 to 3: %v", stakingtypes.ModuleName, err))
+	}
+	if err := cfg.RegisterMigration(stakingtypes.ModuleName, 3, m.Migrate3to4); err != nil {
+		panic(fmt.Sprintf("failed to migrate x/%s from version 3 to 4: %v", stakingtypes.ModuleName, err))
+	}
+	if err := cfg.RegisterMigration(stakingtypes.ModuleName, 4, m.Migrate4to5); err != nil {
+		panic(fmt.Sprintf("failed to migrate x/%s from version 4 to 5: %v", stakingtypes.ModuleName, err))
+	}
 }
 
 // GetBaseApp returns the BaseApp of BabylonApp
