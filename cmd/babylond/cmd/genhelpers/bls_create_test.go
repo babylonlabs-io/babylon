@@ -23,11 +23,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/app"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
-	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/testutil/signer"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	cmtprivval "github.com/cometbft/cometbft/privval"
+	"github.com/cometbft/cometbft/privval"
 )
 
 func Test_CmdCreateBls(t *testing.T) {
@@ -36,7 +36,7 @@ func Test_CmdCreateBls(t *testing.T) {
 	cfg, err := genutiltest.CreateDefaultCometConfig(home)
 	require.NoError(t, err)
 
-	signer, err := signer.SetupTestPrivSigner()
+	signer, err := signer.SetupTestBlsSigner()
 	require.NoError(t, err)
 	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
 		Logger:             logger,
@@ -74,16 +74,16 @@ func Test_CmdCreateBls(t *testing.T) {
 
 	keyPath := nodeCfg.PrivValidatorKeyFile()
 	statePath := nodeCfg.PrivValidatorStateFile()
-	blsKeyFile := privval.DefaultBlsKeyFile(home)
-	blsPasswordFile := privval.DefaultBlsPasswordFile(home)
+	blsKeyFile := appsigner.DefaultBlsKeyFile(home)
+	blsPasswordFile := appsigner.DefaultBlsPasswordFile(home)
 
-	err = privval.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
+	err = appsigner.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
 	require.NoError(t, err)
 
-	filePV := cmtprivval.GenFilePV(keyPath, statePath)
+	filePV := privval.GenFilePV(keyPath, statePath)
 	filePV.Key.Save()
 
-	blsPV := privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password")
+	bls := appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
 	defer Clean(keyPath, statePath, blsKeyFile, blsPasswordFile)
 
 	genBlsCmd.SetArgs([]string{
@@ -101,7 +101,7 @@ func Test_CmdCreateBls(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, sdk.ValAddress(addr).String(), genKey.ValidatorAddress)
 	require.Equal(t, filePV.Key.PubKey.Bytes(), genKey.ValPubkey.Bytes())
-	require.True(t, blsPV.Key.PubKey.Equal(*genKey.BlsKey.Pubkey))
+	require.True(t, bls.Key.PubKey.Equal(*genKey.BlsKey.Pubkey))
 
 	require.True(t, genKey.BlsKey.Pop.IsValid(*genKey.BlsKey.Pubkey, genKey.ValPubkey))
 }

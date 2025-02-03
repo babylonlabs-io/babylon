@@ -7,16 +7,19 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 
-	"github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/babylonlabs-io/babylon/privval"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	cmtconfig "github.com/cometbft/cometbft/config"
-	cmtprivval "github.com/cometbft/cometbft/privval"
+	"github.com/cometbft/cometbft/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
+const TestPassword string = "password"
+
 // SetupTestPrivSigner sets up a PrivSigner for testing
-func SetupTestPrivSigner() (*signer.PrivSigner, error) {
+func SetupTestBlsSigner() (*appsigner.BlsKey, error) {
 	// Create a temporary node directory
 	nodeDir, err := os.MkdirTemp("", "tmp-signer")
 	if err != nil {
@@ -26,20 +29,25 @@ func SetupTestPrivSigner() (*signer.PrivSigner, error) {
 		_ = os.RemoveAll(nodeDir)
 	}()
 
-	// generate a privSigner
-	if err := GeneratePrivSigner(nodeDir); err != nil {
-		return nil, fmt.Errorf("failed to generate priv signer: %w", err)
+	nodeCfg := cmtconfig.DefaultConfig()
+	nodeCfg.SetRoot(nodeDir)
+
+	blsKeyFile := appsigner.DefaultBlsKeyFile(nodeDir)
+	blsPasswordFile := appsigner.DefaultBlsPasswordFile(nodeDir)
+
+	if err := appsigner.EnsureDirs(blsKeyFile, blsPasswordFile); err != nil {
+		return nil, fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 
-	privSigner, _ := signer.InitPrivSigner(nodeDir)
-	return privSigner, nil
+	bls := appsigner.GenBls(blsKeyFile, blsPasswordFile, TestPassword)
+	return &bls.Key, nil
 }
 
 // GenesisKeyFromPrivSigner generates a genesis key from a priv signer
-func GenesisKeyFromPrivSigner(ps *signer.PrivSigner, delegatorAddress sdk.ValAddress) (*checkpointingtypes.GenesisKey, error) {
-	valKeys, err := privval.NewValidatorKeys(
-		ps.PV.Comet.PrivKey,
-		ps.PV.Bls.PrivKey,
+func GenesisKeyFromPrivSigner(cmtPrivKey crypto.PrivKey, blsPrivKey bls12381.PrivateKey, delegatorAddress sdk.ValAddress) (*checkpointingtypes.GenesisKey, error) {
+	valKeys, err := appsigner.NewValidatorKeys(
+		cmtPrivKey,
+		blsPrivKey,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate validator keys: %w", err)
@@ -54,26 +62,4 @@ func GenesisKeyFromPrivSigner(ps *signer.PrivSigner, delegatorAddress sdk.ValAdd
 		valKeys.PoP,
 		&cosmosed.PubKey{Key: valPubkey.Bytes()},
 	)
-}
-
-// GeneratePrivSigner generates a priv signer
-func GeneratePrivSigner(nodeDir string) error {
-	nodeCfg := cmtconfig.DefaultConfig()
-	nodeCfg.SetRoot(nodeDir)
-
-	cmtKeyFile := nodeCfg.PrivValidatorKeyFile()
-	cmtStateFile := nodeCfg.PrivValidatorStateFile()
-	blsKeyFile := privval.DefaultBlsKeyFile(nodeDir)
-	blsPasswordFile := privval.DefaultBlsPasswordFile(nodeDir)
-
-	if err := privval.EnsureDirs(cmtKeyFile, cmtStateFile, blsKeyFile, blsPasswordFile); err != nil {
-		return fmt.Errorf("failed to ensure dirs: %w", err)
-	}
-
-	cometPV := cmtprivval.GenFilePV(cmtKeyFile, cmtStateFile)
-	cometPV.Key.Save()
-	cometPV.LastSignState.Save()
-
-	privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password")
-	return nil
 }

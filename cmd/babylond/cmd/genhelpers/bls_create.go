@@ -5,15 +5,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	cmtconfig "github.com/cometbft/cometbft/config"
-	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
 	"github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/privval"
-	cmtprivval "github.com/cometbft/cometbft/privval"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
+	cmtconfig "github.com/cometbft/cometbft/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -43,37 +41,21 @@ $ babylond gen-helpers create-bls %s1f5tnl46mk4dfp4nx3n2vnrvyw2h2ydz6ykhk3r --ho
 		RunE: func(cmd *cobra.Command, args []string) error {
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
 
-			nodeCfg := cmtconfig.DefaultConfig()
-			nodeCfg.SetRoot(homeDir)
-			cmtPvKeyFile := nodeCfg.PrivValidatorKeyFile()
-			cmtPvStateFile := nodeCfg.PrivValidatorStateFile()
-			blsKeyFile := privval.DefaultBlsKeyFile(homeDir)
-			blsPasswordFile := privval.DefaultBlsPasswordFile(homeDir)
-
-			if err := func(paths ...string) error {
-				for _, path := range paths {
-					if !cmtos.FileExists(path) {
-						return fmt.Errorf("file does not exist in %s", path)
-					}
-				}
-				return nil
-			}(cmtPvKeyFile, cmtPvStateFile, blsKeyFile, blsPasswordFile); err != nil {
-				return fmt.Errorf("failed to check files: %w", err)
+			ck, err := appsigner.LoadConsensusKey(homeDir)
+			if err != nil {
+				return fmt.Errorf("failed to load key from %s: %w", homeDir, err)
 			}
-
-			cmtPV := cmtprivval.LoadFilePV(cmtPvKeyFile, cmtPvStateFile)
-			blsPV := privval.LoadBlsPV(blsKeyFile, blsPasswordFile)
 
 			addr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return fmt.Errorf("invalid address: %w", err)
 			}
 
-			outputFileName, err := privval.ExportGenBls(
+			outputFileName, err := appsigner.ExportGenBls(
 				sdk.ValAddress(addr),
-				cmtPV.Key.PrivKey,
-				blsPV.Key.PrivKey,
-				filepath.Dir(cmtPvKeyFile),
+				ck.Comet.PrivKey,
+				ck.Bls.PrivKey,
+				filepath.Join(homeDir, cmtconfig.DefaultConfigDir),
 			)
 			if err != nil {
 				return fmt.Errorf("failed to export genesis bls: %w", err)

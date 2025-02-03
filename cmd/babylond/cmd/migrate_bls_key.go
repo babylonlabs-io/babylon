@@ -7,13 +7,14 @@ import (
 	"strings"
 
 	"github.com/babylonlabs-io/babylon/app"
+
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/privval"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	cmtjson "github.com/cometbft/cometbft/libs/json"
 	cmtos "github.com/cometbft/cometbft/libs/os"
-	cmtprivval "github.com/cometbft/cometbft/privval"
+	"github.com/cometbft/cometbft/privval"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 )
@@ -81,20 +82,20 @@ func migrate(homeDir, password string) error {
 	}
 
 	if password == "" {
-		password = privval.NewBlsPassword()
+		password = appsigner.NewBlsPassword()
 	}
 
 	cmtKeyFilePath := cmtcfg.PrivValidatorKeyFile()
 	cmtStateFilePath := cmtcfg.PrivValidatorStateFile()
-	blsKeyFilePath := privval.DefaultBlsKeyFile(homeDir)
-	blsPasswordFilePath := privval.DefaultBlsPasswordFile(homeDir)
+	blsKeyFilePath := appsigner.DefaultBlsKeyFile(homeDir)
+	blsPasswordFilePath := appsigner.DefaultBlsPasswordFile(homeDir)
 
-	cmtPv := cmtprivval.NewFilePV(prevCmtPrivKey, cmtKeyFilePath, cmtStateFilePath)
-	blsPv := privval.NewBlsPV(prevBlsPrivKey, blsKeyFilePath, blsPasswordFilePath)
+	cmtPv := privval.NewFilePV(prevCmtPrivKey, cmtKeyFilePath, cmtStateFilePath)
+	bls := appsigner.NewBls(prevBlsPrivKey, blsKeyFilePath, blsPasswordFilePath)
 
 	// save key to files after verification
 	cmtPv.Save()
-	blsPv.Key.Save(password)
+	bls.Key.Save(password)
 
 	if err := verifySeparateFiles(
 		cmtKeyFilePath, cmtStateFilePath, blsKeyFilePath, blsPasswordFilePath,
@@ -127,10 +128,10 @@ func verifySeparateFiles(
 	prevCmtPrivKey cmtcrypto.PrivKey,
 	prevBlsPrivKey bls12381.PrivateKey,
 ) error {
-	cmtPv := cmtprivval.LoadFilePV(cmtKeyFilePath, cmtStateFilePath)
-	blsPv := privval.LoadBlsPV(blsKeyFilePath, blsPasswordFilePath)
+	cmtPv := privval.LoadFilePV(cmtKeyFilePath, cmtStateFilePath)
+	bls := appsigner.LoadBls(blsKeyFilePath, blsPasswordFilePath)
 
-	if bytes.Equal(prevCmtPrivKey.Bytes(), cmtPv.Key.PrivKey.Bytes()) && bytes.Equal(prevBlsPrivKey, blsPv.Key.PrivKey) {
+	if bytes.Equal(prevCmtPrivKey.Bytes(), cmtPv.Key.PrivKey.Bytes()) && bytes.Equal(prevBlsPrivKey, bls.Key.PrivKey) {
 		return nil
 	}
 	return fmt.Errorf("migrated keys do not match")

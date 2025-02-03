@@ -21,7 +21,7 @@ import (
 	cmtconfig "github.com/cometbft/cometbft/config"
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cometbft/cometbft/libs/tempfile"
-	cmtprivval "github.com/cometbft/cometbft/privval"
+	"github.com/cometbft/cometbft/privval"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -33,12 +33,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/app"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
-	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/testutil/cli"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/testutil/signer"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 func newConfig() depinject.Config {
@@ -78,9 +79,12 @@ func Test_CmdCreateAddWithoutGentx(t *testing.T) {
 	require.NoError(t, err)
 
 	db := dbm.NewMemDB()
-	signer, err := signer.SetupTestPrivSigner()
+
+	tbs, err := signer.SetupTestBlsSigner()
 	require.NoError(t, err)
-	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
+	blsSigner := checkpointingtypes.BlsSigner(tbs)
+
+	bbn := app.NewBabylonAppWithCustomOptions(t, false, blsSigner, app.SetupOptions{
 		Logger:             logger,
 		DB:                 db,
 		InvCheckPeriod:     0,
@@ -120,9 +124,12 @@ func Test_CmdCreateAddWithoutGentx(t *testing.T) {
 // error is expected if adding duplicate
 func Test_CmdAddBlsWithGentx(t *testing.T) {
 	db := dbm.NewMemDB()
-	signer, err := signer.SetupTestPrivSigner()
+
+	tbs, err := signer.SetupTestBlsSigner()
 	require.NoError(t, err)
-	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
+	blsSigner := checkpointingtypes.BlsSigner(tbs)
+
+	bbn := app.NewBabylonAppWithCustomOptions(t, false, blsSigner, app.SetupOptions{
 		Logger:             log.NewNopLogger(),
 		DB:                 db,
 		InvCheckPeriod:     0,
@@ -156,16 +163,16 @@ func Test_CmdAddBlsWithGentx(t *testing.T) {
 
 		keyPath := nodeCfg.PrivValidatorKeyFile()
 		statePath := nodeCfg.PrivValidatorStateFile()
-		blsKeyFile := privval.DefaultBlsKeyFile(homeDir)
-		blsPasswordFile := privval.DefaultBlsPasswordFile(homeDir)
+		blsKeyFile := appsigner.DefaultBlsKeyFile(homeDir)
+		blsPasswordFile := appsigner.DefaultBlsPasswordFile(homeDir)
 
-		err := privval.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
+		err := appsigner.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
 		require.NoError(t, err)
 
-		filePV := cmtprivval.GenFilePV(keyPath, statePath)
+		filePV := privval.GenFilePV(keyPath, statePath)
 		filePV.Key.Save()
 		filePV.LastSignState.Save()
-		privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password")
+		appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
 
 		_, err = cli.ExecTestCLICmd(v.ClientCtx, genBlsCmd, []string{v.Address.String(), fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir)})
 		require.NoError(t, err)

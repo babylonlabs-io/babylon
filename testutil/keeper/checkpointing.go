@@ -20,7 +20,7 @@ import (
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
-func CheckpointingKeeper(t testing.TB, ek types.EpochingKeeper, signer keeper.BlsSigner) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec) {
+func CheckpointingKeeper(t testing.TB, ek types.EpochingKeeper, signer types.BlsSigner) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 
 	db := dbm.NewMemDB()

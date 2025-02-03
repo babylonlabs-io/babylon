@@ -5,20 +5,26 @@ import (
 	"testing"
 
 	"cosmossdk.io/log"
-	"github.com/babylonlabs-io/babylon/testutil/signer"
 	abci "github.com/cometbft/cometbft/abci/types"
 	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/testutil/signer"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 func TestBabylonBlockedAddrs(t *testing.T) {
 	db := dbm.NewMemDB()
-	signer, _ := signer.SetupTestPrivSigner()
+
+	tbs, err := signer.SetupTestBlsSigner()
+	require.NoError(t, err)
+	blsSigner := checkpointingtypes.BlsSigner(tbs)
+
 	logger := log.NewTestLogger(t)
 
-	app := NewBabylonAppWithCustomOptions(t, false, signer, SetupOptions{
+	app := NewBabylonAppWithCustomOptions(t, false, blsSigner, SetupOptions{
 		Logger:             logger,
 		DB:                 db,
 		InvCheckPeriod:     0,
@@ -41,7 +47,7 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		)
 	}
 
-	_, err := app.FinalizeBlock(&abci.RequestFinalizeBlock{
+	_, err = app.FinalizeBlock(&abci.RequestFinalizeBlock{
 		Height: 1,
 	})
 	require.NoError(t, err)
@@ -57,7 +63,7 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		true,
 		map[int64]bool{},
 		0,
-		signer,
+		&blsSigner,
 		TmpAppOptions(),
 		EmptyWasmOpts,
 	)
@@ -72,11 +78,14 @@ func TestGetMaccPerms(t *testing.T) {
 
 func TestUpgradeStateOnGenesis(t *testing.T) {
 	db := dbm.NewMemDB()
-	privSigner, err := signer.SetupTestPrivSigner()
+
+	tbs, err := signer.SetupTestBlsSigner()
 	require.NoError(t, err)
+	blsSigner := checkpointingtypes.BlsSigner(tbs)
+
 	logger := log.NewTestLogger(t)
 
-	app := NewBabylonAppWithCustomOptions(t, false, privSigner, SetupOptions{
+	app := NewBabylonAppWithCustomOptions(t, false, blsSigner, SetupOptions{
 		Logger:             logger,
 		DB:                 db,
 		InvCheckPeriod:     0,

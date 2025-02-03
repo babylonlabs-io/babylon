@@ -21,13 +21,6 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/app"
-	babylonApp "github.com/babylonlabs-io/babylon/app"
-	appsigner "github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
@@ -58,6 +51,15 @@ import (
 	gogoprotoio "github.com/cosmos/gogoproto/io"
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/app"
+	babylonApp "github.com/babylonlabs-io/babylon/app"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
+	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 var validatorConfig = &initialization.NodeConfig{
@@ -138,7 +140,7 @@ type FinalizedBlock struct {
 
 type BabylonAppDriver struct {
 	App                  *app.BabylonApp
-	PrivSigner           *appsigner.PrivSigner
+	BlsSigner            checkpointingtypes.BlsSigner
 	DriverAccountPrivKey cryptotypes.PrivKey
 	DriverAccountSeqNr   uint64
 	DriverAccountAccNr   uint64
@@ -150,6 +152,7 @@ type BabylonAppDriver struct {
 	FinalizedBlocks      []FinalizedBlock
 	LastState            sm.State
 	DelegatorAddress     sdk.ValAddress
+	CometPrivKey         cmtcrypto.PrivKey
 }
 
 // Inititializes Babylon driver for block creation
@@ -195,15 +198,16 @@ func NewBabylonAppDriver(
 		panic(err)
 	}
 
-	signer, err := appsigner.InitPrivSigner(chain.Nodes[0].ConfigDir)
+	blsSigner, err := appsigner.InitBlsSigner(chain.Nodes[0].ConfigDir)
 	require.NoError(t, err)
-	require.NotNil(t, signer)
+	require.NotNil(t, blsSigner)
 	signerValAddress := sdk.ValAddress(chain.Nodes[0].PublicAddress)
 	require.NoError(t, err)
 	fmt.Printf("signer val address: %s\n", signerValAddress.String())
 
 	appOptions := NewAppOptionsWithFlagHome(chain.Nodes[0].ConfigDir)
 	baseAppOptions := server.DefaultBaseappOptions(appOptions)
+
 	tmpApp := babylonApp.NewBabylonApp(
 		log.NewNopLogger(),
 		dbm.NewMemDB(),
@@ -211,7 +215,7 @@ func NewBabylonAppDriver(
 		true,
 		map[int64]bool{},
 		0,
-		signer,
+		blsSigner,
 		appOptions,
 		babylonApp.EmptyWasmOpts,
 		baseAppOptions...,
@@ -260,7 +264,7 @@ func NewBabylonAppDriver(
 
 	return &BabylonAppDriver{
 		App:                  tmpApp,
-		PrivSigner:           signer,
+		BlsSigner:            *blsSigner,
 		DriverAccountPrivKey: &validatorPrivKey,
 		// Driver account always start from 1, as we executed tx for creating validator
 		// in genesis block
@@ -274,6 +278,7 @@ func NewBabylonAppDriver(
 		FinalizedBlocks:    []FinalizedBlock{},
 		LastState:          state.Copy(),
 		DelegatorAddress:   signerValAddress,
+		CometPrivKey:       chain.Nodes[0].CometPrivKey,
 	}
 }
 
@@ -458,7 +463,7 @@ func (d *BabylonAppDriver) GenerateNewBlock(t *testing.T) *abci.ResponseFinalize
 			t,
 			extension,
 			lastFinalizedBlock.Height,
-			d.PrivSigner.PV.Comet.PrivKey,
+			d.CometPrivKey,
 		)
 
 		// We are adding invalid signatures here as we are not validating them in
@@ -772,9 +777,9 @@ func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
 		panic(err)
 	}
 
-	signer, err := appsigner.InitPrivSigner(nodeDir)
+	blsSigner, err := appsigner.InitBlsSigner(nodeDir)
 	require.NoError(t, err)
-	require.NotNil(t, signer)
+	require.NotNil(t, blsSigner)
 
 	appOptions := NewAppOptionsWithFlagHome(nodeDir)
 	baseAppOptions := server.DefaultBaseappOptions(appOptions)
@@ -785,7 +790,7 @@ func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
 		true,
 		map[int64]bool{},
 		0,
-		signer,
+		blsSigner,
 		appOptions,
 		babylonApp.EmptyWasmOpts,
 		baseAppOptions...,

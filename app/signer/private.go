@@ -4,26 +4,56 @@ import (
 	"fmt"
 
 	cmtconfig "github.com/cometbft/cometbft/config"
-
-	"github.com/babylonlabs-io/babylon/privval"
 	cmtos "github.com/cometbft/cometbft/libs/os"
-	cmtprivval "github.com/cometbft/cometbft/privval"
+	"github.com/cometbft/cometbft/privval"
+
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
-type PrivSigner struct {
-	PV *privval.WrappedFilePV
+// ConsensusKey represents the consensus keys
+type ConsensusKey struct {
+	Comet *privval.FilePVKey
+	Bls   *BlsKey
 }
 
-func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
+// LoadConsensusKey loads the consensus keys from the node directory
+// Since it loads both the FilePV and Bls from the local,
+// User who runs the remote signer cannot operate this function
+func LoadConsensusKey(nodeDir string) (*ConsensusKey, error) {
+	filePV, err := loadFilePV(nodeDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load file pv key: %w", err)
+	}
+	bls, err := loadBls(nodeDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load bls pv key: %w", err)
+	}
+
+	return &ConsensusKey{
+		Comet: &filePV.Key,
+		Bls:   &bls.Key,
+	}, nil
+}
+
+// InitBlsSigner initializes the bls signer
+func InitBlsSigner(nodeDir string) (*checkpointingtypes.BlsSigner, error) {
+	bls, err := loadBls(nodeDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load bls pv key: %w", err)
+	}
+	blsSigner := checkpointingtypes.BlsSigner(&bls.Key)
+	return &blsSigner, nil
+}
+
+// loadFilePV loads the private key from the node directory in local
+func loadFilePV(homeDir string) (*privval.FilePV, error) {
 	nodeCfg := cmtconfig.DefaultConfig()
-	nodeCfg.SetRoot(nodeDir)
+	nodeCfg.SetRoot(homeDir)
 
 	pvKeyFile := nodeCfg.PrivValidatorKeyFile()
 	pvStateFile := nodeCfg.PrivValidatorStateFile()
-	blsKeyFile := privval.DefaultBlsKeyFile(nodeDir)
-	blsPasswordFile := privval.DefaultBlsPasswordFile(nodeDir)
 
-	if err := privval.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
+	if err := EnsureDirs(pvKeyFile, pvStateFile); err != nil {
 		return nil, fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 
@@ -31,14 +61,26 @@ func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
 		return nil, fmt.Errorf("validator key file does not exist. create file using `babylond init`: %s", pvKeyFile)
 	}
 
+	filePV := privval.LoadFilePV(pvKeyFile, pvStateFile)
+	return filePV, nil
+}
+
+// loadBls loads the private key from the node directory in local
+func loadBls(homeDir string) (*Bls, error) {
+	nodeCfg := cmtconfig.DefaultConfig()
+	nodeCfg.SetRoot(homeDir)
+
+	blsKeyFile := DefaultBlsKeyFile(homeDir)
+	blsPasswordFile := DefaultBlsPasswordFile(homeDir)
+
+	if err := EnsureDirs(blsKeyFile, blsPasswordFile); err != nil {
+		return nil, fmt.Errorf("failed to ensure dirs: %w", err)
+	}
+
 	if !cmtos.FileExists(blsKeyFile) || !cmtos.FileExists(blsPasswordFile) {
 		return nil, fmt.Errorf("BLS key file does not exist. create file using `babylond init` or `babylond create-bls-key`: %s", blsKeyFile)
 	}
 
-	cometPV := cmtprivval.LoadFilePV(pvKeyFile, pvStateFile)
-	blsPV := privval.LoadBlsPV(blsKeyFile, blsPasswordFile)
-
-	return &PrivSigner{
-		PV: privval.NewWrappedFilePV(cometPV.Key, blsPV.Key),
-	}, nil
+	bls := LoadBls(blsKeyFile, blsPasswordFile)
+	return bls, nil
 }

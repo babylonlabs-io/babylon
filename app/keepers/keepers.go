@@ -16,8 +16,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	mintkeeper "github.com/babylonlabs-io/babylon/x/mint/keeper"
-	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -59,8 +57,10 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
+	mintkeeper "github.com/babylonlabs-io/babylon/x/mint/keeper"
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
+
 	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/app/signer"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	owasm "github.com/babylonlabs-io/babylon/wasmbinding"
 	btccheckpointkeeper "github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
@@ -163,7 +163,7 @@ func (ak *AppKeepers) InitKeepers(
 	homePath string,
 	invCheckPeriod uint,
 	skipUpgradeHeights map[int64]bool,
-	privSigner *signer.PrivSigner,
+	blsSigner checkpointingtypes.BlsSigner,
 	appOpts servertypes.AppOptions,
 	wasmConfig wasmtypes.WasmConfig,
 	wasmOpts []wasmkeeper.Option,
@@ -252,7 +252,7 @@ func (ak *AppKeepers) InitKeepers(
 	checkpointingKeeper := checkpointingkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[checkpointingtypes.StoreKey]),
-		privSigner.PV,
+		blsSigner,
 		epochingKeeper,
 	)
 

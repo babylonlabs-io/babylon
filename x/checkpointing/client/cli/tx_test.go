@@ -26,10 +26,10 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/privval"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	testutilcli "github.com/babylonlabs-io/babylon/testutil/cli"
 	checkpointcli "github.com/babylonlabs-io/babylon/x/checkpointing/client/cli"
-	cmtprivval "github.com/cometbft/cometbft/privval"
+	"github.com/cometbft/cometbft/privval"
 )
 
 type mockCometRPC struct {
@@ -109,17 +109,17 @@ func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 
 	cmtKeyPath := nodeCfg.PrivValidatorKeyFile()
 	cmtStatePath := nodeCfg.PrivValidatorStateFile()
-	blsKeyFile := privval.DefaultBlsKeyFile(homeDir)
-	blsPasswordFile := privval.DefaultBlsPasswordFile(homeDir)
+	blsKeyFile := appsigner.DefaultBlsKeyFile(homeDir)
+	blsPasswordFile := appsigner.DefaultBlsPasswordFile(homeDir)
 
-	err := privval.EnsureDirs(cmtKeyPath, cmtStatePath, blsKeyFile, blsPasswordFile)
+	err := appsigner.EnsureDirs(cmtKeyPath, cmtStatePath, blsKeyFile, blsPasswordFile)
 	require.NoError(err)
 
-	filePV := cmtprivval.GenFilePV(cmtKeyPath, cmtStatePath)
+	filePV := privval.GenFilePV(cmtKeyPath, cmtStatePath)
 	filePV.Key.Save()
 	filePV.LastSignState.Save()
 
-	privval.GenBlsPV(blsKeyFile, blsPasswordFile, "password")
+	appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
 	cmd := checkpointcli.CmdWrappedCreateValidator(authcodec.NewBech32Codec("cosmosvaloper"))
 
 	consPrivKey := filePV.Key.PrivKey
