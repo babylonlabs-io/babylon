@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+- [#421](https://github.com/babylonlabs-io/babylon/pull/421) Add checks to public
+randomness commit at `TestBTCRewardsDistribution`.
 - [#445](https://github.com/babylonlabs-io/babylon/pull/445) Reject BTC headers
 forks starting with already known header
 - [#457](https://github.com/babylonlabs-io/babylon/pull/457)  Remove staking msg

@@ -49,6 +49,12 @@ func TestGetTxPriority(t *testing.T) {
 			gas:         1_000_000,
 			expectedPri: 1000,
 		},
+		{
+			name:        "0 gas, should return 0 priority",
+			fee:         sdk.NewCoins(sdk.NewInt64Coin(denom, 1_000)),
+			gas:         0,
+			expectedPri: 0,
+		},
 	}
 
 	for _, tc := range cases {

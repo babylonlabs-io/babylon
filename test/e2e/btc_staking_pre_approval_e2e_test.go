@@ -396,75 +396,27 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	fpRewardGauge, ok := fpRewardGauges[itypes.FinalityProviderType.String()]
 	s.True(ok)
 	s.True(fpRewardGauge.Coins.IsAllPositive())
+	s.Require().Len(fpRewardGauge.Coins, 1)
+	s.Require().True(!fpRewardGauge.Coins[0].IsZero())
+
 	// ensure BTC delegation has received rewards after the block is finalised
 	btcDelRewardGauges, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
 	s.NoError(err)
 	btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTCDelegationType.String()]
 	s.True(ok)
 	s.True(btcDelRewardGauge.Coins.IsAllPositive())
+	s.Require().Len(btcDelRewardGauge.Coins, 1)
+	s.Require().True(!btcDelRewardGauge.Coins[0].IsZero())
 	s.T().Logf("the finality provider received rewards for providing finality")
 }
 
 func (s *BTCStakingPreApprovalTestSuite) Test4WithdrawReward() {
 	chainA := s.configurer.GetChainConfig(0)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	n, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// finality provider balance before withdraw
-	fpBabylonAddr, err := sdk.AccAddressFromBech32(s.cacheFP.Addr)
-	s.NoError(err)
-	delBabylonAddr := fpBabylonAddr
-
-	fpBalance, err := nonValidatorNode.QueryBalances(fpBabylonAddr.String())
-	s.NoError(err)
-	// finality provider reward gauge should not be fully withdrawn
-	fpRgs, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
-	s.NoError(err)
-	fpRg := fpRgs[itypes.FinalityProviderType.String()]
-	s.T().Logf("finality provider's withdrawable reward before withdrawing: %s", convertToRewardGauge(fpRg).GetWithdrawableCoins().String())
-	s.False(convertToRewardGauge(fpRg).IsFullyWithdrawn())
-
-	// withdraw finality provider reward
-	nonValidatorNode.WithdrawReward(itypes.FinalityProviderType.String(), initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
-
-	// balance after withdrawing finality provider reward
-	fpBalance2, err := nonValidatorNode.QueryBalances(fpBabylonAddr.String())
-	s.NoError(err)
-	s.T().Logf("fpBalance2: %s; fpBalance: %s", fpBalance2.String(), fpBalance.String())
-	s.True(fpBalance2.IsAllGT(fpBalance))
-	// finality provider reward gauge should be fully withdrawn now
-	fpRgs2, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
-	s.NoError(err)
-	fpRg2 := fpRgs2[itypes.FinalityProviderType.String()]
-	s.T().Logf("finality provider's withdrawable reward after withdrawing: %s", convertToRewardGauge(fpRg2).GetWithdrawableCoins().String())
-	s.True(convertToRewardGauge(fpRg2).IsFullyWithdrawn())
-
-	// BTC delegation balance before withdraw
-	btcDelBalance, err := nonValidatorNode.QueryBalances(delBabylonAddr.String())
-	s.NoError(err)
-	// BTC delegation reward gauge should not be fully withdrawn
-	btcDelRgs, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
-	s.NoError(err)
-	btcDelRg := btcDelRgs[itypes.BTCDelegationType.String()]
-	s.T().Logf("BTC delegation's withdrawable reward before withdrawing: %s", convertToRewardGauge(btcDelRg).GetWithdrawableCoins().String())
-	s.False(convertToRewardGauge(btcDelRg).IsFullyWithdrawn())
-
-	// withdraw BTC delegation reward
-	nonValidatorNode.WithdrawReward(itypes.BTCDelegationType.String(), initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
-
-	// balance after withdrawing BTC delegation reward
-	btcDelBalance2, err := nonValidatorNode.QueryBalances(delBabylonAddr.String())
-	s.NoError(err)
-	s.T().Logf("btcDelBalance2: %s; btcDelBalance: %s", btcDelBalance2.String(), btcDelBalance.String())
-	s.True(btcDelBalance2.IsAllGT(btcDelBalance))
-	// BTC delegation reward gauge should be fully withdrawn now
-	btcDelRgs2, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
-	s.NoError(err)
-	btcDelRg2 := convertToRewardGauge(btcDelRgs2[itypes.BTCDelegationType.String()])
-	s.T().Logf("BTC delegation's withdrawable reward after withdrawing: %s", btcDelRg2.GetWithdrawableCoins().String())
-	s.True(btcDelRg2.IsFullyWithdrawn())
+	n.WithdrawRewardCheckingBalances(itypes.FinalityProviderType.String(), s.cacheFP.Addr)
+	n.WithdrawRewardCheckingBalances(itypes.BTCDelegationType.String(), s.cacheFP.Addr)
 }
 
 // Test5SubmitStakerUnbonding is an end-to-end test for user unbonding
