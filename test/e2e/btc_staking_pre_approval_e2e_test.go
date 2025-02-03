@@ -108,13 +108,14 @@ func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegatio
 	s.NoError(err)
 
 	// submit the message for creating BTC delegation
+	delBtcPK := bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey())
 	nonValidatorNode.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey()),
+		delBtcPK,
 		pop,
 		stakingTx,
 		// We are passing `nil` as inclusion proof will be provided in separate tx
 		nil,
-		s.cacheFP.BtcPk,
+		[]bbn.BIP340PubKey{*s.cacheFP.BtcPk},
 		stakingTimeBlocks,
 		btcutil.Amount(s.stakingValue),
 		testStakingInfo.SlashingTx,

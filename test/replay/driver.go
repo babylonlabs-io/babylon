@@ -726,7 +726,6 @@ func (d *BabylonAppDriver) WaitTillAllFpsJailed(t *testing.T) {
 }
 
 // SendTxWithMsgsFromDriverAccount sends tx with msgs from driver account and asserts that
-// SendTxWithMsgsFromDriverAccount sends tx with msgs from driver account and asserts that
 // execution was successful. It assumes that there will only be one tx in the block.
 func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	t *testing.T,
@@ -749,7 +748,7 @@ func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 		}
 
 		// all executions should be successful
-		require.Equal(t, rs.Code, uint32(0))
+		require.Equal(t, rs.Code, uint32(0), rs.Log)
 	}
 
 	d.DriverAccountSeqNr++

@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -32,6 +33,13 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 		return types.ErrFpRegistered
 	}
 
+	// default consumer ID is Babylon's chain ID
+	consumerID := msg.GetConsumerId()
+	if consumerID == "" {
+		// Babylon chain ID
+		consumerID = ctx.ChainID()
+	}
+
 	// all good, add this finality provider
 	fp := types.FinalityProvider{
 		Description: msg.Description,
@@ -39,8 +47,16 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 		Addr:        msg.Addr,
 		BtcPk:       msg.BtcPk,
 		Pop:         msg.Pop,
+		ConsumerId:  consumerID,
 	}
-	k.setFinalityProvider(ctx, &fp)
+
+	if consumerID == ctx.ChainID() {
+		k.setFinalityProvider(ctx, &fp)
+	} else {
+		if err := k.SetConsumerFinalityProvider(ctx, &fp, consumerID); err != nil {
+			return err
+		}
+	}
 
 	// notify subscriber
 	return ctx.EventManager().EmitTypedEvent(types.NewEventFinalityProviderCreated(&fp))
@@ -109,6 +125,113 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	// event for updating the finality provider set
 	powerUpdateEvent := types.NewEventPowerDistUpdateWithSlashedFP(fp.BtcPk)
 	k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
+
+	return nil
+}
+
+// SlashConsumerFinalityProvider slashes a consumer finality provider with the given PK
+func (k Keeper) SlashConsumerFinalityProvider(ctx context.Context, consumerID string, fpBTCPK *bbn.BIP340PubKey) error {
+	// Get consumer finality provider
+	fp, err := k.BscKeeper.GetConsumerFinalityProvider(ctx, consumerID, fpBTCPK)
+	if err != nil {
+		return err
+	}
+
+	// Return error if already slashed
+	if fp.IsSlashed() {
+		return types.ErrFpAlreadySlashed
+	}
+
+	// Set slashed height
+	fp.SlashedBabylonHeight = uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	btcTip := k.btclcKeeper.GetTipInfo(ctx)
+	if btcTip == nil {
+		return fmt.Errorf("failed to get current BTC tip")
+	}
+	fp.SlashedBtcHeight = btcTip.Height
+	k.BscKeeper.SetConsumerFinalityProvider(ctx, fp)
+
+	// Process all delegations for this consumer finality provider and record slashed events
+	err = k.HandleFPBTCDelegations(ctx, fpBTCPK, func(btcDel *types.BTCDelegation) error {
+		stakingTxHash := btcDel.MustGetStakingTxHash().String()
+		eventSlashedBTCDelegation := types.NewEventPowerDistUpdateWithSlashedBTCDelegation(stakingTxHash)
+		k.addPowerDistUpdateEvent(ctx, btcTip.Height, eventSlashedBTCDelegation)
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to handle BTC delegations: %w", err)
+	}
+
+	return nil
+}
+
+// PropagateFPSlashingToConsumers propagates the slashing of a finality provider (FP) to all relevant consumer chains.
+// It processes all delegations associated with the given FP and creates slashing events for each affected consumer chain.
+//
+// The function performs the following steps:
+//  1. Retrieves all BTC delegations associated with the given finality provider.
+//  2. Collects slashed events for each consumer chain using collectSlashedConsumerEvents:
+//     a. For each delegation, creates a SlashedBTCDelegation event.
+//     b. Identifies the consumer chains associated with the FPs in the delegation.
+//     c. Ensures that each consumer chain receives only one event per delegation, even if multiple FPs in the delegation belong to the same consumer.
+//  3. Sends the collected events to their respective consumer chains.
+//
+// Parameters:
+// - ctx: The context for the operation.
+// - fpBTCPK: The Bitcoin public key of the finality provider being slashed.
+//
+// Returns:
+// - An error if any operation fails, nil otherwise.
+func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) error {
+	// Map to collect events for each consumer
+	consumerEvents := make(map[string][]*types.BTCStakingConsumerEvent)
+	// Create a map to store FP to consumer ID mappings
+	fpToConsumerMap := make(map[string]string)
+
+	// Process all delegations for this finality provider and collect slashing events
+	// for each consumer chain. Ensures that each consumer receives only one event per
+	// delegation, even if multiple finality providers in the delegation belong to the same consumer.
+	err := k.HandleFPBTCDelegations(ctx, fpBTCPK, func(delegation *types.BTCDelegation) error {
+		consumerEvent := types.CreateSlashedBTCDelegationEvent(delegation)
+
+		// Track consumers seen for this delegation
+		seenConsumers := make(map[string]struct{})
+
+		for _, delegationFPBTCPK := range delegation.FpBtcPkList {
+			fpBTCPKHex := delegationFPBTCPK.MarshalHex()
+			consumerID, exists := fpToConsumerMap[fpBTCPKHex]
+			if !exists {
+				// If not in map, check if it's a Babylon FP or get its consumer
+				// TODO: avoid querying GetFinalityProvider again by passing the result
+				// https://github.com/babylonlabs-io/babylon/blob/873f1232365573a97032037af4ac99b5e3fcada8/x/btcstaking/keeper/btc_delegators.go#L79 to this function
+				if _, err := k.GetFinalityProvider(ctx, delegationFPBTCPK); err == nil {
+					continue // It's a Babylon FP, skip
+				} else if consumerID, err = k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &delegationFPBTCPK); err == nil {
+					// Found consumer, add to map
+					fpToConsumerMap[fpBTCPKHex] = consumerID
+				} else {
+					return types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPKHex)
+				}
+			}
+
+			// Only add event once per consumer per delegation
+			if _, ok := seenConsumers[consumerID]; !ok {
+				consumerEvents[consumerID] = append(consumerEvents[consumerID], consumerEvent)
+				seenConsumers[consumerID] = struct{}{}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Send collected events to each involved consumer chain
+	for consumerID, events := range consumerEvents {
+		if err := k.AddBTCStakingConsumerEvents(ctx, consumerID, events); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

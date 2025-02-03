@@ -1,0 +1,17 @@
+syntax = "proto3";
+package babylon.btcstkconsumer.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (amino.name) = "babylon/x/btcstkconsumer/v1/Params";
+  option (gogoproto.equal) = true;
+
+  // permissioned_integration is a flag to enable permissioned integration, i.e.,
+  // requiring governance proposal to approve new integrations.
+  bool permissioned_integration = 1;
+}

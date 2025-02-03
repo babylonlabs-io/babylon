@@ -15,7 +15,7 @@
       }
     },
     {
-      "url":  "./tmp-swagger-gen/babylon/btclightclient/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/babylon/btclightclient/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "BtcLightClientParams"
@@ -23,7 +23,7 @@
       }
     },
     {
-      "url":  "./tmp-swagger-gen/babylon/epoching/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/babylon/epoching/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "EpochingParams"
@@ -31,10 +31,53 @@
       }
     },
     {
-      "url":  "./tmp-swagger-gen/babylon/checkpointing/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/babylon/btcstaking/v1/query.swagger.json"
+    },
+    {
+      "url": "./tmp-swagger-gen/babylon/finality/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "FinalityParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/babylon/mint/v1/query.swagger.json"
+    },
+    {
+      "url": "./tmp-swagger-gen/babylon/monitor/v1/query.swagger.json"
+    },
+    {
+      "url": "./tmp-swagger-gen/babylon/checkpointing/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "CheckpointingParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/babylon/btcstkconsumer/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "BtcStkConsumerParams",
+          "FinalityProviders": "FinalityProvidersConsumer",
+          "FinalityProvider": "FinalityProviderConsumer"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/babylon/incentive/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "IncentiveParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/babylon/zoneconcierge/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "ZoneConciergeParams"
         }
       }
     }

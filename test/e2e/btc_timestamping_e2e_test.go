@@ -3,11 +3,13 @@ package e2e
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -172,10 +174,16 @@ func (s *BTCTimestampingTestSuite) Test5Wasm() {
 	// the data is eventually included in the contract
 	queryMsg := fmt.Sprintf(`{"check_data": { "data_hash": "%s" } }`, dataHashHex)
 	var queryResult map[string]interface{}
+	var smartContractResponse *wasmtypes.QuerySmartContractStateResponse
 	s.Eventually(func() bool {
-		queryResult, err = nonValidatorNode.QueryWasmSmartObject(contractAddr, queryMsg)
+		smartContractResponse, err = nonValidatorNode.QueryWasmSmart(contractAddr, queryMsg)
 		return err == nil
 	}, time.Second*10, time.Second)
+
+	s.NotNil(smartContractResponse)
+	s.NotNil(smartContractResponse.Data)
+	err = json.Unmarshal(smartContractResponse.Data, &queryResult)
+	s.NoError(err)
 
 	finalized := queryResult["finalized"].(bool)
 	latestFinalizedEpoch := int(queryResult["latest_finalized_epoch"].(float64))

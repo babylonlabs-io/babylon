@@ -6,6 +6,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -53,7 +54,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 				stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 					r,
 					delSK,
-					fps[i].BtcPk.MustToBTCPK(),
+					[]*btcec.PublicKey{fps[i].BtcPk.MustToBTCPK()},
 					int64(stakingValue),
 					1000,
 					0,
@@ -208,7 +209,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 				stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 					r,
 					delSK,
-					fp.BtcPk.MustToBTCPK(),
+					[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
 					int64(stakingValue),
 					1000,
 					0,
@@ -275,7 +276,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 				r,
 				delSK,
-				fp.BtcPk.MustToBTCPK(),
+				[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
 				int64(stakingValue),
 				1000,
 				0,
@@ -390,7 +391,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 				r,
 				delSK,
-				fpPK,
+				[]*btcec.PublicKey{fpPK},
 				int64(stakingValue),
 				1000,
 				0,
@@ -448,7 +449,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 				r,
 				delSK,
-				fpBTCPK.MustToBTCPK(),
+				[]*btcec.PublicKey{fpBTCPK.MustToBTCPK()},
 				int64(stakingValue),
 				1000,
 				0,
@@ -484,7 +485,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 			stakingTxHash, delMsg, del, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 				r,
 				delSK,
-				fpPK,
+				[]*btcec.PublicKey{fpPK},
 				int64(stakingValue),
 				1000,
 				0,

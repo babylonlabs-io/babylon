@@ -172,6 +172,7 @@ mockgen_cmd=go run github.com/golang/mock/mockgen@v1.6.0
 mocks: $(MOCKS_DIR) ## Generate mock objects for testing
 	$(mockgen_cmd) -source=x/checkpointing/types/expected_keepers.go -package mocks -destination testutil/mocks/checkpointing_expected_keepers.go
 	$(mockgen_cmd) -source=x/checkpointing/keeper/bls_signer.go -package mocks -destination testutil/mocks/bls_signer.go
+	$(mockgen_cmd) -source=x/zoneconcierge/types/expected_keepers.go -package types -destination x/zoneconcierge/types/mocked_keepers.go
 	$(mockgen_cmd) -source=x/btcstaking/types/expected_keepers.go -package types -destination x/btcstaking/types/mocked_keepers.go
 	$(mockgen_cmd) -source=x/finality/types/expected_keepers.go -package types -destination x/finality/types/mocked_keepers.go
 	$(mockgen_cmd) -source=x/incentive/types/expected_keepers.go -package types -destination x/incentive/types/mocked_keepers.go
@@ -268,19 +269,19 @@ endif
 test-e2e: build-docker-e2e test-e2e-cache
 
 test-e2e-cache:
-	go test -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+	$(MAKE) test-e2e-cache-btc-timestamping
+	$(MAKE) test-e2e-cache-btc-staking
+	$(MAKE) clean-e2e
+	$(MAKE) test-e2e-cache-btc-staking-pre-approval
+	$(MAKE) test-e2e-cache-ibc-transfer
+#	$(MAKE) test-e2e-cache-upgrade-v1
 
-test-e2e-cache-ibc-transfer:
-	go test -run TestIBCTranferTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+clean-e2e:
+	docker container rm -f $(shell docker container ls -a -q) || true
+	docker network prune -f || true
 
 test-e2e-cache-btc-timestamping:
 	go test -run TestBTCTimestampingTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
-
-test-e2e-cache-btc-timestamping-phase-2-hermes:
-	go test -run TestBTCTimestampingPhase2HermesTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
-
-test-e2e-cache-btc-timestamping-phase-2-rly:
-	go test -run TestBTCTimestampingPhase2RlyTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-btc-staking:
 	go test -run TestBTCStakingTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
@@ -290,6 +291,9 @@ test-e2e-cache-btc-rewards:
 
 test-e2e-cache-btc-staking-pre-approval:
 	go test -run TestBTCStakingPreApprovalTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-cache-ibc-transfer:
+	go test -run TestIBCTranferTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-upgrade-v1:
 	go test -run TestSoftwareUpgradeV1TestnetTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
@@ -447,7 +451,7 @@ build-cosmos-relayer-docker: ## Build Docker image for the Cosmos relayer
 	$(MAKE) -C contrib/images cosmos-relayer
 
 clean-docker-network:
-	$(DOCKER) network rm ${dockerNetworkList}
+	$(DOCKER) network rm ${dockerNetworkList} || true
 
 build-test-wasm: ## Build WASM bindings for testing
 	$(DOCKER) run --rm -v "$(WASM_DIR)":/code \

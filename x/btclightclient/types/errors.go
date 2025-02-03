@@ -16,4 +16,5 @@ var (
 	ErrChainWithNotEnoughWork   = errorsmod.Register(ModuleName, 1105, "provided chain has not enough work")
 	ErrUnauthorizedReporter     = errorsmod.Register(ModuleName, 1106, "unauthorized reporter")
 	ErrInvalidMessageFormat     = errorsmod.Register(ModuleName, 1107, "invalid message format")
+	ErrForkStartWithKnownHeader = errorsmod.Register(ModuleName, 1108, "fork start with known header")
 )

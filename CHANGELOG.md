@@ -43,11 +43,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#396](https://github.com/babylonlabs-io/babylon/pull/396) BLS Key Separation and ERC2335 Implementation
 - [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
 check of rewards
+- [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public
+
+### State Machine Breaking
+
+- [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
+This PR contains a series of PRs on multi-staking support and BTC staking integration.
+
+### Bug fixes
+
+- [#443](https://github.com/babylonlabs-io/babylon/pull/443) Fix swagger generation for incentive missing
+`v1` in path
+- [#445](https://github.com/babylonlabs-io/babylon/pull/445) Reject BTC headers
+forks starting with already known header
+
+## v1.0.0-rc4
+
+### Improvements
+
+- [#419](https://github.com/babylonlabs-io/babylon/pull/419) Add new modules to swagger config
+- [#429](https://github.com/babylonlabs-io/babylon/pull/429) chore: remove cosmos/relayer dependency
 
 ### Bug fixes
 
 - [#353](https://github.com/babylonlabs-io/babylon/pull/353) Bump to SDK
   0.50.11
+- [#404](https://github.com/babylonlabs-io/babylon/pull/404) Improve adaptor
+signature nonce generation to match reference implementation
+- [#413](https://github.com/babylonlabs-io/babylon/pull/413) Fix adaptor
+signature R verification
+- [#441](https://github.com/babylonlabs-io/babylon/pull/441) Fix fuzzing test for
+`CreateBTCDelegationWithParamsFromBtcHeight`
 
 ## v1.0.0-rc3
 
@@ -368,8 +394,6 @@ by add ibc default gen state and min gas price specification of `1ubbn`
 
 ### State Machine Breaking
 
-* [#80](https://github.com/babylonlabs-io/babylon/pull/80) Implement ADR-25 and
-enable jailing/unjailing finality providers
 * [#45](https://github.com/babylonlabs-io/babylon/pull/45) Implement ADR-23 and improve
 BTC staking parameters
 * [#51](https://github.com/babylonlabs-io/babylon/pull/51) Implement ADR-24 and
@@ -380,11 +404,6 @@ with `client-id` to identify consumer chains in `zoneconcierge` module
 processes `MsgCreateFinalityProvider` message during upgrade execution
 * [#4](https://github.com/babylonlabs-io/babylon/pull/4) Add upgrade that
 Insert BTC headers into `btclightclient` module state during upgrade execution
-
-### Misc Improvements
-
-* [#84](https://github.com/babylonlabs-io/babylon/pull/84) Add `unjail-finality-provider`
-cmd to `finality` module CLI.
 
 ## v0.9.3
 

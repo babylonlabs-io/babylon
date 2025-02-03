@@ -89,9 +89,6 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
-	"github.com/babylonlabs-io/babylon/x/mint"
-	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
-
 	"github.com/babylonlabs-io/babylon/app/ante"
 	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
@@ -104,6 +101,8 @@ import (
 	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking"
 	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/x/btcstkconsumer"
+	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	"github.com/babylonlabs-io/babylon/x/checkpointing"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/x/epoching"
@@ -113,8 +112,12 @@ import (
 	"github.com/babylonlabs-io/babylon/x/incentive"
 	incentivekeeper "github.com/babylonlabs-io/babylon/x/incentive/keeper"
 	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/x/mint"
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	"github.com/babylonlabs-io/babylon/x/monitor"
 	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge"
+	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 const (
@@ -309,6 +312,9 @@ func NewBabylonApp(
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper),
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper),
 		monitor.NewAppModule(appCodec, app.MonitorKeeper),
+		// Babylon modules - integration
+		btcstkconsumer.NewAppModule(appCodec, app.BTCStkConsumerKeeper, app.AccountKeeper, app.BankKeeper),
+		zoneconcierge.NewAppModule(appCodec, app.ZoneConciergeKeeper, app.AccountKeeper, app.BankKeeper),
 		// Babylon modules - btc staking
 		btcstaking.NewAppModule(appCodec, app.BTCStakingKeeper),
 		finality.NewAppModule(appCodec, app.FinalityKeeper),
@@ -365,6 +371,9 @@ func NewBabylonApp(
 		ibctransfertypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
+		// Integration related modules
+		bsctypes.ModuleName,
+		zctypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -393,6 +402,9 @@ func NewBabylonApp(
 		ibctransfertypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
+		// Integration related modules
+		bsctypes.ModuleName,
+		zctypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -425,6 +437,9 @@ func NewBabylonApp(
 		ibctransfertypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
+		// Integration related modules
+		bsctypes.ModuleName,
+		zctypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -541,10 +556,11 @@ func NewBabylonApp(
 
 	// At startup, after all modules have been registered, check that all proto
 	// annotations are correct.
-	protoFiles, err := proto.MergedRegistry()
-	if err != nil {
-		panic(err)
-	}
+	// FIXME (https://github.com/babylonlabs-io/babylon-private/issues/266): This is a temporary fix
+	protoFiles, _ := proto.MergedRegistry()
+	// if err != nil {
+	// 	panic(err)
+	// }
 	err = msgservice.ValidateProtoAnnotations(protoFiles)
 	if err != nil {
 		// Once we switch to using protoreflect-based antehandlers, we might

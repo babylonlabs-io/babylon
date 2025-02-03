@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"cosmossdk.io/store/prefix"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -95,6 +96,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	unbondingTxSig *bbn.BIP340Signature,
 	parsedUnbondingSlashingAdaptorSignatures []asig.AdaptorSignature,
 	params *types.Params,
+	btcTipHeight uint32,
 ) {
 	hadQuorum := btcDel.HasCovenantQuorums(params.CovenantQuorum)
 
@@ -106,6 +108,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 		parsedUnbondingSlashingAdaptorSignatures,
 	)
 
+	// set BTC delegation back to KV store
 	k.setBTCDelegation(ctx, btcDel)
 
 	if err := ctx.EventManager().EmitTypedEvent(types.NewCovenantSignatureReceivedEvent(
@@ -137,8 +140,10 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 					NewState:      types.BTCDelegationStatus_ACTIVE,
 				},
 			)
-			btcTip := k.btclcKeeper.GetTipInfo(ctx)
-			k.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
+			k.addPowerDistUpdateEvent(ctx, btcTipHeight, activeEvent)
+
+			// notify consumer chains about the active BTC delegation
+			k.notifyConsumersOnActiveBTCDel(ctx, btcDel)
 		} else {
 			quorumReachedEvent := types.NewCovenantQuorumReachedEvent(
 				btcDel,
@@ -152,12 +157,31 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	}
 }
 
+func (k Keeper) notifyConsumersOnActiveBTCDel(ctx context.Context, btcDel *types.BTCDelegation) {
+	// get consumer ids of only non-Babylon finality providers
+	restakedFPConsumerIDs, err := k.restakedFPConsumerIDs(ctx, btcDel.FpBtcPkList)
+	if err != nil {
+		panic(fmt.Errorf("failed to get consumer ids for the restaked BTC delegation: %w", err))
+	}
+	consumerEvent, err := types.CreateActiveBTCDelegationEvent(btcDel)
+	if err != nil {
+		panic(fmt.Errorf("failed to create active BTC delegation event: %w", err))
+	}
+	for _, consumerID := range restakedFPConsumerIDs {
+		if err := k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
+			panic(fmt.Errorf("failed to add active BTC delegation event: %w", err))
+		}
+	}
+}
+
 // btcUndelegate adds the signature of the unbonding tx signed by the staker
 // to the given BTC delegation
 func (k Keeper) btcUndelegate(
 	ctx sdk.Context,
 	btcDel *types.BTCDelegation,
 	u *types.DelegatorUnbondingInfo,
+	stakeSpendingTx []byte,
+	proof *types.InclusionProof,
 ) {
 	btcDel.BtcUndelegation.DelegatorUnbondingInfo = u
 	k.setBTCDelegation(ctx, btcDel)
@@ -176,6 +200,22 @@ func (k Keeper) btcUndelegate(
 	unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	k.addPowerDistUpdateEvent(ctx, btcTip.Height, unbondedEvent)
+
+	// get consumer ids of only non-Babylon finality providers
+	restakedFPConsumerIDs, err := k.restakedFPConsumerIDs(ctx, btcDel.FpBtcPkList)
+	if err != nil {
+		panic(fmt.Errorf("failed to get consumer ids for the restaked BTC delegation: %w", err))
+	}
+	// create consumer event for unbonded BTC delegation and add it to the consumer's event store
+	consumerEvent, err := types.CreateUnbondedBTCDelegationEvent(btcDel, stakeSpendingTx, proof)
+	if err != nil {
+		panic(fmt.Errorf("failed to create unbonded BTC delegation event: %w", err))
+	}
+	for _, consumerID := range restakedFPConsumerIDs {
+		if err = k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
+			panic(fmt.Errorf("failed to add active BTC delegation event: %w", err))
+		}
+	}
 }
 
 func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegation) {
@@ -183,6 +223,73 @@ func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 	stakingTxHash := btcDel.MustGetStakingTxHash()
 	btcDelBytes := k.cdc.MustMarshal(btcDel)
 	store.Set(stakingTxHash[:], btcDelBytes)
+}
+
+// validateRestakedFPs ensures all finality providers are known to Babylon and at least
+// one of them is a Babylon finality provider. It also checks whether the BTC stake is
+// restaked to FPs of consumer chains
+func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) (bool, error) {
+	restakedToBabylon := false
+	restakedToConsumers := false
+
+	for i := range fpBTCPKs {
+		fpBTCPK := fpBTCPKs[i]
+
+		// find the fp and determine whether it's Babylon fp or consumer chain fp
+		if fp, err := k.GetFinalityProvider(ctx, fpBTCPK); err == nil {
+			// ensure the finality provider is not slashed
+			if fp.IsSlashed() {
+				return false, types.ErrFpAlreadySlashed
+			}
+			restakedToBabylon = true
+			continue
+		} else if consumerID, err := k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
+			fp, err := k.BscKeeper.GetConsumerFinalityProvider(ctx, consumerID, &fpBTCPK)
+			if err != nil {
+				return false, err
+			}
+			// ensure the finality provider is not slashed
+			if fp.IsSlashed() {
+				return false, types.ErrFpAlreadySlashed
+			}
+			restakedToConsumers = true
+			continue
+		} else {
+			return false, types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPK.MarshalHex())
+		}
+	}
+	if !restakedToBabylon {
+		// a BTC delegation has to stake to at least 1 Babylon finality provider
+		return false, types.ErrNoBabylonFPRestaked
+	}
+	return restakedToConsumers, nil
+}
+
+// restakedFPConsumerIDs returns the unique consumer IDs of non-Babylon finality providers
+// The returned list is sorted in order to make sure the function is deterministic
+func (k Keeper) restakedFPConsumerIDs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) ([]string, error) {
+	consumerIDMap := make(map[string]struct{})
+
+	for i := range fpBTCPKs {
+		fpBTCPK := fpBTCPKs[i]
+		if _, err := k.GetFinalityProvider(ctx, fpBTCPK); err == nil {
+			continue
+		} else if consumerID, err := k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
+			consumerIDMap[consumerID] = struct{}{}
+		} else {
+			return nil, types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPK.MarshalHex())
+		}
+	}
+
+	uniqueConsumerIDs := make([]string, 0, len(consumerIDMap))
+	for consumerID := range consumerIDMap {
+		uniqueConsumerIDs = append(uniqueConsumerIDs, consumerID)
+	}
+
+	// Sort consumer IDs for deterministic ordering
+	slices.Sort(uniqueConsumerIDs)
+
+	return uniqueConsumerIDs, nil
 }
 
 // GetBTCDelegation gets the BTC delegation with a given staking tx hash
