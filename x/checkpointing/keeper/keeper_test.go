@@ -137,18 +137,68 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 		require.Len(t, mockCkptWithMeta.Lifecycle, 4)
 		require.Equal(t, curStateUpdate(ctx, types.Confirmed), mockCkptWithMeta.Lifecycle[3])
 
-		/* Confirmed -> Finalized */
+		// Ensure it is possible to forget a checkpoint even if it was already confirmed
+		/* Confirmed -> Forgotten */
+		ctx = updateRandomCtx(r, ctx)
+		ckptKeeper.SetCheckpointForgotten(ctx, epoch)
+		// ensure status is updated
+		status, err = ckptKeeper.GetStatus(ctx, epoch)
+		require.NoError(t, err)
+		require.Equal(t, types.Sealed, status)
+		// ensure state update of Forgotten is recorded
+		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
+		require.NoError(t, err)
+		require.Len(t, mockCkptWithMeta.Lifecycle, 5)
+		require.Equal(t, curStateUpdate(ctx, types.Sealed), mockCkptWithMeta.Lifecycle[4])
+
+		/* Forgotten -> Submitted -> Confirmed -> Finalized */
+		ctx = updateRandomCtx(r, ctx)
+		ckptKeeper.SetCheckpointSubmitted(ctx, epoch)
+		// ensure status is updated
+		status, err = ckptKeeper.GetStatus(ctx, epoch)
+		require.NoError(t, err)
+		require.Equal(t, types.Submitted, status)
+
+		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
+		require.NoError(t, err)
+		require.Len(t, mockCkptWithMeta.Lifecycle, 6)
+		require.Equal(t, curStateUpdate(ctx, types.Submitted), mockCkptWithMeta.Lifecycle[5])
+
+		ctx = updateRandomCtx(r, ctx)
+		ckptKeeper.SetCheckpointConfirmed(ctx, epoch)
+		// ensure status is updated
+		status, err = ckptKeeper.GetStatus(ctx, epoch)
+		require.NoError(t, err)
+		require.Equal(t, types.Confirmed, status)
+
+		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
+		require.NoError(t, err)
+		require.Len(t, mockCkptWithMeta.Lifecycle, 7)
+		require.Equal(t, curStateUpdate(ctx, types.Confirmed), mockCkptWithMeta.Lifecycle[6])
+
 		ctx = updateRandomCtx(r, ctx)
 		ckptKeeper.SetCheckpointFinalized(ctx, epoch)
 		// ensure status is updated
 		status, err = ckptKeeper.GetStatus(ctx, epoch)
 		require.NoError(t, err)
 		require.Equal(t, types.Finalized, status)
-		// ensure state update of Finalized is recorded
+
 		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
 		require.NoError(t, err)
-		require.Len(t, mockCkptWithMeta.Lifecycle, 5)
-		require.Equal(t, curStateUpdate(ctx, types.Finalized), mockCkptWithMeta.Lifecycle[4])
+		require.Len(t, mockCkptWithMeta.Lifecycle, 8)
+		require.Equal(t, curStateUpdate(ctx, types.Finalized), mockCkptWithMeta.Lifecycle[7])
+
+		/* Finalized -> Forgotten is not allowed */
+		ctx = updateRandomCtx(r, ctx)
+		ckptKeeper.SetCheckpointForgotten(ctx, epoch)
+		status, err = ckptKeeper.GetStatus(ctx, epoch)
+		require.NoError(t, err)
+		require.Equal(t, types.Finalized, status)
+
+		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
+		require.NoError(t, err)
+		require.Len(t, mockCkptWithMeta.Lifecycle, 8)
+		require.Equal(t, curStateUpdate(ctx, types.Finalized), mockCkptWithMeta.Lifecycle[7])
 	})
 }
 
