@@ -58,6 +58,8 @@ This PR contains a series of PRs on multi-staking support and BTC stakingintegra
 `v1` in path
 - [#445](https://github.com/babylonlabs-io/babylon/pull/445) Reject BTC headers
 forks starting with already known header
+- [#473](https://github.com/babylonlabs-io/babylon/pull/473) Fix checkpoint status transition
+from `Finalized` to `Forgotten`
 
 ## v1.0.0-rc4
 
