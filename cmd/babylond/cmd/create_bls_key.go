@@ -27,21 +27,31 @@ $ babylond create-bls-key --home ./
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
-			password, _ := cmd.Flags().GetString(flagBlsPassword)
-			createBlsKeyAndSave(homeDir, password)
+			appsigner.GenBls(appsigner.DefaultBlsKeyFile(homeDir), appsigner.DefaultBlsPasswordFile(homeDir), blsPassword(cmd))
 			return nil
 		},
 	}
 
 	cmd.Flags().String(flags.FlagHome, app.DefaultNodeHome, "The node home directory")
-	cmd.Flags().String(flagBlsPassword, "", "The password for the BLS key. If a flag is set, the non-empty password should be provided. If a flag is not set, the password will be read from the prompt.")
+	cmd.Flags().String(flagBlsPassword, "", "The password for the BLS key. If the flag is not set, the password will be read from the prompt.")
+	cmd.Flags().Bool(flagNoBlsPassword, false, "The BLS key will use an empty password if the flag is set.")
 	return cmd
 }
 
-// createBlsKeyAndSave creates a pair of BLS keys and saves them to files
-func createBlsKeyAndSave(homeDir, password string) {
-	if password == "" {
-		password = appsigner.NewBlsPassword()
+// blsPassword returns the password for the BLS key.
+// If the noBlsPassword flag is set, the function returns an empty string.
+// If the blsPassword flag is set but no argument, the function returns "flag needs an argument: --bls-password" error.
+// If the blsPassword flag is set with non-empty string, the function returns the value of the flag.
+// If the blsPassword flag is set with empty string, the function requires the user to enter a password.
+// If the blsPassword flag is not set and the noBlsPassword flag is not set, the function requires the user to enter a password.
+func blsPassword(cmd *cobra.Command) string {
+	noBlsPassword, _ := cmd.Flags().GetBool(flagNoBlsPassword)
+	if noBlsPassword {
+		return ""
 	}
-	appsigner.GenBls(appsigner.DefaultBlsKeyFile(homeDir), appsigner.DefaultBlsPasswordFile(homeDir), password)
+	password, _ := cmd.Flags().GetString(flagBlsPassword)
+	if password == "" {
+		return appsigner.NewBlsPassword()
+	}
+	return password
 }

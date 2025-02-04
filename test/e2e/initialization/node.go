@@ -258,7 +258,7 @@ func (n *internalNode) export() *Node {
 		PrivateKey:    n.privateKey.Bytes(),
 		PeerId:        n.peerId,
 		IsValidator:   n.isValidator,
-		CometPrivKey:  n.consensusKey.Comet.PrivKey,
+		CometPrivKey:  n.consensusKey.Comet.PrivKey.Bytes(),
 	}
 }
 

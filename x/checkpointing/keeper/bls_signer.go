@@ -19,7 +19,7 @@ func (k Keeper) SignBLS(epochNum uint64, blockHash types.BlockHash) (bls12381.Si
 
 // GetValidatorAddress returns the validator address of the signer
 func (k Keeper) GetValidatorAddress(ctx context.Context) (sdk.ValAddress, error) {
-	blsPubKey, err := k.blsSigner.GetBlsPubkey()
+	blsPubKey, err := k.blsSigner.BlsPubKey()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get BLS public key: %w", err)
 	}

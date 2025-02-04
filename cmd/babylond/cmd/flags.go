@@ -54,6 +54,7 @@ const (
 	flagFinalitySigTimeout         = "finality-sig-timeout"
 	flagJailDuration               = "jail-duration"
 	flagBlsPassword                = "bls-password"
+	flagNoBlsPassword              = "no-bls-password"
 )
 
 type GenesisCLIArgs struct {

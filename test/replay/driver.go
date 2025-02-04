@@ -28,6 +28,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	cs "github.com/cometbft/cometbft/consensus"
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
+	"github.com/cometbft/cometbft/crypto/ed25519"
 	cometlog "github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/mempool"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -278,7 +279,7 @@ func NewBabylonAppDriver(
 		FinalizedBlocks:    []FinalizedBlock{},
 		LastState:          state.Copy(),
 		DelegatorAddress:   signerValAddress,
-		CometPrivKey:       chain.Nodes[0].CometPrivKey,
+		CometPrivKey:       ed25519.PrivKey(chain.Nodes[0].CometPrivKey),
 	}
 }
 
