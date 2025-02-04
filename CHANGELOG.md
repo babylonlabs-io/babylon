@@ -43,6 +43,8 @@ randomness commit at `TestBTCRewardsDistribution`.
 forks starting with already known header
 - [#457](https://github.com/babylonlabs-io/babylon/pull/457)  Remove staking msg
 server and update gentx to generate `MsgWrappedCreateValidator`
+- [#473](https://github.com/babylonlabs-io/babylon/pull/473) Fix checkpoint status transition
+from `Finalized` to `Forgotten`
 
 ## v1.0.0-rc4
 
