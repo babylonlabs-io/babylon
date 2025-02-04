@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#470](https://github.com/babylonlabs-io/babylon/pull/470) Return full consumer info and remove DB object
+usage in `x/btcstkconsumer` queries
 - [#421](https://github.com/babylonlabs-io/babylon/pull/421) Add checks to public
 randomness commit at `TestBTCRewardsDistribution`.
 - [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
