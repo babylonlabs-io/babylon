@@ -50,6 +50,10 @@ func CheckTxFeeWithGlobalMinGasPrices(ctx sdk.Context, tx sdk.Tx) (sdk.Coins, in
 // provided in a transaction.
 // NOTE: This implementation should not be used for txs with multiple coins.
 func getTxPriority(fee sdk.Coins, gas int64) int64 {
+	if gas == 0 {
+		return 0
+	}
+
 	var priority int64
 	for _, c := range fee {
 		p := c.Amount.Mul(sdkmath.NewInt(priorityScalingFactor)).QuoRaw(gas)
