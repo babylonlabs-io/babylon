@@ -21,17 +21,27 @@ service Msg {
   // WrappedUndelegate defines a method for performing an undelegation from a
   // delegate and a validator.
   rpc WrappedUndelegate(MsgWrappedUndelegate)
-      returns (MsgWrappedUndelegateResponse);
+    returns (MsgWrappedUndelegateResponse);
 
   // WrappedBeginRedelegate defines a method for performing a redelegation of
   // coins from a delegator and source validator to a destination validator.
   rpc WrappedBeginRedelegate(MsgWrappedBeginRedelegate)
-      returns (MsgWrappedBeginRedelegateResponse);
+    returns (MsgWrappedBeginRedelegateResponse);
 
   // WrappedCancelUnbondingDelegation defines a method for cancelling unbonding of
   // coins from a delegator and source validator to a destination validator.
   rpc WrappedCancelUnbondingDelegation(MsgWrappedCancelUnbondingDelegation)
-      returns (MsgWrappedCancelUnbondingDelegationResponse);
+    returns (MsgWrappedCancelUnbondingDelegationResponse);
+
+  // WrappedEditValidator defines a method for editing the validator
+  // information.
+  rpc WrappedEditValidator(MsgWrappedEditValidator)
+    returns (MsgWrappedEditValidatorResponse);
+
+  // WrappedStakingUpdateParams defines a method for update the parameters
+  // of the x/staking module.
+  rpc WrappedStakingUpdateParams(MsgWrappedStakingUpdateParams)
+    returns (MsgWrappedStakingUpdateParamsResponse);
 
   // UpdateParams defines a method for updating epoching module parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
@@ -89,6 +99,31 @@ message MsgWrappedCancelUnbondingDelegation {
 // MsgWrappedCancelUnbondingDelegationResponse is the response to the
 // MsgWrappedCancelUnbondingDelegation message
 message MsgWrappedCancelUnbondingDelegationResponse {}
+
+// MsgWrappedEditValidator defines a message for updating validator description
+// and commission rate.
+message MsgWrappedEditValidator {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  option (cosmos.msg.v1.signer) = "msg";
+
+  cosmos.staking.v1beta1.MsgEditValidator msg = 1;
+}
+
+// MsgWrappedEditValidatorResponse is the response to the MsgWrappedEditValidator message.
+message MsgWrappedEditValidatorResponse {}
+
+// MsgWrappedStakingUpdateParams defines a message for updating x/staking module parameters.
+message MsgWrappedStakingUpdateParams {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  option (cosmos.msg.v1.signer) = "msg";
+
+  cosmos.staking.v1beta1.MsgUpdateParams msg = 1;
+}
+
+// MsgWrappedStakingUpdateParamsResponse is the response to the MsgWrappedStakingUpdateParams message.
+message MsgWrappedStakingUpdateParamsResponse {}
 
 // MsgUpdateParams defines a message for updating epoching module parameters.
 message MsgUpdateParams {

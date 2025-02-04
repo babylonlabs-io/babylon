@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"errors"
+	fmt "fmt"
 	"os"
 	"path/filepath"
 
@@ -88,4 +89,21 @@ func GetGenesisStateFromAppState(cdc codec.Codec, appState map[string]json.RawMe
 	}
 
 	return genesisState
+}
+
+func GenTxMessageValidatorWrappedCreateValidator(msgs []sdk.Msg) error {
+	if len(msgs) != 1 {
+		return fmt.Errorf("unexpected number of GenTx messages; got: %d, expected: 1", len(msgs))
+	}
+
+	msg, ok := msgs[0].(*MsgWrappedCreateValidator)
+	if !ok {
+		return fmt.Errorf("unexpected GenTx message type; expected: MsgWrappedCreateValidator, got: %T", msgs[0])
+	}
+
+	if err := msg.ValidateBasic(); err != nil {
+		return fmt.Errorf("invalid GenTx '%s': %w", msgs[0], err)
+	}
+
+	return nil
 }

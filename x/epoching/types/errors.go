@@ -8,7 +8,7 @@ import (
 
 var (
 	ErrUnwrappedMsgType = errorsmod.Register(ModuleName, 1, `
-										invalid message type in {MsgCreateValidator, MsgDelegate, MsgUndelegate, MsgBeginRedelegate, MsgCancelUnbondingDelegation}
+										invalid message type in {MsgCreateValidator, MsgDelegate, MsgUndelegate, MsgBeginRedelegate, MsgCancelUnbondingDelegation, MsgEditValidator, MsgStakingUpdateParams}
 										messages. For creating a validator use the wrapped version under 'tx checkpointing create-validator'
 										and for the other messages use the wrapped versions under 'tx epoching {delegate,undelegate,redelegate,cancel-unbond}'`)
 	ErrInvalidQueuedMessageType  = errorsmod.Register(ModuleName, 2, "invalid message type of a QueuedMessage")

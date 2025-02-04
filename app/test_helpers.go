@@ -169,7 +169,7 @@ func genesisStateWithValSet(t *testing.T,
 			Description:       stakingtypes.Description{},
 			UnbondingHeight:   int64(0),
 			UnbondingTime:     time.Unix(0, 0).UTC(),
-			Commission:        stakingtypes.NewCommission(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec()),
+			Commission:        stakingtypes.NewCommission(math.LegacyZeroDec(), math.LegacyNewDec(100), math.LegacyNewDec(2)),
 			MinSelfDelegation: math.ZeroInt(),
 		}
 

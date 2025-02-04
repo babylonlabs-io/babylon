@@ -246,6 +246,7 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[epochingtypes.StoreKey]),
 		bankKeeper,
 		stakingKeeper,
+		stakingkeeper.NewMsgServerImpl(stakingKeeper),
 		appparams.AccGov.String(),
 	)
 
@@ -475,8 +476,6 @@ func (ak *AppKeepers) InitKeepers(
 		&btclightclientKeeper,
 	)
 
-	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
-	epochingKeeper.SetMsgServiceRouter(bApp.MsgServiceRouter())
 	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
 	ak.EpochingKeeper = *epochingKeeper.SetHooks(
 		epochingtypes.NewMultiEpochingHooks(ak.MonitorKeeper.Hooks()),

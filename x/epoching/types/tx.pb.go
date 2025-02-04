@@ -340,6 +340,157 @@ func (m *MsgWrappedCancelUnbondingDelegationResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWrappedCancelUnbondingDelegationResponse proto.InternalMessageInfo
 
+// MsgWrappedEditValidator defines a message for updating validator description
+// and commission rate.
+type MsgWrappedEditValidator struct {
+	Msg *types.MsgEditValidator `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
+}
+
+func (m *MsgWrappedEditValidator) Reset()         { *m = MsgWrappedEditValidator{} }
+func (m *MsgWrappedEditValidator) String() string { return proto.CompactTextString(m) }
+func (*MsgWrappedEditValidator) ProtoMessage()    {}
+func (*MsgWrappedEditValidator) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a5fc8fed8f4e58b6, []int{8}
+}
+func (m *MsgWrappedEditValidator) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgWrappedEditValidator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgWrappedEditValidator.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgWrappedEditValidator) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgWrappedEditValidator.Merge(m, src)
+}
+func (m *MsgWrappedEditValidator) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgWrappedEditValidator) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgWrappedEditValidator.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgWrappedEditValidator proto.InternalMessageInfo
+
+// MsgWrappedEditValidatorResponse is the response to the MsgWrappedEditValidator message.
+type MsgWrappedEditValidatorResponse struct {
+}
+
+func (m *MsgWrappedEditValidatorResponse) Reset()         { *m = MsgWrappedEditValidatorResponse{} }
+func (m *MsgWrappedEditValidatorResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgWrappedEditValidatorResponse) ProtoMessage()    {}
+func (*MsgWrappedEditValidatorResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a5fc8fed8f4e58b6, []int{9}
+}
+func (m *MsgWrappedEditValidatorResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgWrappedEditValidatorResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgWrappedEditValidatorResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgWrappedEditValidatorResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgWrappedEditValidatorResponse.Merge(m, src)
+}
+func (m *MsgWrappedEditValidatorResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgWrappedEditValidatorResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgWrappedEditValidatorResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgWrappedEditValidatorResponse proto.InternalMessageInfo
+
+// MsgWrappedStakingUpdateParams defines a message for updating x/staking module parameters.
+type MsgWrappedStakingUpdateParams struct {
+	Msg *types.MsgUpdateParams `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
+}
+
+func (m *MsgWrappedStakingUpdateParams) Reset()         { *m = MsgWrappedStakingUpdateParams{} }
+func (m *MsgWrappedStakingUpdateParams) String() string { return proto.CompactTextString(m) }
+func (*MsgWrappedStakingUpdateParams) ProtoMessage()    {}
+func (*MsgWrappedStakingUpdateParams) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a5fc8fed8f4e58b6, []int{10}
+}
+func (m *MsgWrappedStakingUpdateParams) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgWrappedStakingUpdateParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgWrappedStakingUpdateParams.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgWrappedStakingUpdateParams) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgWrappedStakingUpdateParams.Merge(m, src)
+}
+func (m *MsgWrappedStakingUpdateParams) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgWrappedStakingUpdateParams) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgWrappedStakingUpdateParams.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgWrappedStakingUpdateParams proto.InternalMessageInfo
+
+// MsgWrappedStakingUpdateParamsResponse is the response to the MsgWrappedStakingUpdateParams message.
+type MsgWrappedStakingUpdateParamsResponse struct {
+}
+
+func (m *MsgWrappedStakingUpdateParamsResponse) Reset()         { *m = MsgWrappedStakingUpdateParamsResponse{} }
+func (m *MsgWrappedStakingUpdateParamsResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgWrappedStakingUpdateParamsResponse) ProtoMessage()    {}
+func (*MsgWrappedStakingUpdateParamsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a5fc8fed8f4e58b6, []int{11}
+}
+func (m *MsgWrappedStakingUpdateParamsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgWrappedStakingUpdateParamsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgWrappedStakingUpdateParamsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgWrappedStakingUpdateParamsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgWrappedStakingUpdateParamsResponse.Merge(m, src)
+}
+func (m *MsgWrappedStakingUpdateParamsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgWrappedStakingUpdateParamsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgWrappedStakingUpdateParamsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgWrappedStakingUpdateParamsResponse proto.InternalMessageInfo
+
 // MsgUpdateParams defines a message for updating epoching module parameters.
 type MsgUpdateParams struct {
 	// authority is the address of the governance account.
@@ -357,7 +508,7 @@ func (m *MsgUpdateParams) Reset()         { *m = MsgUpdateParams{} }
 func (m *MsgUpdateParams) String() string { return proto.CompactTextString(m) }
 func (*MsgUpdateParams) ProtoMessage()    {}
 func (*MsgUpdateParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a5fc8fed8f4e58b6, []int{8}
+	return fileDescriptor_a5fc8fed8f4e58b6, []int{12}
 }
 func (m *MsgUpdateParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -408,7 +559,7 @@ func (m *MsgUpdateParamsResponse) Reset()         { *m = MsgUpdateParamsResponse
 func (m *MsgUpdateParamsResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgUpdateParamsResponse) ProtoMessage()    {}
 func (*MsgUpdateParamsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a5fc8fed8f4e58b6, []int{9}
+	return fileDescriptor_a5fc8fed8f4e58b6, []int{13}
 }
 func (m *MsgUpdateParamsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -446,6 +597,10 @@ func init() {
 	proto.RegisterType((*MsgWrappedBeginRedelegateResponse)(nil), "babylon.epoching.v1.MsgWrappedBeginRedelegateResponse")
 	proto.RegisterType((*MsgWrappedCancelUnbondingDelegation)(nil), "babylon.epoching.v1.MsgWrappedCancelUnbondingDelegation")
 	proto.RegisterType((*MsgWrappedCancelUnbondingDelegationResponse)(nil), "babylon.epoching.v1.MsgWrappedCancelUnbondingDelegationResponse")
+	proto.RegisterType((*MsgWrappedEditValidator)(nil), "babylon.epoching.v1.MsgWrappedEditValidator")
+	proto.RegisterType((*MsgWrappedEditValidatorResponse)(nil), "babylon.epoching.v1.MsgWrappedEditValidatorResponse")
+	proto.RegisterType((*MsgWrappedStakingUpdateParams)(nil), "babylon.epoching.v1.MsgWrappedStakingUpdateParams")
+	proto.RegisterType((*MsgWrappedStakingUpdateParamsResponse)(nil), "babylon.epoching.v1.MsgWrappedStakingUpdateParamsResponse")
 	proto.RegisterType((*MsgUpdateParams)(nil), "babylon.epoching.v1.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "babylon.epoching.v1.MsgUpdateParamsResponse")
 }
@@ -453,44 +608,50 @@ func init() {
 func init() { proto.RegisterFile("babylon/epoching/v1/tx.proto", fileDescriptor_a5fc8fed8f4e58b6) }
 
 var fileDescriptor_a5fc8fed8f4e58b6 = []byte{
-	// 586 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x94, 0xc1, 0x8e, 0xd2, 0x40,
-	0x1c, 0xc6, 0x5b, 0x77, 0xdd, 0x64, 0x47, 0xe3, 0x6a, 0x25, 0x2e, 0x54, 0x52, 0x10, 0x34, 0x2a,
-	0x4a, 0x1b, 0x50, 0x57, 0xdd, 0x78, 0x50, 0x34, 0x9e, 0x24, 0x31, 0x98, 0x8d, 0x89, 0x89, 0x31,
-	0x53, 0x3a, 0x19, 0x1a, 0xe8, 0x4c, 0xed, 0xcc, 0x6e, 0x96, 0x93, 0x1b, 0x4f, 0x1e, 0x3d, 0x78,
-	0x36, 0xfb, 0x08, 0x7b, 0xf0, 0x21, 0xf6, 0xb8, 0xf1, 0xe4, 0xc9, 0x18, 0x38, 0xac, 0x0f, 0xe0,
-	0x03, 0x98, 0xb6, 0xd3, 0x16, 0x81, 0x02, 0xee, 0x8d, 0xe1, 0xff, 0xfd, 0xbf, 0xef, 0x07, 0xfd,
-	0x3a, 0x20, 0x6f, 0x42, 0xb3, 0xdf, 0xa3, 0xc4, 0x40, 0x2e, 0x6d, 0x77, 0x6c, 0x82, 0x8d, 0x9d,
-	0x9a, 0xc1, 0x77, 0x75, 0xd7, 0xa3, 0x9c, 0x2a, 0x17, 0xc5, 0x54, 0x8f, 0xa6, 0xfa, 0x4e, 0x4d,
-	0xcd, 0x60, 0x8a, 0x69, 0x30, 0x37, 0xfc, 0x4f, 0xa1, 0x54, 0x2d, 0xb4, 0x29, 0x73, 0x28, 0x33,
-	0x18, 0x87, 0xdd, 0xd0, 0xc6, 0x44, 0x1c, 0x26, 0x5e, 0x6a, 0x71, 0x5a, 0x92, 0x0b, 0x3d, 0xe8,
-	0x30, 0xa1, 0xc8, 0x85, 0x16, 0xef, 0x42, 0xef, 0xf0, 0x20, 0x46, 0xeb, 0xc2, 0xdd, 0x61, 0xc1,
-	0x9a, 0xc3, 0x70, 0x38, 0x28, 0xbd, 0x05, 0x4a, 0x93, 0xe1, 0xd7, 0x1e, 0x74, 0x5d, 0x64, 0x3d,
-	0x43, 0x3d, 0x84, 0x21, 0x47, 0xca, 0x3d, 0xb0, 0xe4, 0x30, 0x9c, 0x95, 0x8b, 0xf2, 0x8d, 0x33,
-	0xf5, 0xb2, 0x2e, 0xac, 0x04, 0x9a, 0x2e, 0xd0, 0xf4, 0x26, 0xc3, 0xd1, 0x46, 0xcb, 0xd7, 0x6f,
-	0x9e, 0xff, 0xb4, 0x5f, 0x90, 0x7e, 0xef, 0x17, 0xa4, 0x8f, 0xc7, 0x07, 0x15, 0xff, 0x9b, 0x52,
-	0x1e, 0xa8, 0x93, 0xf6, 0x2d, 0xc4, 0x5c, 0x4a, 0x18, 0x2a, 0x41, 0x90, 0x49, 0xa6, 0x5b, 0xc4,
-	0x8a, 0xe2, 0xef, 0x8f, 0xc6, 0x5f, 0x9b, 0x11, 0x9f, 0xec, 0xa4, 0x01, 0x68, 0x20, 0x3f, 0x2d,
-	0x22, 0x46, 0xe8, 0x82, 0x5c, 0x32, 0x6f, 0x20, 0x6c, 0x93, 0x16, 0x8a, 0x39, 0x1e, 0x8d, 0x72,
-	0x54, 0x66, 0x70, 0x8c, 0x2d, 0xa6, 0xc1, 0x94, 0xc1, 0x95, 0xd4, 0xb0, 0x98, 0xe8, 0x03, 0x28,
-	0x27, 0xa2, 0xa7, 0x90, 0xb4, 0x51, 0x6f, 0x8b, 0x98, 0x94, 0x58, 0x36, 0x89, 0xfe, 0x6e, 0x9b,
-	0x12, 0xe5, 0xf9, 0x28, 0xdb, 0xdd, 0x19, 0x6c, 0xa9, 0x16, 0x69, 0x94, 0x55, 0x70, 0x6b, 0x01,
-	0x80, 0x98, 0xf7, 0x8b, 0x0c, 0xd6, 0xfc, 0x47, 0xe1, 0x5a, 0x90, 0xa3, 0x97, 0x41, 0x1f, 0x95,
-	0x0d, 0xb0, 0x0a, 0xb7, 0x79, 0x87, 0x7a, 0x36, 0xef, 0x07, 0x88, 0xab, 0x8d, 0xec, 0xf7, 0x6f,
-	0xd5, 0x8c, 0xa0, 0x7c, 0x62, 0x59, 0x1e, 0x62, 0xec, 0x15, 0xf7, 0x6c, 0x82, 0x5b, 0x89, 0x54,
-	0x79, 0x08, 0x56, 0xc2, 0x46, 0x67, 0x4f, 0x05, 0xbf, 0xeb, 0xb2, 0x3e, 0xe5, 0x05, 0xd2, 0xc3,
-	0x90, 0xc6, 0xf2, 0xe1, 0xcf, 0x82, 0xd4, 0x12, 0x0b, 0x9b, 0xe7, 0x7c, 0xfe, 0xc4, 0xaa, 0x94,
-	0x03, 0xeb, 0x63, 0x54, 0x11, 0x71, 0xfd, 0xcf, 0x32, 0x58, 0x6a, 0x32, 0xac, 0x74, 0xc1, 0xda,
-	0x78, 0xf1, 0xaf, 0x4f, 0x0d, 0x9c, 0xac, 0xb0, 0x6a, 0x2c, 0x28, 0x8c, 0x42, 0x95, 0xf7, 0xe0,
-	0xc2, 0x64, 0xd1, 0x6f, 0xce, 0x71, 0x49, 0xa4, 0x6a, 0x6d, 0x61, 0x69, 0x1c, 0xb9, 0x27, 0x83,
-	0x4b, 0x29, 0xcd, 0xd6, 0xe7, 0xb8, 0x8d, 0xe9, 0xd5, 0x8d, 0xff, 0xd3, 0xc7, 0x08, 0x5f, 0x65,
-	0x50, 0x9c, 0x5b, 0xe5, 0x07, 0x73, 0xcc, 0x53, 0x37, 0xd5, 0xc7, 0x27, 0xdd, 0x8c, 0x01, 0x4d,
-	0x70, 0xf6, 0x9f, 0xe6, 0x5e, 0x4d, 0x73, 0x1c, 0x55, 0xa9, 0xb7, 0x17, 0x51, 0x45, 0x19, 0xea,
-	0xe9, 0xbd, 0xe3, 0x83, 0x8a, 0xdc, 0x78, 0x71, 0x38, 0xd0, 0xe4, 0xa3, 0x81, 0x26, 0xff, 0x1a,
-	0x68, 0xf2, 0xe7, 0xa1, 0x26, 0x1d, 0x0d, 0x35, 0xe9, 0xc7, 0x50, 0x93, 0xde, 0xd4, 0xb1, 0xcd,
-	0x3b, 0xdb, 0xa6, 0xde, 0xa6, 0x8e, 0x21, 0x8c, 0x7b, 0xd0, 0x64, 0x55, 0x9b, 0x46, 0x47, 0x63,
-	0x37, 0xb9, 0xf6, 0x79, 0xdf, 0x45, 0xcc, 0x5c, 0x09, 0xee, 0xef, 0x3b, 0x7f, 0x03, 0x00, 0x00,
-	0xff, 0xff, 0xdc, 0x26, 0x42, 0x47, 0x81, 0x06, 0x00, 0x00,
+	// 674 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x96, 0x4b, 0x4f, 0x13, 0x5d,
+	0x18, 0xc7, 0x3b, 0x2f, 0xaf, 0x24, 0x3c, 0x1a, 0xd1, 0xb1, 0x11, 0x38, 0xe2, 0x14, 0x8a, 0x04,
+	0x44, 0x98, 0x09, 0x15, 0x51, 0x1a, 0x17, 0x5a, 0x2f, 0x2b, 0x49, 0x4c, 0x09, 0x9a, 0x98, 0x18,
+	0x73, 0xa6, 0x73, 0x72, 0x98, 0xd0, 0xce, 0x19, 0xe7, 0x1c, 0x08, 0xb8, 0x91, 0xb8, 0x72, 0xe1,
+	0xc2, 0x85, 0x6b, 0xc3, 0x47, 0x60, 0xe1, 0x87, 0x60, 0x49, 0x5c, 0xb9, 0x32, 0x06, 0x16, 0xf8,
+	0x2d, 0x34, 0x9d, 0x7b, 0xcb, 0x5c, 0x5a, 0x77, 0x3d, 0x7d, 0xfe, 0x97, 0x5f, 0x2f, 0xcf, 0x69,
+	0x61, 0x5c, 0xc7, 0xfa, 0x6e, 0x93, 0x59, 0x1a, 0xb1, 0x59, 0x63, 0xc3, 0xb4, 0xa8, 0xb6, 0xbd,
+	0xa8, 0x89, 0x1d, 0xd5, 0x76, 0x98, 0x60, 0xf2, 0x15, 0x7f, 0xaa, 0x06, 0x53, 0x75, 0x7b, 0x11,
+	0x15, 0x29, 0xa3, 0xcc, 0x9d, 0x6b, 0xed, 0x47, 0x9e, 0x14, 0x95, 0x1a, 0x8c, 0xb7, 0x18, 0xd7,
+	0xb8, 0xc0, 0x9b, 0x5e, 0x8c, 0x4e, 0x04, 0x8e, 0xb2, 0xd0, 0x44, 0x52, 0x93, 0x8d, 0x1d, 0xdc,
+	0xe2, 0xbe, 0x62, 0xcc, 0x8b, 0x78, 0xe3, 0x65, 0x7b, 0x07, 0x7f, 0x34, 0xe2, 0xa7, 0xb7, 0xb8,
+	0x6b, 0x6b, 0x71, 0xea, 0x0d, 0xca, 0xaf, 0x41, 0x5e, 0xe5, 0xf4, 0xa5, 0x83, 0x6d, 0x9b, 0x18,
+	0x8f, 0x49, 0x93, 0x50, 0x2c, 0x88, 0x7c, 0x07, 0x06, 0x5a, 0x9c, 0x8e, 0x4a, 0x13, 0xd2, 0xec,
+	0xf9, 0xca, 0x94, 0xea, 0x47, 0xf9, 0x68, 0xaa, 0x8f, 0xa6, 0xae, 0x72, 0x1a, 0x38, 0xea, 0x6d,
+	0x7d, 0xf5, 0xd2, 0xc7, 0xfd, 0x52, 0xe1, 0xf7, 0x7e, 0xa9, 0xf0, 0xe1, 0xf4, 0x60, 0xae, 0xfd,
+	0x4c, 0x79, 0x1c, 0xd0, 0xd9, 0xf8, 0x3a, 0xe1, 0x36, 0xb3, 0x38, 0x29, 0x63, 0x28, 0x46, 0xd3,
+	0x75, 0xcb, 0x08, 0xea, 0xef, 0xc6, 0xeb, 0xa7, 0x33, 0xea, 0x23, 0x4f, 0x1a, 0x80, 0x02, 0xe3,
+	0x49, 0x15, 0x21, 0xc2, 0x26, 0x8c, 0x45, 0xf3, 0x1a, 0xa1, 0xa6, 0x55, 0x27, 0x21, 0xc7, 0xfd,
+	0x38, 0xc7, 0x5c, 0x06, 0x47, 0x97, 0x31, 0x0d, 0x66, 0x0a, 0x26, 0x53, 0xcb, 0x42, 0xa2, 0xf7,
+	0x30, 0x15, 0x89, 0x1e, 0x61, 0xab, 0x41, 0x9a, 0xeb, 0x96, 0xce, 0x2c, 0xc3, 0xb4, 0x82, 0xb7,
+	0xdb, 0x64, 0x96, 0xfc, 0x34, 0xce, 0xb6, 0x94, 0xc1, 0x96, 0x1a, 0x91, 0x46, 0xb9, 0x00, 0xb7,
+	0x7a, 0x00, 0x08, 0x79, 0x29, 0x8c, 0x44, 0xf2, 0x27, 0x86, 0x29, 0x5e, 0xe0, 0xa6, 0x69, 0x60,
+	0xc1, 0x1c, 0xb9, 0x1a, 0x67, 0x9c, 0xcd, 0x60, 0xec, 0xb0, 0xa5, 0x71, 0x4d, 0x42, 0x29, 0xa5,
+	0x28, 0x64, 0x69, 0xc2, 0xf5, 0x48, 0xb2, 0xe6, 0xf5, 0xac, 0xdb, 0x06, 0x16, 0xe4, 0xb9, 0xbb,
+	0x28, 0xf2, 0x4a, 0x9c, 0x68, 0x26, 0xeb, 0x9b, 0x15, 0x73, 0xa5, 0x01, 0xcd, 0xc0, 0x74, 0x66,
+	0x5b, 0x88, 0xf5, 0x45, 0x82, 0xe1, 0xae, 0x4c, 0x79, 0x19, 0x86, 0xf0, 0x96, 0xd8, 0x60, 0x8e,
+	0x29, 0x76, 0x5d, 0x9e, 0xa1, 0xda, 0xe8, 0xf7, 0x6f, 0x0b, 0x45, 0x1f, 0xe9, 0xa1, 0x61, 0x38,
+	0x84, 0xf3, 0x35, 0xe1, 0x98, 0x16, 0xad, 0x47, 0x52, 0x79, 0x05, 0x06, 0xbd, 0xa5, 0x1f, 0xfd,
+	0xcf, 0x7d, 0x11, 0xd7, 0xd4, 0x84, 0x3b, 0x46, 0xf5, 0x4a, 0x6a, 0xff, 0x1f, 0xfe, 0x2c, 0x15,
+	0xea, 0xbe, 0xa1, 0x7a, 0xb1, 0x4d, 0x1e, 0x45, 0x95, 0xc7, 0xdc, 0x4f, 0x2e, 0x89, 0xb8, 0xf2,
+	0x67, 0x10, 0x06, 0x56, 0x39, 0x95, 0x37, 0x61, 0xb8, 0xfb, 0x6e, 0x98, 0x49, 0x2c, 0x3c, 0xbb,
+	0xe5, 0x48, 0xeb, 0x51, 0x18, 0x94, 0xca, 0x6f, 0xe1, 0xf2, 0xd9, 0xbb, 0xe0, 0x66, 0x4e, 0x4a,
+	0x24, 0x45, 0x8b, 0x3d, 0x4b, 0xc3, 0xca, 0x3d, 0x09, 0xae, 0xa6, 0x2c, 0xbf, 0x9a, 0x93, 0xd6,
+	0xa5, 0x47, 0xcb, 0xfd, 0xe9, 0x43, 0x84, 0xaf, 0x12, 0x4c, 0xe4, 0x6e, 0xfb, 0xbd, 0x9c, 0xf0,
+	0x54, 0x27, 0x7a, 0xf0, 0xaf, 0xce, 0x10, 0xf0, 0x1d, 0x14, 0x13, 0xb7, 0x7b, 0x3e, 0x27, 0xb9,
+	0x43, 0x8d, 0x96, 0xfa, 0x51, 0x87, 0xdd, 0x9f, 0x24, 0x40, 0x19, 0xeb, 0x5c, 0xc9, 0x09, 0x4d,
+	0xf0, 0xa0, 0x6a, 0xff, 0x9e, 0x10, 0x47, 0x87, 0x0b, 0x1d, 0xfd, 0x37, 0xd2, 0xb2, 0x3a, 0x1a,
+	0xe7, 0x7b, 0x51, 0x05, 0x1d, 0xe8, 0xdc, 0xde, 0xe9, 0xc1, 0x9c, 0x54, 0x7b, 0x76, 0x78, 0xac,
+	0x48, 0x47, 0xc7, 0x8a, 0xf4, 0xeb, 0x58, 0x91, 0x3e, 0x9f, 0x28, 0x85, 0xa3, 0x13, 0xa5, 0xf0,
+	0xe3, 0x44, 0x29, 0xbc, 0xaa, 0x50, 0x53, 0x6c, 0x6c, 0xe9, 0x6a, 0x83, 0xb5, 0x34, 0x3f, 0xb8,
+	0x89, 0x75, 0xbe, 0x60, 0xb2, 0xe0, 0xa8, 0xed, 0x44, 0x7f, 0x12, 0xc4, 0xae, 0x4d, 0xb8, 0x3e,
+	0xe8, 0xfe, 0xda, 0xdf, 0xfe, 0x1b, 0x00, 0x00, 0xff, 0xff, 0x5e, 0xac, 0xab, 0x13, 0xaf, 0x08,
+	0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -517,6 +678,12 @@ type MsgClient interface {
 	// WrappedCancelUnbondingDelegation defines a method for cancelling unbonding of
 	// coins from a delegator and source validator to a destination validator.
 	WrappedCancelUnbondingDelegation(ctx context.Context, in *MsgWrappedCancelUnbondingDelegation, opts ...grpc.CallOption) (*MsgWrappedCancelUnbondingDelegationResponse, error)
+	// WrappedEditValidator defines a method for editing the validator
+	// information.
+	WrappedEditValidator(ctx context.Context, in *MsgWrappedEditValidator, opts ...grpc.CallOption) (*MsgWrappedEditValidatorResponse, error)
+	// WrappedStakingUpdateParams defines a method for update the parameters
+	// of the x/staking module.
+	WrappedStakingUpdateParams(ctx context.Context, in *MsgWrappedStakingUpdateParams, opts ...grpc.CallOption) (*MsgWrappedStakingUpdateParamsResponse, error)
 	// UpdateParams defines a method for updating epoching module parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 }
@@ -565,6 +732,24 @@ func (c *msgClient) WrappedCancelUnbondingDelegation(ctx context.Context, in *Ms
 	return out, nil
 }
 
+func (c *msgClient) WrappedEditValidator(ctx context.Context, in *MsgWrappedEditValidator, opts ...grpc.CallOption) (*MsgWrappedEditValidatorResponse, error) {
+	out := new(MsgWrappedEditValidatorResponse)
+	err := c.cc.Invoke(ctx, "/babylon.epoching.v1.Msg/WrappedEditValidator", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) WrappedStakingUpdateParams(ctx context.Context, in *MsgWrappedStakingUpdateParams, opts ...grpc.CallOption) (*MsgWrappedStakingUpdateParamsResponse, error) {
+	out := new(MsgWrappedStakingUpdateParamsResponse)
+	err := c.cc.Invoke(ctx, "/babylon.epoching.v1.Msg/WrappedStakingUpdateParams", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error) {
 	out := new(MsgUpdateParamsResponse)
 	err := c.cc.Invoke(ctx, "/babylon.epoching.v1.Msg/UpdateParams", in, out, opts...)
@@ -588,6 +773,12 @@ type MsgServer interface {
 	// WrappedCancelUnbondingDelegation defines a method for cancelling unbonding of
 	// coins from a delegator and source validator to a destination validator.
 	WrappedCancelUnbondingDelegation(context.Context, *MsgWrappedCancelUnbondingDelegation) (*MsgWrappedCancelUnbondingDelegationResponse, error)
+	// WrappedEditValidator defines a method for editing the validator
+	// information.
+	WrappedEditValidator(context.Context, *MsgWrappedEditValidator) (*MsgWrappedEditValidatorResponse, error)
+	// WrappedStakingUpdateParams defines a method for update the parameters
+	// of the x/staking module.
+	WrappedStakingUpdateParams(context.Context, *MsgWrappedStakingUpdateParams) (*MsgWrappedStakingUpdateParamsResponse, error)
 	// UpdateParams defines a method for updating epoching module parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 }
@@ -607,6 +798,12 @@ func (*UnimplementedMsgServer) WrappedBeginRedelegate(ctx context.Context, req *
 }
 func (*UnimplementedMsgServer) WrappedCancelUnbondingDelegation(ctx context.Context, req *MsgWrappedCancelUnbondingDelegation) (*MsgWrappedCancelUnbondingDelegationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WrappedCancelUnbondingDelegation not implemented")
+}
+func (*UnimplementedMsgServer) WrappedEditValidator(ctx context.Context, req *MsgWrappedEditValidator) (*MsgWrappedEditValidatorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WrappedEditValidator not implemented")
+}
+func (*UnimplementedMsgServer) WrappedStakingUpdateParams(ctx context.Context, req *MsgWrappedStakingUpdateParams) (*MsgWrappedStakingUpdateParamsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WrappedStakingUpdateParams not implemented")
 }
 func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
@@ -688,6 +885,42 @@ func _Msg_WrappedCancelUnbondingDelegation_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_WrappedEditValidator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgWrappedEditValidator)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).WrappedEditValidator(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.epoching.v1.Msg/WrappedEditValidator",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).WrappedEditValidator(ctx, req.(*MsgWrappedEditValidator))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_WrappedStakingUpdateParams_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgWrappedStakingUpdateParams)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).WrappedStakingUpdateParams(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.epoching.v1.Msg/WrappedStakingUpdateParams",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).WrappedStakingUpdateParams(ctx, req.(*MsgWrappedStakingUpdateParams))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MsgUpdateParams)
 	if err := dec(in); err != nil {
@@ -725,6 +958,14 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WrappedCancelUnbondingDelegation",
 			Handler:    _Msg_WrappedCancelUnbondingDelegation_Handler,
+		},
+		{
+			MethodName: "WrappedEditValidator",
+			Handler:    _Msg_WrappedEditValidator_Handler,
+		},
+		{
+			MethodName: "WrappedStakingUpdateParams",
+			Handler:    _Msg_WrappedStakingUpdateParams_Handler,
 		},
 		{
 			MethodName: "UpdateParams",
@@ -967,6 +1208,122 @@ func (m *MsgWrappedCancelUnbondingDelegationResponse) MarshalToSizedBuffer(dAtA 
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgWrappedEditValidator) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgWrappedEditValidator) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgWrappedEditValidator) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Msg != nil {
+		{
+			size, err := m.Msg.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgWrappedEditValidatorResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgWrappedEditValidatorResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgWrappedEditValidatorResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgWrappedStakingUpdateParams) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgWrappedStakingUpdateParams) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgWrappedStakingUpdateParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Msg != nil {
+		{
+			size, err := m.Msg.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgWrappedStakingUpdateParamsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgWrappedStakingUpdateParamsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgWrappedStakingUpdateParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func (m *MsgUpdateParams) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1121,6 +1478,50 @@ func (m *MsgWrappedCancelUnbondingDelegation) Size() (n int) {
 }
 
 func (m *MsgWrappedCancelUnbondingDelegationResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgWrappedEditValidator) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Msg != nil {
+		l = m.Msg.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgWrappedEditValidatorResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgWrappedStakingUpdateParams) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Msg != nil {
+		l = m.Msg.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgWrappedStakingUpdateParamsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1680,6 +2081,278 @@ func (m *MsgWrappedCancelUnbondingDelegationResponse) Unmarshal(dAtA []byte) err
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgWrappedCancelUnbondingDelegationResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgWrappedEditValidator) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgWrappedEditValidator: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgWrappedEditValidator: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Msg", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Msg == nil {
+				m.Msg = &types.MsgEditValidator{}
+			}
+			if err := m.Msg.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgWrappedEditValidatorResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgWrappedEditValidatorResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgWrappedEditValidatorResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgWrappedStakingUpdateParams) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgWrappedStakingUpdateParams: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgWrappedStakingUpdateParams: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Msg", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Msg == nil {
+				m.Msg = &types.MsgUpdateParams{}
+			}
+			if err := m.Msg.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgWrappedStakingUpdateParamsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgWrappedStakingUpdateParamsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgWrappedStakingUpdateParamsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
