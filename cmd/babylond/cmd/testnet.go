@@ -35,6 +35,7 @@ import (
 	"github.com/spf13/cobra"
 
 	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
+	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
 
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	appsigner "github.com/babylonlabs-io/babylon/app/signer"
@@ -321,8 +322,13 @@ func InitTestnet(
 			return err
 		}
 
+		wrappedCreateVal, err := checkpointingtypes.NewMsgWrappedCreateValidator(createValMsg, genKey.BlsKey.Pubkey, genKey.BlsKey.Pop)
+		if err != nil {
+			return err
+		}
+
 		txBuilder := clientCtx.TxConfig.NewTxBuilder()
-		if err = txBuilder.SetMsgs(createValMsg); err != nil {
+		if err = txBuilder.SetMsgs(wrappedCreateVal); err != nil {
 			return err
 		}
 
@@ -481,14 +487,14 @@ func collectGenFiles(
 			return err
 		}
 
-		nodeAppState, err := genutil.GenAppStateFromConfig(
+		nodeAppState, err := genhelpers.GenAppStateFromConfig(
 			clientCtx.Codec,
 			clientCtx.TxConfig,
 			nodeConfig,
 			initCfg,
 			genesis,
 			genBalIterator,
-			genutiltypes.DefaultMessageValidator,
+			checkpointingtypes.GenTxMessageValidatorWrappedCreateValidator,
 			authcodec.NewBech32Codec(appparams.Bech32PrefixValAddr),
 		)
 		if err != nil {

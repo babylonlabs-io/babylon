@@ -39,16 +39,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-- [#434](https://github.com/babylonlabs-io/babylon/pull/434) Removal of delegator address, change init cmd and add migration cmd
-- [#396](https://github.com/babylonlabs-io/babylon/pull/396) BLS Key Separation and ERC2335 Implementation
+- [#421](https://github.com/babylonlabs-io/babylon/pull/421) Add checks to public
+randomness commit at `TestBTCRewardsDistribution`.
 - [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
 check of rewards
 - [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public
+- [#467](https://github.com/babylonlabs-io/babylon/pull/467) BLS keystore improvement
 
 ### State Machine Breaking
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
+- [#457](https://github.com/babylonlabs-io/babylon/pull/457) Remove staking msg server and update gentx to generate
+`MsgWrappedCreateValidator`
 
 ### Bug fixes
 

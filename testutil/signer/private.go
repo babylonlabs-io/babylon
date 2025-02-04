@@ -18,7 +18,7 @@ import (
 
 const TestPassword string = "password"
 
-// SetupTestPrivSigner sets up a PrivSigner for testing
+// SetupTestBlsSigner sets up a BLS signer for testing
 func SetupTestBlsSigner() (*appsigner.BlsKey, error) {
 	// Create a temporary node directory
 	nodeDir, err := os.MkdirTemp("", "tmp-signer")

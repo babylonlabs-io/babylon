@@ -151,6 +151,20 @@ func (mr *MockEpochingKeeperMockRecorder) GetValidatorSet(ctx, epochNumer interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorSet", reflect.TypeOf((*MockEpochingKeeper)(nil).GetValidatorSet), ctx, epochNumer)
 }
 
+// StkMsgCreateValidator mocks base method.
+func (m *MockEpochingKeeper) StkMsgCreateValidator(ctx context.Context, msg *types2.MsgCreateValidator) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StkMsgCreateValidator", ctx, msg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// StkMsgCreateValidator indicates an expected call of StkMsgCreateValidator.
+func (mr *MockEpochingKeeperMockRecorder) StkMsgCreateValidator(ctx, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StkMsgCreateValidator", reflect.TypeOf((*MockEpochingKeeper)(nil).StkMsgCreateValidator), ctx, msg)
+}
+
 // MockCheckpointingHooks is a mock of CheckpointingHooks interface.
 type MockCheckpointingHooks struct {
 	ctrl     *gomock.Controller
