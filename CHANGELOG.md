@@ -44,6 +44,7 @@ randomness commit at `TestBTCRewardsDistribution`.
 - [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
 check of rewards
 - [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public
+- [#476](https://github.com/babylonlabs-io/babylon/pull/476) Bump cometbft to `v0.38.17`
 
 ### State Machine Breaking
 
