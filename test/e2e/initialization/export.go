@@ -2,8 +2,6 @@ package initialization
 
 import (
 	"fmt"
-
-	cmtcrypto "github.com/cometbft/cometbft/crypto"
 )
 
 type ChainMeta struct {
@@ -12,16 +10,16 @@ type ChainMeta struct {
 }
 
 type Node struct {
-	Name          string            `json:"name"`
-	ConfigDir     string            `json:"configDir"`
-	Mnemonic      string            `json:"mnemonic"`
-	PublicAddress string            `json:"publicAddress"`
-	WalletName    string            `json:"walletName"`
-	PublicKey     []byte            `json:"publicKey"`
-	PrivateKey    []byte            `json:"privateKey"`
-	PeerId        string            `json:"peerId"`
-	IsValidator   bool              `json:"isValidator"`
-	CometPrivKey  cmtcrypto.PrivKey `json:"cometPrivKey"`
+	Name          string `json:"name"`
+	ConfigDir     string `json:"configDir"`
+	Mnemonic      string `json:"mnemonic"`
+	PublicAddress string `json:"publicAddress"`
+	WalletName    string `json:"walletName"`
+	PublicKey     []byte `json:"publicKey"`
+	PrivateKey    []byte `json:"privateKey"`
+	PeerId        string `json:"peerId"`
+	IsValidator   bool   `json:"isValidator"`
+	CometPrivKey  []byte `json:"cometPrivKey"`
 }
 
 type Chain struct {

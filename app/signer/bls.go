@@ -197,8 +197,8 @@ func (k *BlsKey) SignMsgWithBls(msg []byte) (bls12381.Signature, error) {
 	return bls12381.Sign(k.PrivKey, msg), nil
 }
 
-// GetBlsPubkey returns the public key of the BLS, implementing the BlsSigner interface
-func (k *BlsKey) GetBlsPubkey() (bls12381.PublicKey, error) {
+// BlsPubKey returns the public key of the BLS, implementing the BlsSigner interface
+func (k *BlsKey) BlsPubKey() (bls12381.PublicKey, error) {
 	if k.PrivKey == nil {
 		return nil, checkpointingtypes.ErrBlsPrivKeyDoesNotExist
 	}

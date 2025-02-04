@@ -46,13 +46,13 @@ $ babylond migrate-bls-key --home ./
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
-			password, _ := cmd.Flags().GetString(flagBlsPassword)
-			return migrate(homeDir, password)
+			return migrate(homeDir, blsPassword(cmd))
 		},
 	}
 
 	cmd.Flags().String(flags.FlagHome, app.DefaultNodeHome, "The node home directory")
-	cmd.Flags().String(flagBlsPassword, "", "The password for the BLS key. If a flag is set, the non-empty password should be provided. If a flag is not set, the password will be read from the prompt.")
+	cmd.Flags().String(flagBlsPassword, "", "The password for the BLS key. If the flag is not set, the password will be read from the prompt.")
+	cmd.Flags().Bool(flagNoBlsPassword, false, "The BLS key will use an empty password if the flag is set.")
 	return cmd
 }
 
@@ -79,10 +79,6 @@ func migrate(homeDir, password string) error {
 
 	if prevCmtPrivKey == nil || prevBlsPrivKey == nil {
 		return fmt.Errorf("priv_validator_key.json of previous version does not contain both the comet and bls keys")
-	}
-
-	if password == "" {
-		password = appsigner.NewBlsPassword()
 	}
 
 	cmtKeyFilePath := cmtcfg.PrivValidatorKeyFile()

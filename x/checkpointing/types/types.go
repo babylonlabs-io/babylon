@@ -25,7 +25,7 @@ const (
 // BlsSigner is an interface for signing BLS messages
 type BlsSigner interface {
 	SignMsgWithBls(msg []byte) (bls12381.Signature, error)
-	GetBlsPubkey() (bls12381.PublicKey, error)
+	BlsPubKey() (bls12381.PublicKey, error)
 }
 
 type BlockHash []byte
