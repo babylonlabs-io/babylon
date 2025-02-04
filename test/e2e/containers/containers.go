@@ -72,7 +72,7 @@ func (m *Manager) ExecTxCmd(t *testing.T, chainId string, nodeName string, comma
 // namely adding flags `--chain-id={chain-id} -b=block --yes --keyring-backend=test "--log_format=json"`,
 // and searching for `successStr`
 func (m *Manager) ExecTxCmdWithSuccessString(t *testing.T, chainId string, containerName string, command []string, successStr string) (bytes.Buffer, bytes.Buffer, error) {
-	additionalArgs := []string{fmt.Sprintf("--chain-id=%s", chainId), "--gas-prices=0.002ubbn", "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
+	additionalArgs := []string{fmt.Sprintf("--chain-id=%s", chainId), "--gas-prices=1ubbn", "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
 
 	cmd := command
 	cmd = append(cmd, additionalArgs...)

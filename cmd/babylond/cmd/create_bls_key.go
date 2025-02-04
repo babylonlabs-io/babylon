@@ -17,9 +17,6 @@ func CreateBlsKeyCmd() *cobra.Command {
 		Long: strings.TrimSpace(`create-bls will create a pair of BLS keys that are used to
 send BLS signatures for checkpointing.
 
-BLS keys are stored along with other validator keys in priv_validator_key.json,
-which should exist before running the command (via babylond init or babylond testnet).
-
 Example:
 $ babylond create-bls-key --home ./
 `,
@@ -28,7 +25,7 @@ $ babylond create-bls-key --home ./
 		RunE: func(cmd *cobra.Command, args []string) error {
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
 			password, _ := cmd.Flags().GetString(flagBlsPassword)
-			createBlsKeyAndSave(homeDir, password)
+			CreateBlsKeyAndSave(homeDir, password)
 			return nil
 		},
 	}
@@ -38,8 +35,8 @@ $ babylond create-bls-key --home ./
 	return cmd
 }
 
-// createBlsKeyAndSave creates a pair of BLS keys and saves them to files
-func createBlsKeyAndSave(homeDir, password string) {
+// CreateBlsKeyAndSave creates a pair of BLS keys and saves them to files
+func CreateBlsKeyAndSave(homeDir, password string) {
 	if password == "" {
 		password = appsigner.NewBlsPassword()
 	}

@@ -31,12 +31,15 @@ import (
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/viper"
 
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+
+	"github.com/cometbft/cometbft/privval"
+
 	babylonApp "github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
-	"github.com/cometbft/cometbft/privval"
 )
 
 type internalNode struct {
@@ -79,7 +82,7 @@ func (n *internalNode) configDir() string {
 	return fmt.Sprintf("%s/%s", n.chain.chainMeta.configDir(), n.moniker)
 }
 
-func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error) {
+func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin, consensusKey appsigner.ConsensusKey) (sdk.Msg, error) {
 	description := stakingtypes.NewDescription(n.moniker, "", "", "", "")
 	commissionRates := stakingtypes.CommissionRates{
 		Rate:          math.LegacyMustNewDecFromStr("0.1"),
@@ -96,12 +99,11 @@ func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error)
 	}
 
 	addr, err := n.keyInfo.GetAddress()
-
 	if err != nil {
 		return nil, err
 	}
 
-	return stakingtypes.NewMsgCreateValidator(
+	stkMsgCreateVal, err := stakingtypes.NewMsgCreateValidator(
 		sdk.ValAddress(addr).String(),
 		valPubKey,
 		amount,
@@ -109,6 +111,16 @@ func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error)
 		commissionRates,
 		minSelfDelegation,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	proofOfPossession, err := appsigner.BuildPoP(consensusKey.Comet.PrivKey, consensusKey.Bls.PrivKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return checkpointingtypes.NewMsgWrappedCreateValidator(stkMsgCreateVal, &consensusKey.Bls.PubKey, proofOfPossession)
 }
 
 func (n *internalNode) createConfig() error {
@@ -381,7 +393,6 @@ func (n *internalNode) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 
 	txBuilder.SetMemo(fmt.Sprintf("%s@%s:26656", n.nodeKey.ID(), n.moniker))
 	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(20000))))
-	txBuilder.SetGasLimit(uint64(200000 * len(msgs)))
 
 	addr, err := n.keyInfo.GetAddress()
 	if err != nil {

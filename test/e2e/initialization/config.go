@@ -7,10 +7,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-
-	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -23,15 +19,13 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	appsigner "github.com/babylonlabs-io/babylon/app/signer"
+	"github.com/babylonlabs-io/babylon/test/e2e/util"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	blctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
-
-	"github.com/babylonlabs-io/babylon/test/e2e/util"
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 )
 
 // NodeConfig is a configuration for the node supplied from the test runner
@@ -248,11 +242,6 @@ func initGenesis(
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, checkpointingtypes.ModuleName, checkpointingtypes.DefaultGenesis(), updateCheckpointingGenesis(chain))
-	if err != nil {
-		return err
-	}
-
 	err = updateModuleGenesis(appGenState, blctypes.ModuleName, blctypes.DefaultGenesis(), updateBtcLightClientGenesis(btcHeaders))
 	if err != nil {
 		return err
@@ -358,7 +347,7 @@ func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.Genesi
 func updateFinalityGenesis(finalityGenState *finalitytypes.GenesisState) {
 	finalityGenState.Params = finalitytypes.DefaultParams()
 	finalityGenState.Params.FinalityActivationHeight = 0
-	finalityGenState.Params.FinalitySigTimeout = 3
+	finalityGenState.Params.FinalitySigTimeout = 4
 	finalityGenState.Params.SignedBlocksWindow = 300
 }
 
@@ -375,7 +364,7 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 			if c.chainMeta.Id != ChainAID {
 				stakeAmountCoin = StakeAmountCoinB
 			}
-			createValmsg, err := node.buildCreateValidatorMsg(stakeAmountCoin)
+			createValmsg, err := node.buildCreateValidatorMsg(stakeAmountCoin, node.consensusKey)
 			if err != nil {
 				panic("genutil genesis setup failed: " + err.Error())
 			}
@@ -392,48 +381,5 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 			genTxs = append(genTxs, txRaw)
 		}
 		genUtilGenState.GenTxs = genTxs
-	}
-}
-
-func updateCheckpointingGenesis(c *internalChain) func(*checkpointingtypes.GenesisState) {
-	return func(checkpointingGenState *checkpointingtypes.GenesisState) {
-		var genKeys []*checkpointingtypes.GenesisKey
-
-		for _, node := range c.nodes {
-			if !node.isValidator {
-				continue
-			}
-
-			ck := node.consensusKey
-
-			proofOfPossession, err := appsigner.BuildPoP(ck.Comet.PrivKey, ck.Bls.PrivKey)
-			if err != nil {
-				panic("It should be possible to build proof of possession from validator private keys")
-			}
-
-			valPubKey, err := cryptocodec.FromCmtPubKeyInterface(ck.Comet.PubKey)
-			if err != nil {
-				panic("It should be possible to retrieve validator public key")
-			}
-
-			// get address from keyring
-			accAddr, err := node.keyInfo.GetAddress()
-			if err != nil {
-				panic("It should be possible to get validator address from delegator address")
-			}
-
-			genKey := &checkpointingtypes.GenesisKey{
-				ValidatorAddress: sdk.ValAddress(accAddr).String(),
-				BlsKey: &checkpointingtypes.BlsKey{
-					Pubkey: &ck.Bls.PubKey,
-					Pop:    proofOfPossession,
-				},
-				ValPubkey: valPubKey.(*ed25519.PubKey),
-			}
-
-			genKeys = append(genKeys, genKey)
-		}
-
-		checkpointingGenState.GenesisKeys = genKeys
 	}
 }
