@@ -175,7 +175,7 @@ func (im IBCModule) OnRecvPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	var packetData types.ZoneconciergePacketData
+	var packetData types.InboundPacket
 	if errProto := types.ModuleCdc.Unmarshal(modulePacket.GetData(), &packetData); errProto != nil {
 		im.keeper.Logger(ctx).Error("Failed to unmarshal packet data with protobuf", "error", errProto)
 		if errJSON := types.ModuleCdc.UnmarshalJSON(modulePacket.GetData(), &packetData); errJSON != nil {
@@ -185,15 +185,14 @@ func (im IBCModule) OnRecvPacket(
 	}
 
 	switch packet := packetData.Packet.(type) {
-	case *types.ZoneconciergePacketData_ConsumerSlashing:
+	case *types.InboundPacket_ConsumerSlashing:
 		err := im.keeper.HandleConsumerSlashing(ctx, modulePacket.DestinationPort, modulePacket.DestinationChannel, packet.ConsumerSlashing)
 		if err != nil {
 			return channeltypes.NewErrorAcknowledgement(err)
 		}
 		return channeltypes.NewResultAcknowledgement([]byte("Consumer slashing handled successfully"))
-	// Add other packet types here if needed
 	default:
-		errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
+		errMsg := fmt.Sprintf("unrecognized inbound packet type: %T", packet)
 		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg))
 	}
 }
@@ -249,8 +248,8 @@ func (im IBCModule) OnTimeoutPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	var modulePacketData types.ZoneconciergePacketData
-	if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
+	var packetData types.InboundPacket
+	if err := packetData.Unmarshal(modulePacket.GetData()); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
 	}
 

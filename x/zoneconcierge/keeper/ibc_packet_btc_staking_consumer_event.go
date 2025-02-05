@@ -33,9 +33,9 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 			continue
 		}
 
-		// Prepare the packet for ZoneConcierge.
-		zcPacket := &types.ZoneconciergePacketData{
-			Packet: &types.ZoneconciergePacketData_BtcStaking{
+		// Prepare the outbound packet
+		outPacket := &types.OutboundPacket{
+			Packet: &types.OutboundPacket_BtcStaking{
 				BtcStaking: ibcPacket,
 			},
 		}
@@ -43,8 +43,11 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 		// Iterate through the list of channels and send the IBC packet to each.
 		for _, channel := range channels {
 			// Send the IBC packet.
-			if err := k.SendIBCPacket(ctx, channel, zcPacket); err != nil {
-				k.Logger(sdkCtx).Error("Failed to send BTC staking consumer events", "clientID", consumerID, "channelID", channel.ChannelId, "error", err)
+			if err := k.SendIBCPacket(ctx, channel, outPacket); err != nil {
+				k.Logger(sdkCtx).Error("Failed to send BTC staking consumer events",
+					"clientID", consumerID,
+					"channelID", channel.ChannelId,
+					"error", err)
 				continue
 			}
 		}
