@@ -38,7 +38,7 @@ import (
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
 
 	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/privval"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
@@ -180,7 +180,7 @@ func InitTestnet(
 	genesisParams GenesisParams,
 ) error {
 	nodeIDs := make([]string, numValidators)
-	valKeys := make([]*privval.ValidatorKeys, numValidators)
+	valKeys := make([]*appsigner.ValidatorKeys, numValidators)
 
 	babylonConfig := DefaultBabylonAppConfig()
 	babylonConfig.MinGasPrices = minGasPrices

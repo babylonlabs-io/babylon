@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"path/filepath"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
-	cmtos "github.com/cometbft/cometbft/libs/os"
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -28,9 +26,10 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/privval"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	testutilcli "github.com/babylonlabs-io/babylon/testutil/cli"
 	checkpointcli "github.com/babylonlabs-io/babylon/x/checkpointing/client/cli"
+	"github.com/cometbft/cometbft/privval"
 )
 
 type mockCometRPC struct {
@@ -103,17 +102,27 @@ func (s *CLITestSuite) SetupSuite() {
 func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 	require := s.Require()
 	homeDir := s.T().TempDir()
+
+	// create BLS keys
 	nodeCfg := cmtconfig.DefaultConfig()
-	pvKeyFile := filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
-	err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
+	nodeCfg.SetRoot(homeDir)
+
+	cmtKeyPath := nodeCfg.PrivValidatorKeyFile()
+	cmtStatePath := nodeCfg.PrivValidatorStateFile()
+	blsKeyFile := appsigner.DefaultBlsKeyFile(homeDir)
+	blsPasswordFile := appsigner.DefaultBlsPasswordFile(homeDir)
+
+	err := appsigner.EnsureDirs(cmtKeyPath, cmtStatePath, blsKeyFile, blsPasswordFile)
 	require.NoError(err)
-	pvStateFile := filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
-	err = cmtos.EnsureDir(filepath.Dir(pvStateFile), 0777)
-	require.NoError(err)
-	wrappedPV := privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile)
+
+	filePV := privval.GenFilePV(cmtKeyPath, cmtStatePath)
+	filePV.Key.Save()
+	filePV.LastSignState.Save()
+
+	appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
 	cmd := checkpointcli.CmdWrappedCreateValidator(authcodec.NewBech32Codec("cosmosvaloper"))
 
-	consPrivKey := wrappedPV.GetValPrivKey()
+	consPrivKey := filePV.Key.PrivKey
 	consPubKey, err := cryptocodec.FromCmtPubKeyInterface(consPrivKey.PubKey())
 	require.NoError(err)
 	consPubKeyBz, err := s.clientCtx.Codec.MarshalInterfaceJSON(consPubKey)
