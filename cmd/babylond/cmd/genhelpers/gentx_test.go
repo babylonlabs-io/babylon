@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	dbm "github.com/cosmos/cosmos-db"
-
 	"cosmossdk.io/log"
-	appparams "github.com/babylonlabs-io/babylon/app/params"
+	cmtconfig "github.com/cometbft/cometbft/config"
+	"github.com/cometbft/cometbft/privval"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -26,9 +26,10 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/app/params"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
-	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/testutil/signer"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
@@ -39,7 +40,7 @@ func Test_CmdGenTx(t *testing.T) {
 	cfg, err := genutiltest.CreateDefaultCometConfig(home)
 	require.NoError(t, err)
 
-	signer, err := signer.SetupTestPrivSigner()
+	signer, err := signer.SetupTestBlsSigner()
 	require.NoError(t, err)
 	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
 		Logger:             logger,
@@ -75,6 +76,24 @@ func Test_CmdGenTx(t *testing.T) {
 	addr, _, err := testutil.GenerateSaveCoinKey(kb, keyName, "", true, algo)
 	require.NoError(t, err)
 
+	// create BLS keys
+	nodeCfg := cmtconfig.DefaultConfig()
+	nodeCfg.SetRoot(home)
+
+	keyPath := nodeCfg.PrivValidatorKeyFile()
+	statePath := nodeCfg.PrivValidatorStateFile()
+	blsKeyFile := appsigner.DefaultBlsKeyFile(home)
+	blsPasswordFile := appsigner.DefaultBlsPasswordFile(home)
+
+	err = appsigner.EnsureDirs(keyPath, statePath, blsKeyFile, blsPasswordFile)
+	require.NoError(t, err)
+
+	filePV := privval.GenFilePV(keyPath, statePath)
+	filePV.Key.Save()
+
+	bls := appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
+	defer Clean(keyPath, statePath, blsKeyFile, blsPasswordFile)
+
 	baseFlags := []string{
 		fmt.Sprintf("--%s=%s", flags.FlagHome, home),
 		fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, keyring.BackendTest),
@@ -98,15 +117,22 @@ func Test_CmdGenTx(t *testing.T) {
 	require.NoError(t, err)
 
 	// verifies if the BLS was successfully created with gentx
-	keyPath, statePath := genhelpers.PathsNodeCfg(home)
-	filePV := privval.LoadWrappedFilePV(keyPath, statePath)
 	outputFilePath := filepath.Join(filepath.Dir(keyPath), fmt.Sprintf("gen-bls-%s.json", sdk.ValAddress(addr).String()))
 	require.NoError(t, err)
 	genKey, err := types.LoadGenesisKeyFromFile(outputFilePath)
+
 	require.NoError(t, err)
 	require.Equal(t, sdk.ValAddress(addr).String(), genKey.ValidatorAddress)
 
-	require.True(t, filePV.Key.BlsPubKey.Equal(*genKey.BlsKey.Pubkey))
 	require.Equal(t, filePV.Key.PubKey.Bytes(), genKey.ValPubkey.Bytes())
+	require.True(t, bls.Key.PubKey.Equal(*genKey.BlsKey.Pubkey))
+
 	require.True(t, genKey.BlsKey.Pop.IsValid(*genKey.BlsKey.Pubkey, genKey.ValPubkey))
+}
+
+// Clean removes PVKey file and PVState file
+func Clean(paths ...string) {
+	for _, path := range paths {
+		_ = os.RemoveAll(filepath.Dir(path))
+	}
 }

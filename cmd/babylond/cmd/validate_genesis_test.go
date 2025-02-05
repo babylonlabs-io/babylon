@@ -90,9 +90,11 @@ func generateTestGenesisState(t *testing.T, home string, n int) (*app.BabylonApp
 	logger := log.NewNopLogger()
 	cfg, _ := genutiltest.CreateDefaultCometConfig(home)
 
-	signer, err := signer.SetupTestPrivSigner()
+	tbs, err := signer.SetupTestBlsSigner()
 	require.NoError(t, err)
-	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
+	blsSigner := checkpointingtypes.BlsSigner(tbs)
+
+	bbn := app.NewBabylonAppWithCustomOptions(t, false, blsSigner, app.SetupOptions{
 		Logger:             logger,
 		DB:                 dbm.NewMemDB(),
 		InvCheckPeriod:     0,
