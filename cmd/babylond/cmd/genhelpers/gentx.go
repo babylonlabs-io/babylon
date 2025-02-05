@@ -12,14 +12,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/bls"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	"github.com/spf13/cobra"
 
-	address "cosmossdk.io/core/address"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+
+	"cosmossdk.io/core/address"
 	sdkerrors "cosmossdk.io/errors"
 
-	"github.com/babylonlabs-io/babylon/privval"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -176,28 +176,27 @@ $ %s gentx my-key-name 1000000stake --home=/path/to/home/dir --keyring-backend=o
 			}
 
 			// bls load/create
-			privValKeyFilePath, statePath := PathsNodeCfg(clientCtx.HomeDir)
-			wrappedPV := privval.LoadWrappedFilePV(privValKeyFilePath, statePath)
-			if wrappedPV.Key.DelegatorAddress == "" {
-				cmd.PrintErrf("failed to read bls keys in %q. You probably forgot to run `babylond create-bls-key`, creating...\n", privValKeyFilePath)
-				wrappedPV, err = bls.CreateBlsKey(clientCtx.HomeDir, addr)
-				if err != nil {
-					return sdkerrors.Wrap(err, "failed to set bls keys into priv_validator_key.json")
-				}
-				cmd.PrintErrf("successfully created bls key in %q.\n", privValKeyFilePath)
-			}
 
-			filePathGenBlsOut := filepath.Join(privValKeyFilePath, fmt.Sprintf("gen-bls-%s.json", wrappedPV.GetAddress().String()))
-
-			genBls, err := checkpointingtypes.LoadGenesisKeyFromFile(filePathGenBlsOut)
+			ck, err := appsigner.LoadConsensusKey(clientCtx.HomeDir)
 			if err != nil {
-				cmd.PrintErrf("Bls PoP not found in %q, creating...\n", filePathGenBlsOut)
-				genBls, _, err = wrappedPV.ExportGenBls(filepath.Dir(privValKeyFilePath))
-				if err != nil {
-					return err
-				}
-				cmd.PrintErrf("successfully created bls PoP in %q.\n", filePathGenBlsOut)
+				return fmt.Errorf("failed to load key from %s: %w", clientCtx.HomeDir, err)
 			}
+
+			outputFileName, err := appsigner.ExportGenBls(
+				sdk.ValAddress(addr),
+				ck.Comet.PrivKey,
+				ck.Bls.PrivKey,
+				filepath.Join(clientCtx.HomeDir, cmtconfig.DefaultConfigDir),
+			)
+			if err != nil {
+				return err
+			}
+
+			genBls, err := checkpointingtypes.LoadGenesisKeyFromFile(outputFileName)
+			if err != nil {
+				return fmt.Errorf("failed to load BLS key from genesis file path %s: %w", outputFileName, err)
+			}
+			cmd.PrintErrf("successfully created bls PoP in %q.\n", outputFileName)
 
 			err = genBls.Validate()
 			if err != nil {

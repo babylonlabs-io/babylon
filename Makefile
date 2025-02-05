@@ -86,6 +86,11 @@ else
   BUILD_TAGS += mainnet
 endif
 
+# Handles the inclusion of e2e upgrade in binary
+ifeq (e2e_upgrade,$(findstring e2e_upgrade,$(BABYLON_BUILD_OPTIONS)))
+  BUILD_TAGS += e2e_upgrade
+endif
+
 # DB backend selection
 ifeq (cleveldb,$(findstring cleveldb,$(BABYLON_BUILD_OPTIONS)))
   ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=cleveldb
