@@ -37,6 +37,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#464](https://github.com/babylonlabs-io/babylon/pull/464) Update security email. Fix site / repository refs
 - [#421](https://github.com/babylonlabs-io/babylon/pull/421) Add checks to public
 randomness commit at `TestBTCRewardsDistribution`.
 - [#445](https://github.com/babylonlabs-io/babylon/pull/445) Reject BTC headers

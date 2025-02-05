@@ -82,7 +82,7 @@ voting power is cast on it.
 The voting power of each finality provider is based on
 its Bitcoin stake retrieved from the BTC Staking module.
 Finality votes are performed using
-[Extractable-One-Time-Signatures (EOTS)](https://docs.babylonchain.io/assets/files/btc_staking_litepaper-32bfea0c243773f0bfac63e148387aef.pdf)
+[Extractable-One-Time-Signatures (EOTS)](https://docs.babylonlabs.io/assets/files/btc_staking_litepaper-32bfea0c243773f0bfac63e148387aef.pdf)
 and verified using
 the finality providers' committed public randomness.
 
@@ -103,14 +103,14 @@ operator of each of the programs exist.
 Otherwise,
 an alarm will be raised by the monitor program.
 
-### [Vigilante Submitter](https://github.com/babylonchain/vigilante)
+### [Vigilante Submitter](https://github.com/babylonlabs-io/vigilante)
 
 A standalone program that submits
 Babylon checkpoints to Bitcoin as
 Bitcoin transactions embedding data
 utilizing the `OP_RETURN` Bitcoin script code.
 
-### [Vigilante Reporter](https://github.com/babylonchain/vigilante)
+### [Vigilante Reporter](https://github.com/babylonlabs-io/vigilante)
 
 A standalone program that scans
 the Bitcoin ledger for Bitcoin headers and Babylon checkpoints,
@@ -122,7 +122,7 @@ The monitor programs suite is responsible for
 monitoring the consistency between Babylon's state and
 Bitcoin.
 
-### [Checkpointing Monitor](https://github.com/babylonchain/vigilante)
+### [Checkpointing Monitor](https://github.com/babylonlabs-io/vigilante)
 
 A standalone program that monitors:
 
@@ -132,7 +132,7 @@ A standalone program that monitors:
 - The timely inclusion of Babylon's Bitcoin checkpoints
   information in the Babylon ledger.
 
-### [BTC Staking Monitor](https://github.com/babylonchain/vigilante)
+### [BTC Staking Monitor](https://github.com/babylonlabs-io/vigilante)
 
 A standalone program that monitors:
 
@@ -165,27 +165,27 @@ withdraw their funds when their stake expires.
 The following set of standalone programs
 has been developed to enable these functionalities:
 
-- [BTC Staker Daemon](https://github.com/babylonchain/btc-staker):
+- [BTC Staker Daemon](https://github.com/babylonlabs-io/btc-staker):
   Daemon program connecting to a Bitcoin wallet and Babylon.
-- [BTC Staker Dashboard](https://github.com/babylonchain/btc-staking-dashboard):
+- [BTC Staker Dashboard](https://github.com/babylonlabs-io/btc-staking-dashboard):
   Web application connecting to a Bitcoin wallet extension and the Babylon API.
   It should only be used for testing purposes.
 - Wallet Integrations (TBD)
 
-### [Finality Provider](https://github.com/babylonchain/finality-provider)
+### [Finality Provider](https://github.com/babylonlabs-io/finality-provider)
 
 A standalone program that allows the registration and
 maintenance of a finality provider.
 It monitors for a finality provider's inclusion in the active set, commits
-[Extractable One Time Signature (EOTS)](https://docs.babylonchain.io/assets/files/btc_staking_litepaper-32bfea0c243773f0bfac63e148387aef.pdf)
+[Extractable One Time Signature (EOTS)](https://docs.babylonlabs.io/assets/files/btc_staking_litepaper-32bfea0c243773f0bfac63e148387aef.pdf)
 public randomness, and
 submits finality votes for blocks.
 Finality votes are created through a connection to a standalone
-[EOTS manager daemon](https://github.com/babylonchain/finality-provider)
+[EOTS manager daemon](https://github.com/babylonlabs-io/finality-provider)
 responsible for securely maintaining the
 finality provider's private keys.
 
-### [Covenant Emulator](https://github.com/babylonchain/covenant-emulator)
+### [Covenant Emulator](https://github.com/babylonlabs-io/covenant-emulator)
 
 A standalone program utilized by the covenant emulation committee members.
 It emulates [covenant](https://covenants.info) functionality by monitoring

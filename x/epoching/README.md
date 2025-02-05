@@ -557,5 +557,5 @@ message EventWrappedStakingUpdateParams {
 
 The Epoching module provides a set of queries about epochs, validators and
 delegations, listed at
-[docs.babylonchain.io](https://docs.babylonchain.io/docs/developer-guides/grpcrestapi#tag/Epoching).
+[docs.babylonlabs.io](https://docs.babylonlabs.io/docs/developer-guides/grpcrestapi#tag/Epoching).
 <!-- TODO: update Babylon doc website -->
