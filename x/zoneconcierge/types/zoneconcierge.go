@@ -131,9 +131,9 @@ func (ci *ChainInfo) ValidateBasic() error {
 	return nil
 }
 
-func NewBTCTimestampPacketData(btcTimestamp *BTCTimestamp) *ZoneconciergePacketData {
-	return &ZoneconciergePacketData{
-		Packet: &ZoneconciergePacketData_BtcTimestamp{
+func NewBTCTimestampPacketData(btcTimestamp *BTCTimestamp) *OutboundPacket {
+	return &OutboundPacket{
+		Packet: &OutboundPacket_BtcTimestamp{
 			BtcTimestamp: btcTimestamp,
 		},
 	}
