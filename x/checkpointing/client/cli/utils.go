@@ -10,8 +10,6 @@ import (
 	"cosmossdk.io/core/address"
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	cmtconfig "github.com/cometbft/cometbft/config"
-	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -23,7 +21,7 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	flag "github.com/spf13/pflag"
 
-	"github.com/babylonlabs-io/babylon/privval"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
@@ -202,14 +200,14 @@ func buildCommissionRates(rateStr, maxRateStr, maxChangeRateStr string) (commiss
 	return commission, nil
 }
 
-func getValKeyFromFile(homeDir string) (*privval.ValidatorKeys, error) {
-	nodeCfg := cmtconfig.DefaultConfig()
-	keyPath := filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
-	statePath := filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
-	if !cmtos.FileExists(keyPath) {
-		return nil, errors.New("validator key file does not exist")
+// getValKeyFromFile loads the validator key from the node directory
+// Both FilePV from priv_validator_key.json and Bls should be present in the node directory
+// befor function is called.
+func getValKeyFromFile(homeDir string) (*appsigner.ValidatorKeys, error) {
+	ck, err := appsigner.LoadConsensusKey(homeDir)
+	if err != nil {
+		return nil, err
 	}
-	wrappedPV := privval.LoadWrappedFilePV(keyPath, statePath)
 
-	return privval.NewValidatorKeys(wrappedPV.GetValPrivKey(), wrappedPV.GetBlsPrivKey())
+	return appsigner.NewValidatorKeys(ck.Comet.PrivKey, ck.Bls.PrivKey)
 }

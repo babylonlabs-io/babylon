@@ -8,11 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cometbft/cometbft/crypto/ed25519"
+
 	"cosmossdk.io/math"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	cmtconfig "github.com/cometbft/cometbft/config"
-	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
-	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/p2p"
 	cmttypes "github.com/cometbft/cometbft/types"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
@@ -32,11 +31,14 @@ import (
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/viper"
 
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+
+	"github.com/cometbft/cometbft/privval"
+
 	babylonApp "github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/privval"
 	"github.com/babylonlabs-io/babylon/test/e2e/util"
 )
 
@@ -46,7 +48,7 @@ type internalNode struct {
 	mnemonic     string
 	keyInfo      *keyring.Record
 	privateKey   cryptotypes.PrivKey
-	consensusKey privval.WrappedFilePVKey
+	consensusKey appsigner.ConsensusKey
 	nodeKey      p2p.NodeKey
 	peerId       string
 	isValidator  bool
@@ -80,7 +82,7 @@ func (n *internalNode) configDir() string {
 	return fmt.Sprintf("%s/%s", n.chain.chainMeta.configDir(), n.moniker)
 }
 
-func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin, consensusKey privval.WrappedFilePVKey) (sdk.Msg, error) {
+func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin, consensusKey appsigner.ConsensusKey) (sdk.Msg, error) {
 	description := stakingtypes.NewDescription(n.moniker, "", "", "", "")
 	commissionRates := stakingtypes.CommissionRates{
 		Rate:          math.LegacyMustNewDecFromStr("0.1"),
@@ -91,7 +93,7 @@ func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin, consensusKey pri
 	// get the initial validator min self delegation
 	minSelfDelegation, _ := math.NewIntFromString("1")
 
-	valPubKey, err := cryptocodec.FromCmtPubKeyInterface(n.consensusKey.PubKey)
+	valPubKey, err := cryptocodec.FromCmtPubKeyInterface(n.consensusKey.Comet.PubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -113,12 +115,12 @@ func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin, consensusKey pri
 		return nil, err
 	}
 
-	proofOfPossession, err := privval.BuildPoP(consensusKey.PrivKey, consensusKey.BlsPrivKey)
+	proofOfPossession, err := appsigner.BuildPoP(consensusKey.Comet.PrivKey, consensusKey.Bls.PrivKey)
 	if err != nil {
 		return nil, err
 	}
 
-	return checkpointingtypes.NewMsgWrappedCreateValidator(stkMsgCreateVal, &consensusKey.BlsPubKey, proofOfPossession)
+	return checkpointingtypes.NewMsgWrappedCreateValidator(stkMsgCreateVal, &consensusKey.Bls.PubKey, proofOfPossession)
 }
 
 func (n *internalNode) createConfig() error {
@@ -169,30 +171,36 @@ func (n *internalNode) createNodeKey() error {
 func (n *internalNode) createConsensusKey() error {
 	serverCtx := server.NewDefaultContext()
 	config := serverCtx.Config
-
 	config.SetRoot(n.configDir())
 	config.Moniker = n.moniker
 
 	pvKeyFile := config.PrivValidatorKeyFile()
-	if err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0o777); err != nil {
-		return err
-	}
-
 	pvStateFile := config.PrivValidatorStateFile()
-	if err := cmtos.EnsureDir(filepath.Dir(pvStateFile), 0o777); err != nil {
-		return err
+	blsKeyFile := appsigner.DefaultBlsKeyFile(n.configDir())
+	blsPasswordFile := appsigner.DefaultBlsPasswordFile(n.configDir())
+
+	if err := appsigner.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
+		return fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 
-	privKey := cmted25519.GenPrivKeyFromSecret([]byte(n.mnemonic))
-	blsPrivKey := bls12381.GenPrivKeyFromSecret([]byte(n.mnemonic))
-	filePV := privval.NewWrappedFilePV(privKey, blsPrivKey, pvKeyFile, pvStateFile)
+	// create file pv
+	var privKey ed25519.PrivKey
+	if n.mnemonic == "" {
+		privKey = ed25519.GenPrivKey()
+	} else {
+		privKey = ed25519.GenPrivKeyFromSecret([]byte(n.mnemonic))
+	}
+	filePV := privval.NewFilePV(privKey, pvKeyFile, pvStateFile)
+	filePV.Key.Save()
+	filePV.LastSignState.Save()
 
-	accAddress, _ := n.keyInfo.GetAddress()
-	filePV.Save()
-	filePV.SetAccAddress(accAddress)
+	// create bls pv
+	bls := appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
 
-	n.consensusKey = filePV.Key
-
+	n.consensusKey = appsigner.ConsensusKey{
+		Comet: &filePV.Key,
+		Bls:   &bls.Key,
+	}
 	return nil
 }
 
@@ -262,6 +270,7 @@ func (n *internalNode) export() *Node {
 		PrivateKey:    n.privateKey.Bytes(),
 		PeerId:        n.peerId,
 		IsValidator:   n.isValidator,
+		CometPrivKey:  n.consensusKey.Comet.PrivKey.Bytes(),
 	}
 }
 
