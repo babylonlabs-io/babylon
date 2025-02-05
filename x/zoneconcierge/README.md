@@ -497,4 +497,4 @@ the module parameters via a governance proposal.
 
 It provides a set of queries about the status of checkpointed PoS blockchains,
 listed at
-[docs.babylonchain.io](https://docs.babylonchain.io/docs/developer-guides/grpcrestapi#tag/ZoneConcierge).
+[docs.babylonlabs.io](https://docs.babylonlabs.io/docs/developer-guides/grpcrestapi#tag/ZoneConcierge).
