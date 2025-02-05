@@ -11,14 +11,20 @@ import "babylon/finality/v1/finality.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/zoneconcierge/types";
 
-// ZoneconciergePacketData is the message that defines the IBC packets of
-// ZoneConcierge
-message ZoneconciergePacketData {
+// OutboundPacket represents packets sent from Babylon to other chains
+message OutboundPacket {
   // packet is the actual message carried in the IBC packet
   oneof packet {
     BTCTimestamp btc_timestamp = 1;
     babylon.btcstaking.v1.BTCStakingIBCPacket btc_staking = 2;
-    ConsumerSlashingIBCPacket consumer_slashing = 3;
+  }
+}
+
+// InboundPacket represents packets received by Babylon from other chains
+message InboundPacket {
+  // packet is the actual message carried in the IBC packet
+  oneof packet {
+    ConsumerSlashingIBCPacket consumer_slashing = 1;
   }
 }
 
