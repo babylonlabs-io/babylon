@@ -305,7 +305,7 @@ func InitTestnet(
 			},
 			ValPubkey: valPubkey.(*ed25519.PubKey),
 		}
-		genKeys = append(genKeys, genKey)
+		// genKeys = append(genKeys, genKey)
 		valStr, err := valAddrCodec.BytesToString(sdk.ValAddress(addr))
 		if err != nil {
 			return err
