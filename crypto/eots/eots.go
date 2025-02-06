@@ -6,8 +6,8 @@ import (
 	"io"
 
 	"github.com/babylonlabs-io/babylon/crypto/common"
+	"github.com/babylonlabs-io/babylon/crypto/schnorr"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	ecdsa_schnorr "github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr"

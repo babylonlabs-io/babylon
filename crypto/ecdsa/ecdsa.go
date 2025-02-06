@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
+	secp_ecdsa "github.com/babylonlabs-io/babylon/crypto/ecdsa/ecdsa"
+	"github.com/babylonlabs-io/babylon/crypto/schnorr"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 )
@@ -36,12 +36,12 @@ func magicHash(msg string) chainhash.Hash {
 
 func Sign(sk *btcec.PrivateKey, msg string) []byte {
 	msgHash := magicHash(msg)
-	return ecdsa.SignCompact(sk, msgHash[:], true)
+	return secp_ecdsa.SignCompact(sk, msgHash[:], true)
 }
 
 func Verify(pk *btcec.PublicKey, msg string, sigBytes []byte) error {
 	msgHash := magicHash(msg)
-	recoveredPK, _, err := ecdsa.RecoverCompact(sigBytes, msgHash[:])
+	recoveredPK, _, err := secp_ecdsa.RecoverCompact(sigBytes, msgHash[:])
 	if err != nil {
 		return err
 	}

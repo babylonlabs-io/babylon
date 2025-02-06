@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+	"github.com/babylonlabs-io/babylon/crypto/schnorr"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/golang/mock/gomock"

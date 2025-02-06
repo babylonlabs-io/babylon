@@ -6,10 +6,10 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/crypto/schnorr"
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/mempool"
@@ -476,7 +476,7 @@ func signTxWithOneScriptSpendInputFromTapLeafInternal(
 
 	sigHashes := txscript.NewTxSigHashes(txToSign, inputFetcher)
 
-	sig, err := txscript.RawTxInTapscriptSignature(
+	sig, err := RawTxInTapscriptSignature(
 		txToSign, sigHashes, 0, fundingOutput.Value,
 		fundingOutput.PkScript, tapLeaf, txscript.SigHashDefault,
 		privKey,

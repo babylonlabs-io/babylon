@@ -3,8 +3,8 @@ package datagen
 import (
 	"math/rand"
 
+	"github.com/babylonlabs-io/babylon/crypto/schnorr"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

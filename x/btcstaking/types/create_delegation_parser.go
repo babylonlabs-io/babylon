@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/babylonlabs-io/babylon/crypto/schnorr"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"

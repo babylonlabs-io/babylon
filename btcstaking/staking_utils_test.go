@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/babylonlabs-io/babylon/btcstaking"
+	"github.com/babylonlabs-io/babylon/crypto/schnorr"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/stretchr/testify/require"
 )
 

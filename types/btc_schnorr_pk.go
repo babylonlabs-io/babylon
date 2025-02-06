@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/babylonlabs-io/babylon/crypto/schnorr"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 )
 
 type BIP340PubKey []byte

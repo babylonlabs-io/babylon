@@ -1,8 +1,8 @@
 package btcstaking
 
 import (
+	"github.com/babylonlabs-io/babylon/crypto/schnorr"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 )
 
 // XonlyPubKey is a wrapper around btcec.PublicKey that represents BTC public

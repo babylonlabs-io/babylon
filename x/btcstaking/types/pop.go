@@ -7,9 +7,9 @@ import (
 
 	"github.com/babylonlabs-io/babylon/crypto/bip322"
 	"github.com/babylonlabs-io/babylon/crypto/ecdsa"
+	"github.com/babylonlabs-io/babylon/crypto/schnorr"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"

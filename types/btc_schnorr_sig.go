@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+	"github.com/babylonlabs-io/babylon/crypto/schnorr"
 )
 
 type BIP340Signature []byte

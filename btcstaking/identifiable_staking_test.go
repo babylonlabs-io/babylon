@@ -7,7 +7,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/btcstaking"
 
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+	"github.com/babylonlabs-io/babylon/crypto/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
