@@ -25,6 +25,10 @@ func ScalarBaseMultWithBlinding(k *btcec.ModNScalar) (*btcec.JacobianPoint, erro
 	var rNegG btcec.JacobianPoint
 	btcec.ScalarBaseMultNonConst(rNeg, &rNegG)
 
+	// Convert to affine coordinates so that the addition is constant time
+	krG.ToAffine()
+	rNegG.ToAffine()
+
 	// Add (k+r)G and -rG to get kG
 	var R btcec.JacobianPoint
 	btcec.AddNonConst(&krG, &rNegG, &R)
