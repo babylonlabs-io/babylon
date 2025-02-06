@@ -59,6 +59,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 
 ### Bug fixes
 
+- [#486](https://github.com/babylonlabs-io/babylon/pull/486) crypto: blinding base mult of nonce
 - [#443](https://github.com/babylonlabs-io/babylon/pull/443) Fix swagger generation for incentive missing
 `v1` in path
 - [#445](https://github.com/babylonlabs-io/babylon/pull/445) Reject BTC headers
