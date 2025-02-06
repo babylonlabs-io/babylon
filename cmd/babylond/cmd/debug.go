@@ -6,11 +6,18 @@ import (
 	"fmt"
 	"strings"
 
+	"cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/types"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/debug"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	// this pkg was deprecated but still needs support
 	bech32 "github.com/cosmos/cosmos-sdk/types/bech32/legacybech32" //nolint:staticcheck
@@ -42,6 +49,8 @@ func DebugCmd() *cobra.Command {
 
 		return PrintBip340(cmd, args)
 	}
+
+	debugCmd.AddCommand(NewSendToRandomAddrs())
 	return debugCmd
 }
 
@@ -129,4 +138,48 @@ func bytesToPubkey(bz []byte, keytype string) (cryptotypes.PubKey, bool) {
 		return &secp256k1.PubKey{Key: bz}, true
 	}
 	return nil, false
+}
+
+func NewSendToRandomAddrs() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "bank-send-random-addrs [numberAddrs] [coins-for-each-addr]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Create a finality provider",
+		Long: strings.TrimSpace(
+			`Creates a finality provider for Babylon or a Consumer chain.`, // TODO: example
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			coinsForEachAddr, err := sdk.ParseCoinsNormalized(args[1])
+			if err != nil {
+				return err
+			}
+
+			randomAddrs, ok := math.NewIntFromString(args[0])
+			if !ok {
+				return fmt.Errorf("failed to parse number from arg %s", args[0])
+			}
+
+			fromAddr := clientCtx.FromAddress
+
+			input := banktypes.NewInput(fromAddr, coinsForEachAddr.MulInt(randomAddrs))
+
+			numOfAddrs := randomAddrs.Uint64()
+			output := make([]banktypes.Output, numOfAddrs)
+			for i := uint64(0); i < numOfAddrs; i++ {
+				addr := datagen.GenRandomAddress()
+				output[i] = banktypes.NewOutput(addr, coinsForEachAddr)
+			}
+
+			msg := banktypes.NewMsgMultiSend(input, output)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
 }
