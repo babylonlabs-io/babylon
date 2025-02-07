@@ -529,15 +529,15 @@ func (i *UnbondingInfo) SlashingPathSpendInfo() (*SpendInfo, error) {
 	return i.scriptHolder.scriptSpendInfoByName(i.slashingPathLeafHash)
 }
 
-// IsRateValid checks if the given rate is between the valid range i.e., (0,1) with a precision of at most 2 decimal places.
-func IsRateValid(rate sdkmath.LegacyDec) bool {
+// IsSlashingRateValid checks if the given rate is between the valid range i.e., (0,1) with a precision of at most 4 decimal places.
+func IsSlashingRateValid(rate sdkmath.LegacyDec) bool {
 	// Check if the slashing rate is between 0 and 1
 	if rate.LTE(sdkmath.LegacyZeroDec()) || rate.GTE(sdkmath.LegacyOneDec()) {
 		return false
 	}
 
-	// Multiply by 100 to move the decimal places and check if precision is at most 2 decimal places
-	multipliedRate := rate.Mul(sdkmath.LegacyNewDec(100))
+	// Multiply by 10000 to move the decimal places and check if precision is at most 4 decimal places
+	multipliedRate := rate.Mul(sdkmath.LegacyNewDec(10000))
 
 	// Truncate the rate to remove decimal places
 	truncatedRate := multipliedRate.TruncateDec()

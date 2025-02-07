@@ -51,6 +51,8 @@ check of rewards
 - [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public
 - [#467](https://github.com/babylonlabs-io/babylon/pull/467) BLS keystore improvement
 - [#476](https://github.com/babylonlabs-io/babylon/pull/476) Bump cometbft to `v0.38.17`
+- [#491](https://github.com/babylonlabs-io/babylon/pull/491) Allow slashing rate
+to have 4 decimal places
 
 ### State Machine Breaking
 
