@@ -167,7 +167,7 @@ func (m *QueryConsumerRegistryListRequest) GetPagination() *query.PageRequest {
 
 // QueryConsumerRegistryListResponse is response type for the Query/ConsumerRegistryList RPC method
 type QueryConsumerRegistryListResponse struct {
-	// consumer_ids are IDs of the consumers in ascending alphabetical order
+	// consumer_registers are the registered consumers in ascending alphabetical order
 	ConsumerRegisters []*ConsumerRegisterResponse `protobuf:"bytes,1,rep,name=consumer_registers,json=consumerRegisters,proto3" json:"consumer_registers,omitempty"`
 	// pagination defines the pagination in the response
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`

@@ -64,7 +64,7 @@ message QueryConsumerRegistryListRequest {
 
 // QueryConsumerRegistryListResponse is response type for the Query/ConsumerRegistryList RPC method
 message QueryConsumerRegistryListResponse {
-  // consumer_ids are IDs of the consumers in ascending alphabetical order
+  // consumer_registers are the registered consumers in ascending alphabetical order
   repeated ConsumerRegisterResponse consumer_registers = 1;
   // pagination defines the pagination in the response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
