@@ -21,7 +21,7 @@ To privately report a security vulnerability, please choose one of the following
 
 ### 1. Email
 
-Send your detailed vulnerability report to `security@babylonchain.io`.
+Send your detailed vulnerability report to `security@babylonlabs.io`.
 
 ### 2. GitHub Private Vulnerability Reporting
 
@@ -79,4 +79,4 @@ place.
 
 ## Feedback on this Policy
 
-For recommendations on how to improve this policy, either submit a pull request or email `security@babylonchain.io`.
+For recommendations on how to improve this policy, either submit a pull request or email `security@babylonlabs.io`.

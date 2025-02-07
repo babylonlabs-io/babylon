@@ -140,7 +140,7 @@ delegations under culpable finality providers.
 A BTC staker can unbond early by signing the unbonding transaction and
 submitting it to Bitcoin. The BTC Staking module identifies unbonding requests
 through this signature reported by the [BTC staking tracker
-daemon](https://github.com/babylonchain/vigilante), and will consider the BTC
+daemon](https://github.com/babylonlabs-io/vigilante), and will consider the BTC
 delegation unbonded immediately upon such a signature.
 
 ## States
@@ -378,7 +378,7 @@ The message handlers are defined at
 
 The `MsgCreateFinalityProvider` message is used for creating a finality
 provider. It is typically submitted by a finality provider via the [finality
-provider](https://github.com/babylonchain/finality-provider) program.
+provider](https://github.com/babylonlabs-io/finality-provider) program.
 
 ```protobuf
 // MsgCreateFinalityProvider is the message for creating a finality provider
@@ -475,7 +475,7 @@ Upon `MsgEditFinalityProvider`, a Babylon node will execute as follows:
 
 The `MsgCreateBTCDelegation` message is used for delegating some bitcoin to a
 finality provider. It is typically submitted by a BTC delegator via the [BTC
-staker](https://github.com/babylonchain/btc-staker) program.
+staker](https://github.com/babylonlabs-io/btc-staker) program.
 
 ```protobuf
 // MsgCreateBTCDelegation is the message for creating a BTC delegation
@@ -610,7 +610,7 @@ node will execute as follows:
 The `MsgAddCovenantSigs` message is used for submitting signatures on a BTC
 delegation signed by a covenant committee member. It is typically submitted by a
 covenant committee member via the [covenant
-emulator](https://github.com/babylonchain/covenant-emulator) program.
+emulator](https://github.com/babylonlabs-io/covenant-emulator) program.
 
 ```protobuf
 // MsgAddCovenantSigs is the message for handling signatures from a covenant member
@@ -655,7 +655,7 @@ Upon `AddCovenantSigs`, a Babylon node will execute as follows:
 
 The `MsgBTCUndelegate` message is used for unbonding bitcoin from a given
 finality provider. It is typically reported by the [BTC staking
-tracker](https://github.com/babylonchain/vigilante/tree/dev/btcstaking-tracker)
+tracker](https://github.com/babylonlabs-io/vigilante/tree/main/btcstaking-tracker)
 program which proactively monitors unbonding transactions on Bitcoin.
 
 ```protobuf
@@ -751,7 +751,7 @@ Upon `MsgSelectiveSlashingEvidence`, a Babylon node will execute as follows:
    this.
 
 The `MsgSelectiveSlashingEvidence` is typically reported by the [BTC staking
-tracker](https://github.com/babylonchain/vigilante/tree/dev/btcstaking-tracker)
+tracker](https://github.com/babylonlabs-io/vigilante/tree/main/btcstaking-tracker)
 program. It keeps monitoring for slashing transactions on Bitcoin. Upon each
 slashing transaction, it will try to extract the finality provider's secret key.
 If successful, it will construct a `MsgSelectiveSlashingEvidence` message and
@@ -977,6 +977,6 @@ Endpoint: `/babylon/btcstaking/v1/btc_delegation/{staking_tx_hash_hex}`
 Description: Retrieves a specific BTC delegation by its corresponding staking transaction hash.
 
 Additional Information:
-For further details on how to use these queries and additional documentation, please refer to docs.babylonchain.io.
+For further details on how to use these queries and additional documentation, please refer to docs.babylonlabs.io.
 
 <!-- TODO: update Babylon doc website -->
