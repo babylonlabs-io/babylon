@@ -99,7 +99,7 @@ confirmations, the staker can submit a proof of inclusion to the Babylon
 chain to obtain voting power based on their confirmed stake. Alternatively,
 the staker can rely on the off-chain
 [vigilante watcher](https://github.com/babylonlabs-io/vigilante) program,
-which will submit the proof of inclusion on their behalf
+which will submit the proof of inclusion on their behalf.
 
 ## 3. Stake Submission
 
@@ -553,29 +553,29 @@ has been launched.
 > by the [btccheckpoint](../x/btccheckpoint) module's parameters.
 8. After receiving the proof of inclusion, the stake is designated as `ACTIVE`. 
 
-**Important: Gas requirements for the pre-staking registration flow**:
-Given that the pre-staking registration flow does not have the requirement
-that the staker has already committed funds to the Bitcoin network,
-it could serve as a chain spamming vector, especially given that it
-leads to the submission of multiple covenant emulator signatures.
-To combat this, the submission of a `MsgCreateBTCDelegation` message
-using the pre-staking registration flow requires a minimum gas amount
-specified by the `delegation_creation_base_gas_fee` attribute of the
-Babylon parameters.
+> **Important: Gas requirements for the pre-staking registration flow**:
+> Given that the pre-staking registration flow does not have the requirement
+> that the staker has already committed funds to the Bitcoin network,
+> it could serve as a chain spamming vector, especially given that it
+> leads to the submission of multiple covenant emulator signatures.
+> To combat this, the submission of a `MsgCreateBTCDelegation` message
+> using the pre-staking registration flow requires a minimum gas amount
+> specified by the `delegation_creation_base_gas_fee` attribute of the
+> Babylon parameters.
 
-**Important: Which Bitcoin Staking parameters to use**: Given that the staking
-parameters are Bitcoin block height specific and the fact that the
-pre-staking registration flow requires the staker to first submit their
-transaction to Babylon and then to Bitcoin, a concern might arise that
-the Bitcoin block height at the time of Babylon submission might correspond
-to different parameters than the Bitcoin block height at the time of
-Bitcoin inclusion. To combat this, the Babylon chain expects
-that the staking transaction will use the Bitcoin staking parameters
-defined for the Bitcoin height of the tip of the **on-chain Bitcoin light client**
-of the Babylon chain at the time of the pre-staking registration submission.
-The tip height of the on-chain Bitcoin light client can be retrieved as follows:
-* LCD/RPC: through the `/babylon/btclightclient/v1/tip` query endpoint
-* CLI: through the `babylond query btclightclient tip` query
+> **Important: Which Bitcoin Staking parameters to use**: Given that the staking
+> parameters are Bitcoin block height specific and the fact that the
+> pre-staking registration flow requires the staker to first submit their
+> transaction to Babylon and then to Bitcoin, a concern might arise that
+> the Bitcoin block height at the time of Babylon submission might correspond
+> to different parameters than the Bitcoin block height at the time of
+> Bitcoin inclusion. To combat this, the Babylon chain expects
+> that the staking transaction will use the Bitcoin staking parameters
+> defined for the Bitcoin height of the tip of the **on-chain Bitcoin light client**
+> of the Babylon chain at the time of the pre-staking registration submission.
+> The tip height of the on-chain Bitcoin light client can be retrieved as follows:
+> * LCD/RPC: through the `/babylon/btclightclient/v1/tip` query endpoint
+> * CLI: through the `babylond query btclightclient tip` query
 
 ### 4.3. Technical Resources for Babylon Broadcasting
 
@@ -589,6 +589,12 @@ transactions.
 * External References: For detailed instructions, refer to external
 [Cosmos SDK resources](https://docs.cosmos.network/main/learn/advanced/transactions#broadcasting-the-transaction), which provide comprehensive
 guidance on using these tools.
+
+> **Important**: Phase-1 staking transactions intending to sign up through
+> the post-stake registration flow, will only be accepted when they are eligible
+> based on [these criteria](./phase1-stake-registration-eligibility.md).
+> New phase-2 created stakes created either through the pre-staking registration flow
+> or the post-staking registration flow will be accepted only once the allow-list expires.
 
 ## 5. Managing your Stake
 
