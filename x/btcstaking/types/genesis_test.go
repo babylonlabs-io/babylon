@@ -28,7 +28,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						&types.Params{
 							CovenantPks:          types.DefaultParams().CovenantPks,
 							CovenantQuorum:       types.DefaultParams().CovenantQuorum,
-							MinStakingValueSat:   1000,
+							MinStakingValueSat:   10000,
 							MaxStakingValueSat:   100000000,
 							MinStakingTimeBlocks: 100,
 							MaxStakingTimeBlocks: 1000,
