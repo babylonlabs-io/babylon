@@ -176,7 +176,7 @@ func (h *Helper) GenAndApplyCustomParams(
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, types.Params{
 		CovenantPks:               bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
 		CovenantQuorum:            3,
-		MinStakingValueSat:        1000,
+		MinStakingValueSat:        10000,
 		MaxStakingValueSat:        int64(4 * 10e8),
 		MinStakingTimeBlocks:      400,
 		MaxStakingTimeBlocks:      10000,

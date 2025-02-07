@@ -9,7 +9,9 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
@@ -64,7 +66,7 @@ func DefaultParams() Params {
 	return Params{
 		CovenantPks:          bbn.NewBIP340PKsFromBTCPKs(pks),
 		CovenantQuorum:       quorum,
-		MinStakingValueSat:   1000,
+		MinStakingValueSat:   10000,
 		MaxStakingValueSat:   10 * 10e8,
 		MinStakingTimeBlocks: 400, // this should be larger than minUnbonding
 		MaxStakingTimeBlocks: math.MaxUint16,
@@ -167,6 +169,30 @@ func validateStakingTime(minStakingTime, maxStakingTime uint32) error {
 	return nil
 }
 
+func validateNoDustSlashingOutput(p *Params) error {
+	// OP_RETURN scripts are allowed to be dust by BTC standard rules
+	if len(p.SlashingPkScript) > 0 && p.SlashingPkScript[0] == txscript.OP_RETURN {
+		return nil
+	}
+
+	slashingRateFloat64, err := p.SlashingRate.Float64()
+	if err != nil {
+		return fmt.Errorf("error converting slashing rate to float64: %w", err)
+	}
+
+	minUnbondingOutputValue := p.MinStakingValueSat - p.UnbondingFeeSat
+
+	minSlashingAmount := btcutil.Amount(minUnbondingOutputValue).MulF64(slashingRateFloat64)
+
+	minSlashingOutput := wire.NewTxOut(int64(minSlashingAmount), p.SlashingPkScript)
+
+	if mempool.IsDust(minSlashingOutput, mempool.DefaultMinRelayTxFee) {
+		return fmt.Errorf("invalid parameters configuration. Minimum slashing output is dust")
+	}
+
+	return nil
+}
+
 // Validate validates the set of params
 func (p Params) Validate() error {
 	if p.CovenantQuorum == 0 {
@@ -195,8 +221,12 @@ func (p Params) Validate() error {
 		return err
 	}
 
-	if !btcstaking.IsRateValid(p.SlashingRate) {
+	if !btcstaking.IsSlashingRateValid(p.SlashingRate) {
 		return btcstaking.ErrInvalidSlashingRate
+	}
+
+	if err := validateNoDustSlashingOutput(&p); err != nil {
+		return err
 	}
 
 	if err := validateUnbondingTime(p.UnbondingTimeBlocks); err != nil {
