@@ -56,6 +56,8 @@ from `Finalized` to `Forgotten`
 - [#491](https://github.com/babylonlabs-io/babylon/pull/491) Allow slashing rate
 to have 4 decimal places
 - [#488](https://github.com/babylonlabs-io/babylon/pull/488) Fix duplicate BLS key registration in testnet command
+- [#493](https://github.com/babylonlabs-io/babylon/pull/493) Add v1rc5 testnet
+upgrade handler
 
 ## v1.0.0-rc4
 
