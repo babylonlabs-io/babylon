@@ -406,8 +406,7 @@ func InitTestnet(
 		}
 	}
 
-	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles,
-		genKeys, numValidators, genesisParams); err != nil {
+	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles, numValidators, genesisParams); err != nil {
 		return err
 	}
 
@@ -426,7 +425,7 @@ func InitTestnet(
 func initGenFiles(
 	clientCtx client.Context, mbm module.BasicManager, chainID string,
 	genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance,
-	genFiles []string, genKeys []*checkpointingtypes.GenesisKey, numValidators int, genesisParams GenesisParams,
+	genFiles []string, numValidators int, genesisParams GenesisParams,
 ) error {
 	appGenState := mbm.DefaultGenesis(clientCtx.Codec)
 
@@ -439,9 +438,6 @@ func initGenFiles(
 
 	// set the balances in the genesis state
 	genesisParams.BankGenBalances = banktypes.SanitizeGenesisBalances(genBalances)
-
-	// set the bls keys for the checkpointing module
-	genesisParams.CheckpointingGenKeys = genKeys
 
 	genesis := &genutiltypes.AppGenesis{}
 

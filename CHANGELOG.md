@@ -53,6 +53,7 @@ from `Finalized` to `Forgotten`
 - [#457](https://github.com/babylonlabs-io/babylon/pull/457) Remove staking msg server and update gentx to generate
   `MsgWrappedCreateValidator`
 - [#476](https://github.com/babylonlabs-io/babylon/pull/476) Bump cometbft to `v0.38.17`
+- [#488](https://github.com/babylonlabs-io/babylon/pull/488) Fix duplicate BLS key registration in testnet command
 
 ## v1.0.0-rc4
 
