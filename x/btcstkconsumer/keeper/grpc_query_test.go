@@ -53,11 +53,11 @@ func FuzzConsumerRegistryList(f *testing.F) {
 			},
 		})
 		require.NoError(t, err)
-		actualConsumerIDs := resp.ConsumerIds
+		actualConsumerRegisters := resp.ConsumerRegisters
 
-		require.Equal(t, limit, uint64(len(actualConsumerIDs)))
+		require.Equal(t, limit, uint64(len(actualConsumerRegisters)))
 		for i := uint64(0); i < limit; i++ {
-			require.Contains(t, allConsumerIDs, actualConsumerIDs[i])
+			require.Contains(t, allConsumerIDs, actualConsumerRegisters[i].ConsumerId)
 		}
 	})
 }
@@ -98,7 +98,7 @@ func FuzzConsumersRegistry(f *testing.F) {
 		})
 		require.NoError(t, err)
 
-		for i, respData := range resp.ConsumersRegister {
+		for i, respData := range resp.ConsumerRegisters {
 			require.Equal(t, consumersRegister[i].consumerID, respData.ConsumerId)
 		}
 	})

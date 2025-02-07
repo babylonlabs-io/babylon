@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#470](https://github.com/babylonlabs-io/babylon/pull/470) Return full consumer info and remove DB object
+usage in `x/btcstkconsumer` queries
 - [#483](https://github.com/babylonlabs-io/babylon/pull/483) Upgrade wasmd and wasmvm to latest
 versions (related to security advisories CWA-2025-001 and CWA-2025-002)
 - [#464](https://github.com/babylonlabs-io/babylon/pull/464) Update security email. Fix site / repository refs
