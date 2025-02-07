@@ -67,6 +67,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 forks starting with already known header
 - [#473](https://github.com/babylonlabs-io/babylon/pull/473) Fix checkpoint status transition
 from `Finalized` to `Forgotten`
+- [#488](https://github.com/babylonlabs-io/babylon/pull/488) Fix duplicate BLS key registration in testnet command
 
 ## v1.0.0-rc4
 
