@@ -53,6 +53,8 @@ check of rewards
 - [#476](https://github.com/babylonlabs-io/babylon/pull/476) Bump cometbft to `v0.38.17`
 - [#491](https://github.com/babylonlabs-io/babylon/pull/491) Allow slashing rate
 to have 4 decimal places
+- [#493](https://github.com/babylonlabs-io/babylon/pull/493) Add v1rc5 testnet
+upgrade handler
 
 ### State Machine Breaking
 
