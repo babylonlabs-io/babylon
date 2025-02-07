@@ -205,9 +205,6 @@ We will focus on the values defined in each parameters version:
 * `btc_activation_height`: The Bitcoin block height on which this version of
   parameters takes into effect.
 
-<!--- TODO 2: troubleshooting for btc activation -->
-<!--- TODO 3: note about finality not being activated -->
-
 **How to Retrieve Parameters**
 
 The above parameters are specified as the parameters of
