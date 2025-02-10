@@ -614,7 +614,6 @@ The process involves the following steps:
 2. Construct a withdrawal transaction signed by the staker.
 3. Submit the transaction to the Bitcoin blockchain.
 
-
 For a practical example of how to construct the withdrawal transaction,
 refer to:
 * [the TypeScript library documentation](https://github.com/babylonlabs-io/btc-staking-ts?tab=readme-ov-file#withdrawing)
@@ -631,7 +630,10 @@ while the remaining funds are transfered to a timelock script,
 which can later be withdrawn using the same withdrawal process
 defined in the previous section.
 
-<!-- TODO: what's the slashing timelock and how can it be found? -->
+To determine the slashing timelock, refer to the `unbonding_time_blocks` 
+parameter in the [Babylon Chain BTC Staking Parameters](32-babylon-chain-btc-staking-parameters). Babylon ensures that the timelock on the change output of a slashing 
+transaction matches the unbonding time. Therefore, the unbonding time 
+parameter effectively represents your slashing timelock.
 
 ## 5. Bitcoin Staking Rewards
 
@@ -651,8 +653,9 @@ The rewards are distributed as follows:
   and commission rate of the finality provider the stake has been delegated to.
   The rewards are entered into a gauge, which stakers can query and withdraw
   from through a transaction submission.
-* 
-<!-- TODO: how often are rewards distributed? -->
+* Rewards are distributed when a block is finalized. The system processes 
+  finalized blocks to ensure that all eligible stakers receive their rewards 
+  based on the voting power and commission rates at the time of finalization.
 
 ### 5.2. Rewards Withdrawal
 
