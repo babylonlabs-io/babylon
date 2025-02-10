@@ -1,12 +1,13 @@
 package cli
 
 import (
+	"context"
 	"fmt"
-
-	"github.com/cosmos/cosmos-sdk/client/flags"
+	"strconv"
 
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +28,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdBTCDelegations())
 	cmd.AddCommand(CmdFinalityProviderDelegations())
 	cmd.AddCommand(CmdDelegation())
+	cmd.AddCommand(GetCmdQueryParamsByVersion())
 
 	return cmd
 }
@@ -186,5 +188,39 @@ func CmdFinalityProviderDelegations() *cobra.Command {
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "finality-provider-delegations")
 
+	return cmd
+}
+
+// GetCmdQueryParamsByVersion implements the query params by version command.
+func GetCmdQueryParamsByVersion() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params-by-version [version]",
+		Short: "Query BTC staking parameters by version number",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			version, err := strconv.ParseUint(args[0], 10, 32)
+			if err != nil {
+				return fmt.Errorf("version must be a positive 32-bit integer: %w", err)
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.ParamsByVersion(
+				context.Background(),
+				&types.QueryParamsByVersionRequest{Version: uint32(version)},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
