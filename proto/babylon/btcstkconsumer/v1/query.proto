@@ -9,7 +9,6 @@ import "cosmos/staking/v1beta1/staking.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
 import "babylon/btcstaking/v1/pop.proto";
-import "babylon/btcstkconsumer/v1/btcstkconsumer.proto";
 import "babylon/btcstkconsumer/v1/params.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types";
@@ -65,8 +64,8 @@ message QueryConsumerRegistryListRequest {
 
 // QueryConsumerRegistryListResponse is response type for the Query/ConsumerRegistryList RPC method
 message QueryConsumerRegistryListResponse {
-  // consumer_ids are IDs of the consumers in ascending alphabetical order
-  repeated string consumer_ids = 1;
+  // consumer_registers are the registered consumers in ascending alphabetical order
+  repeated ConsumerRegisterResponse consumer_registers = 1;
   // pagination defines the pagination in the response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -76,7 +75,7 @@ message QueryConsumersRegistryRequest { repeated string consumer_ids = 1; }
 
 // QueryConsumersRegistryResponse is response type for the Query/ConsumersRegistry RPC method.
 message QueryConsumersRegistryResponse {
-  repeated babylon.btcstkconsumer.v1.ConsumerRegister consumers_register = 1;
+  repeated ConsumerRegisterResponse consumer_registers = 1;
 }
 
 // QueryFinalityProvidersRequest is the request type for the
@@ -152,4 +151,24 @@ message QueryFinalityProviderConsumerRequest {
 // QueryFinalityProviderConsumerResponse returns the CZ finality provier consumer id
 message QueryFinalityProviderConsumerResponse {
   string consumer_id = 1;
+}
+
+// ConsumerRegisterResponse contains the information for a registered consumer
+// The struct is used in the query responses
+message ConsumerRegisterResponse {
+  // consumer_id is the ID of the consumer
+  // - for Cosmos SDK chains, the consumer ID will be the IBC client ID
+  // - for ETH L2 chains, the consumer ID will be the chain ID of the ETH L2
+  //   chain
+  string consumer_id = 1;
+  // consumer_name is the name of the consumer
+  string consumer_name = 2;
+  // consumer_description is a description for the consumer (can be empty)
+  string consumer_description = 3;
+  // cosmos_channel_id is the IBC channel ID for the consumer
+  // set only for Cosmos integration
+  string cosmos_channel_id = 4;
+  // eth_l2_finality_contract_address is the address of the finality contract
+  // set only for ETH L2 integration
+  string eth_l2_finality_contract_address = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }

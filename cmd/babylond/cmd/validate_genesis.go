@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	cmttypes "github.com/cometbft/cometbft/types"
@@ -11,8 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/cobra"
-
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 const chainUpgradeGuide = "https://github.com/cosmos/cosmos-sdk/blob/a51aa517c46c70df04a06f586c67fb765e45322a/UPGRADING.md"
@@ -56,10 +53,6 @@ func ValidateGenesisCmd(mbm module.BasicManager, validator genutiltypes.MessageV
 				return fmt.Errorf("error validating genesis file %s: %s", genesis, err.Error())
 			}
 
-			if err = CheckCorrespondence(clientCtx, genState, validator); err != nil {
-				return fmt.Errorf("error validating genesis file correspondence %s: %s", genesis, err.Error())
-			}
-
 			fmt.Printf("File at %s is a valid genesis file\n", genesis)
 			return nil
 		},
@@ -80,46 +73,4 @@ func validateGenDoc(importGenesisFile string) (*cmttypes.GenesisDoc, error) {
 	}
 
 	return genDoc, nil
-}
-
-// CheckCorrespondence checks that each genesis tx/BLS key should have one
-// corresponding BLS key/genesis tx
-func CheckCorrespondence(ctx client.Context, genesis map[string]json.RawMessage, validator genutiltypes.MessageValidator) error {
-	checkpointingGenState := checkpointingtypes.GetGenesisStateFromAppState(ctx.Codec, genesis)
-	gks := checkpointingGenState.GetGenesisKeys()
-	genTxState := genutiltypes.GetGenesisStateFromAppState(ctx.Codec, genesis)
-	addresses := make(map[string]struct{}, 0)
-	// ensure no duplicate BLS keys
-	for _, gk := range gks {
-		addresses[gk.ValidatorAddress] = struct{}{}
-	}
-	if len(addresses) != len(gks) {
-		return errors.New("duplicate genesis BLS keys")
-	}
-	// ensure the number of BLS keys and gentxs are the same so that we
-	// don't need to do reverse checking
-	if len(addresses) != len(genTxState.GenTxs) {
-		return errors.New("genesis txs and genesis BLS keys do not match")
-	}
-	// ensure every gentx has a match with BLS key by address
-	for _, genTx := range genTxState.GenTxs {
-		tx, err := genutiltypes.ValidateAndGetGenTx(genTx, ctx.TxConfig.TxJSONDecoder(), validator)
-		if err != nil {
-			return err
-		}
-		msgs := tx.GetMsgs()
-		if len(msgs) == 0 {
-			return errors.New("invalid genesis transaction")
-		}
-		msgCreateValidator, ok := msgs[0].(*checkpointingtypes.MsgWrappedCreateValidator)
-		if !ok {
-			return fmt.Errorf("not able to parse msg zero as MsgWrappedCreateValidator")
-		}
-
-		if _, exists := addresses[msgCreateValidator.MsgCreateValidator.ValidatorAddress]; !exists {
-			return errors.New("cannot find a corresponding BLS key for a genesis tx")
-		}
-	}
-
-	return nil
 }

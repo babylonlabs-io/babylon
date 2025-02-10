@@ -9829,10 +9829,47 @@ paths:
           schema:
             type: object
             properties:
-              consumer_ids:
+              consumer_registers:
                 type: array
                 items:
-                  type: string
+                  type: object
+                  properties:
+                    consumer_id:
+                      type: string
+                      title: >-
+                        consumer_id is the ID of the consumer
+
+                        - for Cosmos SDK chains, the consumer ID will be the IBC
+                        client ID
+
+                        - for ETH L2 chains, the consumer ID will be the chain
+                        ID of the ETH L2
+                          chain
+                    consumer_name:
+                      type: string
+                      title: consumer_name is the name of the consumer
+                    consumer_description:
+                      type: string
+                      title: >-
+                        consumer_description is a description for the consumer
+                        (can be empty)
+                    cosmos_channel_id:
+                      type: string
+                      title: |-
+                        cosmos_channel_id is the IBC channel ID for the consumer
+                        set only for Cosmos integration
+                    eth_l2_finality_contract_address:
+                      type: string
+                      title: >-
+                        eth_l2_finality_contract_address is the address of the
+                        finality contract
+
+                        set only for ETH L2 integration
+                  title: >-
+                    ConsumerRegisterResponse contains the information for a
+                    registered consumer
+
+                    The struct is used in the query responses
                 title: >-
                   consumer_ids are IDs of the consumers in ascending
                   alphabetical order
@@ -10133,7 +10170,7 @@ paths:
           schema:
             type: object
             properties:
-              consumers_register:
+              consumer_registers:
                 type: array
                 items:
                   type: object
@@ -10157,33 +10194,23 @@ paths:
                       title: >-
                         consumer_description is a description for the consumer
                         (can be empty)
-                    cosmos_consumer_metadata:
-                      type: object
-                      properties:
-                        channel_id:
-                          type: string
-                          title: >-
-                            channel_id defines the IBC channel ID for the
-                            consumer chain
+                    cosmos_channel_id:
+                      type: string
+                      title: |-
+                        cosmos_channel_id is the IBC channel ID for the consumer
+                        set only for Cosmos integration
+                    eth_l2_finality_contract_address:
+                      type: string
                       title: >-
-                        CosmosConsumerMetadata is the metadata for the Cosmos
-                        integration
-                    eth_l2_consumer_metadata:
-                      type: object
-                      properties:
-                        finality_contract_address:
-                          type: string
-                          title: >-
-                            finality_contract_address is the address of the
-                            finality contract for
+                        eth_l2_finality_contract_address is the address of the
+                        finality contract
 
-                            the ETH L2 integration
-                      title: >-
-                        ETHL2ConsumerMetadata is the metadata for the ETH L2
-                        integration
+                        set only for ETH L2 integration
                   title: >-
-                    ConsumerRegister is the registration information of a
-                    consumer
+                    ConsumerRegisterResponse contains the information for a
+                    registered consumer
+
+                    The struct is used in the query responses
             description: >-
               QueryConsumersRegistryResponse is response type for the
               Query/ConsumersRegistry RPC method.
@@ -21464,7 +21491,7 @@ definitions:
           transition and the time (in both timestamp and block height) of this
           transition.
     description: RawCheckpointWithMetaResponse wraps the raw checkpoint with metadata.
-  babylon.btcstkconsumer.v1.ConsumerRegister:
+  babylon.btcstkconsumer.v1.ConsumerRegisterResponse:
     type: object
     properties:
       consumer_id:
@@ -21483,41 +21510,23 @@ definitions:
       consumer_description:
         type: string
         title: consumer_description is a description for the consumer (can be empty)
-      cosmos_consumer_metadata:
-        type: object
-        properties:
-          channel_id:
-            type: string
-            title: channel_id defines the IBC channel ID for the consumer chain
-        title: CosmosConsumerMetadata is the metadata for the Cosmos integration
-      eth_l2_consumer_metadata:
-        type: object
-        properties:
-          finality_contract_address:
-            type: string
-            title: >-
-              finality_contract_address is the address of the finality contract
-              for
-
-              the ETH L2 integration
-        title: ETHL2ConsumerMetadata is the metadata for the ETH L2 integration
-    title: ConsumerRegister is the registration information of a consumer
-  babylon.btcstkconsumer.v1.CosmosConsumerMetadata:
-    type: object
-    properties:
-      channel_id:
-        type: string
-        title: channel_id defines the IBC channel ID for the consumer chain
-    title: CosmosConsumerMetadata is the metadata for the Cosmos integration
-  babylon.btcstkconsumer.v1.ETHL2ConsumerMetadata:
-    type: object
-    properties:
-      finality_contract_address:
+      cosmos_channel_id:
         type: string
         title: |-
-          finality_contract_address is the address of the finality contract for
-          the ETH L2 integration
-    title: ETHL2ConsumerMetadata is the metadata for the ETH L2 integration
+          cosmos_channel_id is the IBC channel ID for the consumer
+          set only for Cosmos integration
+      eth_l2_finality_contract_address:
+        type: string
+        title: >-
+          eth_l2_finality_contract_address is the address of the finality
+          contract
+
+          set only for ETH L2 integration
+    title: >-
+      ConsumerRegisterResponse contains the information for a registered
+      consumer
+
+      The struct is used in the query responses
   babylon.btcstkconsumer.v1.FinalityProviderResponse:
     type: object
     properties:
@@ -21626,10 +21635,47 @@ definitions:
   babylon.btcstkconsumer.v1.QueryConsumerRegistryListResponse:
     type: object
     properties:
-      consumer_ids:
+      consumer_registers:
         type: array
         items:
-          type: string
+          type: object
+          properties:
+            consumer_id:
+              type: string
+              title: >-
+                consumer_id is the ID of the consumer
+
+                - for Cosmos SDK chains, the consumer ID will be the IBC client
+                ID
+
+                - for ETH L2 chains, the consumer ID will be the chain ID of the
+                ETH L2
+                  chain
+            consumer_name:
+              type: string
+              title: consumer_name is the name of the consumer
+            consumer_description:
+              type: string
+              title: >-
+                consumer_description is a description for the consumer (can be
+                empty)
+            cosmos_channel_id:
+              type: string
+              title: |-
+                cosmos_channel_id is the IBC channel ID for the consumer
+                set only for Cosmos integration
+            eth_l2_finality_contract_address:
+              type: string
+              title: >-
+                eth_l2_finality_contract_address is the address of the finality
+                contract
+
+                set only for ETH L2 integration
+          title: >-
+            ConsumerRegisterResponse contains the information for a registered
+            consumer
+
+            The struct is used in the query responses
         title: consumer_ids are IDs of the consumers in ascending alphabetical order
       pagination:
         title: pagination defines the pagination in the response
@@ -21664,7 +21710,7 @@ definitions:
   babylon.btcstkconsumer.v1.QueryConsumersRegistryResponse:
     type: object
     properties:
-      consumers_register:
+      consumer_registers:
         type: array
         items:
           type: object
@@ -21688,27 +21734,23 @@ definitions:
               title: >-
                 consumer_description is a description for the consumer (can be
                 empty)
-            cosmos_consumer_metadata:
-              type: object
-              properties:
-                channel_id:
-                  type: string
-                  title: channel_id defines the IBC channel ID for the consumer chain
+            cosmos_channel_id:
+              type: string
+              title: |-
+                cosmos_channel_id is the IBC channel ID for the consumer
+                set only for Cosmos integration
+            eth_l2_finality_contract_address:
+              type: string
               title: >-
-                CosmosConsumerMetadata is the metadata for the Cosmos
-                integration
-            eth_l2_consumer_metadata:
-              type: object
-              properties:
-                finality_contract_address:
-                  type: string
-                  title: >-
-                    finality_contract_address is the address of the finality
-                    contract for
+                eth_l2_finality_contract_address is the address of the finality
+                contract
 
-                    the ETH L2 integration
-              title: ETHL2ConsumerMetadata is the metadata for the ETH L2 integration
-          title: ConsumerRegister is the registration information of a consumer
+                set only for ETH L2 integration
+          title: >-
+            ConsumerRegisterResponse contains the information for a registered
+            consumer
+
+            The struct is used in the query responses
     description: >-
       QueryConsumersRegistryResponse is response type for the
       Query/ConsumersRegistry RPC method.
