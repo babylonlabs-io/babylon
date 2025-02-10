@@ -90,9 +90,10 @@ The following diagram illustrates the post-staking registration flow:
 Steps:
 1. **Generate staking metadata**: Retrieve the staking transaction
    from its included Bitcoin block and generate the proof of inclusion.
-2. **Fill the `MsgCreateBTCDelegation` message** with the metadata
-   and broadcast it to the Babylon blockchain (details on how to do this
-   will be provided in [Section 3.4.](#34-the-msgcreatebtcdelegation-babylon-message))
+2. **Fill the `MsgCreateBTCDelegation` message** with the  unbonding transaction, 
+  signed slashing transactions and proof of possession (POP) and broadcast it to
+  the Babylon blockchain (details on how to do this will be provided in
+  [Section 3.4.](#34-the-msgcreatebtcdelegation-babylon-message))
 3. **Await Covenant Verification**: The stake will remain in a `PENDING` state until the covenants
    provide their verification signatures.
 4. **Activation**: Once a quorum of covenant signatures is reached,
@@ -198,7 +199,7 @@ Babylon registration transaction.
 > transactions can be found in the
 > [Bitcoin Staking script specification](./staking-script.md).
 
-Once assmbled, this daa is packaged into a Babylon chain transaction and
+Once assembled, this data is packaged into a Babylon chain transaction and
 broadcast to the network. The process differs based on whether the staker
 follows the pre-staking or post-staking registration flow.
 
@@ -217,7 +218,7 @@ from which the parameters version takes effect.
 To determine the applicable parameter version for a staking taking
 effect at Bitcoin block height `lookup_btc_height`:
 1. Sort all parameters versions by `btc_activation_height` in ascending order.
-2. The first parameters version with `btc_activation_height > lookup_btc_height`
+2. The first parameters version with `lookup_btc_height >= btc_activation_height`
    applies to the staking.
 
 Below is an overview of the key staking parameters contained in the different
@@ -680,9 +681,11 @@ The message defines the following fields:
   (must match the signer of the message).
 
 **Submitting the Withdrawal Transaction**:
-Rewards can be withdrawan by:
+Rewards can be withdrawn by:
 * Submitting the `MsgWithdrawReward` via any RPC/LCD node
 * Using the CLI `babylond tx incentive withdraw-reward <type>`
+* You can claim rewards programmatically using the 
+  TypeScript implementation. Please refer to the [TypeScript claim rewards implementation](https://github.com/babylonlabs-io/simple-staking/blob/main/src/app/hooks/services/useRewardsService.ts#L49).
  
 **Querying for available rewards**:
 Rewards can be checked using the `x/incentive` module:
@@ -691,3 +694,5 @@ Rewards can be checked using the `x/incentive` module:
   where `address` is the bech32 address of the staker.
 * **via the CLI command**
   `babylond query incentive reward-gauges <bech32-address>`
+* **via TypeScript**: You can use the TypeScript implementation to query rewards. 
+Please refer to the [TypeScript library documentation](https://github.com/babylonlabs-io/simple-staking/blob/main/src/app/hooks/client/rpc/queries/useBbnQuery.ts).
