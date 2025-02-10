@@ -9,6 +9,7 @@
    2. [Babylon Chain BTC Staking Parameters](#32-babylon-chain-btc-staking-parameters)
    3. [Creating the Bitcoin transactions](#33-creating-the-bitcoin-transactions)
    4. [The `MsgCreateBTCDelegation` Babylon message](#34-the-msgcreatebtcdelegation-babylon-message)
+   4. [Constructing the `MsgCreateBTCDelegation`](#35-constructing-the-msgcreatebtcdelegation)
 4. [Managing your Bitcoin Stake](#4-managing-your-bitcoin-stake)
    1. [On-demand unbonding](#41-on-demand-unbonding)
    2. [Withdrawing Expired/Unbonded BTC Stake](#42-withdrawing-expiredunbonded-bitcoin-stake)
