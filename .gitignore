@@ -11,13 +11,6 @@ build
 *.dll
 *.so
 *.dylib
-*.db
-*.module
-*.wasm
-*.toml
-*.json
-*.lock
-
 
 # Test binary, built with `go test -c`
 *.test
