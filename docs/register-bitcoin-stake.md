@@ -499,7 +499,7 @@ message MsgCreateBTCDelegation {
     pairing first. Some resources on constructing the proof:
     * [Merkle Proof specification](https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-transaction-get-merkle)
     * [Golang implementation](https://github.com/babylonlabs-io/btc-staker/blob/v0.15.1/babylonclient/utils.go#L10)
-    * [TypeScript implementation](https://github.com/babylonlabs-io/btc-staking-ts/blob/de1d1cff3ef4ad45b5c61f0d7b11fd4479de278a/src/staking/manager.ts#L760))
+    * [TypeScript implementation](https://github.com/babylonlabs-io/btc-staking-ts/blob/de1d1cff3ef4ad45b5c61f0d7b11fd4479de278a/src/staking/manager.ts#L760)
 * `slashing_tx` / `delegator_slashing_sig`:
   The slashing transaction that spends the BTC staking transaction through the
   slashing path and the staker's BIP-340 (Schnorr) signature for it.
