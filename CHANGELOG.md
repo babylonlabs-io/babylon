@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#499](https://github.com/babylonlabs-io/babylon/pull/499) Add `params-by-version` CLI command
+
 ## v1.0.0-rc5
 
 ### Improvements
