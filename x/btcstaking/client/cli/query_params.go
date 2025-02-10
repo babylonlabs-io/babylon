@@ -34,3 +34,4 @@ func CmdQueryParams() *cobra.Command {
 
 	return cmd
 }
+
