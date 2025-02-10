@@ -56,6 +56,7 @@ to have 4 decimal places
 - [#493](https://github.com/babylonlabs-io/babylon/pull/493) Add v1rc5 testnet
 upgrade handler
 - [#480](https://github.com/babylonlabs-io/babylon/pull/480) Improve IBC packet structure
+- [#499](https://github.com/babylonlabs-io/babylon/pull/499) Add `params-by-version` CLI command
 
 ### State Machine Breaking
 
