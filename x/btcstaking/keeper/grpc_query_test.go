@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/rand"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -404,4 +405,122 @@ func AddFinalityProvider(t *testing.T, goCtx context.Context, k btcstakingkeeper
 		Pop:         fp.Pop,
 	})
 	require.NoError(t, err)
+}
+
+func TestCorrectParamsVersionIsUsed(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
+	keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil)
+
+	// covenant and slashing addr
+	covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
+	slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
+	require.NoError(t, err)
+	slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+	require.NoError(t, err)
+	slashingChangeLockTime := uint16(101)
+
+	// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
+	// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
+	// with value below the dust threshold, causing test failure.
+	// Our goal is not to test failure due to such extreme cases here;
+	// this is already covered in FuzzGeneratingValidStakingSlashingTx
+	slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+
+	fp, err := datagen.GenRandomFinalityProvider(r)
+	require.NoError(t, err)
+	AddFinalityProvider(t, ctx, *keeper, fp)
+
+	startHeight := uint32(datagen.RandomInt(r, 100)) + 1
+	btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).AnyTimes()
+
+	endHeight := uint32(datagen.RandomInt(r, 1000)) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
+	stakingTime := endHeight - startHeight
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	btcDel, err := datagen.GenRandomBTCDelegation(
+		r,
+		t,
+		net,
+		[]bbn.BIP340PubKey{*fp.BtcPk},
+		delSK,
+		covenantSKs,
+		covenantPKs,
+		covenantQuorum,
+		slashingPkScript,
+		stakingTime, startHeight, endHeight, 10000,
+		slashingRate,
+		slashingChangeLockTime,
+	)
+
+	err = keeper.AddBTCDelegation(ctx, btcDel)
+	require.NoError(t, err)
+
+	// delegation is active as it have all covenant sigs
+	txHash := btcDel.MustGetStakingTxHash().String()
+	delView, err := keeper.BTCDelegation(ctx, &types.QueryBTCDelegationRequest{
+		StakingTxHashHex: txHash,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, delView)
+
+	require.True(t, delView.BtcDelegation.Active)
+
+	dp := types.DefaultParams()
+
+	// Generate 3 new key pairs and increase keys and quorum size in params, this
+	// will mean new delegations will require more signatures to be active
+	_, pk1, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	_, pk2, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	_, pk3, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+
+	// Convert public keys to BIP340 format
+	bip340pk1 := bbn.NewBIP340PubKeyFromBTCPK(pk1)
+	bip340pk2 := bbn.NewBIP340PubKeyFromBTCPK(pk2)
+	bip340pk3 := bbn.NewBIP340PubKeyFromBTCPK(pk3)
+
+	dp.BtcActivationHeight = 10
+	dp.CovenantPks = append(dp.CovenantPks, *bip340pk1, *bip340pk2, *bip340pk3)
+	dp.CovenantQuorum = dp.CovenantQuorum + 3
+
+	err = keeper.SetParams(ctx, dp)
+	require.NoError(t, err)
+
+	// check delegation is still active in every endpoint
+	delView, err = keeper.BTCDelegation(ctx, &types.QueryBTCDelegationRequest{
+		StakingTxHashHex: txHash,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, delView)
+
+	require.True(t, delView.BtcDelegation.Active)
+
+	delegationsView, err := keeper.BTCDelegations(ctx, &types.QueryBTCDelegationsRequest{
+		Status: types.BTCDelegationStatus_ACTIVE,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, delegationsView)
+	require.Len(t, delegationsView.BtcDelegations, 1)
+
+	pagination := constructRequestWithLimit(r, 10)
+	// Generate the initial query
+	req := types.QueryFinalityProviderDelegationsRequest{
+		FpBtcPkHex: fp.BtcPk.MarshalHex(),
+		Pagination: pagination,
+	}
+
+	fpView, err := keeper.FinalityProviderDelegations(ctx, &req)
+	require.NoError(t, err)
+	require.NotNil(t, fpView)
+	require.Len(t, fpView.BtcDelegatorDelegations, 1)
+	require.Len(t, fpView.BtcDelegatorDelegations[0].Dels, 1)
+	require.True(t, fpView.BtcDelegatorDelegations[0].Dels[0].Active)
 }
