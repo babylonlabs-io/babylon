@@ -23,7 +23,7 @@
 This document walks through the communication protocol
 with the Babylon chain in order to register Bitcoin stakes.
 The document is structured as follows:
-- [Section 2](#2-bitcoin-stake-registration-methods)) provides an overview
+- [Section 2](#2-bitcoin-stake-registration-methods) provides an overview
   of the two flows for registering stakes on the Babylon chain.
 - [Section 3](#3-bitcoin-stake-registration) describes the data required for stake registration,
   the registration process itself, and the `MsgCreateBTCDelegation` message used
