@@ -2,8 +2,8 @@
 ## Table of contents
 1. [Introduction](#1-introduction)
 2. [Bitcoin Stake Registration Methods](#2-bitcoin-stake-registration-methods)
-   1. [Post-Staking Registration Flow](#21-post-staking-registration-flow)
-   2. [Pre-Staking Registration Flow](#22-pre-staking-registration-flow)
+   1. [Post-Staking Registration](#21-post-staking-registration)
+   2. [Pre-Staking Registration](#22-pre-staking-registration)
 3. [Bitcoin Stake Registration](#3-bitcoin-stake-registration)
    1. [Overview of Data that needs to be Submitted](#31-overview-of-registration-data)
    2. [Babylon Chain BTC Staking Parameters](#32-babylon-chain-btc-staking-parameters)
