@@ -19,7 +19,7 @@ import (
 
 // SendIBCPacket sends an IBC packet to a channel
 // (adapted from https://github.com/cosmos/ibc-go/blob/v5.0.0/modules/apps/transfer/keeper/relay.go)
-func (k Keeper) SendIBCPacket(ctx context.Context, channel channeltypes.IdentifiedChannel, packetData *types.ZoneconciergePacketData) error {
+func (k Keeper) SendIBCPacket(ctx context.Context, channel channeltypes.IdentifiedChannel, packetData *types.OutboundPacket) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// get src/dst ports and channels
 	sourcePort := channel.PortId
