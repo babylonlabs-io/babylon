@@ -24,14 +24,14 @@ This document walks through the communication protocol
 with the Babylon chain in order to register Bitcoin stakes.
 The document is structured as follows:
 - [Section 2](#2-bitcoin-stake-registration-methods) provides an overview
-  of the two flows for registering stakes on the Babylon chain.
+    of the two flows for registering stakes on the Babylon chain.
 - [Section 3](#3-bitcoin-stake-registration) describes the data required for stake registration,
-  the registration process itself, and the `MsgCreateBTCDelegation` message used
-  to communicate staking transactions to the Babylon chain.
+    the registration process itself, and the `MsgCreateBTCDelegation` message used
+    to communicate staking transactions to the Babylon chain.
 - [Section 4](#4-managing-your-bitcoin-stake) details stake management, including
-  on-demand unbonding and withdrawal.
+    on-demand unbonding and withdrawal.
 - [Section 5](#5-bitcoin-staking-rewards) focuses on the Bitcoin staking rewards
-  and how to access them.
+    and how to access them.
 
 **Target Audience**: This document is intended as a reference for technical
 readers that intend to implement their own methods for registering Bitcoin stakes
@@ -465,6 +465,7 @@ message MsgCreateBTCDelegation {
     > * Legacy inputs have their `script_sig` field filled with the signature.
     > * Other inputs, such as SegWit inputs, can be provided without the witness
     >   to minimize costs.
+  >
   > The downside to this is that by submitting a fully signed
   > staking transaction, there is a risk of it being propagated
   > to Bitcoin prematurely, before receiving the covenant signatures
