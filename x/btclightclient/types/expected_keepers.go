@@ -15,3 +15,7 @@ type BTCLightClientHooks interface {
 type IncentiveKeeper interface {
 	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
 }
+
+type ZoneConciergeKeeper interface {
+	BroadcastBTCHeaders(ctx context.Context, headers []*BTCHeaderInfo)
+}

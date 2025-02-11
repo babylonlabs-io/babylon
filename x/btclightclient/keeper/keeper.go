@@ -23,6 +23,7 @@ type (
 		storeService corestoretypes.KVStoreService
 		hooks        types.BTCLightClientHooks
 		iKeeper      types.IncentiveKeeper
+		zcKeeper     types.ZoneConciergeKeeper
 		btcConfig    bbn.BtcConfig
 		bl           *types.BtcLightClient
 		authority    string
@@ -36,6 +37,7 @@ func NewKeeper(
 	storeService corestoretypes.KVStoreService,
 	btcConfig bbn.BtcConfig,
 	iKeeper types.IncentiveKeeper,
+	zcKeeper types.ZoneConciergeKeeper,
 	authority string,
 ) Keeper {
 	bl := types.NewBtcLightClientFromParams(btcConfig.NetParams())
@@ -45,6 +47,7 @@ func NewKeeper(
 		storeService: storeService,
 		hooks:        nil,
 		iKeeper:      iKeeper,
+		zcKeeper:     zcKeeper,
 		btcConfig:    btcConfig,
 		bl:           bl,
 		authority:    authority,
@@ -109,6 +112,12 @@ func (k Keeper) triggerEventAndHandleHooksHandler() func(ctx context.Context, s 
 			k.triggerHeaderInserted(ctx, h)
 			k.triggerRollForward(ctx, h)
 		}
+
+		// Broadcast all headers after they're inserted
+		if len(result.HeadersToInsert) > 0 {
+			k.zcKeeper.BroadcastBTCHeaders(sdk.UnwrapSDKContext(ctx), result.HeadersToInsert)
+		}
+
 		return nil
 	}
 }
