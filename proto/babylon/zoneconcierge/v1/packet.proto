@@ -17,6 +17,7 @@ message OutboundPacket {
   oneof packet {
     BTCTimestamp btc_timestamp = 1;
     babylon.btcstaking.v1.BTCStakingIBCPacket btc_staking = 2;
+    BTCHeaders btc_headers = 3;
   }
 }
 
@@ -26,6 +27,12 @@ message InboundPacket {
   oneof packet {
     ConsumerSlashingIBCPacket consumer_slashing = 1;
   }
+}
+
+// BTCHeaders contains BTC headers received from a vigilante reporter
+// These headers are forwarded to consumer chains immediately upon receipt
+message BTCHeaders {
+    repeated babylon.btclightclient.v1.BTCHeaderInfo headers = 1;
 }
 
 // BTCTimestamp is a BTC timestamp that carries information of a BTC-finalised epoch
