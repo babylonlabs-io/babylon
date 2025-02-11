@@ -457,6 +457,7 @@ func TestCorrectParamsVersionIsUsed(t *testing.T) {
 		slashingRate,
 		slashingChangeLockTime,
 	)
+	require.NoError(t, err)
 
 	err = keeper.AddBTCDelegation(ctx, btcDel)
 	require.NoError(t, err)
@@ -489,7 +490,7 @@ func TestCorrectParamsVersionIsUsed(t *testing.T) {
 
 	dp.BtcActivationHeight = 10
 	dp.CovenantPks = append(dp.CovenantPks, *bip340pk1, *bip340pk2, *bip340pk3)
-	dp.CovenantQuorum = dp.CovenantQuorum + 3
+	dp.CovenantQuorum += 3
 
 	err = keeper.SetParams(ctx, dp)
 	require.NoError(t, err)
