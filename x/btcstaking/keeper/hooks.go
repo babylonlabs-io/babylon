@@ -22,8 +22,9 @@ var _ HandledHooks = Hooks{}
 
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
-// AfterBTCRollBack implements HandledHooks.
-func (h Hooks) AfterBTCRollBack(goCtx context.Context, rollbackFrom *ltypes.BTCHeaderInfo, rollbackTo *ltypes.BTCHeaderInfo) {
+// AfterBTCRollBack updates the Largest BTC reorg if it is higher than the current one
+// to later verify in EndBlocker.
+func (h Hooks) AfterBTCRollBack(goCtx context.Context, rollbackFrom, rollbackTo *ltypes.BTCHeaderInfo) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// sanity checks for rollback values
