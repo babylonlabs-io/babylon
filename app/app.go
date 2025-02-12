@@ -673,10 +673,6 @@ func (app *BabylonApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) 
 		panic(err)
 	}
 
-	if _, ok := app.ModuleManager.Modules[epochingtypes.ModuleName].(module.HasGenesis); !ok {
-		panic("FAULTY")
-	}
-
 	res, err := app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
 	if err != nil {
 		panic(err)
@@ -821,6 +817,7 @@ func (app *BabylonApp) setupUpgradeStoreLoaders() {
 		if upgradeInfo.Name == upgrade.UpgradeName {
 			storeUpgrades := upgrade.StoreUpgrades
 			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
+			return
 		}
 	}
 }
