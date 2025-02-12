@@ -46,6 +46,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#509](https://github.com/babylonlabs-io/babylon/pull/509) crypto: fix ECDSA malleability
 - [#486](https://github.com/babylonlabs-io/babylon/pull/486) crypto: blinding base mult of nonce
+- [#443](https://github.com/babylonlabs-io/babylon/pull/443) Fix swagger generation for incentive missing `v1` in path
+- [#505](https://github.com/babylonlabs-io/babylon/pull/505) Fix `x/btcstaking`
+delegation queries
 
 ## v1.0.0-rc5
 
