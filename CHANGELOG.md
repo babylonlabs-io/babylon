@@ -48,6 +48,7 @@ check of rewards
 - [#480](https://github.com/babylonlabs-io/babylon/pull/480) Improve IBC packet structure
 - [#499](https://github.com/babylonlabs-io/babylon/pull/499) Add `params-by-version` CLI command
 - [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
+- [#515](https://github.com/babylonlabs-io/babylon/pull/515) Add `staker_addr` to `EventBTCDelegationCreated`
 
 ### State Machine Breaking
 
