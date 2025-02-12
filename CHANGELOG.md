@@ -41,6 +41,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#499](https://github.com/babylonlabs-io/babylon/pull/499) Add `params-by-version` CLI command
 
+### Bug fixes
+
+- [#486](https://github.com/babylonlabs-io/babylon/pull/486) crypto: blinding base mult of nonce
+
 ## v1.0.0-rc5
 
 ### Improvements
