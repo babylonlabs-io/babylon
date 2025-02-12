@@ -46,6 +46,7 @@ check of rewards
 - [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public
 - [#480](https://github.com/babylonlabs-io/babylon/pull/480) Improve IBC packet structure
 - [#499](https://github.com/babylonlabs-io/babylon/pull/499) Add `params-by-version` CLI command
+- [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
 
 ### State Machine Breaking
 
