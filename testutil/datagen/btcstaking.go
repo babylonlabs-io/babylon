@@ -165,7 +165,7 @@ func GenRandomBTCDelegation(
 	require.NoError(t, err)
 	w := uint16(100) // TODO: parameterise w
 
-	pop, err := NewPoPBTC(sdk.MustAccAddressFromBech32(staker.Address), delSK)
+	pop, err := NewPoPBTC(MustAccAddressFromBech32WithPrefix(staker.Address, "bbn"), delSK)
 	require.NoError(t, err)
 
 	del := &bstypes.BTCDelegation{
