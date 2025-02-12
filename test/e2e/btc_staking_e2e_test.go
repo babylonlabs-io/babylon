@@ -410,7 +410,7 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 
 	// NOTE: we use the multisig address for the BTC delegation
 	multisigStakerAddr := sdk.MustAccAddressFromBech32(multisigAddr)
-	pop, err := bstypes.NewPoPBTC(multisigStakerAddr, s.delBTCSK)
+	pop, err := datagen.NewPoPBTC(multisigStakerAddr, s.delBTCSK)
 	s.NoError(err)
 
 	// generate staking tx and slashing tx
@@ -480,7 +480,7 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 	unbondingTime := btcStkParams.UnbondingTimeBlocks
 
 	// NOTE: we use the grantee staker address for the BTC delegation PoP
-	pop, err := bstypes.NewPoPBTC(granteeStakerAddr, s.delBTCSK)
+	pop, err := datagen.NewPoPBTC(granteeStakerAddr, s.delBTCSK)
 	s.NoError(err)
 
 	// generate staking tx and slashing tx
@@ -571,7 +571,7 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	unbondingTime := btcStkParams.UnbondingTimeBlocks
 
 	// NOTE: we use the grantee staker address for the BTC delegation PoP
-	pop, err := bstypes.NewPoPBTC(granteeStakerAddr, s.delBTCSK)
+	pop, err := datagen.NewPoPBTC(granteeStakerAddr, s.delBTCSK)
 	s.NoError(err)
 
 	// generate staking tx and slashing tx

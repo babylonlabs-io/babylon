@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#508](https://github.com/babylonlabs-io/babylon/pull/508) Move PoP constructor functiosn to datagen/
 - [#499](https://github.com/babylonlabs-io/babylon/pull/499) Add `params-by-version` CLI command
 
 ### Bug fixes

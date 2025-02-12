@@ -69,7 +69,7 @@ func GenRandomFinalityProviderWithBTCBabylonSKs(
 	btcPK := btcSK.PubKey()
 	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	// pop
-	pop, err := bstypes.NewPoPBTC(fpAddr, btcSK)
+	pop, err := NewPoPBTC(fpAddr, btcSK)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +168,7 @@ func GenRandomBTCDelegation(
 	require.NoError(t, err)
 	w := uint16(100) // TODO: parameterise w
 
-	pop, err := bstypes.NewPoPBTC(sdk.MustAccAddressFromBech32(staker.Address), delSK)
+	pop, err := NewPoPBTC(sdk.MustAccAddressFromBech32(staker.Address), delSK)
 	require.NoError(t, err)
 
 	del := &bstypes.BTCDelegation{
@@ -346,7 +346,7 @@ func GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
 	delSlashingTxSig, err := unbondingSlashingInfo.GenDelSlashingTxSig(delSK)
 	require.NoError(t, err)
 
-	pop, err := bstypes.NewPoPBTC(sdk.MustAccAddressFromBech32(stakerAddr.String()), delSK)
+	pop, err := NewPoPBTC(sdk.MustAccAddressFromBech32(stakerAddr.String()), delSK)
 	require.NoError(t, err)
 
 	msg := &bstypes.MsgCreateBTCDelegation{
