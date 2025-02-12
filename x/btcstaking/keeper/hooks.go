@@ -9,7 +9,7 @@ import (
 )
 
 // HandledHooks Helper interface to ensure Hooks implements
-// the btclightclient hooks
+// the btclightclient hook
 type HandledHooks interface {
 	ltypes.BTCLightClientHooks
 }
