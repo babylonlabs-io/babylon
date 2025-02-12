@@ -46,6 +46,8 @@ usage in `x/btcstkconsumer` queries
 check of rewards
 - [#480](https://github.com/babylonlabs-io/babylon/pull/480) Improve IBC packet structure
 - [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
+- [#515](https://github.com/babylonlabs-io/babylon/pull/515) Add `staker_addr` to `EventBTCDelegationCreated`
+- [#504](https://github.com/babylonlabs-io/babylon/pull/504) Add `btc-headers` IBC packet
 
 ### State Machine Breaking
 
