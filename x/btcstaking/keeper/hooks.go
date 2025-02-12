@@ -40,7 +40,7 @@ func (h Hooks) AfterBTCRollBack(goCtx context.Context, rollbackFrom *ltypes.BTCH
 	// should verify that the BTC height it is rolling back is lower than the latest tip
 	if rollbackTo.Height >= rollbackFrom.Height {
 		h.k.Logger(ctx).Warn(
-			"BTC rollback with rollback height 'To' heigher or equal than 'From'",
+			"BTC rollback with rollback height 'To' higher or equal than 'From'",
 			"from_height", rollbackFrom.Height,
 			"to_height", rollbackTo.Height,
 		)
