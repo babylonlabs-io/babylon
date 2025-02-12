@@ -1007,7 +1007,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	stakerAddr := sdk.MustAccAddressFromBech32(acc.Address)
 
 	// PoP
-	pop, err := types.NewPoPBTC(stakerAddr, delSK)
+	pop, err := datagen.NewPoPBTC(stakerAddr, delSK)
 	require.NoError(t, err)
 	// generate staking tx info
 	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
