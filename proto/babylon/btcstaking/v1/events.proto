@@ -178,6 +178,8 @@ message EventBTCDelegationCreated {
   string unbonding_tx = 8 [(amino.dont_omitempty) = true];
   // new_state of the BTC delegation
   string new_state = 9 [(amino.dont_omitempty) = true];
+  // staker Babylon address
+  string staker_addr = 10 [(amino.dont_omitempty) = true];
 }
 
 // EventCovenantSignatureReceived is the event emitted when a covenant committee
