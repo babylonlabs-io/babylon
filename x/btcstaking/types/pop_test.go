@@ -41,7 +41,7 @@ func FuzzPoP_BIP340(f *testing.F) {
 		accAddr := datagen.GenRandomAccount().GetAddress()
 
 		// generate and verify PoP, correct case
-		pop, err := types.NewPoPBTC(accAddr, btcSK)
+		pop, err := datagen.NewPoPBTC(accAddr, btcSK)
 		require.NoError(t, err)
 		err = pop.VerifyBIP340(accAddr, bip340PK)
 		require.NoError(t, err)
@@ -67,7 +67,7 @@ func FuzzPoP_ECDSA(f *testing.F) {
 		accAddr := datagen.GenRandomAccount().GetAddress()
 
 		// generate and verify PoP, correct case
-		pop, err := types.NewPoPBTCWithECDSABTCSig(accAddr, btcSK)
+		pop, err := datagen.NewPoPBTCWithECDSABTCSig(accAddr, btcSK)
 		require.NoError(t, err)
 		err = pop.VerifyECDSA(accAddr, bip340PK)
 		require.NoError(t, err)
@@ -88,7 +88,7 @@ func FuzzPoP_BIP322_P2WPKH(f *testing.F) {
 		accAddr := datagen.GenRandomAccount().GetAddress()
 
 		// generate and verify PoP, correct case
-		pop, err := types.NewPoPBTCWithBIP322P2WPKHSig(accAddr, btcSK, net)
+		pop, err := datagen.NewPoPBTCWithBIP322P2WPKHSig(accAddr, btcSK, net)
 		require.NoError(t, err)
 		err = pop.VerifyBIP322(accAddr, bip340PK, net)
 		require.NoError(t, err)
@@ -109,7 +109,7 @@ func FuzzPoP_BIP322_P2Tr_BIP86(f *testing.F) {
 		accAddr := datagen.GenRandomAccount().GetAddress()
 
 		// generate and verify PoP, correct case
-		pop, err := types.NewPoPBTCWithBIP322P2TRBIP86Sig(accAddr, btcSK, net)
+		pop, err := datagen.NewPoPBTCWithBIP322P2TRBIP86Sig(accAddr, btcSK, net)
 		require.NoError(t, err)
 		err = pop.VerifyBIP322(accAddr, bip340PK, net)
 		require.NoError(t, err)
@@ -134,7 +134,7 @@ func FuzzPop_ValidBip322SigNotMatchingBip340PubKey(f *testing.F) {
 		accAddr := datagen.GenRandomAccount().GetAddress()
 
 		// generate valid bip322 P2WPKH pop
-		pop, err := types.NewPoPBTCWithBIP322P2WPKHSig(accAddr, btcSK, net)
+		pop, err := datagen.NewPoPBTCWithBIP322P2WPKHSig(accAddr, btcSK, net)
 		require.NoError(t, err)
 
 		// verify bip322 pop with incorrect staker key
@@ -142,7 +142,7 @@ func FuzzPop_ValidBip322SigNotMatchingBip340PubKey(f *testing.F) {
 		require.Error(t, err)
 
 		// generate valid bip322 P2Tr pop
-		pop, err = types.NewPoPBTCWithBIP322P2TRBIP86Sig(accAddr, btcSK, net)
+		pop, err = datagen.NewPoPBTCWithBIP322P2TRBIP86Sig(accAddr, btcSK, net)
 		require.NoError(t, err)
 
 		// verify bip322 pop with incorrect staker key
@@ -159,13 +159,13 @@ func TestPoPBTCValidateBasic(t *testing.T) {
 
 	addrToSign := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
 
-	popBip340, err := types.NewPoPBTC(addrToSign, btcSK)
+	popBip340, err := datagen.NewPoPBTC(addrToSign, btcSK)
 	require.NoError(t, err)
 
-	popBip322, err := types.NewPoPBTCWithBIP322P2WPKHSig(addrToSign, btcSK, &chaincfg.MainNetParams)
+	popBip322, err := datagen.NewPoPBTCWithBIP322P2WPKHSig(addrToSign, btcSK, &chaincfg.MainNetParams)
 	require.NoError(t, err)
 
-	popECDSA, err := types.NewPoPBTCWithECDSABTCSig(addrToSign, btcSK)
+	popECDSA, err := datagen.NewPoPBTCWithECDSABTCSig(addrToSign, btcSK)
 	require.NoError(t, err)
 
 	tcs := []struct {
@@ -245,13 +245,13 @@ func TestPoPBTCVerify(t *testing.T) {
 
 	netParams := &chaincfg.MainNetParams
 
-	popBip340, err := types.NewPoPBTC(addrToSign, btcSK)
+	popBip340, err := datagen.NewPoPBTC(addrToSign, btcSK)
 	require.NoError(t, err)
 
-	popBip322, err := types.NewPoPBTCWithBIP322P2WPKHSig(addrToSign, btcSK, netParams)
+	popBip322, err := datagen.NewPoPBTCWithBIP322P2WPKHSig(addrToSign, btcSK, netParams)
 	require.NoError(t, err)
 
-	popECDSA, err := types.NewPoPBTCWithECDSABTCSig(addrToSign, btcSK)
+	popECDSA, err := datagen.NewPoPBTCWithECDSABTCSig(addrToSign, btcSK)
 	require.NoError(t, err)
 
 	tcs := []struct {

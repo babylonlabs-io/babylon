@@ -330,7 +330,7 @@ func (h *Helper) CreateDelegationWithBtcBlockHeight(
 	staker := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
 
 	// PoP
-	pop, err := types.NewPoPBTC(staker, delSK)
+	pop, err := datagen.NewPoPBTC(staker, delSK)
 	h.NoError(err)
 	// generate staking tx info
 	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
