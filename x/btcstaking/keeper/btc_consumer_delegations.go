@@ -55,7 +55,6 @@ func (k Keeper) GetBTCConsumerDelegatorDelegationsResponses(
 	fpBTCPK *bbn.BIP340PubKey,
 	pagination *query.PageRequest,
 	btcHeight uint32,
-	covenantQuorum uint32,
 ) ([]*bstypes.BTCDelegatorDelegationsResponse, *query.PageResponse, error) {
 	btcDelStore := k.btcConsumerDelegatorStore(ctx, fpBTCPK)
 
@@ -70,9 +69,11 @@ func (k Keeper) GetBTCConsumerDelegatorDelegationsResponses(
 
 		btcDelsResp := make([]*bstypes.BTCDelegationResponse, len(curBTCDels.Dels))
 		for i, btcDel := range curBTCDels.Dels {
+			params := k.GetParamsByVersion(ctx, btcDel.ParamsVersion)
+
 			status := btcDel.GetStatus(
 				btcHeight,
-				covenantQuorum,
+				params.CovenantQuorum,
 			)
 			btcDelsResp[i] = bstypes.NewBTCDelegationResponse(btcDel, status)
 		}
