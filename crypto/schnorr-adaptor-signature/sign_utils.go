@@ -3,6 +3,7 @@ package schnorr_adaptor_signature
 import (
 	"fmt"
 
+	"github.com/babylonlabs-io/babylon/crypto/common"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -21,14 +22,16 @@ func encSign(
 	m []byte,
 	t *btcec.JacobianPoint,
 ) (*AdaptorSignature, error) {
-	// R' = kG
-	var RHat btcec.JacobianPoint
+	// R' = kG (with blinding in order to prevent timing side channel attacks)
 	k := *nonce
-	btcec.ScalarBaseMultNonConst(&k, &RHat)
+	RHat, err := common.ScalarBaseMultWithBlinding(&k)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute kG: %w", err)
+	}
 
 	// get R = R'+T
 	var R btcec.JacobianPoint
-	btcec.AddNonConst(&RHat, t, &R)
+	btcec.AddNonConst(RHat, t, &R)
 	// negate k and R if R.y is odd
 	affineRWithEvenY, needNegation := intoPointWithEvenY(&R)
 	R = *affineRWithEvenY
