@@ -96,7 +96,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegatio
 
 	// NOTE: we use the node's address for the BTC delegation
 	stakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
-	pop, err := bstypes.NewPoPBTC(stakerAddr, s.delBTCSK)
+	pop, err := datagen.NewPoPBTC(stakerAddr, s.delBTCSK)
 	s.NoError(err)
 
 	// generate staking tx and slashing tx
