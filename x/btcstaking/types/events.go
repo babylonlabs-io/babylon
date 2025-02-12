@@ -109,6 +109,7 @@ func NewBtcDelCreationEvent(
 		UnbondingTime:             strconv.FormatUint(uint64(btcDel.UnbondingTime), 10),
 		UnbondingTx:               hex.EncodeToString(btcDel.BtcUndelegation.UnbondingTx),
 		NewState:                  BTCDelegationStatus_PENDING.String(),
+		StakerAddr:                btcDel.StakerAddr,
 	}
 }
 
