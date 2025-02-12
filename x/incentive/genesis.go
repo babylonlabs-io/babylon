@@ -9,10 +9,13 @@ import (
 
 // InitGenesis initializes the module's state from a provided genesis state.
 func InitGenesis(ctx context.Context, k keeper.Keeper, genState types.GenesisState) {
-	if err := k.SetParams(ctx, genState.Params); err != nil {
+	if err := genState.Validate(); err != nil {
 		panic(err)
 	}
-	// TODO(rafilx): add gauge, reward tracker
+
+	if err := k.InitGenesis(ctx, genState); err != nil {
+		panic(err)
+	}
 }
 
 // ExportGenesis returns the module's exported genesis

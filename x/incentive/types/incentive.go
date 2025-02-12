@@ -17,6 +17,16 @@ func (g *Gauge) GetCoinsPortion(portion math.LegacyDec) sdk.Coins {
 	return GetCoinsPortion(g.Coins, portion)
 }
 
+func (g *Gauge) Validate() error {
+	if !g.Coins.IsValid() {
+		return fmt.Errorf("gauge has invalid coins: %s", g.Coins.String())
+	}
+	if g.Coins.IsAnyNegative() {
+		return fmt.Errorf("gauge contains negative coin amounts: %s", g.Coins.String())
+	}
+	return nil
+}
+
 func NewRewardGauge(coins ...sdk.Coin) *RewardGauge {
 	return &RewardGauge{
 		Coins:          coins,
@@ -42,6 +52,19 @@ func (rg *RewardGauge) IsFullyWithdrawn() bool {
 
 func (rg *RewardGauge) Add(coins sdk.Coins) {
 	rg.Coins = rg.Coins.Add(coins...)
+}
+
+func (rg *RewardGauge) Validate() error {
+	if !rg.Coins.IsValid() || rg.Coins.IsAnyNegative() {
+		return fmt.Errorf("reward gauge has invalid or negative coins: %s", rg.Coins.String())
+	}
+	if !rg.WithdrawnCoins.IsValid() || rg.WithdrawnCoins.IsAnyNegative() {
+		return fmt.Errorf("reward gauge has invalid or negative withdrawn coins: %s", rg.WithdrawnCoins.String())
+	}
+	if rg.WithdrawnCoins.IsAnyGT(rg.Coins) {
+		return fmt.Errorf("withdrawn coins (%s) cannot exceed total coins (%s)", rg.WithdrawnCoins.String(), rg.Coins.String())
+	}
+	return nil
 }
 
 func GetCoinsPortion(coinsInt sdk.Coins, portion math.LegacyDec) sdk.Coins {
@@ -95,4 +118,13 @@ func (st StakeholderType) String() string {
 		return "btc_delegation"
 	}
 	panic("invalid stakeholder type")
+}
+
+func (st StakeholderType) Validate() error {
+	switch st {
+	case FINALITY_PROVIDER, BTC_DELEGATION:
+		return nil
+	default:
+		return fmt.Errorf("invalid stakeholder type: %d", st)
+	}
 }
