@@ -53,8 +53,9 @@ check of rewards
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
 
 ### Bug fixes
-- [#443](https://github.com/babylonlabs-io/babylon/pull/443) Fix swagger generation for incentive missing
-`v1` in path
+
+- [#486](https://github.com/babylonlabs-io/babylon/pull/486) crypto: blinding base mult of nonce
+- [#443](https://github.com/babylonlabs-io/babylon/pull/443) Fix swagger generation for incentive missing `v1` in path
 
 ## v1.0.0-rc5
 
