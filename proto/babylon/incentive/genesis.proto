@@ -40,6 +40,9 @@ message RewardGaugeEntry {
 
 // StakeholderType represents the different types of stakeholders.
 enum StakeholderType {
+  option (gogoproto.goproto_enum_prefix) = false;
+  // Disables default String() generation
+  option (gogoproto.goproto_enum_stringer) = false;
   // Finality provider stakeholder type
   FINALITY_PROVIDER = 0;
   // BTC delegation stakeholder type

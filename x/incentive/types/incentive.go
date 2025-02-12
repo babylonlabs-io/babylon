@@ -55,40 +55,32 @@ func GetCoinsPortion(coinsInt sdk.Coins, portion math.LegacyDec) sdk.Coins {
 	return portionCoinsInt
 }
 
-// StakeholderType enum for stakeholder type, used as key prefix in KVStore
-type StakeholderType byte
-
-const (
-	FinalityProviderType StakeholderType = iota
-	BTCDelegationType
-)
-
 func GetAllStakeholderTypes() []StakeholderType {
-	return []StakeholderType{FinalityProviderType, BTCDelegationType}
+	return []StakeholderType{FINALITY_PROVIDER, BTC_DELEGATION}
 }
 
 func NewStakeHolderType(stBytes []byte) (StakeholderType, error) {
 	if len(stBytes) != 1 {
-		return FinalityProviderType, fmt.Errorf("invalid format for stBytes")
+		return FINALITY_PROVIDER, fmt.Errorf("invalid format for stBytes")
 	}
 	switch stBytes[0] {
-	case byte(FinalityProviderType):
-		return FinalityProviderType, nil
-	case byte(BTCDelegationType):
-		return BTCDelegationType, nil
+	case byte(FINALITY_PROVIDER):
+		return FINALITY_PROVIDER, nil
+	case byte(BTC_DELEGATION):
+		return BTC_DELEGATION, nil
 	default:
-		return FinalityProviderType, fmt.Errorf("invalid stBytes")
+		return FINALITY_PROVIDER, fmt.Errorf("invalid stBytes")
 	}
 }
 
 func NewStakeHolderTypeFromString(stStr string) (StakeholderType, error) {
 	switch stStr {
 	case "finality_provider":
-		return FinalityProviderType, nil
+		return FINALITY_PROVIDER, nil
 	case "btc_delegation":
-		return BTCDelegationType, nil
+		return BTC_DELEGATION, nil
 	default:
-		return FinalityProviderType, fmt.Errorf("invalid stStr")
+		return FINALITY_PROVIDER, fmt.Errorf("invalid stStr")
 	}
 }
 
@@ -97,9 +89,9 @@ func (st StakeholderType) Bytes() []byte {
 }
 
 func (st StakeholderType) String() string {
-	if st == FinalityProviderType {
+	if st == FINALITY_PROVIDER {
 		return "finality_provider"
-	} else if st == BTCDelegationType {
+	} else if st == BTC_DELEGATION {
 		return "btc_delegation"
 	}
 	panic("invalid stakeholder type")
