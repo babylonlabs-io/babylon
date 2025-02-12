@@ -13,11 +13,13 @@ func (k Keeper) triggerHeaderInserted(ctx context.Context, headerInfo *types.BTC
 	k.emitTypedEventWithLog(ctx, &types.EventBTCHeaderInserted{Header: headerInfo})
 }
 
-func (k Keeper) triggerRollBack(ctx context.Context, headerInfo *types.BTCHeaderInfo) {
+// triggerRollBack calls the hook and emits an event, the rollbackFrom is the latest tip
+// prior rollbackTo best block is sent
+func (k Keeper) triggerRollBack(ctx context.Context, rollbackFrom, rollbackTo *types.BTCHeaderInfo) {
 	// Trigger AfterBTCRollBack hook
-	k.AfterBTCRollBack(ctx, headerInfo)
+	k.AfterBTCRollBack(ctx, rollbackFrom, rollbackTo)
 	// Emit BTCRollBack event
-	k.emitTypedEventWithLog(ctx, &types.EventBTCRollBack{Header: headerInfo})
+	k.emitTypedEventWithLog(ctx, &types.EventBTCRollBack{Header: rollbackTo})
 }
 
 func (k Keeper) triggerRollForward(ctx context.Context, headerInfo *types.BTCHeaderInfo) {

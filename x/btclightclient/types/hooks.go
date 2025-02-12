@@ -18,9 +18,9 @@ func (h MultiBTCLightClientHooks) AfterBTCHeaderInserted(ctx context.Context, he
 	}
 }
 
-func (h MultiBTCLightClientHooks) AfterBTCRollBack(ctx context.Context, headerInfo *BTCHeaderInfo) {
+func (h MultiBTCLightClientHooks) AfterBTCRollBack(ctx context.Context, rollbackFrom, rollbackTo *BTCHeaderInfo) {
 	for i := range h {
-		h[i].AfterBTCRollBack(ctx, headerInfo)
+		h[i].AfterBTCRollBack(ctx, rollbackFrom, rollbackTo)
 	}
 }
 
