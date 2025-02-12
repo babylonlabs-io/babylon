@@ -1,4 +1,4 @@
-# Registration of Existing Stakes to the Babylon Chain
+# Phase-1 Stake Registration Eligibility
 
 This document is intended for Bitcoin stakers who have
 submitted confirmed Bitcoin staking transactions
@@ -129,7 +129,7 @@ This data is submitted as a transaction on the Babylon blockchain,
 requiring native Babylon blockchain funds for transaction fees.
 Full details on the staking transaction format
 and data requirements are available in the
-[`x/btcstaking` module specification](../x/btcstaking).
+[staking registration guide](./register-bitcoin-stake.md).
 
 ## Frequently Asked Questions (FAQ)
 
