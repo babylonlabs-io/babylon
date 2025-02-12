@@ -121,7 +121,7 @@ func GenRandomBTCDelegation(
 	if err != nil {
 		return nil, err
 	}
-	staker := GenRandomAccount()
+	staker := GenRandomAccountWithPrefix("bbn") // Staker address is always Babylon's
 
 	// staking/slashing tx
 	stakingSlashingInfo := GenBTCStakingSlashingInfo(
