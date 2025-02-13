@@ -21,5 +21,6 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
 	k.BroadcastBTCStakingConsumerEvents(ctx)
+	k.BroadcastBTCHeaders(ctx)
 	return []abci.ValidatorUpdate{}, nil
 }
