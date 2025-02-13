@@ -29,6 +29,7 @@ func GenRandomValidatorAddress() sdk.ValAddress {
 	return sdk.ValAddress(ed25519.GenPrivKey().PubKey().Address())
 }
 
+// FIXME? Rename to GenRandomEd25519Address
 func GenRandomAddress() sdk.AccAddress {
 	return sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 }

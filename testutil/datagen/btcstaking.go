@@ -1,7 +1,6 @@
 package datagen
 
 import (
-	sec256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"math/rand"
 	"testing"
 
@@ -124,7 +123,7 @@ func GenRandomBTCDelegation(
 		return nil, err
 	}
 
-	stakerAddress := sdk.AccAddress(sec256k1.GenPrivKey().PubKey().Address().Bytes())
+	stakerAddress := GenRandomSecp256k1Address()
 
 	// staking/slashing tx
 	stakingSlashingInfo := GenBTCStakingSlashingInfo(

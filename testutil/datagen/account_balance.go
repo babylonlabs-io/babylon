@@ -11,6 +11,11 @@ import (
 	"strings"
 )
 
+func GenRandomSecp256k1Address() sdk.AccAddress {
+	senderPrivKey := sec256k1.GenPrivKey()
+	return senderPrivKey.PubKey().Address().Bytes()
+}
+
 func GenRandomAccount() *authtypes.BaseAccount {
 	senderPrivKey := sec256k1.GenPrivKey()
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
