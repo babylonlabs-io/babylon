@@ -15,6 +15,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
@@ -121,7 +122,7 @@ func GenRandomBTCDelegation(
 	if err != nil {
 		return nil, err
 	}
-	staker := GenRandomAccountWithPrefix("bbn") // Staker address is always Babylon's
+	staker := GenRandomAccountWithPrefix(appparams.Bech32PrefixAccAddr) // Staker address is always Babylon's
 
 	// staking/slashing tx
 	stakingSlashingInfo := GenBTCStakingSlashingInfo(
@@ -165,7 +166,7 @@ func GenRandomBTCDelegation(
 	require.NoError(t, err)
 	w := uint16(100) // TODO: parameterise w
 
-	pop, err := NewPoPBTC(MustAccAddressFromBech32WithPrefix(staker.Address, "bbn"), delSK)
+	pop, err := NewPoPBTC(MustAccAddressFromBech32WithPrefix(staker.Address, appparams.Bech32PrefixAccAddr), delSK)
 	require.NoError(t, err)
 
 	del := &bstypes.BTCDelegation{
