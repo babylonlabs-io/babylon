@@ -1,6 +1,7 @@
 package datagen
 
 import (
+	sec256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"math/rand"
 	"testing"
 
@@ -122,7 +123,8 @@ func GenRandomBTCDelegation(
 	if err != nil {
 		return nil, err
 	}
-	staker := GenRandomAccountWithPrefix(appparams.Bech32PrefixAccAddr) // Staker address is always Babylon's
+
+	stakerAddress := sdk.AccAddress(sec256k1.GenPrivKey().PubKey().Address().Bytes())
 
 	// staking/slashing tx
 	stakingSlashingInfo := GenBTCStakingSlashingInfo(
@@ -166,11 +168,11 @@ func GenRandomBTCDelegation(
 	require.NoError(t, err)
 	w := uint16(100) // TODO: parameterise w
 
-	pop, err := NewPoPBTC(MustAccAddressFromBech32WithPrefix(staker.Address, appparams.Bech32PrefixAccAddr), delSK)
+	pop, err := NewPoPBTC(stakerAddress, delSK)
 	require.NoError(t, err)
 
 	del := &bstypes.BTCDelegation{
-		StakerAddr:       staker.Address,
+		StakerAddr:       sdk.MustBech32ifyAddressBytes(appparams.Bech32PrefixAccAddr, stakerAddress), // Staker address is always Babylon's
 		BtcPk:            delBTCPK,
 		Pop:              pop,
 		FpBtcPkList:      fpBTCPKs,
