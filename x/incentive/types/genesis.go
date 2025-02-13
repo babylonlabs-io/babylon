@@ -2,6 +2,8 @@ package types
 
 import (
 	"fmt"
+	"sort"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -9,8 +11,8 @@ import (
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params:           DefaultParams(),
-		BtcStakingGauges: nil,
-		RewardGauges:     nil,
+		BtcStakingGauges: []BTCStakingGaugeEntry{},
+		RewardGauges:     []RewardGaugeEntry{},
 	}
 }
 
@@ -77,16 +79,38 @@ func validateBTCStakingGauges(entries []BTCStakingGaugeEntry) error {
 }
 
 func validateRewardGauges(entries []RewardGaugeEntry) error {
-	addressMap := make(map[string]bool) // To check for duplicate addresses
+	addressTypeMap := make(map[string]map[StakeholderType]bool) // Map of address -> map of types
+
 	for _, entry := range entries {
-		if _, exists := addressMap[entry.Address]; exists {
-			return fmt.Errorf("duplicate reward gauge for address: %s", entry.Address)
+		if _, exists := addressTypeMap[entry.Address]; !exists {
+			addressTypeMap[entry.Address] = make(map[StakeholderType]bool)
 		}
-		addressMap[entry.Address] = true
+
+		if _, exists := addressTypeMap[entry.Address][entry.StakeholderType]; exists {
+			return fmt.Errorf("duplicate reward gauge for address: %s and type: %s", entry.Address, entry.StakeholderType)
+		}
+
+		addressTypeMap[entry.Address][entry.StakeholderType] = true
 
 		if err := entry.Validate(); err != nil {
 			return err
 		}
 	}
+
 	return nil
+}
+
+// Helper function to sort gauges to get a deterministic
+// result on the tests
+func SortGauges(gs *GenesisState) {
+	sort.Slice(gs.RewardGauges, func(i, j int) bool {
+		if gs.RewardGauges[i].StakeholderType != gs.RewardGauges[j].StakeholderType {
+			return gs.RewardGauges[i].StakeholderType < gs.RewardGauges[j].StakeholderType
+		}
+		return gs.RewardGauges[i].Address < gs.RewardGauges[j].Address
+	})
+
+	sort.Slice(gs.BtcStakingGauges, func(i, j int) bool {
+		return gs.BtcStakingGauges[i].Height < gs.BtcStakingGauges[j].Height
+	})
 }
