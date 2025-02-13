@@ -95,7 +95,7 @@ func U64ToBEBytes(u uint64) []byte {
 	return u64bytes
 }
 
-func encodeFirstOpRetrun(
+func encodeFirstOpReturn(
 	tag BabylonTag,
 	version FormatVersion,
 	epoch uint64,
@@ -359,7 +359,7 @@ func ConnectParts(version FormatVersion, f []byte, s []byte) ([]byte, error) {
 	}
 
 	var dst []byte
-	// TODO this is not supper efficient
+	// TODO this is not super efficient
 	dst = append(dst, f...)
 	dst = append(dst, s[:hashStartIdx]...)
 
