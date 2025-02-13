@@ -1,0 +1,2876 @@
+swagger: '2.0'
+info:
+  contact:
+    name: CometBFT
+    url: 'https://cometbft.com/'
+  description: >
+    CometBFT supports the following RPC protocols:
+
+
+    * URI over HTTP
+
+    * JSONRPC over HTTP
+
+    * JSONRPC over websockets
+
+
+    ## Configuration
+
+
+    RPC can be configured by tuning parameters under `[rpc]` table in the
+
+    `$CMTHOME/config/config.toml` file or by using the `--rpc.X` command-line
+
+    flags.
+
+
+    The default RPC listen address is `tcp://127.0.0.1:26657`.
+
+    To set another address, set the `laddr` config parameter to desired value.
+
+    CORS (Cross-Origin Resource Sharing) can be enabled by setting
+
+    `cors_allowed_origins`, `cors_allowed_methods`, `cors_allowed_headers`
+
+    config parameters.
+
+
+    If testing using a local RPC node, under the `[rpc]`
+
+    section change the `cors_allowed_origins` property, please add the URL of
+
+    the site where this OpenAPI document is running, for example:
+
+      `cors_allowed_origins = ["http://localhost:8088"]`
+
+    or if testing from the official documentation site:
+
+      `cors_allowed_origins = ["https://docs.cometbft.com"]`
+
+    ## Arguments
+
+
+    Arguments which expect strings or byte arrays may be passed as quoted
+
+    strings, like `"abc"` or as `0x`-prefixed strings, like `0x616263`.
+
+
+    ## URI/HTTP
+
+
+    A REST like interface.
+
+        curl localhost:26657/block?height=5
+
+    ## JSONRPC/HTTP
+
+
+    JSONRPC requests can be POST'd to the root RPC endpoint via HTTP.
+
+        curl --header "Content-Type: application/json" --request POST --data '{"method": "block", "params": ["5"], "id": 1}' localhost:26657
+
+    ## JSONRPC/websockets
+
+
+    JSONRPC requests can be also made via websocket.
+
+    The websocket endpoint is at `/websocket`, e.g. `localhost:26657/websocket`.
+
+    Asynchronous RPC functions like event `subscribe` and `unsubscribe` are
+
+    only available via websockets.
+
+
+    For example using the [websocat](https://github.com/vi/websocat) tool, you
+    can subscribe for 'NewBlock` events
+
+    with the following command:
+
+        echo '{ "jsonrpc": "2.0","method": "subscribe","id": 0,"params": {"query": "tm.event='"'NewBlock'"'"} }' | websocat -n -t ws://127.0.0.1:26657/websocket
+  license:
+    name: Apache 2.0
+    url: 'https://github.com/cometbft/cometbft/blob/v0.38.x/LICENSE'
+  title: CometBFT RPC
+  version: v0.38.x
+host: rpc.cosmos.directory
+basePath: /cosmoshub
+schemes:
+  - https
+paths:
+  /abci_info:
+    get:
+      produces:
+        - application/json
+      parameters: []
+      responses:
+        '200':
+          description: Get some info about the application.
+          schema:
+            $ref: '#/definitions/ABCIInfoResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - ABCI
+      description: |
+        Get info about the application.
+
+        Upon success, the `Cache-Control` header will be set with the default
+        maximum age.
+      operationId: abci_info
+      summary: Get info about the application.
+  /abci_query:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: Path to the data ("/a/b/c")
+          in: query
+          name: path
+          required: true
+          type: string
+        - description: Data
+          in: query
+          name: data
+          required: true
+          type: string
+        - default: 0
+          description: Height (0 means latest)
+          in: query
+          name: height
+          required: false
+          type: integer
+        - default: false
+          description: Include proofs of the transactions inclusion in the block
+          in: query
+          name: prove
+          required: false
+          type: boolean
+      responses:
+        '200':
+          description: Response of the submitted query
+          schema:
+            $ref: '#/definitions/ABCIQueryResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - ABCI
+      description: |
+        Query the application for some information.
+      operationId: abci_query
+      summary: Query the application for some information.
+  /block:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - default: 0
+          description: >-
+            height to return. If no height is provided, it will fetch the latest
+            block.
+          in: query
+          name: height
+          type: integer
+      responses:
+        '200':
+          description: Block informations.
+          schema:
+            $ref: '#/definitions/BlockResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get Block.
+
+        If the `height` field is set to a non-default value, upon success, the
+        `Cache-Control` header will be set with the default maximum age.
+      operationId: block
+      summary: Get block at a specified height
+  /block_by_hash:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: block hash
+          in: query
+          name: hash
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Block informations.
+          schema:
+            $ref: '#/definitions/BlockResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get Block By Hash.
+
+        Upon success, the `Cache-Control` header will be set with the default
+        maximum age.
+      operationId: block_by_hash
+      summary: Get block by hash
+  /block_results:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - default: 0
+          description: >-
+            height to return. If no height is provided, it will fetch
+            information regarding the latest block.
+          in: query
+          name: height
+          type: integer
+      responses:
+        '200':
+          description: Block results.
+          schema:
+            $ref: '#/definitions/BlockResultsResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get block_results.
+
+        If the `height` field is set to a non-default value, upon success, the
+        `Cache-Control` header will be set with the default maximum age.
+      operationId: block_results
+      summary: Get block results at a specified height
+  /block_search:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: Query
+          in: query
+          name: query
+          required: true
+          type: string
+        - default: 1
+          description: Page number (1-based)
+          in: query
+          name: page
+          required: false
+          type: integer
+        - default: 30
+          description: 'Number of entries per page (max: 100)'
+          in: query
+          name: per_page
+          required: false
+          type: integer
+        - default: desc
+          description: >-
+            Order in which blocks are sorted ("asc" or "desc"), by height. If
+            empty, default sorting will be still applied.
+          in: query
+          name: order_by
+          required: false
+          type: string
+      responses:
+        '200':
+          description: List of paginated blocks matching the search criteria.
+          schema:
+            $ref: '#/definitions/BlockSearchResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Search for blocks by FinalizeBlock events.
+
+        See /subscribe for the query syntax.
+      operationId: block_search
+      summary: Search for blocks by FinalizeBlock events
+  /blockchain:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: Minimum block height to return
+          in: query
+          name: minHeight
+          type: integer
+        - description: Maximum block height to return
+          in: query
+          name: maxHeight
+          type: integer
+      responses:
+        '200':
+          description: 'Block headers, returned in descending order (highest first).'
+          schema:
+            $ref: '#/definitions/BlockchainResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get block headers for minHeight <= height <= maxHeight.
+
+        At most 20 items will be returned.
+
+        Upon success, the `Cache-Control` header will be set with the default
+        maximum age.
+      operationId: blockchain
+      summary: 'Get block headers (max: 20) for minHeight <= height <= maxHeight.'
+  /broadcast_evidence:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: JSON evidence
+          in: query
+          name: evidence
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Broadcast evidence of the misbehavior.
+          schema:
+            $ref: '#/definitions/BroadcastEvidenceResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Broadcast evidence of the misbehavior.
+      operationId: broadcast_evidence
+      summary: Broadcast evidence of the misbehavior.
+  /broadcast_tx_async:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: The transaction
+          in: query
+          name: tx
+          required: true
+          type: string
+      responses:
+        '200':
+          description: empty answer
+          schema:
+            $ref: '#/definitions/BroadcastTxResponse'
+        '500':
+          description: empty error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Tx
+      description: >
+        If you want to be sure that the transaction is included in a block, you
+        can
+
+        subscribe for the result using JSONRPC via a websocket. See
+
+        https://docs.cometbft.com/v0.38.x/core/subscription.html
+
+        If you haven't received anything after a couple of blocks, resend it. If
+        the
+
+        same happens again, send it to some other node. A few reasons why it
+        could
+
+        happen:
+
+
+        1. malicious node can drop or pretend it had committed your tx
+
+        2. malicious proposer (not necessary the one you're communicating with)
+        can
+
+        drop transactions, which might become valid in the future
+
+        (https://github.com/tendermint/tendermint/issues/3322)
+
+        3. node can be offline
+
+
+        Please refer to [formatting/encoding
+        rules](https://docs.cometbft.com/v0.38.x/core/using-cometbft.html#formatting)
+
+        for additional details
+      operationId: broadcast_tx_async
+      summary: >-
+        Returns right away, with no response. Does not wait for CheckTx nor
+        DeliverTx results.
+  /broadcast_tx_commit:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: The transaction
+          in: query
+          name: tx
+          required: true
+          type: string
+      responses:
+        '200':
+          description: empty answer
+          schema:
+            $ref: '#/definitions/BroadcastTxCommitResponse'
+        '500':
+          description: empty error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Tx
+      description: >
+        IMPORTANT: use only for testing and development. In production, use
+
+        BroadcastTxSync or BroadcastTxAsync. You can subscribe for the
+        transaction
+
+        result using JSONRPC via a websocket. See
+
+        https://docs.cometbft.com/v0.38.x/core/subscription.html
+
+
+        CONTRACT: only returns error if mempool.CheckTx() errs or if we timeout
+
+        waiting for tx to commit.
+
+
+        If CheckTx or DeliverTx fail, no error will be returned, but the
+        returned result
+
+        will contain a non-OK ABCI code.
+
+
+        Please refer to [formatting/encoding
+        rules](https://docs.cometbft.com/v0.38.x/core/using-cometbft.html#formatting)
+
+        for additional details
+      operationId: broadcast_tx_commit
+      summary: Returns with the responses from CheckTx and DeliverTx.
+  /broadcast_tx_sync:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: The transaction
+          in: query
+          name: tx
+          required: true
+          type: string
+          x-example: '456'
+      responses:
+        '200':
+          description: Empty
+          schema:
+            $ref: '#/definitions/BroadcastTxResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Tx
+      description: >
+        If you want to be sure that the transaction is included in a block, you
+        can
+
+        subscribe for the result using JSONRPC via a websocket. See
+
+        https://docs.cometbft.com/v0.38.x/core/subscription.html
+
+        If you haven't received anything after a couple of blocks, resend it. If
+        the
+
+        same happens again, send it to some other node. A few reasons why it
+        could
+
+        happen:
+
+
+        1. malicious node can drop or pretend it had committed your tx
+
+        2. malicious proposer (not necessary the one you're communicating with)
+        can
+
+        drop transactions, which might become valid in the future
+
+        (https://github.com/tendermint/tendermint/issues/3322)
+
+
+
+        Please refer to [formatting/encoding
+        rules](https://docs.cometbft.com/v0.38.x/core/using-cometbft.html#formatting)
+
+        for additional details
+      operationId: broadcast_tx_sync
+      summary: >-
+        Returns with the response from CheckTx. Does not wait for DeliverTx
+        result.
+  /check_tx:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: The transaction
+          in: query
+          name: tx
+          required: true
+          type: string
+      responses:
+        '200':
+          description: ABCI application's CheckTx response
+          schema:
+            $ref: '#/definitions/CheckTxResponse'
+        '500':
+          description: empty error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Tx
+      description: >
+        The transaction won't be added to the mempool.
+
+
+        Please refer to [formatting/encoding
+        rules](https://docs.cometbft.com/v0.38.x/core/using-cometbft.html#formatting)
+
+        for additional details
+
+
+        Upon success, the `Cache-Control` header will be set with the default
+
+        maximum age.
+      operationId: check_tx
+      summary: Checks the transaction without executing it.
+  /commit:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - default: 0
+          description: >-
+            height to return. If no height is provided, it will fetch commit
+            informations regarding the latest block.
+          in: query
+          name: height
+          type: integer
+      responses:
+        '200':
+          description: >
+            Commit results.
+
+
+            canonical switches from false to true for block H once block H+1 has
+            been committed. Until then it's subjective and only reflects what
+            this node has seen so far.
+          schema:
+            $ref: '#/definitions/CommitResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get Commit.
+
+        If the `height` field is set to a non-default value, upon success, the
+        `Cache-Control` header will be set with the default maximum age.
+      operationId: commit
+      summary: Get commit results at a specified height
+  /consensus_params:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - default: 0
+          description: >-
+            height to return. If no height is provided, it will fetch commit
+            informations regarding the latest block.
+          in: query
+          name: height
+          type: integer
+      responses:
+        '200':
+          description: consensus parameters results.
+          schema:
+            $ref: '#/definitions/ConsensusParamsResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get consensus parameters.
+
+        If the `height` field is set to a non-default value, upon success, the
+        `Cache-Control` header will be set with the default maximum age.
+      operationId: consensus_params
+      summary: Get consensus parameters
+  /consensus_state:
+    get:
+      produces:
+        - application/json
+      parameters: []
+      responses:
+        '200':
+          description: consensus state results.
+          schema:
+            $ref: '#/definitions/ConsensusStateResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: >
+        Get consensus state.
+
+
+        Not safe to call from inside the ABCI application during a block
+        execution.
+      operationId: consensus_state
+      summary: Get consensus state
+  /dial_peers:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: Have the peers you are dialing be persistent
+          in: query
+          name: persistent
+          type: boolean
+        - description: Have the peers you are dialing be unconditional
+          in: query
+          name: unconditional
+          type: boolean
+        - description: Have the peers you are dialing be private
+          in: query
+          name: private
+          type: boolean
+        - collectionFormat: multi
+          description: array of peers to dial
+          in: query
+          items:
+            example: 'f9baeaa15fedf5e1ef7448dd60f46c01f1a9e9c4@1.2.3.4:26656'
+            type: string
+          name: peers
+          type: array
+      responses:
+        '200':
+          description: Dialing seeds in progress. See /net_info for details
+          schema:
+            $ref: '#/definitions/dialResp'
+        '500':
+          description: empty error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Unsafe
+      description: >
+        Set a persistent peer, this route in under unsafe, and has to manually
+        enabled to use.
+
+
+        **Example:** curl
+        'localhost:26657/dial_peers?peers=\["f9baeaa15fedf5e1ef7448dd60f46c01f1a9e9c4@1.2.3.4:26656","0491d373a8e0fcf1023aaf18c51d6a1d0d4f31bd@5.6.7.8:26656"\]&persistent=false'
+      operationId: dial_peers
+      summary: Add Peers/Persistent Peers (unsafe)
+  /dial_seeds:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - collectionFormat: multi
+          description: list of seed nodes to dial
+          in: query
+          items:
+            example: 'f9baeaa15fedf5e1ef7448dd60f46c01f1a9e9c4@1.2.3.4:26656'
+            type: string
+          name: peers
+          type: array
+      responses:
+        '200':
+          description: Dialing seeds in progress. See /net_info for details
+          schema:
+            $ref: '#/definitions/dialResp'
+        '500':
+          description: empty error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Unsafe
+      description: >
+        Dial a peer, this route in under unsafe, and has to manually enabled to
+        use
+
+          **Example:** curl 'localhost:26657/dial_seeds?seeds=\["f9baeaa15fedf5e1ef7448dd60f46c01f1a9e9c4@1.2.3.4:26656","0491d373a8e0fcf1023aaf18c51d6a1d0d4f31bd@5.6.7.8:26656"\]'
+      operationId: dial_seeds
+      summary: Dial Seeds (Unsafe)
+  /dump_consensus_state:
+    get:
+      produces:
+        - application/json
+      parameters: []
+      responses:
+        '200':
+          description: >
+            Complete consensus state.
+
+
+            See
+            https://pkg.go.dev/github.com/cometbft/cometbft/types?tab=doc#Vote.String
+            for Vote string description.
+          schema:
+            $ref: '#/definitions/DumpConsensusResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: >
+        Get consensus state.
+
+
+        Not safe to call from inside the ABCI application during a block
+        execution.
+      operationId: dump_consensus_state
+      summary: Get consensus state
+  /genesis:
+    get:
+      produces:
+        - application/json
+      parameters: []
+      responses:
+        '200':
+          description: Genesis results.
+          schema:
+            $ref: '#/definitions/GenesisResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get genesis.
+
+        Upon success, the `Cache-Control` header will be set with the default
+        maximum age.
+      operationId: genesis
+      summary: Get Genesis
+  /genesis_chunked:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - default: 0
+          description: Sequence number of the chunk to download.
+          in: query
+          name: chunk
+          type: integer
+      responses:
+        '200':
+          description: Genesis chunk response.
+          schema:
+            $ref: '#/definitions/GenesisChunkedResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get genesis document in multiple chunks to make it easier to iterate
+        through larger genesis structures. Each chunk is produced by converting
+        the genesis document to JSON and then splitting the resulting payload
+        into 16MB blocks, and then Base64-encoding each block.
+
+        Upon success, the `Cache-Control` header will be set with the default
+        maximum age.
+      operationId: genesis_chunked
+      summary: Get Genesis in multiple chunks
+  /header:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - default: 0
+          description: >-
+            height to return. If no height is provided, it will fetch the latest
+            header.
+          in: query
+          name: height
+          type: integer
+      responses:
+        '200':
+          description: Header informations.
+          schema:
+            $ref: '#/definitions/BlockHeader'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get Header.
+
+        If the `height` field is set to a non-default value, upon success, the
+        `Cache-Control` header will be set with the default maximum age.
+      operationId: header
+      summary: Get header at a specified height
+  /header_by_hash:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: header hash
+          in: query
+          name: hash
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Header informations.
+          schema:
+            $ref: '#/definitions/BlockHeader'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get Header By Hash.
+
+        Upon success, the `Cache-Control` header will be set with the default
+        maximum age.
+      operationId: header_by_hash
+      summary: Get header by hash
+  /health:
+    get:
+      produces:
+        - application/json
+      parameters: []
+      responses:
+        '200':
+          description: Gets Node Health
+          schema:
+            $ref: '#/definitions/EmptyResponse'
+        '500':
+          description: empty error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: >
+        Get node health. Returns empty result (200 OK) on success, no response -
+        in case of an error.
+      operationId: health
+      summary: Node heartbeat
+  /net_info:
+    get:
+      produces:
+        - application/json
+      parameters: []
+      responses:
+        '200':
+          description: empty answer
+          schema:
+            $ref: '#/definitions/NetInfoResponse'
+        '500':
+          description: empty error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get network info.
+      operationId: net_info
+      summary: Network information
+  /num_unconfirmed_txs:
+    get:
+      produces:
+        - application/json
+      parameters: []
+      responses:
+        '200':
+          description: status about unconfirmed transactions
+          schema:
+            $ref: '#/definitions/NumUnconfirmedTransactionsResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get data about unconfirmed transactions
+      operationId: num_unconfirmed_txs
+      summary: Get data about unconfirmed transactions
+  /status:
+    get:
+      produces:
+        - application/json
+      parameters: []
+      responses:
+        '200':
+          description: Status of the node
+          schema:
+            $ref: '#/definitions/StatusResponse'
+        '500':
+          description: empty error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: >
+        Get CometBFT status including node info, pubkey, latest block hash, app
+        hash, block height and time.
+      operationId: status
+      summary: Node Status
+  /tx:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: hash of transaction to retrieve
+          in: query
+          name: hash
+          required: true
+          type: string
+        - default: false
+          description: Include proofs of the transaction's inclusion in the block
+          in: query
+          name: prove
+          required: false
+          type: boolean
+      responses:
+        '200':
+          description: Get a transaction`
+          schema:
+            $ref: '#/definitions/TxResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get a transaction
+
+        Upon success, the `Cache-Control` header will be set with the default
+        maximum age.
+      operationId: tx
+      summary: Get transactions by hash
+  /tx_search:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - description: Query
+          in: query
+          name: query
+          required: true
+          type: string
+        - default: false
+          description: Include proofs of the transactions inclusion in the block
+          in: query
+          name: prove
+          required: false
+          type: boolean
+        - default: 1
+          description: Page number (1-based)
+          in: query
+          name: page
+          required: false
+          type: integer
+        - default: 30
+          description: 'Number of entries per page (max: 100)'
+          in: query
+          name: per_page
+          required: false
+          type: integer
+        - default: asc
+          description: >-
+            Order in which transactions are sorted ("asc" or "desc"), by height
+            & index. If empty, default sorting will be still applied.
+          in: query
+          name: order_by
+          required: false
+          type: string
+      responses:
+        '200':
+          description: List of unconfirmed transactions
+          schema:
+            $ref: '#/definitions/TxSearchResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Search for transactions w/ their results.
+
+        See /subscribe for the query syntax.
+      operationId: tx_search
+      summary: Search for transactions
+  /unconfirmed_txs:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - default: 30
+          description: Maximum number of unconfirmed transactions to return (max 100)
+          in: query
+          name: limit
+          required: false
+          type: integer
+      responses:
+        '200':
+          description: List of unconfirmed transactions
+          schema:
+            $ref: '#/definitions/UnconfirmedTransactionsResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get list of unconfirmed transactions
+      operationId: unconfirmed_txs
+      summary: Get the list of unconfirmed transactions
+  /validators:
+    get:
+      produces:
+        - application/json
+      parameters:
+        - default: 0
+          description: >-
+            height to return. If no height is provided, it will fetch validator
+            set which corresponds to the latest block.
+          in: query
+          name: height
+          type: integer
+        - default: 1
+          description: Page number (1-based)
+          in: query
+          name: page
+          required: false
+          type: integer
+        - default: 30
+          description: 'Number of entries per page (max: 100)'
+          in: query
+          name: per_page
+          required: false
+          type: integer
+      responses:
+        '200':
+          description: Commit results.
+          schema:
+            $ref: '#/definitions/ValidatorsResponse'
+        '500':
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      tags:
+        - Info
+      description: |
+        Get Validators. Validators are sorted first by voting power
+        (descending), then by address (ascending).
+
+        If the `height` field is set to a non-default value, upon success, the
+        `Cache-Control` header will be set with the default maximum age.
+      operationId: validators
+      summary: Get validator set at a specified height
+definitions:
+  ABCIInfoResponse:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          response:
+            properties:
+              app_version:
+                example: '1'
+                type: string
+              data:
+                example: '{"size":0}'
+                type: string
+              last_block_app_hash:
+                example: >-
+                  C9AEBB441B787D9F1D846DE51F3826F4FD386108B59B08239653ABF59455C3F8
+                type: string
+              last_block_height:
+                example: '1314126'
+                type: string
+              version:
+                example: 0.16.1
+                type: string
+            required:
+              - data
+              - version
+              - app_version
+              - last_block_height
+              - last_block_app_hash
+            type: object
+        required:
+          - response
+        type: object
+    required:
+      - jsonrpc
+      - id
+    type: object
+  ABCIQueryResponse:
+    properties:
+      error:
+        example: ''
+        type: string
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          response:
+            properties:
+              code:
+                example: '0'
+                type: string
+              height:
+                example: '0'
+                type: string
+              index:
+                example: '-1'
+                type: string
+              key:
+                example: '61626364'
+                type: string
+              log:
+                example: exists
+                type: string
+              proof:
+                example: >-
+                  010114FED0DAD959F36091AD761C922ABA3CBF1D8349990101020103011406AA2262E2F448242DF2C2607C3CDC705313EE3B0001149D16177BC71E445476174622EA559715C293740C
+                type: string
+              value:
+                example: '61626364'
+                type: string
+            required:
+              - log
+              - height
+              - proof
+              - value
+              - key
+              - index
+              - code
+            type: object
+        required:
+          - response
+        type: object
+    required:
+      - error
+      - result
+      - id
+      - jsonrpc
+    type: object
+  Block:
+    properties:
+      data:
+        items:
+          example: >-
+            yQHwYl3uCkKoo2GaChRnd+THLQ2RM87nEZrE19910Z28ABIUWW/t8AtIMwcyU0sT32RcMDI9GF0aEAoFdWF0b20SBzEwMDAwMDASEwoNCgV1YXRvbRIEMzEwMRCd8gEaagom61rphyEDoJPxlcjRoNDtZ9xMdvs+lRzFaHe2dl2P5R2yVCWrsHISQKkqX5H1zXAIJuC57yw0Yb03Fwy75VRip0ZBtLiYsUqkOsPUoQZAhDNP+6LY+RUwz/nVzedkF0S29NZ32QXdGv0=
+          type: string
+        type: array
+      evidence:
+        items:
+          $ref: '#/definitions/Evidence'
+        type: array
+      header:
+        $ref: '#/definitions/BlockHeader'
+      last_commit:
+        properties:
+          block_id:
+            $ref: '#/definitions/BlockID'
+          height:
+            type: integer
+          round:
+            type: integer
+          signatures:
+            items:
+              $ref: '#/definitions/Commit'
+            type: array
+        type: object
+    type: object
+  BlockComplete:
+    properties:
+      block:
+        $ref: '#/definitions/Block'
+      block_id:
+        $ref: '#/definitions/BlockID'
+    type: object
+  BlockHeader:
+    properties:
+      app_hash:
+        example: 223BF64D4A01074DC523A80E76B9BBC786C791FB0A1893AC5B14866356FCFD6C
+        type: string
+      chain_id:
+        example: cosmoshub-2
+        type: string
+      consensus_hash:
+        example: 0F2908883A105C793B74495EB7D6DF2EEA479ED7FC9349206A65CB0F9987A0B8
+        type: string
+      data_hash:
+        example: 970886F99E77ED0D60DA8FCE0447C2676E59F2F77302B0C4AA10E1D02F18EF73
+        type: string
+      evidence_hash:
+        example: ''
+        type: string
+      height:
+        example: '12'
+        type: string
+      last_block_id:
+        $ref: '#/definitions/BlockID'
+      last_commit_hash:
+        example: 21B9BC845AD2CB2C4193CDD17BFC506F1EBE5A7402E84AD96E64171287A34812
+        type: string
+      last_results_hash:
+        example: ''
+        type: string
+      next_validators_hash:
+        example: D658BFD100CA8025CFD3BECFE86194322731D387286FBD26E059115FD5F2BCA0
+        type: string
+      proposer_address:
+        example: D540AB022088612AC74B287D076DBFBC4A377A2E
+        type: string
+      time:
+        example: '2019-04-22T17:01:51.701356223Z'
+        type: string
+      validators_hash:
+        example: D658BFD100CA8025CFD3BECFE86194322731D387286FBD26E059115FD5F2BCA0
+        type: string
+      version:
+        properties:
+          app:
+            example: '0'
+            type: string
+          block:
+            example: '10'
+            type: string
+        required:
+          - block
+          - app
+        type: object
+    required:
+      - version
+      - chain_id
+      - height
+      - time
+      - last_block_id
+      - last_commit_hash
+      - data_hash
+      - validators_hash
+      - next_validators_hash
+      - consensus_hash
+      - app_hash
+      - last_results_hash
+      - evidence_hash
+      - proposer_address
+    type: object
+  BlockID:
+    properties:
+      hash:
+        example: 112BC173FD838FB68EB43476816CD7B4C6661B6884A9E357B417EE957E1CF8F7
+        type: string
+      parts:
+        properties:
+          hash:
+            example: 38D4B26B5B725C4F13571EFE022C030390E4C33C8CF6F88EDD142EA769642DBD
+            type: string
+          total:
+            example: 1
+            type: integer
+        required:
+          - total
+          - hash
+        type: object
+    required:
+      - hash
+      - parts
+  BlockMeta:
+    properties:
+      block_id:
+        $ref: '#/definitions/BlockID'
+      block_size:
+        example: 1000000
+        type: integer
+      header:
+        $ref: '#/definitions/BlockHeader'
+      num_txs:
+        example: '54'
+        type: string
+    type: object
+  BlockResponse:
+    allOf:
+      - $ref: '#/definitions/JSONRPC'
+      - properties:
+          result:
+            $ref: '#/definitions/BlockComplete'
+        type: object
+    description: Blockc info
+  BlockResultsResponse:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          consensus_param_updates:
+            $ref: '#/definitions/ConsensusParams'
+          finalize_block_events:
+            items:
+              properties:
+                attributes:
+                  items:
+                    $ref: '#/definitions/Event'
+                  nullable: false
+                  type: array
+                type:
+                  example: app
+                  type: string
+              type: object
+            type: array
+            x-nullable: true
+          height:
+            example: '12'
+            type: string
+          txs_results:
+            items:
+              properties:
+                info:
+                  example: ''
+                  type: string
+                code:
+                  example: '0'
+                  type: string
+                codespace:
+                  example: ibc
+                  type: string
+                data:
+                  example: ''
+                  type: string
+                events:
+                  items:
+                    properties:
+                      attributes:
+                        items:
+                          $ref: '#/definitions/Event'
+                        nullable: false
+                        type: array
+                      type:
+                        example: app
+                        type: string
+                    type: object
+                  type: array
+                  x-nullable: true
+                gas_used:
+                  example: '100'
+                  type: string
+                gas_wanted:
+                  example: '100'
+                  type: string
+                log:
+                  example: not enough gas
+                  type: string
+              type: object
+            type: array
+            x-nullable: true
+          validator_updates:
+            items:
+              properties:
+                power:
+                  example: '300'
+                  type: string
+                pub_key:
+                  properties:
+                    type:
+                      example: tendermint/PubKeyEd25519
+                      type: string
+                    value:
+                      example: 9tK9IT+FPdf2qm+5c2qaxi10sWP+3erWTKgftn2PaQM=
+                      type: string
+                  required:
+                    - type
+                    - value
+                  type: object
+              type: object
+            type: array
+            x-nullable: true
+        required:
+          - height
+        type: object
+    required:
+      - jsonrpc
+      - id
+      - result
+    type: object
+  BlockSearchResponse:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          blocks:
+            items:
+              $ref: '#/definitions/BlockComplete'
+            type: array
+          total_count:
+            example: 2
+            type: integer
+        required:
+          - blocks
+          - total_count
+        type: object
+    required:
+      - jsonrpc
+      - id
+      - result
+    type: object
+  Blockchain:
+    properties:
+      block_metas:
+        items:
+          $ref: '#/definitions/BlockMeta'
+        type: array
+      last_height:
+        example: '1276718'
+        type: string
+    required:
+      - last_height
+      - block_metas
+    type: object
+  BlockchainResponse:
+    allOf:
+      - $ref: '#/definitions/JSONRPC'
+      - properties:
+          result:
+            $ref: '#/definitions/Blockchain'
+        type: object
+    description: Blockchain info
+  BroadcastEvidenceResponse:
+    properties:
+      error:
+        example: ''
+        type: string
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        example: ''
+        type: string
+    required:
+      - id
+      - jsonrpc
+    type: object
+  BroadcastTxCommitResponse:
+    properties:
+      error:
+        example: ''
+        type: string
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          check_tx:
+            properties:
+              code:
+                example: '0'
+                type: string
+              data:
+                example: ''
+                type: string
+              log:
+                example: ''
+                type: string
+            required:
+              - log
+              - data
+              - code
+            type: object
+          deliver_tx:
+            properties:
+              code:
+                example: '0'
+                type: string
+              data:
+                example: ''
+                type: string
+              log:
+                example: ''
+                type: string
+            required:
+              - log
+              - data
+              - code
+            type: object
+          hash:
+            example: 75CA0F856A4DA078FC4911580360E70CEFB2EBEE
+            type: string
+          height:
+            example: '26682'
+            type: string
+        required:
+          - height
+          - hash
+          - deliver_tx
+          - check_tx
+        type: object
+    required:
+      - error
+      - result
+      - id
+      - jsonrpc
+    type: object
+  BroadcastTxResponse:
+    properties:
+      error:
+        example: ''
+        type: string
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          code:
+            example: '0'
+            type: string
+          codespace:
+            example: ibc
+            type: string
+          data:
+            example: ''
+            type: string
+          hash:
+            example: 0D33F2F03A5234F38706E43004489E061AC40A2E
+            type: string
+          log:
+            example: ''
+            type: string
+        required:
+          - code
+          - data
+          - log
+          - hash
+        type: object
+    required:
+      - jsonrpc
+      - id
+      - result
+      - error
+    type: object
+  Channel:
+    properties:
+      ID:
+        example: 48
+        type: integer
+      Priority:
+        example: '5'
+        type: string
+      RecentlySent:
+        example: '0'
+        type: string
+      SendQueueCapacity:
+        example: '1'
+        type: string
+      SendQueueSize:
+        example: '0'
+        type: string
+    type: object
+  CheckTxResponse:
+    properties:
+      error:
+        example: ''
+        type: string
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          info:
+            example: ''
+            type: string
+          code:
+            example: '0'
+            type: string
+          codespace:
+            example: bank
+            type: string
+          data:
+            example: ''
+            type: string
+          events:
+            items:
+              properties:
+                attributes:
+                  items:
+                    $ref: '#/definitions/Event'
+                  nullable: false
+                  type: array
+                type:
+                  example: app
+                  type: string
+              type: object
+            type: array
+            x-nullable: true
+          gas_used:
+            example: '0'
+            type: string
+          gas_wanted:
+            example: '1'
+            type: string
+          log:
+            example: ''
+            type: string
+        required:
+          - log
+          - data
+          - code
+        type: object
+    required:
+      - error
+      - result
+      - id
+      - jsonrpc
+    type: object
+  Commit:
+    properties:
+      block_id:
+        $ref: '#/definitions/BlockID'
+      height:
+        example: '1262085'
+        type: string
+      round:
+        example: 0
+        type: integer
+      signature:
+        example: >-
+          DBchvucTzAUEJnGYpNvMdqLhBAHG4Px8BsOBB3J3mAFCLGeuG7uJqy+nVngKzZdPhPi8RhmE/xcw/M9DOJjEDg==
+        type: string
+      timestamp:
+        example: '2019-08-01T11:39:38.867269833Z'
+        type: string
+      type:
+        example: 2
+        type: integer
+      validator_address:
+        example: 000001E443FD237E4B616E2FA69DF4EE3D49A94F
+        type: string
+      validator_index:
+        example: 0
+        type: integer
+    required:
+      - type
+      - height
+      - round
+      - block_id
+      - timestamp
+      - validator_address
+      - validator_index
+      - signature
+  CommitResponse:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          canonical:
+            example: true
+            type: boolean
+          signed_header:
+            properties:
+              commit:
+                properties:
+                  block_id:
+                    $ref: '#/definitions/BlockID'
+                  height:
+                    example: '1311801'
+                    type: string
+                  round:
+                    example: 0
+                    type: integer
+                  signatures:
+                    items:
+                      properties:
+                        block_id_flag:
+                          example: 2
+                          type: integer
+                        signature:
+                          example: >-
+                            14jaTQXYRt8kbLKEhdHq7AXycrFImiLuZx50uOjs2+Zv+2i7RTG/jnObD07Jo2ubZ8xd7bNBJMqkgtkd0oQHAw==
+                          type: string
+                        timestamp:
+                          example: '2019-04-22T17:01:58.376629719Z'
+                          type: string
+                        validator_address:
+                          example: 000001E443FD237E4B616E2FA69DF4EE3D49A94F
+                          type: string
+                      type: object
+                    type: array
+                required:
+                  - height
+                  - round
+                  - block_id
+                  - signatures
+                type: object
+              header:
+                $ref: '#/definitions/BlockHeader'
+            required:
+              - header
+              - commit
+            type: object
+        required:
+          - signed_header
+          - canonical
+        type: object
+    required:
+      - jsonrpc
+      - id
+      - result
+    type: object
+  ConnectionStatus:
+    properties:
+      Channels:
+        items:
+          $ref: '#/definitions/Channel'
+        type: array
+      Duration:
+        example: '168901057956119'
+        type: string
+      RecvMonitor:
+        $ref: '#/definitions/Monitor'
+      SendMonitor:
+        $ref: '#/definitions/Monitor'
+    type: object
+  ConsensusParams:
+    properties:
+      block:
+        properties:
+          max_bytes:
+            example: '22020096'
+            type: string
+          max_gas:
+            example: '1000'
+            type: string
+          time_iota_ms:
+            example: '1000'
+            type: string
+        required:
+          - max_bytes
+          - max_gas
+          - time_iota_ms
+        type: object
+      evidence:
+        properties:
+          max_age:
+            example: '100000'
+            type: string
+        required:
+          - max_age
+        type: object
+      validator:
+        properties:
+          pub_key_types:
+            example:
+              - ed25519
+            items:
+              type: string
+            type: array
+        required:
+          - pub_key_types
+        type: object
+    required:
+      - block
+      - evidence
+      - validator
+    type: object
+    x-nullable: true
+  ConsensusParamsResponse:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          block_height:
+            example: '1'
+            type: string
+          consensus_params:
+            $ref: '#/definitions/ConsensusParams'
+        required:
+          - block_height
+          - consensus_params
+        type: object
+    required:
+      - jsonrpc
+      - id
+      - result
+    type: object
+  ConsensusStateResponse:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          round_state:
+            properties:
+              height/round/step:
+                example: 1262197/0/8
+                type: string
+              height_vote_set:
+                items:
+                  properties:
+                    precommits:
+                      example:
+                        - >-
+                          Vote{5:18C78D135C9D 1262197/00/2(Precommit)
+                          634ADAF1F402 8B5EFFFEABCD @
+                          2019-08-01T11:52:36.25600005Z}
+                        - nil-Vote
+                      items:
+                        type: string
+                      type: array
+                    precommits_bit_array:
+                      example: >-
+                        BA{100:xxxxxx_xxxxx_xxxx_x_xxx_xx_xx_xx__x_x_x__xxxxxxxxxxxxxx_xxxx_xx_xxxxxx_xxxxxxxx_xxxx_xxx_x_xxxx__xxx}
+                        118726247/170151262 = 0.70
+                      type: string
+                    prevotes:
+                      example:
+                        - >-
+                          Vote{0:000001E443FD 1262197/00/1(Prevote) 634ADAF1F402
+                          7BB974E1BA40 @ 2019-08-01T11:52:35.513572509Z}
+                        - nil-Vote
+                      items:
+                        type: string
+                      type: array
+                    prevotes_bit_array:
+                      example: >-
+                        BA{100:xxxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}
+                        169753436/170151262 = 1.00
+                      type: string
+                    round:
+                      example: 0
+                      type: integer
+                  type: object
+                type: array
+              locked_block_hash:
+                example: >-
+                  634ADAF1F402663BEC2ABC340ECE8B4B45AA906FA603272ACC5F5EED3097E009
+                type: string
+              proposal_block_hash:
+                example: >-
+                  634ADAF1F402663BEC2ABC340ECE8B4B45AA906FA603272ACC5F5EED3097E009
+                type: string
+              proposer:
+                properties:
+                  address:
+                    example: D540AB022088612AC74B287D076DBFBC4A377A2E
+                    type: string
+                  index:
+                    example: 0
+                    type: integer
+                type: object
+              start_time:
+                example: '2019-08-01T11:52:38.962730289Z'
+                type: string
+              valid_block_hash:
+                example: >-
+                  634ADAF1F402663BEC2ABC340ECE8B4B45AA906FA603272ACC5F5EED3097E009
+                type: string
+            required:
+              - height/round/step
+              - start_time
+              - proposal_block_hash
+              - locked_block_hash
+              - valid_block_hash
+              - height_vote_set
+              - proposer
+            type: object
+        required:
+          - round_state
+        type: object
+    required:
+      - jsonrpc
+      - id
+      - result
+    type: object
+  DumpConsensusResponse:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          peers:
+            items:
+              properties:
+                node_address:
+                  example: '357f6a6c1d27414579a8185060aa8adf9815c43c@68.183.41.207:26656'
+                  type: string
+                peer_state:
+                  properties:
+                    round_state:
+                      properties:
+                        catchup_commit:
+                          example: >-
+                            ____________________________________________________________________________________________________
+                          type: string
+                          x-nullable: true
+                        catchup_commit_round:
+                          example: -1
+                          type: integer
+                          x-nullable: true
+                        height:
+                          example: '1311801'
+                          type: string
+                        last_commit:
+                          example: >-
+                            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+                          type: string
+                          x-nullable: true
+                        last_commit_round:
+                          example: 0
+                          type: integer
+                          x-nullable: true
+                        precommits:
+                          example: >-
+                            ____________________________________________________________________________________________________
+                          type: string
+                          x-nullable: true
+                        prevotes:
+                          example: >-
+                            ___________________x________________________________________________________________________________
+                          type: string
+                          x-nullable: true
+                        proposal:
+                          example: false
+                          type: boolean
+                        proposal_block_parts_header:
+                          properties:
+                            hash:
+                              example: ''
+                              type: string
+                            total:
+                              example: 0
+                              type: integer
+                          required:
+                            - total
+                            - hash
+                          type: object
+                        proposal_pol:
+                          example: >-
+                            ____________________________________________________________________________________________________
+                          type: string
+                          x-nullable: true
+                        proposal_pol_round:
+                          example: -1
+                          type: integer
+                          x-nullable: true
+                        round:
+                          example: '0'
+                          type: string
+                        start_time:
+                          example: '2019-08-05T11:28:49.21730864Z'
+                          type: string
+                        step:
+                          example: 3
+                          type: integer
+                      required:
+                        - height
+                        - round
+                        - step
+                        - start_time
+                        - proposal
+                        - proposal_block_parts_header
+                        - proposal_block_parts
+                        - proposal_pol_round
+                        - proposal_pol
+                        - prevotes
+                        - precommits
+                        - last_commit_round
+                        - last_commit
+                        - catchup_commit_round
+                        - catchup_commit
+                      type: object
+                    stats:
+                      properties:
+                        block_parts:
+                          example: '4786'
+                          type: string
+                        votes:
+                          example: '1159558'
+                          type: string
+                      required:
+                        - votes
+                        - block_parts
+                      type: object
+                  required:
+                    - round_state
+                    - stats
+                  type: object
+              type: object
+            type: array
+          round_state:
+            properties:
+              commit_round:
+                example: -1
+                type: integer
+              commit_time:
+                example: '2019-08-05T11:28:44.064658805Z'
+                type: string
+              height:
+                example: '1311801'
+                type: string
+              last_commit:
+                properties:
+                  peer_maj_23s:
+                    properties: {}
+                    type: object
+                  votes:
+                    example:
+                      - >-
+                        Vote{0:000001E443FD 1311800/00/2(Precommit) 3071ADB27D1A
+                        77EE1B6B6847 @ 2019-08-05T11:28:43.810128139Z}
+                    items:
+                      type: string
+                    type: array
+                  votes_bit_array:
+                    example: >-
+                      BA{100:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}
+                      170220253/170220253 = 1.00
+                    type: string
+                required:
+                  - votes
+                  - votes_bit_array
+                  - peer_maj_23s
+                type: object
+                x-nullable: true
+              last_validators:
+                properties:
+                  proposer:
+                    $ref: '#/definitions/ValidatorPriority'
+                  validators:
+                    items:
+                      $ref: '#/definitions/ValidatorPriority'
+                    type: array
+                required:
+                  - validators
+                  - proposer
+                type: object
+              locked_round:
+                example: -1
+                type: integer
+              round:
+                example: 0
+                type: integer
+              start_time:
+                example: '2019-08-05T11:28:49.064658805Z'
+                type: string
+              step:
+                example: 3
+                type: integer
+              triggered_timeout_precommit:
+                example: false
+                type: boolean
+              valid_round:
+                example: '-1'
+                type: string
+              validators:
+                properties:
+                  proposer:
+                    $ref: '#/definitions/ValidatorPriority'
+                  validators:
+                    items:
+                      $ref: '#/definitions/ValidatorPriority'
+                    type: array
+                required:
+                  - validators
+                  - proposer
+                type: object
+              votes:
+                items:
+                  properties:
+                    precommits:
+                      example:
+                        - nil-Vote
+                      items:
+                        type: string
+                      type: array
+                      x-nullable: true
+                    precommits_bit_array:
+                      example: >-
+                        BA{100:____________________________________________________________________________________________________}
+                        0/170220253 = 0.00
+                      type: string
+                    prevotes:
+                      example:
+                        - nil-Vote
+                        - >-
+                          Vote{19:46A3F8B8393B 1311801/00/1(Prevote)
+                          000000000000 64CE682305CB @
+                          2019-08-05T11:28:47.374703444Z}
+                      items:
+                        type: string
+                      type: array
+                      x-nullable: true
+                    prevotes_bit_array:
+                      example: >-
+                        BA{100:___________________x________________________________________________________________________________}
+                        209706/170220253 = 0.00
+                      type: string
+                    round:
+                      example: '0'
+                      type: string
+                  type: object
+                type: array
+            required:
+              - height
+              - round
+              - step
+              - start_time
+              - commit_time
+              - validators
+              - proposal
+              - proposal_block
+              - proposal_block_parts
+              - locked_round
+              - locked_block
+              - locked_block_parts
+              - valid_round
+              - valid_block
+              - valid_block_parts
+              - votes
+              - commit_round
+              - last_commit
+              - last_validators
+              - triggered_timeout_precommit
+            type: object
+        required:
+          - round_state
+          - peers
+        type: object
+    required:
+      - jsonrpc
+      - id
+      - result
+    type: object
+  EmptyResponse:
+    allOf:
+      - $ref: '#/definitions/JSONRPC'
+      - properties:
+          result:
+            additionalProperties: {}
+            type: object
+        type: object
+    description: Empty Response
+  ErrorResponse:
+    allOf:
+      - $ref: '#/definitions/JSONRPC'
+      - properties:
+          error:
+            example: Description of failure
+            type: string
+        type: object
+    description: Error Response
+  Event:
+    properties:
+      index:
+        example: false
+        type: boolean
+      key:
+        example: action
+        type: string
+      value:
+        example: send
+        type: string
+    type: object
+  Evidence:
+    properties:
+      height:
+        type: integer
+      time:
+        type: integer
+      total_voting_power:
+        type: integer
+      type:
+        type: string
+      validator:
+        $ref: '#/definitions/Validator'
+    type: object
+  GenesisChunkedResponse:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          chunk:
+            example: 0
+            type: integer
+          data:
+            example: Z2VuZXNpcwo=
+            type: string
+          total:
+            example: 1
+            type: integer
+        required:
+          - chunk
+          - total
+          - data
+    required:
+      - jsonrpc
+      - id
+      - result
+    type: object
+  GenesisResponse:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          genesis:
+            properties:
+              app_hash:
+                example: ''
+                type: string
+              app_state:
+                properties: {}
+                type: object
+              chain_id:
+                example: cosmoshub-2
+                type: string
+              consensus_params:
+                $ref: '#/definitions/ConsensusParams'
+              genesis_time:
+                example: '2019-04-22T17:00:00Z'
+                type: string
+              initial_height:
+                example: '2'
+                type: string
+              validators:
+                items:
+                  properties:
+                    address:
+                      example: B00A6323737F321EB0B8D59C6FD497A14B60938A
+                      type: string
+                    name:
+                      example: Certus One
+                      type: string
+                    power:
+                      example: '9328525'
+                      type: string
+                    pub_key:
+                      properties:
+                        type:
+                          example: tendermint/PubKeyEd25519
+                          type: string
+                        value:
+                          example: cOQZvh/h9ZioSeUMZB/1Vy1Xo5x2sjrVjlE/qHnYifM=
+                          type: string
+                      required:
+                        - type
+                        - value
+                      type: object
+                  type: object
+                type: array
+            required:
+              - genesis_time
+              - chain_id
+              - initial_height
+              - consensus_params
+              - validators
+              - app_hash
+            type: object
+        required:
+          - genesis
+        type: object
+    required:
+      - jsonrpc
+      - id
+      - result
+    type: object
+  JSONRPC:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+    type: object
+  Monitor:
+    properties:
+      Active:
+        example: true
+        type: boolean
+      AvgRate:
+        example: '0'
+        type: string
+      Bytes:
+        example: '5'
+        type: string
+      BytesRem:
+        example: '0'
+        type: string
+      CurRate:
+        example: '0'
+        type: string
+      Duration:
+        example: '168901060000000'
+        type: string
+      Idle:
+        example: '168901040000000'
+        type: string
+      InstRate:
+        example: '0'
+        type: string
+      PeakRate:
+        example: '0'
+        type: string
+      Progress:
+        example: 0
+        type: integer
+      Samples:
+        example: '1'
+        type: string
+      Start:
+        example: '2019-07-31T14:31:28.66Z'
+        type: string
+      TimeRem:
+        example: '0'
+        type: string
+    type: object
+  NetInfo:
+    properties:
+      listeners:
+        items:
+          example: Listener(@)
+          type: string
+        type: array
+      listening:
+        example: true
+        type: boolean
+      n_peers:
+        example: '1'
+        type: string
+      peers:
+        items:
+          $ref: '#/definitions/Peer'
+        type: array
+    type: object
+  NetInfoResponse:
+    allOf:
+      - $ref: '#/definitions/JSONRPC'
+      - properties:
+          result:
+            $ref: '#/definitions/NetInfo'
+        type: object
+    description: NetInfo Response
+  NodeInfo:
+    properties:
+      channels:
+        example: '4020212223303800'
+        type: string
+      id:
+        example: 5576458aef205977e18fd50b274e9b5d9014525a
+        type: string
+      listen_addr:
+        example: 'tcp:0.0.0.0:26656'
+        type: string
+      moniker:
+        example: moniker-node
+        type: string
+      network:
+        example: cosmoshub-2
+        type: string
+      other:
+        properties:
+          rpc_address:
+            example: 'tcp:0.0.0.0:26657'
+            type: string
+          tx_index:
+            example: 'on'
+            type: string
+        type: object
+      protocol_version:
+        $ref: '#/definitions/ProtocolVersion'
+      version:
+        example: 0.32.1
+        type: string
+    type: object
+  NumUnconfirmedTransactionsResponse:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          n_txs:
+            example: '31'
+            type: string
+          total:
+            example: '82'
+            type: string
+          total_bytes:
+            example: '19974'
+            type: string
+        required:
+          - n_txs
+          - total
+          - total_bytes
+        type: object
+    required:
+      - jsonrpc
+      - id
+      - result
+    type: object
+  Peer:
+    properties:
+      connection_status:
+        $ref: '#/definitions/ConnectionStatus'
+      is_outbound:
+        example: true
+        type: boolean
+      node_info:
+        $ref: '#/definitions/NodeInfo'
+      remote_ip:
+        example: 95.179.155.35
+        type: string
+    type: object
+  ProtocolVersion:
+    properties:
+      app:
+        example: '0'
+        type: string
+      block:
+        example: '10'
+        type: string
+      p2p:
+        example: '7'
+        type: string
+    type: object
+  PubKey:
+    properties:
+      type:
+        example: tendermint/PubKeyEd25519
+        type: string
+      value:
+        example: A6DoBUypNtUAyEHWtQ9bFjfNg8Bo9CrnkUGl6k6OHN4=
+        type: string
+    type: object
+  Status:
+    description: Status Response
+    properties:
+      node_info:
+        $ref: '#/definitions/NodeInfo'
+      sync_info:
+        $ref: '#/definitions/SyncInfo'
+      validator_info:
+        $ref: '#/definitions/ValidatorInfo'
+    type: object
+  StatusResponse:
+    allOf:
+      - $ref: '#/definitions/JSONRPC'
+      - properties:
+          result:
+            $ref: '#/definitions/Status'
+        type: object
+    description: Status Response
+  SyncInfo:
+    properties:
+      catching_up:
+        example: false
+        type: boolean
+      earliest_app_hash:
+        example: C9AEBB441B787D9F1D846DE51F3826F4FD386108B59B08239653ABF59455C3F8
+        type: string
+      earliest_block_hash:
+        example: 790BA84C3545FCCC49A5C629CEE6EA58A6E875C3862175BDC11EE7AF54703501
+        type: string
+      earliest_block_height:
+        example: '1262196'
+        type: string
+      earliest_block_time:
+        example: '2019-08-01T11:52:22.818762194Z'
+        type: string
+      latest_app_hash:
+        example: C9AEBB441B787D9F1D846DE51F3826F4FD386108B59B08239653ABF59455C3F8
+        type: string
+      latest_block_hash:
+        example: 790BA84C3545FCCC49A5C629CEE6EA58A6E875C3862175BDC11EE7AF54703501
+        type: string
+      latest_block_height:
+        example: '1262196'
+        type: string
+      latest_block_time:
+        example: '2019-08-01T11:52:22.818762194Z'
+        type: string
+    type: object
+  TxResponse:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          hash:
+            example: D70952032620CC4E2737EB8AC379806359D8E0B17B0488F627997A0B043ABDED
+            type: string
+          height:
+            example: '1000'
+            type: string
+          index:
+            example: 0
+            type: integer
+          tx:
+            example: >-
+              5wHwYl3uCkaoo2GaChQmSIu8hxpJxLcCuIi8fiHN4TMwrRIU/Af1cEG7Rcs/6LjTl7YjRSymJfYaFAoFdWF0b20SCzE0OTk5OTk1MDAwEhMKDQoFdWF0b20SBDUwMDAQwJoMGmoKJuta6YchAwswBShaB1wkZBctLIhYqBC3JrAI28XGzxP+rVEticGEEkAc+khTkKL9CDE47aDvjEHvUNt+izJfT4KVF2v2JkC+bmlH9K08q3PqHeMI9Z5up+XMusnTqlP985KF+SI5J3ZOIhhNYWRlIGJ5IENpcmNsZSB3aXRoIGxvdmU=
+            type: string
+          tx_result:
+            properties:
+              tags:
+                items:
+                  $ref: '#/definitions/Event'
+                type: array
+              gas_used:
+                example: '28596'
+                type: string
+              gas_wanted:
+                example: '200000'
+                type: string
+              log:
+                example: '[{"msg_index":"0","success":true,"log":""}]'
+                type: string
+            required:
+              - log
+              - gas_wanted
+              - gas_used
+              - tags
+            type: object
+        required:
+          - hash
+          - height
+          - index
+          - tx_result
+          - tx
+        type: object
+    required:
+      - jsonrpc
+      - id
+      - result
+    type: object
+  TxSearchResponse:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          total_count:
+            example: '2'
+            type: string
+          txs:
+            items:
+              properties:
+                hash:
+                  example: >-
+                    D70952032620CC4E2737EB8AC379806359D8E0B17B0488F627997A0B043ABDED
+                  type: string
+                height:
+                  example: '1000'
+                  type: string
+                index:
+                  example: 0
+                  type: integer
+                proof:
+                  properties:
+                    Data:
+                      example: >-
+                        5wHwYl3uCkaoo2GaChQmSIu8hxpJxLcCuIi8fiHN4TMwrRIU/Af1cEG7Rcs/6LjTl7YjRSymJfYaFAoFdWF0b20SCzE0OTk5OTk1MDAwEhMKDQoFdWF0b20SBDUwMDAQwJoMGmoKJuta6YchAwswBShaB1wkZBctLIhYqBC3JrAI28XGzxP+rVEticGEEkAc+khTkKL9CDE47aDvjEHvUNt+izJfT4KVF2v2JkC+bmlH9K08q3PqHeMI9Z5up+XMusnTqlP985KF+SI5J3ZOIhhNYWRlIGJ5IENpcmNsZSB3aXRoIGxvdmU=
+                      type: string
+                    Proof:
+                      properties:
+                        aunts:
+                          example:
+                            - eWb+HG/eMmukrQj4vNGyFYb3nKQncAWacq4HF5eFzDY=
+                          items:
+                            type: string
+                          type: array
+                        index:
+                          example: '0'
+                          type: string
+                        leaf_hash:
+                          example: eoJxKCzF3m72Xiwb/Q43vJ37/2Sx8sfNS9JKJohlsYI=
+                          type: string
+                        total:
+                          example: '2'
+                          type: string
+                      required:
+                        - total
+                        - index
+                        - leaf_hash
+                        - aunts
+                      type: object
+                    RootHash:
+                      example: >-
+                        72FE6BF6D4109105357AECE0A82E99D0F6288854D16D8767C5E72C57F876A14D
+                      type: string
+                  required:
+                    - RootHash
+                    - Data
+                    - Proof
+                  type: object
+                tx:
+                  example: >-
+                    5wHwYl3uCkaoo2GaChQmSIu8hxpJxLcCuIi8fiHN4TMwrRIU/Af1cEG7Rcs/6LjTl7YjRSymJfYaFAoFdWF0b20SCzE0OTk5OTk1MDAwEhMKDQoFdWF0b20SBDUwMDAQwJoMGmoKJuta6YchAwswBShaB1wkZBctLIhYqBC3JrAI28XGzxP+rVEticGEEkAc+khTkKL9CDE47aDvjEHvUNt+izJfT4KVF2v2JkC+bmlH9K08q3PqHeMI9Z5up+XMusnTqlP985KF+SI5J3ZOIhhNYWRlIGJ5IENpcmNsZSB3aXRoIGxvdmU=
+                  type: string
+                tx_result:
+                  properties:
+                    tags:
+                      $ref: '#/definitions/Event'
+                    gas_used:
+                      example: '28596'
+                      type: string
+                    gas_wanted:
+                      example: '200000'
+                      type: string
+                    log:
+                      example: '[{"msg_index":"0","success":true,"log":""}]'
+                      type: string
+                  required:
+                    - log
+                    - gas_wanted
+                    - gas_used
+                    - tags
+                  type: object
+              type: object
+            type: array
+        required:
+          - txs
+          - total_count
+        type: object
+    required:
+      - jsonrpc
+      - id
+      - result
+    type: object
+  UnconfirmedTransactionsResponse:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          n_txs:
+            example: '82'
+            type: string
+          total:
+            example: '82'
+            type: string
+          total_bytes:
+            example: '19974'
+            type: string
+          txs:
+            example:
+              - >-
+                gAPwYl3uCjCMTXENChSMnIkb5ZpYHBKIZqecFEV2tuZr7xIUA75/FmYq9WymsOBJ0XSJ8yV8zmQKMIxNcQ0KFIyciRvlmlgcEohmp5wURXa25mvvEhQbrvwbvlNiT+Yjr86G+YQNx7kRVgowjE1xDQoUjJyJG+WaWBwSiGannBRFdrbma+8SFK2m+1oxgILuQLO55n8mWfnbIzyPCjCMTXENChSMnIkb5ZpYHBKIZqecFEV2tuZr7xIUQNGfkmhTNMis4j+dyMDIWXdIPiYKMIxNcQ0KFIyciRvlmlgcEohmp5wURXa25mvvEhS8sL0D0wwgGCItQwVowak5YB38KRIUCg4KBXVhdG9tEgUxMDA1NBDoxRgaagom61rphyECn8x7emhhKdRCB2io7aS/6Cpuq5NbVqbODmqOT3jWw6kSQKUresk+d+Gw0BhjiggTsu8+1voW+VlDCQ1GRYnMaFOHXhyFv7BCLhFWxLxHSAYT8a5XqoMayosZf9mANKdXArA=
+            items:
+              type: string
+              x-nullable: true
+            type: array
+            x-nullable: true
+        required:
+          - n_txs
+          - total
+          - total_bytes
+          - txs
+        type: object
+    required:
+      - jsonrpc
+      - id
+      - result
+    type: object
+  Validator:
+    properties:
+      address:
+        type: string
+      pub_key:
+        $ref: '#/definitions/PubKey'
+      voting_power:
+        type: integer
+    type: object
+  ValidatorInfo:
+    properties:
+      address:
+        example: 5D6A51A8E9899C44079C6AF90618BA0369070E6E
+        type: string
+      pub_key:
+        $ref: '#/definitions/PubKey'
+      voting_power:
+        example: '0'
+        type: string
+    type: object
+  ValidatorPriority:
+    properties:
+      address:
+        example: 000001E443FD237E4B616E2FA69DF4EE3D49A94F
+        type: string
+      proposer_priority:
+        example: '-11896414'
+        type: string
+      pub_key:
+        properties:
+          type:
+            example: tendermint/PubKeyEd25519
+            type: string
+          value:
+            example: 9tK9IT+FPdf2qm+5c2qaxi10sWP+3erWTKgftn2PaQM=
+            type: string
+        required:
+          - type
+          - value
+        type: object
+      voting_power:
+        example: '239727'
+        type: string
+    type: object
+  ValidatorsResponse:
+    properties:
+      id:
+        example: 0
+        type: integer
+      jsonrpc:
+        example: '2.0'
+        type: string
+      result:
+        properties:
+          block_height:
+            example: '55'
+            type: string
+          count:
+            example: '1'
+            type: string
+          total:
+            example: '25'
+            type: string
+          validators:
+            items:
+              $ref: '#/definitions/ValidatorPriority'
+            type: array
+        required:
+          - block_height
+          - validators
+        type: object
+    required:
+      - jsonrpc
+      - id
+      - result
+    type: object
+  dialResp:
+    properties:
+      Log:
+        example: Dialing seeds in progress. See /net_info for details
+        type: string
+    type: object
+tags:
+  - description: Informations about the node APIs
+    name: Info
+  - description: Transactions broadcast APIs
+    name: Tx
+  - description: ABCI APIs
+    name: ABCI
+  - description: Evidence APIs
+    name: Evidence
+  - description: Unsafe APIs
+    name: Unsafe
+x-components: {}
+
