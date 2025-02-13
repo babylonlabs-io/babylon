@@ -23,7 +23,6 @@ type (
 		storeService corestoretypes.KVStoreService
 		hooks        types.BTCLightClientHooks
 		iKeeper      types.IncentiveKeeper
-		zcKeeper     types.ZoneConciergeKeeper
 		btcConfig    bbn.BtcConfig
 		bl           *types.BtcLightClient
 		authority    string
@@ -110,7 +109,6 @@ func (k Keeper) triggerEventAndHandleHooksHandler() func(ctx context.Context, s 
 			k.triggerHeaderInserted(ctx, h)
 			k.triggerRollForward(ctx, h)
 		}
-
 		return nil
 	}
 }
