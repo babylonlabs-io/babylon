@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 
 	"cosmossdk.io/math"
@@ -21,8 +22,11 @@ func (g *Gauge) Validate() error {
 	if !g.Coins.IsValid() {
 		return fmt.Errorf("gauge has invalid coins: %s", g.Coins.String())
 	}
-	if g.Coins.IsAnyNegative() {
-		return fmt.Errorf("gauge contains negative coin amounts: %s", g.Coins.String())
+	if g.Coins.IsAnyNil() {
+		return errors.New("gauge has nil coins")
+	}
+	if g.Coins.Len() == 0 {
+		return errors.New("gauge has no coins")
 	}
 	return nil
 }
@@ -55,14 +59,17 @@ func (rg *RewardGauge) Add(coins sdk.Coins) {
 }
 
 func (rg *RewardGauge) Validate() error {
-	if !rg.Coins.IsValid() || rg.Coins.IsAnyNegative() {
+	if !rg.Coins.IsValid() {
 		return fmt.Errorf("reward gauge has invalid or negative coins: %s", rg.Coins.String())
 	}
-	if !rg.WithdrawnCoins.IsValid() || rg.WithdrawnCoins.IsAnyNegative() {
+	if !rg.WithdrawnCoins.IsValid() {
 		return fmt.Errorf("reward gauge has invalid or negative withdrawn coins: %s", rg.WithdrawnCoins.String())
 	}
 	if rg.WithdrawnCoins.IsAnyGT(rg.Coins) {
 		return fmt.Errorf("withdrawn coins (%s) cannot exceed total coins (%s)", rg.WithdrawnCoins.String(), rg.Coins.String())
+	}
+	if rg.Coins.Len() == 0 && rg.WithdrawnCoins.Len() == 0 {
+		return errors.New("reward gauge has no coins")
 	}
 	return nil
 }
