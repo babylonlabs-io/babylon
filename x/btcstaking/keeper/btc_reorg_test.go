@@ -23,10 +23,18 @@ func TestHaltIfBtcReorgLargerThanConfirmationDepth(t *testing.T) {
 
 	k, ctx := keepertest.BTCStakingKeeper(t, nil, btcckKeeper, nil)
 
-	err := k.SetLargestBtcReorg(ctx, p.BtcConfirmationDepth)
+	err := k.SetLargestBtcReorg(ctx, p.BtcConfirmationDepth-1)
 	require.NoError(t, err)
 
-	k.HaltIfBtcReorgLargerThanConfirmationDepth(ctx)
+	require.NotPanics(t, func() {
+		k.HaltIfBtcReorgLargerThanConfirmationDepth(ctx)
+	})
+
+	err = k.SetLargestBtcReorg(ctx, p.BtcConfirmationDepth)
+	require.NoError(t, err)
+	require.Panics(t, func() {
+		k.HaltIfBtcReorgLargerThanConfirmationDepth(ctx)
+	})
 
 	err = k.SetLargestBtcReorg(ctx, p.BtcConfirmationDepth+1)
 	require.NoError(t, err)

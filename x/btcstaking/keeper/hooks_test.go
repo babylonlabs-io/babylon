@@ -1,13 +1,8 @@
 package keeper_test
 
 import (
-	"fmt"
-	"math/rand"
 	"testing"
-	"time"
 
-	"cosmossdk.io/collections"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	ltypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/stretchr/testify/require"
@@ -15,29 +10,13 @@ import (
 
 func TestAfterBTCRollBack(t *testing.T) {
 	t.Parallel()
-	r := rand.New(rand.NewSource(time.Now().Unix()))
 
 	tcs := []struct {
-		title                 string
-		rollbackFrom          *ltypes.BTCHeaderInfo
-		rollbackTo            *ltypes.BTCHeaderInfo
-		expLargestBtcReorg    uint32
-		expLargestBtcReorgErr error
+		title              string
+		rollbackFrom       *ltypes.BTCHeaderInfo
+		rollbackTo         *ltypes.BTCHeaderInfo
+		expLargestBtcReorg uint32
 	}{
-		{
-			"No rollback 'from'",
-			nil,
-			datagen.GenRandomBTCHeaderInfo(r),
-			0,
-			fmt.Errorf("%w: key 'no_key' of type uint32", collections.ErrNotFound),
-		},
-		{
-			"No rollback 'to'",
-			datagen.GenRandomBTCHeaderInfo(r),
-			nil,
-			0,
-			fmt.Errorf("%w: key 'no_key' of type uint32", collections.ErrNotFound),
-		},
 		{
 			"Rollback 'from' height > 'to' height",
 			&ltypes.BTCHeaderInfo{
@@ -46,8 +25,8 @@ func TestAfterBTCRollBack(t *testing.T) {
 			&ltypes.BTCHeaderInfo{
 				Height: 12,
 			},
-			0,
-			fmt.Errorf("%w: key 'no_key' of type uint32", collections.ErrNotFound),
+			// uint32 when subtracts
+			4294967294,
 		},
 		{
 			"Rollback to correct height",
@@ -58,7 +37,6 @@ func TestAfterBTCRollBack(t *testing.T) {
 				Height: 12,
 			},
 			3,
-			nil,
 		},
 		{
 			"Rollback to very large height",
@@ -69,7 +47,6 @@ func TestAfterBTCRollBack(t *testing.T) {
 				Height: 12,
 			},
 			14988,
-			nil,
 		},
 	}
 
@@ -81,13 +58,8 @@ func TestAfterBTCRollBack(t *testing.T) {
 			k.Hooks().AfterBTCRollBack(ctx, tc.rollbackFrom, tc.rollbackTo)
 
 			actLargestBtcReorg, err := k.LargestBtcReorgInBlocks.Get(ctx)
-			if tc.expLargestBtcReorgErr != nil {
-				require.EqualError(t, err, tc.expLargestBtcReorgErr.Error())
-				return
-			}
-
 			require.NoError(t, err)
-			require.Equal(t, tc.expLargestBtcReorg, actLargestBtcReorg)
+			require.EqualValues(t, tc.expLargestBtcReorg, actLargestBtcReorg)
 		})
 	}
 }

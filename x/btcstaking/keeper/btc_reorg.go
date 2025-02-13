@@ -12,7 +12,7 @@ func (k *Keeper) HaltIfBtcReorgLargerThanConfirmationDepth(ctx context.Context) 
 	p := k.btccKeeper.GetParams(ctx)
 
 	largestReorg := k.MustGetLargestBtcReorg(ctx)
-	if largestReorg > p.BtcConfirmationDepth {
+	if largestReorg >= p.BtcConfirmationDepth {
 		panic(fmt.Sprintf("Reorg %d is larger than BTC confirmation Depth %d", largestReorg, p.BtcConfirmationDepth))
 	}
 }
@@ -21,13 +21,16 @@ func (k *Keeper) HaltIfBtcReorgLargerThanConfirmationDepth(ctx context.Context) 
 // value in the store.
 func (k *Keeper) SetLargestBtcReorg(ctx context.Context, newLargestBlockReorg uint32) error {
 	exists, err := k.LargestBtcReorgInBlocks.Has(ctx)
-	if err != nil || !exists {
+	if err != nil {
+		panic(fmt.Errorf("setting largest btc reorg failed encode in Has: %w", err))
+	}
+	if !exists {
 		return k.LargestBtcReorgInBlocks.Set(ctx, newLargestBlockReorg)
 	}
 
 	currentLargestReorg, err := k.LargestBtcReorgInBlocks.Get(ctx)
 	if err != nil {
-		return err
+		panic(fmt.Errorf("setting largest btc reorg failed encode in Get: %w", err))
 	}
 
 	if currentLargestReorg >= newLargestBlockReorg {
@@ -43,13 +46,16 @@ func (k *Keeper) SetLargestBtcReorg(ctx context.Context, newLargestBlockReorg ui
 // it was already set, as it is probably an programming error.
 func (k *Keeper) MustGetLargestBtcReorg(ctx context.Context) uint32 {
 	exists, err := k.LargestBtcReorgInBlocks.Has(ctx)
-	if err != nil || !exists {
+	if err != nil {
+		panic(fmt.Errorf("must get largest btc reorg failed encode in Has: %w", err))
+	}
+	if !exists {
 		return 0
 	}
 
 	largestReorg, err := k.LargestBtcReorgInBlocks.Get(ctx)
 	if err != nil {
-		panic(fmt.Errorf("failed to get the largest btc reorg: %w", err))
+		panic(fmt.Errorf("setting largest btc reorg failed encode in Get: %w", err))
 	}
 
 	return largestReorg

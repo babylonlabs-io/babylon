@@ -27,27 +27,6 @@ func (k Keeper) Hooks() Hooks { return Hooks{k} }
 func (h Hooks) AfterBTCRollBack(goCtx context.Context, rollbackFrom, rollbackTo *ltypes.BTCHeaderInfo) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// sanity checks for rollback values
-	if rollbackFrom == nil {
-		h.k.Logger(ctx).Debug("BTC rollback without rollbackFrom")
-		return
-	}
-
-	if rollbackTo == nil {
-		h.k.Logger(ctx).Debug("BTC rollback without rollbackTo")
-		return
-	}
-
-	// should verify that the BTC height it is rolling back is lower than the latest tip
-	if rollbackTo.Height >= rollbackFrom.Height {
-		h.k.Logger(ctx).Warn(
-			"BTC rollback with rollback height 'To' higher or equal than 'From'",
-			"from_height", rollbackFrom.Height,
-			"to_height", rollbackTo.Height,
-		)
-		return
-	}
-
 	newReorg := rollbackFrom.Height - rollbackTo.Height
 	if err := h.k.SetLargestBtcReorg(ctx, newReorg); err != nil {
 		h.k.Logger(ctx).Error("failed to set largest BTC reorg", zap.Error(err))
