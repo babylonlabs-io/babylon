@@ -472,7 +472,6 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[btclightclienttypes.StoreKey]),
 		*btcConfig,
 		&ak.IncentiveKeeper,
-		&ak.ZoneConciergeKeeper,
 		appparams.AccGov.String(),
 	)
 

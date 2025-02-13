@@ -28,11 +28,6 @@ import (
 
 type MockIncentiveKeeper struct{}
 
-type MockZoneConciergeKeeper struct{}
-
-func (mzk MockZoneConciergeKeeper) BroadcastBTCHeaders(ctx context.Context, headers []*btclightclientt.BTCHeaderInfo) {
-}
-
 func (mik MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg sdk.Msg) {}
 
 func BTCLightClientKeeper(t testing.TB) (*btclightclientk.Keeper, sdk.Context) {
@@ -70,7 +65,6 @@ func BTCLightClientKeeperWithCustomParams(
 		stServ,
 		testCfg,
 		&MockIncentiveKeeper{},
-		&MockZoneConciergeKeeper{},
 		appparams.AccGov.String(),
 	)
 
