@@ -563,8 +563,8 @@ CheckpointFinalizationTimeout)`, where `MinUnbondingTime` and
    Babylon.
 7. If the allow-list is enabled, ensure that the staking transaction is
    in the allow-list.
-8. If the delegation contains an inclusion proof (optional as it is pre-staking 
-   registration), verify the inclusion proof and ensure that it is 
+8. If the delegation contains an inclusion proof (optional due to the capability
+    for pre-staking registration), verify the inclusion proof and ensure that it is 
    `BTCConfirmationDepth`-deep in the Bitcoin blockchain, where 
    `BTCConfirmationDepth` is a module parameter specified in the BTC
    Checkpoint module. <!-- TODO: add a  link to btccheckpoint doc -->
@@ -579,8 +579,8 @@ the proof of inclusion of a Bitcoin Stake delegation on the
 Bitcoin blockchain.
 This message is utilised for notifying the Babylon blockchain
 that a staking transaction that was previously submitted through
-the pre-registration process and is now on Bitcoin whilst having received sufficient
-confirmations to become active.
+the pre- staking registration process and is now on Bitcoin and has
+received sufficient confirmations to become active.
 
 ```protobuf
 // MsgAddBTCDelegationInclusionProof is the message for adding proof of inclusion of BTC delegation on BTC chain
