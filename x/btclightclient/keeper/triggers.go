@@ -48,9 +48,9 @@ func CheckRollBackInvariants(rollbackFrom, rollbackTo *types.BTCHeaderInfo) erro
 	// should verify that the BTC height it is rolling back is lower than the latest tip
 	if rollbackTo.Height >= rollbackFrom.Height {
 		return fmt.Errorf(
-			"BTC rollback with rollback 'To' higher or equal than 'From'\n" +
-				fmt.Sprintf("'From' -> %d - %s\n", rollbackFrom.Height, rollbackFrom.Hash.MarshalHex()) +
-				fmt.Sprintf("'To' -> %d - %s\n", rollbackTo.Height, rollbackTo.Hash.MarshalHex()),
+			"BTC rollback with rollback 'To' higher or equal than 'From'\n%s\n%s",
+			fmt.Sprintf("'From' -> %d - %s", rollbackFrom.Height, rollbackFrom.Hash.MarshalHex()),
+			fmt.Sprintf("'To' -> %d - %s", rollbackTo.Height, rollbackTo.Hash.MarshalHex()),
 		)
 	}
 

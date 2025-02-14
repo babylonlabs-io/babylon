@@ -47,9 +47,9 @@ func TestCheckRollBackInvariants(t *testing.T) {
 				Hash:   randHeaderTo.Hash,
 			},
 			fmt.Errorf(
-				"BTC rollback with rollback 'To' higher or equal than 'From'\n" +
-					fmt.Sprintf("'From' -> %d - %s\n", 10, randHeaderFrom.Hash) +
-					fmt.Sprintf("'To' -> %d - %s\n", 12, randHeaderTo.Hash),
+				"BTC rollback with rollback 'To' higher or equal than 'From'\n%s\n%s",
+				fmt.Sprintf("'From' -> %d - %s", 10, randHeaderFrom.Hash.MarshalHex()),
+				fmt.Sprintf("'To' -> %d - %s", 12, randHeaderTo.Hash.MarshalHex()),
 			),
 		},
 		{
@@ -63,9 +63,9 @@ func TestCheckRollBackInvariants(t *testing.T) {
 				Hash:   randHeaderTo.Hash,
 			},
 			fmt.Errorf(
-				"BTC rollback with rollback 'To' higher or equal than 'From'\n" +
-					fmt.Sprintf("'From' -> %d - %s\n", 18, randHeaderFrom.Hash) +
-					fmt.Sprintf("'To' -> %d - %s\n", 18, randHeaderTo.Hash),
+				"BTC rollback with rollback 'To' higher or equal than 'From'\n%s\n%s",
+				fmt.Sprintf("'From' -> %d - %s", 18, randHeaderFrom.Hash.MarshalHex()),
+				fmt.Sprintf("'To' -> %d - %s", 18, randHeaderTo.Hash.MarshalHex()),
 			),
 		},
 		{
