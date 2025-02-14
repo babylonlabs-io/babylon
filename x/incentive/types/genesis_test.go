@@ -34,6 +34,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					{StakeholderType: types.BTC_DELEGATION, Address: addrStr, RewardGauge: datagen.GenRandomRewardGauge(r)},
 					{StakeholderType: types.FINALITY_PROVIDER, Address: addrStr, RewardGauge: datagen.GenRandomRewardGauge(r)},
 				},
+				WithdrawAddresses: []types.WithdrawAddressEntry{},
 			},
 			valid: true,
 		},
@@ -46,6 +47,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					{StakeholderType: types.BTC_DELEGATION, Address: addrStr, RewardGauge: datagen.GenRandomRewardGauge(r)},
 					{StakeholderType: types.BTC_DELEGATION, Address: addrStr, RewardGauge: datagen.GenRandomRewardGauge(r)},
 				},
+				WithdrawAddresses: []types.WithdrawAddressEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("duplicate reward gauge for address: %s", addrStr),
@@ -58,10 +60,31 @@ func TestGenesisState_Validate(t *testing.T) {
 					{Height: 100, Gauge: datagen.GenRandomGauge(r)},
 					{Height: 100, Gauge: datagen.GenRandomGauge(r)},
 				},
-				RewardGauges: []types.RewardGaugeEntry{},
+				RewardGauges:      []types.RewardGaugeEntry{},
+				WithdrawAddresses: []types.WithdrawAddressEntry{},
 			},
 			valid:  false,
 			errMsg: "duplicate BTC staking gauge for height: 100",
+		},
+		{
+			desc: "Genesis with duplicated entries in withdraw addr",
+			genState: &types.GenesisState{
+				Params:           types.DefaultParams(),
+				BtcStakingGauges: []types.BTCStakingGaugeEntry{},
+				RewardGauges:     []types.RewardGaugeEntry{},
+				WithdrawAddresses: []types.WithdrawAddressEntry{
+					{
+						DelegatorAddress: addrStr,
+						WithdrawAddress:  datagen.GenRandomAddress().String(),
+					},
+					{
+						DelegatorAddress: addrStr,
+						WithdrawAddress:  datagen.GenRandomAddress().String(),
+					},
+				},
+			},
+			valid:  false,
+			errMsg: fmt.Sprintf("duplicate delegator address: %s", addrStr),
 		},
 	}
 	for _, tc := range tests {
@@ -173,6 +196,54 @@ func TestRewardGaugeEntry_Validate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.entry.Validate()
 			if tc.expErr {
+				require.Error(t, err)
+				require.ErrorContains(t, err, tc.errMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestWithdrawAddressEntry_Validate(t *testing.T) {
+	tests := []struct {
+		name      string
+		entry     types.WithdrawAddressEntry
+		expectErr bool
+		errMsg    string
+	}{
+		{
+			name: "Valid addresses",
+			entry: types.WithdrawAddressEntry{
+				DelegatorAddress: datagen.GenRandomAddress().String(),
+				WithdrawAddress:  datagen.GenRandomAddress().String(),
+			},
+			expectErr: false,
+		},
+		{
+			name: "Invalid delegator address",
+			entry: types.WithdrawAddressEntry{
+				DelegatorAddress: "invalid_delegator",
+				WithdrawAddress:  datagen.GenRandomAddress().String(),
+			},
+			expectErr: true,
+			errMsg:    "invalid delegator",
+		},
+		{
+			name: "Invalid withdraw address",
+			entry: types.WithdrawAddressEntry{
+				DelegatorAddress: datagen.GenRandomAddress().String(),
+				WithdrawAddress:  "invalid_withdraw",
+			},
+			expectErr: true,
+			errMsg:    "invalid withdrawer",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.entry.Validate()
+			if tc.expectErr {
 				require.Error(t, err)
 				require.ErrorContains(t, err, tc.errMsg)
 			} else {

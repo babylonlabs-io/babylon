@@ -4,17 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"cosmossdk.io/store/prefix"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// InitGenesis initializes the keeper state from a provided initial genesis state.
+// InitGenesis performs stateful validations and initializes the keeper state from a provided initial genesis state.
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	for _, entry := range gs.BtcStakingGauges {
-		if err := entry.Validate(); err != nil {
-			return err
-		}
-
 		// check that height is less than current height
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 		height := sdkCtx.BlockHeight()
@@ -26,10 +24,6 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	}
 
 	for _, entry := range gs.RewardGauges {
-		if err := entry.Validate(); err != nil {
-			return err
-		}
-
 		// check that the address exists
 		// we can use MustAccAddressFromBech32 safely here because it is validated before
 		accAddr := sdk.MustAccAddressFromBech32(entry.Address)
@@ -39,6 +33,19 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		}
 
 		k.SetRewardGauge(ctx, entry.StakeholderType, accAddr, entry.RewardGauge)
+	}
+
+	for _, entry := range gs.WithdrawAddresses {
+		// check that delegator address exists
+		delAddr := sdk.MustAccAddressFromBech32(entry.DelegatorAddress)
+		acc := k.accountKeeper.GetAccount(ctx, delAddr)
+		if acc == nil {
+			return fmt.Errorf("delegator account with address %s does not exist", entry.DelegatorAddress)
+		}
+		withdrawAddr := sdk.MustAccAddressFromBech32(entry.WithdrawAddress)
+		if err := k.SetWithdrawAddr(ctx, delAddr, withdrawAddr); err != nil {
+			return err
+		}
 	}
 
 	return k.SetParams(ctx, gs.Params)
@@ -54,10 +61,16 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 	if err != nil {
 		return nil, err
 	}
+
+	wa, err := k.withdrawAddresses(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return &types.GenesisState{
-		Params:           k.GetParams(ctx),
-		BtcStakingGauges: bsg,
-		RewardGauges:     rg,
+		Params:            k.GetParams(ctx),
+		BtcStakingGauges:  bsg,
+		RewardGauges:      rg,
+		WithdrawAddresses: wa,
 	}, nil
 }
 
@@ -116,6 +129,36 @@ func (k Keeper) rewardGauges(ctx context.Context) ([]types.RewardGaugeEntry, err
 			}
 			entries = append(entries, entry)
 		}
+	}
+
+	return entries, nil
+}
+
+// withdrawAddresses loads all withdraw addresses stored.
+// This function has high resource consumption and should be only used on export genesis.
+func (k Keeper) withdrawAddresses(ctx context.Context) ([]types.WithdrawAddressEntry, error) {
+	entries := make([]types.WithdrawAddressEntry, 0)
+
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	store := prefix.NewStore(storeAdapter, types.DelegatorWithdrawAddrPrefix)
+	iterator := store.Iterator(nil, nil)
+
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		key := iterator.Key()
+		value := iterator.Value()
+
+		// Extract delegator address from key (strip prefix)
+		delAddr := sdk.AccAddress(key[len(types.DelegatorWithdrawAddrPrefix):])
+
+		// Convert stored withdraw address from bytes to sdk.AccAddress
+		withdrawAddr := sdk.AccAddress(value)
+
+		entries = append(entries, types.WithdrawAddressEntry{
+			DelegatorAddress: delAddr.String(),
+			WithdrawAddress:  withdrawAddr.String(),
+		})
 	}
 
 	return entries, nil

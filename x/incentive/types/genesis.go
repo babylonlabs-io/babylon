@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 
@@ -10,9 +11,10 @@ import (
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Params:           DefaultParams(),
-		BtcStakingGauges: []BTCStakingGaugeEntry{},
-		RewardGauges:     []RewardGaugeEntry{},
+		Params:            DefaultParams(),
+		BtcStakingGauges:  []BTCStakingGaugeEntry{},
+		RewardGauges:      []RewardGaugeEntry{},
+		WithdrawAddresses: []WithdrawAddressEntry{},
 	}
 }
 
@@ -25,6 +27,10 @@ func (gs GenesisState) Validate() error {
 
 	if err := validateRewardGauges(gs.RewardGauges); err != nil {
 		return fmt.Errorf("invalid reward gauges: %w", err)
+	}
+
+	if err := validateWithdrawAddresses(gs.WithdrawAddresses); err != nil {
+		return fmt.Errorf("invalid withdraw addresses: %w", err)
 	}
 
 	return gs.Params.Validate()
@@ -41,12 +47,8 @@ func (bse BTCStakingGaugeEntry) Validate() error {
 }
 
 func (rge RewardGaugeEntry) Validate() error {
-	if rge.Address == "" {
-		return fmt.Errorf("reward gauge entry has empty address")
-	}
-
-	if _, err := sdk.AccAddressFromBech32(rge.Address); err != nil {
-		return fmt.Errorf("invalid address: %s, error: %w", rge.Address, err)
+	if err := validateAddrStr(rge.Address); err != nil {
+		return err
 	}
 
 	if err := rge.StakeholderType.Validate(); err != nil {
@@ -59,6 +61,41 @@ func (rge RewardGaugeEntry) Validate() error {
 
 	if err := rge.RewardGauge.Validate(); err != nil {
 		return fmt.Errorf("invalid reward gauge for address %s: %w", rge.Address, err)
+	}
+	return nil
+}
+
+func (wa WithdrawAddressEntry) Validate() error {
+	if err := validateAddrStr(wa.DelegatorAddress); err != nil {
+		return fmt.Errorf("invalid delegator, error: %w", err)
+	}
+	if err := validateAddrStr(wa.WithdrawAddress); err != nil {
+		return fmt.Errorf("invalid withdrawer, error: %w", err)
+	}
+	return nil
+}
+
+func validateWithdrawAddresses(entries []WithdrawAddressEntry) error {
+	addrMap := make(map[string]bool) // check for duplicate entries
+	for _, e := range entries {
+		if _, exists := addrMap[e.DelegatorAddress]; exists {
+			return fmt.Errorf("duplicate delegator address: %s", e.DelegatorAddress)
+		}
+		addrMap[e.DelegatorAddress] = true
+		err := e.Validate()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateAddrStr(addr string) error {
+	if addr == "" {
+		return errors.New("empty address")
+	}
+	if _, err := sdk.AccAddressFromBech32(addr); err != nil {
+		return fmt.Errorf("invalid address: %s, error: %w", addr, err)
 	}
 	return nil
 }
@@ -100,9 +137,9 @@ func validateRewardGauges(entries []RewardGaugeEntry) error {
 	return nil
 }
 
-// Helper function to sort gauges to get a deterministic
+// Helper function to sort gauges and addresses to get a deterministic
 // result on the tests
-func SortGauges(gs *GenesisState) {
+func SortData(gs *GenesisState) {
 	sort.Slice(gs.RewardGauges, func(i, j int) bool {
 		if gs.RewardGauges[i].StakeholderType != gs.RewardGauges[j].StakeholderType {
 			return gs.RewardGauges[i].StakeholderType < gs.RewardGauges[j].StakeholderType
@@ -112,5 +149,9 @@ func SortGauges(gs *GenesisState) {
 
 	sort.Slice(gs.BtcStakingGauges, func(i, j int) bool {
 		return gs.BtcStakingGauges[i].Height < gs.BtcStakingGauges[j].Height
+	})
+
+	sort.Slice(gs.WithdrawAddresses, func(i, j int) bool {
+		return gs.WithdrawAddresses[i].DelegatorAddress < gs.WithdrawAddresses[j].DelegatorAddress
 	})
 }

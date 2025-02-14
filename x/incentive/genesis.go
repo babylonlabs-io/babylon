@@ -9,6 +9,7 @@ import (
 
 // InitGenesis initializes the module's state from a provided genesis state.
 func InitGenesis(ctx context.Context, k keeper.Keeper, genState types.GenesisState) {
+	// stateless validations
 	if err := genState.Validate(); err != nil {
 		panic(err)
 	}
