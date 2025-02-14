@@ -13,6 +13,8 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		if err := entry.Validate(); err != nil {
 			return err
 		}
+		// TODO check that height is less than current height
+
 		k.SetBTCStakingGauge(ctx, entry.Height, entry.Gauge)
 	}
 
@@ -20,6 +22,8 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		if err := entry.Validate(); err != nil {
 			return err
 		}
+		// TODO check that the address exists
+
 		// we can use MustAccAddressFromBech32 safely here because it is validated before
 		k.SetRewardGauge(ctx, entry.StakeholderType, sdk.MustAccAddressFromBech32(entry.Address), entry.RewardGauge)
 	}
