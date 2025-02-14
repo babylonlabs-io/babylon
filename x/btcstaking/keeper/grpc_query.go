@@ -235,7 +235,7 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 func (k Keeper) LargestBtcReOrg(ctx context.Context, _ *types.QueryLargestBtcReOrgRequest) (*types.QueryLargestBtcReOrgResponse, error) {
 	largestBtcReorg, err := k.LargestBtcReorg.Get(ctx)
 	if err != nil {
-		return nil, err
+		return nil, types.ErrLargestBtcReorgNotFound
 	}
 
 	return &types.QueryLargestBtcReOrgResponse{

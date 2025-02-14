@@ -41,7 +41,7 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 			BtcPk:       fp.BtcPk,
 			Pop:         fp.Pop,
 		}
-		_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
+		_, err = h.BTCStakingMsgServer.CreateFinalityProvider(h.Ctx, msg)
 		h.NoError(err)
 		fps = append(fps, fp)
 	}
