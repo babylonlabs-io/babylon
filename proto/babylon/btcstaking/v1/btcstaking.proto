@@ -6,6 +6,7 @@ import "cosmos_proto/cosmos.proto";
 import "cosmos/staking/v1beta1/staking.proto";
 import "babylon/btcstaking/v1/pop.proto";
 import "babylon/btccheckpoint/v1/btccheckpoint.proto";
+import "babylon/btclightclient/v1/btclightclient.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 
@@ -239,4 +240,15 @@ message InclusionProof {
     babylon.btccheckpoint.v1.TransactionKey key = 1;
     // proof is the Merkle proof that this tx is included in the position in `key`
     bytes proof = 2;
+}
+
+// LargestBtcReOrg stores the largest BTC reorg recorded
+message LargestBtcReOrg {
+    // BlockDiff is the difference of the block height of the BTC header Tip - the btc height
+    // which it was rolled back
+    uint32 block_diff = 1;
+    // RollbackFrom is the latest BTC block header prior to rollback
+    babylon.btclightclient.v1.BTCHeaderInfo rollback_from = 2;
+    // RollbackTo is the BTC block header which we rollback to
+    babylon.btclightclient.v1.BTCHeaderInfo rollback_to = 3;
 }

@@ -1,8 +1,11 @@
 package keeper_test
 
 import (
+	"math/rand"
 	"testing"
+	"time"
 
+	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
@@ -22,21 +25,28 @@ func TestHaltIfBtcReorgLargerThanConfirmationDepth(t *testing.T) {
 	btcckKeeper.EXPECT().GetParams(gomock.Any()).Return(p).AnyTimes()
 
 	k, ctx := keepertest.BTCStakingKeeper(t, nil, btcckKeeper, nil)
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 
-	err := k.SetLargestBtcReorg(ctx, p.BtcConfirmationDepth-1)
+	from, to := datagen.GenRandomBTCHeaderInfo(r), datagen.GenRandomBTCHeaderInfo(r)
+	largestReorg := types.NewLargestBtcReOrg(from, to)
+
+	largestReorg.BlockDiff = p.BtcConfirmationDepth - 1
+	err := k.SetLargestBtcReorg(ctx, largestReorg)
 	require.NoError(t, err)
 
 	require.NotPanics(t, func() {
 		k.HaltIfBtcReorgLargerThanConfirmationDepth(ctx)
 	})
 
-	err = k.SetLargestBtcReorg(ctx, p.BtcConfirmationDepth)
+	largestReorg.BlockDiff = p.BtcConfirmationDepth
+	err = k.SetLargestBtcReorg(ctx, largestReorg)
 	require.NoError(t, err)
 	require.Panics(t, func() {
 		k.HaltIfBtcReorgLargerThanConfirmationDepth(ctx)
 	})
 
-	err = k.SetLargestBtcReorg(ctx, p.BtcConfirmationDepth+1)
+	largestReorg.BlockDiff = p.BtcConfirmationDepth + 1
+	err = k.SetLargestBtcReorg(ctx, largestReorg)
 	require.NoError(t, err)
 	require.Panics(t, func() {
 		k.HaltIfBtcReorgLargerThanConfirmationDepth(ctx)
@@ -69,6 +79,11 @@ func TestMustGetLargestBtcReorg(t *testing.T) {
 		},
 	}
 
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+
+	from, to := datagen.GenRandomBTCHeaderInfo(r), datagen.GenRandomBTCHeaderInfo(r)
+	largestReorg := types.NewLargestBtcReOrg(from, to)
+
 	for _, tc := range tcs {
 		t.Run(tc.title, func(t *testing.T) {
 			t.Parallel()
@@ -76,11 +91,12 @@ func TestMustGetLargestBtcReorg(t *testing.T) {
 			k, ctx := keepertest.BTCStakingKeeper(t, nil, nil, nil)
 
 			if tc.setNewLargest {
-				err := k.LargestBtcReorgInBlocks.Set(ctx, tc.largestBtcReorg)
+				largestReorg.BlockDiff = tc.largestBtcReorg
+				err := k.LargestBtcReorg.Set(ctx, largestReorg)
 				require.NoError(t, err)
 			}
 
-			actLargestBtcReorg := k.MustGetLargestBtcReorg(ctx)
+			actLargestBtcReorg := k.MustGetLargestBtcReorgBlockDiff(ctx)
 			require.Equal(t, tc.largestBtcReorg, actLargestBtcReorg)
 		})
 	}
@@ -92,10 +108,10 @@ func TestSetLargestBtcReorg(t *testing.T) {
 	tcs := []struct {
 		title string
 
-		setNewLargestFirst bool
-		setLargestBtcReorg uint32
+		setNewLargestFirst     bool
+		setLargestBtcReorgDiff uint32
 
-		newLargestBtcReorg      uint32
+		newLargestBtcReorgDiff  uint32
 		expectedLargestBtcReorg uint32
 	}{
 		{
@@ -135,6 +151,11 @@ func TestSetLargestBtcReorg(t *testing.T) {
 		},
 	}
 
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+
+	from, to := datagen.GenRandomBTCHeaderInfo(r), datagen.GenRandomBTCHeaderInfo(r)
+	largestReorg := types.NewLargestBtcReOrg(from, to)
+
 	for _, tc := range tcs {
 		t.Run(tc.title, func(t *testing.T) {
 			t.Parallel()
@@ -142,14 +163,16 @@ func TestSetLargestBtcReorg(t *testing.T) {
 			k, ctx := keepertest.BTCStakingKeeper(t, nil, nil, nil)
 
 			if tc.setNewLargestFirst {
-				err := k.LargestBtcReorgInBlocks.Set(ctx, tc.setLargestBtcReorg)
+				largestReorg.BlockDiff = tc.setLargestBtcReorgDiff
+				err := k.LargestBtcReorg.Set(ctx, largestReorg)
 				require.NoError(t, err)
 			}
 
-			err := k.SetLargestBtcReorg(ctx, tc.newLargestBtcReorg)
+			largestReorg.BlockDiff = tc.newLargestBtcReorgDiff
+			err := k.SetLargestBtcReorg(ctx, largestReorg)
 			require.NoError(t, err)
 
-			actLargestBtcReorg := k.MustGetLargestBtcReorg(ctx)
+			actLargestBtcReorg := k.MustGetLargestBtcReorgBlockDiff(ctx)
 			require.Equal(t, tc.expectedLargestBtcReorg, actLargestBtcReorg)
 		})
 	}

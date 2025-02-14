@@ -4,6 +4,7 @@ import (
 	"context"
 
 	ltypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"go.uber.org/zap"
 )
@@ -27,8 +28,7 @@ func (k Keeper) Hooks() Hooks { return Hooks{k} }
 func (h Hooks) AfterBTCRollBack(goCtx context.Context, rollbackFrom, rollbackTo *ltypes.BTCHeaderInfo) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	newReorg := rollbackFrom.Height - rollbackTo.Height
-	if err := h.k.SetLargestBtcReorg(ctx, newReorg); err != nil {
+	if err := h.k.SetLargestBtcReorg(ctx, types.NewLargestBtcReOrg(rollbackFrom, rollbackTo)); err != nil {
 		h.k.Logger(ctx).Error("failed to set largest BTC reorg", zap.Error(err))
 	}
 }

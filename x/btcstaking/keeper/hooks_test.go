@@ -57,9 +57,9 @@ func TestAfterBTCRollBack(t *testing.T) {
 			k, ctx := keepertest.BTCStakingKeeper(t, nil, nil, nil)
 			k.Hooks().AfterBTCRollBack(ctx, tc.rollbackFrom, tc.rollbackTo)
 
-			actLargestBtcReorg, err := k.LargestBtcReorgInBlocks.Get(ctx)
+			actLargestBtcReorg, err := k.LargestBtcReorg.Get(ctx)
 			require.NoError(t, err)
-			require.EqualValues(t, tc.expLargestBtcReorg, actLargestBtcReorg)
+			require.EqualValues(t, tc.expLargestBtcReorg, actLargestBtcReorg.BlockDiff)
 		})
 	}
 }

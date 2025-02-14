@@ -7,6 +7,7 @@ import (
 
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
 
 func (fp *FinalityProvider) IsSlashed() bool {
@@ -106,4 +107,13 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 	}
 
 	return orderedCovSigs, nil
+}
+
+// NewLargestBtcReOrg creates a new Largest BTC reorg based on the rollback vars
+func NewLargestBtcReOrg(rollbackFrom, rollbackTo *btclightclienttypes.BTCHeaderInfo) LargestBtcReOrg {
+	return LargestBtcReOrg{
+		BlockDiff:    rollbackFrom.Height - rollbackTo.Height,
+		RollbackFrom: rollbackFrom,
+		RollbackTo:   rollbackTo,
+	}
 }
