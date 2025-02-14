@@ -170,7 +170,7 @@ func TestRewardGaugeEntry_Validate(t *testing.T) {
 				RewardGauge: datagen.GenRandomRewardGauge(r),
 			},
 			expErr: true,
-			errMsg: "reward gauge entry has empty address",
+			errMsg: "empty address",
 		},
 		{
 			name: "invalid bech32 address",
