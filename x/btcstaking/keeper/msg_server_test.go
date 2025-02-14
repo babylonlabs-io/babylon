@@ -446,13 +446,11 @@ func TestBtcStakingWithBtcReOrg(t *testing.T) {
 	require.Equal(t, respLargestReOrg.RollbackTo.HashHex, rBlockTo.ToResponse().HashHex)
 
 	// BTC staking tx is still seen as active rolling back to a block where the confirmation depth is less than btcctParams.BtcConfirmationDepth
-	// Should we handle this differently?
 	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: rBlockTo.Height})
 	delResp, err := h.BTCStakingKeeper.BTCDelegation(h.Ctx, &types.QueryBTCDelegationRequest{
 		StakingTxHashHex: stakingTxHash,
 	})
 	h.NoError(err)
-	// SHOULD BE PENDING
 	require.Equal(t, types.BTCDelegationStatus_ACTIVE.String(), delResp.BtcDelegation.StatusDesc)
 
 	// -------------- simulates a reorg of current tip - (BTC depth) --------
