@@ -44,7 +44,7 @@ func RandomLegacyDec(r *rand.Rand, rngI, rngPrec int) math.LegacyDec {
 		prec++
 	}
 
-	return math.LegacyNewDecWithPrec(i, int64(prec))
+	return math.LegacyNewDecWithPrec(i, prec)
 }
 
 func RandomIntOtherThan(r *rand.Rand, x int, rng int) uint64 {
