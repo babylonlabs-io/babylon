@@ -2,12 +2,19 @@ package datagen
 
 import (
 	sdkmath "cosmossdk.io/math"
+	"errors"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	sec256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"strings"
 )
+
+func GenRandomSecp256k1Address() sdk.AccAddress {
+	senderPrivKey := sec256k1.GenPrivKey()
+	return senderPrivKey.PubKey().Address().Bytes()
+}
 
 func GenRandomAccount() *authtypes.BaseAccount {
 	senderPrivKey := sec256k1.GenPrivKey()
@@ -30,4 +37,36 @@ func GenRandomAccWithBalance(n int) ([]authtypes.GenesisAccount, []banktypes.Bal
 	}
 
 	return accs, balances
+}
+
+// MustAccAddressFromBech32WithPrefix calls AccAddressFromBech32WithPrefix and
+// panics on error.
+// Adapted from github.com/cosmos/cosmos-sdk@v0.50.11/types/address.go
+func MustAccAddressFromBech32WithPrefix(address, prefix string) sdk.AccAddress {
+	addr, err := AccAddressFromBech32WithPrefix(address, prefix)
+	if err != nil {
+		panic(err)
+	}
+
+	return addr
+}
+
+// AccAddressFromBech32WithPrefix creates an AccAddress from a Bech32 string.
+// Adapted from github.com/cosmos/cosmos-sdk@v0.50.11/types/address.go
+func AccAddressFromBech32WithPrefix(address, bech32PrefixAccAddr string) (addr sdk.AccAddress, err error) {
+	if len(strings.TrimSpace(address)) == 0 {
+		return sdk.AccAddress{}, errors.New("empty address string is not allowed")
+	}
+
+	bz, err := sdk.GetFromBech32(address, bech32PrefixAccAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	err = sdk.VerifyAddressFormat(bz)
+	if err != nil {
+		return nil, err
+	}
+
+	return bz, nil
 }
