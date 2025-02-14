@@ -41,7 +41,7 @@ func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) er
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	headersToBroadcast := h.k.getHeadersToBroadcast(ctx)
 	if len(headersToBroadcast) == 0 {
-		h.k.Logger(sdkCtx).Info("no new headers to broadcast in finalized epoch", "epoch", epoch)
+		h.k.Logger(sdkCtx).Info("no new BTC headers to broadcast", "epoch", epoch)
 		return nil
 	}
 

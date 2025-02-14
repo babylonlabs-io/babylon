@@ -45,7 +45,7 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) {
 	}
 
 	if len(headers) == 0 {
-		k.Logger(sdkCtx).Info("no new headers to broadcast")
+		k.Logger(sdkCtx).Info("no new BTC headers to broadcast")
 		return
 	}
 
