@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -110,27 +111,16 @@ func NewStakeHolderType(stBytes []byte) (StakeholderType, error) {
 }
 
 func NewStakeHolderTypeFromString(stStr string) (StakeholderType, error) {
-	switch stStr {
-	case "finality_provider":
-		return FINALITY_PROVIDER, nil
-	case "btc_delegation":
-		return BTC_DELEGATION, nil
-	default:
-		return FINALITY_PROVIDER, fmt.Errorf("invalid stStr")
+	// Convert to uppercase for case-insensitive matching
+	stStr = strings.ToUpper(stStr)
+	if value, ok := StakeholderType_value[stStr]; ok {
+		return StakeholderType(value), nil
 	}
+	return FINALITY_PROVIDER, fmt.Errorf("invalid stStr: %s", stStr)
 }
 
 func (st StakeholderType) Bytes() []byte {
 	return []byte{byte(st)}
-}
-
-func (st StakeholderType) String() string {
-	if st == FINALITY_PROVIDER {
-		return "finality_provider"
-	} else if st == BTC_DELEGATION {
-		return "btc_delegation"
-	}
-	panic("invalid stakeholder type")
 }
 
 func (st StakeholderType) Validate() error {
