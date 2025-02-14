@@ -72,7 +72,7 @@ The following actors interact with the BTC staking module:
 
 ### Stake Creation
 
-#### Single Step Delegation
+#### Post-staking Registration
 A Bitcoin staker can receive voting power through their Bitcoin stake delegation
 by following this process:
 1. Create a Bitcoin staking transaction and submit it to Bitcoin. The
@@ -94,15 +94,15 @@ by following this process:
    for the slashing transactions and unbonding transaction.
    The BTC Delegation is now activated.
 
-#### Expression of Interest Delegation (EOI)
+#### Pre-staking Registration
 
 The above mechanism requires the staker to first lock their funds
 and then request the Babylon blockchain to activate the stake.
 For stakers that want to avoid this and prefer to first receive confirmation
-and then lock their funds on Bitcoin, the Expression of Interest (EOI) procedure
+and then lock their funds on Bitcoin, the pre-staking registration
 can be used.
 
-The EOI procedure works as follows:
+The pre-staking registration procedure works as follows:
 
 1. The BTC staker constructs the following transactions (whose specifications
    can be found [here](../../docs/staking-script.md)) and sends them on Babylon
@@ -563,9 +563,10 @@ CheckpointFinalizationTimeout)`, where `MinUnbondingTime` and
    Babylon.
 7. If the allow-list is enabled, ensure that the staking transaction is
    in the allow-list.
-8. If the delegation contains an inclusion proof (it is optional due to EOI),
-   verify the inclusion proof and ensure that it is `BTCConfirmationDepth`-deep in the Bitcoin
-   blockchain, where `BTCConfirmationDepth` is a module parameter specified in the BTC
+8. If the delegation contains an inclusion proof (optional as it is pre-staking 
+   registration), verify the inclusion proof and ensure that it is 
+   `BTCConfirmationDepth`-deep in the Bitcoin blockchain, where 
+   `BTCConfirmationDepth` is a module parameter specified in the BTC
    Checkpoint module. <!-- TODO: add a  link to btccheckpoint doc -->
 9. Create a `BTCDelegation` object and save it to the BTC delegation storage and
    the BTC delegation index storage.
@@ -578,7 +579,7 @@ the proof of inclusion of a Bitcoin Stake delegation on the
 Bitcoin blockchain.
 This message is utilised for notifying the Babylon blockchain
 that a staking transaction that was previously submitted through
-the EOI process is now on Bitcoin and has received sufficient
+the pre-registration process and is now on Bitcoin whilst having received sufficient
 confirmations to become active.
 
 ```protobuf
