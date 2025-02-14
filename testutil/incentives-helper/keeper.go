@@ -139,7 +139,7 @@ func (h *IncentiveHelper) BtcUndelegate(
 	}
 
 	// early unbond
-	_, err := h.BTCStakingMsgServer.BTCUndelegate(h.Ctx, msgUndelegate)
+	_, err := h.MsgServer.BTCUndelegate(h.Ctx, msgUndelegate)
 	h.NoError(err)
 
 	h.EqualBtcDelegationStatus(stakingTxHash, btcLightClientTipHeight, bstypes.BTCDelegationStatus_UNBONDED)
@@ -153,7 +153,7 @@ func (h *IncentiveHelper) GenerateAndSendCovenantSignatures(
 ) {
 	covMsgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, del)
 	for _, msg := range covMsgs {
-		_, err := h.BTCStakingMsgServer.AddCovenantSigs(h.Ctx, msg)
+		_, err := h.MsgServer.AddCovenantSigs(h.Ctx, msg)
 		h.NoError(err)
 	}
 }

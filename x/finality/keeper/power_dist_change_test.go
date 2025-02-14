@@ -936,7 +936,7 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 	for _, m := range msgs {
 		mCopy := m
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
-		_, err = h.BTCStakingMsgServer.AddCovenantSigs(h.Ctx, mCopy)
+		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, mCopy)
 		h.NoError(err)
 	}
 

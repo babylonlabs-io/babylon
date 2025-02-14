@@ -58,13 +58,13 @@ func FuzzMsgServer_UpdateParams(f *testing.F) {
 			Params:    params,
 		}
 
-		_, err := h.BTCStakingMsgServer.UpdateParams(h.Ctx, msg)
+		_, err := h.MsgServer.UpdateParams(h.Ctx, msg)
 		require.ErrorIs(t, err, govtypes.ErrInvalidProposalMsg,
 			"should not set minUnbondingTime to be less than checkpointFinalizationTimeout")
 
 		// Try to update params with minUnbondingTime larger than checkpointFinalizationTimeout
 		msg.Params.UnbondingTimeBlocks = uint32(r.Intn(1000)) + ckptFinalizationTimeout + 1
-		_, err = h.BTCStakingMsgServer.UpdateParams(h.Ctx, msg)
+		_, err = h.MsgServer.UpdateParams(h.Ctx, msg)
 		require.NoError(t, err)
 	})
 }
@@ -97,7 +97,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 				BtcPk:       fp.BtcPk,
 				Pop:         fp.Pop,
 			}
-			_, err = h.BTCStakingMsgServer.CreateFinalityProvider(h.Ctx, msg)
+			_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.NoError(t, err)
 
 			fps = append(fps, fp)
@@ -117,7 +117,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 				BtcPk:       fp2.BtcPk,
 				Pop:         fp2.Pop,
 			}
-			_, err := h.BTCStakingMsgServer.CreateFinalityProvider(h.Ctx, msg)
+			_, err := h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.Error(t, err)
 		}
 	})
@@ -154,7 +154,7 @@ func FuzzMsgEditFinalityProvider(f *testing.F) {
 			Description: newDescription,
 			Commission:  &newCommission,
 		}
-		_, err := h.BTCStakingMsgServer.EditFinalityProvider(h.Ctx, msg)
+		_, err := h.MsgServer.EditFinalityProvider(h.Ctx, msg)
 		h.NoError(err)
 		editedFp, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, *fp.BtcPk)
 		h.NoError(err)
@@ -171,7 +171,7 @@ func FuzzMsgEditFinalityProvider(f *testing.F) {
 			Description: newDescription,
 			Commission:  &newCommission,
 		}
-		_, err = h.BTCStakingMsgServer.EditFinalityProvider(h.Ctx, msg)
+		_, err = h.MsgServer.EditFinalityProvider(h.Ctx, msg)
 		require.Equal(h.T(), err, status.Errorf(codes.PermissionDenied, "the signer does not correspond to the finality provider's Babylon address"))
 		errStatus := status.Convert(err)
 		require.Equal(h.T(), codes.PermissionDenied, errStatus.Code())
@@ -530,7 +530,7 @@ func createActiveBtcDel(t *testing.T, btcLightclientTipHeight uint32) (*testutil
 	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
 	for _, msg := range msgs {
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: btcBlockHeightTxInserted})
-		_, err = h.BTCStakingMsgServer.AddCovenantSigs(h.Ctx, msg)
+		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
 		h.NoError(err)
 	}
 
@@ -610,7 +610,7 @@ func TestRejectActivationThatShouldNotUsePreApprovalFlow(t *testing.T) {
 	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
 	for _, msg := range msgs {
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 10})
-		_, err = h.BTCStakingMsgServer.AddCovenantSigs(h.Ctx, msg)
+		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
 		h.NoError(err)
 	}
 
@@ -634,7 +634,7 @@ func TestRejectActivationThatShouldNotUsePreApprovalFlow(t *testing.T) {
 	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(headerInfo.Header.Hash())).Return(headerInfo, nil).AnyTimes()
 	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 30})
 	// Call the AddBTCDelegationInclusionProof handler
-	_, err = h.BTCStakingMsgServer.AddBTCDelegationInclusionProof(h.Ctx, msg)
+	_, err = h.MsgServer.AddBTCDelegationInclusionProof(h.Ctx, msg)
 	h.Error(err)
 	require.ErrorAs(t, err, &types.ErrStakingTxIncludedTooEarly)
 }
@@ -694,14 +694,14 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		// ensure the system does not panick due to a bogus covenant sig request
 		bogusMsg := *msgs[0]
 		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
-		_, err = h.BTCStakingMsgServer.AddCovenantSigs(h.Ctx, &bogusMsg)
+		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, &bogusMsg)
 		h.Error(err)
 
 		for i, msg := range msgs {
-			_, err = h.BTCStakingMsgServer.AddCovenantSigs(h.Ctx, msg)
+			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
 			h.NoError(err)
 			// check that submitting the same covenant signature returns error
-			_, err = h.BTCStakingMsgServer.AddCovenantSigs(h.Ctx, msg)
+			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
 			h.Error(err, "i: %d", i)
 		}
 
@@ -858,11 +858,11 @@ func FuzzBTCUndelegate(f *testing.F) {
 		bogusMsg := *msg
 		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
-		_, err = h.BTCStakingMsgServer.BTCUndelegate(h.Ctx, &bogusMsg)
+		_, err = h.MsgServer.BTCUndelegate(h.Ctx, &bogusMsg)
 		h.Error(err)
 
 		// unbond
-		_, err = h.BTCStakingMsgServer.BTCUndelegate(h.Ctx, msg)
+		_, err = h.MsgServer.BTCUndelegate(h.Ctx, msg)
 		h.NoError(err)
 
 		// ensure the BTC delegation is unbonded
@@ -934,7 +934,7 @@ func FuzzBTCUndelegateExpired(f *testing.F) {
 
 		// expires the delegation
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 2000}).AnyTimes()
-		_, err = h.BTCStakingMsgServer.BTCUndelegate(h.Ctx, msg)
+		_, err = h.MsgServer.BTCUndelegate(h.Ctx, msg)
 		require.EqualError(t, err, types.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an unbonded BTC delegation").Error())
 	})
 }
@@ -1001,11 +1001,11 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		bogusMsg := *msg
 		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
-		_, err = h.BTCStakingMsgServer.SelectiveSlashingEvidence(h.Ctx, &bogusMsg)
+		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, &bogusMsg)
 		h.Error(err)
 
 		// submit evidence of selective slashing
-		_, err = h.BTCStakingMsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
+		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
 		h.NoError(err)
 
 		// ensure the finality provider is slashed
@@ -1093,7 +1093,7 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		}
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 
-		_, err = h.BTCStakingMsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
+		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
 		h.NoError(err)
 
 		// ensure the finality provider is slashed
@@ -1222,7 +1222,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 		DelegatorUnbondingSlashingSig: delUnbondingSlashingSig,
 	}
 
-	_, err = h.BTCStakingMsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
+	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	require.Error(t, err)
 	require.True(t, errors.Is(err, types.ErrFpNotFound))
 
@@ -1236,7 +1236,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	mockTipHeaderInfo := &btclctypes.BTCHeaderInfo{Height: uint32(tipHeight)}
 	btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), btcHeader.Hash()).Return(inclusionHeader, nil).Times(1)
 	btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockTipHeaderInfo).Times(1)
-	_, err = h.BTCStakingMsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
+	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	require.NoError(t, err)
 }
 

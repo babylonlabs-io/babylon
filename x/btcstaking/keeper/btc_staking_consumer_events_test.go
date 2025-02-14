@@ -128,10 +128,10 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
 		bogusMsg := *msgs[0]
 		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
-		_, err = h.BTCStakingMsgServer.AddCovenantSigs(h.Ctx, &bogusMsg)
+		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, &bogusMsg)
 		h.Error(err)
 		for _, msg := range msgs {
-			_, err = h.BTCStakingMsgServer.AddCovenantSigs(h.Ctx, msg)
+			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
 			h.NoError(err)
 		}
 		// ensure the BTC delegation now has voting power as it has been activated
@@ -238,13 +238,13 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		// ensure the system does not panic due to a bogus unbonding msg
 		bogusMsg := *msg
 		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
-		_, err = h.BTCStakingMsgServer.BTCUndelegate(h.Ctx, &bogusMsg)
+		_, err = h.MsgServer.BTCUndelegate(h.Ctx, &bogusMsg)
 		h.Error(err)
 
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 
 		// unbond
-		_, err = h.BTCStakingMsgServer.BTCUndelegate(h.Ctx, msg)
+		_, err = h.MsgServer.BTCUndelegate(h.Ctx, msg)
 		h.NoError(err)
 
 		// ensure the BTC delegation is unbonded

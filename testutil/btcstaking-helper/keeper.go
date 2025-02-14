@@ -40,9 +40,9 @@ var (
 type Helper struct {
 	t testing.TB
 
-	Ctx                 sdk.Context
-	BTCStakingKeeper    *keeper.Keeper
-	BTCStakingMsgServer types.MsgServer
+	Ctx              sdk.Context
+	BTCStakingKeeper *keeper.Keeper
+	MsgServer        types.MsgServer
 
 	BTCStkConsumerKeeper    *bsckeeper.Keeper
 	BtcStkConsumerMsgServer bsctypes.MsgServer
@@ -113,8 +113,8 @@ func NewHelperWithStoreAndIncentive(
 		t:   t,
 		Ctx: ctx,
 
-		BTCStakingKeeper:    k,
-		BTCStakingMsgServer: msgSrvr,
+		BTCStakingKeeper: k,
+		MsgServer:        msgSrvr,
 
 		BTCStkConsumerKeeper:    &bscKeeper,
 		BtcStkConsumerMsgServer: btcStkConsumerMsgServer,
@@ -233,7 +233,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 		ConsumerId:  "",
 	}
 
-	_, err = h.BTCStakingMsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
+	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
 	h.NoError(err)
 	return fpSK, fpPK, fp
 }
@@ -256,7 +256,7 @@ func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string)
 		Pop:         fp.Pop,
 		ConsumerId:  fp.ConsumerId,
 	}
-	_, err = h.BTCStakingMsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
+	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -426,7 +426,7 @@ func (h *Helper) CreateDelegationWithBtcBlockHeight(
 	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Hash())).Return(btcHeaderInfo, nil).AnyTimes()
 	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: lightClientTipHeight})
 
-	_, err = h.BTCStakingMsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
+	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	if err != nil {
 		return "", nil, nil, nil, nil, nil, err
 	}
@@ -549,7 +549,7 @@ func (h *Helper) CreateCovenantSigs(
 	for _, m := range covenantMsgs {
 		msgCopy := m
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: lightClientTipHeight}).MaxTimes(1)
-		_, err := h.BTCStakingMsgServer.AddCovenantSigs(h.Ctx, msgCopy)
+		_, err := h.MsgServer.AddCovenantSigs(h.Ctx, msgCopy)
 		h.NoError(err)
 	}
 	/*
@@ -603,7 +603,7 @@ func (h *Helper) AddInclusionProof(
 	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: lightClientTipHeight})
 
 	// Call the AddBTCDelegationInclusionProof handler
-	_, err = h.BTCStakingMsgServer.AddBTCDelegationInclusionProof(h.Ctx, msg)
+	_, err = h.MsgServer.AddBTCDelegationInclusionProof(h.Ctx, msg)
 	h.NoError(err)
 
 	// Verify that the inclusion proof is added successfully and the BTC delegation
