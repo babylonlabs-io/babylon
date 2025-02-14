@@ -13,9 +13,18 @@ import (
 func (k *Keeper) HaltIfBtcReorgLargerThanConfirmationDepth(ctx context.Context) {
 	p := k.btccKeeper.GetParams(ctx)
 
-	largestReorg := k.MustGetLargestBtcReorgBlockDiff(ctx)
-	if largestReorg >= p.BtcConfirmationDepth {
-		panic(fmt.Sprintf("Reorg %d is larger than BTC confirmation Depth %d", largestReorg, p.BtcConfirmationDepth))
+	largestReorg := k.GetLargestBtcReorg(ctx)
+	if largestReorg == nil {
+		return
+	}
+
+	if largestReorg.BlockDiff >= p.BtcConfirmationDepth {
+		msg := fmt.Sprintf(
+			"Reorg %d is larger than BTC confirmation Depth %d.\n%s\n%s", largestReorg.BlockDiff, p.BtcConfirmationDepth,
+			fmt.Sprintf("'From' -> %d - %s", largestReorg.RollbackFrom.Height, largestReorg.RollbackFrom.Hash.MarshalHex()),
+			fmt.Sprintf("'To' -> %d - %s", largestReorg.RollbackTo.Height, largestReorg.RollbackTo.Hash.MarshalHex()),
+		)
+		panic(msg)
 	}
 }
 
@@ -43,16 +52,16 @@ func (k *Keeper) SetLargestBtcReorg(ctx context.Context, newLargestBlockReorg ty
 	return k.LargestBtcReorg.Set(ctx, newLargestBlockReorg)
 }
 
-// MustGetLargestBtcReorg returns zero if the value is not set yet
+// GetLargestBtcReorg returns nil if the value is not set yet
 // but it panics if it fails to parse the value from the store after
 // it was already set, as it is probably an programming error.
-func (k *Keeper) MustGetLargestBtcReorgBlockDiff(ctx context.Context) uint32 {
+func (k *Keeper) GetLargestBtcReorg(ctx context.Context) *types.LargestBtcReOrg {
 	exists, err := k.LargestBtcReorg.Has(ctx)
 	if err != nil {
 		panic(fmt.Errorf("must get largest btc reorg failed encode in Has: %w", err))
 	}
 	if !exists {
-		return 0
+		return nil
 	}
 
 	largestReorg, err := k.LargestBtcReorg.Get(ctx)
@@ -60,5 +69,5 @@ func (k *Keeper) MustGetLargestBtcReorgBlockDiff(ctx context.Context) uint32 {
 		panic(fmt.Errorf("setting largest btc reorg failed encode in Get: %w", err))
 	}
 
-	return largestReorg.BlockDiff
+	return &largestReorg
 }

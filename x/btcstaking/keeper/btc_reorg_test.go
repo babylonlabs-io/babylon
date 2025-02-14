@@ -55,34 +55,42 @@ func TestHaltIfBtcReorgLargerThanConfirmationDepth(t *testing.T) {
 
 func TestMustGetLargestBtcReorg(t *testing.T) {
 	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+
+	from, to := datagen.GenRandomBTCHeaderInfo(r), datagen.GenRandomBTCHeaderInfo(r)
 
 	tcs := []struct {
 		title string
 
 		setNewLargest   bool
-		largestBtcReorg uint32
+		largestBtcReorg *types.LargestBtcReOrg
 	}{
 		{
 			"value never set, should be zero",
 			false,
-			0,
+			nil,
 		},
 		{
 			"value 0, should return 0",
 			true,
-			0,
+			&types.LargestBtcReOrg{
+				BlockDiff:    0,
+				RollbackFrom: from,
+				RollbackTo:   to,
+			},
 		},
 		{
 			"value 15, should return 15",
 			true,
-			15,
+			&types.LargestBtcReOrg{
+				BlockDiff:    15,
+				RollbackFrom: from,
+				RollbackTo:   to,
+			},
 		},
 	}
 
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-
-	from, to := datagen.GenRandomBTCHeaderInfo(r), datagen.GenRandomBTCHeaderInfo(r)
-	largestReorg := types.NewLargestBtcReOrg(from, to)
+	// largestReorg := types.NewLargestBtcReOrg(from, to)
 
 	for _, tc := range tcs {
 		t.Run(tc.title, func(t *testing.T) {
@@ -91,12 +99,11 @@ func TestMustGetLargestBtcReorg(t *testing.T) {
 			k, ctx := keepertest.BTCStakingKeeper(t, nil, nil, nil)
 
 			if tc.setNewLargest {
-				largestReorg.BlockDiff = tc.largestBtcReorg
-				err := k.LargestBtcReorg.Set(ctx, largestReorg)
+				err := k.LargestBtcReorg.Set(ctx, *tc.largestBtcReorg)
 				require.NoError(t, err)
 			}
 
-			actLargestBtcReorg := k.MustGetLargestBtcReorgBlockDiff(ctx)
+			actLargestBtcReorg := k.GetLargestBtcReorg(ctx)
 			require.Equal(t, tc.largestBtcReorg, actLargestBtcReorg)
 		})
 	}
@@ -105,6 +112,9 @@ func TestMustGetLargestBtcReorg(t *testing.T) {
 func TestSetLargestBtcReorg(t *testing.T) {
 	t.Parallel()
 
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	from, to := datagen.GenRandomBTCHeaderInfo(r), datagen.GenRandomBTCHeaderInfo(r)
+
 	tcs := []struct {
 		title string
 
@@ -112,48 +122,65 @@ func TestSetLargestBtcReorg(t *testing.T) {
 		setLargestBtcReorgDiff uint32
 
 		newLargestBtcReorgDiff  uint32
-		expectedLargestBtcReorg uint32
+		expectedLargestBtcReorg *types.LargestBtcReOrg
 	}{
 		{
 			"value never set, should be able to correctly set largest",
 			false,
 			0,
 			2,
-			2,
+			&types.LargestBtcReOrg{
+				BlockDiff:    2,
+				RollbackFrom: from,
+				RollbackTo:   to,
+			},
 		},
 		{
 			"value before set largest: 10, set 15, should update to 15",
 			true,
 			10,
 			15,
-			15,
+			&types.LargestBtcReOrg{
+				BlockDiff:    15,
+				RollbackFrom: from,
+				RollbackTo:   to,
+			},
 		},
 		{
 			"value before set largest: 10, set 8, should not update to 8",
 			true,
 			10,
 			8,
-			10,
+			&types.LargestBtcReOrg{
+				BlockDiff:    10,
+				RollbackFrom: from,
+				RollbackTo:   to,
+			},
 		},
 		{
 			"value before set largest: 10, set 10, should continue to be 10",
 			true,
 			10,
 			10,
-			10,
+			&types.LargestBtcReOrg{
+				BlockDiff:    10,
+				RollbackFrom: from,
+				RollbackTo:   to,
+			},
 		},
 		{
 			"value never set before, set 1535, should update to new value",
 			false,
 			0,
 			1535,
-			1535,
+			&types.LargestBtcReOrg{
+				BlockDiff:    1535,
+				RollbackFrom: from,
+				RollbackTo:   to,
+			},
 		},
 	}
 
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-
-	from, to := datagen.GenRandomBTCHeaderInfo(r), datagen.GenRandomBTCHeaderInfo(r)
 	largestReorg := types.NewLargestBtcReOrg(from, to)
 
 	for _, tc := range tcs {
@@ -172,7 +199,7 @@ func TestSetLargestBtcReorg(t *testing.T) {
 			err := k.SetLargestBtcReorg(ctx, largestReorg)
 			require.NoError(t, err)
 
-			actLargestBtcReorg := k.MustGetLargestBtcReorgBlockDiff(ctx)
+			actLargestBtcReorg := k.GetLargestBtcReorg(ctx)
 			require.Equal(t, tc.expectedLargestBtcReorg, actLargestBtcReorg)
 		})
 	}
