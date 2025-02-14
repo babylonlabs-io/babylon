@@ -927,9 +927,10 @@ type LargestBtcReOrg struct {
 	// BlockDiff is the difference of the block height of the BTC header Tip - the btc height
 	// which it was rolled back
 	BlockDiff uint32 `protobuf:"varint,1,opt,name=block_diff,json=blockDiff,proto3" json:"block_diff,omitempty"`
-	// RollbackFrom
+	// RollbackFrom is the latest BTC block header prior to rollback
 	RollbackFrom *types2.BTCHeaderInfo `protobuf:"bytes,2,opt,name=rollback_from,json=rollbackFrom,proto3" json:"rollback_from,omitempty"`
-	RollbackTo   *types2.BTCHeaderInfo `protobuf:"bytes,3,opt,name=rollback_to,json=rollbackTo,proto3" json:"rollback_to,omitempty"`
+	// RollbackTo is the BTC block header which we rollback to
+	RollbackTo *types2.BTCHeaderInfo `protobuf:"bytes,3,opt,name=rollback_to,json=rollbackTo,proto3" json:"rollback_to,omitempty"`
 }
 
 func (m *LargestBtcReOrg) Reset()         { *m = LargestBtcReOrg{} }

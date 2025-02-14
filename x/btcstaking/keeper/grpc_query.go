@@ -230,3 +230,17 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 		BtcDelegation: types.NewBTCDelegationResponse(btcDel, status),
 	}, nil
 }
+
+// LargestBtcReOrg implements types.QueryServer.
+func (k Keeper) LargestBtcReOrg(ctx context.Context, _ *types.QueryLargestBtcReOrgRequest) (*types.QueryLargestBtcReOrgResponse, error) {
+	largestBtcReorg, err := k.LargestBtcReorg.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryLargestBtcReOrgResponse{
+		BlockDiff:    largestBtcReorg.BlockDiff,
+		RollbackFrom: largestBtcReorg.RollbackFrom.ToResponse(),
+		RollbackTo:   largestBtcReorg.RollbackTo.ToResponse(),
+	}, nil
+}
