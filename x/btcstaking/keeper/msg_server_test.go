@@ -407,10 +407,11 @@ func TestProperVersionInDelegation(t *testing.T) {
 // TestBtcStakingWithBtcReOrg creates an BTC staking delegation
 // with enough covenant signatures submitted to be considered ACTIVE.
 func TestBtcStakingWithBtcReOrg(t *testing.T) {
-	btcBlockHeightTxInserted := uint32(30)
-	h, r, btcctParams, stakingTxHash := createActiveBtcDel(t, btcBlockHeightTxInserted)
+	btcLightclientTipHeight := uint32(30)
+	// btc staking tx will be included at btcLightclientTipHeight - BTC confirmation depth
+	h, r, btcctParams, stakingTxHash := createActiveBtcDel(t, btcLightclientTipHeight)
 
-	// verifies the Largest reorg without anything set
+	// verifies the largest reorg without anything set
 	_, err := h.BTCStakingKeeper.LargestBtcReOrg(h.Ctx, &types.QueryLargestBtcReOrgRequest{})
 	require.EqualError(t, err, types.ErrLargestBtcReorgNotFound.Error())
 
@@ -422,10 +423,10 @@ func TestBtcStakingWithBtcReOrg(t *testing.T) {
 
 	// -------------- simulates a reorg of current tip - (BTC depth - 1) --------
 	// It should not panic in x/btcstaking end blocker as the reorg is at the limit allowed
-	// It should consider the BTC staking as PENDING, since the block was revoked
+	// It should consider the BTC staking as PENDING, since the block depth was revoked
 	rBlockFrom, rBlockTo := datagen.GenRandomBTCHeaderInfo(r), datagen.GenRandomBTCHeaderInfo(r)
-	rBlockFrom.Height = btcBlockHeightTxInserted
-	rBlockTo.Height = btcBlockHeightTxInserted - (btcctParams.BtcConfirmationDepth - 1)
+	rBlockFrom.Height = btcLightclientTipHeight
+	rBlockTo.Height = btcLightclientTipHeight - (btcctParams.BtcConfirmationDepth - 1)
 	currLargestReorg := types.NewLargestBtcReOrg(rBlockFrom, rBlockTo)
 
 	err = h.BTCStakingKeeper.SetLargestBtcReorg(h.Ctx, currLargestReorg)
@@ -444,19 +445,23 @@ func TestBtcStakingWithBtcReOrg(t *testing.T) {
 	require.Equal(t, respLargestReOrg.RollbackFrom.HashHex, rBlockFrom.ToResponse().HashHex)
 	require.Equal(t, respLargestReOrg.RollbackTo.HashHex, rBlockTo.ToResponse().HashHex)
 
-	// BTC staking tx is still seen as active rolling back to a block before the staking tx was included
+	// BTC staking tx is still seen as active rolling back to a block where the confirmation depth is less than btcctParams.BtcConfirmationDepth
 	// Should we handle this differently?
 	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: rBlockTo.Height})
 	delResp, err := h.BTCStakingKeeper.BTCDelegation(h.Ctx, &types.QueryBTCDelegationRequest{
 		StakingTxHashHex: stakingTxHash,
 	})
 	h.NoError(err)
+	// SHOULD BE PENDING
 	require.Equal(t, types.BTCDelegationStatus_ACTIVE.String(), delResp.BtcDelegation.StatusDesc)
 
 	// -------------- simulates a reorg of current tip - (BTC depth) --------
 	// Should panic in x/btcstaking end blocker as the reorg is the size of k'
-	rBlockFrom.Height = btcBlockHeightTxInserted
-	rBlockTo.Height = btcBlockHeightTxInserted - (btcctParams.BtcConfirmationDepth)
+	// If a big reorg happened each btc staking transaction included in this last reorg blocks
+	// will need to be analyzed if they are included in the new reorganization of blocks
+	// and a emergency upgrade will be needed to revoke this values stored in voting power and rewards
+	rBlockFrom.Height = btcLightclientTipHeight
+	rBlockTo.Height = btcLightclientTipHeight - (btcctParams.BtcConfirmationDepth)
 	currLargestReorg = types.NewLargestBtcReOrg(rBlockFrom, rBlockTo)
 
 	err = h.BTCStakingKeeper.SetLargestBtcReorg(h.Ctx, currLargestReorg)
@@ -476,7 +481,7 @@ func TestBtcStakingWithBtcReOrg(t *testing.T) {
 	require.Equal(t, respLargestReOrg.RollbackTo.HashHex, rBlockTo.ToResponse().HashHex)
 }
 
-func createActiveBtcDel(t *testing.T, btcBlockHeightTxInserted uint32) (*testutil.Helper, *rand.Rand, btcctypes.Params, string) {
+func createActiveBtcDel(t *testing.T, btcLightclientTipHeight uint32) (*testutil.Helper, *rand.Rand, btcctypes.Params, string) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -502,6 +507,7 @@ func createActiveBtcDel(t *testing.T, btcBlockHeightTxInserted uint32) (*testuti
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
 
+	btcBlockHeightTxInserted := btcLightclientTipHeight - btcctParams.BtcConfirmationDepth
 	stakingTxHash, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
@@ -512,8 +518,8 @@ func createActiveBtcDel(t *testing.T, btcBlockHeightTxInserted uint32) (*testuti
 		0,
 		false,
 		false,
-		10,
 		btcBlockHeightTxInserted,
+		btcLightclientTipHeight,
 	)
 	h.NoError(err)
 
