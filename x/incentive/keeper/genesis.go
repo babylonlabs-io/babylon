@@ -10,11 +10,18 @@ import (
 // InitGenesis initializes the keeper state from a provided initial genesis state.
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	for _, entry := range gs.BtcStakingGauges {
+		if err := entry.Validate(); err != nil {
+			return err
+		}
 		k.SetBTCStakingGauge(ctx, entry.Height, entry.Gauge)
 	}
 
 	for _, entry := range gs.RewardGauges {
-		k.SetRewardGauge(ctx, entry.StakeholderType, sdk.AccAddress(entry.Address), entry.RewardGauge)
+		if err := entry.Validate(); err != nil {
+			return err
+		}
+		// we can use MustAccAddressFromBech32 safely here because it is validated before
+		k.SetRewardGauge(ctx, entry.StakeholderType, sdk.MustAccAddressFromBech32(entry.Address), entry.RewardGauge)
 	}
 
 	return k.SetParams(ctx, gs.Params)
@@ -77,6 +84,9 @@ func (k Keeper) rewardGauges(ctx context.Context) ([]types.RewardGaugeEntry, err
 			var gauge types.RewardGauge
 			if err := k.cdc.Unmarshal(iter.Value(), &gauge); err != nil {
 				return nil, err
+			}
+			if gauge.WithdrawnCoins == nil {
+				gauge.WithdrawnCoins = sdk.NewCoins()
 			}
 			addr := sdk.AccAddress(iter.Key())
 			entry := types.RewardGaugeEntry{
