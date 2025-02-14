@@ -80,6 +80,32 @@ func TestRewardGaugeValidate(t *testing.T) {
 			expectErr: false,
 		},
 		{
+			name: "Valid reward gauge with multiple withdrawn coins",
+			gauge: &types.RewardGauge{
+				Coins: sdk.NewCoins(
+					sdk.NewInt64Coin(appparams.DefaultBondDenom, 100),
+					sdk.NewInt64Coin("btc", 10),
+				),
+				WithdrawnCoins: sdk.NewCoins(
+					sdk.NewInt64Coin(appparams.DefaultBondDenom, 50),
+					sdk.NewInt64Coin("btc", 5),
+				),
+			},
+			expectErr: false,
+		},
+		{
+			name: "Invalid gauge with withdrawn coin not in Coins",
+			gauge: &types.RewardGauge{
+				Coins: sdk.NewCoins(sdk.NewInt64Coin(appparams.DefaultBondDenom, 100)),
+				WithdrawnCoins: sdk.NewCoins(
+					sdk.NewInt64Coin(appparams.DefaultBondDenom, 50),
+					sdk.NewInt64Coin("btc", 5),
+				),
+			},
+			expectErr: true,
+			errMsg:    "withdrawn coin denomination (btc) does not exist in reward coins",
+		},
+		{
 			name: "Invalid Coins (negative amount)",
 			gauge: &types.RewardGauge{
 				Coins:          sdk.Coins{{Denom: appparams.DefaultBondDenom, Amount: math.NewInt(-100)}},

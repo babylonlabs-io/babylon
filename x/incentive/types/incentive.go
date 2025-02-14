@@ -71,6 +71,12 @@ func (rg *RewardGauge) Validate() error {
 	if rg.Coins.Len() == 0 && rg.WithdrawnCoins.Len() == 0 {
 		return errors.New("reward gauge has no coins")
 	}
+	// Ensure WithdrawnCoins only contains denominations that exist in Coins
+	for _, wc := range rg.WithdrawnCoins {
+		if !rg.Coins.AmountOf(wc.Denom).IsPositive() {
+			return fmt.Errorf("withdrawn coin denomination (%s) does not exist in reward coins", wc.Denom)
+		}
+	}
 	return nil
 }
 
