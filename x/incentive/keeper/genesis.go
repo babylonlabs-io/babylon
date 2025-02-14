@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +14,13 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		if err := entry.Validate(); err != nil {
 			return err
 		}
-		// TODO check that height is less than current height
+
+		// check that height is less than current height
+		sdkCtx := sdk.UnwrapSDKContext(ctx)
+		height := sdkCtx.BlockHeight()
+		if entry.Height > uint64(height) {
+			return fmt.Errorf("BTC staking gauge height (%d) is higher than current block height (%d)", entry.Height, height)
+		}
 
 		k.SetBTCStakingGauge(ctx, entry.Height, entry.Gauge)
 	}
@@ -22,10 +29,16 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		if err := entry.Validate(); err != nil {
 			return err
 		}
-		// TODO check that the address exists
 
+		// check that the address exists
 		// we can use MustAccAddressFromBech32 safely here because it is validated before
-		k.SetRewardGauge(ctx, entry.StakeholderType, sdk.MustAccAddressFromBech32(entry.Address), entry.RewardGauge)
+		accAddr := sdk.MustAccAddressFromBech32(entry.Address)
+		acc := k.accountKeeper.GetAccount(ctx, accAddr)
+		if acc == nil {
+			return fmt.Errorf("account in rewards gauge with address %s does not exist", entry.Address)
+		}
+
+		k.SetRewardGauge(ctx, entry.StakeholderType, accAddr, entry.RewardGauge)
 	}
 
 	return k.SetParams(ctx, gs.Params)
