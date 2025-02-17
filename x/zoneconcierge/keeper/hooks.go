@@ -39,7 +39,7 @@ func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error
 // AfterRawCheckpointFinalized is triggered upon an epoch has been finalised
 func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	headersToBroadcast := h.k.getHeadersToBroadcast(ctx)
+	headersToBroadcast := h.k.getBTCHeadersToSend(ctx, types.WDeepStrategy)
 	if len(headersToBroadcast) == 0 {
 		h.k.Logger(sdkCtx).Info("no new BTC headers to broadcast", "epoch", epoch)
 		return nil

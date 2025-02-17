@@ -158,18 +158,36 @@ func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHe
 	return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
 }
 
-// getHeadersToBroadcast retrieves headers to be broadcasted to all open IBC channels to ZoneConcierge
-// The header to be broadcasted are:
-// - either the whole known chain if we did not broadcast any headers yet
-// - headers from the child of the most recent header we sent which is still in the main chain up to the current tip
-func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHeaderInfo {
+// getBTCHeadersToSend retrieves BTC headers based on the specified strategy:
+//
+// For WDeepStrategy:
+// - If no headers sent yet: Returns last w+1 headers from current tip (required by Babylon contract)
+// - If headers were sent:
+//   - Searches last segment for most recent valid header still in main chain
+//   - If found: Returns headers from that point to current tip
+//   - If none found (full reorg): Returns last w+1 headers from current tip
+//
+// For AllHeadersStrategy:
+// - If no headers sent yet: Returns all headers from base to current tip
+// - If headers were sent:
+//   - Searches last segment for most recent valid header still in main chain
+//   - If found: Returns headers from that point to current tip
+//   - If none found (full reorg): Returns all headers from base to current tip
+func (k Keeper) getBTCHeadersToSend(ctx context.Context, strategy types.BTCHeadersFetchStrategy) []*btclctypes.BTCHeaderInfo {
 	lastSegment := k.GetLastSentSegment(ctx)
+	currentTip := k.btclcKeeper.GetTipInfo(ctx)
 
 	if lastSegment == nil {
-		// we did not send any headers yet, so we need to send the last w+1 BTC headers
-		// where w+1 is imposed by Babylon contract. This ensures that the first BTC header
-		// in Babylon contract will be w-deep
-		return k.getDeepEnoughBTCHeaders(ctx)
+		switch strategy {
+		case types.WDeepStrategy:
+			// we did not send any headers yet, so we need to send the last w+1 BTC headers
+			// where w+1 is imposed by Babylon contract. This ensures that the first BTC header
+			// in Babylon contract will be w-deep
+			return k.getDeepEnoughBTCHeaders(ctx)
+		case types.AllHeadersStrategy:
+			// send all headers from the base of the chain to the current tip
+			return k.btclcKeeper.GetMainChainUpTo(ctx, currentTip.Height)
+		}
 	}
 
 	// we already sent some headers, so we need to send headers from the child of the most recent header we sent
@@ -186,14 +204,18 @@ func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHead
 	}
 
 	if initHeader == nil {
-		// if initHeader is nil, then this means a reorg happens such that all headers
-		// in the last segment are reverted. In this case, send the last w+1 BTC headers
-		return k.getDeepEnoughBTCHeaders(ctx)
+		switch strategy {
+		case types.WDeepStrategy:
+			// if initHeader is nil, then this means a reorg happens such that all headers
+			// in the last segment are reverted. In this case, send the last w+1 BTC headers
+			return k.getDeepEnoughBTCHeaders(ctx)
+		case types.AllHeadersStrategy:
+			// send all headers from the base of the chain to the current tip
+			return k.btclcKeeper.GetMainChainUpTo(ctx, currentTip.Height)
+		}
 	}
 
-	headersToSend := k.btclcKeeper.GetMainChainFrom(ctx, initHeader.Height+1)
-
-	return headersToSend
+	return k.btclcKeeper.GetMainChainFrom(ctx, initHeader.Height+1)
 }
 
 // BroadcastBTCTimestamps sends an IBC packet of BTC timestamp to all open IBC channels to ZoneConcierge

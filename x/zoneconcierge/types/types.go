@@ -17,3 +17,14 @@ type HeaderInfo struct {
 	Height   uint64
 	Time     time.Time
 }
+
+// BTCHeadersFetchStrategy defines the strategy for fetching BTC headers
+type BTCHeadersFetchStrategy int
+
+const (
+	// WDeepStrategy fetches w+1 headers from current tip
+	WDeepStrategy BTCHeadersFetchStrategy = iota
+
+	// AllHeadersStrategy fetches all headers from base of the chain to current tip
+	AllHeadersStrategy
+)
