@@ -17,7 +17,7 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) {
 		return
 	}
 
-	// Currently broadcasting last w+1 headers but this should fetch from BSN base header to tip
+	// TODO: fetch from BSN base header to tip
 	headers := k.getHeadersToBroadcast(ctx)
 	if len(headers) == 0 {
 		k.Logger(sdkCtx).Info("no new BTC headers to broadcast")
