@@ -15,7 +15,7 @@ message GenesisState {
   // BTC staking gauge on every height
   repeated BTCStakingGaugeEntry btc_staking_gauges = 2
       [ (gogoproto.nullable) = false ];
-  // Staking Rewards gauge on every height
+  // RewardGauges the reward gauge for each BTC staker and finality provider
   repeated RewardGaugeEntry reward_gauges = 3 [ (gogoproto.nullable) = false ];
   // Withdraw addresses of the delegators
   repeated WithdrawAddressEntry withdraw_addresses = 4
