@@ -41,7 +41,7 @@ type Params struct {
 	MaxStakingValueSat int64 `protobuf:"varint,4,opt,name=max_staking_value_sat,json=maxStakingValueSat,proto3" json:"max_staking_value_sat,omitempty"`
 	// min_staking_time is the minimum lock time specified in staking output script
 	MinStakingTimeBlocks uint32 `protobuf:"varint,5,opt,name=min_staking_time_blocks,json=minStakingTimeBlocks,proto3" json:"min_staking_time_blocks,omitempty"`
-	// max_staking_time_blocks is the maximum lock time time specified in staking output script
+	// max_staking_time_blocks is the maximum lock time specified in staking output script
 	MaxStakingTimeBlocks uint32 `protobuf:"varint,6,opt,name=max_staking_time_blocks,json=maxStakingTimeBlocks,proto3" json:"max_staking_time_blocks,omitempty"`
 	// PARAMETERS COVERING SLASHING
 	// slashing_pk_script is the pk_script expected in slashing output ie. the first

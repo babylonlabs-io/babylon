@@ -22,7 +22,7 @@ message Params {
   int64 max_staking_value_sat = 4;
   // min_staking_time is the minimum lock time specified in staking output script
   uint32 min_staking_time_blocks = 5;
-  // max_staking_time_blocks is the maximum lock time time specified in staking output script
+  // max_staking_time_blocks is the maximum lock time specified in staking output script
   uint32 max_staking_time_blocks = 6;
   // PARAMETERS COVERING SLASHING
   // slashing_pk_script is the pk_script expected in slashing output ie. the first
