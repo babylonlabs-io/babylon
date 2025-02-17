@@ -210,7 +210,6 @@ wasmbinding/testdata/target
 /x/incentives/keeper/babylon_testing/
 tools-stamp
 /tests/localbabylon/.babylond/*
-docs/diagrams/plantuml.jar
 .testnets/
 .testnet/
 mytestnet/
