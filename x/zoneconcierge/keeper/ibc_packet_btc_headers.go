@@ -17,7 +17,8 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) {
 		return
 	}
 
-	// TODO: fetch from BSN base header to tip
+	// TODO: currently sending last w+1 headers but should fetch from BSN base header to tip
+	// This will be fixed once Babylon knows about BSN base header
 	headers := k.getHeadersToBroadcast(ctx)
 	if len(headers) == 0 {
 		k.Logger(sdkCtx).Info("no new BTC headers to broadcast")
