@@ -36,7 +36,7 @@ Further details on this process can be found in [Section 2.3: Staking Protocol &
 
 ## 2. Timeline of Events  
 
-![stakingtimeline](./stakingtimeline.png)
+![stakingtimeline](./static/stakingtimeline.png)
 
 ### 2.1. Chain launch
 
