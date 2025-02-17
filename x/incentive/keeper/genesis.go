@@ -12,10 +12,11 @@ import (
 
 // InitGenesis performs stateful validations and initializes the keeper state from a provided initial genesis state.
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	height := sdkCtx.BlockHeight()
+
 	for _, entry := range gs.BtcStakingGauges {
 		// check that height is less than current height
-		sdkCtx := sdk.UnwrapSDKContext(ctx)
-		height := sdkCtx.BlockHeight()
 		if entry.Height > uint64(height) {
 			return fmt.Errorf("BTC staking gauge height (%d) is higher than current block height (%d)", entry.Height, height)
 		}
