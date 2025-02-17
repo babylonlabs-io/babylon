@@ -12,11 +12,11 @@ import (
 var _ sdk.PostDecorator = &IBCHeaderDecorator{}
 
 type IBCHeaderDecorator struct {
-	k Keeper
+	k *Keeper
 }
 
 // NewIBCHeaderDecorator creates a new IBCHeaderDecorator
-func NewIBCHeaderDecorator(k Keeper) *IBCHeaderDecorator {
+func NewIBCHeaderDecorator(k *Keeper) *IBCHeaderDecorator {
 	return &IBCHeaderDecorator{
 		k: k,
 	}
