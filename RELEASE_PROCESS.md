@@ -56,7 +56,7 @@ branch (see [CONTRIBUTING.md](./CONTRIBUTING.md#pull-requests)).
   * When bugs are found, create a PR for `main`, and backport fixes to the
     release branch.
   * Before tagging the release, create and merge PR to the release branch that:
-    * Moves all changelog entries form `Unreleased` section of the changelog to the newly created section `v0.Y.0`
+    * Moves all changelog entries from `Unreleased` section of the changelog to the newly created section `v0.Y.0`
   * Create new release candidate tags after bugs are fixed.
 * After the team feels the release candidate is ready, create a full release:
   * **Note:** The final release MUST have the same commit hash as the latest

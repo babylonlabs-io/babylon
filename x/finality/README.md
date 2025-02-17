@@ -401,7 +401,7 @@ Upon `MsgAddFinalitySig`, a Babylon node will execute as follows:
 ### MsgUpdateParams
 
 The `MsgUpdateParams` message is used for updating the module parameters for the
-Finality module. It can only be executed via a govenance proposal.
+Finality module. It can only be executed via a governance proposal.
 
 ```protobuf
 // MsgUpdateParams defines a message for updating finality module parameters.
