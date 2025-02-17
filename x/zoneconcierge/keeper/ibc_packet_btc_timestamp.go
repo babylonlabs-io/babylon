@@ -158,33 +158,33 @@ func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHe
 	return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
 }
 
-// getBTCHeadersToSend retrieves BTC headers based on the specified strategy:
+// getBTCHeadersToSend retrieves BTC headers based on the specified fetch mode:
 //
-// For WDeepStrategy:
+// For WDeepFetch:
 // - If no headers sent yet: Returns last w+1 headers from current tip (required by Babylon contract)
 // - If headers were sent:
 //   - Searches last segment for most recent valid header still in main chain
 //   - If found: Returns headers from that point to current tip
 //   - If none found (full reorg): Returns last w+1 headers from current tip
 //
-// For AllHeadersStrategy:
+// For FullChainFetch:
 // - If no headers sent yet: Returns all headers from base to current tip
 // - If headers were sent:
 //   - Searches last segment for most recent valid header still in main chain
 //   - If found: Returns headers from that point to current tip
 //   - If none found (full reorg): Returns all headers from base to current tip
-func (k Keeper) getBTCHeadersToSend(ctx context.Context, strategy types.BTCHeadersFetchStrategy) []*btclctypes.BTCHeaderInfo {
+func (k Keeper) getBTCHeadersToSend(ctx context.Context, mode types.BTCHeaderFetchMode) []*btclctypes.BTCHeaderInfo {
 	lastSegment := k.GetLastSentSegment(ctx)
 	currentTip := k.btclcKeeper.GetTipInfo(ctx)
 
 	if lastSegment == nil {
-		switch strategy {
-		case types.WDeepStrategy:
+		switch mode {
+		case types.WDeepFetch:
 			// we did not send any headers yet, so we need to send the last w+1 BTC headers
 			// where w+1 is imposed by Babylon contract. This ensures that the first BTC header
 			// in Babylon contract will be w-deep
 			return k.getDeepEnoughBTCHeaders(ctx)
-		case types.AllHeadersStrategy:
+		case types.FullChainFetch:
 			// send all headers from the base of the chain to the current tip
 			return k.btclcKeeper.GetMainChainUpTo(ctx, currentTip.Height)
 		}
@@ -204,12 +204,12 @@ func (k Keeper) getBTCHeadersToSend(ctx context.Context, strategy types.BTCHeade
 	}
 
 	if initHeader == nil {
-		switch strategy {
-		case types.WDeepStrategy:
+		switch mode {
+		case types.WDeepFetch:
 			// if initHeader is nil, then this means a reorg happens such that all headers
 			// in the last segment are reverted. In this case, send the last w+1 BTC headers
 			return k.getDeepEnoughBTCHeaders(ctx)
-		case types.AllHeadersStrategy:
+		case types.FullChainFetch:
 			// send all headers from the base of the chain to the current tip
 			return k.btclcKeeper.GetMainChainUpTo(ctx, currentTip.Height)
 		}

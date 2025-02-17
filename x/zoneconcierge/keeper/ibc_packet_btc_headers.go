@@ -19,7 +19,7 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) {
 	}
 
 	// 2. Get headers to broadcast
-	headers := k.getBTCHeadersToSend(ctx, types.AllHeadersStrategy)
+	headers := k.getBTCHeadersToSend(ctx, types.FullChainFetch)
 
 	// 3. Broadcast headers
 	packet := types.NewBTCHeadersPacketData(&types.BTCHeaders{Headers: headers})

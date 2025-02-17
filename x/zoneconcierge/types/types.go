@@ -18,13 +18,13 @@ type HeaderInfo struct {
 	Time     time.Time
 }
 
-// BTCHeadersFetchStrategy defines the strategy for fetching BTC headers
-type BTCHeadersFetchStrategy int
+// BTCHeaderFetchMode represents different modes of fetching BTC headers
+type BTCHeaderFetchMode int
 
 const (
-	// WDeepStrategy fetches w+1 headers from current tip
-	WDeepStrategy BTCHeadersFetchStrategy = iota
+	// WDeepFetch fetches w+1 headers from tip for contract initialization and reorgs
+	WDeepFetch BTCHeaderFetchMode = iota
 
-	// AllHeadersStrategy fetches all headers from base of the chain to current tip
-	AllHeadersStrategy
+	// FullChainFetch fetches all headers from base to tip for full synchronization
+	FullChainFetch
 )
