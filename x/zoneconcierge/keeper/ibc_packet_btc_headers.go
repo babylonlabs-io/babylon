@@ -11,17 +11,19 @@ import (
 func (k Keeper) BroadcastBTCHeaders(ctx context.Context) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	// 1. Check channels first - fail fast
 	openZCChannels := k.GetAllOpenZCChannels(ctx)
 	if len(openZCChannels) == 0 {
 		k.Logger(sdkCtx).Info("no open IBC channel with ZoneConcierge, skip broadcasting BTC headers")
 		return
 	}
 
-	// 2. Get headers to broadcast
-	headers := k.getBTCHeadersToSend(ctx, types.FullChainFetch)
+	// Currently broadcasting last w+1 headers but this should fetch from BSN base header to tip
+	headers := k.getHeadersToBroadcast(ctx)
+	if len(headers) == 0 {
+		k.Logger(sdkCtx).Info("no new BTC headers to broadcast")
+		return
+	}
 
-	// 3. Broadcast headers
 	packet := types.NewBTCHeadersPacketData(&types.BTCHeaders{Headers: headers})
 	for _, channel := range openZCChannels {
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
@@ -32,7 +34,6 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) {
 		}
 	}
 
-	// 4. Update last segment
 	k.setLastSentSegment(ctx, &types.BTCChainSegment{
 		BtcHeaders: headers,
 	})
