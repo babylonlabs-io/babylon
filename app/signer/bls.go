@@ -207,3 +207,31 @@ func (k *BlsKey) BlsPubKey() (bls12381.PublicKey, error) {
 	}
 	return k.PubKey, nil
 }
+
+// LoadBlsSignerIfExists attempts to load an existing BLS signer from the specified home directory
+// Returns the signer if files exist and can be loaded, or nil if files don't exist
+func LoadBlsSignerIfExists(homeDir string) checkpointingtypes.BlsSigner {
+	blsKeyFile := DefaultBlsKeyFile(homeDir)
+	blsPasswordFile := DefaultBlsPasswordFile(homeDir)
+
+	if !cmtos.FileExists(blsKeyFile) || !cmtos.FileExists(blsPasswordFile) {
+		return nil
+	}
+
+	bls := LoadBls(blsKeyFile, blsPasswordFile)
+	return &bls.Key
+}
+
+// CreateBlsSigner creates a new BLS signer with the given password
+func CreateBlsSigner(homeDir string, password string) (checkpointingtypes.BlsSigner, error) {
+	blsKeyFile := DefaultBlsKeyFile(homeDir)
+	blsPasswordFile := DefaultBlsPasswordFile(homeDir)
+
+	if err := EnsureDirs(blsKeyFile, blsPasswordFile); err != nil {
+		return nil, fmt.Errorf("failed to ensure dirs exist: %w", err)
+	}
+
+	// Generate a new BLS key with the provided password
+	bls := GenBls(blsKeyFile, blsPasswordFile, password)
+	return &bls.Key, nil
+}

@@ -241,6 +241,8 @@ func addModuleInitFlags(startCmd *cobra.Command) {
 
 	startCmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|kwallet|pass|test)")
 	startCmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+	startCmd.Flags().Bool(flagNoBlsPassword, false, "Generate BLS key without password protection (suitable for RPC nodes)")
+	startCmd.Flags().String(flagBlsPassword, "", "Use the specified password for BLS key (if empty and --no-bls-password is not set, will prompt for password)")
 }
 
 func queryCommand() *cobra.Command {
@@ -308,9 +310,24 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	// auto migrate when build tag is set to "e2e_upgrade"
 	automigrate_e2e_upgrade(logger, homeDir)
 
-	blsSigner, err := appsigner.InitBlsSigner(homeDir)
-	if err != nil {
-		panic(fmt.Errorf("failed to initialize priv signer: %w", err))
+	// Try to load existing BLS signer first
+	blsSigner := appsigner.LoadBlsSignerIfExists(homeDir)
+
+	// If no existing signer, create new one with password based on flags
+	if blsSigner == nil {
+		password := ""
+		if !cast.ToBool(appOpts.Get(flagNoBlsPassword)) {
+			password = cast.ToString(appOpts.Get(flagBlsPassword))
+			if password == "" {
+				password = appsigner.NewBlsPassword()
+			}
+		}
+
+		var err error
+		blsSigner, err = appsigner.CreateBlsSigner(homeDir, password)
+		if err != nil {
+			panic(fmt.Errorf("failed to create new BLS signer: %w", err))
+		}
 	}
 
 	var wasmOpts []wasmkeeper.Option
@@ -321,7 +338,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	return app.NewBabylonApp(
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
-		blsSigner,
+		&blsSigner,
 		appOpts,
 		wasmOpts,
 		baseappOptions...,
