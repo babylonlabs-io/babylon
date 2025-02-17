@@ -17,14 +17,3 @@ type HeaderInfo struct {
 	Height   uint64
 	Time     time.Time
 }
-
-// BTCHeaderFetchMode represents different modes of fetching BTC headers
-type BTCHeaderFetchMode int
-
-const (
-	// WDeepFetch fetches w+1 headers from tip for contract initialization and reorgs
-	WDeepFetch BTCHeaderFetchMode = iota
-
-	// FullChainFetch fetches all headers from base to tip for full synchronization
-	FullChainFetch
-)
