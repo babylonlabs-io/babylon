@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#519](https://github.com/babylonlabs-io/babylon/pull/519) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module
+
 ## v1.0.0-rc6
 
 ### Improvements
@@ -46,10 +50,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#515](https://github.com/babylonlabs-io/babylon/pull/515) Add `staker_addr` to `EventBTCDelegationCreated`
 - [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public in
 `babylonclient` package
-
-### State Machine Breaking
-
-- [#519](https://github.com/babylonlabs-io/babylon/pull/519) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module
 
 ### Bug fixes
 
