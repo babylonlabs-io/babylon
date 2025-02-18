@@ -235,3 +235,28 @@ func CreateBlsSigner(homeDir string, password string) (checkpointingtypes.BlsSig
 	bls := GenBls(blsKeyFile, blsPasswordFile, password)
 	return &bls.Key, nil
 }
+
+// LoadOrGenBlsKey attempts to load an existing BLS signer or creates a new one if none exists.
+// If noPassword is true, creates key without password protection.
+// If password is empty and noPassword is false, will prompt for password.
+func LoadOrGenBlsKey(homeDir string, noPassword bool, password string) (checkpointingtypes.BlsSigner, error) {
+	// Try to load existing BLS signer first
+	blsSigner := LoadBlsSignerIfExists(homeDir)
+
+	// If no existing signer, create new one with password based on flags
+	if blsSigner == nil {
+		if !noPassword {
+			if password == "" {
+				password = NewBlsPassword()
+			}
+		}
+
+		var err error
+		blsSigner, err = CreateBlsSigner(homeDir, password)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create new BLS signer: %w", err)
+		}
+	}
+
+	return blsSigner, nil
+}
