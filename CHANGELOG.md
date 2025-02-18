@@ -40,16 +40,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#513](https://github.com/babylonlabs-io/babylon/pull/513) Suport datagen BTC delegation creation from Consumers
-- [#508](https://github.com/babylonlabs-io/babylon/pull/508) Move PoP constructor functiosn to datagen/
 - [#470](https://github.com/babylonlabs-io/babylon/pull/470) Return full consumer info and remove DB object
 usage in `x/btcstkconsumer` queries
 - [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
 check of rewards
-- [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public
 - [#480](https://github.com/babylonlabs-io/babylon/pull/480) Improve IBC packet structure
-- [#499](https://github.com/babylonlabs-io/babylon/pull/499) Add `params-by-version` CLI command
 - [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
-- [#515](https://github.com/babylonlabs-io/babylon/pull/515) Add `staker_addr` to `EventBTCDelegationCreated`
 
 ### State Machine Breaking
 
@@ -60,6 +56,19 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 ### Bug fixes
 
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+
+## v1.0.0-rc6
+
+### Improvements
+
+- [#508](https://github.com/babylonlabs-io/babylon/pull/508) Move PoP constructor functiosn to datagen/
+- [#499](https://github.com/babylonlabs-io/babylon/pull/499) Add `params-by-version` CLI command
+- [#515](https://github.com/babylonlabs-io/babylon/pull/515) Add `staker_addr` to `EventBTCDelegationCreated`
+- [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public in
+`babylonclient` package
+
+### Bug fixes
+
 - [#509](https://github.com/babylonlabs-io/babylon/pull/509) crypto: fix ECDSA malleability
 - [#486](https://github.com/babylonlabs-io/babylon/pull/486) crypto: blinding base mult of nonce
 - [#443](https://github.com/babylonlabs-io/babylon/pull/443) Fix swagger generation for incentive missing `v1` in path
