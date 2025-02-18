@@ -14,12 +14,10 @@ func InitGenesis(ctx context.Context, k keeper.Keeper, genState types.GenesisSta
 	k.SetGenBlsKeys(ctx, genState.GenesisKeys)
 	// set epoch 0 to be finalised at genesis
 	k.SetLastFinalizedEpoch(ctx, 0)
-	k.SetConflictingCheckpointReceived(ctx, genState.ConflictingCheckpointReceived)
 }
 
 // ExportGenesis returns the capability module's exported genesis.
 func ExportGenesis(ctx context.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := types.DefaultGenesis()
-	genesis.ConflictingCheckpointReceived = k.GetConflictingCheckpointReceived(ctx)
 	return genesis
 }

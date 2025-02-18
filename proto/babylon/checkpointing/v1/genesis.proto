@@ -10,9 +10,6 @@ option go_package = "github.com/babylonlabs-io/babylon/x/checkpointing/types";
 message GenesisState {
   // genesis_keys defines the public keys for the genesis validators
   repeated GenesisKey genesis_keys = 1;
-  // conflicting_checkpoint_received is a flag used to halt the chain
-  // when receiving a conflicting checkpoint
-  bool conflicting_checkpoint_received = 2;
 }
 
 // GenesisKey defines public key information about the genesis validators
