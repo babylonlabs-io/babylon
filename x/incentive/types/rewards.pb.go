@@ -27,15 +27,16 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// FinalityProviderHistoricalRewards represents the cumulative rewards ratio of the
-// finality provider per sat in that period.
-// The period is ommited here and should be part of the key used to store this structure.
-// Key: Prefix + Finality provider bech32 address + Period.
+// FinalityProviderHistoricalRewards represents the cumulative rewards ratio of
+// the finality provider per sat in that period. The period is ommited here and
+// should be part of the key used to store this structure. Key: Prefix +
+// Finality provider bech32 address + Period.
 type FinalityProviderHistoricalRewards struct {
 	// The cumulative rewards of that finality provider per sat until that period
-	// This coins will aways increase the value, never be reduced due to keep acumulation
-	// and when the cumulative rewards will be used to distribute rewards, 2 periods will
-	// be loaded, calculate the difference and multiplied by the total sat amount delegated
+	// This coins will aways increase the value, never be reduced due to keep
+	// acumulation and when the cumulative rewards will be used to distribute
+	// rewards, 2 periods will be loaded, calculate the difference and multiplied
+	// by the total sat amount delegated
 	// https://github.com/cosmos/cosmos-sdk/blob/e76102f885b71fd6e1c1efb692052173c4b3c3a3/x/distribution/keeper/delegation.go#L47
 	CumulativeRewardsPerSat github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=cumulative_rewards_per_sat,json=cumulativeRewardsPerSat,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"cumulative_rewards_per_sat"`
 }
@@ -84,20 +85,21 @@ func (m *FinalityProviderHistoricalRewards) GetCumulativeRewardsPerSat() github_
 // BTC delegations that delegated for this finality provider is entitled to.
 // Note: This rewards are for the BTC delegators that delegated to this FP
 // the FP itself is not the owner or can withdraw this rewards.
-// If a slash event happens with this finality provider, all the delegations need
-// to withdraw to the RewardGauge and the related scrutures should be deleted.
-// Key: Prefix + Finality provider bech32 address.
+// If a slash event happens with this finality provider, all the delegations
+// need to withdraw to the RewardGauge and the related scrutures should be
+// deleted. Key: Prefix + Finality provider bech32 address.
 type FinalityProviderCurrentRewards struct {
-	// CurrentRewards is the current rewards that the finality provider have and it was not
-	// yet stored inside the FinalityProviderHistoricalRewards. Once something happens that
-	// modifies the amount of satoshis delegated to this finality provider or the delegators
-	// starting period (activation, unbonding or btc rewards withdraw)
-	// a new period must be created, accumulate this rewards to FinalityProviderHistoricalRewards
-	// with a new period and zero out the Current Rewards.
+	// CurrentRewards is the current rewards that the finality provider have and
+	// it was not yet stored inside the FinalityProviderHistoricalRewards. Once
+	// something happens that modifies the amount of satoshis delegated to this
+	// finality provider or the delegators starting period (activation, unbonding
+	// or btc rewards withdraw) a new period must be created, accumulate this
+	// rewards to FinalityProviderHistoricalRewards with a new period and zero out
+	// the Current Rewards.
 	CurrentRewards github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=current_rewards,json=currentRewards,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"current_rewards"`
 	// Period stores the current period that serves as a reference for
-	// creating new historical rewards and correlate with BTCDelegationRewardsTracker
-	// StartPeriodCumulativeReward.
+	// creating new historical rewards and correlate with
+	// BTCDelegationRewardsTracker StartPeriodCumulativeReward.
 	Period uint64 `protobuf:"varint,2,opt,name=period,proto3" json:"period,omitempty"`
 	// TotalActiveSat is the total amount of active satoshi delegated
 	// to this finality provider.
