@@ -317,13 +317,13 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	// ensure finality provider has received rewards after the block is finalised
 	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
 	s.NoError(err)
-	fpRewardGauge, ok := fpRewardGauges[itypes.FinalityProviderType.String()]
+	fpRewardGauge, ok := fpRewardGauges[itypes.FINALITY_PROVIDER.String()]
 	s.True(ok)
 	s.True(fpRewardGauge.Coins.IsAllPositive())
 	// ensure BTC delegation has received rewards after the block is finalised
 	btcDelRewardGauges, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
 	s.NoError(err)
-	btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTCDelegationType.String()]
+	btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTC_DELEGATION.String()]
 	s.True(ok)
 	s.True(btcDelRewardGauge.Coins.IsAllPositive())
 	s.T().Logf("the finality provider received rewards for providing finality")
@@ -334,8 +334,8 @@ func (s *BTCStakingTestSuite) Test4WithdrawReward() {
 	n, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	n.WithdrawRewardCheckingBalances(itypes.FinalityProviderType.String(), s.cacheFP.Addr)
-	n.WithdrawRewardCheckingBalances(itypes.BTCDelegationType.String(), s.cacheFP.Addr)
+	n.WithdrawRewardCheckingBalances(itypes.FINALITY_PROVIDER.String(), s.cacheFP.Addr)
+	n.WithdrawRewardCheckingBalances(itypes.BTC_DELEGATION.String(), s.cacheFP.Addr)
 }
 
 // Test5SubmitStakerUnbonding is an end-to-end test for user unbonding
