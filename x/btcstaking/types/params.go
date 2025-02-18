@@ -83,6 +83,7 @@ func DefaultParams() Params {
 		// Allow list can only be enabled by upgrade
 		AllowListExpirationHeight: 0,
 		BtcActivationHeight:       0,
+		MaxCommissionChangeRate:   sdkmath.LegacyNewDecWithPrec(1, 1), // Default daily %s is 10%
 	}
 }
 
@@ -99,16 +100,24 @@ func validateMinSlashingTxFeeSat(fee int64) error {
 }
 
 func validateMinCommissionRate(rate sdkmath.LegacyDec) error {
-	if rate.IsNil() {
-		return fmt.Errorf("minimum commission rate cannot be nil")
+	return validateCommissionParam(rate, "minimum commission rate")
+}
+
+func validateMaxCommissionChangeRate(rateChange sdkmath.LegacyDec) error {
+	return validateCommissionParam(rateChange, "maximum commission change rate")
+}
+
+func validateCommissionParam(value sdkmath.LegacyDec, paramName string) error {
+	if value.IsNil() {
+		return fmt.Errorf("%s cannot be nil", paramName)
 	}
 
-	if rate.IsNegative() {
-		return fmt.Errorf("minimum commission rate cannot be negative")
+	if value.IsNegative() {
+		return fmt.Errorf("%s cannot be negative", paramName)
 	}
 
-	if rate.GT(sdkmath.LegacyOneDec()) {
-		return fmt.Errorf("minimum commission rate cannot be greater than 100%%")
+	if value.GT(sdkmath.LegacyOneDec()) {
+		return fmt.Errorf("%s cannot be greater than 100%%", paramName)
 	}
 	return nil
 }
@@ -218,6 +227,10 @@ func (p Params) Validate() error {
 	}
 
 	if err := validateMinCommissionRate(p.MinCommissionRate); err != nil {
+		return err
+	}
+
+	if err := validateMaxCommissionChangeRate(p.MaxCommissionChangeRate); err != nil {
 		return err
 	}
 

@@ -102,16 +102,6 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Addr, err)
 	}
 
-	if req.Commission != nil {
-		// ensure commission rate is at least the minimum commission rate in parameters, and
-		minCommission := ms.MinCommissionRate(goCtx)
-		if req.Commission.LT(minCommission) {
-			return nil, types.ErrCommissionLTMinRate.Wrapf(
-				"cannot set finality provider commission to less than minimum rate of %s",
-				minCommission)
-		}
-	}
-
 	fp, err := ms.GetFinalityProvider(goCtx, req.BtcPk)
 	if err != nil {
 		return nil, err
@@ -122,12 +112,13 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 		return nil, status.Errorf(codes.PermissionDenied, "the signer does not correspond to the finality provider's Babylon address")
 	}
 
+	if err := ms.UpdateFinalityProviderCommission(goCtx, req.Commission, fp); err != nil {
+		return nil, err
+	}
+
 	// all good, update the finality provider and set back
 	fp.Description = req.Description
-	// update commission if corresponds
-	if req.Commission != nil {
-		fp.Commission = req.Commission
-	}
+
 	ms.setFinalityProvider(goCtx, fp)
 
 	// notify subscriber

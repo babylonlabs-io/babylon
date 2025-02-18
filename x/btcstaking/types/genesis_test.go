@@ -37,6 +37,7 @@ func TestGenesisState_Validate(t *testing.T) {
 							MinCommissionRate:    sdkmath.LegacyMustNewDecFromStr("0.5"),
 							SlashingRate:         sdkmath.LegacyMustNewDecFromStr("0.1"),
 							UnbondingFeeSat:      types.DefaultParams().UnbondingFeeSat,
+							MaxCommissionChangeRate: sdkmath.LegacyMustNewDecFromStr("0.1"),
 						},
 					},
 				}
@@ -56,6 +57,7 @@ func TestGenesisState_Validate(t *testing.T) {
 							MinCommissionRate:   sdkmath.LegacyMustNewDecFromStr("0.5"),
 							SlashingRate:        sdkmath.LegacyZeroDec(), // invalid slashing rate
 							UnbondingFeeSat:     types.DefaultParams().UnbondingFeeSat,
+							MaxCommissionChangeRate: sdkmath.LegacyMustNewDecFromStr("0.1"),
 						},
 					},
 				}

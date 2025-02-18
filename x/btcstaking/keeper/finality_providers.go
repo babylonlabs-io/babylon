@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
@@ -309,4 +311,43 @@ func (k Keeper) UnjailFinalityProvider(ctx context.Context, fpBTCPK []byte) erro
 func (k Keeper) finalityProviderStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return prefix.NewStore(storeAdapter, types.FinalityProviderKey)
+}
+
+// UpdateFinalityProviderCommission performs stateful validation checks of a new commission
+// rate. If validation fails, an error is returned. If no errors, the commission
+// and the CommissionUpdateTime are updated in the provided pointer
+func (k Keeper) UpdateFinalityProviderCommission(goCtx context.Context, newCommission *math.LegacyDec, fp *types.FinalityProvider) error {
+	if newCommission == nil {
+		return nil
+	}
+
+	var (
+		ctx       = sdk.UnwrapSDKContext(goCtx)
+		blockTime = ctx.BlockHeader().Time
+	)
+	// check that there were no commission updates in the last 24hs
+	if blockTime.Sub(fp.CommissionUpdateTime).Hours() < 24 {
+		return stktypes.ErrCommissionUpdateTime
+	}
+
+	// ensure commission rate is at least the minimum commission rate in parameters, and
+	minCommission := k.MinCommissionRate(goCtx)
+	if newCommission.LT(minCommission) {
+		return types.ErrCommissionLTMinRate.Wrapf(
+			"cannot set finality provider commission to less than minimum rate of %s",
+			minCommission)
+	}
+
+	// check that the change rate does not exceed the max change rate allowed
+	// new rate % points change cannot be greater than the max change rate
+	maxRateChange := k.MaxCommissionRateChange(goCtx)
+	if newCommission.Sub(*fp.Commission).GT(maxRateChange) {
+		return stktypes.ErrCommissionGTMaxChangeRate
+	}
+
+	// update commission and commission update time
+	fp.Commission = newCommission
+	fp.CommissionUpdateTime = blockTime
+
+	return nil
 }
