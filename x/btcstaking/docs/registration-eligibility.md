@@ -22,11 +22,12 @@ structured into three key phases:
 
 Each stage determines when and how different participants can register.
 * **Block production commencement & finality activation**: At this stage, only 
-    `Finality providers` and `phase-1 cap-1 stakers` are permitted to register.
+    `Finality providers` and `phase-1 stakers` are permitted to register.
     The allow-list enforces restrictions preventing new stakes from being created.
     BTC stakers do not receive voting power or rewards at this point. Only
     post-staking registrations for existing actors are permitted, as reflected 
     in the allow-list.
+    > **⚡ Note:**: These stakes above are planned to be `cap-1` stakes.
 * **Finality Activation & Allow-list expiration** Finality providers gain 
     voting rights, and BTC stakers begin receiving rewards.
 * **Allow-List Expiration & Thereafter**: All stakeholders can register and new
@@ -38,36 +39,32 @@ Further details on this process can be found in [Section 2.3: Staking Protocol &
 
 ![stakingtimeline](./static/stakingtimeline.png)
 
-### 2.1. Chain launch
+### 2.1. Chain Launch
 
-The launch process consists of multiple key steps, ensuring that 
-**finality providers, validators, and BTC stakers** transition smoothly into
-the network:
+The launch process ensures a smooth transition for **finality providers** 
+and **BTC stakers** into the network:
 
-* **Single Validator Start**: The Babylon Labs validator will produce the first 
-    blocks to initiate the network.
-* **Gradual Validator Set Expansion**: Validators will register upon launch but
-    will not become active until the next epoch.
-* **Finality Provider Onboarding**: Finality providers will be able to register
-    shortly after launch to prepare for BTC staking finality activation.
-* **Controlled Transition of BTC Stakers**: BTC stakers will transition once
-    finality is active, ensuring that voting power is correctly distributed.
+* **Network Initialization**: Block production resumes, allowing participants to
+    register.
+* **Finality Provider Onboarding**: Finality providers can register shortly after
+    launch to prepare for BTC staking finality activation.
+* **BTC Staker Transition**: BTC stakers will transition once finality is active,
+    ensuring that voting power is correctly distributed.
 
-Since **block production throughput is limited**, onboarding will take place
-over multiple blocks to prevent congestion. Additionally, validators can censor transactions, so decentralisation will be achieved gradually by allowing 
-multiple validators to produce blocks.
+Given the limited **block production throughput**, onboarding will occur over multiple blocks to prevent congestion. Decentralization will be achieved gradually as more participants join the network.
 
 ###  2.2. Allow-list
 
-The allow-list consists of staking transactions hashes completed during `cap-1`.
-This means that only those that staked during `cap-1` can register when the 
-allow-list is active. During this period, only post-staking registrations are 
-permitted, specifically during block production and finality activation. 
-No pre-staking registrations can take place before the allow-list expires. 
+The allow-list comprises a collection of transaction hashes that correspond to 
+specific stakes. This list is used to determine which stakes are eligible for 
+registration. During the active period of the allow-list, only post-staking 
+registrations are allowed, particularly during block production and finality 
+activation. Pre-staking registrations are not permitted until the allow-list 
+has expired.
 
 The allow-list will expire at a predefined block height. Once it has expired, 
 all stake types, both pre and post-registrations become valid for staking.
- 
+
 ### 2.3. Staking protocol and finality activation  
 
 There are 2 ways to create stake, through pre-staking registration and 
