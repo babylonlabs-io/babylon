@@ -91,16 +91,18 @@ paths:
                               MsgInsertBTCSpvProof itself
                         title: >-
                           CheckpointAddressesResponse contains the addresses of
-                          the submitter and reporter of a
+                          the submitter and
 
-                          given checkpoint
+                          reporter of a given checkpoint
                       title: list of vigilantes' addresses of the best submission
                   description: >-
                     BTCCheckpointInfoResponse contains all data about best
-                    submission of checkpoint for
+                    submission of
 
-                    given epoch. Best submission is the submission which is
-                    deeper in btc ledger.
+                    checkpoint for given epoch. Best submission is the
+                    submission which is deeper
+
+                    in btc ledger.
               pagination:
                 title: pagination defines the pagination in the response
                 type: object
@@ -260,9 +262,9 @@ paths:
                     type: string
                     title: >-
                       4byte tag in hex format, required to be present in the
-                      OP_RETURN transaction
+                      OP_RETURN
 
-                      related to babylon
+                      transaction related to babylon
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -367,15 +369,17 @@ paths:
                             MsgInsertBTCSpvProof itself
                       title: >-
                         CheckpointAddressesResponse contains the addresses of
-                        the submitter and reporter of a
+                        the submitter and
 
-                        given checkpoint
+                        reporter of a given checkpoint
                     title: list of vigilantes' addresses of the best submission
                 description: >-
                   BTCCheckpointInfoResponse contains all data about best
-                  submission of checkpoint for
+                  submission of
 
-                  given epoch. Best submission is the submission which is deeper
+                  checkpoint for given epoch. Best submission is the submission
+                  which is deeper
+
                   in btc ledger.
             title: |-
               QueryBtcCheckpointInfoResponse is response type for the
@@ -527,9 +531,9 @@ paths:
                     description: Work is the sdkmath.Uint as string.
                 description: >-
                   BTCHeaderInfoResponse is a structure that contains all
-                  relevant information about a
+                  relevant information
 
-                  BTC header response
+                  about a BTC header response
                    - Full header as string hex.
                    - Header hash for easy retrieval as string hex.
                    - Height of the header in the BTC chain.
@@ -680,9 +684,9 @@ paths:
                 format: int64
             title: >-
               QueryMainChainDepthResponse is the response type for the
-              Query/MainChainDepth RPC
+              Query/MainChainDepth
 
-              it contains depth of the block in main chain
+              RPC it contains depth of the block in main chain
         default:
           description: An unexpected error response.
           schema:
@@ -866,9 +870,9 @@ paths:
                       description: Work is the sdkmath.Uint as string.
                   description: >-
                     BTCHeaderInfoResponse is a structure that contains all
-                    relevant information about a
+                    relevant information
 
-                    BTC header response
+                    about a BTC header response
                      - Full header as string hex.
                      - Header hash for easy retrieval as string hex.
                      - Height of the header in the BTC chain.
@@ -1062,9 +1066,9 @@ paths:
                     description: Work is the sdkmath.Uint as string.
                 description: >-
                   BTCHeaderInfoResponse is a structure that contains all
-                  relevant information about a
+                  relevant information
 
-                  BTC header response
+                  about a BTC header response
                    - Full header as string hex.
                    - Header hash for easy retrieval as string hex.
                    - Height of the header in the BTC chain.
@@ -2248,7 +2252,9 @@ paths:
                       type: string
                       description: >-
                         msg_id is the original message ID, i.e., hash of the
-                        marshaled message as hex.
+                        marshaled message as
+
+                        hex.
                     block_height:
                       type: string
                       format: uint64
@@ -2270,9 +2276,9 @@ paths:
                         epoching module as string.
                   title: >-
                     QueuedMessageResponse is a message that can change the
-                    validator set and is delayed
+                    validator set and is
 
-                    to the end of an epoch
+                    delayed to the end of an epoch
                 title: msgs is the list of messages queued in the current epoch
               pagination:
                 title: pagination defines the pagination in the response
@@ -2921,7 +2927,9 @@ paths:
                             type: string
                             description: >-
                               msg_id is the original message ID, i.e., hash of
-                              the marshaled message as hex.
+                              the marshaled message as
+
+                              hex.
                           block_height:
                             type: string
                             format: uint64
@@ -2943,9 +2951,9 @@ paths:
                               epoching module as string.
                         title: >-
                           QueuedMessageResponse is a message that can change the
-                          validator set and is delayed
+                          validator set and is
 
-                          to the end of an epoch
+                          delayed to the end of an epoch
                   title: >-
                     QueuedMessageList is a message that contains a list of
                     staking-related
@@ -3499,7 +3507,9 @@ paths:
                       format: date-time
                   description: >-
                     ValStateUpdateResponse is a message response that records a
-                    state update of a validator.
+                    state update of a
+
+                    validator.
             title: |-
               QueryValidatorLifecycleResponse is the response type for the
               Query/ValidatorLifecycle RPC method
@@ -3746,7 +3756,9 @@ paths:
                     format: int64
                     title: >-
                       staking_time is the number of blocks for which the
-                      delegation is locked on BTC chain
+                      delegation is locked on
+
+                      BTC chain
                   start_height:
                     type: integer
                     format: int64
@@ -3794,7 +3806,9 @@ paths:
                           format: byte
                           title: >-
                             cov_pk is the public key of the covenant emulator,
-                            used as the public key of the adaptor signature
+                            used as the public key
+
+                            of the adaptor signature
                         adaptor_sigs:
                           type: array
                           items:
@@ -3802,8 +3816,9 @@ paths:
                             format: byte
                           title: >-
                             adaptor_sigs is a list of adaptor signatures, each
-                            encrypted by a restaked BTC finality provider's
-                            public key
+                            encrypted by a restaked
+
+                            BTC finality provider's public key
                       title: >-
                         CovenantAdaptorSignatures is a list adaptor signatures
                         signed by the
@@ -3835,9 +3850,9 @@ paths:
                     format: int64
                     title: >-
                       unbonding_time used in unbonding output timelock path and
-                      in slashing transactions
+                      in slashing
 
-                      change outputs
+                      transactions change outputs
                   undelegation_response:
                     description: >-
                       undelegation_response is the undelegation info of this
@@ -3851,9 +3866,10 @@ paths:
                           the funds from staking
 
                           output to unbonding output. Unbonding output will
-                          usually have lower timelock
+                          usually have lower
 
-                          than staking output. The unbonding tx as string hex.
+                          timelock than staking output. The unbonding tx as
+                          string hex.
                       covenant_unbonding_sig_list:
                         type: array
                         items:
@@ -3898,8 +3914,9 @@ paths:
                               format: byte
                               title: >-
                                 cov_pk is the public key of the covenant
-                                emulator, used as the public key of the adaptor
-                                signature
+                                emulator, used as the public key
+
+                                of the adaptor signature
                             adaptor_sigs:
                               type: array
                               items:
@@ -3907,8 +3924,9 @@ paths:
                                 format: byte
                               title: >-
                                 adaptor_sigs is a list of adaptor signatures,
-                                each encrypted by a restaked BTC finality
-                                provider's public key
+                                each encrypted by a restaked
+
+                                BTC finality provider's public key
                           title: >-
                             CovenantAdaptorSignatures is a list adaptor
                             signatures signed by the
@@ -3938,7 +3956,9 @@ paths:
                               the staking output. It is
 
                               filled only if the spend_stake_tx_hex is different
-                              than the unbonding_tx_hex
+                              than the
+
+                              unbonding_tx_hex
                     title: >-
                       BTCUndelegationResponse provides all necessary info about
                       the undeleagation
@@ -3948,9 +3968,9 @@ paths:
                     title: params version used to validate delegation
             title: >-
               QueryBTCDelegationResponse is response type matching
-              QueryBTCDelegationRequest
 
-              and containing BTC delegation information
+              QueryBTCDelegationRequest and containing BTC delegation
+              information
         default:
           description: An unexpected error response.
           schema:
@@ -4196,7 +4216,9 @@ paths:
                       format: int64
                       title: >-
                         staking_time is the number of blocks for which the
-                        delegation is locked on BTC chain
+                        delegation is locked on
+
+                        BTC chain
                     start_height:
                       type: integer
                       format: int64
@@ -4246,7 +4268,9 @@ paths:
                             format: byte
                             title: >-
                               cov_pk is the public key of the covenant emulator,
-                              used as the public key of the adaptor signature
+                              used as the public key
+
+                              of the adaptor signature
                           adaptor_sigs:
                             type: array
                             items:
@@ -4254,8 +4278,9 @@ paths:
                               format: byte
                             title: >-
                               adaptor_sigs is a list of adaptor signatures, each
-                              encrypted by a restaked BTC finality provider's
-                              public key
+                              encrypted by a restaked
+
+                              BTC finality provider's public key
                         title: >-
                           CovenantAdaptorSignatures is a list adaptor signatures
                           signed by the
@@ -4287,9 +4312,9 @@ paths:
                       format: int64
                       title: >-
                         unbonding_time used in unbonding output timelock path
-                        and in slashing transactions
+                        and in slashing
 
-                        change outputs
+                        transactions change outputs
                     undelegation_response:
                       description: >-
                         undelegation_response is the undelegation info of this
@@ -4303,9 +4328,10 @@ paths:
                             the funds from staking
 
                             output to unbonding output. Unbonding output will
-                            usually have lower timelock
+                            usually have lower
 
-                            than staking output. The unbonding tx as string hex.
+                            timelock than staking output. The unbonding tx as
+                            string hex.
                         covenant_unbonding_sig_list:
                           type: array
                           items:
@@ -4350,8 +4376,9 @@ paths:
                                 format: byte
                                 title: >-
                                   cov_pk is the public key of the covenant
-                                  emulator, used as the public key of the
-                                  adaptor signature
+                                  emulator, used as the public key
+
+                                  of the adaptor signature
                               adaptor_sigs:
                                 type: array
                                 items:
@@ -4359,8 +4386,9 @@ paths:
                                   format: byte
                                 title: >-
                                   adaptor_sigs is a list of adaptor signatures,
-                                  each encrypted by a restaked BTC finality
-                                  provider's public key
+                                  each encrypted by a restaked
+
+                                  BTC finality provider's public key
                             title: >-
                               CovenantAdaptorSignatures is a list adaptor
                               signatures signed by the
@@ -4390,7 +4418,9 @@ paths:
                                 spent the staking output. It is
 
                                 filled only if the spend_stake_tx_hex is
-                                different than the unbonding_tx_hex
+                                different than the
+
+                                unbonding_tx_hex
                       title: >-
                         BTCUndelegationResponse provides all necessary info
                         about the undeleagation
@@ -4400,10 +4430,14 @@ paths:
                       title: params version used to validate delegation
                   description: >-
                     BTCDelegationResponse is the client needed information from
-                    a BTCDelegation with the current status based on parameters.
+                    a BTCDelegation
+
+                    with the current status based on parameters.
                 title: >-
                   btc_delegations contains all the queried BTC delegations under
-                  the given status
+                  the given
+
+                  status
               pagination:
                 description: pagination defines the pagination in the response.
                 type: object
@@ -4776,6 +4810,7 @@ paths:
                              - BIP322: BIP322 means the btc_sig will follow the BIP-322 encoding
                              - ECDSA: ECDSA means the btc_sig will follow the ECDSA encoding
                             ref:
+
                             https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/src/BtcWallet.ts#L331
                         btc_sig:
                           type: string
@@ -4823,7 +4858,9 @@ paths:
                         finality provider has voted
                   description: >-
                     FinalityProviderResponse defines a finality provider with
-                    voting power information.
+                    voting power
+
+                    information.
                 title: finality_providers contains all the finality providers
               pagination:
                 description: pagination defines the pagination in the response.
@@ -5102,7 +5139,7 @@ paths:
         - Query
   /babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/delegations:
     get:
-      summary: >-
+      summary: |-
         FinalityProviderDelegations queries all BTC delegations of the given
         finality provider
       operationId: FinalityProviderDelegations
@@ -5150,7 +5187,9 @@ paths:
                             format: int64
                             title: >-
                               staking_time is the number of blocks for which the
-                              delegation is locked on BTC chain
+                              delegation is locked on
+
+                              BTC chain
                           start_height:
                             type: integer
                             format: int64
@@ -5200,8 +5239,9 @@ paths:
                                   format: byte
                                   title: >-
                                     cov_pk is the public key of the covenant
-                                    emulator, used as the public key of the
-                                    adaptor signature
+                                    emulator, used as the public key
+
+                                    of the adaptor signature
                                 adaptor_sigs:
                                   type: array
                                   items:
@@ -5209,8 +5249,9 @@ paths:
                                     format: byte
                                   title: >-
                                     adaptor_sigs is a list of adaptor
-                                    signatures, each encrypted by a restaked BTC
-                                    finality provider's public key
+                                    signatures, each encrypted by a restaked
+
+                                    BTC finality provider's public key
                               title: >-
                                 CovenantAdaptorSignatures is a list adaptor
                                 signatures signed by the
@@ -5242,9 +5283,9 @@ paths:
                             format: int64
                             title: >-
                               unbonding_time used in unbonding output timelock
-                              path and in slashing transactions
+                              path and in slashing
 
-                              change outputs
+                              transactions change outputs
                           undelegation_response:
                             description: >-
                               undelegation_response is the undelegation info of
@@ -5258,10 +5299,10 @@ paths:
                                   transfer the funds from staking
 
                                   output to unbonding output. Unbonding output
-                                  will usually have lower timelock
+                                  will usually have lower
 
-                                  than staking output. The unbonding tx as
-                                  string hex.
+                                  timelock than staking output. The unbonding tx
+                                  as string hex.
                               covenant_unbonding_sig_list:
                                 type: array
                                 items:
@@ -5307,8 +5348,9 @@ paths:
                                       format: byte
                                       title: >-
                                         cov_pk is the public key of the covenant
-                                        emulator, used as the public key of the
-                                        adaptor signature
+                                        emulator, used as the public key
+
+                                        of the adaptor signature
                                     adaptor_sigs:
                                       type: array
                                       items:
@@ -5317,6 +5359,7 @@ paths:
                                       title: >-
                                         adaptor_sigs is a list of adaptor
                                         signatures, each encrypted by a restaked
+
                                         BTC finality provider's public key
                                   title: >-
                                     CovenantAdaptorSignatures is a list adaptor
@@ -5347,7 +5390,9 @@ paths:
                                       which spent the staking output. It is
 
                                       filled only if the spend_stake_tx_hex is
-                                      different than the unbonding_tx_hex
+                                      different than the
+
+                                      unbonding_tx_hex
                             title: >-
                               BTCUndelegationResponse provides all necessary
                               info about the undeleagation
@@ -5357,11 +5402,14 @@ paths:
                             title: params version used to validate delegation
                         description: >-
                           BTCDelegationResponse is the client needed information
-                          from a BTCDelegation with the current status based on
-                          parameters.
+                          from a BTCDelegation
+
+                          with the current status based on parameters.
                   description: >-
                     BTCDelegatorDelegationsResponse is a collection of BTC
-                    delegations responses from the same delegator.
+                    delegations responses
+
+                    from the same delegator.
                 description: >-
                   btc_delegator_delegations contains all the queried BTC
                   delegations.
@@ -5587,11 +5635,11 @@ paths:
         - name: fp_btc_pk_hex
           description: >-
             fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
-            providerthat
 
-            this BTC delegation delegates to
+            providerthat this BTC delegation delegates to the PK follows
+            encoding in
 
-            the PK follows encoding in BIP-340 spec
+            BIP-340 spec
           in: path
           required: true
           type: string
@@ -5734,6 +5782,7 @@ paths:
                            - BIP322: BIP322 means the btc_sig will follow the BIP-322 encoding
                            - ECDSA: ECDSA means the btc_sig will follow the ECDSA encoding
                           ref:
+
                           https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/src/BtcWallet.ts#L331
                       btc_sig:
                         type: string
@@ -5781,7 +5830,9 @@ paths:
                       finality provider has voted
                 description: >-
                   FinalityProviderResponse defines a finality provider with
-                  voting power information.
+                  voting power
+
+                  information.
                 title: finality_provider contains the FinalityProvider
             title: >-
               QueryFinalityProviderResponse contains information about a
@@ -5982,7 +6033,7 @@ paths:
                         }
       parameters:
         - name: fp_btc_pk_hex
-          description: >-
+          description: |-
             fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
             provider
           in: path
@@ -6041,13 +6092,17 @@ paths:
                     format: int64
                     title: >-
                       min_staking_time is the minimum lock time specified in
-                      staking output script
+                      staking output
+
+                      script
                   max_staking_time_blocks:
                     type: integer
                     format: int64
                     title: >-
                       max_staking_time_blocks is the maximum lock time time
-                      specified in staking output script
+                      specified in staking
+
+                      output script
                   slashing_pk_script:
                     type: string
                     format: byte
@@ -6055,9 +6110,9 @@ paths:
                       PARAMETERS COVERING SLASHING
 
                       slashing_pk_script is the pk_script expected in slashing
-                      output ie. the first
+                      output ie. the
 
-                      output of slashing transaction
+                      first output of slashing transaction
                   min_slashing_tx_fee_sat:
                     type: string
                     format: int64
@@ -6087,10 +6142,12 @@ paths:
                       PARAMETERS COVERING UNBONDING
 
                       unbonding_time is the exact unbonding time required from
-                      unbonding transaction
+                      unbonding
 
-                      it must be larger than `checkpoint_finalization_timeout`
-                      from `btccheckpoint` module
+                      transaction it must be larger than
+                      `checkpoint_finalization_timeout` from
+
+                      `btccheckpoint` module
                   unbonding_fee_sat:
                     type: string
                     format: int64
@@ -6101,12 +6158,12 @@ paths:
                       PARAMETERS COVERING FINALITY PROVIDERS
 
                       min_commission_rate is the chain-wide minimum commission
-                      rate that a finality provider
+                      rate that a
 
-                      can charge their delegators expressed as a decimal (e.g.,
-                      0.5 for 50%). Maximal precion
+                      finality provider can charge their delegators expressed as
+                      a decimal (e.g.,
 
-                      is 2 decimal places
+                      0.5 for 50%). Maximal precion is 2 decimal places
                   delegation_creation_base_gas_fee:
                     type: string
                     format: uint64
@@ -6127,7 +6184,9 @@ paths:
                     format: int64
                     title: >-
                       btc_activation_height is the btc height from which
-                      parameters are activated (inclusive)
+                      parameters are activated
+
+                      (inclusive)
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -6331,7 +6390,9 @@ paths:
     get:
       summary: >-
         ParamsByBTCHeight queries the parameters of the module for a specific
-        BTC height
+        BTC
+
+        height
       operationId: ParamsByBTCHeight
       responses:
         '200':
@@ -6380,13 +6441,17 @@ paths:
                     format: int64
                     title: >-
                       min_staking_time is the minimum lock time specified in
-                      staking output script
+                      staking output
+
+                      script
                   max_staking_time_blocks:
                     type: integer
                     format: int64
                     title: >-
                       max_staking_time_blocks is the maximum lock time time
-                      specified in staking output script
+                      specified in staking
+
+                      output script
                   slashing_pk_script:
                     type: string
                     format: byte
@@ -6394,9 +6459,9 @@ paths:
                       PARAMETERS COVERING SLASHING
 
                       slashing_pk_script is the pk_script expected in slashing
-                      output ie. the first
+                      output ie. the
 
-                      output of slashing transaction
+                      first output of slashing transaction
                   min_slashing_tx_fee_sat:
                     type: string
                     format: int64
@@ -6426,10 +6491,12 @@ paths:
                       PARAMETERS COVERING UNBONDING
 
                       unbonding_time is the exact unbonding time required from
-                      unbonding transaction
+                      unbonding
 
-                      it must be larger than `checkpoint_finalization_timeout`
-                      from `btccheckpoint` module
+                      transaction it must be larger than
+                      `checkpoint_finalization_timeout` from
+
+                      `btccheckpoint` module
                   unbonding_fee_sat:
                     type: string
                     format: int64
@@ -6440,12 +6507,12 @@ paths:
                       PARAMETERS COVERING FINALITY PROVIDERS
 
                       min_commission_rate is the chain-wide minimum commission
-                      rate that a finality provider
+                      rate that a
 
-                      can charge their delegators expressed as a decimal (e.g.,
-                      0.5 for 50%). Maximal precion
+                      finality provider can charge their delegators expressed as
+                      a decimal (e.g.,
 
-                      is 2 decimal places
+                      0.5 for 50%). Maximal precion is 2 decimal places
                   delegation_creation_base_gas_fee:
                     type: string
                     format: uint64
@@ -6466,12 +6533,14 @@ paths:
                     format: int64
                     title: >-
                       btc_activation_height is the btc height from which
-                      parameters are activated (inclusive)
+                      parameters are activated
+
+                      (inclusive)
               version:
                 type: integer
                 format: int64
                 title: version is the version of the params for the given BTC height
-            description: >-
+            description: |-
               QueryParamsByBTCHeightResponse is response type for the
               Query/QueryParamsByBTCHeightResponse RPC method.
         default:
@@ -6680,7 +6749,9 @@ paths:
     get:
       summary: >-
         ParamsByVersion queries the parameters of the module for a specific
-        version of past params.
+        version
+
+        of past params.
       operationId: ParamsByVersion
       responses:
         '200':
@@ -6729,13 +6800,17 @@ paths:
                     format: int64
                     title: >-
                       min_staking_time is the minimum lock time specified in
-                      staking output script
+                      staking output
+
+                      script
                   max_staking_time_blocks:
                     type: integer
                     format: int64
                     title: >-
                       max_staking_time_blocks is the maximum lock time time
-                      specified in staking output script
+                      specified in staking
+
+                      output script
                   slashing_pk_script:
                     type: string
                     format: byte
@@ -6743,9 +6818,9 @@ paths:
                       PARAMETERS COVERING SLASHING
 
                       slashing_pk_script is the pk_script expected in slashing
-                      output ie. the first
+                      output ie. the
 
-                      output of slashing transaction
+                      first output of slashing transaction
                   min_slashing_tx_fee_sat:
                     type: string
                     format: int64
@@ -6775,10 +6850,12 @@ paths:
                       PARAMETERS COVERING UNBONDING
 
                       unbonding_time is the exact unbonding time required from
-                      unbonding transaction
+                      unbonding
 
-                      it must be larger than `checkpoint_finalization_timeout`
-                      from `btccheckpoint` module
+                      transaction it must be larger than
+                      `checkpoint_finalization_timeout` from
+
+                      `btccheckpoint` module
                   unbonding_fee_sat:
                     type: string
                     format: int64
@@ -6789,12 +6866,12 @@ paths:
                       PARAMETERS COVERING FINALITY PROVIDERS
 
                       min_commission_rate is the chain-wide minimum commission
-                      rate that a finality provider
+                      rate that a
 
-                      can charge their delegators expressed as a decimal (e.g.,
-                      0.5 for 50%). Maximal precion
+                      finality provider can charge their delegators expressed as
+                      a decimal (e.g.,
 
-                      is 2 decimal places
+                      0.5 for 50%). Maximal precion is 2 decimal places
                   delegation_creation_base_gas_fee:
                     type: string
                     format: uint64
@@ -6815,7 +6892,9 @@ paths:
                     format: int64
                     title: >-
                       btc_activation_height is the btc height from which
-                      parameters are activated (inclusive)
+                      parameters are activated
+
+                      (inclusive)
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -7025,9 +7104,11 @@ paths:
     get:
       summary: >-
         ActivatedHeight queries the height when BTC staking protocol is
-        activated, i.e., the first height when
+        activated,
 
-        there exists 1 finality provider with voting power
+        i.e., the first height when there exists 1 finality provider with voting
+
+        power
       operationId: ActivatedHeight
       responses:
         '200':
@@ -7038,7 +7119,7 @@ paths:
               height:
                 type: string
                 format: uint64
-            description: >-
+            description: |-
               QueryActivatedHeightResponse is the response type for the
               Query/ActivatedHeight RPC method.
         default:
@@ -7333,7 +7414,9 @@ paths:
                         the `s` in a Schnorr signature `(r, s)`
 
                         `r` is the public randomness that is already committed
-                        by the finality provider
+                        by the finality
+
+                        provider
                     fork_finality_sig:
                       type: string
                       format: byte
@@ -7462,7 +7545,7 @@ paths:
         - Query
   /babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/evidence:
     get:
-      summary: >-
+      summary: |-
         Evidence queries the first evidence which can be used for extracting the
         BTC SK
       operationId: Evidence
@@ -7510,7 +7593,9 @@ paths:
                       the `s` in a Schnorr signature `(r, s)`
 
                       `r` is the public randomness that is already committed by
-                      the finality provider
+                      the finality
+
+                      provider
                   fork_finality_sig:
                     type: string
                     format: byte
@@ -7562,7 +7647,7 @@ paths:
         - Query
   /babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/power:
     get:
-      summary: >-
+      summary: |-
         FinalityProviderCurrentPower queries the voting power of a finality
         provider at the current height
       operationId: FinalityProviderCurrentPower
@@ -7611,11 +7696,11 @@ paths:
         - name: fp_btc_pk_hex
           description: >-
             fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
-            provider that
 
-            this BTC delegation delegates to
+            provider that this BTC delegation delegates to the PK follows
+            encoding in
 
-            the PK follows encoding in BIP-340 spec
+            BIP-340 spec
           in: path
           required: true
           type: string
@@ -7623,7 +7708,7 @@ paths:
         - Query
   /babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/power/{height}:
     get:
-      summary: >-
+      summary: |-
         FinalityProviderPowerAtHeight queries the voting power of a finality
         provider at a given height
       operationId: FinalityProviderPowerAtHeight
@@ -7668,18 +7753,20 @@ paths:
         - name: fp_btc_pk_hex
           description: >-
             fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
-            provider that
 
-            this BTC delegation delegates to
+            provider that this BTC delegation delegates to the PK follows
+            encoding in
 
-            the PK follows encoding in BIP-340 spec
+            BIP-340 spec
           in: path
           required: true
           type: string
         - name: height
           description: >-
             height is used for querying the given finality provider's voting
-            power at this height
+            power at
+
+            this height
           in: path
           required: true
           type: string
@@ -7690,7 +7777,9 @@ paths:
     get:
       summary: >-
         ListPubRandCommit is a range query for public randomness commitments of
-        a given finality provider
+        a
+
+        given finality provider
       operationId: ListPubRandCommit
       responses:
         '200':
@@ -7724,10 +7813,12 @@ paths:
                     randomness commitment
                 title: >-
                   pub_rand_commit_map is the map where the key is the start
-                  height and the value
+                  height and the
 
-                  is the public randomness commitment at this height for the
-                  given finality provider
+                  value is the public randomness commitment at this height for
+                  the given
+
+                  finality provider
               pagination:
                 description: pagination defines the pagination in the response.
                 type: object
@@ -7774,7 +7865,7 @@ paths:
                       format: byte
       parameters:
         - name: fp_btc_pk_hex
-          description: >-
+          description: |-
             fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
             provider
           in: path
@@ -7842,15 +7933,14 @@ paths:
     get:
       summary: >-
         ListPublicRandomness is a range query for public randomness of a given
-        finality provider
 
-        NOTE: Babylon only has the knowledge of public randomness that is
-        already revealed by
+        finality provider NOTE: Babylon only has the knowledge of public
+        randomness
 
-        finality providers, i.e., the finality provider already provides a
-        finality signature
+        that is already revealed by finality providers, i.e., the finality
+        provider
 
-        at the corresponding height
+        already provides a finality signature at the corresponding height
       operationId: ListPublicRandomness
       responses:
         '200':
@@ -7915,7 +8005,7 @@ paths:
                       format: byte
       parameters:
         - name: fp_btc_pk_hex
-          description: >-
+          description: |-
             fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
             provider
           in: path
@@ -7981,7 +8071,7 @@ paths:
         - Query
   /babylon/finality/v1/finality_providers/{height}:
     get:
-      summary: >-
+      summary: |-
         ActiveFinalityProvidersAtHeight queries finality providers with non zero
         voting power at given height.
       operationId: ActiveFinalityProvidersAtHeight
@@ -8012,7 +8102,9 @@ paths:
                       format: uint64
                       title: >-
                         voting_power is the voting power of this finality
-                        provider at the given height
+                        provider at the given
+
+                        height
                     slashed_babylon_height:
                       type: string
                       format: uint64
@@ -8040,7 +8132,9 @@ paths:
                         finality provider has voted
                   description: >-
                     ActiveFinalityProvidersAtHeightResponse wraps the
-                    FinalityProvider with metadata.
+                    FinalityProvider with
+
+                    metadata.
                 description: >-
                   finality_providers contains all the queried finality
                   providersn.
@@ -8094,7 +8188,9 @@ paths:
         - name: height
           description: >-
             height defines at which Babylon height to query the finality
-            providers info.
+            providers
+
+            info.
           in: path
           required: true
           type: string
@@ -8176,30 +8272,39 @@ paths:
                     format: int64
                     title: >-
                       max_active_finality_providers is the maximum number of
-                      active finality providers in the BTC staking protocol
+                      active finality
+
+                      providers in the BTC staking protocol
                   signed_blocks_window:
                     type: string
                     format: int64
                     title: >-
                       signed_blocks_window defines the size of the sliding
-                      window for tracking finality provider liveness
+                      window for tracking
+
+                      finality provider liveness
                   finality_sig_timeout:
                     type: string
                     format: int64
                     title: >-
                       finality_sig_timeout defines how much time (in terms of
-                      blocks) finality providers have to cast a finality
+                      blocks) finality
 
-                      vote before being judged as missing their voting turn on
-                      the given block
+                      providers have to cast a finality vote before being judged
+                      as missing their
+
+                      voting turn on the given block
                   min_signed_per_window:
                     type: string
                     format: byte
                     title: >-
                       min_signed_per_window defines the minimum number of blocks
-                      that a finality provider is required to sign
+                      that a finality
 
-                      within the sliding window to avoid being jailed
+                      provider is required to sign within the sliding window to
+                      avoid being
+
+                      jailed
                   min_pub_rand:
                     type: string
                     format: uint64
@@ -8212,18 +8317,20 @@ paths:
                     type: string
                     title: >-
                       jail_duration is the minimum period of time that a
-                      finality provider remains jailed
+                      finality provider
+
+                      remains jailed
                   finality_activation_height:
                     type: string
                     format: uint64
                     description: >-
                       finality_activation_height is the babylon block height
-                      which the finality module will
+                      which the finality
 
-                      start to accept finality voting and the minimum allowed
-                      value for the public randomness
+                      module will start to accept finality voting and the
+                      minimum allowed value
 
-                      commit start height.
+                      for the public randomness commit start height.
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -8296,9 +8403,9 @@ paths:
                         liveness downtime.
                   description: >-
                     SigningInfoResponse defines the API response containing a
-                    finality provider's signing info
+                    finality provider's
 
-                    for monitoring their liveness activity.
+                    signing info for monitoring their liveness activity.
                 title: >-
                   info is the signing info of all finality providers with
                   signing info
@@ -8420,7 +8527,9 @@ paths:
     get:
       summary: >-
         SigningInfo queries the signing info of given finality provider BTC
-        public key
+        public
+
+        key
       operationId: SigningInfo
       responses:
         '200':
@@ -8459,9 +8568,9 @@ paths:
                       liveness downtime.
                 description: >-
                   SigningInfoResponse defines the API response containing a
-                  finality provider's signing info
+                  finality provider's
 
-                  for monitoring their liveness activity.
+                  signing info for monitoring their liveness activity.
             title: >-
               QuerySigningInfoResponse is the response type for the
               Query/SigningInfo RPC
@@ -8503,7 +8612,9 @@ paths:
     get:
       summary: >-
         VotesAtHeight queries finality providers who have signed the block at
-        given height.
+        given
+
+        height.
       operationId: VotesAtHeight
       responses:
         '200':
@@ -8518,9 +8629,10 @@ paths:
                   format: byte
                 title: >-
                   btc_pk is the Bitcoin secp256k1 PK of finality providers who
-                  have signed the block at given height.
+                  have signed
 
-                  the PK follows encoding in BIP-340 spec
+                  the block at given height. the PK follows encoding in BIP-340
+                  spec
             description: |-
               QueryVotesAtHeightResponse is the response type for the
               Query/VotesAtHeight RPC method.
@@ -9312,7 +9424,7 @@ paths:
         - Query
   /babylon/checkpointing/v1/raw_checkpoints:
     get:
-      summary: >-
+      summary: |-
         RawCheckpoints queries checkpoints for a epoch range specified in
         pagination params.
       operationId: RawCheckpoints
