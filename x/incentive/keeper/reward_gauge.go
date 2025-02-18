@@ -10,7 +10,7 @@ import (
 )
 
 func (k Keeper) sendAllBtcDelegationTypeToRewardsGauge(ctx context.Context, sType types.StakeholderType, del sdk.AccAddress) error {
-	if sType != types.BTCDelegationType {
+	if sType != types.BTC_DELEGATION {
 		return nil
 	}
 	return k.sendAllBtcRewardsToGauge(ctx, del)
