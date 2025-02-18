@@ -273,10 +273,29 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 			bls12381.Sign(blsPrivKey1, msgBytes),
 			t,
 		)
-		require.Panics(t, func() {
-			_ = ckptKeeper.VerifyCheckpoint(ctx, *rawBtcCheckpoint)
-		})
+		// check that the corresponding ConflictingCheckpointReceived flag is initially false
+		require.False(t, ckptKeeper.GetConflictingCheckpointReceived(ctx))
+
+		err = ckptKeeper.VerifyCheckpoint(ctx, *rawBtcCheckpoint)
+		require.ErrorIs(t, err, types.ErrConflictingCheckpoint)
+		// check that the corresponding ConflictingCheckpointReceived flag is set to true
+		require.True(t, ckptKeeper.GetConflictingCheckpointReceived(ctx))
 	})
+}
+
+func TestSetGetConflictingCheckpointReceived(t *testing.T) {
+	k, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil)
+
+	// Ensure default value is false if the key is not set
+	require.False(t, k.GetConflictingCheckpointReceived(ctx), "default value should be false when key is not set")
+
+	// Test setting the flag to true
+	k.SetConflictingCheckpointReceived(ctx, true)
+	require.True(t, k.GetConflictingCheckpointReceived(ctx), "expected value to be true after setting")
+
+	// Test setting the flag to false
+	k.SetConflictingCheckpointReceived(ctx, false)
+	require.False(t, k.GetConflictingCheckpointReceived(ctx), "expected value to be false after setting to false")
 }
 
 func makeBtcCkptBytes(r *rand.Rand, epoch uint64, appHash []byte, bitmap []byte, blsSig []byte, t *testing.T) *btctxformatter.RawBtcCheckpoint {
