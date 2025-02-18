@@ -3,11 +3,14 @@ package types
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // ensure that these message types implement the sdk.Msg interface
@@ -50,8 +53,13 @@ func (m *MsgCreateFinalityProvider) ValidateBasic() error {
 }
 
 func (m *MsgEditFinalityProvider) ValidateBasic() error {
-	if m.Commission == nil {
-		return fmt.Errorf("empty commission")
+	if m.Commission != nil {
+		if m.Commission.IsNegative() {
+			return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "commission rate must be between 0 and 1 (inclusive). Got negative value")
+		}
+		if m.Commission.GT(math.LegacyOneDec()) {
+			return ErrCommissionGTMaxRate
+		}
 	}
 	if m.Description == nil {
 		return fmt.Errorf("empty description")

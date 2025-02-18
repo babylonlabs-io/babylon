@@ -9,7 +9,6 @@ import (
 	btcckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -98,26 +97,24 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	// ensure commission rate is
-	// - at least the minimum commission rate in parameters, and
-	// - at most 1
-	if req.Commission.LT(ms.MinCommissionRate(goCtx)) {
-		return nil, types.ErrCommissionLTMinRate.Wrapf(
-			"cannot set finality provider commission to less than minimum rate of %s",
-			ms.MinCommissionRate(goCtx))
+	fpAddr, err := sdk.AccAddressFromBech32(req.Addr)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Addr, err)
 	}
-	if req.Commission.GT(sdkmath.LegacyOneDec()) {
-		return nil, types.ErrCommissionGTMaxRate
+
+	if req.Commission != nil {
+		// ensure commission rate is at least the minimum commission rate in parameters, and
+		minCommission := ms.MinCommissionRate(goCtx)
+		if req.Commission.LT(minCommission) {
+			return nil, types.ErrCommissionLTMinRate.Wrapf(
+				"cannot set finality provider commission to less than minimum rate of %s",
+				minCommission)
+		}
 	}
 
 	fp, err := ms.GetFinalityProvider(goCtx, req.BtcPk)
 	if err != nil {
 		return nil, err
-	}
-
-	fpAddr, err := sdk.AccAddressFromBech32(req.Addr)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Addr, err)
 	}
 
 	// ensure the signer corresponds to the finality provider's Babylon address
@@ -127,7 +124,10 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 
 	// all good, update the finality provider and set back
 	fp.Description = req.Description
-	fp.Commission = req.Commission
+	// update commission if corresponds
+	if req.Commission != nil {
+		fp.Commission = req.Commission
+	}
 	ms.setFinalityProvider(goCtx, fp)
 
 	// notify subscriber
