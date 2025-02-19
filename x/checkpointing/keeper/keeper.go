@@ -373,6 +373,11 @@ func (k Keeper) SetCheckpointForgotten(ctx context.Context, epoch uint64) {
 	if err != nil {
 		k.Logger(sdkCtx).Error("failed to emit checkpoint forgotten event for epoch %v", ckpt.Ckpt.EpochNum)
 	}
+
+	// invoke hook
+	if err := k.AfterRawCheckpointForgotten(ctx, ckpt.Ckpt); err != nil {
+		k.Logger(sdkCtx).Error("failed to trigger checkpoint forgotten hook for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
+	}
 }
 
 // setCheckpointStatus sets a ckptWithMeta to the given state,
