@@ -17,8 +17,17 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) {
 		return
 	}
 
-	// TODO: currently sending last w+1 headers but should fetch from BSN base header to tip
-	// This will be fixed once Babylon knows about BSN base header
+	// Current behavior:
+	// - If no headers sent: Returns last w+1 headers from tip
+	// - If headers previously sent:
+	//   - If last segment valid: Returns headers from last sent to tip
+	//   - If last segment invalid (reorg): Returns last w+1 headers from tip
+	//
+	// TODO: Should use BSN base BTC header as starting point:
+	// - If no headers sent: Return from BSN base to tip
+	// - If headers previously sent:
+	//   - If last segment valid: Return from last sent header to tip
+	//   - If last segment invalid (reorg): Return from BSN base to tip
 	headers := k.getHeadersToBroadcast(ctx)
 	if len(headers) == 0 {
 		k.Logger(sdkCtx).Info("no new BTC headers to broadcast")
