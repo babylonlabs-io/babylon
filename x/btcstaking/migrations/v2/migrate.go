@@ -38,6 +38,9 @@ func migrateParams(ctx context.Context, k Keeper) error {
 	defaultParams := types.DefaultParams()
 	storedParams := k.GetParamsWithVersion(ctx)
 	storedParams.Params.MaxCommissionChangeRate = defaultParams.MaxCommissionChangeRate
+	if err := storedParams.Params.Validate(); err != nil {
+		return err
+	}
 	return k.OverwriteParamsAtVersion(ctx, storedParams.Version, storedParams.Params)
 }
 
