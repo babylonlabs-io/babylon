@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#536](https://github.com/babylonlabs-io/babylon/pull/536) Improve protobuf vs. json error msgs / types
+- [#527](https://github.com/babylonlabs-io/babylon/pull/527) Create BSL signer on start command with flags.
 - [#513](https://github.com/babylonlabs-io/babylon/pull/513) Suport datagen BTC delegation creation from Consumers
 - [#470](https://github.com/babylonlabs-io/babylon/pull/470) Return full consumer info and remove DB object
 usage in `x/btcstkconsumer` queries
@@ -54,6 +56,8 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 - [#530](https://github.com/babylonlabs-io/babylon/pull/530) Add `ConflictingCheckpointReceived` flag in `x/checkpointing` module.
 - [#519](https://github.com/babylonlabs-io/babylon/pull/519) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module
 - [#537](https://github.com/babylonlabs-io/babylon/pull/537) Add commission validation to `EditFinalityProvider` in `x/btcstaking` module
+- [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
+invocation
 
 ### Bug fixes
 
