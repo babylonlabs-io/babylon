@@ -272,7 +272,7 @@ func (ts *BTCTimestamp) Verify(
 
 	// verify and insert all BTC headers
 	headersBytes := []bbn.BTCHeaderBytes{}
-	for _, headerInfo := range ts.BtcHeaders {
+	for _, headerInfo := range ts.BtcHeaders.Headers {
 		headerBytes := bbn.NewBTCHeaderBytesFromBlockHeader(headerInfo.Header.ToBlockHeader())
 		headersBytes = append(headersBytes, headerBytes)
 	}
