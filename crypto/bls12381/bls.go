@@ -2,10 +2,10 @@ package bls12381
 
 import (
 	"crypto/rand"
+	"errors"
 	"io"
 
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
-	"github.com/pkg/errors"
 	blst "github.com/supranational/blst/bindings/go"
 )
 

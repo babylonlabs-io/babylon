@@ -3,13 +3,13 @@ package types
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 
 	"github.com/boljen/go-bitmap"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/pkg/errors"
 )
 
 func (v *Validator) GetValAddress() sdk.ValAddress {
