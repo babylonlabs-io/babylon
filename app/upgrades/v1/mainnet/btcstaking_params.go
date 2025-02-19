@@ -23,6 +23,7 @@ const BtcStakingParamsStr = `[
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1000,
     "allow_list_expiration_height": 0,
-    "btc_activation_height": 100
+    "btc_activation_height": 100,
+    "max_commission_change_rate": "0.1"
   }
 ]`

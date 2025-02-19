@@ -3,6 +3,7 @@ package testutil
 import (
 	"math/rand"
 	"testing"
+	"time"
 
 	"cosmossdk.io/core/header"
 	"cosmossdk.io/log"
@@ -107,7 +108,7 @@ func NewHelperWithStoreAndIncentive(
 	err = fk.SetParams(ctx, ftypes.DefaultParams())
 	require.NoError(t, err)
 
-	ctx = ctx.WithHeaderInfo(header.Info{Height: 1}).WithBlockHeight(1)
+	ctx = ctx.WithHeaderInfo(header.Info{Height: 1, Time: time.Now()}).WithBlockHeight(1).WithBlockTime(time.Now())
 
 	return &Helper{
 		t:   t,
@@ -198,6 +199,7 @@ func (h *Helper) GenAndApplyCustomParams(
 		UnbondingFeeSat:           1000,
 		AllowListExpirationHeight: allowListExpirationHeight,
 		BtcActivationHeight:       1,
+		MaxCommissionChangeRate:   sdkmath.LegacyOneDec(), // allow 100% change for fuzz testing
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs
