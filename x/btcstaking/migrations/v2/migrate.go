@@ -35,9 +35,8 @@ func MigrateStore(ctx context.Context, store storetypes.KVStore, k Keeper, cdc c
 
 // migrateParams adds the default value to the new param max commission change rate
 func migrateParams(ctx context.Context, k Keeper) error {
-	defaultParams := types.DefaultParams()
 	storedParams := k.GetParamsWithVersion(ctx)
-	storedParams.Params.MaxCommissionChangeRate = defaultParams.MaxCommissionChangeRate
+	storedParams.Params.MaxCommissionChangeRate = types.DefaultMaxCommissionChangeRate
 	if err := storedParams.Params.Validate(); err != nil {
 		return err
 	}
