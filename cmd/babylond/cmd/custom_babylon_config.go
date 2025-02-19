@@ -24,7 +24,7 @@ func defaultBabylonBtcConfig() BtcConfig {
 type BabylonAppConfig struct {
 	serverconfig.Config `mapstructure:",squash"`
 
-	Wasm wasmtypes.WasmConfig `mapstructure:"wasm"`
+	Wasm wasmtypes.NodeConfig `mapstructure:"wasm"`
 
 	BtcConfig BtcConfig `mapstructure:"btc-config"`
 }
@@ -36,7 +36,7 @@ func DefaultBabylonAppConfig() *BabylonAppConfig {
 	baseConfig.MinGasPrices = fmt.Sprintf("%f%s", appparams.GlobalMinGasPrice, appparams.BaseCoinUnit)
 	return &BabylonAppConfig{
 		Config:    baseConfig,
-		Wasm:      wasmtypes.DefaultWasmConfig(),
+		Wasm:      wasmtypes.DefaultNodeConfig(),
 		BtcConfig: defaultBabylonBtcConfig(),
 	}
 }

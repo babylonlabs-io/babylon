@@ -174,7 +174,7 @@ func (ak *AppKeepers) InitKeepers(
 	skipUpgradeHeights map[int64]bool,
 	blsSigner checkpointingtypes.BlsSigner,
 	appOpts servertypes.AppOptions,
-	wasmConfig wasmtypes.WasmConfig,
+	wasmConfig wasmtypes.NodeConfig,
 	wasmOpts []wasmkeeper.Option,
 	blockedAddress map[string]bool,
 ) {
@@ -430,6 +430,7 @@ func (ak *AppKeepers) InitKeepers(
 		bApp.GRPCQueryRouter(),
 		homePath,
 		wasmConfig,
+		wasmtypes.VMConfig{},
 		WasmCapabilities(),
 		appparams.AccGov.String(),
 		wasmOpts...,
