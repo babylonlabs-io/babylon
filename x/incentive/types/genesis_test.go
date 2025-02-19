@@ -109,7 +109,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			errMsg: fmt.Sprintf("duplicate delegator address: %s", addrStr1),
 		},
 		{
-			desc: "Genesis with emtpy string in MsgHashes",
+			desc: "Genesis with empty string in MsgHashes",
 			genState: &types.GenesisState{
 				Params:                             types.DefaultParams(),
 				BtcStakingGauges:                   []types.BTCStakingGaugeEntry{},
