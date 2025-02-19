@@ -39,14 +39,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-- [#508](https://github.com/babylonlabs-io/babylon/pull/508) Move PoP constructor functiosn to datagen/
+- [#536](https://github.com/babylonlabs-io/babylon/pull/536) Improve protobuf vs. json error msgs / types
+- [#527](https://github.com/babylonlabs-io/babylon/pull/527) Create BSL signer on start command with flags.
+- [#513](https://github.com/babylonlabs-io/babylon/pull/513) Suport datagen BTC delegation creation from Consumers
 - [#470](https://github.com/babylonlabs-io/babylon/pull/470) Return full consumer info and remove DB object
 usage in `x/btcstkconsumer` queries
 - [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
 check of rewards
-- [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public
 - [#480](https://github.com/babylonlabs-io/babylon/pull/480) Improve IBC packet structure
-- [#499](https://github.com/babylonlabs-io/babylon/pull/499) Add `params-by-version` CLI command
 - [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
 - [#515](https://github.com/babylonlabs-io/babylon/pull/515) Add `staker_addr` to `EventBTCDelegationCreated`
 - [#518](https://github.com/babylonlabs-io/babylon/pull/518) Add check BTC reorg blocks higher than `k` deep
@@ -55,6 +55,22 @@ check of rewards
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
+- [#530](https://github.com/babylonlabs-io/babylon/pull/530) Add `ConflictingCheckpointReceived` flag in `x/checkpointing` module.
+- [#519](https://github.com/babylonlabs-io/babylon/pull/519) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module
+
+### Bug fixes
+
+- [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+
+## v1.0.0-rc6
+
+### Improvements
+
+- [#508](https://github.com/babylonlabs-io/babylon/pull/508) Move PoP constructor functiosn to datagen/
+- [#499](https://github.com/babylonlabs-io/babylon/pull/499) Add `params-by-version` CLI command
+- [#515](https://github.com/babylonlabs-io/babylon/pull/515) Add `staker_addr` to `EventBTCDelegationCreated`
+- [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public in
+`babylonclient` package
 
 ### Bug fixes
 

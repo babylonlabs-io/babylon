@@ -1,38 +1,26 @@
-# Adapted from https://github.com/marketplace/actions/backporting
-#
-# Usage: 
-#   - Let's say you want to backport a pull request on a branch named `production`.
-#   - Then label it with `backport production`.
-#   - That's it! When the pull request gets merged, it will be backported to 
-#     the `production` branch. If the pull request cannot be backported, a comment 
-#     explaining why will automatically be posted.
-#
-# Note: multiple backport labels can be added. For example, if a pull request 
-#       has the labels `backport staging` and `backport production` it will be 
-#       backported to both branches: `staging` and `production`.
-name: Backport
+name: Automatic backport action
+
 on:
   pull_request_target:
-    types:
-      - closed
-      - labeled
+    types: ["labeled", "closed"]
 
 jobs:
   backport:
-    name: Backport
+    name: Backport PR
+    if: github.event.pull_request.merged == true && !(contains(github.event.pull_request.labels.*.name, 'backport'))
     runs-on: ubuntu-latest
-    # Only react to merged PRs for security reasons.
-    # See https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target.
-    if: >
-      github.event.pull_request.merged
-      && (
-        github.event.action == 'closed'
-        || (
-          github.event.action == 'labeled'
-          && contains(github.event.label.name, 'backport')
-        )
-      )
     steps:
-      - uses: tibdex/backport@v2
+      - name: Backport Action
+        uses: sorenlouv/backport-github-action@v9.5.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          auto_backport_label_prefix: "backport "
+
+      - name: Info log
+        if: ${{ success() }}
+        run: cat ~/.backport/backport.info.log
+        
+      - name: Debug log
+        if: ${{ failure() }}
+        run: cat ~/.backport/backport.debug.log        
+         

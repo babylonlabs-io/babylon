@@ -11914,19 +11914,27 @@ paths:
                           signatures required by gogoproto.
                       title: >-
                         withdrawn_coins are coins that have been withdrawn by
-                        the stakeholder already
+                        the stakeholder
+
+                        already
                   title: >-
                     RewardGaugesResponse is an object that stores rewards
-                    distributed to a BTC staking stakeholder
+                    distributed to a BTC
+
+                    staking stakeholder
                 title: >-
                   reward_gauges is the map of reward gauges, where key is the
-                  stakeholder type
+                  stakeholder
 
-                  and value is the reward gauge holding all rewards for the
-                  stakeholder in that type
+                  type and value is the reward gauge holding all rewards for the
+                  stakeholder
+
+                  in that type
             description: >-
               QueryRewardGaugesResponse is response type for the
-              Query/RewardGauges RPC method.
+              Query/RewardGauges RPC
+
+              method.
         default:
           description: An unexpected error response.
           schema:
@@ -11993,10 +12001,14 @@ paths:
                       can have multiple coin denoms
                 description: >-
                   BTCStakingGaugeResponse is response type for the
-                  Query/BTCStakingGauge RPC method.
+                  Query/BTCStakingGauge RPC
+
+                  method.
             description: >-
               QueryBTCStakingGaugeResponse is response type for the
-              Query/BTCStakingGauge RPC method.
+              Query/BTCStakingGauge
+
+              RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -12092,12 +12104,14 @@ paths:
                     type: string
                     title: >-
                       btc_staking_portion is the portion of rewards that goes to
-                      Finality Providers/delegations
+                      Finality
 
-                      NOTE: the portion of each Finality Provider/delegation is
-                      calculated by using its voting
+                      Providers/delegations NOTE: the portion of each Finality
 
-                      power and finality provider's commission
+                      Provider/delegation is calculated by using its voting
+                      power and finality
+
+                      provider's commission
                 title: >-
                   Params defines the parameters for the module, including
                   portions of rewards
@@ -12106,9 +12120,9 @@ paths:
                   portions should
 
                   be strictly less than 1 so that the rest will go to Comet
-                  validators/delegations
 
-                  adapted from
+                  validators/delegations adapted from
+
                   https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/proto/cosmos/distribution/v1beta1/distribution.proto
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
@@ -22361,7 +22375,7 @@ definitions:
         title: |-
           coins that have been in the gauge
           can have multiple coin denoms
-    description: >-
+    description: |-
       BTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC
       method.
   babylon.incentive.Params:
@@ -22371,12 +22385,13 @@ definitions:
         type: string
         title: >-
           btc_staking_portion is the portion of rewards that goes to Finality
-          Providers/delegations
 
-          NOTE: the portion of each Finality Provider/delegation is calculated
-          by using its voting
+          Providers/delegations NOTE: the portion of each Finality
 
-          power and finality provider's commission
+          Provider/delegation is calculated by using its voting power and
+          finality
+
+          provider's commission
     title: >-
       Params defines the parameters for the module, including portions of
       rewards
@@ -22385,9 +22400,9 @@ definitions:
       should
 
       be strictly less than 1 so that the rest will go to Comet
-      validators/delegations
 
-      adapted from
+      validators/delegations adapted from
+
       https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/proto/cosmos/distribution/v1beta1/distribution.proto
   babylon.incentive.QueryBTCStakingGaugeResponse:
     type: object
@@ -22418,10 +22433,14 @@ definitions:
               can have multiple coin denoms
         description: >-
           BTCStakingGaugeResponse is response type for the Query/BTCStakingGauge
-          RPC method.
+          RPC
+
+          method.
     description: >-
       QueryBTCStakingGaugeResponse is response type for the
-      Query/BTCStakingGauge RPC method.
+      Query/BTCStakingGauge
+
+      RPC method.
   babylon.incentive.QueryDelegatorWithdrawAddressResponse:
     type: object
     properties:
@@ -22442,12 +22461,14 @@ definitions:
             type: string
             title: >-
               btc_staking_portion is the portion of rewards that goes to
-              Finality Providers/delegations
+              Finality
 
-              NOTE: the portion of each Finality Provider/delegation is
-              calculated by using its voting
+              Providers/delegations NOTE: the portion of each Finality
 
-              power and finality provider's commission
+              Provider/delegation is calculated by using its voting power and
+              finality
+
+              provider's commission
         title: >-
           Params defines the parameters for the module, including portions of
           rewards
@@ -22456,9 +22477,9 @@ definitions:
           should
 
           be strictly less than 1 so that the rest will go to Comet
-          validators/delegations
 
-          adapted from
+          validators/delegations adapted from
+
           https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/proto/cosmos/distribution/v1beta1/distribution.proto
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   babylon.incentive.QueryRewardGaugesResponse:
@@ -22508,17 +22529,23 @@ definitions:
                   signatures required by gogoproto.
               title: >-
                 withdrawn_coins are coins that have been withdrawn by the
-                stakeholder already
+                stakeholder
+
+                already
           title: >-
             RewardGaugesResponse is an object that stores rewards distributed to
-            a BTC staking stakeholder
+            a BTC
+
+            staking stakeholder
         title: >-
           reward_gauges is the map of reward gauges, where key is the
-          stakeholder type
+          stakeholder
 
-          and value is the reward gauge holding all rewards for the stakeholder
+          type and value is the reward gauge holding all rewards for the
+          stakeholder
+
           in that type
-    description: >-
+    description: |-
       QueryRewardGaugesResponse is response type for the Query/RewardGauges RPC
       method.
   babylon.incentive.RewardGaugesResponse:
@@ -22555,10 +22582,10 @@ definitions:
 
             NOTE: The amount field is an Int which implements the custom method
             signatures required by gogoproto.
-        title: >-
+        title: |-
           withdrawn_coins are coins that have been withdrawn by the stakeholder
           already
-    title: >-
+    title: |-
       RewardGaugesResponse is an object that stores rewards distributed to a BTC
       staking stakeholder
   babylon.btccheckpoint.v1.SubmissionKey:

@@ -140,7 +140,7 @@ func (k Keeper) CalculateBTCDelegationRewardsAndSendToGauge(ctx context.Context,
 		return nil
 	}
 
-	k.accumulateRewardGauge(ctx, types.BTCDelegationType, del, rewards)
+	k.accumulateRewardGauge(ctx, types.BTC_DELEGATION, del, rewards)
 	return nil
 }
 

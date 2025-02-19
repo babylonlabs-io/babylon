@@ -5,6 +5,7 @@ package types
 
 import (
 	fmt "fmt"
+	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
@@ -23,9 +24,44 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// StakeholderType represents the different types of stakeholders.
+type StakeholderType int32
+
+const (
+	// Finality provider stakeholder type
+	FINALITY_PROVIDER StakeholderType = 0
+	// BTC delegation stakeholder type
+	BTC_DELEGATION StakeholderType = 1
+)
+
+var StakeholderType_name = map[int32]string{
+	0: "FINALITY_PROVIDER",
+	1: "BTC_DELEGATION",
+}
+
+var StakeholderType_value = map[string]int32{
+	"FINALITY_PROVIDER": 0,
+	"BTC_DELEGATION":    1,
+}
+
+func (x StakeholderType) String() string {
+	return proto.EnumName(StakeholderType_name, int32(x))
+}
+
+func (StakeholderType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_41d5400dc6b4b931, []int{0}
+}
+
 // GenesisState defines the incentive module's genesis state.
 type GenesisState struct {
+	// params the current params of the state.
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
+	// BTC staking gauge on every height
+	BtcStakingGauges []BTCStakingGaugeEntry `protobuf:"bytes,2,rep,name=btc_staking_gauges,json=btcStakingGauges,proto3" json:"btc_staking_gauges"`
+	// RewardGauges the reward gauge for each BTC staker and finality provider
+	RewardGauges []RewardGaugeEntry `protobuf:"bytes,3,rep,name=reward_gauges,json=rewardGauges,proto3" json:"reward_gauges"`
+	// Withdraw addresses of the delegators
+	WithdrawAddresses []WithdrawAddressEntry `protobuf:"bytes,4,rep,name=withdraw_addresses,json=withdrawAddresses,proto3" json:"withdraw_addresses"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -68,27 +104,250 @@ func (m *GenesisState) GetParams() Params {
 	return Params{}
 }
 
+func (m *GenesisState) GetBtcStakingGauges() []BTCStakingGaugeEntry {
+	if m != nil {
+		return m.BtcStakingGauges
+	}
+	return nil
+}
+
+func (m *GenesisState) GetRewardGauges() []RewardGaugeEntry {
+	if m != nil {
+		return m.RewardGauges
+	}
+	return nil
+}
+
+func (m *GenesisState) GetWithdrawAddresses() []WithdrawAddressEntry {
+	if m != nil {
+		return m.WithdrawAddresses
+	}
+	return nil
+}
+
+// BTCStakingGaugeEntry represents a gauge for BTC staking rewards at a specific
+// height.
+type BTCStakingGaugeEntry struct {
+	// Block height at which this gauge is set
+	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+	// The gauge object storing rewards info
+	Gauge *Gauge `protobuf:"bytes,2,opt,name=gauge,proto3" json:"gauge,omitempty"`
+}
+
+func (m *BTCStakingGaugeEntry) Reset()         { *m = BTCStakingGaugeEntry{} }
+func (m *BTCStakingGaugeEntry) String() string { return proto.CompactTextString(m) }
+func (*BTCStakingGaugeEntry) ProtoMessage()    {}
+func (*BTCStakingGaugeEntry) Descriptor() ([]byte, []int) {
+	return fileDescriptor_41d5400dc6b4b931, []int{1}
+}
+func (m *BTCStakingGaugeEntry) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *BTCStakingGaugeEntry) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_BTCStakingGaugeEntry.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *BTCStakingGaugeEntry) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BTCStakingGaugeEntry.Merge(m, src)
+}
+func (m *BTCStakingGaugeEntry) XXX_Size() int {
+	return m.Size()
+}
+func (m *BTCStakingGaugeEntry) XXX_DiscardUnknown() {
+	xxx_messageInfo_BTCStakingGaugeEntry.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_BTCStakingGaugeEntry proto.InternalMessageInfo
+
+func (m *BTCStakingGaugeEntry) GetHeight() uint64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
+func (m *BTCStakingGaugeEntry) GetGauge() *Gauge {
+	if m != nil {
+		return m.Gauge
+	}
+	return nil
+}
+
+// RewardGaugeEntry represents a reward gauge for a specific stakeholder.
+type RewardGaugeEntry struct {
+	// Type of stakeholder
+	StakeholderType StakeholderType `protobuf:"varint,1,opt,name=stakeholder_type,json=stakeholderType,proto3,enum=babylon.incentive.StakeholderType" json:"stakeholder_type,omitempty"`
+	// Address of the stakeholder
+	Address string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
+	// The reward gauge object
+	RewardGauge *RewardGauge `protobuf:"bytes,3,opt,name=reward_gauge,json=rewardGauge,proto3" json:"reward_gauge,omitempty"`
+}
+
+func (m *RewardGaugeEntry) Reset()         { *m = RewardGaugeEntry{} }
+func (m *RewardGaugeEntry) String() string { return proto.CompactTextString(m) }
+func (*RewardGaugeEntry) ProtoMessage()    {}
+func (*RewardGaugeEntry) Descriptor() ([]byte, []int) {
+	return fileDescriptor_41d5400dc6b4b931, []int{2}
+}
+func (m *RewardGaugeEntry) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *RewardGaugeEntry) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_RewardGaugeEntry.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *RewardGaugeEntry) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RewardGaugeEntry.Merge(m, src)
+}
+func (m *RewardGaugeEntry) XXX_Size() int {
+	return m.Size()
+}
+func (m *RewardGaugeEntry) XXX_DiscardUnknown() {
+	xxx_messageInfo_RewardGaugeEntry.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RewardGaugeEntry proto.InternalMessageInfo
+
+func (m *RewardGaugeEntry) GetStakeholderType() StakeholderType {
+	if m != nil {
+		return m.StakeholderType
+	}
+	return FINALITY_PROVIDER
+}
+
+func (m *RewardGaugeEntry) GetAddress() string {
+	if m != nil {
+		return m.Address
+	}
+	return ""
+}
+
+func (m *RewardGaugeEntry) GetRewardGauge() *RewardGauge {
+	if m != nil {
+		return m.RewardGauge
+	}
+	return nil
+}
+
+// WithdrawAddressEntry holds the record of a withdraw address belonging to a
+// delegator address.
+type WithdrawAddressEntry struct {
+	// Address of the delegator
+	DelegatorAddress string `protobuf:"bytes,1,opt,name=delegator_address,json=delegatorAddress,proto3" json:"delegator_address,omitempty"`
+	// Withdraw address
+	WithdrawAddress string `protobuf:"bytes,2,opt,name=withdraw_address,json=withdrawAddress,proto3" json:"withdraw_address,omitempty"`
+}
+
+func (m *WithdrawAddressEntry) Reset()         { *m = WithdrawAddressEntry{} }
+func (m *WithdrawAddressEntry) String() string { return proto.CompactTextString(m) }
+func (*WithdrawAddressEntry) ProtoMessage()    {}
+func (*WithdrawAddressEntry) Descriptor() ([]byte, []int) {
+	return fileDescriptor_41d5400dc6b4b931, []int{3}
+}
+func (m *WithdrawAddressEntry) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *WithdrawAddressEntry) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_WithdrawAddressEntry.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *WithdrawAddressEntry) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WithdrawAddressEntry.Merge(m, src)
+}
+func (m *WithdrawAddressEntry) XXX_Size() int {
+	return m.Size()
+}
+func (m *WithdrawAddressEntry) XXX_DiscardUnknown() {
+	xxx_messageInfo_WithdrawAddressEntry.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WithdrawAddressEntry proto.InternalMessageInfo
+
+func (m *WithdrawAddressEntry) GetDelegatorAddress() string {
+	if m != nil {
+		return m.DelegatorAddress
+	}
+	return ""
+}
+
+func (m *WithdrawAddressEntry) GetWithdrawAddress() string {
+	if m != nil {
+		return m.WithdrawAddress
+	}
+	return ""
+}
+
 func init() {
+	proto.RegisterEnum("babylon.incentive.StakeholderType", StakeholderType_name, StakeholderType_value)
 	proto.RegisterType((*GenesisState)(nil), "babylon.incentive.GenesisState")
+	proto.RegisterType((*BTCStakingGaugeEntry)(nil), "babylon.incentive.BTCStakingGaugeEntry")
+	proto.RegisterType((*RewardGaugeEntry)(nil), "babylon.incentive.RewardGaugeEntry")
+	proto.RegisterType((*WithdrawAddressEntry)(nil), "babylon.incentive.WithdrawAddressEntry")
 }
 
 func init() { proto.RegisterFile("babylon/incentive/genesis.proto", fileDescriptor_41d5400dc6b4b931) }
 
 var fileDescriptor_41d5400dc6b4b931 = []byte{
-	// 197 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4f, 0x4a, 0x4c, 0xaa,
-	0xcc, 0xc9, 0xcf, 0xd3, 0xcf, 0xcc, 0x4b, 0x4e, 0xcd, 0x2b, 0xc9, 0x2c, 0x4b, 0xd5, 0x4f, 0x4f,
-	0xcd, 0x4b, 0x2d, 0xce, 0x2c, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x84, 0x2a, 0xd0,
-	0x83, 0x2b, 0x90, 0x12, 0x49, 0xcf, 0x4f, 0xcf, 0x07, 0xcb, 0xea, 0x83, 0x58, 0x10, 0x85, 0x52,
-	0x72, 0x98, 0x26, 0x15, 0x24, 0x16, 0x25, 0xe6, 0x42, 0x0d, 0x52, 0x72, 0xe7, 0xe2, 0x71, 0x87,
-	0x98, 0x1c, 0x5c, 0x92, 0x58, 0x92, 0x2a, 0x64, 0xce, 0xc5, 0x06, 0x91, 0x97, 0x60, 0x54, 0x60,
-	0xd4, 0xe0, 0x36, 0x92, 0xd4, 0xc3, 0xb0, 0x49, 0x2f, 0x00, 0xac, 0xc0, 0x89, 0xe5, 0xc4, 0x3d,
-	0x79, 0x86, 0x20, 0xa8, 0x72, 0x27, 0xdf, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c,
-	0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63, 0x39, 0x86, 0x0b, 0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63,
-	0x88, 0x32, 0x4e, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x87, 0x1a, 0x96,
-	0x93, 0x98, 0x54, 0xac, 0x9b, 0x99, 0x0f, 0xe3, 0xea, 0x57, 0x20, 0x39, 0xaf, 0xa4, 0xb2, 0x20,
-	0xb5, 0x38, 0x89, 0x0d, 0xec, 0x3c, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0x33, 0x58, 0xf9,
-	0x93, 0x0a, 0x01, 0x00, 0x00,
+	// 555 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x93, 0x4f, 0x6e, 0xda, 0x40,
+	0x18, 0xc5, 0x6d, 0xa0, 0x54, 0x1d, 0x68, 0x30, 0x23, 0x5a, 0x39, 0x2c, 0x9c, 0x94, 0x2e, 0x1a,
+	0x55, 0x8a, 0x91, 0xc8, 0xa2, 0x6b, 0x4c, 0x28, 0x42, 0x4a, 0x48, 0x64, 0x50, 0xab, 0xfe, 0x51,
+	0xad, 0x31, 0x1e, 0x0d, 0x56, 0xc1, 0x83, 0x66, 0x26, 0xa5, 0xdc, 0xa0, 0xcb, 0x9e, 0xa1, 0xbd,
+	0x42, 0x0f, 0x91, 0x65, 0x94, 0x55, 0x56, 0x55, 0x05, 0x17, 0xa9, 0x18, 0x0f, 0x84, 0x80, 0x9b,
+	0xee, 0x3c, 0xf3, 0xfd, 0x78, 0x7c, 0xef, 0x3d, 0x1b, 0xec, 0xf9, 0xc8, 0x9f, 0x0e, 0x69, 0x54,
+	0x0d, 0xa3, 0x3e, 0x8e, 0x44, 0xf8, 0x05, 0x57, 0x09, 0x8e, 0x30, 0x0f, 0xb9, 0x3d, 0x66, 0x54,
+	0x50, 0x58, 0x54, 0x80, 0xbd, 0x02, 0xca, 0x25, 0x42, 0x09, 0x95, 0xd3, 0xea, 0xe2, 0x29, 0x06,
+	0xcb, 0xd6, 0xb6, 0xd2, 0x18, 0x31, 0x34, 0x52, 0x42, 0xe5, 0x67, 0xdb, 0xf3, 0xd5, 0x93, 0x42,
+	0x76, 0xfb, 0x94, 0x8f, 0x28, 0xf7, 0x62, 0xed, 0xf8, 0x10, 0x8f, 0x2a, 0xd7, 0x29, 0x90, 0x6f,
+	0xc5, 0x8b, 0x75, 0x05, 0x12, 0x18, 0xbe, 0x02, 0xd9, 0x58, 0xde, 0xd4, 0xf7, 0xf5, 0x83, 0x5c,
+	0x6d, 0xd7, 0xde, 0x5a, 0xd4, 0x3e, 0x97, 0x80, 0x93, 0xb9, 0xfc, 0xbd, 0xa7, 0xb9, 0x0a, 0x87,
+	0x1f, 0x00, 0xf4, 0x45, 0xdf, 0xe3, 0x02, 0x7d, 0x0e, 0x23, 0xe2, 0x11, 0x74, 0x41, 0x30, 0x37,
+	0x53, 0xfb, 0xe9, 0x83, 0x5c, 0xed, 0x45, 0x82, 0x88, 0xd3, 0x6b, 0x74, 0x63, 0xb6, 0xb5, 0x40,
+	0x9b, 0x91, 0x60, 0x53, 0x25, 0x69, 0xf8, 0xa2, 0xbf, 0x3e, 0xe3, 0xb0, 0x03, 0x1e, 0x33, 0x3c,
+	0x41, 0x2c, 0x58, 0xea, 0xa6, 0xa5, 0xee, 0xf3, 0x04, 0x5d, 0x57, 0x72, 0x5b, 0x9a, 0x79, 0x76,
+	0x7b, 0xcf, 0xe1, 0x47, 0x00, 0x27, 0xa1, 0x18, 0x04, 0x0c, 0x4d, 0x3c, 0x14, 0x04, 0x0c, 0x73,
+	0x8e, 0xb9, 0x99, 0xf9, 0xe7, 0xb2, 0x6f, 0x15, 0x5c, 0x8f, 0xd9, 0x75, 0xe1, 0xe2, 0xe4, 0xee,
+	0x0c, 0xf3, 0xca, 0x27, 0x50, 0x4a, 0x72, 0x07, 0x9f, 0x82, 0xec, 0x00, 0x87, 0x64, 0x20, 0x64,
+	0xb6, 0x19, 0x57, 0x9d, 0xa0, 0x0d, 0x1e, 0x48, 0x5b, 0x66, 0x4a, 0x46, 0x6e, 0x26, 0x2c, 0x20,
+	0x55, 0xdc, 0x18, 0xab, 0xdc, 0xe8, 0xc0, 0xd8, 0xb4, 0x09, 0x4f, 0x81, 0xb1, 0xc8, 0x1e, 0x0f,
+	0xe8, 0x30, 0xc0, 0xcc, 0x13, 0xd3, 0x31, 0x96, 0x7f, 0xb3, 0x53, 0xab, 0x24, 0xe8, 0x75, 0x6f,
+	0xd1, 0xde, 0x74, 0x8c, 0xdd, 0x02, 0xbf, 0x7b, 0x01, 0x6b, 0xe0, 0xa1, 0x0a, 0x46, 0x6e, 0xf5,
+	0xc8, 0x31, 0xaf, 0x7f, 0x1d, 0x96, 0xd4, 0xbb, 0xa3, 0xac, 0x76, 0x05, 0x0b, 0x23, 0xe2, 0x2e,
+	0x41, 0x58, 0x07, 0xf9, 0xf5, 0x96, 0xcc, 0xb4, 0xb4, 0x63, 0xdd, 0x5f, 0x92, 0x9b, 0x5b, 0x6b,
+	0xa6, 0xf2, 0x43, 0x07, 0xa5, 0xa4, 0xb0, 0x61, 0x13, 0x14, 0x03, 0x3c, 0xc4, 0x04, 0x09, 0xca,
+	0x96, 0x95, 0x49, 0x7f, 0xf7, 0x6d, 0x66, 0xac, 0x7e, 0xa2, 0xee, 0x61, 0x03, 0x18, 0x9b, 0xc5,
+	0xff, 0xd7, 0x5f, 0x61, 0xa3, 0xe1, 0x97, 0x0e, 0x28, 0x6c, 0xe4, 0x07, 0x9f, 0x80, 0xe2, 0xeb,
+	0x76, 0xa7, 0x7e, 0xd2, 0xee, 0xbd, 0xf3, 0xce, 0xdd, 0xb3, 0x37, 0xed, 0xe3, 0xa6, 0x6b, 0x68,
+	0x10, 0x82, 0x1d, 0xa7, 0xd7, 0xf0, 0x8e, 0x9b, 0x27, 0xcd, 0x56, 0xbd, 0xd7, 0x3e, 0xeb, 0x18,
+	0x7a, 0x39, 0xf3, 0xed, 0xa7, 0xa5, 0x39, 0xa7, 0x97, 0x33, 0x4b, 0xbf, 0x9a, 0x59, 0xfa, 0x9f,
+	0x99, 0xa5, 0x7f, 0x9f, 0x5b, 0xda, 0xd5, 0xdc, 0xd2, 0x6e, 0xe6, 0x96, 0xf6, 0xfe, 0x88, 0x84,
+	0x62, 0x70, 0xe1, 0xdb, 0x7d, 0x3a, 0xaa, 0xaa, 0xe4, 0x86, 0xc8, 0xe7, 0x87, 0x21, 0x5d, 0x1e,
+	0xab, 0x5f, 0xd7, 0x3e, 0xf6, 0x45, 0xd1, 0xdc, 0xcf, 0xca, 0xcf, 0xf9, 0xe8, 0x6f, 0x00, 0x00,
+	0x00, 0xff, 0xff, 0x44, 0x0b, 0x0d, 0x8f, 0x78, 0x04, 0x00, 0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -111,6 +370,48 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.WithdrawAddresses) > 0 {
+		for iNdEx := len(m.WithdrawAddresses) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.WithdrawAddresses[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.RewardGauges) > 0 {
+		for iNdEx := len(m.RewardGauges) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.RewardGauges[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.BtcStakingGauges) > 0 {
+		for iNdEx := len(m.BtcStakingGauges) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.BtcStakingGauges[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
 	{
 		size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
@@ -121,6 +422,130 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	i--
 	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *BTCStakingGaugeEntry) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *BTCStakingGaugeEntry) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *BTCStakingGaugeEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Gauge != nil {
+		{
+			size, err := m.Gauge.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintGenesis(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Height != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.Height))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *RewardGaugeEntry) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *RewardGaugeEntry) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RewardGaugeEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.RewardGauge != nil {
+		{
+			size, err := m.RewardGauge.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintGenesis(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Address) > 0 {
+		i -= len(m.Address)
+		copy(dAtA[i:], m.Address)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.Address)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.StakeholderType != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.StakeholderType))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *WithdrawAddressEntry) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *WithdrawAddressEntry) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *WithdrawAddressEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.WithdrawAddress) > 0 {
+		i -= len(m.WithdrawAddress)
+		copy(dAtA[i:], m.WithdrawAddress)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.WithdrawAddress)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.DelegatorAddress) > 0 {
+		i -= len(m.DelegatorAddress)
+		copy(dAtA[i:], m.DelegatorAddress)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.DelegatorAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -143,6 +568,77 @@ func (m *GenesisState) Size() (n int) {
 	_ = l
 	l = m.Params.Size()
 	n += 1 + l + sovGenesis(uint64(l))
+	if len(m.BtcStakingGauges) > 0 {
+		for _, e := range m.BtcStakingGauges {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.RewardGauges) > 0 {
+		for _, e := range m.RewardGauges {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.WithdrawAddresses) > 0 {
+		for _, e := range m.WithdrawAddresses {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *BTCStakingGaugeEntry) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Height != 0 {
+		n += 1 + sovGenesis(uint64(m.Height))
+	}
+	if m.Gauge != nil {
+		l = m.Gauge.Size()
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	return n
+}
+
+func (m *RewardGaugeEntry) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.StakeholderType != 0 {
+		n += 1 + sovGenesis(uint64(m.StakeholderType))
+	}
+	l = len(m.Address)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	if m.RewardGauge != nil {
+		l = m.RewardGauge.Size()
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	return n
+}
+
+func (m *WithdrawAddressEntry) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.DelegatorAddress)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.WithdrawAddress)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
 	return n
 }
 
@@ -213,6 +709,464 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if err := m.Params.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcStakingGauges", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BtcStakingGauges = append(m.BtcStakingGauges, BTCStakingGaugeEntry{})
+			if err := m.BtcStakingGauges[len(m.BtcStakingGauges)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardGauges", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RewardGauges = append(m.RewardGauges, RewardGaugeEntry{})
+			if err := m.RewardGauges[len(m.RewardGauges)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WithdrawAddresses", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WithdrawAddresses = append(m.WithdrawAddresses, WithdrawAddressEntry{})
+			if err := m.WithdrawAddresses[len(m.WithdrawAddresses)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *BTCStakingGaugeEntry) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: BTCStakingGaugeEntry: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: BTCStakingGaugeEntry: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			m.Height = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Height |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Gauge", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Gauge == nil {
+				m.Gauge = &Gauge{}
+			}
+			if err := m.Gauge.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *RewardGaugeEntry) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RewardGaugeEntry: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RewardGaugeEntry: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakeholderType", wireType)
+			}
+			m.StakeholderType = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.StakeholderType |= StakeholderType(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Address = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardGauge", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.RewardGauge == nil {
+				m.RewardGauge = &RewardGauge{}
+			}
+			if err := m.RewardGauge.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *WithdrawAddressEntry) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: WithdrawAddressEntry: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: WithdrawAddressEntry: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DelegatorAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DelegatorAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WithdrawAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WithdrawAddress = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

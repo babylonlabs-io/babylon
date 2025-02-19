@@ -118,6 +118,7 @@ import (
 	"github.com/babylonlabs-io/babylon/x/monitor"
 	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
 	"github.com/babylonlabs-io/babylon/x/zoneconcierge"
+	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
@@ -530,6 +531,7 @@ func NewBabylonApp(
 	// set postHandler
 	postHandler := sdk.ChainPostDecorators(
 		incentivekeeper.NewRefundTxDecorator(&app.IncentiveKeeper),
+		zckeeper.NewIBCHeaderDecorator(&app.ZoneConciergeKeeper),
 	)
 	app.SetPostHandler(postHandler)
 
