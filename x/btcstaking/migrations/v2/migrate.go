@@ -12,8 +12,8 @@ import (
 )
 
 type Keeper interface {
-	SetParams(ctx context.Context, p types.Params) error
-	GetParams(ctx context.Context) types.Params
+	OverwriteParamsAtVersion(ctx context.Context, v uint32, p types.Params) error
+	GetParamsWithVersion(ctx context.Context) types.StoredParams
 }
 
 // MigrateStore performs store migrations to add the new fields
@@ -36,9 +36,9 @@ func MigrateStore(ctx context.Context, store storetypes.KVStore, k Keeper, cdc c
 // migrateParams adds the default value to the new param max commission change rate
 func migrateParams(ctx context.Context, k Keeper) error {
 	defaultParams := types.DefaultParams()
-	params := k.GetParams(ctx)
-	params.MaxCommissionChangeRate = defaultParams.MaxCommissionChangeRate
-	return k.SetParams(ctx, params)
+	storedParams := k.GetParamsWithVersion(ctx)
+	storedParams.Params.MaxCommissionChangeRate = defaultParams.MaxCommissionChangeRate
+	return k.OverwriteParamsAtVersion(ctx, storedParams.Version, storedParams.Params)
 }
 
 // migrateFinalityProviders adds a default value to the new CommissionUpdateTime

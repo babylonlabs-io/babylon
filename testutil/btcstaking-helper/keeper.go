@@ -92,7 +92,7 @@ func NewHelperWithStoreAndIncentive(
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
 	ictvKeeper ftypes.IncentiveKeeper,
 ) *Helper {
-	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btclcKeeper, btccKForBtcStaking, ictvKeeper)
+	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, nil, btclcKeeper, btccKForBtcStaking, ictvKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
 	bscKeeper := k.BscKeeper.(bsckeeper.Keeper)

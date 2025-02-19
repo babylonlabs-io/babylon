@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
@@ -44,12 +45,13 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 
 	// all good, add this finality provider
 	fp := types.FinalityProvider{
-		Description: msg.Description,
-		Commission:  msg.Commission,
-		Addr:        msg.Addr,
-		BtcPk:       msg.BtcPk,
-		Pop:         msg.Pop,
-		ConsumerId:  consumerID,
+		Description:          msg.Description,
+		Commission:           msg.Commission,
+		Addr:                 msg.Addr,
+		BtcPk:                msg.BtcPk,
+		Pop:                  msg.Pop,
+		ConsumerId:           consumerID,
+		CommissionUpdateTime: time.Unix(0, 0).UTC(),
 	}
 
 	if consumerID == ctx.ChainID() {

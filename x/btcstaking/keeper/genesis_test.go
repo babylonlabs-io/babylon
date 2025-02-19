@@ -24,7 +24,7 @@ import (
 func TestInitGenesisWithSetParams(t *testing.T) {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
-	k, ctx := testutilk.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, nil)
+	k, ctx := testutilk.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, nil, nil)
 
 	err := k.InitGenesis(ctx, *types.DefaultGenesis())
 	require.NoError(t, err)
