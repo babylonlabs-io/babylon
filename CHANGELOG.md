@@ -40,20 +40,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#527](https://github.com/babylonlabs-io/babylon/pull/527) Create BSL signer on start command with flags.
-- [#513](https://github.com/babylonlabs-io/babylon/pull/513) Suport datagen BTC delegation creation from Consumers
-- [#470](https://github.com/babylonlabs-io/babylon/pull/470) Return full consumer info and remove DB object
-usage in `x/btcstkconsumer` queries
-- [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
-check of rewards
-- [#480](https://github.com/babylonlabs-io/babylon/pull/480) Improve IBC packet structure
-- [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
 
 ### State Machine Breaking
-
-- [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
-This PR contains a series of PRs on multi-staking support and BTC staking integration.
-- [#530](https://github.com/babylonlabs-io/babylon/pull/530) Add `ConflictingCheckpointReceived` flag in `x/checkpointing` module.
-- [#519](https://github.com/babylonlabs-io/babylon/pull/519) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module
 
 ### Bug fixes
 
