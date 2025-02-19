@@ -37,7 +37,7 @@ func TestMigrateStore(t *testing.T) {
 	require.Equal(t, sdkmath.LegacyZeroDec(), initParams.MaxCommissionChangeRate)
 
 	// setup some finality providers
-	expFp := setupFinalityProviers(t, ctx, storeService, k, encCfg.Codec)
+	expFp := setupFinalityProviers(t, ctx, storeService, encCfg.Codec)
 
 	// Run migrations
 	store := runtime.KVStoreAdapter(storeService.OpenKVStore(ctx))
@@ -101,7 +101,7 @@ func setupParams(t *testing.T, ctx context.Context, storeService store.KVStoreSe
 
 // setupFinalityProviers sets up some finality providers for the test and
 // returns the expected finality providers after the migration
-func setupFinalityProviers(t *testing.T, ctx context.Context, storeService store.KVStoreService, k *keeper.Keeper, cdc codec.Codec) []*types.FinalityProvider {
+func setupFinalityProviers(t *testing.T, ctx context.Context, storeService store.KVStoreService, cdc codec.Codec) []*types.FinalityProvider {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	fpCount := rand.Intn(20)
 	exp := make([]*types.FinalityProvider, fpCount)
