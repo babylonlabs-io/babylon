@@ -138,3 +138,11 @@ func NewBTCTimestampPacketData(btcTimestamp *BTCTimestamp) *OutboundPacket {
 		},
 	}
 }
+
+func NewBTCHeadersPacketData(btcHeaders *BTCHeaders) *OutboundPacket {
+	return &OutboundPacket{
+		Packet: &OutboundPacket_BtcHeaders{
+			BtcHeaders: btcHeaders,
+		},
+	}
+}
