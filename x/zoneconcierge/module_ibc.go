@@ -209,16 +209,16 @@ func (im IBCModule) OnAcknowledgementPacket(
 	// - for acknowledgment message with errors defined in `x/wasm`, it uses json
 	// - for all other acknowledgement messages, it uses protobuf
 	if errProto := types.ModuleCdc.Unmarshal(acknowledgement, &ack); errProto != nil {
-		im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement with protobuf", "error", errProto)
+		im.keeper.Logger(ctx).Warn("cannot unmarshal packet acknowledgement with protobuf, trying json.")
 		if errJson := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); errJson != nil {
-			im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement with json", "error", errJson)
+			im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement with json.", "error", errJson)
 			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement with protobuf (error: %v) or json (error: %v)", errProto, errJson)
 		}
 	}
 
 	switch resp := ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
-		im.keeper.Logger(ctx).Info("received an Acknowledgement message", "result", string(resp.Result))
+		im.keeper.Logger(ctx).Info("received an Acknowledgement message.", "result", string(resp.Result))
 		// TODO: emit typed event
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
@@ -228,7 +228,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 			),
 		)
 	case *channeltypes.Acknowledgement_Error:
-		im.keeper.Logger(ctx).Error("received an Acknowledgement error message", "error", resp.Error)
+		im.keeper.Logger(ctx).Error("received an Acknowledgement error message.", "error", resp.Error)
 		// TODO: emit typed event
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(

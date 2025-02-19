@@ -69,6 +69,9 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 		ek := mocks.NewMockEpochingKeeper(ctrl)
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil)
 
+		hooks := mocks.NewMockCheckpointingHooks(ctrl)
+		ckptKeeper.SetHooks(hooks)
+
 		/* new accumulating checkpoint*/
 		mockCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta(r)
 		mockCkptWithMeta.Status = types.Accumulating
@@ -126,6 +129,8 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 
 		/* Submitted -> Confirmed */
 		ctx = updateRandomCtx(r, ctx)
+
+		hooks.EXPECT().AfterRawCheckpointConfirmed(gomock.Any(), gomock.Any()).Return(nil)
 		ckptKeeper.SetCheckpointConfirmed(ctx, epoch)
 		// ensure status is updated
 		status, err = ckptKeeper.GetStatus(ctx, epoch)
@@ -139,6 +144,7 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 
 		// Ensure it is possible to forget a checkpoint even if it was already confirmed
 		/* Confirmed -> Forgotten */
+		hooks.EXPECT().AfterRawCheckpointForgotten(gomock.Any(), gomock.Any()).Return(nil)
 		ctx = updateRandomCtx(r, ctx)
 		ckptKeeper.SetCheckpointForgotten(ctx, epoch)
 		// ensure status is updated
@@ -164,6 +170,7 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 		require.Len(t, mockCkptWithMeta.Lifecycle, 6)
 		require.Equal(t, curStateUpdate(ctx, types.Submitted), mockCkptWithMeta.Lifecycle[5])
 
+		hooks.EXPECT().AfterRawCheckpointConfirmed(gomock.Any(), gomock.Any()).Return(nil)
 		ctx = updateRandomCtx(r, ctx)
 		ckptKeeper.SetCheckpointConfirmed(ctx, epoch)
 		// ensure status is updated
@@ -176,6 +183,7 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 		require.Len(t, mockCkptWithMeta.Lifecycle, 7)
 		require.Equal(t, curStateUpdate(ctx, types.Confirmed), mockCkptWithMeta.Lifecycle[6])
 
+		hooks.EXPECT().AfterRawCheckpointFinalized(gomock.Any(), gomock.Any()).Return(nil)
 		ctx = updateRandomCtx(r, ctx)
 		ckptKeeper.SetCheckpointFinalized(ctx, epoch)
 		// ensure status is updated
