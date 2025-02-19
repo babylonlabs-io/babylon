@@ -179,11 +179,6 @@ func (k Keeper) MinCommissionRate(ctx context.Context) math.LegacyDec {
 	return k.GetParams(ctx).MinCommissionRate
 }
 
-// MaxCommissionRateChange returns the maximum daily commission rate change of finality providers
-func (k Keeper) MaxCommissionRateChange(ctx context.Context) math.LegacyDec {
-	return k.GetParams(ctx).MaxCommissionChangeRate
-}
-
 func (k Keeper) SetHeightToVersionMap(ctx context.Context, p *types.HeightToVersionMap) error {
 	if err := p.Validate(); err != nil {
 		return err

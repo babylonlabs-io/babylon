@@ -330,8 +330,9 @@ func (k Keeper) UpdateFinalityProviderCommission(goCtx context.Context, newCommi
 		return stktypes.ErrCommissionUpdateTime
 	}
 
-	// ensure commission rate is at least the minimum commission rate in parameters, and
-	minCommission := k.MinCommissionRate(goCtx)
+	// ensure commission rate is at least the minimum commission rate in parameters
+	params := k.GetParams(goCtx)
+	minCommission, maxRateChange := params.MinCommissionRate, params.MaxCommissionChangeRate
 	if newCommission.LT(minCommission) {
 		return types.ErrCommissionLTMinRate.Wrapf(
 			"cannot set finality provider commission to less than minimum rate of %s",
@@ -340,7 +341,6 @@ func (k Keeper) UpdateFinalityProviderCommission(goCtx context.Context, newCommi
 
 	// check that the change rate does not exceed the max change rate allowed
 	// new rate % points change cannot be greater than the max change rate
-	maxRateChange := k.MaxCommissionRateChange(goCtx)
 	if newCommission.Sub(*fp.Commission).GT(maxRateChange) {
 		return stktypes.ErrCommissionGTMaxChangeRate
 	}

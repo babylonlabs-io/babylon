@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"context"
 	"time"
 
 	"cosmossdk.io/store/prefix"
@@ -10,14 +11,19 @@ import (
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
+type Keeper interface {
+	SetParams(ctx context.Context, p types.Params) error
+	GetParams(ctx context.Context) types.Params
+}
+
 // MigrateStore performs store migrations to add the new fields
 // needed for validation on finality provider commission updates.
 // The migration includes:
 // - Adding the commission max change rate to the module parameters
 // - Adding the field CommissionUpdateTime to the FinalityProvier type
-func MigrateStore(store storetypes.KVStore, cdc codec.BinaryCodec) error {
+func MigrateStore(ctx context.Context, store storetypes.KVStore, k Keeper, cdc codec.BinaryCodec) error {
 	// Migrate params - add the max change rate default value
-	if err := migrateParams(store, cdc); err != nil {
+	if err := migrateParams(ctx, k); err != nil {
 		return err
 	}
 
@@ -28,21 +34,11 @@ func MigrateStore(store storetypes.KVStore, cdc codec.BinaryCodec) error {
 }
 
 // migrateParams adds the default value to the new param max commission change rate
-func migrateParams(store storetypes.KVStore, cdc codec.BinaryCodec) error {
-	var params types.Params
+func migrateParams(ctx context.Context, k Keeper) error {
 	defaultParams := types.DefaultParams()
-	paramsBz := store.Get(types.ParamsKey)
-	cdc.MustUnmarshal(paramsBz, &params)
-
+	params := k.GetParams(ctx)
 	params.MaxCommissionChangeRate = defaultParams.MaxCommissionChangeRate
-	if err := params.Validate(); err != nil {
-		return err
-	}
-
-	bz := cdc.MustMarshal(&params)
-
-	store.Set(types.ParamsKey, bz)
-	return nil
+	return k.SetParams(ctx, params)
 }
 
 // migrateFinalityProviders adds a default value to the new CommissionUpdateTime
