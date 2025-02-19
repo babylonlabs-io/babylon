@@ -78,7 +78,8 @@ be removed from the following modules state `x/btcstaking`, `x/finality`,
 - `x/incentives` If that BTC delegation was ever active, there is a need to
 subtract the voting power from the rewards tracker. Also it is only modified
 the values from now on, if rewards were accured from a BTC staking transaction
-that was rollbacked, the past is behind us.
+that was rollbacked, the past is behind us and it should be let with the funds
+that were accured, losing a few coins in the rewards.
   - For the incentives module state there is a single function which should be
   called [`BtcDelegationUnbonded`](https://github.com/babylonlabs-io/babylon/blob/c8c44be12eb826b41f6f2cd3eae4452268398cdf/x/incentive/keeper/reward_tracker.go#L47)
   which receives as parameter the Finality provider and BTC delegator baby
@@ -95,7 +96,30 @@ to remove the data from the 3 modules states.
 #### 3.3 `MsgBTCUndelegate`
 
 Check if the inclusion proof had a reorg in the BTC blocks, if it is not
-rollbacked, there is nothing to do.
+rollbacked, there is nothing to do. If it was rollbacked it is needed
+to remove the existence of this BTC undelegation and affecting 3 modules state
+with similar steps took at [3.1](#31-msgcreatebtcdelegation).
+
+- `x/btcstaking`
+  - Clean out the field for `BtcUndelegation` in `BTCDelegation` for the key
+  [`BTCDelegationKey`](https://github.com/babylonlabs-io/babylon/blob/7727f91491d5b8ddd6c10fa285ef3bea8a5ded4d/x/btcstaking/types/keys.go#L23)
+  in which corresponds to the BTC staking tx hash.
+  - Remove the [`PowerDistUpdateKey`](https://github.com/babylonlabs-io/babylon/blob/7727f91491d5b8ddd6c10fa285ef3bea8a5ded4d/x/btcstaking/types/keys.go#L27)
+  if a `EventPowerDistUpdate_BtcDelStateUpdate` was emitted for that
+  BTC staking tx hash with Undelegate.
+- `x/finality`
+  - Update the voting power amount in [`VotingPowerKey`](https://github.com/babylonlabs-io/babylon/blob/40f890d56d0bb081a6ce413281cc025f3d8b91d1/x/finality/types/keys.go#L50)
+  by adding the satoshi amounts of the finality provider that the BTC
+  delegation delegated to.
+  - Add the `TotalVotingPower` and the respective `FinalityProviderDistInfo`
+  based on which finality provider was delegated to in
+  [`VotingPowerDistCacheKey`](https://github.com/babylonlabs-io/babylon/blob/40f890d56d0bb081a6ce413281cc025f3d8b91d1/x/finality/types/keys.go#L51).
+- `x/incentives` It is needed to add the voting power from the rewards tracker.
+  - For the incentives module state there is a single function which should be
+  called [`BtcDelegationActivated`](https://github.com/babylonlabs-io/babylon/blob/c8c44be12eb826b41f6f2cd3eae4452268398cdf/x/incentive/keeper/reward_tracker.go#L34)
+  which receives as parameter the Finality provider and BTC delegator baby
+  address and the amount of satoshi from the rollbacked BTC undelegate.
+  This will already update all the keys in the state accordingly.
 
 ### 4. Overall updates
 
@@ -108,12 +132,19 @@ to update some state about the new heights as in:
   - Remove the [`LargestBtcReorgInBlocks`](https://github.com/babylonlabs-io/babylon/blob/7727f91491d5b8ddd6c10fa285ef3bea8a5ded4d/x/btcstaking/types/keys.go#L32)
   value previous set, to avoid halting again from the same BTC reorg.
 
-- `x/`
-
 ### Create the emergency upgrade handler
 
-### Tag release
+The emergency upgrade handler is called a
+[`Fork`](https://github.com/babylonlabs-io/babylon/blob/b56406b48b3d3b541c8aa57fe4490edb0fbff6a8/app/upgrades/types.go#L43) in the structures as the chain is halted
+and there is no possibility to create a software upgrade proposal
+that handles nicely the upgrade plan. So, the fork structure
+would contain as the name something that correlates with the BTC block heights
+which were reorg, the upgrade height would be defined as the Babylon block
+height in which the panic for reorg happened and the `BeginForkLogic`
+should contain a single function that modifies the keepers with the data
+collected during step [3](#3-analyze-each-message).
 
-### Test in a private enviroment
-
-### Announce new binary for validators
+After that, tag a new release with the emergency upgrade in it, following
+the [Release Procedure](../../../RELEASE_PROCESS.md#release-procedure)
+test the logic in a private enviroment and if it all the state is modified
+as expected, announce the new binary for validators.
