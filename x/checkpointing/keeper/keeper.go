@@ -198,7 +198,9 @@ func (k Keeper) VerifyCheckpoint(ctx context.Context, checkpoint txformat.RawBtc
 	_, err := k.verifyCkptBytes(ctx, &checkpoint)
 	if err != nil {
 		if errors.Is(err, types.ErrConflictingCheckpoint) {
-			panic(err)
+			// Set the conflicting checkpoint flag that will halt
+			// the chain based on module's EndBlock logic
+			k.SetConflictingCheckpointReceived(ctx, true)
 		}
 		return err
 	}
@@ -486,6 +488,37 @@ func (k Keeper) SetLastFinalizedEpoch(ctx context.Context, epochNumber uint64) {
 	store := k.storeService.OpenKVStore(ctx)
 	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	if err := store.Set(types.LastFinalizedEpochKey, epochNumberBytes); err != nil {
+		panic(err)
+	}
+}
+
+// GetConflictingCheckpointReceived gets the stored ConflictingCheckpointReceived value
+func (k Keeper) GetConflictingCheckpointReceived(ctx context.Context) bool {
+	store := k.storeService.OpenKVStore(ctx)
+	value, err := store.Get(types.ConflictingCheckpointReceivedKey)
+	if err != nil {
+		panic(err)
+	}
+	// If the key is not set, assume false (default behavior)
+	if len(value) == 0 {
+		return false
+	}
+
+	// Convert the first byte to a boolean
+	return value[0] == 1
+}
+
+// SetConflictingCheckpointReceived sets the ConflictingCheckpointReceived flag value
+func (k Keeper) SetConflictingCheckpointReceived(ctx context.Context, value bool) {
+	store := k.storeService.OpenKVStore(ctx)
+	var byteValue []byte
+	switch value {
+	case true:
+		byteValue = []byte{1}
+	default:
+		byteValue = []byte{0}
+	}
+	if err := store.Set(types.ConflictingCheckpointReceivedKey, byteValue); err != nil {
 		panic(err)
 	}
 }
