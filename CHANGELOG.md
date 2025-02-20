@@ -49,6 +49,7 @@ check of rewards
 - [#480](https://github.com/babylonlabs-io/babylon/pull/480) Improve IBC packet structure
 - [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
 - [#504](https://github.com/babylonlabs-io/babylon/pull/504) Add `btc-headers` IBC packet
+- [#543](https://github.com/babylonlabs-io/babylon/pull/543) Fix last segment update condition
 
 ### State Machine Breaking
 
