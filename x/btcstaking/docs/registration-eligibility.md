@@ -158,24 +158,38 @@ actors in the system.
 
 ## 4. Retrieving details about the timeline
 
-To retrieve information about the activation block height and
-the allow-list, query the BTC Staking module or find the information
-within the code.
+To obtain information about the activation block height and the allow-list of
+staking transactions, you can query the BTC Staking module or inspect the
+relevant code.
 
-To find the activation block height, query the BTC Staking parameters, use the
-following command:
+**Retrieving the Activation Block Height**
+To retrieve the activation block height, query the BTC Staking module
+parameters using the following command:
 
-`babylond query btcstaking params`
+```shell
+babylond query btcstaking params
+```
 
-In the output, look for the `BTCStakingActivatedHeight` field to find the
-activation block height.
+In the command output, locate the `BTCStakingActivatedHeight` field, which
+indicates the activation block height.
 
-To view the defined parameters, go to `app/upgrades/v1/mainnet/btcstaking_params.go`
-and similarly look for the `BTCStakingActivatedHeight` field.
+Alternatively, you can find the activation block height defined in the code by
+navigating to:
 
-Additionally, to view the allow-list of staking transaction hashes,
- look at the list of transaction hashes in the code at
-`app/upgrades/v1/mainnet/allowed_staking_tx_hashes.go`.
+```shell
+app/upgrades/v1/mainnet/btcstaking_params.go
+```
+
+**Retrieving the Allow-list of Staking Transaction Hashes**
+To access the allow-list of staking transaction hashes, refer to
+the following file:
+
+```shell
+app/upgrades/v1/mainnet/allowed_staking_tx_hashes.go
+```
+
+This file contains the list of transaction hashes that are permitted for
+BTC staking.
 
 ### 5. FAQs
 
