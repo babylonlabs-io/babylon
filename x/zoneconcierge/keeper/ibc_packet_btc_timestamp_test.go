@@ -9,6 +9,7 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	btclckeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -51,79 +52,59 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		btclcKeeper := babylonApp.BTCLightClientKeeper
 		ctx := babylonApp.NewContext(false)
 
-		hooks := zcKeeper.Hooks()
-
-		// insert a random number of BTC headers to BTC light client
+		// insert initial btc headers and test header selection
 		wValue := babylonApp.BtcCheckpointKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 		chainLength := uint32(datagen.RandomInt(r, 10)) + wValue
-		genRandomChain(
-			t,
-			r,
-			&btclcKeeper,
-			ctx,
-			0,
-			chainLength,
-		)
+		genRandomChain(t, r, &btclcKeeper, ctx, 0, chainLength)
+		headers := zcKeeper.GetHeadersToBroadcast(ctx)
+		require.Len(t, headers, int(wValue)+1)
+		zcKeeper.SetLastSentSegment(ctx, &types.BTCChainSegment{
+			BtcHeaders: headers,
+		})
 
-		// finalise a random epoch
-		epochNum := datagen.RandomInt(r, 10)
-		err := hooks.AfterRawCheckpointFinalized(ctx, epochNum)
-		require.NoError(t, err)
-		// current tip
+		// verify last segment matches the last w+1 headers from tip
 		btcTip := btclcKeeper.GetTipInfo(ctx)
-		// assert the last segment is the last w+1 BTC headers
 		lastSegment := zcKeeper.GetLastSentSegment(ctx)
 		require.Len(t, lastSegment.BtcHeaders, int(wValue)+1)
 		for i := range lastSegment.BtcHeaders {
 			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, btcTip.Height-wValue+uint32(i)), lastSegment.BtcHeaders[i])
 		}
 
-		// finalise another epoch, during which a small number of new BTC headers are inserted
-		epochNum += 1
+		// insert additional headers and test header selection
 		chainLength = uint32(datagen.RandomInt(r, 10)) + 1
-		genRandomChain(
-			t,
-			r,
-			&btclcKeeper,
-			ctx,
-			btcTip.Height,
-			chainLength,
-		)
-		err = hooks.AfterRawCheckpointFinalized(ctx, epochNum)
-		require.NoError(t, err)
-		// assert the last segment is since the header after the last tip
+		genRandomChain(t, r, &btclcKeeper, ctx, btcTip.Height, chainLength)
+		headers = zcKeeper.GetHeadersToBroadcast(ctx)
+		require.Len(t, headers, int(chainLength))
+		zcKeeper.SetLastSentSegment(ctx, &types.BTCChainSegment{
+			BtcHeaders: headers,
+		})
+
+		// verify last segment is since the header after the last tip
 		lastSegment = zcKeeper.GetLastSentSegment(ctx)
 		require.Len(t, lastSegment.BtcHeaders, int(chainLength))
 		for i := range lastSegment.BtcHeaders {
 			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, uint32(i)+btcTip.Height+1), lastSegment.BtcHeaders[i])
 		}
 
-		// remember the current tip and the segment length
+		// store current state for reorg test
 		btcTip = btclcKeeper.GetTipInfo(ctx)
 		lastSegmentLength := uint32(len(lastSegment.BtcHeaders))
 
-		// finalise another epoch, during which a number of new BTC headers with reorg are inserted
-		epochNum += 1
-		// reorg at a super random point
+		// create and insert a fork chain
 		// NOTE: it's possible that the last segment is totally reverted. We want to be resilient against
 		// this, by sending the BTC headers since the last reorg point
 		reorgPoint := uint32(datagen.RandomInt(r, int(btcTip.Height)))
 		revertedChainLength := btcTip.Height - reorgPoint
-		// the fork chain needs to be longer than the canonical one
+		// ensure fork is longer to trigger reorg
 		forkChainLength := revertedChainLength + uint32(datagen.RandomInt(r, 10)) + 1
-		genRandomChain(
-			t,
-			r,
-			&btclcKeeper,
-			ctx,
-			reorgPoint,
-			forkChainLength,
-		)
-		err = hooks.AfterRawCheckpointFinalized(ctx, epochNum)
-		require.NoError(t, err)
-		// current tip
+		genRandomChain(t, r, &btclcKeeper, ctx, reorgPoint, forkChainLength)
+		headers = zcKeeper.GetHeadersToBroadcast(ctx)
+		zcKeeper.SetLastSentSegment(ctx, &types.BTCChainSegment{
+			BtcHeaders: headers,
+		})
+
+		// verify last segment is since the last reorg point
 		btcTip = btclcKeeper.GetTipInfo(ctx)
-		// assert the last segment is the last w+1 BTC headers
 		lastSegment = zcKeeper.GetLastSentSegment(ctx)
 		if revertedChainLength >= lastSegmentLength {
 			// the entire last segment is reverted, the last w+1 BTC headers should be sent

@@ -29,9 +29,9 @@ func (k Keeper) GetLastSentSegment(ctx context.Context) *types.BTCChainSegment {
 	return &segment
 }
 
-// setLastSentSegment sets the last segment which was broadcasted to the other light clients
+// SetLastSentSegment sets the last segment which was broadcasted to the other light clients
 // called upon each AfterRawCheckpointFinalized hook invocation
-func (k Keeper) setLastSentSegment(ctx context.Context, segment *types.BTCChainSegment) {
+func (k Keeper) SetLastSentSegment(ctx context.Context, segment *types.BTCChainSegment) {
 	store := k.storeService.OpenKVStore(ctx)
 	segmentBytes := k.cdc.MustMarshal(segment)
 	if err := store.Set(types.LastSentBTCSegmentKey, segmentBytes); err != nil {

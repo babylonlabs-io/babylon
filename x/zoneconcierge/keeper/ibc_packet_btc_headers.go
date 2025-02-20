@@ -28,7 +28,7 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) {
 	// - If headers previously sent:
 	//   - If last segment valid: Return from last sent header to tip
 	//   - If last segment invalid (reorg): Return from BSN base to tip
-	headers := k.getHeadersToBroadcast(ctx)
+	headers := k.GetHeadersToBroadcast(ctx)
 	if len(headers) == 0 {
 		k.Logger(sdkCtx).Info("no new BTC headers to broadcast")
 		return
@@ -47,7 +47,7 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) {
 	}
 
 	if broadcastsSuccessful {
-		k.setLastSentSegment(ctx, &types.BTCChainSegment{
+		k.SetLastSentSegment(ctx, &types.BTCChainSegment{
 			BtcHeaders: headers,
 		})
 	}

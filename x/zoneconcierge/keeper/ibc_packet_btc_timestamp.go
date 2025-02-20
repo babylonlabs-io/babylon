@@ -158,11 +158,11 @@ func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHe
 	return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
 }
 
-// getHeadersToBroadcast retrieves headers to be broadcasted to all open IBC channels to ZoneConcierge
+// GetHeadersToBroadcast retrieves headers to be broadcasted to all open IBC channels to ZoneConcierge
 // The header to be broadcasted are:
 // - either the whole known chain if we did not broadcast any headers yet
 // - headers from the child of the most recent header we sent which is still in the main chain up to the current tip
-func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHeaderInfo {
+func (k Keeper) GetHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHeaderInfo {
 	lastSegment := k.GetLastSentSegment(ctx)
 
 	if lastSegment == nil {
@@ -255,7 +255,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 	}
 
 	if broadcastsSuccessful && len(headersToBroadcast) > 0 {
-		k.setLastSentSegment(ctx, &types.BTCChainSegment{
+		k.SetLastSentSegment(ctx, &types.BTCChainSegment{
 			BtcHeaders: headersToBroadcast,
 		})
 	}
