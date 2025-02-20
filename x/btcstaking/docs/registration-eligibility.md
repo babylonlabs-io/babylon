@@ -44,31 +44,54 @@ in [Section 2.3: Staking Protocol & Finality Activation](#23-staking-protocol-an
 
 Bitcoin stake registration involves the submission of
 Bitcoin stakes into the Babylon chain in order for the stake
-to receive voting power and earn rewards. More details
-on the different ways to register stake
-can be found [here](../../../docs/register-bitcoin-stake.md).
+to receive voting power and earn rewards.
+
+There are 2 ways to create stake, through pre-staking registration and
+post-staking registration.
+
+* **Pre-staking registration**: The process where a staker registers their
+    stake with Babylon **before** staking on Bitcoin, without providing a proof
+    of inclusion.
+* **Post-staking registration**: The process where a staker **first** stakes on
+    Bitcoin and then registers their stake with Babylon.
+
+To see more on this please refer to [Registering Bitcoin Stake](../../../docs/register-bitcoin-stake.md)
 
 ### 2.2. Stakes Allow-List
 
-The allow-list comprises a collection of transaction hashes that correspond to
-specific stakes. This list is used to determine which stakes are eligible for
-registration. During the active period of the allow-list, only post-staking
+The allow-list consists of a collection of transaction hashes that correspond
+to specific stakes. This list is used to determine which stakes are eligible
+for registration. During the active period of the allow-list, **only post-staking**
 registrations are allowed, particularly during block production and finality
 activation. Pre-staking registrations are not permitted until the allow-list
 has expired.
 
 The allow-list will expire at a predefined block height. Once it has expired,
-all stake types, both pre-staking and
-post-staking registrations become valid for staking.
+all stake types, both pre-staking and post-staking registrations become
+valid for staking.
 
 ### 2.3. Finality Voting Activation
-..
-* what does activation mean? Before activation who secures the chain?
-* Why do we do this? I want to earn rewards now!
-Given the limited **block production throughput**,
-onboarding will occur over multiple blocks to prevent congestion.
-Decentralization will be achieved gradually as more participants
-join the network.
+
+Finality voting activation refers to the point in which Finality Providers
+are enabled to begin casting votes to finalize blocks on Babylon.
+This is determined by a specific block height and once activated, finality
+providers can start participating in the finality voting process, and BTC
+stakes can be registered and begin earning rewards.
+
+Prior to activation, the security of the Babylon blockchain is maintained by the
+CometBFT validators. These validators are responsible for producing blocks and
+ensuring the integrity of the blockchain until the BTC Staking protocol is
+fully activated.
+
+Due to the limited throughput of the Babylon blockchain and the potential for
+transaction censorship by CometBFT validators, onboarding will occur over
+multiple blocks to prevent congestion. By setting a specific block height for
+activation, the network can ensure that all necessary conditions are met,
+facilitating gradual decentralization as more participants join the network.
+This special condition is specified as a block height on `x/btcstaking`.
+
+Once finality voting is activated, BTC stakers can start earning rewards
+based on their voting power.
 
 ## 3. Timeline of Events
 
@@ -100,12 +123,12 @@ into the chain:
   More details on how to register your Bitcoin stakes
   [here](../../../docs/register-bitcoin-stake.md).
 
-> **⚡ Important Note** Bitcoin stakes cannot register to the Babylon chain
+> **⚡ Important** Bitcoin stakes cannot register to the Babylon chain
 > unless the finality provider they have been delegated to has registered.
-> For phase-1 stakes, this means that the phase-1 finality provider
+> For phase-1 stakes, this means that the phase-1 finality providers
 > should register first, before stake registration is attempted.
 
-> **⚡ Important Note** While finality providers and Bitcoin Stakers can
+> **⚡ Important** While finality providers and Bitcoin Stakers can
 > register at this point, the Bitcoin stake does not yet have voting power
 > and is not eligible for receiving rewards. Voting power and rewards
 > will start being granted once the finality protocol activates
@@ -113,74 +136,46 @@ into the chain:
 
 ### 3.2. Finality Voting Activation
 
-* finality voting is activated. What can people do now?
-* finality providers: will start voting for the finalization of blocks.
-* rewards: btc staking rewards are going to be distirbuted to btc stakers based
-* on their voting power.
-* people can start withdrawing rewards.
-
-There are 2 ways to create stake, through pre-staking registration and
-post-staking registration.
-
-* **Pre-staking registration**: The process where a staker registers their
-    stake with Babylon **before** staking on Bitcoin, without providing a proof
-    of inclusion.
-* **Post-staking registration**: The process where a staker **first** stakes on
-    Bitcoin and then registers their stake with Babylon.
-
-To see more on this please refer to [Registering Bitcoin Stake](../../../docs/register-bitcoin-stake.md)
-
-Babylon's BTC Staking protocol introduces an additional consensus round, known
-as the **finality round**, which occurs after blocks are produced by CometBFT.
-This round is conducted by **finality providers**, whose voting power is
-derived from staked BTC delegated to them.
-The [Finality module](https://github.com/babylonlabs-io/babylon/blob/main/x/finality)
-leverages the voting power table
-maintained in the BTC Staking module to determine block finalisation status,
-detect equivocations among finality providers, and impose slashing penalties on
-BTC delegations under culpable providers.
-
-During the chain launch, finality providers and BTC stakes must transition
-through an active Babylon blockchain in a structured sequence. Finality
-providers must transition first, as the Babylon blockchain only accepts stake
-registrations that delegate to known finality providers. Due to the network’s
-limited block throughput, onboarding both finality providers and BTC stakes will
-require multiple blocks to complete. Additionally, since CometBFT validators
-have the ability to censor specific onboarding transactions, it is essential to
-allow sufficient validators to produce blocks.
-
-Additionally, the activation timing will be specified as a special condition on
-`x/btcstaking` based on a pre-defined block height.
+When finality voting is activated, finality providers can begin
+participating in the voting process to finalize blocks, this is essential for
+ensuring the security of the chain. This allows them to contribute to the
+network's consensus and security. Additionally, BTC staking rewards will be
+distributed to stakers based on their voting power. Participants can also
+start withdrawing their earned rewards, for those who have staked their BTC.
 
 ### 3.3. Allow-list Expiration
 
-What can the actors of the system now do (i.e. what capabilities
-are unlocked for them, once we reach this point)
-* allow-list has now expired
-* business as usual for fps
-* stake registration is now open for every stake either existing
-  (e.g. from phase-1) or new one
+Once the allow-list has expired, several capabilities are unlocked for the
+actors in the system.
+* **Finality providers (FPs)**: can continue their operations as usual,
+  maintaining their role in the network without any changes. This includes
+  participating in the finality voting process to finalize blocks,
+  ensuring the security and immutability of the blockchain.
+  Finality providers continue to cast votes, contribute to achieving consensus,
+  and secure the network, all while earning rewards based on their voting power.
+* **BTC Stakers**: stake registration is now open to all, allowing
+  both existing stakes (e.g. from phase-1) and new stakes to be registered.
 
 ## 4. Retrieving details about the timeline
-<!-- the below needs to be upated as cannot seem to find the query, i think it needs to be added:
-https://github.com/babylonlabs-io/babylon/issues/321-->
 
-To retrieve information about protocol activation, we can query the BTC Staking
-module, where a predefined block height is set for activation.
+To retrieve information about the activation block height and
+the allow-list, query the BTC Staking module or find the information
+within the code.
 
-The allow-list is hardcoded and accessible to all users; however, it is currently
-only manageable by querying the genesis file. This is defined by the parameter:
-
-```
-`flagAllowedReporterAddresses = "allowed-reporter-addresses"`
-```
-
-To query the BTC Staking parameters, use:
+To find the activation block height, query the BTC Staking parameters, use the
+following command:
 
 `babylond query btcstaking params`
 
-Within the output, look for the `BTCStakingActivatedHeight` field to find the
+In the output, look for the `BTCStakingActivatedHeight` field to find the
 activation block height.
+
+To view the defined parameters, go to `app/upgrades/v1/mainnet/btcstaking_params.go`
+and similarly look for the `BTCStakingActivatedHeight` field.
+
+Additionally, to view the allow-list of staking transaction hashes,
+ look at the list of transaction hashes in the code at
+`app/upgrades/v1/mainnet/allowed_staking_tx_hashes.go`.
 
 ### 5. FAQs
 
