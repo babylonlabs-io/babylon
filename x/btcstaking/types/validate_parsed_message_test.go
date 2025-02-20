@@ -50,7 +50,6 @@ func testStakingParams(
 		SlashingRate:            sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
 		UnbondingTimeBlocks:     200,
 		UnbondingFeeSat:         1000,
-		MaxCommissionChangeRate: sdkmath.LegacyMustNewDecFromStr("0.1"),
 	}
 }
 

@@ -35,8 +35,7 @@ const BtcStakingParamsStr = `[
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1000,
     "allow_list_expiration_height": 26120,
-    "btc_activation_height": 197535,
-    "max_commission_change_rate": "0.1"
+    "btc_activation_height": 197535
   },
   {
     "covenant_pks": [
@@ -63,8 +62,7 @@ const BtcStakingParamsStr = `[
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1000,
     "allow_list_expiration_height": 26120,
-    "btc_activation_height": 198665,
-    "max_commission_change_rate": "0.1"
+    "btc_activation_height": 198665
   },
   {
     "covenant_pks": [
@@ -91,8 +89,7 @@ const BtcStakingParamsStr = `[
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1000,
     "allow_list_expiration_height": 26120,
-    "btc_activation_height": 200665,
-    "max_commission_change_rate": "0.1"
+    "btc_activation_height": 200665
   },
   {
     "covenant_pks": [
@@ -119,8 +116,7 @@ const BtcStakingParamsStr = `[
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1000,
     "allow_list_expiration_height": 26120,
-    "btc_activation_height": 215968,
-    "max_commission_change_rate": "0.1"
+    "btc_activation_height": 215968
   },
   {
     "covenant_pks": [
@@ -147,8 +143,7 @@ const BtcStakingParamsStr = `[
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1000,
     "allow_list_expiration_height": 26120,
-    "btc_activation_height": 220637,
-    "max_commission_change_rate": "0.1"
+    "btc_activation_height": 220637
   },
   {
     "covenant_pks": [
@@ -175,7 +170,6 @@ const BtcStakingParamsStr = `[
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1095000,
     "allow_list_expiration_height": 26124,
-    "btc_activation_height": 227174,
-    "max_commission_change_rate": "0.1"
+    "btc_activation_height": 227174
   }
 ]`

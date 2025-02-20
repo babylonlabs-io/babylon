@@ -25,8 +25,6 @@ const (
 	defaultDelegationCreationBaseGasFee = 1000
 )
 
-var DefaultMaxCommissionChangeRate = sdkmath.LegacyNewDecWithPrec(1, 1) // Default daily %s is 10%
-
 var _ paramtypes.ParamSet = (*Params)(nil)
 
 // DefaultCovenantCommittee deterministically generates a covenant committee
@@ -85,7 +83,6 @@ func DefaultParams() Params {
 		// Allow list can only be enabled by upgrade
 		AllowListExpirationHeight: 0,
 		BtcActivationHeight:       0,
-		MaxCommissionChangeRate:   DefaultMaxCommissionChangeRate,
 	}
 }
 
@@ -103,10 +100,6 @@ func validateMinSlashingTxFeeSat(fee int64) error {
 
 func validateMinCommissionRate(rate sdkmath.LegacyDec) error {
 	return validateCommissionParam(rate, "minimum commission rate")
-}
-
-func validateMaxCommissionChangeRate(rateChange sdkmath.LegacyDec) error {
-	return validateCommissionParam(rateChange, "maximum commission change rate")
 }
 
 func validateCommissionParam(value sdkmath.LegacyDec, paramName string) error {
@@ -229,10 +222,6 @@ func (p Params) Validate() error {
 	}
 
 	if err := validateMinCommissionRate(p.MinCommissionRate); err != nil {
-		return err
-	}
-
-	if err := validateMaxCommissionChangeRate(p.MaxCommissionChangeRate); err != nil {
 		return err
 	}
 
