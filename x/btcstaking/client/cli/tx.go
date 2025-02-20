@@ -517,7 +517,7 @@ func NewSelectiveSlashingEvidenceCmd() *cobra.Command {
 }
 
 // getCommissionRates retrieves the commission rates information
-// from the corresponding flags. If the flag value is emtpy, uses default values
+// from the corresponding flags. If the flag value is empty, uses default values
 func getCommissionRates(fs *pflag.FlagSet) (stakingtypes.CommissionRates, error) {
 	rateStr, _ := fs.GetString(stakingcli.FlagCommissionRate)
 	if rateStr == "" {
