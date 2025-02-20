@@ -99,20 +99,16 @@ func validateMinSlashingTxFeeSat(fee int64) error {
 }
 
 func validateMinCommissionRate(rate sdkmath.LegacyDec) error {
-	return validateCommissionParam(rate, "minimum commission rate")
-}
-
-func validateCommissionParam(value sdkmath.LegacyDec, paramName string) error {
-	if value.IsNil() {
-		return fmt.Errorf("%s cannot be nil", paramName)
+	if rate.IsNil() {
+		return fmt.Errorf("minimum commission rate cannot be nil")
 	}
 
-	if value.IsNegative() {
-		return fmt.Errorf("%s cannot be negative", paramName)
+	if rate.IsNegative() {
+		return fmt.Errorf("minimum commission rate cannot be negative")
 	}
 
-	if value.GT(sdkmath.LegacyOneDec()) {
-		return fmt.Errorf("%s cannot be greater than 100%%", paramName)
+	if rate.GT(sdkmath.LegacyOneDec()) {
+		return fmt.Errorf("minimum commission rate cannot be greater than 100%%")
 	}
 	return nil
 }
