@@ -47,12 +47,31 @@ message FinalityProvider {
   // on. If it's missing / empty, it's assumed the finality provider is
   // operating in the Babylon chain.
   string consumer_id = 10;
-  // commission_update_time is the last time the commission rate was changed.
-  google.protobuf.Timestamp commission_update_time = 11 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true,
-    (gogoproto.stdtime) = true
+  // commission_info contains information details of the finality provider commission.
+  CommissionInfo commission_info = 11;
+}
+
+// CommissionInfo defines the information related to the commission of
+// a finality provider.
+message CommissionInfo {
+  option (gogoproto.equal) = true;
+  // max_rate defines the maximum commission rate which validator can ever charge, as a fraction.
+  string max_rate = 1 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
   ];
+  // max_change_rate defines the maximum daily increase of the validator commission, as a fraction.
+  string max_change_rate = 2 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+  // update_time is the last time the commission rate was changed.
+  google.protobuf.Timestamp update_time = 3
+  [(gogoproto.nullable) = false, (amino.dont_omitempty) = true, (gogoproto.stdtime) = true];
 }
 
 // FinalityProviderWithMeta wraps the FinalityProvider with metadata.

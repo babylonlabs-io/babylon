@@ -68,13 +68,6 @@ message Params {
   // btc_activation_height is the btc height from which parameters are activated
   // (inclusive)
   uint32 btc_activation_height = 15;
-  // max_commission_change_rate defines the maximum daily increase of the
-  // finality provider commission, as a fraction.
-  string max_commission_change_rate = 16 [
-    (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = false
-  ];
 }
 
 // HeightVersionPair pairs a btc height with a version of the parameters
