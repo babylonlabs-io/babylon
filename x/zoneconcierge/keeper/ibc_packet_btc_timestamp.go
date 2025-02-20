@@ -226,11 +226,13 @@ func (k Keeper) BroadcastBTCTimestamps(
 	}
 
 	// for each channel, construct and send BTC timestamp
+	broadcastsSuccessful := true
 	for _, channel := range openZCChannels {
 		// get the ID of the chain under this channel
 		consumerID, err := k.getClientID(ctx, channel)
 		if err != nil {
 			k.Logger(sdkCtx).Error("failed to get client ID, skip sending BTC timestamp for this consumer", "channelID", channel.ChannelId, "error", err)
+			broadcastsSuccessful = false
 			continue
 		}
 
@@ -238,6 +240,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 		btcTimestamp, err := k.createBTCTimestamp(ctx, consumerID, channel, finalizedInfo)
 		if err != nil {
 			k.Logger(sdkCtx).Error("failed to generate BTC timestamp, skip sending BTC timestamp for this chain", "consumerID", consumerID, "error", err)
+			broadcastsSuccessful = false
 			continue
 		}
 
@@ -246,7 +249,14 @@ func (k Keeper) BroadcastBTCTimestamps(
 		// send IBC packet
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
 			k.Logger(sdkCtx).Error("failed to send BTC timestamp IBC packet, skip sending BTC timestamp for this chain", "consumerID", consumerID, "channelID", channel.ChannelId, "error", err)
+			broadcastsSuccessful = false
 			continue
 		}
+	}
+
+	if broadcastsSuccessful && len(headersToBroadcast) > 0 {
+		k.setLastSentSegment(ctx, &types.BTCChainSegment{
+			BtcHeaders: headersToBroadcast,
+		})
 	}
 }

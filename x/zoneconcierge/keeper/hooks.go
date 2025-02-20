@@ -7,7 +7,6 @@ import (
 
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
-	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 type Hooks struct {
@@ -42,13 +41,6 @@ func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) er
 
 	// send BTC timestamp to all open channels with ZoneConcierge
 	h.k.BroadcastBTCTimestamps(ctx, epoch, headersToBroadcast)
-
-	// only update the segment if we have broadcasted some headers
-	if len(headersToBroadcast) > 0 {
-		h.k.setLastSentSegment(ctx, &types.BTCChainSegment{
-			BtcHeaders: headersToBroadcast,
-		})
-	}
 	return nil
 }
 

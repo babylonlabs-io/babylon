@@ -35,16 +35,20 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) {
 	}
 
 	packet := types.NewBTCHeadersPacketData(&types.BTCHeaders{Headers: headers})
+	broadcastsSuccessful := true
 	for _, channel := range openZCChannels {
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
 			k.Logger(sdkCtx).Error("failed to send BTC headers IBC packet",
 				"channelID", channel.ChannelId,
 				"error", err)
+			broadcastsSuccessful = false
 			continue
 		}
 	}
 
-	k.setLastSentSegment(ctx, &types.BTCChainSegment{
-		BtcHeaders: headers,
-	})
+	if broadcastsSuccessful {
+		k.setLastSentSegment(ctx, &types.BTCChainSegment{
+			BtcHeaders: headers,
+		})
+	}
 }
