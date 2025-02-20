@@ -25,6 +25,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 	require.NoError(t, err)
 
 	invalidAddr := "bbnbadaddr"
+	commission := stktypes.NewCommissionRates(*fp.Commission, fp.CommissionInfo.MaxRate, fp.CommissionInfo.MaxChangeRate)
 
 	tcs := []struct {
 		title  string
@@ -36,29 +37,29 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       fp.BtcPk,
 				Pop:         fp.Pop,
 			},
 			nil,
 		},
 		{
-			"invalid: empty commission",
+			"invalid: empty commission rates",
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  nil,
+				Commission:  stktypes.CommissionRates{},
 				BtcPk:       fp.BtcPk,
 				Pop:         fp.Pop,
 			},
-			fmt.Errorf("empty commission"),
+			fmt.Errorf("empty commission rate"),
 		},
 		{
 			"invalid: empty description",
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: nil,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       fp.BtcPk,
 				Pop:         fp.Pop,
 			},
@@ -75,7 +76,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 					SecurityContact: fp.Description.SecurityContact,
 					Details:         fp.Description.Details,
 				},
-				Commission: fp.Commission,
+				Commission: commission,
 				BtcPk:      fp.BtcPk,
 				Pop:        fp.Pop,
 			},
@@ -92,7 +93,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 					SecurityContact: fp.Description.SecurityContact,
 					Details:         fp.Description.Details,
 				},
-				Commission: fp.Commission,
+				Commission: commission,
 				BtcPk:      fp.BtcPk,
 				Pop:        fp.Pop,
 			},
@@ -103,7 +104,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       nil,
 				Pop:         fp.Pop,
 			},
@@ -114,7 +115,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       (*bbntypes.BIP340PubKey)(&bigBtcPK),
 				Pop:         fp.Pop,
 			},
@@ -125,7 +126,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       fp.BtcPk,
 				Pop:         nil,
 			},
@@ -136,7 +137,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       fp.BtcPk,
 				Pop:         nil,
 			},
@@ -147,7 +148,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        invalidAddr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       fp.BtcPk,
 				Pop:         fp.Pop,
 			},
@@ -158,7 +159,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       fp.BtcPk,
 				Pop: &types.ProofOfPossessionBTC{
 					BtcSig: nil,

@@ -3,10 +3,8 @@ package keeper
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"cosmossdk.io/math"
-	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,11 +21,16 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 	params := k.GetParams(ctx)
 	// ensure commission rate is
 	// - at least the minimum commission rate in parameters, and
-	// - at most 1
-	if msg.Commission.LT(params.MinCommissionRate) {
+	// - at most 1 or less than the MaxRate
+	if msg.Commission.Rate.LT(params.MinCommissionRate) {
 		return types.ErrCommissionLTMinRate.Wrapf("cannot set finality provider commission to less than minimum rate of %s", params.MinCommissionRate.String())
 	}
-	if msg.Commission.GT(sdkmath.LegacyOneDec()) {
+	commissionInfo := types.NewCommissionInfoWithTime(msg.Commission.MaxRate, msg.Commission.MaxChangeRate, ctx.BlockHeader().Time)
+	if err := commissionInfo.Validate(); err != nil {
+		return err
+	}
+
+	if msg.Commission.Rate.GT(msg.Commission.MaxRate) {
 		return types.ErrCommissionGTMaxRate
 	}
 
@@ -45,13 +48,13 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 
 	// all good, add this finality provider
 	fp := types.FinalityProvider{
-		Description:          msg.Description,
-		Commission:           msg.Commission,
-		Addr:                 msg.Addr,
-		BtcPk:                msg.BtcPk,
-		Pop:                  msg.Pop,
-		ConsumerId:           consumerID,
-		CommissionUpdateTime: time.Unix(0, 0).UTC(),
+		Description:    msg.Description,
+		Commission:     &msg.Commission.Rate,
+		Addr:           msg.Addr,
+		BtcPk:          msg.BtcPk,
+		Pop:            msg.Pop,
+		ConsumerId:     consumerID,
+		CommissionInfo: commissionInfo,
 	}
 
 	if consumerID == ctx.ChainID() {
@@ -323,18 +326,25 @@ func (k Keeper) UpdateFinalityProviderCommission(goCtx context.Context, newCommi
 		return nil
 	}
 
+	if fp.CommissionInfo == nil {
+		return fmt.Errorf("cannot update commission. Finality provider with address %s does not have commission info defined", fp.Addr)
+	}
+
+	if newCommission.IsNegative() {
+		return stktypes.ErrCommissionNegative
+	}
+
 	var (
 		ctx       = sdk.UnwrapSDKContext(goCtx)
 		blockTime = ctx.BlockHeader().Time
 	)
 	// check that there were no commission updates in the last 24hs
-	if blockTime.Sub(fp.CommissionUpdateTime).Hours() < 24 {
+	if blockTime.Sub(fp.CommissionInfo.UpdateTime).Hours() < 24 {
 		return stktypes.ErrCommissionUpdateTime
 	}
 
 	// ensure commission rate is at least the minimum commission rate in parameters
-	params := k.GetParams(goCtx)
-	minCommission, maxRateChange := params.MinCommissionRate, params.MaxCommissionChangeRate
+	minCommission := k.MinCommissionRate(goCtx)
 	if newCommission.LT(minCommission) {
 		return types.ErrCommissionLTMinRate.Wrapf(
 			"cannot set finality provider commission to less than minimum rate of %s",
@@ -343,13 +353,13 @@ func (k Keeper) UpdateFinalityProviderCommission(goCtx context.Context, newCommi
 
 	// check that the change rate does not exceed the max change rate allowed
 	// new rate % points change cannot be greater than the max change rate
-	if newCommission.Sub(*fp.Commission).GT(maxRateChange) {
+	if newCommission.Sub(*fp.Commission).GT(fp.CommissionInfo.MaxChangeRate) {
 		return stktypes.ErrCommissionGTMaxChangeRate
 	}
 
 	// update commission and commission update time
 	fp.Commission = newCommission
-	fp.CommissionUpdateTime = blockTime
+	fp.CommissionInfo.UpdateTime = blockTime
 
 	return nil
 }

@@ -72,13 +72,17 @@ func GenCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, fpAddr sdk
 		return nil, err
 	}
 	return &bstypes.FinalityProvider{
-		Description:          description,
-		Commission:           &commission,
-		BtcPk:                bip340PK,
-		Addr:                 fpAddr.String(),
-		Pop:                  pop,
-		ConsumerId:           consumerID,
-		CommissionUpdateTime: time.Unix(0, 0).UTC(),
+		Description: description,
+		Commission:  &commission,
+		BtcPk:       bip340PK,
+		Addr:        fpAddr.String(),
+		Pop:         pop,
+		ConsumerId:  consumerID,
+		CommissionInfo: bstypes.NewCommissionInfoWithTime(
+			sdkmath.LegacyOneDec(),
+			sdkmath.LegacyOneDec(),
+			time.Unix(0, 0).UTC(),
+		),
 	}, nil
 }
 
@@ -94,9 +98,13 @@ func GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(
 	return &bstypes.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
 		Description: fp.Description,
-		Commission:  fp.Commission,
-		BtcPk:       fp.BtcPk,
-		Pop:         fp.Pop,
+		Commission: stakingtypes.NewCommissionRates(
+			*fp.Commission,
+			fp.CommissionInfo.MaxRate,
+			fp.CommissionInfo.MaxChangeRate,
+		),
+		BtcPk: fp.BtcPk,
+		Pop:   fp.Pop,
 	}, nil
 }
 

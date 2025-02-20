@@ -30,29 +30,34 @@ func TestUpdateFinalityProviderCommission(t *testing.T) {
 		newCommission *math.LegacyDec
 		fp            types.FinalityProvider
 		minCommission math.LegacyDec
-		maxRateChange math.LegacyDec
 		expectedErr   error
 	}{
 		{
 			name:          "nil commission (no-op)",
 			newCommission: nil,
 			fp: types.FinalityProvider{
-				Commission:           randomDec(),
-				CommissionUpdateTime: now.Add(-48 * time.Hour).UTC(),
+				Commission: randomDec(),
+				CommissionInfo: types.NewCommissionInfoWithTime(
+					math.LegacyOneDec(),
+					math.LegacyOneDec(),
+					now.Add(-48*time.Hour).UTC(),
+				),
 			},
 			minCommission: math.LegacyZeroDec(),
-			maxRateChange: math.LegacyOneDec(),
 			expectedErr:   nil,
 		},
 		{
 			name:          "commission updated within 24h (fails)",
 			newCommission: randomDec(),
 			fp: types.FinalityProvider{
-				Commission:           randomDec(),
-				CommissionUpdateTime: now.Add(-12 * time.Hour).UTC(),
+				Commission: randomDec(),
+				CommissionInfo: types.NewCommissionInfoWithTime(
+					math.LegacyOneDec(),
+					math.LegacyOneDec(),
+					now.Add(-12*time.Hour).UTC(),
+				),
 			},
 			minCommission: math.LegacyZeroDec(),
-			maxRateChange: math.LegacyOneDec(),
 			expectedErr:   stktypes.ErrCommissionUpdateTime,
 		},
 		{
@@ -66,10 +71,13 @@ func TestUpdateFinalityProviderCommission(t *testing.T) {
 					val := math.LegacyNewDecWithPrec(5, 1)
 					return &val
 				}(), // 0.5
-				CommissionUpdateTime: now.Add(-48 * time.Hour).UTC(),
+				CommissionInfo: types.NewCommissionInfoWithTime(
+					math.LegacyOneDec(),
+					math.LegacyOneDec(),
+					now.Add(-48*time.Hour).UTC(),
+				),
 			},
 			minCommission: math.LegacyNewDecWithPrec(2, 1), // 0.2
-			maxRateChange: math.LegacyOneDec(),
 			expectedErr:   types.ErrCommissionLTMinRate,
 		},
 		{
@@ -83,10 +91,13 @@ func TestUpdateFinalityProviderCommission(t *testing.T) {
 					val := math.LegacyNewDecWithPrec(5, 1)
 					return &val
 				}(), // 0.5
-				CommissionUpdateTime: now.Add(-48 * time.Hour).UTC(),
+				CommissionInfo: types.NewCommissionInfoWithTime(
+					math.LegacyOneDec(),
+					math.LegacyNewDecWithPrec(3, 1), // 0.3 max rate change
+					now.Add(-48*time.Hour).UTC(),
+				),
 			},
 			minCommission: math.LegacyZeroDec(),
-			maxRateChange: math.LegacyNewDecWithPrec(3, 1), // 0.3
 			expectedErr:   stktypes.ErrCommissionGTMaxChangeRate,
 		},
 		{
@@ -100,10 +111,13 @@ func TestUpdateFinalityProviderCommission(t *testing.T) {
 					val := math.LegacyNewDecWithPrec(5, 1)
 					return &val
 				}(), // 0.5
-				CommissionUpdateTime: now.Add(-48 * time.Hour).UTC(),
+				CommissionInfo: types.NewCommissionInfoWithTime(
+					math.LegacyOneDec(),
+					math.LegacyNewDecWithPrec(2, 1), // 0.2 max rate change
+					now.Add(-48*time.Hour).UTC(),
+				),
 			},
 			minCommission: math.LegacyNewDecWithPrec(1, 2), // 0.01
-			maxRateChange: math.LegacyNewDecWithPrec(2, 1), // 0.2
 			expectedErr:   nil,
 		},
 	}
@@ -120,7 +134,6 @@ func TestUpdateFinalityProviderCommission(t *testing.T) {
 
 			params := h.BTCStakingKeeper.GetParams(h.Ctx)
 			params.MinCommissionRate = tc.minCommission
-			params.MaxCommissionChangeRate = tc.maxRateChange
 			params.BtcActivationHeight = 1
 			require.NoError(t, h.BTCStakingKeeper.SetParams(h.Ctx, params))
 
@@ -134,7 +147,7 @@ func TestUpdateFinalityProviderCommission(t *testing.T) {
 				require.NoError(t, err)
 				if tc.newCommission != nil {
 					require.Equal(t, tc.newCommission, tc.fp.Commission)
-					require.Equal(t, now.UTC(), tc.fp.CommissionUpdateTime)
+					require.Equal(t, now.UTC(), tc.fp.CommissionInfo.UpdateTime)
 				}
 			}
 		})

@@ -25,8 +25,20 @@ var (
 )
 
 func (m *MsgCreateFinalityProvider) ValidateBasic() error {
-	if m.Commission == nil {
-		return fmt.Errorf("empty commission")
+	if m.Commission.Rate.IsNil() {
+		return fmt.Errorf("empty commission rate")
+	}
+
+	if m.Commission.MaxRate.IsNil() {
+		return fmt.Errorf("empty commission max rate")
+	}
+
+	if m.Commission.MaxChangeRate.IsNil() {
+		return fmt.Errorf("empty commission max change rate")
+	}
+
+	if err := m.Commission.Validate(); err != nil {
+		return err
 	}
 	if m.Description == nil {
 		return fmt.Errorf("empty description")

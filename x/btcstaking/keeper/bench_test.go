@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
@@ -37,9 +39,13 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 		msg := &types.MsgCreateFinalityProvider{
 			Addr:        fp.Addr,
 			Description: fp.Description,
-			Commission:  fp.Commission,
-			BtcPk:       fp.BtcPk,
-			Pop:         fp.Pop,
+			Commission: stktypes.NewCommissionRates(
+				*fp.Commission,
+				fp.CommissionInfo.MaxRate,
+				fp.CommissionInfo.MaxChangeRate,
+			),
+			BtcPk: fp.BtcPk,
+			Pop:   fp.Pop,
 		}
 		_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 		h.NoError(err)

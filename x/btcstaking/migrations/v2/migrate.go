@@ -36,7 +36,6 @@ func MigrateStore(ctx context.Context, store storetypes.KVStore, k Keeper, cdc c
 // migrateParams adds the default value to the new param max commission change rate
 func migrateParams(ctx context.Context, k Keeper) error {
 	storedParams := k.GetParamsWithVersion(ctx)
-	storedParams.Params.MaxCommissionChangeRate = types.DefaultMaxCommissionChangeRate
 	if err := storedParams.Params.Validate(); err != nil {
 		return err
 	}
@@ -55,7 +54,7 @@ func migrateFinalityProviders(store storetypes.KVStore, cdc codec.BinaryCodec) {
 		cdc.MustUnmarshal(iter.Value(), &fp)
 
 		// Add the commission update time to the finality providers
-		fp.CommissionUpdateTime = time.Unix(0, 0).UTC()
+		fp.CommissionInfo.UpdateTime = time.Unix(0, 0).UTC()
 
 		updatedFpBz := cdc.MustMarshal(&fp)
 		fpStore.Set(iter.Key(), updatedFpBz)
