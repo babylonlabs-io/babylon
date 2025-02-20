@@ -126,7 +126,7 @@ func (k Keeper) createBTCTimestamp(
 	// NOTE: it's possible that there is no header checkpointed in this epoch
 	btcTimestamp := &types.BTCTimestamp{
 		Header:           nil,
-		BtcHeaders:       btcHeaders,
+		BtcHeaders:       &types.BTCHeaders{Headers: btcHeaders},
 		EpochInfo:        finalizedInfo.EpochInfo,
 		RawCheckpoint:    finalizedInfo.RawCheckpoint,
 		BtcSubmissionKey: finalizedInfo.BTCSubmissionKey,
