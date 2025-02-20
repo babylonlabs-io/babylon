@@ -412,7 +412,7 @@ func (n *NodeConfig) CreateBTCDelegationAndCheck(
 
 	// NOTE: we use the node's address for the BTC delegation
 	del1Addr := sdk.MustAccAddressFromBech32(delAddr)
-	popDel1, err := bstypes.NewPoPBTC(del1Addr, btcStakerSK)
+	popDel1, err := datagen.NewPoPBTC(del1Addr, btcStakerSK)
 	require.NoError(t, err)
 
 	testStakingInfo, stakingTx, inclusionProof, testUnbondingInfo, delegatorSig := n.BTCStakingUnbondSlashInfo(r, t, btcNet, params, fp, btcStakerSK, stakingTimeBlocks, stakingSatAmt)

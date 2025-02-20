@@ -23,36 +23,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/babylonlabs-io/babylon/app/ante"
-	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/babylonlabs-io/babylon/app/upgrades"
-	"github.com/babylonlabs-io/babylon/client/docs"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/x/btccheckpoint"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/x/btclightclient"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/x/btcstkconsumer"
-	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
-	"github.com/babylonlabs-io/babylon/x/checkpointing"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	"github.com/babylonlabs-io/babylon/x/epoching"
-	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
-	"github.com/babylonlabs-io/babylon/x/finality"
-	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
-	"github.com/babylonlabs-io/babylon/x/incentive"
-	incentivekeeper "github.com/babylonlabs-io/babylon/x/incentive/keeper"
-	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
-	"github.com/babylonlabs-io/babylon/x/mint"
-	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
-	"github.com/babylonlabs-io/babylon/x/monitor"
-	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
-	"github.com/babylonlabs-io/babylon/x/zoneconcierge"
-	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -119,6 +89,37 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
+
+	"github.com/babylonlabs-io/babylon/app/ante"
+	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/app/upgrades"
+	"github.com/babylonlabs-io/babylon/client/docs"
+	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/btccheckpoint"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/x/btclightclient"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/x/btcstkconsumer"
+	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/x/checkpointing"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/x/epoching"
+	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/x/finality"
+	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/x/incentive"
+	incentivekeeper "github.com/babylonlabs-io/babylon/x/incentive/keeper"
+	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/x/mint"
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
+	"github.com/babylonlabs-io/babylon/x/monitor"
+	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/x/zoneconcierge"
+	zckeeper "github.com/babylonlabs-io/babylon/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
 )
 
 const (
@@ -210,7 +211,7 @@ func NewBabylonApp(
 	loadLatest bool,
 	skipUpgradeHeights map[int64]bool,
 	invCheckPeriod uint,
-	privSigner *signer.PrivSigner,
+	blsSigner *checkpointingtypes.BlsSigner,
 	appOpts servertypes.AppOptions,
 	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
@@ -261,7 +262,7 @@ func NewBabylonApp(
 		homePath,
 		invCheckPeriod,
 		skipUpgradeHeights,
-		privSigner,
+		*blsSigner,
 		appOpts,
 		wasmConfig,
 		wasmOpts,
@@ -530,6 +531,7 @@ func NewBabylonApp(
 	// set postHandler
 	postHandler := sdk.ChainPostDecorators(
 		incentivekeeper.NewRefundTxDecorator(&app.IncentiveKeeper),
+		zckeeper.NewIBCHeaderDecorator(&app.ZoneConciergeKeeper),
 	)
 	app.SetPostHandler(postHandler)
 
@@ -671,10 +673,6 @@ func (app *BabylonApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) 
 	err := app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
 	if err != nil {
 		panic(err)
-	}
-
-	if _, ok := app.ModuleManager.Modules[epochingtypes.ModuleName].(module.HasGenesis); !ok {
-		panic("FAULTY")
 	}
 
 	res, err := app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
@@ -821,6 +819,7 @@ func (app *BabylonApp) setupUpgradeStoreLoaders() {
 		if upgradeInfo.Name == upgrade.UpgradeName {
 			storeUpgrades := upgrade.StoreUpgrades
 			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
+			return
 		}
 	}
 }

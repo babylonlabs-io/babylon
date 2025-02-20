@@ -45,6 +45,13 @@ func Verify(pk *btcec.PublicKey, msg string, sigBytes []byte) error {
 	if err != nil {
 		return err
 	}
+	var s btcec.ModNScalar
+	if overflow := s.SetByteSlice(sigBytes[33:65]); overflow {
+		return fmt.Errorf("invalid signature: S >= group order")
+	}
+	if s.IsOverHalfOrder() {
+		return fmt.Errorf("invalid signature: S >= group order/2")
+	}
 	pkBytes := schnorr.SerializePubKey(pk)
 	recoveredPKBytes := schnorr.SerializePubKey(recoveredPK)
 	if !bytes.Equal(pkBytes, recoveredPKBytes) {

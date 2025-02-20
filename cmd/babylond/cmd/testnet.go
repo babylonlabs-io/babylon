@@ -38,7 +38,7 @@ import (
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
 
 	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/privval"
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
@@ -180,7 +180,7 @@ func InitTestnet(
 	genesisParams GenesisParams,
 ) error {
 	nodeIDs := make([]string, numValidators)
-	valKeys := make([]*privval.ValidatorKeys, numValidators)
+	valKeys := make([]*appsigner.ValidatorKeys, numValidators)
 
 	babylonConfig := DefaultBabylonAppConfig()
 	babylonConfig.MinGasPrices = minGasPrices
@@ -406,8 +406,7 @@ func InitTestnet(
 		}
 	}
 
-	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles,
-		genKeys, numValidators, genesisParams); err != nil {
+	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles, numValidators, genesisParams); err != nil {
 		return err
 	}
 
@@ -426,7 +425,7 @@ func InitTestnet(
 func initGenFiles(
 	clientCtx client.Context, mbm module.BasicManager, chainID string,
 	genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance,
-	genFiles []string, genKeys []*checkpointingtypes.GenesisKey, numValidators int, genesisParams GenesisParams,
+	genFiles []string, numValidators int, genesisParams GenesisParams,
 ) error {
 	appGenState := mbm.DefaultGenesis(clientCtx.Codec)
 
@@ -439,9 +438,6 @@ func initGenFiles(
 
 	// set the balances in the genesis state
 	genesisParams.BankGenBalances = banktypes.SanitizeGenesisBalances(genBalances)
-
-	// set the bls keys for the checkpointing module
-	genesisParams.CheckpointingGenKeys = genKeys
 
 	genesis := &genutiltypes.AppGenesis{}
 

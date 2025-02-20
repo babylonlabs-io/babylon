@@ -69,6 +69,9 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 		ek := mocks.NewMockEpochingKeeper(ctrl)
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil)
 
+		hooks := mocks.NewMockCheckpointingHooks(ctrl)
+		ckptKeeper.SetHooks(hooks)
+
 		/* new accumulating checkpoint*/
 		mockCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta(r)
 		mockCkptWithMeta.Status = types.Accumulating
@@ -126,6 +129,8 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 
 		/* Submitted -> Confirmed */
 		ctx = updateRandomCtx(r, ctx)
+
+		hooks.EXPECT().AfterRawCheckpointConfirmed(gomock.Any(), gomock.Any()).Return(nil)
 		ckptKeeper.SetCheckpointConfirmed(ctx, epoch)
 		// ensure status is updated
 		status, err = ckptKeeper.GetStatus(ctx, epoch)
@@ -137,18 +142,71 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 		require.Len(t, mockCkptWithMeta.Lifecycle, 4)
 		require.Equal(t, curStateUpdate(ctx, types.Confirmed), mockCkptWithMeta.Lifecycle[3])
 
-		/* Confirmed -> Finalized */
+		// Ensure it is possible to forget a checkpoint even if it was already confirmed
+		/* Confirmed -> Forgotten */
+		hooks.EXPECT().AfterRawCheckpointForgotten(gomock.Any(), gomock.Any()).Return(nil)
+		ctx = updateRandomCtx(r, ctx)
+		ckptKeeper.SetCheckpointForgotten(ctx, epoch)
+		// ensure status is updated
+		status, err = ckptKeeper.GetStatus(ctx, epoch)
+		require.NoError(t, err)
+		require.Equal(t, types.Sealed, status)
+		// ensure state update of Forgotten is recorded
+		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
+		require.NoError(t, err)
+		require.Len(t, mockCkptWithMeta.Lifecycle, 5)
+		require.Equal(t, curStateUpdate(ctx, types.Sealed), mockCkptWithMeta.Lifecycle[4])
+
+		/* Forgotten -> Submitted -> Confirmed -> Finalized */
+		ctx = updateRandomCtx(r, ctx)
+		ckptKeeper.SetCheckpointSubmitted(ctx, epoch)
+		// ensure status is updated
+		status, err = ckptKeeper.GetStatus(ctx, epoch)
+		require.NoError(t, err)
+		require.Equal(t, types.Submitted, status)
+
+		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
+		require.NoError(t, err)
+		require.Len(t, mockCkptWithMeta.Lifecycle, 6)
+		require.Equal(t, curStateUpdate(ctx, types.Submitted), mockCkptWithMeta.Lifecycle[5])
+
+		hooks.EXPECT().AfterRawCheckpointConfirmed(gomock.Any(), gomock.Any()).Return(nil)
+		ctx = updateRandomCtx(r, ctx)
+		ckptKeeper.SetCheckpointConfirmed(ctx, epoch)
+		// ensure status is updated
+		status, err = ckptKeeper.GetStatus(ctx, epoch)
+		require.NoError(t, err)
+		require.Equal(t, types.Confirmed, status)
+
+		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
+		require.NoError(t, err)
+		require.Len(t, mockCkptWithMeta.Lifecycle, 7)
+		require.Equal(t, curStateUpdate(ctx, types.Confirmed), mockCkptWithMeta.Lifecycle[6])
+
+		hooks.EXPECT().AfterRawCheckpointFinalized(gomock.Any(), gomock.Any()).Return(nil)
 		ctx = updateRandomCtx(r, ctx)
 		ckptKeeper.SetCheckpointFinalized(ctx, epoch)
 		// ensure status is updated
 		status, err = ckptKeeper.GetStatus(ctx, epoch)
 		require.NoError(t, err)
 		require.Equal(t, types.Finalized, status)
-		// ensure state update of Finalized is recorded
+
 		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
 		require.NoError(t, err)
-		require.Len(t, mockCkptWithMeta.Lifecycle, 5)
-		require.Equal(t, curStateUpdate(ctx, types.Finalized), mockCkptWithMeta.Lifecycle[4])
+		require.Len(t, mockCkptWithMeta.Lifecycle, 8)
+		require.Equal(t, curStateUpdate(ctx, types.Finalized), mockCkptWithMeta.Lifecycle[7])
+
+		/* Finalized -> Forgotten is not allowed */
+		ctx = updateRandomCtx(r, ctx)
+		ckptKeeper.SetCheckpointForgotten(ctx, epoch)
+		status, err = ckptKeeper.GetStatus(ctx, epoch)
+		require.NoError(t, err)
+		require.Equal(t, types.Finalized, status)
+
+		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
+		require.NoError(t, err)
+		require.Len(t, mockCkptWithMeta.Lifecycle, 8)
+		require.Equal(t, curStateUpdate(ctx, types.Finalized), mockCkptWithMeta.Lifecycle[7])
 	})
 }
 
@@ -223,10 +281,29 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 			bls12381.Sign(blsPrivKey1, msgBytes),
 			t,
 		)
-		require.Panics(t, func() {
-			_ = ckptKeeper.VerifyCheckpoint(ctx, *rawBtcCheckpoint)
-		})
+		// check that the corresponding ConflictingCheckpointReceived flag is initially false
+		require.False(t, ckptKeeper.GetConflictingCheckpointReceived(ctx))
+
+		err = ckptKeeper.VerifyCheckpoint(ctx, *rawBtcCheckpoint)
+		require.ErrorIs(t, err, types.ErrConflictingCheckpoint)
+		// check that the corresponding ConflictingCheckpointReceived flag is set to true
+		require.True(t, ckptKeeper.GetConflictingCheckpointReceived(ctx))
 	})
+}
+
+func TestSetGetConflictingCheckpointReceived(t *testing.T) {
+	k, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil)
+
+	// Ensure default value is false if the key is not set
+	require.False(t, k.GetConflictingCheckpointReceived(ctx), "default value should be false when key is not set")
+
+	// Test setting the flag to true
+	k.SetConflictingCheckpointReceived(ctx, true)
+	require.True(t, k.GetConflictingCheckpointReceived(ctx), "expected value to be true after setting")
+
+	// Test setting the flag to false
+	k.SetConflictingCheckpointReceived(ctx, false)
+	require.False(t, k.GetConflictingCheckpointReceived(ctx), "expected value to be false after setting to false")
 }
 
 func makeBtcCkptBytes(r *rand.Rand, epoch uint64, appHash []byte, bitmap []byte, blsSig []byte, t *testing.T) *btctxformatter.RawBtcCheckpoint {

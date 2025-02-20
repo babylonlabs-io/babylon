@@ -72,7 +72,7 @@ The following actors interact with the BTC staking module:
 
 ### Stake Creation
 
-#### Single Step Delegation
+#### Post-staking Registration
 A Bitcoin staker can receive voting power through their Bitcoin stake delegation
 by following this process:
 1. Create a Bitcoin staking transaction and submit it to Bitcoin. The
@@ -94,15 +94,15 @@ by following this process:
    for the slashing transactions and unbonding transaction.
    The BTC Delegation is now activated.
 
-#### Expression of Interest Delegation (EOI)
+#### Pre-staking Registration
 
 The above mechanism requires the staker to first lock their funds
 and then request the Babylon blockchain to activate the stake.
 For stakers that want to avoid this and prefer to first receive confirmation
-and then lock their funds on Bitcoin, the Expression of Interest (EOI) procedure
+and then lock their funds on Bitcoin, the pre-staking registration
 can be used.
 
-The EOI procedure works as follows:
+The pre-staking registration procedure works as follows:
 
 1. The BTC staker constructs the following transactions (whose specifications
    can be found [here](../../docs/staking-script.md)) and sends them on Babylon
@@ -140,7 +140,7 @@ delegations under culpable finality providers.
 A BTC staker can unbond early by signing the unbonding transaction and
 submitting it to Bitcoin. The BTC Staking module identifies unbonding requests
 through this signature reported by the [BTC staking tracker
-daemon](https://github.com/babylonchain/vigilante), and will consider the BTC
+daemon](https://github.com/babylonlabs-io/vigilante), and will consider the BTC
 delegation unbonded immediately upon such a signature.
 
 ## States
@@ -378,7 +378,7 @@ The message handlers are defined at
 
 The `MsgCreateFinalityProvider` message is used for creating a finality
 provider. It is typically submitted by a finality provider via the [finality
-provider](https://github.com/babylonchain/finality-provider) program.
+provider](https://github.com/babylonlabs-io/finality-provider) program.
 
 ```protobuf
 // MsgCreateFinalityProvider is the message for creating a finality provider
@@ -475,7 +475,7 @@ Upon `MsgEditFinalityProvider`, a Babylon node will execute as follows:
 
 The `MsgCreateBTCDelegation` message is used for delegating some bitcoin to a
 finality provider. It is typically submitted by a BTC delegator via the [BTC
-staker](https://github.com/babylonchain/btc-staker) program.
+staker](https://github.com/babylonlabs-io/btc-staker) program.
 
 ```protobuf
 // MsgCreateBTCDelegation is the message for creating a BTC delegation
@@ -563,9 +563,10 @@ CheckpointFinalizationTimeout)`, where `MinUnbondingTime` and
    Babylon.
 7. If the allow-list is enabled, ensure that the staking transaction is
    in the allow-list.
-8. If the delegation contains an inclusion proof (it is optional due to EOI),
-   verify the inclusion proof and ensure that it is `BTCConfirmationDepth`-deep in the Bitcoin
-   blockchain, where `BTCConfirmationDepth` is a module parameter specified in the BTC
+8. If the delegation contains an inclusion proof (optional due to the capability
+    for pre-staking registration), verify the inclusion proof and ensure that it is 
+   `BTCConfirmationDepth`-deep in the Bitcoin blockchain, where 
+   `BTCConfirmationDepth` is a module parameter specified in the BTC
    Checkpoint module. <!-- TODO: add a  link to btccheckpoint doc -->
 9. Create a `BTCDelegation` object and save it to the BTC delegation storage and
    the BTC delegation index storage.
@@ -578,8 +579,8 @@ the proof of inclusion of a Bitcoin Stake delegation on the
 Bitcoin blockchain.
 This message is utilised for notifying the Babylon blockchain
 that a staking transaction that was previously submitted through
-the EOI process is now on Bitcoin and has received sufficient
-confirmations to become active.
+the pre- staking registration process and is now on Bitcoin and has
+received sufficient confirmations to become active.
 
 ```protobuf
 // MsgAddBTCDelegationInclusionProof is the message for adding proof of inclusion of BTC delegation on BTC chain
@@ -610,7 +611,7 @@ node will execute as follows:
 The `MsgAddCovenantSigs` message is used for submitting signatures on a BTC
 delegation signed by a covenant committee member. It is typically submitted by a
 covenant committee member via the [covenant
-emulator](https://github.com/babylonchain/covenant-emulator) program.
+emulator](https://github.com/babylonlabs-io/covenant-emulator) program.
 
 ```protobuf
 // MsgAddCovenantSigs is the message for handling signatures from a covenant member
@@ -655,7 +656,7 @@ Upon `AddCovenantSigs`, a Babylon node will execute as follows:
 
 The `MsgBTCUndelegate` message is used for unbonding bitcoin from a given
 finality provider. It is typically reported by the [BTC staking
-tracker](https://github.com/babylonchain/vigilante/tree/dev/btcstaking-tracker)
+tracker](https://github.com/babylonlabs-io/vigilante/tree/main/btcstaking-tracker)
 program which proactively monitors unbonding transactions on Bitcoin.
 
 ```protobuf
@@ -751,7 +752,7 @@ Upon `MsgSelectiveSlashingEvidence`, a Babylon node will execute as follows:
    this.
 
 The `MsgSelectiveSlashingEvidence` is typically reported by the [BTC staking
-tracker](https://github.com/babylonchain/vigilante/tree/dev/btcstaking-tracker)
+tracker](https://github.com/babylonlabs-io/vigilante/tree/main/btcstaking-tracker)
 program. It keeps monitoring for slashing transactions on Bitcoin. Upon each
 slashing transaction, it will try to extract the finality provider's secret key.
 If successful, it will construct a `MsgSelectiveSlashingEvidence` message and
@@ -977,6 +978,6 @@ Endpoint: `/babylon/btcstaking/v1/btc_delegation/{staking_tx_hash_hex}`
 Description: Retrieves a specific BTC delegation by its corresponding staking transaction hash.
 
 Additional Information:
-For further details on how to use these queries and additional documentation, please refer to docs.babylonchain.io.
+For further details on how to use these queries and additional documentation, please refer to docs.babylonlabs.io.
 
 <!-- TODO: update Babylon doc website -->

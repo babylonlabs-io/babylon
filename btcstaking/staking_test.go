@@ -83,7 +83,7 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 		minFee := 2000
 		// generate a random slashing rate with random precision,
 		// this will include both valid and invalid ranges, so we can test both cases
-		randomPrecision := r.Int63n(4)                                                                   // [0,3]
+		randomPrecision := r.Int63n(6)                                                                   // [0,3]
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 1001)), randomPrecision) // [0,1000] / 10^{randomPrecision}
 
 		for i := 0; i < stakingTxNumOutputs; i++ {
@@ -165,7 +165,7 @@ func testSlashingTx(
 		&chaincfg.MainNetParams,
 	)
 
-	if btcstaking.IsRateValid(slashingRate) {
+	if btcstaking.IsSlashingRateValid(slashingRate) {
 		// If the slashing rate is valid i.e., in the range (0,1) with at most 2 decimal places,
 		// it is still possible that the slashing transaction is invalid. The following checks will confirm that
 		// slashing tx is not constructed if

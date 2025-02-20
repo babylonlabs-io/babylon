@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	corestoretypes "cosmossdk.io/core/store"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	txformat "github.com/babylonlabs-io/babylon/btctxformatter"
 
@@ -24,7 +25,7 @@ type (
 	Keeper struct {
 		cdc            codec.BinaryCodec
 		storeService   corestoretypes.KVStoreService
-		blsSigner      BlsSigner
+		blsSigner      types.BlsSigner
 		epochingKeeper types.EpochingKeeper
 		hooks          types.CheckpointingHooks
 	}
@@ -33,7 +34,7 @@ type (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService corestoretypes.KVStoreService,
-	signer BlsSigner,
+	signer types.BlsSigner,
 	ek types.EpochingKeeper,
 ) Keeper {
 	return Keeper{
@@ -197,7 +198,9 @@ func (k Keeper) VerifyCheckpoint(ctx context.Context, checkpoint txformat.RawBtc
 	_, err := k.verifyCkptBytes(ctx, &checkpoint)
 	if err != nil {
 		if errors.Is(err, types.ErrConflictingCheckpoint) {
-			panic(err)
+			// Set the conflicting checkpoint flag that will halt
+			// the chain based on module's EndBlock logic
+			k.SetConflictingCheckpointReceived(ctx, true)
 		}
 		return err
 	}
@@ -273,11 +276,28 @@ func (k *Keeper) SetEpochingKeeper(ek types.EpochingKeeper) {
 	k.epochingKeeper = ek
 }
 
+func (k Keeper) validateCheckpointStatus(
+	ckptWithMeta *types.RawCheckpointWithMeta,
+	allowedStatuses []types.CheckpointStatus,
+) error {
+	for _, status := range allowedStatuses {
+		if ckptWithMeta.Status == status {
+			return nil
+		}
+	}
+
+	var statusStrings []string
+	for _, status := range allowedStatuses {
+		statusStrings = append(statusStrings, status.String())
+	}
+	return types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be one of %v", statusStrings)
+}
+
 // SetCheckpointSubmitted sets the status of a checkpoint to SUBMITTED,
 // and records the associated state update in lifecycle
 func (k Keeper) SetCheckpointSubmitted(ctx context.Context, epoch uint64) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	ckpt, err := k.setCheckpointStatus(ctx, epoch, types.Sealed, types.Submitted)
+	ckpt, err := k.setCheckpointStatus(ctx, epoch, []types.CheckpointStatus{types.Sealed}, types.Submitted)
 	if err != nil {
 		k.Logger(sdkCtx).Error("failed to set checkpoint status to SUBMITTED for epoch %v: %v", epoch, err)
 		return
@@ -294,7 +314,7 @@ func (k Keeper) SetCheckpointSubmitted(ctx context.Context, epoch uint64) {
 // and records the associated state update in lifecycle
 func (k Keeper) SetCheckpointConfirmed(ctx context.Context, epoch uint64) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	ckpt, err := k.setCheckpointStatus(ctx, epoch, types.Submitted, types.Confirmed)
+	ckpt, err := k.setCheckpointStatus(ctx, epoch, []types.CheckpointStatus{types.Submitted}, types.Confirmed)
 	if err != nil {
 		k.Logger(sdkCtx).Error("failed to set checkpoint status to CONFIRMED for epoch %v: %v", epoch, err)
 		return
@@ -316,7 +336,7 @@ func (k Keeper) SetCheckpointConfirmed(ctx context.Context, epoch uint64) {
 func (k Keeper) SetCheckpointFinalized(ctx context.Context, epoch uint64) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// set the checkpoint's status to be finalised
-	ckpt, err := k.setCheckpointStatus(ctx, epoch, types.Confirmed, types.Finalized)
+	ckpt, err := k.setCheckpointStatus(ctx, epoch, []types.CheckpointStatus{types.Confirmed}, types.Finalized)
 	if err != nil {
 		k.Logger(sdkCtx).Error("failed to set checkpoint status to FINALIZED for epoch %v: %v", epoch, err)
 		return
@@ -340,7 +360,9 @@ func (k Keeper) SetCheckpointFinalized(ctx context.Context, epoch uint64) {
 // and records the associated state update in lifecycle
 func (k Keeper) SetCheckpointForgotten(ctx context.Context, epoch uint64) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	ckpt, err := k.setCheckpointStatus(ctx, epoch, types.Submitted, types.Sealed)
+	// In case of big reorg, the checkpoint might be forgotten even if it was already
+	// confirmed
+	ckpt, err := k.setCheckpointStatus(ctx, epoch, []types.CheckpointStatus{types.Submitted, types.Confirmed}, types.Sealed)
 	if err != nil {
 		k.Logger(sdkCtx).Error("failed to set checkpoint status to SEALED for epoch %v: %v", epoch, err)
 		return
@@ -351,18 +373,31 @@ func (k Keeper) SetCheckpointForgotten(ctx context.Context, epoch uint64) {
 	if err != nil {
 		k.Logger(sdkCtx).Error("failed to emit checkpoint forgotten event for epoch %v", ckpt.Ckpt.EpochNum)
 	}
+
+	// invoke hook
+	if err := k.AfterRawCheckpointForgotten(ctx, ckpt.Ckpt); err != nil {
+		k.Logger(sdkCtx).Error("failed to trigger checkpoint forgotten hook for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
+	}
 }
 
 // setCheckpointStatus sets a ckptWithMeta to the given state,
 // and records the state update in its lifecycle
-func (k Keeper) setCheckpointStatus(ctx context.Context, epoch uint64, from types.CheckpointStatus, to types.CheckpointStatus) (*types.RawCheckpointWithMeta, error) {
+func (k Keeper) setCheckpointStatus(
+	ctx context.Context,
+	epoch uint64,
+	expectedStatus []types.CheckpointStatus,
+	to types.CheckpointStatus,
+) (*types.RawCheckpointWithMeta, error) {
 	ckptWithMeta, err := k.GetRawCheckpoint(ctx, epoch)
 	if err != nil {
 		return nil, err
 	}
-	if ckptWithMeta.Status != from {
-		return nil, types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be %s", from.String())
+
+	if err := k.validateCheckpointStatus(ckptWithMeta, expectedStatus); err != nil {
+		return nil, err
 	}
+
+	from := ckptWithMeta.Status
 	ckptWithMeta.Status = to                    // set status
 	ckptWithMeta.RecordStateUpdate(ctx, to)     // record state update to the lifecycle
 	err = k.UpdateCheckpoint(ctx, ckptWithMeta) // write back to KVStore
@@ -401,24 +436,39 @@ func (k Keeper) GetBLSPubKeySet(ctx context.Context, epochNumber uint64) ([]*typ
 	return valWithblsKeys, nil
 }
 
+// GetBlsPubKey returns the BLS public key of the validator
 func (k Keeper) GetBlsPubKey(ctx context.Context, address sdk.ValAddress) (bls12381.PublicKey, error) {
 	return k.RegistrationState(ctx).GetBlsPubKey(address)
 }
 
+// GetValAddr returns the validator address of the BLS public key
+func (k Keeper) GetValAddr(ctx context.Context, key bls12381.PublicKey) (sdk.ValAddress, error) {
+	return k.RegistrationState(ctx).GetValAddr(key)
+}
+
+// GetEpoch returns the current epoch
 func (k Keeper) GetEpoch(ctx context.Context) *epochingtypes.Epoch {
 	return k.epochingKeeper.GetEpoch(ctx)
 }
 
+// GetValidatorSet returns the validator set for a given epoch
 func (k Keeper) GetValidatorSet(ctx context.Context, epochNumber uint64) epochingtypes.ValidatorSet {
 	return k.epochingKeeper.GetValidatorSet(ctx, epochNumber)
 }
 
+// GetTotalVotingPower returns the total voting power for a given epoch
 func (k Keeper) GetTotalVotingPower(ctx context.Context, epochNumber uint64) int64 {
 	return k.epochingKeeper.GetTotalVotingPower(ctx, epochNumber)
 }
 
+// GetPubKeyByConsAddr returns the public key of a validator by consensus address
 func (k Keeper) GetPubKeyByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (cmtprotocrypto.PublicKey, error) {
 	return k.epochingKeeper.GetPubKeyByConsAddr(ctx, consAddr)
+}
+
+// GetValidatorByConsAddr returns the validator by consensus address
+func (k Keeper) GetValidator(ctx context.Context, addr sdk.ValAddress) (stakingtypes.Validator, error) {
+	return k.epochingKeeper.GetValidator(ctx, addr)
 }
 
 // GetLastFinalizedEpoch gets the last finalised epoch
@@ -433,6 +483,7 @@ func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
 	return sdk.BigEndianToUint64(epochNumberBytes)
 }
 
+// GetEpochByHeight returns the epoch number for a given height
 func (k Keeper) GetEpochByHeight(ctx context.Context, height uint64) uint64 {
 	return k.epochingKeeper.GetEpochNumByHeight(ctx, height)
 }
@@ -442,6 +493,37 @@ func (k Keeper) SetLastFinalizedEpoch(ctx context.Context, epochNumber uint64) {
 	store := k.storeService.OpenKVStore(ctx)
 	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	if err := store.Set(types.LastFinalizedEpochKey, epochNumberBytes); err != nil {
+		panic(err)
+	}
+}
+
+// GetConflictingCheckpointReceived gets the stored ConflictingCheckpointReceived value
+func (k Keeper) GetConflictingCheckpointReceived(ctx context.Context) bool {
+	store := k.storeService.OpenKVStore(ctx)
+	value, err := store.Get(types.ConflictingCheckpointReceivedKey)
+	if err != nil {
+		panic(err)
+	}
+	// If the key is not set, assume false (default behavior)
+	if len(value) == 0 {
+		return false
+	}
+
+	// Convert the first byte to a boolean
+	return value[0] == 1
+}
+
+// SetConflictingCheckpointReceived sets the ConflictingCheckpointReceived flag value
+func (k Keeper) SetConflictingCheckpointReceived(ctx context.Context, value bool) {
+	store := k.storeService.OpenKVStore(ctx)
+	var byteValue []byte
+	switch value {
+	case true:
+		byteValue = []byte{1}
+	default:
+		byteValue = []byte{0}
+	}
+	if err := store.Set(types.ConflictingCheckpointReceivedKey, byteValue); err != nil {
 		panic(err)
 	}
 }

@@ -11,8 +11,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-
 	"github.com/babylonlabs-io/babylon/x/checkpointing/client/cli"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
@@ -26,7 +24,7 @@ import (
 var (
 	_ appmodule.AppModule       = AppModule{}
 	_ appmodule.HasBeginBlocker = AppModule{}
-	_ module.HasABCIEndBlock    = AppModule{}
+	_ appmodule.HasEndBlocker   = AppModule{}
 	_ module.AppModuleBasic     = AppModuleBasic{}
 )
 
@@ -159,10 +157,11 @@ func (am AppModule) BeginBlock(ctx context.Context) error {
 	return BeginBlocker(ctx, am.keeper)
 }
 
-// EndBlock executes all ABCI EndBlock logic respective to the capability module. It
-// returns no validator updates.
-func (am AppModule) EndBlock(_ context.Context) ([]abci.ValidatorUpdate, error) {
-	return []abci.ValidatorUpdate{}, nil
+// EndBlock returns the end blocker for the checkpointing module. It returns no validator
+// updates.
+func (am AppModule) EndBlock(ctx context.Context) error {
+	EndBlocker(ctx, am.keeper)
+	return nil
 }
 
 // IsOnePerModuleType implements the depinject.OnePerModuleType interface.

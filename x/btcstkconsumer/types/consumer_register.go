@@ -47,3 +47,20 @@ func (cr *ConsumerRegister) Type() ConsumerType {
 	}
 	return ConsumerType_ETH_L2
 }
+
+func (cr *ConsumerRegister) ToResponse() *ConsumerRegisterResponse {
+	resp := &ConsumerRegisterResponse{
+		ConsumerId:          cr.ConsumerId,
+		ConsumerName:        cr.ConsumerName,
+		ConsumerDescription: cr.ConsumerDescription,
+	}
+	if cr.ConsumerMetadata != nil {
+		switch md := cr.ConsumerMetadata.(type) {
+		case *ConsumerRegister_CosmosConsumerMetadata:
+			resp.CosmosChannelId = md.CosmosConsumerMetadata.ChannelId
+		case *ConsumerRegister_EthL2ConsumerMetadata:
+			resp.EthL2FinalityContractAddress = md.EthL2ConsumerMetadata.FinalityContractAddress
+		}
+	}
+	return resp
+}

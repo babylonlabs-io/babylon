@@ -15,6 +15,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
@@ -65,7 +66,7 @@ func GenCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, fpAddr sdk
 	btcPK := btcSK.PubKey()
 	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	// pop
-	pop, err := bstypes.NewPoPBTC(fpAddr, btcSK)
+	pop, err := NewPoPBTC(fpAddr, btcSK)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +122,8 @@ func GenRandomBTCDelegation(
 	if err != nil {
 		return nil, err
 	}
-	staker := GenRandomAccount()
+
+	stakerAddress := GenRandomSecp256k1Address()
 
 	// staking/slashing tx
 	stakingSlashingInfo := GenBTCStakingSlashingInfo(
@@ -165,11 +167,11 @@ func GenRandomBTCDelegation(
 	require.NoError(t, err)
 	w := uint16(100) // TODO: parameterise w
 
-	pop, err := bstypes.NewPoPBTC(sdk.MustAccAddressFromBech32(staker.Address), delSK)
+	pop, err := NewPoPBTC(stakerAddress, delSK)
 	require.NoError(t, err)
 
 	del := &bstypes.BTCDelegation{
-		StakerAddr:       staker.Address,
+		StakerAddr:       sdk.MustBech32ifyAddressBytes(appparams.Bech32PrefixAccAddr, stakerAddress), // Staker address is always Babylon's
 		BtcPk:            delBTCPK,
 		Pop:              pop,
 		FpBtcPkList:      fpBTCPKs,
@@ -343,7 +345,7 @@ func GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
 	delSlashingTxSig, err := unbondingSlashingInfo.GenDelSlashingTxSig(delSK)
 	require.NoError(t, err)
 
-	pop, err := bstypes.NewPoPBTC(sdk.MustAccAddressFromBech32(stakerAddr.String()), delSK)
+	pop, err := NewPoPBTC(sdk.MustAccAddressFromBech32(stakerAddr.String()), delSK)
 	require.NoError(t, err)
 
 	msg := &bstypes.MsgCreateBTCDelegation{

@@ -175,7 +175,7 @@ func (im IBCModule) OnRecvPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	var packetData types.ZoneconciergePacketData
+	var packetData types.InboundPacket
 	if errProto := types.ModuleCdc.Unmarshal(modulePacket.GetData(), &packetData); errProto != nil {
 		im.keeper.Logger(ctx).Error("Failed to unmarshal packet data with protobuf", "error", errProto)
 		if errJSON := types.ModuleCdc.UnmarshalJSON(modulePacket.GetData(), &packetData); errJSON != nil {
@@ -185,15 +185,14 @@ func (im IBCModule) OnRecvPacket(
 	}
 
 	switch packet := packetData.Packet.(type) {
-	case *types.ZoneconciergePacketData_ConsumerSlashing:
+	case *types.InboundPacket_ConsumerSlashing:
 		err := im.keeper.HandleConsumerSlashing(ctx, modulePacket.DestinationPort, modulePacket.DestinationChannel, packet.ConsumerSlashing)
 		if err != nil {
 			return channeltypes.NewErrorAcknowledgement(err)
 		}
 		return channeltypes.NewResultAcknowledgement([]byte("Consumer slashing handled successfully"))
-	// Add other packet types here if needed
 	default:
-		errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
+		errMsg := fmt.Sprintf("unrecognized inbound packet type: %T", packet)
 		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg))
 	}
 }
@@ -210,16 +209,16 @@ func (im IBCModule) OnAcknowledgementPacket(
 	// - for acknowledgment message with errors defined in `x/wasm`, it uses json
 	// - for all other acknowledgement messages, it uses protobuf
 	if errProto := types.ModuleCdc.Unmarshal(acknowledgement, &ack); errProto != nil {
-		im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement with protobuf", "error", errProto)
+		im.keeper.Logger(ctx).Warn("cannot unmarshal packet acknowledgement with protobuf, trying json.")
 		if errJson := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); errJson != nil {
-			im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement with json", "error", errJson)
+			im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement with json.", "error", errJson)
 			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement with protobuf (error: %v) or json (error: %v)", errProto, errJson)
 		}
 	}
 
 	switch resp := ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
-		im.keeper.Logger(ctx).Info("received an Acknowledgement message", "result", string(resp.Result))
+		im.keeper.Logger(ctx).Info("received an Acknowledgement message.", "result", string(resp.Result))
 		// TODO: emit typed event
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
@@ -229,7 +228,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 			),
 		)
 	case *channeltypes.Acknowledgement_Error:
-		im.keeper.Logger(ctx).Error("received an Acknowledgement error message", "error", resp.Error)
+		im.keeper.Logger(ctx).Error("received an Acknowledgement error message.", "error", resp.Error)
 		// TODO: emit typed event
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
@@ -249,8 +248,8 @@ func (im IBCModule) OnTimeoutPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	var modulePacketData types.ZoneconciergePacketData
-	if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
+	var packetData types.InboundPacket
+	if err := packetData.Unmarshal(modulePacket.GetData()); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
 	}
 

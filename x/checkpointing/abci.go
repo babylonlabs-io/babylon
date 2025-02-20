@@ -26,3 +26,10 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 	}
 	return nil
 }
+
+func EndBlocker(ctx context.Context, k keeper.Keeper) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
+	if conflict := k.GetConflictingCheckpointReceived(ctx); conflict {
+		panic(types.ErrConflictingCheckpoint)
+	}
+}

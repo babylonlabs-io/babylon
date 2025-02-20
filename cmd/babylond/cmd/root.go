@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -10,7 +11,6 @@ import (
 	confixcmd "cosmossdk.io/tools/confix/cmd"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/babylonlabs-io/babylon/app/signer"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	dbm "github.com/cosmos/cosmos-db"
@@ -22,6 +22,8 @@ import (
 	authtxconfig "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -43,8 +45,8 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/bls"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
 // NewRootCmd creates a new root command for babylond. It is called once in the
@@ -75,12 +77,12 @@ func NewRootCmd() *cobra.Command {
 			initClientCtx = initClientCtx.WithCmdContext(cmd.Context())
 			initClientCtx, err := client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to read command flags: %w", err)
 			}
 
 			initClientCtx, err = config.ReadFromClientConfig(initClientCtx)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to read client config: %w", err)
 			}
 
 			if !initClientCtx.Offline {
@@ -97,14 +99,14 @@ func NewRootCmd() *cobra.Command {
 					txConfigOpts,
 				)
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to create tx config: %w", err)
 				}
 
 				initClientCtx = initClientCtx.WithTxConfig(txConfig)
 			}
 
 			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
-				return err
+				return fmt.Errorf("failed to set cmd client context handler: %w", err)
 			}
 
 			customAppTemplate, customAppConfig := initAppConfig()
@@ -113,7 +115,7 @@ func NewRootCmd() *cobra.Command {
 			err = server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig, customCometConfig)
 
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to intercept configs: %w", err)
 			}
 
 			return nil
@@ -140,7 +142,7 @@ func NewRootCmd() *cobra.Command {
 // EnhanceRootCommandWithoutTxStaking excludes staking tx commands
 func EnhanceRootCommandWithoutTxStaking(autoCliOpts autocli.AppOptions, rootCmd *cobra.Command) {
 	if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to enhance root command: %w", err))
 	}
 
 	txCmd := FindSubCommand(rootCmd, "tx")
@@ -205,7 +207,7 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 	gentxModule := basicManager[genutiltypes.ModuleName].(genutil.AppModuleBasic)
 
 	rootCmd.AddCommand(
-		genutilcli.InitCmd(basicManager, app.DefaultNodeHome),
+		InitCmd(basicManager, app.DefaultNodeHome),
 		genhelpers.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome, gentxModule.GenTxValidator, authcodec.NewBech32Codec(params.Bech32PrefixValAddr)),
 		genutilcli.MigrateGenesisCmd(genutilcli.MigrationMap),
 		genhelpers.GenTxCmd(basicManager, txConfig, banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome, authcodec.NewBech32Codec(params.Bech32PrefixValAddr)),
@@ -215,7 +217,8 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		cmtcli.NewCompletionCmd(rootCmd, true),
 		TestnetCmd(basicManager, banktypes.GenesisBalancesIterator{}),
 		genhelpers.CmdGenHelpers(gentxModule.GenTxValidator),
-		bls.CreateBlsKeyCmd(),
+		MigrateBlsKeyCmd(),
+		CreateBlsKeyCmd(),
 		ModuleSizeCmd(),
 		DebugCmd(),
 		confixcmd.ConfigCommand(),
@@ -238,6 +241,8 @@ func addModuleInitFlags(startCmd *cobra.Command) {
 
 	startCmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|kwallet|pass|test)")
 	startCmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+	startCmd.Flags().Bool(flagNoBlsPassword, true, "Generate BLS key without password protection (suitable for RPC nodes)")
+	startCmd.Flags().String(flagBlsPassword, "", "Use the specified password for BLS key (if empty and --no-bls-password is not set, will prompt for password)")
 }
 
 func queryCommand() *cobra.Command {
@@ -301,9 +306,18 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	}
 
 	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
-	privSigner, err := signer.InitPrivSigner(homeDir)
+
+	// auto migrate when build tag is set to "e2e_upgrade"
+	automigrate_e2e_upgrade(logger, homeDir)
+
+	// Load or generate BLS signer
+	blsSigner, err := appsigner.LoadOrGenBlsKey(
+		homeDir,
+		cast.ToBool(appOpts.Get(flagNoBlsPassword)),
+		cast.ToString(appOpts.Get(flagBlsPassword)),
+	)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to load or generate BLS signer: %w", err))
 	}
 
 	var wasmOpts []wasmkeeper.Option
@@ -314,7 +328,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	return app.NewBabylonApp(
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
-		privSigner,
+		&blsSigner,
 		appOpts,
 		wasmOpts,
 		baseappOptions...,
@@ -339,19 +353,41 @@ func appExport(
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
-	privSigner, err := signer.InitPrivSigner(homePath)
+	ck, err := appsigner.LoadConsensusKey(homePath)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to initialize priv signer: %w", err))
 	}
+
+	blsSigner := checkpointingtypes.BlsSigner(ck.Bls)
+
 	if height != -1 {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, uint(1), privSigner, appOpts, app.EmptyWasmOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, uint(1), &blsSigner, appOpts, app.EmptyWasmOpts)
 
 		if err = babylonApp.LoadHeight(height); err != nil {
-			return servertypes.ExportedApp{}, err
+			return servertypes.ExportedApp{}, fmt.Errorf("failed to load height: %w", err)
 		}
 	} else {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, uint(1), privSigner, appOpts, app.EmptyWasmOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, uint(1), &blsSigner, appOpts, app.EmptyWasmOpts)
 	}
 
 	return babylonApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
+}
+
+// automigrate_e2e_upgrade_test runs when the build tag is set to "e2e_upgrade".
+// It always checks if the key structure is the previous version
+// and migrates into a separate version of the divided key files
+func automigrate_e2e_upgrade(logger log.Logger, homeDir string) {
+	if app.IsE2EUpgradeBuildFlag {
+		logger.Debug(
+			"***************************************************************************\n" +
+				"NOTE: In testnet mode, it will automatically migrate the key file\n" +
+				"if priv_validator_key.json contains both the comet and bls keys,\n" +
+				"used in previous version.\n" +
+				"Do not run it in a production environment, as it may cause problems.\n" +
+				"***************************************************************************\n",
+		)
+		if err := migrate(homeDir, "password"); err != nil {
+			logger.Debug(err.Error())
+		}
+	}
 }

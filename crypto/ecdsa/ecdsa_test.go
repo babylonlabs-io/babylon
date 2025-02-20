@@ -35,3 +35,26 @@ func TestECDSA(t *testing.T) {
 	err = ecdsa.Verify(pk, testMsg, sig)
 	require.NoError(t, err)
 }
+
+func TestECDSAMalleability(t *testing.T) {
+	// decode SK and PK
+	skBytes, err := hex.DecodeString(skHex)
+	require.NoError(t, err)
+	sk, pk := btcec.PrivKeyFromBytes(skBytes)
+	require.NotNil(t, sk)
+	require.NotNil(t, pk)
+	// sign
+	sig := ecdsa.Sign(sk, testMsg)
+	// verify
+	err = ecdsa.Verify(pk, testMsg, sig)
+	require.NoError(t, err)
+	// Modify signature
+	sig[0] = ((sig[0] - 27) ^ 1) + 27
+	var s btcec.ModNScalar
+	s.SetByteSlice(sig[33:65])
+	s.Negate()
+	s.PutBytesUnchecked(sig[33:65])
+	// Verify modified signature
+	err = ecdsa.Verify(pk, testMsg, sig)
+	require.Error(t, err)
+}

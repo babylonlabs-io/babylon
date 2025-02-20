@@ -186,7 +186,7 @@ func (h *Helper) GenAndApplyCustomParams(
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, types.Params{
 		CovenantPks:               bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
 		CovenantQuorum:            3,
-		MinStakingValueSat:        1000,
+		MinStakingValueSat:        10000,
 		MaxStakingValueSat:        int64(4 * 10e8),
 		MinStakingTimeBlocks:      400,
 		MaxStakingTimeBlocks:      10000,
@@ -330,7 +330,7 @@ func (h *Helper) CreateDelegationWithBtcBlockHeight(
 	staker := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
 
 	// PoP
-	pop, err := types.NewPoPBTC(staker, delSK)
+	pop, err := datagen.NewPoPBTC(staker, delSK)
 	h.NoError(err)
 	// generate staking tx info
 	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)

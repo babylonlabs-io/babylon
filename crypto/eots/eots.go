@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/babylonlabs-io/babylon/crypto/common"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -79,9 +80,11 @@ func signHash(sk *PrivateKey, privateRand *PrivateRand, hash [32]byte) (*Signatu
 
 	k := new(ModNScalar).Set(privateRand)
 
-	// R = kG
-	var R btcec.JacobianPoint
-	btcec.ScalarBaseMultNonConst(k, &R)
+	// R = kG (with blinding in order to prevent timing side channel attacks)
+	R, err := common.ScalarBaseMultWithBlinding(k)
+	if err != nil {
+		return nil, err
+	}
 
 	// Negate nonce k if R.y is odd (R.y is the y coordinate of the point R)
 	//

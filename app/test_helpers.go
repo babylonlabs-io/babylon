@@ -9,8 +9,6 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	pruningtypes "cosmossdk.io/store/pruning/types"
-	"github.com/babylonlabs-io/babylon/testutil/signer"
-	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	tmjson "github.com/cometbft/cometbft/libs/json"
@@ -31,10 +29,12 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/app/params"
 	appsigner "github.com/babylonlabs-io/babylon/app/signer"
+	"github.com/babylonlabs-io/babylon/testutil/signer"
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
+
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/privval"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
@@ -49,7 +49,7 @@ type SetupOptions struct {
 	AppOpts            types.AppOptions
 }
 
-func setup(t *testing.T, ps *appsigner.PrivSigner, withGenesis bool, invCheckPeriod uint, btcConf bbn.SupportedBtcNetwork) (*BabylonApp, GenesisState) {
+func setup(t *testing.T, blsSigner checkpointingtypes.BlsSigner, withGenesis bool, invCheckPeriod uint, btcConf bbn.SupportedBtcNetwork) (*BabylonApp, GenesisState) {
 	db := dbm.NewMemDB()
 	nodeHome := t.TempDir()
 
@@ -61,6 +61,7 @@ func setup(t *testing.T, ps *appsigner.PrivSigner, withGenesis bool, invCheckPer
 	appOptions[server.FlagMempoolMaxTxs] = mempool.DefaultMaxTx
 	appOptions[flags.FlagChainID] = "chain-test"
 	baseAppOpts := server.DefaultBaseappOptions(appOptions)
+
 	app := NewBabylonApp(
 		log.NewNopLogger(),
 		db,
@@ -68,7 +69,7 @@ func setup(t *testing.T, ps *appsigner.PrivSigner, withGenesis bool, invCheckPer
 		true,
 		map[int64]bool{},
 		invCheckPeriod,
-		ps,
+		&blsSigner,
 		appOptions,
 		EmptyWasmOpts,
 		baseAppOpts...,
@@ -83,10 +84,10 @@ func setup(t *testing.T, ps *appsigner.PrivSigner, withGenesis bool, invCheckPer
 // Created Babylon application will have one validator with hardcoed amount of tokens.
 // This is necessary as from cosmos-sdk 0.46 it is required that there is at least
 // one validator in validator set during InitGenesis abci call - https://github.com/cosmos/cosmos-sdk/pull/9697
-func NewBabylonAppWithCustomOptions(t *testing.T, isCheckTx bool, privSigner *appsigner.PrivSigner, options SetupOptions) *BabylonApp {
+func NewBabylonAppWithCustomOptions(t *testing.T, isCheckTx bool, blsSigner checkpointingtypes.BlsSigner, options SetupOptions) *BabylonApp {
 	t.Helper()
 	// create validator set with single validator
-	valKeys, err := privval.NewValidatorKeys(ed25519.GenPrivKey(), bls12381.GenPrivKey())
+	valKeys, err := appsigner.NewValidatorKeys(ed25519.GenPrivKey(), bls12381.GenPrivKey())
 	require.NoError(t, err)
 	valPubkey, err := cryptocodec.FromCmtPubKeyInterface(valKeys.ValPubkey)
 	require.NoError(t, err)
@@ -112,7 +113,7 @@ func NewBabylonAppWithCustomOptions(t *testing.T, isCheckTx bool, privSigner *ap
 		true,
 		options.SkipUpgradeHeights,
 		options.InvCheckPeriod,
-		privSigner,
+		&blsSigner,
 		options.AppOpts,
 		EmptyWasmOpts,
 	)
@@ -237,22 +238,29 @@ func Setup(t *testing.T, isCheckTx bool) *BabylonApp {
 func SetupWithBitcoinConf(t *testing.T, isCheckTx bool, btcConf bbn.SupportedBtcNetwork) *BabylonApp {
 	t.Helper()
 
-	ps, err := signer.SetupTestPrivSigner()
+	tbs, err := signer.SetupTestBlsSigner()
 	require.NoError(t, err)
-	valPubKey := ps.WrappedPV.Key.PubKey
+	blsSigner := checkpointingtypes.BlsSigner(tbs)
+
+	cmtPrivKey := ed25519.GenPrivKey()
+
 	// generate genesis account
-	acc := authtypes.NewBaseAccount(valPubKey.Address().Bytes(), &cosmosed.PubKey{Key: valPubKey.Bytes()}, 0, 0)
+	acc := authtypes.NewBaseAccount(
+		cmtPrivKey.PubKey().Address().Bytes(),
+		&cosmosed.PubKey{Key: cmtPrivKey.PubKey().Bytes()},
+		0,
+		0,
+	)
 	balance := banktypes.Balance{
 		Address: acc.GetAddress().String(),
 		Coins:   sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(100000000000000))),
 	}
-	ps.WrappedPV.Key.DelegatorAddress = acc.GetAddress().String()
 	// create validator set with single validator
-	genesisKey, err := signer.GenesisKeyFromPrivSigner(ps)
+	genesisKey, err := signer.GenesisKeyFromPrivSigner(cmtPrivKey, tbs.PrivKey, sdk.ValAddress(acc.GetAddress()))
 	require.NoError(t, err)
 	genesisValSet := []*checkpointingtypes.GenesisKey{genesisKey}
 
-	app := SetupWithGenesisValSet(t, btcConf, genesisValSet, ps, []authtypes.GenesisAccount{acc}, balance)
+	app := SetupWithGenesisValSet(t, btcConf, genesisValSet, blsSigner, []authtypes.GenesisAccount{acc}, balance)
 
 	return app
 }
@@ -262,9 +270,9 @@ func SetupWithBitcoinConf(t *testing.T, isCheckTx bool, btcConf bbn.SupportedBtc
 // of one consensus engine unit (10^6) in the default token of the babylon app from first genesis
 // account. A Nop logger is set in BabylonApp.
 // Note that the privSigner should be the 0th item of valSet
-func SetupWithGenesisValSet(t *testing.T, btcConf bbn.SupportedBtcNetwork, valSet []*checkpointingtypes.GenesisKey, privSigner *appsigner.PrivSigner, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *BabylonApp {
+func SetupWithGenesisValSet(t *testing.T, btcConf bbn.SupportedBtcNetwork, valSet []*checkpointingtypes.GenesisKey, blsSigner checkpointingtypes.BlsSigner, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *BabylonApp {
 	t.Helper()
-	app, genesisState := setup(t, privSigner, true, 5, btcConf)
+	app, genesisState := setup(t, blsSigner, true, 5, btcConf)
 	genesisState = genesisStateWithValSet(t, app, genesisState, valSet, genAccs, balances...)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")

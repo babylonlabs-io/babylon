@@ -98,8 +98,6 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	covenantQuorum := k.GetParams(ctx).CovenantQuorum
-
 	// get current BTC height
 	btcTipHeight := k.btclcKeeper.GetTipInfo(ctx).Height
 
@@ -109,8 +107,10 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 		var btcDel types.BTCDelegation
 		k.cdc.MustUnmarshal(value, &btcDel)
 
+		params := k.GetParamsByVersion(ctx, btcDel.ParamsVersion)
+
 		// hit if the queried status is ANY or matches the BTC delegation status
-		status := btcDel.GetStatus(btcTipHeight, covenantQuorum)
+		status := btcDel.GetStatus(btcTipHeight, params.CovenantQuorum)
 		if req.Status == types.BTCDelegationStatus_ANY || status == req.Status {
 			if accumulate {
 				resp := types.NewBTCDelegationResponse(&btcDel, status)
@@ -144,7 +144,6 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	btcHeight := k.btclcKeeper.GetTipInfo(ctx).Height
-	covenantQuorum := k.GetParams(ctx).CovenantQuorum
 
 	fpPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
 	if err != nil {
@@ -169,9 +168,11 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 
 			btcDelsResp := make([]*types.BTCDelegationResponse, len(curBTCDels.Dels))
 			for i, btcDel := range curBTCDels.Dels {
+				params := k.GetParamsByVersion(sdkCtx, btcDel.ParamsVersion)
+
 				status := btcDel.GetStatus(
 					btcHeight,
-					covenantQuorum,
+					params.CovenantQuorum,
 				)
 				btcDelsResp[i] = types.NewBTCDelegationResponse(btcDel, status)
 			}
@@ -187,7 +188,7 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 
 	case k.BscKeeper.HasConsumerFinalityProvider(ctx, fpPK):
 		// this is a consumer finality provider
-		btcDels, pageRes, err = k.GetBTCConsumerDelegatorDelegationsResponses(sdkCtx, fpPK, req.Pagination, btcHeight, covenantQuorum)
+		btcDels, pageRes, err = k.GetBTCConsumerDelegatorDelegationsResponses(sdkCtx, fpPK, req.Pagination, btcHeight)
 		if err != nil {
 			return nil, err
 		}
@@ -218,9 +219,11 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 		return nil, types.ErrBTCDelegationNotFound
 	}
 
+	params := k.GetParamsByVersion(ctx, btcDel.ParamsVersion)
+
 	status := btcDel.GetStatus(
 		k.btclcKeeper.GetTipInfo(ctx).Height,
-		k.GetParams(ctx).CovenantQuorum,
+		params.CovenantQuorum,
 	)
 
 	return &types.QueryBTCDelegationResponse{

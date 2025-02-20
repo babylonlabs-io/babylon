@@ -43,23 +43,70 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 block bank send and still create BTC delegations
 - [#421](https://github.com/babylonlabs-io/babylon/pull/421) Add checks to public
 randomness commit at `TestBTCRewardsDistribution`.
+- [#536](https://github.com/babylonlabs-io/babylon/pull/536) Improve protobuf vs. json error msgs / types
+- [#527](https://github.com/babylonlabs-io/babylon/pull/527) Create BSL signer on start command with flags.
+- [#513](https://github.com/babylonlabs-io/babylon/pull/513) Suport datagen BTC delegation creation from Consumers
+- [#470](https://github.com/babylonlabs-io/babylon/pull/470) Return full consumer info and remove DB object
+usage in `x/btcstkconsumer` queries
 - [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
 check of rewards
-- [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public
+- [#480](https://github.com/babylonlabs-io/babylon/pull/480) Improve IBC packet structure
+- [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
+- [#504](https://github.com/babylonlabs-io/babylon/pull/504) Add `btc-headers` IBC packet
 
 ### State Machine Breaking
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
-This PR contains a series of PRs on multi-staking support and BTC stakingintegration.
-- [#457](https://github.com/babylonlabs-io/babylon/pull/457) Remove staking msg server and update gentx to generate
-`MsgWrappedCreateValidator`
+This PR contains a series of PRs on multi-staking support and BTC staking integration.
+- [#530](https://github.com/babylonlabs-io/babylon/pull/530) Add `ConflictingCheckpointReceived` flag in `x/checkpointing` module.
+- [#519](https://github.com/babylonlabs-io/babylon/pull/519) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module
+- [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
+invocation
 
 ### Bug fixes
 
-- [#443](https://github.com/babylonlabs-io/babylon/pull/443) Fix swagger generation for incentive missing
-`v1` in path
+- [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+
+## v1.0.0-rc6
+
+### Improvements
+
+- [#508](https://github.com/babylonlabs-io/babylon/pull/508) Move PoP constructor functiosn to datagen/
+- [#499](https://github.com/babylonlabs-io/babylon/pull/499) Add `params-by-version` CLI command
+- [#515](https://github.com/babylonlabs-io/babylon/pull/515) Add `staker_addr` to `EventBTCDelegationCreated`
+- [#458](https://github.com/babylonlabs-io/babylon/pull/458) Set `CosmosProvider` functions as public in
+`babylonclient` package
+
+### Bug fixes
+
+- [#509](https://github.com/babylonlabs-io/babylon/pull/509) crypto: fix ECDSA malleability
+- [#486](https://github.com/babylonlabs-io/babylon/pull/486) crypto: blinding base mult of nonce
+- [#443](https://github.com/babylonlabs-io/babylon/pull/443) Fix swagger generation for incentive missing `v1` in path
+- [#505](https://github.com/babylonlabs-io/babylon/pull/505) Fix `x/btcstaking`
+delegation queries
+
+## v1.0.0-rc5
+
+### Improvements
+
+- [#467](https://github.com/babylonlabs-io/babylon/pull/467) BLS keystore improvement
+- [#483](https://github.com/babylonlabs-io/babylon/pull/483) Upgrade wasmd and wasmvm to latest
+versions (related to security advisories CWA-2025-001 and CWA-2025-002)
+- [#464](https://github.com/babylonlabs-io/babylon/pull/464) Update security email. Fix site / repository refs
+- [#421](https://github.com/babylonlabs-io/babylon/pull/421) Add checks to public
+randomness commit at `TestBTCRewardsDistribution`.
 - [#445](https://github.com/babylonlabs-io/babylon/pull/445) Reject BTC headers
 forks starting with already known header
+- [#457](https://github.com/babylonlabs-io/babylon/pull/457)  Remove staking msg
+server and update gentx to generate `MsgWrappedCreateValidator`
+- [#473](https://github.com/babylonlabs-io/babylon/pull/473) Fix checkpoint status transition
+from `Finalized` to `Forgotten`
+- [#476](https://github.com/babylonlabs-io/babylon/pull/476) Bump cometbft to `v0.38.17`
+- [#491](https://github.com/babylonlabs-io/babylon/pull/491) Allow slashing rate
+to have 4 decimal places
+- [#488](https://github.com/babylonlabs-io/babylon/pull/488) Fix duplicate BLS key registration in testnet command
+- [#493](https://github.com/babylonlabs-io/babylon/pull/493) Add v1rc5 testnet
+upgrade handler
 
 ## v1.0.0-rc4
 

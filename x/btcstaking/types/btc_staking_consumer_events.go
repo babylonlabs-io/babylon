@@ -52,6 +52,7 @@ func CreateActiveBTCDelegationEvent(activeDel *BTCDelegation) (*BTCStakingConsum
 	event := &BTCStakingConsumerEvent{
 		Event: &BTCStakingConsumerEvent_ActiveDel{
 			ActiveDel: &ActiveBTCDelegation{
+				StakerAddr:           activeDel.StakerAddr,
 				BtcPkHex:             activeDel.BtcPk.MarshalHex(),
 				FpBtcPkList:          fpBtcPkHexList,
 				StartHeight:          activeDel.StartHeight,

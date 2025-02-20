@@ -1,19 +1,14 @@
 package keeper
 
 import (
-	"github.com/cometbft/cometbft/crypto"
+	"context"
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
-
-type BlsSigner interface {
-	GetAddress() sdk.ValAddress
-	SignMsgWithBls(msg []byte) (bls12381.Signature, error)
-	GetBlsPubkey() (bls12381.PublicKey, error)
-	GetValidatorPubkey() (crypto.PubKey, error)
-}
 
 // SignBLS signs a BLS signature over the given information
 func (k Keeper) SignBLS(epochNum uint64, blockHash types.BlockHash) (bls12381.Signature, error) {
@@ -22,14 +17,11 @@ func (k Keeper) SignBLS(epochNum uint64, blockHash types.BlockHash) (bls12381.Si
 	return k.blsSigner.SignMsgWithBls(signBytes)
 }
 
-func (k Keeper) GetBLSSignerAddress() sdk.ValAddress {
-	return k.blsSigner.GetAddress()
-}
-
-func (k Keeper) GetValidatorAddress() sdk.ValAddress {
-	pk, err := k.blsSigner.GetValidatorPubkey()
+// GetValidatorAddress returns the validator address of the signer
+func (k Keeper) GetValidatorAddress(ctx context.Context) (sdk.ValAddress, error) {
+	blsPubKey, err := k.blsSigner.BlsPubKey()
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to get BLS public key: %w", err)
 	}
-	return sdk.ValAddress(pk.Address())
+	return k.GetValAddr(ctx, blsPubKey)
 }

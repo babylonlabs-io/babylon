@@ -27,6 +27,7 @@ var (
 	_ module.AppModuleBasic     = AppModuleBasic{}
 	_ appmodule.HasBeginBlocker = AppModule{}
 	_ module.HasABCIEndBlock    = AppModule{}
+	_ module.HasGenesis         = AppModule{}
 )
 
 // ----------------------------------------------------------------------------
