@@ -41,11 +41,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#527](https://github.com/babylonlabs-io/babylon/pull/527) Create BSL signer on start command with flags.
 
-### State Machine Breaking
-
 ### Bug fixes
 
-=======
 ### State Machine Breaking
 
 - [#530](https://github.com/babylonlabs-io/babylon/pull/530) Add `ConflictingCheckpointReceived` flag in `x/checkpointing` module.
