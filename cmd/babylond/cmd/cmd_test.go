@@ -137,7 +137,7 @@ func TestStartCmd(t *testing.T) {
 	require.FileExists(t, blsKeyFile, "BLS key file should be recreated by start command")
 	require.FileExists(t, blsPasswordFile, "BLS password file should be recreated by start command")
 
-	blsSigner := signer.LoadBlsSignerIfExists(app.DefaultNodeHome)
+	blsSigner := signer.LoadBlsSignerIfExists(app.DefaultNodeHome, "")
 	require.NotNil(t, blsSigner, "Should be able to load BLS signer after start")
 
 	p, err := os.FindProcess(os.Getpid())

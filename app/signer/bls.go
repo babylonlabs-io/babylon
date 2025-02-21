@@ -210,8 +210,12 @@ func (k *BlsKey) BlsPubKey() (bls12381.PublicKey, error) {
 
 // LoadBlsSignerIfExists attempts to load an existing BLS signer from the specified home directory
 // Returns the signer if files exist and can be loaded, or nil if files don't exist
-func LoadBlsSignerIfExists(homeDir string) checkpointingtypes.BlsSigner {
+// If customKeyPath is not empty, will use that path for the BLS key file instead of the default.
+func LoadBlsSignerIfExists(homeDir string, customKeyPath string) checkpointingtypes.BlsSigner {
 	blsKeyFile := DefaultBlsKeyFile(homeDir)
+	if customKeyPath != "" {
+		blsKeyFile = customKeyPath
+	}
 	blsPasswordFile := DefaultBlsPasswordFile(homeDir)
 
 	if !cmtos.FileExists(blsKeyFile) || !cmtos.FileExists(blsPasswordFile) {
@@ -223,8 +227,11 @@ func LoadBlsSignerIfExists(homeDir string) checkpointingtypes.BlsSigner {
 }
 
 // CreateBlsSigner creates a new BLS signer with the given password
-func CreateBlsSigner(homeDir string, password string) (checkpointingtypes.BlsSigner, error) {
+func CreateBlsSigner(homeDir string, password string, customKeyPath string) (checkpointingtypes.BlsSigner, error) {
 	blsKeyFile := DefaultBlsKeyFile(homeDir)
+	if customKeyPath != "" {
+		blsKeyFile = customKeyPath
+	}
 	blsPasswordFile := DefaultBlsPasswordFile(homeDir)
 
 	if err := EnsureDirs(blsKeyFile, blsPasswordFile); err != nil {
@@ -239,23 +246,21 @@ func CreateBlsSigner(homeDir string, password string) (checkpointingtypes.BlsSig
 // LoadOrGenBlsKey attempts to load an existing BLS signer or creates a new one if none exists.
 // If noPassword is true, creates key without password protection.
 // If password is empty and noPassword is false, will prompt for password.
-func LoadOrGenBlsKey(homeDir string, noPassword bool, password string) (checkpointingtypes.BlsSigner, error) {
+// If customKeyPath is not empty, will use that path for the BLS key file instead of the default.
+func LoadOrGenBlsKey(homeDir string, noPassword bool, password string, customKeyPath string) (checkpointingtypes.BlsSigner, error) {
 	// Try to load existing BLS signer first
-	blsSigner := LoadBlsSignerIfExists(homeDir)
+	blsSigner := LoadBlsSignerIfExists(homeDir, customKeyPath)
+	if blsSigner != nil {
+		return blsSigner, nil
+	}
 
-	// If no existing signer, create new one with password based on flags
-	if blsSigner == nil {
-		if !noPassword {
-			if password == "" {
-				password = NewBlsPassword()
-			}
-		}
+	if !noPassword && password == "" {
+		password = NewBlsPassword()
+	}
 
-		var err error
-		blsSigner, err = CreateBlsSigner(homeDir, password)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create new BLS signer: %w", err)
-		}
+	blsSigner, err := CreateBlsSigner(homeDir, password, customKeyPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new BLS signer: %w", err)
 	}
 
 	return blsSigner, nil

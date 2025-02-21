@@ -21,12 +21,24 @@ func defaultBabylonBtcConfig() BtcConfig {
 	}
 }
 
+type BlsConfig struct {
+	BlsKeyFile string `mapstructure:"bls-key-file"`
+}
+
+func defaultBabylonBlsConfig() BlsConfig {
+	return BlsConfig{
+		BlsKeyFile: "", // Will default to $HOME/.babylond/config/bls_key.json
+	}
+}
+
 type BabylonAppConfig struct {
 	serverconfig.Config `mapstructure:",squash"`
 
 	Wasm wasmtypes.WasmConfig `mapstructure:"wasm"`
 
 	BtcConfig BtcConfig `mapstructure:"btc-config"`
+
+	BlsConfig BlsConfig `mapstructure:"bls-config"`
 }
 
 func DefaultBabylonAppConfig() *BabylonAppConfig {
@@ -38,11 +50,20 @@ func DefaultBabylonAppConfig() *BabylonAppConfig {
 		Config:    baseConfig,
 		Wasm:      wasmtypes.DefaultWasmConfig(),
 		BtcConfig: defaultBabylonBtcConfig(),
+		BlsConfig: defaultBabylonBlsConfig(),
 	}
 }
 
 func DefaultBabylonTemplate() string {
 	return serverconfig.DefaultConfigTemplate + wasmtypes.DefaultConfigTemplate() + `
+###############################################################################
+###                        BLS configuration                                ###
+###############################################################################
+
+[bls-config]
+# Path to the BLS key file (if empty, defaults to $HOME/.babylond/config/bls_key.json)
+bls-key-file = "{{ .BlsConfig.BlsKeyFile }}"
+
 ###############################################################################
 ###                      Babylon Bitcoin configuration                      ###
 ###############################################################################
