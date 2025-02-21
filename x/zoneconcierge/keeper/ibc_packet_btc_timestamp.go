@@ -195,7 +195,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 	if epochNum < 1 {
 		k.Logger(sdkCtx).Info("skipping BTC timestamp broadcast",
 			"reason", "epoch less than 1",
-			"current_epoch", epochNum,
+			"epoch", epochNum,
 		)
 		return nil
 	}
