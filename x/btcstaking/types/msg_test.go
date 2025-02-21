@@ -52,7 +52,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 				BtcPk:       fp.BtcPk,
 				Pop:         fp.Pop,
 			},
-			fmt.Errorf("empty commission rate"),
+			fmt.Errorf("empty commission"),
 		},
 		{
 			"invalid: empty description",
