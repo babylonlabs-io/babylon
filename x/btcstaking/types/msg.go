@@ -11,7 +11,6 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // ensure that these message types implement the sdk.Msg interface
@@ -26,10 +25,6 @@ var (
 )
 
 func (m *MsgCreateFinalityProvider) ValidateBasic() error {
-	if m.Commission == (stktypes.CommissionRates{}) {
-		return fmt.Errorf("empty commission")
-	}
-
 	if err := m.Commission.Validate(); err != nil {
 		return err
 	}

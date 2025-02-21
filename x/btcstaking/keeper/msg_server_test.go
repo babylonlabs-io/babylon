@@ -14,7 +14,6 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -93,7 +92,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 			msg := &types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission: stktypes.NewCommissionRates(
+				Commission: types.NewCommissionRates(
 					*fp.Commission,
 					fp.CommissionInfo.MaxRate,
 					fp.CommissionInfo.MaxChangeRate,
@@ -117,7 +116,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 			msg := &types.MsgCreateFinalityProvider{
 				Addr:        fp2.Addr,
 				Description: fp2.Description,
-				Commission: stktypes.NewCommissionRates(
+				Commission: types.NewCommissionRates(
 					*fp2.Commission,
 					fp2.CommissionInfo.MaxRate,
 					fp2.CommissionInfo.MaxChangeRate,

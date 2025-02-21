@@ -518,14 +518,14 @@ func NewSelectiveSlashingEvidenceCmd() *cobra.Command {
 
 // getCommissionRates retrieves the commission rates information
 // from the corresponding flags. If the flag value is empty, uses default values
-func getCommissionRates(fs *pflag.FlagSet) (stakingtypes.CommissionRates, error) {
+func getCommissionRates(fs *pflag.FlagSet) (types.CommissionRates, error) {
 	rateStr, _ := fs.GetString(stakingcli.FlagCommissionRate)
 	if rateStr == "" {
 		rateStr = defaultCommissionRate
 	}
 	rate, err := sdkmath.LegacyNewDecFromStr(rateStr)
 	if err != nil {
-		return stakingtypes.CommissionRates{}, fmt.Errorf("invalid commission-rate: %w", err)
+		return types.CommissionRates{}, fmt.Errorf("invalid commission-rate: %w", err)
 	}
 	maxRateStr, _ := fs.GetString(stakingcli.FlagCommissionMaxRate)
 	if maxRateStr == "" {
@@ -533,7 +533,7 @@ func getCommissionRates(fs *pflag.FlagSet) (stakingtypes.CommissionRates, error)
 	}
 	maxRate, err := sdkmath.LegacyNewDecFromStr(maxRateStr)
 	if err != nil {
-		return stakingtypes.CommissionRates{}, fmt.Errorf("invalid commission-max-rate: %w", err)
+		return types.CommissionRates{}, fmt.Errorf("invalid commission-max-rate: %w", err)
 	}
 
 	maxRateChangeStr, _ := fs.GetString(stakingcli.FlagCommissionMaxChangeRate)
@@ -542,7 +542,7 @@ func getCommissionRates(fs *pflag.FlagSet) (stakingtypes.CommissionRates, error)
 	}
 	maxRateChange, err := sdkmath.LegacyNewDecFromStr(maxRateChangeStr)
 	if err != nil {
-		return stakingtypes.CommissionRates{}, fmt.Errorf("invalid commission-max-change-rate: %w", err)
+		return types.CommissionRates{}, fmt.Errorf("invalid commission-max-change-rate: %w", err)
 	}
-	return stakingtypes.NewCommissionRates(rate, maxRate, maxRateChange), nil
+	return types.NewCommissionRates(rate, maxRate, maxRateChange), nil
 }

@@ -16,7 +16,6 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -229,7 +228,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	msgNewFp := types.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
 		Description: fp.Description,
-		Commission: stktypes.NewCommissionRates(
+		Commission: types.NewCommissionRates(
 			*fp.Commission,
 			fp.CommissionInfo.MaxRate,
 			fp.CommissionInfo.MaxChangeRate,
@@ -257,7 +256,7 @@ func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string)
 	msgNewFp := types.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
 		Description: fp.Description,
-		Commission: stktypes.NewCommissionRates(
+		Commission: types.NewCommissionRates(
 			*fp.Commission,
 			fp.CommissionInfo.MaxRate,
 			fp.CommissionInfo.MaxChangeRate,
@@ -655,7 +654,7 @@ func (h *Helper) AddFinalityProvider(fp *types.FinalityProvider) {
 	err := h.BTCStakingKeeper.AddFinalityProvider(h.Ctx, &types.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
 		Description: fp.Description,
-		Commission: stktypes.NewCommissionRates(
+		Commission: types.NewCommissionRates(
 			*fp.Commission,
 			fp.CommissionInfo.MaxRate,
 			fp.CommissionInfo.MaxChangeRate,

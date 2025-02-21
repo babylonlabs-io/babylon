@@ -25,7 +25,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 	require.NoError(t, err)
 
 	invalidAddr := "bbnbadaddr"
-	commission := stktypes.NewCommissionRates(*fp.Commission, fp.CommissionInfo.MaxRate, fp.CommissionInfo.MaxChangeRate)
+	commission := types.NewCommissionRates(*fp.Commission, fp.CommissionInfo.MaxRate, fp.CommissionInfo.MaxChangeRate)
 
 	tcs := []struct {
 		title  string
@@ -48,7 +48,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  stktypes.CommissionRates{},
+				Commission:  types.CommissionRates{},
 				BtcPk:       fp.BtcPk,
 				Pop:         fp.Pop,
 			},

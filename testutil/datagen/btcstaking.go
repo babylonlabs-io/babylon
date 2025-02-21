@@ -19,6 +19,7 @@ import (
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -98,7 +99,7 @@ func GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(
 	return &bstypes.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
 		Description: fp.Description,
-		Commission: stakingtypes.NewCommissionRates(
+		Commission: types.NewCommissionRates(
 			*fp.Commission,
 			fp.CommissionInfo.MaxRate,
 			fp.CommissionInfo.MaxChangeRate,
