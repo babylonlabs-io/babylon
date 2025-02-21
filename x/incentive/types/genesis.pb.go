@@ -58,7 +58,7 @@ type GenesisState struct {
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
 	// BTC staking gauge on every height
 	BtcStakingGauges []BTCStakingGaugeEntry `protobuf:"bytes,2,rep,name=btc_staking_gauges,json=btcStakingGauges,proto3" json:"btc_staking_gauges"`
-	// Staking Rewards gauge on every height
+	// RewardGauges the reward gauge for each BTC staker and finality provider
 	RewardGauges []RewardGaugeEntry `protobuf:"bytes,3,rep,name=reward_gauges,json=rewardGauges,proto3" json:"reward_gauges"`
 	// Withdraw addresses of the delegators
 	WithdrawAddresses []WithdrawAddressEntry `protobuf:"bytes,4,rep,name=withdraw_addresses,json=withdrawAddresses,proto3" json:"withdraw_addresses"`

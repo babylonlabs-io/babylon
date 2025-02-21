@@ -793,6 +793,7 @@ func equalFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpRes
 	require.Equal(t, fp.Pop, fpResp.Pop)
 	require.Equal(t, fp.SlashedBabylonHeight, fpResp.SlashedBabylonHeight)
 	require.Equal(t, fp.SlashedBtcHeight, fpResp.SlashedBtcHeight)
+	require.Equal(t, fp.CommissionInfo, fpResp.CommissionInfo)
 }
 
 // CreateNodeFPFromNodeAddr creates a random finality provider.
