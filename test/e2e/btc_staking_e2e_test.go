@@ -793,10 +793,12 @@ func equalFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpRes
 	require.Equal(t, fp.Pop, fpResp.Pop)
 	require.Equal(t, fp.SlashedBabylonHeight, fpResp.SlashedBabylonHeight)
 	require.Equal(t, fp.SlashedBtcHeight, fpResp.SlashedBtcHeight)
-	// don't compare UpdateTime field because it is set to the
-	// current block time on creation
 	require.Equal(t, fp.CommissionInfo.MaxRate, fpResp.CommissionInfo.MaxRate)
 	require.Equal(t, fp.CommissionInfo.MaxChangeRate, fpResp.CommissionInfo.MaxChangeRate)
+	// UpdateTime field is set to the
+	// current block time on creation, so we can check in the response
+	// if the UpdateTime is within the last 15 secs
+	require.GreaterOrEqual(t, fpResp.CommissionInfo.UpdateTime, time.Now().UTC().Add(-15*time.Second))
 }
 
 // CreateNodeFPFromNodeAddr creates a random finality provider.
