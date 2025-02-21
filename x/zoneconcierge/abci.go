@@ -20,7 +20,13 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
-	k.BroadcastBTCHeaders(ctx)
-	k.BroadcastBTCStakingConsumerEvents(ctx)
+	if err := k.BroadcastBTCHeaders(ctx); err != nil {
+		panic(err)
+	}
+
+	if err := k.BroadcastBTCStakingConsumerEvents(ctx); err != nil {
+		panic(err)
+	}
+
 	return []abci.ValidatorUpdate{}, nil
 }
