@@ -292,4 +292,6 @@ message FinalityProviderResponse {
   // highest_voted_height is the highest height for which the
   // finality provider has voted
   uint32 highest_voted_height = 10;
+  // commission_info contains information details of the finality provider commission.
+  CommissionInfo commission_info = 11;  
 }

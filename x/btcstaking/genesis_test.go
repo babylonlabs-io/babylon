@@ -21,7 +21,7 @@ func TestGenesis(t *testing.T) {
 	}
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
-	k, ctx := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, nil)
+	k, ctx := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, nil, nil)
 
 	btcstaking.InitGenesis(ctx, *k, genesisState)
 	got := btcstaking.ExportGenesis(ctx, *k)

@@ -39,13 +39,15 @@ type Params struct {
 	MinStakingValueSat int64 `protobuf:"varint,3,opt,name=min_staking_value_sat,json=minStakingValueSat,proto3" json:"min_staking_value_sat,omitempty"`
 	// max_staking_value_sat is the maximum of satoshis locked in staking output
 	MaxStakingValueSat int64 `protobuf:"varint,4,opt,name=max_staking_value_sat,json=maxStakingValueSat,proto3" json:"max_staking_value_sat,omitempty"`
-	// min_staking_time is the minimum lock time specified in staking output script
+	// min_staking_time is the minimum lock time specified in staking output
+	// script
 	MinStakingTimeBlocks uint32 `protobuf:"varint,5,opt,name=min_staking_time_blocks,json=minStakingTimeBlocks,proto3" json:"min_staking_time_blocks,omitempty"`
-	// max_staking_time_blocks is the maximum lock time time specified in staking output script
+	// max_staking_time_blocks is the maximum lock time time specified in staking
+	// output script
 	MaxStakingTimeBlocks uint32 `protobuf:"varint,6,opt,name=max_staking_time_blocks,json=maxStakingTimeBlocks,proto3" json:"max_staking_time_blocks,omitempty"`
 	// PARAMETERS COVERING SLASHING
-	// slashing_pk_script is the pk_script expected in slashing output ie. the first
-	// output of slashing transaction
+	// slashing_pk_script is the pk_script expected in slashing output ie. the
+	// first output of slashing transaction
 	SlashingPkScript []byte `protobuf:"bytes,7,opt,name=slashing_pk_script,json=slashingPkScript,proto3" json:"slashing_pk_script,omitempty"`
 	// min_slashing_tx_fee_sat is the minimum amount of tx fee (quantified
 	// in Satoshi) needed for the pre-signed slashing tx. It covers both:
@@ -56,15 +58,16 @@ type Params struct {
 	// places
 	SlashingRate cosmossdk_io_math.LegacyDec `protobuf:"bytes,9,opt,name=slashing_rate,json=slashingRate,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"slashing_rate"`
 	// PARAMETERS COVERING UNBONDING
-	// unbonding_time is the exact unbonding time required from unbonding transaction
-	// it must be larger than `checkpoint_finalization_timeout` from `btccheckpoint` module
+	// unbonding_time is the exact unbonding time required from unbonding
+	// transaction it must be larger than `checkpoint_finalization_timeout` from
+	// `btccheckpoint` module
 	UnbondingTimeBlocks uint32 `protobuf:"varint,10,opt,name=unbonding_time_blocks,json=unbondingTimeBlocks,proto3" json:"unbonding_time_blocks,omitempty"`
 	// unbonding_fee exact fee required for unbonding transaction
 	UnbondingFeeSat int64 `protobuf:"varint,11,opt,name=unbonding_fee_sat,json=unbondingFeeSat,proto3" json:"unbonding_fee_sat,omitempty"`
 	// PARAMETERS COVERING FINALITY PROVIDERS
-	// min_commission_rate is the chain-wide minimum commission rate that a finality provider
-	// can charge their delegators expressed as a decimal (e.g., 0.5 for 50%). Maximal precion
-	// is 2 decimal places
+	// min_commission_rate is the chain-wide minimum commission rate that a
+	// finality provider can charge their delegators expressed as a decimal (e.g.,
+	// 0.5 for 50%). Maximal precion is 2 decimal places
 	MinCommissionRate cosmossdk_io_math.LegacyDec `protobuf:"bytes,12,opt,name=min_commission_rate,json=minCommissionRate,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"min_commission_rate"`
 	// base gas fee for delegation creation
 	DelegationCreationBaseGasFee uint64 `protobuf:"varint,13,opt,name=delegation_creation_base_gas_fee,json=delegationCreationBaseGasFee,proto3" json:"delegation_creation_base_gas_fee,omitempty"`
@@ -72,7 +75,8 @@ type Params struct {
 	// i.e all staking transactions are allowed to enter Babylon chain afterwards
 	// setting it to 0 means allow list is disabled
 	AllowListExpirationHeight uint64 `protobuf:"varint,14,opt,name=allow_list_expiration_height,json=allowListExpirationHeight,proto3" json:"allow_list_expiration_height,omitempty"`
-	// btc_activation_height is the btc height from which parameters are activated (inclusive)
+	// btc_activation_height is the btc height from which parameters are activated
+	// (inclusive)
 	BtcActivationHeight uint32 `protobuf:"varint,15,opt,name=btc_activation_height,json=btcActivationHeight,proto3" json:"btc_activation_height,omitempty"`
 }
 
@@ -194,7 +198,8 @@ func (m *Params) GetBtcActivationHeight() uint32 {
 
 // HeightVersionPair pairs a btc height with a version of the parameters
 type HeightVersionPair struct {
-	// start_height is the height from which the parameters are activated (inclusive)
+	// start_height is the height from which the parameters are activated
+	// (inclusive)
 	StartHeight uint64 `protobuf:"varint,1,opt,name=start_height,json=startHeight,proto3" json:"start_height,omitempty"`
 	// version is the version of the parameters
 	Version uint32 `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
@@ -249,7 +254,8 @@ func (m *HeightVersionPair) GetVersion() uint32 {
 
 // HeightToVersionMap maps a btc height to a version of the parameters
 type HeightToVersionMap struct {
-	// Pairs must be sorted by `start_height` in ascending order, without duplicates
+	// Pairs must be sorted by `start_height` in ascending order, without
+	// duplicates
 	Pairs []*HeightVersionPair `protobuf:"bytes,1,rep,name=pairs,proto3" json:"pairs,omitempty"`
 }
 

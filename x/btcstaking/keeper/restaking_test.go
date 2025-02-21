@@ -57,6 +57,10 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		czFPBTCPK := bbn.NewBIP340PubKeyFromBTCPK(czFPPK)
 		czFP2, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, consumerRegister.ConsumerId, czFPBTCPK)
 		h.NoError(err)
+		// on finality provider creation, the commission update time is set to the
+		// current block time. The czFP is randomly generated with update time = 0,
+		// so we need to update it to the block time to make it equal
+		czFP.CommissionInfo.UpdateTime = h.Ctx.BlockTime().UTC()
 		require.Equal(t, czFP, czFP2)
 
 		/*

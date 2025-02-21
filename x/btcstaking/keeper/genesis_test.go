@@ -24,7 +24,7 @@ import (
 func TestInitGenesisWithSetParams(t *testing.T) {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
-	k, ctx := testutilk.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, nil)
+	k, ctx := testutilk.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, nil, nil)
 
 	err := k.InitGenesis(ctx, *types.DefaultGenesis())
 	require.NoError(t, err)
@@ -59,7 +59,7 @@ func TestExportGenesis(t *testing.T) {
 	blkHeight := uint64(r.Int63n(1000)) + math.MaxUint16
 	totalDelegations := 0
 
-	for _, fp := range fps {
+	for i := range fps {
 		btcHead := btclcK.GetTipInfo(ctx)
 		btcHead.Height = uint32(blkHeight + 100)
 		btclcK.InsertHeaderInfos(ctx, []*btclightclientt.BTCHeaderInfo{
@@ -67,14 +67,18 @@ func TestExportGenesis(t *testing.T) {
 		})
 
 		// set finality
-		h.AddFinalityProvider(fp)
+		h.AddFinalityProvider(fps[i])
+		// on creating the finality providers, the commission UpdateTime
+		// is set to be the current block time. To check equality afterwards,
+		// we update the randomly generated fps (with UpdateTime = 0) to have UpdateTime = block time
+		fps[i].CommissionInfo.UpdateTime = ctx.BlockHeader().Time
 
 		stakingValue := r.Int31n(200000) + 10000
 		numDelegations := r.Int31n(10)
 		delegations := createNDelegationsForFinalityProvider(
 			r,
 			t,
-			fp.BtcPk.MustToBTCPK(),
+			fps[i].BtcPk.MustToBTCPK(),
 			int64(stakingValue),
 			int(numDelegations),
 			params.CovenantQuorum,
@@ -99,7 +103,7 @@ func TestExportGenesis(t *testing.T) {
 				Idx: &types.BTCDelegatorDelegationIndex{
 					StakingTxHashList: idxDelegatorStk.StakingTxHashList,
 				},
-				FpBtcPk:  fp.BtcPk,
+				FpBtcPk:  fps[i].BtcPk,
 				DelBtcPk: del.BtcPk,
 			}
 

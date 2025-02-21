@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbntypes "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
@@ -24,6 +25,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 	require.NoError(t, err)
 
 	invalidAddr := "bbnbadaddr"
+	commission := types.NewCommissionRates(*fp.Commission, fp.CommissionInfo.MaxRate, fp.CommissionInfo.MaxChangeRate)
 
 	tcs := []struct {
 		title  string
@@ -35,18 +37,18 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       fp.BtcPk,
 				Pop:         fp.Pop,
 			},
 			nil,
 		},
 		{
-			"invalid: empty commission",
+			"invalid: empty commission rates",
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  nil,
+				Commission:  types.CommissionRates{},
 				BtcPk:       fp.BtcPk,
 				Pop:         fp.Pop,
 			},
@@ -57,7 +59,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: nil,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       fp.BtcPk,
 				Pop:         fp.Pop,
 			},
@@ -74,7 +76,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 					SecurityContact: fp.Description.SecurityContact,
 					Details:         fp.Description.Details,
 				},
-				Commission: fp.Commission,
+				Commission: commission,
 				BtcPk:      fp.BtcPk,
 				Pop:        fp.Pop,
 			},
@@ -91,7 +93,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 					SecurityContact: fp.Description.SecurityContact,
 					Details:         fp.Description.Details,
 				},
-				Commission: fp.Commission,
+				Commission: commission,
 				BtcPk:      fp.BtcPk,
 				Pop:        fp.Pop,
 			},
@@ -102,7 +104,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       nil,
 				Pop:         fp.Pop,
 			},
@@ -113,7 +115,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       (*bbntypes.BIP340PubKey)(&bigBtcPK),
 				Pop:         fp.Pop,
 			},
@@ -124,7 +126,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       fp.BtcPk,
 				Pop:         nil,
 			},
@@ -135,7 +137,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       fp.BtcPk,
 				Pop:         nil,
 			},
@@ -146,7 +148,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        invalidAddr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       fp.BtcPk,
 				Pop:         fp.Pop,
 			},
@@ -157,7 +159,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 			&types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
+				Commission:  commission,
 				BtcPk:       fp.BtcPk,
 				Pop: &types.ProofOfPossessionBTC{
 					BtcSig: nil,
@@ -176,6 +178,101 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 				return
 			}
 			require.NoError(t, actErr)
+		})
+	}
+}
+
+func TestMsgEditFinalityProviderValidateBasic(t *testing.T) {
+	var (
+		r                = rand.New(rand.NewSource(10))
+		randomDecPointer = func() *math.LegacyDec {
+			val := datagen.RandomLegacyDec(r, 10, 1)
+			return &val
+		}
+		negativeDec      = math.LegacyNewDecWithPrec(-1, 2)
+		biggerThanOneDec = math.LegacyOneDec().Add(math.LegacyOneDec())
+		fpDesc           = &stktypes.Description{
+			Moniker: "test description",
+		}
+	)
+	validPk, err := datagen.GenRandomBIP340PubKey(r)
+	require.NoError(t, err)
+	testCases := []struct {
+		name     string
+		msg      *types.MsgEditFinalityProvider
+		expected error
+	}{
+		{
+			name: "valid commission and description",
+			msg: &types.MsgEditFinalityProvider{
+				Commission:  randomDecPointer(),
+				Description: fpDesc,
+				BtcPk:       []byte(*validPk),
+			},
+			expected: nil,
+		},
+		{
+			name: "commission negative value",
+			msg: &types.MsgEditFinalityProvider{
+				Commission:  &negativeDec,
+				Description: fpDesc,
+				BtcPk:       []byte(*validPk),
+			},
+			expected: sdkerrors.ErrInvalidRequest.Wrap("commission rate must be between 0 and 1 (inclusive). Got negative value"),
+		},
+		{
+			name: "commission greater than 1",
+			msg: &types.MsgEditFinalityProvider{
+				Commission:  &biggerThanOneDec,
+				Description: fpDesc,
+				BtcPk:       []byte(*validPk),
+			},
+			expected: types.ErrCommissionGTMaxRate,
+		},
+		{
+			name: "empty description",
+			msg: &types.MsgEditFinalityProvider{
+				Description: nil,
+				BtcPk:       []byte(*validPk),
+			},
+			expected: fmt.Errorf("empty description"),
+		},
+		{
+			name: "empty moniker",
+			msg: &types.MsgEditFinalityProvider{
+				Description: &stktypes.Description{
+					Moniker: "",
+				},
+				BtcPk: []byte(*validPk),
+			},
+			expected: fmt.Errorf("empty moniker"),
+		},
+		{
+			name: "invalid BTC public key length",
+			msg: &types.MsgEditFinalityProvider{
+				Description: fpDesc,
+				BtcPk:       []byte("shortBTCpk"),
+			},
+			expected: fmt.Errorf("malformed BTC PK"),
+		},
+		{
+			name: "invalid BTC public key (non-hex)",
+			msg: &types.MsgEditFinalityProvider{
+				Description: fpDesc,
+				BtcPk:       []byte("B3C0F1D2E3A4B596C7D8E9FA1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6E7F8A9BZ"),
+			},
+			expected: fmt.Errorf("malformed BTC PK"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.expected != nil {
+				require.EqualError(t, err, tc.expected.Error())
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 }

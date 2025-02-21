@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -24,7 +25,17 @@ const (
 	FlagWebsite         = "website"
 	FlagSecurityContact = "security-contact"
 	FlagDetails         = "details"
-	FlagCommissionRate  = "commission-rate"
+
+	FlagCommissionRate          = "commission-rate"
+	FlagCommissionMaxRate       = "commission-max-rate"
+	FlagCommissionMaxChangeRate = "commission-max-change-rate"
+)
+
+// default values
+const (
+	defaultCommissionRate          = "0.1"
+	defaultCommissionMaxRate       = "0.2"
+	defaultCommissionMaxChangeRate = "0.01"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -80,9 +91,8 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 				security,
 				details,
 			)
-			// get commission
-			rateStr, _ := fs.GetString(FlagCommissionRate)
-			rate, err := sdkmath.LegacyNewDecFromStr(rateStr)
+			// get commission rate information
+			commission, err := getCommissionRates(fs)
 			if err != nil {
 				return err
 			}
@@ -102,7 +112,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 			msg := types.MsgCreateFinalityProvider{
 				Addr:        clientCtx.FromAddress.String(),
 				Description: &description,
-				Commission:  &rate,
+				Commission:  commission,
 				BtcPk:       btcPK,
 				Pop:         pop,
 				ConsumerId:  consumerID,
@@ -119,7 +129,10 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 	fs.String(FlagSecurityContact, "", "The finality provider's (optional) security contact email")
 	fs.String(FlagDetails, "", "The finality provider's (optional) details")
 	fs.String(FlagIdentity, "", "The (optional) identity signature (ex. UPort or Keybase)")
+	// commission-related flags
 	fs.String(FlagCommissionRate, "0", "The initial commission rate percentage")
+	fs.String(FlagCommissionMaxRate, "", "The maximum commission rate percentage")
+	fs.String(FlagCommissionMaxChangeRate, "", "The maximum commission change rate percentage (per day)")
 
 	flags.AddTxFlagsToCmd(cmd)
 
@@ -506,4 +519,35 @@ func NewSelectiveSlashingEvidenceCmd() *cobra.Command {
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
+}
+
+// getCommissionRates retrieves the commission rates information
+// from the corresponding flags. If the flag value is empty, uses default values
+func getCommissionRates(fs *pflag.FlagSet) (types.CommissionRates, error) {
+	rateStr, _ := fs.GetString(FlagCommissionRate)
+	if rateStr == "" {
+		rateStr = defaultCommissionRate
+	}
+	rate, err := sdkmath.LegacyNewDecFromStr(rateStr)
+	if err != nil {
+		return types.CommissionRates{}, fmt.Errorf("invalid commission-rate: %w", err)
+	}
+	maxRateStr, _ := fs.GetString(FlagCommissionMaxRate)
+	if maxRateStr == "" {
+		maxRateStr = defaultCommissionMaxRate
+	}
+	maxRate, err := sdkmath.LegacyNewDecFromStr(maxRateStr)
+	if err != nil {
+		return types.CommissionRates{}, fmt.Errorf("invalid commission-max-rate: %w", err)
+	}
+
+	maxRateChangeStr, _ := fs.GetString(FlagCommissionMaxChangeRate)
+	if maxRateChangeStr == "" {
+		maxRateChangeStr = defaultCommissionMaxChangeRate
+	}
+	maxRateChange, err := sdkmath.LegacyNewDecFromStr(maxRateChangeStr)
+	if err != nil {
+		return types.CommissionRates{}, fmt.Errorf("invalid commission-max-change-rate: %w", err)
+	}
+	return types.NewCommissionRates(rate, maxRate, maxRateChange), nil
 }

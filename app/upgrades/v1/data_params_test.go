@@ -19,7 +19,7 @@ func TestHardCodedBtcStakingParamsAreValid(t *testing.T) {
 	for _, upgradeData := range UpgradeV1Data {
 		db := dbm.NewMemDB()
 		stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
-		k, ctx := testutilk.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, nil)
+		k, ctx := testutilk.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, nil, nil)
 
 		params, err := v1.LoadBtcStakingParamsFromData(upgradeData.BtcStakingParamsStr)
 		require.NoError(t, err)
