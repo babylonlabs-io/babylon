@@ -225,10 +225,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// - at least 1 one of them is a Babylon finality provider,
 	// - are not slashed, and
 	// - their registered epochs are finalised
-	// and then check whether the BTC stake is restaked to FPs of consumers
-	// TODO: ensure the BTC delegation does not restake to too many finality providers
-	// (pending concrete design)
-	restakedToConsumers, err := ms.validateRestakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
+	// and then check whether the BTC stake is multi-staked to FPs of consumers
+	restakedToConsumers, err := ms.validateStakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
 	if err != nil {
 		return nil, err
 	}
@@ -317,6 +315,16 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	// 1. make sure the delegation exists
 	btcDel, params, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
 	if err != nil {
+		return nil, err
+	}
+
+	// Ensure all finality providers
+	// - are known to Babylon,
+	// - at least 1 one of them is a Babylon finality provider,
+	// - are not slashed, and
+	// - their registered epochs are finalised
+	// and then check whether the BTC stake is multi-staked to FPs of consumers
+	if _, err = ms.validateStakedFPs(ctx, btcDel.FpBtcPkList); err != nil {
 		return nil, err
 	}
 
@@ -444,8 +452,17 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	}
 
 	btcDel, params, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
-
 	if err != nil {
+		return nil, err
+	}
+
+	// Ensure all finality providers
+	// - are known to Babylon,
+	// - at least 1 one of them is a Babylon finality provider,
+	// - are not slashed, and
+	// - their registered epochs are finalised
+	// and then check whether the BTC stake is multi-staked to FPs of consumers
+	if _, err = ms.validateStakedFPs(ctx, btcDel.FpBtcPkList); err != nil {
 		return nil, err
 	}
 

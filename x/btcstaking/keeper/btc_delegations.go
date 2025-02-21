@@ -225,10 +225,10 @@ func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 	store.Set(stakingTxHash[:], btcDelBytes)
 }
 
-// validateRestakedFPs ensures all finality providers are known to Babylon and at least
+// validateStakedFPs ensures all finality providers are known to Babylon and at least
 // one of them is a Babylon finality provider. It also checks whether the BTC stake is
-// restaked to FPs of consumer chains
-func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) (bool, error) {
+// multi-staked to FPs of consumer chains
+func (k Keeper) validateStakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) (bool, error) {
 	restakedToBabylon := false
 	restakedToConsumers := false
 
