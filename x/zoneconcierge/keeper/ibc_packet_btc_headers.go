@@ -12,7 +12,9 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	openZCChannels := k.GetAllOpenZCChannels(ctx)
 	if len(openZCChannels) == 0 {
-		k.Logger(sdkCtx).Info("no open IBC channel with ZoneConcierge, skip broadcasting BTC headers")
+		k.Logger(sdkCtx).Info("skipping BTC header broadcast",
+			"reason", "no open channels",
+		)
 		return nil
 	}
 
@@ -29,7 +31,9 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 	//   - If last segment invalid (reorg): Return from BSN base to tip
 	headers := k.getHeadersToBroadcast(ctx)
 	if len(headers) == 0 {
-		k.Logger(sdkCtx).Info("no new BTC headers to broadcast")
+		k.Logger(sdkCtx).Info("skipping BTC header broadcast",
+			"reason", "no headers to broadcast",
+		)
 		return nil
 	}
 

@@ -20,7 +20,9 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	openZCChannels := k.GetAllOpenZCChannels(ctx)
 	if len(openZCChannels) == 0 {
-		k.Logger(sdkCtx).Info("no open IBC channel with ZoneConcierge, skip broadcasting BTC staking consumer events")
+		k.Logger(sdkCtx).Info("skipping BTC staking consumer event broadcast",
+			"reason", "no open channels",
+		)
 		return nil
 	}
 
@@ -43,7 +45,10 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 		// Check if there are open channels for the current consumer ID.
 		channels, ok := consumerChannelMap[consumerID]
 		if !ok {
-			k.Logger(sdkCtx).Error("No channels found for clientID", "clientID", consumerID)
+			k.Logger(sdkCtx).Warn("skipping BTC staking consumer event broadcast",
+				"reason", "no channels found for consumer",
+				"consumerID", consumerID,
+			)
 			continue
 		}
 
