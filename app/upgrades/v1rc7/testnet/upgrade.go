@@ -35,7 +35,7 @@ func CreateUpgradeHandler() upgrades.UpgradeHandlerCreator {
 
 			logger := ctx.Logger().With("upgrade", UpgradeName)
 			logger.Info("migrating finality providers...")
-			if err := migrateFinalityProviders(ctx, keepers.BTCStakingKeeper); err != nil {
+			if err := MigrateFinalityProviders(ctx, keepers.BTCStakingKeeper); err != nil {
 				return nil, fmt.Errorf("failed migrate finality providers: %w", err)
 			}
 			logger.Info("finality providers migration done!")
@@ -50,9 +50,9 @@ func CreateUpgradeHandler() upgrades.UpgradeHandlerCreator {
 	}
 }
 
-// migrateFinalityProviders populates the new CommissionInfo field
+// MigrateFinalityProviders populates the new CommissionInfo field
 // with default values
-func migrateFinalityProviders(goCtx context.Context, k btcstakingkeeper.Keeper) error {
+func MigrateFinalityProviders(goCtx context.Context, k btcstakingkeeper.Keeper) error {
 	var (
 		defaultCommissionMaxRate       = sdkmath.LegacyMustNewDecFromStr("0.2")
 		defaultCommissionMaxChangeRate = sdkmath.LegacyMustNewDecFromStr("0.01")

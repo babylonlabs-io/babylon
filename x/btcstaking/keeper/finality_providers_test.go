@@ -11,7 +11,6 @@ import (
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -124,13 +123,7 @@ func TestUpdateFinalityProviderCommission(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			// mock BTC light client and BTC checkpoint modules
-			btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
-			btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-			h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+			h := testutil.NewHelper(t, nil, nil)
 
 			params := h.BTCStakingKeeper.GetParams(h.Ctx)
 			params.MinCommissionRate = tc.minCommission
