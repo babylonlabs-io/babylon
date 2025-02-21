@@ -1,6 +1,10 @@
 # Adapted from https://github.com/sorenlouv/backport-github-action
 name: Automatic backport action
 
+permissions:
+  contents: write # so it can comment
+  pull-requests: write # so it can create pull requests
+
 on:
   pull_request_target:
     types: ["labeled", "closed"]
