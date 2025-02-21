@@ -61,6 +61,7 @@ invocation
 
 ### Bug fixes
 
+- [#552](https://github.com/babylonlabs-io/babylon/pull/552) fix: fix: reject staking messages involving slashed FPs
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 
 ## v1.0.0-rc6
