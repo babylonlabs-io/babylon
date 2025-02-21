@@ -193,18 +193,26 @@ func (k Keeper) BroadcastBTCTimestamps(
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// Babylon does not broadcast BTC timestamps until finalising epoch 1
 	if epochNum < 1 {
-		k.Logger(sdkCtx).Info("Babylon does not finalize epoch 1 yet, skip broadcasting BTC timestamps")
+		k.Logger(sdkCtx).Info("skipping BTC timestamp broadcast",
+			"reason", "epoch less than 1",
+			"current_epoch", epochNum,
+		)
 		return nil
 	}
 
 	// get all channels that are open and are connected to ZoneConcierge's port
 	openZCChannels := k.GetAllOpenZCChannels(ctx)
 	if len(openZCChannels) == 0 {
-		k.Logger(sdkCtx).Info("no open IBC channel with ZoneConcierge, skip broadcasting BTC timestamps")
+		k.Logger(sdkCtx).Info("skipping BTC timestamp broadcast",
+			"reason", "no open channels",
+		)
 		return nil
 	}
 
-	k.Logger(sdkCtx).Info("there exists open IBC channels with ZoneConcierge, generating BTC timestamps", "number of channels", len(openZCChannels))
+	k.Logger(sdkCtx).Info("broadcasting BTC timestamps",
+		"channels", len(openZCChannels),
+		"epoch", epochNum,
+	)
 
 	// get all metadata shared across BTC timestamps in the same epoch
 	finalizedInfo, err := k.getFinalizedInfo(ctx, epochNum, headersToBroadcast)
