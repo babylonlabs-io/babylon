@@ -281,7 +281,6 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 		// so they should be aggregated in the first block of the new epoch
 		// and no BLS signatures are send in epoch 0
 		if epoch.IsVoteExtensionProposal(ctx) {
-
 			// 1. extract the special tx containing the checkpoint
 			injectedCkpt, err := h.ExtractInjectedCheckpoint(req.Txs)
 			if err != nil {

@@ -49,6 +49,7 @@ check of rewards
 - [#480](https://github.com/babylonlabs-io/babylon/pull/480) Improve IBC packet structure
 - [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
 - [#504](https://github.com/babylonlabs-io/babylon/pull/504) Add `btc-headers` IBC packet
+- [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
 
 ### State Machine Breaking
 
