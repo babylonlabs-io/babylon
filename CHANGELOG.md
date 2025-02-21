@@ -40,8 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#527](https://github.com/babylonlabs-io/babylon/pull/527) Create BSL signer on start command with flags.
-
-### Bug fixes
+- [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
 
 ### State Machine Breaking
 
