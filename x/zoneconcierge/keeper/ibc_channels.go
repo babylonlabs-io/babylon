@@ -30,34 +30,15 @@ func (k Keeper) GetAllOpenZCChannels(ctx context.Context) []channeltypes.Identif
 	return openZCChannels
 }
 
-// MapClientIDToChannels creates a map of IBC client IDs to their corresponding channels
-func (k Keeper) MapClientIDToChannels(ctx context.Context) map[string][]channeltypes.IdentifiedChannel {
-	openZCChannels := k.GetAllOpenZCChannels(ctx)
-	clientChannelMap := make(map[string][]channeltypes.IdentifiedChannel)
+// getClientID gets the ID of the IBC client under the given channel
+// We will use the client ID as the consumer ID to uniquely identify
+// the consumer chain
+func (k Keeper) getClientID(ctx context.Context, channel channeltypes.IdentifiedChannel) (string, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
-	for _, channel := range openZCChannels {
-		ibcClientID, err := k.getIBCClientID(ctx, channel)
-		if err != nil {
-			k.Logger(sdkCtx).Error("Failed to get IBC client ID, skipping channel", "channelID", channel.ChannelId, "error", err)
-			continue
-		}
-
-		clientChannelMap[ibcClientID] = append(clientChannelMap[ibcClientID], channel)
-	}
-
-	return clientChannelMap
-}
-
-// getIBCClientID gets the IBC client ID associated with the given channel
-func (k Keeper) getIBCClientID(ctx context.Context, channel channeltypes.IdentifiedChannel) (string, error) {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	// get clientState under this channel
 	clientID, _, err := k.channelKeeper.GetChannelClientState(sdkCtx, channel.PortId, channel.ChannelId)
 	if err != nil {
 		return "", err
 	}
-
 	return clientID, nil
 }
 
