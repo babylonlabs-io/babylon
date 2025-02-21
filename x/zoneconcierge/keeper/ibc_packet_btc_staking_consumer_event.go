@@ -37,10 +37,8 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 		consumerChannelMap[consumerID] = append(consumerChannelMap[consumerID], channel)
 	}
 
-	// Retrieve all BTC staking consumer events.
-	consumerIBCPacketMap := k.bsKeeper.GetAllBTCStakingConsumerIBCPackets(ctx)
-
 	// Iterate through all consumer events and send them to the corresponding open IBC channel.
+	consumerIBCPacketMap := k.bsKeeper.GetAllBTCStakingConsumerIBCPackets(ctx)
 	for consumerID, ibcPacket := range consumerIBCPacketMap {
 		// Check if there are open channels for the current consumer ID.
 		channels, ok := consumerChannelMap[consumerID]
@@ -52,22 +50,18 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 			continue
 		}
 
-		// Prepare the outbound packet
 		outPacket := &types.OutboundPacket{
 			Packet: &types.OutboundPacket_BtcStaking{
 				BtcStaking: ibcPacket,
 			},
 		}
 
-		// Iterate through the list of channels and send the IBC packet to each.
 		for _, channel := range channels {
-			// Send the IBC packet.
 			if err := k.SendIBCPacket(ctx, channel, outPacket); err != nil {
 				return err
 			}
 		}
 
-		// Delete the events for the current consumer ID from the store after successful transmission.
 		k.bsKeeper.DeleteBTCStakingConsumerIBCPacket(ctx, consumerID)
 	}
 

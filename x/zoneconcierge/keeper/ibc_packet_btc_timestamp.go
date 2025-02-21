@@ -130,7 +130,11 @@ func (k Keeper) createBTCTimestamp(
 			btcTimestamp.Proof.ProofCzHeaderInEpoch = epochChainInfo.ProofHeaderInEpoch
 		}
 	} else {
-		k.Logger(sdkCtx).Warn("failed to get epochChainInfo", "consumerID", consumerID, "epochNum", epochNum, "error", err)
+		k.Logger(sdkCtx).Debug("no epochChainInfo for consumer",
+			"consumerID", consumerID,
+			"epoch", epochNum,
+			"error", err,
+		)
 	}
 
 	return btcTimestamp, nil
