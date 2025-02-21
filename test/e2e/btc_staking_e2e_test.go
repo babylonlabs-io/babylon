@@ -649,7 +649,7 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	// 	false,
 	// 	fmt.Sprintf("--fee-granter=%s", feePayerAddr.String()),
 	// 	fmt.Sprintf("--fees=%s", fees.Add(stakerBalance).String()),
-	// )s.feePayerAddr
+	// )
 	// s.Require().Contains(output, fmt.Sprintf("code: %d", feegrant.ErrFeeLimitExceeded.ABCICode()))
 	// s.Require().Contains(output, feegrant.ErrFeeLimitExceeded.Error())
 
