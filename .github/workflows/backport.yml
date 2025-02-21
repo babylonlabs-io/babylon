@@ -1,4 +1,4 @@
-# Adapted from https://github.com/sorenlouv/backport-github-action 2
+# Adapted from https://github.com/sorenlouv/backport-github-action 3
 name: Automatic backport action
 
 permissions:
