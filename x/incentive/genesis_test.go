@@ -11,12 +11,10 @@ import (
 )
 
 func TestGenesis(t *testing.T) {
-	genesisState := types.GenesisState{
-		Params: types.DefaultParams(),
-	}
+	genesisState := types.DefaultGenesis()
 
 	k, ctx := keepertest.IncentiveKeeper(t, nil, nil, nil)
-	incentive.InitGenesis(ctx, *k, genesisState)
+	incentive.InitGenesis(ctx, *k, *genesisState)
 	got := incentive.ExportGenesis(ctx, *k)
 	require.NotNil(t, got)
 

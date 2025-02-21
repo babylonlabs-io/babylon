@@ -27,12 +27,14 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params defines the parameters for the module, including portions of rewards
 // distributed to each type of stakeholder. Note that sum of the portions should
-// be strictly less than 1 so that the rest will go to Comet validators/delegations
-// adapted from https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/proto/cosmos/distribution/v1beta1/distribution.proto
+// be strictly less than 1 so that the rest will go to Comet
+// validators/delegations adapted from
+// https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/proto/cosmos/distribution/v1beta1/distribution.proto
 type Params struct {
-	// btc_staking_portion is the portion of rewards that goes to Finality Providers/delegations
-	// NOTE: the portion of each Finality Provider/delegation is calculated by using its voting
-	// power and finality provider's commission
+	// btc_staking_portion is the portion of rewards that goes to Finality
+	// Providers/delegations NOTE: the portion of each Finality
+	// Provider/delegation is calculated by using its voting power and finality
+	// provider's commission
 	BtcStakingPortion cosmossdk_io_math.LegacyDec `protobuf:"bytes,1,opt,name=btc_staking_portion,json=btcStakingPortion,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"btc_staking_portion"`
 }
 

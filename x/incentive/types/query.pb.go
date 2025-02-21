@@ -115,7 +115,8 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
-// QueryRewardGaugesRequest is request type for the Query/RewardGauges RPC method.
+// QueryRewardGaugesRequest is request type for the Query/RewardGauges RPC
+// method.
 type QueryRewardGaugesRequest struct {
 	// address is the address of the stakeholder in bech32 string
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
@@ -161,12 +162,14 @@ func (m *QueryRewardGaugesRequest) GetAddress() string {
 	return ""
 }
 
-// RewardGaugesResponse is an object that stores rewards distributed to a BTC staking stakeholder
+// RewardGaugesResponse is an object that stores rewards distributed to a BTC
+// staking stakeholder
 type RewardGaugesResponse struct {
 	// coins are coins that have been in the gauge
 	// Can have multiple coin denoms
 	Coins github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=coins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"coins"`
-	// withdrawn_coins are coins that have been withdrawn by the stakeholder already
+	// withdrawn_coins are coins that have been withdrawn by the stakeholder
+	// already
 	WithdrawnCoins github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=withdrawn_coins,json=withdrawnCoins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"withdrawn_coins"`
 }
 
@@ -217,10 +220,12 @@ func (m *RewardGaugesResponse) GetWithdrawnCoins() github_com_cosmos_cosmos_sdk_
 	return nil
 }
 
-// QueryRewardGaugesResponse is response type for the Query/RewardGauges RPC method.
+// QueryRewardGaugesResponse is response type for the Query/RewardGauges RPC
+// method.
 type QueryRewardGaugesResponse struct {
-	// reward_gauges is the map of reward gauges, where key is the stakeholder type
-	// and value is the reward gauge holding all rewards for the stakeholder in that type
+	// reward_gauges is the map of reward gauges, where key is the stakeholder
+	// type and value is the reward gauge holding all rewards for the stakeholder
+	// in that type
 	RewardGauges map[string]*RewardGaugesResponse `protobuf:"bytes,1,rep,name=reward_gauges,json=rewardGauges,proto3" json:"reward_gauges,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
@@ -264,7 +269,8 @@ func (m *QueryRewardGaugesResponse) GetRewardGauges() map[string]*RewardGaugesRe
 	return nil
 }
 
-// QueryBTCStakingGaugeRequest is request type for the Query/BTCStakingGauge RPC method.
+// QueryBTCStakingGaugeRequest is request type for the Query/BTCStakingGauge RPC
+// method.
 type QueryBTCStakingGaugeRequest struct {
 	// height is the queried Babylon height
 	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
@@ -310,7 +316,8 @@ func (m *QueryBTCStakingGaugeRequest) GetHeight() uint64 {
 	return 0
 }
 
-// BTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC method.
+// BTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC
+// method.
 type BTCStakingGaugeResponse struct {
 	// coins that have been in the gauge
 	// can have multiple coin denoms
@@ -357,7 +364,8 @@ func (m *BTCStakingGaugeResponse) GetCoins() github_com_cosmos_cosmos_sdk_types.
 	return nil
 }
 
-// QueryBTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC method.
+// QueryBTCStakingGaugeResponse is response type for the Query/BTCStakingGauge
+// RPC method.
 type QueryBTCStakingGaugeResponse struct {
 	// gauge is the BTC staking gauge at the queried height
 	Gauge *BTCStakingGaugeResponse `protobuf:"bytes,1,opt,name=gauge,proto3" json:"gauge,omitempty"`

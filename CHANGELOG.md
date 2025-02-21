@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#519](https://github.com/babylonlabs-io/babylon/pull/519) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module
 - [#527](https://github.com/babylonlabs-io/babylon/pull/527) Create BSL signer on start command with flags.
 - [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
 

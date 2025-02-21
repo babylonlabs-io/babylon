@@ -34,6 +34,19 @@ func RandomUInt32(r *rand.Rand, rng uint32) uint32 {
 	return uint32(r.Intn(int(rng)))
 }
 
+// RandomLegacyDec generates a random sdk.Dec with i in the range [0, rngI) and precision in the range [0, rngPrec).
+func RandomLegacyDec(r *rand.Rand, rngI, rngPrec int) math.LegacyDec {
+	i := int64(r.Intn(rngI))
+	prec := int64(r.Intn(rngPrec))
+
+	// prec cannot be 0
+	if prec == 0 {
+		prec++
+	}
+
+	return math.LegacyNewDecWithPrec(i, prec)
+}
+
 func RandomIntOtherThan(r *rand.Rand, x int, rng int) uint64 {
 	if rng == 1 && x == 0 {
 		panic("There is no other int")

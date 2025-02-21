@@ -138,8 +138,8 @@ func (m *MsgWithdrawRewardResponse) GetCoins() github_com_cosmos_cosmos_sdk_type
 type MsgUpdateParams struct {
 	// authority is the address of the governance account.
 	// just FYI: cosmos.AddressString marks that this field should use type alias
-	// for AddressString instead of string, but the functionality is not yet implemented
-	// in cosmos-proto
+	// for AddressString instead of string, but the functionality is not yet
+	// implemented in cosmos-proto
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 	// params defines the incentive parameters to update.
 	//
@@ -388,7 +388,8 @@ type MsgClient interface {
 	WithdrawReward(ctx context.Context, in *MsgWithdrawReward, opts ...grpc.CallOption) (*MsgWithdrawRewardResponse, error)
 	// UpdateParams updates the incentive module parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
-	// SetWithdrawAddress defines a method to change the withdraw address of a stakeholder
+	// SetWithdrawAddress defines a method to change the withdraw address of a
+	// stakeholder
 	SetWithdrawAddress(ctx context.Context, in *MsgSetWithdrawAddress, opts ...grpc.CallOption) (*MsgSetWithdrawAddressResponse, error)
 }
 
@@ -433,7 +434,8 @@ type MsgServer interface {
 	WithdrawReward(context.Context, *MsgWithdrawReward) (*MsgWithdrawRewardResponse, error)
 	// UpdateParams updates the incentive module parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
-	// SetWithdrawAddress defines a method to change the withdraw address of a stakeholder
+	// SetWithdrawAddress defines a method to change the withdraw address of a
+	// stakeholder
 	SetWithdrawAddress(context.Context, *MsgSetWithdrawAddress) (*MsgSetWithdrawAddressResponse, error)
 }
 
