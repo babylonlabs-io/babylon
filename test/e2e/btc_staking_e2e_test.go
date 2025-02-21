@@ -729,7 +729,7 @@ func (s *BTCStakingTestSuite) Test9BlockBankSendAndBTCDelegate() {
 	unbondingTime := btcStkParams.UnbondingTimeBlocks
 
 	// NOTE: we use the grantee staker address for the BTC delegation PoP
-	pop, err := bstypes.NewPoPBTC(sdk.MustAccAddressFromBech32(stakerNoFundsAddr), s.delBTCSK)
+	pop, err := datagen.NewPoPBTC(sdk.MustAccAddressFromBech32(stakerNoFundsAddr), s.delBTCSK)
 	s.NoError(err)
 
 	// generate staking tx and slashing tx
