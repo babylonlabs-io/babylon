@@ -265,6 +265,11 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 		return nil, types.ErrInvalidPubRand.Wrapf("invalid signature over the public randomness list: %v", err)
 	}
 
+	// check commitment is not empty
+	if len(req.Commitment) == 0 {
+		return nil, types.ErrInvalidPubRand.Wrap("empty commitment")
+	}
+	
 	prCommit := &types.PubRandCommit{
 		StartHeight: req.StartHeight,
 		NumPubRand:  req.NumPubRand,
