@@ -20,8 +20,8 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
+	// error in generating IBC packet data or sending packets is consensus-critical
 	if err := k.BroadcastBTCHeaders(ctx); err != nil {
-		// error in generating IBC packet data or sending packets is consensus-critical
 		panic(err)
 	}
 	if err := k.BroadcastBTCStakingConsumerEvents(ctx); err != nil {
