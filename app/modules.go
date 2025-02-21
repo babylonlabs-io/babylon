@@ -1,7 +1,6 @@
 package app
 
 import (
-	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/cosmos/cosmos-sdk/client"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -10,8 +9,6 @@ import (
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 )
-
-var _ ibctesting.ChainApp = &BabylonApp{}
 
 // The following functions are required by ibctesting
 // (copied from https://github.com/osmosis-labs/osmosis/blob/main/app/modules.go)
