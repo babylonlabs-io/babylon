@@ -15,7 +15,7 @@ type Erc2335KeyStore struct {
 	Version     uint                   `json:"version"`     // Version of the keystore format (e.g., 4 for keystorev4).
 	UUID        string                 `json:"uuid"`        // Unique identifier for the keystore.
 	Path        string                 `json:"path"`        // File path where the keystore is stored.
-	Pubkey      string                 `json:"pubkey"`      // Public key associated with the keystore, stored as a hexadecimal string.
+	Pubkey      string                 `json:"pubkey"`      // Public key associated with the keystore, stored as a base64 encoded string.
 	Description string                 `json:"description"` // Optional description of the keystore, currently used to store the delegator address.
 }
 
