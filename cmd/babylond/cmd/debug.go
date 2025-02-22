@@ -58,9 +58,6 @@ func PrintBip340(cmd *cobra.Command, args []string) error {
 	}
 
 	bip340Key := types.BIP340PubKey(pk.Bytes())
-	if err != nil {
-		return err
-	}
 
 	cmd.Println("BIP340 Hex:", bip340Key.MarshalHex())
 	return nil
