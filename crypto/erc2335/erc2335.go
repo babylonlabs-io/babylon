@@ -1,6 +1,7 @@
 package erc2335
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -33,7 +34,7 @@ func Encrypt(privKey, pubKey []byte, password string) ([]byte, error) {
 	keystoreJSON := Erc2335KeyStore{
 		Crypto:  cryptoFields,
 		Version: 4,
-		Pubkey:  fmt.Sprintf("%x", pubKey),
+		Pubkey:  base64.StdEncoding.EncodeToString(pubKey),
 	}
 
 	return json.Marshal(keystoreJSON)
