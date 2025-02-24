@@ -26,7 +26,7 @@ In Bitcoin, there are two types of UTXO spending methods:
 2. **Script Path Spending** – Requires execution of a Bitcoin Script
     (used in Babylon).
 
-**Babylon exclusively uses script spending** because it enforces specific
+**Babylon exclusively uses script spending** becausetc it enforces specific
 staking conditions. Each type of transaction (staking, unbonding, slashing)
 has its own predefined rules.
 
@@ -34,7 +34,7 @@ For example, to process an unbonding transaction, the validator must:
 
 - Provide **three valid signatures** (e.g., from the staker and the
     Babylon covenant committee).
-- Submit a valid Merkle proof** proving that the spending script was
+- Submit a **valid Merkle proof** proving that the spending script was
     pre-committed in the staking transaction.
 
 If all conditions are met, Bitcoin allows the UTXO to be spent,
