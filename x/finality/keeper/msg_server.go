@@ -235,7 +235,7 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
 
 	// To avoid public randomness reset,
-	// check for overflow when doing (c.StartHeight + c.NumPubRand)
+	// check for overflow when doing (StartHeight + NumPubRand)
 	if req.StartHeight >= (req.StartHeight + req.NumPubRand) {
 		return nil, types.ErrOverflowInBlockHeight.Wrapf(
 			"public rand commit start block height: %d is equal or higher than (start height + num pub rand) %d",
