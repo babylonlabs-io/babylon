@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- - [BIP341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)-
+- [BIP341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)-
 a document specifying how to spend Taproot outputs
 
 ## How BTC Staking Works in Babylon
