@@ -52,6 +52,10 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 		return nil, types.ErrInvalidStakingTx.Wrapf("not included in the Bitcoin chain")
 	}
 
+	if inclusionProof.Index == 0 {
+		return nil, types.ErrInvalidStakingTx.Wrapf("coinbase tx cannot be used for staking")
+	}
+
 	startHeight := stakingTxHeader.Height
 	endHeight := stakingTxHeader.Height + stakingTime
 

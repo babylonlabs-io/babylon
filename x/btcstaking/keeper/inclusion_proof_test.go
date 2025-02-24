@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -184,6 +185,50 @@ func FuzzVerifyInclusionProofAndGetHeight(f *testing.F) {
 			)
 
 			require.ErrorContains(t, err, "staking tx's timelock has no more than unbonding")
+		})
+
+		t.Run("reject coinbase transaction", func(t *testing.T) {
+			params := h.BTCStakingKeeper.GetParams(h.Ctx)
+			msgTx := datagen.CreateDummyTx()
+			msgTx1 := datagen.CreateDummyTx()
+
+			// generate common merkle proof and inclusion header
+			prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
+			btcHeaderWithProof := datagen.GenRandomBtcdBlockWithTransactions(
+				r,
+				[]*wire.MsgTx{msgTx, msgTx1},
+				&prevBlock.Header,
+			)
+
+			inclusionHeader := btcHeaderWithProof.Block.Header
+			headerBytes := bbntypes.NewBTCHeaderBytesFromBlockHeader(&inclusionHeader)
+
+			inclusionHeaderInfo := &btclctypes.BTCHeaderInfo{
+				Header: &headerBytes,
+				Height: 10,
+			}
+			inclusionHeaderHash := inclusionHeader.BlockHash()
+			inclusionHeaderHashBytes := bbntypes.NewBTCHeaderHashBytesFromChainhash(&inclusionHeaderHash)
+
+			coinBaseIdx := 0
+			coinbaseProof := &types.ParsedProofOfInclusion{
+				HeaderHash: &inclusionHeaderHashBytes,
+				Proof:      btcHeaderWithProof.Proofs[coinBaseIdx].MerkleNodes,
+				Index:      uint32(coinBaseIdx), // Set index to 0 for coinbase
+			}
+
+			btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), &inclusionHeaderHashBytes).Return(inclusionHeaderInfo, nil).AnyTimes()
+
+			_, err = h.BTCStakingKeeper.VerifyInclusionProofAndGetHeight(
+				h.Ctx,
+				btcutil.NewTx(btcHeaderWithProof.Transactions[coinBaseIdx]),
+				confirmationDepth,
+				stakingTime,
+				params.UnbondingTimeBlocks,
+				coinbaseProof,
+			)
+
+			require.ErrorContains(t, err, "coinbase tx cannot be used for staking")
 		})
 	})
 }
