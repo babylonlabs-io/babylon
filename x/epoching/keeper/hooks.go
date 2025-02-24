@@ -49,7 +49,15 @@ func (k Keeper) Hooks() Hooks { return Hooks{k} }
 // BeforeValidatorSlashed records the slash event
 func (h Hooks) BeforeValidatorSlashed(ctx context.Context, valAddr sdk.ValAddress, fraction math.LegacyDec) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	thresholds := []float64{float64(1) / float64(3), float64(2) / float64(3)}
+	// Define thresholds as integer ratios to avoid doing arithmetic
+	// operations with float values that may cause nondeterminism due to rounding
+	thresholds := []struct {
+		numerator   int64
+		denominator int64
+	}{
+		{1, 3}, // 1/3
+		{2, 3}, // 2/3
+	}
 
 	epochNumber := h.k.GetEpoch(ctx).EpochNumber
 	totalVotingPower := h.k.GetTotalVotingPower(ctx, epochNumber)
@@ -68,7 +76,16 @@ func (h Hooks) BeforeValidatorSlashed(ctx context.Context, valAddr sdk.ValAddres
 
 	for _, threshold := range thresholds {
 		// if a certain threshold voting power is slashed in a single epoch, emit event and trigger hook
-		if float64(slashedVotingPower) < float64(totalVotingPower)*threshold && float64(totalVotingPower)*threshold <= float64(slashedVotingPower+thisVotingPower) {
+		// Use integer multiplication instead of floating point comparison
+		// totalVotingPower is multiplied by the threshold (totalVotingPower * threshold) and then compared against slashedVotingPower
+		// and (slashedVotingPower + thisVotingPower). So, by multiplying totalVotingPower * threshold.numerator
+		// and slashedVotingPower & (slashedVotingPower + thisVotingPower) by the threshold.denominator
+		// we get the same comparison.
+		left := slashedVotingPower * threshold.denominator
+		right1 := totalVotingPower * threshold.numerator
+		right2 := (slashedVotingPower + thisVotingPower) * threshold.denominator
+
+		if left < right1 && right1 <= right2 {
 			slashedVals := h.k.GetSlashedValidators(ctx, epochNumber)
 			slashedVals = append(slashedVals, thisVal)
 			event := types.NewEventSlashThreshold(slashedVotingPower, totalVotingPower, slashedVals)
