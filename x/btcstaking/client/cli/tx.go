@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -29,13 +30,6 @@ const (
 	FlagCommissionRate          = "commission-rate"
 	FlagCommissionMaxRate       = "commission-max-rate"
 	FlagCommissionMaxChangeRate = "commission-max-change-rate"
-)
-
-// default values
-const (
-	defaultCommissionRate          = "0.1"
-	defaultCommissionMaxRate       = "0.2"
-	defaultCommissionMaxChangeRate = "0.01"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -523,31 +517,28 @@ func NewSelectiveSlashingEvidenceCmd() *cobra.Command {
 
 // getCommissionRates retrieves the commission rates information
 // from the corresponding flags. If the flag value is empty, uses default values
-func getCommissionRates(fs *pflag.FlagSet) (types.CommissionRates, error) {
+func getCommissionRates(fs *pflag.FlagSet) (commission types.CommissionRates, err error) {
 	rateStr, _ := fs.GetString(FlagCommissionRate)
-	if rateStr == "" {
-		rateStr = defaultCommissionRate
-	}
-	rate, err := sdkmath.LegacyNewDecFromStr(rateStr)
-	if err != nil {
-		return types.CommissionRates{}, fmt.Errorf("invalid commission-rate: %w", err)
-	}
 	maxRateStr, _ := fs.GetString(FlagCommissionMaxRate)
-	if maxRateStr == "" {
-		maxRateStr = defaultCommissionMaxRate
-	}
-	maxRate, err := sdkmath.LegacyNewDecFromStr(maxRateStr)
-	if err != nil {
-		return types.CommissionRates{}, fmt.Errorf("invalid commission-max-rate: %w", err)
+	maxRateChangeStr, _ := fs.GetString(FlagCommissionMaxChangeRate)
+
+	if rateStr == "" || maxRateStr == "" || maxRateChangeStr == "" {
+		return commission, errors.New("must specify all validator commission parameters")
 	}
 
-	maxRateChangeStr, _ := fs.GetString(FlagCommissionMaxChangeRate)
-	if maxRateChangeStr == "" {
-		maxRateChangeStr = defaultCommissionMaxChangeRate
+	rate, err := sdkmath.LegacyNewDecFromStr(rateStr)
+	if err != nil {
+		return commission, fmt.Errorf("invalid commission-rate: %w", err)
 	}
+
+	maxRate, err := sdkmath.LegacyNewDecFromStr(maxRateStr)
+	if err != nil {
+		return commission, fmt.Errorf("invalid commission-max-rate: %w", err)
+	}
+
 	maxRateChange, err := sdkmath.LegacyNewDecFromStr(maxRateChangeStr)
 	if err != nil {
-		return types.CommissionRates{}, fmt.Errorf("invalid commission-max-change-rate: %w", err)
+		return commission, fmt.Errorf("invalid commission-max-change-rate: %w", err)
 	}
 	return types.NewCommissionRates(rate, maxRate, maxRateChange), nil
 }
