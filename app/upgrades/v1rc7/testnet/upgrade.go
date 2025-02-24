@@ -34,16 +34,16 @@ func CreateUpgradeHandler() upgrades.UpgradeHandlerCreator {
 			ctx := sdk.UnwrapSDKContext(context)
 
 			logger := ctx.Logger().With("upgrade", UpgradeName)
+			migrations, err := mm.RunMigrations(ctx, cfg, fromVM)
+			if err != nil {
+				return nil, fmt.Errorf("failed to run migrations: %w", err)
+			}
+
 			logger.Info("migrating finality providers...")
 			if err := MigrateFinalityProviders(ctx, keepers.BTCStakingKeeper); err != nil {
 				return nil, fmt.Errorf("failed migrate finality providers: %w", err)
 			}
 			logger.Info("finality providers migration done!")
-
-			migrations, err := mm.RunMigrations(ctx, cfg, fromVM)
-			if err != nil {
-				return nil, fmt.Errorf("failed to run migrations: %w", err)
-			}
 
 			return migrations, nil
 		}
@@ -80,7 +80,7 @@ func MigrateFinalityProviders(goCtx context.Context, k btcstakingkeeper.Keeper) 
 				SlashedBtcHeight:     fp.SlashedBtcHeight,
 				Jailed:               fp.Jailed,
 				HighestVotedHeight:   fp.HighestVotedHeight,
-				ConsumerId:           ctx.ChainID(),
+				ConsumerId:           ctx.ChainID(), // Here we're not using fp.ConsumerId because the query result is not returning it. Also, this field is not available on release/v1.x branch. Make sure to remove it when backporting
 				CommissionInfo:       btcstakingtypes.NewCommissionInfoWithTime(defaultCommissionMaxRate, defaultCommissionMaxChangeRate, ctx.BlockHeader().Time),
 			})
 			if err != nil {
