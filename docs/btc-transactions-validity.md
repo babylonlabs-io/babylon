@@ -30,7 +30,7 @@ In Bitcoin, there are two types of UTXO spending methods:
 staking conditions. Each type of transaction (staking, unbonding, slashing)
 has its own predefined rules.
 
-For example, to process an unbonding transaction, the validator must:
+For example, to process an unbonding transaction, the BTC staker must:
 
 - Provide **three valid signatures** (e.g., from the staker and the
     Babylon covenant committee).
