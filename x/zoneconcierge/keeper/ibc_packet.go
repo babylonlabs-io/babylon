@@ -48,14 +48,12 @@ func (k Keeper) SendIBCPacket(ctx context.Context, channel channeltypes.Identifi
 		timeoutTime, // if the packet is not relayed after this time, then the packet will be time out
 		k.cdc.MustMarshal(packetData),
 	)
-
-	// send packet
 	if err != nil {
-		// Failed/timeout packet should not make the system crash
 		k.Logger(sdkCtx).Error(fmt.Sprintf("failed to send IBC packet (sequence number: %d) to channel %v port %s: %v", seq, destinationChannel, destinationPort, err))
-	} else {
-		k.Logger(sdkCtx).Info(fmt.Sprintf("successfully sent IBC packet (sequence number: %d) to channel %v port %s", seq, destinationChannel, destinationPort))
+		return err
 	}
+
+	k.Logger(sdkCtx).Info(fmt.Sprintf("successfully sent IBC packet (sequence number: %d) to channel %v port %s", seq, destinationChannel, destinationPort))
 
 	// metrics stuff
 	labels := []metrics.Label{

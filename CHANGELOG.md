@@ -50,6 +50,7 @@ check of rewards
 - [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
 - [#504](https://github.com/babylonlabs-io/babylon/pull/504) Add `btc-headers` IBC packet
 - [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
+- [#556](https://github.com/babylonlabs-io/babylon/pull/556) Panic on consensus critical errors
 
 ### State Machine Breaking
 
