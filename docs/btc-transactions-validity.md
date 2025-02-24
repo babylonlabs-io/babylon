@@ -41,7 +41,8 @@ inside `Q`. If `m' == m`, the UTXO is validated and able to be spent.
 
 This Taproot public key construction follows the principles outlined in
 [BIP341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#constructing-and-spending-taproot-outputs),
-which details how Taproot UTXOs commit to both a public key and an optional script path.
+which details how Taproot UTXOs commit to both a public key and an optional
+script path.
 
 The exact implementation for Babylon’s staking module can be found in the
 [Babylon GitHub repository](https://github.com/babylonlabs-io/babylon/blob/main/btcstaking/types.go?plain=1#L27).
