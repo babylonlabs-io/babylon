@@ -1,16 +1,21 @@
 package keeper_test
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math"
 	"math/rand"
 	"testing"
 	"time"
 
+	"cosmossdk.io/collections"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/x/incentive/keeper"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
@@ -19,9 +24,11 @@ import (
 
 func TestInitGenesis(t *testing.T) {
 	var (
-		r   = rand.New(rand.NewSource(time.Now().Unix()))
-		acc = datagen.GenRandomAccount()
+		r    = rand.New(rand.NewSource(time.Now().Unix()))
+		acc1 = datagen.GenRandomAccount()
+		acc2 = datagen.GenRandomAccount()
 	)
+
 	tests := []struct {
 		name       string
 		gs         types.GenesisState
@@ -41,20 +48,54 @@ func TestInitGenesis(t *testing.T) {
 				},
 				RewardGauges: []types.RewardGaugeEntry{
 					{
-						Address:     acc.Address,
+						Address:     acc1.Address,
 						RewardGauge: datagen.GenRandomRewardGauge(r),
 					},
 				},
 				WithdrawAddresses: []types.WithdrawAddressEntry{
 					{
-						DelegatorAddress: acc.Address,
+						DelegatorAddress: acc1.Address,
 						WithdrawAddress:  datagen.GenRandomAccount().Address,
+					},
+				},
+				RefundableMsgHashes: []string{
+					genRandomMsgHashStr(),
+					genRandomMsgHashStr(),
+				},
+				FinalityProvidersCurrentRewards:    genRandomFinalityProviderCurrentRewardsEntries(r, 2),
+				FinalityProvidersHistoricalRewards: genRandomFinalityProviderHistoricalRewardsEntries(r, 2),
+				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{
+					{
+						FinalityProviderAddress: acc1.Address,
+						DelegatorAddress:        acc2.Address,
+						Tracker: func() *types.BTCDelegationRewardsTracker {
+							val := datagen.GenRandomBTCDelegationRewardsTracker(r)
+							return &val
+						}(),
+					},
+					{
+						FinalityProviderAddress: acc2.Address,
+						DelegatorAddress:        acc1.Address,
+						Tracker: func() *types.BTCDelegationRewardsTracker {
+							val := datagen.GenRandomBTCDelegationRewardsTracker(r)
+							return &val
+						}(),
+					},
+				},
+				BtcDelegatorsToFps: []types.BTCDelegatorToFpEntry{
+					{
+						DelegatorAddress:        acc2.Address,
+						FinalityProviderAddress: acc1.Address,
+					},
+					{
+						DelegatorAddress:        acc1.Address,
+						FinalityProviderAddress: acc2.Address,
 					},
 				},
 			},
 			akMockResp: func(m *types.MockAccountKeeper) {
 				// mock account keeper to return an account on GetAccount call
-				m.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Return(acc).Times(2)
+				m.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Return(acc1).AnyTimes()
 			},
 			expectErr: false,
 		},
@@ -79,7 +120,7 @@ func TestInitGenesis(t *testing.T) {
 				Params: types.DefaultParams(),
 				RewardGauges: []types.RewardGaugeEntry{
 					{
-						Address:     acc.Address,
+						Address:     acc1.Address,
 						RewardGauge: datagen.GenRandomRewardGauge(r),
 					},
 				},
@@ -89,7 +130,7 @@ func TestInitGenesis(t *testing.T) {
 				m.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 			},
 			expectErr: true,
-			errMsg:    fmt.Sprintf("account in rewards gauge with address %s does not exist", acc.Address),
+			errMsg:    fmt.Sprintf("account in rewards gauge with address %s does not exist", acc1.Address),
 		},
 		{
 			name: "Invalid delegator address (account does not exist)",
@@ -97,7 +138,7 @@ func TestInitGenesis(t *testing.T) {
 				Params: types.DefaultParams(),
 				WithdrawAddresses: []types.WithdrawAddressEntry{
 					{
-						DelegatorAddress: acc.Address,
+						DelegatorAddress: acc1.Address,
 						WithdrawAddress:  datagen.GenRandomAccount().Address,
 					},
 				},
@@ -107,7 +148,17 @@ func TestInitGenesis(t *testing.T) {
 				m.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 			},
 			expectErr: true,
-			errMsg:    fmt.Sprintf("delegator account with address %s does not exist", acc.Address),
+			errMsg:    fmt.Sprintf("delegator account with address %s does not exist", acc1.Address),
+		},
+		{
+			name: "Invalid msg hash string",
+			gs: types.GenesisState{
+				Params:              types.DefaultParams(),
+				RefundableMsgHashes: []string{"invalid_hash"},
+			},
+			akMockResp: func(m *types.MockAccountKeeper) {},
+			expectErr:  true,
+			errMsg:     "error decoding msg hash",
 		},
 	}
 
@@ -135,8 +186,14 @@ func TestInitGenesis(t *testing.T) {
 func FuzzTestExportGenesis(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		ctx, k, gs, ctrl := setupTest(t, seed)
+		ctx, k, sk, gs, ctrl := setupTest(t, seed)
 		defer ctrl.Finish()
+
+		var (
+			storeService = runtime.NewKVStoreService(sk)
+			store        = storeService.OpenKVStore(ctx)
+			storeAdaptor = runtime.KVStoreAdapter(store)
+		)
 
 		// Setup current state
 		require.NoError(t, k.SetParams(ctx, gs.Params))
@@ -145,6 +202,33 @@ func FuzzTestExportGenesis(f *testing.F) {
 			k.SetBTCStakingGauge(ctx, gs.BtcStakingGauges[i].Height, gs.BtcStakingGauges[i].Gauge)
 			k.SetRewardGauge(ctx, gs.RewardGauges[i].StakeholderType, sdk.MustAccAddressFromBech32(gs.RewardGauges[i].Address), gs.RewardGauges[i].RewardGauge)
 			k.SetWithdrawAddr(ctx, sdk.MustAccAddressFromBech32(gs.WithdrawAddresses[i].DelegatorAddress), sdk.MustAccAddressFromBech32(gs.WithdrawAddresses[i].WithdrawAddress))
+			bz, err := hex.DecodeString(gs.RefundableMsgHashes[i])
+			require.NoError(t, err)
+			k.RefundableMsgKeySet.Set(ctx, bz)
+			
+			// FP current rewards 
+			k.FinalityProviderCurrentRewards.Set(ctx, sdk.MustAccAddressFromBech32(gs.FinalityProvidersCurrentRewards[i].Address).Bytes(), *gs.FinalityProvidersCurrentRewards[i].Rewards)
+			fphrKey := collections.Join(
+				sdk.MustAccAddressFromBech32(gs.FinalityProvidersHistoricalRewards[i].Address).Bytes(),
+				gs.FinalityProvidersHistoricalRewards[i].Period,
+			)
+
+			// FP historical rewards 
+			k.FinalityProviderHistoricalRewards.Set(ctx, fphrKey, *gs.FinalityProvidersHistoricalRewards[i].Rewards)
+			bdrtKey := collections.Join(
+				sdk.MustAccAddressFromBech32(gs.BtcDelegationRewardsTrackers[i].FinalityProviderAddress).Bytes(),
+				sdk.MustAccAddressFromBech32(gs.BtcDelegationRewardsTrackers[i].DelegatorAddress).Bytes(),
+			)
+
+			// BTCDelegationRewardsTracker
+			k.BTCDelegationRewardsTracker.Set(ctx, bdrtKey, *gs.BtcDelegationRewardsTrackers[i].Tracker)
+
+			// btcDel2FP
+			st := prefix.NewStore(storeAdaptor, types.BTCDelegatorToFPKey)
+			delAcc := sdk.MustAccAddressFromBech32(gs.BtcDelegatorsToFps[i].DelegatorAddress)
+			fpAcc := sdk.MustAccAddressFromBech32(gs.BtcDelegatorsToFps[i].FinalityProviderAddress)
+			delStore := prefix.NewStore(st, delAcc.Bytes())
+			delStore.Set(fpAcc.Bytes(), []byte{0x00})
 		}
 
 		// Run the ExportGenesis
@@ -160,7 +244,7 @@ func FuzzTestExportGenesis(f *testing.F) {
 func FuzzTestInitGenesis(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		ctx, k, gs, ctrl := setupTest(t, seed)
+		ctx, k, _, gs, ctrl := setupTest(t, seed)
 		defer ctrl.Finish()
 		// Run the InitGenesis
 		err := k.InitGenesis(ctx, *gs)
@@ -178,16 +262,22 @@ func FuzzTestInitGenesis(f *testing.F) {
 
 // setupTest is a helper function to generate a random genesis state
 // and setup the incentive keeper with the accounts keeper mock
-func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *types.GenesisState, *gomock.Controller) {
+func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetypes.KVStoreKey, *types.GenesisState, *gomock.Controller) {
 	var (
 		ctrl       = gomock.NewController(t)
 		r          = rand.New(rand.NewSource(seed))
 		ak         = types.NewMockAccountKeeper(ctrl)
-		k, ctx     = keepertest.IncentiveKeeper(t, nil, ak, nil)
+		storeKey   = storetypes.NewKVStoreKey(types.StoreKey)
+		k, ctx     = keepertest.IncentiveKeeperWithStoreKey(t, storeKey, nil, ak, nil)
 		l          = int(math.Abs(float64(r.Int() % 50))) // cap it to 50 entries
 		bsg        = make([]types.BTCStakingGaugeEntry, l)
 		rg         = make([]types.RewardGaugeEntry, l)
 		wa         = make([]types.WithdrawAddressEntry, l)
+		mh         = make([]string, l)
+		fpCurrRwd  = make([]types.FinalityProviderCurrentRewardsEntry, l)
+		fpHistRwd  = make([]types.FinalityProviderHistoricalRewardsEntry, l)
+		bdrt       = make([]types.BTCDelegationRewardsTrackerEntry, l)
+		d2fp       = make([]types.BTCDelegatorToFpEntry, l)
 		currHeight = datagen.RandomInt(r, 100000)
 	)
 	defer ctrl.Finish()
@@ -200,18 +290,48 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *types.Ge
 			Height: getUniqueHeight(currHeight, usedHeights),
 			Gauge:  datagen.GenRandomGauge(r),
 		}
-		acc := datagen.GenRandomAccount()
-		// mock account keeper to return an account on GetAccount call (called 2 times, for the RewardsGauge, and the withdraw addr)
-		ak.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Return(acc).AnyTimes()
+		acc1 := datagen.GenRandomAccount()
+		acc2 := datagen.GenRandomAccount()
+		// mock account keeper to return an account on GetAccount calls
+		ak.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Return(acc1).AnyTimes()
+		ak.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Return(acc2).AnyTimes()
 
 		rg[i] = types.RewardGaugeEntry{
 			StakeholderType: datagen.GenRandomStakeholderType(r),
-			Address:         acc.Address,
+			Address:         acc1.Address,
 			RewardGauge:     datagen.GenRandomRewardGauge(r),
 		}
 		wa[i] = types.WithdrawAddressEntry{
-			DelegatorAddress: acc.Address,
+			DelegatorAddress: acc1.Address,
 			WithdrawAddress:  datagen.GenRandomAccount().Address,
+		}
+		mh[i] = genRandomMsgHashStr()
+		fpCurrRwd[i] = types.FinalityProviderCurrentRewardsEntry{
+			Address: acc1.Address,
+			Rewards: func() *types.FinalityProviderCurrentRewards {
+				val := datagen.GenRandomFinalityProviderCurrentRewards(r)
+				return &val
+			}(),
+		}
+		fpHistRwd[i] = types.FinalityProviderHistoricalRewardsEntry{
+			Address: acc1.Address,
+			Period:  getUniqueHeight(currHeight, usedHeights),
+			Rewards: func() *types.FinalityProviderHistoricalRewards {
+				val := datagen.GenRandomFPHistRwd(r)
+				return &val
+			}(),
+		}
+		bdrt[i] = types.BTCDelegationRewardsTrackerEntry{
+			FinalityProviderAddress: acc1.Address,
+			DelegatorAddress:        acc2.Address,
+			Tracker: func() *types.BTCDelegationRewardsTracker {
+				val := datagen.GenRandomBTCDelegationRewardsTracker(r)
+				return &val
+			}(),
+		}
+		d2fp[i] = types.BTCDelegatorToFpEntry{
+			DelegatorAddress:        acc2.Address,
+			FinalityProviderAddress: acc1.Address,
 		}
 	}
 
@@ -219,13 +339,18 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *types.Ge
 		Params: types.Params{
 			BtcStakingPortion: datagen.RandomLegacyDec(r, 10, 1),
 		},
-		BtcStakingGauges:  bsg,
-		RewardGauges:      rg,
-		WithdrawAddresses: wa,
+		BtcStakingGauges:                   bsg,
+		RewardGauges:                       rg,
+		WithdrawAddresses:                  wa,
+		RefundableMsgHashes:                mh,
+		FinalityProvidersCurrentRewards:    fpCurrRwd,
+		FinalityProvidersHistoricalRewards: fpHistRwd,
+		BtcDelegationRewardsTrackers:       bdrt,
+		BtcDelegatorsToFps:                 d2fp,
 	}
 
 	require.NoError(t, gs.Validate())
-	return ctx, k, gs, ctrl
+	return ctx, k, storeKey, gs, ctrl
 }
 
 // getUniqueHeight is a helper function to get a block height
@@ -240,4 +365,41 @@ func getUniqueHeight(currHeight uint64, usedHeights map[uint64]bool) uint64 {
 		}
 	}
 	return height
+}
+
+func genRandomMsgHashStr() string {
+	msg := types.MsgWithdrawReward{
+		Address: datagen.GenRandomAccount().Address,
+	}
+	msgHash := types.HashMsg(&msg)
+	return hex.EncodeToString(msgHash)
+}
+
+func genRandomFinalityProviderCurrentRewardsEntries(r *rand.Rand, count int) []types.FinalityProviderCurrentRewardsEntry {
+	res := make([]types.FinalityProviderCurrentRewardsEntry, count)
+	for i := range res {
+		res[i] = types.FinalityProviderCurrentRewardsEntry{
+			Address: datagen.GenRandomAccount().Address,
+			Rewards: func() *types.FinalityProviderCurrentRewards {
+				val := datagen.GenRandomFinalityProviderCurrentRewards(r)
+				return &val
+			}(),
+		}
+	}
+	return res
+}
+
+func genRandomFinalityProviderHistoricalRewardsEntries(r *rand.Rand, count int) []types.FinalityProviderHistoricalRewardsEntry {
+	res := make([]types.FinalityProviderHistoricalRewardsEntry, count)
+	for i := range res {
+		res[i] = types.FinalityProviderHistoricalRewardsEntry{
+			Address: datagen.GenRandomAccount().Address,
+			Period:  datagen.RandomInt(r, 100000),
+			Rewards: func() *types.FinalityProviderHistoricalRewards {
+				val := datagen.GenRandomFPHistRwd(r)
+				return &val
+			}(),
+		}
+	}
+	return res
 }
