@@ -62,6 +62,7 @@ invocation
 ### Bug fixes
 
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+- [#563](https://github.com/babylonlabs-io/babylon/pull/563) reject coinbase staking transactions
 
 ## v1.0.0-rc6
 
