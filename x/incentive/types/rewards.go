@@ -65,7 +65,7 @@ func (f *FinalityProviderCurrentRewards) Validate() error {
 	}
 
 	if f.TotalActiveSat.IsNil() {
-		return errors.New("current rewards has no coins")
+		return errors.New("current rewards has no total active satoshi delegated")
 	}
 
 	if f.TotalActiveSat.IsNegative() {

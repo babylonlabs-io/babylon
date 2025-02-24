@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/store/prefix"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -47,6 +49,61 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		if err := k.SetWithdrawAddr(ctx, delAddr, withdrawAddr); err != nil {
 			return err
 		}
+	}
+
+	for _, entry := range gs.RefundableMsgHashes {
+		// hashes are hex encoded for better readability
+		bz, err := hex.DecodeString(entry)
+		if err != nil {
+			return fmt.Errorf("error decoding msg hash: %w", err)
+		}
+		if err := k.RefundableMsgKeySet.Set(ctx, bz); err != nil {
+			return fmt.Errorf("error storing msg hash: %w", err)
+		}
+	}
+
+	for _, entry := range gs.FinalityProvidersCurrentRewards {
+		if err := k.FinalityProviderCurrentRewards.Set(
+			ctx,
+			sdk.MustAccAddressFromBech32(entry.Address).Bytes(),
+			*entry.Rewards,
+		); err != nil {
+			return err
+		}
+	}
+
+	for _, entry := range gs.FinalityProvidersHistoricalRewards {
+		if err := k.FinalityProviderHistoricalRewards.Set(
+			ctx,
+			collections.Join(
+				sdk.MustAccAddressFromBech32(entry.Address).Bytes(),
+				entry.Period,
+			),
+			*entry.Rewards,
+		); err != nil {
+			return err
+		}
+	}
+
+	for _, entry := range gs.BtcDelegationRewardsTrackers {
+		if err := k.BTCDelegationRewardsTracker.Set(
+			ctx,
+			collections.Join(
+				sdk.MustAccAddressFromBech32(entry.FinalityProviderAddress).Bytes(),
+				sdk.MustAccAddressFromBech32(entry.DelegatorAddress).Bytes(),
+			),
+			*entry.Tracker,
+		); err != nil {
+			return err
+		}
+	}
+
+	for _, entry := range gs.BtcDelegatorsToFps {
+		k.setBTCDelegatorToFP(
+			ctx,
+			sdk.MustAccAddressFromBech32(entry.DelegatorAddress),
+			sdk.MustAccAddressFromBech32(entry.FinalityProviderAddress),
+		)
 	}
 
 	return k.SetParams(ctx, gs.Params)
