@@ -276,6 +276,7 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 		k := h.ckptKeeper
 
 		epoch := k.GetEpoch(ctx)
+		proposerAddr := sdk.ValAddress(req.ProposerAddress).String()
 		// BLS signatures are sent in the last block of the previous epoch,
 		// so they should be aggregated in the first block of the new epoch
 		// and no BLS signatures are send in epoch 0
@@ -283,8 +284,9 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			// 1. extract the special tx containing the checkpoint
 			injectedCkpt, err := h.ExtractInjectedCheckpoint(req.Txs)
 			if err != nil {
-				h.logger.Error(
-					"processProposal: failed to extract injected checkpoint from the tx set", "err", err)
+				h.logger.Info(
+					"processProposal: failed to extract injected checkpoint from the tx set",
+					"height", req.Height, "epoch", epoch.EpochNumber, "proposer", proposerAddr, "err", err)
 				// should not return error here as error will cause panic
 				return resReject, nil
 			}
@@ -294,7 +296,8 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			req.Txs, err = removeInjectedTx(req.Txs)
 			if err != nil {
 				// should not return error here as error will cause panic
-				h.logger.Error("failed to remove injected tx from request: %w", err)
+				h.logger.Info("failed to remove injected tx from request",
+					"height", req.Height, "epoch", epoch.EpochNumber, "proposer", proposerAddr, "err", err)
 				return resReject, nil
 			}
 
@@ -302,7 +305,8 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			err = baseapp.ValidateVoteExtensions(ctx, h.ckptKeeper, req.Height, ctx.ChainID(), *injectedCkpt.ExtendedCommitInfo)
 			if err != nil {
 				// the returned err will lead to panic as something very wrong happened during consensus
-				h.logger.Error("invalid vote extensions by ValidateVoteExtensions: %w", err)
+				h.logger.Info("invalid vote extensions by ValidateVoteExtensions",
+					"height", req.Height, "epoch", epoch.EpochNumber, "proposer", proposerAddr, "err", err)
 				return resReject, nil
 			}
 
@@ -314,7 +318,8 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			ckpt, err := h.buildCheckpointFromVoteExtensions(ctx, epoch.EpochNumber, injectedCkpt.ExtendedCommitInfo.Votes)
 			if err != nil {
 				// should not return error here as error will cause panic
-				h.logger.Error("invalid vote extensions: %w", err)
+				h.logger.Info("invalid vote extensions",
+					"height", req.Height, "epoch", epoch.EpochNumber, "proposer", proposerAddr, "err", err)
 				return resReject, nil
 			}
 			// TODO it is possible that although the checkpoints do not match but the injected
@@ -322,7 +327,8 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			//  and we should probably send an alarm and stall the blockchain
 			if !ckpt.Equal(injectedCkpt.Ckpt) {
 				// should not return error here as error will cause panic
-				h.logger.Error("invalid checkpoint in vote extension tx", "err", err)
+				h.logger.Info("invalid checkpoint in vote extension tx",
+					"height", req.Height, "epoch", epoch.EpochNumber, "proposer", proposerAddr, "err", err)
 				return resReject, nil
 			}
 		}
@@ -330,11 +336,13 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 		// 5. verify the rest of the txs using the default handler
 		res, err := h.defaultProcessProposalHandler(ctx, req)
 		if err != nil {
+			h.logger.Error("failed in default ProcessProposal handler",
+				"proposer", proposerAddr, "err", err)
 			return resReject, fmt.Errorf("failed in default ProcessProposal handler: %w", err)
 		}
 		if !res.IsAccepted() {
-			h.logger.Error("the proposal is rejected by default ProcessProposal handler",
-				"height", req.Height, "epoch", epoch.EpochNumber)
+			h.logger.Info("the proposal is rejected by default ProcessProposal handler",
+				"height", req.Height, "epoch", epoch.EpochNumber, "proposer", proposerAddr)
 			return resReject, nil
 		}
 

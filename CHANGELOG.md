@@ -51,7 +51,8 @@ check of rewards
 - [#504](https://github.com/babylonlabs-io/babylon/pull/504) Add `btc-headers` IBC packet
 - [#519](https://github.com/babylonlabs-io/babylon/pull/519) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module
 - [#542](https://github.com/babylonlabs-io/babylon/pull/542) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module (follow up of [#519](https://github.com/babylonlabs-io/babylon/pull/519))
-
+- [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
+- [#556](https://github.com/babylonlabs-io/babylon/pull/556) Panic on consensus critical errors
 
 ### State Machine Breaking
 
@@ -64,6 +65,7 @@ invocation
 ### Bug fixes
 
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+- [#563](https://github.com/babylonlabs-io/babylon/pull/563) reject coinbase staking transactions
 
 ## v1.0.0-rc6
 
