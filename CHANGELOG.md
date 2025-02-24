@@ -48,8 +48,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Bug fixes
 
-- - [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
+- [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
 invocation
+- [#563](https://github.com/babylonlabs-io/babylon/pull/563) reject coinbase staking transactions
 
 ## v1.0.0-rc6
 
