@@ -73,9 +73,11 @@ func (m *MsgEditFinalityProvider) ValidateBasic() error {
 }
 
 func (m *MsgCreateBTCDelegation) ValidateBasic() error {
-	if _, err := ParseCreateDelegationMessage(m); err != nil {
-		return err
-	}
+	fmt.Println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ValidateBasic MsgCreateBTCDelegation")
+
+	// if _, err := ParseCreateDelegationMessage(m); err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
