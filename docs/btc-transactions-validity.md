@@ -26,9 +26,13 @@ In Bitcoin, there are two types of UTXO spending methods:
 2. **Script Path Spending** – Requires execution of a Bitcoin Script
     (used in Babylon).
 
-**Babylon exclusively uses script spending** becausetc it enforces specific
-staking conditions. Each type of transaction (staking, unbonding, slashing)
-has its own predefined rules.
+Babylon exclusively uses script spending to enforce specific staking conditions,
+ensuring that BTC can only be unlocked under predefined rules. It is important
+to note that the staking transaction is not a spending transaction; rather, it
+creates a Taproot UTXO that locks the BTC. In contrast, unbonding, slashing,
+and timelock transactions are spending transactions that unlock BTC by following
+one of the pre-committed script paths. Once BTC is staked, it remains locked
+until it is spent through one of these three allowed paths.
 
 For example, to process an unbonding transaction, the BTC staker must:
 
