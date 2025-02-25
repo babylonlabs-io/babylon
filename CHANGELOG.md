@@ -51,6 +51,7 @@ check of rewards
 - [#504](https://github.com/babylonlabs-io/babylon/pull/504) Add `btc-headers` IBC packet
 - [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
 - [#556](https://github.com/babylonlabs-io/babylon/pull/556) Panic on consensus critical errors
+- [#566](https://github.com/babylonlabs-io/babylon/pull/566) Remove float values in `BeforeValidatorSlashed` hook in `x/epoching` module
 
 ### State Machine Breaking
 
