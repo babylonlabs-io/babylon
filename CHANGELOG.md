@@ -37,9 +37,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#527](https://github.com/babylonlabs-io/babylon/pull/527) Create BSL signer on start command with flags.
+- [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
+
 ### State Machine Breaking
 
+- [#530](https://github.com/babylonlabs-io/babylon/pull/530) Add `ConflictingCheckpointReceived` flag in `x/checkpointing` module.
 - [#567](https://github.com/babylonlabs-io/babylon/pull/567) Add check for height overflow in `CommitPubRandList` in `x/finality` module
+
+### Bug fixes
+
+- [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
+invocation
+- [#563](https://github.com/babylonlabs-io/babylon/pull/563) reject coinbase staking transactions
 
 ## v1.0.0-rc6
 
