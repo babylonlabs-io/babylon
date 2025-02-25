@@ -23,4 +23,5 @@ var (
 	ErrBTCStakingNotActivated         = errorsmod.Register(ModuleName, 1114, "the BTC staking protocol is not activated yet")
 	ErrFinalityNotActivated           = errorsmod.Register(ModuleName, 1115, "finality is not active yet")
 	ErrSigHeightOutdated              = errorsmod.Register(ModuleName, 1116, "the voting block is already finalized and timestamped")
+	ErrOverflowInBlockHeight          = errorsmod.Register(ModuleName, 1117, "overflow in block height calculation")
 )
