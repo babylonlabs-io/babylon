@@ -192,6 +192,16 @@ func (d *BTCDelegation) MustGetStakingTx() *wire.MsgTx {
 	return stakingTx
 }
 
+func (d *BTCDelegation) MustGetUnbondingTx() *wire.MsgTx {
+	unbondingTx, err := bbn.NewBTCTxFromBytes(d.BtcUndelegation.UnbondingTx)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return unbondingTx
+}
+
 func (d *BTCDelegation) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(d.StakerAddr); err != nil {
 		return fmt.Errorf("invalid staker address: %s - %w", d.StakerAddr, err)
