@@ -1,4 +1,9 @@
+# Adapted from https://github.com/sorenlouv/backport-github-action
 name: Automatic backport action
+
+permissions:
+  contents: write # so it can comment
+  pull-requests: write # so it can create pull requests
 
 on:
   pull_request_target:
@@ -14,7 +19,7 @@ jobs:
         uses: sorenlouv/backport-github-action@v9.5.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          auto_backport_label_prefix: "backport "
+          auto_backport_label_prefix: "backport-to-"
 
       - name: Info log
         if: ${{ success() }}

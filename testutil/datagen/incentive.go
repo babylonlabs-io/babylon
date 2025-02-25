@@ -3,7 +3,6 @@ package datagen
 import (
 	"math/rand"
 
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -155,7 +154,7 @@ func GenRandomFinalityProviderCurrentRewards(r *rand.Rand) itypes.FinalityProvid
 
 func GenRandomBTCDelegationRewardsTracker(r *rand.Rand) itypes.BTCDelegationRewardsTracker {
 	period := RandomInt(r, 100) + 2
-	activeSatoshi := RandomMathInt(r, 10000).Add(math.NewInt(100))
+	activeSatoshi := RandomMathInt(r, 10000).Add(sdkmath.NewInt(100))
 	return itypes.NewBTCDelegationRewardsTracker(period, activeSatoshi)
 }
 
