@@ -3,6 +3,7 @@ package testutil
 import (
 	"math/rand"
 	"testing"
+	"time"
 
 	"cosmossdk.io/core/header"
 	"cosmossdk.io/log"
@@ -88,7 +89,7 @@ func NewHelperWithStoreAndIncentive(
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
 	ictvKeeper ftypes.IncentiveKeeper,
 ) *Helper {
-	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btclcKeeper, btccKForBtcStaking, ictvKeeper)
+	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, nil, btclcKeeper, btccKForBtcStaking, ictvKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
 	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality)
@@ -100,7 +101,7 @@ func NewHelperWithStoreAndIncentive(
 	err = fk.SetParams(ctx, ftypes.DefaultParams())
 	require.NoError(t, err)
 
-	ctx = ctx.WithHeaderInfo(header.Info{Height: 1}).WithBlockHeight(1)
+	ctx = ctx.WithHeaderInfo(header.Info{Height: 1, Time: time.Now()}).WithBlockHeight(1).WithBlockTime(time.Now())
 
 	return &Helper{
 		t:   t,
@@ -216,9 +217,13 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	msgNewFp := types.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
 		Description: fp.Description,
-		Commission:  fp.Commission,
-		BtcPk:       fp.BtcPk,
-		Pop:         fp.Pop,
+		Commission: types.NewCommissionRates(
+			*fp.Commission,
+			fp.CommissionInfo.MaxRate,
+			fp.CommissionInfo.MaxChangeRate,
+		),
+		BtcPk:      fp.BtcPk,
+		Pop:        fp.Pop,
 	}
 
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
@@ -605,9 +610,13 @@ func (h *Helper) AddFinalityProvider(fp *types.FinalityProvider) {
 	err := h.BTCStakingKeeper.AddFinalityProvider(h.Ctx, &types.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
 		Description: fp.Description,
-		Commission:  fp.Commission,
-		BtcPk:       fp.BtcPk,
-		Pop:         fp.Pop,
+		Commission: types.NewCommissionRates(
+			*fp.Commission,
+			fp.CommissionInfo.MaxRate,
+			fp.CommissionInfo.MaxChangeRate,
+		),
+		BtcPk: fp.BtcPk,
+		Pop:   fp.Pop,
 	})
 	h.NoError(err)
 }

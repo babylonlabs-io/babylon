@@ -7,6 +7,7 @@ import (
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
 	"github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
 	v1rc5 "github.com/babylonlabs-io/babylon/app/upgrades/v1rc5/testnet"
+	v1rc7 "github.com/babylonlabs-io/babylon/app/upgrades/v1rc7/testnet"
 )
 
 // init is used to include v1 upgrade testnet data
@@ -23,5 +24,6 @@ func init() {
 			AllowedStakingTxHashesStr: testnet.AllowedStakingTxHashesStr,
 		}, testnet.TestnetParamUpgrade),
 		v1rc5.CreateUpgrade(),
+		v1rc7.CreateUpgrade(),
 	}
 }

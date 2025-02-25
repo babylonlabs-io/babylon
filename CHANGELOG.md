@@ -45,6 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### State Machine Breaking
 
 - [#530](https://github.com/babylonlabs-io/babylon/pull/530) Add `ConflictingCheckpointReceived` flag in `x/checkpointing` module.
+- [#537](https://github.com/babylonlabs-io/babylon/pull/537) Add `CommissionRates` type to `MsgCreateFinalityProvider` and commission validation to `EditFinalityProvider` in `x/btcstaking` module
 
 ### Bug fixes
 
