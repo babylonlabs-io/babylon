@@ -875,6 +875,11 @@ func CreateNodeFP(
 	actualFps := node.QueryFinalityProviders()
 	require.Len(t, actualFps, len(previousFps)+1)
 
+	// get chain ID to assert equality with the ConsumerId field
+	status, err := node.Status()
+	require.NoError(t, err)
+	newFP.ConsumerId = status.NodeInfo.Network
+
 	for _, fpResp := range actualFps {
 		if !strings.EqualFold(fpResp.Addr, newFP.Addr) {
 			continue
