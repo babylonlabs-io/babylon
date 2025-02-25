@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/babylonlabs-io/babylon/app/signer"
+	cmtcfg "github.com/cometbft/cometbft/config"
+	"path/filepath"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
@@ -27,7 +30,7 @@ type BlsConfig struct {
 
 func defaultBabylonBlsConfig() BlsConfig {
 	return BlsConfig{
-		BlsKeyFile: "", // Will default to $HOME/.babylond/config/bls_key.json
+		BlsKeyFile: filepath.Join(cmtcfg.DefaultConfigDir, signer.DefaultBlsKeyName),
 	}
 }
 
