@@ -12,6 +12,7 @@ import (
 	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/app/signer"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -49,8 +50,8 @@ func TestStartCmd(t *testing.T) {
 
 	require.NoError(t, svrcmd.Execute(rootCmd, app.BabylonAppEnvPrefix, app.DefaultNodeHome))
 
-	blsKeyFile := signer.DefaultBlsKeyFile(app.DefaultNodeHome)
-	blsPasswordFile := signer.DefaultBlsPasswordFile(app.DefaultNodeHome)
+	blsKeyFile := filepath.Join(app.DefaultNodeHome, cmtcfg.DefaultConfigDir, signer.DefaultBlsKeyName)
+	blsPasswordFile := filepath.Join(app.DefaultNodeHome, cmtcfg.DefaultConfigDir, signer.DefaultBlsPasswordName)
 	require.FileExists(t, blsKeyFile, "BLS key file should exist after init")
 	require.FileExists(t, blsPasswordFile, "BLS password file should exist after init")
 

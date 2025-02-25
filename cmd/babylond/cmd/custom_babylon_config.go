@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+
+	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/app/signer"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	"path/filepath"
@@ -30,7 +32,7 @@ type BlsConfig struct {
 
 func defaultBabylonBlsConfig() BlsConfig {
 	return BlsConfig{
-		BlsKeyFile: filepath.Join(cmtcfg.DefaultConfigDir, signer.DefaultBlsKeyName),
+		BlsKeyFile: filepath.Join(app.DefaultNodeHome, cmtcfg.DefaultConfigDir, signer.DefaultBlsKeyName),
 	}
 }
 
