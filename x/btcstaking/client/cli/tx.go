@@ -515,7 +515,7 @@ func getCommissionRates(fs *pflag.FlagSet) (commission types.CommissionRates, er
 	maxRateChangeStr, _ := fs.GetString(FlagCommissionMaxChangeRate)
 
 	if rateStr == "" || maxRateStr == "" || maxRateChangeStr == "" {
-		return commission, errors.New("must specify all validator commission parameters")
+		return commission, errors.New("must specify all finality provider commission parameters")
 	}
 
 	rate, err := sdkmath.LegacyNewDecFromStr(rateStr)
