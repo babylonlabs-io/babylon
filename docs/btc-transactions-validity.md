@@ -11,6 +11,11 @@ root (`m`), which defines the allowed spending conditions. This ensures that
 only predefined scripts (timelock, unbonding, slashing) can be used to spend
 the UTXO.
 
+To spend BTC, the spender must provide a valid script and a Merkle proof,
+proving that the script was pre-committed inside `m`. Each spending path
+corresponds to a specific spending script, which enforces the conditions
+for unlocking the BTC.
+
 The Taproot public key (`Q`) is derived using the following formula:
 
 ```shell
