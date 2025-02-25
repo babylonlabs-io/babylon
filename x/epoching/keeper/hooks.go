@@ -49,8 +49,6 @@ func (k Keeper) Hooks() Hooks { return Hooks{k} }
 // BeforeValidatorSlashed records the slash event
 func (h Hooks) BeforeValidatorSlashed(ctx context.Context, valAddr sdk.ValAddress, fraction math.LegacyDec) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	// Define thresholds as integer ratios to avoid doing arithmetic
-	// operations with float values that may cause nondeterminism due to rounding
 	thresholds := []math.LegacyDec{
 		math.LegacyMustNewDecFromStr("0.33"), // 1/3
 		math.LegacyMustNewDecFromStr("0.67"), // 2/3
