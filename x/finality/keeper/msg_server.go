@@ -234,6 +234,15 @@ func (ms msgServer) ShouldAcceptSigForHeight(ctx context.Context, block *types.I
 func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommitPubRandList) (*types.MsgCommitPubRandListResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
 
+	// To avoid public randomness reset,
+	// check for overflow when doing (StartHeight + NumPubRand)
+	if req.StartHeight >= (req.StartHeight + req.NumPubRand) {
+		return nil, types.ErrOverflowInBlockHeight.Wrapf(
+			"public rand commit start block height: %d is equal or higher than (start height + num pub rand) %d",
+			req.StartHeight, req.StartHeight+req.NumPubRand,
+		)
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	activationHeight, errMod := ms.validateActivationHeight(ctx, req.StartHeight)
 	if errMod != nil {

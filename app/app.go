@@ -233,7 +233,7 @@ func NewBabylonApp(
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetTxEncoder(txConfig.TxEncoder())
 
-	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	wasmConfig, err := wasm.ReadNodeConfig(appOpts)
 	if err != nil {
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
