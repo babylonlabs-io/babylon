@@ -12,7 +12,7 @@ import (
 	"github.com/babylonlabs-io/babylon/x/epoching/types"
 )
 
-func (k Keeper) setEpochInfo(ctx context.Context, epochNumber uint64, epoch *types.Epoch) {
+func (k Keeper) SetEpochInfo(ctx context.Context, epochNumber uint64, epoch *types.Epoch) {
 	store := k.epochInfoStore(ctx)
 	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	epochBytes := k.cdc.MustMarshal(epoch)
@@ -38,7 +38,7 @@ func (k Keeper) InitEpoch(ctx context.Context) *types.Epoch {
 		panic("InitEpoch can be invoked only at genesis")
 	}
 	genesisEpoch := types.NewEpoch(0, 1, 0, &header.Time)
-	k.setEpochInfo(ctx, 0, &genesisEpoch)
+	k.SetEpochInfo(ctx, 0, &genesisEpoch)
 
 	return &genesisEpoch
 }
@@ -93,7 +93,7 @@ func (k Keeper) RecordLastHeaderTime(ctx context.Context) error {
 	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 	epoch.LastBlockTime = &header.Time
 	// save back to KVStore
-	k.setEpochInfo(ctx, epoch.EpochNumber, epoch)
+	k.SetEpochInfo(ctx, epoch.EpochNumber, epoch)
 	return nil
 }
 
@@ -115,7 +115,7 @@ func (k Keeper) RecordSealerAppHashForPrevEpoch(ctx context.Context) *types.Epoc
 
 	// record the sealer AppHash for the sealed epoch
 	sealedEpoch.SealerAppHash = header.AppHash
-	k.setEpochInfo(ctx, sealedEpoch.EpochNumber, sealedEpoch)
+	k.SetEpochInfo(ctx, sealedEpoch.EpochNumber, sealedEpoch)
 
 	return sealedEpoch
 }
@@ -133,7 +133,7 @@ func (k Keeper) RecordSealerBlockHashForEpoch(ctx context.Context) *types.Epoch 
 
 	// record the sealer block hash for the sealing epoch
 	epoch.SealerBlockHash = header.Hash
-	k.setEpochInfo(ctx, epoch.EpochNumber, epoch)
+	k.SetEpochInfo(ctx, epoch.EpochNumber, epoch)
 
 	return epoch
 }
@@ -147,7 +147,7 @@ func (k Keeper) IncEpoch(ctx context.Context) types.Epoch {
 
 	epochInterval := k.GetParams(ctx).EpochInterval
 	newEpoch := types.NewEpoch(incrementedEpochNumber, epochInterval, uint64(sdkCtx.HeaderInfo().Height), nil)
-	k.setEpochInfo(ctx, incrementedEpochNumber, &newEpoch)
+	k.SetEpochInfo(ctx, incrementedEpochNumber, &newEpoch)
 
 	return newEpoch
 }
