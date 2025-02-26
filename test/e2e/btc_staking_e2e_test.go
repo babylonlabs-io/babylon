@@ -793,6 +793,13 @@ func equalFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpRes
 	require.Equal(t, fp.Pop, fpResp.Pop)
 	require.Equal(t, fp.SlashedBabylonHeight, fpResp.SlashedBabylonHeight)
 	require.Equal(t, fp.SlashedBtcHeight, fpResp.SlashedBtcHeight)
+	require.Equal(t, fp.ConsumerId, fpResp.ConsumerId)
+	require.Equal(t, fp.CommissionInfo.MaxRate, fpResp.CommissionInfo.MaxRate)
+	require.Equal(t, fp.CommissionInfo.MaxChangeRate, fpResp.CommissionInfo.MaxChangeRate)
+	// UpdateTime field is set to the
+	// current block time on creation, so we can check in the response
+	// if the UpdateTime is within the last 15 secs
+	require.GreaterOrEqual(t, fpResp.CommissionInfo.UpdateTime, time.Now().UTC().Add(-15*time.Second))
 }
 
 // CreateNodeFPFromNodeAddr creates a random finality provider.
@@ -814,7 +821,7 @@ func CreateNodeFPFromNodeAddr(
 	// use a higher commission to ensure the reward is more than tx fee of a finality sig
 	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
 	newFP.Commission = &commission
-	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission)
+	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission, newFP.CommissionInfo.MaxRate, newFP.CommissionInfo.MaxChangeRate)
 
 	// wait for a block so that above txs take effect
 	node.WaitForNextBlock()
@@ -822,6 +829,11 @@ func CreateNodeFPFromNodeAddr(
 	// query the existence of finality provider and assert equivalence
 	actualFps := node.QueryFinalityProviders()
 	require.Len(t, actualFps, len(previousFps)+1)
+
+	// get chain ID to assert equality with the ConsumerId field
+	status, err := node.Status()
+	require.NoError(t, err)
+	newFP.ConsumerId = status.NodeInfo.Network
 
 	for _, fpResp := range actualFps {
 		if !strings.EqualFold(fpResp.Addr, newFP.Addr) {
@@ -854,7 +866,7 @@ func CreateNodeFP(
 	// use a higher commission to ensure the reward is more than tx fee of a finality sig
 	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
 	newFP.Commission = &commission
-	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission)
+	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission, newFP.CommissionInfo.MaxRate, newFP.CommissionInfo.MaxChangeRate)
 
 	// wait for a block so that above txs take effect
 	node.WaitForNextBlock()
@@ -862,6 +874,11 @@ func CreateNodeFP(
 	// query the existence of finality provider and assert equivalence
 	actualFps := node.QueryFinalityProviders()
 	require.Len(t, actualFps, len(previousFps)+1)
+
+	// get chain ID to assert equality with the ConsumerId field
+	status, err := node.Status()
+	require.NoError(t, err)
+	newFP.ConsumerId = status.NodeInfo.Network
 
 	for _, fpResp := range actualFps {
 		if !strings.EqualFold(fpResp.Addr, newFP.Addr) {
