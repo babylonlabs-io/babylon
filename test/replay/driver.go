@@ -550,7 +550,7 @@ func (d *BabylonAppDriver) GetBTCLCTip() (*wire.BlockHeader, uint32) {
 	return tipInfo.Header.ToBlockHeader(), tipInfo.Height
 }
 
-func blocksWithProofsToHeaderBytes(blocks []*datagen.BlockWithProofs) []bbn.BTCHeaderBytes {
+func BlocksWithProofsToHeaderBytes(blocks []*datagen.BlockWithProofs) []bbn.BTCHeaderBytes {
 	headerBytes := []bbn.BTCHeaderBytes{}
 	for _, block := range blocks {
 		headerBytes = append(headerBytes, bbn.NewBTCHeaderBytesFromBlockHeader(&block.Block.Header))
@@ -565,7 +565,7 @@ func (d *BabylonAppDriver) ExtendBTCLcWithNEmptyBlocks(
 ) (*wire.BlockHeader, uint32) {
 	tip, _ := d.GetBTCLCTip()
 	blocks := datagen.GenNEmptyBlocks(r, uint64(n), tip)
-	headers := blocksWithProofsToHeaderBytes(blocks)
+	headers := BlocksWithProofsToHeaderBytes(blocks)
 
 	d.SendTxWithMsgsFromDriverAccount(t, &btclighttypes.MsgInsertHeaders{
 		Signer:  d.GetDriverAccountAddress().String(),
@@ -583,7 +583,7 @@ func (d *BabylonAppDriver) GenBlockWithTransactions(
 ) *datagen.BlockWithProofs {
 	tip, _ := d.GetBTCLCTip()
 	block := datagen.GenRandomBtcdBlockWithTransactions(r, txs, tip)
-	headers := blocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
+	headers := BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
 
 	d.SendTxWithMsgsFromDriverAccount(t, &btclighttypes.MsgInsertHeaders{
 		Signer:  d.GetDriverAccountAddress().String(),
