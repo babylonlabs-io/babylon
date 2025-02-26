@@ -174,7 +174,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 ) *ftypes.VotingPowerDistCache {
 	// a map where key is finality provider's BTC PK hex and value is a list
 	// of BTC delegations satoshis amount that newly become active under this provider
-	activedSatsByFpBtcPk := map[string][]uint64{}
+	activatedSatsByFpBtcPk := map[string][]uint64{}
 	// a map where key is finality provider's BTC PK hex and value is a list
 	// of BTC delegations satoshis that were unbonded or expired without previously
 	// being unbonded
@@ -214,9 +214,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 						// This is a consumer FP rather than Babylon FP, skip it
 						continue
 					}
-					activedSatsByFpBtcPk[fpBTCPKHex] = append(activedSatsByFpBtcPk[fpBTCPKHex], btcDel.TotalSat)
+					activatedSatsByFpBtcPk[fpBTCPKHex] = append(activatedSatsByFpBtcPk[fpBTCPKHex], btcDel.TotalSat)
 				}
 
+				// FP could be already slashed when it is being activated, but it is okay
+				// since slashed finality providers do not earn rewards
 				k.processRewardTracker(ctx, fpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
 					k.MustProcessBtcDelegationActivated(ctx, fp, del, sats)
 				})
@@ -291,7 +293,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		}
 
 		// process all new BTC delegations under this finality provider
-		if fpActiveSats, ok := activedSatsByFpBtcPk[fpBTCPKHex]; ok {
+		if fpActiveSats, ok := activatedSatsByFpBtcPk[fpBTCPKHex]; ok {
 			// handle new BTC delegations for this finality provider
 			for _, activatedSats := range fpActiveSats {
 				fp.AddBondedSats(activatedSats)
@@ -299,7 +301,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			// remove the finality provider entry in fpActiveSats map, so that
 			// after the for loop the rest entries in fpActiveSats belongs to new
 			// finality providers with new BTC delegations
-			delete(activedSatsByFpBtcPk, fpBTCPKHex)
+			delete(activatedSatsByFpBtcPk, fpBTCPKHex)
 		}
 
 		// process all new unbonding BTC delegations under this finality provider
@@ -325,8 +327,8 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		process new BTC delegations under new finality providers in activeBTCDels
 	*/
 	// sort new finality providers in activeBTCDels to ensure determinism
-	fpActiveBtcPkHexList := make([]string, 0, len(activedSatsByFpBtcPk))
-	for fpBTCPKHex := range activedSatsByFpBtcPk {
+	fpActiveBtcPkHexList := make([]string, 0, len(activatedSatsByFpBtcPk))
+	for fpBTCPKHex := range activatedSatsByFpBtcPk {
 		// if the fp was slashed, should not even be added to the list
 		_, isSlashed := slashedFPs[fpBTCPKHex]
 		if isSlashed {
@@ -357,7 +359,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		}
 
 		// add each BTC delegation
-		fpActiveSats := activedSatsByFpBtcPk[fpBTCPKHex]
+		fpActiveSats := activatedSatsByFpBtcPk[fpBTCPKHex]
 		for _, activatedSats := range fpActiveSats {
 			fpDistInfo.AddBondedSats(activatedSats)
 		}
