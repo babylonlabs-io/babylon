@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec/v2"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
@@ -259,6 +260,32 @@ func TestSortFinalityProvidersWithZeroedVotingPower(t *testing.T) {
 			require.Equal(t, tt.expected, tt.fps, "Sorted slice should match expected order")
 		})
 	}
+}
+
+func FuzzNewFinalityProviderDistInfo(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 1000)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		fp, err := datagen.GenRandomFinalityProvider(r)
+		require.NoError(t, err)
+
+		if r.Int31n(10) > 5 {
+			fp.SlashedBabylonHeight = r.Uint64()
+		}
+		if r.Int31n(10) > 5 {
+			fp.Jailed = true
+		}
+
+		fpDstInf := types.NewFinalityProviderDistInfo(fp)
+		require.Equal(t, fpDstInf.BtcPk.MarshalHex(), fp.BtcPk.MarshalHex())
+		require.Equal(t, sdk.AccAddress(fpDstInf.Addr).String(), fp.Addr)
+		require.Equal(t, fpDstInf.Commission.String(), fp.Commission.String())
+		require.Equal(t, fpDstInf.TotalBondedSat, uint64(0))
+		require.Equal(t, fpDstInf.IsJailed, fp.Jailed)
+		require.Equal(t, fpDstInf.IsSlashed, fp.IsSlashed())
+		require.Equal(t, fpDstInf.IsTimestamped, false)
+	})
 }
 
 // FuzzSortingDeterminism tests the property of the sorting algorithm that the result should

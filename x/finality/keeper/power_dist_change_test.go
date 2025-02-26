@@ -2,12 +2,14 @@ package keeper_test
 
 import (
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
 	babylonApp "github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/test/replay"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/golang/mock/gomock"
@@ -29,7 +31,7 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		// t.Parallel()
+		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
 
 		app := babylonApp.Setup(t, false)
@@ -39,10 +41,10 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 		initHeader.Height = int64(1)
 		ctx = ctx.WithHeaderInfo(initHeader)
 
-		btcStkK, finalityK, btcLightK, checkPointK := app.BTCStakingKeeper, app.FinalityKeeper, app.BTCLightClientKeeper, app.CheckpointingKeeper
-		msgSrvrBtcStk, msgSrvrBtcLight := btcstakingkeeper.NewMsgServerImpl(btcStkK), btclightclientkeeper.NewMsgServerImpl(btcLightK)
+		btcStkK, finalityK, checkPointK, btcCheckK, btcLightK := app.BTCStakingKeeper, app.FinalityKeeper, app.CheckpointingKeeper, app.BtcCheckpointKeeper, app.BTCLightClientKeeper
+		msgSrvrBtcStk := btcstakingkeeper.NewMsgServerImpl(btcStkK)
 		btcNet := app.BTCLightClientKeeper.GetBTCNet()
-		btcStkParams := btcStkK.GetParams(ctx)
+		btcStkParams, btcCheckParams := btcStkK.GetParams(ctx), btcCheckK.GetParams(ctx)
 
 		covenantSKs, _, _ := bstypes.DefaultCovenantCommittee()
 
@@ -53,6 +55,7 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 		var (
 			btcDelWithoutInclusionProof   *datagen.CreateDelegationInfo
 			fpToBeSlashed                 *btcstktypes.MsgCreateFinalityProvider
+			fpSlashedSK                   *secp256k1.PrivateKey
 			delegationInfosToIncludeProof []*datagen.CreateDelegationInfo
 		)
 		for i := 0; i < int(createdFps); i++ {
@@ -89,6 +92,7 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 				if btcDelWithoutInclusionProof == nil {
 					fpToBeSlashed = fpMsg
 					btcDelWithoutInclusionProof = delCreationInfo
+					fpSlashedSK = fpBtcSK
 					// the first one will be slashed, and the inclusion proof sent later
 					continue
 				}
@@ -114,20 +118,12 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 
 		checkPointK.SetLastFinalizedEpoch(ctx, 1)
 
-		stakingTransactions := replay.DelegationInfosToBTCTx(delegationInfosToIncludeProof)
-		tip := btcLightK.GetTipInfo(ctx)
-		block := datagen.GenRandomBtcdBlockWithTransactions(r, stakingTransactions, tip.Header.ToBlockHeader())
-		headers := replay.BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
+		block, stakingTransactions := AddBtcBlockWithDelegations(t, r, app, ctx, delegationInfosToIncludeProof...)
 
-		_, err := msgSrvrBtcLight.InsertHeaders(ctx, &btclctypes.MsgInsertHeaders{
-			Signer:  datagen.GenRandomAccount().Address,
-			Headers: headers,
-		})
-		require.NoError(t, err)
 		ctx = ProduceBlock(t, r, app, ctx)
 
 		// make staking txs k-deep
-		AddNBtcBlock(t, r, app, ctx, 30)
+		AddNBtcBlock(t, r, app, ctx, uint(btcCheckParams.BtcConfirmationDepth))
 
 		// send proofs
 		for i, stakingTx := range stakingTransactions {
@@ -150,21 +146,80 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 		activeFps := vpDstCache.GetActiveFinalityProviderSet()
 		require.Equal(t, len(activeFps), int(createdFps))
 
-		fpToBeSlashed.Descriptor()
-		// for _, dstCacheFp  := range vpDstCache.FinalityProviders {
-		// 	dstCacheFp.
-		// }
+		// gets any active delegation from the fp to be slashed
+		var delSlashed *datagen.CreateDelegationInfo
+		for _, activeDel := range delegationInfosToIncludeProof {
+			if strings.EqualFold(fpToBeSlashed.BtcPk.MarshalHex(), activeDel.MsgCreateBTCDelegation.FpBtcPkList[0].MarshalHex()) {
+				delSlashed = activeDel
+				break
+			}
+		}
 
-		// for _, fp := range resp.FinalityProviders {
-		// 	fps[fp.BtcPk.MarshalHex()] = fp
-		// 	require.True(t, fp.)
-		// }
-		// select fp to slash
+		_, err := msgSrvrBtcStk.SelectiveSlashingEvidence(ctx, &btcstktypes.MsgSelectiveSlashingEvidence{
+			Signer:           datagen.GenRandomAddress().String(),
+			StakingTxHash:    delSlashed.StakingTxHash,
+			RecoveredFpBtcSk: fpSlashedSK.Serialize(),
+		})
+		require.NoError(t, err)
 
-		//
+		AddBtcBlock(t, r, app, ctx)
+		ctx = ProduceBlock(t, r, app, ctx)
 
-		// btcStkK.GetFinalityProvider()
+		vpDstCacheAfterSlash := finalityK.GetVotingPowerDistCache(ctx, uint64(ctx.HeaderInfo().Height-1))
+		activeFps = vpDstCacheAfterSlash.GetActiveFinalityProviderSet()
+		// since it was slashed, the number of active fps should be reduced
+		require.Equal(t, len(activeFps), int(createdFps-1))
+
+		// adds the inclusion proof of the btc delegation which the FP was slashed
+		block, stakingSlashedTx := AddBtcBlockWithDelegations(t, r, app, ctx, btcDelWithoutInclusionProof)
+
+		ctx = ProduceBlock(t, r, app, ctx)
+
+		// make staking txs k-deep
+		AddNBtcBlock(t, r, app, ctx, uint(btcCheckParams.BtcConfirmationDepth))
+
+		// send proofs
+		for i, stakingTx := range stakingSlashedTx {
+			msgSrvrBtcStk.AddBTCDelegationInclusionProof(ctx, &bstypes.MsgAddBTCDelegationInclusionProof{
+				Signer:                  datagen.GenRandomAccount().Address,
+				StakingTxHash:           stakingTx.TxHash().String(),
+				StakingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(block.Proofs[i+1]),
+			})
+		}
+
+		// check if the event to update delegation is there
+		height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+		tip := btcLightK.GetTipInfo(ctx)
+		lastBTCTipHeight := btcStkK.GetBTCHeightAtBabylonHeight(ctx, height-1)
+		events := btcStkK.GetAllPowerDistUpdateEvents(ctx, lastBTCTipHeight, tip.Height)
+		require.Equal(t, len(events), 1)
+
+		AddBtcBlock(t, r, app, ctx)
+		ctx = ProduceBlock(t, r, app, ctx)
+		vpDstCacheAfterInclusionProofOfSlashedFp := finalityK.GetVotingPowerDistCache(ctx, uint64(ctx.HeaderInfo().Height-1))
+		activeFps = vpDstCacheAfterInclusionProofOfSlashedFp.GetActiveFinalityProviderSet()
+
+		// last check to verify that the voting power distribution cache didn't changed after including proof of an BTC delegation that contains a slashed finality provider
+		require.Equal(t, len(activeFps), int(createdFps-1))
+		require.Equal(t, vpDstCacheAfterSlash, vpDstCacheAfterInclusionProofOfSlashedFp)
 	})
+}
+
+func AddBtcBlockWithDelegations(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context, delInfos ...*datagen.CreateDelegationInfo) (*datagen.BlockWithProofs, []*wire.MsgTx) {
+	btcLightK := app.BTCLightClientKeeper
+	msgSrvrBtcLight := btclightclientkeeper.NewMsgServerImpl(btcLightK)
+
+	stkTxs := replay.DelegationInfosToBTCTx(delInfos)
+	tip := btcLightK.GetTipInfo(ctx)
+	block := datagen.GenRandomBtcdBlockWithTransactions(r, stkTxs, tip.Header.ToBlockHeader())
+	headers := replay.BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
+	_, err := msgSrvrBtcLight.InsertHeaders(ctx, &btclctypes.MsgInsertHeaders{
+		Signer:  datagen.GenRandomAccount().Address,
+		Headers: headers,
+	})
+	require.NoError(t, err)
+
+	return block, stkTxs
 }
 
 func MaybeProduceBlock(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context) sdk.Context {

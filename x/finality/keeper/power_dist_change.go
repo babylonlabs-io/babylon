@@ -348,6 +348,13 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			// This is a consumer FP rather than Babylon FP, skip it
 			continue
 		}
+		// if the fp is slashed it shouldn't be included in the newDc
+		if newFP.IsSlashed() {
+			// case if a BTC delegation is created without inclusion proof
+			// the finality provider gets slashed
+			// inclusion proof gets included and generates an EventPowerDistUpdate_BtcDelStateUpdate
+			continue
+		}
 		fpDistInfo := ftypes.NewFinalityProviderDistInfo(newFP)
 
 		// check for jailing cases
