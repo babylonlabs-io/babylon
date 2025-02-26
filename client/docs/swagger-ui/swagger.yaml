@@ -3746,7 +3746,9 @@ paths:
                     format: int64
                     title: >-
                       staking_time is the number of blocks for which the
-                      delegation is locked on BTC chain
+                      delegation is locked on
+
+                      BTC chain
                   start_height:
                     type: integer
                     format: int64
@@ -3794,7 +3796,9 @@ paths:
                           format: byte
                           title: >-
                             cov_pk is the public key of the covenant emulator,
-                            used as the public key of the adaptor signature
+                            used as the public key
+
+                            of the adaptor signature
                         adaptor_sigs:
                           type: array
                           items:
@@ -3802,8 +3806,9 @@ paths:
                             format: byte
                           title: >-
                             adaptor_sigs is a list of adaptor signatures, each
-                            encrypted by a restaked BTC finality provider's
-                            public key
+                            encrypted by a restaked
+
+                            BTC finality provider's public key
                       title: >-
                         CovenantAdaptorSignatures is a list adaptor signatures
                         signed by the
@@ -3835,9 +3840,9 @@ paths:
                     format: int64
                     title: >-
                       unbonding_time used in unbonding output timelock path and
-                      in slashing transactions
+                      in slashing
 
-                      change outputs
+                      transactions change outputs
                   undelegation_response:
                     description: >-
                       undelegation_response is the undelegation info of this
@@ -3851,9 +3856,10 @@ paths:
                           the funds from staking
 
                           output to unbonding output. Unbonding output will
-                          usually have lower timelock
+                          usually have lower
 
-                          than staking output. The unbonding tx as string hex.
+                          timelock than staking output. The unbonding tx as
+                          string hex.
                       covenant_unbonding_sig_list:
                         type: array
                         items:
@@ -3898,8 +3904,9 @@ paths:
                               format: byte
                               title: >-
                                 cov_pk is the public key of the covenant
-                                emulator, used as the public key of the adaptor
-                                signature
+                                emulator, used as the public key
+
+                                of the adaptor signature
                             adaptor_sigs:
                               type: array
                               items:
@@ -3907,8 +3914,9 @@ paths:
                                 format: byte
                               title: >-
                                 adaptor_sigs is a list of adaptor signatures,
-                                each encrypted by a restaked BTC finality
-                                provider's public key
+                                each encrypted by a restaked
+
+                                BTC finality provider's public key
                           title: >-
                             CovenantAdaptorSignatures is a list adaptor
                             signatures signed by the
@@ -3938,7 +3946,9 @@ paths:
                               the staking output. It is
 
                               filled only if the spend_stake_tx_hex is different
-                              than the unbonding_tx_hex
+                              than the
+
+                              unbonding_tx_hex
                     title: >-
                       BTCUndelegationResponse provides all necessary info about
                       the undeleagation
@@ -3948,9 +3958,9 @@ paths:
                     title: params version used to validate delegation
             title: >-
               QueryBTCDelegationResponse is response type matching
-              QueryBTCDelegationRequest
 
-              and containing BTC delegation information
+              QueryBTCDelegationRequest and containing BTC delegation
+              information
         default:
           description: An unexpected error response.
           schema:
@@ -4196,7 +4206,9 @@ paths:
                       format: int64
                       title: >-
                         staking_time is the number of blocks for which the
-                        delegation is locked on BTC chain
+                        delegation is locked on
+
+                        BTC chain
                     start_height:
                       type: integer
                       format: int64
@@ -4246,7 +4258,9 @@ paths:
                             format: byte
                             title: >-
                               cov_pk is the public key of the covenant emulator,
-                              used as the public key of the adaptor signature
+                              used as the public key
+
+                              of the adaptor signature
                           adaptor_sigs:
                             type: array
                             items:
@@ -4254,8 +4268,9 @@ paths:
                               format: byte
                             title: >-
                               adaptor_sigs is a list of adaptor signatures, each
-                              encrypted by a restaked BTC finality provider's
-                              public key
+                              encrypted by a restaked
+
+                              BTC finality provider's public key
                         title: >-
                           CovenantAdaptorSignatures is a list adaptor signatures
                           signed by the
@@ -4287,9 +4302,9 @@ paths:
                       format: int64
                       title: >-
                         unbonding_time used in unbonding output timelock path
-                        and in slashing transactions
+                        and in slashing
 
-                        change outputs
+                        transactions change outputs
                     undelegation_response:
                       description: >-
                         undelegation_response is the undelegation info of this
@@ -4303,9 +4318,10 @@ paths:
                             the funds from staking
 
                             output to unbonding output. Unbonding output will
-                            usually have lower timelock
+                            usually have lower
 
-                            than staking output. The unbonding tx as string hex.
+                            timelock than staking output. The unbonding tx as
+                            string hex.
                         covenant_unbonding_sig_list:
                           type: array
                           items:
@@ -4350,8 +4366,9 @@ paths:
                                 format: byte
                                 title: >-
                                   cov_pk is the public key of the covenant
-                                  emulator, used as the public key of the
-                                  adaptor signature
+                                  emulator, used as the public key
+
+                                  of the adaptor signature
                               adaptor_sigs:
                                 type: array
                                 items:
@@ -4359,8 +4376,9 @@ paths:
                                   format: byte
                                 title: >-
                                   adaptor_sigs is a list of adaptor signatures,
-                                  each encrypted by a restaked BTC finality
-                                  provider's public key
+                                  each encrypted by a restaked
+
+                                  BTC finality provider's public key
                             title: >-
                               CovenantAdaptorSignatures is a list adaptor
                               signatures signed by the
@@ -4390,7 +4408,9 @@ paths:
                                 spent the staking output. It is
 
                                 filled only if the spend_stake_tx_hex is
-                                different than the unbonding_tx_hex
+                                different than the
+
+                                unbonding_tx_hex
                       title: >-
                         BTCUndelegationResponse provides all necessary info
                         about the undeleagation
@@ -4400,10 +4420,14 @@ paths:
                       title: params version used to validate delegation
                   description: >-
                     BTCDelegationResponse is the client needed information from
-                    a BTCDelegation with the current status based on parameters.
+                    a BTCDelegation
+
+                    with the current status based on parameters.
                 title: >-
                   btc_delegations contains all the queried BTC delegations under
-                  the given status
+                  the given
+
+                  status
               pagination:
                 description: pagination defines the pagination in the response.
                 type: object
@@ -4821,9 +4845,45 @@ paths:
                       title: |-
                         highest_voted_height is the highest height for which the
                         finality provider has voted
+                    commission_info:
+                      description: >-
+                        commission_info contains information details of the
+                        finality provider
+
+                        commission.
+                      type: object
+                      properties:
+                        max_rate:
+                          type: string
+                          description: >-
+                            max_rate defines the maximum commission rate which
+                            validator can ever charge, as a fraction.
+                        max_change_rate:
+                          type: string
+                          description: >-
+                            max_change_rate defines the maximum daily increase
+                            of the validator commission, as a fraction.
+                        update_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            update_time is the last time the commission rate was
+                            changed.
+                    consumer_id:
+                      type: string
+                      description: >-
+                        consumer_id is the ID of the consumer the finality
+                        provider is operating
+
+                        on. If it's missing / empty, it's assumed the finality
+                        provider is
+
+                        operating in the Babylon chain.
                   description: >-
                     FinalityProviderResponse defines a finality provider with
-                    voting power information.
+                    voting power
+
+                    information.
                 title: finality_providers contains all the finality providers
               pagination:
                 description: pagination defines the pagination in the response.
@@ -5102,7 +5162,7 @@ paths:
         - Query
   /babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/delegations:
     get:
-      summary: >-
+      summary: |-
         FinalityProviderDelegations queries all BTC delegations of the given
         finality provider
       operationId: FinalityProviderDelegations
@@ -5150,7 +5210,9 @@ paths:
                             format: int64
                             title: >-
                               staking_time is the number of blocks for which the
-                              delegation is locked on BTC chain
+                              delegation is locked on
+
+                              BTC chain
                           start_height:
                             type: integer
                             format: int64
@@ -5200,8 +5262,9 @@ paths:
                                   format: byte
                                   title: >-
                                     cov_pk is the public key of the covenant
-                                    emulator, used as the public key of the
-                                    adaptor signature
+                                    emulator, used as the public key
+
+                                    of the adaptor signature
                                 adaptor_sigs:
                                   type: array
                                   items:
@@ -5209,8 +5272,9 @@ paths:
                                     format: byte
                                   title: >-
                                     adaptor_sigs is a list of adaptor
-                                    signatures, each encrypted by a restaked BTC
-                                    finality provider's public key
+                                    signatures, each encrypted by a restaked
+
+                                    BTC finality provider's public key
                               title: >-
                                 CovenantAdaptorSignatures is a list adaptor
                                 signatures signed by the
@@ -5242,9 +5306,9 @@ paths:
                             format: int64
                             title: >-
                               unbonding_time used in unbonding output timelock
-                              path and in slashing transactions
+                              path and in slashing
 
-                              change outputs
+                              transactions change outputs
                           undelegation_response:
                             description: >-
                               undelegation_response is the undelegation info of
@@ -5258,10 +5322,10 @@ paths:
                                   transfer the funds from staking
 
                                   output to unbonding output. Unbonding output
-                                  will usually have lower timelock
+                                  will usually have lower
 
-                                  than staking output. The unbonding tx as
-                                  string hex.
+                                  timelock than staking output. The unbonding tx
+                                  as string hex.
                               covenant_unbonding_sig_list:
                                 type: array
                                 items:
@@ -5307,8 +5371,9 @@ paths:
                                       format: byte
                                       title: >-
                                         cov_pk is the public key of the covenant
-                                        emulator, used as the public key of the
-                                        adaptor signature
+                                        emulator, used as the public key
+
+                                        of the adaptor signature
                                     adaptor_sigs:
                                       type: array
                                       items:
@@ -5317,6 +5382,7 @@ paths:
                                       title: >-
                                         adaptor_sigs is a list of adaptor
                                         signatures, each encrypted by a restaked
+
                                         BTC finality provider's public key
                                   title: >-
                                     CovenantAdaptorSignatures is a list adaptor
@@ -5347,7 +5413,9 @@ paths:
                                       which spent the staking output. It is
 
                                       filled only if the spend_stake_tx_hex is
-                                      different than the unbonding_tx_hex
+                                      different than the
+
+                                      unbonding_tx_hex
                             title: >-
                               BTCUndelegationResponse provides all necessary
                               info about the undeleagation
@@ -5357,11 +5425,14 @@ paths:
                             title: params version used to validate delegation
                         description: >-
                           BTCDelegationResponse is the client needed information
-                          from a BTCDelegation with the current status based on
-                          parameters.
+                          from a BTCDelegation
+
+                          with the current status based on parameters.
                   description: >-
                     BTCDelegatorDelegationsResponse is a collection of BTC
-                    delegations responses from the same delegator.
+                    delegations responses
+
+                    from the same delegator.
                 description: >-
                   btc_delegator_delegations contains all the queried BTC
                   delegations.
@@ -5587,11 +5658,11 @@ paths:
         - name: fp_btc_pk_hex
           description: >-
             fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
-            providerthat
 
-            this BTC delegation delegates to
+            providerthat this BTC delegation delegates to the PK follows
+            encoding in
 
-            the PK follows encoding in BIP-340 spec
+            BIP-340 spec
           in: path
           required: true
           type: string
@@ -5779,9 +5850,45 @@ paths:
                     title: |-
                       highest_voted_height is the highest height for which the
                       finality provider has voted
+                  commission_info:
+                    description: >-
+                      commission_info contains information details of the
+                      finality provider
+
+                      commission.
+                    type: object
+                    properties:
+                      max_rate:
+                        type: string
+                        description: >-
+                          max_rate defines the maximum commission rate which
+                          validator can ever charge, as a fraction.
+                      max_change_rate:
+                        type: string
+                        description: >-
+                          max_change_rate defines the maximum daily increase of
+                          the validator commission, as a fraction.
+                      update_time:
+                        type: string
+                        format: date-time
+                        description: >-
+                          update_time is the last time the commission rate was
+                          changed.
+                  consumer_id:
+                    type: string
+                    description: >-
+                      consumer_id is the ID of the consumer the finality
+                      provider is operating
+
+                      on. If it's missing / empty, it's assumed the finality
+                      provider is
+
+                      operating in the Babylon chain.
                 description: >-
                   FinalityProviderResponse defines a finality provider with
-                  voting power information.
+                  voting power
+
+                  information.
                 title: finality_provider contains the FinalityProvider
             title: >-
               QueryFinalityProviderResponse contains information about a
@@ -5982,7 +6089,7 @@ paths:
                         }
       parameters:
         - name: fp_btc_pk_hex
-          description: >-
+          description: |-
             fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
             provider
           in: path
@@ -6306,13 +6413,17 @@ paths:
                     format: int64
                     title: >-
                       min_staking_time is the minimum lock time specified in
-                      staking output script
+                      staking output
+
+                      script
                   max_staking_time_blocks:
                     type: integer
                     format: int64
                     title: >-
                       max_staking_time_blocks is the maximum lock time time
-                      specified in staking output script
+                      specified in staking
+
+                      output script
                   slashing_pk_script:
                     type: string
                     format: byte
@@ -6320,9 +6431,9 @@ paths:
                       PARAMETERS COVERING SLASHING
 
                       slashing_pk_script is the pk_script expected in slashing
-                      output ie. the first
+                      output ie. the
 
-                      output of slashing transaction
+                      first output of slashing transaction
                   min_slashing_tx_fee_sat:
                     type: string
                     format: int64
@@ -6352,10 +6463,12 @@ paths:
                       PARAMETERS COVERING UNBONDING
 
                       unbonding_time is the exact unbonding time required from
-                      unbonding transaction
+                      unbonding
 
-                      it must be larger than `checkpoint_finalization_timeout`
-                      from `btccheckpoint` module
+                      transaction it must be larger than
+                      `checkpoint_finalization_timeout` from
+
+                      `btccheckpoint` module
                   unbonding_fee_sat:
                     type: string
                     format: int64
@@ -6366,12 +6479,12 @@ paths:
                       PARAMETERS COVERING FINALITY PROVIDERS
 
                       min_commission_rate is the chain-wide minimum commission
-                      rate that a finality provider
+                      rate that a
 
-                      can charge their delegators expressed as a decimal (e.g.,
-                      0.5 for 50%). Maximal precion
+                      finality provider can charge their delegators expressed as
+                      a decimal (e.g.,
 
-                      is 2 decimal places
+                      0.5 for 50%). Maximal precion is 2 decimal places
                   delegation_creation_base_gas_fee:
                     type: string
                     format: uint64
@@ -6392,7 +6505,9 @@ paths:
                     format: int64
                     title: >-
                       btc_activation_height is the btc height from which
-                      parameters are activated (inclusive)
+                      parameters are activated
+
+                      (inclusive)
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -6596,7 +6711,9 @@ paths:
     get:
       summary: >-
         ParamsByBTCHeight queries the parameters of the module for a specific
-        BTC height
+        BTC
+
+        height
       operationId: ParamsByBTCHeight
       responses:
         '200':
@@ -6645,13 +6762,17 @@ paths:
                     format: int64
                     title: >-
                       min_staking_time is the minimum lock time specified in
-                      staking output script
+                      staking output
+
+                      script
                   max_staking_time_blocks:
                     type: integer
                     format: int64
                     title: >-
                       max_staking_time_blocks is the maximum lock time time
-                      specified in staking output script
+                      specified in staking
+
+                      output script
                   slashing_pk_script:
                     type: string
                     format: byte
@@ -6659,9 +6780,9 @@ paths:
                       PARAMETERS COVERING SLASHING
 
                       slashing_pk_script is the pk_script expected in slashing
-                      output ie. the first
+                      output ie. the
 
-                      output of slashing transaction
+                      first output of slashing transaction
                   min_slashing_tx_fee_sat:
                     type: string
                     format: int64
@@ -6691,10 +6812,12 @@ paths:
                       PARAMETERS COVERING UNBONDING
 
                       unbonding_time is the exact unbonding time required from
-                      unbonding transaction
+                      unbonding
 
-                      it must be larger than `checkpoint_finalization_timeout`
-                      from `btccheckpoint` module
+                      transaction it must be larger than
+                      `checkpoint_finalization_timeout` from
+
+                      `btccheckpoint` module
                   unbonding_fee_sat:
                     type: string
                     format: int64
@@ -6705,12 +6828,12 @@ paths:
                       PARAMETERS COVERING FINALITY PROVIDERS
 
                       min_commission_rate is the chain-wide minimum commission
-                      rate that a finality provider
+                      rate that a
 
-                      can charge their delegators expressed as a decimal (e.g.,
-                      0.5 for 50%). Maximal precion
+                      finality provider can charge their delegators expressed as
+                      a decimal (e.g.,
 
-                      is 2 decimal places
+                      0.5 for 50%). Maximal precion is 2 decimal places
                   delegation_creation_base_gas_fee:
                     type: string
                     format: uint64
@@ -6731,12 +6854,14 @@ paths:
                     format: int64
                     title: >-
                       btc_activation_height is the btc height from which
-                      parameters are activated (inclusive)
+                      parameters are activated
+
+                      (inclusive)
               version:
                 type: integer
                 format: int64
                 title: version is the version of the params for the given BTC height
-            description: >-
+            description: |-
               QueryParamsByBTCHeightResponse is response type for the
               Query/QueryParamsByBTCHeightResponse RPC method.
         default:
@@ -6945,7 +7070,9 @@ paths:
     get:
       summary: >-
         ParamsByVersion queries the parameters of the module for a specific
-        version of past params.
+        version
+
+        of past params.
       operationId: ParamsByVersion
       responses:
         '200':
@@ -6994,13 +7121,17 @@ paths:
                     format: int64
                     title: >-
                       min_staking_time is the minimum lock time specified in
-                      staking output script
+                      staking output
+
+                      script
                   max_staking_time_blocks:
                     type: integer
                     format: int64
                     title: >-
                       max_staking_time_blocks is the maximum lock time time
-                      specified in staking output script
+                      specified in staking
+
+                      output script
                   slashing_pk_script:
                     type: string
                     format: byte
@@ -7008,9 +7139,9 @@ paths:
                       PARAMETERS COVERING SLASHING
 
                       slashing_pk_script is the pk_script expected in slashing
-                      output ie. the first
+                      output ie. the
 
-                      output of slashing transaction
+                      first output of slashing transaction
                   min_slashing_tx_fee_sat:
                     type: string
                     format: int64
@@ -7040,10 +7171,12 @@ paths:
                       PARAMETERS COVERING UNBONDING
 
                       unbonding_time is the exact unbonding time required from
-                      unbonding transaction
+                      unbonding
 
-                      it must be larger than `checkpoint_finalization_timeout`
-                      from `btccheckpoint` module
+                      transaction it must be larger than
+                      `checkpoint_finalization_timeout` from
+
+                      `btccheckpoint` module
                   unbonding_fee_sat:
                     type: string
                     format: int64
@@ -7054,12 +7187,12 @@ paths:
                       PARAMETERS COVERING FINALITY PROVIDERS
 
                       min_commission_rate is the chain-wide minimum commission
-                      rate that a finality provider
+                      rate that a
 
-                      can charge their delegators expressed as a decimal (e.g.,
-                      0.5 for 50%). Maximal precion
+                      finality provider can charge their delegators expressed as
+                      a decimal (e.g.,
 
-                      is 2 decimal places
+                      0.5 for 50%). Maximal precion is 2 decimal places
                   delegation_creation_base_gas_fee:
                     type: string
                     format: uint64
@@ -7080,7 +7213,9 @@ paths:
                     format: int64
                     title: >-
                       btc_activation_height is the btc height from which
-                      parameters are activated (inclusive)
+                      parameters are activated
+
+                      (inclusive)
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -17902,7 +18037,9 @@ definitions:
         format: int64
         title: >-
           staking_time is the number of blocks for which the delegation is
-          locked on BTC chain
+          locked on
+
+          BTC chain
       start_height:
         type: integer
         format: int64
@@ -17943,7 +18080,9 @@ definitions:
               format: byte
               title: >-
                 cov_pk is the public key of the covenant emulator, used as the
-                public key of the adaptor signature
+                public key
+
+                of the adaptor signature
             adaptor_sigs:
               type: array
               items:
@@ -17951,7 +18090,9 @@ definitions:
                 format: byte
               title: >-
                 adaptor_sigs is a list of adaptor signatures, each encrypted by
-                a restaked BTC finality provider's public key
+                a restaked
+
+                BTC finality provider's public key
           title: >-
             CovenantAdaptorSignatures is a list adaptor signatures signed by the
 
@@ -17976,11 +18117,9 @@ definitions:
       unbonding_time:
         type: integer
         format: int64
-        title: >-
+        title: |-
           unbonding_time used in unbonding output timelock path and in slashing
-          transactions
-
-          change outputs
+          transactions change outputs
       undelegation_response:
         description: undelegation_response is the undelegation info of this delegation.
         type: object
@@ -17992,9 +18131,9 @@ definitions:
               staking
 
               output to unbonding output. Unbonding output will usually have
-              lower timelock
+              lower
 
-              than staking output. The unbonding tx as string hex.
+              timelock than staking output. The unbonding tx as string hex.
           covenant_unbonding_sig_list:
             type: array
             items:
@@ -18034,7 +18173,9 @@ definitions:
                   format: byte
                   title: >-
                     cov_pk is the public key of the covenant emulator, used as
-                    the public key of the adaptor signature
+                    the public key
+
+                    of the adaptor signature
                 adaptor_sigs:
                   type: array
                   items:
@@ -18042,7 +18183,9 @@ definitions:
                     format: byte
                   title: >-
                     adaptor_sigs is a list of adaptor signatures, each encrypted
-                    by a restaked BTC finality provider's public key
+                    by a restaked
+
+                    BTC finality provider's public key
               title: >-
                 CovenantAdaptorSignatures is a list adaptor signatures signed by
                 the
@@ -18068,6 +18211,7 @@ definitions:
                   output. It is
 
                   filled only if the spend_stake_tx_hex is different than the
+
                   unbonding_tx_hex
         title: >-
           BTCUndelegationResponse provides all necessary info about the
@@ -18078,7 +18222,9 @@ definitions:
         title: params version used to validate delegation
     description: >-
       BTCDelegationResponse is the client needed information from a
-      BTCDelegation with the current status based on parameters.
+      BTCDelegation
+
+      with the current status based on parameters.
   babylon.btcstaking.v1.BTCDelegationStatus:
     type: string
     enum:
@@ -18117,6 +18263,7 @@ definitions:
        - ACTIVE: ACTIVE defines a delegation that has voting power
        - UNBONDED: UNBONDED defines a delegation no longer has voting power
       by receiving unbonding tx with signatures from staker and covenant
+
       committee
        - EXPIRED: EXPIRED defines a delegation no longer has voting power
       for reaching the end of staking transaction timelock
@@ -18155,7 +18302,9 @@ definitions:
               format: int64
               title: >-
                 staking_time is the number of blocks for which the delegation is
-                locked on BTC chain
+                locked on
+
+                BTC chain
             start_height:
               type: integer
               format: int64
@@ -18199,7 +18348,9 @@ definitions:
                     format: byte
                     title: >-
                       cov_pk is the public key of the covenant emulator, used as
-                      the public key of the adaptor signature
+                      the public key
+
+                      of the adaptor signature
                   adaptor_sigs:
                     type: array
                     items:
@@ -18207,7 +18358,9 @@ definitions:
                       format: byte
                     title: >-
                       adaptor_sigs is a list of adaptor signatures, each
-                      encrypted by a restaked BTC finality provider's public key
+                      encrypted by a restaked
+
+                      BTC finality provider's public key
                 title: >-
                   CovenantAdaptorSignatures is a list adaptor signatures signed
                   by the
@@ -18235,9 +18388,9 @@ definitions:
               format: int64
               title: >-
                 unbonding_time used in unbonding output timelock path and in
-                slashing transactions
+                slashing
 
-                change outputs
+                transactions change outputs
             undelegation_response:
               description: >-
                 undelegation_response is the undelegation info of this
@@ -18251,9 +18404,10 @@ definitions:
                     funds from staking
 
                     output to unbonding output. Unbonding output will usually
-                    have lower timelock
+                    have lower
 
-                    than staking output. The unbonding tx as string hex.
+                    timelock than staking output. The unbonding tx as string
+                    hex.
                 covenant_unbonding_sig_list:
                   type: array
                   items:
@@ -18297,7 +18451,9 @@ definitions:
                         format: byte
                         title: >-
                           cov_pk is the public key of the covenant emulator,
-                          used as the public key of the adaptor signature
+                          used as the public key
+
+                          of the adaptor signature
                       adaptor_sigs:
                         type: array
                         items:
@@ -18305,8 +18461,9 @@ definitions:
                           format: byte
                         title: >-
                           adaptor_sigs is a list of adaptor signatures, each
-                          encrypted by a restaked BTC finality provider's public
-                          key
+                          encrypted by a restaked
+
+                          BTC finality provider's public key
                     title: >-
                       CovenantAdaptorSignatures is a list adaptor signatures
                       signed by the
@@ -18335,7 +18492,9 @@ definitions:
                         staking output. It is
 
                         filled only if the spend_stake_tx_hex is different than
-                        the unbonding_tx_hex
+                        the
+
+                        unbonding_tx_hex
               title: >-
                 BTCUndelegationResponse provides all necessary info about the
                 undeleagation
@@ -18345,10 +18504,14 @@ definitions:
               title: params version used to validate delegation
           description: >-
             BTCDelegationResponse is the client needed information from a
-            BTCDelegation with the current status based on parameters.
+            BTCDelegation
+
+            with the current status based on parameters.
     description: >-
       BTCDelegatorDelegationsResponse is a collection of BTC delegations
-      responses from the same delegator.
+      responses
+
+      from the same delegator.
   babylon.btcstaking.v1.BTCSigType:
     type: string
     enum:
@@ -18373,9 +18536,8 @@ definitions:
           staking
 
           output to unbonding output. Unbonding output will usually have lower
-          timelock
 
-          than staking output. The unbonding tx as string hex.
+          timelock than staking output. The unbonding tx as string hex.
       covenant_unbonding_sig_list:
         type: array
         items:
@@ -18415,7 +18577,9 @@ definitions:
               format: byte
               title: >-
                 cov_pk is the public key of the covenant emulator, used as the
-                public key of the adaptor signature
+                public key
+
+                of the adaptor signature
             adaptor_sigs:
               type: array
               items:
@@ -18423,7 +18587,9 @@ definitions:
                 format: byte
               title: >-
                 adaptor_sigs is a list of adaptor signatures, each encrypted by
-                a restaked BTC finality provider's public key
+                a restaked
+
+                BTC finality provider's public key
           title: >-
             CovenantAdaptorSignatures is a list adaptor signatures signed by the
 
@@ -18448,10 +18614,31 @@ definitions:
               output. It is
 
               filled only if the spend_stake_tx_hex is different than the
+
               unbonding_tx_hex
     title: >-
       BTCUndelegationResponse provides all necessary info about the
       undeleagation
+  babylon.btcstaking.v1.CommissionInfo:
+    type: object
+    properties:
+      max_rate:
+        type: string
+        description: >-
+          max_rate defines the maximum commission rate which validator can ever
+          charge, as a fraction.
+      max_change_rate:
+        type: string
+        description: >-
+          max_change_rate defines the maximum daily increase of the validator
+          commission, as a fraction.
+      update_time:
+        type: string
+        format: date-time
+        description: update_time is the last time the commission rate was changed.
+    description: |-
+      CommissionInfo defines the information related to the commission of
+      a finality provider.
   babylon.btcstaking.v1.CovenantAdaptorSignatures:
     type: object
     properties:
@@ -18460,7 +18647,9 @@ definitions:
         format: byte
         title: >-
           cov_pk is the public key of the covenant emulator, used as the public
-          key of the adaptor signature
+          key
+
+          of the adaptor signature
       adaptor_sigs:
         type: array
         items:
@@ -18468,7 +18657,9 @@ definitions:
           format: byte
         title: >-
           adaptor_sigs is a list of adaptor signatures, each encrypted by a
-          restaked BTC finality provider's public key
+          restaked
+
+          BTC finality provider's public key
     title: |-
       CovenantAdaptorSignatures is a list adaptor signatures signed by the
       covenant with different finality provider's public keys as encryption keys
@@ -18482,6 +18673,7 @@ definitions:
           It is
 
           filled only if the spend_stake_tx_hex is different than the
+
           unbonding_tx_hex
     title: >-
       DelegatorUnbondingInfoResponse provides all necessary info about
@@ -18585,7 +18777,36 @@ definitions:
         title: |-
           highest_voted_height is the highest height for which the
           finality provider has voted
-    description: >-
+      commission_info:
+        description: |-
+          commission_info contains information details of the finality provider
+          commission.
+        type: object
+        properties:
+          max_rate:
+            type: string
+            description: >-
+              max_rate defines the maximum commission rate which validator can
+              ever charge, as a fraction.
+          max_change_rate:
+            type: string
+            description: >-
+              max_change_rate defines the maximum daily increase of the
+              validator commission, as a fraction.
+          update_time:
+            type: string
+            format: date-time
+            description: update_time is the last time the commission rate was changed.
+      consumer_id:
+        type: string
+        description: >-
+          consumer_id is the ID of the consumer the finality provider is
+          operating
+
+          on. If it's missing / empty, it's assumed the finality provider is
+
+          operating in the Babylon chain.
+    description: |-
       FinalityProviderResponse defines a finality provider with voting power
       information.
   babylon.btcstaking.v1.Params:
@@ -18623,7 +18844,7 @@ definitions:
       min_staking_time_blocks:
         type: integer
         format: int64
-        title: >-
+        title: |-
           min_staking_time is the minimum lock time specified in staking output
           script
       max_staking_time_blocks:
@@ -18631,7 +18852,9 @@ definitions:
         format: int64
         title: >-
           max_staking_time_blocks is the maximum lock time time specified in
-          staking output script
+          staking
+
+          output script
       slashing_pk_script:
         type: string
         format: byte
@@ -18639,9 +18862,9 @@ definitions:
           PARAMETERS COVERING SLASHING
 
           slashing_pk_script is the pk_script expected in slashing output ie.
-          the first
+          the
 
-          output of slashing transaction
+          first output of slashing transaction
       min_slashing_tx_fee_sat:
         type: string
         format: int64
@@ -18666,9 +18889,10 @@ definitions:
           PARAMETERS COVERING UNBONDING
 
           unbonding_time is the exact unbonding time required from unbonding
-          transaction
 
-          it must be larger than `checkpoint_finalization_timeout` from
+          transaction it must be larger than `checkpoint_finalization_timeout`
+          from
+
           `btccheckpoint` module
       unbonding_fee_sat:
         type: string
@@ -18680,12 +18904,11 @@ definitions:
           PARAMETERS COVERING FINALITY PROVIDERS
 
           min_commission_rate is the chain-wide minimum commission rate that a
-          finality provider
 
-          can charge their delegators expressed as a decimal (e.g., 0.5 for
-          50%). Maximal precion
+          finality provider can charge their delegators expressed as a decimal
+          (e.g.,
 
-          is 2 decimal places
+          0.5 for 50%). Maximal precion is 2 decimal places
       delegation_creation_base_gas_fee:
         type: string
         format: uint64
@@ -18706,7 +18929,9 @@ definitions:
         format: int64
         title: >-
           btc_activation_height is the btc height from which parameters are
-          activated (inclusive)
+          activated
+
+          (inclusive)
     description: Params defines the parameters for the module.
   babylon.btcstaking.v1.ProofOfPossessionBTC:
     type: object
@@ -18770,7 +18995,9 @@ definitions:
             format: int64
             title: >-
               staking_time is the number of blocks for which the delegation is
-              locked on BTC chain
+              locked on
+
+              BTC chain
           start_height:
             type: integer
             format: int64
@@ -18811,7 +19038,9 @@ definitions:
                   format: byte
                   title: >-
                     cov_pk is the public key of the covenant emulator, used as
-                    the public key of the adaptor signature
+                    the public key
+
+                    of the adaptor signature
                 adaptor_sigs:
                   type: array
                   items:
@@ -18819,7 +19048,9 @@ definitions:
                     format: byte
                   title: >-
                     adaptor_sigs is a list of adaptor signatures, each encrypted
-                    by a restaked BTC finality provider's public key
+                    by a restaked
+
+                    BTC finality provider's public key
               title: >-
                 CovenantAdaptorSignatures is a list adaptor signatures signed by
                 the
@@ -18847,9 +19078,9 @@ definitions:
             format: int64
             title: >-
               unbonding_time used in unbonding output timelock path and in
-              slashing transactions
+              slashing
 
-              change outputs
+              transactions change outputs
           undelegation_response:
             description: undelegation_response is the undelegation info of this delegation.
             type: object
@@ -18861,9 +19092,9 @@ definitions:
                   from staking
 
                   output to unbonding output. Unbonding output will usually have
-                  lower timelock
+                  lower
 
-                  than staking output. The unbonding tx as string hex.
+                  timelock than staking output. The unbonding tx as string hex.
               covenant_unbonding_sig_list:
                 type: array
                 items:
@@ -18903,7 +19134,9 @@ definitions:
                       format: byte
                       title: >-
                         cov_pk is the public key of the covenant emulator, used
-                        as the public key of the adaptor signature
+                        as the public key
+
+                        of the adaptor signature
                     adaptor_sigs:
                       type: array
                       items:
@@ -18911,8 +19144,9 @@ definitions:
                         format: byte
                       title: >-
                         adaptor_sigs is a list of adaptor signatures, each
-                        encrypted by a restaked BTC finality provider's public
-                        key
+                        encrypted by a restaked
+
+                        BTC finality provider's public key
                   title: >-
                     CovenantAdaptorSignatures is a list adaptor signatures
                     signed by the
@@ -18938,7 +19172,9 @@ definitions:
                       staking output. It is
 
                       filled only if the spend_stake_tx_hex is different than
-                      the unbonding_tx_hex
+                      the
+
+                      unbonding_tx_hex
             title: >-
               BTCUndelegationResponse provides all necessary info about the
               undeleagation
@@ -18946,11 +19182,9 @@ definitions:
             type: integer
             format: int64
             title: params version used to validate delegation
-    title: >-
+    title: |-
       QueryBTCDelegationResponse is response type matching
-      QueryBTCDelegationRequest
-
-      and containing BTC delegation information
+      QueryBTCDelegationRequest and containing BTC delegation information
   babylon.btcstaking.v1.QueryBTCDelegationsResponse:
     type: object
     properties:
@@ -18985,7 +19219,9 @@ definitions:
               format: int64
               title: >-
                 staking_time is the number of blocks for which the delegation is
-                locked on BTC chain
+                locked on
+
+                BTC chain
             start_height:
               type: integer
               format: int64
@@ -19029,7 +19265,9 @@ definitions:
                     format: byte
                     title: >-
                       cov_pk is the public key of the covenant emulator, used as
-                      the public key of the adaptor signature
+                      the public key
+
+                      of the adaptor signature
                   adaptor_sigs:
                     type: array
                     items:
@@ -19037,7 +19275,9 @@ definitions:
                       format: byte
                     title: >-
                       adaptor_sigs is a list of adaptor signatures, each
-                      encrypted by a restaked BTC finality provider's public key
+                      encrypted by a restaked
+
+                      BTC finality provider's public key
                 title: >-
                   CovenantAdaptorSignatures is a list adaptor signatures signed
                   by the
@@ -19065,9 +19305,9 @@ definitions:
               format: int64
               title: >-
                 unbonding_time used in unbonding output timelock path and in
-                slashing transactions
+                slashing
 
-                change outputs
+                transactions change outputs
             undelegation_response:
               description: >-
                 undelegation_response is the undelegation info of this
@@ -19081,9 +19321,10 @@ definitions:
                     funds from staking
 
                     output to unbonding output. Unbonding output will usually
-                    have lower timelock
+                    have lower
 
-                    than staking output. The unbonding tx as string hex.
+                    timelock than staking output. The unbonding tx as string
+                    hex.
                 covenant_unbonding_sig_list:
                   type: array
                   items:
@@ -19127,7 +19368,9 @@ definitions:
                         format: byte
                         title: >-
                           cov_pk is the public key of the covenant emulator,
-                          used as the public key of the adaptor signature
+                          used as the public key
+
+                          of the adaptor signature
                       adaptor_sigs:
                         type: array
                         items:
@@ -19135,8 +19378,9 @@ definitions:
                           format: byte
                         title: >-
                           adaptor_sigs is a list of adaptor signatures, each
-                          encrypted by a restaked BTC finality provider's public
-                          key
+                          encrypted by a restaked
+
+                          BTC finality provider's public key
                     title: >-
                       CovenantAdaptorSignatures is a list adaptor signatures
                       signed by the
@@ -19165,7 +19409,9 @@ definitions:
                         staking output. It is
 
                         filled only if the spend_stake_tx_hex is different than
-                        the unbonding_tx_hex
+                        the
+
+                        unbonding_tx_hex
               title: >-
                 BTCUndelegationResponse provides all necessary info about the
                 undeleagation
@@ -19175,10 +19421,14 @@ definitions:
               title: params version used to validate delegation
           description: >-
             BTCDelegationResponse is the client needed information from a
-            BTCDelegation with the current status based on parameters.
+            BTCDelegation
+
+            with the current status based on parameters.
         title: >-
           btc_delegations contains all the queried BTC delegations under the
-          given status
+          given
+
+          status
       pagination:
         description: pagination defines the pagination in the response.
         type: object
@@ -19240,7 +19490,9 @@ definitions:
                     format: int64
                     title: >-
                       staking_time is the number of blocks for which the
-                      delegation is locked on BTC chain
+                      delegation is locked on
+
+                      BTC chain
                   start_height:
                     type: integer
                     format: int64
@@ -19288,7 +19540,9 @@ definitions:
                           format: byte
                           title: >-
                             cov_pk is the public key of the covenant emulator,
-                            used as the public key of the adaptor signature
+                            used as the public key
+
+                            of the adaptor signature
                         adaptor_sigs:
                           type: array
                           items:
@@ -19296,8 +19550,9 @@ definitions:
                             format: byte
                           title: >-
                             adaptor_sigs is a list of adaptor signatures, each
-                            encrypted by a restaked BTC finality provider's
-                            public key
+                            encrypted by a restaked
+
+                            BTC finality provider's public key
                       title: >-
                         CovenantAdaptorSignatures is a list adaptor signatures
                         signed by the
@@ -19329,9 +19584,9 @@ definitions:
                     format: int64
                     title: >-
                       unbonding_time used in unbonding output timelock path and
-                      in slashing transactions
+                      in slashing
 
-                      change outputs
+                      transactions change outputs
                   undelegation_response:
                     description: >-
                       undelegation_response is the undelegation info of this
@@ -19345,9 +19600,10 @@ definitions:
                           the funds from staking
 
                           output to unbonding output. Unbonding output will
-                          usually have lower timelock
+                          usually have lower
 
-                          than staking output. The unbonding tx as string hex.
+                          timelock than staking output. The unbonding tx as
+                          string hex.
                       covenant_unbonding_sig_list:
                         type: array
                         items:
@@ -19392,8 +19648,9 @@ definitions:
                               format: byte
                               title: >-
                                 cov_pk is the public key of the covenant
-                                emulator, used as the public key of the adaptor
-                                signature
+                                emulator, used as the public key
+
+                                of the adaptor signature
                             adaptor_sigs:
                               type: array
                               items:
@@ -19401,8 +19658,9 @@ definitions:
                                 format: byte
                               title: >-
                                 adaptor_sigs is a list of adaptor signatures,
-                                each encrypted by a restaked BTC finality
-                                provider's public key
+                                each encrypted by a restaked
+
+                                BTC finality provider's public key
                           title: >-
                             CovenantAdaptorSignatures is a list adaptor
                             signatures signed by the
@@ -19432,7 +19690,9 @@ definitions:
                               the staking output. It is
 
                               filled only if the spend_stake_tx_hex is different
-                              than the unbonding_tx_hex
+                              than the
+
+                              unbonding_tx_hex
                     title: >-
                       BTCUndelegationResponse provides all necessary info about
                       the undeleagation
@@ -19442,10 +19702,14 @@ definitions:
                     title: params version used to validate delegation
                 description: >-
                   BTCDelegationResponse is the client needed information from a
-                  BTCDelegation with the current status based on parameters.
+                  BTCDelegation
+
+                  with the current status based on parameters.
           description: >-
             BTCDelegatorDelegationsResponse is a collection of BTC delegations
-            responses from the same delegator.
+            responses
+
+            from the same delegator.
         description: btc_delegator_delegations contains all the queried BTC delegations.
       pagination:
         description: pagination defines the pagination in the response.
@@ -19573,7 +19837,38 @@ definitions:
             title: |-
               highest_voted_height is the highest height for which the
               finality provider has voted
-        description: >-
+          commission_info:
+            description: >-
+              commission_info contains information details of the finality
+              provider
+
+              commission.
+            type: object
+            properties:
+              max_rate:
+                type: string
+                description: >-
+                  max_rate defines the maximum commission rate which validator
+                  can ever charge, as a fraction.
+              max_change_rate:
+                type: string
+                description: >-
+                  max_change_rate defines the maximum daily increase of the
+                  validator commission, as a fraction.
+              update_time:
+                type: string
+                format: date-time
+                description: update_time is the last time the commission rate was changed.
+          consumer_id:
+            type: string
+            description: >-
+              consumer_id is the ID of the consumer the finality provider is
+              operating
+
+              on. If it's missing / empty, it's assumed the finality provider is
+
+              operating in the Babylon chain.
+        description: |-
           FinalityProviderResponse defines a finality provider with voting power
           information.
         title: finality_provider contains the FinalityProvider
@@ -19686,9 +19981,45 @@ definitions:
               title: |-
                 highest_voted_height is the highest height for which the
                 finality provider has voted
+            commission_info:
+              description: >-
+                commission_info contains information details of the finality
+                provider
+
+                commission.
+              type: object
+              properties:
+                max_rate:
+                  type: string
+                  description: >-
+                    max_rate defines the maximum commission rate which validator
+                    can ever charge, as a fraction.
+                max_change_rate:
+                  type: string
+                  description: >-
+                    max_change_rate defines the maximum daily increase of the
+                    validator commission, as a fraction.
+                update_time:
+                  type: string
+                  format: date-time
+                  description: >-
+                    update_time is the last time the commission rate was
+                    changed.
+            consumer_id:
+              type: string
+              description: >-
+                consumer_id is the ID of the consumer the finality provider is
+                operating
+
+                on. If it's missing / empty, it's assumed the finality provider
+                is
+
+                operating in the Babylon chain.
           description: >-
             FinalityProviderResponse defines a finality provider with voting
-            power information.
+            power
+
+            information.
         title: finality_providers contains all the finality providers
       pagination:
         description: pagination defines the pagination in the response.
@@ -19818,13 +20149,17 @@ definitions:
             format: int64
             title: >-
               min_staking_time is the minimum lock time specified in staking
-              output script
+              output
+
+              script
           max_staking_time_blocks:
             type: integer
             format: int64
             title: >-
               max_staking_time_blocks is the maximum lock time time specified in
-              staking output script
+              staking
+
+              output script
           slashing_pk_script:
             type: string
             format: byte
@@ -19832,9 +20167,9 @@ definitions:
               PARAMETERS COVERING SLASHING
 
               slashing_pk_script is the pk_script expected in slashing output
-              ie. the first
+              ie. the
 
-              output of slashing transaction
+              first output of slashing transaction
           min_slashing_tx_fee_sat:
             type: string
             format: int64
@@ -19862,9 +20197,10 @@ definitions:
               PARAMETERS COVERING UNBONDING
 
               unbonding_time is the exact unbonding time required from unbonding
-              transaction
 
-              it must be larger than `checkpoint_finalization_timeout` from
+              transaction it must be larger than
+              `checkpoint_finalization_timeout` from
+
               `btccheckpoint` module
           unbonding_fee_sat:
             type: string
@@ -19876,12 +20212,12 @@ definitions:
               PARAMETERS COVERING FINALITY PROVIDERS
 
               min_commission_rate is the chain-wide minimum commission rate that
-              a finality provider
+              a
 
-              can charge their delegators expressed as a decimal (e.g., 0.5 for
-              50%). Maximal precion
+              finality provider can charge their delegators expressed as a
+              decimal (e.g.,
 
-              is 2 decimal places
+              0.5 for 50%). Maximal precion is 2 decimal places
           delegation_creation_base_gas_fee:
             type: string
             format: uint64
@@ -19902,12 +20238,14 @@ definitions:
             format: int64
             title: >-
               btc_activation_height is the btc height from which parameters are
-              activated (inclusive)
+              activated
+
+              (inclusive)
       version:
         type: integer
         format: int64
         title: version is the version of the params for the given BTC height
-    description: >-
+    description: |-
       QueryParamsByBTCHeightResponse is response type for the
       Query/QueryParamsByBTCHeightResponse RPC method.
   babylon.btcstaking.v1.QueryParamsByVersionResponse:
@@ -19954,13 +20292,17 @@ definitions:
             format: int64
             title: >-
               min_staking_time is the minimum lock time specified in staking
-              output script
+              output
+
+              script
           max_staking_time_blocks:
             type: integer
             format: int64
             title: >-
               max_staking_time_blocks is the maximum lock time time specified in
-              staking output script
+              staking
+
+              output script
           slashing_pk_script:
             type: string
             format: byte
@@ -19968,9 +20310,9 @@ definitions:
               PARAMETERS COVERING SLASHING
 
               slashing_pk_script is the pk_script expected in slashing output
-              ie. the first
+              ie. the
 
-              output of slashing transaction
+              first output of slashing transaction
           min_slashing_tx_fee_sat:
             type: string
             format: int64
@@ -19998,9 +20340,10 @@ definitions:
               PARAMETERS COVERING UNBONDING
 
               unbonding_time is the exact unbonding time required from unbonding
-              transaction
 
-              it must be larger than `checkpoint_finalization_timeout` from
+              transaction it must be larger than
+              `checkpoint_finalization_timeout` from
+
               `btccheckpoint` module
           unbonding_fee_sat:
             type: string
@@ -20012,12 +20355,12 @@ definitions:
               PARAMETERS COVERING FINALITY PROVIDERS
 
               min_commission_rate is the chain-wide minimum commission rate that
-              a finality provider
+              a
 
-              can charge their delegators expressed as a decimal (e.g., 0.5 for
-              50%). Maximal precion
+              finality provider can charge their delegators expressed as a
+              decimal (e.g.,
 
-              is 2 decimal places
+              0.5 for 50%). Maximal precion is 2 decimal places
           delegation_creation_base_gas_fee:
             type: string
             format: uint64
@@ -20038,7 +20381,9 @@ definitions:
             format: int64
             title: >-
               btc_activation_height is the btc height from which parameters are
-              activated (inclusive)
+              activated
+
+              (inclusive)
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   babylon.btcstaking.v1.QueryParamsResponse:
     type: object
@@ -20084,13 +20429,17 @@ definitions:
             format: int64
             title: >-
               min_staking_time is the minimum lock time specified in staking
-              output script
+              output
+
+              script
           max_staking_time_blocks:
             type: integer
             format: int64
             title: >-
               max_staking_time_blocks is the maximum lock time time specified in
-              staking output script
+              staking
+
+              output script
           slashing_pk_script:
             type: string
             format: byte
@@ -20098,9 +20447,9 @@ definitions:
               PARAMETERS COVERING SLASHING
 
               slashing_pk_script is the pk_script expected in slashing output
-              ie. the first
+              ie. the
 
-              output of slashing transaction
+              first output of slashing transaction
           min_slashing_tx_fee_sat:
             type: string
             format: int64
@@ -20128,9 +20477,10 @@ definitions:
               PARAMETERS COVERING UNBONDING
 
               unbonding_time is the exact unbonding time required from unbonding
-              transaction
 
-              it must be larger than `checkpoint_finalization_timeout` from
+              transaction it must be larger than
+              `checkpoint_finalization_timeout` from
+
               `btccheckpoint` module
           unbonding_fee_sat:
             type: string
@@ -20142,12 +20492,12 @@ definitions:
               PARAMETERS COVERING FINALITY PROVIDERS
 
               min_commission_rate is the chain-wide minimum commission rate that
-              a finality provider
+              a
 
-              can charge their delegators expressed as a decimal (e.g., 0.5 for
-              50%). Maximal precion
+              finality provider can charge their delegators expressed as a
+              decimal (e.g.,
 
-              is 2 decimal places
+              0.5 for 50%). Maximal precion is 2 decimal places
           delegation_creation_base_gas_fee:
             type: string
             format: uint64
@@ -20168,7 +20518,9 @@ definitions:
             format: int64
             title: >-
               btc_activation_height is the btc height from which parameters are
-              activated (inclusive)
+              activated
+
+              (inclusive)
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   babylon.btcstaking.v1.SignatureInfo:
     type: object
