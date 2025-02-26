@@ -97,10 +97,12 @@ func (k Keeper) triggerEventAndHandleHooksHandler() func(ctx context.Context, s 
 	return func(ctx context.Context, s headersState, result *types.InsertResult) error {
 		// if we have rollback, first delete all headers up to the rollback point
 		if result.RollbackInfo != nil {
+			// gets the tip prior to rollback and delete
+			lastTip := s.GetTip()
 			// roll back to the height
 			s.rollBackHeadersUpTo(result.RollbackInfo.HeaderToRollbackTo.Height)
 			// trigger rollback event
-			k.triggerRollBack(ctx, result.RollbackInfo.HeaderToRollbackTo)
+			k.triggerRollBack(ctx, lastTip, result.RollbackInfo.HeaderToRollbackTo)
 		}
 
 		for _, header := range result.HeadersToInsert {

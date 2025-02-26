@@ -91,18 +91,16 @@ paths:
                               MsgInsertBTCSpvProof itself
                         title: >-
                           CheckpointAddressesResponse contains the addresses of
-                          the submitter and
+                          the submitter and reporter of a
 
-                          reporter of a given checkpoint
+                          given checkpoint
                       title: list of vigilantes' addresses of the best submission
                   description: >-
                     BTCCheckpointInfoResponse contains all data about best
-                    submission of
+                    submission of checkpoint for
 
-                    checkpoint for given epoch. Best submission is the
-                    submission which is deeper
-
-                    in btc ledger.
+                    given epoch. Best submission is the submission which is
+                    deeper in btc ledger.
               pagination:
                 title: pagination defines the pagination in the response
                 type: object
@@ -262,9 +260,9 @@ paths:
                     type: string
                     title: >-
                       4byte tag in hex format, required to be present in the
-                      OP_RETURN
+                      OP_RETURN transaction
 
-                      transaction related to babylon
+                      related to babylon
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -369,17 +367,15 @@ paths:
                             MsgInsertBTCSpvProof itself
                       title: >-
                         CheckpointAddressesResponse contains the addresses of
-                        the submitter and
+                        the submitter and reporter of a
 
-                        reporter of a given checkpoint
+                        given checkpoint
                     title: list of vigilantes' addresses of the best submission
                 description: >-
                   BTCCheckpointInfoResponse contains all data about best
-                  submission of
+                  submission of checkpoint for
 
-                  checkpoint for given epoch. Best submission is the submission
-                  which is deeper
-
+                  given epoch. Best submission is the submission which is deeper
                   in btc ledger.
             title: |-
               QueryBtcCheckpointInfoResponse is response type for the
@@ -531,9 +527,9 @@ paths:
                     description: Work is the sdkmath.Uint as string.
                 description: >-
                   BTCHeaderInfoResponse is a structure that contains all
-                  relevant information
+                  relevant information about a
 
-                  about a BTC header response
+                  BTC header response
                    - Full header as string hex.
                    - Header hash for easy retrieval as string hex.
                    - Height of the header in the BTC chain.
@@ -684,9 +680,9 @@ paths:
                 format: int64
             title: >-
               QueryMainChainDepthResponse is the response type for the
-              Query/MainChainDepth
+              Query/MainChainDepth RPC
 
-              RPC it contains depth of the block in main chain
+              it contains depth of the block in main chain
         default:
           description: An unexpected error response.
           schema:
@@ -870,9 +866,9 @@ paths:
                       description: Work is the sdkmath.Uint as string.
                   description: >-
                     BTCHeaderInfoResponse is a structure that contains all
-                    relevant information
+                    relevant information about a
 
-                    about a BTC header response
+                    BTC header response
                      - Full header as string hex.
                      - Header hash for easy retrieval as string hex.
                      - Height of the header in the BTC chain.
@@ -1066,9 +1062,9 @@ paths:
                     description: Work is the sdkmath.Uint as string.
                 description: >-
                   BTCHeaderInfoResponse is a structure that contains all
-                  relevant information
+                  relevant information about a
 
-                  about a BTC header response
+                  BTC header response
                    - Full header as string hex.
                    - Header hash for easy retrieval as string hex.
                    - Height of the header in the BTC chain.
@@ -2252,9 +2248,7 @@ paths:
                       type: string
                       description: >-
                         msg_id is the original message ID, i.e., hash of the
-                        marshaled message as
-
-                        hex.
+                        marshaled message as hex.
                     block_height:
                       type: string
                       format: uint64
@@ -2276,9 +2270,9 @@ paths:
                         epoching module as string.
                   title: >-
                     QueuedMessageResponse is a message that can change the
-                    validator set and is
+                    validator set and is delayed
 
-                    delayed to the end of an epoch
+                    to the end of an epoch
                 title: msgs is the list of messages queued in the current epoch
               pagination:
                 title: pagination defines the pagination in the response
@@ -2927,9 +2921,7 @@ paths:
                             type: string
                             description: >-
                               msg_id is the original message ID, i.e., hash of
-                              the marshaled message as
-
-                              hex.
+                              the marshaled message as hex.
                           block_height:
                             type: string
                             format: uint64
@@ -2951,9 +2943,9 @@ paths:
                               epoching module as string.
                         title: >-
                           QueuedMessageResponse is a message that can change the
-                          validator set and is
+                          validator set and is delayed
 
-                          delayed to the end of an epoch
+                          to the end of an epoch
                   title: >-
                     QueuedMessageList is a message that contains a list of
                     staking-related
@@ -3507,9 +3499,7 @@ paths:
                       format: date-time
                   description: >-
                     ValStateUpdateResponse is a message response that records a
-                    state update of a
-
-                    validator.
+                    state update of a validator.
             title: |-
               QueryValidatorLifecycleResponse is the response type for the
               Query/ValidatorLifecycle RPC method
@@ -4810,7 +4800,6 @@ paths:
                              - BIP322: BIP322 means the btc_sig will follow the BIP-322 encoding
                              - ECDSA: ECDSA means the btc_sig will follow the ECDSA encoding
                             ref:
-
                             https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/src/BtcWallet.ts#L331
                         btc_sig:
                           type: string
@@ -4856,6 +4845,40 @@ paths:
                       title: |-
                         highest_voted_height is the highest height for which the
                         finality provider has voted
+                    commission_info:
+                      description: >-
+                        commission_info contains information details of the
+                        finality provider
+
+                        commission.
+                      type: object
+                      properties:
+                        max_rate:
+                          type: string
+                          description: >-
+                            max_rate defines the maximum commission rate which
+                            validator can ever charge, as a fraction.
+                        max_change_rate:
+                          type: string
+                          description: >-
+                            max_change_rate defines the maximum daily increase
+                            of the validator commission, as a fraction.
+                        update_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            update_time is the last time the commission rate was
+                            changed.
+                    consumer_id:
+                      type: string
+                      description: >-
+                        consumer_id is the ID of the consumer the finality
+                        provider is operating
+
+                        on. If it's missing / empty, it's assumed the finality
+                        provider is
+
+                        operating in the Babylon chain.
                   description: >-
                     FinalityProviderResponse defines a finality provider with
                     voting power
@@ -5782,7 +5805,6 @@ paths:
                            - BIP322: BIP322 means the btc_sig will follow the BIP-322 encoding
                            - ECDSA: ECDSA means the btc_sig will follow the ECDSA encoding
                           ref:
-
                           https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/src/BtcWallet.ts#L331
                       btc_sig:
                         type: string
@@ -5828,6 +5850,40 @@ paths:
                     title: |-
                       highest_voted_height is the highest height for which the
                       finality provider has voted
+                  commission_info:
+                    description: >-
+                      commission_info contains information details of the
+                      finality provider
+
+                      commission.
+                    type: object
+                    properties:
+                      max_rate:
+                        type: string
+                        description: >-
+                          max_rate defines the maximum commission rate which
+                          validator can ever charge, as a fraction.
+                      max_change_rate:
+                        type: string
+                        description: >-
+                          max_change_rate defines the maximum daily increase of
+                          the validator commission, as a fraction.
+                      update_time:
+                        type: string
+                        format: date-time
+                        description: >-
+                          update_time is the last time the commission rate was
+                          changed.
+                  consumer_id:
+                    type: string
+                    description: >-
+                      consumer_id is the ID of the consumer the finality
+                      provider is operating
+
+                      on. If it's missing / empty, it's assumed the finality
+                      provider is
+
+                      operating in the Babylon chain.
                 description: >-
                   FinalityProviderResponse defines a finality provider with
                   voting power
@@ -6039,6 +6095,271 @@ paths:
           in: path
           required: true
           type: string
+      tags:
+        - Query
+  /babylon/btcstaking/v1/largest_btc_reorg:
+    get:
+      summary: LargestBtcReOrg retrieves the largest BTC reorg
+      operationId: LargestBtcReOrg
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              block_diff:
+                type: integer
+                format: int64
+                title: >-
+                  BlockDiff is the difference of the block height of the BTC
+                  header Tip - the btc height
+
+                  which it was rolled back
+              rollback_from:
+                title: RollbackFrom is the latest BTC block header prior to rollback
+                type: object
+                properties:
+                  header_hex:
+                    type: string
+                  hash_hex:
+                    type: string
+                  height:
+                    type: integer
+                    format: int64
+                  work:
+                    type: string
+                    description: Work is the sdkmath.Uint as string.
+                description: >-
+                  BTCHeaderInfoResponse is a structure that contains all
+                  relevant information about a
+
+                  BTC header response
+                   - Full header as string hex.
+                   - Header hash for easy retrieval as string hex.
+                   - Height of the header in the BTC chain.
+                   - Total work spent on the header. This is the sum of the work corresponding
+                   to the header Bits field
+                     and the total work of the header.
+              rollback_to:
+                title: RollbackTo is the BTC block header which we rollback to
+                type: object
+                properties:
+                  header_hex:
+                    type: string
+                  hash_hex:
+                    type: string
+                  height:
+                    type: integer
+                    format: int64
+                  work:
+                    type: string
+                    description: Work is the sdkmath.Uint as string.
+                description: >-
+                  BTCHeaderInfoResponse is a structure that contains all
+                  relevant information about a
+
+                  BTC header response
+                   - Full header as string hex.
+                   - Header hash for easy retrieval as string hex.
+                   - Height of the header in the BTC chain.
+                   - Total work spent on the header. This is the sum of the work corresponding
+                   to the header Bits field
+                     and the total work of the header.
+            title: QueryLargestBtcReOrgResponse stores the largest BTC reorg recorded
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                    value:
+                      type: string
+                      format: byte
+                      description: >-
+                        Must be a valid serialized protocol buffer of the above
+                        specified type.
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+                        // or ...
+                        if (any.isSameTypeAs(Foo.getDefaultInstance())) {
+                          foo = any.unpack(Foo.getDefaultInstance());
+                        }
+
+                    Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                    Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+                    JSON
+
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
       tags:
         - Query
   /babylon/btcstaking/v1/params:
@@ -7104,11 +7425,9 @@ paths:
     get:
       summary: >-
         ActivatedHeight queries the height when BTC staking protocol is
-        activated,
+        activated, i.e., the first height when
 
-        i.e., the first height when there exists 1 finality provider with voting
-
-        power
+        there exists 1 finality provider with voting power
       operationId: ActivatedHeight
       responses:
         '200':
@@ -7119,7 +7438,7 @@ paths:
               height:
                 type: string
                 format: uint64
-            description: |-
+            description: >-
               QueryActivatedHeightResponse is the response type for the
               Query/ActivatedHeight RPC method.
         default:
@@ -7414,9 +7733,7 @@ paths:
                         the `s` in a Schnorr signature `(r, s)`
 
                         `r` is the public randomness that is already committed
-                        by the finality
-
-                        provider
+                        by the finality provider
                     fork_finality_sig:
                       type: string
                       format: byte
@@ -7545,7 +7862,7 @@ paths:
         - Query
   /babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/evidence:
     get:
-      summary: |-
+      summary: >-
         Evidence queries the first evidence which can be used for extracting the
         BTC SK
       operationId: Evidence
@@ -7593,9 +7910,7 @@ paths:
                       the `s` in a Schnorr signature `(r, s)`
 
                       `r` is the public randomness that is already committed by
-                      the finality
-
-                      provider
+                      the finality provider
                   fork_finality_sig:
                     type: string
                     format: byte
@@ -7647,7 +7962,7 @@ paths:
         - Query
   /babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/power:
     get:
-      summary: |-
+      summary: >-
         FinalityProviderCurrentPower queries the voting power of a finality
         provider at the current height
       operationId: FinalityProviderCurrentPower
@@ -7696,11 +8011,11 @@ paths:
         - name: fp_btc_pk_hex
           description: >-
             fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
+            provider that
 
-            provider that this BTC delegation delegates to the PK follows
-            encoding in
+            this BTC delegation delegates to
 
-            BIP-340 spec
+            the PK follows encoding in BIP-340 spec
           in: path
           required: true
           type: string
@@ -7708,7 +8023,7 @@ paths:
         - Query
   /babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/power/{height}:
     get:
-      summary: |-
+      summary: >-
         FinalityProviderPowerAtHeight queries the voting power of a finality
         provider at a given height
       operationId: FinalityProviderPowerAtHeight
@@ -7753,20 +8068,18 @@ paths:
         - name: fp_btc_pk_hex
           description: >-
             fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
+            provider that
 
-            provider that this BTC delegation delegates to the PK follows
-            encoding in
+            this BTC delegation delegates to
 
-            BIP-340 spec
+            the PK follows encoding in BIP-340 spec
           in: path
           required: true
           type: string
         - name: height
           description: >-
             height is used for querying the given finality provider's voting
-            power at
-
-            this height
+            power at this height
           in: path
           required: true
           type: string
@@ -7777,9 +8090,7 @@ paths:
     get:
       summary: >-
         ListPubRandCommit is a range query for public randomness commitments of
-        a
-
-        given finality provider
+        a given finality provider
       operationId: ListPubRandCommit
       responses:
         '200':
@@ -7813,12 +8124,10 @@ paths:
                     randomness commitment
                 title: >-
                   pub_rand_commit_map is the map where the key is the start
-                  height and the
+                  height and the value
 
-                  value is the public randomness commitment at this height for
-                  the given
-
-                  finality provider
+                  is the public randomness commitment at this height for the
+                  given finality provider
               pagination:
                 description: pagination defines the pagination in the response.
                 type: object
@@ -7865,7 +8174,7 @@ paths:
                       format: byte
       parameters:
         - name: fp_btc_pk_hex
-          description: |-
+          description: >-
             fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
             provider
           in: path
@@ -7933,14 +8242,15 @@ paths:
     get:
       summary: >-
         ListPublicRandomness is a range query for public randomness of a given
+        finality provider
 
-        finality provider NOTE: Babylon only has the knowledge of public
-        randomness
+        NOTE: Babylon only has the knowledge of public randomness that is
+        already revealed by
 
-        that is already revealed by finality providers, i.e., the finality
-        provider
+        finality providers, i.e., the finality provider already provides a
+        finality signature
 
-        already provides a finality signature at the corresponding height
+        at the corresponding height
       operationId: ListPublicRandomness
       responses:
         '200':
@@ -8005,7 +8315,7 @@ paths:
                       format: byte
       parameters:
         - name: fp_btc_pk_hex
-          description: |-
+          description: >-
             fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
             provider
           in: path
@@ -8071,7 +8381,7 @@ paths:
         - Query
   /babylon/finality/v1/finality_providers/{height}:
     get:
-      summary: |-
+      summary: >-
         ActiveFinalityProvidersAtHeight queries finality providers with non zero
         voting power at given height.
       operationId: ActiveFinalityProvidersAtHeight
@@ -8102,9 +8412,7 @@ paths:
                       format: uint64
                       title: >-
                         voting_power is the voting power of this finality
-                        provider at the given
-
-                        height
+                        provider at the given height
                     slashed_babylon_height:
                       type: string
                       format: uint64
@@ -8132,9 +8440,7 @@ paths:
                         finality provider has voted
                   description: >-
                     ActiveFinalityProvidersAtHeightResponse wraps the
-                    FinalityProvider with
-
-                    metadata.
+                    FinalityProvider with metadata.
                 description: >-
                   finality_providers contains all the queried finality
                   providersn.
@@ -8188,9 +8494,7 @@ paths:
         - name: height
           description: >-
             height defines at which Babylon height to query the finality
-            providers
-
-            info.
+            providers info.
           in: path
           required: true
           type: string
@@ -8272,39 +8576,30 @@ paths:
                     format: int64
                     title: >-
                       max_active_finality_providers is the maximum number of
-                      active finality
-
-                      providers in the BTC staking protocol
+                      active finality providers in the BTC staking protocol
                   signed_blocks_window:
                     type: string
                     format: int64
                     title: >-
                       signed_blocks_window defines the size of the sliding
-                      window for tracking
-
-                      finality provider liveness
+                      window for tracking finality provider liveness
                   finality_sig_timeout:
                     type: string
                     format: int64
                     title: >-
                       finality_sig_timeout defines how much time (in terms of
-                      blocks) finality
+                      blocks) finality providers have to cast a finality
 
-                      providers have to cast a finality vote before being judged
-                      as missing their
-
-                      voting turn on the given block
+                      vote before being judged as missing their voting turn on
+                      the given block
                   min_signed_per_window:
                     type: string
                     format: byte
                     title: >-
                       min_signed_per_window defines the minimum number of blocks
-                      that a finality
+                      that a finality provider is required to sign
 
-                      provider is required to sign within the sliding window to
-                      avoid being
-
-                      jailed
+                      within the sliding window to avoid being jailed
                   min_pub_rand:
                     type: string
                     format: uint64
@@ -8317,20 +8612,18 @@ paths:
                     type: string
                     title: >-
                       jail_duration is the minimum period of time that a
-                      finality provider
-
-                      remains jailed
+                      finality provider remains jailed
                   finality_activation_height:
                     type: string
                     format: uint64
                     description: >-
                       finality_activation_height is the babylon block height
-                      which the finality
+                      which the finality module will
 
-                      module will start to accept finality voting and the
-                      minimum allowed value
+                      start to accept finality voting and the minimum allowed
+                      value for the public randomness
 
-                      for the public randomness commit start height.
+                      commit start height.
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -8403,9 +8696,9 @@ paths:
                         liveness downtime.
                   description: >-
                     SigningInfoResponse defines the API response containing a
-                    finality provider's
+                    finality provider's signing info
 
-                    signing info for monitoring their liveness activity.
+                    for monitoring their liveness activity.
                 title: >-
                   info is the signing info of all finality providers with
                   signing info
@@ -8527,9 +8820,7 @@ paths:
     get:
       summary: >-
         SigningInfo queries the signing info of given finality provider BTC
-        public
-
-        key
+        public key
       operationId: SigningInfo
       responses:
         '200':
@@ -8568,9 +8859,9 @@ paths:
                       liveness downtime.
                 description: >-
                   SigningInfoResponse defines the API response containing a
-                  finality provider's
+                  finality provider's signing info
 
-                  signing info for monitoring their liveness activity.
+                  for monitoring their liveness activity.
             title: >-
               QuerySigningInfoResponse is the response type for the
               Query/SigningInfo RPC
@@ -8612,9 +8903,7 @@ paths:
     get:
       summary: >-
         VotesAtHeight queries finality providers who have signed the block at
-        given
-
-        height.
+        given height.
       operationId: VotesAtHeight
       responses:
         '200':
@@ -8629,10 +8918,9 @@ paths:
                   format: byte
                 title: >-
                   btc_pk is the Bitcoin secp256k1 PK of finality providers who
-                  have signed
+                  have signed the block at given height.
 
-                  the block at given height. the PK follows encoding in BIP-340
-                  spec
+                  the PK follows encoding in BIP-340 spec
             description: |-
               QueryVotesAtHeightResponse is the response type for the
               Query/VotesAtHeight RPC method.
@@ -9424,7 +9712,7 @@ paths:
         - Query
   /babylon/checkpointing/v1/raw_checkpoints:
     get:
-      summary: |-
+      summary: >-
         RawCheckpoints queries checkpoints for a epoch range specified in
         pagination params.
       operationId: RawCheckpoints
@@ -9933,9 +10221,7 @@ paths:
     get:
       summary: >-
         ConsumerRegistryList queries the list of consumers that are registered
-        to
-
-        Babylon
+        to Babylon
       operationId: ConsumerRegistryList
       responses:
         '200':
@@ -9986,9 +10272,7 @@ paths:
                     The struct is used in the query responses
                 title: >-
                   consumer_registers are the registered consumers in ascending
-                  alphabetical
-
-                  order
+                  alphabetical order
               pagination:
                 title: pagination defines the pagination in the response
                 type: object
@@ -10018,7 +10302,7 @@ paths:
                            repeated Bar results = 1;
                            PageResponse page = 2;
                    }
-            title: |-
+            title: >-
               QueryConsumerRegistryListResponse is response type for the
               Query/ConsumerRegistryList RPC method
         default:
@@ -10278,9 +10562,7 @@ paths:
     get:
       summary: >-
         ConsumersRegistry queries the latest info for a given list of consumers
-        in
-
-        Babylon's view
+        in Babylon's view
       operationId: ConsumersRegistry
       responses:
         '200':
@@ -10329,7 +10611,7 @@ paths:
                     registered consumer
 
                     The struct is used in the query responses
-            description: |-
+            description: >-
               QueryConsumersRegistryResponse is response type for the
               Query/ConsumersRegistry RPC method.
         default:
@@ -10614,7 +10896,6 @@ paths:
                            - BIP322: BIP322 means the btc_sig will follow the BIP-322 encoding
                            - ECDSA: ECDSA means the btc_sig will follow the ECDSA encoding
                           ref:
-
                           https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/src/BtcWallet.ts#L331
                       btc_sig:
                         type: string
@@ -10648,9 +10929,7 @@ paths:
                     format: uint64
                     title: >-
                       voting_power is the voting power of this finality provider
-                      at the given
-
-                      height
+                      at the given height
                   consumer_id:
                     type: string
                     title: >-
@@ -10658,9 +10937,7 @@ paths:
                       registered to
                 description: >-
                   FinalityProviderResponse defines a finality provider with
-                  voting power
-
-                  information.
+                  voting power information.
             title: >-
               QueryFinalityProviderResponse contains information about a
               finality provider
@@ -10867,7 +11144,7 @@ paths:
           required: true
           type: string
         - name: fp_btc_pk_hex
-          description: |-
+          description: >-
             fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
             provider
           in: path
@@ -10889,9 +11166,7 @@ paths:
                 type: string
             title: >-
               QueryFinalityProviderConsumerResponse returns the CZ finality
-              provier
-
-              consumer id
+              provier consumer id
         default:
           description: An unexpected error response.
           schema:
@@ -11088,7 +11363,7 @@ paths:
                         }
       parameters:
         - name: fp_btc_pk_hex
-          description: |-
+          description: >-
             fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
             provider
           in: path
@@ -11176,7 +11451,6 @@ paths:
                              - BIP322: BIP322 means the btc_sig will follow the BIP-322 encoding
                              - ECDSA: ECDSA means the btc_sig will follow the ECDSA encoding
                             ref:
-
                             https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/src/BtcWallet.ts#L331
                         btc_sig:
                           type: string
@@ -11210,9 +11484,7 @@ paths:
                       format: uint64
                       title: >-
                         voting_power is the voting power of this finality
-                        provider at the given
-
-                        height
+                        provider at the given height
                     consumer_id:
                       type: string
                       title: >-
@@ -11220,9 +11492,7 @@ paths:
                         registered to
                   description: >-
                     FinalityProviderResponse defines a finality provider with
-                    voting power
-
-                    information.
+                    voting power information.
                 title: finality_providers contains all the finality providers
               pagination:
                 description: pagination defines the pagination in the response.
@@ -11521,10 +11791,9 @@ paths:
                     type: boolean
                     description: >-
                       permissioned_integration is a flag to enable permissioned
-                      integration,
+                      integration, i.e.,
 
-                      i.e., requiring governance proposal to approve new
-                      integrations.
+                      requiring governance proposal to approve new integrations.
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -12068,9 +12337,9 @@ paths:
                     format: uint64
                     title: >-
                       babylon_header_height is the height of the babylon block
-                      that includes this
+                      that includes this CZ
 
-                      CZ header
+                      header
                   babylon_epoch:
                     type: string
                     format: uint64
@@ -12134,9 +12403,9 @@ paths:
                           format: uint64
                           title: >-
                             babylon_header_height is the height of the babylon
-                            block that includes this
+                            block that includes this CZ
 
-                            CZ header
+                            header
                         babylon_epoch:
                           type: string
                           format: uint64
@@ -12704,9 +12973,7 @@ paths:
     get:
       summary: >-
         ChainsInfo queries the latest info for a given list of chains in
-        Babylon's
-
-        view
+        Babylon's view
       operationId: ChainsInfo
       responses:
         '200':
@@ -12764,9 +13031,9 @@ paths:
                           format: uint64
                           title: >-
                             babylon_header_height is the height of the babylon
-                            block that includes this
+                            block that includes this CZ
 
-                            CZ header
+                            header
                         babylon_epoch:
                           type: string
                           format: uint64
@@ -12834,9 +13101,9 @@ paths:
                                 format: uint64
                                 title: >-
                                   babylon_header_height is the height of the
-                                  babylon block that includes this
+                                  babylon block that includes this CZ
 
-                                  CZ header
+                                  header
                               babylon_epoch:
                                 type: string
                                 format: uint64
@@ -13172,9 +13439,9 @@ paths:
                           format: uint64
                           title: >-
                             babylon_header_height is the height of the babylon
-                            block that includes this
+                            block that includes this CZ
 
-                            CZ header
+                            header
                         babylon_epoch:
                           type: string
                           format: uint64
@@ -13242,9 +13509,9 @@ paths:
                                 format: uint64
                                 title: >-
                                   babylon_header_height is the height of the
-                                  babylon block that includes this
+                                  babylon block that includes this CZ
 
-                                  CZ header
+                                  header
                               babylon_epoch:
                                 type: string
                                 format: uint64
@@ -13314,9 +13581,9 @@ paths:
                 title: chain_info is the info of the CZ
             description: >-
               QueryEpochChainsInfoResponse is response type for the
-              Query/EpochChainsInfo
+              Query/EpochChainsInfo RPC
 
-              RPC method.
+              method.
         default:
           description: An unexpected error response.
           schema:
@@ -13588,9 +13855,9 @@ paths:
                         format: uint64
                         title: >-
                           babylon_header_height is the height of the babylon
-                          block that includes this
+                          block that includes this CZ
 
-                          CZ header
+                          header
                       babylon_epoch:
                         type: string
                         format: uint64
@@ -13657,9 +13924,9 @@ paths:
                               format: uint64
                               title: >-
                                 babylon_header_height is the height of the
-                                babylon block that includes this
+                                babylon block that includes this CZ
 
-                                CZ header
+                                header
                             babylon_epoch:
                               type: string
                               format: uint64
@@ -14262,7 +14529,7 @@ paths:
         - Query
   /babylon/zoneconcierge/v1/finalized_chains_info:
     get:
-      summary: |-
+      summary: >-
         FinalizedChainsInfo queries the BTC-finalised info of chains with given
         IDs, with proofs
       operationId: FinalizedChainsInfo
@@ -14329,9 +14596,9 @@ paths:
                               format: uint64
                               title: >-
                                 babylon_header_height is the height of the
-                                babylon block that includes this
+                                babylon block that includes this CZ
 
-                                CZ header
+                                header
                             babylon_epoch:
                               type: string
                               format: uint64
@@ -14401,9 +14668,9 @@ paths:
                                     format: uint64
                                     title: >-
                                       babylon_header_height is the height of the
-                                      babylon block that includes this
+                                      babylon block that includes this CZ
 
-                                      CZ header
+                                      header
                                   babylon_epoch:
                                     type: string
                                     format: uint64
@@ -15061,9 +15328,9 @@ paths:
                       format: uint64
                       title: >-
                         babylon_header_height is the height of the babylon block
-                        that includes this
+                        that includes this CZ
 
-                        CZ header
+                        header
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -15429,9 +15696,9 @@ paths:
                       format: uint64
                       title: >-
                         babylon_header_height is the height of the babylon block
-                        that includes this
+                        that includes this CZ
 
-                        CZ header
+                        header
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -15681,7 +15948,7 @@ paths:
                     format: int64
                     title: >-
                       ibc_packet_timeout_seconds is the time period after which
-                      an unrelayed
+                      an unrelayed 
 
                       IBC packet becomes timeout, measured in seconds
             description: >-
@@ -15950,17 +16217,16 @@ definitions:
                 calculated from submission message MsgInsertBTCSpvProof itself
           title: >-
             CheckpointAddressesResponse contains the addresses of the submitter
-            and
+            and reporter of a
 
-            reporter of a given checkpoint
+            given checkpoint
         title: list of vigilantes' addresses of the best submission
     description: >-
       BTCCheckpointInfoResponse contains all data about best submission of
+      checkpoint for
 
-      checkpoint for given epoch. Best submission is the submission which is
-      deeper
-
-      in btc ledger.
+      given epoch. Best submission is the submission which is deeper in btc
+      ledger.
   babylon.btccheckpoint.v1.CheckpointAddressesResponse:
     type: object
     properties:
@@ -15976,9 +16242,11 @@ definitions:
         title: |-
           reporter is the address of the reporter who reported the submissions,
           calculated from submission message MsgInsertBTCSpvProof itself
-    title: |-
+    title: >-
       CheckpointAddressesResponse contains the addresses of the submitter and
-      reporter of a given checkpoint
+      reporter of a
+
+      given checkpoint
   babylon.btccheckpoint.v1.Params:
     type: object
     properties:
@@ -16012,9 +16280,11 @@ definitions:
           paper)
       checkpoint_tag:
         type: string
-        title: |-
+        title: >-
           4byte tag in hex format, required to be present in the OP_RETURN
-          transaction related to babylon
+          transaction
+
+          related to babylon
     description: Params defines the parameters for the module.
   babylon.btccheckpoint.v1.QueryBtcCheckpointInfoResponse:
     type: object
@@ -16086,17 +16356,16 @@ definitions:
                     itself
               title: >-
                 CheckpointAddressesResponse contains the addresses of the
-                submitter and
+                submitter and reporter of a
 
-                reporter of a given checkpoint
+                given checkpoint
             title: list of vigilantes' addresses of the best submission
         description: >-
           BTCCheckpointInfoResponse contains all data about best submission of
+          checkpoint for
 
-          checkpoint for given epoch. Best submission is the submission which is
-          deeper
-
-          in btc ledger.
+          given epoch. Best submission is the submission which is deeper in btc
+          ledger.
     title: |-
       QueryBtcCheckpointInfoResponse is response type for the
       Query/BtcCheckpointInfo RPC method
@@ -16172,17 +16441,16 @@ definitions:
                       itself
                 title: >-
                   CheckpointAddressesResponse contains the addresses of the
-                  submitter and
+                  submitter and reporter of a
 
-                  reporter of a given checkpoint
+                  given checkpoint
               title: list of vigilantes' addresses of the best submission
           description: >-
             BTCCheckpointInfoResponse contains all data about best submission of
+            checkpoint for
 
-            checkpoint for given epoch. Best submission is the submission which
-            is deeper
-
-            in btc ledger.
+            given epoch. Best submission is the submission which is deeper in
+            btc ledger.
       pagination:
         title: pagination defines the pagination in the response
         type: object
@@ -16292,9 +16560,11 @@ definitions:
               paper)
           checkpoint_tag:
             type: string
-            title: |-
+            title: >-
               4byte tag in hex format, required to be present in the OP_RETURN
-              transaction related to babylon
+              transaction
+
+              related to babylon
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   babylon.btccheckpoint.v1.SubmissionKeyResponse:
     type: object
@@ -16784,9 +17054,9 @@ definitions:
         description: Work is the sdkmath.Uint as string.
     description: >-
       BTCHeaderInfoResponse is a structure that contains all relevant
-      information
+      information about a
 
-      about a BTC header response
+      BTC header response
        - Full header as string hex.
        - Header hash for easy retrieval as string hex.
        - Height of the header in the BTC chain.
@@ -16824,9 +17094,9 @@ definitions:
             description: Work is the sdkmath.Uint as string.
         description: >-
           BTCHeaderInfoResponse is a structure that contains all relevant
-          information
+          information about a
 
-          about a BTC header response
+          BTC header response
            - Full header as string hex.
            - Header hash for easy retrieval as string hex.
            - Height of the header in the BTC chain.
@@ -16895,9 +17165,9 @@ definitions:
         format: int64
     title: >-
       QueryMainChainDepthResponse is the response type for the
-      Query/MainChainDepth
+      Query/MainChainDepth RPC
 
-      RPC it contains depth of the block in main chain
+      it contains depth of the block in main chain
   babylon.btclightclient.v1.QueryMainChainResponse:
     type: object
     properties:
@@ -16918,9 +17188,9 @@ definitions:
               description: Work is the sdkmath.Uint as string.
           description: >-
             BTCHeaderInfoResponse is a structure that contains all relevant
-            information
+            information about a
 
-            about a BTC header response
+            BTC header response
              - Full header as string hex.
              - Header hash for easy retrieval as string hex.
              - Height of the header in the BTC chain.
@@ -16991,9 +17261,9 @@ definitions:
             description: Work is the sdkmath.Uint as string.
         description: >-
           BTCHeaderInfoResponse is a structure that contains all relevant
-          information
+          information about a
 
-          about a BTC header response
+          BTC header response
            - Full header as string hex.
            - Header hash for easy retrieval as string hex.
            - Height of the header in the BTC chain.
@@ -17313,9 +17583,7 @@ definitions:
               type: string
               description: >-
                 msg_id is the original message ID, i.e., hash of the marshaled
-                message as
-
-                hex.
+                message as hex.
             block_height:
               type: string
               format: uint64
@@ -17335,9 +17603,9 @@ definitions:
                 epoching module as string.
           title: >-
             QueuedMessageResponse is a message that can change the validator set
-            and is
+            and is delayed
 
-            delayed to the end of an epoch
+            to the end of an epoch
         title: msgs is the list of messages queued in the current epoch
       pagination:
         title: pagination defines the pagination in the response
@@ -17529,9 +17797,7 @@ definitions:
                     type: string
                     description: >-
                       msg_id is the original message ID, i.e., hash of the
-                      marshaled message as
-
-                      hex.
+                      marshaled message as hex.
                   block_height:
                     type: string
                     format: uint64
@@ -17553,9 +17819,9 @@ definitions:
                       epoching module as string.
                 title: >-
                   QueuedMessageResponse is a message that can change the
-                  validator set and is
+                  validator set and is delayed
 
-                  delayed to the end of an epoch
+                  to the end of an epoch
           title: >-
             QueuedMessageList is a message that contains a list of
             staking-related
@@ -17628,9 +17894,7 @@ definitions:
               format: date-time
           description: >-
             ValStateUpdateResponse is a message response that records a state
-            update of a
-
-            validator.
+            update of a validator.
     title: |-
       QueryValidatorLifecycleResponse is the response type for the
       Query/ValidatorLifecycle RPC method
@@ -17652,9 +17916,7 @@ definitions:
               type: string
               description: >-
                 msg_id is the original message ID, i.e., hash of the marshaled
-                message as
-
-                hex.
+                message as hex.
             block_height:
               type: string
               format: uint64
@@ -17674,9 +17936,9 @@ definitions:
                 epoching module as string.
           title: >-
             QueuedMessageResponse is a message that can change the validator set
-            and is
+            and is delayed
 
-            delayed to the end of an epoch
+            to the end of an epoch
     title: |-
       QueuedMessageList is a message that contains a list of staking-related
       messages queued for an epoch
@@ -17690,9 +17952,7 @@ definitions:
         type: string
         description: >-
           msg_id is the original message ID, i.e., hash of the marshaled message
-          as
-
-          hex.
+          as hex.
       block_height:
         type: string
         format: uint64
@@ -17708,9 +17968,9 @@ definitions:
           epoching module as string.
     title: >-
       QueuedMessageResponse is a message that can change the validator set and
-      is
+      is delayed
 
-      delayed to the end of an epoch
+      to the end of an epoch
   babylon.epoching.v1.ValStateUpdateResponse:
     type: object
     properties:
@@ -17725,9 +17985,7 @@ definitions:
         format: date-time
     description: >-
       ValStateUpdateResponse is a message response that records a state update
-      of a
-
-      validator.
+      of a validator.
   babylon.epoching.v1.Validator:
     type: object
     properties:
@@ -18266,7 +18524,6 @@ definitions:
        - BIP322: BIP322 means the btc_sig will follow the BIP-322 encoding
        - ECDSA: ECDSA means the btc_sig will follow the ECDSA encoding
       ref:
-
       https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/src/BtcWallet.ts#L331
     title: BTCSigType indicates the type of btc_sig in a pop
   babylon.btcstaking.v1.BTCUndelegationResponse:
@@ -18362,6 +18619,26 @@ definitions:
     title: >-
       BTCUndelegationResponse provides all necessary info about the
       undeleagation
+  babylon.btcstaking.v1.CommissionInfo:
+    type: object
+    properties:
+      max_rate:
+        type: string
+        description: >-
+          max_rate defines the maximum commission rate which validator can ever
+          charge, as a fraction.
+      max_change_rate:
+        type: string
+        description: >-
+          max_change_rate defines the maximum daily increase of the validator
+          commission, as a fraction.
+      update_time:
+        type: string
+        format: date-time
+        description: update_time is the last time the commission rate was changed.
+    description: |-
+      CommissionInfo defines the information related to the commission of
+      a finality provider.
   babylon.btcstaking.v1.CovenantAdaptorSignatures:
     type: object
     properties:
@@ -18459,7 +18736,6 @@ definitions:
                - BIP322: BIP322 means the btc_sig will follow the BIP-322 encoding
                - ECDSA: ECDSA means the btc_sig will follow the ECDSA encoding
               ref:
-
               https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/src/BtcWallet.ts#L331
           btc_sig:
             type: string
@@ -18501,6 +18777,35 @@ definitions:
         title: |-
           highest_voted_height is the highest height for which the
           finality provider has voted
+      commission_info:
+        description: |-
+          commission_info contains information details of the finality provider
+          commission.
+        type: object
+        properties:
+          max_rate:
+            type: string
+            description: >-
+              max_rate defines the maximum commission rate which validator can
+              ever charge, as a fraction.
+          max_change_rate:
+            type: string
+            description: >-
+              max_change_rate defines the maximum daily increase of the
+              validator commission, as a fraction.
+          update_time:
+            type: string
+            format: date-time
+            description: update_time is the last time the commission rate was changed.
+      consumer_id:
+        type: string
+        description: >-
+          consumer_id is the ID of the consumer the finality provider is
+          operating
+
+          on. If it's missing / empty, it's assumed the finality provider is
+
+          operating in the Babylon chain.
     description: |-
       FinalityProviderResponse defines a finality provider with voting power
       information.
@@ -18644,7 +18949,6 @@ definitions:
            - BIP322: BIP322 means the btc_sig will follow the BIP-322 encoding
            - ECDSA: ECDSA means the btc_sig will follow the ECDSA encoding
           ref:
-
           https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/src/BtcWallet.ts#L331
       btc_sig:
         type: string
@@ -19492,7 +19796,6 @@ definitions:
                    - BIP322: BIP322 means the btc_sig will follow the BIP-322 encoding
                    - ECDSA: ECDSA means the btc_sig will follow the ECDSA encoding
                   ref:
-
                   https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/src/BtcWallet.ts#L331
               btc_sig:
                 type: string
@@ -19534,6 +19837,37 @@ definitions:
             title: |-
               highest_voted_height is the highest height for which the
               finality provider has voted
+          commission_info:
+            description: >-
+              commission_info contains information details of the finality
+              provider
+
+              commission.
+            type: object
+            properties:
+              max_rate:
+                type: string
+                description: >-
+                  max_rate defines the maximum commission rate which validator
+                  can ever charge, as a fraction.
+              max_change_rate:
+                type: string
+                description: >-
+                  max_change_rate defines the maximum daily increase of the
+                  validator commission, as a fraction.
+              update_time:
+                type: string
+                format: date-time
+                description: update_time is the last time the commission rate was changed.
+          consumer_id:
+            type: string
+            description: >-
+              consumer_id is the ID of the consumer the finality provider is
+              operating
+
+              on. If it's missing / empty, it's assumed the finality provider is
+
+              operating in the Babylon chain.
         description: |-
           FinalityProviderResponse defines a finality provider with voting power
           information.
@@ -19606,7 +19940,6 @@ definitions:
                      - BIP322: BIP322 means the btc_sig will follow the BIP-322 encoding
                      - ECDSA: ECDSA means the btc_sig will follow the ECDSA encoding
                     ref:
-
                     https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/src/BtcWallet.ts#L331
                 btc_sig:
                   type: string
@@ -19648,6 +19981,40 @@ definitions:
               title: |-
                 highest_voted_height is the highest height for which the
                 finality provider has voted
+            commission_info:
+              description: >-
+                commission_info contains information details of the finality
+                provider
+
+                commission.
+              type: object
+              properties:
+                max_rate:
+                  type: string
+                  description: >-
+                    max_rate defines the maximum commission rate which validator
+                    can ever charge, as a fraction.
+                max_change_rate:
+                  type: string
+                  description: >-
+                    max_change_rate defines the maximum daily increase of the
+                    validator commission, as a fraction.
+                update_time:
+                  type: string
+                  format: date-time
+                  description: >-
+                    update_time is the last time the commission rate was
+                    changed.
+            consumer_id:
+              type: string
+              description: >-
+                consumer_id is the ID of the consumer the finality provider is
+                operating
+
+                on. If it's missing / empty, it's assumed the finality provider
+                is
+
+                operating in the Babylon chain.
           description: >-
             FinalityProviderResponse defines a finality provider with voting
             power
@@ -19676,6 +20043,68 @@ definitions:
     description: |-
       QueryFinalityProvidersResponse is the response type for the
       Query/FinalityProviders RPC method.
+  babylon.btcstaking.v1.QueryLargestBtcReOrgResponse:
+    type: object
+    properties:
+      block_diff:
+        type: integer
+        format: int64
+        title: >-
+          BlockDiff is the difference of the block height of the BTC header Tip
+          - the btc height
+
+          which it was rolled back
+      rollback_from:
+        title: RollbackFrom is the latest BTC block header prior to rollback
+        type: object
+        properties:
+          header_hex:
+            type: string
+          hash_hex:
+            type: string
+          height:
+            type: integer
+            format: int64
+          work:
+            type: string
+            description: Work is the sdkmath.Uint as string.
+        description: >-
+          BTCHeaderInfoResponse is a structure that contains all relevant
+          information about a
+
+          BTC header response
+           - Full header as string hex.
+           - Header hash for easy retrieval as string hex.
+           - Height of the header in the BTC chain.
+           - Total work spent on the header. This is the sum of the work corresponding
+           to the header Bits field
+             and the total work of the header.
+      rollback_to:
+        title: RollbackTo is the BTC block header which we rollback to
+        type: object
+        properties:
+          header_hex:
+            type: string
+          hash_hex:
+            type: string
+          height:
+            type: integer
+            format: int64
+          work:
+            type: string
+            description: Work is the sdkmath.Uint as string.
+        description: >-
+          BTCHeaderInfoResponse is a structure that contains all relevant
+          information about a
+
+          BTC header response
+           - Full header as string hex.
+           - Header hash for easy retrieval as string hex.
+           - Height of the header in the BTC chain.
+           - Total work spent on the header. This is the sum of the work corresponding
+           to the header Bits field
+             and the total work of the header.
+    title: QueryLargestBtcReOrgResponse stores the largest BTC reorg recorded
   babylon.btcstaking.v1.QueryParamsByBTCHeightResponse:
     type: object
     properties:
@@ -20141,9 +20570,7 @@ definitions:
         format: uint64
         title: >-
           voting_power is the voting power of this finality provider at the
-          given
-
-          height
+          given height
       slashed_babylon_height:
         type: string
         format: uint64
@@ -20167,7 +20594,7 @@ definitions:
         title: |-
           highest_voted_height is the highest height for which the
           finality provider has voted
-    description: |-
+    description: >-
       ActiveFinalityProvidersAtHeightResponse wraps the FinalityProvider with
       metadata.
   babylon.finality.v1.EvidenceResponse:
@@ -20208,7 +20635,6 @@ definitions:
           the `s` in a Schnorr signature `(r, s)`
 
           `r` is the public randomness that is already committed by the finality
-
           provider
       fork_finality_sig:
         type: string
@@ -20244,7 +20670,7 @@ definitions:
       max_active_finality_providers:
         type: integer
         format: int64
-        title: |-
+        title: >-
           max_active_finality_providers is the maximum number of active finality
           providers in the BTC staking protocol
       signed_blocks_window:
@@ -20252,30 +20678,24 @@ definitions:
         format: int64
         title: >-
           signed_blocks_window defines the size of the sliding window for
-          tracking
-
-          finality provider liveness
+          tracking finality provider liveness
       finality_sig_timeout:
         type: string
         format: int64
         title: >-
           finality_sig_timeout defines how much time (in terms of blocks)
-          finality
+          finality providers have to cast a finality
 
-          providers have to cast a finality vote before being judged as missing
-          their
-
-          voting turn on the given block
+          vote before being judged as missing their voting turn on the given
+          block
       min_signed_per_window:
         type: string
         format: byte
         title: >-
           min_signed_per_window defines the minimum number of blocks that a
-          finality
+          finality provider is required to sign
 
-          provider is required to sign within the sliding window to avoid being
-
-          jailed
+          within the sliding window to avoid being jailed
       min_pub_rand:
         type: string
         format: uint64
@@ -20284,7 +20704,7 @@ definitions:
           message should commit
       jail_duration:
         type: string
-        title: |-
+        title: >-
           jail_duration is the minimum period of time that a finality provider
           remains jailed
       finality_activation_height:
@@ -20292,12 +20712,12 @@ definitions:
         format: uint64
         description: >-
           finality_activation_height is the babylon block height which the
-          finality
+          finality module will
 
-          module will start to accept finality voting and the minimum allowed
-          value
+          start to accept finality voting and the minimum allowed value for the
+          public randomness
 
-          for the public randomness commit start height.
+          commit start height.
     description: Params defines the parameters for the module.
   babylon.finality.v1.PubRandCommitResponse:
     type: object
@@ -20337,7 +20757,7 @@ definitions:
       height:
         type: string
         format: uint64
-    description: |-
+    description: >-
       QueryActivatedHeightResponse is the response type for the
       Query/ActivatedHeight RPC method.
   babylon.finality.v1.QueryActiveFinalityProvidersAtHeightResponse:
@@ -20362,9 +20782,7 @@ definitions:
               format: uint64
               title: >-
                 voting_power is the voting power of this finality provider at
-                the given
-
-                height
+                the given height
             slashed_babylon_height:
               type: string
               format: uint64
@@ -20390,9 +20808,7 @@ definitions:
                 finality provider has voted
           description: >-
             ActiveFinalityProvidersAtHeightResponse wraps the FinalityProvider
-            with
-
-            metadata.
+            with metadata.
         description: finality_providers contains all the queried finality providersn.
       pagination:
         description: pagination defines the pagination in the response.
@@ -20482,9 +20898,7 @@ definitions:
               the `s` in a Schnorr signature `(r, s)`
 
               `r` is the public randomness that is already committed by the
-              finality
-
-              provider
+              finality provider
           fork_finality_sig:
             type: string
             format: byte
@@ -20613,9 +21027,7 @@ definitions:
                 the `s` in a Schnorr signature `(r, s)`
 
                 `r` is the public randomness that is already committed by the
-                finality
-
-                provider
+                finality provider
             fork_finality_sig:
               type: string
               format: byte
@@ -20676,10 +21088,9 @@ definitions:
             commitment
         title: >-
           pub_rand_commit_map is the map where the key is the start height and
-          the
+          the value
 
-          value is the public randomness commitment at this height for the given
-
+          is the public randomness commitment at this height for the given
           finality provider
       pagination:
         description: pagination defines the pagination in the response.
@@ -20750,39 +21161,30 @@ definitions:
             format: int64
             title: >-
               max_active_finality_providers is the maximum number of active
-              finality
-
-              providers in the BTC staking protocol
+              finality providers in the BTC staking protocol
           signed_blocks_window:
             type: string
             format: int64
             title: >-
               signed_blocks_window defines the size of the sliding window for
-              tracking
-
-              finality provider liveness
+              tracking finality provider liveness
           finality_sig_timeout:
             type: string
             format: int64
             title: >-
               finality_sig_timeout defines how much time (in terms of blocks)
-              finality
+              finality providers have to cast a finality
 
-              providers have to cast a finality vote before being judged as
-              missing their
-
-              voting turn on the given block
+              vote before being judged as missing their voting turn on the given
+              block
           min_signed_per_window:
             type: string
             format: byte
             title: >-
               min_signed_per_window defines the minimum number of blocks that a
-              finality
+              finality provider is required to sign
 
-              provider is required to sign within the sliding window to avoid
-              being
-
-              jailed
+              within the sliding window to avoid being jailed
           min_pub_rand:
             type: string
             format: uint64
@@ -20793,20 +21195,18 @@ definitions:
             type: string
             title: >-
               jail_duration is the minimum period of time that a finality
-              provider
-
-              remains jailed
+              provider remains jailed
           finality_activation_height:
             type: string
             format: uint64
             description: >-
               finality_activation_height is the babylon block height which the
-              finality
+              finality module will
 
-              module will start to accept finality voting and the minimum
-              allowed value
+              start to accept finality voting and the minimum allowed value for
+              the public randomness
 
-              for the public randomness commit start height.
+              commit start height.
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   babylon.finality.v1.QuerySigningInfoResponse:
     type: object
@@ -20842,9 +21242,9 @@ definitions:
               downtime.
         description: >-
           SigningInfoResponse defines the API response containing a finality
-          provider's
+          provider's signing info
 
-          signing info for monitoring their liveness activity.
+          for monitoring their liveness activity.
     title: >-
       QuerySigningInfoResponse is the response type for the Query/SigningInfo
       RPC
@@ -20886,9 +21286,9 @@ definitions:
                 downtime.
           description: >-
             SigningInfoResponse defines the API response containing a finality
-            provider's
+            provider's signing info
 
-            signing info for monitoring their liveness activity.
+            for monitoring their liveness activity.
         title: info is the signing info of all finality providers with signing info
       pagination:
         type: object
@@ -20931,9 +21331,9 @@ definitions:
           format: byte
         title: >-
           btc_pk is the Bitcoin secp256k1 PK of finality providers who have
-          signed
+          signed the block at given height.
 
-          the block at given height. the PK follows encoding in BIP-340 spec
+          the PK follows encoding in BIP-340 spec
     description: |-
       QueryVotesAtHeightResponse is the response type for the
       Query/VotesAtHeight RPC method.
@@ -20966,9 +21366,9 @@ definitions:
           downtime.
     description: >-
       SigningInfoResponse defines the API response containing a finality
-      provider's
+      provider's signing info
 
-      signing info for monitoring their liveness activity.
+      for monitoring their liveness activity.
   babylon.mint.v1.QueryAnnualProvisionsResponse:
     type: object
     properties:
@@ -21874,7 +22274,6 @@ definitions:
                - BIP322: BIP322 means the btc_sig will follow the BIP-322 encoding
                - ECDSA: ECDSA means the btc_sig will follow the ECDSA encoding
               ref:
-
               https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/src/BtcWallet.ts#L331
           btc_sig:
             type: string
@@ -21908,13 +22307,11 @@ definitions:
         format: uint64
         title: >-
           voting_power is the voting power of this finality provider at the
-          given
-
-          height
+          given height
       consumer_id:
         type: string
         title: consumer_id is the consumer id this finality provider is registered to
-    description: |-
+    description: >-
       FinalityProviderResponse defines a finality provider with voting power
       information.
   babylon.btcstkconsumer.v1.Params:
@@ -21922,9 +22319,11 @@ definitions:
     properties:
       permissioned_integration:
         type: boolean
-        description: |-
+        description: >-
           permissioned_integration is a flag to enable permissioned integration,
-          i.e., requiring governance proposal to approve new integrations.
+          i.e.,
+
+          requiring governance proposal to approve new integrations.
     description: Params defines the parameters for the module.
   babylon.btcstkconsumer.v1.QueryConsumerRegistryListResponse:
     type: object
@@ -21972,9 +22371,7 @@ definitions:
             The struct is used in the query responses
         title: >-
           consumer_registers are the registered consumers in ascending
-          alphabetical
-
-          order
+          alphabetical order
       pagination:
         title: pagination defines the pagination in the response
         type: object
@@ -22002,7 +22399,7 @@ definitions:
                    repeated Bar results = 1;
                    PageResponse page = 2;
            }
-    title: |-
+    title: >-
       QueryConsumerRegistryListResponse is response type for the
       Query/ConsumerRegistryList RPC method
   babylon.btcstkconsumer.v1.QueryConsumersRegistryResponse:
@@ -22049,7 +22446,7 @@ definitions:
             consumer
 
             The struct is used in the query responses
-    description: |-
+    description: >-
       QueryConsumersRegistryResponse is response type for the
       Query/ConsumersRegistry RPC method.
   babylon.btcstkconsumer.v1.QueryFinalityProviderConsumerResponse:
@@ -22057,7 +22454,7 @@ definitions:
     properties:
       consumer_id:
         type: string
-    title: |-
+    title: >-
       QueryFinalityProviderConsumerResponse returns the CZ finality provier
       consumer id
   babylon.btcstkconsumer.v1.QueryFinalityProviderResponse:
@@ -22122,7 +22519,6 @@ definitions:
                    - BIP322: BIP322 means the btc_sig will follow the BIP-322 encoding
                    - ECDSA: ECDSA means the btc_sig will follow the ECDSA encoding
                   ref:
-
                   https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/src/BtcWallet.ts#L331
               btc_sig:
                 type: string
@@ -22156,15 +22552,13 @@ definitions:
             format: uint64
             title: >-
               voting_power is the voting power of this finality provider at the
-              given
-
-              height
+              given height
           consumer_id:
             type: string
             title: >-
               consumer_id is the consumer id this finality provider is
               registered to
-        description: |-
+        description: >-
           FinalityProviderResponse defines a finality provider with voting power
           information.
     title: >-
@@ -22233,7 +22627,6 @@ definitions:
                      - BIP322: BIP322 means the btc_sig will follow the BIP-322 encoding
                      - ECDSA: ECDSA means the btc_sig will follow the ECDSA encoding
                     ref:
-
                     https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/src/BtcWallet.ts#L331
                 btc_sig:
                   type: string
@@ -22267,9 +22660,7 @@ definitions:
               format: uint64
               title: >-
                 voting_power is the voting power of this finality provider at
-                the given
-
-                height
+                the given height
             consumer_id:
               type: string
               title: >-
@@ -22277,9 +22668,7 @@ definitions:
                 registered to
           description: >-
             FinalityProviderResponse defines a finality provider with voting
-            power
-
-            information.
+            power information.
         title: finality_providers contains all the finality providers
       pagination:
         description: pagination defines the pagination in the response.
@@ -22314,9 +22703,9 @@ definitions:
             type: boolean
             description: >-
               permissioned_integration is a flag to enable permissioned
-              integration,
+              integration, i.e.,
 
-              i.e., requiring governance proposal to approve new integrations.
+              requiring governance proposal to approve new integrations.
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   babylon.incentive.BTCStakingGaugeResponse:
     type: object
@@ -22779,9 +23168,9 @@ definitions:
             format: uint64
             title: >-
               babylon_header_height is the height of the babylon block that
-              includes this
+              includes this CZ
 
-              CZ header
+              header
           babylon_epoch:
             type: string
             format: uint64
@@ -22843,9 +23232,9 @@ definitions:
                   format: uint64
                   title: >-
                     babylon_header_height is the height of the babylon block
-                    that includes this
+                    that includes this CZ
 
-                    CZ header
+                    header
                 babylon_epoch:
                   type: string
                   format: uint64
@@ -22957,9 +23346,9 @@ definitions:
                 format: uint64
                 title: >-
                   babylon_header_height is the height of the babylon block that
-                  includes this
+                  includes this CZ
 
-                  CZ header
+                  header
               babylon_epoch:
                 type: string
                 format: uint64
@@ -23022,9 +23411,9 @@ definitions:
                       format: uint64
                       title: >-
                         babylon_header_height is the height of the babylon block
-                        that includes this
+                        that includes this CZ
 
-                        CZ header
+                        header
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -23423,9 +23812,9 @@ definitions:
               format: uint64
               title: >-
                 babylon_header_height is the height of the babylon block that
-                includes this
+                includes this CZ
 
-                CZ header
+                header
             babylon_epoch:
               type: string
               format: uint64
@@ -23506,9 +23895,9 @@ definitions:
         format: uint64
         title: >-
           babylon_header_height is the height of the babylon block that includes
-          this
+          this CZ
 
-          CZ header
+          header
       babylon_epoch:
         type: string
         format: uint64
@@ -23530,8 +23919,10 @@ definitions:
       ibc_packet_timeout_seconds:
         type: integer
         format: int64
-        title: |-
-          ibc_packet_timeout_seconds is the time period after which an unrelayed
+        title: >-
+          ibc_packet_timeout_seconds is the time period after which an
+          unrelayed 
+
           IBC packet becomes timeout, measured in seconds
     description: Params defines the parameters for the module.
   babylon.zoneconcierge.v1.ProofEpochSealed:
@@ -23904,9 +24295,9 @@ definitions:
                   format: uint64
                   title: >-
                     babylon_header_height is the height of the babylon block
-                    that includes this
+                    that includes this CZ
 
-                    CZ header
+                    header
                 babylon_epoch:
                   type: string
                   format: uint64
@@ -23970,9 +24361,9 @@ definitions:
                         format: uint64
                         title: >-
                           babylon_header_height is the height of the babylon
-                          block that includes this
+                          block that includes this CZ
 
-                          CZ header
+                          header
                       babylon_epoch:
                         type: string
                         format: uint64
@@ -24094,9 +24485,9 @@ definitions:
                   format: uint64
                   title: >-
                     babylon_header_height is the height of the babylon block
-                    that includes this
+                    that includes this CZ
 
-                    CZ header
+                    header
                 babylon_epoch:
                   type: string
                   format: uint64
@@ -24160,9 +24551,9 @@ definitions:
                         format: uint64
                         title: >-
                           babylon_header_height is the height of the babylon
-                          block that includes this
+                          block that includes this CZ
 
-                          CZ header
+                          header
                       babylon_epoch:
                         type: string
                         format: uint64
@@ -24232,9 +24623,9 @@ definitions:
         title: chain_info is the info of the CZ
     description: >-
       QueryEpochChainsInfoResponse is response type for the
-      Query/EpochChainsInfo
+      Query/EpochChainsInfo RPC
 
-      RPC method.
+      method.
   babylon.zoneconcierge.v1.QueryFinalizedChainInfoUntilHeightResponse:
     type: object
     properties:
@@ -24285,9 +24676,9 @@ definitions:
                 format: uint64
                 title: >-
                   babylon_header_height is the height of the babylon block that
-                  includes this
+                  includes this CZ
 
-                  CZ header
+                  header
               babylon_epoch:
                 type: string
                 format: uint64
@@ -24350,9 +24741,9 @@ definitions:
                       format: uint64
                       title: >-
                         babylon_header_height is the height of the babylon block
-                        that includes this
+                        that includes this CZ
 
-                        CZ header
+                        header
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -24768,9 +25159,9 @@ definitions:
                       format: uint64
                       title: >-
                         babylon_header_height is the height of the babylon block
-                        that includes this
+                        that includes this CZ
 
-                        CZ header
+                        header
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -24836,9 +25227,9 @@ definitions:
                             format: uint64
                             title: >-
                               babylon_header_height is the height of the babylon
-                              block that includes this
+                              block that includes this CZ
 
-                              CZ header
+                              header
                           babylon_epoch:
                             type: string
                             format: uint64
@@ -25246,9 +25637,9 @@ definitions:
             format: uint64
             title: >-
               babylon_header_height is the height of the babylon block that
-              includes this
+              includes this CZ
 
-              CZ header
+              header
           babylon_epoch:
             type: string
             format: uint64
@@ -25310,9 +25701,9 @@ definitions:
                   format: uint64
                   title: >-
                     babylon_header_height is the height of the babylon block
-                    that includes this
+                    that includes this CZ
 
-                    CZ header
+                    header
                 babylon_epoch:
                   type: string
                   format: uint64
@@ -25403,9 +25794,9 @@ definitions:
               format: uint64
               title: >-
                 babylon_header_height is the height of the babylon block that
-                includes this
+                includes this CZ
 
-                CZ header
+                header
             babylon_epoch:
               type: string
               format: uint64
@@ -25470,9 +25861,9 @@ definitions:
               format: uint64
               title: >-
                 babylon_header_height is the height of the babylon block that
-                includes this
+                includes this CZ
 
-                CZ header
+                header
             babylon_epoch:
               type: string
               format: uint64
@@ -25531,7 +25922,7 @@ definitions:
             format: int64
             title: >-
               ibc_packet_timeout_seconds is the time period after which an
-              unrelayed
+              unrelayed 
 
               IBC packet becomes timeout, measured in seconds
     description: QueryParamsResponse is the response type for the Query/Params RPC method.
