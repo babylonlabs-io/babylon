@@ -205,65 +205,6 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 	})
 }
 
-func AddBtcBlockWithDelegations(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context, delInfos ...*datagen.CreateDelegationInfo) (*datagen.BlockWithProofs, []*wire.MsgTx) {
-	btcLightK := app.BTCLightClientKeeper
-	msgSrvrBtcLight := btclightclientkeeper.NewMsgServerImpl(btcLightK)
-
-	stkTxs := replay.DelegationInfosToBTCTx(delInfos)
-	tip := btcLightK.GetTipInfo(ctx)
-	block := datagen.GenRandomBtcdBlockWithTransactions(r, stkTxs, tip.Header.ToBlockHeader())
-	headers := replay.BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
-	_, err := msgSrvrBtcLight.InsertHeaders(ctx, &btclctypes.MsgInsertHeaders{
-		Signer:  datagen.GenRandomAccount().Address,
-		Headers: headers,
-	})
-	require.NoError(t, err)
-
-	return block, stkTxs
-}
-
-func MaybeProduceBlock(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context) sdk.Context {
-	if r.Int31n(10) > 5 {
-		return ctx
-	}
-
-	return ProduceBlock(t, r, app, ctx)
-}
-
-func ProduceBlock(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context) sdk.Context {
-	_, err := app.BeginBlocker(ctx)
-	require.NoError(t, err)
-	_, err = app.EndBlocker(ctx)
-	require.NoError(t, err)
-
-	header := ctx.HeaderInfo()
-	header.Height += 1
-	return ctx.WithHeaderInfo(header)
-}
-
-func AddBtcBlock(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context) {
-	btcLightK := app.BTCLightClientKeeper
-	msgSrvrBtcLight := btclightclientkeeper.NewMsgServerImpl(btcLightK)
-
-	prevBlockHeader := btcLightK.GetTipInfo(ctx).Header.ToBlockHeader()
-	dummyGeneralTx := datagen.CreateDummyTx()
-	dummyGeneralHeaderWithProof := datagen.CreateBlockWithTransaction(r, prevBlockHeader, dummyGeneralTx)
-	dummyGeneralHeader := dummyGeneralHeaderWithProof.HeaderBytes
-	generalHeaders := []bbn.BTCHeaderBytes{dummyGeneralHeader}
-	insertHeaderMsg := &btclctypes.MsgInsertHeaders{
-		Signer:  datagen.GenRandomAddress().String(),
-		Headers: generalHeaders,
-	}
-	_, err := msgSrvrBtcLight.InsertHeaders(ctx, insertHeaderMsg)
-	require.NoError(t, err)
-}
-
-func AddNBtcBlock(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context, number uint) {
-	for i := 0; i < int(number); i++ {
-		AddBtcBlock(t, r, app, ctx)
-	}
-}
-
 func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
@@ -1195,4 +1136,63 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 	require.NotNil(t, btcDelStateUpdate)
 	require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
 	require.Equal(t, btcstktypes.BTCDelegationStatus_ACTIVE, btcDelStateUpdate.NewState)
+}
+
+func AddBtcBlockWithDelegations(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context, delInfos ...*datagen.CreateDelegationInfo) (*datagen.BlockWithProofs, []*wire.MsgTx) {
+	btcLightK := app.BTCLightClientKeeper
+	msgSrvrBtcLight := btclightclientkeeper.NewMsgServerImpl(btcLightK)
+
+	stkTxs := replay.DelegationInfosToBTCTx(delInfos)
+	tip := btcLightK.GetTipInfo(ctx)
+	block := datagen.GenRandomBtcdBlockWithTransactions(r, stkTxs, tip.Header.ToBlockHeader())
+	headers := replay.BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
+	_, err := msgSrvrBtcLight.InsertHeaders(ctx, &btclctypes.MsgInsertHeaders{
+		Signer:  datagen.GenRandomAccount().Address,
+		Headers: headers,
+	})
+	require.NoError(t, err)
+
+	return block, stkTxs
+}
+
+func MaybeProduceBlock(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context) sdk.Context {
+	if r.Int31n(10) > 5 {
+		return ctx
+	}
+
+	return ProduceBlock(t, r, app, ctx)
+}
+
+func ProduceBlock(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context) sdk.Context {
+	_, err := app.BeginBlocker(ctx)
+	require.NoError(t, err)
+	_, err = app.EndBlocker(ctx)
+	require.NoError(t, err)
+
+	header := ctx.HeaderInfo()
+	header.Height += 1
+	return ctx.WithHeaderInfo(header)
+}
+
+func AddBtcBlock(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context) {
+	btcLightK := app.BTCLightClientKeeper
+	msgSrvrBtcLight := btclightclientkeeper.NewMsgServerImpl(btcLightK)
+
+	prevBlockHeader := btcLightK.GetTipInfo(ctx).Header.ToBlockHeader()
+	dummyGeneralTx := datagen.CreateDummyTx()
+	dummyGeneralHeaderWithProof := datagen.CreateBlockWithTransaction(r, prevBlockHeader, dummyGeneralTx)
+	dummyGeneralHeader := dummyGeneralHeaderWithProof.HeaderBytes
+	generalHeaders := []bbn.BTCHeaderBytes{dummyGeneralHeader}
+	insertHeaderMsg := &btclctypes.MsgInsertHeaders{
+		Signer:  datagen.GenRandomAddress().String(),
+		Headers: generalHeaders,
+	}
+	_, err := msgSrvrBtcLight.InsertHeaders(ctx, insertHeaderMsg)
+	require.NoError(t, err)
+}
+
+func AddNBtcBlock(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context, number uint) {
+	for i := 0; i < int(number); i++ {
+		AddBtcBlock(t, r, app, ctx)
+	}
 }
