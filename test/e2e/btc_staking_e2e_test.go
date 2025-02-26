@@ -793,6 +793,7 @@ func equalFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpRes
 	require.Equal(t, fp.Pop, fpResp.Pop)
 	require.Equal(t, fp.SlashedBabylonHeight, fpResp.SlashedBabylonHeight)
 	require.Equal(t, fp.SlashedBtcHeight, fpResp.SlashedBtcHeight)
+	require.Equal(t, fp.ConsumerId, fpResp.ConsumerId)
 	require.Equal(t, fp.CommissionInfo.MaxRate, fpResp.CommissionInfo.MaxRate)
 	require.Equal(t, fp.CommissionInfo.MaxChangeRate, fpResp.CommissionInfo.MaxChangeRate)
 	// UpdateTime field is set to the
@@ -828,6 +829,11 @@ func CreateNodeFPFromNodeAddr(
 	// query the existence of finality provider and assert equivalence
 	actualFps := node.QueryFinalityProviders()
 	require.Len(t, actualFps, len(previousFps)+1)
+
+	// get chain ID to assert equality with the ConsumerId field
+	status, err := node.Status()
+	require.NoError(t, err)
+	newFP.ConsumerId = status.NodeInfo.Network
 
 	for _, fpResp := range actualFps {
 		if !strings.EqualFold(fpResp.Addr, newFP.Addr) {
@@ -868,6 +874,11 @@ func CreateNodeFP(
 	// query the existence of finality provider and assert equivalence
 	actualFps := node.QueryFinalityProviders()
 	require.Len(t, actualFps, len(previousFps)+1)
+
+	// get chain ID to assert equality with the ConsumerId field
+	status, err := node.Status()
+	require.NoError(t, err)
+	newFP.ConsumerId = status.NodeInfo.Network
 
 	for _, fpResp := range actualFps {
 		if !strings.EqualFold(fpResp.Addr, newFP.Addr) {

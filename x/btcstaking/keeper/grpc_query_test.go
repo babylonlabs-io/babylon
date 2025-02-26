@@ -131,9 +131,19 @@ func FuzzFinalityProvider(f *testing.F) {
 			}
 
 			// check keys from map matches those in returned response
+			require.Equal(t, v.Description, resp.FinalityProvider.Description)
+			require.Equal(t, v.Commission, resp.FinalityProvider.Commission)
 			require.Equal(t, v.BtcPk.MarshalHex(), resp.FinalityProvider.BtcPk.MarshalHex())
 			require.Equal(t, v.Addr, resp.FinalityProvider.Addr)
 			require.Equal(t, v.HighestVotedHeight, resp.FinalityProvider.HighestVotedHeight)
+			require.Equal(t, v.Pop, resp.FinalityProvider.Pop)
+			require.Equal(t, v.SlashedBabylonHeight, resp.FinalityProvider.SlashedBabylonHeight)
+			require.Equal(t, v.SlashedBtcHeight, resp.FinalityProvider.SlashedBtcHeight)
+			require.Equal(t, v.Jailed, resp.FinalityProvider.Jailed)
+			require.Equal(t, v.HighestVotedHeight, resp.FinalityProvider.HighestVotedHeight)
+			require.Equal(t, v.CommissionInfo.MaxRate, resp.FinalityProvider.CommissionInfo.MaxRate)
+			require.Equal(t, v.CommissionInfo.MaxChangeRate, resp.FinalityProvider.CommissionInfo.MaxChangeRate)
+			require.Equal(t, v.ConsumerId, resp.FinalityProvider.ConsumerId)
 		}
 
 		// check some random non-existing guy
@@ -405,8 +415,9 @@ func AddFinalityProvider(t *testing.T, goCtx context.Context, k btcstakingkeeper
 			fp.CommissionInfo.MaxRate,
 			fp.CommissionInfo.MaxChangeRate,
 		),
-		BtcPk: fp.BtcPk,
-		Pop:   fp.Pop,
+		BtcPk:      fp.BtcPk,
+		Pop:        fp.Pop,
+		ConsumerId: fp.ConsumerId,
 	})
 	require.NoError(t, err)
 }
