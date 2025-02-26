@@ -80,7 +80,7 @@ func MigrateFinalityProviders(goCtx context.Context, k btcstakingkeeper.Keeper) 
 				SlashedBtcHeight:     fp.SlashedBtcHeight,
 				Jailed:               fp.Jailed,
 				HighestVotedHeight:   fp.HighestVotedHeight,
-				ConsumerId:           ctx.ChainID(), // Here we're not using fp.ConsumerId because the query result is not returning it. Also, this field is not available on release/v1.x branch. Make sure to remove it when backporting
+				ConsumerId:           fp.ConsumerId, // This field is not available on release/v1.x branch. Make sure to remove it when backporting
 				CommissionInfo:       btcstakingtypes.NewCommissionInfoWithTime(defaultCommissionMaxRate, defaultCommissionMaxChangeRate, ctx.BlockHeader().Time),
 			})
 			if err != nil {

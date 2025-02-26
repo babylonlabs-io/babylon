@@ -53,6 +53,7 @@ check of rewards
 - [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
 - [#556](https://github.com/babylonlabs-io/babylon/pull/556) Panic on consensus critical errors
 - [#566](https://github.com/babylonlabs-io/babylon/pull/566) Remove float values in `BeforeValidatorSlashed` hook in `x/epoching` module
+- [#575](https://github.com/babylonlabs-io/babylon/pull/575) Add `ConsumerId` field in `FinalityProviderResponse` in `x/btcstaking` module
 
 ### State Machine Breaking
 
