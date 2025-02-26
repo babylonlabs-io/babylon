@@ -400,9 +400,13 @@ func AddFinalityProvider(t *testing.T, goCtx context.Context, k btcstakingkeeper
 	err := k.AddFinalityProvider(goCtx, &types.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
 		Description: fp.Description,
-		Commission:  fp.Commission,
-		BtcPk:       fp.BtcPk,
-		Pop:         fp.Pop,
+		Commission: types.NewCommissionRates(
+			*fp.Commission,
+			fp.CommissionInfo.MaxRate,
+			fp.CommissionInfo.MaxChangeRate,
+		),
+		BtcPk: fp.BtcPk,
+		Pop:   fp.Pop,
 	})
 	require.NoError(t, err)
 }
