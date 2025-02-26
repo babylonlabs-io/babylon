@@ -242,7 +242,10 @@ maintained Bitcoin best chain:
 // of the current mainchain to which we are rolling back to.
 // In other words, there is one rollback event emitted per re-org, to the
 // greatest common ancestor of the old and the new fork.
-message EventBTCRollBack { BTCHeaderInfo header = 1; }
+message EventBTCRollBack {
+  BTCHeaderInfo header = 1;
+  BTCHeaderInfo rollback_from = 2;
+}
 
 // EventBTCRollForward is emitted on Msg/InsertHeader
 // The header included in the event is the one the main chain is extended with.

@@ -24,7 +24,7 @@ func (k Keeper) triggerRollBack(ctx context.Context, rollbackFrom, rollbackTo *t
 	// Trigger AfterBTCRollBack hook
 	k.AfterBTCRollBack(ctx, rollbackFrom, rollbackTo)
 	// Emit BTCRollBack event
-	k.emitTypedEventWithLog(ctx, &types.EventBTCRollBack{Header: rollbackTo})
+	k.emitTypedEventWithLog(ctx, &types.EventBTCRollBack{Header: rollbackTo, RollbackFrom: rollbackFrom})
 }
 
 func (k Keeper) triggerRollForward(ctx context.Context, headerInfo *types.BTCHeaderInfo) {
