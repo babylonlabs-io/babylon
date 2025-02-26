@@ -41,7 +41,9 @@ func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) er
 	headersToBroadcast := h.k.getHeadersToBroadcast(ctx)
 
 	// send BTC timestamp to all open channels with ZoneConcierge
-	h.k.BroadcastBTCTimestamps(ctx, epoch, headersToBroadcast)
+	if err := h.k.BroadcastBTCTimestamps(ctx, epoch, headersToBroadcast); err != nil {
+		panic(err)
+	}
 
 	// only update the segment if we have broadcasted some headers
 	if len(headersToBroadcast) > 0 {

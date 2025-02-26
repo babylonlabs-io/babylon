@@ -93,9 +93,13 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 			msg := &types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
 				Description: fp.Description,
-				Commission:  fp.Commission,
-				BtcPk:       fp.BtcPk,
-				Pop:         fp.Pop,
+				Commission: types.NewCommissionRates(
+					*fp.Commission,
+					fp.CommissionInfo.MaxRate,
+					fp.CommissionInfo.MaxChangeRate,
+				),
+				BtcPk: fp.BtcPk,
+				Pop:   fp.Pop,
 			}
 			_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.NoError(t, err)
@@ -113,9 +117,13 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 			msg := &types.MsgCreateFinalityProvider{
 				Addr:        fp2.Addr,
 				Description: fp2.Description,
-				Commission:  fp2.Commission,
-				BtcPk:       fp2.BtcPk,
-				Pop:         fp2.Pop,
+				Commission: types.NewCommissionRates(
+					*fp2.Commission,
+					fp2.CommissionInfo.MaxRate,
+					fp2.CommissionInfo.MaxChangeRate,
+				),
+				BtcPk: fp2.BtcPk,
+				Pop:   fp2.Pop,
 			}
 			_, err := h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.Error(t, err)
@@ -148,6 +156,9 @@ func FuzzMsgEditFinalityProvider(f *testing.F) {
 		newDescription := datagen.GenRandomDescription(r)
 
 		// scenario 1: editing finality provider should succeed
+		// Note that, on finality provider creation, the commission update time is set to the current block time.
+		// So we need to update block time to be after 24hs to edit the commission
+		h.Ctx = h.Ctx.WithBlockTime(h.Ctx.BlockTime().Add(25 * time.Hour))
 		msg := &types.MsgEditFinalityProvider{
 			Addr:        fp.Addr,
 			BtcPk:       *fp.BtcPk,

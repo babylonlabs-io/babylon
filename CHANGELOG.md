@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#538](https://github.com/babylonlabs-io/babylon/pull/538) Upgrade to wasmd v0.54.x and wasmvm v2.2.x
 - [#536](https://github.com/babylonlabs-io/babylon/pull/536) Improve protobuf vs. json error msgs / types
 - [#527](https://github.com/babylonlabs-io/babylon/pull/527) Create BSL signer on start command with flags.
 - [#513](https://github.com/babylonlabs-io/babylon/pull/513) Suport datagen BTC delegation creation from Consumers
@@ -51,6 +52,10 @@ check of rewards
 - [#515](https://github.com/babylonlabs-io/babylon/pull/515) Add `staker_addr` to `EventBTCDelegationCreated`
 - [#518](https://github.com/babylonlabs-io/babylon/pull/518) Add check BTC reorg blocks higher than `k` deep
 - [#504](https://github.com/babylonlabs-io/babylon/pull/504) Add `btc-headers` IBC packet
+- [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
+- [#556](https://github.com/babylonlabs-io/babylon/pull/556) Panic on consensus critical errors
+- [#566](https://github.com/babylonlabs-io/babylon/pull/566) Remove float values in `BeforeValidatorSlashed` hook in `x/epoching` module
+- [#575](https://github.com/babylonlabs-io/babylon/pull/575) Add `ConsumerId` field in `FinalityProviderResponse` in `x/btcstaking` module
 
 ### State Machine Breaking
 
@@ -58,12 +63,15 @@ check of rewards
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
 - [#530](https://github.com/babylonlabs-io/babylon/pull/530) Add `ConflictingCheckpointReceived` flag in `x/checkpointing` module.
 - [#519](https://github.com/babylonlabs-io/babylon/pull/519) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module
+- [#537](https://github.com/babylonlabs-io/babylon/pull/537) Add `CommissionRates` type to `MsgCreateFinalityProvider` and commission validation to `EditFinalityProvider` in `x/btcstaking` module
 - [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
 invocation
+- [#567](https://github.com/babylonlabs-io/babylon/pull/567) Add check for height overflow in `CommitPubRandList` in `x/finality` module
 
 ### Bug fixes
 
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+- [#563](https://github.com/babylonlabs-io/babylon/pull/563) reject coinbase staking transactions
 
 ## v1.0.0-rc6
 

@@ -71,8 +71,8 @@ func (h *VoteExtensionHandler) ExtendVote() sdk.ExtendVoteHandler {
 		blsSig, err := k.SignBLS(epoch.EpochNumber, req.Hash)
 		if err != nil {
 			// NOTE: this indicates misconfiguration of the BLS key
-			panic(fmt.Errorf("failed to sign BLS signature at epoch %v, height %v",
-				epoch.EpochNumber, req.Height))
+			panic(fmt.Errorf("failed to sign BLS signature at epoch %v, height %v, validator %s",
+				epoch.EpochNumber, req.Height, valOperAddr.String()))
 		}
 
 		var bhash ckpttypes.BlockHash
@@ -97,7 +97,7 @@ func (h *VoteExtensionHandler) ExtendVote() sdk.ExtendVoteHandler {
 		}
 
 		h.logger.Info("successfully sent BLS signature in vote extension",
-			"epoch", epoch.EpochNumber, "height", req.Height)
+			"epoch", epoch.EpochNumber, "height", req.Height, "validator", valOperAddr.String())
 
 		return &abci.ResponseExtendVote{VoteExtension: bz}, nil
 	}
@@ -116,38 +116,41 @@ func (h *VoteExtensionHandler) VerifyVoteExtension() sdk.VerifyVoteExtensionHand
 			return resAccept, nil
 		}
 
+		extensionSigner := sdk.ValAddress(req.ValidatorAddress).String()
 		if len(req.VoteExtension) == 0 {
-			h.logger.Error("received empty vote extension", "height", req.Height)
+			h.logger.Info("received empty vote extension",
+				"height", req.Height, "validator", extensionSigner)
 			return resReject, nil
 		}
 
 		var ve ckpttypes.VoteExtension
 		if err := ve.Unmarshal(req.VoteExtension); err != nil {
-			h.logger.Error("failed to unmarshal vote extension", "err", err, "height", req.Height)
+			h.logger.Info("failed to unmarshal vote extension",
+				"err", err, "height", req.Height, "validator", extensionSigner)
 			return resReject, nil
 		}
 
 		// 1. verify epoch number
 		if epoch.EpochNumber != ve.EpochNum {
-			h.logger.Error("invalid epoch number in the vote extension",
-				"want", epoch.EpochNumber, "got", ve.EpochNum)
+			h.logger.Info("invalid epoch number in the vote extension",
+				"want", epoch.EpochNumber, "got", ve.EpochNum, "height", req.Height, "validator", extensionSigner)
 			return resReject, nil
 		}
 
 		// 2. ensure the validator address in the BLS sig matches the signer of the vote extension
 		// this prevents validators use valid BLS from another validator
 		blsSig := ve.ToBLSSig()
-		extensionSigner := sdk.ValAddress(req.ValidatorAddress).String()
 		if extensionSigner != blsSig.ValidatorAddress {
-			h.logger.Error("the vote extension signer does not match the BLS signature signer",
-				"extension signer", extensionSigner, "BLS signer", blsSig.SignerAddress)
+			h.logger.Info("the vote extension signer does not match the BLS signature signer",
+				"extension signer", extensionSigner, "BLS signer", blsSig.SignerAddress, "height", req.Height)
 			return resReject, nil
 		}
 
 		// 3. verify signing hash
 		if !blsSig.BlockHash.Equal(req.Hash) {
 			// processed BlsSig message is for invalid last commit hash
-			h.logger.Error("in valid block ID in BLS sig", "want", req.Hash, "got", blsSig.BlockHash)
+			h.logger.Info("in valid block ID in BLS sig",
+				"want", req.Hash, "got", blsSig.BlockHash, "validator", extensionSigner, "height", req.Height)
 			return resReject, nil
 		}
 
@@ -155,18 +158,19 @@ func (h *VoteExtensionHandler) VerifyVoteExtension() sdk.VerifyVoteExtensionHand
 		if err := k.VerifyBLSSig(ctx, blsSig); err != nil {
 			// Note: reject this vote extension as BLS is invalid
 			// this will also reject the corresponding PreCommit vote
-			h.logger.Error("invalid BLS sig in vote extension",
+			h.logger.Info("invalid BLS sig in vote extension",
 				"err", err,
 				"height", req.Height,
 				"epoch", epoch.EpochNumber,
+				"validator", extensionSigner,
 			)
 			return resReject, nil
 		}
 
 		h.logger.Info("successfully verified vote extension",
-			"signer_address", ve.Signer,
 			"height", req.Height,
 			"epoch", epoch.EpochNumber,
+			"validator", extensionSigner,
 		)
 
 		return &abci.ResponseVerifyVoteExtension{Status: abci.ResponseVerifyVoteExtension_ACCEPT}, nil
