@@ -90,8 +90,6 @@ func TestMustGetLargestBtcReorg(t *testing.T) {
 		},
 	}
 
-	// largestReorg := types.NewLargestBtcReOrg(from, to)
-
 	for _, tc := range tcs {
 		t.Run(tc.title, func(t *testing.T) {
 			t.Parallel()

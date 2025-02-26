@@ -16,7 +16,7 @@ in BTC block 140 or higher should be deleted as the inclusion proof will
 be different. BTC delegations included before BTC block height 140 will not
 be affected as the BTC rollbacks only happens if there is a better chain
 presented, a better chain means chain with more blocks, so any BTC delegation
-included in block 139 or prior would still be considered valid and active.
+included in block 139 or prior would still be considered valid.
 
 This recovery procedure only cares about the BTC transactions that were executed
 in blocks which have been rollbacked.
