@@ -4,7 +4,15 @@
 
 ## Taproot outputs
 
-## Staking Transaction
+## Building Transactions
+
+There are three special transaction types
+
+- Staking Transaction
+- Unbonding Transaction
+- Slashing Transaction
+
+### Staking Transaction
 
 A staking transaction is different to the other transactions. It creates a UTXO
 and can only be spent by specific paths. The paths are a predefined spending
@@ -28,7 +36,7 @@ The following are **not yet** needed.
     - Spending Script
     - Schnorr signatures
 
-### Data Required for Staking Output
+#### Data Required for Staking Output
 
 The staking output (`staking_output`) is created based on both user input and
 global parameters. The following data is required to construct this output:
@@ -47,11 +55,11 @@ These values are either provided by the user** when initiating a staking
 transaction or retrieved from the global parameters. The final `staking_output`
 commits these conditions within its Taproot structure.
 
-### Building a Staking Transaction Using the Babylon Library
+#### Building a Staking Transaction Using the Babylon Library
 
 To simplify the creation of a staking transaction the Babylon staking library provides its own function.
 
-#### Function Overview
+##### Function Overview
 
 The Babylon staking library exposes the
 [BuildV0IdentifiableStakingOutputsAndTx](https://github.com/babylonlabs-io/babylon/blob/main/btcstaking/identifiable_staking.go?plain=1#L231)
@@ -107,7 +115,7 @@ This function internally calls `BuildV0IdentifiableStakingOutputs()`, which:
     - Constructs the Taproot UTXO, embedding the staking conditions inside the
         Merkle root.
 
-#### OP_RETURN Output
+##### OP_RETURN Output
 
 To store staking metadata on-chain, Babylon uses an OP_RETURN output. This
 output is built using the `V0OpReturnData` struct:
