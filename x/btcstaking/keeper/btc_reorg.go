@@ -8,8 +8,8 @@ import (
 )
 
 // HaltIfBtcReorgLargerThanConfirmationDepth safety mechanism to stop the chain in case there is an BTC reorg
-// higher than the BtcConfirmationDepth. In teory this should only happen if the babylon chain goes down for
-// a period longer than (2 * BtcConfirmationDepth * 10min).
+// higher than the BtcConfirmationDepth. In theory this should only happen if the babylon chain goes down for
+// a period longer than (2 * BtcConfirmationDepth * 10min) and a malicious miner mines a large fork.
 func (k *Keeper) HaltIfBtcReorgLargerThanConfirmationDepth(ctx context.Context) {
 	p := k.btccKeeper.GetParams(ctx)
 
