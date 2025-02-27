@@ -150,7 +150,7 @@ func NewFinalityProviderDistInfo(fp *bstypes.FinalityProvider) *FinalityProvider
 		TotalBondedSat: 0,
 		IsJailed:       fp.Jailed,
 		IsSlashed:      fp.IsSlashed(),
-		IsTimestamped:  false, // not possible to fill info without tip height
+		IsTimestamped:  false,
 	}
 }
 
