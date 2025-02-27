@@ -696,12 +696,12 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 }
 
 func (s *BTCStakingTestSuite) Test9BlockBankSendAndBTCDelegate() {
-	chain := s.configurer.GetChainConfig(0)
-	n, err := chain.GetNodeAtIndex(2)
+	c := s.configurer.GetChainConfig(0)
+	n, err := c.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	propID := n.TxGovPropSubmitProposal("/govProps/block-bank-send.json", n.WalletName)
-	chain.TxGovVoteFromAllNodes(propID, govv1.VoteOption_VOTE_OPTION_YES)
+	c.TxGovVoteFromAllNodes(propID, govv1.VoteOption_VOTE_OPTION_YES)
 
 	s.Eventually(func() bool {
 		sendEnabled, err := n.QueryBankSendEnabled(appparams.DefaultBondDenom)
@@ -751,9 +751,14 @@ func (s *BTCStakingTestSuite) Test9BlockBankSendAndBTCDelegate() {
 	// wait for a block to take effect the fee grant tx.
 	n.WaitForNextBlock()
 
+	balancesFeePayerBeforeBtcDel, err := n.QueryBalances(s.feePayerAddr)
+	s.NoError(err)
+	balancesStakerBeforeBtcDel, err := n.QueryBalances(stakerNoFundsAddr)
+	s.NoError(err)
+
 	// submit the message to create BTC delegation using the fee grant at the max of spend limit
 	btcPK := bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey())
-	n.CreateBTCDelegation(
+	outStrBtcDel := n.CreateBTCDelegation(
 		btcPK,
 		pop,
 		stakingTx,
@@ -773,8 +778,22 @@ func (s *BTCStakingTestSuite) Test9BlockBankSendAndBTCDelegate() {
 		fmt.Sprintf("--fee-granter=%s", s.feePayerAddr),
 	)
 
+	txHashBtcDel := chain.GetTxHashFromOutput(outStrBtcDel)
+
 	// wait for a block so that above txs take effect
 	n.WaitForNextBlock()
+
+	_, txResp := n.QueryTx(txHashBtcDel)
+	txFeesPaid := txResp.AuthInfo.Fee.Amount
+
+	// verify the expected balances after the btc delegation gets included
+	balancesFeePayerAfterBtcDel, err := n.QueryBalances(s.feePayerAddr)
+	s.NoError(err)
+	balancesStakerAfterBtcDel, err := n.QueryBalances(stakerNoFundsAddr)
+	s.NoError(err)
+
+	s.Equal(balancesStakerBeforeBtcDel.String(), balancesStakerAfterBtcDel.String())
+	s.Equal(balancesFeePayerBeforeBtcDel.String(), balancesFeePayerAfterBtcDel.Add(txFeesPaid...).String())
 
 	// check that the delegation succeeded
 	delegation := n.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
