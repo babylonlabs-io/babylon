@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	govv1 "cosmossdk.io/api/cosmos/gov/v1"
 	sdkmath "cosmossdk.io/math"
 	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
@@ -43,6 +44,8 @@ type BTCStakingTestSuite struct {
 	covenantQuorum uint32
 	stakingValue   int64
 	configurer     configurer.Configurer
+
+	feePayerAddr string
 }
 
 func (s *BTCStakingTestSuite) SetupSuite() {
@@ -567,7 +570,8 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	s.NoError(err)
 
 	wGratee, wGranter := "staker", "feePayer"
-	feePayerAddr := sdk.MustAccAddressFromBech32(node.KeysAdd(wGranter))
+	s.feePayerAddr = node.KeysAdd(wGranter)
+	feePayerAddr := sdk.MustAccAddressFromBech32(s.feePayerAddr)
 	granteeStakerAddr := sdk.MustAccAddressFromBech32(node.KeysAdd(wGratee))
 
 	feePayerBalanceBeforeBTCDel := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(4000000))
@@ -689,6 +693,112 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	feePayerBalances, err := node.QueryBalances(feePayerAddr.String())
 	s.NoError(err)
 	s.True(feePayerBalanceBeforeBTCDel.Amount.GT(feePayerBalances.AmountOf(appparams.BaseCoinUnit)))
+}
+
+func (s *BTCStakingTestSuite) Test9BlockBankSendAndBTCDelegate() {
+	c := s.configurer.GetChainConfig(0)
+	n, err := c.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	propID := n.TxGovPropSubmitProposal("/govProps/block-bank-send.json", n.WalletName)
+	c.TxGovVoteFromAllNodes(propID, govv1.VoteOption_VOTE_OPTION_YES)
+
+	s.Eventually(func() bool {
+		sendEnabled, err := n.QueryBankSendEnabled(appparams.DefaultBondDenom)
+		if err != nil {
+			s.T().Logf("not possible to query if denom is enabled: %s", err.Error())
+			return false
+		}
+
+		if len(sendEnabled) != 1 {
+			s.T().Log("send enabled returned more than it should")
+			return false
+		}
+		bondDenomSendEnabled := sendEnabled[0]
+		return strings.EqualFold(bondDenomSendEnabled.Denom, appparams.DefaultBondDenom) &&
+			bondDenomSendEnabled.Enabled == false
+	}, time.Minute*5, time.Second*5)
+
+	stakerNoFundsAddr := n.KeysAdd("out-of-funds-btc-staker")
+
+	// create a random BTC delegation under the cached finality provider
+	// BTC staking btcStkParams, BTC delegation key pairs and PoP
+	btcStkParams := n.QueryBTCStakingParams()
+
+	// required unbonding time
+	unbondingTime := btcStkParams.UnbondingTimeBlocks
+
+	// NOTE: we use the grantee staker address for the BTC delegation PoP
+	pop, err := datagen.NewPoPBTC(sdk.MustAccAddressFromBech32(stakerNoFundsAddr), s.delBTCSK)
+	s.NoError(err)
+
+	// generate staking tx and slashing tx
+	stakingTimeBlocks := uint16(math.MaxUint16) - 2
+	testStakingInfo, stakingTx, inclusionProof, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(n, btcStkParams, stakingTimeBlocks, s.cacheFP)
+
+	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(s.delBTCSK)
+	s.NoError(err)
+
+	fees := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(50000))
+
+	// conceive the fee grant from the payer to the staker only for one specific msg type.
+	n.TxFeeGrant(
+		s.feePayerAddr, stakerNoFundsAddr,
+		fmt.Sprintf("--from=%s", s.feePayerAddr),
+		fmt.Sprintf("--%s=%s", feegrantcli.FlagSpendLimit, fees.String()),
+		fmt.Sprintf("--%s=%s", feegrantcli.FlagAllowedMsgs, sdk.MsgTypeURL(&bstypes.MsgCreateBTCDelegation{})),
+	)
+	// wait for a block to take effect the fee grant tx.
+	n.WaitForNextBlock()
+
+	balancesFeePayerBeforeBtcDel, err := n.QueryBalances(s.feePayerAddr)
+	s.NoError(err)
+	balancesStakerBeforeBtcDel, err := n.QueryBalances(stakerNoFundsAddr)
+	s.NoError(err)
+
+	// submit the message to create BTC delegation using the fee grant at the max of spend limit
+	btcPK := bbn.NewBIP340PubKeyFromBTCPK(s.delBTCSK.PubKey())
+	outStrBtcDel := n.CreateBTCDelegation(
+		btcPK,
+		pop,
+		stakingTx,
+		inclusionProof,
+		[]bbn.BIP340PubKey{*s.cacheFP.BtcPk},
+		stakingTimeBlocks,
+		btcutil.Amount(s.stakingValue),
+		testStakingInfo.SlashingTx,
+		delegatorSig,
+		testUnbondingInfo.UnbondingTx,
+		testUnbondingInfo.SlashingTx,
+		uint16(unbondingTime),
+		btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
+		delUnbondingSlashingSig,
+		stakerNoFundsAddr,
+		false,
+		fmt.Sprintf("--fee-granter=%s", s.feePayerAddr),
+	)
+
+	txHashBtcDel := chain.GetTxHashFromOutput(outStrBtcDel)
+
+	// wait for a block so that above txs take effect
+	n.WaitForNextBlock()
+
+	_, txResp := n.QueryTx(txHashBtcDel)
+	txFeesPaid := txResp.AuthInfo.Fee.Amount
+
+	// verify the expected balances after the btc delegation gets included
+	balancesFeePayerAfterBtcDel, err := n.QueryBalances(s.feePayerAddr)
+	s.NoError(err)
+	balancesStakerAfterBtcDel, err := n.QueryBalances(stakerNoFundsAddr)
+	s.NoError(err)
+
+	s.Equal(balancesStakerBeforeBtcDel.String(), balancesStakerAfterBtcDel.String())
+	s.Equal(balancesFeePayerBeforeBtcDel.String(), balancesFeePayerAfterBtcDel.Add(txFeesPaid...).String())
+
+	// check that the delegation succeeded
+	delegation := n.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
+	s.NotNil(delegation)
+	s.Equal(stakerNoFundsAddr, delegation.BtcDelegation.StakerAddr)
 }
 
 // ParseRespsBTCDelToBTCDel parses an BTC delegation response to BTC Delegation
