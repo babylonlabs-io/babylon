@@ -3,7 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
-	reflect "reflect"
+	"reflect"
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

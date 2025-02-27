@@ -128,7 +128,7 @@ func TestInitGenesis(t *testing.T) {
 			akMockResp: func(m *types.MockAccountKeeper) {
 				// mock account keeper to return an account on GetAccount call
 				m.EXPECT().GetAccount(gomock.Any(), acc1.GetAddress()).Return(acc1).AnyTimes()
-				m.EXPECT().GetAccount(gomock.Any(), acc2.GetAddress()).Return(acc1).AnyTimes()
+				m.EXPECT().GetAccount(gomock.Any(), acc2.GetAddress()).Return(acc2).AnyTimes()
 			},
 			expectErr: false,
 		},
