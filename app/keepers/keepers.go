@@ -582,7 +582,7 @@ func (ak *AppKeepers) InitKeepers(
 		checkpointingtypes.NewMultiCheckpointingHooks(epochingKeeper.Hooks(), zcKeeper.Hooks(), monitorKeeper.Hooks()),
 	)
 	btclightclientKeeper.SetHooks(
-		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks()),
+		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks(), ak.BTCStakingKeeper.Hooks()),
 	)
 
 	// wire the keepers with hooks to the app

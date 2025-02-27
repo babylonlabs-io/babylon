@@ -39,6 +39,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#466](https://github.com/babylonlabs-io/babylon/pull/466) Add e2e test to
+block bank send and still create BTC delegations
+- [#558](https://github.com/babylonlabs-io/babylon/pull/558) Change BLS public key format from hex to base64 in bls_key.json.
 - [#538](https://github.com/babylonlabs-io/babylon/pull/538) Upgrade to wasmd v0.54.x and wasmvm v2.2.x
 - [#536](https://github.com/babylonlabs-io/babylon/pull/536) Improve protobuf vs. json error msgs / types
 - [#527](https://github.com/babylonlabs-io/babylon/pull/527) Create BSL signer on start command with flags.
@@ -49,6 +52,8 @@ usage in `x/btcstkconsumer` queries
 check of rewards
 - [#480](https://github.com/babylonlabs-io/babylon/pull/480) Improve IBC packet structure
 - [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
+- [#515](https://github.com/babylonlabs-io/babylon/pull/515) Add `staker_addr` to `EventBTCDelegationCreated`
+- [#518](https://github.com/babylonlabs-io/babylon/pull/518) Add check BTC reorg blocks higher than `k` deep
 - [#504](https://github.com/babylonlabs-io/babylon/pull/504) Add `btc-headers` IBC packet
 - [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
 - [#556](https://github.com/babylonlabs-io/babylon/pull/556) Panic on consensus critical errors
@@ -72,6 +77,7 @@ invocation
 cache if an old BTC delegation receives inclusion proof
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 - [#563](https://github.com/babylonlabs-io/babylon/pull/563) reject coinbase staking transactions
+- [#584](https://github.com/babylonlabs-io/babylon/pull/584) fix: Panic can be triggered in handling liveness
 
 ## v1.0.0-rc6
 
