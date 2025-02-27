@@ -9,6 +9,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/btcstaking/v1/params.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
 import "babylon/btcstaking/v1/pop.proto";
+import "babylon/btclightclient/v1/query.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
 
@@ -18,39 +19,59 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/params";
   }
-  // ParamsByVersion queries the parameters of the module for a specific version of past params.
-  rpc ParamsByVersion(QueryParamsByVersionRequest) returns (QueryParamsByVersionResponse) {
+  // ParamsByVersion queries the parameters of the module for a specific version
+  // of past params.
+  rpc ParamsByVersion(QueryParamsByVersionRequest)
+      returns (QueryParamsByVersionResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/params/{version}";
   }
 
-  // ParamsByBTCHeight queries the parameters of the module for a specific BTC height
-  rpc ParamsByBTCHeight(QueryParamsByBTCHeightRequest) returns (QueryParamsByBTCHeightResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/params/btc_height/{btc_height}";
+  // ParamsByBTCHeight queries the parameters of the module for a specific BTC
+  // height
+  rpc ParamsByBTCHeight(QueryParamsByBTCHeightRequest)
+      returns (QueryParamsByBTCHeightResponse) {
+    option (google.api.http).get =
+        "/babylon/btcstaking/v1/params/btc_height/{btc_height}";
   }
 
   // FinalityProviders queries all finality providers
-  rpc FinalityProviders(QueryFinalityProvidersRequest) returns (QueryFinalityProvidersResponse) {
+  rpc FinalityProviders(QueryFinalityProvidersRequest)
+      returns (QueryFinalityProvidersResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers";
   }
 
   // FinalityProvider info about one finality provider
-  rpc FinalityProvider(QueryFinalityProviderRequest) returns (QueryFinalityProviderResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/finality_provider";
+  rpc FinalityProvider(QueryFinalityProviderRequest)
+      returns (QueryFinalityProviderResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers/"
+                                   "{fp_btc_pk_hex}/finality_provider";
   }
 
   // BTCDelegations queries all BTC delegations under a given status
-  rpc BTCDelegations(QueryBTCDelegationsRequest) returns (QueryBTCDelegationsResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegations/{status}";
+  rpc BTCDelegations(QueryBTCDelegationsRequest)
+      returns (QueryBTCDelegationsResponse) {
+    option (google.api.http).get =
+        "/babylon/btcstaking/v1/btc_delegations/{status}";
   }
 
-  // FinalityProviderDelegations queries all BTC delegations of the given finality provider
-  rpc FinalityProviderDelegations(QueryFinalityProviderDelegationsRequest) returns (QueryFinalityProviderDelegationsResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/delegations";
+  // FinalityProviderDelegations queries all BTC delegations of the given
+  // finality provider
+  rpc FinalityProviderDelegations(QueryFinalityProviderDelegationsRequest)
+      returns (QueryFinalityProviderDelegationsResponse) {
+    option (google.api.http).get =
+        "/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/delegations";
   }
 
   // BTCDelegation retrieves delegation by corresponding staking tx hash
-  rpc BTCDelegation(QueryBTCDelegationRequest) returns (QueryBTCDelegationResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegation/{staking_tx_hash_hex}";
+  rpc BTCDelegation(QueryBTCDelegationRequest)
+      returns (QueryBTCDelegationResponse) {
+    option (google.api.http).get =
+        "/babylon/btcstaking/v1/btc_delegation/{staking_tx_hash_hex}";
+  }
+
+  // LargestBtcReOrg retrieves the largest BTC reorg
+  rpc LargestBtcReOrg(QueryLargestBtcReOrgRequest) returns (QueryLargestBtcReOrgResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/largest_btc_reorg";
   }
 }
 
@@ -60,29 +81,27 @@ message QueryParamsRequest {}
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params holds all the parameters of this module.
-  Params params = 1 [(gogoproto.nullable) = false];
+  Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
-message QueryParamsByVersionRequest {
-  uint32 version = 1;
-}
+message QueryParamsByVersionRequest { uint32 version = 1; }
 
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsByVersionResponse {
   // params holds all the parameters of this module.
-  Params params = 1 [(gogoproto.nullable) = false];
+  Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
-// QueryParamsByBTCHeightRequest is request type for the Query/ParamsByBTCHeight RPC method.
-message QueryParamsByBTCHeightRequest {
-  uint32 btc_height = 1;
-}
+// QueryParamsByBTCHeightRequest is request type for the Query/ParamsByBTCHeight
+// RPC method.
+message QueryParamsByBTCHeightRequest { uint32 btc_height = 1; }
 
-// QueryParamsByBTCHeightResponse is response type for the Query/QueryParamsByBTCHeightResponse RPC method.
+// QueryParamsByBTCHeightResponse is response type for the
+// Query/QueryParamsByBTCHeightResponse RPC method.
 message QueryParamsByBTCHeightResponse {
   // params holds all the parameters of this module.
-  Params params = 1 [(gogoproto.nullable) = false];
+  Params params = 1 [ (gogoproto.nullable) = false ];
 
   // version is the version of the params for the given BTC height
   uint32 version = 2;
@@ -105,10 +124,10 @@ message QueryFinalityProvidersResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-
 // QueryFinalityProviderRequest requests information about a finality provider
 message QueryFinalityProviderRequest {
-  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
+  // provider
   string fp_btc_pk_hex = 1;
 }
 
@@ -131,7 +150,8 @@ message QueryBTCDelegationsRequest {
 // QueryBTCDelegationsResponse is the response type for the
 // Query/BTCDelegations RPC method.
 message QueryBTCDelegationsResponse {
-  // btc_delegations contains all the queried BTC delegations under the given status
+  // btc_delegations contains all the queried BTC delegations under the given
+  // status
   repeated BTCDelegationResponse btc_delegations = 1;
 
   // pagination defines the pagination in the response.
@@ -141,9 +161,9 @@ message QueryBTCDelegationsResponse {
 // QueryFinalityProviderDelegationsRequest is the request type for the
 // Query/FinalityProviderDelegations RPC method.
 message QueryFinalityProviderDelegationsRequest {
-  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality providerthat
-  // this BTC delegation delegates to
-  // the PK follows encoding in BIP-340 spec
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality
+  // providerthat this BTC delegation delegates to the PK follows encoding in
+  // BIP-340 spec
   string fp_btc_pk_hex = 1;
 
   // pagination defines an optional pagination for the request.
@@ -167,24 +187,30 @@ message QueryBTCDelegationRequest {
   string staking_tx_hash_hex = 1;
 }
 
-// QueryBTCDelegationResponse is response type matching QueryBTCDelegationRequest
-// and containing BTC delegation information
+// QueryBTCDelegationResponse is response type matching
+// QueryBTCDelegationRequest and containing BTC delegation information
 message QueryBTCDelegationResponse {
   // BTCDelegation represents the client needed information of an BTCDelegation.
   BTCDelegationResponse btc_delegation = 1;
 }
 
-// BTCDelegationResponse is the client needed information from a BTCDelegation with the current status based on parameters.
+// BTCDelegationResponse is the client needed information from a BTCDelegation
+// with the current status based on parameters.
 message BTCDelegationResponse {
   // staker_addr is the address to receive rewards from BTC delegation.
-  string staker_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string staker_addr = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
   // the PK follows encoding in BIP-340 spec
-  bytes btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  bytes btc_pk = 2
+      [ (gogoproto.customtype) =
+            "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   // fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
   // this BTC delegation delegates to
-  repeated bytes fp_btc_pk_list = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
-  // staking_time is the number of blocks for which the delegation is locked on BTC chain
+  repeated bytes fp_btc_pk_list = 3
+      [ (gogoproto.customtype) =
+            "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  // staking_time is the number of blocks for which the delegation is locked on
+  // BTC chain
   uint32 staking_time = 4;
   // start_height is the start BTC height of the BTC delegation
   // it is the start BTC height of the timelock
@@ -213,8 +239,8 @@ message BTCDelegationResponse {
   bool active = 13;
   // descriptive status of current delegation.
   string status_desc = 14;
-  // unbonding_time used in unbonding output timelock path and in slashing transactions
-  // change outputs
+  // unbonding_time used in unbonding output timelock path and in slashing
+  // transactions change outputs
   uint32 unbonding_time = 15;
   // undelegation_response is the undelegation info of this delegation.
   BTCUndelegationResponse undelegation_response = 16;
@@ -226,15 +252,16 @@ message BTCDelegationResponse {
 // which spent the staking output
 message DelegatorUnbondingInfoResponse {
   // spend_stake_tx_hex is the transaction which spent the staking output. It is
-  // filled only if the spend_stake_tx_hex is different than the unbonding_tx_hex
+  // filled only if the spend_stake_tx_hex is different than the
+  // unbonding_tx_hex
   string spend_stake_tx_hex = 1;
 }
 
 // BTCUndelegationResponse provides all necessary info about the undeleagation
 message BTCUndelegationResponse {
   // unbonding_tx is the transaction which will transfer the funds from staking
-  // output to unbonding output. Unbonding output will usually have lower timelock
-  // than staking output. The unbonding tx as string hex.
+  // output to unbonding output. Unbonding output will usually have lower
+  // timelock than staking output. The unbonding tx as string hex.
   string unbonding_tx_hex = 1;
   // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
   // by covenant members
@@ -255,25 +282,29 @@ message BTCUndelegationResponse {
   DelegatorUnbondingInfoResponse delegator_unbonding_info_response = 6;
 }
 
-// BTCDelegatorDelegationsResponse is a collection of BTC delegations responses from the same delegator.
+// BTCDelegatorDelegationsResponse is a collection of BTC delegations responses
+// from the same delegator.
 message BTCDelegatorDelegationsResponse {
   repeated BTCDelegationResponse dels = 1;
 }
 
-// FinalityProviderResponse defines a finality provider with voting power information.
+// FinalityProviderResponse defines a finality provider with voting power
+// information.
 message FinalityProviderResponse {
   // description defines the description terms for the finality provider.
   cosmos.staking.v1beta1.Description description = 1;
   // commission defines the commission rate of the finality provider.
   string commission = 2 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
   ];
   // addr is the address to receive commission from delegations.
-  string addr = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string addr = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // btc_pk is the Bitcoin secp256k1 PK of this finality provider
   // the PK follows encoding in BIP-340 spec
-  bytes btc_pk = 4 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  bytes btc_pk = 4
+      [ (gogoproto.customtype) =
+            "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   // pop is the proof of possession of the BTC_PK by the fp addr.
   // Essentially is the signature where the BTC SK sigs the fp addr.
   ProofOfPossessionBTC pop = 5;
@@ -292,4 +323,25 @@ message FinalityProviderResponse {
   // highest_voted_height is the highest height for which the
   // finality provider has voted
   uint32 highest_voted_height = 10;
+  // commission_info contains information details of the finality provider
+  // commission.
+  CommissionInfo commission_info = 11;
+  // consumer_id is the ID of the consumer the finality provider is operating
+  // on. If it's missing / empty, it's assumed the finality provider is
+  // operating in the Babylon chain.
+  string consumer_id = 12;
+}
+
+// QueryLargestBtcReOrgRequest query request of the largest BTC reorg request
+message QueryLargestBtcReOrgRequest {}
+
+// QueryLargestBtcReOrgResponse stores the largest BTC reorg recorded
+message QueryLargestBtcReOrgResponse {
+  // BlockDiff is the difference of the block height of the BTC header Tip - the btc height
+  // which it was rolled back
+  uint32 block_diff = 1;
+  // RollbackFrom is the latest BTC block header prior to rollback
+  babylon.btclightclient.v1.BTCHeaderInfoResponse rollback_from = 2;
+  // RollbackTo is the BTC block header which we rollback to
+  babylon.btclightclient.v1.BTCHeaderInfoResponse rollback_to = 3;
 }

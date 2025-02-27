@@ -39,8 +39,8 @@ func (m *MockHooks) AfterBTCRollForward(_ context.Context, headerInfo *types.BTC
 	m.AfterBTCRollForwardStore = append(m.AfterBTCRollForwardStore, headerInfo)
 }
 
-func (m *MockHooks) AfterBTCRollBack(_ context.Context, headerInfo *types.BTCHeaderInfo) {
-	m.AfterBTCRollBackStore = append(m.AfterBTCRollBackStore, headerInfo)
+func (m *MockHooks) AfterBTCRollBack(_ context.Context, _, rollbackTo *types.BTCHeaderInfo) {
+	m.AfterBTCRollBackStore = append(m.AfterBTCRollBackStore, rollbackTo)
 }
 
 func (m *MockHooks) AfterBTCHeaderInserted(_ context.Context, headerInfo *types.BTCHeaderInfo) {

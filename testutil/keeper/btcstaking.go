@@ -30,11 +30,14 @@ func BTCStakingKeeperWithStore(
 	t testing.TB,
 	db dbm.DB,
 	stateStore store.CommitMultiStore,
+	storeKey *storetypes.KVStoreKey,
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
 	iKeeper types.IncentiveKeeper,
 ) (*keeper.Keeper, sdk.Context) {
-	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
+	if storeKey == nil {
+		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
+	}
 
 	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, stateStore.LoadLatestVersion())
@@ -80,10 +83,20 @@ func BTCStakingKeeper(
 	btccKeeper types.BtcCheckpointKeeper,
 	iKeeper types.IncentiveKeeper,
 ) (*keeper.Keeper, sdk.Context) {
+	return BTCStakingKeeperWithStoreKey(t, nil, btclcKeeper, btccKeeper, iKeeper)
+}
+
+func BTCStakingKeeperWithStoreKey(
+	t testing.TB,
+	storeKey *storetypes.KVStoreKey,
+	btclcKeeper types.BTCLightClientKeeper,
+	btccKeeper types.BtcCheckpointKeeper,
+	iKeeper types.IncentiveKeeper,
+) (*keeper.Keeper, sdk.Context) {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
-	k, ctx := BTCStakingKeeperWithStore(t, db, stateStore, btclcKeeper, btccKeeper, iKeeper)
+	k, ctx := BTCStakingKeeperWithStore(t, db, stateStore, storeKey, btclcKeeper, btccKeeper, iKeeper)
 
 	// Initialize params
 	if err := k.SetParams(ctx, types.DefaultParams()); err != nil {
