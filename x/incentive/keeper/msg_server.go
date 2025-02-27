@@ -44,22 +44,21 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 func (ms msgServer) WithdrawReward(goCtx context.Context, req *types.MsgWithdrawReward) (*types.MsgWithdrawRewardResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// get stakeholder type and address
-	sType, err := types.NewStakeHolderTypeFromString(req.Type)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if err := req.Type.Validate(); err != nil {
+		return nil, err
 	}
+	// get stakeholder address
 	addr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := ms.sendAllBtcDelegationTypeToRewardsGauge(ctx, sType, addr); err != nil {
+	if err := ms.sendAllBtcDelegationTypeToRewardsGauge(ctx, req.Type, addr); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// withdraw reward, i.e., send withdrawable reward to the stakeholder address and clear the reward gauge
-	withdrawnCoins, err := ms.withdrawReward(ctx, sType, addr)
+	withdrawnCoins, err := ms.withdrawReward(ctx, req.Type, addr)
 	if err != nil {
 		return nil, err
 	}
