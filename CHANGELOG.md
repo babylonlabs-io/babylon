@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#466](https://github.com/babylonlabs-io/babylon/pull/466) Add e2e test to
+block bank send and still create BTC delegations
 - [#538](https://github.com/babylonlabs-io/babylon/pull/538) Upgrade to wasmd v0.54.x and wasmvm v2.2.x
 - [#527](https://github.com/babylonlabs-io/babylon/pull/527) Create BSL signer on start command with flags.
 - [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
