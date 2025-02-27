@@ -17,14 +17,9 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-
-	sdkmath "cosmossdk.io/math"
-	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	appparams "github.com/babylonlabs-io/babylon/app/params"
 
 	"github.com/babylonlabs-io/babylon/crypto/eots"
 	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
@@ -750,7 +745,7 @@ func (s *BTCStakingTestSuite) Test9BlockBankSendAndBTCDelegate() {
 		pop,
 		stakingTx,
 		inclusionProof,
-		[]bbn.BIP340PubKey{*s.cacheFP.BtcPk},
+		s.cacheFP.BtcPk,
 		stakingTimeBlocks,
 		btcutil.Amount(s.stakingValue),
 		testStakingInfo.SlashingTx,
