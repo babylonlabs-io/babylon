@@ -85,7 +85,7 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 
 		proposalTxs, err := NewPrepareProposalTxs(req)
 		if err != nil {
-			return &EmptyProposalRes, fmt.Errorf(fmt.Sprintf("NewPrepareProposalTxs error: %v", err))
+			return &EmptyProposalRes, fmt.Errorf("NewPrepareProposalTxs error: %w", err)
 		}
 
 		if len(req.LocalLastCommit.Votes) == 0 {
@@ -106,7 +106,7 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 			return &EmptyProposalRes, fmt.Errorf("failed to build checkpoint from vote extensions: %w", err)
 		}
 
-		// 3. inject a "fake" tx into the proposal s.t. validators can decode, verify the checkpoint
+		// 3. inject a checkpoint tx into the proposal s.t. validators can decode, verify the checkpoint
 		injectedVoteExtTx, err := h.buildInjectedTxBytes(ckpt, &req.LocalLastCommit)
 		if err != nil {
 			return &EmptyProposalRes, fmt.Errorf("failed to encode vote extensions into a special tx: %w", err)
