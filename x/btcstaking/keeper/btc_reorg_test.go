@@ -198,7 +198,7 @@ func TestSetLargestBtcReorg(t *testing.T) {
 			require.NoError(t, err)
 
 			actLargestBtcReorg := k.GetLargestBtcReorg(ctx)
-			require.Equal(t, tc.expectedLargestBtcReorg, actLargestBtcReorg)
+			require.EqualValues(t, tc.expectedLargestBtcReorg, actLargestBtcReorg)
 		})
 	}
 }
