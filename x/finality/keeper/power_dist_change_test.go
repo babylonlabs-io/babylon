@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -1025,13 +1024,13 @@ func TestHandleLivenessPanic(t *testing.T) {
 
 	valset, err := defaultStakingKeeper.GetAllValidators(ctx)
 	require.NoError(t, err)
-	fmt.Printf("[+] initial validator set length : %d\n", len(valset))
+	t.Logf("[+] initial validator set length : %d\n", len(valset))
 
 	header := ctx.HeaderInfo()
 	maximumSimulateBlocks := 5
 
 	// Epoch and checkpoint setting
-	fmt.Printf("Current Epoch Number : %d\n", epochingKeeper.GetEpoch(ctx).GetEpochNumber())
+	t.Logf("Current Epoch Number : %d\n", epochingKeeper.GetEpoch(ctx).GetEpochNumber())
 	checkpointingKeeper.SetLastFinalizedEpoch(ctx, 1)
 
 	// Among externally created FPs, save the FP where i==5
@@ -1064,7 +1063,7 @@ func TestHandleLivenessPanic(t *testing.T) {
 		ctx = ctx.WithHeaderInfo(header)
 		ctx = ctx.WithBlockHeight(header.Height)
 
-		fmt.Printf("-------- BeginBlock : %d ---------\n", header.Height)
+		t.Logf("-------- BeginBlock : %d ---------\n", header.Height)
 		_, err := app.BeginBlocker(ctx)
 		require.NoError(t, err)
 
@@ -1076,9 +1075,9 @@ func TestHandleLivenessPanic(t *testing.T) {
 		}
 		ftypes.SortFinalityProvidersWithZeroedVotingPower(fpsList)
 
-		fmt.Printf("block height : %d, activeFps length : %d\n", ctx.HeaderInfo().Height, len(fpsList))
+		t.Logf("block height : %d, activeFps length : %d\n", ctx.HeaderInfo().Height, len(fpsList))
 		for fpIndex, fp := range fpsList {
-			fmt.Printf("fpIndex : %d, active fp address : %v, voting power : %d\n",
+			t.Logf("fpIndex : %d, active fp address : %v, voting power : %d\n",
 				fpIndex, fp.BtcPk.MarshalHex(), fp.TotalBondedSat)
 		}
 
@@ -1114,7 +1113,7 @@ func TestHandleLivenessPanic(t *testing.T) {
 		}
 
 		_, err = app.EndBlocker(ctx)
-		fmt.Printf("-------- EndBlock height : %d---------\n", header.Height)
+		t.Logf("-------- EndBlock height : %d---------\n", header.Height)
 		require.NoError(t, err)
 		header.Height++
 	}
