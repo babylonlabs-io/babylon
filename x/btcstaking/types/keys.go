@@ -27,5 +27,5 @@ var (
 	PowerDistUpdateKey        = []byte{0x08}              // key prefix for power distribution update events
 	AllowedStakingTxHashesKey = collections.NewPrefix(9)  // key prefix for allowed staking tx hashes
 	HeightToVersionMapKey     = []byte{0x10}              // key prefix for height to version map
-	LargestBtcReorgInBlocks   = collections.NewPrefix(13) // key prefix for the BTC block height difference of the largest reorg
+	LargestBtcReorgInBlocks   = collections.NewPrefix(11) // key prefix for the BTC block height difference of the largest reorg
 )
