@@ -520,7 +520,7 @@ func createActiveBtcDel(t *testing.T, btcLightclientTipHeight uint32) (*testutil
 	stakingTxHash, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
-		[]*btcec.PublicKey{fpPK},
+		fpPK,
 		stakingValue,
 		1000,
 		0,
