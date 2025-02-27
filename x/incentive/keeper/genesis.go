@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"cosmossdk.io/collections"
 	"cosmossdk.io/store/prefix"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -69,7 +68,7 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		if acc == nil {
 			return fmt.Errorf("finality provider account with address %s does not exist", entry.Address)
 		}
-		if err := k.FinalityProviderCurrentRewards.Set(ctx, fpAddr.Bytes(), *entry.Rewards); err != nil {
+		if err := k.setFinalityProviderCurrentRewards(ctx, fpAddr, *entry.Rewards); err != nil {
 			return err
 		}
 	}
@@ -81,17 +80,13 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		if acc == nil {
 			return fmt.Errorf("finality provider account with address %s does not exist", entry.Address)
 		}
-		if err := k.FinalityProviderHistoricalRewards.Set(
-			ctx,
-			collections.Join(fpAddr.Bytes(), entry.Period),
-			*entry.Rewards,
-		); err != nil {
+		if err := k.setFinalityProviderHistoricalRewards(ctx, fpAddr, entry.Period, *entry.Rewards); err != nil {
 			return err
 		}
 	}
 
 	for _, entry := range gs.BtcDelegationRewardsTrackers {
-		// check that fp and delegator accounts exists
+		// check that fp and delegator accounts exist
 		fpAddr := sdk.MustAccAddressFromBech32(entry.FinalityProviderAddress)
 		acc := k.accountKeeper.GetAccount(ctx, fpAddr)
 		if acc == nil {
@@ -102,28 +97,17 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		if acc == nil {
 			return fmt.Errorf("delegator account with address %s does not exist", entry.DelegatorAddress)
 		}
-		if err := k.BTCDelegationRewardsTracker.Set(
-			ctx,
-			collections.Join(
-				fpAddr.Bytes(),
-				delAddr.Bytes(),
-			),
-			*entry.Tracker,
-		); err != nil {
+		// This function also calls setBTCDelegatorToFP() which stores the BTC delegator to FPs mapping.
+		// Additionally, the GenesisState.Validate() function checks that the delegator <> FP relationships
+		// match between the entries in BtcDelegationRewardsTrackers and BtcDelegatorsToFps.
+		// So this function call, stores all the corresponding BTCDelegationRewardsTrackers and the BTCDelegatorToFPs
+		if err := k.setBTCDelegationRewardsTracker(ctx, fpAddr, delAddr, *entry.Tracker); err != nil {
 			return err
 		}
 	}
 
-	for _, entry := range gs.BtcDelegatorsToFps {
-		// here we don't check if delegator and fp accounts exist
-		// because we already checked in the GenesisState.Validate() func that these addresses are the same
-		// as in the BtcDelegationRewardsTrackers
-		k.setBTCDelegatorToFP(
-			ctx,
-			sdk.MustAccAddressFromBech32(entry.DelegatorAddress),
-			sdk.MustAccAddressFromBech32(entry.FinalityProviderAddress),
-		)
-	}
+	// NOTE: no need to store the entries on gs.BtcDelegatorsToFps because these are stored with the setBTCDelegationRewardsTracker
+	// call in the lines above
 
 	return k.SetParams(ctx, gs.Params)
 }
