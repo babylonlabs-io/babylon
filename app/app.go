@@ -201,6 +201,9 @@ type BabylonApp struct {
 
 	// module configurator
 	configurator module.Configurator
+
+	// custom end blocker handler
+	customEndBlockHandler *EnableTransfersEndBlock
 }
 
 // NewBabylonApp returns a reference to an initialized BabylonApp.
@@ -456,6 +459,14 @@ func NewBabylonApp(
 
 	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
+
+	// NewTransferEndBlocker to enable transfers at a certain block both bank and ibc-transfer
+	app.customEndBlockHandler = NewTransferEndBlocker(
+		app.BankKeeper,
+		app.TransferKeeper,
+		EnableTransfersHeight,
+	)
+
 	app.RegisterServicesWithoutStaking()
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
 
@@ -661,6 +672,10 @@ func (app *BabylonApp) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 
 // EndBlocker application updates every end block
 func (app *BabylonApp) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
+	if err := app.customEndBlockHandler.EndBlocker(ctx); err != nil {
+		panic("Didn't enable transfers")
+	}
+	// Run the regular module end blockers
 	return app.ModuleManager.EndBlock(ctx)
 }
 
