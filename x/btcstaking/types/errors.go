@@ -34,4 +34,5 @@ var (
 	ErrConsumerIDNotRegistered   = errorsmod.Register(ModuleName, 1125, "Consumer is not registered")
 	ErrNoBabylonFPRestaked       = errorsmod.Register(ModuleName, 1126, "the BTC delegation request does not restake to any Babylon finality provider")
 	ErrEmptyCommissionRates      = errorsmod.Register(ModuleName, 1127, "empty commission")
+	ErrLargestBtcReorgNotFound   = errorsmod.Register(ModuleName, 1128, "there is no BTC reorg currently set")
 )

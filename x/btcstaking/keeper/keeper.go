@@ -27,6 +27,9 @@ type (
 
 		Schema                       collections.Schema
 		AllowedStakingTxHashesKeySet collections.KeySet[[]byte]
+		// LargestBtcReorg defines the BTC block height difference between
+		// the btc tip height and the rollback block height
+		LargestBtcReorg collections.Item[types.LargestBtcReOrg]
 
 		btcNet *chaincfg.Params
 		// the address capable of executing a MsgUpdateParams or
@@ -64,6 +67,12 @@ func NewKeeper(
 			types.AllowedStakingTxHashesKey,
 			"allowed_staking_tx_hashes_key_set",
 			collections.BytesKey,
+		),
+		LargestBtcReorg: collections.NewItem[types.LargestBtcReOrg](
+			sb,
+			types.LargestBtcReorgInBlocks,
+			"largest_btc_reorg",
+			codec.CollValue[types.LargestBtcReOrg](cdc),
 		),
 		btcNet:    btcNet,
 		authority: authority,
