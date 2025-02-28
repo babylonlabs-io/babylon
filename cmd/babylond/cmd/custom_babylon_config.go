@@ -2,6 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
+
+	"github.com/babylonlabs-io/babylon/app/signer"
+	cmtcfg "github.com/cometbft/cometbft/config"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
@@ -21,12 +25,24 @@ func defaultBabylonBtcConfig() BtcConfig {
 	}
 }
 
+type BlsConfig struct {
+	BlsKeyFile string `mapstructure:"bls-key-file"`
+}
+
+func defaultBabylonBlsConfig() BlsConfig {
+	return BlsConfig{
+		BlsKeyFile: filepath.Join(cmtcfg.DefaultConfigDir, signer.DefaultBlsKeyName),
+	}
+}
+
 type BabylonAppConfig struct {
 	serverconfig.Config `mapstructure:",squash"`
 
 	Wasm wasmtypes.NodeConfig `mapstructure:"wasm"`
 
 	BtcConfig BtcConfig `mapstructure:"btc-config"`
+
+	BlsConfig BlsConfig `mapstructure:"bls-config"`
 }
 
 func DefaultBabylonAppConfig() *BabylonAppConfig {
@@ -38,11 +54,20 @@ func DefaultBabylonAppConfig() *BabylonAppConfig {
 		Config:    baseConfig,
 		Wasm:      wasmtypes.DefaultNodeConfig(),
 		BtcConfig: defaultBabylonBtcConfig(),
+		BlsConfig: defaultBabylonBlsConfig(),
 	}
 }
 
 func DefaultBabylonTemplate() string {
 	return serverconfig.DefaultConfigTemplate + wasmtypes.DefaultConfigTemplate() + `
+###############################################################################
+###                        BLS configuration                                ###
+###############################################################################
+
+[bls-config]
+# Path to the BLS key file (if empty, defaults to $HOME/.babylond/config/bls_key.json)
+bls-key-file = "{{ .BlsConfig.BlsKeyFile }}"
+
 ###############################################################################
 ###                      Babylon Bitcoin configuration                      ###
 ###############################################################################

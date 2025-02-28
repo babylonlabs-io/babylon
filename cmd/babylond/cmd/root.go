@@ -310,11 +310,12 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	// auto migrate when build tag is set to "e2e_upgrade"
 	automigrate_e2e_upgrade(logger, homeDir)
 
-	// Load or generate BLS signer
+	// Load or generate BLS signer with potential custom path from app.toml
 	blsSigner, err := appsigner.LoadOrGenBlsKey(
 		homeDir,
 		cast.ToBool(appOpts.Get(flagNoBlsPassword)),
 		cast.ToString(appOpts.Get(flagBlsPassword)),
+		cast.ToString(appOpts.Get("bls-config.bls-key-file")),
 	)
 	if err != nil {
 		panic(fmt.Errorf("failed to load or generate BLS signer: %w", err))
