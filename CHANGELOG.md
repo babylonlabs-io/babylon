@@ -60,6 +60,7 @@ check of rewards
 - [#556](https://github.com/babylonlabs-io/babylon/pull/556) Panic on consensus critical errors
 - [#566](https://github.com/babylonlabs-io/babylon/pull/566) Remove float values in `BeforeValidatorSlashed` hook in `x/epoching` module
 - [#575](https://github.com/babylonlabs-io/babylon/pull/575) Add `ConsumerId` field in `FinalityProviderResponse` in `x/btcstaking` module
+- [#590](https://github.com/babylonlabs-io/babylon/pull/590) Add `DelegationRewards` query in `x/incentive` module
 
 ### State Machine Breaking
 
@@ -74,6 +75,7 @@ invocation
 
 ### Bug fixes
 
+- [#591](https://github.com/babylonlabs-io/babylon/pull/591) bump ibc to v8.6.1 that fixes security issue
 - [#579](https://github.com/babylonlabs-io/babylon/pull/579) Slashed FP gets activated in voting power distribution
 cache if an old BTC delegation receives inclusion proof
 - [#592](https://github.com/babylonlabs-io/babylon/pull/592) finality: avoid refunding finality signatures over forks

@@ -25,6 +25,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		CmdQueryParams(),
 		CmdQueryRewardGauges(),
 		CmdQueryBTCStakingGauge(),
+		CmdQueryDelegationRewards(),
 	)
 
 	return cmd
@@ -82,6 +83,37 @@ func CmdQueryBTCStakingGauge() *cobra.Command {
 				Height: height,
 			}
 			res, err := queryClient.BTCStakingGauge(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryDelegationRewards() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "delegation-rewards [finality-provider-address] [delegator-address]",
+		Short: "shows the current delegation rewards of given finality provider and delegator addresses",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			req := &types.QueryDelegationRewardsRequest{
+				FinalityProviderAddress: args[0],
+				DelegatorAddress:        args[1],
+			}
+			res, err := queryClient.DelegationRewards(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
