@@ -135,17 +135,19 @@ func VerifySpendStakeTxStakerSig(
 		return fmt.Errorf("failed to parse control block in witness: %w", err)
 	}
 
-	stakingWitnessProgram := stakingOutput.PkScript[1:]
+	stakingWitnessProgram := stakingOutput.PkScript[2:]
 
 	// Now that we know the control block is valid, we'll
 	// verify the top-level taproot commitment, which
 	// proves that the specified script was committed to in
 	// the merkle tree.
 	witnessScript := stakeSpendWitness[len(stakeSpendWitness)-2]
-	err = txscript.VerifyTaprootLeafCommitment(
-		controlBlock, stakingWitnessProgram, witnessScript,
-	)
-	if err != nil {
+
+	if err := txscript.VerifyTaprootLeafCommitment(
+		controlBlock,
+		stakingWitnessProgram,
+		witnessScript,
+	); err != nil {
 		return fmt.Errorf("failed to verify taproot leaf commitment in witness: %w", err)
 	}
 

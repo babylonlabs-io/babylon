@@ -10,7 +10,9 @@ import (
 
 	"cosmossdk.io/core/header"
 	sdkmath "cosmossdk.io/math"
+	stk "github.com/babylonlabs-io/babylon/btcstaking"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -110,7 +112,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 		require.NoError(t, err)
 
 		// Case 6: commit a pubrand list that overflows when adding startHeight + numPubRand
-		overflowStartHeight := math.MaxUint64 - datagen.RandomInt(r, 5) 
+		overflowStartHeight := math.MaxUint64 - datagen.RandomInt(r, 5)
 		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, overflowStartHeight, numPubRand)
 		require.NoError(t, err)
 		_, err = ms.CommitPubRandList(ctx, msg)
@@ -664,8 +666,8 @@ func TestBtcDelegationRewards(t *testing.T) {
 	startHeight := uint64(0)
 	h.FpAddPubRand(r, fp1SK, startHeight)
 
-	_, fp1Del1, _ := h.CreateActiveBtcDelegation(r, covenantSKs, fp1PK, stakingValueFp1Del1, stakingTime, btcLightClientTipHeight)
-	_, fp1Del2, _ := h.CreateActiveBtcDelegation(r, covenantSKs, fp1PK, stakingValueFp1Del2, stakingTime, btcLightClientTipHeight)
+	_, _, fp1Del1, _ := h.CreateActiveBtcDelegation(r, covenantSKs, fp1PK, stakingValueFp1Del1, stakingTime, btcLightClientTipHeight)
+	_, _, fp1Del2, _ := h.CreateActiveBtcDelegation(r, covenantSKs, fp1PK, stakingValueFp1Del2, stakingTime, btcLightClientTipHeight)
 
 	// process the events of the activated BTC delegations
 	h.BTCStakingKeeper.IndexBTCHeight(h.Ctx)
@@ -737,7 +739,7 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	h.FpAddPubRand(r, fpSK, startHeight)
 	btcLightClientTipHeight := uint32(30)
 
-	stakingTxHash, del, unbondingInfo := h.CreateActiveBtcDelegation(r, covenantSKs, fpPK, stakingValue, stakingTime, btcLightClientTipHeight)
+	delSK, stakingTxHash, del, unbondingInfo := h.CreateActiveBtcDelegation(r, covenantSKs, fpPK, stakingValue, stakingTime, btcLightClientTipHeight)
 
 	// process the events as active btc delegation
 	h.BTCStakingKeeper.IndexBTCHeight(h.Ctx)
@@ -749,7 +751,63 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	btcLightClientTipHeight = uint32(45)
 	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: btcLightClientTipHeight}).AnyTimes()
 
-	h.BtcUndelegate(stakingTxHash, del, unbondingInfo, btcLightClientTipHeight)
+	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+
+	unbondingTx := del.MustGetUnbondingTx()
+	stakingTx := del.MustGetStakingTx()
+
+	// rebuild staking info to build valid witness for unbonding tx
+	covenantKeys, err := bbn.NewBTCPKsFromBIP340PKs(bsParams.CovenantPks)
+	h.NoError(err)
+
+	stakingInfo, err := stk.BuildStakingInfo(
+		del.BtcPk.MustToBTCPK(),
+		[]*btcec.PublicKey{fpPK},
+		covenantKeys,
+		bsParams.CovenantQuorum,
+		stakingTime,
+		btcutil.Amount(stakingValue),
+		h.Net,
+	)
+	h.NoError(err)
+
+	stakingOutput := stakingTx.TxOut[0]
+
+	// sanity check that what we re-build is the same as what we have in the BTC delegation
+	require.Equal(t, stakingOutput, stakingInfo.StakingOutput)
+
+	unbondingSpendInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	h.NoError(err)
+
+	unbondingScirpt := unbondingSpendInfo.RevealedLeaf.Script
+	require.NotNil(t, unbondingScirpt)
+
+	covenantSigs := datagen.GenerateSignatures(
+		t,
+		covenantSKs,
+		unbondingTx,
+		stakingTx.TxOut[0],
+		unbondingSpendInfo.RevealedLeaf,
+	)
+	h.NoError(err)
+
+	stakerSig, err := stk.SignTxWithOneScriptSpendInputFromTapLeaf(
+		unbondingTx,
+		stakingTx.TxOut[0],
+		delSK,
+		unbondingSpendInfo.RevealedLeaf,
+	)
+	h.NoError(err)
+
+	ubWitness, err := unbondingSpendInfo.CreateUnbondingPathWitness(covenantSigs, stakerSig)
+	h.NoError(err)
+
+	unbondingTx.TxIn[0].Witness = ubWitness
+
+	serializedUnbondingTxWithWitness, err := bbn.SerializeBTCTx(unbondingTx)
+	h.NoError(err)
+
+	h.BtcUndelegate(stakingTxHash, del, unbondingInfo, serializedUnbondingTxWithWitness, btcLightClientTipHeight)
 
 	// increases one bbn block to get the voting power distribution cache
 	// from the previous block
