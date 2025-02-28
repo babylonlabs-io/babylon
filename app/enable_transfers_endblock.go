@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank/keeper"
 )
 
+// EnableTransfersHeight TODO: Set this to the height for mainnet once it gets closer to launch.
 const EnableTransfersHeight = 10
 
 type EnableTransfersEndBlock struct {
@@ -34,7 +35,7 @@ func (h *EnableTransfersEndBlock) EndBlocker(ctx sdk.Context) error {
 		ctx.Logger().Info(fmt.Sprintf("Executing custom EndBlocker logic at height %d", ctx.BlockHeight()))
 
 		bankParams := h.bankKeeper.GetParams(ctx)
-		bankParams.DefaultSendEnabled = false
+		bankParams.DefaultSendEnabled = true
 
 		err := h.bankKeeper.SetParams(ctx, bankParams)
 		if err != nil {
@@ -42,16 +43,12 @@ func (h *EnableTransfersEndBlock) EndBlocker(ctx sdk.Context) error {
 		}
 
 		transferParams := h.TransferKeeper.GetParams(ctx)
-		transferParams.SendEnabled = false
-		transferParams.ReceiveEnabled = false
+		transferParams.SendEnabled = true
+		transferParams.ReceiveEnabled = true
 
 		h.TransferKeeper.SetParams(ctx, transferParams)
 
-		sendEnabledAfter := h.bankKeeper.GetParams(ctx)
-		fmt.Println("SEND ENABLED After", sendEnabledAfter)
-
-		transferAfter := h.TransferKeeper.GetParams(ctx)
-		fmt.Println("TRANSFER ENABLED AFTER", transferAfter)
+		ctx.Logger().Info(fmt.Sprintf("Updated transfer and bank parameters at height %d", ctx.BlockHeight()))
 	}
 
 	return nil
