@@ -7,6 +7,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// getRecipient returns the address that should receive the refund.
+func getRecipient(feeTx sdk.FeeTx) sdk.AccAddress {
+	if feeGranter := feeTx.FeeGranter(); feeGranter != nil {
+		return feeGranter
+	}
+	return feeTx.FeePayer()
+}
+
 // RefundTx refunds the given tx by sending the fee back to the fee payer.
 func (k Keeper) RefundTx(ctx context.Context, tx sdk.FeeTx) error {
 	txFee := tx.GetFee()
@@ -15,7 +23,7 @@ func (k Keeper) RefundTx(ctx context.Context, tx sdk.FeeTx) error {
 		// but having this check for compatibility in the future
 		return nil
 	}
-	txFeePayer := tx.FeePayer()
+	txFeePayer := getRecipient(tx)
 
 	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, k.feeCollectorName, txFeePayer, txFee)
 }
