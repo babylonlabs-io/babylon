@@ -61,6 +61,33 @@ func (k Keeper) BTCStakingGauge(goCtx context.Context, req *types.QueryBTCStakin
 	return &types.QueryBTCStakingGaugeResponse{Gauge: convertGaugeToBTCStakingResponse(*gauge)}, nil
 }
 
+// DelegationRewards returns the current rewards for the specified finality provider and delegator
+func (k Keeper) DelegationRewards(ctx context.Context, req *types.QueryDelegationRewardsRequest) (*types.QueryDelegationRewardsResponse, error) {
+	// try to cast address
+	fpAddr, err := sdk.AccAddressFromBech32(req.FinalityProviderAddress)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	delAddr, err := sdk.AccAddressFromBech32(req.DelegatorAddress)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	// Finalize the period to get a new history with the current rewards available
+	// This will not be committed anyways because it is a query
+	endPeriod, err := k.IncrementFinalityProviderPeriod(ctx, fpAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	rewards, err := k.CalculateBTCDelegationRewards(ctx, fpAddr, delAddr, endPeriod)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryDelegationRewardsResponse{Rewards: rewards}, nil
+}
+
 func convertGaugeToBTCStakingResponse(gauge types.Gauge) *types.BTCStakingGaugeResponse {
 	return &types.BTCStakingGaugeResponse{
 		Coins: gauge.Coins,
