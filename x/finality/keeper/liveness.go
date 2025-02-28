@@ -139,9 +139,15 @@ func (k Keeper) updateSigningInfo(
 	// A genesis finality provider will start at index 0, whereas a non-genesis finality provider's
 	// startHeight will be the block they become active for, but the first block they vote on will be
 	// one later. (And thus their first vote is at index 1)
+	//
+	// NOTE: due to the introduction of the parameter `FinalitySigTimeout`, if there are `x`
+	// consecutive blocks for which a fp is non-active in the middle of the fp being active
+	// where `x` < FinalitySigTimeout, it is possible that `signInfo.StartHeight > height`
+	// in this case, it should return directly because it indicates that the fp does not
+	// need to vote for the height we are examining. This ensures the index calculated
+	// below will not be negative
 	if signInfo.StartHeight > height {
-		return false, nil, fmt.Errorf("invalid state, the finality provider signing info has start height %d, which is greater than the current height %d",
-			signInfo.StartHeight, height)
+		return false, &signInfo, nil
 	}
 	index := (height - signInfo.StartHeight) % signedBlocksWindow
 

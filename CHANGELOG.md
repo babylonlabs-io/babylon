@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#558](https://github.com/babylonlabs-io/babylon/pull/558) Change BLS public key format from hex to base64 in bls_key.json.
+- [#466](https://github.com/babylonlabs-io/babylon/pull/466) Add e2e test to
+block bank send and still create BTC delegations
 - [#538](https://github.com/babylonlabs-io/babylon/pull/538) Upgrade to wasmd v0.54.x and wasmvm v2.2.x
 - [#527](https://github.com/babylonlabs-io/babylon/pull/527) Create BSL signer on start command with flags.
 - [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
@@ -56,6 +58,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
 invocation
 - [#563](https://github.com/babylonlabs-io/babylon/pull/563) reject coinbase staking transactions
+- [#584](https://github.com/babylonlabs-io/babylon/pull/584) fix: Panic can be triggered in handling liveness
 
 ## v1.0.0-rc6
 

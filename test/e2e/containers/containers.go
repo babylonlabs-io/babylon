@@ -278,7 +278,7 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		Mounts: []string{
 			fmt.Sprintf("%s/:%s", valCondifDir, BabylonHomePath),
 			fmt.Sprintf("%s/bytecode:/bytecode", pwd),
-			fmt.Sprintf("%s/upgrades:/upgrades", pwd),
+			fmt.Sprintf("%s/govProps:/govProps", pwd),
 		},
 	}
 
