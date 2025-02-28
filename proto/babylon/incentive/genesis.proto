@@ -57,6 +57,6 @@ enum StakeholderType {
   option (gogoproto.goproto_enum_prefix) = false;
   // Finality provider stakeholder type
   FINALITY_PROVIDER = 0;
-  // BTC delegation stakeholder type
-  BTC_DELEGATION = 1;
+  // BTC staker stakeholder type
+  BTC_STAKER = 1;
 }

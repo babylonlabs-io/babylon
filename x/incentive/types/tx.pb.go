@@ -37,7 +37,7 @@ type MsgWithdrawReward struct {
 	// address is the address of the stakeholder in bech32 string
 	// signer of this msg has to be this address
 	Address string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
-	// Type of stakeholder (FINALITY_PROVIDER or BTC_DELEGATION)
+	// Type of stakeholder (FINALITY_PROVIDER or BTC_STAKER)
 	Type StakeholderType `protobuf:"varint,3,opt,name=type,proto3,enum=babylon.incentive.StakeholderType" json:"type,omitempty"`
 }
 

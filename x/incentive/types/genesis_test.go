@@ -31,7 +31,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				Params:           types.DefaultParams(),
 				BtcStakingGauges: []types.BTCStakingGaugeEntry{},
 				RewardGauges: []types.RewardGaugeEntry{
-					{StakeholderType: types.BTC_DELEGATION, Address: addrStr, RewardGauge: datagen.GenRandomRewardGauge(r)},
+					{StakeholderType: types.BTC_STAKER, Address: addrStr, RewardGauge: datagen.GenRandomRewardGauge(r)},
 					{StakeholderType: types.FINALITY_PROVIDER, Address: addrStr, RewardGauge: datagen.GenRandomRewardGauge(r)},
 				},
 				WithdrawAddresses: []types.WithdrawAddressEntry{},
@@ -44,8 +44,8 @@ func TestGenesisState_Validate(t *testing.T) {
 				Params:           types.DefaultParams(),
 				BtcStakingGauges: []types.BTCStakingGaugeEntry{},
 				RewardGauges: []types.RewardGaugeEntry{
-					{StakeholderType: types.BTC_DELEGATION, Address: addrStr, RewardGauge: datagen.GenRandomRewardGauge(r)},
-					{StakeholderType: types.BTC_DELEGATION, Address: addrStr, RewardGauge: datagen.GenRandomRewardGauge(r)},
+					{StakeholderType: types.BTC_STAKER, Address: addrStr, RewardGauge: datagen.GenRandomRewardGauge(r)},
+					{StakeholderType: types.BTC_STAKER, Address: addrStr, RewardGauge: datagen.GenRandomRewardGauge(r)},
 				},
 				WithdrawAddresses: []types.WithdrawAddressEntry{},
 			},

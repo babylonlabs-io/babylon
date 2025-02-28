@@ -33,7 +33,7 @@ func GetTxCmd() *cobra.Command {
 func NewWithdrawRewardCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "withdraw-reward [type]",
-		Short: "withdraw reward of the stakeholder behind the transaction submitter in a given type (one of {finality_provider, btc_delegation})",
+		Short: "withdraw reward of the stakeholder behind the transaction submitter in a given type (one of {finality_provider, btc_staker})",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
