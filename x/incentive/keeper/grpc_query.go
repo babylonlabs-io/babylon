@@ -61,7 +61,7 @@ func (k Keeper) BTCStakingGauge(goCtx context.Context, req *types.QueryBTCStakin
 	return &types.QueryBTCStakingGaugeResponse{Gauge: convertGaugeToBTCStakingResponse(*gauge)}, nil
 }
 
-// DelegationRewards implements types.QueryServer.
+// DelegationRewards returns the current rewards for the specified finality provider and delegator
 func (k Keeper) DelegationRewards(ctx context.Context, req *types.QueryDelegationRewardsRequest) (*types.QueryDelegationRewardsResponse, error) {
 	// try to cast address
 	fpAddr, err := sdk.AccAddressFromBech32(req.FinalityProviderAddress)
