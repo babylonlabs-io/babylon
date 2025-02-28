@@ -63,7 +63,7 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 		tempDir := t.TempDir()
 		defer os.RemoveAll(tempDir)
 
-		blsSigner, err := LoadOrGenBlsKey(tempDir, true, "", "")
+		blsSigner, err := LoadOrGenBlsKey(tempDir, true, "", defaultBlsKeyFilePath)
 		assert.NoError(t, err)
 		assert.NotNil(t, blsSigner)
 
@@ -72,7 +72,7 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 		_, err = os.Stat(DefaultBlsPasswordFile(tempDir))
 		assert.NoError(t, err, "BLS password file should exist")
 
-		loadedSigner, err := LoadOrGenBlsKey(tempDir, true, "", "")
+		loadedSigner, err := LoadOrGenBlsKey(tempDir, true, "", defaultBlsKeyFilePath)
 		assert.NoError(t, err)
 		assert.NotNil(t, loadedSigner)
 
@@ -89,7 +89,7 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 
 		testPassword := "testpassword123"
 
-		blsSigner, err := LoadOrGenBlsKey(tempDir, false, testPassword, "")
+		blsSigner, err := LoadOrGenBlsKey(tempDir, false, testPassword, defaultBlsKeyFilePath)
 		assert.NoError(t, err)
 		assert.NotNil(t, blsSigner)
 
@@ -98,7 +98,7 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 		_, err = os.Stat(DefaultBlsPasswordFile(tempDir))
 		assert.NoError(t, err, "BLS password file should exist")
 
-		loadedSigner, err := LoadOrGenBlsKey(tempDir, false, testPassword, "")
+		loadedSigner, err := LoadOrGenBlsKey(tempDir, false, testPassword, defaultBlsKeyFilePath)
 		assert.NoError(t, err)
 		assert.NotNil(t, loadedSigner)
 
@@ -114,11 +114,11 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 		defer os.RemoveAll(tempDir)
 
 		password := "existingpassword"
-		originalSigner, err := CreateBlsSigner(tempDir, password, "")
+		originalSigner, err := CreateBlsSigner(tempDir, password, defaultBlsKeyFilePath)
 		assert.NoError(t, err)
 		assert.NotNil(t, originalSigner)
 
-		loadedSigner, err := LoadOrGenBlsKey(tempDir, false, "different_password", "")
+		loadedSigner, err := LoadOrGenBlsKey(tempDir, false, "different_password", defaultBlsKeyFilePath)
 		assert.NoError(t, err)
 		assert.NotNil(t, loadedSigner)
 
@@ -130,7 +130,7 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 	})
 
 	t.Run("invalid directory path", func(t *testing.T) {
-		blsSigner, err := LoadOrGenBlsKey("/random-non-existent/path/that/should/not/exist", true, "", "")
+		blsSigner, err := LoadOrGenBlsKey("/random-non-existent/path/that/should/not/exist", true, "", defaultBlsKeyFilePath)
 		assert.Error(t, err)
 		assert.Nil(t, blsSigner)
 	})
@@ -139,25 +139,26 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 		tempDir := t.TempDir()
 		defer os.RemoveAll(tempDir)
 
-		customPath := filepath.Join(tempDir, "custom", "path", "bls_key.json")
+		// Create a full path for the custom key location
+		customFullPath := filepath.Join(tempDir, "custom", "path", "bls_key.json")
 		passwordPath := DefaultBlsPasswordFile(tempDir)
 
-		err := os.MkdirAll(filepath.Dir(customPath), 0700)
+		err := os.MkdirAll(filepath.Dir(customFullPath), 0700)
 		assert.NoError(t, err, "Should be able to create custom directory for key")
 		err = os.MkdirAll(filepath.Dir(passwordPath), 0700)
 		assert.NoError(t, err, "Should be able to create directory for password file")
 
 		password := "testpassword"
-		pv := NewBls(bls12381.GenPrivKey(), customPath, passwordPath)
+		pv := NewBls(bls12381.GenPrivKey(), customFullPath, passwordPath)
 		assert.NotNil(t, pv)
 		pv.Key.Save(password)
 
-		_, err = os.Stat(customPath)
+		_, err = os.Stat(customFullPath)
 		assert.NoError(t, err, "Custom BLS key file should exist")
 		_, err = os.Stat(passwordPath)
 		assert.NoError(t, err, "BLS password file should exist in default location")
 
-		loadedSigner, err := LoadOrGenBlsKey(tempDir, false, password, customPath)
+		loadedSigner, err := LoadOrGenBlsKey(tempDir, false, password, customFullPath)
 		assert.NoError(t, err)
 		assert.NotNil(t, loadedSigner)
 
@@ -166,7 +167,7 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, origPubKey.Bytes(), loadedPubKey.Bytes())
 
-		anotherLoadedSigner, err := LoadOrGenBlsKey(tempDir, false, password, customPath)
+		anotherLoadedSigner, err := LoadOrGenBlsKey(tempDir, false, password, customFullPath)
 		assert.NoError(t, err)
 		assert.NotNil(t, anotherLoadedSigner)
 
