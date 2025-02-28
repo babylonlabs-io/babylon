@@ -2,11 +2,15 @@ package types
 
 import (
 	"fmt"
+	time "time"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 )
 
 func (fp *FinalityProvider) IsSlashed() bool {
@@ -106,4 +110,47 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 	}
 
 	return orderedCovSigs, nil
+}
+
+// NewLargestBtcReOrg creates a new Largest BTC reorg based on the rollback vars
+func NewLargestBtcReOrg(rollbackFrom, rollbackTo *btclightclienttypes.BTCHeaderInfo) LargestBtcReOrg {
+	return LargestBtcReOrg{
+		BlockDiff:    rollbackFrom.Height - rollbackTo.Height,
+		RollbackFrom: rollbackFrom,
+		RollbackTo:   rollbackTo,
+	}
+}
+
+// NewCommissionInfoWithTime returns an initialized finality provider commission info with a specified
+// update time which should be the current block BFT time.
+func NewCommissionInfoWithTime(maxRate, maxChangeRate math.LegacyDec, updatedAt time.Time) *CommissionInfo {
+	return &CommissionInfo{
+		MaxRate:       maxRate,
+		MaxChangeRate: maxChangeRate,
+		UpdateTime:    updatedAt,
+	}
+}
+
+// Validate performs basic sanity validation checks of initial commission
+// info parameters. If validation fails, an SDK error is returned.
+func (cr CommissionInfo) Validate() error {
+	switch {
+	case cr.MaxRate.IsNegative():
+		// max rate cannot be negative
+		return stktypes.ErrCommissionNegative
+
+	case cr.MaxRate.GT(math.LegacyOneDec()):
+		// max rate cannot be greater than 1
+		return stktypes.ErrCommissionHuge
+
+	case cr.MaxChangeRate.IsNegative():
+		// change rate cannot be negative
+		return stktypes.ErrCommissionChangeRateNegative
+
+	case cr.MaxChangeRate.GT(cr.MaxRate):
+		// change rate cannot be greater than the max rate
+		return stktypes.ErrCommissionChangeRateGTMaxRate
+	}
+
+	return nil
 }

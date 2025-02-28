@@ -37,9 +37,13 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 		msg := &types.MsgCreateFinalityProvider{
 			Addr:        fp.Addr,
 			Description: fp.Description,
-			Commission:  fp.Commission,
-			BtcPk:       fp.BtcPk,
-			Pop:         fp.Pop,
+			Commission: types.NewCommissionRates(
+				*fp.Commission,
+				fp.CommissionInfo.MaxRate,
+				fp.CommissionInfo.MaxChangeRate,
+			),
+			BtcPk: fp.BtcPk,
+			Pop:   fp.Pop,
 		}
 		_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 		h.NoError(err)

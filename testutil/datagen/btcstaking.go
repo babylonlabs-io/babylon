@@ -3,6 +3,7 @@ package datagen
 import (
 	"math/rand"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -32,6 +34,15 @@ func GenRandomFinalityProvider(r *rand.Rand) (*bstypes.FinalityProvider, error) 
 		return nil, err
 	}
 	return GenRandomFinalityProviderWithBTCSK(r, btcSK)
+}
+
+func GenRandomMsgCreateFinalityProvider(r *rand.Rand) (*bstypes.MsgCreateFinalityProvider, error) {
+	// BTC key pairs
+	btcSK, _, err := GenRandomBTCKeyPair(r)
+	if err != nil {
+		return nil, err
+	}
+	return GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(r, btcSK, GenRandomAccount().GetAddress())
 }
 
 func CreateNFinalityProviders(r *rand.Rand, t *testing.T, n int) []*bstypes.FinalityProvider {
@@ -79,6 +90,11 @@ func GenRandomFinalityProviderWithBTCBabylonSKs(
 		BtcPk:       bip340PK,
 		Addr:        fpAddr.String(),
 		Pop:         pop,
+		CommissionInfo: bstypes.NewCommissionInfoWithTime(
+			sdkmath.LegacyOneDec(),
+			sdkmath.LegacyOneDec(),
+			time.Unix(0, 0).UTC(),
+		),
 	}, nil
 }
 
@@ -94,9 +110,13 @@ func GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(
 	return &bstypes.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
 		Description: fp.Description,
-		Commission:  fp.Commission,
-		BtcPk:       fp.BtcPk,
-		Pop:         fp.Pop,
+		Commission: types.NewCommissionRates(
+			*fp.Commission,
+			fp.CommissionInfo.MaxRate,
+			fp.CommissionInfo.MaxChangeRate,
+		),
+		BtcPk: fp.BtcPk,
+		Pop:   fp.Pop,
 	}, nil
 }
 

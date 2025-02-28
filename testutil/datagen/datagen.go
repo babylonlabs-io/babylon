@@ -34,7 +34,7 @@ func RandomUInt32(r *rand.Rand, rng uint32) uint32 {
 	return uint32(r.Intn(int(rng)))
 }
 
-// RandomLegacyDec generates a random sdk.Dec with i in the range [0, rngI) and precision in the range [0, rngPrec).
+// RandomLegacyDec generates a random sdk.Dec with i in the range [0, rngI) and precision in the range (0, rngPrec).
 func RandomLegacyDec(r *rand.Rand, rngI, rngPrec int) math.LegacyDec {
 	i := int64(r.Intn(rngI))
 	prec := int64(r.Intn(rngPrec))

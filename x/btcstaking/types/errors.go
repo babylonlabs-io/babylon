@@ -31,4 +31,6 @@ var (
 	ErrFpNotJailed               = errorsmod.Register(ModuleName, 1122, "the finality provider is not jailed")
 	ErrDuplicatedCovenantSig     = errorsmod.Register(ModuleName, 1123, "the covenant signature is already submitted")
 	ErrStakingTxIncludedTooEarly = errorsmod.Register(ModuleName, 1124, "the staking transaction is included too early in BTC chain")
+	ErrEmptyCommissionRates      = errorsmod.Register(ModuleName, 1125, "empty commission")
+	ErrLargestBtcReorgNotFound   = errorsmod.Register(ModuleName, 1128, "there is no BTC reorg currently set")
 )

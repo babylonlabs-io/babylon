@@ -4856,6 +4856,28 @@ paths:
                       title: |-
                         highest_voted_height is the highest height for which the
                         finality provider has voted
+                    commission_info:
+                      description: >-
+                        commission_info contains information details of the
+                        finality provider commission.
+                      type: object
+                      properties:
+                        max_rate:
+                          type: string
+                          description: >-
+                            max_rate defines the maximum commission rate which
+                            validator can ever charge, as a fraction.
+                        max_change_rate:
+                          type: string
+                          description: >-
+                            max_change_rate defines the maximum daily increase
+                            of the validator commission, as a fraction.
+                        update_time:
+                          type: string
+                          format: date-time
+                          description: >-
+                            update_time is the last time the commission rate was
+                            changed.
                   description: >-
                     FinalityProviderResponse defines a finality provider with
                     voting power
@@ -5828,6 +5850,28 @@ paths:
                     title: |-
                       highest_voted_height is the highest height for which the
                       finality provider has voted
+                  commission_info:
+                    description: >-
+                      commission_info contains information details of the
+                      finality provider commission.
+                    type: object
+                    properties:
+                      max_rate:
+                        type: string
+                        description: >-
+                          max_rate defines the maximum commission rate which
+                          validator can ever charge, as a fraction.
+                      max_change_rate:
+                        type: string
+                        description: >-
+                          max_change_rate defines the maximum daily increase of
+                          the validator commission, as a fraction.
+                      update_time:
+                        type: string
+                        format: date-time
+                        description: >-
+                          update_time is the last time the commission rate was
+                          changed.
                 description: >-
                   FinalityProviderResponse defines a finality provider with
                   voting power
@@ -6039,6 +6083,271 @@ paths:
           in: path
           required: true
           type: string
+      tags:
+        - Query
+  /babylon/btcstaking/v1/largest_btc_reorg:
+    get:
+      summary: LargestBtcReOrg retrieves the largest BTC reorg
+      operationId: LargestBtcReOrg
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              block_diff:
+                type: integer
+                format: int64
+                title: >-
+                  BlockDiff is the difference of the block height of the BTC
+                  header Tip - the btc height
+
+                  which it was rolled back
+              rollback_from:
+                title: RollbackFrom is the latest BTC block header prior to rollback
+                type: object
+                properties:
+                  header_hex:
+                    type: string
+                  hash_hex:
+                    type: string
+                  height:
+                    type: integer
+                    format: int64
+                  work:
+                    type: string
+                    description: Work is the sdkmath.Uint as string.
+                description: >-
+                  BTCHeaderInfoResponse is a structure that contains all
+                  relevant information about a
+
+                  BTC header response
+                   - Full header as string hex.
+                   - Header hash for easy retrieval as string hex.
+                   - Height of the header in the BTC chain.
+                   - Total work spent on the header. This is the sum of the work corresponding
+                   to the header Bits field
+                     and the total work of the header.
+              rollback_to:
+                title: RollbackTo is the BTC block header which we rollback to
+                type: object
+                properties:
+                  header_hex:
+                    type: string
+                  hash_hex:
+                    type: string
+                  height:
+                    type: integer
+                    format: int64
+                  work:
+                    type: string
+                    description: Work is the sdkmath.Uint as string.
+                description: >-
+                  BTCHeaderInfoResponse is a structure that contains all
+                  relevant information about a
+
+                  BTC header response
+                   - Full header as string hex.
+                   - Header hash for easy retrieval as string hex.
+                   - Height of the header in the BTC chain.
+                   - Total work spent on the header. This is the sum of the work corresponding
+                   to the header Bits field
+                     and the total work of the header.
+            title: QueryLargestBtcReOrgResponse stores the largest BTC reorg recorded
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                    value:
+                      type: string
+                      format: byte
+                      description: >-
+                        Must be a valid serialized protocol buffer of the above
+                        specified type.
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+                        // or ...
+                        if (any.isSameTypeAs(Foo.getDefaultInstance())) {
+                          foo = any.unpack(Foo.getDefaultInstance());
+                        }
+
+                    Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                    Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+                    JSON
+
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
       tags:
         - Query
   /babylon/btcstaking/v1/params:
@@ -11857,7 +12166,9 @@ definitions:
               format: byte
               title: >-
                 cov_pk is the public key of the covenant emulator, used as the
-                public key of the adaptor signature
+                public key
+
+                of the adaptor signature
             adaptor_sigs:
               type: array
               items:
@@ -11865,7 +12176,9 @@ definitions:
                 format: byte
               title: >-
                 adaptor_sigs is a list of adaptor signatures, each encrypted by
-                a restaked BTC finality provider's public key
+                a restaked
+
+                BTC finality provider's public key
           title: >-
             CovenantAdaptorSignatures is a list adaptor signatures signed by the
 
@@ -11948,7 +12261,9 @@ definitions:
                   format: byte
                   title: >-
                     cov_pk is the public key of the covenant emulator, used as
-                    the public key of the adaptor signature
+                    the public key
+
+                    of the adaptor signature
                 adaptor_sigs:
                   type: array
                   items:
@@ -11956,7 +12271,9 @@ definitions:
                     format: byte
                   title: >-
                     adaptor_sigs is a list of adaptor signatures, each encrypted
-                    by a restaked BTC finality provider's public key
+                    by a restaked
+
+                    BTC finality provider's public key
               title: >-
                 CovenantAdaptorSignatures is a list adaptor signatures signed by
                 the
@@ -12031,6 +12348,7 @@ definitions:
        - ACTIVE: ACTIVE defines a delegation that has voting power
        - UNBONDED: UNBONDED defines a delegation no longer has voting power
       by receiving unbonding tx with signatures from staker and covenant
+
       committee
        - EXPIRED: EXPIRED defines a delegation no longer has voting power
       for reaching the end of staking transaction timelock
@@ -12113,7 +12431,9 @@ definitions:
                     format: byte
                     title: >-
                       cov_pk is the public key of the covenant emulator, used as
-                      the public key of the adaptor signature
+                      the public key
+
+                      of the adaptor signature
                   adaptor_sigs:
                     type: array
                     items:
@@ -12121,7 +12441,9 @@ definitions:
                       format: byte
                     title: >-
                       adaptor_sigs is a list of adaptor signatures, each
-                      encrypted by a restaked BTC finality provider's public key
+                      encrypted by a restaked
+
+                      BTC finality provider's public key
                 title: >-
                   CovenantAdaptorSignatures is a list adaptor signatures signed
                   by the
@@ -12211,7 +12533,9 @@ definitions:
                         format: byte
                         title: >-
                           cov_pk is the public key of the covenant emulator,
-                          used as the public key of the adaptor signature
+                          used as the public key
+
+                          of the adaptor signature
                       adaptor_sigs:
                         type: array
                         items:
@@ -12219,8 +12543,9 @@ definitions:
                           format: byte
                         title: >-
                           adaptor_sigs is a list of adaptor signatures, each
-                          encrypted by a restaked BTC finality provider's public
-                          key
+                          encrypted by a restaked
+
+                          BTC finality provider's public key
                     title: >-
                       CovenantAdaptorSignatures is a list adaptor signatures
                       signed by the
@@ -12329,7 +12654,9 @@ definitions:
               format: byte
               title: >-
                 cov_pk is the public key of the covenant emulator, used as the
-                public key of the adaptor signature
+                public key
+
+                of the adaptor signature
             adaptor_sigs:
               type: array
               items:
@@ -12337,7 +12664,9 @@ definitions:
                 format: byte
               title: >-
                 adaptor_sigs is a list of adaptor signatures, each encrypted by
-                a restaked BTC finality provider's public key
+                a restaked
+
+                BTC finality provider's public key
           title: >-
             CovenantAdaptorSignatures is a list adaptor signatures signed by the
 
@@ -12366,6 +12695,26 @@ definitions:
     title: >-
       BTCUndelegationResponse provides all necessary info about the
       undeleagation
+  babylon.btcstaking.v1.CommissionInfo:
+    type: object
+    properties:
+      max_rate:
+        type: string
+        description: >-
+          max_rate defines the maximum commission rate which validator can ever
+          charge, as a fraction.
+      max_change_rate:
+        type: string
+        description: >-
+          max_change_rate defines the maximum daily increase of the validator
+          commission, as a fraction.
+      update_time:
+        type: string
+        format: date-time
+        description: update_time is the last time the commission rate was changed.
+    description: |-
+      CommissionInfo defines the information related to the commission of
+      a finality provider.
   babylon.btcstaking.v1.CovenantAdaptorSignatures:
     type: object
     properties:
@@ -12374,7 +12723,9 @@ definitions:
         format: byte
         title: >-
           cov_pk is the public key of the covenant emulator, used as the public
-          key of the adaptor signature
+          key
+
+          of the adaptor signature
       adaptor_sigs:
         type: array
         items:
@@ -12382,7 +12733,9 @@ definitions:
           format: byte
         title: >-
           adaptor_sigs is a list of adaptor signatures, each encrypted by a
-          restaked BTC finality provider's public key
+          restaked
+
+          BTC finality provider's public key
     title: |-
       CovenantAdaptorSignatures is a list adaptor signatures signed by the
       covenant with different finality provider's public keys as encryption keys
@@ -12499,6 +12852,26 @@ definitions:
         title: |-
           highest_voted_height is the highest height for which the
           finality provider has voted
+      commission_info:
+        description: >-
+          commission_info contains information details of the finality provider
+          commission.
+        type: object
+        properties:
+          max_rate:
+            type: string
+            description: >-
+              max_rate defines the maximum commission rate which validator can
+              ever charge, as a fraction.
+          max_change_rate:
+            type: string
+            description: >-
+              max_change_rate defines the maximum daily increase of the
+              validator commission, as a fraction.
+          update_time:
+            type: string
+            format: date-time
+            description: update_time is the last time the commission rate was changed.
     description: >-
       FinalityProviderResponse defines a finality provider with voting power
       information.
@@ -12537,7 +12910,7 @@ definitions:
       min_staking_time_blocks:
         type: integer
         format: int64
-        title: >-
+        title: |-
           min_staking_time is the minimum lock time specified in staking output
           script
       max_staking_time_blocks:
@@ -12545,7 +12918,9 @@ definitions:
         format: int64
         title: >-
           max_staking_time_blocks is the maximum lock time time specified in
-          staking output script
+          staking
+
+          output script
       slashing_pk_script:
         type: string
         format: byte
@@ -12553,9 +12928,9 @@ definitions:
           PARAMETERS COVERING SLASHING
 
           slashing_pk_script is the pk_script expected in slashing output ie.
-          the first
+          the
 
-          output of slashing transaction
+          first output of slashing transaction
       min_slashing_tx_fee_sat:
         type: string
         format: int64
@@ -12580,9 +12955,10 @@ definitions:
           PARAMETERS COVERING UNBONDING
 
           unbonding_time is the exact unbonding time required from unbonding
-          transaction
 
-          it must be larger than `checkpoint_finalization_timeout` from
+          transaction it must be larger than `checkpoint_finalization_timeout`
+          from
+
           `btccheckpoint` module
       unbonding_fee_sat:
         type: string
@@ -12594,12 +12970,11 @@ definitions:
           PARAMETERS COVERING FINALITY PROVIDERS
 
           min_commission_rate is the chain-wide minimum commission rate that a
-          finality provider
 
-          can charge their delegators expressed as a decimal (e.g., 0.5 for
-          50%). Maximal precion
+          finality provider can charge their delegators expressed as a decimal
+          (e.g.,
 
-          is 2 decimal places
+          0.5 for 50%). Maximal precion is 2 decimal places
       delegation_creation_base_gas_fee:
         type: string
         format: uint64
@@ -12620,7 +12995,9 @@ definitions:
         format: int64
         title: >-
           btc_activation_height is the btc height from which parameters are
-          activated (inclusive)
+          activated
+
+          (inclusive)
     description: Params defines the parameters for the module.
   babylon.btcstaking.v1.ProofOfPossessionBTC:
     type: object
@@ -12725,7 +13102,9 @@ definitions:
                   format: byte
                   title: >-
                     cov_pk is the public key of the covenant emulator, used as
-                    the public key of the adaptor signature
+                    the public key
+
+                    of the adaptor signature
                 adaptor_sigs:
                   type: array
                   items:
@@ -12733,7 +13112,9 @@ definitions:
                     format: byte
                   title: >-
                     adaptor_sigs is a list of adaptor signatures, each encrypted
-                    by a restaked BTC finality provider's public key
+                    by a restaked
+
+                    BTC finality provider's public key
               title: >-
                 CovenantAdaptorSignatures is a list adaptor signatures signed by
                 the
@@ -12817,7 +13198,9 @@ definitions:
                       format: byte
                       title: >-
                         cov_pk is the public key of the covenant emulator, used
-                        as the public key of the adaptor signature
+                        as the public key
+
+                        of the adaptor signature
                     adaptor_sigs:
                       type: array
                       items:
@@ -12825,8 +13208,9 @@ definitions:
                         format: byte
                       title: >-
                         adaptor_sigs is a list of adaptor signatures, each
-                        encrypted by a restaked BTC finality provider's public
-                        key
+                        encrypted by a restaked
+
+                        BTC finality provider's public key
                   title: >-
                     CovenantAdaptorSignatures is a list adaptor signatures
                     signed by the
@@ -12943,7 +13327,9 @@ definitions:
                     format: byte
                     title: >-
                       cov_pk is the public key of the covenant emulator, used as
-                      the public key of the adaptor signature
+                      the public key
+
+                      of the adaptor signature
                   adaptor_sigs:
                     type: array
                     items:
@@ -12951,7 +13337,9 @@ definitions:
                       format: byte
                     title: >-
                       adaptor_sigs is a list of adaptor signatures, each
-                      encrypted by a restaked BTC finality provider's public key
+                      encrypted by a restaked
+
+                      BTC finality provider's public key
                 title: >-
                   CovenantAdaptorSignatures is a list adaptor signatures signed
                   by the
@@ -13041,7 +13429,9 @@ definitions:
                         format: byte
                         title: >-
                           cov_pk is the public key of the covenant emulator,
-                          used as the public key of the adaptor signature
+                          used as the public key
+
+                          of the adaptor signature
                       adaptor_sigs:
                         type: array
                         items:
@@ -13049,8 +13439,9 @@ definitions:
                           format: byte
                         title: >-
                           adaptor_sigs is a list of adaptor signatures, each
-                          encrypted by a restaked BTC finality provider's public
-                          key
+                          encrypted by a restaked
+
+                          BTC finality provider's public key
                     title: >-
                       CovenantAdaptorSignatures is a list adaptor signatures
                       signed by the
@@ -13202,7 +13593,9 @@ definitions:
                           format: byte
                           title: >-
                             cov_pk is the public key of the covenant emulator,
-                            used as the public key of the adaptor signature
+                            used as the public key
+
+                            of the adaptor signature
                         adaptor_sigs:
                           type: array
                           items:
@@ -13210,8 +13603,9 @@ definitions:
                             format: byte
                           title: >-
                             adaptor_sigs is a list of adaptor signatures, each
-                            encrypted by a restaked BTC finality provider's
-                            public key
+                            encrypted by a restaked
+
+                            BTC finality provider's public key
                       title: >-
                         CovenantAdaptorSignatures is a list adaptor signatures
                         signed by the
@@ -13306,8 +13700,9 @@ definitions:
                               format: byte
                               title: >-
                                 cov_pk is the public key of the covenant
-                                emulator, used as the public key of the adaptor
-                                signature
+                                emulator, used as the public key
+
+                                of the adaptor signature
                             adaptor_sigs:
                               type: array
                               items:
@@ -13315,8 +13710,9 @@ definitions:
                                 format: byte
                               title: >-
                                 adaptor_sigs is a list of adaptor signatures,
-                                each encrypted by a restaked BTC finality
-                                provider's public key
+                                each encrypted by a restaked
+
+                                BTC finality provider's public key
                           title: >-
                             CovenantAdaptorSignatures is a list adaptor
                             signatures signed by the
@@ -13487,6 +13883,26 @@ definitions:
             title: |-
               highest_voted_height is the highest height for which the
               finality provider has voted
+          commission_info:
+            description: >-
+              commission_info contains information details of the finality
+              provider commission.
+            type: object
+            properties:
+              max_rate:
+                type: string
+                description: >-
+                  max_rate defines the maximum commission rate which validator
+                  can ever charge, as a fraction.
+              max_change_rate:
+                type: string
+                description: >-
+                  max_change_rate defines the maximum daily increase of the
+                  validator commission, as a fraction.
+              update_time:
+                type: string
+                format: date-time
+                description: update_time is the last time the commission rate was changed.
         description: >-
           FinalityProviderResponse defines a finality provider with voting power
           information.
@@ -13600,6 +14016,28 @@ definitions:
               title: |-
                 highest_voted_height is the highest height for which the
                 finality provider has voted
+            commission_info:
+              description: >-
+                commission_info contains information details of the finality
+                provider commission.
+              type: object
+              properties:
+                max_rate:
+                  type: string
+                  description: >-
+                    max_rate defines the maximum commission rate which validator
+                    can ever charge, as a fraction.
+                max_change_rate:
+                  type: string
+                  description: >-
+                    max_change_rate defines the maximum daily increase of the
+                    validator commission, as a fraction.
+                update_time:
+                  type: string
+                  format: date-time
+                  description: >-
+                    update_time is the last time the commission rate was
+                    changed.
           description: >-
             FinalityProviderResponse defines a finality provider with voting
             power information.
@@ -13626,6 +14064,68 @@ definitions:
     description: |-
       QueryFinalityProvidersResponse is the response type for the
       Query/FinalityProviders RPC method.
+  babylon.btcstaking.v1.QueryLargestBtcReOrgResponse:
+    type: object
+    properties:
+      block_diff:
+        type: integer
+        format: int64
+        title: >-
+          BlockDiff is the difference of the block height of the BTC header Tip
+          - the btc height
+
+          which it was rolled back
+      rollback_from:
+        title: RollbackFrom is the latest BTC block header prior to rollback
+        type: object
+        properties:
+          header_hex:
+            type: string
+          hash_hex:
+            type: string
+          height:
+            type: integer
+            format: int64
+          work:
+            type: string
+            description: Work is the sdkmath.Uint as string.
+        description: >-
+          BTCHeaderInfoResponse is a structure that contains all relevant
+          information about a
+
+          BTC header response
+           - Full header as string hex.
+           - Header hash for easy retrieval as string hex.
+           - Height of the header in the BTC chain.
+           - Total work spent on the header. This is the sum of the work corresponding
+           to the header Bits field
+             and the total work of the header.
+      rollback_to:
+        title: RollbackTo is the BTC block header which we rollback to
+        type: object
+        properties:
+          header_hex:
+            type: string
+          hash_hex:
+            type: string
+          height:
+            type: integer
+            format: int64
+          work:
+            type: string
+            description: Work is the sdkmath.Uint as string.
+        description: >-
+          BTCHeaderInfoResponse is a structure that contains all relevant
+          information about a
+
+          BTC header response
+           - Full header as string hex.
+           - Header hash for easy retrieval as string hex.
+           - Height of the header in the BTC chain.
+           - Total work spent on the header. This is the sum of the work corresponding
+           to the header Bits field
+             and the total work of the header.
+    title: QueryLargestBtcReOrgResponse stores the largest BTC reorg recorded
   babylon.btcstaking.v1.QueryParamsByBTCHeightResponse:
     type: object
     properties:
@@ -13670,13 +14170,17 @@ definitions:
             format: int64
             title: >-
               min_staking_time is the minimum lock time specified in staking
-              output script
+              output
+
+              script
           max_staking_time_blocks:
             type: integer
             format: int64
             title: >-
               max_staking_time_blocks is the maximum lock time time specified in
-              staking output script
+              staking
+
+              output script
           slashing_pk_script:
             type: string
             format: byte
@@ -13684,9 +14188,9 @@ definitions:
               PARAMETERS COVERING SLASHING
 
               slashing_pk_script is the pk_script expected in slashing output
-              ie. the first
+              ie. the
 
-              output of slashing transaction
+              first output of slashing transaction
           min_slashing_tx_fee_sat:
             type: string
             format: int64
@@ -13714,9 +14218,10 @@ definitions:
               PARAMETERS COVERING UNBONDING
 
               unbonding_time is the exact unbonding time required from unbonding
-              transaction
 
-              it must be larger than `checkpoint_finalization_timeout` from
+              transaction it must be larger than
+              `checkpoint_finalization_timeout` from
+
               `btccheckpoint` module
           unbonding_fee_sat:
             type: string
@@ -13728,12 +14233,12 @@ definitions:
               PARAMETERS COVERING FINALITY PROVIDERS
 
               min_commission_rate is the chain-wide minimum commission rate that
-              a finality provider
+              a
 
-              can charge their delegators expressed as a decimal (e.g., 0.5 for
-              50%). Maximal precion
+              finality provider can charge their delegators expressed as a
+              decimal (e.g.,
 
-              is 2 decimal places
+              0.5 for 50%). Maximal precion is 2 decimal places
           delegation_creation_base_gas_fee:
             type: string
             format: uint64
@@ -13754,7 +14259,9 @@ definitions:
             format: int64
             title: >-
               btc_activation_height is the btc height from which parameters are
-              activated (inclusive)
+              activated
+
+              (inclusive)
       version:
         type: integer
         format: int64
@@ -13806,13 +14313,17 @@ definitions:
             format: int64
             title: >-
               min_staking_time is the minimum lock time specified in staking
-              output script
+              output
+
+              script
           max_staking_time_blocks:
             type: integer
             format: int64
             title: >-
               max_staking_time_blocks is the maximum lock time time specified in
-              staking output script
+              staking
+
+              output script
           slashing_pk_script:
             type: string
             format: byte
@@ -13820,9 +14331,9 @@ definitions:
               PARAMETERS COVERING SLASHING
 
               slashing_pk_script is the pk_script expected in slashing output
-              ie. the first
+              ie. the
 
-              output of slashing transaction
+              first output of slashing transaction
           min_slashing_tx_fee_sat:
             type: string
             format: int64
@@ -13850,9 +14361,10 @@ definitions:
               PARAMETERS COVERING UNBONDING
 
               unbonding_time is the exact unbonding time required from unbonding
-              transaction
 
-              it must be larger than `checkpoint_finalization_timeout` from
+              transaction it must be larger than
+              `checkpoint_finalization_timeout` from
+
               `btccheckpoint` module
           unbonding_fee_sat:
             type: string
@@ -13864,12 +14376,12 @@ definitions:
               PARAMETERS COVERING FINALITY PROVIDERS
 
               min_commission_rate is the chain-wide minimum commission rate that
-              a finality provider
+              a
 
-              can charge their delegators expressed as a decimal (e.g., 0.5 for
-              50%). Maximal precion
+              finality provider can charge their delegators expressed as a
+              decimal (e.g.,
 
-              is 2 decimal places
+              0.5 for 50%). Maximal precion is 2 decimal places
           delegation_creation_base_gas_fee:
             type: string
             format: uint64
@@ -13890,7 +14402,9 @@ definitions:
             format: int64
             title: >-
               btc_activation_height is the btc height from which parameters are
-              activated (inclusive)
+              activated
+
+              (inclusive)
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   babylon.btcstaking.v1.QueryParamsResponse:
     type: object
@@ -13936,13 +14450,17 @@ definitions:
             format: int64
             title: >-
               min_staking_time is the minimum lock time specified in staking
-              output script
+              output
+
+              script
           max_staking_time_blocks:
             type: integer
             format: int64
             title: >-
               max_staking_time_blocks is the maximum lock time time specified in
-              staking output script
+              staking
+
+              output script
           slashing_pk_script:
             type: string
             format: byte
@@ -13950,9 +14468,9 @@ definitions:
               PARAMETERS COVERING SLASHING
 
               slashing_pk_script is the pk_script expected in slashing output
-              ie. the first
+              ie. the
 
-              output of slashing transaction
+              first output of slashing transaction
           min_slashing_tx_fee_sat:
             type: string
             format: int64
@@ -13980,9 +14498,10 @@ definitions:
               PARAMETERS COVERING UNBONDING
 
               unbonding_time is the exact unbonding time required from unbonding
-              transaction
 
-              it must be larger than `checkpoint_finalization_timeout` from
+              transaction it must be larger than
+              `checkpoint_finalization_timeout` from
+
               `btccheckpoint` module
           unbonding_fee_sat:
             type: string
@@ -13994,12 +14513,12 @@ definitions:
               PARAMETERS COVERING FINALITY PROVIDERS
 
               min_commission_rate is the chain-wide minimum commission rate that
-              a finality provider
+              a
 
-              can charge their delegators expressed as a decimal (e.g., 0.5 for
-              50%). Maximal precion
+              finality provider can charge their delegators expressed as a
+              decimal (e.g.,
 
-              is 2 decimal places
+              0.5 for 50%). Maximal precion is 2 decimal places
           delegation_creation_base_gas_fee:
             type: string
             format: uint64
@@ -14020,7 +14539,9 @@ definitions:
             format: int64
             title: >-
               btc_activation_height is the btc height from which parameters are
-              activated (inclusive)
+              activated
+
+              (inclusive)
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   babylon.btcstaking.v1.SignatureInfo:
     type: object

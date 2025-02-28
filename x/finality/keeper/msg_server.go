@@ -208,6 +208,10 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		// slash this finality provider, including setting its voting power to
 		// zero, extracting its BTC SK, and emit an event
 		ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
+
+		// NOTE: we should NOT return error here, otherwise the state change triggered in this tx
+		// (including the evidence and slashing) will be rolled back
+		return &types.MsgAddFinalitySigResponse{}, nil
 	}
 
 	// at this point, the finality signature is 1) valid, 2) over a canonical block,
@@ -233,6 +237,15 @@ func (ms msgServer) ShouldAcceptSigForHeight(ctx context.Context, block *types.I
 // CommitPubRandList commits a list of EOTS public randomness
 func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommitPubRandList) (*types.MsgCommitPubRandListResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
+
+	// To avoid public randomness reset,
+	// check for overflow when doing (StartHeight + NumPubRand)
+	if req.StartHeight >= (req.StartHeight + req.NumPubRand) {
+		return nil, types.ErrOverflowInBlockHeight.Wrapf(
+			"public rand commit start block height: %d is equal or higher than (start height + num pub rand) %d",
+			req.StartHeight, req.StartHeight+req.NumPubRand,
+		)
+	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	activationHeight, errMod := ms.validateActivationHeight(ctx, req.StartHeight)

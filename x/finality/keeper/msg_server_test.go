@@ -3,12 +3,13 @@ package keeper_test
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/rand"
 	"testing"
 	"time"
 
 	"cosmossdk.io/core/header"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -106,6 +107,14 @@ func FuzzCommitPubRandList(f *testing.F) {
 		require.NoError(t, err)
 		_, err = ms.CommitPubRandList(ctx, msg)
 		require.NoError(t, err)
+
+		// Case 6: commit a pubrand list that overflows when adding startHeight + numPubRand
+		overflowStartHeight := math.MaxUint64 - datagen.RandomInt(r, 5)
+		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, overflowStartHeight, numPubRand)
+		require.NoError(t, err)
+		_, err = ms.CommitPubRandList(ctx, msg)
+		require.Error(t, err)
+		require.ErrorContains(t, err, types.ErrOverflowInBlockHeight.Error())
 	})
 }
 
@@ -564,12 +573,12 @@ func TestBtcDelegationRewards(t *testing.T) {
 	// if 1500ubbn are added as reward
 	// del1 should receive 1/3 => 500
 	// del2 should receive 2/3 => 1000
-	rwdFp1 := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(1500)))
+	rwdFp1 := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1500)))
 	err = h.IncentivesKeeper.AddFinalityProviderRewardsForBtcDelegations(h.Ctx, fp1.Address(), rwdFp1)
 	h.NoError(err)
 
-	rwdFp1Del1 := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(500)))
-	rwdFp1Del2 := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(1000)))
+	rwdFp1Del1 := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(500)))
+	rwdFp1Del2 := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1000)))
 
 	fp1Del1Rwd, err := h.IncentivesKeeper.RewardGauges(h.Ctx, &ictvtypes.QueryRewardGaugesRequest{
 		Address: fp1Del1.Address().String(),
