@@ -1,7 +1,9 @@
 package datagen
 
 import (
+	"bytes"
 	"math/rand"
+	"sort"
 	"testing"
 	"time"
 
@@ -9,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
@@ -644,4 +647,72 @@ func (info *TestUnbondingSlashingInfo) GenCovenantSigs(
 		})
 	}
 	return covUnbondingSlashingSigs, covUnbondingSigList, nil
+}
+
+type SignatureInfo struct {
+	SignerPubKey *btcec.PublicKey
+	Signature    *schnorr.Signature
+}
+
+func NewSignatureInfo(
+	signerPubKey *btcec.PublicKey,
+	signature *schnorr.Signature,
+) *SignatureInfo {
+	return &SignatureInfo{
+		SignerPubKey: signerPubKey,
+		Signature:    signature,
+	}
+}
+
+// Helper function to sort all signatures in reverse lexicographical order of signing public keys
+// this way signatures are ready to be used in multisig witness with corresponding public keys
+func sortSignatureInfo(infos []*SignatureInfo) []*SignatureInfo {
+	sortedInfos := make([]*SignatureInfo, len(infos))
+	copy(sortedInfos, infos)
+	sort.SliceStable(sortedInfos, func(i, j int) bool {
+		keyIBytes := schnorr.SerializePubKey(sortedInfos[i].SignerPubKey)
+		keyJBytes := schnorr.SerializePubKey(sortedInfos[j].SignerPubKey)
+		return bytes.Compare(keyIBytes, keyJBytes) == 1
+	})
+
+	return sortedInfos
+}
+
+// generate list of signatures in valid order
+func GenerateSignatures(
+	t *testing.T,
+	keys []*btcec.PrivateKey,
+	tx *wire.MsgTx,
+	stakingOutput *wire.TxOut,
+	leaf txscript.TapLeaf,
+) []*schnorr.Signature {
+	var si []*SignatureInfo
+
+	for _, key := range keys {
+		pubKey := key.PubKey()
+		sig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
+			tx,
+			stakingOutput,
+			key,
+			leaf,
+		)
+		require.NoError(t, err)
+		info := NewSignatureInfo(
+			pubKey,
+			sig,
+		)
+		si = append(si, info)
+	}
+
+	// sort signatures by public key
+	sortedSigInfo := sortSignatureInfo(si)
+
+	var sigs []*schnorr.Signature = make([]*schnorr.Signature, len(sortedSigInfo))
+
+	for i, sigInfo := range sortedSigInfo {
+		sig := sigInfo
+		sigs[i] = sig.Signature
+	}
+
+	return sigs
 }
