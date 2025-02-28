@@ -38,7 +38,7 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		// t.Parallel()
+		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
 
 		app := babylonApp.Setup(t, false)

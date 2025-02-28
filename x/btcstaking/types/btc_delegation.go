@@ -142,7 +142,7 @@ func (d *BTCDelegation) GetStatus(
 
 	// if the endheight is lower than the btc height + unbonding time
 	// the btc delegation should be considered expired
-	if btcHeight+d.UnbondingTime > d.EndHeight {
+	if btcHeight+d.UnbondingTime >= d.EndHeight {
 		return BTCDelegationStatus_EXPIRED
 	}
 
