@@ -304,6 +304,15 @@ func CreateBlockWithTransaction(
 	ph *wire.BlockHeader,
 	tx *wire.MsgTx,
 ) *BtcHeaderWithProof {
+	proof, _ := CreateWireBlockWithTransaction(r, ph, tx)
+	return proof
+}
+
+func CreateWireBlockWithTransaction(
+	r *rand.Rand,
+	ph *wire.BlockHeader,
+	tx *wire.MsgTx,
+) (*BtcHeaderWithProof, *wire.BlockHeader) {
 	var transactions []*wire.MsgTx
 	// height does not matter here, as it is used only for calculation of reward
 	transactions = append(transactions, createCoinbaseTx(int32(889), &chaincfg.SimNetParams))
@@ -336,7 +345,7 @@ func CreateBlockWithTransaction(
 	return &BtcHeaderWithProof{
 		HeaderBytes: headerBytes,
 		SpvProof:    proof,
-	}
+	}, randHeader
 }
 
 func CreateDummyTx() *wire.MsgTx {
