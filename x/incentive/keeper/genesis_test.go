@@ -11,10 +11,12 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/x/incentive/keeper"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -223,6 +225,7 @@ func FuzzTestExportGenesis(f *testing.F) {
 		defer ctrl.Finish()
 
 		var (
+			encConfig    = appparams.DefaultEncodingConfig()
 			storeService = runtime.NewKVStoreService(sk)
 			store        = storeService.OpenKVStore(ctx)
 			storeAdaptor = runtime.KVStoreAdapter(store)
@@ -240,21 +243,38 @@ func FuzzTestExportGenesis(f *testing.F) {
 			k.RefundableMsgKeySet.Set(ctx, bz)
 
 			// FP current rewards
-			k.FinalityProviderCurrentRewards.Set(ctx, sdk.MustAccAddressFromBech32(gs.FinalityProvidersCurrentRewards[i].Address).Bytes(), *gs.FinalityProvidersCurrentRewards[i].Rewards)
+			fpCurrRwdKeyBz, err := collections.EncodeKeyWithPrefix(types.FinalityProviderCurrentRewardsKeyPrefix.Bytes(), collections.BytesKey, sdk.MustAccAddressFromBech32(gs.FinalityProvidersCurrentRewards[i].Address).Bytes())
+			require.NoError(t, err)
+
+			currRwdBz, err := codec.CollValue[types.FinalityProviderCurrentRewards](encConfig.Codec).Encode(*gs.FinalityProvidersCurrentRewards[i].Rewards)
+			require.NoError(t, err)
+			require.NoError(t, store.Set(fpCurrRwdKeyBz, currRwdBz))
+
+			// FP historical rewards
 			fphrKey := collections.Join(
 				sdk.MustAccAddressFromBech32(gs.FinalityProvidersHistoricalRewards[i].Address).Bytes(),
 				gs.FinalityProvidersHistoricalRewards[i].Period,
 			)
 
-			// FP historical rewards
-			k.FinalityProviderHistoricalRewards.Set(ctx, fphrKey, *gs.FinalityProvidersHistoricalRewards[i].Rewards)
+			fphrKeyBz, err := collections.EncodeKeyWithPrefix(types.FinalityProviderHistoricalRewardsKeyPrefix.Bytes(), collections.PairKeyCodec(collections.BytesKey, collections.Uint64Key), fphrKey)
+			require.NoError(t, err)
+
+			histRwdBz, err := codec.CollValue[types.FinalityProviderHistoricalRewards](encConfig.Codec).Encode(*gs.FinalityProvidersHistoricalRewards[i].Rewards)
+			require.NoError(t, err)
+			require.NoError(t, store.Set(fphrKeyBz, histRwdBz))
+
+			// BTCDelegationRewardsTracker
 			bdrtKey := collections.Join(
 				sdk.MustAccAddressFromBech32(gs.BtcDelegationRewardsTrackers[i].FinalityProviderAddress).Bytes(),
 				sdk.MustAccAddressFromBech32(gs.BtcDelegationRewardsTrackers[i].DelegatorAddress).Bytes(),
 			)
 
-			// BTCDelegationRewardsTracker
-			k.BTCDelegationRewardsTracker.Set(ctx, bdrtKey, *gs.BtcDelegationRewardsTrackers[i].Tracker)
+			bdrtKeyBz, err := collections.EncodeKeyWithPrefix(types.BTCDelegationRewardsTrackerKeyPrefix.Bytes(), collections.PairKeyCodec(collections.BytesKey, collections.BytesKey), bdrtKey)
+			require.NoError(t, err)
+
+			bdrtBz, err := codec.CollValue[types.BTCDelegationRewardsTracker](encConfig.Codec).Encode(*gs.BtcDelegationRewardsTrackers[i].Tracker)
+			require.NoError(t, err)
+			require.NoError(t, store.Set(bdrtKeyBz, bdrtBz))
 
 			// btcDel2FP
 			st := prefix.NewStore(storeAdaptor, types.BTCDelegatorToFPKey)
