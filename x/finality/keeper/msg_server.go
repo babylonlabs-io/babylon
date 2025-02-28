@@ -208,6 +208,10 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		// slash this finality provider, including setting its voting power to
 		// zero, extracting its BTC SK, and emit an event
 		ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
+
+		// NOTE: we should NOT return error here, otherwise the state change triggered in this tx
+		// (including the evidence and slashing) will be rolled back
+		return &types.MsgAddFinalitySigResponse{}, nil
 	}
 
 	// at this point, the finality signature is 1) valid, 2) over a canonical block,
