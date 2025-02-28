@@ -1,6 +1,9 @@
 package types
 
 import (
+	"errors"
+	"fmt"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -50,10 +53,55 @@ func (f *FinalityProviderCurrentRewards) SubTotalActiveSat(amt sdkmath.Int) {
 	f.TotalActiveSat = f.TotalActiveSat.Sub(amt)
 }
 
+func (f *FinalityProviderCurrentRewards) Validate() error {
+	if !f.CurrentRewards.IsValid() {
+		return fmt.Errorf("current rewards has invalid coins: %s", f.CurrentRewards.String())
+	}
+	if f.CurrentRewards.IsAnyNil() {
+		return errors.New("current rewards has nil coins")
+	}
+	if f.CurrentRewards.Len() == 0 {
+		return errors.New("current rewards has no coins")
+	}
+
+	if f.TotalActiveSat.IsNil() {
+		return errors.New("current rewards has no total active satoshi delegated")
+	}
+
+	if f.TotalActiveSat.IsNegative() {
+		return fmt.Errorf("current rewards has a negative total active satoshi delegated value: %s", f.TotalActiveSat.String())
+	}
+	return nil
+}
+
 func (f *BTCDelegationRewardsTracker) AddTotalActiveSat(amt sdkmath.Int) {
 	f.TotalActiveSat = f.TotalActiveSat.Add(amt)
 }
 
 func (f *BTCDelegationRewardsTracker) SubTotalActiveSat(amt sdkmath.Int) {
 	f.TotalActiveSat = f.TotalActiveSat.Sub(amt)
+}
+
+func (f *BTCDelegationRewardsTracker) Validate() error {
+	if f.TotalActiveSat.IsNil() {
+		return errors.New("btc delegation rewards tracker has nil total active sat")
+	}
+
+	if f.TotalActiveSat.IsNegative() {
+		return fmt.Errorf("btc delegation rewards tracker has a negative total active satoshi delegated value: %s", f.TotalActiveSat.String())
+	}
+	return nil
+}
+
+func (hr *FinalityProviderHistoricalRewards) Validate() error {
+	if !hr.CumulativeRewardsPerSat.IsValid() {
+		return fmt.Errorf("cummulative rewards per sat has invalid coins: %s", hr.CumulativeRewardsPerSat.String())
+	}
+	if hr.CumulativeRewardsPerSat.IsAnyNil() {
+		return errors.New("cummulative rewards per sat has nil coins")
+	}
+	if hr.CumulativeRewardsPerSat.Len() == 0 {
+		return errors.New("cummulative rewards per sat has no coins")
+	}
+	return nil
 }
