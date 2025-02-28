@@ -67,7 +67,7 @@ func (h *IncentiveHelper) CreateBtcDelegation(
 	stakingTime uint16,
 	btcLightClientTipHeight uint32,
 ) (
-	stakingTxHash string, msgCreateBTCDel *bstypes.MsgCreateBTCDelegation, actualDel *bstypes.BTCDelegation, unbondingInfo *btcstkhelper.UnbondingTxInfo,
+	delSK *btcec.PrivateKey, stakingTxHash string, msgCreateBTCDel *bstypes.MsgCreateBTCDelegation, actualDel *bstypes.BTCDelegation, unbondingInfo *btcstkhelper.UnbondingTxInfo,
 ) {
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
@@ -96,7 +96,7 @@ func (h *IncentiveHelper) CreateBtcDelegation(
 	h.Equal(msgCreateBTCDel.StakingTx, actualDel.StakingTx)
 	h.Equal(msgCreateBTCDel.SlashingTx, actualDel.SlashingTx)
 
-	return stakingTxHash, msgCreateBTCDel, actualDel, unbondingInfo
+	return delSK, stakingTxHash, msgCreateBTCDel, actualDel, unbondingInfo
 }
 
 func (h *IncentiveHelper) CreateActiveBtcDelegation(
@@ -107,16 +107,16 @@ func (h *IncentiveHelper) CreateActiveBtcDelegation(
 	stakingTime uint16,
 	btcLightClientTipHeight uint32,
 ) (
-	stakingTxHash string, actualDel *bstypes.BTCDelegation, unbondingInfo *btcstkhelper.UnbondingTxInfo,
+	delSK *btcec.PrivateKey, stakingTxHash string, actualDel *bstypes.BTCDelegation, unbondingInfo *btcstkhelper.UnbondingTxInfo,
 ) {
-	stakingTxHash, msgCreateBTCDel, actualDel, unbondingInfo := h.CreateBtcDelegation(r, fpPK, stakingValue, stakingTime, btcLightClientTipHeight)
+	delSK, stakingTxHash, msgCreateBTCDel, actualDel, unbondingInfo := h.CreateBtcDelegation(r, fpPK, stakingValue, stakingTime, btcLightClientTipHeight)
 
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: btcLightClientTipHeight}).MaxTimes(len(bsParams.CovenantPks) * 2)
 
 	h.GenerateAndSendCovenantSignatures(r, covenantSKs, msgCreateBTCDel, actualDel)
 	h.EqualBtcDelegationStatus(stakingTxHash, btcLightClientTipHeight, bstypes.BTCDelegationStatus_ACTIVE)
-	return stakingTxHash, actualDel, unbondingInfo
+	return delSK, stakingTxHash, actualDel, unbondingInfo
 }
 
 func (h *IncentiveHelper) EqualBtcDelRwdTrackerActiveSat(fp, del sdk.AccAddress, expectedSatAmount uint64) {
@@ -129,13 +129,15 @@ func (h *IncentiveHelper) BtcUndelegate(
 	stakingTxHash string,
 	del *bstypes.BTCDelegation,
 	unbondingInfo *testutil.UnbondingTxInfo,
+	unbondingTx []byte,
 	btcLightClientTipHeight uint32,
 ) {
 	msgUndelegate := &bstypes.MsgBTCUndelegate{
 		Signer:                        datagen.GenRandomAccount().Address,
 		StakingTxHash:                 stakingTxHash,
-		StakeSpendingTx:               del.BtcUndelegation.UnbondingTx,
+		StakeSpendingTx:               unbondingTx,
 		StakeSpendingTxInclusionProof: unbondingInfo.UnbondingTxInclusionProof,
+		FundingTransactions:           [][]byte{del.StakingTx},
 	}
 
 	// early unbond

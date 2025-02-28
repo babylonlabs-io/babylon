@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -22,6 +23,12 @@ import (
 	"github.com/babylonlabs-io/babylon/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+)
+
+const (
+	// blankCodeSepValue is the value of the code separator position in the
+	// tapscript sighash when no code separator was found in the script.
+	blankCodeSepValue = math.MaxUint32
 )
 
 type msgServer struct {
@@ -581,6 +588,39 @@ func containsInput(tx *wire.MsgTx, inputHash *chainhash.Hash, inputIdx uint32) b
 	return false
 }
 
+func findInputIdx(
+	tx *wire.MsgTx,
+	fundingTxHash *chainhash.Hash,
+	fundingOutputIdx uint32,
+) (uint32, error) {
+	for idx, txIn := range tx.TxIn {
+		if txIn.PreviousOutPoint.Hash.IsEqual(fundingTxHash) && txIn.PreviousOutPoint.Index == fundingOutputIdx {
+			return uint32(idx), nil
+		}
+	}
+	return 0, fmt.Errorf("transaction does not spend the expected output %s:%d", fundingTxHash.String(), fundingOutputIdx)
+}
+
+func getFundingTxTransactions(txs [][]byte) ([]*wire.MsgTx, error) {
+	if len(txs) == 0 {
+		return nil, fmt.Errorf("no funding transactions provided")
+	}
+
+	fundingTxs := make([]*wire.MsgTx, len(txs))
+
+	for i, tx := range txs {
+		fundingTx, err := bbn.NewBTCTxFromBytes(tx)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse funding transaction: %w", err)
+		}
+
+		fundingTxs[i] = fundingTx
+	}
+
+	return fundingTxs, nil
+}
+
 // BTCUndelegate adds a signature on the unbonding tx from the BTC delegator
 // this effectively proves that the BTC delegator wants to unbond and Babylon
 // will consider its BTC delegation unbonded
@@ -624,6 +664,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	btcHeader := stakerSpendigTxHeader.Header.ToBlockHeader()
 
+	// 1. Verify stake spending tx inclusion proof
 	proofValid := btcckpttypes.VerifyInclusionProof(
 		btcutil.NewTx(stakeSpendingTx),
 		&btcHeader.MerkleRoot,
@@ -635,11 +676,39 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("stake spending tx is not included in the Bitcoin chain: invalid inclusion proof")
 	}
 
-	registeredUnbondingTx, err := bbn.NewBTCTxFromBytes(btcDel.BtcUndelegation.UnbondingTx)
+	stakingTx := btcDel.MustGetStakingTx()
+
+	stakingTxHash := stakingTx.TxHash()
+
+	// 2. Verify stake spending tx spends staking output
+	stakingTxInputIdx, err := findInputIdx(
+		stakeSpendingTx,
+		&stakingTxHash,
+		btcDel.StakingOutputIdx,
+	)
 
 	if err != nil {
-		panic(fmt.Errorf("failed to parse unbonding tx from existing delegation with hash %s: %w", req.StakingTxHash, err))
+		return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("stake spending tx does not spend staking output: %s", err)
 	}
+
+	fundingTxs, err := getFundingTxTransactions(req.FundingTransactions)
+
+	if err != nil {
+		return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to parse funding transactions: %s", err)
+	}
+
+	// 3. Verify staker signature on stake spending tx
+	if err := VerifySpendStakeTxStakerSig(
+		btcDel.BtcPk.MustToBTCPK(),
+		stakingTx.TxOut[btcDel.StakingOutputIdx],
+		stakingTxInputIdx,
+		fundingTxs,
+		stakeSpendingTx,
+	); err != nil {
+		return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to verify stake spending tx staker signature: %s", err)
+	}
+
+	registeredUnbondingTx := btcDel.MustGetUnbondingTx()
 
 	registeredUnbondingTxHash := registeredUnbondingTx.TxHash()
 
@@ -658,19 +727,8 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 		types.EmitEarlyUnbondedEvent(ctx, btcDel.MustGetStakingTxHash().String(), stakerSpendigTxHeader.Height)
 	} else {
-		// stakeSpendingTx is not unbonding tx, first we need to verify whether it
-		// actually spends staking output
-		stakingTxHash, err := chainhash.NewHashFromStr(req.StakingTxHash)
-
-		if err != nil {
-			// panic as we already verified the staking tx hash in the beginning
-			panic(fmt.Errorf("failed to parse staking tx hash from existing delegation with hash %s: %w", req.StakingTxHash, err))
-		}
-
-		if !containsInput(stakeSpendingTx, stakingTxHash, btcDel.StakingOutputIdx) {
-			return nil, types.ErrInvalidBTCUndelegateReq.Wrap("stake spending tx does not spend staking output")
-		}
-
+		// spend staking tx is not the registered unbonding tx, we need to save it in the database
+		// and emit an event
 		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
 			SpendStakeTx: req.StakeSpendingTx,
 		}
