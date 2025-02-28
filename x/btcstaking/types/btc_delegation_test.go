@@ -166,7 +166,6 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 }
 
 func TestGetStatus(t *testing.T) {
-
 	covenantQuorum := 1
 	tcs := []struct {
 		title string
@@ -316,5 +315,4 @@ func TestGetStatus(t *testing.T) {
 			require.Equal(t, tc.expStatus, actStatus)
 		})
 	}
-
 }
