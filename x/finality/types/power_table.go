@@ -95,7 +95,6 @@ func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(maxActiveFPs uint32
 	}
 
 	totalVotingPower := uint64(0)
-
 	for i := uint32(0); i < numActiveFPs; i++ {
 		totalVotingPower += dc.FinalityProviders[i].TotalBondedSat
 	}
@@ -140,12 +139,18 @@ func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*Fin
 	return inactiveFps
 }
 
+// NewFinalityProviderDistInfo loads the FinalityProviderDistInfo based on the fp data.
+// Note: The IsTimestamped property is always set to false, as it is not possible to determine
+// the timestamp without the tip height.
 func NewFinalityProviderDistInfo(fp *bstypes.FinalityProvider) *FinalityProviderDistInfo {
 	return &FinalityProviderDistInfo{
 		BtcPk:          fp.BtcPk,
 		Addr:           sdk.MustAccAddressFromBech32(fp.Addr),
 		Commission:     fp.Commission,
 		TotalBondedSat: 0,
+		IsJailed:       fp.Jailed,
+		IsSlashed:      fp.IsSlashed(),
+		IsTimestamped:  false,
 	}
 }
 
