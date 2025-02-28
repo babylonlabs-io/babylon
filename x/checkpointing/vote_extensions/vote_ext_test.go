@@ -1,4 +1,4 @@
-package checkpointing_test
+package vote_extensions_test
 
 import (
 	"math/rand"

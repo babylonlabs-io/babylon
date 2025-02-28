@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/stretchr/testify/require"
 )
 
 // TestEpochFinalization checks whether we can finalize some epochs
