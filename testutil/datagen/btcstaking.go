@@ -36,6 +36,15 @@ func GenRandomFinalityProvider(r *rand.Rand) (*bstypes.FinalityProvider, error) 
 	return GenRandomFinalityProviderWithBTCSK(r, btcSK)
 }
 
+func GenRandomMsgCreateFinalityProvider(r *rand.Rand) (*bstypes.MsgCreateFinalityProvider, error) {
+	// BTC key pairs
+	btcSK, _, err := GenRandomBTCKeyPair(r)
+	if err != nil {
+		return nil, err
+	}
+	return GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(r, btcSK, GenRandomAccount().GetAddress())
+}
+
 func CreateNFinalityProviders(r *rand.Rand, t *testing.T, n int) []*bstypes.FinalityProvider {
 	fps := make([]*bstypes.FinalityProvider, n)
 	for i := 0; i < n; i++ {
