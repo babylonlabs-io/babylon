@@ -60,7 +60,7 @@ func (k Keeper) deleteBTCDelegatorToFP(ctx context.Context, del, fp sdk.AccAddre
 // GetFinalityProviderCurrentRewards returns the Finality Provider current rewards
 // based on the FP address key
 func (k Keeper) GetFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress) (types.FinalityProviderCurrentRewards, error) {
-	value, err := k.FinalityProviderCurrentRewards.Get(ctx, fp.Bytes())
+	value, err := k.finalityProviderCurrentRewards.Get(ctx, fp.Bytes())
 	if err != nil {
 		return types.FinalityProviderCurrentRewards{}, types.ErrFPCurrentRewardsNotFound
 	}
@@ -71,7 +71,7 @@ func (k Keeper) GetFinalityProviderCurrentRewards(ctx context.Context, fp sdk.Ac
 // It stops if the function `it` returns an error.
 func (k Keeper) IterateBTCDelegationRewardsTracker(ctx context.Context, fp sdk.AccAddress, it func(fp, del sdk.AccAddress) error) error {
 	rng := collections.NewPrefixedPairRange[[]byte, []byte](fp.Bytes())
-	return k.BTCDelegationRewardsTracker.Walk(ctx, rng, func(key collections.Pair[[]byte, []byte], value types.BTCDelegationRewardsTracker) (stop bool, err error) {
+	return k.btcDelegationRewardsTracker.Walk(ctx, rng, func(key collections.Pair[[]byte, []byte], value types.BTCDelegationRewardsTracker) (stop bool, err error) {
 		del := sdk.AccAddress(key.K2())
 		if err := it(fp, del); err != nil {
 			return err != nil, err
@@ -83,7 +83,7 @@ func (k Keeper) IterateBTCDelegationRewardsTracker(ctx context.Context, fp sdk.A
 // deleteKeysFromBTCDelegationRewardsTracker iterates over all the BTC delegation rewards tracker by the finality provider and deletes it.
 func (k Keeper) deleteKeysFromBTCDelegationRewardsTracker(ctx context.Context, fp sdk.AccAddress, delKeys [][]byte) {
 	rng := collections.NewPrefixedPairRange[[]byte, []byte](fp.Bytes())
-	err := k.BTCDelegationRewardsTracker.Clear(ctx, rng)
+	err := k.btcDelegationRewardsTracker.Clear(ctx, rng)
 	if err != nil {
 		k.Logger(sdk.UnwrapSDKContext(ctx)).Error("error deleting BTCDelegationRewardsTracker", "error", err)
 	}
@@ -95,7 +95,7 @@ func (k Keeper) deleteKeysFromBTCDelegationRewardsTracker(ctx context.Context, f
 // GetBTCDelegationRewardsTracker returns the BTCDelegationRewardsTracker based on the delegation key (fp, del)
 // It returns an error in case the key is not found.
 func (k Keeper) GetBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.AccAddress) (types.BTCDelegationRewardsTracker, error) {
-	value, err := k.BTCDelegationRewardsTracker.Get(ctx, collections.Join(fp.Bytes(), del.Bytes()))
+	value, err := k.btcDelegationRewardsTracker.Get(ctx, collections.Join(fp.Bytes(), del.Bytes()))
 	if err != nil {
 		return types.BTCDelegationRewardsTracker{}, types.ErrBTCDelegationRewardsTrackerNotFound
 	}
@@ -105,19 +105,19 @@ func (k Keeper) GetBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.
 // setBTCDelegationRewardsTracker sets a new structure in the store, it fails and returns an error if the rwd fails to marshal.
 func (k Keeper) setBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.AccAddress, rwd types.BTCDelegationRewardsTracker) error {
 	k.setBTCDelegatorToFP(ctx, del, fp)
-	return k.BTCDelegationRewardsTracker.Set(ctx, collections.Join(fp.Bytes(), del.Bytes()), rwd)
+	return k.btcDelegationRewardsTracker.Set(ctx, collections.Join(fp.Bytes(), del.Bytes()), rwd)
 }
 
 // setFinalityProviderCurrentRewards sets a new structure in the store, it fails and returns an error if the rwd fails to marshal.
 func (k Keeper) setFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress, rwd types.FinalityProviderCurrentRewards) error {
-	return k.FinalityProviderCurrentRewards.Set(ctx, fp.Bytes(), rwd)
+	return k.finalityProviderCurrentRewards.Set(ctx, fp.Bytes(), rwd)
 }
 
 // deleteAllFromFinalityProviderRwd deletes all the data related to Finality Provider Rewards
 // Historical and current from a fp address key.
 func (k Keeper) deleteAllFromFinalityProviderRwd(ctx context.Context, fp sdk.AccAddress) {
 	rng := collections.NewPrefixedPairRange[[]byte, uint64](fp.Bytes())
-	err := k.FinalityProviderHistoricalRewards.Clear(ctx, rng)
+	err := k.finalityProviderHistoricalRewards.Clear(ctx, rng)
 	if err != nil {
 		k.Logger(sdk.UnwrapSDKContext(ctx)).Error("error deleting FinalityProviderHistoricalRewards", "error", err)
 	}
@@ -127,7 +127,7 @@ func (k Keeper) deleteAllFromFinalityProviderRwd(ctx context.Context, fp sdk.Acc
 
 // deleteFinalityProviderCurrentRewards deletes the current FP reward based on the key received
 func (k Keeper) deleteFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress) {
-	if err := k.FinalityProviderCurrentRewards.Remove(ctx, fp.Bytes()); err != nil {
+	if err := k.finalityProviderCurrentRewards.Remove(ctx, fp.Bytes()); err != nil {
 		k.Logger(sdk.UnwrapSDKContext(ctx)).Error("error deleting FinalityProviderCurrentRewards", "error", err)
 	}
 }
@@ -135,7 +135,7 @@ func (k Keeper) deleteFinalityProviderCurrentRewards(ctx context.Context, fp sdk
 // GetFinalityProviderHistoricalRewards returns the FinalityProviderHistoricalRewards based on the key (fp, period)
 // It returns an error if the key is not found inside the store.
 func (k Keeper) GetFinalityProviderHistoricalRewards(ctx context.Context, fp sdk.AccAddress, period uint64) (types.FinalityProviderHistoricalRewards, error) {
-	value, err := k.FinalityProviderHistoricalRewards.Get(ctx, collections.Join(fp.Bytes(), period))
+	value, err := k.finalityProviderHistoricalRewards.Get(ctx, collections.Join(fp.Bytes(), period))
 	if err != nil {
 		return types.FinalityProviderHistoricalRewards{}, types.ErrFPHistoricalRewardsNotFound
 	}
@@ -145,7 +145,7 @@ func (k Keeper) GetFinalityProviderHistoricalRewards(ctx context.Context, fp sdk
 // setFinalityProviderHistoricalRewards sets a new value inside the store, it returns an error
 // if the marshal of the `rwd` fails.
 func (k Keeper) setFinalityProviderHistoricalRewards(ctx context.Context, fp sdk.AccAddress, period uint64, rwd types.FinalityProviderHistoricalRewards) error {
-	return k.FinalityProviderHistoricalRewards.Set(ctx, collections.Join(fp.Bytes(), period), rwd)
+	return k.finalityProviderHistoricalRewards.Set(ctx, collections.Join(fp.Bytes(), period), rwd)
 }
 
 // subDelegationSat subtracts an amount of active stake from the BTCDelegationRewardsTracker

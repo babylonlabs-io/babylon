@@ -32,12 +32,12 @@ type (
 
 		// Collections structures for rewards
 
-		// BTCDelegationRewardsTracker maps (FpAddr, DelAddr) => BTCDelegationRewardsTracker
-		BTCDelegationRewardsTracker collections.Map[collections.Pair[[]byte, []byte], types.BTCDelegationRewardsTracker]
-		// FinalityProviderHistoricalRewards maps (FpAddr, period) => FinalityProviderHistoricalRewards
-		FinalityProviderHistoricalRewards collections.Map[collections.Pair[[]byte, uint64], types.FinalityProviderHistoricalRewards]
-		// FinalityProviderCurrentRewards maps (FpAddr) => FinalityProviderCurrentRewards
-		FinalityProviderCurrentRewards collections.Map[[]byte, types.FinalityProviderCurrentRewards]
+		// btcDelegationRewardsTracker maps (FpAddr, DelAddr) => BTCDelegationRewardsTracker
+		btcDelegationRewardsTracker collections.Map[collections.Pair[[]byte, []byte], types.BTCDelegationRewardsTracker]
+		// finalityProviderHistoricalRewards maps (FpAddr, period) => FinalityProviderHistoricalRewards
+		finalityProviderHistoricalRewards collections.Map[collections.Pair[[]byte, uint64], types.FinalityProviderHistoricalRewards]
+		// finalityProviderCurrentRewards maps (FpAddr) => FinalityProviderCurrentRewards
+		finalityProviderCurrentRewards collections.Map[[]byte, types.FinalityProviderCurrentRewards]
 	}
 )
 
@@ -66,7 +66,7 @@ func NewKeeper(
 		),
 
 		// Collections structures for rewards
-		BTCDelegationRewardsTracker: collections.NewMap(
+		btcDelegationRewardsTracker: collections.NewMap(
 			sb,
 			types.BTCDelegationRewardsTrackerKeyPrefix,
 			"btc_delegation_rewards_tracker",
@@ -74,7 +74,7 @@ func NewKeeper(
 			collections.PairKeyCodec(collections.BytesKey, collections.BytesKey),
 			codec.CollValue[types.BTCDelegationRewardsTracker](cdc),
 		),
-		FinalityProviderHistoricalRewards: collections.NewMap(
+		finalityProviderHistoricalRewards: collections.NewMap(
 			sb,
 			types.FinalityProviderHistoricalRewardsKeyPrefix,
 			"fp_historical_rewards",
@@ -82,7 +82,7 @@ func NewKeeper(
 			collections.PairKeyCodec(collections.BytesKey, collections.Uint64Key),
 			codec.CollValue[types.FinalityProviderHistoricalRewards](cdc),
 		),
-		FinalityProviderCurrentRewards: collections.NewMap(
+		finalityProviderCurrentRewards: collections.NewMap(
 			sb,
 			types.FinalityProviderCurrentRewardsKeyPrefix,
 			"fp_current_rewards",
