@@ -22,7 +22,6 @@ import (
 	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	btcckeeper "github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	btclckeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	btclightclientkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
@@ -50,21 +49,22 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 		ctx = ctx.WithHeaderInfo(initHeader)
 
 		btcStkK, finalityK, checkPointK, btcCheckK, btcLightK := app.BTCStakingKeeper, app.FinalityKeeper, app.CheckpointingKeeper, app.BtcCheckpointKeeper, app.BTCLightClientKeeper
-		msgSrvrBtcStk, msgSrvrBtcCheck := btcstakingkeeper.NewMsgServerImpl(btcStkK), btcckeeper.NewMsgServerImpl(btcCheckK)
+		msgSrvrBtcStk := btcstakingkeeper.NewMsgServerImpl(btcStkK)
 		btcNet := app.BTCLightClientKeeper.GetBTCNet()
 		btcStkParams, btcCheckParams := btcStkK.GetParams(ctx), btcCheckK.GetParams(ctx)
 
 		covenantSKs, _, _ := bstypes.DefaultCovenantCommittee()
 		btcCheckParams.BtcConfirmationDepth = 2
+		btcCheckParams.CheckpointFinalizationTimeout = 5
 
-		_, err := msgSrvrBtcCheck.UpdateParams(ctx, &btcctypes.MsgUpdateParams{
-			Authority: appparams.AccGov.String(),
-			Params:    btcCheckParams,
-		})
+		err := btcCheckK.SetParams(ctx, btcCheckParams)
 		require.NoError(t, err)
 
+		btcCheckParams = btcCheckK.GetParams(ctx)
 		btcStkParams.UnbondingTimeBlocks = btcCheckParams.BtcConfirmationDepth + btcCheckParams.CheckpointFinalizationTimeout
 		btcStkParams.BtcActivationHeight = 1
+		btcStkParams.MinStakingTimeBlocks = 25
+		btcStkParams.MaxStakingTimeBlocks = 26
 
 		_, err = msgSrvrBtcStk.UpdateParams(ctx, &btcstktypes.MsgUpdateParams{
 			Authority: appparams.AccGov.String(),
@@ -81,8 +81,9 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 		_, err = msgSrvrBtcStk.CreateFinalityProvider(ctx, fpMsg)
 		require.NoError(t, err)
 
-		AddNBtcBlock(t, r, app, ctx, 1)
+		// creates one BTC block
 		ctx = ProduceBlock(t, r, app, ctx)
+		AddNBtcBlock(t, r, app, ctx, 1)
 
 		fpBtcPk := []bbn.BIP340PubKey{*fpMsg.BtcPk}
 		delBtcSK, _, err := datagen.GenRandomBTCKeyPair(r)
@@ -117,6 +118,7 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 
 		checkPointK.SetLastFinalizedEpoch(ctx, 1)
 
+		ctx = ProduceBlock(t, r, app, ctx)
 		block, stakingTransactions := AddBtcBlockWithDelegations(t, r, app, ctx, delCreationInfo)
 		ctx = ProduceBlock(t, r, app, ctx)
 
@@ -133,7 +135,9 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 		})
 
 		// produce btc block to update tip height
+		ctx = ProduceBlock(t, r, app, ctx)
 		AddNBtcBlock(t, r, app, ctx, 1)
+
 		ctx = ProduceBlock(t, r, app, ctx)
 
 		// all the fps are in the vp dst cache
@@ -143,24 +147,39 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 		activeFps := vpDstCache.GetActiveFinalityProviderSet()
 		require.Equal(t, len(activeFps), 1)
 
-		parsedInclusionProof, err := bstypes.NewParsedProofOfInclusion(inclusionProof)
+		btcDel, err := btcStkK.GetBTCDelegation(ctx, delCreationInfo.StakingTxHash)
+		require.NoError(t, err)
+		tip := btcLightK.GetTipInfo(ctx)
+		btcBlocksUntilBtcDelExpire := btcDel.EndHeight - (tip.Height + btcStkParams.UnbondingTimeBlocks)
+
+		ctx = ProduceBlock(t, r, app, ctx)
+		AddNBtcBlock(t, r, app, ctx, uint(btcBlocksUntilBtcDelExpire-1)) // it will miss one block to reach expired
+		ctx = ProduceBlock(t, r, app, ctx)                               // updates tip header
+
+		block = AddBtcBlockWithTxs(t, r, app, ctx, delCreationInfo.UnbondingTx)
+		inclusionProof = bstypes.NewInclusionProofFromSpvProof(block.Proofs[1])
+
+		_, err = app.BeginBlocker(ctx) // process voting power dis change events, setting to expired
 		require.NoError(t, err)
 
-		stakingTxHeader, err := btcLightK.GetHeaderByHash(ctx, parsedInclusionProof.HeaderHash)
-		require.NoError(t, err)
-		endHeight := stakingTxHeader.Height + delCreationInfo.MsgCreateBTCDelegation.StakingTime
-		btcBlocksUntilBtcDelExpire := endHeight - btcStkParams.UnbondingTimeBlocks
-
-		// reaches expired btc block
-		AddNBtcBlock(t, r, app, ctx, uint(btcBlocksUntilBtcDelExpire))
-
-		_, err = app.BeginBlocker(ctx)
-		require.NoError(t, err)
 		// sends unbond del
+		msgUndelegate := &bstypes.MsgBTCUndelegate{
+			Signer:                        datagen.GenRandomAccount().Address,
+			StakingTxHash:                 delCreationInfo.StakingTxHash,
+			StakeSpendingTx:               delCreationInfo.MsgCreateBTCDelegation.UnbondingTx,
+			StakeSpendingTxInclusionProof: inclusionProof,
+		}
+		_, err = msgSrvrBtcStk.BTCUndelegate(ctx, msgUndelegate) // fails to unbond, since the BTC was expired
+		require.EqualError(t, err, bstypes.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an unbonded BTC delegation").Error(), "should error out")
 
 		// produce block
 		_, err = app.EndBlocker(ctx)
 		require.NoError(t, err)
+
+		// produces one more block to process the unbonding and it should not halt the chain
+		require.NotPanics(t, func() {
+			ProduceBlock(t, r, app, ctx)
+		})
 	})
 }
 
@@ -1275,12 +1294,16 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 }
 
 func AddBtcBlockWithDelegations(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context, delInfos ...*datagen.CreateDelegationInfo) (*datagen.BlockWithProofs, []*wire.MsgTx) {
+	stkTxs := replay.DelegationInfosToBTCTx(delInfos)
+	return AddBtcBlockWithTxs(t, r, app, ctx, stkTxs...), stkTxs
+}
+
+func AddBtcBlockWithTxs(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context, txs ...*wire.MsgTx) *datagen.BlockWithProofs {
 	btcLightK := app.BTCLightClientKeeper
 	msgSrvrBtcLight := btclightclientkeeper.NewMsgServerImpl(btcLightK)
 
-	stkTxs := replay.DelegationInfosToBTCTx(delInfos)
 	tip := btcLightK.GetTipInfo(ctx)
-	block := datagen.GenRandomBtcdBlockWithTransactions(r, stkTxs, tip.Header.ToBlockHeader())
+	block := datagen.GenRandomBtcdBlockWithTransactions(r, txs, tip.Header.ToBlockHeader())
 	headers := replay.BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
 	_, err := msgSrvrBtcLight.InsertHeaders(ctx, &btclctypes.MsgInsertHeaders{
 		Signer:  datagen.GenRandomAccount().Address,
@@ -1288,7 +1311,7 @@ func AddBtcBlockWithDelegations(t *testing.T, r *rand.Rand, app *babylonApp.Baby
 	})
 	require.NoError(t, err)
 
-	return block, stkTxs
+	return block
 }
 
 func MaybeProduceBlock(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context) sdk.Context {
