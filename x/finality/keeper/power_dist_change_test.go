@@ -1042,7 +1042,7 @@ func TestHandleLivenessPanic(t *testing.T) {
 		// Create FP externally and pass it when called
 		fpSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, "")
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
 		require.NoError(t, err)
 		// Save when i is 5
 		if i == 1 {
@@ -1087,7 +1087,7 @@ func TestHandleLivenessPanic(t *testing.T) {
 			// Create FP externally and pass it when called
 			newfpSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			require.NoError(t, err)
-			newfp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, newfpSK, "")
+			newfp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, newfpSK)
 			require.NoError(t, err)
 
 			createDelegationWithFinalityProvider(
