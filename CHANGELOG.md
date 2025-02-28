@@ -48,6 +48,7 @@ block bank send and still create BTC delegations
 - [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
 - [#566](https://github.com/babylonlabs-io/babylon/pull/566) Remove float values in `BeforeValidatorSlashed` hook in `x/epoching` module
 - [#542](https://github.com/babylonlabs-io/babylon/pull/542) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module (follow up of [#519](https://github.com/babylonlabs-io/babylon/pull/519))
+- [#590](https://github.com/babylonlabs-io/babylon/pull/590) Add `DelegationRewards` query in `x/incentive` module
 
 ### State Machine Breaking
 
