@@ -129,7 +129,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		for addrStr, reward := range fpRewardMap {
 			addr, err := sdk.AccAddressFromBech32(addrStr)
 			require.NoError(t, err)
-			rg := k.GetRewardGauge(ctx, types.FinalityProviderType, addr)
+			rg := k.GetRewardGauge(ctx, types.FINALITY_PROVIDER, addr)
 			require.NotNil(t, rg)
 			require.Equal(t, reward, rg.Coins)
 		}
@@ -138,7 +138,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		for addrStr, reward := range btcDelRewardMap {
 			addr, err := sdk.AccAddressFromBech32(addrStr)
 			require.NoError(t, err)
-			rg := k.GetRewardGauge(ctx, types.BTCDelegationType, addr)
+			rg := k.GetRewardGauge(ctx, types.BTC_DELEGATION, addr)
 			require.NotNil(t, rg)
 
 			// A little bit of rewards could be lost in the process due to precision points
@@ -168,13 +168,13 @@ func FuzzRewardBTCStaking(f *testing.F) {
 			fpAddr := fp.GetAddress()
 			if _, isVoter := voters[fp.BtcPk.MarshalHex()]; !isVoter {
 				// Check that non-voters received no rewards
-				rg := k.GetRewardGauge(ctx, types.FinalityProviderType, fpAddr)
+				rg := k.GetRewardGauge(ctx, types.FINALITY_PROVIDER, fpAddr)
 				require.Nil(t, rg)
 
 				// Check their delegators received no rewards
 				for delAddrStr := range btcTotalSatByDelAddressByFpAddress[fpAddr.String()] {
 					delAddr := sdk.MustAccAddressFromBech32(delAddrStr)
-					rg := k.GetRewardGauge(ctx, types.BTCDelegationType, delAddr)
+					rg := k.GetRewardGauge(ctx, types.BTC_DELEGATION, delAddr)
 					require.Nil(t, rg)
 				}
 			}

@@ -57,11 +57,11 @@ func FuzzCheckFpSlashed(f *testing.F) {
 		require.NoError(t, err)
 
 		del1Fp1Rwds := coins.CalculatePercentageOfCoins(rwdFp1, del1Fp1Percentage)
-		del1RwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del1)
+		del1RwdGauge := k.GetRewardGauge(ctx, types.BTC_DELEGATION, del1)
 		coins.RequireCoinsDiffInPointOnePercentMargin(t, del1Fp1Rwds, del1RwdGauge.Coins)
 
 		del2Fp1Rwds := coins.CalculatePercentageOfCoins(rwdFp1, del2Fp1Percentage)
-		del2RwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del2)
+		del2RwdGauge := k.GetRewardGauge(ctx, types.BTC_DELEGATION, del2)
 		coins.RequireCoinsDiffInPointOnePercentMargin(t, del2Fp1Rwds, del2RwdGauge.Coins)
 
 		// verifies that everything was deleted for fp1
@@ -103,13 +103,13 @@ func FuzzCheckFpSlashed(f *testing.F) {
 
 		fp2RwdForEachDel := coins.CalculatePercentageOfCoins(rwdFp2, eachDelFp2Percentage)
 
-		lastDel1RwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del1)
+		lastDel1RwdGauge := k.GetRewardGauge(ctx, types.BTC_DELEGATION, del1)
 		coins.RequireCoinsDiffInPointOnePercentMargin(t, del1Fp1Rwds.Add(fp2RwdForEachDel...), lastDel1RwdGauge.Coins)
 
 		err = k.sendAllBtcRewardsToGauge(ctx, del2)
 		require.NoError(t, err)
 
-		lastDel2RwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del2)
+		lastDel2RwdGauge := k.GetRewardGauge(ctx, types.BTC_DELEGATION, del2)
 		coins.RequireCoinsDiffInPointOnePercentMargin(t, del2Fp1Rwds.Add(fp2RwdForEachDel...), lastDel2RwdGauge.Coins)
 	})
 }
@@ -159,7 +159,7 @@ func FuzzCheckSendAllBtcRewardsToGauge(f *testing.F) {
 		del1Fp1Rwds := coins.CalculatePercentageOfCoins(rwdFp1, del1Fp1Percentage)
 		fp2RwdForEachDel := coins.CalculatePercentageOfCoins(rwdFp2, eachDelFp2Percentage)
 		expectedRwdDel1 := del1Fp1Rwds.Add(fp2RwdForEachDel...)
-		del1RwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del1)
+		del1RwdGauge := k.GetRewardGauge(ctx, types.BTC_DELEGATION, del1)
 		coins.RequireCoinsDiffInPointOnePercentMargin(t, expectedRwdDel1, del1RwdGauge.Coins)
 
 		// calculates rewards for the del2
@@ -168,14 +168,14 @@ func FuzzCheckSendAllBtcRewardsToGauge(f *testing.F) {
 
 		del2Fp1Rwds := coins.CalculatePercentageOfCoins(rwdFp1, del2Fp1Percentage)
 		expectedRwdDel2 := del2Fp1Rwds.Add(fp2RwdForEachDel...)
-		del2RwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del2)
+		del2RwdGauge := k.GetRewardGauge(ctx, types.BTC_DELEGATION, del2)
 		coins.RequireCoinsDiffInPointOnePercentMargin(t, expectedRwdDel2, del2RwdGauge.Coins)
 
 		// check if send all the rewards again something changes, it shouldn't
 		err = k.sendAllBtcRewardsToGauge(ctx, del1)
 		require.NoError(t, err)
 
-		newDel1RwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del1)
+		newDel1RwdGauge := k.GetRewardGauge(ctx, types.BTC_DELEGATION, del1)
 		require.Equal(t, newDel1RwdGauge.Coins.String(), del1RwdGauge.Coins.String())
 
 		// sends new rewards for fp2 which is 50/50
@@ -187,7 +187,7 @@ func FuzzCheckSendAllBtcRewardsToGauge(f *testing.F) {
 		require.NoError(t, err)
 
 		lastFp2RwdForEachDel := coins.CalculatePercentageOfCoins(rwdFp2, eachDelFp2Percentage)
-		lastDel1RwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del1)
+		lastDel1RwdGauge := k.GetRewardGauge(ctx, types.BTC_DELEGATION, del1)
 		lastExpectedRwdDel1 := del1Fp1Rwds.Add(fp2RwdForEachDel...).Add(lastFp2RwdForEachDel...)
 		coins.RequireCoinsDiffInPointOnePercentMargin(t, lastExpectedRwdDel1, lastDel1RwdGauge.Coins)
 		require.Equal(t, lastFp2RwdForEachDel.String(), lastDel1RwdGauge.Coins.Sub(newDel1RwdGauge.Coins...).String())
@@ -217,7 +217,7 @@ func FuzzCheckBtcDelegationModifiedWithPreInitDel(f *testing.F) {
 		err = k.BtcDelegationActivated(ctx, fp, del, datagen.RandomInt(r, 1000)+10)
 		require.NoError(t, err)
 
-		delRwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del)
+		delRwdGauge := k.GetRewardGauge(ctx, types.BTC_DELEGATION, del)
 		require.Nil(t, delRwdGauge)
 
 		coinsToDel := datagen.GenRandomCoins(r)
@@ -228,7 +228,7 @@ func FuzzCheckBtcDelegationModifiedWithPreInitDel(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, count, 2)
 
-		delRwdGauge = k.GetRewardGauge(ctx, types.BTCDelegationType, del)
+		delRwdGauge = k.GetRewardGauge(ctx, types.BTC_DELEGATION, del)
 		coins.RequireCoinsDiffInPointOnePercentMargin(t, delRwdGauge.Coins, coinsToDel)
 		// note: the difference here in one micro coin value is expected due to the loss of precision in the BTC reward tracking mechanism
 		// that needs to keep track of how much rewards 1 satoshi is entitled to receive.
@@ -264,12 +264,12 @@ func FuzzCheckCalculateBTCDelegationRewardsAndSendToGauge(f *testing.F) {
 		expectedRwd = expectedRwd.QuoInt(types.DecimalAccumulatedRewards)
 
 		rwdGauge := datagen.GenRandomRewardGauge(r)
-		k.SetRewardGauge(ctx, types.BTCDelegationType, del, rwdGauge)
+		k.SetRewardGauge(ctx, types.BTC_DELEGATION, del, rwdGauge)
 
 		err = k.CalculateBTCDelegationRewardsAndSendToGauge(ctx, fp, del, endPeriod)
 		require.NoError(t, err)
 
-		delRwdGauge := k.GetRewardGauge(ctx, types.BTCDelegationType, del)
+		delRwdGauge := k.GetRewardGauge(ctx, types.BTC_DELEGATION, del)
 		require.Equal(t, rwdGauge.Coins.Add(expectedRwd...).String(), delRwdGauge.Coins.String())
 	})
 }

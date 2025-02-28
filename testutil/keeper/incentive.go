@@ -26,11 +26,14 @@ func IncentiveKeeperWithStore(
 	t testing.TB,
 	db dbm.DB,
 	stateStore store.CommitMultiStore,
+	storeKey *storetypes.KVStoreKey,
 	bankKeeper types.BankKeeper,
 	accountKeeper types.AccountKeeper,
 	epochingKeeper types.EpochingKeeper,
 ) (*keeper.Keeper, sdk.Context) {
-	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
+	if storeKey == nil {
+		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
+	}
 
 	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, stateStore.LoadLatestVersion())
@@ -55,10 +58,14 @@ func IncentiveKeeperWithStore(
 }
 
 func IncentiveKeeper(t testing.TB, bankKeeper types.BankKeeper, accountKeeper types.AccountKeeper, epochingKeeper types.EpochingKeeper) (*keeper.Keeper, sdk.Context) {
+	return IncentiveKeeperWithStoreKey(t, nil, bankKeeper, accountKeeper, epochingKeeper)
+}
+
+func IncentiveKeeperWithStoreKey(t testing.TB, storeKey *storetypes.KVStoreKey, bankKeeper types.BankKeeper, accountKeeper types.AccountKeeper, epochingKeeper types.EpochingKeeper) (*keeper.Keeper, sdk.Context) {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
-	k, ctx := IncentiveKeeperWithStore(t, db, stateStore, bankKeeper, accountKeeper, epochingKeeper)
+	k, ctx := IncentiveKeeperWithStore(t, db, stateStore, storeKey, bankKeeper, accountKeeper, epochingKeeper)
 
 	// Initialize params
 	if err := k.SetParams(ctx, types.DefaultParams()); err != nil {

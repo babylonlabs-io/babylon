@@ -26,7 +26,8 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Gauge is an object that stores rewards to be distributed
-// code adapted from https://github.com/osmosis-labs/osmosis/blob/v18.0.0/proto/osmosis/incentives/gauge.proto
+// code adapted from
+// https://github.com/osmosis-labs/osmosis/blob/v18.0.0/proto/osmosis/incentives/gauge.proto
 type Gauge struct {
 	// coins are coins that have been in the gauge
 	// Can have multiple coin denoms
@@ -73,13 +74,15 @@ func (m *Gauge) GetCoins() github_com_cosmos_cosmos_sdk_types.Coins {
 	return nil
 }
 
-// RewardGauge is an object that stores rewards distributed to a BTC staking stakeholder
-// code adapted from https://github.com/osmosis-labs/osmosis/blob/v18.0.0/proto/osmosis/incentives/gauge.proto
+// RewardGauge is an object that stores rewards distributed to a BTC staking
+// stakeholder code adapted from
+// https://github.com/osmosis-labs/osmosis/blob/v18.0.0/proto/osmosis/incentives/gauge.proto
 type RewardGauge struct {
 	// coins are coins that have been in the gauge
 	// Can have multiple coin denoms
 	Coins github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=coins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"coins"`
-	// withdrawn_coins are coins that have been withdrawn by the stakeholder already
+	// withdrawn_coins are coins that have been withdrawn by the stakeholder
+	// already
 	WithdrawnCoins github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=withdrawn_coins,json=withdrawnCoins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"withdrawn_coins"`
 }
 
