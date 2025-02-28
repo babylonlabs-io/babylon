@@ -30,7 +30,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -127,12 +126,7 @@ func NewRootCmd() *cobra.Command {
 	// add keyring to autocli opts
 	autoCliOpts := tempApp.AutoCliOpts()
 	initClientCtx, _ = config.ReadFromClientConfig(initClientCtx)
-	autoCliOpts.Keyring, _ = keyring.NewAutoCLIKeyring(initClientCtx.Keyring)
 	autoCliOpts.ClientCtx = initClientCtx
-	autoCliOpts.TxConfigOpts = tx.ConfigOptions{
-		EnabledSignModes:           tx.DefaultSignModes,
-		TextualCoinMetadataQueryFn: authtxconfig.NewGRPCCoinMetadataQueryFn(initClientCtx),
-	}
 
 	EnhanceRootCommandWithoutTxStaking(autoCliOpts, rootCmd)
 
@@ -310,11 +304,12 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	// auto migrate when build tag is set to "e2e_upgrade"
 	automigrate_e2e_upgrade(logger, homeDir)
 
-	// Load or generate BLS signer
+	// Load or generate BLS signer with potential custom path from app.toml
 	blsSigner, err := appsigner.LoadOrGenBlsKey(
 		homeDir,
 		cast.ToBool(appOpts.Get(flagNoBlsPassword)),
 		cast.ToString(appOpts.Get(flagBlsPassword)),
+		cast.ToString(appOpts.Get("bls-config.bls-key-file")),
 	)
 	if err != nil {
 		panic(fmt.Errorf("failed to load or generate BLS signer: %w", err))
