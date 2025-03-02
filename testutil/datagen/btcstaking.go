@@ -8,6 +8,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	stk "github.com/babylonlabs-io/babylon/btcstaking"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -715,4 +716,69 @@ func GenerateSignatures(
 	}
 
 	return sigs
+}
+
+func AddWitnessToUnbondingTx(
+	t *testing.T,
+	stakingOutput *wire.TxOut,
+	stakerSk *btcec.PrivateKey,
+	covenantSks []*btcec.PrivateKey,
+	covenantQuorum uint32,
+	finalityProviderPKs []*btcec.PublicKey,
+	stakingTime uint16,
+	stakingValue int64,
+	unbondingTx *wire.MsgTx,
+	net *chaincfg.Params,
+) ([]byte, *wire.MsgTx) {
+	var covenatnPks []*btcec.PublicKey
+	for _, sk := range covenantSks {
+		covenatnPks = append(covenatnPks, sk.PubKey())
+	}
+
+	stakingInfo, err := stk.BuildStakingInfo(
+		stakerSk.PubKey(),
+		finalityProviderPKs,
+		covenatnPks,
+		covenantQuorum,
+		stakingTime,
+		btcutil.Amount(stakingValue),
+		net,
+	)
+	require.NoError(t, err)
+
+	// sanity check that what we re-build is the same as what we have in the BTC delegation
+	require.Equal(t, stakingOutput, stakingInfo.StakingOutput)
+
+	unbondingSpendInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+
+	unbondingScirpt := unbondingSpendInfo.RevealedLeaf.Script
+	require.NotNil(t, unbondingScirpt)
+
+	covenantSigs := GenerateSignatures(
+		t,
+		covenantSks,
+		unbondingTx,
+		stakingOutput,
+		unbondingSpendInfo.RevealedLeaf,
+	)
+	require.NoError(t, err)
+
+	stakerSig, err := stk.SignTxWithOneScriptSpendInputFromTapLeaf(
+		unbondingTx,
+		stakingOutput,
+		stakerSk,
+		unbondingSpendInfo.RevealedLeaf,
+	)
+	require.NoError(t, err)
+
+	ubWitness, err := unbondingSpendInfo.CreateUnbondingPathWitness(covenantSigs, stakerSig)
+	require.NoError(t, err)
+
+	unbondingTx.TxIn[0].Witness = ubWitness
+
+	serializedUnbondingTxWithWitness, err := bbn.SerializeBTCTx(unbondingTx)
+	require.NoError(t, err)
+
+	return serializedUnbondingTxWithWitness, unbondingTx
 }

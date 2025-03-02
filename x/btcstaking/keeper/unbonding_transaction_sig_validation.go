@@ -20,9 +20,9 @@ func isAnnexedWitness(witness wire.TxWitness) bool {
 }
 
 // extractAnnex attempts to extract the annex from the passed witness
-func extractAnnex(witness wire.TxWitness) ([]byte, error) {
+func extractAnnex(witness wire.TxWitness) []byte {
 	lastElement := witness[len(witness)-1]
-	return lastElement, nil
+	return lastElement
 }
 
 func parseSchnorrSigFromWitness(rawSig []byte) (*schnorr.Signature, txscript.SigHashType, error) {
@@ -56,8 +56,7 @@ func parseSchnorrSigFromWitness(rawSig []byte) (*schnorr.Signature, txscript.Sig
 		return sig, sigHashType, nil
 	// Otherwise, this is an invalid signature, so we need to bail out.
 	default:
-		str := fmt.Sprintf("invalid sig len: %v", len(rawSig))
-		return nil, 0, fmt.Errorf(str)
+		return nil, 0, fmt.Errorf("invalid sig len: %d", len(rawSig))
 	}
 }
 
@@ -65,7 +64,6 @@ func buildOutputFetcher(
 	fundingTransactions []*wire.MsgTx,
 	spendStakeTx *wire.MsgTx,
 ) (*txscript.MultiPrevOutFetcher, error) {
-
 	fundingTxs := make(map[chainhash.Hash]*wire.MsgTx)
 
 	for _, tx := range fundingTransactions {
@@ -114,12 +112,7 @@ func VerifySpendStakeTxStakerSig(
 	annex := []byte{}
 
 	if isAnnexedWitness(stakeSpendWitness) {
-		var err error
-		annex, err = extractAnnex(stakeSpendWitness)
-		if err != nil {
-			return fmt.Errorf("failed to extract annex: %w", err)
-		}
-
+		annex = extractAnnex(stakeSpendWitness)
 		// Snip the annex off the end of the witness stack.
 		stakeSpendWitness = stakeSpendWitness[:len(stakeSpendWitness)-1]
 	}
@@ -151,11 +144,6 @@ func VerifySpendStakeTxStakerSig(
 		return fmt.Errorf("failed to verify taproot leaf commitment in witness: %w", err)
 	}
 
-	var opts []txscript.TaprootSigHashOption
-	if len(annex) > 0 {
-		opts = append(opts, txscript.WithAnnex(annex))
-	}
-
 	// Staker key is always first in the script, therefore signature will be last.
 	// In this true regardless of the path used to spend the staking output (timelock, unbonding, slashing)
 	stakerRawSig := stakeSpendWitness[len(stakeSpendWitness)-3]
@@ -169,6 +157,11 @@ func VerifySpendStakeTxStakerSig(
 	prevOuts, err := buildOutputFetcher(fundingTransactions, spendStakeTx)
 	if err != nil {
 		return fmt.Errorf("failed to build output fetcher from provided funding transactions: %w", err)
+	}
+
+	var opts []txscript.TaprootSigHashOption
+	if len(annex) > 0 {
+		opts = append(opts, txscript.WithAnnex(annex))
 	}
 
 	sigHash, err := txscript.CalcTapscriptSignaturehash(

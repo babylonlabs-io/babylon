@@ -9,9 +9,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	stk "github.com/babylonlabs-io/babylon/btcstaking"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -862,56 +860,18 @@ func FuzzBTCUndelegate(f *testing.F) {
 		unbondingTx := actualDel.MustGetUnbondingTx()
 		stakingTx := actualDel.MustGetStakingTx()
 
-		// rebuild staking info to build valid witness for unbonding tx
-		covenantKeys, err := bbn.NewBTCPKsFromBIP340PKs(bsParams.CovenantPks)
-		h.NoError(err)
-
-		stakingInfo, err := stk.BuildStakingInfo(
-			actualDel.BtcPk.MustToBTCPK(),
-			[]*btcec.PublicKey{fpPK},
-			covenantKeys,
-			bsParams.CovenantQuorum,
-			stakingTime,
-			btcutil.Amount(stakingValue),
-			h.Net,
-		)
-		h.NoError(err)
-
-		stakingOutput := stakingTx.TxOut[0]
-
-		// sanity check that what we re-build is the same as what we have in the BTC delegation
-		require.Equal(t, stakingOutput, stakingInfo.StakingOutput)
-
-		unbondingSpendInfo, err := stakingInfo.UnbondingPathSpendInfo()
-		h.NoError(err)
-
-		unbondingScirpt := unbondingSpendInfo.RevealedLeaf.Script
-		require.NotNil(t, unbondingScirpt)
-
-		covenantSigs := datagen.GenerateSignatures(
+		serializedUnbondingTxWithWitness, _ := datagen.AddWitnessToUnbondingTx(
 			t,
-			covenantSKs,
-			unbondingTx,
-			stakingTx.TxOut[0],
-			unbondingSpendInfo.RevealedLeaf,
-		)
-		h.NoError(err)
-
-		stakerSig, err := stk.SignTxWithOneScriptSpendInputFromTapLeaf(
-			unbondingTx,
 			stakingTx.TxOut[0],
 			delSK,
-			unbondingSpendInfo.RevealedLeaf,
+			covenantSKs,
+			bsParams.CovenantQuorum,
+			[]*btcec.PublicKey{fpPK},
+			stakingTime,
+			stakingValue,
+			unbondingTx,
+			h.Net,
 		)
-		h.NoError(err)
-
-		ubWitness, err := unbondingSpendInfo.CreateUnbondingPathWitness(covenantSigs, stakerSig)
-		h.NoError(err)
-
-		unbondingTx.TxIn[0].Witness = ubWitness
-
-		serializedUnbondingTxWithWitness, err := bbn.SerializeBTCTx(unbondingTx)
-		h.NoError(err)
 
 		msg := &types.MsgBTCUndelegate{
 			Signer:                        datagen.GenRandomAccount().Address,

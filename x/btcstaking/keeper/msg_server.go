@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
@@ -23,12 +22,6 @@ import (
 	"github.com/babylonlabs-io/babylon/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
-)
-
-const (
-	// blankCodeSepValue is the value of the code separator position in the
-	// tapscript sighash when no code separator was found in the script.
-	blankCodeSepValue = math.MaxUint32
 )
 
 type msgServer struct {
@@ -577,15 +570,6 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	ms.iKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgAddCovenantSigsResponse{}, nil
-}
-
-func containsInput(tx *wire.MsgTx, inputHash *chainhash.Hash, inputIdx uint32) bool {
-	for _, txIn := range tx.TxIn {
-		if txIn.PreviousOutPoint.Hash.IsEqual(inputHash) && txIn.PreviousOutPoint.Index == inputIdx {
-			return true
-		}
-	}
-	return false
 }
 
 func findInputIdx(
