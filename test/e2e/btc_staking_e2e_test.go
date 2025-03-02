@@ -370,22 +370,14 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	s.NoError(err)
 
 	unbondingTx := activeDel.MustGetUnbondingTx()
-	stakingTx := activeDel.MustGetStakingTx()
-	params := nonValidatorNode.QueryBTCStakingParams()
-
-	var finalityProviderBtcPk []*btcec.PublicKey
-	for _, fpk := range activeDel.FpBtcPkList {
-		key := fpk.MustToBTCPK()
-		finalityProviderBtcPk = append(finalityProviderBtcPk, key)
-	}
 
 	_, unbondingTxMsg := datagen.AddWitnessToUnbondingTx(
 		s.T(),
-		stakingTx.TxOut[activeDel.StakingOutputIdx],
+		stakingMsgTx.TxOut[activeDel.StakingOutputIdx],
 		s.delBTCSK,
 		s.covenantSKs,
-		params.CovenantQuorum,
-		finalityProviderBtcPk,
+		s.covenantQuorum,
+		[]*btcec.PublicKey{s.cacheFP.BtcPk.MustToBTCPK()},
 		uint16(activeDel.GetStakingTime()),
 		int64(activeDel.TotalSat),
 		unbondingTx,
@@ -864,6 +856,7 @@ func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstyp
 		BtcPk:            resp.BtcPk,
 		FpBtcPkList:      resp.FpBtcPkList,
 		StartHeight:      resp.StartHeight,
+		StakingTime:      resp.StakingTime,
 		EndHeight:        resp.EndHeight,
 		TotalSat:         resp.TotalSat,
 		StakingTx:        stakingTx,
