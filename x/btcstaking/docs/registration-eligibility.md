@@ -1,12 +1,15 @@
 # Staking Registration Eligibility
 
 1. [Introduction](#1-introduction)
-2. [Timeline of Events](#2-timeline-of-events)
-    1. [Chain launch](#21-chain-launch)
-    2. [Allow-list](#22-allow-list)
-    3. [Staking protocol and finality activation](#23-staking-protocol-and-finality-activation)
-3. [Retrieving details about the timeline](#3-retrieving-details-about-the-timeline)
-4. [FAQs](#4-faqs)
+2. [Terminology](#2-terminology)
+    1. [Bitcoin Stake Registration](#21-bitcoin-stake-registration)
+    2. [Stakes Allow-List](#22-stakes-allow-list)
+    3. [Finality Voting Activation](#23-finality-voting-activation)
+3. [Timeline of Events](#3-timeline-of-events)
+    1. [Chain Launch](#31-chain-launch)
+    2. [Finality Voting Activation](#32-finality-voting-activation)
+    3. [Allow-list Expiration](#33-allow-list-expiration)
+4. [Retrieving details about the timeline](#4-retrieving-details-about-the-timeline)
 
 ## 1. Introduction
 
@@ -14,6 +17,7 @@ This document outlines the various stages of the Babylon chain launch
 and details the points in which different finality providers
 and BTC stakes are eligible for registration.
 The launch is structured into three key stages:
+
 * **Stage 1: Chain Launch**: At this stage, only
   finality providers and allow-listed stakes can register.
   The allow-list specifies a list of transaction hashes that
@@ -105,6 +109,7 @@ The chain launch procedure involves the Babylon Chain
 starting to produce blocks that contain transactions.
 At this point, the following actors can start onboarding
 into the chain:
+
 * **CometBFT Validators**: CometBFT validators can permissionlessly
   submit validator registration transactions and become eligible
   for producing Babylon blocks. More details on the CometBFT
@@ -168,15 +173,19 @@ relevant code.
 **Retrieving the Activation Block Height**
 The Finality Activation block height can be retrieved by the
 [x/btcstaking](../README.md) parameters. You can retrieve those:
+
 * through the CLI and an RPC node connection
+
 ```shell
 babylond query btcstaking params --node <rpcnode>
 ```
+
 * through an LCD/API node connection (you can find one
   for the Babylon Genesis public networks
   [here](https://github.com/babylonlabs-io/networks))
 * by parsing through the upgrade handler responsible for specifying it
   (e.g., for testnet)
+
 ```shell
 app/upgrades/v1/testnet/btcstaking_params.go
 ```
@@ -187,6 +196,7 @@ the codebase for each different deployed
 [network](https://github.com/babylonlabs-io/networks).
 For example, the testnet allow-list transaction
 hashes can be found here:
+
 ```shell
 app/upgrades/v1/testnet/allowed_staking_tx_hashes.go
 ```
