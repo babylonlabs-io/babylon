@@ -369,9 +369,28 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
 	s.NoError(err)
 
-	unbondingTx := activeDel.BtcUndelegation.UnbondingTx
-	unbondingTxMsg, err := bbn.NewBTCTxFromBytes(unbondingTx)
-	s.NoError(err)
+	unbondingTx := activeDel.MustGetUnbondingTx()
+	stakingTx := activeDel.MustGetStakingTx()
+	params := nonValidatorNode.QueryBTCStakingParams()
+
+	var finalityProviderBtcPk []*btcec.PublicKey
+	for _, fpk := range activeDel.FpBtcPkList {
+		key := fpk.MustToBTCPK()
+		finalityProviderBtcPk = append(finalityProviderBtcPk, key)
+	}
+
+	_, unbondingTxMsg := datagen.AddWitnessToUnbondingTx(
+		s.T(),
+		stakingTx.TxOut[activeDel.StakingOutputIdx],
+		s.delBTCSK,
+		s.covenantSKs,
+		params.CovenantQuorum,
+		finalityProviderBtcPk,
+		uint16(activeDel.GetStakingTime()),
+		int64(activeDel.TotalSat),
+		unbondingTx,
+		s.net,
+	)
 
 	blockWithUnbondingTx := datagen.CreateBlockWithTransaction(s.r, currentBtcTip.Header.ToBlockHeader(), unbondingTxMsg)
 	nonValidatorNode.InsertHeader(&blockWithUnbondingTx.HeaderBytes)
@@ -383,6 +402,9 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 			&stakingTxHash,
 			unbondingTxMsg,
 			inclusionProof,
+			[]*wire.MsgTx{
+				stakingMsgTx,
+			},
 		)
 		// wait for a block so that above txs take effect
 		nonValidatorNode.WaitForNextBlock()
