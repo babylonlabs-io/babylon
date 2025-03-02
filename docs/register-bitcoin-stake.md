@@ -46,7 +46,7 @@ reference implementation) or using the
 Bitcoin stakes must be registered on the Babylon blockchain
 to gain voting power and earn rewards.
 This registration process involves
-submitting a registration transaction
+submitting a registration transaction 
 followed by the validation of the staking operation by key
 network components including the Babylon chain CometBFT validators
 and the covenant committee.
@@ -68,11 +68,11 @@ circumstances. In the following sections, we will explore the approaches in more
 > where `k` is a Babylon chain parameter defined in the
 > [x/btccheckpoint](../x/btccheckpoint) module (as `btc_confirmation_depth`)
 > and controlled by governance.
->
+> 
 > Depth measures how deep a transaction's block is within the Bitcoin blockchain.
 > It is calculated as the difference between the Bitcoin tip height and the block
 > containing the transaction.
->
+> 
 > Example: If the Bitcoin tip height is 100, then:
 > * Block 99 is 1-deep
 > * Block 90 is 10-deep
@@ -90,7 +90,7 @@ The following diagram illustrates the post-staking registration flow:
 Steps:
 1. **Generate staking metadata**: Retrieve the staking transaction
    from its included Bitcoin block and generate the proof of inclusion.
-2. **Fill the `MsgCreateBTCDelegation` message** with the  unbonding transaction,
+2. **Fill the `MsgCreateBTCDelegation` message** with the  unbonding transaction, 
   signed slashing transactions and proof of possession (POP) and broadcast it to
   the Babylon blockchain (details on how to do this will be provided in
   [Section 3.4.](#34-the-msgcreatebtcdelegation-babylon-message))
@@ -98,7 +98,7 @@ Steps:
    provide their verification signatures.
 4. **Activation**: Once a quorum of covenant signatures is reached,
    the stake is designated as `ACTIVE`.
-
+ 
 ### 2.2. Pre-Staking Registration
 
 The Pre-staking registration flow  is for stakers who seek
@@ -153,11 +153,11 @@ Steps:
    Upon receiving the proof of inclusion, the stake is marked as active.
 
 > **⚠️ Important**: Gas Requirements for Pre-staking registration
->
+> 
 > Since pre-staking registration does not require prior fund commitment
 > on Bitcoin, it could be exploited for chain spamming, especially
 > due to the multiple covenant signature submissions it triggers.
->
+> 
 > To mitigate this, submitting a `MsgCreateBTCDelegation` via
 > the pre-staking registration flow requires an increased
 > minimum gas fees that covers the gas for the staking,
@@ -178,7 +178,6 @@ while later sections detail how to create and package it into a
 Babylon registration transaction.
 
 **Key Registration Data**:
-
 * **BTC Staking Transaction**: The Bitcoin transaction that locks the Bitcoin stake
   in the self-custodial Bitcoin staking script. It can be submitted signed or unsigned,
   depending on the staking flow and UTXO inputs.
@@ -261,17 +260,17 @@ versions managed by the [x/btcstaking](../x/btcstaking) module:
 
 
 > **⚡ Retrieving Staking Parameters**
->
+> 
 > These parameters are part of the [x/btcstaking](../x/btcstaking)
 > module parameters can be queried via a Babylon node using
 > RPC/LCD endpoints or the CLI.
 
 > **⚡ Choosing the Correct Staking Parameters**
->
+> 
 > Stakers must ensure that their Bitcoin transaction adheres
 > to the correct parameters based on the registration flow
 > that is followed:
->
+> 
 > * **Post-staking registration flow**: Use parameters corresponding to
 >   the Bitcoin block height in which the staking transaction is included
 >   (similar to phase-1).
@@ -390,7 +389,7 @@ message MsgCreateBTCDelegation {
   * **ECDSA**: The hex-encoded string of the staker address bytes should be signed
     Example:
     * **Babylon Staker Address**: `bbn1x3pgec70smnl7vsdzz88asnv47fdntyn5u98yg`
-    * **Hex-encoded string of the address**: `62626e317833706765633730736d6e6c377673647a7a383861736e76343766646e74796e357539387967`
+    * **Hex-encoded string of the address**: `62626e317833706765633730736d6e6c377673647a7a383861736e76343766646e74796e357539387967` 
       (example hex encoding)
     * **Signature using ECDSA (secp256k1)**:
       * Signature: `304402207a01b7f4c8f5d1f8053a5d1a74c2f14b5b8ef4b4c98b06d0eb82f7a5bb32f3dd02202d1e6e8f9f5a1b8e50e3829bcb3a2e85c6fa9c0c8c9cf1f5a3e2e3f8c3b2e4d5`
@@ -443,21 +442,21 @@ message MsgCreateBTCDelegation {
   > the staking transaction in a format that contains all the
   > necessary data to generate the full hash corresponding
   > to the fully signed transaction.
-  >
+  > 
   > For legacy inputs that require the `script_sig` field to be filled,
   > the signature **must** be included when submitting the
   > transaction to Babylon, as this field directly influences
   > the transaction hash.
-  >
+  > 
   > On the other hand, for inputs that require the `witness` field
   > (e.g., SegWit inputs), the signature **does not** need to be
   > included as part of the transaction.
-  >
+  > 
   > While this distinction doesn't affect the guarantees of staking
   > transactions following the post-staking registration flow
   > (since stakes are first committed to Bitcoin), stakers opting
   > for the pre-staking registration flow must ensure that any legacy inputs
-  > (which require the `script_sig` field) must submit the staking transaction
+  > (which require the `script_sig` field) must submit the staking transaction 
   > as **fully signed**.
   >
   > For example, if a staker creates a staking transaction with multiple inputs,
@@ -490,7 +489,7 @@ message MsgCreateBTCDelegation {
       [ (gogoproto.customtype) =
       "github.com/babylonlabs-io/babylon/types.BTCHeaderHashBytes" ];
   }
-
+  
   // in x/btcstaking module types
   message InclusionProof {
       // key is the position (txIdx, blockHash) of this tx on BTC blockchain
@@ -607,7 +606,7 @@ refer to:
 * [the Golang staking library utils](../btcstaking/witness_utils.go)
 
 > **⚡ Note: Unbonding notification on the Babylon chain**
->
+> 
 > The Babylon system employs
 > the [Vigilante Unbonding Watcher](https://github.com/babylonlabs-io/vigilante),
 > a service that monitors the Bitcoin ledger for **on-demand unbonding transactions**
@@ -618,8 +617,8 @@ refer to:
 ### 4.2. Withdrawing Expired/Unbonded Bitcoin Stake
 
 The withdrawal process involves submitting a Bitcoin transaction
-that transfers staked BTC from Babylon protocol output (either staking or
-unbonding or change from slashing) to the address under staker wallet control,
+that transfers staked BTC from Babylon protocol output (either staking or 
+unbonding or change from slashing) to the address under staker wallet control, 
 once its timelock has expired.
 
 The process involves the following steps:
@@ -644,10 +643,10 @@ while the remaining funds are transfered to a timelock script,
 which can later be withdrawn using the same withdrawal process
 defined in the previous section.
 
-To determine the slashing timelock, refer to the `unbonding_time_blocks`
-parameter in the [Babylon Chain BTC Staking Parameters](32-babylon-chain-btc-staking-parameters). Babylon ensures that the timelock on the change output of a slashing
-transaction matches the unbonding time. Therefore, the unbonding time
-parameter effectively represents your slashing timelock. The reasoning behind
+To determine the slashing timelock, refer to the `unbonding_time_blocks` 
+parameter in the [Babylon Chain BTC Staking Parameters](32-babylon-chain-btc-staking-parameters). Babylon ensures that the timelock on the change output of a slashing 
+transaction matches the unbonding time. Therefore, the unbonding time 
+parameter effectively represents your slashing timelock. The reasoning behind 
 the timelock is that we want to avoid situation in which some finality providers
 could use slashing as a way to unbond instantly.
 
@@ -665,23 +664,23 @@ The rewards are distributed as follows:
   * Native stakers
   * Bitcoin stakers
   * Community pool
-
+  
   The allocation is controlled by specific parameters:
-  * **Bitcoin Stakers Portion**: Defined by the `btc_staking_portion` parameter,
+  * **Bitcoin Stakers Portion**: Defined by the `btc_staking_portion` parameter, 
     which specifies the portion of rewards allocated to Bitcoin stakers. This is
-    calculated based on the voting power and commission rate of the finality
+    calculated based on the voting power and commission rate of the finality 
     provider the stake has been delegated to.
-  * **Community Pool Portion**: Typically defined in the `x/distribution`
+  * **Community Pool Portion**: Typically defined in the `x/distribution` 
     module of the Cosmos SDK, often referred to as the community tax.
-  * **Native Stakers Portion**: The remaining rewards, after allocations to
+  * **Native Stakers Portion**: The remaining rewards, after allocations to 
     Bitcoin stakers and the community pool, are distributed to native stakers.
-
+    
 * Rewards for Bitcoin stakers are further distributed based on the voting power
   and commission rate of the finality provider the stake has been delegated to.
   The rewards are entered into a gauge, which stakers can query and withdraw
   from through a transaction submission.
-* Rewards are distributed when a block is finalized. The system processes
-  finalized blocks to ensure that all eligible stakers receive their rewards
+* Rewards are distributed when a block is finalized. The system processes 
+  finalized blocks to ensure that all eligible stakers receive their rewards 
   based on the voting power and commission rates at the time of finalization.
 
 ### 5.2. Rewards Withdrawal
@@ -710,9 +709,9 @@ The message defines the following fields:
 Rewards can be withdrawn by:
 * Submitting the `MsgWithdrawReward` via any RPC/LCD node
 * Using the CLI `babylond tx incentive withdraw-reward <type>`
-* You can claim rewards programmatically using the
+* You can claim rewards programmatically using the 
   TypeScript implementation. Please refer to the [TypeScript claim rewards implementation](https://github.com/babylonlabs-io/simple-staking/blob/main/src/app/hooks/services/useRewardsService.ts#L49).
-
+ 
 **Querying for available rewards**:
 Rewards can be checked using the `x/incentive` module:
 * **via an RPC/LCD query**
@@ -720,5 +719,5 @@ Rewards can be checked using the `x/incentive` module:
   where `address` is the bech32 address of the staker.
 * **via the CLI command**
   `babylond query incentive reward-gauges <bech32-address>`
-* **via TypeScript**: You can use the TypeScript implementation to query rewards.
+* **via TypeScript**: You can use the TypeScript implementation to query rewards. 
 Please refer to the [TypeScript library documentation](https://github.com/babylonlabs-io/simple-staking/blob/main/src/app/hooks/client/rpc/queries/useBbnQuery.ts).
