@@ -103,7 +103,9 @@ import (
 	"github.com/babylonlabs-io/babylon/x/btcstaking"
 	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/x/checkpointing"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/prepare"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/vote_extensions"
 	"github.com/babylonlabs-io/babylon/x/epoching"
 	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/x/finality"
@@ -484,12 +486,12 @@ func NewBabylonApp(
 	)
 
 	// set proposal extension
-	proposalHandler := checkpointing.NewProposalHandler(
+	proposalHandler := prepare.NewProposalHandler(
 		logger, &app.CheckpointingKeeper, bApp.Mempool(), bApp, app.EncCfg)
 	proposalHandler.SetHandlers(bApp)
 
 	// set vote extension
-	voteExtHandler := checkpointing.NewVoteExtensionHandler(logger, &app.CheckpointingKeeper)
+	voteExtHandler := vote_extensions.NewVoteExtensionHandler(logger, &app.CheckpointingKeeper)
 	voteExtHandler.SetHandlers(bApp)
 
 	app.SetInitChainer(app.InitChainer)
