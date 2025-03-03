@@ -98,7 +98,12 @@ Steps:
    provide their verification signatures.
 4. **Activation**: Once a quorum of covenant signatures is reached,
    the stake is designated as `ACTIVE`.
- 
+
+> **⚠️ Critical Warning**: When migrating your stake from Phase-1, it is essential
+> to include the proof of inclusion to verify that your stake originates from
+> previous Bitcoin block heights. **Failing to provide this proof will prevent**
+> **the migration of your stake**.
+
 ### 2.2. Pre-Staking Registration
 
 The Pre-staking registration flow  is for stakers who seek
@@ -152,6 +157,9 @@ Steps:
 8. **Activation**:
    Upon receiving the proof of inclusion, the stake is marked as active.
 
+> **⚠️ Critical Warning**: After your transaction is confirmed in a Bitcoin block,
+> remember to submit the proof of inclusion to complete the registration process.
+>
 > **⚠️ Important**: Gas Requirements for Pre-staking registration
 > 
 > Since pre-staking registration does not require prior fund commitment
@@ -195,6 +203,11 @@ Babylon registration transaction.
   block that is `k`-deep. Submitted during initial registration in the post-staking
   registration flow or later in the pre-staking registration flow.
 
+> **⚠️ Critical Warning**: The proof of inclusion is a vital part of your
+> registration data.
+> Ensure it is included to verify your stake's origin from past Bitcoin
+> block heights.
+>
 > **⚡ Note**: More details on the Bitcoin staking, unbonding, and slashing
 > transactions can be found in the
 > [Bitcoin Staking script specification](./staking-script.md).
