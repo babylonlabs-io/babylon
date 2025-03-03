@@ -88,7 +88,7 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 
 				ctx = MaybeProduceBlock(t, r, app, ctx)
 
-				for covI, _ := range covenantSKs {
+				for covI := range covenantSKs {
 					_, err = msgSrvrBtcStk.AddCovenantSigs(ctx, delCreationInfo.MsgAddCovenantSigs[covI])
 					require.NoError(t, err)
 

@@ -84,6 +84,8 @@ cache if an old BTC delegation receives inclusion proof
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 - [#563](https://github.com/babylonlabs-io/babylon/pull/563) reject coinbase staking transactions
 - [#584](https://github.com/babylonlabs-io/babylon/pull/584) fix: Panic can be triggered in handling liveness
+- [#585](https://github.com/babylonlabs-io/babylon/pull/585) fix: Proposal vote extensions' byte limit
+- [#594](https://github.com/babylonlabs-io/babylon/pull/594) Refund tx to correct recipient
 
 ## v1.0.0-rc6
 

@@ -286,7 +286,7 @@ func (k Keeper) refundableMsgHashes(ctx context.Context) ([]string, error) {
 func (k Keeper) finalityProvidersCurrentRewards(ctx context.Context) ([]types.FinalityProviderCurrentRewardsEntry, error) {
 	entries := make([]types.FinalityProviderCurrentRewardsEntry, 0)
 
-	iter, err := k.finalityProviderCurrentRewards.Iterate(ctx, nil)
+	iter, err := k.FinalityProviderCurrentRewards.Iterate(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func (k Keeper) finalityProvidersCurrentRewards(ctx context.Context) ([]types.Fi
 func (k Keeper) finalityProvidersHistoricalRewards(ctx context.Context) ([]types.FinalityProviderHistoricalRewardsEntry, error) {
 	entries := make([]types.FinalityProviderHistoricalRewardsEntry, 0)
 
-	iter, err := k.finalityProviderHistoricalRewards.Iterate(ctx, nil)
+	iter, err := k.FinalityProviderHistoricalRewards.Iterate(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +357,7 @@ func (k Keeper) finalityProvidersHistoricalRewards(ctx context.Context) ([]types
 func (k Keeper) btcDelegationRewardsTrackers(ctx context.Context) ([]types.BTCDelegationRewardsTrackerEntry, error) {
 	entries := make([]types.BTCDelegationRewardsTrackerEntry, 0)
 
-	iter, err := k.btcDelegationRewardsTracker.Iterate(ctx, nil)
+	iter, err := k.BTCDelegationRewardsTracker.Iterate(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
