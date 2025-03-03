@@ -37,7 +37,6 @@ conditions presented in the diagram.
 
 A stake is valid and eligible for registration on the Babylon blockchain if
 it meets the following criteria:
-
 1. **Confirmed on the Bitcoin ledger**:
    The staking transaction must have received sufficient
    Bitcoin confirmations to be considered final.
@@ -66,7 +65,6 @@ This is implemented via an allow-list that specifies which staking
 transactions can be registered by their transaction hashes.
 
 It has two important properties:
-
 * **Hardcoded Allow-List**: This list is embedded in the Babylon blockchain
   codebase and is visible to all users.
 * **Automatic Expiration**: The allow-list functionality has a fixed expiration
@@ -86,7 +84,7 @@ can register.
 If that is you, learn how to set up your Babylon blockchain
 finality provider stack and how to register
 **If you are a finality provider**,
-follow the
+follow the 
 [registration guide](https://github.com/babylonlabs-io/finality-provider/blob/main/docs/finality-provider-operation.md)
 to set up your finality provider stack and register on the Babylon blockchain.
 
@@ -98,8 +96,7 @@ supplementary data to the Babylon blockchain. The data submitted
 should be compliant to the Bitcoin Staking parameters for the
 Bitcoin block height the staking transaction has been included.
 Key data include:
-
-1. **Staking Transaction and Merkle Proof**: Proof that the staking
+1. **Staking Transaction and Merkle Proof**: Proof that the staking 
    transaction was confirmed in a valid Bitcoin block.
 2. **Pre-Signed Slashing Transaction**: The staker pre-signs a
    slashing transaction, indicating their consent to slashing.
@@ -127,7 +124,6 @@ Key data include:
 > If these parameters differ from those used to create your stake, the system
 > will permanently reject it. In this case, your only option would be to
 > on-demand unbond and stake again.
-
 
 This data is submitted as a transaction on the Babylon blockchain,
 requiring native Babylon blockchain funds for transaction fees.
