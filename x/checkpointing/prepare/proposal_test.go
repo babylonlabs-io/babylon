@@ -1,4 +1,4 @@
-package checkpointing_test
+package prepare_test
 
 import (
 	"bytes"
@@ -27,7 +27,7 @@ import (
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/testutil/helper"
 	"github.com/babylonlabs-io/babylon/testutil/mocks"
-	"github.com/babylonlabs-io/babylon/x/checkpointing"
+	"github.com/babylonlabs-io/babylon/x/checkpointing/prepare"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	et "github.com/babylonlabs-io/babylon/x/epoching/types"
 )
@@ -492,7 +492,7 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 			name := t.Name()
 			encCfg := appparams.DefaultEncodingConfig()
 			bApp := baseapp.NewBaseApp(name, logger, db, encCfg.TxConfig.TxDecoder(), baseapp.SetChainID("chain-test"))
-			h := checkpointing.NewProposalHandler(
+			h := prepare.NewProposalHandler(
 				log.NewNopLogger(),
 				ek,
 				mem,

@@ -1,10 +1,9 @@
-package checkpointing
+package prepare
 
 import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"slices"
 
 	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -19,15 +18,17 @@ import (
 
 const defaultInjectedTxIndex = 0
 
+var (
+	EmptyProposalRes = abci.ResponsePrepareProposal{Txs: [][]byte{}}
+)
+
 type ProposalHandler struct {
 	logger     log.Logger
 	ckptKeeper CheckpointingKeeper
 	bApp       *baseapp.BaseApp
 
 	// used for building and parsing the injected tx
-	txEncoder sdk.TxEncoder
-	txDecoder sdk.TxDecoder
-	txBuilder client.TxBuilder
+	txConfig client.TxConfig
 
 	defaultPrepareProposalHandler sdk.PrepareProposalHandler
 	defaultProcessProposalHandler sdk.ProcessProposalHandler
@@ -47,9 +48,7 @@ func NewProposalHandler(
 		logger:                        logger,
 		ckptKeeper:                    ckptKeeper,
 		bApp:                          bApp,
-		txEncoder:                     encCfg.TxConfig.TxEncoder(),
-		txDecoder:                     encCfg.TxConfig.TxDecoder(),
-		txBuilder:                     encCfg.TxConfig.NewTxBuilder(),
+		txConfig:                      encCfg.TxConfig,
 		defaultPrepareProposalHandler: defaultHandler.PrepareProposalHandler(),
 		defaultProcessProposalHandler: defaultHandler.ProcessProposalHandler(),
 	}
@@ -74,25 +73,29 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 		}
 
 		k := h.ckptKeeper
-		proposalTxs := res.Txs
-		proposalRes := &abci.ResponsePrepareProposal{Txs: proposalTxs}
+		defaultProposalRes := &abci.ResponsePrepareProposal{Txs: res.Txs}
 
 		epoch := k.GetEpoch(ctx)
 		// BLS signatures are sent in the last block of the previous epoch,
 		// so they should be aggregated in the first block of the new epoch
 		// and no BLS signatures are send in epoch 0
 		if !epoch.IsVoteExtensionProposal(ctx) {
-			return proposalRes, nil
+			return defaultProposalRes, nil
+		}
+
+		proposalTxs, err := NewPrepareProposalTxs(req)
+		if err != nil {
+			return &EmptyProposalRes, fmt.Errorf("NewPrepareProposalTxs error: %w", err)
 		}
 
 		if len(req.LocalLastCommit.Votes) == 0 {
-			return proposalRes, fmt.Errorf("no extended votes received from the last block")
+			return &EmptyProposalRes, fmt.Errorf("no extended votes received from the last block")
 		}
 
 		// 1. verify the validity of vote extensions (2/3 majority is achieved)
 		err = baseapp.ValidateVoteExtensions(ctx, h.ckptKeeper, req.Height, ctx.ChainID(), req.LocalLastCommit)
 		if err != nil {
-			return proposalRes, fmt.Errorf("invalid vote extensions: %w", err)
+			return &EmptyProposalRes, fmt.Errorf("invalid vote extensions: %w", err)
 		}
 
 		// 2. build a checkpoint for the previous epoch
@@ -100,22 +103,27 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 		// we can use the current epoch
 		ckpt, err := h.buildCheckpointFromVoteExtensions(ctx, epoch.EpochNumber, req.LocalLastCommit.Votes)
 		if err != nil {
-			return proposalRes, fmt.Errorf("failed to build checkpoint from vote extensions: %w", err)
+			return &EmptyProposalRes, fmt.Errorf("failed to build checkpoint from vote extensions: %w", err)
 		}
 
-		// 3. inject a "fake" tx into the proposal s.t. validators can decode, verify the checkpoint
-		injectedCkpt := &ckpttypes.MsgInjectedCheckpoint{
-			Ckpt:               ckpt,
-			ExtendedCommitInfo: &req.LocalLastCommit,
-		}
-		injectedVoteExtTx, err := h.buildInjectedTxBytes(injectedCkpt)
+		// 3. inject a checkpoint tx into the proposal s.t. validators can decode, verify the checkpoint
+		injectedVoteExtTx, err := h.buildInjectedTxBytes(ckpt, &req.LocalLastCommit)
 		if err != nil {
-			return nil, fmt.Errorf("failed to encode vote extensions into a special tx: %w", err)
+			return &EmptyProposalRes, fmt.Errorf("failed to encode vote extensions into a special tx: %w", err)
 		}
-		proposalTxs = slices.Insert(proposalTxs, defaultInjectedTxIndex, [][]byte{injectedVoteExtTx}...)
+
+		err = proposalTxs.SetOrReplaceCheckpointTx(injectedVoteExtTx)
+		if err != nil {
+			return &EmptyProposalRes, fmt.Errorf("failed to inject checkpoint tx into the proposal: %w", err)
+		}
+
+		err = proposalTxs.ReplaceOtherTxs(res.Txs)
+		if err != nil {
+			return &EmptyProposalRes, fmt.Errorf("failed to add other txs into the proposal: %w", err)
+		}
 
 		return &abci.ResponsePrepareProposal{
-			Txs: proposalTxs,
+			Txs: proposalTxs.GetTxsInOrder(),
 		}, nil
 	}
 }
@@ -382,12 +390,13 @@ func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 	}
 }
 
-func (h *ProposalHandler) buildInjectedTxBytes(injectedCkpt *ckpttypes.MsgInjectedCheckpoint) ([]byte, error) {
-	if err := h.txBuilder.SetMsgs(injectedCkpt); err != nil {
-		return nil, err
+func (h *ProposalHandler) buildInjectedTxBytes(ckpt *ckpttypes.RawCheckpointWithMeta, info *abci.ExtendedCommitInfo) ([]byte, error) {
+	msg := &ckpttypes.MsgInjectedCheckpoint{
+		Ckpt:               ckpt,
+		ExtendedCommitInfo: info,
 	}
 
-	return h.txEncoder(h.txBuilder.GetTx())
+	return EncodeMsgsIntoTxBytes(h.txConfig, msg)
 }
 
 // ExtractInjectedCheckpoint extracts the injected checkpoint from the tx set
@@ -402,7 +411,7 @@ func (h *ProposalHandler) ExtractInjectedCheckpoint(txs [][]byte) (*ckpttypes.Ms
 		return nil, fmt.Errorf("the injected vote extensions tx is empty")
 	}
 
-	injectedTx, err := h.txDecoder(injectedTxBytes)
+	injectedTx, err := h.txConfig.TxDecoder()(injectedTxBytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode injected vote extension tx: %w", err)
 	}
@@ -424,4 +433,20 @@ func removeInjectedTx(txs [][]byte) ([][]byte, error) {
 	txs = append(txs[:defaultInjectedTxIndex], txs[defaultInjectedTxIndex+1:]...)
 
 	return txs, nil
+}
+
+// EncodeMsgsIntoTxBytes encodes the given msgs into a single transaction.
+func EncodeMsgsIntoTxBytes(txConfig client.TxConfig, msgs ...sdk.Msg) ([]byte, error) {
+	txBuilder := txConfig.NewTxBuilder()
+	err := txBuilder.SetMsgs(msgs...)
+	if err != nil {
+		return nil, err
+	}
+
+	txBytes, err := txConfig.TxEncoder()(txBuilder.GetTx())
+	if err != nil {
+		return nil, err
+	}
+
+	return txBytes, nil
 }
