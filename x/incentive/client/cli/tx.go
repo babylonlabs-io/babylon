@@ -41,13 +41,8 @@ func NewWithdrawRewardCmd() *cobra.Command {
 				return err
 			}
 
-			stkType, err := types.NewStakeHolderTypeFromString(args[0])
-			if err != nil {
-				return err
-			}
-
 			msg := types.MsgWithdrawReward{
-				Type:    stkType,
+				Type:    args[0],
 				Address: clientCtx.FromAddress.String(),
 			}
 

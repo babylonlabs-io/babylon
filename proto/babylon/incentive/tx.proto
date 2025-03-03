@@ -6,7 +6,6 @@ import "cosmos_proto/cosmos.proto";
 import "cosmos/msg/v1/msg.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "babylon/incentive/params.proto";
-import "babylon/incentive/genesis.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
 
@@ -27,13 +26,11 @@ service Msg {
 // MsgWithdrawReward defines a message for withdrawing reward of a stakeholder.
 message MsgWithdrawReward {
   option (cosmos.msg.v1.signer) = "address";
-  // RESERVED: previously stakeholder type was a string. Now is an enum
-  reserved 1;
+  // type is the stakeholder type {finality_provider, btc_staker}
+  string type = 1;
   // address is the address of the stakeholder in bech32 string
   // signer of this msg has to be this address
   string address = 2;
-  // Type of stakeholder (FINALITY_PROVIDER or BTC_STAKER)
-  StakeholderType type = 3;
 }
 
 // MsgWithdrawRewardResponse is the response to the MsgWithdrawReward message

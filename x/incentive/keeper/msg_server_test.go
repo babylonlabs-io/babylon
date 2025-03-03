@@ -51,7 +51,7 @@ func FuzzWithdrawReward(f *testing.F) {
 
 		// invoke withdraw and assert consistency
 		resp, err := ms.WithdrawReward(ctx, &types.MsgWithdrawReward{
-			Type:    sType,
+			Type:    sType.String(),
 			Address: sAddr.String(),
 		})
 		require.NoError(t, err)
@@ -64,11 +64,11 @@ func FuzzWithdrawReward(f *testing.F) {
 
 		// should fail with invalid stakeholder type 
 		_, err = ms.WithdrawReward(ctx, &types.MsgWithdrawReward{
-			Type:    types.StakeholderType(4),
+			Type:    "invalid_type",
 			Address: sAddr.String(),
 		})
 		require.Error(t, err)
-		require.ErrorContains(t, err, "invalid stakeholder type")
+		require.ErrorContains(t, err, "invalid stStr: INVALID_TYPE")
 	})
 }
 
@@ -111,7 +111,7 @@ func FuzzSetWithdrawAddr(f *testing.F) {
 
 		// invoke withdraw and assert consistency
 		resp, err := ms.WithdrawReward(ctx, &types.MsgWithdrawReward{
-			Type:    sType,
+			Type:    sType.String(),
 			Address: sAddr.String(),
 		})
 		require.NoError(t, err)
