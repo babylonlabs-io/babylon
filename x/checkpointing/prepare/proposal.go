@@ -112,12 +112,12 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 			return &EmptyProposalRes, fmt.Errorf("failed to encode vote extensions into a special tx: %w", err)
 		}
 
-		err = proposalTxs.SetCheckpointTx(injectedVoteExtTx)
+		err = proposalTxs.SetOrReplaceCheckpointTx(injectedVoteExtTx)
 		if err != nil {
 			return &EmptyProposalRes, fmt.Errorf("failed to inject checkpoint tx into the proposal: %w", err)
 		}
 
-		err = proposalTxs.AddOtherTxs(res.Txs)
+		err = proposalTxs.ReplaceOtherTxs(res.Txs)
 		if err != nil {
 			return &EmptyProposalRes, fmt.Errorf("failed to add other txs into the proposal: %w", err)
 		}

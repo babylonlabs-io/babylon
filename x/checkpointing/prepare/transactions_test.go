@@ -21,7 +21,7 @@ func TestPrepareProposalTxs(t *testing.T) {
 
 		// Set checkpoint tx of size 20
 		checkpointTx := make([]byte, 20)
-		err = txs.SetCheckpointTx(checkpointTx)
+		err = txs.SetOrReplaceCheckpointTx(checkpointTx)
 		require.NoError(t, err)
 
 		// Add other txs that fit within remaining space (80 bytes)
@@ -30,7 +30,7 @@ func TestPrepareProposalTxs(t *testing.T) {
 			make([]byte, 30), // tx2
 			make([]byte, 10), // tx3
 		}
-		err = txs.AddOtherTxs(otherTxs)
+		err = txs.ReplaceOtherTxs(otherTxs)
 		require.NoError(t, err)
 
 		// Verify all txs were added
@@ -50,7 +50,7 @@ func TestPrepareProposalTxs(t *testing.T) {
 
 		// Set checkpoint tx of size 20
 		checkpointTx := make([]byte, 20)
-		err = txs.SetCheckpointTx(checkpointTx)
+		err = txs.SetOrReplaceCheckpointTx(checkpointTx)
 		require.NoError(t, err)
 
 		// Try to add other txs where some won't fit
@@ -59,7 +59,7 @@ func TestPrepareProposalTxs(t *testing.T) {
 			make([]byte, 20), // tx2 - won't fit
 			make([]byte, 10), // tx3 - won't fit
 		}
-		err = txs.AddOtherTxs(otherTxs)
+		err = txs.ReplaceOtherTxs(otherTxs)
 		require.NoError(t, err)
 
 		// Verify only fitting txs were added
@@ -79,7 +79,7 @@ func TestPrepareProposalTxs(t *testing.T) {
 
 		// Set checkpoint tx of size 40
 		checkpointTx := make([]byte, 40)
-		err = txs.SetCheckpointTx(checkpointTx)
+		err = txs.SetOrReplaceCheckpointTx(checkpointTx)
 		require.NoError(t, err)
 
 		// Add other txs that exactly fill remaining space (60 bytes)
@@ -87,7 +87,7 @@ func TestPrepareProposalTxs(t *testing.T) {
 			make([]byte, 30), // tx1
 			make([]byte, 30), // tx2
 		}
-		err = txs.AddOtherTxs(otherTxs)
+		err = txs.ReplaceOtherTxs(otherTxs)
 		require.NoError(t, err)
 
 		// Verify all txs were added and space is exactly filled
@@ -107,7 +107,7 @@ func TestPrepareProposalTxs(t *testing.T) {
 
 		// Try to set checkpoint tx larger than max
 		checkpointTx := make([]byte, 20)
-		err = txs.SetCheckpointTx(checkpointTx)
+		err = txs.SetOrReplaceCheckpointTx(checkpointTx)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "exceeds max")
 	})

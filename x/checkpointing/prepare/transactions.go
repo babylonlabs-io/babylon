@@ -35,20 +35,20 @@ func NewPrepareProposalTxs(
 	}, nil
 }
 
-// SetCheckpointTx sets the tx used for checkpoint
-func (t *PrepareProposalTxs) SetCheckpointTx(tx []byte) error {
+// SetOrReplaceCheckpointTx sets the tx used for checkpoint. If the checkpoint tx already exists,
+// replace it
+func (t *PrepareProposalTxs) SetOrReplaceCheckpointTx(tx []byte) error {
 	oldBytes := uint64(len(t.CheckpointTx))
 	newBytes := uint64(len(tx))
-	if err := t.UpdateUsedBytes(oldBytes, newBytes); err != nil {
+	if err := t.updateUsedBytes(oldBytes, newBytes); err != nil {
 		return err
 	}
 	t.CheckpointTx = tx
 	return nil
 }
 
-// AddOtherTxs adds txs to the "other" tx category and return early
-// if all the remaining bytes are used up
-func (t *PrepareProposalTxs) AddOtherTxs(allTxs [][]byte) error {
+// ReplaceOtherTxs replaces other txs with the given txs (existing ones are cleared)
+func (t *PrepareProposalTxs) ReplaceOtherTxs(allTxs [][]byte) error {
 	t.OtherTxs = make([][]byte, 0, len(allTxs))
 	bytesToAdd := uint64(0)
 	for _, tx := range allTxs {
@@ -61,16 +61,16 @@ func (t *PrepareProposalTxs) AddOtherTxs(allTxs [][]byte) error {
 		t.OtherTxs = append(t.OtherTxs, tx)
 	}
 
-	if err := t.UpdateUsedBytes(0, bytesToAdd); err != nil {
+	if err := t.updateUsedBytes(0, bytesToAdd); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// UpdateUsedBytes updates the used bytes field. This returns an error if the num used bytes
+// updateUsedBytes updates the used bytes field. This returns an error if the num used bytes
 // exceeds the max byte limit.
-func (t *PrepareProposalTxs) UpdateUsedBytes(
+func (t *PrepareProposalTxs) updateUsedBytes(
 	bytesToRemove uint64,
 	bytesToAdd uint64,
 ) error {
