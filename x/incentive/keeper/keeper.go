@@ -32,6 +32,7 @@ type (
 
 		// Collections structures for rewards
 
+		// Public for test reasons
 		// BTCDelegationRewardsTracker maps (FpAddr, DelAddr) => BTCDelegationRewardsTracker
 		BTCDelegationRewardsTracker collections.Map[collections.Pair[[]byte, []byte], types.BTCDelegationRewardsTracker]
 		// FinalityProviderHistoricalRewards maps (FpAddr, period) => FinalityProviderHistoricalRewards
