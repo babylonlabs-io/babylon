@@ -49,7 +49,6 @@ func (ms msgServer) WithdrawReward(goCtx context.Context, req *types.MsgWithdraw
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
 	addr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
