@@ -1,4 +1,4 @@
-package checkpointing
+package vote_extensions
 
 import (
 	"fmt"

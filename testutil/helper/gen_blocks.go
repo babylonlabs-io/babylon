@@ -140,6 +140,7 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 	// 3. prepare proposal with previous BLS sigs
 	blockTxs := [][]byte{}
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
+		MaxTxBytes:      10000,
 		LocalLastCommit: extendedCommitInfo,
 		Height:          newHeight,
 	})
@@ -232,6 +233,7 @@ func (h *Helper) ApplyEmptyBlockWithValSet(r *rand.Rand, valSetWithKeys *datagen
 	// 3. prepare proposal with previous BLS sigs
 	blockTxs := [][]byte{}
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
+		MaxTxBytes:      10000,
 		LocalLastCommit: abci.ExtendedCommitInfo{Votes: extendedVotes},
 		Height:          newHeight,
 	})
@@ -333,6 +335,7 @@ func (h *Helper) ApplyEmptyBlockWithInvalidVoteExtensions(r *rand.Rand) (sdk.Con
 	// 3. prepare proposal with previous BLS sigs
 	blockTxs := [][]byte{}
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
+		MaxTxBytes:      10000,
 		LocalLastCommit: extendedCommitInfo,
 		Height:          newHeight,
 	})
@@ -440,6 +443,7 @@ func (h *Helper) ApplyEmptyBlockWithSomeInvalidVoteExtensions(r *rand.Rand) (sdk
 	var blockTxs [][]byte
 
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
+		MaxTxBytes:      10000,
 		LocalLastCommit: extendedCommitInfo,
 		Height:          newHeight,
 	})
