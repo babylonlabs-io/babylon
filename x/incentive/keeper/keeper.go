@@ -31,6 +31,7 @@ type (
 		feeCollectorName string
 
 		// Collections structures for rewards
+
 		// btcDelegationRewardsTracker maps (FpAddr, DelAddr) => btcDelegationRewardsTracker
 		btcDelegationRewardsTracker collections.Map[collections.Pair[[]byte, []byte], types.BTCDelegationRewardsTracker]
 		// finalityProviderHistoricalRewards maps (FpAddr, period) => finalityProviderHistoricalRewards
