@@ -584,13 +584,13 @@ func TestBtcDelegationRewards(t *testing.T) {
 		Address: fp1Del1.Address().String(),
 	})
 	h.NoError(err)
-	h.Equal(fp1Del1Rwd.RewardGauges[ictvtypes.BTC_DELEGATION.String()].Coins.String(), rwdFp1Del1.String())
+	h.Equal(fp1Del1Rwd.RewardGauges[ictvtypes.BTC_STAKER.String()].Coins.String(), rwdFp1Del1.String())
 
 	fp1Del2Rwd, err := h.IncentivesKeeper.RewardGauges(h.Ctx, &ictvtypes.QueryRewardGaugesRequest{
 		Address: fp1Del2.Address().String(),
 	})
 	h.NoError(err)
-	h.Equal(fp1Del2Rwd.RewardGauges[ictvtypes.BTC_DELEGATION.String()].Coins.String(), rwdFp1Del2.String())
+	h.Equal(fp1Del2Rwd.RewardGauges[ictvtypes.BTC_STAKER.String()].Coins.String(), rwdFp1Del2.String())
 }
 
 func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {

@@ -138,7 +138,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		for addrStr, reward := range btcDelRewardMap {
 			addr, err := sdk.AccAddressFromBech32(addrStr)
 			require.NoError(t, err)
-			rg := k.GetRewardGauge(ctx, types.BTC_DELEGATION, addr)
+			rg := k.GetRewardGauge(ctx, types.BTC_STAKER, addr)
 			require.NotNil(t, rg)
 
 			// A little bit of rewards could be lost in the process due to precision points
@@ -174,7 +174,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 				// Check their delegators received no rewards
 				for delAddrStr := range btcTotalSatByDelAddressByFpAddress[fpAddr.String()] {
 					delAddr := sdk.MustAccAddressFromBech32(delAddrStr)
-					rg := k.GetRewardGauge(ctx, types.BTC_DELEGATION, delAddr)
+					rg := k.GetRewardGauge(ctx, types.BTC_STAKER, delAddr)
 					require.Nil(t, rg)
 				}
 			}
