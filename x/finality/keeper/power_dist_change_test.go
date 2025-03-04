@@ -796,6 +796,7 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		signInfoAfterJail.JailedUntil = time.Now()
 		signInfoAfterJail.MissedBlocksCounter = 0
 		err = h.FinalityKeeper.FinalityProviderSigningTracker.Set(h.Ctx, fp.BtcPk.MustMarshal(), signInfoAfterJail)
+		require.NoError(t, err)
 
 		// ensure the jailed label is set
 		fpAfterJailing, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
