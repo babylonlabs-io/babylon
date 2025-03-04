@@ -10,6 +10,7 @@ import (
 
 	"cosmossdk.io/core/header"
 	sdkmath "cosmossdk.io/math"
+	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -548,8 +549,8 @@ func TestBtcDelegationRewards(t *testing.T) {
 	startHeight := uint64(0)
 	h.FpAddPubRand(r, fp1SK, startHeight)
 
-	_, fp1Del1, _ := h.CreateActiveBtcDelegation(r, covenantSKs, fp1PK, stakingValueFp1Del1, stakingTime, btcLightClientTipHeight)
-	_, fp1Del2, _ := h.CreateActiveBtcDelegation(r, covenantSKs, fp1PK, stakingValueFp1Del2, stakingTime, btcLightClientTipHeight)
+	_, _, fp1Del1, _ := h.CreateActiveBtcDelegation(r, covenantSKs, fp1PK, stakingValueFp1Del1, stakingTime, btcLightClientTipHeight)
+	_, _, fp1Del2, _ := h.CreateActiveBtcDelegation(r, covenantSKs, fp1PK, stakingValueFp1Del2, stakingTime, btcLightClientTipHeight)
 
 	// process the events of the activated BTC delegations
 	h.BTCStakingKeeper.IndexBTCHeight(h.Ctx)
@@ -621,7 +622,7 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	h.FpAddPubRand(r, fpSK, startHeight)
 	btcLightClientTipHeight := uint32(30)
 
-	stakingTxHash, del, unbondingInfo := h.CreateActiveBtcDelegation(r, covenantSKs, fpPK, stakingValue, stakingTime, btcLightClientTipHeight)
+	delSK, stakingTxHash, del, unbondingInfo := h.CreateActiveBtcDelegation(r, covenantSKs, fpPK, stakingValue, stakingTime, btcLightClientTipHeight)
 
 	// process the events as active btc delegation
 	h.BTCStakingKeeper.IndexBTCHeight(h.Ctx)
@@ -633,7 +634,25 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	btcLightClientTipHeight = uint32(45)
 	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: btcLightClientTipHeight}).AnyTimes()
 
-	h.BtcUndelegate(stakingTxHash, del, unbondingInfo, btcLightClientTipHeight)
+	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+
+	unbondingTx := del.MustGetUnbondingTx()
+	stakingTx := del.MustGetStakingTx()
+
+	serializedUnbondingTxWithWitness, _ := datagen.AddWitnessToUnbondingTx(
+		t,
+		stakingTx.TxOut[0],
+		delSK,
+		covenantSKs,
+		bsParams.CovenantQuorum,
+		[]*btcec.PublicKey{fpPK},
+		stakingTime,
+		stakingValue,
+		unbondingTx,
+		h.Net,
+	)
+
+	h.BtcUndelegate(stakingTxHash, del, unbondingInfo, serializedUnbondingTxWithWitness, btcLightClientTipHeight)
 
 	// increases one bbn block to get the voting power distribution cache
 	// from the previous block

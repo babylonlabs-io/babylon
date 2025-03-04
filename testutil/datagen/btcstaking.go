@@ -1,14 +1,18 @@
 package datagen
 
 import (
+	"bytes"
 	"math/rand"
+	"sort"
 	"testing"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	stk "github.com/babylonlabs-io/babylon/btcstaking"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
@@ -645,4 +649,137 @@ func (info *TestUnbondingSlashingInfo) GenCovenantSigs(
 		})
 	}
 	return covUnbondingSlashingSigs, covUnbondingSigList, nil
+}
+
+type SignatureInfo struct {
+	SignerPubKey *btcec.PublicKey
+	Signature    *schnorr.Signature
+}
+
+func NewSignatureInfo(
+	signerPubKey *btcec.PublicKey,
+	signature *schnorr.Signature,
+) *SignatureInfo {
+	return &SignatureInfo{
+		SignerPubKey: signerPubKey,
+		Signature:    signature,
+	}
+}
+
+// Helper function to sort all signatures in reverse lexicographical order of signing public keys
+// this way signatures are ready to be used in multisig witness with corresponding public keys
+func sortSignatureInfo(infos []*SignatureInfo) []*SignatureInfo {
+	sortedInfos := make([]*SignatureInfo, len(infos))
+	copy(sortedInfos, infos)
+	sort.SliceStable(sortedInfos, func(i, j int) bool {
+		keyIBytes := schnorr.SerializePubKey(sortedInfos[i].SignerPubKey)
+		keyJBytes := schnorr.SerializePubKey(sortedInfos[j].SignerPubKey)
+		return bytes.Compare(keyIBytes, keyJBytes) == 1
+	})
+
+	return sortedInfos
+}
+
+// generate list of signatures in valid order
+func GenerateSignatures(
+	t *testing.T,
+	keys []*btcec.PrivateKey,
+	tx *wire.MsgTx,
+	stakingOutput *wire.TxOut,
+	leaf txscript.TapLeaf,
+) []*schnorr.Signature {
+	var si []*SignatureInfo
+
+	for _, key := range keys {
+		pubKey := key.PubKey()
+		sig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
+			tx,
+			stakingOutput,
+			key,
+			leaf,
+		)
+		require.NoError(t, err)
+		info := NewSignatureInfo(
+			pubKey,
+			sig,
+		)
+		si = append(si, info)
+	}
+
+	// sort signatures by public key
+	sortedSigInfo := sortSignatureInfo(si)
+
+	var sigs []*schnorr.Signature = make([]*schnorr.Signature, len(sortedSigInfo))
+
+	for i, sigInfo := range sortedSigInfo {
+		sig := sigInfo
+		sigs[i] = sig.Signature
+	}
+
+	return sigs
+}
+
+func AddWitnessToUnbondingTx(
+	t *testing.T,
+	stakingOutput *wire.TxOut,
+	stakerSk *btcec.PrivateKey,
+	covenantSks []*btcec.PrivateKey,
+	covenantQuorum uint32,
+	finalityProviderPKs []*btcec.PublicKey,
+	stakingTime uint16,
+	stakingValue int64,
+	unbondingTx *wire.MsgTx,
+	net *chaincfg.Params,
+) ([]byte, *wire.MsgTx) {
+	var covenatnPks []*btcec.PublicKey
+	for _, sk := range covenantSks {
+		covenatnPks = append(covenatnPks, sk.PubKey())
+	}
+
+	stakingInfo, err := stk.BuildStakingInfo(
+		stakerSk.PubKey(),
+		finalityProviderPKs,
+		covenatnPks,
+		covenantQuorum,
+		stakingTime,
+		btcutil.Amount(stakingValue),
+		net,
+	)
+	require.NoError(t, err)
+
+	// sanity check that what we re-build is the same as what we have in the BTC delegation
+	require.Equal(t, stakingOutput, stakingInfo.StakingOutput)
+
+	unbondingSpendInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+
+	unbondingScirpt := unbondingSpendInfo.RevealedLeaf.Script
+	require.NotNil(t, unbondingScirpt)
+
+	covenantSigs := GenerateSignatures(
+		t,
+		covenantSks,
+		unbondingTx,
+		stakingOutput,
+		unbondingSpendInfo.RevealedLeaf,
+	)
+	require.NoError(t, err)
+
+	stakerSig, err := stk.SignTxWithOneScriptSpendInputFromTapLeaf(
+		unbondingTx,
+		stakingOutput,
+		stakerSk,
+		unbondingSpendInfo.RevealedLeaf,
+	)
+	require.NoError(t, err)
+
+	ubWitness, err := unbondingSpendInfo.CreateUnbondingPathWitness(covenantSigs, stakerSig)
+	require.NoError(t, err)
+
+	unbondingTx.TxIn[0].Witness = ubWitness
+
+	serializedUnbondingTxWithWitness, err := bbn.SerializeBTCTx(unbondingTx)
+	require.NoError(t, err)
+
+	return serializedUnbondingTxWithWitness, unbondingTx
 }
