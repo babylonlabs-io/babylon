@@ -36,7 +36,7 @@ jobs:
       docker_scan: true
 
   docker_testnet_pipeline:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@refs/heads/hiep/add-custom-tag
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@hiep/add-custom-tag
     needs: ["lint_test"]
     secrets: inherit
     # if: startsWith(github.ref, 'refs/tags/')  # Run only on tag push
