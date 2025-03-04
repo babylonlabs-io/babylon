@@ -7,8 +7,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	babylonApp "github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/test/replay"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
@@ -17,6 +15,9 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	babylonApp "github.com/babylonlabs-io/babylon/app"
+	"github.com/babylonlabs-io/babylon/test/replay"
 
 	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
@@ -775,6 +776,9 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		h.NoError(err)
 		require.False(t, fpBeforeJailing.IsJailed())
 		require.Equal(t, uint64(stakingValue), h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
+		signInfoBeforeJail, err := h.FinalityKeeper.FinalityProviderSigningTracker.Get(h.Ctx, fp.BtcPk.MustMarshal())
+		require.NoError(t, err)
+		require.True(t, signInfoBeforeJail.JailedUntil.Equal(time.Unix(0, 0)))
 
 		// try unjail fp that is not jailed, should expect error
 		err = h.BTCStakingKeeper.UnjailFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
@@ -786,6 +790,12 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		*/
 		err = h.BTCStakingKeeper.JailFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
 		h.NoError(err)
+		// update signing info
+		signInfoAfterJail, err := h.FinalityKeeper.FinalityProviderSigningTracker.Get(h.Ctx, fp.BtcPk.MustMarshal())
+		require.NoError(t, err)
+		signInfoAfterJail.JailedUntil = time.Now()
+		signInfoAfterJail.MissedBlocksCounter = 0
+		err = h.FinalityKeeper.FinalityProviderSigningTracker.Set(h.Ctx, fp.BtcPk.MustMarshal(), signInfoAfterJail)
 
 		// ensure the jailed label is set
 		fpAfterJailing, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
@@ -817,8 +827,13 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		h.SetCtxHeight(babylonHeight)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
 		h.BeginBlocker()
-		// ensure the finality provider does not have voting power anymore
+		// ensure the finality provider has regained voting power
 		require.Equal(t, uint64(stakingValue), h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
+		signInfoAfterUnjail, err := h.FinalityKeeper.FinalityProviderSigningTracker.Get(h.Ctx, fp.BtcPk.MustMarshal())
+		require.NoError(t, err)
+		require.Equal(t, babylonHeight, uint64(signInfoAfterUnjail.StartHeight))
+		require.True(t, signInfoAfterUnjail.JailedUntil.Equal(time.Unix(0, 0)))
+		require.Equal(t, int64(0), signInfoAfterUnjail.MissedBlocksCounter)
 	})
 }
 
