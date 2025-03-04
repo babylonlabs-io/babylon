@@ -33,3 +33,20 @@ jobs:
       dockerfile: ./contrib/images/babylond/Dockerfile
       repoName: babylond
       docker_scan: true
+
+  docker_testnet_pipeline:
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.10.2
+    needs: ["lint_test"]
+    secrets: inherit
+    # if: startsWith(github.ref, 'refs/tags/')  # Run only on tag push
+    permissions:
+      # required for all workflows
+      security-events: write
+      # required to fetch internal or private CodeQL packs
+      packages: read
+    with:
+      publish: true
+      dockerfile: ./contrib/images/babylond/Dockerfile
+      repoName: babylond
+      imageTag: ${{ github.ref_name }}-testnet  # Append '-testnet' to the tag name
+      docker_scan: true
