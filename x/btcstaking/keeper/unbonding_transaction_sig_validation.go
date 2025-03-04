@@ -89,6 +89,10 @@ func buildOutputFetcher(
 	return txscript.NewMultiPrevOutFetcher(prevOuts), nil
 }
 
+// VerifySpendStakeTxStakerSig verifies that staker signature which is included
+// in the spend stake transaction witness is valid.
+// Funding transactions are necessary, as taproot signature commits to values and
+// pkScripts of all the inputs to the spend stake transaction.
 func VerifySpendStakeTxStakerSig(
 	stakerPubKey *btcec.PublicKey,
 	stakingOutput *wire.TxOut,
@@ -117,6 +121,9 @@ func VerifySpendStakeTxStakerSig(
 		stakeSpendWitness = stakeSpendWitness[:len(stakeSpendWitness)-1]
 	}
 
+	// After snipping potential annex, there will be at least 3 elements in the witness stack
+	// ... <StakerSig> <ScriptPath> <ControlBlock>
+	// this is true regardless of the path used to spend the staking output (timelock, unbonding, slashing)
 	if len(stakeSpendWitness) < 3 {
 		return fmt.Errorf("Expected at least 3 elements in the witness stack. Provided amount of elements: %d", len(stakeSpendWitness))
 	}
@@ -128,6 +135,11 @@ func VerifySpendStakeTxStakerSig(
 		return fmt.Errorf("failed to parse control block in witness: %w", err)
 	}
 
+	// StakingOutput is always a pay-to-taproot output, and its pkScript have 34
+	// bytes program.
+	// 1st byte is OP_1, which defines program version
+	// 2nd byte is OP_DATA_32, which pushes 32 bytes of data
+	// last 32 bytes is actual taproot program
 	stakingWitnessProgram := stakingOutput.PkScript[2:]
 
 	// Now that we know the control block is valid, we'll
@@ -145,7 +157,7 @@ func VerifySpendStakeTxStakerSig(
 	}
 
 	// Staker key is always first in the script, therefore signature will be last.
-	// In this true regardless of the path used to spend the staking output (timelock, unbonding, slashing)
+	// It is true regardless of the path used to spend the staking output (timelock, unbonding, slashing)
 	stakerRawSig := stakeSpendWitness[len(stakeSpendWitness)-3]
 
 	stakerSig, sigHashType, err := parseSchnorrSigFromWitness(stakerRawSig)
