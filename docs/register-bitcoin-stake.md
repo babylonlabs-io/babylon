@@ -98,7 +98,21 @@ Steps:
    provide their verification signatures.
 4. **Activation**: Once a quorum of covenant signatures is reached,
    the stake is designated as `ACTIVE`.
- 
+
+> **⚠️ Critical Warning**: When migrating your stake from Phase-1, it is essential
+> to include the proof of inclusion to specify that your stake has already
+> been included on the Bitcoin ledger.
+> **Failing to provide this proof will make the Babylon node expect**
+> **your stake to be included in a later Bitcoin height, leading to**
+> **the rejection of any subsequent staking registrations of it**.
+> In those cases, the stake will have to be unbonded and staked again.
+>
+> **⚠️ Important Warning about Finality Providers**: Be cautious when selecting a
+> finality provider for your stake. If the finality provider you delegate to gets
+> slashed before your stake is registered, your stake may become stuck. This is
+> particularly important for Phase-1 stake that is in the process of being
+>registered.
+
 ### 2.2. Pre-Staking Registration
 
 The Pre-staking registration flow  is for stakers who seek
@@ -152,6 +166,9 @@ Steps:
 8. **Activation**:
    Upon receiving the proof of inclusion, the stake is marked as active.
 
+> **⚠️ Critical Warning**: After your transaction is confirmed in a Bitcoin block,
+> remember to submit the proof of inclusion to complete the registration process.
+>
 > **⚠️ Important**: Gas Requirements for Pre-staking registration
 > 
 > Since pre-staking registration does not require prior fund commitment
@@ -166,6 +183,12 @@ Steps:
 > staking parameter of the Babylon chain
 > (this parameter will be detailed in
 > [Section 3.2.](#32-babylon-chain-btc-staking-parameters)).
+>
+> **⚠️ Important Warning about Finality Providers**: Be cautious when selecting a
+> finality provider for your stake. If the finality provider you delegate to gets
+> slashed before your stake is registered, your stake may become stuck. This is
+> particularly important for Phase-1 stake that is in the process of being
+>registered.
 
 ## 3. Bitcoin Stake Registration
 
@@ -195,9 +218,21 @@ Babylon registration transaction.
   block that is `k`-deep. Submitted during initial registration in the post-staking
   registration flow or later in the pre-staking registration flow.
 
+> **⚠️ Critical Warning**: The proof of inclusion is a vital part of your
+> registration data.
+> Ensure it is included to verify your stake's origin from past Bitcoin
+> block heights. Failure to include it will lead to your
+> stake needing to unbond and be staked again.
+>
 > **⚡ Note**: More details on the Bitcoin staking, unbonding, and slashing
 > transactions can be found in the
 > [Bitcoin Staking script specification](./staking-script.md).
+>
+> **⚠️ Important Warning about Finality Providers**: Be cautious when selecting a
+> finality provider for your stake. If the finality provider you delegate to gets
+> slashed before your stake is registered, your stake may become stuck. This is
+> particularly important for Phase-1 stake that is in the process of being
+> registered.
 
 Once assembled, this data is packaged into a Babylon chain transaction and
 broadcast to the network. The process differs based on whether the staker

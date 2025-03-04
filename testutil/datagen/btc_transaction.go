@@ -391,6 +391,30 @@ func GenRandomTx(r *rand.Rand) *wire.MsgTx {
 	return tx
 }
 
+func GenRandomTxWithOutputs(r *rand.Rand, numOutputs int) *wire.MsgTx {
+	// structure of the below tx is from https://github.com/btcsuite/btcd/blob/master/wire/msgtx_test.go
+	tx := &wire.MsgTx{
+		Version: 1,
+		TxIn: []*wire.TxIn{
+			{
+				PreviousOutPoint: wire.OutPoint{
+					Hash:  GenRandomBtcdHash(r),
+					Index: r.Uint32(),
+				},
+				SignatureScript: GenRandomByteArray(r, 10),
+				Sequence:        r.Uint32(),
+			},
+		},
+		LockTime: 0,
+	}
+
+	for i := 0; i < numOutputs; i++ {
+		tx.AddTxOut(wire.NewTxOut(r.Int63(), GenRandomByteArray(r, 80)))
+	}
+
+	return tx
+}
+
 func GenRandomBabylonTxPair(r *rand.Rand) ([]*wire.MsgTx, *txformat.RawBtcCheckpoint) {
 	txs := []*wire.MsgTx{GenRandomTx(r), GenRandomTx(r)}
 	builder := txscript.NewScriptBuilder()
