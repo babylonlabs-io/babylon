@@ -64,6 +64,7 @@ check of rewards
 - [#575](https://github.com/babylonlabs-io/babylon/pull/575) Add `ConsumerId` field in `FinalityProviderResponse` in `x/btcstaking` module
 - [#589](https://github.com/babylonlabs-io/babylon/pull/589) Rename `btc_delegation` stakeholder type to `btc_staker` in `x/incentive` module
 - [#590](https://github.com/babylonlabs-io/babylon/pull/590) Add `DelegationRewards` query in `x/incentive` module
+- [#625](https://github.com/babylonlabs-io/babylon/pull/625) Add `GasLimit` decorator in ante handler
 
 ### State Machine Breaking
 
