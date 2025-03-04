@@ -71,7 +71,7 @@ func TestSetGetRewardGauge(t *testing.T) {
 
 	// Retrieve values using the new enum type
 	rg1 := k.GetRewardGauge(ctx, types.FINALITY_PROVIDER, addr1)
-	rg2 := k.GetRewardGauge(ctx, types.BTC_DELEGATION, addr2)
+	rg2 := k.GetRewardGauge(ctx, types.BTC_STAKER, addr2)
 
 	// Validate that both are equal
 	require.Equal(t, g1, rg1)

@@ -709,11 +709,11 @@ func (s *BtcRewardsDistribution) QueryRewardGauges(n *chain.NodeConfig) (
 	s.True(ok)
 	s.True(fp2RewardGauge.Coins.IsAllPositive())
 
-	btcDel1RewardGauge, ok := btcDel1RewardGauges[itypes.BTC_DELEGATION.String()]
+	btcDel1RewardGauge, ok := btcDel1RewardGauges[itypes.BTC_STAKER.String()]
 	s.True(ok)
 	s.True(btcDel1RewardGauge.Coins.IsAllPositive())
 
-	btcDel2RewardGauge, ok := btcDel2RewardGauges[itypes.BTC_DELEGATION.String()]
+	btcDel2RewardGauge, ok := btcDel2RewardGauges[itypes.BTC_STAKER.String()]
 	s.True(ok)
 	s.True(btcDel2RewardGauge.Coins.IsAllPositive())
 
@@ -743,7 +743,7 @@ func CheckWithdrawReward(
 	delBalanceBeforeWithdraw, err := n.QueryBalances(delAddr)
 	require.NoError(t, err)
 
-	txHash := n.WithdrawReward(itypes.BTC_DELEGATION.String(), delWallet)
+	txHash := n.WithdrawReward(itypes.BTC_STAKER.String(), delWallet)
 
 	n.WaitForNextBlock()
 
@@ -757,7 +757,7 @@ func CheckWithdrawReward(
 
 	// note that the rewards might not be precise as more or less blocks were produced and given out rewards
 	// while the query balance / withdraw / query gauge was running
-	delRewardGauge, ok := delRwdGauge[itypes.BTC_DELEGATION.String()]
+	delRewardGauge, ok := delRwdGauge[itypes.BTC_STAKER.String()]
 	require.True(t, ok)
 	require.True(t, delRewardGauge.Coins.IsAllPositive())
 

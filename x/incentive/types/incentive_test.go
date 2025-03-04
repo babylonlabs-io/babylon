@@ -169,8 +169,8 @@ func TestStakeholderTypeValidate(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name:      "Valid BTC_DELEGATION",
-			shType:    types.BTC_DELEGATION,
+			name:      "Valid BTC_STAKER",
+			shType:    types.BTC_STAKER,
 			expectErr: false,
 		},
 		{
