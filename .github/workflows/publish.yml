@@ -50,4 +50,6 @@ jobs:
       dockerfile: ./contrib/images/babylond/Dockerfile
       repoName: babylond
       imageTag: ${{ github.ref_name }}-testnet  # Append '-testnet' to the tag name
+      buildArgs: |
+        BABYLON_BUILD_OPTIONS=testnet
       docker_scan: true
