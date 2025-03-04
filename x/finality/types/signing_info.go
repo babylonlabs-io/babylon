@@ -15,6 +15,7 @@ func NewFinalityProviderSigningInfo(
 		FpBtcPk:             fpPk,
 		StartHeight:         startHeight,
 		MissedBlocksCounter: missedBlocksCounter,
+		JailedUntil:         time.Unix(0, 0),
 	}
 }
 

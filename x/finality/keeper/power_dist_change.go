@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"time"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/store/prefix"
@@ -130,7 +131,10 @@ func (k Keeper) handleActivatedFinalityProvider(ctx context.Context, fpPk *bbn.B
 	signingInfo, err := k.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if err == nil {
-		signingInfo.StartHeight = sdkCtx.BlockHeight()
+		// reset signing info
+		signingInfo.StartHeight = sdkCtx.HeaderInfo().Height
+		signingInfo.JailedUntil = time.Unix(0, 0)
+		signingInfo.MissedBlocksCounter = 0
 	} else if errors.Is(err, collections.ErrNotFound) {
 		signingInfo = ftypes.NewFinalityProviderSigningInfo(
 			fpPk,
