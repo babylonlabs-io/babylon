@@ -30,7 +30,7 @@ func NewTransferEndBlocker(
 }
 
 func (h *EnableTransfersEndBlock) EndBlocker(ctx sdk.Context) error {
-	if ctx.BlockHeight() == h.targetHeight {
+	if ctx.BlockHeight() == h.targetHeight && ctx.ChainID() == "TODO: Insert chain id closer to launch" {
 		// Log that we're executing the custom logic
 		ctx.Logger().Info(fmt.Sprintf("Executing custom EndBlocker logic at height %d", ctx.BlockHeight()))
 
