@@ -277,6 +277,7 @@ func (n *NodeConfig) BTCUndelegate(
 	stakingTxHash *chainhash.Hash,
 	spendStakeTx *wire.MsgTx,
 	spendStakeTxInclusionProof *bstypes.InclusionProof,
+	fundingTxs []*wire.MsgTx,
 ) {
 	n.LogActionF("undelegate by using signature on unbonding tx from delegator")
 
@@ -286,7 +287,15 @@ func (n *NodeConfig) BTCUndelegate(
 	inclusionProofHex, err := spendStakeTxInclusionProof.MarshalHex()
 	require.NoError(n.t, err)
 
-	cmd := []string{"babylond", "tx", "btcstaking", "btc-undelegate", stakingTxHash.String(), spendStakeTxHex, inclusionProofHex, "--from=val"}
+	fundingTxsHex := make([]string, len(fundingTxs))
+	for i, tx := range fundingTxs {
+		fundingTxBytes, err := bbn.SerializeBTCTx(tx)
+		require.NoError(n.t, err)
+		fundingTxsHex[i] = hex.EncodeToString(fundingTxBytes)
+	}
+	fundingTxsHexStr := strings.Join(fundingTxsHex, ",")
+
+	cmd := []string{"babylond", "tx", "btcstaking", "btc-undelegate", stakingTxHash.String(), spendStakeTxHex, inclusionProofHex, fundingTxsHexStr, "--from=val"}
 
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)

@@ -69,6 +69,7 @@ cache if an old BTC delegation receives inclusion proof
 - [#584](https://github.com/babylonlabs-io/babylon/pull/584) fix: Panic can be triggered in handling liveness
 - [#585](https://github.com/babylonlabs-io/babylon/pull/585) fix: Proposal vote extensions' byte limit
 - [#594](https://github.com/babylonlabs-io/babylon/pull/594) Refund tx to correct recipient
+- [#599](https://github.com/babylonlabs-io/babylon/pull/599) check staker signature in `BTCUndelegate`
 
 ## v1.0.0-rc6
 

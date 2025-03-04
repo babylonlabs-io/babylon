@@ -829,12 +829,13 @@ func FuzzBTCUndelegate(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
+		stakingTime := uint16(1000)
 		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, unbondingInfo, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			fpPK,
 			stakingValue,
-			1000,
+			stakingTime,
 			0,
 			0,
 			true,
@@ -856,11 +857,30 @@ func FuzzBTCUndelegate(f *testing.F) {
 		status := actualDel.GetStatus(btcTip, bsParams.CovenantQuorum)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 
+		unbondingTx := actualDel.MustGetUnbondingTx()
+		stakingTx := actualDel.MustGetStakingTx()
+
+		serializedUnbondingTxWithWitness, _ := datagen.AddWitnessToUnbondingTx(
+			t,
+			stakingTx.TxOut[0],
+			delSK,
+			covenantSKs,
+			bsParams.CovenantQuorum,
+			[]*btcec.PublicKey{fpPK},
+			stakingTime,
+			stakingValue,
+			unbondingTx,
+			h.Net,
+		)
+
 		msg := &types.MsgBTCUndelegate{
 			Signer:                        datagen.GenRandomAccount().Address,
 			StakingTxHash:                 stakingTxHash,
-			StakeSpendingTx:               actualDel.BtcUndelegation.UnbondingTx,
+			StakeSpendingTx:               serializedUnbondingTxWithWitness,
 			StakeSpendingTxInclusionProof: unbondingInfo.UnbondingTxInclusionProof,
+			FundingTransactions: [][]byte{
+				actualDel.StakingTx,
+			},
 		}
 
 		// ensure the system does not panick due to a bogus unbonding msg

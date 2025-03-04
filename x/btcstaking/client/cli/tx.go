@@ -428,8 +428,8 @@ func NewAddCovenantSigsCmd() *cobra.Command {
 
 func NewBTCUndelegateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "btc-undelegate [staking_tx_hash] [spend_stake_tx] [spend_stake_tx_inclusion_proof]",
-		Args:  cobra.ExactArgs(3),
+		Use:   "btc-undelegate [staking_tx_hash] [spend_stake_tx] [spend_stake_tx_inclusion_proof] [funding_tx1],[funding_tx2],...",
+		Args:  cobra.ExactArgs(4),
 		Short: "Add unbonding information about a BTC delegation identified by a given staking tx hash.",
 		Long: strings.TrimSpace(
 			`Add unbonding information about a BTC delegation identified by a given staking tx hash. Proof of inclusion proves stake was spent on BTC chain`, // TODO: example
@@ -453,11 +453,23 @@ func NewBTCUndelegateCmd() *cobra.Command {
 				return err
 			}
 
+			// parse funding txs
+			fundingTxs := [][]byte{}
+			for _, fundingTxHex := range strings.Split(args[3], ",") {
+				_, fundingTxBytes, err := bbn.NewBTCTxFromHex(fundingTxHex)
+				if err != nil {
+					return fmt.Errorf("invalid funding tx: %w", err)
+				}
+
+				fundingTxs = append(fundingTxs, fundingTxBytes)
+			}
+
 			msg := types.MsgBTCUndelegate{
 				Signer:                        clientCtx.FromAddress.String(),
 				StakingTxHash:                 stakingTxHash,
 				StakeSpendingTx:               bytes,
 				StakeSpendingTxInclusionProof: inclusionProof,
+				FundingTransactions:           fundingTxs,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
