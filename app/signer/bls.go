@@ -213,7 +213,7 @@ func (k *BlsKey) BlsPubKey() (bls12381.PublicKey, error) {
 // If customKeyPath is provided, will use that path for the BLS key file instead of the default.
 func LoadBlsSignerIfExists(homeDir string, customKeyPath string) checkpointingtypes.BlsSigner {
 	blsKeyFile := customKeyPath
-	if blsKeyFile == defaultBlsKeyFilePath {
+	if blsKeyFile == defaultBlsKeyFilePath || blsKeyFile == "" {
 		blsKeyFile = DefaultBlsKeyFile(homeDir)
 	}
 	blsPasswordFile := DefaultBlsPasswordFile(homeDir)
@@ -229,7 +229,7 @@ func LoadBlsSignerIfExists(homeDir string, customKeyPath string) checkpointingty
 // CreateBlsSigner creates a new BLS signer with the given password
 func CreateBlsSigner(homeDir string, password string, customKeyPath string) (checkpointingtypes.BlsSigner, error) {
 	blsKeyFile := customKeyPath
-	if blsKeyFile == defaultBlsKeyFilePath {
+	if blsKeyFile == defaultBlsKeyFilePath || blsKeyFile == "" {
 		blsKeyFile = DefaultBlsKeyFile(homeDir)
 	}
 	blsPasswordFile := DefaultBlsPasswordFile(homeDir)
