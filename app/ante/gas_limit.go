@@ -15,7 +15,7 @@ type GasLimitDecorator struct {
 	maxGasWantedPerTx uint64
 }
 
-func NewTxGasLimitDecorator() GasLimitDecorator {
+func NewGasLimitDecorator() GasLimitDecorator {
 	return GasLimitDecorator{
 		maxGasWantedPerTx: defaultMaxGasWantedPerTx,
 	}

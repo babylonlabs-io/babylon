@@ -53,7 +53,7 @@ func TestGasLimitDecorator(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := sdk.NewContext(nil, cmtproto.Header{}, tc.isCheckTx, nil)
-			decorator := ante.NewTxGasLimitDecorator()
+			decorator := ante.NewGasLimitDecorator()
 
 			tx := &mockFeeTx{gasWanted: tc.gasWanted}
 			_, err := decorator.AnteHandle(ctx, tx, tc.simulate, func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {

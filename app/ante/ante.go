@@ -63,7 +63,7 @@ func NewAnteHandler(
 	}
 
 	anteHandler := sdk.ChainAnteDecorators(
-		NewTxGasLimitDecorator(),
+		NewGasLimitDecorator(),
 		NewWrappedAnteHandler(authAnteHandler),
 		NewBtcValidationDecorator(btcConfig, btccKeeper),
 	)
