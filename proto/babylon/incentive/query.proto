@@ -34,6 +34,15 @@ service Query {
     option (google.api.http).get =
         "/babylon/incentive/delegators/{delegator_address}/withdraw_address";
   }
+
+  // DelegationRewards queries the delegation rewards of given finality provider
+  // and delegator addresses
+  rpc DelegationRewards(QueryDelegationRewardsRequest)
+      returns (QueryDelegationRewardsResponse) {
+    option (google.api.http).get =
+        "/babylon/incentive/finality_providers/{finality_provider_address}/"
+        "delegators/{delegator_address}/delegation_rewards";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -123,4 +132,33 @@ message QueryDelegatorWithdrawAddressResponse {
   // withdraw_address defines the delegator address to query for.
   string withdraw_address = 1
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// QueryDelegationRewardsRequest is the request type for the
+// Query/DelegationRewards RPC method.
+message QueryDelegationRewardsRequest {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // finality_provider_address defines the finality provider address of the
+  // delegation.
+  string finality_provider_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // delegator_address defines the delegator address to query for.
+  string delegator_address = 2
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// QueryDelegationRewardsResponse is the response type for the
+// Query/DelegationRewards RPC method.
+message QueryDelegationRewardsResponse {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // rewards are the delegation reward coins
+  // Can have multiple coin denoms
+  repeated cosmos.base.v1beta1.Coin rewards = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }
