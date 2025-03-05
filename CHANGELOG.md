@@ -92,6 +92,7 @@ cache if an old BTC delegation receives inclusion proof
 - [#599](https://github.com/babylonlabs-io/babylon/pull/599) check staker signature in `BTCUndelegate`
 - [#631](https://github.com/babylonlabs-io/babylon/pull/631) Ignore expired events
 if delegation was never activated
+- [#629](https://github.com/babylonlabs-io/babylon/pull/629) Allow OP_RETURN as slashing output
 
 ## v1.0.0-rc6
 
