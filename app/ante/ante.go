@@ -62,12 +62,21 @@ func NewAnteHandler(
 		panic(err)
 	}
 
-	anteHandler := sdk.ChainAnteDecorators(
-		NewWrappedAnteHandler(authAnteHandler),
-		NewBtcValidationDecorator(btcConfig, btccKeeper),
-	)
+	//app handler for internal messages
+	appHandler := NewAppAnteHandler(accountKeeper)
 
-	return anteHandler
+	// handler that branches between internal and normal messages
+	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, err error) {
+		if InternalInjectedMsg(tx.GetMsgs()) {
+			return appHandler.appInjectedMsgAnteHandle(ctx, tx, simulate)
+		}
+
+		// normal path
+		return sdk.ChainAnteDecorators(
+			NewWrappedAnteHandler(authAnteHandler),
+			NewBtcValidationDecorator(btcConfig, btccKeeper),
+		)(ctx, tx, simulate)
+	}
 }
 
 // WrappedAnteHandler is the wrapped AnteHandler that implements the `AnteDecorator` interface, which has a single function `AnteHandle`.
