@@ -134,21 +134,15 @@ func getPossibleStakingOutput(
 // Parameters:
 //   - stakingTx: The staking transaction from which the staking output is to be used for slashing.
 //   - stakingOutputIdx: The index of the staking output in the staking transaction.
-//   - slashingAddress: The Bitcoin address to which the slashed funds will be sent.
 //   - stakerPk: public key of the staker i.e the btc holder who can spend staking output after lock time
-//   - slashingChangeLockTime: lock time which will be used on slashing transaction change output
+//   - slashChangeLockTime: lock time for change output in slashing transaction
 //   - fee: The transaction fee to be paid.
 //   - slashingRate: The rate at which the staked funds will be slashed, expressed as a decimal.
-//   - script: The staking script to which the staking output should commit.
 //   - net: The network on which transactions should take place (e.g., mainnet, testnet).
 //
 // Returns:
 //   - *wire.MsgTx: The constructed slashing transaction without script signature or witness.
 //   - error: An error if any validation or construction step fails.
-//
-// This function validates the same conditions as BuildSlashingTxFromStakingTx and additionally checks whether the
-// staking output at the specified index commits to the provided script and whether the provided script is a valid
-// staking script for the given network. If any of these additional validations fail, an error is returned.
 func BuildSlashingTxFromStakingTxStrict(
 	stakingTx *wire.MsgTx,
 	stakingOutputIdx uint32,
@@ -413,7 +407,6 @@ func validateSlashingTx(
 
 // CheckSlashingTxMatchFundingTx validates all relevant data of slashing and funding transaction.
 // - both transactions are valid from pov of BTC rules
-// - funding transaction has output committing to the provided script
 // - slashing transaction is valid
 // - slashing transaction input hash is pointing to funding transaction hash
 // - slashing transaction input index is pointing to funding transaction output committing to the script
