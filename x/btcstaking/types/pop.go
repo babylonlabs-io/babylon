@@ -213,6 +213,12 @@ func VerifyBIP322SigPop(
 	if err := bip322.Verify(msg, witness, btcAddress, net); err != nil {
 		fmt.Printf("Error: %v\n", err)
 		fmt.Printf("error type: %T\n", err)
+		if txErr, ok := err.(txscript.Error); ok {
+			fmt.Printf("txscript error code: %v\n", txErr.ErrorCode)
+			fmt.Printf("txscript error description: %s\n", txErr.Description)
+		} else {
+			fmt.Println("Error is not of type txscript.Error")
+		}
 		return err
 	}
 
@@ -271,6 +277,7 @@ func VerifyBIP322(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubK
 // 1. verify whether bip322 pop signature where msg=pop.BabylonSig
 // 2. verify(sig=pop.BabylonSig, pubkey=babylonPK, msg=bip340PK)?
 func (pop *ProofOfPossessionBTC) VerifyBIP322(addr sdk.AccAddress, bip340PK *bbn.BIP340PubKey, net *chaincfg.Params) error {
+	fmt.Println("addr.String()", addr.String())
 	msg := tmhash.Sum(addr.Bytes())
 	if err := VerifyBIP322(pop.BtcSigType, pop.BtcSig, bip340PK, msg, net); err != nil {
 		return fmt.Errorf("failed to verify possession of babylon sig by the BTC key: %w", err)
