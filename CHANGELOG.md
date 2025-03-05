@@ -74,6 +74,8 @@ cache if an old BTC delegation receives inclusion proof
 - [#585](https://github.com/babylonlabs-io/babylon/pull/585) fix: Proposal vote extensions' byte limit
 - [#594](https://github.com/babylonlabs-io/babylon/pull/594) Refund tx to correct recipient
 - [#599](https://github.com/babylonlabs-io/babylon/pull/599) check staker signature in `BTCUndelegate`
+- [#631](https://github.com/babylonlabs-io/babylon/pull/631) Ignore expired events
+if delegation was never activated
 
 ## v1.0.0-rc6
 

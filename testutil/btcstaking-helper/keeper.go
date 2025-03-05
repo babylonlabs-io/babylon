@@ -69,13 +69,29 @@ func NewHelper(
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
 	iKeeper.EXPECT().BtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	iKeeper.EXPECT().BtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	iKeeper.EXPECT().FpSlashed(gomock.Any(), gomock.Any()).AnyTimes()
 
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(timestampedEpoch).AnyTimes()
+
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, iKeeper)
+}
+
+func NewHelperNoMocksCalls(
+	t testing.TB,
+	btclcKeeper *types.MockBTCLightClientKeeper,
+	btccKeeper *types.MockBtcCheckpointKeeper,
+) *Helper {
+	ctrl := gomock.NewController(t)
+
+	// mock refundable messages
+	iKeeper := ftypes.NewMockIncentiveKeeper(ctrl)
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+
+	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 
 	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, iKeeper)
 }
@@ -222,8 +238,8 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 			fp.CommissionInfo.MaxRate,
 			fp.CommissionInfo.MaxChangeRate,
 		),
-		BtcPk:      fp.BtcPk,
-		Pop:        fp.Pop,
+		BtcPk: fp.BtcPk,
+		Pop:   fp.Pop,
 	}
 
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
