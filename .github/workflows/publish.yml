@@ -3,10 +3,11 @@ name: docker_publish
 on:
   push:
     branches:
-    - 'main'
-    - 'dev'
+      - 'main'
+      - 'dev'
+      - 'release/v1.x'
     tags:
-    - '*'
+      - '*'
 
 jobs:
   lint_test:
