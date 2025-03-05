@@ -211,7 +211,9 @@ func VerifyBIP322SigPop(
 	fmt.Printf("btcAddress hex: %x\n", btcAddress.String())
 
 	if err := bip322.Verify(msg, witness, btcAddress, net); err != nil {
-		fmt.Printf("error type: %T\n", err)
+		if txErr, ok := err.(*txscript.Error); ok {
+			fmt.Printf("Error code: %v, Description: %s\n", txErr.ErrorCode, txErr.Description)
+		}
 		return err
 	}
 
