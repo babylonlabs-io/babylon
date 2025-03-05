@@ -89,7 +89,7 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 
 				ctx = MaybeProduceBlock(t, r, app, ctx)
 
-				for covI, _ := range covenantSKs {
+				for covI := range covenantSKs {
 					_, err = msgSrvrBtcStk.AddCovenantSigs(ctx, delCreationInfo.MsgAddCovenantSigs[covI])
 					require.NoError(t, err)
 
@@ -1566,4 +1566,66 @@ func createAndCommitFinalityProvider(
 	require.NoError(t, err)
 	_, err = finalityMsgServer.CommitPubRandList(ctx, msgCommitPubRandList)
 	require.NoError(t, err)
+}
+
+func TestIgnoreExpiredEventIfThereIsNoQuorum(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
+	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper)
+
+	// set all parameters
+	h.GenAndApplyParams(r)
+
+	// generate and insert new finality provider
+	_, fpPK, _ := h.CreateFinalityProvider(r)
+
+	// generate and insert new BTC delegation
+	stakingValue := int64(2 * 10e8)
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	stakingParams := h.BTCStakingKeeper.GetParamsWithVersion(h.Ctx).Params
+	expectedStakingTxHash, _, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+		r,
+		delSK,
+		fpPK,
+		stakingValue,
+		1000,
+		0,
+		0,
+		false,
+		false,
+		10,
+		30,
+	)
+	h.NoError(err)
+
+	/*
+		at this point, there should be 1 event that BTC delegation
+		will become expired at end height - min_unbonding_time
+	*/
+	// there exists no event at the current BTC tip
+	btcTip := &btclctypes.BTCHeaderInfo{Height: 30}
+	events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
+	require.Len(t, events, 0)
+
+	// the BTC delegation will be expired (unbonded) at end height - unbonding_time
+	unbondedHeight := actualDel.EndHeight - stakingParams.UnbondingTimeBlocks
+	events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
+	require.Len(t, events, 1)
+	btcDelStateUpdate := events[0].GetBtcDelStateUpdate()
+	require.NotNil(t, btcDelStateUpdate)
+	require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
+	require.Equal(t, btcstktypes.BTCDelegationStatus_EXPIRED, btcDelStateUpdate.NewState)
+
+	// set it to the future
+	btcTip = &btclctypes.BTCHeaderInfo{Height: 1000}
+	// k.IncentiveKeeper.BtcDelegationUnbonded(ctx, fp, del, sats) won't be called
+	// as delegation does not have covenant quorum
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
+	h.BeginBlocker()
 }

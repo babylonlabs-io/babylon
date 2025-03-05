@@ -135,6 +135,20 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetParams(ctx interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParams", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetParams), ctx)
 }
 
+// GetParamsByVersion mocks base method.
+func (m *MockBTCStakingKeeper) GetParamsByVersion(ctx context.Context, v uint32) *types.Params {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetParamsByVersion", ctx, v)
+	ret0, _ := ret[0].(*types.Params)
+	return ret0
+}
+
+// GetParamsByVersion indicates an expected call of GetParamsByVersion.
+func (mr *MockBTCStakingKeeperMockRecorder) GetParamsByVersion(ctx, v interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParamsByVersion", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetParamsByVersion), ctx, v)
+}
+
 // HasFinalityProvider mocks base method.
 func (m *MockBTCStakingKeeper) HasFinalityProvider(ctx context.Context, fpBTCPK []byte) bool {
 	m.ctrl.T.Helper()
@@ -319,20 +333,6 @@ func (m *MockIncentiveKeeper) BtcDelegationUnbonded(ctx context.Context, fp, del
 func (mr *MockIncentiveKeeperMockRecorder) BtcDelegationUnbonded(ctx, fp, del, sat interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BtcDelegationUnbonded", reflect.TypeOf((*MockIncentiveKeeper)(nil).BtcDelegationUnbonded), ctx, fp, del, sat)
-}
-
-// FpSlashed mocks base method.
-func (m *MockIncentiveKeeper) FpSlashed(ctx context.Context, fp types1.AccAddress) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FpSlashed", ctx, fp)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// FpSlashed indicates an expected call of FpSlashed.
-func (mr *MockIncentiveKeeperMockRecorder) FpSlashed(ctx, fp interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FpSlashed", reflect.TypeOf((*MockIncentiveKeeper)(nil).FpSlashed), ctx, fp)
 }
 
 // IndexRefundableMsg mocks base method.
