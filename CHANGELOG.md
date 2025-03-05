@@ -74,6 +74,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 - [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
 invocation
 - [#567](https://github.com/babylonlabs-io/babylon/pull/567) Add check for height overflow in `CommitPubRandList` in `x/finality` module
+- [#620](https://github.com/babylonlabs-io/babylon/pull/620) fix: Incorrect set of JailUntil after unjailing
 
 ### Bug fixes
 
