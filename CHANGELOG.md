@@ -93,6 +93,8 @@ cache if an old BTC delegation receives inclusion proof
 - [#631](https://github.com/babylonlabs-io/babylon/pull/631) Ignore expired events
 if delegation was never activated
 - [#629](https://github.com/babylonlabs-io/babylon/pull/629) Allow OP_RETURN as slashing output
+- [#597](https://github.com/babylonlabs-io/babylon/pull/597) fix: Expired and Unbonding delegation
+in the same BTC block could lead to a panic and chain halt
 
 ## v1.0.0-rc6
 
