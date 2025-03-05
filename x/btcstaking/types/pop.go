@@ -177,14 +177,17 @@ func VerifyBIP322SigPop(
 	if len(msg) == 0 || len(address) == 0 || len(signature) == 0 || len(pubKeyNoCoord) == 0 {
 		return fmt.Errorf("cannot verify bip322 signature. One of the required parameters is empty")
 	}
+	fmt.Println("--------------------------------VERIFY BIP322 POP--------------------------------")
 
 	witness, err := bip322.SimpleSigToWitness(signature)
 	if err != nil {
+		fmt.Println("error in SimpleSigToWitness", err)
 		return err
 	}
 
 	btcAddress, err := btcutil.DecodeAddress(address, net)
 	if err != nil {
+		fmt.Println("error in DecodeAddress", err)
 		return err
 	}
 
@@ -199,20 +202,24 @@ func VerifyBIP322SigPop(
 	// used in bip322 signature verification.
 	stakerKeyMatchesBtcAddressFn, err := isSupportedAddressAndWitness(btcAddress, witness, net)
 	if err != nil {
+		fmt.Println("error in isSupportedAddressAndWitness", err)
 		return err
 	}
 
 	if err := bip322.Verify(msg, witness, btcAddress, net); err != nil {
+		fmt.Println("error in Verify", err)
 		return err
 	}
 
 	key, err := bbn.NewBIP340PubKey(pubKeyNoCoord)
 	if err != nil {
+		fmt.Println("error in NewBIP340PubKey", err)
 		return err
 	}
 
 	// rule 3: verify bip322Sig.Address corresponds to bip340PK
 	if err := stakerKeyMatchesBtcAddressFn(key); err != nil {
+		fmt.Println("error in stakerKeyMatchesBtcAddressFn", err)
 		return err
 	}
 
@@ -224,16 +231,19 @@ func VerifyBIP322SigPop(
 // verify whether bip322 pop signature where msg=signedMsg
 func VerifyBIP322(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKey, signedMsg []byte, net *chaincfg.Params) error {
 	if sigType != BTCSigType_BIP322 {
+		fmt.Println("error in BTCSigType_BIP322", sigType)
 		return fmt.Errorf("the Bitcoin signature in this proof of possession is not using BIP-322 encoding")
 	}
 	// unmarshal pop.BtcSig to bip322Sig
 	var bip322Sig BIP322Sig
 	if err := bip322Sig.Unmarshal(btcSigRaw); err != nil {
+		fmt.Println("error in Unmarshal bip322Sig", err)
 		return err
 	}
 
 	btcKeyBytes, err := bip340PK.Marshal()
 	if err != nil {
+		fmt.Println("error in Marshal btcKeyBytes", err)
 		return err
 	}
 
