@@ -110,7 +110,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 		require.NoError(t, err)
 
 		// Case 6: commit a pubrand list that overflows when adding startHeight + numPubRand
-		overflowStartHeight := math.MaxUint64 - datagen.RandomInt(r, 5) 
+		overflowStartHeight := math.MaxUint64 - datagen.RandomInt(r, 5)
 		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, overflowStartHeight, numPubRand)
 		require.NoError(t, err)
 		_, err = ms.CommitPubRandList(ctx, msg)
@@ -664,8 +664,8 @@ func TestBtcDelegationRewards(t *testing.T) {
 	startHeight := uint64(0)
 	h.FpAddPubRand(r, fp1SK, startHeight)
 
-	_, fp1Del1, _ := h.CreateActiveBtcDelegation(r, covenantSKs, fp1PK, stakingValueFp1Del1, stakingTime, btcLightClientTipHeight)
-	_, fp1Del2, _ := h.CreateActiveBtcDelegation(r, covenantSKs, fp1PK, stakingValueFp1Del2, stakingTime, btcLightClientTipHeight)
+	_, _, fp1Del1, _ := h.CreateActiveBtcDelegation(r, covenantSKs, fp1PK, stakingValueFp1Del1, stakingTime, btcLightClientTipHeight)
+	_, _, fp1Del2, _ := h.CreateActiveBtcDelegation(r, covenantSKs, fp1PK, stakingValueFp1Del2, stakingTime, btcLightClientTipHeight)
 
 	// process the events of the activated BTC delegations
 	h.BTCStakingKeeper.IndexBTCHeight(h.Ctx)
@@ -700,13 +700,13 @@ func TestBtcDelegationRewards(t *testing.T) {
 		Address: fp1Del1.Address().String(),
 	})
 	h.NoError(err)
-	h.Equal(fp1Del1Rwd.RewardGauges[ictvtypes.BTC_DELEGATION.String()].Coins.String(), rwdFp1Del1.String())
+	h.Equal(fp1Del1Rwd.RewardGauges[ictvtypes.BTC_STAKER.String()].Coins.String(), rwdFp1Del1.String())
 
 	fp1Del2Rwd, err := h.IncentivesKeeper.RewardGauges(h.Ctx, &ictvtypes.QueryRewardGaugesRequest{
 		Address: fp1Del2.Address().String(),
 	})
 	h.NoError(err)
-	h.Equal(fp1Del2Rwd.RewardGauges[ictvtypes.BTC_DELEGATION.String()].Coins.String(), rwdFp1Del2.String())
+	h.Equal(fp1Del2Rwd.RewardGauges[ictvtypes.BTC_STAKER.String()].Coins.String(), rwdFp1Del2.String())
 }
 
 func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
@@ -737,7 +737,7 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	h.FpAddPubRand(r, fpSK, startHeight)
 	btcLightClientTipHeight := uint32(30)
 
-	stakingTxHash, del, unbondingInfo := h.CreateActiveBtcDelegation(r, covenantSKs, fpPK, stakingValue, stakingTime, btcLightClientTipHeight)
+	delSK, stakingTxHash, del, unbondingInfo := h.CreateActiveBtcDelegation(r, covenantSKs, fpPK, stakingValue, stakingTime, btcLightClientTipHeight)
 
 	// process the events as active btc delegation
 	h.BTCStakingKeeper.IndexBTCHeight(h.Ctx)
@@ -749,7 +749,25 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	btcLightClientTipHeight = uint32(45)
 	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: btcLightClientTipHeight}).AnyTimes()
 
-	h.BtcUndelegate(stakingTxHash, del, unbondingInfo, btcLightClientTipHeight)
+	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+
+	unbondingTx := del.MustGetUnbondingTx()
+	stakingTx := del.MustGetStakingTx()
+
+	serializedUnbondingTxWithWitness, _ := datagen.AddWitnessToUnbondingTx(
+		t,
+		stakingTx.TxOut[0],
+		delSK,
+		covenantSKs,
+		bsParams.CovenantQuorum,
+		[]*btcec.PublicKey{fpPK},
+		stakingTime,
+		stakingValue,
+		unbondingTx,
+		h.Net,
+	)
+
+	h.BtcUndelegate(stakingTxHash, del, unbondingInfo, serializedUnbondingTxWithWitness, btcLightClientTipHeight)
 
 	// increases one bbn block to get the voting power distribution cache
 	// from the previous block

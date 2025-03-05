@@ -61,7 +61,13 @@ func IncentiveKeeper(t testing.TB, bankKeeper types.BankKeeper, accountKeeper ty
 	return IncentiveKeeperWithStoreKey(t, nil, bankKeeper, accountKeeper, epochingKeeper)
 }
 
-func IncentiveKeeperWithStoreKey(t testing.TB, storeKey *storetypes.KVStoreKey, bankKeeper types.BankKeeper, accountKeeper types.AccountKeeper, epochingKeeper types.EpochingKeeper) (*keeper.Keeper, sdk.Context) {
+func IncentiveKeeperWithStoreKey(
+	t testing.TB,
+	storeKey *storetypes.KVStoreKey,
+	bankKeeper types.BankKeeper,
+	accountKeeper types.AccountKeeper,
+	epochingKeeper types.EpochingKeeper,
+) (*keeper.Keeper, sdk.Context) {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 

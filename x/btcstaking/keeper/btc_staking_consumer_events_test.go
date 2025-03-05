@@ -201,12 +201,13 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
+		stakingTime := uint16(1000)
 		stakingTxHash, msgCreateBTCDel, actualDel, _, _, unbondingInfo, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			[]*btcec.PublicKey{consumerFpPK, babylonFpPK},
 			stakingValue,
-			1000,
+			stakingTime,
 			0,
 			0,
 			false,
@@ -226,8 +227,6 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		status := actualDel.GetStatus(btcTip, bsParams.CovenantQuorum)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 
-		// construct unbonding msg
-		h.NoError(err)
 		msg := &types.MsgBTCUndelegate{
 			Signer:                        datagen.GenRandomAccount().Address,
 			StakingTxHash:                 stakingTxHash,
@@ -242,6 +241,32 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		h.Error(err)
 
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+
+		unbondingTx := actualDel.MustGetUnbondingTx()
+		stakingTx := actualDel.MustGetStakingTx()
+
+		serializedUnbondingTxWithWitness, _ := datagen.AddWitnessToUnbondingTx(
+			t,
+			stakingTx.TxOut[0],
+			delSK,
+			covenantSKs,
+			bsParams.CovenantQuorum,
+			[]*btcec.PublicKey{consumerFpPK, babylonFpPK},
+			stakingTime,
+			stakingValue,
+			unbondingTx,
+			h.Net,
+		)
+
+		msg = &types.MsgBTCUndelegate{
+			Signer:                        datagen.GenRandomAccount().Address,
+			StakingTxHash:                 stakingTxHash,
+			StakeSpendingTx:               serializedUnbondingTxWithWitness,
+			StakeSpendingTxInclusionProof: unbondingInfo.UnbondingTxInclusionProof,
+			FundingTransactions: [][]byte{
+				actualDel.StakingTx,
+			},
+		}
 
 		// unbond
 		_, err = h.MsgServer.BTCUndelegate(h.Ctx, msg)

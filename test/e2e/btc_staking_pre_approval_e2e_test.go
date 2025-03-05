@@ -403,7 +403,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	// ensure BTC delegation has received rewards after the block is finalised
 	btcDelRewardGauges, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
 	s.NoError(err)
-	btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTC_DELEGATION.String()]
+	btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTC_STAKER.String()]
 	s.True(ok)
 	s.True(btcDelRewardGauge.Coins.IsAllPositive())
 	s.Require().Len(btcDelRewardGauge.Coins, 1)
@@ -417,7 +417,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4WithdrawReward() {
 	s.NoError(err)
 
 	n.WithdrawRewardCheckingBalances(itypes.FINALITY_PROVIDER.String(), s.cacheFP.Addr)
-	n.WithdrawRewardCheckingBalances(itypes.BTC_DELEGATION.String(), s.cacheFP.Addr)
+	n.WithdrawRewardCheckingBalances(itypes.BTC_STAKER.String(), s.cacheFP.Addr)
 }
 
 // Test5SubmitStakerUnbonding is an end-to-end test for user unbonding
@@ -448,9 +448,20 @@ func (s *BTCStakingPreApprovalTestSuite) Test5SubmitStakerUnbonding() {
 	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
 	s.NoError(err)
 
-	unbondingTx := activeDel.BtcUndelegation.UnbondingTx
-	unbondingTxMsg, err := bbn.NewBTCTxFromBytes(unbondingTx)
-	s.NoError(err)
+	unbondingTx := activeDel.MustGetUnbondingTx()
+
+	_, unbondingTxMsg := datagen.AddWitnessToUnbondingTx(
+		s.T(),
+		stakingMsgTx.TxOut[activeDel.StakingOutputIdx],
+		s.delBTCSK,
+		s.covenantSKs,
+		s.covenantQuorum,
+		[]*btcec.PublicKey{s.cacheFP.BtcPk.MustToBTCPK()},
+		uint16(activeDel.GetStakingTime()),
+		int64(activeDel.TotalSat),
+		unbondingTx,
+		s.net,
+	)
 
 	blockWithUnbondingTx := datagen.CreateBlockWithTransaction(s.r, currentBtcTip.Header.ToBlockHeader(), unbondingTxMsg)
 	nonValidatorNode.InsertHeader(&blockWithUnbondingTx.HeaderBytes)
@@ -462,6 +473,9 @@ func (s *BTCStakingPreApprovalTestSuite) Test5SubmitStakerUnbonding() {
 			&stakingTxHash,
 			unbondingTxMsg,
 			inclusionProof,
+			[]*wire.MsgTx{
+				stakingMsgTx,
+			},
 		)
 		// wait for a block so that above txs take effect
 		nonValidatorNode.WaitForNextBlock()

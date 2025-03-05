@@ -7,8 +7,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	babylonApp "github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/test/replay"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
@@ -18,7 +16,10 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	babylonApp "github.com/babylonlabs-io/babylon/app"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/test/replay"
+
 	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -238,7 +239,7 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 
 				ctx = MaybeProduceBlock(t, r, app, ctx)
 
-				for covI, _ := range covenantSKs {
+				for covI := range covenantSKs {
 					_, err = msgSrvrBtcStk.AddCovenantSigs(ctx, delCreationInfo.MsgAddCovenantSigs[covI])
 					require.NoError(t, err)
 
@@ -924,6 +925,9 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		h.NoError(err)
 		require.False(t, fpBeforeJailing.IsJailed())
 		require.Equal(t, uint64(stakingValue), h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
+		signInfoBeforeJail, err := h.FinalityKeeper.FinalityProviderSigningTracker.Get(h.Ctx, fp.BtcPk.MustMarshal())
+		require.NoError(t, err)
+		require.True(t, signInfoBeforeJail.JailedUntil.Equal(time.Unix(0, 0)))
 
 		// try unjail fp that is not jailed, should expect error
 		err = h.BTCStakingKeeper.UnjailFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
@@ -935,6 +939,13 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		*/
 		err = h.BTCStakingKeeper.JailFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
 		h.NoError(err)
+		// update signing info
+		signInfoAfterJail, err := h.FinalityKeeper.FinalityProviderSigningTracker.Get(h.Ctx, fp.BtcPk.MustMarshal())
+		require.NoError(t, err)
+		signInfoAfterJail.JailedUntil = time.Now()
+		signInfoAfterJail.MissedBlocksCounter = 0
+		err = h.FinalityKeeper.FinalityProviderSigningTracker.Set(h.Ctx, fp.BtcPk.MustMarshal(), signInfoAfterJail)
+		require.NoError(t, err)
 
 		// ensure the jailed label is set
 		fpAfterJailing, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
@@ -966,8 +977,13 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		h.SetCtxHeight(babylonHeight)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
 		h.BeginBlocker()
-		// ensure the finality provider does not have voting power anymore
+		// ensure the finality provider has regained voting power
 		require.Equal(t, uint64(stakingValue), h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
+		signInfoAfterUnjail, err := h.FinalityKeeper.FinalityProviderSigningTracker.Get(h.Ctx, fp.BtcPk.MustMarshal())
+		require.NoError(t, err)
+		require.Equal(t, babylonHeight, uint64(signInfoAfterUnjail.StartHeight))
+		require.True(t, signInfoAfterUnjail.JailedUntil.Equal(time.Unix(0, 0)))
+		require.Equal(t, int64(0), signInfoAfterUnjail.MissedBlocksCounter)
 	})
 }
 
@@ -1706,4 +1722,66 @@ func createAndCommitFinalityProvider(
 	require.NoError(t, err)
 	_, err = finalityMsgServer.CommitPubRandList(ctx, msgCommitPubRandList)
 	require.NoError(t, err)
+}
+
+func TestIgnoreExpiredEventIfThereIsNoQuorum(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
+	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper)
+
+	// set all parameters
+	h.GenAndApplyParams(r)
+
+	// generate and insert new finality provider
+	_, fpPK, _ := h.CreateFinalityProvider(r)
+
+	// generate and insert new BTC delegation
+	stakingValue := int64(2 * 10e8)
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	stakingParams := h.BTCStakingKeeper.GetParamsWithVersion(h.Ctx).Params
+	expectedStakingTxHash, _, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+		r,
+		delSK,
+		[]*btcec.PublicKey{fpPK},
+		stakingValue,
+		1000,
+		0,
+		0,
+		false,
+		false,
+		10,
+		30,
+	)
+	h.NoError(err)
+
+	/*
+		at this point, there should be 1 event that BTC delegation
+		will become expired at end height - min_unbonding_time
+	*/
+	// there exists no event at the current BTC tip
+	btcTip := &btclctypes.BTCHeaderInfo{Height: 30}
+	events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
+	require.Len(t, events, 0)
+
+	// the BTC delegation will be expired (unbonded) at end height - unbonding_time
+	unbondedHeight := actualDel.EndHeight - stakingParams.UnbondingTimeBlocks
+	events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
+	require.Len(t, events, 1)
+	btcDelStateUpdate := events[0].GetBtcDelStateUpdate()
+	require.NotNil(t, btcDelStateUpdate)
+	require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
+	require.Equal(t, btcstktypes.BTCDelegationStatus_EXPIRED, btcDelStateUpdate.NewState)
+
+	// set it to the future
+	btcTip = &btclctypes.BTCHeaderInfo{Height: 1000}
+	// k.IncentiveKeeper.BtcDelegationUnbonded(ctx, fp, del, sats) won't be called
+	// as delegation does not have covenant quorum
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
+	h.BeginBlocker()
 }

@@ -11,6 +11,7 @@ import (
 
 type BTCStakingKeeper interface {
 	GetParams(ctx context.Context) bstypes.Params
+	GetParamsByVersion(ctx context.Context, v uint32) *bstypes.Params
 	GetCurrentBTCHeight(ctx context.Context) uint32
 	GetBTCHeightAtBabylonHeight(ctx context.Context, babylonHeight uint64) uint32
 	GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*bstypes.FinalityProvider, error)
