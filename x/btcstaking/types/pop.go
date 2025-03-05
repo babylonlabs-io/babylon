@@ -206,8 +206,12 @@ func VerifyBIP322SigPop(
 		return err
 	}
 
+	fmt.Printf("msg hex: %x\n", msg)
+	fmt.Printf("witness hex: %x\n", witness)
+	fmt.Printf("btcAddress hex: %x\n", btcAddress)
+
 	if err := bip322.Verify(msg, witness, btcAddress, net); err != nil {
-		fmt.Println("error in Verify", err)
+		fmt.Printf("error in Verify: %+v\n", err)
 		return err
 	}
 
