@@ -250,6 +250,9 @@ message MsgBTCUndelegate {
   // spend_spending_tx_inclusion_proof is the proof of inclusion of the
   // stake_spending_tx in the BTC chain
   InclusionProof stake_spending_tx_inclusion_proof = 4;
+  // funding_transactions is a list of bitcoin transactions that funds the stake_spending_tx
+  // i.e. they are inputs of the stake_spending_tx
+  repeated bytes funding_transactions = 5;
 }
 // MsgBTCUndelegateResponse is the response for MsgBTCUndelegate
 message MsgBTCUndelegateResponse {}
