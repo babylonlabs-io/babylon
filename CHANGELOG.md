@@ -66,6 +66,7 @@ check of rewards
 - [#589](https://github.com/babylonlabs-io/babylon/pull/589) Rename `btc_delegation` stakeholder type to `btc_staker` in `x/incentive` module
 - [#590](https://github.com/babylonlabs-io/babylon/pull/590) Add `DelegationRewards` query in `x/incentive` module
 - [#624](https://github.com/babylonlabs-io/babylon/pull/624) Make keeper's collections private in `x/incentive` module
+- [#633](https://github.com/babylonlabs-io/babylon/pull/633) Fix swagger
 
 ### State Machine Breaking
 
