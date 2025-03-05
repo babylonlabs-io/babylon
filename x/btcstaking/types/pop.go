@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"github.com/babylonlabs-io/babylon/crypto/bip322"
@@ -211,9 +212,12 @@ func VerifyBIP322SigPop(
 	fmt.Printf("btcAddress hex: %x\n", btcAddress.String())
 
 	if err := bip322.Verify(msg, witness, btcAddress, net); err != nil {
-		if txErr, ok := err.(*txscript.Error); ok {
+		var txErr *txscript.Error
+		if errors.As(err, &txErr) {
 			fmt.Printf("Error code: %v, Description: %s\n", txErr.ErrorCode, txErr.Description)
 		}
+		unwrappedErr := errors.Unwrap(err)
+		fmt.Printf("Unwrapped error type: %T\n", unwrappedErr)
 		return err
 	}
 
