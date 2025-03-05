@@ -94,6 +94,10 @@ func buildSlashingTxFromOutpoint(
 
 	// Verify that the none of the outputs is a dust output.
 	for _, out := range tx.TxOut {
+		if isOPReturn(out.PkScript) {
+			continue
+		}
+
 		if mempool.IsDust(out, mempool.DefaultMinRelayTxFee) {
 			return nil, ErrDustOutputFound
 		}
@@ -310,6 +314,10 @@ func CheckPreSignedSlashingTxSanity(tx *wire.MsgTx) error {
 	)
 }
 
+func isOPReturn(script []byte) bool {
+	return len(script) > 0 && script[0] == txscript.OP_RETURN
+}
+
 // validateSlashingTx performs basic checks on a slashing transaction:
 // - the slashing transaction is not nil.
 // - the slashing transaction has exactly one input.
@@ -366,6 +374,11 @@ func validateSlashingTx(
 
 	// Verify that the none of the outputs is a dust output.
 	for _, out := range slashingTx.TxOut {
+		// OP_RETURN outputs can be dust and considered standard
+		if isOPReturn(out.PkScript) {
+			continue
+		}
+
 		if mempool.IsDust(out, mempool.DefaultMinRelayTxFee) {
 			return ErrDustOutputFound
 		}

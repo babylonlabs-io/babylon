@@ -599,3 +599,68 @@ func TestCheckPreSignedTxSanity(t *testing.T) {
 		})
 	}
 }
+
+func TestAllowSlashingOutputToBeOPReturn(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	// we do not care for inputs in staking tx
+	stakingTx := wire.NewMsgTx(2)
+	bogusInputHashBytes := [32]byte{}
+	bogusInputHash, _ := chainhash.NewHash(bogusInputHashBytes[:])
+	stakingTx.AddTxIn(
+		wire.NewTxIn(wire.NewOutPoint(bogusInputHash, 0), nil, nil),
+	)
+
+	stakingOutputIdx := 0
+	slashingLockTime := uint16(r.Intn(1000) + 1)
+	sd := genValidStakingScriptData(t, r)
+
+	minStakingValue := 500000
+	minFee := 2000
+
+	info, err := btcstaking.BuildStakingInfo(
+		sd.StakerKey,
+		[]*btcec.PublicKey{sd.FinalityProviderKey},
+		[]*btcec.PublicKey{sd.CovenantKey},
+		1,
+		sd.StakingTime,
+		btcutil.Amount(r.Intn(5000)+minStakingValue),
+		&chaincfg.MainNetParams,
+	)
+
+	require.NoError(t, err)
+	stakingTx.AddTxOut(info.StakingOutput)
+
+	// super small slashing rate, slashing output wil be 50sats
+	slashingRate := sdkmath.LegacyMustNewDecFromStr("0.0001")
+
+	opReturnSlashingScript, err := txscript.NullDataScript([]byte("hello"))
+	require.NoError(t, err)
+
+	// Construct slashing transaction using the provided parameters
+	slashingTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
+		stakingTx,
+		uint32(stakingOutputIdx),
+		opReturnSlashingScript,
+		sd.StakerKey,
+		slashingLockTime,
+		int64(minFee),
+		slashingRate,
+		&chaincfg.MainNetParams,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, slashingTx)
+
+	err = btcstaking.CheckSlashingTxMatchFundingTx(
+		slashingTx,
+		stakingTx,
+		uint32(stakingOutputIdx),
+		int64(minFee),
+		slashingRate,
+		opReturnSlashingScript,
+		sd.StakerKey,
+		slashingLockTime,
+		&chaincfg.MainNetParams,
+	)
+	require.NoError(t, err)
+}
