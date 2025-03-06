@@ -540,3 +540,57 @@ func TestCorrectParamsVersionIsUsed(t *testing.T) {
 	require.Len(t, fpView.BtcDelegatorDelegations[0].Dels, 1)
 	require.True(t, fpView.BtcDelegatorDelegations[0].Dels[0].Active)
 }
+
+func FuzzParamsVersions(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+		k, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+
+		qntParams := datagen.RandomInt(r, 120) + 1
+
+		paramsToSet := k.GetParams(ctx)
+		for i := uint32(0); i < uint32(qntParams); i++ {
+			paramsToSet.BtcActivationHeight += 1 + i
+			err := k.SetParams(ctx, paramsToSet)
+			require.NoError(t, err)
+		}
+
+		limit := (qntParams / 2) + 1
+		pagination := constructRequestWithLimit(r, limit)
+		req := types.QueryParamsVersionsRequest{
+			Pagination: pagination,
+		}
+
+		var (
+			err  error
+			resp *types.QueryParamsVersionsResponse
+		)
+
+		paramsFromQuery := make([]types.Params, 0)
+		for {
+			resp, err = k.ParamsVersions(ctx, &req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			for _, storedParams := range resp.Params {
+				paramsFromQuery = append(paramsFromQuery, storedParams.Params)
+			}
+
+			if len(resp.Params) != int(limit) || len(resp.Pagination.NextKey) == 0 {
+				break
+			}
+
+			pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
+			req = types.QueryParamsVersionsRequest{Pagination: pagination}
+		}
+
+		allParams := k.GetAllParams(ctx)
+
+		require.Equal(t, len(allParams), len(paramsFromQuery))
+		for i, paramFromQuery := range paramsFromQuery {
+			require.EqualValues(t, *allParams[i], paramFromQuery)
+		}
+	})
+}
