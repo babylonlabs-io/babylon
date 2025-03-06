@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	// RegularTxMaxPriority is the max priority for non-liveness-related message.
-	// This, the reserved priority range for protocol liveness-related messages is (RegularTxMaxPriority, MaxInt64]
+	// RegularTxMaxPriority is the max priority for transactions with regular messages.
+	// Thus, the reserved priority range for protocol liveness-related messages is (RegularTxMaxPriority, MaxInt64]
 	RegularTxMaxPriority = math.MaxInt64 - 1000
 	// LivenessTxPriority is the priority for protocol liveness-related messages.
-	// For the moment, is the same priority for all of these messages
+	// For the moment, the priority is the same for all of these messages
 	LivenessTxPriority = math.MaxInt64 - 100
 )
 
@@ -30,7 +30,7 @@ func NewPriorityDecorator() PriorityDecorator {
 
 // Assigns higher priority to protocol liveness-related transactions
 func (pd PriorityDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	// Cap priority for regular txs
+	// Cap priority for txs with regular messages
 	// Use higher priorities for liveness-related txs
 	priority := min(ctx.Priority(), RegularTxMaxPriority)
 
@@ -59,7 +59,7 @@ func isLivenessTx(tx sdk.Tx) bool {
 			// BTC staking finality
 			*ftypes.MsgCommitPubRandList,
 			*ftypes.MsgAddFinalitySig,
-			// PoS integration (Babylon side)
+			// PoS integration
 			*bstctypes.MsgRegisterConsumer:
 			return true
 		default:
