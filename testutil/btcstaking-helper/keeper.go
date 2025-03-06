@@ -84,6 +84,23 @@ func NewHelper(
 	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, iKeeper)
 }
 
+func NewHelperNoMocksCalls(
+	t testing.TB,
+	btclcKeeper *types.MockBTCLightClientKeeper,
+	btccKeeper *types.MockBtcCheckpointKeeper,
+) *Helper {
+	ctrl := gomock.NewController(t)
+
+	// mock refundable messages
+	iKeeper := ftypes.NewMockIncentiveKeeper(ctrl)
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+
+	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
+
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, iKeeper)
+}
+
 func NewHelperWithStoreAndIncentive(
 	t testing.TB,
 	db dbm.DB,

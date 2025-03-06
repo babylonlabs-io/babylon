@@ -67,6 +67,7 @@ check of rewards
 - [#590](https://github.com/babylonlabs-io/babylon/pull/590) Add `DelegationRewards` query in `x/incentive` module
 - [#624](https://github.com/babylonlabs-io/babylon/pull/624) Make keeper's collections private in `x/incentive` module
 - [#625](https://github.com/babylonlabs-io/babylon/pull/625) Add `GasLimit` decorator in ante handler
+- [#633](https://github.com/babylonlabs-io/babylon/pull/633) Fix swagger
 
 ### State Machine Breaking
 
@@ -91,6 +92,11 @@ cache if an old BTC delegation receives inclusion proof
 - [#585](https://github.com/babylonlabs-io/babylon/pull/585) fix: Proposal vote extensions' byte limit
 - [#594](https://github.com/babylonlabs-io/babylon/pull/594) Refund tx to correct recipient
 - [#599](https://github.com/babylonlabs-io/babylon/pull/599) check staker signature in `BTCUndelegate`
+- [#631](https://github.com/babylonlabs-io/babylon/pull/631) Ignore expired events
+if delegation was never activated
+- [#629](https://github.com/babylonlabs-io/babylon/pull/629) Allow OP_RETURN as slashing output
+- [#597](https://github.com/babylonlabs-io/babylon/pull/597) fix: Expired and Unbonding delegation
+in the same BTC block could lead to a panic and chain halt
 
 ## v1.0.0-rc6
 

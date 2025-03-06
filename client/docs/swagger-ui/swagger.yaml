@@ -12221,6 +12221,82 @@ paths:
           type: string
       tags:
         - Query
+  /babylon/incentive/finality_providers/{finality_provider_address}/delegators/{delegator_address}/delegation_rewards:
+    get:
+      summary: >-
+        DelegationRewards queries the delegation rewards of given finality
+        provider
+
+        and delegator addresses
+      operationId: DelegationRewards
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              rewards:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    denom:
+                      type: string
+                    amount:
+                      type: string
+                  description: >-
+                    Coin defines a token with a denomination and an amount.
+
+
+                    NOTE: The amount field is an Int which implements the custom
+                    method
+
+                    signatures required by gogoproto.
+                title: |-
+                  rewards are the delegation reward coins
+                  Can have multiple coin denoms
+            description: |-
+              QueryDelegationRewardsResponse is the response type for the
+              Query/DelegationRewards RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: finality_provider_address
+          description: >-
+            finality_provider_address defines the finality provider address of
+            the
+
+            delegation.
+          in: path
+          required: true
+          type: string
+        - name: delegator_address
+          description: delegator_address defines the delegator address to query for.
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /babylon/incentive/params:
     get:
       summary: Parameters queries the parameters of the module.
@@ -22793,6 +22869,29 @@ definitions:
       Query/BTCStakingGauge
 
       RPC method.
+  babylon.incentive.QueryDelegationRewardsResponse:
+    type: object
+    properties:
+      rewards:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+        title: |-
+          rewards are the delegation reward coins
+          Can have multiple coin denoms
+    description: |-
+      QueryDelegationRewardsResponse is the response type for the
+      Query/DelegationRewards RPC method.
   babylon.incentive.QueryDelegatorWithdrawAddressResponse:
     type: object
     properties:

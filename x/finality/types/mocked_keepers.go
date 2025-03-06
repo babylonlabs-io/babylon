@@ -136,6 +136,20 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetParams(ctx interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParams", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetParams), ctx)
 }
 
+// GetParamsByVersion mocks base method.
+func (m *MockBTCStakingKeeper) GetParamsByVersion(ctx context.Context, v uint32) *types0.Params {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetParamsByVersion", ctx, v)
+	ret0, _ := ret[0].(*types0.Params)
+	return ret0
+}
+
+// GetParamsByVersion indicates an expected call of GetParamsByVersion.
+func (mr *MockBTCStakingKeeperMockRecorder) GetParamsByVersion(ctx, v interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParamsByVersion", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetParamsByVersion), ctx, v)
+}
+
 // HasFinalityProvider mocks base method.
 func (m *MockBTCStakingKeeper) HasFinalityProvider(ctx context.Context, fpBTCPK []byte) bool {
 	m.ctrl.T.Helper()
