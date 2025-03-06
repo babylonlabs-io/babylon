@@ -491,6 +491,7 @@ func NewBabylonApp(
 
 	// initialize AnteHandler for the app
 	anteHandler := ante.NewAnteHandler(
+		appOpts,
 		&app.AccountKeeper,
 		app.BankKeeper,
 		&app.FeeGrantKeeper,
