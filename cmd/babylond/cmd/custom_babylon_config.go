@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"path/filepath"
+	"strconv"
 
+	"github.com/babylonlabs-io/babylon/app/ante"
 	"github.com/babylonlabs-io/babylon/app/signer"
 	cmtcfg "github.com/cometbft/cometbft/config"
 
@@ -35,6 +37,16 @@ func defaultBabylonBlsConfig() BlsConfig {
 	}
 }
 
+type BabylonMempoolConfig struct {
+	MaxGasWantedPerTx string `mapstructure:"max-gas-wanted-per-tx"`
+}
+
+func defaultBabylonMempoolConfig() BabylonMempoolConfig {
+	return BabylonMempoolConfig{
+		MaxGasWantedPerTx: strconv.Itoa(ante.DefaultMaxGasWantedPerTx),
+	}
+}
+
 type BabylonAppConfig struct {
 	serverconfig.Config `mapstructure:",squash"`
 
@@ -43,6 +55,8 @@ type BabylonAppConfig struct {
 	BtcConfig BtcConfig `mapstructure:"btc-config"`
 
 	BlsConfig BlsConfig `mapstructure:"bls-config"`
+
+	BabylonMempoolConfig BabylonMempoolConfig `mapstructure:"babylon-mempool"`
 }
 
 func DefaultBabylonAppConfig() *BabylonAppConfig {
@@ -51,10 +65,11 @@ func DefaultBabylonAppConfig() *BabylonAppConfig {
 	// app.toml, in order to avoid spamming attacks due to transactions with 0 gas price.
 	baseConfig.MinGasPrices = fmt.Sprintf("%f%s", appparams.GlobalMinGasPrice, appparams.BaseCoinUnit)
 	return &BabylonAppConfig{
-		Config:    baseConfig,
-		Wasm:      wasmtypes.DefaultNodeConfig(),
-		BtcConfig: defaultBabylonBtcConfig(),
-		BlsConfig: defaultBabylonBlsConfig(),
+		Config:               baseConfig,
+		Wasm:                 wasmtypes.DefaultNodeConfig(),
+		BtcConfig:            defaultBabylonBtcConfig(),
+		BlsConfig:            defaultBabylonBlsConfig(),
+		BabylonMempoolConfig: defaultBabylonMempoolConfig(),
 	}
 }
 
@@ -77,5 +92,14 @@ bls-key-file = "{{ .BlsConfig.BlsKeyFile }}"
 # Configures which bitcoin network should be used for checkpointing
 # valid values are: [mainnet, testnet, simnet, signet, regtest]
 network = "{{ .BtcConfig.Network }}"
+
+###############################################################################
+###                      Babylon Mempool Configuration                      ###
+###############################################################################
+
+[babylon-mempool]
+# This is the max allowed gas for any tx.
+# This is only for local mempool purposes, and thus	is only ran on check tx.
+max-gas-wanted-per-tx = "{{ .BabylonMempoolConfig.MaxGasWantedPerTx }}"
 `
 }
