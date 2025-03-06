@@ -35,3 +35,29 @@ func CmdQueryParams() *cobra.Command {
 	return cmd
 }
 
+func CmdQueryParamsVersions() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params-versions",
+		Short: "shows all the parameters of the module with version",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.ParamsVersions(cmd.Context(), &types.QueryParamsVersionsRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
