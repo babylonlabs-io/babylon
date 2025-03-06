@@ -16,9 +16,10 @@ func NewValidateInternalMsgDecorator() ValidateInternalMsgDecorator {
 
 func (vd ValidateInternalMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
 	msgs := tx.GetMsgs()
-	if InternalInjectedMsg(msgs) {
+	if SingleInjectedMsg(msgs) {
 		if len(msgs) > 1 {
-			return ctx, fmt.Errorf("%w: internal msg must be the only msg in tx", sdkerrors.ErrInvalidRequest)
+			err := fmt.Errorf("%w: internal msg must be the only msg in tx", sdkerrors.ErrInvalidRequest)
+			return ctx, err
 		}
 
 		if ctx.IsCheckTx() {

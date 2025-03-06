@@ -5,11 +5,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func InternalInjectedMsg(msgs []sdk.Msg) bool {
-	if len(msgs) != 1 {
-		return false
-	}
+func SingleInjectedMsg(msgs []sdk.Msg) bool {
+	return len(msgs) == 1 && InjectedMsg(msgs[0])
+}
 
-	_, ok := msgs[0].(*ckpttypes.MsgInjectedCheckpoint)
+func InjectedMsg(msg sdk.Msg) bool {
+	_, ok := msg.(*ckpttypes.MsgInjectedCheckpoint)
 	return ok
 }
