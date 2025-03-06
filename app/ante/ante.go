@@ -67,8 +67,8 @@ func NewAnteHandler(
 
 	// handler that branches between internal and normal messages
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, err error) {
-		if InternalInjectedMsg(tx.GetMsgs()) {
-			return appHandler.appInjectedMsgAnteHandle(ctx, tx, simulate)
+		if SingleInjectedMsg(tx.GetMsgs()) {
+			return appHandler.AppInjectedMsgAnteHandle(ctx, tx, simulate)
 		}
 
 		// normal path

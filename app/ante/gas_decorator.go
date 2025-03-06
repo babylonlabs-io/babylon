@@ -13,7 +13,7 @@ func NewBypassGasDecorator() BypassGasDecorator {
 }
 
 func (bd BypassGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	if InternalInjectedMsg(tx.GetMsgs()) {
+	if SingleInjectedMsg(tx.GetMsgs()) {
 		newCtx = ctx.WithBlockGasMeter(types.NewBypassGasMeter())
 		return next(newCtx, tx, simulate)
 	}

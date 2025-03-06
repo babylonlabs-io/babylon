@@ -27,7 +27,7 @@ func emptyAnteHandler(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, e
 	return ctx, nil
 }
 
-func (ah AppAnteHandler) appInjectedMsgAnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool) (
+func (ah AppAnteHandler) AppInjectedMsgAnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool) (
 	newCtx sdk.Context,
 	err error,
 ) {
