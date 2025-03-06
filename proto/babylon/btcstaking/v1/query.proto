@@ -356,12 +356,18 @@ message QueryLargestBtcReOrgResponse {
 // QueryParamsVersionsRequest is the request type for the
 // Query/ParamsVersions RPC method.
 message QueryParamsVersionsRequest {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
 // QueryParamsVersionsResponse stores all the params with versions.
 message QueryParamsVersionsResponse {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
   // params holds all the params with version from this module.
   repeated StoredParams params = 1 [ (gogoproto.nullable) = false ];
 
