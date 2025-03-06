@@ -47,13 +47,12 @@ func CmdQueryParamsVersions() *cobra.Command {
 			}
 
 			queryClient := types.NewQueryClient(clientCtx)
-
-                        pageReq, err := client.ReadPageRequest(cmd.Flags())
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
 			if err != nil {
 				return err
 			}
 			res, err := queryClient.ParamsVersions(cmd.Context(), &types.QueryParamsVersionsRequest{
-			     Pagination: pageReq,
+				Pagination: pageReq,
 			})
 			if err != nil {
 				return err
