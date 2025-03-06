@@ -10,6 +10,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/types"
 	btcckeeper "github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
 	epochingkeeper "github.com/babylonlabs-io/babylon/x/epoching/keeper"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -18,6 +19,7 @@ import (
 
 // NewAnteHandler creates a new AnteHandler for the Babylon chain.
 func NewAnteHandler(
+	appOpts servertypes.AppOptions,
 	accountKeeper authante.AccountKeeper,
 	bankKeeper authtypes.BankKeeper,
 	feegrantKeeper authante.FeegrantKeeper,
@@ -62,8 +64,9 @@ func NewAnteHandler(
 		panic(err)
 	}
 
+	mempoolOpts := NewMempoolOptions(appOpts)
 	anteHandler := sdk.ChainAnteDecorators(
-		NewGasLimitDecorator(),
+		NewGasLimitDecorator(mempoolOpts),
 		NewWrappedAnteHandler(authAnteHandler),
 		NewBtcValidationDecorator(btcConfig, btccKeeper),
 	)

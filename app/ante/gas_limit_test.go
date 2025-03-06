@@ -22,28 +22,28 @@ func TestGasLimitDecorator(t *testing.T) {
 	}{
 		{
 			name:        "Valid gas limit",
-			gasWanted:   10_000_000,
+			gasWanted:   5_000_000,
 			isCheckTx:   true,
 			simulate:    false,
 			expectError: false,
 		},
 		{
 			name:        "Exceeds gas limit in CheckTx",
-			gasWanted:   60_000_000,
+			gasWanted:   12_000_000,
 			isCheckTx:   true,
 			simulate:    false,
 			expectError: true,
 		},
 		{
 			name:        "Exceeds gas limit in Simulate mode (should not fail)",
-			gasWanted:   60_000_000,
+			gasWanted:   12_000_000,
 			isCheckTx:   true,
 			simulate:    true,
 			expectError: false,
 		},
 		{
 			name:        "Exceeds gas limit in DeliverTx (should not fail)",
-			gasWanted:   60_000_000,
+			gasWanted:   12_000_000,
 			isCheckTx:   false,
 			simulate:    false,
 			expectError: false,
@@ -53,7 +53,7 @@ func TestGasLimitDecorator(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := sdk.NewContext(nil, cmtproto.Header{}, tc.isCheckTx, nil)
-			decorator := ante.NewGasLimitDecorator()
+			decorator := ante.NewGasLimitDecorator(ante.NewDefaultMempoolOptions())
 
 			tx := &mockFeeTx{gasWanted: tc.gasWanted}
 			_, err := decorator.AnteHandle(ctx, tx, tc.simulate, func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
