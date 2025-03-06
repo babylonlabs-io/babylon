@@ -36,12 +36,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	runtimeservices "github.com/cosmos/cosmos-sdk/runtime/services"
+	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -239,6 +241,7 @@ func NewBabylonApp(
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetTxEncoder(txConfig.TxEncoder())
+	bApp.SetMempool(getAppMempool(appOpts))
 
 	wasmConfig, err := wasm.ReadNodeConfig(appOpts)
 	if err != nil {
@@ -859,4 +862,23 @@ func BlockedAddresses() map[string]bool {
 	delete(modAccAddrs, appparams.AccGov.String())
 
 	return modAccAddrs
+}
+
+// getAppMempool returns the corresponding application mempool according to the
+// mempool.MaxTx value (default = 0).
+// - mempool.MaxTx = 0: uncapped PriorityNonce mempool (default)
+// - mempool.MaxTx > 0: capped PriorityNonce mempool
+// - mempool.MaxTx < 0: no-op mempool
+func getAppMempool(appOpts servertypes.AppOptions) mempool.Mempool {
+	var (
+		mp         mempool.Mempool
+		maxTxs     = cast.ToInt(appOpts.Get(server.FlagMempoolMaxTxs))
+		mempoolCfg = mempool.DefaultPriorityNonceMempoolConfig()
+	)
+	mempoolCfg.MaxTx = maxTxs
+	mp = mempool.NewPriorityMempool(mempoolCfg)
+	if maxTxs < 0 {
+		mp = mempool.NoOpMempool{}
+	}
+	return mp
 }
