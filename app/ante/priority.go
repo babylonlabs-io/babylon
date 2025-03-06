@@ -18,7 +18,7 @@ const (
 	RegularTxMaxPriority = math.MaxInt64 - 1000
 	// LivenessTxPriority is the priority for protocol liveness-related messages.
 	// For the moment, the priority is the same for all of these messages
-	LivenessTxPriority = math.MaxInt64 - 100
+	LivenessTxPriority = RegularTxMaxPriority + 100
 )
 
 // PriorityDecorator assigns higher priority to protocol liveness-related transactions
