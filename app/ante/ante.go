@@ -62,7 +62,7 @@ func NewAnteHandler(
 		panic(err)
 	}
 
-	//app handler for internal messages
+	// app handler for internal messages
 	appHandler := NewAppAnteHandler(accountKeeper)
 
 	// handler that branches between internal and normal messages
