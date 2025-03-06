@@ -54,6 +54,14 @@
           "Params": "CheckpointingParams"
         }
       }
+    },
+    {
+      "url": "./tmp-swagger-gen/babylon/incentive/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "IncentiveParams"
+        }
+      }
     }
   ]
 }
