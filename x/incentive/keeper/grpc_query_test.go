@@ -8,9 +8,11 @@ import (
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/x/incentive/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -104,11 +106,19 @@ func FuzzDelegationRewardsQuery(f *testing.F) {
 			storeService = runtime.NewKVStoreService(storeKey)
 			store        = storeService.OpenKVStore(ctx)
 			storeAdaptor = runtime.KVStoreAdapter(store)
+			encConfig    = appparams.DefaultEncodingConfig()
 			btcRwd       = datagen.GenRandomBTCDelegationRewardsTracker(r)
 		)
 
 		// Setup a BTCDelegationRewardsTracker for the delegator
-		require.NoError(t, k.BTCDelegationRewardsTracker.Set(ctx, collections.Join(fp.Bytes(), del.Bytes()), btcRwd))
+		bdrtKey := collections.Join(fp.Bytes(), del.Bytes())
+		bdrtKeyBz, err := collections.EncodeKeyWithPrefix(types.BTCDelegationRewardsTrackerKeyPrefix.Bytes(), collections.PairKeyCodec(collections.BytesKey, collections.BytesKey), bdrtKey)
+		require.NoError(t, err)
+		bdrtBz, err := codec.CollValue[types.BTCDelegationRewardsTracker](encConfig.Codec).Encode(btcRwd)
+		require.NoError(t, err)
+		require.NoError(t, store.Set(bdrtKeyBz, bdrtBz))
+
+		// store delegator-fp record
 		st := prefix.NewStore(storeAdaptor, types.BTCDelegatorToFPKey)
 		delStore := prefix.NewStore(st, del.Bytes())
 		delStore.Set(fp.Bytes(), []byte{0x00})
@@ -118,21 +128,39 @@ func FuzzDelegationRewardsQuery(f *testing.F) {
 		fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
 		fpCurrentRwd.Period = btcRwd.StartPeriodCumulativeReward + 2
 		fpCurrentRwd.TotalActiveSat = btcRwd.TotalActiveSat
-		err := k.FinalityProviderCurrentRewards.Set(ctx, fp.Bytes(), fpCurrentRwd)
+
+		fpCurrRwdKeyBz, err := collections.EncodeKeyWithPrefix(types.FinalityProviderCurrentRewardsKeyPrefix.Bytes(), collections.BytesKey, fp.Bytes())
 		require.NoError(t, err)
+		currRwdBz, err := codec.CollValue[types.FinalityProviderCurrentRewards](encConfig.Codec).Encode(fpCurrentRwd)
+		require.NoError(t, err)
+		require.NoError(t, store.Set(fpCurrRwdKeyBz, currRwdBz))
 
 		// set start historical rewards corresponding to btcRwd.StartPeriodCumulativeReward
 		amtRwdInHistStart := fpCurrentRwd.CurrentRewards.MulInt(types.DecimalAccumulatedRewards).QuoInt(math.NewInt(2))
 		startHist := types.NewFinalityProviderHistoricalRewards(amtRwdInHistStart)
-		err = k.FinalityProviderHistoricalRewards.Set(ctx, collections.Join(fp.Bytes(), btcRwd.StartPeriodCumulativeReward), startHist)
+		// encode the starting historical rewards
+		startHistRwdBz, err := codec.CollValue[types.FinalityProviderHistoricalRewards](encConfig.Codec).Encode(startHist)
 		require.NoError(t, err)
+
+		sfphrKey := collections.Join(fp.Bytes(), btcRwd.StartPeriodCumulativeReward)
+		sfphrKeyBz, err := collections.EncodeKeyWithPrefix(types.FinalityProviderHistoricalRewardsKeyPrefix.Bytes(), collections.PairKeyCodec(collections.BytesKey, collections.Uint64Key), sfphrKey)
+		require.NoError(t, err)
+
+		require.NoError(t, store.Set(sfphrKeyBz, startHistRwdBz))
 
 		// set end period historical rewards
 		// end period for calculation is fpCurrentRwd.Period-1
 		amtRwdInHistEnd := amtRwdInHistStart.Add(fpCurrentRwd.CurrentRewards.MulInt(types.DecimalAccumulatedRewards).QuoInt(fpCurrentRwd.TotalActiveSat)...)
 		endHist := types.NewFinalityProviderHistoricalRewards(amtRwdInHistEnd)
-		err = k.FinalityProviderHistoricalRewards.Set(ctx, collections.Join(fp.Bytes(), fpCurrentRwd.Period-1), endHist)
+		// encode the fp historical rewards
+		endHistRwdBz, err := codec.CollValue[types.FinalityProviderHistoricalRewards](encConfig.Codec).Encode(endHist)
 		require.NoError(t, err)
+
+		efphrKey := collections.Join(fp.Bytes(), fpCurrentRwd.Period-1)
+		efphrKeyBz, err := collections.EncodeKeyWithPrefix(types.FinalityProviderHistoricalRewardsKeyPrefix.Bytes(), collections.PairKeyCodec(collections.BytesKey, collections.Uint64Key), efphrKey)
+		require.NoError(t, err)
+
+		require.NoError(t, store.Set(efphrKeyBz, endHistRwdBz))
 
 		// Calculate expected rewards
 		expectedRwd := endHist.CumulativeRewardsPerSat.Sub(startHist.CumulativeRewardsPerSat...)

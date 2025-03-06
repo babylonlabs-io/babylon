@@ -725,7 +725,7 @@ Rewards can be withdrawn by submitting a `MsgWithdrawReward` message:
 // MsgWithdrawReward defines a message for withdrawing reward of a stakeholder.
 message MsgWithdrawReward {
     option (cosmos.msg.v1.signer) = "address";
-    // {finality_provider, btc_delegation}
+    // type is the stakeholder type {finality_provider, btc_staker}
     string type = 1;
     // address is the address of the stakeholder in bech32 string
     // signer of this msg has to be this address
@@ -736,7 +736,7 @@ message MsgWithdrawReward {
 The message defines the following fields:
 * `type`: Specifies the stakeholder type for reward withdrawal. Allowed values:
   * `finality_provider`
-  * `btc_delegation`
+  * `btc_staker`
 * `address`: The bech32 address of the stakeholder
   (must match the signer of the message).
 

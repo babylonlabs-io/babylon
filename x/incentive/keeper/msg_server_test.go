@@ -61,6 +61,14 @@ func FuzzWithdrawReward(f *testing.F) {
 		newRg := ik.GetRewardGauge(ctx, sType, sAddr)
 		require.NotNil(t, newRg)
 		require.True(t, newRg.IsFullyWithdrawn())
+
+		// should fail with invalid stakeholder type 
+		_, err = ms.WithdrawReward(ctx, &types.MsgWithdrawReward{
+			Type:    "invalid_type",
+			Address: sAddr.String(),
+		})
+		require.Error(t, err)
+		require.ErrorContains(t, err, "invalid stStr: INVALID_TYPE")
 	})
 }
 

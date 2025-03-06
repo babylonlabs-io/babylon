@@ -271,6 +271,7 @@ type CreateDelegationInfo struct {
 	MsgAddCovenantSigs     []*bstypes.MsgAddCovenantSigs
 	StakingTxHash          string
 	StakingTx              *wire.MsgTx
+	UnbondingTx            *wire.MsgTx
 }
 
 // GenRandomMsgCreateBtcDelegation generates a random MsgCreateBTCDelegation message
@@ -431,6 +432,7 @@ func GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
 		MsgAddCovenantSigs:     msgs,
 		StakingTxHash:          stkTxHash.String(),
 		StakingTx:              stakingSlashingInfo.StakingTx,
+		UnbondingTx:            unbondingSlashingInfo.UnbondingTx,
 	}
 }
 

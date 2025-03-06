@@ -326,7 +326,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	// ensure BTC delegation has received rewards after the block is finalised
 	btcDelRewardGauges, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
 	s.NoError(err)
-	btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTC_DELEGATION.String()]
+	btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTC_STAKER.String()]
 	s.True(ok)
 	s.True(btcDelRewardGauge.Coins.IsAllPositive())
 	s.T().Logf("the finality provider received rewards for providing finality")
@@ -338,7 +338,7 @@ func (s *BTCStakingTestSuite) Test4WithdrawReward() {
 	s.NoError(err)
 
 	n.WithdrawRewardCheckingBalances(itypes.FINALITY_PROVIDER.String(), s.cacheFP.Addr)
-	n.WithdrawRewardCheckingBalances(itypes.BTC_DELEGATION.String(), s.cacheFP.Addr)
+	n.WithdrawRewardCheckingBalances(itypes.BTC_STAKER.String(), s.cacheFP.Addr)
 }
 
 // Test5SubmitStakerUnbonding is an end-to-end test for user unbonding
