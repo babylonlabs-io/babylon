@@ -67,6 +67,7 @@ check of rewards
 - [#590](https://github.com/babylonlabs-io/babylon/pull/590) Add `DelegationRewards` query in `x/incentive` module
 - [#624](https://github.com/babylonlabs-io/babylon/pull/624) Make keeper's collections private in `x/incentive` module
 - [#633](https://github.com/babylonlabs-io/babylon/pull/633) Fix swagger
+- [#643](https://github.com/babylonlabs-io/babylon/pull/643) Fix flaky test `FuzzBTCDelegation`
 
 ### State Machine Breaking
 
