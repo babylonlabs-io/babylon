@@ -58,7 +58,7 @@ func FuzzBTCDelegation(f *testing.F) {
 		btcHeight := btcDel.StartHeight + uint32(datagen.RandomInt(r, 50))
 
 		// test expected voting power
-		hasVotingPower := hasCovenantSig && btcDel.StartHeight <= btcHeight && btcHeight+unbondingTime <= btcDel.EndHeight
+		hasVotingPower := hasCovenantSig && btcDel.StartHeight <= btcHeight && btcHeight+unbondingTime < btcDel.EndHeight
 		actualVotingPower := btcDel.VotingPower(btcHeight, 1)
 		if hasVotingPower {
 			require.Equal(t, btcDel.TotalSat, actualVotingPower)
