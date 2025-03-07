@@ -225,8 +225,12 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 					k.MustProcessBtcDelegationActivated(ctx, fp, del, sats)
 				})
 			case types.BTCDelegationStatus_UNBONDED:
-				// add the unbonded BTC delegation to the map
-				k.processPowerDistUpdateEventUnbond(ctx, fpByBtcPkHex, btcDel, unbondedSatsByFpBtcPk)
+				// In case of delegation transtioning from phase-1 it is possible that
+				// somebody unbonds before receiving the required covenant signatures.
+				if btcDel.HasCovenantQuorums(delParams.CovenantQuorum) {
+					// add the unbonded BTC delegation to the map
+					k.processPowerDistUpdateEventUnbond(ctx, fpByBtcPkHex, btcDel, unbondedSatsByFpBtcPk)
+				}
 			case types.BTCDelegationStatus_EXPIRED:
 				types.EmitExpiredDelegationEvent(sdkCtx, delStkTxHash)
 				// We process expired event if:
