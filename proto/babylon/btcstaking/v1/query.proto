@@ -19,6 +19,12 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/params";
   }
+
+  // ParamsVersions queries all the parameters of the module with version.
+  rpc ParamsVersions(QueryParamsVersionsRequest) returns (QueryParamsVersionsResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/params_versions";
+  }
+
   // ParamsByVersion queries the parameters of the module for a specific version
   // of past params.
   rpc ParamsByVersion(QueryParamsByVersionRequest)
@@ -344,4 +350,27 @@ message QueryLargestBtcReOrgResponse {
   babylon.btclightclient.v1.BTCHeaderInfoResponse rollback_from = 2;
   // RollbackTo is the BTC block header which we rollback to
   babylon.btclightclient.v1.BTCHeaderInfoResponse rollback_to = 3;
+}
+
+
+// QueryParamsVersionsRequest is the request type for the
+// Query/ParamsVersions RPC method.
+message QueryParamsVersionsRequest {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryParamsVersionsResponse stores all the params with versions.
+message QueryParamsVersionsResponse {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // params holds all the params with version from this module.
+  repeated StoredParams params = 1 [ (gogoproto.nullable) = false ];
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

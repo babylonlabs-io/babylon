@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#648](https://github.com/babylonlabs-io/babylon/pull/648) Add query to get all parameters
+from `x/btcstaking` module.
 - [#623](https://github.com/babylonlabs-io/babylon/pull/623) Add check for empty string in `bls` loading.
 - [#544](https://github.com/babylonlabs-io/babylon/pull/544) Add `bls-config` to `app.toml` for custom bls key location.
 - [#466](https://github.com/babylonlabs-io/babylon/pull/466) Add e2e test to
@@ -99,6 +101,8 @@ if delegation was never activated
 - [#629](https://github.com/babylonlabs-io/babylon/pull/629) Allow OP_RETURN as slashing output
 - [#597](https://github.com/babylonlabs-io/babylon/pull/597) fix: Expired and Unbonding delegation
 in the same BTC block could lead to a panic and chain halt
+- [#647](https://github.com/babylonlabs-io/babylon/pull/647) Ignore unbonding event
+if delegation did not have covenant quorum
 
 ## v1.0.0-rc6
 

@@ -244,3 +244,29 @@ func (k Keeper) LargestBtcReOrg(ctx context.Context, _ *types.QueryLargestBtcReO
 		RollbackTo:   largestBtcReorg.RollbackTo.ToResponse(),
 	}, nil
 }
+
+// ParamsVersions iterates over all the versioned parameters in the store.
+func (k Keeper) ParamsVersions(c context.Context, req *types.QueryParamsVersionsRequest) (*types.QueryParamsVersionsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	store := k.paramsStore(ctx)
+
+	var resp []types.StoredParams
+	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
+		var sp types.StoredParams
+		if err := sp.Unmarshal(value); err != nil {
+			return err
+		}
+
+		resp = append(resp, sp)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryParamsVersionsResponse{Params: resp, Pagination: pageRes}, nil
+}

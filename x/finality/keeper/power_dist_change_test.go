@@ -96,7 +96,7 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 
 		ctx = ProduceBlock(t, r, app, ctx)
 
-		for covI, _ := range covenantSKs {
+		for covI := range covenantSKs {
 			_, err = msgSrvrBtcStk.AddCovenantSigs(ctx, delCreationInfo.MsgAddCovenantSigs[covI])
 			require.NoError(t, err)
 
@@ -448,7 +448,7 @@ func CreateFpAndBtcDel(
 
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	_, _, del, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+	_, msg, del, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
 		[]*btcec.PublicKey{fpPK},
@@ -462,6 +462,9 @@ func CreateFpAndBtcDel(
 		30,
 	)
 	h.NoError(err)
+
+	h.CreateCovenantSigs(r, covenantSKs, msg, del, 30)
+
 	return h, del, covenantSKs
 }
 
@@ -1784,4 +1787,48 @@ func TestIgnoreExpiredEventIfThereIsNoQuorum(t *testing.T) {
 	// as delegation does not have covenant quorum
 	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
 	h.BeginBlocker()
+}
+
+func TestIgnoreUnbondingEventIfThereIsNoQuorum(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
+	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper)
+
+	// set all parameters
+	h.GenAndApplyParams(r)
+
+	_, fpPK, _ := h.CreateFinalityProvider(r)
+
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	_, _, del, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+		r,
+		delSK,
+		[]*btcec.PublicKey{fpPK},
+		int64(2*10e8),
+		1000,
+		0,
+		0,
+		false,
+		false,
+		10,
+		30,
+	)
+	h.NoError(err)
+	eventUnbond := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
+		StakingTxHash: del.MustGetStakingTxHash().String(),
+		NewState:      btcstktypes.BTCDelegationStatus_UNBONDED,
+	})
+	events := []*btcstktypes.EventPowerDistUpdate{eventUnbond}
+
+	// k.IncentiveKeeper.BtcDelegationUnbonded(ctx, fp, del, sats) won't be called
+	// as delegation does not have covenant quorum
+	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), events)
+	require.Len(t, newDc.FinalityProviders, 0)
 }
