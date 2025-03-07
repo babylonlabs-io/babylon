@@ -254,14 +254,14 @@ func (k Keeper) ParamsVersions(c context.Context, req *types.QueryParamsVersions
 	ctx := sdk.UnwrapSDKContext(c)
 	store := k.paramsStore(ctx)
 
-	var resp []types.StoredParams
+	var resp []types.ParamsVersionResponse
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
 		var sp types.StoredParams
 		if err := sp.Unmarshal(value); err != nil {
 			return err
 		}
 
-		resp = append(resp, sp)
+		resp = append(resp, sp.ToResponse())
 		return nil
 	})
 	if err != nil {
