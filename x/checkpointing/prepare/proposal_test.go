@@ -15,13 +15,19 @@ import (
 	tendermintTypes "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdktestdata "github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
+	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	protoio "github.com/cosmos/gogoproto/io"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/babylonlabs-io/babylon/app/ante"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
@@ -30,6 +36,7 @@ import (
 	"github.com/babylonlabs-io/babylon/x/checkpointing/prepare"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	et "github.com/babylonlabs-io/babylon/x/epoching/types"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 type TestValidator struct {
@@ -263,6 +270,8 @@ type Scenario struct {
 	TotalPower   int64
 	ValidatorSet []TestValidator
 	Extensions   []cbftt.ExtendedVoteInfo
+	Txs          []sdk.Tx
+	TxVerifier   baseapp.ProposalTxVerifier
 }
 
 type ValidatorsAndExtensions struct {
@@ -295,7 +304,178 @@ func ToValidatorSet(v []TestValidator) et.ValidatorSet {
 	return et.NewSortedValidatorSet(cv)
 }
 
+func addTxsToMempool(txs []sdk.Tx, mp mempool.Mempool) error {
+	if len(txs) == 0 {
+		return nil
+	}
+	ctx := sdk.Context{}.WithPriority(100)
+	deco := ante.NewPriorityDecorator()
+
+	next := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+		return ctx, nil
+	}
+	for _, tx := range txs {
+		newCtx, err := deco.AnteHandle(ctx, tx, false, next)
+		if err != nil {
+			return err
+		}
+		if err := mp.Insert(newCtx, tx); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func buildTx(txConfig client.TxConfig, signer sdk.AccAddress, nonce uint64, msgs []sdk.Msg) (sdk.Tx, error) {
+	builder := txConfig.NewTxBuilder()
+	if err := builder.SetMsgs(msgs...); err != nil {
+		return nil, err
+	}
+	builder.SetGasLimit(100)
+	if err := setTxSignature(builder, nonce); err != nil {
+		return nil, err
+	}
+	return builder.GetTx(), nil
+}
+
+func setTxSignature(builder client.TxBuilder, nonce uint64) error {
+	h := randomBlockHash()
+	privKey := secp256k1.GenPrivKeyFromSecret([]byte(h.String()))
+	pubKey := privKey.PubKey()
+	return builder.SetSignatures(
+		signingtypes.SignatureV2{
+			PubKey:   pubKey,
+			Sequence: nonce,
+			Data:     &signingtypes.SingleSignatureData{},
+		},
+	)
+}
+
+func regularTx(txConf client.TxConfig) (sdk.Tx, error) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	signer := datagen.GenRandomAccount().GetAddress()
+	nonce := datagen.RandomUInt32(r, 10_000)
+	msgs := []sdk.Msg{
+		&sdktestdata.TestMsg{},
+	}
+	return buildTx(txConf, signer, uint64(nonce), msgs)
+}
+
+func livenessTx(txConf client.TxConfig) (sdk.Tx, error) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	signer := datagen.GenRandomAccount().GetAddress()
+	nonce := datagen.RandomUInt32(r, 10_000)
+	msgs := []sdk.Msg{
+		&ftypes.MsgAddFinalitySig{},
+	}
+	return buildTx(txConf, signer, uint64(nonce), msgs)
+}
+
+func isRegularTx(txDecoder sdk.TxDecoder, txBz []byte) (bool, error) {
+	return isTxType[*sdktestdata.TestMsg](txDecoder, txBz)
+}
+
+func isLivenessTx(txDecoder sdk.TxDecoder, txBz []byte) (bool, error) {
+	return isTxType[*ftypes.MsgAddFinalitySig](txDecoder, txBz)
+}
+
+func isTxType[T any](txDecoder sdk.TxDecoder, txBz []byte) (bool, error) {
+	tx, err := txDecoder(txBz)
+	if err != nil {
+		return false, err
+	}
+	msgs := tx.GetMsgs()
+	for _, msg := range msgs {
+		if _, ok := msg.(T); !ok {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func genRandomTxs(t *testing.T, txConf client.TxConfig, regTxsCount, livenessTxsCount int) []sdk.Tx {
+	var txs []sdk.Tx
+	// Generate regular transactions
+	for i := 0; i < regTxsCount; i++ {
+		tx, err := regularTx(txConf)
+		require.NoError(t, err)
+		txs = append(txs, tx)
+	}
+
+	// Generate liveness transactions
+	for i := 0; i < livenessTxsCount; i++ {
+		tx, err := livenessTx(txConf)
+		require.NoError(t, err)
+		txs = append(txs, tx)
+	}
+
+	// Shuffle transactions randomly
+	rand.Shuffle(len(txs), func(i, j int) { txs[i], txs[j] = txs[j], txs[i] })
+	return txs
+}
+
+func verifyTxOrder(t *testing.T, txs [][]byte, txDecoder sdk.TxDecoder, regTxsCount, livenessTxsCount int) {
+	if len(txs) == 1 {
+		return
+	}
+	// Skip the first transaction which is the injection checkpoint tx
+	for i, txBz := range txs[1:] {
+		isLiveness, err := isLivenessTx(txDecoder, txBz)
+		require.NoError(t, err, "Error decoding transaction at index %d", i+1)
+
+		if i < livenessTxsCount { // First transactions should be liveness txs
+			require.True(t, isLiveness, "Expected a liveness transaction at index %d", i+1)
+		} else { // The remaining transactions should be regular txs
+			isRegular, err := isRegularTx(txDecoder, txBz)
+			require.NoError(t, err, "Error decoding transaction at index %d", i+1)
+			require.True(t, isRegular, "Expected a regular transaction at index %d", i+1)
+		}
+	}
+
+}
+
+// txVerifier is a dummy tx verifier used in tests
+type txVerifier struct {
+	txEncodConfig client.TxEncodingConfig
+}
+
+// PrepareProposalVerifyTx implements baseapp.ProposalTxVerifier.
+func (m txVerifier) PrepareProposalVerifyTx(tx sdk.Tx) ([]byte, error) {
+	return m.txEncodConfig.TxEncoder()(tx)
+}
+
+// ProcessProposalVerifyTx implements baseapp.ProposalTxVerifier.
+func (m txVerifier) ProcessProposalVerifyTx(txBz []byte) (sdk.Tx, error) {
+	return m.txEncodConfig.TxDecoder()(txBz)
+
+}
+
+// TxDecode implements baseapp.ProposalTxVerifier.
+func (m txVerifier) TxDecode(txBz []byte) (sdk.Tx, error) {
+	return m.txEncodConfig.TxDecoder()(txBz)
+}
+
+// TxEncode implements baseapp.ProposalTxVerifier.
+func (m txVerifier) TxEncode(tx sdk.Tx) ([]byte, error) {
+	return m.txEncodConfig.TxEncoder()(tx)
+}
+
+func newTxVerifier(txEnc client.TxEncodingConfig) baseapp.ProposalTxVerifier {
+	return txVerifier{txEncodConfig: txEnc}
+}
+
 func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
+	var (
+		r               = rand.New(rand.NewSource(time.Now().UnixNano()))
+		encCfg          = appparams.DefaultEncodingConfig()
+		regularTxCount  = int(datagen.RandomInt(r, 10))
+		livenessTxCount = int(datagen.RandomInt(r, 10))
+	)
+	sdktestdata.RegisterInterfaces(encCfg.InterfaceRegistry)
+	ftypes.RegisterInterfaces(encCfg.InterfaceRegistry)
+	cryptocodec.RegisterInterfaces(encCfg.InterfaceRegistry)
+
 	tests := []struct {
 		name          string
 		scenarioSetup func(ec *EpochAndCtx, ek *mocks.MockCheckpointingKeeper) *Scenario
@@ -471,7 +651,34 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "All valid vote extensions and other transactions in block proposal",
+			scenarioSetup: func(ec *EpochAndCtx, ek *mocks.MockCheckpointingKeeper) *Scenario {
+				bh := randomBlockHash()
+				validatorAndExtensions, totalPower := generateNValidatorAndVoteExtensions(t, 4, &bh, ec.Epoch.EpochNumber)
 
+				var signedVoteExtensions []cbftt.ExtendedVoteInfo
+				for i, val := range validatorAndExtensions.Vals {
+					validator := val
+					ek.EXPECT().GetPubKeyByConsAddr(gomock.Any(), sdk.ConsAddress(validator.ValidatorAddress(t).Bytes())).Return(validator.ProtoPubkey(), nil).AnyTimes()
+					ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(nil).AnyTimes()
+					ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
+					marshaledExtension, err := validatorAndExtensions.Extensions[i].Marshal()
+					require.NoError(t, err)
+					signedExtension := validator.SignVoteExtension(t, marshaledExtension, ec.Ctx.HeaderInfo().Height-1, ec.Ctx.ChainID())
+					signedVoteExtensions = append(signedVoteExtensions, signedExtension)
+				}
+
+				return &Scenario{
+					TotalPower:   totalPower,
+					ValidatorSet: validatorAndExtensions.Vals,
+					Extensions:   signedVoteExtensions,
+					Txs:          genRandomTxs(t, encCfg.TxConfig, regularTxCount, livenessTxCount),
+					TxVerifier:   newTxVerifier(encCfg.TxConfig), // we need to use this dummy tx verifier, otherwise the baseApp is used and runs the transactions in 'execModePrepareProposal' and execModeProcessProposal'
+				}
+			},
+			expectError: false,
+		},
 		// TODO: Add scenarios testing compatibility of prepareProposal, processProposal and preBlocker
 	}
 
@@ -479,7 +686,9 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := gomock.NewController(t)
 			ek := mocks.NewMockCheckpointingKeeper(c)
-			mem := mempool.NoOpMempool{}
+			mCfg := mempool.DefaultPriorityNonceMempoolConfig()
+			mCfg.MaxTx = 0
+			mem := mempool.NewPriorityMempool(mCfg)
 			ec := epochAndVoteExtensionCtx()
 			scenario := tt.scenarioSetup(ec, ek)
 			// Those are true for every scenario
@@ -487,10 +696,12 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 			ek.EXPECT().GetTotalVotingPower(gomock.Any(), ec.Epoch.EpochNumber).Return(scenario.TotalPower).AnyTimes()
 			ek.EXPECT().GetValidatorSet(gomock.Any(), ec.Epoch.EpochNumber).Return(et.NewSortedValidatorSet(ToValidatorSet(scenario.ValidatorSet))).AnyTimes()
 
+			// if there're txs in the scenario, add them to the mempool
+			addTxsToMempool(scenario.Txs, mem)
+
 			logger := log.NewTestLogger(t)
 			db := dbm.NewMemDB()
 			name := t.Name()
-			encCfg := appparams.DefaultEncodingConfig()
 			bApp := baseapp.NewBaseApp(name, logger, db, encCfg.TxConfig.TxDecoder(), baseapp.SetChainID("chain-test"))
 			h := prepare.NewProposalHandler(
 				log.NewNopLogger(),
@@ -499,6 +710,10 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				bApp,
 				encCfg,
 			)
+
+			if scenario.TxVerifier != nil {
+				h = h.WithTxVerifier(scenario.TxVerifier)
+			}
 
 			commitInfo, _, cometInfo := helper.ExtendedCommitToLastCommit(cbftt.ExtendedCommitInfo{Round: 0, Votes: scenario.Extensions})
 			scenario.Extensions = commitInfo.Votes
@@ -510,11 +725,13 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				require.Len(t, prop.Txs, 1)
+				expTxCount := len(scenario.Txs) + 1 // Expecting to have all the txs in the mempool + the injected checkpoint tx
+				require.Len(t, prop.Txs, expTxCount)
 				checkpoint, err := h.ExtractInjectedCheckpoint(prop.Txs)
 				require.NoError(t, err)
 				err = verifyCheckpoint(scenario.ValidatorSet, checkpoint.Ckpt.Ckpt)
 				require.NoError(t, err)
+				verifyTxOrder(t, prop.Txs, encCfg.TxConfig.TxDecoder(), regularTxCount, livenessTxCount)
 			}
 		})
 	}
