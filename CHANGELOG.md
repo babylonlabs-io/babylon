@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#648](https://github.com/babylonlabs-io/babylon/pull/648) Add query to get all parameters
+from `x/btcstaking` module.
 - [#544](https://github.com/babylonlabs-io/babylon/pull/544) Add `bls-config` to `app.toml` for custom bls key location.
 - [#558](https://github.com/babylonlabs-io/babylon/pull/558) Change BLS public key format from hex to base64 in bls_key.json.
 - [#466](https://github.com/babylonlabs-io/babylon/pull/466) Add e2e test to
