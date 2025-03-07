@@ -29,6 +29,7 @@ type ProposalHandler struct {
 
 	// used for building and parsing the injected tx
 	txConfig client.TxConfig
+	mp       mempool.Mempool
 
 	defaultPrepareProposalHandler sdk.PrepareProposalHandler
 	defaultProcessProposalHandler sdk.ProcessProposalHandler
@@ -46,6 +47,7 @@ func NewProposalHandler(
 
 	return &ProposalHandler{
 		logger:                        logger,
+		mp:                            mp,
 		ckptKeeper:                    ckptKeeper,
 		bApp:                          bApp,
 		txConfig:                      encCfg.TxConfig,
@@ -422,6 +424,15 @@ func (h *ProposalHandler) ExtractInjectedCheckpoint(txs [][]byte) (*ckpttypes.Ms
 	injectedCkpt := msgs[0].(*ckpttypes.MsgInjectedCheckpoint)
 
 	return injectedCkpt, nil
+}
+
+// WithTxVerifier allows to specify the transaction verifier to use in the
+// defaultHandler. Useful for testing
+func (h *ProposalHandler) WithTxVerifier(ptv baseapp.ProposalTxVerifier) *ProposalHandler {
+	defaultHandler := baseapp.NewDefaultProposalHandler(h.mp, ptv)
+	h.defaultPrepareProposalHandler = defaultHandler.PrepareProposalHandler()
+	h.defaultProcessProposalHandler = defaultHandler.ProcessProposalHandler()
+	return h
 }
 
 // removeInjectedTx removes the injected tx from the tx set

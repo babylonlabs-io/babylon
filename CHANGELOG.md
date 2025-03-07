@@ -71,6 +71,7 @@ check of rewards
 - [#625](https://github.com/babylonlabs-io/babylon/pull/625) Add `GasLimit` decorator in ante handler and local mempool configuration
 - [#633](https://github.com/babylonlabs-io/babylon/pull/633) Fix swagger
 - [#643](https://github.com/babylonlabs-io/babylon/pull/643) Fix flaky test `FuzzBTCDelegation`
+- [#644](https://github.com/babylonlabs-io/babylon/pull/644) Add priority nonce mempool and transaction priority ante handler decorator
 
 ### State Machine Breaking
 
