@@ -99,7 +99,7 @@ func PrintDBStats(db dbm.DB, printInterval int) {
 
 	itr, err := db.Iterator(nil, nil)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to create iterator: %w", err)
 	}
 	fmt.Printf("****************** Retrieved database iterator ******************\n")
 
@@ -135,7 +135,7 @@ func PrintDBStats(db dbm.DB, printInterval int) {
 	}
 
 	if err := itr.Error(); err != nil {
-		panic(err)
+		return fmt.Errorf("iterator error: %w", err)
 	}
 	fmt.Printf("****************** Finished iterating over whole database ******************\n")
 	printModuleStats(storeKeyStats, &gs)
