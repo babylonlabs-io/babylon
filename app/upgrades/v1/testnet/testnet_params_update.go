@@ -14,12 +14,12 @@ import (
 
 var (
 	// Governance params
-	TestnetVotingPeriod          = 24 * time.Hour
-	TestnetExpeditedVotingPeriod = 12 * time.Hour
-	// 10 BBN
-	TestnetMinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(10000000))
-	// 20 BBN
-	TestnetExpeditedMinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(20000000))
+	TestnetVotingPeriod          = 1 * time.Hour
+	TestnetExpeditedVotingPeriod = 30 * time.Minute
+	// 1000 BBN
+	TestnetMinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(1000000000))
+	// 2000 BBN
+	TestnetExpeditedMinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(2000000000))
 	// Consensus params
 	TestnetBlockGasLimit = int64(250000000)
 	// Staking params
