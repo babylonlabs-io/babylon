@@ -7439,9 +7439,7 @@ paths:
                     version:
                       type: integer
                       format: int64
-                      title: |-
-                        version of the stored parameters. Each parameters update
-                        increments version number by 1
+                      description: version of the stored parameters.
                     params:
                       title: 'NOTE: Parameters must always be provided'
                       type: object
@@ -7581,12 +7579,10 @@ paths:
 
                             (inclusive)
                       description: Params defines the parameters for the module.
-                  title: >-
-                    StoredParams attach information about the version of stored
-                    parameters
-                description: params holds all the params with version from this module.
+                  description: ParamsVersionResponse the response of a versioned parameter.
+                title: Params the parameters with the version
               pagination:
-                description: pagination defines the pagination in the response.
+                description: Pagination defines the pagination in the response.
                 type: object
                 properties:
                   next_key:
@@ -19446,6 +19442,148 @@ definitions:
 
           (inclusive)
     description: Params defines the parameters for the module.
+  babylon.btcstaking.v1.ParamsVersionResponse:
+    type: object
+    properties:
+      version:
+        type: integer
+        format: int64
+        description: version of the stored parameters.
+      params:
+        title: 'NOTE: Parameters must always be provided'
+        type: object
+        properties:
+          covenant_pks:
+            type: array
+            items:
+              type: string
+              format: byte
+            title: >-
+              PARAMETERS COVERING STAKING
+
+              covenant_pks is the list of public keys held by the covenant
+              committee
+
+              each PK follows encoding in BIP-340 spec on Bitcoin
+          covenant_quorum:
+            type: integer
+            format: int64
+            title: >-
+              covenant_quorum is the minimum number of signatures needed for the
+              covenant
+
+              multisignature
+          min_staking_value_sat:
+            type: string
+            format: int64
+            title: >-
+              min_staking_value_sat is the minimum of satoshis locked in staking
+              output
+          max_staking_value_sat:
+            type: string
+            format: int64
+            title: >-
+              max_staking_value_sat is the maximum of satoshis locked in staking
+              output
+          min_staking_time_blocks:
+            type: integer
+            format: int64
+            title: >-
+              min_staking_time is the minimum lock time specified in staking
+              output
+
+              script
+          max_staking_time_blocks:
+            type: integer
+            format: int64
+            title: >-
+              max_staking_time_blocks is the maximum lock time time specified in
+              staking
+
+              output script
+          slashing_pk_script:
+            type: string
+            format: byte
+            title: >-
+              PARAMETERS COVERING SLASHING
+
+              slashing_pk_script is the pk_script expected in slashing output
+              ie. the
+
+              first output of slashing transaction
+          min_slashing_tx_fee_sat:
+            type: string
+            format: int64
+            title: >-
+              min_slashing_tx_fee_sat is the minimum amount of tx fee
+              (quantified
+
+              in Satoshi) needed for the pre-signed slashing tx. It covers both:
+
+              staking slashing transaction and unbonding slashing transaction
+          slashing_rate:
+            type: string
+            title: >-
+              slashing_rate determines the portion of the staked amount to be
+              slashed,
+
+              expressed as a decimal (e.g., 0.5 for 50%). Maximal precion is 2
+              decimal
+
+              places
+          unbonding_time_blocks:
+            type: integer
+            format: int64
+            title: >-
+              PARAMETERS COVERING UNBONDING
+
+              unbonding_time is the exact unbonding time required from unbonding
+
+              transaction it must be larger than
+              `checkpoint_finalization_timeout` from
+
+              `btccheckpoint` module
+          unbonding_fee_sat:
+            type: string
+            format: int64
+            title: unbonding_fee exact fee required for unbonding transaction
+          min_commission_rate:
+            type: string
+            title: >-
+              PARAMETERS COVERING FINALITY PROVIDERS
+
+              min_commission_rate is the chain-wide minimum commission rate that
+              a
+
+              finality provider can charge their delegators expressed as a
+              decimal (e.g.,
+
+              0.5 for 50%). Maximal precion is 2 decimal places
+          delegation_creation_base_gas_fee:
+            type: string
+            format: uint64
+            title: base gas fee for delegation creation
+          allow_list_expiration_height:
+            type: string
+            format: uint64
+            title: >-
+              allow_list_expiration_height is the height at which the allow list
+              expires
+
+              i.e all staking transactions are allowed to enter Babylon chain
+              afterwards
+
+              setting it to 0 means allow list is disabled
+          btc_activation_height:
+            type: integer
+            format: int64
+            title: >-
+              btc_activation_height is the btc height from which parameters are
+              activated
+
+              (inclusive)
+        description: Params defines the parameters for the module.
+    description: ParamsVersionResponse the response of a versioned parameter.
   babylon.btcstaking.v1.ProofOfPossessionBTC:
     type: object
     properties:
@@ -21046,9 +21184,7 @@ definitions:
             version:
               type: integer
               format: int64
-              title: |-
-                version of the stored parameters. Each parameters update
-                increments version number by 1
+              description: version of the stored parameters.
             params:
               title: 'NOTE: Parameters must always be provided'
               type: object
@@ -21186,12 +21322,10 @@ definitions:
 
                     (inclusive)
               description: Params defines the parameters for the module.
-          title: >-
-            StoredParams attach information about the version of stored
-            parameters
-        description: params holds all the params with version from this module.
+          description: ParamsVersionResponse the response of a versioned parameter.
+        title: Params the parameters with the version
       pagination:
-        description: pagination defines the pagination in the response.
+        description: Pagination defines the pagination in the response.
         type: object
         properties:
           next_key:
@@ -21220,150 +21354,6 @@ definitions:
         type: string
         format: byte
     title: SignatureInfo is a BIP-340 signature together with its signer's BIP-340 PK
-  babylon.btcstaking.v1.StoredParams:
-    type: object
-    properties:
-      version:
-        type: integer
-        format: int64
-        title: |-
-          version of the stored parameters. Each parameters update
-          increments version number by 1
-      params:
-        title: 'NOTE: Parameters must always be provided'
-        type: object
-        properties:
-          covenant_pks:
-            type: array
-            items:
-              type: string
-              format: byte
-            title: >-
-              PARAMETERS COVERING STAKING
-
-              covenant_pks is the list of public keys held by the covenant
-              committee
-
-              each PK follows encoding in BIP-340 spec on Bitcoin
-          covenant_quorum:
-            type: integer
-            format: int64
-            title: >-
-              covenant_quorum is the minimum number of signatures needed for the
-              covenant
-
-              multisignature
-          min_staking_value_sat:
-            type: string
-            format: int64
-            title: >-
-              min_staking_value_sat is the minimum of satoshis locked in staking
-              output
-          max_staking_value_sat:
-            type: string
-            format: int64
-            title: >-
-              max_staking_value_sat is the maximum of satoshis locked in staking
-              output
-          min_staking_time_blocks:
-            type: integer
-            format: int64
-            title: >-
-              min_staking_time is the minimum lock time specified in staking
-              output
-
-              script
-          max_staking_time_blocks:
-            type: integer
-            format: int64
-            title: >-
-              max_staking_time_blocks is the maximum lock time time specified in
-              staking
-
-              output script
-          slashing_pk_script:
-            type: string
-            format: byte
-            title: >-
-              PARAMETERS COVERING SLASHING
-
-              slashing_pk_script is the pk_script expected in slashing output
-              ie. the
-
-              first output of slashing transaction
-          min_slashing_tx_fee_sat:
-            type: string
-            format: int64
-            title: >-
-              min_slashing_tx_fee_sat is the minimum amount of tx fee
-              (quantified
-
-              in Satoshi) needed for the pre-signed slashing tx. It covers both:
-
-              staking slashing transaction and unbonding slashing transaction
-          slashing_rate:
-            type: string
-            title: >-
-              slashing_rate determines the portion of the staked amount to be
-              slashed,
-
-              expressed as a decimal (e.g., 0.5 for 50%). Maximal precion is 2
-              decimal
-
-              places
-          unbonding_time_blocks:
-            type: integer
-            format: int64
-            title: >-
-              PARAMETERS COVERING UNBONDING
-
-              unbonding_time is the exact unbonding time required from unbonding
-
-              transaction it must be larger than
-              `checkpoint_finalization_timeout` from
-
-              `btccheckpoint` module
-          unbonding_fee_sat:
-            type: string
-            format: int64
-            title: unbonding_fee exact fee required for unbonding transaction
-          min_commission_rate:
-            type: string
-            title: >-
-              PARAMETERS COVERING FINALITY PROVIDERS
-
-              min_commission_rate is the chain-wide minimum commission rate that
-              a
-
-              finality provider can charge their delegators expressed as a
-              decimal (e.g.,
-
-              0.5 for 50%). Maximal precion is 2 decimal places
-          delegation_creation_base_gas_fee:
-            type: string
-            format: uint64
-            title: base gas fee for delegation creation
-          allow_list_expiration_height:
-            type: string
-            format: uint64
-            title: >-
-              allow_list_expiration_height is the height at which the allow list
-              expires
-
-              i.e all staking transactions are allowed to enter Babylon chain
-              afterwards
-
-              setting it to 0 means allow list is disabled
-          btc_activation_height:
-            type: integer
-            format: int64
-            title: >-
-              btc_activation_height is the btc height from which parameters are
-              activated
-
-              (inclusive)
-        description: Params defines the parameters for the module.
-    title: StoredParams attach information about the version of stored parameters
   cosmos.staking.v1beta1.Description:
     type: object
     properties:

@@ -368,9 +368,18 @@ message QueryParamsVersionsResponse {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
-  // params holds all the params with version from this module.
-  repeated StoredParams params = 1 [ (gogoproto.nullable) = false ];
+  // Params the parameters with the version
+  repeated ParamsVersionResponse params = 1 [ (gogoproto.nullable) = false ];
 
-  // pagination defines the pagination in the response.
+  // Pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// ParamsVersionResponse the response of a versioned parameter.
+message ParamsVersionResponse {
+  // version of the stored parameters.
+  uint32 version = 1;
+
+  // NOTE: Parameters must always be provided
+  Params params = 2 [ (gogoproto.nullable) = false ];
 }

@@ -401,3 +401,8 @@ func (m *HeightToVersionMap) Validate() error {
 
 	return nil
 }
+
+// ToResponse parses it to the response
+func (p StoredParams) ToResponse() ParamsVersionResponse {
+	return ParamsVersionResponse(p)
+}
