@@ -330,7 +330,7 @@ func addTxsToMempool(txs []sdk.Tx, mp mempool.Mempool) error {
 	return nil
 }
 
-func buildTx(txConfig client.TxConfig, signer sdk.AccAddress, nonce uint64, msgs []sdk.Msg) (sdk.Tx, error) {
+func buildTx(txConfig client.TxConfig, nonce uint64, msgs []sdk.Msg) (sdk.Tx, error) {
 	builder := txConfig.NewTxBuilder()
 	if err := builder.SetMsgs(msgs...); err != nil {
 		return nil, err
@@ -357,22 +357,20 @@ func setTxSignature(builder client.TxBuilder, nonce uint64) error {
 
 func regularTx(txConf client.TxConfig) (sdk.Tx, error) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	signer := datagen.GenRandomAccount().GetAddress()
 	nonce := datagen.RandomUInt32(r, 10_000)
 	msgs := []sdk.Msg{
 		&sdktestdata.TestMsg{},
 	}
-	return buildTx(txConf, signer, uint64(nonce), msgs)
+	return buildTx(txConf, uint64(nonce), msgs)
 }
 
 func livenessTx(txConf client.TxConfig) (sdk.Tx, error) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	signer := datagen.GenRandomAccount().GetAddress()
 	nonce := datagen.RandomUInt32(r, 10_000)
 	msgs := []sdk.Msg{
 		&ftypes.MsgAddFinalitySig{},
 	}
-	return buildTx(txConf, signer, uint64(nonce), msgs)
+	return buildTx(txConf, uint64(nonce), msgs)
 }
 
 func isRegularTx(txDecoder sdk.TxDecoder, txBz []byte) (bool, error) {
@@ -429,6 +427,8 @@ func verifyTxOrder(t *testing.T, txs [][]byte, txDecoder sdk.TxDecoder, regTxsCo
 	if len(txs) == 1 {
 		return
 	}
+	// Expect to have one extra tx, the injected checkpoint tx
+	require.Equal(t, regTxsCount+livenessTxsCount+1, len(txs), "Unexpected number of transactions")
 	// Skip the first transaction which is the injected checkpoint tx
 	for i, txBz := range txs[1:] {
 		isLiveness, err := isLivenessTx(txDecoder, txBz)
@@ -442,7 +442,6 @@ func verifyTxOrder(t *testing.T, txs [][]byte, txDecoder sdk.TxDecoder, regTxsCo
 			require.True(t, isRegular, "Expected a regular transaction at index %d", i+1)
 		}
 	}
-
 }
 
 // txVerifier is a dummy tx verifier used in tests
@@ -458,7 +457,6 @@ func (m txVerifier) PrepareProposalVerifyTx(tx sdk.Tx) ([]byte, error) {
 // ProcessProposalVerifyTx implements baseapp.ProposalTxVerifier.
 func (m txVerifier) ProcessProposalVerifyTx(txBz []byte) (sdk.Tx, error) {
 	return m.txEncodConfig.TxDecoder()(txBz)
-
 }
 
 // TxDecode implements baseapp.ProposalTxVerifier.
