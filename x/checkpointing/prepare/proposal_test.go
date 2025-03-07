@@ -304,6 +304,9 @@ func ToValidatorSet(v []TestValidator) et.ValidatorSet {
 	return et.NewSortedValidatorSet(cv)
 }
 
+// addTxsToMempool is a helper function to add the transactions to the
+// provided mempool. Uses the Priority anteHandler decorator
+// to set the tx priority
 func addTxsToMempool(txs []sdk.Tx, mp mempool.Mempool) error {
 	if len(txs) == 0 {
 		return nil
@@ -373,25 +376,32 @@ func livenessTx(txConf client.TxConfig) (sdk.Tx, error) {
 }
 
 func isRegularTx(txDecoder sdk.TxDecoder, txBz []byte) (bool, error) {
-	return isTxType[*sdktestdata.TestMsg](txDecoder, txBz)
-}
-
-func isLivenessTx(txDecoder sdk.TxDecoder, txBz []byte) (bool, error) {
-	return isTxType[*ftypes.MsgAddFinalitySig](txDecoder, txBz)
-}
-
-func isTxType[T any](txDecoder sdk.TxDecoder, txBz []byte) (bool, error) {
 	tx, err := txDecoder(txBz)
 	if err != nil {
 		return false, err
 	}
 	msgs := tx.GetMsgs()
 	for _, msg := range msgs {
-		if _, ok := msg.(T); !ok {
+		if _, ok := msg.(*sdktestdata.TestMsg); !ok {
 			return false, nil
 		}
 	}
 	return true, nil
+}
+
+func isLivenessTx(txDecoder sdk.TxDecoder, txBz []byte) (bool, error) {
+	tx, err := txDecoder(txBz)
+	if err != nil {
+		return false, err
+	}
+	msgs := tx.GetMsgs()
+	for _, msg := range msgs {
+		// a tx with only one liveness-related msg is a livenessTx
+		if _, ok := msg.(*ftypes.MsgAddFinalitySig); ok {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func genRandomTxs(t *testing.T, txConf client.TxConfig, regTxsCount, livenessTxsCount int) []sdk.Tx {
