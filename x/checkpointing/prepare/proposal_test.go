@@ -429,7 +429,7 @@ func verifyTxOrder(t *testing.T, txs [][]byte, txDecoder sdk.TxDecoder, regTxsCo
 	if len(txs) == 1 {
 		return
 	}
-	// Skip the first transaction which is the injection checkpoint tx
+	// Skip the first transaction which is the injected checkpoint tx
 	for i, txBz := range txs[1:] {
 		isLiveness, err := isLivenessTx(txDecoder, txBz)
 		require.NoError(t, err, "Error decoding transaction at index %d", i+1)
