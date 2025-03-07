@@ -27,9 +27,9 @@ var (
 	// Distribution params
 	TestnetCommunityTax, _ = sdkmath.LegacyNewDecFromStr("0.001")
 	// BTC checkpoint params
-	TestnetBTCCheckpointTag = hex.EncodeToString([]byte("bbt5"))
+	TestnetBTCCheckpointTag = hex.EncodeToString([]byte("bbb5"))
 	// Additional allow address to BTC light client
-	TestnetReporterAllowAddress = "bbn1cferwuxd95mdnyh4qnptahmzym0xt9sp9asqnw"
+	TestnetReporterAllowAddress = "bbn1xgfxeu4xaht496d4jj7urj55eejly39mu9uzlm"
 )
 
 // TestnetParamUpgrade make updates to specific params of specific modules
