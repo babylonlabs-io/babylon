@@ -7019,9 +7019,7 @@ paths:
     get:
       summary: >-
         ParamsByVersion queries the parameters of the module for a specific
-        version
-
-        of past params.
+        version of past params.
       operationId: ParamsByVersion
       responses:
         '200':
@@ -10601,6 +10599,375 @@ paths:
           in: query
           required: false
           type: boolean
+      tags:
+        - Query
+  /babylon/incentive/address/{address}/reward_gauge:
+    get:
+      summary: RewardGauge queries the reward gauge of a given stakeholder address
+      operationId: RewardGauges
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              reward_gauges:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    coins:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          denom:
+                            type: string
+                          amount:
+                            type: string
+                        description: >-
+                          Coin defines a token with a denomination and an
+                          amount.
+
+
+                          NOTE: The amount field is an Int which implements the
+                          custom method
+
+                          signatures required by gogoproto.
+                      title: |-
+                        coins are coins that have been in the gauge
+                        Can have multiple coin denoms
+                    withdrawn_coins:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          denom:
+                            type: string
+                          amount:
+                            type: string
+                        description: >-
+                          Coin defines a token with a denomination and an
+                          amount.
+
+
+                          NOTE: The amount field is an Int which implements the
+                          custom method
+
+                          signatures required by gogoproto.
+                      title: >-
+                        withdrawn_coins are coins that have been withdrawn by
+                        the stakeholder
+
+                        already
+                  title: >-
+                    RewardGaugesResponse is an object that stores rewards
+                    distributed to a BTC
+
+                    staking stakeholder
+                title: >-
+                  reward_gauges is the map of reward gauges, where key is the
+                  stakeholder
+
+                  type and value is the reward gauge holding all rewards for the
+                  stakeholder
+
+                  in that type
+            description: >-
+              QueryRewardGaugesResponse is response type for the
+              Query/RewardGauges RPC
+
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: address
+          description: address is the address of the stakeholder in bech32 string
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /babylon/incentive/btc_staking_gauge/{height}:
+    get:
+      summary: BTCStakingGauge queries the BTC staking gauge of a given height
+      operationId: BTCStakingGauge
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              gauge:
+                title: gauge is the BTC staking gauge at the queried height
+                type: object
+                properties:
+                  coins:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        denom:
+                          type: string
+                        amount:
+                          type: string
+                      description: >-
+                        Coin defines a token with a denomination and an amount.
+
+
+                        NOTE: The amount field is an Int which implements the
+                        custom method
+
+                        signatures required by gogoproto.
+                    title: |-
+                      coins that have been in the gauge
+                      can have multiple coin denoms
+                description: >-
+                  BTCStakingGaugeResponse is response type for the
+                  Query/BTCStakingGauge RPC
+
+                  method.
+            description: >-
+              QueryBTCStakingGaugeResponse is response type for the
+              Query/BTCStakingGauge
+
+              RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: height
+          description: height is the queried Babylon height
+          in: path
+          required: true
+          type: string
+          format: uint64
+      tags:
+        - Query
+  /babylon/incentive/delegators/{delegator_address}/withdraw_address:
+    get:
+      summary: DelegatorWithdrawAddress queries withdraw address of a delegator.
+      operationId: DelegatorWithdrawAddress
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              withdraw_address:
+                type: string
+                description: withdraw_address defines the delegator address to query for.
+            description: |-
+              QueryDelegatorWithdrawAddressResponse is the response type for the
+              Query/DelegatorWithdrawAddress RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: delegator_address
+          description: delegator_address defines the delegator address to query for.
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /babylon/incentive/finality_providers/{finality_provider_address}/delegators/{delegator_address}/delegation_rewards:
+    get:
+      summary: >-
+        DelegationRewards queries the delegation rewards of given finality
+        provider
+
+        and delegator addresses
+      operationId: DelegationRewards
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              rewards:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    denom:
+                      type: string
+                    amount:
+                      type: string
+                  description: >-
+                    Coin defines a token with a denomination and an amount.
+
+
+                    NOTE: The amount field is an Int which implements the custom
+                    method
+
+                    signatures required by gogoproto.
+                title: |-
+                  rewards are the delegation reward coins
+                  Can have multiple coin denoms
+            description: |-
+              QueryDelegationRewardsResponse is the response type for the
+              Query/DelegationRewards RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: finality_provider_address
+          description: >-
+            finality_provider_address defines the finality provider address of
+            the
+
+            delegation.
+          in: path
+          required: true
+          type: string
+        - name: delegator_address
+          description: delegator_address defines the delegator address to query for.
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /babylon/incentive/params:
+    get:
+      summary: Parameters queries the parameters of the module.
+      operationId: IncentiveParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params holds all the parameters of this module.
+                type: object
+                properties:
+                  btc_staking_portion:
+                    type: string
+                    title: >-
+                      btc_staking_portion is the portion of rewards that goes to
+                      Finality
+
+                      Providers/delegations NOTE: the portion of each Finality
+
+                      Provider/delegation is calculated by using its voting
+                      power and finality
+
+                      provider's commission
+                title: >-
+                  Params defines the parameters for the module, including
+                  portions of rewards
+
+                  distributed to each type of stakeholder. Note that sum of the
+                  portions should
+
+                  be strictly less than 1 so that the rest will go to Comet
+
+                  validators/delegations adapted from
+
+                  https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/proto/cosmos/distribution/v1beta1/distribution.proto
+            description: >-
+              QueryParamsResponse is response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
       tags:
         - Query
 definitions:
@@ -16889,3 +17256,259 @@ definitions:
           transition and the time (in both timestamp and block height) of this
           transition.
     description: RawCheckpointWithMetaResponse wraps the raw checkpoint with metadata.
+  babylon.incentive.BTCStakingGaugeResponse:
+    type: object
+    properties:
+      coins:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+        title: |-
+          coins that have been in the gauge
+          can have multiple coin denoms
+    description: |-
+      BTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC
+      method.
+  babylon.incentive.Params:
+    type: object
+    properties:
+      btc_staking_portion:
+        type: string
+        title: >-
+          btc_staking_portion is the portion of rewards that goes to Finality
+
+          Providers/delegations NOTE: the portion of each Finality
+
+          Provider/delegation is calculated by using its voting power and
+          finality
+
+          provider's commission
+    title: >-
+      Params defines the parameters for the module, including portions of
+      rewards
+
+      distributed to each type of stakeholder. Note that sum of the portions
+      should
+
+      be strictly less than 1 so that the rest will go to Comet
+
+      validators/delegations adapted from
+
+      https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/proto/cosmos/distribution/v1beta1/distribution.proto
+  babylon.incentive.QueryBTCStakingGaugeResponse:
+    type: object
+    properties:
+      gauge:
+        title: gauge is the BTC staking gauge at the queried height
+        type: object
+        properties:
+          coins:
+            type: array
+            items:
+              type: object
+              properties:
+                denom:
+                  type: string
+                amount:
+                  type: string
+              description: >-
+                Coin defines a token with a denomination and an amount.
+
+
+                NOTE: The amount field is an Int which implements the custom
+                method
+
+                signatures required by gogoproto.
+            title: |-
+              coins that have been in the gauge
+              can have multiple coin denoms
+        description: >-
+          BTCStakingGaugeResponse is response type for the Query/BTCStakingGauge
+          RPC
+
+          method.
+    description: >-
+      QueryBTCStakingGaugeResponse is response type for the
+      Query/BTCStakingGauge
+
+      RPC method.
+  babylon.incentive.QueryDelegationRewardsResponse:
+    type: object
+    properties:
+      rewards:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+        title: |-
+          rewards are the delegation reward coins
+          Can have multiple coin denoms
+    description: |-
+      QueryDelegationRewardsResponse is the response type for the
+      Query/DelegationRewards RPC method.
+  babylon.incentive.QueryDelegatorWithdrawAddressResponse:
+    type: object
+    properties:
+      withdraw_address:
+        type: string
+        description: withdraw_address defines the delegator address to query for.
+    description: |-
+      QueryDelegatorWithdrawAddressResponse is the response type for the
+      Query/DelegatorWithdrawAddress RPC method.
+  babylon.incentive.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params holds all the parameters of this module.
+        type: object
+        properties:
+          btc_staking_portion:
+            type: string
+            title: >-
+              btc_staking_portion is the portion of rewards that goes to
+              Finality
+
+              Providers/delegations NOTE: the portion of each Finality
+
+              Provider/delegation is calculated by using its voting power and
+              finality
+
+              provider's commission
+        title: >-
+          Params defines the parameters for the module, including portions of
+          rewards
+
+          distributed to each type of stakeholder. Note that sum of the portions
+          should
+
+          be strictly less than 1 so that the rest will go to Comet
+
+          validators/delegations adapted from
+
+          https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/proto/cosmos/distribution/v1beta1/distribution.proto
+    description: QueryParamsResponse is response type for the Query/Params RPC method.
+  babylon.incentive.QueryRewardGaugesResponse:
+    type: object
+    properties:
+      reward_gauges:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            coins:
+              type: array
+              items:
+                type: object
+                properties:
+                  denom:
+                    type: string
+                  amount:
+                    type: string
+                description: >-
+                  Coin defines a token with a denomination and an amount.
+
+
+                  NOTE: The amount field is an Int which implements the custom
+                  method
+
+                  signatures required by gogoproto.
+              title: |-
+                coins are coins that have been in the gauge
+                Can have multiple coin denoms
+            withdrawn_coins:
+              type: array
+              items:
+                type: object
+                properties:
+                  denom:
+                    type: string
+                  amount:
+                    type: string
+                description: >-
+                  Coin defines a token with a denomination and an amount.
+
+
+                  NOTE: The amount field is an Int which implements the custom
+                  method
+
+                  signatures required by gogoproto.
+              title: >-
+                withdrawn_coins are coins that have been withdrawn by the
+                stakeholder
+
+                already
+          title: >-
+            RewardGaugesResponse is an object that stores rewards distributed to
+            a BTC
+
+            staking stakeholder
+        title: >-
+          reward_gauges is the map of reward gauges, where key is the
+          stakeholder
+
+          type and value is the reward gauge holding all rewards for the
+          stakeholder
+
+          in that type
+    description: |-
+      QueryRewardGaugesResponse is response type for the Query/RewardGauges RPC
+      method.
+  babylon.incentive.RewardGaugesResponse:
+    type: object
+    properties:
+      coins:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+        title: |-
+          coins are coins that have been in the gauge
+          Can have multiple coin denoms
+      withdrawn_coins:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+        title: |-
+          withdrawn_coins are coins that have been withdrawn by the stakeholder
+          already
+    title: |-
+      RewardGaugesResponse is an object that stores rewards distributed to a BTC
+      staking stakeholder
