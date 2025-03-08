@@ -14,12 +14,12 @@ import (
 
 var (
 	// Governance params
-	TestnetVotingPeriod          = 24 * time.Hour
-	TestnetExpeditedVotingPeriod = 12 * time.Hour
-	// 10 BBN
-	TestnetMinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(10000000))
-	// 20 BBN
-	TestnetExpeditedMinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(20000000))
+	TestnetVotingPeriod          = 1 * time.Hour
+	TestnetExpeditedVotingPeriod = 30 * time.Minute
+	// 1000 BBN
+	TestnetMinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(1000000000))
+	// 2000 BBN
+	TestnetExpeditedMinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(2000000000))
 	// Consensus params
 	TestnetBlockGasLimit = int64(250000000)
 	// Staking params
@@ -27,9 +27,9 @@ var (
 	// Distribution params
 	TestnetCommunityTax, _ = sdkmath.LegacyNewDecFromStr("0.001")
 	// BTC checkpoint params
-	TestnetBTCCheckpointTag = hex.EncodeToString([]byte("bbt5"))
+	TestnetBTCCheckpointTag = hex.EncodeToString([]byte("bbb5"))
 	// Additional allow address to BTC light client
-	TestnetReporterAllowAddress = "bbn1cferwuxd95mdnyh4qnptahmzym0xt9sp9asqnw"
+	TestnetReporterAllowAddress = "bbn1xgfxeu4xaht496d4jj7urj55eejly39mu9uzlm"
 )
 
 // TestnetParamUpgrade make updates to specific params of specific modules

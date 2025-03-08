@@ -9,11 +9,11 @@ package testnet
 // blocks. In this case the finality activation block heigth will be set
 // as 8844 = 8640 (24hrs worth of blocks) + ~200 (blocks of TGE).
 const FinalityParamStr = `{
-  "max_active_finality_providers": 100,
+  "max_active_finality_providers": 70,
   "signed_blocks_window": 10000,
   "finality_sig_timeout": 3,
   "min_signed_per_window": "0.05",
   "min_pub_rand": 500,
-  "jail_duration": "3600s",
+  "jail_duration": "600s",
   "finality_activation_height": 8844
 }`
