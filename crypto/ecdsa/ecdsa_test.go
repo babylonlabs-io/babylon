@@ -36,6 +36,25 @@ func TestECDSA(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestECDSARecoverPublicKey(t *testing.T) {
+	// decode SK and PK
+	skBytes, err := hex.DecodeString(skHex)
+	require.NoError(t, err)
+	sk, pk := btcec.PrivKeyFromBytes(skBytes)
+	require.NotNil(t, sk)
+	require.NotNil(t, pk)
+	// sign
+	sig := ecdsa.Sign(sk, testMsg)
+	testSigBytes, err := base64.StdEncoding.DecodeString(testSigBase64)
+	require.NoError(t, err)
+	// ensure sig is same as that in test vector
+	require.True(t, bytes.Equal(sig, testSigBytes))
+	// recover PK
+	recoveredPK, err := ecdsa.RecoverPublicKey(testMsg, sig)
+	require.NoError(t, err)
+	require.Equal(t, pk.SerializeCompressed(), recoveredPK.SerializeCompressed())
+}
+
 func TestECDSAMalleability(t *testing.T) {
 	// decode SK and PK
 	skBytes, err := hex.DecodeString(skHex)
