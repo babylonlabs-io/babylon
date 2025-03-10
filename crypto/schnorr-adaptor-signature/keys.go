@@ -3,6 +3,7 @@ package schnorr_adaptor_signature
 import (
 	"fmt"
 
+	"github.com/babylonlabs-io/babylon/crypto/common"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
@@ -19,8 +20,10 @@ func NewDecyptionKeyFromModNScalar(scalar *btcec.ModNScalar) (*DecryptionKey, er
 	}
 
 	// enforce using a scalar corresponding to an even encryption key
-	var ekPoint btcec.JacobianPoint
-	btcec.ScalarBaseMultNonConst(scalar, &ekPoint)
+	ekPoint, err := common.ScalarBaseMultWithBlinding(scalar)
+	if err != nil {
+		return nil, err
+	}
 	ekPoint.ToAffine()
 	if ekPoint.Y.IsOdd() {
 		scalar = scalar.Negate()
@@ -48,12 +51,14 @@ func NewDecyptionKeyFromBytes(decKeyBytes []byte) (*DecryptionKey, error) {
 	return NewDecyptionKeyFromModNScalar(&decKeyScalar)
 }
 
-func (dk *DecryptionKey) GetEncKey() *EncryptionKey {
-	var ekPoint btcec.JacobianPoint
-	btcec.ScalarBaseMultNonConst(&dk.ModNScalar, &ekPoint)
+func (dk *DecryptionKey) GetEncKey() (*EncryptionKey, error) {
+	ekPoint, err := common.ScalarBaseMultWithBlinding(&dk.ModNScalar)
+	if err != nil {
+		return nil, err
+	}
 	// NOTE: we convert ekPoint to affine coordinates for consistency
 	ekPoint.ToAffine()
-	return &EncryptionKey{ekPoint}
+	return &EncryptionKey{*ekPoint}, nil
 }
 
 func (dk *DecryptionKey) ToBTCSK() *btcec.PrivateKey {
@@ -123,6 +128,9 @@ func GenKeyPair() (*EncryptionKey, *DecryptionKey, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	ek := dk.GetEncKey()
+	ek, err := dk.GetEncKey()
+	if err != nil {
+		return nil, nil, err
+	}
 	return ek, dk, nil
 }

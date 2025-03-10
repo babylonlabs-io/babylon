@@ -20,7 +20,8 @@ func FuzzKeyGen(f *testing.F) {
 		require.NoError(t, err)
 
 		// ensure that decKey.GetEncKey() is same as encKey
-		actualEncKey := decKey.GetEncKey()
+		actualEncKey, err := decKey.GetEncKey()
+		require.NoError(t, err)
 		require.Equal(t, encKey, actualEncKey)
 
 		// ensure that the corresponding btcPK and btcSK
