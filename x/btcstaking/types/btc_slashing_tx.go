@@ -281,7 +281,7 @@ func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 	*/
 	// decrypt covenant adaptor signature to Schnorr signature using finality provider's SK,
 	// then marshal
-	decKey, err := asig.NewDecyptionKeyFromBTCSK(fpSK)
+	decKey, err := asig.NewDecryptionKeyKeyFromBTCSK(fpSK)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get decryption key from BTC SK: %w", err)
 	}

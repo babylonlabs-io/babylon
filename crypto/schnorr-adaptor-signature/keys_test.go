@@ -35,7 +35,7 @@ func FuzzKeyGen(f *testing.F) {
 		actualEncKey, err = asig.NewEncryptionKeyFromBTCPK(btcPK)
 		require.NoError(t, err)
 		require.Equal(t, encKey, actualEncKey)
-		actualDecKey, err := asig.NewDecyptionKeyFromBTCSK(btcSK)
+		actualDecKey, err := asig.NewDecryptionKeyKeyFromBTCSK(btcSK)
 		require.NoError(t, err)
 		require.Equal(t, decKey, actualDecKey)
 	})
@@ -61,7 +61,7 @@ func FuzzKeySerialization(f *testing.F) {
 
 		// roundtrip of serialising/deserialising decKey
 		decKeyBytes := decKey.ToBytes()
-		actualDecKey, err := asig.NewDecyptionKeyFromBytes(decKeyBytes)
+		actualDecKey, err := asig.NewDecryptionKeyKeyFromBytes(decKeyBytes)
 		require.NoError(t, err)
 		require.Equal(t, decKey, actualDecKey)
 	})
