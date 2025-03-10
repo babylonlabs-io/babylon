@@ -69,6 +69,7 @@ func NewAnteHandler(
 		NewGasLimitDecorator(mempoolOpts),
 		NewWrappedAnteHandler(authAnteHandler),
 		NewBtcValidationDecorator(btcConfig, btccKeeper),
+		NewPriorityDecorator(),
 	)
 
 	return anteHandler
