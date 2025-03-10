@@ -39,16 +39,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-- [#648](https://github.com/babylonlabs-io/babylon/pull/648) Add query to get all parameters
-from `x/btcstaking` module.
+- [#655](https://github.com/babylonlabs-io/babylon/pull/655) Add func `ParseV0StakingTxWithoutTag` to
+parse staking tx without verifying opreturn tag.
 - [#623](https://github.com/babylonlabs-io/babylon/pull/623) Add check for empty string in `bls` loading.
-- [#544](https://github.com/babylonlabs-io/babylon/pull/544) Add `bls-config` to `app.toml` for custom bls key location.
-- [#466](https://github.com/babylonlabs-io/babylon/pull/466) Add e2e test to
-block bank send and still create BTC delegations
-- [#558](https://github.com/babylonlabs-io/babylon/pull/558) Change BLS public key format from hex to base64 in bls_key.json.
-- [#538](https://github.com/babylonlabs-io/babylon/pull/538) Upgrade to wasmd v0.54.x and wasmvm v2.2.x
 - [#536](https://github.com/babylonlabs-io/babylon/pull/536) Improve protobuf vs. json error msgs / types
-- [#527](https://github.com/babylonlabs-io/babylon/pull/527) Create BSL signer on start command with flags.
 - [#513](https://github.com/babylonlabs-io/babylon/pull/513) Suport datagen BTC delegation creation from Consumers
 - [#470](https://github.com/babylonlabs-io/babylon/pull/470) Return full consumer info and remove DB object
 usage in `x/btcstkconsumer` queries
@@ -56,41 +50,60 @@ usage in `x/btcstkconsumer` queries
 check of rewards
 - [#480](https://github.com/babylonlabs-io/babylon/pull/480) Improve IBC packet structure
 - [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
-- [#515](https://github.com/babylonlabs-io/babylon/pull/515) Add `staker_addr` to `EventBTCDelegationCreated`
-- [#518](https://github.com/babylonlabs-io/babylon/pull/518) Add check BTC reorg blocks higher than `k` deep
 - [#504](https://github.com/babylonlabs-io/babylon/pull/504) Add `btc-headers` IBC packet
-- [#519](https://github.com/babylonlabs-io/babylon/pull/519) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module
-- [#542](https://github.com/babylonlabs-io/babylon/pull/542) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module (follow up of [#519](https://github.com/babylonlabs-io/babylon/pull/519))
-- [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
-- [#556](https://github.com/babylonlabs-io/babylon/pull/556) Panic on consensus critical errors
-- [#566](https://github.com/babylonlabs-io/babylon/pull/566) Remove float values in `BeforeValidatorSlashed` hook in `x/epoching` module
 - [#575](https://github.com/babylonlabs-io/babylon/pull/575) Add `ConsumerId` field in `FinalityProviderResponse` in `x/btcstaking` module
-- [#589](https://github.com/babylonlabs-io/babylon/pull/589) Rename `btc_delegation` stakeholder type to `btc_staker` in `x/incentive` module
-- [#590](https://github.com/babylonlabs-io/babylon/pull/590) Add `DelegationRewards` query in `x/incentive` module
 - [#624](https://github.com/babylonlabs-io/babylon/pull/624) Make keeper's collections private in `x/incentive` module
 - [#625](https://github.com/babylonlabs-io/babylon/pull/625) Add `GasLimit` decorator in ante handler and local mempool configuration
-- [#633](https://github.com/babylonlabs-io/babylon/pull/633) Fix swagger
 - [#643](https://github.com/babylonlabs-io/babylon/pull/643) Fix flaky test `FuzzBTCDelegation`
 
 ### State Machine Breaking
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
+
+
+### Bug fixes
+- [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+
+## v1.0.0-rc7
+
+### Improvements
+
+- [#648](https://github.com/babylonlabs-io/babylon/pull/648) Add query to get all parameters
+from `x/btcstaking` module.
+- [#544](https://github.com/babylonlabs-io/babylon/pull/544) Add `bls-config` to `app.toml` for custom bls key location.
+- [#558](https://github.com/babylonlabs-io/babylon/pull/558) Change BLS public key format from hex to base64 in bls_key.json.
+- [#466](https://github.com/babylonlabs-io/babylon/pull/466) Add e2e test to
+- [#519](https://github.com/babylonlabs-io/babylon/pull/519) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module
+block bank send and still create BTC delegations
+- [#538](https://github.com/babylonlabs-io/babylon/pull/538) Upgrade to wasmd v0.54.x and wasmvm v2.2.x
+- [#527](https://github.com/babylonlabs-io/babylon/pull/527) Create BSL signer on start command with flags.
+- [#554](https://github.com/babylonlabs-io/babylon/pull/554) Improve vote extension logs
+- [#566](https://github.com/babylonlabs-io/babylon/pull/566) Remove float values in `BeforeValidatorSlashed` hook in `x/epoching` module
+- [#542](https://github.com/babylonlabs-io/babylon/pull/542) Add missing data in `InitGenesis` and `ExportGenesis` in `x/incentive` module (follow up of [#519](https://github.com/babylonlabs-io/babylon/pull/519))
+- [#589](https://github.com/babylonlabs-io/babylon/pull/589) Rename `btc_delegation` stakeholder type to `btc_staker` in `x/incentive` module
+- [#590](https://github.com/babylonlabs-io/babylon/pull/590) Add `DelegationRewards` query in `x/incentive` module
+- [#633](https://github.com/babylonlabs-io/babylon/pull/633) Fix swagger
+
+### State Machine Breaking
+
+- [#518](https://github.com/babylonlabs-io/babylon/pull/518) Add check BTC reorg blocks higher than `k` deep
 - [#530](https://github.com/babylonlabs-io/babylon/pull/530) Add `ConflictingCheckpointReceived` flag in `x/checkpointing` module.
 - [#537](https://github.com/babylonlabs-io/babylon/pull/537) Add `CommissionRates` type to `MsgCreateFinalityProvider` and commission validation to `EditFinalityProvider` in `x/btcstaking` module
-- [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
-invocation
 - [#567](https://github.com/babylonlabs-io/babylon/pull/567) Add check for height overflow in `CommitPubRandList` in `x/finality` module
 - [#620](https://github.com/babylonlabs-io/babylon/pull/620) fix: Incorrect set of JailUntil after unjailing
 
 ### Bug fixes
 
 - [#657](https://github.com/babylonlabs-io/babylon/pull/657) crypto: fix adaptor sig timing side channels
+- [#656](https://github.com/babylonlabs-io/babylon/pull/656) crypto: fix adaptor sig validity and typos 
+- [#658](https://github.com/babylonlabs-io/babylon/pull/658) crypto: Add check for Z==1 in ToBTCPK
+- [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
+invocation
 - [#591](https://github.com/babylonlabs-io/babylon/pull/591) bump ibc to v8.6.1 that fixes security issue
 - [#579](https://github.com/babylonlabs-io/babylon/pull/579) Slashed FP gets activated in voting power distribution
 cache if an old BTC delegation receives inclusion proof
 - [#592](https://github.com/babylonlabs-io/babylon/pull/592) finality: avoid refunding finality signatures over forks
-- [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 - [#563](https://github.com/babylonlabs-io/babylon/pull/563) reject coinbase staking transactions
 - [#584](https://github.com/babylonlabs-io/babylon/pull/584) fix: Panic can be triggered in handling liveness
 - [#585](https://github.com/babylonlabs-io/babylon/pull/585) fix: Proposal vote extensions' byte limit

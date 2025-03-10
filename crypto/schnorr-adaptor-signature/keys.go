@@ -14,7 +14,7 @@ type DecryptionKey struct {
 	btcec.ModNScalar
 }
 
-func NewDecyptionKeyFromModNScalar(scalar *btcec.ModNScalar) (*DecryptionKey, error) {
+func NewDecryptionKeyKeyFromModNScalar(scalar *btcec.ModNScalar) (*DecryptionKey, error) {
 	if scalar.IsZero() {
 		return nil, fmt.Errorf("the given scalar is zero")
 	}
@@ -32,11 +32,11 @@ func NewDecyptionKeyFromModNScalar(scalar *btcec.ModNScalar) (*DecryptionKey, er
 	return &DecryptionKey{*scalar}, nil
 }
 
-func NewDecyptionKeyFromBTCSK(btcSK *btcec.PrivateKey) (*DecryptionKey, error) {
-	return NewDecyptionKeyFromModNScalar(&btcSK.Key)
+func NewDecryptionKeyKeyFromBTCSK(btcSK *btcec.PrivateKey) (*DecryptionKey, error) {
+	return NewDecryptionKeyKeyFromModNScalar(&btcSK.Key)
 }
 
-func NewDecyptionKeyFromBytes(decKeyBytes []byte) (*DecryptionKey, error) {
+func NewDecryptionKeyKeyFromBytes(decKeyBytes []byte) (*DecryptionKey, error) {
 	if len(decKeyBytes) != ModNScalarSize {
 		return nil, fmt.Errorf(
 			"the length of the given bytes for decryption key is incorrect (expected: %d, actual: %d)",
@@ -48,7 +48,7 @@ func NewDecyptionKeyFromBytes(decKeyBytes []byte) (*DecryptionKey, error) {
 	var decKeyScalar btcec.ModNScalar
 	decKeyScalar.SetByteSlice(decKeyBytes)
 
-	return NewDecyptionKeyFromModNScalar(&decKeyScalar)
+	return NewDecryptionKeyKeyFromModNScalar(&decKeyScalar)
 }
 
 func (dk *DecryptionKey) GetEncKey() (*EncryptionKey, error) {
@@ -109,10 +109,11 @@ func NewEncryptionKeyFromBytes(encKeyBytes []byte) (*EncryptionKey, error) {
 	}
 	return NewEncryptionKeyFromJacobianPoint(&point)
 }
-
-func (ek *EncryptionKey) ToBTCPK() *btcec.PublicKey {
-	affineEK := *ek
-	return secp256k1.NewPublicKey(&affineEK.X, &affineEK.Y)
+func (ek *EncryptionKey) ToBTCPK() (*btcec.PublicKey, error) {
+	if !ek.Z.IsOne() {
+		return nil, fmt.Errorf("point must be in affine coordinates (Z=1)")
+	}
+	return secp256k1.NewPublicKey(&ek.X, &ek.Y), nil
 }
 
 func (ek *EncryptionKey) ToBytes() []byte {
@@ -124,7 +125,7 @@ func GenKeyPair() (*EncryptionKey, *DecryptionKey, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	dk, err := NewDecyptionKeyFromBTCSK(sk)
+	dk, err := NewDecryptionKeyKeyFromBTCSK(sk)
 	if err != nil {
 		return nil, nil, err
 	}
