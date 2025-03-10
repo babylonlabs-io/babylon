@@ -85,6 +85,7 @@ invocation
 
 ### Bug fixes
 
+- [#658](https://github.com/babylonlabs-io/babylon/pull/658) crypto: Add check for Z==1 in ToBTCPK
 - [#591](https://github.com/babylonlabs-io/babylon/pull/591) bump ibc to v8.6.1 that fixes security issue
 - [#579](https://github.com/babylonlabs-io/babylon/pull/579) Slashed FP gets activated in voting power distribution
 cache if an old BTC delegation receives inclusion proof

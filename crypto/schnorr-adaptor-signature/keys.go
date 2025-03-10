@@ -104,10 +104,11 @@ func NewEncryptionKeyFromBytes(encKeyBytes []byte) (*EncryptionKey, error) {
 	}
 	return NewEncryptionKeyFromJacobianPoint(&point)
 }
-
-func (ek *EncryptionKey) ToBTCPK() *btcec.PublicKey {
-	affineEK := *ek
-	return secp256k1.NewPublicKey(&affineEK.X, &affineEK.Y)
+func (ek *EncryptionKey) ToBTCPK() (*btcec.PublicKey, error) {
+	if !ek.Z.IsOne() {
+		return nil, fmt.Errorf("point must be in affine coordinates (Z=1)")
+	}
+	return secp256k1.NewPublicKey(&ek.X, &ek.Y), nil
 }
 
 func (ek *EncryptionKey) ToBytes() []byte {

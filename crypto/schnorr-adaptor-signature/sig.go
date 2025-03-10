@@ -210,7 +210,11 @@ func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*Adap
 	var privKeyBytes [chainhash.HashSize]byte
 	skScalar.PutBytes(&privKeyBytes)
 
-	encKeyBytes := encKey.ToBTCPK().SerializeCompressed()
+	encKeyBTCPK, err := encKey.ToBTCPK()
+	if err != nil {
+		return nil, err
+	}
+	encKeyBytes := encKeyBTCPK.SerializeCompressed()
 	// hashForNonce is sha256(m || P || T)
 	hashForNonce := appendAndHash(msgHash, pubKeyBytes, encKeyBytes)
 
