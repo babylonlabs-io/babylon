@@ -25,7 +25,8 @@ func FuzzKeyGen(f *testing.F) {
 
 		// ensure that the corresponding btcPK and btcSK
 		// constitute a key pair
-		btcPK := encKey.ToBTCPK()
+		btcPK, err := encKey.ToBTCPK()
+		require.NoError(t, err)
 		btcSK := decKey.ToBTCSK()
 		actualBTCPK := btcSK.PubKey()
 		require.Equal(t, btcPK, actualBTCPK)
