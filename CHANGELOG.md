@@ -67,6 +67,7 @@ block bank send and still create BTC delegations
 
 ### Bug fixes
 
+- [#658](https://github.com/babylonlabs-io/babylon/pull/658) crypto: Add check for Z==1 in ToBTCPK
 - [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
 invocation
 - [#591](https://github.com/babylonlabs-io/babylon/pull/591) bump ibc to v8.6.1 that fixes security issue
