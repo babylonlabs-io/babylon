@@ -301,7 +301,7 @@ func TestPoPBTCVerify(t *testing.T) {
 			randomAddr,
 			bip340PK,
 			popECDSA,
-			fmt.Errorf("failed to verify btcSigRaw"),
+			fmt.Errorf("the recovered PK does not match the given PK"),
 		},
 		{
 			"invalid: SigType",
