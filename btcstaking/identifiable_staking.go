@@ -349,13 +349,39 @@ func ParseV0StakingTx(
 	covenantQuorum uint32,
 	net *chaincfg.Params,
 ) (*ParsedV0StakingTx, error) {
+	if len(expectedTag) != TagLen {
+		return nil, fmt.Errorf("invalid tag length: %d, expected: %d", len(expectedTag), TagLen)
+	}
+
+	v0StakingTx, err := ParseV0StakingTxWithoutTag(tx, covenantKeys, covenantQuorum, net)
+	if err != nil {
+		return nil, err
+	}
+
+	// at this point we know that transaction has op return output which seems to match
+	// the expected shape. Check the tag and version.
+	if !bytes.Equal(v0StakingTx.OpReturnData.Tag, expectedTag) {
+		return nil, fmt.Errorf("unexpected tag: %s, expected: %s",
+			hex.EncodeToString(v0StakingTx.OpReturnData.Tag),
+			hex.EncodeToString(expectedTag),
+		)
+	}
+
+	return v0StakingTx, nil
+}
+
+// ParseV0StakingTxWithoutTag takes a btc transaction and checks whether it is a staking transaction and if so parses it
+// for easy data retrieval.
+// It does all necessary checks to ensure that the transaction is valid staking transaction.
+func ParseV0StakingTxWithoutTag(
+	tx *wire.MsgTx,
+	covenantKeys []*btcec.PublicKey,
+	covenantQuorum uint32,
+	net *chaincfg.Params,
+) (*ParsedV0StakingTx, error) {
 	// 1. Basic arguments checks
 	if tx == nil {
 		return nil, fmt.Errorf("nil tx")
-	}
-
-	if len(expectedTag) != TagLen {
-		return nil, fmt.Errorf("invalid tag length: %d, expected: %d", len(expectedTag), TagLen)
 	}
 
 	if len(covenantKeys) == 0 {
@@ -379,15 +405,6 @@ func ParseV0StakingTx(
 
 	if opReturnData == nil {
 		return nil, fmt.Errorf("transaction does not have expected op return output")
-	}
-
-	// at this point we know that transaction has op return output which seems to match
-	// the expected shape. Check the tag and version.
-	if !bytes.Equal(opReturnData.Tag, expectedTag) {
-		return nil, fmt.Errorf("unexpected tag: %s, expected: %s",
-			hex.EncodeToString(opReturnData.Tag),
-			hex.EncodeToString(expectedTag),
-		)
 	}
 
 	if opReturnData.Version != 0 {
