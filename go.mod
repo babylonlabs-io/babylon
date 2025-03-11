@@ -38,7 +38,7 @@ require (
 	cosmossdk.io/x/feegrant v0.1.1
 	cosmossdk.io/x/tx v0.13.7
 	cosmossdk.io/x/upgrade v0.1.4
-	github.com/CosmWasm/wasmvm/v2 v2.2.1
+	github.com/CosmWasm/wasmvm/v2 v2.2.3
 	github.com/avast/retry-go/v4 v4.5.1
 	github.com/bits-and-blooms/bitset v1.10.0
 	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
