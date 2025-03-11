@@ -52,20 +52,23 @@ func (sig *AdaptorSignature) Decrypt(decKey *DecryptionKey) (*schnorr.Signature,
 // 3. Let dk' = (ss - s) mod n - compute the decryption key
 // 4. Return FAIL if ek != bytes(int(dk') * G)
 // 5. Return dk'
-func (sig *AdaptorSignature) Recover(decryptedSchnorrSig *schnorr.Signature) *DecryptionKey {
+func (sig *AdaptorSignature) Recover(decryptedSchnorrSig *schnorr.Signature) (*DecryptionKey, error) {
+	psig := sig.ToPreSignature()
+
 	// unpack s and R from Schnorr signature
-	_, s := unpackSchnorrSig(decryptedSchnorrSig)
-	sHat := sig.sHat
+	sigBytes := decryptedSchnorrSig.Serialize()
 
-	// extract encryption key t = s - s'
-	sHat.Negate()
-	t := s.Add(&sHat)
-
-	if sig.needNegation {
-		t.Negate()
+	dkBytes, err := extract(psig, sigBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract decryption key: %w", err)
 	}
 
-	return &DecryptionKey{*t}
+	dk, err := NewDecryptionKeyFromBytes(dkBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create decryption key: %w", err)
+	}
+
+	return dk, nil
 }
 
 // appendAndHash appends the given data and hashes the result.

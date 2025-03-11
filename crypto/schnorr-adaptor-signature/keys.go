@@ -14,7 +14,7 @@ type DecryptionKey struct {
 	btcec.ModNScalar
 }
 
-func NewDecryptionKeyKeyFromModNScalar(scalar *btcec.ModNScalar) (*DecryptionKey, error) {
+func NewDecryptionKeyFromModNScalar(scalar *btcec.ModNScalar) (*DecryptionKey, error) {
 	if scalar.IsZero() {
 		return nil, fmt.Errorf("the given scalar is zero")
 	}
@@ -32,11 +32,11 @@ func NewDecryptionKeyKeyFromModNScalar(scalar *btcec.ModNScalar) (*DecryptionKey
 	return &DecryptionKey{*scalar}, nil
 }
 
-func NewDecryptionKeyKeyFromBTCSK(btcSK *btcec.PrivateKey) (*DecryptionKey, error) {
-	return NewDecryptionKeyKeyFromModNScalar(&btcSK.Key)
+func NewDecryptionKeyFromBTCSK(btcSK *btcec.PrivateKey) (*DecryptionKey, error) {
+	return NewDecryptionKeyFromModNScalar(&btcSK.Key)
 }
 
-func NewDecryptionKeyKeyFromBytes(decKeyBytes []byte) (*DecryptionKey, error) {
+func NewDecryptionKeyFromBytes(decKeyBytes []byte) (*DecryptionKey, error) {
 	if len(decKeyBytes) != ModNScalarSize {
 		return nil, fmt.Errorf(
 			"the length of the given bytes for decryption key is incorrect (expected: %d, actual: %d)",
@@ -48,7 +48,7 @@ func NewDecryptionKeyKeyFromBytes(decKeyBytes []byte) (*DecryptionKey, error) {
 	var decKeyScalar btcec.ModNScalar
 	decKeyScalar.SetByteSlice(decKeyBytes)
 
-	return NewDecryptionKeyKeyFromModNScalar(&decKeyScalar)
+	return NewDecryptionKeyFromModNScalar(&decKeyScalar)
 }
 
 func (dk *DecryptionKey) GetEncKey() (*EncryptionKey, error) {
@@ -129,7 +129,7 @@ func GenKeyPair() (*EncryptionKey, *DecryptionKey, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	dk, err := NewDecryptionKeyKeyFromBTCSK(sk)
+	dk, err := NewDecryptionKeyFromBTCSK(sk)
 	if err != nil {
 		return nil, nil, err
 	}

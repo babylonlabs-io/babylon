@@ -286,6 +286,34 @@ func decrypt(psig []byte, dk []byte) ([]byte, error) {
 	return sig[:], nil
 }
 
+// extract extracts the decryption key from a pre-signature and its decrypted signature.
+// This implements the Extract algorithm as defined in the spec.
+func extract(psig []byte, sig []byte) ([]byte, error) {
+	// Step 1: Let ss = int(sig[32:64])
+	var ss btcec.ModNScalar
+	if overflow := ss.SetByteSlice(sig[32:64]); overflow {
+		return nil, fmt.Errorf("ss value exceeds curve order")
+	}
+
+	// Step 2: Let s = int(psig[32:64])
+	var s btcec.ModNScalar
+	if overflow := s.SetByteSlice(psig[32:64]); overflow {
+		return nil, fmt.Errorf("s value exceeds curve order")
+	}
+
+	// Step 3: Let dk' = (ss - s) mod n
+	s.Negate()
+	dk := ss.Add(&s)
+
+	// TODO: Step 4: Return FAIL if ek != bytes(int(dk') * G)
+	// skip verifying the encryption key for now
+
+	// Step 5: Return dk'
+	var dkBytes [32]byte
+	dk.PutBytesUnchecked(dkBytes[:])
+	return dkBytes[:], nil
+}
+
 // liftX lifts an x-coordinate to a point on the curve with even y-coordinate.
 // It returns a pointer to a JacobianPoint or an error if lifting fails.
 func liftX(x *btcec.FieldVal) (*btcec.JacobianPoint, error) {
