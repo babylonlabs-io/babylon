@@ -95,6 +95,7 @@ block bank send and still create BTC delegations
 
 ### Bug fixes
 
+- [#665](https://github.com/babylonlabs-io/babylon/pull/665) crypto: align adaptor sig impl with spec
 - [#657](https://github.com/babylonlabs-io/babylon/pull/657) crypto: fix adaptor sig timing side channels
 - [#656](https://github.com/babylonlabs-io/babylon/pull/656) crypto: fix adaptor sig validity and typos 
 - [#658](https://github.com/babylonlabs-io/babylon/pull/658) crypto: Add check for Z==1 in ToBTCPK
