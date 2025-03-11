@@ -8,6 +8,13 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 )
 
+const (
+	ModNScalarSize       = 32
+	FieldValSize         = 32
+	JacobianPointSize    = 33
+	AdaptorSignatureSize = JacobianPointSize + ModNScalarSize + 1
+)
+
 // AdaptorSignature is the structure for a Schnorr adaptor signature
 // as defined in the spec. It corresponds to the SchnorrFunEncryptedSignature
 // format described in the spec.
@@ -156,13 +163,11 @@ func (sig *AdaptorSignature) Equals(sig2 AdaptorSignature) bool {
 	return bytes.Equal(sig.MustMarshal(), sig2.MustMarshal())
 }
 
-// ToPreSignature converts an adaptor signature to a pre-signature.
+// ToSpecBytes converts an adaptor signature to a pre-signature in the spec format.
 // The pre-signature is a 64-byte array containing:
 // - The x-coordinate of R' (32 bytes)
 // - s' (32 bytes)
-//
-// This implements the ConvertFromSchnorrFunEncryptedSignature algorithm from the spec.
-func (sig *AdaptorSignature) ToPreSignature() []byte {
+func (sig *AdaptorSignature) ToSpecBytes() []byte {
 	// Step 1: Extract R and s' from adaptor signature
 	R := sig.r
 	sHat := sig.sHat
@@ -178,11 +183,11 @@ func (sig *AdaptorSignature) ToPreSignature() []byte {
 	return preSignature[:]
 }
 
-// NewAdaptorSignatureFromPreSignature creates a new adaptor signature from a pre-signature and encryption key.
+// NewAdaptorSignatureFromSpecFormat creates a new adaptor signature from a pre-signature and encryption key.
 // The pre-signature must be 64 bytes and the encryption key must be 32 bytes.
 //
 // This implements the ConvertToSchnorrFunEncryptedSignature algorithm from the spec.
-func NewAdaptorSignatureFromPreSignature(psig []byte, encKey []byte) (*AdaptorSignature, error) {
+func NewAdaptorSignatureFromSpecFormat(psig []byte, encKey []byte) (*AdaptorSignature, error) {
 	// Validate input lengths
 	if len(psig) != 64 {
 		return nil, fmt.Errorf("pre-signature must be 64 bytes, got %d", len(psig))

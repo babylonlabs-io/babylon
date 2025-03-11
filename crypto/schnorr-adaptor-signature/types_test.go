@@ -33,11 +33,11 @@ func FuzzAdaptorSignaturePreSignatureConversion(f *testing.F) {
 		require.NoError(t, err)
 
 		// Convert to pre-signature
-		preSig := originalSig.ToPreSignature()
+		preSig := originalSig.ToSpecBytes()
 
 		// Convert back to adaptor signature
 		encKeyBytes := encKey.ToBytes()
-		convertedSig, err := asig.NewAdaptorSignatureFromPreSignature(preSig, encKeyBytes)
+		convertedSig, err := asig.NewAdaptorSignatureFromSpecFormat(preSig, encKeyBytes)
 		require.NoError(t, err)
 
 		// Verify they are equal

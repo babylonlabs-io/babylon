@@ -1,3 +1,15 @@
+// This file implements the Schnorr adaptor signature scheme as specified in spec.md.
+//
+// The scheme consists of four algorithms:
+// - EncSign: Creates a pre-signature using a private key and encryption key
+// - Verify: Verifies a pre-signature using a public key and encryption key
+// - Decrypt: Decrypts a pre-signature using a decryption key to obtain a valid Schnorr signature
+// - Extract: Extracts the decryption key from a pre-signature and its corresponding Schnorr signature
+//
+// The implementation follows ./spec.md and includes additional constant-time operations
+// and side-channel attack mitigations. See ./spec.md for the detailed protocol specification
+// and security properties.
+
 package schnorr_adaptor_signature
 
 import (
@@ -7,13 +19,6 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-)
-
-const (
-	ModNScalarSize       = 32
-	FieldValSize         = 32
-	JacobianPointSize    = 33
-	AdaptorSignatureSize = JacobianPointSize + ModNScalarSize + 1
 )
 
 // encSign implements the core of the EncSign algorithm as defined in the spec.
@@ -244,8 +249,7 @@ func decrypt(psig []byte, dk []byte) ([]byte, error) {
 	T.ToAffine()
 
 	// Step 6: Let (u, Tp) = (u', T') if has_even_y(T'), otherwise let (u, Tp) = (n - u', -T')
-	var Tp btcec.JacobianPoint
-	Tp = T
+	Tp := T
 	if T.Y.IsOdd() {
 		Tp.Y.Negate(1).Normalize()
 		u.Negate()
@@ -333,15 +337,4 @@ func negatePoint(point *btcec.JacobianPoint) *btcec.JacobianPoint {
 	nPoint := *point
 	nPoint.Y.Negate(1).Normalize()
 	return &nPoint
-}
-
-// unpackSchnorrSig extracts the r and s values from a Schnorr signature.
-// It returns pointers to the r (FieldVal) and s (ModNScalar) components.
-func unpackSchnorrSig(sig *schnorr.Signature) (*btcec.FieldVal, *btcec.ModNScalar) {
-	sigBytes := sig.Serialize()
-	var r btcec.FieldVal
-	r.SetByteSlice(sigBytes[0:32])
-	var s btcec.ModNScalar
-	s.SetByteSlice(sigBytes[32:64])
-	return &r, &s
 }

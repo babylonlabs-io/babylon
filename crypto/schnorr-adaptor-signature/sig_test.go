@@ -103,7 +103,7 @@ func FuzzRecover(f *testing.F) {
 		schnorrSig, err := adaptorSig.Decrypt(decKey)
 		require.NoError(t, err)
 		// recover
-		expectedDecKey, err := adaptorSig.Recover(schnorrSig)
+		expectedDecKey, err := adaptorSig.Extract(schnorrSig)
 		require.NoError(t, err)
 
 		// assert the recovered decryption key is the expected one

@@ -1111,7 +1111,7 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		decryptedCovenantSig := bbn.NewBIP340SignatureFromBTCSig(covSchnorrSig)
 
 		// recover the fpSK by using adaptor signature and decrypted Schnorr signature
-		recoveredFPDecKey, err := covASig.Recover(decryptedCovenantSig.MustToBTCSig())
+		recoveredFPDecKey, err := covASig.Extract(decryptedCovenantSig.MustToBTCSig())
 		require.NoError(t, err)
 		recoveredFPSK := recoveredFPDecKey.ToBTCSK()
 		// ensure the recovered finality provider SK is same as the real one
