@@ -56,7 +56,7 @@ func newAdaptorSignature(r *btcec.JacobianPoint, sHat *btcec.ModNScalar, needNeg
 // public key, encryption key and message hash
 func (sig *AdaptorSignature) EncVerify(pk *btcec.PublicKey, encKey *EncryptionKey, msgHash []byte) error {
 	pkBytes := schnorr.SerializePubKey(pk)
-	return encVerify(sig, msgHash, pkBytes, &encKey.JacobianPoint)
+	return encVerify(sig, msgHash, pkBytes, &encKey.FieldVal)
 }
 
 // Decrypt decrypts the adaptor signature to a Schnorr signature by
@@ -227,7 +227,7 @@ func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*Adap
 		)
 
 		// try to generate adaptor signature
-		sig, err := encSign(&skScalar, nonce, pk, msgHash, &encKey.JacobianPoint)
+		sig, err := encSign(&skScalar, nonce, pk, msgHash, &encKey.FieldVal)
 		if err != nil {
 			// Try again with a new nonce.
 			continue

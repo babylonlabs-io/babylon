@@ -20,7 +20,7 @@ func encSign(
 	privKey, nonce *btcec.ModNScalar,
 	pubKey *btcec.PublicKey,
 	m []byte,
-	t *btcec.JacobianPoint,
+	t *btcec.FieldVal,
 ) (*AdaptorSignature, error) {
 	// R' = kG (with blinding in order to prevent timing side channel attacks)
 	k := *nonce
@@ -29,9 +29,14 @@ func encSign(
 		return nil, fmt.Errorf("failed to compute kG: %w", err)
 	}
 
+	Tp, err := liftX(t)
+	if err != nil {
+		return nil, fmt.Errorf("failed to lift t: %w", err)
+	}
+
 	// get R = R'+T
 	var R btcec.JacobianPoint
-	btcec.AddNonConst(RHat, t, &R)
+	btcec.AddNonConst(RHat, Tp, &R)
 	// negate k and R if R.y is odd
 	affineRWithEvenY, needNegation := intoPointWithEvenY(&R)
 	R = *affineRWithEvenY
@@ -72,7 +77,7 @@ func encVerify(
 	sig *AdaptorSignature,
 	m []byte,
 	pubKeyBytes []byte,
-	t *btcec.JacobianPoint,
+	t *btcec.FieldVal,
 ) error {
 	// Fail if m is not 32 bytes
 	if len(m) != chainhash.HashSize {
@@ -80,13 +85,18 @@ func encVerify(
 			len(m), chainhash.HashSize)
 	}
 
+	Tp, err := liftX(t)
+	if err != nil {
+		return fmt.Errorf("failed to lift t: %w", err)
+	}
+
 	// R' = R-T (or R+T if it needs negation)
 	R := &sig.r // NOTE: R is an affine point
 	var RHat btcec.JacobianPoint
 	if sig.needNegation {
-		btcec.AddNonConst(R, t, &RHat)
+		btcec.AddNonConst(R, Tp, &RHat)
 	} else {
-		btcec.AddNonConst(R, negatePoint(t), &RHat)
+		btcec.AddNonConst(R, negatePoint(Tp), &RHat)
 	}
 
 	RHat.ToAffine()
@@ -138,6 +148,17 @@ func encVerify(
 	}
 
 	return nil
+}
+
+func liftX(x *btcec.FieldVal) (*btcec.JacobianPoint, error) {
+	var y btcec.FieldVal
+	if success := btcec.DecompressY(x, true, &y); !success {
+		return nil, fmt.Errorf("failed to decompress y")
+	}
+	var z btcec.FieldVal
+	z.SetInt(1)
+	point := btcec.MakeJacobianPoint(x, &y, &z)
+	return &point, nil
 }
 
 // intoPointWithEvenY converts the given Jacobian point to an affine

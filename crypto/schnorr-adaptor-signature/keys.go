@@ -5,7 +5,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/crypto/common"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 )
 
 // DecryptionKey is the decryption key in the adaptor
@@ -58,7 +58,7 @@ func (dk *DecryptionKey) GetEncKey() (*EncryptionKey, error) {
 	}
 	// NOTE: we convert ekPoint to affine coordinates for consistency
 	ekPoint.ToAffine()
-	return &EncryptionKey{*ekPoint}, nil
+	return &EncryptionKey{ekPoint.X}, nil
 }
 
 func (dk *DecryptionKey) ToBTCSK() *btcec.PrivateKey {
@@ -71,7 +71,7 @@ func (dk *DecryptionKey) ToBytes() []byte {
 }
 
 type EncryptionKey struct {
-	btcec.JacobianPoint
+	btcec.FieldVal
 }
 
 func NewEncryptionKeyFromJacobianPoint(point *btcec.JacobianPoint) (*EncryptionKey, error) {
@@ -93,7 +93,7 @@ func NewEncryptionKeyFromJacobianPoint(point *btcec.JacobianPoint) (*EncryptionK
 		affinePoint.Y.Negate(1).Normalize()
 	}
 
-	return &EncryptionKey{affinePoint}, nil
+	return &EncryptionKey{affinePoint.X}, nil
 }
 
 func NewEncryptionKeyFromBTCPK(btcPK *btcec.PublicKey) (*EncryptionKey, error) {
@@ -103,21 +103,25 @@ func NewEncryptionKeyFromBTCPK(btcPK *btcec.PublicKey) (*EncryptionKey, error) {
 }
 
 func NewEncryptionKeyFromBytes(encKeyBytes []byte) (*EncryptionKey, error) {
-	point, err := btcec.ParseJacobian(encKeyBytes)
-	if err != nil {
-		return nil, err
+	if len(encKeyBytes) != FieldValSize {
+		return nil, fmt.Errorf(
+			"the length of the given bytes for encryption key is incorrect (expected: %d, actual: %d)",
+			FieldValSize,
+			len(encKeyBytes),
+		)
 	}
-	return NewEncryptionKeyFromJacobianPoint(&point)
+	fieldVal := btcec.FieldVal{}
+	fieldVal.SetByteSlice(encKeyBytes)
+	return &EncryptionKey{fieldVal}, nil
 }
+
 func (ek *EncryptionKey) ToBTCPK() (*btcec.PublicKey, error) {
-	if !ek.Z.IsOne() {
-		return nil, fmt.Errorf("point must be in affine coordinates (Z=1)")
-	}
-	return secp256k1.NewPublicKey(&ek.X, &ek.Y), nil
+	return schnorr.ParsePubKey(ek.ToBytes())
 }
 
 func (ek *EncryptionKey) ToBytes() []byte {
-	return btcec.JacobianToByteSlice(ek.JacobianPoint)
+	fieldValBytes := ek.FieldVal.Bytes()
+	return fieldValBytes[:]
 }
 
 func GenKeyPair() (*EncryptionKey, *DecryptionKey, error) {
