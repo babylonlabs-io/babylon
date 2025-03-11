@@ -1,3 +1,4 @@
+<!-- markdownlint-disable -->
 # BIP0340-compatible Schnorr adaptor signatures
 
 This document describes a Schnorr adaptor signature [(1)][1] [(2)][2] construction
