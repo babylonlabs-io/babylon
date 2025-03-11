@@ -35,7 +35,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		// a random finality provider gets slashed
 		slashedFPIdx := int(datagen.RandomInt(r, numRestakedFPs))
 		fpSK, fpPK := fpSKs[slashedFPIdx], fpPKs[slashedFPIdx]
-		decKey, err := asig.NewDecyptionKeyFromBTCSK(fpSK)
+		decKey, err := asig.NewDecryptionKeyKeyFromBTCSK(fpSK)
 		require.NoError(t, err)
 		encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
 		require.NoError(t, err)
