@@ -8,7 +8,6 @@ import (
 	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	bstctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
@@ -50,17 +49,12 @@ func isLivenessTx(tx sdk.Tx) bool {
 			// BTC timestamping
 			*btcctypes.MsgInsertBTCSpvProof,
 			// BTC staking
-			*bstypes.MsgCreateFinalityProvider,
-			*bstypes.MsgCreateBTCDelegation,
-			*bstypes.MsgAddBTCDelegationInclusionProof,
 			*bstypes.MsgAddCovenantSigs,
 			*bstypes.MsgBTCUndelegate,
 			*bstypes.MsgSelectiveSlashingEvidence,
 			// BTC staking finality
 			*ftypes.MsgCommitPubRandList,
-			*ftypes.MsgAddFinalitySig,
-			// PoS integration
-			*bstctypes.MsgRegisterConsumer:
+			*ftypes.MsgAddFinalitySig:
 			return true
 		default:
 			return false
