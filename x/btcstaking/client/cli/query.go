@@ -23,6 +23,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdQueryParams())
+	cmd.AddCommand(CmdQueryParamsVersions())
 	cmd.AddCommand(CmdFinalityProvider())
 	cmd.AddCommand(CmdFinalityProviders())
 	cmd.AddCommand(CmdBTCDelegations())

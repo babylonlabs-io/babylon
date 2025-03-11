@@ -132,8 +132,8 @@ func encVerify(
 	if R.Y.IsOdd() {
 		return fmt.Errorf("expected R.y is odd")
 	}
-	// ensure R' is same as the expected R' = s'*G - e*P
-	if !expRHat.X.Equals(&RHat.X) {
+	// ensure R' is same as the expected R' = s'*G - e*P by checking both x and y coordinates
+	if !expRHat.X.Equals(&RHat.X) || !expRHat.Y.Equals(&RHat.Y) {
 		return fmt.Errorf("expected R' = s'*G - e*P is different from the actual R'")
 	}
 

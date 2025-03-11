@@ -37,8 +37,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v1.0.0-rc7
+
 ### Improvements
 
+- [#648](https://github.com/babylonlabs-io/babylon/pull/648) Add query to get all parameters
+from `x/btcstaking` module.
 - [#544](https://github.com/babylonlabs-io/babylon/pull/544) Add `bls-config` to `app.toml` for custom bls key location.
 - [#558](https://github.com/babylonlabs-io/babylon/pull/558) Change BLS public key format from hex to base64 in bls_key.json.
 - [#466](https://github.com/babylonlabs-io/babylon/pull/466) Add e2e test to
@@ -52,6 +56,7 @@ block bank send and still create BTC delegations
 - [#589](https://github.com/babylonlabs-io/babylon/pull/589) Rename `btc_delegation` stakeholder type to `btc_staker` in `x/incentive` module
 - [#590](https://github.com/babylonlabs-io/babylon/pull/590) Add `DelegationRewards` query in `x/incentive` module
 - [#625](https://github.com/babylonlabs-io/babylon/pull/625) Add `GasLimit` decorator in ante handler and local mempool configuration
+- [#633](https://github.com/babylonlabs-io/babylon/pull/633) Fix swagger
 
 ### State Machine Breaking
 
@@ -63,6 +68,9 @@ block bank send and still create BTC delegations
 
 ### Bug fixes
 
+- [#657](https://github.com/babylonlabs-io/babylon/pull/657) crypto: fix adaptor sig timing side channels
+- [#656](https://github.com/babylonlabs-io/babylon/pull/656) crypto: fix adaptor sig validity and typos 
+- [#658](https://github.com/babylonlabs-io/babylon/pull/658) crypto: Add check for Z==1 in ToBTCPK
 - [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
 invocation
 - [#591](https://github.com/babylonlabs-io/babylon/pull/591) bump ibc to v8.6.1 that fixes security issue
@@ -80,6 +88,8 @@ if delegation was never activated
 - [#629](https://github.com/babylonlabs-io/babylon/pull/629) Allow OP_RETURN as slashing output
 - [#597](https://github.com/babylonlabs-io/babylon/pull/597) fix: Expired and Unbonding delegation
 in the same BTC block could lead to a panic and chain halt
+- [#647](https://github.com/babylonlabs-io/babylon/pull/647) Ignore unbonding event
+if delegation did not have covenant quorum
 
 ## v1.0.0-rc6
 
