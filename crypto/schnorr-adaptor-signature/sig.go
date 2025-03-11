@@ -22,21 +22,6 @@ import (
 	secp "github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
-var (
-	// CustomBabylonrfc6979ExtraDataV0 is the extra data to feed to RFC6979 when
-	// generating the deterministic nonce for the BIP-340 Babylon adaptor signature scheme.
-	// This ensures the same nonce is not generated for the same message and key
-	// as for other signing algorithms such as ECDSA.
-	//
-	// It is equal to SHA-256([]byte("BIP-340/babylon-adaptor-signature")).
-	customBabylonRFC6979ExtraDataV0 = [chainhash.HashSize]uint8{
-		0xcd, 0x36, 0xb5, 0x97, 0xbd, 0x59, 0x08, 0xfc,
-		0x48, 0x5c, 0xe9, 0xa2, 0xc0, 0xc2, 0x8b, 0xce,
-		0xd0, 0xda, 0xdb, 0x7f, 0xac, 0x7b, 0xf9, 0x4c,
-		0x19, 0x68, 0x51, 0xfb, 0x23, 0x27, 0x07, 0x09,
-	}
-)
-
 // EncVerify verifies that the adaptor signature is valid with respect to the given
 // public key, encryption key and message hash.
 func (sig *AdaptorSignature) EncVerify(pk *btcec.PublicKey, encKey *EncryptionKey, msgHash []byte) error {
