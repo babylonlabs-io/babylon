@@ -2,7 +2,6 @@ package bls12381
 
 import (
 	"crypto/rand"
-	"fmt"
 	"testing"
 )
 
@@ -17,7 +16,7 @@ func BenchmarkVerifyCompressed(b *testing.B) {
 	// Create a signature
 	sig := Sign(sk, msg)
 
-	b.Run(fmt.Sprintf("WithSigGroupCheck"), func(b *testing.B) {
+	b.Run("WithSigGroupCheck", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			dummySig := new(BlsSig)
@@ -25,7 +24,7 @@ func BenchmarkVerifyCompressed(b *testing.B) {
 		}
 	})
 
-	b.Run(fmt.Sprintf("WithoutSigGroupCheck"), func(b *testing.B) {
+	b.Run("WithoutSigGroupCheck", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			dummySig := new(BlsSig)
@@ -43,7 +42,7 @@ func BenchmarkAggregateCompressed(b *testing.B) {
 		pks = append(pks, pk.Bytes())
 	}
 
-	b.Run(fmt.Sprintf("WithGroupCheck"), func(b *testing.B) {
+	b.Run("WithGroupCheck", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			aggPk := new(BlsMultiPubKey)
@@ -51,7 +50,7 @@ func BenchmarkAggregateCompressed(b *testing.B) {
 		}
 	})
 
-	b.Run(fmt.Sprintf("WithoutGroupCheck"), func(b *testing.B) {
+	b.Run("WithoutGroupCheck", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			aggPk := new(BlsMultiPubKey)
