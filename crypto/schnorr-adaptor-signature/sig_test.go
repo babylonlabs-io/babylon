@@ -67,8 +67,8 @@ func FuzzDecrypt(f *testing.F) {
 		require.NoError(t, err)
 
 		// decrypt message
-		schnorrSig := adaptorSig.Decrypt(decKey)
-
+		schnorrSig, err := adaptorSig.Decrypt(decKey)
+		require.NoError(t, err)
 		// decrypted Schnorr signature should be valid
 		resVerify := schnorrSig.Verify(msgHash, pk)
 		require.True(t, resVerify)
@@ -100,8 +100,8 @@ func FuzzRecover(f *testing.F) {
 		require.NoError(t, err)
 
 		// decrypt message
-		schnorrSig := adaptorSig.Decrypt(decKey)
-
+		schnorrSig, err := adaptorSig.Decrypt(decKey)
+		require.NoError(t, err)
 		// recover
 		expectedDecKey := adaptorSig.Recover(schnorrSig)
 

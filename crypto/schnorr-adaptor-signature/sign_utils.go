@@ -210,6 +210,82 @@ func encVerify(
 	return nil
 }
 
+// decrypt decrypts a pre-signature using a decryption key.
+// This implements the Decrypt algorithm as defined in the spec.
+func decrypt(psig []byte, dk []byte) ([]byte, error) {
+	// Step 1: Let Rp = lift_x(int(psig[0:32]))
+	var rX btcec.FieldVal
+	if overflow := rX.SetByteSlice(psig[0:32]); overflow {
+		return nil, fmt.Errorf("R x-coordinate exceeds field size")
+	}
+	Rp, err := liftX(&rX)
+	if err != nil {
+		return nil, fmt.Errorf("failed to lift R x-coordinate: %w", err)
+	}
+
+	// Step 2: Let s = int(psig[32:64])
+	var s btcec.ModNScalar
+	if overflow := s.SetByteSlice(psig[32:64]); overflow {
+		return nil, fmt.Errorf("s value exceeds curve order")
+	}
+
+	// Step 3-4: Let u' = int(dk)
+	var u btcec.ModNScalar
+	if overflow := u.SetByteSlice(dk); overflow {
+		return nil, fmt.Errorf("decryption key exceeds curve order")
+	}
+	if u.IsZero() {
+		return nil, fmt.Errorf("decryption key is zero")
+	}
+
+	// Step 5: Let T' = u' * G
+	var T btcec.JacobianPoint
+	btcec.ScalarBaseMultNonConst(&u, &T)
+	T.ToAffine()
+
+	// Step 6: Let (u, Tp) = (u', T') if has_even_y(T'), otherwise let (u, Tp) = (n - u', -T')
+	var Tp btcec.JacobianPoint
+	Tp = T
+	if T.Y.IsOdd() {
+		Tp.Y.Negate(1).Normalize()
+		u.Negate()
+	}
+
+	// Step 7: Compute ss and RTp
+	var RTp btcec.JacobianPoint
+	var ss btcec.ModNScalar
+
+	// Try Rp + Tp first
+	btcec.AddNonConst(Rp, &Tp, &RTp)
+	RTp.ToAffine()
+	if !RTp.Y.IsOdd() {
+		ss.Set(&s)
+		ss.Add(&u)
+	} else {
+		// Try Rp - Tp
+		btcec.AddNonConst(Rp, negatePoint(&Tp), &RTp)
+		RTp.ToAffine()
+		if !RTp.Y.IsOdd() {
+			ss.Set(&s)
+			u.Negate()
+			ss.Add(&u)
+		} else {
+			return nil, fmt.Errorf("both Rp+Tp and Rp-Tp have odd y")
+		}
+	}
+
+	// Step 8: Let sig = bytes(RTp) || bytes(ss)
+	var sig [64]byte
+	RTp.X.PutBytesUnchecked(sig[0:32])
+	ss.PutBytesUnchecked(sig[32:64])
+
+	// TODO: Step 9: Return FAIL if Verify(pk, m, sig) fails
+	// skip verifying the signature for now
+
+	// Step 10: Return sig
+	return sig[:], nil
+}
+
 // liftX lifts an x-coordinate to a point on the curve with even y-coordinate.
 // It returns a pointer to a JacobianPoint or an error if lifting fails.
 func liftX(x *btcec.FieldVal) (*btcec.JacobianPoint, error) {

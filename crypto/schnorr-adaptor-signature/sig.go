@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/crypto/common"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -35,65 +34,13 @@ func (sig *AdaptorSignature) EncVerify(pk *btcec.PublicKey, encKey *EncryptionKe
 
 // Decrypt decrypts the adaptor signature to a Schnorr signature by
 // using the decryption key.
-func (sig *AdaptorSignature) Decrypt(decKey *DecryptionKey) *schnorr.Signature {
-	// Step 1-2: Extract Rp and s from the adaptor signature
-	Rp := sig.r
-	s := sig.sHat
-
-	// Step 3-4: Extract decryption key
-	u := decKey.ModNScalar
-
-	// Step 5: Compute T' = u' * G
-	T, err := common.ScalarBaseMultWithBlinding(&u)
+func (sig *AdaptorSignature) Decrypt(decKey *DecryptionKey) (*schnorr.Signature, error) {
+	psig := sig.ToPreSignature()
+	decryptedSchnorrSig, err := decrypt(psig, decKey.ToBytes())
 	if err != nil {
-		// This should never happen with a valid decryption key
-		panic("failed to compute T = u*G")
+		return nil, fmt.Errorf("failed to decrypt adaptor signature: %w", err)
 	}
-	T.ToAffine()
-
-	// Step 6: Ensure T has even y-coordinate
-	var Tp btcec.JacobianPoint
-	Tp = *T
-	var actualU btcec.ModNScalar
-	actualU.Set(&u)
-	if T.Y.IsOdd() {
-		// If T.y is odd, negate both T and u
-		Tp.Y.Negate(1).Normalize()
-		actualU.Negate()
-	}
-
-	// Step 7: Compute ss and RTp
-	var RTp btcec.JacobianPoint
-	var ss btcec.ModNScalar
-
-	// First try: Rp + Tp
-	if !sig.needNegation {
-		btcec.AddNonConst(&Rp, &Tp, &RTp)
-		RTp.ToAffine()
-		ss.Set(&s)
-		ss.Add(&actualU)
-	} else {
-		// Second try: Rp - Tp
-		var negTp btcec.JacobianPoint
-		negTp = Tp
-		negTp.Y.Negate(1).Normalize()
-		btcec.AddNonConst(&Rp, &negTp, &RTp)
-		RTp.ToAffine()
-		ss.Set(&s)
-		var negU btcec.ModNScalar
-		negU.Set(&actualU)
-		negU.Negate()
-		ss.Add(&negU)
-	}
-
-	// Ensure RTp has even y-coordinate as required by BIP-340
-	if RTp.Y.IsOdd() {
-		RTp.Y.Negate(1).Normalize()
-		ss.Negate()
-	}
-
-	// Create and return the signature
-	return schnorr.NewSignature(&RTp.X, &ss)
+	return schnorr.ParseSignature(decryptedSchnorrSig)
 }
 
 // Recover recovers the decryption key by using the adaptor signature
