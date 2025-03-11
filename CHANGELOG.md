@@ -40,6 +40,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#670](https://github.com/babylonlabs-io/babylon/pull/670) add function to recover pub key from sig
 - [#646](https://github.com/babylonlabs-io/babylon/pull/646) backport: chore(ante): add tx gas limit decorator and local mempool config
 
+### Improvements
+
+- [#666](https://github.com/babylonlabs-io/babylon/pull/666) Upgrade to wasmvm v2.2.3.
+
 ### Bug fixes
 
 - [#664](https://github.com/babylonlabs-io/babylon/pull/664) crypto: fix adaptor sig timing side channels
