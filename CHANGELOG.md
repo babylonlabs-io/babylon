@@ -64,6 +64,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 
 ### Bug fixes
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+- [#667](https://github.com/babylonlabs-io/babylon/pull/667) crypto: enable groupcheck in BLS verification/aggregation
 
 ## v1.0.0-rc7
 
