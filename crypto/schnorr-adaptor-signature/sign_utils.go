@@ -216,7 +216,7 @@ func encVerify(
 // It returns a pointer to a JacobianPoint or an error if lifting fails.
 func liftX(x *btcec.FieldVal) (*btcec.JacobianPoint, error) {
 	var y btcec.FieldVal
-	if success := btcec.DecompressY(x, true, &y); !success {
+	if success := btcec.DecompressY(x, false, &y); !success {
 		return nil, fmt.Errorf("failed to decompress y")
 	}
 	var z btcec.FieldVal
