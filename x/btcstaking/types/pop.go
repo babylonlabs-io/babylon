@@ -279,7 +279,8 @@ func VerifyECDSA(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKe
 	// So we have to hex BabylonSig before verifying the signature
 	bbnSigHex := hex.EncodeToString(msg)
 
-	recoveredPK, err := ecdsa.RecoverPublicKey(bbnSigHex, btcSigRaw)
+	// we ignore ignore is compressed flag as we only care about comparing X coordinates
+	recoveredPK, _, err := ecdsa.RecoverPublicKey(bbnSigHex, btcSigRaw)
 	if err != nil {
 		return fmt.Errorf("failed to recover btc public key when verifying ECDSA PoP: %w", err)
 	}

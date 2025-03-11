@@ -50,7 +50,7 @@ func TestECDSARecoverPublicKey(t *testing.T) {
 	// ensure sig is same as that in test vector
 	require.True(t, bytes.Equal(sig, testSigBytes))
 	// recover PK
-	recoveredPK, err := ecdsa.RecoverPublicKey(testMsg, sig)
+	recoveredPK, _, err := ecdsa.RecoverPublicKey(testMsg, sig)
 	require.NoError(t, err)
 	require.Equal(t, pk.SerializeCompressed(), recoveredPK.SerializeCompressed())
 }

@@ -69,20 +69,20 @@ func Verify(pk *btcec.PublicKey, msg string, sigBytes []byte) error {
 	return nil
 }
 
-func RecoverPublicKey(msg string, sigBytes []byte) (*btcec.PublicKey, error) {
+func RecoverPublicKey(msg string, sigBytes []byte) (*btcec.PublicKey, bool, error) {
 	msgHash := magicHash(msg)
-	recoveredPK, _, err := ecdsa.RecoverCompact(sigBytes, msgHash[:])
+	recoveredPK, wasCompressed, err := ecdsa.RecoverCompact(sigBytes, msgHash[:])
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	var s btcec.ModNScalar
 	if overflow := s.SetByteSlice(sigBytes[33:65]); overflow {
-		return nil, fmt.Errorf("invalid signature: S >= group order")
+		return nil, false, fmt.Errorf("invalid signature: S >= group order")
 	}
 	if s.IsOverHalfOrder() {
-		return nil, fmt.Errorf("invalid signature: S >= group order/2")
+		return nil, false, fmt.Errorf("invalid signature: S >= group order/2")
 	}
 
-	return recoveredPK, nil
+	return recoveredPK, wasCompressed, nil
 }
