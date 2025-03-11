@@ -52,8 +52,8 @@ func isLivenessTx(tx sdk.Tx) bool {
 			*bstypes.MsgAddCovenantSigs,
 			*bstypes.MsgBTCUndelegate,
 			*bstypes.MsgSelectiveSlashingEvidence,
+			*bstypes.MsgAddBTCDelegationInclusionProof,
 			// BTC staking finality
-			*ftypes.MsgCommitPubRandList,
 			*ftypes.MsgAddFinalitySig:
 			return true
 		default:
