@@ -93,7 +93,7 @@ func encSign(
 
 	// Step 15: Verify the signature
 	// Return FAIL if EncVerify(bytes(Pp), ek, m, psig) fails
-	if err := encVerify(sig, m, pBytes, t); err != nil {
+	if err := encVerify(sig.ToPreSignature(), m, pBytes, t); err != nil {
 		return nil, fmt.Errorf("verification of generated signature failed: %w", err)
 	}
 
@@ -102,15 +102,18 @@ func encSign(
 }
 
 // encVerify implements the EncVerify algorithm as defined in the spec.
-// It verifies that an adaptor signature is valid with respect to the given
+// It verifies that a pre-signature is valid with respect to the given
 // public key, encryption key, and message.
 func encVerify(
-	sig *AdaptorSignature,
+	psig []byte,
 	m []byte,
 	pubKeyBytes []byte,
 	t *btcec.FieldVal,
 ) error {
-	// Validate message length
+	// Validate input lengths
+	if len(psig) != 64 {
+		return fmt.Errorf("wrong size for pre-signature (got %v, want 64)", len(psig))
+	}
 	if len(m) != chainhash.HashSize {
 		return fmt.Errorf("wrong size for message (got %v, want %v)",
 			len(m), chainhash.HashSize)
@@ -133,12 +136,20 @@ func encVerify(
 	}
 
 	// Step 3: Let Rp = lift_x(int(psig[0:32])); return FAIL if that fails
-	// In our implementation, Rp is already in the signature
-	Rp := &sig.r
+	var rX btcec.FieldVal
+	if overflow := rX.SetByteSlice(psig[0:32]); overflow {
+		return fmt.Errorf("R x-coordinate exceeds field size")
+	}
+	Rp, err := liftX(&rX)
+	if err != nil {
+		return fmt.Errorf("failed to lift R x-coordinate: %w", err)
+	}
 
 	// Step 4: Let s = int(psig[32:64]); return FAIL if s >= n
-	// In our implementation, s is already in the signature as sHat
-	s := sig.sHat
+	var s btcec.ModNScalar
+	if overflow := s.SetByteSlice(psig[32:64]); overflow {
+		return fmt.Errorf("s value exceeds curve order")
+	}
 
 	// Step 5: Compute RTp
 	// If has_even_y(Rp + Tp), let RTp = Rp + Tp
@@ -158,16 +169,6 @@ func encVerify(
 		if RTp.Y.IsOdd() {
 			// If both Rp+Tp and Rp-Tp have odd y, this is an error
 			return fmt.Errorf("both Rp+Tp and Rp-Tp have odd y")
-		}
-
-		// Check if this matches the needNegation flag
-		if !sig.needNegation {
-			return fmt.Errorf("needNegation flag is false but Rp-Tp is used")
-		}
-	} else {
-		// Check if this matches the needNegation flag
-		if sig.needNegation {
-			return fmt.Errorf("needNegation flag is true but Rp+Tp is used")
 		}
 	}
 

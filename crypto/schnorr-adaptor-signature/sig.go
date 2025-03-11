@@ -30,7 +30,7 @@ var (
 // public key, encryption key and message hash.
 func (sig *AdaptorSignature) EncVerify(pk *btcec.PublicKey, encKey *EncryptionKey, msgHash []byte) error {
 	pkBytes := schnorr.SerializePubKey(pk)
-	return encVerify(sig, msgHash, pkBytes, &encKey.FieldVal)
+	return encVerify(sig.ToPreSignature(), msgHash, pkBytes, &encKey.FieldVal)
 }
 
 // Decrypt decrypts the adaptor signature to a Schnorr signature by
