@@ -192,12 +192,12 @@ func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*Adap
 		)
 
 		// Steps 10-16: Generate adaptor signature with the nonce
-		sig, err := encSign(&skScalar, nonce, pk, msgHash, &encKey.FieldVal)
+		psig, err := encSign(&skScalar, nonce, pk, msgHash, &encKey.FieldVal)
 		if err != nil {
 			// Try again with a new nonce if this one doesn't work
 			continue
 		}
 
-		return sig, nil
+		return NewAdaptorSignatureFromPreSignature(psig, encKey.ToBytes())
 	}
 }

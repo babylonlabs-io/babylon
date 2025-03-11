@@ -17,7 +17,7 @@ const (
 )
 
 // encSign implements the core of the EncSign algorithm as defined in the spec.
-// It generates an adaptor signature using the given private key, nonce,
+// It generates a 64-byte pre-signature using the given private key, nonce,
 // public key, message, and encryption key.
 //
 // The algorithm starts from step 9 since steps 1-8 are handled in EncSign
@@ -26,7 +26,7 @@ func encSign(
 	pubKey *btcec.PublicKey,
 	m []byte,
 	t *btcec.FieldVal,
-) (*AdaptorSignature, error) {
+) ([]byte, error) {
 	// Step 9: Compute R' = k'*G (with blinding to prevent timing side channel attacks)
 	k := *nonce
 	RHat, err := common.ScalarBaseMultWithBlinding(&k)
@@ -53,7 +53,6 @@ func encSign(
 	// Else if has_even_y(Rp - Tp), let RTp = Rp - Tp
 	// Else let a = bytes(k) and go back to Step 5
 	var RTp btcec.JacobianPoint
-	var needNegation bool
 
 	// Try Rp + Tp first
 	btcec.AddNonConst(RHat, Tp, &RTp)
@@ -69,8 +68,6 @@ func encSign(
 			// This corresponds to "let a = bytes(k) and go back to Step 5" in the spec
 			return nil, fmt.Errorf("both Rp+Tp and Rp-Tp have odd y, need to try again with a new nonce")
 		}
-
-		needNegation = true
 	}
 
 	// Step 13: Compute the challenge
@@ -87,18 +84,18 @@ func encSign(
 	// Step 14: Compute s' = (k + e*d) mod n
 	sHat := new(btcec.ModNScalar).Mul2(&e, privKey).Add(&k)
 
-	// Create the adaptor signature (Rp, s', needNegation)
-	// Note: According to the spec, we store Rp (not RTp) in the adaptor signature
-	sig := newAdaptorSignature(RHat, sHat, needNegation)
+	// Step 15: Create the 64-byte pre-signature (bytes(Rp) || bytes(s'))
+	presig := make([]byte, 64)
+	RHat.X.PutBytesUnchecked(presig[:32])
+	sHat.PutBytesUnchecked(presig[32:])
 
-	// Step 15: Verify the signature
+	// Step 16: Verify the signature
 	// Return FAIL if EncVerify(bytes(Pp), ek, m, psig) fails
-	if err := encVerify(sig.ToPreSignature(), m, pBytes, t); err != nil {
+	if err := encVerify(presig, m, pBytes, t); err != nil {
 		return nil, fmt.Errorf("verification of generated signature failed: %w", err)
 	}
 
-	// Step 16: Return the adaptor signature
-	return sig, nil
+	return presig, nil
 }
 
 // encVerify implements the EncVerify algorithm as defined in the spec.
