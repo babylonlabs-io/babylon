@@ -27,8 +27,11 @@ var (
 	}
 )
 
-// AdaptorSignature is the structure for an adaptor signature
-// the adaptor signature is a triple (R, s', need_negation) where
+// AdaptorSignature is the structure for a Schnorr adaptor signature
+// as defined in the spec. It corresponds to the SchnorrFunEncryptedSignature
+// format described in the spec.
+//
+// It is a triple (R, s', need_negation) where:
 //   - `R` is the tweaked public randomness, which is derived from
 //     offsetting public randomness R' sampled by the signer by
 //     using encryption key T
@@ -44,6 +47,8 @@ type AdaptorSignature struct {
 	needNegation bool
 }
 
+// newAdaptorSignature creates a new AdaptorSignature with the given parameters.
+// It copies the values to avoid unexpected modifications.
 func newAdaptorSignature(r *btcec.JacobianPoint, sHat *btcec.ModNScalar, needNegation bool) *AdaptorSignature {
 	var sig AdaptorSignature
 	sig.r.Set(r)
@@ -52,48 +57,71 @@ func newAdaptorSignature(r *btcec.JacobianPoint, sHat *btcec.ModNScalar, needNeg
 	return &sig
 }
 
-// EncVerify verifies that the adaptor signature is valid w.r.t. the given
-// public key, encryption key and message hash
+// EncVerify verifies that the adaptor signature is valid with respect to the given
+// public key, encryption key and message hash.
 func (sig *AdaptorSignature) EncVerify(pk *btcec.PublicKey, encKey *EncryptionKey, msgHash []byte) error {
 	pkBytes := schnorr.SerializePubKey(pk)
 	return encVerify(sig, msgHash, pkBytes, &encKey.FieldVal)
 }
 
 // Decrypt decrypts the adaptor signature to a Schnorr signature by
-// using the decryption key `decKey`, noted by `t` in the paper
+// using the decryption key.
 func (sig *AdaptorSignature) Decrypt(decKey *DecryptionKey) *schnorr.Signature {
+	// Step 1: Extract R and s' from the adaptor signature
 	R := sig.r
+	sHat := sig.sHat
 
+	// Steps 2-4: Extract decryption key and apply negation if needed
+	// In our implementation, we use the needNegation flag to determine
+	// whether the decryption key needs to be negated
 	t := decKey.ModNScalar
 	if sig.needNegation {
 		t.Negate()
 	}
-	// s = s' + t (or s'-t if negation is needed)
-	s := sig.sHat
+
+	// Step 5: Compute s = s' + u (or s' - u if negation is needed)
+	var s btcec.ModNScalar
+	s.Set(&sHat)
 	s.Add(&t)
 
+	// Step 6: Return the Schnorr signature (R, s)
 	return schnorr.NewSignature(&R.X, &s)
 }
 
 // Recover recovers the decryption key by using the adaptor signature
-// and the Schnorr signature decrypted from it
+// and the Schnorr signature decrypted from it.
 func (sig *AdaptorSignature) Recover(decryptedSchnorrSig *schnorr.Signature) *DecryptionKey {
-	// unpack s and R from Schnorr signature
+	// Step 1: Extract s from the decrypted Schnorr signature
 	_, s := unpackSchnorrSig(decryptedSchnorrSig)
+
+	// Step 2: Extract s' from the adaptor signature
 	sHat := sig.sHat
 
-	// extract encryption key t = s - s'
-	sHat.Negate()
-	t := s.Add(&sHat)
+	// Step 3: Compute dk' = (s - s') mod n
+	// First negate s' to compute s - s' as s + (-s')
+	var negatedSHat btcec.ModNScalar
+	negatedSHat.Set(&sHat)
+	negatedSHat.Negate()
 
+	// Compute t = s + (-s')
+	var t btcec.ModNScalar
+	t.Set(s)
+	t.Add(&negatedSHat)
+
+	// Step 4: Apply negation if needed based on the adaptor signature
 	if sig.needNegation {
 		t.Negate()
 	}
 
-	return &DecryptionKey{*t}
+	// Step 5: Return the decryption key
+	return &DecryptionKey{t}
 }
 
-// Marshal is to implement proto interface
+// Marshal serializes the adaptor signature to bytes.
+// The format is:
+// - r (33 bytes): The Jacobian point R
+// - sHat (32 bytes): The scalar s'
+// - needNegation (1 byte): Boolean flag indicating if decryption key needs negation
 func (sig *AdaptorSignature) Marshal() ([]byte, error) {
 	if sig == nil {
 		return nil, nil
@@ -114,6 +142,8 @@ func (sig *AdaptorSignature) Marshal() ([]byte, error) {
 	return asigBytes, nil
 }
 
+// MustMarshal serializes the adaptor signature to bytes.
+// It panics if marshaling fails.
 func (sig *AdaptorSignature) MustMarshal() []byte {
 	if sig == nil {
 		return nil
@@ -126,16 +156,17 @@ func (sig *AdaptorSignature) MustMarshal() []byte {
 	return bz
 }
 
+// MarshalHex serializes the adaptor signature to a hex string.
 func (sig *AdaptorSignature) MarshalHex() string {
 	return hex.EncodeToString(sig.MustMarshal())
 }
 
-// Size is to implement proto interface
+// Size returns the size of the serialized adaptor signature in bytes.
 func (sig *AdaptorSignature) Size() int {
 	return AdaptorSignatureSize
 }
 
-// MarshalTo is to implement proto interface
+// MarshalTo serializes the adaptor signature to the provided byte slice.
 func (sig *AdaptorSignature) MarshalTo(data []byte) (int, error) {
 	bz, err := sig.Marshal()
 	if err != nil {
@@ -145,7 +176,7 @@ func (sig *AdaptorSignature) MarshalTo(data []byte) (int, error) {
 	return len(data), nil
 }
 
-// Unmarshal is to implement proto interface
+// Unmarshal deserializes an adaptor signature from bytes.
 func (sig *AdaptorSignature) Unmarshal(data []byte) error {
 	adaptorSig, err := NewAdaptorSignatureFromBytes(data)
 	if err != nil {
@@ -157,11 +188,13 @@ func (sig *AdaptorSignature) Unmarshal(data []byte) error {
 	return nil
 }
 
+// Equals checks if two adaptor signatures are equal.
 func (sig *AdaptorSignature) Equals(sig2 AdaptorSignature) bool {
 	return bytes.Equal(sig.MustMarshal(), sig2.MustMarshal())
 }
 
-// appendAndHash appends the given data and hashes the result
+// appendAndHash appends the given data and hashes the result.
+// This is used in the nonce generation process for EncSign.
 // Expected input is:
 //   - msgHash: 32 bytes
 //   - signerPubKeyBytes: 33 bytes
@@ -182,54 +215,58 @@ func appendAndHash(
 }
 
 // EncSign generates an adaptor signature by using the given secret key,
-// encryption key (noted by `T` in the paper) and message hash
+// encryption key (noted by `T` in the paper) and message hash.
 func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*AdaptorSignature, error) {
-	// d' = int(d)
-	var skScalar btcec.ModNScalar
-	skScalar.Set(&sk.Key)
-
 	// Fail if msgHash is not 32 bytes
 	if len(msgHash) != chainhash.HashSize {
 		return nil, fmt.Errorf("wrong size for message hash (got %v, want %v)", len(msgHash), chainhash.HashSize)
 	}
 
-	// Fail if d = 0 or d >= n
+	// Step 1: Let d' = int(d)
+	var skScalar btcec.ModNScalar
+	skScalar.Set(&sk.Key)
+
+	// Step 2: Return FAIL if d' == 0 or d' >= n
 	if skScalar.IsZero() {
 		return nil, fmt.Errorf("private key is zero")
 	}
 
-	// P = 'd*G
+	// Step 3: Let Pp = d' * G
 	pk := sk.PubKey()
 
-	// Negate d if P.y is odd.
+	// Step 4: Let d = d' if has_even_y(Pp), otherwise let d = n - d'
 	pubKeyBytes := pk.SerializeCompressed()
 	if pubKeyBytes[0] == secp.PubKeyFormatCompressedOdd {
 		skScalar.Negate()
 	}
 
+	// Step 5: Generate t as byte-wise XOR of bytes(d) and tagged_hash("BIP0340/aux", a)
+	// Note: In our implementation, we use RFC6979 for deterministic nonce generation
 	var privKeyBytes [chainhash.HashSize]byte
 	skScalar.PutBytes(&privKeyBytes)
 
+	// Get encryption key bytes for nonce generation
 	encKeyBTCPK, err := encKey.ToBTCPK()
 	if err != nil {
 		return nil, err
 	}
 	encKeyBytes := encKeyBTCPK.SerializeCompressed()
-	// hashForNonce is sha256(m || P || T)
+
+	// Step 6-7: Generate rand = tagged_hash("BIP0340/nonce", t || bytes(Pp) || m)
+	// We use appendAndHash which combines the message, public key, and encryption key
 	hashForNonce := appendAndHash(msgHash, pubKeyBytes, encKeyBytes)
 
+	// Steps 8-16: Try to generate adaptor signature with different nonces until successful
 	for iteration := uint32(0); ; iteration++ {
-		// Use RFC6979 to generate a deterministic nonce in [1, n-1]
-		// parameterized by the private key, message being signed, extra data
-		// that identifies the scheme, and an iteration count
+		// Step 8-9: Generate nonce k' and ensure it's not zero
 		nonce := btcec.NonceRFC6979(
 			privKeyBytes[:], hashForNonce, customBabylonRFC6979ExtraDataV0[:], nil, iteration,
 		)
 
-		// try to generate adaptor signature
+		// Steps 10-16: Generate adaptor signature with the nonce
 		sig, err := encSign(&skScalar, nonce, pk, msgHash, &encKey.FieldVal)
 		if err != nil {
-			// Try again with a new nonce.
+			// Try again with a new nonce if this one doesn't work
 			continue
 		}
 
@@ -237,7 +274,11 @@ func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*Adap
 	}
 }
 
-// NewAdaptorSignatureFromBytes parses the given byte array to an adaptor signature
+// NewAdaptorSignatureFromBytes parses the given byte array to an adaptor signature.
+// The format is:
+// - r (33 bytes): The Jacobian point R
+// - sHat (32 bytes): The scalar s'
+// - needNegation (1 byte): Boolean flag indicating if decryption key needs negation
 func NewAdaptorSignatureFromBytes(asigBytes []byte) (*AdaptorSignature, error) {
 	if len(asigBytes) != AdaptorSignatureSize {
 		return nil, fmt.Errorf(
@@ -250,22 +291,27 @@ func NewAdaptorSignatureFromBytes(asigBytes []byte) (*AdaptorSignature, error) {
 	// extract r
 	r, err := btcec.ParseJacobian(asigBytes[0:JacobianPointSize])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse r: %w", err)
 	}
+
 	// extract sHat
 	var sHat btcec.ModNScalar
 	sHat.SetByteSlice(asigBytes[JacobianPointSize : JacobianPointSize+ModNScalarSize])
-	// extract needNegation
-	needNegation := asigBytes[AdaptorSignatureSize-1] != 0x00
 
+	// extract needNegation
+	needNegation := asigBytes[JacobianPointSize+ModNScalarSize] == 0x01
+
+	// Create a new AdaptorSignature
+	// Since r is already a pointer, we can use newAdaptorSignature
 	return newAdaptorSignature(&r, &sHat, needNegation), nil
 }
 
-// NewAdaptorSignatureFromHex parses the given hex string to an adaptor signature
+// NewAdaptorSignatureFromHex parses the given hex string to an adaptor signature.
 func NewAdaptorSignatureFromHex(asigHex string) (*AdaptorSignature, error) {
 	asigBytes, err := hex.DecodeString(asigHex)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decode hex string: %w", err)
 	}
+
 	return NewAdaptorSignatureFromBytes(asigBytes)
 }
