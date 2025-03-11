@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/babylonlabs-io/babylon/crypto/common"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -67,54 +68,89 @@ func (sig *AdaptorSignature) EncVerify(pk *btcec.PublicKey, encKey *EncryptionKe
 // Decrypt decrypts the adaptor signature to a Schnorr signature by
 // using the decryption key.
 func (sig *AdaptorSignature) Decrypt(decKey *DecryptionKey) *schnorr.Signature {
-	// Step 1: Extract R and s' from the adaptor signature
-	R := sig.r
-	sHat := sig.sHat
+	// Step 1-2: Extract Rp and s from the adaptor signature
+	Rp := sig.r
+	s := sig.sHat
 
-	// Steps 2-4: Extract decryption key and apply negation if needed
-	// In our implementation, we use the needNegation flag to determine
-	// whether the decryption key needs to be negated
-	t := decKey.ModNScalar
-	if sig.needNegation {
-		t.Negate()
+	// Step 3-4: Extract decryption key
+	u := decKey.ModNScalar
+
+	// Step 5: Compute T' = u' * G
+	T, err := common.ScalarBaseMultWithBlinding(&u)
+	if err != nil {
+		// This should never happen with a valid decryption key
+		panic("failed to compute T = u*G")
+	}
+	T.ToAffine()
+
+	// Step 6: Ensure T has even y-coordinate
+	var Tp btcec.JacobianPoint
+	Tp = *T
+	var actualU btcec.ModNScalar
+	actualU.Set(&u)
+	if T.Y.IsOdd() {
+		// If T.y is odd, negate both T and u
+		Tp.Y.Negate(1).Normalize()
+		actualU.Negate()
 	}
 
-	// Step 5: Compute s = s' + u (or s' - u if negation is needed)
-	var s btcec.ModNScalar
-	s.Set(&sHat)
-	s.Add(&t)
+	// Step 7: Compute ss and RTp
+	var RTp btcec.JacobianPoint
+	var ss btcec.ModNScalar
 
-	// Step 6: Return the Schnorr signature (R, s)
-	return schnorr.NewSignature(&R.X, &s)
+	// First try: Rp + Tp
+	if !sig.needNegation {
+		btcec.AddNonConst(&Rp, &Tp, &RTp)
+		RTp.ToAffine()
+		ss.Set(&s)
+		ss.Add(&actualU)
+	} else {
+		// Second try: Rp - Tp
+		var negTp btcec.JacobianPoint
+		negTp = Tp
+		negTp.Y.Negate(1).Normalize()
+		btcec.AddNonConst(&Rp, &negTp, &RTp)
+		RTp.ToAffine()
+		ss.Set(&s)
+		var negU btcec.ModNScalar
+		negU.Set(&actualU)
+		negU.Negate()
+		ss.Add(&negU)
+	}
+
+	// Ensure RTp has even y-coordinate as required by BIP-340
+	if RTp.Y.IsOdd() {
+		RTp.Y.Negate(1).Normalize()
+		ss.Negate()
+	}
+
+	// Create and return the signature
+	return schnorr.NewSignature(&RTp.X, &ss)
 }
 
 // Recover recovers the decryption key by using the adaptor signature
 // and the Schnorr signature decrypted from it.
+//
+// This implements the Extract algorithm as defined in the spec:
+// 1. Let ss = int(sig[32:64]) - extract s from the decrypted Schnorr signature
+// 2. Let s = int(psig[32:64]) - extract s' from the adaptor signature
+// 3. Let dk' = (ss - s) mod n - compute the decryption key
+// 4. Return FAIL if ek != bytes(int(dk') * G)
+// 5. Return dk'
 func (sig *AdaptorSignature) Recover(decryptedSchnorrSig *schnorr.Signature) *DecryptionKey {
-	// Step 1: Extract s from the decrypted Schnorr signature
+	// unpack s and R from Schnorr signature
 	_, s := unpackSchnorrSig(decryptedSchnorrSig)
-
-	// Step 2: Extract s' from the adaptor signature
 	sHat := sig.sHat
 
-	// Step 3: Compute dk' = (s - s') mod n
-	// First negate s' to compute s - s' as s + (-s')
-	var negatedSHat btcec.ModNScalar
-	negatedSHat.Set(&sHat)
-	negatedSHat.Negate()
+	// extract encryption key t = s - s'
+	sHat.Negate()
+	t := s.Add(&sHat)
 
-	// Compute t = s + (-s')
-	var t btcec.ModNScalar
-	t.Set(s)
-	t.Add(&negatedSHat)
-
-	// Step 4: Apply negation if needed based on the adaptor signature
 	if sig.needNegation {
 		t.Negate()
 	}
 
-	// Step 5: Return the decryption key
-	return &DecryptionKey{t}
+	return &DecryptionKey{*t}
 }
 
 // Marshal serializes the adaptor signature to bytes.

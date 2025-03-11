@@ -87,7 +87,8 @@ func encSign(
 	// Step 14: Compute s' = (k + e*d) mod n
 	sHat := new(btcec.ModNScalar).Mul2(&e, privKey).Add(&k)
 
-	// Create the adaptor signature (R, s', needNegation)
+	// Create the adaptor signature (Rp, s', needNegation)
+	// Note: According to the spec, we store Rp (not RTp) in the adaptor signature
 	sig := newAdaptorSignature(RHat, sHat, needNegation)
 
 	// Step 15: Verify the signature
@@ -103,8 +104,6 @@ func encSign(
 // encVerify implements the EncVerify algorithm as defined in the spec.
 // It verifies that an adaptor signature is valid with respect to the given
 // public key, encryption key, and message.
-//
-// The algorithm follows these steps:
 func encVerify(
 	sig *AdaptorSignature,
 	m []byte,
@@ -146,14 +145,31 @@ func encVerify(
 	// Else if has_even_y(Rp - Tp), let RTp = Rp - Tp
 	// Else return FAIL
 	var RTp btcec.JacobianPoint
-	if sig.needNegation {
-		// RTp = Rp - Tp
-		btcec.AddNonConst(Rp, negatePoint(Tp), &RTp)
-	} else {
-		// RTp = Rp + Tp
-		btcec.AddNonConst(Rp, Tp, &RTp)
-	}
+
+	// Try Rp + Tp first
+	btcec.AddNonConst(Rp, Tp, &RTp)
 	RTp.ToAffine()
+
+	if RTp.Y.IsOdd() {
+		// If Rp+Tp has odd y, try Rp-Tp
+		btcec.AddNonConst(Rp, negatePoint(Tp), &RTp)
+		RTp.ToAffine()
+
+		if RTp.Y.IsOdd() {
+			// If both Rp+Tp and Rp-Tp have odd y, this is an error
+			return fmt.Errorf("both Rp+Tp and Rp-Tp have odd y")
+		}
+
+		// Check if this matches the needNegation flag
+		if !sig.needNegation {
+			return fmt.Errorf("needNegation flag is false but Rp-Tp is used")
+		}
+	} else {
+		// Check if this matches the needNegation flag
+		if sig.needNegation {
+			return fmt.Errorf("needNegation flag is true but Rp+Tp is used")
+		}
+	}
 
 	// Step 6: Compute challenge e
 	// e = int(tagged_hash("BIP0340/challenge", bytes(RTp) || bytes(Pp) || m)) mod n
@@ -207,24 +223,6 @@ func liftX(x *btcec.FieldVal) (*btcec.JacobianPoint, error) {
 	z.SetInt(1)
 	point := btcec.MakeJacobianPoint(x, &y, &z)
 	return &point, nil
-}
-
-// intoPointWithEvenY converts the given Jacobian point to an affine
-// point with even y value, and returns a bool value on whether the
-// negation is performed.
-// The bool value will be used for decrypting an adaptor signature
-// to a Schnorr signature.
-func intoPointWithEvenY(point *btcec.JacobianPoint) (*btcec.JacobianPoint, bool) {
-	affinePoint := point
-	affinePoint.ToAffine()
-
-	needNegation := affinePoint.Y.IsOdd()
-
-	if needNegation {
-		affinePoint = negatePoint(affinePoint)
-	}
-
-	return affinePoint, needNegation
 }
 
 // negatePoint negates a point (either Jacobian or affine)
