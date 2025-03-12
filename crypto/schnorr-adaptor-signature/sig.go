@@ -17,7 +17,7 @@ var AdaptorSignatureTagNonce = []byte("SchnorrAdaptor/nonce")
 // public key, encryption key and message hash.
 func (sig *AdaptorSignature) EncVerify(pk *btcec.PublicKey, encKey *EncryptionKey, msgHash []byte) error {
 	pkBytes := schnorr.SerializePubKey(pk)
-	return encVerify(sig, msgHash, pkBytes, &encKey.FieldVal)
+	return encVerify(sig, msgHash, pkBytes, &encKey.JacobianPoint)
 }
 
 // Decrypt decrypts the adaptor signature to a Schnorr signature by
@@ -107,7 +107,7 @@ func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*Adap
 		}
 
 		// Steps 9-16: Generate adaptor signature with the nonce
-		adaptorSig, err := encSign(&skScalar, &nonce, pk, msgHash, &encKey.FieldVal)
+		adaptorSig, err := encSign(&skScalar, &nonce, pk, msgHash, &encKey.JacobianPoint)
 		if err != nil {
 			// Try again with a new nonce if this one doesn't work
 			continue

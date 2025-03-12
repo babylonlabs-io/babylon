@@ -18,7 +18,7 @@ func encSign(
 	privKey, nonce *btcec.ModNScalar,
 	pubKey *btcec.PublicKey,
 	m []byte,
-	t *btcec.FieldVal,
+	t *btcec.JacobianPoint,
 ) (*AdaptorSignature, error) {
 	// Step 9: Compute R = k0*G
 	// NOTE: later we will negate k0 if needed, and after that k = k0
@@ -29,7 +29,7 @@ func encSign(
 	}
 
 	// Step 10: Compute R + T
-	Tp, err := liftX(t)
+	Tp, err := liftX(&t.X)
 	if err != nil {
 		return nil, fmt.Errorf("failed to lift t: %w", err)
 	}
@@ -74,7 +74,7 @@ func encVerify(
 	adaptorSig *AdaptorSignature,
 	m []byte,
 	pubKeyBytes []byte,
-	t *btcec.FieldVal,
+	t *btcec.JacobianPoint,
 ) error {
 	if len(m) != chainhash.HashSize {
 		return fmt.Errorf("wrong size for message (got %v, want %v)",
@@ -136,7 +136,7 @@ func encVerify(
 
 	// Step 7: Verify T matches encryption key
 	T.ToAffine()
-	if !T.X.Equals(t) {
+	if !T.X.Equals(&t.X) || !T.Y.Equals(&t.Y) {
 		return fmt.Errorf("extracted encryption key does not match")
 	}
 

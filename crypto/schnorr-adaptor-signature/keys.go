@@ -5,7 +5,6 @@ import (
 
 	"github.com/babylonlabs-io/babylon/crypto/common"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 )
 
 // DecryptionKey is the decryption key in the adaptor
@@ -58,7 +57,7 @@ func (dk *DecryptionKey) GetEncKey() (*EncryptionKey, error) {
 	}
 	// NOTE: we convert ekPoint to affine coordinates for consistency
 	ekPoint.ToAffine()
-	return &EncryptionKey{ekPoint.X}, nil
+	return &EncryptionKey{*ekPoint}, nil
 }
 
 func (dk *DecryptionKey) ToBTCSK() *btcec.PrivateKey {
@@ -71,7 +70,7 @@ func (dk *DecryptionKey) ToBytes() []byte {
 }
 
 type EncryptionKey struct {
-	btcec.FieldVal
+	btcec.JacobianPoint
 }
 
 func NewEncryptionKeyFromJacobianPoint(point *btcec.JacobianPoint) (*EncryptionKey, error) {
@@ -93,7 +92,7 @@ func NewEncryptionKeyFromJacobianPoint(point *btcec.JacobianPoint) (*EncryptionK
 		affinePoint.Y.Negate(1).Normalize()
 	}
 
-	return &EncryptionKey{affinePoint.X}, nil
+	return &EncryptionKey{affinePoint}, nil
 }
 
 func NewEncryptionKeyFromBTCPK(btcPK *btcec.PublicKey) (*EncryptionKey, error) {
@@ -103,24 +102,26 @@ func NewEncryptionKeyFromBTCPK(btcPK *btcec.PublicKey) (*EncryptionKey, error) {
 }
 
 func NewEncryptionKeyFromBytes(encKeyBytes []byte) (*EncryptionKey, error) {
-	if len(encKeyBytes) != FieldValSize {
+	if len(encKeyBytes) != JacobianPointSize {
 		return nil, fmt.Errorf(
 			"the length of the given bytes for encryption key is incorrect (expected: %d, actual: %d)",
-			FieldValSize,
+			JacobianPointSize,
 			len(encKeyBytes),
 		)
 	}
-	fieldVal := btcec.FieldVal{}
-	fieldVal.SetByteSlice(encKeyBytes)
-	return &EncryptionKey{fieldVal}, nil
+	btcPKPoint, err := btcec.ParseJacobian(encKeyBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse encryption key bytes: %w", err)
+	}
+	return NewEncryptionKeyFromJacobianPoint(&btcPKPoint)
 }
 
 func (ek *EncryptionKey) ToBTCPK() (*btcec.PublicKey, error) {
-	return schnorr.ParsePubKey(ek.ToBytes())
+	return btcec.ParsePubKey(ek.ToBytes())
 }
 
 func (ek *EncryptionKey) ToBytes() []byte {
-	fieldValBytes := ek.FieldVal.Bytes()
+	fieldValBytes := btcec.JacobianToByteSlice(ek.JacobianPoint)
 	return fieldValBytes[:]
 }
 
