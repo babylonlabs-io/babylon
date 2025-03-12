@@ -3,7 +3,6 @@ package params
 import (
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types/address"
-	"github.com/cosmos/cosmos-sdk/types/mempool"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -49,10 +48,6 @@ var (
 func init() {
 	SetAddressPrefixes()
 	RegisterDenoms()
-
-	// Set DefaultMaxTx = 0 so the application uses the PriorityNonceMempool by default
-	// instead of the NoOpMempool
-	mempool.DefaultMaxTx = 0
 }
 
 func RegisterDenoms() {
