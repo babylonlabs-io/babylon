@@ -91,30 +91,34 @@ func EncSignWithAuxData(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []b
 		skScalar.Negate()
 	}
 
-	// Step 5-6: Generate random bytes for nonce generation
-	// genRandForNonce does the following:
-	// 1. Generates t as byte-wise XOR of bytes(d) and tagged_hash("BIP0340/aux", a)
-	// 2. Generates rand = tagged_hash("BIP0340/nonce", t || bytes(Pp) || m)
-	var skBytes [chainhash.HashSize]byte
-	skScalar.PutBytes(&skBytes)
 	encKeyBytes := encKey.ToBytes()
-	pkXOnlyBytes := schnorr.SerializePubKey(pk)
-	randForNonce := genRandForNonce(skBytes, auxData, encKeyBytes, pkXOnlyBytes, msgHash)
 
-	// Step 7: Generate nonce `k' = int(rand) mod n`
-	var nonce btcec.ModNScalar
-	nonce.SetBytes(&randForNonce)
+	// Steps 5-16: Try to generate adaptor signature with different nonces until successful
+	for iteration := uint32(0); ; iteration++ {
+		// Step 5-6: Generate random bytes for nonce generation
+		// genRandForNonce does the following:
+		// 1. Generates t as byte-wise XOR of bytes(d) and tagged_hash("BIP0340/aux", a)
+		// 2. Generates rand = tagged_hash("BIP0340/nonce", t || bytes(Pp) || m)
+		var skBytes [chainhash.HashSize]byte
+		skScalar.PutBytes(&skBytes)
+		randForNonce := genRandForNonce(skBytes, auxData, pkBytes, encKeyBytes, msgHash)
 
-	// Step 8: Return FAIL if k' == 0
-	if nonce.IsZero() {
-		return nil, fmt.Errorf("generated zero nonce")
+		// Step 7: Generate nonce `k' = int(rand) mod n`
+		var nonce btcec.ModNScalar
+		nonce.SetBytes(&randForNonce)
+
+		// Step 8: Return FAIL if k' == 0
+		if nonce.IsZero() {
+			continue
+		}
+
+		// Steps 9-16: Generate adaptor signature with the nonce
+		adaptorSig, err := encSign(&skScalar, &nonce, pk, msgHash, &encKey.JacobianPoint)
+		if err != nil {
+			// Try again with a new nonce if this one doesn't work
+			continue
+		}
+
+		return adaptorSig, nil
 	}
-
-	// Steps 9-16: Generate adaptor signature with the nonce
-	adaptorSig, err := encSign(&skScalar, &nonce, pk, msgHash, &encKey.JacobianPoint)
-	if err != nil {
-		return nil, err
-	}
-
-	return adaptorSig, nil
 }
