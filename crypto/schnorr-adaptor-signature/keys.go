@@ -122,7 +122,7 @@ func (ek *EncryptionKey) ToBTCPK() (*btcec.PublicKey, error) {
 
 func (ek *EncryptionKey) ToBytes() []byte {
 	fieldValBytes := btcec.JacobianToByteSlice(ek.JacobianPoint)
-	return fieldValBytes[:]
+	return fieldValBytes
 }
 
 func GenKeyPair() (*EncryptionKey, *DecryptionKey, error) {
