@@ -36,8 +36,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
+
+- [#660](https://github.com/babylonlabs-io/babylon/pull/660) add function to recover pub key from sig
+- [#625](https://github.com/babylonlabs-io/babylon/pull/625) add tx gas limit decorator and local mempool config
+
+### Improvements
+
+- [#666](https://github.com/babylonlabs-io/babylon/pull/666) Upgrade to wasmvm v2.2.3.
+
 ### Bug fixes
 
+- [#657](https://github.com/babylonlabs-io/babylon/pull/657) crypto: fix adaptor sig timing side channels
+- [#656](https://github.com/babylonlabs-io/babylon/pull/656) crypto: fix adaptor sig validity and typos
+- [#658](https://github.com/babylonlabs-io/babylon/pull/658) crypto: check if Z==1 in ToBTCPK
 - [#660](https://github.com/babylonlabs-io/babylon/pull/660) fix: ecdsa verification
 
 ### Improvements
