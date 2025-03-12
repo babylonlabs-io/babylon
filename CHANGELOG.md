@@ -50,6 +50,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#656](https://github.com/babylonlabs-io/babylon/pull/656) crypto: fix adaptor sig validity and typos
 - [#658](https://github.com/babylonlabs-io/babylon/pull/658) crypto: check if Z==1 in ToBTCPK
 - [#660](https://github.com/babylonlabs-io/babylon/pull/660) fix: ecdsa verification
+- [#673](https://github.com/babylonlabs-io/babylon/pull/673) fix: move bip322 signing
+functions to `testutil`
 
 ### Improvements
 
