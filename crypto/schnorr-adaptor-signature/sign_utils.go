@@ -158,24 +158,30 @@ func decrypt(psig *AdaptorSignature, dk *btcec.ModNScalar) (*schnorr.Signature, 
 	}
 
 	// Get R point from adaptor signature
-	R := psig.R0
-	R.ToAffine()
+	R0 := psig.R0
+	R0.ToAffine()
 
-	// Compute final s value based on R.Y being even/odd
+	// Compute final s value based on R0.Y being even/odd
+	// This matches the Python reference implementation:
+	// if sig[0] == 2 (even y): s = (s0 + t) % n
+	// if sig[0] == 3 (odd y): s = (s0 - t) % n
 	var s btcec.ModNScalar
-	if !R.Y.IsOdd() {
-		// R.Y is even, so s = s0 + t
+	if !R0.Y.IsOdd() {
+		// R0.Y is even (sig[0] == 2)
+		// s = (s0 + t) % n
 		s.Set(&s0)
 		s.Add(&t)
 	} else {
-		// R.Y is odd, so s = s0 - t
+		// R0.Y is odd (sig[0] == 3)
+		// s = (s0 - t) % n
 		s.Set(&s0)
-		t.Negate()
-		s.Add(&t)
+		tNeg := t
+		tNeg.Negate()
+		s.Add(&tNeg)
 	}
 
-	// Create Schnorr signature from R.X and s
-	return schnorr.NewSignature(&R.X, &s), nil
+	// Create Schnorr signature from R0.X and s
+	return schnorr.NewSignature(&R0.X, &s), nil
 }
 
 // unwrapSchnorrSignature extracts the R point and s scalar bytes from a Schnorr signature.
@@ -187,7 +193,7 @@ func unwrapSchnorrSignature(sig *schnorr.Signature) ([]byte, []byte) {
 
 // extract extracts the decryption key from a pre-signature and its decrypted signature.
 // This implements the Extract algorithm as defined in the spec.
-func extract(psig *AdaptorSignature, sig *schnorr.Signature) (*DecryptionKey, error) {
+func extract(psig *AdaptorSignature, sig *schnorr.Signature) (*btcec.ModNScalar, error) {
 	// Get s0 value from adaptor signature
 	s0 := psig.s
 
@@ -200,24 +206,31 @@ func extract(psig *AdaptorSignature, sig *schnorr.Signature) (*DecryptionKey, er
 	}
 
 	// Get R point from adaptor signature and convert to affine
-	R := psig.R0
-	R.ToAffine()
+	R0 := psig.R0
+	R0.ToAffine()
 
-	// Calculate decryption key based on R.Y being even/odd
+	// Calculate decryption key based on R0.Y being even/odd
+	// This matches the Python reference implementation:
+	// if sig65[0] == 2 (even y): t = (s - s0) % n
+	// if sig65[0] == 3 (odd y): t = (s0 - s) % n
 	var dk btcec.ModNScalar
-	if !R.Y.IsOdd() {
-		// R.Y is even, so dk = s - s0
+	if !R0.Y.IsOdd() {
+		// R0.Y is even (sig65[0] == 2)
+		// t = (s - s0) % n
 		dk.Set(s)
-		s0.Negate()
-		dk.Add(&s0)
+		s0Neg := new(btcec.ModNScalar).Set(&s0)
+		s0Neg.Negate()
+		dk.Add(s0Neg)
 	} else {
-		// R.Y is odd, so dk = s0 - s
+		// R0.Y is odd (sig65[0] == 3)
+		// t = (s0 - s) % n
 		dk.Set(&s0)
-		s.Negate()
-		dk.Add(s)
+		sNeg := new(btcec.ModNScalar).Set(s)
+		sNeg.Negate()
+		dk.Add(sNeg)
 	}
 
-	return NewDecryptionKeyFromModNScalar(&dk)
+	return &dk, nil
 }
 
 // liftX lifts an x-coordinate to a point on the curve with even y-coordinate.
