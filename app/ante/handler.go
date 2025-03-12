@@ -11,6 +11,8 @@ type AppAnteHandler struct {
 	extensionOptionsChecker sdk.AnteDecorator
 	txTimeoutHeight         sdk.AnteDecorator
 	validateMemo            sdk.AnteDecorator
+	validateSigCount        authante.ValidateSigCountDecorator
+	validateBasic           authante.ValidateBasicDecorator
 }
 
 func NewAppAnteHandler(accountKeeper authante.AccountKeeper) AppAnteHandler {
@@ -20,6 +22,8 @@ func NewAppAnteHandler(accountKeeper authante.AccountKeeper) AppAnteHandler {
 		extensionOptionsChecker: authante.NewExtensionOptionsDecorator(nil),
 		txTimeoutHeight:         authante.NewTxTimeoutHeightDecorator(),
 		validateMemo:            authante.NewValidateMemoDecorator(accountKeeper),
+		validateSigCount:        authante.NewValidateSigCountDecorator(accountKeeper),
+		validateBasic:           authante.NewValidateBasicDecorator(),
 	}
 }
 
