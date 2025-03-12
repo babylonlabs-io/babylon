@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/app/ante"
-	"github.com/babylonlabs-io/babylon/app/ante/types"
+	types "github.com/babylonlabs-io/babylon/app/ante/types"
 	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

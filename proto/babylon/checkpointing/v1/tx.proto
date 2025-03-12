@@ -1,10 +1,12 @@
 syntax = "proto3";
 package babylon.checkpointing.v1;
 
-import "gogoproto/gogo.proto";
 import "babylon/checkpointing/v1/bls_key.proto";
-import "cosmos/staking/v1beta1/tx.proto";
+import "babylon/checkpointing/v1/checkpoint.proto";
 import "cosmos/msg/v1/msg.proto";
+import "cosmos/staking/v1beta1/tx.proto";
+import "gogoproto/gogo.proto";
+import "tendermint/abci/types.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/checkpointing/types";
 
@@ -13,9 +15,22 @@ service Msg {
   option (cosmos.msg.v1.service) = true;
 
   // WrappedCreateValidator defines a method for registering a new validator
-  rpc WrappedCreateValidator(MsgWrappedCreateValidator)
-      returns (MsgWrappedCreateValidatorResponse);
+  rpc WrappedCreateValidator(MsgWrappedCreateValidator) returns (MsgWrappedCreateValidatorResponse);
+  rpc InjectedCheckpoint(MsgInjectedCheckpoint) returns (MsgInjectedCheckpointResponse);
 }
+
+// MsgInjectedCheckpoint wraps the checkpoint and the extended votes
+// Note: this is a special message type that is only for internal ABCI++ usage
+// for inserting checkpoint into the block
+message MsgInjectedCheckpoint {
+  RawCheckpointWithMeta ckpt = 1;
+  // extended_commit_info is the commit info including the vote extensions
+  // from the previous proposal
+  tendermint.abci.ExtendedCommitInfo extended_commit_info = 2;
+}
+
+// Internal response for MsgInjectedCheckpoint
+message MsgInjectedCheckpointResponse {}
 
 // MsgWrappedCreateValidator defines a wrapped message to create a validator
 message MsgWrappedCreateValidator {

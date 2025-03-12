@@ -1,7 +1,7 @@
 package ante
 
 import (
-	"github.com/babylonlabs-io/babylon/app/ante/types"
+	types "github.com/babylonlabs-io/babylon/app/ante/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

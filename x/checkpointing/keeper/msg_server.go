@@ -62,3 +62,7 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 
 	return &types.MsgWrappedCreateValidatorResponse{}, nil
 }
+
+func (k msgServer) InjectedCheckpoint(ctx context.Context, msg *types.MsgInjectedCheckpoint) (*types.MsgInjectedCheckpointResponse, error) {
+	return &types.MsgInjectedCheckpointResponse{}, nil
+}
