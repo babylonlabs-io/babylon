@@ -35,13 +35,22 @@ func TestPriorityDecorator(t *testing.T) {
 			expected: ante.LivenessTxPriority,
 		},
 		{
-			name: "Mixed messages, including liveness tx",
+			name: "Liveness tx with many messages",
+			msgs: []sdk.Msg{
+				&ftypes.MsgAddFinalitySig{},
+				&btclctypes.MsgInsertHeaders{},
+			},
+			initPrio: 50,
+			expected: ante.LivenessTxPriority,
+		},
+		{
+			name: "Mixed messages (regular and liveness-related), is not liveness-tx",
 			msgs: []sdk.Msg{
 				&ftypes.MsgAddFinalitySig{},
 				&sdktestdata.TestMsg{},
 			},
 			initPrio: 50,
-			expected: ante.LivenessTxPriority,
+			expected: 50,
 		},
 		{
 			name: "Regular tx with low priority",

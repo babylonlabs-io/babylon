@@ -42,7 +42,12 @@ func (pd PriorityDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool
 	return next(newCtx, tx, simulate)
 }
 
+// isLivenessTx returns true if ALL its messages are liveness-related
 func isLivenessTx(tx sdk.Tx) bool {
+	if len(tx.GetMsgs()) == 0 {
+		return false
+	}
+
 	for _, msg := range tx.GetMsgs() {
 		switch msg.(type) {
 		case *btclctypes.MsgInsertHeaders, // BTC light client
@@ -55,10 +60,10 @@ func isLivenessTx(tx sdk.Tx) bool {
 			*bstypes.MsgAddBTCDelegationInclusionProof,
 			// BTC staking finality
 			*ftypes.MsgAddFinalitySig:
-			return true
+			continue
 		default:
 			return false
 		}
 	}
-	return false
+	return true
 }
