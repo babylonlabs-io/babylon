@@ -58,9 +58,12 @@ func genRandForNonce(
 	return *randForNonce
 }
 
-// EncSign generates an adaptor signature by using the given secret key,
-// encryption key (noted by `T` in the paper) and message hash.
 func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*AdaptorSignature, error) {
+	auxData := rand.Bytes(chainhash.HashSize)
+	return EncSignWithAuxData(sk, encKey, msgHash, auxData)
+}
+
+func EncSignWithAuxData(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte, auxData []byte) (*AdaptorSignature, error) {
 	// Fail if msgHash is not 32 bytes
 	if len(msgHash) != chainhash.HashSize {
 		return nil, fmt.Errorf("wrong size for message hash (got %v, want %v)", len(msgHash), chainhash.HashSize)
@@ -94,7 +97,6 @@ func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*Adap
 		// 2. Generates rand = tagged_hash("BIP0340/nonce", t || bytes(Pp) || m)
 		var skBytes [chainhash.HashSize]byte
 		skScalar.PutBytes(&skBytes)
-		auxData := rand.Bytes(chainhash.HashSize)
 		randForNonce := genRandForNonce(skBytes, auxData, pkBytes, encKeyBytes, msgHash)
 
 		// Step 7: Generate nonce `k' = int(rand) mod n`
