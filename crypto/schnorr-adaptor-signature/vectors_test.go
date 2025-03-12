@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const TrueStr = "TRUE"
+
 func executePresigVector(secKeyHex, pubKeyHex, auxRandHex, msgHex, adaptorHex, presigHex string) error {
 	pubKeyBytes, err := hex.DecodeString(pubKeyHex)
 	if err != nil {
@@ -108,7 +110,7 @@ func TestPresigVectors(t *testing.T) {
 
 		t.Run("Vector "+index, func(t *testing.T) {
 			err := executePresigVector(secKeyHex, pubKeyHex, auxRandHex, msgHex, adaptorHex, presigHex)
-			expectedResult := resultStr == "TRUE"
+			expectedResult := resultStr == TrueStr
 			if expectedResult {
 				require.NoError(t, err)
 			} else {
@@ -193,7 +195,7 @@ func TestAdaptVectors(t *testing.T) {
 
 		t.Run("Vector "+index, func(t *testing.T) {
 			err := executeAdaptVector(pubKeyHex, msgHex, secAdaptorHex, presigHex, bip340sigHex)
-			expectedResult := resultStr == "TRUE"
+			expectedResult := resultStr == TrueStr
 			if expectedResult {
 				require.NoError(t, err)
 			} else {
@@ -203,7 +205,7 @@ func TestAdaptVectors(t *testing.T) {
 	}
 }
 
-func executeSecAdaptorVector(presigHex, bip340sigHex, secAdaptorHex string, index string) error {
+func executeSecAdaptorVector(presigHex, bip340sigHex, secAdaptorHex string) error {
 	presigBytes, err := hex.DecodeString(presigHex)
 	if err != nil {
 		return err
@@ -267,8 +269,8 @@ func TestSecAdaptorVectors(t *testing.T) {
 		index, presigHex, bip340sigHex, secAdaptorHex, resultStr, _ := row[0], row[1], row[2], row[3], row[4], row[5]
 
 		t.Run("Vector "+index, func(t *testing.T) {
-			err := executeSecAdaptorVector(presigHex, bip340sigHex, secAdaptorHex, index)
-			expectedResult := resultStr == "TRUE"
+			err := executeSecAdaptorVector(presigHex, bip340sigHex, secAdaptorHex)
+			expectedResult := resultStr == TrueStr
 			if expectedResult {
 				require.NoError(t, err)
 			} else {
