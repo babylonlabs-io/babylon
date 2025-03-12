@@ -1,15 +1,3 @@
-// This file implements the Schnorr adaptor signature scheme as specified in spec.md.
-//
-// The scheme consists of four algorithms:
-// - EncSign: Creates a pre-signature using a private key and encryption key
-// - Verify: Verifies a pre-signature using a public key and encryption key
-// - Decrypt: Decrypts a pre-signature using a decryption key to obtain a valid Schnorr signature
-// - Extract: Extracts the decryption key from a pre-signature and its corresponding Schnorr signature
-//
-// The implementation follows ./spec.md and includes additional constant-time operations
-// and side-channel attack mitigations. See ./spec.md for the detailed protocol specification
-// and security properties.
-
 package schnorr_adaptor_signature
 
 import (
@@ -22,7 +10,7 @@ import (
 )
 
 // encSign implements the core of the EncSign algorithm as defined in the spec.
-// It generates a 64-byte pre-signature using the given private key, nonce,
+// It generates a 65-byte pre-signature using the given private key, nonce,
 // public key, message, and encryption key.
 //
 // The algorithm starts from step 9 since steps 1-8 are handled in EncSign
@@ -31,291 +19,205 @@ func encSign(
 	pubKey *btcec.PublicKey,
 	m []byte,
 	t *btcec.FieldVal,
-) ([]byte, error) {
-	// Step 9: Compute R' = k'*G (with blinding to prevent timing side channel attacks)
+) (*AdaptorSignature, error) {
+	// Step 9: Compute R = k0*G
+	// NOTE: later we will negate k0 if needed, and after that k = k0
 	k := *nonce
-	RHat, err := common.ScalarBaseMultWithBlinding(&k)
+	R, err := common.ScalarBaseMultWithBlinding(&k)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute kG: %w", err)
 	}
 
-	// Step 10: Let (k, Rp) = (k', R') if has_even_y(R'), otherwise let (k, Rp) = (n - k', -R')
-	RHat.ToAffine()
-	if RHat.Y.IsOdd() {
-		k.Negate()
-		// Negate the y-coordinate in place
-		RHat.Y.Negate(1).Normalize()
-	}
-
-	// Step 11: Let Tp = lift_x(int(ek)); return FAIL if that fails
+	// Step 10: Compute R + T
 	Tp, err := liftX(t)
 	if err != nil {
 		return nil, fmt.Errorf("failed to lift t: %w", err)
 	}
 
-	// Step 12: Compute RTp with even y-coordinate
-	// If has_even_y(Rp + Tp), let RTp = Rp + Tp
-	// Else if has_even_y(Rp - Tp), let RTp = Rp - Tp
-	// Else let a = bytes(k) and go back to Step 5
-	var RTp btcec.JacobianPoint
+	var R0 btcec.JacobianPoint
+	btcec.AddNonConst(R, Tp, &R0)
+	R0.ToAffine()
 
-	// Try Rp + Tp first
-	btcec.AddNonConst(RHat, Tp, &RTp)
-	RTp.ToAffine()
-
-	if RTp.Y.IsOdd() {
-		// If Rp+Tp has odd y, try Rp-Tp
-		btcec.AddNonConst(RHat, negatePoint(Tp), &RTp)
-		RTp.ToAffine()
-
-		if RTp.Y.IsOdd() {
-			// If both Rp+Tp and Rp-Tp have odd y, we need a new nonce
-			// This corresponds to "let a = bytes(k) and go back to Step 5" in the spec
-			return nil, fmt.Errorf("both Rp+Tp and Rp-Tp have odd y, need to try again with a new nonce")
-		}
+	// If R0 has odd y, negate k
+	if R0.Y.IsOdd() {
+		k.Negate()
 	}
 
-	// Step 13: Compute the challenge
-	// e = int(tagged_hash("BIP0340/challenge", bytes(RTp) || bytes(Pp) || m)) mod n
-	var rtpBytes [chainhash.HashSize]byte
-	RTp.X.PutBytesUnchecked(rtpBytes[:])
+	// Compute challenge e = tagged_hash("BIP0340/challenge", bytes(R0) || bytes(P) || m)
+	var r0Bytes [chainhash.HashSize]byte
+	R0.X.PutBytesUnchecked(r0Bytes[:])
 	pBytes := schnorr.SerializePubKey(pubKey)
 	commitment := chainhash.TaggedHash(
-		chainhash.TagBIP0340Challenge, rtpBytes[:], pBytes, m,
+		chainhash.TagBIP0340Challenge, r0Bytes[:], pBytes, m,
 	)
 	var e btcec.ModNScalar
 	e.SetBytes((*[ModNScalarSize]byte)(commitment))
 
-	// Step 14: Compute s' = (k + e*d) mod n
-	sHat := new(btcec.ModNScalar).Mul2(&e, privKey).Add(&k)
+	// Compute s = k + e*d mod n
+	s := new(btcec.ModNScalar).Mul2(&e, privKey).Add(&k)
 
-	// Step 15: Create the 64-byte pre-signature (bytes(Rp) || bytes(s'))
-	presig := make([]byte, 64)
-	RHat.X.PutBytesUnchecked(presig[:32])
-	sHat.PutBytesUnchecked(presig[32:])
+	// Create 65-byte pre-signature
+	adaptorSig := newAdaptorSignature(&R0, s)
 
-	// Step 16: Verify the signature
-	// Return FAIL if EncVerify(bytes(Pp), ek, m, psig) fails
-	if err := encVerify(presig, m, pBytes, t); err != nil {
+	// Verify the signature
+	if err := encVerify(adaptorSig, m, pBytes, t); err != nil {
 		return nil, fmt.Errorf("verification of generated signature failed: %w", err)
 	}
 
-	return presig, nil
+	return adaptorSig, nil
 }
 
 // encVerify implements the EncVerify algorithm as defined in the spec.
 // It verifies that a pre-signature is valid with respect to the given
 // public key, encryption key, and message.
 func encVerify(
-	psig []byte,
+	adaptorSig *AdaptorSignature,
 	m []byte,
 	pubKeyBytes []byte,
 	t *btcec.FieldVal,
 ) error {
-	// Validate input lengths
-	if len(psig) != 64 {
-		return fmt.Errorf("wrong size for pre-signature (got %v, want 64)", len(psig))
-	}
 	if len(m) != chainhash.HashSize {
 		return fmt.Errorf("wrong size for message (got %v, want %v)",
 			len(m), chainhash.HashSize)
 	}
+	if len(pubKeyBytes) != chainhash.HashSize {
+		return fmt.Errorf("wrong size for public key (got %v, want %v)",
+			len(pubKeyBytes), chainhash.HashSize)
+	}
 
-	// Step 1: Let Pp = lift_x(int(pk)); return FAIL if that fails
+	// Step 1: Let P = lift_x(pubkey)
 	pubKey, err := schnorr.ParsePubKey(pubKeyBytes)
 	if err != nil {
 		return err
 	}
-	// Fail if P is not a point on the curve
 	if !pubKey.IsOnCurve() {
 		return fmt.Errorf("pubkey point is not on curve")
 	}
 
-	// Step 2: Let Tp = lift_x(int(ek)); return FAIL if that fails
-	Tp, err := liftX(t)
-	if err != nil {
-		return fmt.Errorf("failed to lift t: %w", err)
-	}
+	// Step 2: Let s = int(psig[33:65]); return FAIL if s >= n
+	s := adaptorSig.s
 
-	// Step 3: Let Rp = lift_x(int(psig[0:32])); return FAIL if that fails
-	var rX btcec.FieldVal
-	if overflow := rX.SetByteSlice(psig[0:32]); overflow {
-		return fmt.Errorf("R x-coordinate exceeds field size")
-	}
-	Rp, err := liftX(&rX)
-	if err != nil {
-		return fmt.Errorf("failed to lift R x-coordinate: %w", err)
-	}
+	// Step 3: Let R0 = lift_x(psig[0:33])
+	R0 := adaptorSig.R0
 
-	// Step 4: Let s = int(psig[32:64]); return FAIL if s >= n
-	var s btcec.ModNScalar
-	if overflow := s.SetByteSlice(psig[32:64]); overflow {
-		return fmt.Errorf("s value exceeds curve order")
-	}
-
-	// Step 5: Compute RTp
-	// If has_even_y(Rp + Tp), let RTp = Rp + Tp
-	// Else if has_even_y(Rp - Tp), let RTp = Rp - Tp
-	// Else return FAIL
-	var RTp btcec.JacobianPoint
-
-	// Try Rp + Tp first
-	btcec.AddNonConst(Rp, Tp, &RTp)
-	RTp.ToAffine()
-
-	if RTp.Y.IsOdd() {
-		// If Rp+Tp has odd y, try Rp-Tp
-		btcec.AddNonConst(Rp, negatePoint(Tp), &RTp)
-		RTp.ToAffine()
-
-		if RTp.Y.IsOdd() {
-			// If both Rp+Tp and Rp-Tp have odd y, this is an error
-			return fmt.Errorf("both Rp+Tp and Rp-Tp have odd y")
-		}
-	}
-
-	// Step 6: Compute challenge e
-	// e = int(tagged_hash("BIP0340/challenge", bytes(RTp) || bytes(Pp) || m)) mod n
-	var rtpBytes [chainhash.HashSize]byte
-	RTp.X.PutBytesUnchecked(rtpBytes[:])
+	// Step 4: Compute challenge e = H(R0.x || P || m)
+	var r0Bytes [chainhash.HashSize]byte
+	R0.X.PutBytesUnchecked(r0Bytes[:])
 	commitment := chainhash.TaggedHash(
-		chainhash.TagBIP0340Challenge, rtpBytes[:], pubKeyBytes, m,
+		chainhash.TagBIP0340Challenge, r0Bytes[:], pubKeyBytes, m,
 	)
 	var e btcec.ModNScalar
 	e.SetBytes((*[ModNScalarSize]byte)(commitment))
 
-	// Negate e to use AddNonConst for subtraction
-	e.Negate()
-
-	// Step 7: Compute Rrec = s*G - e*P
-	var P, Rrec, sG, eP btcec.JacobianPoint
+	// Step 5: Compute R = s*G - e*P
+	var P, R, sG, eP btcec.JacobianPoint
 	pubKey.AsJacobian(&P)
-	btcec.ScalarBaseMultNonConst(&s, &sG) // s*G
-	btcec.ScalarMultNonConst(&e, &P, &eP) // -e*P
-	btcec.AddNonConst(&sG, &eP, &Rrec)    // Rrec = s*G-e*P
+	btcec.ScalarBaseMultNonConst(&s, &sG)
+	e.Negate() // Negate e to use AddNonConst for subtraction
+	btcec.ScalarMultNonConst(&e, &P, &eP)
+	btcec.AddNonConst(&sG, &eP, &R)
 
-	// Step 8: Return FAIL if Rrec is the point at infinity
-	if (Rrec.X.IsZero() && Rrec.Y.IsZero()) || Rrec.Z.IsZero() {
-		return fmt.Errorf("Rrec point is at infinity")
+	if (R.X.IsZero() && R.Y.IsZero()) || R.Z.IsZero() {
+		return fmt.Errorf("R point is at infinity")
 	}
 
-	Rrec.ToAffine()
-
-	// Step 9: Return FAIL if not has_even_y(Rrec)
-	if Rrec.Y.IsOdd() {
-		return fmt.Errorf("Rrec.y is odd")
+	// Step 6: Let T = R0 + (-R) if has_even_y(R0) else R0 + R
+	R.ToAffine()
+	var T btcec.JacobianPoint
+	if !R0.Y.IsOdd() {
+		btcec.AddNonConst(&R0, negatePoint(&R), &T)
+	} else {
+		btcec.AddNonConst(&R0, &R, &T)
 	}
 
-	// Step 10: Return FAIL if x(Rrec) != x(Rp)
-	if !Rrec.X.Equals(&Rp.X) {
-		return fmt.Errorf("x(Rrec) != x(Rp)")
+	if (T.X.IsZero() && T.Y.IsZero()) || T.Z.IsZero() {
+		return fmt.Errorf("T point is at infinity")
 	}
 
-	// Step 11: Return SUCCESS only if no prior step failed
+	// Step 7: Verify T matches encryption key
+	T.ToAffine()
+	if !T.X.Equals(t) {
+		return fmt.Errorf("extracted encryption key does not match")
+	}
+
 	return nil
 }
 
 // decrypt decrypts a pre-signature using a decryption key.
 // This implements the Decrypt algorithm as defined in the spec.
-func decrypt(psig []byte, dk []byte) ([]byte, error) {
-	// Step 1: Let Rp = lift_x(int(psig[0:32]))
-	var rX btcec.FieldVal
-	if overflow := rX.SetByteSlice(psig[0:32]); overflow {
-		return nil, fmt.Errorf("R x-coordinate exceeds field size")
-	}
-	Rp, err := liftX(&rX)
-	if err != nil {
-		return nil, fmt.Errorf("failed to lift R x-coordinate: %w", err)
+func decrypt(psig *AdaptorSignature, dk *DecryptionKey) (*schnorr.Signature, error) {
+	// Get s value from adaptor signature
+	s0 := psig.s
+
+	// Get decryption key value
+	t := dk.ModNScalar
+
+	// Check if s0 or t is zero or exceeds curve order
+	if s0.IsZero() || t.IsZero() {
+		return nil, fmt.Errorf("s0 or decryption key is zero")
 	}
 
-	// Step 2: Let s = int(psig[32:64])
+	// Get R point from adaptor signature
+	R := psig.R0
+	R.ToAffine()
+
+	// Compute final s value based on R.Y being even/odd
 	var s btcec.ModNScalar
-	if overflow := s.SetByteSlice(psig[32:64]); overflow {
-		return nil, fmt.Errorf("s value exceeds curve order")
-	}
-
-	// Step 3-4: Let u' = int(dk)
-	var u btcec.ModNScalar
-	if overflow := u.SetByteSlice(dk); overflow {
-		return nil, fmt.Errorf("decryption key exceeds curve order")
-	}
-	if u.IsZero() {
-		return nil, fmt.Errorf("decryption key is zero")
-	}
-
-	// Step 5: Let T' = u' * G
-	var T btcec.JacobianPoint
-	btcec.ScalarBaseMultNonConst(&u, &T)
-	T.ToAffine()
-
-	// Step 6: Let (u, Tp) = (u', T') if has_even_y(T'), otherwise let (u, Tp) = (n - u', -T')
-	Tp := T
-	if T.Y.IsOdd() {
-		Tp.Y.Negate(1).Normalize()
-		u.Negate()
-	}
-
-	// Step 7: Compute ss and RTp
-	var RTp btcec.JacobianPoint
-	var ss btcec.ModNScalar
-
-	// Try Rp + Tp first
-	btcec.AddNonConst(Rp, &Tp, &RTp)
-	RTp.ToAffine()
-	if !RTp.Y.IsOdd() {
-		ss.Set(&s)
-		ss.Add(&u)
+	if !R.Y.IsOdd() {
+		// R.Y is even, so s = s0 + t
+		s.Set(&s0)
+		s.Add(&t)
 	} else {
-		// Try Rp - Tp
-		btcec.AddNonConst(Rp, negatePoint(&Tp), &RTp)
-		RTp.ToAffine()
-		if !RTp.Y.IsOdd() {
-			ss.Set(&s)
-			u.Negate()
-			ss.Add(&u)
-		} else {
-			return nil, fmt.Errorf("both Rp+Tp and Rp-Tp have odd y")
-		}
+		// R.Y is odd, so s = s0 - t
+		s.Set(&s0)
+		t.Negate()
+		s.Add(&t)
 	}
 
-	// Step 8: Let sig = bytes(RTp) || bytes(ss)
-	var sig [64]byte
-	RTp.X.PutBytesUnchecked(sig[0:32])
-	ss.PutBytesUnchecked(sig[32:64])
+	// Create Schnorr signature from R.X and s
+	return schnorr.NewSignature(&R.X, &s), nil
+}
 
-	// TODO: Step 9: Return FAIL if Verify(pk, m, sig) fails
-	// skip verifying the signature for now
-
-	// Step 10: Return sig
-	return sig[:], nil
+// unwrapSchnorrSignature extracts the R point and s scalar bytes from a Schnorr signature.
+// Returns the first 32 bytes as R and last 32 bytes as s.
+func unwrapSchnorrSignature(sig *schnorr.Signature) ([]byte, []byte) {
+	sigBytes := sig.Serialize()
+	return sigBytes[:32], sigBytes[32:]
 }
 
 // extract extracts the decryption key from a pre-signature and its decrypted signature.
 // This implements the Extract algorithm as defined in the spec.
-func extract(psig []byte, sig []byte) ([]byte, error) {
-	// Step 1: Let ss = int(sig[32:64])
-	var ss btcec.ModNScalar
-	if overflow := ss.SetByteSlice(sig[32:64]); overflow {
-		return nil, fmt.Errorf("ss value exceeds curve order")
+func extract(psig *AdaptorSignature, sig *schnorr.Signature) (*DecryptionKey, error) {
+	// Get s0 value from adaptor signature
+	s0 := psig.s
+
+	// get s value from schnorr signature
+	_, sBytes := unwrapSchnorrSignature(sig)
+	s := new(btcec.ModNScalar)
+	s.SetByteSlice(sBytes)
+	if s0.IsZero() || s.IsZero() {
+		return nil, fmt.Errorf("s values must be non-zero")
 	}
 
-	// Step 2: Let s = int(psig[32:64])
-	var s btcec.ModNScalar
-	if overflow := s.SetByteSlice(psig[32:64]); overflow {
-		return nil, fmt.Errorf("s value exceeds curve order")
+	// Get R point from adaptor signature and convert to affine
+	R := psig.R0
+	R.ToAffine()
+
+	// Calculate decryption key based on R.Y being even/odd
+	var dk btcec.ModNScalar
+	if !R.Y.IsOdd() {
+		// R.Y is even, so dk = s - s0
+		dk.Set(s)
+		s0.Negate()
+		dk.Add(&s0)
+	} else {
+		// R.Y is odd, so dk = s0 - s
+		dk.Set(&s0)
+		s.Negate()
+		dk.Add(s)
 	}
 
-	// Step 3: Let dk' = (ss - s) mod n
-	s.Negate()
-	dk := ss.Add(&s)
-
-	// TODO: Step 4: Return FAIL if ek != bytes(int(dk') * G)
-	// skip verifying the encryption key for now
-
-	// Step 5: Return dk'
-	var dkBytes [32]byte
-	dk.PutBytesUnchecked(dkBytes[:])
-	return dkBytes[:], nil
+	return NewDecryptionKeyFromModNScalar(&dk)
 }
 
 // liftX lifts an x-coordinate to a point on the curve with even y-coordinate.

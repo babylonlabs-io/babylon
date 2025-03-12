@@ -1,15 +1,3 @@
-// This file provides the high-level API wrappers around the core cryptographic
-// operations implemented in sign_utils.go, which implements the ./spec.md.
-//
-// The scheme consists of four main algorithms:
-// - EncSign: Creates a pre-signature using a private key and encryption key
-// - EncVerify: Verifies a pre-signature using a public key and encryption key
-// - Decrypt: Decrypts a pre-signature using a decryption key to obtain a valid Schnorr signature
-// - Extract: Extracts the decryption key from a pre-signature and its corresponding Schnorr signature
-//
-// See sign_utils.go for the detailed implementation and ./spec.md for the protocol specification
-// and security properties.
-
 package schnorr_adaptor_signature
 
 import (
@@ -22,43 +10,26 @@ import (
 	secp "github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
+var AdaptorSignatureTagAux = []byte("SchnorrAdaptor/aux")
+var AdaptorSignatureTagNonce = []byte("SchnorrAdaptor/nonce")
+
 // EncVerify verifies that the adaptor signature is valid with respect to the given
 // public key, encryption key and message hash.
 func (sig *AdaptorSignature) EncVerify(pk *btcec.PublicKey, encKey *EncryptionKey, msgHash []byte) error {
 	pkBytes := schnorr.SerializePubKey(pk)
-	return encVerify(sig.ToSpecBytes(), msgHash, pkBytes, &encKey.FieldVal)
+	return encVerify(sig, msgHash, pkBytes, &encKey.FieldVal)
 }
 
 // Decrypt decrypts the adaptor signature to a Schnorr signature by
 // using the decryption key.
 func (sig *AdaptorSignature) Decrypt(decKey *DecryptionKey) (*schnorr.Signature, error) {
-	psig := sig.ToSpecBytes()
-	decryptedSchnorrSig, err := decrypt(psig, decKey.ToBytes())
-	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt adaptor signature: %w", err)
-	}
-	return schnorr.ParseSignature(decryptedSchnorrSig)
+	return decrypt(sig, decKey)
 }
 
 // Extract extracts the decryption key by using the adaptor signature
 // and the Schnorr signature decrypted from it.
 func (sig *AdaptorSignature) Extract(decryptedSchnorrSig *schnorr.Signature) (*DecryptionKey, error) {
-	psig := sig.ToSpecBytes()
-
-	// unpack s and R from Schnorr signature
-	sigBytes := decryptedSchnorrSig.Serialize()
-
-	dkBytes, err := extract(psig, sigBytes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract decryption key: %w", err)
-	}
-
-	dk, err := NewDecryptionKeyFromBytes(dkBytes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create decryption key: %w", err)
-	}
-
-	return dk, nil
+	return extract(sig, decryptedSchnorrSig)
 }
 
 // genNonce generates a nonce for signing according to BIP340 specification:
@@ -71,18 +42,19 @@ func (sig *AdaptorSignature) Extract(decryptedSchnorrSig *schnorr.Signature) (*D
 func genRandForNonce(
 	skBytes [chainhash.HashSize]byte,
 	auxRand []byte,
+	encKeyBytes []byte,
 	pkBytes []byte,
 	msgHash []byte,
 ) [chainhash.HashSize]byte {
-	// Step 5: t = bytes(d) XOR tagged_hash("BIP0340/aux", a)
-	auxHash := chainhash.TaggedHash(chainhash.TagBIP0340Aux, auxRand)
+	// Step 5: t = bytes(d) XOR tagged_hash("SchnorrAdaptor/aux", aux)
+	auxHash := chainhash.TaggedHash(AdaptorSignatureTagAux, auxRand)
 	var t [chainhash.HashSize]byte
 	for i := 0; i < chainhash.HashSize; i++ {
 		t[i] = skBytes[i] ^ auxHash[i]
 	}
 
-	// Step 6: rand = tagged_hash("BIP0340/nonce", t || bytes(Pp) || m)
-	randForNonce := chainhash.TaggedHash(chainhash.TagBIP0340Nonce, t[:], pkBytes, msgHash)
+	// Step 6: rand = tagged_hash("SchnorrAdaptor/nonce", t || T || P || msg)
+	randForNonce := chainhash.TaggedHash(AdaptorSignatureTagNonce, t[:], encKeyBytes, pkBytes, msgHash)
 	return *randForNonce
 }
 
@@ -112,6 +84,8 @@ func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*Adap
 		skScalar.Negate()
 	}
 
+	encKeyBytes := encKey.ToBytes()
+
 	// Steps 5-16: Try to generate adaptor signature with different nonces until successful
 	for iteration := uint32(0); ; iteration++ {
 		// Step 5-6: Generate random bytes for nonce generation
@@ -121,7 +95,7 @@ func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*Adap
 		var skBytes [chainhash.HashSize]byte
 		skScalar.PutBytes(&skBytes)
 		auxData := rand.Bytes(chainhash.HashSize)
-		randForNonce := genRandForNonce(skBytes, auxData, pkBytes, msgHash)
+		randForNonce := genRandForNonce(skBytes, auxData, pkBytes, encKeyBytes, msgHash)
 
 		// Step 7: Generate nonce `k' = int(rand) mod n`
 		var nonce btcec.ModNScalar
@@ -133,12 +107,12 @@ func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*Adap
 		}
 
 		// Steps 9-16: Generate adaptor signature with the nonce
-		psig, err := encSign(&skScalar, &nonce, pk, msgHash, &encKey.FieldVal)
+		adaptorSig, err := encSign(&skScalar, &nonce, pk, msgHash, &encKey.FieldVal)
 		if err != nil {
 			// Try again with a new nonce if this one doesn't work
 			continue
 		}
 
-		return NewAdaptorSignatureFromSpecFormat(psig, encKey.ToBytes())
+		return adaptorSig, nil
 	}
 }

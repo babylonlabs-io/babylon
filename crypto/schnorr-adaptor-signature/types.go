@@ -12,44 +12,27 @@ const (
 	ModNScalarSize       = 32
 	FieldValSize         = 32
 	JacobianPointSize    = 33
-	AdaptorSignatureSize = JacobianPointSize + ModNScalarSize + 1
+	AdaptorSignatureSize = JacobianPointSize + ModNScalarSize
 )
 
-// AdaptorSignature is the structure for a Schnorr adaptor signature
-// as defined in the spec. It corresponds to the SchnorrFunEncryptedSignature
-// format described in the spec.
-//
-// It is a triple (R, s', need_negation) where:
-//   - `R` is the tweaked public randomness, which is derived from
-//     offsetting public randomness R' sampled by the signer by
-//     using encryption key T
-//   - `sHat` is the secret s' in the adaptor signature
-//   - `needNegation` is a bool value indicating whether decryption
-//     key needs to be negated when decrypting a Schnorr signature
-//     It is needed since (R, s') does not tell whether R'+T has odd
-//     or even y index, thus does not tell whether decryption key needs
-//     to be negated upon decryption.
 type AdaptorSignature struct {
-	r            btcec.JacobianPoint
-	sHat         btcec.ModNScalar
-	needNegation bool
+	R0 btcec.JacobianPoint
+	s  btcec.ModNScalar
 }
 
 // newAdaptorSignature creates a new AdaptorSignature with the given parameters.
 // It copies the values to avoid unexpected modifications.
-func newAdaptorSignature(r *btcec.JacobianPoint, sHat *btcec.ModNScalar, needNegation bool) *AdaptorSignature {
+func newAdaptorSignature(r *btcec.JacobianPoint, s *btcec.ModNScalar) *AdaptorSignature {
 	var sig AdaptorSignature
-	sig.r.Set(r)
-	sig.sHat.Set(sHat)
-	sig.needNegation = needNegation
+	sig.R0.Set(r)
+	sig.s.Set(s)
 	return &sig
 }
 
 // NewAdaptorSignatureFromBytes parses the given byte array to an adaptor signature.
 // The format is:
 // - r (33 bytes): The Jacobian point R
-// - sHat (32 bytes): The scalar s'
-// - needNegation (1 byte): Boolean flag indicating if decryption key needs negation
+// - s (32 bytes): The scalar s
 func NewAdaptorSignatureFromBytes(asigBytes []byte) (*AdaptorSignature, error) {
 	if len(asigBytes) != AdaptorSignatureSize {
 		return nil, fmt.Errorf(
@@ -65,16 +48,13 @@ func NewAdaptorSignatureFromBytes(asigBytes []byte) (*AdaptorSignature, error) {
 		return nil, fmt.Errorf("failed to parse r: %w", err)
 	}
 
-	// extract sHat
-	var sHat btcec.ModNScalar
-	sHat.SetByteSlice(asigBytes[JacobianPointSize : JacobianPointSize+ModNScalarSize])
-
-	// extract needNegation
-	needNegation := asigBytes[JacobianPointSize+ModNScalarSize] == 0x01
+	// extract s
+	var s btcec.ModNScalar
+	s.SetByteSlice(asigBytes[JacobianPointSize:])
 
 	// Create a new AdaptorSignature
 	// Since r is already a pointer, we can use newAdaptorSignature
-	return newAdaptorSignature(&r, &sHat, needNegation), nil
+	return newAdaptorSignature(&r, &s), nil
 }
 
 // NewAdaptorSignatureFromHex parses the given hex string to an adaptor signature.
@@ -90,25 +70,18 @@ func NewAdaptorSignatureFromHex(asigHex string) (*AdaptorSignature, error) {
 // Marshal serializes the adaptor signature to bytes.
 // The format is:
 // - r (33 bytes): The Jacobian point R
-// - sHat (32 bytes): The scalar s'
-// - needNegation (1 byte): Boolean flag indicating if decryption key needs negation
+// - s (32 bytes): The scalar s
 func (sig *AdaptorSignature) Marshal() ([]byte, error) {
 	if sig == nil {
 		return nil, nil
 	}
 	var asigBytes []byte
 	// append r
-	rBytes := btcec.JacobianToByteSlice(sig.r)
+	rBytes := btcec.JacobianToByteSlice(sig.R0)
 	asigBytes = append(asigBytes, rBytes...)
-	// append sHat
-	sHatBytes := sig.sHat.Bytes()
-	asigBytes = append(asigBytes, sHatBytes[:]...)
-	// append needNegation
-	if sig.needNegation {
-		asigBytes = append(asigBytes, 0x01)
-	} else {
-		asigBytes = append(asigBytes, 0x00)
-	}
+	// append s
+	sBytes := sig.s.Bytes()
+	asigBytes = append(asigBytes, sBytes[:]...)
 	return asigBytes, nil
 }
 
@@ -161,91 +134,4 @@ func (sig *AdaptorSignature) Unmarshal(data []byte) error {
 // Equals checks if two adaptor signatures are equal.
 func (sig *AdaptorSignature) Equals(sig2 AdaptorSignature) bool {
 	return bytes.Equal(sig.MustMarshal(), sig2.MustMarshal())
-}
-
-// ToSpecBytes converts an adaptor signature to a pre-signature in the spec format.
-// The pre-signature is a 64-byte array containing:
-// - The x-coordinate of R' (32 bytes)
-// - s' (32 bytes)
-func (sig *AdaptorSignature) ToSpecBytes() []byte {
-	// Step 1: Extract R and s' from adaptor signature
-	R := sig.r
-	sHat := sig.sHat
-
-	// Step 2: Serialize R x-coordinate to 32 bytes
-	var preSignature [64]byte
-	R.X.PutBytesUnchecked(preSignature[0:32])
-
-	// Step 3: Serialize s' to 32 bytes
-	sHatBytes := sHat.Bytes()
-	copy(preSignature[32:64], sHatBytes[:])
-
-	return preSignature[:]
-}
-
-// NewAdaptorSignatureFromSpecFormat creates a new adaptor signature from a pre-signature and encryption key.
-// The pre-signature must be 64 bytes and the encryption key must be 32 bytes.
-//
-// This implements the ConvertToSchnorrFunEncryptedSignature algorithm from the spec.
-func NewAdaptorSignatureFromSpecFormat(psig []byte, encKey []byte) (*AdaptorSignature, error) {
-	// Validate input lengths
-	if len(psig) != 64 {
-		return nil, fmt.Errorf("pre-signature must be 64 bytes, got %d", len(psig))
-	}
-	if len(encKey) != 32 {
-		return nil, fmt.Errorf("encryption key must be 32 bytes, got %d", len(encKey))
-	}
-
-	// Step 1: Let Rp = lift_x(int(psig[0:32]))
-	var rX btcec.FieldVal
-	if overflow := rX.SetByteSlice(psig[0:32]); overflow {
-		return nil, fmt.Errorf("R x-coordinate exceeds field size")
-	}
-	Rp, err := liftX(&rX)
-	if err != nil {
-		return nil, fmt.Errorf("failed to lift R x-coordinate: %w", err)
-	}
-
-	// Step 2: Let s = int(psig[32:64])
-	var s btcec.ModNScalar
-	if overflow := s.SetByteSlice(psig[32:64]); overflow {
-		return nil, fmt.Errorf("s value exceeds curve order")
-	}
-
-	// Step 3: Let Tp = lift_x(int(ek))
-	var tX btcec.FieldVal
-	if overflow := tX.SetByteSlice(encKey); overflow {
-		return nil, fmt.Errorf("encryption key exceeds field size")
-	}
-	Tp, err := liftX(&tX)
-	if err != nil {
-		return nil, fmt.Errorf("failed to lift encryption key: %w", err)
-	}
-
-	// Step 4: Compute nn and RTp
-	var RTp btcec.JacobianPoint
-	var needNegation bool
-
-	// Try Rp + Tp first
-	btcec.AddNonConst(Rp, Tp, &RTp)
-	RTp.ToAffine()
-
-	if RTp.Y.IsOdd() {
-		// If Rp+Tp has odd y, try Rp-Tp
-		btcec.AddNonConst(Rp, negatePoint(Tp), &RTp)
-		RTp.ToAffine()
-
-		if RTp.Y.IsOdd() {
-			return nil, fmt.Errorf("both Rp+Tp and Rp-Tp have odd y")
-		}
-
-		needNegation = true
-	}
-
-	// Step 5: Return (RTp, s, nn)
-	return &AdaptorSignature{
-		r:            *Rp,
-		sHat:         s,
-		needNegation: needNegation,
-	}, nil
 }
