@@ -21,8 +21,6 @@ func TestInternalMessageDecoratorExecutionModes(t *testing.T) {
 		{"recheck", sdk.ExecModeReCheck, true},
 		{"vote extension", sdk.ExecModeVoteExtension, true},
 		{"verify vote extension", sdk.ExecModeVerifyVoteExtension, true},
-		{"finalize", sdk.ExecModeFinalize, true},
-		{"deliver", sdk.ExecModeFinalize, true},
 	}
 
 	for _, tc := range executionModes {

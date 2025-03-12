@@ -45,6 +45,7 @@ func (vd ValidateInternalMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, si
 			return ctx, fmt.Errorf("%w: internal msg not allowed in vote extension mode", sdkerrors.ErrInvalidRequest)
 		case sdk.ExecModeVerifyVoteExtension:
 			return ctx, fmt.Errorf("%w: internal msg not allowed in verify vote extension mode", sdkerrors.ErrInvalidRequest)
+		}
 	}
 
 	return next(ctx, tx, simulate)
