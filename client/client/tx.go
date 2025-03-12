@@ -71,7 +71,6 @@ func (c *Client) SendMsg(ctx context.Context, msg sdk.Msg, expectedErrors []*err
 // SendMsgs sends a list of messages to the chain.
 func (c *Client) SendMsgs(ctx context.Context, msgs []sdk.Msg, expectedErrors []*errors.Error, unrecoverableErrors []*errors.Error) (*babylonclient.RelayerTxResponse, error) {
 	return c.ReliablySendMsgs(ctx, msgs, expectedErrors, unrecoverableErrors, 1)
-
 }
 
 // ReliablySendMsg reliable sends a message to the chain.
