@@ -11,9 +11,115 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+// Bunch of test signing utilites
+func PubkeyToP2WPKHAddress(p *btcec.PublicKey, net *chaincfg.Params) (*btcutil.AddressWitnessPubKeyHash, error) {
+	witnessAddr, err := btcutil.NewAddressWitnessPubKeyHash(
+		btcutil.Hash160(p.SerializeCompressed()),
+		net,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return witnessAddr, nil
+}
+
+func SignWithP2WPKHAddress(
+	msg []byte,
+	privKey *btcec.PrivateKey,
+	net *chaincfg.Params,
+) (*btcutil.AddressWitnessPubKeyHash, []byte, error) {
+	pubKey := privKey.PubKey()
+
+	witnessAddr, err := PubkeyToP2WPKHAddress(pubKey, net)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	toSpend, err := bip322.GetToSpendTx(msg, witnessAddr)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	toSign := bip322.GetToSignTx(toSpend)
+
+	fetcher := txscript.NewCannedPrevOutputFetcher(
+		toSpend.TxOut[0].PkScript,
+		toSpend.TxOut[0].Value,
+	)
+
+	hashCache := txscript.NewTxSigHashes(toSign, fetcher)
+
+	// always use compressed pubkey
+	witness, err := txscript.WitnessSignature(toSign, hashCache, 0,
+		toSpend.TxOut[0].Value, toSpend.TxOut[0].PkScript, txscript.SigHashAll, privKey, true)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	serializedWitness, err := bip322.SerializeWitness(witness)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return witnessAddr, serializedWitness, nil
+}
+
+func SignWithP2TrSpendAddress(
+	msg []byte,
+	privKey *btcec.PrivateKey,
+	net *chaincfg.Params,
+) (*btcutil.AddressTaproot, []byte, error) {
+	pubKey := privKey.PubKey()
+
+	witnessAddr, err := bip322.PubKeyToP2TrSpendAddress(pubKey, net)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	toSpend, err := bip322.GetToSpendTx(msg, witnessAddr)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	toSign := bip322.GetToSignTx(toSpend)
+
+	fetcher := txscript.NewCannedPrevOutputFetcher(
+		toSpend.TxOut[0].PkScript,
+		toSpend.TxOut[0].Value,
+	)
+
+	hashCache := txscript.NewTxSigHashes(toSign, fetcher)
+
+	witness, err := txscript.TaprootWitnessSignature(
+		toSign, hashCache, 0, toSpend.TxOut[0].Value, toSpend.TxOut[0].PkScript,
+		txscript.SigHashDefault, privKey,
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	serializedWitness, err := bip322.SerializeWitness(witness)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return witnessAddr, serializedWitness, nil
+}
 
 type bip322Sign[A btcutil.Address] func(sg []byte,
 	privKey *btcec.PrivateKey,
@@ -108,7 +214,7 @@ func NewPoPBTCWithBIP322P2WPKHSig(
 	btcSK *btcec.PrivateKey,
 	net *chaincfg.Params,
 ) (*bstypes.ProofOfPossessionBTC, error) {
-	return newPoPBTCWithBIP322Sig(addr, btcSK, net, bip322.SignWithP2WPKHAddress)
+	return newPoPBTCWithBIP322Sig(addr, btcSK, net, SignWithP2WPKHAddress)
 }
 
 func NewPoPBTCWithBIP322P2TRBIP86Sig(
@@ -116,5 +222,5 @@ func NewPoPBTCWithBIP322P2TRBIP86Sig(
 	btcSK *btcec.PrivateKey,
 	net *chaincfg.Params,
 ) (*bstypes.ProofOfPossessionBTC, error) {
-	return newPoPBTCWithBIP322Sig(addrToSign, btcSK, net, bip322.SignWithP2TrSpendAddress)
+	return newPoPBTCWithBIP322Sig(addrToSign, btcSK, net, SignWithP2TrSpendAddress)
 }

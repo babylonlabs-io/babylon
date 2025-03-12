@@ -66,6 +66,8 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 ### Bug fixes
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 - [#660](https://github.com/babylonlabs-io/babylon/pull/660) fix: ecdsa verification
+- [#673](https://github.com/babylonlabs-io/babylon/pull/673) fix: move bip322 signing
+functions to `testutil`
 
 ## v1.0.0-rc7
 
@@ -98,7 +100,7 @@ block bank send and still create BTC delegations
 ### Bug fixes
 
 - [#657](https://github.com/babylonlabs-io/babylon/pull/657) crypto: fix adaptor sig timing side channels
-- [#656](https://github.com/babylonlabs-io/babylon/pull/656) crypto: fix adaptor sig validity and typos 
+- [#656](https://github.com/babylonlabs-io/babylon/pull/656) crypto: fix adaptor sig validity and typos
 - [#658](https://github.com/babylonlabs-io/babylon/pull/658) crypto: Add check for Z==1 in ToBTCPK
 - [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
 invocation
