@@ -23,7 +23,7 @@ func (sig *AdaptorSignature) EncVerify(pk *btcec.PublicKey, encKey *EncryptionKe
 // Decrypt decrypts the adaptor signature to a Schnorr signature by
 // using the decryption key.
 func (sig *AdaptorSignature) Decrypt(decKey *DecryptionKey) (*schnorr.Signature, error) {
-	return decrypt(sig, decKey)
+	return decrypt(sig, &decKey.ModNScalar)
 }
 
 // Extract extracts the decryption key by using the adaptor signature

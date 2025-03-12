@@ -145,12 +145,12 @@ func encVerify(
 
 // decrypt decrypts a pre-signature using a decryption key.
 // This implements the Decrypt algorithm as defined in the spec.
-func decrypt(psig *AdaptorSignature, dk *DecryptionKey) (*schnorr.Signature, error) {
+func decrypt(psig *AdaptorSignature, dk *btcec.ModNScalar) (*schnorr.Signature, error) {
 	// Get s value from adaptor signature
 	s0 := psig.s
 
 	// Get decryption key value
-	t := dk.ModNScalar
+	t := *dk
 
 	// Check if s0 or t is zero or exceeds curve order
 	if s0.IsZero() || t.IsZero() {
