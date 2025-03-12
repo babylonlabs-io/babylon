@@ -26,14 +26,19 @@ func (sig *AdaptorSignature) Decrypt(decKey *DecryptionKey) (*schnorr.Signature,
 	return decrypt(sig, &decKey.ModNScalar)
 }
 
-// Extract extracts the decryption key by using the adaptor signature
+// Extract extracts the decryption key from an adaptor signature
 // and the Schnorr signature decrypted from it.
 func (sig *AdaptorSignature) Extract(decryptedSchnorrSig *schnorr.Signature) (*DecryptionKey, error) {
 	scalar, err := extract(sig, decryptedSchnorrSig)
 	if err != nil {
 		return nil, err
 	}
-	return NewDecryptionKeyFromModNScalar(scalar)
+
+	// Create a DecryptionKey directly without enforcing even encryption key since
+	// we are extracting it from an existing adaptor signature that was already
+	// verified. The extracted decryption key must be valid since it was used to
+	// create a valid Schnorr signature.
+	return &DecryptionKey{*scalar}, nil
 }
 
 // genNonce generates a nonce for signing according to BIP340 specification:

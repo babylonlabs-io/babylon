@@ -200,28 +200,26 @@ func decrypt(psig *AdaptorSignature, dk *btcec.ModNScalar) (*schnorr.Signature, 
 	return schnorr.NewSignature(&R0.X, &s), nil
 }
 
-// unwrapSchnorrSignature extracts the R point and s scalar bytes from a Schnorr signature.
-// Returns the first 32 bytes as R and last 32 bytes as s.
-func unwrapSchnorrSignature(sig *schnorr.Signature) ([]byte, []byte) {
-	sigBytes := sig.Serialize()
-	return sigBytes[:32], sigBytes[32:]
-}
-
 // extract extracts the decryption key from a pre-signature and its decrypted signature.
 // This implements the Extract algorithm as defined in the spec.
 func extract(psig *AdaptorSignature, sig *schnorr.Signature) (*btcec.ModNScalar, error) {
 	// Get s0 value from adaptor signature
 	s0 := psig.s
 
-	// get s value from schnorr signature
-	_, sBytes := unwrapSchnorrSignature(sig)
-	s := new(btcec.ModNScalar)
-	s.SetByteSlice(sBytes)
+	// Get s value from schnorr signature
+	sigBytes := sig.Serialize()
+	sBytes := sigBytes[32:]
+	var s btcec.ModNScalar
+	if overflow := s.SetByteSlice(sBytes); overflow {
+		return nil, fmt.Errorf("s value in signature is invalid")
+	}
+
+	// Check if s0 or s is zero or exceeds curve order
 	if s0.IsZero() || s.IsZero() {
 		return nil, fmt.Errorf("s values must be non-zero")
 	}
 
-	// Get R point from adaptor signature and convert to affine
+	// Get R0 point from adaptor signature to check its Y parity
 	R0 := psig.R0
 	R0.ToAffine()
 
@@ -233,7 +231,7 @@ func extract(psig *AdaptorSignature, sig *schnorr.Signature) (*btcec.ModNScalar,
 	if !R0.Y.IsOdd() {
 		// R0.Y is even (sig65[0] == 2)
 		// t = (s - s0) % n
-		dk.Set(s)
+		dk.Set(&s)
 		s0Neg := new(btcec.ModNScalar).Set(&s0)
 		s0Neg.Negate()
 		dk.Add(s0Neg)
@@ -241,25 +239,12 @@ func extract(psig *AdaptorSignature, sig *schnorr.Signature) (*btcec.ModNScalar,
 		// R0.Y is odd (sig65[0] == 3)
 		// t = (s0 - s) % n
 		dk.Set(&s0)
-		sNeg := new(btcec.ModNScalar).Set(s)
+		sNeg := new(btcec.ModNScalar).Set(&s)
 		sNeg.Negate()
 		dk.Add(sNeg)
 	}
 
 	return &dk, nil
-}
-
-// liftX lifts an x-coordinate to a point on the curve with even y-coordinate.
-// It returns a pointer to a JacobianPoint or an error if lifting fails.
-func liftX(x *btcec.FieldVal) (*btcec.JacobianPoint, error) {
-	var y btcec.FieldVal
-	if success := btcec.DecompressY(x, false, &y); !success {
-		return nil, fmt.Errorf("failed to decompress y")
-	}
-	var z btcec.FieldVal
-	z.SetInt(1)
-	point := btcec.MakeJacobianPoint(x, &y, &z)
-	return &point, nil
 }
 
 // negatePoint negates a point (either Jacobian or affine)
