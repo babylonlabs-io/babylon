@@ -40,6 +40,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#660](https://github.com/babylonlabs-io/babylon/pull/660) fix: ecdsa verification
 
+### Improvements
+
+- [#655](https://github.com/babylonlabs-io/babylon/pull/655) Add func `ParseV0StakingTxWithoutTag` to
+parse staking tx without verifying opreturn tag.
+
 ## v1.0.0-rc7
 
 ### Improvements
