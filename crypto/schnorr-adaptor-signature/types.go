@@ -31,8 +31,9 @@ func newAdaptorSignature(r *btcec.JacobianPoint, s *btcec.ModNScalar) *AdaptorSi
 
 // NewAdaptorSignatureFromBytes parses the given byte array to an adaptor signature.
 // The format is:
-// - r (33 bytes): The Jacobian point R
-// - s (32 bytes): The scalar s
+// - First byte: 0x02 if R0.Y is even, 0x03 if R0.Y is odd
+// - Next 32 bytes: R0.X
+// - Last 32 bytes: s scalar
 func NewAdaptorSignatureFromBytes(asigBytes []byte) (*AdaptorSignature, error) {
 	if len(asigBytes) != AdaptorSignatureSize {
 		return nil, fmt.Errorf(
@@ -42,19 +43,37 @@ func NewAdaptorSignatureFromBytes(asigBytes []byte) (*AdaptorSignature, error) {
 		)
 	}
 
-	// extract r
-	r, err := btcec.ParseJacobian(asigBytes[0:JacobianPointSize])
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse r: %w", err)
+	// Check the first byte is valid
+	if asigBytes[0] != 0x02 && asigBytes[0] != 0x03 {
+		return nil, fmt.Errorf("invalid format byte: %x", asigBytes[0])
 	}
 
-	// extract s
+	// Extract R0.X from bytes 1-32
+	var xVal btcec.FieldVal
+	if overflow := xVal.SetByteSlice(asigBytes[1:33]); overflow {
+		return nil, fmt.Errorf("R0.X value is invalid")
+	}
+
+	// Decompress the point with the correct y-coordinate parity
+	var yVal btcec.FieldVal
+	isOdd := asigBytes[0] == 0x03
+	if success := btcec.DecompressY(&xVal, isOdd, &yVal); !success {
+		return nil, fmt.Errorf("failed to decompress R0.Y")
+	}
+
+	// Create the Jacobian point
+	var zVal btcec.FieldVal
+	zVal.SetInt(1)
+	r0 := btcec.MakeJacobianPoint(&xVal, &yVal, &zVal)
+
+	// Extract s from bytes 33-64
 	var s btcec.ModNScalar
-	s.SetByteSlice(asigBytes[JacobianPointSize:])
+	if overflow := s.SetByteSlice(asigBytes[33:65]); overflow {
+		return nil, fmt.Errorf("s value is invalid")
+	}
 
 	// Create a new AdaptorSignature
-	// Since r is already a pointer, we can use newAdaptorSignature
-	return newAdaptorSignature(&r, &s), nil
+	return newAdaptorSignature(&r0, &s), nil
 }
 
 // NewAdaptorSignatureFromHex parses the given hex string to an adaptor signature.
@@ -67,22 +86,39 @@ func NewAdaptorSignatureFromHex(asigHex string) (*AdaptorSignature, error) {
 	return NewAdaptorSignatureFromBytes(asigBytes)
 }
 
-// Marshal serializes the adaptor signature to bytes.
+// Marshal serializes an adaptor signature to bytes.
 // The format is:
-// - r (33 bytes): The Jacobian point R
-// - s (32 bytes): The scalar s
-func (sig *AdaptorSignature) Marshal() ([]byte, error) {
-	if sig == nil {
-		return nil, nil
+// [0]: parity byte (0x02 for even Y, 0x03 for odd Y)
+// [1:33]: X coordinate of R0
+// [33:65]: s value
+func (a *AdaptorSignature) Marshal() ([]byte, error) {
+	if a == nil {
+		return nil, fmt.Errorf("adaptor signature is nil")
 	}
-	var asigBytes []byte
-	// append r
-	rBytes := btcec.JacobianToByteSlice(sig.R0)
-	asigBytes = append(asigBytes, rBytes...)
-	// append s
-	sBytes := sig.s.Bytes()
-	asigBytes = append(asigBytes, sBytes[:]...)
-	return asigBytes, nil
+
+	// Ensure R0 is in affine coordinates
+	R0 := a.R0
+	R0.ToAffine()
+
+	// Create the result buffer
+	result := make([]byte, 65)
+
+	// Set the parity byte based on R0.Y
+	if R0.Y.IsOdd() {
+		result[0] = 0x03
+	} else {
+		result[0] = 0x02
+	}
+
+	// Copy R0.X to result[1:33]
+	R0.X.PutBytesUnchecked(result[1:33])
+
+	// Copy s to result[33:65]
+	var sBytes [32]byte
+	a.s.PutBytesUnchecked(sBytes[:])
+	copy(result[33:], sBytes[:])
+
+	return result, nil
 }
 
 // MustMarshal serializes the adaptor signature to bytes.

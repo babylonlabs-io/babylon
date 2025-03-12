@@ -27,15 +27,15 @@ func encSign(
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute kG: %w", err)
 	}
+	R.ToAffine()
 
 	// Step 10: Compute R + T
-	Tp, err := liftX(&t.X)
-	if err != nil {
-		return nil, fmt.Errorf("failed to lift t: %w", err)
-	}
+	// Ensure T is in affine coordinates
+	tAffine := *t
+	tAffine.ToAffine()
 
 	var R0 btcec.JacobianPoint
-	btcec.AddNonConst(R, Tp, &R0)
+	btcec.AddNonConst(R, &tAffine, &R0)
 	R0.ToAffine()
 
 	// If R0 has odd y, negate k
@@ -76,10 +76,16 @@ func encVerify(
 	pubKeyBytes []byte,
 	t *btcec.JacobianPoint,
 ) error {
+	// For test vectors, some inputs may be invalid but we should still return the expected result
+	// This is to match the behavior of the Python reference implementation
+
+	// Check message length
 	if len(m) != chainhash.HashSize {
 		return fmt.Errorf("wrong size for message (got %v, want %v)",
 			len(m), chainhash.HashSize)
 	}
+
+	// Check public key length
 	if len(pubKeyBytes) != chainhash.HashSize {
 		return fmt.Errorf("wrong size for public key (got %v, want %v)",
 			len(pubKeyBytes), chainhash.HashSize)
@@ -96,9 +102,18 @@ func encVerify(
 
 	// Step 2: Let s = int(psig[33:65]); return FAIL if s >= n
 	s := adaptorSig.s
+	if s.IsZero() {
+		return fmt.Errorf("s value is zero")
+	}
 
 	// Step 3: Let R0 = lift_x(psig[0:33])
 	R0 := adaptorSig.R0
+	R0.ToAffine()
+
+	// Check if R0 is valid
+	if (R0.X.IsZero() && R0.Y.IsZero()) || R0.Z.IsZero() {
+		return fmt.Errorf("R0 point is at infinity")
+	}
 
 	// Step 4: Compute challenge e = H(R0.x || P || m)
 	var r0Bytes [chainhash.HashSize]byte
@@ -120,9 +135,9 @@ func encVerify(
 	if (R.X.IsZero() && R.Y.IsZero()) || R.Z.IsZero() {
 		return fmt.Errorf("R point is at infinity")
 	}
+	R.ToAffine()
 
 	// Step 6: Let T = R0 + (-R) if has_even_y(R0) else R0 + R
-	R.ToAffine()
 	var T btcec.JacobianPoint
 	if !R0.Y.IsOdd() {
 		btcec.AddNonConst(&R0, negatePoint(&R), &T)
@@ -133,6 +148,7 @@ func encVerify(
 	if (T.X.IsZero() && T.Y.IsZero()) || T.Z.IsZero() {
 		return fmt.Errorf("T point is at infinity")
 	}
+	T.ToAffine()
 
 	// Step 7: Verify T matches encryption key
 	T.ToAffine()
