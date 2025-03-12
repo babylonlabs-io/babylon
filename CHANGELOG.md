@@ -37,8 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-- [#670](https://github.com/babylonlabs-io/babylon/pull/670) add function to recover pub key from sig
-- [#646](https://github.com/babylonlabs-io/babylon/pull/646) backport: chore(ante): add tx gas limit decorator and local mempool config
+- [#660](https://github.com/babylonlabs-io/babylon/pull/660) add function to recover pub key from sig
+- [#625](https://github.com/babylonlabs-io/babylon/pull/625) add tx gas limit decorator and local mempool config
 
 ### Improvements
 
@@ -46,9 +46,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Bug fixes
 
-- [#664](https://github.com/babylonlabs-io/babylon/pull/664) crypto: fix adaptor sig timing side channels
-- [#663](https://github.com/babylonlabs-io/babylon/pull/653) crypto: fix adaptor sig validity and typos
-- [#662](https://github.com/babylonlabs-io/babylon/pull/662) crypto: check if Z==1 in ToBTCPK
+- [#657](https://github.com/babylonlabs-io/babylon/pull/657) crypto: fix adaptor sig timing side channels
+- [#656](https://github.com/babylonlabs-io/babylon/pull/656) crypto: fix adaptor sig validity and typos
+- [#658](https://github.com/babylonlabs-io/babylon/pull/658) crypto: check if Z==1 in ToBTCPK
 - [#660](https://github.com/babylonlabs-io/babylon/pull/660) fix: ecdsa verification
 
 ## v1.0.0-rc7
