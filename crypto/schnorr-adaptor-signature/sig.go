@@ -41,13 +41,11 @@ func (sig *AdaptorSignature) Extract(decryptedSchnorrSig *schnorr.Signature) (*D
 	return &DecryptionKey{*scalar}, nil
 }
 
-// genNonce generates a nonce for signing according to BIP340 specification:
-//  5. Let t be the byte-wise XOR of bytes(d) and tagged_hash("BIP0340/aux", a)
+// genNonce generates a nonce for signing according to BIP340 specification with
+// domain separation for Schnorr adaptor signatures:
+//  5. Let t be the byte-wise XOR of bytes(d) and tagged_hash("SchnorrAdaptor/aux", a)
 //     where a is auxiliary random data
-//  6. Let rand = tagged_hash("BIP0340/nonce", t || bytes(Pp) || m)
-//
-// The nonce generation follows BIP340 with additional domain separation for
-// Babylon adaptor signatures.
+//  6. Let rand = tagged_hash("SchnorrAdaptor/nonce", t || T || P || m)
 func genRandForNonce(
 	skBytes [chainhash.HashSize]byte,
 	auxRand []byte,
@@ -67,11 +65,16 @@ func genRandForNonce(
 	return *randForNonce
 }
 
+// EncSign creates an adaptor signature using the given private key, encryption key,
+// and message hash. It generates random auxiliary data internally.
 func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*AdaptorSignature, error) {
 	auxData := rand.Bytes(chainhash.HashSize)
 	return EncSignWithAuxData(sk, encKey, msgHash, auxData)
 }
 
+// EncSignWithAuxData creates an adaptor signature using the given private key,
+// encryption key, message hash, and auxiliary data.
+// allowing the caller to provide auxiliary data for deterministic nonce generation.
 func EncSignWithAuxData(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte, auxData []byte) (*AdaptorSignature, error) {
 	// Fail if msgHash is not 32 bytes
 	if len(msgHash) != chainhash.HashSize {
@@ -102,11 +105,11 @@ func EncSignWithAuxData(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []b
 	for iteration := uint32(0); ; iteration++ {
 		// Step 5-6: Generate random bytes for nonce generation
 		// genRandForNonce does the following:
-		// 1. Generates t as byte-wise XOR of bytes(d) and tagged_hash("BIP0340/aux", a)
-		// 2. Generates rand = tagged_hash("BIP0340/nonce", t || bytes(Pp) || m)
+		// - Generates t as byte-wise XOR of bytes(d) and tagged_hash("SchnorrAdaptor/aux", a)
+		// - Generates rand = tagged_hash("SchnorrAdaptor/nonce", t || T || P || m)
 		var skBytes [chainhash.HashSize]byte
 		skScalar.PutBytes(&skBytes)
-		randForNonce := genRandForNonce(skBytes, auxData, pkBytes, encKeyBytes, msgHash)
+		randForNonce := genRandForNonce(skBytes, auxData, encKeyBytes, pkBytes, msgHash)
 
 		// Step 7: Generate nonce `k' = int(rand) mod n`
 		var nonce btcec.ModNScalar
