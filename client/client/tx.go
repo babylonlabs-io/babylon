@@ -64,22 +64,39 @@ func (c *Client) SendMsgsToMempool(ctx context.Context, msgs []sdk.Msg) error {
 	return nil
 }
 
+// SendMsg sends a message to the chain.
+func (c *Client) SendMsg(ctx context.Context, msg sdk.Msg, expectedErrors []*errors.Error, unrecoverableErrors []*errors.Error) (*babylonclient.RelayerTxResponse, error) {
+	return c.SendMsgs(ctx, []sdk.Msg{msg}, expectedErrors, unrecoverableErrors)
+}
+
+// SendMsgs sends a list of messages to the chain.
+func (c *Client) SendMsgs(ctx context.Context, msgs []sdk.Msg, expectedErrors []*errors.Error, unrecoverableErrors []*errors.Error) (*babylonclient.RelayerTxResponse, error) {
+	return c.ReliablySendMsgs(ctx, msgs, expectedErrors, unrecoverableErrors, 1)
+}
+
 // ReliablySendMsg reliable sends a message to the chain.
 // It utilizes a file lock as well as a keyring lock to ensure atomic access.
 // TODO: needs tests
-func (c *Client) ReliablySendMsg(ctx context.Context, msg sdk.Msg, expectedErrors []*errors.Error, unrecoverableErrors []*errors.Error) (*babylonclient.RelayerTxResponse, error) {
-	return c.ReliablySendMsgs(ctx, []sdk.Msg{msg}, expectedErrors, unrecoverableErrors)
+func (c *Client) ReliablySendMsg(ctx context.Context, msg sdk.Msg, expectedErrors []*errors.Error, unrecoverableErrors []*errors.Error, retries ...uint) (*babylonclient.RelayerTxResponse, error) {
+	return c.ReliablySendMsgs(ctx, []sdk.Msg{msg}, expectedErrors, unrecoverableErrors, retries...)
 }
 
 // ReliablySendMsgs reliably sends a list of messages to the chain.
 // It utilizes a file lock as well as a keyring lock to ensure atomic access.
 // TODO: needs tests
-func (c *Client) ReliablySendMsgs(ctx context.Context, msgs []sdk.Msg, expectedErrors []*errors.Error, unrecoverableErrors []*errors.Error) (*babylonclient.RelayerTxResponse, error) {
+func (c *Client) ReliablySendMsgs(ctx context.Context, msgs []sdk.Msg, expectedErrors []*errors.Error, unrecoverableErrors []*errors.Error, retries ...uint) (*babylonclient.RelayerTxResponse, error) {
 	var (
 		rlyResp     *babylonclient.RelayerTxResponse
 		callbackErr error
 		wg          sync.WaitGroup
 	)
+
+	rty := rtyAttNum
+	rtyAttempts := rtyAtt
+	if len(retries) > 0 {
+		rty = retries[0]
+		rtyAttempts = retry.Attempts(rty)
+	}
 
 	callback := func(rtr *babylonclient.RelayerTxResponse, err error) {
 		rlyResp = rtr
@@ -118,8 +135,8 @@ func (c *Client) ReliablySendMsgs(ctx context.Context, msgs []sdk.Msg, expectedE
 			return sendMsgErr
 		}
 		return nil
-	}, retry.Context(ctx), rtyAtt, rtyDel, rtyErr, retry.OnRetry(func(n uint, err error) {
-		c.logger.Debug("retrying", zap.Uint("attempt", n+1), zap.Uint("max_attempts", rtyAttNum), zap.Error(err))
+	}, retry.Context(ctx), rtyAttempts, rtyDel, rtyErr, retry.OnRetry(func(n uint, err error) {
+		c.logger.Debug("retrying", zap.Uint("attempt", n+1), zap.Uint("max_attempts", rty), zap.Error(err))
 	})); err != nil {
 		return nil, err
 	}
