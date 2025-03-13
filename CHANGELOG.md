@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.
 - [#666](https://github.com/babylonlabs-io/babylon/pull/666) Upgrade to wasmvm v2.2.3.
 - [#655](https://github.com/babylonlabs-io/babylon/pull/655) Add func `ParseV0StakingTxWithoutTag` to
 parse staking tx without verifying opreturn tag.
@@ -57,6 +58,7 @@ check of rewards
 - [#625](https://github.com/babylonlabs-io/babylon/pull/625) Add `GasLimit` decorator in ante handler and local mempool configuration
 - [#643](https://github.com/babylonlabs-io/babylon/pull/643) Fix flaky test `FuzzBTCDelegation`
 - [#644](https://github.com/babylonlabs-io/babylon/pull/644) Add priority nonce mempool and transaction priority ante handler decorator
+- [#668](https://github.com/babylonlabs-io/babylon/pull/668) Remove unused unsafe key gen functions
 
 ### State Machine Breaking
 
@@ -66,6 +68,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 
 ### Bug fixes
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+- [#667](https://github.com/babylonlabs-io/babylon/pull/667) crypto: enable groupcheck in BLS verification/aggregation
 - [#660](https://github.com/babylonlabs-io/babylon/pull/660) fix: ecdsa verification
 - [#673](https://github.com/babylonlabs-io/babylon/pull/673) fix: move bip322 signing
 functions to `testutil`
