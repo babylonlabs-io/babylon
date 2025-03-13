@@ -59,6 +59,25 @@ func Verify(sig Signature, pk PublicKey, msg []byte) (bool, error) {
 	return dummySig.VerifyCompressed(sig, false, pk, false, msg, DST), nil
 }
 
+// PopProve signs on a msg using a BLS secret key for proof-of-possession
+// using DST_POP
+func PopProve(sk PrivateKey, msg []byte) Signature {
+	secretKey := new(blst.SecretKey)
+	secretKey.Deserialize(sk)
+	return new(BlsSig).Sign(secretKey, msg, DST_POP).Compress()
+}
+
+// PopVerify verifies a BLS sig generated from PopProve over msg with a
+// BLS public key. The sig and public key are all compressed
+func PopVerify(sig Signature, pk PublicKey, msg []byte) (bool, error) {
+	dummySig := new(BlsSig)
+	return dummySig.VerifyCompressed(sig, false, pk, false, msg, DST_POP), nil
+}
+
+func GetPopSignMsg(blsPk PublicKey, data []byte) []byte {
+	return append(blsPk.Bytes(), data...)
+}
+
 // AggrSig aggregates BLS signatures in an accumulative manner
 func AggrSig(existingSig Signature, newSig Signature) (Signature, error) {
 	if existingSig == nil {
