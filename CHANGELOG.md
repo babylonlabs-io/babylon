@@ -50,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#657](https://github.com/babylonlabs-io/babylon/pull/657) crypto: fix adaptor sig timing side channels
 - [#656](https://github.com/babylonlabs-io/babylon/pull/656) crypto: fix adaptor sig validity and typos
 - [#658](https://github.com/babylonlabs-io/babylon/pull/658) crypto: check if Z==1 in ToBTCPK
+- [#667](https://github.com/babylonlabs-io/babylon/pull/667) crypto: enable groupcheck in BLS verification/aggregation
 - [#660](https://github.com/babylonlabs-io/babylon/pull/660) fix: ecdsa verification
 
 ### Improvements
