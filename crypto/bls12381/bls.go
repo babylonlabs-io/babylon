@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"io"
 
-	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	"github.com/pkg/errors"
 	blst "github.com/supranational/blst/bindings/go"
 )
@@ -21,12 +20,6 @@ func GenKeyPair() (PrivateKey, PublicKey) {
 
 func GenPrivKey() PrivateKey {
 	return genPrivKey(rand.Reader)
-}
-
-func GenPrivKeyFromSecret(secret []byte) PrivateKey {
-	seed := cmtcrypto.Sha256(secret)
-
-	return genPrivKeyFromSeed(seed)
 }
 
 func genPrivKey(rand io.Reader) PrivateKey {
