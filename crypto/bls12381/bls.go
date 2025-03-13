@@ -56,7 +56,8 @@ func Sign(sk PrivateKey, msg []byte) Signature {
 // the sig and public key are all compressed
 func Verify(sig Signature, pk PublicKey, msg []byte) (bool, error) {
 	dummySig := new(BlsSig)
-	return dummySig.VerifyCompressed(sig, false, pk, false, msg, DST), nil
+	// sigGroupcheck is always enabled for security
+	return dummySig.VerifyCompressed(sig, true, pk, false, msg, DST), nil
 }
 
 // AggrSig aggregates BLS signatures in an accumulative manner
@@ -75,7 +76,8 @@ func AggrSigList(sigs []Signature) (Signature, error) {
 	for i := 0; i < len(sigs); i++ {
 		sigBytes[i] = sigs[i].Bytes()
 	}
-	if !aggSig.AggregateCompressed(sigBytes, false) {
+	// groupcheck is always enabled for security
+	if !aggSig.AggregateCompressed(sigBytes, true) {
 		return nil, errors.New("failed to aggregate bls signatures")
 	}
 	return aggSig.ToAffine().Compress(), nil
@@ -97,7 +99,8 @@ func AggrPKList(pks []PublicKey) (PublicKey, error) {
 	for i := 0; i < len(pks); i++ {
 		pkBytes[i] = pks[i].Bytes()
 	}
-	if !aggPk.AggregateCompressed(pkBytes, false) {
+	// groupcheck is always enabled for security
+	if !aggPk.AggregateCompressed(pkBytes, true) {
 		return nil, errors.New("failed to aggregate bls public keys")
 	}
 	return aggPk.ToAffine().Compress(), nil
