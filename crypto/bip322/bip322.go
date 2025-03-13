@@ -172,19 +172,6 @@ func Verify(
 	return vm.Execute()
 }
 
-func PubkeyToP2WPKHAddress(p *btcec.PublicKey, net *chaincfg.Params) (*btcutil.AddressWitnessPubKeyHash, error) {
-	witnessAddr, err := btcutil.NewAddressWitnessPubKeyHash(
-		btcutil.Hash160(p.SerializeCompressed()),
-		net,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return witnessAddr, nil
-}
-
 func PubKeyToP2TrSpendAddress(p *btcec.PublicKey, net *chaincfg.Params) (*btcutil.AddressTaproot, error) {
 	tapKey := txscript.ComputeTaprootKeyNoScript(p)
 
@@ -195,95 +182,4 @@ func PubKeyToP2TrSpendAddress(p *btcec.PublicKey, net *chaincfg.Params) (*btcuti
 		return nil, err
 	}
 	return address, nil
-}
-
-func SignWithP2WPKHAddress(
-	msg []byte,
-	privKey *btcec.PrivateKey,
-	net *chaincfg.Params,
-) (*btcutil.AddressWitnessPubKeyHash, []byte, error) {
-	pubKey := privKey.PubKey()
-
-	witnessAddr, err := PubkeyToP2WPKHAddress(pubKey, net)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	toSpend, err := GetToSpendTx(msg, witnessAddr)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	toSign := GetToSignTx(toSpend)
-
-	fetcher := txscript.NewCannedPrevOutputFetcher(
-		toSpend.TxOut[0].PkScript,
-		toSpend.TxOut[0].Value,
-	)
-
-	hashCache := txscript.NewTxSigHashes(toSign, fetcher)
-
-	// always use compressed pubkey
-	witness, err := txscript.WitnessSignature(toSign, hashCache, 0,
-		toSpend.TxOut[0].Value, toSpend.TxOut[0].PkScript, txscript.SigHashAll, privKey, true)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	serializedWitness, err := SerializeWitness(witness)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return witnessAddr, serializedWitness, nil
-}
-
-func SignWithP2TrSpendAddress(
-	msg []byte,
-	privKey *btcec.PrivateKey,
-	net *chaincfg.Params,
-) (*btcutil.AddressTaproot, []byte, error) {
-	pubKey := privKey.PubKey()
-
-	witnessAddr, err := PubKeyToP2TrSpendAddress(pubKey, net)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	toSpend, err := GetToSpendTx(msg, witnessAddr)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	toSign := GetToSignTx(toSpend)
-
-	fetcher := txscript.NewCannedPrevOutputFetcher(
-		toSpend.TxOut[0].PkScript,
-		toSpend.TxOut[0].Value,
-	)
-
-	hashCache := txscript.NewTxSigHashes(toSign, fetcher)
-
-	witness, err := txscript.TaprootWitnessSignature(
-		toSign, hashCache, 0, toSpend.TxOut[0].Value, toSpend.TxOut[0].PkScript,
-		txscript.SigHashDefault, privKey,
-	)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	serializedWitness, err := SerializeWitness(witness)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return witnessAddr, serializedWitness, nil
 }
