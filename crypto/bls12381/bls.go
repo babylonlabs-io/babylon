@@ -75,7 +75,10 @@ func PopVerify(sig Signature, pk PublicKey, msg []byte) (bool, error) {
 }
 
 func GetPopSignMsg(blsPk PublicKey, data []byte) []byte {
-	return append(blsPk.Bytes(), data...)
+	result := make([]byte, 0, len(blsPk)+len(data))
+	result = append(result, blsPk...)
+	result = append(result, data...)
+	return result
 }
 
 // AggrSig aggregates BLS signatures in an accumulative manner
