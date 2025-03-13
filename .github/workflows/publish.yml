@@ -5,6 +5,7 @@ on:
     branches:
     - 'main'
     - 'dev'
+    - 'hiep/support-testnet-docker-build'
     tags:
     - '*'
 
