@@ -43,6 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#666](https://github.com/babylonlabs-io/babylon/pull/666) Upgrade to wasmvm v2.2.3.
+- [#668](https://github.com/babylonlabs-io/babylon/pull/668) Remove unused unsafe key gen functions
 
 ### Bug fixes
 
