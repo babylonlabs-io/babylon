@@ -20,6 +20,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 )
 
+const (
+	FlagBlsPopFilePath = "bls-pop"
+)
+
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -79,6 +83,7 @@ before running the command (e.g., via babylond create-bls-key).`)
 
 	defaultNodeHome := filepath.Join(userHomeDir, ".babylond")
 	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The node home directory")
+	cmd.Flags().String(FlagBlsPopFilePath, "", "The path to the proof-of-possession file")
 
 	return cmd
 }
