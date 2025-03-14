@@ -9,7 +9,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
-// encSign implements the core of the EncSign algorithm as defined in the spec.
+// encSign implements the core of the `schnorr_presig_sign` algorithm as defined in the spec.
 // It generates a 65-byte pre-signature using the given private key, nonce,
 // public key, message, and encryption key.
 //
@@ -36,6 +36,11 @@ func encSign(
 
 	var R0 btcec.JacobianPoint
 	btcec.AddNonConst(R, &tAffine, &R0)
+
+	// Ensure R0 is not infinite
+	if (R0.X.IsZero() && R0.Y.IsZero()) || R0.Z.IsZero() {
+		return nil, fmt.Errorf("R0 point is at infinity")
+	}
 	R0.ToAffine()
 
 	// If R0 has odd y, negate k
@@ -57,7 +62,10 @@ func encSign(
 	s := new(btcec.ModNScalar).Mul2(&e, privKey).Add(&k)
 
 	// Create 65-byte pre-signature
-	adaptorSig := newAdaptorSignature(&R0, s)
+	adaptorSig, err := newAdaptorSignature(&R0, s)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create adaptor signature: %w", err)
+	}
 
 	// Verify the signature
 	if err := encVerify(adaptorSig, m, pBytes, t); err != nil {
@@ -67,7 +75,7 @@ func encSign(
 	return adaptorSig, nil
 }
 
-// encVerify implements the EncVerify algorithm as defined in the spec.
+// encVerify implements the `schnorr_presig_verify` algorithm as defined in the spec.
 // It verifies that a pre-signature is valid with respect to the given
 // public key, encryption key, and message.
 func encVerify(
@@ -95,9 +103,6 @@ func encVerify(
 	pubKey, err := schnorr.ParsePubKey(pubKeyBytes)
 	if err != nil {
 		return err
-	}
-	if !pubKey.IsOnCurve() {
-		return fmt.Errorf("pubkey point is not on curve")
 	}
 
 	// Step 2: Let s = int(psig[33:65]); return FAIL if s >= n
@@ -151,7 +156,6 @@ func encVerify(
 	T.ToAffine()
 
 	// Step 7: Verify T matches encryption key
-	T.ToAffine()
 	if !T.X.Equals(&t.X) || !T.Y.Equals(&t.Y) {
 		return fmt.Errorf("extracted encryption key does not match")
 	}
@@ -160,7 +164,7 @@ func encVerify(
 }
 
 // decrypt decrypts a pre-signature using a decryption key.
-// This implements the Decrypt algorithm as defined in the spec.
+// This implements the `schnorr_adapt` algorithm as defined in the spec.
 func decrypt(psig *AdaptorSignature, dk *btcec.ModNScalar) (*schnorr.Signature, error) {
 	// Get s value from adaptor signature
 	s0 := psig.s
@@ -175,7 +179,6 @@ func decrypt(psig *AdaptorSignature, dk *btcec.ModNScalar) (*schnorr.Signature, 
 
 	// Get R point from adaptor signature
 	R0 := psig.R0
-	R0.ToAffine()
 
 	// Compute final s value based on R0.Y being even/odd
 	// This matches the Python reference implementation:
@@ -201,7 +204,7 @@ func decrypt(psig *AdaptorSignature, dk *btcec.ModNScalar) (*schnorr.Signature, 
 }
 
 // extract extracts the decryption key from a pre-signature and its decrypted signature.
-// This implements the Extract algorithm as defined in the spec.
+// This implements the `schnorr_extract_secadaptor` algorithm as defined in the spec.
 func extract(psig *AdaptorSignature, sig *schnorr.Signature) (*btcec.ModNScalar, error) {
 	// Get s0 value from adaptor signature
 	s0 := psig.s
@@ -221,7 +224,6 @@ func extract(psig *AdaptorSignature, sig *schnorr.Signature) (*btcec.ModNScalar,
 
 	// Get R0 point from adaptor signature to check its Y parity
 	R0 := psig.R0
-	R0.ToAffine()
 
 	// Calculate decryption key based on R0.Y being even/odd
 	// This matches the Python reference implementation:

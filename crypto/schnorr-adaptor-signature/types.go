@@ -22,11 +22,17 @@ type AdaptorSignature struct {
 
 // newAdaptorSignature creates a new AdaptorSignature with the given parameters.
 // It copies the values to avoid unexpected modifications.
-func newAdaptorSignature(r *btcec.JacobianPoint, s *btcec.ModNScalar) *AdaptorSignature {
+func newAdaptorSignature(r *btcec.JacobianPoint, s *btcec.ModNScalar) (*AdaptorSignature, error) {
 	var sig AdaptorSignature
+
+	// Ensure r is an affine point
+	if r.Z.IsZero() || !r.Z.IsOne() {
+		return nil, fmt.Errorf("R0 must be an affine point")
+	}
+
 	sig.R0.Set(r)
 	sig.s.Set(s)
-	return &sig
+	return &sig, nil
 }
 
 // NewAdaptorSignatureFromBytes parses the given byte array to an adaptor signature.
@@ -43,28 +49,10 @@ func NewAdaptorSignatureFromBytes(asigBytes []byte) (*AdaptorSignature, error) {
 		)
 	}
 
-	// Check the first byte is valid
-	if asigBytes[0] != 0x02 && asigBytes[0] != 0x03 {
-		return nil, fmt.Errorf("invalid format byte: %x", asigBytes[0])
+	r0, err := btcec.ParseJacobian(asigBytes[:33])
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse R0: %w", err)
 	}
-
-	// Extract R0.X from bytes 1-32
-	var xVal btcec.FieldVal
-	if overflow := xVal.SetByteSlice(asigBytes[1:33]); overflow {
-		return nil, fmt.Errorf("R0.X value is invalid")
-	}
-
-	// Decompress the point with the correct y-coordinate parity
-	var yVal btcec.FieldVal
-	isOdd := asigBytes[0] == 0x03
-	if success := btcec.DecompressY(&xVal, isOdd, &yVal); !success {
-		return nil, fmt.Errorf("failed to decompress R0.Y")
-	}
-
-	// Create the Jacobian point
-	var zVal btcec.FieldVal
-	zVal.SetInt(1)
-	r0 := btcec.MakeJacobianPoint(&xVal, &yVal, &zVal)
 
 	// Extract s from bytes 33-64
 	var s btcec.ModNScalar
@@ -73,7 +61,7 @@ func NewAdaptorSignatureFromBytes(asigBytes []byte) (*AdaptorSignature, error) {
 	}
 
 	// Create a new AdaptorSignature
-	return newAdaptorSignature(&r0, &s), nil
+	return newAdaptorSignature(&r0, &s)
 }
 
 // NewAdaptorSignatureFromHex parses the given hex string to an adaptor signature.
