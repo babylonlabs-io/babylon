@@ -278,8 +278,25 @@ func VerifyECDSA(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKe
 	// NOTE: ecdsa.Verify has to take message as a string
 	// So we have to hex BabylonSig before verifying the signature
 	bbnSigHex := hex.EncodeToString(msg)
-	if err := ecdsa.Verify(btcPK, bbnSigHex, btcSigRaw); err != nil {
-		return fmt.Errorf("failed to verify btcSigRaw")
+
+	// we ignore ignore is compressed flag as we only care about comparing X coordinates
+	recoveredPK, _, err := ecdsa.RecoverPublicKey(bbnSigHex, btcSigRaw)
+	if err != nil {
+		return fmt.Errorf("failed to recover btc public key when verifying ECDSA PoP: %w", err)
+	}
+
+	btcPKBytes := schnorr.SerializePubKey(btcPK)
+
+	recoveredPKBytes := schnorr.SerializePubKey(recoveredPK)
+
+	// We only compare X coordinates, as both stakers and fp providers
+	// are identified by 32byte public key compliant with BIP-340 spec that
+	// assumes Y coordinate is even.
+	// This should be safe to do, as except of the ECDSA pop verification, both
+	// both parties will also sign other data with BIP-340 schnorr signature for
+	// which 32bytes key is enough.
+	if !bytes.Equal(btcPKBytes, recoveredPKBytes) {
+		return fmt.Errorf("the recovered PK does not match the given PK")
 	}
 
 	return nil

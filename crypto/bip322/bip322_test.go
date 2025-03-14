@@ -79,7 +79,7 @@ func FuzzBip322ValidP2WPKHSignature(f *testing.F) {
 		require.NoError(t, err)
 		dataLen := r.Int31n(200) + 1
 		dataToSign := datagen.GenRandomByteArray(r, uint64(dataLen))
-		address, witness, err := bip322.SignWithP2WPKHAddress(dataToSign, privkey, net)
+		address, witness, err := datagen.SignWithP2WPKHAddress(dataToSign, privkey, net)
 		require.NoError(t, err)
 		witnessDecoded, err := bip322.SimpleSigToWitness(witness)
 		require.NoError(t, err)
@@ -102,7 +102,7 @@ func FuzzBip322ValidP2TrSpendSignature(f *testing.F) {
 		require.NoError(t, err)
 		dataLen := r.Int31n(200) + 1
 		dataToSign := datagen.GenRandomByteArray(r, uint64(dataLen))
-		address, witness, err := bip322.SignWithP2TrSpendAddress(dataToSign, privkey, net)
+		address, witness, err := datagen.SignWithP2TrSpendAddress(dataToSign, privkey, net)
 		require.NoError(t, err)
 		witnessDecoded, err := bip322.SimpleSigToWitness(witness)
 		require.NoError(t, err)
