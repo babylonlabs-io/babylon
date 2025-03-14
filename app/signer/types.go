@@ -19,12 +19,6 @@ type ValidatorKeys struct {
 	blsPrivkey bls12381.PrivateKey
 }
 
-// // BlsPop represents a proof-of-possession for a validator.
-// type BlsPop struct {
-// 	BlsPubkey bls12381.PublicKey
-// 	PoP       *types.ProofOfPossession
-// }
-
 // NewValidatorKeys creates a new instance including validator keys.
 func NewValidatorKeys(valPrivkey cmtcrypto.PrivKey, blsPrivKey bls12381.PrivateKey) (*ValidatorKeys, error) {
 	pop, err := BuildPoP(valPrivkey, blsPrivKey)
@@ -59,39 +53,3 @@ func BuildPoP(valPrivKey cmtcrypto.PrivKey, blsPrivkey bls12381.PrivateKey) (*ty
 		BlsSig:     &pop,
 	}, nil
 }
-
-// // SaveBlsPop saves a proof-of-possession to a file.
-// func SaveBlsPop(filePath string, blsPubKey bls12381.PublicKey, pop *types.ProofOfPossession) error {
-// 	blsPop := BlsPop{
-// 		BlsPubkey: blsPubKey,
-// 		PoP:       pop,
-// 	}
-
-// 	// convert keystore to json
-// 	jsonBytes, err := json.MarshalIndent(blsPop, "", "  ")
-// 	if err != nil {
-// 		return fmt.Errorf("failed to marshal bls proof-of-possession: %w", err)
-// 	}
-
-// 	// write generated erc2335 keystore to file
-// 	if err := tempfile.WriteFileAtomic(filePath, jsonBytes, 0600); err != nil {
-// 		return fmt.Errorf("failed to write bls proof-of-possession: %w", err)
-// 	}
-// 	return nil
-// }
-
-// // LoadBlsPop loads a proof-of-possession from a file.
-// func LoadBlsPop(filePath string) (BlsPop, error) {
-// 	var bp BlsPop
-
-// 	keyJSONBytes, err := os.ReadFile(filePath)
-// 	if err != nil {
-// 		return BlsPop{}, fmt.Errorf("failed to read bls pop file: %w", err)
-// 	}
-
-// 	if err := json.Unmarshal(keyJSONBytes, &bp); err != nil {
-// 		return BlsPop{}, fmt.Errorf("failed to unmarshal bls pop from file: %w", err)
-// 	}
-
-// 	return bp, nil
-// }
