@@ -3,6 +3,7 @@ package bls12381
 import (
 	"encoding/hex"
 	"errors"
+
 	blst "github.com/supranational/blst/bindings/go"
 )
 
@@ -23,6 +24,9 @@ type BlsMultiPubKey = blst.P2Aggregate
 
 // Domain Separation Tag for signatures on G1 (minimal-signature-size)
 var DST = []byte("BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_")
+
+// Domain Separation Tag specified for the PoP ciphersuite
+var DST_POP = []byte("BLS_POP_BLS12381G1_XMD:SHA-256_SSWU_RO_POP_")
 
 type Signature []byte
 type PublicKey []byte

@@ -66,13 +66,16 @@ check of rewards
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
 
-
 ### Bug fixes
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 - [#667](https://github.com/babylonlabs-io/babylon/pull/667) crypto: enable groupcheck in BLS verification/aggregation
 - [#660](https://github.com/babylonlabs-io/babylon/pull/660) fix: ecdsa verification
+<<<<<<< HEAD
+- [#680](https://github.com/babylonlabs-io/babylon/pull/680) crypto: fix bls rogue attack
+=======
 - [#673](https://github.com/babylonlabs-io/babylon/pull/673) fix: move bip322 signing
 functions to `testutil`
+>>>>>>> main
 
 ## v1.0.0-rc7
 
