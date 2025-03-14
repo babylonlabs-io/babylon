@@ -57,6 +57,7 @@ check of rewards
 - [#625](https://github.com/babylonlabs-io/babylon/pull/625) Add `GasLimit` decorator in ante handler and local mempool configuration
 - [#643](https://github.com/babylonlabs-io/babylon/pull/643) Fix flaky test `FuzzBTCDelegation`
 - [#668](https://github.com/babylonlabs-io/babylon/pull/668) Remove unused unsafe key gen functions
+- [#682](https://github.com/babylonlabs-io/babylon/pull/682) Avoid creating pop in `babylond tx checkpointing create-validator`
 
 ### State Machine Breaking
 
