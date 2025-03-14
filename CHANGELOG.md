@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.
 - [#666](https://github.com/babylonlabs-io/babylon/pull/666) Upgrade to wasmvm v2.2.3.
 - [#655](https://github.com/babylonlabs-io/babylon/pull/655) Add func `ParseV0StakingTxWithoutTag` to
 parse staking tx without verifying opreturn tag.
@@ -56,6 +57,9 @@ check of rewards
 - [#624](https://github.com/babylonlabs-io/babylon/pull/624) Make keeper's collections private in `x/incentive` module
 - [#625](https://github.com/babylonlabs-io/babylon/pull/625) Add `GasLimit` decorator in ante handler and local mempool configuration
 - [#643](https://github.com/babylonlabs-io/babylon/pull/643) Fix flaky test `FuzzBTCDelegation`
+- [#644](https://github.com/babylonlabs-io/babylon/pull/644) Add priority nonce mempool and transaction priority ante handler decorator
+- [#676](https://github.com/babylonlabs-io/babylon/pull/676) Bump IBC-go to `v8.7.0`
+- [#668](https://github.com/babylonlabs-io/babylon/pull/668) Remove unused unsafe key gen functions
 
 ### State Machine Breaking
 
@@ -64,8 +68,14 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 
 ### Bug fixes
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+- [#667](https://github.com/babylonlabs-io/babylon/pull/667) crypto: enable groupcheck in BLS verification/aggregation
 - [#660](https://github.com/babylonlabs-io/babylon/pull/660) fix: ecdsa verification
+<<<<<<< HEAD
 - [#680](https://github.com/babylonlabs-io/babylon/pull/680) crypto: fix bls rogue attack
+=======
+- [#673](https://github.com/babylonlabs-io/babylon/pull/673) fix: move bip322 signing
+functions to `testutil`
+>>>>>>> main
 
 ## v1.0.0-rc7
 
@@ -98,7 +108,7 @@ block bank send and still create BTC delegations
 ### Bug fixes
 
 - [#657](https://github.com/babylonlabs-io/babylon/pull/657) crypto: fix adaptor sig timing side channels
-- [#656](https://github.com/babylonlabs-io/babylon/pull/656) crypto: fix adaptor sig validity and typos 
+- [#656](https://github.com/babylonlabs-io/babylon/pull/656) crypto: fix adaptor sig validity and typos
 - [#658](https://github.com/babylonlabs-io/babylon/pull/658) crypto: Add check for Z==1 in ToBTCPK
 - [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
 invocation
