@@ -60,6 +60,7 @@ check of rewards
 - [#644](https://github.com/babylonlabs-io/babylon/pull/644) Add priority nonce mempool and transaction priority ante handler decorator
 - [#676](https://github.com/babylonlabs-io/babylon/pull/676) Bump IBC-go to `v8.7.0`
 - [#668](https://github.com/babylonlabs-io/babylon/pull/668) Remove unused unsafe key gen functions
+- [#682](https://github.com/babylonlabs-io/babylon/pull/682) Avoid creating pop in `babylond tx checkpointing create-validator`
 
 ### State Machine Breaking
 

@@ -45,7 +45,7 @@ func BuildPoP(valPrivKey cmtcrypto.PrivKey, blsPrivkey bls12381.PrivateKey) (*ty
 	}
 	data, err := valPrivKey.Sign(blsPrivkey.PubKey().Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("Error while building PoP: %w", err)
+		return nil, fmt.Errorf("failed to sign Ed25519 key: %w", err)
 	}
 	pop := bls12381.Sign(blsPrivkey, data)
 	return &types.ProofOfPossession{
