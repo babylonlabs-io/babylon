@@ -141,7 +141,7 @@ Steps:
    (details on how to do this
    will be provided in [Section 3.4.](#34-the-msgcreatebtcdelegation-babylon-message))
    > **⚡ Note**: As the staking transaction is not on the Bitcoin ledger yet,
-   > the Proof of Possession should be omitted. This signals that the pre-staking
+   > the proof of inclusion should be omitted. This signals that the pre-staking
    > registration flow is followed and a proof of inclusion will be submitted later.
 2. **Await Covenant Verification**:
    Until then, the stake remains as `PENDING`.
