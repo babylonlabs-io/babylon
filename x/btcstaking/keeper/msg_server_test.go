@@ -1104,12 +1104,15 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		h.NoError(err)
 
 		// finality provider decrypts the covenant signature
-		decKey, err := asig.NewDecryptionKeyKeyFromBTCSK(fpSK)
+		decKey, err := asig.NewDecryptionKeyFromBTCSK(fpSK)
 		h.NoError(err)
-		decryptedCovenantSig := bbn.NewBIP340SignatureFromBTCSig(covASig.Decrypt(decKey))
+		covSchnorrSig, err := covASig.Decrypt(decKey)
+		require.NoError(t, err)
+		decryptedCovenantSig := bbn.NewBIP340SignatureFromBTCSig(covSchnorrSig)
 
 		// recover the fpSK by using adaptor signature and decrypted Schnorr signature
-		recoveredFPDecKey := covASig.Recover(decryptedCovenantSig.MustToBTCSig())
+		recoveredFPDecKey, err := covASig.Extract(decryptedCovenantSig.MustToBTCSig())
+		require.NoError(t, err)
 		recoveredFPSK := recoveredFPDecKey.ToBTCSK()
 		// ensure the recovered finality provider SK is same as the real one
 		require.Equal(t, fpSK.Serialize(), recoveredFPSK.Serialize())

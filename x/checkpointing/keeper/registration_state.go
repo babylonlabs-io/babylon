@@ -53,7 +53,7 @@ func (rs RegistrationState) CreateRegistration(key bls12381.PublicKey, valAddr s
 	}
 
 	// save concrete BLS public key object
-	blsPkKey := types.AddrToBlsKeyKey(valAddr)
+	blsPkKey := types.AddrToBlsKey(valAddr)
 	rs.addrToBlsKeys.Set(blsPkKey, key)
 	rs.blsKeysToAddr.Set(bkToAddrKey, valAddr.Bytes())
 
@@ -62,7 +62,7 @@ func (rs RegistrationState) CreateRegistration(key bls12381.PublicKey, valAddr s
 
 // GetBlsPubKey retrieves BLS public key by validator's address
 func (rs RegistrationState) GetBlsPubKey(addr sdk.ValAddress) (bls12381.PublicKey, error) {
-	pkKey := types.AddrToBlsKeyKey(addr)
+	pkKey := types.AddrToBlsKey(addr)
 	rawBytes := rs.addrToBlsKeys.Get(pkKey)
 	if rawBytes == nil {
 		return nil, types.ErrBlsKeyDoesNotExist.Wrapf("BLS public key does not exist with address %s", addr)
@@ -85,6 +85,6 @@ func (rs RegistrationState) GetValAddr(key bls12381.PublicKey) (sdk.ValAddress, 
 
 // Exists checks whether a BLS key exists
 func (rs RegistrationState) Exists(addr sdk.ValAddress) bool {
-	pkKey := types.AddrToBlsKeyKey(addr)
+	pkKey := types.AddrToBlsKey(addr)
 	return rs.addrToBlsKeys.Has(pkKey)
 }
