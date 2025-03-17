@@ -36,7 +36,7 @@ distributed through the `x/distribution` module after the initial distribution
 to BTC stakers and finality providers. Details on this process can be found in
 the genesis file [here](../proto/babylon/incentive/genesis.proto).
 
-Within the module, there is an object called the `rewards gauge`, which serves
+Within the module, there is a critical object called the `rewards gauge`, which serves
 as a pool accumulating rewards for both finality providers and BTC stakers.
 This gauge is a key component of the module, acting as a ledger that tracks
 rewards allocated but not yet withdrawn by stakeholders.
@@ -175,7 +175,7 @@ message FinalityProviderHistoricalRewards {
 
 This message tracks the current rewards for a finality provider that have not
 yet been stored in `FinalityProviderHistoricalRewards`. Managed by the
-[reward_tracker_store.go](./keeper/reward_tracker_store.go)
+[reward tracker store](./keeper/reward_tracker_store.go)
 
 ```protobuf
 message FinalityProviderCurrentRewards {
@@ -197,7 +197,7 @@ message FinalityProviderCurrentRewards {
 This message tracks the rewards for a BTC delegator, including the starting
 period of the last reward withdrawal or modification and the total active
 satoshis delegated to a specific finality provider. Managed by the
-[reward_tracker_store.go](./keeper/reward_tracker_store.go)
+[reward tracker store](./keeper/reward_tracker_store.go)
 
 ```protobuf
 message BTCDelegationRewardsTracker {
@@ -214,7 +214,8 @@ uint64 start_period_cumulative_reward = 1;
 
 ### 3.1. MsgUpdateParams
 
-The `MsgUpdateParams` message is used to update the parameters of the Incentive module. This message is typically submitted by an authorized entity, such as a governance module, to modify the operational parameters of the module.
+The `MsgUpdateParams` message is used to update the parameters of the incentive module.
+This should only be executable through governance proposals.
 
 ```protobuf
 message MsgUpdateParams {
@@ -249,7 +250,6 @@ Upon receiving `MsgSetWithdrawAddress`, a Babylon node will execute as follow
 1. Verify that the sender is the delegator or has the authority to set the
     withdraw address.
 2. Update the withdraw address for the delegator in the state.
-3. Emit an event indicating the successful update of the withdraw address.
 
 ### 3.3. MsgWithdrawReward
 
@@ -269,8 +269,7 @@ Upon receiving `MsgWithdrawReward`, a Babylon node will execute as follows:
 1. Verify that the sender is the delegator or has the authority to withdraw
     rewards.
 2. Calculate the rewards owed to the delegator based on the current state.
-    - Transfer the calculated rewards to the delegator's withdraw address.
-3. Emit an event indicating the successful withdrawal of rewards.
+3. Transfer the calculated rewards to the delegator's withdraw address.
 
 ## 4. BeginBlocker
 
@@ -282,20 +281,21 @@ defined [here](./abci.go)
 
 ### Parameters
 
-Endpoint: `/babylon/incentive/v1/params`
+Endpoint: `/babylon/incentive/v1/params`\
 Description: Queries the current parameters of the Incentive module.
 
 #### BTC Staking Gauge
 
-Endpoint: `/babylon/incentive/v1/btc_staking_gauge/{height}`
-Description: Retrieves the BTC staking gauge information for a specific block height.
+Endpoint: `/babylon/incentive/v1/btc_staking_gauge/{height}`\
+Description: Retrieves the BTC staking gauge information for a specific block 
+height.
 
 #### Reward Gauges
 
-Endpoint: `/babylon/incentive/v1/reward_gauges`
+Endpoint: `/babylon/incentive/v1/reward_gauges`\
 Description: Retrieves the reward gauges for all stakeholders.
 
 #### Delegator Withdraw Address
 
-Endpoint: `/babylon/incentive/v1/delegators/{delegator_address}/withdraw_address`
+Endpoint: `/babylon/incentive/v1/delegators/{delegator_address}/withdraw_address`\
 Description: Queries the withdraw address of a specific delegator.
