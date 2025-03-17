@@ -180,11 +180,10 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 func TestGetBlsPassword(t *testing.T) {
 	t.Run("get password from environment variable", func(t *testing.T) {
 		originalValue := os.Getenv(BlsPasswordEnvVar)
-		defer os.Setenv(BlsPasswordEnvVar, originalValue)
+		defer t.Setenv(BlsPasswordEnvVar, originalValue)
 
 		testPassword := "env-password-123"
-		err := os.Setenv(BlsPasswordEnvVar, testPassword)
-		assert.NoError(t, err)
+		t.Setenv(BlsPasswordEnvVar, testPassword)
 
 		tempDir := t.TempDir()
 		nonExistentFile := filepath.Join(tempDir, "non-existent-password.txt")
@@ -197,15 +196,14 @@ func TestGetBlsPassword(t *testing.T) {
 
 	t.Run("get password from file when env var not set", func(t *testing.T) {
 		originalValue := os.Getenv(BlsPasswordEnvVar)
-		defer os.Setenv(BlsPasswordEnvVar, originalValue)
+		defer t.Setenv(BlsPasswordEnvVar, originalValue)
 
-		err := os.Setenv(BlsPasswordEnvVar, "")
-		assert.NoError(t, err)
+		t.Setenv(BlsPasswordEnvVar, "")
 
 		tempDir := t.TempDir()
 		passwordFile := filepath.Join(tempDir, "password.txt")
 		testPassword := "file-password-456"
-		err = os.WriteFile(passwordFile, []byte(testPassword), 0600)
+		err := os.WriteFile(passwordFile, []byte(testPassword), 0600)
 		assert.NoError(t, err)
 
 		password, fromEnv, err := GetBlsPassword(passwordFile)
@@ -216,15 +214,14 @@ func TestGetBlsPassword(t *testing.T) {
 
 	t.Run("error when neither env var nor file exists", func(t *testing.T) {
 		originalValue := os.Getenv(BlsPasswordEnvVar)
-		defer os.Setenv(BlsPasswordEnvVar, originalValue)
+		defer t.Setenv(BlsPasswordEnvVar, originalValue)
 
-		err := os.Setenv(BlsPasswordEnvVar, "")
-		assert.NoError(t, err)
+		t.Setenv(BlsPasswordEnvVar, "")
 
 		tempDir := t.TempDir()
 		nonExistentFile := filepath.Join(tempDir, "non-existent-password.txt")
 
-		_, _, err = GetBlsPassword(nonExistentFile)
+		_, _, err := GetBlsPassword(nonExistentFile)
 		assert.Error(t, err)
 	})
 }
@@ -233,7 +230,7 @@ func TestLoadBlsWithEnvVar(t *testing.T) {
 	t.Run("load bls with environment variable", func(t *testing.T) {
 		// Save original env var value to restore later
 		originalValue := os.Getenv(BlsPasswordEnvVar)
-		defer os.Setenv(BlsPasswordEnvVar, originalValue)
+		defer t.Setenv(BlsPasswordEnvVar, originalValue)
 
 		tempDir := t.TempDir()
 		defer os.RemoveAll(tempDir)
@@ -274,10 +271,9 @@ func TestLoadBlsWithEnvVar(t *testing.T) {
 
 	t.Run("save password to file when env var not set", func(t *testing.T) {
 		originalValue := os.Getenv(BlsPasswordEnvVar)
-		defer os.Setenv(BlsPasswordEnvVar, originalValue)
+		defer t.Setenv(BlsPasswordEnvVar, originalValue)
 
-		err := os.Setenv(BlsPasswordEnvVar, "")
-		assert.NoError(t, err)
+		t.Setenv(BlsPasswordEnvVar, "")
 
 		tempDir := t.TempDir()
 		defer os.RemoveAll(tempDir)
