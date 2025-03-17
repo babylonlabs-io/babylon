@@ -248,8 +248,7 @@ func TestLoadBlsWithEnvVar(t *testing.T) {
 		assert.NoError(t, err, "BLS password file should exist")
 
 		envPassword := "env-password-789"
-		err = os.Setenv(BlsPasswordEnvVar, envPassword)
-		assert.NoError(t, err)
+		t.Setenv(BlsPasswordEnvVar, envPassword)
 
 		originalPasswordContent, err := os.ReadFile(blsPasswordFile)
 		assert.NoError(t, err)
