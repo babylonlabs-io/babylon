@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/require"
 
@@ -25,6 +26,24 @@ func newInvalidBIP340PoP(r *rand.Rand) *types.ProofOfPossessionBTC {
 		BtcSigType: types.BTCSigType_BIP340,
 		BtcSig:     datagen.GenRandomByteArray(r, 32), // fake sig hash
 	}
+}
+
+func Fuzz_AddressToSignBIP322(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		accAddr := datagen.GenRandomAccount().GetAddress()
+
+		addrStr := accAddr.String()
+		strUtf8Valid := utf8.ValidString(addrStr)
+		require.True(t, strUtf8Valid)
+
+		bz := types.AddressToSignBIP322(accAddr)
+		require.Equal(t, []byte(addrStr), bz)
+
+		bzUtf8Valid := utf8.Valid(bz)
+		require.True(t, bzUtf8Valid)
+	})
 }
 
 func FuzzPoP_BIP340(f *testing.F) {

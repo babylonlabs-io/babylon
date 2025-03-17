@@ -256,11 +256,19 @@ func VerifyBIP322(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubK
 // 1. verify whether bip322 pop signature where msg=pop.BabylonSig
 // 2. verify(sig=pop.BabylonSig, pubkey=babylonPK, msg=bip340PK)?
 func (pop *ProofOfPossessionBTC) VerifyBIP322(addr sdk.AccAddress, bip340PK *bbn.BIP340PubKey, net *chaincfg.Params) error {
-	msg := tmhash.Sum(addr.Bytes())
-	if err := VerifyBIP322(pop.BtcSigType, pop.BtcSig, bip340PK, msg, net); err != nil {
+	msgToSign := AddressToSignBIP322(addr)
+	if err := VerifyBIP322(pop.BtcSigType, pop.BtcSig, bip340PK, msgToSign, net); err != nil {
 		return fmt.Errorf("failed to verify possession of babylon sig by the BTC key: %w", err)
 	}
 	return nil
+}
+
+// AddressToSignBIP322 gets the address as bech32 string and just parses it to bytes
+// This is necessary due to wallet extensions only allow to sign string messages and
+// convert those to bytes before signing.
+func AddressToSignBIP322(addr sdk.AccAddress) []byte {
+	bech32AddrStr := addr.String()
+	return []byte(bech32AddrStr)
 }
 
 // VerifyECDSA verifies the validity of PoP where Bitcoin signature is in ECDSA encoding
