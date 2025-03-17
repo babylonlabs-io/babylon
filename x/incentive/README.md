@@ -105,7 +105,7 @@ parameters are represented as a `Params` object
 [here](../proto/babylon/incentive/params.proto)
 defined as follows:
 
-```go
+```protobuf
 message Params {
     option (gogoproto.goproto_stringer) = false;
     string btc_staking_portion = 1 [
@@ -122,7 +122,7 @@ This object stores rewards that are to be distributed, It can hold multipl
 denominations of coins and is managed by
 [reward gauge management](./keeper/btc_staking_gauge.go).
 
-```go
+```protobuf
 message Gauge {
     repeated cosmos.base.v1beta1.Coin coins = 1 [
         (gogoproto.nullable) = false,
@@ -138,7 +138,7 @@ and is used to track rewards distributed to a BTC staking stakeholder. I
 includes both the accumulated rewards and the withdrawn rewards, allowing the
  system to manage the lifecycle of rewards for each stakeholder.
 
-```go
+```protobuf
 message RewardGauge {
 repeated cosmos.base.v1beta1.Coin coins = 1 [
         (gogoproto.nullable) = false,
@@ -161,7 +161,7 @@ between periods for accurate distribution. Both the
 and [reward tracker](./keeper/reward_tracker.go) are focused on the management
 of rewards.
 
-```go
+```protobuf
 message FinalityProviderHistoricalRewards {
     repeated cosmos.base.v1beta1.Coin cumulative_rewards_per_sat = 1 [
         (gogoproto.nullable) = false,
@@ -177,7 +177,7 @@ This message tracks the current rewards for a finality provider that hav
 yet been stored in `FinalityProviderHistoricalRewards`. Managed by the
 [reward_tracker_store.go](./keeper/reward_tracker_store.go)
 
-```go
+```protobuf
 message FinalityProviderCurrentRewards {
     repeated cosmos.base.v1beta1.Coin current_rewards = 1 [
         (gogoproto.nullable) = false,
@@ -199,7 +199,7 @@ period of the last reward withdrawal or modification and the total active
 satoshis delegated to a specific finality provider. Managed by the
 [reward_tracker_store.go](./keeper/reward_tracker_store.go)
 
-```go
+```protobuf
 message BTCDelegationRewardsTracker {
 uint64 start_period_cumulative_reward = 1;
     bytes total_active_sat = 2 [
@@ -216,7 +216,7 @@ uint64 start_period_cumulative_reward = 1;
 
 The `MsgUpdateParams` message is used to update the parameters of the Incentive module. This message is typically submitted by an authorized entity, such as a governance module, to modify the operational parameters of the module.
 
-```go
+```protobuf
 message MsgUpdateParams {
   option (cosmos.msg.v1.signer) = "authority";
   string authority = 1;
@@ -236,7 +236,7 @@ Upon receiving `MsgUpdateParams`, a Babylon node will execute as follows:
 The `MsgSetWithdrawAddress` message is used to set a new withdraw address for a
 delegator. This address is where the rewards will be sent when they are withdrawn.
 
-```go
+```protobuf
 message MsgSetWithdrawAddress {
   option (cosmos.msg.v1.signer) = "delegator_address";
   string delegator_address = 1;
@@ -257,7 +257,7 @@ The `MsgWithdrawReward` message is used to withdraw rewards for a delegator.
 This message triggers the distribution of accumulated rewards to the specified
 withdraw address.
 
-```go
+```protobuf
 message MsgWithdrawReward {
   option (cosmos.msg.v1.signer) = "delegator_address";
   string delegator_address = 1;
