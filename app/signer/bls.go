@@ -24,8 +24,9 @@ import (
 var _ checkpointingtypes.BlsSigner = &BlsKey{}
 
 const (
-	DefaultBlsKeyName      = "bls_key.json"     // Default file name for BLS key
-	DefaultBlsPasswordName = "bls_password.txt" // Default file name for BLS password
+	DefaultBlsKeyName      = "bls_key.json"         // Default file name for BLS key
+	DefaultBlsPasswordName = "bls_password.txt"     // Default file name for BLS password
+	BlsPasswordEnvVar      = "BABYLON_BLS_PASSWORD" // Environment variable name for BLS password
 )
 
 var (
@@ -76,11 +77,11 @@ func GenBls(keyFilePath, passwordFilePath, password string) *Bls {
 // LoadBls returns a Bls after loading the erc2335 type of structure
 // from the file and decrypt it using a password.
 func LoadBls(keyFilePath, passwordFilePath string) *Bls {
-	passwordBytes, err := os.ReadFile(passwordFilePath)
+	// Get password from environment variable or file
+	password, _, err := GetBlsPassword(passwordFilePath)
 	if err != nil {
-		cmtos.Exit(fmt.Sprintf("failed to read BLS password file: %v", err.Error()))
+		cmtos.Exit(fmt.Sprintf("failed to get BLS password: %v", err.Error()))
 	}
-	password := string(passwordBytes)
 
 	keystore, err := erc2335.LoadKeyStore(keyFilePath)
 	if err != nil {
@@ -114,6 +115,25 @@ func NewBlsPassword() string {
 	return password
 }
 
+// GetBlsPassword retrieves the BLS password from environment variable or password file
+// Returns the password and a boolean indicating if it was found in the environment
+func GetBlsPassword(passwordFilePath string) (string, bool, error) {
+	password := os.Getenv(BlsPasswordEnvVar)
+	if password != "" {
+		return password, true, nil
+	}
+
+	if cmtos.FileExists(passwordFilePath) {
+		passwordBytes, err := os.ReadFile(passwordFilePath)
+		if err != nil {
+			return "", false, fmt.Errorf("failed to read BLS password file: %w", err)
+		}
+		return string(passwordBytes), false, nil
+	}
+
+	return "", false, fmt.Errorf("BLS password not found in environment variable or file")
+}
+
 // Save saves the bls12381 key to the file.
 // The file stores an erc2335 structure containing the encrypted bls private key.
 func (k *BlsKey) Save(password string) {
@@ -140,9 +160,13 @@ func (k *BlsKey) Save(password string) {
 		panic(fmt.Errorf("failed to write BLS key: %w", err))
 	}
 
-	// save used password to file
-	if err := tempfile.WriteFileAtomic(k.passwordPath, []byte(password), 0600); err != nil {
-		panic(fmt.Errorf("failed to write BLS password: %w", err))
+	// Only save the password to a file if it's not provided via environment variable
+	// This maintains backward compatibility while avoiding storing the password in plaintext
+	// when it's provided via environment variable
+	if os.Getenv(BlsPasswordEnvVar) == "" {
+		if err := tempfile.WriteFileAtomic(k.passwordPath, []byte(password), 0600); err != nil {
+			panic(fmt.Errorf("failed to write BLS password: %w", err))
+		}
 	}
 }
 
@@ -247,6 +271,8 @@ func CreateBlsSigner(homeDir string, password string, customKeyPath string) (che
 // If noPassword is true, creates key without password protection.
 // If password is empty and noPassword is false, will prompt for password.
 // If customKeyPath is not empty, will use that path for the BLS key file instead of the default.
+// The password can also be provided via the BABYLON_BLS_PASSWORD environment variable,
+// which takes precedence over the password file.
 func LoadOrGenBlsKey(homeDir string, noPassword bool, password string, customKeyPath string) (checkpointingtypes.BlsSigner, error) {
 	// Try to load existing BLS signer first
 	blsSigner := LoadBlsSignerIfExists(homeDir, customKeyPath)

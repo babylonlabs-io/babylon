@@ -176,3 +176,121 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 		assert.Equal(t, origPubKey.Bytes(), anotherLoadedPubKey.Bytes())
 	})
 }
+
+func TestGetBlsPassword(t *testing.T) {
+	t.Run("get password from environment variable", func(t *testing.T) {
+		originalValue := os.Getenv(BlsPasswordEnvVar)
+		defer os.Setenv(BlsPasswordEnvVar, originalValue)
+
+		testPassword := "env-password-123"
+		err := os.Setenv(BlsPasswordEnvVar, testPassword)
+		assert.NoError(t, err)
+
+		tempDir := t.TempDir()
+		nonExistentFile := filepath.Join(tempDir, "non-existent-password.txt")
+
+		password, fromEnv, err := GetBlsPassword(nonExistentFile)
+		assert.NoError(t, err)
+		assert.True(t, fromEnv)
+		assert.Equal(t, testPassword, password)
+	})
+
+	t.Run("get password from file when env var not set", func(t *testing.T) {
+		originalValue := os.Getenv(BlsPasswordEnvVar)
+		defer os.Setenv(BlsPasswordEnvVar, originalValue)
+
+		err := os.Setenv(BlsPasswordEnvVar, "")
+		assert.NoError(t, err)
+
+		tempDir := t.TempDir()
+		passwordFile := filepath.Join(tempDir, "password.txt")
+		testPassword := "file-password-456"
+		err = os.WriteFile(passwordFile, []byte(testPassword), 0600)
+		assert.NoError(t, err)
+
+		password, fromEnv, err := GetBlsPassword(passwordFile)
+		assert.NoError(t, err)
+		assert.False(t, fromEnv)
+		assert.Equal(t, testPassword, password)
+	})
+
+	t.Run("error when neither env var nor file exists", func(t *testing.T) {
+		originalValue := os.Getenv(BlsPasswordEnvVar)
+		defer os.Setenv(BlsPasswordEnvVar, originalValue)
+
+		err := os.Setenv(BlsPasswordEnvVar, "")
+		assert.NoError(t, err)
+
+		tempDir := t.TempDir()
+		nonExistentFile := filepath.Join(tempDir, "non-existent-password.txt")
+
+		_, _, err = GetBlsPassword(nonExistentFile)
+		assert.Error(t, err)
+	})
+}
+
+func TestLoadBlsWithEnvVar(t *testing.T) {
+	t.Run("load bls with environment variable", func(t *testing.T) {
+		// Save original env var value to restore later
+		originalValue := os.Getenv(BlsPasswordEnvVar)
+		defer os.Setenv(BlsPasswordEnvVar, originalValue)
+
+		tempDir := t.TempDir()
+		defer os.RemoveAll(tempDir)
+
+		blsKeyFile := filepath.Join(tempDir, DefaultBlsKeyName)
+		blsPasswordFile := filepath.Join(tempDir, DefaultBlsPasswordName)
+		filePassword := "file-password-789"
+
+		bls := GenBls(blsKeyFile, blsPasswordFile, filePassword)
+		assert.NotNil(t, bls)
+
+		_, err := os.Stat(blsKeyFile)
+		assert.NoError(t, err, "BLS key file should exist")
+		_, err = os.Stat(blsPasswordFile)
+		assert.NoError(t, err, "BLS password file should exist")
+
+		envPassword := "env-password-789"
+		err = os.Setenv(BlsPasswordEnvVar, envPassword)
+		assert.NoError(t, err)
+
+		originalPasswordContent, err := os.ReadFile(blsPasswordFile)
+		assert.NoError(t, err)
+		assert.Equal(t, filePassword, string(originalPasswordContent))
+
+		pv := NewBls(bls.Key.PrivKey, blsKeyFile, blsPasswordFile)
+		pv.Key.Save(envPassword)
+
+		currentPasswordContent, err := os.ReadFile(blsPasswordFile)
+		assert.NoError(t, err)
+		assert.Equal(t, filePassword, string(currentPasswordContent))
+		assert.Equal(t, string(originalPasswordContent), string(currentPasswordContent))
+
+		loadedBls := LoadBls(blsKeyFile, blsPasswordFile)
+		assert.NotNil(t, loadedBls)
+
+		assert.Equal(t, bls.Key.PubKey.Bytes(), loadedBls.Key.PubKey.Bytes())
+	})
+
+	t.Run("save password to file when env var not set", func(t *testing.T) {
+		originalValue := os.Getenv(BlsPasswordEnvVar)
+		defer os.Setenv(BlsPasswordEnvVar, originalValue)
+
+		err := os.Setenv(BlsPasswordEnvVar, "")
+		assert.NoError(t, err)
+
+		tempDir := t.TempDir()
+		defer os.RemoveAll(tempDir)
+
+		blsKeyFile := filepath.Join(tempDir, DefaultBlsKeyName)
+		blsPasswordFile := filepath.Join(tempDir, DefaultBlsPasswordName)
+		filePassword := "new-file-password"
+
+		bls := GenBls(blsKeyFile, blsPasswordFile, filePassword)
+		assert.NotNil(t, bls)
+
+		passwordContent, err := os.ReadFile(blsPasswordFile)
+		assert.NoError(t, err)
+		assert.Equal(t, filePassword, string(passwordContent))
+	})
+}
