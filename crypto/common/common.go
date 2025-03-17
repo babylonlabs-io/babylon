@@ -42,7 +42,7 @@ func ScalarBaseMultWithBlinding(k *btcec.ModNScalar) (*btcec.JacobianPoint, erro
 
 	// zero all intermediate values
 	copy(secret[:], zero32[:])
-	copy(rBytesExtract[:], zero32[:])
+	copy(rBytesExtract, zero32[:])
 	copy(rInput[:], zero4096[:])
 
 	// Generate a random blinding factor r
