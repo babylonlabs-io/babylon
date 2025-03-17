@@ -190,7 +190,7 @@ func newBIP322Sig[A btcutil.Address](
 	net *chaincfg.Params,
 	bip322SignFn bip322Sign[A],
 ) ([]byte, error) {
-	address, witnessSignture, err := bip322SignFn(
+	address, witnessSignature, err := bip322SignFn(
 		msgToSign,
 		btcSK,
 		net,
@@ -201,7 +201,7 @@ func newBIP322Sig[A btcutil.Address](
 
 	bip322Sig := bstypes.BIP322Sig{
 		Address: address.EncodeAddress(),
-		Sig:     witnessSignture,
+		Sig:     witnessSignature,
 	}
 
 	return bip322Sig.Marshal()
