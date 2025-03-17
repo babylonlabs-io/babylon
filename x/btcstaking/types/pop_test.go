@@ -38,7 +38,7 @@ func Fuzz_AddressToSignBIP322(f *testing.F) {
 		strUtf8Valid := utf8.ValidString(addrStr)
 		require.True(t, strUtf8Valid)
 
-		bz := types.AddressToSignBIP322(accAddr)
+		bz := types.MsgToSignBIP322(accAddr)
 		require.Equal(t, []byte(addrStr), bz)
 
 		bzUtf8Valid := utf8.Valid(bz)

@@ -175,7 +175,7 @@ func newPoPBTCWithBIP322Sig[A btcutil.Address](
 		BtcSigType: bstypes.BTCSigType_BIP322,
 	}
 
-	bzToSign := bstypes.AddressToSignBIP322(addressToSign)
+	bzToSign := bstypes.MsgToSignBIP322(addressToSign)
 	bip322SigEncoded, err := newBIP322Sig(bzToSign, btcSK, net, bip322SignFn)
 	if err != nil {
 		return nil, err
