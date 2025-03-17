@@ -11,7 +11,6 @@ import (
 
 func TestNewBls(t *testing.T) {
 	tempDir := t.TempDir()
-	defer os.RemoveAll(tempDir)
 
 	keyFilePath := DefaultBlsKeyFile(tempDir)
 	passwordFilePath := DefaultBlsPasswordFile(tempDir)
@@ -61,7 +60,6 @@ func TestNewBls(t *testing.T) {
 func TestLoadOrGenBlsKey(t *testing.T) {
 	t.Run("generate new key without password", func(t *testing.T) {
 		tempDir := t.TempDir()
-		defer os.RemoveAll(tempDir)
 
 		blsSigner, err := LoadOrGenBlsKey(tempDir, true, "", defaultBlsKeyFilePath)
 		assert.NoError(t, err)
@@ -85,7 +83,6 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 
 	t.Run("generate new key with password", func(t *testing.T) {
 		tempDir := t.TempDir()
-		defer os.RemoveAll(tempDir)
 
 		testPassword := "testpassword123"
 
@@ -111,7 +108,6 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 
 	t.Run("load existing key", func(t *testing.T) {
 		tempDir := t.TempDir()
-		defer os.RemoveAll(tempDir)
 
 		password := "existingpassword"
 		originalSigner, err := CreateBlsSigner(tempDir, password, defaultBlsKeyFilePath)
@@ -137,7 +133,6 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 
 	t.Run("custom key path", func(t *testing.T) {
 		tempDir := t.TempDir()
-		defer os.RemoveAll(tempDir)
 
 		// Create a full path for the custom key location
 		customFullPath := filepath.Join(tempDir, "custom", "path", "bls_key.json")
