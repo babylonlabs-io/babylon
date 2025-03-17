@@ -5,12 +5,13 @@ import (
 	"errors"
 	"io"
 
-	"github.com/babylonlabs-io/babylon/crypto/common"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	ecdsa_schnorr "github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr"
+
+	"github.com/babylonlabs-io/babylon/crypto/common"
 )
 
 type ModNScalar = btcec.ModNScalar
@@ -72,11 +73,11 @@ func signHash(sk *PrivateKey, privateRand *PrivateRand, hash [32]byte) (*Signatu
 
 	pubKey := PubGen(sk)
 
-	// Negate d if P.y is odd.
+	// Always negate d to avoid timing attack and pick the
+	// negated value later if P.y odd
 	pubKeyBytes := pubKey.SerializeCompressed()
-	if pubKeyBytes[0] == secp256k1.PubKeyFormatCompressedOdd {
-		privKeyScalar.Negate()
-	}
+	privKeyScalarNegated := new(ModNScalar).Set(&privKeyScalar).Negate()
+	isPyOdd := pubKeyBytes[0] == secp256k1.PubKeyFormatCompressedOdd
 
 	k := new(ModNScalar).Set(privateRand)
 
@@ -86,13 +87,14 @@ func signHash(sk *PrivateKey, privateRand *PrivateRand, hash [32]byte) (*Signatu
 		return nil, err
 	}
 
-	// Negate nonce k if R.y is odd (R.y is the y coordinate of the point R)
+	// Always negate nonce k to avoid timing attack and pick the
+	// negated value later if R.y is odd
+	// (R.y is the y coordinate of the point R)
 	//
 	// Note that R must be in affine coordinates for this check.
 	R.ToAffine()
-	if R.Y.IsOdd() {
-		k.Negate()
-	}
+	kNegated := new(ModNScalar).Set(k).Negate()
+	isRyOdd := R.Y.IsOdd()
 
 	// e = tagged_hash("BIP0340/challenge", bytes(R) || bytes(P) || m) mod n
 	var rBytes [32]byte
@@ -110,7 +112,19 @@ func signHash(sk *PrivateKey, privateRand *PrivateRand, hash [32]byte) (*Signatu
 	}
 
 	// s = k + e*d mod n
-	sig := new(ModNScalar).Mul2(&e, &privKeyScalar).Add(k)
+	// choose negated values for
+	// privKeyScalar and k to avoid timing attack
+	sig := new(ModNScalar)
+	switch {
+	case isPyOdd && isRyOdd:
+		sig.Mul2(&e, privKeyScalarNegated).Add(kNegated)
+	case isPyOdd && !isRyOdd:
+		sig.Mul2(&e, privKeyScalarNegated).Add(k)
+	case !isPyOdd && isRyOdd:
+		sig.Mul2(&e, &privKeyScalar).Add(kNegated)
+	default: // !isPyOdd && !isRyOdd
+		sig.Mul2(&e, &privKeyScalar).Add(k)
+	}
 
 	// If Verify(bytes(P), m, sig) fails, abort.
 	// optional
