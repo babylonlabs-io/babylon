@@ -25,6 +25,13 @@ func GenPrivKey() PrivateKey {
 func genPrivKey(rand io.Reader) PrivateKey {
 	seed := make([]byte, SeedSize)
 
+	// Ensure seed is zeroized before function returns, even on error
+	defer func() {
+		for i := range seed {
+			seed[i] = 0
+		}
+	}()
+
 	_, err := io.ReadFull(rand, seed)
 	if err != nil {
 		panic(err)
