@@ -47,10 +47,35 @@ func Sign(sk PrivateKey, msg []byte) Signature {
 
 // Verify verifies a BLS sig over msg with a BLS public key
 // the sig and public key are all compressed
+// NOTE that the verification enables subgroupcheck
+// and pkvalidate for security with slight performance loss
 func Verify(sig Signature, pk PublicKey, msg []byte) (bool, error) {
 	dummySig := new(BlsSig)
 	// sigGroupcheck is always enabled for security
-	return dummySig.VerifyCompressed(sig, true, pk, false, msg, DST), nil
+	return dummySig.VerifyCompressed(sig, true, pk, true, msg, DST), nil
+}
+
+// PopProve signs on a msg using a BLS secret key for proof-of-possession
+// using DST_POP
+func PopProve(sk PrivateKey, msg []byte) Signature {
+	secretKey := new(blst.SecretKey)
+	secretKey.Deserialize(sk)
+	return new(BlsSig).Sign(secretKey, msg, DST_POP).Compress()
+}
+
+// PopVerify verifies a BLS sig generated from PopProve over msg with a
+// BLS public key. The sig and public key are all compressed
+// and pkvalidate for security with slight performance loss
+func PopVerify(sig Signature, pk PublicKey, msg []byte) (bool, error) {
+	dummySig := new(BlsSig)
+	return dummySig.VerifyCompressed(sig, true, pk, true, msg, DST_POP), nil
+}
+
+func GetPopSignMsg(blsPk PublicKey, data []byte) []byte {
+	result := make([]byte, 0, len(blsPk)+len(data))
+	result = append(result, blsPk...)
+	result = append(result, data...)
+	return result
 }
 
 // AggrSig aggregates BLS signatures in an accumulative manner
@@ -63,6 +88,7 @@ func AggrSig(existingSig Signature, newSig Signature) (Signature, error) {
 }
 
 // AggrSigList aggregates BLS sigs into a single BLS signature
+// Note that groupcheck is enabled for security with performance loss
 func AggrSigList(sigs []Signature) (Signature, error) {
 	aggSig := new(BlsMultiSig)
 	sigBytes := make([][]byte, len(sigs))
@@ -86,6 +112,7 @@ func AggrPK(existingPK PublicKey, newPK PublicKey) (PublicKey, error) {
 }
 
 // AggrPKList aggregates BLS public keys into a single BLS public key
+// Note that groupcheck is enabled for security with performance loss
 func AggrPKList(pks []PublicKey) (PublicKey, error) {
 	aggPk := new(BlsMultiPubKey)
 	pkBytes := make([][]byte, len(pks))
