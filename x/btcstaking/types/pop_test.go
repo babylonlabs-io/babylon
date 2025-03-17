@@ -28,7 +28,7 @@ func newInvalidBIP340PoP(r *rand.Rand) *types.ProofOfPossessionBTC {
 	}
 }
 
-func Fuzz_AddressToSignBIP322(f *testing.F) {
+func Fuzz_MsgToSignBIP322(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
