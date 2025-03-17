@@ -104,10 +104,10 @@ func (cc *CosmosProvider) QueryABCI(ctx context.Context, req abci.RequestQuery) 
 // The wait will end after either the asyncTimeout has run out or the asyncCtx exits.
 // If there is no error broadcasting, the asyncCallback will be called with success/failure of the wait for block inclusion.
 func (cc *CosmosProvider) BroadcastTx(
-	ctx context.Context, // context for tx broadcast
-	tx []byte, // raw tx to be broadcast
-	asyncCtx context.Context, // context for async wait for block inclusion after successful tx broadcast
-	asyncTimeout time.Duration, // timeout for waiting for block inclusion
+	ctx context.Context,                              // context for tx broadcast
+	tx []byte,                                        // raw tx to be broadcast
+	asyncCtx context.Context,                         // context for async wait for block inclusion after successful tx broadcast
+	asyncTimeout time.Duration,                       // timeout for waiting for block inclusion
 	asyncCallbacks []func(*RelayerTxResponse, error), // callback for success/fail of the wait for block inclusion
 ) error {
 	res, err := cc.RPCClient.BroadcastTxSync(ctx, tx)
@@ -349,6 +349,16 @@ func (cc *CosmosProvider) SendMessagesToMempool(
 	asyncCtx context.Context,
 	asyncCallbacks []func(*RelayerTxResponse, error),
 ) error {
+	blockTimeout := defaultBroadcastWaitTimeout
+	var err error
+
+	if cc.PCfg.BlockTimeout != "" {
+		blockTimeout, err = time.ParseDuration(cc.PCfg.BlockTimeout)
+		if err != nil {
+			return err
+		}
+	}
+
 	txSignerKey := cc.PCfg.Key
 
 	sequenceGuard := ensureSequenceGuard(cc, txSignerKey)
@@ -365,7 +375,7 @@ func (cc *CosmosProvider) SendMessagesToMempool(
 		return err
 	}
 
-	if err := cc.BroadcastTx(ctx, txBytes, asyncCtx, defaultBroadcastWaitTimeout, asyncCallbacks); err != nil {
+	if err := cc.BroadcastTx(ctx, txBytes, asyncCtx, blockTimeout, asyncCallbacks); err != nil {
 		if strings.Contains(err.Error(), legacyerrors.ErrWrongSequence.Error()) {
 			cc.handleAccountSequenceMismatchError(sequenceGuard, err)
 		}
