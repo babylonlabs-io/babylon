@@ -9,10 +9,11 @@ import (
 )
 
 const (
-	ModNScalarSize       = 32
-	FieldValSize         = 32
-	JacobianPointSize    = 33
-	AdaptorSignatureSize = JacobianPointSize + ModNScalarSize
+	ModNScalarSize                = 32
+	FieldValSize                  = 32
+	JacobianPointSize             = 33
+	AdaptorSignatureSize          = JacobianPointSize + ModNScalarSize
+	AdaptorSignatureSizeOldFormat = AdaptorSignatureSize + 1
 )
 
 type AdaptorSignature struct {
@@ -35,17 +36,58 @@ func newAdaptorSignature(r *btcec.JacobianPoint, s *btcec.ModNScalar) (*AdaptorS
 	return &sig, nil
 }
 
+// convertOldFormatToNewFormat converts the old format of
+// adaptor signature to the new format.
+func convertOldFormatToNewFormat(oldSigBytes []byte) ([]byte, error) {
+	if oldSigBytes[0] != 0x02 {
+		return nil, fmt.Errorf("invalid point (must be even)")
+	}
+
+	var newSigBytes [AdaptorSignatureSize]byte
+
+	switch oldSigBytes[AdaptorSignatureSizeOldFormat-1] {
+	case 0x00:
+		newSigBytes[0] = 0x02
+	case 0x01:
+		newSigBytes[0] = 0x03
+	default:
+		return nil, fmt.Errorf("invalid needsNegation byte")
+	}
+
+	copy(newSigBytes[1:], oldSigBytes[1:AdaptorSignatureSizeOldFormat-1])
+
+	return newSigBytes[:], nil
+}
+
 // NewAdaptorSignatureFromBytes parses the given byte array to an adaptor signature.
-// The format is:
-// - First byte: 0x02 if R0.Y is even, 0x03 if R0.Y is odd
-// - Next 32 bytes: R0.X
+// It handles two formats:
+// The new format is:
+// - First 32 bytes: R0.X
 // - Last 32 bytes: s scalar
-func NewAdaptorSignatureFromBytes(asigBytes []byte) (*AdaptorSignature, error) {
-	if len(asigBytes) != AdaptorSignatureSize {
+// The old format is:
+// - First 32 bytes: R0.X
+// - Next 32 bytes: s scalar
+// - Last byte: bool on needNegation
+func NewAdaptorSignatureFromBytes(rawBytes []byte) (*AdaptorSignature, error) {
+	var asigBytes []byte
+
+	switch len(rawBytes) {
+	case AdaptorSignatureSizeOldFormat:
+		// old format, convert to new format
+		newSigBytes, err := convertOldFormatToNewFormat(rawBytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert old format to new format: %w", err)
+		}
+		asigBytes = newSigBytes
+	case AdaptorSignatureSize:
+		// new format, copy
+		asigBytes = rawBytes
+	default:
 		return nil, fmt.Errorf(
-			"the length of the given bytes for adaptor signature is incorrect (expected: %d, actual: %d)",
+			"the length of the given bytes for adaptor signature is incorrect (expected: %d or %d, actual: %d)",
 			AdaptorSignatureSize,
-			len(asigBytes),
+			AdaptorSignatureSizeOldFormat,
+			len(rawBytes),
 		)
 	}
 
