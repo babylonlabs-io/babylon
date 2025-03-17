@@ -73,6 +73,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 - [#660](https://github.com/babylonlabs-io/babylon/pull/660) fix: ecdsa verification
 - [#673](https://github.com/babylonlabs-io/babylon/pull/673) fix: move bip322 signing
 functions to `testutil`
+- [#683](https://github.com/babylonlabs-io/babylon/pull/683) crypto: fix eots signing timing attack
 
 ## v1.0.0-rc7
 
