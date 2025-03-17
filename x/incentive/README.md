@@ -1,5 +1,22 @@
 # Incentive
 
+## Table of Contents
+
+- [1. Introduction](#1-introduction)
+- [2. States](#2-states)
+  - [2.1. Parameters](#21-parameters)
+  - [2.2. Gauge](#22-gauge)
+  - [2.3. Reward Gauge](#23-reward-gauge)
+  - [2.4. FinalityProviderHistoricalRewards](#24-finalityproviderhistoricalrewards)
+  - [2.5. FinalityProviderCurrentRewards](#25-finalityprovidercurrentrewards)
+  - [2.6. BTCDelegationRewardsTracker](#26-btcdelegationrewardstracker)
+- [3. Messages](#3-messages)
+  - [3.1. MsgUpdateParams](#31-msgupdateparams)
+  - [3.2. MsgSetWithdrawAddress](#32-msgsetwithdrawaddress)
+  - [3.3. MsgWithdrawReward](#33-msgwithdrawreward)
+- [4. BeginBlocker](#4-beginblocker)
+- [5. Queries](#5-queries)
+
 ## 1. Introduction
 
 The Incentive module is responsible for determining the eligibility of rewards
