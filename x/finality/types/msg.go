@@ -76,7 +76,7 @@ func VerifyFinalitySig(m *MsgAddFinalitySig, prCommit *PubRandCommit) error {
 	if err != nil {
 		return err
 	}
-	return eots.Verify(pk, m.PubRand.ToFieldVal(), msgToSign, m.FinalitySig.ToModNScalar())
+	return eots.Verify(pk, m.PubRand.ToFieldValNormalized(), msgToSign, m.FinalitySig.ToModNScalar())
 }
 
 // HashToSign returns a 32-byte hash of (start_height || num_pub_rand || commitment)
