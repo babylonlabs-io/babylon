@@ -10,7 +10,7 @@ import (
 	storetypes "cosmossdk.io/store/types"
 
 	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/app/upgrades/v1rc7/testnet"
+	"github.com/babylonlabs-io/babylon/app/upgrades/v1rc8/testnet"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
 	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
