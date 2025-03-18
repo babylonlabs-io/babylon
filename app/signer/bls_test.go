@@ -63,16 +63,19 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 		tempDir := t.TempDir()
 		defer os.RemoveAll(tempDir)
 
-		blsSigner, err := LoadOrGenBlsKey(tempDir, true, "", "", defaultBlsKeyFilePath)
+		blsSigner, err := LoadOrGenBlsKey(tempDir, true, "", "", "")
 		assert.NoError(t, err)
 		assert.NotNil(t, blsSigner)
 
-		_, err = os.Stat(DefaultBlsKeyFile(tempDir))
-		assert.NoError(t, err, "BLS key file should exist")
-		_, err = os.Stat(DefaultBlsPasswordFile(tempDir))
-		assert.NoError(t, err, "BLS password file should exist")
+		keyFile := DefaultBlsKeyFile(tempDir)
+		passwordFile := DefaultBlsPasswordFile(tempDir)
 
-		loadedSigner, err := LoadOrGenBlsKey(tempDir, true, "", "", defaultBlsKeyFilePath)
+		_, err = os.Stat(keyFile)
+		assert.NoError(t, err, "BLS key file should exist at: "+keyFile)
+		_, err = os.Stat(passwordFile)
+		assert.NoError(t, err, "BLS password file should exist at: "+passwordFile)
+
+		loadedSigner, err := LoadOrGenBlsKey(tempDir, true, "", "", "")
 		assert.NoError(t, err)
 		assert.NotNil(t, loadedSigner)
 
@@ -89,16 +92,19 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 
 		testPassword := "testpassword123"
 
-		blsSigner, err := LoadOrGenBlsKey(tempDir, false, testPassword, "", defaultBlsKeyFilePath)
+		blsSigner, err := LoadOrGenBlsKey(tempDir, false, testPassword, "", "")
 		assert.NoError(t, err)
 		assert.NotNil(t, blsSigner)
 
-		_, err = os.Stat(DefaultBlsKeyFile(tempDir))
-		assert.NoError(t, err, "BLS key file should exist")
-		_, err = os.Stat(DefaultBlsPasswordFile(tempDir))
-		assert.NoError(t, err, "BLS password file should exist")
+		keyFile := DefaultBlsKeyFile(tempDir)
+		passwordFile := DefaultBlsPasswordFile(tempDir)
 
-		loadedSigner, err := LoadOrGenBlsKey(tempDir, false, testPassword, "", defaultBlsKeyFilePath)
+		_, err = os.Stat(keyFile)
+		assert.NoError(t, err, "BLS key file should exist at: "+keyFile)
+		_, err = os.Stat(passwordFile)
+		assert.NoError(t, err, "BLS password file should exist at: "+passwordFile)
+
+		loadedSigner, err := LoadOrGenBlsKey(tempDir, false, testPassword, "", "")
 		assert.NoError(t, err)
 		assert.NotNil(t, loadedSigner)
 
@@ -110,7 +116,7 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 	})
 
 	t.Run("invalid directory path", func(t *testing.T) {
-		blsSigner, err := LoadOrGenBlsKey("/random-non-existent/path/that/should/not/exist", true, "", "", defaultBlsKeyFilePath)
+		blsSigner, err := LoadOrGenBlsKey("/random-non-existent/path/that/should/not/exist", true, "", "", "")
 		assert.Error(t, err)
 		assert.Nil(t, blsSigner)
 	})
@@ -119,7 +125,6 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 		tempDir := t.TempDir()
 		defer os.RemoveAll(tempDir)
 
-		// Create a full path for the custom key location
 		customFullPath := filepath.Join(tempDir, "custom", "path", "bls_key.json")
 		passwordPath := DefaultBlsPasswordFile(tempDir)
 

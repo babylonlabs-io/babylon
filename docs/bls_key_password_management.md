@@ -11,24 +11,25 @@ and require a password for decryption when the node starts.
 
 ## Password Management Options
 
-There are three ways to provide the password for the BLS key:
+There are two main ways to provide the password for the BLS key:
 
 1. **Environment Variable (Recommended)**: Set the `BABYLON_BLS_PASSWORD` 
    environment variable
-2. **Password File**: Store the password in a file (default location: 
-   `$HOME/.babylond/config/bls_password.txt` or custom location)
-3. **Interactive Prompt**: Enter the password when prompted during node startup
+2. **Password File**: Create a file containing only the password and provide
+   its path when starting the node
 
 ## Key Generation
 
-When generating a new BLS key (during `init` or using `create-bls-key`), you'll
-be prompted to choose how to manage your password:
+When generating a new BLS key (during `init` or using `create-bls-key`), you
+will be prompted to enter a secure password. For security, the input will be
+hidden, and you'll need to confirm your password by entering it twice.
 
-```
-Select the storage strategy for your BLS password.
-1. Environment variable (recommended)
-2. Local file (not recommended)
-```
+If the passwords don't match, you'll have up to 3 attempts to enter matching
+passwords before the command fails.
+
+After key generation, the password is NOT automatically stored anywhere. You
+are responsible for remembering or securely storing this password for future
+use.
 
 ### Command Line Flags
 
@@ -39,7 +40,7 @@ The following command-line flags can be used with `babylond init`,
   production)
 - `--no-bls-password` - Generate key without password protection (suitable for 
   non-validator nodes)
-- `--bls-password-file` - Specify a custom path for the password file
+- `--bls-password-file` - Specify a path to a file containing the password
 
 Example:
 ```bash
@@ -55,7 +56,7 @@ babylond start --bls-password-file="/path/to/custom/password.txt"
 
 ## Using Environment Variables (Recommended)
 
-Using environment variables is the recommended approach for production
+Setting an environment variable is the recommended approach for production
 environments as it avoids storing the password in plaintext on disk.
 
 ```bash
@@ -66,23 +67,21 @@ export BABYLON_BLS_PASSWORD="your-secure-password"
 babylond start
 ```
 
-**Important**: When using the environment variable method, Babylon will not 
-write the password to any file, enhancing security by avoiding plaintext
-storage on disk.
+## Creating and Using Password Files
 
-## Using Password Files
+If you prefer to store the password in a file:
 
-For deployment scenarios where environment variables aren't suitable, Babylon
-supports reading the password from a file.
+1. Create a text file containing only your password
+2. Set appropriate permissions (e.g., `chmod 600`)
+3. Provide the path when starting the node:
 
-Default location:
-```
-$HOME/.babylond/config/bls_password.txt
-```
-
-Custom location (specified via flag):
 ```bash
-babylond start --bls-password-file="/path/to/custom/password.txt"
+# Create a password file
+echo "your-secure-password" > /path/to/bls_password.txt
+chmod 600 /path/to/bls_password.txt
+
+# Start node with password file
+babylond start --bls-password-file="/path/to/bls_password.txt"
 ```
 
 ## Priority Order
@@ -92,12 +91,26 @@ order:
 
 1. Direct password provided via `--bls-password` flag
 2. `BABYLON_BLS_PASSWORD` environment variable
-3. Custom password file path (if specified with `--bls-password-file`)
-4. Default password file path (`$HOME/.babylond/config/bls_password.txt`)
-5. Interactive prompt (if none of the above are available)
+3. Password file specified with `--bls-password-file`
+4. Interactive prompt
 
 If `--no-bls-password` is specified, the system will use an empty password
 regardless of other settings.
+
+## Security Considerations
+
+1. **Do not use empty passwords** for validator nodes. Only use the
+   `--no-bls-password` flag for non-validator nodes.
+
+2. **Store passwords securely**. Once the key is generated, the system will
+   not store the password automatically. You are responsible for remembering
+   or securely storing it.
+
+3. **Consider using a password manager** to generate and store your BLS key
+   password securely.
+
+4. **Environment variables are generally more secure** than storing passwords
+   in files, as they exist only in memory rather than on disk.
 
 ## Non-Validator Nodes
 

@@ -1,7 +1,6 @@
 package signer
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -12,7 +11,6 @@ import (
 	cmtjson "github.com/cometbft/cometbft/libs/json"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/libs/tempfile"
-	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -82,23 +80,55 @@ func GenBls(keyFilePath, passwordFilePath, password string) *Bls {
 	return pv
 }
 
-// LoadBls returns a Bls after loading the erc2335 type of structure
-// from the file and decrypt it using a password.
-func LoadBls(keyFilePath, passwordFilePath string) *Bls {
-	password, err := GetBlsPassword(passwordFilePath)
-	if err != nil {
-		cmtos.Exit(fmt.Sprintf("failed to get BLS password: %v", err.Error()))
+// LoadBlsFromEnv loads a BLS key using a password from environment variable
+func LoadBlsFromEnv(keyFilePath string) (*Bls, error) {
+	password := GetBlsPasswordFromEnv()
+	if password == "" {
+		return nil, fmt.Errorf("BLS password not found in environment variable")
 	}
 
 	keystore, err := erc2335.LoadKeyStore(keyFilePath)
 	if err != nil {
-		cmtos.Exit(fmt.Sprintf("failed to read erc2335 keystore: %v", err.Error()))
+		return nil, fmt.Errorf("failed to read erc2335 keystore: %w", err)
+	}
+
+	privKey, err := erc2335.Decrypt(keystore, password)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt BLS key: %w", err)
+	}
+
+	blsPrivKey := bls12381.PrivateKey(privKey)
+	return &Bls{
+		Key: BlsKey{
+			PubKey:       blsPrivKey.PubKey(),
+			PrivKey:      blsPrivKey,
+			filePath:     keyFilePath,
+			passwordPath: "",
+		},
+	}, nil
+}
+
+// LoadBlsFromFile loads a BLS key using a password from file
+func LoadBlsFromFile(keyFilePath, passwordFilePath string) (*Bls, error) {
+	if !cmtos.FileExists(passwordFilePath) {
+		return nil, fmt.Errorf("BLS password file does not exist: %s", passwordFilePath)
+	}
+
+	passwordBytes, err := os.ReadFile(passwordFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read BLS password file: %w", err)
+	}
+	password := string(passwordBytes)
+
+	keystore, err := erc2335.LoadKeyStore(keyFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read erc2335 keystore: %w", err)
 	}
 
 	// decrypt bls key from erc2335 type of structure
 	privKey, err := erc2335.Decrypt(keystore, password)
 	if err != nil {
-		cmtos.Exit(fmt.Sprintf("failed to decrypt BLS key: %v", err.Error()))
+		return nil, fmt.Errorf("failed to decrypt BLS key: %w", err)
 	}
 
 	blsPrivKey := bls12381.PrivateKey(privKey)
@@ -109,17 +139,23 @@ func LoadBls(keyFilePath, passwordFilePath string) *Bls {
 			filePath:     keyFilePath,
 			passwordPath: passwordFilePath,
 		},
-	}
+	}, nil
 }
 
-// NewBlsPassword returns a password from the user prompt.
-func NewBlsPassword() string {
-	inBuf := bufio.NewReader(os.Stdin)
-	password, err := input.GetString("Enter your bls password", inBuf)
-	if err != nil {
-		cmtos.Exit("failed to get BLS password")
+// LoadBls loads a BLS key, attempting to use environment variable first and file-based passwords after.
+func LoadBls(keyFilePath, passwordFilePath string) *Bls {
+	if bls, err := LoadBlsFromEnv(keyFilePath); err == nil {
+		return bls
 	}
-	return password
+
+	if passwordFilePath != "" {
+		bls, err := LoadBlsFromFile(keyFilePath, passwordFilePath)
+		if err == nil {
+			return bls
+		}
+	}
+
+	return nil
 }
 
 // GetBlsPassword retrieves the BLS password from environment variable or password file.
@@ -180,17 +216,12 @@ func (k *BlsKey) Save(password string) {
 		panic(fmt.Errorf("failed to write BLS key: %w", err))
 	}
 
-	// Only save the password to a file if a password file path is provided
 	if k.passwordPath != "" {
-		dirPath := filepath.Dir(k.passwordPath)
-		if err := cmtos.EnsureDir(dirPath, 0777); err != nil {
-			panic(fmt.Errorf("failed to ensure password file directory: %w", err))
-		}
-
 		if err := tempfile.WriteFileAtomic(k.passwordPath, []byte(password), 0600); err != nil {
 			panic(fmt.Errorf("failed to write BLS password: %w", err))
 		}
 	}
+
 }
 
 // ExportGenBls writes a {address, bls_pub_key, pop, and pub_key} into a json file
@@ -272,22 +303,16 @@ func LoadBlsSignerIfExists(homeDir string, customPasswordPath, customKeyPath str
 		return nil
 	}
 
-	if envPassword := GetBlsPasswordFromEnv(); envPassword != "" {
-		bls := LoadBls(blsKeyFile, "")
+	bls := LoadBls(blsKeyFile, customPasswordPath)
+	if bls != nil {
 		return &bls.Key
-	}
-
-	if customPasswordPath != "" && customPasswordPath != defaultBlsPasswordPath {
-		if cmtos.FileExists(customPasswordPath) {
-			bls := LoadBls(blsKeyFile, customPasswordPath)
-			return &bls.Key
-		}
 	}
 
 	defaultPasswordFile := DefaultBlsPasswordFile(homeDir)
 	if cmtos.FileExists(defaultPasswordFile) {
-		bls := LoadBls(blsKeyFile, defaultPasswordFile)
-		return &bls.Key
+		if bls, err := LoadBlsFromFile(blsKeyFile, defaultPasswordFile); err == nil {
+			return &bls.Key
+		}
 	}
 
 	return nil
@@ -337,13 +362,10 @@ func determinePasswordFilePath(homeDir, customPasswordPath string) string {
 
 // determinePassword returns the appropriate password based on the given options
 func determinePassword(noPassword bool, explicitPassword, passwordFilePath string) string {
-	if noPassword {
-		// When using no password, ensure an empty password file exists
-		if passwordFilePath != "" {
-			dirPath := filepath.Dir(passwordFilePath)
-			if err := cmtos.EnsureDir(dirPath, 0777); err == nil {
-				_ = tempfile.WriteFileAtomic(passwordFilePath, []byte(""), 0600)
-			}
+	if noPassword && passwordFilePath != "" {
+		dirPath := filepath.Dir(passwordFilePath)
+		if err := cmtos.EnsureDir(dirPath, 0777); err == nil {
+			_ = tempfile.WriteFileAtomic(passwordFilePath, []byte(""), 0600)
 		}
 		return ""
 	}
