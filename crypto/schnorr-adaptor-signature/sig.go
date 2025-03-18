@@ -16,9 +16,9 @@ var AdaptorSignatureTagNonce = []byte("SchnorrAdaptor/nonce")
 
 // EncVerify verifies that the adaptor signature is valid with respect to the given
 // public key, encryption key and message hash.
-func (sig *AdaptorSignature) EncVerify(pk *btcec.PublicKey, encKey *EncryptionKey, msg []byte) error {
+func (sig *AdaptorSignature) EncVerify(pk *btcec.PublicKey, encKey *EncryptionKey, msgHash []byte) error {
 	pkBytes := schnorr.SerializePubKey(pk)
-	return encVerify(sig, msg, pkBytes, &encKey.JacobianPoint)
+	return encVerify(sig, msgHash, pkBytes, &encKey.JacobianPoint)
 }
 
 // Decrypt decrypts the adaptor signature to a Schnorr signature by
@@ -52,7 +52,7 @@ func genRandForNonce(
 	auxRand []byte,
 	encKeyBytes []byte,
 	pkBytes []byte,
-	msg []byte,
+	msgHash []byte,
 ) [chainhash.HashSize]byte {
 	// Calculate tagged_hash("SchnorrAdaptor/aux", aux)
 	auxHash := chainhash.TaggedHash(AdaptorSignatureTagAux, auxRand)
@@ -70,21 +70,25 @@ func genRandForNonce(
 	}
 
 	// rand = tagged_hash("SchnorrAdaptor/nonce", t || T || P || msg)
-	randForNonce := chainhash.TaggedHash(AdaptorSignatureTagNonce, t[:], encKeyBytes, pkBytes, msg)
+	randForNonce := chainhash.TaggedHash(AdaptorSignatureTagNonce, t[:], encKeyBytes, pkBytes, msgHash)
 	return *randForNonce
 }
 
 // EncSign creates an adaptor signature using the given private key, encryption key,
 // and message hash. It generates random auxiliary data internally.
-func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msg []byte) (*AdaptorSignature, error) {
+func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*AdaptorSignature, error) {
 	auxData := rand.Bytes(chainhash.HashSize)
-	return EncSignWithAuxData(sk, encKey, msg, auxData)
+	return EncSignWithAuxData(sk, encKey, msgHash, auxData)
 }
 
 // EncSignWithAuxData creates an adaptor signature using the given private key,
 // encryption key, message hash, and auxiliary data.
 // allowing the caller to provide auxiliary data for deterministic nonce generation.
-func EncSignWithAuxData(sk *btcec.PrivateKey, encKey *EncryptionKey, msg []byte, auxData []byte) (*AdaptorSignature, error) {
+func EncSignWithAuxData(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte, auxData []byte) (*AdaptorSignature, error) {
+	// Fail if msgHash is not 32 bytes
+	if len(msgHash) != chainhash.HashSize {
+		return nil, fmt.Errorf("wrong size for message hash (got %v, want %v)", len(msgHash), chainhash.HashSize)
+	}
 	// Fail if auxData is not 32 bytes
 	if len(auxData) != chainhash.HashSize {
 		return nil, fmt.Errorf("wrong size for auxiliary data (got %v, want %v)", len(auxData), chainhash.HashSize)
@@ -121,7 +125,7 @@ func EncSignWithAuxData(sk *btcec.PrivateKey, encKey *EncryptionKey, msg []byte,
 	// - Generates rand = tagged_hash("SchnorrAdaptor/nonce", t || T || P || m)
 	var skBytes [chainhash.HashSize]byte
 	skScalar.PutBytes(&skBytes)
-	randForNonce := genRandForNonce(skBytes, auxData, encKeyBytes, pkBytes, msg)
+	randForNonce := genRandForNonce(skBytes, auxData, encKeyBytes, pkBytes, msgHash)
 	// Zeroize private key bytes after use
 	defer func() {
 		for i := range skBytes {
@@ -145,7 +149,7 @@ func EncSignWithAuxData(sk *btcec.PrivateKey, encKey *EncryptionKey, msg []byte,
 	}
 
 	// Steps 9-16: Generate adaptor signature with the nonce
-	adaptorSig, err := encSign(&skScalar, &nonce, pk, msg, &encKey.JacobianPoint)
+	adaptorSig, err := encSign(&skScalar, &nonce, pk, msgHash, &encKey.JacobianPoint)
 	if err != nil {
 		return nil, err
 	}

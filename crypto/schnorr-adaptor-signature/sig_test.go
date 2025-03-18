@@ -28,12 +28,15 @@ func FuzzEncSignAndEncVerify(f *testing.F) {
 		encKey, _, err := asig.GenKeyPair()
 		require.NoError(t, err)
 
+		// message hash
+		msgHash := chainhash.HashB(msg)
+
 		// encSign message
-		adaptorSig, err := asig.EncSign(sk, encKey, msg)
+		adaptorSig, err := asig.EncSign(sk, encKey, msgHash)
 		require.NoError(t, err)
 
 		// encVerify message
-		err = adaptorSig.EncVerify(pk, encKey, msg)
+		err = adaptorSig.EncVerify(pk, encKey, msgHash)
 		require.NoError(t, err)
 	})
 }
@@ -56,15 +59,18 @@ func FuzzDecrypt(f *testing.F) {
 		encKey, decKey, err := asig.GenKeyPair()
 		require.NoError(t, err)
 
+		// message hash
+		msgHash := chainhash.HashB(msg)
+
 		// encSign message
-		adaptorSig, err := asig.EncSign(sk, encKey, msg)
+		adaptorSig, err := asig.EncSign(sk, encKey, msgHash)
 		require.NoError(t, err)
 
 		// decrypt message
 		schnorrSig, err := adaptorSig.Decrypt(decKey)
 		require.NoError(t, err)
 		// decrypted Schnorr signature should be valid
-		resVerify := schnorrSig.Verify(msg, pk)
+		resVerify := schnorrSig.Verify(msgHash, pk)
 		require.True(t, resVerify)
 	})
 }
