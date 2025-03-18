@@ -89,12 +89,12 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 		queuedMsgs := k.GetCurrentEpochMsgs(ctx)
 		// forward each msg in the msg queue to the right keeper
 		for _, msg := range queuedMsgs {
-			_, err := k.HandleQueuedMsg(ctx, msg)
+			_, errQueuedMsg := k.HandleQueuedMsg(ctx, msg)
 			// skip this failed msg and emit and event signalling it
 			// we do not panic here as some users may wrap an invalid message
 			// (e.g., self-delegate coins more than its balance, wrong coding of addresses, ...)
 			// honest validators will have consistent execution results on the queued messages
-			if err != nil {
+			if errQueuedMsg != nil {
 				// emit an event signalling the failed execution
 				err := sdkCtx.EventManager().EmitTypedEvent(
 					&types.EventHandleQueuedMsg{
@@ -102,7 +102,7 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 						Height:      msg.BlockHeight,
 						TxId:        msg.TxId,
 						MsgId:       msg.MsgId,
-						Error:       err.Error(),
+						Error:       errQueuedMsg.Error(),
 					},
 				)
 				if err != nil {
