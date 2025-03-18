@@ -109,7 +109,7 @@ func (e *Evidence) ExtractBTCSK() (*btcec.PrivateKey, error) {
 		return nil, err
 	}
 	return eots.Extract(
-		btcPK, e.PubRand.ToFieldVal(),
+		btcPK, e.PubRand.ToFieldValNormalized(),
 		e.canonicalMsgToSign(), e.CanonicalFinalitySig.ToModNScalar(), // msg and sig for canonical block
 		e.forkMsgToSign(), e.ForkFinalitySig.ToModNScalar(), // msg and sig for fork block
 	)

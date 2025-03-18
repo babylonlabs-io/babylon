@@ -349,6 +349,16 @@ func (cc *CosmosProvider) SendMessagesToMempool(
 	asyncCtx context.Context,
 	asyncCallbacks []func(*RelayerTxResponse, error),
 ) error {
+	blockTimeout := defaultBroadcastWaitTimeout
+	var err error
+
+	if cc.PCfg.BlockTimeout != "" {
+		blockTimeout, err = time.ParseDuration(cc.PCfg.BlockTimeout)
+		if err != nil {
+			return err
+		}
+	}
+
 	txSignerKey := cc.PCfg.Key
 
 	sequenceGuard := ensureSequenceGuard(cc, txSignerKey)
@@ -365,7 +375,7 @@ func (cc *CosmosProvider) SendMessagesToMempool(
 		return err
 	}
 
-	if err := cc.BroadcastTx(ctx, txBytes, asyncCtx, defaultBroadcastWaitTimeout, asyncCallbacks); err != nil {
+	if err := cc.BroadcastTx(ctx, txBytes, asyncCtx, blockTimeout, asyncCallbacks); err != nil {
 		if strings.Contains(err.Error(), legacyerrors.ErrWrongSequence.Error()) {
 			cc.handleAccountSequenceMismatchError(sequenceGuard, err)
 		}
