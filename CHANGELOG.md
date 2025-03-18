@@ -39,8 +39,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-- [#697](https://github.com/babylonlabs-io/babylon/pull/697) Update BIP322 PoP sign
-of bech32 string address as bytes, instead of sha256 hash of address bytes.
 - [#687](https://github.com/babylonlabs-io/babylon/pull/687) Add details to btc-reorg runbook.
 - [#693](https://github.com/babylonlabs-io/babylon/pull/693) chore: use timeout from config in bbn client
 - [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.
@@ -69,6 +67,8 @@ check of rewards
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
+- [#697](https://github.com/babylonlabs-io/babylon/pull/697) Update BIP322 PoP and
+ECDSA Pop to sign bech32 encoded cosmos address
 
 ### Bug fixes
 
