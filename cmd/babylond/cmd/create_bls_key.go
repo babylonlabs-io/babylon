@@ -86,7 +86,7 @@ $ babylond create-bls-key --home ./
 
 				fmt.Printf("\nIMPORTANT: Your BLS key has been created with password protection.\n")
 				fmt.Printf("You must set the BABYLON_BLS_PASSWORD environment variable before starting the node:\n")
-				fmt.Printf("export %s=%s\n", appsigner.BlsPasswordEnvVar, password)
+				fmt.Printf("export %s=<your_password>\n", appsigner.BlsPasswordEnvVar)
 				return nil
 			}
 
@@ -104,7 +104,7 @@ $ babylond create-bls-key --home ./
 
 				if fileChoice == "1" {
 					passwordFile = appsigner.DefaultBlsPasswordFile(homeDir)
-					fmt.Printf("Your password will be saved to: %s\n", passwordFile)
+					fmt.Println("Your password will be saved to the default location.")
 				} else {
 					fmt.Println("Please enter the absolute path where you want to save your password file:")
 					fmt.Println("(If you provide a directory path, the file will be named bls_password.txt)")
@@ -128,8 +128,8 @@ $ babylond create-bls-key --home ./
 				bls.Key.Save(password)
 
 				fmt.Printf("\nIMPORTANT: Your BLS key has been created with password protection.\n")
-				fmt.Printf("Your password has been saved to: %s\n", passwordFile)
-				fmt.Printf("You will need this file when starting your node.\n")
+				fmt.Println("Your password has been saved to the specified location.")
+				fmt.Println("You will need this file when starting your node.")
 				return nil
 			}
 
