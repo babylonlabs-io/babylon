@@ -64,11 +64,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 functions to `testutil`
 - [#683](https://github.com/babylonlabs-io/babylon/pull/683) crypto: fix eots signing timing attack
 - [#691](https://github.com/babylonlabs-io/babylon/pull/691) crypto: fix eots missing normalization in use of secp256k1.FieldVal
+- [#671](https://github.com/babylonlabs-io/babylon/pull/671) crypto: align adaptor sig impl with Blockstream spec
 
 ### Improvements
 
 - [#655](https://github.com/babylonlabs-io/babylon/pull/655) Add func `ParseV0StakingTxWithoutTag` to
 parse staking tx without verifying opreturn tag.
+- [#666](https://github.com/babylonlabs-io/babylon/pull/666) Upgrade to wasmvm v2.2.3.
+- [#668](https://github.com/babylonlabs-io/babylon/pull/668) Remove unused unsafe key gen functions
+- [#676](https://github.com/babylonlabs-io/babylon/pull/676) Bump IBC-go to `v8.7.0`
+- [#644](https://github.com/babylonlabs-io/babylon/pull/644) Add priority nonce mempool and transaction priority ante handler decorator
+- [#693](https://github.com/babylonlabs-io/babylon/pull/693) chore: use timeout from config in bbn client
+- [#660](https://github.com/babylonlabs-io/babylon/pull/660) add function to recover pub key from sig
+- [#625](https://github.com/babylonlabs-io/babylon/pull/625) add tx gas limit decorator and local mempool config
+
+### State breaking
+
+- [#697](https://github.com/babylonlabs-io/babylon/pull/697) Update BIP322 PoP and
+ECDSA Pop to sign bech32 encoded cosmos address
 
 ## v1.0.0-rc7
 
@@ -101,9 +114,6 @@ block bank send and still create BTC delegations
 
 ### Bug fixes
 
-- [#657](https://github.com/babylonlabs-io/babylon/pull/657) crypto: fix adaptor sig timing side channels
-- [#656](https://github.com/babylonlabs-io/babylon/pull/656) crypto: fix adaptor sig validity and typos
-- [#658](https://github.com/babylonlabs-io/babylon/pull/658) crypto: Add check for Z==1 in ToBTCPK
 - [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
 invocation
 - [#591](https://github.com/babylonlabs-io/babylon/pull/591) bump ibc to v8.6.1 that fixes security issue

@@ -50,7 +50,7 @@ func FuzzSlashingTx_VerifySigAndASig(f *testing.F) {
 		// use a random fp SK/PK
 		fpIdx := int(datagen.RandomInt(r, numRestakedFPs))
 		fpSK, fpPK := fpSKs[fpIdx], fpPKs[fpIdx]
-		decKey, err := asig.NewDecryptionKeyKeyFromBTCSK(fpSK)
+		decKey, err := asig.NewDecryptionKeyFromBTCSK(fpSK)
 		require.NoError(t, err)
 		encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
 		require.NoError(t, err)
@@ -105,7 +105,8 @@ func FuzzSlashingTx_VerifySigAndASig(f *testing.F) {
 
 		// decrypt covenant adaptor signature and ensure the resulting Schnorr signature
 		// can be verified
-		covSig := covASig.Decrypt(decKey)
+		covSig, err := covASig.Decrypt(decKey)
+		require.NoError(t, err)
 		err = slashingTx.VerifySignature(
 			testStakingInfo.StakingInfo.StakingOutput,
 			slashingPkScriptPath,
@@ -151,7 +152,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		fpSK, fpPK := fpSKs[fpIdx], fpPKs[fpIdx]
 		encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
 		require.NoError(t, err)
-		decKey, err := asig.NewDecryptionKeyKeyFromBTCSK(fpSK)
+		decKey, err := asig.NewDecryptionKeyFromBTCSK(fpSK)
 		require.NoError(t, err)
 
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
@@ -227,7 +228,8 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 			)
 			require.NoError(t, err, "verifying covenant adaptor sig at %d", i)
 
-			covSchnorrSig := covSigsForFP[i].Decrypt(decKey)
+			covSchnorrSig, err := covSigsForFP[i].Decrypt(decKey)
+			require.NoError(t, err)
 			err = slashingTx.VerifySignature(
 				testStakingInfo.StakingInfo.StakingOutput,
 				slashingPkScriptPath,
