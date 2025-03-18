@@ -39,7 +39,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-- [#690](https://github.com/babylonlabs-io/babylon/pull/690) Add env variable for bls password.
+- [#690](https://github.com/babylonlabs-io/babylon/pull/690) Add new BLS password flow which includes env variable.
+- [#687](https://github.com/babylonlabs-io/babylon/pull/687) Add details to btc-reorg runbook.
+- [#693](https://github.com/babylonlabs-io/babylon/pull/693) chore: use timeout from config in bbn client
 - [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.
 - [#666](https://github.com/babylonlabs-io/babylon/pull/666) Upgrade to wasmvm v2.2.3.
 - [#655](https://github.com/babylonlabs-io/babylon/pull/655) Add func `ParseV0StakingTxWithoutTag` to
@@ -67,6 +69,12 @@ check of rewards
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
 
+### API Breaking
+
+- [#682](https://github.com/babylonlabs-io/babylon/pull/682) Avoid creating pop in `babylond tx checkpointing create-validator`
+- [#697](https://github.com/babylonlabs-io/babylon/pull/697) Update BIP322 PoP and
+ECDSA Pop to sign bech32 encoded cosmos address
+
 ### Bug fixes
 
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
@@ -76,6 +84,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 - [#673](https://github.com/babylonlabs-io/babylon/pull/673) fix: move bip322 signing
 functions to `testutil`
 - [#683](https://github.com/babylonlabs-io/babylon/pull/683) crypto: fix eots signing timing attack
+- [#691](https://github.com/babylonlabs-io/babylon/pull/691) crypto: fix eots missing normalization in use of secp256k1.FieldVal
 
 ## v1.0.0-rc7
 
