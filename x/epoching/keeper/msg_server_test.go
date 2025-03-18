@@ -250,9 +250,10 @@ func FuzzMsgWrappedUpdateStakingParams(f *testing.F) {
 }
 
 func TestExponentiallyEventsEndEpochQueuedMessages(t *testing.T) {
+	t.Parallel()
+
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	h := testhelper.NewHelper(t)
-
 	ctx, k, stkK := h.Ctx, h.App.EpochingKeeper, h.App.StakingKeeper
 
 	vals, err := stkK.GetValidators(ctx, 1)
