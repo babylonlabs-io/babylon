@@ -39,6 +39,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#687](https://github.com/babylonlabs-io/babylon/pull/687) Add details to btc-reorg runbook.
+- [#693](https://github.com/babylonlabs-io/babylon/pull/693) chore: use timeout from config in bbn client
+- [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.
 - [#666](https://github.com/babylonlabs-io/babylon/pull/666) Upgrade to wasmvm v2.2.3.
 - [#655](https://github.com/babylonlabs-io/babylon/pull/655) Add func `ParseV0StakingTxWithoutTag` to
 parse staking tx without verifying opreturn tag.
@@ -56,6 +59,8 @@ check of rewards
 - [#624](https://github.com/babylonlabs-io/babylon/pull/624) Make keeper's collections private in `x/incentive` module
 - [#625](https://github.com/babylonlabs-io/babylon/pull/625) Add `GasLimit` decorator in ante handler and local mempool configuration
 - [#643](https://github.com/babylonlabs-io/babylon/pull/643) Fix flaky test `FuzzBTCDelegation`
+- [#644](https://github.com/babylonlabs-io/babylon/pull/644) Add priority nonce mempool and transaction priority ante handler decorator
+- [#676](https://github.com/babylonlabs-io/babylon/pull/676) Bump IBC-go to `v8.7.0`
 - [#668](https://github.com/babylonlabs-io/babylon/pull/668) Remove unused unsafe key gen functions
 
 ### State Machine Breaking
@@ -66,14 +71,19 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 ### API Breaking
 
 - [#682](https://github.com/babylonlabs-io/babylon/pull/682) Avoid creating pop in `babylond tx checkpointing create-validator`
+- [#697](https://github.com/babylonlabs-io/babylon/pull/697) Update BIP322 PoP and
+ECDSA Pop to sign bech32 encoded cosmos address
 
 ### Bug fixes
 
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 - [#667](https://github.com/babylonlabs-io/babylon/pull/667) crypto: enable groupcheck in BLS verification/aggregation
 - [#660](https://github.com/babylonlabs-io/babylon/pull/660) fix: ecdsa verification
+- [#680](https://github.com/babylonlabs-io/babylon/pull/680) crypto: fix bls rogue attack
 - [#673](https://github.com/babylonlabs-io/babylon/pull/673) fix: move bip322 signing
 functions to `testutil`
+- [#683](https://github.com/babylonlabs-io/babylon/pull/683) crypto: fix eots signing timing attack
+- [#691](https://github.com/babylonlabs-io/babylon/pull/691) crypto: fix eots missing normalization in use of secp256k1.FieldVal
 
 ## v1.0.0-rc7
 
