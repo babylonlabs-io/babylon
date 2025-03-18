@@ -50,24 +50,24 @@ before running the command (e.g., via babylond create-bls-key).`)
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		clientCtx, err := client.GetClientTxContext(cmd)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get client tx context: %w", err)
 		}
 
 		txf, err := tx.NewFactoryCLI(clientCtx, cmd.Flags())
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create transaction factory: %w", err)
 		}
 
 		val, err := parseAndValidateValidatorJSON(clientCtx.Codec, args[0])
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to parse and validate validator JSON: %w", err)
 		}
 
 		txf = txf.WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
 		txf, msg, err := buildWrappedCreateValidatorMsg(clientCtx, txf, cmd.Flags(), val, valAddrCodec)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to build wrapped create validator message: %w", err)
 		}
 
 		return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)

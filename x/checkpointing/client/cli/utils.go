@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"cosmossdk.io/core/address"
 	errorsmod "cosmossdk.io/errors"
@@ -164,7 +163,7 @@ func buildWrappedCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs
 	var pop *types.ProofOfPossession
 
 	blsPopFilePath, _ := fs.GetString(FlagBlsPopFilePath)
-	if !strings.EqualFold(blsPopFilePath, "") {
+	if blsPopFilePath != "" {
 		// if blsPopFilePath is not empty, load bls key from the provided path
 		blsPop, err := appsigner.LoadBlsPop(blsPopFilePath)
 		if err != nil {
