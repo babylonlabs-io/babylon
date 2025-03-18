@@ -67,6 +67,10 @@ check of rewards
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
+
+### API Breaking
+
+- [#682](https://github.com/babylonlabs-io/babylon/pull/682) Avoid creating pop in `babylond tx checkpointing create-validator`
 - [#697](https://github.com/babylonlabs-io/babylon/pull/697) Update BIP322 PoP and
 ECDSA Pop to sign bech32 encoded cosmos address
 
