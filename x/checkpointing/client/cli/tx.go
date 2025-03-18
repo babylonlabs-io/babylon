@@ -41,12 +41,12 @@ func GetTxCmd() *cobra.Command {
 
 func CmdWrappedCreateValidator(valAddrCodec address.Codec) *cobra.Command {
 	cmd := cosmoscli.NewCreateValidatorCmd(valAddrCodec)
-	cmd.Long = strings.TrimSpace(`create-validator will create a new validator initialized
-with a self-delegation to it using the BLS key generated for the validator (e.g., via babylond create-bls-key).
+	cmd.Long = strings.TrimSpace(`create-validator will create a new validator identified by both Ed25519 key and BLS key.
+This command creates a MsgWrappedCreateValidator message which is a wrapper of Cosmos SDK's
+MsgCreateValidator with a pair of BLS key.
 
-This command creates a MsgWrappedCreateValidator message which is a wrapper of cosmos-sdk's
-create validator with a pair of BLS key. The BLS key should exist in priv_validator_key.json
-before running the command (e.g., via babylond create-bls-key).`)
+If --bls-pop is specified, it will use the BLS pop generated via 'babylond generate-bls-pop'.
+If not specified, the BLS pop will be generated from priv_validator_key.json and bls_key.json.`)
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		clientCtx, err := client.GetClientTxContext(cmd)
 		if err != nil {
@@ -83,7 +83,7 @@ before running the command (e.g., via babylond create-bls-key).`)
 
 	defaultNodeHome := filepath.Join(userHomeDir, ".babylond")
 	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The node home directory")
-	cmd.Flags().String(FlagBlsPopFilePath, "", "The path to the proof-of-possession file")
+	cmd.Flags().String(FlagBlsPopFilePath, "", "The path to the BLS proof-of-possession file generated via `babylon generate-bls-pop`")
 
 	return cmd
 }
