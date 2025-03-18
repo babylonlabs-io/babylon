@@ -37,6 +37,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v1.0.0-rc.6-hot-fix
+
+### Bug fixes
+
+- [#714](https://github.com/babylonlabs-io/babylon/pull/714) hot-fix: removed
+duplicated events `EventHandleQueuedMsg` at end of epoch for queued messages
+
 ## v1.0.0-rc6
 
 ### Improvements
