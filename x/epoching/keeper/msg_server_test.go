@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
@@ -245,4 +246,79 @@ func FuzzMsgWrappedUpdateStakingParams(f *testing.F) {
 		require.Equal(t, newBondDenom, stakingParamsAfterChange.BondDenom)
 		require.Equal(t, newMinCommissionRate.String(), stakingParamsAfterChange.MinCommissionRate.String())
 	})
+}
+
+func TestFoo(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	h := testhelper.NewHelper(t)
+
+	ctx, k, stkK := h.Ctx, h.App.EpochingKeeper, h.App.StakingKeeper
+
+	vals, err := stkK.GetValidators(ctx, 1)
+	h.NoError(err)
+	require.Len(t, vals, 1)
+
+	valBeforeChange := vals[0]
+	valAddr, err := sdk.ValAddressFromBech32(valBeforeChange.OperatorAddress)
+	h.NoError(err)
+
+	newDescription := datagen.GenRandomDescription(r)
+	newCommissionRate := sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("0.%d", r.Int31n(5)+1))
+	newMinSelfDel := valBeforeChange.MinSelfDelegation.AddRaw(r.Int63n(valBeforeChange.Tokens.Sub(valBeforeChange.MinSelfDelegation).Int64()))
+
+	msg := stakingtypes.NewMsgEditValidator(valAddr.String(), *newDescription, &newCommissionRate, &newMinSelfDel)
+	wMsg := types.NewMsgWrappedEditValidator(msg)
+
+	res, err := h.MsgSrvr.WrappedEditValidator(ctx, wMsg)
+	h.NoError(err)
+	require.NotNil(t, res)
+
+	epochMsgs := k.GetCurrentEpochMsgs(ctx)
+	require.Len(t, epochMsgs, 1)
+
+	var numDelMessages int = 7
+
+	for i := 0; i < numDelMessages; i++ {
+		epochMsgs = k.GetCurrentEpochMsgs(ctx)
+		msgDel := types.NewMsgWrappedDelegate(
+			stakingtypes.NewMsgDelegate(
+				h.GenAccs[0].GetAddress().String(),
+				valAddr.String(),
+				sdk.NewCoin("ubbn", sdkmath.NewInt(100000)),
+			),
+		)
+
+		res, err := h.MsgSrvr.WrappedDelegate(ctx, msgDel)
+		h.NoError(err)
+		require.NotNil(t, res)
+	}
+
+	epochMsgs = k.GetCurrentEpochMsgs(ctx)
+	require.Len(t, epochMsgs, numDelMessages+1)
+
+	blkHeader := ctx.BlockHeader()
+	blkHeader.Time = valBeforeChange.Commission.UpdateTime.Add(time.Hour * 25)
+	ctx = ctx.WithBlockHeader(blkHeader)
+
+	epoch := k.GetEpoch(ctx)
+	info := ctx.HeaderInfo()
+	info.Height = int64(epoch.GetLastBlockHeight())
+	info.Time = blkHeader.Time
+
+	// creates a new context to empty out the events from the manager
+	// which contained types.EventWrappedDelegate generated
+	// by the x/epoching msg server
+	ctx = sdk.NewContext(ctx.MultiStore(), ctx.BlockHeader(), ctx.IsCheckTx(), ctx.Logger()).WithHeaderInfo(info)
+
+	// with a clean context
+	valsetUpdate, err := epoching.EndBlocker(ctx, k)
+	h.NoError(err)
+	require.Len(t, valsetUpdate, 0)
+
+	var events []abci.Event
+	if evtMgr := ctx.EventManager(); evtMgr != nil {
+		events = evtMgr.ABCIEvents()
+	}
+
+	fmt.Println(len(events))
 }
