@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	UpgradeName = "v1rc7"
+	UpgradeName = "v1rc8"
 )
 
 func CreateUpgrade() upgrades.Upgrade {
