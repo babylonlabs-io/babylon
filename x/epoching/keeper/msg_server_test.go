@@ -8,6 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
@@ -319,6 +320,84 @@ func TestFoo(t *testing.T) {
 	if evtMgr := ctx.EventManager(); evtMgr != nil {
 		events = evtMgr.ABCIEvents()
 	}
+
+	fmt.Println(len(events))
+}
+
+func TestEpochFailedMsg(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	h := testhelper.NewHelper(t)
+
+	ctx, k, stkK := h.Ctx, h.App.EpochingKeeper, h.App.StakingKeeper
+
+	vals, err := stkK.GetValidators(ctx, 1)
+	h.NoError(err)
+	require.Len(t, vals, 1)
+
+	valBeforeChange := vals[0]
+	valAddr, err := sdk.ValAddressFromBech32(valBeforeChange.OperatorAddress)
+	h.NoError(err)
+
+	valI, err := h.App.StakingKeeper.GetValidator(ctx, valAddr)
+	require.NoError(t, err)
+
+	newDescription := datagen.GenRandomDescription(r)
+	// newBadCommissionRate := valI.Commission.MaxRate.Add(sdkmath.LegacyMustNewDecFromStr("0.01"))
+	newBadCommissionRate := sdkmath.LegacyMustNewDecFromStr("0.0015")
+	newMinSelfDel := valBeforeChange.MinSelfDelegation.AddRaw(r.Int63n(valBeforeChange.Tokens.Sub(valBeforeChange.MinSelfDelegation).Int64()))
+
+	msg := stakingtypes.NewMsgEditValidator(valAddr.String(), *newDescription, &newBadCommissionRate, &newMinSelfDel)
+	// wMsg := types.NewMsgWrappedEditValidator(msg)
+
+	// res, err := h.MsgSrvr.WrappedEditValidator(ctx, wMsg)
+	// h.NoError(err)
+	// require.NotNil(t, res)
+
+	blockHeight := uint64(ctx.HeaderInfo().Height)
+	blockTime := ctx.HeaderInfo().Time
+	txid := tmhash.Sum(ctx.TxBytes())
+
+	queuedMsg, err := types.NewQueuedMessage(blockHeight, blockTime, txid, msg)
+	require.NoError(t, err)
+	h.App.EpochingKeeper.EnqueueMsg(ctx, queuedMsg)
+
+	epochMsgs := k.GetCurrentEpochMsgs(ctx)
+	require.Len(t, epochMsgs, 1)
+
+	epochMsgs = k.GetCurrentEpochMsgs(ctx)
+
+	blkHeader := ctx.BlockHeader()
+	blkHeader.Time = valBeforeChange.Commission.UpdateTime.Add(time.Hour * 5)
+	ctx = ctx.WithBlockHeader(blkHeader)
+
+	epoch := k.GetEpoch(ctx)
+	info := ctx.HeaderInfo()
+	info.Height = int64(epoch.GetLastBlockHeight())
+	info.Time = blkHeader.Time
+
+	// update the commission to update the time and fail on the wrap execution
+	// _, err = h.App.StakingKeeper.UpdateValidatorCommission(ctx, valI, valI.Commission.Rate.Add(sdkmath.LegacyMustNewDecFromStr("0.001")))
+	// h.NoError(err)
+
+	// creates a new context to empty out the events from the manager
+	// which contained types.EventWrappedDelegate generated
+	// by the x/epoching msg server
+	ctx = sdk.NewContext(ctx.MultiStore(), ctx.BlockHeader(), ctx.IsCheckTx(), ctx.Logger()).WithHeaderInfo(info)
+
+	// with a clean context
+	valsetUpdate, err := epoching.EndBlocker(ctx, k)
+	h.NoError(err)
+	require.Len(t, valsetUpdate, 0)
+
+	var events []abci.Event
+	if evtMgr := ctx.EventManager(); evtMgr != nil {
+		events = evtMgr.ABCIEvents()
+	}
+
+	valI, err = h.App.StakingKeeper.GetValidator(ctx, valAddr)
+	require.NoError(t, err)
+
+	require.Equal(t, newDescription.Moniker, valI.Description.Moniker, "should not be equal, the commission update should fail the entire msg and not write the context")
 
 	fmt.Println(len(events))
 }

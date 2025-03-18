@@ -111,21 +111,6 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 				// skip this failed msg
 				continue
 			}
-			// for each event, emit an wrapped event EventTypeHandleQueuedMsg, which attaches the original attributes plus the original event type, the epoch number, txid and msgid to the event here
-			// for _, event := range res.Events {
-			// 	err := sdkCtx.EventManager().EmitTypedEvent(
-			// 		&types.EventHandleQueuedMsg{
-			// 			OriginalEventType:  event.Type,
-			// 			EpochNumber:        epoch.EpochNumber,
-			// 			TxId:               msg.TxId,
-			// 			MsgId:              msg.MsgId,
-			// 			OriginalAttributes: event.Attributes,
-			// 		},
-			// 	)
-			// 	if err != nil {
-			// 		return nil, err
-			// 	}
-			// }
 		}
 
 		// update validator set
