@@ -221,7 +221,6 @@ func (k *BlsKey) Save(password string) {
 			panic(fmt.Errorf("failed to write BLS password: %w", err))
 		}
 	}
-
 }
 
 // ExportGenBls writes a {address, bls_pub_key, pop, and pub_key} into a json file
