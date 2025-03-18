@@ -273,7 +273,7 @@ func MsgToSignBIP322(addr sdk.AccAddress) []byte {
 
 // VerifyECDSA verifies the validity of PoP where Bitcoin signature is in ECDSA encoding
 // 1. verify(sig=sig_btc, pubkey=pk_btc, msg=msg)?
-func VerifyECDSA(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKey, msg []byte) error {
+func VerifyECDSA(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKey, msg string) error {
 	if sigType != BTCSigType_ECDSA {
 		return fmt.Errorf("the Bitcoin signature in this proof of possession is not using ECDSA encoding")
 	}
@@ -283,12 +283,9 @@ func VerifyECDSA(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKe
 	if err != nil {
 		return err
 	}
-	// NOTE: ecdsa.Verify has to take message as a string
-	// So we have to hex BabylonSig before verifying the signature
-	bbnSigHex := hex.EncodeToString(msg)
 
 	// we ignore ignore is compressed flag as we only care about comparing X coordinates
-	recoveredPK, _, err := ecdsa.RecoverPublicKey(bbnSigHex, btcSigRaw)
+	recoveredPK, _, err := ecdsa.RecoverPublicKey(msg, btcSigRaw)
 	if err != nil {
 		return fmt.Errorf("failed to recover btc public key when verifying ECDSA PoP: %w", err)
 	}
@@ -313,7 +310,8 @@ func VerifyECDSA(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKe
 // VerifyECDSA verifies the validity of PoP where Bitcoin signature is in ECDSA encoding
 // 1. verify(sig=sig_btc, pubkey=pk_btc, msg=addr)?
 func (pop *ProofOfPossessionBTC) VerifyECDSA(addr sdk.AccAddress, bip340PK *bbn.BIP340PubKey) error {
-	return VerifyECDSA(pop.BtcSigType, pop.BtcSig, bip340PK, addr.Bytes())
+	accountAddressBech32 := addr.String()
+	return VerifyECDSA(pop.BtcSigType, pop.BtcSig, bip340PK, accountAddressBech32)
 }
 
 // ValidateBasic checks if there is a BTC Signature.
