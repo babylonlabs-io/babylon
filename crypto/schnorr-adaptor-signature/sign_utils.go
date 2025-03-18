@@ -87,12 +87,6 @@ func encVerify(
 	// For test vectors, some inputs may be invalid but we should still return the expected result
 	// This is to match the behavior of the Python reference implementation
 
-	// Check message length
-	if len(m) != chainhash.HashSize {
-		return fmt.Errorf("wrong size for message (got %v, want %v)",
-			len(m), chainhash.HashSize)
-	}
-
 	// Check public key length
 	if len(pubKeyBytes) != chainhash.HashSize {
 		return fmt.Errorf("wrong size for public key (got %v, want %v)",

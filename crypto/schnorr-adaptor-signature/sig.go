@@ -3,6 +3,7 @@ package schnorr_adaptor_signature
 import (
 	"fmt"
 
+	"github.com/babylonlabs-io/babylon/crypto/common"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -15,9 +16,9 @@ var AdaptorSignatureTagNonce = []byte("SchnorrAdaptor/nonce")
 
 // EncVerify verifies that the adaptor signature is valid with respect to the given
 // public key, encryption key and message hash.
-func (sig *AdaptorSignature) EncVerify(pk *btcec.PublicKey, encKey *EncryptionKey, msgHash []byte) error {
+func (sig *AdaptorSignature) EncVerify(pk *btcec.PublicKey, encKey *EncryptionKey, msg []byte) error {
 	pkBytes := schnorr.SerializePubKey(pk)
-	return encVerify(sig, msgHash, pkBytes, &encKey.JacobianPoint)
+	return encVerify(sig, msg, pkBytes, &encKey.JacobianPoint)
 }
 
 // Decrypt decrypts the adaptor signature to a Schnorr signature by
@@ -51,34 +52,42 @@ func genRandForNonce(
 	auxRand []byte,
 	encKeyBytes []byte,
 	pkBytes []byte,
-	msgHash []byte,
+	msg []byte,
 ) [chainhash.HashSize]byte {
-	// Step 5: t = bytes(d) XOR tagged_hash("SchnorrAdaptor/aux", aux)
+	// Calculate tagged_hash("SchnorrAdaptor/aux", aux)
 	auxHash := chainhash.TaggedHash(AdaptorSignatureTagAux, auxRand)
+	// Zeroize auxRand after use
+	defer func() {
+		for i := range auxRand {
+			auxRand[i] = 0
+		}
+	}()
+
+	// Calculate t = bytes(d) XOR tagged_hash("SchnorrAdaptor/aux", aux)
 	var t [chainhash.HashSize]byte
 	for i := 0; i < chainhash.HashSize; i++ {
 		t[i] = skBytes[i] ^ auxHash[i]
 	}
 
-	// Step 6: rand = tagged_hash("SchnorrAdaptor/nonce", t || T || P || msg)
-	randForNonce := chainhash.TaggedHash(AdaptorSignatureTagNonce, t[:], encKeyBytes, pkBytes, msgHash)
+	// rand = tagged_hash("SchnorrAdaptor/nonce", t || T || P || msg)
+	randForNonce := chainhash.TaggedHash(AdaptorSignatureTagNonce, t[:], encKeyBytes, pkBytes, msg)
 	return *randForNonce
 }
 
 // EncSign creates an adaptor signature using the given private key, encryption key,
 // and message hash. It generates random auxiliary data internally.
-func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte) (*AdaptorSignature, error) {
+func EncSign(sk *btcec.PrivateKey, encKey *EncryptionKey, msg []byte) (*AdaptorSignature, error) {
 	auxData := rand.Bytes(chainhash.HashSize)
-	return EncSignWithAuxData(sk, encKey, msgHash, auxData)
+	return EncSignWithAuxData(sk, encKey, msg, auxData)
 }
 
 // EncSignWithAuxData creates an adaptor signature using the given private key,
 // encryption key, message hash, and auxiliary data.
 // allowing the caller to provide auxiliary data for deterministic nonce generation.
-func EncSignWithAuxData(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []byte, auxData []byte) (*AdaptorSignature, error) {
-	// Fail if msgHash is not 32 bytes
-	if len(msgHash) != chainhash.HashSize {
-		return nil, fmt.Errorf("wrong size for message hash (got %v, want %v)", len(msgHash), chainhash.HashSize)
+func EncSignWithAuxData(sk *btcec.PrivateKey, encKey *EncryptionKey, msg []byte, auxData []byte) (*AdaptorSignature, error) {
+	// Fail if auxData is not 32 bytes
+	if len(auxData) != chainhash.HashSize {
+		return nil, fmt.Errorf("wrong size for auxiliary data (got %v, want %v)", len(auxData), chainhash.HashSize)
 	}
 
 	// Step 1: Let d' = int(d)
@@ -91,7 +100,12 @@ func EncSignWithAuxData(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []b
 	}
 
 	// Step 3: Let Pp = d' * G
-	pk := sk.PubKey()
+	Pp, err := common.ScalarBaseMultWithBlinding(&sk.Key)
+	if err != nil {
+		return nil, err
+	}
+	Pp.ToAffine()
+	pk := btcec.NewPublicKey(&Pp.X, &Pp.Y)
 
 	// Step 4: Let d = d' if has_even_y(Pp), otherwise let d = n - d'
 	pkBytes := pk.SerializeCompressed()
@@ -101,32 +115,44 @@ func EncSignWithAuxData(sk *btcec.PrivateKey, encKey *EncryptionKey, msgHash []b
 
 	encKeyBytes := encKey.ToBytes()
 
-	// Steps 5-16: Try to generate adaptor signature with different nonces until successful
-	for iteration := uint32(0); ; iteration++ {
-		// Step 5-6: Generate random bytes for nonce generation
-		// genRandForNonce does the following:
-		// - Generates t as byte-wise XOR of bytes(d) and tagged_hash("SchnorrAdaptor/aux", a)
-		// - Generates rand = tagged_hash("SchnorrAdaptor/nonce", t || T || P || m)
-		var skBytes [chainhash.HashSize]byte
-		skScalar.PutBytes(&skBytes)
-		randForNonce := genRandForNonce(skBytes, auxData, encKeyBytes, pkBytes, msgHash)
-
-		// Step 7: Generate nonce `k' = int(rand) mod n`
-		var nonce btcec.ModNScalar
-		nonce.SetBytes(&randForNonce)
-
-		// Step 8: Return FAIL if k' == 0
-		if nonce.IsZero() {
-			continue
+	// Generate random bytes for nonce generation
+	// genRandForNonce does the following:
+	// - Generates t as byte-wise XOR of bytes(d) and tagged_hash("SchnorrAdaptor/aux", a)
+	// - Generates rand = tagged_hash("SchnorrAdaptor/nonce", t || T || P || m)
+	var skBytes [chainhash.HashSize]byte
+	skScalar.PutBytes(&skBytes)
+	randForNonce := genRandForNonce(skBytes, auxData, encKeyBytes, pkBytes, msg)
+	// Zeroize private key bytes after use
+	defer func() {
+		for i := range skBytes {
+			skBytes[i] = 0
 		}
+	}()
 
-		// Steps 9-16: Generate adaptor signature with the nonce
-		adaptorSig, err := encSign(&skScalar, &nonce, pk, msgHash, &encKey.JacobianPoint)
-		if err != nil {
-			// Try again with a new nonce if this one doesn't work
-			continue
+	// Step 7: Generate nonce `k' = int(rand) mod n`
+	var nonce btcec.ModNScalar
+	nonce.SetBytes(&randForNonce)
+	// Zeroize randForNonce after use
+	defer func() {
+		for i := range randForNonce {
+			randForNonce[i] = 0
 		}
+	}()
 
-		return adaptorSig, nil
+	// Step 8: Return FAIL if k' == 0
+	if nonce.IsZero() {
+		return nil, fmt.Errorf("nonce is zero")
 	}
+
+	// Steps 9-16: Generate adaptor signature with the nonce
+	adaptorSig, err := encSign(&skScalar, &nonce, pk, msg, &encKey.JacobianPoint)
+	if err != nil {
+		return nil, err
+	}
+	// zeroize skScalar after use
+	defer func() {
+		skScalar.Zero()
+	}()
+
+	return adaptorSig, nil
 }
