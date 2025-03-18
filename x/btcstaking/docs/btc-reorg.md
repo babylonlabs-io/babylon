@@ -10,13 +10,13 @@ larger than the `BtcConfirmationDepth`, the chain should halt and revoke all
 the BTC delegations that were recorded until the first reorg block height.
 
 By example, if BTC is in block height 150 and Babylon chain has a
-`BtcConfirmationDepth` of 10 and it is submitted a valid BTC reorg of 10 blocks
-that rollbacks BTC to block height 140, every BTC delegation that was included
-in BTC block 140 or higher should be deleted as the inclusion proof will
-be different. BTC delegations included before BTC block height 140 will not
-be affected as the BTC rollbacks only happens if there is a better chain
-presented, a better chain means chain with more blocks, so any BTC delegation
-included in block 139 or prior would still be considered valid.
+`BtcConfirmationDepth` of 10 and it is submitted a valid BTC reorg of 15 blocks
+that rollbacks BTC to block height 136, every BTC delegation that was included
+in BTC block 136 or higher should be deleted as the inclusion proof will
+be different. BTC delegations that included in the BTC block height 135 or lower
+will not be affected as the BTC rollbacks only happens if there is a better
+chain presented, a better chain means chain with more blocks, so any BTC
+delegation included in block 135 or prior would still be considered valid.
 
 This recovery procedure only cares about the BTC transactions that were executed
 in blocks which have been rollbacked.
@@ -39,8 +39,8 @@ genesis state.
 After having collected the babylon block height corresponded to the BTC block
 height which the rollback happened, iterate over every transaction until
 the halt block and gather all the messages which were approved and are one of
-the types: `MsgCreateBTCDelegation`, `MsgAddBTCDelegationInclusionProof` and
-`MsgBTCUndelegate`.
+the types: `MsgCreateBTCDelegation`, `MsgAddBTCDelegationInclusionProof`,
+`MsgBTCUndelegate`, `MsgInsertHeaders` and `MsgInsertBTCSpvProof`.
 
 ### 3. Analyze each message
 
@@ -86,6 +86,12 @@ that were accured, losing a few coins in the rewards.
   address and the amount of satoshi from the rollbacked BTC delegation.
   This will already update all the keys in the state accordingly.
 
+> Note transactions that were included during blocks 150 ~ 141 (150 - `BtcConfirmationDepth`)
+in a 15 Bitcoin blocks rollback are invalid and should be removed but were
+also not  considered deep enough to be active. Dropping those proofs and
+the event updates to voting power table is enough to handle during the
+recory procedure.
+
 #### 3.2 `MsgAddBTCDelegationInclusionProof`
 
 Check if the proof is one from the BTC block heights which was rollbacked,
@@ -120,6 +126,28 @@ with similar steps took at [3.1](#31-msgcreatebtcdelegation).
   which receives as parameter the Finality provider and BTC delegator baby
   address and the amount of satoshi from the rollbacked BTC undelegate.
   This will already update all the keys in the state accordingly.
+
+#### 3.4 `MsgInsertHeaders`
+
+The module `x/btclightclient` automatically handles the rollback of blocks, the issue
+relies when the Babylon chain was halted while Bitcoin was producing new blocks, the
+new blocks should have it's headers collected and included into the Babylon chain
+state when it is being recovered. If the headers are not insterted, an attacker
+could mine just 1-2 blocks on the forked Bitcoin chain and cause Babylon chain
+to execute fake delegations, right after Babylon chain restarts. To avoid this,
+Babylon should insert headers of the created Bitcoind blocks while it was
+down during the recovery procedure.
+
+#### 3.5 `MsgInsertBTCSpvProof`
+
+All the proofs that were sent by the vigilante reporter in the Bitcoin blocks
+that were affected by the rollback, will need to be revoked and might modify
+the status of checkpoints, the recovery procedure for this specific case
+might also need to modify the vigilante to send again transactions of
+checkpoints to the main chain of Bitcoin. This inserted proofs will
+then need to be included into Babylon state and update checkpoint status
+accordingly to chain configuration of `BtcConfirmationDepth` and
+`CheckpointFinalizationTimeout` in the `x/btccheckpoint` module.
 
 ### 4. Overall updates
 

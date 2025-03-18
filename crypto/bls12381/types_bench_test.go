@@ -16,15 +16,15 @@ func BenchmarkVerifyCompressed(b *testing.B) {
 	// Create a signature
 	sig := Sign(sk, msg)
 
-	b.Run("WithSigGroupCheck", func(b *testing.B) {
+	b.Run("WithSigGroupCheckAndPkValidate", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			dummySig := new(BlsSig)
-			dummySig.VerifyCompressed(sig, true, pk, false, msg, DST)
+			dummySig.VerifyCompressed(sig, true, pk, true, msg, DST)
 		}
 	})
 
-	b.Run("WithoutSigGroupCheck", func(b *testing.B) {
+	b.Run("WithoutSigGroupCheckOrPkValidate", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			dummySig := new(BlsSig)
