@@ -4,9 +4,10 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/crypto/eots"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+
+	"github.com/babylonlabs-io/babylon/crypto/eots"
 )
 
 type SchnorrPubRand []byte
@@ -40,9 +41,13 @@ func NewPubRandFromPrivRand(sr *eots.PrivateRand) *SchnorrPubRand {
 	return NewSchnorrPubRandFromFieldVal(&j.X)
 }
 
-func (pr SchnorrPubRand) ToFieldVal() *btcec.FieldVal {
+// ToFieldValNormalized converts bytes into btcec.FieldVal and ensures
+// it is normalized
+func (pr SchnorrPubRand) ToFieldValNormalized() *btcec.FieldVal {
 	var r btcec.FieldVal
-	r.SetByteSlice(pr)
+	if r.SetByteSlice(pr) {
+		r.Normalize()
+	}
 	return &r
 }
 
