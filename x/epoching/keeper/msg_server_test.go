@@ -249,7 +249,7 @@ func FuzzMsgWrappedUpdateStakingParams(f *testing.F) {
 	})
 }
 
-func TestFoo(t *testing.T) {
+func TestExponentiallyEventsEndEpochQueuedMessages(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	h := testhelper.NewHelper(t)
 
@@ -269,7 +269,6 @@ func TestFoo(t *testing.T) {
 
 	msg := stakingtypes.NewMsgEditValidator(valAddr.String(), *newDescription, &newCommissionRate, &newMinSelfDel)
 	wMsg := types.NewMsgWrappedEditValidator(msg)
-
 	res, err := h.MsgSrvr.WrappedEditValidator(ctx, wMsg)
 	h.NoError(err)
 	require.NotNil(t, res)
@@ -277,8 +276,7 @@ func TestFoo(t *testing.T) {
 	epochMsgs := k.GetCurrentEpochMsgs(ctx)
 	require.Len(t, epochMsgs, 1)
 
-	var numDelMessages int = 7
-
+	var numDelMessages int = datagen.RandomInRange(r, 5, 25)
 	for i := 0; i < numDelMessages; i++ {
 		epochMsgs = k.GetCurrentEpochMsgs(ctx)
 		msgDel := types.NewMsgWrappedDelegate(
@@ -306,22 +304,26 @@ func TestFoo(t *testing.T) {
 	info.Height = int64(epoch.GetLastBlockHeight())
 	info.Time = blkHeader.Time
 
-	// creates a new context to empty out the events from the manager
+	// cleans out the msg server envents
 	// which contained types.EventWrappedDelegate generated
-	// by the x/epoching msg server
+	// by the x/epoching msg server in WrappedDelegate
 	ctx = sdk.NewContext(ctx.MultiStore(), ctx.BlockHeader(), ctx.IsCheckTx(), ctx.Logger()).WithHeaderInfo(info)
 
 	// with a clean context
-	valsetUpdate, err := epoching.EndBlocker(ctx, k)
+	_, err = epoching.EndBlocker(ctx, k)
 	h.NoError(err)
-	require.Len(t, valsetUpdate, 0)
 
 	var events []abci.Event
 	if evtMgr := ctx.EventManager(); evtMgr != nil {
 		events = evtMgr.ABCIEvents()
 	}
 
-	fmt.Println(len(events))
+	eventsGeneratedByMsgEditValidator := 1
+	eventsGeneratedByMsgDelegate := 4
+	eventsGeneratedHealthyEpochEndBlocker := 1
+
+	expEventsLen := (numDelMessages * eventsGeneratedByMsgDelegate) + eventsGeneratedByMsgEditValidator + eventsGeneratedHealthyEpochEndBlocker
+	require.Equal(t, expEventsLen, len(events))
 }
 
 func TestEpochFailedMsg(t *testing.T) {
