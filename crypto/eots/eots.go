@@ -80,6 +80,9 @@ func signHash(sk *PrivateKey, privateRand *PrivateRand, hash [32]byte) (*Signatu
 	isPyOdd := pubKeyBytes[0] == secp256k1.PubKeyFormatCompressedOdd
 
 	k := new(ModNScalar).Set(privateRand)
+	defer func() {
+		k.Zero()
+	}()
 
 	// R = kG (with blinding in order to prevent timing side channel attacks)
 	R, err := common.ScalarBaseMultWithBlinding(k)
@@ -94,6 +97,9 @@ func signHash(sk *PrivateKey, privateRand *PrivateRand, hash [32]byte) (*Signatu
 	// Note that R must be in affine coordinates for this check.
 	R.ToAffine()
 	kNegated := new(ModNScalar).Set(k).Negate()
+	defer func() {
+		kNegated.Zero()
+	}()
 	isRyOdd := R.Y.IsOdd()
 
 	// e = tagged_hash("BIP0340/challenge", bytes(R) || bytes(P) || m) mod n
