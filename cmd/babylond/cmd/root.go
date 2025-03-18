@@ -237,6 +237,7 @@ func addModuleInitFlags(startCmd *cobra.Command) {
 	startCmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	startCmd.Flags().Bool(flagNoBlsPassword, true, "Generate BLS key without password protection (suitable for RPC nodes)")
 	startCmd.Flags().String(flagBlsPassword, "", "Use the specified password for BLS key (if empty and --no-bls-password is not set, will prompt for password)")
+	startCmd.Flags().String(flagBlsPasswordFile, "", "Load a custom file path to the bls password (not recommended)")
 }
 
 func queryCommand() *cobra.Command {
@@ -309,6 +310,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 		homeDir,
 		cast.ToBool(appOpts.Get(flagNoBlsPassword)),
 		cast.ToString(appOpts.Get(flagBlsPassword)),
+		cast.ToString(appOpts.Get(flagBlsPasswordFile)),
 		cast.ToString(appOpts.Get("bls-config.bls-key-file")),
 	)
 	if err != nil {

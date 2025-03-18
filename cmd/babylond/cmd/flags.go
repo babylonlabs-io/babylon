@@ -55,6 +55,7 @@ const (
 	flagJailDuration               = "jail-duration"
 	flagBlsPassword                = "bls-password"
 	flagNoBlsPassword              = "no-bls-password"
+	flagBlsPasswordFile            = "bls-password-file"
 )
 
 type GenesisCLIArgs struct {
