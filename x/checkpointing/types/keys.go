@@ -46,8 +46,8 @@ func ValidatorBlsKeySetKey(epoch uint64) []byte {
 	return sdk.Uint64ToBigEndian(epoch)
 }
 
-// AddrToBlsKeyKey defines validator address
-func AddrToBlsKeyKey(valAddr sdk.ValAddress) []byte {
+// AddrToBlsKey defines validator address
+func AddrToBlsKey(valAddr sdk.ValAddress) []byte {
 	return valAddr
 }
 

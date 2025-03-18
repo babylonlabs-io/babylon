@@ -1,5 +1,4 @@
 # schnorr-adaptor-signature
 
 This package provides an implementation of the Schnorr adaptor signature in Golang.
-It follows the construction in paper [One-Time Verifiably Encrypted Signatures A.K.A. Adaptor Signatures](https://github.com/LLFourn/one-time-VES/tree/master).
-The implementation strictly ports the Rust implementation in [secp256kfun](https://github.com/LLFourn/secp256kfun/blob/master/schnorr_fun/src/adaptor/mod.rs).
+The implementation follows Blockstream's [secp256k1-zkp implementation](https://github.com/BlockstreamResearch/secp256k1-zkp/pull/299) ([spec](https://github.com/ZhePang/Python_Specification_for_Schnorr_Adaptor)).
