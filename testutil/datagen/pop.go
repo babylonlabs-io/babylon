@@ -1,8 +1,6 @@
 package datagen
 
 import (
-	"encoding/hex"
-
 	"github.com/babylonlabs-io/babylon/crypto/bip322"
 	"github.com/babylonlabs-io/babylon/crypto/ecdsa"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -157,9 +155,9 @@ func NewPoPBTCWithECDSABTCSig(addr sdk.AccAddress, btcSK *btcec.PrivateKey) (*bs
 
 	// generate pop.BtcSig = ecdsa_sign(sk_BTC, pop.BabylonSig)
 	// NOTE: ecdsa.Sign has to take the message as string.
-	// So we have to hex addr before signing
-	addrHex := hex.EncodeToString(addr.Bytes())
-	btcSig := ecdsa.Sign(btcSK, addrHex)
+	// So we have to convert the address to bech32 string before signing
+	addrBech32 := addr.String()
+	btcSig := ecdsa.Sign(btcSK, addrBech32)
 	pop.BtcSig = btcSig
 
 	return &pop, nil
@@ -175,7 +173,8 @@ func newPoPBTCWithBIP322Sig[A btcutil.Address](
 		BtcSigType: bstypes.BTCSigType_BIP322,
 	}
 
-	bip322SigEncoded, err := newBIP322Sig(tmhash.Sum(addressToSign.Bytes()), btcSK, net, bip322SignFn)
+	bzToSign := bstypes.MsgToSignBIP322(addressToSign)
+	bip322SigEncoded, err := newBIP322Sig(bzToSign, btcSK, net, bip322SignFn)
 	if err != nil {
 		return nil, err
 	}
