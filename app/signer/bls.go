@@ -26,11 +26,13 @@ var _ checkpointingtypes.BlsSigner = &BlsKey{}
 const (
 	DefaultBlsKeyName      = "bls_key.json"     // Default file name for BLS key
 	DefaultBlsPasswordName = "bls_password.txt" // Default file name for BLS password
+	DefaultBlsPopName      = "bls_pop.json"     // Default file name for BLS PoP
 )
 
 var (
 	defaultBlsKeyFilePath  = filepath.Join(cmtcfg.DefaultConfigDir, DefaultBlsKeyName)      // Default file path for BLS key
 	defaultBlsPasswordPath = filepath.Join(cmtcfg.DefaultConfigDir, DefaultBlsPasswordName) // Default file path for BLS password
+	defaultBlsPopPath      = filepath.Join(cmtcfg.DefaultConfigDir, DefaultBlsPopName)      // Default file path for BLS PoP
 )
 
 // Bls is a wrapper around BlsKey
@@ -48,6 +50,12 @@ type BlsKey struct {
 	PrivKey      bls12381.PrivateKey `json:"bls_priv_key"` // Private Key of BLS
 	filePath     string              // File Path of BLS Key
 	passwordPath string              // File Path of BLS Password
+}
+
+// BlsPop represents a proof-of-possession for a validator.
+type BlsPop struct {
+	BlsPubkey bls12381.PublicKey                    `json:"bls_pub_key"`
+	Pop       *checkpointingtypes.ProofOfPossession `json:"pop"`
 }
 
 // NewBls returns a new Bls.
@@ -189,6 +197,11 @@ func DefaultBlsPasswordFile(home string) string {
 	return filepath.Join(home, defaultBlsPasswordPath)
 }
 
+// DefaultBlsPopFile returns the default BLS PoP file path.
+func DefaultBlsPopFile(home string) string {
+	return filepath.Join(home, defaultBlsPopPath)
+}
+
 // SignMsgWithBls signs a message with BLS, implementing the BlsSigner interface
 func (k *BlsKey) SignMsgWithBls(msg []byte) (bls12381.Signature, error) {
 	if k.PrivKey == nil {
@@ -264,4 +277,40 @@ func LoadOrGenBlsKey(homeDir string, noPassword bool, password string, customKey
 	}
 
 	return blsSigner, nil
+}
+
+// SaveBlsPop saves a proof-of-possession to a file.
+func SaveBlsPop(filePath string, blsPubKey bls12381.PublicKey, pop *checkpointingtypes.ProofOfPossession) error {
+	blsPop := BlsPop{
+		BlsPubkey: blsPubKey,
+		Pop:       pop,
+	}
+
+	// convert keystore to json
+	jsonBytes, err := json.MarshalIndent(blsPop, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal bls proof-of-possession: %w", err)
+	}
+
+	// write generated erc2335 keystore to file
+	if err := tempfile.WriteFileAtomic(filePath, jsonBytes, 0600); err != nil {
+		return fmt.Errorf("failed to write bls proof-of-possession: %w", err)
+	}
+	return nil
+}
+
+// LoadBlsPop loads a proof-of-possession from a file.
+func LoadBlsPop(filePath string) (BlsPop, error) {
+	var bp BlsPop
+
+	keyJSONBytes, err := os.ReadFile(filePath)
+	if err != nil {
+		return BlsPop{}, fmt.Errorf("failed to read bls pop file: %w", err)
+	}
+
+	if err := json.Unmarshal(keyJSONBytes, &bp); err != nil {
+		return BlsPop{}, fmt.Errorf("failed to unmarshal bls pop from file: %w", err)
+	}
+
+	return bp, nil
 }
