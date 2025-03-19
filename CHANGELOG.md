@@ -37,6 +37,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#687](https://github.com/babylonlabs-io/babylon/pull/687) Add details to btc-reorg runbook.
 - [#693](https://github.com/babylonlabs-io/babylon/pull/693) chore: use timeout from config in bbn client
 - [#660](https://github.com/babylonlabs-io/babylon/pull/660) add function to recover pub key from sig
 - [#625](https://github.com/babylonlabs-io/babylon/pull/625) add tx gas limit decorator and local mempool config
@@ -51,6 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### API Breaking
 
+- [#690](https://github.com/babylonlabs-io/babylon/pull/690) Add new BLS password flow which includes env variable.
 - [#682](https://github.com/babylonlabs-io/babylon/pull/682) Avoid creating pop in `babylond tx checkpointing create-validator`
 
 ### Bug fixes
