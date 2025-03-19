@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#690](https://github.com/babylonlabs-io/babylon/pull/690) Add new BLS password flow which includes env variable.
 - [#687](https://github.com/babylonlabs-io/babylon/pull/687) Add details to btc-reorg runbook.
 - [#693](https://github.com/babylonlabs-io/babylon/pull/693) chore: use timeout from config in bbn client
 - [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.

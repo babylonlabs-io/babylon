@@ -28,7 +28,7 @@ func TestInitCmd(t *testing.T) {
 		"init",     // Test the init cmd
 		"app-test", // Moniker
 		fmt.Sprintf("--%s=%s", cli.FlagOverwrite, "true"), // Overwrite genesis.json, in case it already exists
-		fmt.Sprintf("--%s=%s", "bls-password", "testpassword"),
+		"--no-bls-password",
 	})
 
 	require.NoError(t, svrcmd.Execute(rootCmd, app.BabylonAppEnvPrefix, app.DefaultNodeHome))
@@ -45,7 +45,7 @@ func TestStartCmd(t *testing.T) {
 		"init",
 		"app-test",
 		fmt.Sprintf("--%s=%s", cli.FlagOverwrite, "true"),
-		fmt.Sprintf("--%s=%s", "bls-password", "testpassword"),
+		"--no-bls-password",
 	})
 
 	require.NoError(t, svrcmd.Execute(rootCmd, app.BabylonAppEnvPrefix, app.DefaultNodeHome))
@@ -138,7 +138,7 @@ func TestStartCmd(t *testing.T) {
 	require.FileExists(t, blsKeyFile, "BLS key file should be recreated by start command")
 	require.FileExists(t, blsPasswordFile, "BLS password file should be recreated by start command")
 
-	blsSigner := signer.LoadBlsSignerIfExists(app.DefaultNodeHome, filepath.Join(cmtcfg.DefaultConfigDir, signer.DefaultBlsKeyName))
+	blsSigner := signer.LoadBlsSignerIfExists(app.DefaultNodeHome, "", filepath.Join(cmtcfg.DefaultConfigDir, signer.DefaultBlsKeyName))
 	require.NotNil(t, blsSigner, "Should be able to load BLS signer after start")
 
 	p, err := os.FindProcess(os.Getpid())
