@@ -108,8 +108,6 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 				if err != nil {
 					return nil, err
 				}
-				// skip this failed msg
-				continue
 			}
 		}
 
