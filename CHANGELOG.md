@@ -67,6 +67,8 @@ functions to `testutil`
 - [#691](https://github.com/babylonlabs-io/babylon/pull/691) crypto: fix eots missing normalization in use of secp256k1.FieldVal
 - [#671](https://github.com/babylonlabs-io/babylon/pull/671) crypto: align adaptor sig impl with Blockstream spec
 - [#705](https://github.com/babylonlabs-io/babylon/pull/705) Add bls key length validation from the ERC-2335 keystore
+- [#712](https://github.com/babylonlabs-io/babylon/pull/712) fix: remove exponentially events emission at processing
+queued msgs at the end epoch.
 
 ### Improvements
 
@@ -84,6 +86,8 @@ parse staking tx without verifying opreturn tag.
 
 - [#697](https://github.com/babylonlabs-io/babylon/pull/697) Update BIP322 PoP and
 ECDSA Pop to sign bech32 encoded cosmos address
+- [#695](https://github.com/babylonlabs-io/babylon/pull/695) Improve checkpoint
+panicking behavior
 
 ## v1.0.0-rc7
 
