@@ -45,7 +45,7 @@ $ babylond create-bls-key --home ./
 				bls := appsigner.NewBls(bls12381.GenPrivKey(), blsKeyFile, blsPasswordFile)
 				bls.Key.Save("")
 				fmt.Printf("BLS key generated successfully without password protection.\n")
-				fmt.Printf("Note: An empty password file has been created at %s for backward compatibility.\n", blsPasswordFile)
+				fmt.Printf("Note: An empty password file has been created for backward compatibility.\n")
 				return nil
 			}
 
@@ -54,9 +54,11 @@ $ babylond create-bls-key --home ./
 				password = appsigner.NewBlsPassword()
 			}
 
-			// We deliberately pass an empty string for the password file path to avoid
+			// We deliberately pass an empty string for the password file path ("") to avoid
 			// automatically creating a password file. This gives operators full control over
 			// how they want to store and provide the password (env var or custom password file).
+			// Security best practice is to not store the password on disk at all and use the
+			// environment variable instead.
 			bls := appsigner.NewBls(bls12381.GenPrivKey(), blsKeyFile, "")
 			bls.Key.Save(password)
 
