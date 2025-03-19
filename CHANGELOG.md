@@ -37,20 +37,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-- [#693](https://github.com/babylonlabs-io/babylon/pull/693) chore: use timeout from config in bbn client
-- [#660](https://github.com/babylonlabs-io/babylon/pull/660) add function to recover pub key from sig
-- [#625](https://github.com/babylonlabs-io/babylon/pull/625) add tx gas limit decorator and local mempool config
-
-### Improvements
-
-- [#666](https://github.com/babylonlabs-io/babylon/pull/666) Upgrade to wasmvm v2.2.3.
-- [#668](https://github.com/babylonlabs-io/babylon/pull/668) Remove unused unsafe key gen functions
-- [#676](https://github.com/babylonlabs-io/babylon/pull/676) Bump IBC-go to `v8.7.0`
-- [#644](https://github.com/babylonlabs-io/babylon/pull/644) Add priority nonce mempool and transaction priority ante handler decorator
-- [#701](https://github.com/babylonlabs-io/babylon/pull/701) Update upgrade name to `v1rc8`
-
 ### API Breaking
 
+- [#690](https://github.com/babylonlabs-io/babylon/pull/690) Add new BLS password flow which includes env variable.
 - [#682](https://github.com/babylonlabs-io/babylon/pull/682) Avoid creating pop in `babylond tx checkpointing create-validator`
 
 ### Bug fixes
@@ -61,17 +50,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#667](https://github.com/babylonlabs-io/babylon/pull/667) crypto: enable groupcheck in BLS verification/aggregation
 - [#660](https://github.com/babylonlabs-io/babylon/pull/660) fix: ecdsa verification
 - [#680](https://github.com/babylonlabs-io/babylon/pull/680) crypto: fix bls rogue attack
-- [#673](https://github.com/babylonlabs-io/babylon/pull/673) fix: move bip322 signing
-functions to `testutil`
+- [#673](https://github.com/babylonlabs-io/babylon/pull/673) fix: move bip322 signing functions to `testutil`
 - [#683](https://github.com/babylonlabs-io/babylon/pull/683) crypto: fix eots signing timing attack
 - [#691](https://github.com/babylonlabs-io/babylon/pull/691) crypto: fix eots missing normalization in use of secp256k1.FieldVal
 - [#671](https://github.com/babylonlabs-io/babylon/pull/671) crypto: align adaptor sig impl with Blockstream spec
 - [#705](https://github.com/babylonlabs-io/babylon/pull/705) Add bls key length validation from the ERC-2335 keystore
-- [#712](https://github.com/babylonlabs-io/babylon/pull/712) fix: remove exponentially events emission at processing
-queued msgs at the end epoch.
+- [#712](https://github.com/babylonlabs-io/babylon/pull/712) fix: remove exponentially events emission at processing queued msgs at the end epoch.
 
 ### Improvements
 
+- [#701](https://github.com/babylonlabs-io/babylon/pull/701) Update upgrade name to `v1rc8`
+- [#687](https://github.com/babylonlabs-io/babylon/pull/687) Add details to btc-reorg runbook.
 - [#655](https://github.com/babylonlabs-io/babylon/pull/655) Add func `ParseV0StakingTxWithoutTag` to
 parse staking tx without verifying opreturn tag.
 - [#666](https://github.com/babylonlabs-io/babylon/pull/666) Upgrade to wasmvm v2.2.3.
@@ -84,10 +73,9 @@ parse staking tx without verifying opreturn tag.
 
 ### State breaking
 
-- [#697](https://github.com/babylonlabs-io/babylon/pull/697) Update BIP322 PoP and
+- [#697](https://github.com/babylonlabs-io/babylon/pull/697) Update BIP322 PoP and 
 ECDSA Pop to sign bech32 encoded cosmos address
-- [#695](https://github.com/babylonlabs-io/babylon/pull/695) Improve checkpoint
-panicking behavior
+- [#695](https://github.com/babylonlabs-io/babylon/pull/695) Improve checkpoint panicking behavior
 
 ## v1.0.0-rc7
 

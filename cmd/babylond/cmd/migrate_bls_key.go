@@ -51,7 +51,7 @@ $ babylond migrate-bls-key --home ./
 	}
 
 	cmd.Flags().String(flags.FlagHome, app.DefaultNodeHome, "The node home directory")
-	cmd.Flags().String(flagBlsPassword, "", "The password for the BLS key. If the flag is not set, the password will be read from the prompt.")
+	cmd.Flags().String(flagInsecureBlsPassword, "", "The password for the BLS key. If the flag is not set, the password will be read from the prompt.")
 	cmd.Flags().Bool(flagNoBlsPassword, false, "The BLS key will use an empty password if the flag is set.")
 	return cmd
 }
@@ -125,7 +125,7 @@ func verifySeparateFiles(
 	prevBlsPrivKey bls12381.PrivateKey,
 ) error {
 	cmtPv := privval.LoadFilePV(cmtKeyFilePath, cmtStateFilePath)
-	bls := appsigner.LoadBls(blsKeyFilePath, blsPasswordFilePath)
+	bls := appsigner.TryLoadBlsFromFile(blsKeyFilePath, blsPasswordFilePath)
 
 	if bytes.Equal(prevCmtPrivKey.Bytes(), cmtPv.Key.PrivKey.Bytes()) && bytes.Equal(prevBlsPrivKey, bls.Key.PrivKey) {
 		return nil

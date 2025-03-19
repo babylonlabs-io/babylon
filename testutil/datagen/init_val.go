@@ -60,7 +60,7 @@ func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic strin
 		if !cmtos.FileExists(blsPasswordFile) {
 			cmtos.Exit(fmt.Sprintf("BLS password file does not exist: %v", blsPasswordFile))
 		}
-		bls = appsigner.LoadBls(blsKeyFile, blsPasswordFile)
+		bls = appsigner.TryLoadBlsFromFile(blsKeyFile, blsPasswordFile)
 	} else {
 		bls = appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
 	}

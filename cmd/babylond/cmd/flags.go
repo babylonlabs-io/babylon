@@ -53,8 +53,9 @@ const (
 	flagMinSignedPerWindow         = "min-signed-per-window"
 	flagFinalitySigTimeout         = "finality-sig-timeout"
 	flagJailDuration               = "jail-duration"
-	flagBlsPassword                = "bls-password"
+	flagInsecureBlsPassword        = "insecure-bls-password"
 	flagNoBlsPassword              = "no-bls-password"
+	flagBlsPasswordFile            = "bls-password-file"
 )
 
 type GenesisCLIArgs struct {
