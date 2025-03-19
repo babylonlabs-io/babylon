@@ -79,21 +79,3 @@ $ babylond create-bls-key --home ./
 	cmd.Flags().Bool(flagNoBlsPassword, false, "The BLS key will use an empty password if the flag is set.")
 	return cmd
 }
-
-// blsPassword returns the password for the BLS key.
-// If the noBlsPassword flag is set, the function returns an empty string.
-// If the blsPassword flag is set with non-empty string, the function returns the value of the flag.
-// If the blsPassword flag is set with empty string or not set at all,
-// the function prompts the user to enter a password with confirmation.
-func blsPassword(cmd *cobra.Command) string {
-	noBlsPassword, _ := cmd.Flags().GetBool(flagNoBlsPassword)
-	if noBlsPassword {
-		return ""
-	}
-	password, _ := cmd.Flags().GetString(flagInsecureBlsPassword)
-	if password != "" {
-		return password
-	}
-
-	return appsigner.NewBlsPassword()
-}
