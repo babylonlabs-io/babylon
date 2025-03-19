@@ -45,7 +45,7 @@ $ babylond create-bls-key --home ./
 				bls := appsigner.NewBls(bls12381.GenPrivKey(), blsKeyFile, blsPasswordFile)
 				bls.Key.Save("")
 				fmt.Printf("BLS key generated successfully without password protection.\n")
-				fmt.Printf("Note: An empty password file has been created at %s for backward compatibility.\n", blsPasswordFile)
+				fmt.Printf("Note: An empty password file has been created for backward compatibility.\n")
 				return nil
 			}
 
