@@ -64,6 +64,11 @@ func NewBls(privKey bls12381.PrivateKey, keyFilePath, passwordFilePath string) *
 	if privKey == nil {
 		panic("BLS private key should not be nil")
 	}
+
+	if err := privKey.ValidateBasic(); err != nil {
+		panic(fmt.Errorf("invalid BLS private key: %w", err))
+	}
+
 	return &Bls{
 		Key: BlsKey{
 			PubKey:       privKey.PubKey(),
@@ -102,6 +107,10 @@ func LoadBls(keyFilePath, passwordFilePath string) *Bls {
 	}
 
 	blsPrivKey := bls12381.PrivateKey(privKey)
+	if err := blsPrivKey.ValidateBasic(); err != nil {
+		cmtos.Exit(fmt.Sprintf("invalid BLS private key: %v", err.Error()))
+	}
+
 	return &Bls{
 		Key: BlsKey{
 			PubKey:       blsPrivKey.PubKey(),
