@@ -47,31 +47,10 @@ func (k Keeper) GetBestSubmission(ctx context.Context, epochNumber uint64) (type
 func (k Keeper) addEpochSubmission(
 	ctx context.Context,
 	epochNum uint64,
+	ed *types.EpochData,
 	sk types.SubmissionKey,
 	sd types.SubmissionData,
-) error {
-	ed := k.GetEpochData(ctx, epochNum)
-
-	// TODO: SaveEpochData and SaveSubmission should be done in one transaction.
-	// Not sure cosmos-sdk has facilities to do it.
-	// Otherwise it is possible to end up with node which updated submission list
-	// but did not save submission itself.
-
-	// if ed is nil, it means it is our first submission for this epoch
-	if ed == nil {
-		// we do not have any data saved yet
-		newEd := types.NewEmptyEpochData()
-		ed = &newEd
-	}
-
-	if ed.Status == types.Finalized {
-		// we already finalized given epoch so we do not need any more submissions
-		// TODO We should probably compare new submission with the existing submission
-		// which finalized the epoch. As it means we finalized epoch with not the best
-		// submission possible
-		return types.ErrEpochAlreadyFinalized
-	}
-
+) {
 	if len(ed.Keys) == 0 {
 		// it is first epoch submission inform checkpointing module about this fact
 		k.checkpointingKeeper.SetCheckpointSubmitted(ctx, epochNum)
@@ -80,7 +59,6 @@ func (k Keeper) addEpochSubmission(
 	ed.AppendKey(sk)
 	k.saveEpochData(ctx, epochNum, ed)
 	k.saveSubmission(ctx, sk, sd)
-	return nil
 }
 
 func (k Keeper) saveSubmission(ctx context.Context, sk types.SubmissionKey, sd types.SubmissionData) {

@@ -14,7 +14,8 @@ type MockBTCLightClientKeeper struct {
 }
 
 type MockCheckpointingKeeper struct {
-	returnError bool
+	returnError  bool
+	VerifyCalled bool
 }
 
 type MockIncentiveKeeper struct {
@@ -29,7 +30,8 @@ func NewMockBTCLightClientKeeper() *MockBTCLightClientKeeper {
 
 func NewMockCheckpointingKeeper() *MockCheckpointingKeeper {
 	mc := MockCheckpointingKeeper{
-		returnError: false,
+		returnError:  false,
+		VerifyCalled: false,
 	}
 	return &mc
 }
@@ -68,11 +70,11 @@ func (ck MockBTCLightClientKeeper) MainChainDepth(ctx context.Context, headerByt
 	}
 }
 
-func (ck MockCheckpointingKeeper) VerifyCheckpoint(ctx context.Context, checkpoint txformat.RawBtcCheckpoint) error {
+func (ck *MockCheckpointingKeeper) VerifyCheckpoint(ctx context.Context, checkpoint txformat.RawBtcCheckpoint) error {
 	if ck.returnError {
 		return errors.New("bad checkpoints")
 	}
-
+	ck.VerifyCalled = true
 	return nil
 }
 

@@ -83,6 +83,8 @@ parse staking tx without verifying opreturn tag.
 
 - [#697](https://github.com/babylonlabs-io/babylon/pull/697) Update BIP322 PoP and
 ECDSA Pop to sign bech32 encoded cosmos address
+- [#695](https://github.com/babylonlabs-io/babylon/pull/695) Improve checkpoint
+panicking behavior
 
 ## v1.0.0-rc7
 
