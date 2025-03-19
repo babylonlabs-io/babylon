@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v1.0.0-rc8
+
 ### API Breaking
 
 - [#690](https://github.com/babylonlabs-io/babylon/pull/690) Add new BLS password flow which includes env variable.
@@ -73,7 +75,7 @@ parse staking tx without verifying opreturn tag.
 
 ### State breaking
 
-- [#697](https://github.com/babylonlabs-io/babylon/pull/697) Update BIP322 PoP and 
+- [#697](https://github.com/babylonlabs-io/babylon/pull/697) Update BIP322 PoP and
 ECDSA Pop to sign bech32 encoded cosmos address
 - [#695](https://github.com/babylonlabs-io/babylon/pull/695) Improve checkpoint panicking behavior
 
