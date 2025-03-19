@@ -3,6 +3,7 @@ package bls12381
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 
 	blst "github.com/supranational/blst/bindings/go"
 )
@@ -35,6 +36,8 @@ type PrivateKey []byte
 const (
 	// SignatureSize is the size, in bytes, of a compressed BLS signature
 	SignatureSize = 48
+	// PrivKeySize is the size, in bytes, of a BLS private key
+	PrivKeySize = 32
 	// PubKeySize is the size, in bytes, of a compressed BLS public key
 	PubKeySize = 96
 	// SeedSize is the size, in bytes, of private key seeds
@@ -43,10 +46,10 @@ const (
 
 func (sig Signature) ValidateBasic() error {
 	if sig == nil {
-		return errors.New("invalid BLS signature")
+		return errors.New("empty BLS signature")
 	}
 	if len(sig) != SignatureSize {
-		return errors.New("invalid BLS signature")
+		return fmt.Errorf("invalid BLS signature length, got %d, expected %d", len(sig), SignatureSize)
 	}
 
 	return nil
@@ -77,7 +80,7 @@ func (sig Signature) Size() int {
 
 func (sig *Signature) Unmarshal(data []byte) error {
 	if len(data) != SignatureSize {
-		return errors.New("Invalid signature length")
+		return fmt.Errorf("invalid BLS signature length, got %d, expected %d", len(data), SignatureSize)
 	}
 
 	*sig = data
@@ -138,7 +141,7 @@ func (pk PublicKey) Size() int {
 
 func (pk *PublicKey) Unmarshal(data []byte) error {
 	if len(data) != PubKeySize {
-		return errors.New("Invalid public key length")
+		return fmt.Errorf("invalid BLS public key length, got %d, expected %d", len(data), PubKeySize)
 	}
 
 	*pk = data
@@ -151,6 +154,14 @@ func (pk PublicKey) Equal(k PublicKey) bool {
 
 func (pk PublicKey) Bytes() []byte {
 	return pk
+}
+
+func (sk PrivateKey) ValidateBasic() error {
+	if len(sk) != PrivKeySize {
+		return fmt.Errorf("invalid BLS private key length, got %d, expected %d", len(sk), PrivKeySize)
+	}
+
+	return nil
 }
 
 func (sk PrivateKey) PubKey() PublicKey {
