@@ -36,7 +36,7 @@ use.
 The following command-line flags can be used with `babylond init`, 
 `babylond create-bls-key`, and `babylond start`:
 
-- `--bls-password` - Directly specify the password (not recommended for 
+- `--insecure-bls-password` - Directly specify the password (not recommended for 
   production)
 - `--no-bls-password` - Generate key without password protection (suitable for 
   non-validator nodes)
@@ -48,7 +48,7 @@ Example:
 babylond create-bls-key --no-bls-password
 
 # Create a BLS key with a specified password
-babylond create-bls-key --bls-password="your-secure-password"
+babylond create-bls-key --insecure-bls-password="your-secure-password"
 
 # Start a node using a password from a custom location
 babylond start --bls-password-file="/path/to/custom/password.txt"
@@ -89,7 +89,7 @@ babylond start --bls-password-file="/path/to/bls_password.txt"
 When loading the BLS key, Babylon checks for the password in the following 
 order:
 
-1. Direct password provided via `--bls-password` flag
+1. Direct password provided via `--insecure-bls-password` flag
 2. `BABYLON_BLS_PASSWORD` environment variable
 3. Password file specified with `--bls-password-file`
 4. Interactive prompt
