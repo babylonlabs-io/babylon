@@ -45,7 +45,7 @@ $ babylond create-bls-key --home ./
 				return nil
 			}
 
-			password, _ := cmd.Flags().GetString(flagBlsPassword)
+			password, _ := cmd.Flags().GetString(flagInsecureBlsPassword)
 			if password == "" {
 				password = appsigner.NewBlsPassword()
 			}
@@ -66,7 +66,7 @@ $ babylond create-bls-key --home ./
 	}
 
 	cmd.Flags().String(flags.FlagHome, app.DefaultNodeHome, "The node home directory")
-	cmd.Flags().String(flagBlsPassword, "", "The password for the BLS key. If the flag is not set, the password will be read from the prompt.")
+	cmd.Flags().String(flagInsecureBlsPassword, "", "The password for the BLS key. If the flag is not set, the password will be read from the prompt.")
 	cmd.Flags().Bool(flagNoBlsPassword, false, "The BLS key will use an empty password if the flag is set.")
 	return cmd
 }
@@ -81,7 +81,7 @@ func blsPassword(cmd *cobra.Command) string {
 	if noBlsPassword {
 		return ""
 	}
-	password, _ := cmd.Flags().GetString(flagBlsPassword)
+	password, _ := cmd.Flags().GetString(flagInsecureBlsPassword)
 	if password != "" {
 		return password
 	}

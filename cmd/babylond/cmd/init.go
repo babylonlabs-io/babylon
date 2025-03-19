@@ -46,7 +46,7 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 				return nil
 			}
 
-			password, _ := cmd.Flags().GetString(flagBlsPassword)
+			password, _ := cmd.Flags().GetString(flagInsecureBlsPassword)
 			if password == "" {
 				password = appsigner.NewBlsPassword()
 			}
@@ -66,7 +66,7 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 		},
 	}
 	cmd.Flags().AddFlagSet(cosmosInitCmd.Flags())
-	cmd.Flags().String(flagBlsPassword, "", "The password for the BLS key. If the flag is not set, the password will be read from the prompt.")
+	cmd.Flags().String(flagInsecureBlsPassword, "", "The password for the BLS key. If the flag is not set, the password will be read from the prompt.")
 	cmd.Flags().Bool(flagNoBlsPassword, false, "The BLS key will use an empty password if the flag is set.")
 	return cmd
 }
