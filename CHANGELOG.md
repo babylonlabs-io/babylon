@@ -63,6 +63,7 @@ check of rewards
 - [#676](https://github.com/babylonlabs-io/babylon/pull/676) Bump IBC-go to `v8.7.0`
 - [#668](https://github.com/babylonlabs-io/babylon/pull/668) Remove unused unsafe key gen functions
 - [#701](https://github.com/babylonlabs-io/babylon/pull/701) Update upgrade name to `v1rc8`
+- [#696](https://github.com/babylonlabs-io/babylon/pull/696) Restore zoneconcierge queries in query client
 
 ### State Machine Breaking
 
