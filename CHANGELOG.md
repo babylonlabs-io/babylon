@@ -66,6 +66,7 @@ functions to `testutil`
 - [#683](https://github.com/babylonlabs-io/babylon/pull/683) crypto: fix eots signing timing attack
 - [#691](https://github.com/babylonlabs-io/babylon/pull/691) crypto: fix eots missing normalization in use of secp256k1.FieldVal
 - [#671](https://github.com/babylonlabs-io/babylon/pull/671) crypto: align adaptor sig impl with Blockstream spec
+- [#705](https://github.com/babylonlabs-io/babylon/pull/705) Add bls key length validation from the ERC-2335 keystore
 
 ### Improvements
 
