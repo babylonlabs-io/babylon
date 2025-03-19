@@ -143,7 +143,7 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 		_, err = os.Stat(passwordPath)
 		assert.NoError(t, err, "BLS password file should exist in default location")
 
-		loadedSigner, err := LoadOrGenBlsKey(tempDir, false, password, "", customFullPath)
+		loadedSigner, err := LoadOrGenBlsKey(tempDir, false, password, passwordPath, customFullPath)
 		assert.NoError(t, err)
 		assert.NotNil(t, loadedSigner)
 
@@ -152,7 +152,7 @@ func TestLoadOrGenBlsKey(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, origPubKey.Bytes(), loadedPubKey.Bytes())
 
-		anotherLoadedSigner, err := LoadOrGenBlsKey(tempDir, false, password, "", customFullPath)
+		anotherLoadedSigner, err := LoadOrGenBlsKey(tempDir, false, password, passwordPath, customFullPath)
 		assert.NoError(t, err)
 		assert.NotNil(t, anotherLoadedSigner)
 

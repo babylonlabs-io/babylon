@@ -80,55 +80,21 @@ func GenBls(keyFilePath, passwordFilePath, password string) *Bls {
 	return pv
 }
 
-// LoadBlsFromEnv loads a BLS key using a password from environment variable
-func LoadBlsFromEnv(keyFilePath string) (*Bls, error) {
-	password := GetBlsPasswordFromEnv()
-	if password == "" {
-		return nil, fmt.Errorf("BLS password not found in environment variable")
-	}
-
+// LoadBls loads a BLS key, attempting to use environment variable first and file-based passwords after.
+func LoadBls(keyFilePath, passwordFilePath string) *Bls {
 	keystore, err := erc2335.LoadKeyStore(keyFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read erc2335 keystore: %w", err)
+		return nil
+	}
+
+	password, err := GetBlsPassword(passwordFilePath)
+	if err != nil {
+		return nil
 	}
 
 	privKey, err := erc2335.Decrypt(keystore, password)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt BLS key: %w", err)
-	}
-
-	blsPrivKey := bls12381.PrivateKey(privKey)
-	return &Bls{
-		Key: BlsKey{
-			PubKey:       blsPrivKey.PubKey(),
-			PrivKey:      blsPrivKey,
-			filePath:     keyFilePath,
-			passwordPath: "",
-		},
-	}, nil
-}
-
-// LoadBlsFromFile loads a BLS key using a password from file
-func LoadBlsFromFile(keyFilePath, passwordFilePath string) (*Bls, error) {
-	if !cmtos.FileExists(passwordFilePath) {
-		return nil, fmt.Errorf("BLS password file does not exist: %s", passwordFilePath)
-	}
-
-	passwordBytes, err := os.ReadFile(passwordFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read BLS password file: %w", err)
-	}
-	password := string(passwordBytes)
-
-	keystore, err := erc2335.LoadKeyStore(keyFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read erc2335 keystore: %w", err)
-	}
-
-	// decrypt bls key from erc2335 type of structure
-	privKey, err := erc2335.Decrypt(keystore, password)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt BLS key: %w", err)
+		return nil
 	}
 
 	blsPrivKey := bls12381.PrivateKey(privKey)
@@ -139,23 +105,7 @@ func LoadBlsFromFile(keyFilePath, passwordFilePath string) (*Bls, error) {
 			filePath:     keyFilePath,
 			passwordPath: passwordFilePath,
 		},
-	}, nil
-}
-
-// LoadBls loads a BLS key, attempting to use environment variable first and file-based passwords after.
-func LoadBls(keyFilePath, passwordFilePath string) *Bls {
-	if bls, err := LoadBlsFromEnv(keyFilePath); err == nil {
-		return bls
 	}
-
-	if passwordFilePath != "" {
-		bls, err := LoadBlsFromFile(keyFilePath, passwordFilePath)
-		if err == nil {
-			return bls
-		}
-	}
-
-	return nil
 }
 
 // GetBlsPassword retrieves the BLS password from environment variable or password file.
@@ -302,16 +252,11 @@ func LoadBlsSignerIfExists(homeDir string, customPasswordPath, customKeyPath str
 		return nil
 	}
 
-	bls := LoadBls(blsKeyFile, customPasswordPath)
+	passwordPath := determinePasswordFilePath(homeDir, customPasswordPath)
+
+	bls := LoadBls(blsKeyFile, passwordPath)
 	if bls != nil {
 		return &bls.Key
-	}
-
-	defaultPasswordFile := DefaultBlsPasswordFile(homeDir)
-	if cmtos.FileExists(defaultPasswordFile) {
-		if bls, err := LoadBlsFromFile(blsKeyFile, defaultPasswordFile); err == nil {
-			return &bls.Key
-		}
 	}
 
 	return nil

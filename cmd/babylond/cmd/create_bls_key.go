@@ -50,7 +50,7 @@ $ babylond create-bls-key --home ./
 				password = appsigner.NewBlsPassword()
 			}
 
-			bls := appsigner.NewBls(bls12381.GenPrivKey(), blsKeyFile, blsPasswordFile)
+			bls := appsigner.NewBls(bls12381.GenPrivKey(), blsKeyFile, "")
 			bls.Key.Save(password)
 
 			fmt.Printf("\nIMPORTANT: Your BLS key has been created with password protection.\n")
