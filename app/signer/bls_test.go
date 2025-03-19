@@ -33,7 +33,7 @@ func TestNewBls(t *testing.T) {
 		pv.Key.Save(password)
 
 		t.Run("load bls key from file", func(t *testing.T) {
-			loadedPv := LoadBls(keyFilePath, passwordFilePath)
+			loadedPv := TryLoadBlsFromFile(keyFilePath, passwordFilePath)
 			assert.NotNil(t, loadedPv)
 
 			assert.Equal(t, pv.Key.PrivKey, loadedPv.Key.PrivKey)
@@ -49,7 +49,7 @@ func TestNewBls(t *testing.T) {
 		pv.Key.Save(password)
 
 		t.Run("load bls key from file", func(t *testing.T) {
-			loadedPv := LoadBls(keyFilePath, passwordFilePath)
+			loadedPv := TryLoadBlsFromFile(keyFilePath, passwordFilePath)
 			assert.NotNil(t, loadedPv)
 
 			assert.Equal(t, pv.Key.PrivKey, loadedPv.Key.PrivKey)
@@ -258,13 +258,13 @@ func TestLoadBlsWithEnvVar(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, envPassword, string(passwordContent))
 
-		loadedBls := LoadBls(blsKeyFile, blsPasswordFile)
+		loadedBls := TryLoadBlsFromFile(blsKeyFile, blsPasswordFile)
 		assert.NotNil(t, loadedBls)
 		assert.Equal(t, bls.Key.PubKey.Bytes(), loadedBls.Key.PubKey.Bytes())
 
 		t.Setenv(BlsPasswordEnvVar, "")
 
-		fileLoadedBls := LoadBls(blsKeyFile, blsPasswordFile)
+		fileLoadedBls := TryLoadBlsFromFile(blsKeyFile, blsPasswordFile)
 		assert.NotNil(t, fileLoadedBls)
 		assert.Equal(t, bls.Key.PubKey.Bytes(), fileLoadedBls.Key.PubKey.Bytes())
 	})

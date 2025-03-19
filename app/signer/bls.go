@@ -80,8 +80,10 @@ func GenBls(keyFilePath, passwordFilePath, password string) *Bls {
 	return pv
 }
 
-// LoadBls loads a BLS key, attempting to use environment variable first and file-based passwords after.
-func LoadBls(keyFilePath, passwordFilePath string) *Bls {
+// TryLoadBlsFromFile attempts to load a BLS key from the given file paths.
+// It tries to use environment variable for password first, then falls back to file-based password.
+// Returns nil if the key file doesn't exist or can't be accessed, panic if it can't be decrypted.
+func TryLoadBlsFromFile(keyFilePath, passwordFilePath string) *Bls {
 	keystore, err := erc2335.LoadKeyStore(keyFilePath)
 	if err != nil {
 		return nil
@@ -94,7 +96,7 @@ func LoadBls(keyFilePath, passwordFilePath string) *Bls {
 
 	privKey, err := erc2335.Decrypt(keystore, password)
 	if err != nil {
-		return nil
+		panic(fmt.Errorf("failed to decrypt BLS key: %w", err))
 	}
 
 	blsPrivKey := bls12381.PrivateKey(privKey)
@@ -254,7 +256,7 @@ func LoadBlsSignerIfExists(homeDir string, customPasswordPath, customKeyPath str
 
 	passwordPath := determinePasswordFilePath(homeDir, customPasswordPath)
 
-	bls := LoadBls(blsKeyFile, passwordPath)
+	bls := TryLoadBlsFromFile(blsKeyFile, passwordPath)
 	if bls != nil {
 		return &bls.Key
 	}

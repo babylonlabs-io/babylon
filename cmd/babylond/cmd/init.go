@@ -40,9 +40,13 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 			}
 
 			if noBlsPassword {
+				// We still create an empty password file for backward compatibility
+				// This ensures that the system components that expect this file to exist will still work
+				// even when no password protection is used
 				bls := appsigner.NewBls(bls12381.GenPrivKey(), blsKeyFile, blsPasswordFile)
 				bls.Key.Save("")
 				fmt.Printf("BLS key generated successfully without password protection.\n")
+				fmt.Printf("Note: An empty password file has been created at %s for backward compatibility.\n", blsPasswordFile)
 				return nil
 			}
 
@@ -51,6 +55,11 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 				password = appsigner.NewBlsPassword()
 			}
 
+			// We deliberately pass an empty string for the password file path ("") to avoid
+			// automatically creating a password file. This gives operators full control over
+			// how they want to store and provide the password (env var or custom password file).
+			// Security best practice is to not store the password on disk at all and use the
+			// environment variable instead.
 			bls := appsigner.NewBls(bls12381.GenPrivKey(), blsKeyFile, "")
 			bls.Key.Save(password)
 
