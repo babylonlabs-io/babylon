@@ -211,6 +211,7 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		cmtcli.NewCompletionCmd(rootCmd, true),
 		TestnetCmd(basicManager, banktypes.GenesisBalancesIterator{}),
 		genhelpers.CmdGenHelpers(gentxModule.GenTxValidator),
+		MigrateBlsKeyCmd(),
 		CreateBlsKeyCmd(),
 		GenerateBlsPopCmd(),
 		ModuleSizeCmd(),
@@ -302,6 +303,9 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 
 	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
 
+	// auto migrate when build tag is set to "e2e_upgrade"
+	automigrate_e2e_upgrade(logger, homeDir)
+
 	// Load or generate BLS signer with potential custom path from app.toml
 	blsSigner, err := appsigner.LoadOrGenBlsKey(
 		homeDir,
@@ -365,4 +369,23 @@ func appExport(
 	}
 
 	return babylonApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
+}
+
+// automigrate_e2e_upgrade_test runs when the build tag is set to "e2e_upgrade".
+// It always checks if the key structure is the previous version
+// and migrates into a separate version of the divided key files
+func automigrate_e2e_upgrade(logger log.Logger, homeDir string) {
+	if app.IsE2EUpgradeBuildFlag {
+		logger.Debug(
+			"***************************************************************************\n" +
+				"NOTE: In testnet mode, it will automatically migrate the key file\n" +
+				"if priv_validator_key.json contains both the comet and bls keys,\n" +
+				"used in previous version.\n" +
+				"Do not run it in a production environment, as it may cause problems.\n" +
+				"***************************************************************************\n",
+		)
+		if err := migrate(homeDir, "password"); err != nil {
+			logger.Debug(err.Error())
+		}
+	}
 }

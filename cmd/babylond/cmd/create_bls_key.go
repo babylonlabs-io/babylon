@@ -45,7 +45,7 @@ $ babylond create-bls-key --home ./
 				bls := appsigner.NewBls(bls12381.GenPrivKey(), blsKeyFile, blsPasswordFile)
 				bls.Key.Save("")
 				fmt.Printf("BLS key generated successfully without password protection.\n")
-				fmt.Printf("Note: An empty password file has been created for backward compatibility.\n")
+				fmt.Printf("Note: An empty password file has been created at %s for backward compatibility.\n", blsPasswordFile)
 				return nil
 			}
 
@@ -54,11 +54,9 @@ $ babylond create-bls-key --home ./
 				password = appsigner.NewBlsPassword()
 			}
 
-			// We deliberately pass an empty string for the password file path ("") to avoid
+			// We deliberately pass an empty string for the password file path to avoid
 			// automatically creating a password file. This gives operators full control over
 			// how they want to store and provide the password (env var or custom password file).
-			// Security best practice is to not store the password on disk at all and use the
-			// environment variable instead.
 			bls := appsigner.NewBls(bls12381.GenPrivKey(), blsKeyFile, "")
 			bls.Key.Save(password)
 
@@ -78,4 +76,22 @@ $ babylond create-bls-key --home ./
 	cmd.Flags().String(flagInsecureBlsPassword, "", "The password for the BLS key. If the flag is not set, the password will be read from the prompt.")
 	cmd.Flags().Bool(flagNoBlsPassword, false, "The BLS key will use an empty password if the flag is set.")
 	return cmd
+}
+
+// blsPassword returns the password for the BLS key.
+// If the noBlsPassword flag is set, the function returns an empty string.
+// If the blsPassword flag is set with non-empty string, the function returns the value of the flag.
+// If the blsPassword flag is set with empty string or not set at all,
+// the function prompts the user to enter a password with confirmation.
+func blsPassword(cmd *cobra.Command) string {
+	noBlsPassword, _ := cmd.Flags().GetBool(flagNoBlsPassword)
+	if noBlsPassword {
+		return ""
+	}
+	password, _ := cmd.Flags().GetString(flagInsecureBlsPassword)
+	if password != "" {
+		return password
+	}
+
+	return appsigner.NewBlsPassword()
 }
