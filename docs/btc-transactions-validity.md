@@ -14,9 +14,10 @@ There are three special transaction types
 
 ### Staking Transaction
 
-A staking transaction is different to the other transactions. It creates a UTXO
-and can only be spent by specific paths. The paths are a predefined spending
-rules enforced by a one of the spending scripts [here] (#spending-scripts).
+A staking transaction is different to the other transactions. It creates
+exactly one UTXO which commits to and can only be spent by specific paths.
+The paths are a predefined spending rules enforced by a one of the spending
+scripts [here](#spending-scripts). All other UTXOs are ignored by Babylon
 
 Requirements:
 
@@ -28,13 +29,6 @@ Requirements:
     - **Merkle Root**: Inside `Q`, commits to spending rules (timelock,
         unbonding, slashing)
     - **Internal Public Key**: Used to derive `Q`
-3. **`OP_RETURN` Output**:  Contains Babylon metadata (tag, `staker_pk`,
-    `finality_provider_pk`, `staking_time`, `version`, `global_parameters.tag`)
-
-The following are **not yet** needed.
-    - Merkle Proof
-    - Spending Script
-    - Schnorr signatures
 
 #### Data Required for Staking Output
 
@@ -70,16 +64,15 @@ generates the following:
 - An `OP_RETURN` output, storing the staking metadata
 
 ```go
-func BuildV0IdentifiableStakingOutputsAndTx(
- tag []byte,
+func BuildStakingInfo(
  stakerKey *btcec.PublicKey,
- fpKey *btcec.PublicKey,
+ fpKeys []*btcec.PublicKey,
  covenantKeys []*btcec.PublicKey,
  covenantQuorum uint32,
  stakingTime uint16,
  stakingAmount btcutil.Amount,
  net *chaincfg.Params,
-) (*IdentifiableStakingInfo, *wire.MsgTx, error)
+) (*StakingInfo, error) {
 ```
 
 To construct the full staking transaction, the user must provide the following
@@ -114,24 +107,6 @@ This function internally calls `BuildV0IdentifiableStakingOutputs()`, which:
     - Generates the OP_RETURN output using the parameters above.
     - Constructs the Taproot UTXO, embedding the staking conditions inside the
         Merkle root.
-
-##### OP_RETURN Output
-
-To store staking metadata on-chain, Babylon uses an OP_RETURN output. This
-output is built using the `V0OpReturnData` struct:
-
-```go
-type V0OpReturnData struct {
- Tag                       []byte
- Version                   byte
- StakerPublicKey           *XonlyPubKey
- FinalityProviderPublicKey *XonlyPubKey
- StakingTime               uint16
-}
-
-```
-
-<!-- should we still include serialisation format for OP_RETURN data? -->
 
 ### Suggested way of creaing and sending a staking transaction
 
