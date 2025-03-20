@@ -109,7 +109,7 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 		}
 
 		// 3. inject a checkpoint tx into the proposal s.t. validators can decode, verify the checkpoint
-		injectedVoteExtTx, err := h.buildInjectedTxBytes(ckpt, &req.LocalLastCommit, req.ProposerAddress)
+		injectedVoteExtTx, err := h.buildInjectedTxBytes(ckpt, &req.LocalLastCommit)
 		if err != nil {
 			return &EmptyProposalRes, fmt.Errorf("failed to encode vote extensions into a special tx: %w", err)
 		}
@@ -392,11 +392,10 @@ func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 	}
 }
 
-func (h *ProposalHandler) buildInjectedTxBytes(ckpt *ckpttypes.RawCheckpointWithMeta, info *abci.ExtendedCommitInfo, proposerAddress []byte) ([]byte, error) {
+func (h *ProposalHandler) buildInjectedTxBytes(ckpt *ckpttypes.RawCheckpointWithMeta, info *abci.ExtendedCommitInfo) ([]byte, error) {
 	msg := &ckpttypes.MsgInjectedCheckpoint{
 		Ckpt:               ckpt,
 		ExtendedCommitInfo: info,
-		SignerAddress:      string(proposerAddress),
 	}
 
 	return EncodeMsgsIntoTxBytes(h.txConfig, msg)
