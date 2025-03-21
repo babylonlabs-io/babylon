@@ -19,22 +19,22 @@
 
 ## 1. Introduction
 
-The Incentive module is responsible for determining the eligibility of rewards
-for both finality providers and BTC stakers. Initially, rewards are calculated
+The Incentive module is responsible for distributing rewards to both
+finality providers and BTC stakers. Initially, rewards are calculated
 based on the voting power of the finality provider, with the remaining rewards
-distributed to BTC delegations according to their voting power share.
+distributed to BTC delegators according to their voting power share.
 
-Rewards and distributions are triggered at the beginning of each
+The reward distribution is triggered at the beginning of each
 block during the [BeginBlocker](https://docs.cosmos.network/main/build/building-modules/beginblock-endblock#beginblocker-and-endblocker-1)
-phase, ensuring immediate availability.
+phase.
 
 The module is designed to manage the distribution of rewards for both BTC
 stakers and finality providers. Rewards are allocated based on the voting
 power of the finality provider and the BTC delegations. This module works
-in collaboration with the `x/distribution`. For native stakers, rewards are
-distributed through the `x/distribution` module after the initial distribution
-to BTC stakers and finality providers. Details on this process can be found in
-the genesis file [here](../proto/babylon/incentive/genesis.proto).
+in collaboration with the `x/distribution`. For native stakers and validators,
+rewards are distributed through the `x/distribution` module after the initial
+distribution to BTC stakers and finality providers. Details on this process can
+be found in the genesis file [here](../proto/babylon/incentive/genesis.proto).
 
 Within the module, there is a critical object called the `rewards gauge`, which serves
 as a pool accumulating rewards for both finality providers and BTC stakers.
@@ -49,7 +49,7 @@ There are 2 messages available through CLI
 
 ### What is the inflation mechanism and how are rewards distributed
 
-The minter module defines the inflation mechanism, which is calculated
+The x/mint module defines the inflation mechanism, which is calculated
 annually and holds the parameters for the logic that that determines
 inflation and the minting of new coins. The logic is based on the current year,
 depending on the number of years since genesis. The inflation schedule,
@@ -201,13 +201,13 @@ satoshis delegated to a specific finality provider. Managed by the
 
 ```protobuf
 message BTCDelegationRewardsTracker {
-uint64 start_period_cumulative_reward = 1;
-    bytes total_active_sat = 2 [
-        (cosmos_proto.scalar) = "cosmos.Int",
-        (gogoproto.customtype) = "cosmossdk.io/math.Int",
-        (gogoproto.nullable) = false
-    ];
-}
+    uint64 start_period_cumulative_reward = 1;
+        bytes total_active_sat = 2 [
+            (cosmos_proto.scalar) = "cosmos.Int",
+            (gogoproto.customtype) = "cosmossdk.io/math.Int",
+            (gogoproto.nullable) = false
+        ];
+    }
 ```
 
 ## 3. Messages
