@@ -39,13 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-- [#690](https://github.com/babylonlabs-io/babylon/pull/690) Add new BLS password flow which includes env variable.
-- [#687](https://github.com/babylonlabs-io/babylon/pull/687) Add details to btc-reorg runbook.
-- [#693](https://github.com/babylonlabs-io/babylon/pull/693) chore: use timeout from config in bbn client
 - [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.
-- [#666](https://github.com/babylonlabs-io/babylon/pull/666) Upgrade to wasmvm v2.2.3.
-- [#655](https://github.com/babylonlabs-io/babylon/pull/655) Add func `ParseV0StakingTxWithoutTag` to
-parse staking tx without verifying opreturn tag.
 - [#623](https://github.com/babylonlabs-io/babylon/pull/623) Add check for empty string in `bls` loading.
 - [#536](https://github.com/babylonlabs-io/babylon/pull/536) Improve protobuf vs. json error msgs / types
 - [#513](https://github.com/babylonlabs-io/babylon/pull/513) Suport datagen BTC delegation creation from Consumers
@@ -58,40 +52,58 @@ check of rewards
 - [#504](https://github.com/babylonlabs-io/babylon/pull/504) Add `btc-headers` IBC packet
 - [#575](https://github.com/babylonlabs-io/babylon/pull/575) Add `ConsumerId` field in `FinalityProviderResponse` in `x/btcstaking` module
 - [#624](https://github.com/babylonlabs-io/babylon/pull/624) Make keeper's collections private in `x/incentive` module
-- [#625](https://github.com/babylonlabs-io/babylon/pull/625) Add `GasLimit` decorator in ante handler and local mempool configuration
 - [#643](https://github.com/babylonlabs-io/babylon/pull/643) Fix flaky test `FuzzBTCDelegation`
-- [#644](https://github.com/babylonlabs-io/babylon/pull/644) Add priority nonce mempool and transaction priority ante handler decorator
-- [#676](https://github.com/babylonlabs-io/babylon/pull/676) Bump IBC-go to `v8.7.0`
-- [#668](https://github.com/babylonlabs-io/babylon/pull/668) Remove unused unsafe key gen functions
-- [#701](https://github.com/babylonlabs-io/babylon/pull/701) Update upgrade name to `v1rc8`
 - [#696](https://github.com/babylonlabs-io/babylon/pull/696) Restore zoneconcierge queries in query client
 
 ### State Machine Breaking
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
-- [#695](https://github.com/babylonlabs-io/babylon/pull/695) Improve checkpoint
-panicking behavior
-
-### API Breaking
-
-- [#682](https://github.com/babylonlabs-io/babylon/pull/682) Avoid creating pop in `babylond tx checkpointing create-validator`
-- [#697](https://github.com/babylonlabs-io/babylon/pull/697) Update BIP322 PoP and
-ECDSA Pop to sign bech32 encoded cosmos address
 
 ### Bug fixes
 
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+
+## v1.0.0-rc8
+
+### API Breaking
+
+- [#690](https://github.com/babylonlabs-io/babylon/pull/690) Add new BLS password flow which includes env variable.
+- [#682](https://github.com/babylonlabs-io/babylon/pull/682) Avoid creating pop in `babylond tx checkpointing create-validator`
+
+### Bug fixes
+
+- [#657](https://github.com/babylonlabs-io/babylon/pull/657) crypto: fix adaptor sig timing side channels
+- [#656](https://github.com/babylonlabs-io/babylon/pull/656) crypto: fix adaptor sig validity and typos
+- [#658](https://github.com/babylonlabs-io/babylon/pull/658) crypto: check if Z==1 in ToBTCPK
 - [#667](https://github.com/babylonlabs-io/babylon/pull/667) crypto: enable groupcheck in BLS verification/aggregation
-- [#660](https://github.com/babylonlabs-io/babylon/pull/660) fix: ecdsa verification
 - [#680](https://github.com/babylonlabs-io/babylon/pull/680) crypto: fix bls rogue attack
-- [#673](https://github.com/babylonlabs-io/babylon/pull/673) fix: move bip322 signing
-functions to `testutil`
+- [#673](https://github.com/babylonlabs-io/babylon/pull/673) fix: move bip322 signing functions to `testutil`
 - [#683](https://github.com/babylonlabs-io/babylon/pull/683) crypto: fix eots signing timing attack
 - [#691](https://github.com/babylonlabs-io/babylon/pull/691) crypto: fix eots missing normalization in use of secp256k1.FieldVal
+- [#671](https://github.com/babylonlabs-io/babylon/pull/671) crypto: align adaptor sig impl with Blockstream spec
 - [#705](https://github.com/babylonlabs-io/babylon/pull/705) Add bls key length validation from the ERC-2335 keystore
-- [#712](https://github.com/babylonlabs-io/babylon/pull/712) fix: remove exponentially events emission at processing
-queued msgs at the end epoch.
+- [#712](https://github.com/babylonlabs-io/babylon/pull/712) fix: remove exponentially events emission at processing queued msgs at the end epoch.
+
+### Improvements
+
+- [#701](https://github.com/babylonlabs-io/babylon/pull/701) Update upgrade name to `v1rc8`
+- [#687](https://github.com/babylonlabs-io/babylon/pull/687) Add details to btc-reorg runbook.
+- [#655](https://github.com/babylonlabs-io/babylon/pull/655) Add func `ParseV0StakingTxWithoutTag` to
+parse staking tx without verifying opreturn tag.
+- [#666](https://github.com/babylonlabs-io/babylon/pull/666) Upgrade to wasmvm v2.2.3.
+- [#668](https://github.com/babylonlabs-io/babylon/pull/668) Remove unused unsafe key gen functions
+- [#676](https://github.com/babylonlabs-io/babylon/pull/676) Bump IBC-go to `v8.7.0`
+- [#644](https://github.com/babylonlabs-io/babylon/pull/644) Add priority nonce mempool and transaction priority ante handler decorator
+- [#693](https://github.com/babylonlabs-io/babylon/pull/693) chore: use timeout from config in bbn client
+- [#660](https://github.com/babylonlabs-io/babylon/pull/660) add function to recover pub key from sig
+- [#625](https://github.com/babylonlabs-io/babylon/pull/625) add tx gas limit decorator and local mempool config
+
+### State breaking
+
+- [#697](https://github.com/babylonlabs-io/babylon/pull/697) Update BIP322 PoP and
+ECDSA Pop to sign bech32 encoded cosmos address
+- [#695](https://github.com/babylonlabs-io/babylon/pull/695) Improve checkpoint panicking behavior
 
 ## v1.0.0-rc7
 
@@ -123,10 +135,6 @@ block bank send and still create BTC delegations
 
 ### Bug fixes
 
-- [#671](https://github.com/babylonlabs-io/babylon/pull/671) crypto: align adaptor sig impl with Blockstream spec
-- [#657](https://github.com/babylonlabs-io/babylon/pull/657) crypto: fix adaptor sig timing side channels
-- [#656](https://github.com/babylonlabs-io/babylon/pull/656) crypto: fix adaptor sig validity and typos
-- [#658](https://github.com/babylonlabs-io/babylon/pull/658) crypto: Add check for Z==1 in ToBTCPK
 - [#539](https://github.com/babylonlabs-io/babylon/pull/539) fix: add missing `x/checkpointing` hooks
 invocation
 - [#591](https://github.com/babylonlabs-io/babylon/pull/591) bump ibc to v8.6.1 that fixes security issue
