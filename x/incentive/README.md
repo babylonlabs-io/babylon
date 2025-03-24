@@ -46,29 +46,12 @@ There are 2 messages available through CLI
 - `MsgSetWithdrawAddress` - set a new withdraw address for a delegator or
     finality provider
 
-### What is the inflation mechanism and how are rewards distributed
-
-The x/mint module defines the inflation mechanism, which is calculated
-annually and holds the parameters for the logic that that determines
-inflation and the minting of new coins. The logic is based on the current year,
-depending on the number of years since genesis. The inflation schedule,
-found [here](../mint/README.md) outlines how the inflation rate is expected to
-change over time, typically decreasing to a target rate to ensure a controlled
-increase in the coin supply.
-
-Each block, there is a check to update the minter's inflation rate if the
-provisions (total number of tokens to be minted that year) are zero, which is
-expected at genesis. The inflation rate and annual provisions are recalculated
-based on the total supply of the staking token. Additionally there is a check
-for the number of coins that are minted for that block, this is based on annual
-provisions and the precise time elapsed since the previous block.
-
 ### Overview of x/distribution logic
 
 Once the rewards have been distributed by `x/incentive` to BTC stakers
-and finality providers the `x/distribution` module is called in `app.go`. The
+and finality providers, the `x/distribution` module is called in `app.go`. The
 `x/distribution` module is designed to passively distribute rewards between
-delegators and validators by rewards accumulating in global pool until withdrawal's
+delegators and validators by rewards accumulating in global pool until withdrawals
 (e.g. `MsgWithdrawDelegatorReward`) or a delegation state change such as bonding,
 unbonding or re-delegation and this would trigger a full reward withdrawal
  for that delegation before the state change.
@@ -84,6 +67,23 @@ providers, the [`x/distribution`](https://docs.cosmos.network/main/build/modules
 module will then distribute the rest to native stakers and validators. However,
 note that rewards are not actively “pushed” out to accounts at this time—instead,
 they are recorded and remain in the pool until a withdrawal event.
+
+### What is the inflation mechanism and how are rewards distributed
+
+The `x/mint` module defines the inflation mechanism, which is calculated
+annually and holds the parameters for the logic that that determines
+inflation and the minting of new coins. The logic is based on the current year,
+depending on the number of years since genesis. The inflation schedule,
+found [here](../mint/README.md) outlines how the inflation rate is expected to
+change over time, typically decreasing to a target rate to ensure a controlled
+increase in the coin supply.
+
+Each block, there is a check to update the minter's inflation rate if the
+provisions (total number of tokens to be minted that year) are zero, which is
+expected at genesis. The inflation rate and annual provisions are recalculated
+based on the total supply of the staking token. Additionally there is a check
+for the number of coins that are minted for that block, this is based on annual
+provisions and the precise time elapsed since the previous block.
 
 ## 2. States
 
