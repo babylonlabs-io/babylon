@@ -163,10 +163,13 @@ message Gauge {
 
 ### 2.3. Reward Gauge
 
-The `RewardGauge` is  managed by [reward gauge management](./keeper/reward_gauge.go)
-and is used to track rewards distributed to a BTC staking stakeholder. It
-includes both the accumulated rewards and the withdrawn rewards, allowing the
- system to manage the lifecycle of rewards for each stakeholder.
+The `RewardGauge` is managed by the [reward gauge management]
+(./keeper/reward_gauge.go) and is used to track rewards distributed to a BTC
+staking stakeholder. It includes both the accumulated rewards and the
+withdrawn rewards, allowing the system to manage the lifecycle of rewards for
+each stakeholder. It is important to note that the amount of rewards available
+to withdraw is calculated as the difference between the total coins and the
+`withdrawn_coins`.
 
 ```protobuf
 // RewardGauge is an object that stores rewards distributed to a BTC staking
@@ -196,7 +199,8 @@ rewards, allowing the system to calculate the difference in rewards
 between periods for accurate distribution. Both the
 [reward tracker store](./keeper/reward_tracker_store.go)
 and [reward tracker](./keeper/reward_tracker.go) are focused on the management
-of rewards.
+of rewards. It is important to note that the finality provider key and period
+is used to store this structure.
 
 ```protobuf
 // FinalityProviderHistoricalRewards represents the cumulative rewards ratio of
