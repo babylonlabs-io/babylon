@@ -1,20 +1,23 @@
 # Release Process
 
 - [Breaking Changes](#breaking-changes)
-- [Release Procedure](#release-procedure)
+- [Major Release Procedure](#major-release-procedure)
   - [Creating a new release branch](#creating-a-new-release-branch)
   - [Cutting a new release](#cutting-a-new-release)
   - [Tagging Procedure](#tagging-procedure)
-- [Patch Release Procedure](#patch-release-procedure)
+- [Release Policy](#release-policy)
+  - [Definitions](#definitions)
+  - [Policy](#policy)
+- [Non-major Release Procedure](#non-major-release-procedure)
 
 This document outlines the release process for the Babylon node (babylond)
 
 Babylon follows [semantic versioning](https://semver.org), but with the
 following deviations to account for state-machine and API breaking changes.
 
-- State-machine breaking changes & API breaking changes will result in an
-increase of the minor version Y (0.Y.z).
-- All other changes will result in an increase of the patch version Z (0.y.Z).
+- State-machine breaking changes will result in an increase of the major version X (X.y.z).
+- Emergency releases & API breaking changes will result in an increase of the minor version Y (x.Y.z | x > 0).
+- All other changes will result in an increase of the patch version Z (x.y.Z | x > 0).
 
 ## Breaking Changes
 
@@ -28,21 +31,21 @@ non state-machine breaking.
 A change is considered to be ***API breaking*** if it modifies the provided API.
 This includes events, queries, CLI interfaces.
 
-## Release Procedure
+## Major Release Procedure
 
-A _release_ is an increment of the second number (eg: `v0.1.0` → `v0.2.0`)
+A _major release_ is an increment of the first number (eg: `v9.1.0` → `v10.0.0`).
 
 **Note**: Generally, PRs should target either `main` or a long-lived feature
 branch (see [CONTRIBUTING.md](./CONTRIBUTING.md#pull-requests)).
 
 * Once the team feels that `main` is _**feature complete**_, we create a
-  `release/v0.Y.x` branch (going forward known as release branch), where `Y` is
-  the minor version number, with patch part substituted to `x` (eg: v0.11.x).
+  `release/vY.x` branch (going forward known as release branch), where `Y` is
+  the version number, with the minor and patch part substituted to `x` (eg: 11.x).
   * **PRs targeting directly a release branch can be merged _only_ when
     exceptional circumstances arise**.
 * In the release branch
   * Create a PR that adds new version section in the `CHANGELOG.md`, matching the released version e.g
-    for branch `release/v0.Y.x`, section will be called `v0.Y.0`
+    for branch `release/vY.x`, section will be called `vY.0.0`
 * We freeze the release branch from receiving any new features and focus on
   releasing a release candidate.
   * Finish audits and reviews.
@@ -56,25 +59,24 @@ branch (see [CONTRIBUTING.md](./CONTRIBUTING.md#pull-requests)).
   * When bugs are found, create a PR for `main`, and backport fixes to the
     release branch.
   * Before tagging the release, create and merge PR to the release branch that:
-    * Moves all changelog entries form `Unreleased` section of the changelog to the newly created section `v0.Y.0`
+    * Moves all changelog entries form `Unreleased` section of the changelog to the newly created section `vY.0`
   * Create new release candidate tags after bugs are fixed.
 * After the team feels the release candidate is ready, create a full release:
   * **Note:** The final release MUST have the same commit hash as the latest
     corresponding release candidate.
-  * Create a new annotated git tag in the release branch (follow the [Tagging
-    Procedure](#tagging-procedure))
-* After the final release is made e.g `v0.Y.0`, backport changelog changes to the `main` branch
+  * Create a new annotated git tag in the release branch (follow the [Tagging Procedure](#tagging-procedure))
+* After the final release is made e.g `vY.0.0`, backport changelog changes to the `main` branch
   * checkout a new branch from the main branch: `username/backport_changelog`
-  * bring the new section from `release/v0.Y.x` branch to the `CHANGELOG.md` file on `main` branch
+  * bring the new section from `release/vY.x` branch to the `CHANGELOG.md` file on `main` branch
   * open PR against the `main` branch
 
 ### Creating a new release branch
 
-- create a new release branch, e.g., `release/v0.10.x`
+- create a new release branch, e.g., `release/v2.x`
     ```bash
     git checkout main
     git pull
-    git checkout -b release/v0.10.x
+    git checkout -b release/v2.x
     ```
 - push the release branch upstream
     ```bash
@@ -82,12 +84,12 @@ branch (see [CONTRIBUTING.md](./CONTRIBUTING.md#pull-requests)).
     ```
 ### Cutting a new release
 
-Before cutting a release (e.g., `v0.10.0-rc.0`), the
+Before cutting a release (e.g., `v2.0.0-rc.0`), the
 following steps are necessary:
 
-- move to the release branch, e.g., `release/v0.10.x`
+- move to the release branch, e.g., `release/v2.x`
     ```bash
-    git checkout release/v0.10.x
+    git checkout release/v2.x
     ```
 - create new tag (follow the [Tagging Procedure](#tagging-procedure))
 
@@ -104,32 +106,64 @@ The following steps are the default for tagging a specific branch commit using
 git on your local machine. Usually, release branches are labeled `release/v*`:
 
 Ensure you have checked out the commit you wish to tag and then do (assuming
-you want to release version `v0.10.0-rc.0` ):
+you want to release version `v2.0.0-rc.0` ):
 ```bash
 git pull --tags
 
-git tag -s -a v0.10.0-rc.0 -m "Version v0.10.0-rc.0"
+git tag -s -a v2.0.0-rc.0 -m "Version v2.0.0-rc.0"
 ```
 
 With every tag, the Github action will use the `goreleaser` tool to create a
 release, including artifacts and their checksums.
 
-## Patch Release Procedure
+## Release Policy
 
-A _patch release_ is an increment of the patch number (eg: `v10.0.0` → `v10.0.1`).
+### Definitions
 
-**Important**: _**Patch releases can break consensus only in exceptional
-circumstances .**_
+A `major` release is an increment of the _major number_ (eg: `v9.X.X → v10.X.X`).
+
+A `minor` release is an increment of the _minor number_ (eg: `v9.0.X → v9.1.X`).
+
+A `patch` release is an increment of the _patch number_ (eg: `v10.0.0` → `v10.0.1`).
+
+### Policy
+
+A `major` release will only be done via a governance gated upgrade. It can contain state breaking changes, and will
+also generally include new features, major changes to existing features, and/or large updates to key dependency
+packages such as CometBFT or the Cosmos SDK.
+
+A `minor` release may be done via a governance gated upgrade, or via a coordinated upgrade on a predefined block
+height. It will contain breaking changes which require a coordinated upgrade, but the scope of these changes is
+limited to essential updates such as fixes for security vulnerabilities.
+
+Each vulnerability which requires a state breaking upgrade will be evaluated individually by the maintainers of the
+software and the maintainers will make a determination on whether to include the changes into a minor release.
+
+A `patch` release will be created for changes which are strictly not state breaking. The latest patch release for a
+given release version is generally the recommended release, however, validator updates can be rolled out
+asynchronously without risking the state of a network running the software.
+
+The intention of the Release Policy is to ensure that the latest Babylond release is maintained with the following
+categories of fixes:
+
+- Tooling improvements (including code formatting, linting, static analysis and updates to testing frameworks)
+- Performance enhancements for running archival and syncing nodes
+- Test and benchmarking suites, ensuring that fixes are sound and there are no performance regressions
+- Library updates including point releases for core libraries such as IBC-Go, Cosmos SDK, Tendermint and other dependencies
+- General maintenance improvements, that are deemed necessary by the stewarding team, that help align different releases and reduce the workload on the stewarding team
+- Security fixes
+
+## Non-major Release Procedure
 
 Updates to the release branch should come from `main` by backporting PRs
-(usually done by automatic cherry pick followed by a PR to the release branch).
-The backports must be marked using `backport release/v0.Y.x` label in PR for
-`main`, where `release/v0.Y.x` is the name of the release branch. It is the PR
-author's responsibility to fix merge conflicts, update changelog entries, and
-ensure CI passes. If a PR originates from an external contributor, a member of
-the stewarding team assumes responsibility to perform this process instead of
-the original author.
+(usually done by automatic cherry-pick followed by a PRs to the release branch).
+The backports must be marked using `backport/vY.x` label in PR for main.
+It is the PR author's responsibility to fix merge conflicts, update changelog entries, and
+ensure CI passes. If a PR originates from an external contributor, a member of the stewarding team assumes
+responsibility to perform this process instead of the original author.
 
 After the release branch has all commits required for the next patch release:
-* Create a new annotated git tag in the release
-branch (follow the [Tagging Procedure](#tagging-procedure)).
+
+* Update the [changelog](#changelog)
+* Create a new annotated git tag in the release branch (follow the [Tagging Procedure](#tagging-procedure)).
+* Once the release process completes, back port changelog updates to `main` branch
