@@ -39,7 +39,7 @@ jobs:
     uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@hiep/fix-digest
     needs: ["lint_test"]
     secrets: inherit
-    if: startsWith(github.ref, 'refs/tags/')  # Run only on tag push
+    # if: startsWith(github.ref, 'refs/tags/')  # Run only on tag push
     permissions:
       # required for all workflows
       security-events: write
