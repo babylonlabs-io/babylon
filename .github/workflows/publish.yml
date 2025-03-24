@@ -53,3 +53,4 @@ jobs:
       buildArgs: |
         BABYLON_BUILD_OPTIONS=testnet
       docker_scan: true
+      buildArtifactPrefix: "testnet-"
