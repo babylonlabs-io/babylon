@@ -63,7 +63,7 @@ based on the total supply of the staking token. Additionally there is a check
 for the number of coins that are minted for that block, this is based on annual
 provisions and the precise time elapsed since the previous block.
 
-## Overview of x/distribution logic
+### Overview of x/distribution logic
 
 Once the rewards have been distributed by `x/incentive` to BTC stakers
 and finality providers the `x/distribution` module is called in `app.go`. The
