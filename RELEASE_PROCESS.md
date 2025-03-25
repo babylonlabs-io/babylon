@@ -132,14 +132,14 @@ A `major` release will only be done via a governance gated upgrade. It can conta
 also generally include new features, major changes to existing features, and/or large updates to key dependency
 packages such as CometBFT or the Cosmos SDK.
 
-A `minor` release may be done via a governance gated upgrade, or via a coordinated upgrade on a predefined block
-height. It will contain breaking changes which require a coordinated upgrade, but the scope of these changes is
+A `minor` release may be executed via a governance gated upgrade, or via a coordinated upgrade on a predefined block
+height. It will contain breaking changes that require a coordinated upgrade, but the scope of these changes is
 limited to essential updates such as fixes for security vulnerabilities.
 
 Each vulnerability which requires a state breaking upgrade will be evaluated individually by the maintainers of the
-software and the maintainers will make a determination on whether to include the changes into a minor release.
+software and the maintainers will determine on whether to include the changes into a minor release.
 
-A `patch` release will be created for changes which are strictly not state breaking. The latest patch release for a
+A `patch` release will be created for changes that are strictly not state breaking. The latest patch release for a
 given release version is generally the recommended release, however, validator updates can be rolled out
 asynchronously without risking the state of a network running the software.
 
@@ -149,15 +149,15 @@ categories of fixes:
 - Tooling improvements (including code formatting, linting, static analysis and updates to testing frameworks)
 - Performance enhancements for running archival and syncing nodes
 - Test and benchmarking suites, ensuring that fixes are sound and there are no performance regressions
-- Library updates including point releases for core libraries such as IBC-Go, Cosmos SDK, Tendermint and other dependencies
+- Library updates including point releases for core libraries such as IBC-Go, Cosmos SDK, CometBFT and other dependencies
 - General maintenance improvements, that are deemed necessary by the stewarding team, that help align different releases and reduce the workload on the stewarding team
 - Security fixes
 
 ## Non-major Release Procedure
 
 Updates to the release branch should come from `main` by backporting PRs
-(usually done by automatic cherry-pick followed by a PRs to the release branch).
-The backports must be marked using `backport/vY.x` label in PR for main.
+(usually done by automatic cherry-pick followed by PRs to the release branch).
+The backports must be marked using `backport-to-release/vY.x` label in PR for main.
 It is the PR author's responsibility to fix merge conflicts, update changelog entries, and
 ensure CI passes. If a PR originates from an external contributor, a member of the stewarding team assumes
 responsibility to perform this process instead of the original author.
