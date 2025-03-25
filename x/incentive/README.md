@@ -19,7 +19,7 @@
 
 ## 1. Distribution for BTC Stakers and Finality Providers
 
-The Incentive module is responsible for distributing rewards to both
+The `x/incentive` module is responsible for distributing rewards to both
 finality providers and BTC stakers. Initially, rewards are calculated
 based on the voting power of the finality provider, with the remaining rewards
 distributed to BTC delegators according to their voting power share.
@@ -65,7 +65,7 @@ or when a change in delegation triggers a withdrawal.
 Upon `BeginBlock`, following the reward distribution for BTC stakers and finality
 providers, the [`x/distribution`](https://docs.cosmos.network/main/build/modules/distribution)
 module will then distribute the rest to native stakers and validators. However,
-note that rewards are not actively “pushed” out to accounts at this time—instead,
+note that rewards are not actively “pushed” out to accounts at this time instead,
 they are recorded and remain in the pool until a withdrawal event.
 
 ### What is the inflation mechanism and how are rewards distributed
