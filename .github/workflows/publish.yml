@@ -21,7 +21,7 @@ jobs:
       run-lint: true
 
   docker_pipeline:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@hiep/fix-digest
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.12.1
     needs: ["lint_test"]
     secrets: inherit
     permissions:
@@ -36,7 +36,7 @@ jobs:
       docker_scan: true
 
   docker_testnet_pipeline:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@hiep/fix-digest
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.12.1
     needs: ["lint_test"]
     secrets: inherit
     # if: startsWith(github.ref, 'refs/tags/')  # Run only on tag push
