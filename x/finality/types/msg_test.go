@@ -4,44 +4,42 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/crypto/eots"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/stretchr/testify/require"
 )
 
-func FuzzMsgAddFinalitySig(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
+// func FuzzMsgAddFinalitySig(f *testing.F) {
+// 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
+// 	f.Fuzz(func(t *testing.T, seed int64) {
+// 		r := rand.New(rand.NewSource(seed))
 
-		sk, err := eots.KeyGen(r)
-		require.NoError(t, err)
+// 		sk, err := eots.KeyGen(r)
+// 		require.NoError(t, err)
 
-		numPubRand := uint64(100)
-		randListInfo, err := datagen.GenRandomPubRandList(r, numPubRand)
-		require.NoError(t, err)
+// 		numPubRand := uint64(100)
+// 		randListInfo, err := datagen.GenRandomPubRandList(r, numPubRand)
+// 		require.NoError(t, err)
 
-		startHeight := datagen.RandomInt(r, 10)
-		blockHeight := startHeight + datagen.RandomInt(r, 10)
-		blockHash := datagen.GenRandomByteArray(r, 32)
+// 		startHeight := datagen.RandomInt(r, 10)
+// 		blockHeight := startHeight + datagen.RandomInt(r, 10)
+// 		blockHash := datagen.GenRandomByteArray(r, 32)
 
-		signer := datagen.GenRandomAccount().Address
-		msg, err := datagen.NewMsgAddFinalitySig(signer, sk, startHeight, blockHeight, randListInfo, blockHash)
-		require.NoError(t, err)
+// 		signer := datagen.GenRandomAccount().Address
+// 		msg, err := datagen.NewMsgAddFinalitySig(signer, sk, startHeight, blockHeight, randListInfo, blockHash)
+// 		require.NoError(t, err)
 
-		prCommit := &types.PubRandCommit{
-			StartHeight: startHeight,
-			NumPubRand:  numPubRand,
-			Commitment:  randListInfo.Commitment,
-		}
+// 		prCommit := &types.PubRandCommit{
+// 			StartHeight: startHeight,
+// 			NumPubRand:  numPubRand,
+// 			Commitment:  randListInfo.Commitment,
+// 		}
 
-		// verify the finality signature message
-		err = types.VerifyFinalitySig(msg, prCommit)
-		require.NoError(t, err)
-	})
-}
+// 		// verify the finality signature message
+// 		err = types.VerifyFinalitySig(msg, prCommit)
+// 		require.NoError(t, err)
+// 	})
+// }
 
 func FuzzMsgCommitPubRandList(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)

@@ -3,17 +3,20 @@ package keeper
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/cosmos/cosmos-sdk/telemetry"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
+	"github.com/babylonlabs-io/babylon/crypto/eots"
 	bbn "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/x/finality/types"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/cometbft/cometbft/crypto/merkle"
+	"github.com/cosmos/cosmos-sdk/telemetry"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 type msgServer struct {
@@ -57,6 +60,56 @@ func (ms msgServer) ResumeFinalityProposal(goCtx context.Context, req *types.Msg
 	}
 
 	return &types.MsgResumeFinalityProposalResponse{}, nil
+}
+
+func toFieldVal(b []byte) *btcec.FieldVal {
+	var r btcec.FieldVal
+	r.SetByteSlice(b)
+	return &r
+}
+
+func (ms msgServer) VerifyFinalitySig(ctx sdk.Context, m *types.MsgAddFinalitySig, prCommit *types.PubRandCommit) error {
+	// verify the index of the public randomness
+	heightOfProof := prCommit.StartHeight + uint64(m.Proof.Index)
+	if m.BlockHeight != heightOfProof {
+		return types.ErrInvalidFinalitySig.Wrapf("the inclusion proof (for height %d) does not correspond to the given height (%d) in the message", heightOfProof, m.BlockHeight)
+	}
+	// verify the total number of randomness is same as in the commit
+	if uint64(m.Proof.Total) != prCommit.NumPubRand {
+		return types.ErrInvalidFinalitySig.Wrapf("the total number of public randomnesses in the proof (%d) does not match the number of public randomnesses committed (%d)", m.Proof.Total, prCommit.NumPubRand)
+	}
+	// verify the proof of inclusion for this public randomness
+	unwrappedProof, err := merkle.ProofFromProto(m.Proof)
+	if err != nil {
+		return types.ErrInvalidFinalitySig.Wrapf("failed to unwrap proof: %v", err)
+	}
+	if err := unwrappedProof.Verify(prCommit.Commitment, *m.PubRand); err != nil {
+		return types.ErrInvalidFinalitySig.Wrapf("the inclusion proof of the public randomness is invalid: %v", err)
+	}
+
+	// public randomness is good, verify finality signature
+	msgToSign := m.MsgToSign()
+	pk, err := m.FpBtcPk.ToBTCPK()
+	if err != nil {
+		return err
+	}
+
+	normalizedPubRand := m.PubRand.ToFieldValNormalized()
+	normalizedHexBytes := hex.EncodeToString(normalizedPubRand.Bytes()[:])
+
+	notNormalizedPubRand := toFieldVal(m.PubRand.MustMarshal())
+	notNormalizedHexBytes := hex.EncodeToString(notNormalizedPubRand.Bytes()[:])
+
+	ms.Logger(ctx).With(
+		"normalizedHexBytes", normalizedHexBytes,
+		"notNormalizedHexBytes", notNormalizedHexBytes,
+	).Info("Show the normalized and not normalized public randomness")
+
+	if err := eots.Verify(pk, notNormalizedPubRand, msgToSign, m.FinalitySig.ToModNScalar()); err != nil {
+		ms.Logger(ctx).Info("Verify the not normalized public randomness succeed")
+	}
+
+	return eots.Verify(pk, normalizedPubRand, msgToSign, m.FinalitySig.ToModNScalar())
 }
 
 // AddFinalitySig adds a new vote to a given block
@@ -138,7 +191,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 
 	// verify the finality signature message w.r.t. the public randomness commitment
 	// including the public randomness inclusion proof and the finality signature
-	if err := types.VerifyFinalitySig(req, prCommit); err != nil {
+	if err := ms.VerifyFinalitySig(ctx, req, prCommit); err != nil {
 		return nil, err
 	}
 	// the public randomness is good, set the public randomness
