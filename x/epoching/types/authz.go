@@ -1,7 +1,7 @@
 package types
 
 import (
-	context "context"
+	"context"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -83,18 +83,18 @@ func (a StakeAuthorization) Accept(ctx context.Context, msg sdk.Msg) (authz.Acce
 	)
 
 	switch msg := msg.(type) {
-	case *MsgDelegate:
-		validatorAddress = msg.ValidatorAddress
-		amount = msg.Amount
-	case *MsgUndelegate:
-		validatorAddress = msg.ValidatorAddress
-		amount = msg.Amount
-	case *MsgBeginRedelegate:
-		validatorAddress = msg.ValidatorDstAddress
-		amount = msg.Amount
-	case *MsgCancelUnbondingDelegation:
-		validatorAddress = msg.ValidatorAddress
-		amount = msg.Amount
+	case *MsgWrappedDelegate:
+		validatorAddress = msg.Msg.ValidatorAddress
+		amount = msg.Msg.Amount
+	case *MsgWrappedUndelegate:
+		validatorAddress = msg.Msg.ValidatorAddress
+		amount = msg.Msg.Amount
+	case *MsgWrappedBeginRedelegate:
+		validatorAddress = msg.Msg.ValidatorDstAddress
+		amount = msg.Msg.Amount
+	case *MsgWrappedCancelUnbondingDelegation:
+		validatorAddress = msg.Msg.ValidatorAddress
+		amount = msg.Msg.Amount
 	default:
 		return authz.AcceptResponse{}, sdkerrors.ErrInvalidRequest.Wrap("unknown msg type")
 	}
@@ -182,13 +182,13 @@ func validateAllowAndDenyValidators(allowed, denied []sdk.ValAddress) ([]string,
 func normalizeAuthzType(authzType AuthorizationType) (string, error) {
 	switch authzType {
 	case AuthorizationType_AUTHORIZATION_TYPE_DELEGATE:
-		return sdk.MsgTypeURL(&MsgDelegate{}), nil
+		return sdk.MsgTypeURL(&MsgWrappedDelegate{}), nil
 	case AuthorizationType_AUTHORIZATION_TYPE_UNDELEGATE:
-		return sdk.MsgTypeURL(&MsgUndelegate{}), nil
+		return sdk.MsgTypeURL(&MsgWrappedUndelegate{}), nil
 	case AuthorizationType_AUTHORIZATION_TYPE_REDELEGATE:
-		return sdk.MsgTypeURL(&MsgBeginRedelegate{}), nil
+		return sdk.MsgTypeURL(&MsgWrappedBeginRedelegate{}), nil
 	case AuthorizationType_AUTHORIZATION_TYPE_CANCEL_UNBONDING_DELEGATION:
-		return sdk.MsgTypeURL(&MsgCancelUnbondingDelegation{}), nil
+		return sdk.MsgTypeURL(&MsgWrappedCancelUnbondingDelegation{}), nil
 	default:
 		return "", errorsmod.Wrapf(authz.ErrUnknownAuthorizationType, "cannot normalize authz type with %T", authzType)
 	}
