@@ -2,11 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/babylonlabs-io/babylon/client/babylonclient"
 	"net/url"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/babylonlabs-io/babylon/client/babylonclient"
 )
 
 // BabylonConfig defines configuration for the Babylon client
@@ -36,8 +37,8 @@ func (cfg *BabylonConfig) Validate() error {
 	if cfg.Timeout <= 0 {
 		return fmt.Errorf("timeout must be positive")
 	}
-	if cfg.BlockTimeout < 0 {
-		return fmt.Errorf("block-timeout can't be negative")
+	if cfg.BlockTimeout <= 0 {
+		return fmt.Errorf("block-timeout must be positive")
 	}
 	return nil
 }
@@ -77,6 +78,7 @@ func DefaultBabylonConfig() BabylonConfig {
 		KeyDirectory:     defaultBabylonHome(),
 		Debug:            true,
 		Timeout:          20 * time.Second,
+		BlockTimeout:     10 * time.Minute,
 		OutputFormat:     "json",
 		SignModeStr:      "direct",
 		SubmitterAddress: "bbn1v6k7k9s8md3k29cu9runasstq5zaa0lpznk27w", // this is currently a placeholder, will not recognized by Babylon
