@@ -1,7 +1,10 @@
 package types
 
 import (
+	"bytes"
 	"encoding/hex"
+
+	"github.com/btcsuite/btcd/wire"
 )
 
 func delegatorUnbondingInfoToResponse(ui *DelegatorUnbondingInfo) *DelegatorUnbondingInfoResponse {
@@ -35,6 +38,15 @@ func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus)
 		UnbondingTime:        btcDel.UnbondingTime,
 		UndelegationResponse: nil,
 		ParamsVersion:        btcDel.ParamsVersion,
+	}
+
+	// Recompute the staking Tx hash from raw bytes
+	if len(btcDel.StakingTx) > 0 {
+		stx := wire.NewMsgTx(wire.TxVersion)
+		err := stx.Deserialize(bytes.NewReader(btcDel.StakingTx))
+		if err == nil {
+			resp.StakingTxHashHex = stx.TxHash().String()
+		}
 	}
 
 	if btcDel.SlashingTx != nil {

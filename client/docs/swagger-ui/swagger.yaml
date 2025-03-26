@@ -3956,6 +3956,9 @@ paths:
                     type: integer
                     format: int64
                     title: params version used to validate delegation
+                  staking_tx_hash_hex:
+                    type: string
+                    title: 'TODO: move this next to staking_tx_hex or keep it here'
             title: >-
               QueryBTCDelegationResponse is response type matching
 
@@ -4418,6 +4421,9 @@ paths:
                       type: integer
                       format: int64
                       title: params version used to validate delegation
+                    staking_tx_hash_hex:
+                      type: string
+                      title: 'TODO: move this next to staking_tx_hex or keep it here'
                   description: >-
                     BTCDelegationResponse is the client needed information from
                     a BTCDelegation
@@ -5423,6 +5429,11 @@ paths:
                             type: integer
                             format: int64
                             title: params version used to validate delegation
+                          staking_tx_hash_hex:
+                            type: string
+                            title: >-
+                              TODO: move this next to staking_tx_hex or keep it
+                              here
                         description: >-
                           BTCDelegationResponse is the client needed information
                           from a BTCDelegation
@@ -18733,6 +18744,9 @@ definitions:
         type: integer
         format: int64
         title: params version used to validate delegation
+      staking_tx_hash_hex:
+        type: string
+        title: 'TODO: move this next to staking_tx_hex or keep it here'
     description: >-
       BTCDelegationResponse is the client needed information from a
       BTCDelegation
@@ -19015,6 +19029,9 @@ definitions:
               type: integer
               format: int64
               title: params version used to validate delegation
+            staking_tx_hash_hex:
+              type: string
+              title: 'TODO: move this next to staking_tx_hex or keep it here'
           description: >-
             BTCDelegationResponse is the client needed information from a
             BTCDelegation
@@ -19695,6 +19712,9 @@ definitions:
             type: integer
             format: int64
             title: params version used to validate delegation
+          staking_tx_hash_hex:
+            type: string
+            title: 'TODO: move this next to staking_tx_hex or keep it here'
     title: |-
       QueryBTCDelegationResponse is response type matching
       QueryBTCDelegationRequest and containing BTC delegation information
@@ -19932,6 +19952,9 @@ definitions:
               type: integer
               format: int64
               title: params version used to validate delegation
+            staking_tx_hash_hex:
+              type: string
+              title: 'TODO: move this next to staking_tx_hex or keep it here'
           description: >-
             BTCDelegationResponse is the client needed information from a
             BTCDelegation
@@ -20213,6 +20236,9 @@ definitions:
                     type: integer
                     format: int64
                     title: params version used to validate delegation
+                  staking_tx_hash_hex:
+                    type: string
+                    title: 'TODO: move this next to staking_tx_hex or keep it here'
                 description: >-
                   BTCDelegationResponse is the client needed information from a
                   BTCDelegation
