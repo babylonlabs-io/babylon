@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -136,18 +137,26 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, err
 	}
 
+	ms.Logger(ctx).Info("Before VerifyFinalitySig")
 	// verify the finality signature message w.r.t. the public randomness commitment
 	// including the public randomness inclusion proof and the finality signature
 	if err := types.VerifyFinalitySig(req, prCommit); err != nil {
 		return nil, err
 	}
+	ms.Logger(ctx).Info("After VerifyFinalitySig")
+
+	ms.Logger(ctx).Info("SetPubRand")
 	// the public randomness is good, set the public randomness
 	ms.SetPubRand(ctx, req.FpBtcPk, req.BlockHeight, *req.PubRand)
 
 	// verify whether the voted block is a fork or not
 	if !bytes.Equal(indexedBlock.AppHash, req.BlockAppHash) {
 		// the finality provider votes for a fork!
-
+		ms.Logger(ctx).Info(
+			"block app hash check",
+			"indexedBlock.AppHash", hex.EncodeToString(indexedBlock.AppHash),
+			"req.BlockAppHash", hex.EncodeToString(req.BlockAppHash),
+		)
 		// construct evidence
 		evidence := &types.Evidence{
 			FpBtcPk:              req.FpBtcPk,
@@ -162,13 +171,24 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		// if this finality provider has also signed canonical block, slash it
 		canonicalSig, err := ms.GetSig(ctx, req.BlockHeight, fpPK)
 		if err == nil {
+			ms.Logger(ctx).Info(
+				"block app hash check - get canonical sig nil",
+				"canonicalSig", hex.EncodeToString(canonicalSig.MustMarshal()),
+			)
 			// set canonial sig
 			evidence.CanonicalFinalitySig = canonicalSig
 			// slash this finality provider, including setting its voting power to
 			// zero, extracting its BTC SK, and emit an event
 			ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
+			ms.Logger(ctx).Info(
+				"block app hash check - slash fp",
+				"eotsPk", req.FpBtcPk.MarshalHex(),
+			)
 		}
 
+		ms.Logger(ctx).Info(
+			"block app hash check - set evidence",
+		)
 		// save evidence
 		ms.SetEvidence(ctx, evidence)
 
@@ -177,11 +197,25 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return &types.MsgAddFinalitySigResponse{}, nil
 	}
 
+	ms.Logger(ctx).Info(
+		"Set Sig",
+		"req.BlockHeight", req.BlockHeight,
+		"fpPK", fpPK.MarshalHex(),
+		"req.FinalitySig", req.FinalitySig.ToHexStr(),
+	)
 	// this signature is good, add vote to DB
 	ms.SetSig(ctx, req.BlockHeight, fpPK, req.FinalitySig)
 
 	// update `HighestVotedHeight` if needed
+	ms.Logger(ctx).Info(
+		"Update HighestVotedHeight",
+		"fp.HighestVotedHeight", fp.HighestVotedHeight,
+	)
 	if fp.HighestVotedHeight < uint32(req.BlockHeight) {
+		ms.Logger(ctx).Info(
+			"Updated HighestVotedHeight",
+			"fp.HighestVotedHeight", fp.HighestVotedHeight,
+		)
 		fp.HighestVotedHeight = uint32(req.BlockHeight)
 		err := ms.BTCStakingKeeper.UpdateFinalityProvider(ctx, fp)
 		if err != nil {
@@ -189,6 +223,9 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		}
 	}
 
+	ms.Logger(ctx).Info(
+		"check if it has evidence",
+	)
 	// if this finality provider has signed the canonical block before,
 	// slash it via extracting its secret key, and emit an event
 	if ms.HasEvidence(ctx, req.FpBtcPk, req.BlockHeight) {
@@ -201,6 +238,10 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 			panic(fmt.Errorf("failed to get evidence despite HasEvidence returns true"))
 		}
 
+		ms.Logger(ctx).Info(
+			"FP already have evidence",
+		)
+
 		// set canonical sig to this evidence
 		evidence.CanonicalFinalitySig = req.FinalitySig
 		ms.SetEvidence(ctx, evidence)
@@ -209,16 +250,28 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		// zero, extracting its BTC SK, and emit an event
 		ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
 
+		ms.Logger(ctx).Info(
+			"FP was slashed",
+			"req.FpBtcPk", req.FpBtcPk.MarshalHex(),
+		)
+
 		// NOTE: we should NOT return error here, otherwise the state change triggered in this tx
 		// (including the evidence and slashing) will be rolled back
 		return &types.MsgAddFinalitySigResponse{}, nil
 	}
 
+	ms.Logger(ctx).Info(
+		"Index refundable Msg",
+		"req.BlockAppHash", hex.EncodeToString(req.BlockAppHash),
+	)
 	// at this point, the finality signature is 1) valid, 2) over a canonical block,
 	// and 3) not duplicated.
 	// Thus, we can safely consider this message as refundable
 	ms.IncentiveKeeper.IndexRefundableMsg(ctx, req)
 
+	ms.Logger(ctx).Warn(
+		"End AddFinalitySig",
+	)
 	return &types.MsgAddFinalitySigResponse{}, nil
 }
 
