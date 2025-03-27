@@ -10,6 +10,11 @@ import (
 	"github.com/babylonlabs-io/babylon/crypto/eots"
 )
 
+const (
+	// Maximal amount of block that can be finalized and rewarded in one EndBlocker
+	MaxFinalizedRewardedBlocksPerEndBlock = uint64(15000)
+)
+
 func (c *PubRandCommit) IsInRange(height uint64) bool {
 	start, end := c.Range()
 	return start <= height && height <= end

@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"math"
 	"math/rand"
 	"testing"
 	"time"
@@ -59,7 +60,7 @@ func TestHandleResumeFinalityProposal(t *testing.T) {
 	// tally blocks and none of them should be finalised
 	iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return().AnyTimes()
 	ctx = datagen.WithCtxHeight(ctx, currentHeight)
-	fKeeper.TallyBlocks(ctx)
+	fKeeper.TallyBlocks(ctx, math.MaxUint64)
 	for i := haltingHeight; i < currentHeight; i++ {
 		ib, err := fKeeper.GetBlock(ctx, i)
 		require.NoError(t, err)

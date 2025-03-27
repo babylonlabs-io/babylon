@@ -55,7 +55,7 @@ func FuzzHandleRewarding(f *testing.F) {
 
 		// First call to HandleRewarding - expect no rewards
 		ctx = datagen.WithCtxHeight(ctx, targetHeight)
-		fKeeper.HandleRewarding(ctx, int64(targetHeight))
+		fKeeper.HandleRewarding(ctx, int64(targetHeight), uint64(10000))
 
 		nextHeight := fKeeper.GetNextHeightToReward(ctx)
 		require.Zero(t, nextHeight,
@@ -77,7 +77,7 @@ func FuzzHandleRewarding(f *testing.F) {
 			Times(int(firstBatchFinalized))
 
 		// Second call to HandleRewarding
-		fKeeper.HandleRewarding(ctx, int64(targetHeight))
+		fKeeper.HandleRewarding(ctx, int64(targetHeight), uint64(10000))
 
 		nextHeight = fKeeper.GetNextHeightToReward(ctx)
 		expectedNextHeight := activatedHeight + firstBatchFinalized
@@ -100,7 +100,7 @@ func FuzzHandleRewarding(f *testing.F) {
 			Times(int(secondBatchFinalized))
 
 		// Final call to HandleRewarding
-		fKeeper.HandleRewarding(ctx, int64(targetHeight))
+		fKeeper.HandleRewarding(ctx, int64(targetHeight), uint64(10000))
 
 		// Verify final state
 		finalNextHeight := fKeeper.GetNextHeightToReward(ctx)
@@ -160,7 +160,7 @@ func TestHandleRewardingWithGapsOfUnfinalizedBlocks(t *testing.T) {
 		Return().
 		Times(2) // number of finalized blocks processed
 
-	fKeeper.HandleRewarding(ctx, 3)
+	fKeeper.HandleRewarding(ctx, 3, uint64(10000))
 
 	actNextBlockToBeRewarded := fKeeper.GetNextHeightToReward(ctx)
 	require.Equal(t, uint64(4), actNextBlockToBeRewarded)

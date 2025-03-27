@@ -48,7 +48,7 @@ func FuzzTallying_FinalizingNoBlock(f *testing.F) {
 		fKeeper.SetVotingPower(ctx, datagen.GenRandomByteArray(r, 32), activatedHeight, 1)
 		// tally blocks and none of them should be finalised
 		ctx = datagen.WithCtxHeight(ctx, activatedHeight+10-1)
-		fKeeper.TallyBlocks(ctx)
+		fKeeper.TallyBlocks(ctx, uint64(10000))
 		for i := activatedHeight; i < activatedHeight+10; i++ {
 			ib, err := fKeeper.GetBlock(ctx, i)
 			require.NoError(t, err)
@@ -95,7 +95,7 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 		}
 		// tally blocks and none of them should be finalised
 		ctx = datagen.WithCtxHeight(ctx, activatedHeight+10-1)
-		fKeeper.TallyBlocks(ctx)
+		fKeeper.TallyBlocks(ctx, uint64(10000))
 		for i := activatedHeight; i < activatedHeight+10; i++ {
 			ib, err := fKeeper.GetBlock(ctx, i)
 			require.NoError(t, err)
@@ -208,7 +208,7 @@ func FuzzConsecutiveFinalization(f *testing.F) {
 		}
 
 		ctx = datagen.WithCtxHeight(ctx, activatedHeight+numBlockToInspect-1)
-		fKeeper.TallyBlocks(ctx)
+		fKeeper.TallyBlocks(ctx, uint64(10000))
 
 		// all blocks up to firstNonFinalizedBlock must be finalised
 		for i := activatedHeight; i < firstNonFinalizedBlock; i++ {

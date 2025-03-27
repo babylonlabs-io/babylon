@@ -17,7 +17,7 @@ import (
 // - finalised blocks (i.e., block with finality provider set AND QC of this finality provider set)
 // - non-finalisable blocks (i.e., block with no active finality providers)
 // but without block that has finality providers set AND does not receive QC
-func (k Keeper) TallyBlocks(ctx context.Context) {
+func (k Keeper) TallyBlocks(ctx context.Context, maxFinalizedBlocks uint64) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	activatedHeight, err := k.GetBTCStakingActivatedHeight(ctx)
 	if err != nil {
@@ -32,6 +32,9 @@ func (k Keeper) TallyBlocks(ctx context.Context) {
 		startHeight = activatedHeight
 	}
 
+	lastBlockHeight := uint64(sdkCtx.HeaderInfo().Height)
+	maxHeightToFinalize := min(startHeight+maxFinalizedBlocks, lastBlockHeight)
+
 	// find all blocks that are non-finalised AND have finality provider set since max(activatedHeight, lastFinalizedHeight+1)
 	// There are 4 different scenarios as follows
 	// - has finality providers, non-finalised: tally and try to finalise
@@ -40,7 +43,7 @@ func (k Keeper) TallyBlocks(ctx context.Context) {
 	// - does not have finality providers, finalised: impossible to happen, panic
 	// After this for loop, the blocks since earliest activated height are either finalised or non-finalisable
 finalizationLoop:
-	for i := startHeight; i <= uint64(sdkCtx.HeaderInfo().Height); i++ {
+	for i := startHeight; i <= maxHeightToFinalize; i++ {
 		ib, err := k.GetBlock(ctx, i)
 		if err != nil {
 			panic(err) // failing to get an existing block is a programming error
