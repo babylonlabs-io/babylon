@@ -420,4 +420,49 @@ The transfer module uses a token filter middleware which
 serves to prevent non-native Babylon tokens from being
 on Babylon. If a user is to try to send a token from another
 chain across, it will be simply rejected and the token returned
-back to the user. 
+back to the user.
+
+### Handling Expired/Frozen IBC Clients
+
+If an IBC client expires or becomes frozen, you'll need to submit a governance proposal to recover the client. 
+
+In IBC terminology:
+- The "host chain" is the chain that maintains the light client of the counterparty chain
+- For example, if you're relaying between Babylon and Cosmos Hub:
+  - When Babylon maintains a light client of Cosmos Hub, Babylon is the host chain
+  - When Cosmos Hub maintains a light client of Babylon, Cosmos Hub is the host chain
+
+The process involves:
+
+1. Submitting a governance proposal on the host chain to recover the client
+   - This means if Babylon's light client of Cosmos Hub expires, you submit the proposal on Babylon
+   - If Cosmos Hub's light client of Babylon expires, you submit the proposal on Cosmos Hub
+
+2. The proposal requires:
+   - The expired client ID
+   - An active client ID to substitute it with
+   - The governance address that will submit the proposal
+
+Here's an example of the proposal JSON:
+
+```json
+{
+  "messages": [
+    {
+      "@type": "/ibc.core.client.v1.MsgRecoverClient",
+      "subject_client_id": "<expired-client-id>",
+      "substitute_client_id": "<active-client-id>",
+      "signer": "<gov-address>"
+    }
+  ],
+  "metadata": "<metadata>",
+  "deposit": "10stake",
+  "title": "My proposal",
+  "summary": "A short summary of my proposal",
+  "expedited": false
+}
+```
+
+For detailed steps on how to submit an IBC client recovery proposal, refer to the [IBC Governance Proposals Guide](https://ibc.cosmos.network/main/ibc/proposals.html#steps). For more information about submitting governance proposals on Babylon, including parameters and requirements, see the [Babylon Governance Guide](https://docs.babylonlabs.io/guides/governance/).
+
+> **Note**: It's important to monitor your IBC clients and submit recovery proposals before they expire to maintain continuous cross-chain communication. The trusting period (33 hours for Babylon) determines how long a light client remains valid before requiring an update. 
