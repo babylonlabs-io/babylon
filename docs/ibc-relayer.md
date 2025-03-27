@@ -59,16 +59,13 @@ After you have successfully installed Hermes and created the necessary folders,
 you now have to edit `config.toml` and add the appropriate configurations for
 the chains you want to relay between.
 
-For this tutorial, we will be using the following chains:
-
-- Babylon's `bbn-test-5` testnet
-- Cosmos Hub's `theta-testnet-001` testnet
-
-Edit the Hermes configuration.
+Edit the Hermes configuration:
 
 ```bash
 vim $HOME/.hermes/config.toml
 ```
+
+Here's the complete configuration for both chains:
 
 ```toml
 [global]
@@ -102,112 +99,63 @@ enabled = false
 host = "127.0.0.1"
 port = 3001
 
-[telemetry.buckets.latency_submitted]
-start = 500
-end = 20000
-buckets = 10
-
-[telemetry.buckets.latency_confirmed]
-start = 1000
-end = 30000
-buckets = 10
-
 [[chains]]
 id = "theta-testnet-001"
 type = "CosmosSdk"
 rpc_addr = "https://rpc.sentry-01.theta-testnet.polypore.xyz"
 grpc_addr = "https://grpc.sentry-01.theta-testnet.polypore.xyz"
+websocket_addr = "ws://rpc.sentry-01.theta-testnet.polypore.xyz:26657/websocket"
 rpc_timeout = "10s"
-trusted_node = false
 account_prefix = "cosmos"
 key_name = "key-cosmos"
-key_store_type = "Test"
 store_prefix = "ibc"
 default_gas = 100000
 max_gas = 400000
 gas_multiplier = 1.5
 max_msg_num = 30
 max_tx_size = 180000
-max_grpc_decoding_size = 33554432
 clock_drift = "5s"
 max_block_time = "30s"
-ccv_consumer_chain = false
-memo_prefix = ""
-sequential_batch_tx = false
 trusting_period = "14days"
 client_refresh_rate = "1/3"
-
-[chains.event_source]
-mode = "push"
-url = "ws://rpc.sentry-01.theta-testnet.polypore.xyz:26657/websocket"
-batch_delay = "500ms"
-
-[chains.trust_threshold]
-numerator = "1"
-denominator = "3"
-
-[chains.gas_price]
-price = 0.025
-denom = "uatom"
-
+gas_price = { price = 0.025, denom = "uatom" }
+trust_threshold = { numerator = "1", denominator = "3" }
 [chains.packet_filter]
 policy = "allow"
 list = [["transfer", "channel-0"]]
-
-[chains.packet_filter.min_fees]
-
-[chains.address_type]
-derivation = "cosmos"
 
 [[chains]]
 id = "bbn-test-5"
 type = "CosmosSdk"
 rpc_addr = "https://babylon-testnet-rpc.nodes.guru"
 grpc_addr = "https://babylon-testnet-grpc.nodes.guru"
+websocket_addr = "wss://babylon-testnet-rpc.nodes.guru/websocket"
 rpc_timeout = "10s"
-trusted_node = false
 account_prefix = "bbn"
 key_name = "babylon-key"
-key_store_type = "Test"
 store_prefix = "ibc"
 default_gas = 100000
 max_gas = 400000
 gas_multiplier = 1.5
 max_msg_num = 30
 max_tx_size = 180000
-max_grpc_decoding_size = 33554432
 clock_drift = "5s"
 max_block_time = "30s"
-ccv_consumer_chain = false
-memo_prefix = ""
-sequential_batch_tx = false
 # Babylon has a ~50 hour unbonding period, so we set the trusting period to 33 hours
-# (approximately 2/3 of the unbonding period)
 trusting_period = "33hours"
 client_refresh_rate = "1/3"
-
-[chains.event_source]
-mode = "push"
-url = "wss://babylon-testnet-rpc.nodes.guru/websocket"
-batch_delay = "500ms"
-
-[chains.trust_threshold]
-numerator = "1"
-denominator = "3"
-
-[chains.gas_price]
-price = 0.1
-denom = "ubbn"
-
+gas_price = { price = 0.1, denom = "ubbn" }
+trust_threshold = { numerator = "1", denominator = "3" }
 [chains.packet_filter]
 policy = "allow"
 list = [["transfer", "channel-0"]]
-
-[chains.packet_filter.min_fees]
-
-[chains.address_type]
-derivation = "cosmos"
 ```
+
+Key configuration differences between the chains:
+- Babylon uses `ubbn` as the gas denomination with a price of 0.1
+- Cosmos Hub uses `uatom` as the gas denomination with a price of 0.025
+- Babylon's trusting period is set to 33 hours (2/3 of its ~50 hour unbonding period)
+- Cosmos Hub's trusting period is set to 14 days
 
 ### Add relayer wallets
 
