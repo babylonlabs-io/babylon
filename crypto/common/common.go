@@ -28,7 +28,7 @@ func ScalarBaseMultWithBlinding(k *btcec.ModNScalar) (*btcec.JacobianPoint, erro
 	}
 	secret := k.Bytes()
 
-	// compute randomeness in defensive way
+	// compute randomness in defensive way
 	rBytesExtract := hkdf.Extract(
 		sha256.New,
 		hkdf.Extract(sha256.New, secret[:], bSalt[:]),
