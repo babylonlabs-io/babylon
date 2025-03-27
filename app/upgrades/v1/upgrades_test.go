@@ -285,7 +285,7 @@ func (s *UpgradeTestSuite) Upgrade() {
 	s.ctx = s.ctx.WithHeaderInfo(header.Info{Height: DummyUpgradeHeight, Time: s.ctx.BlockTime().Add(time.Second)}).WithBlockHeight(DummyUpgradeHeight)
 	s.NotPanics(func() {
 		_, err := s.preModule.PreBlock(s.ctx)
-		s.NoError(err)
+		s.Require().NoError(err)
 	})
 }
 

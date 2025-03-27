@@ -24,10 +24,10 @@ func TestHardCodedBtcStakingParamsAreValid(t *testing.T) {
 		params, err := v1.LoadBtcStakingParamsFromData(upgradeData.BtcStakingParamsStr)
 		require.NoError(t, err)
 
-		for _, p := range params {
+		for i, p := range params {
 			// using set Params here makes sure the parameters in the upgrade string are consistent
 			err = k.SetParams(ctx, p)
-			require.NoError(t, err)
+			require.NoError(t, err, "error set params version %d to set params %+v", i, params)
 		}
 	}
 }
