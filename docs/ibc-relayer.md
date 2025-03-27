@@ -8,7 +8,8 @@ relayers, processes that can be run by anyone which constantly
 scan for outbound packets on one chain and submits these packets
 alongside corresponding proofs on the destination chain.
 
-In this guide, we will explore how to set up and use the [Hermes](https://github.com/informalsystems/hermes) relayer to establish
+In this guide, we will explore how to set up and use
+the [Hermes](https://github.com/informalsystems/hermes) relayer to establish
 IBC connections and relay packets between Babylon and other Cosmos SDK chains.
 
 ## Hermes
@@ -18,8 +19,10 @@ Rust implementation of an IBC relayer released as part of the
 `ibc-relayer-cli` crate. It includes a CLI for relaying packets between
 Cosmos SDK chains, as well as Prometheus metrics and a REST API.
 
-Please follow the steps at [Hermes Quick Start](https://hermes.informal.systems/quick-start/)
-to install Hermes. Before proceeding, verify that Hermes is installed correctly by
+Please follow the steps
+at [Hermes Quick Start](https://hermes.informal.systems/quick-start/)
+to install Hermes. Before proceeding, verify that Hermes is installed correctly
+by
 running `hermes version`.
 
 ### Configuration
@@ -187,8 +190,11 @@ each chain.
 
 You can get testnet tokens from faucets for both testnets via Discord:
 
-- Babylon: [https://discord.gg/babylonglobal](https://discord.gg/babylonglobal) - You can request testnet tokens and contact the Babylon team for support
-- Cosmos Hub: [https://discord.gg/cosmosnetwork](https://discord.gg/cosmosnetwork)
+-
+Babylon: [https://discord.gg/babylonglobal](https://discord.gg/babylonglobal) -
+You can request testnet tokens and contact the Babylon team for support
+- Cosmos
+  Hub: [https://discord.gg/cosmosnetwork](https://discord.gg/cosmosnetwork)
 
 Add your seed phrase to a file and upload it to the server. Do not
 use wallets for anything else but relaying to avoid running into
@@ -225,10 +231,12 @@ SUCCESS "configuration is valid"
 If you're attempting to create new connections, verify
 that the chains in question don't already have connections and clients in
 place and use the existing ones if they do. In that case you can
-**skip this step** and go to [Configure channels in Hermes](#configure-channels-in-hermes)
+**skip this step** and go
+to [Configure channels in Hermes](#configure-channels-in-hermes)
 section.
 
-In this example, we are creating new clients and a new connection between `bbn-test-5`
+In this example, we are creating new clients and a new connection
+between `bbn-test-5`
 and `theta-testnet-001` networks.
 
 ## Create clients
@@ -400,7 +408,8 @@ list = [
 
 ## Start the relayer
 
-Start the relayer via [`hermes start`](https://hermes.informal.systems/documentation/commands/relaying/index.html#the-start-command)
+Start the relayer
+via [`hermes start`](https://hermes.informal.systems/documentation/commands/relaying/index.html#the-start-command)
 
 ## Transfer
 
@@ -424,24 +433,31 @@ back to the user.
 
 ### Handling Expired/Frozen IBC Clients
 
-If an IBC client expires or becomes frozen, you'll need to submit a governance proposal to recover the client. 
+If an IBC client expires or becomes frozen, you'll need to submit a governance
+proposal to recover the client.
 
 In IBC terminology:
-- The "host chain" is the chain that maintains the light client of the counterparty chain
+
+- The "host chain" is the chain that maintains the light client of the
+  counterparty chain
 - For example, if you're relaying between Babylon and Cosmos Hub:
-  - When Babylon maintains a light client of Cosmos Hub, Babylon is the host chain
-  - When Cosmos Hub maintains a light client of Babylon, Cosmos Hub is the host chain
+    - When Babylon maintains a light client of Cosmos Hub, Babylon is the host
+      chain
+    - When Cosmos Hub maintains a light client of Babylon, Cosmos Hub is the
+      host chain
 
 The process involves:
 
 1. Submitting a governance proposal on the host chain to recover the client
-   - This means if Babylon's light client of Cosmos Hub expires, you submit the proposal on Babylon
-   - If Cosmos Hub's light client of Babylon expires, you submit the proposal on Cosmos Hub
+    - This means if Babylon's light client of Cosmos Hub expires, you submit the
+      proposal on Babylon
+    - If Cosmos Hub's light client of Babylon expires, you submit the proposal
+      on Cosmos Hub
 
 2. The proposal requires:
-   - The expired client ID
-   - An active client ID to substitute it with
-   - The governance address that will submit the proposal
+    - The expired client ID
+    - An active client ID to substitute it with
+    - The governance address that will submit the proposal
 
 Here's an example of the proposal JSON:
 
@@ -463,6 +479,13 @@ Here's an example of the proposal JSON:
 }
 ```
 
-For detailed steps on how to submit an IBC client recovery proposal, refer to the [IBC Governance Proposals Guide](https://ibc.cosmos.network/main/ibc/proposals.html#steps). For more information about submitting governance proposals on Babylon, including parameters and requirements, see the [Babylon Governance Guide](https://docs.babylonlabs.io/guides/governance/).
+For detailed steps on how to submit an IBC client recovery proposal, refer to
+the [IBC Governance Proposals Guide](https://ibc.cosmos.network/main/ibc/proposals.html#steps).
+For more information about submitting governance proposals on Babylon, including
+parameters and requirements, see
+the [Babylon Governance Guide](https://docs.babylonlabs.io/guides/governance/).
 
-> **Note**: It's important to monitor your IBC clients and submit recovery proposals before they expire to maintain continuous cross-chain communication. The trusting period (33 hours for Babylon) determines how long a light client remains valid before requiring an update. 
+> **Note**: It's important to monitor your IBC clients and submit recovery
+> proposals before they expire to maintain continuous cross-chain communication.
+> The trusting period (33 hours for Babylon) determines how long a light client
+> remains valid before requiring an update. 
