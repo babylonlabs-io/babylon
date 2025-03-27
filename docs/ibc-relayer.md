@@ -401,11 +401,7 @@ SUCCESS Channel {
 }
 ```
 
-:::tip Congratulations!
-
-You have successfully created a new IBC connection between two networks.
-
-:::
+**Congratulations!** You have successfully created a new IBC connection between two networks.
 
 ### Configure channels in Hermes
 
