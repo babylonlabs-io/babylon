@@ -23,8 +23,7 @@ IBC connections and relay packets between Babylon and other Cosmos SDK chains.
   - [Open connection over new clients](#open-connection-over-new-clients)
   - [Configure channels in Hermes](#configure-channels-in-hermes)
 - [Start the relayer](#start-the-relayer)
-- [Transfer](#transfer)
-  - [Handling Expired/Frozen IBC Clients](#handling-expiredfrozen-ibc-clients)
+- [Handling Expired/Frozen IBC Clients](#handling-expiredfrozen-ibc-clients)
 
 ## Hermes
 
@@ -425,19 +424,7 @@ list = [
 Start the relayer
 via [`hermes start`](https://hermes.informal.systems/documentation/commands/relaying/index.html#the-start-command)
 
-## Transfer
-
-The Babylon state machine is built with the IBC transfer
-module, allowing for the native Babylon token to be
-transferred to any other IBC enabled chain. Transfer can
-be initialized through the `babylond` CLI. Information
-can be found via the help label as follows:
-
-```bash
-babylond tx ibc-transfer transfer --help
-```
-
-### Handling Expired/Frozen IBC Clients
+## Handling Expired/Frozen IBC Clients
 
 If an IBC client expires or becomes frozen, you'll need to submit a governance
 proposal to recover the client.
