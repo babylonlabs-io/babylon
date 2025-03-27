@@ -12,6 +12,20 @@ In this guide, we will explore how to set up and use
 the [Hermes](https://github.com/informalsystems/hermes) relayer to establish
 IBC connections and relay packets between Babylon and other Cosmos SDK chains.
 
+## Table of Contents
+
+- [Hermes](#hermes)
+  - [Configuration](#configuration)
+  - [Add relayer wallets](#add-relayer-wallets)
+  - [Verify configuration files](#verify-configuration-files)
+- [Create a connection between 2 chains](#create-a-connection-between-2-chains)
+  - [Create clients](#create-clients)
+  - [Open connection over new clients](#open-connection-over-new-clients)
+  - [Configure channels in Hermes](#configure-channels-in-hermes)
+- [Start the relayer](#start-the-relayer)
+- [Transfer](#transfer)
+  - [Handling Expired/Frozen IBC Clients](#handling-expiredfrozen-ibc-clients)
+
 ## Hermes
 
 [Hermes](https://github.com/informalsystems/hermes) is an open-source
@@ -422,14 +436,6 @@ can be found via the help label as follows:
 ```bash
 babylond tx ibc-transfer transfer --help
 ```
-
-### Token filter
-
-The transfer module uses a token filter middleware which
-serves to prevent non-native Babylon tokens from being
-on Babylon. If a user is to try to send a token from another
-chain across, it will be simply rejected and the token returned
-back to the user.
 
 ### Handling Expired/Frozen IBC Clients
 
