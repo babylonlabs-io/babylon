@@ -14,6 +14,7 @@ IBC connections and relay packets between Babylon and other Cosmos SDK chains.
 
 ## Table of Contents
 
+- [Prerequisites](#prerequisites)
 - [Hermes](#hermes)
   - [Configuration](#configuration)
   - [Add relayer wallets](#add-relayer-wallets)
@@ -24,6 +25,18 @@ IBC connections and relay packets between Babylon and other Cosmos SDK chains.
   - [Configure channels in Hermes](#configure-channels-in-hermes)
 - [Start the relayer](#start-the-relayer)
 - [Handling Expired/Frozen IBC Clients](#handling-expiredfrozen-ibc-clients)
+- [Helpful Commands](#helpful-commands)
+
+## Prerequisites
+
+Before beginning, ensure you have:
+1. Rust installed and configured
+2. Access to RPC and gRPC endpoints for both chains
+3. Wallets funded with native tokens for both chains
+
+For this tutorial, we will be using:
+- Babylon's `bbn-test-5` testnet
+- Cosmos Hub's `theta-testnet-001` testnet
 
 ## Hermes
 
@@ -481,4 +494,42 @@ the [Babylon Governance Guide](https://docs.babylonlabs.io/guides/governance/).
 > **Note**: It's important to monitor your IBC clients and submit recovery
 > proposals before they expire to maintain continuous cross-chain communication.
 > The trusting period (33 hours for Babylon) determines how long a light client
-> remains valid before requiring an update. 
+> remains valid before requiring an update.
+
+## Helpful Commands
+
+Use these commands to monitor and troubleshoot your relayer:
+
+### Query Pending Packets
+
+Check if there are any pending packets on a channel:
+```bash
+hermes query packet pending --chain bbn-test-5 --port transfer --channel channel-0
+```
+
+You can also check specific types of pending packets:
+```bash
+# Check pending sends
+hermes query packet pending-sends --chain bbn-test-5 --port transfer --channel channel-0
+
+# Check pending acknowledgements
+hermes query packet pending-acks --chain bbn-test-5 --port transfer --channel channel-0
+```
+
+### Query Packet Commitments
+
+Check packet commitments on both chains:
+```bash
+hermes query packet commitments --chain bbn-test-5 --port transfer --channel channel-0
+hermes query packet commitments --chain theta-testnet-001 --port transfer --channel channel-0
+```
+
+### Clear Channel
+
+If you need to clear a congested channel manually (only works on hermes `v0.12.0` and higher):
+```bash
+# Stop your Hermes daemon first before using clear packets
+hermes clear packets --chain bbn-test-5 --port transfer --channel channel-0
+```
+
+**Note**: You'll need to stop your Hermes daemon before using `clear packets`. This is important, otherwise the `clear packets` process will be racing with the daemon process to access the same relayer wallet, resulting in account sequence mismatch errors. 
