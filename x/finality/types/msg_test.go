@@ -1,8 +1,6 @@
 package types_test
 
 import (
-	"encoding/json"
-	fmt "fmt"
 	"math/rand"
 	"testing"
 
@@ -14,9 +12,6 @@ import (
 
 func FuzzMsgAddFinalitySig(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
-
-	prCommitList := []*types.PubRandCommit{}
-	msgList := []*types.MsgAddFinalitySig{}
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -42,19 +37,10 @@ func FuzzMsgAddFinalitySig(f *testing.F) {
 			Commitment:  randListInfo.Commitment,
 		}
 
-		prCommitList = append(prCommitList, prCommit)
-		msgList = append(msgList, msg)
-
 		// verify the finality signature message
 		err = types.VerifyFinalitySig(msg, prCommit)
 		require.NoError(t, err)
 	})
-
-	testStrJson, _ := json.Marshal(prCommitList)
-	fmt.Println(string(testStrJson))
-	fmt.Println("--------------------------------")
-	testStrJson, _ = json.Marshal(msgList)
-	fmt.Println(string(testStrJson))
 }
 
 func FuzzMsgCommitPubRandList(f *testing.F) {
