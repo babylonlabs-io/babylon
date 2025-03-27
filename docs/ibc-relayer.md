@@ -218,13 +218,10 @@ each chain.
 
 You can get testnet tokens from faucets for both testnets via Discord:
 
--
-
-Babylon: [https://discord.gg/babylonglobal](https://discord.gg/babylonglobal) -
+- Babylon: [https://discord.gg/babylonglobal](https://discord.gg/babylonglobal) -
 You can request testnet tokens and contact the Babylon team for support
 
-- Cosmos
-  Hub: [https://discord.gg/cosmosnetwork](https://discord.gg/cosmosnetwork)
+- Cosmos Hub: [https://discord.gg/cosmosnetwork](https://discord.gg/cosmosnetwork)
 
 Add your seed phrase to a file and upload it to the server. Do not
 use wallets for anything else but relaying to avoid running into
