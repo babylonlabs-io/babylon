@@ -2,7 +2,7 @@
 
 Babylon uses [IBC](https://ibcprotocol.dev/)
 (Inter-Blockchain Communication protocol) to enable cross-chain
-transfer of tokens and to maintain connections with Consumer Zones.
+transfer of tokens.
 To support this capability it relies on
 relayers, processes that can be run by anyone which constantly
 scan for outbound packets on one chain and submits these packets
@@ -187,7 +187,7 @@ each chain.
 
 You can get testnet tokens from faucets for both testnets via Discord:
 
-- Babylon: [https://discord.gg/babylon](https://discord.gg/babylon)
+- Babylon: [https://discord.gg/babylonglobal](https://discord.gg/babylonglobal) - You can request testnet tokens and contact the Babylon team for support
 - Cosmos Hub: [https://discord.gg/cosmosnetwork](https://discord.gg/cosmosnetwork)
 
 Add your seed phrase to a file and upload it to the server. Do not
