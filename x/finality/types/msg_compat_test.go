@@ -2,7 +2,9 @@ package types_test
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
+	fmt "fmt"
 	"testing"
 
 	"github.com/babylonlabs-io/babylon/x/finality/types"
@@ -38,10 +40,6 @@ func TestEOTSCompat(t *testing.T) {
 	err = json.Unmarshal([]byte(wrapper.Msg), &msg1)
 	require.NoError(t, err)
 
-	// Verify the message
-	err = types.VerifyFinalitySig(&msg1, prCommit)
-	require.NoError(t, err)
-
 	// Parse MSG2 which also contains a nested JSON string
 	var wrapper2 struct {
 		Msg string `json:"msg"`
@@ -52,7 +50,29 @@ func TestEOTSCompat(t *testing.T) {
 	err = json.Unmarshal([]byte(wrapper2.Msg), &msg2)
 	require.NoError(t, err)
 
+	// check apphash
+	appHash1Hex := "A549AEFEA9716F541F365BF94C94A4C571AD8805CCB2E4C1DC0B1BF21B5986F4"
+	appHash1Bytes, err := hex.DecodeString(appHash1Hex)
+	require.NoError(t, err)
+	require.Equal(t, appHash1Bytes, msg1.BlockAppHash)
+	appHash2Hex := "2613652A6B0FD4C3EB3A7451D39E6F9E677ECB3649D6B311E8537B40265B4725"
+	appHash2Bytes, err := hex.DecodeString(appHash2Hex)
+	require.NoError(t, err)
+	require.Equal(t, appHash2Bytes, msg2.BlockAppHash)
+
+	// Verify the message
+	err = types.VerifyFinalitySig(&msg1, prCommit)
+	require.NoError(t, err)
+
 	// Verify the message
 	err = types.VerifyFinalitySig(&msg2, prCommit)
 	require.NoError(t, err)
+}
+
+func TestAppHash(t *testing.T) {
+	bytes, err := base64.StdEncoding.DecodeString("/ZA9m66zqxxzTuAD3nX2dsWpqNBXRkflOFg01X0+eew=")
+	require.NoError(t, err)
+	hexStr := hex.EncodeToString(bytes)
+	fmt.Println(hexStr)
+	require.Equal(t, hexStr, "84E49D5F628DFCB77C87F94CF83F90A0ED2017DF7D16BF9C7EB52E5CDDD5205E")
 }
