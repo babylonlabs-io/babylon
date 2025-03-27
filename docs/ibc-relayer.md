@@ -16,13 +16,13 @@ IBC connections and relay packets between Babylon and other Cosmos SDK chains.
 
 - [Prerequisites](#prerequisites)
 - [Hermes](#hermes)
-  - [Configuration](#configuration)
-  - [Add relayer wallets](#add-relayer-wallets)
-  - [Verify configuration files](#verify-configuration-files)
+    - [Configuration](#configuration)
+    - [Add relayer wallets](#add-relayer-wallets)
+    - [Verify configuration files](#verify-configuration-files)
 - [Create a connection between 2 chains](#create-a-connection-between-2-chains)
-  - [Create clients](#create-clients)
-  - [Open connection over new clients](#open-connection-over-new-clients)
-  - [Configure channels in Hermes](#configure-channels-in-hermes)
+    - [Create clients](#create-clients)
+    - [Open connection over new clients](#open-connection-over-new-clients)
+    - [Configure channels in Hermes](#configure-channels-in-hermes)
 - [Start the relayer](#start-the-relayer)
 - [Handling Expired/Frozen IBC Clients](#handling-expiredfrozen-ibc-clients)
 - [Helpful Commands](#helpful-commands)
@@ -30,11 +30,13 @@ IBC connections and relay packets between Babylon and other Cosmos SDK chains.
 ## Prerequisites
 
 Before beginning, ensure you have:
+
 1. Rust installed and configured
 2. Access to RPC and gRPC endpoints for both chains
 3. Wallets funded with native tokens for both chains
 
 For this tutorial, we will be using:
+
 - Babylon's `bbn-test-5` testnet
 - Cosmos Hub's `theta-testnet-001` testnet
 
@@ -217,8 +219,10 @@ each chain.
 You can get testnet tokens from faucets for both testnets via Discord:
 
 -
+
 Babylon: [https://discord.gg/babylonglobal](https://discord.gg/babylonglobal) -
 You can request testnet tokens and contact the Babylon team for support
+
 - Cosmos
   Hub: [https://discord.gg/cosmosnetwork](https://discord.gg/cosmosnetwork)
 
@@ -503,11 +507,13 @@ Use these commands to monitor and troubleshoot your relayer:
 ### Query Pending Packets
 
 Check if there are any pending packets on a channel:
+
 ```bash
 hermes query packet pending --chain bbn-test-5 --port transfer --channel channel-0
 ```
 
 You can also check specific types of pending packets:
+
 ```bash
 # Check pending sends
 hermes query packet pending-sends --chain bbn-test-5 --port transfer --channel channel-0
@@ -519,6 +525,7 @@ hermes query packet pending-acks --chain bbn-test-5 --port transfer --channel ch
 ### Query Packet Commitments
 
 Check packet commitments on both chains:
+
 ```bash
 hermes query packet commitments --chain bbn-test-5 --port transfer --channel channel-0
 hermes query packet commitments --chain theta-testnet-001 --port transfer --channel channel-0
@@ -526,10 +533,15 @@ hermes query packet commitments --chain theta-testnet-001 --port transfer --chan
 
 ### Clear Channel
 
-If you need to clear a congested channel manually (only works on hermes `v0.12.0` and higher):
+If you need to clear a congested channel manually (only works on
+hermes `v0.12.0` and higher):
+
 ```bash
 # Stop your Hermes daemon first before using clear packets
 hermes clear packets --chain bbn-test-5 --port transfer --channel channel-0
 ```
 
-**Note**: You'll need to stop your Hermes daemon before using `clear packets`. This is important, otherwise the `clear packets` process will be racing with the daemon process to access the same relayer wallet, resulting in account sequence mismatch errors. 
+**Note**: You'll need to stop your Hermes daemon before using `clear packets`.
+This is important, otherwise the `clear packets` process will be racing with the
+daemon process to access the same relayer wallet, resulting in account sequence
+mismatch errors. 
