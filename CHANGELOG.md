@@ -55,6 +55,8 @@ check of rewards
 - [#624](https://github.com/babylonlabs-io/babylon/pull/624) Make keeper's collections private in `x/incentive` module
 - [#643](https://github.com/babylonlabs-io/babylon/pull/643) Fix flaky test `FuzzBTCDelegation`
 - [#696](https://github.com/babylonlabs-io/babylon/pull/696) Restore zoneconcierge queries in query client
+- [#745](https://github.com/babylonlabs-io/babylon/pull/745) Hard limit of the number of finalized
+and rewarded blocks
 
 ### State Machine Breaking
 
