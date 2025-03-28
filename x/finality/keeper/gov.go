@@ -8,7 +8,6 @@ import (
 
 	bbntypes "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 // HandleResumeFinalityProposal handles the resume finality proposal in the following steps:
@@ -25,6 +24,7 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 	params := k.GetParams(ctx)
 	currentHeight := ctx.HeaderInfo().Height
 	currentTime := ctx.HeaderInfo().Time
+	voters := k.GetVoters(ctx, uint64(haltingHeight))
 
 	// jail the given finality providers
 	fpPks := make([]*bbntypes.BIP340PubKey, 0, len(fpPksHex))
@@ -35,7 +35,6 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 		}
 		fpPks = append(fpPks, fpPk)
 
-		voters := k.GetVoters(ctx, uint64(haltingHeight))
 		_, voted := voters[fpPkHex]
 		if voted {
 			// all the given finality providers should not have voted for the halting height
@@ -85,8 +84,6 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 		// set the voting power distribution cache of the current height
 		k.SetVotingPowerDistCache(ctx, h, distCache)
 	}
-
-	k.TallyBlocks(ctx, types.MaxFinalizedRewardedBlocksPerEndBlock)
 
 	return nil
 }

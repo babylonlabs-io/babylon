@@ -252,7 +252,13 @@ endif
 test-e2e: build-docker-e2e test-e2e-cache
 
 test-e2e-cache:
-	go test -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+	$(MAKE) test-e2e-gov-resume-finality
+	$(MAKE) test-e2e-cache-btc-timestamping
+	$(MAKE) test-e2e-cache-btc-staking
+	$(MAKE) clean-e2e
+	$(MAKE) test-e2e-cache-btc-staking-pre-approval
+	$(MAKE) test-e2e-cache-ibc-transfer
+	$(MAKE) test-e2e-cache-upgrade-v1
 
 test-e2e-cache-ibc-transfer:
 	go test -run TestIBCTranferTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
@@ -271,6 +277,9 @@ test-e2e-cache-btc-staking:
 
 test-e2e-cache-btc-rewards:
 	go test -run TestBTCRewardsDistribution -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-gov-resume-finality:
+	go test -run TestGovResumeFinality -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-btc-staking-pre-approval:
 	go test -run TestBTCStakingPreApprovalTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e

@@ -33,6 +33,9 @@ func (k Keeper) TallyBlocks(ctx context.Context, maxFinalizedBlocks uint64) {
 	}
 
 	currentLastBlockHeight := uint64(sdkCtx.HeaderInfo().Height)
+	if !k.HasBlock(ctx, currentLastBlockHeight) {
+		k.IndexBlock(ctx)
+	}
 	// need to add minus 1, as the tallying loop is inclucive of [start, end]
 	maxHeightToFinalize := min(startHeight+maxFinalizedBlocks-1, currentLastBlockHeight)
 
