@@ -85,8 +85,5 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 		k.SetVotingPowerDistCache(ctx, h, distCache)
 	}
 
-	k.IndexBlock(ctx)
-	k.TallyBlocks(ctx)
-
 	return nil
 }
