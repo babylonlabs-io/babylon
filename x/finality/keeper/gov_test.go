@@ -71,6 +71,8 @@ func TestHandleResumeFinalityProposal(t *testing.T) {
 	err := fKeeper.HandleResumeFinalityProposal(ctx, publicKeysToHex(activeFpPks[1:]), uint32(haltingHeight))
 	require.NoError(t, err)
 
+	fKeeper.TallyBlocks(ctx, types.MaxFinalizedRewardedBlocksPerEndBlock)
+
 	for i := haltingHeight; i < currentHeight; i++ {
 		ib, err := fKeeper.GetBlock(ctx, i)
 		require.NoError(t, err)
