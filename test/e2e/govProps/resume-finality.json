@@ -4,13 +4,14 @@
       "@type": "/babylon.finality.v1.MsgResumeFinalityProposal",
       "authority": "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
       "fp_pks_hex": [
-        "d66124f8f42fd83e4c901a100ae3b5d706ef6cfd217b04bc64152e739a30c41e",
-        "7f067ebae1677f47c79b93681bac6eb6d7bba2d876d3770b47261fa6e5427028"
+        "2ce4d0b22d0c0aff53b974a34b3b1dd41e9d2dba54098fca8f9d12666cee2af5"
       ],
-      "halting_height": 595893
+      "halting_height": 54
     }
   ],
+  "metadata": "",
   "deposit": "500000000ubbn",
   "title": "Resume finality",
-  "summary": "Resume finality by jailing Finality provider with largest voting power"
+  "summary": "Resume finality by jailing Finality provider with largest voting power",
+  "expedited": false
 }

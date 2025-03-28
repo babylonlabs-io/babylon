@@ -347,6 +347,8 @@ func (s *GovFinalityResume) Test4UpgradeResumeFinality() {
 
 	haltBlockHeight, err := n.QueryActivatedHeight()
 	s.NoError(err)
+	// increase one block, since we only voted for the activated height
+	haltBlockHeight++
 
 	prop, msg, err := parseGovPropResumeFinalityToFileFromFile(cdc, propPath)
 	s.NoError(err)
