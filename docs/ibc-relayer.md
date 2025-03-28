@@ -58,7 +58,7 @@ For complete setup instructions, including wallet configuration, connection setu
 
 ## Monitoring and Maintenance
 
-Regular monitoring of your IBC clients is crucial. For example, if using Hermes, you can monitor the `client_updates_submitted_total` metric, which counts the number of client update messages submitted between chains. This metric should increase over time as your relayer submits updates to keep the IBC clients synchronized. For detailed information about this metric, refer to [Hermes metrics documentation](https://hermes.informal.systems/documentation/telemetry/operators.html#what-is-the-overall-ibc-status-of-each-network).
+Regular monitoring of your IBC clients is crucial. For example, if using Hermes, you can monitor the `client_updates_submitted_total` metric, which counts the number of client update messages submitted between chains. This metric should increase over time as your relayer submits updates to keep the IBC clients synchronized. For detailed information about this metric as well as other important metrics, refer to [Hermes metrics documentation](https://hermes.informal.systems/documentation/telemetry/operators.html#what-is-the-overall-ibc-status-of-each-network).
 
 > **Note**: For advanced monitoring, see [Informal Systems' IBC Insights](https://insights.informal.systems/noble/osmosis).
 
