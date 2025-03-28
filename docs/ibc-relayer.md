@@ -87,8 +87,7 @@ important metrics, refer
 to [Hermes metrics documentation](https://hermes.informal.systems/documentation/telemetry/operators.html#what-is-the-overall-ibc-status-of-each-network).
 
 > **Note**: For advanced monitoring,
->
-see [Informal Systems' IBC Insights](https://insights.informal.systems/noble/osmosis).
+> see [Informal Systems' IBC Insights](https://insights.informal.systems/noble/osmosis).
 
 ## Handling Expired/Frozen IBC Clients
 
