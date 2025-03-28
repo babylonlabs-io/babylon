@@ -70,11 +70,6 @@ refresh = true
 client_refresh_rate = 1/5
 ```
 
-> **Important**: Do not use the default 21-day unbonding period that might be
-> fetched from the `x/staking` module query. Always set the trusting period
-> based
-> on Babylon's actual unbonding period of ~50 hours.
-
 For complete setup instructions, including wallet configuration, connection
 setup, and channel creation, refer to:
 
