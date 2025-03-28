@@ -13,12 +13,12 @@ Babylon has a unique unbonding mechanism that differs from standard Cosmos SDK c
 1. **Epoching System**:
    - All staking operations and voting power adjustments are processed at the final block of each epoch
    - The final block of each epoch is checkpointed onto the Bitcoin blockchain
-   - Each epoch spans 360 blocks (defined by `epoch_interval` parameter)
+   - Each epoch spans 360 blocks (defined by `epoch_interval` parameter of [x/epoching module](https://github.com/babylonlabs-io/babylon/blob/main/x/epoching/README.md))
    - With 10s block times, each epoch duration is 1 hour
 
 2. **Finalization Process**:
    - After an epoch is timestamped on a Bitcoin block, it becomes finalized once the block is 300-deep
-   - This is defined by the `checkpoint_finalization_timeout` parameter
+   - This is defined by the `checkpoint_finalization_timeout` parameter of [x/btccheckpoint module](https://github.com/babylonlabs-io/babylon/blob/main/x/btccheckpoint/README.md)
    - Any unbonding requests from that checkpointed epoch are then matured
    - Given Bitcoin's average block time of ~10 minutes, the average unbonding time is about 50 hours
 
