@@ -32,9 +32,8 @@ When setting up a relayer for Babylon, pay special attention to these parameters
    - Babylon's unbonding period is ~50 hours (based on ~300 BTC blocks)
    - Therefore, the trusting period should be set to ~33 hours
 
-2. **Client Refresh Rate**: Should be set to 1/5 of the trusting period
-   - With a 33-hour trusting period, the client refresh rate should be ~6 hours
-   - This ensures clients are refreshed well before they expire
+2. **Client Refresh Rate**: A higher refresh rate is recommended (1/5 of trusting period, i.e., ~6.6 hours)
+   - Make sure `refresh = true` is set in the configuration
 
 **Important**: Do not use the default 21-day unbonding period that Hermes might fetch from the `x/staking` module query. Always set the trusting period based on Babylon's actual unbonding period of ~50 hours.
 
