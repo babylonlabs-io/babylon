@@ -347,7 +347,7 @@ func (s *GovFinalityResume) Test4UpgradeResumeFinality() {
 
 	cdc := app.NewTmpBabylonApp().AppCodec()
 
-	haltBlockHeight, err := n.QueryCurrentHeight()
+	haltBlockHeight, err := n.QueryActivatedHeight()
 	s.NoError(err)
 
 	prop, msg, err := parseGovPropResumeFinalityToFileFromFile(cdc, propPath)
@@ -360,7 +360,8 @@ func (s *GovFinalityResume) Test4UpgradeResumeFinality() {
 	err = WriteGovPropResumeFinalityToFile(cdc, propPath, *prop, *msg)
 	s.NoError(err)
 
-	propID := n.TxGovPropSubmitProposal(propPath, n.WalletName)
+	// uses relative path to submit the prop
+	propID := n.TxGovPropSubmitProposal(config.GovPropResumeFinality, n.WalletName)
 	c.TxGovVoteFromAllNodes(propID, govv1.VoteOption_VOTE_OPTION_YES)
 
 	fp := n.QueryFinalityProvider(btcPk)
