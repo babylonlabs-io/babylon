@@ -53,9 +53,6 @@ func ParseTwoProofs(
 	var checkpointData [][]byte
 
 	for i, proof := range parsedProofs {
-		if i > math.MaxUint8 || i < 0 {
-			return nil, fmt.Errorf("expected at most 255 proofs but got %d", len(parsedProofs))
-		}
 		partIdxUint8 := uint8(i)
 		data, err := txformat.GetCheckpointData(
 			expectedTag,
