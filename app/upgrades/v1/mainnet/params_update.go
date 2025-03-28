@@ -24,13 +24,14 @@ var (
 	MainnetMinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(50_000_000000))
 	// 200k BBN
 	MainnetMaxDepositPeriod      = 14 * 24 * time.Hour
-	MainnetExpeditedMinDeposit   = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(200_000_000000))
 	MainnetExpeditedVotingPeriod = 24 * time.Hour
+	MainnetExpeditedMinDeposit   = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(200_000_000000))
 
 	// Consensus params
-	TestnetBlockGasLimit = int64(250000000)
+	MainnetBlockGasLimit = int64(300000000)
 	// Staking params
-	TestnetMinCommissionRate, _ = sdkmath.LegacyNewDecFromStr("0.03")
+	MainnetMinCommissionRate, _ = sdkmath.LegacyNewDecFromStr("0.03")
+
 	// Distribution params
 	TestnetCommunityTax, _ = sdkmath.LegacyNewDecFromStr("0.001")
 	// BTC checkpoint params
@@ -41,7 +42,7 @@ var (
 
 // MainnetParamUpgrade make updates to specific params of specific modules
 func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
-
+	// update slashing params
 	slashingParams, err := k.SlashingKeeper.GetParams(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get slash params: %w", err)
@@ -77,7 +78,7 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 		return fmt.Errorf("failed to get consensus params: %w", err)
 	}
 
-	consensusParams.Block.MaxGas = TestnetBlockGasLimit
+	consensusParams.Block.MaxGas = MainnetBlockGasLimit
 
 	if err := k.ConsensusParamsKeeper.ParamsStore.Set(ctx, consensusParams); err != nil {
 		return fmt.Errorf("failed to set consensus params: %w", err)
@@ -89,7 +90,7 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 		return fmt.Errorf("failed to get staking params: %w", err)
 	}
 
-	stakingParams.MinCommissionRate = TestnetMinCommissionRate
+	stakingParams.MinCommissionRate = MainnetMinCommissionRate
 
 	if err := k.StakingKeeper.SetParams(ctx, stakingParams); err != nil {
 		return fmt.Errorf("failed to set staking params: %w", err)
