@@ -50,6 +50,7 @@ check of rewards
 - [#499](https://github.com/babylonlabs-io/babylon/pull/499) Add `params-by-version` CLI command
 - [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
 - [#515](https://github.com/babylonlabs-io/babylon/pull/515) Add `staker_addr` to `EventBTCDelegationCreated`
+- [#745](https://github.com/babylonlabs-io/babylon/pull/745) Hard limit of the number of finalized and rewarded blocks
 
 ### State Machine Breaking
 

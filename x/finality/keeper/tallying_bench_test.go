@@ -82,7 +82,7 @@ func benchmarkTallyBlocks(b *testing.B, numFPs int) {
 
 		b.StartTimer()
 
-		fKeeper.TallyBlocks(ctx)
+		fKeeper.TallyBlocks(ctx, uint64(10000))
 	}
 }
 
