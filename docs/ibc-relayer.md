@@ -8,7 +8,9 @@ mechanism.
 
 ## Important Note on Babylon's Unbonding Period
 
-Babylon has a unique unbonding mechanism that differs from standard Cosmos SDK chains. The Babylon Genesis chain introduces secure, fast unbonding through Bitcoin timestamping:
+Babylon has a unique unbonding mechanism that differs from standard Cosmos SDK chains. The Babylon Genesis chain disables the standard `x/staking` module and wraps it with the `x/epoching` module, introducing secure, fast unbonding through Bitcoin timestamping.
+
+**Important**: The standard `x/staking` module's unbonding time parameter remains at the default 21 days, but **this value should be ignored** when configuring the relayer's trusting period.
 
 1. **Epoching System**:
    - All staking operations and voting power adjustments are processed at the final block of each epoch
@@ -27,11 +29,6 @@ Babylon has a unique unbonding mechanism that differs from standard Cosmos SDK c
    - This is about 2/3 of the unbonding period, following standard IBC security practices
    - This configuration only affects light clients of Babylon Genesis on other chains
    - The trusting period of other chains' light clients on Babylon Genesis remains unaffected
-
-4. **Module Configuration**:
-   - The `x/staking` module is disabled and wrapped with `x/epoching` module
-   - The standard `x/staking` module's unbonding time parameter remains at the default 21 days
-   - **This 21-day value should be ignored** when configuring the relayer's trusting period
 
 Due to these unique characteristics, special attention is required when configuring the relayer's trusting period and client refresh rate.
 
