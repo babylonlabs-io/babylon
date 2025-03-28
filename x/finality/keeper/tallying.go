@@ -32,8 +32,9 @@ func (k Keeper) TallyBlocks(ctx context.Context, maxFinalizedBlocks uint64) {
 		startHeight = activatedHeight
 	}
 
-	lastBlockHeight := uint64(sdkCtx.HeaderInfo().Height)
-	maxHeightToFinalize := min(startHeight+maxFinalizedBlocks, lastBlockHeight)
+	currentLastBlockHeight := uint64(sdkCtx.HeaderInfo().Height)
+	// need to add minus 1, as the tallying loop is inclucive of [start, end]
+	maxHeightToFinalize := min(startHeight+maxFinalizedBlocks-1, currentLastBlockHeight)
 
 	// find all blocks that are non-finalised AND have finality provider set since max(activatedHeight, lastFinalizedHeight+1)
 	// There are 4 different scenarios as follows

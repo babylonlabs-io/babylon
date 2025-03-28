@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 	"os"
 	"runtime/pprof"
@@ -83,7 +82,7 @@ func benchmarkTallyBlocks(b *testing.B, numFPs int) {
 
 		b.StartTimer()
 
-		fKeeper.TallyBlocks(ctx, math.MaxUint64)
+		fKeeper.TallyBlocks(ctx, uint64(10000))
 	}
 }
 

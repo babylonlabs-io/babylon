@@ -25,7 +25,8 @@ func (k Keeper) HandleRewarding(ctx context.Context, targetHeight int64, maxRewa
 	}
 
 	maxHeightToReward := min(
-		nextHeightToReward+maxRewardedBlocks,
+		// need to add minus 1, as the rewarding loop is inclucive of [start, end]
+		nextHeightToReward+maxRewardedBlocks-1,
 		uint64(targetHeight),
 	)
 
