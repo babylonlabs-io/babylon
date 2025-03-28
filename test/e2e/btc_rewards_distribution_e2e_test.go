@@ -208,7 +208,7 @@ func (s *BtcRewardsDistribution) Test3SubmitCovenantSignature() {
 	s.Require().Equal(len(pendingDelsResp), 3)
 
 	for _, pendingDelResp := range pendingDelsResp {
-		pendingDel, err := ParseRespBTCDelToBTCDel(pendingDelResp)
+		pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
 		s.NoError(err)
 
 		SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
@@ -443,7 +443,7 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 	}
 
 	s.Equal(len(pendingDels), 1)
-	pendingDel, err := ParseRespBTCDelToBTCDel(pendingDels[0])
+	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDels[0])
 	s.NoError(err)
 
 	SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)

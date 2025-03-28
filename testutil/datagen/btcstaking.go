@@ -40,6 +40,33 @@ func GenRandomFinalityProvider(r *rand.Rand) (*bstypes.FinalityProvider, error) 
 	return GenRandomFinalityProviderWithBTCSK(r, btcSK)
 }
 
+func GenCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, fpAddr sdk.AccAddress) (*bstypes.FinalityProvider, error) {
+	// commission
+	commission := GenRandomCommission(r)
+	// description
+	description := GenRandomDescription(r)
+	// key pairs
+	btcPK := btcSK.PubKey()
+	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+	// pop
+	pop, err := NewPoPBTC(fpAddr, btcSK)
+	if err != nil {
+		return nil, err
+	}
+	return &bstypes.FinalityProvider{
+		Description: description,
+		Commission:  &commission,
+		BtcPk:       bip340PK,
+		Addr:        fpAddr.String(),
+		Pop:         pop,
+		CommissionInfo: bstypes.NewCommissionInfoWithTime(
+			sdkmath.LegacyOneDec(),
+			sdkmath.LegacyOneDec(),
+			time.Unix(0, 0).UTC(),
+		),
+	}, nil
+}
+
 func GenRandomMsgCreateFinalityProvider(r *rand.Rand) (*bstypes.MsgCreateFinalityProvider, error) {
 	// BTC key pairs
 	btcSK, _, err := GenRandomBTCKeyPair(r)
