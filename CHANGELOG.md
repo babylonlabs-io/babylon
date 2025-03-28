@@ -36,6 +36,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
+### Improvements
+
+- [#749](https://github.com/babylonlabs-io/babylon/pull/749) Upgrade handler for `v1rc9`
 
 ### State breaking
 
