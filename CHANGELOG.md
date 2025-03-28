@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### State breaking
+
+- [#745](https://github.com/babylonlabs-io/babylon/pull/745) Hard limit of the number of finalized
+and rewarded blocks
+
 ### Bug fixes
 
 - [#731](https://github.com/babylonlabs-io/babylon/pull/731) chore: fix block timeout in Babylon client
