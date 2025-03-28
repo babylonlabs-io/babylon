@@ -48,7 +48,7 @@ func FuzzTallying_FinalizingNoBlock(f *testing.F) {
 		fKeeper.SetVotingPower(ctx, datagen.GenRandomByteArray(r, 32), activatedHeight, 1)
 		// tally blocks and none of them should be finalised
 		ctx = datagen.WithCtxHeight(ctx, activatedHeight+10-1)
-		fKeeper.TallyBlocks(ctx)
+		fKeeper.TallyBlocks(ctx, uint64(10000))
 		for i := activatedHeight; i < activatedHeight+10; i++ {
 			ib, err := fKeeper.GetBlock(ctx, i)
 			require.NoError(t, err)
@@ -95,11 +95,86 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 		}
 		// tally blocks and none of them should be finalised
 		ctx = datagen.WithCtxHeight(ctx, activatedHeight+10-1)
-		fKeeper.TallyBlocks(ctx)
+		fKeeper.TallyBlocks(ctx, uint64(10000))
 		for i := activatedHeight; i < activatedHeight+10; i++ {
 			ib, err := fKeeper.GetBlock(ctx, i)
 			require.NoError(t, err)
 			if i < activatedHeight+numWithQCs {
+				require.True(t, ib.Finalized)
+			} else {
+				require.False(t, ib.Finalized)
+			}
+		}
+	})
+}
+
+func FuzzTallying_FinalizingAtMostMaxFinalizedBlocks(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+		iKeeper := types.NewMockIncentiveKeeper(ctrl)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+
+		// activate BTC staking protocol at a random height
+		activatedHeight := datagen.RandomInt(r, 10) + 1
+
+		// index a list of blocks, give some of them QCs, and tally them.
+		// Expect they are all finalised
+		limit := uint64(datagen.RandomInRange(r, 10, 20))
+		numWithQCs := uint64(datagen.RandomInRange(r, 50, 100))
+		totalBlocks := uint64(datagen.RandomInRange(r, 100, 200))
+		for i := activatedHeight; i < activatedHeight+totalBlocks; i++ {
+			// index blocks
+			fKeeper.SetBlock(ctx, &types.IndexedBlock{
+				Height:    i,
+				AppHash:   datagen.GenRandomByteArray(r, 32),
+				Finalized: false,
+			})
+			if i < activatedHeight+numWithQCs {
+				// this block has QC
+				err := giveQCToHeight(r, ctx, fKeeper, i)
+				require.NoError(t, err)
+			} else {
+				// this block does not have QC
+				err := giveNoQCToHeight(r, ctx, fKeeper, i)
+				require.NoError(t, err)
+			}
+		}
+
+		for i := activatedHeight; i < activatedHeight+totalBlocks; i++ {
+			ib, err := fKeeper.GetBlock(ctx, i)
+			require.NoError(t, err)
+			require.False(t, ib.Finalized)
+		}
+
+		// tally blocks and only blocks up to limit should be finalised
+		ctx = datagen.WithCtxHeight(ctx, activatedHeight+totalBlocks-1)
+		fKeeper.TallyBlocks(ctx, limit)
+		for i := activatedHeight; i < activatedHeight+totalBlocks; i++ {
+			ib, err := fKeeper.GetBlock(ctx, i)
+			require.NoError(t, err)
+			// only limit blocks should be finalised
+			if i < activatedHeight+limit {
+				require.True(t, ib.Finalized)
+			} else {
+				require.False(t, ib.Finalized)
+			}
+		}
+
+		// next limit batch of blocks should be finalised
+		ctx = datagen.WithCtxHeight(ctx, activatedHeight+totalBlocks-1)
+		fKeeper.TallyBlocks(ctx, limit)
+		for i := activatedHeight + limit; i < activatedHeight+totalBlocks; i++ {
+			ib, err := fKeeper.GetBlock(ctx, i)
+			require.NoError(t, err)
+			// only limit blocks should be finalised
+			if i < activatedHeight+2*limit {
 				require.True(t, ib.Finalized)
 			} else {
 				require.False(t, ib.Finalized)
@@ -208,7 +283,7 @@ func FuzzConsecutiveFinalization(f *testing.F) {
 		}
 
 		ctx = datagen.WithCtxHeight(ctx, activatedHeight+numBlockToInspect-1)
-		fKeeper.TallyBlocks(ctx)
+		fKeeper.TallyBlocks(ctx, uint64(10000))
 
 		// all blocks up to firstNonFinalizedBlock must be finalised
 		for i := activatedHeight; i < firstNonFinalizedBlock; i++ {
