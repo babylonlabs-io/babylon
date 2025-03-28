@@ -59,7 +59,7 @@ func TestHandleResumeFinalityProposal(t *testing.T) {
 	// tally blocks and none of them should be finalised
 	iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return().AnyTimes()
 	ctx = datagen.WithCtxHeight(ctx, currentHeight)
-	fKeeper.TallyBlocks(ctx)
+	fKeeper.TallyBlocks(ctx, uint64(10000))
 	for i := haltingHeight; i < currentHeight; i++ {
 		ib, err := fKeeper.GetBlock(ctx, i)
 		require.NoError(t, err)
@@ -70,6 +70,8 @@ func TestHandleResumeFinalityProposal(t *testing.T) {
 	bsKeeper.EXPECT().JailFinalityProvider(ctx, gomock.Any()).Return(nil).AnyTimes()
 	err := fKeeper.HandleResumeFinalityProposal(ctx, publicKeysToHex(activeFpPks[1:]), uint32(haltingHeight))
 	require.NoError(t, err)
+
+	fKeeper.TallyBlocks(ctx, types.MaxFinalizedRewardedBlocksPerEndBlock)
 
 	for i := haltingHeight; i < currentHeight; i++ {
 		ib, err := fKeeper.GetBlock(ctx, i)

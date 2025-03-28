@@ -78,7 +78,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegatio
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	s.cacheFP = CreateNodeFPFromNodeAddr(
+	s.cacheFP = chain.CreateFpFromNodeAddr(
 		s.T(),
 		s.r,
 		s.fptBTCSK,
@@ -157,7 +157,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test2SubmitCovenantSignature() {
 	pendingDels := pendingDelsSet[0]
 	s.Len(pendingDels.Dels, 1)
 	pendingDelResp := pendingDels.Dels[0]
-	pendingDel, err := ParseRespBTCDelToBTCDel(pendingDelResp)
+	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
 	s.NoError(err)
 	s.Len(pendingDel.CovenantSigs, 0)
 
@@ -242,7 +242,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test2SubmitCovenantSignature() {
 	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(s.cacheFP.BtcPk.MarshalHex())
 	s.Len(activeDelsSet, 1)
 
-	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
+	activeDels, err := chain.ParseRespsBTCDelToBTCDel(activeDelsSet[0])
 	s.NoError(err)
 	s.NotNil(activeDels)
 	s.Len(activeDels.Dels, 1)
@@ -260,7 +260,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test3SendStakingTransctionInclusionProo
 	verifiedDelegations := nonValidatorNode.QueryVerifiedDelegations()
 	s.Len(verifiedDelegations, 1)
 
-	btcDel, err := ParseRespBTCDelToBTCDel(verifiedDelegations[0])
+	btcDel, err := chain.ParseRespBTCDelToBTCDel(verifiedDelegations[0])
 	s.NoError(err)
 	s.True(btcDel.HasCovenantQuorums(s.covenantQuorum))
 
@@ -434,7 +434,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test5SubmitStakerUnbonding() {
 	activeDels := activeDelsSet[0]
 	s.Len(activeDels.Dels, 1)
 	activeDelResp := activeDels.Dels[0]
-	activeDel, err := ParseRespBTCDelToBTCDel(activeDelResp)
+	activeDel, err := chain.ParseRespBTCDelToBTCDel(activeDelResp)
 	s.NoError(err)
 	s.NotNil(activeDel.CovenantSigs)
 
@@ -488,7 +488,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test5SubmitStakerUnbonding() {
 		return len(unbondedDelsResp) > 0
 	}, time.Minute, time.Second*2)
 
-	unbondDel, err := ParseRespBTCDelToBTCDel(unbondedDelsResp[0])
+	unbondDel, err := chain.ParseRespBTCDelToBTCDel(unbondedDelsResp[0])
 	s.NoError(err)
 	s.Equal(stakingTxHash, unbondDel.MustGetStakingTxHash())
 }

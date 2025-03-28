@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#746](https://github.com/babylonlabs-io/babylon/pull/746) Add mainnet parameters to v1 upgrade handler.
+- [#749](https://github.com/babylonlabs-io/babylon/pull/749) Upgrade handler for `v1rc9`
 - [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.
 - [#623](https://github.com/babylonlabs-io/babylon/pull/623) Add check for empty string in `bls` loading.
 - [#536](https://github.com/babylonlabs-io/babylon/pull/536) Improve protobuf vs. json error msgs / types
@@ -55,6 +56,8 @@ check of rewards
 - [#624](https://github.com/babylonlabs-io/babylon/pull/624) Make keeper's collections private in `x/incentive` module
 - [#643](https://github.com/babylonlabs-io/babylon/pull/643) Fix flaky test `FuzzBTCDelegation`
 - [#696](https://github.com/babylonlabs-io/babylon/pull/696) Restore zoneconcierge queries in query client
+- [#745](https://github.com/babylonlabs-io/babylon/pull/745) Hard limit of the number of finalized
+and rewarded blocks
 
 ### State Machine Breaking
 
@@ -63,6 +66,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 
 ### Bug fixes
 
+- [#748](https://github.com/babylonlabs-io/babylon/pull/748) fix: gov resume finality, index block before tally.
 - [#731](https://github.com/babylonlabs-io/babylon/pull/731) chore: fix block timeout in Babylon client
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 
