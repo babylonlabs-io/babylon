@@ -8,11 +8,30 @@ mechanism.
 
 ## Important Note on Babylon's Unbonding Period
 
-Babylon has a unique unbonding mechanism that differs from standard Cosmos SDK chains:
+Babylon has a unique unbonding mechanism that differs from standard Cosmos SDK chains. The Babylon Genesis chain introduces secure, fast unbonding through Bitcoin timestamping:
 
-1. Babylon uses Bitcoin timestamp-assisted unbonding (~300 BTC blocks, approximately 50 hours)
-2. The standard `x/staking` module is disabled and wrapped with `x/epoching` module
-3. Hermes by default queries the `x/staking` module for unbonding period, which will return 21 days on Babylon - **this value should be ignored**
+1. **Epoching System**:
+   - All staking operations and voting power adjustments are processed at the final block of each epoch
+   - The final block of each epoch is checkpointed onto the Bitcoin blockchain
+   - Each epoch spans 360 blocks (defined by `epoch_interval` parameter)
+   - With 10s block times, each epoch duration is 1 hour
+
+2. **Finalization Process**:
+   - After an epoch is timestamped on a Bitcoin block, it becomes finalized once the block is 300-deep
+   - This is defined by the `checkpoint_finalization_timeout` parameter
+   - Any unbonding requests from that checkpointed epoch are then matured
+   - Given Bitcoin's average block time of ~10 minutes, the average unbonding time is about 50 hours
+
+3. **IBC Light Client Configuration**:
+   - IBC light clients for Babylon Genesis on other chains should have a lower trusting period (~33 hours)
+   - This is about 2/3 of the unbonding period, following standard IBC security practices
+   - This configuration only affects light clients of Babylon Genesis on other chains
+   - The trusting period of other chains' light clients on Babylon Genesis remains unaffected
+
+4. **Module Configuration**:
+   - The `x/staking` module is disabled and wrapped with `x/epoching` module
+   - The standard `x/staking` module's unbonding time parameter remains at the default 21 days
+   - **This 21-day value should be ignored** when configuring the relayer's trusting period
 
 Due to these unique characteristics, special attention is required when configuring the relayer's trusting period and client refresh rate.
 
@@ -24,7 +43,7 @@ Before beginning, ensure you have:
 3. Access to RPC and gRPC endpoints for both chains
 4. Wallets funded with native tokens for both chains
 
-## Configuration Requirements
+## Relayer Configuration
 
 When setting up a relayer for Babylon, pay special attention to these parameters:
 
