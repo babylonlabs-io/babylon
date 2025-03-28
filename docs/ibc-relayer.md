@@ -45,7 +45,22 @@ For complete setup instructions, including wallet configuration, connection setu
 
 Regular monitoring of your IBC clients is crucial. The trusting period of 33 hours means you need to ensure your clients are refreshed before they expire. The client refresh rate of 6 hours ensures this happens well before the trusting period expires.
 
-For monitoring commands and troubleshooting, refer to the [Hermes documentation](https://hermes.informal.systems/documentation/commands/index.html).
+### IBC Metrics Monitoring
+
+For effective monitoring, pay attention to these key metrics:
+
+1. **Client Updates**: Monitor `client_updates_submitted_total` metric
+   - This metric should consistently increase as more packets are relayed
+   - A stagnant or decreasing value might indicate issues with client updates
+   - For detailed information about this metric, refer to [Hermes metrics documentation](https://hermes.informal.systems/documentation/telemetry/operators.html#what-is-the-overall-ibc-status-of-each-network)
+
+2. **Relayer Redundancy**: Monitor the level of redundancy in relayer operators
+   - A large collection of unaffected packets can signal:
+     - Network-wide IBC health issues
+     - Relayer-specific problems (wallet issues, RPC problems)
+   - Regular monitoring helps identify potential issues before they become critical
+
+For advanced monitoring and insights, you can use tools like [Informal Systems' IBC Insights](https://insights.informal.systems/noble/osmosis) to track network health and relayer performance.
 
 ## Handling Expired/Frozen IBC Clients
 
