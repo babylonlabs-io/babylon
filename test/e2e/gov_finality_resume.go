@@ -40,8 +40,6 @@ type GovFinalityResume struct {
 	covenantQuorum uint32
 	stakingValue   int64
 	configurer     configurer.Configurer
-
-	feePayerAddr string
 }
 
 func (s *GovFinalityResume) SetupSuite() {
