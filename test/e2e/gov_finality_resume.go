@@ -26,6 +26,7 @@ import (
 	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	v1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 type GovFinalityResume struct {
@@ -368,13 +369,18 @@ func (s *GovFinalityResume) Test4UpgradeResumeFinality() {
 	s.Require().False(fp.Jailed)
 
 	s.Eventually(func() bool {
-		fp := n.QueryFinalityProvider(btcPk)
-		if !fp.Jailed {
-			s.T().Logf("FP %s is not jailed yet", btcPk)
+		propResp := n.QueryProposal(propID)
+		if propResp.Proposal.Status != v1beta1.StatusPassed {
+			s.T().Logf("Proposal %d did not passed: %s", propID, propResp.Proposal.Status.String())
 			return false
 		}
-		return fp.Jailed
-	}, time.Minute*5, time.Second*5)
+		return propResp.Proposal.Status == v1beta1.StatusPassed
+	}, time.Minute*5, time.Second*6)
+
+	n.WaitForNextBlock()
+
+	fp = n.QueryFinalityProvider(btcPk)
+	s.Require().True(fp.Jailed)
 }
 
 // WriteGovPropResumeFinalityToFile loads from the file the Upgrade msg as json.
