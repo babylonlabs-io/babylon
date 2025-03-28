@@ -327,17 +327,10 @@ func (s *GovFinalityResume) Test3CommitPublicRandomnessAndSubmitFinalitySignatur
 	s.T().Logf("the finality provider received rewards for providing finality")
 }
 
-// PropPath returns the local full path of the upgrade file
-func (s *GovFinalityResume) PropPath() (string, error) {
-	pwd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(pwd, config.GovPropResumeFinality), nil
-}
-
 func (s *GovFinalityResume) Test4UpgradeResumeFinality() {
 	c := s.configurer.GetChainConfig(0)
+	c.WaitUntilHeight(1)
+
 	n, err := c.GetNodeAtIndex(2)
 	s.NoError(err)
 
@@ -406,4 +399,13 @@ func parseGovPropResumeFinalityToFileFromFile(cdc codec.Codec, propFilePath stri
 		return nil, nil, fmt.Errorf("unable to parse msg to ftypes.MsgResumeFinalityProposal")
 	}
 	return &prop, msg, nil
+}
+
+// PropPath returns the local full path of the upgrade file
+func (s *GovFinalityResume) PropPath() (string, error) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(pwd, config.GovPropResumeFinality), nil
 }
