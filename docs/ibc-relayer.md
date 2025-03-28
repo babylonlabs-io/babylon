@@ -2,7 +2,7 @@
 
 Babylon uses [IBC](https://ibcprotocol.dev/)
 (Inter-Blockchain Communication protocol) to enable cross-chain
-transfer of tokens. This guide focuses on the specific configurations needed
+communication with other Cosmos SDK chains. This guide focuses on the specific configurations needed
 when relaying with Babylon, particularly around its unique unbonding period
 mechanism.
 
