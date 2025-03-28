@@ -57,8 +57,8 @@ When setting up a relayer for Babylon, pay special attention to these parameters
 **Important**: Do not use the default 21-day unbonding period that Hermes might fetch from the `x/staking` module query. Always set the trusting period based on Babylon's actual unbonding period of ~50 hours.
 
 For complete setup instructions, including wallet configuration, connection setup, and channel creation, refer to:
-- [Celestia's IBC Relayer Guide](https://docs.celestia.org/guides/ibc-relayer/)
-- [Osmosis's Relayer Guide](https://docs.osmosis.zone/guides/relaying/relayer-guide)
+- [Celestia's IBC Relayer Guide](https://docs.celestia.org/how-to-guides/ibc-relayer)
+- [Osmosis's Relayer Guide](https://docs.osmosis.zone/osmosis-core/relaying/relayer-guide)
 
 ## Monitoring and Maintenance
 
