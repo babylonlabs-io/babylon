@@ -41,6 +41,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#731](https://github.com/babylonlabs-io/babylon/pull/731) chore: fix block timeout in Babylon client
 
+### Improvements
+
+- [#749](https://github.com/babylonlabs-io/babylon/pull/749) Upgrade handler for `v1rc9`
+
 ## v1.0.0-rc8
 
 ### API Breaking
