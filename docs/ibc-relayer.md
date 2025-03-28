@@ -10,7 +10,7 @@ mechanism.
 
 Babylon has a unique unbonding mechanism that differs from standard Cosmos SDK chains. The Babylon Genesis chain disables the standard `x/staking` module and wraps it with the `x/epoching` module, introducing secure, fast unbonding through Bitcoin timestamping.
 
-**Important**: The standard `x/staking` module's unbonding time parameter remains at the default 21 days, but **this value should be ignored** when configuring the relayer's trusting period.
+> **Important**: The standard `x/staking` module's unbonding time parameter remains at the default 21 days, but **this value should be ignored** when configuring the relayer's trusting period.
 
 1. **Epoching System**:
    - All staking operations and voting power adjustments are processed at the final block of each epoch
@@ -32,14 +32,6 @@ Babylon has a unique unbonding mechanism that differs from standard Cosmos SDK c
 
 Due to these unique characteristics, special attention is required when configuring the relayer's trusting period and client refresh rate.
 
-## Prerequisites
-
-Before beginning, ensure you have:
-1. Rust installed and configured
-2. Hermes installed (refer to [Hermes Quick Start](https://hermes.informal.systems/quick-start/) for installation steps)
-3. Access to RPC and gRPC endpoints for both chains
-4. Wallets funded with native tokens for both chains
-
 ## Relayer Configuration
 
 When setting up a relayer for Babylon, pay special attention to these parameters:
@@ -49,9 +41,16 @@ When setting up a relayer for Babylon, pay special attention to these parameters
    - Therefore, the trusting period should be set to ~33 hours
 
 2. **Client Refresh Rate**: A higher refresh rate is recommended (1/5 of trusting period, i.e., ~6.6 hours)
-   - Make sure `refresh = true` is set in the configuration
 
-**Important**: Do not use the default 21-day unbonding period that Hermes might fetch from the `x/staking` module query. Always set the trusting period based on Babylon's actual unbonding period of ~50 hours.
+For example, in Hermes configuration:
+```
+[[chains]]
+trusting_period = "33 hours"
+refresh = true
+client_refresh_rate = 1/5
+```
+
+> **Important**: Do not use the default 21-day unbonding period that might be fetched from the `x/staking` module query. Always set the trusting period based on Babylon's actual unbonding period of ~50 hours.
 
 For complete setup instructions, including wallet configuration, connection setup, and channel creation, refer to:
 - [Celestia's IBC Relayer Guide](https://docs.celestia.org/how-to-guides/ibc-relayer)
@@ -59,7 +58,7 @@ For complete setup instructions, including wallet configuration, connection setu
 
 ## Monitoring and Maintenance
 
-Regular monitoring of your IBC clients is crucial. Monitor the `client_updates_submitted_total` metric, which counts the number of client update messages submitted between chains. This metric should increase over time as your relayer submits updates to keep the IBC clients synchronized. For detailed information about this metric, refer to [Hermes metrics documentation](https://hermes.informal.systems/documentation/telemetry/operators.html#what-is-the-overall-ibc-status-of-each-network).
+Regular monitoring of your IBC clients is crucial. For example, if using Hermes, you can monitor the `client_updates_submitted_total` metric, which counts the number of client update messages submitted between chains. This metric should increase over time as your relayer submits updates to keep the IBC clients synchronized.
 
 For network-wide health monitoring, visit [Babylon Testnet Network Metrics](https://insights.informal.systems/babylon-testnet-5/network-metrics).
 
