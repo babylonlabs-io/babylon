@@ -41,7 +41,6 @@ builds:
       - ledger
       - muslc
 
-builds:
   - id: babylond-testnet-linux-amd64
     main: ./cmd/babylond/main.go
     binary: babylond
