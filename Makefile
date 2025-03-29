@@ -66,6 +66,13 @@ ifeq (secp,$(findstring secp,$(BABYLON_BUILD_OPTIONS)))
   build_tags += libsecp256k1_sdk
 endif
 
+# Handles the inclusion of upgrade in binary
+ifeq (testnet,$(findstring testnet,$(BABYLON_BUILD_OPTIONS)))
+  build_tags += testnet
+else
+  build_tags += mainnet
+endif
+
 whitespace :=
 whitespace := $(whitespace) $(whitespace)
 comma := ,
@@ -79,16 +86,9 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=babylon \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
-# Handles the inclusion of upgrade in binary
-ifeq (testnet,$(findstring testnet,$(BABYLON_BUILD_OPTIONS)))
-  BUILD_TAGS += testnet
-else
-  BUILD_TAGS += mainnet
-endif
-
 # Handles the inclusion of e2e upgrade in binary
 ifeq (e2e_upgrade,$(findstring e2e_upgrade,$(BABYLON_BUILD_OPTIONS)))
-  BUILD_TAGS += e2e_upgrade
+  build_tags += e2e_upgrade
 endif
 
 # DB backend selection
@@ -97,17 +97,17 @@ ifeq (cleveldb,$(findstring cleveldb,$(BABYLON_BUILD_OPTIONS)))
 endif
 ifeq (badgerdb,$(findstring badgerdb,$(BABYLON_BUILD_OPTIONS)))
   ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=badgerdb
-  BUILD_TAGS += badgerdb
+  build_tags += badgerdb
 endif
 # handle rocksdb
 ifeq (rocksdb,$(findstring rocksdb,$(BABYLON_BUILD_OPTIONS)))
   CGO_ENABLED=1
-  BUILD_TAGS += rocksdb
+  build_tags += rocksdb
   ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
 endif
 # handle boltdb
 ifeq (boltdb,$(findstring boltdb,$(BABYLON_BUILD_OPTIONS)))
-  BUILD_TAGS += boltdb
+  build_tags += boltdb
   ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=boltdb
 endif
 
@@ -121,7 +121,6 @@ endif
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
-build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
