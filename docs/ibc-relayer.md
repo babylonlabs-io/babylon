@@ -65,7 +65,7 @@ For RPC and LCD endpoints for different networks, refer to the [Babylon Networks
 ## Relayer Configuration
 
 When setting up a relayer for Babylon, pay special attention to these
-parameters:
+parameters. The following values are specific to Babylon mainnet:
 
 1. **Trusting Period**: Should be set to approximately 2/3 of the network's
    unbonding period
@@ -75,9 +75,10 @@ parameters:
    trusting period)
     - On Babylon mainnet, this is ~6.6 hours
 
-For example, in Hermes configuration for Babylon mainnet:
+Example Hermes configuration:
 
-```[[chains]]
+```
+[[chains]]
 trusting_period = "33 hours"
 refresh = true
 client_refresh_rate = 1/5
