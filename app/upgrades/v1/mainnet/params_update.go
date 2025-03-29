@@ -8,6 +8,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -19,9 +20,9 @@ var (
 
 	// Governance params
 	MainnetVotingPeriod = 3 * 24 * time.Hour
-	// 50k BBN
+	// 50k BABY
 	MainnetMinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(50_000_000000))
-	// 200k BBN
+	// 200k BABY
 	MainnetMaxDepositPeriod      = 14 * 24 * time.Hour
 	MainnetExpeditedVotingPeriod = 24 * time.Hour
 	MainnetExpeditedMinDeposit   = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(200_000_000000))
@@ -55,7 +56,6 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 	if err := slashingParams.Validate(); err != nil {
 		return fmt.Errorf("failed to validate slashing params: %w", err)
 	}
-
 	if err := k.SlashingKeeper.SetParams(ctx, slashingParams); err != nil {
 		return fmt.Errorf("failed to set slashing params: %w", err)
 	}
@@ -76,6 +76,9 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 		MainnetExpeditedMinDeposit,
 	}
 
+	if err := govParams.ValidateBasic(); err != nil {
+		return fmt.Errorf("failed to validate gov params: %w", err)
+	}
 	if err := k.GovKeeper.Params.Set(ctx, govParams); err != nil {
 		return fmt.Errorf("failed to set gov params: %w", err)
 	}
@@ -88,6 +91,10 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 
 	consensusParams.Block.MaxGas = MainnetBlockGasLimit
 
+	consparams := cmttypes.ConsensusParamsFromProto(consensusParams)
+	if err := consparams.ValidateUpdate(&consensusParams, ctx.HeaderInfo().Height); err != nil {
+		return fmt.Errorf("failed to validate consensus params: %w", err)
+	}
 	if err := k.ConsensusParamsKeeper.ParamsStore.Set(ctx, consensusParams); err != nil {
 		return fmt.Errorf("failed to set consensus params: %w", err)
 	}
@@ -100,6 +107,9 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 
 	stakingParams.MinCommissionRate = MainnetBabyMinCommissionRate
 
+	if err := stakingParams.Validate(); err != nil {
+		return fmt.Errorf("failed to validate staking params: %w", err)
+	}
 	if err := k.StakingKeeper.SetParams(ctx, stakingParams); err != nil {
 		return fmt.Errorf("failed to set staking params: %w", err)
 	}
@@ -113,6 +123,9 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 	distributionParams.CommunityTax = MainnetCommunityTax
 	distributionParams.WithdrawAddrEnabled = MainnetWithdrawalAddrEnabled
 
+	if err := distributionParams.ValidateBasic(); err != nil {
+		return fmt.Errorf("failed to validate distribution params: %w", err)
+	}
 	if err := k.DistrKeeper.Params.Set(ctx, distributionParams); err != nil {
 		return fmt.Errorf("failed to set distribution params: %w", err)
 	}
@@ -123,6 +136,9 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 	btcCheckpointParams.BtcConfirmationDepth = MainnetBTCConfirmationDepth
 	btcCheckpointParams.CheckpointFinalizationTimeout = MainnetBTCFinalizationDepth
 
+	if err := btcCheckpointParams.Validate(); err != nil {
+		return fmt.Errorf("failed to validate btc checkpoint params: %w", err)
+	}
 	if err := k.BtcCheckpointKeeper.SetParams(ctx, btcCheckpointParams); err != nil {
 		return fmt.Errorf("failed to set btc checkpoint params: %w", err)
 	}
