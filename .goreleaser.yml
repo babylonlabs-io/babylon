@@ -12,6 +12,10 @@ builds:
     hooks:
       pre:
         - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.x86_64.a
+        - cp /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
+        - curl -LO https://musl.cc/x86_64-linux-musl-cross.tgz
+        - tar xf x86_64-linux-musl-cross.tgz
+        - mv x86_64-linux-musl-cross /opt/musl-cross
     goos:
       - linux
     goarch:
@@ -26,11 +30,14 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
       - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc,static_wasm
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc
       - -linkmode=external
       - -w -s
-      - -extldflags '-L/lib -lwasmvm_muslc.x86_64 -Wl,-z,muldefs -static-libgcc -static-libstdc++ -lm'
-    tags: [netgo, ledger, muslc]
+      - -extldflags "-Wl,-z,muldefs -static -z noexecstack"
+    tags:
+      - netgo
+      - ledger
+      - muslc
 
   - id: babylond-testnet-linux-amd64
     main: ./cmd/babylond/main.go
@@ -38,6 +45,10 @@ builds:
     hooks:
       pre:
         - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.x86_64.a
+        - cp /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
+        - curl -LO https://musl.cc/x86_64-linux-musl-cross.tgz
+        - tar xf x86_64-linux-musl-cross.tgz
+        - mv x86_64-linux-musl-cross /opt/musl-cross
     goos:
       - linux
     goarch:
@@ -52,11 +63,15 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
       - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc,static_wasm,testnet
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc,testnet
       - -linkmode=external
       - -w -s
-      - -extldflags '-L/lib -lwasmvm_muslc.x86_64 -Wl,-z,muldefs -static-libgcc -static-libstdc++ -static -lm -ldl'
-    tags: [netgo, ledger, muslc, testnet]
+      - -extldflags "-Wl,-z,muldefs -static -z noexecstack"
+    tags:
+      - netgo
+      - ledger
+      - muslc
+      - testnet
 
   # - id: babylond-linux-arm64
   #   main: ./cmd/babylond/main.go
