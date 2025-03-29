@@ -33,8 +33,8 @@ var (
 	MainnetBabyMinCommissionRate, _ = sdkmath.LegacyNewDecFromStr("0.03")
 
 	// BTC checkpoint params
-	MainnetBTCConfirmationDepth = uint32(30)
-	MainnetBTCFinalizationDepth = uint32(300)
+	MainnetBTCConfirmationDepth   = uint32(30)
+	MainnetBTCFinalizationTimeout = uint32(300)
 
 	// Distribution params
 	MainnetCommunityTax          = sdkmath.LegacyZeroDec()
@@ -134,7 +134,7 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 	btcCheckpointParams := k.BtcCheckpointKeeper.GetParams(ctx)
 
 	btcCheckpointParams.BtcConfirmationDepth = MainnetBTCConfirmationDepth
-	btcCheckpointParams.CheckpointFinalizationTimeout = MainnetBTCFinalizationDepth
+	btcCheckpointParams.CheckpointFinalizationTimeout = MainnetBTCFinalizationTimeout
 
 	if err := btcCheckpointParams.Validate(); err != nil {
 		return fmt.Errorf("failed to validate btc checkpoint params: %w", err)
