@@ -7,7 +7,8 @@ configurations needed
 when relaying with Babylon, particularly around its unique unbonding period
 mechanism.
 
-> **Note**: Babylon supports IBC Transfer and IBC-Wasm. It does not support ICA, ICQ, IBC Hooks, or IBC Middleware yet.
+> **Note**: Babylon supports IBC Transfer and IBC-Wasm. It does not support ICA,
+> ICQ, IBC Hooks, or IBC Middleware yet.
 
 ## Important Note on Babylon's Unbonding Period
 
