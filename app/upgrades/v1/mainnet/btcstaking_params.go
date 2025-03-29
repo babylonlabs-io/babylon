@@ -27,7 +27,7 @@ const BtcStakingParamsStr = `[
     "unbonding_fee_sat": 64000,
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1095000,
-    "allow_list_expiration_height": 0,
+    "allow_list_expiration_height": 129800,
     "btc_activation_height": 857910
   },
   {
@@ -54,7 +54,7 @@ const BtcStakingParamsStr = `[
     "unbonding_fee_sat": 32000,
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1095000,
-    "allow_list_expiration_height": 0,
+    "allow_list_expiration_height": 129800,
     "btc_activation_height": 864790
   },
   {
@@ -81,7 +81,7 @@ const BtcStakingParamsStr = `[
     "unbonding_fee_sat": 32000,
     "min_commission_rate": "0.03",
     "delegation_creation_base_gas_fee": 1095000,
-    "allow_list_expiration_height": 0,
+    "allow_list_expiration_height": 129800,
     "btc_activation_height": 874088
   },
   {
