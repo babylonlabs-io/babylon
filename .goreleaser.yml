@@ -243,7 +243,7 @@ checksum:
 
 release:
   github:
-    owner: babylonlabs-io
+    owner: RafilxTenfen
     name: babylon
 
 # Docs: https://goreleaser.com/customization/changelog/
