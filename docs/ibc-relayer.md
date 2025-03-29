@@ -24,8 +24,7 @@ through Bitcoin timestamping.
     - The AppHash of the last block of each epoch is checkpointed onto the Bitcoin blockchain
       (this AppHash is derived from the entire execution trace prior to that block)
     - On Babylon mainnet, each epoch spans 360 blocks (defined by `epoch_interval` parameter
-      of [x/epoching module](https://github.com/babylonlabs-io/babylon/blob/main/x/epoching/README.md))
-    - On Babylon mainnet, with 10s block times, each epoch duration is 1 hour
+      of [x/epoching module](https://github.com/babylonlabs-io/babylon/blob/main/x/epoching/README.md)) with 10s block times, resulting in 1 hour epoch duration
 
 2. **Finalization Process**:
     - After an epoch is timestamped on a Bitcoin block, it becomes finalized
@@ -70,8 +69,7 @@ parameters:
 
 1. **Trusting Period**: Should be set to approximately 2/3 of the network's
    unbonding period
-    - On Babylon mainnet, the unbonding period is ~50 hours (based on ~300 BTC blocks)
-    - Therefore, on mainnet, the trusting period should be set to ~33 hours
+    - On Babylon mainnet, the unbonding period is ~50 hours (based on ~300 BTC blocks), therefore the trusting period should be set to ~33 hours
 
 2. **Client Refresh Rate**: A higher refresh rate is recommended (1/5 of
    trusting period)
