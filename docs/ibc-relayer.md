@@ -114,10 +114,6 @@ synchronized. For detailed information about this metric as well as other
 important metrics, refer
 to [Hermes metrics documentation](https://hermes.informal.systems/documentation/telemetry/operators.html#what-is-the-overall-ibc-status-of-each-network).
 
-> **Note**: For advanced monitoring,
->
-see [Informal Systems' IBC Insights](https://insights.informal.systems/noble/osmosis).
-
 ## Handling Expired/Frozen IBC Clients
 
 If an IBC client expires or becomes frozen, you'll need to submit a governance
