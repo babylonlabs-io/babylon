@@ -23,9 +23,10 @@ var (
 	// 50k BABY
 	MinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(50_000_000000))
 	// 200k BABY
-	MaxDepositPeriod      = 14 * 24 * time.Hour
-	ExpeditedVotingPeriod = 24 * time.Hour
-	ExpeditedMinDeposit   = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(200_000_000000))
+	MaxDepositPeriod          = 14 * 24 * time.Hour
+	ExpeditedVotingPeriod     = 24 * time.Hour
+	ExpeditedMinDeposit       = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(200_000_000000))
+	MinInitialDepositRatio, _ = sdkmath.LegacyNewDecFromStr("0.1")
 
 	// Consensus params
 	BlockGasLimit = int64(300000000)
@@ -75,6 +76,7 @@ func ParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 	govParams.ExpeditedMinDeposit = []sdk.Coin{
 		ExpeditedMinDeposit,
 	}
+	govParams.MinInitialDepositRatio = MinInitialDepositRatio.String()
 
 	if err := govParams.ValidateBasic(); err != nil {
 		return fmt.Errorf("failed to validate gov params: %w", err)
