@@ -52,6 +52,10 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 	slashingParams.DowntimeJailDuration = MainnetDowntimeJailDuration
 	slashingParams.SlashFractionDowntime = MainnetSlashFractionDowntime
 
+	if err := k.SlashingKeeper.SetParams(ctx, slashingParams); err != nil {
+		return fmt.Errorf("failed to set slashing params: %w", err)
+	}
+
 	// update gov params
 	govParams, err := k.GovKeeper.Params.Get(ctx)
 	if err != nil {
