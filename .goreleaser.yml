@@ -2,8 +2,18 @@ version: 2
 project_name: babylon
 
 env:
-  - GO111MODULE=on
   - CGO_ENABLED=1
+  - CC=/opt/musl-cross/bin/x86_64-linux-musl-gcc
+  - LD=/opt/musl-cross/bin/x86_64-linux-musl-ld
+  - CGO_LDFLAGS=-L/lib
+
+before:
+  hooks:
+    - wget -nc https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.x86_64.a
+    - cp -n -u /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
+    - curl -LO https://musl.cc/x86_64-linux-musl-cross.tgz
+    - tar xf x86_64-linux-musl-cross.tgz
+    - mv -n -u x86_64-linux-musl-cross /opt/musl-cross
 
 builds:
   - id: babylond-linux-amd64
@@ -11,22 +21,10 @@ builds:
     binary: babylond
     builder: go
     gobinary: "go"
-    hooks:
-      pre:
-        - wget -nc https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.x86_64.a
-        - cp -n -u /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
-        - curl -LO https://musl.cc/x86_64-linux-musl-cross.tgz
-        - tar xf x86_64-linux-musl-cross.tgz
-        - mv -n -u x86_64-linux-musl-cross /opt/musl-cross
     goos:
       - linux
     goarch:
       - amd64
-    env:
-      - CGO_ENABLED=1
-      - CC=/opt/musl-cross/bin/x86_64-linux-musl-gcc
-      - LD=/opt/musl-cross/bin/x86_64-linux-musl-ld
-      - CGO_LDFLAGS=-L/lib
     flags:
       - -mod=readonly
       - -trimpath
@@ -42,187 +40,33 @@ builds:
     tags:
       - ledger
       - muslc
-      - [testnet, mainnet]
 
-  # - id: babylond-testnet-linux-amd64
-  #   main: ./cmd/babylond/main.go
-  #   binary: babylond
-  #   builder: go
-  #   gobinary: "go"
-  #   hooks:
-  #     pre:
-  #       - wget -nc https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.x86_64.a
-  #       - cp -n -u /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
-  #       - curl -LO https://musl.cc/x86_64-linux-musl-cross.tgz
-  #       - tar xf x86_64-linux-musl-cross.tgz
-  #       - mv -n -u x86_64-linux-musl-cross /opt/musl-cross
-  #   goos:
-  #     - linux
-  #   goarch:
-  #     - amd64
-  #   env:
-  #     - CGO_ENABLED=1
-  #     - CC=/opt/musl-cross/bin/x86_64-linux-musl-gcc
-  #     - LD=/opt/musl-cross/bin/x86_64-linux-musl-ld
-  #     - CGO_LDFLAGS=-L/lib
-  #   flags:
-  #     - -mod=readonly
-  #     - -trimpath
-  #   ldflags:
-  #     - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-  #     - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-  #     - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.BuildTags=ledger,muslc,testnet
-  #     - -linkmode=external
-  #     - -w -s
-  #     - -extldflags "-Wl,-z,muldefs -static -z noexecstack"
-  #   tags:
-  #     - ledger
-  #     - muslc
-  #     - testnet
-
-  # - id: babylond-linux-arm64
-  #   main: ./cmd/babylond/main.go
-  #   binary: babylond
-  #   hooks:
-  #     pre:
-  #       - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.aarch64.a -O /lib/libwasmvm_muslc.aarch64.a
-  #   goos:
-  #     - linux
-  #   goarch:
-  #     - arm64
-  #   env:
-  #     - CC=aarch64-linux-gnu-gcc
-  #   flags:
-  #     - -mod=readonly
-  #     - -trimpath
-  #   ldflags:
-  #     - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-  #     - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-  #     - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc
-  #     - -linkmode=external
-  #     - -w -s
-  #     - -extldflags '-L/lib -lwasmvm_muslc.aarch64 -Wl,-z,muldefs -static -lm'
-  #   tags: [netgo, ledger, muslc]
-
-  # - id: babylond-testnet-linux-arm64
-  #   main: ./cmd/babylond/main.go
-  #   binary: babylond
-  #   hooks:
-  #     pre:
-  #       - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.aarch64.a -O /lib/libwasmvm_muslc.aarch64.a
-  #   goos:
-  #     - linux
-  #   goarch:
-  #     - arm64
-  #   flags:
-  #     - -mod=readonly
-  #     - -trimpath
-  #   ldflags:
-  #     - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-  #     - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-  #     - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc,testnet
-  #     - -linkmode=external
-  #     - -w -s
-  #     - -extldflags '-L/lib -lwasmvm_muslc.aarch64 -Wl,-z,muldefs -static -lm'
-  #   tags: [netgo, ledger, muslc, testnet]
-
-  # - id: babylond-darwin-amd64
-  #   main: ./cmd/babylond/main.go
-  #   binary: babylond
-  #   hooks:
-  #     pre:
-  #       - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvmstatic_darwin.a -O /lib/libwasmvmstatic_darwin.a
-  #   goos:
-  #     - darwin
-  #   goarch:
-  #     - amd64
-  #   flags:
-  #     - -mod=readonly
-  #     - -trimpath
-  #   ldflags:
-  #     - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-  #     - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-  #     - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,static_wasm
-  #     - -linkmode=external
-  #     - -w -s
-  #   tags: [netgo, ledger, static_wasm]
-
-  # - id: babylond-testnet-darwin-amd64
-  #   main: ./cmd/babylond/main.go
-  #   binary: babylond
-  #   hooks:
-  #     pre:
-  #       - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvmstatic_darwin.a -O /lib/libwasmvmstatic_darwin.a
-  #   goos:
-  #     - darwin
-  #   goarch:
-  #     - amd64
-  #   flags:
-  #     - -mod=readonly
-  #     - -trimpath
-  #   ldflags:
-  #     - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-  #     - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-  #     - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,static_wasm,testnet
-  #     - -linkmode=external
-  #     - -w -s
-  #   tags: [netgo, ledger, static_wasm, testnet]
-
-  # - id: babylond-darwin-arm64
-  #   main: ./cmd/babylond/main.go
-  #   binary: babylond
-  #   hooks:
-  #     pre:
-  #       - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvmstatic_darwin.a -O /lib/libwasmvmstatic_darwin.a
-  #   goos:
-  #     - darwin
-  #   goarch:
-  #     - arm64
-  #   flags:
-  #     - -mod=readonly
-  #     - -trimpath
-  #   ldflags:
-  #     - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-  #     - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-  #     - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,static_wasm
-  #     - -linkmode=external
-  #     - -w -s
-  #   tags: [netgo, ledger, static_wasm]
-
-  # - id: babylond-testnet-darwin-arm64
-  #   main: ./cmd/babylond/main.go
-  #   binary: babylond
-  #   hooks:
-  #     pre:
-  #       - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvmstatic_darwin.a -O /lib/libwasmvmstatic_darwin.a
-  #   goos:
-  #     - darwin
-  #   goarch:
-  #     - arm64
-  #   flags:
-  #     - -mod=readonly
-  #     - -trimpath
-  #   ldflags:
-  #     - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-  #     - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-  #     - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,static_wasm,testnet
-  #     - -linkmode=external
-  #     - -w -s
-  #   tags: [netgo, ledger, static_wasm, testnet]
+builds:
+  - id: babylond-testnet-linux-amd64
+    main: ./cmd/babylond/main.go
+    binary: babylond
+    builder: go
+    gobinary: "go"
+    goos:
+      - linux
+    goarch:
+      - amd64
+    flags:
+      - -mod=readonly
+      - -trimpath
+    ldflags:
+      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
+      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
+      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
+      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=ledger,muslc,testnet
+      - -linkmode=external
+      - -w -s
+      - -extldflags "-Wl,-z,muldefs -static -z noexecstack"
+    tags:
+      - ledger
+      - muslc
+      - testnet
 
 archives:
   - id: zipped
@@ -233,14 +77,14 @@ archives:
     wrap_in_directory: false
     files:
       - none*
-  # - id: zipped-testnet
-  #   builds:
-  #     - babylond-testnet-linux-amd64
-  #   name_template: "{{.ProjectName}}-testnet-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
-  #   format: tar.gz
-  #   wrap_in_directory: false
-  #   files:
-  #     - none*
+  - id: zipped-testnet
+    builds:
+      - babylond-testnet-linux-amd64
+    name_template: "{{.ProjectName}}-testnet-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    format: tar.gz
+    wrap_in_directory: false
+    files:
+      - none*
   - id: binaries
     builds:
       - babylond-linux-amd64
@@ -249,14 +93,14 @@ archives:
     wrap_in_directory: false
     files:
       - none*
-  # - id: binaries-testnet
-  #   builds:
-  #     - babylond-testnet-linux-amd64
-  #   name_template: "{{.ProjectName}}-testnet-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
-  #   format: binary
-  #   wrap_in_directory: false
-  #   files:
-  #     - none*
+  - id: binaries-testnet
+    builds:
+      - babylond-testnet-linux-amd64
+    name_template: "{{.ProjectName}}-testnet-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    format: binary
+    wrap_in_directory: false
+    files:
+      - none*
 
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
