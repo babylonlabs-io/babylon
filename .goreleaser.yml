@@ -1,6 +1,21 @@
 version: 2
 project_name: babylon
 
+defaults:
+  env:
+    - GO111MODULE=on
+    - CGO_ENABLED=1
+  flags:
+    - -mod=readonly
+    - -trimpath
+  ldflags:
+    - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
+    - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
+    - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
+    - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+    - -linkmode=external
+    - -w -s
+
 builds:
   - id: babylond-linux-amd64
     main: ./cmd/babylond/main.go
@@ -12,24 +27,10 @@ builds:
       - linux
     goarch:
       - amd64
-    env:
-      - GO111MODULE=on
-    flags:
-      - -mod=readonly
-      - -trimpath
     ldflags:
-      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc
-      - -linkmode=external
       - -extldflags '-L/lib -lwasmvm_muslc.x86_64 -Wl,-z,muldefs -static -lm'
-      - -w -s
-    tags:
-      - netgo
-      - ledger
-      - muslc
+    tags: [netgo, ledger, muslc]
 
   - id: babylond-testnet-linux-amd64
     main: ./cmd/babylond/main.go
@@ -41,25 +42,10 @@ builds:
       - linux
     goarch:
       - amd64
-    env:
-      - GO111MODULE=on
-    flags:
-      - -mod=readonly
-      - -trimpath
     ldflags:
-      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc,testnet
-      - -linkmode=external
       - -extldflags '-L/lib -lwasmvm_muslc.x86_64 -Wl,-z,muldefs -static -lm'
-      - -w -s
-    tags:
-      - netgo
-      - ledger
-      - muslc
-      - testnet
+    tags: [netgo, ledger, muslc, testnet]
 
   - id: babylond-linux-arm64
     main: ./cmd/babylond/main.go
@@ -71,24 +57,10 @@ builds:
       - linux
     goarch:
       - arm64
-    env:
-      - GO111MODULE=on
-    flags:
-      - -mod=readonly
-      - -trimpath
     ldflags:
-      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc
-      - -linkmode=external
       - -extldflags '-L/lib -lwasmvm_muslc.aarch64 -Wl,-z,muldefs -static -lm'
-      - -w -s
-    tags:
-      - netgo
-      - ledger
-      - muslc
+    tags: [netgo, ledger, muslc]
 
   - id: babylond-testnet-linux-arm64
     main: ./cmd/babylond/main.go
@@ -100,25 +72,10 @@ builds:
       - linux
     goarch:
       - arm64
-    env:
-      - GO111MODULE=on
-    flags:
-      - -mod=readonly
-      - -trimpath
     ldflags:
-      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc,testnet
-      - -linkmode=external
       - -extldflags '-L/lib -lwasmvm_muslc.aarch64 -Wl,-z,muldefs -static -lm'
-      - -w -s
-    tags:
-      - netgo
-      - ledger
-      - muslc
-      - testnet
+    tags: [netgo, ledger, muslc, testnet]
 
   - id: babylond-darwin-amd64
     main: ./cmd/babylond/main.go
@@ -130,23 +87,9 @@ builds:
       - darwin
     goarch:
       - amd64
-    env:
-      - GO111MODULE=on
-    flags:
-      - -mod=readonly
-      - -trimpath
     ldflags:
-      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,static_wasm
-      - -linkmode=external
-      - -w -s
-    tags:
-      - netgo
-      - ledger
-      - static_wasm
+    tags: [netgo, ledger, static_wasm]
 
   - id: babylond-testnet-darwin-amd64
     main: ./cmd/babylond/main.go
@@ -158,24 +101,9 @@ builds:
       - darwin
     goarch:
       - amd64
-    env:
-      - GO111MODULE=on
-    flags:
-      - -mod=readonly
-      - -trimpath
     ldflags:
-      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,static_wasm,testnet
-      - -linkmode=external
-      - -w -s
-    tags:
-      - netgo
-      - ledger
-      - static_wasm
-      - testnet
+    tags: [netgo, ledger, static_wasm, testnet]
 
   - id: babylond-darwin-arm64
     main: ./cmd/babylond/main.go
@@ -187,23 +115,9 @@ builds:
       - darwin
     goarch:
       - arm64
-    env:
-      - GO111MODULE=on
-    flags:
-      - -mod=readonly
-      - -trimpath
     ldflags:
-      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,static_wasm
-      - -linkmode=external
-      - -w -s
-    tags:
-      - netgo
-      - ledger
-      - static_wasm
+    tags: [netgo, ledger, static_wasm]
 
   - id: babylond-testnet-darwin-arm64
     main: ./cmd/babylond/main.go
@@ -215,24 +129,9 @@ builds:
       - darwin
     goarch:
       - arm64
-    env:
-      - GO111MODULE=on
-    flags:
-      - -mod=readonly
-      - -trimpath
     ldflags:
-      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,static_wasm,testnet
-      - -linkmode=external
-      - -w -s
-    tags:
-      - netgo
-      - ledger
-      - static_wasm
-      - testnet
+    tags: [netgo, ledger, static_wasm, testnet]
 
 archives:
   - id: zipped
