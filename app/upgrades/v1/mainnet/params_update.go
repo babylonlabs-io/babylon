@@ -1,7 +1,6 @@
 package mainnet
 
 import (
-	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -30,14 +29,15 @@ var (
 	// Consensus params
 	MainnetBlockGasLimit = int64(300000000)
 	// Staking params
-	MainnetMinCommissionRate, _ = sdkmath.LegacyNewDecFromStr("0.03")
+	MainnetBabyMinCommissionRate, _ = sdkmath.LegacyNewDecFromStr("0.03")
+
+	// BTC checkpoint params
+	MainnetBTCConfirmationDepth = uint32(30)
+	MainnetBTCFinalizationDepth = uint32(300)
 
 	// Distribution params
-	TestnetCommunityTax, _ = sdkmath.LegacyNewDecFromStr("0.001")
-	// BTC checkpoint params
-	TestnetBTCCheckpointTag = hex.EncodeToString([]byte("bbt5"))
-	// Additional allow address to BTC light client
-	TestnetReporterAllowAddress = "bbn1cferwuxd95mdnyh4qnptahmzym0xt9sp9asqnw"
+	MainnetCommunityTax          = sdkmath.LegacyZeroDec()
+	MainnetWithdrawalAddrEnabled = true
 )
 
 // MainnetParamUpgrade make updates to specific params of specific modules
@@ -90,7 +90,7 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 		return fmt.Errorf("failed to get staking params: %w", err)
 	}
 
-	stakingParams.MinCommissionRate = MainnetMinCommissionRate
+	stakingParams.MinCommissionRate = MainnetBabyMinCommissionRate
 
 	if err := k.StakingKeeper.SetParams(ctx, stakingParams); err != nil {
 		return fmt.Errorf("failed to set staking params: %w", err)
@@ -102,28 +102,21 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 		return fmt.Errorf("failed to get distribution params: %w", err)
 	}
 
-	distributionParams.CommunityTax = TestnetCommunityTax
+	distributionParams.CommunityTax = MainnetCommunityTax
+	distributionParams.WithdrawAddrEnabled = MainnetWithdrawalAddrEnabled
 
 	if err := k.DistrKeeper.Params.Set(ctx, distributionParams); err != nil {
 		return fmt.Errorf("failed to set distribution params: %w", err)
 	}
 
-	// update btc checkpoint tag
+	// update btc checkpoint params
 	btcCheckpointParams := k.BtcCheckpointKeeper.GetParams(ctx)
 
-	btcCheckpointParams.CheckpointTag = TestnetBTCCheckpointTag
+	btcCheckpointParams.BtcConfirmationDepth = MainnetBTCConfirmationDepth
+	btcCheckpointParams.CheckpointFinalizationTimeout = MainnetBTCFinalizationDepth
 
 	if err := k.BtcCheckpointKeeper.SetParams(ctx, btcCheckpointParams); err != nil {
 		return fmt.Errorf("failed to set btc checkpoint params: %w", err)
-	}
-
-	// btc light client allow address
-	btcLCParams := k.BTCLightClientKeeper.GetParams(ctx)
-
-	btcLCParams.InsertHeadersAllowList = append(btcLCParams.InsertHeadersAllowList, TestnetReporterAllowAddress)
-
-	if err := k.BTCLightClientKeeper.SetParams(ctx, btcLCParams); err != nil {
-		return fmt.Errorf("failed to set btc light client params: %w", err)
 	}
 
 	return nil
