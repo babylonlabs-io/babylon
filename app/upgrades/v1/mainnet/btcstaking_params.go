@@ -1,7 +1,7 @@
 package mainnet
 
 // TBD for last parameter version
-// - btc_activation_height, set as 893434 btc block as somewhere in mid april
+// - btc_activation_height
 const BtcStakingParamsStr = `[
   {
     "covenant_pks": [
