@@ -43,38 +43,43 @@ builds:
       - ledger
       - muslc
 
-  # - id: babylond-testnet-linux-amd64
-  #   main: ./cmd/babylond/main.go
-  #   binary: babylond
-  #   hooks:
-  #     pre:
-  #       - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.x86_64.a
-  #       - cp -n /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
-  #       - curl -LO https://musl.cc/x86_64-linux-musl-cross.tgz
-  #       - tar xf x86_64-linux-musl-cross.tgz
-  #       - mv x86_64-linux-musl-cross /opt/musl-cross
-  #   goos:
-  #     - linux
-  #   goarch:
-  #     - amd64
-  #   env:
-  #     - CC=x86_64-linux-gnu-gcc
-  #   flags:
-  #     - -mod=readonly
-  #     - -trimpath
-  #   ldflags:
-  #     - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
-  #     - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
-  #     - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-  #     - -X github.com/cosmos/cosmos-sdk/version.BuildTags=ledger,muslc,testnet
-  #     - -linkmode=external
-  #     - -w -s
-  #     - -extldflags "-Wl,-z,muldefs -static -z noexecstack"
-  #   tags:
-  #     - ledger
-  #     - muslc
-  #     - testnet
+  - id: babylond-testnet-linux-amd64
+    main: ./cmd/babylond/main.go
+    binary: babylond
+    builder: go
+    gobinary: "go"
+    hooks:
+      pre:
+        - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.x86_64.a
+        - cp -n /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
+        - curl -LO https://musl.cc/x86_64-linux-musl-cross.tgz
+        - tar xf x86_64-linux-musl-cross.tgz
+        - mv x86_64-linux-musl-cross /opt/musl-cross
+    goos:
+      - linux
+    goarch:
+      - amd64
+    env:
+      - CGO_ENABLED=1
+      - CC=/opt/musl-cross/bin/x86_64-linux-musl-gcc
+      - LD=/opt/musl-cross/bin/x86_64-linux-musl-ld
+      - CGO_LDFLAGS=-L/lib
+    flags:
+      - -mod=readonly
+      - -trimpath
+    ldflags:
+      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
+      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
+      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
+      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=ledger,muslc,testnet
+      - -linkmode=external
+      - -w -s
+      - -extldflags "-Wl,-z,muldefs -static -z noexecstack"
+    tags:
+      - ledger
+      - muslc
+      - testnet
 
   # - id: babylond-linux-arm64
   #   main: ./cmd/babylond/main.go
