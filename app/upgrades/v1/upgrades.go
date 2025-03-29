@@ -158,7 +158,7 @@ func upgradeParameters(
 		return fmt.Errorf("failed to upgrade finality parameters: %w", err)
 	}
 	if err := upgradeIncentiveParameters(ctx, cdc, iK, incentiveParam); err != nil {
-		return err
+		return fmt.Errorf("failed to upgrade incentive parameters: %w", err)
 	}
 
 	if err := upgradeCosmWasmParameters(ctx, cdc, wasmK, wasmParam); err != nil {
