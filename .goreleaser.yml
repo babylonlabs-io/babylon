@@ -227,6 +227,7 @@ archives:
   - id: zipped
     builds:
       - babylond-linux-amd64
+      - babylond-testnet-linux-amd64
       # - babylond-linux-arm64
       # - babylond-darwin-amd64
       # - babylond-linux-arm64
@@ -238,6 +239,7 @@ archives:
   - id: binaries
     builds:
       - babylond-linux-amd64
+      - babylond-testnet-linux-amd64
       # - babylond-linux-arm64
       # - babylond-darwin-amd64
       # - babylond-darwin-arm64
