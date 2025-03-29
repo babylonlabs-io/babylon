@@ -12,6 +12,7 @@ builds:
     hooks:
       pre:
         - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.x86_64.a
+        - rm /lib/libwasmvm_muslc.a
         - cp /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
         - curl -LO https://musl.cc/x86_64-linux-musl-cross.tgz
         - tar xf x86_64-linux-musl-cross.tgz
@@ -21,7 +22,10 @@ builds:
     goarch:
       - amd64
     env:
-      - CC=x86_64-linux-gnu-gcc
+      - CGO_ENABLED=1
+      - CC=/opt/musl-cross/bin/x86_64-linux-musl-gcc
+      - LD=/opt/musl-cross/bin/x86_64-linux-musl-ld
+      - CGO_LDFLAGS=-L/lib
     flags:
       - -mod=readonly
       - -trimpath
@@ -30,12 +34,11 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
       - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=ledger,muslc
       - -linkmode=external
       - -w -s
       - -extldflags "-Wl,-z,muldefs -static -z noexecstack"
     tags:
-      - netgo
       - ledger
       - muslc
 
@@ -45,6 +48,7 @@ builds:
     hooks:
       pre:
         - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.x86_64.a
+        - rm /lib/libwasmvm_muslc.a
         - cp /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
         - curl -LO https://musl.cc/x86_64-linux-musl-cross.tgz
         - tar xf x86_64-linux-musl-cross.tgz
@@ -63,12 +67,11 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
       - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc,testnet
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=ledger,muslc,testnet
       - -linkmode=external
       - -w -s
       - -extldflags "-Wl,-z,muldefs -static -z noexecstack"
     tags:
-      - netgo
       - ledger
       - muslc
       - testnet
