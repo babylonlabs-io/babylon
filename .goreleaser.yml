@@ -204,9 +204,9 @@ archives:
   - id: zipped
     builds:
       - babylond-linux-amd64
-      - babylond-linux-arm64
-      - babylond-darwin-amd64
-      - babylond-linux-arm64
+      # - babylond-linux-arm64
+      # - babylond-darwin-amd64
+      # - babylond-linux-arm64
     name_template: "{{.ProjectName}}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
     format: tar.gz
     files:
@@ -214,9 +214,9 @@ archives:
   - id: binaries
     builds:
       - babylond-linux-amd64
-      - babylond-linux-arm64
-      - babylond-darwin-amd64
-      - babylond-darwin-arm64
+      # - babylond-linux-arm64
+      # - babylond-darwin-amd64
+      # - babylond-darwin-arm64
     name_template: "{{.ProjectName}}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
     format: binary
     files:
