@@ -14,44 +14,44 @@ import (
 
 var (
 	// Slashing params
-	MainnetMinSignedBlocks, _    = sdkmath.LegacyNewDecFromStr("0.6")
-	MainnetSlashFractionDowntime = sdkmath.LegacyZeroDec()
-	MainnetDowntimeJailDuration  = 300 * time.Second
+	MinSignedBlocks, _    = sdkmath.LegacyNewDecFromStr("0.6")
+	SlashFractionDowntime = sdkmath.LegacyZeroDec()
+	DowntimeJailDuration  = 300 * time.Second
 
 	// Governance params
-	MainnetVotingPeriod = 3 * 24 * time.Hour
+	VotingPeriod = 3 * 24 * time.Hour
 	// 50k BABY
-	MainnetMinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(50_000_000000))
+	MinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(50_000_000000))
 	// 200k BABY
-	MainnetMaxDepositPeriod      = 14 * 24 * time.Hour
-	MainnetExpeditedVotingPeriod = 24 * time.Hour
-	MainnetExpeditedMinDeposit   = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(200_000_000000))
+	MaxDepositPeriod      = 14 * 24 * time.Hour
+	ExpeditedVotingPeriod = 24 * time.Hour
+	ExpeditedMinDeposit   = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(200_000_000000))
 
 	// Consensus params
-	MainnetBlockGasLimit = int64(300000000)
+	BlockGasLimit = int64(300000000)
 	// Staking params
-	MainnetBabyMinCommissionRate, _ = sdkmath.LegacyNewDecFromStr("0.03")
+	BabyMinCommissionRate, _ = sdkmath.LegacyNewDecFromStr("0.03")
 
 	// BTC checkpoint params
-	MainnetBTCConfirmationDepth   = uint32(30)
-	MainnetBTCFinalizationTimeout = uint32(300)
+	BTCConfirmationDepth   = uint32(30)
+	BTCFinalizationTimeout = uint32(300)
 
 	// Distribution params
-	MainnetCommunityTax          = sdkmath.LegacyZeroDec()
-	MainnetWithdrawalAddrEnabled = true
+	CommunityTax          = sdkmath.LegacyZeroDec()
+	WithdrawalAddrEnabled = true
 )
 
-// MainnetParamUpgrade make updates to specific params of specific modules
-func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
+// ParamUpgrade make updates to specific params of specific modules
+func ParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 	// update slashing params
 	slashingParams, err := k.SlashingKeeper.GetParams(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get slash params: %w", err)
 	}
 
-	slashingParams.MinSignedPerWindow = MainnetMinSignedBlocks
-	slashingParams.DowntimeJailDuration = MainnetDowntimeJailDuration
-	slashingParams.SlashFractionDowntime = MainnetSlashFractionDowntime
+	slashingParams.MinSignedPerWindow = MinSignedBlocks
+	slashingParams.DowntimeJailDuration = DowntimeJailDuration
+	slashingParams.SlashFractionDowntime = SlashFractionDowntime
 
 	if err := slashingParams.Validate(); err != nil {
 		return fmt.Errorf("failed to validate slashing params: %w", err)
@@ -66,14 +66,14 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 		return fmt.Errorf("failed to get gov params: %w", err)
 	}
 
-	govParams.VotingPeriod = &MainnetVotingPeriod
-	govParams.ExpeditedVotingPeriod = &MainnetExpeditedVotingPeriod
-	govParams.MaxDepositPeriod = &MainnetMaxDepositPeriod
+	govParams.VotingPeriod = &VotingPeriod
+	govParams.ExpeditedVotingPeriod = &ExpeditedVotingPeriod
+	govParams.MaxDepositPeriod = &MaxDepositPeriod
 	govParams.MinDeposit = []sdk.Coin{
-		MainnetMinDeposit,
+		MinDeposit,
 	}
 	govParams.ExpeditedMinDeposit = []sdk.Coin{
-		MainnetExpeditedMinDeposit,
+		ExpeditedMinDeposit,
 	}
 
 	if err := govParams.ValidateBasic(); err != nil {
@@ -89,7 +89,7 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 		return fmt.Errorf("failed to get consensus params: %w", err)
 	}
 
-	consensusParams.Block.MaxGas = MainnetBlockGasLimit
+	consensusParams.Block.MaxGas = BlockGasLimit
 
 	consparams := cmttypes.ConsensusParamsFromProto(consensusParams)
 	if err := consparams.ValidateUpdate(&consensusParams, ctx.HeaderInfo().Height); err != nil {
@@ -105,7 +105,7 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 		return fmt.Errorf("failed to get staking params: %w", err)
 	}
 
-	stakingParams.MinCommissionRate = MainnetBabyMinCommissionRate
+	stakingParams.MinCommissionRate = BabyMinCommissionRate
 
 	if err := stakingParams.Validate(); err != nil {
 		return fmt.Errorf("failed to validate staking params: %w", err)
@@ -120,8 +120,8 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 		return fmt.Errorf("failed to get distribution params: %w", err)
 	}
 
-	distributionParams.CommunityTax = MainnetCommunityTax
-	distributionParams.WithdrawAddrEnabled = MainnetWithdrawalAddrEnabled
+	distributionParams.CommunityTax = CommunityTax
+	distributionParams.WithdrawAddrEnabled = WithdrawalAddrEnabled
 
 	if err := distributionParams.ValidateBasic(); err != nil {
 		return fmt.Errorf("failed to validate distribution params: %w", err)
@@ -133,8 +133,8 @@ func MainnetParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 	// update btc checkpoint params
 	btcCheckpointParams := k.BtcCheckpointKeeper.GetParams(ctx)
 
-	btcCheckpointParams.BtcConfirmationDepth = MainnetBTCConfirmationDepth
-	btcCheckpointParams.CheckpointFinalizationTimeout = MainnetBTCFinalizationTimeout
+	btcCheckpointParams.BtcConfirmationDepth = BTCConfirmationDepth
+	btcCheckpointParams.CheckpointFinalizationTimeout = BTCFinalizationTimeout
 
 	if err := btcCheckpointParams.Validate(); err != nil {
 		return fmt.Errorf("failed to validate btc checkpoint params: %w", err)
