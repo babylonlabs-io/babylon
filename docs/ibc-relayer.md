@@ -11,20 +11,21 @@ mechanism.
 
 Babylon has a unique unbonding mechanism that differs from standard Cosmos SDK
 chains. The Babylon Genesis chain disables the standard `x/staking` module and
-wraps it with the `x/epoching` module, introducing secure, fast unbonding
+wraps it with the [x/epoching module](https://github.com/babylonlabs-io/babylon/blob/main/x/epoching/README.md)) module, introducing secure, fast unbonding
 through Bitcoin timestamping.
 
 > **Important**: The standard `x/staking` module's unbonding time parameter
 > remains at the default 21 days, but **this value should be ignored** when
 > configuring the relayer's trusting period.
 
-1. **Epoching System**:
+1. **Epoched Staking Mechanism**:
     - All staking operations and voting power adjustments are processed at the
-      final block of each epoch
-    - The final block of each epoch is checkpointed onto the Bitcoin blockchain
+      last block of each epoch
+    - The AppHash of the last block of each epoch is checkpointed onto the Bitcoin blockchain
+      (this AppHash is derived from the entire execution trace prior to that block)
     - Each epoch spans 360 blocks (defined by `epoch_interval` parameter
       of [x/epoching module](https://github.com/babylonlabs-io/babylon/blob/main/x/epoching/README.md))
-    - With 10s block times, each epoch duration is 1 hour
+    - For example, on Babylon mainnet, with 10s block times, each epoch duration is 1 hour
 
 2. **Finalization Process**:
     - After an epoch is timestamped on a Bitcoin block, it becomes finalized
