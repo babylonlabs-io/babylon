@@ -23,22 +23,22 @@ through Bitcoin timestamping.
       last block of each epoch
     - The AppHash of the last block of each epoch is checkpointed onto the Bitcoin blockchain
       (this AppHash is derived from the entire execution trace prior to that block)
-    - Each epoch spans 360 blocks (defined by `epoch_interval` parameter
+    - On Babylon mainnet, each epoch spans 360 blocks (defined by `epoch_interval` parameter
       of [x/epoching module](https://github.com/babylonlabs-io/babylon/blob/main/x/epoching/README.md))
-    - For example, on Babylon mainnet, with 10s block times, each epoch duration is 1 hour
+    - On Babylon mainnet, with 10s block times, each epoch duration is 1 hour
 
 2. **Finalization Process**:
     - After an epoch is timestamped on a Bitcoin block, it becomes finalized
-      once the block is 300-deep
+      once the block reaches a certain depth
     - This is defined by the `checkpoint_finalization_timeout` parameter
       of [x/btccheckpoint module](https://github.com/babylonlabs-io/babylon/blob/main/x/btccheckpoint/README.md)
     - Any unbonding requests from that checkpointed epoch are then matured
-    - Given Bitcoin's average block time of ~10 minutes, the average unbonding
+    - On Babylon mainnet, the block must be 300-deep, and given Bitcoin's average block time of ~10 minutes, the average unbonding
       time is about 50 hours
 
 3. **IBC Light Client Configuration**:
     - IBC light clients for Babylon Genesis on other chains should have a lower
-      trusting period (~33 hours)
+      trusting period
     - This is about 2/3 of the unbonding period, following standard IBC security
       practices
     - This configuration only affects light clients of Babylon Genesis on other
@@ -49,23 +49,37 @@ through Bitcoin timestamping.
 Due to these unique characteristics, special attention is required when
 configuring the relayer's trusting period and client refresh rate.
 
+## Network-Specific Parameters
+
+The values mentioned above are specific to Babylon mainnet. For other networks (testnet, etc.), you can retrieve these values using:
+
+```bash
+# Query epoch interval
+babylond query epoching params
+
+# Query checkpoint finalization timeout
+babylond query btccheckpoint params
+```
+
+For RPC and LCD endpoints for different networks, refer to the [Babylon Networks Repository](https://github.com/babylonlabs-io/networks/tree/main/bbn-test-5).
+
 ## Relayer Configuration
 
 When setting up a relayer for Babylon, pay special attention to these
 parameters:
 
-1. **Trusting Period**: Should be set to approximately 2/3 of Babylon's
+1. **Trusting Period**: Should be set to approximately 2/3 of the network's
    unbonding period
-    - Babylon's unbonding period is ~50 hours (based on ~300 BTC blocks)
-    - Therefore, the trusting period should be set to ~33 hours
+    - On Babylon mainnet, the unbonding period is ~50 hours (based on ~300 BTC blocks)
+    - Therefore, on mainnet, the trusting period should be set to ~33 hours
 
 2. **Client Refresh Rate**: A higher refresh rate is recommended (1/5 of
-   trusting period, i.e., ~6.6 hours)
+   trusting period)
+    - On Babylon mainnet, this is ~6.6 hours
 
-For example, in Hermes configuration:
+For example, in Hermes configuration for Babylon mainnet:
 
-```
-[[chains]]
+```[[chains]]
 trusting_period = "33 hours"
 refresh = true
 client_refresh_rate = 1/5
