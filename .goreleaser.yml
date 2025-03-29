@@ -14,10 +14,10 @@ builds:
     hooks:
       pre:
         - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.x86_64.a
-        - cp -n /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
+        - cp -n -u /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
         - curl -LO https://musl.cc/x86_64-linux-musl-cross.tgz
         - tar xf x86_64-linux-musl-cross.tgz
-        - mv -n x86_64-linux-musl-cross /opt/musl-cross
+        - mv -n -u x86_64-linux-musl-cross /opt/musl-cross
     goos:
       - linux
     goarch:
@@ -51,10 +51,10 @@ builds:
     hooks:
       pre:
         - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.x86_64.a
-        - cp -n /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
+        - cp -n -u /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
         - curl -LO https://musl.cc/x86_64-linux-musl-cross.tgz
         - tar xf x86_64-linux-musl-cross.tgz
-        - mv -n x86_64-linux-musl-cross /opt/musl-cross
+        - mv -n -u x86_64-linux-musl-cross /opt/musl-cross
     goos:
       - linux
     goarch:
