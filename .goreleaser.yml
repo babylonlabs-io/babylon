@@ -55,7 +55,7 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc,static_wasm,testnet
       - -linkmode=external
       - -w -s
-      - -extldflags '-L/lib -lwasmvm_muslc.x86_64 -Wl,-z,muldefs -static-libgcc -static-libstdc++ -lm'
+      - -extldflags '-L/lib -lwasmvm_muslc.x86_64 -Wl,-z,muldefs -static-libgcc -static-libstdc++ -static -lm -ldl'
     tags: [netgo, ledger, muslc, testnet]
 
   # - id: babylond-linux-arm64
