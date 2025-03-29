@@ -111,10 +111,8 @@ that maintains the light client of the counterparty chain.
 
 For example, if you're relaying between Babylon and another chain:
 
-- If Babylon's light client of the other chain expires, submit the proposal on
-  Babylon
-- If the other chain's light client of Babylon expires, submit the proposal on
-  the other chain
+- If the light client of the other chain (maintained on Babylon) expires, submit the proposal on Babylon
+- If the light client of Babylon (maintained on the other chain) expires, submit the proposal on the other chain
 
 For detailed steps on how to submit an IBC client recovery proposal, refer to
 the [IBC Governance Proposals Guide](https://ibc.cosmos.network/main/ibc/proposals.html#steps).
