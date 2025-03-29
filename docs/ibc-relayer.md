@@ -2,7 +2,7 @@
 
 Babylon uses [IBC](https://ibcprotocol.dev/)
 (Inter-Blockchain Communication protocol) to enable cross-chain
-communication with other Cosmos SDK chains. This guide focuses on the specific
+communication with other IBC enabled chains. This guide focuses on the specific
 configurations needed
 when relaying with Babylon, particularly around its unique unbonding period
 mechanism.
@@ -15,7 +15,7 @@ Babylon supports IBC Transfer and IBC-Wasm. It does not support ICA, ICQ, IBC Ho
 
 Babylon has a unique unbonding mechanism that differs from standard Cosmos SDK
 chains. The Babylon Genesis chain disables the standard `x/staking` module and
-wraps it with the [x/epoching module](https://github.com/babylonlabs-io/babylon/blob/main/x/epoching/README.md)) module, introducing secure, fast unbonding
+wraps it with the [x/epoching module](../x/epoching/README.md) module, introducing secure, fast unbonding
 through Bitcoin timestamping.
 
 > **Important**: The standard `x/staking` module's unbonding time parameter
@@ -28,13 +28,13 @@ through Bitcoin timestamping.
     - The AppHash of the last block of each epoch is checkpointed onto the Bitcoin blockchain
       (this AppHash is derived from the entire execution trace prior to that block)
     - On Babylon mainnet, each epoch spans 360 blocks (defined by `epoch_interval` parameter
-      of [x/epoching module](https://github.com/babylonlabs-io/babylon/blob/main/x/epoching/README.md)) with 10s block times, resulting in 1 hour epoch duration
+      of [x/epoching module](../x/epoching/README.md)) with 10s block times, resulting in 1 hour epoch duration
 
 2. **Finalization Process**:
     - After an epoch is timestamped on a Bitcoin block, it becomes finalized
       once the block reaches a certain depth
     - This is defined by the `checkpoint_finalization_timeout` parameter
-      of [x/btccheckpoint module](https://github.com/babylonlabs-io/babylon/blob/main/x/btccheckpoint/README.md)
+      of [x/btccheckpoint module](../x/btccheckpoint/README.md)
     - Any unbonding requests from that checkpointed epoch are then matured
     - On Babylon mainnet, the block must be 300-deep, and given Bitcoin's average block time of ~10 minutes, the average unbonding
       time is about 50 hours
