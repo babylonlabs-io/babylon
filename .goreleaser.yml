@@ -26,10 +26,10 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
       - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc,static_wasm
       - -linkmode=external
       - -w -s
-      - -extldflags '-L/lib -lwasmvm_muslc.x86_64 -Wl,-z,muldefs -static -lm'
+      - -extldflags '-L/lib -lwasmvm_muslc.x86_64 -Wl,-z,muldefs -static-libgcc -static-libstdc++ -lm'
     tags: [netgo, ledger, muslc]
 
   - id: babylond-testnet-linux-amd64
@@ -52,10 +52,10 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
       - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc,testnet
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger,muslc,static_wasm,testnet
       - -linkmode=external
       - -w -s
-      - -extldflags '-L/lib -lwasmvm_muslc.x86_64 -Wl,-z,muldefs -static -lm'
+      - -extldflags '-L/lib -lwasmvm_muslc.x86_64 -Wl,-z,muldefs -static-libgcc -static-libstdc++ -lm'
     tags: [netgo, ledger, muslc, testnet]
 
   # - id: babylond-linux-arm64
