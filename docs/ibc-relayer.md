@@ -9,13 +9,15 @@ mechanism.
 
 ### IBC Functionalities
 
-Babylon supports IBC Transfer and IBC-Wasm. It does not support ICA, ICQ, IBC Hooks, or IBC Middleware yet.
+Babylon supports IBC Transfer and IBC-Wasm. It does not support ICA, ICQ, IBC
+Hooks, or IBC Middleware yet.
 
 ## Important Note on Babylon's Unbonding Period
 
 Babylon has a unique unbonding mechanism that differs from standard Cosmos SDK
 chains. The Babylon Genesis chain disables the standard `x/staking` module and
-wraps it with the [x/epoching module](../x/epoching/README.md) module, introducing secure, fast unbonding
+wraps it with the [x/epoching module](../x/epoching/README.md) module,
+introducing secure, fast unbonding
 through Bitcoin timestamping.
 
 > **Important**: The standard `x/staking` module's unbonding time parameter
@@ -25,10 +27,14 @@ through Bitcoin timestamping.
 1. **Epoched Staking Mechanism**:
     - All staking operations and voting power adjustments are processed at the
       last block of each epoch
-    - The AppHash of the last block of each epoch is checkpointed onto the Bitcoin blockchain
-      (this AppHash is derived from the entire execution trace prior to that block)
-    - On Babylon mainnet, each epoch spans 360 blocks (defined by `epoch_interval` parameter
-      of [x/epoching module](../x/epoching/README.md)) with 10s block times, resulting in 1 hour epoch duration
+    - The AppHash of the last block of each epoch is checkpointed onto the
+      Bitcoin blockchain
+      (this AppHash is derived from the entire execution trace prior to that
+      block)
+    - On Babylon mainnet, each epoch spans 360 blocks (defined
+      by `epoch_interval` parameter
+      of [x/epoching module](../x/epoching/README.md)) with 10s block times,
+      resulting in 1 hour epoch duration
 
 2. **Finalization Process**:
     - After an epoch is timestamped on a Bitcoin block, it becomes finalized
@@ -36,7 +42,8 @@ through Bitcoin timestamping.
     - This is defined by the `checkpoint_finalization_timeout` parameter
       of [x/btccheckpoint module](../x/btccheckpoint/README.md)
     - Any unbonding requests from that checkpointed epoch are then matured
-    - On Babylon mainnet, the block must be 300-deep, and given Bitcoin's average block time of ~10 minutes, the average unbonding
+    - On Babylon mainnet, the block must be 300-deep, and given Bitcoin's
+      average block time of ~10 minutes, the average unbonding
       time is about 50 hours
 
 3. **IBC Light Client Configuration**:
@@ -54,7 +61,8 @@ configuring the relayer's trusting period and client refresh rate.
 
 ## Network-Specific Parameters
 
-The values mentioned above are specific to Babylon mainnet. For other networks (testnet, etc.), you can retrieve these values using:
+The values mentioned above are specific to Babylon mainnet. For other networks (
+testnet, etc.), you can retrieve these values using:
 
 ```bash
 # Query epoch interval
@@ -64,7 +72,8 @@ babylond query epoching params
 babylond query btccheckpoint params
 ```
 
-For RPC and LCD endpoints for different networks, refer to the [Babylon Networks Repository](https://github.com/babylonlabs-io/networks/tree/main/bbn-test-5).
+For RPC and LCD endpoints for different networks, refer to
+the [Babylon Networks Repository](https://github.com/babylonlabs-io/networks/tree/main/bbn-test-5).
 
 ## Relayer Configuration
 
@@ -73,7 +82,8 @@ parameters. The following values are specific to Babylon mainnet:
 
 1. **Trusting Period**: Should be set to approximately 2/3 of the network's
    unbonding period
-    - On Babylon mainnet, the unbonding period is ~50 hours (based on ~300 BTC blocks), therefore the trusting period should be set to ~33 hours
+    - On Babylon mainnet, the unbonding period is ~50 hours (based on ~300 BTC
+      blocks), therefore the trusting period should be set to ~33 hours
 
 2. **Client Refresh Rate**: A higher refresh rate is recommended (1/5 of
    trusting period)
@@ -105,7 +115,8 @@ important metrics, refer
 to [Hermes metrics documentation](https://hermes.informal.systems/documentation/telemetry/operators.html#what-is-the-overall-ibc-status-of-each-network).
 
 > **Note**: For advanced monitoring,
-> see [Informal Systems' IBC Insights](https://insights.informal.systems/noble/osmosis).
+>
+see [Informal Systems' IBC Insights](https://insights.informal.systems/noble/osmosis).
 
 ## Handling Expired/Frozen IBC Clients
 
@@ -115,8 +126,10 @@ that maintains the light client of the counterparty chain.
 
 For example, if you're relaying between Babylon and another chain:
 
-- If the light client of the other chain (maintained on Babylon) expires, submit the proposal on Babylon
-- If the light client of Babylon (maintained on the other chain) expires, submit the proposal on the other chain
+- If the light client of the other chain (maintained on Babylon) expires, submit
+  the proposal on Babylon
+- If the light client of Babylon (maintained on the other chain) expires, submit
+  the proposal on the other chain
 
 For detailed steps on how to submit an IBC client recovery proposal, refer to
 the [IBC Governance Proposals Guide](https://ibc.cosmos.network/main/ibc/proposals.html#steps).
