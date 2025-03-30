@@ -23,7 +23,7 @@ func init() {
 			NewBtcHeadersStr:          testnet.NewBtcHeadersStr,
 			TokensDistributionStr:     testnet.TokensDistributionStr,
 			AllowedStakingTxHashesStr: testnet.AllowedStakingTxHashesStr,
-		}, testnet.TestnetParamUpgrade),
+		}, testnet.ParamUpgrade),
 		v1rc5.CreateUpgrade(),
 		v1rc8.CreateUpgrade(),
 		v1rc9.CreateUpgrade(),
