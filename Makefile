@@ -105,6 +105,10 @@ ifeq (boltdb,$(findstring boltdb,$(BABYLON_BUILD_OPTIONS)))
   ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=boltdb
 endif
 
+# To efectively statically link the binary is to manually wget the
+# libwasmvm_muslc.$(UNAME_S).a to libwasmvm.$(UNAME_S).a and
+# libwasmvm_muslc.a to libwasmvm.a.
+# Example wget https://github.com/CosmWasm/wasmvm/releases/download/$COSMWASM_VERSION/libwasmvm_muslc."$(uname -m)".a
 ifeq ($(LINK_STATICALLY),true)
 	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
 endif
