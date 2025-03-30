@@ -8,6 +8,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/app/params"
+	"github.com/cometbft/cometbft/proto/tendermint/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -92,7 +93,11 @@ func ParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 	}
 
 	consensusParams.Block.MaxGas = BlockGasLimit
-
+	if consensusParams.Version == nil {
+		consensusParams.Version = &types.VersionParams{
+			App: 1,
+		}
+	}
 	consparams := cmttypes.ConsensusParamsFromProto(consensusParams)
 	if err := consparams.ValidateUpdate(&consensusParams, ctx.HeaderInfo().Height); err != nil {
 		return fmt.Errorf("failed to validate consensus params: %w", err)
