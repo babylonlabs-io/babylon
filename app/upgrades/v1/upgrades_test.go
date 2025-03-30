@@ -92,6 +92,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 	testCases := []struct {
 		msg            string
+		baseBtcHeader  *btclighttypes.BTCHeaderInfo
 		upgradeDataStr v1.UpgradeDataString
 		upgradeParams  v1.ParamUpgradeFn
 		preUpgrade     func()
@@ -100,8 +101,9 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	}{
 		{
 			"Test launch software upgrade v1 mainnet",
+			sample.MainnetBtcHeader854784(s.T()),
 			UpgradeV1DataMainnet,
-			nil,
+			mainnetdata.ParamUpgrade,
 			s.PreUpgrade,
 			s.Upgrade,
 			func() {
@@ -140,6 +142,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		},
 		{
 			"Test launch software upgrade v1 testnet",
+			sample.SignetBtcHeader195552(s.T()),
 			UpgradeV1DataTestnet,
 			testnetdata.ParamUpgrade,
 			s.PreUpgrade,
@@ -193,7 +196,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 	for _, tc := range testCases {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
-			s.SetupTest(tc.upgradeDataStr, tc.upgradeParams) // reset
+			s.SetupTest(tc.upgradeDataStr, tc.upgradeParams, tc.baseBtcHeader) // reset
 
 			tc.preUpgrade()
 			tc.upgrade()
@@ -202,7 +205,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	}
 }
 
-func (s *UpgradeTestSuite) SetupTest(upgradeDataStr v1.UpgradeDataString, upgradeParams v1.ParamUpgradeFn) {
+func (s *UpgradeTestSuite) SetupTest(upgradeDataStr v1.UpgradeDataString, upgradeParams v1.ParamUpgradeFn, baseBtcHeader *btclighttypes.BTCHeaderInfo) {
 	s.upgradeDataStr = upgradeDataStr
 
 	// add the upgrade plan
@@ -213,14 +216,9 @@ func (s *UpgradeTestSuite) SetupTest(upgradeDataStr v1.UpgradeDataString, upgrad
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
 	s.preModule = upgrade.NewAppModule(s.app.UpgradeKeeper, s.app.AccountKeeper.AddressCodec())
 
-	// Note: for mainnet upgrade testing a new function needs to be created and
-	// probably split the upgrade test suite in 2, since the btc config
-	// will be different for testnet and for mainnet.
-	baseBtcHeader := sample.SignetBtcHeader195552(s.T())
-
-	k := s.app.BTCLightClientKeeper
+	btcLightK := s.app.BTCLightClientKeeper
 	btclightclient.InitGenesis(s.ctx, s.app.BTCLightClientKeeper, btclighttypes.GenesisState{
-		Params:     k.GetParams(s.ctx),
+		Params:     btcLightK.GetParams(s.ctx),
 		BtcHeaders: []*btclighttypes.BTCHeaderInfo{baseBtcHeader},
 	})
 
