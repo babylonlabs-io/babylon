@@ -141,7 +141,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		{
 			"Test launch software upgrade v1 testnet",
 			UpgradeV1DataTestnet,
-			testnetdata.TestnetParamUpgrade,
+			testnetdata.ParamUpgrade,
 			s.PreUpgrade,
 			s.Upgrade,
 			func() {
@@ -160,33 +160,33 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				// check that the gov params were updated
 				govParams, err := s.app.GovKeeper.Params.Get(s.ctx)
 				s.NoError(err)
-				s.EqualValues(testnetdata.TestnetVotingPeriod, *govParams.VotingPeriod)
-				s.EqualValues(testnetdata.TestnetExpeditedVotingPeriod, *govParams.ExpeditedVotingPeriod)
-				s.EqualValues([]sdk.Coin{testnetdata.TestnetMinDeposit}, govParams.MinDeposit)
-				s.EqualValues([]sdk.Coin{testnetdata.TestnetExpeditedMinDeposit}, govParams.ExpeditedMinDeposit)
+				s.EqualValues(testnetdata.VotingPeriod, *govParams.VotingPeriod)
+				s.EqualValues(testnetdata.ExpeditedVotingPeriod, *govParams.ExpeditedVotingPeriod)
+				s.EqualValues([]sdk.Coin{testnetdata.MinDeposit}, govParams.MinDeposit)
+				s.EqualValues([]sdk.Coin{testnetdata.ExpeditedMinDeposit}, govParams.ExpeditedMinDeposit)
 
 				// check that the consensus params were updated
 				consensusParams, err := s.app.ConsensusParamsKeeper.ParamsStore.Get(s.ctx)
 				s.NoError(err)
-				s.EqualValues(testnetdata.TestnetBlockGasLimit, consensusParams.Block.MaxGas)
+				s.EqualValues(testnetdata.BlockGasLimit, consensusParams.Block.MaxGas)
 
 				// check that the staking params were updated
 				stakingParams, err := s.app.StakingKeeper.GetParams(s.ctx)
 				s.NoError(err)
-				s.EqualValues(testnetdata.TestnetMinCommissionRate, stakingParams.MinCommissionRate)
+				s.EqualValues(testnetdata.MinCommissionRate, stakingParams.MinCommissionRate)
 
 				// check that the distribution params were updated
 				distributionParams, err := s.app.DistrKeeper.Params.Get(s.ctx)
 				s.NoError(err)
-				s.EqualValues(testnetdata.TestnetCommunityTax, distributionParams.CommunityTax)
+				s.EqualValues(testnetdata.CommunityTax, distributionParams.CommunityTax)
 
 				// check that the btc checkpoint params were updated
 				btcCheckpointParams := s.app.BtcCheckpointKeeper.GetParams(s.ctx)
-				s.EqualValues(testnetdata.TestnetBTCCheckpointTag, btcCheckpointParams.CheckpointTag)
+				s.EqualValues(testnetdata.BTCCheckpointTag, btcCheckpointParams.CheckpointTag)
 
 				// check that the btc light client params were updated
 				btcLCParams := s.app.BTCLightClientKeeper.GetParams(s.ctx)
-				s.True(slices.Contains(btcLCParams.InsertHeadersAllowList, testnetdata.TestnetReporterAllowAddress))
+				s.True(slices.Contains(btcLCParams.InsertHeadersAllowList, testnetdata.ReporterAllowAddress))
 			},
 		},
 	}
@@ -285,7 +285,7 @@ func (s *UpgradeTestSuite) Upgrade() {
 	s.ctx = s.ctx.WithHeaderInfo(header.Info{Height: DummyUpgradeHeight, Time: s.ctx.BlockTime().Add(time.Second)}).WithBlockHeight(DummyUpgradeHeight)
 	s.NotPanics(func() {
 		_, err := s.preModule.PreBlock(s.ctx)
-		s.NoError(err)
+		s.Require().NoError(err)
 	})
 }
 
