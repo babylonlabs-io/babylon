@@ -17,4 +17,5 @@ const (
 	PropSubmitBlocks float32 = 1
 	// Upgrade prop files json
 	UpgradeSignetLaunchFilePath = "/govProps/v1.json"
+	GovPropResumeFinality       = "/govProps/resume-finality.json"
 )

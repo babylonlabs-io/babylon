@@ -8,6 +8,7 @@ import (
 	"github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
 	v1rc5 "github.com/babylonlabs-io/babylon/app/upgrades/v1rc5/testnet"
 	v1rc8 "github.com/babylonlabs-io/babylon/app/upgrades/v1rc8/testnet"
+	v1rc9 "github.com/babylonlabs-io/babylon/app/upgrades/v1rc9/testnet"
 )
 
 // init is used to include v1 upgrade testnet data
@@ -22,8 +23,9 @@ func init() {
 			NewBtcHeadersStr:          testnet.NewBtcHeadersStr,
 			TokensDistributionStr:     testnet.TokensDistributionStr,
 			AllowedStakingTxHashesStr: testnet.AllowedStakingTxHashesStr,
-		}, testnet.TestnetParamUpgrade),
+		}, testnet.ParamUpgrade),
 		v1rc5.CreateUpgrade(),
 		v1rc8.CreateUpgrade(),
+		v1rc9.CreateUpgrade(),
 	}
 }
