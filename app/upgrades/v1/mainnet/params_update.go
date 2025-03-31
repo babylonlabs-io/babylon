@@ -25,7 +25,7 @@ var (
 	MinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(50_000_000000))
 	// 200k BABY
 	MaxDepositPeriod          = 14 * 24 * time.Hour
-	ExpeditedVotingPeriod     = 24 * time.Hour
+	ExpeditedVotingPeriod     = 5 * time.Minute
 	ExpeditedMinDeposit       = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(200_000_000000))
 	MinInitialDepositRatio, _ = sdkmath.LegacyNewDecFromStr("0.1")
 
