@@ -36,7 +36,7 @@ var (
 
 	// BTC checkpoint params
 	BTCConfirmationDepth   = uint32(30)
-	BTCFinalizationTimeout = uint32(300)
+	BTCFinalizationTimeout = uint32(50)
 
 	// Distribution params
 	CommunityTax          = sdkmath.LegacyZeroDec()
