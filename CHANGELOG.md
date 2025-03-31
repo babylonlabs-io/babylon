@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#761](https://github.com/babylonlabs-io/babylon/pull/746) Add mainnet allowed transaction hash to v1 upgrade handler.
+- [#757](https://github.com/babylonlabs-io/babylon/pull/757) Statically link wasm and add binaries
+with [`testnet`, `mainnet`] flags to release assets.
 - [#746](https://github.com/babylonlabs-io/babylon/pull/746) Add mainnet parameters to v1 upgrade handler.
 - [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.
 - [#623](https://github.com/babylonlabs-io/babylon/pull/623) Add check for empty string in `bls` loading.
@@ -64,6 +66,8 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 
 ### Bug fixes
 
+- [#741](https://github.com/babylonlabs-io/babylon/pull/741) chore: fix register consumer CLI
+- [#731](https://github.com/babylonlabs-io/babylon/pull/731) chore: fix block timeout in Babylon client
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 
 ## v1.0.0-rc9
