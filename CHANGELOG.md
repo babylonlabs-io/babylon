@@ -58,6 +58,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 
 ### Bug fixes
 
+- [#741](https://github.com/babylonlabs-io/babylon/pull/741) chore: fix register consumer CLI
 - [#509](https://github.com/babylonlabs-io/babylon/pull/509) crypto: fix ECDSA malleability
 - [#486](https://github.com/babylonlabs-io/babylon/pull/486) crypto: blinding base mult of nonce
 - [#443](https://github.com/babylonlabs-io/babylon/pull/443) Fix swagger generation for incentive missing `v1` in path
