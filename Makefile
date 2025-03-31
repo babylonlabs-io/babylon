@@ -32,6 +32,13 @@ endif
 
 export GO111MODULE = on
 
+# process linker flags
+
+ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=babylon \
+		  -X github.com/cosmos/cosmos-sdk/version.AppName=babylond \
+		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
+		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
+
 # process build tags
 
 build_tags = netgo
@@ -66,19 +73,6 @@ ifeq (secp,$(findstring secp,$(BABYLON_BUILD_OPTIONS)))
   build_tags += libsecp256k1_sdk
 endif
 
-whitespace :=
-whitespace := $(whitespace) $(whitespace)
-comma := ,
-build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
-
-# process linker flags
-
-ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=babylon \
-		  -X github.com/cosmos/cosmos-sdk/version.AppName=babylond \
-		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
-		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
-
 # Handles the inclusion of upgrade in binary
 ifeq (testnet,$(findstring testnet,$(BABYLON_BUILD_OPTIONS)))
   BUILD_TAGS += testnet
@@ -112,6 +106,12 @@ ifeq (boltdb,$(findstring boltdb,$(BABYLON_BUILD_OPTIONS)))
 endif
 
 ifeq ($(LINK_STATICALLY),true)
+# To efectively statically link the binary is to manually wget the
+# libwasmvm_muslc.$(UNAME_S).a to libwasmvm.$(UNAME_S).a and
+# libwasmvm_muslc.a to libwasmvm.a and also set the necessary env vars
+# [CGO_ENABLED=1, CC=/opt/musl-cross/bin/x86_64-linux-musl-gcc,
+# LD=/opt/musl-cross/bin/x86_64-linux-musl-ld, CGO_LDFLAGS=-L/lib]
+# Example wget https://github.com/CosmWasm/wasmvm/releases/download/$COSMWASM_VERSION/libwasmvm_muslc."$(uname -m)".a
 	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
 endif
 
@@ -123,6 +123,13 @@ ldflags := $(strip $(ldflags))
 
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
+
+whitespace :=
+whitespace := $(whitespace) $(whitespace)
+comma := ,
+build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
+
+ldflags += -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 # check for nostrip option
