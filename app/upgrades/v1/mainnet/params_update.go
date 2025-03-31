@@ -36,7 +36,7 @@ var (
 
 	// BTC checkpoint params
 	BTCConfirmationDepth   = uint32(30)
-	BTCFinalizationTimeout = uint32(300)
+	BTCFinalizationTimeout = uint32(50)
 
 	// Distribution params
 	CommunityTax          = sdkmath.LegacyZeroDec()
@@ -142,6 +142,7 @@ func ParamUpgrade(ctx sdk.Context, k *keepers.AppKeepers) error {
 
 	btcCheckpointParams.BtcConfirmationDepth = BTCConfirmationDepth
 	btcCheckpointParams.CheckpointFinalizationTimeout = BTCFinalizationTimeout
+	btcCheckpointParams.CheckpointTag = "74657374"
 
 	if err := btcCheckpointParams.Validate(); err != nil {
 		return fmt.Errorf("failed to validate btc checkpoint params: %w", err)
