@@ -215,17 +215,14 @@ message Epoch {
   // finalised. The last_block_time field is nil in the epoch's beginning, and
   // is set upon the end of this epoch.
   google.protobuf.Timestamp last_block_time = 4 [ (gogoproto.stdtime) = true ];
-  // app_hash_root is the Merkle root of all AppHashs in this epoch
-  // It will be used for proving a block is in an epoch
-  bytes app_hash_root = 5;
   // sealer is the last block of the sealed epoch
   // sealer_app_hash points to the sealer but stored in the 1st header
   // of the next epoch
-  bytes sealer_app_hash = 6;
+  bytes sealer_app_hash = 5;
   // sealer_block_hash is the hash of the sealer
   // the validator set has generated a BLS multisig on the hash,
   // i.e., hash of the last block in the epoch
-  bytes sealer_block_hash = 7;
+  bytes sealer_block_hash = 6;
 }
 ```
 
@@ -254,7 +251,7 @@ message QueuedMessage {
   // block_time is the timestamp when this msg is submitted to Babylon
   google.protobuf.Timestamp block_time = 4 [ (gogoproto.stdtime) = true ];
   // msg is the actual message that is sent by a user and is queued by the
-  // Epoching module
+  // epoching module
   oneof msg {
     cosmos.staking.v1beta1.MsgCreateValidator msg_create_validator = 5;
     cosmos.staking.v1beta1.MsgDelegate msg_delegate = 6;
