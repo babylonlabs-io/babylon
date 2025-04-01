@@ -217,8 +217,8 @@ a structure storing the information of a PoS blockchain that checkpoints to Baby
 ```protobuf
 // ChainInfo is the information of a CZ
 message ChainInfo {
-  // chain_id is the ID of the chain
-  string chain_id = 1;
+  // consumer_id is the ID of the consumer
+  string consumer_id = 1;
   // latest_header is the latest header in CZ's canonical chain
   IndexedHeader latest_header = 2;
   // latest_forks is the latest forks, formed as a series of IndexedHeader (from
@@ -247,8 +247,8 @@ chain's `ConsumerID` plus the height, and the value is a `IndexedHeader` object.
 ```protobuf
 // IndexedHeader is the metadata of a CZ header
 message IndexedHeader {
-  // chain_id is the unique ID of the chain
-  string chain_id = 1;
+  // consumer_id is the unique ID of the consumer
+  string consumer_id = 1;
   // hash is the hash of this header
   bytes hash = 2;
   // height is the height of this header on CZ ledger
@@ -256,7 +256,7 @@ message IndexedHeader {
   uint64 height = 3;
   // time is the timestamp of this header on CZ ledger
   // it is needed for CZ to unbond all mature validators/delegations
-  // before this timestamp when this header is BTC-finalized
+  // before this timestamp when this header is BTC-finalised
   google.protobuf.Timestamp time = 4 [ (gogoproto.stdtime) = true ];
   // babylon_header_hash is the hash of the babylon block that includes this CZ
   // header

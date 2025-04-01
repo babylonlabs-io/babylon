@@ -120,14 +120,17 @@ parameters. The Finality module's parameters are represented as a `Params`
 // Params defines the parameters for the module.
 message Params {
   option (gogoproto.goproto_stringer) = false;
+
+  // max_active_finality_providers is the maximum number of active finality providers in the BTC staking protocol
+  uint32 max_active_finality_providers = 1;
   // signed_blocks_window defines the size of the sliding window for tracking finality provider liveness
-  int64 signed_blocks_window  = 1;
+  int64 signed_blocks_window  = 2;
   // finality_sig_timeout defines how much time (in terms of blocks) finality providers have to cast a finality
   // vote before being judged as missing their voting turn on the given block
-  int64 finality_sig_timeout = 2;
+  int64 finality_sig_timeout = 3;
   // min_signed_per_window defines the minimum number of blocks that a finality provider is required to sign
-  // within the sliding window to avoid being detected as sluggish
-  bytes min_signed_per_window = 3 [
+  // within the sliding window to avoid being jailed
+  bytes min_signed_per_window = 4 [
     (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable)   = false,
@@ -135,7 +138,14 @@ message Params {
   ];
   // min_pub_rand is the minimum number of public randomness each
   // message should commit
-  uint64 min_pub_rand = 4;
+  uint64 min_pub_rand = 5;
+  // jail_duration is the minimum period of time that a finality provider remains jailed
+  google.protobuf.Duration jail_duration = 6
+  [(gogoproto.nullable) = false, (amino.dont_omitempty) = true, (gogoproto.stdduration) = true];
+  // finality_activation_height is the babylon block height which the finality module will
+  // start to accept finality voting and the minimum allowed value for the public randomness
+  // commit start height.
+  uint64 finality_activation_height = 7;
 }
 ```
 
@@ -231,9 +241,8 @@ message Evidence {
     bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
     // block_height is the height of the conflicting blocks
     uint64 block_height = 2;
-    // master_pub_rand is the master public randomness the finality provider has committed to
-    // encoded as a base58 string
-    string master_pub_rand = 3;
+    // pub_rand is the public randomness the finality provider has committed to
+    bytes pub_rand = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrPubRand" ];
     // canonical_app_hash is the AppHash of the canonical block
     bytes canonical_app_hash = 4;
     // fork_app_hash is the AppHash of the fork block

@@ -16,11 +16,11 @@ const (
 	DefaultMinPubRand                 = 100
 	DefaultFinalitySigTimeout         = 3
 	DefaultJailDuration               = 24 * 60 * 60 * 1 * time.Second // 1 day
-	// For mainnet considering we want 48 hours
-	// at a block time of 10s that would be 17280 blocks
+	// For mainnet considering we want 76 hours
+	// at a block time of 10s that would be 27600 blocks
 	// considering the upgrade for Phase-2 will happen at block
-	// 220, the mainnet activation height for btcstaking should
-	// be 17280 + 220 = 17500.
+	// 240, the mainnet activation height for btcstaking should
+	// be 27360 + 220 = 27600.
 	// For now it is set to 1 to avoid breaking dependencies.
 	DefaultFinalityActivationHeight = 1
 )

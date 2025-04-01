@@ -160,7 +160,9 @@ message Params {
   // PARAMETERS COVERING STAKING
   // covenant_pks is the list of public keys held by the covenant committee
   // each PK follows encoding in BIP-340 spec on Bitcoin
-  repeated bytes covenant_pks = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  repeated bytes covenant_pks = 1
+      [ (gogoproto.customtype) =
+            "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
   // covenant_quorum is the minimum number of signatures needed for the covenant
   // multisignature
   uint32 covenant_quorum = 2;
@@ -168,13 +170,15 @@ message Params {
   int64 min_staking_value_sat = 3;
   // max_staking_value_sat is the maximum of satoshis locked in staking output
   int64 max_staking_value_sat = 4;
-  // min_staking_time is the minimum lock time specified in staking output script
+  // min_staking_time is the minimum lock time specified in staking output
+  // script
   uint32 min_staking_time_blocks = 5;
-  // max_staking_time_blocks is the maximum lock time time specified in staking output script
+  // max_staking_time_blocks is the maximum lock time time specified in staking
+  // output script
   uint32 max_staking_time_blocks = 6;
   // PARAMETERS COVERING SLASHING
-  // slashing_pk_script is the pk_script expected in slashing output ie. the first
-  // output of slashing transaction
+  // slashing_pk_script is the pk_script expected in slashing output ie. the
+  // first output of slashing transaction
   bytes slashing_pk_script = 7;
   // min_slashing_tx_fee_sat is the minimum amount of tx fee (quantified
   // in Satoshi) needed for the pre-signed slashing tx. It covers both:
@@ -184,25 +188,34 @@ message Params {
   // expressed as a decimal (e.g., 0.5 for 50%). Maximal precion is 2 decimal
   // places
   string slashing_rate = 9 [
-      (cosmos_proto.scalar)  = "cosmos.Dec",
-      (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-      (gogoproto.nullable)   = false
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
   ];
   // PARAMETERS COVERING UNBONDING
-  // unbonding_time_blocks is the required timelock on unbonding transaction in BTC blocks
+  // unbonding_time is the exact unbonding time required from unbonding
+  // transaction it must be larger than `checkpoint_finalization_timeout` from
+  // `btccheckpoint` module
   uint32 unbonding_time_blocks = 10;
-  // unbonding_fee_sat is the exact fee required for unbonding transaction
+  // unbonding_fee exact fee required for unbonding transaction
   int64 unbonding_fee_sat = 11;
   // PARAMETERS COVERING FINALITY PROVIDERS
-  // min_commission_rate is the chain-wide minimum commission rate that a finality provider
-  // can charge their delegators expressed as a decimal (e.g., 0.5 for 50%). Maximal precion
-  // is 2 decimal places
+  // min_commission_rate is the chain-wide minimum commission rate that a
+  // finality provider can charge their delegators expressed as a decimal (e.g.,
+  // 0.5 for 50%). Maximal precion is 2 decimal places
   string min_commission_rate = 12 [
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable)   = false
+    (gogoproto.nullable) = false
   ];
   // base gas fee for delegation creation
   uint64 delegation_creation_base_gas_fee = 13;
+  // allow_list_expiration_height is the height at which the allow list expires
+  // i.e all staking transactions are allowed to enter Babylon chain afterwards
+  // setting it to 0 means allow list is disabled
+  uint64 allow_list_expiration_height = 14;
+  // btc_activation_height is the btc height from which parameters are activated
+  // (inclusive)
+  uint32 btc_activation_height = 15;
 }
 ```
 
@@ -218,31 +231,42 @@ finality provider.
 ```protobuf
 // FinalityProvider defines a finality provider
 message FinalityProvider {
-    // addr is the bech32 address identifier of the finality provider.
-    string addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-    // description defines the description terms for the finality provider.
-    cosmos.staking.v1beta1.Description description = 2;
-    // commission defines the commission rate of the finality provider.
-    string commission = 3  [
-        (cosmos_proto.scalar)  = "cosmos.Dec",
-        (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
-    ];
-    // btc_pk is the Bitcoin secp256k1 PK of this finality provider
-    // the PK follows encoding in BIP-340 spec
-    bytes btc_pk = 4 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
-    // pop is the proof of possession of the btc_pk, where the BTC
-    // private key signs the bech32 bbn addr of the finality provider.
-    ProofOfPossessionBTC pop = 5;
-    // slashed_babylon_height indicates the Babylon height when
-    // the finality provider is slashed.
-    // if it's 0 then the finality provider is not slashed
-    uint64 slashed_babylon_height = 6;
-    // slashed_btc_height indicates the BTC height when
-    // the finality provider is slashed.
-    // if it's 0 then the finality provider is not slashed
-    uint32 slashed_btc_height = 7;
-    // jailed defines whether the finality provider is jailed
-    bool jailed = 8;
+  // addr is the bech32 address identifier of the finality provider.
+  string addr = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // description defines the description terms for the finality provider.
+  cosmos.staking.v1beta1.Description description = 2;
+  // commission defines the commission rate of the finality provider.
+  string commission = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
+  ];
+  // btc_pk is the Bitcoin secp256k1 PK of this finality provider
+  // the PK follows encoding in BIP-340 spec
+  bytes btc_pk = 4
+      [ (gogoproto.customtype) =
+            "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  // pop is the proof of possession of the btc_pk, where the BTC
+  // private key signs the bech32 bbn addr of the finality provider.
+  ProofOfPossessionBTC pop = 5;
+  // slashed_babylon_height indicates the Babylon height when
+  // the finality provider is slashed.
+  // if it's 0 then the finality provider is not slashed
+  uint64 slashed_babylon_height = 6;
+  // slashed_btc_height indicates the BTC height when
+  // the finality provider is slashed.
+  // if it's 0 then the finality provider is not slashed
+  uint32 slashed_btc_height = 7;
+  // jailed defines whether the finality provider is jailed
+  bool jailed = 8;
+  // highest_voted_height is the highest height for which the
+  // finality provider has voted
+  uint32 highest_voted_height = 9;
+  // consumer_id is the ID of the consumer the finality provider is operating
+  // on. If it's missing / empty, it's assumed the finality provider is
+  // operating in the Babylon chain.
+  string consumer_id = 10;
+  // commission_info contains information details of the finality provider commission.
+  CommissionInfo commission_info = 11;
 }
 ```
 
@@ -670,9 +694,15 @@ message MsgBTCUndelegate {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 2;
-  // unbonding_tx_sig is the signature of the staker on the unbonding tx submitted to babylon
-  // the signature follows encoding in BIP-340 spec
-  bytes unbonding_tx_sig = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340Signature" ];
+  // stake_spending_tx is a bitcoin transaction that spends the staking
+  // transaction i.e it has staking output as an input
+  bytes stake_spending_tx = 3;
+  // spend_spending_tx_inclusion_proof is the proof of inclusion of the
+  // stake_spending_tx in the BTC chain
+  InclusionProof stake_spending_tx_inclusion_proof = 4;
+  // funding_transactions is a list of bitcoin transactions that funds the stake_spending_tx
+  // i.e. they are inputs of the stake_spending_tx
+  repeated bytes funding_transactions = 5;
 }
 ```
 
