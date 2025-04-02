@@ -278,6 +278,12 @@ versions managed by the [x/btcstaking](../x/btcstaking) module:
 > These parameters are part of the [x/btcstaking](../x/btcstaking)
 > module parameters can be queried via a Babylon node using
 > RPC/LCD endpoints or the CLI.
+>
+> **⚠️  Warning**: Make sure that you are retrieving the BTC Staking parameters
+> from a trusted node and you verify their authenticity using additional
+> sources. Failure to use the correct BTC Staking parameters might make your
+> stake unverifiable or temporarily frozen on Bitcoin (in the case of an
+> invalid covenant emulation committee). 
 
 > **⚡ Choosing the Correct Staking Parameters**
 >
