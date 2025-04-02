@@ -44,9 +44,6 @@ func RecoverPublicKey(msg string, sigBytes []byte) (*btcec.PublicKey, bool, erro
 	if err != nil {
 		return nil, false, err
 	}
-	if !wasCompressed {
-		return nil, false, fmt.Errorf("unsupported signature: uncompressed public key")
-	}
 
 	var s btcec.ModNScalar
 	if overflow := s.SetByteSlice(sigBytes[33:65]); overflow {

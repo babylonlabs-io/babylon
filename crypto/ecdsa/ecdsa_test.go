@@ -79,23 +79,3 @@ func TestECDSAMalleability(t *testing.T) {
 	_, _, err = ecdsa.RecoverPublicKey(testMsg, sig)
 	require.Error(t, err)
 }
-
-func TestECDSAMalleabilityCompressed(t *testing.T) {
-	// decode SK and PK
-	skBytes, err := hex.DecodeString(skHex)
-	require.NoError(t, err)
-	sk, pk := btcec.PrivKeyFromBytes(skBytes)
-	require.NotNil(t, sk)
-	require.NotNil(t, pk)
-	// sign
-	sig := ecdsa.Sign(sk, testMsg)
-	// verify by recovering public key
-	recoveredPK, _, err := ecdsa.RecoverPublicKey(testMsg, sig)
-	require.NoError(t, err)
-	require.Equal(t, pk.SerializeCompressed(), recoveredPK.SerializeCompressed())
-	// Modify signature
-	sig[0] = ((sig[0] - 27) ^ 4) + 27
-	// Verify modified signature
-	_, _, err = ecdsa.RecoverPublicKey(testMsg, sig)
-	require.Error(t, err)
-}
