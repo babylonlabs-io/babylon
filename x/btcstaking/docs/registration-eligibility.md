@@ -13,26 +13,26 @@
 
 ## 1. Introduction
 
-This document outlines the various stages of the Babylon chain launch
-and details the points in which different finality providers
+This document outlines the various stages of the Babylon Genesis chain launch
+and details the points in which different Finality Providers
 and BTC stakes are eligible for registration.
 The launch is structured into three key stages:
 
-* **Stage 1: Chain Launch**: At this stage, only
-  finality providers and allow-listed stakes can register.
+* **Stage 1: Babylon Genesis Chain Launch**: At this stage, only
+  Finality Providers and allow-listed stakes can register.
   The allow-list specifies a list of transaction hashes that
   are eligible for registration. These transaction hashes are
-  typically associated with existing transactions (e.g., coming from phase-1).
-  The purpose of the allow-list is for Bitcoin stake to be onboarded
-  in two separate stages, with the bulk of the stake coming in the second
+  typically associated with existing transactions (e.g., coming from Phase-1).
+  The purpose of the allow-list is for Bitcoin stakes to be onboarded
+  in two separate stages, with the bulk of the stakes coming in the second
   stage. This ensures a smooth launch focused on safety
-  and incremental onboarding of stake. After the allow-list expires
+  and incremental onboarding of stakes. After the allow-list expires
   at a pre-determined time, all stakes, including new ones, can register.
-  Note that even though stakes and finality providers can register,
+  Note that even though stakes and Finality Providers can register,
   they do not have voting power. This comes at the next stage.
 * **Stage 2: Bitcoin Staking Finality Activation** Bitcoin Stake receives
   finality voting power leading to
-  finality providers starting to submit finality votes
+  Finality Providers starting to submit finality votes
   and BTC stakers receiving staking rewards.
 * **Stage 3: Uncapped Bitcoin Staking**: All stakeholders can register and new
   stakes can be created. BTC Staking is uncapped.
@@ -42,10 +42,10 @@ The launch is structured into three key stages:
 ### 2.1. Bitcoin Stake Registration
 
 Bitcoin stake registration involves the submission of
-Bitcoin stakes into the Babylon chain in order for the stake
+Bitcoin stakes to the Babylon Genesis chain in order for the stake
 to receive voting power and earn rewards.
 
-There are 2 ways to create stake, either through pre-staking registration or
+There are 2 ways to create stakes, either through pre-staking registration or
 post-staking registration.
 
 * **Pre-staking registration**: The process in which a staker registers their
@@ -61,16 +61,11 @@ documentation.
 ### 2.2. Stakes Allow-List
 
 The allow-list consists of a collection of transaction hashes corresponding
-to Bitcoin staking transactions.
-It has a pre-determined expiration date and
-is implemented as a mechanism to initially restrict
-the stake that can register into the chain in order
-to ensure the secure and gradual launch of the system
-(similar to the caps mechanism on phase-1).
-While the allow-list is active,
-**only post-staking registrations are allowed**
-with Bitcoin staking transactions with a hash
-included in the allow-list.
+to Bitcoin staking transactions. It has a pre-determined expiration date and
+is implemented as a mechanism to initially restrict the stakes that can register into the chain in order
+to ensure the secure and gradual launch of the system (similar to the caps mechanism on Phase-1).
+While the allow-list is active, **only post-staking registrations are allowed**
+with Bitcoin staking transactions that have a hash included in the allow-list.
 Pre-staking registrations are not permitted until the allow-list has expired.
 
 > **⚡ Note**
@@ -81,15 +76,15 @@ Pre-staking registrations are not permitted until the allow-list has expired.
 ### 2.3. Finality Voting Activation
 
 Another measure to ensure that the Bitcoin Staking protocol
-is launched smoothly is the delayed
-activation of the finality voting power of Bitcoin Stake.
-This is due to the Babylon Chain enabling the staking of
+is smoothly launched is the delayed
+activation of the finality voting power of Bitcoin Stakes.
+This delay is necessary because Babylon Chain enables the staking of
 the Bitcoin asset, meaning that sufficient amount of time should be
-given for the Bitcoins to be onboarded.
+given for the Bitcoin asset to be onboarded.
 
-Finality voting activation refers to the point in which
-Bitcoin Stakes receive finality voting power and
-the finality providers that such stakes are delegated to
+Finality voting activation refers to the point at which
+Bitcoin Stakes receive finality voting power and when
+Finality Providers, that such stakes are delegated to,
 can begin casting votes to finalize blocks on the Babylon chain.
 The time of the finality voting activation
 is determined by a block height included in the Babylon chain
@@ -103,44 +98,44 @@ based on their voting power.
 
 ![Staking Timeline](./static/stakingtimeline.png)
 
-### 3.1. Chain Launch
+### 3.1. Babylon Genesis Chain Launch
 
-The chain launch procedure involves the Babylon Chain
+The Babylon Genesis launch procedure involves the chain
 starting to produce blocks that contain transactions.
 At this point, the following actors can start onboarding
-into the chain:
+onto the chain:
 
 * **CometBFT Validators**: CometBFT validators can permissionlessly
   submit validator registration transactions and become eligible
   for producing Babylon blocks. More details on the CometBFT
   validator registration procedure can be found [here](../../../x/epoching).
-* **Finality Providers**: Finality providers can permissionlessly
-  register into the Babylon chain. Note that finality providers
+* **Finality Providers**: Finality Providers can permissionlessly
+  register to Babylon Genesis. Note that Finality Providers
   that have operated and received delegations in a Phase-1 Babylon
   network, should register using *exactly* the same EOTS key they
   used for the corresponding network
-  (i.e., for Babylon chain mainnet use the same key as with the phase-1 mainnet).
-  More details on how to register a finality provider or migrate the phase-1
-  EOTS key into the Babylon chain can be found
+  (i.e., for Babylon Genesis mainnet use the same key as with the Phase-1 mainnet).
+  More details on how to register a Finality Provider or migrate the Phase-1
+  EOTS key to Babylon Genesis can be found
   [here](https://github.com/babylonlabs-io/finality-provider).
 * **BTC Stake Registration** Bitcoin stakes for which their hash
-  is included in the allow-list and the finality provider to which
+  is included in the allow-list and the Finality Provider to which
   they have been delegated to has registered
-  can now register to the Babylon chain.
+  can now register to Babylon Genesis.
   More details on how to register your Bitcoin stakes
   [here](../../../docs/register-bitcoin-stake.md).
 
-> **⚡ Important** Bitcoin stakes cannot register to the Babylon chain
-> unless the finality provider they have been delegated to has registered.
-> For phase-1 stakes, this means that the phase-1 finality providers
+> **⚡ Important** Bitcoin stakes cannot register to Babylon Genesis
+> unless the Finality Provider they have been delegated to has registered.
+> For Phase-1 stakes, this means that the Phase-1 Finality Providers
 > should register first, before stake registration is attempted.
 
 > **⚠️ Warning** Phase-1 stakes should always follow the post-staking
 > registration procedure. Following the pre-staking registration
-> procedure for a phase-1 stake will lead to this stake's inability
-> to ever register on the Babylon chain.
+> procedure for a Phase-1 stake will lead to this stake's inability
+> to ever register on the Babylon Genesis chain.
 
-> **⚡ Important** While finality providers and Bitcoin Stakers can
+> **⚡ Important** While Finality Providers and Bitcoin Stakers can
 > register at this point, the Bitcoin stake does not yet have voting power
 > and is not eligible for receiving rewards. Voting power and rewards
 > will start being granted once the finality protocol activates
@@ -148,19 +143,19 @@ into the chain:
 
 ### 3.2. Finality Voting Activation
 
-When finality voting is activated, finality providers can begin
+When finality voting is activated, Finality Providers can begin
 participating in the voting process to finalize blocks based
 on the voting power they have received from their Bitcoin Stake
-delegations. Note that only the active set of finality providers
-is determined by a top-X ranking based on the finality providers'
-stake. The number of active finality providers is determined
+delegations. Note that only the active set of Finality Providers
+determined by a top-X ranking based on the Finality Providers'
+stake can participate in voting. The number of active Finality Providers is determined
 by a parameter of the [x/btcstaking](../README.md) module.
 
 ### 3.3. Allow-list Expiration
 
-Once the allow-list has expired, stkae registration becomes fully
-open and uncapped, allowing both existing stakes (e.g., from phase-1)
-and new stakes to be registered. Finality providers can continue their
+Once the allow-list has expired, stake registration becomes fully
+open and uncapped, allowing both existing stakes (e.g., from Phase-1)
+and new stakes to be registered. Finality Providers can continue their
 operations as usual, maintaining their role in the network without
 any changes.
 
