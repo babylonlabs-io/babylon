@@ -70,7 +70,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 
 ## v1.0.0-rc11
 
-### bug fixes
+### Bug fixes
 
 - [#780](https://github.com/babylonlabs-io/babylon/pull/780) crypto: remove Verify for ECDSA
 
