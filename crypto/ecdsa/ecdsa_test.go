@@ -31,9 +31,10 @@ func TestECDSA(t *testing.T) {
 	require.NoError(t, err)
 	// ensure sig is same as that in test vector
 	require.True(t, bytes.Equal(sig, testSigBytes))
-	// verify
-	err = ecdsa.Verify(pk, testMsg, sig)
+	// verify by recovering public key
+	recoveredPK, _, err := ecdsa.RecoverPublicKey(testMsg, sig)
 	require.NoError(t, err)
+	require.Equal(t, pk.SerializeCompressed(), recoveredPK.SerializeCompressed())
 }
 
 func TestECDSARecoverPublicKey(t *testing.T) {
@@ -64,9 +65,10 @@ func TestECDSAMalleability(t *testing.T) {
 	require.NotNil(t, pk)
 	// sign
 	sig := ecdsa.Sign(sk, testMsg)
-	// verify
-	err = ecdsa.Verify(pk, testMsg, sig)
+	// verify by recovering public key
+	recoveredPK, _, err := ecdsa.RecoverPublicKey(testMsg, sig)
 	require.NoError(t, err)
+	require.Equal(t, pk.SerializeCompressed(), recoveredPK.SerializeCompressed())
 	// Modify signature
 	sig[0] = ((sig[0] - 27) ^ 1) + 27
 	var s btcec.ModNScalar
@@ -74,6 +76,6 @@ func TestECDSAMalleability(t *testing.T) {
 	s.Negate()
 	s.PutBytesUnchecked(sig[33:65])
 	// Verify modified signature
-	err = ecdsa.Verify(pk, testMsg, sig)
+	_, _, err = ecdsa.RecoverPublicKey(testMsg, sig)
 	require.Error(t, err)
 }
