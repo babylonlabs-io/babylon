@@ -44,6 +44,9 @@ func Verify(pk *btcec.PublicKey, msg string, sigBytes []byte) error {
 	if err != nil {
 		return err
 	}
+	if !wasCompressed {
+		return fmt.Errorf("unsupported signature: uncompressed public key")
+	}
 	var s btcec.ModNScalar
 	if overflow := s.SetByteSlice(sigBytes[33:65]); overflow {
 		return fmt.Errorf("invalid signature: S >= group order")
