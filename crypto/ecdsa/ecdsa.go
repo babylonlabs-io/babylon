@@ -38,37 +38,6 @@ func Sign(sk *btcec.PrivateKey, msg string) []byte {
 	return ecdsa.SignCompact(sk, msgHash[:], true)
 }
 
-func Verify(pk *btcec.PublicKey, msg string, sigBytes []byte) error {
-	msgHash := magicHash(msg)
-	recoveredPK, wasCompressed, err := ecdsa.RecoverCompact(sigBytes, msgHash[:])
-	if err != nil {
-		return err
-	}
-	var s btcec.ModNScalar
-	if overflow := s.SetByteSlice(sigBytes[33:65]); overflow {
-		return fmt.Errorf("invalid signature: S >= group order")
-	}
-	if s.IsOverHalfOrder() {
-		return fmt.Errorf("invalid signature: S >= group order/2")
-	}
-
-	var serializedPK []byte
-	var serializedRecoveredPK []byte
-
-	if wasCompressed {
-		serializedPK = pk.SerializeCompressed()
-		serializedRecoveredPK = recoveredPK.SerializeCompressed()
-	} else {
-		serializedPK = pk.SerializeUncompressed()
-		serializedRecoveredPK = recoveredPK.SerializeUncompressed()
-	}
-
-	if !bytes.Equal(serializedPK, serializedRecoveredPK) {
-		return fmt.Errorf("the recovered PK does not match the given PK")
-	}
-	return nil
-}
-
 func RecoverPublicKey(msg string, sigBytes []byte) (*btcec.PublicKey, bool, error) {
 	msgHash := magicHash(msg)
 	recoveredPK, wasCompressed, err := ecdsa.RecoverCompact(sigBytes, msgHash[:])
