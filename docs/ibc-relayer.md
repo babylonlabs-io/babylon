@@ -90,9 +90,11 @@ parameters. The following values are specific to Babylon mainnet:
 Example Hermes configuration:
 
 ```
+[mode.clients]
+refresh = true
+
 [[chains]]
 trusting_period = "33 hours"
-refresh = true
 client_refresh_rate = "1/5"
 ```
 
