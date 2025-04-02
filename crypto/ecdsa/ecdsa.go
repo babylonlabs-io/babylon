@@ -44,9 +44,6 @@ func Verify(pk *btcec.PublicKey, msg string, sigBytes []byte) error {
 	if err != nil {
 		return err
 	}
-	if !wasCompressed {
-		return fmt.Errorf("unsupported signature: uncompressed public key")
-	}
 	var s btcec.ModNScalar
 	if overflow := s.SetByteSlice(sigBytes[33:65]); overflow {
 		return fmt.Errorf("invalid signature: S >= group order")
@@ -62,8 +59,8 @@ func Verify(pk *btcec.PublicKey, msg string, sigBytes []byte) error {
 		serializedPK = pk.SerializeCompressed()
 		serializedRecoveredPK = recoveredPK.SerializeCompressed()
 	} else {
-		serializedPK = pk.SerializeUncompressed()
-		serializedRecoveredPK = recoveredPK.SerializeUncompressed()
+		// enforce compressed key format
+		return fmt.Errorf("unsupported signature: uncompressed public key")
 	}
 
 	if !bytes.Equal(serializedPK, serializedRecoveredPK) {
