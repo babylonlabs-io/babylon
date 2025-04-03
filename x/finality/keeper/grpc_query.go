@@ -19,6 +19,24 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
+// VotingPowerTable implements types.QueryServer.
+func (k Keeper) VotingPowerTable(ctx context.Context, req *types.QueryVotingPowerTableRequest) (*types.QueryVotingPowerTableResponse, error) {
+	// get the finality provider set of this block
+	fpSet := k.GetVotingPowerTable(ctx, req.BlockHeight)
+
+	resp := make([]*types.VotingPowerTableFpResponse, len(fpSet))
+	for fpBtcPkHex, vp := range fpSet {
+		resp = append(resp, &types.VotingPowerTableFpResponse{
+			FpBtcPkHex:  fpBtcPkHex,
+			VotingPower: vp,
+		})
+	}
+
+	return &types.QueryVotingPowerTableResponse{
+		Fps: resp,
+	}, nil
+}
+
 // NextHeightToFinalize implements types.QueryServer.
 func (k Keeper) NextHeightToFinalize(ctx context.Context, _ *types.QueryNextHeightToFinalizeRequest) (*types.QueryNextHeightToFinalizeResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
