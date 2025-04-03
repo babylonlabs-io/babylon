@@ -29,6 +29,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmd.AddCommand(
+		CmdQueryNextHeightToFinalize(),
 		CmdQueryParams(),
 		CmdFinalityProvidersAtHeight(),
 		CmdFinalityProviderPowerAtHeight(),
@@ -135,6 +136,30 @@ func CmdFinalityProvidersAtHeight() *cobra.Command {
 
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "finality-providers-at-height")
+
+	return cmd
+}
+
+func CmdQueryNextHeightToFinalize() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "next-height-to-finalize",
+		Short: "returns information about the next height to be finalized",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.NextHeightToFinalize(cmd.Context(), &types.QueryNextHeightToFinalizeRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
