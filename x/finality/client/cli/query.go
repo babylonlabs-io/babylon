@@ -29,6 +29,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmd.AddCommand(
+		CmdQueryVotingPowerTable(),
 		CmdQueryNextHeightToFinalize(),
 		CmdQueryParams(),
 		CmdFinalityProvidersAtHeight(),
@@ -151,6 +152,36 @@ func CmdQueryNextHeightToFinalize() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			res, err := queryClient.NextHeightToFinalize(cmd.Context(), &types.QueryNextHeightToFinalizeRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryVotingPowerTable() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "vp-table [height]",
+		Short: "returns information of the voting power table at some given height",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+			height, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.VotingPowerTable(cmd.Context(), &types.QueryVotingPowerTableRequest{
+				BlockHeight: height,
+			})
 			if err != nil {
 				return err
 			}

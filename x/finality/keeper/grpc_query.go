@@ -23,6 +23,9 @@ var _ types.QueryServer = Keeper{}
 func (k Keeper) VotingPowerTable(ctx context.Context, req *types.QueryVotingPowerTableRequest) (*types.QueryVotingPowerTableResponse, error) {
 	// get the finality provider set of this block
 	fpSet := k.GetVotingPowerTable(ctx, req.BlockHeight)
+	if fpSet == nil {
+		return nil, fmt.Errorf("failed to get voting power table at height %d", req.BlockHeight)
+	}
 
 	resp := make([]*types.VotingPowerTableFpResponse, len(fpSet))
 	for fpBtcPkHex, vp := range fpSet {
