@@ -7019,7 +7019,9 @@ paths:
     get:
       summary: >-
         ParamsByVersion queries the parameters of the module for a specific
-        version of past params.
+        version
+
+        of past params.
       operationId: ParamsByVersion
       responses:
         '200':
@@ -8939,6 +8941,57 @@ paths:
           in: query
           required: false
           type: boolean
+      tags:
+        - Query
+  /babylon/finality/v1/next_height_to_finalize:
+    get:
+      summary: >-
+        NextHeightToFinalize queries the next height in which finality will try
+        to finalize
+      operationId: NextHeightToFinalize
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              current_block_height:
+                type: string
+                format: uint64
+              next_height_to_finalize:
+                type: string
+                format: uint64
+              max_height_to_finalize:
+                type: string
+                format: uint64
+              max_finalized_blocks:
+                type: string
+                format: uint64
+            description: >-
+              QueryNextHeightToFinalizeResponse is the response type for the
+              Query/NextHeightToFinalize RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
       tags:
         - Query
   /babylon/finality/v1/params:
@@ -16221,6 +16274,24 @@ definitions:
     description: |-
       QueryListPublicRandomnessResponse is the response type for the
       Query/ListPublicRandomness RPC method.
+  babylon.finality.v1.QueryNextHeightToFinalizeResponse:
+    type: object
+    properties:
+      current_block_height:
+        type: string
+        format: uint64
+      next_height_to_finalize:
+        type: string
+        format: uint64
+      max_height_to_finalize:
+        type: string
+        format: uint64
+      max_finalized_blocks:
+        type: string
+        format: uint64
+    description: >-
+      QueryNextHeightToFinalizeResponse is the response type for the
+      Query/NextHeightToFinalize RPC method.
   babylon.finality.v1.QueryParamsResponse:
     type: object
     properties:
