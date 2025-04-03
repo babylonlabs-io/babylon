@@ -27,7 +27,7 @@ func (k Keeper) VotingPowerTable(ctx context.Context, req *types.QueryVotingPowe
 		return nil, fmt.Errorf("failed to get voting power table at height %d", req.BlockHeight)
 	}
 
-	resp := make([]*types.VotingPowerTableFpResponse, len(fpSet))
+	resp := make([]*types.VotingPowerTableFpResponse, 0, len(fpSet))
 	for fpBtcPkHex, vp := range fpSet {
 		resp = append(resp, &types.VotingPowerTableFpResponse{
 			FpBtcPkHex:  fpBtcPkHex,
