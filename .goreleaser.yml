@@ -33,13 +33,14 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
       - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=ledger,muslc
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=ledger,muslc,mainnet
       - -linkmode=external
       - -w -s
       - -extldflags "-Wl,-z,muldefs -static -z noexecstack"
     tags:
       - ledger
       - muslc
+      - mainnet
 
   - id: babylond-testnet-linux-amd64
     main: ./cmd/babylond/main.go
