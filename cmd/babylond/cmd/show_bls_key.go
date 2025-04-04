@@ -60,13 +60,17 @@ $ babylond show-bls-key --no-bls-password
 				return fmt.Errorf("failed to determine BLS password: %w", err)
 			}
 
-			info, err := appsigner.ShowBlsKey(homeDir, password, "")
+			info, err := appsigner.ShowBlsKey(homeDir, password)
 			if err != nil {
 				return fmt.Errorf("failed to show BLS key: %w", err)
 			}
 
-                           clientCtx := client.GetClientContextFromCmd(cmd)
-                           return clientCtx.PrintProto(res)
+			jsonBytes, err := json.MarshalIndent(info, "", "  ")
+			if err != nil {
+				return fmt.Errorf("failed to marshal key info: %w", err)
+			}
+
+			cmd.Println(string(jsonBytes))
 			return nil
 		},
 	}
