@@ -457,8 +457,8 @@ func ShowBlsKey(homeDir string, password string, customKeyPath string) (map[stri
 
 // CreateBlsKey creates a new BLS key
 // Takes a password that was determined by the password determination logic.
-func CreateBlsKey(homeDir string, password string, passwordFilePath string, customKeyPath string, cmd *cobra.Command) error {
-	blsKeyFile := determineKeyFilePath(homeDir, customKeyPath)
+func CreateBlsKey(homeDir string, password string, passwordFilePath string, cmd *cobra.Command) error {
+	blsKeyFile := determineKeyFilePath(homeDir, "")
 
 	// Check if BLS key already exists
 	if cmtos.FileExists(blsKeyFile) {
@@ -484,13 +484,11 @@ func CreateBlsKey(homeDir string, password string, passwordFilePath string, cust
 	// Print appropriate message based on password source
 	if password == "" {
 		cmd.Printf("BLS key generated successfully without password protection.\n")
-		cmd.Printf("BLS key saved at: %s\n", blsKeyFile)
 		if passwordFilePath != "" {
 			cmd.Printf("An empty password file has been created at for backward compatibility.\n")
 		}
 	} else {
 		cmd.Printf("\n ⚠️ IMPORTANT: Your BLS key has been created with password protection. ⚠️\n")
-		cmd.Printf("BLS key saved at: %s\n", blsKeyFile)
 		cmd.Printf("You must provide this password when starting the node using one of these methods:\n")
 		cmd.Printf("1. (Recommended) Set the %s environment variable:\n", BlsPasswordEnvVar)
 		cmd.Printf("export %s=<your_password>\n", BlsPasswordEnvVar)

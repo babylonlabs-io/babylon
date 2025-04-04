@@ -2,13 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	appsigner "github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -45,30 +41,14 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 				return fmt.Errorf("failed to get passwordFile flag: %w", err)
 			}
 
-			// Read app.toml for BLS key file path
-			configDir := filepath.Join(homeDir, "config")
-			configFilePath := filepath.Join(configDir, "app.toml")
-
-			var customKeyFile string
-			if _, err := os.Stat(configFilePath); err == nil {
-				// Only attempt to read from app.toml if it exists
-				v := viper.New()
-				v.SetConfigFile(configFilePath)
-				if err := v.ReadInConfig(); err == nil {
-					// Successfully read config
-					v.SetConfigName("app")
-					customKeyFile = cast.ToString(v.Get("bls-config.bls-key-file"))
-				}
-			}
-
 			// Determine password at the system boundary
 			password, err := appsigner.GetBlsKeyPassword(noBlsPassword, passwordFile, true)
 			if err != nil {
 				return fmt.Errorf("failed to determine BLS password: %w", err)
 			}
 
-			// Generate BLS key using the refactored function with explicit password and custom key file path
-			if err := appsigner.CreateBlsKey(homeDir, password, passwordFile, customKeyFile, cmd); err != nil {
+			// Generate BLS key using the refactored function with explicit password
+			if err := appsigner.CreateBlsKey(homeDir, password, passwordFile, cmd); err != nil {
 				return fmt.Errorf("failed to create BLS key: %w", err)
 			}
 
