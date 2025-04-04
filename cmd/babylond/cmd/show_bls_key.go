@@ -65,13 +65,8 @@ $ babylond show-bls-key --no-bls-password
 				return fmt.Errorf("failed to show BLS key: %w", err)
 			}
 
-			// Print output as JSON with indentation
-			jsonBytes, err := json.MarshalIndent(info, "", "  ")
-			if err != nil {
-				return fmt.Errorf("failed to marshal key info: %w", err)
-			}
-
-			cmd.Println(string(jsonBytes))
+                           clientCtx := client.GetClientContextFromCmd(cmd)
+                           return clientCtx.PrintProto(res)
 			return nil
 		},
 	}
