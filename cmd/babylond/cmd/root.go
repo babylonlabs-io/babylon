@@ -312,7 +312,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	// Load or generate BLS signer with potential custom path from app.toml
 	blsSigner, err := appsigner.LoadOrGenBlsKey(
 		homeDir,
-		cast.ToBool(appOpts.Get(flagNoBlsPassword)),
+		noBlsPassword,
 		cast.ToString(appOpts.Get(flagBlsPasswordFile)),
 		cast.ToString(appOpts.Get("bls-config.bls-key-file")),
 	)
