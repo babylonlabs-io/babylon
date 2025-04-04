@@ -473,8 +473,8 @@ func CreateBlsKey(homeDir string, password string, passwordFilePath string) erro
 		fmt.Printf("export %s=<your_password>\n", BlsPasswordEnvVar)
 
 		if passwordFilePath != "" {
-			fmt.Printf("2. The password has been stored in %s. You can use it when starting the node:\n", passwordFilePath)
-			fmt.Printf("babylond start --bls-password-file=%s\n", passwordFilePath)
+			fmt.Printf("2. The password has been stored in the specified password file. You can use it when starting the node:\n")
+			fmt.Printf("babylond start --bls-password-file=<path_to_password_file>\n")
 		} else {
 			fmt.Printf("2. (Not recommended) Create a password file and provide its path when starting the node:\n")
 			fmt.Printf("babylond start --bls-password-file=<path_to_file>\n")
