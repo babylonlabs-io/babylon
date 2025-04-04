@@ -39,6 +39,16 @@ service Query {
     option (google.api.http).get = "/babylon/finality/v1/activated_height";
   }
 
+  // NextHeightToFinalize queries the next height in which finality will try to finalize
+  rpc NextHeightToFinalize(QueryNextHeightToFinalizeRequest) returns (QueryNextHeightToFinalizeResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/next_height_to_finalize";
+  }
+
+  // VotingPowerTable queries the voting power table at specific block height
+  rpc VotingPowerTable(QueryVotingPowerTableRequest) returns (QueryVotingPowerTableResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/vp_table/{block_height}";
+  }
+
   // ListPublicRandomness is a range query for public randomness of a given finality provider
   // NOTE: Babylon only has the knowledge of public randomness that is already revealed by
   // finality providers, i.e., the finality provider already provides a finality signature
@@ -184,6 +194,33 @@ message QueryActivatedHeightRequest {}
 // QueryActivatedHeightResponse is the response type for the Query/ActivatedHeight RPC method.
 message QueryActivatedHeightResponse {
   uint64 height = 1;
+}
+
+// QueryNextHeightToFinalizeRequest is the request type for the Query/NextHeightToFinalize RPC method.
+message QueryNextHeightToFinalizeRequest {}
+
+// QueryNextHeightToFinalizeResponse is the response type for the Query/NextHeightToFinalize RPC method.
+message QueryNextHeightToFinalizeResponse {
+  uint64 current_block_height = 1;
+  uint64 next_height_to_finalize = 2;
+  uint64 max_height_to_finalize = 3;
+  uint64 max_finalized_blocks = 4;
+}
+
+// QueryVotingPowerTableRequest is the request type for the Query/VotingPowerTable RPC method.
+message QueryVotingPowerTableRequest {
+  uint64 block_height = 1;
+}
+
+// QueryVotingPowerTableResponse is the response type for the Query/VotingPowerTable RPC method.
+message QueryVotingPowerTableResponse {
+  repeated VotingPowerTableFpResponse fps = 1;
+}
+
+// VotingPowerTableFpResponse voting power table for each FP response.
+message VotingPowerTableFpResponse {
+  string fp_btc_pk_hex = 1;
+  uint64 voting_power = 2;
 }
 
 // QueryListPublicRandomnessRequest is the request type for the

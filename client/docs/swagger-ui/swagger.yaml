@@ -7019,7 +7019,9 @@ paths:
     get:
       summary: >-
         ParamsByVersion queries the parameters of the module for a specific
-        version of past params.
+        version
+
+        of past params.
       operationId: ParamsByVersion
       responses:
         '200':
@@ -8941,6 +8943,57 @@ paths:
           type: boolean
       tags:
         - Query
+  /babylon/finality/v1/next_height_to_finalize:
+    get:
+      summary: >-
+        NextHeightToFinalize queries the next height in which finality will try
+        to finalize
+      operationId: NextHeightToFinalize
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              current_block_height:
+                type: string
+                format: uint64
+              next_height_to_finalize:
+                type: string
+                format: uint64
+              max_height_to_finalize:
+                type: string
+                format: uint64
+              max_finalized_blocks:
+                type: string
+                format: uint64
+            description: >-
+              QueryNextHeightToFinalizeResponse is the response type for the
+              Query/NextHeightToFinalize RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
   /babylon/finality/v1/params:
     get:
       summary: Parameters queries the parameters of the module.
@@ -9333,6 +9386,62 @@ paths:
       parameters:
         - name: height
           description: height defines at which height to query the finality providers.
+          in: path
+          required: true
+          type: string
+          format: uint64
+      tags:
+        - Query
+  /babylon/finality/v1/vp_table/{block_height}:
+    get:
+      summary: VotingPowerTable queries the voting power table at specific block height
+      operationId: VotingPowerTable
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              fps:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    fp_btc_pk_hex:
+                      type: string
+                    voting_power:
+                      type: string
+                      format: uint64
+                  description: >-
+                    VotingPowerTableFpResponse voting power table for each FP
+                    response.
+            description: >-
+              QueryVotingPowerTableResponse is the response type for the
+              Query/VotingPowerTable RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: block_height
           in: path
           required: true
           type: string
@@ -16221,6 +16330,24 @@ definitions:
     description: |-
       QueryListPublicRandomnessResponse is the response type for the
       Query/ListPublicRandomness RPC method.
+  babylon.finality.v1.QueryNextHeightToFinalizeResponse:
+    type: object
+    properties:
+      current_block_height:
+        type: string
+        format: uint64
+      next_height_to_finalize:
+        type: string
+        format: uint64
+      max_height_to_finalize:
+        type: string
+        format: uint64
+      max_finalized_blocks:
+        type: string
+        format: uint64
+    description: >-
+      QueryNextHeightToFinalizeResponse is the response type for the
+      Query/NextHeightToFinalize RPC method.
   babylon.finality.v1.QueryParamsResponse:
     type: object
     properties:
@@ -16409,6 +16536,23 @@ definitions:
     description: |-
       QueryVotesAtHeightResponse is the response type for the
       Query/VotesAtHeight RPC method.
+  babylon.finality.v1.QueryVotingPowerTableResponse:
+    type: object
+    properties:
+      fps:
+        type: array
+        items:
+          type: object
+          properties:
+            fp_btc_pk_hex:
+              type: string
+            voting_power:
+              type: string
+              format: uint64
+          description: VotingPowerTableFpResponse voting power table for each FP response.
+    description: >-
+      QueryVotingPowerTableResponse is the response type for the
+      Query/VotingPowerTable RPC method.
   babylon.finality.v1.SigningInfoResponse:
     type: object
     properties:
@@ -16441,6 +16585,15 @@ definitions:
       provider's signing info
 
       for monitoring their liveness activity.
+  babylon.finality.v1.VotingPowerTableFpResponse:
+    type: object
+    properties:
+      fp_btc_pk_hex:
+        type: string
+      voting_power:
+        type: string
+        format: uint64
+    description: VotingPowerTableFpResponse voting power table for each FP response.
   babylon.mint.v1.QueryAnnualProvisionsResponse:
     type: object
     properties:

@@ -19,6 +19,45 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
+// VotingPowerTable implements types.QueryServer.
+func (k Keeper) VotingPowerTable(ctx context.Context, req *types.QueryVotingPowerTableRequest) (*types.QueryVotingPowerTableResponse, error) {
+	// get the finality provider set of this block
+	fpSet := k.GetVotingPowerTable(ctx, req.BlockHeight)
+	if fpSet == nil {
+		return nil, fmt.Errorf("failed to get voting power table at height %d", req.BlockHeight)
+	}
+
+	resp := make([]*types.VotingPowerTableFpResponse, 0, len(fpSet))
+	for fpBtcPkHex, vp := range fpSet {
+		resp = append(resp, &types.VotingPowerTableFpResponse{
+			FpBtcPkHex:  fpBtcPkHex,
+			VotingPower: vp,
+		})
+	}
+
+	return &types.QueryVotingPowerTableResponse{
+		Fps: resp,
+	}, nil
+}
+
+// NextHeightToFinalize implements types.QueryServer.
+func (k Keeper) NextHeightToFinalize(ctx context.Context, _ *types.QueryNextHeightToFinalizeRequest) (*types.QueryNextHeightToFinalizeResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	currentLastBlockHeight := uint64(sdkCtx.HeaderInfo().Height)
+	maxFinalizedBlocks := types.MaxFinalizedRewardedBlocksPerEndBlock
+
+	nextHeightToFinalize := k.getNextHeightToFinalize(ctx)
+	maxHeightToFinalize := min(nextHeightToFinalize+maxFinalizedBlocks-1, currentLastBlockHeight)
+
+	return &types.QueryNextHeightToFinalizeResponse{
+		CurrentBlockHeight:   currentLastBlockHeight,
+		NextHeightToFinalize: nextHeightToFinalize,
+		MaxHeightToFinalize:  maxHeightToFinalize,
+		MaxFinalizedBlocks:   maxFinalizedBlocks,
+	}, nil
+}
+
 // FinalityProviderPowerAtHeight returns the voting power of the specified finality provider
 // at the provided Babylon height
 func (k Keeper) FinalityProviderPowerAtHeight(ctx context.Context, req *types.QueryFinalityProviderPowerAtHeightRequest) (*types.QueryFinalityProviderPowerAtHeightResponse, error) {
