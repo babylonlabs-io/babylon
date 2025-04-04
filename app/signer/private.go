@@ -82,16 +82,25 @@ func loadBls(homeDir string) (*Bls, error) {
 	}
 
 	if password := GetBlsPasswordFromEnv(); password != "" {
-		bls, err := TryLoadBlsFromFile(blsKeyFile, "")
+		bls, ok, err := TryLoadBlsFromFile(blsKeyFile, "")
 		if err != nil {
 			return nil, err
 		}
-		return bls, nil
+		if ok {
+			return bls, nil
+		}
 	}
 
 	if !cmtos.FileExists(blsPasswordFile) {
 		return nil, fmt.Errorf("BLS password file does not exist and no environment variable set: %s", blsPasswordFile)
 	}
 
-	return TryLoadBlsFromFile(blsKeyFile, blsPasswordFile)
+	bls, ok, err := TryLoadBlsFromFile(blsKeyFile, blsPasswordFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load bls key: %w", err)
+	}
+	if ok {
+		return bls, nil
+	}
+	return nil, fmt.Errorf("failed to load bls key: %w", err)
 }

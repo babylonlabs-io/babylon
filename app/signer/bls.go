@@ -3,9 +3,10 @@ package signer
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
+
+	"github.com/spf13/cobra"
 
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
@@ -90,26 +91,25 @@ func GenBls(keyFilePath, passwordFilePath, password string) *Bls {
 // It tries to use environment variable for password first, then falls back to file-based password.
 // Returns error if the key file exists, but cannot get password or the key cannot
 // be decrypted
-func TryLoadBlsFromFile(keyFilePath, passwordFilePath string) (*Bls, error) {
+func TryLoadBlsFromFile(keyFilePath, passwordFilePath string) (*Bls, bool, error) {
 	keystore, err := erc2335.LoadKeyStore(keyFilePath)
 	if err != nil {
-		//nolint:nilerr
-		return nil, nil
+		return nil, false, nil
 	}
 
 	password, err := GetBlsPassword(passwordFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get password")
+		return nil, false, fmt.Errorf("failed to get password: %w", err)
 	}
 
 	privKey, err := erc2335.Decrypt(keystore, password)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt BLS key: %w", err)
+		return nil, false, fmt.Errorf("failed to decrypt BLS key: %w", err)
 	}
 
 	blsPrivKey := bls12381.PrivateKey(privKey)
 	if err := blsPrivKey.ValidateBasic(); err != nil {
-		return nil, fmt.Errorf("invalid BLS private key: %w", err)
+		return nil, false, fmt.Errorf("invalid BLS private key: %w", err)
 	}
 
 	return &Bls{
@@ -119,7 +119,7 @@ func TryLoadBlsFromFile(keyFilePath, passwordFilePath string) (*Bls, error) {
 			filePath:     keyFilePath,
 			passwordPath: passwordFilePath,
 		},
-	}, nil
+	}, true, nil
 }
 
 // GetBlsPassword retrieves the BLS password from environment variable or password file.

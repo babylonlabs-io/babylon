@@ -61,9 +61,12 @@ func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic strin
 		if !cmtos.FileExists(blsPasswordFile) {
 			cmtos.Exit(fmt.Sprintf("BLS password file does not exist: %v", blsPasswordFile))
 		}
-		loadedBls, err := appsigner.TryLoadBlsFromFile(blsKeyFile, blsPasswordFile)
+		loadedBls, ok, err := appsigner.TryLoadBlsFromFile(blsKeyFile, blsPasswordFile)
 		if err != nil {
 			return "", nil, err
+		}
+		if !ok {
+			cmtos.Exit(fmt.Sprintf("failed to load BLS key: %v", err))
 		}
 		bls = loadedBls
 	} else {
