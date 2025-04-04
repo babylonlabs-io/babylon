@@ -9,9 +9,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -20,6 +17,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	stakingcli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
+
+	"github.com/babylonlabs-io/babylon/app"
+	"github.com/babylonlabs-io/babylon/app/signer"
+	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
 )
 
 func TestInitCmd(t *testing.T) {
@@ -138,7 +139,8 @@ func TestStartCmd(t *testing.T) {
 	require.FileExists(t, blsKeyFile, "BLS key file should be recreated by start command")
 	require.FileExists(t, blsPasswordFile, "BLS password file should be recreated by start command")
 
-	blsSigner := signer.LoadBlsSignerIfExists(app.DefaultNodeHome, "", filepath.Join(cmtcfg.DefaultConfigDir, signer.DefaultBlsKeyName))
+	blsSigner, err := signer.LoadBlsSignerIfExists(app.DefaultNodeHome, "", filepath.Join(cmtcfg.DefaultConfigDir, signer.DefaultBlsKeyName))
+	require.NoError(t, err)
 	require.NotNil(t, blsSigner, "Should be able to load BLS signer after start")
 
 	p, err := os.FindProcess(os.Getpid())

@@ -319,6 +319,7 @@ func TestLoadBlsSignerIfExists(t *testing.T) {
 		assert.Error(t, err, "Password file should not exist")
 
 		blsSigner, err := LoadBlsSignerIfExists(tempDir, nonExistentPasswordFile, blsKeyFile)
+		assert.NoError(t, err)
 		assert.NotNil(t, blsSigner, "Should load signer with env var but no password file")
 
 		loadedPubKey, err := blsSigner.BlsPubKey()
@@ -378,7 +379,7 @@ func TestLoadBlsSignerIfExists(t *testing.T) {
 		assert.Nil(t, blsSigner, "Should return nil when key file doesn't exist")
 	})
 
-	t.Run("return nil when neither env var nor password file exists", func(t *testing.T) {
+	t.Run("return error when neither env var nor password file exists", func(t *testing.T) {
 		originalValue := os.Getenv(BlsPasswordEnvVar)
 		defer t.Setenv(BlsPasswordEnvVar, originalValue)
 
@@ -394,7 +395,7 @@ func TestLoadBlsSignerIfExists(t *testing.T) {
 		assert.NotNil(t, bls)
 
 		blsSigner, err := LoadBlsSignerIfExists(tempDir, nonExistentPasswordFile, blsKeyFile)
-		assert.NoError(t, err)
+		assert.Error(t, err)
 		assert.Nil(t, blsSigner, "Should return nil when neither env var nor password file exists")
 	})
 }
