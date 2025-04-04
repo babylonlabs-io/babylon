@@ -302,6 +302,13 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 
 	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
 
+	noBlsPassword := cast.ToBool(appOpts.Get(flagNoBlsPassword))
+	fileBlsPassword := cast.ToString(appOpts.Get(flagBlsPasswordFile))
+
+	if err := appsigner.ValidatePasswordMethods(noBlsPassword, fileBlsPassword); err != nil {
+		panic(fmt.Errorf("more than one password sources detected: %w", err))
+	}
+
 	// Load or generate BLS signer with potential custom path from app.toml
 	blsSigner, err := appsigner.LoadOrGenBlsKey(
 		homeDir,

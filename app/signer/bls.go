@@ -336,11 +336,6 @@ func LoadBlsSignerIfExists(homeDir string, noPassword bool, customPasswordPath, 
 // 2. Password file (ONLY if explicitly provided and file exists)
 // 3. Interactive prompt (with confirmation for new keys)
 func LoadOrGenBlsKey(homeDir string, noPassword bool, customPasswordPath, customKeyPath string) (checkpointingtypes.BlsSigner, error) {
-	// Validate that only one password method is provided
-	if err := ValidatePasswordMethods(noPassword, customPasswordPath); err != nil {
-		return nil, err
-	}
-
 	blsKeyFile := determineKeyFilePath(homeDir, customKeyPath)
 	keyExists := cmtos.FileExists(blsKeyFile)
 
