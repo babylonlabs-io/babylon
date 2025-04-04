@@ -97,3 +97,19 @@ func readLineFromBuf(buf *bufio.Reader) (string, error) {
 
 	return strings.TrimSpace(pass), nil
 }
+
+// GetBlsUnlockPasswordFromPrompt prompts the user for a password once, without confirmation.
+// This is suitable for unlock operations where we only need to check if the password
+// is correct for an existing key.
+func GetBlsUnlockPasswordFromPrompt() string {
+	inBuf := bufio.NewReader(os.Stdin)
+
+	fmt.Println("Enter your BLS key password (input will be hidden):")
+
+	password, err := GetBlsPasswordInput("Enter password: ", inBuf)
+	if err != nil {
+		cmtos.Exit(fmt.Sprintf("failed to get BLS password: %v", err.Error()))
+	}
+
+	return password
+}
