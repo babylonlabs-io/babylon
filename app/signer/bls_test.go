@@ -5,8 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	"github.com/test-go/testify/assert"
+
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 )
 
 func TestNewBls(t *testing.T) {
@@ -33,7 +34,8 @@ func TestNewBls(t *testing.T) {
 		pv.Key.Save(password)
 
 		t.Run("load bls key from file", func(t *testing.T) {
-			loadedPv := TryLoadBlsFromFile(keyFilePath, passwordFilePath)
+			loadedPv, err := TryLoadBlsFromFile(keyFilePath, passwordFilePath)
+			assert.NoError(t, err)
 			assert.NotNil(t, loadedPv)
 
 			assert.Equal(t, pv.Key.PrivKey, loadedPv.Key.PrivKey)
@@ -49,7 +51,8 @@ func TestNewBls(t *testing.T) {
 		pv.Key.Save(password)
 
 		t.Run("load bls key from file", func(t *testing.T) {
-			loadedPv := TryLoadBlsFromFile(keyFilePath, passwordFilePath)
+			loadedPv, err := TryLoadBlsFromFile(keyFilePath, passwordFilePath)
+			assert.NoError(t, err)
 			assert.NotNil(t, loadedPv)
 
 			assert.Equal(t, pv.Key.PrivKey, loadedPv.Key.PrivKey)
@@ -258,13 +261,15 @@ func TestLoadBlsWithEnvVar(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, envPassword, string(passwordContent))
 
-		loadedBls := TryLoadBlsFromFile(blsKeyFile, blsPasswordFile)
+		loadedBls, err := TryLoadBlsFromFile(blsKeyFile, blsPasswordFile)
+		assert.NoError(t, err)
 		assert.NotNil(t, loadedBls)
 		assert.Equal(t, bls.Key.PubKey.Bytes(), loadedBls.Key.PubKey.Bytes())
 
 		t.Setenv(BlsPasswordEnvVar, "")
 
-		fileLoadedBls := TryLoadBlsFromFile(blsKeyFile, blsPasswordFile)
+		fileLoadedBls, err := TryLoadBlsFromFile(blsKeyFile, blsPasswordFile)
+		assert.NoError(t, err)
 		assert.NotNil(t, fileLoadedBls)
 		assert.Equal(t, bls.Key.PubKey.Bytes(), fileLoadedBls.Key.PubKey.Bytes())
 	})
@@ -313,7 +318,7 @@ func TestLoadBlsSignerIfExists(t *testing.T) {
 		_, err = os.Stat(nonExistentPasswordFile)
 		assert.Error(t, err, "Password file should not exist")
 
-		blsSigner := LoadBlsSignerIfExists(tempDir, nonExistentPasswordFile, blsKeyFile)
+		blsSigner, err := LoadBlsSignerIfExists(tempDir, nonExistentPasswordFile, blsKeyFile)
 		assert.NotNil(t, blsSigner, "Should load signer with env var but no password file")
 
 		loadedPubKey, err := blsSigner.BlsPubKey()
@@ -337,7 +342,8 @@ func TestLoadBlsSignerIfExists(t *testing.T) {
 		bls := GenBls(blsKeyFile, blsPasswordFile, envPassword)
 		assert.NotNil(t, bls)
 
-		blsSigner := LoadBlsSignerIfExists(tempDir, blsPasswordFile, blsKeyFile)
+		blsSigner, err := LoadBlsSignerIfExists(tempDir, blsPasswordFile, blsKeyFile)
+		assert.NoError(t, err)
 		assert.NotNil(t, blsSigner, "Should load signer with env var taking precedence")
 
 		loadedPubKey, err := blsSigner.BlsPubKey()
@@ -346,7 +352,8 @@ func TestLoadBlsSignerIfExists(t *testing.T) {
 
 		t.Setenv(BlsPasswordEnvVar, "")
 
-		fileBlsSigner := LoadBlsSignerIfExists(tempDir, blsPasswordFile, blsKeyFile)
+		fileBlsSigner, err := LoadBlsSignerIfExists(tempDir, blsPasswordFile, blsKeyFile)
+		assert.NoError(t, err)
 		assert.NotNil(t, fileBlsSigner, "Should load signer with file password")
 
 		fileLoadedPubKey, err := fileBlsSigner.BlsPubKey()
@@ -366,7 +373,8 @@ func TestLoadBlsSignerIfExists(t *testing.T) {
 
 		nonExistentKeyFile := filepath.Join(tempDir, "non-existent-key.json")
 
-		blsSigner := LoadBlsSignerIfExists(tempDir, "", nonExistentKeyFile)
+		blsSigner, err := LoadBlsSignerIfExists(tempDir, "", nonExistentKeyFile)
+		assert.NoError(t, err)
 		assert.Nil(t, blsSigner, "Should return nil when key file doesn't exist")
 	})
 
@@ -385,7 +393,8 @@ func TestLoadBlsSignerIfExists(t *testing.T) {
 		bls := GenBls(blsKeyFile, "", "test-password")
 		assert.NotNil(t, bls)
 
-		blsSigner := LoadBlsSignerIfExists(tempDir, nonExistentPasswordFile, blsKeyFile)
+		blsSigner, err := LoadBlsSignerIfExists(tempDir, nonExistentPasswordFile, blsKeyFile)
+		assert.NoError(t, err)
 		assert.Nil(t, blsSigner, "Should return nil when neither env var nor password file exists")
 	})
 }
