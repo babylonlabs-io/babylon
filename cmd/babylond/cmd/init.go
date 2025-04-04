@@ -33,7 +33,7 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 			passwordFile, _ := cmd.Flags().GetString(flagBlsPasswordFile)
 
 			// Determine password at the system boundary
-			password, err := appsigner.DetermineBlsPassword(noBlsPassword, passwordFile)
+			password, err := appsigner.GetBlsKeyPassword(noBlsPassword, passwordFile)
 			if err != nil {
 				return fmt.Errorf("failed to determine BLS password: %w", err)
 			}
