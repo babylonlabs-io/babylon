@@ -94,6 +94,7 @@ func GenBls(keyFilePath, passwordFilePath, password string) *Bls {
 func TryLoadBlsFromFile(keyFilePath, passwordFilePath string) (*Bls, bool, error) {
 	keystore, err := erc2335.LoadKeyStore(keyFilePath)
 	if err != nil {
+		//nolint:nilerr
 		return nil, false, nil
 	}
 

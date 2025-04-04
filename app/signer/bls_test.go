@@ -95,7 +95,7 @@ func TestGetBlsPassword(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
 
 		testPassword := "env-password-123"
-		os.Setenv(BlsPasswordEnvVar, testPassword)
+		t.Setenv(BlsPasswordEnvVar, testPassword)
 
 		// Verify the env var is set correctly
 		envVal, exists := os.LookupEnv(BlsPasswordEnvVar)
@@ -168,7 +168,7 @@ func TestLoadBlsWithEnvVar(t *testing.T) {
 		blsKeyFile := filepath.Join(configDir, DefaultBlsKeyName)
 
 		testPassword := "test-password-123"
-		os.Setenv(BlsPasswordEnvVar, testPassword)
+		t.Setenv(BlsPasswordEnvVar, testPassword)
 
 		privKey := bls12381.GenPrivKey()
 		blsSigner := NewBls(privKey, blsKeyFile, "")
@@ -201,7 +201,7 @@ func TestLoadBlsSignerIfExists(t *testing.T) {
 		blsKeyFile := filepath.Join(configDir, DefaultBlsKeyName)
 		testPassword := "env-password-test"
 
-		os.Setenv(BlsPasswordEnvVar, testPassword)
+		t.Setenv(BlsPasswordEnvVar, testPassword)
 
 		privKey := bls12381.GenPrivKey()
 		bls := NewBls(privKey, blsKeyFile, "")
@@ -362,7 +362,7 @@ func TestValidatePasswordMethods(t *testing.T) {
 	t.Run("single password method - env var", func(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
 
-		os.Setenv(BlsPasswordEnvVar, "password")
+		t.Setenv(BlsPasswordEnvVar, "password")
 
 		err := ValidatePasswordMethods(false, "")
 		assert.NoError(t, err)
@@ -373,7 +373,7 @@ func TestValidatePasswordMethods(t *testing.T) {
 	t.Run("multiple methods - no password and env var", func(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
 
-		os.Setenv(BlsPasswordEnvVar, "env-password")
+		t.Setenv(BlsPasswordEnvVar, "env-password")
 
 		err := ValidatePasswordMethods(true, "")
 		assert.Error(t, err)
@@ -391,7 +391,7 @@ func TestGetBlsKeyPassword(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
 
 		testPassword := "test-env-var-password"
-		os.Setenv(BlsPasswordEnvVar, testPassword)
+		t.Setenv(BlsPasswordEnvVar, testPassword)
 
 		password, err := GetBlsKeyPassword(false, "", false)
 		assert.NoError(t, err)
@@ -421,7 +421,7 @@ func TestGetBlsKeyPassword(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
 
 		envPassword := "env-password-precedence"
-		os.Setenv(BlsPasswordEnvVar, envPassword)
+		t.Setenv(BlsPasswordEnvVar, envPassword)
 
 		tempDir := t.TempDir()
 		passwordFile := filepath.Join(tempDir, "password.txt")
@@ -518,7 +518,7 @@ func TestShowBlsKey(t *testing.T) {
 		blsKey := GenBls(keyFile, "", keyPassword)
 		assert.NotNil(t, blsKey)
 
-		os.Setenv(BlsPasswordEnvVar, keyPassword)
+		t.Setenv(BlsPasswordEnvVar, keyPassword)
 
 		passwordFile := filepath.Join(tempDir, "password.txt")
 		err = os.WriteFile(passwordFile, []byte(keyPassword), 0600)
@@ -563,7 +563,7 @@ func TestCreateBlsKey(t *testing.T) {
 		tempDir := t.TempDir()
 
 		testPassword := "env-var-create-password"
-		os.Setenv(BlsPasswordEnvVar, testPassword)
+		t.Setenv(BlsPasswordEnvVar, testPassword)
 
 		err := CreateBlsKey(tempDir, testPassword, "", testCmd)
 		assert.NoError(t, err)
@@ -639,7 +639,7 @@ func TestCreateBlsKey(t *testing.T) {
 
 		tempDir := t.TempDir()
 
-		os.Setenv(BlsPasswordEnvVar, "env-password")
+		t.Setenv(BlsPasswordEnvVar, "env-password")
 
 		passwordFile := filepath.Join(tempDir, "password.txt")
 		err := os.WriteFile(passwordFile, []byte("file-password"), 0600)

@@ -2,8 +2,9 @@ package cmd_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
