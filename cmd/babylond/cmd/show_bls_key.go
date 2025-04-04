@@ -55,7 +55,7 @@ $ babylond show-bls-key --no-bls-password
 			}
 
 			// Determine password at the system boundary
-			password, err := appsigner.GetBlsKeyPassword(noBlsPassword, passwordFile)
+			password, err := appsigner.GetBlsKeyPassword(noBlsPassword, passwordFile, false)
 			if err != nil {
 				return fmt.Errorf("failed to determine BLS password: %w", err)
 			}

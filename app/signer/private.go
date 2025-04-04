@@ -81,7 +81,8 @@ func loadBls(homeDir string) (*Bls, error) {
 		return nil, fmt.Errorf("BLS key file does not exist. create file using `babylond init` or `babylond create-bls-key`: %s", blsKeyFile)
 	}
 
-	if password := GetBlsPasswordFromEnv(); password != "" {
+	password, found := GetBlsPasswordFromEnv()
+	if found && password != "" {
 		bls, ok, err := TryLoadBlsFromFile(blsKeyFile, "")
 		if err != nil {
 			return nil, err
