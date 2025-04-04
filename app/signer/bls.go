@@ -265,17 +265,13 @@ func GetBlsKeyPassword(noPassword bool, passwordFilePath string) string {
 	}
 
 	// Try getting password from environment
-	password := GetBlsPasswordFromEnv()
-	if password != "" {
+	if password := GetBlsPasswordFromEnv(); password != "" {
 		return password
 	}
 
-	// Try password file ONLY if path is explicitly provided and file exists
-	if passwordFilePath != "" && cmtos.FileExists(passwordFilePath) {
-		passwordBytes, err := os.ReadFile(passwordFilePath)
-		if err == nil {
-			return string(passwordBytes)
-		}
+	passwordBytes, err := os.ReadFile(passwordFilePath)
+	if err == nil {
+		return string(passwordBytes)
 	}
 
 	return GetBlsUnlockPasswordFromPrompt()
@@ -359,12 +355,7 @@ func LoadOrGenBlsKey(homeDir string, noPassword bool, customPasswordPath, custom
 	}
 
 	genPassword := GetBlsKeyPassword(false, customPasswordPath)
-	passwordFilePath := ""
-	if customPasswordPath != "" && !noPassword {
-		passwordFilePath = customPasswordPath
-	}
-
-	bls := GenBls(blsKeyFile, passwordFilePath, genPassword)
+	bls := GenBls(blsKeyFile, customPasswordPath, genPassword)
 	return &bls.Key, nil
 }
 
