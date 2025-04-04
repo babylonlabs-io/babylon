@@ -37,11 +37,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v1.0.1
+
+### Bug fixes
+
+- [#793](https://github.com/babylonlabs-io/babylon/pull/793) fix: BLS key will be overwritten when the password is not retrieved
+
 ## v1.0.0
 
 ## v1.0.0-rc11
 
-### bug fixes
+### Bug fixes
 
 - [#780](https://github.com/babylonlabs-io/babylon/pull/780) crypto: remove Verify for ECDSA
 
