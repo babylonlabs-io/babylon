@@ -62,6 +62,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 
 ### Bug fixes
 
+- [#796](https://github.com/babylonlabs-io/babylon/pull/796) fix: goreleaser add `mainnet` build flag to generated binary
 - [#741](https://github.com/babylonlabs-io/babylon/pull/741) chore: fix register consumer CLI
 - [#731](https://github.com/babylonlabs-io/babylon/pull/731) chore: fix block timeout in Babylon client
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
