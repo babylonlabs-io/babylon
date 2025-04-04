@@ -98,10 +98,10 @@ func readLineFromBuf(buf *bufio.Reader) (string, error) {
 	return strings.TrimSpace(pass), nil
 }
 
-// GetBlsUnlockPassword prompts the user for a password once, without confirmation.
+// GetBlsUnlockPasswordFromPrompt prompts the user for a password once, without confirmation.
 // This is suitable for unlock operations where we only need to check if the password
 // is correct for an existing key.
-func GetBlsUnlockPassword() string {
+func GetBlsUnlockPasswordFromPrompt() string {
 	inBuf := bufio.NewReader(os.Stdin)
 
 	fmt.Println("Enter your BLS key password (input will be hidden):")
@@ -112,4 +112,38 @@ func GetBlsUnlockPassword() string {
 	}
 
 	return password
+}
+
+// DetermineBlsPassword centralizes password determination logic.
+// Returns final password and source information for UI feedback
+// This should be called by command handlers rather than lower-level utility functions
+func DetermineBlsPassword(noPassword bool, passwordFilePath string) (string, error) {
+	// Validate that only one password method is provided
+	if err := ValidatePasswordMethods(noPassword, passwordFilePath); err != nil {
+		return "", err
+	}
+
+	// If using no-password mode, return empty password immediately
+	if noPassword {
+		return "", nil
+	}
+
+	// Try environment variable first
+	envPassword := GetBlsPasswordFromEnv()
+	if envPassword != "" {
+		return envPassword, nil
+	}
+
+	// Try password file only if explicitly provided and exists
+	if passwordFilePath != "" && cmtos.FileExists(passwordFilePath) {
+		passwordBytes, err := os.ReadFile(passwordFilePath)
+		if err != nil {
+			return "", fmt.Errorf("failed to read password file: %w", err)
+		}
+		return string(passwordBytes), nil
+	}
+
+	// For unlocking existing keys, use single prompt
+	password := GetBlsUnlockPasswordFromPrompt()
+	return password, nil
 }

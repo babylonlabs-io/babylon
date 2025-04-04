@@ -30,11 +30,16 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
 			noBlsPassword, _ := cmd.Flags().GetBool(flagNoBlsPassword)
-			explicitPassword, _ := cmd.Flags().GetString(flagInsecureBlsPassword)
 			passwordFile, _ := cmd.Flags().GetString(flagBlsPasswordFile)
 
-			// Generate BLS key using the common helper function
-			if err := appsigner.CreateBlsKey(homeDir, noBlsPassword, explicitPassword, passwordFile); err != nil {
+			// Determine password at the system boundary
+			password, err := appsigner.DetermineBlsPassword(noBlsPassword, passwordFile)
+			if err != nil {
+				return fmt.Errorf("failed to determine BLS password: %w", err)
+			}
+
+			// Generate BLS key using the refactored function with explicit password
+			if err := appsigner.CreateBlsKey(homeDir, password, passwordFile); err != nil {
 				return fmt.Errorf("failed to create BLS key: %w", err)
 			}
 
@@ -43,7 +48,6 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 	}
 	cmd.Flags().AddFlagSet(cosmosInitCmd.Flags())
 	cmd.Flags().Bool(flagNoBlsPassword, false, "The BLS key will use an empty password if the flag is set")
-	cmd.Flags().String(flagInsecureBlsPassword, "", "The password for the BLS key. If not set, will try env var, then prompt")
 	cmd.Flags().String(flagBlsPasswordFile, "", "Path to a file to store the BLS password (not recommended)")
 	return cmd
 }

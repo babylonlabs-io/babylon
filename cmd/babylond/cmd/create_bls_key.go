@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -19,9 +20,8 @@ send BLS signatures for checkpointing.
 
 Password precedence:
 1. Environment variable BABYLON_BLS_PASSWORD
-2. Password specified with --insecure-bls-password flag 
-3. Password file specified with --bls-password-file flag
-4. Interactive prompt
+2. Password file specified with --bls-password-file flag
+3. Interactive prompt
 
 Example:
 $ babylond create-bls-key
@@ -33,17 +33,21 @@ $ babylond create-bls-key --no-bls-password
 		RunE: func(cmd *cobra.Command, args []string) error {
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
 			noBlsPassword, _ := cmd.Flags().GetBool(flagNoBlsPassword)
-			explicitPassword, _ := cmd.Flags().GetString(flagInsecureBlsPassword)
 			passwordFile, _ := cmd.Flags().GetString(flagBlsPasswordFile)
 
-			// Generate BLS key using the common helper function
-			return appsigner.CreateBlsKey(homeDir, noBlsPassword, explicitPassword, passwordFile)
+			// Determine password at the system boundary
+			password, err := appsigner.DetermineBlsPassword(noBlsPassword, passwordFile)
+			if err != nil {
+				return fmt.Errorf("failed to determine BLS password: %w", err)
+			}
+
+			// Generate BLS key using the refactored function with explicit password
+			return appsigner.CreateBlsKey(homeDir, password, passwordFile)
 		},
 	}
 
 	cmd.Flags().String(flags.FlagHome, app.DefaultNodeHome, "The node home directory")
 	cmd.Flags().Bool(flagNoBlsPassword, false, "Generate BLS key without password protection")
-	cmd.Flags().String(flagInsecureBlsPassword, "", "The password for the BLS key. If not set, will try env var, then prompt")
 	cmd.Flags().String(flagBlsPasswordFile, "", "Custom file path to store the BLS password")
 	return cmd
 }

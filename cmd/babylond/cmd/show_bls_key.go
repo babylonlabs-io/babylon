@@ -23,9 +23,8 @@ func ShowBlsKeyCmd() *cobra.Command {
 The command will try to load the existing BLS key and show its public key and other information.
 Password precedence for decrypting the key:
 1. Environment variable BABYLON_BLS_PASSWORD
-2. Password specified with --insecure-bls-password flag 
-3. Password file (from --bls-password-file or default location)
-4. Prompt the user for password
+2. Password file (from --bls-password-file or default location)
+3. Prompt the user for password
 
 Example:
 $ babylond show-bls-key
@@ -36,7 +35,6 @@ $ babylond show-bls-key --no-bls-password
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
 			noBlsPassword, _ := cmd.Flags().GetBool(flagNoBlsPassword)
 			passwordFile, _ := cmd.Flags().GetString(flagBlsPasswordFile)
-			explicitPassword, _ := cmd.Flags().GetString(flagInsecureBlsPassword)
 
 			// Convert passwordFile to absolute path if it's not empty and not already absolute
 			if passwordFile != "" && !filepath.IsAbs(passwordFile) {
@@ -47,7 +45,13 @@ $ babylond show-bls-key --no-bls-password
 				passwordFile = absPath
 			}
 
-			info, err := appsigner.ShowBlsKey(homeDir, noBlsPassword, explicitPassword, passwordFile, "")
+			// Determine password at the system boundary
+			password, err := appsigner.DetermineBlsPassword(noBlsPassword, passwordFile)
+			if err != nil {
+				return fmt.Errorf("failed to determine BLS password: %w", err)
+			}
+
+			info, err := appsigner.ShowBlsKey(homeDir, password, "")
 			if err != nil {
 				return fmt.Errorf("failed to show BLS key: %w", err)
 			}
@@ -65,7 +69,6 @@ $ babylond show-bls-key --no-bls-password
 
 	cmd.Flags().String(flags.FlagHome, app.DefaultNodeHome, "The node home directory")
 	cmd.Flags().Bool(flagNoBlsPassword, false, "Indicate that the BLS key has no password protection")
-	cmd.Flags().String(flagInsecureBlsPassword, "", "The password for the BLS key")
 	cmd.Flags().String(flagBlsPasswordFile, "", "Path to a file containing the BLS password")
 
 	return cmd
