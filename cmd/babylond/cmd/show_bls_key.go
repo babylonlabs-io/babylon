@@ -32,9 +32,18 @@ $ babylond show-bls-key --bls-password-file=/path/to/password.txt
 $ babylond show-bls-key --no-bls-password
 `),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
-			noBlsPassword, _ := cmd.Flags().GetBool(flagNoBlsPassword)
-			passwordFile, _ := cmd.Flags().GetString(flagBlsPasswordFile)
+			homeDir, err := cmd.Flags().GetString(flags.FlagHome)
+			if err != nil {
+				return fmt.Errorf("failed to get home directory: %w", err)
+			}
+			noBlsPassword, err := cmd.Flags().GetBool(flagNoBlsPassword)
+			if err != nil {
+				return fmt.Errorf("failed to get noBlsPassword flag: %w", err)
+			}
+			passwordFile, err := cmd.Flags().GetString(flagBlsPasswordFile)
+			if err != nil {
+				return fmt.Errorf("failed to get passwordFile flag: %w", err)
+			}
 
 			// Convert passwordFile to absolute path if it's not empty and not already absolute
 			if passwordFile != "" && !filepath.IsAbs(passwordFile) {
@@ -62,7 +71,7 @@ $ babylond show-bls-key --no-bls-password
 				return fmt.Errorf("failed to marshal key info: %w", err)
 			}
 
-			fmt.Println(string(jsonBytes))
+			cmd.Println(string(jsonBytes))
 			return nil
 		},
 	}

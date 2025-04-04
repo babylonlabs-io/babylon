@@ -28,9 +28,18 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 				return fmt.Errorf("failed to run init command: %w", err)
 			}
 
-			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
-			noBlsPassword, _ := cmd.Flags().GetBool(flagNoBlsPassword)
-			passwordFile, _ := cmd.Flags().GetString(flagBlsPasswordFile)
+			homeDir, err := cmd.Flags().GetString(flags.FlagHome)
+			if err != nil {
+				return fmt.Errorf("failed to get home directory: %w", err)
+			}
+			noBlsPassword, err := cmd.Flags().GetBool(flagNoBlsPassword)
+			if err != nil {
+				return fmt.Errorf("failed to get noBlsPassword flag: %w", err)
+			}
+			passwordFile, err := cmd.Flags().GetString(flagBlsPasswordFile)
+			if err != nil {
+				return fmt.Errorf("failed to get passwordFile flag: %w", err)
+			}
 
 			// Determine password at the system boundary
 			password, err := appsigner.GetBlsKeyPassword(noBlsPassword, passwordFile)
@@ -39,7 +48,7 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 			}
 
 			// Generate BLS key using the refactored function with explicit password
-			if err := appsigner.CreateBlsKey(homeDir, password, passwordFile); err != nil {
+			if err := appsigner.CreateBlsKey(homeDir, password, passwordFile, cmd); err != nil {
 				return fmt.Errorf("failed to create BLS key: %w", err)
 			}
 

@@ -3,6 +3,7 @@ package signer
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
 
@@ -448,7 +449,7 @@ func ShowBlsKey(homeDir string, password string, customKeyPath string) (map[stri
 
 // CreateBlsKey creates a new BLS key
 // Takes a password that was determined by the password determination logic.
-func CreateBlsKey(homeDir string, password string, passwordFilePath string) error {
+func CreateBlsKey(homeDir string, password string, passwordFilePath string, cmd *cobra.Command) error {
 	blsKeyFile := determineKeyFilePath(homeDir, "")
 
 	// Check if BLS key already exists
@@ -474,25 +475,25 @@ func CreateBlsKey(homeDir string, password string, passwordFilePath string) erro
 
 	// Print appropriate message based on password source
 	if password == "" {
-		fmt.Printf("BLS key generated successfully without password protection.\n")
+		cmd.Printf("BLS key generated successfully without password protection.\n")
 		if passwordFilePath != "" {
-			fmt.Printf("An empty password file has been created at for backward compatibility.\n")
+			cmd.Printf("An empty password file has been created at for backward compatibility.\n")
 		}
 	} else {
-		fmt.Printf("\nIMPORTANT: Your BLS key has been created with password protection.\n")
-		fmt.Printf("You must provide this password when starting the node using one of these methods:\n")
-		fmt.Printf("1. (Recommended) Set the %s environment variable:\n", BlsPasswordEnvVar)
-		fmt.Printf("export %s=<your_password>\n", BlsPasswordEnvVar)
+		cmd.Printf("\n ⚠️ IMPORTANT: Your BLS key has been created with password protection. ⚠️\n")
+		cmd.Printf("You must provide this password when starting the node using one of these methods:\n")
+		cmd.Printf("1. (Recommended) Set the %s environment variable:\n", BlsPasswordEnvVar)
+		cmd.Printf("export %s=<your_password>\n", BlsPasswordEnvVar)
 
 		if passwordFilePath != "" {
-			fmt.Printf("2. The password has been stored in the specified password file. You can use it when starting the node by providing the path to the password file\n")
-			fmt.Printf("babylond start --bls-password-file=<path_to_password_file>\n")
+			cmd.Printf("2. The password has been stored in the specified password file. You can use it when starting the node by providing the path to the password file\n")
+			cmd.Printf("babylond start --bls-password-file=<path_to_password_file>\n")
 		} else {
-			fmt.Printf("2. (Not recommended) Create a password file and provide its path when starting the node by specifying the path to the password file.\n")
-			fmt.Printf("babylond start --bls-password-file=<path_to_file>\n")
+			cmd.Printf("2. (Not recommended) Create a password file and provide its path when starting the node by specifying the path to the password file.\n")
+			cmd.Printf("babylond start --bls-password-file=<path_to_file>\n")
 		}
 
-		fmt.Printf("\nRemember to securely store your password. If you lose it, you won't be able to access your BLS key.\n")
+		cmd.Printf("\nRemember to securely store your password. If you lose it, you won't be able to access your BLS key.\n")
 	}
 
 	return nil
