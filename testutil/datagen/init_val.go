@@ -9,9 +9,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/go-bip39"
 
-	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/privval"
+
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
 )
 
 // InitializeNodeValidatorFiles creates private validator and p2p configuration files.
@@ -60,7 +61,11 @@ func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic strin
 		if !cmtos.FileExists(blsPasswordFile) {
 			cmtos.Exit(fmt.Sprintf("BLS password file does not exist: %v", blsPasswordFile))
 		}
-		bls = appsigner.TryLoadBlsFromFile(blsKeyFile, blsPasswordFile)
+		loadedBls, err := appsigner.TryLoadBlsFromFile(blsKeyFile, blsPasswordFile)
+		if err != nil {
+			return "", nil, err
+		}
+		bls = loadedBls
 	} else {
 		bls = appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
 	}

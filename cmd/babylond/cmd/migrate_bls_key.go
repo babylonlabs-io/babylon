@@ -8,8 +8,6 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app"
 
-	appsigner "github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	cmtjson "github.com/cometbft/cometbft/libs/json"
@@ -17,6 +15,9 @@ import (
 	"github.com/cometbft/cometbft/privval"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
+
+	appsigner "github.com/babylonlabs-io/babylon/app/signer"
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
 )
 
 // PrevWrappedFilePV is a struct for prev version of priv_validator_key.json
@@ -125,7 +126,10 @@ func verifySeparateFiles(
 	prevBlsPrivKey bls12381.PrivateKey,
 ) error {
 	cmtPv := privval.LoadFilePV(cmtKeyFilePath, cmtStateFilePath)
-	bls := appsigner.TryLoadBlsFromFile(blsKeyFilePath, blsPasswordFilePath)
+	bls, err := appsigner.TryLoadBlsFromFile(blsKeyFilePath, blsPasswordFilePath)
+	if err != nil {
+		return err
+	}
 
 	if bytes.Equal(prevCmtPrivKey.Bytes(), cmtPv.Key.PrivKey.Bytes()) && bytes.Equal(prevBlsPrivKey, bls.Key.PrivKey) {
 		return nil
