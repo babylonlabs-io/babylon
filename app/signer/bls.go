@@ -502,7 +502,7 @@ func CreateBlsKey(homeDir string, password string, passwordFilePath string, cmd 
 		}
 
 		cmd.Printf("\nRemember to securely store your password. If you lose it, you won't be able to access your BLS key.\n")
-		cmd.Printf("\n ⚠️Note: If youd did not store your password in a file an interactive password prompt will be displayed..\n")
+		cmd.Printf("\n ⚠️Note: If you did not specify the password in one of the above methods interactive password prompt will be displayed..\n")
 	}
 
 	return nil
