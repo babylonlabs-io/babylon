@@ -89,7 +89,7 @@ func TestNewBls(t *testing.T) {
 
 func TestGetBlsPassword(t *testing.T) {
 	origEnvValue := os.Getenv(BlsPasswordEnvVar)
-	defer os.Setenv(BlsPasswordEnvVar, origEnvValue)
+	defer t.Setenv(BlsPasswordEnvVar, origEnvValue)
 
 	t.Run("get password from environment variable", func(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
@@ -157,7 +157,7 @@ func TestGetBlsPassword(t *testing.T) {
 func TestLoadBlsWithEnvVar(t *testing.T) {
 	t.Run("load bls with environment variable", func(t *testing.T) {
 		originalValue := os.Getenv(BlsPasswordEnvVar)
-		defer os.Setenv(BlsPasswordEnvVar, originalValue)
+		defer t.Setenv(BlsPasswordEnvVar, originalValue)
 
 		tempDir := t.TempDir()
 
@@ -188,7 +188,7 @@ func TestLoadBlsWithEnvVar(t *testing.T) {
 
 func TestLoadBlsSignerIfExists(t *testing.T) {
 	origEnvValue := os.Getenv(BlsPasswordEnvVar)
-	defer os.Setenv(BlsPasswordEnvVar, origEnvValue)
+	defer t.Setenv(BlsPasswordEnvVar, origEnvValue)
 
 	t.Run("load with environment variable", func(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
@@ -298,7 +298,7 @@ func TestLoadBlsSignerIfExists(t *testing.T) {
 		err := os.WriteFile(passwordFile, []byte("test-password"), 0600)
 		assert.NoError(t, err)
 
-		os.Setenv(BlsPasswordEnvVar, "env-password")
+		t.Setenv(BlsPasswordEnvVar, "env-password")
 
 		err = ValidatePasswordMethods(false, passwordFile)
 		assert.Error(t, err)
@@ -325,7 +325,7 @@ func TestLoadBlsSignerIfExists(t *testing.T) {
 		assert.NoError(t, err)
 
 		testPassword := "custom-key-password"
-		os.Setenv(BlsPasswordEnvVar, testPassword)
+		t.Setenv(BlsPasswordEnvVar, testPassword)
 
 		privKey := bls12381.GenPrivKey()
 		bls := NewBls(privKey, customKeyFile, "")
@@ -347,7 +347,7 @@ func TestLoadBlsSignerIfExists(t *testing.T) {
 
 func TestValidatePasswordMethods(t *testing.T) {
 	origEnvValue := os.Getenv(BlsPasswordEnvVar)
-	defer os.Setenv(BlsPasswordEnvVar, origEnvValue)
+	defer t.Setenv(BlsPasswordEnvVar, origEnvValue)
 
 	t.Run("single password method - no password", func(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
@@ -385,7 +385,7 @@ func TestValidatePasswordMethods(t *testing.T) {
 
 func TestGetBlsKeyPassword(t *testing.T) {
 	origEnvValue := os.Getenv(BlsPasswordEnvVar)
-	defer os.Setenv(BlsPasswordEnvVar, origEnvValue)
+	defer t.Setenv(BlsPasswordEnvVar, origEnvValue)
 
 	t.Run("env var password", func(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
@@ -451,7 +451,7 @@ func TestGetBlsKeyPassword(t *testing.T) {
 
 func TestShowBlsKey(t *testing.T) {
 	origEnvValue := os.Getenv(BlsPasswordEnvVar)
-	defer os.Setenv(BlsPasswordEnvVar, origEnvValue)
+	defer t.Setenv(BlsPasswordEnvVar, origEnvValue)
 
 	t.Run("show key with password file", func(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
@@ -534,7 +534,7 @@ func TestShowBlsKey(t *testing.T) {
 
 func TestCreateBlsKey(t *testing.T) {
 	origEnvValue := os.Getenv(BlsPasswordEnvVar)
-	defer os.Setenv(BlsPasswordEnvVar, origEnvValue)
+	defer t.Setenv(BlsPasswordEnvVar, origEnvValue)
 
 	t.Run("create key with no password", func(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)

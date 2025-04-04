@@ -489,7 +489,6 @@ func CreateBlsKey(homeDir string, password string, passwordFilePath string, cmd 
 			cmd.Printf("An empty password file has been created at for backward compatibility.\n")
 		}
 	} else {
-
 		cmd.Printf("\n ⚠️ IMPORTANT: Your BLS key has been created with password protection. ⚠️\n")
 		cmd.Printf("You can provide this password when starting the node using one of these methods:\n")
 		cmd.Printf("1. (Recommended) Set the %s environment variable: \nexport %s=<your_password>", BlsPasswordEnvVar, BlsPasswordEnvVar)
