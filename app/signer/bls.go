@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/spf13/cobra"
+
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	cmtjson "github.com/cometbft/cometbft/libs/json"
@@ -87,26 +89,28 @@ func GenBls(keyFilePath, passwordFilePath, password string) *Bls {
 
 // TryLoadBlsFromFile attempts to load a BLS key from the given file paths.
 // It tries to use environment variable for password first, then falls back to file-based password.
-// Returns nil if the key file doesn't exist or can't be accessed, panic if it can't be decrypted.
-func TryLoadBlsFromFile(keyFilePath, passwordFilePath string) *Bls {
+// Returns error if the key file exists, but cannot get password or the key cannot
+// be decrypted
+func TryLoadBlsFromFile(keyFilePath, passwordFilePath string) (*Bls, bool, error) {
 	keystore, err := erc2335.LoadKeyStore(keyFilePath)
 	if err != nil {
-		return nil
+		//nolint:nilerr
+		return nil, false, nil
 	}
 
 	password, err := GetBlsPassword(passwordFilePath)
 	if err != nil {
-		return nil
+		return nil, false, fmt.Errorf("failed to get password: %w", err)
 	}
 
 	privKey, err := erc2335.Decrypt(keystore, password)
 	if err != nil {
-		panic(fmt.Errorf("failed to decrypt BLS key: %w", err))
+		return nil, false, fmt.Errorf("failed to decrypt BLS key: %w", err)
 	}
 
 	blsPrivKey := bls12381.PrivateKey(privKey)
 	if err := blsPrivKey.ValidateBasic(); err != nil {
-		cmtos.Exit(fmt.Sprintf("invalid BLS private key: %v", err.Error()))
+		return nil, false, fmt.Errorf("invalid BLS private key: %w", err)
 	}
 
 	return &Bls{
@@ -116,16 +120,16 @@ func TryLoadBlsFromFile(keyFilePath, passwordFilePath string) *Bls {
 			filePath:     keyFilePath,
 			passwordPath: passwordFilePath,
 		},
-	}
+	}, true, nil
 }
 
 // GetBlsPassword retrieves the BLS password from environment variable or password file.
-// Password precedence:
+// Password sources:
 // 1. Environment variable (BABYLON_BLS_PASSWORD)
 // 2. Password file (if path is provided and file exists)
 func GetBlsPassword(passwordFilePath string) (string, error) {
-	password := GetBlsPasswordFromEnv()
-	if password != "" {
+	password, found := GetBlsPasswordFromEnv()
+	if found {
 		return password, nil
 	}
 
@@ -147,8 +151,8 @@ func GetBlsPassword(passwordFilePath string) (string, error) {
 
 // GetBlsPasswordFromEnv retrieves the BLS password from the environment variable only.
 // Returns empty string if not found.
-func GetBlsPasswordFromEnv() string {
-	return os.Getenv(BlsPasswordEnvVar)
+func GetBlsPasswordFromEnv() (string, bool) {
+	return os.LookupEnv(BlsPasswordEnvVar)
 }
 
 // Save saves the bls12381 key to the file.
@@ -251,51 +255,124 @@ func (k *BlsKey) BlsPubKey() (bls12381.PublicKey, error) {
 	return k.PubKey, nil
 }
 
+// GetBlsKeyPassword is a unified function to handle BLS key password retrieval.
+// Returns password if a password was found from one of the sources.
+// 1. If noPassword is true, returns empty string without checking other sources.
+// 2. Environment variable BABYLON_BLS_PASSWORD
+// 3. Password file (ONLY if path is explicitly provided and file exists)
+// 4. Interactive prompt, if no other sources are found
+//   - For new keys: confirmation flow with matching passwords
+//   - For existing keys: single prompt without confirmation
+func GetBlsKeyPassword(noPassword bool, passwordFilePath string, isNewKey bool) (string, error) {
+	if err := ValidatePasswordMethods(noPassword, passwordFilePath); err != nil {
+		return "", err
+	}
+
+	// If using no-password mode, return empty password immediately
+	if noPassword {
+		return "", nil
+	}
+
+	// Try getting password from environment
+	password, found := GetBlsPasswordFromEnv()
+	if found {
+		return password, nil
+	}
+
+	passwordBytes, err := os.ReadFile(passwordFilePath)
+	if err == nil {
+		return string(passwordBytes), nil
+	}
+
+	// Use appropriate interactive prompt based on whether this is a new key or existing key
+	if isNewKey {
+		return NewBlsPassword(), nil
+	}
+	return GetBlsUnlockPasswordFromPrompt(), nil
+}
+
+// ValidatePasswordMethods checks if multiple password methods are being used simultaneously.
+// Returns an error if more than one method is provided.
+func ValidatePasswordMethods(noPassword bool, passwordFilePath string) error {
+	_, envFound := GetBlsPasswordFromEnv()
+	fileSet := passwordFilePath != ""
+
+	if (noPassword && (envFound || fileSet)) || (envFound && fileSet) {
+		return fmt.Errorf("multiple password methods detected (no-password: %v, env var: %v, password file: %v) - please provide only one method",
+			noPassword, envFound, fileSet)
+	}
+	return nil
+}
+
 // LoadBlsSignerIfExists attempts to load an existing BLS signer from the specified home directory
 // Returns the signer if files exist and can be loaded, or nil if files don't exist
-// Password precedence:
-// 1. Environment variable (BABYLON_BLS_PASSWORD)
-// 2. Custom password file path (if provided)
-// 3. Default password file path
-func LoadBlsSignerIfExists(homeDir string, customPasswordPath, customKeyPath string) checkpointingtypes.BlsSigner {
+// Possible password sources:
+// 1. Empty password passed from flag
+// 2. Environment variable (BABYLON_BLS_PASSWORD)
+// 3. Custom password file path (ONLY if explicitly provided and file exists)
+// 4. Interactive prompt for password
+// Error will be returned if the key exists but cannot decrypt it
+func LoadBlsSignerIfExists(homeDir string, noPassword bool, customPasswordPath, customKeyPath string) (checkpointingtypes.BlsSigner, error) {
 	blsKeyFile := determineKeyFilePath(homeDir, customKeyPath)
 	if !cmtos.FileExists(blsKeyFile) {
-		return nil
+		return nil, nil
 	}
 
-	passwordPath := determinePasswordFilePath(homeDir, customPasswordPath)
-
-	bls := TryLoadBlsFromFile(blsKeyFile, passwordPath)
-	if bls != nil {
-		return &bls.Key
+	// Try to load keystore first
+	keystore, err := erc2335.LoadKeyStore(blsKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load BLS key file: %w", err)
 	}
 
-	return nil
+	// Try to get password from all sources
+	password, err := GetBlsKeyPassword(noPassword, customPasswordPath, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get password: %w", err)
+	}
+
+	privKey, err := erc2335.Decrypt(keystore, password)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt BLS key: %w", err)
+	}
+
+	blsPrivKey := bls12381.PrivateKey(privKey)
+	if err := blsPrivKey.ValidateBasic(); err != nil {
+		return nil, fmt.Errorf("invalid BLS private key: %w", err)
+	}
+
+	return &BlsKey{
+		PubKey:       blsPrivKey.PubKey(),
+		PrivKey:      blsPrivKey,
+		filePath:     blsKeyFile,
+		passwordPath: customPasswordPath,
+	}, nil
 }
 
 // LoadOrGenBlsKey attempts to load an existing BLS signer or creates a new one if none exists.
 // If noPassword is true, creates key without password protection.
-// If password is empty and noPassword is false, will try to get from env/file or prompt.
-// Password precedence:
-// 1. Explicit password provided as argument
-// 2. Environment variable (BABYLON_BLS_PASSWORD)
-// 3. Custom or default password file
-func LoadOrGenBlsKey(homeDir string, noPassword bool, password string, customPasswordPath, customKeyPath string) (checkpointingtypes.BlsSigner, error) {
-	blsSigner := LoadBlsSignerIfExists(homeDir, customPasswordPath, customKeyPath)
-	if blsSigner != nil {
-		return blsSigner, nil
-	}
-
+// Password sources:
+// 1. Environment variable (BABYLON_BLS_PASSWORD)
+// 2. Password file (ONLY if explicitly provided and file exists)
+// 3. Interactive prompt (with confirmation for new keys)
+func LoadOrGenBlsKey(homeDir string, noPassword bool, customPasswordPath, customKeyPath string) (checkpointingtypes.BlsSigner, error) {
 	blsKeyFile := determineKeyFilePath(homeDir, customKeyPath)
-	blsPasswordFile := determinePasswordFilePath(homeDir, customPasswordPath)
+	keyExists := cmtos.FileExists(blsKeyFile)
 
-	if err := EnsureDirs(blsKeyFile, blsPasswordFile); err != nil {
-		return nil, fmt.Errorf("failed to ensure directories for BLS key: %w", err)
+	if keyExists {
+		blsSigner, err := LoadBlsSignerIfExists(homeDir, noPassword, customPasswordPath, customKeyPath)
+		if err != nil {
+			return nil, fmt.Errorf("BLS key file exists at %s but could not be loaded: %w. If you need to generate a new key, please manually delete the existing file first", blsKeyFile, err)
+		}
+		if blsSigner != nil {
+			return blsSigner, nil
+		}
 	}
 
-	password = determinePassword(noPassword, password, blsPasswordFile)
-
-	bls := GenBls(blsKeyFile, blsPasswordFile, password)
+	genPassword, err := GetBlsKeyPassword(noPassword, customPasswordPath, true)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get password: %w", err)
+	}
+	bls := GenBls(blsKeyFile, customPasswordPath, genPassword)
 	return &bls.Key, nil
 }
 
@@ -305,36 +382,6 @@ func determineKeyFilePath(homeDir, customKeyPath string) string {
 		return customKeyPath
 	}
 	return DefaultBlsKeyFile(homeDir)
-}
-
-// determinePasswordFilePath returns the appropriate password file path
-func determinePasswordFilePath(homeDir, customPasswordPath string) string {
-	if customPasswordPath != "" && customPasswordPath != defaultBlsPasswordPath {
-		return customPasswordPath
-	}
-	return DefaultBlsPasswordFile(homeDir)
-}
-
-// determinePassword returns the appropriate password based on the given options
-func determinePassword(noPassword bool, explicitPassword, passwordFilePath string) string {
-	if noPassword && passwordFilePath != "" {
-		dirPath := filepath.Dir(passwordFilePath)
-		if err := cmtos.EnsureDir(dirPath, 0777); err == nil {
-			_ = tempfile.WriteFileAtomic(passwordFilePath, []byte(""), 0600)
-		}
-		return ""
-	}
-
-	if explicitPassword != "" {
-		return explicitPassword
-	}
-
-	password, err := GetBlsPassword(passwordFilePath)
-	if err == nil {
-		return password
-	}
-
-	return NewBlsPassword()
 }
 
 // SaveBlsPop saves a proof-of-possession to a file.
@@ -371,4 +418,92 @@ func LoadBlsPop(filePath string) (BlsPop, error) {
 	}
 
 	return bp, nil
+}
+
+// ShowBlsKey displays information about a BLS key
+// Takes a password that was determined by the password determination logic.
+func ShowBlsKey(homeDir string, password string) (map[string]interface{}, error) {
+	blsKeyFile := determineKeyFilePath(homeDir, "")
+	if !cmtos.FileExists(blsKeyFile) {
+		return nil, fmt.Errorf("BLS key file does not exist at %s", blsKeyFile)
+	}
+
+	// Load keystore first to check if we can open the file
+	keystore, err := erc2335.LoadKeyStore(blsKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load BLS key file: %w", err)
+	}
+
+	// Try to decrypt the key with the provided password
+	privKey, err := erc2335.Decrypt(keystore, password)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt BLS key (incorrect password): %w", err)
+	}
+
+	blsPrivKey := bls12381.PrivateKey(privKey)
+	if err := blsPrivKey.ValidateBasic(); err != nil {
+		return nil, fmt.Errorf("invalid BLS private key: %w", err)
+	}
+
+	blsPubKey := blsPrivKey.PubKey()
+
+	result := map[string]interface{}{
+		"pubkey":        blsPubKey.Bytes(),
+		"pubkey_hex":    fmt.Sprintf("%x", blsPubKey.Bytes()),
+		"keystore_path": blsKeyFile,
+	}
+
+	return result, nil
+}
+
+// CreateBlsKey creates a new BLS key
+// Takes a password that was determined by the password determination logic.
+func CreateBlsKey(homeDir string, password string, passwordFilePath string, cmd *cobra.Command) error {
+	blsKeyFile := determineKeyFilePath(homeDir, "")
+
+	// Check if BLS key already exists
+	if cmtos.FileExists(blsKeyFile) {
+		return fmt.Errorf("BLS key already exists at %s. If you need to generate a new key, please manually delete the existing file first", blsKeyFile)
+	}
+
+	// Ensure the key file directory exists
+	if err := EnsureDirs(blsKeyFile); err != nil {
+		return fmt.Errorf("failed to ensure key directory exists: %w", err)
+	}
+
+	// If a password file is specified, ensure its directory exists too
+	if passwordFilePath != "" {
+		if err := EnsureDirs(passwordFilePath); err != nil {
+			return fmt.Errorf("failed to ensure password file directory exists: %w", err)
+		}
+	}
+
+	// Generate key with provided password
+	bls := NewBls(bls12381.GenPrivKey(), blsKeyFile, passwordFilePath)
+	bls.Key.Save(password)
+
+	// Print appropriate message based on password source
+	if password == "" {
+		cmd.Printf("BLS key generated successfully without password protection.\n")
+		if passwordFilePath != "" {
+			cmd.Printf("An empty password file has been created at for backward compatibility.\n")
+		}
+	} else {
+		cmd.Printf("\n ⚠️ IMPORTANT: Your BLS key has been created with password protection. ⚠️\n")
+		cmd.Printf("You can provide this password when starting the node using one of these methods:\n")
+		cmd.Printf("1. (Recommended) Set the %s environment variable: \nexport %s=<your_password>", BlsPasswordEnvVar, BlsPasswordEnvVar)
+		cmd.Printf("export %s=<your_password>\n", BlsPasswordEnvVar)
+
+		if passwordFilePath != "" {
+			cmd.Printf("2. The password has been stored in the specified password file. You can use it when starting the node by providing the path to the password file\n")
+			cmd.Printf("babylond start --bls-password-file=<path_to_password_file>\n")
+		} else {
+			cmd.Printf("2. (Not recommended) Create a password file and provide its path when starting the node by specifying the path to the password file.\n")
+			cmd.Printf("babylond start --bls-password-file=<path_to_file>\n")
+		}
+		cmd.Println("3. If you did not specify the password in one of the above methods interactive password prompt will be displayed.")
+		cmd.Printf("\nRemember to securely store your password. If you lose it, you won't be able to access your BLS key.\n")
+	}
+
+	return nil
 }
