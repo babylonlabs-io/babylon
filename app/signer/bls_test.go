@@ -446,7 +446,6 @@ func TestGetBlsKeyPassword(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "", password)
 	})
-
 }
 
 func TestShowBlsKey(t *testing.T) {
