@@ -238,7 +238,7 @@ func addModuleInitFlags(startCmd *cobra.Command) {
 	startCmd.Flags().Bool(flagNoBlsPassword, false, "Generate BLS key without password protection (suitable for RPC nodes)")
 	startCmd.Flags().String(flagInsecureBlsPassword, "", "Use the specified password for BLS key (if empty and --no-bls-password is not set, will prompt for password)")
 	startCmd.Flags().String(flagBlsPasswordFile, "", "Load a custom file path to the bls password (not recommended)")
-}0
+}
 
 func queryCommand() *cobra.Command {
 	cmd := &cobra.Command{
