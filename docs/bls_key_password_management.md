@@ -1,13 +1,14 @@
 # BLS Key Management in Babylon
 
 This document describes how BLS keys are managed in Babylon, including password
-management options and command-line flags for secure key generation and usage.
+management options, command-line flags for secure key generation and usage.
 
 ## Overview
 
 BLS keys in Babylon are used for validator signatures in the checkpointing
 mechanism. These keys are stored encrypted using the ERC-2335 keystore format
-and require a password for decryption when the node starts.
+and require a password for decryption when the node starts. Backing up the generated keys
+and more specifically the `bls_key.json` file outside the default config directory is recommended.
 
 ## Password Management Options
 
