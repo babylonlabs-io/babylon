@@ -9392,6 +9392,62 @@ paths:
           format: uint64
       tags:
         - Query
+  /babylon/finality/v1/vp_table/{block_height}:
+    get:
+      summary: VotingPowerTable queries the voting power table at specific block height
+      operationId: VotingPowerTable
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              fps:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    fp_btc_pk_hex:
+                      type: string
+                    voting_power:
+                      type: string
+                      format: uint64
+                  description: >-
+                    VotingPowerTableFpResponse voting power table for each FP
+                    response.
+            description: >-
+              QueryVotingPowerTableResponse is the response type for the
+              Query/VotingPowerTable RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: block_height
+          in: path
+          required: true
+          type: string
+          format: uint64
+      tags:
+        - Query
   /cosmos/mint/v1beta1/annual_provisions:
     get:
       summary: AnnualProvisions returns the current annual provisions.
@@ -22169,6 +22225,23 @@ definitions:
     description: |-
       QueryVotesAtHeightResponse is the response type for the
       Query/VotesAtHeight RPC method.
+  babylon.finality.v1.QueryVotingPowerTableResponse:
+    type: object
+    properties:
+      fps:
+        type: array
+        items:
+          type: object
+          properties:
+            fp_btc_pk_hex:
+              type: string
+            voting_power:
+              type: string
+              format: uint64
+          description: VotingPowerTableFpResponse voting power table for each FP response.
+    description: >-
+      QueryVotingPowerTableResponse is the response type for the
+      Query/VotingPowerTable RPC method.
   babylon.finality.v1.SigningInfoResponse:
     type: object
     properties:
@@ -22201,6 +22274,15 @@ definitions:
       provider's signing info
 
       for monitoring their liveness activity.
+  babylon.finality.v1.VotingPowerTableFpResponse:
+    type: object
+    properties:
+      fp_btc_pk_hex:
+        type: string
+      voting_power:
+        type: string
+        format: uint64
+    description: VotingPowerTableFpResponse voting power table for each FP response.
   babylon.mint.v1.QueryAnnualProvisionsResponse:
     type: object
     properties:

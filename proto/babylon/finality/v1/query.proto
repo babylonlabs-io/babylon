@@ -86,6 +86,11 @@ service Query {
   rpc SigningInfos(QuerySigningInfosRequest) returns (QuerySigningInfosResponse) {
     option (google.api.http).get = "/babylon/finality/v1/signing_infos";
   }
+
+  // VotingPowerTable queries the voting power table at specific block height
+  rpc VotingPowerTable(QueryVotingPowerTableRequest) returns (QueryVotingPowerTableResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/vp_table/{block_height}";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -395,4 +400,19 @@ message QuerySigningInfosResponse {
   // info is the signing info of all finality providers with signing info
   repeated SigningInfoResponse signing_infos = 1 [(gogoproto.nullable) = false];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+// QueryVotingPowerTableRequest is the request type for the Query/VotingPowerTable RPC method.
+message QueryVotingPowerTableRequest {
+  uint64 block_height = 1;
+}
+
+// QueryVotingPowerTableResponse is the response type for the Query/VotingPowerTable RPC method.
+message QueryVotingPowerTableResponse {
+  repeated VotingPowerTableFpResponse fps = 1;
+}
+
+// VotingPowerTableFpResponse voting power table for each FP response.
+message VotingPowerTableFpResponse {
+  string fp_btc_pk_hex = 1;
+  uint64 voting_power = 2;
 }
