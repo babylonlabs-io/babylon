@@ -18,6 +18,38 @@ import (
 
 var oneYear = time.Duration(minttypes.NanosecondsPerYear)
 
+func TestInflationFuture(t *testing.T) {
+	h := helper.NewHelper(t)
+	app := h.App
+	timeLayout := "2006-01-02T15:04:05.999999999Z"
+
+	ctx := sdk.NewContext(app.CommitMultiStore(), types.Header{}, false, log.NewNopLogger())
+	blkTime226, err := time.Parse(timeLayout, "2025-04-03T06:36:14.175470164Z")
+	require.NoError(t, err)
+
+	app.MintKeeper.SetMinter(ctx, minttypes.Minter{
+		InflationRate:     math.LegacyMustNewDecFromStr("0.08"),
+		AnnualProvisions:  math.LegacyMustNewDecFromStr("800000000000000.000000000000000000"),
+		PreviousBlockTime: &blkTime226,
+		BondDenom:         "ubbn",
+	})
+
+	desired, err := time.Parse(timeLayout, "2025-04-10T10:00:00.205988790Z")
+	require.NoError(t, err)
+
+	minter := app.MintKeeper.GetMinter(ctx)
+
+	toMintCoin, err := minter.CalculateBlockProvision(desired, *minter.PreviousBlockTime)
+	fmt.Printf("toMintCoin: %s", toMintCoin)
+	require.Equal(t, "15642221226400ubbn", toMintCoin.String())
+
+	initialSupply := math.LegacyMustNewDecFromStr("10000000000000000")
+	finalAmt := initialSupply.Add(toMintCoin.Amount.ToLegacyDec())
+
+	// expected amount of coins at "2025-04-10T10:00:00.205988790Z"
+	require.Equal(t, "10015642221226400", finalAmt.String())
+}
+
 func TestInflationRate(t *testing.T) {
 	h := helper.NewHelper(t)
 	app := h.App
