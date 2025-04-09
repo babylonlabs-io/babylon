@@ -57,8 +57,9 @@ func BTCLightClientKeeperWithCustomParams(
 
 	registry := codectypes.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
-
-	testCfg := bbn.ParseBtcOptionsFromConfig(bapp.TmpAppOptions())
+	appOpts, cleanup := bapp.TmpAppOptions()
+	defer cleanup()
+	testCfg := bbn.ParseBtcOptionsFromConfig(appOpts)
 	stServ := runtime.NewKVStoreService(storeKey)
 	k := btclightclientk.NewKeeper(
 		cdc,
