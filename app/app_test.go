@@ -24,13 +24,15 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 	blsSigner := checkpointingtypes.BlsSigner(tbs)
 
 	logger := log.NewTestLogger(t)
+	appOpts, cleanup := TmpAppOptions()
+	defer cleanup()
 
 	app := NewBabylonAppWithCustomOptions(t, false, blsSigner, SetupOptions{
 		Logger:             logger,
 		DB:                 db,
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            TmpAppOptions(),
+		AppOpts:            appOpts,
 	})
 
 	for acc := range BlockedAddresses() {
@@ -56,6 +58,9 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 	require.NoError(t, err)
 
 	logger2 := log.NewTestLogger(t)
+
+	appOpts, cleanup = TmpAppOptions()
+	defer cleanup()
 	// Making a new app object with the db, so that initchain hasn't been called
 	app2 := NewBabylonApp(
 		logger2,
@@ -65,7 +70,7 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		map[int64]bool{},
 		0,
 		&blsSigner,
-		TmpAppOptions(),
+		appOpts,
 		EmptyWasmOpts,
 	)
 	_, err = app2.ExportAppStateAndValidators(false, []string{}, []string{})
@@ -85,13 +90,15 @@ func TestUpgradeStateOnGenesis(t *testing.T) {
 	blsSigner := checkpointingtypes.BlsSigner(tbs)
 
 	logger := log.NewTestLogger(t)
+	appOpts, cleanup := TmpAppOptions()
+	defer cleanup()
 
 	app := NewBabylonAppWithCustomOptions(t, false, blsSigner, SetupOptions{
 		Logger:             logger,
 		DB:                 db,
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            TmpAppOptions(),
+		AppOpts:            appOpts,
 	})
 
 	// make sure the upgrade keeper has version map in state
@@ -109,13 +116,15 @@ func TestStakingRouterDisabled(t *testing.T) {
 	db := dbm.NewMemDB()
 	tbs, _ := testsigner.SetupTestBlsSigner()
 	logger := log.NewTestLogger(t)
+	appOpts, cleanup := TmpAppOptions()
+	defer cleanup()
 
 	app := NewBabylonAppWithCustomOptions(t, false, tbs, SetupOptions{
 		Logger:             logger,
 		DB:                 db,
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            TmpAppOptions(),
+		AppOpts:            appOpts,
 	})
 
 	msgs := []sdk.Msg{
