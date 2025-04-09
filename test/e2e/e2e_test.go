@@ -38,8 +38,3 @@ func TestGovResumeFinality(t *testing.T) {
 func TestBTCStakingPreApprovalTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingPreApprovalTestSuite))
 }
-
-// TestSoftwareUpgradeV1TestnetTestSuite tests software upgrade of v1 testnet end-to-end
-func TestSoftwareUpgradeV1TestnetTestSuite(t *testing.T) {
-	suite.Run(t, new(SoftwareUpgradeV1TestnetTestSuite))
-}
