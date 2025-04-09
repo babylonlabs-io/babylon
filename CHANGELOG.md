@@ -67,6 +67,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 - [#731](https://github.com/babylonlabs-io/babylon/pull/731) chore: fix block timeout in Babylon client
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 - [#793](https://github.com/babylonlabs-io/babylon/pull/793) fix: BLS key will be overwritten when the password is not retrieved
+- [#802](https://github.com/babylonlabs-io/babylon/pull/802) fix: clean up resources allocated by TmpAppOptions
 
 ## v1.0.0
 
