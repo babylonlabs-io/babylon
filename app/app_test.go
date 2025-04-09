@@ -1,4 +1,4 @@
-package app
+package app_test
 
 import (
 	"fmt"
@@ -9,11 +9,34 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	"github.com/stretchr/testify/require"
 
+	babylonApp "github.com/babylonlabs-io/babylon/app"
 	testsigner "github.com/babylonlabs-io/babylon/testutil/signer"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
+	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
+)
+
+var (
+	expectedMaccPerms = map[string][]string{
+		authtypes.FeeCollectorName:     nil, // fee collector account
+		distrtypes.ModuleName:          nil,
+		minttypes.ModuleName:           {authtypes.Minter},
+		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:            {authtypes.Burner},
+		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		ibcfeetypes.ModuleName:         nil,
+		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
+	}
 )
 
 func TestBabylonBlockedAddrs(t *testing.T) {
@@ -24,10 +47,10 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 	blsSigner := checkpointingtypes.BlsSigner(tbs)
 
 	logger := log.NewTestLogger(t)
-	appOpts, cleanup := TmpAppOptions()
+	appOpts, cleanup := babylonApp.TmpAppOptions()
 	defer cleanup()
 
-	app := NewBabylonAppWithCustomOptions(t, false, blsSigner, SetupOptions{
+	app := babylonApp.NewBabylonAppWithCustomOptions(t, false, blsSigner, babylonApp.SetupOptions{
 		Logger:             logger,
 		DB:                 db,
 		InvCheckPeriod:     0,
@@ -35,7 +58,7 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		AppOpts:            appOpts,
 	})
 
-	for acc := range BlockedAddresses() {
+	for acc := range babylonApp.BlockedAddresses() {
 		var addr sdk.AccAddress
 		if modAddr, err := sdk.AccAddressFromBech32(acc); err == nil {
 			addr = modAddr
@@ -59,10 +82,10 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 
 	logger2 := log.NewTestLogger(t)
 
-	appOpts, cleanup = TmpAppOptions()
+	appOpts, cleanup = babylonApp.TmpAppOptions()
 	defer cleanup()
 	// Making a new app object with the db, so that initchain hasn't been called
-	app2 := NewBabylonApp(
+	app2 := babylonApp.NewBabylonApp(
 		logger2,
 		db,
 		nil,
@@ -71,15 +94,15 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		0,
 		&blsSigner,
 		appOpts,
-		EmptyWasmOpts,
+		babylonApp.EmptyWasmOpts,
 	)
 	_, err = app2.ExportAppStateAndValidators(false, []string{}, []string{})
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }
 
 func TestGetMaccPerms(t *testing.T) {
-	dup := GetMaccPerms()
-	require.Equal(t, maccPerms, dup, "duplicated module account permissions differed from actual module account permissions")
+	dup := babylonApp.GetMaccPerms()
+	require.Equal(t, expectedMaccPerms, dup, "duplicated module account permissions differed from actual module account permissions")
 }
 
 func TestUpgradeStateOnGenesis(t *testing.T) {
@@ -90,10 +113,10 @@ func TestUpgradeStateOnGenesis(t *testing.T) {
 	blsSigner := checkpointingtypes.BlsSigner(tbs)
 
 	logger := log.NewTestLogger(t)
-	appOpts, cleanup := TmpAppOptions()
+	appOpts, cleanup := babylonApp.TmpAppOptions()
 	defer cleanup()
 
-	app := NewBabylonAppWithCustomOptions(t, false, blsSigner, SetupOptions{
+	app := babylonApp.NewBabylonAppWithCustomOptions(t, false, blsSigner, babylonApp.SetupOptions{
 		Logger:             logger,
 		DB:                 db,
 		InvCheckPeriod:     0,
@@ -116,10 +139,10 @@ func TestStakingRouterDisabled(t *testing.T) {
 	db := dbm.NewMemDB()
 	tbs, _ := testsigner.SetupTestBlsSigner()
 	logger := log.NewTestLogger(t)
-	appOpts, cleanup := TmpAppOptions()
+	appOpts, cleanup := babylonApp.TmpAppOptions()
 	defer cleanup()
 
-	app := NewBabylonAppWithCustomOptions(t, false, tbs, SetupOptions{
+	app := babylonApp.NewBabylonAppWithCustomOptions(t, false, tbs, babylonApp.SetupOptions{
 		Logger:             logger,
 		DB:                 db,
 		InvCheckPeriod:     0,
