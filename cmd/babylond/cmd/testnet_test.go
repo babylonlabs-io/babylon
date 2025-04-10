@@ -31,13 +31,15 @@ func Test_TestnetCmd(t *testing.T) {
 	tbs, err := signer.SetupTestBlsSigner()
 	require.NoError(t, err)
 	blsSigner := checkpointingtypes.BlsSigner(tbs)
+	appOpts, cleanup := app.TmpAppOptions()
+	defer cleanup()
 
 	bbn := app.NewBabylonAppWithCustomOptions(t, false, blsSigner, app.SetupOptions{
 		Logger:             logger,
 		DB:                 dbm.NewMemDB(),
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            app.TmpAppOptions(),
+		AppOpts:            appOpts,
 	})
 	err = genutiltest.ExecInitCmd(bbn.BasicModuleManager, home, bbn.AppCodec())
 	require.NoError(t, err)
