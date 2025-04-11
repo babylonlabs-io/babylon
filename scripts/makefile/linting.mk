@@ -33,8 +33,7 @@ lint-markdown:
 	@docker run -v $(PWD):/workdir ghcr.io/igorshubovych/markdownlint-cli:latest "**/*.md"
 
 lint-markdown-fix:
-	lint-markdown:
-	@echo "Running Markdown linter..."
+	@echo "Running Markdown linter with auto-fix..."
 	@docker run -v $(PWD):/workdir ghcr.io/igorshubovych/markdownlint-cli:latest "**/*.md" --fix
 
 lint-typo:
