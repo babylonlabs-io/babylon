@@ -47,7 +47,7 @@ linters:
     - sqlclosecheck
     - staticcheck
     # - stylecheck
-    - setenv
+    - tenv
     - testableexamples
     # - tparallel
     - typecheck
