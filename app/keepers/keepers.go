@@ -359,6 +359,7 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
+	fmt.Printf("\n\n\n\nCHECK INVARIANTS %d", invCheckPeriod)
 	ak.CrisisKeeper = crisiskeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[crisistypes.StoreKey]),
