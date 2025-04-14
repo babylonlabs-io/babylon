@@ -38,8 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
 - [#802](https://github.com/babylonlabs-io/babylon/pull/802) fix: clean up resources allocated by TmpAppOptions
-
-## v1.0.1
+- [#805](https://github.com/babylonlabs-io/babylon/pull/805) chore: upgrade the make file: linting
 
 ### Bug fixes
 
