@@ -55,6 +55,7 @@ check of rewards
 - [#643](https://github.com/babylonlabs-io/babylon/pull/643) Fix flaky test `FuzzBTCDelegation`
 - [#696](https://github.com/babylonlabs-io/babylon/pull/696) Restore zoneconcierge queries in query client
 - [#805](https://github.com/babylonlabs-io/babylon/pull/805) chore: upgrade the make file: linting
+- [#821](https://github.com/babylonlabs-io/babylon/pull/821) Add import/export genesis logic in `x/btccheckpoint` module
 
 ### State Machine Breaking
 
