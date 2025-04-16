@@ -373,6 +373,30 @@ func (k Keeper) SigningInfos(ctx context.Context, req *types.QuerySigningInfosRe
 	return &types.QuerySigningInfosResponse{SigningInfos: convertToSigningInfosResponse(signInfos), Pagination: pageRes}, nil
 }
 
+// VotingPowerTable queries the voting power table at some specified babylon block height.
+func (k Keeper) VotingPowerTable(ctx context.Context, req *types.QueryVotingPowerTableRequest) (*types.QueryVotingPowerTableResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+
+	fpSet := k.GetVotingPowerTable(ctx, req.BlockHeight)
+	if fpSet == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to get voting power table at height %d", req.BlockHeight)
+	}
+
+	resp := make([]*types.VotingPowerTableFpResponse, 0, len(fpSet))
+	for fpBtcPkHex, vp := range fpSet {
+		resp = append(resp, &types.VotingPowerTableFpResponse{
+			FpBtcPkHex:  fpBtcPkHex,
+			VotingPower: vp,
+		})
+	}
+
+	return &types.QueryVotingPowerTableResponse{
+		Fps: resp,
+	}, nil
+}
+
 func convertToSigningInfoResponse(info types.FinalityProviderSigningInfo) types.SigningInfoResponse {
 	return types.SigningInfoResponse{
 		FpBtcPkHex:          info.FpBtcPk.MarshalHex(),

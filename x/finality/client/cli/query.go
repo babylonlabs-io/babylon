@@ -41,6 +41,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		CmdListEvidences(),
 		CmdSigningInfo(),
 		CmdAllSigningInfo(),
+		CmdQueryVotingPowerTable(),
 	)
 
 	return cmd
@@ -405,6 +406,36 @@ func CmdAllSigningInfo() *cobra.Command {
 
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "all-signing-info")
+
+	return cmd
+}
+
+func CmdQueryVotingPowerTable() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "vp-table [blk-height]",
+		Short: "Shows information of the BTC voting power table at some specified babylon block height",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+			height, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.VotingPowerTable(cmd.Context(), &types.QueryVotingPowerTableRequest{
+				BlockHeight: height,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }

@@ -10,6 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
@@ -632,6 +634,53 @@ func FuzzSigningInfo(f *testing.F) {
 			require.Equal(t, fpSigningInfos[si.FpBtcPkHex].MissedBlocksCounter, si.MissedBlocksCounter)
 			require.Equal(t, fpSigningInfos[si.FpBtcPkHex].StartHeight, si.StartHeight)
 		}
+	})
+}
+
+func FuzzQueryVotingPowerTable(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
+
+		numFps := datagen.RandomInt(r, 16) + 5
+
+		blkHeight := datagen.RandomInt(r, 150000) + 5
+		vpByFp := make(map[string]uint64, numFps)
+		for i := 0; i < int(numFps); i++ {
+			randFpPk, err := datagen.GenRandomBIP340PubKey(r)
+			require.NoError(t, err)
+
+			fpVp := datagen.RandomInt(r, 500000)
+
+			keeper.SetVotingPower(ctx, *randFpPk, blkHeight, fpVp)
+			vpByFp[randFpPk.MarshalHex()] = fpVp
+		}
+
+		resp, err := keeper.VotingPowerTable(ctx, &types.QueryVotingPowerTableRequest{
+			BlockHeight: blkHeight,
+		})
+		require.NoError(t, err)
+
+		for _, fp := range resp.Fps {
+			vp, ok := vpByFp[fp.FpBtcPkHex]
+			require.True(t, ok)
+			require.Equal(t, vp, fp.VotingPower)
+		}
+
+		badHeight := blkHeight + 1
+		if r.Int31n(10) > 5 {
+			badHeight = blkHeight - 1
+		}
+
+		resp, err = keeper.VotingPowerTable(ctx, &types.QueryVotingPowerTableRequest{
+			BlockHeight: badHeight,
+		})
+		require.Nil(t, resp)
+		require.EqualError(t, err, status.Errorf(codes.InvalidArgument, "failed to get voting power table at height %d", badHeight).Error())
 	})
 }
 

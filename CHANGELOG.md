@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#800](https://github.com/babylonlabs-io/babylon/pull/800) Add query `VotingPowerTable`.
 - [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.
 - [#623](https://github.com/babylonlabs-io/babylon/pull/623) Add check for empty string in `bls` loading.
 - [#536](https://github.com/babylonlabs-io/babylon/pull/536) Improve protobuf vs. json error msgs / types
