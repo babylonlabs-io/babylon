@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sort"
 
+	"github.com/babylonlabs-io/babylon/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -162,18 +163,9 @@ func (bdt BTCDelegatorToFpEntry) Validate() error {
 }
 
 func validateWithdrawAddresses(entries []WithdrawAddressEntry) error {
-	addrMap := make(map[string]bool) // check for duplicate entries
-	for _, e := range entries {
-		if _, exists := addrMap[e.DelegatorAddress]; exists {
-			return fmt.Errorf("duplicate delegator address: %s", e.DelegatorAddress)
-		}
-		addrMap[e.DelegatorAddress] = true
-		err := e.Validate()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return types.ValidateEntries(entries, func(e WithdrawAddressEntry) string {
+		return e.DelegatorAddress
+	})
 }
 
 func validateAddrStr(addr string) error {
@@ -187,18 +179,9 @@ func validateAddrStr(addr string) error {
 }
 
 func validateBTCStakingGauges(entries []BTCStakingGaugeEntry) error {
-	heightMap := make(map[uint64]bool) // To check for duplicate heights
-	for _, entry := range entries {
-		if _, exists := heightMap[entry.Height]; exists {
-			return fmt.Errorf("duplicate BTC staking gauge for height: %d", entry.Height)
-		}
-		heightMap[entry.Height] = true
-
-		if err := entry.Validate(); err != nil {
-			return err
-		}
-	}
-	return nil
+	return types.ValidateEntries(entries, func(e BTCStakingGaugeEntry) uint64 {
+		return e.Height
+	})
 }
 
 func validateRewardGauges(entries []RewardGaugeEntry) error {
@@ -238,17 +221,9 @@ func validateMsgHashes(hashes []string) error {
 }
 
 func validateFPCurrentRewards(entries []FinalityProviderCurrentRewardsEntry) error {
-	addrMap := make(map[string]bool) // To check for duplicate hashes
-	for _, e := range entries {
-		if _, exists := addrMap[e.Address]; exists {
-			return fmt.Errorf("duplicate current rewards entry for address: %s", e.Address)
-		}
-		addrMap[e.Address] = true
-		if err := e.Rewards.Validate(); err != nil {
-			return err
-		}
-	}
-	return nil
+	return types.ValidateEntries(entries, func(e FinalityProviderCurrentRewardsEntry) string {
+		return e.Address
+	})
 }
 
 func validateFPHistoricalRewards(entries []FinalityProviderHistoricalRewardsEntry) error {

@@ -14,13 +14,12 @@ message GenesisState {
   // the last finalized epoch number
   uint64 last_finalized_epoch_number = 2;
   // Epochs data for each stored epoch
-  repeated EpochEntry epochs = 3;
+  repeated EpochEntry epochs = 3 [ (gogoproto.nullable) = false ];
   // Submission data for each stored submission key
-  repeated SubmissionEntry submissions = 4;
+  repeated SubmissionEntry submissions = 4  [(gogoproto.nullable) = false ];
 }
 
-// EpochEntry represents data for an epoch at a specific
-// height.
+// EpochEntry represents data for a specific epoch number.
 message EpochEntry {
   // Epoch number
   uint64 epoch_number = 1;
@@ -28,7 +27,7 @@ message EpochEntry {
   EpochData data = 2;
 }
 
-// SubmissionEntry represents data for a submission entry for
+// SubmissionEntry represents data for a submission for
 // a specific submission key.
 message SubmissionEntry {
   // Epoch number
