@@ -2,6 +2,7 @@ package types
 
 import (
 	fmt "fmt"
+	"sort"
 
 	"github.com/babylonlabs-io/babylon/types"
 )
@@ -60,4 +61,15 @@ func (s SubmissionEntry) Validate() error {
 		return err
 	}
 	return s.Data.Validate()
+}
+
+// Helper function to sort slices to get a deterministic
+// result on the tests
+func SortData(gs *GenesisState) {
+	sort.Slice(gs.Epochs, func(i, j int) bool {
+		return gs.Epochs[i].EpochNumber < gs.Epochs[j].EpochNumber
+	})
+	sort.Slice(gs.Submissions, func(i, j int) bool {
+		return gs.Submissions[i].SubmissionKey.Key[0].Hash.String() < gs.Submissions[j].SubmissionKey.Key[0].Hash.String()
+	})
 }
