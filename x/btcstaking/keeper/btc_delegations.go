@@ -49,7 +49,7 @@ func (k Keeper) AddBTCDelegation(
 	}
 
 	// save this BTC delegation
-	k.setBTCDelegation(ctx, btcDel)
+	k.SetBTCDelegation(ctx, btcDel)
 
 	if err := ctx.EventManager().EmitTypedEvents(types.NewBtcDelCreationEvent(
 		btcDel,
@@ -106,7 +106,8 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 		parsedUnbondingSlashingAdaptorSignatures,
 	)
 
-	k.setBTCDelegation(ctx, btcDel)
+	// set BTC delegation back to KV store
+	k.SetBTCDelegation(ctx, btcDel)
 
 	if err := ctx.EventManager().EmitTypedEvent(types.NewCovenantSignatureReceivedEvent(
 		btcDel,
@@ -160,7 +161,7 @@ func (k Keeper) btcUndelegate(
 	u *types.DelegatorUnbondingInfo,
 ) {
 	btcDel.BtcUndelegation.DelegatorUnbondingInfo = u
-	k.setBTCDelegation(ctx, btcDel)
+	k.SetBTCDelegation(ctx, btcDel)
 
 	if !btcDel.HasInclusionProof() {
 		return
@@ -170,6 +171,8 @@ func (k Keeper) btcUndelegate(
 	event := &types.EventBTCDelegationStateUpdate{
 		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
 		NewState:      types.BTCDelegationStatus_UNBONDED,
+		// TODO: check the possibility to add the BTC block height of inclusion of the early unbond ot the event
+		// so it is possible to verify if this unbonded transaction was rollback in a BTC reorg
 	}
 
 	// record event that the BTC delegation becomes unbonded at this height
@@ -178,11 +181,17 @@ func (k Keeper) btcUndelegate(
 	k.addPowerDistUpdateEvent(ctx, btcTip.Height, unbondedEvent)
 }
 
-func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegation) {
+func (k Keeper) SetBTCDelegation(ctx context.Context, btcDel *types.BTCDelegation) {
 	store := k.btcDelegationStore(ctx)
 	stakingTxHash := btcDel.MustGetStakingTxHash()
 	btcDelBytes := k.cdc.MustMarshal(btcDel)
 	store.Set(stakingTxHash[:], btcDelBytes)
+}
+
+func (k Keeper) DeleteBTCDelegation(ctx context.Context, btcDel *types.BTCDelegation) {
+	store := k.btcDelegationStore(ctx)
+	stakingTxHash := btcDel.MustGetStakingTxHash()
+	store.Delete(stakingTxHash[:])
 }
 
 // GetBTCDelegation gets the BTC delegation with a given staking tx hash

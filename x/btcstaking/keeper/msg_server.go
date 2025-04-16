@@ -357,7 +357,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	// 7. set start height and end height and save it to db
 	btcDel.StartHeight = timeInfo.StartHeight
 	btcDel.EndHeight = timeInfo.EndHeight
-	ms.setBTCDelegation(ctx, btcDel)
+	ms.SetBTCDelegation(ctx, btcDel)
 
 	// 8. emit events
 	stakingTxHash := btcDel.MustGetStakingTxHash()
@@ -400,7 +400,8 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 
 func (ms msgServer) getBTCDelWithParams(
 	ctx context.Context,
-	stakingTxHash string) (*types.BTCDelegation, *types.Params, error) {
+	stakingTxHash string,
+) (*types.BTCDelegation, *types.Params, error) {
 	btcDel, err := ms.GetBTCDelegation(ctx, stakingTxHash)
 	if err != nil {
 		return nil, nil, err

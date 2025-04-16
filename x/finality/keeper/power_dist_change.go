@@ -67,14 +67,19 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *ftypes.Vot
 	}
 
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	k.RecordVpAndDistCacheForHeight(ctx, newDc, babylonTipHeight)
+}
 
+// RecordVpAndDistCacheForHeight updates the voting power of Finality providers for that height and updates the voting
+// power distribution cache
+func (k Keeper) RecordVpAndDistCacheForHeight(ctx context.Context, newDc *ftypes.VotingPowerDistCache, bbnHeight uint64) {
 	// label fps with whether it has timestamped pub rand so that these fps
 	// will not be assigned voting power
 	for _, fpDistInfo := range newDc.FinalityProviders {
 		// TODO calling HasTimestampedPubRand potentially iterates
 		// all the pub rand committed by the fpDistInfo, which might slow down
 		// the process, need optimization
-		fpDistInfo.IsTimestamped = k.HasTimestampedPubRand(ctx, fpDistInfo.BtcPk, babylonTipHeight)
+		fpDistInfo.IsTimestamped = k.HasTimestampedPubRand(ctx, fpDistInfo.BtcPk, bbnHeight)
 	}
 
 	// apply the finality provider voting power dist info to the new cache
@@ -86,11 +91,11 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *ftypes.Vot
 	// set voting power table for each active finality providers at this height
 	for i := uint32(0); i < newDc.NumActiveFps; i++ {
 		fp := newDc.FinalityProviders[i]
-		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalBondedSat)
+		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), bbnHeight, fp.TotalBondedSat)
 	}
 
 	// set the voting power distribution cache of the current height
-	k.SetVotingPowerDistCache(ctx, babylonTipHeight, newDc)
+	k.SetVotingPowerDistCache(ctx, bbnHeight, newDc)
 }
 
 // handleFPStateUpdates emits events and triggers hooks for finality providers with state updates
@@ -221,7 +226,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 
 				// FP could be already slashed when it is being activated, but it is okay
 				// since slashed finality providers do not earn rewards
-				k.processRewardTracker(ctx, fpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
+				k.ProcessRewardTracker(ctx, fpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
 					k.MustProcessBtcDelegationActivated(ctx, fp, del, sats)
 				})
 			case types.BTCDelegationStatus_UNBONDED:
@@ -406,7 +411,7 @@ func (k Keeper) processPowerDistUpdateEventUnbond(
 		fpBTCPKHex := fpBTCPK.MarshalHex()
 		unbondedSatsByFpBtcPk[fpBTCPKHex] = append(unbondedSatsByFpBtcPk[fpBTCPKHex], btcDel.TotalSat)
 	}
-	k.processRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
+	k.ProcessRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
 		k.MustProcessBtcDelegationUnbonded(ctx, fp, del, sats)
 	})
 }
@@ -441,10 +446,14 @@ func (k Keeper) votingPowerDistCacheStore(ctx context.Context) prefix.Store {
 	return prefix.NewStore(storeAdapter, ftypes.VotingPowerDistCacheKey)
 }
 
-// processRewardTracker loads the fps from inside the btc delegation
-// with cache and executes the function by passing the fp, delegator address
+// ProcessRewardTracker loads Babylon FPs from the given BTC delegation
+// and executes the given function over each Babylon FP, delegator address
 // and satoshi amounts.
-func (k Keeper) processRewardTracker(
+// NOTE:
+//   - The function will only be executed over Babylon FPs but not consumer FPs
+//   - The function makes uses of the fpByBtcPkHex cache, and the cache only
+//     contains Babylon FPs but not consumer FPs
+func (k Keeper) ProcessRewardTracker(
 	ctx context.Context,
 	fpByBtcPkHex map[string]*types.FinalityProvider,
 	btcDel *types.BTCDelegation,

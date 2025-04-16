@@ -5,6 +5,7 @@ package app
 import (
 	"github.com/babylonlabs-io/babylon/app/upgrades"
 	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
+	v1reorg "github.com/babylonlabs-io/babylon/app/upgrades/v1-fork-btc-reorg-k/testnet"
 	"github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
 	v1rc5 "github.com/babylonlabs-io/babylon/app/upgrades/v1rc5/testnet"
 	v1rc8 "github.com/babylonlabs-io/babylon/app/upgrades/v1rc8/testnet"
@@ -27,5 +28,8 @@ func init() {
 		v1rc5.CreateUpgrade(),
 		v1rc8.CreateUpgrade(),
 		v1rc9.CreateUpgrade(),
+	}
+	Forks = []upgrades.Fork{
+		v1reorg.CreateFork(),
 	}
 }
