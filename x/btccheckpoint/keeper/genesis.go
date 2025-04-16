@@ -76,7 +76,6 @@ func (k Keeper) epochs(ctx context.Context) ([]types.EpochEntry, error) {
 // This function has high resource consumption and should be only used on export genesis.
 func (k Keeper) submissions(ctx context.Context) ([]types.SubmissionEntry, error) {
 	entries := make([]types.SubmissionEntry, 0)
-
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	submissionsDataStore := prefix.NewStore(storeAdapter, types.SubmisionKeyPrefix)
 
