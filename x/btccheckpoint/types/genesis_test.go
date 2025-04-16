@@ -12,36 +12,42 @@ import (
 )
 
 func TestGenesisState_Validate(t *testing.T) {
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-	defaultParams := types.DefaultParams()
+	var (
+		r             = rand.New(rand.NewSource(time.Now().Unix()))
+		defaultParams = types.DefaultParams()
+		entriesCount  = 3
+		epochs        = make([]types.EpochEntry, 0, entriesCount)
+		submissions   = make([]types.SubmissionEntry, 0, entriesCount)
+	)
 
-	header := datagen.GenRandomBTCHeaderBytes(r, nil, nil)
-
-	var epochNum uint64 = 1
-
-	validTxKey := &types.TransactionKey{Hash: header.Hash()}
-	validEpoch := types.EpochEntry{
-		EpochNumber: epochNum,
-		Data: &types.EpochData{
-			Keys: []*types.SubmissionKey{{Key: []*types.TransactionKey{validTxKey}}},
-		},
-	}
-
-	validSubmission := types.SubmissionEntry{
-		SubmissionKey: &types.SubmissionKey{
-			Key: []*types.TransactionKey{validTxKey},
-		},
-		Data: &types.SubmissionData{
-			VigilanteAddresses: &types.CheckpointAddresses{
-				Submitter: make([]byte, 20),
-				Reporter:  make([]byte, 20),
+	for i := range entriesCount {
+		epochNum := uint64(i + 1)
+		header := datagen.GenRandomBTCHeaderBytes(r, nil, nil)
+		validTxKey := &types.TransactionKey{Hash: header.Hash()}
+		validEpoch := types.EpochEntry{
+			EpochNumber: epochNum,
+			Data: &types.EpochData{
+				Keys: []*types.SubmissionKey{{Key: []*types.TransactionKey{validTxKey}}},
 			},
-			TxsInfo: []*types.TransactionInfo{{
-				Key:         validTxKey,
-				Transaction: []byte{0x2},
-				Proof:       []byte{0x3},
-			}},
-		},
+		}
+		epochs = append(epochs, validEpoch)
+		validSubmission := types.SubmissionEntry{
+			SubmissionKey: &types.SubmissionKey{
+				Key: []*types.TransactionKey{validTxKey},
+			},
+			Data: &types.SubmissionData{
+				VigilanteAddresses: &types.CheckpointAddresses{
+					Submitter: make([]byte, 20),
+					Reporter:  make([]byte, 20),
+				},
+				TxsInfo: []*types.TransactionInfo{{
+					Key:         validTxKey,
+					Transaction: []byte{0x2},
+					Proof:       []byte{0x3},
+				}},
+			},
+		}
+		submissions = append(submissions, validSubmission)
 	}
 
 	tests := []struct {
@@ -58,14 +64,17 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
-				Params: defaultParams,
+				Params:                   defaultParams,
+				LastFinalizedEpochNumber: uint64(entriesCount - 1),
+				Epochs:                   epochs,
+				Submissions:              submissions,
 			},
 			valid: true,
 		},
 		{
 			desc: "duplicate epochs",
 			genState: &types.GenesisState{
-				Epochs: []types.EpochEntry{validEpoch, validEpoch}, // duplicate
+				Epochs: []types.EpochEntry{epochs[0], epochs[0]},
 				Params: defaultParams,
 			},
 			valid:  false,
@@ -74,7 +83,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "duplicate submissions",
 			genState: &types.GenesisState{
-				Submissions: []types.SubmissionEntry{validSubmission, validSubmission}, // duplicate
+				Submissions: []types.SubmissionEntry{submissions[0], submissions[0]},
 				Params:      defaultParams,
 			},
 			valid:  false,
@@ -84,12 +93,12 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "last finalized epoch greater than highest epoch",
 			genState: &types.GenesisState{
 				LastFinalizedEpochNumber: 2,
-				Epochs:                   []types.EpochEntry{validEpoch}, // max is 1
+				Epochs:                   []types.EpochEntry{epochs[0]}, // max is 1
 				Params:                   defaultParams,
 			},
 			valid: false,
 			errMsg: fmt.Sprintf("last finalized epoch number (%d) cannot be greater than the highest epoch number (%d)",
-				2, epochNum),
+				2, 1),
 		},
 	}
 
