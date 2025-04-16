@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 
 include scripts/makefile/linting.mk
+include scripts/makefile/gosec.mk
 
 .DEFAULT_GOAL := help
 help:
@@ -388,19 +389,6 @@ test-sim-profile:
 benchmark:
 	@go test -mod=readonly -bench=. $(PACKAGES_NOSIMULATION)
 .PHONY: benchmark
-
-
-###############################################################################
-###                                Gosec                                    ###
-###############################################################################
-
-gosec: ## Run security checks
-	$(DOCKER) run --rm -it -w /$(PROJECT_NAME)/ -v $(CURDIR):/$(PROJECT_NAME) securego/gosec -exclude-generated -exclude-dir=/$(PROJECT_NAME)/testutil -exclude-dir=/$(PROJECT_NAME)/test -conf /$(PROJECT_NAME)/gosec.json /$(PROJECT_NAME)/...
-
-gosec-local: ## Run local security checkss
-	gosec -exclude-generated -exclude-dir=$(CURDIR)/testutil -exclude-dir=$(CURDIR)/test -conf $(CURDIR)/gosec.json $(CURDIR)/...
-
-.PHONY: gosec gosec-local
 
 ###############################################################################
 ###                                Protobuf                                 ###
