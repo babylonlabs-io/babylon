@@ -56,6 +56,7 @@ check of rewards
 - [#696](https://github.com/babylonlabs-io/babylon/pull/696) Restore zoneconcierge queries in query client
 - [#805](https://github.com/babylonlabs-io/babylon/pull/805) chore: upgrade the make file: linting
 - [#816](https://github.com/babylonlabs-io/babylon/pull/816) chore: upgrade the make file: gosec
+- [#822](https://github.com/babylonlabs-io/babylon/pull/822) chore: upgrade the make file: protobuf
 
 ### State Machine Breaking
 
