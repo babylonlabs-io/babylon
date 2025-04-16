@@ -409,7 +409,8 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 
 func (ms msgServer) getBTCDelWithParams(
 	ctx context.Context,
-	stakingTxHash string) (*types.BTCDelegation, *types.Params, error) {
+	stakingTxHash string,
+) (*types.BTCDelegation, *types.Params, error) {
 	btcDel, err := ms.GetBTCDelegation(ctx, stakingTxHash)
 	if err != nil {
 		return nil, nil, err
