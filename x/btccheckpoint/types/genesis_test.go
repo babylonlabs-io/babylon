@@ -22,12 +22,12 @@ func TestGenesisState_Validate(t *testing.T) {
 
 	for i := range entriesCount {
 		epochNum := uint64(i + 1)
-		header := datagen.GenRandomBTCHeaderBytes(r, nil, nil)
-		validTxKey := &types.TransactionKey{Hash: header.Hash()}
+		validTxKey := datagen.RandomTxKey(r)
 		validEpoch := types.EpochEntry{
 			EpochNumber: epochNum,
 			Data: &types.EpochData{
-				Keys: []*types.SubmissionKey{{Key: []*types.TransactionKey{validTxKey}}},
+				Status: datagen.RandomBtcStatus(r),
+				Keys:   []*types.SubmissionKey{{Key: []*types.TransactionKey{validTxKey}}},
 			},
 		}
 		epochs = append(epochs, validEpoch)
@@ -37,13 +37,13 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			Data: &types.SubmissionData{
 				VigilanteAddresses: &types.CheckpointAddresses{
-					Submitter: make([]byte, 20),
-					Reporter:  make([]byte, 20),
+					Submitter: datagen.GenRandomAddress().Bytes(),
+					Reporter:  datagen.GenRandomAddress().Bytes(),
 				},
 				TxsInfo: []*types.TransactionInfo{{
 					Key:         validTxKey,
-					Transaction: []byte{0x2},
-					Proof:       []byte{0x3},
+					Transaction: datagen.GenRandomByteArray(r, 32),
+					Proof:       datagen.GenRandomByteArray(r, 32),
 				}},
 			},
 		}
