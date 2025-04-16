@@ -11,7 +11,6 @@ import (
 
 // InitGenesis performs stateful validations and initializes the keeper state from a provided initial genesis state.
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
-
 	k.setLastFinalizedEpochNumber(ctx, gs.LastFinalizedEpochNumber)
 
 	for _, e := range gs.Epochs {

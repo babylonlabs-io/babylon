@@ -83,7 +83,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		powLimit = datagen.RandomMathInt(r, 1000).BigInt()
 		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
 		k, ctx   = keepertest.NewBTCChkptKeeperWithStoreKeys(t, storeKey, nil, nil, nil, nil, powLimit)
-		l        = int(math.Abs(float64(r.Int() % 50))) // cap it to 50 entries
+		l        = int(math.Abs(float64(r.Int()%50 + 1))) // cap it to 50 entries
 		e        = make([]types.EpochEntry, l)
 		s        = make([]types.SubmissionEntry, l)
 	)
