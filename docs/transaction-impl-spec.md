@@ -3,7 +3,7 @@
 ## Introduction
 
 A lock-only network involves users locking their Bitcoin using the self-custodial
-Bitcoin Staking script without a Babylon chain operating.
+Bitcoin Staking script without a Babylon Genesis chain operating.
 In this document, we precisely define how one can construct
 the Bitcoin transactions specified by the Bitcoin Staking protocol.
 

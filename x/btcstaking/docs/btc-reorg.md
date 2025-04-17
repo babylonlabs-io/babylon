@@ -9,7 +9,7 @@ If for some unexpected reason there is a reorg in the bitcoin blockchain
 larger than the `BtcConfirmationDepth`, the chain should halt and revoke all
 the BTC delegations that were recorded until the first reorg block height.
 
-By example, if BTC is in block height 150 and Babylon chain has a
+By example, if BTC is in block height 150 and Babylon Genesis chain has a
 `BtcConfirmationDepth` of 10 and it is submitted a valid BTC reorg of 15 blocks
 that rollbacks BTC to block height 136, every BTC delegation that was included
 in BTC block 136 or higher should be deleted as the inclusion proof will
@@ -54,7 +54,7 @@ proof sent.
 
 If there was a inclusion proof, verify if the proof is one from the BTC block
 heights which was rollbacked, if it is from an BTC block that was not reorg,
-but it was only later included in the Babylon chain, all good and there is
+but it was only later included in the Babylon Genesis chain, all good and there is
 nothing to do. Now, if it was rollbacked this BTC staking transaction needs to
 be removed from the following modules state `x/btcstaking`, `x/finality`,
 `x/incentives`.
@@ -130,11 +130,11 @@ with similar steps took at [3.1](#31-msgcreatebtcdelegation).
 #### 3.4 `MsgInsertHeaders`
 
 The module `x/btclightclient` automatically handles the rollback of blocks, the issue
-relies when the Babylon chain was halted while Bitcoin was producing new blocks, the
-new blocks should have it's headers collected and included into the Babylon chain
+relies when the Babylon Genesis chain was halted while Bitcoin was producing new blocks, the
+new blocks should have it's headers collected and included into the Babylon Genesis chain
 state when it is being recovered. If the headers are not insterted, an attacker
-could mine just 1-2 blocks on the forked Bitcoin chain and cause Babylon chain
-to execute fake delegations, right after Babylon chain restarts. To avoid this,
+could mine just 1-2 blocks on the forked Bitcoin chain and cause Babylon Genesis chain
+to execute fake delegations, right after Babylon Genesis chain restarts. To avoid this,
 Babylon should insert headers of the created Bitcoind blocks while it was
 down during the recovery procedure.
 

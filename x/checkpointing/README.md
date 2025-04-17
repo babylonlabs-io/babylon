@@ -31,7 +31,7 @@ scheme, around which this module provides the following functionalities:
 
 ## Concepts
 
-Babylon checkpoints record the state of the Babylon chain at
+Babylon checkpoints record the state of the Babylon Genesis chain at
 the end of a particular [epoch](../../x/epoching/README.md).
 They are created with the intention to be included in
 the Bitcoin ledger to protect Babylon and
@@ -39,7 +39,7 @@ the chains that connect with it against long range attacks.
 The confirmation of a Babylon checkpoint on Bitcoin
 serves as an immutable record of Babylon's state
 up to the checkpointed epoch and
-determines the canonical branch of the Babylon chain.
+determines the canonical branch of the Babylon Genesis chain.
 
 At their core, checkpoints contain a unique identifier
 of the state they commit to and BLS signatures
@@ -74,7 +74,7 @@ which is responsible for monitoring their confirmation status and
 reporting it to the Checkpointing module.
 The observation of two conflicting checkpoints with a valid BLS multi-signature
 means that a fork exists and an alarm will be raised.
-In this case, the Babylon chain's canonical chain is represented by
+In this case, the Babylon Genesis chain's canonical chain is represented by
 the state of the checkpoint that has been included first in the Bitcoin ledger.
 
 ## States

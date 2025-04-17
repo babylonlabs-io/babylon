@@ -3,16 +3,16 @@
 ## Introduction
 
 Security researchers are essential in identifying vulnerabilities that may impact the Babylon ecosystem.
-If you have discovered a security vulnerability in the Babylon chain or any repository managed by Babylon,
+If you have discovered a security vulnerability in the Babylon Genesis chain or any repository managed by Babylon,
 we encourage you to notify us using one of the methods outlined below.
 
 ### Guidelines for Responsible Vulnerability Testing and Reporting
 
 1. **Refrain from testing vulnerabilities on our publicly accessible environments**, including but not limited to:
-  - Babylon mainnet.
-  - Babylon frontend.
-  - Babylon public testnets.
-  - Babylon testnet frontend.
+  - Babylon Genesis mainnet.
+  - Babylon Staking frontend.
+  - Babylon Genesis public testnets.
+  - Babylon Staking testnet frontend.
 2. **Avoid reporting security vulnerabilities through public channels, including GitHub issues.**
 
 ## Reporting Security Issues
