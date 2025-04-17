@@ -67,14 +67,19 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *ftypes.Vot
 	}
 
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	k.RecordVpAndDistCacheForHeight(ctx, newDc, babylonTipHeight)
+}
 
+// RecordVpAndDistCacheForHeight updates the voting power of Finality providers for that height and updates the voting
+// power distribution cache
+func (k Keeper) RecordVpAndDistCacheForHeight(ctx context.Context, newDc *ftypes.VotingPowerDistCache, bbnHeight uint64) {
 	// label fps with whether it has timestamped pub rand so that these fps
 	// will not be assigned voting power
 	for _, fpDistInfo := range newDc.FinalityProviders {
 		// TODO calling HasTimestampedPubRand potentially iterates
 		// all the pub rand committed by the fpDistInfo, which might slow down
 		// the process, need optimization
-		fpDistInfo.IsTimestamped = k.HasTimestampedPubRand(ctx, fpDistInfo.BtcPk, babylonTipHeight)
+		fpDistInfo.IsTimestamped = k.HasTimestampedPubRand(ctx, fpDistInfo.BtcPk, bbnHeight)
 	}
 
 	// apply the finality provider voting power dist info to the new cache
@@ -86,11 +91,11 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *ftypes.Vot
 	// set voting power table for each active finality providers at this height
 	for i := uint32(0); i < newDc.NumActiveFps; i++ {
 		fp := newDc.FinalityProviders[i]
-		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalBondedSat)
+		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), bbnHeight, fp.TotalBondedSat)
 	}
 
 	// set the voting power distribution cache of the current height
-	k.SetVotingPowerDistCache(ctx, babylonTipHeight, newDc)
+	k.SetVotingPowerDistCache(ctx, bbnHeight, newDc)
 }
 
 // handleFPStateUpdates emits events and triggers hooks for finality providers with state updates

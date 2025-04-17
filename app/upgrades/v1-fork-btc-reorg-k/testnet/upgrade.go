@@ -11,6 +11,7 @@ import (
 	bskeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	fkeeper "github.com/babylonlabs-io/babylon/x/finality/keeper"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -58,6 +59,8 @@ func CreateUpgradeHandler() upgrades.UpgradeHandlerCreator {
 
 // RollbackBtcStkTxs rollbacks all the BTC staking transactions that were included during the blocks
 // which were rollbacked in the BTC reorg.
+// Note: the order of the endblock which panic matters, the halt happened at the btcstaking
+// so finality and incentive had not run their end blockers in the panic block.
 func RollbackBtcStkTxs(
 	ctx context.Context,
 	btcStkK *bskeeper.Keeper,
@@ -68,10 +71,15 @@ func RollbackBtcStkTxs(
 ) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
+	largerBtcReorg := btcStkK.GetLargestBtcReorg(ctx)
+	btcBlockHeightRollback := largerBtcReorg.RollbackFrom.Height
 	paramsByVs := btcStkK.GetAllParamsByVersion(ctx)
+	// the BTC reorg was executed in btclightclient and panic in btcstaking,
+	// which means that the tip height is currently the latest BTC block after the whole reorg
 	btcTip := btcLgtK.GetTipInfo(ctx)
-
 	bbnHeight := uint64(sdkCtx.HeaderInfo().Height)
+
+	newDc := ftypes.NewVotingPowerDistCache()
 	lastVpDstCache := finalK.GetVotingPowerDistCache(ctx, bbnHeight-1)
 	satsToUnbondByFpBtcPk := make(map[string]uint64, 0)
 
@@ -90,10 +98,11 @@ func RollbackBtcStkTxs(
 			return fmt.Errorf("failed to get the params version %d for BTC delegation to staking tx: %s", btcDel.ParamsVersion, stkTx.String())
 		}
 
-		// At this point each staking transaction is considered that the inclusion proof was made in a BTC block that was rolled back
-		// or the
+		// At this point each staking transaction is considered that the inclusion proof or any BTC action was made in a BTC block that
+		// was rolled back, so there is a need to revert the state that was modified.
 		btcStatus := btcDel.GetStatus(btcTip.Height, p.CovenantQuorum)
 		switch btcStatus {
+		// for pending, expired and verified there is no need to update anything
 		case bstypes.BTCDelegationStatus_PENDING:
 		case bstypes.BTCDelegationStatus_EXPIRED:
 		case bstypes.BTCDelegationStatus_VERIFIED:
@@ -120,18 +129,31 @@ func RollbackBtcStkTxs(
 
 		}
 
-		for i := range lastVpDstCache.FinalityProviders {
-			// create a copy of the finality provider
-			fp := *lastVpDstCache.FinalityProviders[i]
-			fpBTCPKHex := fp.BtcPk.MarshalHex()
+		// TODO: handle BTC delegation for consumers rollback
+	}
 
-			satsToUnbond, ok := satsToUnbondByFpBtcPk[fpBTCPKHex]
-			if !ok {
-				continue
-			}
+	for i := range lastVpDstCache.FinalityProviders {
+		// create a copy of the finality provider
+		fp := *lastVpDstCache.FinalityProviders[i]
+		fpBTCPKHex := fp.BtcPk.MarshalHex()
+
+		satsToUnbond, ok := satsToUnbondByFpBtcPk[fpBTCPKHex]
+		if ok {
 			fp.RemoveBondedSats(satsToUnbond)
 		}
-		// TODO: handle BTC delegation for consumers rollback
+
+		// add this finality provider to the new cache if it has voting power
+		if fp.TotalBondedSat > 0 {
+			newDc.AddFinalityProviderDistInfo(&fp)
+		}
+	}
+
+	finalK.RecordVpAndDistCacheForHeight(ctx, newDc, bbnHeight)
+
+	// check out each BTC VP distribution event in which was generated in some BTC staking delegation
+	// that had action in the reorg blocks
+	for btcHeight := btcBlockHeightRollback; btcHeight <= largerBtcReorg.RollbackFrom.Height; btcHeight++ {
+		btcStkK.ClearPowerDistUpdateEvents(ctx, btcHeight)
 	}
 
 	return nil
