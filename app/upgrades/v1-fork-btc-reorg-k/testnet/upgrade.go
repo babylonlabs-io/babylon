@@ -7,6 +7,7 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/babylonlabs-io/babylon/app/keepers"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
+	bbn "github.com/babylonlabs-io/babylon/types"
 	bclkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	bskeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
@@ -67,7 +68,8 @@ func RollbackBtcStkTxs(
 	btcLgtK *bclkeeper.Keeper,
 	finalK *fkeeper.Keeper,
 
-	stkTxs ...chainhash.Hash,
+	stkTxs []chainhash.Hash,
+	rollbackUnbondTxs []chainhash.Hash,
 ) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
@@ -82,8 +84,15 @@ func RollbackBtcStkTxs(
 	newDc := ftypes.NewVotingPowerDistCache()
 	lastVpDstCache := finalK.GetVotingPowerDistCache(ctx, bbnHeight-1)
 	satsToUnbondByFpBtcPk := make(map[string]uint64, 0)
+	mapStkTxs := map[string]struct{}{}
+	mapRollbackUnbondTxs := map[string]struct{}{}
+
+	for _, ubdTx := range rollbackUnbondTxs {
+		mapRollbackUnbondTxs[ubdTx.String()] = struct{}{}
+	}
 
 	for _, stkTx := range stkTxs {
+		mapStkTxs[stkTx.String()] = struct{}{}
 		btcDel, err := btcStkK.GetBTCDelegation(ctx, stkTx.String())
 		if err != nil {
 			return fmt.Errorf("failed to find BTC delegation to staking tx: %s - %w", stkTx.String(), err)
@@ -109,7 +118,8 @@ func RollbackBtcStkTxs(
 			continue
 		case bstypes.BTCDelegationStatus_ACTIVE:
 			// Decrease the total VP from the voting power table for that FP
-			// how do we know which babylon height this btc delegation was activated?
+			// how do we know which babylon height this btc delegation was
+			// activated (Voting Power was included in the VP distribution cache)?
 			// since there is no clear way how to get this information, just update the
 			// latest voting power table stored in the finality
 			for _, fpBTCPK := range btcDel.FpBtcPkList {
@@ -125,8 +135,23 @@ func RollbackBtcStkTxs(
 
 			continue
 		case bstypes.BTCDelegationStatus_UNBONDED:
-			continue
+			// how to check if the unbonded BTC delegation transaction was rolledback
 
+			ubdTx, err := bbn.NewBTCTxFromBytes(btcDel.BtcUndelegation.UnbondingTx)
+			if err != nil {
+				return fmt.Errorf("failed to parse unbonding tx %x off staking tx: %s - %w", btcDel.BtcUndelegation.UnbondingTx, stkTx.String(), err)
+			}
+
+			ubdTxHash := ubdTx.TxHash().String()
+			_, rollback := mapRollbackUnbondTxs[ubdTxHash]
+			if !rollback {
+				continue
+			}
+
+			// if the slash tx was rollbacked there is no need to rollback state, as the BTC can be already slashed
+			btcDel.BtcUndelegation.DelegatorUnbondingInfo = nil
+			// Add back to the incentive rewards
+			// Add back to the voting power table
 		}
 
 		// TODO: handle BTC delegation for consumers rollback
@@ -153,7 +178,23 @@ func RollbackBtcStkTxs(
 	// check out each BTC VP distribution event in which was generated in some BTC staking delegation
 	// that had action in the reorg blocks
 	for btcHeight := btcBlockHeightRollback; btcHeight <= largerBtcReorg.RollbackFrom.Height; btcHeight++ {
-		btcStkK.ClearPowerDistUpdateEvents(ctx, btcHeight)
+		vpEvents := btcStkK.GetAllPowerDistUpdateEvents(ctx, btcHeight, btcHeight)
+		for idx, evt := range vpEvents {
+			switch typedEvent := evt.Ev.(type) {
+			case *bstypes.EventPowerDistUpdate_BtcDelStateUpdate:
+				delEvent := typedEvent.BtcDelStateUpdate
+				delStkTxHash := delEvent.StakingTxHash
+
+				_, rollbacked := mapStkTxs[delStkTxHash]
+				if !rollbacked {
+					continue
+				}
+
+				btcStkK.DeletePowerDistEvent(ctx, btcHeight, uint64(idx))
+			default: // other events as slashed, jailed, unjail do no matter the BTC pk
+				continue
+			}
+		}
 	}
 
 	return nil
