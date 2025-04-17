@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#802](https://github.com/babylonlabs-io/babylon/pull/802) fix: clean up resources allocated by TmpAppOptions
 - [#805](https://github.com/babylonlabs-io/babylon/pull/805) chore: upgrade the make file: linting
+- [#816](https://github.com/babylonlabs-io/babylon/pull/816) chore: upgrade the make file: gosec
 
 ## v1.0.1
 
