@@ -272,7 +272,12 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		Entrypoint: []string{
 			"sh",
 			"-c",
-			"babylond start " + FlagHome,
+			// one can use the following for debugging purposes
+			// "babylond start " + FlagHome + " --log_level trace --trace",
+			// TODO: parameterise the log level
+			"export BABYLON_BLS_PASSWORD=password && babylond start " + FlagHome,
+			// Alternative option: use --no-bls-password flag
+			// "babylond start " + FlagHome + " --no-bls-password",
 		},
 		ExposedPorts: []string{"26656", "26657", "1317", "9090"},
 		Mounts: []string{

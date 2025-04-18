@@ -42,12 +42,15 @@ func Test_CmdGenTx(t *testing.T) {
 
 	signer, err := signer.SetupTestBlsSigner()
 	require.NoError(t, err)
+	appOpts, cleanup := app.TmpAppOptions()
+	defer cleanup()
+
 	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
 		Logger:             logger,
 		DB:                 dbm.NewMemDB(),
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            app.TmpAppOptions(),
+		AppOpts:            appOpts,
 	})
 
 	err = genutiltest.ExecInitCmd(bbn.BasicModuleManager, home, bbn.AppCodec())
