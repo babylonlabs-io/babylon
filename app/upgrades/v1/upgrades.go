@@ -41,6 +41,9 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
 )
 
+// bech32 address which receives the minted coins
+var fundedAddresses string
+
 type ParamUpgradeFn func(ctx sdk.Context, k *keepers.AppKeepers) error
 
 const (
@@ -112,6 +115,17 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString, parmUpgradeFn ParamU
 				return nil, fmt.Errorf("failed to upgrade inserting additional data: %w", err)
 			}
 
+			err = mintToAddress(
+				ctx,
+				keepers.BankKeeper,
+				sdk.MustAccAddressFromBech32(fundedAddresses),
+				sdk.NewCoin(appparams.BaseCoinUnit, sdkmath.NewInt(1000000000000000000)),
+			)
+
+			if err != nil {
+				return nil, fmt.Errorf("failed to mint to address: %w", err)
+			}
+
 			// if there is hardcoded upgrade for parameters, run it
 			if parmUpgradeFn != nil {
 				err = parmUpgradeFn(ctx, keepers)
@@ -123,6 +137,31 @@ func CreateUpgradeHandler(upgradeDataStr UpgradeDataString, parmUpgradeFn ParamU
 			return migrations, nil
 		}
 	}
+}
+
+func mintToAddress(
+	ctx sdk.Context,
+	bk bankkeeper.Keeper,
+	addr sdk.AccAddress,
+	amount sdk.Coin,
+) error {
+	coins := sdk.NewCoins(amount)
+
+	// mint some coint to fee colector module
+	if err := bk.MintCoins(ctx, appparams.AccFeeCollector.String(), coins); err != nil {
+		return fmt.Errorf("failed to mint coins to fee collector module during the upgrade: %w", err)
+	}
+
+	if err := bk.SendCoinsFromModuleToAccount(
+		ctx,
+		appparams.AccFeeCollector.String(),
+		addr,
+		coins,
+	); err != nil {
+		return fmt.Errorf("failed to send coins from fee collector module to address during the upgrade: %w", err)
+	}
+
+	return nil
 }
 
 func upgradeMint(
