@@ -1,9 +1,11 @@
 package types
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
@@ -38,7 +40,14 @@ func (gs GenesisState) Validate() error {
 			return err
 		}
 	}
-	return nil
+
+	if gs.LargestBtcReorg != nil {
+		if err := gs.LargestBtcReorg.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return gs.validateAllowedStakingTxHashes()
 }
 
 // GenesisStateFromAppState returns x/btcstaking GenesisState given raw application
@@ -51,4 +60,36 @@ func GenesisStateFromAppState(cdc codec.Codec, appState map[string]json.RawMessa
 	}
 
 	return genesisState
+}
+
+type AllowedStakingTxHashStr string
+
+func (h AllowedStakingTxHashStr) Validate() error {
+	// hashes are hex encoded for better readability
+	bz, err := hex.DecodeString(string(h))
+	if err != nil {
+		return fmt.Errorf("error decoding tx hash: %w", err)
+	}
+	// NewHash validates hash size
+	if _, err := chainhash.NewHash(bz); err != nil {
+		return err
+	}
+	return nil
+}
+
+// validateAllowedStakingTxHashes validates there're no duplicate entries
+// and the hash has the corresponding size
+func (gs GenesisState) validateAllowedStakingTxHashes() error {
+	hashes := make(map[string]bool)
+	for _, hStr := range gs.AllowedStakingTxHashes {
+		if _, exists := hashes[hStr]; exists {
+			return fmt.Errorf("duplicate staking tx hash: %s", hStr)
+		}
+		hashes[hStr] = true
+		h := AllowedStakingTxHashStr(hStr)
+		if err := h.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
 }

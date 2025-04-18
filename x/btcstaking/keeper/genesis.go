@@ -53,7 +53,7 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		// hashes are hex encoded for better readability
 		bz, err := hex.DecodeString(hStr)
 		if err != nil {
-			return fmt.Errorf("error decoding msg hash: %w", err)
+			return fmt.Errorf("error decoding tx hash: %w", err)
 		}
 		if err := k.AllowedStakingTxHashesKeySet.Set(ctx, bz); err != nil {
 			return err
