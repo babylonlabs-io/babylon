@@ -12,6 +12,7 @@ import (
 )
 
 func TestReplayBlocks(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
 	replayerTempDir := t.TempDir()
@@ -30,6 +31,7 @@ func TestReplayBlocks(t *testing.T) {
 }
 
 func TestSendingTxFromDriverAccount(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
 	replayerTempDir := t.TempDir()

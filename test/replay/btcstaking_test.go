@@ -12,6 +12,7 @@ import (
 
 // TestEpochFinalization checks whether we can finalize some epochs
 func TestEpochFinalization(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
 	replayerTempDir := t.TempDir()
@@ -60,6 +61,7 @@ func FuzzCreatingAndActivatingDelegations(f *testing.F) {
 }
 
 func TestNewAccountCreation(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
 	replayerTempDir := t.TempDir()
@@ -75,6 +77,7 @@ func TestNewAccountCreation(t *testing.T) {
 }
 
 func TestFinalityProviderRegistration(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
 	replayerTempDir := t.TempDir()
@@ -95,6 +98,7 @@ func TestFinalityProviderRegistration(t *testing.T) {
 }
 
 func TestFinalityProviderCommitRandomness(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
 	replayerTempDir := t.TempDir()
@@ -112,6 +116,7 @@ func TestFinalityProviderCommitRandomness(t *testing.T) {
 }
 
 func TestSendingDelegation(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
 	replayerTempDir := t.TempDir()
@@ -141,6 +146,7 @@ func TestSendingDelegation(t *testing.T) {
 }
 
 func TestSendingCovenantSignatures(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
 	replayerTempDir := t.TempDir()
@@ -178,6 +184,7 @@ func TestSendingCovenantSignatures(t *testing.T) {
 }
 
 func TestActivatingDelegation(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
 	replayerTempDir := t.TempDir()
@@ -214,6 +221,7 @@ func TestActivatingDelegation(t *testing.T) {
 }
 
 func TestVoting(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
 	replayerTempDir := t.TempDir()
@@ -268,6 +276,7 @@ func TestVoting(t *testing.T) {
 }
 
 func TestStakingAndFinalizingBlocks(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
 	replayerTempDir := t.TempDir()
@@ -296,6 +305,7 @@ func TestStakingAndFinalizingBlocks(t *testing.T) {
 }
 
 func TestStakingAndFinalizingMultipleBlocksAtOnce(t *testing.T) {
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
 	replayerTempDir := t.TempDir()

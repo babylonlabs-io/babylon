@@ -18,7 +18,7 @@ func NewStandardScenario(driver *BabylonAppDriver) *StandardScenario {
 
 // TODO: for now scenario works for small amount of fps and stakers, as with
 // larger amound we are hitting per block gas limit, which leads to account sequence
-// nuber errors. Improve this in the future.
+// number errors. Improve this in the future.
 func (s *StandardScenario) InitScenario(
 	numFps int,
 	delegationsPerFp int,
