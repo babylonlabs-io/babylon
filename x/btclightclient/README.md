@@ -3,7 +3,7 @@
 The BTC light client module is essentially a BTC light client that maintains
 the canonical header chain of Bitcoin.
 
-Babylon chain needs to know about different events happening on Bitcoin chain.
+Babylon Genesis chain needs to know about different events happening on Bitcoin chain.
 To make it possible in a secure way, Babylon needs to know the current
 state of the Bitcoin chain i.e., what is the canonical chain of the Bitcoin network.
 
@@ -28,7 +28,7 @@ state of the Bitcoin chain i.e., what is the canonical chain of the Bitcoin netw
 
 ### Problem statement
 
-The Babylon chain needs to learn and validate a number of events that had
+The Babylon Genesis chain needs to learn and validate a number of events that had
 happened on the Bitcoin chain. Those events are:
 
 1. `New checkpoint event` - Bitcoin Timestamping protocol requires checkpoints
@@ -39,7 +39,7 @@ which carry this checkpoint.
 transactions to be deep enough in the Bitcoin chain. Thus, the staking
 transactions also must be accompanied by the inclusion proof.
 
-To properly validate those inclusion proofs, the Babylon chain needs to know the
+To properly validate those inclusion proofs, the Babylon Genesis chain needs to know the
 current state of BTC chain i.e., what is current canonical chain recognized by BTC.
 
 ### Babylon's BTC light client design
@@ -139,7 +139,7 @@ does not point to the current BTC chain tip.
 ### MsgInsertHeaders
 
 `MsgInsertHeaders` is the main message processed by the BTC light client module.
-Its purpose is to update the state of the BTC chain as viewed by Babylon chain.
+Its purpose is to update the state of the BTC chain as viewed by Babylon Genesis chain.
 
 The handler of this message is defined
 at [x/btclightclient/keeper/msg_server.go](./keeper/msg_server.go).
