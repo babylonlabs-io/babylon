@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	time "time"
 
@@ -119,6 +120,30 @@ func NewLargestBtcReOrg(rollbackFrom, rollbackTo *btclightclienttypes.BTCHeaderI
 		RollbackFrom: rollbackFrom,
 		RollbackTo:   rollbackTo,
 	}
+}
+
+func (lbr LargestBtcReOrg) Validate() error {
+	if lbr.RollbackFrom == nil {
+		return errors.New("rollback_from is nil")
+	}
+
+	if lbr.RollbackTo == nil {
+		return errors.New("rollback_to is nil")
+	}
+
+	if err := lbr.RollbackFrom.Validate(); err != nil {
+		return fmt.Errorf("error validating rollback_from: %w", err)
+	}
+
+	if err := lbr.RollbackTo.Validate(); err != nil {
+		return fmt.Errorf("error validating rollback_to: %w", err)
+	}
+
+	if lbr.RollbackFrom.Height <= lbr.RollbackTo.Height {
+		return fmt.Errorf("rollback_from height %d is lower or equal than rollback_to height %d", lbr.RollbackFrom.Height, lbr.RollbackTo.Height)
+	}
+
+	return nil
 }
 
 // NewCommissionInfoWithTime returns an initialized finality provider commission info with a specified
