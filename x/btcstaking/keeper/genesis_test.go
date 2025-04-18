@@ -88,7 +88,7 @@ func TestExportGenesis(t *testing.T) {
 	// index blocks heights
 	for _, ch := range chainsHeight {
 		btcHead := btclcK.GetTipInfo(ctx)
-		btcHead.Height = uint32(ch.BlockHeightBtc)
+		btcHead.Height = ch.BlockHeightBtc
 		btclcK.InsertHeaderInfos(ctx, []*btclightclientt.BTCHeaderInfo{
 			btcHead,
 		})
