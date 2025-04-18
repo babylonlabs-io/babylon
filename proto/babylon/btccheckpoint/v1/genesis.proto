@@ -3,8 +3,35 @@ package babylon.btccheckpoint.v1;
 
 import "gogoproto/gogo.proto";
 import "babylon/btccheckpoint/v1/params.proto";
+import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/x/btccheckpoint/types";
 
 // GenesisState defines the btccheckpoint module's genesis state.
-message GenesisState { Params params = 1 [ (gogoproto.nullable) = false ]; }
+message GenesisState {
+  // params the current params of the state.
+  Params params = 1 [ (gogoproto.nullable) = false ];
+  // the last finalized epoch number
+  uint64 last_finalized_epoch_number = 2;
+  // Epochs data for each stored epoch
+  repeated EpochEntry epochs = 3 [ (gogoproto.nullable) = false ];
+  // Submission data for each stored submission key
+  repeated SubmissionEntry submissions = 4  [(gogoproto.nullable) = false ];
+}
+
+// EpochEntry represents data for a specific epoch number.
+message EpochEntry {
+  // Epoch number
+  uint64 epoch_number = 1;
+  // The epoch data
+  EpochData data = 2;
+}
+
+// SubmissionEntry represents data for a submission for
+// a specific submission key.
+message SubmissionEntry {
+  // Epoch number
+  SubmissionKey submission_key = 1;
+  // The submission data corresponding to the submission key
+  SubmissionData data = 2;
+}

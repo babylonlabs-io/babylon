@@ -81,7 +81,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
 			},
 			valid:  false,
-			errMsg: "duplicate BTC staking gauge for height: 100",
+			errMsg: "invalid BTC staking gauges: duplicate entry for key: 100",
 		},
 		{
 			desc: "Genesis with duplicated entries in withdraw addr",
@@ -106,7 +106,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
 			},
 			valid:  false,
-			errMsg: fmt.Sprintf("duplicate delegator address: %s", addrStr1),
+			errMsg: fmt.Sprintf("invalid withdraw addresses: duplicate entry for key: %s", addrStr1),
 		},
 		{
 			desc: "Genesis with empty string in MsgHashes",
@@ -169,7 +169,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
 			},
 			valid:  false,
-			errMsg: fmt.Sprintf("duplicate current rewards entry for address: %s", addrStr1),
+			errMsg: fmt.Sprintf("invalid finality providers current rewards: duplicate entry for key: %s", addrStr1),
 		},
 		{
 			desc: "Genesis with 2 historical rewards for same finality provider and different period",
