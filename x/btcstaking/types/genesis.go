@@ -4,6 +4,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"slices"
+	"sort"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -92,4 +94,30 @@ func (gs GenesisState) validateAllowedStakingTxHashes() error {
 		}
 	}
 	return nil
+}
+
+// Helper function to sort slices to get a deterministic
+// result on the tests
+func SortData(gs *GenesisState) {
+	sort.Slice(gs.FinalityProviders, func(i, j int) bool {
+		return gs.FinalityProviders[i].Addr < gs.FinalityProviders[j].Addr
+	})
+
+	sort.Slice(gs.BtcDelegations, func(i, j int) bool {
+		return gs.BtcDelegations[i].StakerAddr < gs.BtcDelegations[j].StakerAddr
+	})
+
+	sort.Slice(gs.BlockHeightChains, func(i, j int) bool {
+		return gs.BlockHeightChains[i].BlockHeightBbn < gs.BlockHeightChains[j].BlockHeightBbn
+	})
+
+	sort.Slice(gs.BtcDelegators, func(i, j int) bool {
+		return gs.BtcDelegators[i].String() < gs.BtcDelegators[j].String()
+	})
+
+	sort.Slice(gs.Events, func(i, j int) bool {
+		return gs.Events[i].Idx < gs.Events[j].Idx
+	})
+
+	slices.Sort(gs.AllowedStakingTxHashes)
 }

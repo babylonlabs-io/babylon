@@ -6,7 +6,6 @@ import (
 	time "time"
 
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	types2 "github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
@@ -19,27 +18,27 @@ func TestLargestBtcReOrg_Validate(t *testing.T) {
 	}{
 		{
 			name:    "nil rollback_from",
-			lbr:     types.LargestBtcReOrg{RollbackFrom: nil, RollbackTo: randomBTCHeaderInfoWithHeight(r, 100)},
+			lbr:     types.LargestBtcReOrg{RollbackFrom: nil, RollbackTo: datagen.GenRandomBTCHeaderInfoWithHeight(r, 100)},
 			wantErr: "rollback_from is nil",
 		},
 		{
 			name:    "nil rollback_to",
-			lbr:     types.LargestBtcReOrg{RollbackFrom: randomBTCHeaderInfoWithHeight(r, 100), RollbackTo: nil},
+			lbr:     types.LargestBtcReOrg{RollbackFrom: datagen.GenRandomBTCHeaderInfoWithHeight(r, 100), RollbackTo: nil},
 			wantErr: "rollback_to is nil",
 		},
 		{
 			name:    "rollback_from height lower than rollback_to",
-			lbr:     types.LargestBtcReOrg{RollbackFrom: randomBTCHeaderInfoWithHeight(r, 90), RollbackTo: randomBTCHeaderInfoWithHeight(r, 100)},
+			lbr:     types.LargestBtcReOrg{RollbackFrom: datagen.GenRandomBTCHeaderInfoWithHeight(r, 90), RollbackTo: datagen.GenRandomBTCHeaderInfoWithHeight(r, 100)},
 			wantErr: "rollback_from height 90 is lower or equal than rollback_to height 100",
 		},
 		{
 			name:    "rollback_from height equal to rollback_to",
-			lbr:     types.LargestBtcReOrg{RollbackFrom: randomBTCHeaderInfoWithHeight(r, 100), RollbackTo: randomBTCHeaderInfoWithHeight(r, 100)},
+			lbr:     types.LargestBtcReOrg{RollbackFrom: datagen.GenRandomBTCHeaderInfoWithHeight(r, 100), RollbackTo: datagen.GenRandomBTCHeaderInfoWithHeight(r, 100)},
 			wantErr: "rollback_from height 100 is lower or equal than rollback_to height 100",
 		},
 		{
 			name:    "valid rollback",
-			lbr:     types.LargestBtcReOrg{RollbackFrom: randomBTCHeaderInfoWithHeight(r, 150), RollbackTo: randomBTCHeaderInfoWithHeight(r, 100)},
+			lbr:     types.LargestBtcReOrg{RollbackFrom: datagen.GenRandomBTCHeaderInfoWithHeight(r, 150), RollbackTo: datagen.GenRandomBTCHeaderInfoWithHeight(r, 100)},
 			wantErr: "",
 		},
 	}
@@ -60,10 +59,4 @@ func TestLargestBtcReOrg_Validate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func randomBTCHeaderInfoWithHeight(r *rand.Rand, height uint32) *types2.BTCHeaderInfo {
-	h := datagen.GenRandomBTCHeaderInfo(r)
-	h.Height = height
-	return h
 }
