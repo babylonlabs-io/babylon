@@ -1,13 +1,11 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	bbntypes "github.com/babylonlabs-io/babylon/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 )
 
 // HandleResumeFinalityProposal handles the resume finality proposal in the following steps:
@@ -41,28 +39,56 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 			return fmt.Errorf("the finality provider %s has voted for height %d", fpPkHex, haltingHeight)
 		}
 
+		fpBtcPk := fpPk.MustMarshal()
+		fp, err := k.BTCStakingKeeper.GetFinalityProvider(ctx, fpBtcPk)
+		if err != nil {
+			return fmt.Errorf("failed to find the finality provider %s in btcstaking: %w", fpPkHex, err)
+		}
+
+		k.Logger(ctx).Debug(
+			"fp running proposal resume finality",
+			"jailed", fp.IsJailed(),
+			"slashed", fp.IsSlashed(),
+			"height", haltingHeight,
+			"public_key", fpPkHex,
+		)
+
+		// if the FP is already jailed or slashed, no need to try to set to jail
+		// or to update the signing info
+		if fp.IsSlashed() || fp.IsJailed() {
+			continue
+		}
+
+		k.Logger(ctx).Debug(
+			"fp will be jailed",
+			"height", haltingHeight,
+			"public_key", fpPkHex,
+		)
+
 		err = k.jailSluggishFinalityProvider(ctx, fpPk)
-		if err != nil && !errors.Is(err, bstypes.ErrFpAlreadyJailed) {
+		if err != nil {
 			return fmt.Errorf("failed to jail the finality provider %s: %w", fpPkHex, err)
 		}
 
 		// update signing info
-		signInfo, err := k.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
+		signInfo, err := k.FinalityProviderSigningTracker.Get(ctx, fpBtcPk)
 		if err != nil {
 			return fmt.Errorf("the signing info of finality provider %s is not created: %w", fpPkHex, err)
 		}
 		signInfo.JailedUntil = currentTime.Add(params.JailDuration)
 		signInfo.MissedBlocksCounter = 0
+
 		if err := k.DeleteMissedBlockBitmap(ctx, fpPk); err != nil {
 			return fmt.Errorf("failed to remove the missed block bit map for finality provider %s: %w", fpPkHex, err)
 		}
-		err = k.FinalityProviderSigningTracker.Set(ctx, fpPk.MustMarshal(), signInfo)
+
+		err = k.FinalityProviderSigningTracker.Set(ctx, fpBtcPk, signInfo)
 		if err != nil {
 			return fmt.Errorf("failed to set the signing info for finality provider %s: %w", fpPkHex, err)
 		}
 
 		k.Logger(ctx).Info(
-			"finality provider is jailed in the proposal",
+			"finality provider was jailed",
 			"height", haltingHeight,
 			"public_key", fpPkHex,
 		)
@@ -73,8 +99,14 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 		distCache := k.GetVotingPowerDistCache(ctx, h)
 		activeFps := distCache.GetActiveFinalityProviderSet()
 		for _, fpToJail := range fpPks {
-			if fp, exists := activeFps[fpToJail.MarshalHex()]; exists {
-				fp.IsJailed = true
+			fpDstInf, exists := activeFps[fpToJail.MarshalHex()]
+			if exists {
+				// if the fp was already slashed at that height, keep as it was
+				// and do not update to jailed.
+				if !fpDstInf.IsSlashed {
+					fpDstInf.IsJailed = true
+				}
+
 				k.SetVotingPower(ctx, fpToJail.MustMarshal(), h, 0)
 			}
 		}
