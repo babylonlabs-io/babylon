@@ -84,6 +84,7 @@ func RollbackBtcStkTxs(
 	newDc := ftypes.NewVotingPowerDistCache()
 	lastVpDstCache := finalK.GetVotingPowerDistCache(ctx, bbnHeight-1)
 	satsToUnbondByFpBtcPk := make(map[string]uint64, 0)
+	satsToActivateByFpBtcPk := make(map[string]uint64, 0)
 	mapStkTxs := map[string]struct{}{}
 	mapRollbackUnbondTxs := map[string]struct{}{}
 
@@ -148,6 +149,11 @@ func RollbackBtcStkTxs(
 				continue
 			}
 
+			for _, fpBTCPK := range btcDel.FpBtcPkList {
+				fpBTCPKHex := fpBTCPK.MarshalHex()
+				satsToActivateByFpBtcPk[fpBTCPKHex] += btcDel.TotalSat
+			}
+
 			// if the slash tx was rollbacked there is no need to rollback state, as the BTC can be already slashed
 			btcDel.BtcUndelegation.DelegatorUnbondingInfo = nil
 			// Add back to the incentive rewards
@@ -157,14 +163,20 @@ func RollbackBtcStkTxs(
 		// TODO: handle BTC delegation for consumers rollback
 	}
 
+	// Updates the new voting power distribution cache
 	for i := range lastVpDstCache.FinalityProviders {
 		// create a copy of the finality provider
 		fp := *lastVpDstCache.FinalityProviders[i]
 		fpBTCPKHex := fp.BtcPk.MarshalHex()
 
-		satsToUnbond, ok := satsToUnbondByFpBtcPk[fpBTCPKHex]
-		if ok {
+		satsToUnbond, okUnbond := satsToUnbondByFpBtcPk[fpBTCPKHex]
+		if okUnbond {
 			fp.RemoveBondedSats(satsToUnbond)
+		}
+
+		satsToActivate, okActivate := satsToActivateByFpBtcPk[fpBTCPKHex]
+		if okActivate {
+			fp.AddBondedSats(satsToActivate)
 		}
 
 		// add this finality provider to the new cache if it has voting power
@@ -173,7 +185,8 @@ func RollbackBtcStkTxs(
 		}
 	}
 
-	finalK.RecordVpAndDistCacheForHeight(ctx, newDc, bbnHeight)
+	// store in state
+	finalK.RecordVpAndDistCacheForHeight(ctx, newDc, bbnHeight-1)
 
 	// check out each BTC VP distribution event in which was generated in some BTC staking delegation
 	// that had action in the reorg blocks
