@@ -105,6 +105,31 @@ func (s *RawCheckpointSubmission) GetSubmissionData(epochNum uint64, txsInfo []*
 	}
 }
 
+func (sd SubmissionData) Validate() error {
+	if sd.VigilanteAddresses != nil {
+		if err := sd.VigilanteAddresses.Validate(); err != nil {
+			return err
+		}
+	}
+	for _, ti := range sd.TxsInfo {
+		if err := ti.ValidateBasic(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (ca CheckpointAddresses) Validate() error {
+	expAddrLen := btctxformatter.AddressLength
+	if len(ca.Submitter) != expAddrLen {
+		return fmt.Errorf("invalid submitter address length: expected %d, got %d", expAddrLen, len(ca.Submitter))
+	}
+	if len(ca.Reporter) != expAddrLen {
+		return fmt.Errorf("invalid reporter address length: expected %d, got %d", expAddrLen, len(ca.Reporter))
+	}
+	return nil
+}
+
 func (sk *SubmissionKey) GetKeyBlockHashes() []*types.BTCHeaderHashBytes {
 	var hashes []*types.BTCHeaderHashBytes
 
@@ -114,6 +139,18 @@ func (sk *SubmissionKey) GetKeyBlockHashes() []*types.BTCHeaderHashBytes {
 	}
 
 	return hashes
+}
+
+func (sk *SubmissionKey) Validate() error {
+	if sk.Key == nil {
+		return nil
+	}
+	for _, k := range sk.Key {
+		if err := k.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func NewEmptyEpochData() EpochData {
@@ -126,6 +163,18 @@ func NewEmptyEpochData() EpochData {
 func (s *EpochData) AppendKey(k SubmissionKey) {
 	key := &k
 	s.Keys = append(s.Keys, key)
+}
+
+func (s *EpochData) Validate() error {
+	if s.Keys == nil {
+		return fmt.Errorf("keys cannot be nil")
+	}
+	for _, k := range s.Keys {
+		if err := k.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // HappenedAfter returns true if `this` submission happened after `that` submission
@@ -153,6 +202,13 @@ func (newSubmission *SubmissionBtcInfo) IsBetterThan(currentBestSubmission *Subm
 	// the same block. To resolve the tie we need to take into account index of
 	// latest transaction of the submissions
 	return newSubmission.YoungestBlockLowestTxIdx < currentBestSubmission.YoungestBlockLowestTxIdx
+}
+
+func (tk TransactionKey) Validate() error {
+	if tk.Hash == nil {
+		return fmt.Errorf("transaction hash cannot be nil")
+	}
+	return nil
 }
 
 func NewTransactionInfo(txKey *TransactionKey, txBytes []byte, proof []byte) *TransactionInfo {
