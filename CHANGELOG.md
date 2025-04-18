@@ -57,6 +57,7 @@ check of rewards
 - [#805](https://github.com/babylonlabs-io/babylon/pull/805) chore: upgrade the make file: linting
 - [#816](https://github.com/babylonlabs-io/babylon/pull/816) chore: upgrade the make file: gosec
 - [#821](https://github.com/babylonlabs-io/babylon/pull/821) Add import/export genesis logic in `x/btccheckpoint` module
+- [#828](https://github.com/babylonlabs-io/babylon/pull/828) Add `AllowedStakingTxHashes` and `LargetsBTCReorg` to import/export genesis logic in `x/btcstaking` module
 
 ### State Machine Breaking
 
