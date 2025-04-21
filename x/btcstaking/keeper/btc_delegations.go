@@ -194,6 +194,8 @@ func (k Keeper) btcUndelegate(
 	event := &types.EventBTCDelegationStateUpdate{
 		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
 		NewState:      types.BTCDelegationStatus_UNBONDED,
+		// TODO: check the possibility to add the BTC block height of inclusion of the early unbond ot the event
+		// so it is possible to verify if this unbonded transaction was rollback in a BTC reorg
 	}
 
 	// record event that the BTC delegation becomes unbonded at this height

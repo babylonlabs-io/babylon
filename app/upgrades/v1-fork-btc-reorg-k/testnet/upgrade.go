@@ -7,7 +7,6 @@ import (
 	"github.com/babylonlabs-io/babylon/app/keepers"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
 	bbn "github.com/babylonlabs-io/babylon/types"
-	bclkeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
 	bskeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	fkeeper "github.com/babylonlabs-io/babylon/x/finality/keeper"
@@ -19,6 +18,15 @@ import (
 
 const (
 	UpgradeName = "v1-btc-reorg-k"
+)
+
+var (
+	// MapUnbondStkTxHashRollback this should be the staking transaction
+	// hash hex of the unbonding transactions that got rolled back.
+	MapUnbondStkTxHashRollback = map[string]struct{}{
+		// example staking tx of an unbonding staking transaction
+		"a3d84be950961d03a72c04a0128cce000e3476f489e17273cbea71f971b47f61": {},
+	}
 )
 
 func CreateUpgrade() upgrades.Fork {
@@ -36,16 +44,105 @@ func CreateForkLogic(context sdk.Context, keepers *keepers.AppKeepers) {
 	l := ctx.Logger()
 
 	// this upgrade should be called when there is a BTC reorg higher than K blocks (btccheckpoint.BtcConfirmationDepth)
-	btcStkK := keepers.BTCStakingKeeper
+	btcStkK, btcLgtK := keepers.BTCStakingKeeper, keepers.BTCLightClientKeeper
 
 	largerBtcReorg := btcStkK.GetLargestBtcReorg(ctx)
-	btcBlockHeightRollback := largerBtcReorg.RollbackFrom.Height
+	btcBlockHeightRollbackFrom := largerBtcReorg.RollbackFrom.Height
 
-	l.Debug("running upgrade due to large BTC reorg", zap.Uint32("btc_block_height_rollback_from", btcBlockHeightRollback))
-	// iterate over voting power expiration events to get the latest transactions from
-	// rollback height + (maxStaking - btcDel.UnbondingTime) from the latest btc staking parameter
+	l.Debug(
+		"running upgrade due to large BTC reorg",
+		zap.Uint32("btc_block_height_rollback_from", btcBlockHeightRollbackFrom),
+		zap.Uint32("btc_block_height_rollback_to", largerBtcReorg.RollbackTo.Height),
+	)
 
+	btcTip := btcLgtK.GetTipInfo(ctx)
+	paramsByVs := btcStkK.GetAllParamsByVersion(ctx)
+
+	cacheBtcDelByStkTxHashHex := make(map[string]*bstypes.BTCDelegation, 0)
+
+	mapStkTxHashRollback := HandleDeleteVotingPowerDistributionEvts(
+		ctx,
+		&btcStkK,
+		paramsByVs,
+		cacheBtcDelByStkTxHashHex,
+		btcTip.Height,
+		largerBtcReorg,
+		MapUnbondStkTxHashRollback,
+	)
+
+	for stkTxHashHexRollbacked, _ := range mapStkTxHashRollback {
+		l.Debug(
+			"staking transaction was rolledbacked",
+			zap.String("stk_tx_hash_hex", stkTxHashHexRollbacked),
+		)
+	}
+
+	// deletes the old largest reorg to avoid panic at end blocker again
 	btcStkK.DeleteLargestBtcReorg(ctx)
+}
+
+func HandleDeleteVotingPowerDistributionEvts(
+	ctx context.Context,
+	btcStkK *bskeeper.Keeper,
+
+	paramsByVs map[uint32]*bstypes.Params,
+	cacheBtcDelByStkTxHashHex map[string]*bstypes.BTCDelegation,
+	btcTipHeight uint32,
+	largerBtcReorg *bstypes.LargestBtcReOrg,
+	mapUnbondStkTxHashRollback map[string]struct{},
+) (mapStkTxHashRollback map[string]struct{}) {
+	mapStkTxHashRollback = make(map[string]struct{}, 0)
+	eventsToDelete := make([]bstypes.EventIndex, 0)
+
+	higherBtcStakingPeriod := MaxBtcStakingTimeBlocks(paramsByVs)
+	btcBlockHeightRollbackFrom := largerBtcReorg.RollbackFrom.Height
+
+	// iterating over all the BTC staking events from the rollback height until latest Tip + the maximum staking period
+	for btcHeight := btcBlockHeightRollbackFrom; btcHeight <= btcTipHeight+higherBtcStakingPeriod; btcHeight++ {
+		vpEvents := btcStkK.GetAllPowerDistUpdateEvents(ctx, btcHeight, btcHeight)
+		for idx, evt := range vpEvents {
+			switch typedEvent := evt.Ev.(type) {
+			case *bstypes.EventPowerDistUpdate_BtcDelStateUpdate:
+				delEvt := typedEvent.BtcDelStateUpdate
+				stkTxHash := delEvt.StakingTxHash
+
+				btcDel := loadBtcDel(ctx, btcStkK, cacheBtcDelByStkTxHashHex, stkTxHash)
+
+				if largerBtcReorg.IsBtcHeightRollbacked(btcDel.StartHeight) {
+					mapStkTxHashRollback[stkTxHash] = struct{}{}
+					eventsToDelete = append(eventsToDelete, bstypes.EventIndex{
+						Idx:            uint64(idx),
+						BlockHeightBtc: btcHeight,
+					})
+					continue
+				}
+				// if the btc staking transaction hash was not activated during the rollback
+				// verify if the unbond wasn't
+
+				if delEvt.NewState != bstypes.BTCDelegationStatus_UNBONDED {
+					// if it is not unbonding, nothing to do
+					continue
+				}
+
+				_, isUnbondingTxRolledBack := mapUnbondStkTxHashRollback[stkTxHash]
+				if isUnbondingTxRolledBack {
+					eventsToDelete = append(eventsToDelete, bstypes.EventIndex{
+						Idx:            uint64(idx),
+						BlockHeightBtc: btcHeight,
+					})
+				}
+
+			default: // other events as slashed, jailed, unjail do not matter for the rollback procedure
+				continue
+			}
+		}
+	}
+
+	for _, evt := range eventsToDelete {
+		btcStkK.DeletePowerDistEvent(ctx, evt.BlockHeightBtc, evt.Idx)
+	}
+
+	return mapStkTxHashRollback
 }
 
 // RollbackBtcStkTxs rollbacks all the BTC staking transactions that were included during the blocks
@@ -55,55 +152,42 @@ func CreateForkLogic(context sdk.Context, keepers *keepers.AppKeepers) {
 func RollbackBtcStkTxs(
 	ctx context.Context,
 	btcStkK *bskeeper.Keeper,
-	btcLgtK *bclkeeper.Keeper,
 	finalK *fkeeper.Keeper,
 
+	cacheBtcDelByStkTxHashHex map[string]*bstypes.BTCDelegation,
+	btcTipHeight uint32,
 	stkTxs []chainhash.Hash,
-	rollbackUnbondTxs []chainhash.Hash,
+	mapRollbackUnbondTxs map[string]struct{},
 ) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	largerBtcReorg := btcStkK.GetLargestBtcReorg(ctx)
-	btcBlockHeightRollback := largerBtcReorg.RollbackFrom.Height
 	paramsByVs := btcStkK.GetAllParamsByVersion(ctx)
 	// the BTC reorg was executed in btclightclient and panic in btcstaking,
 	// which means that the tip height is currently the latest BTC block after the whole reorg
-	btcTip := btcLgtK.GetTipInfo(ctx)
 	bbnHeight := uint64(sdkCtx.HeaderInfo().Height)
 	vpDstCacheHeight := bbnHeight - 1
 
 	newDc := ftypes.NewVotingPowerDistCache()
-	lastVpDstCache := finalK.GetVotingPowerDistCache(ctx, vpDstCacheHeight)
 	satsToUnbondByFpBtcPk := make(map[string]uint64, 0)
 	satsToActivateByFpBtcPk := make(map[string]uint64, 0)
 	cacheFpByBtcPkHex := map[string]*bstypes.FinalityProvider{}
 
-	mapStkTxs := map[string]struct{}{}
-	mapRollbackUnbondTxs := map[string]struct{}{}
-
-	for _, ubdTx := range rollbackUnbondTxs {
-		mapRollbackUnbondTxs[ubdTx.String()] = struct{}{}
-	}
-
 	for _, stkTx := range stkTxs {
-		mapStkTxs[stkTx.String()] = struct{}{}
-		btcDel, err := btcStkK.GetBTCDelegation(ctx, stkTx.String())
-		if err != nil {
-			return fmt.Errorf("failed to find BTC delegation to staking tx: %s - %w", stkTx.String(), err)
-		}
+		stkTxHash := stkTx.String()
+		btcDel := loadBtcDel(ctx, btcStkK, cacheBtcDelByStkTxHashHex, stkTxHash)
 
 		if !btcDel.HasInclusionProof() {
-			return fmt.Errorf("the given BTC delegation does not have inclusion proof: %s, it doesn't need to rollback", stkTx.String())
+			return fmt.Errorf("the given BTC delegation does not have inclusion proof: %s, it doesn't need to rollback", stkTxHash)
 		}
 
 		p := paramsByVs[btcDel.ParamsVersion]
 		if p == nil {
-			return fmt.Errorf("failed to get the params version %d for BTC delegation to staking tx: %s", btcDel.ParamsVersion, stkTx.String())
+			return fmt.Errorf("failed to get the params version %d for BTC delegation to staking tx: %s", btcDel.ParamsVersion, stkTxHash)
 		}
 
 		// At this point each staking transaction is considered that the inclusion proof or any BTC action was made in a BTC block that
 		// was rolled back, so there is a need to revert the state that was modified.
-		btcStatus := btcDel.GetStatus(btcTip.Height, p.CovenantQuorum)
+		btcStatus := btcDel.GetStatus(btcTipHeight, p.CovenantQuorum)
 		switch btcStatus {
 		// for pending, expired and verified there is no need to update anything
 		case bstypes.BTCDelegationStatus_PENDING:
@@ -138,7 +222,7 @@ func RollbackBtcStkTxs(
 
 			ubdTx, err := bbn.NewBTCTxFromBytes(btcDel.BtcUndelegation.UnbondingTx)
 			if err != nil {
-				return fmt.Errorf("failed to parse unbonding tx %x off staking tx: %s - %w", btcDel.BtcUndelegation.UnbondingTx, stkTx.String(), err)
+				return fmt.Errorf("failed to parse unbonding tx %x off staking tx: %s - %w", btcDel.BtcUndelegation.UnbondingTx, stkTxHash, err)
 			}
 
 			ubdTxHash := ubdTx.TxHash().String()
@@ -165,6 +249,8 @@ func RollbackBtcStkTxs(
 		// TODO: handle BTC delegation for consumers rollback
 	}
 
+	lastVpDstCache := finalK.GetVotingPowerDistCache(ctx, vpDstCacheHeight)
+
 	// Updates the new voting power distribution cache
 	for i := range lastVpDstCache.FinalityProviders {
 		// create a copy of the finality provider
@@ -190,27 +276,39 @@ func RollbackBtcStkTxs(
 	// store in state
 	finalK.RecordVpAndDistCacheForHeight(ctx, newDc, vpDstCacheHeight)
 
-	// check out each BTC VP distribution event in which was generated in some BTC staking delegation
-	// that had action in the reorg blocks
-	for btcHeight := btcBlockHeightRollback; btcHeight <= largerBtcReorg.RollbackFrom.Height; btcHeight++ {
-		vpEvents := btcStkK.GetAllPowerDistUpdateEvents(ctx, btcHeight, btcHeight)
-		for idx, evt := range vpEvents {
-			switch typedEvent := evt.Ev.(type) {
-			case *bstypes.EventPowerDistUpdate_BtcDelStateUpdate:
-				delEvent := typedEvent.BtcDelStateUpdate
-				delStkTxHash := delEvent.StakingTxHash
+	return nil
+}
 
-				_, rollbacked := mapStkTxs[delStkTxHash]
-				if !rollbacked {
-					continue
-				}
+// MaxBtcStakingTimeBlocks iterates over all the parameters to get the higher staking time
+// in blocks
+func MaxBtcStakingTimeBlocks(paramsByVs map[uint32]*bstypes.Params) uint32 {
+	higherBtcStakingPeriod := uint32(0)
 
-				btcStkK.DeletePowerDistEvent(ctx, btcHeight, uint64(idx))
-			default: // other events as slashed, jailed, unjail do not matter for the rollback procedure
-				continue
-			}
+	for _, p := range paramsByVs {
+		if p.MaxStakingTimeBlocks <= higherBtcStakingPeriod {
+			continue
 		}
+		higherBtcStakingPeriod = p.MaxStakingTimeBlocks
 	}
 
-	return nil
+	return higherBtcStakingPeriod
+}
+
+func loadBtcDel(
+	ctx context.Context,
+	btcStkK *bskeeper.Keeper,
+	cacheBtcDelByStkTxHashHex map[string]*bstypes.BTCDelegation,
+	stkTxHashHex string,
+) *bstypes.BTCDelegation {
+	del, found := cacheBtcDelByStkTxHashHex[stkTxHashHex]
+	if !found {
+		btcDel, err := btcStkK.GetBTCDelegation(ctx, stkTxHashHex)
+		if err != nil {
+			panic(fmt.Errorf("failed to find BTC delegation to staking tx: %s - %w", stkTxHashHex, err).Error())
+		}
+		cacheBtcDelByStkTxHashHex[stkTxHashHex] = btcDel
+		return btcDel
+	}
+
+	return del
 }
