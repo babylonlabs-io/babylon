@@ -1,19 +1,34 @@
 package types_test
 
 import (
+	"encoding/hex"
+	"math/rand"
 	"testing"
+	time "time"
 
 	sdkmath "cosmossdk.io/math"
 
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
+	entriesCount := 10
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	txHashes := make([]string, 0, entriesCount)
+	for range entriesCount {
+		txHash := datagen.GenRandomTx(r).TxHash()
+		// hex encode the txHash bytes
+		txHashStr := hex.EncodeToString(txHash[:])
+		txHashes = append(txHashes, txHashStr)
+	}
+
 	tests := []struct {
 		desc     string
 		genState func() *types.GenesisState
 		valid    bool
+		errMsg   string
 	}{
 		{
 			desc:     "default is valid",
@@ -39,6 +54,7 @@ func TestGenesisState_Validate(t *testing.T) {
 							UnbondingFeeSat:      types.DefaultParams().UnbondingFeeSat,
 						},
 					},
+					AllowedStakingTxHashes: txHashes,
 				}
 			},
 			valid: true,
@@ -112,7 +128,8 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 				}
 			},
-			valid: false,
+			valid:  false,
+			errMsg: "pairs must be sorted by start height in ascending order",
 		},
 		{
 			desc: "parameters with btc activation height in ascending order are valid",
@@ -132,6 +149,26 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid: true,
 		},
+		{
+			desc: "duplicate staking tx hash",
+			genState: func() *types.GenesisState {
+				params1 := types.DefaultParams()
+				params1.BtcActivationHeight = 100
+
+				params2 := types.DefaultParams()
+				params2.BtcActivationHeight = 101
+
+				return &types.GenesisState{
+					Params: []*types.Params{
+						&params1,
+						&params2,
+					},
+					AllowedStakingTxHashes: []string{txHashes[0], txHashes[0]},
+				}
+			},
+			valid:  false,
+			errMsg: "duplicate staking tx hash",
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
@@ -141,6 +178,50 @@ func TestGenesisState_Validate(t *testing.T) {
 				require.NoError(t, err)
 			} else {
 				require.Error(t, err)
+				require.ErrorContains(t, err, tc.errMsg)
+			}
+		})
+	}
+}
+
+func TestAllowedStakingTxHashStr_Validate(t *testing.T) {
+	testCases := []struct {
+		name   string
+		input  types.AllowedStakingTxHashStr
+		expErr bool
+	}{
+		{
+			name:   "valid 32-byte hex string",
+			input:  types.AllowedStakingTxHashStr("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+			expErr: false,
+		},
+		{
+			name:   "invalid hex string",
+			input:  types.AllowedStakingTxHashStr("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"),
+			expErr: true,
+		},
+		{
+			name:   "too short (less than 32 bytes)",
+			input:  types.AllowedStakingTxHashStr("abcd"),
+			expErr: true,
+		},
+		{
+			name:   "too long (more than 32 bytes)",
+			input:  types.AllowedStakingTxHashStr("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+			expErr: true,
+		},
+		{
+			name:   "empty string",
+			input:  types.AllowedStakingTxHashStr(""),
+			expErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.input.Validate()
+			if (err != nil) != tc.expErr {
+				t.Errorf("Validate() error = %v, expErr = %v", err, tc.expErr)
 			}
 		})
 	}
