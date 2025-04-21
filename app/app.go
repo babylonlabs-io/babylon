@@ -448,6 +448,7 @@ func NewBabylonApp(
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
 		// BTC staking related modules
+		// TODO add here btcstakingconsumer before btcstaking module for init genesis logic
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
 		// tokenomics-related modules

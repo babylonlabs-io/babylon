@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"encoding/hex"
+	"fmt"
 	"math"
 	"math/rand"
 	"testing"
@@ -70,7 +71,7 @@ func TestExportGenesis(t *testing.T) {
 	k, btclcK := h.App.BTCStakingKeeper, h.App.BTCLightClientKeeper
 
 	require.NoError(t, k.SetLargestBtcReorg(ctx, *gs.LargestBtcReorg))
-	fps, delegations, chainsHeight := gs.FinalityProviders, gs.BtcDelegations, gs.BlockHeightChains
+	fps, delegations, chainsHeight, consumerEvents := gs.FinalityProviders, gs.BtcDelegations, gs.BlockHeightChains, gs.ConsumerEvents
 
 	for i := range gs.FinalityProviders {
 		// set finality
@@ -99,6 +100,16 @@ func TestExportGenesis(t *testing.T) {
 		h.Ctx = ctx
 
 		k.IndexBTCHeight(ctx)
+	}
+
+	// store consumer events
+	for _, e := range consumerEvents {
+		event := &types.BTCStakingConsumerEvent{
+			Event: &types.BTCStakingConsumerEvent_ActiveDel{
+				ActiveDel: e.Events.ActiveDel[0],
+			},
+		}
+		k.AddBTCStakingConsumerEvent(ctx, e.ConsumerId, event)
 	}
 
 	exportedGs, err := k.ExportGenesis(ctx)
@@ -131,6 +142,8 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 	events := make([]*types.EventIndex, 0)
 	btcDelegators := make([]*types.BTCDelegator, 0)
 	allowedStkTxHashes := make([]string, 0)
+	consumerBtcDelegators := make([]*types.BTCDelegator, 0)
+	consumerEvents := make([]*types.ConsumerEvent, 0)
 
 	blkHeight := uint64(r.Int63n(1000)) + math.MaxUint16
 	totalDelegations := 0
@@ -185,6 +198,13 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 				BlockHeightBtc: del.EndHeight - del.UnbondingTime,
 				Event:          unbondedEvent,
 			})
+
+			consumerEvents = append(consumerEvents, &types.ConsumerEvent{
+				ConsumerId: fmt.Sprintf("consumer%d", totalDelegations+1),
+				Events: &types.BTCStakingIBCPacket{
+					ActiveDel: []*types.ActiveBTCDelegation{{}},
+				},
+			})
 		}
 
 		// chain heights
@@ -206,6 +226,8 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 		Events:                 events,
 		AllowedStakingTxHashes: allowedStkTxHashes,
 		LargestBtcReorg:        latestBtcReOrg,
+		BtcConsumerDelegators:  consumerBtcDelegators,
+		ConsumerEvents:         consumerEvents,
 	}
 	require.NoError(t, gs.Validate())
 	return ctx, h, gs
