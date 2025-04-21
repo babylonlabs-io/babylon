@@ -28,6 +28,11 @@ func (k *Keeper) HaltIfBtcReorgLargerThanConfirmationDepth(ctx context.Context) 
 	}
 }
 
+// DeleteLargestBtcReorg deletes the largers BTC reorg recorded.
+func (k *Keeper) DeleteLargestBtcReorg(ctx context.Context) error {
+	return k.LargestBtcReorg.Remove(ctx)
+}
+
 // SetLargestBtcReorg sets the new largest BTC block reorg if it is higher than the current
 // value in the store.
 func (k *Keeper) SetLargestBtcReorg(ctx context.Context, newLargestBlockReorg types.LargestBtcReOrg) error {

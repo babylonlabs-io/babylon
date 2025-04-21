@@ -230,7 +230,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 
 				// FP could be already slashed when it is being activated, but it is okay
 				// since slashed finality providers do not earn rewards
-				k.processRewardTracker(ctx, fpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
+				k.ProcessRewardTracker(ctx, fpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
 					k.MustProcessBtcDelegationActivated(ctx, fp, del, sats)
 				})
 			case types.BTCDelegationStatus_UNBONDED:
@@ -419,7 +419,7 @@ func (k Keeper) processPowerDistUpdateEventUnbond(
 		}
 		unbondedSatsByFpBtcPk[fpBTCPKHex] = append(unbondedSatsByFpBtcPk[fpBTCPKHex], btcDel.TotalSat)
 	}
-	k.processRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
+	k.ProcessRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
 		k.MustProcessBtcDelegationUnbonded(ctx, fp, del, sats)
 	})
 }
@@ -454,14 +454,14 @@ func (k Keeper) votingPowerDistCacheStore(ctx context.Context) prefix.Store {
 	return prefix.NewStore(storeAdapter, ftypes.VotingPowerDistCacheKey)
 }
 
-// processRewardTracker loads Babylon FPs from the given BTC delegation
+// ProcessRewardTracker loads Babylon FPs from the given BTC delegation
 // and executes the given function over each Babylon FP, delegator address
 // and satoshi amounts.
 // NOTE:
 //   - The function will only be executed over Babylon FPs but not consumer FPs
 //   - The function makes uses of the fpByBtcPkHex cache, and the cache only
 //     contains Babylon FPs but not consumer FPs
-func (k Keeper) processRewardTracker(
+func (k Keeper) ProcessRewardTracker(
 	ctx context.Context,
 	fpByBtcPkHex map[string]*types.FinalityProvider,
 	btcDel *types.BTCDelegation,

@@ -363,7 +363,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	// 7. set start height and end height and save it to db
 	btcDel.StartHeight = timeInfo.StartHeight
 	btcDel.EndHeight = timeInfo.EndHeight
-	ms.setBTCDelegation(ctx, btcDel)
+	ms.SetBTCDelegation(ctx, btcDel)
 
 	// 8. emit events
 	stakingTxHash := btcDel.MustGetStakingTxHash()

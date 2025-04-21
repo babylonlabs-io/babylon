@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/babylonlabs-io/babylon/app/keepers"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -15,7 +14,6 @@ import (
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	"go.uber.org/zap"
 )
 
@@ -23,39 +21,31 @@ const (
 	UpgradeName = "v1-btc-reorg-k"
 )
 
-func CreateUpgrade() upgrades.Upgrade {
-	return upgrades.Upgrade{
-		UpgradeName:          UpgradeName,
-		CreateUpgradeHandler: CreateUpgradeHandler(),
+func CreateUpgrade() upgrades.Fork {
+	return upgrades.Fork{
+		UpgradeName: UpgradeName,
+		// TODO: fill with correct block height of fork,
+		UpgradeHeight:  12000,
+		BeginForkLogic: CreateForkLogic,
 	}
 }
 
-// CreateUpgradeHandler upgrade handler for launch.
-func CreateUpgradeHandler() upgrades.UpgradeHandlerCreator {
-	return func(mm *module.Manager, cfg module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
-		return func(context context.Context, _plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-			ctx := sdk.UnwrapSDKContext(context)
+// CreateForkLogic executes the fork logic to handle BTC reorg large than k.
+func CreateForkLogic(context sdk.Context, keepers *keepers.AppKeepers) {
+	ctx := sdk.UnwrapSDKContext(context)
+	l := ctx.Logger()
 
-			migrations, err := mm.RunMigrations(ctx, cfg, fromVM)
-			if err != nil {
-				return nil, fmt.Errorf("failed to run migrations: %w", err)
-			}
+	// this upgrade should be called when there is a BTC reorg higher than K blocks (btccheckpoint.BtcConfirmationDepth)
+	btcStkK := keepers.BTCStakingKeeper
 
-			l := ctx.Logger()
+	largerBtcReorg := btcStkK.GetLargestBtcReorg(ctx)
+	btcBlockHeightRollback := largerBtcReorg.RollbackFrom.Height
 
-			// this upgrade should be called when there is a BTC reorg higher than K blocks (btccheckpoint.BtcConfirmationDepth)
-			btcStkK := keepers.BTCStakingKeeper
+	l.Debug("running upgrade due to large BTC reorg", zap.Uint32("btc_block_height_rollback_from", btcBlockHeightRollback))
+	// iterate over voting power expiration events to get the latest transactions from
+	// rollback height + (maxStaking - btcDel.UnbondingTime) from the latest btc staking parameter
 
-			largerBtcReorg := btcStkK.GetLargestBtcReorg(ctx)
-			btcBlockHeightRollback := largerBtcReorg.RollbackFrom.Height
-
-			l.Debug("running upgrade due to large BTC reorg", zap.Uint32("btc_block_height_rollback_from", btcBlockHeightRollback))
-			// iterate over voting power expiration events to get the latest transactions from
-			// rollback height + (maxStaking - btcDel.UnbondingTime) from the latest btc staking parameter
-
-			return migrations, nil
-		}
-	}
+	btcStkK.DeleteLargestBtcReorg(ctx)
 }
 
 // RollbackBtcStkTxs rollbacks all the BTC staking transactions that were included during the blocks
@@ -80,11 +70,14 @@ func RollbackBtcStkTxs(
 	// which means that the tip height is currently the latest BTC block after the whole reorg
 	btcTip := btcLgtK.GetTipInfo(ctx)
 	bbnHeight := uint64(sdkCtx.HeaderInfo().Height)
+	vpDstCacheHeight := bbnHeight - 1
 
 	newDc := ftypes.NewVotingPowerDistCache()
-	lastVpDstCache := finalK.GetVotingPowerDistCache(ctx, bbnHeight-1)
+	lastVpDstCache := finalK.GetVotingPowerDistCache(ctx, vpDstCacheHeight)
 	satsToUnbondByFpBtcPk := make(map[string]uint64, 0)
 	satsToActivateByFpBtcPk := make(map[string]uint64, 0)
+	cacheFpByBtcPkHex := map[string]*bstypes.FinalityProvider{}
+
 	mapStkTxs := map[string]struct{}{}
 	mapRollbackUnbondTxs := map[string]struct{}{}
 
@@ -117,6 +110,7 @@ func RollbackBtcStkTxs(
 		case bstypes.BTCDelegationStatus_EXPIRED:
 		case bstypes.BTCDelegationStatus_VERIFIED:
 			continue
+		// if the slash tx was rollbacked there is no need to rollback state, as the BTC can be already slashed
 		case bstypes.BTCDelegationStatus_ACTIVE:
 			// Decrease the total VP from the voting power table for that FP
 			// how do we know which babylon height this btc delegation was
@@ -133,8 +127,12 @@ func RollbackBtcStkTxs(
 			btcDel.StartHeight = 0
 
 			// Unbond in the incentive rewards tracker
+			finalK.ProcessRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
+				finalK.MustProcessBtcDelegationUnbonded(ctx, fp, del, sats)
+			})
 
-			continue
+			btcStkK.SetBTCDelegation(ctx, btcDel)
+
 		case bstypes.BTCDelegationStatus_UNBONDED:
 			// how to check if the unbonded BTC delegation transaction was rolledback
 
@@ -146,6 +144,7 @@ func RollbackBtcStkTxs(
 			ubdTxHash := ubdTx.TxHash().String()
 			_, rollback := mapRollbackUnbondTxs[ubdTxHash]
 			if !rollback {
+				// if shouldn't rollback the unbonding tx, just check the next
 				continue
 			}
 
@@ -154,10 +153,13 @@ func RollbackBtcStkTxs(
 				satsToActivateByFpBtcPk[fpBTCPKHex] += btcDel.TotalSat
 			}
 
-			// if the slash tx was rollbacked there is no need to rollback state, as the BTC can be already slashed
 			btcDel.BtcUndelegation.DelegatorUnbondingInfo = nil
-			// Add back to the incentive rewards
-			// Add back to the voting power table
+			// Add back to the incentive rewards tracker
+			finalK.ProcessRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
+				finalK.MustProcessBtcDelegationActivated(ctx, fp, del, sats)
+			})
+
+			btcStkK.SetBTCDelegation(ctx, btcDel)
 		}
 
 		// TODO: handle BTC delegation for consumers rollback
@@ -186,7 +188,7 @@ func RollbackBtcStkTxs(
 	}
 
 	// store in state
-	finalK.RecordVpAndDistCacheForHeight(ctx, newDc, bbnHeight-1)
+	finalK.RecordVpAndDistCacheForHeight(ctx, newDc, vpDstCacheHeight)
 
 	// check out each BTC VP distribution event in which was generated in some BTC staking delegation
 	// that had action in the reorg blocks
@@ -204,7 +206,7 @@ func RollbackBtcStkTxs(
 				}
 
 				btcStkK.DeletePowerDistEvent(ctx, btcHeight, uint64(idx))
-			default: // other events as slashed, jailed, unjail do no matter the BTC pk
+			default: // other events as slashed, jailed, unjail do not matter for the rollback procedure
 				continue
 			}
 		}

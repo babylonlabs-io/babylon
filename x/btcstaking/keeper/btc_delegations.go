@@ -50,7 +50,7 @@ func (k Keeper) AddBTCDelegation(
 	}
 
 	// save this BTC delegation
-	k.setBTCDelegation(ctx, btcDel)
+	k.SetBTCDelegation(ctx, btcDel)
 
 	if err := ctx.EventManager().EmitTypedEvents(types.NewBtcDelCreationEvent(
 		btcDel,
@@ -109,7 +109,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	)
 
 	// set BTC delegation back to KV store
-	k.setBTCDelegation(ctx, btcDel)
+	k.SetBTCDelegation(ctx, btcDel)
 
 	if err := ctx.EventManager().EmitTypedEvent(types.NewCovenantSignatureReceivedEvent(
 		btcDel,
@@ -184,7 +184,7 @@ func (k Keeper) btcUndelegate(
 	proof *types.InclusionProof,
 ) {
 	btcDel.BtcUndelegation.DelegatorUnbondingInfo = u
-	k.setBTCDelegation(ctx, btcDel)
+	k.SetBTCDelegation(ctx, btcDel)
 
 	if !btcDel.HasInclusionProof() {
 		return
@@ -218,7 +218,7 @@ func (k Keeper) btcUndelegate(
 	}
 }
 
-func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegation) {
+func (k Keeper) SetBTCDelegation(ctx context.Context, btcDel *types.BTCDelegation) {
 	store := k.btcDelegationStore(ctx)
 	stakingTxHash := btcDel.MustGetStakingTxHash()
 	btcDelBytes := k.cdc.MustMarshal(btcDel)
