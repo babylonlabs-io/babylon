@@ -227,6 +227,12 @@ func (k Keeper) SetBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 	store.Set(stakingTxHash[:], btcDelBytes)
 }
 
+func (k Keeper) DeleteBTCDelegation(ctx context.Context, btcDel *types.BTCDelegation) {
+	store := k.btcDelegationStore(ctx)
+	stakingTxHash := btcDel.MustGetStakingTxHash()
+	store.Delete(stakingTxHash[:])
+}
+
 // validateRestakedFPs ensures all finality providers are known to Babylon and at least
 // one of them is a Babylon finality provider. It also checks whether the BTC stake is
 // restaked to FPs of consumer chains

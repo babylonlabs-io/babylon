@@ -199,7 +199,9 @@ func HandleBtcDelegationsAndIncentive(
 		btcDel := loadBtcDel(ctx, btcStkK, cacheBtcDelByStkTxHashHex, stkTxHash)
 
 		if !btcDel.HasInclusionProof() {
-			return nil, nil, fmt.Errorf("the given BTC delegation does not have inclusion proof: %s, it doesn't need to rollback", stkTxHash)
+			// it doesn't have inclusion proof, can just be deleted
+			btcStkK.DeleteBTCDelegation(ctx, btcDel)
+			continue
 		}
 
 		p := paramsByVs[btcDel.ParamsVersion]
