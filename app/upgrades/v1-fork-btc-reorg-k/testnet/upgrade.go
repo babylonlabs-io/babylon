@@ -11,7 +11,6 @@ import (
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	fkeeper "github.com/babylonlabs-io/babylon/x/finality/keeper"
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"go.uber.org/zap"
 )
@@ -44,7 +43,7 @@ func CreateForkLogic(context sdk.Context, keepers *keepers.AppKeepers) {
 	l := ctx.Logger()
 
 	// this upgrade should be called when there is a BTC reorg higher than K blocks (btccheckpoint.BtcConfirmationDepth)
-	btcStkK, btcLgtK := keepers.BTCStakingKeeper, keepers.BTCLightClientKeeper
+	btcStkK, btcLgtK, finalK := keepers.BTCStakingKeeper, keepers.BTCLightClientKeeper, keepers.FinalityKeeper
 
 	largerBtcReorg := btcStkK.GetLargestBtcReorg(ctx)
 	btcBlockHeightRollbackFrom := largerBtcReorg.RollbackFrom.Height
@@ -60,6 +59,9 @@ func CreateForkLogic(context sdk.Context, keepers *keepers.AppKeepers) {
 
 	cacheBtcDelByStkTxHashHex := make(map[string]*bstypes.BTCDelegation, 0)
 
+	// collects and deletes the events that are still not processed but
+	// the act that generated the event was rolledbacked:
+	// staking tx or unbonding
 	mapStkTxHashRollback := HandleDeleteVotingPowerDistributionEvts(
 		ctx,
 		&btcStkK,
@@ -70,12 +72,24 @@ func CreateForkLogic(context sdk.Context, keepers *keepers.AppKeepers) {
 		MapUnbondStkTxHashRollback,
 	)
 
-	for stkTxHashHexRollbacked, _ := range mapStkTxHashRollback {
-		l.Debug(
-			"staking transaction was rolledbacked",
-			zap.String("stk_tx_hash_hex", stkTxHashHexRollbacked),
-		)
+	// unsets the values on BTC delegation and returns the values to update
+	// the voting power table
+	satsToUnbondByFpBtcPk, satsToActivateByFpBtcPk, err := HandleBtcDelegations(
+		ctx,
+		&btcStkK,
+		&finalK,
+		cacheBtcDelByStkTxHashHex,
+		btcTip.Height,
+		paramsByVs,
+		mapStkTxHashRollback,
+		MapUnbondStkTxHashRollback,
+	)
+	if err != nil {
+		panic(err)
 	}
+
+	// Updates the voting power table accordingly to the BTC delegations rollback actions.
+	HandleVotingPowerDistCache(ctx, &finalK, satsToActivateByFpBtcPk, satsToUnbondByFpBtcPk)
 
 	// deletes the old largest reorg to avoid panic at end blocker again
 	btcStkK.DeleteLargestBtcReorg(ctx)
@@ -97,6 +111,8 @@ func HandleDeleteVotingPowerDistributionEvts(
 	higherBtcStakingPeriod := MaxBtcStakingTimeBlocks(paramsByVs)
 	btcBlockHeightRollbackFrom := largerBtcReorg.RollbackFrom.Height
 
+	l := sdk.UnwrapSDKContext(ctx).Logger()
+
 	// iterating over all the BTC staking events from the rollback height until latest Tip + the maximum staking period
 	for btcHeight := btcBlockHeightRollbackFrom; btcHeight <= btcTipHeight+higherBtcStakingPeriod; btcHeight++ {
 		vpEvents := btcStkK.GetAllPowerDistUpdateEvents(ctx, btcHeight, btcHeight)
@@ -114,6 +130,10 @@ func HandleDeleteVotingPowerDistributionEvts(
 						Idx:            uint64(idx),
 						BlockHeightBtc: btcHeight,
 					})
+					l.Debug(
+						"staking transaction was rolledbacked",
+						zap.String("stk_tx_hash_hex", stkTxHash),
+					)
 					continue
 				}
 				// if the btc staking transaction hash was not activated during the rollback
@@ -126,6 +146,10 @@ func HandleDeleteVotingPowerDistributionEvts(
 
 				_, isUnbondingTxRolledBack := mapUnbondStkTxHashRollback[stkTxHash]
 				if isUnbondingTxRolledBack {
+					l.Debug(
+						"unbonding transaction was rolledbacked",
+						zap.String("stk_tx_hash_hex", stkTxHash),
+					)
 					eventsToDelete = append(eventsToDelete, bstypes.EventIndex{
 						Idx:            uint64(idx),
 						BlockHeightBtc: btcHeight,
@@ -145,44 +169,33 @@ func HandleDeleteVotingPowerDistributionEvts(
 	return mapStkTxHashRollback
 }
 
-// RollbackBtcStkTxs rollbacks all the BTC staking transactions that were included during the blocks
+// HandleBtcDelegations rollbacks all the BTC staking transactions that were included during the blocks
 // which were rollbacked in the BTC reorg.
 // Note: the order of the endblock which panic matters, the halt happened at the btcstaking
 // so finality and incentive had not run their end blockers in the panic block.
-func RollbackBtcStkTxs(
+func HandleBtcDelegations(
 	ctx context.Context,
 	btcStkK *bskeeper.Keeper,
 	finalK *fkeeper.Keeper,
 
 	cacheBtcDelByStkTxHashHex map[string]*bstypes.BTCDelegation,
 	btcTipHeight uint32,
-	stkTxs []chainhash.Hash,
-	mapRollbackUnbondTxs map[string]struct{},
-) error {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	paramsByVs map[uint32]*bstypes.Params,
+	mapStkTxHashRollback, mapRollbackUnbondTxs map[string]struct{},
+) (satsToUnbondByFpBtcPk, satsToActivateByFpBtcPk map[string]uint64, err error) {
+	cacheFpByBtcPkHex := make(map[string]*bstypes.FinalityProvider, 0)
+	satsToUnbondByFpBtcPk, satsToActivateByFpBtcPk = make(map[string]uint64, 0), make(map[string]uint64, 0)
 
-	paramsByVs := btcStkK.GetAllParamsByVersion(ctx)
-	// the BTC reorg was executed in btclightclient and panic in btcstaking,
-	// which means that the tip height is currently the latest BTC block after the whole reorg
-	bbnHeight := uint64(sdkCtx.HeaderInfo().Height)
-	vpDstCacheHeight := bbnHeight - 1
-
-	newDc := ftypes.NewVotingPowerDistCache()
-	satsToUnbondByFpBtcPk := make(map[string]uint64, 0)
-	satsToActivateByFpBtcPk := make(map[string]uint64, 0)
-	cacheFpByBtcPkHex := map[string]*bstypes.FinalityProvider{}
-
-	for _, stkTx := range stkTxs {
-		stkTxHash := stkTx.String()
+	for stkTxHash := range mapStkTxHashRollback {
 		btcDel := loadBtcDel(ctx, btcStkK, cacheBtcDelByStkTxHashHex, stkTxHash)
 
 		if !btcDel.HasInclusionProof() {
-			return fmt.Errorf("the given BTC delegation does not have inclusion proof: %s, it doesn't need to rollback", stkTxHash)
+			return nil, nil, fmt.Errorf("the given BTC delegation does not have inclusion proof: %s, it doesn't need to rollback", stkTxHash)
 		}
 
 		p := paramsByVs[btcDel.ParamsVersion]
 		if p == nil {
-			return fmt.Errorf("failed to get the params version %d for BTC delegation to staking tx: %s", btcDel.ParamsVersion, stkTxHash)
+			return nil, nil, fmt.Errorf("failed to get the params version %d for BTC delegation to staking tx: %s", btcDel.ParamsVersion, stkTxHash)
 		}
 
 		// At this point each staking transaction is considered that the inclusion proof or any BTC action was made in a BTC block that
@@ -222,7 +235,7 @@ func RollbackBtcStkTxs(
 
 			ubdTx, err := bbn.NewBTCTxFromBytes(btcDel.BtcUndelegation.UnbondingTx)
 			if err != nil {
-				return fmt.Errorf("failed to parse unbonding tx %x off staking tx: %s - %w", btcDel.BtcUndelegation.UnbondingTx, stkTxHash, err)
+				return nil, nil, fmt.Errorf("failed to parse unbonding tx %x off staking tx: %s - %w", btcDel.BtcUndelegation.UnbondingTx, stkTxHash, err)
 			}
 
 			ubdTxHash := ubdTx.TxHash().String()
@@ -249,7 +262,23 @@ func RollbackBtcStkTxs(
 		// TODO: handle BTC delegation for consumers rollback
 	}
 
+	return satsToUnbondByFpBtcPk, satsToActivateByFpBtcPk, nil
+}
+
+func HandleVotingPowerDistCache(
+	ctx context.Context,
+	finalK *fkeeper.Keeper,
+	satsToActivateByFpBtcPk, satsToUnbondByFpBtcPk map[string]uint64,
+) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	// the BTC reorg was executed in btclightclient and panic in btcstaking,
+	// which means that the tip height is currently the latest BTC block after the whole reorg
+	bbnHeight := uint64(sdkCtx.HeaderInfo().Height)
+	vpDstCacheHeight := bbnHeight - 1
+
 	lastVpDstCache := finalK.GetVotingPowerDistCache(ctx, vpDstCacheHeight)
+	newDc := ftypes.NewVotingPowerDistCache()
 
 	// Updates the new voting power distribution cache
 	for i := range lastVpDstCache.FinalityProviders {
@@ -275,8 +304,6 @@ func RollbackBtcStkTxs(
 
 	// store in state
 	finalK.RecordVpAndDistCacheForHeight(ctx, newDc, vpDstCacheHeight)
-
-	return nil
 }
 
 // MaxBtcStakingTimeBlocks iterates over all the parameters to get the higher staking time
