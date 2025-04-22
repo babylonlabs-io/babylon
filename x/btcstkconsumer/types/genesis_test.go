@@ -13,7 +13,7 @@ import (
 
 func TestGenesisState_Validate(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	entriesCount := rand.Intn(25)
+	entriesCount := rand.Intn(25) + 2 // make sure it is always at least 2
 	fps := make([]*btcstaking.FinalityProvider, 0, entriesCount)
 	consumers := make([]*types.ConsumerRegister, 0, entriesCount)
 
