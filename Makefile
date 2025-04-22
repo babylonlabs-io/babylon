@@ -2,6 +2,7 @@
 
 include scripts/makefile/linting.mk
 include scripts/makefile/gosec.mk
+include scripts/makefile/protobuf.mk
 
 .DEFAULT_GOAL := help
 help:
@@ -19,11 +20,7 @@ help:
 	@echo "  make install                               Install babylond binary"
 	@echo "  make lint                                  Show available lint commands"
 	@echo "  make mocks                                 Generate mock objects for testing"
-	@echo "  make proto-all                             Generate all protobuf related files"
-	@echo "  make proto-format                          Format protobuf files"
-	@echo "  make proto-gen                             Generate protobuf files"
-	@echo "  make proto-lint                            Lint protobuf files"
-	@echo "  make proto-swagger-gen                     Generate Swagger files from protobuf"
+	@echo "  make proto                                 Generate protobuf related files"
 	@echo "  make test                                  Run tests"
 	@echo "  make test-all                              Run all tests"
 	@echo "  make test-unit                             Run unit tests"
@@ -390,32 +387,6 @@ test-sim-profile:
 benchmark:
 	@go test -mod=readonly -bench=. $(PACKAGES_NOSIMULATION)
 .PHONY: benchmark
-
-###############################################################################
-###                                Protobuf                                 ###
-###############################################################################
-
-protoVer=0.14.0
-protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
-
-proto-all: proto-gen proto-swagger-gen ## Generate all protobuf related files
-
-proto-gen: proto-lint ## Generate protobuf files
-	@echo "Generating Protobuf files"
-	@$(protoImage) sh ./proto/scripts/protocgen.sh
-
-proto-swagger-gen: ## Generate Swagger files from protobuf
-	@echo "Generating Protobuf Swagger"
-	@$(protoImage) sh ./proto/scripts/protoc-swagger-gen.sh
-
-proto-format: ## Format protobuf files
-	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
-
-proto-lint: ## Lint protobuf files
-	@$(protoImage) buf lint --error-format=json
-
-.PHONY: proto-gen proto-swagger-gen proto-format proto-lint
 
 ###############################################################################
 ###                                Docker                                   ###
