@@ -30,6 +30,6 @@ func init() {
 		v1rc9.CreateUpgrade(),
 	}
 	Forks = []upgrades.Fork{
-		v1reorg.CreateUpgrade(),
+		v1reorg.CreateFork(),
 	}
 }

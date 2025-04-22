@@ -27,7 +27,7 @@ var (
 	}
 )
 
-func CreateUpgrade() upgrades.Fork {
+func CreateFork() upgrades.Fork {
 	return upgrades.Fork{
 		UpgradeName: UpgradeName,
 		// TODO: fill with correct block height of fork,
@@ -53,6 +53,9 @@ func ForkHandler(context sdk.Context, keepers *keepers.AppKeepers) error {
 	btcStkK, btcLgtK, finalK := keepers.BTCStakingKeeper, keepers.BTCLightClientKeeper, keepers.FinalityKeeper
 
 	largerBtcReorg := btcStkK.GetLargestBtcReorg(ctx)
+	if largerBtcReorg == nil {
+		panic("no btc reorg has happened")
+	}
 	btcBlockHeightRollbackFrom := largerBtcReorg.RollbackFrom.Height
 
 	l.Debug(
@@ -226,16 +229,12 @@ func HandleBtcDelegationsAndIncentive(
 				satsToUnbondByFpBtcPk[fpBTCPKHex] += btcDel.TotalSat
 			}
 
-			// Remove the inclusion proof of the BTC delegation
-			btcDel.EndHeight = 0
-			btcDel.StartHeight = 0
-
 			// Unbond in the incentive rewards tracker
 			finalK.ProcessRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
 				finalK.MustProcessBtcDelegationUnbonded(ctx, fp, del, sats)
 			})
 
-			btcStkK.SetBTCDelegation(ctx, btcDel)
+			btcStkK.DeleteBTCDelegation(ctx, btcDel)
 			continue
 
 		case bstypes.BTCDelegationStatus_UNBONDED:
