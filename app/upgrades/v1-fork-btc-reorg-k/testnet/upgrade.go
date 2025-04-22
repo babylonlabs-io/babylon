@@ -290,6 +290,10 @@ func HandleVotingPowerDistCache(
 
 	newDc := ftypes.NewVotingPowerDistCache()
 	lastVpDstCache := finalK.GetVotingPowerDistCache(ctx, vpDstCacheHeight)
+	if lastVpDstCache == nil {
+		// no need to update if there wasn't a voting power cache for that babylon height
+		return
+	}
 
 	// Updates the new voting power distribution cache
 	for i := range lastVpDstCache.FinalityProviders {
