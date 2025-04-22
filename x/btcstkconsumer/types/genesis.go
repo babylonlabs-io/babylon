@@ -1,6 +1,9 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+)
 
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
@@ -45,4 +48,16 @@ func validateConsumers(consumers []*ConsumerRegister) (map[string]bool, error) {
 		}
 	}
 	return consumersMap, nil
+}
+
+// Helper function to sort slices to get a deterministic
+// result on the tests
+func SortData(gs *GenesisState) {
+	sort.Slice(gs.Consumers, func(i, j int) bool {
+		return gs.Consumers[i].ConsumerId < gs.Consumers[j].ConsumerId
+	})
+
+	sort.Slice(gs.FinalityProviders, func(i, j int) bool {
+		return gs.FinalityProviders[i].Addr < gs.FinalityProviders[j].Addr
+	})
 }
