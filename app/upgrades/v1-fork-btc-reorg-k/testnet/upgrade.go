@@ -39,6 +39,14 @@ func CreateUpgrade() upgrades.Fork {
 
 // CreateForkLogic executes the fork logic to handle BTC reorg large than k.
 func CreateForkLogic(context sdk.Context, keepers *keepers.AppKeepers) {
+	err := ForkHandler(context, keepers)
+	if err != nil {
+		panic(fmt.Errorf("failed to run the fork handler: %w", err))
+	}
+}
+
+// ForkHandler wraps the logic of the fork to return an error
+func ForkHandler(context sdk.Context, keepers *keepers.AppKeepers) error {
 	ctx := sdk.UnwrapSDKContext(context)
 	l := ctx.Logger()
 
@@ -85,14 +93,14 @@ func CreateForkLogic(context sdk.Context, keepers *keepers.AppKeepers) {
 		MapUnbondStkTxHashRollback,
 	)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to handle BTC delegations: %w", err)
 	}
 
 	// Updates the voting power table accordingly to the BTC delegations rollback actions.
 	HandleVotingPowerDistCache(ctx, &finalK, satsToActivateByFpBtcPk, satsToUnbondByFpBtcPk)
 
 	// deletes the old largest reorg to avoid panic at end blocker again
-	btcStkK.DeleteLargestBtcReorg(ctx)
+	return btcStkK.DeleteLargestBtcReorg(ctx)
 }
 
 func HandleDeleteVotingPowerDistributionEvts(
