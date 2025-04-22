@@ -10,7 +10,9 @@ import (
 // InitGenesis initializes the module's state from a provided genesis state.
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	for _, c := range gs.Consumers {
-		k.RegisterConsumer(ctx, c)
+		if err := k.RegisterConsumer(ctx, c); err != nil {
+			return err
+		}
 	}
 
 	for _, fp := range gs.FinalityProviders {

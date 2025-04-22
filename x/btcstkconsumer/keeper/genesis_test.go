@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 	"testing"
 
@@ -68,7 +67,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *types.Ge
 	var (
 		r      = rand.New(rand.NewSource(seed))
 		k, ctx = keepertest.BTCStkConsumerKeeper(t)
-		l      = int(math.Abs(float64(r.Int() % 50))) // cap it to 50 entries
+		l      = r.Intn(50)
 		cs     = make([]*types.ConsumerRegister, l)
 		fps    = make([]*btcstktypes.FinalityProvider, l)
 	)
