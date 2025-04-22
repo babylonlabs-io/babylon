@@ -20,7 +20,7 @@ help:
 	@echo "  make install                               Install babylond binary"
 	@echo "  make lint                                  Show available lint commands"
 	@echo "  make mocks                                 Generate mock objects for testing"
-	@echo "  make proto				     Generate protobuf related files"
+	@echo "  make proto                                 Generate protobuf related files"
 	@echo "  make test                                  Run tests"
 	@echo "  make test-all                              Run all tests"
 	@echo "  make test-unit                             Run unit tests"

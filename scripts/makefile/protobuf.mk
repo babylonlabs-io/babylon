@@ -18,7 +18,7 @@ proto:
 	@echo "  proto-gen            Generate protobuf files"
 	@echo "  proto-swagger-gen    Generate Swagger files from protobuf"
 	@echo "  proto-format         Format Proto Files"
-	@echo "  proto-lint	       Lint protobuf files"
+	@echo "  proto-lint           Lint protobuf files"
 	@echo ""
 
 proto-all: proto-gen proto-swagger-gen
