@@ -6,7 +6,6 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app/keepers"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
-	bbn "github.com/babylonlabs-io/babylon/types"
 	bskeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	fkeeper "github.com/babylonlabs-io/babylon/x/finality/keeper"
@@ -80,9 +79,8 @@ func ForkHandler(context sdk.Context, keepers *keepers.AppKeepers) error {
 		MapUnbondStkTxHashRollback,
 	)
 
-	// unsets the values on BTC delegation and returns the values to update
-	// the voting power table
-	satsToUnbondByFpBtcPk, satsToActivateByFpBtcPk, err := HandleBtcDelegations(
+	// unsets the values on BTC delegation and reward tracker
+	satsToUnbondByFpBtcPk, satsToActivateByFpBtcPk, err := HandleBtcDelegationsAndIncentive(
 		ctx,
 		&btcStkK,
 		&finalK,
@@ -103,6 +101,8 @@ func ForkHandler(context sdk.Context, keepers *keepers.AppKeepers) error {
 	return btcStkK.DeleteLargestBtcReorg(ctx)
 }
 
+// HandleDeleteVotingPowerDistributionEvts iterates over all possible rolledback voting power distribution
+// events to verify if they were and delete it if the act that generated then was reorged.
 func HandleDeleteVotingPowerDistributionEvts(
 	ctx context.Context,
 	btcStkK *bskeeper.Keeper,
@@ -177,11 +177,11 @@ func HandleDeleteVotingPowerDistributionEvts(
 	return mapStkTxHashRollback
 }
 
-// HandleBtcDelegations rollbacks all the BTC staking transactions that were included during the blocks
+// HandleBtcDelegationsAndIncentive rollbacks all the BTC staking transactions that were included during the blocks
 // which were rollbacked in the BTC reorg.
 // Note: the order of the endblock which panic matters, the halt happened at the btcstaking
 // so finality and incentive had not run their end blockers in the panic block.
-func HandleBtcDelegations(
+func HandleBtcDelegationsAndIncentive(
 	ctx context.Context,
 	btcStkK *bskeeper.Keeper,
 	finalK *fkeeper.Keeper,
@@ -192,6 +192,7 @@ func HandleBtcDelegations(
 	mapStkTxHashRollback, mapRollbackUnbondTxs map[string]struct{},
 ) (satsToUnbondByFpBtcPk, satsToActivateByFpBtcPk map[string]uint64, err error) {
 	cacheFpByBtcPkHex := make(map[string]*bstypes.FinalityProvider, 0)
+	// collect data to update cache voting power table in finality
 	satsToUnbondByFpBtcPk, satsToActivateByFpBtcPk = make(map[string]uint64, 0), make(map[string]uint64, 0)
 
 	for stkTxHash := range mapStkTxHashRollback {
@@ -206,8 +207,7 @@ func HandleBtcDelegations(
 			return nil, nil, fmt.Errorf("failed to get the params version %d for BTC delegation to staking tx: %s", btcDel.ParamsVersion, stkTxHash)
 		}
 
-		// At this point each staking transaction is considered that the inclusion proof or any BTC action was made in a BTC block that
-		// was rolled back, so there is a need to revert the state that was modified.
+		// verify the current status of the BTC delegation to rollback the state in btcstaking
 		btcStatus := btcDel.GetStatus(btcTipHeight, p.CovenantQuorum)
 		switch btcStatus {
 		// for pending, expired and verified there is no need to update anything
@@ -217,11 +217,8 @@ func HandleBtcDelegations(
 			continue
 		// if the slash tx was rollbacked there is no need to rollback state, as the BTC can be already slashed
 		case bstypes.BTCDelegationStatus_ACTIVE:
-			// Decrease the total VP from the voting power table for that FP
-			// how do we know which babylon height this btc delegation was
-			// activated (Voting Power was included in the VP distribution cache)?
-			// since there is no clear way how to get this information, just update the
-			// latest voting power table stored in the finality
+			// if it is currently active, it should rollback the sats in finality vp table
+			// and unbond in the reward tracker
 			for _, fpBTCPK := range btcDel.FpBtcPkList {
 				fpBTCPKHex := fpBTCPK.MarshalHex()
 				satsToUnbondByFpBtcPk[fpBTCPKHex] += btcDel.TotalSat
@@ -237,19 +234,13 @@ func HandleBtcDelegations(
 			})
 
 			btcStkK.SetBTCDelegation(ctx, btcDel)
+			continue
 
 		case bstypes.BTCDelegationStatus_UNBONDED:
-			// how to check if the unbonded BTC delegation transaction was rolledback
-
-			ubdTx, err := bbn.NewBTCTxFromBytes(btcDel.BtcUndelegation.UnbondingTx)
-			if err != nil {
-				return nil, nil, fmt.Errorf("failed to parse unbonding tx %x off staking tx: %s - %w", btcDel.BtcUndelegation.UnbondingTx, stkTxHash, err)
-			}
-
-			ubdTxHash := ubdTx.TxHash().String()
-			_, rollback := mapRollbackUnbondTxs[ubdTxHash]
+			// verify if the staking transaction hash is in the unbond
+			// rolledback list of staking txs
+			_, rollback := mapRollbackUnbondTxs[stkTxHash]
 			if !rollback {
-				// if shouldn't rollback the unbonding tx, just check the next
 				continue
 			}
 
@@ -259,12 +250,14 @@ func HandleBtcDelegations(
 			}
 
 			btcDel.BtcUndelegation.DelegatorUnbondingInfo = nil
+
 			// Add back to the incentive rewards tracker
 			finalK.ProcessRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
 				finalK.MustProcessBtcDelegationActivated(ctx, fp, del, sats)
 			})
 
 			btcStkK.SetBTCDelegation(ctx, btcDel)
+			continue
 		}
 
 		// TODO: handle BTC delegation for consumers rollback
@@ -273,6 +266,15 @@ func HandleBtcDelegations(
 	return satsToUnbondByFpBtcPk, satsToActivateByFpBtcPk, nil
 }
 
+// HandleVotingPowerDistCache decreases the total VP from the
+// voting power table for the given FPs. There is no clear way
+// to know which babylon height the BTC delegation was activated
+// (The babylon height in which the voting Power was included in
+// the VP distribution cache). For this reason, just update the
+// latest voting power table stored in the finality to keep
+// the records correctly from now on.
+// Note: We can't use the current block height, as it will be updated
+// in this end blocker.
 func HandleVotingPowerDistCache(
 	ctx context.Context,
 	finalK *fkeeper.Keeper,
@@ -285,8 +287,8 @@ func HandleVotingPowerDistCache(
 	bbnHeight := uint64(sdkCtx.HeaderInfo().Height)
 	vpDstCacheHeight := bbnHeight - 1
 
-	lastVpDstCache := finalK.GetVotingPowerDistCache(ctx, vpDstCacheHeight)
 	newDc := ftypes.NewVotingPowerDistCache()
+	lastVpDstCache := finalK.GetVotingPowerDistCache(ctx, vpDstCacheHeight)
 
 	// Updates the new voting power distribution cache
 	for i := range lastVpDstCache.FinalityProviders {
@@ -310,7 +312,7 @@ func HandleVotingPowerDistCache(
 		}
 	}
 
-	// store in state
+	// Update the voting power table in the state, accordingly
 	finalK.RecordVpAndDistCacheForHeight(ctx, newDc, vpDstCacheHeight)
 }
 
@@ -329,6 +331,8 @@ func MaxBtcStakingTimeBlocks(paramsByVs map[uint32]*bstypes.Params) uint32 {
 	return higherBtcStakingPeriod
 }
 
+// loadBtcDel caches the btc delegation based on the staking tx hash hex
+// NOTE: the btc delegation staking transactions hash hex must exists.
 func loadBtcDel(
 	ctx context.Context,
 	btcStkK *bskeeper.Keeper,
