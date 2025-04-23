@@ -106,6 +106,7 @@ import (
 	btcstakingtypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer"
 	bsctypes "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
 	"github.com/babylonlabs-io/babylon/v2/x/checkpointing"
 	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/prepare"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
