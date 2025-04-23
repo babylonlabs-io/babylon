@@ -106,6 +106,7 @@ import (
 	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/x/btcstkconsumer"
 	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
 	"github.com/babylonlabs-io/babylon/x/checkpointing"
 	"github.com/babylonlabs-io/babylon/x/checkpointing/prepare"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
@@ -381,6 +382,7 @@ func NewBabylonApp(
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
+		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -412,6 +414,7 @@ func NewBabylonApp(
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
+		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -447,6 +450,7 @@ func NewBabylonApp(
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
+		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
 		// TODO add here btcstakingconsumer before btcstaking module for init genesis logic
 		btcstakingtypes.ModuleName,
