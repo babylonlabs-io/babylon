@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/incentive/types";
 
 // FinalityProviderHistoricalRewards represents the cumulative rewards ratio of
 // the finality provider per sat in that period. The period is ommited here and

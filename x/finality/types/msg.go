@@ -7,8 +7,8 @@ import (
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/crypto/eots"
-	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
 )
 
 // ensure that these message types implement the sdk.Msg interface

@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"context"
-	"github.com/babylonlabs-io/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 )
 
 // SetParams sets the x/epoching module parameters.

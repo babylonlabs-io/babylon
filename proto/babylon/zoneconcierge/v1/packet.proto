@@ -9,7 +9,7 @@ import "babylon/epoching/v1/epoching.proto";
 import "babylon/zoneconcierge/v1/zoneconcierge.proto";
 import "babylon/finality/v1/finality.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/zoneconcierge/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types";
 
 // OutboundPacket represents packets sent from Babylon to other chains
 message OutboundPacket {

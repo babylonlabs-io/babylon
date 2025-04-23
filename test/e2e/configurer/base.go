@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/test/e2e/containers"
-	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
-	"github.com/babylonlabs-io/babylon/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/containers"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/util"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 )

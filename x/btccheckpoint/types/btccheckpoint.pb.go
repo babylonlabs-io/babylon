@@ -5,7 +5,7 @@ package types
 
 import (
 	fmt "fmt"
-	github_com_babylonlabs_io_babylon_types "github.com/babylonlabs-io/babylon/types"
+	github_com_babylonlabs_io_babylon_types "github.com/babylonlabs-io/babylon/v2/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
@@ -90,7 +90,7 @@ type BTCSpvProof struct {
 	MerkleNodes []byte `protobuf:"bytes,3,opt,name=merkle_nodes,json=merkleNodes,proto3" json:"merkle_nodes,omitempty"`
 	// Valid btc header which confirms btc_transaction.
 	// Should have exactly 80 bytes
-	ConfirmingBtcHeader *github_com_babylonlabs_io_babylon_types.BTCHeaderBytes `protobuf:"bytes,4,opt,name=confirming_btc_header,json=confirmingBtcHeader,proto3,customtype=github.com/babylonlabs-io/babylon/types.BTCHeaderBytes" json:"confirming_btc_header,omitempty"`
+	ConfirmingBtcHeader *github_com_babylonlabs_io_babylon_types.BTCHeaderBytes `protobuf:"bytes,4,opt,name=confirming_btc_header,json=confirmingBtcHeader,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BTCHeaderBytes" json:"confirming_btc_header,omitempty"`
 }
 
 func (m *BTCSpvProof) Reset()         { *m = BTCSpvProof{} }
@@ -151,7 +151,7 @@ func (m *BTCSpvProof) GetMerkleNodes() []byte {
 // which transaction was included and transaction index in the block
 type TransactionKey struct {
 	Index uint32                                                      `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
-	Hash  *github_com_babylonlabs_io_babylon_types.BTCHeaderHashBytes `protobuf:"bytes,2,opt,name=hash,proto3,customtype=github.com/babylonlabs-io/babylon/types.BTCHeaderHashBytes" json:"hash,omitempty"`
+	Hash  *github_com_babylonlabs_io_babylon_types.BTCHeaderHashBytes `protobuf:"bytes,2,opt,name=hash,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BTCHeaderHashBytes" json:"hash,omitempty"`
 }
 
 func (m *TransactionKey) Reset()         { *m = TransactionKey{} }
@@ -516,7 +516,7 @@ type BTCCheckpointInfo struct {
 	BestSubmissionBtcBlockHeight uint32 `protobuf:"varint,2,opt,name=best_submission_btc_block_height,json=bestSubmissionBtcBlockHeight,proto3" json:"best_submission_btc_block_height,omitempty"`
 	// hash of the btc block which determines checkpoint btc block height i.e.
 	// youngest block of best submission
-	BestSubmissionBtcBlockHash *github_com_babylonlabs_io_babylon_types.BTCHeaderHashBytes `protobuf:"bytes,3,opt,name=best_submission_btc_block_hash,json=bestSubmissionBtcBlockHash,proto3,customtype=github.com/babylonlabs-io/babylon/types.BTCHeaderHashBytes" json:"best_submission_btc_block_hash,omitempty"`
+	BestSubmissionBtcBlockHash *github_com_babylonlabs_io_babylon_types.BTCHeaderHashBytes `protobuf:"bytes,3,opt,name=best_submission_btc_block_hash,json=bestSubmissionBtcBlockHash,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BTCHeaderHashBytes" json:"best_submission_btc_block_hash,omitempty"`
 	// the BTC checkpoint transactions of the best submission
 	BestSubmissionTransactions []*TransactionInfo `protobuf:"bytes,4,rep,name=best_submission_transactions,json=bestSubmissionTransactions,proto3" json:"best_submission_transactions,omitempty"`
 	// list of vigilantes' addresses of the best submission

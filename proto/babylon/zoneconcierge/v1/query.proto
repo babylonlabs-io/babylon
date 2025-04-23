@@ -10,7 +10,7 @@ import "babylon/epoching/v1/epoching.proto";
 import "babylon/zoneconcierge/v1/zoneconcierge.proto";
 import "babylon/zoneconcierge/v1/params.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/zoneconcierge/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types";
 
 // Query defines the gRPC querier service.
 service Query {

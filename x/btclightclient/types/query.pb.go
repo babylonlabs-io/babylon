@@ -7,7 +7,7 @@ import (
 	context "context"
 	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
-	github_com_babylonlabs_io_babylon_types "github.com/babylonlabs-io/babylon/types"
+	github_com_babylonlabs_io_babylon_types "github.com/babylonlabs-io/babylon/v2/types"
 	_ "github.com/cosmos/cosmos-proto"
 	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/cosmos/gogoproto/gogoproto"
@@ -164,7 +164,7 @@ func (m *QueryHashesRequest) GetPagination() *query.PageRequest {
 
 // QueryHashesResponse is response type for the Query/Hashes RPC method.
 type QueryHashesResponse struct {
-	Hashes     []github_com_babylonlabs_io_babylon_types.BTCHeaderHashBytes `protobuf:"bytes,1,rep,name=hashes,proto3,customtype=github.com/babylonlabs-io/babylon/types.BTCHeaderHashBytes" json:"hashes,omitempty"`
+	Hashes     []github_com_babylonlabs_io_babylon_types.BTCHeaderHashBytes `protobuf:"bytes,1,rep,name=hashes,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BTCHeaderHashBytes" json:"hashes,omitempty"`
 	Pagination *query.PageResponse                                          `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
@@ -211,7 +211,7 @@ func (m *QueryHashesResponse) GetPagination() *query.PageResponse {
 // QueryContainsRequest is request type for the Query/Contains RPC method.
 // It involves checking whether a hash is maintained by the module.
 type QueryContainsRequest struct {
-	Hash *github_com_babylonlabs_io_babylon_types.BTCHeaderHashBytes `protobuf:"bytes,1,opt,name=hash,proto3,customtype=github.com/babylonlabs-io/babylon/types.BTCHeaderHashBytes" json:"hash,omitempty"`
+	Hash *github_com_babylonlabs_io_babylon_types.BTCHeaderHashBytes `protobuf:"bytes,1,opt,name=hash,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BTCHeaderHashBytes" json:"hash,omitempty"`
 }
 
 func (m *QueryContainsRequest) Reset()         { *m = QueryContainsRequest{} }
@@ -917,7 +917,7 @@ type QueryClient interface {
 	Contains(ctx context.Context, in *QueryContainsRequest, opts ...grpc.CallOption) (*QueryContainsResponse, error)
 	// ContainsBytes is a temporary method that
 	// checks whether a hash is maintained by the module.
-	// See discussion at https://github.com/babylonlabs-io/babylon/pull/132
+	// See discussion at https://github.com/babylonlabs-io/babylon/v2/pull/132
 	// for more details.
 	ContainsBytes(ctx context.Context, in *QueryContainsBytesRequest, opts ...grpc.CallOption) (*QueryContainsBytesResponse, error)
 	// MainChain returns the canonical chain
@@ -1022,7 +1022,7 @@ type QueryServer interface {
 	Contains(context.Context, *QueryContainsRequest) (*QueryContainsResponse, error)
 	// ContainsBytes is a temporary method that
 	// checks whether a hash is maintained by the module.
-	// See discussion at https://github.com/babylonlabs-io/babylon/pull/132
+	// See discussion at https://github.com/babylonlabs-io/babylon/v2/pull/132
 	// for more details.
 	ContainsBytes(context.Context, *QueryContainsBytesRequest) (*QueryContainsBytesResponse, error)
 	// MainChain returns the canonical chain

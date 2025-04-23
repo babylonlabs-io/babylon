@@ -5,7 +5,7 @@ import "cosmos/staking/v1beta1/staking.proto";
 import "babylon/btcstaking/v1/pop.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types";
 
 // SlashedFinalityProvider carries a slashed finality provider on a consumer
 message SlashedFinalityProvider {

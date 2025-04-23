@@ -4,14 +4,14 @@ import (
 	goMath "math"
 	"testing"
 
-	btckckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	btckckpttypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
 	"github.com/btcsuite/btcd/wire"
 
-	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
 
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	et "github.com/babylonlabs-io/babylon/x/epoching/types"
+	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	et "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 )

@@ -6,9 +6,9 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	types2 "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	types1 "github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	types "github.com/babylonlabs-io/babylon/x/epoching/types"
+	types2 "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
+	types1 "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	types "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"

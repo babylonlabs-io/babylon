@@ -8,7 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
+	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
 	comettypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -29,14 +29,14 @@ import (
 	ibctypes "github.com/cosmos/ibc-go/v8/modules/core/types"
 	"github.com/spf13/cobra"
 
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
 )
 
 func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.Command {

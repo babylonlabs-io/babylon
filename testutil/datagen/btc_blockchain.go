@@ -6,9 +6,9 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/btctxformatter"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v2/btctxformatter"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
