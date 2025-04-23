@@ -10,7 +10,7 @@ breaking:
     - FILE
 lint:
   use:
-    - STANDARD
+    - DEFAULT
     - COMMENTS
     - FILE_LOWER_SNAKE_CASE
     - COMMENT_MESSAGE
