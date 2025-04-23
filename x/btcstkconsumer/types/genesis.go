@@ -15,7 +15,7 @@ func DefaultGenesis() *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	consumersMap, err := validateConsumers(gs.Consumers)
+	consumersMap, err := getConsumersMap(gs.Consumers)
 	if err != nil {
 		return err
 	}
@@ -33,9 +33,9 @@ func (gs GenesisState) Validate() error {
 	return gs.Params.Validate()
 }
 
-// validateConsumers validates the consumers
+// getConsumersMap validates the consumers
 // and returns a map with the consumer ids
-func validateConsumers(consumers []*ConsumerRegister) (map[string]bool, error) {
+func getConsumersMap(consumers []*ConsumerRegister) (map[string]bool, error) {
 	consumersMap := make(map[string]bool)
 	for _, c := range consumers {
 		if _, exists := consumersMap[c.ConsumerId]; exists {
