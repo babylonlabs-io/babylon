@@ -625,7 +625,7 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 
 	// tries to create a send transaction putting the freegranter as feepayer, it should FAIL
 	// since we only gave grant for BTC delegation msgs.
-	// TODO: Uncomment the next lines when issue: https://github.com/babylonlabs-io/babylon/v2/issues/693
+	// TODO: Uncomment the next lines when issue: https://github.com/babylonlabs-io/babylon/issues/693
 	// is fixed on cosmos-sdk side
 	// outBuff, errBuff, err := node.BankSendOutput(
 	// 	wGratee, node.PublicAddress, stakerBalance.String(),
