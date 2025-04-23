@@ -16,7 +16,8 @@ import (
 // it is also used for e2e testing
 func init() {
 	Upgrades = []upgrades.Upgrade{
-		v1.CreateUpgrade(v2.Upgrade, v1.UpgradeDataString{
+		v2.Upgrade,
+		v1.CreateUpgrade(v1.UpgradeDataString{
 			BtcStakingParamsStr:       testnet.BtcStakingParamsStr,
 			FinalityParamStr:          testnet.FinalityParamStr,
 			IncentiveParamStr:         testnet.IncentiveParamStr,
