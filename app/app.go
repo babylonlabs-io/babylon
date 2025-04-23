@@ -381,6 +381,7 @@ func NewBabylonApp(
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
+		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -412,6 +413,7 @@ func NewBabylonApp(
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
+		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -447,6 +449,7 @@ func NewBabylonApp(
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
+		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,

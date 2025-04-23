@@ -64,3 +64,16 @@ func (cr *ConsumerRegister) ToResponse() *ConsumerRegisterResponse {
 	}
 	return resp
 }
+
+func (cr ConsumerRegister) Validate() error {
+	if len(cr.ConsumerId) == 0 {
+		return fmt.Errorf("ConsumerId must be non-empty")
+	}
+	if len(cr.ConsumerName) == 0 {
+		return fmt.Errorf("ConsumerName must be non-empty")
+	}
+	if len(cr.ConsumerDescription) == 0 {
+		return fmt.Errorf("ConsumerDescription must be non-empty")
+	}
+	return nil
+}
