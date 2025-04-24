@@ -408,6 +408,12 @@ func GenRandomBTCHeaderInfoWithInvalidHeader(r *rand.Rand, powLimit *big.Int) *b
 	}
 }
 
+func GenRandomBTCHeaderInfoWithHeight(r *rand.Rand, height uint32) *btclightclienttypes.BTCHeaderInfo {
+	h := GenRandomBTCHeaderInfoWithParent(r, nil)
+	h.Height = height
+	return h
+}
+
 // MutateHash takes a hash as a parameter, copies it, modifies the copy, and returns the copy.
 func MutateHash(r *rand.Rand, hash *bbn.BTCHeaderHashBytes) *bbn.BTCHeaderHashBytes {
 	mutatedBytes := make([]byte, bbn.BTCHeaderHashLen)

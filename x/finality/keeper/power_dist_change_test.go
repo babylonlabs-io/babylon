@@ -1313,7 +1313,7 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 }
 
 func AddBtcBlockWithDelegations(t *testing.T, r *rand.Rand, app *babylonApp.BabylonApp, ctx sdk.Context, delInfos ...*datagen.CreateDelegationInfo) (*datagen.BlockWithProofs, []*wire.MsgTx) {
-	stkTxs := replay.DelegationInfosToBTCTx(delInfos)
+	stkTxs := datagen.DelegationInfosToBTCTx(delInfos)
 	return AddBtcBlockWithTxs(t, r, app, ctx, stkTxs...), stkTxs
 }
 
