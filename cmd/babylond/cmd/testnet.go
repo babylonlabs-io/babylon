@@ -34,14 +34,14 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 
-	appkeepers "github.com/babylonlabs-io/babylon/app/keepers"
-	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
+	appkeepers "github.com/babylonlabs-io/babylon/v2/app/keepers"
+	"github.com/babylonlabs-io/babylon/v2/cmd/babylond/cmd/genhelpers"
 
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 )
 
 var (

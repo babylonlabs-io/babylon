@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#837](https://github.com/babylonlabs-io/babylon/pull/837) Bump repository to v2.
 - [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.
 - [#623](https://github.com/babylonlabs-io/babylon/pull/623) Add check for empty string in `bls` loading.
 - [#536](https://github.com/babylonlabs-io/babylon/pull/536) Improve protobuf vs. json error msgs / types
@@ -57,6 +58,7 @@ check of rewards
 - [#821](https://github.com/babylonlabs-io/babylon/pull/821) Add import/export genesis logic in `x/btccheckpoint` module
 - [#828](https://github.com/babylonlabs-io/babylon/pull/828) Add `AllowedStakingTxHashes` and `LargetsBTCReorg` to import/export genesis logic in `x/btcstaking` module
 - [#822](https://github.com/babylonlabs-io/babylon/pull/822) chore: upgrade the make file: protobuf
+- [#836](https://github.com/babylonlabs-io/babylon/pull/836) Add import/export genesis logic in `x/btcstakingconsumer` module
 - [#841](https://github.com/babylonlabs-io/babylon/pull/841) chore: upgrade the make file: release
 
 ### State Machine Breaking

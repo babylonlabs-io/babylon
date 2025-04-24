@@ -4,7 +4,7 @@ package babylon.btclightclient.v1;
 import "gogoproto/gogo.proto";
 
 
-option go_package = "github.com/babylonlabs-io/babylon/x/btclightclient/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types";
 
 // Params defines the parameters for the module.
 message Params {

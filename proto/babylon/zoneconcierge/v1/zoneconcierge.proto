@@ -10,7 +10,7 @@ import "babylon/checkpointing/v1/checkpoint.proto";
 import "babylon/epoching/v1/epoching.proto";
 import "babylon/btclightclient/v1/btclightclient.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/zoneconcierge/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types";
 
 // IndexedHeader is the metadata of a CZ header
 message IndexedHeader {

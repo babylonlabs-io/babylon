@@ -3,14 +3,14 @@ package babylon.checkpointing.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/checkpointing/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types";
 
 // BlsKey wraps BLS public key with PoP
 message BlsKey {
   // pubkey is the BLS public key of a validator
   bytes pubkey = 1
       [ (gogoproto.customtype) =
-            "github.com/babylonlabs-io/babylon/crypto/bls12381.PublicKey" ];
+            "github.com/babylonlabs-io/babylon/v2/crypto/bls12381.PublicKey" ];
 
   // pop is the proof-of-possession of the BLS key
   ProofOfPossession pop = 2;
@@ -26,7 +26,7 @@ message ProofOfPossession {
   // ed25519_sig)
   bytes bls_sig = 2
       [ (gogoproto.customtype) =
-            "github.com/babylonlabs-io/babylon/crypto/bls12381.Signature" ];
+            "github.com/babylonlabs-io/babylon/v2/crypto/bls12381.Signature" ];
 }
 
 // ValidatorWithBLSSet defines a set of validators with their BLS public keys
@@ -58,5 +58,5 @@ message VoteExtension {
   // bls_sig is the BLS signature
   bytes bls_sig = 6
   [ (gogoproto.customtype) =
-    "github.com/babylonlabs-io/babylon/crypto/bls12381.Signature" ];
+    "github.com/babylonlabs-io/babylon/v2/crypto/bls12381.Signature" ];
 }

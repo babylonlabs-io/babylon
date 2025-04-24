@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/babylonlabs-io/babylon/app"
-	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v2/app"
+	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )

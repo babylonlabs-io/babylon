@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/keeper"
-	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 )

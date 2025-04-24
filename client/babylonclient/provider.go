@@ -5,7 +5,7 @@ package babylonclient
 
 import (
 	"fmt"
-	"github.com/babylonlabs-io/babylon/app/params"
+	"github.com/babylonlabs-io/babylon/v2/app/params"
 	"github.com/cometbft/cometbft/rpc/client/http"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"

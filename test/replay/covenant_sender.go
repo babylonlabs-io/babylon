@@ -4,14 +4,14 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/btcstaking"
-	"github.com/babylonlabs-io/babylon/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v2/btcstaking"
+	"github.com/babylonlabs-io/babylon/v2/types"
+	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 
-	babylonApp "github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	babylonApp "github.com/babylonlabs-io/babylon/v2/app"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	"github.com/stretchr/testify/require"
 )
 

@@ -6,7 +6,7 @@ import "cosmos/msg/v1/msg.proto";
 import "babylon/btclightclient/v1/params.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/btclightclient/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types";
 
 // Msg defines the Msg service.
 service Msg {
@@ -26,7 +26,7 @@ message MsgInsertHeaders {
   string signer = 1;
   repeated bytes headers = 2
       [ (gogoproto.customtype) =
-            "github.com/babylonlabs-io/babylon/types.BTCHeaderBytes" ];
+            "github.com/babylonlabs-io/babylon/v2/types.BTCHeaderBytes" ];
 }
 // MsgInsertHeadersResponse defines the response for the InsertHeaders transaction
 message MsgInsertHeadersResponse {}

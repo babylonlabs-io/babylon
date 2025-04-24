@@ -18,11 +18,11 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	"github.com/stretchr/testify/require"
 
-	babylonApp "github.com/babylonlabs-io/babylon/app"
-	testsigner "github.com/babylonlabs-io/babylon/testutil/signer"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	incentivetypes "github.com/babylonlabs-io/babylon/x/incentive/types"
-	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
+	babylonApp "github.com/babylonlabs-io/babylon/v2/app"
+	testsigner "github.com/babylonlabs-io/babylon/v2/testutil/signer"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	incentivetypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
 )
 
 var (
