@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/babylonlabs-io/babylon/app/keepers"
-	"github.com/babylonlabs-io/babylon/app/upgrades"
+	"github.com/babylonlabs-io/babylon/v2/app/keepers"
+	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 )

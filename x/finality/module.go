@@ -11,9 +11,9 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/babylonlabs-io/babylon/x/finality/client/cli"
-	"github.com/babylonlabs-io/babylon/x/finality/keeper"
-	"github.com/babylonlabs-io/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v2/x/finality/client/cli"
+	"github.com/babylonlabs-io/babylon/v2/x/finality/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"

@@ -3,10 +3,10 @@ package datagen
 import (
 	"fmt"
 
-	appsigner "github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/testutil/signer"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
+	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v2/testutil/signer"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/codec"

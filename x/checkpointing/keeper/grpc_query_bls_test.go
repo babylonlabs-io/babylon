@@ -11,11 +11,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
-	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v2/app"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v2/testutil/helper"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v2/x/checkpointing/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 )
 
 // FuzzQueryBLSKeySet does the following checks

@@ -13,8 +13,8 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v2/types"
 )
 
 // DefaultGenesis returns the default Capability genesis state

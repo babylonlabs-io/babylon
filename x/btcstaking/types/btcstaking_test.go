@@ -5,8 +5,8 @@ import (
 	"testing"
 	time "time"
 
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
 
 func TestLargestBtcReOrg_Validate(t *testing.T) {

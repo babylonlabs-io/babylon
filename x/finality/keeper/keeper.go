@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
 )
 
 type (

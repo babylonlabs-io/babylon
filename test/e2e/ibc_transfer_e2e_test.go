@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 )
