@@ -3,8 +3,8 @@ package types
 import (
 	"time"
 
-	bbntypes "github.com/babylonlabs-io/babylon/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	bbntypes "github.com/babylonlabs-io/babylon/v2/types"
+	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
 
 // NewFinalityProviderSigningInfo creates a new FinalityProviderSigningInfo instance

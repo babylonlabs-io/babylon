@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	bsmodule "github.com/babylonlabs-io/babylon/x/btcstaking"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	testutil "github.com/babylonlabs-io/babylon/v2/testutil/btcstaking-helper"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	btclctypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	bsmodule "github.com/babylonlabs-io/babylon/v2/x/btcstaking"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/golang/mock/gomock"
 )

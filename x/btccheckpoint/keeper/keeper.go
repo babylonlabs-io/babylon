@@ -12,9 +12,9 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store/prefix"
-	txformat "github.com/babylonlabs-io/babylon/btctxformatter"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	txformat "github.com/babylonlabs-io/babylon/v2/btctxformatter"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	"github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

@@ -1,10 +1,10 @@
 package datagen
 
 import (
-	"github.com/babylonlabs-io/babylon/btcstaking"
-	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v2/btcstaking"
+	asig "github.com/babylonlabs-io/babylon/v2/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/wire"

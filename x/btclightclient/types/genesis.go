@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	bbn "github.com/babylonlabs-io/babylon/types"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	"github.com/btcsuite/btcd/chaincfg"
 
 	"github.com/cosmos/cosmos-sdk/codec"

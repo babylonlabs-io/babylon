@@ -11,15 +11,15 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/app"
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
-	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v2/app"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
+	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v2/testutil/helper"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v2/x/checkpointing/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 )
 
 // FuzzWrappedCreateValidator_InsufficientTokens tests adding new validators with zero voting power

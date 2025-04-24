@@ -8,9 +8,9 @@ import (
 	"cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/x/mint/simulation"
-	"github.com/babylonlabs-io/babylon/x/mint/types"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/x/mint/simulation"
+	"github.com/babylonlabs-io/babylon/v2/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 )
 

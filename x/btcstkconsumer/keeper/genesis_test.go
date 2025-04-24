@@ -8,11 +8,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
-	btcstktypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/keeper"
-	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
+	btcstktypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
 
 	"github.com/stretchr/testify/require"
 )
