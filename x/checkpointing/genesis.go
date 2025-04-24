@@ -7,17 +7,24 @@ import (
 	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 )
 
-// InitGenesis initializes the capability module's state from a provided genesis
+// InitGenesis initializes the checkpointing module's state from a provided genesis
 // state.
-// TODO: importing/exporting genesis
 func InitGenesis(ctx context.Context, k keeper.Keeper, genState types.GenesisState) {
-	k.SetGenBlsKeys(ctx, genState.GenesisKeys)
-	// set epoch 0 to be finalised at genesis
-	k.SetLastFinalizedEpoch(ctx, 0)
+	// stateless validations
+	if err := genState.Validate(); err != nil {
+		panic(err)
+	}
+
+	if err := k.InitGenesis(ctx, genState); err != nil {
+		panic(err)
+	}
 }
 
-// ExportGenesis returns the capability module's exported genesis.
+// ExportGenesis returns the checkpointing module's exported genesis.
 func ExportGenesis(ctx context.Context, k keeper.Keeper) *types.GenesisState {
-	genesis := types.DefaultGenesis()
-	return genesis
+	gs, err := k.ExportGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return gs
 }

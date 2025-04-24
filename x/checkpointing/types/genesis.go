@@ -2,9 +2,10 @@ package types
 
 import (
 	"encoding/json"
-	fmt "fmt"
+	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -114,4 +115,23 @@ func GenTxMessageValidatorWrappedCreateValidator(msgs []sdk.Msg) error {
 
 func (gk *ValidatorSetEntry) Validate() error {
 	return gk.ValidatorSet.Validate()
+}
+
+// Helper function to sort slices to get a deterministic
+// result on the tests
+func SortData(gs *GenesisState) {
+	sort.Slice(gs.GenesisKeys, func(i, j int) bool {
+		return gs.GenesisKeys[i].ValidatorAddress < gs.GenesisKeys[j].ValidatorAddress
+	})
+
+	sort.Slice(gs.ValidatorSets, func(i, j int) bool {
+		return gs.ValidatorSets[i].EpochNumber < gs.ValidatorSets[j].EpochNumber
+	})
+
+	sort.Slice(gs.Checkpoints, func(i, j int) bool {
+		if gs.Checkpoints[i].Ckpt != nil && gs.Checkpoints[j].Ckpt != nil {
+			return gs.Checkpoints[i].Ckpt.EpochNum < gs.Checkpoints[j].Ckpt.EpochNum
+		}
+		return gs.Checkpoints[i].PowerSum < gs.Checkpoints[j].PowerSum
+	})
 }
