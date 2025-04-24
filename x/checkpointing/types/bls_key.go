@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
 )
 
 // Validate checks for duplicate ValidatorAddress or BlsPubKey entries.

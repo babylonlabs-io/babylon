@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 )
 
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {

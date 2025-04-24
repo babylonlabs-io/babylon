@@ -7,8 +7,8 @@ import (
 	"cosmossdk.io/store/prefix"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-  
-  "github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+
+	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 )
 
