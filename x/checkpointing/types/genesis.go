@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"errors"
 	fmt "fmt"
 	"os"
 	"path/filepath"
@@ -14,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/types"
 )
 
 // DefaultGenesis returns the default Capability genesis state
@@ -24,19 +24,23 @@ func DefaultGenesis() *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	addresses := make(map[string]struct{}, 0)
-	for _, gk := range gs.GenesisKeys {
-		if _, exists := addresses[gk.ValidatorAddress]; exists {
-			return errors.New("duplicate genesis key")
-		}
-		addresses[gk.ValidatorAddress] = struct{}{}
-		err := gk.Validate()
-		if err != nil {
-			return err
-		}
+	if err := types.ValidateEntries(gs.GenesisKeys, func(gk *GenesisKey) string { return gk.ValidatorAddress }); err != nil {
+		return err
 	}
 
-	return nil
+	if err := types.ValidateEntries(gs.ValidatorSets, func(e *ValidatorSetEntry) uint64 { return e.EpochNumber }); err != nil {
+		return err
+	}
+
+	return types.ValidateEntries(
+		gs.Checkpoints,
+		func(chkpt *RawCheckpointWithMeta) uint64 {
+			if chkpt.Ckpt == nil {
+				return 0
+			}
+			return chkpt.Ckpt.EpochNum
+		},
+	)
 }
 
 func NewGenesisKey(delAddr sdk.ValAddress, blsPubKey *bls12381.PublicKey, pop *ProofOfPossession, pubkey cryptotypes.PubKey) (*GenesisKey, error) {
@@ -106,4 +110,8 @@ func GenTxMessageValidatorWrappedCreateValidator(msgs []sdk.Msg) error {
 	}
 
 	return nil
+}
+
+func (gk *ValidatorSetEntry) Validate() error {
+	return gk.ValidatorSet.Validate()
 }

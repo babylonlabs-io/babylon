@@ -1,0 +1,36 @@
+package types
+
+import (
+	"fmt"
+
+	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+)
+
+// Validate checks for duplicate ValidatorAddress or BlsPubKey entries.
+func (vs ValidatorWithBlsKeySet) Validate() error {
+	addressMap := make(map[string]struct{})
+	pubKeyMap := make(map[string]struct{})
+
+	for i, val := range vs.ValSet {
+		// Check duplicate ValidatorAddress
+		if _, exists := addressMap[val.ValidatorAddress]; exists {
+			return fmt.Errorf("duplicate ValidatorAddress found at index %d: %s", i, val.ValidatorAddress)
+		}
+		addressMap[val.ValidatorAddress] = struct{}{}
+
+		// Check duplicate BlsPubKey using string representation for map key
+		key := string(val.BlsPubKey)
+		if _, exists := pubKeyMap[key]; exists {
+			return fmt.Errorf("duplicate BlsPubKey found at index %d", i)
+		}
+		pubKeyMap[key] = struct{}{}
+
+		// check BLS key
+		pk := new(bls12381.PublicKey)
+		if err := pk.Unmarshal(val.BlsPubKey); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
