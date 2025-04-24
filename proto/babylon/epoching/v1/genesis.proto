@@ -32,16 +32,8 @@ message GenesisState {
 message EpochQueue {
   // epoch_number is the epoch's identifier
   uint64 epoch_number = 1;
-  // queue is a slice containing all the epochs' queued messages
-  repeated EpochQueueEntry queue = 2;
-}
-
-// EpochQueueEntry contains the queued message and the queue length
-message EpochQueueEntry {
-  // msg is the enqueued message
-  QueuedMessage msg = 1;
-  // queue_length is the current length of the queue
-  uint64 queue_length = 2;
+  // msgs is a slice containing all the epochs' queued messages
+  repeated QueuedMessage msgs = 2;
 }
 
 // EpochValidatorSet contains the epoch number and the validators corresponding
