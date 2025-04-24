@@ -107,10 +107,28 @@ func TestResumeFinalityOfSlashedFp(t *testing.T) {
 	}
 	d.GovPropWaitPass(&prop)
 
-	d.GenerateNewBlock() // tally
+	d.GenerateNewBlock()
+	// check that the blocks got finalized
 	for blkHeight := lastFinalizedBlkHeight + 1; blkHeight <= lastVotedBlkHeight; blkHeight++ {
 		bl := d.GetIndexedBlock(blkHeight)
 		require.Equal(t, bl.Finalized, true)
-		lastVotedBlkHeight = blkHeight
 	}
+
+	// the fp in the voting power distribution cache should still be marked as slashed
+	vpDstCache := d.GetVotingPowerDistCache(d.GetLastFinalizedBlock().Height)
+	for _, vpFp := range vpDstCache.FinalityProviders {
+		if vpFp.BtcPk.Equals(jailedFp.BTCPublicKey()) {
+			require.True(d.t, vpFp.IsSlashed)
+			require.Zero(d.t, vpFp.TotalBondedSat)
+			continue
+		}
+
+		require.False(d.t, vpFp.IsJailed)
+		require.False(d.t, vpFp.IsSlashed)
+		require.NotZero(d.t, vpFp.TotalBondedSat)
+	}
+
+	// continue to be slashed status in btcstaking
+	slashedFp = d.GetFp(*jailedFp.BTCPublicKey())
+	require.True(t, slashedFp.IsSlashed())
 }

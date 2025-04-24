@@ -86,6 +86,10 @@ func (d *BabylonAppDriver) GetActiveFpsAtHeight(t *testing.T, height uint64) []*
 	return res.FinalityProviders
 }
 
+func (d *BabylonAppDriver) GetVotingPowerDistCache(height uint64) *ftypes.VotingPowerDistCache {
+	return d.App.FinalityKeeper.GetVotingPowerDistCache(d.Ctx(), height)
+}
+
 func (d *BabylonAppDriver) GovProposals() []*govv1types.Proposal {
 	resp, err := d.GovQuerySvr().Proposals(d.Ctx(), &govv1types.QueryProposalsRequest{
 		ProposalStatus: govv1types.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD,
