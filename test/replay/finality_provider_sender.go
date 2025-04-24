@@ -87,7 +87,7 @@ func (f *FinalityProvider) CastVote(height uint64) {
 	f.CastVoteForHash(height, indexedBlock.AppHash)
 }
 
-// CastVoteForHash usefull to cast bad vote
+// CastVoteForHash useful to cast bad vote
 func (f *FinalityProvider) CastVoteForHash(height uint64, blkAppHash []byte) {
 	msg, err := datagen.NewMsgAddFinalitySig(
 		f.AddressString(),
