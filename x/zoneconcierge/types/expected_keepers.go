@@ -3,13 +3,13 @@ package types
 import (
 	"context"
 
-	bbn "github.com/babylonlabs-io/babylon/types"
-	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	btcstkconsumertypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck

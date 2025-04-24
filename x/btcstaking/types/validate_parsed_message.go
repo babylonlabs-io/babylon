@@ -6,8 +6,8 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 
-	"github.com/babylonlabs-io/babylon/btcstaking"
-	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/v2/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
 )
 
 type ParamsValidationResult struct {

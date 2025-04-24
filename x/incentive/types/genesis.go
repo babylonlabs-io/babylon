@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

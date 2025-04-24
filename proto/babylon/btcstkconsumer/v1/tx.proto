@@ -7,7 +7,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "babylon/btcstkconsumer/v1/params.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types";
 
 // Msg defines the Msg service.
 service Msg {

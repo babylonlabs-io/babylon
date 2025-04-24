@@ -3,18 +3,20 @@
 package app
 
 import (
-	"github.com/babylonlabs-io/babylon/app/upgrades"
-	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
-	"github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
-	v1rc5 "github.com/babylonlabs-io/babylon/app/upgrades/v1rc5/testnet"
-	v1rc8 "github.com/babylonlabs-io/babylon/app/upgrades/v1rc8/testnet"
-	v1rc9 "github.com/babylonlabs-io/babylon/app/upgrades/v1rc9/testnet"
+	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
+	v1 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1"
+	"github.com/babylonlabs-io/babylon/v2/app/upgrades/v1/testnet"
+	v1rc5 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1rc5/testnet"
+	v1rc8 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1rc8/testnet"
+	v1rc9 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1rc9/testnet"
+	v2 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2"
 )
 
 // init is used to include v1 upgrade testnet data
 // it is also used for e2e testing
 func init() {
 	Upgrades = []upgrades.Upgrade{
+		v2.Upgrade,
 		v1.CreateUpgrade(v1.UpgradeDataString{
 			BtcStakingParamsStr:       testnet.BtcStakingParamsStr,
 			FinalityParamStr:          testnet.FinalityParamStr,

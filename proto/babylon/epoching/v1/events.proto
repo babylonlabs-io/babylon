@@ -3,7 +3,7 @@ package babylon.epoching.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/epoching/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/epoching/types";
 
 // EventBeginEpoch is the event emitted when an epoch has started
 message EventBeginEpoch { uint64 epoch_number = 1; }

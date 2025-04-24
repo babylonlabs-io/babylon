@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
 	"github.com/test-go/testify/require"
 )
 
