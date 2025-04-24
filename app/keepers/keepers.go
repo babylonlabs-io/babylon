@@ -485,9 +485,6 @@ func (ak *AppKeepers) InitKeepers(
 		checkpointingtypes.NewMultiCheckpointingHooks(ak.EpochingKeeper.Hooks(), ak.MonitorKeeper.Hooks()),
 	)
 	ak.BtcCheckpointKeeper = btcCheckpointKeeper
-	ak.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
-		btclightclienttypes.NewMultiBTCLightClientHooks(ak.BtcCheckpointKeeper.Hooks()),
-	)
 
 	// set up BTC staking keeper
 	ak.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
@@ -498,6 +495,10 @@ func (ak *AppKeepers) InitKeepers(
 		&ak.IncentiveKeeper,
 		btcNetParams,
 		appparams.AccGov.String(),
+	)
+
+	ak.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
+		btclightclienttypes.NewMultiBTCLightClientHooks(ak.BtcCheckpointKeeper.Hooks(), ak.BTCStakingKeeper.Hooks()),
 	)
 
 	// set up finality keeper
