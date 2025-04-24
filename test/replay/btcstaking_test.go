@@ -307,9 +307,7 @@ func TestStakingAndFinalizingBlocks(t *testing.T) {
 func TestStakingAndFinalizingMultipleBlocksAtOnce(t *testing.T) {
 	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	driverTempDir := t.TempDir()
-	replayerTempDir := t.TempDir()
-	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+	driver := NewBabylonAppDriverTmpDir(r, t)
 	driver.GenerateNewBlock()
 
 	scenario := NewStandardScenario(driver)

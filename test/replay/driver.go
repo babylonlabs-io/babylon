@@ -143,6 +143,14 @@ type BabylonAppDriver struct {
 	CurrentTime      time.Time
 }
 
+// NewBabylonAppDriverTmpDir initializes Babylon driver for block creation with
+// temporary directories
+func NewBabylonAppDriverTmpDir(r *rand.Rand, t *testing.T) *BabylonAppDriver {
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	return NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+}
+
 // Inititializes Babylon driver for block creation
 func NewBabylonAppDriver(
 	r *rand.Rand,
