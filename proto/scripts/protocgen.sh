@@ -15,8 +15,13 @@ for dir in $proto_dirs; do
 done
 cd ..
 
+
 # move proto files to the right places
-cp -r github.com/babylonlabs-io/babylon/* ./
+#
+# Note: Proto files are suffixed with the current binary version.
+cp -r github.com/babylonlabs-io/babylon/v2/* ./
+
 rm -rf github.com
+go mod tidy
 
 # go mod tidy -compat=1.23

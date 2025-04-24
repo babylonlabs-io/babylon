@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

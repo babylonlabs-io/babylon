@@ -7,7 +7,7 @@ import "google/protobuf/timestamp.proto";
 import "babylon/checkpointing/v1/checkpoint.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/checkpointing/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -187,7 +187,7 @@ message RawCheckpointResponse {
   // bls_multi_sig defines the multi sig that is aggregated from individual BLS
   // sigs
   bytes bls_multi_sig = 4 [
-    (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/crypto/bls12381.Signature"
+    (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/crypto/bls12381.Signature"
   ];
 }
 
@@ -215,7 +215,7 @@ message RawCheckpointWithMetaResponse {
   // bls_aggr_pk defines the aggregated BLS public key
   bytes bls_aggr_pk = 4
       [ (gogoproto.customtype) =
-            "github.com/babylonlabs-io/babylon/crypto/bls12381.PublicKey" ];
+            "github.com/babylonlabs-io/babylon/v2/crypto/bls12381.PublicKey" ];
   // power_sum defines the accumulated voting power for the checkpoint
   uint64 power_sum = 5;
   // lifecycle defines the lifecycle of this checkpoint, i.e., each state

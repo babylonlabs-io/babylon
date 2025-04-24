@@ -17,9 +17,9 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/testutil/signer"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v2/app"
+	"github.com/babylonlabs-io/babylon/v2/testutil/signer"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 )
 
 func Test_TestnetCmd(t *testing.T) {

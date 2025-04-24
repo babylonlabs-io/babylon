@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bbn "github.com/babylonlabs-io/babylon/types"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
 )
 
 func NewEventPowerDistUpdateWithBTCDel(ev *EventBTCDelegationStateUpdate) *EventPowerDistUpdate {

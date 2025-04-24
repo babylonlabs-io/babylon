@@ -9,8 +9,8 @@ import (
 	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/x/finality/types"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
 )
 
 /*

@@ -3,10 +3,10 @@ package incentive_test
 import (
 	"testing"
 
-	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/testutil/nullify"
-	"github.com/babylonlabs-io/babylon/x/incentive"
-	"github.com/babylonlabs-io/babylon/x/incentive/types"
+	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v2/testutil/nullify"
+	"github.com/babylonlabs-io/babylon/v2/x/incentive"
+	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
 	"github.com/stretchr/testify/require"
 )
 

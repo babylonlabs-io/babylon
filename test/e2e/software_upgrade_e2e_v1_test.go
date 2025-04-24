@@ -8,18 +8,18 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/babylonlabs-io/babylon/app"
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
-	"github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/testutil/sample"
-	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v2/app"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	v1 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1"
+	"github.com/babylonlabs-io/babylon/v2/app/upgrades/v1/testnet"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v2/testutil/sample"
+	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
 
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer/config"
-	"github.com/babylonlabs-io/babylon/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/config"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/util"
 )
 
 type SoftwareUpgradeV1TestnetTestSuite struct {

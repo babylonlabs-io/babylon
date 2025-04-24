@@ -1,8 +1,8 @@
 package types
 
 import (
-	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/types"
+	asig "github.com/babylonlabs-io/babylon/v2/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
 )
 
 func (ud *BTCUndelegation) HasCovenantQuorumOnSlashing(quorum uint32) bool {

@@ -16,9 +16,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/x/epoching/keeper"
-	"github.com/babylonlabs-io/babylon/x/epoching/types"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/x/epoching/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 )
 
 func EpochingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {

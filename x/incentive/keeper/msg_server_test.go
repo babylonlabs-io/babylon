@@ -5,10 +5,10 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/x/incentive/keeper"
-	"github.com/babylonlabs-io/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	testkeeper "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/incentive/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -62,7 +62,7 @@ func FuzzWithdrawReward(f *testing.F) {
 		require.NotNil(t, newRg)
 		require.True(t, newRg.IsFullyWithdrawn())
 
-		// should fail with invalid stakeholder type 
+		// should fail with invalid stakeholder type
 		_, err = ms.WithdrawReward(ctx, &types.MsgWithdrawReward{
 			Type:    "invalid_type",
 			Address: sAddr.String(),

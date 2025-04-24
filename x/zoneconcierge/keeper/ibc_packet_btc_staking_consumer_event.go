@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	bbn "github.com/babylonlabs-io/babylon/types"
-	bsctypes "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
-	"github.com/babylonlabs-io/babylon/x/zoneconcierge/types"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	bsctypes "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 )

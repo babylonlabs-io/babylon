@@ -19,13 +19,13 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/babylonlabs-io/babylon/test/e2e/util"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	blctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/x/finality/types"
-	minttypes "github.com/babylonlabs-io/babylon/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/util"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
+	blctypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
 )
 
 // NodeConfig is a configuration for the node supplied from the test runner

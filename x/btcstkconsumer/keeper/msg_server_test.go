@@ -7,12 +7,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
-	wasmtest "github.com/babylonlabs-io/babylon/wasmbinding/test"
-	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/keeper"
-	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v2/app"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
+	wasmtest "github.com/babylonlabs-io/babylon/v2/wasmbinding/test"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"

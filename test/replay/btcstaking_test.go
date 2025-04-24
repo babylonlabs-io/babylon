@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 )
 
 // TestEpochFinalization checks whether we can finalize some epochs
