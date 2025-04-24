@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 
+	appparams "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/babylonlabs-io/babylon/testutil/datagen"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -69,7 +71,7 @@ func TestResumeFinalityOfSlashedFp(t *testing.T) {
 
 	// one fp continues to vote, but the one to be jailed one does not vote
 	jailedFp := scn.finalityProviders[1]
-	// lastFinalizedBlkHeight := lastVotedBlkHeight
+	lastFinalizedBlkHeight := lastVotedBlkHeight
 
 	for {
 		lastVotedBlkHeight++
@@ -82,20 +84,33 @@ func TestResumeFinalityOfSlashedFp(t *testing.T) {
 		bl := d.GetIndexedBlock(lastVotedBlkHeight)
 		require.Equal(t, bl.Finalized, false)
 
-		fp, err := d.App.BTCStakingKeeper.GetFinalityProvider(d.GetContextForLastFinalizedBlock(), *jailedFp.BTCPublicKey())
-		require.NoError(t, err)
-
+		fp := d.GetFp(*jailedFp.BTCPublicKey())
 		if fp.Jailed {
 			break
 		}
 	}
 
-	// fp is slashed
+	// fp is slashed, sending bogus vote is not enough since the fp
+	// is jailed, new votes are no accepted. It is needed to send a
+	// selective slash with one of the BTC delegations stk txs
 	jailedFp.SendSelectiveSlashingEvidence()
 	d.GenerateNewBlock()
 
-	slashedFp, err := d.App.BTCStakingKeeper.GetFinalityProvider(d.GetContextForLastFinalizedBlock(), *jailedFp.BTCPublicKey())
-	require.NoError(t, err)
+	slashedFp := d.GetFp(*jailedFp.BTCPublicKey())
 	require.True(t, slashedFp.IsSlashed())
 
+	// send gov proposal to resume finality
+	prop := ftypes.MsgResumeFinalityProposal{
+		Authority:     appparams.AccGov.String(),
+		FpPksHex:      []string{slashedFp.BtcPk.MarshalHex()},
+		HaltingHeight: uint32(lastFinalizedBlkHeight + 1), // fp voted in the last finalized
+	}
+	d.GovPropWaitPass(&prop)
+
+	d.GenerateNewBlock() // tally
+	for blkHeight := lastFinalizedBlkHeight + 1; blkHeight <= lastVotedBlkHeight; blkHeight++ {
+		bl := d.GetIndexedBlock(blkHeight)
+		require.Equal(t, bl.Finalized, true)
+		lastVotedBlkHeight = blkHeight
+	}
 }

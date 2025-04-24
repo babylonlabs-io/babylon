@@ -6,6 +6,8 @@ import (
 
 	btckckpttypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	"github.com/btcsuite/btcd/wire"
+	govk "github.com/cosmos/cosmos-sdk/x/gov/keeper"
+	govv1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 
@@ -84,6 +86,26 @@ func (d *BabylonAppDriver) GetActiveFpsAtHeight(t *testing.T, height uint64) []*
 	return res.FinalityProviders
 }
 
+func (d *BabylonAppDriver) GovProposals() []*govv1types.Proposal {
+	resp, err := d.GovQuerySvr().Proposals(d.Ctx(), &govv1types.QueryProposalsRequest{
+		ProposalStatus: govv1types.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD,
+	})
+	require.NoError(d.t, err)
+	return resp.Proposals
+}
+
+func (d *BabylonAppDriver) GovProposal(propId uint64) *govv1types.Proposal {
+	resp, err := d.GovQuerySvr().Proposal(d.Ctx(), &govv1types.QueryProposalRequest{
+		ProposalId: propId,
+	})
+	require.NoError(d.t, err)
+	return resp.Proposal
+}
+
+func (d *BabylonAppDriver) GovQuerySvr() govv1types.QueryServer {
+	return govk.NewQueryServer(&d.App.GovKeeper)
+}
+
 func (d *BabylonAppDriver) GetAllFps(t *testing.T) []*bstypes.FinalityProviderResponse {
 	res, err := d.App.BTCStakingKeeper.FinalityProviders(
 		d.GetContextForLastFinalizedBlock(),
@@ -95,6 +117,12 @@ func (d *BabylonAppDriver) GetAllFps(t *testing.T) []*bstypes.FinalityProviderRe
 
 func (d *BabylonAppDriver) GetActiveFpsAtCurrentHeight(t *testing.T) []*ftypes.ActiveFinalityProvidersAtHeightResponse {
 	return d.GetActiveFpsAtHeight(t, d.GetLastFinalizedBlock().Height)
+}
+
+func (d *BabylonAppDriver) GetFp(fpBTCPK []byte) *bstypes.FinalityProvider {
+	fp, err := d.App.BTCStakingKeeper.GetFinalityProvider(d.GetContextForLastFinalizedBlock(), fpBTCPK)
+	require.NoError(d.t, err)
+	return fp
 }
 
 func (d *BabylonAppDriver) GetActivationHeight(t *testing.T) uint64 {

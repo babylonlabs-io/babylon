@@ -48,6 +48,7 @@ import (
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	gogoprotoio "github.com/cosmos/gogoproto/io"
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/require"
@@ -162,8 +163,8 @@ func NewBabylonAppDriver(
 		chainID,
 		dir,
 		[]*initialization.NodeConfig{validatorConfig},
-		3*time.Minute,
-		1*time.Minute,
+		6*time.Second, // voting period
+		3*time.Second, // expedited
 		1,
 		[]*btclighttypes.BTCHeaderInfo{},
 	)
@@ -278,6 +279,10 @@ func NewBabylonAppDriver(
 		// initiate time to current time
 		CurrentTime: time.Now(),
 	}
+}
+
+func (d *BabylonAppDriver) Ctx() sdk.Context {
+	return d.GetContextForLastFinalizedBlock()
 }
 
 func (d *BabylonAppDriver) GetLastFinalizedBlock() *FinalizedBlock {
@@ -761,7 +766,8 @@ func (d *BabylonAppDriver) WaitTillAllFpsJailed(t *testing.T) {
 // execution was successful. It assumes that there will only be one tx in the block.
 func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	t *testing.T,
-	msgs ...sdk.Msg) {
+	msgs ...sdk.Msg,
+) {
 	d.SendTxWithMessagesSuccess(
 		t,
 		d.SenderInfo,
@@ -909,5 +915,34 @@ func (d *BabylonAppDriver) CreateCovenantSender() *CovenantSender {
 		t:   d.t,
 		d:   d,
 		app: d.App,
+	}
+}
+
+func (d *BabylonAppDriver) GovPropAndVote(msgInGovProp sdk.Msg) (lastPropId uint64) {
+	msgToSend := d.NewGovProp(msgInGovProp)
+	d.SendTxWithMsgsFromDriverAccount(d.t, msgToSend)
+
+	props := d.GovProposals()
+	lastPropId = props[len(props)-1].Id
+
+	d.GovVote(lastPropId)
+	return lastPropId
+}
+
+func (d *BabylonAppDriver) GovPropWaitPass(msgInGovProp sdk.Msg) {
+	propId := d.GovPropAndVote(msgInGovProp)
+
+	for {
+		prop := d.GovProposal(propId)
+
+		if prop.Status == v1.ProposalStatus_PROPOSAL_STATUS_FAILED {
+			d.t.Errorf("prop %d failed due to: %s", propId, prop.FailedReason)
+		}
+
+		if prop.Status == v1.ProposalStatus_PROPOSAL_STATUS_PASSED {
+			break
+		}
+
+		d.GenerateNewBlock()
 	}
 }
