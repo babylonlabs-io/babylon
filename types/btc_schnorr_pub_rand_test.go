@@ -4,10 +4,11 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v2/types"
 )
 
 func FuzzSchnorrPubRand(f *testing.F) {
@@ -22,7 +23,7 @@ func FuzzSchnorrPubRand(f *testing.F) {
 
 		// FieldVal -> SchnorrPubRand -> FieldVal
 		pubRand := types.NewSchnorrPubRandFromFieldVal(&fieldVal)
-		fieldVal2 := pubRand.ToFieldVal()
+		fieldVal2 := pubRand.ToFieldValNormalized()
 		require.True(t, fieldVal.Equals(fieldVal2))
 
 		// SchnorrPubRand -> bytes -> SchnorrPubRand

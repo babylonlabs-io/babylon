@@ -19,16 +19,16 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
-	testutil "github.com/babylonlabs-io/babylon/testutil/btcstaking-helper"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	btclctypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	asig "github.com/babylonlabs-io/babylon/v2/crypto/schnorr-adaptor-signature"
+	testutil "github.com/babylonlabs-io/babylon/v2/testutil/btcstaking-helper"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v2/testutil/helper"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstaking"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
 
 func FuzzMsgServer_UpdateParams(f *testing.F) {
@@ -1104,12 +1104,15 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		h.NoError(err)
 
 		// finality provider decrypts the covenant signature
-		decKey, err := asig.NewDecryptionKeyKeyFromBTCSK(fpSK)
+		decKey, err := asig.NewDecryptionKeyFromBTCSK(fpSK)
 		h.NoError(err)
-		decryptedCovenantSig := bbn.NewBIP340SignatureFromBTCSig(covASig.Decrypt(decKey))
+		covSchnorrSig, err := covASig.Decrypt(decKey)
+		require.NoError(t, err)
+		decryptedCovenantSig := bbn.NewBIP340SignatureFromBTCSig(covSchnorrSig)
 
 		// recover the fpSK by using adaptor signature and decrypted Schnorr signature
-		recoveredFPDecKey := covASig.Recover(decryptedCovenantSig.MustToBTCSig())
+		recoveredFPDecKey, err := covASig.Extract(decryptedCovenantSig.MustToBTCSig())
+		require.NoError(t, err)
 		recoveredFPSK := recoveredFPDecKey.ToBTCSK()
 		// ensure the recovered finality provider SK is same as the real one
 		require.Equal(t, fpSK.Serialize(), recoveredFPSK.Serialize())

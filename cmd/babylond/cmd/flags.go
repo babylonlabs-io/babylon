@@ -11,11 +11,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	babylonApp "github.com/babylonlabs-io/babylon/app"
-	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	btcltypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	btcstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	babylonApp "github.com/babylonlabs-io/babylon/v2/app"
+	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
+	btcltypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	btcstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
 )
 
 const (
@@ -53,8 +53,8 @@ const (
 	flagMinSignedPerWindow         = "min-signed-per-window"
 	flagFinalitySigTimeout         = "finality-sig-timeout"
 	flagJailDuration               = "jail-duration"
-	flagBlsPassword                = "bls-password"
 	flagNoBlsPassword              = "no-bls-password"
+	flagBlsPasswordFile            = "bls-password-file"
 )
 
 type GenesisCLIArgs struct {

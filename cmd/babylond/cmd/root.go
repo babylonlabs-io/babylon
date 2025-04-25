@@ -23,7 +23,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	appsigner "github.com/babylonlabs-io/babylon/app/signer"
+	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
 
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -42,10 +42,10 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v2/app"
+	"github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/cmd/babylond/cmd/genhelpers"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 )
 
 // NewRootCmd creates a new root command for babylond. It is called once in the
@@ -211,8 +211,9 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		cmtcli.NewCompletionCmd(rootCmd, true),
 		TestnetCmd(basicManager, banktypes.GenesisBalancesIterator{}),
 		genhelpers.CmdGenHelpers(gentxModule.GenTxValidator),
-		MigrateBlsKeyCmd(),
 		CreateBlsKeyCmd(),
+		ShowBlsKeyCmd(),
+		GenerateBlsPopCmd(),
 		ModuleSizeCmd(),
 		DebugCmd(),
 		confixcmd.ConfigCommand(),
@@ -235,8 +236,8 @@ func addModuleInitFlags(startCmd *cobra.Command) {
 
 	startCmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|kwallet|pass|test)")
 	startCmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-	startCmd.Flags().Bool(flagNoBlsPassword, true, "Generate BLS key without password protection (suitable for RPC nodes)")
-	startCmd.Flags().String(flagBlsPassword, "", "Use the specified password for BLS key (if empty and --no-bls-password is not set, will prompt for password)")
+	startCmd.Flags().Bool(flagNoBlsPassword, false, "Generate BLS key without password protection (suitable for RPC nodes)")
+	startCmd.Flags().String(flagBlsPasswordFile, "", "Load a custom file path to the bls password (not recommended)")
 }
 
 func queryCommand() *cobra.Command {
@@ -301,14 +302,18 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 
 	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
 
-	// auto migrate when build tag is set to "e2e_upgrade"
-	automigrate_e2e_upgrade(logger, homeDir)
+	noBlsPassword := cast.ToBool(appOpts.Get(flagNoBlsPassword))
+	fileBlsPassword := cast.ToString(appOpts.Get(flagBlsPasswordFile))
+
+	if err := appsigner.ValidatePasswordMethods(noBlsPassword, fileBlsPassword); err != nil {
+		panic(fmt.Errorf("more than one password sources detected: %w", err))
+	}
 
 	// Load or generate BLS signer with potential custom path from app.toml
 	blsSigner, err := appsigner.LoadOrGenBlsKey(
 		homeDir,
-		cast.ToBool(appOpts.Get(flagNoBlsPassword)),
-		cast.ToString(appOpts.Get(flagBlsPassword)),
+		noBlsPassword,
+		cast.ToString(appOpts.Get(flagBlsPasswordFile)),
 		cast.ToString(appOpts.Get("bls-config.bls-key-file")),
 	)
 	if err != nil {
@@ -366,23 +371,4 @@ func appExport(
 	}
 
 	return babylonApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
-}
-
-// automigrate_e2e_upgrade_test runs when the build tag is set to "e2e_upgrade".
-// It always checks if the key structure is the previous version
-// and migrates into a separate version of the divided key files
-func automigrate_e2e_upgrade(logger log.Logger, homeDir string) {
-	if app.IsE2EUpgradeBuildFlag {
-		logger.Debug(
-			"***************************************************************************\n" +
-				"NOTE: In testnet mode, it will automatically migrate the key file\n" +
-				"if priv_validator_key.json contains both the comet and bls keys,\n" +
-				"used in previous version.\n" +
-				"Do not run it in a production environment, as it may cause problems.\n" +
-				"***************************************************************************\n",
-		)
-		if err := migrate(homeDir, "password"); err != nil {
-			logger.Debug(err.Error())
-		}
-	}
 }

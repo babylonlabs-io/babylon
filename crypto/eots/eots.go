@@ -11,7 +11,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	ecdsa_schnorr "github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr"
 
-	"github.com/babylonlabs-io/babylon/crypto/common"
+	"github.com/babylonlabs-io/babylon/v2/crypto/common"
 )
 
 type ModNScalar = btcec.ModNScalar
@@ -80,6 +80,9 @@ func signHash(sk *PrivateKey, privateRand *PrivateRand, hash [32]byte) (*Signatu
 	isPyOdd := pubKeyBytes[0] == secp256k1.PubKeyFormatCompressedOdd
 
 	k := new(ModNScalar).Set(privateRand)
+	defer func() {
+		k.Zero()
+	}()
 
 	// R = kG (with blinding in order to prevent timing side channel attacks)
 	R, err := common.ScalarBaseMultWithBlinding(k)
@@ -94,6 +97,9 @@ func signHash(sk *PrivateKey, privateRand *PrivateRand, hash [32]byte) (*Signatu
 	// Note that R must be in affine coordinates for this check.
 	R.ToAffine()
 	kNegated := new(ModNScalar).Set(k).Negate()
+	defer func() {
+		kNegated.Zero()
+	}()
 	isRyOdd := R.Y.IsOdd()
 
 	// e = tagged_hash("BIP0340/challenge", bytes(R) || bytes(P) || m) mod n
@@ -134,6 +140,7 @@ func signHash(sk *PrivateKey, privateRand *PrivateRand, hash [32]byte) (*Signatu
 }
 
 // Verify verifies that the signature is valid for this message, public key and random value.
+// Precondition: r must be normalized
 func Verify(pubKey *PublicKey, r *PublicRand, message []byte, sig *Signature) error {
 	h := hash(message)
 	pubkeyBytes := schnorr.SerializePubKey(pubKey)
@@ -211,6 +218,7 @@ func verifyHash(pubKeyBytes []byte, r *PublicRand, hash [32]byte, sig *Signature
 }
 
 // Extract extracts the private key from a public key and signatures for two distinct hashes messages.
+// Precondition: r must be normalized
 func Extract(pubKey *PublicKey, r *PublicRand, message1 []byte, sig1 *Signature, message2 []byte, sig2 *Signature) (*PrivateKey, error) {
 	h1 := hash(message1)
 	h2 := hash(message2)

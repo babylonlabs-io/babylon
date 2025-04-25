@@ -7,7 +7,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/crypto/eots"
+	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
 )
 
 func (c *PubRandCommit) IsInRange(height uint64) bool {
@@ -109,7 +109,7 @@ func (e *Evidence) ExtractBTCSK() (*btcec.PrivateKey, error) {
 		return nil, err
 	}
 	return eots.Extract(
-		btcPK, e.PubRand.ToFieldVal(),
+		btcPK, e.PubRand.ToFieldValNormalized(),
 		e.canonicalMsgToSign(), e.CanonicalFinalitySig.ToModNScalar(), // msg and sig for canonical block
 		e.forkMsgToSign(), e.ForkFinalitySig.ToModNScalar(), // msg and sig for fork block
 	)

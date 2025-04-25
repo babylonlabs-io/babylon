@@ -21,8 +21,9 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	flag "github.com/spf13/pflag"
 
-	appsigner "github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
+	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 )
 
 // validator struct to define the fields of the validator
@@ -155,20 +156,40 @@ func newBuildCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *fl
 func buildWrappedCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *flag.FlagSet, val validator, valAc address.Codec) (tx.Factory, *types.MsgWrappedCreateValidator, error) {
 	txf, msg, err := newBuildCreateValidatorMsg(clientCtx, txf, fs, val, valAc)
 	if err != nil {
-		return txf, nil, err
+		return txf, nil, fmt.Errorf("failed to build create validator message: %w", err)
 	}
 
-	home, _ := fs.GetString(flags.FlagHome)
-	valKey, err := getValKeyFromFile(home)
-	if err != nil {
-		return txf, nil, err
+	var blsPK *bls12381.PublicKey
+	var pop *types.ProofOfPossession
+
+	blsPopFilePath, _ := fs.GetString(FlagBlsPopFilePath)
+	if blsPopFilePath != "" {
+		// if blsPopFilePath is not empty, load bls key from the provided path
+		blsPop, err := appsigner.LoadBlsPop(blsPopFilePath)
+		if err != nil {
+			return txf, nil, fmt.Errorf("failed to load bls pop from provided path: %w", err)
+		}
+		blsPK = &blsPop.BlsPubkey
+		pop = blsPop.Pop
+	} else {
+		// if blsPopFilePath is empty, load bls key from the node directory
+		// both priv_validator_key.json and bls_key.json are required
+		// to be present in the node directory
+		home, _ := fs.GetString(flags.FlagHome)
+		valKey, err := getValKeyFromFile(home)
+		if err != nil {
+			return txf, nil, fmt.Errorf("failed to load bls key from node directory: %w", err)
+		}
+		blsPK = &valKey.BlsPubkey
+		pop = valKey.PoP
 	}
-	wrappedMsg, err := types.NewMsgWrappedCreateValidator(msg, &valKey.BlsPubkey, valKey.PoP)
+
+	wrappedMsg, err := types.NewMsgWrappedCreateValidator(msg, blsPK, pop)
 	if err != nil {
-		return txf, nil, err
+		return txf, nil, fmt.Errorf("failed to create wrapped create validator message: %w", err)
 	}
 	if err := wrappedMsg.ValidateBasic(); err != nil {
-		return txf, nil, err
+		return txf, nil, fmt.Errorf("failed to validate wrapped create validator message: %w", err)
 	}
 
 	return txf, wrappedMsg, nil
@@ -206,7 +227,7 @@ func buildCommissionRates(rateStr, maxRateStr, maxChangeRateStr string) (commiss
 func getValKeyFromFile(homeDir string) (*appsigner.ValidatorKeys, error) {
 	ck, err := appsigner.LoadConsensusKey(homeDir)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load consensus key: %w", err)
 	}
 
 	return appsigner.NewValidatorKeys(ck.Comet.PrivKey, ck.Bls.PrivKey)

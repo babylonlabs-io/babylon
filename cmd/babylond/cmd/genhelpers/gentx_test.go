@@ -24,14 +24,14 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/app/params"
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/app/signer"
-	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
-	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
-	"github.com/babylonlabs-io/babylon/testutil/signer"
-	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v2/app"
+	"github.com/babylonlabs-io/babylon/v2/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
+	"github.com/babylonlabs-io/babylon/v2/cmd/babylond/cmd"
+	"github.com/babylonlabs-io/babylon/v2/cmd/babylond/cmd/genhelpers"
+	"github.com/babylonlabs-io/babylon/v2/testutil/signer"
+	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 )
 
 func Test_CmdGenTx(t *testing.T) {
@@ -42,12 +42,15 @@ func Test_CmdGenTx(t *testing.T) {
 
 	signer, err := signer.SetupTestBlsSigner()
 	require.NoError(t, err)
+	appOpts, cleanup := app.TmpAppOptions()
+	defer cleanup()
+
 	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
 		Logger:             logger,
 		DB:                 dbm.NewMemDB(),
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            app.TmpAppOptions(),
+		AppOpts:            appOpts,
 	})
 
 	err = genutiltest.ExecInitCmd(bbn.BasicModuleManager, home, bbn.AppCodec())

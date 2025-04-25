@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	appsigner "github.com/babylonlabs-io/babylon/app/signer"
+	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -28,13 +28,35 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 				return fmt.Errorf("failed to run init command: %w", err)
 			}
 
-			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
-			appsigner.GenBls(appsigner.DefaultBlsKeyFile(homeDir), appsigner.DefaultBlsPasswordFile(homeDir), blsPassword(cmd))
+			homeDir, err := cmd.Flags().GetString(flags.FlagHome)
+			if err != nil {
+				return fmt.Errorf("failed to get home directory: %w", err)
+			}
+			noBlsPassword, err := cmd.Flags().GetBool(flagNoBlsPassword)
+			if err != nil {
+				return fmt.Errorf("failed to get noBlsPassword flag: %w", err)
+			}
+			passwordFile, err := cmd.Flags().GetString(flagBlsPasswordFile)
+			if err != nil {
+				return fmt.Errorf("failed to get passwordFile flag: %w", err)
+			}
+
+			// Determine password at the system boundary
+			password, err := appsigner.GetBlsKeyPassword(noBlsPassword, passwordFile, true)
+			if err != nil {
+				return fmt.Errorf("failed to determine BLS password: %w", err)
+			}
+
+			// Generate BLS key using the refactored function with explicit password
+			if err := appsigner.CreateBlsKey(homeDir, password, passwordFile, cmd); err != nil {
+				return fmt.Errorf("failed to create BLS key: %w", err)
+			}
+
 			return nil
 		},
 	}
 	cmd.Flags().AddFlagSet(cosmosInitCmd.Flags())
-	cmd.Flags().String(flagBlsPassword, "", "The password for the BLS key. If the flag is not set, the password will be read from the prompt.")
-	cmd.Flags().Bool(flagNoBlsPassword, false, "The BLS key will use an empty password if the flag is set.")
+	cmd.Flags().Bool(flagNoBlsPassword, false, "The BLS key will use an empty password if the flag is set")
+	cmd.Flags().String(flagBlsPasswordFile, "", "Path to a file to store the BLS password (not recommended)")
 	return cmd
 }

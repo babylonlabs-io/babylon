@@ -5,8 +5,8 @@ import (
 
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
 
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 )
 
 // ValidatorKeys represents a validator keys.
@@ -45,7 +45,7 @@ func BuildPoP(valPrivKey cmtcrypto.PrivKey, blsPrivkey bls12381.PrivateKey) (*ty
 	}
 	data, err := valPrivKey.Sign(blsPrivkey.PubKey().Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("Error while building PoP: %w", err)
+		return nil, fmt.Errorf("failed to sign Ed25519 key: %w", err)
 	}
 
 	msg := bls12381.GetPopSignMsg(blsPrivkey.PubKey(), data)

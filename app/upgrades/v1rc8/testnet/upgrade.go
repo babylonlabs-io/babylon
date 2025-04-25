@@ -10,14 +10,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/babylonlabs-io/babylon/app/keepers"
-	"github.com/babylonlabs-io/babylon/app/upgrades"
-	btcstakingkeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v2/app/keepers"
+	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
+	btcstakingkeeper "github.com/babylonlabs-io/babylon/v2/x/btcstaking/keeper"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
 
 const (
-	UpgradeName = "v1rc7"
+	UpgradeName = "v1rc8"
 )
 
 func CreateUpgrade() upgrades.Upgrade {

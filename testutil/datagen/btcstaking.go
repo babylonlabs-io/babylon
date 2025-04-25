@@ -8,7 +8,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	stk "github.com/babylonlabs-io/babylon/btcstaking"
+	stk "github.com/babylonlabs-io/babylon/v2/btcstaking"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -20,11 +20,11 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/btcstaking"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
 
 const (
@@ -272,6 +272,16 @@ type CreateDelegationInfo struct {
 	StakingTxHash          string
 	StakingTx              *wire.MsgTx
 	UnbondingTx            *wire.MsgTx
+}
+
+func DelegationInfosToBTCTx(
+	delInfos []*CreateDelegationInfo,
+) []*wire.MsgTx {
+	txs := []*wire.MsgTx{}
+	for _, delInfo := range delInfos {
+		txs = append(txs, delInfo.StakingTx)
+	}
+	return txs
 }
 
 // GenRandomMsgCreateBtcDelegation generates a random MsgCreateBTCDelegation message

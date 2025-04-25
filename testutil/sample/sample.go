@@ -3,10 +3,10 @@ package sample
 import (
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/types"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	btclightck "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
-	btclighttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v2/types"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	btclightck "github.com/babylonlabs-io/babylon/v2/x/btclightclient/keeper"
+	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -36,6 +36,30 @@ func SignetBtcHeader195552(t *testing.T) *btclighttypes.BTCHeaderInfo {
 	btcHeader = btclighttypes.BTCHeaderInfo{
 		Header: &btcHeaderHash,
 		Height: uint32(195552),
+		Hash:   &headerHash,
+		Work:   &work,
+	}
+
+	return &btcHeader
+}
+
+// MainnetBtcHeader854784 returns the BTC Header block 854784 from mainnet.
+func MainnetBtcHeader854784(t *testing.T) *btclighttypes.BTCHeaderInfo {
+	var btcHeader btclighttypes.BTCHeaderInfo
+
+	// mainnet btc header of height 854784
+	btcHeaderHash, err := types.NewBTCHeaderBytesFromHex("0000c020f382af1f6d228721b49f3da2f5b831587803b16597b301000000000000000000e4f76aae64d8316d195a92424871b74168b58d1c3c6988548e0e9890b15fc2fc3c00aa66be1a0317082e4bc7")
+	require.NoError(t, err)
+
+	wireHeaders := btclightck.BtcHeadersBytesToBlockHeader([]types.BTCHeaderBytes{btcHeaderHash})
+	wireHeader := wireHeaders[0]
+
+	blockHash := wireHeader.BlockHash()
+	headerHash := bbn.NewBTCHeaderHashBytesFromChainhash(&blockHash)
+	work := btclighttypes.CalcWork(&btcHeaderHash)
+	btcHeader = btclighttypes.BTCHeaderInfo{
+		Header: &btcHeaderHash,
+		Height: uint32(854784),
 		Hash:   &headerHash,
 		Work:   &work,
 	}

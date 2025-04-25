@@ -14,9 +14,9 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 
-	"github.com/babylonlabs-io/babylon/btcstaking"
-	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/types"
+	"github.com/babylonlabs-io/babylon/v2/btcstaking"
+	asig "github.com/babylonlabs-io/babylon/v2/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
 )
 
 func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, error) {
@@ -495,6 +495,16 @@ func NewBTCDelegatorDelegationIndex() *BTCDelegatorDelegationIndex {
 	return &BTCDelegatorDelegationIndex{
 		StakingTxHashList: [][]byte{},
 	}
+}
+
+func (i *BTCDelegatorDelegationIndex) Validate() error {
+	for _, bz := range i.StakingTxHashList {
+		// NewHash validates hash size
+		if _, err := chainhash.NewHash(bz); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (i *BTCDelegatorDelegationIndex) Has(stakingTxHash chainhash.Hash) bool {

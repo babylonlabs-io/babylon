@@ -5,8 +5,9 @@ import "gogoproto/gogo.proto";
 import "babylon/btcstaking/v1/params.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
 import "babylon/btcstaking/v1/events.proto";
+import "babylon/btcstaking/v1/packet.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types";
 
 // GenesisState defines the btcstaking module's genesis state.
 message GenesisState {
@@ -18,10 +19,20 @@ message GenesisState {
   repeated BTCDelegation btc_delegations = 3;
   // block_height_chains the block height of babylon and bitcoin.
   repeated BlockHeightBbnToBtc block_height_chains = 5;
-  // btc_delegators contains all the btc delegators with the associated finality provider.
+  // btc_delegators contains all the btc delegators with the associated finality
+  // provider.
   repeated BTCDelegator btc_delegators = 6;
   // all the events and its indexes.
   repeated EventIndex events = 7;
+  // collection of the allowed staking transaction hashes (hex encoded)
+  repeated string allowed_staking_tx_hashes = 8;
+  // largest BTC block reorg
+  LargestBtcReOrg largest_btc_reorg = 9;
+  // btc_consumer_delegators contains all the btc delegators
+  // with the associated finality provider of a consumer chain
+  repeated BTCDelegator btc_consumer_delegators = 10;
+  // all consumer chain events
+  repeated ConsumerEvent consumer_events = 11;
 }
 
 // BlockHeightBbnToBtc stores the btc <-> bbn block.
@@ -37,9 +48,13 @@ message BTCDelegator {
   // idx the btc delegator index.
   BTCDelegatorDelegationIndex idx = 1;
   // fp_btc_pk the finality provider btc public key.
-  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  bytes fp_btc_pk = 2
+      [ (gogoproto.customtype) =
+            "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" ];
   // del_btc_pk the delegator btc public key.
-  bytes del_btc_pk = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  bytes del_btc_pk = 3
+      [ (gogoproto.customtype) =
+            "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" ];
 }
 
 // EventIndex contains the event and its index.
@@ -50,4 +65,14 @@ message EventIndex {
   uint32 block_height_btc = 2;
   // event the event stored.
   EventPowerDistUpdate event = 3;
+}
+
+// ConsumerEvent contains the events belonging to a specific consumer chain.
+message ConsumerEvent {
+  // consumer_id is the identifier of the consumer chain
+  string consumer_id = 1;
+  // events holds all the events (NewFinalityProvider, ActiveBTCDelegation,
+  // SlashedBTCDelegation, UnbondedBTCDelegation)
+  // for the consumer chain
+  BTCStakingIBCPacket events = 2;
 }

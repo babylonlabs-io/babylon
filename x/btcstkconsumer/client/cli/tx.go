@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -32,8 +32,8 @@ func GetTxCmd() *cobra.Command {
 
 func NewRegisterConsumerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register-consumer <consumer-id> <name> [description]",
-		Args:  cobra.ExactArgs(3),
+		Use:   "register-consumer <consumer-id> <name> <description> [eth-l2-address]",
+		Args:  cobra.MinimumNArgs(3),
 		Short: "Registers a consumer",
 		Long: strings.TrimSpace(
 			`Registers a consumer with Babylon. The consumer-id must be unique and will be used to identify this consumer.
@@ -57,12 +57,17 @@ func NewRegisterConsumerCmd() *cobra.Command {
 			if description == "" {
 				return fmt.Errorf("consumer's description cannot be empty")
 			}
+			ethL2Address := ""
+			if len(args) > 3 {
+				ethL2Address = args[3]
+			}
 
 			msg := types.MsgRegisterConsumer{
-				Signer:              clientCtx.FromAddress.String(),
-				ConsumerId:          consumerId,
-				ConsumerName:        name,
-				ConsumerDescription: description,
+				Signer:                       clientCtx.FromAddress.String(),
+				ConsumerId:                   consumerId,
+				ConsumerName:                 name,
+				ConsumerDescription:          description,
+				EthL2FinalityContractAddress: ethL2Address,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

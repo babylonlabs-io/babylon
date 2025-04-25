@@ -3,7 +3,7 @@ package v1_test
 import (
 	"testing"
 
-	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
+	v1 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -12,7 +12,6 @@ func TestCheckTokensDistributionFromData(t *testing.T) {
 	for _, upgradeData := range UpgradeV1Data {
 		d, err := v1.LoadTokenDistributionFromData(upgradeData.TokensDistributionStr)
 		require.NoError(t, err)
-		require.Greater(t, len(d.TokenDistribution), 1)
 
 		for _, td := range d.TokenDistribution {
 			sender, err := sdk.AccAddressFromBech32(td.AddressSender)

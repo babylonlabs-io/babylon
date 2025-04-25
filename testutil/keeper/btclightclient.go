@@ -19,11 +19,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	bapp "github.com/babylonlabs-io/babylon/app"
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	btclightclientk "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
-	btclightclientt "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	bapp "github.com/babylonlabs-io/babylon/v2/app"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	btclightclientk "github.com/babylonlabs-io/babylon/v2/x/btclightclient/keeper"
+	btclightclientt "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
 )
 
 type MockIncentiveKeeper struct{}
@@ -57,8 +57,9 @@ func BTCLightClientKeeperWithCustomParams(
 
 	registry := codectypes.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
-
-	testCfg := bbn.ParseBtcOptionsFromConfig(bapp.TmpAppOptions())
+	appOpts, cleanup := bapp.TmpAppOptions()
+	defer cleanup()
+	testCfg := bbn.ParseBtcOptionsFromConfig(appOpts)
 	stServ := runtime.NewKVStoreService(storeKey)
 	k := btclightclientk.NewKeeper(
 		cdc,

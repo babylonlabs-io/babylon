@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math"
 	"math/rand"
@@ -12,7 +11,7 @@ import (
 	govv1 "cosmossdk.io/api/cosmos/gov/v1"
 	sdkmath "cosmossdk.io/math"
 	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
-	appparams "github.com/babylonlabs-io/babylon/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -20,15 +19,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/babylonlabs-io/babylon/crypto/eots"
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
-	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	itypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -81,7 +80,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	s.cacheFP = CreateNodeFPFromNodeAddr(
+	s.cacheFP = chain.CreateFpFromNodeAddr(
 		s.T(),
 		s.r,
 		s.fptBTCSK,
@@ -135,7 +134,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	pendingDels := pendingDelsSet[0]
 	s.Len(pendingDels.Dels, 1)
 	pendingDelResp := pendingDels.Dels[0]
-	pendingDel, err := ParseRespBTCDelToBTCDel(pendingDelResp)
+	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
 	s.NoError(err)
 	s.Len(pendingDel.CovenantSigs, 0)
 
@@ -221,7 +220,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(s.cacheFP.BtcPk.MarshalHex())
 	s.Len(activeDelsSet, 1)
 
-	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
+	activeDels, err := chain.ParseRespsBTCDelToBTCDel(activeDelsSet[0])
 	s.NoError(err)
 	s.NotNil(activeDels)
 	s.Len(activeDels.Dels, 1)
@@ -230,7 +229,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum))
 }
 
-// Test2CommitPublicRandomnessAndSubmitFinalitySignature is an end-to-end
+// Test3CommitPublicRandomnessAndSubmitFinalitySignature is an end-to-end
 // test for user story 3: finality provider commits public randomness and submits
 // finality signature, such that blocks can be finalised.
 func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignature() {
@@ -355,7 +354,7 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	activeDels := activeDelsSet[0]
 	s.Len(activeDels.Dels, 1)
 	activeDelResp := activeDels.Dels[0]
-	activeDel, err := ParseRespBTCDelToBTCDel(activeDelResp)
+	activeDel, err := chain.ParseRespBTCDelToBTCDel(activeDelResp)
 	s.NoError(err)
 	s.NotNil(activeDel.CovenantSigs)
 
@@ -409,7 +408,7 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 		return len(unbondedDelsResp) > 0
 	}, time.Minute, time.Second*2)
 
-	unbondDel, err := ParseRespBTCDelToBTCDel(unbondedDelsResp[0])
+	unbondDel, err := chain.ParseRespBTCDelToBTCDel(unbondedDelsResp[0])
 	s.NoError(err)
 	s.Equal(stakingTxHash, unbondDel.MustGetStakingTxHash())
 }
@@ -815,162 +814,6 @@ func (s *BTCStakingTestSuite) Test9BlockBankSendAndBTCDelegate() {
 	s.Equal(stakerNoFundsAddr, delegation.BtcDelegation.StakerAddr)
 }
 
-// ParseRespsBTCDelToBTCDel parses an BTC delegation response to BTC Delegation
-func ParseRespsBTCDelToBTCDel(resp *bstypes.BTCDelegatorDelegationsResponse) (btcDels *bstypes.BTCDelegatorDelegations, err error) {
-	if resp == nil {
-		return nil, nil
-	}
-	btcDels = &bstypes.BTCDelegatorDelegations{
-		Dels: make([]*bstypes.BTCDelegation, len(resp.Dels)),
-	}
-
-	for i, delResp := range resp.Dels {
-		del, err := ParseRespBTCDelToBTCDel(delResp)
-		if err != nil {
-			return nil, err
-		}
-		btcDels.Dels[i] = del
-	}
-	return btcDels, nil
-}
-
-// ParseRespBTCDelToBTCDel parses an BTC delegation response to BTC Delegation
-func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstypes.BTCDelegation, err error) {
-	stakingTx, err := hex.DecodeString(resp.StakingTxHex)
-	if err != nil {
-		return nil, err
-	}
-
-	delSig, err := bbn.NewBIP340SignatureFromHex(resp.DelegatorSlashSigHex)
-	if err != nil {
-		return nil, err
-	}
-
-	slashingTx, err := bstypes.NewBTCSlashingTxFromHex(resp.SlashingTxHex)
-	if err != nil {
-		return nil, err
-	}
-
-	btcDel = &bstypes.BTCDelegation{
-		StakerAddr:       resp.StakerAddr,
-		BtcPk:            resp.BtcPk,
-		FpBtcPkList:      resp.FpBtcPkList,
-		StartHeight:      resp.StartHeight,
-		StakingTime:      resp.StakingTime,
-		EndHeight:        resp.EndHeight,
-		TotalSat:         resp.TotalSat,
-		StakingTx:        stakingTx,
-		DelegatorSig:     delSig,
-		StakingOutputIdx: resp.StakingOutputIdx,
-		CovenantSigs:     resp.CovenantSigs,
-		UnbondingTime:    resp.UnbondingTime,
-		SlashingTx:       slashingTx,
-	}
-
-	if resp.UndelegationResponse != nil {
-		ud := resp.UndelegationResponse
-		unbondTx, err := hex.DecodeString(ud.UnbondingTxHex)
-		if err != nil {
-			return nil, err
-		}
-
-		slashTx, err := bstypes.NewBTCSlashingTxFromHex(ud.SlashingTxHex)
-		if err != nil {
-			return nil, err
-		}
-
-		delSlashingSig, err := bbn.NewBIP340SignatureFromHex(ud.DelegatorSlashingSigHex)
-		if err != nil {
-			return nil, err
-		}
-
-		btcDel.BtcUndelegation = &bstypes.BTCUndelegation{
-			UnbondingTx:              unbondTx,
-			CovenantUnbondingSigList: ud.CovenantUnbondingSigList,
-			CovenantSlashingSigs:     ud.CovenantSlashingSigs,
-			SlashingTx:               slashTx,
-			DelegatorSlashingSig:     delSlashingSig,
-		}
-
-		if ud.DelegatorUnbondingInfoResponse != nil {
-			var spendStakeTx []byte = make([]byte, 0)
-			if ud.DelegatorUnbondingInfoResponse.SpendStakeTxHex != "" {
-				spendStakeTx, err = hex.DecodeString(ud.DelegatorUnbondingInfoResponse.SpendStakeTxHex)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			btcDel.BtcUndelegation.DelegatorUnbondingInfo = &bstypes.DelegatorUnbondingInfo{
-				SpendStakeTx: spendStakeTx,
-			}
-		}
-	}
-
-	return btcDel, nil
-}
-
-func equalFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpResp *bstypes.FinalityProviderResponse) {
-	require.Equal(t, fp.Description, fpResp.Description)
-	require.Equal(t, fp.Commission, fpResp.Commission)
-	require.Equal(t, fp.Addr, fpResp.Addr)
-	require.Equal(t, fp.BtcPk, fpResp.BtcPk)
-	require.Equal(t, fp.Pop, fpResp.Pop)
-	require.Equal(t, fp.SlashedBabylonHeight, fpResp.SlashedBabylonHeight)
-	require.Equal(t, fp.SlashedBtcHeight, fpResp.SlashedBtcHeight)
-	require.Equal(t, fp.ConsumerId, fpResp.ConsumerId)
-	require.Equal(t, fp.CommissionInfo.MaxRate, fpResp.CommissionInfo.MaxRate)
-	require.Equal(t, fp.CommissionInfo.MaxChangeRate, fpResp.CommissionInfo.MaxChangeRate)
-	// UpdateTime field is set to the
-	// current block time on creation, so we can check in the response
-	// if the UpdateTime is within the last 15 secs
-	require.GreaterOrEqual(t, fpResp.CommissionInfo.UpdateTime, time.Now().UTC().Add(-15*time.Second))
-}
-
-// CreateNodeFPFromNodeAddr creates a random finality provider.
-func CreateNodeFPFromNodeAddr(
-	t *testing.T,
-	r *rand.Rand,
-	fpSk *btcec.PrivateKey,
-	node *chain.NodeConfig,
-) (newFP *bstypes.FinalityProvider) {
-	// the node is the new FP
-	nodeAddr, err := sdk.AccAddressFromBech32(node.PublicAddress)
-	require.NoError(t, err)
-
-	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, nodeAddr, "")
-	require.NoError(t, err)
-
-	previousFps := node.QueryFinalityProviders()
-
-	// use a higher commission to ensure the reward is more than tx fee of a finality sig
-	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
-	newFP.Commission = &commission
-	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission, newFP.CommissionInfo.MaxRate, newFP.CommissionInfo.MaxChangeRate)
-
-	// wait for a block so that above txs take effect
-	node.WaitForNextBlock()
-
-	// query the existence of finality provider and assert equivalence
-	actualFps := node.QueryFinalityProviders()
-	require.Len(t, actualFps, len(previousFps)+1)
-
-	// get chain ID to assert equality with the ConsumerId field
-	status, err := node.Status()
-	require.NoError(t, err)
-	newFP.ConsumerId = status.NodeInfo.Network
-
-	for _, fpResp := range actualFps {
-		if !strings.EqualFold(fpResp.Addr, newFP.Addr) {
-			continue
-		}
-		equalFinalityProviderResp(t, newFP, fpResp)
-		return newFP
-	}
-
-	return nil
-}
-
 // CreateNodeFP creates a random finality provider.
 func CreateNodeFP(
 	t *testing.T,
@@ -1009,7 +852,7 @@ func CreateNodeFP(
 		if !strings.EqualFold(fpResp.Addr, newFP.Addr) {
 			continue
 		}
-		equalFinalityProviderResp(t, newFP, fpResp)
+		chain.EqualFinalityProviderResp(t, newFP, fpResp)
 		return newFP
 	}
 

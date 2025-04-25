@@ -7,15 +7,16 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/testutil/helper"
-	"github.com/babylonlabs-io/babylon/x/epoching"
-	"github.com/babylonlabs-io/babylon/x/epoching/types"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v2/testutil/helper"
+	"github.com/babylonlabs-io/babylon/v2/x/epoching"
+	"github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 )
 
 // TODO (fuzz tests): replace the following tests with fuzz ones
@@ -245,4 +246,81 @@ func FuzzMsgWrappedUpdateStakingParams(f *testing.F) {
 		require.Equal(t, newBondDenom, stakingParamsAfterChange.BondDenom)
 		require.Equal(t, newMinCommissionRate.String(), stakingParamsAfterChange.MinCommissionRate.String())
 	})
+}
+
+func TestExponentiallyEventsEndEpochQueuedMessages(t *testing.T) {
+	t.Parallel()
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	h := testhelper.NewHelper(t)
+	ctx, k, stkK := h.Ctx, h.App.EpochingKeeper, h.App.StakingKeeper
+
+	vals, err := stkK.GetValidators(ctx, 1)
+	h.NoError(err)
+	require.Len(t, vals, 1)
+
+	valBeforeChange := vals[0]
+	valAddr, err := sdk.ValAddressFromBech32(valBeforeChange.OperatorAddress)
+	h.NoError(err)
+
+	newDescription := datagen.GenRandomDescription(r)
+	newCommissionRate := sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("0.%d", r.Int31n(5)+1))
+	newMinSelfDel := valBeforeChange.MinSelfDelegation.AddRaw(r.Int63n(valBeforeChange.Tokens.Sub(valBeforeChange.MinSelfDelegation).Int64()))
+
+	msg := stakingtypes.NewMsgEditValidator(valAddr.String(), *newDescription, &newCommissionRate, &newMinSelfDel)
+	wMsg := types.NewMsgWrappedEditValidator(msg)
+	res, err := h.MsgSrvr.WrappedEditValidator(ctx, wMsg)
+	h.NoError(err)
+	require.NotNil(t, res)
+
+	epochMsgs := k.GetCurrentEpochMsgs(ctx)
+	require.Len(t, epochMsgs, 1)
+
+	var numDelMessages int = datagen.RandomInRange(r, 5, 25)
+	for i := 0; i < numDelMessages; i++ {
+		msgDel := types.NewMsgWrappedDelegate(
+			stakingtypes.NewMsgDelegate(
+				h.GenAccs[0].GetAddress().String(),
+				valAddr.String(),
+				sdk.NewCoin("ubbn", sdkmath.NewInt(100000)),
+			),
+		)
+
+		res, err := h.MsgSrvr.WrappedDelegate(ctx, msgDel)
+		h.NoError(err)
+		require.NotNil(t, res)
+	}
+
+	epochMsgs = k.GetCurrentEpochMsgs(ctx)
+	require.Len(t, epochMsgs, numDelMessages+1)
+
+	blkHeader := ctx.BlockHeader()
+	blkHeader.Time = valBeforeChange.Commission.UpdateTime.Add(time.Hour * 25)
+	ctx = ctx.WithBlockHeader(blkHeader)
+
+	epoch := k.GetEpoch(ctx)
+	info := ctx.HeaderInfo()
+	info.Height = int64(epoch.GetLastBlockHeight())
+	info.Time = blkHeader.Time
+
+	// cleans out the msg server envents
+	// which contained types.EventWrappedDelegate generated
+	// by the x/epoching msg server in WrappedDelegate
+	ctx = sdk.NewContext(ctx.MultiStore(), ctx.BlockHeader(), ctx.IsCheckTx(), ctx.Logger()).WithHeaderInfo(info)
+
+	// with a clean context
+	_, err = epoching.EndBlocker(ctx, k)
+	h.NoError(err)
+
+	var events []abci.Event
+	if evtMgr := ctx.EventManager(); evtMgr != nil {
+		events = evtMgr.ABCIEvents()
+	}
+
+	eventsGeneratedByMsgEditValidator := 1
+	eventsGeneratedByMsgDelegate := 4
+	eventsGeneratedHealthyEpochEndBlocker := 1
+
+	expEventsLen := (numDelMessages * eventsGeneratedByMsgDelegate) + eventsGeneratedByMsgEditValidator + eventsGeneratedHealthyEpochEndBlocker
+	require.Equal(t, expEventsLen, len(events))
 }

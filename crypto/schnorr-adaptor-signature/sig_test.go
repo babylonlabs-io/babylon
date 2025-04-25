@@ -7,7 +7,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/stretchr/testify/require"
 
-	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
+	asig "github.com/babylonlabs-io/babylon/v2/crypto/schnorr-adaptor-signature"
 )
 
 func FuzzEncSignAndEncVerify(f *testing.F) {
@@ -67,8 +67,8 @@ func FuzzDecrypt(f *testing.F) {
 		require.NoError(t, err)
 
 		// decrypt message
-		schnorrSig := adaptorSig.Decrypt(decKey)
-
+		schnorrSig, err := adaptorSig.Decrypt(decKey)
+		require.NoError(t, err)
 		// decrypted Schnorr signature should be valid
 		resVerify := schnorrSig.Verify(msgHash, pk)
 		require.True(t, resVerify)
@@ -100,10 +100,11 @@ func FuzzRecover(f *testing.F) {
 		require.NoError(t, err)
 
 		// decrypt message
-		schnorrSig := adaptorSig.Decrypt(decKey)
-
+		schnorrSig, err := adaptorSig.Decrypt(decKey)
+		require.NoError(t, err)
 		// recover
-		expectedDecKey := adaptorSig.Recover(schnorrSig)
+		expectedDecKey, err := adaptorSig.Extract(schnorrSig)
+		require.NoError(t, err)
 
 		// assert the recovered decryption key is the expected one
 		require.True(t, expectedDecKey.Equals(&decKey.ModNScalar))

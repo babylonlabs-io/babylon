@@ -9,7 +9,7 @@ import "babylon/finality/v1/finality.proto";
 import "google/protobuf/timestamp.proto";
 import "amino/amino.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/finality/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/finality/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -148,7 +148,7 @@ message QueryActiveFinalityProvidersAtHeightRequest {
 message ActiveFinalityProvidersAtHeightResponse {
   // btc_pk is the Bitcoin secp256k1 PK of thisfinality provider
   // the PK follows encoding in BIP-340 spec
-  string btc_pk_hex = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  string btc_pk_hex = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" ];
   // height is the queried Babylon height
   uint64 height = 2;
   // voting_power is the voting power of this finality provider at the given height
@@ -201,7 +201,7 @@ message QueryListPublicRandomnessRequest {
 message QueryListPublicRandomnessResponse {
   // pub_rand_map is the map where the key is the height and the value
   // is the public randomness at this height for the given finality provider
-  map<uint64, bytes> pub_rand_map = 1  [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrPubRand" ];
+  map<uint64, bytes> pub_rand_map = 1  [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.SchnorrPubRand" ];
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -294,7 +294,7 @@ message QueryVotesAtHeightRequest {
 message QueryVotesAtHeightResponse {
   // btc_pk is the Bitcoin secp256k1 PK of finality providers who have signed the block at given height.
   // the PK follows encoding in BIP-340 spec
-  repeated bytes btc_pks = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey"];
+  repeated bytes btc_pks = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey"];
 }
 
 // QueryEvidenceRequest is the request type for the
@@ -313,7 +313,7 @@ message EvidenceResponse {
     // block_height is the height of the conflicting blocks
     uint64 block_height = 2;
     // pub_rand is the public randomness the finality provider has committed to
-    bytes pub_rand = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrPubRand" ];
+    bytes pub_rand = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.SchnorrPubRand" ];
     // canonical_app_hash is the AppHash of the canonical block
     bytes canonical_app_hash = 4;
     // fork_app_hash is the AppHash of the fork block
@@ -322,10 +322,10 @@ message EvidenceResponse {
     // where finality signature is an EOTS signature, i.e.,
     // the `s` in a Schnorr signature `(r, s)`
     // `r` is the public randomness that is already committed by the finality provider
-    bytes canonical_finality_sig = 6 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrEOTSSig" ];
+    bytes canonical_finality_sig = 6 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.SchnorrEOTSSig" ];
     // fork_finality_sig is the finality signature to the fork block
     // where finality signature is an EOTS signature
-    bytes fork_finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.SchnorrEOTSSig" ];
+    bytes fork_finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.SchnorrEOTSSig" ];
 }
 
 // QueryEvidenceResponse is the response type for the

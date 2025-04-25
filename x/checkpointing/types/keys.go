@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -46,8 +46,8 @@ func ValidatorBlsKeySetKey(epoch uint64) []byte {
 	return sdk.Uint64ToBigEndian(epoch)
 }
 
-// AddrToBlsKeyKey defines validator address
-func AddrToBlsKeyKey(valAddr sdk.ValAddress) []byte {
+// AddrToBlsKey defines validator address
+func AddrToBlsKey(valAddr sdk.ValAddress) []byte {
 	return valAddr
 }
 

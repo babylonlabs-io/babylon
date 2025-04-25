@@ -16,12 +16,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/app"
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer/config"
-	"github.com/babylonlabs-io/babylon/test/e2e/containers"
-	"github.com/babylonlabs-io/babylon/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/v2/app"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/config"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/containers"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/initialization"
 )
 
 type UpgradeSettings struct {
@@ -309,8 +309,8 @@ func (uc *UpgradeConfigurer) UpgradeFilePath() (string, error) {
 }
 
 // parseGovPropFromFile loads from the file and parse it to the upgrade msg.
-func parseGovPropFromFile(cdc codec.Codec, propFilePath string) (*proposal, *upgradetypes.MsgSoftwareUpgrade, error) {
-	prop, msgs, _, err := parseSubmitProposal(cdc, propFilePath)
+func parseGovPropFromFile(cdc codec.Codec, propFilePath string) (*chain.Proposal, *upgradetypes.MsgSoftwareUpgrade, error) {
+	prop, msgs, _, err := chain.ParseSubmitProposal(cdc, propFilePath)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -323,68 +323,12 @@ func parseGovPropFromFile(cdc codec.Codec, propFilePath string) (*proposal, *upg
 }
 
 // writeGovPropToFile loads from the file the Upgrade msg as json.
-func writeGovPropToFile(cdc codec.Codec, propFilePath string, prop proposal, msgSoftwareUpgrade upgradetypes.MsgSoftwareUpgrade) error {
+func writeGovPropToFile(cdc codec.Codec, propFilePath string, prop chain.Proposal, msgSoftwareUpgrade upgradetypes.MsgSoftwareUpgrade) error {
 	bz, err := cdc.MarshalInterfaceJSON(&msgSoftwareUpgrade)
 	if err != nil {
 		return err
 	}
 	prop.Messages = []json.RawMessage{bz}
 
-	return writeProposalToFile(cdc, propFilePath, prop)
-}
-
-// Copy from https://github.com/cosmos/cosmos-sdk/blob/4251905d56e0e7a3350145beedceafe786953295/x/gov/client/cli/util.go#L83
-// Not exported structure and file
-// proposal defines the new Msg-based proposal.
-type proposal struct {
-	// Msgs defines an array of sdk.Msgs proto-JSON-encoded as Anys.
-	Messages  []json.RawMessage `json:"messages,omitempty"`
-	Metadata  string            `json:"metadata"`
-	Deposit   string            `json:"deposit"`
-	Title     string            `json:"title"`
-	Summary   string            `json:"summary"`
-	Expedited bool              `json:"expedited"`
-}
-
-// parseSubmitProposal reads and parses the proposal.
-func parseSubmitProposal(cdc codec.Codec, path string) (proposal, []sdk.Msg, sdk.Coins, error) {
-	var proposal proposal
-
-	contents, err := os.ReadFile(path)
-	if err != nil {
-		return proposal, nil, nil, err
-	}
-
-	err = json.Unmarshal(contents, &proposal)
-	if err != nil {
-		return proposal, nil, nil, err
-	}
-
-	msgs := make([]sdk.Msg, len(proposal.Messages))
-	for i, anyJSON := range proposal.Messages {
-		var msg sdk.Msg
-		err := cdc.UnmarshalInterfaceJSON(anyJSON, &msg)
-		if err != nil {
-			return proposal, nil, nil, err
-		}
-
-		msgs[i] = msg
-	}
-
-	deposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
-	if err != nil {
-		return proposal, nil, nil, err
-	}
-
-	return proposal, msgs, deposit, nil
-}
-
-// writeProposalToFile marshal the prop as json to the file.
-func writeProposalToFile(_ codec.Codec, path string, prop proposal) error {
-	bz, err := json.MarshalIndent(&prop, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(path, bz, 0644)
+	return chain.WriteProposalToFile(cdc, propFilePath, prop)
 }

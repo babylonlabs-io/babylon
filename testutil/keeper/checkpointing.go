@@ -16,12 +16,18 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
-	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 )
 
 func CheckpointingKeeper(t testing.TB, ek types.EpochingKeeper, signer types.BlsSigner) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec) {
-	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
+	return CheckpointingKeeperWithStoreKey(t, nil, ek, signer)
+}
+
+func CheckpointingKeeperWithStoreKey(t testing.TB, storeKey *storetypes.KVStoreKey, ek types.EpochingKeeper, signer types.BlsSigner) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec) {
+	if storeKey == nil {
+		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
+	}
 
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())

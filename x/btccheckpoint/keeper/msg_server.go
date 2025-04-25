@@ -2,12 +2,14 @@ package keeper
 
 import (
 	"context"
+	"errors"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 )
 
 var _ types.MsgServer = msgServer{}
@@ -47,25 +49,40 @@ func (ms msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertB
 		return nil, types.ErrInvalidHeader.Wrap(err.Error())
 	}
 
+	epochNum := rawSubmission.CheckpointData.Epoch
+
+	ed := ms.k.GetEpochData(sdkCtx, epochNum)
+
+	if ed == nil {
+		// we do not have any data saved yet
+		newEd := types.NewEmptyEpochData()
+		ed = &newEd
+	}
+
+	if ed.Status == types.Finalized {
+		// we have already finalized given epoch so we do not need any more submissions
+		return nil, types.ErrEpochAlreadyFinalized
+	}
+
 	// At this point:
 	// - every proof of inclusion is valid i.e every transaction is proved to be
 	// part of provided block and contains some OP_RETURN data
 	// - header is proved to be part of the chain we know about through BTCLightClient
+	// - epoch is not yet finalized
 	// - this is new checkpoint submission
 	// Verify if this is expected checkpoint
-	err = ms.k.checkpointingKeeper.VerifyCheckpoint(sdkCtx, rawSubmission.CheckpointData)
+	if err := ms.k.checkpointingKeeper.VerifyCheckpoint(sdkCtx, rawSubmission.CheckpointData); err != nil {
+		if errors.Is(err, ckpttypes.ErrConflictingCheckpoint) {
+			// We end such transaction with success to preserve setting of the conflict
+			// flag in the state. This flag will trigger halt of the chain in the
+			// EndBlocker call
+			return &types.MsgInsertBTCSpvProofResponse{}, nil
+		}
 
-	if err != nil {
 		return nil, err
 	}
 
-	// At this point we know this is a valid checkpoint for this epoch as this was validated
-	// by checkpointing module
-	epochNum := rawSubmission.CheckpointData.Epoch
-
-	err = ms.k.checkAncestors(sdkCtx, epochNum, newSubmissionOldestHeaderDepth)
-
-	if err != nil {
+	if err := ms.k.checkAncestors(sdkCtx, epochNum, newSubmissionOldestHeaderDepth); err != nil {
 		return nil, err
 	}
 
@@ -81,16 +98,13 @@ func (ms msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertB
 	submissionData := rawSubmission.GetSubmissionData(epochNum, txsInfo)
 
 	// Everything is fine, save new checkpoint and update Epoch data
-	err = ms.k.addEpochSubmission(
+	ms.k.addEpochSubmission(
 		sdkCtx,
 		epochNum,
+		ed,
 		submissionKey,
 		submissionData,
 	)
-
-	if err != nil {
-		return nil, err
-	}
 
 	// At this point, the BTC checkpoint is a valid submission and is
 	// not duplicated (first time seeing the pair of BTC txs)

@@ -3,13 +3,20 @@ package babylon.checkpointing.v1;
 
 import "cosmos/crypto/ed25519/keys.proto";
 import "babylon/checkpointing/v1/bls_key.proto";
+import "babylon/checkpointing/v1/checkpoint.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/checkpointing/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types";
 
 // GenesisState defines the checkpointing module's genesis state.
 message GenesisState {
   // genesis_keys defines the public keys for the genesis validators
   repeated GenesisKey genesis_keys = 1;
+  // validator sets per epoch
+  repeated ValidatorSetEntry validator_sets = 2;
+  // checkpoints are all the raw checkpoints with meta
+  repeated RawCheckpointWithMeta checkpoints = 3;
+  // last finalized epoch
+  uint64 last_finalized_epoch = 4;
 }
 
 // GenesisKey defines public key information about the genesis validators
@@ -22,4 +29,13 @@ message GenesisKey {
 
   // val_pubkey defines the ed25519 public key of the validator at genesis
   cosmos.crypto.ed25519.PubKey val_pubkey = 3;
+}
+
+// ValidatorSetEntry defines the validator set
+// for a specific epoch
+message ValidatorSetEntry {
+  // epoch number
+  uint64 epoch_number = 1;
+  // validator set corresponding to the epoch number
+  ValidatorWithBlsKeySet validator_set = 2;
 }

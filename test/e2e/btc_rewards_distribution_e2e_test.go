@@ -18,15 +18,15 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/babylonlabs-io/babylon/crypto/eots"
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/testutil/coins"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
-	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v2/testutil/coins"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	itypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
 )
 
 const (
@@ -208,7 +208,7 @@ func (s *BtcRewardsDistribution) Test3SubmitCovenantSignature() {
 	s.Require().Equal(len(pendingDelsResp), 3)
 
 	for _, pendingDelResp := range pendingDelsResp {
-		pendingDel, err := ParseRespBTCDelToBTCDel(pendingDelResp)
+		pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
 		s.NoError(err)
 
 		SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
@@ -443,7 +443,7 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 	}
 
 	s.Equal(len(pendingDels), 1)
-	pendingDel, err := ParseRespBTCDelToBTCDel(pendingDels[0])
+	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDels[0])
 	s.NoError(err)
 
 	SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)

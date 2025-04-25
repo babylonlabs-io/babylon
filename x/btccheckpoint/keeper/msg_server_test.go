@@ -13,12 +13,12 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	dg "github.com/babylonlabs-io/babylon/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	bkeeper "github.com/babylonlabs-io/babylon/x/btccheckpoint/keeper"
-	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	dg "github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	bkeeper "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/keeper"
+	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
 )
 
 type TestKeepers struct {
@@ -457,6 +457,51 @@ func TestLeaveOnlyBestSubmissionWhenEpochFinalized(t *testing.T) {
 
 	require.Equal(t, finalSubKey.Key[0].Hash, b1Hash(msg3))
 	require.Equal(t, finalSubKey.Key[1].Hash, b2Hash(msg3))
+}
+
+func TestReturnErrorIfEpochAlreadyFinalized(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	tk := InitTestKeepers(t)
+	defaultParams := btcctypes.DefaultParams()
+	wDeep := defaultParams.CheckpointFinalizationTimeout
+
+	require.False(t, tk.Checkpointing.VerifyCalled)
+	msg := dg.GenerateMessageWithRandomSubmitterForEpoch(r, 1)
+	tk.BTCLightClient.SetDepth(b1Hash(msg), uint32(1))
+	tk.BTCLightClient.SetDepth(b2Hash(msg), uint32(0))
+	_, err := tk.insertProofMsg(msg)
+	require.NoError(t, err, "failed to insert submission")
+	require.True(t, tk.Checkpointing.VerifyCalled)
+
+	ed := tk.GetEpochData(uint64(1))
+	require.NotNil(t, ed)
+	require.Len(t, ed.Keys, 1)
+
+	tk.BTCLightClient.SetDepth(b1Hash(msg), wDeep+4)
+	tk.BTCLightClient.SetDepth(b2Hash(msg), wDeep+5)
+
+	tk.onTipChange()
+
+	ed = tk.GetEpochData(uint64(1))
+	require.NotNil(t, ed)
+	require.Len(t, ed.Keys, 1)
+	require.Equal(t, ed.Status, btcctypes.Finalized)
+
+	finalSubKey := ed.Keys[0]
+
+	require.Equal(t, finalSubKey.Key[0].Hash, b1Hash(msg))
+	require.Equal(t, finalSubKey.Key[1].Hash, b2Hash(msg))
+
+	// set to false to simulate new transaction being processed
+	tk.Checkpointing.VerifyCalled = false
+	// new valid submission that is higher in btc chain should be rejected
+	msg1 := dg.GenerateMessageWithRandomSubmitterForEpoch(r, 1)
+	tk.BTCLightClient.SetDepth(b1Hash(msg1), uint32(1))
+	tk.BTCLightClient.SetDepth(b2Hash(msg1), uint32(0))
+	_, err = tk.insertProofMsg(msg1)
+	require.ErrorIs(t, err, btcctypes.ErrEpochAlreadyFinalized)
+	// It should still be falce as verify should not be called if epoch is already finalized
+	require.False(t, tk.Checkpointing.VerifyCalled)
 }
 
 func TestTxIdxShouldBreakTies(t *testing.T) {

@@ -4,7 +4,7 @@ package babylon.btcstkconsumer.v1;
 import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types";
 
 // Params defines the parameters for the module.
 message Params {

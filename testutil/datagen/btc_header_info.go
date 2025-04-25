@@ -8,9 +8,9 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	btclightclientk "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	btclightclientk "github.com/babylonlabs-io/babylon/v2/x/btclightclient/keeper"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -406,6 +406,12 @@ func GenRandomBTCHeaderInfoWithInvalidHeader(r *rand.Rand, powLimit *big.Int) *b
 			panic("Failed to generate invalid btc header in 100 random tries")
 		}
 	}
+}
+
+func GenRandomBTCHeaderInfoWithHeight(r *rand.Rand, height uint32) *btclightclienttypes.BTCHeaderInfo {
+	h := GenRandomBTCHeaderInfoWithParent(r, nil)
+	h.Height = height
+	return h
 }
 
 // MutateHash takes a hash as a parameter, copies it, modifies the copy, and returns the copy.

@@ -24,11 +24,11 @@ import (
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/app/signer"
-	testutilcli "github.com/babylonlabs-io/babylon/testutil/cli"
-	checkpointcli "github.com/babylonlabs-io/babylon/x/checkpointing/client/cli"
+	"github.com/babylonlabs-io/babylon/v2/app"
+	"github.com/babylonlabs-io/babylon/v2/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
+	testutilcli "github.com/babylonlabs-io/babylon/v2/testutil/cli"
+	checkpointcli "github.com/babylonlabs-io/babylon/v2/x/checkpointing/client/cli"
 	"github.com/cometbft/cometbft/privval"
 )
 
@@ -128,6 +128,14 @@ func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 	consPubKeyBz, err := s.clientCtx.Codec.MarshalInterfaceJSON(consPubKey)
 	require.NoError(err)
 	require.NotNil(consPubKeyBz)
+
+	// generate-bls-pop cmd logic
+	ck, err := appsigner.LoadConsensusKey(homeDir)
+	require.NoError(err)
+	pop, err := appsigner.BuildPoP(ck.Comet.PrivKey, ck.Bls.PrivKey)
+	require.NoError(err)
+	err = appsigner.SaveBlsPop(appsigner.DefaultBlsPopFile(homeDir), ck.Bls.PrivKey.PubKey(), pop)
+	require.NoError(err)
 
 	validJSON := fmt.Sprintf(`
 	{
@@ -259,6 +267,45 @@ func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 				fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir),
 			},
 			"",
+		},
+		{
+			"valid transaction with all fields (with bls-pop flag)",
+			[]string{
+				validJSONFile.Name(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.addrs[0]),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir),
+				fmt.Sprintf("--%s=%s", checkpointcli.FlagBlsPopFilePath, appsigner.DefaultBlsPopFile(homeDir)),
+			},
+			"",
+		},
+		{
+			"valid transaction without optional fields (with bls-pop flag)",
+			[]string{
+				validJSONWOOptionalFile.Name(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.addrs[0]),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir),
+				fmt.Sprintf("--%s=%s", checkpointcli.FlagBlsPopFilePath, appsigner.DefaultBlsPopFile(homeDir)),
+			},
+			"",
+		},
+		{
+			"invalid transaction (wrong bls-pop file path)",
+			[]string{
+				validJSONFile.Name(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.addrs[0]),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir),
+				fmt.Sprintf("--%s=%s", checkpointcli.FlagBlsPopFilePath, appsigner.DefaultBlsPopFile(homeDir)+"_invalid"),
+			},
+			"failed to load bls pop from provided path",
 		},
 	}
 

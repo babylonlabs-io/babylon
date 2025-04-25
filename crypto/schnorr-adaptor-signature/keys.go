@@ -3,9 +3,8 @@ package schnorr_adaptor_signature
 import (
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/crypto/common"
+	"github.com/babylonlabs-io/babylon/v2/crypto/common"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 // DecryptionKey is the decryption key in the adaptor
@@ -14,7 +13,7 @@ type DecryptionKey struct {
 	btcec.ModNScalar
 }
 
-func NewDecryptionKeyKeyFromModNScalar(scalar *btcec.ModNScalar) (*DecryptionKey, error) {
+func NewDecryptionKeyFromModNScalar(scalar *btcec.ModNScalar) (*DecryptionKey, error) {
 	if scalar.IsZero() {
 		return nil, fmt.Errorf("the given scalar is zero")
 	}
@@ -32,11 +31,11 @@ func NewDecryptionKeyKeyFromModNScalar(scalar *btcec.ModNScalar) (*DecryptionKey
 	return &DecryptionKey{*scalar}, nil
 }
 
-func NewDecryptionKeyKeyFromBTCSK(btcSK *btcec.PrivateKey) (*DecryptionKey, error) {
-	return NewDecryptionKeyKeyFromModNScalar(&btcSK.Key)
+func NewDecryptionKeyFromBTCSK(btcSK *btcec.PrivateKey) (*DecryptionKey, error) {
+	return NewDecryptionKeyFromModNScalar(&btcSK.Key)
 }
 
-func NewDecryptionKeyKeyFromBytes(decKeyBytes []byte) (*DecryptionKey, error) {
+func NewDecryptionKeyFromBytes(decKeyBytes []byte) (*DecryptionKey, error) {
 	if len(decKeyBytes) != ModNScalarSize {
 		return nil, fmt.Errorf(
 			"the length of the given bytes for decryption key is incorrect (expected: %d, actual: %d)",
@@ -48,7 +47,7 @@ func NewDecryptionKeyKeyFromBytes(decKeyBytes []byte) (*DecryptionKey, error) {
 	var decKeyScalar btcec.ModNScalar
 	decKeyScalar.SetByteSlice(decKeyBytes)
 
-	return NewDecryptionKeyKeyFromModNScalar(&decKeyScalar)
+	return NewDecryptionKeyFromModNScalar(&decKeyScalar)
 }
 
 func (dk *DecryptionKey) GetEncKey() (*EncryptionKey, error) {
@@ -103,21 +102,27 @@ func NewEncryptionKeyFromBTCPK(btcPK *btcec.PublicKey) (*EncryptionKey, error) {
 }
 
 func NewEncryptionKeyFromBytes(encKeyBytes []byte) (*EncryptionKey, error) {
-	point, err := btcec.ParseJacobian(encKeyBytes)
+	if len(encKeyBytes) != JacobianPointSize {
+		return nil, fmt.Errorf(
+			"the length of the given bytes for encryption key is incorrect (expected: %d, actual: %d)",
+			JacobianPointSize,
+			len(encKeyBytes),
+		)
+	}
+	btcPKPoint, err := btcec.ParseJacobian(encKeyBytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse encryption key bytes: %w", err)
 	}
-	return NewEncryptionKeyFromJacobianPoint(&point)
+	return NewEncryptionKeyFromJacobianPoint(&btcPKPoint)
 }
+
 func (ek *EncryptionKey) ToBTCPK() (*btcec.PublicKey, error) {
-	if !ek.Z.IsOne() {
-		return nil, fmt.Errorf("point must be in affine coordinates (Z=1)")
-	}
-	return secp256k1.NewPublicKey(&ek.X, &ek.Y), nil
+	return btcec.ParsePubKey(ek.ToBytes())
 }
 
 func (ek *EncryptionKey) ToBytes() []byte {
-	return btcec.JacobianToByteSlice(ek.JacobianPoint)
+	fieldValBytes := btcec.JacobianToByteSlice(ek.JacobianPoint)
+	return fieldValBytes
 }
 
 func GenKeyPair() (*EncryptionKey, *DecryptionKey, error) {
@@ -125,7 +130,7 @@ func GenKeyPair() (*EncryptionKey, *DecryptionKey, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	dk, err := NewDecryptionKeyKeyFromBTCSK(sk)
+	dk, err := NewDecryptionKeyFromBTCSK(sk)
 	if err != nil {
 		return nil, nil, err
 	}

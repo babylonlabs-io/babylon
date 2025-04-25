@@ -4,14 +4,18 @@ package babylon.btcstkconsumer.v1;
 import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 import "babylon/btcstkconsumer/v1/params.proto";
+import "babylon/btcstkconsumer/v1/btcstkconsumer.proto";
+import "babylon/btcstaking/v1/btcstaking.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/btcstkconsumer/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types";
 
 // GenesisState defines the btcstkconsumer module's genesis state.
 message GenesisState {
   // params defines all the parameters of the module.
-  Params params = 1 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  Params params = 1
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  // consumers contails all the registered consumers
+  repeated ConsumerRegister consumers = 2;
+  // finality_providers contails all the finality providers of consumer chains
+  repeated babylon.btcstaking.v1.FinalityProvider finality_providers = 3;
 }

@@ -30,6 +30,11 @@ func TestBTCRewardsDistribution(t *testing.T) {
 	suite.Run(t, new(BtcRewardsDistribution))
 }
 
+// TestGovResumeFinality tests resume of finality voting gov prop
+func TestGovResumeFinality(t *testing.T) {
+	suite.Run(t, new(GovFinalityResume))
+}
+
 func TestBTCStakingPreApprovalTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingPreApprovalTestSuite))
 }

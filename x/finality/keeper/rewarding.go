@@ -6,11 +6,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
 )
 
 // HandleRewarding calls the reward to stakers if the block is finalized
-func (k Keeper) HandleRewarding(ctx context.Context, targetHeight int64) {
+func (k Keeper) HandleRewarding(ctx context.Context, targetHeight int64, maxRewardedBlocks uint64) {
 	// rewarding is executed in a range of [nextHeightToReward, heightToExamine]
 	// this is we don't know when a block will be finalized and we need ensure
 	// every finalized block will be processed to reward
@@ -23,9 +23,16 @@ func (k Keeper) HandleRewarding(ctx context.Context, targetHeight int64) {
 		}
 		nextHeightToReward = activatedHeight
 	}
+
+	maxHeightToReward := min(
+		// need to add minus 1, as the rewarding loop is inclucive of [start, end]
+		nextHeightToReward+maxRewardedBlocks-1,
+		uint64(targetHeight),
+	)
+
 	copiedNextHeightToReward := nextHeightToReward
 
-	for height := nextHeightToReward; height <= uint64(targetHeight); height++ {
+	for height := nextHeightToReward; height <= maxHeightToReward; height++ {
 		block, err := k.GetBlock(ctx, height)
 		if err != nil {
 			panic(err)

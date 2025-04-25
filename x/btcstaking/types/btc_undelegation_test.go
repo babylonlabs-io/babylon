@@ -9,11 +9,11 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/stretchr/testify/require"
 
-	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
-	btctest "github.com/babylonlabs-io/babylon/testutil/bitcoin"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	asig "github.com/babylonlabs-io/babylon/v2/crypto/schnorr-adaptor-signature"
+	btctest "github.com/babylonlabs-io/babylon/v2/testutil/bitcoin"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
 
 func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
@@ -35,7 +35,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		// a random finality provider gets slashed
 		slashedFPIdx := int(datagen.RandomInt(r, numRestakedFPs))
 		fpSK, fpPK := fpSKs[slashedFPIdx], fpPKs[slashedFPIdx]
-		decKey, err := asig.NewDecryptionKeyKeyFromBTCSK(fpSK)
+		decKey, err := asig.NewDecryptionKeyFromBTCSK(fpSK)
 		require.NoError(t, err)
 		encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
 		require.NoError(t, err)
@@ -104,7 +104,8 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			)
 			require.NoError(t, err)
 
-			covSig := covSigsForFP[i].Decrypt(decKey)
+			covSig, err := covSigsForFP[i].Decrypt(decKey)
+			require.NoError(t, err)
 			err = btcDel.BtcUndelegation.SlashingTx.VerifySignature(
 				unbondingInfo.UnbondingOutput,
 				slashingSpendInfo.GetPkScriptPath(),

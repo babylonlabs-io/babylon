@@ -8,8 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/x/finality/keeper"
-	"github.com/babylonlabs-io/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v2/x/finality/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
 )
 
 func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
@@ -24,10 +24,8 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 	// if the BTC staking protocol is activated, i.e., there exists a height where a finality provider
 	// has voting power, start indexing and tallying blocks
 	if k.IsFinalityActive(ctx) {
-		// index the current block
-		k.IndexBlock(ctx)
 		// tally all non-finalised blocks
-		k.TallyBlocks(ctx)
+		k.TallyBlocks(ctx, types.MaxFinalizedRewardedBlocksPerEndBlock)
 
 		// detect sluggish finality providers if there are any
 		// heightToExamine is determined by the current height - params.FinalitySigTimeout
@@ -40,7 +38,7 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 		if heightToExamine >= 1 {
 			k.HandleLiveness(ctx, heightToExamine)
 
-			k.HandleRewarding(ctx, heightToExamine)
+			k.HandleRewarding(ctx, heightToExamine, types.MaxFinalizedRewardedBlocksPerEndBlock)
 		}
 	}
 

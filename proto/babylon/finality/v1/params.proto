@@ -6,7 +6,7 @@ import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
 import "google/protobuf/duration.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/finality/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/finality/types";
 
 // Params defines the parameters for the module.
 message Params {

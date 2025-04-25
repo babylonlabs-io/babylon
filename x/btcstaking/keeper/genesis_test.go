@@ -1,24 +1,27 @@
 package keeper_test
 
 import (
+	"encoding/hex"
+	"fmt"
 	"math"
 	"math/rand"
-	"strings"
 	"testing"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
+	"github.com/btcsuite/btcd/btcec/v2"
 	dbm "github.com/cosmos/cosmos-db"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	v1 "github.com/babylonlabs-io/babylon/app/upgrades/v1"
-	testnetdata "github.com/babylonlabs-io/babylon/app/upgrades/v1/testnet"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/testutil/helper"
-	testutilk "github.com/babylonlabs-io/babylon/testutil/keeper"
-	btclightclientt "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	v1 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1"
+	testnetdata "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1/testnet"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v2/testutil/helper"
+	testutilk "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
+	btclightclientt "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
 
 func TestInitGenesisWithSetParams(t *testing.T) {
@@ -38,9 +41,92 @@ func TestInitGenesisWithSetParams(t *testing.T) {
 	}
 }
 
+func TestInitGenesis(t *testing.T) {
+	ctx, h, gs := setupTest(t)
+	k := h.App.BTCStakingKeeper
+
+	// params already exist when setting up the test suite
+	// so we'll pass the params as nil in the InitGenesis
+	// to avoid having an error when trying to set the same params
+	gs.Params = nil
+
+	err := k.InitGenesis(ctx, *gs)
+	require.NoError(t, err)
+
+	// restore the params for checking equality
+	dp := types.DefaultParams()
+	gs.Params = []*types.Params{&dp}
+
+	exportedGs, err := k.ExportGenesis(ctx)
+	require.NoError(t, err)
+
+	types.SortData(exportedGs)
+	types.SortData(gs)
+
+	require.Equal(t, gs, exportedGs)
+}
+
 func TestExportGenesis(t *testing.T) {
+	ctx, h, gs := setupTest(t)
+	k, btclcK := h.App.BTCStakingKeeper, h.App.BTCLightClientKeeper
+
+	require.NoError(t, k.SetLargestBtcReorg(ctx, *gs.LargestBtcReorg))
+	fps, delegations, chainsHeight, consumerEvents := gs.FinalityProviders, gs.BtcDelegations, gs.BlockHeightChains, gs.ConsumerEvents
+
+	for i := range gs.FinalityProviders {
+		// set finality
+		h.AddFinalityProvider(fps[i])
+		// on creating the finality providers, the commission UpdateTime
+		// is set to be the current block time. To check equality afterwards,
+		// we update the randomly generated fps (with UpdateTime = 0) to have UpdateTime = block time
+		fps[i].CommissionInfo.UpdateTime = ctx.BlockHeader().Time
+
+		// make delegations per fp so event indexes are the same as the
+		// generated data in the setupTest func
+		delegateToFP(h, delegations, fps[i].BtcPk.MustToBTCPK())
+	}
+
+	// index blocks heights
+	for _, ch := range chainsHeight {
+		btcHead := btclcK.GetTipInfo(ctx)
+		btcHead.Height = ch.BlockHeightBtc
+		btclcK.InsertHeaderInfos(ctx, []*btclightclientt.BTCHeaderInfo{
+			btcHead,
+		})
+
+		header := ctx.HeaderInfo()
+		header.Height = int64(ch.BlockHeightBbn)
+		ctx = ctx.WithHeaderInfo(header)
+		h.Ctx = ctx
+
+		k.IndexBTCHeight(ctx)
+	}
+
+	// store consumer events
+	for _, e := range consumerEvents {
+		event := &types.BTCStakingConsumerEvent{
+			Event: &types.BTCStakingConsumerEvent_ActiveDel{
+				ActiveDel: e.Events.ActiveDel[0],
+			},
+		}
+		k.AddBTCStakingConsumerEvent(ctx, e.ConsumerId, event)
+	}
+
+	exportedGs, err := k.ExportGenesis(ctx)
+	h.NoError(err)
+
+	// sort expected and exported data to have deterministic order in the results
+	types.SortData(gs)
+	types.SortData(exportedGs)
+
+	require.Equal(t, gs, exportedGs)
+
+	// TODO: vp dst cache
+}
+
+func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) {
 	r, h := rand.New(rand.NewSource(11)), helper.NewHelper(t)
-	k, btclcK, ctx := h.App.BTCStakingKeeper, h.App.BTCLightClientKeeper, h.Ctx
+	k, ctx := h.App.BTCStakingKeeper, h.Ctx
 	numFps := 3
 
 	fps := datagen.CreateNFinalityProviders(r, t, numFps)
@@ -53,26 +139,18 @@ func TestExportGenesis(t *testing.T) {
 		BlockHeightBtc: 0,
 	})
 	btcDelegations := make([]*types.BTCDelegation, 0)
-	eventsIdx := make(map[uint64]*types.EventIndex, 0)
-	btcDelegatorIndex := make(map[string]*types.BTCDelegator, 0)
+	events := make([]*types.EventIndex, 0)
+	btcDelegators := make([]*types.BTCDelegator, 0)
+	allowedStkTxHashes := make([]string, 0)
+	consumerBtcDelegators := make([]*types.BTCDelegator, 0)
+	consumerEvents := make([]*types.ConsumerEvent, 0)
 
 	blkHeight := uint64(r.Int63n(1000)) + math.MaxUint16
 	totalDelegations := 0
 
+	latestBtcReOrg := &types.LargestBtcReOrg{RollbackFrom: datagen.GenRandomBTCHeaderInfoWithHeight(r, 150), RollbackTo: datagen.GenRandomBTCHeaderInfoWithHeight(r, 100)}
+
 	for i := range fps {
-		btcHead := btclcK.GetTipInfo(ctx)
-		btcHead.Height = uint32(blkHeight + 100)
-		btclcK.InsertHeaderInfos(ctx, []*btclightclientt.BTCHeaderInfo{
-			btcHead,
-		})
-
-		// set finality
-		h.AddFinalityProvider(fps[i])
-		// on creating the finality providers, the commission UpdateTime
-		// is set to be the current block time. To check equality afterwards,
-		// we update the randomly generated fps (with UpdateTime = 0) to have UpdateTime = block time
-		fps[i].CommissionInfo.UpdateTime = ctx.BlockHeader().Time
-
 		stakingValue := r.Int31n(200000) + 10000
 		numDelegations := r.Int31n(10)
 		delegations := createNDelegationsForFinalityProvider(
@@ -87,8 +165,6 @@ func TestExportGenesis(t *testing.T) {
 		for _, del := range delegations {
 			totalDelegations++
 
-			// sets delegations
-			h.AddDelegation(del)
 			btcDelegations = append(btcDelegations, del)
 
 			// BTC delegators idx
@@ -99,13 +175,15 @@ func TestExportGenesis(t *testing.T) {
 			err = idxDelegatorStk.Add(stakingTxHash)
 			h.NoError(err)
 
-			btcDelegatorIndex[del.BtcPk.MarshalHex()] = &types.BTCDelegator{
+			btcDelegators = append(btcDelegators, &types.BTCDelegator{
 				Idx: &types.BTCDelegatorDelegationIndex{
 					StakingTxHashList: idxDelegatorStk.StakingTxHashList,
 				},
 				FpBtcPk:  fps[i].BtcPk,
 				DelBtcPk: del.BtcPk,
-			}
+			})
+
+			allowedStkTxHashes = append(allowedStkTxHashes, hex.EncodeToString(stakingTxHash[:]))
 
 			// record event that the BTC delegation will become expired (unbonded) at EndHeight-w
 			unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
@@ -115,74 +193,59 @@ func TestExportGenesis(t *testing.T) {
 
 			// events
 			idxEvent := uint64(totalDelegations - 1)
-			eventsIdx[idxEvent] = &types.EventIndex{
+			events = append(events, &types.EventIndex{
 				Idx:            idxEvent,
 				BlockHeightBtc: del.EndHeight - del.UnbondingTime,
 				Event:          unbondedEvent,
-			}
+			})
+
+			consumerEvents = append(consumerEvents, &types.ConsumerEvent{
+				ConsumerId: fmt.Sprintf("consumer%d", totalDelegations+1),
+				Events: &types.BTCStakingIBCPacket{
+					ActiveDel: []*types.ActiveBTCDelegation{{}},
+				},
+			})
 		}
 
-		// sets chain heights
-		header := ctx.HeaderInfo()
-		header.Height = int64(blkHeight)
-		ctx = ctx.WithHeaderInfo(header)
-		h.Ctx = ctx
-
-		k.IndexBTCHeight(ctx)
+		// chain heights
+		btcHeight := uint32(blkHeight + 100)
 		chainsHeight = append(chainsHeight, &types.BlockHeightBbnToBtc{
 			BlockHeightBbn: blkHeight,
-			BlockHeightBtc: btcHead.Height,
+			BlockHeightBtc: btcHeight,
 		})
 
 		blkHeight++ // each fp increase blk height to modify data in state.
 	}
 
-	gs, err := k.ExportGenesis(ctx)
-	h.NoError(err)
-	require.Equal(t, k.GetParams(ctx), *gs.Params[0])
+	gs := &types.GenesisState{
+		Params:                 []*types.Params{&params},
+		FinalityProviders:      fps,
+		BtcDelegations:         btcDelegations,
+		BlockHeightChains:      chainsHeight,
+		BtcDelegators:          btcDelegators,
+		Events:                 events,
+		AllowedStakingTxHashes: allowedStkTxHashes,
+		LargestBtcReorg:        latestBtcReOrg,
+		BtcConsumerDelegators:  consumerBtcDelegators,
+		ConsumerEvents:         consumerEvents,
+	}
+	require.NoError(t, gs.Validate())
+	return ctx, h, gs
+}
 
-	// finality providers
-	correctFps := 0
-	for _, fp := range fps {
-		for _, gsfp := range gs.FinalityProviders {
-			if !strings.EqualFold(fp.Addr, gsfp.Addr) {
-				continue
-			}
-			require.EqualValues(t, fp, gsfp)
-			correctFps++
+func delegateToFP(h *helper.Helper, delegations []*types.BTCDelegation, fpBtcPk *btcec.PublicKey) {
+	ctx, k := h.Ctx, h.App.BTCStakingKeeper
+	for _, del := range delegations {
+		if !del.FpBtcPkList[0].MustToBTCPK().IsEqual(fpBtcPk) {
+			continue
 		}
+		// sets delegations
+		h.AddDelegation(del)
+
+		stakingTxHash, err := del.GetStakingTxHash()
+		h.NoError(err)
+
+		// store the staking tx hashes as allowed staking tx
+		k.IndexAllowedStakingTransaction(ctx, &stakingTxHash)
 	}
-	require.Equal(t, correctFps, numFps)
-
-	// btc delegations
-	correctDels := 0
-	for _, del := range btcDelegations {
-		for _, gsdel := range gs.BtcDelegations {
-			if !strings.EqualFold(del.StakerAddr, gsdel.StakerAddr) {
-				continue
-			}
-			correctDels++
-			require.Equal(t, del, gsdel)
-		}
-	}
-	require.Equal(t, correctDels, len(btcDelegations))
-
-	// chains height
-	require.Equal(t, chainsHeight, gs.BlockHeightChains)
-
-	// btc delegators
-	require.Equal(t, totalDelegations, len(gs.BtcDelegators))
-	for _, btcDel := range gs.BtcDelegators {
-		idxBtcDel := btcDelegatorIndex[btcDel.DelBtcPk.MarshalHex()]
-		require.Equal(t, btcDel, idxBtcDel)
-	}
-
-	// events
-	require.Equal(t, totalDelegations, len(gs.Events))
-	for _, evt := range gs.Events {
-		evtIdx := eventsIdx[evt.Idx]
-		require.Equal(t, evt, evtIdx)
-	}
-
-	// TODO: vp dst cache
 }

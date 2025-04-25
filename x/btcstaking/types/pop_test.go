@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/require"
 
@@ -11,9 +12,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
 
 var (
@@ -25,6 +26,24 @@ func newInvalidBIP340PoP(r *rand.Rand) *types.ProofOfPossessionBTC {
 		BtcSigType: types.BTCSigType_BIP340,
 		BtcSig:     datagen.GenRandomByteArray(r, 32), // fake sig hash
 	}
+}
+
+func Fuzz_MsgToSignBIP322(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		accAddr := datagen.GenRandomAccount().GetAddress()
+
+		addrStr := accAddr.String()
+		strUtf8Valid := utf8.ValidString(addrStr)
+		require.True(t, strUtf8Valid)
+
+		bz := types.MsgToSignBIP322(accAddr)
+		require.Equal(t, []byte(addrStr), bz)
+
+		bzUtf8Valid := utf8.Valid(bz)
+		require.True(t, bzUtf8Valid)
+	})
 }
 
 func FuzzPoP_BIP340(f *testing.F) {
