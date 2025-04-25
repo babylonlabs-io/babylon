@@ -34,6 +34,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		desc     string
 		genState *types.GenesisState
 		valid    bool
+		errMsg   string
 	}{
 		{
 			desc:     "default is valid",
@@ -49,14 +50,21 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid: true,
 		},
+		{
+			desc:     "invalid genesis state - empty",
+			genState: &types.GenesisState{},
+			valid:    false,
+			errMsg:   "epoch interval must be at least 2",
+		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
 			err := tc.genState.Validate()
 			if tc.valid {
 				require.NoError(t, err)
-			} else {
-				require.Error(t, err)
+				return
 			}
+			require.Error(t, err)
+			require.ErrorContains(t, err, tc.errMsg)
 		})
 	}
 }
