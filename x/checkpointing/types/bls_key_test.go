@@ -53,7 +53,7 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			vs, privKeys := datagen.GenerateValidatorSetWithBLSPrivKeys(int(datagen.RandomIntOtherThan(r, 0, 10)))
+			vs, privKeys := datagen.GenerateValidatorSetWithBLSPrivKeys(int(datagen.RandomIntOtherThan(r, 0, 10) + 1)) // make sure to always have at least 2 validators
 			tc.setup(vs, privKeys)
 			err := vs.Validate()
 			if tc.expectErr == nil {
