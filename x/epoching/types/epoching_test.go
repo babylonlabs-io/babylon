@@ -33,7 +33,7 @@ func FuzzEpoch(f *testing.F) {
 	})
 }
 
-func TestValidatorValidate(t *testing.T) {
+func TestValidator_Validate(t *testing.T) {
 	validAddr := datagen.GenRandomValidatorAddress()
 	testCases := []struct {
 		name      string
@@ -168,7 +168,7 @@ func TestValidatorLifecycle_Validate(t *testing.T) {
 	}
 }
 
-func TestDelegationLifecycleValidate(t *testing.T) {
+func TestDelegationLifecycle_Validate(t *testing.T) {
 	// Generate a valid delegator address
 	validDelAddr := datagen.GenRandomAddress().String()
 	dummyDelState := &types.DelegationStateUpdate{} // Assuming an empty update is valid for testing

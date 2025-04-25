@@ -1,9 +1,12 @@
 package types_test
 
 import (
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/babylonlabs-io/babylon/v2/app"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v2/testutil/nullify"
 	"github.com/babylonlabs-io/babylon/v2/x/epoching"
 	"github.com/babylonlabs-io/babylon/v2/x/epoching/types"
@@ -30,6 +33,66 @@ func TestGenesis(t *testing.T) {
 }
 
 func TestGenesisState_Validate(t *testing.T) {
+	var (
+		r              = rand.New(rand.NewSource(time.Now().Unix()))
+		now            = time.Now()
+		entriesCount   = int(datagen.RandomIntOtherThan(r, 0, 10))
+		vs             = datagen.GenRandomValSet(entriesCount)
+		slashedVs      = datagen.GenRandomValSet(entriesCount)
+		epochs         = make([]*types.Epoch, entriesCount)
+		qs             = make([]*types.EpochQueue, entriesCount)
+		valSets        = make([]*types.EpochValidatorSet, entriesCount)
+		slashedValSets = make([]*types.EpochValidatorSet, entriesCount)
+		valsLc         = make([]*types.ValidatorLifecycle, entriesCount)
+		delsLc         = make([]*types.DelegationLifecycle, entriesCount)
+	)
+
+	for i := range entriesCount {
+		epochNum := uint64(i) + 1
+		epochs[i] = datagen.GenRandomEpoch(r)
+		epochs[i].EpochNumber = epochNum
+		epochs[i].FirstBlockHeight = epochNum + 1000
+		epochs[i].SealerAppHash = append(epochs[i].SealerAppHash, byte(epochNum))
+
+		qs[i] = &types.EpochQueue{
+			EpochNumber: epochNum,
+			Msgs: []*types.QueuedMessage{{
+				TxId:        []byte("tx"),
+				MsgId:       []byte("msg"),
+				BlockHeight: 100,
+				BlockTime:   &now,
+				Msg:         &types.QueuedMessage_MsgDelegate{},
+			}},
+		}
+
+		valSets[i] = &types.EpochValidatorSet{
+			EpochNumber: epochNum,
+			Validators:  make([]*types.Validator, entriesCount),
+		}
+
+		for j, v := range vs {
+			valSets[i].Validators[j] = &v
+		}
+
+		slashedValSets[i] = &types.EpochValidatorSet{
+			EpochNumber: epochNum,
+			Validators:  make([]*types.Validator, entriesCount),
+		}
+
+		for j, v := range slashedVs {
+			slashedValSets[i].Validators[j] = &v
+		}
+
+		valsLc[i] = &types.ValidatorLifecycle{
+			ValAddr: datagen.GenRandomValidatorAddress().String(),
+			ValLife: []*types.ValStateUpdate{{}},
+		}
+
+		delsLc[i] = &types.DelegationLifecycle{
+			DelAddr: datagen.GenRandomAddress().String(),
+			DelLife: []*types.DelegationStateUpdate{{}},
+		}
+	}
 	for _, tc := range []struct {
 		desc     string
 		genState *types.GenesisState
@@ -51,10 +114,113 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid: true,
 		},
 		{
+			desc: "valid full genesis state",
+			genState: types.NewGenesis(
+				types.DefaultParams(),
+				epochs,
+				qs,
+				valSets,
+				slashedValSets,
+				valsLc,
+				delsLc,
+			),
+			valid: true,
+		},
+		{
 			desc:     "invalid genesis state - empty",
 			genState: &types.GenesisState{},
 			valid:    false,
 			errMsg:   "epoch interval must be at least 2",
+		},
+		{
+			desc: "invalid genesis state - duplicate epoch number",
+			genState: types.NewGenesis(
+				types.DefaultParams(),
+				append(epochs, epochs[0]),
+				qs,
+				valSets,
+				slashedValSets,
+				valsLc,
+				delsLc,
+			),
+			valid:  false,
+			errMsg: "duplicate EpochNumber",
+		},
+		{
+			desc: "invalid genesis state - duplicate epoch FirstBlockHeight",
+			genState: types.NewGenesis(
+				types.DefaultParams(),
+				append(epochs, &types.Epoch{
+					EpochNumber:      uint64(entriesCount) + 1,
+					FirstBlockHeight: epochs[0].FirstBlockHeight,
+				}),
+				qs,
+				valSets,
+				slashedValSets,
+				valsLc,
+				delsLc,
+			),
+			valid:  false,
+			errMsg: "duplicate FirstBlockHeight",
+		},
+		{
+			desc: "invalid genesis state - duplicate epoch SealerBlockHash",
+			genState: types.NewGenesis(
+				types.DefaultParams(),
+				append(epochs, &types.Epoch{
+					EpochNumber:     uint64(entriesCount) + 1,
+					SealerBlockHash: epochs[0].SealerBlockHash,
+				}),
+				qs,
+				valSets,
+				slashedValSets,
+				valsLc,
+				delsLc,
+			),
+			valid:  false,
+			errMsg: "duplicate SealerBlockHash",
+		},
+		{
+			desc: "invalid genesis state - duplicate queue",
+			genState: types.NewGenesis(
+				types.DefaultParams(),
+				epochs,
+				append(qs, qs[0]),
+				valSets,
+				slashedValSets,
+				valsLc,
+				delsLc,
+			),
+			valid:  false,
+			errMsg: "duplicate entry",
+		},
+		{
+			desc: "invalid genesis state - duplicate val set",
+			genState: types.NewGenesis(
+				types.DefaultParams(),
+				epochs,
+				qs,
+				append(valSets, valSets[0]),
+				slashedValSets,
+				valsLc,
+				delsLc,
+			),
+			valid:  false,
+			errMsg: "duplicate entry",
+		},
+		{
+			desc: "invalid genesis state - duplicate val lyfecycle",
+			genState: types.NewGenesis(
+				types.DefaultParams(),
+				epochs,
+				qs,
+				valSets,
+				slashedValSets,
+				append(valsLc, valsLc[0]),
+				delsLc,
+			),
+			valid:  false,
+			errMsg: "duplicate entry",
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
@@ -65,6 +231,81 @@ func TestGenesisState_Validate(t *testing.T) {
 			}
 			require.Error(t, err)
 			require.ErrorContains(t, err, tc.errMsg)
+		})
+	}
+}
+
+func TestEpochQueue_Validate(t *testing.T) {
+	now := time.Now()
+
+	tests := []struct {
+		name     string
+		queue    types.EpochQueue
+		valid    bool
+		errorMsg string
+	}{
+		{
+			name:     "nil Msgs",
+			queue:    types.EpochQueue{EpochNumber: 1, Msgs: nil},
+			valid:    false,
+			errorMsg: "empty Msgs in epoch queue. EpochNum: 1",
+		},
+		{
+			name:     "empty Msgs slice",
+			queue:    types.EpochQueue{EpochNumber: 2, Msgs: []*types.QueuedMessage{}},
+			valid:    false,
+			errorMsg: "empty Msgs in epoch queue.",
+		},
+		{
+			name: "single message with nil Msg",
+			queue: types.EpochQueue{
+				EpochNumber: 3,
+				Msgs: []*types.QueuedMessage{
+					{Msg: nil},
+				},
+			},
+			valid:    false,
+			errorMsg: "null Msg in epoch queue. EpochNum: 3",
+		},
+		{
+			name: "single valid message",
+			queue: types.EpochQueue{
+				EpochNumber: 4,
+				Msgs: []*types.QueuedMessage{
+					{
+						TxId:        []byte("tx"),
+						MsgId:       []byte("msg"),
+						BlockHeight: 100,
+						BlockTime:   &now,
+						Msg:         &types.QueuedMessage_MsgDelegate{},
+					},
+				},
+			},
+			valid: true,
+		},
+		{
+			name: "multiple messages with one nil",
+			queue: types.EpochQueue{
+				EpochNumber: 5,
+				Msgs: []*types.QueuedMessage{
+					{Msg: &types.QueuedMessage_MsgDelegate{}},
+					{Msg: nil},
+				},
+			},
+			valid:    false,
+			errorMsg: "null Msg in epoch queue. EpochNum: 5",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.queue.Validate()
+			if tc.valid {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.ErrorContains(t, err, tc.errorMsg)
 		})
 	}
 }

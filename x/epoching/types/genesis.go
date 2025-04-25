@@ -57,8 +57,8 @@ func (gs GenesisState) Validate() error {
 }
 
 func (eq EpochQueue) Validate() error {
-	if eq.Msgs == nil {
-		return fmt.Errorf("null Msgs in epoch queue. EpochNum: %d", eq.EpochNumber)
+	if len(eq.Msgs) == 0 {
+		return fmt.Errorf("empty Msgs in epoch queue. EpochNum: %d", eq.EpochNumber)
 	}
 
 	for _, e := range eq.Msgs {
@@ -70,6 +70,9 @@ func (eq EpochQueue) Validate() error {
 }
 
 func (ev EpochValidatorSet) Validate() error {
+	if len(ev.Validators) == 0 {
+		return fmt.Errorf("empty validators. Epoch %d", ev.EpochNumber)
+	}
 	return types.ValidateEntries(ev.Validators, func(v *Validator) string { return string(v.Addr) })
 }
 
