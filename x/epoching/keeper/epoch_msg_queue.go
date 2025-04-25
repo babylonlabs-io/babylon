@@ -24,6 +24,42 @@ func (k Keeper) InitMsgQueue(ctx context.Context) {
 	store.Set(epochNumberBytes, queueLenBytes)
 }
 
+// InitGenMsgQueue initialises the msg queue length of the current epoch to 0
+// or to the provided genesis epoch queues
+func (k Keeper) InitGenMsgQueue(ctx context.Context, genEpochsQueue []*types.EpochQueue) error {
+	if len(genEpochsQueue) > 0 {
+		queueLengthStore := k.msgQueueLengthStore(ctx)
+		for _, eq := range genEpochsQueue {
+			queueLen := uint64(0) // initial epoch's queue length
+			msgQueueStore := k.msgQueueStore(ctx, eq.EpochNumber)
+
+			for _, m := range eq.Msgs {
+				// set the msgs in the queue store
+				// key: index, in this case = queueLenBytes
+				queueLenBytes := sdk.Uint64ToBigEndian(queueLen)
+				// value: msgBytes
+				msgBytes, err := k.cdc.MarshalInterface(m)
+				if err != nil {
+					return (errorsmod.Wrap(types.ErrMarshal, err.Error()))
+				}
+				msgQueueStore.Set(queueLenBytes, msgBytes)
+				// increment queue length
+				queueLen++
+			}
+
+			// update the queue length store for the epoch
+			epochNumberBytes := sdk.Uint64ToBigEndian(eq.EpochNumber)
+			queueLenBytes := sdk.Uint64ToBigEndian(queueLen)
+			queueLengthStore.Set(epochNumberBytes, queueLenBytes)
+		}
+		return nil
+	}
+
+	// if no genesis epochs are provided, initialize the queue length store
+	k.InitMsgQueue(ctx)
+	return nil
+}
+
 // GetQueueLength fetches the number of queued messages of a given epoch
 func (k Keeper) GetQueueLength(ctx context.Context, epochNumber uint64) uint64 {
 	store := k.msgQueueLengthStore(ctx)

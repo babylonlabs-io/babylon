@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
@@ -26,10 +27,45 @@ func (k Keeper) setSlashedVotingPower(ctx context.Context, epochNumber uint64, p
 }
 
 // InitSlashedVotingPower sets the slashed voting power of the current epoch to 0
-// This is called upon initialising the genesis state and upon a new epoch
+// This is called upon a new epoch
 func (k Keeper) InitSlashedVotingPower(ctx context.Context) {
 	epochNumber := k.GetEpoch(ctx).EpochNumber
 	k.setSlashedVotingPower(ctx, epochNumber, 0)
+}
+
+// InitGenSlashedVotingPower sets the slashed voting power of the current epoch to 0
+// or sets the provided slashed validator sets.
+// This is called upon initialising the genesis state
+func (k Keeper) InitGenSlashedVotingPower(ctx context.Context, genSlashedValSet []*types.EpochValidatorSet) error {
+	if len(genSlashedValSet) > 0 {
+		slashedVPStore := k.slashedVotingPowerStore(ctx)
+		for _, ev := range genSlashedValSet {
+			totalSlashedPower := int64(0) // initialize epoch slashed voting power
+			store := k.slashedValSetStore(ctx, ev.EpochNumber)
+
+			// set slashed validators
+			for _, v := range ev.Validators {
+				powerBytes, err := sdkmath.NewInt(v.Power).Marshal()
+				if err != nil {
+					return errorsmod.Wrap(types.ErrMarshal, err.Error())
+				}
+				store.Set(v.Addr, powerBytes)
+				totalSlashedPower += v.Power
+			}
+
+			epochNumberBytes := sdk.Uint64ToBigEndian(ev.EpochNumber)
+			// value: power
+			powerBytes, err := sdkmath.NewInt(totalSlashedPower).Marshal()
+			if err != nil {
+				return errorsmod.Wrap(types.ErrMarshal, err.Error())
+			}
+			// set epoch's slashed voting power
+			slashedVPStore.Set(epochNumberBytes, powerBytes)
+		}
+		return nil
+	}
+	k.InitSlashedVotingPower(ctx)
+	return nil
 }
 
 // GetSlashedVotingPower fetches the amount of slashed voting power of a given epoch

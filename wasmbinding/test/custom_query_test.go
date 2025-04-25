@@ -79,13 +79,15 @@ func TestFinalizedEpoch(t *testing.T) {
 	require.Equal(t, resp.EpochInfo.EpochNumber, uint64(0))
 	require.Equal(t, resp.EpochInfo.LastBlockHeight, uint64(0))
 
-	epoch := babylonApp.EpochingKeeper.InitEpoch(ctx)
-	babylonApp.CheckpointingKeeper.SetCheckpointFinalized(ctx, epoch.EpochNumber)
+	err := babylonApp.EpochingKeeper.InitEpoch(ctx, nil)
+	require.NoError(t,err)
+	expEpochNum := uint64(0)
+	babylonApp.CheckpointingKeeper.SetCheckpointFinalized(ctx, 0)
 
 	resp = bindings.LatestFinalizedEpochInfoResponse{}
 	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp, nil)
-	require.Equal(t, resp.EpochInfo.EpochNumber, epoch.EpochNumber)
-	require.Equal(t, resp.EpochInfo.LastBlockHeight, epoch.GetLastBlockHeight())
+	require.Equal(t, resp.EpochInfo.EpochNumber, expEpochNum)
+	require.Equal(t, resp.EpochInfo.LastBlockHeight, expEpochNum)
 }
 
 func TestQueryBtcTip(t *testing.T) {

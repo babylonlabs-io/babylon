@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
@@ -69,6 +70,39 @@ func (k Keeper) InitValidatorSet(ctx context.Context) {
 		panic(errorsmod.Wrap(types.ErrMarshal, err.Error()))
 	}
 	k.votingPowerStore(ctx).Set(epochNumberBytes, totalPowerBytes)
+}
+
+// InitGenValidatorSet stores the validator set in the beginning of the current epoch
+// or stores the provided genesis validator sets
+// This is called upon InitGenesis
+func (k Keeper) InitGenValidatorSet(ctx context.Context, genEpochsValSet []*types.EpochValidatorSet) error {
+	if len(genEpochsValSet) > 0 {
+		for _, ev := range genEpochsValSet {
+			totalPower := int64(0) // initialize epoch voting power
+			store := k.valSetStore(ctx, ev.EpochNumber)
+
+			// store epoch validators
+			for _, v := range ev.Validators {
+				powerBytes, err := sdkmath.NewInt(v.Power).Marshal()
+				if err != nil {
+					return errorsmod.Wrap(types.ErrMarshal, err.Error())
+				}
+				store.Set(v.Addr, powerBytes)
+				totalPower += v.Power
+			}
+
+			// set epoch total voting power
+			totalPowerBytes, err := sdkmath.NewInt(totalPower).Marshal()
+			if err != nil {
+				return errorsmod.Wrap(types.ErrMarshal, err.Error())
+			}
+			epochNumberBytes := sdk.Uint64ToBigEndian(ev.EpochNumber)
+			k.votingPowerStore(ctx).Set(epochNumberBytes, totalPowerBytes)
+		}
+		return nil
+	}
+	k.InitValidatorSet(ctx)
+	return nil
 }
 
 // ClearValidatorSet removes the validator set of a given epoch
