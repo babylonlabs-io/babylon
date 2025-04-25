@@ -79,6 +79,7 @@ const (
 	defaultGasLimit = 750000
 	defaultFee      = 500000
 	epochLength     = 10
+	blkTime         = time.Second * 5
 )
 
 var (
@@ -159,12 +160,14 @@ func NewBabylonAppDriver(
 	dir string,
 	copyDir string,
 ) *BabylonAppDriver {
+	expeditedVotingPeriod := blkTime + time.Second
+
 	chain, err := initialization.InitChain(
 		chainID,
 		dir,
 		[]*initialization.NodeConfig{validatorConfig},
-		6*time.Second, // voting period
-		3*time.Second, // expedited
+		expeditedVotingPeriod*2, // voting period
+		expeditedVotingPeriod,   // expedited
 		1,
 		[]*btclighttypes.BTCHeaderInfo{},
 	)
@@ -504,7 +507,7 @@ func (d *BabylonAppDriver) GenerateNewBlock() *abci.ResponseFinalizeBlock {
 	// ApplyBlock
 	// add slepp to avoid zero duration for minting
 	// Simulate 5s block time
-	newTime := d.CurrentTime.Add(5 * time.Second)
+	newTime := d.CurrentTime.Add(blkTime)
 	extCommitSig := cmttypes.ExtendedCommitSig{
 		CommitSig: cmttypes.CommitSig{
 			BlockIDFlag:      cmttypes.BlockIDFlagCommit,
