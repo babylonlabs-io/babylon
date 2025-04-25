@@ -58,6 +58,7 @@ check of rewards
 - [#821](https://github.com/babylonlabs-io/babylon/pull/821) Add import/export genesis logic in `x/btccheckpoint` module
 - [#828](https://github.com/babylonlabs-io/babylon/pull/828) Add `AllowedStakingTxHashes` and `LargetsBTCReorg` to import/export genesis logic in `x/btcstaking` module
 - [#822](https://github.com/babylonlabs-io/babylon/pull/822) chore: upgrade the make file: protobuf
+- [#831](https://github.com/babylonlabs-io/babylon/pull/831) Add `BtcConsumerDelegators` and `ConsumerEvents` to import/export genesis logic in `x/btcstaking` module
 - [#836](https://github.com/babylonlabs-io/babylon/pull/836) Add import/export genesis logic in `x/btcstakingconsumer` module
 - [#840](https://github.com/babylonlabs-io/babylon/pull/840) Add import/export genesis logic in `x/checkpointing` module
 
