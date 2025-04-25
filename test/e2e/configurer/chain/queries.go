@@ -25,11 +25,11 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/test/e2e/util"
-	blc "github.com/babylonlabs-io/babylon/x/btclightclient/types"
-	ct "github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	etypes "github.com/babylonlabs-io/babylon/x/epoching/types"
-	mtypes "github.com/babylonlabs-io/babylon/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/util"
+	blc "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	ct "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	etypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	mtypes "github.com/babylonlabs-io/babylon/v2/x/monitor/types"
 )
 
 func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]byte, error) {

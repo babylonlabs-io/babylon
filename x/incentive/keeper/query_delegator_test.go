@@ -1,9 +1,9 @@
 package keeper_test
 
 import (
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	testkeeper "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

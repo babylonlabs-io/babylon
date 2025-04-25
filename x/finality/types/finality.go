@@ -7,7 +7,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/crypto/eots"
+	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
 )
 
 func (c *PubRandCommit) IsInRange(height uint64) bool {

@@ -7,7 +7,7 @@ import (
 	context "context"
 	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
-	github_com_babylonlabs_io_babylon_types "github.com/babylonlabs-io/babylon/types"
+	github_com_babylonlabs_io_babylon_types "github.com/babylonlabs-io/babylon/v2/types"
 	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
@@ -43,7 +43,7 @@ type MsgCreateFinalityProvider struct {
 	Description *types.Description `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	// btc_pk is the Bitcoin secp256k1 PK of this finality provider
 	// the PK follows encoding in BIP-340 spec
-	BtcPk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,4,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"btc_pk,omitempty"`
+	BtcPk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,4,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"btc_pk,omitempty"`
 	// pop is the proof of possession of btc_pk over the FP signer address.
 	Pop *ProofOfPossessionBTC `protobuf:"bytes,5,opt,name=pop,proto3" json:"pop,omitempty"`
 	// commission is the finality provider commission information
@@ -307,11 +307,11 @@ type MsgCreateBTCDelegation struct {
 	// pop is the proof of possession of btc_pk by the staker_addr.
 	Pop *ProofOfPossessionBTC `protobuf:"bytes,2,opt,name=pop,proto3" json:"pop,omitempty"`
 	// btc_pk is the Bitcoin secp256k1 PK of the BTC delegator
-	BtcPk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,3,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"btc_pk,omitempty"`
+	BtcPk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,3,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"btc_pk,omitempty"`
 	// fp_btc_pk_list is the list of Bitcoin secp256k1 PKs of the finality
 	// providers, if there is more than one finality provider pk it means that
 	// delegation is re-staked
-	FpBtcPkList []github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,4,rep,name=fp_btc_pk_list,json=fpBtcPkList,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"fp_btc_pk_list,omitempty"`
+	FpBtcPkList []github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,4,rep,name=fp_btc_pk_list,json=fpBtcPkList,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"fp_btc_pk_list,omitempty"`
 	// staking_time is the time lock used in staking transaction
 	StakingTime uint32 `protobuf:"varint,5,opt,name=staking_time,json=stakingTime,proto3" json:"staking_time,omitempty"`
 	// staking_value  is the amount of satoshis locked in staking output
@@ -329,7 +329,7 @@ type MsgCreateBTCDelegation struct {
 	// (i.e., SK corresponding to btc_pk). It will be a part of the witness for
 	// the staking tx output. The staking tx output further needs signatures from
 	// covenant and finality provider in order to be spendable.
-	DelegatorSlashingSig *github_com_babylonlabs_io_babylon_types.BIP340Signature `protobuf:"bytes,10,opt,name=delegator_slashing_sig,json=delegatorSlashingSig,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340Signature" json:"delegator_slashing_sig,omitempty"`
+	DelegatorSlashingSig *github_com_babylonlabs_io_babylon_types.BIP340Signature `protobuf:"bytes,10,opt,name=delegator_slashing_sig,json=delegatorSlashingSig,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340Signature" json:"delegator_slashing_sig,omitempty"`
 	// unbonding_time is the time lock used when funds are being unbonded. It is
 	// be used in:
 	// - unbonding transaction, time lock spending path
@@ -351,7 +351,7 @@ type MsgCreateBTCDelegation struct {
 	UnbondingSlashingTx *BTCSlashingTx `protobuf:"bytes,14,opt,name=unbonding_slashing_tx,json=unbondingSlashingTx,proto3,customtype=BTCSlashingTx" json:"unbonding_slashing_tx,omitempty"`
 	// delegator_unbonding_slashing_sig is the signature on the slashing tx by the
 	// delegator (i.e., SK corresponding to btc_pk).
-	DelegatorUnbondingSlashingSig *github_com_babylonlabs_io_babylon_types.BIP340Signature `protobuf:"bytes,15,opt,name=delegator_unbonding_slashing_sig,json=delegatorUnbondingSlashingSig,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340Signature" json:"delegator_unbonding_slashing_sig,omitempty"`
+	DelegatorUnbondingSlashingSig *github_com_babylonlabs_io_babylon_types.BIP340Signature `protobuf:"bytes,15,opt,name=delegator_unbonding_slashing_sig,json=delegatorUnbondingSlashingSig,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340Signature" json:"delegator_unbonding_slashing_sig,omitempty"`
 }
 
 func (m *MsgCreateBTCDelegation) Reset()         { *m = MsgCreateBTCDelegation{} }
@@ -600,7 +600,7 @@ var xxx_messageInfo_MsgAddBTCDelegationInclusionProofResponse proto.InternalMess
 type MsgAddCovenantSigs struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
 	// pk is the BTC public key of the covenant member
-	Pk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=pk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"pk,omitempty"`
+	Pk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=pk,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"pk,omitempty"`
 	// staking_tx_hash is the hash of the staking tx.
 	// It uniquely identifies a BTC delegation
 	StakingTxHash string `protobuf:"bytes,3,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
@@ -610,7 +610,7 @@ type MsgAddCovenantSigs struct {
 	SlashingTxSigs [][]byte `protobuf:"bytes,4,rep,name=slashing_tx_sigs,json=slashingTxSigs,proto3" json:"slashing_tx_sigs,omitempty"`
 	// unbonding_tx_sig is the signature of the covenant on the unbonding tx
 	// submitted to babylon the signature follows encoding in BIP-340 spec
-	UnbondingTxSig *github_com_babylonlabs_io_babylon_types.BIP340Signature `protobuf:"bytes,5,opt,name=unbonding_tx_sig,json=unbondingTxSig,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340Signature" json:"unbonding_tx_sig,omitempty"`
+	UnbondingTxSig *github_com_babylonlabs_io_babylon_types.BIP340Signature `protobuf:"bytes,5,opt,name=unbonding_tx_sig,json=unbondingTxSig,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340Signature" json:"unbonding_tx_sig,omitempty"`
 	// slashing_unbonding_tx_sigs is a list of adaptor signatures of the covenant
 	// on slashing tx corresponding to unbonding tx submitted to babylon
 	// the order of sigs should respect the order of finality providers

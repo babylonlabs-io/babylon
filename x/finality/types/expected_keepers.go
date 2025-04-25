@@ -5,8 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	etypes "github.com/babylonlabs-io/babylon/x/epoching/types"
+	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	etypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 )
 
 type BTCStakingKeeper interface {

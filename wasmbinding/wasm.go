@@ -7,11 +7,11 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/wasmbinding/bindings"
-	lcKeeper "github.com/babylonlabs-io/babylon/x/btclightclient/keeper"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
-	epochingkeeper "github.com/babylonlabs-io/babylon/x/epoching/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	"github.com/babylonlabs-io/babylon/v2/wasmbinding/bindings"
+	lcKeeper "github.com/babylonlabs-io/babylon/v2/x/btclightclient/keeper"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v2/x/checkpointing/keeper"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v2/x/epoching/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

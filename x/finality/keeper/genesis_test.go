@@ -6,10 +6,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
 )
 
 func FuzzTestExportGenesis(f *testing.F) {

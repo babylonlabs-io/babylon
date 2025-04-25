@@ -5,9 +5,9 @@ import (
 
 	"github.com/boljen/go-bitmap"
 
-	txformat "github.com/babylonlabs-io/babylon/btctxformatter"
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	txformat "github.com/babylonlabs-io/babylon/v2/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 )
 
 const (

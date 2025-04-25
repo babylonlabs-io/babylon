@@ -14,7 +14,7 @@ message Params {
   // each PK follows encoding in BIP-340 spec on Bitcoin
   repeated bytes covenant_pks = 1
       [ (gogoproto.customtype) =
-            "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+            "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" ];
   // covenant_quorum is the minimum number of signatures needed for the covenant
   // multisignature
   uint32 covenant_quorum = 2;

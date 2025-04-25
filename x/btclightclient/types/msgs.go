@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
-	bbn "github.com/babylonlabs-io/babylon/types"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

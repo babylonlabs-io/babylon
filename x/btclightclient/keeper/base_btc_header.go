@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"context"
-	"github.com/babylonlabs-io/babylon/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
 )
 
 func (k Keeper) GetBaseBTCHeader(ctx context.Context) *types.BTCHeaderInfo {
