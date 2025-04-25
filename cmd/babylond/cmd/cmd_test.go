@@ -8,6 +8,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app"
 	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	"github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 )
@@ -18,6 +19,7 @@ func TestInitCmd(t *testing.T) {
 		"init",     // Test the init cmd
 		"app-test", // Moniker
 		fmt.Sprintf("--%s=%s", cli.FlagOverwrite, "true"), // Overwrite genesis.json, in case it already exists
+		fmt.Sprintf("--%s=%s", flags.FlagHome, t.TempDir()),
 		"--no-bls-password",
 	})
 
