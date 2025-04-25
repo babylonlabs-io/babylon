@@ -60,6 +60,7 @@ check of rewards
 - [#822](https://github.com/babylonlabs-io/babylon/pull/822) chore: upgrade the make file: protobuf
 - [#831](https://github.com/babylonlabs-io/babylon/pull/831) Add `BtcConsumerDelegators` and `ConsumerEvents` to import/export genesis logic in `x/btcstaking` module
 - [#836](https://github.com/babylonlabs-io/babylon/pull/836) Add import/export genesis logic in `x/btcstakingconsumer` module
+- [#840](https://github.com/babylonlabs-io/babylon/pull/840) Add import/export genesis logic in `x/checkpointing` module
 
 ### State Machine Breaking
 
