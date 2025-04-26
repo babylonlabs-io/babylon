@@ -9,9 +9,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	asig "github.com/babylonlabs-io/babylon/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	asig "github.com/babylonlabs-io/babylon/v2/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
 
 // AddBTCDelegation adds a BTC delegation post verification to the system, including

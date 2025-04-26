@@ -6,7 +6,7 @@ package types
 import (
 	bytes "bytes"
 	fmt "fmt"
-	github_com_babylonlabs_io_babylon_crypto_bls12381 "github.com/babylonlabs-io/babylon/crypto/bls12381"
+	github_com_babylonlabs_io_babylon_crypto_bls12381 "github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
 	types "github.com/cometbft/cometbft/abci/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -81,7 +81,7 @@ type RawCheckpoint struct {
 	Bitmap []byte `protobuf:"bytes,3,opt,name=bitmap,proto3" json:"bitmap,omitempty"`
 	// bls_multi_sig defines the multi sig that is aggregated from individual BLS
 	// sigs
-	BlsMultiSig *github_com_babylonlabs_io_babylon_crypto_bls12381.Signature `protobuf:"bytes,4,opt,name=bls_multi_sig,json=blsMultiSig,proto3,customtype=github.com/babylonlabs-io/babylon/crypto/bls12381.Signature" json:"bls_multi_sig,omitempty"`
+	BlsMultiSig *github_com_babylonlabs_io_babylon_crypto_bls12381.Signature `protobuf:"bytes,4,opt,name=bls_multi_sig,json=blsMultiSig,proto3,customtype=github.com/babylonlabs-io/babylon/v2/crypto/bls12381.Signature" json:"bls_multi_sig,omitempty"`
 }
 
 func (m *RawCheckpoint) Reset()         { *m = RawCheckpoint{} }
@@ -137,7 +137,7 @@ type RawCheckpointWithMeta struct {
 	// status defines the status of the checkpoint
 	Status CheckpointStatus `protobuf:"varint,2,opt,name=status,proto3,enum=babylon.checkpointing.v1.CheckpointStatus" json:"status,omitempty"`
 	// bls_aggr_pk defines the aggregated BLS public key
-	BlsAggrPk *github_com_babylonlabs_io_babylon_crypto_bls12381.PublicKey `protobuf:"bytes,3,opt,name=bls_aggr_pk,json=blsAggrPk,proto3,customtype=github.com/babylonlabs-io/babylon/crypto/bls12381.PublicKey" json:"bls_aggr_pk,omitempty"`
+	BlsAggrPk *github_com_babylonlabs_io_babylon_crypto_bls12381.PublicKey `protobuf:"bytes,3,opt,name=bls_aggr_pk,json=blsAggrPk,proto3,customtype=github.com/babylonlabs-io/babylon/v2/crypto/bls12381.PublicKey" json:"bls_aggr_pk,omitempty"`
 	// power_sum defines the accumulated voting power for the checkpoint
 	PowerSum uint64 `protobuf:"varint,4,opt,name=power_sum,json=powerSum,proto3" json:"power_sum,omitempty"`
 	// lifecycle defines the lifecycle of this checkpoint, i.e., each state
@@ -337,7 +337,7 @@ type BlsSig struct {
 	// block_hash defines the 'BlockID.Hash', which is the hash of
 	// the block that individual BLS sigs are signed on
 	BlockHash *BlockHash                                                   `protobuf:"bytes,2,opt,name=block_hash,json=blockHash,proto3,customtype=BlockHash" json:"block_hash,omitempty"`
-	BlsSig    *github_com_babylonlabs_io_babylon_crypto_bls12381.Signature `protobuf:"bytes,3,opt,name=bls_sig,json=blsSig,proto3,customtype=github.com/babylonlabs-io/babylon/crypto/bls12381.Signature" json:"bls_sig,omitempty"`
+	BlsSig    *github_com_babylonlabs_io_babylon_crypto_bls12381.Signature `protobuf:"bytes,3,opt,name=bls_sig,json=blsSig,proto3,customtype=github.com/babylonlabs-io/babylon/v2/crypto/bls12381.Signature" json:"bls_sig,omitempty"`
 	// can't find cosmos_proto.scalar when compiling due to cosmos v0.45.4 does
 	// not support scalar string signer_address = 4 [(cosmos_proto.scalar) =
 	// "cosmos.AddressString"]

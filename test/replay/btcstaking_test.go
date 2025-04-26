@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
 
 // TestEpochFinalization checks whether we can finalize some epochs

@@ -16,12 +16,12 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/cmd/babylond/cmd/genhelpers"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/testutil/helper"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	btcctypes "github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
-	btcstktypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v2/cmd/babylond/cmd/genhelpers"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v2/testutil/helper"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
 
 func FuzzCmdSetBtcDels(f *testing.F) {

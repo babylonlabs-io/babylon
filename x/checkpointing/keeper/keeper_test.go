@@ -10,12 +10,12 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/btctxformatter"
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/testutil/mocks"
-	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v2/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	testkeeper "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v2/testutil/mocks"
+	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 )
 
 // FuzzKeeperAddRawCheckpoint checks

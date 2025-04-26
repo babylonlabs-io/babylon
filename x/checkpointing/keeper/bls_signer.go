@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 )
 
 // SignBLS signs a BLS signature over the given information

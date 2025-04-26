@@ -3,10 +3,10 @@ package types_test
 import (
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/app"
-	"github.com/babylonlabs-io/babylon/testutil/nullify"
-	"github.com/babylonlabs-io/babylon/x/epoching"
-	"github.com/babylonlabs-io/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v2/app"
+	"github.com/babylonlabs-io/babylon/v2/testutil/nullify"
+	"github.com/babylonlabs-io/babylon/v2/x/epoching"
+	"github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 	"github.com/stretchr/testify/require"
 )
 

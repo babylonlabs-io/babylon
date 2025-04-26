@@ -20,15 +20,15 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/app"
-	appparams "github.com/babylonlabs-io/babylon/app/params"
-	"github.com/babylonlabs-io/babylon/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
-	"github.com/babylonlabs-io/babylon/x/epoching/keeper"
-	"github.com/babylonlabs-io/babylon/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v2/app"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v2/x/epoching/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 )
 
 // Helper is a structure which wraps the entire app and exposes functionalities for testing the epoching module

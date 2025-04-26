@@ -9,11 +9,11 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/testutil/keeper"
-	bbntypes "github.com/babylonlabs-io/babylon/types"
-	"github.com/babylonlabs-io/babylon/x/finality/keeper"
-	"github.com/babylonlabs-io/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
+	bbntypes "github.com/babylonlabs-io/babylon/v2/types"
+	"github.com/babylonlabs-io/babylon/v2/x/finality/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
 )
 
 func TestHandleResumeFinalityProposal(t *testing.T) {

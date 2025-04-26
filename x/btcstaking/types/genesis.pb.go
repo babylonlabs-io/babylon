@@ -5,7 +5,7 @@ package types
 
 import (
 	fmt "fmt"
-	github_com_babylonlabs_io_babylon_types "github.com/babylonlabs-io/babylon/types"
+	github_com_babylonlabs_io_babylon_types "github.com/babylonlabs-io/babylon/v2/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
@@ -175,9 +175,9 @@ type BTCDelegator struct {
 	// idx the btc delegator index.
 	Idx *BTCDelegatorDelegationIndex `protobuf:"bytes,1,opt,name=idx,proto3" json:"idx,omitempty"`
 	// fp_btc_pk the finality provider btc public key.
-	FpBtcPk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	FpBtcPk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// del_btc_pk the delegator btc public key.
-	DelBtcPk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,3,opt,name=del_btc_pk,json=delBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"del_btc_pk,omitempty"`
+	DelBtcPk *github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,3,opt,name=del_btc_pk,json=delBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"del_btc_pk,omitempty"`
 }
 
 func (m *BTCDelegator) Reset()         { *m = BTCDelegator{} }

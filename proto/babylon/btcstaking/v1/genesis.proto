@@ -37,9 +37,9 @@ message BTCDelegator {
   // idx the btc delegator index.
   BTCDelegatorDelegationIndex idx = 1;
   // fp_btc_pk the finality provider btc public key.
-  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" ];
   // del_btc_pk the delegator btc public key.
-  bytes del_btc_pk = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
+  bytes del_btc_pk = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" ];
 }
 
 // EventIndex contains the event and its index.

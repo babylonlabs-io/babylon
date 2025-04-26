@@ -6,7 +6,7 @@ package types
 import (
 	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
-	github_com_babylonlabs_io_babylon_types "github.com/babylonlabs-io/babylon/types"
+	github_com_babylonlabs_io_babylon_types "github.com/babylonlabs-io/babylon/v2/types"
 	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -31,7 +31,7 @@ type Params struct {
 	// PARAMETERS COVERING STAKING
 	// covenant_pks is the list of public keys held by the covenant committee
 	// each PK follows encoding in BIP-340 spec on Bitcoin
-	CovenantPks []github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,1,rep,name=covenant_pks,json=covenantPks,proto3,customtype=github.com/babylonlabs-io/babylon/types.BIP340PubKey" json:"covenant_pks,omitempty"`
+	CovenantPks []github_com_babylonlabs_io_babylon_types.BIP340PubKey `protobuf:"bytes,1,rep,name=covenant_pks,json=covenantPks,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"covenant_pks,omitempty"`
 	// covenant_quorum is the minimum number of signatures needed for the covenant
 	// multisignature
 	CovenantQuorum uint32 `protobuf:"varint,2,opt,name=covenant_quorum,json=covenantQuorum,proto3" json:"covenant_quorum,omitempty"`
