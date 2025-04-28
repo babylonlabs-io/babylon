@@ -41,6 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#842](https://github.com/babylonlabs-io/babylon/pull/842) fix: Properly wire `btclightclient` hook for
 `btcstaking` to panic in case of a BTC reorg larger than `BtcConfirmationDepth`.
+- [#829](https://github.com/babylonlabs-io/babylon/pull/829) fix: add checks for slashed fp in gov resume finality.
 
 ## v1.0.2
 
