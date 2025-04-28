@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	testkeeper "github.com/babylonlabs-io/babylon/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/x/finality/types"
+	testkeeper "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
 )
 
 func TestParamsQuery(t *testing.T) {

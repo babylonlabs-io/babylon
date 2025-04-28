@@ -18,15 +18,15 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/babylonlabs-io/babylon/crypto/eots"
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/testutil/coins"
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/types"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
-	itypes "github.com/babylonlabs-io/babylon/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v2/testutil/coins"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	itypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
 )
 
 const (

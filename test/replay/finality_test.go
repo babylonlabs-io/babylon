@@ -4,9 +4,9 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/testutil/datagen"
-	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
