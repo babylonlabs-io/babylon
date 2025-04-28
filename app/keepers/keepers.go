@@ -17,6 +17,32 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	owasm "github.com/babylonlabs-io/babylon/v2/wasmbinding"
+	btccheckpointkeeper "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/keeper"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
+	btclightclientkeeper "github.com/babylonlabs-io/babylon/v2/x/btclightclient/keeper"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	btcstakingkeeper "github.com/babylonlabs-io/babylon/v2/x/btcstaking/keeper"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	bsckeeper "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/keeper"
+	bsctypes "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v2/x/checkpointing/keeper"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v2/x/epoching/keeper"
+	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	finalitykeeper "github.com/babylonlabs-io/babylon/v2/x/finality/keeper"
+	finalitytypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	incentivekeeper "github.com/babylonlabs-io/babylon/v2/x/incentive/keeper"
+	incentivetypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	mintkeeper "github.com/babylonlabs-io/babylon/v2/x/mint/keeper"
+	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	monitorkeeper "github.com/babylonlabs-io/babylon/v2/x/monitor/keeper"
+	monitortypes "github.com/babylonlabs-io/babylon/v2/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge"
+	zckeeper "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -44,6 +70,7 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ibccallbacks "github.com/cosmos/ibc-go/modules/apps/callbacks"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
@@ -658,17 +685,31 @@ func (ak *AppKeepers) InitKeepers(
 	ak.GovKeeper.SetLegacyRouter(govRouter)
 
 	// Create all supported IBC routes
+	var wasmStack porttypes.IBCModule
+	wasmStackIBCHandler := wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCFeeKeeper)
+	wasmStack = ibcfee.NewIBCMiddleware(wasmStackIBCHandler, ak.IBCFeeKeeper)
+
+	// Create Transfer Stack
+	// SendPacket, since it is originating from the application to core IBC:
+	// transferKeeper.SendPacket -> callbacks.Sen§dPacket -> feeKeeper.SendPacket -> channel.SendPacket
+
+	// RecvPacket, message that originates from core IBC and goes down to app, the flow is the other way
+	// channel.RecvPacket -> callbacks.OnRecvPacket -> fee.OnRecvPacket -> transfer.OnRecvPacket
+
+	// transfer stack contains (from top to bottom):
+	// - IBC Callbacks Middleware
+	// - IBC Fee Middleware
+	// - Transfer
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(ak.TransferKeeper)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, ak.IBCFeeKeeper)
+	transferStack = ibccallbacks.NewIBCMiddleware(transferStack, ak.IBCFeeKeeper, wasmStackIBCHandler,
+		appparams.MaxIBCCallbackGas)
+	ak.TransferKeeper.WithICS4Wrapper(transferStack.(porttypes.ICS4Wrapper))
 
 	var zoneConciergeStack porttypes.IBCModule
 	zoneConciergeStack = zoneconcierge.NewIBCModule(ak.ZoneConciergeKeeper)
 	zoneConciergeStack = ibcfee.NewIBCMiddleware(zoneConciergeStack, ak.IBCFeeKeeper)
-
-	var wasmStack porttypes.IBCModule
-	wasmStack = wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCFeeKeeper)
-	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, ak.IBCFeeKeeper)
 
 	// Create static IBC router, add ibc-transfer module route, then set and seal it
 	ibcRouter := porttypes.NewRouter().
