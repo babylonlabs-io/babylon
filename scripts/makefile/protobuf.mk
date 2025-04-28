@@ -7,7 +7,7 @@ protoVer=0.14.0
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
 protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
 
-proto:
+proto-help:
 	@echo "Available proto commands:"
 	@echo ""
 	@echo "Usage:"
