@@ -95,10 +95,10 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		s[i] = randomSubmissionEntry(r)
 	}
 
-	chkptFinTimeout := datagen.RandomUInt32(r, 10000)
+	chkptFinTimeout := datagen.RandomUInt32(r, 10000) + 5
 	gs := &types.GenesisState{
 		Params: types.Params{
-			BtcConfirmationDepth:          datagen.RandomUInt32(r, chkptFinTimeout-1),
+			BtcConfirmationDepth:          datagen.RandomUInt32(r, chkptFinTimeout-1) + 1,
 			CheckpointFinalizationTimeout: chkptFinTimeout,
 			CheckpointTag:                 datagen.GenRandomHexStr(r, 4),
 		},

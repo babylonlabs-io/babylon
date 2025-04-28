@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math"
 
+	"cosmossdk.io/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
@@ -14,6 +16,7 @@ import (
 
 // InitGenesis initializes the module's state from a provided genesis state.
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// save all past params versions
 	for _, p := range gs.Params {
 		params := p
@@ -66,6 +69,14 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		}
 	}
 
+	if err := k.setBTCConsumerDelegators(sdkCtx, gs.BtcConsumerDelegators); err != nil {
+		return err
+	}
+
+	if err := k.setConsumerEvents(ctx, gs.ConsumerEvents); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -81,7 +92,7 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
-	btcDels, err := k.btcDelegators(ctx)
+	btcDels, err := k.btcDelegatorsWithKey(ctx, types.BTCDelegatorKey)
 	if err != nil {
 		return nil, err
 	}
@@ -96,6 +107,11 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
+	consumerBtcDels, err := k.btcDelegatorsWithKey(ctx, types.BTCConsumerDelegatorKey)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.GenesisState{
 		Params:                 k.GetAllParams(ctx),
 		FinalityProviders:      fps,
@@ -105,6 +121,8 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		Events:                 evts,
 		AllowedStakingTxHashes: txHashes,
 		LargestBtcReorg:        k.GetLargestBtcReorg(ctx),
+		BtcConsumerDelegators:  consumerBtcDels,
+		ConsumerEvents:         k.consumerEvents(ctx),
 	}, nil
 }
 
@@ -159,8 +177,10 @@ func (k Keeper) blockHeightChains(ctx context.Context) []*types.BlockHeightBbnTo
 	return blocks
 }
 
-func (k Keeper) btcDelegators(ctx context.Context) ([]*types.BTCDelegator, error) {
-	iter := k.btcDelegatorStore(ctx).Iterator(nil, nil)
+func (k Keeper) btcDelegatorsWithKey(ctx context.Context, storeKey []byte) ([]*types.BTCDelegator, error) {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	store := prefix.NewStore(storeAdapter, storeKey)
+	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 
 	dels := make([]*types.BTCDelegator, 0)
@@ -238,6 +258,19 @@ func (k Keeper) eventIdxs(
 	return evts, nil
 }
 
+func (k Keeper) consumerEvents(ctx context.Context) []*types.ConsumerEvent {
+	eventsMap := k.GetAllBTCStakingConsumerIBCPackets(ctx)
+	entriesCount := len(eventsMap)
+	res := make([]*types.ConsumerEvent, 0, entriesCount)
+	for consumerId, events := range eventsMap {
+		res = append(res, &types.ConsumerEvent{
+			ConsumerId: consumerId,
+			Events:     events,
+		})
+	}
+	return res
+}
+
 func (k Keeper) setBlockHeightChains(ctx context.Context, blocks *types.BlockHeightBbnToBtc) {
 	store := k.btcHeightStore(ctx)
 	store.Set(sdk.Uint64ToBigEndian(blocks.BlockHeightBbn), sdk.Uint64ToBigEndian(uint64(blocks.BlockHeightBtc)))
@@ -256,6 +289,46 @@ func (k Keeper) setEventIdx(
 	}
 	store.Set(sdk.Uint64ToBigEndian(evt.Idx), bz)
 
+	return nil
+}
+
+// setBTCConsumerDelegators is a function to set the provided BTC
+// consumer delegators data. It thows an error if the provided FP
+// does not exist or there's an already
+// existing store entry for the provided data.
+// NOTE: this is used in InitGenesis only
+func (k Keeper) setBTCConsumerDelegators(ctx sdk.Context, btcDels []*types.BTCDelegator) error {
+	for _, btcDel := range btcDels {
+		if !k.BscKeeper.HasConsumerFinalityProvider(ctx, btcDel.FpBtcPk) {
+			return fmt.Errorf("finality provider not found. BTC pk: %s", btcDel.FpBtcPk.MarshalHex())
+		}
+
+		// get BTC delegation index under this finality provider
+		btcDelIndex := k.getBTCConsumerDelegatorDelegationIndex(ctx, btcDel.FpBtcPk, btcDel.DelBtcPk)
+		if btcDelIndex != nil {
+			return fmt.Errorf("delegation index already exists. FP BTC pk: %s, Delegator BTC pk: %s", btcDel.FpBtcPk.MarshalHex(), btcDel.DelBtcPk.MarshalHex())
+		}
+
+		// save the index
+		k.setBTCConsumerDelegatorDelegationIndex(ctx, btcDel.FpBtcPk, btcDel.DelBtcPk, btcDel.Idx)
+	}
+
+	return nil
+}
+
+// setConsumerEvents stores the provided consumer events.
+// Throws an error if the data contains duplicate entries with same consumer id
+// NOTE: used in InitGenesis only
+func (k Keeper) setConsumerEvents(ctx context.Context, events []*types.ConsumerEvent) error {
+	store := k.btcStakingConsumerEventStore(ctx)
+	for _, e := range events {
+		storeKey := []byte(e.ConsumerId)
+		if store.Has(storeKey) {
+			return fmt.Errorf("duplicate consumer id: %s", e.ConsumerId)
+		}
+		eventsBytes := k.cdc.MustMarshal(e.Events)
+		store.Set(storeKey, eventsBytes)
+	}
 	return nil
 }
 

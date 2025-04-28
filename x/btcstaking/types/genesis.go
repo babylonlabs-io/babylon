@@ -3,10 +3,12 @@ package types
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
 
+	types "github.com/babylonlabs-io/babylon/v2/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/codec"
 )
@@ -43,10 +45,34 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
+	for _, d := range gs.BtcDelegations {
+		if err := d.ValidateBasic(); err != nil {
+			return err
+		}
+	}
+
+	for _, d := range gs.BtcDelegators {
+		if err := d.Validate(); err != nil {
+			return err
+		}
+	}
+
 	if gs.LargestBtcReorg != nil {
 		if err := gs.LargestBtcReorg.Validate(); err != nil {
 			return err
 		}
+	}
+
+	for _, d := range gs.BtcConsumerDelegators {
+		if err := d.Validate(); err != nil {
+			return err
+		}
+	}
+
+	if err := types.ValidateEntries(gs.ConsumerEvents, func(e *ConsumerEvent) string {
+		return e.ConsumerId
+	}); err != nil {
+		return err
 	}
 
 	return gs.validateAllowedStakingTxHashes()
@@ -96,6 +122,50 @@ func (gs GenesisState) validateAllowedStakingTxHashes() error {
 	return nil
 }
 
+func (d BTCDelegator) Validate() error {
+	if d.FpBtcPk == nil {
+		return errors.New("null FP BTC PubKey")
+	}
+
+	if d.DelBtcPk == nil {
+		return errors.New("null Delegator BTC PubKey")
+	}
+
+	if d.Idx == nil {
+		return errors.New("null Index")
+	}
+
+	// validate BIP340PubKey length
+	if d.FpBtcPk.Size() != types.BIP340PubKeyLen {
+		return fmt.Errorf("invalid FP BTC PubKey. Expected length %d, got %d", types.BIP340PubKeyLen, d.FpBtcPk.Size())
+	}
+
+	if d.DelBtcPk.Size() != types.BIP340PubKeyLen {
+		return fmt.Errorf("invalid Delegator BTC PubKey. Expected length %d, got %d", types.BIP340PubKeyLen, d.DelBtcPk.Size())
+	}
+
+	return d.Idx.Validate()
+}
+
+func (e ConsumerEvent) Validate() error {
+	if e.ConsumerId == "" {
+		return errors.New("empty Consumer ID")
+	}
+
+	if e.Events == nil {
+		return errors.New("null Events")
+	}
+
+	if len(e.Events.NewFp) == 0 &&
+		len(e.Events.ActiveDel) == 0 &&
+		len(e.Events.SlashedDel) == 0 &&
+		len(e.Events.UnbondedDel) == 0 {
+		return errors.New("empty Events")
+	}
+
+	return nil
+}
+
 // Helper function to sort slices to get a deterministic
 // result on the tests
 func SortData(gs *GenesisState) {
@@ -117,6 +187,14 @@ func SortData(gs *GenesisState) {
 
 	sort.Slice(gs.Events, func(i, j int) bool {
 		return gs.Events[i].Idx < gs.Events[j].Idx
+	})
+
+	sort.Slice(gs.BtcConsumerDelegators, func(i, j int) bool {
+		return gs.BtcConsumerDelegators[i].String() < gs.BtcConsumerDelegators[j].String()
+	})
+
+	sort.Slice(gs.ConsumerEvents, func(i, j int) bool {
+		return gs.ConsumerEvents[i].ConsumerId < gs.ConsumerEvents[j].ConsumerId
 	})
 
 	slices.Sort(gs.AllowedStakingTxHashes)
