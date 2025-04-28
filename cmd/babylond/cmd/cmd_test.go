@@ -14,12 +14,13 @@ import (
 )
 
 func TestInitCmd(t *testing.T) {
+	tmpDir := t.TempDir()
 	rootCmd := cmd.NewRootCmd()
 	rootCmd.SetArgs([]string{
 		"init",     // Test the init cmd
 		"app-test", // Moniker
 		fmt.Sprintf("--%s=%s", cli.FlagOverwrite, "true"), // Overwrite genesis.json, in case it already exists
-		fmt.Sprintf("--%s=%s", flags.FlagHome, t.TempDir()),
+		fmt.Sprintf("--%s=%s", flags.FlagHome, tmpDir),
 		"--no-bls-password",
 	})
 
