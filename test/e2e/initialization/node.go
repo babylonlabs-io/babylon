@@ -85,9 +85,9 @@ func (n *internalNode) configDir() string {
 func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin, consensusKey appsigner.ConsensusKey) (sdk.Msg, error) {
 	description := stakingtypes.NewDescription(n.moniker, "", "", "", "")
 	commissionRates := stakingtypes.CommissionRates{
-		Rate:          math.LegacyMustNewDecFromStr("0.0"),
-		MaxRate:       math.LegacyMustNewDecFromStr("0.0"),
-		MaxChangeRate: math.LegacyMustNewDecFromStr("0.00"),
+		Rate:          math.LegacyMustNewDecFromStr("0.03"),
+		MaxRate:       math.LegacyMustNewDecFromStr("0.1"),
+		MaxChangeRate: math.LegacyMustNewDecFromStr("0.02"),
 	}
 
 	// get the initial validator min self delegation

@@ -123,7 +123,7 @@ func (s *PocTestSuite) TestPoc() {
 
 	err = nodeB0.Run()
 	s.NoError(err)
-	time.Sleep(10 * time.Minute)
+	time.Sleep(5 * time.Minute)
 
 	// Search docker logs on any chain B node for "Int overflow" or "ERR CONSENSUS FAILURE!!!"
 }
