@@ -84,16 +84,48 @@ func (f *FinalityProvider) CommitRandomness() {
 
 func (f *FinalityProvider) CastVote(height uint64) {
 	indexedBlock := f.d.GetIndexedBlock(height)
+	f.CastVoteForHash(height, indexedBlock.AppHash)
+}
 
+// CastVoteForHash useful to cast bad vote
+func (f *FinalityProvider) CastVoteForHash(height uint64, blkAppHash []byte) {
 	msg, err := datagen.NewMsgAddFinalitySig(
 		f.AddressString(),
 		f.BTCPrivateKey,
 		1,
 		height,
 		f.randListInfo,
-		indexedBlock.AppHash,
+		blkAppHash,
 	)
 	require.NoError(f.t, err)
+
+	DefaultSendTxWithMessagesSuccess(
+		f.t,
+		f.app,
+		f.SenderInfo,
+		msg,
+	)
+
+	f.IncSeq()
+}
+
+func (f *FinalityProvider) SendSelectiveSlashingEvidence() {
+	ctx := f.d.GetContextForLastFinalizedBlock()
+
+	resp, err := f.app.BTCStakingKeeper.FinalityProviderDelegations(ctx, &bstypes.QueryFinalityProviderDelegationsRequest{
+		FpBtcPkHex: f.BTCPublicKey().MarshalHex(),
+	})
+	require.NoError(f.t, err)
+
+	stkTxHex := resp.BtcDelegatorDelegations[0].Dels[0].StakingTxHex
+	tx, _, err := bbn.NewBTCTxFromHex(stkTxHex)
+	require.NoError(f.t, err)
+
+	msg := &bstypes.MsgSelectiveSlashingEvidence{
+		Signer:           f.AddressString(),
+		StakingTxHash:    tx.TxHash().String(),
+		RecoveredFpBtcSk: f.BTCPrivateKey.Serialize(),
+	}
 
 	DefaultSendTxWithMessagesSuccess(
 		f.t,
