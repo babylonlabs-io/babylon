@@ -85,9 +85,9 @@ func (n *internalNode) configDir() string {
 func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin, consensusKey appsigner.ConsensusKey) (sdk.Msg, error) {
 	description := stakingtypes.NewDescription(n.moniker, "", "", "", "")
 	commissionRates := stakingtypes.CommissionRates{
-		Rate:          math.LegacyMustNewDecFromStr("0.1"),
-		MaxRate:       math.LegacyMustNewDecFromStr("0.2"),
-		MaxChangeRate: math.LegacyMustNewDecFromStr("0.01"),
+		Rate:          math.LegacyMustNewDecFromStr("0.0"),
+		MaxRate:       math.LegacyMustNewDecFromStr("0.0"),
+		MaxChangeRate: math.LegacyMustNewDecFromStr("0.00"),
 	}
 
 	// get the initial validator min self delegation
@@ -374,7 +374,7 @@ func (n *internalNode) initNodeConfigs(persistentPeers []string) error {
 	valConfig.P2P.ExternalAddress = fmt.Sprintf("%s:%d", n.moniker, 26656)
 	valConfig.RPC.ListenAddress = "tcp://0.0.0.0:26657"
 	valConfig.StateSync.Enable = false
-	valConfig.LogLevel = "debug"
+	valConfig.LogLevel = "info"
 	valConfig.P2P.PersistentPeers = strings.Join(persistentPeers, ",")
 	valConfig.Storage.DiscardABCIResponses = false
 

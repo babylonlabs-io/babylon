@@ -106,7 +106,7 @@ var (
 			PruningInterval:    "0",
 			SnapshotInterval:   1500,
 			SnapshotKeepRecent: 2,
-			IsValidator:        false,
+			IsValidator:        true,
 			BtcNetwork:         btcNetworkStr,
 		},
 	}

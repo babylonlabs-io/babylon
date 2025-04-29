@@ -109,6 +109,49 @@ func (n *NodeConfig) BankSend(fromWallet, to, amount string, overallFlags ...str
 	n.LogActionF("successfully sent bank sent %s from address %s to %s", amount, fromWallet, to)
 }
 
+func (n *NodeConfig) ReadPrivValKeyFile(overallFlags ...string) string {
+	n.LogActionF("getting val priv key file")
+	fileFullPath := filepath.Join(n.ConfigDir, "config", "priv_validator_key.json")
+	out, err := os.ReadFile(fileFullPath)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully fetched val priv key")
+	return string(out)
+}
+
+func (n *NodeConfig) WritePrivValKeyFile(data string, overallFlags ...string) {
+	n.LogActionF("writing val priv key file")
+	path := filepath.Join("config", "priv_validator_key.json")
+	n.WriteFile(path, data)
+	n.LogActionF("successfully updated val priv key file")
+}
+
+func (n *NodeConfig) FundValidatorRewardsPool(fromWallet, validator string, amount string, overallFlags ...string) {
+	n.LogActionF("funding validator from wallet %s  validator %s", fromWallet, validator)
+	cmd := []string{"babylond", "tx", "distribution", "fund-validator-rewards-pool", validator, amount, fmt.Sprintf("--from=%s", fromWallet)}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
+
+	require.NoError(n.t, err)
+	n.LogActionF("successfully funded validator from wallet %s  validator %s", fromWallet, validator)
+}
+
+func (n *NodeConfig) WithdrawValidatorRewards(fromWallet, validator string, overallFlags ...string) {
+	n.LogActionF("withdrawing validator rewards from wallet %s  validator %s", fromWallet, validator)
+	cmd := []string{"babylond", "tx", "distribution", "withdraw-rewards", validator, fmt.Sprintf("--from=%s", fromWallet)}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
+
+	require.NoError(n.t, err)
+	n.LogActionF("successfully withdraw validator rewards from wallet %s  validator %s", fromWallet, validator)
+}
+
+func (n *NodeConfig) Delegate(fromWallet, validator string, amount string, overallFlags ...string) {
+	n.LogActionF("delegating from %s to validator %s", fromWallet, validator)
+	cmd := []string{"babylond", "tx", "epoching", "delegate", validator, amount, fmt.Sprintf("--from=%s", fromWallet)}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
+
+	require.NoError(n.t, err)
+	n.LogActionF("successfully delegated %s to validator %s", fromWallet, validator)
+}
+
 func (n *NodeConfig) BankMultiSend(fromWallet string, receivers []string, amount string, overallFlags ...string) {
 	if len(receivers) == 0 {
 		require.Error(n.t, fmt.Errorf("no address to send to"))

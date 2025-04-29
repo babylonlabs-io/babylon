@@ -17,6 +17,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/util"
@@ -67,7 +68,9 @@ var (
 	StakeAmountCoinA = sdk.NewCoin(BabylonDenom, StakeAmountIntA)
 	StakeAmountIntB  = sdkmath.NewInt(StakeAmountB)
 	StakeAmountCoinB = sdk.NewCoin(BabylonDenom, StakeAmountIntB)
-
+	// Test denom used for testing overflow proof of concept
+	MaxSupply       = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+	TestDenom       = "utest"
 	InitBalanceStrA = fmt.Sprintf("%d%s", BabylonBalanceA, BabylonDenom)
 	InitBalanceStrB = fmt.Sprintf("%d%s", BabylonBalanceB, BabylonDenom)
 )
@@ -171,7 +174,7 @@ func initGenesis(
 	// initialize a genesis file
 	configDir := chain.nodes[0].configDir()
 
-	for _, val := range chain.nodes {
+	for i, val := range chain.nodes {
 		addr, err := val.keyInfo.GetAddress()
 
 		if err != nil {
@@ -179,8 +182,16 @@ func initGenesis(
 		}
 
 		if chain.chainMeta.Id == ChainAID {
-			if err := addAccount(configDir, "", InitBalanceStrA, addr, forkHeight); err != nil {
-				return err
+			// Node 2 will have a custom denom (utest) with supply of MAX_INT_256 already minted
+			if i == 2 {
+				initBalance := fmt.Sprintf("%d%s,%s%s", BabylonBalanceA, BabylonDenom, MaxSupply, TestDenom)
+				if err := addAccount(configDir, "", initBalance, addr, forkHeight); err != nil {
+					return err
+				}
+			} else {
+				if err := addAccount(configDir, "", InitBalanceStrA, addr, forkHeight); err != nil {
+					return err
+				}
 			}
 		} else if chain.chainMeta.Id == ChainBID {
 			if err := addAccount(configDir, "", InitBalanceStrB, addr, forkHeight); err != nil {
@@ -296,7 +307,6 @@ func updateBankGenesis(bankGenState *banktypes.GenesisState) {
 func updateGovGenesis(votingPeriod, expeditedVotingPeriod time.Duration) func(govGenState *govv1.GenesisState) {
 	return func(govGenState *govv1.GenesisState) {
 		govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(100)))
-		govGenState.Params.ExpeditedMinDeposit = sdk.NewCoins(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(1000)))
 		govGenState.Params.VotingPeriod = &votingPeriod
 		govGenState.Params.ExpeditedVotingPeriod = &expeditedVotingPeriod
 	}
@@ -356,14 +366,19 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 	return func(genUtilGenState *genutiltypes.GenesisState) {
 		// generate genesis txs
 		genTxs := make([]json.RawMessage, 0, len(c.nodes))
-		for _, node := range c.nodes {
+		for i, node := range c.nodes {
 			if !node.isValidator {
 				continue
 			}
 
 			stakeAmountCoin := StakeAmountCoinA
 			if c.chainMeta.Id != ChainAID {
-				stakeAmountCoin = StakeAmountCoinB
+				if i == 2 {
+					// Node 2 will have initial stake set to 1 token
+					stakeAmountCoin = sdk.NewCoin(BabylonDenom, sdkmath.OneInt())
+				} else {
+					stakeAmountCoin = StakeAmountCoinB
+				}
 			}
 			createValmsg, err := node.buildCreateValidatorMsg(stakeAmountCoin, node.consensusKey)
 			if err != nil {
