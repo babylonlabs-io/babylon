@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonlabs-io/babylon/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
 )
 
 // InitGenesis performs stateful validations and initializes the keeper state from a provided initial genesis state.

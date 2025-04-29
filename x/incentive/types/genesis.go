@@ -6,8 +6,9 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/babylonlabs-io/babylon/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/v2/types"
 )
 
 // DefaultGenesis returns the default genesis state
