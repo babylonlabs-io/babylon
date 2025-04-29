@@ -38,29 +38,10 @@ func (k Keeper) InitSlashedVotingPower(ctx context.Context) {
 // This is called upon initialising the genesis state
 func (k Keeper) InitGenSlashedVotingPower(ctx context.Context, genSlashedValSet []*types.EpochValidatorSet) error {
 	if len(genSlashedValSet) > 0 {
-		slashedVPStore := k.slashedVotingPowerStore(ctx)
 		for _, ev := range genSlashedValSet {
-			totalSlashedPower := int64(0) // initialize epoch slashed voting power
-			store := k.slashedValSetStore(ctx, ev.EpochNumber)
-
-			// set slashed validators
-			for _, v := range ev.Validators {
-				powerBytes, err := sdkmath.NewInt(v.Power).Marshal()
-				if err != nil {
-					return errorsmod.Wrap(types.ErrMarshal, err.Error())
-				}
-				store.Set(v.Addr, powerBytes)
-				totalSlashedPower += v.Power
+			if err := k.setEpochSlashedValSet(ctx, ev); err != nil {
+				return nil
 			}
-
-			epochNumberBytes := sdk.Uint64ToBigEndian(ev.EpochNumber)
-			// value: power
-			powerBytes, err := sdkmath.NewInt(totalSlashedPower).Marshal()
-			if err != nil {
-				return errorsmod.Wrap(types.ErrMarshal, err.Error())
-			}
-			// set epoch's slashed voting power
-			slashedVPStore.Set(epochNumberBytes, powerBytes)
 		}
 		return nil
 	}
@@ -173,4 +154,37 @@ func (k Keeper) slashedValSetStore(ctx context.Context, epochNumber uint64) pref
 func (k Keeper) slashedVotingPowerStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return prefix.NewStore(storeAdapter, types.SlashedVotingPowerKey)
+}
+
+// setEpochSlashedValSet sets the epoch's slashed validator set.
+// It is used in InitGenesis logic only.
+func (k Keeper) setEpochSlashedValSet(ctx context.Context, ev *types.EpochValidatorSet) error {
+	if ev == nil {
+		return nil
+	}
+
+	var (
+		totalSlashedPower = int64(0) // initialize epoch slashed voting power
+		valSetStore       = k.slashedValSetStore(ctx, ev.EpochNumber)
+	)
+
+	// set slashed validators
+	for _, v := range ev.Validators {
+		powerBytes, err := sdkmath.NewInt(v.Power).Marshal()
+		if err != nil {
+			return errorsmod.Wrap(types.ErrMarshal, err.Error())
+		}
+		valSetStore.Set(v.Addr, powerBytes)
+		totalSlashedPower += v.Power
+	}
+
+	epochNumberBytes := sdk.Uint64ToBigEndian(ev.EpochNumber)
+	// value: power
+	powerBytes, err := sdkmath.NewInt(totalSlashedPower).Marshal()
+	if err != nil {
+		return errorsmod.Wrap(types.ErrMarshal, err.Error())
+	}
+	// set epoch's slashed voting power
+	k.slashedVotingPowerStore(ctx).Set(epochNumberBytes, powerBytes)
+	return nil
 }

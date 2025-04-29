@@ -80,7 +80,7 @@ func TestFinalizedEpoch(t *testing.T) {
 	require.Equal(t, resp.EpochInfo.LastBlockHeight, uint64(0))
 
 	err := babylonApp.EpochingKeeper.InitEpoch(ctx, nil)
-	require.NoError(t,err)
+	require.NoError(t, err)
 	expEpochNum := uint64(0)
 	babylonApp.CheckpointingKeeper.SetCheckpointFinalized(ctx, 0)
 

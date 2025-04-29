@@ -78,26 +78,9 @@ func (k Keeper) InitValidatorSet(ctx context.Context) {
 func (k Keeper) InitGenValidatorSet(ctx context.Context, genEpochsValSet []*types.EpochValidatorSet) error {
 	if len(genEpochsValSet) > 0 {
 		for _, ev := range genEpochsValSet {
-			totalPower := int64(0) // initialize epoch voting power
-			store := k.valSetStore(ctx, ev.EpochNumber)
-
-			// store epoch validators
-			for _, v := range ev.Validators {
-				powerBytes, err := sdkmath.NewInt(v.Power).Marshal()
-				if err != nil {
-					return errorsmod.Wrap(types.ErrMarshal, err.Error())
-				}
-				store.Set(v.Addr, powerBytes)
-				totalPower += v.Power
+			if err := k.setEpochValSet(ctx, ev); err != nil {
+				return err
 			}
-
-			// set epoch total voting power
-			totalPowerBytes, err := sdkmath.NewInt(totalPower).Marshal()
-			if err != nil {
-				return errorsmod.Wrap(types.ErrMarshal, err.Error())
-			}
-			epochNumberBytes := sdk.Uint64ToBigEndian(ev.EpochNumber)
-			k.votingPowerStore(ctx).Set(epochNumberBytes, totalPowerBytes)
 		}
 		return nil
 	}
@@ -176,4 +159,36 @@ func (k Keeper) valSetStore(ctx context.Context, epochNumber uint64) prefix.Stor
 func (k Keeper) votingPowerStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return prefix.NewStore(storeAdapter, types.VotingPowerKey)
+}
+
+// setEpochValSet sets the epoch's validator set.
+// It is used in InitGenesis logic only.
+func (k Keeper) setEpochValSet(ctx context.Context, ev *types.EpochValidatorSet) error {
+	if ev == nil {
+		return nil
+	}
+
+	var (
+		totalPower = int64(0) // initialize epoch voting power
+		store      = k.valSetStore(ctx, ev.EpochNumber)
+	)
+
+	// store epoch validators
+	for _, v := range ev.Validators {
+		powerBytes, err := sdkmath.NewInt(v.Power).Marshal()
+		if err != nil {
+			return errorsmod.Wrap(types.ErrMarshal, err.Error())
+		}
+		store.Set(v.Addr, powerBytes)
+		totalPower += v.Power
+	}
+
+	// set epoch total voting power
+	totalPowerBytes, err := sdkmath.NewInt(totalPower).Marshal()
+	if err != nil {
+		return errorsmod.Wrap(types.ErrMarshal, err.Error())
+	}
+	epochNumberBytes := sdk.Uint64ToBigEndian(ev.EpochNumber)
+	k.votingPowerStore(ctx).Set(epochNumberBytes, totalPowerBytes)
+	return nil
 }

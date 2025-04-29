@@ -28,29 +28,10 @@ func (k Keeper) InitMsgQueue(ctx context.Context) {
 // or to the provided genesis epoch queues
 func (k Keeper) InitGenMsgQueue(ctx context.Context, genEpochsQueue []*types.EpochQueue) error {
 	if len(genEpochsQueue) > 0 {
-		queueLengthStore := k.msgQueueLengthStore(ctx)
 		for _, eq := range genEpochsQueue {
-			queueLen := uint64(0) // initial epoch's queue length
-			msgQueueStore := k.msgQueueStore(ctx, eq.EpochNumber)
-
-			for _, m := range eq.Msgs {
-				// set the msgs in the queue store
-				// key: index, in this case = queueLenBytes
-				queueLenBytes := sdk.Uint64ToBigEndian(queueLen)
-				// value: msgBytes
-				msgBytes, err := k.cdc.MarshalInterface(m)
-				if err != nil {
-					return (errorsmod.Wrap(types.ErrMarshal, err.Error()))
-				}
-				msgQueueStore.Set(queueLenBytes, msgBytes)
-				// increment queue length
-				queueLen++
+			if err := k.setEpochQueue(ctx, eq); err != nil {
+				return err
 			}
-
-			// update the queue length store for the epoch
-			epochNumberBytes := sdk.Uint64ToBigEndian(eq.EpochNumber)
-			queueLenBytes := sdk.Uint64ToBigEndian(queueLen)
-			queueLengthStore.Set(epochNumberBytes, queueLenBytes)
 		}
 		return nil
 	}
@@ -308,6 +289,39 @@ func (k Keeper) msgQueueStore(ctx context.Context, epochNumber uint64) prefix.St
 func (k Keeper) msgQueueLengthStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return prefix.NewStore(storeAdapter, types.QueueLengthKey)
+}
+
+// setEpochQueue is used in InitGenesis logic to store a
+// provided epoch's queued messages
+func (k Keeper) setEpochQueue(ctx context.Context, eq *types.EpochQueue) error {
+	if eq == nil {
+		return nil
+	}
+
+	var (
+		queueLen      = uint64(0) // initial epoch's queue length
+		msgQueueStore = k.msgQueueStore(ctx, eq.EpochNumber)
+	)
+
+	for _, m := range eq.Msgs {
+		// set the msgs in the queue store
+		// key: index, in this case = queueLenBytes
+		queueLenBytes := sdk.Uint64ToBigEndian(queueLen)
+		// value: msgBytes
+		msgBytes, err := k.cdc.MarshalInterface(m)
+		if err != nil {
+			return (errorsmod.Wrap(types.ErrMarshal, err.Error()))
+		}
+		msgQueueStore.Set(queueLenBytes, msgBytes)
+		// increment queue length
+		queueLen++
+	}
+
+	// update the queue length store for the epoch
+	epochNumberBytes := sdk.Uint64ToBigEndian(eq.EpochNumber)
+	queueLenBytes := sdk.Uint64ToBigEndian(queueLen)
+	k.msgQueueLengthStore(ctx).Set(epochNumberBytes, queueLenBytes)
+	return nil
 }
 
 // based on a function with the same name in `baseapp.go`
