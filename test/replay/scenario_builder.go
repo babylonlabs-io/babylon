@@ -81,3 +81,26 @@ func (s *StandardScenario) InitScenario(
 	s.finalityProviders = fps
 	s.activationHeight = activationHeight
 }
+
+func (s *StandardScenario) FinalityFinalizeBlocks(fromBlockToFinalize, numBlocksToFinalize uint64) uint64 {
+	d := s.driver
+	t := d.t
+
+	latestFinalizedBlockHeight := uint64(0)
+	for blkHeight := fromBlockToFinalize; blkHeight <= fromBlockToFinalize+numBlocksToFinalize; blkHeight++ {
+		bl := d.GetIndexedBlock(blkHeight)
+		require.Equal(t, bl.Finalized, false)
+
+		for _, fp := range s.finalityProviders {
+			fp.CastVote(blkHeight)
+		}
+
+		d.GenerateNewBlockAssertExecutionSuccess()
+
+		bl = d.GetIndexedBlock(blkHeight)
+		require.Equal(t, bl.Finalized, true)
+		latestFinalizedBlockHeight = blkHeight
+	}
+
+	return latestFinalizedBlockHeight
+}
