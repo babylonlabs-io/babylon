@@ -3,6 +3,9 @@
 ## Table of Contents
 
 1. [Distribution for BTC Stakers and Finality Providers](#1-distribution-for-btc-stakers-and-finality-providers)
+    2. [Overview of x/distribution logic](#overview-of-xdistribution-logic)
+    3. [Reward Distribution for BABY Stakers](#reward-distribution-for-baby-stakers)
+    4. [What is the inflation mechanism and how are rewards distributed](#what-is-the-inflation-mechanism-and-how-are-rewards-distributed)
 2. [States](#2-states)
     1. [Parameters](#21-parameters)
     2. [Gauge](#22-gauge)
@@ -36,9 +39,29 @@ rewards are distributed through the `x/distribution` module after the initial
 distribution to BTC stakers and finality providers.
 
 Within the module, there is a critical object called the `rewards gauge`, which
-serves as a pool accumulating rewards for both finality providers and BTC stakers.
+serves as a gauge accumulating rewards for both finality providers and BTC stakers.
 This gauge is a key component of the module, acting as a ledger that tracks
 rewards allocated but not yet withdrawn by stakeholders.
+
+```protobuf
+// RewardGauge is an object that stores rewards distributed to a BTC staking
+// stakeholder code adapted from
+// https://github.com/osmosis-labs/osmosis/blob/v18.0.0/proto/osmosis/incentives/gauge.proto
+message RewardGauge {
+  // coins are coins that have been in the gauge
+  // Can have multiple coin denoms
+  repeated cosmos.base.v1beta1.Coin coins = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // withdrawn_coins are coins that have been withdrawn by the stakeholder
+  // already
+  repeated cosmos.base.v1beta1.Coin withdrawn_coins = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+```
 
 There are 2 messages available through CLI
 
@@ -163,7 +186,7 @@ message Gauge {
 
 ### 2.3. Reward Gauge
 
-The `RewardGauge` is managed by the [reward gauge management]
+The `RewardGauge` is coordinated by the [reward gauge management]
 (./keeper/reward_gauge.go) and is used to track rewards distributed to a BTC
 staking stakeholder. It includes both the accumulated rewards and the
 withdrawn rewards, allowing the system to manage the lifecycle of rewards for
@@ -193,7 +216,7 @@ message RewardGauge {
 
 ### 2.4. FinalityProviderHistoricalRewards
 
-This message tracks the cumulative rewards ratio of a finality provider per
+This object tracks the cumulative rewards ratio of a finality provider per
 satoshi for a given period. It is used to maintain a historical record of
 rewards, allowing the system to calculate the difference in rewards
 between periods for accurate distribution. Both the
@@ -336,6 +359,15 @@ The `MsgWithdrawReward` message is used to withdraw rewards for a delegator.
 This message triggers the distribution of accumulated rewards to the specified
 withdraw address.
 
+When a user submits a `MsgWithdrawReward` transaction, the system
+initiates a process to transfer all rewards that have been accumulated in
+the user's account gauge to their account. The gauge acts as a ledger,
+tracking the rewards due to the user. Upon processing this message, the
+system calculates the total rewards in the gauge and transfers this amount
+to the user's account balance. This involves deducting the reward amount
+from the gauge and crediting it to the user's account, effectively updating
+the blockchain's state to reflect these changes.
+
 ```protobuf
 message MsgWithdrawReward {
   option (cosmos.msg.v1.signer) = "delegator_address";
@@ -384,15 +416,6 @@ and withdraws BTC delegation rewards to the gauge. While
 it is closely linked to it. The invocation of `BtcDelegationActivated` is
  event-driven, responding to specific transactions related to BTC staking,
  such as when a user delegates BTC to a finality provider.
-
-Lastly, when a user submits a `MsgWithdrawReward` transaction, the system
-initiates a process to transfer all rewards that have been accumulated in
-the user's account gauge to their account. The gauge acts as a ledger,
-tracking the rewards due to the user. Upon processing this message, the
-system calculates the total rewards in the gauge and transfers this amount
-to the user's account balance. This involves deducting the reward amount
-from the gauge and crediting it to the user's account, effectively updating
-the blockchain's state to reflect these changes.
 
 ## 5. Queries
 
