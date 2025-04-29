@@ -302,6 +302,16 @@ type CreateDelegationInfo struct {
 	UnbondingTx            *wire.MsgTx
 }
 
+func DelegationInfosToBTCTx(
+	delInfos []*CreateDelegationInfo,
+) []*wire.MsgTx {
+	txs := []*wire.MsgTx{}
+	for _, delInfo := range delInfos {
+		txs = append(txs, delInfo.StakingTx)
+	}
+	return txs
+}
+
 // GenRandomMsgCreateBtcDelegation generates a random MsgCreateBTCDelegation message
 // valid for the given parameters.
 func GenRandomMsgCreateBtcDelegationAndMsgAddCovenantSignatures(
