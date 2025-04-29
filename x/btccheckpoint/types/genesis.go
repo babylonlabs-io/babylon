@@ -1,7 +1,7 @@
 package types
 
 import (
-	fmt "fmt"
+	"fmt"
 	"sort"
 
 	"github.com/babylonlabs-io/babylon/v2/types"
