@@ -40,7 +40,7 @@ func (k Keeper) InitGenSlashedVotingPower(ctx context.Context, genSlashedValSet 
 	if len(genSlashedValSet) > 0 {
 		for _, ev := range genSlashedValSet {
 			if err := k.setEpochSlashedValSet(ctx, ev); err != nil {
-				return nil
+				return err
 			}
 		}
 		return nil
