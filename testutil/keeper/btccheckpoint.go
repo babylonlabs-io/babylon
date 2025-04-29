@@ -27,9 +27,26 @@ func NewBTCCheckpointKeeper(
 	lk btcctypes.BTCLightClientKeeper,
 	ek btcctypes.CheckpointingKeeper,
 	ik btcctypes.IncentiveKeeper,
-	powLimit *big.Int) (*keeper.Keeper, sdk.Context) {
-	storeKey := storetypes.NewKVStoreKey(btcctypes.StoreKey)
-	tstoreKey := storetypes.NewTransientStoreKey(btcctypes.TStoreKey)
+	powLimit *big.Int,
+) (*keeper.Keeper, sdk.Context) {
+	return NewBTCChkptKeeperWithStoreKeys(t, nil, nil, lk, ek, ik, powLimit)
+}
+
+func NewBTCChkptKeeperWithStoreKeys(
+	t testing.TB,
+	storeKey *storetypes.KVStoreKey,
+	tstoreKey *storetypes.TransientStoreKey,
+	lk btcctypes.BTCLightClientKeeper,
+	ek btcctypes.CheckpointingKeeper,
+	ik btcctypes.IncentiveKeeper,
+	powLimit *big.Int,
+) (*keeper.Keeper, sdk.Context) {
+	if storeKey == nil {
+		storeKey = storetypes.NewKVStoreKey(btcctypes.StoreKey)
+	}
+	if tstoreKey == nil {
+		tstoreKey = storetypes.NewTransientStoreKey(btcctypes.TStoreKey)
+	}
 
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
