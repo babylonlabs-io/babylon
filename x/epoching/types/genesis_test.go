@@ -34,65 +34,11 @@ func TestGenesis(t *testing.T) {
 
 func TestGenesisState_Validate(t *testing.T) {
 	var (
-		r              = rand.New(rand.NewSource(time.Now().Unix()))
-		now            = time.Now()
-		entriesCount   = int(datagen.RandomIntOtherThan(r, 0, 10))
-		vs             = datagen.GenRandomValSet(entriesCount)
-		slashedVs      = datagen.GenRandomValSet(entriesCount)
-		epochs         = make([]*types.Epoch, entriesCount)
-		qs             = make([]*types.EpochQueue, entriesCount)
-		valSets        = make([]*types.EpochValidatorSet, entriesCount)
-		slashedValSets = make([]*types.EpochValidatorSet, entriesCount)
-		valsLc         = make([]*types.ValidatorLifecycle, entriesCount)
-		delsLc         = make([]*types.DelegationLifecycle, entriesCount)
+		r                                                   = rand.New(rand.NewSource(time.Now().Unix()))
+		gs                                                  = datagen.GenRandomEpochingGenesisState(r)
+		epochs, qs, valSets, slashedValSets, valsLc, delsLc = gs.Epochs, gs.Queues, gs.ValidatorSets, gs.SlashedValidatorSets, gs.ValidatorsLifecycle, gs.DelegationsLifecycle
+		entriesCount                                        = len(epochs)
 	)
-
-	for i := range entriesCount {
-		epochNum := uint64(i) + 1
-		epochs[i] = datagen.GenRandomEpoch(r)
-		epochs[i].EpochNumber = epochNum
-		epochs[i].FirstBlockHeight = epochNum + 1000
-		epochs[i].SealerAppHash = append(epochs[i].SealerAppHash, byte(epochNum))
-
-		qs[i] = &types.EpochQueue{
-			EpochNumber: epochNum,
-			Msgs: []*types.QueuedMessage{{
-				TxId:        []byte("tx"),
-				MsgId:       []byte("msg"),
-				BlockHeight: 100,
-				BlockTime:   &now,
-				Msg:         &types.QueuedMessage_MsgDelegate{},
-			}},
-		}
-
-		valSets[i] = &types.EpochValidatorSet{
-			EpochNumber: epochNum,
-			Validators:  make([]*types.Validator, entriesCount),
-		}
-
-		for j, v := range vs {
-			valSets[i].Validators[j] = &v
-		}
-
-		slashedValSets[i] = &types.EpochValidatorSet{
-			EpochNumber: epochNum,
-			Validators:  make([]*types.Validator, entriesCount),
-		}
-
-		for j, v := range slashedVs {
-			slashedValSets[i].Validators[j] = &v
-		}
-
-		valsLc[i] = &types.ValidatorLifecycle{
-			ValAddr: datagen.GenRandomValidatorAddress().String(),
-			ValLife: []*types.ValStateUpdate{{}},
-		}
-
-		delsLc[i] = &types.DelegationLifecycle{
-			DelAddr: datagen.GenRandomAddress().String(),
-			DelLife: []*types.DelegationStateUpdate{{}},
-		}
-	}
 	for _, tc := range []struct {
 		desc     string
 		genState *types.GenesisState
@@ -114,17 +60,9 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid: true,
 		},
 		{
-			desc: "valid full genesis state",
-			genState: types.NewGenesis(
-				types.DefaultParams(),
-				epochs,
-				qs,
-				valSets,
-				slashedValSets,
-				valsLc,
-				delsLc,
-			),
-			valid: true,
+			desc:     "valid full genesis state",
+			genState: gs,
+			valid:    true,
 		},
 		{
 			desc:     "invalid genesis state - empty",

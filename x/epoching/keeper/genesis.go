@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
@@ -22,6 +23,20 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	// init slashed voting power
 	if err := k.InitGenSlashedVotingPower(ctx, gs.SlashedValidatorSets); err != nil {
 		return err
+	}
+
+	// validators lifecycles
+	for _, vl := range gs.ValidatorsLifecycle {
+		valAddr, err := sdk.ValAddressFromBech32(vl.ValAddr)
+		if err != nil {
+			return err
+		}
+		k.SetValLifecycle(ctx, valAddr, vl)
+	}
+
+	// delegations lifecycles
+	for _, dl := range gs.DelegationsLifecycle {
+		k.SetDelegationLifecycle(ctx, sdk.MustAccAddressFromBech32(dl.DelAddr), dl)
 	}
 
 	// set params for this module

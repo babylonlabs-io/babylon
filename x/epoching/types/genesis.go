@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/babylonlabs-io/babylon/v2/types"
 )
@@ -105,4 +106,27 @@ func validateEpochs(epochs []*Epoch) error {
 	}
 
 	return nil
+}
+
+// Helper function to sort slices to get a deterministic
+// result on the tests
+func SortData(gs *GenesisState) {
+	sort.Slice(gs.Epochs, func(i, j int) bool {
+		return gs.Epochs[i].EpochNumber < gs.Epochs[j].EpochNumber
+	})
+	sort.Slice(gs.Queues, func(i, j int) bool {
+		return gs.Queues[i].EpochNumber < gs.Queues[j].EpochNumber
+	})
+	sort.Slice(gs.ValidatorSets, func(i, j int) bool {
+		return gs.ValidatorSets[i].EpochNumber < gs.ValidatorSets[j].EpochNumber
+	})
+	sort.Slice(gs.SlashedValidatorSets, func(i, j int) bool {
+		return gs.SlashedValidatorSets[i].EpochNumber < gs.SlashedValidatorSets[j].EpochNumber
+	})
+	sort.Slice(gs.ValidatorsLifecycle, func(i, j int) bool {
+		return gs.ValidatorsLifecycle[i].ValAddr < gs.ValidatorsLifecycle[j].ValAddr
+	})
+	sort.Slice(gs.DelegationsLifecycle, func(i, j int) bool {
+		return gs.DelegationsLifecycle[i].DelAddr < gs.DelegationsLifecycle[j].DelAddr
+	})
 }
