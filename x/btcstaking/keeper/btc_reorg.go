@@ -49,6 +49,13 @@ func (k *Keeper) SetLargestBtcReorg(ctx context.Context, newLargestBlockReorg ty
 		panic(fmt.Errorf("setting largest btc reorg failed decode in Get: %w", err))
 	}
 
+	if currentLargestReorg.Handled &&
+		currentLargestReorg.RollbackFrom.Height == newLargestBlockReorg.RollbackFrom.Height &&
+		currentLargestReorg.RollbackTo.Height == newLargestBlockReorg.RollbackTo.Height {
+		// The fork already fixed this reorg.
+		return nil
+	}
+
 	if !currentLargestReorg.Handled && currentLargestReorg.BlockDiff >= newLargestBlockReorg.BlockDiff {
 		// no need to update if the current is higher
 		return nil
