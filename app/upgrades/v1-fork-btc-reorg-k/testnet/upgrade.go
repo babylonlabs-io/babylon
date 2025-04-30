@@ -6,6 +6,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app/keepers"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
+	"github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	bskeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
 	fkeeper "github.com/babylonlabs-io/babylon/x/finality/keeper"
@@ -54,7 +55,15 @@ func ForkHandler(context sdk.Context, keepers *keepers.AppKeepers) error {
 
 	largerBtcReorg := btcStkK.GetLargestBtcReorg(ctx)
 	if largerBtcReorg == nil {
-		panic("no btc reorg has happened")
+		largerBtcReorg = &bstypes.LargestBtcReOrg{
+			BlockDiff: 3,
+			RollbackFrom: &types.BTCHeaderInfo{
+				Height: 250404,
+			},
+			RollbackTo: &types.BTCHeaderInfo{
+				Height: 250401,
+			},
+		}
 	}
 	btcBlockHeightRollbackFrom := largerBtcReorg.RollbackFrom.Height
 
@@ -120,12 +129,12 @@ func HandleDeleteVotingPowerDistributionEvts(
 	eventsToDelete := make([]bstypes.EventIndex, 0)
 
 	higherBtcStakingPeriod := MaxBtcStakingTimeBlocks(paramsByVs)
-	btcBlockHeightRollbackFrom := largerBtcReorg.RollbackFrom.Height
+	btcBlockHeightRollbackStartHeight := largerBtcReorg.RollbackTo.Height
 
 	l := sdk.UnwrapSDKContext(ctx).Logger()
 
 	// iterating over all the BTC staking events from the rollback height until latest Tip + the maximum staking period
-	for btcHeight := btcBlockHeightRollbackFrom; btcHeight <= btcTipHeight+higherBtcStakingPeriod; btcHeight++ {
+	for btcHeight := btcBlockHeightRollbackStartHeight; btcHeight <= btcTipHeight+higherBtcStakingPeriod; btcHeight++ {
 		vpEvents := btcStkK.GetAllPowerDistUpdateEvents(ctx, btcHeight, btcHeight)
 		for idx, evt := range vpEvents {
 			switch typedEvent := evt.Ev.(type) {
