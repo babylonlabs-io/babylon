@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"fmt"
+	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 	"testing"
 
 	"cosmossdk.io/log"
@@ -36,6 +37,7 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         nil,
 		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
+		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 	}
 )
 

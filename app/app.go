@@ -125,6 +125,8 @@ import (
 	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge"
 	zckeeper "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
+	"github.com/strangelove-ventures/tokenfactory/x/tokenfactory"
+	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 )
 
 const (
@@ -161,6 +163,7 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         nil,
 		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
+		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 	}
 
 	// software upgrades and forks
@@ -314,6 +317,7 @@ func NewBabylonApp(
 		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		ibctm.AppModule{},
 		ibcwasm.NewAppModule(app.IBCWasmKeeper),
+		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(tokenfactorytypes.ModuleName)),
 		// Babylon modules - btc timestamping
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper),
@@ -367,6 +371,8 @@ func NewBabylonApp(
 		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, crisistypes.ModuleName, genutiltypes.ModuleName,
 		authz.ModuleName, feegrant.ModuleName,
 		paramstypes.ModuleName, vestingtypes.ModuleName, consensusparamtypes.ModuleName, circuittypes.ModuleName,
+		// Token factory
+		tokenfactorytypes.ModuleName,
 		// Babylon modules
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
@@ -399,6 +405,8 @@ func NewBabylonApp(
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName, consensusparamtypes.ModuleName,
+		// Token factory
+		tokenfactorytypes.ModuleName,
 		// Babylon modules
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
@@ -435,6 +443,8 @@ func NewBabylonApp(
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName, consensusparamtypes.ModuleName, circuittypes.ModuleName,
+		// Token factory
+		tokenfactorytypes.ModuleName,
 		// Babylon modules
 		btclightclienttypes.ModuleName,
 		epochingtypes.ModuleName,
