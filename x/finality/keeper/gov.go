@@ -129,13 +129,13 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 	// it is possible that some inactive fps become active after the proposal
 	// therefore, we need to ensure every active finality provider has signing info
 	for pk, dc := range distCache.GetActiveFinalityProviderSet() {
-		signingInfo, err := k.FinalityProviderSigningTracker.Get(ctx, dc.BtcPk.MustMarshal())
+		_, err := k.FinalityProviderSigningTracker.Get(ctx, dc.BtcPk.MustMarshal())
 		if err == nil {
 			continue
 		}
 
 		if errors.Is(err, collections.ErrNotFound) {
-			signingInfo = ftypes.NewFinalityProviderSigningInfo(
+			signingInfo := ftypes.NewFinalityProviderSigningInfo(
 				dc.BtcPk,
 				currentHeight,
 				0,
