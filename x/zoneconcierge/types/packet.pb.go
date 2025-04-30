@@ -250,13 +250,13 @@ func (m *BTCHeaders) GetHeaders() []*types1.BTCHeaderInfo {
 	return nil
 }
 
-// BTCTimestamp is a BTC timestamp that carries information of a BTC-finalised epoch
+// BTCTimestamp is a BTC timestamp that carries information of a BTC-finalised epoch.
 // It includes a number of BTC headers, a raw checkpoint, an epoch metadata, and
-// a CZ header if there exists CZ headers checkpointed to this epoch.
+// a Cosmos BSN header if there exists Cosmos BSN headers checkpointed to this epoch.
 // Upon a newly finalised epoch in Babylon, Babylon will send a BTC timestamp to each
 // Cosmos zone that has phase-2 integration with Babylon via IBC.
 type BTCTimestamp struct {
-	// header is the last CZ header in the finalized Babylon epoch
+	// header is the last Cosmos BSN header in the finalized Babylon epoch
 	Header *IndexedHeader `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
 	// btc_headers is BTC headers between
 	// - the block AFTER the common ancestor of BTC tip at epoch `lastFinalizedEpoch-1` and BTC tip at epoch `lastFinalizedEpoch`

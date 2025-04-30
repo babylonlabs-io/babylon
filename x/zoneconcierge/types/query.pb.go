@@ -470,7 +470,7 @@ func (m *QueryEpochChainsInfoRequest) GetConsumerIds() []string {
 // QueryEpochChainsInfoResponse is response type for the Query/EpochChainsInfo RPC
 // method.
 type QueryEpochChainsInfoResponse struct {
-	// chain_info is the info of the CZ
+	// chains_info is the info of the BSN
 	ChainsInfo []*ChainInfo `protobuf:"bytes,1,rep,name=chains_info,json=chainsInfo,proto3" json:"chains_info,omitempty"`
 }
 
@@ -728,7 +728,7 @@ func (m *QueryListEpochHeadersResponse) GetHeaders() []*IndexedHeader {
 // QueryFinalizedChainsInfoRequest is request type for the
 // Query/FinalizedChainsInfo RPC method.
 type QueryFinalizedChainsInfoRequest struct {
-	// consumer_ids is the list of ids of CZs
+	// consumer_ids is the list of ids of BSNs
 	ConsumerIds []string `protobuf:"bytes,1,rep,name=consumer_ids,json=consumerIds,proto3" json:"consumer_ids,omitempty"`
 	// prove indicates whether the querier wants to get proofs of this timestamp
 	Prove bool `protobuf:"varint,2,opt,name=prove,proto3" json:"prove,omitempty"`
@@ -830,9 +830,9 @@ func (m *QueryFinalizedChainsInfoResponse) GetFinalizedChainsInfo() []*Finalized
 // QueryFinalizedChainInfoUntilHeightRequest is request type for the
 // Query/FinalizedChainInfoUntilHeight RPC method.
 type QueryFinalizedChainInfoUntilHeightRequest struct {
-	// consumer_id is the ID of the CZ
+	// consumer_id is the ID of the BSN
 	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
-	// height is the height of the CZ chain
+	// height is the height of the BSN chain
 	// such that the returned finalised chain info will be no later than this
 	// height
 	Height uint64 `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
@@ -901,7 +901,7 @@ func (m *QueryFinalizedChainInfoUntilHeightRequest) GetProve() bool {
 // QueryFinalizedChainInfoUntilHeightResponse is response type for the
 // Query/FinalizedChainInfoUntilHeight RPC method.
 type QueryFinalizedChainInfoUntilHeightResponse struct {
-	// finalized_chain_info is the info of the CZ
+	// finalized_chain_info is the info of the BSN
 	FinalizedChainInfo *ChainInfo `protobuf:"bytes,1,opt,name=finalized_chain_info,json=finalizedChainInfo,proto3" json:"finalized_chain_info,omitempty"`
 	// epoch_info is the metadata of the last BTC-finalised epoch
 	EpochInfo *types.Epoch `protobuf:"bytes,2,opt,name=epoch_info,json=epochInfo,proto3" json:"epoch_info,omitempty"`
@@ -1103,7 +1103,7 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// Params queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
-	// Header queries the CZ header and fork headers at a given height.
+	// Header queries the BSN header and fork headers at a given height
 	Header(ctx context.Context, in *QueryHeaderRequest, opts ...grpc.CallOption) (*QueryHeaderResponse, error)
 	// ChainList queries the list of chains that checkpoint to Babylon
 	ChainList(ctx context.Context, in *QueryChainListRequest, opts ...grpc.CallOption) (*QueryChainListResponse, error)
@@ -1121,7 +1121,7 @@ type QueryClient interface {
 	// FinalizedChainsInfo queries the BTC-finalised info of chains with given IDs, with proofs
 	FinalizedChainsInfo(ctx context.Context, in *QueryFinalizedChainsInfoRequest, opts ...grpc.CallOption) (*QueryFinalizedChainsInfoResponse, error)
 	// FinalizedChainInfoUntilHeight queries the BTC-finalised info no later than
-	// the provided CZ height, with proofs
+	// the provided BSN height, with proofs
 	FinalizedChainInfoUntilHeight(ctx context.Context, in *QueryFinalizedChainInfoUntilHeightRequest, opts ...grpc.CallOption) (*QueryFinalizedChainInfoUntilHeightResponse, error)
 }
 
@@ -1218,7 +1218,7 @@ func (c *queryClient) FinalizedChainInfoUntilHeight(ctx context.Context, in *Que
 type QueryServer interface {
 	// Params queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
-	// Header queries the CZ header and fork headers at a given height.
+	// Header queries the BSN header and fork headers at a given height
 	Header(context.Context, *QueryHeaderRequest) (*QueryHeaderResponse, error)
 	// ChainList queries the list of chains that checkpoint to Babylon
 	ChainList(context.Context, *QueryChainListRequest) (*QueryChainListResponse, error)
@@ -1236,7 +1236,7 @@ type QueryServer interface {
 	// FinalizedChainsInfo queries the BTC-finalised info of chains with given IDs, with proofs
 	FinalizedChainsInfo(context.Context, *QueryFinalizedChainsInfoRequest) (*QueryFinalizedChainsInfoResponse, error)
 	// FinalizedChainInfoUntilHeight queries the BTC-finalised info no later than
-	// the provided CZ height, with proofs
+	// the provided BSN height, with proofs
 	FinalizedChainInfoUntilHeight(context.Context, *QueryFinalizedChainInfoUntilHeightRequest) (*QueryFinalizedChainInfoUntilHeightResponse, error)
 }
 

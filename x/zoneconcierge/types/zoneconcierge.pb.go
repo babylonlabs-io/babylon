@@ -32,24 +32,24 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// IndexedHeader is the metadata of a CZ header
+// IndexedHeader is the metadata of a BSN header
 type IndexedHeader struct {
 	// consumer_id is the unique ID of the consumer
 	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
 	// hash is the hash of this header
 	Hash []byte `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
-	// height is the height of this header on CZ ledger
-	// (hash, height) jointly provides the position of the header on CZ ledger
+	// height is the height of this header on the BSN's ledger.
+	// (hash, height) jointly provide the position of the header on the BSN ledger
 	Height uint64 `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
-	// time is the timestamp of this header on CZ ledger
-	// it is needed for CZ to unbond all mature validators/delegations
-	// before this timestamp when this header is BTC-finalised
+	// time is the timestamp of this header on the BSN's ledger.
+	// It is needed for a BSN to unbond all mature validators/delegations before
+	// this timestamp, when this header is BTC-finalised
 	Time *time.Time `protobuf:"bytes,4,opt,name=time,proto3,stdtime" json:"time,omitempty"`
-	// babylon_header_hash is the hash of the babylon block that includes this CZ
+	// babylon_header_hash is the hash of the babylon block that includes this BSN
 	// header
 	BabylonHeaderHash []byte `protobuf:"bytes,5,opt,name=babylon_header_hash,json=babylonHeaderHash,proto3" json:"babylon_header_hash,omitempty"`
-	// babylon_header_height is the height of the babylon block that includes this CZ
-	// header
+	// babylon_header_height is the height of the babylon block that includes this
+	// BSN header
 	BabylonHeaderHeight uint64 `protobuf:"varint,6,opt,name=babylon_header_height,json=babylonHeaderHeight,proto3" json:"babylon_header_height,omitempty"`
 	// epoch is the epoch number of this header on Babylon ledger
 	BabylonEpoch uint64 `protobuf:"varint,7,opt,name=babylon_epoch,json=babylonEpoch,proto3" json:"babylon_epoch,omitempty"`
@@ -160,7 +160,7 @@ func (m *IndexedHeader) GetBabylonTxHash() []byte {
 // Then the fork will be {[D1, D2]} where each item is in struct `IndexedBlock`.
 //
 // Note that each `IndexedHeader` in the fork should have a valid quorum
-// certificate. Such forks exist since Babylon considers CZs might have
+// certificate. Such forks exist since Babylon considers BSNs might have
 // dishonest majority. Also note that the IBC-Go implementation will only
 // consider the first header in a fork valid, since the subsequent headers
 // cannot be verified without knowing the validator set in the previous header.
@@ -209,16 +209,16 @@ func (m *Forks) GetHeaders() []*IndexedHeader {
 	return nil
 }
 
-// ChainInfo is the information of a CZ
+// ChainInfo is the information of a BSN
 type ChainInfo struct {
 	// consumer_id is the ID of the consumer
 	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
-	// latest_header is the latest header in CZ's canonical chain
+	// latest_header is the latest header in BSN's canonical chain
 	LatestHeader *IndexedHeader `protobuf:"bytes,2,opt,name=latest_header,json=latestHeader,proto3" json:"latest_header,omitempty"`
 	// latest_forks is the latest forks, formed as a series of IndexedHeader (from
 	// low to high)
 	LatestForks *Forks `protobuf:"bytes,3,opt,name=latest_forks,json=latestForks,proto3" json:"latest_forks,omitempty"`
-	// timestamped_headers_count is the number of timestamped headers in CZ's
+	// timestamped_headers_count is the number of timestamped headers in the BSN's
 	// canonical chain
 	TimestampedHeadersCount uint64 `protobuf:"varint,4,opt,name=timestamped_headers_count,json=timestampedHeadersCount,proto3" json:"timestamped_headers_count,omitempty"`
 }
@@ -341,11 +341,11 @@ func (m *ChainInfoWithProof) GetProofHeaderInEpoch() *crypto.ProofOps {
 	return nil
 }
 
-// FinalizedChainInfo is the information of a CZ that is BTC-finalised
+// FinalizedChainInfo is the information of a BSN that is BTC-finalised
 type FinalizedChainInfo struct {
 	// consumer_id is the ID of the consumer
 	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
-	// finalized_chain_info is the info of the CZ
+	// finalized_chain_info is the info of the BSN
 	FinalizedChainInfo *ChainInfo `protobuf:"bytes,2,opt,name=finalized_chain_info,json=finalizedChainInfo,proto3" json:"finalized_chain_info,omitempty"`
 	// epoch_info is the metadata of the last BTC-finalised epoch
 	EpochInfo *types.Epoch `protobuf:"bytes,3,opt,name=epoch_info,json=epochInfo,proto3" json:"epoch_info,omitempty"`
@@ -513,7 +513,7 @@ func (m *ProofEpochSealed) GetProofEpochValSet() *crypto.ProofOps {
 // ProofFinalizedChainInfo is a set of proofs that attest a chain info is
 // BTC-finalised
 type ProofFinalizedChainInfo struct {
-	// proof_cz_header_in_epoch is the proof that the CZ header is timestamped
+	// proof_cz_header_in_epoch is the proof that the BSN's header is timestamped
 	// within a certain epoch
 	ProofCzHeaderInEpoch *crypto.ProofOps `protobuf:"bytes,1,opt,name=proof_cz_header_in_epoch,json=proofCzHeaderInEpoch,proto3" json:"proof_cz_header_in_epoch,omitempty"`
 	// proof_epoch_sealed is the proof that the epoch is sealed
