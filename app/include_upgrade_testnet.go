@@ -6,6 +6,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
 	v1 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1"
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades/v1/testnet"
+	v1_1 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1_1"
 	v1rc5 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1rc5/testnet"
 	v1rc8 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1rc8/testnet"
 	v1rc9 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1rc9/testnet"
@@ -17,6 +18,7 @@ import (
 func init() {
 	Upgrades = []upgrades.Upgrade{
 		v2.Upgrade,
+		v1_1.Upgrade,
 		v1.CreateUpgrade(v1.UpgradeDataString{
 			BtcStakingParamsStr:       testnet.BtcStakingParamsStr,
 			FinalityParamStr:          testnet.FinalityParamStr,
