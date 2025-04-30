@@ -1,8 +1,10 @@
 package types
 
 import (
+	fmt "fmt"
 	"time"
 
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	bbntypes "github.com/babylonlabs-io/babylon/v2/types"
 	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
@@ -37,4 +39,14 @@ func (si *FinalityProviderSigningInfo) DecrementMissedBlocksCounter() {
 
 func (si *FinalityProviderSigningInfo) ResetMissedBlocksCounter() {
 	si.MissedBlocksCounter = 0
+}
+
+func (fpsi FinalityProviderSigningInfo) Validate() error {
+	if fpsi.FpBtcPk == nil {
+		return fmt.Errorf("invalid signing info. empty finality provider BTC public key")
+	}
+	if fpsi.FpBtcPk.Size() != bbn.BIP340PubKeyLen {
+		return fmt.Errorf("invalid signing info. finality provider BTC public key length: got %d, want %d", fpsi.FpBtcPk.Size(), bbn.BIP340PubKeyLen)
+	}
+	return nil
 }
