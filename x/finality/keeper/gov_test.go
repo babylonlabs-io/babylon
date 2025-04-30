@@ -374,7 +374,7 @@ func TestHandleResumeFinalityProposalMissingSigningInfo(t *testing.T) {
 
 	require.NotPanics(t, func() {
 		fKeeper.HandleLiveness(ctx, int64(nextHeight))
-	}, "Expected panic due to missing signing info for newly active FP")
+	}, "Unexpected panic due to missing signing info for newly active FP")
 }
 
 func generateNFpPks(t *testing.T, r *rand.Rand, n int) []bbntypes.BIP340PubKey {

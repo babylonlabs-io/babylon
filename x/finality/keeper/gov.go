@@ -104,6 +104,7 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 
 	// set the all the given finality providers voting power to 0
 	var distCache *ftypes.VotingPowerDistCache
+	allActiveFps := make(map[string]*ftypes.FinalityProviderDistInfo)
 	for h := uint64(haltingHeight); h <= uint64(currentHeight); h++ {
 		distCache = k.GetVotingPowerDistCache(ctx, h)
 		activeFps := distCache.GetActiveFinalityProviderSet()
@@ -122,13 +123,18 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 
 		distCache.ApplyActiveFinalityProviders(params.MaxActiveFinalityProviders)
 
+		// add active fps to the all active fps set if it does not exist
+		for pk, fp := range distCache.GetActiveFinalityProviderSet() {
+			allActiveFps[pk] = fp
+		}
+
 		// set the voting power distribution cache of the current height
 		k.SetVotingPowerDistCache(ctx, h, distCache)
 	}
 
 	// it is possible that some inactive fps become active after the proposal
 	// therefore, we need to ensure every active finality provider has signing info
-	for pk, dc := range distCache.GetActiveFinalityProviderSet() {
+	for pk, dc := range allActiveFps {
 		_, err := k.FinalityProviderSigningTracker.Get(ctx, dc.BtcPk.MustMarshal())
 		if err == nil {
 			continue
