@@ -1,10 +1,8 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 
-	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	bbntypes "github.com/babylonlabs-io/babylon/v2/types"
@@ -134,24 +132,24 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 	// it is possible that some inactive fps become active after the proposal
 	// therefore, we need to ensure every active finality provider has signing info
 	for pk, dc := range allActiveFps {
-		_, err := k.FinalityProviderSigningTracker.Get(ctx, dc.BtcPk.MustMarshal())
-		if err == nil {
+		hasSigningInfo, err := k.FinalityProviderSigningTracker.Has(ctx, dc.BtcPk.MustMarshal())
+		if err != nil {
+			return fmt.Errorf("failed to get signing info from tracker for fp %s - %w", pk, err)
+		}
+
+		if hasSigningInfo {
 			continue
 		}
 
-		if errors.Is(err, collections.ErrNotFound) {
-			signingInfo := ftypes.NewFinalityProviderSigningInfo(
-				dc.BtcPk,
-				currentHeight,
-				0,
-			)
+		signingInfo := ftypes.NewFinalityProviderSigningInfo(
+			dc.BtcPk,
+			currentHeight,
+			0,
+		)
 
-			setErr := k.FinalityProviderSigningTracker.Set(ctx, dc.BtcPk.MustMarshal(), signingInfo)
-			if setErr != nil {
-				return setErr
-			}
-		} else {
-			return fmt.Errorf("failed to get signing info from tracker for fp %s", pk)
+		err = k.FinalityProviderSigningTracker.Set(ctx, dc.BtcPk.MustMarshal(), signingInfo)
+		if err != nil {
+			return fmt.Errorf("failed to set signing info for fp %s - %w", pk, err)
 		}
 	}
 
