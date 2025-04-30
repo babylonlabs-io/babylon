@@ -123,7 +123,7 @@ func ForkHandler(context sdk.Context, keepers *keepers.AppKeepers) error {
 
 	// Updates the old largest reorg to avoid panic at end blocker again
 	largerBtcReorg.Handled = true
-	return btcStkK.SetLargestBtcReorg(ctx, *largerBtcReorg)
+	return btcStkK.LargestBtcReorg.Set(ctx, *largerBtcReorg)
 }
 
 // HandleDeleteVotingPowerDistributionEvts iterates over all possible rolledback voting power distribution
