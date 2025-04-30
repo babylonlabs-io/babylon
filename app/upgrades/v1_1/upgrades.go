@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
 
-// UpgradeName defines the on-chain upgrade name for the Babylon v2 upgrade
+// UpgradeName defines the on-chain upgrade name for the Babylon v1.1 upgrade
 const UpgradeName = "v1.1"
 
 var Upgrade = upgrades.Upgrade{
