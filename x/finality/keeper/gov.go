@@ -103,10 +103,9 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 	}
 
 	// set the all the given finality providers voting power to 0
-	var distCache *ftypes.VotingPowerDistCache
 	allActiveFps := make(map[string]*ftypes.FinalityProviderDistInfo)
 	for h := uint64(haltingHeight); h <= uint64(currentHeight); h++ {
-		distCache = k.GetVotingPowerDistCache(ctx, h)
+		distCache := k.GetVotingPowerDistCache(ctx, h)
 		activeFps := distCache.GetActiveFinalityProviderSet()
 		for _, fpToJail := range fpPks {
 			fpDstInf, exists := activeFps[fpToJail.MarshalHex()]
