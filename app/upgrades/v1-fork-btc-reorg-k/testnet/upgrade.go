@@ -6,6 +6,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/app/keepers"
 	"github.com/babylonlabs-io/babylon/app/upgrades"
+	bbntypes "github.com/babylonlabs-io/babylon/types"
 	"github.com/babylonlabs-io/babylon/x/btclightclient/types"
 	bskeeper "github.com/babylonlabs-io/babylon/x/btcstaking/keeper"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
@@ -53,17 +54,28 @@ func ForkHandler(context sdk.Context, keepers *keepers.AppKeepers) error {
 	// this upgrade should be called when there is a BTC reorg higher than K blocks (btccheckpoint.BtcConfirmationDepth)
 	btcStkK, btcLgtK, finalK := keepers.BTCStakingKeeper, keepers.BTCLightClientKeeper, keepers.FinalityKeeper
 
-	largerBtcReorg := btcStkK.GetLargestBtcReorg(ctx)
-	if largerBtcReorg == nil {
-		largerBtcReorg = &bstypes.LargestBtcReOrg{
-			BlockDiff: 3,
-			RollbackFrom: &types.BTCHeaderInfo{
-				Height: 250404,
-			},
-			RollbackTo: &types.BTCHeaderInfo{
-				Height: 250401,
-			},
-		}
+	headerTo, err := bbntypes.NewBTCHeaderBytesFromHex("000000203bc383465c19c335119e45a12609337da3ab74cc42e1c8d3d352a45a0a0000003c77cf8aec371b218c1d8ff0280cb6a6df1483bb338e49483a5a70fa224dada04f581168b09a0e1d5514411b")
+	if err != nil {
+		return fmt.Errorf("failed to parse rollback to")
+	}
+
+	headerFrom, err := bbntypes.NewBTCHeaderBytesFromHex("0000002077dee0437b59bf7a2d89d7da8fd0f3990bf6cbf5914216c79bb31cd903000000bdf92ca1fbfc6800c040522d8725ba46b8fa1c29e13fe941144d2df4c8273fdcc2611168b09a0e1d48d82a0d")
+	if err != nil {
+		return fmt.Errorf("failed to parse rollback from")
+	}
+
+	largerBtcReorg := &bstypes.LargestBtcReOrg{
+		BlockDiff: 3,
+		RollbackFrom: &types.BTCHeaderInfo{
+			Header: &headerFrom,
+			Hash:   headerFrom.Hash(),
+			Height: 250404,
+		},
+		RollbackTo: &types.BTCHeaderInfo{
+			Header: &headerTo,
+			Hash:   headerTo.Hash(),
+			Height: 250401,
+		},
 	}
 	btcBlockHeightRollbackFrom := largerBtcReorg.RollbackFrom.Height
 
@@ -109,8 +121,9 @@ func ForkHandler(context sdk.Context, keepers *keepers.AppKeepers) error {
 	// Updates the voting power table accordingly to the BTC delegations rollback actions.
 	HandleVotingPowerDistCache(ctx, &finalK, satsToActivateByFpBtcPk, satsToUnbondByFpBtcPk)
 
-	// deletes the old largest reorg to avoid panic at end blocker again
-	return btcStkK.DeleteLargestBtcReorg(ctx)
+	// Updates the old largest reorg to avoid panic at end blocker again
+	largerBtcReorg.Handled = true
+	return btcStkK.SetLargestBtcReorg(ctx, *largerBtcReorg)
 }
 
 // HandleDeleteVotingPowerDistributionEvts iterates over all possible rolledback voting power distribution

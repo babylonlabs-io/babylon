@@ -7019,7 +7019,9 @@ paths:
     get:
       summary: >-
         ParamsByVersion queries the parameters of the module for a specific
-        version of past params.
+        version
+
+        of past params.
       operationId: ParamsByVersion
       responses:
         '200':

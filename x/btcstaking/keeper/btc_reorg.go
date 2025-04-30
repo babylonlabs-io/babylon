@@ -18,11 +18,11 @@ func (k *Keeper) HaltIfBtcReorgLargerThanConfirmationDepth(ctx context.Context) 
 		return
 	}
 
-	if largestReorg.BlockDiff >= p.BtcConfirmationDepth {
+	if !largestReorg.Handled && largestReorg.BlockDiff >= p.BtcConfirmationDepth {
 		msg := fmt.Sprintf(
 			"Reorg %d is larger than BTC confirmation Depth %d.\n%s\n%s", largestReorg.BlockDiff, p.BtcConfirmationDepth,
-			fmt.Sprintf("'From' -> %d - %s", largestReorg.RollbackFrom.Height, largestReorg.RollbackFrom.Hash.MarshalHex()),
-			fmt.Sprintf("'To' -> %d - %s", largestReorg.RollbackTo.Height, largestReorg.RollbackTo.Hash.MarshalHex()),
+			fmt.Sprintf("'From' -> %d - %s - %s", largestReorg.RollbackFrom.Height, largestReorg.RollbackFrom.Hash.MarshalHex(), largestReorg.RollbackFrom.Work.String()),
+			fmt.Sprintf("'To' -> %d - %s - %s", largestReorg.RollbackTo.Height, largestReorg.RollbackTo.Hash.MarshalHex(), largestReorg.RollbackTo.Work.String()),
 		)
 		panic(msg)
 	}
@@ -49,11 +49,12 @@ func (k *Keeper) SetLargestBtcReorg(ctx context.Context, newLargestBlockReorg ty
 		panic(fmt.Errorf("setting largest btc reorg failed decode in Get: %w", err))
 	}
 
-	if currentLargestReorg.BlockDiff >= newLargestBlockReorg.BlockDiff {
+	if !currentLargestReorg.Handled && currentLargestReorg.BlockDiff >= newLargestBlockReorg.BlockDiff {
 		// no need to update if the current is higher
 		return nil
 	}
 
+	newLargestBlockReorg.Handled = false
 	return k.LargestBtcReorg.Set(ctx, newLargestBlockReorg)
 }
 
