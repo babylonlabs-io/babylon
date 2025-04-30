@@ -111,9 +111,9 @@ func (k Keeper) createBTCTimestamp(
 		RawCheckpoint:    finalizedInfo.RawCheckpoint,
 		BtcSubmissionKey: finalizedInfo.BTCSubmissionKey,
 		Proof: &types.ProofFinalizedChainInfo{
-			ProofCzHeaderInEpoch: nil,
-			ProofEpochSealed:     finalizedInfo.ProofEpochSealed,
-			ProofEpochSubmitted:  finalizedInfo.ProofEpochSubmitted,
+			ProofBsnHeaderInEpoch: nil,
+			ProofEpochSealed:      finalizedInfo.ProofEpochSealed,
+			ProofEpochSubmitted:   finalizedInfo.ProofEpochSubmitted,
 		},
 	}
 
@@ -122,12 +122,12 @@ func (k Keeper) createBTCTimestamp(
 	epochNum := finalizedInfo.EpochInfo.EpochNumber
 	epochChainInfo, err := k.GetEpochChainInfo(ctx, consumerID, epochNum)
 	if err == nil {
-		// if there is a CZ header checkpointed in this finalised epoch,
-		// add this CZ header and corresponding proofs to the BTC timestamp
+		// if there is a BSN header checkpointed in this finalised epoch,
+		// add this BSN header and corresponding proofs to the BTC timestamp
 		epochOfHeader := epochChainInfo.ChainInfo.LatestHeader.BabylonEpoch
 		if epochOfHeader == epochNum {
 			btcTimestamp.Header = epochChainInfo.ChainInfo.LatestHeader
-			btcTimestamp.Proof.ProofCzHeaderInEpoch = epochChainInfo.ProofHeaderInEpoch
+			btcTimestamp.Proof.ProofBsnHeaderInEpoch = epochChainInfo.ProofHeaderInEpoch
 		}
 	} else {
 		k.Logger(sdkCtx).Debug("no epochChainInfo for consumer",

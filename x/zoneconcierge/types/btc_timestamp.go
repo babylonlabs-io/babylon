@@ -150,7 +150,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	return nil
 }
 
-func VerifyCZHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, proof *cmtcrypto.ProofOps) error {
+func VerifyBSNHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, proof *cmtcrypto.ProofOps) error {
 	// nil check
 	switch {
 	case header == nil:
@@ -331,8 +331,8 @@ func (ts *BTCTimestamp) VerifyStateless(
 		return err
 	}
 
-	// verify CZ header is committed to the epoch
-	if err := VerifyCZHeaderInEpoch(ts.Header, ts.EpochInfo, ts.Proof.ProofCzHeaderInEpoch); err != nil {
+	// verify the BSN header is committed to the epoch
+	if err := VerifyBSNHeaderInEpoch(ts.Header, ts.EpochInfo, ts.Proof.ProofBsnHeaderInEpoch); err != nil {
 		return err
 	}
 
