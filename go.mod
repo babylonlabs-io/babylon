@@ -75,9 +75,9 @@ require (
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
-	github.com/gogo/status v1.1.0 // indirect
 	// https://github.com/cosmos/ibc-go/releases/tag/modules%2Fapps%2Fcallbacks%2Fv0.2.0%2Bibc-go-v8.0
 	github.com/cosmos/ibc-go/modules/apps/callbacks v0.2.1-0.20231113120333-342c00b0f8bd
+	github.com/gogo/status v1.1.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
@@ -273,7 +273,6 @@ require (
 // Long lived replaces of Cosmos SDK
 // see: https://github.com/cosmos/cosmos-sdk/blob/v0.50.3/go.mod
 replace (
-
 	// core v0.12 was tagged wrong
 	cosmossdk.io/core => cosmossdk.io/core v0.11.0
 	// use cosmos fork of keyring
