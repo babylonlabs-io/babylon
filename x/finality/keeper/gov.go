@@ -1,11 +1,14 @@
 package keeper
 
 import (
+	"errors"
 	"fmt"
 
+	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	bbntypes "github.com/babylonlabs-io/babylon/v2/types"
+	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
 )
 
 // HandleResumeFinalityProposal handles the resume finality proposal in the following steps:
@@ -23,6 +26,11 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 	currentHeight := ctx.HeaderInfo().Height
 	currentTime := ctx.HeaderInfo().Time
 	voters := k.GetVoters(ctx, uint64(haltingHeight))
+
+	if uint64(haltingHeight) < params.FinalityActivationHeight {
+		return fmt.Errorf("finality halting height %d cannot be lower than finality activation height %d",
+			haltingHeight, params.FinalityActivationHeight)
+	}
 
 	// jail the given finality providers
 	fpPks := make([]*bbntypes.BIP340PubKey, 0, len(fpPksHex))
@@ -95,8 +103,9 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 	}
 
 	// set the all the given finality providers voting power to 0
+	var distCache *ftypes.VotingPowerDistCache
 	for h := uint64(haltingHeight); h <= uint64(currentHeight); h++ {
-		distCache := k.GetVotingPowerDistCache(ctx, h)
+		distCache = k.GetVotingPowerDistCache(ctx, h)
 		activeFps := distCache.GetActiveFinalityProviderSet()
 		for _, fpToJail := range fpPks {
 			fpDstInf, exists := activeFps[fpToJail.MarshalHex()]
@@ -115,6 +124,30 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 
 		// set the voting power distribution cache of the current height
 		k.SetVotingPowerDistCache(ctx, h, distCache)
+	}
+
+	// it is possible that some inactive fps become active after the proposal
+	// therefore, we need to ensure every active finality provider has signing info
+	for pk, dc := range distCache.GetActiveFinalityProviderSet() {
+		signingInfo, err := k.FinalityProviderSigningTracker.Get(ctx, dc.BtcPk.MustMarshal())
+		if err == nil {
+			continue
+		}
+
+		if errors.Is(err, collections.ErrNotFound) {
+			signingInfo = ftypes.NewFinalityProviderSigningInfo(
+				dc.BtcPk,
+				currentHeight,
+				0,
+			)
+
+			setErr := k.FinalityProviderSigningTracker.Set(ctx, dc.BtcPk.MustMarshal(), signingInfo)
+			if setErr != nil {
+				return setErr
+			}
+		} else {
+			return fmt.Errorf("failed to get signing info from tracker for fp %s", pk)
+		}
 	}
 
 	return nil

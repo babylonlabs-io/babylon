@@ -211,6 +211,172 @@ func TestHandleResumeFinalityProposalWithJailedAndSlashedFp(t *testing.T) {
 	}
 }
 
+func TestHandleResumeFinalityProposalMissingSigningInfo(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+	iKeeper := types.NewMockIncentiveKeeper(ctrl)
+	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+
+	// Setup heights
+	haltingHeight := uint64(100)
+	currentHeight := uint64(110)
+	ctx = datagen.WithCtxHeight(ctx, currentHeight)
+
+	// Setup 3 active FPs with proper signing info
+	activeFpNum := 3
+	activeFpPks := generateNFpPks(t, r, activeFpNum)
+	setupActiveFps(t, activeFpPks, haltingHeight, fKeeper, ctx)
+
+	// Setup 1 inactive FP WITHOUT signing info
+	inactiveFpPk, err := datagen.GenRandomBIP340PubKey(r)
+	require.NoError(t, err)
+
+	// Setup blocks and distribution cache
+	for h := haltingHeight; h <= currentHeight; h++ {
+		// Create non-finalized block
+		fKeeper.SetBlock(ctx, &types.IndexedBlock{
+			Height:    h,
+			AppHash:   datagen.GenRandomByteArray(r, 32),
+			Finalized: false,
+		})
+
+		// Set up distribution cache
+		dc := types.NewVotingPowerDistCache()
+
+		// Add active FPs with high power
+		for i := 0; i < activeFpNum; i++ {
+			fKeeper.SetVotingPower(ctx, activeFpPks[i].MustMarshal(), h, 100)
+			dc.AddFinalityProviderDistInfo(&types.FinalityProviderDistInfo{
+				BtcPk:          &activeFpPks[i],
+				TotalBondedSat: 100,
+				IsTimestamped:  true,
+			})
+		}
+
+		// Create a copy of inactiveFpPk to use in the struct
+		inactivePkCopy := *inactiveFpPk
+
+		// Add inactive FP with lower power (only to cache, not as active voter)
+		dc.AddFinalityProviderDistInfo(&types.FinalityProviderDistInfo{
+			BtcPk:          &inactivePkCopy,
+			TotalBondedSat: 50,
+			IsTimestamped:  true,
+		})
+
+		// Only top 3 FPs are active
+		dc.ApplyActiveFinalityProviders(3)
+
+		// Only first FP votes
+		votedSig, err := bbntypes.NewSchnorrEOTSSig(datagen.GenRandomByteArray(r, 32))
+		require.NoError(t, err)
+		fKeeper.SetSig(ctx, h, &activeFpPks[0], votedSig)
+
+		// Set the cache
+		fKeeper.SetVotingPowerDistCache(ctx, h, dc)
+	}
+
+	// Set up expectations for the FP objects
+	for i := 0; i < activeFpNum; i++ {
+		fpPk := activeFpPks[i]
+		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), fpPk.MustMarshal()).DoAndReturn(
+			func(_ interface{}, _ []byte) (*bstypes.FinalityProvider, error) {
+				fp := &bstypes.FinalityProvider{
+					Jailed: false,
+				}
+				fp.BtcPk = new(bbntypes.BIP340PubKey)
+				*fp.BtcPk = fpPk
+				return fp, nil
+			},
+		).AnyTimes()
+	}
+
+	// Setup the inactive FP expectation
+	bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), inactiveFpPk.MustMarshal()).DoAndReturn(
+		func(_ interface{}, _ []byte) (*bstypes.FinalityProvider, error) {
+			fp := &bstypes.FinalityProvider{
+				Jailed: false,
+			}
+			fp.BtcPk = new(bbntypes.BIP340PubKey)
+			*fp.BtcPk = *inactiveFpPk
+			return fp, nil
+		},
+	).AnyTimes()
+
+	// Setup expectations for jailing
+	bsKeeper.EXPECT().JailFinalityProvider(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return().AnyTimes()
+
+	// Verify that initially the inactive FP is NOT part of the active set
+	initialDc := fKeeper.GetVotingPowerDistCache(ctx, currentHeight)
+	initialActiveFPs := initialDc.GetActiveFinalityProviderSet()
+	require.NotContains(t, initialActiveFPs, inactiveFpPk.MarshalHex(),
+		"Inactive FP should not be active initially")
+
+	// Now jail two active FPs, which should make room for the inactive FP to become active
+	err = fKeeper.HandleResumeFinalityProposal(
+		ctx,
+		[]string{activeFpPks[1].MarshalHex(), activeFpPks[2].MarshalHex()},
+		uint32(haltingHeight),
+	)
+	require.NoError(t, err)
+
+	// Verify the inactive FP is now active after redistribution
+	dc := fKeeper.GetVotingPowerDistCache(ctx, currentHeight)
+	activeFPs := dc.GetActiveFinalityProviderSet()
+	require.Contains(t, activeFPs, inactiveFpPk.MarshalHex(), "Inactive FP should now be active")
+
+	// Create next height
+	nextHeight := currentHeight + 1
+	ctx = datagen.WithCtxHeight(ctx, nextHeight)
+
+	// Set up the voting power table to include the inactive FP at next height
+	// This ensures it will be processed by HandleLiveness
+	fKeeper.SetBlock(ctx, &types.IndexedBlock{
+		Height:    nextHeight,
+		AppHash:   datagen.GenRandomByteArray(r, 32),
+		Finalized: false,
+	})
+
+	// Create a DC for the next height
+	nextDc := types.NewVotingPowerDistCache()
+
+	// Add inactive FP as active FP
+	inactivePkCopy := *inactiveFpPk
+	nextDc.AddFinalityProviderDistInfo(&types.FinalityProviderDistInfo{
+		BtcPk:          &inactivePkCopy,
+		TotalBondedSat: 50,
+		IsTimestamped:  true,
+	})
+
+	// Add remaining active FP
+	nextDc.AddFinalityProviderDistInfo(&types.FinalityProviderDistInfo{
+		BtcPk:          &activeFpPks[0],
+		TotalBondedSat: 100,
+		IsTimestamped:  true,
+	})
+
+	// Set both FPs as active
+	nextDc.ApplyActiveFinalityProviders(2)
+	fKeeper.SetVotingPowerDistCache(ctx, nextHeight, nextDc)
+	fKeeper.SetVotingPower(ctx, inactiveFpPk.MustMarshal(), nextHeight, 50)
+	fKeeper.SetVotingPower(ctx, activeFpPks[0].MustMarshal(), nextHeight, 100)
+
+	nextActiveSet := nextDc.GetActiveFinalityProviderSet()
+	require.Contains(t, nextActiveSet, inactiveFpPk.MarshalHex(), "FP should be active in next height cache")
+
+	// Verify we have signing info for the new active FP
+	_, err = fKeeper.FinalityProviderSigningTracker.Get(ctx, inactiveFpPk.MustMarshal())
+	require.NoError(t, err, "Should have signing info for new active FP")
+
+	require.NotPanics(t, func() {
+		fKeeper.HandleLiveness(ctx, int64(nextHeight))
+	}, "Expected panic due to missing signing info for newly active FP")
+}
+
 func generateNFpPks(t *testing.T, r *rand.Rand, n int) []bbntypes.BIP340PubKey {
 	fpPks := make([]bbntypes.BIP340PubKey, 0, n)
 	for i := 0; i < n; i++ {
