@@ -23,6 +23,7 @@ import (
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 	incentivetypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
 	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 )
 
 var (
@@ -36,6 +37,7 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         nil,
 		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
+		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 	}
 )
 
