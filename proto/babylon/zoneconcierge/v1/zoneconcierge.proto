@@ -131,9 +131,9 @@ message ProofFinalizedChainInfo {
     The following fields include proofs that attest the chain info is
     BTC-finalised
   */
-  // proof_cz_header_in_epoch is the proof that the BSN's header is timestamped
+  // proof_bsn_header_in_epoch is the proof that the BSN's header is timestamped
   // within a certain epoch
-  tendermint.crypto.ProofOps proof_cz_header_in_epoch = 1;
+  tendermint.crypto.ProofOps proof_bsn_header_in_epoch = 1;
   // proof_epoch_sealed is the proof that the epoch is sealed
   babylon.zoneconcierge.v1.ProofEpochSealed proof_epoch_sealed = 2;
   // proof_epoch_submitted is the proof that the epoch's checkpoint is included
