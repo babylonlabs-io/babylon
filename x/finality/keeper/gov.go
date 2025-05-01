@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	bbntypes "github.com/babylonlabs-io/babylon/types"
+	ftypes "github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 // HandleResumeFinalityProposal handles the resume finality proposal in the following steps:
@@ -24,14 +25,19 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 	currentTime := ctx.HeaderInfo().Time
 	voters := k.GetVoters(ctx, uint64(haltingHeight))
 
+	if uint64(haltingHeight) < params.FinalityActivationHeight {
+		return fmt.Errorf("finality halting height %d cannot be lower than finality activation height %d",
+			haltingHeight, params.FinalityActivationHeight)
+	}
+
 	// jail the given finality providers
-	fpPks := make([]*bbntypes.BIP340PubKey, 0, len(fpPksHex))
+	fpPksToJail := make(map[string]struct{}, len(fpPksHex))
 	for _, fpPkHex := range fpPksHex {
 		fpPk, err := bbntypes.NewBIP340PubKeyFromHex(fpPkHex)
 		if err != nil {
 			return fmt.Errorf("invalid finality provider public key %s: %w", fpPkHex, err)
 		}
-		fpPks = append(fpPks, fpPk)
+		fpPksToJail[fpPkHex] = struct{}{}
 
 		_, voted := voters[fpPkHex]
 		if voted {
@@ -94,27 +100,39 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 		)
 	}
 
-	// set the all the given finality providers voting power to 0
-	for h := uint64(haltingHeight); h <= uint64(currentHeight); h++ {
-		distCache := k.GetVotingPowerDistCache(ctx, h)
-		activeFps := distCache.GetActiveFinalityProviderSet()
-		for _, fpToJail := range fpPks {
-			fpDstInf, exists := activeFps[fpToJail.MarshalHex()]
-			if exists {
+	// set the all the given finality providers voting power to 0 and updates voting power distribution cache
+	for blkHeight := uint64(haltingHeight); blkHeight <= uint64(currentHeight); blkHeight++ {
+		dc := k.GetVotingPowerDistCache(ctx, blkHeight)
+		newDc := ftypes.NewVotingPowerDistCache()
+
+		for i := range dc.FinalityProviders {
+			// create a copy of the finality provider
+			fp := *dc.FinalityProviders[i]
+			fpBTCPKHex := fp.BtcPk.MarshalHex()
+
+			_, shouldJail := fpPksToJail[fpBTCPKHex]
+			if shouldJail {
 				// if the fp was already slashed at that height, keep as it was
 				// and do not update to jailed.
-				if !fpDstInf.IsSlashed {
-					fpDstInf.IsJailed = true
+				if !fp.IsSlashed {
+					fp.IsJailed = true
 				}
 
-				k.SetVotingPower(ctx, fpToJail.MustMarshal(), h, 0)
+				k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), blkHeight, 0)
 			}
+
+			// add this finality provider to the new cache if it has voting power
+			newDc.AddFinalityProviderDistInfo(&fp)
 		}
 
-		distCache.ApplyActiveFinalityProviders(params.MaxActiveFinalityProviders)
+		// sets the total vp in the new dc
+		newDc.ApplyActiveFinalityProviders(dc.NumActiveFps)
 
 		// set the voting power distribution cache of the current height
-		k.SetVotingPowerDistCache(ctx, h, distCache)
+		k.SetVotingPowerDistCache(ctx, blkHeight, newDc)
+
+		// ensure every active finality provider has signing info
+		k.HandleFPStateUpdates(ctx, dc, newDc)
 	}
 
 	return nil
