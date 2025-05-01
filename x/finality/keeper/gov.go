@@ -8,6 +8,7 @@ import (
 
 	bbntypes "github.com/babylonlabs-io/babylon/types"
 	bstypes "github.com/babylonlabs-io/babylon/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/x/finality/types"
 )
 
 // HandleResumeFinalityProposal handles the resume finality proposal in the following steps:
@@ -85,7 +86,7 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 		k.SetVotingPowerDistCache(ctx, h, distCache)
 	}
 
-	k.TallyBlocks(ctx)
+	k.TallyBlocks(ctx, types.MaxFinalizedRewardedBlocksPerEndBlock)
 
 	return nil
 }
