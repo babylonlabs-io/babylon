@@ -78,7 +78,22 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
 	monitorkeeper "github.com/babylonlabs-io/babylon/v2/x/monitor/keeper"
 	monitortypes "github.com/babylonlabs-io/babylon/v2/x/monitor/types"
+	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
+	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 )
+
+// Enable all default present capabilities.
+var tokenFactoryCapabilities = []string{
+	tokenfactorytypes.EnableBurnFrom,
+	tokenfactorytypes.EnableForceTransfer,
+	tokenfactorytypes.EnableSetMetadata,
+	// SudoMint allows addresses of your choosing to mint tokens based on specific conditions.
+	// via the IsSudoAdminFunc
+	tokenfactorytypes.EnableSudoMint,
+	// CommunityPoolFeeFunding sends tokens to the community pool when a new fee is charged (if one is set in params).
+	// This is useful for ICS chains, or networks who wish to just have the fee tokens burned (not gas fees, just the extra on top).
+	tokenfactorytypes.EnableCommunityPoolFeeFunding,
+}
 
 // Capabilities of the IBC wasm contracts
 func WasmCapabilities() []string {
@@ -115,6 +130,9 @@ type AppKeepers struct {
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
 	CircuitKeeper         circuitkeeper.Keeper
+
+	// Token factory
+	TokenFactoryKeeper tokenfactorykeeper.Keeper
 
 	// Babylon modules
 	EpochingKeeper       epochingkeeper.Keeper
@@ -199,6 +217,7 @@ func (ak *AppKeepers) InitKeepers(
 		wasmtypes.StoreKey,
 		// tokenomics-related modules
 		incentivetypes.StoreKey,
+		tokenfactorytypes.StoreKey,
 	)
 	ak.keys = keys
 
@@ -523,7 +542,20 @@ func (ak *AppKeepers) InitKeepers(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	ak.EvidenceKeeper = *evidenceKeeper
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.EpochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
+	// Create the TokenFactory Keeper
+	ak.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
+		appCodec,
+		ak.keys[tokenfactorytypes.StoreKey],
+		maccPerms,
+		ak.AccountKeeper,
+		ak.BankKeeper,
+		ak.DistrKeeper,
+		tokenFactoryCapabilities,
+		tokenfactorykeeper.DefaultIsSudoAdminFunc,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.TokenFactoryKeeper, &epochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
@@ -594,6 +626,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// whole usage of params module
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
+	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)
 
 	return paramsKeeper
 }
