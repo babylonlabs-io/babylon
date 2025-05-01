@@ -31,13 +31,13 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 	}
 
 	// jail the given finality providers
-	fpPks := make([]*bbntypes.BIP340PubKey, 0, len(fpPksHex))
+	fpPksToJail := make(map[string]struct{}, len(fpPksHex))
 	for _, fpPkHex := range fpPksHex {
 		fpPk, err := bbntypes.NewBIP340PubKeyFromHex(fpPkHex)
 		if err != nil {
 			return fmt.Errorf("invalid finality provider public key %s: %w", fpPkHex, err)
 		}
-		fpPks = append(fpPks, fpPk)
+		fpPksToJail[fpPkHex] = struct{}{}
 
 		_, voted := voters[fpPkHex]
 		if voted {
@@ -100,57 +100,39 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 		)
 	}
 
-	// set the all the given finality providers voting power to 0
-	allActiveFps := make(map[string]*ftypes.FinalityProviderDistInfo)
-	for h := uint64(haltingHeight); h <= uint64(currentHeight); h++ {
-		distCache := k.GetVotingPowerDistCache(ctx, h)
-		activeFps := distCache.GetActiveFinalityProviderSet()
-		for _, fpToJail := range fpPks {
-			fpDstInf, exists := activeFps[fpToJail.MarshalHex()]
-			if exists {
+	// set the all the given finality providers voting power to 0 and updates voting power distribution cache
+	for blkHeight := uint64(haltingHeight); blkHeight <= uint64(currentHeight); blkHeight++ {
+		dc := k.GetVotingPowerDistCache(ctx, blkHeight)
+		newDc := ftypes.NewVotingPowerDistCache()
+
+		for i := range dc.FinalityProviders {
+			// create a copy of the finality provider
+			fp := *dc.FinalityProviders[i]
+			fpBTCPKHex := fp.BtcPk.MarshalHex()
+
+			_, shouldJail := fpPksToJail[fpBTCPKHex]
+			if shouldJail {
 				// if the fp was already slashed at that height, keep as it was
 				// and do not update to jailed.
-				if !fpDstInf.IsSlashed {
-					fpDstInf.IsJailed = true
+				if !fp.IsSlashed {
+					fp.IsJailed = true
 				}
 
-				k.SetVotingPower(ctx, fpToJail.MustMarshal(), h, 0)
+				k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), blkHeight, 0)
 			}
+
+			// add this finality provider to the new cache if it has voting power
+			newDc.AddFinalityProviderDistInfo(&fp)
 		}
 
-		distCache.ApplyActiveFinalityProviders(params.MaxActiveFinalityProviders)
-
-		// add active fps to the all active fps set if it does not exist
-		for pk, fp := range distCache.GetActiveFinalityProviderSet() {
-			allActiveFps[pk] = fp
-		}
+		// sets the total vp in the new dc
+		newDc.ApplyActiveFinalityProviders(dc.NumActiveFps)
 
 		// set the voting power distribution cache of the current height
-		k.SetVotingPowerDistCache(ctx, h, distCache)
-	}
+		k.SetVotingPowerDistCache(ctx, blkHeight, newDc)
 
-	// it is possible that some inactive fps become active after the proposal
-	// therefore, we need to ensure every active finality provider has signing info
-	for pk, dc := range allActiveFps {
-		hasSigningInfo, err := k.FinalityProviderSigningTracker.Has(ctx, dc.BtcPk.MustMarshal())
-		if err != nil {
-			return fmt.Errorf("failed to get signing info from tracker for fp %s - %w", pk, err)
-		}
-
-		if hasSigningInfo {
-			continue
-		}
-
-		signingInfo := ftypes.NewFinalityProviderSigningInfo(
-			dc.BtcPk,
-			currentHeight,
-			0,
-		)
-
-		err = k.FinalityProviderSigningTracker.Set(ctx, dc.BtcPk.MustMarshal(), signingInfo)
-		if err != nil {
-			return fmt.Errorf("failed to set signing info for fp %s - %w", pk, err)
-		}
+		// ensure every active finality provider has signing info
+		k.HandleFPStateUpdates(ctx, dc, newDc)
 	}
 
 	return nil
