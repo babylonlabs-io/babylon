@@ -75,6 +75,7 @@ transfer stack
 ### Bug fixes
 
 - [#829](https://github.com/babylonlabs-io/babylon/pull/829) fix: add checks for slashed fp in gov resume finality
+- [#860](https://github.com/babylonlabs-io/babylon/pull/860) fix: ensure active fps have signing info after finality resumption proposal
 - [#796](https://github.com/babylonlabs-io/babylon/pull/796) fix: goreleaser add `mainnet` build flag to generated binary
 - [#741](https://github.com/babylonlabs-io/babylon/pull/741) chore: fix register consumer CLI
 - [#731](https://github.com/babylonlabs-io/babylon/pull/731) chore: fix block timeout in Babylon client
