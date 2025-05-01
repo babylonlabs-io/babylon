@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -205,4 +206,26 @@ func (qm *QueuedMessage) UnwrapToSdkMsg() sdk.Msg {
 		panic(errorsmod.Wrap(ErrInvalidQueuedMessageType, qm.String()))
 	}
 	return unwrappedMsgWithType
+}
+
+func (e Validator) Validate() error {
+	valAddrStr := sdk.ValAddress(e.Addr).String()
+	_, err := sdk.ValAddressFromBech32(valAddrStr)
+	return err
+}
+
+func (vl ValidatorLifecycle) Validate() error {
+	if len(vl.ValLife) == 0 {
+		return errors.New("validator lyfecycle is empty")
+	}
+	_, err := sdk.ValAddressFromBech32(vl.ValAddr)
+	return err
+}
+
+func (dl DelegationLifecycle) Validate() error {
+	if len(dl.DelLife) == 0 {
+		return errors.New("delegation lyfecycle is empty")
+	}
+	_, err := sdk.AccAddressFromBech32(dl.DelAddr)
+	return err
 }
