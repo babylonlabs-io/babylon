@@ -162,6 +162,8 @@ func (vpdc VotingPowerDistCache) Validate() error {
 		if _, exists := fpMap[fp.BtcPk.MarshalHex()]; exists {
 			return fmt.Errorf("invalid voting power distribution cache. Duplicate finality provider entry with BTC PK %s", fp.BtcPk.MarshalHex())
 		}
+		fpMap[fp.BtcPk.MarshalHex()] = struct{}{}
+		
 		if err := fp.Validate(); err != nil {
 			return err
 		}

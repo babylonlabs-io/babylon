@@ -2,6 +2,7 @@ package types
 
 import (
 	fmt "fmt"
+	"sort"
 
 	"github.com/babylonlabs-io/babylon/v2/types"
 )
@@ -240,4 +241,56 @@ func (vpc VotingPowerDistCacheBlkHeight) Validate() error {
 	}
 
 	return vpc.VpDistribution.Validate()
+}
+
+// Helper function to sort slices to get a deterministic
+// result on the tests
+func SortData(gs *GenesisState) {
+	sort.Slice(gs.IndexedBlocks, func(i, j int) bool {
+		return gs.IndexedBlocks[i].Height < gs.IndexedBlocks[j].Height
+	})
+	sort.Slice(gs.Evidences, func(i, j int) bool {
+		// sort by BTC PK and height
+		bzi, _ := gs.Evidences[i].FpBtcPk.Marshal()
+		bzi = append(bzi, byte(gs.Evidences[i].BlockHeight))
+		bzj, _ := gs.Evidences[j].FpBtcPk.Marshal()
+		bzj = append(bzj, byte(gs.Evidences[j].BlockHeight))
+		return string(bzi) < string(bzj)
+	})
+	sort.Slice(gs.VoteSigs, func(i, j int) bool {
+		// sort by BTC PK and height
+		bzi, _ := gs.VoteSigs[i].FpBtcPk.Marshal()
+		bzi = append(bzi, byte(gs.VoteSigs[i].BlockHeight))
+		bzj, _ := gs.VoteSigs[j].FpBtcPk.Marshal()
+		bzj = append(bzj, byte(gs.VoteSigs[j].BlockHeight))
+		return string(bzi) < string(bzj)
+	})
+	sort.Slice(gs.PublicRandomness, func(i, j int) bool {
+		// sort by BTC PK and height
+		bzi, _ := gs.PublicRandomness[i].FpBtcPk.Marshal()
+		bzi = append(bzi, byte(gs.PublicRandomness[i].BlockHeight))
+		bzj, _ := gs.PublicRandomness[j].FpBtcPk.Marshal()
+		bzj = append(bzj, byte(gs.PublicRandomness[j].BlockHeight))
+		return string(bzi) < string(bzj)
+	})
+	sort.Slice(gs.PubRandCommit, func(i, j int) bool {
+		return gs.PubRandCommit[i].FpBtcPk.MarshalHex() < gs.PubRandCommit[j].FpBtcPk.MarshalHex()
+	})
+	sort.Slice(gs.SigningInfos, func(i, j int) bool {
+		return gs.SigningInfos[i].FpBtcPk.MarshalHex() < gs.SigningInfos[j].FpBtcPk.MarshalHex()
+	})
+	sort.Slice(gs.MissedBlocks, func(i, j int) bool {
+		return gs.MissedBlocks[i].FpBtcPk.MarshalHex() < gs.MissedBlocks[j].FpBtcPk.MarshalHex()
+	})
+	sort.Slice(gs.VotingPowers, func(i, j int) bool {
+		// sort by BTC PK and height
+		bzi, _ := gs.VotingPowers[i].FpBtcPk.Marshal()
+		bzi = append(bzi, byte(gs.VotingPowers[i].BlockHeight))
+		bzj, _ := gs.VotingPowers[j].FpBtcPk.Marshal()
+		bzj = append(bzj, byte(gs.VotingPowers[j].BlockHeight))
+		return string(bzi) < string(bzj)
+	})
+	sort.Slice(gs.VpDstCache, func(i, j int) bool {
+		return gs.VpDstCache[i].BlockHeight < gs.VpDstCache[j].BlockHeight
+	})
 }
