@@ -68,6 +68,8 @@ check of rewards
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
+- [#847](https://github.com/babylonlabs-io/babylon/pull/847) Add ibc callbacks to
+transfer stack
 
 ### Bug fixes
 
