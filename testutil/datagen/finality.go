@@ -165,6 +165,7 @@ func GenRandomFinalityGenesisState(r *rand.Rand) (*ftypes.GenesisState, error) {
 		missedBlocks = make([]ftypes.FinalityProviderMissedBlocks, entriesCount)
 		votingPowers = make([]*ftypes.VotingPowerFP, entriesCount)
 		vpDistCache  = make([]*ftypes.VotingPowerDistCacheBlkHeight, entriesCount)
+		params       = ftypes.DefaultParams()
 	)
 
 	for i := range entriesCount {
@@ -227,8 +228,11 @@ func GenRandomFinalityGenesisState(r *rand.Rand) (*ftypes.GenesisState, error) {
 
 		// populate missed blocks
 		missedBlocks[i] = ftypes.FinalityProviderMissedBlocks{
-			FpBtcPk:      btcPk,
-			MissedBlocks: []ftypes.MissedBlock{{Index: int64(RandomInt(r, 10000))}},
+			FpBtcPk: btcPk,
+			MissedBlocks: []ftypes.MissedBlock{{
+				Index:  int64(RandomInt(r, 10000)) % params.SignedBlocksWindow,
+				Missed: true,
+			}},
 		}
 
 		// populate voting powers
@@ -250,7 +254,7 @@ func GenRandomFinalityGenesisState(r *rand.Rand) (*ftypes.GenesisState, error) {
 	}
 
 	return &ftypes.GenesisState{
-		Params:               ftypes.DefaultParams(),
+		Params:               params,
 		IndexedBlocks:        blocks,
 		Evidences:            evidences,
 		VoteSigs:             votes,

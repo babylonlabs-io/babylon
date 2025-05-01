@@ -250,28 +250,13 @@ func SortData(gs *GenesisState) {
 		return gs.IndexedBlocks[i].Height < gs.IndexedBlocks[j].Height
 	})
 	sort.Slice(gs.Evidences, func(i, j int) bool {
-		// sort by BTC PK and height
-		bzi, _ := gs.Evidences[i].FpBtcPk.Marshal()
-		bzi = append(bzi, byte(gs.Evidences[i].BlockHeight))
-		bzj, _ := gs.Evidences[j].FpBtcPk.Marshal()
-		bzj = append(bzj, byte(gs.Evidences[j].BlockHeight))
-		return string(bzi) < string(bzj)
+		return lessByPubKeyAndHeight(gs.Evidences[i].FpBtcPk, gs.Evidences[i].BlockHeight, gs.Evidences[j].FpBtcPk, gs.Evidences[j].BlockHeight)
 	})
 	sort.Slice(gs.VoteSigs, func(i, j int) bool {
-		// sort by BTC PK and height
-		bzi, _ := gs.VoteSigs[i].FpBtcPk.Marshal()
-		bzi = append(bzi, byte(gs.VoteSigs[i].BlockHeight))
-		bzj, _ := gs.VoteSigs[j].FpBtcPk.Marshal()
-		bzj = append(bzj, byte(gs.VoteSigs[j].BlockHeight))
-		return string(bzi) < string(bzj)
+		return lessByPubKeyAndHeight(gs.VoteSigs[i].FpBtcPk, gs.VoteSigs[i].BlockHeight, gs.VoteSigs[j].FpBtcPk, gs.VoteSigs[j].BlockHeight)
 	})
 	sort.Slice(gs.PublicRandomness, func(i, j int) bool {
-		// sort by BTC PK and height
-		bzi, _ := gs.PublicRandomness[i].FpBtcPk.Marshal()
-		bzi = append(bzi, byte(gs.PublicRandomness[i].BlockHeight))
-		bzj, _ := gs.PublicRandomness[j].FpBtcPk.Marshal()
-		bzj = append(bzj, byte(gs.PublicRandomness[j].BlockHeight))
-		return string(bzi) < string(bzj)
+		return lessByPubKeyAndHeight(gs.PublicRandomness[i].FpBtcPk, gs.PublicRandomness[i].BlockHeight, gs.PublicRandomness[j].FpBtcPk, gs.PublicRandomness[j].BlockHeight)
 	})
 	sort.Slice(gs.PubRandCommit, func(i, j int) bool {
 		return gs.PubRandCommit[i].FpBtcPk.MarshalHex() < gs.PubRandCommit[j].FpBtcPk.MarshalHex()
@@ -283,14 +268,21 @@ func SortData(gs *GenesisState) {
 		return gs.MissedBlocks[i].FpBtcPk.MarshalHex() < gs.MissedBlocks[j].FpBtcPk.MarshalHex()
 	})
 	sort.Slice(gs.VotingPowers, func(i, j int) bool {
-		// sort by BTC PK and height
-		bzi, _ := gs.VotingPowers[i].FpBtcPk.Marshal()
-		bzi = append(bzi, byte(gs.VotingPowers[i].BlockHeight))
-		bzj, _ := gs.VotingPowers[j].FpBtcPk.Marshal()
-		bzj = append(bzj, byte(gs.VotingPowers[j].BlockHeight))
-		return string(bzi) < string(bzj)
+		return lessByPubKeyAndHeight(gs.VotingPowers[i].FpBtcPk, gs.VotingPowers[i].BlockHeight, gs.VotingPowers[j].FpBtcPk, gs.VotingPowers[j].BlockHeight)
 	})
 	sort.Slice(gs.VpDstCache, func(i, j int) bool {
 		return gs.VpDstCache[i].BlockHeight < gs.VpDstCache[j].BlockHeight
 	})
+}
+
+// lessByPubKeyAndHeight provides a deterministic comparator by
+// the pubkey and height.
+func lessByPubKeyAndHeight(pk1 *types.BIP340PubKey, h1 uint64, pk2 *types.BIP340PubKey, h2 uint64) bool {
+	hex1 := pk1.MarshalHex()
+	hex2 := pk2.MarshalHex()
+
+	if hex1 != hex2 {
+		return hex1 < hex2
+	}
+	return h1 < h2
 }
