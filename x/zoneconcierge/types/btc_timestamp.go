@@ -168,7 +168,7 @@ func VerifyBSNHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, p
 		return err
 	}
 
-	// ensure epoch number is same in epoch and CZ header
+	// ensure epoch number is the same in the epoch and the BSN header
 	if epoch.EpochNumber != header.BabylonEpoch {
 		return fmt.Errorf("epoch.EpochNumber (%d) is not equal to header.BabylonEpoch (%d)", epoch.EpochNumber, header.BabylonEpoch)
 	}
@@ -183,7 +183,7 @@ func VerifyBSNHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, p
 	}
 
 	if err := VerifyStore(root, StoreKey, GetCZHeaderKey(header.ConsumerId, header.Height), headerBytes, proof); err != nil {
-		return errorsmod.Wrapf(ErrInvalidMerkleProof, "invalid inclusion proof for CZ header: %v", err)
+		return errorsmod.Wrapf(ErrInvalidMerkleProof, "invalid inclusion proof for BSN header: %v", err)
 	}
 
 	return nil
