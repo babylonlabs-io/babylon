@@ -49,7 +49,7 @@ func FuzzBTCTimestamp(f *testing.F) {
 		// chain is at height 1 thus epoch 1
 
 		/*
-			generate BSN header and its inclusion proof to an epoch
+			generate Consumer header and its inclusion proof to an epoch
 		*/
 		// enter block 11, 1st block of epoch 2
 		epochInterval := ek.GetParams(h.Ctx).EpochInterval
@@ -82,12 +82,12 @@ func FuzzBTCTimestamp(f *testing.F) {
 		h.NoError(err)
 
 		// generate inclusion proof
-		proof, err := zck.ProveBSNHeaderInEpoch(h.Ctx, indexedHeader, epochWithHeader)
+		proof, err := zck.ProveConsumerHeaderInEpoch(h.Ctx, indexedHeader, epochWithHeader)
 		h.NoError(err)
 
 		btcTs.EpochInfo = epochWithHeader
 		btcTs.Header = indexedHeader
-		btcTs.Proof.ProofBsnHeaderInEpoch = proof
+		btcTs.Proof.ProofConsumerHeaderInEpoch = proof
 
 		/*
 			seal the epoch and generate ProofEpochSealed

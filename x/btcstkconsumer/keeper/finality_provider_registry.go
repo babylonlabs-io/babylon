@@ -12,7 +12,7 @@ import (
 	btcstktypes "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
 )
 
-// SetConsumerFinalityProvider adds the given finality provider to BSN chains KVStore
+// SetConsumerFinalityProvider adds the given finality provider to Consumer chains KVStore
 func (k Keeper) SetConsumerFinalityProvider(ctx context.Context, fp *btcstaking.FinalityProvider) {
 	store := k.finalityProviderStore(ctx, fp.ConsumerId)
 	fpBytes := k.cdc.MustMarshal(fp)

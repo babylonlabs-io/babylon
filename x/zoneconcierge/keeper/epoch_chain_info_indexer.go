@@ -112,14 +112,14 @@ func (k Keeper) recordEpochChainInfoProofs(ctx context.Context, epochNumber uint
 
 		lastHeaderInEpoch := chainInfo.ChainInfo.LatestHeader
 		if lastHeaderInEpoch.BabylonEpoch == curEpoch.EpochNumber {
-			// get proofBSNHeaderInEpoch
-			proofBSNHeaderInEpoch, err := k.ProveBSNHeaderInEpoch(ctx, lastHeaderInEpoch, curEpoch)
+			// get proofConsumerHeaderInEpoch
+			proofConsumerHeaderInEpoch, err := k.ProveConsumerHeaderInEpoch(ctx, lastHeaderInEpoch, curEpoch)
 			if err != nil {
 				// only programming error is possible here
-				panic(fmt.Errorf("failed to generate proofBSNHeaderInEpoch for consumer %s: %w", consumerID, err))
+				panic(fmt.Errorf("failed to generate proofConsumerHeaderInEpoch for consumer %s: %w", consumerID, err))
 			}
 
-			chainInfo.ProofHeaderInEpoch = proofBSNHeaderInEpoch
+			chainInfo.ProofHeaderInEpoch = proofConsumerHeaderInEpoch
 
 			// set chain info with proof back
 			k.setEpochChainInfo(ctx, consumerID, epochNumber, chainInfo)
@@ -127,7 +127,7 @@ func (k Keeper) recordEpochChainInfoProofs(ctx context.Context, epochNumber uint
 	}
 }
 
-// epochChainInfoStore stores each epoch's latest ChainInfo for a BSN
+// epochChainInfoStore stores each epoch's latest ChainInfo for a Consumer
 // prefix: EpochChainInfoKey || consumerID
 // key: epochNumber
 // value: ChainInfoWithProof

@@ -133,7 +133,7 @@ func (k Keeper) GetAllConsumerIDs(ctx context.Context) []string {
 	return consumerIds
 }
 
-// msgChainInfoStore stores the information of canonical chains and forks for BSNs
+// msgChainInfoStore stores the information of canonical chains and forks for Consumers
 // prefix: ChainInfoKey
 // key: consumerId
 // value: ChainInfo

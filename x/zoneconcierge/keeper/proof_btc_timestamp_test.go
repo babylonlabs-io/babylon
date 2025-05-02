@@ -21,7 +21,7 @@ import (
 	zctypes "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
 )
 
-func FuzzProofBSNHeaderInEpoch(f *testing.F) {
+func FuzzProofConsumerHeaderInEpoch(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -61,11 +61,11 @@ func FuzzProofBSNHeaderInEpoch(f *testing.F) {
 		h.NoError(err)
 
 		// generate inclusion proof
-		proof, err := zck.ProveBSNHeaderInEpoch(h.Ctx, indexedHeader, epochWithHeader)
+		proof, err := zck.ProveConsumerHeaderInEpoch(h.Ctx, indexedHeader, epochWithHeader)
 		h.NoError(err)
 
 		// verify the inclusion proof
-		err = zctypes.VerifyBSNHeaderInEpoch(indexedHeader, epochWithHeader, proof)
+		err = zctypes.VerifyConsumerHeaderInEpoch(indexedHeader, epochWithHeader, proof)
 		h.NoError(err)
 	})
 }

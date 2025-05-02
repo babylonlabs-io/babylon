@@ -126,7 +126,7 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
-// MsgRegisterConsumer defines a message for registering BSN consumers to the
+// MsgRegisterConsumer defines a message for registering Consumers to the
 // btcstkconsumer module.
 type MsgRegisterConsumer struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
@@ -312,7 +312,7 @@ type MsgClient interface {
 	// UpdateParams defines a (governance) operation for updating the module
 	// parameters. The authority defaults to the x/gov module account.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
-	// RegisterConsumer registers a BSN consumer to the btcstkconsumer module.
+	// RegisterConsumer registers a Consumer to the btcstkconsumer module.
 	RegisterConsumer(ctx context.Context, in *MsgRegisterConsumer, opts ...grpc.CallOption) (*MsgRegisterConsumerResponse, error)
 }
 
@@ -347,7 +347,7 @@ type MsgServer interface {
 	// UpdateParams defines a (governance) operation for updating the module
 	// parameters. The authority defaults to the x/gov module account.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
-	// RegisterConsumer registers a BSN consumer to the btcstkconsumer module.
+	// RegisterConsumer registers a Consumer to the btcstkconsumer module.
 	RegisterConsumer(context.Context, *MsgRegisterConsumer) (*MsgRegisterConsumerResponse, error)
 }
 

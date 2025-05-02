@@ -37,11 +37,11 @@ message BTCHeaders {
 
 // BTCTimestamp is a BTC timestamp that carries information of a BTC-finalised epoch.
 // It includes a number of BTC headers, a raw checkpoint, an epoch metadata, and
-// a Cosmos BSN header if there exists Cosmos BSN headers checkpointed to this epoch.
+// a Cosmos Consumer header if there exists Cosmos Consumer headers checkpointed to this epoch.
 // Upon a newly finalised epoch in Babylon, Babylon will send a BTC timestamp to each
 // Cosmos zone that has phase-2 integration with Babylon via IBC.
 message BTCTimestamp {
-  // header is the last Cosmos BSN header in the finalized Babylon epoch
+  // header is the last Cosmos Consumer header in the finalized Babylon epoch
   babylon.zoneconcierge.v1.IndexedHeader header = 1;
 
   /*

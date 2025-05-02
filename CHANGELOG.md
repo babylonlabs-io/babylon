@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#869](https://github.com/babylonlabs-io/babylon/pull/869) Rename CZ to Consumer in btcstkconsumer and zoneconcierge.
 - [#869](https://github.com/babylonlabs-io/babylon/pull/869) Rename CZ to BSN / Consumer in btcstkconsumer and zoneconcierge.
 - [#846](https://github.com/babylonlabs-io/babylon/pull/846) Add tokenfactory module.
 - [#837](https://github.com/babylonlabs-io/babylon/pull/837) Bump repository to v2.

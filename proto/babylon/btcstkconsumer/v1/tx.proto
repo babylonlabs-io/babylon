@@ -16,7 +16,7 @@ service Msg {
   // UpdateParams defines a (governance) operation for updating the module
   // parameters. The authority defaults to the x/gov module account.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
-  // RegisterConsumer registers a BSN consumer to the btcstkconsumer module.
+  // RegisterConsumer registers a Consumer to the btcstkconsumer module.
   rpc RegisterConsumer(MsgRegisterConsumer) returns (MsgRegisterConsumerResponse);
 }
 
@@ -41,7 +41,7 @@ message MsgUpdateParams {
 // MsgUpdateParams message.
 message MsgUpdateParamsResponse {}
 
-// MsgRegisterConsumer defines a message for registering BSN consumers to the
+// MsgRegisterConsumer defines a message for registering Consumers to the
 // btcstkconsumer module.
 message MsgRegisterConsumer {
   option (cosmos.msg.v1.signer) = "signer";

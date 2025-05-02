@@ -65,7 +65,7 @@ func (k Keeper) GetAllRegisteredConsumerIDs(ctx context.Context) []string {
 	return consumerIDs
 }
 
-// consumerRegistryStore stores the information of registered BSN consumers
+// consumerRegistryStore stores the information of registered Consumers
 // prefix: ConsumerRegisterKey
 // key: consumerID
 // value: ConsumerRegister

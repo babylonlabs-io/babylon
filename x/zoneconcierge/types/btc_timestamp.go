@@ -19,7 +19,7 @@ import (
 	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 )
 
-func GetBSNHeaderKey(consumerID string, height uint64) []byte {
+func GetConsumerHeaderKey(consumerID string, height uint64) []byte {
 	key := CanonicalChainKey
 	key = append(key, []byte(consumerID)...)
 	key = append(key, sdk.Uint64ToBigEndian(height)...)
@@ -150,7 +150,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	return nil
 }
 
-func VerifyBSNHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, proof *cmtcrypto.ProofOps) error {
+func VerifyConsumerHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, proof *cmtcrypto.ProofOps) error {
 	// nil check
 	switch {
 	case header == nil:
@@ -168,7 +168,7 @@ func VerifyBSNHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, p
 		return err
 	}
 
-	// ensure epoch number is the same in the epoch and the BSN header
+	// ensure epoch number is the same in the epoch and the Consumer header
 	if epoch.EpochNumber != header.BabylonEpoch {
 		return fmt.Errorf("epoch.EpochNumber (%d) is not equal to header.BabylonEpoch (%d)", epoch.EpochNumber, header.BabylonEpoch)
 	}
@@ -182,8 +182,8 @@ func VerifyBSNHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, p
 		return err
 	}
 
-	if err := VerifyStore(root, StoreKey, GetBSNHeaderKey(header.ConsumerId, header.Height), headerBytes, proof); err != nil {
-		return errorsmod.Wrapf(ErrInvalidMerkleProof, "invalid inclusion proof for BSN header: %v", err)
+	if err := VerifyStore(root, StoreKey, GetConsumerHeaderKey(header.ConsumerId, header.Height), headerBytes, proof); err != nil {
+		return errorsmod.Wrapf(ErrInvalidMerkleProof, "invalid inclusion proof for Consumer header: %v", err)
 	}
 
 	return nil
@@ -331,8 +331,8 @@ func (ts *BTCTimestamp) VerifyStateless(
 		return err
 	}
 
-	// verify the BSN header is committed to the epoch
-	if err := VerifyBSNHeaderInEpoch(ts.Header, ts.EpochInfo, ts.Proof.ProofBsnHeaderInEpoch); err != nil {
+	// verify the Consumer header is committed to the epoch
+	if err := VerifyConsumerHeaderInEpoch(ts.Header, ts.EpochInfo, ts.Proof.ProofConsumerHeaderInEpoch); err != nil {
 		return err
 	}
 
