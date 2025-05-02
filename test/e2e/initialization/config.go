@@ -16,6 +16,7 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	slashtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/cosmos/gogoproto/proto"
@@ -257,6 +258,10 @@ func initGenesis(
 	if err != nil {
 		return err
 	}
+	err = updateModuleGenesis(appGenState, slashtypes.ModuleName, &slashtypes.GenesisState{}, updateSlashGenesis)
+	if err != nil {
+		return err
+	}
 
 	err = updateModuleGenesis(appGenState, btccheckpointtypes.ModuleName, btccheckpointtypes.DefaultGenesis(), updateBtccheckpointGenesis)
 	if err != nil {
@@ -317,14 +322,24 @@ func updateMintGenesis(mintGenState *minttypes.GenesisState) {
 }
 
 func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
+	minCommissionRate, _ := sdkmath.LegacyNewDecFromStr("0.03")
 	stakeGenState.Params = staketypes.Params{
 		BondDenom:         BabylonDenom,
 		MaxValidators:     100,
 		MaxEntries:        7,
 		HistoricalEntries: 10000,
 		UnbondingTime:     staketypes.DefaultUnbondingTime,
-		MinCommissionRate: sdkmath.LegacyZeroDec(),
+		MinCommissionRate: minCommissionRate,
 	}
+}
+
+func updateSlashGenesis(slashGenState *slashtypes.GenesisState) {
+	// POC: SLASH PARAMS ARE SET TO VALUES IDENTICAL TO MAINNET
+	slashGenState.Params.MinSignedPerWindow = sdkmath.LegacyMustNewDecFromStr("0.60")
+	slashGenState.Params.SignedBlocksWindow = 10000
+	slashGenState.Params.DowntimeJailDuration = 5 * time.Minute
+	slashGenState.Params.SlashFractionDowntime = sdkmath.LegacyMustNewDecFromStr("0.00")
+	slashGenState.Params.SlashFractionDoubleSign = sdkmath.LegacyMustNewDecFromStr("0.05")
 }
 
 func updateCrisisGenesis(crisisGenState *crisistypes.GenesisState) {

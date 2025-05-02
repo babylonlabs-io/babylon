@@ -1,5 +1,11 @@
 package e2e
 
+/*
+NOTE: This test suite has been updated to more closely match configuration for Mainnet.
+The min commission rate is now set to 3% instead of 0% for all validators. To accomodate the deducted commmission, we have to fund the validator rewards an additional time to make up for the deducted commission. This will get the
+cumulative rewards ratio close enough to MAX_INT_256 to trigger the overflow on slashing.
+*/
+
 import (
 	"testing"
 	"time"
@@ -69,7 +75,7 @@ func (s *PocTestSuite) TestPoc() {
 
 	// Transfer test denom from chain A to chain B
 	nodeA.SendIBCTransfer(s.valAccAddrA, s.valAccAddrB, "transfer", transferCoin)
-	nodeA.WaitForNextBlock()
+	nodeB.WaitForNextBlocks(15)
 
 	// Wait until denom is received on chain B
 	denomTrace := transfertypes.ParseDenomTrace(transfertypes.GetPrefixedDenom("transfer", "channel-0", denomA))
@@ -87,20 +93,35 @@ func (s *PocTestSuite) TestPoc() {
 	valAddrB := sdk.ValAddress(sdk.MustAccAddressFromBech32(s.valAccAddrB)).String()
 	rewardsAmount := sdk.NewCoin(ibcDenomA, maxSupply).String()
 	nodeB.FundValidatorRewardsPool(s.valAccAddrB, valAddrB, rewardsAmount)
-	nodeB.WaitForNextBlock()
+	nodeB.WaitForNextBlocks(15)
 
 	// Withdraw validator rewards for validator
-	nodeB.WithdrawValidatorRewards(s.valAccAddrB, valAddrB)
-	nodeB.WaitForNextBlock()
+	nodeB.WithdrawValidatorRewards(s.valAccAddrB, valAddrB, "--commission")
+	nodeB.WaitForNextBlocks(15)
+
+	// Fund more rewards to make up for deducted commission
+	rewardsAmountInt, ok := sdkmath.NewIntFromString("5963292596005040462609982330006597585015759079040119860848489729157008230953")
+	s.True(ok)
+	rewardsAmount = sdk.NewCoin(ibcDenomA, rewardsAmountInt).String()
+	nodeB.FundValidatorRewardsPool(s.valAccAddrB, valAddrB, rewardsAmount)
+	nodeB.WaitForNextBlocks(15)
+
+	// Withdraw validator rewards for validator again
+	nodeB.WithdrawValidatorRewards(s.valAccAddrB, valAddrB, "--commission")
+	nodeB.WaitForNextBlocks(15)
 
 	// Increase stake so node becomes bonded, initial stake was 1 token
 	stakeAmount := initialization.StakeAmountCoinB.String()
 	nodeB.Delegate(s.valAccAddrB, valAddrB, stakeAmount)
-	nodeB.WaitForNextBlocks(10)
+	nodeB.WaitForNextBlocks(15)
 
-	// Fund more validator rewards
+	ibcDenomABalance, err := nodeB.QueryBalance(s.valAccAddrB, ibcDenomA)
+	s.NoError(err)
+
+	// Fund more validator rewards with remaining balance
+	rewardsAmount = ibcDenomABalance.String()
 	nodeB.FundValidatorRewardsPool(s.valAccAddrB, valAddrB, rewardsAmount)
-	nodeB.WaitForNextBlocks(10)
+	nodeB.WaitForNextBlocks(15)
 
 	// Increase stake for node 1 so it has majority of stake, so chain keeps running while we set up double sign scenario
 	// Node 0 and 2 are being used for double sign testing
@@ -110,9 +131,9 @@ func (s *PocTestSuite) TestPoc() {
 	valAddrB1 := sdk.ValAddress(sdk.MustAccAddressFromBech32(valAccAddrB1)).String()
 	stakeAmount = sdk.NewCoin(initialization.BabylonDenom, sdkmath.NewInt(2500000000000)).String()
 	nodeB1.Delegate(valAccAddrB1, valAddrB1, stakeAmount)
-	nodeB1.WaitForNextBlocks(10)
+	nodeB1.WaitForNextBlocks(15)
 
-	// Replace keys on node0 to trigger double sign
+	// Replace keys on node to trigger double sign
 	privKeyFile := nodeB.ReadPrivValKeyFile()
 	nodeB0, err := chainB.GetNodeAtIndex(0)
 	s.NoError(err)
