@@ -19,7 +19,7 @@ import (
 	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 )
 
-func GetCZHeaderKey(consumerID string, height uint64) []byte {
+func GetBSNHeaderKey(consumerID string, height uint64) []byte {
 	key := CanonicalChainKey
 	key = append(key, []byte(consumerID)...)
 	key = append(key, sdk.Uint64ToBigEndian(height)...)
@@ -182,7 +182,7 @@ func VerifyBSNHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, p
 		return err
 	}
 
-	if err := VerifyStore(root, StoreKey, GetCZHeaderKey(header.ConsumerId, header.Height), headerBytes, proof); err != nil {
+	if err := VerifyStore(root, StoreKey, GetBSNHeaderKey(header.ConsumerId, header.Height), headerBytes, proof); err != nil {
 		return errorsmod.Wrapf(ErrInvalidMerkleProof, "invalid inclusion proof for BSN header: %v", err)
 	}
 

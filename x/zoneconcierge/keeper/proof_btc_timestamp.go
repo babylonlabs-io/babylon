@@ -13,7 +13,7 @@ import (
 )
 
 func (k Keeper) ProveBSNHeaderInEpoch(_ context.Context, header *types.IndexedHeader, epoch *epochingtypes.Epoch) (*cmtcrypto.ProofOps, error) {
-	bsnHeaderKey := types.GetCZHeaderKey(header.ConsumerId, header.Height)
+	bsnHeaderKey := types.GetBSNHeaderKey(header.ConsumerId, header.Height)
 	_, _, proof, err := k.QueryStore(types.StoreKey, bsnHeaderKey, int64(epoch.GetSealerBlockHeight()))
 	if err != nil {
 		return nil, err
