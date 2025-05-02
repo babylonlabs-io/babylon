@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+- [#822](https://github.com/babylonlabs-io/babylon/pull/822) chore: upgrade the make file: protobuf
+
 ### Bug fixes
 
 - [#845](https://github.com/babylonlabs-io/babylon/pull/845) fix: Properly wire `btclightclient` hook for
