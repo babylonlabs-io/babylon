@@ -52,16 +52,16 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
 		err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
 		require.NoError(t, err)
-		_, czFPPK, czFP, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
+		_, bsnFPPK, bsnFP, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
 		h.NoError(err)
-		czFPBTCPK := bbn.NewBIP340PubKeyFromBTCPK(czFPPK)
-		czFP2, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, consumerRegister.ConsumerId, czFPBTCPK)
+		bsnFPBTCPK := bbn.NewBIP340PubKeyFromBTCPK(bsnFPPK)
+		bsnFP2, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, consumerRegister.ConsumerId, bsnFPBTCPK)
 		h.NoError(err)
 		// on finality provider creation, the commission update time is set to the
-		// current block time. The czFP is randomly generated with update time = 0,
+		// current block time. The bsnFP is randomly generated with update time = 0,
 		// so we need to update it to the block time to make it equal
-		czFP.CommissionInfo.UpdateTime = h.Ctx.BlockTime().UTC()
-		require.Equal(t, czFP, czFP2)
+		bsnFP.CommissionInfo.UpdateTime = h.Ctx.BlockTime().UTC()
+		require.Equal(t, bsnFP, bsnFP2)
 
 		/*
 			ensure BTC delegation request will fail if some fp PK does not exist
@@ -91,7 +91,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
-			[]*btcec.PublicKey{czFPPK},
+			[]*btcec.PublicKey{bsnFPPK},
 			stakingValue,
 			1000,
 			0,
@@ -111,7 +111,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
-			[]*btcec.PublicKey{fpPK, czFPPK},
+			[]*btcec.PublicKey{fpPK, bsnFPPK},
 			stakingValue,
 			1000,
 			0,
@@ -160,7 +160,7 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 		_, fpPK, fp := h.CreateFinalityProvider(r)
 
 		// generate and insert new consumer finality provider
-		_, czFPPK, czFP, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
+		_, bsnFPPK, bsnFP, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
 		h.NoError(err)
 
 		// Generate a random number of BTC delegations under this finality provider
@@ -173,7 +173,7 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 			_, _, btcDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 				r,
 				delSK,
-				[]*btcec.PublicKey{fpPK, czFPPK},
+				[]*btcec.PublicKey{fpPK, bsnFPPK},
 				stakingValue,
 				1000,
 				0,
@@ -207,7 +207,7 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 		// the tested finality provider is under Babylon or consumer
 		testedFP := fp
 		if datagen.OneInN(r, 2) {
-			testedFP = czFP
+			testedFP = bsnFP
 		}
 
 		// Generate the initial query
@@ -226,8 +226,8 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 				require.Len(t, btcDels.Dels, 1)
 				btcDel := btcDels.Dels[0]
 				require.Len(t, btcDel.FpBtcPkList, 2)
-				require.Equal(t, fp.BtcPk, &btcDel.FpBtcPkList[0])   // Babylon finality provider
-				require.Equal(t, czFP.BtcPk, &btcDel.FpBtcPkList[1]) // consumer finality provider
+				require.Equal(t, fp.BtcPk, &btcDel.FpBtcPkList[0])    // Babylon finality provider
+				require.Equal(t, bsnFP.BtcPk, &btcDel.FpBtcPkList[1]) // consumer finality provider
 				// Check if the pk exists in the map
 				_, ok := expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()]
 				require.True(t, ok)
