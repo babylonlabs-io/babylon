@@ -74,7 +74,7 @@ func (s *StandardScenario) InitScenario(
 	require.Greater(s.driver.t, activationHeight, uint64(0))
 
 	activeFps := s.driver.GetActiveFpsAtHeight(s.driver.t, activationHeight)
-	require.Equal(s.driver.t, len(activeFps), numFps)
+	require.GreaterOrEqual(s.driver.t, numFps, len(activeFps))
 
 	s.covenant = covSender
 	s.stakers = stakers
@@ -82,7 +82,19 @@ func (s *StandardScenario) InitScenario(
 	s.activationHeight = activationHeight
 }
 
-func (s *StandardScenario) FinalityFinalizeBlocks(fromBlockToFinalize, numBlocksToFinalize uint64) uint64 {
+func (s *StandardScenario) FinalityFinalizeBlocksAllVotes(fromBlockToFinalize, numBlocksToFinalize uint64) uint64 {
+	return s.FinalityFinalizeBlocks(fromBlockToFinalize, numBlocksToFinalize, s.FpMapBtcPkHex())
+}
+
+func (s *StandardScenario) FpMapBtcPkHex() map[string]struct{} {
+	fpsToVote := make(map[string]struct{}, len(s.finalityProviders))
+	for _, fp := range s.finalityProviders {
+		fpsToVote[fp.BTCPublicKey().MarshalHex()] = struct{}{}
+	}
+	return fpsToVote
+}
+
+func (s *StandardScenario) FinalityFinalizeBlocks(fromBlockToFinalize, numBlocksToFinalize uint64, fpsToVote map[string]struct{}) uint64 {
 	d := s.driver
 	t := d.t
 
@@ -91,9 +103,7 @@ func (s *StandardScenario) FinalityFinalizeBlocks(fromBlockToFinalize, numBlocks
 		bl := d.GetIndexedBlock(blkHeight)
 		require.Equal(t, bl.Finalized, false)
 
-		for _, fp := range s.finalityProviders {
-			fp.CastVote(blkHeight)
-		}
+		s.FinalityCastVotes(blkHeight, fpsToVote)
 
 		d.GenerateNewBlockAssertExecutionSuccess()
 
@@ -103,4 +113,23 @@ func (s *StandardScenario) FinalityFinalizeBlocks(fromBlockToFinalize, numBlocks
 	}
 
 	return latestFinalizedBlockHeight
+}
+
+func (s *StandardScenario) FinalityCastVotes(blkHeight uint64, fpsToVote map[string]struct{}) {
+	d := s.driver
+
+	for _, fp := range s.finalityProviders {
+		fpPk := fp.BTCPublicKey().MarshalHex()
+		_, shouldVote := fpsToVote[fpPk]
+		if !shouldVote {
+			continue
+		}
+
+		vp := d.App.FinalityKeeper.GetVotingPower(d.Ctx(), *fp.BTCPublicKey(), blkHeight)
+		if vp <= 0 {
+			continue
+		}
+
+		fp.CastVote(blkHeight)
+	}
 }
