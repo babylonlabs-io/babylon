@@ -16,7 +16,7 @@ func GenRandomTMHeader(r *rand.Rand, chainID string, height uint64) *cmtproto.He
 	return &cmtproto.Header{
 		ChainID: chainID,
 		Height:  int64(height),
-		Time:    time.Now(),
+		Time:    time.Now().UTC(),
 		AppHash: GenRandomByteArray(r, 32),
 	}
 }

@@ -355,3 +355,110 @@ func FuzzSortingDeterminism(f *testing.F) {
 		}
 	})
 }
+
+func TestVotingPowerDistCache_Validate(t *testing.T) {
+	testCases := []struct {
+		name      string
+		vpdc      types.VotingPowerDistCache
+		expErrMsg string
+	}{
+		{
+			name:      "empty finality providers",
+			vpdc:      types.VotingPowerDistCache{},
+			expErrMsg: "invalid voting power distribution cache. Empty finality providers",
+		},
+		{
+			name: "NumActiveFps exceeds number of providers",
+			vpdc: types.VotingPowerDistCache{
+				FinalityProviders: []*types.FinalityProviderDistInfo{
+					{
+						BtcPk:          fpPubKey1,
+						TotalBondedSat: 100,
+					},
+				},
+				NumActiveFps:     2,
+				TotalVotingPower: 100,
+			},
+			expErrMsg: "invalid voting power distribution cache. NumActiveFps 2 is higher than FPs count 1",
+		},
+		{
+			name: "duplicate finality providers",
+			vpdc: types.VotingPowerDistCache{
+				FinalityProviders: []*types.FinalityProviderDistInfo{
+					{
+						BtcPk:          fpPubKey1,
+						TotalBondedSat: 100,
+					},
+					{
+						BtcPk:          fpPubKey1,
+						TotalBondedSat: 200,
+					},
+				},
+				NumActiveFps:     2,
+				TotalVotingPower: 300,
+			},
+			expErrMsg: "invalid voting power distribution cache. Duplicate finality provider entry with BTC PK",
+		},
+		{
+			name: "invalid finality provider PK fails",
+			vpdc: types.VotingPowerDistCache{
+				FinalityProviders: []*types.FinalityProviderDistInfo{
+					{
+						BtcPk:          &bbn.BIP340PubKey{},
+						TotalBondedSat: 100,
+					},
+				},
+				NumActiveFps:     1,
+				TotalVotingPower: 100,
+			},
+			expErrMsg: "invalid fp dist info. finality provider BTC public key length: got 0, want 32",
+		},
+		{
+			name: "voting power mismatch",
+			vpdc: types.VotingPowerDistCache{
+				FinalityProviders: []*types.FinalityProviderDistInfo{
+					{
+						BtcPk:          fpPubKey1,
+						TotalBondedSat: 100,
+					},
+					{
+						BtcPk:          fpPubKey2,
+						TotalBondedSat: 100,
+					},
+				},
+				NumActiveFps:     2,
+				TotalVotingPower: 150,
+			},
+			expErrMsg: "invalid voting power distribution cache. Provided TotalVotingPower 150 is different than FPs accumulated voting power 200",
+		},
+		{
+			name: "valid case",
+			vpdc: types.VotingPowerDistCache{
+				FinalityProviders: []*types.FinalityProviderDistInfo{
+					{
+						BtcPk:          fpPubKey1,
+						TotalBondedSat: 100,
+					},
+					{
+						BtcPk:          fpPubKey2,
+						TotalBondedSat: 200,
+					},
+				},
+				NumActiveFps:     2,
+				TotalVotingPower: 300,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.vpdc.Validate()
+			if tc.expErrMsg == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.ErrorContains(t, err, tc.expErrMsg)
+		})
+	}
+}

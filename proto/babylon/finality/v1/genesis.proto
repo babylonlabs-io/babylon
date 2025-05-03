@@ -31,6 +31,10 @@ message GenesisState {
   repeated VotingPowerFP voting_powers = 9;
   // vp_dst_cache is the table of all providers voting power with the total at one specific block.
   repeated VotingPowerDistCacheBlkHeight vp_dst_cache = 10;
+  // next block height to finalize
+  uint64 next_height_to_finalize = 11;
+  // next block height to reward
+  uint64 next_height_to_reward = 12;
 }
 
 // VoteSig the vote of an finality provider

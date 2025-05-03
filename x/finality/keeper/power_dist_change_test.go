@@ -1402,7 +1402,7 @@ func TestHandleLivenessPanic(t *testing.T) {
 	finalityParams.MaxActiveFinalityProviders = 5
 	_ = finalityKeeper.SetParams(ctx, finalityParams)
 
-	epochingKeeper.InitEpoch(ctx)
+	require.NoError(t, epochingKeeper.InitEpoch(ctx, nil))
 	initHeader := ctx.HeaderInfo()
 	initHeader.Height = int64(1)
 	ctx = ctx.WithHeaderInfo(initHeader)

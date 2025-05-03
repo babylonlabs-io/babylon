@@ -5,6 +5,7 @@ import (
 	store "cosmossdk.io/store/types"
 	"github.com/babylonlabs-io/babylon/v2/app/keepers"
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
+	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -17,7 +18,7 @@ var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: store.StoreUpgrades{
-		Added:   []string{},
+		Added:   []string{tokenfactorytypes.ModuleName},
 		Deleted: []string{},
 	},
 }
