@@ -62,6 +62,7 @@ check of rewards
 - [#836](https://github.com/babylonlabs-io/babylon/pull/836) Add import/export genesis logic in `x/btcstakingconsumer` module
 - [#840](https://github.com/babylonlabs-io/babylon/pull/840) Add import/export genesis logic in `x/checkpointing` module
 - [#841](https://github.com/babylonlabs-io/babylon/pull/841) chore: upgrade the make file: release
+- [#871](https://github.com/babylonlabs-io/babylon/pull/871) create `update-bls-password` cmd
 
 ### State Machine Breaking
 
