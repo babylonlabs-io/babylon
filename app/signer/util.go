@@ -104,9 +104,7 @@ func readLineFromBuf(buf *bufio.Reader) (string, error) {
 func GetBlsUnlockPasswordFromPrompt() string {
 	inBuf := bufio.NewReader(os.Stdin)
 
-	fmt.Println("Enter your BLS key password (input will be hidden):")
-
-	password, err := GetBlsPasswordInput("Enter password: ", inBuf)
+	password, err := GetBlsPasswordInput("Enter your BLS key password (input will be hidden): ", inBuf)
 	if err != nil {
 		cmtos.Exit(fmt.Sprintf("failed to get BLS password: %v", err.Error()))
 	}
