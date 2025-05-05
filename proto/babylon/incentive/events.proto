@@ -1,0 +1,45 @@
+syntax = "proto3";
+package babylon.incentive;
+
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/incentive/types";
+
+// EventPowerUpdate is an event that affects voting power distribution
+// of BTC rewards, it is indexed by the babylon block height which
+// they were processed at the finality voting power table.
+message EventPowerUpdate {
+  // ev is the event that affects voting power distribution
+  oneof ev {
+    // slashed_fp means a finality provider is slashed
+    EventSlashedFinalityProvider slashed_fp = 1;
+    // BtcActivated means a BTC delegation becomes active.
+    EventBTCDelegationActivated btc_activated = 2;
+    // BtcUnbonded means a BTC delegation becomes unbonded or withdraw.
+    EventBTCDelegationUnbonded btc_unbonded = 3;
+  }
+}
+
+// EventBTCDelegationActivated event that activated a BTC delegation.
+message EventBTCDelegationActivated {
+  // FpAddr is the bbn address of the finality provider
+  string fp_addr = 1;
+  // BtcDelAddr is the bbn address of the BTC delegator
+  string btc_del_addr = 2;
+  // TotalSat the number of satoshis delegated
+  uint64 total_sat = 3;
+}
+
+// EventBTCDelegationUnbonded event that unbonded or withdraw a BTC delgation.
+message EventBTCDelegationUnbonded {
+  // FpAddr is the bbn address of the finality provider
+  string fp_addr = 1;
+  // BtcDelAddr is the bbn address of the BTC delegator
+  string btc_del_addr = 2;
+  // TotalSat the number of satoshis unbonded withdraw
+  uint64 total_sat = 3;
+}
+
+// EventSlashedFinalityProvider FP got slashed.
+message EventSlashedFinalityProvider {
+  // FpAddr is the bbn address of the finality provider
+  string fp_addr = 1;
+}
