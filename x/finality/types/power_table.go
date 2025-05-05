@@ -1,11 +1,14 @@
 package types
 
 import (
+	"errors"
+	fmt "fmt"
 	"sort"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
 
@@ -139,6 +142,41 @@ func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*Fin
 	return inactiveFps
 }
 
+func (vpdc VotingPowerDistCache) Validate() error {
+	fpsCount := len(vpdc.FinalityProviders)
+	if fpsCount == 0 {
+		return errors.New("invalid voting power distribution cache. Empty finality providers")
+	}
+
+	if vpdc.NumActiveFps > uint32(fpsCount) {
+		return fmt.Errorf("invalid voting power distribution cache. NumActiveFps %d is higher than FPs count %d", vpdc.NumActiveFps, fpsCount)
+	}
+
+	// check fps are unique and total voting power is correct
+	var (
+		accVP uint64
+		fpMap = make(map[string]struct{})
+	)
+
+	for _, fp := range vpdc.FinalityProviders {
+		if _, exists := fpMap[fp.BtcPk.MarshalHex()]; exists {
+			return fmt.Errorf("invalid voting power distribution cache. Duplicate finality provider entry with BTC PK %s", fp.BtcPk.MarshalHex())
+		}
+		fpMap[fp.BtcPk.MarshalHex()] = struct{}{}
+		
+		if err := fp.Validate(); err != nil {
+			return err
+		}
+		accVP += fp.TotalBondedSat
+	}
+
+	if vpdc.TotalVotingPower != accVP {
+		return fmt.Errorf("invalid voting power distribution cache. Provided TotalVotingPower %d is different than FPs accumulated voting power %d", vpdc.TotalVotingPower, accVP)
+	}
+
+	return nil
+}
+
 // NewFinalityProviderDistInfo loads the FinalityProviderDistInfo based on the fp data.
 // Note: The IsTimestamped property is always set to false, as it is not possible to determine
 // the timestamp without the tip height.
@@ -170,6 +208,16 @@ func (v *FinalityProviderDistInfo) RemoveBondedSats(sats uint64) {
 // the finality provider's total voting power
 func (v *FinalityProviderDistInfo) GetBTCDelPortion(totalSatDelegation uint64) sdkmath.LegacyDec {
 	return sdkmath.LegacyNewDec(int64(totalSatDelegation)).QuoTruncate(sdkmath.LegacyNewDec(int64(v.TotalBondedSat)))
+}
+
+func (fpdi FinalityProviderDistInfo) Validate() error {
+	if fpdi.BtcPk == nil {
+		return fmt.Errorf("invalid fp dist info. empty finality provider BTC public key")
+	}
+	if fpdi.BtcPk.Size() != bbn.BIP340PubKeyLen {
+		return fmt.Errorf("invalid fp dist info. finality provider BTC public key length: got %d, want %d", fpdi.BtcPk.Size(), bbn.BIP340PubKeyLen)
+	}
+	return nil
 }
 
 // SortFinalityProvidersWithZeroedVotingPower sorts the finality providers slice,

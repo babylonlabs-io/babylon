@@ -56,6 +56,9 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		k.SetVotingPowerDistCache(ctx, vpCache.BlockHeight, vpCache.VpDistribution)
 	}
 
+	k.setNextHeightToFinalize(ctx, gs.NextHeightToFinalize)
+	k.SetNextHeightToReward(ctx, gs.NextHeightToReward)
+
 	return k.SetParams(ctx, gs.Params)
 }
 
@@ -102,16 +105,18 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 	}
 
 	return &types.GenesisState{
-		Params:           k.GetParams(ctx),
-		IndexedBlocks:    blocks,
-		Evidences:        evidences,
-		VoteSigs:         voteSigs,
-		PublicRandomness: pubRandomness,
-		PubRandCommit:    prCommit,
-		SigningInfos:     signingInfos,
-		MissedBlocks:     missedBlocks,
-		VotingPowers:     vpFps,
-		VpDstCache:       vpDstCache,
+		Params:               k.GetParams(ctx),
+		IndexedBlocks:        blocks,
+		Evidences:            evidences,
+		VoteSigs:             voteSigs,
+		PublicRandomness:     pubRandomness,
+		PubRandCommit:        prCommit,
+		SigningInfos:         signingInfos,
+		MissedBlocks:         missedBlocks,
+		VotingPowers:         vpFps,
+		VpDstCache:           vpDstCache,
+		NextHeightToFinalize: k.getNextHeightToFinalize(ctx),
+		NextHeightToReward:   k.GetNextHeightToReward(ctx),
 	}, nil
 }
 
