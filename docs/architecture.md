@@ -199,7 +199,7 @@ submitting necessary signatures.
 
 The IBC Relayer maintains the
 [IBC protocol](https://cosmos.network/ibc/) connection
-between Babylon and other Cosmos Consumers.
+between Babylon and other Consumers.
 It is responsible for updating the Consumer's light client
 inside the Babylon ledger to enable checkpointing and
 propagating checkpoint information to the Babylon smart contract
