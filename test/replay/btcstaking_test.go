@@ -483,20 +483,41 @@ func TestActivatingDelegationOnSlashedFp(t *testing.T) {
 }
 
 func TestJailingFinalityProvider(t *testing.T) {
-    t.Parallel()
-    r := rand.New(rand.NewSource(time.Now().UnixNano()))
-    driver := NewBabylonAppDriverTmpDir(r, t)
-    driver.GenerateNewBlock()
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driver := NewBabylonAppDriverTmpDir(r, t)
+	driver.GenerateNewBlock()
 
-    scenario := NewStandardScenario(driver)
-    scenario.InitScenario(2, 1)
+	numBlocksFinalized := uint64(2)
+	scenario := NewStandardScenario(driver)
+	scenario.InitScenario(2, 1)
 
-    fp := scenario.finalityProviders[0]
+	lastVotedBlkHeight := scenario.FinalityFinalizeBlocks(scenario.activationHeight, numBlocksFinalized)
 
-    for i := 0; i < 10; i++ {
-        driver.GenerateNewBlock()
-    }
+	fp := scenario.finalityProviders[0]
 
-    jailedFp := driver.GetFp(*fp.BTCPublicKey())
-    require.True(t, jailedFp.Jailed, "FP should be jailed after missing votes")
+	for {
+		lastVotedBlkHeight++
+		for i, fp := range scenario.finalityProviders {
+			if i != 0 {
+				fp.CastVote(lastVotedBlkHeight)
+			}
+		}
+
+		driver.GenerateNewBlock()
+
+		bl := driver.GetIndexedBlock(lastVotedBlkHeight)
+		require.Equal(t, bl.Finalized, false)
+
+		fp := driver.GetFp(*fp.BTCPublicKey())
+		if fp.Jailed {
+			break
+		}
+	}
+
+	fp.SendSelectiveSlashingEvidence()
+	driver.GenerateNewBlock()
+
+	activeFps := driver.GetActiveFpsAtCurrentHeight(t)
+	require.Equal(t, 1, len(activeFps))
 }
