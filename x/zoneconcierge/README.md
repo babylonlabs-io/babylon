@@ -152,7 +152,7 @@ cases that need to verify BTC timestamps of headers, Zone Concierge can provide
 proofs that the headers are indeed checkpointed to Bitcoin. The proof includes
 the following:
 
-- `ProofCzHeaderInEpoch`: Proof that the header of the PoS blockchain is
+- `ProofConsumerHeaderInEpoch`: Proof that the header of the PoS blockchain is
   included in an epoch of Babylon;
 - `ProofEpochSealed`: Proof that the epoch has been agreed by > 2/3 voting power
   of the validator set; and
@@ -216,16 +216,16 @@ ID of the IBC light client. The value is a `ChainInfo` object. The `ChainInfo` i
 a structure storing the information of a PoS blockchain that checkpoints to Babylon.
 
 ```protobuf
-// ChainInfo is the information of a CZ
+// ChainInfo is the information of a Consumer
 message ChainInfo {
   // consumer_id is the ID of the consumer
   string consumer_id = 1;
-  // latest_header is the latest header in CZ's canonical chain
+  // latest_header is the latest header in the Consumer's canonical chain
   IndexedHeader latest_header = 2;
   // latest_forks is the latest forks, formed as a series of IndexedHeader (from
   // low to high)
   Forks latest_forks = 3;
-  // timestamped_headers_count is the number of timestamped headers in CZ's
+  // timestamped_headers_count is the number of timestamped headers in the Consumer's
   // canonical chain
   uint64 timestamped_headers_count = 4;
 }
@@ -246,24 +246,24 @@ chain's `ConsumerID` plus the height, and the value is a `IndexedHeader` object.
 `IndexedHeader` is a structure storing IBC header's metadata.
 
 ```protobuf
-// IndexedHeader is the metadata of a CZ header
+// IndexedHeader is the metadata of a Consumer header
 message IndexedHeader {
   // consumer_id is the unique ID of the consumer
   string consumer_id = 1;
   // hash is the hash of this header
   bytes hash = 2;
-  // height is the height of this header on CZ ledger
-  // (hash, height) jointly provides the position of the header on CZ ledger
+  // height is the height of this header on the Consumer's ledger
+  // (hash, height) jointly provides the position of the header on the Consumer's ledger
   uint64 height = 3;
-  // time is the timestamp of this header on CZ ledger
-  // it is needed for CZ to unbond all mature validators/delegations
+  // time is the timestamp of this header on the Consumer's ledger.
+  // It is needed for the Consumer to unbond all mature validators/delegations
   // before this timestamp when this header is BTC-finalised
   google.protobuf.Timestamp time = 4 [ (gogoproto.stdtime) = true ];
-  // babylon_header_hash is the hash of the babylon block that includes this CZ
-  // header
+  // babylon_header_hash is the hash of the babylon block that includes this
+  // Consumer header
   bytes babylon_header_hash = 5;
-  // babylon_header_height is the height of the babylon block that includes this CZ
-  // header
+  // babylon_header_height is the height of the babylon block that includes this
+  // Consumer header
   uint64 babylon_header_height = 6;
   // epoch is the epoch number of this header on Babylon ledger
   uint64 babylon_epoch = 7;
@@ -349,11 +349,11 @@ Bitcoin.
 ```protobuf
 // BTCTimestamp is a BTC timestamp that carries information of a BTC-finalized epoch
 // It includes a number of BTC headers, a raw checkpoint, an epoch metadata, and 
-// a CZ header if there exists CZ headers checkpointed to this epoch.
+// a Consumer header if there exists Consumer headers checkpointed to this epoch.
 // Upon a newly finalized epoch in Babylon, Babylon will send a BTC timestamp to each
 // PoS blockchain that has phase-2 integration with Babylon via IBC.
 message BTCTimestamp {
-  // header is the last CZ header in the finalized Babylon epoch
+  // header is the last Consumer header in the finalized Babylon epoch
   babylon.zoneconcierge.v1.IndexedHeader header = 1;
 
   /*
@@ -388,9 +388,9 @@ message ProofFinalizedChainInfo {
     The following fields include proofs that attest the chain info is
     BTC-finalized
   */
-  // proof_cz_header_in_epoch is the proof that the CZ header is timestamped
+  // proof_consumer_header_in_epoch is the proof that the Consumer header is timestamped
   // within a certain epoch
-  tendermint.crypto.ProofOps proof_cz_header_in_epoch = 1;
+  tendermint.crypto.ProofOps proof_consumer_header_in_epoch = 1;
   // proof_epoch_sealed is the proof that the epoch is sealed
   babylon.zoneconcierge.v1.ProofEpochSealed proof_epoch_sealed = 2;
   // proof_epoch_submitted is the proof that the epoch's checkpoint is included

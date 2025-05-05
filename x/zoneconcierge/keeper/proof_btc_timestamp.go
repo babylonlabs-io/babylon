@@ -12,9 +12,9 @@ import (
 	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
 )
 
-func (k Keeper) ProveCZHeaderInEpoch(_ context.Context, header *types.IndexedHeader, epoch *epochingtypes.Epoch) (*cmtcrypto.ProofOps, error) {
-	czHeaderKey := types.GetCZHeaderKey(header.ConsumerId, header.Height)
-	_, _, proof, err := k.QueryStore(types.StoreKey, czHeaderKey, int64(epoch.GetSealerBlockHeight()))
+func (k Keeper) ProveConsumerHeaderInEpoch(_ context.Context, header *types.IndexedHeader, epoch *epochingtypes.Epoch) (*cmtcrypto.ProofOps, error) {
+	consumerHeaderKey := types.GetConsumerHeaderKey(header.ConsumerId, header.Height)
+	_, _, proof, err := k.QueryStore(types.StoreKey, consumerHeaderKey, int64(epoch.GetSealerBlockHeight()))
 	if err != nil {
 		return nil, err
 	}
@@ -103,8 +103,8 @@ func (k Keeper) proveFinalizedChainInfo(
 		proof = &types.ProofFinalizedChainInfo{}
 	)
 
-	// Proof that the CZ header is timestamped in epoch
-	proof.ProofCzHeaderInEpoch, err = k.ProveCZHeaderInEpoch(ctx, chainInfo.LatestHeader, epochInfo)
+	// Proof that the Consumer header is timestamped in epoch
+	proof.ProofConsumerHeaderInEpoch, err = k.ProveConsumerHeaderInEpoch(ctx, chainInfo.LatestHeader, epochInfo)
 	if err != nil {
 		return nil, err
 	}
