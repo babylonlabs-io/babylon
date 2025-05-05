@@ -70,6 +70,13 @@ func (k Keeper) GetAllPowerDistUpdateEvents(ctx context.Context, lastBTCTip uint
 	return events
 }
 
+// DeletePowerDistEvent Deletes one voting power distribution event
+// NOTE: It does not updates the index of next events
+func (k Keeper) DeletePowerDistEvent(ctx context.Context, btcHeight uint32, evtIdx uint64) {
+	st := k.powerDistUpdateEventBtcHeightStore(ctx, btcHeight)
+	st.Delete(sdk.Uint64ToBigEndian(evtIdx))
+}
+
 // iteratePowerDistUpdateEvents uses the given handler function to handle each
 // voting power distribution update event that happens at the given BTC height.
 // This is called in `BeginBlocker`

@@ -26,7 +26,7 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	}
 
 	for _, btcDel := range gs.BtcDelegations {
-		k.setBTCDelegation(ctx, btcDel)
+		k.SetBTCDelegation(ctx, btcDel)
 	}
 
 	for _, blocks := range gs.BlockHeightChains {

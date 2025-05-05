@@ -438,6 +438,184 @@ func (h *Helper) CreateDelegationWithBtcBlockHeight(
 	}, nil
 }
 
+func CreateDelegationWithBtcBlockHeight(
+	r *rand.Rand,
+	ctx sdk.Context,
+	t testing.TB,
+	btcStkK *keeper.Keeper,
+	btcNet *chaincfg.Params,
+	delSK *btcec.PrivateKey,
+	fpPKs []*btcec.PublicKey,
+	stakingValue int64,
+	stakingTime uint16,
+	unbondingValue int64,
+	unbondingTime uint16,
+	usePreApproval bool,
+	addToAllowList bool,
+	stakingTransactionInclusionHeight uint32,
+	lightClientTipHeight uint32,
+) (string, *types.MsgCreateBTCDelegation, *types.BTCDelegation, *btclctypes.BTCHeaderInfo, *types.InclusionProof, *UnbondingTxInfo, error) {
+	stakingTimeBlocks := stakingTime
+	bsParams := btcStkK.GetParams(ctx)
+	covPKs, err := bbn.NewBTCPKsFromBIP340PKs(bsParams.CovenantPks)
+	require.NoError(t, err)
+
+	// if not set, use default values for unbonding value and time
+	defaultUnbondingValue := stakingValue - 1000
+	if unbondingValue == 0 {
+		unbondingValue = defaultUnbondingValue
+	}
+	defaultUnbondingTime := bsParams.UnbondingTimeBlocks
+	if unbondingTime == 0 {
+		unbondingTime = uint16(defaultUnbondingTime)
+	}
+
+	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
+		r,
+		t,
+		btcNet,
+		delSK,
+		fpPKs,
+		covPKs,
+		bsParams.CovenantQuorum,
+		stakingTimeBlocks,
+		stakingValue,
+		bsParams.SlashingPkScript,
+		bsParams.SlashingRate,
+		unbondingTime,
+	)
+	require.NoError(t, err)
+
+	stakingTxHash := testStakingInfo.StakingTx.TxHash().String()
+
+	// random signer
+	staker := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
+
+	// PoP
+	pop, err := datagen.NewPoPBTC(staker, delSK)
+	require.NoError(t, err)
+
+	// generate staking tx info
+	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
+	btcHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlock.Header, testStakingInfo.StakingTx)
+	btcHeader := btcHeaderWithProof.HeaderBytes
+	btcHeaderInfo := &btclctypes.BTCHeaderInfo{Header: &btcHeader, Height: stakingTransactionInclusionHeight}
+	serializedStakingTx, err := bbn.SerializeBTCTx(testStakingInfo.StakingTx)
+	require.NoError(t, err)
+
+	txInclusionProof := types.NewInclusionProof(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, btcHeaderWithProof.SpvProof.MerkleNodes)
+
+	slashingSpendInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+
+	// generate proper delegator sig
+	delegatorSig, err := testStakingInfo.SlashingTx.Sign(
+		testStakingInfo.StakingTx,
+		0,
+		slashingSpendInfo.GetPkScriptPath(),
+		delSK,
+	)
+	require.NoError(t, err)
+
+	stakerPk := delSK.PubKey()
+	stPk := bbn.NewBIP340PubKeyFromBTCPK(stakerPk)
+
+	/*
+		logics related to on-demand unbonding
+	*/
+	stkTxHash := testStakingInfo.StakingTx.TxHash()
+	stkOutputIdx := uint32(0)
+
+	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
+		r,
+		t,
+		btcNet,
+		delSK,
+		fpPKs,
+		covPKs,
+		bsParams.CovenantQuorum,
+		wire.NewOutPoint(&stkTxHash, stkOutputIdx),
+		unbondingTime,
+		unbondingValue,
+		bsParams.SlashingPkScript,
+		bsParams.SlashingRate,
+		unbondingTime,
+	)
+	require.NoError(t, err)
+
+	delSlashingTxSig, err := testUnbondingInfo.GenDelSlashingTxSig(delSK)
+	require.NoError(t, err)
+
+	serializedUnbondingTx, err := bbn.SerializeBTCTx(testUnbondingInfo.UnbondingTx)
+	require.NoError(t, err)
+
+	prevBlockForUnbonding, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
+	btcUnbondingHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlockForUnbonding.Header, testUnbondingInfo.UnbondingTx)
+	btcUnbondingHeader := btcUnbondingHeaderWithProof.HeaderBytes
+	btcUnbondingHeaderInfo := &btclctypes.BTCHeaderInfo{Header: &btcUnbondingHeader, Height: 11}
+	unbondingTxInclusionProof := types.NewInclusionProof(
+		&btcctypes.TransactionKey{Index: 1, Hash: btcUnbondingHeader.Hash()},
+		btcUnbondingHeaderWithProof.SpvProof.MerkleNodes,
+	)
+
+	// all good, construct and send MsgCreateBTCDelegation message
+	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
+		StakerAddr:                    staker.String(),
+		BtcPk:                         stPk,
+		FpBtcPkList:                   bbn.NewBIP340PKsFromBTCPKs(fpPKs),
+		Pop:                           pop,
+		StakingTime:                   uint32(stakingTimeBlocks),
+		StakingValue:                  stakingValue,
+		StakingTx:                     serializedStakingTx,
+		SlashingTx:                    testStakingInfo.SlashingTx,
+		DelegatorSlashingSig:          delegatorSig,
+		UnbondingTx:                   serializedUnbondingTx,
+		UnbondingTime:                 uint32(unbondingTime),
+		UnbondingValue:                unbondingValue,
+		UnbondingSlashingTx:           testUnbondingInfo.SlashingTx,
+		DelegatorUnbondingSlashingSig: delSlashingTxSig,
+	}
+
+	if !usePreApproval {
+		msgCreateBTCDel.StakingTxInclusionProof = txInclusionProof
+	}
+
+	if addToAllowList {
+		btcStkK.IndexAllowedStakingTransaction(ctx, &stkTxHash)
+	}
+
+	msgSvr := keeper.NewMsgServerImpl(*btcStkK)
+	_, err = msgSvr.CreateBTCDelegation(ctx, msgCreateBTCDel)
+	if err != nil {
+		return "", nil, nil, nil, nil, nil, err
+	}
+
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(msgCreateBTCDel.StakingTx)
+	if err != nil {
+		return "", nil, nil, nil, nil, nil, err
+	}
+	btcDel, err := btcStkK.GetBTCDelegation(ctx, stakingMsgTx.TxHash().String())
+	if err != nil {
+		return "", nil, nil, nil, nil, nil, err
+	}
+
+	// ensure the delegation is still pending
+	require.Equal(t, btcDel.GetStatus(btcTipHeight, bsParams.CovenantQuorum), types.BTCDelegationStatus_PENDING)
+
+	if usePreApproval {
+		// the BTC delegation does not have inclusion proof
+		require.False(t, btcDel.HasInclusionProof())
+	} else {
+		// the BTC delegation has inclusion proof
+		require.True(t, btcDel.HasInclusionProof())
+	}
+
+	return stakingTxHash, msgCreateBTCDel, btcDel, btcHeaderInfo, txInclusionProof, &UnbondingTxInfo{
+		UnbondingTxInclusionProof: unbondingTxInclusionProof,
+		UnbondingHeaderInfo:       btcUnbondingHeaderInfo,
+	}, nil
+}
+
 func (h *Helper) GenerateCovenantSignaturesMessages(
 	r *rand.Rand,
 	covenantSKs []*btcec.PrivateKey,
