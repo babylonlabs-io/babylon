@@ -351,3 +351,152 @@ func TestStakingAndFinalizingMultipleBlocksAtOnce(t *testing.T) {
 		require.Equal(t, bl.Finalized, true)
 	}
 }
+
+func TestSlashingandFinalizingBlocks(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driver := NewBabylonAppDriverTmpDir(r, t)
+	driver.GenerateNewBlock()
+
+	scenario := NewStandardScenario(driver)
+	scenario.InitScenario(6, 1) // 6 finality providers
+
+	numBlocksInTest := uint64(10)
+	lastVotedBlkHeight := scenario.FinalityFinalizeBlocks(scenario.activationHeight, numBlocksInTest)
+
+	indexSlashFp1 := 1
+	indexSlashFp2 := 2
+	jailedFp1 := scenario.finalityProviders[indexSlashFp1]
+	jailedFp2 := scenario.finalityProviders[indexSlashFp2]
+
+	bl := driver.GetIndexedBlock(lastVotedBlkHeight)
+	require.Equal(t, bl.Finalized, true)
+
+	// 2 fps not voting
+	for i := uint64(0); i < numBlocksInTest; i++ {
+		lastVotedBlkHeight++
+		for i, fp := range scenario.finalityProviders {
+			if i != indexSlashFp1 {
+				fp.CastVote(lastVotedBlkHeight)
+			}
+		}
+
+		driver.GenerateNewBlock()
+
+		bl := driver.GetIndexedBlock(lastVotedBlkHeight)
+		require.Equal(t, bl.Finalized, true)
+	}
+
+	scenario.finalityProviders[indexSlashFp1].SendSelectiveSlashingEvidence()
+	scenario.finalityProviders[indexSlashFp2].SendSelectiveSlashingEvidence()
+
+	driver.GenerateNewBlock()
+
+	slashedFp1 := driver.GetFp(*jailedFp1.BTCPublicKey())
+	require.True(t, slashedFp1.IsSlashed())
+	slashedFp2 := driver.GetFp(*jailedFp2.BTCPublicKey())
+	require.True(t, slashedFp2.IsSlashed())
+
+	driver.GenerateNewBlock()
+
+	bl = driver.GetIndexedBlock(lastVotedBlkHeight)
+	require.Equal(t, bl.Finalized, true)
+
+	require.Len(t, driver.GetActiveFpsAtCurrentHeight(t), 4)
+}
+
+func TestActivatingDelegationOnSlashedFp(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driver := NewBabylonAppDriverTmpDir(r, t)
+	driver.GenerateNewBlock()
+
+	scenario := NewStandardScenario(driver)
+	scenario.InitScenario(6, 1) // 6 finality providers
+
+	covSender := driver.CreateCovenantSender()
+	require.NotNil(t, covSender)
+
+	sinfos := driver.CreateNStakerAccounts(1)
+	s1 := sinfos[0]
+
+	numBlocksInTest := uint64(10)
+	lastVotedBlkHeight := scenario.FinalityFinalizeBlocks(scenario.activationHeight, numBlocksInTest)
+
+	indexSlashFp1 := 1
+	indexSlashFp2 := 2
+	jailedFp1 := scenario.finalityProviders[indexSlashFp1]
+	jailedFp2 := scenario.finalityProviders[indexSlashFp2]
+
+	bl := driver.GetIndexedBlock(lastVotedBlkHeight)
+	require.Equal(t, bl.Finalized, true)
+
+	// 2 fps not voting
+	for i := uint64(0); i < numBlocksInTest; i++ {
+		lastVotedBlkHeight++
+		for i, fp := range scenario.finalityProviders {
+			if i != indexSlashFp1 {
+				fp.CastVote(lastVotedBlkHeight)
+			}
+		}
+
+		driver.GenerateNewBlock()
+
+		bl := driver.GetIndexedBlock(lastVotedBlkHeight)
+		require.Equal(t, bl.Finalized, true)
+	}
+
+	scenario.finalityProviders[indexSlashFp1].SendSelectiveSlashingEvidence()
+	scenario.finalityProviders[indexSlashFp2].SendSelectiveSlashingEvidence()
+
+	driver.GenerateNewBlock()
+
+	slashedFp1 := driver.GetFp(*jailedFp1.BTCPublicKey())
+	require.True(t, slashedFp1.IsSlashed())
+	slashedFp2 := driver.GetFp(*jailedFp2.BTCPublicKey())
+	require.True(t, slashedFp2.IsSlashed())
+
+	driver.GenerateNewBlock()
+
+	bl = driver.GetIndexedBlock(lastVotedBlkHeight)
+	require.Equal(t, bl.Finalized, true)
+
+	require.Len(t, driver.GetActiveFpsAtCurrentHeight(t), 4)
+
+	msg := s1.CreatePreApprovalDelegation(
+		jailedFp1.BTCPublicKey(),
+		1000,
+		100000000,
+	)
+	require.NotNil(t, msg)
+
+	driver.GenerateNewBlock()
+
+	covSender.SendCovenantSignatures()
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	verifiedDelegations := driver.GetVerifiedBTCDelegations(t)
+	require.Len(t, verifiedDelegations, 0)
+
+	bl = driver.GetIndexedBlock(lastVotedBlkHeight)
+	require.Equal(t, bl.Finalized, true)
+}
+
+func TestJailingFinalityProvider(t *testing.T) {
+    t.Parallel()
+    r := rand.New(rand.NewSource(time.Now().UnixNano()))
+    driver := NewBabylonAppDriverTmpDir(r, t)
+    driver.GenerateNewBlock()
+
+    scenario := NewStandardScenario(driver)
+    scenario.InitScenario(2, 1)
+
+    fp := scenario.finalityProviders[0]
+
+    for i := 0; i < 10; i++ {
+        driver.GenerateNewBlock()
+    }
+
+    jailedFp := driver.GetFp(*fp.BTCPublicKey())
+    require.True(t, jailedFp.Jailed, "FP should be jailed after missing votes")
+}
