@@ -159,6 +159,11 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
+	evtsRwdTracker, err := k.rewardTrackerEventsEntry(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.GenesisState{
 		Params:                             k.GetParams(ctx),
 		BtcStakingGauges:                   bsg,
@@ -169,6 +174,7 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		FinalityProvidersHistoricalRewards: fpHistRwd,
 		BtcDelegationRewardsTrackers:       bdrt,
 		BtcDelegatorsToFps:                 d2fp,
+		EventRewardTracker:                 evtsRwdTracker,
 	}, nil
 }
 
