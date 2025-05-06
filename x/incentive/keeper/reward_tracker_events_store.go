@@ -33,13 +33,13 @@ func (k Keeper) SetRewardTrackerEvent(ctx context.Context, height uint64, ev *ty
 }
 
 // AddRewardTrackerEvent gets or create a new reward tracker event, adds the new event and store it
-func (k Keeper) AddRewardTrackerEvent(ctx context.Context, height uint64, newEv types.EventPowerUpdate) error {
+func (k Keeper) AddRewardTrackerEvent(ctx context.Context, height uint64, newEv *types.EventPowerUpdate) error {
 	rwdTrackerEvent, err := k.GetOrNewRewardTrackerEvent(ctx, height)
 	if err != nil {
 		return err
 	}
 
-	rwdTrackerEvent.Events = append(rwdTrackerEvent.Events, &newEv)
+	rwdTrackerEvent.Events = append(rwdTrackerEvent.Events, newEv)
 	return k.SetRewardTrackerEvent(ctx, height, rwdTrackerEvent)
 }
 

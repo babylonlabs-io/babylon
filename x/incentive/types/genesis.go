@@ -22,6 +22,7 @@ func DefaultGenesis() *GenesisState {
 		FinalityProvidersHistoricalRewards: []FinalityProviderHistoricalRewardsEntry{},
 		BtcDelegationRewardsTrackers:       []BTCDelegationRewardsTrackerEntry{},
 		BtcDelegatorsToFps:                 []BTCDelegatorToFpEntry{},
+		EventRewardTracker:                 []EventsPowerUpdateAtHeightEntry{},
 	}
 }
 
@@ -50,6 +51,10 @@ func (gs GenesisState) Validate() error {
 
 	if err := validateFPHistoricalRewards(gs.FinalityProvidersHistoricalRewards); err != nil {
 		return fmt.Errorf("invalid finality providers historical rewards: %w", err)
+	}
+
+	if err := validateEvtPowerUpdateEntries(gs.EventRewardTracker); err != nil {
+		return fmt.Errorf("invalid events from reward tracker: %w", err)
 	}
 
 	btcRewardsAddrMap, err := validateBTCDelegationsRewardsTrackers(gs.BtcDelegationRewardsTrackers)
@@ -160,6 +165,16 @@ func (bdt BTCDelegatorToFpEntry) Validate() error {
 		return fmt.Errorf("invalid delegator, error: %w", err)
 	}
 	return nil
+}
+
+func (evtPowedUpdEntry EventsPowerUpdateAtHeightEntry) Validate() error {
+	return evtPowedUpdEntry.Events.Validate()
+}
+
+func validateEvtPowerUpdateEntries(entries []EventsPowerUpdateAtHeightEntry) error {
+	return types.ValidateEntries(entries, func(e EventsPowerUpdateAtHeightEntry) uint64 {
+		return e.Height
+	})
 }
 
 func validateWithdrawAddresses(entries []WithdrawAddressEntry) error {
@@ -336,5 +351,9 @@ func SortData(gs *GenesisState) {
 			return gs.BtcDelegatorsToFps[i].FinalityProviderAddress < gs.BtcDelegatorsToFps[j].FinalityProviderAddress
 		}
 		return gs.BtcDelegatorsToFps[i].DelegatorAddress < gs.BtcDelegatorsToFps[j].DelegatorAddress
+	})
+
+	sort.Slice(gs.EventRewardTracker, func(i, j int) bool {
+		return gs.EventRewardTracker[i].Height < gs.EventRewardTracker[j].Height
 	})
 }
