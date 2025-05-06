@@ -199,11 +199,11 @@ submitting necessary signatures.
 
 The IBC Relayer maintains the
 [IBC protocol](https://cosmos.network/ibc/) connection
-between Babylon and other Consumer Zones (CZs).
-It is responsible for updating the CZ's light client
+between Babylon and other Consumers.
+It is responsible for updating the Consumer's light client
 inside the Babylon ledger to enable checkpointing and
 propagating checkpoint information to the Babylon smart contract
-deployed within the CZ.
+deployed within the Consumer.
 
 There are different IBC relayer implementations that can achieve
 this function. Most notably:

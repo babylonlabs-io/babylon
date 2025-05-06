@@ -181,9 +181,20 @@ func (k *BlsKey) Save(password string) {
 		panic(fmt.Errorf("failed to write BLS key: %w", err))
 	}
 
+	// set bls_key.json to read only
+	if err := os.Chmod(k.filePath, 0400); err != nil {
+		panic(fmt.Errorf("failed to set read-only permission for BLS key file: %w", err))
+	}
+
+	// write password to file
 	if k.passwordPath != "" {
 		if err := tempfile.WriteFileAtomic(k.passwordPath, []byte(password), 0600); err != nil {
 			panic(fmt.Errorf("failed to write BLS password: %w", err))
+		}
+
+		// set bls_password.txt to read only
+		if err := os.Chmod(k.passwordPath, 0400); err != nil {
+			panic(fmt.Errorf("failed to set read-only permission for BLS password file: %w", err))
 		}
 	}
 }
@@ -491,8 +502,7 @@ func CreateBlsKey(homeDir string, password string, passwordFilePath string, cmd 
 	} else {
 		cmd.Printf("\n ⚠️ IMPORTANT: Your BLS key has been created with password protection. ⚠️\n")
 		cmd.Printf("You can provide this password when starting the node using one of these methods:\n")
-		cmd.Printf("1. (Recommended) Set the %s environment variable: \nexport %s=<your_password>", BlsPasswordEnvVar, BlsPasswordEnvVar)
-		cmd.Printf("export %s=<your_password>\n", BlsPasswordEnvVar)
+		cmd.Printf("1. (Recommended) Set the %s environment variable: \nexport %s=<your_password>\n", BlsPasswordEnvVar, BlsPasswordEnvVar)
 
 		if passwordFilePath != "" {
 			cmd.Printf("2. The password has been stored in the specified password file. You can use it when starting the node by providing the path to the password file\n")

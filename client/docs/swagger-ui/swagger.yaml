@@ -11602,8 +11602,10 @@ paths:
               consumer_id:
                 type: string
             title: >-
-              QueryFinalityProviderConsumerResponse returns the CZ finality
-              provier consumer id
+              QueryFinalityProviderConsumerResponse returns the Consumer
+              finality provider
+
+              consumer id
         default:
           description: An unexpected error response.
           schema:
@@ -12801,7 +12803,7 @@ paths:
         - Query
   /babylon/zoneconcierge/v1/chain_info/{consumer_id}/header/{height}:
     get:
-      summary: Header queries the CZ header and fork headers at a given height.
+      summary: Header queries the Consumer header and fork headers at a given height
       operationId: Header
       responses:
         '200':
@@ -12823,26 +12825,28 @@ paths:
                     type: string
                     format: uint64
                     title: >-
-                      height is the height of this header on CZ ledger
+                      height is the height of this header on the Consumer's
+                      ledger.
 
-                      (hash, height) jointly provides the position of the header
-                      on CZ ledger
+                      (hash, height) jointly provide the position of the header
+                      on the Consumer ledger
                   time:
                     type: string
                     format: date-time
                     title: >-
-                      time is the timestamp of this header on CZ ledger
+                      time is the timestamp of this header on the Consumer's
+                      ledger.
 
-                      it is needed for CZ to unbond all mature
-                      validators/delegations
+                      It is needed for a Consumer to unbond all mature
+                      validators/delegations before
 
-                      before this timestamp when this header is BTC-finalised
+                      this timestamp, when this header is BTC-finalised
                   babylon_header_hash:
                     type: string
                     format: byte
                     title: >-
                       babylon_header_hash is the hash of the babylon block that
-                      includes this CZ
+                      includes this Consumer
 
                       header
                   babylon_header_height:
@@ -12850,9 +12854,9 @@ paths:
                     format: uint64
                     title: >-
                       babylon_header_height is the height of the babylon block
-                      that includes this CZ
+                      that includes this
 
-                      header
+                      Consumer header
                   babylon_epoch:
                     type: string
                     format: uint64
@@ -12868,7 +12872,7 @@ paths:
                       the position of
 
                       the header on Babylon ledger
-                title: IndexedHeader is the metadata of a CZ header
+                title: IndexedHeader is the metadata of a Consumer header
               fork_headers:
                 type: object
                 properties:
@@ -12888,27 +12892,28 @@ paths:
                           type: string
                           format: uint64
                           title: >-
-                            height is the height of this header on CZ ledger
+                            height is the height of this header on the
+                            Consumer's ledger.
 
-                            (hash, height) jointly provides the position of the
-                            header on CZ ledger
+                            (hash, height) jointly provide the position of the
+                            header on the Consumer ledger
                         time:
                           type: string
                           format: date-time
                           title: >-
-                            time is the timestamp of this header on CZ ledger
+                            time is the timestamp of this header on the
+                            Consumer's ledger.
 
-                            it is needed for CZ to unbond all mature
-                            validators/delegations
+                            It is needed for a Consumer to unbond all mature
+                            validators/delegations before
 
-                            before this timestamp when this header is
-                            BTC-finalised
+                            this timestamp, when this header is BTC-finalised
                         babylon_header_hash:
                           type: string
                           format: byte
                           title: >-
                             babylon_header_hash is the hash of the babylon block
-                            that includes this CZ
+                            that includes this Consumer
 
                             header
                         babylon_header_height:
@@ -12916,9 +12921,9 @@ paths:
                           format: uint64
                           title: >-
                             babylon_header_height is the height of the babylon
-                            block that includes this CZ
+                            block that includes this
 
-                            header
+                            Consumer header
                         babylon_epoch:
                           type: string
                           format: uint64
@@ -12936,7 +12941,7 @@ paths:
                             provides the position of
 
                             the header on Babylon ledger
-                      title: IndexedHeader is the metadata of a CZ header
+                      title: IndexedHeader is the metadata of a Consumer header
                     title: >-
                       blocks is the list of non-canonical indexed headers at the
                       same height
@@ -12960,8 +12965,8 @@ paths:
                   Note that each `IndexedHeader` in the fork should have a valid
                   quorum
 
-                  certificate. Such forks exist since Babylon considers CZs
-                  might have
+                  certificate. Such forks exist since Babylon considers
+                  Consumers might have
 
                   dishonest majority. Also note that the IBC-Go implementation
                   will only
@@ -13516,27 +13521,28 @@ paths:
                           type: string
                           format: uint64
                           title: >-
-                            height is the height of this header on CZ ledger
+                            height is the height of this header on the
+                            Consumer's ledger.
 
-                            (hash, height) jointly provides the position of the
-                            header on CZ ledger
+                            (hash, height) jointly provide the position of the
+                            header on the Consumer ledger
                         time:
                           type: string
                           format: date-time
                           title: >-
-                            time is the timestamp of this header on CZ ledger
+                            time is the timestamp of this header on the
+                            Consumer's ledger.
 
-                            it is needed for CZ to unbond all mature
-                            validators/delegations
+                            It is needed for a Consumer to unbond all mature
+                            validators/delegations before
 
-                            before this timestamp when this header is
-                            BTC-finalised
+                            this timestamp, when this header is BTC-finalised
                         babylon_header_hash:
                           type: string
                           format: byte
                           title: >-
                             babylon_header_hash is the hash of the babylon block
-                            that includes this CZ
+                            that includes this Consumer
 
                             header
                         babylon_header_height:
@@ -13544,9 +13550,9 @@ paths:
                           format: uint64
                           title: >-
                             babylon_header_height is the height of the babylon
-                            block that includes this CZ
+                            block that includes this
 
-                            header
+                            Consumer header
                         babylon_epoch:
                           type: string
                           format: uint64
@@ -13564,7 +13570,7 @@ paths:
                             provides the position of
 
                             the header on Babylon ledger
-                      title: IndexedHeader is the metadata of a CZ header
+                      title: IndexedHeader is the metadata of a Consumer header
                     latest_forks:
                       type: object
                       properties:
@@ -13584,29 +13590,29 @@ paths:
                                 type: string
                                 format: uint64
                                 title: >-
-                                  height is the height of this header on CZ
-                                  ledger
+                                  height is the height of this header on the
+                                  Consumer's ledger.
 
-                                  (hash, height) jointly provides the position
-                                  of the header on CZ ledger
+                                  (hash, height) jointly provide the position of
+                                  the header on the Consumer ledger
                               time:
                                 type: string
                                 format: date-time
                                 title: >-
-                                  time is the timestamp of this header on CZ
-                                  ledger
+                                  time is the timestamp of this header on the
+                                  Consumer's ledger.
 
-                                  it is needed for CZ to unbond all mature
-                                  validators/delegations
+                                  It is needed for a Consumer to unbond all
+                                  mature validators/delegations before
 
-                                  before this timestamp when this header is
+                                  this timestamp, when this header is
                                   BTC-finalised
                               babylon_header_hash:
                                 type: string
                                 format: byte
                                 title: >-
                                   babylon_header_hash is the hash of the babylon
-                                  block that includes this CZ
+                                  block that includes this Consumer
 
                                   header
                               babylon_header_height:
@@ -13614,9 +13620,9 @@ paths:
                                 format: uint64
                                 title: >-
                                   babylon_header_height is the height of the
-                                  babylon block that includes this CZ
+                                  babylon block that includes this
 
-                                  header
+                                  Consumer header
                               babylon_epoch:
                                 type: string
                                 format: uint64
@@ -13634,7 +13640,7 @@ paths:
                                   jointly provides the position of
 
                                   the header on Babylon ledger
-                            title: IndexedHeader is the metadata of a CZ header
+                            title: IndexedHeader is the metadata of a Consumer header
                           title: >-
                             blocks is the list of non-canonical indexed headers
                             at the same height
@@ -13659,7 +13665,7 @@ paths:
                         valid quorum
 
                         certificate. Such forks exist since Babylon considers
-                        CZs might have
+                        Consumers might have
 
                         dishonest majority. Also note that the IBC-Go
                         implementation will only
@@ -13679,10 +13685,10 @@ paths:
                       format: uint64
                       title: >-
                         timestamped_headers_count is the number of timestamped
-                        headers in CZ's
+                        headers in the Consumer's
 
                         canonical chain
-                  title: ChainInfo is the information of a CZ
+                  title: ChainInfo is the information of a Consumer
             description: >-
               QueryChainsInfoResponse is response type for the Query/ChainsInfo
               RPC method.
@@ -13924,27 +13930,28 @@ paths:
                           type: string
                           format: uint64
                           title: >-
-                            height is the height of this header on CZ ledger
+                            height is the height of this header on the
+                            Consumer's ledger.
 
-                            (hash, height) jointly provides the position of the
-                            header on CZ ledger
+                            (hash, height) jointly provide the position of the
+                            header on the Consumer ledger
                         time:
                           type: string
                           format: date-time
                           title: >-
-                            time is the timestamp of this header on CZ ledger
+                            time is the timestamp of this header on the
+                            Consumer's ledger.
 
-                            it is needed for CZ to unbond all mature
-                            validators/delegations
+                            It is needed for a Consumer to unbond all mature
+                            validators/delegations before
 
-                            before this timestamp when this header is
-                            BTC-finalised
+                            this timestamp, when this header is BTC-finalised
                         babylon_header_hash:
                           type: string
                           format: byte
                           title: >-
                             babylon_header_hash is the hash of the babylon block
-                            that includes this CZ
+                            that includes this Consumer
 
                             header
                         babylon_header_height:
@@ -13952,9 +13959,9 @@ paths:
                           format: uint64
                           title: >-
                             babylon_header_height is the height of the babylon
-                            block that includes this CZ
+                            block that includes this
 
-                            header
+                            Consumer header
                         babylon_epoch:
                           type: string
                           format: uint64
@@ -13972,7 +13979,7 @@ paths:
                             provides the position of
 
                             the header on Babylon ledger
-                      title: IndexedHeader is the metadata of a CZ header
+                      title: IndexedHeader is the metadata of a Consumer header
                     latest_forks:
                       type: object
                       properties:
@@ -13992,29 +13999,29 @@ paths:
                                 type: string
                                 format: uint64
                                 title: >-
-                                  height is the height of this header on CZ
-                                  ledger
+                                  height is the height of this header on the
+                                  Consumer's ledger.
 
-                                  (hash, height) jointly provides the position
-                                  of the header on CZ ledger
+                                  (hash, height) jointly provide the position of
+                                  the header on the Consumer ledger
                               time:
                                 type: string
                                 format: date-time
                                 title: >-
-                                  time is the timestamp of this header on CZ
-                                  ledger
+                                  time is the timestamp of this header on the
+                                  Consumer's ledger.
 
-                                  it is needed for CZ to unbond all mature
-                                  validators/delegations
+                                  It is needed for a Consumer to unbond all
+                                  mature validators/delegations before
 
-                                  before this timestamp when this header is
+                                  this timestamp, when this header is
                                   BTC-finalised
                               babylon_header_hash:
                                 type: string
                                 format: byte
                                 title: >-
                                   babylon_header_hash is the hash of the babylon
-                                  block that includes this CZ
+                                  block that includes this Consumer
 
                                   header
                               babylon_header_height:
@@ -14022,9 +14029,9 @@ paths:
                                 format: uint64
                                 title: >-
                                   babylon_header_height is the height of the
-                                  babylon block that includes this CZ
+                                  babylon block that includes this
 
-                                  header
+                                  Consumer header
                               babylon_epoch:
                                 type: string
                                 format: uint64
@@ -14042,7 +14049,7 @@ paths:
                                   jointly provides the position of
 
                                   the header on Babylon ledger
-                            title: IndexedHeader is the metadata of a CZ header
+                            title: IndexedHeader is the metadata of a Consumer header
                           title: >-
                             blocks is the list of non-canonical indexed headers
                             at the same height
@@ -14067,7 +14074,7 @@ paths:
                         valid quorum
 
                         certificate. Such forks exist since Babylon considers
-                        CZs might have
+                        Consumers might have
 
                         dishonest majority. Also note that the IBC-Go
                         implementation will only
@@ -14087,11 +14094,11 @@ paths:
                       format: uint64
                       title: >-
                         timestamped_headers_count is the number of timestamped
-                        headers in CZ's
+                        headers in the Consumer's
 
                         canonical chain
-                  title: ChainInfo is the information of a CZ
-                title: chain_info is the info of the CZ
+                  title: ChainInfo is the information of a Consumer
+                title: chains_info is the info of the Consumer
             description: >-
               QueryEpochChainsInfoResponse is response type for the
               Query/EpochChainsInfo RPC
@@ -14312,7 +14319,7 @@ paths:
         FinalizedChainInfoUntilHeight queries the BTC-finalised info no later
         than
 
-        the provided CZ height, with proofs
+        the provided Consumer height, with proofs
       operationId: FinalizedChainInfoUntilHeight
       responses:
         '200':
@@ -14340,27 +14347,28 @@ paths:
                         type: string
                         format: uint64
                         title: >-
-                          height is the height of this header on CZ ledger
+                          height is the height of this header on the Consumer's
+                          ledger.
 
-                          (hash, height) jointly provides the position of the
-                          header on CZ ledger
+                          (hash, height) jointly provide the position of the
+                          header on the Consumer ledger
                       time:
                         type: string
                         format: date-time
                         title: >-
-                          time is the timestamp of this header on CZ ledger
+                          time is the timestamp of this header on the Consumer's
+                          ledger.
 
-                          it is needed for CZ to unbond all mature
-                          validators/delegations
+                          It is needed for a Consumer to unbond all mature
+                          validators/delegations before
 
-                          before this timestamp when this header is
-                          BTC-finalised
+                          this timestamp, when this header is BTC-finalised
                       babylon_header_hash:
                         type: string
                         format: byte
                         title: >-
                           babylon_header_hash is the hash of the babylon block
-                          that includes this CZ
+                          that includes this Consumer
 
                           header
                       babylon_header_height:
@@ -14368,9 +14376,9 @@ paths:
                         format: uint64
                         title: >-
                           babylon_header_height is the height of the babylon
-                          block that includes this CZ
+                          block that includes this
 
-                          header
+                          Consumer header
                       babylon_epoch:
                         type: string
                         format: uint64
@@ -14388,7 +14396,7 @@ paths:
                           provides the position of
 
                           the header on Babylon ledger
-                    title: IndexedHeader is the metadata of a CZ header
+                    title: IndexedHeader is the metadata of a Consumer header
                   latest_forks:
                     type: object
                     properties:
@@ -14408,28 +14416,29 @@ paths:
                               type: string
                               format: uint64
                               title: >-
-                                height is the height of this header on CZ ledger
+                                height is the height of this header on the
+                                Consumer's ledger.
 
-                                (hash, height) jointly provides the position of
-                                the header on CZ ledger
+                                (hash, height) jointly provide the position of
+                                the header on the Consumer ledger
                             time:
                               type: string
                               format: date-time
                               title: >-
-                                time is the timestamp of this header on CZ
-                                ledger
+                                time is the timestamp of this header on the
+                                Consumer's ledger.
 
-                                it is needed for CZ to unbond all mature
-                                validators/delegations
+                                It is needed for a Consumer to unbond all mature
+                                validators/delegations before
 
-                                before this timestamp when this header is
+                                this timestamp, when this header is
                                 BTC-finalised
                             babylon_header_hash:
                               type: string
                               format: byte
                               title: >-
                                 babylon_header_hash is the hash of the babylon
-                                block that includes this CZ
+                                block that includes this Consumer
 
                                 header
                             babylon_header_height:
@@ -14437,9 +14446,9 @@ paths:
                               format: uint64
                               title: >-
                                 babylon_header_height is the height of the
-                                babylon block that includes this CZ
+                                babylon block that includes this
 
-                                header
+                                Consumer header
                             babylon_epoch:
                               type: string
                               format: uint64
@@ -14457,7 +14466,7 @@ paths:
                                 provides the position of
 
                                 the header on Babylon ledger
-                          title: IndexedHeader is the metadata of a CZ header
+                          title: IndexedHeader is the metadata of a Consumer header
                         title: >-
                           blocks is the list of non-canonical indexed headers at
                           the same height
@@ -14481,8 +14490,8 @@ paths:
                       Note that each `IndexedHeader` in the fork should have a
                       valid quorum
 
-                      certificate. Such forks exist since Babylon considers CZs
-                      might have
+                      certificate. Such forks exist since Babylon considers
+                      Consumers might have
 
                       dishonest majority. Also note that the IBC-Go
                       implementation will only
@@ -14502,10 +14511,10 @@ paths:
                     format: uint64
                     title: >-
                       timestamped_headers_count is the number of timestamped
-                      headers in CZ's
+                      headers in the Consumer's
 
                       canonical chain
-                title: ChainInfo is the information of a CZ
+                title: ChainInfo is the information of a Consumer
               epoch_info:
                 title: epoch_info is the metadata of the last BTC-finalised epoch
                 type: object
@@ -14624,10 +14633,10 @@ paths:
                 title: proof is the proof that the chain info is finalized
                 type: object
                 properties:
-                  proof_cz_header_in_epoch:
+                  proof_consumer_header_in_epoch:
                     title: >-
-                      proof_cz_header_in_epoch is the proof that the CZ header
-                      is timestamped
+                      proof_consumer_header_in_epoch is the proof that the
+                      Consumer's header is timestamped
 
                       within a certain epoch
                     type: object
@@ -15015,13 +15024,13 @@ paths:
                         }
       parameters:
         - name: consumer_id
-          description: consumer_id is the ID of the CZ
+          description: consumer_id is the ID of the Consumer
           in: path
           required: true
           type: string
         - name: height
           description: >-
-            height is the height of the CZ chain
+            height is the height of the Consumer chain
 
             such that the returned finalised chain info will be no later than
             this
@@ -15080,28 +15089,29 @@ paths:
                               type: string
                               format: uint64
                               title: >-
-                                height is the height of this header on CZ ledger
+                                height is the height of this header on the
+                                Consumer's ledger.
 
-                                (hash, height) jointly provides the position of
-                                the header on CZ ledger
+                                (hash, height) jointly provide the position of
+                                the header on the Consumer ledger
                             time:
                               type: string
                               format: date-time
                               title: >-
-                                time is the timestamp of this header on CZ
-                                ledger
+                                time is the timestamp of this header on the
+                                Consumer's ledger.
 
-                                it is needed for CZ to unbond all mature
-                                validators/delegations
+                                It is needed for a Consumer to unbond all mature
+                                validators/delegations before
 
-                                before this timestamp when this header is
+                                this timestamp, when this header is
                                 BTC-finalised
                             babylon_header_hash:
                               type: string
                               format: byte
                               title: >-
                                 babylon_header_hash is the hash of the babylon
-                                block that includes this CZ
+                                block that includes this Consumer
 
                                 header
                             babylon_header_height:
@@ -15109,9 +15119,9 @@ paths:
                               format: uint64
                               title: >-
                                 babylon_header_height is the height of the
-                                babylon block that includes this CZ
+                                babylon block that includes this
 
-                                header
+                                Consumer header
                             babylon_epoch:
                               type: string
                               format: uint64
@@ -15129,7 +15139,7 @@ paths:
                                 provides the position of
 
                                 the header on Babylon ledger
-                          title: IndexedHeader is the metadata of a CZ header
+                          title: IndexedHeader is the metadata of a Consumer header
                         latest_forks:
                           type: object
                           properties:
@@ -15151,29 +15161,30 @@ paths:
                                     type: string
                                     format: uint64
                                     title: >-
-                                      height is the height of this header on CZ
-                                      ledger
+                                      height is the height of this header on the
+                                      Consumer's ledger.
 
-                                      (hash, height) jointly provides the
-                                      position of the header on CZ ledger
+                                      (hash, height) jointly provide the
+                                      position of the header on the Consumer
+                                      ledger
                                   time:
                                     type: string
                                     format: date-time
                                     title: >-
-                                      time is the timestamp of this header on CZ
-                                      ledger
+                                      time is the timestamp of this header on
+                                      the Consumer's ledger.
 
-                                      it is needed for CZ to unbond all mature
-                                      validators/delegations
+                                      It is needed for a Consumer to unbond all
+                                      mature validators/delegations before
 
-                                      before this timestamp when this header is
+                                      this timestamp, when this header is
                                       BTC-finalised
                                   babylon_header_hash:
                                     type: string
                                     format: byte
                                     title: >-
                                       babylon_header_hash is the hash of the
-                                      babylon block that includes this CZ
+                                      babylon block that includes this Consumer
 
                                       header
                                   babylon_header_height:
@@ -15181,9 +15192,9 @@ paths:
                                     format: uint64
                                     title: >-
                                       babylon_header_height is the height of the
-                                      babylon block that includes this CZ
+                                      babylon block that includes this
 
-                                      header
+                                      Consumer header
                                   babylon_epoch:
                                     type: string
                                     format: uint64
@@ -15201,7 +15212,9 @@ paths:
                                       jointly provides the position of
 
                                       the header on Babylon ledger
-                                title: IndexedHeader is the metadata of a CZ header
+                                title: >-
+                                  IndexedHeader is the metadata of a Consumer
+                                  header
                               title: >-
                                 blocks is the list of non-canonical indexed
                                 headers at the same height
@@ -15226,7 +15239,7 @@ paths:
                             have a valid quorum
 
                             certificate. Such forks exist since Babylon
-                            considers CZs might have
+                            considers Consumers might have
 
                             dishonest majority. Also note that the IBC-Go
                             implementation will only
@@ -15246,10 +15259,10 @@ paths:
                           format: uint64
                           title: >-
                             timestamped_headers_count is the number of
-                            timestamped headers in CZ's
+                            timestamped headers in the Consumer's
 
                             canonical chain
-                      title: ChainInfo is the information of a CZ
+                      title: ChainInfo is the information of a Consumer
                     epoch_info:
                       title: >-
                         epoch_info is the metadata of the last BTC-finalised
@@ -15370,10 +15383,10 @@ paths:
                       title: proof is the proof that the chain info is finalized
                       type: object
                       properties:
-                        proof_cz_header_in_epoch:
+                        proof_consumer_header_in_epoch:
                           title: >-
-                            proof_cz_header_in_epoch is the proof that the CZ
-                            header is timestamped
+                            proof_consumer_header_in_epoch is the proof that the
+                            Consumer's header is timestamped
 
                             within a certain epoch
                           type: object
@@ -15569,7 +15582,7 @@ paths:
 
                             checkpoint submission
                   title: >-
-                    FinalizedChainInfo is the information of a CZ that is
+                    FinalizedChainInfo is the information of a Consumer that is
                     BTC-finalised
             description: |-
               QueryFinalizedChainsInfoResponse is response type for the
@@ -15770,7 +15783,7 @@ paths:
                         }
       parameters:
         - name: consumer_ids
-          description: consumer_ids is the list of ids of CZs.
+          description: consumer_ids is the list of ids of Consumers.
           in: query
           required: false
           type: array
@@ -15814,26 +15827,28 @@ paths:
                       type: string
                       format: uint64
                       title: >-
-                        height is the height of this header on CZ ledger
+                        height is the height of this header on the Consumer's
+                        ledger.
 
-                        (hash, height) jointly provides the position of the
-                        header on CZ ledger
+                        (hash, height) jointly provide the position of the
+                        header on the Consumer ledger
                     time:
                       type: string
                       format: date-time
                       title: >-
-                        time is the timestamp of this header on CZ ledger
+                        time is the timestamp of this header on the Consumer's
+                        ledger.
 
-                        it is needed for CZ to unbond all mature
-                        validators/delegations
+                        It is needed for a Consumer to unbond all mature
+                        validators/delegations before
 
-                        before this timestamp when this header is BTC-finalised
+                        this timestamp, when this header is BTC-finalised
                     babylon_header_hash:
                       type: string
                       format: byte
                       title: >-
                         babylon_header_hash is the hash of the babylon block
-                        that includes this CZ
+                        that includes this Consumer
 
                         header
                     babylon_header_height:
@@ -15841,9 +15856,9 @@ paths:
                       format: uint64
                       title: >-
                         babylon_header_height is the height of the babylon block
-                        that includes this CZ
+                        that includes this
 
-                        header
+                        Consumer header
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -15861,7 +15876,7 @@ paths:
                         the position of
 
                         the header on Babylon ledger
-                  title: IndexedHeader is the metadata of a CZ header
+                  title: IndexedHeader is the metadata of a Consumer header
                 title: headers is the list of headers
               pagination:
                 title: pagination defines the pagination in the response
@@ -16182,26 +16197,28 @@ paths:
                       type: string
                       format: uint64
                       title: >-
-                        height is the height of this header on CZ ledger
+                        height is the height of this header on the Consumer's
+                        ledger.
 
-                        (hash, height) jointly provides the position of the
-                        header on CZ ledger
+                        (hash, height) jointly provide the position of the
+                        header on the Consumer ledger
                     time:
                       type: string
                       format: date-time
                       title: >-
-                        time is the timestamp of this header on CZ ledger
+                        time is the timestamp of this header on the Consumer's
+                        ledger.
 
-                        it is needed for CZ to unbond all mature
-                        validators/delegations
+                        It is needed for a Consumer to unbond all mature
+                        validators/delegations before
 
-                        before this timestamp when this header is BTC-finalised
+                        this timestamp, when this header is BTC-finalised
                     babylon_header_hash:
                       type: string
                       format: byte
                       title: >-
                         babylon_header_hash is the hash of the babylon block
-                        that includes this CZ
+                        that includes this Consumer
 
                         header
                     babylon_header_height:
@@ -16209,9 +16226,9 @@ paths:
                       format: uint64
                       title: >-
                         babylon_header_height is the height of the babylon block
-                        that includes this CZ
+                        that includes this
 
-                        header
+                        Consumer header
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -16229,7 +16246,7 @@ paths:
                         the position of
 
                         the header on Babylon ledger
-                  title: IndexedHeader is the metadata of a CZ header
+                  title: IndexedHeader is the metadata of a Consumer header
                 title: headers is the list of headers
             description: >-
               QueryListEpochHeadersResponse is response type for the
@@ -23287,7 +23304,9 @@ definitions:
       consumer_id:
         type: string
     title: >-
-      QueryFinalityProviderConsumerResponse returns the CZ finality provier
+      QueryFinalityProviderConsumerResponse returns the Consumer finality
+      provider
+
       consumer id
   babylon.btcstkconsumer.v1.QueryFinalityProviderResponse:
     type: object
@@ -23999,23 +24018,26 @@ definitions:
             type: string
             format: uint64
             title: >-
-              height is the height of this header on CZ ledger
+              height is the height of this header on the Consumer's ledger.
 
-              (hash, height) jointly provides the position of the header on CZ
-              ledger
+              (hash, height) jointly provide the position of the header on the
+              Consumer ledger
           time:
             type: string
             format: date-time
-            title: |-
-              time is the timestamp of this header on CZ ledger
-              it is needed for CZ to unbond all mature validators/delegations
-              before this timestamp when this header is BTC-finalised
+            title: >-
+              time is the timestamp of this header on the Consumer's ledger.
+
+              It is needed for a Consumer to unbond all mature
+              validators/delegations before
+
+              this timestamp, when this header is BTC-finalised
           babylon_header_hash:
             type: string
             format: byte
             title: >-
               babylon_header_hash is the hash of the babylon block that includes
-              this CZ
+              this Consumer
 
               header
           babylon_header_height:
@@ -24023,9 +24045,9 @@ definitions:
             format: uint64
             title: >-
               babylon_header_height is the height of the babylon block that
-              includes this CZ
+              includes this
 
-              header
+              Consumer header
           babylon_epoch:
             type: string
             format: uint64
@@ -24040,7 +24062,7 @@ definitions:
               position of
 
               the header on Babylon ledger
-        title: IndexedHeader is the metadata of a CZ header
+        title: IndexedHeader is the metadata of a Consumer header
       latest_forks:
         type: object
         properties:
@@ -24060,26 +24082,28 @@ definitions:
                   type: string
                   format: uint64
                   title: >-
-                    height is the height of this header on CZ ledger
+                    height is the height of this header on the Consumer's
+                    ledger.
 
-                    (hash, height) jointly provides the position of the header
-                    on CZ ledger
+                    (hash, height) jointly provide the position of the header on
+                    the Consumer ledger
                 time:
                   type: string
                   format: date-time
                   title: >-
-                    time is the timestamp of this header on CZ ledger
+                    time is the timestamp of this header on the Consumer's
+                    ledger.
 
-                    it is needed for CZ to unbond all mature
-                    validators/delegations
+                    It is needed for a Consumer to unbond all mature
+                    validators/delegations before
 
-                    before this timestamp when this header is BTC-finalised
+                    this timestamp, when this header is BTC-finalised
                 babylon_header_hash:
                   type: string
                   format: byte
                   title: >-
                     babylon_header_hash is the hash of the babylon block that
-                    includes this CZ
+                    includes this Consumer
 
                     header
                 babylon_header_height:
@@ -24087,9 +24111,9 @@ definitions:
                   format: uint64
                   title: >-
                     babylon_header_height is the height of the babylon block
-                    that includes this CZ
+                    that includes this
 
-                    header
+                    Consumer header
                 babylon_epoch:
                   type: string
                   format: uint64
@@ -24105,7 +24129,7 @@ definitions:
                     position of
 
                     the header on Babylon ledger
-              title: IndexedHeader is the metadata of a CZ header
+              title: IndexedHeader is the metadata of a Consumer header
             title: >-
               blocks is the list of non-canonical indexed headers at the same
               height
@@ -24127,7 +24151,8 @@ definitions:
 
           Note that each `IndexedHeader` in the fork should have a valid quorum
 
-          certificate. Such forks exist since Babylon considers CZs might have
+          certificate. Such forks exist since Babylon considers Consumers might
+          have
 
           dishonest majority. Also note that the IBC-Go implementation will only
 
@@ -24144,10 +24169,12 @@ definitions:
       timestamped_headers_count:
         type: string
         format: uint64
-        title: |-
-          timestamped_headers_count is the number of timestamped headers in CZ's
+        title: >-
+          timestamped_headers_count is the number of timestamped headers in the
+          Consumer's
+
           canonical chain
-    title: ChainInfo is the information of a CZ
+    title: ChainInfo is the information of a Consumer
   babylon.zoneconcierge.v1.FinalizedChainInfo:
     type: object
     properties:
@@ -24174,26 +24201,26 @@ definitions:
                 type: string
                 format: uint64
                 title: >-
-                  height is the height of this header on CZ ledger
+                  height is the height of this header on the Consumer's ledger.
 
-                  (hash, height) jointly provides the position of the header on
-                  CZ ledger
+                  (hash, height) jointly provide the position of the header on
+                  the Consumer ledger
               time:
                 type: string
                 format: date-time
                 title: >-
-                  time is the timestamp of this header on CZ ledger
+                  time is the timestamp of this header on the Consumer's ledger.
 
-                  it is needed for CZ to unbond all mature
-                  validators/delegations
+                  It is needed for a Consumer to unbond all mature
+                  validators/delegations before
 
-                  before this timestamp when this header is BTC-finalised
+                  this timestamp, when this header is BTC-finalised
               babylon_header_hash:
                 type: string
                 format: byte
                 title: >-
                   babylon_header_hash is the hash of the babylon block that
-                  includes this CZ
+                  includes this Consumer
 
                   header
               babylon_header_height:
@@ -24201,9 +24228,9 @@ definitions:
                 format: uint64
                 title: >-
                   babylon_header_height is the height of the babylon block that
-                  includes this CZ
+                  includes this
 
-                  header
+                  Consumer header
               babylon_epoch:
                 type: string
                 format: uint64
@@ -24219,7 +24246,7 @@ definitions:
                   position of
 
                   the header on Babylon ledger
-            title: IndexedHeader is the metadata of a CZ header
+            title: IndexedHeader is the metadata of a Consumer header
           latest_forks:
             type: object
             properties:
@@ -24239,26 +24266,28 @@ definitions:
                       type: string
                       format: uint64
                       title: >-
-                        height is the height of this header on CZ ledger
+                        height is the height of this header on the Consumer's
+                        ledger.
 
-                        (hash, height) jointly provides the position of the
-                        header on CZ ledger
+                        (hash, height) jointly provide the position of the
+                        header on the Consumer ledger
                     time:
                       type: string
                       format: date-time
                       title: >-
-                        time is the timestamp of this header on CZ ledger
+                        time is the timestamp of this header on the Consumer's
+                        ledger.
 
-                        it is needed for CZ to unbond all mature
-                        validators/delegations
+                        It is needed for a Consumer to unbond all mature
+                        validators/delegations before
 
-                        before this timestamp when this header is BTC-finalised
+                        this timestamp, when this header is BTC-finalised
                     babylon_header_hash:
                       type: string
                       format: byte
                       title: >-
                         babylon_header_hash is the hash of the babylon block
-                        that includes this CZ
+                        that includes this Consumer
 
                         header
                     babylon_header_height:
@@ -24266,9 +24295,9 @@ definitions:
                       format: uint64
                       title: >-
                         babylon_header_height is the height of the babylon block
-                        that includes this CZ
+                        that includes this
 
-                        header
+                        Consumer header
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -24286,7 +24315,7 @@ definitions:
                         the position of
 
                         the header on Babylon ledger
-                  title: IndexedHeader is the metadata of a CZ header
+                  title: IndexedHeader is the metadata of a Consumer header
                 title: >-
                   blocks is the list of non-canonical indexed headers at the
                   same height
@@ -24310,8 +24339,8 @@ definitions:
               Note that each `IndexedHeader` in the fork should have a valid
               quorum
 
-              certificate. Such forks exist since Babylon considers CZs might
-              have
+              certificate. Such forks exist since Babylon considers Consumers
+              might have
 
               dishonest majority. Also note that the IBC-Go implementation will
               only
@@ -24331,10 +24360,10 @@ definitions:
             format: uint64
             title: >-
               timestamped_headers_count is the number of timestamped headers in
-              CZ's
+              the Consumer's
 
               canonical chain
-        title: ChainInfo is the information of a CZ
+        title: ChainInfo is the information of a Consumer
       epoch_info:
         title: epoch_info is the metadata of the last BTC-finalised epoch
         type: object
@@ -24438,10 +24467,10 @@ definitions:
         title: proof is the proof that the chain info is finalized
         type: object
         properties:
-          proof_cz_header_in_epoch:
+          proof_consumer_header_in_epoch:
             title: >-
-              proof_cz_header_in_epoch is the proof that the CZ header is
-              timestamped
+              proof_consumer_header_in_epoch is the proof that the Consumer's
+              header is timestamped
 
               within a certain epoch
             type: object
@@ -24623,7 +24652,7 @@ definitions:
               earliest)
 
               checkpoint submission
-    title: FinalizedChainInfo is the information of a CZ that is BTC-finalised
+    title: FinalizedChainInfo is the information of a Consumer that is BTC-finalised
   babylon.zoneconcierge.v1.Forks:
     type: object
     properties:
@@ -24643,23 +24672,26 @@ definitions:
               type: string
               format: uint64
               title: >-
-                height is the height of this header on CZ ledger
+                height is the height of this header on the Consumer's ledger.
 
-                (hash, height) jointly provides the position of the header on CZ
-                ledger
+                (hash, height) jointly provide the position of the header on the
+                Consumer ledger
             time:
               type: string
               format: date-time
-              title: |-
-                time is the timestamp of this header on CZ ledger
-                it is needed for CZ to unbond all mature validators/delegations
-                before this timestamp when this header is BTC-finalised
+              title: >-
+                time is the timestamp of this header on the Consumer's ledger.
+
+                It is needed for a Consumer to unbond all mature
+                validators/delegations before
+
+                this timestamp, when this header is BTC-finalised
             babylon_header_hash:
               type: string
               format: byte
               title: >-
                 babylon_header_hash is the hash of the babylon block that
-                includes this CZ
+                includes this Consumer
 
                 header
             babylon_header_height:
@@ -24667,9 +24699,9 @@ definitions:
               format: uint64
               title: >-
                 babylon_header_height is the height of the babylon block that
-                includes this CZ
+                includes this
 
-                header
+                Consumer header
             babylon_epoch:
               type: string
               format: uint64
@@ -24684,7 +24716,7 @@ definitions:
                 position of
 
                 the header on Babylon ledger
-          title: IndexedHeader is the metadata of a CZ header
+          title: IndexedHeader is the metadata of a Consumer header
         title: blocks is the list of non-canonical indexed headers at the same height
     description: >-
       Forks is a list of non-canonical `IndexedHeader`s at the same height.
@@ -24704,7 +24736,7 @@ definitions:
 
       Note that each `IndexedHeader` in the fork should have a valid quorum
 
-      certificate. Such forks exist since Babylon considers CZs might have
+      certificate. Such forks exist since Babylon considers Consumers might have
 
       dishonest majority. Also note that the IBC-Go implementation will only
 
@@ -24726,23 +24758,26 @@ definitions:
         type: string
         format: uint64
         title: >-
-          height is the height of this header on CZ ledger
+          height is the height of this header on the Consumer's ledger.
 
-          (hash, height) jointly provides the position of the header on CZ
-          ledger
+          (hash, height) jointly provide the position of the header on the
+          Consumer ledger
       time:
         type: string
         format: date-time
-        title: |-
-          time is the timestamp of this header on CZ ledger
-          it is needed for CZ to unbond all mature validators/delegations
-          before this timestamp when this header is BTC-finalised
+        title: >-
+          time is the timestamp of this header on the Consumer's ledger.
+
+          It is needed for a Consumer to unbond all mature
+          validators/delegations before
+
+          this timestamp, when this header is BTC-finalised
       babylon_header_hash:
         type: string
         format: byte
         title: >-
           babylon_header_hash is the hash of the babylon block that includes
-          this CZ
+          this Consumer
 
           header
       babylon_header_height:
@@ -24750,9 +24785,9 @@ definitions:
         format: uint64
         title: >-
           babylon_header_height is the height of the babylon block that includes
-          this CZ
+          this
 
-          header
+          Consumer header
       babylon_epoch:
         type: string
         format: uint64
@@ -24767,7 +24802,7 @@ definitions:
           of
 
           the header on Babylon ledger
-    title: IndexedHeader is the metadata of a CZ header
+    title: IndexedHeader is the metadata of a Consumer header
   babylon.zoneconcierge.v1.Params:
     type: object
     properties:
@@ -24882,10 +24917,10 @@ definitions:
   babylon.zoneconcierge.v1.ProofFinalizedChainInfo:
     type: object
     properties:
-      proof_cz_header_in_epoch:
+      proof_consumer_header_in_epoch:
         title: >-
-          proof_cz_header_in_epoch is the proof that the CZ header is
-          timestamped
+          proof_consumer_header_in_epoch is the proof that the Consumer's header
+          is timestamped
 
           within a certain epoch
         type: object
@@ -25123,26 +25158,28 @@ definitions:
                   type: string
                   format: uint64
                   title: >-
-                    height is the height of this header on CZ ledger
+                    height is the height of this header on the Consumer's
+                    ledger.
 
-                    (hash, height) jointly provides the position of the header
-                    on CZ ledger
+                    (hash, height) jointly provide the position of the header on
+                    the Consumer ledger
                 time:
                   type: string
                   format: date-time
                   title: >-
-                    time is the timestamp of this header on CZ ledger
+                    time is the timestamp of this header on the Consumer's
+                    ledger.
 
-                    it is needed for CZ to unbond all mature
-                    validators/delegations
+                    It is needed for a Consumer to unbond all mature
+                    validators/delegations before
 
-                    before this timestamp when this header is BTC-finalised
+                    this timestamp, when this header is BTC-finalised
                 babylon_header_hash:
                   type: string
                   format: byte
                   title: >-
                     babylon_header_hash is the hash of the babylon block that
-                    includes this CZ
+                    includes this Consumer
 
                     header
                 babylon_header_height:
@@ -25150,9 +25187,9 @@ definitions:
                   format: uint64
                   title: >-
                     babylon_header_height is the height of the babylon block
-                    that includes this CZ
+                    that includes this
 
-                    header
+                    Consumer header
                 babylon_epoch:
                   type: string
                   format: uint64
@@ -25168,7 +25205,7 @@ definitions:
                     position of
 
                     the header on Babylon ledger
-              title: IndexedHeader is the metadata of a CZ header
+              title: IndexedHeader is the metadata of a Consumer header
             latest_forks:
               type: object
               properties:
@@ -25188,27 +25225,28 @@ definitions:
                         type: string
                         format: uint64
                         title: >-
-                          height is the height of this header on CZ ledger
+                          height is the height of this header on the Consumer's
+                          ledger.
 
-                          (hash, height) jointly provides the position of the
-                          header on CZ ledger
+                          (hash, height) jointly provide the position of the
+                          header on the Consumer ledger
                       time:
                         type: string
                         format: date-time
                         title: >-
-                          time is the timestamp of this header on CZ ledger
+                          time is the timestamp of this header on the Consumer's
+                          ledger.
 
-                          it is needed for CZ to unbond all mature
-                          validators/delegations
+                          It is needed for a Consumer to unbond all mature
+                          validators/delegations before
 
-                          before this timestamp when this header is
-                          BTC-finalised
+                          this timestamp, when this header is BTC-finalised
                       babylon_header_hash:
                         type: string
                         format: byte
                         title: >-
                           babylon_header_hash is the hash of the babylon block
-                          that includes this CZ
+                          that includes this Consumer
 
                           header
                       babylon_header_height:
@@ -25216,9 +25254,9 @@ definitions:
                         format: uint64
                         title: >-
                           babylon_header_height is the height of the babylon
-                          block that includes this CZ
+                          block that includes this
 
-                          header
+                          Consumer header
                       babylon_epoch:
                         type: string
                         format: uint64
@@ -25236,7 +25274,7 @@ definitions:
                           provides the position of
 
                           the header on Babylon ledger
-                    title: IndexedHeader is the metadata of a CZ header
+                    title: IndexedHeader is the metadata of a Consumer header
                   title: >-
                     blocks is the list of non-canonical indexed headers at the
                     same height
@@ -25260,8 +25298,8 @@ definitions:
                 Note that each `IndexedHeader` in the fork should have a valid
                 quorum
 
-                certificate. Such forks exist since Babylon considers CZs might
-                have
+                certificate. Such forks exist since Babylon considers Consumers
+                might have
 
                 dishonest majority. Also note that the IBC-Go implementation
                 will only
@@ -25281,10 +25319,10 @@ definitions:
               format: uint64
               title: >-
                 timestamped_headers_count is the number of timestamped headers
-                in CZ's
+                in the Consumer's
 
                 canonical chain
-          title: ChainInfo is the information of a CZ
+          title: ChainInfo is the information of a Consumer
     description: >-
       QueryChainsInfoResponse is response type for the Query/ChainsInfo RPC
       method.
@@ -25313,26 +25351,28 @@ definitions:
                   type: string
                   format: uint64
                   title: >-
-                    height is the height of this header on CZ ledger
+                    height is the height of this header on the Consumer's
+                    ledger.
 
-                    (hash, height) jointly provides the position of the header
-                    on CZ ledger
+                    (hash, height) jointly provide the position of the header on
+                    the Consumer ledger
                 time:
                   type: string
                   format: date-time
                   title: >-
-                    time is the timestamp of this header on CZ ledger
+                    time is the timestamp of this header on the Consumer's
+                    ledger.
 
-                    it is needed for CZ to unbond all mature
-                    validators/delegations
+                    It is needed for a Consumer to unbond all mature
+                    validators/delegations before
 
-                    before this timestamp when this header is BTC-finalised
+                    this timestamp, when this header is BTC-finalised
                 babylon_header_hash:
                   type: string
                   format: byte
                   title: >-
                     babylon_header_hash is the hash of the babylon block that
-                    includes this CZ
+                    includes this Consumer
 
                     header
                 babylon_header_height:
@@ -25340,9 +25380,9 @@ definitions:
                   format: uint64
                   title: >-
                     babylon_header_height is the height of the babylon block
-                    that includes this CZ
+                    that includes this
 
-                    header
+                    Consumer header
                 babylon_epoch:
                   type: string
                   format: uint64
@@ -25358,7 +25398,7 @@ definitions:
                     position of
 
                     the header on Babylon ledger
-              title: IndexedHeader is the metadata of a CZ header
+              title: IndexedHeader is the metadata of a Consumer header
             latest_forks:
               type: object
               properties:
@@ -25378,27 +25418,28 @@ definitions:
                         type: string
                         format: uint64
                         title: >-
-                          height is the height of this header on CZ ledger
+                          height is the height of this header on the Consumer's
+                          ledger.
 
-                          (hash, height) jointly provides the position of the
-                          header on CZ ledger
+                          (hash, height) jointly provide the position of the
+                          header on the Consumer ledger
                       time:
                         type: string
                         format: date-time
                         title: >-
-                          time is the timestamp of this header on CZ ledger
+                          time is the timestamp of this header on the Consumer's
+                          ledger.
 
-                          it is needed for CZ to unbond all mature
-                          validators/delegations
+                          It is needed for a Consumer to unbond all mature
+                          validators/delegations before
 
-                          before this timestamp when this header is
-                          BTC-finalised
+                          this timestamp, when this header is BTC-finalised
                       babylon_header_hash:
                         type: string
                         format: byte
                         title: >-
                           babylon_header_hash is the hash of the babylon block
-                          that includes this CZ
+                          that includes this Consumer
 
                           header
                       babylon_header_height:
@@ -25406,9 +25447,9 @@ definitions:
                         format: uint64
                         title: >-
                           babylon_header_height is the height of the babylon
-                          block that includes this CZ
+                          block that includes this
 
-                          header
+                          Consumer header
                       babylon_epoch:
                         type: string
                         format: uint64
@@ -25426,7 +25467,7 @@ definitions:
                           provides the position of
 
                           the header on Babylon ledger
-                    title: IndexedHeader is the metadata of a CZ header
+                    title: IndexedHeader is the metadata of a Consumer header
                   title: >-
                     blocks is the list of non-canonical indexed headers at the
                     same height
@@ -25450,8 +25491,8 @@ definitions:
                 Note that each `IndexedHeader` in the fork should have a valid
                 quorum
 
-                certificate. Such forks exist since Babylon considers CZs might
-                have
+                certificate. Such forks exist since Babylon considers Consumers
+                might have
 
                 dishonest majority. Also note that the IBC-Go implementation
                 will only
@@ -25471,11 +25512,11 @@ definitions:
               format: uint64
               title: >-
                 timestamped_headers_count is the number of timestamped headers
-                in CZ's
+                in the Consumer's
 
                 canonical chain
-          title: ChainInfo is the information of a CZ
-        title: chain_info is the info of the CZ
+          title: ChainInfo is the information of a Consumer
+        title: chains_info is the info of the Consumer
     description: >-
       QueryEpochChainsInfoResponse is response type for the
       Query/EpochChainsInfo RPC
@@ -25504,26 +25545,26 @@ definitions:
                 type: string
                 format: uint64
                 title: >-
-                  height is the height of this header on CZ ledger
+                  height is the height of this header on the Consumer's ledger.
 
-                  (hash, height) jointly provides the position of the header on
-                  CZ ledger
+                  (hash, height) jointly provide the position of the header on
+                  the Consumer ledger
               time:
                 type: string
                 format: date-time
                 title: >-
-                  time is the timestamp of this header on CZ ledger
+                  time is the timestamp of this header on the Consumer's ledger.
 
-                  it is needed for CZ to unbond all mature
-                  validators/delegations
+                  It is needed for a Consumer to unbond all mature
+                  validators/delegations before
 
-                  before this timestamp when this header is BTC-finalised
+                  this timestamp, when this header is BTC-finalised
               babylon_header_hash:
                 type: string
                 format: byte
                 title: >-
                   babylon_header_hash is the hash of the babylon block that
-                  includes this CZ
+                  includes this Consumer
 
                   header
               babylon_header_height:
@@ -25531,9 +25572,9 @@ definitions:
                 format: uint64
                 title: >-
                   babylon_header_height is the height of the babylon block that
-                  includes this CZ
+                  includes this
 
-                  header
+                  Consumer header
               babylon_epoch:
                 type: string
                 format: uint64
@@ -25549,7 +25590,7 @@ definitions:
                   position of
 
                   the header on Babylon ledger
-            title: IndexedHeader is the metadata of a CZ header
+            title: IndexedHeader is the metadata of a Consumer header
           latest_forks:
             type: object
             properties:
@@ -25569,26 +25610,28 @@ definitions:
                       type: string
                       format: uint64
                       title: >-
-                        height is the height of this header on CZ ledger
+                        height is the height of this header on the Consumer's
+                        ledger.
 
-                        (hash, height) jointly provides the position of the
-                        header on CZ ledger
+                        (hash, height) jointly provide the position of the
+                        header on the Consumer ledger
                     time:
                       type: string
                       format: date-time
                       title: >-
-                        time is the timestamp of this header on CZ ledger
+                        time is the timestamp of this header on the Consumer's
+                        ledger.
 
-                        it is needed for CZ to unbond all mature
-                        validators/delegations
+                        It is needed for a Consumer to unbond all mature
+                        validators/delegations before
 
-                        before this timestamp when this header is BTC-finalised
+                        this timestamp, when this header is BTC-finalised
                     babylon_header_hash:
                       type: string
                       format: byte
                       title: >-
                         babylon_header_hash is the hash of the babylon block
-                        that includes this CZ
+                        that includes this Consumer
 
                         header
                     babylon_header_height:
@@ -25596,9 +25639,9 @@ definitions:
                       format: uint64
                       title: >-
                         babylon_header_height is the height of the babylon block
-                        that includes this CZ
+                        that includes this
 
-                        header
+                        Consumer header
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -25616,7 +25659,7 @@ definitions:
                         the position of
 
                         the header on Babylon ledger
-                  title: IndexedHeader is the metadata of a CZ header
+                  title: IndexedHeader is the metadata of a Consumer header
                 title: >-
                   blocks is the list of non-canonical indexed headers at the
                   same height
@@ -25640,8 +25683,8 @@ definitions:
               Note that each `IndexedHeader` in the fork should have a valid
               quorum
 
-              certificate. Such forks exist since Babylon considers CZs might
-              have
+              certificate. Such forks exist since Babylon considers Consumers
+              might have
 
               dishonest majority. Also note that the IBC-Go implementation will
               only
@@ -25661,10 +25704,10 @@ definitions:
             format: uint64
             title: >-
               timestamped_headers_count is the number of timestamped headers in
-              CZ's
+              the Consumer's
 
               canonical chain
-        title: ChainInfo is the information of a CZ
+        title: ChainInfo is the information of a Consumer
       epoch_info:
         title: epoch_info is the metadata of the last BTC-finalised epoch
         type: object
@@ -25768,10 +25811,10 @@ definitions:
         title: proof is the proof that the chain info is finalized
         type: object
         properties:
-          proof_cz_header_in_epoch:
+          proof_consumer_header_in_epoch:
             title: >-
-              proof_cz_header_in_epoch is the proof that the CZ header is
-              timestamped
+              proof_consumer_header_in_epoch is the proof that the Consumer's
+              header is timestamped
 
               within a certain epoch
             type: object
@@ -25987,26 +26030,28 @@ definitions:
                       type: string
                       format: uint64
                       title: >-
-                        height is the height of this header on CZ ledger
+                        height is the height of this header on the Consumer's
+                        ledger.
 
-                        (hash, height) jointly provides the position of the
-                        header on CZ ledger
+                        (hash, height) jointly provide the position of the
+                        header on the Consumer ledger
                     time:
                       type: string
                       format: date-time
                       title: >-
-                        time is the timestamp of this header on CZ ledger
+                        time is the timestamp of this header on the Consumer's
+                        ledger.
 
-                        it is needed for CZ to unbond all mature
-                        validators/delegations
+                        It is needed for a Consumer to unbond all mature
+                        validators/delegations before
 
-                        before this timestamp when this header is BTC-finalised
+                        this timestamp, when this header is BTC-finalised
                     babylon_header_hash:
                       type: string
                       format: byte
                       title: >-
                         babylon_header_hash is the hash of the babylon block
-                        that includes this CZ
+                        that includes this Consumer
 
                         header
                     babylon_header_height:
@@ -26014,9 +26059,9 @@ definitions:
                       format: uint64
                       title: >-
                         babylon_header_height is the height of the babylon block
-                        that includes this CZ
+                        that includes this
 
-                        header
+                        Consumer header
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -26034,7 +26079,7 @@ definitions:
                         the position of
 
                         the header on Babylon ledger
-                  title: IndexedHeader is the metadata of a CZ header
+                  title: IndexedHeader is the metadata of a Consumer header
                 latest_forks:
                   type: object
                   properties:
@@ -26054,27 +26099,28 @@ definitions:
                             type: string
                             format: uint64
                             title: >-
-                              height is the height of this header on CZ ledger
+                              height is the height of this header on the
+                              Consumer's ledger.
 
-                              (hash, height) jointly provides the position of
-                              the header on CZ ledger
+                              (hash, height) jointly provide the position of the
+                              header on the Consumer ledger
                           time:
                             type: string
                             format: date-time
                             title: >-
-                              time is the timestamp of this header on CZ ledger
+                              time is the timestamp of this header on the
+                              Consumer's ledger.
 
-                              it is needed for CZ to unbond all mature
-                              validators/delegations
+                              It is needed for a Consumer to unbond all mature
+                              validators/delegations before
 
-                              before this timestamp when this header is
-                              BTC-finalised
+                              this timestamp, when this header is BTC-finalised
                           babylon_header_hash:
                             type: string
                             format: byte
                             title: >-
                               babylon_header_hash is the hash of the babylon
-                              block that includes this CZ
+                              block that includes this Consumer
 
                               header
                           babylon_header_height:
@@ -26082,9 +26128,9 @@ definitions:
                             format: uint64
                             title: >-
                               babylon_header_height is the height of the babylon
-                              block that includes this CZ
+                              block that includes this
 
-                              header
+                              Consumer header
                           babylon_epoch:
                             type: string
                             format: uint64
@@ -26102,7 +26148,7 @@ definitions:
                               provides the position of
 
                               the header on Babylon ledger
-                        title: IndexedHeader is the metadata of a CZ header
+                        title: IndexedHeader is the metadata of a Consumer header
                       title: >-
                         blocks is the list of non-canonical indexed headers at
                         the same height
@@ -26126,8 +26172,8 @@ definitions:
                     Note that each `IndexedHeader` in the fork should have a
                     valid quorum
 
-                    certificate. Such forks exist since Babylon considers CZs
-                    might have
+                    certificate. Such forks exist since Babylon considers
+                    Consumers might have
 
                     dishonest majority. Also note that the IBC-Go implementation
                     will only
@@ -26147,10 +26193,10 @@ definitions:
                   format: uint64
                   title: >-
                     timestamped_headers_count is the number of timestamped
-                    headers in CZ's
+                    headers in the Consumer's
 
                     canonical chain
-              title: ChainInfo is the information of a CZ
+              title: ChainInfo is the information of a Consumer
             epoch_info:
               title: epoch_info is the metadata of the last BTC-finalised epoch
               type: object
@@ -26261,10 +26307,10 @@ definitions:
               title: proof is the proof that the chain info is finalized
               type: object
               properties:
-                proof_cz_header_in_epoch:
+                proof_consumer_header_in_epoch:
                   title: >-
-                    proof_cz_header_in_epoch is the proof that the CZ header is
-                    timestamped
+                    proof_consumer_header_in_epoch is the proof that the
+                    Consumer's header is timestamped
 
                     within a certain epoch
                   type: object
@@ -26447,7 +26493,9 @@ definitions:
                     (i.e., earliest)
 
                     checkpoint submission
-          title: FinalizedChainInfo is the information of a CZ that is BTC-finalised
+          title: >-
+            FinalizedChainInfo is the information of a Consumer that is
+            BTC-finalised
     description: |-
       QueryFinalizedChainsInfoResponse is response type for the
       Query/FinalizedChainsInfo RPC method.
@@ -26468,23 +26516,26 @@ definitions:
             type: string
             format: uint64
             title: >-
-              height is the height of this header on CZ ledger
+              height is the height of this header on the Consumer's ledger.
 
-              (hash, height) jointly provides the position of the header on CZ
-              ledger
+              (hash, height) jointly provide the position of the header on the
+              Consumer ledger
           time:
             type: string
             format: date-time
-            title: |-
-              time is the timestamp of this header on CZ ledger
-              it is needed for CZ to unbond all mature validators/delegations
-              before this timestamp when this header is BTC-finalised
+            title: >-
+              time is the timestamp of this header on the Consumer's ledger.
+
+              It is needed for a Consumer to unbond all mature
+              validators/delegations before
+
+              this timestamp, when this header is BTC-finalised
           babylon_header_hash:
             type: string
             format: byte
             title: >-
               babylon_header_hash is the hash of the babylon block that includes
-              this CZ
+              this Consumer
 
               header
           babylon_header_height:
@@ -26492,9 +26543,9 @@ definitions:
             format: uint64
             title: >-
               babylon_header_height is the height of the babylon block that
-              includes this CZ
+              includes this
 
-              header
+              Consumer header
           babylon_epoch:
             type: string
             format: uint64
@@ -26509,7 +26560,7 @@ definitions:
               position of
 
               the header on Babylon ledger
-        title: IndexedHeader is the metadata of a CZ header
+        title: IndexedHeader is the metadata of a Consumer header
       fork_headers:
         type: object
         properties:
@@ -26529,26 +26580,28 @@ definitions:
                   type: string
                   format: uint64
                   title: >-
-                    height is the height of this header on CZ ledger
+                    height is the height of this header on the Consumer's
+                    ledger.
 
-                    (hash, height) jointly provides the position of the header
-                    on CZ ledger
+                    (hash, height) jointly provide the position of the header on
+                    the Consumer ledger
                 time:
                   type: string
                   format: date-time
                   title: >-
-                    time is the timestamp of this header on CZ ledger
+                    time is the timestamp of this header on the Consumer's
+                    ledger.
 
-                    it is needed for CZ to unbond all mature
-                    validators/delegations
+                    It is needed for a Consumer to unbond all mature
+                    validators/delegations before
 
-                    before this timestamp when this header is BTC-finalised
+                    this timestamp, when this header is BTC-finalised
                 babylon_header_hash:
                   type: string
                   format: byte
                   title: >-
                     babylon_header_hash is the hash of the babylon block that
-                    includes this CZ
+                    includes this Consumer
 
                     header
                 babylon_header_height:
@@ -26556,9 +26609,9 @@ definitions:
                   format: uint64
                   title: >-
                     babylon_header_height is the height of the babylon block
-                    that includes this CZ
+                    that includes this
 
-                    header
+                    Consumer header
                 babylon_epoch:
                   type: string
                   format: uint64
@@ -26574,7 +26627,7 @@ definitions:
                     position of
 
                     the header on Babylon ledger
-              title: IndexedHeader is the metadata of a CZ header
+              title: IndexedHeader is the metadata of a Consumer header
             title: >-
               blocks is the list of non-canonical indexed headers at the same
               height
@@ -26596,7 +26649,8 @@ definitions:
 
           Note that each `IndexedHeader` in the fork should have a valid quorum
 
-          certificate. Such forks exist since Babylon considers CZs might have
+          certificate. Such forks exist since Babylon considers Consumers might
+          have
 
           dishonest majority. Also note that the IBC-Go implementation will only
 
@@ -26625,23 +26679,26 @@ definitions:
               type: string
               format: uint64
               title: >-
-                height is the height of this header on CZ ledger
+                height is the height of this header on the Consumer's ledger.
 
-                (hash, height) jointly provides the position of the header on CZ
-                ledger
+                (hash, height) jointly provide the position of the header on the
+                Consumer ledger
             time:
               type: string
               format: date-time
-              title: |-
-                time is the timestamp of this header on CZ ledger
-                it is needed for CZ to unbond all mature validators/delegations
-                before this timestamp when this header is BTC-finalised
+              title: >-
+                time is the timestamp of this header on the Consumer's ledger.
+
+                It is needed for a Consumer to unbond all mature
+                validators/delegations before
+
+                this timestamp, when this header is BTC-finalised
             babylon_header_hash:
               type: string
               format: byte
               title: >-
                 babylon_header_hash is the hash of the babylon block that
-                includes this CZ
+                includes this Consumer
 
                 header
             babylon_header_height:
@@ -26649,9 +26706,9 @@ definitions:
               format: uint64
               title: >-
                 babylon_header_height is the height of the babylon block that
-                includes this CZ
+                includes this
 
-                header
+                Consumer header
             babylon_epoch:
               type: string
               format: uint64
@@ -26666,7 +26723,7 @@ definitions:
                 position of
 
                 the header on Babylon ledger
-          title: IndexedHeader is the metadata of a CZ header
+          title: IndexedHeader is the metadata of a Consumer header
         title: headers is the list of headers
     description: >-
       QueryListEpochHeadersResponse is response type for the
@@ -26692,23 +26749,26 @@ definitions:
               type: string
               format: uint64
               title: >-
-                height is the height of this header on CZ ledger
+                height is the height of this header on the Consumer's ledger.
 
-                (hash, height) jointly provides the position of the header on CZ
-                ledger
+                (hash, height) jointly provide the position of the header on the
+                Consumer ledger
             time:
               type: string
               format: date-time
-              title: |-
-                time is the timestamp of this header on CZ ledger
-                it is needed for CZ to unbond all mature validators/delegations
-                before this timestamp when this header is BTC-finalised
+              title: >-
+                time is the timestamp of this header on the Consumer's ledger.
+
+                It is needed for a Consumer to unbond all mature
+                validators/delegations before
+
+                this timestamp, when this header is BTC-finalised
             babylon_header_hash:
               type: string
               format: byte
               title: >-
                 babylon_header_hash is the hash of the babylon block that
-                includes this CZ
+                includes this Consumer
 
                 header
             babylon_header_height:
@@ -26716,9 +26776,9 @@ definitions:
               format: uint64
               title: >-
                 babylon_header_height is the height of the babylon block that
-                includes this CZ
+                includes this
 
-                header
+                Consumer header
             babylon_epoch:
               type: string
               format: uint64
@@ -26733,7 +26793,7 @@ definitions:
                 position of
 
                 the header on Babylon ledger
-          title: IndexedHeader is the metadata of a CZ header
+          title: IndexedHeader is the metadata of a Consumer header
         title: headers is the list of headers
       pagination:
         title: pagination defines the pagination in the response

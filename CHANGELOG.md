@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#869](https://github.com/babylonlabs-io/babylon/pull/869) Rename CZ to Consumer in btcstkconsumer and zoneconcierge.
 - [#846](https://github.com/babylonlabs-io/babylon/pull/846) Add tokenfactory module.
 - [#837](https://github.com/babylonlabs-io/babylon/pull/837) Bump repository to v2.
 - [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.
@@ -64,6 +65,7 @@ check of rewards
 - [#840](https://github.com/babylonlabs-io/babylon/pull/840) Add import/export genesis logic in `x/checkpointing` module
 - [#841](https://github.com/babylonlabs-io/babylon/pull/841) chore: upgrade the make file: release
 - [#843](https://github.com/babylonlabs-io/babylon/pull/843) Add import/export genesis logic in `x/epoching` module
+- [#850](https://github.com/babylonlabs-io/babylon/pull/850) Add BLS improvement including permission and verification
 - [#859](https://github.com/babylonlabs-io/babylon/pull/859) Update init/export genesis logic in `x/finality` module
 
 ### State Machine Breaking
