@@ -40,6 +40,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#841](https://github.com/babylonlabs-io/babylon/pull/841) chore: upgrade the make file: release
 - [#850](https://github.com/babylonlabs-io/babylon/pull/850) Add BLS improvement including permission and verification
 
+### State breaking
+
+- [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
+when the babylon block is being BTC rewarded.
+
 ### Bug fixes
 
 - [#860](https://github.com/babylonlabs-io/babylon/pull/860) fix: ensure active fps have signing info after finality resumption proposal
