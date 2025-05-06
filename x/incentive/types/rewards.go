@@ -16,6 +16,32 @@ var (
 	DecimalAccumulatedRewards, _ = sdkmath.NewIntFromString("100000000000000000000")
 )
 
+// NewEventBtcDelegationActivated returns a new EventPowerUpdate of type activated
+func NewEventBtcDelegationActivated(fpAddr, btcDelAddr string, totalSat sdkmath.Int) EventPowerUpdate {
+	return EventPowerUpdate{
+		Ev: &EventPowerUpdate_BtcActivated{
+			BtcActivated: &EventBTCDelegationActivated{
+				FpAddr:     fpAddr,
+				BtcDelAddr: btcDelAddr,
+				TotalSat:   totalSat,
+			},
+		},
+	}
+}
+
+// NewEventBtcDelegationUnboned returns a new EventPowerUpdate of type unbonded
+func NewEventBtcDelegationUnboned(fpAddr, btcDelAddr string, totalSat sdkmath.Int) EventPowerUpdate {
+	return EventPowerUpdate{
+		Ev: &EventPowerUpdate_BtcUnbonded{
+			BtcUnbonded: &EventBTCDelegationUnbonded{
+				FpAddr:     fpAddr,
+				BtcDelAddr: btcDelAddr,
+				TotalSat:   totalSat,
+			},
+		},
+	}
+}
+
 func NewBTCDelegationRewardsTracker(startPeriod uint64, totalSat sdkmath.Int) BTCDelegationRewardsTracker {
 	return BTCDelegationRewardsTracker{
 		StartPeriodCumulativeReward: startPeriod,

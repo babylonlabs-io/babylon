@@ -38,6 +38,9 @@ type (
 		finalityProviderHistoricalRewards collections.Map[collections.Pair[[]byte, uint64], types.FinalityProviderHistoricalRewards]
 		// finalityProviderCurrentRewards maps (FpAddr) => finalityProviderCurrentRewards
 		finalityProviderCurrentRewards collections.Map[[]byte, types.FinalityProviderCurrentRewards]
+
+		// rewardTrackerEvents maps (babylon block height) => types.EventsPowerUpdateAtHeight
+		rewardTrackerEvents collections.Map[uint64, types.EventsPowerUpdateAtHeight]
 	}
 )
 
@@ -89,6 +92,14 @@ func NewKeeper(
 			// key: (FpAddr)
 			collections.BytesKey,
 			codec.CollValue[types.FinalityProviderCurrentRewards](cdc),
+		),
+		rewardTrackerEvents: collections.NewMap(
+			sb,
+			types.RewardTrackerEvents,
+			"events_reward_tracker",
+			// key: (babylon block height)
+			collections.Uint64Key,
+			codec.CollValue[types.EventsPowerUpdateAtHeight](cdc),
 		),
 		authority:        authority,
 		feeCollectorName: feeCollectorName,

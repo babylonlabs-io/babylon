@@ -473,19 +473,21 @@ func (k Keeper) processRewardTracker(
 	}
 }
 
-// MustProcessBtcDelegationActivated calls the IncentiveKeeper.BtcDelegationActivated
+// MustProcessBtcDelegationActivated calls the IncentiveKeeper.AddEventBtcDelegationActivated
 // and panics if it errors
 func (k Keeper) MustProcessBtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sats uint64) {
-	err := k.IncentiveKeeper.BtcDelegationActivated(ctx, fp, del, sats)
+	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	err := k.IncentiveKeeper.AddEventBtcDelegationActivated(ctx, height, fp, del, sats)
 	if err != nil {
 		panic(err)
 	}
 }
 
-// MustProcessBtcDelegationUnbonded calls the IncentiveKeeper.BtcDelegationUnbonded
+// MustProcessBtcDelegationUnbonded calls the IncentiveKeeper.AddEventBtcDelegationUnbonded
 // and panics if it errors
 func (k Keeper) MustProcessBtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sats uint64) {
-	err := k.IncentiveKeeper.BtcDelegationUnbonded(ctx, fp, del, sats)
+	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	err := k.IncentiveKeeper.AddEventBtcDelegationUnbonded(ctx, height, fp, del, sats)
 	if err != nil {
 		panic(err)
 	}
