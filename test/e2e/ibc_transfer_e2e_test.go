@@ -1,11 +1,13 @@
 package e2e
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
 
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -212,6 +214,95 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 			s.T().Logf(
 				"BalanceBeforeReceivingSendBackA: %s; BalanceAfterReceivingSendBackA: %s, coinTransfer: %s",
 				balanceBeforeReceivingSendBackA.String(), balanceAfterReceivingSendBackA.String(), nativeCoin.String(),
+			)
+			return false
+		}
+
+		return true
+	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
+}
+
+// TestPacketForwarding sends a packet from chainB to chainA, and forwards it
+// back to chainB
+func (s *IBCTransferTestSuite) TestPacketForwarding() {
+	bbnChainA := s.configurer.GetChainConfig(0)
+	bbnChainB := s.configurer.GetChainConfig(1)
+
+	nA, err := bbnChainA.GetNodeAtIndex(0)
+	s.NoError(err)
+	nB, err := bbnChainB.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	balanceBeforeSendBackB, err := nB.QueryBalances(s.addrB)
+	s.Require().NoError(err)
+	// Two denoms in B
+	s.Require().Len(balanceBeforeSendBackB, 2)
+	// Look for the ugly IBC one
+	denom := getFirstIBCDenom(balanceBeforeSendBackB)
+	amount := balanceBeforeSendBackB.AmountOf(denom).Int64() // have to pay gas fees
+
+	transferCoin := sdk.NewInt64Coin(denom, amount)
+
+	// Send transfer from val in chain-B (Node 3) to val in chain-A (Node 1)
+	balanceBeforeReceivingSendBackA, err := nA.QueryBalances(s.addrA)
+	s.Require().NoError(err)
+
+	// Generate the forward metadata back to original sender in chain B
+	forwardMetadata := pfmroutertypes.ForwardMetadata{
+		Receiver: s.addrB,
+		Port:     "transfer",
+		Channel:  "channel-0",
+	}
+	memoData := pfmroutertypes.PacketMetadata{Forward: &forwardMetadata}
+	forwardMemo, err := json.Marshal(memoData)
+	s.NoError(err)
+
+	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, string(forwardMemo), transferCoin)
+
+	nB.WaitForNextBlock()
+
+	_, txResp := nB.QueryTx(txHash)
+	txFeesPaid := txResp.AuthInfo.Fee.Amount
+
+	s.Require().Eventually(func() bool {
+		balanceAfterSendBackB, err := nB.QueryBalances(s.addrB)
+		if err != nil {
+			s.T().Logf("failed to query balances: %s", err.Error())
+			return false
+		}
+		// expected to have the same initial balance - fees
+		expectedAmt := balanceBeforeSendBackB.Sub(txFeesPaid...).String()
+		actualAmt := balanceAfterSendBackB.String()
+
+		if !strings.EqualFold(expectedAmt, actualAmt) {
+			s.T().Logf(
+				"BalanceBeforeSendBackB: %s; BalanceAfterSendBackB: %s, txFees: %s, coinTransfer: %s",
+				balanceBeforeSendBackB.String(), balanceAfterSendBackB.String(), txFeesPaid.String(), transferCoin.String(),
+			)
+			return false
+		}
+
+		return true
+	}, 1*time.Minute, 1*time.Second, "Transfer back A was not successful")
+
+	s.Require().Eventually(func() bool {
+		balanceAfterReceivingSendBackA, err := nA.QueryBalances(s.addrA)
+		if err != nil {
+			return false
+		}
+		// Check that there's still one denom in A
+		if len(balanceAfterReceivingSendBackA) != 1 {
+			return false
+		}
+
+		expectedAmt := balanceBeforeReceivingSendBackA.String()
+		actualAmt := balanceAfterReceivingSendBackA.String()
+
+		// Check that the balance of the native denom has increased
+		if !strings.EqualFold(expectedAmt, actualAmt) {
+			s.T().Logf(
+				"BalanceBeforeReceivingSendBackA: %s; BalanceAfterReceivingSendBackA: %s",
+				balanceBeforeReceivingSendBackA.String(), balanceAfterReceivingSendBackA.String(),
 			)
 			return false
 		}
