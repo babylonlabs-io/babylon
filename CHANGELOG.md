@@ -74,6 +74,8 @@ check of rewards
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
 - [#847](https://github.com/babylonlabs-io/babylon/pull/847) Add ibc callbacks to
 transfer stack
+- [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
+when the babylon block is being BTC rewarded.
 
 ### Bug fixes
 
