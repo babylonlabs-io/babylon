@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
@@ -225,6 +226,7 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 // TestPacketForwarding sends a packet from chainB to chainA, and forwards it
 // back to chainB
 func (s *IBCTransferTestSuite) TestPacketForwarding() {
+	nativeDenom := "ubbn"
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
@@ -235,13 +237,8 @@ func (s *IBCTransferTestSuite) TestPacketForwarding() {
 
 	balanceBeforeSendBackB, err := nB.QueryBalances(s.addrB)
 	s.Require().NoError(err)
-	// Two denoms in B
-	s.Require().Len(balanceBeforeSendBackB, 2)
-	// Look for the ugly IBC one
-	denom := getFirstIBCDenom(balanceBeforeSendBackB)
-	amount := balanceBeforeSendBackB.AmountOf(denom).Int64() // have to pay gas fees
 
-	transferCoin := sdk.NewInt64Coin(denom, amount)
+	transferCoin := sdk.NewInt64Coin(nativeDenom, 100_000)
 
 	// Send transfer from val in chain-B (Node 3) to val in chain-A (Node 1)
 	balanceBeforeReceivingSendBackA, err := nA.QueryBalances(s.addrA)
@@ -271,6 +268,7 @@ func (s *IBCTransferTestSuite) TestPacketForwarding() {
 			return false
 		}
 		// expected to have the same initial balance - fees
+		// because the pkg with funds makes a round trip
 		expectedAmt := balanceBeforeSendBackB.Sub(txFeesPaid...).String()
 		actualAmt := balanceAfterSendBackB.String()
 
@@ -290,11 +288,8 @@ func (s *IBCTransferTestSuite) TestPacketForwarding() {
 		if err != nil {
 			return false
 		}
-		// Check that there's still one denom in A
-		if len(balanceAfterReceivingSendBackA) != 1 {
-			return false
-		}
 
+		// balance should remain unchanged on chain A
 		expectedAmt := balanceBeforeReceivingSendBackA.String()
 		actualAmt := balanceAfterReceivingSendBackA.String()
 
