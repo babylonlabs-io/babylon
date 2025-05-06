@@ -70,6 +70,9 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
+	pfmrouterkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/keeper"
+	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 	ibccallbacks "github.com/cosmos/ibc-go/modules/apps/callbacks"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
@@ -148,10 +151,11 @@ type AppKeepers struct {
 	MonitorKeeper        monitorkeeper.Keeper
 
 	// IBC-related modules
-	IBCKeeper      *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	IBCFeeKeeper   ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
-	TransferKeeper ibctransferkeeper.Keeper // for cross-chain fungible token transfers
-	IBCWasmKeeper  ibcwasmkeeper.Keeper     // for IBC wasm light clients
+	IBCKeeper       *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCFeeKeeper    ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
+	TransferKeeper  ibctransferkeeper.Keeper // for cross-chain fungible token transfers
+	IBCWasmKeeper   ibcwasmkeeper.Keeper     // for IBC wasm light clients
+	PFMRouterKeeper *pfmrouterkeeper.Keeper  // Packet Forwarding Middleware
 
 	// Integration-related modules
 	BTCStkConsumerKeeper bsckeeper.Keeper
@@ -222,6 +226,7 @@ func (ak *AppKeepers) InitKeepers(
 		ibctransfertypes.StoreKey,
 		ibcfeetypes.StoreKey,
 		ibcwasmtypes.StoreKey,
+		pfmroutertypes.StoreKey,
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
@@ -541,6 +546,16 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
+	ak.PFMRouterKeeper = pfmrouterkeeper.NewKeeper(
+		appCodec,
+		ak.keys[pfmroutertypes.StoreKey],
+		ak.TransferKeeper,
+		ak.IBCKeeper.ChannelKeeper,
+		ak.BankKeeper,
+		ak.IBCKeeper.ChannelKeeper, // TODO replace ICS4Wrapper with RateLimitKeeper when implemented
+		appparams.AccGov.String(),
+	)
+
 	ak.BTCStkConsumerKeeper = bsckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[bsctypes.StoreKey]),
@@ -664,15 +679,21 @@ func (ak *AppKeepers) InitKeepers(
 
 	// Create Transfer Stack
 	// SendPacket Path:
-	// SendPacket -> Transfer -> Callbacks -> Fee -> IBC core (ICS4Wrapper)
+	// SendPacket -> Transfer -> Callbacks -> PFM -> Fee -> IBC core (ICS4Wrapper)
 	// RecvPacket Path:
-	// RecvPacket -> IBC core -> Fee -> Callbacks -> Transfer (AddRoute)
+	// RecvPacket -> IBC core -> Fee -> PFM -> Callbacks -> Transfer (AddRoute)
 	// Receive path should mirror the send path.
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(ak.TransferKeeper)
 	cbStack := ibccallbacks.NewIBCMiddleware(transferStack, ak.IBCFeeKeeper, wasmStackIBCHandler,
 		appparams.MaxIBCCallbackGas)
-	transferStack = ibcfee.NewIBCMiddleware(cbStack, ak.IBCFeeKeeper)
+	transferStack = pfmrouter.NewIBCMiddleware(
+		cbStack,
+		ak.PFMRouterKeeper,
+		0, // retries on timeout
+		pfmrouterkeeper.DefaultForwardTransferPacketTimeoutTimestamp,
+	)
+	transferStack = ibcfee.NewIBCMiddleware(transferStack, ak.IBCFeeKeeper)
 	ak.TransferKeeper.WithICS4Wrapper(cbStack)
 
 	var zoneConciergeStack porttypes.IBCModule
