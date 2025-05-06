@@ -17,7 +17,12 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	btckckpttypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
 	ckpttypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"cosmossdk.io/core/header"
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -61,6 +66,8 @@ import (
 	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	epochkeeper "github.com/babylonlabs-io/babylon/v2/x/epoching/keeper"
+	epochtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 )
 
 var validatorConfig = &initialization.NodeConfig{
@@ -300,7 +307,19 @@ func (d *BabylonAppDriver) GetLastFinalizedBlock() *FinalizedBlock {
 
 func (d *BabylonAppDriver) GetContextForLastFinalizedBlock() sdk.Context {
 	lastFinalizedBlock := d.GetLastFinalizedBlock()
-	return d.App.NewUncachedContext(false, *lastFinalizedBlock.Block.Header.ToProto())
+
+	lastState, err := d.StateStore.Load()
+	require.NoError(d.t, err)
+
+	return d.App.NewUncachedContext(false, *lastFinalizedBlock.Block.Header.ToProto()).
+		WithBlockHeight(lastState.LastBlockHeight).
+		WithHeaderInfo(header.Info{
+			Height:  int64(lastFinalizedBlock.Height),
+			Hash:    lastFinalizedBlock.ID.Hash,
+			AppHash: lastFinalizedBlock.Block.AppHash,
+			Time:    lastFinalizedBlock.Block.Time,
+			ChainID: lastFinalizedBlock.Block.ChainID,
+		})
 }
 
 type SenderInfo struct {
@@ -867,6 +886,23 @@ func (d *BabylonAppDriver) CreateNStakerAccounts(n int) []*Staker {
 	return stakers
 }
 
+func (d *BabylonAppDriver) WaitOneEpoch() {
+	resp, err := d.App.EpochingKeeper.CurrentEpoch(d.Ctx(), &epochtypes.QueryCurrentEpochRequest{})
+	require.NoError(d.t, err)
+
+	currEpoch := resp.CurrentEpoch
+	for {
+		resp, err := d.App.EpochingKeeper.CurrentEpoch(d.Ctx(), &epochtypes.QueryCurrentEpochRequest{})
+		require.NoError(d.t, err)
+
+		if resp.CurrentEpoch > currEpoch {
+			return
+		}
+
+		d.GenerateNewBlock()
+	}
+}
+
 func (d *BabylonAppDriver) CreateNFinalityProviderAccounts(n int) []*FinalityProvider {
 	var fpInfos []*NewAccountInfo
 	for i := 0; i < n; i++ {
@@ -930,6 +966,18 @@ func (d *BabylonAppDriver) GovPropAndVote(msgInGovProp sdk.Msg) (lastPropId uint
 
 	d.GovVote(lastPropId)
 	return lastPropId
+}
+
+func (d *BabylonAppDriver) MsgSrvrDstr() distributiontypes.MsgServer {
+	return distributionkeeper.NewMsgServerImpl(d.App.DistrKeeper)
+}
+
+func (d *BabylonAppDriver) MsgSrvrStk() stakingtypes.MsgServer {
+	return stakingkeeper.NewMsgServerImpl(d.App.StakingKeeper)
+}
+
+func (d *BabylonAppDriver) MsgSrvrEpoching() epochtypes.MsgServer {
+	return epochkeeper.NewMsgServerImpl(d.App.EpochingKeeper)
 }
 
 func (d *BabylonAppDriver) GovPropWaitPass(msgInGovProp sdk.Msg) {
