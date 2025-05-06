@@ -126,6 +126,16 @@ func TestInitGenesis(t *testing.T) {
 						FinalityProviderAddress: acc2.Address,
 					},
 				},
+				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{
+					types.EventsPowerUpdateAtHeightEntry{
+						Height: datagen.RandomInt(r, 100000) + 1,
+						Events: &types.EventsPowerUpdateAtHeight{
+							Events: []*types.EventPowerUpdate{
+								types.NewEventBtcDelegationActivated(acc1.Address, acc2.Address, datagen.RandomMathInt(r, 1000).AddRaw(20)),
+							},
+						},
+					},
+				},
 			},
 			akMockResp: func(m *types.MockAccountKeeper) {
 				// mock account keeper to return an account on GetAccount call
@@ -282,6 +292,8 @@ func FuzzTestExportGenesis(f *testing.F) {
 			fpAcc := sdk.MustAccAddressFromBech32(gs.BtcDelegatorsToFps[i].FinalityProviderAddress)
 			delStore := prefix.NewStore(st, delAcc.Bytes())
 			delStore.Set(fpAcc.Bytes(), []byte{0x00})
+
+			require.NoError(t, k.SetRewardTrackerEvent(ctx, gs.EventRewardTracker[i].Height, gs.EventRewardTracker[i].Events))
 		}
 
 		// Run the ExportGenesis
@@ -331,6 +343,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		fpHistRwd  = make([]types.FinalityProviderHistoricalRewardsEntry, l)
 		bdrt       = make([]types.BTCDelegationRewardsTrackerEntry, l)
 		d2fp       = make([]types.BTCDelegatorToFpEntry, l)
+		eventsRwd  = make([]types.EventsPowerUpdateAtHeightEntry, l)
 		currHeight = datagen.RandomInt(r, 100000)
 	)
 	defer ctrl.Finish()
@@ -339,8 +352,9 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 	// make sure that BTC staking gauge are unique per height
 	usedHeights := make(map[uint64]bool)
 	for i := 0; i < l; i++ {
+		blkHeight := getUniqueHeight(currHeight, usedHeights)
 		bsg[i] = types.BTCStakingGaugeEntry{
-			Height: getUniqueHeight(currHeight, usedHeights),
+			Height: blkHeight,
 			Gauge:  datagen.GenRandomGauge(r),
 		}
 		acc1 := datagen.GenRandomAccount()
@@ -386,6 +400,14 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 			DelegatorAddress:        acc2.Address,
 			FinalityProviderAddress: acc1.Address,
 		}
+		eventsRwd[i] = types.EventsPowerUpdateAtHeightEntry{
+			Height: blkHeight,
+			Events: &types.EventsPowerUpdateAtHeight{
+				Events: []*types.EventPowerUpdate{
+					types.NewEventBtcDelegationActivated(acc2.Address, acc1.Address, datagen.RandomMathInt(r, 2000).AddRaw(100)),
+				},
+			},
+		}
 	}
 
 	gs := &types.GenesisState{
@@ -400,6 +422,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		FinalityProvidersHistoricalRewards: fpHistRwd,
 		BtcDelegationRewardsTrackers:       bdrt,
 		BtcDelegatorsToFps:                 d2fp,
+		EventRewardTracker:                 eventsRwd,
 	}
 
 	require.NoError(t, gs.Validate())
