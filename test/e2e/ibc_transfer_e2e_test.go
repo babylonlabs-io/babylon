@@ -19,6 +19,8 @@ type IBCTransferTestSuite struct {
 	addrB      string
 }
 
+const nativeDenom = "ubbn"
+
 func (s *IBCTransferTestSuite) SetupSuite() {
 	s.T().Log("setting up IBC test suite...")
 	var (
@@ -57,10 +59,9 @@ func getFirstIBCDenom(balance sdk.Coins) string {
 }
 
 func (s *IBCTransferTestSuite) Test1IBCTransfer() {
-	denom := "ubbn"
 	amount := int64(1_000_000)
 
-	transferCoin := sdk.NewInt64Coin(denom, amount)
+	transferCoin := sdk.NewInt64Coin(nativeDenom, amount)
 
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
@@ -83,7 +84,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	balanceBeforeSendAddrA, err := nA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
 	// Confirm val on A has enough funds
-	s.Assert().GreaterOrEqual(balanceBeforeSendAddrA.AmountOf(denom).Int64(), amount)
+	s.Assert().GreaterOrEqual(balanceBeforeSendAddrA.AmountOf(nativeDenom).Int64(), amount)
 
 	balanceBeforeSendAddrB, err := nB.QueryBalances(s.addrB)
 	s.Require().NoError(err)
@@ -144,8 +145,6 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 }
 
 func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
-	nativeDenom := "ubbn"
-
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
@@ -225,7 +224,6 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 // TestPacketForwarding sends a packet from chainB to chainA, and forwards it
 // back to chainB
 func (s *IBCTransferTestSuite) TestPacketForwarding() {
-	nativeDenom := "ubbn"
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
