@@ -58,7 +58,8 @@ func FuzzAddRewardTrackerEventAndDeletes(f *testing.F) {
 		require.NoError(t, err)
 		// different height
 		nextBlockHeight := blkHeight + 1 + datagen.RandomInt(r, 100)
-		err = k.AddEventBtcDelegationUnbonded(ctx, nextBlockHeight, fp2, del1, datagen.RandomInt(r, 98)+1)
+		amtUbd := datagen.RandomInt(r, 98) + 1
+		err = k.AddEventBtcDelegationUnbonded(ctx, nextBlockHeight, fp2, del1, amtUbd)
 		require.NoError(t, err)
 
 		new, err := k.GetOrNewRewardTrackerEvent(ctx, blkHeight)
@@ -68,6 +69,10 @@ func FuzzAddRewardTrackerEventAndDeletes(f *testing.F) {
 		newNext, err := k.GetOrNewRewardTrackerEvent(ctx, nextBlockHeight)
 		require.NoError(t, err)
 		require.Len(t, newNext.Events, 1)
+
+		typed := newNext.Events[0].Ev.(*types.EventPowerUpdate_BtcUnbonded)
+		require.Equal(t, typed.BtcUnbonded.FpAddr, fp2.String())
+		require.Equal(t, typed.BtcUnbonded.TotalSat.Uint64(), amtUbd)
 
 		// call delete twice for same height
 		err = k.DeleteRewardTrackerEvents(ctx, blkHeight)

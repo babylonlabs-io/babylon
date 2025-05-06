@@ -476,9 +476,14 @@ func (k Keeper) processRewardTracker(
 // MustProcessBtcDelegationActivated calls the IncentiveKeeper.AddEventBtcDelegationActivated
 // and panics if it errors
 func (k Keeper) MustProcessBtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sats uint64) {
-	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	height := uint64(sdkCtx.HeaderInfo().Height)
 	err := k.IncentiveKeeper.AddEventBtcDelegationActivated(ctx, height, fp, del, sats)
 	if err != nil {
+		k.Logger(sdkCtx).Error(
+			"failed to add event of activated BTC delegation",
+			"blockHeight", height,
+		)
 		panic(err)
 	}
 }
@@ -486,9 +491,14 @@ func (k Keeper) MustProcessBtcDelegationActivated(ctx context.Context, fp, del s
 // MustProcessBtcDelegationUnbonded calls the IncentiveKeeper.AddEventBtcDelegationUnbonded
 // and panics if it errors
 func (k Keeper) MustProcessBtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sats uint64) {
-	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	height := uint64(sdkCtx.HeaderInfo().Height)
 	err := k.IncentiveKeeper.AddEventBtcDelegationUnbonded(ctx, height, fp, del, sats)
 	if err != nil {
+		k.Logger(sdkCtx).Error(
+			"failed to add event of unbonded BTC delegation",
+			"blockHeight", height,
+		)
 		panic(err)
 	}
 }
