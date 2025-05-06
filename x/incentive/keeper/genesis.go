@@ -106,6 +106,12 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		}
 	}
 
+	for _, entry := range gs.EventRewardTracker {
+		if err := k.SetRewardTrackerEvent(ctx, entry.Height, entry.Events); err != nil {
+			return fmt.Errorf("failed to set the reward tracker events to height: %d: %w", entry.Height, err)
+		}
+	}
+
 	// NOTE: no need to store the entries on gs.BtcDelegatorsToFps because these are stored with the setBTCDelegationRewardsTracker
 	// call in the lines above
 
@@ -417,6 +423,37 @@ func (k Keeper) btcDelegatorsToFps(ctx context.Context) ([]types.BTCDelegatorToF
 			return nil, err
 		}
 
+		entries = append(entries, entry)
+	}
+
+	return entries, nil
+}
+
+func (k Keeper) rewardTrackerEventsEntry(ctx context.Context) ([]types.EventsPowerUpdateAtHeightEntry, error) {
+	entries := make([]types.EventsPowerUpdateAtHeightEntry, 0)
+
+	iter, err := k.rewardTrackerEvents.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		height, err := iter.Key()
+		if err != nil {
+			return nil, err
+		}
+		v, err := iter.Value()
+		if err != nil {
+			return nil, err
+		}
+		entry := types.EventsPowerUpdateAtHeightEntry{
+			Height: height,
+			Events: &v,
+		}
+		if err := entry.Validate(); err != nil {
+			return nil, err
+		}
 		entries = append(entries, entry)
 	}
 

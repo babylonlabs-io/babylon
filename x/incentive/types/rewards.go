@@ -17,8 +17,8 @@ var (
 )
 
 // NewEventBtcDelegationActivated returns a new EventPowerUpdate of type activated
-func NewEventBtcDelegationActivated(fpAddr, btcDelAddr string, totalSat sdkmath.Int) EventPowerUpdate {
-	return EventPowerUpdate{
+func NewEventBtcDelegationActivated(fpAddr, btcDelAddr string, totalSat sdkmath.Int) *EventPowerUpdate {
+	return &EventPowerUpdate{
 		Ev: &EventPowerUpdate_BtcActivated{
 			BtcActivated: &EventBTCDelegationActivated{
 				FpAddr:     fpAddr,
@@ -30,8 +30,8 @@ func NewEventBtcDelegationActivated(fpAddr, btcDelAddr string, totalSat sdkmath.
 }
 
 // NewEventBtcDelegationUnboned returns a new EventPowerUpdate of type unbonded
-func NewEventBtcDelegationUnboned(fpAddr, btcDelAddr string, totalSat sdkmath.Int) EventPowerUpdate {
-	return EventPowerUpdate{
+func NewEventBtcDelegationUnboned(fpAddr, btcDelAddr string, totalSat sdkmath.Int) *EventPowerUpdate {
+	return &EventPowerUpdate{
 		Ev: &EventPowerUpdate_BtcUnbonded{
 			BtcUnbonded: &EventBTCDelegationUnbonded{
 				FpAddr:     fpAddr,
@@ -129,5 +129,35 @@ func (hr *FinalityProviderHistoricalRewards) Validate() error {
 	if hr.CumulativeRewardsPerSat.Len() == 0 {
 		return errors.New("cummulative rewards per sat has no coins")
 	}
+	return nil
+}
+
+func (evtPowerUpdt *EventsPowerUpdateAtHeight) Validate() error {
+	for _, untypedEvt := range evtPowerUpdt.Events {
+		switch typedEvt := untypedEvt.Ev.(type) {
+		case *EventPowerUpdate_BtcActivated:
+			evt := typedEvt.BtcActivated
+			if err := validateAddrStr(evt.FpAddr); err != nil {
+				return fmt.Errorf("invalid event activated finality provider, error: %w", err)
+			}
+			if err := validateAddrStr(evt.BtcDelAddr); err != nil {
+				return fmt.Errorf("invalid event activated btc delegator, error: %w", err)
+			}
+		case *EventPowerUpdate_BtcUnbonded:
+			evt := typedEvt.BtcUnbonded
+			if err := validateAddrStr(evt.FpAddr); err != nil {
+				return fmt.Errorf("invalid event unbonded finality provider, error: %w", err)
+			}
+			if err := validateAddrStr(evt.BtcDelAddr); err != nil {
+				return fmt.Errorf("invalid event unbonded btc delegator, error: %w", err)
+			}
+		case *EventPowerUpdate_SlashedFp:
+			evt := typedEvt.SlashedFp
+			if err := validateAddrStr(evt.FpAddr); err != nil {
+				return fmt.Errorf("invalid slashed finality provider, error: %w", err)
+			}
+		}
+	}
+
 	return nil
 }
