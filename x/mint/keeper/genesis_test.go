@@ -78,11 +78,12 @@ func FuzzTestInitGenesis(f *testing.F) {
 
 func randomMinter(r *rand.Rand) *types.Minter {
 	now := time.Now().UTC()
+	t := now.Add(-1 * time.Hour * time.Duration(datagen.RandomInt(r, 100000000)))
 	return &types.Minter{
 		BondDenom:         datagen.GenRandomDenom(r),
-		InflationRate:     datagen.RandomLegacyDec(r, 1, 1),
+		InflationRate:     datagen.RandomLegacyDec(r, 10, 1),
 		AnnualProvisions:  datagen.RandomLegacyDec(r, 10000000, 1),
-		PreviousBlockTime: &now,
+		PreviousBlockTime: &t,
 	}
 }
 
