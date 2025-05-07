@@ -552,7 +552,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.TransferKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.BankKeeper,
-		ak.IBCKeeper.ChannelKeeper, // TODO replace ICS4Wrapper with RateLimitKeeper when implemented
+		ak.IBCFeeKeeper, // TODO replace ICS4Wrapper with RateLimitKeeper when implemented
 		appparams.AccGov.String(),
 	)
 
@@ -685,7 +685,7 @@ func (ak *AppKeepers) InitKeepers(
 	// Receive path should mirror the send path.
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(ak.TransferKeeper)
-	cbStack := ibccallbacks.NewIBCMiddleware(transferStack, ak.IBCFeeKeeper, wasmStackIBCHandler,
+	cbStack := ibccallbacks.NewIBCMiddleware(transferStack, ak.PFMRouterKeeper, wasmStackIBCHandler,
 		appparams.MaxIBCCallbackGas)
 	transferStack = pfmrouter.NewIBCMiddleware(
 		cbStack,
