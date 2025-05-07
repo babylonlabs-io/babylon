@@ -151,11 +151,6 @@ func (evtPowerUpdt *EventsPowerUpdateAtHeight) Validate() error {
 			if err := validateAddrStr(evt.BtcDelAddr); err != nil {
 				return fmt.Errorf("invalid event unbonded btc delegator, error: %w", err)
 			}
-		case *EventPowerUpdate_SlashedFp:
-			evt := typedEvt.SlashedFp
-			if err := validateAddrStr(evt.FpAddr); err != nil {
-				return fmt.Errorf("invalid slashed finality provider, error: %w", err)
-			}
 		}
 	}
 

@@ -22,8 +22,6 @@ message EventPowerUpdate {
     EventBTCDelegationActivated btc_activated = 1;
     // BtcUnbonded means a BTC delegation becomes unbonded or withdraw.
     EventBTCDelegationUnbonded btc_unbonded = 2;
-    // slashed_fp means a finality provider is slashed
-    EventSlashedFinalityProvider slashed_fp = 3;
   }
 }
 
@@ -54,10 +52,4 @@ message EventBTCDelegationUnbonded {
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
-}
-
-// EventSlashedFinalityProvider FP got slashed.
-message EventSlashedFinalityProvider {
-  // FpAddr is the bbn address of the finality provider
-  string fp_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
