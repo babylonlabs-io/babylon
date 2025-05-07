@@ -135,8 +135,10 @@ func upgradeMint(
 	if err != nil {
 		return err
 	}
+	minter := minttypes.DefaultMinter()
+	minter.BondDenom = bondedDenom
 	k.InitGenesis(ctx, ak, &minttypes.GenesisState{
-		BondDenom: bondedDenom,
+		Minter: &minter,
 	})
 	return nil
 }
