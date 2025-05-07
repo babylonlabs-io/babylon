@@ -87,8 +87,6 @@ func (k Keeper) ProcessRewardTrackerEventsAtHeight(ctx context.Context, height u
 			if err := k.BtcDelegationUnbonded(ctx, fp, del, evt.TotalSat); err != nil {
 				return err
 			}
-		case *types.EventPowerUpdate_SlashedFp:
-			// do nothing for now
 		}
 	}
 
