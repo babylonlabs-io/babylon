@@ -32,11 +32,6 @@ func (k Keeper) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context,
 // historical reward tracker, withdraw the BTC delegation rewards to gauge
 // and initializes a new delegation with the just ended period.
 func (k Keeper) BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sat sdkmath.Int) error {
-	k.Logger(sdk.UnwrapSDKContext(ctx)).Info(
-		"btc del activated",
-		"fpAddr", fp.String(),
-		"btcDelAddr", del.String(),
-	)
 	return k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error {
 		return k.addDelegationSat(ctx, fp, del, sat)
 	})
@@ -49,11 +44,6 @@ func (k Keeper) BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddre
 // and initialization of a new delegation.
 // It errors out if the unbond amount is higher than the total amount staked.
 func (k Keeper) BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sat sdkmath.Int) error {
-	k.Logger(sdk.UnwrapSDKContext(ctx)).Info(
-		"btc del unbonded",
-		"fpAddr", fp.String(),
-		"btcDelAddr", del.String(),
-	)
 	return k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error {
 		return k.subDelegationSat(ctx, fp, del, sat)
 	})
