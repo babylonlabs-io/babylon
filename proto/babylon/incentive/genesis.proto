@@ -45,6 +45,9 @@ message GenesisState {
   // prior to the BTC reward distribution.
   repeated EventsPowerUpdateAtHeightEntry event_reward_tracker = 10
       [ (gogoproto.nullable) = false ];
+  // LastProcessedHeightEventRewardTracker is the latest block height in which
+  // the reward tracker was processed.
+  uint64 last_processed_height_event_reward_tracker = 11;
 }
 
 // BTCStakingGaugeEntry represents a gauge for BTC staking rewards at a specific

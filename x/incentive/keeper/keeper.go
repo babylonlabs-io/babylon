@@ -41,6 +41,8 @@ type (
 
 		// rewardTrackerEvents maps (babylon block height) => types.EventsPowerUpdateAtHeight
 		rewardTrackerEvents collections.Map[uint64, types.EventsPowerUpdateAtHeight]
+		// rewardTrackerEventsLastProcessedHeight keeps track of the latest processed babylon block height of events
+		rewardTrackerEventsLastProcessedHeight collections.Item[uint64]
 	}
 )
 
@@ -100,6 +102,12 @@ func NewKeeper(
 			// key: (babylon block height)
 			collections.Uint64Key,
 			codec.CollValue[types.EventsPowerUpdateAtHeight](cdc),
+		),
+		rewardTrackerEventsLastProcessedHeight: collections.NewItem[uint64](
+			sb,
+			types.RewardTrackerEventsLastProcessedHeight,
+			"last_processed_height_events_reward_tracker",
+			collections.Uint64Value,
 		),
 		authority:        authority,
 		feeCollectorName: feeCollectorName,

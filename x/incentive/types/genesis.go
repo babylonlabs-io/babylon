@@ -14,16 +14,17 @@ import (
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Params:                             DefaultParams(),
-		BtcStakingGauges:                   []BTCStakingGaugeEntry{},
-		RewardGauges:                       []RewardGaugeEntry{},
-		WithdrawAddresses:                  []WithdrawAddressEntry{},
-		RefundableMsgHashes:                []string{},
-		FinalityProvidersCurrentRewards:    []FinalityProviderCurrentRewardsEntry{},
-		FinalityProvidersHistoricalRewards: []FinalityProviderHistoricalRewardsEntry{},
-		BtcDelegationRewardsTrackers:       []BTCDelegationRewardsTrackerEntry{},
-		BtcDelegatorsToFps:                 []BTCDelegatorToFpEntry{},
-		EventRewardTracker:                 []EventsPowerUpdateAtHeightEntry{},
+		Params:                                DefaultParams(),
+		BtcStakingGauges:                      []BTCStakingGaugeEntry{},
+		RewardGauges:                          []RewardGaugeEntry{},
+		WithdrawAddresses:                     []WithdrawAddressEntry{},
+		RefundableMsgHashes:                   []string{},
+		FinalityProvidersCurrentRewards:       []FinalityProviderCurrentRewardsEntry{},
+		FinalityProvidersHistoricalRewards:    []FinalityProviderHistoricalRewardsEntry{},
+		BtcDelegationRewardsTrackers:          []BTCDelegationRewardsTrackerEntry{},
+		BtcDelegatorsToFps:                    []BTCDelegatorToFpEntry{},
+		EventRewardTracker:                    []EventsPowerUpdateAtHeightEntry{},
+		LastProcessedHeightEventRewardTracker: 0,
 	}
 }
 
