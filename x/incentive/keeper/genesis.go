@@ -112,6 +112,10 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		}
 	}
 
+	if err := k.SetRewardTrackerEventLastProcessedHeight(ctx, gs.LastProcessedHeightEventRewardTracker); err != nil {
+		return fmt.Errorf("failed to set the latest processed block height: %d: %w", gs.LastProcessedHeightEventRewardTracker, err)
+	}
+
 	// NOTE: no need to store the entries on gs.BtcDelegatorsToFps because these are stored with the setBTCDelegationRewardsTracker
 	// call in the lines above
 
@@ -164,17 +168,23 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
+	lastProcessedBlkHeightEvtsRwdTracker, err := k.GetRewardTrackerEventLastProcessedHeight(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.GenesisState{
-		Params:                             k.GetParams(ctx),
-		BtcStakingGauges:                   bsg,
-		RewardGauges:                       rg,
-		WithdrawAddresses:                  wa,
-		RefundableMsgHashes:                rmh,
-		FinalityProvidersCurrentRewards:    fpCurrentRwd,
-		FinalityProvidersHistoricalRewards: fpHistRwd,
-		BtcDelegationRewardsTrackers:       bdrt,
-		BtcDelegatorsToFps:                 d2fp,
-		EventRewardTracker:                 evtsRwdTracker,
+		Params:                                k.GetParams(ctx),
+		BtcStakingGauges:                      bsg,
+		RewardGauges:                          rg,
+		WithdrawAddresses:                     wa,
+		RefundableMsgHashes:                   rmh,
+		FinalityProvidersCurrentRewards:       fpCurrentRwd,
+		FinalityProvidersHistoricalRewards:    fpHistRwd,
+		BtcDelegationRewardsTrackers:          bdrt,
+		BtcDelegatorsToFps:                    d2fp,
+		EventRewardTracker:                    evtsRwdTracker,
+		LastProcessedHeightEventRewardTracker: lastProcessedBlkHeightEvtsRwdTracker,
 	}, nil
 }
 

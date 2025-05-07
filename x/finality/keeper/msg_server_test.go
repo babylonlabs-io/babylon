@@ -670,7 +670,7 @@ func TestBtcDelegationRewards(t *testing.T) {
 	// process the events of the activated BTC delegations
 	h.BTCStakingKeeper.IndexBTCHeight(h.Ctx)
 	h.FinalityKeeper.UpdatePowerDist(h.Ctx)
-	h.IncentivesKeeper.ProcessRewardTrackerEvents(h.Ctx, uint64(h.Ctx.HeaderInfo().Height))
+	h.IncentivesKeeper.ProcessRewardTrackerEventsAtHeight(h.Ctx, uint64(h.Ctx.HeaderInfo().Height))
 
 	fp1CurrentRwd, err := h.IncentivesKeeper.GetFinalityProviderCurrentRewards(h.Ctx, fp1.Address())
 	h.NoError(err)
@@ -743,7 +743,7 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	// process the events as active btc delegation
 	h.BTCStakingKeeper.IndexBTCHeight(h.Ctx)
 	h.FinalityKeeper.UpdatePowerDist(h.Ctx)
-	h.IncentivesKeeper.ProcessRewardTrackerEvents(h.Ctx, uint64(h.Ctx.HeaderInfo().Height))
+	h.IncentivesKeeper.ProcessRewardTrackerEventsAtHeight(h.Ctx, uint64(h.Ctx.HeaderInfo().Height))
 
 	h.EqualBtcDelRwdTrackerActiveSat(fp.Address(), del.Address(), uint64(stakingValue))
 
@@ -779,7 +779,7 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	// process the events as early unbonding btc delegation
 	h.BTCStakingKeeper.IndexBTCHeight(h.Ctx)
 	h.FinalityKeeper.UpdatePowerDist(h.Ctx)
-	h.IncentivesKeeper.ProcessRewardTrackerEvents(h.Ctx, uint64(h.Ctx.HeaderInfo().Height))
+	h.IncentivesKeeper.ProcessRewardTrackerEventsAtHeight(h.Ctx, uint64(h.Ctx.HeaderInfo().Height))
 
 	h.EqualBtcDelRwdTrackerActiveSat(fp.Address(), del.Address(), 0)
 
@@ -794,7 +794,7 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	// process the events as expired btc delegation
 	h.BTCStakingKeeper.IndexBTCHeight(h.Ctx)
 	h.FinalityKeeper.UpdatePowerDist(h.Ctx)
-	h.IncentivesKeeper.ProcessRewardTrackerEvents(h.Ctx, uint64(h.Ctx.HeaderInfo().Height))
+	h.IncentivesKeeper.ProcessRewardTrackerEventsAtHeight(h.Ctx, uint64(h.Ctx.HeaderInfo().Height))
 
 	h.EqualBtcDelRwdTrackerActiveSat(fp.Address(), del.Address(), 0)
 }

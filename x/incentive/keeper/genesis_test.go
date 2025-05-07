@@ -136,6 +136,7 @@ func TestInitGenesis(t *testing.T) {
 						},
 					},
 				},
+				LastProcessedHeightEventRewardTracker: 1,
 			},
 			akMockResp: func(m *types.MockAccountKeeper) {
 				// mock account keeper to return an account on GetAccount call
@@ -296,6 +297,8 @@ func FuzzTestExportGenesis(f *testing.F) {
 			require.NoError(t, k.SetRewardTrackerEvent(ctx, gs.EventRewardTracker[i].Height, gs.EventRewardTracker[i].Events))
 		}
 
+		require.NoError(t, k.SetRewardTrackerEventLastProcessedHeight(ctx, gs.LastProcessedHeightEventRewardTracker))
+
 		// Run the ExportGenesis
 		exported, err := k.ExportGenesis(ctx)
 
@@ -344,7 +347,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		bdrt       = make([]types.BTCDelegationRewardsTrackerEntry, l)
 		d2fp       = make([]types.BTCDelegatorToFpEntry, l)
 		eventsRwd  = make([]types.EventsPowerUpdateAtHeightEntry, l)
-		currHeight = datagen.RandomInt(r, 100000)
+		currHeight = datagen.RandomInt(r, 100000) + 100
 	)
 	defer ctrl.Finish()
 	ctx = ctx.WithBlockHeight(int64(currHeight))
@@ -414,15 +417,16 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		Params: types.Params{
 			BtcStakingPortion: datagen.RandomLegacyDec(r, 10, 1),
 		},
-		BtcStakingGauges:                   bsg,
-		RewardGauges:                       rg,
-		WithdrawAddresses:                  wa,
-		RefundableMsgHashes:                mh,
-		FinalityProvidersCurrentRewards:    fpCurrRwd,
-		FinalityProvidersHistoricalRewards: fpHistRwd,
-		BtcDelegationRewardsTrackers:       bdrt,
-		BtcDelegatorsToFps:                 d2fp,
-		EventRewardTracker:                 eventsRwd,
+		BtcStakingGauges:                      bsg,
+		RewardGauges:                          rg,
+		WithdrawAddresses:                     wa,
+		RefundableMsgHashes:                   mh,
+		FinalityProvidersCurrentRewards:       fpCurrRwd,
+		FinalityProvidersHistoricalRewards:    fpHistRwd,
+		BtcDelegationRewardsTrackers:          bdrt,
+		BtcDelegatorsToFps:                    d2fp,
+		EventRewardTracker:                    eventsRwd,
+		LastProcessedHeightEventRewardTracker: currHeight,
 	}
 
 	require.NoError(t, gs.Validate())

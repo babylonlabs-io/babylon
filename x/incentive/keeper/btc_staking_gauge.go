@@ -34,7 +34,7 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 		}
 	}
 
-	// process all the events for reward tracker on that block height
+	// process all the events for reward tracker until that block height
 	err := k.ProcessRewardTrackerEvents(ctx, height)
 	if err != nil {
 		msg := fmt.Sprintf("failed to process reward tracker events at height %d: %s", height, err.Error())
