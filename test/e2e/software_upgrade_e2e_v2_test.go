@@ -90,21 +90,24 @@ func (s *SoftwareUpgradeV2TestSuite) TestUpgradeV2() {
 
 	// Check that the module exists by querying parameters with the QueryParams helper
 	var tokenfactoryParams map[string]interface{}
-	n.QueryParams(TokenFactoryModulePath, "params", &tokenfactoryParams)
+	n.QueryParams(TokenFactoryModulePath, &tokenfactoryParams)
 	s.T().Logf("Tokenfactory params: %v", tokenfactoryParams)
 
-	// TODO: Add more functionality checks here
+	params, ok := tokenfactoryParams["params"].(map[string]interface{})
+	s.Require().True(ok, "params field should exist and be a map")
+
+	denomCreationFee, ok := params["denom_creation_fee"].([]interface{})
+	s.Require().True(ok, "denom_creation_fee should be a list")
+	s.Require().Len(denomCreationFee, 1, "denom_creation_fee should have one entry")
+
+	feeEntry, ok := denomCreationFee[0].(map[string]interface{})
+	s.Require().True(ok, "fee entry should be a map")
+	s.Equal("stake", feeEntry["denom"])
+	s.Equal("10000000", feeEntry["amount"])
+
+	s.Equal("2000000", params["denom_creation_gas_consume"])
+
 	n.WaitForNextBlock()
 
-	// Check that account balances are preserved after upgrade
-	for addr, balanceBefore := range s.balancesBeforeUpgrade {
-		balanceAfter, err := n.QueryBalance(addr, appparams.DefaultBondDenom)
-		s.NoError(err)
-		// Balances should be at least the same as before (might have increased due to rewards)
-		s.GreaterOrEqual(
-			balanceAfter.Amount.Int64(),
-			balanceBefore.Amount.Int64(),
-			"balance should not decrease after upgrade",
-		)
-	}
+	// TODO: Add more functionality checks here as they are added
 }

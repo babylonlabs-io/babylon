@@ -1,6 +1,7 @@
 package configurer
 
 import (
+	v2 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -8,7 +9,6 @@ import (
 	"time"
 
 	"github.com/babylonlabs-io/babylon/v2/app"
-	v1 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1"
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/config"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +23,7 @@ func TestParseGovPropFromFile(t *testing.T) {
 	_, msgProp, err := parseGovPropFromFile(cdc, upgradePath)
 	require.NoError(t, err)
 
-	require.Equal(t, msgProp.Plan.Name, v1.UpgradeName)
+	require.Equal(t, msgProp.Plan.Name, v2.UpgradeName)
 }
 
 func TestWriteGovPropToFile(t *testing.T) {
