@@ -11,13 +11,14 @@ import (
 // AddEventBtcDelegationActivated stores an event of BTC delegation activated to be processed at a later block height
 func (k Keeper) AddEventBtcDelegationActivated(ctx context.Context, height uint64, fp, del sdk.AccAddress, sat uint64) error {
 	amtSat := sdkmath.NewIntFromUint64(sat)
-	newEv := types.NewEventBtcDelegationActivated(fp.String(), del.String(), amtSat)
+	fpAddr, delAddr := fp.String(), del.String()
 
-	k.Logger(sdk.UnwrapSDKContext(ctx)).Info(
+	newEv := types.NewEventBtcDelegationActivated(fpAddr, delAddr, amtSat)
+	k.Logger(ctx).Debug(
 		"add reward tracker events - activated",
 		"blockHeight", height,
-		"fpAddr", fp.String(),
-		"btcDelAddr", del.String(),
+		"fpAddr", fpAddr,
+		"btcDelAddr", delAddr,
 	)
 
 	return k.AddRewardTrackerEvent(ctx, height, newEv)
@@ -26,9 +27,10 @@ func (k Keeper) AddEventBtcDelegationActivated(ctx context.Context, height uint6
 // AddEventBtcDelegationUnbonded stores an event of BTC delegation unbonded or withdraw to be processed at a later block height
 func (k Keeper) AddEventBtcDelegationUnbonded(ctx context.Context, height uint64, fp, del sdk.AccAddress, sat uint64) error {
 	amtSat := sdkmath.NewIntFromUint64(sat)
-	newEv := types.NewEventBtcDelegationUnboned(fp.String(), del.String(), amtSat)
+	fpAddr, delAddr := fp.String(), del.String()
 
-	k.Logger(sdk.UnwrapSDKContext(ctx)).Info(
+	newEv := types.NewEventBtcDelegationUnboned(fpAddr, delAddr, amtSat)
+	k.Logger(ctx).Debug(
 		"add reward tracker events - unbonded",
 		"blockHeight", height,
 		"fpAddr", fp.String(),
@@ -64,7 +66,7 @@ func (k Keeper) ProcessRewardTrackerEventsAtHeight(ctx context.Context, height u
 		return err
 	}
 
-	k.Logger(sdk.UnwrapSDKContext(ctx)).Info(
+	k.Logger(ctx).Debug(
 		"processing reward tracker events",
 		"blockHeight", height,
 		"events", len(evts.Events),
