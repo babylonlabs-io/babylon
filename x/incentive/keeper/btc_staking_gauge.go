@@ -37,7 +37,9 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 	// process all the events for reward tracker on that block height
 	err := k.ProcessRewardTrackerEvents(ctx, height)
 	if err != nil {
-		panic(fmt.Sprintf("failed to process reward tracker events at height %d: %s", height, err.Error()))
+		msg := fmt.Sprintf("failed to process reward tracker events at height %d: %s", height, err.Error())
+		k.Logger(sdk.UnwrapSDKContext(ctx)).Error(msg)
+		panic(msg)
 	}
 
 	// distribute rewards according to voting power portions for voters

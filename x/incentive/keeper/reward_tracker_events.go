@@ -12,6 +12,14 @@ import (
 func (k Keeper) AddEventBtcDelegationActivated(ctx context.Context, height uint64, fp, del sdk.AccAddress, sat uint64) error {
 	amtSat := sdkmath.NewIntFromUint64(sat)
 	newEv := types.NewEventBtcDelegationActivated(fp.String(), del.String(), amtSat)
+
+	k.Logger(sdk.UnwrapSDKContext(ctx)).Info(
+		"add reward tracker events - activated",
+		"blockHeight", height,
+		"fpAddr", fp.String(),
+		"btcDelAddr", del.String(),
+	)
+
 	return k.AddRewardTrackerEvent(ctx, height, newEv)
 }
 
@@ -19,6 +27,14 @@ func (k Keeper) AddEventBtcDelegationActivated(ctx context.Context, height uint6
 func (k Keeper) AddEventBtcDelegationUnbonded(ctx context.Context, height uint64, fp, del sdk.AccAddress, sat uint64) error {
 	amtSat := sdkmath.NewIntFromUint64(sat)
 	newEv := types.NewEventBtcDelegationUnboned(fp.String(), del.String(), amtSat)
+
+	k.Logger(sdk.UnwrapSDKContext(ctx)).Info(
+		"add reward tracker events - unbonded",
+		"blockHeight", height,
+		"fpAddr", fp.String(),
+		"btcDelAddr", del.String(),
+	)
+
 	return k.AddRewardTrackerEvent(ctx, height, newEv)
 }
 
@@ -30,6 +46,12 @@ func (k Keeper) ProcessRewardTrackerEvents(ctx context.Context, height uint64) e
 	if err != nil {
 		return err
 	}
+
+	k.Logger(sdk.UnwrapSDKContext(ctx)).Info(
+		"processing reward tracker events",
+		"blockHeight", height,
+		"events", len(evts.Events),
+	)
 
 	// it must process all the events without pagination
 	for _, untypedEvt := range evts.Events {
