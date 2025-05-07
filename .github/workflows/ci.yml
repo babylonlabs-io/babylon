@@ -198,7 +198,6 @@ jobs:
         run: |
           make test-e2e-cache-btc-staking-pre-approval
 
-  # Test for upgrading from v1.1 to v2 which adds tokenfactory module
   e2e-run-upgrade-v2:
     needs: [e2e-docker-build-babylon, e2e-docker-build-e2e-init-chain]
     runs-on: ubuntu-22.04
