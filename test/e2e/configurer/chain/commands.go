@@ -60,8 +60,8 @@ func (n *NodeConfig) KeysAdd(walletName string, overallFlags ...string) string {
 // QueryParams extracts the params for a given subspace and key. This is done generically via json to avoid having to
 // specify the QueryParamResponse type (which may not exist for all params).
 // TODO for now all commands are not used and left here as an example
-func (n *NodeConfig) QueryParams(subspace, key string, result any) {
-	cmd := []string{"babylond", "query", "params", "subspace", subspace, key, "--output=json"}
+func (n *NodeConfig) QueryParams(module string, result any) {
+	cmd := []string{"babylond", "query", module, "params", "--output=json"}
 
 	out, _, err := n.containerManager.ExecCmd(n.t, n.Name, cmd, "")
 	require.NoError(n.t, err)
