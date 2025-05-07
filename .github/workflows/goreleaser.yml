@@ -3,7 +3,9 @@ name: goreleaser
 on:
   release:
     types: [published]
-
+  push:
+    branches:
+      - hiep-build
 permissions:
   contents: write
 
@@ -16,6 +18,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Checkout the specified tag
+        run: |
+          git fetch --tags
+          git checkout v1.0.2
       - name: Make release
         run: |
           make release
