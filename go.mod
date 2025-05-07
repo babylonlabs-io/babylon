@@ -49,6 +49,7 @@ require (
 	github.com/cosmos/cosmos-db v1.1.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/gogoproto v1.7.0
+	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8 v8.2.0
 	github.com/cosmos/ibc-go/modules/capability v1.0.1
 	github.com/cosmos/ibc-go/v8 v8.7.0
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0
@@ -68,6 +69,8 @@ require (
 )
 
 require github.com/gogo/status v1.1.0 // indirect
+
+require github.com/iancoleman/orderedmap v0.3.0 // indirect
 
 require (
 	cloud.google.com/go/auth v0.6.0 // indirect
