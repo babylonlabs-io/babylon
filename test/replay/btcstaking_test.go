@@ -412,30 +412,30 @@ func TestActivatingDelegationOnSlashedFp(t *testing.T) {
 	driver.GenerateNewBlock()
 
 	scenario := NewStandardScenario(driver)
-	scenario.InitScenario(6, 1) // 6 finality providers
+	scenario.InitScenario(4, 1)
 
-	covSender := driver.CreateCovenantSender()
-	require.NotNil(t, covSender)
+	for j := 0; j < 1; j++ {
+		scenario.stakers[0].CreatePreApprovalDelegation(
+			scenario.finalityProviders[0].BTCPublicKey(),
+			1000,
+			100000000,
+		)
+	}
 
-	sinfos := driver.CreateNStakerAccounts(1)
-	s1 := sinfos[0]
+	scenario.driver.GenerateNewBlockAssertExecutionSuccess()
+	pendingDelegations := scenario.driver.GetPendingBTCDelegations(scenario.driver.t)
+	require.Equal(scenario.driver.t, 1, len(pendingDelegations))
+
+	scenario.covenant.SendCovenantSignatures()
+	scenario.driver.GenerateNewBlockAssertExecutionSuccess()
 
 	numBlocksInTest := uint64(10)
 	lastVotedBlkHeight := scenario.FinalityFinalizeBlocks(scenario.activationHeight, numBlocksInTest)
 
-	indexSlashFp1 := 1
-	indexSlashFp2 := 2
-	jailedFp1 := scenario.finalityProviders[indexSlashFp1]
-	jailedFp2 := scenario.finalityProviders[indexSlashFp2]
-
-	bl := driver.GetIndexedBlock(lastVotedBlkHeight)
-	require.Equal(t, bl.Finalized, true)
-
-	// 2 fps not voting
 	for i := uint64(0); i < numBlocksInTest; i++ {
 		lastVotedBlkHeight++
 		for i, fp := range scenario.finalityProviders {
-			if i != indexSlashFp1 {
+			if i != 0 {
 				fp.CastVote(lastVotedBlkHeight)
 			}
 		}
@@ -446,40 +446,38 @@ func TestActivatingDelegationOnSlashedFp(t *testing.T) {
 		require.Equal(t, bl.Finalized, true)
 	}
 
-	scenario.finalityProviders[indexSlashFp1].SendSelectiveSlashingEvidence()
-	scenario.finalityProviders[indexSlashFp2].SendSelectiveSlashingEvidence()
+	scenario.finalityProviders[0].SendSelectiveSlashingEvidence()
 
 	driver.GenerateNewBlock()
 
-	slashedFp1 := driver.GetFp(*jailedFp1.BTCPublicKey())
+	slashedFp1 := driver.GetFp(*scenario.finalityProviders[0].BTCPublicKey())
 	require.True(t, slashedFp1.IsSlashed())
-	slashedFp2 := driver.GetFp(*jailedFp2.BTCPublicKey())
-	require.True(t, slashedFp2.IsSlashed())
 
-	driver.GenerateNewBlock()
+	verifiedDelegations := scenario.driver.GetVerifiedBTCDelegations(scenario.driver.t)
+	require.Equal(scenario.driver.t, len(verifiedDelegations), 1)
 
-	bl = driver.GetIndexedBlock(lastVotedBlkHeight)
-	require.Equal(t, bl.Finalized, true)
+	scenario.driver.ActivateVerifiedDelegations(1)
+	scenario.driver.GenerateNewBlockAssertExecutionSuccess()
 
-	require.Len(t, driver.GetActiveFpsAtCurrentHeight(t), 4)
+	activationHeight := scenario.driver.GetActivationHeight(scenario.driver.t)
+	require.Greater(scenario.driver.t, activationHeight, uint64(0))
 
-	msg := s1.CreatePreApprovalDelegation(
-		jailedFp1.BTCPublicKey(),
-		1000,
-		100000000,
-	)
-	require.NotNil(t, msg)
+	activeFps := scenario.driver.GetActiveFpsAtHeight(scenario.driver.t, activationHeight)
+	require.Equal(scenario.driver.t, len(activeFps), 4)
 
-	driver.GenerateNewBlock()
+	require.True(t, slashedFp1.IsSlashed())
 
-	covSender.SendCovenantSignatures()
-	driver.GenerateNewBlockAssertExecutionSuccess()
+	for i := uint64(0); i < numBlocksInTest; i++ {
+		lastVotedBlkHeight++
+		for _, fp := range scenario.finalityProviders {
+			fp.CastVote(lastVotedBlkHeight)
+		}
 
-	verifiedDelegations := driver.GetVerifiedBTCDelegations(t)
-	require.Len(t, verifiedDelegations, 0)
+		driver.GenerateNewBlock()
 
-	bl = driver.GetIndexedBlock(lastVotedBlkHeight)
-	require.Equal(t, bl.Finalized, true)
+		bl := driver.GetIndexedBlock(lastVotedBlkHeight)
+		require.Equal(t, bl.Finalized, true)
+	}
 }
 
 func TestJailingFinalityProvider(t *testing.T) {
