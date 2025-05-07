@@ -1,15 +1,11 @@
 package e2e
 
 import (
-	"math/rand"
-	"time"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
 	v2 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v2/testutil/sample"
 	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
 
@@ -87,15 +83,6 @@ func (s *SoftwareUpgradeV2TestSuite) TestUpgradeV2() {
 	govProp, err := s.configurer.ParseGovPropFromFile()
 	s.NoError(err)
 	chainA.WaitUntilHeight(govProp.Plan.Height + 1) // waits for chain to produce blocks
-
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-	fptBTCSK, _, _ := datagen.GenRandomBTCKeyPair(r)
-	_ = chain.CreateFpFromNodeAddr(
-		s.T(),
-		r,
-		fptBTCSK,
-		n,
-	)
 
 	expectedUpgradeHeight := govProp.Plan.Height
 	resp := n.QueryAppliedPlan(v2.UpgradeName)
