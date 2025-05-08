@@ -6,18 +6,23 @@ import (
 )
 
 // InitGenesis initializes the x/mint store with data from the genesis state.
-func (k Keeper) InitGenesis(ctx sdk.Context, ak types.AccountKeeper, data *types.GenesisState) {
-	minter := types.DefaultMinter()
-	minter.BondDenom = data.BondDenom
-	if err := k.SetMinter(ctx, minter); err != nil {
+func (k Keeper) InitGenesis(ctx sdk.Context, ak types.AccountKeeper, gs *types.GenesisState) {
+	if gs.Minter == nil {
+		dm := types.DefaultMinter()
+		gs.Minter = &dm
+	}
+	if err := k.SetMinter(ctx, *gs.Minter); err != nil {
 		panic(err)
 	}
-	// override the genesis time with the actual genesis time supplied in `InitChain`
-	blockTime := ctx.BlockTime()
-	gt := types.GenesisTime{
-		GenesisTime: &blockTime,
+
+	if gs.GenesisTime == nil {
+		// If no genesis time, use the block time supplied in `InitChain`
+		blockTime := ctx.BlockTime()
+		gs.GenesisTime = &types.GenesisTime{
+			GenesisTime: &blockTime,
+		}
 	}
-	if err := k.SetGenesisTime(ctx, gt); err != nil {
+	if err := k.SetGenesisTime(ctx, *gs.GenesisTime); err != nil {
 		panic(err)
 	}
 	// Although ak.GetModuleAccount appears to be a no-op, it actually creates a
@@ -28,6 +33,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, ak types.AccountKeeper, data *types
 
 // ExportGenesis returns a x/mint GenesisState for the given context.
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
-	bondDenom := k.GetMinter(ctx).BondDenom
-	return types.NewGenesisState(bondDenom)
+	minter := k.GetMinter(ctx)
+	genTime := k.GetGenesisTime(ctx)
+	return types.NewGenesisState(minter, genTime)
 }
