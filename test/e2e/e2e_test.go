@@ -39,7 +39,7 @@ func TestBTCStakingPreApprovalTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakingPreApprovalTestSuite))
 }
 
-// TestSoftwareUpgradeV1TestnetTestSuite tests software upgrade of v1 testnet end-to-end
-func TestSoftwareUpgradeV1TestnetTestSuite(t *testing.T) {
-	suite.Run(t, new(SoftwareUpgradeV1TestnetTestSuite))
+// TestSoftwareUpgradeV2TestSuite tests software upgrade from v1.1 to v2 end-to-end
+func TestSoftwareUpgradeV2TestSuite(t *testing.T) {
+	suite.Run(t, new(SoftwareUpgradeV2TestSuite))
 }
