@@ -33,8 +33,8 @@ func TestGenesisState_Validate(t *testing.T) {
 					{Epoch: 2, BtcLightClientHeight: 101},
 				},
 				CheckpointsReported: []*types.CheckpointReportedLightClient{
-					{CkptHash: "hash1", BtcLightClientHeight: 200},
-					{CkptHash: "hash2", BtcLightClientHeight: 201},
+					{CkptHash: "deadbeef01", BtcLightClientHeight: 200},
+					{CkptHash: "deadbeef02", BtcLightClientHeight: 201},
 				},
 			},
 			valid: true,
@@ -53,7 +53,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "invalid CheckpointReported with height 0",
 			genState: &types.GenesisState{
 				CheckpointsReported: []*types.CheckpointReportedLightClient{
-					{CkptHash: "hash1", BtcLightClientHeight: 0},
+					{CkptHash: "deadbeef", BtcLightClientHeight: 0},
 				},
 			},
 			valid:  false,
@@ -84,12 +84,27 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "duplicate CheckpointsReported hashes",
 			genState: &types.GenesisState{
 				CheckpointsReported: []*types.CheckpointReportedLightClient{
-					{CkptHash: "dup", BtcLightClientHeight: 200},
-					{CkptHash: "dup", BtcLightClientHeight: 201},
+					{CkptHash: "deadbeef", BtcLightClientHeight: 200},
+					{CkptHash: "deadbeef", BtcLightClientHeight: 201},
 				},
 			},
 			valid:  false,
 			errMsg: "duplicate entry",
+		},
+		{
+			desc: "invalid hash string in CheckpointsReported",
+			genState: &types.GenesisState{
+				EpochEndRecords: []*types.EpochEndLightClient{
+					{Epoch: 1, BtcLightClientHeight: 100},
+					{Epoch: 2, BtcLightClientHeight: 101},
+				},
+				CheckpointsReported: []*types.CheckpointReportedLightClient{
+					{CkptHash: "deadbeef01", BtcLightClientHeight: 200},
+					{CkptHash: "deadbeefg2", BtcLightClientHeight: 201},
+				},
+			},
+			valid:  false,
+			errMsg: "invalid hash string deadbeefg2",
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
