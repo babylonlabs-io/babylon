@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#879](https://github.com/babylonlabs-io/babylon/pull/879) Add v2 e2e upgrade test.
 - [#869](https://github.com/babylonlabs-io/babylon/pull/869) Rename CZ to Consumer in btcstkconsumer and zoneconcierge.
 - [#846](https://github.com/babylonlabs-io/babylon/pull/846) Add tokenfactory module.
 - [#837](https://github.com/babylonlabs-io/babylon/pull/837) Bump repository to v2.
@@ -68,6 +69,7 @@ check of rewards
 - [#850](https://github.com/babylonlabs-io/babylon/pull/850) Add BLS improvement including permission and verification
 - [#859](https://github.com/babylonlabs-io/babylon/pull/859) Update init/export genesis logic in `x/finality` module
 - [#876](https://github.com/babylonlabs-io/babylon/pull/876) Add Packet Forwarding Middleware (PFM) module.
+- [#881](https://github.com/babylonlabs-io/babylon/pull/881) Update init/export genesis logic in `x/mint` module
 - [#883](https://github.com/babylonlabs-io/babylon/pull/883) Update init/export genesis logic in `x/monitor` module
 
 ### State Machine Breaking
