@@ -65,7 +65,7 @@ rly -d --home $RELAYER_CONF_DIR keys restore bbn-b val01-bbn-b "$BBN_B_E2E_VAL_M
 sleep 3
 
 # Start Cosmos relayer
-echo "Creating IBC light clients, connection, and channel between the two CZs"
+echo "Creating IBC light clients, connection, and channel between Babylon and Consumer"
 rly -d --home $RELAYER_CONF_DIR tx link bbna-bbnb --src-port ${CHAIN_A_IBC_PORT} --dst-port ${CHAIN_B_IBC_PORT} --order ordered --version zoneconcierge-1
 echo "Created IBC channel successfully!"
 sleep 10

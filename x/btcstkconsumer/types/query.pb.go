@@ -640,7 +640,8 @@ func (m *FinalityProviderResponse) GetConsumerId() string {
 	return ""
 }
 
-// QueryFinalityProviderConsumerRequest requests the consumer a CZ finality provider belongs to
+// QueryFinalityProviderConsumerRequest requests the consumer id a Consumer finality
+// provider belongs to
 type QueryFinalityProviderConsumerRequest struct {
 	// fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
 	FpBtcPkHex string `protobuf:"bytes,1,opt,name=fp_btc_pk_hex,json=fpBtcPkHex,proto3" json:"fp_btc_pk_hex,omitempty"`
@@ -686,7 +687,8 @@ func (m *QueryFinalityProviderConsumerRequest) GetFpBtcPkHex() string {
 	return ""
 }
 
-// QueryFinalityProviderConsumerResponse returns the CZ finality provier consumer id
+// QueryFinalityProviderConsumerResponse returns the Consumer finality provider
+// consumer id
 type QueryFinalityProviderConsumerResponse struct {
 	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
 }

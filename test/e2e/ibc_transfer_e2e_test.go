@@ -1,11 +1,13 @@
 package e2e
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
 
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -16,6 +18,8 @@ type IBCTransferTestSuite struct {
 	addrA      string
 	addrB      string
 }
+
+const nativeDenom = "ubbn"
 
 func (s *IBCTransferTestSuite) SetupSuite() {
 	s.T().Log("setting up IBC test suite...")
@@ -55,10 +59,9 @@ func getFirstIBCDenom(balance sdk.Coins) string {
 }
 
 func (s *IBCTransferTestSuite) Test1IBCTransfer() {
-	denom := "ubbn"
 	amount := int64(1_000_000)
 
-	transferCoin := sdk.NewInt64Coin(denom, amount)
+	transferCoin := sdk.NewInt64Coin(nativeDenom, amount)
 
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
@@ -81,7 +84,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	balanceBeforeSendAddrA, err := nA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
 	// Confirm val on A has enough funds
-	s.Assert().GreaterOrEqual(balanceBeforeSendAddrA.AmountOf(denom).Int64(), amount)
+	s.Assert().GreaterOrEqual(balanceBeforeSendAddrA.AmountOf(nativeDenom).Int64(), amount)
 
 	balanceBeforeSendAddrB, err := nB.QueryBalances(s.addrB)
 	s.Require().NoError(err)
@@ -142,8 +145,6 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 }
 
 func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
-	nativeDenom := "ubbn"
-
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
@@ -212,6 +213,88 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 			s.T().Logf(
 				"BalanceBeforeReceivingSendBackA: %s; BalanceAfterReceivingSendBackA: %s, coinTransfer: %s",
 				balanceBeforeReceivingSendBackA.String(), balanceAfterReceivingSendBackA.String(), nativeCoin.String(),
+			)
+			return false
+		}
+
+		return true
+	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
+}
+
+// TestPacketForwarding sends a packet from chainB to chainA, and forwards it
+// back to chainB
+func (s *IBCTransferTestSuite) TestPacketForwarding() {
+	bbnChainA := s.configurer.GetChainConfig(0)
+	bbnChainB := s.configurer.GetChainConfig(1)
+
+	nA, err := bbnChainA.GetNodeAtIndex(0)
+	s.NoError(err)
+	nB, err := bbnChainB.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	balanceBeforeSendBackB, err := nB.QueryBalances(s.addrB)
+	s.Require().NoError(err)
+
+	transferCoin := sdk.NewInt64Coin(nativeDenom, 100_000)
+
+	// Send transfer from val in chain-B (Node 3) to val in chain-A (Node 1)
+	balanceBeforeReceivingSendBackA, err := nA.QueryBalances(s.addrA)
+	s.Require().NoError(err)
+
+	// Generate the forward metadata back to original sender in chain B
+	forwardMetadata := pfmroutertypes.ForwardMetadata{
+		Receiver: s.addrB,
+		Port:     "transfer",
+		Channel:  "channel-0",
+	}
+	memoData := pfmroutertypes.PacketMetadata{Forward: &forwardMetadata}
+	forwardMemo, err := json.Marshal(memoData)
+	s.NoError(err)
+
+	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, string(forwardMemo), transferCoin)
+
+	nB.WaitForNextBlock()
+
+	_, txResp := nB.QueryTx(txHash)
+	txFeesPaid := txResp.AuthInfo.Fee.Amount
+
+	s.Require().Eventually(func() bool {
+		balanceAfterSendBackB, err := nB.QueryBalances(s.addrB)
+		if err != nil {
+			s.T().Logf("failed to query balances: %s", err.Error())
+			return false
+		}
+		// expected to have the same initial balance - fees
+		// because the pkg with funds makes a round trip
+		expectedAmt := balanceBeforeSendBackB.Sub(txFeesPaid...).String()
+		actualAmt := balanceAfterSendBackB.String()
+
+		if !strings.EqualFold(expectedAmt, actualAmt) {
+			s.T().Logf(
+				"BalanceBeforeSendBackB: %s; BalanceAfterSendBackB: %s, txFees: %s, coinTransfer: %s",
+				balanceBeforeSendBackB.String(), balanceAfterSendBackB.String(), txFeesPaid.String(), transferCoin.String(),
+			)
+			return false
+		}
+
+		return true
+	}, 1*time.Minute, 1*time.Second, "Transfer back A was not successful")
+
+	s.Require().Eventually(func() bool {
+		balanceAfterReceivingSendBackA, err := nA.QueryBalances(s.addrA)
+		if err != nil {
+			return false
+		}
+
+		// balance should remain unchanged on chain A
+		expectedAmt := balanceBeforeReceivingSendBackA.String()
+		actualAmt := balanceAfterReceivingSendBackA.String()
+
+		// Check that the balance of the native denom has increased
+		if !strings.EqualFold(expectedAmt, actualAmt) {
+			s.T().Logf(
+				"BalanceBeforeReceivingSendBackA: %s; BalanceAfterReceivingSendBackA: %s",
+				balanceBeforeReceivingSendBackA.String(), balanceAfterReceivingSendBackA.String(),
 			)
 			return false
 		}

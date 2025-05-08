@@ -1,4 +1,4 @@
-package v2
+package v1_1
 
 import (
 	"context"
@@ -6,21 +6,19 @@ import (
 	store "cosmossdk.io/store/types"
 	"github.com/babylonlabs-io/babylon/v2/app/keepers"
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
-	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
-	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
 
-// UpgradeName defines the on-chain upgrade name for the Babylon v2 upgrade
-const UpgradeName = "v2"
+// UpgradeName defines the on-chain upgrade name for the Babylon v1.1 upgrade
+const UpgradeName = "v1.1"
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: store.StoreUpgrades{
-		Added:   []string{tokenfactorytypes.ModuleName, pfmroutertypes.StoreKey},
+		Added:   []string{},
 		Deleted: []string{},
 	},
 }

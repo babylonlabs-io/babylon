@@ -142,13 +142,15 @@ message FinalityProviderResponse {
   string consumer_id = 10;
 }
 
-// QueryFinalityProviderConsumerRequest requests the consumer a CZ finality provider belongs to
+// QueryFinalityProviderConsumerRequest requests the consumer id a Consumer finality
+// provider belongs to
 message QueryFinalityProviderConsumerRequest {
   // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
   string fp_btc_pk_hex = 1;
 }
 
-// QueryFinalityProviderConsumerResponse returns the CZ finality provier consumer id
+// QueryFinalityProviderConsumerResponse returns the Consumer finality provider
+// consumer id
 message QueryFinalityProviderConsumerResponse {
   string consumer_id = 1;
 }

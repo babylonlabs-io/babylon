@@ -62,7 +62,7 @@ func (k Keeper) insertHeader(ctx context.Context, consumerID string, header *typ
 	return nil
 }
 
-// canonicalChainStore stores the canonical chain of a CZ, formed as a list of IndexedHeader
+// canonicalChainStore stores the canonical chain of a Consumer, formed as a list of IndexedHeader
 // prefix: CanonicalChainKey || consumerID
 // key: height
 // value: IndexedHeader

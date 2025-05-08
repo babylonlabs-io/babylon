@@ -47,7 +47,7 @@ func (k Keeper) insertForkHeader(ctx context.Context, consumerID string, header 
 	return nil
 }
 
-// forkStore stores the forks for each CZ
+// forkStore stores the forks for each Consumer
 // prefix: ForkKey || consumerID
 // key: height that this fork starts from
 // value: a list of IndexedHeader, representing each header in the fork
