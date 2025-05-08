@@ -201,7 +201,7 @@ func PrepareGenesis(
 
 	// mint module genesis
 	mintGenState := minttypes.DefaultGenesisState()
-	mintGenState.BondDenom = genesisParams.StakingParams.BondDenom
+	mintGenState.Minter.BondDenom = genesisParams.StakingParams.BondDenom
 	genesisState[minttypes.ModuleName] = cdc.MustMarshalJSON(mintGenState)
 
 	// distribution module genesis

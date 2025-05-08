@@ -303,7 +303,7 @@ func updateGovGenesis(votingPeriod, expeditedVotingPeriod time.Duration) func(go
 }
 
 func updateMintGenesis(mintGenState *minttypes.GenesisState) {
-	mintGenState.BondDenom = BabylonDenom
+	mintGenState.Minter.BondDenom = BabylonDenom
 }
 
 func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
