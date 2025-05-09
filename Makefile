@@ -342,32 +342,6 @@ benchmark:
 .PHONY: benchmark
 
 ###############################################################################
-###                                Protobuf                                 ###
-###############################################################################
-
-protoVer=0.14.0
-protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
-
-proto-all: proto-gen proto-swagger-gen ## Generate all protobuf related files
-
-proto-gen: proto-lint ## Generate protobuf files
-	@echo "Generating Protobuf files"
-	@$(protoImage) sh ./proto/scripts/protocgen.sh
-
-proto-swagger-gen: ## Generate Swagger files from protobuf
-	@echo "Generating Protobuf Swagger"
-	@$(protoImage) sh ./proto/scripts/protoc-swagger-gen.sh
-
-proto-format: ## Format protobuf files
-	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
-
-proto-lint: ## Lint protobuf files
-	@$(protoImage) buf lint --error-format=json
-
-.PHONY: proto-gen proto-swagger-gen proto-format proto-lint
-
-###############################################################################
 ###                                Docker                                   ###
 ###############################################################################
 dockerNetworkList=$($(DOCKER) network ls --filter name=bbn-testnet --format {{.ID}})
