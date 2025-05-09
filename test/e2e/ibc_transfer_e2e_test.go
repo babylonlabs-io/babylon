@@ -3,6 +3,7 @@ package e2e
 import (
 	"fmt"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
@@ -236,21 +237,24 @@ func (s *IBCTransferTestSuite) Test3RateLimitExceeded() {
 	_, err = chainB.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// Update this to the actual expected status or error message
-	expectedStatus := "rate limit exceeded" // Replace with the correct status or error message
-
-	// Send multiple IBC transfers from A to B to exceed the rate limit
-	for i := 0; i < 10; i++ { // Adjust the number of iterations based on your rate limit settings
+	expectedStatus := "rate limit exceeded"
+	for i := 0; i < 10; i++ {
 		txHash := nA.SendIBCTransfer(s.addrA, s.addrB, fmt.Sprintf("transfer-exceed-%d", i), transferCoin)
 		nA.WaitForNextBlock()
 
-		// Declare and initialize txResp
 		txResp, status := nA.QueryTx(txHash)
 		s.Require().NotNil(txResp)
 
 		s.Require().Equal(expectedStatus, status, "Expected rate limit exceeded error")
 
-		// Log the transaction response for debugging
+
 		s.T().Logf("Transaction Response: %+v", txResp)
 	}
 }
+
+
+func TestIBCTransferTestSuite(t *testing.T) {
+	suite.Run(t, new(IBCTransferTestSuite))
+}
+
+
