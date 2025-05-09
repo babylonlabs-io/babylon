@@ -19,7 +19,7 @@ import (
 )
 
 func FuzzTestExportGenesis(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 1)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		ctx, k, sk, gs := setupTest(t, seed)
 
