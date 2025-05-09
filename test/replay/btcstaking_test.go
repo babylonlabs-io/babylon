@@ -473,10 +473,17 @@ func TestActivatingDelegationOnSlashedFp(t *testing.T) {
 			fp.CastVote(lastVotedBlkHeight)
 		}
 
-		driver.GenerateNewBlock()
+		resp := driver.GenerateNewBlock()
+		require.NotNil(t, resp)
 
-		bl := driver.GetIndexedBlock(lastVotedBlkHeight)
-		require.Equal(t, bl.Finalized, true)
+		var containsSlashing bool = false
+
+		for _, res := range resp.TxResults {
+			if res.Code == 1104 {
+				containsSlashing = true
+			}
+		}
+		require.True(t, containsSlashing)
 	}
 }
 
