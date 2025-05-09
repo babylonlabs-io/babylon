@@ -36,13 +36,6 @@ func hashConcat(a []byte, b []byte) chainhash.Hash {
 	return chainhash.DoubleHashH(c)
 }
 
-func min(a, b uint) uint {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 // createBranch takes as input flatenned representation of merkle tree i.e
 // for tree:
 //
