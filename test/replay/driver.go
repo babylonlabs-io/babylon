@@ -579,6 +579,13 @@ func (d *BabylonAppDriver) GetLastState() sm.State {
 	return lastState
 }
 
+func (d *BabylonAppDriver) GenerateBlocksUntilHeight(untilBlock uint64) {
+	blkHeight := d.Ctx().BlockHeader().Height
+	for i := blkHeight; i < int64(untilBlock); i++ {
+		d.GenerateNewBlockAssertExecutionSuccess()
+	}
+}
+
 func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
 	response := d.GenerateNewBlock()
 

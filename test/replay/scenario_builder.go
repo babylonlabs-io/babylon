@@ -1,6 +1,13 @@
 package replay
 
-import "github.com/stretchr/testify/require"
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+)
+
+const (
+	defaultStakingTime = uint32(1000)
+)
 
 type StandardScenario struct {
 	driver            *BabylonAppDriver
@@ -50,8 +57,7 @@ func (s *StandardScenario) InitScenario(
 		for j := 0; j < delegationsPerFp; j++ {
 			stakers[i].CreatePreApprovalDelegation(
 				fp.BTCPublicKey(),
-				// default values for now
-				1000,
+				defaultStakingTime,
 				100000000,
 			)
 		}
@@ -82,14 +88,37 @@ func (s *StandardScenario) InitScenario(
 	s.activationHeight = activationHeight
 }
 
+func (s *StandardScenario) CreateActiveBtcDel(fp *FinalityProvider, staker *Staker, totalSat int64) {
+	staker.CreatePreApprovalDelegation(
+		fp.BTCPublicKey(),
+		defaultStakingTime,
+		totalSat,
+	)
+
+	s.driver.GenerateNewBlockAssertExecutionSuccess()
+
+	s.covenant.SendCovenantSignatures()
+	s.driver.GenerateNewBlockAssertExecutionSuccess()
+
+	s.driver.ActivateVerifiedDelegations(1)
+	s.driver.GenerateNewBlockAssertExecutionSuccess()
+}
+
 func (s *StandardScenario) FinalityFinalizeBlocksAllVotes(fromBlockToFinalize, numBlocksToFinalize uint64) uint64 {
 	return s.FinalityFinalizeBlocks(fromBlockToFinalize, numBlocksToFinalize, s.FpMapBtcPkHex())
 }
 
 func (s *StandardScenario) FpMapBtcPkHex() map[string]struct{} {
-	fpsToVote := make(map[string]struct{}, len(s.finalityProviders))
-	for _, fp := range s.finalityProviders {
+	return s.FpMapBtcPkHexQnt(len(s.finalityProviders))
+}
+
+func (s *StandardScenario) FpMapBtcPkHexQnt(limit int) map[string]struct{} {
+	fpsToVote := make(map[string]struct{}, limit)
+	for i, fp := range s.finalityProviders {
 		fpsToVote[fp.BTCPublicKey().MarshalHex()] = struct{}{}
+		if i >= limit {
+			return fpsToVote
+		}
 	}
 	return fpsToVote
 }
@@ -132,4 +161,12 @@ func (s *StandardScenario) FinalityCastVotes(blkHeight uint64, fpsToVote map[str
 
 		fp.CastVote(blkHeight)
 	}
+}
+
+func (s *StandardScenario) StakersAddr() []sdk.AccAddress {
+	v := make([]sdk.AccAddress, len(s.stakers))
+	for i, staker := range s.stakers {
+		v[i] = staker.Address()
+	}
+	return v
 }

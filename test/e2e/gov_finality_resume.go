@@ -300,10 +300,10 @@ func (s *GovFinalityResume) Test3CommitPublicRandomnessAndSubmitFinalitySignatur
 
 		// ensure vote is eventually cast
 		var finalizedBlocks []*ftypes.IndexedBlock
-		s.Eventually(func() bool {
+		s.Require().Eventually(func() bool {
 			finalizedBlocks = nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
 			return len(finalizedBlocks) > 0
-		}, time.Minute, time.Millisecond*50)
+		}, time.Minute, time.Millisecond*50, "It didn't finalized any block")
 		s.Equal(activatedHeight, finalizedBlocks[0].Height)
 		s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 		s.T().Logf("the block %d is finalized", activatedHeight)
