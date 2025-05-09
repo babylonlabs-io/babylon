@@ -7,6 +7,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v2/app/keepers"
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
@@ -20,7 +21,7 @@ var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: store.StoreUpgrades{
-		Added:   []string{tokenfactorytypes.ModuleName, pfmroutertypes.StoreKey},
+		Added:   []string{tokenfactorytypes.ModuleName, pfmroutertypes.StoreKey, ratelimittypes.StoreKey},
 		Deleted: []string{},
 	},
 }
