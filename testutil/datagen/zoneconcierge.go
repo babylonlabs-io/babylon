@@ -120,16 +120,15 @@ func GenRandomZoneconciergeGenState(r *rand.Rand) *types.GenesisState {
 		}
 	}
 
-	return &types.GenesisState{
-		PortId: types.PortID,
-		Params: types.Params{
+	return types.NewGenesis(
+		types.Params{
 			IbcPacketTimeoutSeconds: RandomUInt32(r, 100000) + 1,
 		},
-		ChainsInfo:           chainsInfo,
-		ChainsIndexedHeaders: idxHeaders,
-		ChainsForks:          forks,
-		ChainsEpochsInfo:     chainsEpochsInfo,
-		LastSentSegment:      GenRandomBTCChainSegment(r),
-		SealedEpochsProofs:   sealedEpochs,
-	}
+		chainsInfo,
+		idxHeaders,
+		forks,
+		chainsEpochsInfo,
+		GenRandomBTCChainSegment(r),
+		sealedEpochs,
+	)
 }
