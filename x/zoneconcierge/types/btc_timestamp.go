@@ -162,7 +162,7 @@ func VerifyConsumerHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epo
 	}
 
 	// sanity check
-	if err := header.ValidateBasic(); err != nil {
+	if err := header.Validate(); err != nil {
 		return err
 	} else if err := epoch.ValidateBasic(); err != nil {
 		return err
