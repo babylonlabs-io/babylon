@@ -42,7 +42,7 @@ providers;
 <!-- summary of BTC staking protocol and BTC staking module -->
 **Babylon Bitcoin Staking.** Babylon's Bitcoin Staking protocol allows bitcoin
 holders to *trustlessly* stake their bitcoins, in order to provide economic
-security to the Babylon chain and other Proof-of-Stake (PoS) blockchains. The
+security to the Babylon Genesis chain and other Proof-of-Stake (PoS) blockchains. The
 protocol composes a PoS blockchain with an off-the-shelf *finality voting round*
 run by a set of [finality
 providers](https://github.com/babylonlabs-io/finality-provider) who receive *BTC

@@ -3,9 +3,9 @@
 ## Introduction
 
 Babylon's BTC staking protocol turns Bitcoin into a staking asset with the aim
-to enhance the economic security of the Babylon chain. Bitcoin holders can stake
+to enhance the economic security of the Babylon Genesis chain. Bitcoin holders can stake
 their Bitcoin by locking them using a special transaction on the Bitcoin chain.
-The locked Bitcoin contributes to Babylon chain's economic security and generates
+The locked Bitcoin contributes to Babylon Genesis chain's economic security and generates
 yields for the Bitcoin stakers.
 The protocol has the following important properties:
 
@@ -15,7 +15,7 @@ The protocol has the following important properties:
    (DPoS) protocols.
 3. Stake security: the staked Bitcoin is slashed if and only if the BTC staker
    itself (and in the case of delegation, its delegatee) is malicious. This implies
-   that, even if the Babylon chain is compromised and taken over by malicious
+   that, even if the Babylon Genesis chain is compromised and taken over by malicious
    actors, as long as the BTC staker itself (and the validator it delegates to
    in case of delegation) is not malicious, its bitcoin stake is secure.
 4. The protocol supports fractional slashing, meaning the protocol can be
@@ -97,7 +97,7 @@ staker wallet.
 
 ## Types of special transactions
 
-There are three special transaction types recognized by the Babylon chain:
+There are three special transaction types recognized by the Babylon Genesis chain:
 
 - Staking Transaction
 - Unbonding Transaction
@@ -141,7 +141,7 @@ The requirements for a valid slashing transaction are:
 - It must have exactly one input pointing to either the staking output or the
   unbonding output.
 - It must have exactly two outputs, the first sending the slashed fraction of
-  the funds to a burn address specified in the Babylon chain's parameters, and the
+  the funds to a burn address specified in the Babylon Genesis chain's parameters, and the
   second sending the remaining funds to an output which can be unlocked by the staker
   after the timelock.
 - The fee for the slashing transactions must be larger than or equal to the
@@ -208,7 +208,7 @@ where:
 
 - `StakerPK` is the BTC staker's public key
 - `CovenantPk1..CovenantPkN` are the lexicographically sorted public keys of the
-  current covenant committee recognized by the Babylon chain
+  current covenant committee recognized by the Babylon Genesis chain
 - `CovenantThreshold` is a Babylon parameter specifying the number of how many
   covenant committee member signatures are required.
 
@@ -234,7 +234,7 @@ where:
 - `FinalityProviderPk` is the BTC public key of the finality provider to which
   the staker delegates their stake
 - `CovenantPk1..CovenantPkN` are the lexicographically sorted public keys of the
-  current covenant committee members recognized by the Babylon chain.
+  current covenant committee members recognized by the Babylon Genesis chain.
 - `CovenantThreshold` is a Babylon parameter denoting how many covenant
   committee member signatures are required.
 
@@ -312,7 +312,7 @@ where:
 - `FinalityProviderPk` is the BTC public key of the finality provider to which
   the staker delegates their stake.
 - `CovenantPk1..CovenantPkN` are the lexicographically sorted public keys of the
-  current covenant committee members recognized by the Babylon chain.
+  current covenant committee members recognized by the Babylon Genesis chain.
 - `CovenantThreshold` is a Babylon parameter denoting how many covenant
   committee member signatures are required.
 

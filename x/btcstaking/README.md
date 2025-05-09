@@ -41,7 +41,7 @@ providers and BTC delegations under them. This includes:
 ## Concepts
 
 Babylon's Bitcoin Staking protocol allows bitcoin holders to _trustlessly_ stake
-their bitcoin for providing economic security to the Babylon chain and other
+their bitcoin for providing economic security to the Babylon Genesis chain and other
 Proof-of-Stake (PoS) blockchains, _without bridging their bitcoin elsewhere_.
 
 ### Actors
@@ -210,7 +210,7 @@ message Params {
   // base gas fee for delegation creation
   uint64 delegation_creation_base_gas_fee = 13;
   // allow_list_expiration_height is the height at which the allow list expires
-  // i.e all staking transactions are allowed to enter Babylon chain afterwards
+  // i.e all staking transactions are allowed to enter Babylon Genesis chain afterwards
   // setting it to 0 means allow list is disabled
   uint64 allow_list_expiration_height = 14;
   // btc_activation_height is the btc height from which parameters are activated
@@ -263,7 +263,7 @@ message FinalityProvider {
   uint32 highest_voted_height = 9;
   // consumer_id is the ID of the consumer the finality provider is operating
   // on. If it's missing / empty, it's assumed the finality provider is
-  // operating in the Babylon chain.
+  // operating in the Babylon Genesis chain.
   string consumer_id = 10;
   // commission_info contains information details of the finality provider commission.
   CommissionInfo commission_info = 11;
@@ -341,7 +341,7 @@ message BTCDelegation {
 message DelegatorUnbondingInfo {
     // spend_stake_tx is the transaction which spent the staking output. It is
     // filled only if spend_stake_tx is different than unbonding_tx registered
-    // on the Babylon chain.
+    // on the Babylon Genesis chain.
     bytes spend_stake_tx = 1;
 }
 
@@ -870,7 +870,7 @@ message EventFinalityProviderStatusChange {
 ```protobuf
 
 // EventBTCDelegationCreated is the event emitted when a BTC delegation is created
-// on the Babylon chain
+// on the Babylon Genesis chain
 message EventBTCDelegationCreated {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
