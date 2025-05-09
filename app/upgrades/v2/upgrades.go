@@ -2,9 +2,11 @@ package v2
 
 import (
 	"context"
+
 	store "cosmossdk.io/store/types"
 	"github.com/babylonlabs-io/babylon/v2/app/keepers"
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
@@ -18,7 +20,7 @@ var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: store.StoreUpgrades{
-		Added:   []string{tokenfactorytypes.ModuleName},
+		Added:   []string{tokenfactorytypes.ModuleName, ratelimittypes.StoreKey},
 		Deleted: []string{},
 	},
 }

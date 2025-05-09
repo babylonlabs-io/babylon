@@ -70,6 +70,9 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v8"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	ibccallbacks "github.com/cosmos/ibc-go/modules/apps/callbacks"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
@@ -148,10 +151,11 @@ type AppKeepers struct {
 	MonitorKeeper        monitorkeeper.Keeper
 
 	// IBC-related modules
-	IBCKeeper      *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	IBCFeeKeeper   ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
-	TransferKeeper ibctransferkeeper.Keeper // for cross-chain fungible token transfers
-	IBCWasmKeeper  ibcwasmkeeper.Keeper     // for IBC wasm light clients
+	IBCKeeper       *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCFeeKeeper    ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
+	TransferKeeper  ibctransferkeeper.Keeper // for cross-chain fungible token transfers
+	IBCWasmKeeper   ibcwasmkeeper.Keeper     // for IBC wasm light clients
+	RatelimitKeeper ratelimitkeeper.Keeper
 
 	// Integration-related modules
 	BTCStkConsumerKeeper bsckeeper.Keeper
@@ -222,6 +226,7 @@ func (ak *AppKeepers) InitKeepers(
 		ibctransfertypes.StoreKey,
 		ibcfeetypes.StoreKey,
 		ibcwasmtypes.StoreKey,
+		ratelimittypes.StoreKey,
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
@@ -527,6 +532,16 @@ func (ak *AppKeepers) InitKeepers(
 		ak.IBCKeeper.PortKeeper, ak.AccountKeeper, ak.BankKeeper,
 	)
 
+	ak.RatelimitKeeper = *ratelimitkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[ratelimittypes.StoreKey]),
+		ak.GetSubspace(ratelimittypes.ModuleName),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		ak.BankKeeper,
+		ak.IBCKeeper.ChannelKeeper,
+		ak.IBCKeeper.ChannelKeeper, // ICS4Wrapper
+	)
+
 	// Create Transfer Keepers
 	ak.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
@@ -662,17 +677,26 @@ func (ak *AppKeepers) InitKeepers(
 	wasmStackIBCHandler := wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCFeeKeeper)
 	wasmStack = ibcfee.NewIBCMiddleware(wasmStackIBCHandler, ak.IBCFeeKeeper)
 
+	// Create Transfer Stack (from bottom to top of stack)
+	// - core IBC
+	// - ratelimit
+	// - provider
+	// - callbacks
+	// - transfer
+
 	// Create Transfer Stack
-	// SendPacket Path:
-	// SendPacket -> Transfer -> Callbacks -> Fee -> IBC core (ICS4Wrapper)
-	// RecvPacket Path:
-	// RecvPacket -> IBC core -> Fee -> Callbacks -> Transfer (AddRoute)
+	// * SendPacket Path:
+	// 	SendPacket -> Transfer -> Callbacks -> Fee -> RateLimit -> IBC core (ICS4Wrapper)
+	// * RecvPacket Path:
+	// 	RecvPacket -> IBC core -> RateLimit -> Fee -> Callbacks -> Transfer (AddRoute)
 	// Receive path should mirror the send path.
+
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(ak.TransferKeeper)
 	cbStack := ibccallbacks.NewIBCMiddleware(transferStack, ak.IBCFeeKeeper, wasmStackIBCHandler,
 		appparams.MaxIBCCallbackGas)
 	transferStack = ibcfee.NewIBCMiddleware(cbStack, ak.IBCFeeKeeper)
+	transferStack = ratelimiter.NewIBCMiddleware(ak.RatelimitKeeper, transferStack)
 	ak.TransferKeeper.WithICS4Wrapper(cbStack)
 
 	var zoneConciergeStack porttypes.IBCModule
@@ -700,6 +724,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)
+	paramsKeeper.Subspace(ratelimittypes.ModuleName)
 
 	return paramsKeeper
 }
