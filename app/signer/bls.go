@@ -24,11 +24,10 @@ import (
 var _ checkpointingtypes.BlsSigner = &BlsKey{}
 
 const (
-	DefaultBlsKeyName      = "bls_key.json"             // Default file name for BLS key
-	DefaultBlsPasswordName = "bls_password.txt"         // Default file name for BLS password
-	BlsPasswordEnvVar      = "BABYLON_BLS_PASSWORD"     // Environment variable name for BLS password
-	OldBlsPasswordEnvVar   = "BABYLON_OLD_BLS_PASSWORD" // Environment variable name for old BLS password
-	DefaultBlsPopName      = "bls_pop.json"             // Default file name for BLS PoP
+	DefaultBlsKeyName      = "bls_key.json"         // Default file name for BLS key
+	DefaultBlsPasswordName = "bls_password.txt"     // Default file name for BLS password
+	BlsPasswordEnvVar      = "BABYLON_BLS_PASSWORD" // Environment variable name for BLS password
+	DefaultBlsPopName      = "bls_pop.json"         // Default file name for BLS PoP
 )
 
 var (
@@ -166,12 +165,6 @@ func GetBlsPasswordFromEnv() (string, bool) {
 	return os.LookupEnv(BlsPasswordEnvVar)
 }
 
-// GetOldBlsPasswordFromEnv retrieves the old BLS password from the environment variable only.
-// Returns empty string if not found.
-func GetOldBlsPasswordFromEnv() (string, bool) {
-	return os.LookupEnv(OldBlsPasswordEnvVar)
-}
-
 // Save saves the bls12381 key to the file.
 // The file stores an erc2335 structure containing the encrypted bls private key.
 func (k *BlsKey) Save(password string) {
@@ -194,12 +187,12 @@ func (k *BlsKey) Save(password string) {
 	}
 
 	// write generated erc2335 keystore to file
-	if err := tempfile.WriteFileAtomic(k.filePath, jsonBytes, 0600); err != nil {
+	if err := tempfile.WriteFileAtomic(k.filePath, jsonBytes, 0400); err != nil {
 		panic(fmt.Errorf("failed to write BLS key: %w", err))
 	}
 
 	if k.passwordPath != "" {
-		if err := tempfile.WriteFileAtomic(k.passwordPath, []byte(password), 0600); err != nil {
+		if err := tempfile.WriteFileAtomic(k.passwordPath, []byte(password), 0400); err != nil {
 			panic(fmt.Errorf("failed to write BLS password: %w", err))
 		}
 	}
@@ -521,6 +514,11 @@ func UpdateBlsPassword(homeDir string, blsPrivKey bls12381.PrivateKey, password 
 	// Check if BLS key already exists
 	if !cmtos.FileExists(blsKeyFile) {
 		return fmt.Errorf("BLS key does not exist at %s", blsKeyFile)
+	}
+
+	// Remove BLS key file
+	if err := os.Remove(blsKeyFile); err != nil {
+		return fmt.Errorf("failed to remove BLS key file: %w", err)
 	}
 
 	// If a password file is specified, ensure its directory exists too

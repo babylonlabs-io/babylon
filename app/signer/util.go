@@ -32,8 +32,6 @@ func EnsureDirs(paths ...string) error {
 func NewBlsPassword() string {
 	inBuf := bufio.NewReader(os.Stdin)
 
-	fmt.Println("Enter a secure password for your BLS key (input will be hidden)")
-
 	const maxAttempts = 3
 	var attempt int
 
@@ -42,12 +40,12 @@ func NewBlsPassword() string {
 			fmt.Printf("\nPasswords didn't match. Attempt %d of %d\n", attempt+1, maxAttempts)
 		}
 
-		password, err := GetBlsPasswordInput("Enter your BLS password: ", inBuf)
+		password, err := GetBlsPasswordInput("Enter your BLS password (input will be hidden): ", inBuf)
 		if err != nil {
 			cmtos.Exit(fmt.Sprintf("failed to get BLS password: %v", err.Error()))
 		}
 
-		confirmPassword, err := GetBlsPasswordInput("Confirm your BLS password: ", inBuf)
+		confirmPassword, err := GetBlsPasswordInput("Confirm your BLS password (input will be hidden): ", inBuf)
 		if err != nil {
 			cmtos.Exit(fmt.Sprintf("failed to get BLS password confirmation: %v", err.Error()))
 		}
