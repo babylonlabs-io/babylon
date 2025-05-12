@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#884](https://github.com/babylonlabs-io/babylon/pull/884) Bump tokenfactory version to v0.50.6
 - [#879](https://github.com/babylonlabs-io/babylon/pull/879) Add v2 e2e upgrade test.
 - [#869](https://github.com/babylonlabs-io/babylon/pull/869) Rename CZ to Consumer in btcstkconsumer and zoneconcierge.
 - [#846](https://github.com/babylonlabs-io/babylon/pull/846) Add tokenfactory module.
@@ -70,6 +71,7 @@ check of rewards
 - [#859](https://github.com/babylonlabs-io/babylon/pull/859) Update init/export genesis logic in `x/finality` module
 - [#876](https://github.com/babylonlabs-io/babylon/pull/876) Add Packet Forwarding Middleware (PFM) module.
 - [#881](https://github.com/babylonlabs-io/babylon/pull/881) Update init/export genesis logic in `x/mint` module
+- [#883](https://github.com/babylonlabs-io/babylon/pull/883) Update init/export genesis logic in `x/monitor` module
 - [#887](https://github.com/babylonlabs-io/babylon/pull/887) Update init/export genesis logic in `x/zoneconcierge` module
 
 ### State Machine Breaking
