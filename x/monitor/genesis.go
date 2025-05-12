@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"context"
+
 	"github.com/babylonlabs-io/babylon/v2/x/monitor/keeper"
 	"github.com/babylonlabs-io/babylon/v2/x/monitor/types"
 )
