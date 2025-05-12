@@ -135,6 +135,9 @@ func (ci *ChainInfo) Validate() error {
 }
 
 func (f *Forks) Validate() error {
+	if len(f.Headers) == 0 {
+		return errors.New("invalid forks. empty headers")
+	}
 	if err := types.ValidateEntries(
 		f.Headers,
 		func(ih *IndexedHeader) string {
