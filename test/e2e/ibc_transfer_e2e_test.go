@@ -39,7 +39,6 @@ func (s *IBCTransferTestSuite) SetupSuite() {
 
 	err = s.configurer.RunSetup()
 	s.Require().NoError(err)
-
 }
 
 func (s *IBCTransferTestSuite) TearDownSuite() {
