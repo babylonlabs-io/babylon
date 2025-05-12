@@ -399,9 +399,9 @@ func applyRateLimitsToChainConfig(rateLimiterGenState *ratelimiter.GenesisState)
 	}
 
 	quota := &ratelimiter.Quota{
-		MaxPercentSend: sdkmath.NewInt(50),
-		MaxPercentRecv: sdkmath.NewInt(50),
-		DurationHours:  24,
+		MaxPercentSend: sdkmath.NewInt(0),
+		MaxPercentRecv: sdkmath.NewInt(0),
+		DurationHours:  1,
 	}
 
 	rateLimit := ratelimiter.RateLimit{

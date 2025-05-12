@@ -94,7 +94,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	s.Require().Len(balanceBeforeSendAddrB, 1)
 
 	// Send transfer from val in chain-A (Node 3) to val in chain-B (Node 3)
-	txHash := nA.SendIBCTransfer(s.addrA, s.addrB, "transfer", transferCoin)
+	txHash := nA.SendIBCTransfer(s.addrA, s.addrB, "transfer", transferCoin, "channel-0")
 	nA.WaitForNextBlock()
 
 	_, txResp := nA.QueryTx(txHash)
@@ -169,7 +169,7 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 	balanceBeforeReceivingSendBackA, err := nA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
 
-	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, "transfer back", transferCoin)
+	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, "transfer back", transferCoin, "channel-0")
 
 	nB.WaitForNextBlock()
 
@@ -253,7 +253,7 @@ func (s *IBCTransferTestSuite) TestPacketForwarding() {
 	forwardMemo, err := json.Marshal(memoData)
 	s.NoError(err)
 
-	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, string(forwardMemo), transferCoin)
+	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, string(forwardMemo), transferCoin, "channel-0")
 
 	nB.WaitForNextBlock()
 
@@ -303,9 +303,11 @@ func (s *IBCTransferTestSuite) TestPacketForwarding() {
 
 		return true
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
+}
+
 func (s *IBCTransferTestSuite) Test3RateLimitExceeded() {
 	denom := "ubbn"
-	amount := int64(90_000_000_000)
+	amount := int64(10_000_000_000)
 
 	transferCoin := sdk.NewInt64Coin(denom, amount)
 
@@ -317,21 +319,14 @@ func (s *IBCTransferTestSuite) Test3RateLimitExceeded() {
 	_, err = chainB.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// Update this to the actual expected status or error message
-	expectedStatus := "rate limit exceeded" // Replace with the correct status or error message
-
-	// Send multiple IBC transfers from A to B to exceed the rate limit
-	for i := 0; i < 10; i++ { // Adjust the number of iterations based on your rate limit settings
-		txHash := nA.SendIBCTransfer(s.addrA, s.addrB, fmt.Sprintf("transfer-exceed-%d", i), transferCoin)
+	expectedStatus := "rate limit exceeded"
+	for i := 0; i < 10; i++ {
+		txHash := nA.SendIBCTransfer(s.addrA, s.addrB, fmt.Sprintf("transfer-exceed-%d", i), transferCoin, "channel-0")
 		nA.WaitForNextBlock()
-
-		// Declare and initialize txResp
 		txResp, status := nA.QueryTx(txHash)
 		s.Require().NotNil(txResp)
-
 		s.Require().Equal(expectedStatus, status, "Expected rate limit exceeded error")
 
-		// Log the transaction response for debugging
 		s.T().Logf("Transaction Response: %+v", txResp)
 	}
 }
