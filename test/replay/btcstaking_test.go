@@ -362,7 +362,7 @@ func TestSlashingandFinalizingBlocks(t *testing.T) {
 	scenario.InitScenario(6, 1) // 6 finality providers
 
 	numBlocksInTest := uint64(10)
-	lastVotedBlkHeight := scenario.FinalityFinalizeBlocks(scenario.activationHeight, numBlocksInTest)
+	lastVotedBlkHeight := scenario.FinalityFinalizeBlocks(scenario.activationHeight, numBlocksInTest, scenario.FpMapBtcPkHex())
 
 	indexSlashFp1 := 1
 	indexSlashFp2 := 2
@@ -430,7 +430,7 @@ func TestActivatingDelegationOnSlashedFp(t *testing.T) {
 	scenario.driver.GenerateNewBlockAssertExecutionSuccess()
 
 	numBlocksInTest := uint64(10)
-	lastVotedBlkHeight := scenario.FinalityFinalizeBlocks(scenario.activationHeight, numBlocksInTest)
+	lastVotedBlkHeight := scenario.FinalityFinalizeBlocks(scenario.activationHeight, numBlocksInTest, scenario.FpMapBtcPkHex())
 
 	for i := uint64(0); i < numBlocksInTest; i++ {
 		lastVotedBlkHeight++
@@ -497,7 +497,7 @@ func TestJailingFinalityProvider(t *testing.T) {
 	scenario := NewStandardScenario(driver)
 	scenario.InitScenario(2, 1)
 
-	lastVotedBlkHeight := scenario.FinalityFinalizeBlocks(scenario.activationHeight, numBlocksFinalized)
+	lastVotedBlkHeight := scenario.FinalityFinalizeBlocks(scenario.activationHeight, numBlocksFinalized, scenario.FpMapBtcPkHex())
 
 	fp := scenario.finalityProviders[0]
 
