@@ -26,7 +26,6 @@ import (
 	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
 	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
-	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 )
 
 // NodeConfig is a configuration for the node supplied from the test runner
@@ -258,11 +257,6 @@ func initGenesis(
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, ratelimiter.ModuleName, &ratelimiter.GenesisState{}, applyRateLimitsToChainConfig)
-	if err != nil {
-		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
-	}
-
 	bz, err := json.MarshalIndent(appGenState, "", "  ")
 	if err != nil {
 		return err
@@ -389,30 +383,4 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 		}
 		genUtilGenState.GenTxs = genTxs
 	}
-}
-
-func applyRateLimitsToChainConfig(rateLimiterGenState *ratelimiter.GenesisState) {
-
-	path := &ratelimiter.Path{
-		Denom:     "ubbn",
-		ChannelId: "channel-0",
-	}
-
-	quota := &ratelimiter.Quota{
-		MaxPercentSend: sdkmath.NewInt(0),
-		MaxPercentRecv: sdkmath.NewInt(0),
-		DurationHours:  1,
-	}
-
-	rateLimit := ratelimiter.RateLimit{
-		Path:  path,
-		Quota: quota,
-		Flow: &ratelimiter.Flow{
-			Inflow:       sdkmath.ZeroInt(),
-			Outflow:      sdkmath.ZeroInt(),
-			ChannelValue: sdkmath.ZeroInt(),
-		},
-	}
-
-	rateLimiterGenState.RateLimits = append(rateLimiterGenState.RateLimits, rateLimit)
 }
