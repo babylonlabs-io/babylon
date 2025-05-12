@@ -188,9 +188,6 @@ type AppKeepers struct {
 	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
 	ScopedZoneConciergeKeeper capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
-	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
-	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
-	ScopedICQKeeper           capabilitykeeper.ScopedKeeper
 
 	// keys to access the substores
 	keys    map[string]*storetypes.KVStoreKey
@@ -339,13 +336,13 @@ func (ak *AppKeepers) InitKeepers(
 	)
 
 	// grant capabilities for the ibc and ibc-transfer modules
-	ak.ScopedIBCKeeper = ak.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
-	ak.ScopedTransferKeeper = ak.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-	ak.ScopedZoneConciergeKeeper = ak.CapabilityKeeper.ScopeToModule(zctypes.ModuleName)
-	ak.ScopedWasmKeeper = ak.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
-	ak.ScopedICAHostKeeper = ak.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
-	ak.ScopedICAControllerKeeper = ak.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
-	ak.ScopedICQKeeper = ak.CapabilityKeeper.ScopeToModule(icqtypes.ModuleName)
+	scopedIBCKeeper := ak.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
+	scopedTransferKeeper := ak.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
+	scopedZoneConciergeKeeper := ak.CapabilityKeeper.ScopeToModule(zctypes.ModuleName)
+	scopedWasmKeeper := ak.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
+	scopedICAHostKeeper := ak.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
+	scopedICAControllerKeeper := ak.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
+	scopedICQKeeper := ak.CapabilityKeeper.ScopeToModule(icqtypes.ModuleName)
 
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
 	// their scoped modules in `NewApp` with `ScopeToModule`
@@ -449,7 +446,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.GetSubspace(ibcexported.ModuleName),
 		ak.StakingKeeper,
 		ak.UpgradeKeeper,
-		ak.ScopedIBCKeeper,
+		scopedIBCKeeper,
 		// From 8.0.0 the IBC keeper requires an authority for the messages
 		// `MsgIBCSoftwareUpgrade` and `MsgRecoverClient`
 		// https://github.com/cosmos/ibc-go/releases/tag/v8.0.0
@@ -483,7 +480,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.IBCFeeKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper,
-		ak.ScopedWasmKeeper,
+		scopedWasmKeeper,
 		ak.TransferKeeper,
 		bApp.MsgServiceRouter(),
 		bApp.GRPCQueryRouter(),
@@ -563,7 +560,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.IBCKeeper.PortKeeper,
 		ak.AccountKeeper,
 		ak.BankKeeper,
-		ak.ScopedTransferKeeper,
+		scopedTransferKeeper,
 		appparams.AccGov.String(),
 	)
 
@@ -638,7 +635,7 @@ func (ak *AppKeepers) InitKeepers(
 		storeQuerier,
 		&ak.BTCStakingKeeper,
 		&ak.BTCStkConsumerKeeper,
-		ak.ScopedZoneConciergeKeeper,
+		scopedZoneConciergeKeeper,
 		appparams.AccGov.String(),
 	)
 
@@ -700,7 +697,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper,
 		ak.AccountKeeper,
-		ak.ScopedICAHostKeeper,
+		scopedICAHostKeeper,
 		bApp.MsgServiceRouter(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -713,7 +710,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.IBCFeeKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper,
-		ak.ScopedICAControllerKeeper,
+		scopedICAControllerKeeper,
 		bApp.MsgServiceRouter(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -726,7 +723,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.IBCFeeKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper,
-		ak.ScopedICQKeeper,
+		scopedICQKeeper,
 		bApp.GRPCQueryRouter(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
