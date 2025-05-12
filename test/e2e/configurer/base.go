@@ -115,6 +115,20 @@ func (bc *baseConfigurer) RunIBCTransferChannel() error {
 	return nil
 }
 
+// RunIBCChannel sets up an IBC channel with the ports provided.
+// It assumes relayer is already running
+func (bc *baseConfigurer) RunIBCChannel(chainAPort, chainBPort string) error {
+	// Run a relayer between every possible pair of chains.
+	for i := 0; i < len(bc.chainConfigs); i++ {
+		for j := i + 1; j < len(bc.chainConfigs); j++ {
+			if err := bc.createIBCChannel(bc.chainConfigs[i], bc.chainConfigs[j], chainAPort, chainBPort); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (bc *baseConfigurer) runHermesIBCRelayer(chainConfigA *chain.Config, chainConfigB *chain.Config) error {
 	bc.t.Log("starting Hermes relayer container...")
 
@@ -258,14 +272,18 @@ func (bc *baseConfigurer) runCosmosIBCRelayer(chainConfigA *chain.Config, chainC
 }
 
 func (bc *baseConfigurer) createIBCTransferChannel(chainA *chain.Config, chainB *chain.Config) error {
-	bc.t.Logf("connecting %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
-	cmd := []string{"hermes", "create", "channel", "--a-chain", chainA.ChainMeta.Id, "--b-chain", chainB.ChainMeta.Id, "--a-port", "transfer", "--b-port", "transfer", "--new-client-connection", "--yes"}
+	return bc.createIBCChannel(chainA, chainB, "transfer", "transfer")
+}
+
+func (bc *baseConfigurer) createIBCChannel(chainA *chain.Config, chainB *chain.Config, srcPortID, destPortID string) error {
+	bc.t.Logf("connecting %s and %s chains via IBC: src port %q; dest port %q", chainA.ChainMeta.Id, chainB.ChainMeta.Id, srcPortID, destPortID)
+	cmd := []string{"hermes", "create", "channel", "--a-chain", chainA.ChainMeta.Id, "--b-chain", chainB.ChainMeta.Id, "--a-port", srcPortID, "--b-port", destPortID, "--new-client-connection", "--yes"}
 	bc.t.Log(cmd)
 	_, _, err := bc.containerManager.ExecHermesCmd(bc.t, cmd, "SUCCESS")
 	if err != nil {
 		return err
 	}
-	bc.t.Logf("connected %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
+	bc.t.Logf("connected %s and %s chains via IBC src port %q; dest port %q", chainA.ChainMeta.Id, chainB.ChainMeta.Id, srcPortID, destPortID)
 	return nil
 }
 

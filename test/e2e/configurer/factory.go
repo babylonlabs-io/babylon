@@ -31,6 +31,8 @@ type Configurer interface {
 	RunCosmosRelayerIBC() error
 
 	RunIBCTransferChannel() error
+
+	RunIBCChannel(chainAPort, chainBPort string) error
 }
 
 const (
