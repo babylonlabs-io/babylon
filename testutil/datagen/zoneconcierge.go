@@ -22,10 +22,15 @@ func GenRandomIndexedHeader(r *rand.Rand) *types.IndexedHeader {
 	}
 }
 
-func GenRandomIndexedHeaderWithConsumerAndEpoch(r *rand.Rand, consumerId string, epoch uint64) *types.IndexedHeader {
-	now := time.Now()
+func GenRandomIndexedHeaderWithConsumerId(r *rand.Rand, consumerId string) *types.IndexedHeader {
 	h := GenRandomIndexedHeader(r)
 	h.ConsumerId = consumerId
+	return h
+}
+
+func GenRandomIndexedHeaderWithConsumerAndEpoch(r *rand.Rand, consumerId string, epoch uint64) *types.IndexedHeader {
+	now := time.Now().UTC()
+	h := GenRandomIndexedHeaderWithConsumerId(r, consumerId)
 	h.BabylonEpoch = epoch
 	h.Time = &now
 	return h
@@ -49,11 +54,16 @@ func GenRandomBTCChainSegment(r *rand.Rand) *types.BTCChainSegment {
 }
 
 func GenRandomChainInfo(r *rand.Rand) *types.ChainInfo {
+	consumerId := fmt.Sprintf("chain-%s", GenRandomHexStr(r, 20))
+	return GenRandomChainInfoWithConsumerId(r, consumerId)
+}
+
+func GenRandomChainInfoWithConsumerId(r *rand.Rand, consumerId string) *types.ChainInfo {
 	return &types.ChainInfo{
-		ConsumerId:   fmt.Sprintf("chain-%s", GenRandomHexStr(r, 20)),
-		LatestHeader: GenRandomIndexedHeader(r),
+		ConsumerId:   consumerId,
+		LatestHeader: GenRandomIndexedHeaderWithConsumerId(r, consumerId),
 		LatestForks: &types.Forks{
-			Headers: []*types.IndexedHeader{GenRandomIndexedHeader(r)},
+			Headers: []*types.IndexedHeader{GenRandomIndexedHeaderWithConsumerId(r, consumerId)},
 		},
 	}
 }
@@ -61,6 +71,17 @@ func GenRandomChainInfo(r *rand.Rand) *types.ChainInfo {
 func GenRandomChainInfoWithProof(r *rand.Rand) *types.ChainInfoWithProof {
 	return &types.ChainInfoWithProof{
 		ChainInfo: GenRandomChainInfo(r),
+		ProofHeaderInEpoch: &cmtcrypto.ProofOps{
+			Ops: []cmtcrypto.ProofOp{
+				cmtcrypto.ProofOp{},
+			},
+		},
+	}
+}
+
+func GenRandomChainInfoWithProofAndConsumerId(r *rand.Rand, consumerId string) *types.ChainInfoWithProof {
+	return &types.ChainInfoWithProof{
+		ChainInfo: GenRandomChainInfoWithConsumerId(r, consumerId),
 		ProofHeaderInEpoch: &cmtcrypto.ProofOps{
 			Ops: []cmtcrypto.ProofOp{
 				cmtcrypto.ProofOp{},
@@ -98,20 +119,18 @@ func GenRandomZoneconciergeGenState(r *rand.Rand) *types.GenesisState {
 
 	for i := range entriesCount {
 		epochNum := uint64(i + 1)
+		ci := GenRandomChainInfo(r)
+		chainsInfo[i] = ci
 
-		chainsInfo[i] = GenRandomChainInfo(r)
-
-		h := GenRandomIndexedHeader(r)
-		h.BabylonEpoch = epochNum
-		idxHeaders[i] = h
+		idxHeaders[i] = GenRandomIndexedHeaderWithConsumerAndEpoch(r, ci.ConsumerId, epochNum)
 
 		forks[i] = &types.Forks{
-			Headers: []*types.IndexedHeader{GenRandomIndexedHeader(r)},
+			Headers: []*types.IndexedHeader{GenRandomIndexedHeaderWithConsumerAndEpoch(r, ci.ConsumerId, epochNum)},
 		}
 
 		chainsEpochsInfo[i] = &types.EpochChainInfoEntry{
 			EpochNumber: epochNum,
-			ChainInfo:   GenRandomChainInfoWithProof(r),
+			ChainInfo:   GenRandomChainInfoWithProofAndConsumerId(r, ci.ConsumerId),
 		}
 
 		sealedEpochs[i] = &types.SealedEpochProofEntry{

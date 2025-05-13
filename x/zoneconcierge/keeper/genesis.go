@@ -62,19 +62,20 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) {
 	consumerIDs, ci := k.chainsInfo(ctx)
 
-	ei, err := k.chainsEpochsInfo(ctx, consumerIDs)
-	if err != nil {
-		return nil, err
-	}
-
 	h, err := k.chainsHeaders(ctx, consumerIDs)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO forks
+	f, err := k.chainsForks(ctx, consumerIDs)
+	if err != nil {
+		return nil, err
+	}
 
-	// TODO (latest) Chain info 
+	ei, err := k.chainsEpochsInfo(ctx, consumerIDs)
+	if err != nil {
+		return nil, err
+	}
 
 	se, err := k.sealedEpochsProofs(ctx)
 	if err != nil {
@@ -85,8 +86,9 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		Params:               k.GetParams(ctx),
 		PortId:               k.GetPort(ctx),
 		ChainsInfo:           ci,
-		ChainsEpochsInfo:     ei,
 		ChainsIndexedHeaders: h,
+		ChainsForks:          f,
+		ChainsEpochsInfo:     ei,
 		LastSentSegment:      k.GetLastSentSegment(ctx),
 		SealedEpochsProofs:   se,
 	}, nil
@@ -120,7 +122,6 @@ func (k Keeper) chainsHeaders(ctx context.Context, consumerIDs []string) ([]*typ
 		}
 		headers = append(headers, hs...)
 	}
-
 	return headers, nil
 }
 
@@ -140,7 +141,6 @@ func (k Keeper) headersByChain(ctx context.Context, consumerID string) ([]*types
 		}
 		headers = append(headers, &h)
 	}
-
 	return headers, nil
 }
 
@@ -153,7 +153,6 @@ func (k Keeper) chainsEpochsInfo(ctx context.Context, consumerIDs []string) ([]*
 		}
 		entries = append(entries, epochsInfo...)
 	}
-
 	return entries, nil
 }
 
@@ -181,6 +180,37 @@ func (k Keeper) epochsInfoByChain(ctx context.Context, consumerID string) ([]*ty
 	return entries, nil
 }
 
+func (k Keeper) chainsForks(ctx context.Context, consumerIDs []string) ([]*types.Forks, error) {
+	forks := make([]*types.Forks, 0)
+	for _, cID := range consumerIDs {
+		fs, err := k.forksByChain(ctx, cID)
+		if err != nil {
+			return nil, err
+		}
+		forks = append(forks, fs...)
+	}
+	return forks, nil
+}
+
+func (k Keeper) forksByChain(ctx context.Context, consumerID string) ([]*types.Forks, error) {
+	forks := make([]*types.Forks, 0)
+	iter := k.forkStore(ctx, consumerID).Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var f types.Forks
+		if err := k.cdc.Unmarshal(iter.Value(), &f); err != nil {
+			return nil, err
+		}
+
+		if err := f.Validate(); err != nil {
+			return nil, err
+		}
+		forks = append(forks, &f)
+	}
+	return forks, nil
+}
+
 func (k Keeper) sealedEpochsProofs(ctx context.Context) ([]*types.SealedEpochProofEntry, error) {
 	entries := make([]*types.SealedEpochProofEntry, 0)
 	iter := k.sealedEpochProofStore(ctx).Iterator(nil, nil)
@@ -202,6 +232,5 @@ func (k Keeper) sealedEpochsProofs(ctx context.Context) ([]*types.SealedEpochPro
 		}
 		entries = append(entries, entry)
 	}
-
 	return entries, nil
 }
