@@ -33,11 +33,18 @@ const (
 
 func GenRandomFinalityProvider(r *rand.Rand) (*bstypes.FinalityProvider, error) {
 	// key pairs
+	fp, _, err := GenRandomFinalityProviderWithSk(r)
+	return fp, err
+}
+
+func GenRandomFinalityProviderWithSk(r *rand.Rand) (*bstypes.FinalityProvider, *btcec.PrivateKey, error) {
+	// BTC key pairs
 	btcSK, _, err := GenRandomBTCKeyPair(r)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return GenRandomFinalityProviderWithBTCSK(r, btcSK)
+	fp, err := GenRandomFinalityProviderWithBTCSK(r, btcSK)
+	return fp, btcSK, err
 }
 
 func GenCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, fpAddr sdk.AccAddress) (*bstypes.FinalityProvider, error) {

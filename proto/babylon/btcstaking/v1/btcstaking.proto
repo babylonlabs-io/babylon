@@ -46,7 +46,7 @@ message FinalityProvider {
   uint32 highest_voted_height = 9;
   // NOTE: consumer_id field is not yet backported to the release branch.
   // To keep it consistent with the code on main branch, consumer_info has field number 11 instead of 10.
-  
+
   // commission_info contains information details of the finality provider commission.
   CommissionInfo commission_info = 11;
 }
@@ -295,11 +295,14 @@ message InclusionProof {
 
 // LargestBtcReOrg stores the largest BTC reorg recorded
 message LargestBtcReOrg {
-    // BlockDiff is the difference of the block height of the BTC header Tip - the btc height
-    // which it was rolled back
-    uint32 block_diff = 1;
-    // RollbackFrom is the latest BTC block header prior to rollback
-    babylon.btclightclient.v1.BTCHeaderInfo rollback_from = 2;
-    // RollbackTo is the BTC block header which we rollback to
-    babylon.btclightclient.v1.BTCHeaderInfo rollback_to = 3;
+  // BlockDiff is the difference of the block height of the BTC header Tip - the btc height
+  // which it was rolled back
+  uint32 block_diff = 1;
+  // RollbackFrom is the latest BTC block header prior to rollback
+  babylon.btclightclient.v1.BTCHeaderInfo rollback_from = 2;
+  // RollbackTo is the BTC block header which we rollback to
+  babylon.btclightclient.v1.BTCHeaderInfo rollback_to = 3;
+  // Handled returs true if this was already handled by a fork.
+  // If set to true, prevents panic in endblocker if block diff > k.
+  bool handled = 4;
 }

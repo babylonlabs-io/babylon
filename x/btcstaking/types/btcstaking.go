@@ -154,3 +154,22 @@ func (cr CommissionInfo) Validate() error {
 
 	return nil
 }
+
+// IsBtcHeightRollbacked returns true if the given BTC height has been
+// rollbacked accordingly to the largest reorg structure
+func (l LargestBtcReOrg) IsBtcHeightRollbacked(btcHeight uint32) bool {
+	if l.RollbackFrom == nil || l.RollbackTo == nil {
+		return false
+	}
+	if btcHeight <= l.RollbackFrom.Height { // 250404
+		return false
+	}
+	if btcHeight > l.RollbackTo.Height { // 250401
+		// the rollback to is the height before the rollback
+		// which means that any actions that were included in this block
+		// are still valid in the new reorg.
+		return false
+	}
+
+	return true
+}
