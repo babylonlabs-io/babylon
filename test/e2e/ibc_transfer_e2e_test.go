@@ -10,7 +10,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
-	"github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -306,47 +305,72 @@ func (s *IBCTransferTestSuite) TestPacketForwarding() {
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
 }
 
-func CalculateRemainingQuota(quota types.Quota, direction types.PacketDirection, amount, totalValue sdkmath.Int) sdkmath.Int {
-	var maxPercent sdkmath.Int
-	if direction == types.PACKET_RECV {
-		maxPercent = quota.MaxPercentRecv
-	} else {
-		maxPercent = quota.MaxPercentSend
-	}
-
-	maxAllowed := totalValue.Mul(maxPercent).Quo(sdkmath.NewInt(100))
-	remaining := maxAllowed.Sub(amount)
-	if remaining.IsNegative() {
-		return sdkmath.ZeroInt()
-	}
-	return remaining
-}
-
-func (s *IBCTransferTestSuite) TestRateLimitE2E() {
+func (s *IBCTransferTestSuite) TestRateLimitE2EAboveThreshold() {
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
 	nA, err := bbnChainA.GetNodeAtIndex(0)
 	s.NoError(err)
-	_, err = bbnChainB.GetNodeAtIndex(2)
+	nB, err := bbnChainB.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	quota := types.Quota{
-		MaxPercentRecv: sdkmath.NewInt(50),
-		MaxPercentSend: sdkmath.NewInt(50),
-		DurationHours:  uint64(24),
+	balanceBeforeTransferA, err := nA.QueryBalances(s.addrA)
+	s.Require().NoError(err)
+	s.T().Logf("Balance before transfer for addrA: %s", balanceBeforeTransferA.String())
+
+	_, err = nB.QueryBalances(s.addrB)
+	s.Require().NoError(err)
+
+	packetAmount := sdkmath.NewInt(1500000) // above the threshold and should fail
+	channel := "channel-1"
+
+	transferCoin := sdk.NewCoin(nativeDenom, packetAmount)
+
+	s.T().Log("Attempting to send IBC transfer...")
+	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, channel, transferCoin)
+
+	if txHash != "" {
+		s.T().Logf("IBC transfer sent, txHash: %s", txHash)
 	}
 
-	packetAmount := sdkmath.NewInt(15)
-	totalValue := sdkmath.NewInt(100)
+	nA.WaitForNextBlock()
+
+	balanceAfterReceivingSendBackA, err := nA.QueryBalances(s.addrA)
+	s.Require().NoError(err)
+
+	s.Require().Equal(balanceBeforeTransferA.String(), balanceAfterReceivingSendBackA.String(), "Balance should remain unchanged after failed transfer")
+}
+
+func (s *IBCTransferTestSuite) TestRateLimitE2EBelowThreshold() {
+	bbnChainA := s.configurer.GetChainConfig(0)
+	bbnChainB := s.configurer.GetChainConfig(1)
+
+	nA, err := bbnChainA.GetNodeAtIndex(0)
+	s.NoError(err)
+	nB, err := bbnChainB.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	balanceBeforeTransferA, err := nA.QueryBalances(s.addrA)
+	s.Require().NoError(err)
+
+	balanceBeforeTransferB, err := nB.QueryBalances(s.addrB)
+	s.Require().NoError(err)
+
+	packetAmount := sdkmath.NewInt(1)
 	channel := "channel-0"
 
 	transferCoin := sdk.NewCoin(nativeDenom, packetAmount)
 
-	nA.SendIBCTransfer(s.addrA, s.addrB, channel, transferCoin)
+	nB.SendIBCTransfer(s.addrB, s.addrA, channel, transferCoin)
 
-	remainingQuota := CalculateRemainingQuota(quota, types.PACKET_SEND, packetAmount, totalValue)
-	packetStopped := remainingQuota.IsZero()
+	nA.WaitForNextBlock()
 
-	s.True(packetStopped, "Packet should be stopped due to exceeded quota")
+	balanceAfterTransferA, err := nA.QueryBalances(s.addrA)
+	s.Require().NoError(err)
+
+	balanceAfterTransferB, err := nB.QueryBalances(s.addrB)
+	s.Require().NoError(err)
+
+	s.Require().NotEqual(balanceBeforeTransferA.String(), balanceAfterTransferA.String(), "Balance should remain unchanged after failed transfer")
+	s.Require().NotEqual(balanceBeforeTransferB.String(), balanceAfterTransferB.String(), "Balance should remain unchanged after failed transfer")
 }
