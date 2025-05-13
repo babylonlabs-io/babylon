@@ -75,7 +75,6 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 }
 
 func (s *UpgradeTestSuite) SetupTest() {
-
 	// add the upgrade plan
 	app.Upgrades = []upgrades.Upgrade{v2.Upgrade}
 
@@ -83,7 +82,6 @@ func (s *UpgradeTestSuite) SetupTest() {
 	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
 	s.preModule = upgrade.NewAppModule(s.app.UpgradeKeeper, s.app.AccountKeeper.AddressCodec())
-
 }
 
 func (s *UpgradeTestSuite) PreUpgrade() {}
