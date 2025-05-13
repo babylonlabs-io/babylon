@@ -27,33 +27,44 @@ func (IBCMsgSizeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 	// Local mempool filter for improper ibc packets
 	if ctx.IsCheckTx() {
 		for _, msg := range tx.GetMsgs() {
+			var err error
 			switch msg := msg.(type) {
 			case *ibctransfertypes.MsgTransfer:
-				if msg.Size() > MaxMsgSize {
-					return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "msg size is too large. max_msg_size %d", MaxMsgSize)
-				}
-
-				if len([]byte(msg.Memo)) > MaxMemoSize {
-					return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "memo is too large. max_memo_size %d", MaxMemoSize)
-				}
-
-				if len(msg.Receiver) > MaxAddressSize {
-					return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "receiver address is too large. max_address_size %d", MaxAddressSize)
-				}
-
+				err = validateIBCMsgTransfer(msg)
 			// If one of the msgs is from ICA, limit it's size due to current spam potential.
 			case *icacontrollertypes.MsgSendTx:
-				if msg.PacketData.Size() > MaxMsgSize {
-					return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "packet data is too large. max_msg_size %d", MaxMsgSize)
-				}
-
-				if len([]byte(msg.Owner)) > MaxAddressSize {
-					return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "owner address is too large. max_address_size %d", MaxAddressSize)
-				}
+				err = validateICAMsgSendTx(msg)
+			}
+			if err != nil {
+				return ctx, err
 			}
 		}
+	}
+	return next(ctx, tx, simulate)
+}
 
+func validateIBCMsgTransfer(msg *ibctransfertypes.MsgTransfer) error {
+	if msg.Size() > MaxMsgSize {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "msg size is too large. max_msg_size %d", MaxMsgSize)
 	}
 
-	return next(ctx, tx, simulate)
+	if len([]byte(msg.Memo)) > MaxMemoSize {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "memo is too large. max_memo_size %d", MaxMemoSize)
+	}
+
+	if len(msg.Receiver) > MaxAddressSize {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "receiver address is too large. max_address_size %d", MaxAddressSize)
+	}
+	return nil
+}
+
+func validateICAMsgSendTx(msg *icacontrollertypes.MsgSendTx) error {
+	if msg.PacketData.Size() > MaxMsgSize {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "packet data is too large. max_msg_size %d", MaxMsgSize)
+	}
+
+	if len([]byte(msg.Owner)) > MaxAddressSize {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "owner address is too large. max_address_size %d", MaxAddressSize)
+	}
+	return nil
 }

@@ -19,7 +19,6 @@ type ICATestSuite struct {
 
 	configurer configurer.Configurer
 	addrA      string
-	addrB      string
 }
 
 func (s *ICATestSuite) SetupSuite() {
