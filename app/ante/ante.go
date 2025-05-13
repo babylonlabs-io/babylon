@@ -67,6 +67,7 @@ func NewAnteHandler(
 	mempoolOpts := NewMempoolOptions(appOpts)
 	anteHandler := sdk.ChainAnteDecorators(
 		NewGasLimitDecorator(mempoolOpts),
+		NewIBCMsgSizeDecorator(),
 		NewWrappedAnteHandler(authAnteHandler),
 		NewBtcValidationDecorator(btcConfig, btccKeeper),
 		NewPriorityDecorator(),
