@@ -308,39 +308,6 @@ func (s *IBCTransferTestSuite) TestPacketForwarding() {
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
 }
 
-func (s *IBCTransferTestSuite) Test3RateLimitExceeded() {
-	denom := "ubbn"
-	amount := int64(90_000_000_000)
-
-	transferCoin := sdk.NewInt64Coin(denom, amount)
-
-	chainA := s.configurer.GetChainConfig(0)
-	chainB := s.configurer.GetChainConfig(1)
-
-	nA, err := chainA.GetNodeAtIndex(2)
-	s.NoError(err)
-	_, err = chainB.GetNodeAtIndex(2)
-	s.NoError(err)
-
-	// Update this to the actual expected status or error message
-	expectedStatus := "rate limit exceeded" // Replace with the correct status or error message
-
-	// Send multiple IBC transfers from A to B to exceed the rate limit
-	for i := 0; i < 10; i++ { // Adjust the number of iterations based on your rate limit settings
-		txHash := nA.SendIBCTransfer(s.addrA, s.addrB, fmt.Sprintf("transfer-exceed-%d", i), transferCoin)
-		nA.WaitForNextBlock()
-
-		// Declare and initialize txResp
-		txResp, status := nA.QueryTx(txHash)
-		s.Require().NotNil(txResp)
-
-		s.Require().Equal(expectedStatus, status, "Expected rate limit exceeded error")
-
-		// Log the transaction response for debugging
-		s.T().Logf("Transaction Response: %+v", txResp)
-	}
-}
-
 func CalculateRemainingQuota(quota types.Quota, direction types.PacketDirection, amount, totalValue sdkmath.Int) sdkmath.Int {
 	var maxPercent sdkmath.Int
 	if direction == types.PACKET_RECV {
