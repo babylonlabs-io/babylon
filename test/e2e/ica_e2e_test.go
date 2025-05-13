@@ -78,11 +78,13 @@ func (s *ICATestSuite) TestCreateInterchainAccount() {
 	txHash := nA.RegisterICAAccount(icaOwnerAccount, icaConnectionID)
 	nA.WaitForNextBlock()
 
-	resp, _ := nA.QueryTx(txHash)
-	s.T().Logf("register ICA tx receipt: %s", resp.String())
+	_, txResp := nA.QueryTx(txHash)
+	registerTxFees := txResp.AuthInfo.Fee.Amount
 
 	// setup ICA connection
 	err = s.configurer.CompleteIBCChannelHandshake(
+		bbnChainA.ChainMeta.Id,
+		bbnChainB.ChainMeta.Id,
 		icaConnectionID,
 		icaConnectionID,
 		icaOwnerPortID,
@@ -106,8 +108,9 @@ func (s *ICATestSuite) TestCreateInterchainAccount() {
 	txHash = nA.SendIBCTransfer(s.addrA, icaAccount, "transfer", transferCoin)
 	nA.WaitForNextBlock()
 
-	_, txResp := nA.QueryTx(txHash)
-	txFeesPaid := txResp.AuthInfo.Fee.Amount
+	_, txResp = nA.QueryTx(txHash)
+	ibcTxFees := txResp.AuthInfo.Fee.Amount
+	totalFeesPaid := registerTxFees.Add(ibcTxFees...)
 	s.Require().Eventually(func() bool {
 		// Check that the transfer is successful.
 		// Amounts have been discounted from val in chain-A and added (as a wrapped denom) to icaAccount in chain-B
@@ -117,13 +120,13 @@ func (s *ICATestSuite) TestCreateInterchainAccount() {
 			return false
 		}
 
-		expectedAmt := balanceBeforeSendAddrA.Sub(transferCoin).Sub(txFeesPaid...).String()
+		expectedAmt := balanceBeforeSendAddrA.Sub(transferCoin).Sub(totalFeesPaid...).String()
 		actualAmt := balanceAfterSendAddrA.String()
 
 		if !strings.EqualFold(expectedAmt, actualAmt) {
 			s.T().Logf(
 				"BalanceBeforeSendAddrA: %s; BalanceAfterSendAddrA: %s, txFees: %s, coinTransfer: %s",
-				balanceBeforeSendAddrA.String(), balanceAfterSendAddrA.String(), txFeesPaid.String(), transferCoin.String(),
+				balanceBeforeSendAddrA.String(), balanceAfterSendAddrA.String(), registerTxFees.String(), transferCoin.String(),
 			)
 			return false
 		}
@@ -142,7 +145,7 @@ func (s *ICATestSuite) TestCreateInterchainAccount() {
 		if !balanceAfterSendICAAcc.AmountOf(denomB).Equal(transferCoin.Amount) {
 			s.T().Logf(
 				"BalanceAfterSendICAAcc: %s, txFees: %s, coinTransfer: %s",
-				balanceAfterSendICAAcc.String(), txFeesPaid.String(), transferCoin.String(),
+				balanceAfterSendICAAcc.String(), registerTxFees.String(), transferCoin.String(),
 			)
 			return false
 		}

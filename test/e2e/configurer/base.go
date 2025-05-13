@@ -119,24 +119,77 @@ func (bc *baseConfigurer) RunIBCTransferChannel() error {
 // by some transaction that was previously executed on the chain. For example,
 // ICA MsgRegisterInterchainAccount will perform ChanOpenInit during its execution.
 func (bc *baseConfigurer) CompleteIBCChannelHandshake(
+	srcChain, dstChain,
 	srcConnection, dstConnection,
 	srcPort, dstPort,
 	srcChannel, dstChannel string,
 ) error {
-	// Run a relayer between every possible pair of chains.
-	for i := 0; i < len(bc.chainConfigs); i++ {
-		for j := i + 1; j < len(bc.chainConfigs); j++ {
-			if err := bc.completeChannelHandshakeFromTry(
-				bc.chainConfigs[i].ChainMeta.Id,
-				bc.chainConfigs[j].ChainMeta.Id,
-				srcConnection, dstConnection,
-				srcPort, dstPort,
-				srcChannel, dstChannel,
-			); err != nil {
-				return err
-			}
-		}
+	bc.t.Logf("completing IBC channel handshake between: (%s, %s, %s, %s) and (%s, %s, %s, %s)",
+		srcChain, srcConnection, srcPort, srcChannel,
+		dstChain, dstConnection, dstPort, dstChannel)
+
+	cmd := []string{
+		"hermes",
+		"--json",
+		"tx",
+		"chan-open-try",
+		"--dst-chain", dstChain,
+		"--src-chain", srcChain,
+		"--dst-connection", dstConnection,
+		"--dst-port", dstPort,
+		"--src-port", srcPort,
+		"--src-channel", srcChannel,
 	}
+
+	bc.t.Log(cmd)
+	_, _, err := bc.containerManager.ExecHermesCmd(bc.t, cmd, "success")
+	if err != nil {
+		return err
+	}
+
+	cmd = []string{
+		"hermes",
+		"--json",
+		"tx",
+		"chan-open-ack",
+		"--dst-chain", srcChain,
+		"--src-chain", dstChain,
+		"--dst-connection", srcConnection,
+		"--dst-port", srcPort,
+		"--src-port", dstPort,
+		"--dst-channel", srcChannel,
+		"--src-channel", dstChannel,
+	}
+
+	bc.t.Log(cmd)
+	_, _, err = bc.containerManager.ExecHermesCmd(bc.t, cmd, "")
+	if err != nil {
+		return err
+	}
+	cmd = []string{
+		"hermes",
+		"--json",
+		"tx",
+		"chan-open-confirm",
+		"--dst-chain", dstChain,
+		"--src-chain", srcChain,
+		"--dst-connection", dstConnection,
+		"--dst-port", dstPort,
+		"--src-port", srcPort,
+		"--dst-channel", dstChannel,
+		"--src-channel", srcChannel,
+	}
+
+	bc.t.Log(cmd)
+	_, _, err = bc.containerManager.ExecHermesCmd(bc.t, cmd, "")
+	if err != nil {
+		return err
+	}
+
+	bc.t.Logf("IBC channel handshake completed between: (%s, %s, %s, %s) and (%s, %s, %s, %s)",
+		srcChain, srcConnection, srcPort, srcChannel,
+		dstChain, dstConnection, dstPort, dstChannel)
+
 	return nil
 }
 
@@ -295,84 +348,6 @@ func (bc *baseConfigurer) createIBCChannel(chainA *chain.Config, chainB *chain.C
 		return err
 	}
 	bc.t.Logf("connected %s and %s chains via IBC src port %q; dest port %q", chainA.ChainMeta.Id, chainB.ChainMeta.Id, srcPortID, destPortID)
-	return nil
-}
-
-// This function will complete the channel handshake in cases when ChanOpenInit was initiated
-// by some transaction that was previously executed on the chain. For example,
-// ICA MsgRegisterInterchainAccount will perform ChanOpenInit during its execution.
-func (bc *baseConfigurer) completeChannelHandshakeFromTry(
-	srcChain, dstChain,
-	srcConnection, dstConnection,
-	srcPort, dstPort,
-	srcChannel, dstChannel string,
-) error {
-	bc.t.Logf("completing IBC channel handshake between: (%s, %s, %s, %s) and (%s, %s, %s, %s)",
-		srcChain, srcConnection, srcPort, srcChannel,
-		dstChain, dstConnection, dstPort, dstChannel)
-
-	cmd := []string{
-		"hermes",
-		"--json",
-		"tx",
-		"chan-open-try",
-		"--dst-chain", dstChain,
-		"--src-chain", srcChain,
-		"--dst-connection", dstConnection,
-		"--dst-port", dstPort,
-		"--src-port", srcPort,
-		"--src-channel", srcChannel,
-	}
-
-	bc.t.Log(cmd)
-	_, _, err := bc.containerManager.ExecHermesCmd(bc.t, cmd, "")
-	if err != nil {
-		return err
-	}
-
-	cmd = []string{
-		"hermes",
-		"--json",
-		"tx",
-		"chan-open-ack",
-		"--dst-chain", srcChain,
-		"--src-chain", dstChain,
-		"--dst-connection", srcConnection,
-		"--dst-port", srcPort,
-		"--src-port", dstPort,
-		"--dst-channel", srcChannel,
-		"--src-channel", dstChannel,
-	}
-
-	bc.t.Log(cmd)
-	_, _, err = bc.containerManager.ExecHermesCmd(bc.t, cmd, "")
-	if err != nil {
-		return err
-	}
-	cmd = []string{
-		"hermes",
-		"--json",
-		"tx",
-		"chan-open-confirm",
-		"--dst-chain", dstChain,
-		"--src-chain", srcChain,
-		"--dst-connection", dstConnection,
-		"--dst-port", dstPort,
-		"--src-port", srcPort,
-		"--dst-channel", dstChannel,
-		"--src-channel", srcChannel,
-	}
-
-	bc.t.Log(cmd)
-	_, _, err = bc.containerManager.ExecHermesCmd(bc.t, cmd, "")
-	if err != nil {
-		return err
-	}
-
-	bc.t.Logf("IBC channel handshake completed between: (%s, %s, %s, %s) and (%s, %s, %s, %s)",
-		srcChain, srcConnection, srcPort, srcChannel,
-		dstChain, dstConnection, dstPort, dstChannel)
-
 	return nil
 }
 
