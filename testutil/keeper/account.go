@@ -29,6 +29,7 @@ func AccountKeeper(
 	require.NoError(t, stateStore.LoadLatestVersion())
 
 	registry := codectypes.NewInterfaceRegistry()
+	authtypes.RegisterInterfaces(registry)
 	cdc := codec.NewProtoCodec(registry)
 
 	k := accountk.NewAccountKeeper(
