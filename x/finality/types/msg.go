@@ -3,9 +3,11 @@ package types
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/babylonlabs-io/babylon/crypto/eots"
 	bbn "github.com/babylonlabs-io/babylon/types"
@@ -18,6 +20,8 @@ var (
 	_ sdk.Msg = &MsgAddFinalitySig{}
 	_ sdk.Msg = &MsgCommitPubRandList{}
 )
+
+const ExpectedCommitmentLengthBytes = 32
 
 func (m *MsgAddFinalitySig) MsgToSign() []byte {
 	return msgToSignForVote(m.BlockHeight, m.BlockAppHash)
@@ -114,5 +118,29 @@ func (m *MsgCommitPubRandList) VerifySig() error {
 	if !schnorrSig.Verify(msgHash, pk) {
 		return fmt.Errorf("failed to verify signature")
 	}
+	return nil
+}
+
+// ValidateBasic performs stateless validation on MsgCommitPubRandList
+func (m *MsgCommitPubRandList) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(m.Signer)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid signer address (%s)", err)
+	}
+
+	// Checks if the commitment is exactly 32 bytes
+	if len(m.Commitment) != ExpectedCommitmentLengthBytes {
+		return ErrInvalidPubRand.Wrapf("commitment must be %d bytes, got %d", ExpectedCommitmentLengthBytes, len(m.Commitment))
+	}
+
+	// To avoid public randomness reset,
+	// check for overflow when doing (StartHeight + NumPubRand)
+	if m.StartHeight >= (m.StartHeight + m.NumPubRand) {
+		return ErrOverflowInBlockHeight.Wrapf(
+			"public rand commit start block height: %d is equal or higher than (start height + num pub rand) %d",
+			m.StartHeight, m.StartHeight+m.NumPubRand,
+		)
+	}
+
 	return nil
 }
