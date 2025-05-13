@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -19,6 +20,7 @@ import (
 // but without block that has finality providers set AND does not receive QC
 func (k Keeper) TallyBlocks(ctx context.Context, maxFinalizedBlocks uint64) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	k.Logger(sdkCtx).Debug("FINALITY: tallying blocks")
 	activatedHeight, err := k.GetBTCStakingActivatedHeight(ctx)
 	if err != nil {
 		// invoking TallyBlocks when BTC staking protocol is not activated is a programming error
@@ -33,10 +35,12 @@ func (k Keeper) TallyBlocks(ctx context.Context, maxFinalizedBlocks uint64) {
 	}
 
 	currentLastBlockHeight := uint64(sdkCtx.HeaderInfo().Height)
+	k.Logger(sdkCtx).Debug("FINALITY: Current last block height: " + strconv.FormatUint(currentLastBlockHeight, 10))
+	k.Logger(sdkCtx).Debug("FINALITY: Has block: " + strconv.FormatBool(k.HasBlock(ctx, currentLastBlockHeight)))
 	if !k.HasBlock(ctx, currentLastBlockHeight) {
 		k.IndexBlock(ctx)
 	}
-	// need to add minus 1, as the tallying loop is inclucive of [start, end]
+	// need to add minus 1, as the tallying loop is inclusive of [start, end]
 	maxHeightToFinalize := min(startHeight+maxFinalizedBlocks-1, currentLastBlockHeight)
 
 	// find all blocks that are non-finalised AND have finality provider set since max(activatedHeight, lastFinalizedHeight+1)

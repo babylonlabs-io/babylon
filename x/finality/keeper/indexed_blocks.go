@@ -2,16 +2,17 @@ package keeper
 
 import (
 	"context"
-
 	"cosmossdk.io/store/prefix"
 	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"strconv"
 )
 
 // IndexBlock indexes the current block, saves the corresponding indexed block
 // to KVStore
 func (k Keeper) IndexBlock(ctx context.Context) {
+	k.Logger(sdk.UnwrapSDKContext(ctx)).Debug("FINALITY: Indexing block height: " + strconv.FormatInt(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height, 10))
 	headerInfo := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 	ib := &types.IndexedBlock{
 		Height:    uint64(headerInfo.Height),

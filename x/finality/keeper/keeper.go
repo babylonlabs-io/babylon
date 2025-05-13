@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
@@ -93,10 +94,14 @@ func (k Keeper) GetCurrentEpoch(ctx context.Context) uint64 {
 // IsFinalityActive returns true if the finality is activated and ready
 // to start handling liveness, tally and index blocks.
 func (k Keeper) IsFinalityActive(ctx context.Context) (activated bool) {
+	k.Logger(sdk.UnwrapSDKContext(ctx)).Debug("FINALITY: Height: " + strconv.FormatUint(uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height), 10) + ", FinalityActivationHeight: " + strconv.FormatUint(k.GetParams(ctx).FinalityActivationHeight, 10))
 	if uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height) < k.GetParams(ctx).FinalityActivationHeight {
 		return false
 	}
 
 	_, err := k.GetBTCStakingActivatedHeight(ctx)
+	if err != nil {
+		k.Logger(sdk.UnwrapSDKContext(ctx)).Debug("FINALITY: error: " + err.Error())
+	}
 	return err == nil
 }
