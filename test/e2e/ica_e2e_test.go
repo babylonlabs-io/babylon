@@ -75,7 +75,12 @@ func (s *ICATestSuite) TestCreateInterchainAccount() {
 	s.Assert().GreaterOrEqual(balanceBeforeSendAddrA.AmountOf(nativeDenom).Int64(), amount)
 
 	// register ICA account
-	nA.RegisterICAAccount(icaOwnerAccount, icaConnectionID)
+	txHash := nA.RegisterICAAccount(icaOwnerAccount, icaConnectionID)
+	nA.WaitForNextBlock()
+
+	resp, _ := nA.QueryTx(txHash)
+	s.T().Logf("register ICA tx receipt: %s", resp.String())
+
 	// setup ICA connection
 	err = s.configurer.CompleteIBCChannelHandshake(
 		icaConnectionID,
@@ -98,7 +103,7 @@ func (s *ICATestSuite) TestCreateInterchainAccount() {
 	)
 
 	// Send transfer from val in chain-A (Node 3) to ICA account in chain-B
-	txHash := nA.SendIBCTransfer(s.addrA, icaAccount, "transfer", transferCoin)
+	txHash = nA.SendIBCTransfer(s.addrA, icaAccount, "transfer", transferCoin)
 	nA.WaitForNextBlock()
 
 	_, txResp := nA.QueryTx(txHash)
