@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v1.1.0
+
 ### Bug fixes
 
 - [#860](https://github.com/babylonlabs-io/babylon/pull/860) fix: ensure active fps have signing info after finality resumption proposal.

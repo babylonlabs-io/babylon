@@ -1,7 +1,10 @@
 package keepers
 
 import (
+	"context"
+	"fmt"
 	"path/filepath"
+	"strings"
 
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
@@ -20,6 +23,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/types"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -79,6 +83,8 @@ import (
 	monitorkeeper "github.com/babylonlabs-io/babylon/x/monitor/keeper"
 	monitortypes "github.com/babylonlabs-io/babylon/x/monitor/types"
 )
+
+var errBankRestrictionDistribution = fmt.Errorf("the distribution address %s can only receive bond denom %s", appparams.AccDistribution.String(), appparams.DefaultBondDenom)
 
 // Capabilities of the IBC wasm contracts
 func WasmCapabilities() []string {
@@ -228,6 +234,7 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 		logger,
 	)
+	bankKeeper.AppendSendRestriction(bankSendRestrictionOnlyBondDenomToDistribution)
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
@@ -596,4 +603,24 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 
 	return paramsKeeper
+}
+
+// bankSendRestrictionOnlyBondDenomToDistribution restricts that only the default bond denom should be allowed to send to distribution mod acc.
+func bankSendRestrictionOnlyBondDenomToDistribution(ctx context.Context, fromAddr, toAddr types.AccAddress, amt types.Coins) (newToAddr types.AccAddress, err error) {
+	if toAddr.Equals(appparams.AccDistribution) {
+		denoms := amt.Denoms()
+		switch len(denoms) {
+		case 0:
+			return toAddr, nil
+		case 1:
+			denom := denoms[0]
+			if !strings.EqualFold(denom, appparams.DefaultBondDenom) {
+				return nil, errBankRestrictionDistribution
+			}
+		default: // more than one length
+			return nil, errBankRestrictionDistribution
+		}
+	}
+
+	return toAddr, nil
 }
