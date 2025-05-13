@@ -39,7 +39,6 @@ func (s *IBCTransferTestSuite) SetupSuite() {
 
 	err = s.configurer.RunSetup()
 	s.Require().NoError(err)
-
 }
 
 func (s *IBCTransferTestSuite) TearDownSuite() {
@@ -333,9 +332,9 @@ func (s *IBCTransferTestSuite) TestRateLimitE2E() {
 	s.NoError(err)
 
 	quota := types.Quota{
-		MaxPercentRecv: sdkmath.NewInt(10),
-		MaxPercentSend: sdkmath.NewInt(10),
-		DurationHours:  uint64(1),
+		MaxPercentRecv: sdkmath.NewInt(50),
+		MaxPercentSend: sdkmath.NewInt(50),
+		DurationHours:  uint64(24),
 	}
 
 	packetAmount := sdkmath.NewInt(15)

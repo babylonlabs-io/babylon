@@ -695,25 +695,22 @@ func (ak *AppKeepers) InitKeepers(
 	// Create Transfer Stack (from bottom to top of stack)
 	// - core IBC
 	// - ratelimit
-	// - provider
+	// - fee
+	// - PFM (Packet Forwarding Middleware)
 	// - callbacks
 	// - transfer
 
 	// Create Transfer Stack
 	// SendPacket Path:
-	// SendPacket -> Transfer -> Callbacks -> PFM -> Fee -> IBC core (ICS4Wrapper)
+	// SendPacket -> Transfer -> Callbacks -> PFM -> Fee -> RateLimit -> IBC core (ICS4Wrapper)
 	// RecvPacket Path:
-	// RecvPacket -> IBC core -> Fee -> PFM -> Callbacks -> Transfer (AddRoute)
-	// * SendPacket Path:
-	// 	SendPacket -> Transfer -> Callbacks -> Fee -> RateLimit -> IBC core (ICS4Wrapper)
-	// * RecvPacket Path:
-	// 	RecvPacket -> IBC core -> RateLimit -> Fee -> Callbacks -> Transfer (AddRoute)
+	// RecvPacket -> IBC core -> RateLimit -> Fee -> PFM -> Callbacks -> Transfer (AddRoute)
 	// Receive path should mirror the send path.
 
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(ak.TransferKeeper)
-	cbStack := ibccallbacks.NewIBCMiddleware(transferStack, ak.PFMRouterKeeper, wasmStackIBCHandler,
-		appparams.MaxIBCCallbackGas)
+
+	cbStack := ibccallbacks.NewIBCMiddleware(transferStack, ak.PFMRouterKeeper, wasmStackIBCHandler, appparams.MaxIBCCallbackGas)
 	transferStack = pfmrouter.NewIBCMiddleware(
 		cbStack,
 		ak.PFMRouterKeeper,
@@ -721,8 +718,8 @@ func (ak *AppKeepers) InitKeepers(
 		pfmrouterkeeper.DefaultForwardTransferPacketTimeoutTimestamp,
 	)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, ak.IBCFeeKeeper)
-	transferStack = ibcfee.NewIBCMiddleware(cbStack, ak.IBCFeeKeeper)
 	transferStack = ratelimiter.NewIBCMiddleware(ak.RatelimitKeeper, transferStack)
+
 	ak.TransferKeeper.WithICS4Wrapper(cbStack)
 
 	var zoneConciergeStack porttypes.IBCModule

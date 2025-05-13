@@ -392,7 +392,6 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 }
 
 func applyRateLimitsToChainConfig(rateLimiterGenState *ratelimiter.GenesisState) {
-
 	path := &ratelimiter.Path{
 		Denom:     "ubbn",
 		ChannelId: "channel-0",
