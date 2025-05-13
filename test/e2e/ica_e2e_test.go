@@ -12,7 +12,10 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-const icaConnectionID = "connection-1"
+const (
+	icaConnectionID = "connection-0"
+	icaChannel      = "channel-1"
+)
 
 type ICATestSuite struct {
 	suite.Suite
@@ -74,7 +77,14 @@ func (s *ICATestSuite) TestCreateInterchainAccount() {
 	// register ICA account
 	nA.RegisterICAAccount(icaOwnerAccount, icaConnectionID)
 	// setup ICA connection
-	err = s.configurer.RunIBCChannel(icaOwnerPortID, icatypes.HostPortID)
+	err = s.configurer.CompleteIBCChannelHandshake(
+		icaConnectionID,
+		icaConnectionID,
+		icaOwnerPortID,
+		icatypes.HostPortID,
+		icaChannel,
+		icaChannel,
+	)
 	s.Require().NoError(err)
 
 	var icaAccount string

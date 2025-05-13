@@ -32,7 +32,7 @@ type Configurer interface {
 
 	RunIBCTransferChannel() error
 
-	RunIBCChannel(chainAPort, chainBPort string) error
+	CompleteIBCChannelHandshake(srcConnection, dstConnection, srcPort, dstPort, srcChannel, dstChannel string) error
 }
 
 const (
