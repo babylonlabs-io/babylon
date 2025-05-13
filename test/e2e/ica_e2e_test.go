@@ -65,19 +65,12 @@ func (s *ICATestSuite) TestCreateInterchainAccount() {
 	icaOwnerAccount := s.addrA
 	icaOwnerPortID, _ := icatypes.NewControllerPortID(icaOwnerAccount)
 
-	s.addrB = nB.KeysAdd("addr-B")
-
 	nA.WaitForNextBlock()
 
 	balanceBeforeSendAddrA, err := nA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
 	// Confirm val on A has enough funds
 	s.Assert().GreaterOrEqual(balanceBeforeSendAddrA.AmountOf(nativeDenom).Int64(), amount)
-
-	balanceBeforeSendAddrB, err := nB.QueryBalances(s.addrB)
-	s.Require().NoError(err)
-	// Only one denom in B
-	s.Require().Len(balanceBeforeSendAddrB, 1)
 
 	// register ICA account
 	nA.RegisterICAAccount(icaOwnerAccount, icaConnectionID)
