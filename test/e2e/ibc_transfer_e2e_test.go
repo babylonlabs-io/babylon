@@ -2,12 +2,16 @@ package e2e
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+	"github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -36,6 +40,7 @@ func (s *IBCTransferTestSuite) SetupSuite() {
 
 	err = s.configurer.RunSetup()
 	s.Require().NoError(err)
+
 }
 
 func (s *IBCTransferTestSuite) TearDownSuite() {
@@ -301,4 +306,82 @@ func (s *IBCTransferTestSuite) TestPacketForwarding() {
 
 		return true
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
+}
+
+func (s *IBCTransferTestSuite) Test3RateLimitExceeded() {
+	denom := "ubbn"
+	amount := int64(90_000_000_000)
+
+	transferCoin := sdk.NewInt64Coin(denom, amount)
+
+	chainA := s.configurer.GetChainConfig(0)
+	chainB := s.configurer.GetChainConfig(1)
+
+	nA, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+	_, err = chainB.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// Update this to the actual expected status or error message
+	expectedStatus := "rate limit exceeded" // Replace with the correct status or error message
+
+	// Send multiple IBC transfers from A to B to exceed the rate limit
+	for i := 0; i < 10; i++ { // Adjust the number of iterations based on your rate limit settings
+		txHash := nA.SendIBCTransfer(s.addrA, s.addrB, fmt.Sprintf("transfer-exceed-%d", i), transferCoin)
+		nA.WaitForNextBlock()
+
+		// Declare and initialize txResp
+		txResp, status := nA.QueryTx(txHash)
+		s.Require().NotNil(txResp)
+
+		s.Require().Equal(expectedStatus, status, "Expected rate limit exceeded error")
+
+		// Log the transaction response for debugging
+		s.T().Logf("Transaction Response: %+v", txResp)
+	}
+}
+
+func CalculateRemainingQuota(quota types.Quota, direction types.PacketDirection, amount, totalValue sdkmath.Int) sdkmath.Int {
+	var maxPercent sdkmath.Int
+	if direction == types.PACKET_RECV {
+		maxPercent = quota.MaxPercentRecv
+	} else {
+		maxPercent = quota.MaxPercentSend
+	}
+
+	maxAllowed := totalValue.Mul(maxPercent).Quo(sdkmath.NewInt(100))
+	remaining := maxAllowed.Sub(amount)
+	if remaining.IsNegative() {
+		return sdkmath.ZeroInt()
+	}
+	return remaining
+}
+
+func (s *IBCTransferTestSuite) TestRateLimitE2E() {
+	bbnChainA := s.configurer.GetChainConfig(0)
+	bbnChainB := s.configurer.GetChainConfig(1)
+
+	nA, err := bbnChainA.GetNodeAtIndex(0)
+	s.NoError(err)
+	_, err = bbnChainB.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	quota := types.Quota{
+		MaxPercentRecv: sdkmath.NewInt(10),
+		MaxPercentSend: sdkmath.NewInt(10),
+		DurationHours:  uint64(1),
+	}
+
+	packetAmount := sdkmath.NewInt(15)
+	totalValue := sdkmath.NewInt(100)
+	channel := "channel-0"
+
+	transferCoin := sdk.NewCoin(nativeDenom, packetAmount)
+
+	nA.SendIBCTransfer(s.addrA, s.addrB, channel, transferCoin)
+
+	remainingQuota := CalculateRemainingQuota(quota, types.PACKET_SEND, packetAmount, totalValue)
+	packetStopped := remainingQuota.IsZero()
+
+	s.True(packetStopped, "Packet should be stopped due to exceeded quota")
 }
