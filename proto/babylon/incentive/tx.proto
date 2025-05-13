@@ -7,7 +7,7 @@ import "cosmos/msg/v1/msg.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "babylon/incentive/params.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/incentive/types";
 
 // Msg defines the Msg service.
 service Msg {
