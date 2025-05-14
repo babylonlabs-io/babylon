@@ -43,7 +43,7 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		// By default, ICQ allowed queries are empty. So no queries will be allowed until
 		// the allowed list is populated via gov proposal.
 		// For ICA host, by default all messages are allowed (using '*' wildcard),
-		// so we set allow list to empty on so messages are added later when needed via gov proposal
+		// so we set allow list to empty and messages can be added later when needed via gov proposal
 		icaHostParams := icahosttypes.DefaultParams()
 		icaHostParams.AllowMessages = nil
 		if err := icaHostParams.Validate(); err != nil {
