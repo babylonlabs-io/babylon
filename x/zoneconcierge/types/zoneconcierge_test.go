@@ -98,10 +98,6 @@ func TestForks_Validate(t *testing.T) {
 		expectError string
 	}{
 		{
-			name:  "Empty headers",
-			forks: types.Forks{Headers: []*types.IndexedHeader{}},
-		},
-		{
 			name: "Single valid header",
 			forks: types.Forks{
 				Headers: []*types.IndexedHeader{
@@ -118,6 +114,11 @@ func TestForks_Validate(t *testing.T) {
 					datagen.GenRandomIndexedHeaderWithConsumerAndEpoch(r, "chain-A", 2),
 				},
 			},
+		},
+		{
+			name:        "Empty headers",
+			forks:       types.Forks{Headers: []*types.IndexedHeader{}},
+			expectError: "empty headers",
 		},
 		{
 			name: "Duplicate ConsumerId + Epoch",

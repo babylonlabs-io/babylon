@@ -46,7 +46,9 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		k.setEpochChainInfo(ctx, ei.ChainInfo.ChainInfo.ConsumerId, ei.EpochNumber, ei.ChainInfo)
 	}
 
-	k.setLastSentSegment(ctx, gs.LastSentSegment)
+	if gs.LastSentSegment != nil {
+		k.setLastSentSegment(ctx, gs.LastSentSegment)
+	}
 
 	for _, se := range gs.SealedEpochsProofs {
 		k.sealedEpochProofStore(ctx).Set(
