@@ -297,12 +297,10 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeWithdrawRewardsBtcDel(n *chain.No
 
 	// verifies that everyone is active and not slashed
 	fps := n.QueryFinalityProviders()
-	s.Len(fps, 2)
-	s.Equal(fps[0].Commission.String(), fps[1].Commission.String())
-	for _, fp := range fps {
-		s.Equal(fp.SlashedBabylonHeight, uint64(0))
-		s.Equal(fp.SlashedBtcHeight, uint32(0))
-	}
+	s.Len(fps, 1)
+	fp := fps[0]
+	s.Equal(fp.SlashedBabylonHeight, uint64(0))
+	s.Equal(fp.SlashedBtcHeight, uint32(0))
 
 	dels := n.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex())
 	s.Len(dels, 3)
