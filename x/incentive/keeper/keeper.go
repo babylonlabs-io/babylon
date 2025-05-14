@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
 	"cosmossdk.io/collections"
@@ -38,6 +39,11 @@ type (
 		finalityProviderHistoricalRewards collections.Map[collections.Pair[[]byte, uint64], types.FinalityProviderHistoricalRewards]
 		// finalityProviderCurrentRewards maps (FpAddr) => FinalityProviderCurrentRewards
 		finalityProviderCurrentRewards collections.Map[[]byte, types.FinalityProviderCurrentRewards]
+
+		// rewardTrackerEvents maps (babylon block height) => types.EventsPowerUpdateAtHeight
+		rewardTrackerEvents collections.Map[uint64, types.EventsPowerUpdateAtHeight]
+		// rewardTrackerEventsLastProcessedHeight keeps track of the latest processed babylon block height of events
+		rewardTrackerEventsLastProcessedHeight collections.Item[uint64]
 	}
 )
 
@@ -90,11 +96,26 @@ func NewKeeper(
 			collections.BytesKey,
 			codec.CollValue[types.FinalityProviderCurrentRewards](cdc),
 		),
+		rewardTrackerEvents: collections.NewMap(
+			sb,
+			types.RewardTrackerEvents,
+			"events_reward_tracker",
+			// key: (babylon block height)
+			collections.Uint64Key,
+			codec.CollValue[types.EventsPowerUpdateAtHeight](cdc),
+		),
+		rewardTrackerEventsLastProcessedHeight: collections.NewItem[uint64](
+			sb,
+			types.RewardTrackerEventsLastProcessedHeight,
+			"last_processed_height_events_reward_tracker",
+			collections.Uint64Value,
+		),
 		authority:        authority,
 		feeCollectorName: feeCollectorName,
 	}
 }
 
-func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+func (k Keeper) Logger(goCtx context.Context) log.Logger {
+	ctx := sdk.UnwrapSDKContext(goCtx)
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
