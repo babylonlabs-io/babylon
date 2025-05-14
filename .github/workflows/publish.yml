@@ -6,7 +6,6 @@ on:
       - 'main'
       - 'release/v1.x'
       - 'release/v2.x'
-      - 'hiep/fix-docker-publish'
     tags:
       - '*'
 
