@@ -16,6 +16,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v2/app/keepers"
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
+	"github.com/babylonlabs-io/babylon/v2/x/mint/types"
 )
 
 // UpgradeName defines the on-chain upgrade name for the Babylon v2 upgrade
@@ -49,6 +50,18 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		}
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 		keepers.ICAHostKeeper.SetParams(sdkCtx, icaHostParams)
+
+		// Set the denom creation fee to ubbn
+		params := tokenfactorytypes.DefaultParams()
+		params.DenomCreationFee = sdk.NewCoins(sdk.NewInt64Coin(types.DefaultBondDenom, 10_000_000))
+
+		if err := params.Validate(); err != nil {
+			return nil, err
+		}
+
+		if err := keepers.TokenFactoryKeeper.SetParams(ctx, params); err != nil {
+			return nil, err
+		}
 
 		return migrations, nil
 	}
