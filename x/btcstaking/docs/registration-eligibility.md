@@ -78,16 +78,16 @@ Pre-staking registrations are not permitted until the allow-list has expired.
 Another measure to ensure that the Bitcoin Staking protocol
 is smoothly launched is the delayed
 activation of the finality voting power of Bitcoin Stakes.
-This delay is necessary because Babylon Chain enables the staking of
+This delay is necessary because Babylon Genesis chain enables the staking of
 the Bitcoin asset, meaning that sufficient amount of time should be
 given for the Bitcoin asset to be onboarded.
 
 Finality voting activation refers to the point at which
 Bitcoin Stakes receive finality voting power and when
 Finality Providers, that such stakes are delegated to,
-can begin casting votes to finalize blocks on the Babylon chain.
+can begin casting votes to finalize blocks on the Babylon Genesis chain.
 The time of the finality voting activation
-is determined by a block height included in the Babylon chain
+is determined by a block height included in the Babylon Genesis chain
 [x/btcstaking module](../README.md) parameters
 and will be specified at launch time.
 
