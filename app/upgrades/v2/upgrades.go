@@ -58,9 +58,8 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 	}
 }
 
-// UpdateRewardTrackerEventLastProcessedHeight sets the current block height -1 to the reward tracker
-// so when a new BTC block is rewarded it doesn't need to go through all the missing block heights
-// since block 0.
+// UpdateRewardTrackerEventLastProcessedHeight sets the current block height - 1 to the reward tracker
+// so that BTC reward distribution starts from the height at which the upgrade happens
 func UpdateRewardTrackerEventLastProcessedHeight(goCtx context.Context, ictvK incentivekeeper.Keeper) error {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	blkHeight := uint64(ctx.HeaderInfo().Height) - 1 // previous block as it can have events processed at the upgrade height

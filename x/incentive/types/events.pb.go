@@ -25,8 +25,8 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// EventsPowerUpdateAtHeight stores an slice of events that happened at
-// some specific block height, it is indexed by the block height.
+// EventsPowerUpdateAtHeight stores a slice of events happened at
+// some specific block height, indexed by the block height.
 type EventsPowerUpdateAtHeight struct {
 	Events []*EventPowerUpdate `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
 }
@@ -218,7 +218,7 @@ func (m *EventBTCDelegationActivated) GetBtcDelAddr() string {
 	return ""
 }
 
-// EventBTCDelegationUnbonded event that unbonded or withdraw a BTC delgation.
+// EventBTCDelegationUnbonded event that unbonded a BTC delegation.
 type EventBTCDelegationUnbonded struct {
 	// FpAddr is the bbn address of the finality provider
 	FpAddr string `protobuf:"bytes,1,opt,name=fp_addr,json=fpAddr,proto3" json:"fp_addr,omitempty"`
