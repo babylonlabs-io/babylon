@@ -62,3 +62,66 @@ func FuzzMsgCommitPubRandList(f *testing.F) {
 		require.NoError(t, err)
 	})
 }
+
+func TestMsgCommitPubRandListValidateBasic(t *testing.T) {
+	r := rand.New(rand.NewSource(1))
+	sk, _, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name        string
+		msgModifier func(*types.MsgCommitPubRandList)
+		expectErr   bool
+		errString   string
+	}{
+		{
+			name:        "valid message",
+			msgModifier: func(msg *types.MsgCommitPubRandList) {},
+			expectErr:   false,
+		},
+		{
+			name: "invalid signer",
+			msgModifier: func(msg *types.MsgCommitPubRandList) {
+				msg.Signer = "invalid-address"
+			},
+			expectErr: true,
+			errString: "invalid signer address",
+		},
+		{
+			name: "invalid commitment size",
+			msgModifier: func(msg *types.MsgCommitPubRandList) {
+				msg.Commitment = []byte("too-short")
+			},
+			expectErr: true,
+			errString: "commitment must be 32 bytes",
+		},
+		{
+			name: "overflow in block height",
+			msgModifier: func(msg *types.MsgCommitPubRandList) {
+				msg.NumPubRand = 0
+			},
+			expectErr: true,
+			errString: "public rand commit start block height",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			startHeight := datagen.RandomInt(r, 10)
+			numPubRand := datagen.RandomInt(r, 100) + 1
+			_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, sk, startHeight, numPubRand)
+			require.NoError(t, err)
+
+			tc.msgModifier(msg)
+
+			err = msg.ValidateBasic()
+
+			if tc.expectErr {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errString)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
