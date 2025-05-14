@@ -48,6 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#850](https://github.com/babylonlabs-io/babylon/pull/850) Add BLS improvement including permission and verification
 - [#841](https://github.com/babylonlabs-io/babylon/pull/841) chore: upgrade the make file: release
+- [#905](https://github.com/babylonlabs-io/babylon/pull/905) Add `ValidateBasic` for `CommitPubRandList`
 - [#906](https://github.com/babylonlabs-io/babylon/pull/906) Add distribution bank wrapper.
 - [#846](https://github.com/babylonlabs-io/babylon/pull/846) Add tokenfactory module.
 - [#821](https://github.com/babylonlabs-io/babylon/pull/821) Add import/export genesis logic in `x/btccheckpoint` module
