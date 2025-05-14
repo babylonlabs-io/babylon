@@ -286,7 +286,6 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeAddFinalitySigs(n *chain.NodeConf
 }
 
 func (s *SoftwareUpgradeV2TestSuite) preUpgradeWithdrawRewardsBtcDel(n *chain.NodeConfig) {
-
 	// Current setup of voting power
 	// (fp1, del1) => 2_00000000
 	// (fp1, del2) => 4_00000000
