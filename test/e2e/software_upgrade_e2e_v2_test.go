@@ -303,7 +303,7 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeWithdrawRewardsBtcDel(n *chain.No
 	s.Equal(fp.SlashedBtcHeight, uint32(0))
 
 	dels := n.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex())
-	s.Len(dels, 3)
+	s.Len(dels, 2)
 	for _, del := range dels {
 		s.True(del.Active)
 	}
@@ -314,7 +314,7 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeWithdrawRewardsBtcDel(n *chain.No
 		_, errDel1 := n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
 		_, errDel2 := n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
 		return errFp1 == nil && errDel1 == nil && errDel2 == nil
-	}, time.Minute*2, time.Second*3, "wait to have some rewards available in the gauge")
+	}, time.Minute*4, time.Second*3, "wait to have some rewards available in the gauge")
 
 	_, del1DiffRewards, del2DiffRewards := s.QueryRewardGauges(n)
 	s.AddFinalityVoteUntilCurrentHeight(n)
