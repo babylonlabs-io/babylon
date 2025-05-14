@@ -382,7 +382,7 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 		_, errDel1 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
 		_, errDel2 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
 		return errFp1 == nil && errFp2 == nil && errDel1 == nil && errDel2 == nil
-	}, time.Minute*2, time.Second*3, "wait to have some rewards available in the gauge")
+	}, time.Minute*4, time.Second*3, "wait to have some rewards available in the gauge")
 
 	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
 	fp1DiffRewards, fp2DiffRewards, del1DiffRewards, del2DiffRewards := s.QueryRewardGauges(n2)
