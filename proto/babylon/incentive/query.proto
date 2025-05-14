@@ -7,7 +7,7 @@ import "babylon/incentive/params.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/incentive/types";
 
 // Query defines the gRPC querier service.
 service Query {
