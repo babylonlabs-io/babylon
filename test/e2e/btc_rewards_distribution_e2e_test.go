@@ -204,24 +204,11 @@ func (s *BtcRewardsDistribution) Test3SubmitCovenantSignature() {
 	// tx bank send needs to take effect
 	n1.WaitForNextBlock()
 
-	pendingDelsResp := n1.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
-	s.Require().Equal(len(pendingDelsResp), 3)
-
-	for _, pendingDelResp := range pendingDelsResp {
-		pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
-		s.NoError(err)
-
-		SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
-
-		n1.WaitForNextBlock()
-	}
+	AddCovdSigsToPendingBtcDels(s.r, s.T(), n1, s.net, params, s.covenantSKs, s.covenantWallets, s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
 
 	// ensure the BTC delegation has covenant sigs now
-	activeDelsSet := n1.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
+	activeDelsSet := AllBtcDelsActive(s.T(), n1, s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
 	s.Require().Len(activeDelsSet, 3)
-	for _, activeDel := range activeDelsSet {
-		s.Require().True(activeDel.Active)
-	}
 }
 
 // Test4CommitPublicRandomnessAndSealed commits public randomness for
@@ -845,5 +832,39 @@ func SendCovenantSigsToPendingDel(
 			bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
 			covenantUnbondingSlashingSigs[i].AdaptorSigs,
 		)
+	}
+}
+
+func AllBtcDelsActive(t *testing.T, n *chain.NodeConfig, fpsBTCPK ...string) []*bstypes.BTCDelegationResponse {
+	activeDelsSet := n.QueryFinalityProvidersDelegations(fpsBTCPK...)
+	for _, activeDel := range activeDelsSet {
+		require.True(t, activeDel.Active)
+	}
+	return activeDelsSet
+}
+
+func AddCovdSigsToPendingBtcDels(
+	r *rand.Rand,
+	t *testing.T,
+	n *chain.NodeConfig,
+	btcNet *chaincfg.Params,
+	bsParams *bstypes.Params,
+	covenantSKs []*btcec.PrivateKey,
+	covWallets []string,
+	fpsBTCPK ...string,
+) {
+	pendingDelsResp := n.QueryFinalityProvidersDelegations(fpsBTCPK...)
+
+	for _, pendingDelResp := range pendingDelsResp {
+		pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
+		require.NoError(t, err)
+
+		if pendingDel.HasCovenantQuorums(bsParams.CovenantQuorum) {
+			continue
+		}
+
+		SendCovenantSigsToPendingDel(r, t, n, btcNet, covenantSKs, covWallets, pendingDel)
+
+		n.WaitForNextBlock()
 	}
 }
