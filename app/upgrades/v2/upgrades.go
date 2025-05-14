@@ -2,11 +2,10 @@ package v2
 
 import (
 	"context"
-	"cosmossdk.io/math"
 	store "cosmossdk.io/store/types"
 	"github.com/babylonlabs-io/babylon/v2/app/keepers"
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
-	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v2/x/mint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
@@ -36,8 +35,8 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		}
 
 		// Set the denom creation fee to ubbn
-		params := keepers.TokenFactoryKeeper.GetParams(ctx)
-		params.DenomCreationFee = sdk.NewCoins(sdk.NewCoin(minttypes.DefaultBondDenom, math.NewInt(10000000)))
+		params := tokenfactorytypes.DefaultParams()
+		params.DenomCreationFee = sdk.NewCoins(sdk.NewInt64Coin(types.DefaultBondDenom, 10_000_000))
 		if err := keepers.TokenFactoryKeeper.SetParams(ctx, params); err != nil {
 			return nil, err
 		}
