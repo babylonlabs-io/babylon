@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#906](https://github.com/babylonlabs-io/babylon/pull/906) Add distribution bank wrapper.
 - [#884](https://github.com/babylonlabs-io/babylon/pull/884) Bump tokenfactory version to v0.50.6
 - [#879](https://github.com/babylonlabs-io/babylon/pull/879) Add v2 e2e upgrade test.
 - [#869](https://github.com/babylonlabs-io/babylon/pull/869) Rename CZ to Consumer in btcstkconsumer and zoneconcierge.
