@@ -37,6 +37,11 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		// Set the denom creation fee to ubbn
 		params := tokenfactorytypes.DefaultParams()
 		params.DenomCreationFee = sdk.NewCoins(sdk.NewInt64Coin(types.DefaultBondDenom, 10_000_000))
+
+		if err := params.Validate(); err != nil {
+			return nil, err
+		}
+
 		if err := keepers.TokenFactoryKeeper.SetParams(ctx, params); err != nil {
 			return nil, err
 		}
