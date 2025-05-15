@@ -3,7 +3,6 @@ package keepers
 import (
 	"context"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/types"
 	"path/filepath"
 	"strings"
 
@@ -50,6 +49,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -90,9 +90,6 @@ import (
 	icahost "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host"
 	icahostkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/keeper"
 	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
-	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee"
-	ibcfeekeeper "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/keeper"
-	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
 	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
@@ -167,7 +164,6 @@ type AppKeepers struct {
 
 	// IBC-related modules
 	IBCKeeper           *ibckeeper.Keeper           // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	IBCFeeKeeper        ibcfeekeeper.Keeper         // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
 	TransferKeeper      ibctransferkeeper.Keeper    // for cross-chain fungible token transfers
 	IBCWasmKeeper       ibcwasmkeeper.Keeper        // for IBC wasm light clients
 	PFMRouterKeeper     *pfmrouterkeeper.Keeper     // Packet Forwarding Middleware
@@ -242,7 +238,6 @@ func (ak *AppKeepers) InitKeepers(
 		// IBC-related modules
 		ibcexported.StoreKey,
 		ibctransfertypes.StoreKey,
-		ibcfeetypes.StoreKey,
 		ibcwasmtypes.StoreKey,
 		pfmroutertypes.StoreKey,
 		icahosttypes.StoreKey,
@@ -484,7 +479,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.BankKeeper,
 		ak.StakingKeeper,
 		distrkeeper.NewQuerier(ak.DistrKeeper),
-		ak.IBCFeeKeeper,
+		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper,
 		scopedWasmKeeper,
@@ -550,19 +545,12 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
-	ak.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
-		appCodec, keys[ibcfeetypes.StoreKey],
-		ak.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
-		ak.IBCKeeper.ChannelKeeper,
-		ak.IBCKeeper.PortKeeper, ak.AccountKeeper, ak.BankKeeper,
-	)
-
 	// Create Transfer Keepers
 	ak.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
 		ak.GetSubspace(ibctransfertypes.ModuleName),
-		ak.IBCFeeKeeper,
+		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper,
 		ak.AccountKeeper,
@@ -577,7 +565,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.TransferKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.BankKeeper,
-		ak.IBCFeeKeeper, // TODO replace ICS4Wrapper with RateLimitKeeper when implemented
+		ak.IBCKeeper.ChannelKeeper, // TODO replace ICS4Wrapper with RateLimitKeeper when implemented
 		appparams.AccGov.String(),
 	)
 
@@ -628,7 +616,7 @@ func (ak *AppKeepers) InitKeepers(
 	zcKeeper := zckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
-		ak.IBCFeeKeeper,
+		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.ClientKeeper,
 		ak.IBCKeeper.ConnectionKeeper,
 		ak.IBCKeeper.ChannelKeeper,
@@ -700,7 +688,7 @@ func (ak *AppKeepers) InitKeepers(
 	icaHostKeeper := icahostkeeper.NewKeeper(
 		appCodec, ak.keys[icahosttypes.StoreKey],
 		ak.GetSubspace(icahosttypes.SubModuleName),
-		ak.IBCFeeKeeper,
+		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper,
 		ak.AccountKeeper,
@@ -714,7 +702,7 @@ func (ak *AppKeepers) InitKeepers(
 	icaControllerKeeper := icacontrollerkeeper.NewKeeper(
 		appCodec, ak.keys[icacontrollertypes.StoreKey],
 		ak.GetSubspace(icacontrollertypes.SubModuleName),
-		ak.IBCFeeKeeper,
+		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper,
 		scopedICAControllerKeeper,
@@ -727,7 +715,7 @@ func (ak *AppKeepers) InitKeepers(
 	icqKeeper := icqkeeper.NewKeeper(
 		appCodec,
 		ak.keys[icqtypes.StoreKey],
-		ak.IBCFeeKeeper,
+		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper,
 		scopedICQKeeper,
@@ -738,8 +726,7 @@ func (ak *AppKeepers) InitKeepers(
 
 	// Create all supported IBC routes
 	var wasmStack porttypes.IBCModule
-	wasmStackIBCHandler := wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCFeeKeeper)
-	wasmStack = ibcfee.NewIBCMiddleware(wasmStackIBCHandler, ak.IBCFeeKeeper)
+	wasmStackIBCHandler := wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCKeeper.ChannelKeeper)
 
 	// Create Transfer Stack
 	// SendPacket Path:
@@ -757,12 +744,9 @@ func (ak *AppKeepers) InitKeepers(
 		0, // retries on timeout
 		pfmrouterkeeper.DefaultForwardTransferPacketTimeoutTimestamp,
 	)
-	transferStack = ibcfee.NewIBCMiddleware(transferStack, ak.IBCFeeKeeper)
 	ak.TransferKeeper.WithICS4Wrapper(cbStack)
 
-	var zoneConciergeStack porttypes.IBCModule
-	zoneConciergeStack = zoneconcierge.NewIBCModule(ak.ZoneConciergeKeeper)
-	zoneConciergeStack = ibcfee.NewIBCMiddleware(zoneConciergeStack, ak.IBCFeeKeeper)
+	zoneConciergeStack := zoneconcierge.NewIBCModule(ak.ZoneConciergeKeeper)
 
 	// Create Interchain Accounts Controller Stack
 	// SendPacket Path:
@@ -814,7 +798,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 }
 
 // bankSendRestrictionOnlyBondDenomToDistribution restricts that only the default bond denom should be allowed to send to distribution mod acc.
-func bankSendRestrictionOnlyBondDenomToDistribution(ctx context.Context, fromAddr, toAddr types.AccAddress, amt types.Coins) (newToAddr types.AccAddress, err error) {
+func bankSendRestrictionOnlyBondDenomToDistribution(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) (newToAddr sdk.AccAddress, err error) {
 	if toAddr.Equals(appparams.AccDistribution) {
 		denoms := amt.Denoms()
 		switch len(denoms) {
