@@ -122,7 +122,7 @@ func (s *SoftwareUpgradeV2TestSuite) PreUpgrade(chains []*chain.Config) {
 
 	n.WaitForNextBlocks(2)
 
-	s.preUpgradeCreateFp1(n)
+	s.preUpgradeCreateFp1(n) // fast
 	s.preUpgradeCreateBtcDels(n)
 	s.preUpgradeSubmitCovdSigs(n)
 	s.preUpgradeAddFinalitySigs(n)
@@ -200,6 +200,7 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeCreateBtcDels(n *chain.NodeConfig
 	// fp1Del2
 	n.CreateBTCDel(s.r, s.T(), s.net, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, stakingTimeBlocks, s.fp1Del2StakingAmt)
 
+	n.WaitForNextBlocks(2)
 	resp := n.QueryBtcDelegations(bstypes.BTCDelegationStatus_ANY)
 	require.Len(s.T(), resp.BtcDelegations, 2)
 }
@@ -411,6 +412,9 @@ func (s *SoftwareUpgradeV2TestSuite) QueryRewardGauges(n *chain.NodeConfig) (
 	s.True(ok)
 	s.True(btcDel2RewardGauge.Coins.IsAllPositive())
 
+	s.T().Logf("query reward: fp1 - %s", fp1RewardGauge.Coins.String())
+	s.T().Logf("query reward: del1 - %s", btcDel1RewardGauge.Coins.String())
+	s.T().Logf("query reward: del2 - %s", btcDel2RewardGauge.Coins.String())
 	return fp1RewardGauge, btcDel1RewardGauge, btcDel2RewardGauge
 }
 
