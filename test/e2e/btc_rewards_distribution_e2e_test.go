@@ -839,7 +839,7 @@ func AllBtcDelsActive(t *testing.T, n *chain.NodeConfig, fpsBTCPK ...string) []*
 	activeDelsSet := n.QueryFinalityProvidersDelegations(fpsBTCPK...)
 	for _, activeDel := range activeDelsSet {
 		require.True(t, activeDel.Active)
-		require.Greater(t, activeDel.TotalSat, 0)
+		require.Greater(t, activeDel.TotalSat, uint64(0))
 	}
 	return activeDelsSet
 }
