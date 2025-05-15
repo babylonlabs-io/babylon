@@ -74,6 +74,9 @@ import (
 	icq "github.com/cosmos/ibc-apps/modules/async-icq/v8"
 	icqkeeper "github.com/cosmos/ibc-apps/modules/async-icq/v8/keeper"
 	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
+	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v8"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	ibccallbacks "github.com/cosmos/ibc-go/modules/apps/callbacks"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
@@ -165,6 +168,7 @@ type AppKeepers struct {
 	ICAHostKeeper       *icahostkeeper.Keeper       // Interchain Accounts host
 	ICAControllerKeeper *icacontrollerkeeper.Keeper // Interchain Accounts controller
 	ICQKeeper           *icqkeeper.Keeper           // Interchain Queries
+	RatelimitKeeper     ratelimitkeeper.Keeper
 
 	// BTC staking related modules
 	BTCStakingKeeper btcstakingkeeper.Keeper
@@ -232,6 +236,7 @@ func (ak *AppKeepers) InitKeepers(
 		icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey,
 		icqtypes.StoreKey,
+		ratelimittypes.StoreKey,
 		// BTC staking related modules
 		btcstakingtypes.StoreKey,
 		finalitytypes.StoreKey,
@@ -493,6 +498,16 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
+	ak.RatelimitKeeper = *ratelimitkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[ratelimittypes.StoreKey]),
+		ak.GetSubspace(ratelimittypes.ModuleName),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		ak.BankKeeper,
+		ak.IBCKeeper.ChannelKeeper,
+		ak.IBCKeeper.ChannelKeeper, // ICS4Wrapper
+	)
+
 	// Create Transfer Keepers
 	ak.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
@@ -513,7 +528,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.TransferKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.BankKeeper,
-		ak.IBCKeeper.ChannelKeeper, // TODO replace ICS4Wrapper with RateLimitKeeper when implemented
+		ak.RatelimitKeeper,
 		appparams.AccGov.String(),
 	)
 
@@ -670,22 +685,31 @@ func (ak *AppKeepers) InitKeepers(
 	var wasmStack porttypes.IBCModule
 	wasmStackIBCHandler := wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCKeeper.ChannelKeeper)
 
+	// Create Transfer Stack (from bottom to top of stack)
+	// - core IBC
+	// - ratelimit
+	// - PFM (Packet Forwarding Middleware)
+	// - callbacks
+	// - transfer
+
 	// Create Transfer Stack
 	// SendPacket Path:
-	// SendPacket -> Transfer -> Callbacks -> PFM -> IBC core (ICS4Wrapper)
+	// SendPacket -> Transfer -> Callbacks -> PFM -> RateLimit -> IBC core (ICS4Wrapper)
 	// RecvPacket Path:
-	// RecvPacket -> IBC core -> PFM -> Callbacks -> Transfer (AddRoute)
+	// RecvPacket -> IBC core -> RateLimit -> PFM -> Callbacks -> Transfer (AddRoute)
 	// Receive path should mirror the send path.
+
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(ak.TransferKeeper)
-	cbStack := ibccallbacks.NewIBCMiddleware(transferStack, ak.PFMRouterKeeper, wasmStackIBCHandler,
-		appparams.MaxIBCCallbackGas)
+
+	cbStack := ibccallbacks.NewIBCMiddleware(transferStack, ak.PFMRouterKeeper, wasmStackIBCHandler, appparams.MaxIBCCallbackGas)
 	transferStack = pfmrouter.NewIBCMiddleware(
 		cbStack,
 		ak.PFMRouterKeeper,
 		0, // retries on timeout
 		pfmrouterkeeper.DefaultForwardTransferPacketTimeoutTimestamp,
 	)
+	transferStack = ratelimiter.NewIBCMiddleware(ak.RatelimitKeeper, transferStack)
 	ak.TransferKeeper.WithICS4Wrapper(cbStack)
 
 	// Create Interchain Accounts Controller Stack
@@ -732,6 +756,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)
+	paramsKeeper.Subspace(ratelimittypes.ModuleName)
 
 	return paramsKeeper
 }
