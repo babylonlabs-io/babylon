@@ -308,6 +308,42 @@ func (s *IBCTransferTestSuite) TestPacketForwarding() {
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
 }
 
+func (s *IBCTransferTestSuite) TestRateLimitE2EBelowThreshold() {
+	bbnChainA := s.configurer.GetChainConfig(0)
+	bbnChainB := s.configurer.GetChainConfig(1)
+
+	nA, err := bbnChainA.GetNodeAtIndex(0)
+	s.NoError(err)
+	nB, err := bbnChainB.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	_, err = nA.QueryBalances(s.addrA)
+	s.Require().NoError(err)
+
+	balanceBeforeTransferB, err := nB.QueryBalances(s.addrB)
+	s.Require().NoError(err)
+
+	packetAmount := sdkmath.NewInt(1)
+	channel := "channel-0"
+
+	transferCoin := sdk.NewCoin(nativeDenom, packetAmount)
+
+	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, channel, transferCoin)
+
+	nA.WaitForNextBlock()
+
+	_, _, err = nB.QueryTxWithError(txHash)
+	s.Require().NoError(err)
+
+	_, err = nA.QueryBalances(s.addrA)
+	s.Require().NoError(err)
+
+	balanceAfterTransferB, err := nB.QueryBalances(s.addrB)
+	s.Require().NoError(err)
+
+	s.Require().NotEqual(balanceBeforeTransferB.String(), balanceAfterTransferB.String(), "Balance should remain unchanged after transfer")
+}
+
 func (s *IBCTransferTestSuite) TestRateLimitE2EAboveThreshold() {
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
@@ -345,40 +381,4 @@ func (s *IBCTransferTestSuite) TestRateLimitE2EAboveThreshold() {
 	s.Require().NoError(err)
 
 	s.Require().Equal(balanceBeforeTransferA.String(), balanceAfterReceivingSendBackA.String(), "Balance should remain unchanged after failed transfer")
-}
-
-func (s *IBCTransferTestSuite) TestRateLimitE2EBelowThreshold() {
-	bbnChainA := s.configurer.GetChainConfig(0)
-	bbnChainB := s.configurer.GetChainConfig(1)
-
-	nA, err := bbnChainA.GetNodeAtIndex(0)
-	s.NoError(err)
-	nB, err := bbnChainB.GetNodeAtIndex(2)
-	s.NoError(err)
-
-	_, err = nA.QueryBalances(s.addrA)
-	s.Require().NoError(err)
-
-	balanceBeforeTransferB, err := nB.QueryBalances(s.addrB)
-	s.Require().NoError(err)
-
-	packetAmount := sdkmath.NewInt(1)
-	channel := "channel-0"
-
-	transferCoin := sdk.NewCoin(nativeDenom, packetAmount)
-
-	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, channel, transferCoin)
-
-	nA.WaitForNextBlock()
-
-	_, _, err = nB.QueryTxWithError(txHash)
-	s.Require().NoError(err)
-
-	_, err = nA.QueryBalances(s.addrA)
-	s.Require().NoError(err)
-
-	balanceAfterTransferB, err := nB.QueryBalances(s.addrB)
-	s.Require().NoError(err)
-
-	s.Require().NotEqual(balanceBeforeTransferB.String(), balanceAfterTransferB.String(), "Balance should remain unchanged after transfer")
 }
