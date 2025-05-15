@@ -2,8 +2,9 @@ package app_test
 
 import (
 	"fmt"
-	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 	"testing"
+
+	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -13,31 +14,35 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	"github.com/stretchr/testify/require"
 
 	babylonApp "github.com/babylonlabs-io/babylon/v2/app"
 	testsigner "github.com/babylonlabs-io/babylon/v2/testutil/signer"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 	incentivetypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
 	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
+
+	"github.com/stretchr/testify/require"
 )
 
 var (
 	expectedMaccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     nil, // fee collector account
-		distrtypes.ModuleName:          nil,
-		minttypes.ModuleName:           {authtypes.Minter},
-		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:            {authtypes.Burner},
-		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		ibcfeetypes.ModuleName:         nil,
-		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
-		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
+		authtypes.FeeCollectorName:   nil, // fee collector account
+		distrtypes.ModuleName:        nil,
+		minttypes.ModuleName:         {authtypes.Minter},
+		stktypes.BondedPoolName:      {authtypes.Burner, authtypes.Staking},
+		stktypes.NotBondedPoolName:   {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:          {authtypes.Burner},
+		ibctransfertypes.ModuleName:  {authtypes.Minter, authtypes.Burner},
+		ibcfeetypes.ModuleName:       nil,
+		incentivetypes.ModuleName:    nil, // this line is needed to create an account for incentive module
+		tokenfactorytypes.ModuleName: {authtypes.Minter, authtypes.Burner},
+		icatypes.ModuleName:          nil,
+		icqtypes.ModuleName:          nil,
 	}
 )
 
