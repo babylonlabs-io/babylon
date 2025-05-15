@@ -441,17 +441,27 @@ func (n *NodeConfig) QueryTxWithError(txHash string, overallFlags ...string) (sd
 		n.FlagChainID(),
 	}
 
-	out, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
-	require.NoError(n.t, err)
+	out, stderr, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
+	if err != nil {
+		return sdk.TxResponse{}, nil, fmt.Errorf("failed to execute command: %v, stderr: %s", err, stderr.String())
+	}
 
 	var txResp sdk.TxResponse
 	err = util.Cdc.UnmarshalJSON(out.Bytes(), &txResp)
-	require.NoError(n.t, err)
+	if err != nil {
+		if err == io.EOF {
+			return sdk.TxResponse{}, nil, fmt.Errorf("unexpected EOF while unmarshalling transaction response, output: %s", out.String())
+		}
+		return sdk.TxResponse{}, nil, fmt.Errorf("failed to unmarshal transaction response: %v, output: %s", err, out.String())
+	}
 
-	txAuth := txResp.Tx.GetCachedValue().(*sdktx.Tx)
+	txAuth, ok := txResp.Tx.GetCachedValue().(*sdktx.Tx)
+	if !ok {
+		return sdk.TxResponse{}, nil, fmt.Errorf("failed to cast transaction to *sdktx.Tx, response: %v", txResp)
+	}
+
 	return txResp, txAuth, nil
 }
-
 func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch uint64) (lastFinalizedEpoch uint64) {
 	// finalize epochs from 1 to the current epoch
 	currentEpoch, err := n.QueryCurrentEpoch()
