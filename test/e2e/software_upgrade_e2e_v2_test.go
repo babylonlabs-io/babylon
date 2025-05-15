@@ -3,9 +3,11 @@ package e2e
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	"github.com/babylonlabs-io/babylon/v2/x/mint/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -266,10 +268,24 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeAddFinalitySigs(n *chain.NodeConf
 	s.Require().Zero(fp.SlashedBabylonHeight, "fp is slashed")
 	fpDels := n.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
 	s.Require().Len(fpDels, 2)
+	del1BtcPk := bbn.NewBIP340PubKeyFromBTCPK(s.del1BTCSK.PubKey())
+	del2BtcPk := bbn.NewBIP340PubKeyFromBTCPK(s.del2BTCSK.PubKey())
+
 	for _, fpDelStaker := range fpDels {
 		for _, fpDel := range fpDelStaker.Dels {
 			s.Require().True(fpDel.Active)
-			s.Require().GreaterOrEqual(fpDel.TotalSat, uint64(0))
+
+			if strings.EqualFold(del1BtcPk.MarshalHex(), fpDel.BtcPk.MarshalHex()) {
+				s.Require().GreaterOrEqual(fpDel.TotalSat, uint64(s.fp1Del1StakingAmt))
+				continue
+			}
+
+			if strings.EqualFold(del2BtcPk.MarshalHex(), fpDel.BtcPk.MarshalHex()) {
+				s.Require().GreaterOrEqual(fpDel.TotalSat, uint64(s.fp1Del2StakingAmt))
+				continue
+			}
+
+			s.FailNow("found a weird delegation")
 		}
 	}
 
