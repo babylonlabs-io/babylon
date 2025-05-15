@@ -16,7 +16,7 @@ require (
 	github.com/spf13/cast v1.7.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
-	github.com/strangelove-ventures/tokenfactory v0.50.3-wasmvm2
+	github.com/strangelove-ventures/tokenfactory v0.50.6-wasmvm2
 	github.com/stretchr/testify v1.10.0
 	github.com/supranational/blst v0.3.14
 	google.golang.org/genproto v0.0.0-20240701130421-f6361c86f094 // indirect
@@ -282,7 +282,7 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-	github.com/strangelove-ventures/tokenfactory => github.com/babylonlabs-io/tokenfactory v0.50.3-wasmvm2
+	github.com/strangelove-ventures/tokenfactory => github.com/babylonlabs-io/tokenfactory v0.50.6-wasmvm2
 	// Downgraded to stable version see: https://github.com/cosmos/cosmos-sdk/pull/14952
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
