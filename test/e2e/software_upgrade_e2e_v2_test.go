@@ -6,6 +6,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/v2/x/mint/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/cometbft/cometbft/libs/bytes"
@@ -156,7 +157,7 @@ func (s *SoftwareUpgradeV2TestSuite) Test1UpgradeV2() {
 
 	feeEntry, ok := denomCreationFee[0].(map[string]interface{})
 	s.Require().True(ok, "fee entry should be a map")
-	s.Equal("ubbn", feeEntry["denom"])
+	s.Equal(types.DefaultBondDenom, feeEntry["denom"])
 	s.Equal("10000000", feeEntry["amount"])
 
 	s.Equal("2000000", params["denom_creation_gas_consume"])
