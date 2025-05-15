@@ -10,7 +10,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v2/app/keepers"
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
 	incentivekeeper "github.com/babylonlabs-io/babylon/v2/x/incentive/keeper"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
