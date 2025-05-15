@@ -37,9 +37,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-- [#841](https://github.com/babylonlabs-io/babylon/pull/841) chore: upgrade the make file: release
-- [#850](https://github.com/babylonlabs-io/babylon/pull/850) Add BLS improvement including permission and verification
-
 ### Bug fixes
 
 - [#860](https://github.com/babylonlabs-io/babylon/pull/860) fix: ensure active fps have signing info after finality resumption proposal
@@ -49,6 +46,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#850](https://github.com/babylonlabs-io/babylon/pull/850) Add BLS improvement including permission and verification
+- [#841](https://github.com/babylonlabs-io/babylon/pull/841) chore: upgrade the make file: release
 - [#909](https://github.com/babylonlabs-io/babylon/pull/909) Update tokenfactory upgrade fee params to `ubbn`.
 - [#884](https://github.com/babylonlabs-io/babylon/pull/884) Bump tokenfactory version to v0.50.6
 - [#905](https://github.com/babylonlabs-io/babylon/pull/905) Add `ValidateBasic` for `CommitPubRandList`
@@ -64,6 +63,11 @@ transfer stack
 - [#876](https://github.com/babylonlabs-io/babylon/pull/876) Add Packet Forwarding Middleware (PFM) module.
 - [#881](https://github.com/babylonlabs-io/babylon/pull/881) Update init/export genesis logic in `x/mint` module
 - [#883](https://github.com/babylonlabs-io/babylon/pull/883) Update init/export genesis logic in `x/monitor` module
+
+### State Machine Breaking
+
+- [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
+when the babylon block is being BTC rewarded.
 
 ## v1.0.2
 

@@ -215,20 +215,7 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 		return nil, err
 	}
 
-	cfgs := updateNodeConfigs(validatorConfigsChainA, func(cfg *initialization.NodeConfig) *initialization.NodeConfig {
-		return &initialization.NodeConfig{
-			Name:               fmt.Sprintf("%s-%s", cfg.Name, identifier),
-			Pruning:            cfg.Pruning,
-			PruningKeepRecent:  cfg.PruningKeepRecent,
-			PruningInterval:    cfg.PruningInterval,
-			SnapshotInterval:   cfg.SnapshotInterval,
-			SnapshotKeepRecent: cfg.SnapshotKeepRecent,
-			IsValidator:        cfg.IsValidator,
-			BtcNetwork:         string(bbn.BtcSignet),
-		}
-	})
-
-	chainA := chain.New(t, containerManager, initialization.ChainAID, cfgs, nil)
+	chainA := chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil)
 	if btcHeaders != nil {
 		chainA.BTCHeaders = btcHeaders
 	}

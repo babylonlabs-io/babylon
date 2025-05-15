@@ -5,9 +5,10 @@ import "gogoproto/gogo.proto";
 import "babylon/incentive/params.proto";
 import "babylon/incentive/incentive.proto";
 import "babylon/incentive/rewards.proto";
+import "babylon/incentive/events.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/incentive/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/incentive/types";
 
 // GenesisState defines the incentive module's genesis state.
 message GenesisState {
@@ -40,6 +41,13 @@ message GenesisState {
   // finality providers to which it delegated some BTC
   repeated BTCDelegatorToFpEntry btc_delegators_to_fps = 9
       [ (gogoproto.nullable) = false ];
+  // EventRewardTracker stores the events that will be processed at the babylon block height
+  // prior to the BTC reward distribution.
+  repeated EventsPowerUpdateAtHeightEntry event_reward_tracker = 10
+      [ (gogoproto.nullable) = false ];
+  // LastProcessedHeightEventRewardTracker is the latest block height in which
+  // the reward tracker was processed.
+  uint64 last_processed_height_event_reward_tracker = 11;
 }
 
 // BTCStakingGaugeEntry represents a gauge for BTC staking rewards at a specific
@@ -115,6 +123,15 @@ message BTCDelegatorToFpEntry {
   // Address of the finality provider
   string finality_provider_address = 2
       [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// EventsPowerUpdateAtHeightEntry holds an entry of an event
+// to be processed at the BTC reward distribution of some babylon block height
+message EventsPowerUpdateAtHeightEntry {
+  // Height the babylon block height which these events refer to.
+  uint64 height = 1;
+  // Events holds the events to be processed.
+  EventsPowerUpdateAtHeight events = 2;
 }
 
 // StakeholderType represents the different types of stakeholders.

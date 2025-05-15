@@ -35,7 +35,7 @@ const (
 	wDel2             = "del2"
 	wFp1              = "fp1"
 	wFp2              = "fp2"
-	numPubRand        = uint64(350)
+	numPubRand        = uint64(600)
 )
 
 type BtcRewardsDistribution struct {
@@ -204,24 +204,11 @@ func (s *BtcRewardsDistribution) Test3SubmitCovenantSignature() {
 	// tx bank send needs to take effect
 	n1.WaitForNextBlock()
 
-	pendingDelsResp := n1.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
-	s.Require().Equal(len(pendingDelsResp), 3)
-
-	for _, pendingDelResp := range pendingDelsResp {
-		pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
-		s.NoError(err)
-
-		SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
-
-		n1.WaitForNextBlock()
-	}
+	AddCovdSigsToPendingBtcDels(s.r, s.T(), n1, s.net, params, s.covenantSKs, s.covenantWallets, s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
 
 	// ensure the BTC delegation has covenant sigs now
-	activeDelsSet := n1.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
+	activeDelsSet := AllBtcDelsActive(s.T(), n1, s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
 	s.Require().Len(activeDelsSet, 3)
-	for _, activeDel := range activeDelsSet {
-		s.Require().True(activeDel.Active)
-	}
 }
 
 // Test4CommitPublicRandomnessAndSealed commits public randomness for
@@ -395,7 +382,7 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 		_, errDel1 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
 		_, errDel2 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
 		return errFp1 == nil && errFp2 == nil && errDel1 == nil && errDel2 == nil
-	}, time.Minute*2, time.Second*3, "wait to have some rewards available in the gauge")
+	}, time.Minute*4, time.Second*3, "wait to have some rewards available in the gauge")
 
 	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
 	fp1DiffRewards, fp2DiffRewards, del1DiffRewards, del2DiffRewards := s.QueryRewardGauges(n2)
@@ -740,6 +727,9 @@ func CheckWithdrawReward(
 	accDelAddr := sdk.MustAccAddressFromBech32(delAddr)
 	n.WaitForNextBlockWithSleep50ms()
 
+	delRwdGaugeBefore, errRwdGauge := n.QueryRewardGauge(accDelAddr)
+	require.NoError(t, errRwdGauge)
+
 	delBalanceBeforeWithdraw, err := n.QueryBalances(delAddr)
 	require.NoError(t, err)
 
@@ -749,7 +739,7 @@ func CheckWithdrawReward(
 
 	_, txResp := n.QueryTx(txHash)
 
-	delRwdGauge, errRwdGauge := n.QueryRewardGauge(accDelAddr)
+	delRwdGaugeAfter, errRwdGauge := n.QueryRewardGauge(accDelAddr)
 	require.NoError(t, errRwdGauge)
 
 	delBalanceAfterWithdraw, err := n.QueryBalances(delAddr)
@@ -757,12 +747,16 @@ func CheckWithdrawReward(
 
 	// note that the rewards might not be precise as more or less blocks were produced and given out rewards
 	// while the query balance / withdraw / query gauge was running
-	delRewardGauge, ok := delRwdGauge[itypes.BTC_STAKER.String()]
+	delRewardGaugeBefore, ok := delRwdGaugeBefore[itypes.BTC_STAKER.String()]
 	require.True(t, ok)
-	require.True(t, delRewardGauge.Coins.IsAllPositive())
+	require.True(t, delRewardGaugeBefore.Coins.IsAllPositive())
+	delRewardGaugeAfter, ok := delRwdGaugeAfter[itypes.BTC_STAKER.String()]
+	require.True(t, ok)
+	require.True(t, delRewardGaugeAfter.Coins.IsAllPositive())
 
+	coinsWithdraw := delRewardGaugeAfter.WithdrawnCoins.Sub(delRewardGaugeBefore.WithdrawnCoins...)
 	actualAmt := delBalanceAfterWithdraw.String()
-	expectedAmt := delBalanceBeforeWithdraw.Add(delRewardGauge.WithdrawnCoins...).Sub(txResp.AuthInfo.Fee.Amount...).String()
+	expectedAmt := delBalanceBeforeWithdraw.Add(coinsWithdraw...).Sub(txResp.AuthInfo.Fee.Amount...).String()
 	require.Equal(t, expectedAmt, actualAmt)
 }
 
@@ -845,5 +839,40 @@ func SendCovenantSigsToPendingDel(
 			bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
 			covenantUnbondingSlashingSigs[i].AdaptorSigs,
 		)
+	}
+}
+
+func AllBtcDelsActive(t *testing.T, n *chain.NodeConfig, fpsBTCPK ...string) []*bstypes.BTCDelegationResponse {
+	activeDelsSet := n.QueryFinalityProvidersDelegations(fpsBTCPK...)
+	for _, activeDel := range activeDelsSet {
+		require.True(t, activeDel.Active)
+		require.Greater(t, activeDel.TotalSat, uint64(0))
+	}
+	return activeDelsSet
+}
+
+func AddCovdSigsToPendingBtcDels(
+	r *rand.Rand,
+	t *testing.T,
+	n *chain.NodeConfig,
+	btcNet *chaincfg.Params,
+	bsParams *bstypes.Params,
+	covenantSKs []*btcec.PrivateKey,
+	covWallets []string,
+	fpsBTCPK ...string,
+) {
+	pendingDelsResp := n.QueryFinalityProvidersDelegations(fpsBTCPK...)
+
+	for _, pendingDelResp := range pendingDelsResp {
+		pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
+		require.NoError(t, err)
+
+		if pendingDel.HasCovenantQuorums(bsParams.CovenantQuorum) {
+			continue
+		}
+
+		SendCovenantSigsToPendingDel(r, t, n, btcNet, covenantSKs, covWallets, pendingDel)
+
+		n.WaitForNextBlock()
 	}
 }

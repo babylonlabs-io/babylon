@@ -2,12 +2,14 @@ package v2
 
 import (
 	"context"
+
 	"github.com/babylonlabs-io/babylon/v2/x/mint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	store "cosmossdk.io/store/types"
 	"github.com/babylonlabs-io/babylon/v2/app/keepers"
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
+	incentivekeeper "github.com/babylonlabs-io/babylon/v2/x/incentive/keeper"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
@@ -35,6 +37,12 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 			return nil, err
 		}
 
+		// update reward distribution events
+		err = UpdateRewardTrackerEventLastProcessedHeight(ctx, keepers.IncentiveKeeper)
+		if err != nil {
+			return nil, err
+		}
+
 		// Set the denom creation fee to ubbn
 		params := tokenfactorytypes.DefaultParams()
 		params.DenomCreationFee = sdk.NewCoins(sdk.NewInt64Coin(types.DefaultBondDenom, 10_000_000))
@@ -49,4 +57,12 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 
 		return migrations, nil
 	}
+}
+
+// UpdateRewardTrackerEventLastProcessedHeight sets the current block height - 1 to the reward tracker
+// so that BTC reward distribution starts from the height at which the upgrade happens
+func UpdateRewardTrackerEventLastProcessedHeight(goCtx context.Context, ictvK incentivekeeper.Keeper) error {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	blkHeight := uint64(ctx.HeaderInfo().Height) - 1 // previous block as it can have events processed at the upgrade height
+	return ictvK.SetRewardTrackerEventLastProcessedHeight(ctx, blkHeight)
 }

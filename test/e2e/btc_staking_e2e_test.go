@@ -289,7 +289,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 
 		// ensure vote is eventually cast
 		var finalizedBlocks []*ftypes.IndexedBlock
-		s.Eventually(func() bool {
+		s.Require().Eventually(func() bool {
 			finalizedBlocks = nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
 			return len(finalizedBlocks) > 0
 		}, time.Minute, time.Millisecond*50)

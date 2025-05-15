@@ -411,6 +411,31 @@ func (n *NodeConfig) CreateBTCDelegationAndCheck(
 	stakingTimeBlocks uint16,
 	stakingSatAmt int64,
 ) (testStakingInfo *datagen.TestStakingSlashingInfo) {
+	testStakingInfo = n.CreateBTCDel(r, t, btcNet, walletNameSender, fp, btcStakerSK, delAddr, stakingTimeBlocks, stakingSatAmt)
+
+	// wait for a block so that above txs take effect
+	n.WaitForNextBlock()
+
+	// check if the address matches
+	btcDelegationResp := n.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
+	require.NotNil(t, btcDelegationResp)
+	require.Equal(t, btcDelegationResp.BtcDelegation.StakerAddr, delAddr)
+	require.Equal(t, btcStakerSK.PubKey().SerializeCompressed()[1:], btcDelegationResp.BtcDelegation.BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+
+	return testStakingInfo
+}
+
+func (n *NodeConfig) CreateBTCDel(
+	r *rand.Rand,
+	t testing.TB,
+	btcNet *chaincfg.Params,
+	walletNameSender string,
+	fp *bstypes.FinalityProvider,
+	btcStakerSK *btcec.PrivateKey,
+	delAddr string,
+	stakingTimeBlocks uint16,
+	stakingSatAmt int64,
+) (testStakingInfo *datagen.TestStakingSlashingInfo) {
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := n.QueryBTCStakingParams()
 
@@ -443,15 +468,6 @@ func (n *NodeConfig) CreateBTCDelegationAndCheck(
 		walletNameSender,
 		false,
 	)
-
-	// wait for a block so that above txs take effect
-	n.WaitForNextBlock()
-
-	// check if the address matches
-	btcDelegationResp := n.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
-	require.NotNil(t, btcDelegationResp)
-	require.Equal(t, btcDelegationResp.BtcDelegation.StakerAddr, delAddr)
-	require.Equal(t, btcStakerSK.PubKey().SerializeCompressed()[1:], btcDelegationResp.BtcDelegation.BtcPk.MustToBTCPK().SerializeCompressed()[1:])
 
 	return testStakingInfo
 }
