@@ -467,6 +467,8 @@ func NewBabylonApp(
 		ibctransfertypes.ModuleName,
 		ratelimittypes.ModuleName,
 		wasmtypes.ModuleName,
+		icatypes.ModuleName,
+		icqtypes.ModuleName,
 		pfmroutertypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,

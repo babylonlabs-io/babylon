@@ -17,6 +17,7 @@ import (
 	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
 	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
 	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	"github.com/babylonlabs-io/babylon/v2/app/keepers"
@@ -67,13 +68,8 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-		if err := AddRateLimit(sdkCtx, keepers.RatelimitKeeper, Denom, DefaultTransferChannel, DefaultDailyLimit, DailyDurationHours); err != nil {
-			return nil, err
-		}
-		if err := AddRateLimit(sdkCtx, keepers.RatelimitKeeper, Denom, NobleTransferChannel, NobleDailyLimit, DailyDurationHours); err != nil {
-			return nil, err
-		}
-		if err := AddRateLimit(sdkCtx, keepers.RatelimitKeeper, Denom, AtomTransferChannel, AtomDailyLimit, DailyDurationHours); err != nil {
+		// Add a default rate limit to existing channels on port 'transfer'
+		if err := addRateLimits(sdkCtx, keepers.IBCKeeper.ChannelKeeper, keepers.RatelimitKeeper); err != nil {
 			return nil, err
 		}
 
@@ -110,7 +106,21 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 	}
 }
 
-func AddRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper, denom, channel string, percent int, durationHours uint64) error {
+// addRateLimits adds rate limit to the native denom ('ubbn') to all channels registered on the channel keeper
+func addRateLimits(ctx sdk.Context, chk transfertypes.ChannelKeeper, rlk ratelimitkeeper.Keeper) error {
+	logger := ctx.Logger().With("upgrade", UpgradeName)
+	channels := chk.GetAllChannelsWithPortPrefix(ctx, transfertypes.PortID)
+	logger.Info("adding limits to channels", "channels_count", len(channels))
+	for _, ch := range channels {
+		if err := addRateLimit(ctx, rlk, Denom, ch.ChannelId, DefaultDailyLimit, DailyDurationHours); err != nil {
+			return err
+		}
+	}
+	logger.Info("Done adding limits to channels")
+	return nil
+}
+
+func addRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper, denom, channel string, percent int, durationHours uint64) error {
 	addRateLimitMsg := ratelimittypes.MsgAddRateLimit{
 		ChannelId:      channel,
 		Denom:          denom,

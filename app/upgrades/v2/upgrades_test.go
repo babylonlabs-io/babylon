@@ -11,15 +11,10 @@ import (
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
-	"github.com/babylonlabs-io/babylon/v2/testutil/mocks"
 	"github.com/babylonlabs-io/babylon/v2/testutil/sample"
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
@@ -28,14 +23,15 @@ import (
 	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/test-go/testify/mock"
 )
 
-const (
-	DummyUpgradeHeight = 5
-)
+const DummyUpgradeHeight = 5
 
-var ()
+var usedChannels = []channeltypes.IdentifiedChannel{
+	{ChannelId: "channel-0"},
+	{ChannelId: "channel-1"},
+	{ChannelId: "channel-5"},
+}
 
 type UpgradeTestSuite struct {
 	suite.Suite
@@ -92,26 +88,11 @@ func (s *UpgradeTestSuite) SetupTest() {
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
 	s.preModule = upgrade.NewAppModule(s.app.UpgradeKeeper, s.app.AccountKeeper.AddressCodec())
 
-	// replace channel keeper, ICS4Wrappers and BankKeeper with a mock
-	mockChannelKeeper := &mocks.MockChannelKeeper{}
-
-	// mock the responses for adding a rate limit
-	mockChannelKeeper.On("GetChannel", mock.Anything, mock.Anything, "channel-0").Return(channeltypes.Channel{Counterparty: channeltypes.NewCounterparty("transfer", "channel-1")}, true)
-	mockChannelKeeper.On("GetChannel", mock.Anything, mock.Anything, "channel-1").Return(channeltypes.Channel{Counterparty: channeltypes.NewCounterparty("transfer", "channel-1")}, true)
-	mockChannelKeeper.On("GetChannel", mock.Anything, mock.Anything, "channel-5").Return(channeltypes.Channel{Counterparty: channeltypes.NewCounterparty("transfer", "channel-1")}, true)
-
-	authAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
-	newKeeper := ratelimitkeeper.NewKeeper(
-		s.app.AppCodec(),
-		runtime.NewKVStoreService(s.app.GetKey(ratelimittypes.ModuleName)),
-		s.app.GetSubspace(ratelimittypes.ModuleName),
-		authAddr,
-		s.app.BankKeeper,
-		mockChannelKeeper,
-		s.app.IBCKeeper.ChannelKeeper,
-	)
-
-	s.app.RatelimitKeeper = *newKeeper
+	// create some channels to test the rate limit logic
+	for _, ch := range usedChannels {
+		channel := channeltypes.NewChannel(channeltypes.OPEN, channeltypes.UNORDERED, channeltypes.NewCounterparty("transfer", "channel-1"), []string{"connection-0"}, "ics20-1")
+		s.app.IBCKeeper.ChannelKeeper.SetChannel(s.ctx, "transfer", ch.ChannelId, channel)
+	}
 }
 
 func (s *UpgradeTestSuite) PreUpgrade() {}
@@ -136,4 +117,10 @@ func (s *UpgradeTestSuite) Upgrade() {
 	})
 }
 
-func (s *UpgradeTestSuite) PostUpgrade() {}
+func (s *UpgradeTestSuite) PostUpgrade() {
+	// check rate limits are set
+	res, err := s.app.RatelimitKeeper.AllRateLimits(s.ctx, &ratelimittypes.QueryAllRateLimitsRequest{})
+	s.Require().NoError(err)
+	s.Require().NotNil(res)
+	s.Require().Len(res.RateLimits, len(usedChannels))
+}
