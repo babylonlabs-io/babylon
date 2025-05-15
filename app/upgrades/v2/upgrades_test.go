@@ -11,16 +11,24 @@ import (
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
+	"github.com/babylonlabs-io/babylon/v2/testutil/mocks"
 	"github.com/babylonlabs-io/babylon/v2/testutil/sample"
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	"github.com/babylonlabs-io/babylon/v2/app"
 	v2 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2"
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
 	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+
+	"github.com/stretchr/testify/suite"
+	"github.com/test-go/testify/mock"
 )
 
 const (
@@ -32,73 +40,13 @@ var ()
 type UpgradeTestSuite struct {
 	suite.Suite
 
-	ctx        sdk.Context
-	app        *app.BabylonApp
-	preModule  appmodule.HasPreBlocker
-	configurer configurer.Configurer
+	ctx       sdk.Context
+	app       *app.BabylonApp
+	preModule appmodule.HasPreBlocker
 }
 
 func TestUpgradeTestSuite(t *testing.T) {
 	suite.Run(t, new(UpgradeTestSuite))
-}
-
-func (s *UpgradeTestSuite) SetupSuite() {
-	s.T().Log("setting up upgrade test suite...")
-	var (
-		err error
-	)
-
-	s.configurer, err = configurer.NewIBCTransferConfigurer(s.T(), true)
-
-	s.Require().NoError(err)
-
-	err = s.configurer.ConfigureChains()
-	s.Require().NoError(err)
-
-	err = s.configurer.RunSetup()
-	s.Require().NoError(err)
-
-	s.SetupWithMultipleIBCChannels()
-}
-
-func (s *UpgradeTestSuite) TearDownSuite() {
-	err := s.configurer.ClearResources()
-	if err != nil {
-		s.T().Logf("error to clear resources %s", err.Error())
-	}
-}
-
-func (s *UpgradeTestSuite) SetupWithMultipleIBCChannels() {
-
-	// chainA := s.configurer.GetChainConfig(0)
-	// chainB := s.configurer.GetChainConfig(1)
-
-	// for i := 1; i <= 5; i++ {
-	// 	portA := fmt.Sprintf("channel-%d", i)
-	// 	portB := fmt.Sprintf("channel-%d", i)
-
-	// 	// Log the expected channel name
-	// 	expectedChannelName := fmt.Sprintf("channel-%d", i)
-	// 	s.T().Logf("Creating IBC channel: %s", expectedChannelName)
-
-	// 	cmd := []string{
-	// 		"hermes", "create", "channel",
-	// 		"--a-chain", chainA.ChainMeta.Id,
-	// 		"--b-chain", chainB.ChainMeta.Id,
-	// 		"--a-port", portA,
-	// 		"--b-port", portB,
-	// 		"--new-client-connection",
-	// 		"--yes",
-	// 	}
-	// 	s.T().Log(cmd)
-
-	// 	stdout, stderr, err := s.configurer.ContainerManager().ExecHermesCmd(s.T(), cmd, "SUCCESS")
-	// 		s.Require().NoError(err, "Failed to create IBC channel %s", expectedChannelName)
-	// 	} else {
-	// 		s.T().Logf("Successfully created IBC channel: %s", expectedChannelName)
-	// 		s.T().Logf("Hermes stdout: %s", stdout.String())
-	// 	}
-	// }
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
@@ -139,6 +87,27 @@ func (s *UpgradeTestSuite) SetupTest() {
 	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
 	s.preModule = upgrade.NewAppModule(s.app.UpgradeKeeper, s.app.AccountKeeper.AddressCodec())
+
+	// replace channel keeper, ICS4Wrappers and BankKeeper with a mock
+	mockChannelKeeper := &mocks.MockChannelKeeper{}
+
+	// mock the responses for adding a rate limit
+	mockChannelKeeper.On("GetChannel", mock.Anything, mock.Anything, "channel-0").Return(channeltypes.Channel{Counterparty: channeltypes.NewCounterparty("transfer", "channel-1")}, true)
+	mockChannelKeeper.On("GetChannel", mock.Anything, mock.Anything, "channel-1").Return(channeltypes.Channel{Counterparty: channeltypes.NewCounterparty("transfer", "channel-1")}, true)
+	mockChannelKeeper.On("GetChannel", mock.Anything, mock.Anything, "channel-5").Return(channeltypes.Channel{Counterparty: channeltypes.NewCounterparty("transfer", "channel-1")}, true)
+
+	authAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+	newKeeper := ratelimitkeeper.NewKeeper(
+		s.app.AppCodec(),
+		runtime.NewKVStoreService(s.app.GetKey(ratelimittypes.ModuleName)),
+		s.app.GetSubspace(ratelimittypes.ModuleName),
+		authAddr,
+		s.app.BankKeeper,
+		mockChannelKeeper,
+		s.app.IBCKeeper.ChannelKeeper,
+	)
+
+	s.app.RatelimitKeeper = *newKeeper
 }
 
 func (s *UpgradeTestSuite) PreUpgrade() {}

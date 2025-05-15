@@ -3,16 +3,16 @@ package v2
 import (
 	"context"
 
-	sdkmath "cosmossdk.io/math"
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	store "cosmossdk.io/store/types"
 	"github.com/babylonlabs-io/babylon/v2/app/keepers"
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
@@ -61,13 +61,13 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-		if err := AddStackedRateLimit(sdkCtx, keepers.RatelimitKeeper, Denom, DefaultTransferChannel, []int64{DefaultDailyLimit, DefaultWeeklyLimit}, []int64{DailyDurationHours, WeeklyDurationHours}); err != nil {
+		if err := AddRateLimit(sdkCtx, keepers.RatelimitKeeper, Denom, DefaultTransferChannel, DefaultDailyLimit, DailyDurationHours); err != nil {
 			return nil, err
 		}
-		if err := AddStackedRateLimit(sdkCtx, keepers.RatelimitKeeper, Denom, NobleTransferChannel, []int64{NobleDailyLimit, NobleWeeklyLimit}, []int64{DailyDurationHours, WeeklyDurationHours}); err != nil {
+		if err := AddRateLimit(sdkCtx, keepers.RatelimitKeeper, Denom, NobleTransferChannel, NobleDailyLimit, DailyDurationHours); err != nil {
 			return nil, err
 		}
-		if err := AddStackedRateLimit(sdkCtx, keepers.RatelimitKeeper, Denom, AtomTransferChannel, []int64{AtomDailyLimit, AtomWeeklyLimit}, []int64{DailyDurationHours, WeeklyDurationHours}); err != nil {
+		if err := AddRateLimit(sdkCtx, keepers.RatelimitKeeper, Denom, AtomTransferChannel, AtomDailyLimit, DailyDurationHours); err != nil {
 			return nil, err
 		}
 
@@ -87,18 +87,6 @@ func AddRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper, denom, channel stri
 	err := k.AddRateLimit(ctx, &addRateLimitMsg)
 	if err != nil {
 		panic(errorsmod.Wrapf(err, "unable to add rate limit for denom %s on channel %s", denom, channel))
-	}
-	return nil
-}
-
-func AddStackedRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper, denom, channel string, percents []int64, durations []int64) error {
-	if len(percents) != len(durations) {
-		return errorsmod.Wrapf(nil, "percents and durations must be the same length")
-	}
-	for i := range percents {
-		if err := AddRateLimit(ctx, k, denom, channel, int(percents[i]), uint64(durations[i])); err != nil {
-			return err
-		}
 	}
 	return nil
 }
