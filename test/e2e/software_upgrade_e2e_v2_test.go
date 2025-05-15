@@ -304,8 +304,6 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeAddFinalitySigs(n *chain.NodeConf
 }
 
 func (s *SoftwareUpgradeV2TestSuite) preUpgradeWithdrawRewardsBtcDel(n *chain.NodeConfig) {
-	s.AddFinalityVoteUntilCurrentHeight(n)
-
 	// Current setup of voting power
 	// (fp1, del1) => 2_00000000
 	// (fp1, del2) => 4_00000000
@@ -337,7 +335,6 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeWithdrawRewardsBtcDel(n *chain.No
 	}, time.Minute*4, time.Second*3, "wait to have some rewards available in the gauge")
 
 	_, del1DiffRewards, del2DiffRewards := s.QueryRewardGauges(n)
-	s.AddFinalityVoteUntilCurrentHeight(n)
 
 	// The rewards distributed to the delegators should be 1x for del1 and 2x for del2
 	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1DiffRewards.Coins, del2DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(2)))
