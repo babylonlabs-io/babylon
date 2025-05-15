@@ -278,15 +278,34 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeAddFinalitySigs(n *chain.NodeConf
 	// submit finality signature
 	s.finalityIdx = s.finalityBlockHeightVoted - commitStartHeight
 
-	s.AddFinalityVoteUntilCurrentHeight(n)
+	n.WaitForNextBlockWithSleep50ms()
 
+	appHash := n.AddFinalitySignatureToBlock(
+		s.fp1BTCSK,
+		s.fp1.BtcPk,
+		s.finalityBlockHeightVoted,
+		s.fp1RandListInfo.SRList[s.finalityIdx],
+		&s.fp1RandListInfo.PRList[s.finalityIdx],
+		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		fmt.Sprintf("--from=%s", wFp1),
+	)
+
+	n.WaitForNextBlockWithSleep50ms()
+
+	var finalizedBlocks []*ftypes.IndexedBlock
 	s.Eventually(func() bool {
-		finalizedBlocks := n.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
+		finalizedBlocks = n.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
 		return len(finalizedBlocks) > 0
 	}, time.Minute, time.Millisecond*50)
+
+	s.Equal(s.finalityBlockHeightVoted, finalizedBlocks[0].Height)
+	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
+	s.T().Logf("the block %d is finalized", s.finalityBlockHeightVoted)
 }
 
 func (s *SoftwareUpgradeV2TestSuite) preUpgradeWithdrawRewardsBtcDel(n *chain.NodeConfig) {
+	s.AddFinalityVoteUntilCurrentHeight(n)
+
 	// Current setup of voting power
 	// (fp1, del1) => 2_00000000
 	// (fp1, del2) => 4_00000000
