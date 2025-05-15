@@ -49,7 +49,7 @@ func (s *ICATestSuite) TearDownSuite() {
 }
 
 func (s *ICATestSuite) TestCreateInterchainAccount() {
-	amount := int64(1_000_000)
+	amount := int64(100_000)
 
 	transferCoin := sdk.NewInt64Coin(nativeDenom, amount)
 

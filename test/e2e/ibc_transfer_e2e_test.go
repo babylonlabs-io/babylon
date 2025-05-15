@@ -62,7 +62,7 @@ func getFirstIBCDenom(balance sdk.Coins) string {
 }
 
 func (s *IBCTransferTestSuite) Test1IBCTransfer() {
-	amount := int64(1_000_000)
+	amount := int64(100_000)
 
 	transferCoin := sdk.NewInt64Coin(nativeDenom, amount)
 
@@ -365,7 +365,7 @@ func (s *IBCTransferTestSuite) TestRateLimitE2EAboveThreshold() {
 	_, err = nB.QueryBalances(s.addrB)
 	s.Require().NoError(err)
 
-	packetAmount := sdkmath.NewInt(500_000) // above the threshold and should fail
+	packetAmount := sdkmath.NewInt(1_000_001) // above the threshold and should fail
 	channel := "channel-0"
 
 	transferCoin := sdk.NewCoin(nativeDenom, packetAmount)
@@ -374,9 +374,11 @@ func (s *IBCTransferTestSuite) TestRateLimitE2EAboveThreshold() {
 	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, channel, transferCoin)
 	nB.WaitForNextBlock()
 
-	txRes, _, err := nB.QueryTxWithError(txHash)
-	s.Require().Error(err)
-	s.Require().Zero(txRes.Code, fmt.Sprintf("Tx response with non-zero code. Code: %d - Raw log: %s", txRes.Code, txRes.RawLog))
+	txRes, tx, err := nB.QueryTxWithError(txHash)
+	s.Require().NoError(err)
+	s.Require().NotZero(txRes.Code, fmt.Sprintf("Tx was suppossed to fail. Code: %d", txRes.Code))
+	s.Require().Contains(txRes.RawLog, "quota exceeded")
+	txFeesPaid := tx.AuthInfo.Fee.Amount
 
 	if txHash != "" {
 		s.T().Logf("IBC transfer sent, txHash: %s", txHash)
@@ -385,5 +387,5 @@ func (s *IBCTransferTestSuite) TestRateLimitE2EAboveThreshold() {
 	balanceAfterReceivingSendBackA, err := nA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
 
-	s.Require().Equal(balanceBeforeTransferA.String(), balanceAfterReceivingSendBackA.String(), "Balance should remain unchanged after failed transfer")
+	s.Require().Equal(balanceBeforeTransferA.Sub(txFeesPaid...).String(), balanceAfterReceivingSendBackA.String(), "Balance should remain unchanged after failed transfer (only paid for fees)")
 }
