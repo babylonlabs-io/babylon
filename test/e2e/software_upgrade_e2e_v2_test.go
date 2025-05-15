@@ -122,7 +122,7 @@ func (s *SoftwareUpgradeV2TestSuite) PreUpgrade(chains []*chain.Config) {
 
 	n.WaitForNextBlocks(2)
 
-	s.preUpgradeCreateFp1(n) // fast
+	s.preUpgradeCreateFp1(n)
 	s.preUpgradeCreateBtcDels(n)
 	s.preUpgradeSubmitCovdSigs(n)
 	s.preUpgradeAddFinalitySigs(n)
@@ -354,7 +354,8 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeWithdrawRewardsBtcDel(n *chain.No
 	_, del1DiffRewards, del2DiffRewards := s.QueryRewardGauges(n)
 
 	// The rewards distributed to the delegators should be 1x for del1 and 2x for del2
-	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1DiffRewards.Coins, del2DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(2)))
+	// to compare the rewards, duplicates the amount of rewards in del1 to check with del2
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(2)), del2DiffRewards.Coins)
 
 	// withdraw both BTC del rewards
 	CheckWithdrawReward(s.T(), n, wDel1, s.del1Addr)
