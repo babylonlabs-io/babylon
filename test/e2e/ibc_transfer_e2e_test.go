@@ -374,11 +374,10 @@ func (s *IBCTransferTestSuite) TestRateLimitE2EAboveThreshold() {
 	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, channel, transferCoin)
 	nB.WaitForNextBlock()
 
-	txRes, tx, err := nB.QueryTxWithError(txHash)
+	txRes, _, err := nB.QueryTxWithError(txHash)
 	s.Require().NoError(err)
 	s.Require().NotZero(txRes.Code, fmt.Sprintf("Tx was suppossed to fail. Code: %d", txRes.Code))
 	s.Require().Contains(txRes.RawLog, "quota exceeded")
-	txFeesPaid := tx.AuthInfo.Fee.Amount
 
 	if txHash != "" {
 		s.T().Logf("IBC transfer sent, txHash: %s", txHash)
@@ -387,5 +386,5 @@ func (s *IBCTransferTestSuite) TestRateLimitE2EAboveThreshold() {
 	balanceAfterReceivingSendBackA, err := nA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
 
-	s.Require().Equal(balanceBeforeTransferA.Sub(txFeesPaid...).String(), balanceAfterReceivingSendBackA.String(), "Balance should remain unchanged after failed transfer (only paid for fees)")
+	s.Require().Equal(balanceBeforeTransferA.String(), balanceAfterReceivingSendBackA.String(), "Balance should remain unchanged after failed transfer (only paid for fees)")
 }
