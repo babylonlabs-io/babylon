@@ -39,6 +39,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#909](https://github.com/babylonlabs-io/babylon/pull/909) Update tokenfactory upgrade fee params to `ubbn` .
+- [#884](https://github.com/babylonlabs-io/babylon/pull/884) Bump tokenfactory version to v0.50.6.
+- [#906](https://github.com/babylonlabs-io/babylon/pull/906) Add distribution bank wrapper.
+- [#905](https://github.com/babylonlabs-io/babylon/pull/905) Add `ValidateBasic` for `CommitPubRandList`
+- [#884](https://github.com/babylonlabs-io/babylon/pull/884) Bump tokenfactory version to v0.50.6
+- [#879](https://github.com/babylonlabs-io/babylon/pull/879) Add v2 e2e upgrade test.
+- [#869](https://github.com/babylonlabs-io/babylon/pull/869) Rename CZ to Consumer in btcstkconsumer and zoneconcierge.
+- [#846](https://github.com/babylonlabs-io/babylon/pull/846) Add tokenfactory module.
 - [#837](https://github.com/babylonlabs-io/babylon/pull/837) Bump repository to v2.
 - [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.
 - [#623](https://github.com/babylonlabs-io/babylon/pull/623) Add check for empty string in `bls` loading.
@@ -62,16 +70,28 @@ check of rewards
 - [#836](https://github.com/babylonlabs-io/babylon/pull/836) Add import/export genesis logic in `x/btcstakingconsumer` module
 - [#840](https://github.com/babylonlabs-io/babylon/pull/840) Add import/export genesis logic in `x/checkpointing` module
 - [#841](https://github.com/babylonlabs-io/babylon/pull/841) chore: upgrade the make file: release
+- [#843](https://github.com/babylonlabs-io/babylon/pull/843) Add import/export genesis logic in `x/epoching` module
+- [#850](https://github.com/babylonlabs-io/babylon/pull/850) Add BLS improvement including permission and verification
+- [#859](https://github.com/babylonlabs-io/babylon/pull/859) Update init/export genesis logic in `x/finality` module
 - [#871](https://github.com/babylonlabs-io/babylon/pull/871) create `update-bls-password` cmd
+- [#876](https://github.com/babylonlabs-io/babylon/pull/876) Add Packet Forwarding Middleware (PFM) module.
+- [#881](https://github.com/babylonlabs-io/babylon/pull/881) Update init/export genesis logic in `x/mint` module
+- [#883](https://github.com/babylonlabs-io/babylon/pull/883) Update init/export genesis logic in `x/monitor` module
+- [#897](https://github.com/babylonlabs-io/babylon/pull/897) Add Interchain Accounts (ICA) and Interchain Queries (ICQ) modules.
 
 ### State Machine Breaking
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
+- [#847](https://github.com/babylonlabs-io/babylon/pull/847) Add ibc callbacks to
+transfer stack
+- [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
+when the babylon block is being BTC rewarded.
 
 ### Bug fixes
 
 - [#829](https://github.com/babylonlabs-io/babylon/pull/829) fix: add checks for slashed fp in gov resume finality
+- [#860](https://github.com/babylonlabs-io/babylon/pull/860) fix: ensure active fps have signing info after finality resumption proposal
 - [#796](https://github.com/babylonlabs-io/babylon/pull/796) fix: goreleaser add `mainnet` build flag to generated binary
 - [#741](https://github.com/babylonlabs-io/babylon/pull/741) chore: fix register consumer CLI
 - [#731](https://github.com/babylonlabs-io/babylon/pull/731) chore: fix block timeout in Babylon client
