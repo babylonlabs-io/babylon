@@ -80,15 +80,17 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+	icq "github.com/cosmos/ibc-apps/modules/async-icq/v8"
+	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
+	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v8"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
-	ratelimiter"github.com/cosmos/ibc-apps/modules/rate-limiting/v8"
 	"github.com/cosmos/ibc-go/modules/capability"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee"
-	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
+	ica "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v8/modules/core" // ibc module puts types under `ibchost` rather than `ibctypes`
@@ -165,9 +167,10 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		ibcfeetypes.ModuleName:         nil,
 		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
+		icatypes.ModuleName:            nil,
+		icqtypes.ModuleName:            nil,
 	}
 
 	// software upgrades and forks
@@ -318,12 +321,13 @@ func NewBabylonApp(
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 		ibc.NewAppModule(app.IBCKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
-		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		ibctm.AppModule{},
 		ibcwasm.NewAppModule(app.IBCWasmKeeper),
 		pfmrouter.NewAppModule(app.PFMRouterKeeper, app.GetSubspace(pfmroutertypes.ModuleName)),
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(tokenfactorytypes.ModuleName)),
 		ratelimiter.NewAppModule(appCodec, app.RatelimitKeeper),
+		ica.NewAppModule(app.ICAControllerKeeper, app.ICAHostKeeper),
+		icq.NewAppModule(*app.ICQKeeper, app.GetSubspace(icqtypes.ModuleName)),
 		// Babylon modules - btc timestamping
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper),
@@ -389,7 +393,6 @@ func NewBabylonApp(
 		ibcexported.ModuleName,
 		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
 		ratelimittypes.ModuleName,
 		// Integration related modules
@@ -424,7 +427,6 @@ func NewBabylonApp(
 		ibcexported.ModuleName,
 		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
 		ratelimittypes.ModuleName,
 		// Integration related modules
@@ -463,7 +465,6 @@ func NewBabylonApp(
 		ibcexported.ModuleName,
 		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcfeetypes.ModuleName,
 		ratelimittypes.ModuleName,
 		wasmtypes.ModuleName,
 		pfmroutertypes.ModuleName,

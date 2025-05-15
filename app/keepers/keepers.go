@@ -1,8 +1,10 @@
 package keepers
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
@@ -47,6 +49,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -73,6 +76,9 @@ import (
 	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
 	pfmrouterkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/keeper"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+	icq "github.com/cosmos/ibc-apps/modules/async-icq/v8"
+	icqkeeper "github.com/cosmos/ibc-apps/modules/async-icq/v8/keeper"
+	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
 	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v8"
 	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
@@ -81,9 +87,12 @@ import (
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee"
-	ibcfeekeeper "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/keeper"
-	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
+	icacontroller "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
+	icahost "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host"
+	icahostkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
 	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
@@ -93,6 +102,9 @@ import (
 	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 )
+
+var errBankRestrictionDistribution = fmt.Errorf("the distribution address %s can only receive bond denom %s",
+	appparams.AccDistribution.String(), appparams.DefaultBondDenom)
 
 // Enable all default present capabilities.
 var tokenFactoryCapabilities = []string{
@@ -154,12 +166,14 @@ type AppKeepers struct {
 	MonitorKeeper        monitorkeeper.Keeper
 
 	// IBC-related modules
-	IBCKeeper       *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	IBCFeeKeeper    ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
-	TransferKeeper  ibctransferkeeper.Keeper // for cross-chain fungible token transfers
-	IBCWasmKeeper   ibcwasmkeeper.Keeper     // for IBC wasm light clients
-	PFMRouterKeeper *pfmrouterkeeper.Keeper  // Packet Forwarding Middleware
-	RatelimitKeeper ratelimitkeeper.Keeper
+	IBCKeeper           *ibckeeper.Keeper           // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	TransferKeeper      ibctransferkeeper.Keeper    // for cross-chain fungible token transfers
+	IBCWasmKeeper       ibcwasmkeeper.Keeper        // for IBC wasm light clients
+	PFMRouterKeeper     *pfmrouterkeeper.Keeper     // Packet Forwarding Middleware
+	ICAHostKeeper       *icahostkeeper.Keeper       // Interchain Accounts host
+	ICAControllerKeeper *icacontrollerkeeper.Keeper // Interchain Accounts controller
+	ICQKeeper           *icqkeeper.Keeper           // Interchain Queries
+	RatelimitKeeper     ratelimitkeeper.Keeper
 
 	// Integration-related modules
 	BTCStkConsumerKeeper bsckeeper.Keeper
@@ -228,9 +242,11 @@ func (ak *AppKeepers) InitKeepers(
 		// IBC-related modules
 		ibcexported.StoreKey,
 		ibctransfertypes.StoreKey,
-		ibcfeetypes.StoreKey,
 		ibcwasmtypes.StoreKey,
 		pfmroutertypes.StoreKey,
+		icahosttypes.StoreKey,
+		icacontrollertypes.StoreKey,
+		icqtypes.StoreKey,
 		ratelimittypes.StoreKey,
 		// Integration related modules
 		bsctypes.ModuleName,
@@ -271,6 +287,7 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 		logger,
 	)
+	bankKeeper.AppendSendRestriction(bankSendRestrictionOnlyBondDenomToDistribution)
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
@@ -330,6 +347,9 @@ func (ak *AppKeepers) InitKeepers(
 	scopedTransferKeeper := ak.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	scopedZoneConciergeKeeper := ak.CapabilityKeeper.ScopeToModule(zctypes.ModuleName)
 	scopedWasmKeeper := ak.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
+	scopedICAHostKeeper := ak.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
+	scopedICAControllerKeeper := ak.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
+	scopedICQKeeper := ak.CapabilityKeeper.ScopeToModule(icqtypes.ModuleName)
 
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
 	// their scoped modules in `NewApp` with `ScopeToModule`
@@ -464,7 +484,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.BankKeeper,
 		ak.StakingKeeper,
 		distrkeeper.NewQuerier(ak.DistrKeeper),
-		ak.IBCFeeKeeper,
+		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper,
 		scopedWasmKeeper,
@@ -530,13 +550,6 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
-	ak.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
-		appCodec, keys[ibcfeetypes.StoreKey],
-		ak.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
-		ak.IBCKeeper.ChannelKeeper,
-		ak.IBCKeeper.PortKeeper, ak.AccountKeeper, ak.BankKeeper,
-	)
-
 	ak.RatelimitKeeper = *ratelimitkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[ratelimittypes.StoreKey]),
@@ -552,7 +565,7 @@ func (ak *AppKeepers) InitKeepers(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
 		ak.GetSubspace(ibctransfertypes.ModuleName),
-		ak.IBCFeeKeeper,
+		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper,
 		ak.AccountKeeper,
@@ -567,7 +580,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.TransferKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.BankKeeper,
-		ak.IBCFeeKeeper, // TODO replace ICS4Wrapper with RateLimitKeeper when implemented
+		ak.IBCKeeper.ChannelKeeper, // TODO replace ICS4Wrapper with RateLimitKeeper when implemented
 		appparams.AccGov.String(),
 	)
 
@@ -618,7 +631,7 @@ func (ak *AppKeepers) InitKeepers(
 	zcKeeper := zckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
-		ak.IBCFeeKeeper,
+		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.ClientKeeper,
 		ak.IBCKeeper.ConnectionKeeper,
 		ak.IBCKeeper.ChannelKeeper,
@@ -687,10 +700,48 @@ func (ak *AppKeepers) InitKeepers(
 	// Set legacy router for backwards compatibility with gov v1beta1
 	ak.GovKeeper.SetLegacyRouter(govRouter)
 
+	icaHostKeeper := icahostkeeper.NewKeeper(
+		appCodec, ak.keys[icahosttypes.StoreKey],
+		ak.GetSubspace(icahosttypes.SubModuleName),
+		ak.IBCKeeper.ChannelKeeper,
+		ak.IBCKeeper.ChannelKeeper,
+		ak.IBCKeeper.PortKeeper,
+		ak.AccountKeeper,
+		scopedICAHostKeeper,
+		bApp.MsgServiceRouter(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+	icaHostKeeper.WithQueryRouter(bApp.GRPCQueryRouter())
+	ak.ICAHostKeeper = &icaHostKeeper
+
+	icaControllerKeeper := icacontrollerkeeper.NewKeeper(
+		appCodec, ak.keys[icacontrollertypes.StoreKey],
+		ak.GetSubspace(icacontrollertypes.SubModuleName),
+		ak.IBCKeeper.ChannelKeeper,
+		ak.IBCKeeper.ChannelKeeper,
+		ak.IBCKeeper.PortKeeper,
+		scopedICAControllerKeeper,
+		bApp.MsgServiceRouter(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+	ak.ICAControllerKeeper = &icaControllerKeeper
+
+	// ICQ Keeper
+	icqKeeper := icqkeeper.NewKeeper(
+		appCodec,
+		ak.keys[icqtypes.StoreKey],
+		ak.IBCKeeper.ChannelKeeper,
+		ak.IBCKeeper.ChannelKeeper,
+		ak.IBCKeeper.PortKeeper,
+		scopedICQKeeper,
+		bApp.GRPCQueryRouter(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+	ak.ICQKeeper = &icqKeeper
+
 	// Create all supported IBC routes
 	var wasmStack porttypes.IBCModule
-	wasmStackIBCHandler := wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCFeeKeeper)
-	wasmStack = ibcfee.NewIBCMiddleware(wasmStackIBCHandler, ak.IBCFeeKeeper)
+	wasmStackIBCHandler := wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCKeeper.ChannelKeeper)
 
 	// Create Transfer Stack (from bottom to top of stack)
 	// - core IBC
@@ -717,19 +768,40 @@ func (ak *AppKeepers) InitKeepers(
 		0, // retries on timeout
 		pfmrouterkeeper.DefaultForwardTransferPacketTimeoutTimestamp,
 	)
-	transferStack = ibcfee.NewIBCMiddleware(transferStack, ak.IBCFeeKeeper)
 	transferStack = ratelimiter.NewIBCMiddleware(ak.RatelimitKeeper, transferStack)
 	ak.TransferKeeper.WithICS4Wrapper(cbStack)
 
-	var zoneConciergeStack porttypes.IBCModule
-	zoneConciergeStack = zoneconcierge.NewIBCModule(ak.ZoneConciergeKeeper)
-	zoneConciergeStack = ibcfee.NewIBCMiddleware(zoneConciergeStack, ak.IBCFeeKeeper)
+	zoneConciergeStack := zoneconcierge.NewIBCModule(ak.ZoneConciergeKeeper)
 
-	// Create static IBC router, add ibc-transfer module route, then set and seal it
+	// Create Interchain Accounts Controller Stack
+	// SendPacket Path:
+	// SendPacket -> Callbacks -> ICA Controller -> IBC core
+	// RecvPacket Path:
+	// RecvPacket -> IBC core -> ICA Controller -> Callbacks
+	var icaControllerStack porttypes.IBCModule
+	icaControllerStack = icacontroller.NewIBCMiddleware(icaControllerStack, *ak.ICAControllerKeeper)
+	icaControllerStack = ibccallbacks.NewIBCMiddleware(icaControllerStack, ak.IBCKeeper.ChannelKeeper,
+		wasmStackIBCHandler, appparams.MaxIBCCallbackGas)
+	icaICS4Wrapper := icaControllerStack.(porttypes.ICS4Wrapper)
+	ak.ICAControllerKeeper.WithICS4Wrapper(icaICS4Wrapper)
+
+	// ICA Host stack
+	// RecvPacket, message that originates from core IBC and goes down to app, the flow is:
+	// channel.RecvPacket -> fee.OnRecvPacket -> icaHost.OnRecvPacket
+	icaHostStack := icahost.NewIBCModule(*ak.ICAHostKeeper)
+
+	// Create Async ICQ module stack
+	icqStack := icq.NewIBCModule(*ak.ICQKeeper)
+
+	// Create static IBC router, add ibc-transfer module route,
+	// and the other routes (ICA, ICQ, wasm, zoneconcierge), then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
 		AddRoute(zctypes.ModuleName, zoneConciergeStack).
-		AddRoute(wasmtypes.ModuleName, wasmStack)
+		AddRoute(wasmtypes.ModuleName, wasmStack).
+		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
+		AddRoute(icahosttypes.SubModuleName, icaHostStack).
+		AddRoute(icqtypes.ModuleName, icqStack)
 
 	// Setting Router will finalize all routes by sealing router
 	// No more routes can be added
@@ -749,4 +821,24 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ratelimittypes.ModuleName)
 
 	return paramsKeeper
+}
+
+// bankSendRestrictionOnlyBondDenomToDistribution restricts that only the default bond denom should be allowed to send to distribution mod acc.
+func bankSendRestrictionOnlyBondDenomToDistribution(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) (newToAddr sdk.AccAddress, err error) {
+	if toAddr.Equals(appparams.AccDistribution) {
+		denoms := amt.Denoms()
+		switch len(denoms) {
+		case 0:
+			return toAddr, nil
+		case 1:
+			denom := denoms[0]
+			if !strings.EqualFold(denom, appparams.DefaultBondDenom) {
+				return nil, errBankRestrictionDistribution
+			}
+		default: // more than one length
+			return nil, errBankRestrictionDistribution
+		}
+	}
+
+	return toAddr, nil
 }

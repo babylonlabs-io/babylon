@@ -64,6 +64,10 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 			s.Upgrade,
 			func() {
 				s.PostUpgrade()
+				// check the reward tracker event last processed height
+				lastProcessedHeight, err := s.app.IncentiveKeeper.GetRewardTrackerEventLastProcessedHeight(s.ctx)
+				s.NoError(err)
+				s.EqualValues(DummyUpgradeHeight-1, lastProcessedHeight)
 			},
 		},
 	}
