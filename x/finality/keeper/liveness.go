@@ -203,3 +203,18 @@ func (k Keeper) jailSluggishFinalityProvider(ctx context.Context, fpBtcPk *types
 
 	return nil
 }
+
+// ExportedHandleActivatedFinalityProvider exports the private method for testing
+func (k Keeper) ExportedHandleActivatedFinalityProvider(ctx context.Context, fpPk *types.BIP340PubKey) error {
+	return k.handleActivatedFinalityProvider(ctx, fpPk)
+}
+
+// ExportedUpdateSigningInfo exports the private updateSigningInfo method for testing
+func (k Keeper) ExportedUpdateSigningInfo(
+	ctx context.Context,
+	fpPk *types.BIP340PubKey,
+	missed bool,
+	height int64,
+) (bool, *finalitytypes.FinalityProviderSigningInfo, error) {
+	return k.updateSigningInfo(ctx, fpPk, missed, height)
+}

@@ -134,7 +134,7 @@ func (k Keeper) handleActivatedFinalityProvider(ctx context.Context, fpPk *bbn.B
 		// reset signing info
 		signingInfo.StartHeight = sdkCtx.HeaderInfo().Height
 		signingInfo.JailedUntil = time.Unix(0, 0)
-		signingInfo.MissedBlocksCounter = 0
+		// signingInfo.MissedBlocksCounter = 0
 	} else if errors.Is(err, collections.ErrNotFound) {
 		signingInfo = ftypes.NewFinalityProviderSigningInfo(
 			fpPk,
