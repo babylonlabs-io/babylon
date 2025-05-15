@@ -746,16 +746,15 @@ func (ak *AppKeepers) InitKeepers(
 	// Create Transfer Stack (from bottom to top of stack)
 	// - core IBC
 	// - ratelimit
-	// - fee
 	// - PFM (Packet Forwarding Middleware)
 	// - callbacks
 	// - transfer
 
 	// Create Transfer Stack
 	// SendPacket Path:
-	// SendPacket -> Transfer -> Callbacks -> PFM -> Fee -> RateLimit -> IBC core (ICS4Wrapper)
+	// SendPacket -> Transfer -> Callbacks -> PFM -> RateLimit -> IBC core (ICS4Wrapper)
 	// RecvPacket Path:
-	// RecvPacket -> IBC core -> RateLimit -> Fee -> PFM -> Callbacks -> Transfer (AddRoute)
+	// RecvPacket -> IBC core -> RateLimit -> PFM -> Callbacks -> Transfer (AddRoute)
 	// Receive path should mirror the send path.
 
 	var transferStack porttypes.IBCModule
