@@ -532,7 +532,7 @@ func (ak *AppKeepers) InitKeepers(
 
 	ak.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
 		appCodec, keys[ibcfeetypes.StoreKey],
-		ak.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
+		ak.RatelimitKeeper, // may be replaced with IBC middleware
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper, ak.AccountKeeper, ak.BankKeeper,
 	)
@@ -719,7 +719,6 @@ func (ak *AppKeepers) InitKeepers(
 	)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, ak.IBCFeeKeeper)
 	transferStack = ratelimiter.NewIBCMiddleware(ak.RatelimitKeeper, transferStack)
-
 	ak.TransferKeeper.WithICS4Wrapper(cbStack)
 
 	var zoneConciergeStack porttypes.IBCModule
