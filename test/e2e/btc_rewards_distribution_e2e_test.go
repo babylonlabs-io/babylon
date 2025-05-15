@@ -35,7 +35,7 @@ const (
 	wDel2             = "del2"
 	wFp1              = "fp1"
 	wFp2              = "fp2"
-	numPubRand        = uint64(350)
+	numPubRand        = uint64(600)
 )
 
 type BtcRewardsDistribution struct {

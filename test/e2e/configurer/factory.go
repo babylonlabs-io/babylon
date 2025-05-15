@@ -224,7 +224,7 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 			SnapshotInterval:   cfg.SnapshotInterval,
 			SnapshotKeepRecent: cfg.SnapshotKeepRecent,
 			IsValidator:        cfg.IsValidator,
-			BtcNetwork:         string(bbn.BtcSignet),
+			BtcNetwork:         btcNetworkStr,
 		}
 	})
 
