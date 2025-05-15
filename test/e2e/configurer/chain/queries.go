@@ -441,22 +441,14 @@ func (n *NodeConfig) QueryTxWithError(txHash string, overallFlags ...string) (sd
 		n.FlagChainID(),
 	}
 
-	out, stderr, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
-	if err != nil {
-		return sdk.TxResponse{}, nil, fmt.Errorf("failed to execute command: %v, stderr: %s", err, stderr.String())
-	}
+	out, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
+	require.NoError(n.t, err)
 
 	var txResp sdk.TxResponse
 	err = util.Cdc.UnmarshalJSON(out.Bytes(), &txResp)
-	if err != nil {
-		return sdk.TxResponse{}, nil, fmt.Errorf("failed to unmarshal transaction response: %v, output: %s", err, out.String())
-	}
+	require.NoError(n.t, err)
 
-	txAuth, ok := txResp.Tx.GetCachedValue().(*sdktx.Tx)
-	if !ok {
-		return sdk.TxResponse{}, nil, fmt.Errorf("failed to cast transaction to *sdktx.Tx, response: %v", txResp)
-	}
-
+	txAuth := txResp.Tx.GetCachedValue().(*sdktx.Tx)
 	return txResp, txAuth, nil
 }
 

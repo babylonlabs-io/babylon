@@ -81,18 +81,6 @@ func (n *NodeConfig) SendIBCTransfer(from, recipient, memo string, token sdk.Coi
 	return GetTxHashFromOutput(outBuf.String())
 }
 
-func (n *NodeConfig) SendIBCTransferWithError(from, recipient, memo string, token sdk.Coin) (txHash string, err error) {
-	n.LogActionF("IBC sending %s from %s to %s. memo: %s", token.Amount.String(), from, recipient, memo)
-
-	cmd := []string{"babylond", "tx", "ibc-transfer", "transfer", "transfer", "channel-0", recipient, token.String(), fmt.Sprintf("--from=%s", from), "--memo", memo}
-	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
-	require.NoError(n.t, err)
-
-	n.LogActionF("successfully submitted sent IBC transfer: out %s", outBuf.String())
-	return GetTxHashFromOutput(outBuf.String()), nil
-}
-
-
 func (n *NodeConfig) FailIBCTransfer(from, recipient, amount string) {
 	n.LogActionF("IBC sending %s from %s to %s", amount, from, recipient)
 
