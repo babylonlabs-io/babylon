@@ -123,4 +123,12 @@ func (s *UpgradeTestSuite) PostUpgrade() {
 	s.Require().NoError(err)
 	s.Require().NotNil(res)
 	s.Require().Len(res.RateLimits, len(usedChannels))
+
+	for _, rl := range res.RateLimits {
+		s.Require().Equal(v2.DefaultDailyLimit, rl.Quota.MaxPercentRecv)
+		s.Require().Equal(v2.DefaultDailyLimit, rl.Quota.MaxPercentSend)
+		s.Require().Equal(v2.DailyDurationHours, rl.Quota.DurationHours)
+		s.Require().Zero(rl.Flow.Inflow.Int64())
+		s.Require().Zero(rl.Flow.Outflow.Int64())
+	}
 }

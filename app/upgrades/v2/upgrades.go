@@ -21,42 +21,30 @@ import (
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	"github.com/babylonlabs-io/babylon/v2/app/keepers"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
 	incentivekeeper "github.com/babylonlabs-io/babylon/v2/x/incentive/keeper"
 	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
 )
 
 // UpgradeName defines the on-chain upgrade name for the Babylon v2 upgrade
-const (
-	UpgradeName            = "v2"
-	Denom                  = "ubbn"
-	DefaultTransferChannel = "channel-5"
-	NobleTransferChannel   = "channel-1"
-	AtomTransferChannel    = "channel-0"
+const UpgradeName = "v2"
 
+var (
 	// durations in hours
-	DailyDurationHours  = 24
-	WeeklyDurationHours = 168
-
+	DailyDurationHours uint64 = 24
 	// limits (percentages)
-	DefaultDailyLimit  = 20
-	DefaultWeeklyLimit = 40
+	DefaultDailyLimit = sdkmath.NewInt(20)
 
-	NobleDailyLimit  = 30
-	NobleWeeklyLimit = 60
-
-	AtomDailyLimit  = 20
-	AtomWeeklyLimit = 40
+	Upgrade = upgrades.Upgrade{
+		UpgradeName:          UpgradeName,
+		CreateUpgradeHandler: CreateUpgradeHandler,
+		StoreUpgrades: store.StoreUpgrades{
+			Added:   []string{tokenfactorytypes.ModuleName, pfmroutertypes.StoreKey, icacontrollertypes.StoreKey, icahosttypes.StoreKey, icqtypes.StoreKey, ratelimittypes.StoreKey},
+			Deleted: []string{ibcfeetypes.StoreKey},
+		},
+	}
 )
-
-var Upgrade = upgrades.Upgrade{
-	UpgradeName:          UpgradeName,
-	CreateUpgradeHandler: CreateUpgradeHandler,
-	StoreUpgrades: store.StoreUpgrades{
-		Added:   []string{tokenfactorytypes.ModuleName, pfmroutertypes.StoreKey, icacontrollertypes.StoreKey, icahosttypes.StoreKey, icqtypes.StoreKey, ratelimittypes.StoreKey},
-		Deleted: []string{ibcfeetypes.StoreKey},
-	},
-}
 
 func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
@@ -112,7 +100,7 @@ func addRateLimits(ctx sdk.Context, chk transfertypes.ChannelKeeper, rlk ratelim
 	channels := chk.GetAllChannelsWithPortPrefix(ctx, transfertypes.PortID)
 	logger.Info("adding limits to channels", "channels_count", len(channels))
 	for _, ch := range channels {
-		if err := addRateLimit(ctx, rlk, Denom, ch.ChannelId, DefaultDailyLimit, DailyDurationHours); err != nil {
+		if err := addRateLimit(ctx, rlk, appparams.DefaultBondDenom, ch.ChannelId, DefaultDailyLimit, DailyDurationHours); err != nil {
 			return err
 		}
 	}
@@ -120,12 +108,12 @@ func addRateLimits(ctx sdk.Context, chk transfertypes.ChannelKeeper, rlk ratelim
 	return nil
 }
 
-func addRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper, denom, channel string, percent int, durationHours uint64) error {
+func addRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper, denom, channel string, percent sdkmath.Int, durationHours uint64) error {
 	addRateLimitMsg := ratelimittypes.MsgAddRateLimit{
 		ChannelId:      channel,
 		Denom:          denom,
-		MaxPercentSend: sdkmath.NewInt(int64(percent)),
-		MaxPercentRecv: sdkmath.NewInt(int64(percent)),
+		MaxPercentSend: percent,
+		MaxPercentRecv: percent,
 		DurationHours:  durationHours,
 	}
 
