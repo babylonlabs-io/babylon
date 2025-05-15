@@ -580,7 +580,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.TransferKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.BankKeeper,
-		ak.IBCKeeper.ChannelKeeper, // TODO replace ICS4Wrapper with RateLimitKeeper when implemented
+		ak.RatelimitKeeper,
 		appparams.AccGov.String(),
 	)
 
