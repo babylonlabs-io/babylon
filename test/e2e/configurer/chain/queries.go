@@ -435,6 +435,23 @@ func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) (sdk.TxRespo
 	return txResp, txAuth
 }
 
+func (n *NodeConfig) QueryTxWithError(txHash string, overallFlags ...string) (sdk.TxResponse, *sdktx.Tx, error) {
+	cmd := []string{
+		"babylond", "q", "tx", "--type=hash", txHash, "--output=json",
+		n.FlagChainID(),
+	}
+
+	out, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
+	require.NoError(n.t, err)
+
+	var txResp sdk.TxResponse
+	err = util.Cdc.UnmarshalJSON(out.Bytes(), &txResp)
+	require.NoError(n.t, err)
+
+	txAuth := txResp.Tx.GetCachedValue().(*sdktx.Tx)
+	return txResp, txAuth, nil
+}
+
 func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch uint64) (lastFinalizedEpoch uint64) {
 	// finalize epochs from 1 to the current epoch
 	currentEpoch, err := n.QueryCurrentEpoch()
