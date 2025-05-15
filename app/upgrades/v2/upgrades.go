@@ -2,6 +2,8 @@ package v2
 
 import (
 	"context"
+	"github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	store "cosmossdk.io/store/types"
 	"github.com/babylonlabs-io/babylon/v2/app/keepers"
@@ -30,6 +32,18 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		// Run migrations before applying any other state changes.
 		migrations, err := mm.RunMigrations(ctx, configurator, fromVM)
 		if err != nil {
+			return nil, err
+		}
+
+		// Set the denom creation fee to ubbn
+		params := tokenfactorytypes.DefaultParams()
+		params.DenomCreationFee = sdk.NewCoins(sdk.NewInt64Coin(types.DefaultBondDenom, 10_000_000))
+
+		if err := params.Validate(); err != nil {
+			return nil, err
+		}
+
+		if err := keepers.TokenFactoryKeeper.SetParams(ctx, params); err != nil {
 			return nil, err
 		}
 
