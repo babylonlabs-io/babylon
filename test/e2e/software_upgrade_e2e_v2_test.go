@@ -196,9 +196,9 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeCreateBtcDels(n *chain.NodeConfig
 	n.WaitForNextBlock()
 
 	// fp1Del1
-	n.CreateBTCDelegationAndCheck(s.r, s.T(), s.net, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, stakingTimeBlocks, s.fp1Del1StakingAmt)
+	n.CreateBTCDel(s.r, s.T(), s.net, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, stakingTimeBlocks, s.fp1Del1StakingAmt)
 	// fp1Del2
-	n.CreateBTCDelegationAndCheck(s.r, s.T(), s.net, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, stakingTimeBlocks, s.fp1Del2StakingAmt)
+	n.CreateBTCDel(s.r, s.T(), s.net, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, stakingTimeBlocks, s.fp1Del2StakingAmt)
 
 	resp := n.QueryBtcDelegations(bstypes.BTCDelegationStatus_ANY)
 	require.Len(s.T(), resp.BtcDelegations, 2)
