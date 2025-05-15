@@ -1,7 +1,6 @@
 package types
 
 import (
-	"errors"
 	fmt "fmt"
 	"sort"
 
@@ -144,10 +143,6 @@ func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*Fin
 
 func (vpdc VotingPowerDistCache) Validate() error {
 	fpsCount := len(vpdc.FinalityProviders)
-	if fpsCount == 0 {
-		return errors.New("invalid voting power distribution cache. Empty finality providers")
-	}
-
 	if vpdc.NumActiveFps > uint32(fpsCount) {
 		return fmt.Errorf("invalid voting power distribution cache. NumActiveFps %d is higher than FPs count %d", vpdc.NumActiveFps, fpsCount)
 	}
@@ -163,7 +158,7 @@ func (vpdc VotingPowerDistCache) Validate() error {
 			return fmt.Errorf("invalid voting power distribution cache. Duplicate finality provider entry with BTC PK %s", fp.BtcPk.MarshalHex())
 		}
 		fpMap[fp.BtcPk.MarshalHex()] = struct{}{}
-		
+
 		if err := fp.Validate(); err != nil {
 			return err
 		}
