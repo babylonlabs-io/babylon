@@ -516,6 +516,12 @@ func UpdateBlsPassword(homeDir string, blsPrivKey bls12381.PrivateKey, password 
 		return fmt.Errorf("BLS key does not exist at %s", blsKeyFile)
 	}
 
+	// Create backup of BLS key file before removing it
+	backupBlsKeyFile := blsKeyFile + ".bk"
+	if err := cmtos.CopyFile(blsKeyFile, backupBlsKeyFile); err != nil {
+		return fmt.Errorf("failed to create backup of BLS key file: %w", err)
+	}
+
 	// Remove BLS key file
 	if err := os.Remove(blsKeyFile); err != nil {
 		return fmt.Errorf("failed to remove BLS key file: %w", err)
@@ -531,6 +537,11 @@ func UpdateBlsPassword(homeDir string, blsPrivKey bls12381.PrivateKey, password 
 	// Generate key with provided password
 	bls := NewBls(blsPrivKey, blsKeyFile, passwordFilePath)
 	bls.Key.Save(password)
+
+	// Remove backup of BLS key file
+	if err := os.Remove(backupBlsKeyFile); err != nil {
+		return fmt.Errorf("failed to remove backup of BLS key file: %w", err)
+	}
 
 	// Print appropriate message based on password source
 	if password == "" {
