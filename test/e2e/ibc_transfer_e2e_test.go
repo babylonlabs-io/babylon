@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -257,11 +258,11 @@ func (s *IBCTransferTestSuite) TestPacketForwarding() {
 
 	nB.WaitForNextBlock()
 
-	_, txResp := nB.QueryTx(txHash)
-	txFeesPaid := txResp.AuthInfo.Fee.Amount
-
-	_, _, err = nB.QueryTxWithError(txHash)
+	txRes, tx, err := nB.QueryTxWithError(txHash)
 	s.Require().NoError(err)
+	// check tx was successful
+	s.Require().Zero(txRes.Code, fmt.Sprintf("Tx response with non-zero code. Code: %d - Raw log: %s", txRes.Code, txRes.RawLog))
+	txFeesPaid := tx.AuthInfo.Fee.Amount
 
 	s.Require().Eventually(func() bool {
 		balanceAfterSendBackB, err := nB.QueryBalances(s.addrB)
@@ -329,8 +330,9 @@ func (s *IBCTransferTestSuite) TestE2EBelowThreshold() {
 
 	nB.WaitForNextBlock()
 
-	_, _, err = nB.QueryTxWithError(txHash)
+	txRes, _, err := nB.QueryTxWithError(txHash)
 	s.Require().NoError(err)
+	s.Require().Zero(txRes.Code, fmt.Sprintf("Tx response with non-zero code. Code: %d - Raw log: %s", txRes.Code, txRes.RawLog))
 
 	s.Require().Eventually(func() bool {
 		balanceAfterReceivingSendA, err := nA.QueryBalances(s.addrA)
@@ -370,15 +372,15 @@ func (s *IBCTransferTestSuite) TestRateLimitE2EAboveThreshold() {
 
 	s.T().Log("Attempting to send IBC transfer...")
 	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, channel, transferCoin)
+	nB.WaitForNextBlock()
 
-	_, _, err = nB.QueryTxWithError(txHash)
+	txRes, _, err := nB.QueryTxWithError(txHash)
 	s.Require().Error(err)
+	s.Require().Zero(txRes.Code, fmt.Sprintf("Tx response with non-zero code. Code: %d - Raw log: %s", txRes.Code, txRes.RawLog))
 
 	if txHash != "" {
 		s.T().Logf("IBC transfer sent, txHash: %s", txHash)
 	}
-
-	nA.WaitForNextBlock()
 
 	balanceAfterReceivingSendBackA, err := nA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
