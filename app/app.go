@@ -82,6 +82,8 @@ import (
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 	icq "github.com/cosmos/ibc-apps/modules/async-icq/v8"
 	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
+	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v8"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	"github.com/cosmos/ibc-go/modules/capability"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
@@ -323,6 +325,7 @@ func NewBabylonApp(
 		ibcwasm.NewAppModule(app.IBCWasmKeeper),
 		pfmrouter.NewAppModule(app.PFMRouterKeeper, app.GetSubspace(pfmroutertypes.ModuleName)),
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(tokenfactorytypes.ModuleName)),
+		ratelimiter.NewAppModule(appCodec, app.RatelimitKeeper),
 		ica.NewAppModule(app.ICAControllerKeeper, app.ICAHostKeeper),
 		icq.NewAppModule(*app.ICQKeeper, app.GetSubspace(icqtypes.ModuleName)),
 		// Babylon modules - btc timestamping
@@ -391,6 +394,7 @@ func NewBabylonApp(
 		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		wasmtypes.ModuleName,
+		ratelimittypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
@@ -424,6 +428,7 @@ func NewBabylonApp(
 		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		wasmtypes.ModuleName,
+		ratelimittypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
@@ -460,10 +465,11 @@ func NewBabylonApp(
 		ibcexported.ModuleName,
 		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
+		ratelimittypes.ModuleName,
 		wasmtypes.ModuleName,
-		pfmroutertypes.ModuleName,
 		icatypes.ModuleName,
 		icqtypes.ModuleName,
+		pfmroutertypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
