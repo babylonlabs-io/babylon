@@ -593,7 +593,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.BankKeeper,
 		ak.StakingKeeper,
 		distrkeeper.NewQuerier(ak.DistrKeeper),
-		ak.IBCFeeKeeper,
+		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.PortKeeper,
 		scopedWasmKeeper,
@@ -672,9 +672,9 @@ func (ak *AppKeepers) InitKeepers(
 
 	// Create Transfer Stack
 	// SendPacket Path:
-	// SendPacket -> Transfer -> Callbacks -> PFM -> Fee -> IBC core (ICS4Wrapper)
+	// SendPacket -> Transfer -> Callbacks -> PFM -> IBC core (ICS4Wrapper)
 	// RecvPacket Path:
-	// RecvPacket -> IBC core -> Fee -> PFM -> Callbacks -> Transfer (AddRoute)
+	// RecvPacket -> IBC core -> PFM -> Callbacks -> Transfer (AddRoute)
 	// Receive path should mirror the send path.
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(ak.TransferKeeper)
