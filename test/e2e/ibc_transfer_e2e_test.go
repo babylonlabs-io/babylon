@@ -308,7 +308,7 @@ func (s *IBCTransferTestSuite) TestPacketForwarding() {
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
 }
 
-func (s *IBCTransferTestSuite) TestRateLimitE2EBelowThreshold() {
+func (s *IBCTransferTestSuite) TestE2EBelowThreshold() {
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
@@ -317,31 +317,67 @@ func (s *IBCTransferTestSuite) TestRateLimitE2EBelowThreshold() {
 	nB, err := bbnChainB.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	_, err = nA.QueryBalances(s.addrA)
+	balanceBeforeSendB, err := nB.QueryBalances(s.addrB)
 	s.Require().NoError(err)
 
-	balanceBeforeTransferB, err := nB.QueryBalances(s.addrB)
+	transferCoin := sdk.NewInt64Coin(nativeDenom, 100)
+
+	balanceBeforeReceivingSendA, err := nA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
 
-	packetAmount := sdkmath.NewInt(1)
-	channel := "channel-0"
+	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, "channel-0", transferCoin)
 
-	transferCoin := sdk.NewCoin(nativeDenom, packetAmount)
+	nB.WaitForNextBlock()
 
-	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, channel, transferCoin)
-
-	nA.WaitForNextBlock()
+	_, txResp := nB.QueryTx(txHash)
+	txFeesPaid := txResp.AuthInfo.Fee.Amount
 
 	_, _, err = nB.QueryTxWithError(txHash)
 	s.Require().NoError(err)
 
-	_, err = nA.QueryBalances(s.addrA)
-	s.Require().NoError(err)
+	s.Require().Eventually(func() bool {
+		balanceAfterSendB, err := nB.QueryBalances(s.addrB)
+		if err != nil {
+			s.T().Logf("failed to query balances: %s", err.Error())
+			return false
+		}
+		// expected to have the same initial balance - fees
+		// because the pkg with funds makes a round trip
+		expectedAmt := balanceBeforeSendB.Sub(txFeesPaid...).String()
+		actualAmt := balanceAfterSendB.String()
 
-	balanceAfterTransferB, err := nB.QueryBalances(s.addrB)
-	s.Require().NoError(err)
+		if !strings.EqualFold(expectedAmt, actualAmt) {
+			s.T().Logf(
+				"BalanceBeforeSendkB: %s; BalanceAfterSendB: %s, txFees: %s, coinTransfer: %s",
+				balanceBeforeSendB.String(), balanceAfterSendB.String(), txFeesPaid.String(), transferCoin.String(),
+			)
+			return false
+		}
 
-	s.Require().NotEqual(balanceBeforeTransferB.String(), balanceAfterTransferB.String(), "Balance should remain unchanged after transfer")
+		return true
+	}, 1*time.Minute, 1*time.Second, "Transfer back A was not successful")
+
+	s.Require().Eventually(func() bool {
+		balanceAfterReceivingSendA, err := nA.QueryBalances(s.addrA)
+		if err != nil {
+			return false
+		}
+
+		// balance should remain unchanged on chain A
+		expectedAmt := balanceBeforeReceivingSendA.String()
+		actualAmt := balanceAfterReceivingSendA.String()
+
+		// Check that the balance of the native denom has increased
+		if !strings.EqualFold(expectedAmt, actualAmt) {
+			s.T().Logf(
+				"BalanceBeforeReceivingSendA: %s; BalanceAfterReceivingSendA: %s",
+				balanceBeforeReceivingSendA.String(), balanceAfterReceivingSendA.String(),
+			)
+			return false
+		}
+
+		return true
+	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
 }
 
 func (s *IBCTransferTestSuite) TestRateLimitE2EAboveThreshold() {
