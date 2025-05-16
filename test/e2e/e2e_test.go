@@ -48,3 +48,8 @@ func TestICATestSuite(t *testing.T) {
 func TestSoftwareUpgradeV2TestSuite(t *testing.T) {
 	suite.Run(t, new(SoftwareUpgradeV2TestSuite))
 }
+
+// TestFinalityGadgetTestSuite tests finality gadgets integration
+func TestFinalityGadgetTestSuite(t *testing.T) {
+	suite.Run(t, new(FinalityGadgetTestSuite))
+}
