@@ -23,6 +23,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/util"
@@ -433,6 +434,46 @@ func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) (sdk.TxRespo
 
 	txAuth := txResp.Tx.GetCachedValue().(*sdktx.Tx)
 	return txResp, txAuth
+}
+
+func (n *NodeConfig) QueryTxWithError(txHash string, overallFlags ...string) (sdk.TxResponse, *sdktx.Tx, error) {
+	cmd := []string{
+		"babylond", "q", "tx", "--type=hash", txHash, "--output=json",
+		n.FlagChainID(),
+	}
+
+	out, stderr, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
+	if err != nil {
+		return sdk.TxResponse{}, nil, fmt.Errorf("failed to execute command: %v, stderr: %s", err, stderr.String())
+	}
+
+	var txResp sdk.TxResponse
+	err = util.Cdc.UnmarshalJSON(out.Bytes(), &txResp)
+	if err != nil {
+		if err == io.EOF {
+			return sdk.TxResponse{}, nil, fmt.Errorf("unexpected EOF while unmarshalling transaction response, output: %s", out.String())
+		}
+		return sdk.TxResponse{}, nil, fmt.Errorf("failed to unmarshal transaction response: %v, output: %s", err, out.String())
+	}
+
+	txAuth, ok := txResp.Tx.GetCachedValue().(*sdktx.Tx)
+	if !ok {
+		return sdk.TxResponse{}, nil, fmt.Errorf("failed to cast transaction to *sdktx.Tx, response: %v", txResp)
+	}
+
+	return txResp, txAuth, nil
+}
+
+func (n *NodeConfig) QueryICAAccountAddress(owner, connectionID string) string {
+	path := fmt.Sprintf("ibc/apps/interchain_accounts/controller/v1/owners/%s/connections/%s", owner, connectionID)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var resp icacontrollertypes.QueryInterchainAccountResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return resp.Address
 }
 
 func (n *NodeConfig) WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch uint64) (lastFinalizedEpoch uint64) {

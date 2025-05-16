@@ -77,7 +77,10 @@ check of rewards
 - [#876](https://github.com/babylonlabs-io/babylon/pull/876) Add Packet Forwarding Middleware (PFM) module.
 - [#881](https://github.com/babylonlabs-io/babylon/pull/881) Update init/export genesis logic in `x/mint` module
 - [#883](https://github.com/babylonlabs-io/babylon/pull/883) Update init/export genesis logic in `x/monitor` module
+- [#887](https://github.com/babylonlabs-io/babylon/pull/887) Update init/export genesis logic in `x/zoneconcierge` module
 - [#897](https://github.com/babylonlabs-io/babylon/pull/897) Add Interchain Accounts (ICA) and Interchain Queries (ICQ) modules.
+- [#902](https://github.com/babylonlabs-io/babylon/pull/902) Add IBC rate limiter to IBC transfer module
+- [#913](https://github.com/babylonlabs-io/babylon/pull/913) Remove IBC-fee module.
 
 ### State Machine Breaking
 

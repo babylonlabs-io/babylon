@@ -214,6 +214,7 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		CreateBlsKeyCmd(),
 		UpdateBlsPasswordCmd(),
 		ShowBlsKeyCmd(),
+		VerifyValidatorBlsKey(),
 		GenerateBlsPopCmd(),
 		ModuleSizeCmd(),
 		DebugCmd(),

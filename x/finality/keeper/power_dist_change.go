@@ -50,18 +50,18 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events)
 
 	// record voting power and cache for this height
-	k.recordVotingPowerAndCache(ctx, newDc)
+	k.RecordVotingPowerAndCache(ctx, newDc)
 	// emit events for finality providers with state updates
-	k.handleFPStateUpdates(ctx, dc, newDc)
+	k.HandleFPStateUpdates(ctx, dc, newDc)
 	// record metrics
 	k.recordMetrics(newDc)
 }
 
-// recordVotingPowerAndCache assigns voting power to each active finality provider
+// RecordVotingPowerAndCache assigns voting power to each active finality provider
 // with the following consideration:
 // 1. the fp must have timestamped pub rand
 // 2. the fp must in the top x ranked by the voting power (x is given by maxActiveFps)
-func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *ftypes.VotingPowerDistCache) {
+func (k Keeper) RecordVotingPowerAndCache(ctx context.Context, newDc *ftypes.VotingPowerDistCache) {
 	if newDc == nil {
 		panic("the voting power distribution cache cannot be nil")
 	}
@@ -93,8 +93,8 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, newDc *ftypes.Vot
 	k.SetVotingPowerDistCache(ctx, babylonTipHeight, newDc)
 }
 
-// handleFPStateUpdates emits events and triggers hooks for finality providers with state updates
-func (k Keeper) handleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.VotingPowerDistCache) {
+// HandleFPStateUpdates emits events and triggers hooks for finality providers with state updates
+func (k Keeper) HandleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.VotingPowerDistCache) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	newlyActiveFPs := newDc.FindNewActiveFinalityProviders(prevDc)
@@ -473,20 +473,32 @@ func (k Keeper) processRewardTracker(
 	}
 }
 
-// MustProcessBtcDelegationActivated calls the IncentiveKeeper.BtcDelegationActivated
+// MustProcessBtcDelegationActivated calls the IncentiveKeeper.AddEventBtcDelegationActivated
 // and panics if it errors
 func (k Keeper) MustProcessBtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sats uint64) {
-	err := k.IncentiveKeeper.BtcDelegationActivated(ctx, fp, del, sats)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	height := uint64(sdkCtx.HeaderInfo().Height)
+	err := k.IncentiveKeeper.AddEventBtcDelegationActivated(ctx, height, fp, del, sats)
 	if err != nil {
+		k.Logger(sdkCtx).Error(
+			"failed to add event of activated BTC delegation",
+			"blockHeight", height,
+		)
 		panic(err)
 	}
 }
 
-// MustProcessBtcDelegationUnbonded calls the IncentiveKeeper.BtcDelegationUnbonded
+// MustProcessBtcDelegationUnbonded calls the IncentiveKeeper.AddEventBtcDelegationUnbonded
 // and panics if it errors
 func (k Keeper) MustProcessBtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sats uint64) {
-	err := k.IncentiveKeeper.BtcDelegationUnbonded(ctx, fp, del, sats)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	height := uint64(sdkCtx.HeaderInfo().Height)
+	err := k.IncentiveKeeper.AddEventBtcDelegationUnbonded(ctx, height, fp, del, sats)
 	if err != nil {
+		k.Logger(sdkCtx).Error(
+			"failed to add event of unbonded BTC delegation",
+			"blockHeight", height,
+		)
 		panic(err)
 	}
 }

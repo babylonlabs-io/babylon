@@ -94,7 +94,7 @@ func CmdRegisteredConsumer() *cobra.Command {
 func CmdFinalityProviderConsumer() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "finality-provider-consumer <fp_btc_pk_hex>",
-		Short: "retrieve a given CZ finality provider's registered consumer id",
+		Short: "retrieve a given Consumer finality provider's registered consumer id",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)

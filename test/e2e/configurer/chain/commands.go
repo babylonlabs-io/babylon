@@ -25,6 +25,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,8 +61,8 @@ func (n *NodeConfig) KeysAdd(walletName string, overallFlags ...string) string {
 // QueryParams extracts the params for a given subspace and key. This is done generically via json to avoid having to
 // specify the QueryParamResponse type (which may not exist for all params).
 // TODO for now all commands are not used and left here as an example
-func (n *NodeConfig) QueryParams(subspace, key string, result any) {
-	cmd := []string{"babylond", "query", "params", "subspace", subspace, key, "--output=json"}
+func (n *NodeConfig) QueryParams(module string, result any) {
+	cmd := []string{"babylond", "query", module, "params", "--output=json"}
 
 	out, _, err := n.containerManager.ExecCmd(n.t, n.Name, cmd, "")
 	require.NoError(n.t, err)
@@ -519,3 +520,48 @@ func GetTxHashFromOutput(txOutput string) (txHash string) {
 	}
 	return ""
 }
+
+func (n *NodeConfig) RegisterICAAccount(from, connectionID string) (txHash string) {
+	n.LogActionF("Registering ICA Account for %s and connection %s", from, connectionID)
+
+	version := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
+		Version:                icatypes.Version,
+		ControllerConnectionId: connectionID,
+		HostConnectionId:       connectionID,
+		Encoding:               icatypes.EncodingProtobuf,
+		TxType:                 icatypes.TxTypeSDKMultiMsg,
+	}))
+
+	cmd := []string{
+		"babylond", "tx",
+		"interchain-accounts",
+		"controller", "register",
+		connectionID,
+		fmt.Sprintf("--version=%s", version),
+		fmt.Sprintf("--from=%s", from), "--gas=250000",
+	}
+
+	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+
+	n.LogActionF("successfully created ICA account: out %s", outBuf.String())
+	return GetTxHashFromOutput(outBuf.String())
+}
+
+func (n *NodeConfig) FailICASendTx(from, connectionID, packetMsgPath string) {
+	n.LogActionF("%s sending ICA transaction to the host chain %s", from, n.chainId)
+
+	cmd := []string{
+		"babylond", "tx",
+		"interchain-accounts", "controller",
+		"send-tx", connectionID, packetMsgPath,
+		fmt.Sprintf("--from=%s", from),
+	}
+
+	_, _, err := n.containerManager.ExecTxCmdWithSuccessString(n.t, n.chainId, n.Name, cmd, "message type not allowed")
+	require.NoError(n.t, err)
+
+	n.LogActionF("Failed to perform ICA send (as expected)")
+}
+
+

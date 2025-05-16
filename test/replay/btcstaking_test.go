@@ -351,3 +351,178 @@ func TestStakingAndFinalizingMultipleBlocksAtOnce(t *testing.T) {
 		require.Equal(t, bl.Finalized, true)
 	}
 }
+
+func TestSlashingandFinalizingBlocks(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driver := NewBabylonAppDriverTmpDir(r, t)
+	driver.GenerateNewBlock()
+
+	scenario := NewStandardScenario(driver)
+	scenario.InitScenario(6, 1) // 6 finality providers
+
+	numBlocksInTest := uint64(10)
+	lastVotedBlkHeight := scenario.FinalityFinalizeBlocks(scenario.activationHeight, numBlocksInTest, scenario.FpMapBtcPkHex())
+
+	indexSlashFp1 := 1
+	indexSlashFp2 := 2
+	jailedFp1 := scenario.finalityProviders[indexSlashFp1]
+	jailedFp2 := scenario.finalityProviders[indexSlashFp2]
+
+	bl := driver.GetIndexedBlock(lastVotedBlkHeight)
+	require.Equal(t, bl.Finalized, true)
+
+	// 2 fps not voting
+	for i := uint64(0); i < numBlocksInTest; i++ {
+		lastVotedBlkHeight++
+		for i, fp := range scenario.finalityProviders {
+			if i != indexSlashFp1 {
+				fp.CastVote(lastVotedBlkHeight)
+			}
+		}
+
+		driver.GenerateNewBlock()
+
+		bl := driver.GetIndexedBlock(lastVotedBlkHeight)
+		require.Equal(t, bl.Finalized, true)
+	}
+
+	scenario.finalityProviders[indexSlashFp1].SendSelectiveSlashingEvidence()
+	scenario.finalityProviders[indexSlashFp2].SendSelectiveSlashingEvidence()
+
+	driver.GenerateNewBlock()
+
+	slashedFp1 := driver.GetFp(*jailedFp1.BTCPublicKey())
+	require.True(t, slashedFp1.IsSlashed())
+	slashedFp2 := driver.GetFp(*jailedFp2.BTCPublicKey())
+	require.True(t, slashedFp2.IsSlashed())
+
+	driver.GenerateNewBlock()
+
+	bl = driver.GetIndexedBlock(lastVotedBlkHeight)
+	require.Equal(t, bl.Finalized, true)
+
+	require.Len(t, driver.GetActiveFpsAtCurrentHeight(t), 4)
+}
+
+func TestActivatingDelegationOnSlashedFp(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driver := NewBabylonAppDriverTmpDir(r, t)
+	driver.GenerateNewBlock()
+
+	scenario := NewStandardScenario(driver)
+	scenario.InitScenario(4, 1)
+
+	for j := 0; j < 1; j++ {
+		scenario.stakers[0].CreatePreApprovalDelegation(
+			scenario.finalityProviders[0].BTCPublicKey(),
+			1000,
+			100000000,
+		)
+	}
+
+	scenario.driver.GenerateNewBlockAssertExecutionSuccess()
+	pendingDelegations := scenario.driver.GetPendingBTCDelegations(scenario.driver.t)
+	require.Equal(scenario.driver.t, 1, len(pendingDelegations))
+
+	scenario.covenant.SendCovenantSignatures()
+	scenario.driver.GenerateNewBlockAssertExecutionSuccess()
+
+	numBlocksInTest := uint64(10)
+	lastVotedBlkHeight := scenario.FinalityFinalizeBlocks(scenario.activationHeight, numBlocksInTest, scenario.FpMapBtcPkHex())
+
+	for i := uint64(0); i < numBlocksInTest; i++ {
+		lastVotedBlkHeight++
+		for i, fp := range scenario.finalityProviders {
+			if i != 0 {
+				fp.CastVote(lastVotedBlkHeight)
+			}
+		}
+
+		driver.GenerateNewBlock()
+
+		bl := driver.GetIndexedBlock(lastVotedBlkHeight)
+		require.Equal(t, bl.Finalized, true)
+	}
+
+	scenario.finalityProviders[0].SendSelectiveSlashingEvidence()
+
+	driver.GenerateNewBlock()
+
+	slashedFp1 := driver.GetFp(*scenario.finalityProviders[0].BTCPublicKey())
+	require.True(t, slashedFp1.IsSlashed())
+
+	verifiedDelegations := scenario.driver.GetVerifiedBTCDelegations(scenario.driver.t)
+	require.Equal(scenario.driver.t, len(verifiedDelegations), 1)
+
+	scenario.driver.ActivateVerifiedDelegations(1)
+	scenario.driver.GenerateNewBlockAssertExecutionSuccess()
+
+	activationHeight := scenario.driver.GetActivationHeight(scenario.driver.t)
+	require.Greater(scenario.driver.t, activationHeight, uint64(0))
+
+	activeFps := scenario.driver.GetActiveFpsAtHeight(scenario.driver.t, activationHeight)
+	require.Equal(scenario.driver.t, len(activeFps), 4)
+
+	require.True(t, slashedFp1.IsSlashed())
+
+	for i := uint64(0); i < numBlocksInTest; i++ {
+		lastVotedBlkHeight++
+		for _, fp := range scenario.finalityProviders {
+			fp.CastVote(lastVotedBlkHeight)
+		}
+
+		resp := driver.GenerateNewBlock()
+		require.NotNil(t, resp)
+
+		var containsSlashing bool = false
+
+		for _, res := range resp.TxResults {
+			if res.Code == 1104 {
+				containsSlashing = true
+			}
+		}
+		require.True(t, containsSlashing)
+	}
+}
+
+func TestJailingFinalityProvider(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driver := NewBabylonAppDriverTmpDir(r, t)
+	driver.GenerateNewBlock()
+
+	numBlocksFinalized := uint64(2)
+	scenario := NewStandardScenario(driver)
+	scenario.InitScenario(2, 1)
+
+	lastVotedBlkHeight := scenario.FinalityFinalizeBlocks(scenario.activationHeight, numBlocksFinalized, scenario.FpMapBtcPkHex())
+
+	fp := scenario.finalityProviders[0]
+
+	for {
+		lastVotedBlkHeight++
+		for i, fp := range scenario.finalityProviders {
+			if i != 0 {
+				fp.CastVote(lastVotedBlkHeight)
+			}
+		}
+
+		driver.GenerateNewBlock()
+
+		bl := driver.GetIndexedBlock(lastVotedBlkHeight)
+		require.Equal(t, bl.Finalized, false)
+
+		fp := driver.GetFp(*fp.BTCPublicKey())
+		if fp.Jailed {
+			break
+		}
+	}
+
+	fp.SendSelectiveSlashingEvidence()
+	driver.GenerateNewBlock()
+
+	activeFps := driver.GetActiveFpsAtCurrentHeight(t)
+	require.Equal(t, 1, len(activeFps))
+}

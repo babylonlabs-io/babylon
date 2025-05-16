@@ -65,8 +65,8 @@ func (k Keeper) GetChainInfo(ctx context.Context, consumerId string) (*types.Cha
 // - replace the old latest header with the given one
 // - increment the number of timestamped headers
 // Note that this function is triggered only upon receiving headers from the relayer,
-// and only a subset of headers in CZ are relayed. Thus TimestampedHeadersCount is not
-// equal to the total number of headers in CZ.
+// and only a subset of headers in the Consumer are relayed. Thus TimestampedHeadersCount is not
+// equal to the total number of headers in the Consumer.
 func (k Keeper) updateLatestHeader(ctx context.Context, consumerId string, header *types.IndexedHeader) error {
 	if header == nil {
 		return errorsmod.Wrapf(types.ErrInvalidHeader, "header is nil")
@@ -133,7 +133,7 @@ func (k Keeper) GetAllConsumerIDs(ctx context.Context) []string {
 	return consumerIds
 }
 
-// msgChainInfoStore stores the information of canonical chains and forks for CZs
+// msgChainInfoStore stores the information of canonical chains and forks for Consumers
 // prefix: ChainInfoKey
 // key: consumerId
 // value: ChainInfo

@@ -90,7 +90,8 @@ func FuzzRewardBTCStaking(f *testing.F) {
 
 			for delAddrStr, delSat := range btcTotalSatByDelAddressByFpAddress[fpAddr.String()] {
 				btcDelAddr := sdk.MustAccAddressFromBech32(delAddrStr)
-				err := k.BtcDelegationActivated(ctx, fpAddr, btcDelAddr, delSat)
+
+				err := k.BtcDelegationActivated(ctx, fpAddr, btcDelAddr, sdkmath.NewIntFromUint64(delSat))
 				require.NoError(t, err)
 
 				btcDelPortion := fp.GetBTCDelPortion(delSat)
@@ -116,7 +117,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 					require.Equal(t, delRwd.TotalActiveSat.Uint64(), delSat)
 
 					// makes sure the rewards added reach the delegation gauge
-					err = k.BtcDelegationActivated(ctx, fpAddr, delAddr, 0)
+					err = k.BtcDelegationActivated(ctx, fpAddr, delAddr, sdkmath.ZeroInt())
 					require.NoError(t, err)
 					fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fpAddr)
 					require.NoError(t, err)

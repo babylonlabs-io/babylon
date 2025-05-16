@@ -1,0 +1,55 @@
+syntax = "proto3";
+package babylon.incentive;
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/incentive/types";
+
+// EventsPowerUpdateAtHeight stores a slice of events happened at
+// some specific block height, indexed by the block height.
+message EventsPowerUpdateAtHeight {
+  repeated EventPowerUpdate events = 1;
+}
+
+// EventPowerUpdate is an event that affects voting power distribution
+// of BTC rewards, it is indexed by the babylon block height which
+// they were processed at the finality voting power table.
+message EventPowerUpdate {
+  // ev is the event that affects voting power distribution
+  oneof ev {
+    // BtcActivated means a BTC delegation becomes active.
+    EventBTCDelegationActivated btc_activated = 1;
+    // BtcUnbonded means a BTC delegation becomes unbonded.
+    EventBTCDelegationUnbonded btc_unbonded = 2;
+  }
+}
+
+
+// EventBTCDelegationActivated event that activated a BTC delegation.
+message EventBTCDelegationActivated {
+  // FpAddr is the bbn address of the finality provider
+  string fp_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // BtcDelAddr is the bbn address of the BTC delegator
+  string btc_del_addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // TotalSat the number of satoshis delegated
+  bytes total_sat = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// EventBTCDelegationUnbonded event that unbonded a BTC delegation.
+message EventBTCDelegationUnbonded {
+  // FpAddr is the bbn address of the finality provider
+  string fp_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // BtcDelAddr is the bbn address of the BTC delegator
+  string btc_del_addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // TotalSat the number of satoshis unbonded withdraw
+  bytes total_sat = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}

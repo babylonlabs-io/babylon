@@ -579,6 +579,13 @@ func (d *BabylonAppDriver) GetLastState() sm.State {
 	return lastState
 }
 
+func (d *BabylonAppDriver) GenerateBlocksUntilHeight(untilBlock uint64) {
+	blkHeight := d.Ctx().BlockHeader().Height
+	for i := blkHeight; i < int64(untilBlock); i++ {
+		d.GenerateNewBlockAssertExecutionSuccess()
+	}
+}
+
 func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
 	response := d.GenerateNewBlock()
 
@@ -939,13 +946,13 @@ func (d *BabylonAppDriver) GovPropWaitPass(msgInGovProp sdk.Msg) {
 		prop := d.GovProposal(propId)
 
 		if prop.Status == v1.ProposalStatus_PROPOSAL_STATUS_FAILED {
-			d.t.Errorf("prop %d failed due to: %s", propId, prop.FailedReason)
+			d.t.Fatalf("prop %d failed due to: %s", propId, prop.FailedReason)
 		}
 
 		if prop.Status == v1.ProposalStatus_PROPOSAL_STATUS_PASSED {
 			break
 		}
 
-		d.GenerateNewBlock()
+		d.GenerateNewBlockAssertExecutionSuccess()
 	}
 }

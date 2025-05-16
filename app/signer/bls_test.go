@@ -33,13 +33,12 @@ func TestNewBls(t *testing.T) {
 		})
 	})
 
-	t.Run("save bls key to file without delegator address", func(t *testing.T) {
+	t.Run("save bls key to file", func(t *testing.T) {
 		t.Parallel()
 		testTempDir := t.TempDir()
 		testKeyFilePath := DefaultBlsKeyFile(testTempDir)
 		testPasswordFilePath := DefaultBlsPasswordFile(testTempDir)
 
-		// Ensure directories exist before saving
 		err := EnsureDirs(testKeyFilePath, testPasswordFilePath)
 		assert.NoError(t, err)
 
@@ -58,31 +57,17 @@ func TestNewBls(t *testing.T) {
 			assert.Equal(t, pv.Key.PrivKey, loadedPv.Key.PrivKey)
 			assert.Equal(t, pv.Key.PubKey.Bytes(), loadedPv.Key.PubKey.Bytes())
 		})
-	})
 
-	t.Run("save bls key to file with delegator address", func(t *testing.T) {
-		t.Parallel()
-		testTempDir := t.TempDir()
-		testKeyFilePath := DefaultBlsKeyFile(testTempDir)
-		testPasswordFilePath := DefaultBlsPasswordFile(testTempDir)
-
-		err := EnsureDirs(testKeyFilePath, testPasswordFilePath)
-		assert.NoError(t, err)
-
-		pv := NewBls(bls12381.GenPrivKey(), testKeyFilePath, testPasswordFilePath)
-		assert.NotNil(t, pv)
-
-		password := "password"
-		pv.Key.Save(password)
-
-		t.Run("load bls key from file", func(t *testing.T) {
+		t.Run("check bls_key.json and bls_password.txt permissions", func(t *testing.T) {
 			t.Parallel()
-			loadedPv, _, err := TryLoadBlsFromFile(testKeyFilePath, testPasswordFilePath)
+			// Check permissions
+			fileInfo, err := os.Stat(testKeyFilePath)
 			assert.NoError(t, err)
-			assert.NotNil(t, loadedPv)
+			assert.Equal(t, fileInfo.Mode().Perm(), os.FileMode(0400))
 
-			assert.Equal(t, pv.Key.PrivKey, loadedPv.Key.PrivKey)
-			assert.Equal(t, pv.Key.PubKey.Bytes(), loadedPv.Key.PubKey.Bytes())
+			fileInfo, err = os.Stat(testPasswordFilePath)
+			assert.NoError(t, err)
+			assert.Equal(t, fileInfo.Mode().Perm(), os.FileMode(0400))
 		})
 	})
 }
