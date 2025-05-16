@@ -191,20 +191,10 @@ func (k *BlsKey) Save(password string) {
 		panic(fmt.Errorf("failed to write BLS key: %w", err))
 	}
 
-	// set bls_key.json to read only
-	if err := os.Chmod(k.filePath, 0400); err != nil {
-		panic(fmt.Errorf("failed to set read-only permission for BLS key file: %w", err))
-	}
-
 	// write password to file
 	if k.passwordPath != "" {
 		if err := tempfile.WriteFileAtomic(k.passwordPath, []byte(password), 0400); err != nil {
 			panic(fmt.Errorf("failed to write BLS password: %w", err))
-		}
-
-		// set bls_password.txt to read only
-		if err := os.Chmod(k.passwordPath, 0400); err != nil {
-			panic(fmt.Errorf("failed to set read-only permission for BLS password file: %w", err))
 		}
 	}
 }
