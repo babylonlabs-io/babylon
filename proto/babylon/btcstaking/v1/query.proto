@@ -11,7 +11,7 @@ import "babylon/btcstaking/v1/btcstaking.proto";
 import "babylon/btcstaking/v1/pop.proto";
 import "babylon/btclightclient/v1/query.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types";
 
 // Query defines the gRPC querier service.
 service Query {

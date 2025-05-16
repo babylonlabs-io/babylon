@@ -10,7 +10,7 @@ import "babylon/btclightclient/v1/btclightclient.proto";
 import "amino/amino.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types";
 
 // FinalityProvider defines a finality provider
 message FinalityProvider {

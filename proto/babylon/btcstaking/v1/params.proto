@@ -4,7 +4,7 @@ package babylon.btcstaking.v1;
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/btcstaking/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types";
 
 // Params defines the parameters for the module.
 message Params {

@@ -1,7 +1,7 @@
 syntax = "proto3";
 package babylon.finality.v1;
 
-option go_package = "github.com/babylonlabs-io/babylon/x/finality/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/finality/types";
 
 import "gogoproto/gogo.proto";
 import "tendermint/crypto/proof.proto";
