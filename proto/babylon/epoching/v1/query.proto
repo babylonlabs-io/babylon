@@ -8,7 +8,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/epoching/v1/params.proto";
 import "babylon/epoching/v1/epoching.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/epoching/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/epoching/types";
 
 // Query defines the gRPC querier service.
 service Query {

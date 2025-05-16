@@ -5,7 +5,7 @@ import "google/protobuf/timestamp.proto";
 import "gogoproto/gogo.proto";
 import "tendermint/abci/types.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/x/checkpointing/types";
+option go_package = "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types";
 
 // RawCheckpoint wraps the BLS multi sig with metadata
 message RawCheckpoint {
