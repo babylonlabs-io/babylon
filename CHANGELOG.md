@@ -71,6 +71,7 @@ check of rewards
 - [#843](https://github.com/babylonlabs-io/babylon/pull/843) Add import/export genesis logic in `x/epoching` module
 - [#850](https://github.com/babylonlabs-io/babylon/pull/850) Add BLS improvement including permission and verification
 - [#859](https://github.com/babylonlabs-io/babylon/pull/859) Update init/export genesis logic in `x/finality` module
+- [#871](https://github.com/babylonlabs-io/babylon/pull/871) create `update-bls-password` cmd
 - [#876](https://github.com/babylonlabs-io/babylon/pull/876) Add Packet Forwarding Middleware (PFM) module.
 - [#881](https://github.com/babylonlabs-io/babylon/pull/881) Update init/export genesis logic in `x/mint` module
 - [#883](https://github.com/babylonlabs-io/babylon/pull/883) Update init/export genesis logic in `x/monitor` module
