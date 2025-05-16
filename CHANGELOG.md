@@ -37,21 +37,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-### Bug fixes
-
-- [#860](https://github.com/babylonlabs-io/babylon/pull/860) fix: ensure active fps have signing info after finality resumption proposal
-- [#845](https://github.com/babylonlabs-io/babylon/pull/845) fix: Properly wire `btclightclient` hook for
-`btcstaking` to panic in case of a BTC reorg larger than `BtcConfirmationDepth`.
-- [#829](https://github.com/babylonlabs-io/babylon/pull/829) fix: add checks for slashed fp in gov resume finality.
-
 ### Improvements
 
 - [#850](https://github.com/babylonlabs-io/babylon/pull/850) Add BLS improvement including permission and verification
 - [#841](https://github.com/babylonlabs-io/babylon/pull/841) chore: upgrade the make file: release
 - [#909](https://github.com/babylonlabs-io/babylon/pull/909) Update tokenfactory upgrade fee params to `ubbn`.
 - [#884](https://github.com/babylonlabs-io/babylon/pull/884) Bump tokenfactory version to v0.50.6
-- [#905](https://github.com/babylonlabs-io/babylon/pull/905) Add `ValidateBasic` for `CommitPubRandList`
-- [#906](https://github.com/babylonlabs-io/babylon/pull/906) Add distribution bank wrapper.
 - [#846](https://github.com/babylonlabs-io/babylon/pull/846) Add tokenfactory module.
 - [#821](https://github.com/babylonlabs-io/babylon/pull/821) Add import/export genesis logic in `x/btccheckpoint` module
 - [#828](https://github.com/babylonlabs-io/babylon/pull/828) Add `AllowedStakingTxHashes` and `LargetsBTCReorg` to import/export genesis logic in `x/btcstaking` module
@@ -71,6 +62,17 @@ transfer stack
 
 - [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
 when the babylon block is being BTC rewarded.
+
+## v1.1.0
+
+### Bug fixes
+
+- [#860](https://github.com/babylonlabs-io/babylon/pull/860) fix: ensure active fps have signing info after finality resumption proposal.
+- [#842](https://github.com/babylonlabs-io/babylon/pull/842) fix: Properly wire `btclightclient` hook for
+`btcstaking` to panic in case of a BTC reorg larger than `BtcConfirmationDepth`.
+- [#829](https://github.com/babylonlabs-io/babylon/pull/829) fix: add checks for slashed fp in gov resume finality.
+- [#905](https://github.com/babylonlabs-io/babylon/pull/905) Add `ValidateBasic` for `CommitPubRandList`
+- [#906](https://github.com/babylonlabs-io/babylon/pull/906) Add distribution bank wrapper.
 
 ## v1.0.2
 
