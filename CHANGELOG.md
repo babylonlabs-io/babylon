@@ -51,6 +51,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#847](https://github.com/babylonlabs-io/babylon/pull/847) Add ibc callbacks to
 transfer stack
 - [#859](https://github.com/babylonlabs-io/babylon/pull/859) Update init/export genesis logic in `x/finality` module
+- [#871](https://github.com/babylonlabs-io/babylon/pull/871) create `update-bls-password` cmd
 - [#876](https://github.com/babylonlabs-io/babylon/pull/876) Add Packet Forwarding Middleware (PFM) module.
 - [#881](https://github.com/babylonlabs-io/babylon/pull/881) Update init/export genesis logic in `x/mint` module
 - [#883](https://github.com/babylonlabs-io/babylon/pull/883) Update init/export genesis logic in `x/monitor` module
