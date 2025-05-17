@@ -139,6 +139,19 @@ func TestGetBlsPassword(t *testing.T) {
 	})
 }
 
+func TestGetBlsKeyFileIfExist(t *testing.T) {
+	origEnvValue := os.Getenv(BlsPasswordEnvVar)
+	defer t.Setenv(BlsPasswordEnvVar, origEnvValue)
+
+	t.Run("error with key does not exists", func(t *testing.T) {
+		os.Unsetenv(BlsPasswordEnvVar)
+
+		tempDir := t.TempDir()
+		_, exist := GetBlsKeyFileIfExist(tempDir, "")
+		assert.False(t, exist)
+	})
+}
+
 func TestLoadBlsWithEnvVar(t *testing.T) {
 	t.Run("load bls with environment variable", func(t *testing.T) {
 		originalValue := os.Getenv(BlsPasswordEnvVar)
@@ -459,7 +472,7 @@ func TestShowBlsKey(t *testing.T) {
 		err = os.WriteFile(passwordFile, []byte(keyPassword), 0600)
 		assert.NoError(t, err)
 
-		keyInfo, err := ShowBlsKey(tempDir, keyPassword)
+		keyInfo, err := ShowBlsKey(keyFile, keyPassword)
 		assert.NoError(t, err)
 		assert.NotNil(t, keyInfo)
 		assert.Equal(t, privKey.PubKey().Bytes(), keyInfo["pubkey"])
@@ -482,7 +495,7 @@ func TestShowBlsKey(t *testing.T) {
 		blsKey := NewBls(privKey, keyFile, "")
 		blsKey.Key.Save("")
 
-		keyInfo, err := ShowBlsKey(tempDir, "")
+		keyInfo, err := ShowBlsKey(keyFile, "")
 		assert.NoError(t, err)
 		assert.NotNil(t, keyInfo)
 		assert.Equal(t, privKey.PubKey().Bytes(), keyInfo["pubkey"])
@@ -527,8 +540,9 @@ func TestCreateBlsKey(t *testing.T) {
 		assert.False(t, exists, "Environment variable should be unset for no-password test")
 
 		tempDir := t.TempDir()
+		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir, "")
 
-		err := CreateBlsKey(tempDir, "", "", testCmd)
+		err := CreateBlsKey(blsKeyFile, "", "", testCmd)
 		assert.NoError(t, err)
 
 		configDir := filepath.Join(tempDir, "config")
@@ -545,11 +559,12 @@ func TestCreateBlsKey(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
 
 		tempDir := t.TempDir()
+		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir, "")
 
 		testPassword := "env-var-create-password"
 		t.Setenv(BlsPasswordEnvVar, testPassword)
 
-		err := CreateBlsKey(tempDir, testPassword, "", testCmd)
+		err := CreateBlsKey(blsKeyFile, testPassword, "", testCmd)
 		assert.NoError(t, err)
 
 		configDir := filepath.Join(tempDir, "config")
@@ -567,6 +582,7 @@ func TestCreateBlsKey(t *testing.T) {
 		assert.False(t, exists, "Environment variable should be unset for password file test")
 
 		tempDir := t.TempDir()
+		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir, "")
 
 		passwordFile := filepath.Join(tempDir, "password.txt")
 		testPassword := "file-create-password"
@@ -577,7 +593,7 @@ func TestCreateBlsKey(t *testing.T) {
 		err = os.MkdirAll(configDir, 0700)
 		assert.NoError(t, err)
 
-		err = CreateBlsKey(tempDir, testPassword, passwordFile, testCmd)
+		err = CreateBlsKey(blsKeyFile, testPassword, passwordFile, testCmd)
 		assert.NoError(t, err)
 
 		keyFile := filepath.Join(configDir, DefaultBlsKeyName)
@@ -589,13 +605,14 @@ func TestCreateBlsKey(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
 
 		tempDir := t.TempDir()
+		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir, "")
 
 		configDir := filepath.Join(tempDir, "config")
 		err := os.MkdirAll(configDir, 0700)
 		assert.NoError(t, err)
 
 		firstPassword := ""
-		err = CreateBlsKey(tempDir, firstPassword, "", testCmd)
+		err = CreateBlsKey(blsKeyFile, firstPassword, "", testCmd)
 		assert.NoError(t, err)
 
 		keyFile := filepath.Join(configDir, DefaultBlsKeyName)
@@ -604,10 +621,6 @@ func TestCreateBlsKey(t *testing.T) {
 		modTimeBefore := fileInfoBefore.ModTime()
 
 		time.Sleep(10 * time.Millisecond)
-
-		err = CreateBlsKey(tempDir, "new-password", "", testCmd)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "already exists")
 
 		fileInfoAfter, err := os.Stat(keyFile)
 		assert.NoError(t, err)
@@ -648,8 +661,9 @@ func TestUpdateBlsPassword(t *testing.T) {
 		assert.False(t, exists, "Environment variable should be unset for no-password test")
 
 		tempDir := t.TempDir()
+		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir, "")
 
-		err := CreateBlsKey(tempDir, "", "", testCmd)
+		err := CreateBlsKey(blsKeyFile, "", "", testCmd)
 		assert.NoError(t, err)
 
 		configDir := filepath.Join(tempDir, "config")
@@ -661,13 +675,13 @@ func TestUpdateBlsPassword(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, blsSigner)
 
-		blsPrivKey, err := LoadBlsPrivKey(tempDir, "")
+		blsPrivKey, err := LoadBlsPrivKeyFromFile(blsKeyFile, "")
 		assert.NoError(t, err)
 
 		newPassword := "env-var-new-password"
 		t.Setenv(BlsPasswordEnvVar, newPassword)
 
-		err = UpdateBlsPassword(tempDir, blsPrivKey, newPassword, "", testCmd)
+		err = UpdateBlsPassword(blsKeyFile, blsPrivKey, newPassword, "", testCmd)
 		assert.NoError(t, err)
 
 		blsSigner, err = LoadBlsSignerIfExists(tempDir, false, "", "")
@@ -685,7 +699,9 @@ func TestUpdateBlsPassword(t *testing.T) {
 
 		tempDir := t.TempDir()
 
-		err := CreateBlsKey(tempDir, "", "", testCmd)
+		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir, "")
+
+		err := CreateBlsKey(blsKeyFile, "", "", testCmd)
 		assert.NoError(t, err)
 
 		configDir := filepath.Join(tempDir, "config")
@@ -697,7 +713,7 @@ func TestUpdateBlsPassword(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, blsSigner)
 
-		blsPrivKey, err := LoadBlsPrivKey(tempDir, "")
+		blsPrivKey, err := LoadBlsPrivKeyFromFile(blsKeyFile, "")
 		assert.NoError(t, err)
 
 		newPassword := "env-var-new-password"
@@ -705,21 +721,11 @@ func TestUpdateBlsPassword(t *testing.T) {
 		err = os.WriteFile(newPasswordFile, []byte(newPassword), 0600)
 		assert.NoError(t, err)
 
-		err = UpdateBlsPassword(tempDir, blsPrivKey, newPassword, newPasswordFile, testCmd)
+		err = UpdateBlsPassword(blsKeyFile, blsPrivKey, newPassword, newPasswordFile, testCmd)
 		assert.NoError(t, err)
 
 		blsSigner, err = LoadBlsSignerIfExists(tempDir, false, newPasswordFile, "")
 		assert.NoError(t, err)
 		assert.NotNil(t, blsSigner)
-	})
-
-	t.Run("error with key does not exists", func(t *testing.T) {
-		os.Unsetenv(BlsPasswordEnvVar)
-
-		tempDir := t.TempDir()
-
-		err := UpdateBlsPassword(tempDir, nil, "new-password", "", testCmd)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "BLS key does not exist")
 	})
 }
