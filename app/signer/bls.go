@@ -446,14 +446,7 @@ func ShowBlsKey(homeDir string, password string) (map[string]interface{}, error)
 
 // CreateBlsKey creates a new BLS key
 // Takes a password that was determined by the password determination logic.
-func CreateBlsKey(homeDir string, password string, passwordFilePath string, cmd *cobra.Command) error {
-	blsKeyFile := determineKeyFilePath(homeDir, "")
-
-	// Check if BLS key already exists
-	if cmtos.FileExists(blsKeyFile) {
-		return fmt.Errorf("BLS key already exists at %s. If you need to generate a new key, please manually delete the existing file first", blsKeyFile)
-	}
-
+func CreateBlsKey(blsKeyFile string, password string, passwordFilePath string, cmd *cobra.Command) error {
 	// Ensure the key file directory exists
 	if err := EnsureDirs(blsKeyFile); err != nil {
 		return fmt.Errorf("failed to ensure key directory exists: %w", err)
