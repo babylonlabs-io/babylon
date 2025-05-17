@@ -147,7 +147,7 @@ func TestGetBlsKeyFileIfExist(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
 
 		tempDir := t.TempDir()
-		_, exist := GetBlsKeyFileIfExist(tempDir)
+		_, exist := GetBlsKeyFileIfExist(tempDir, "")
 		assert.False(t, exist)
 	})
 }
@@ -540,7 +540,7 @@ func TestCreateBlsKey(t *testing.T) {
 		assert.False(t, exists, "Environment variable should be unset for no-password test")
 
 		tempDir := t.TempDir()
-		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir)
+		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir, "")
 
 		err := CreateBlsKey(blsKeyFile, "", "", testCmd)
 		assert.NoError(t, err)
@@ -559,7 +559,7 @@ func TestCreateBlsKey(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
 
 		tempDir := t.TempDir()
-		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir)
+		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir, "")
 
 		testPassword := "env-var-create-password"
 		t.Setenv(BlsPasswordEnvVar, testPassword)
@@ -582,7 +582,7 @@ func TestCreateBlsKey(t *testing.T) {
 		assert.False(t, exists, "Environment variable should be unset for password file test")
 
 		tempDir := t.TempDir()
-		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir)
+		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir, "")
 
 		passwordFile := filepath.Join(tempDir, "password.txt")
 		testPassword := "file-create-password"
@@ -605,7 +605,7 @@ func TestCreateBlsKey(t *testing.T) {
 		os.Unsetenv(BlsPasswordEnvVar)
 
 		tempDir := t.TempDir()
-		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir)
+		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir, "")
 
 		configDir := filepath.Join(tempDir, "config")
 		err := os.MkdirAll(configDir, 0700)
@@ -661,7 +661,7 @@ func TestUpdateBlsPassword(t *testing.T) {
 		assert.False(t, exists, "Environment variable should be unset for no-password test")
 
 		tempDir := t.TempDir()
-		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir)
+		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir, "")
 
 		err := CreateBlsKey(blsKeyFile, "", "", testCmd)
 		assert.NoError(t, err)
@@ -699,7 +699,7 @@ func TestUpdateBlsPassword(t *testing.T) {
 
 		tempDir := t.TempDir()
 
-		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir)
+		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir, "")
 
 		err := CreateBlsKey(blsKeyFile, "", "", testCmd)
 		assert.NoError(t, err)

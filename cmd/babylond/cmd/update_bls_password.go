@@ -36,7 +36,7 @@ $ babylond update-bls-password --no-bls-password
 				return fmt.Errorf("failed to get home directory: %w", err)
 			}
 
-			blsKeyFile, exist := appsigner.GetBlsKeyFileIfExist(homeDir)
+			blsKeyFile, exist := appsigner.GetBlsKeyFileIfExist(homeDir, "")
 			if !exist {
 				return fmt.Errorf("BLS key file does not exist at %s", blsKeyFile)
 			}

@@ -266,6 +266,11 @@ func (k *BlsKey) BlsPubKey() (bls12381.PublicKey, error) {
 	return k.PubKey, nil
 }
 
+// BlsKeyFilePath returns the file path of the BLS key
+func (k *BlsKey) BlsKeyFilePath() string {
+	return k.filePath
+}
+
 // GetBlsKeyPassword is a unified function to handle BLS key password retrieval.
 // Returns password if a password was found from one of the sources.
 // 1. If noPassword is true, returns empty string without checking other sources.
@@ -324,8 +329,8 @@ func ValidatePasswordMethods(noPassword bool, passwordFilePath string) error {
 // 4. Interactive prompt for password
 // Error will be returned if the key exists but cannot decrypt it
 func LoadBlsSignerIfExists(homeDir string, noPassword bool, customPasswordPath, customKeyPath string) (checkpointingtypes.BlsSigner, error) {
-	blsKeyFile := determineKeyFilePath(homeDir, customKeyPath)
-	if !cmtos.FileExists(blsKeyFile) {
+	blsKeyFile, exist := GetBlsKeyFileIfExist(homeDir, customKeyPath)
+	if !exist {
 		return nil, nil
 	}
 
@@ -355,24 +360,21 @@ func LoadBlsSignerIfExists(homeDir string, noPassword bool, customPasswordPath, 
 // 2. Password file (ONLY if explicitly provided and file exists)
 // 3. Interactive prompt (with confirmation for new keys)
 func LoadOrGenBlsKey(homeDir string, noPassword bool, customPasswordPath, customKeyPath string) (checkpointingtypes.BlsSigner, error) {
-	blsKeyFile := determineKeyFilePath(homeDir, customKeyPath)
-	keyExists := cmtos.FileExists(blsKeyFile)
-
-	if keyExists {
-		blsSigner, err := LoadBlsSignerIfExists(homeDir, noPassword, customPasswordPath, customKeyPath)
-		if err != nil {
-			return nil, fmt.Errorf("BLS key file exists at %s but could not be loaded: %w. If you need to generate a new key, please manually delete the existing file first", blsKeyFile, err)
-		}
-		if blsSigner != nil {
-			return blsSigner, nil
-		}
+	blsSigner, err := LoadBlsSignerIfExists(homeDir, noPassword, customPasswordPath, customKeyPath)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"BLS key file exists at %s but could not be loaded: %w. If you need to generate a new key, please manually delete the existing file first",
+			blsSigner.BlsKeyFilePath(), err)
+	}
+	if blsSigner != nil {
+		return blsSigner, nil
 	}
 
 	genPassword, err := GetBlsKeyPassword(noPassword, customPasswordPath, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get password: %w", err)
 	}
-	bls := GenBls(blsKeyFile, customPasswordPath, genPassword)
+	bls := GenBls(blsSigner.BlsKeyFilePath(), customPasswordPath, genPassword)
 	return &bls.Key, nil
 }
 
@@ -540,7 +542,7 @@ func UpdateBlsPassword(blsKeyFile string, blsPrivKey bls12381.PrivateKey, passwo
 
 // GetBlsKeyFileIfExist returns the determined BLS key file path
 // and a boolean indicating whether the file exists
-func GetBlsKeyFileIfExist(homeDir string) (string, bool) {
-	blsKeyFile := determineKeyFilePath(homeDir, "")
+func GetBlsKeyFileIfExist(homeDir, customKeyPath string) (string, bool) {
+	blsKeyFile := determineKeyFilePath(homeDir, customKeyPath)
 	return blsKeyFile, cmtos.FileExists(blsKeyFile)
 }

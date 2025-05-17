@@ -38,7 +38,7 @@ $ babylond create-bls-key --no-bls-password
 
 			// If bls_key.json already exists,
 			// return error with message that Users should delete the existing file first
-			blsKeyFile, exist := appsigner.GetBlsKeyFileIfExist(homeDir)
+			blsKeyFile, exist := appsigner.GetBlsKeyFileIfExist(homeDir, "")
 			if exist {
 				return fmt.Errorf("BLS key already exists at %s. If you need to generate a new key, please manually delete the existing file first", blsKeyFile)
 			}

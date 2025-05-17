@@ -34,7 +34,7 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 			}
 
 			// Check bls_key.json is already exist
-			blsKeyFile, exist := appsigner.GetBlsKeyFileIfExist(homeDir)
+			blsKeyFile, exist := appsigner.GetBlsKeyFileIfExist(homeDir, "")
 			if exist {
 				return fmt.Errorf("BLS key already exists at %s. If you need to generate a new key, please manually delete the existing file first", blsKeyFile)
 			}
