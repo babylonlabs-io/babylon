@@ -139,6 +139,19 @@ func TestGetBlsPassword(t *testing.T) {
 	})
 }
 
+func TestGetBlsKeyFileIfExist(t *testing.T) {
+	origEnvValue := os.Getenv(BlsPasswordEnvVar)
+	defer t.Setenv(BlsPasswordEnvVar, origEnvValue)
+
+	t.Run("error with key does not exists", func(t *testing.T) {
+		os.Unsetenv(BlsPasswordEnvVar)
+
+		tempDir := t.TempDir()
+		_, exist := GetBlsKeyFileIfExist(tempDir)
+		assert.False(t, exist)
+	})
+}
+
 func TestLoadBlsWithEnvVar(t *testing.T) {
 	t.Run("load bls with environment variable", func(t *testing.T) {
 		originalValue := os.Getenv(BlsPasswordEnvVar)
@@ -649,6 +662,8 @@ func TestUpdateBlsPassword(t *testing.T) {
 
 		tempDir := t.TempDir()
 
+		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir)
+
 		err := CreateBlsKey(tempDir, "", "", testCmd)
 		assert.NoError(t, err)
 
@@ -661,13 +676,13 @@ func TestUpdateBlsPassword(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, blsSigner)
 
-		blsPrivKey, err := LoadBlsPrivKey(tempDir, "")
+		blsPrivKey, err := LoadBlsPrivKeyFromFile(blsKeyFile, "")
 		assert.NoError(t, err)
 
 		newPassword := "env-var-new-password"
 		t.Setenv(BlsPasswordEnvVar, newPassword)
 
-		err = UpdateBlsPassword(tempDir, blsPrivKey, newPassword, "", testCmd)
+		err = UpdateBlsPassword(blsKeyFile, blsPrivKey, newPassword, "", testCmd)
 		assert.NoError(t, err)
 
 		blsSigner, err = LoadBlsSignerIfExists(tempDir, false, "", "")
@@ -685,6 +700,8 @@ func TestUpdateBlsPassword(t *testing.T) {
 
 		tempDir := t.TempDir()
 
+		blsKeyFile, _ := GetBlsKeyFileIfExist(tempDir)
+
 		err := CreateBlsKey(tempDir, "", "", testCmd)
 		assert.NoError(t, err)
 
@@ -697,7 +714,7 @@ func TestUpdateBlsPassword(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, blsSigner)
 
-		blsPrivKey, err := LoadBlsPrivKey(tempDir, "")
+		blsPrivKey, err := LoadBlsPrivKeyFromFile(blsKeyFile, "")
 		assert.NoError(t, err)
 
 		newPassword := "env-var-new-password"
@@ -705,21 +722,11 @@ func TestUpdateBlsPassword(t *testing.T) {
 		err = os.WriteFile(newPasswordFile, []byte(newPassword), 0600)
 		assert.NoError(t, err)
 
-		err = UpdateBlsPassword(tempDir, blsPrivKey, newPassword, newPasswordFile, testCmd)
+		err = UpdateBlsPassword(blsKeyFile, blsPrivKey, newPassword, newPasswordFile, testCmd)
 		assert.NoError(t, err)
 
 		blsSigner, err = LoadBlsSignerIfExists(tempDir, false, newPasswordFile, "")
 		assert.NoError(t, err)
 		assert.NotNil(t, blsSigner)
-	})
-
-	t.Run("error with key does not exists", func(t *testing.T) {
-		os.Unsetenv(BlsPasswordEnvVar)
-
-		tempDir := t.TempDir()
-
-		err := UpdateBlsPassword(tempDir, nil, "new-password", "", testCmd)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "BLS key does not exist")
 	})
 }
