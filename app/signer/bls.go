@@ -422,12 +422,7 @@ func LoadBlsPop(filePath string) (BlsPop, error) {
 
 // ShowBlsKey displays information about a BLS key
 // Takes a password that was determined by the password determination logic.
-func ShowBlsKey(homeDir string, password string) (map[string]interface{}, error) {
-	blsKeyFile := determineKeyFilePath(homeDir, "")
-	if !cmtos.FileExists(blsKeyFile) {
-		return nil, fmt.Errorf("BLS key file does not exist at %s", blsKeyFile)
-	}
-
+func ShowBlsKey(blsKeyFile string, password string) (map[string]interface{}, error) {
 	blsPrivKey, err := LoadBlsPrivKeyFromFile(blsKeyFile, password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load BLS key: %w", err)

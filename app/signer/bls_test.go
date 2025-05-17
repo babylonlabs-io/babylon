@@ -472,7 +472,7 @@ func TestShowBlsKey(t *testing.T) {
 		err = os.WriteFile(passwordFile, []byte(keyPassword), 0600)
 		assert.NoError(t, err)
 
-		keyInfo, err := ShowBlsKey(tempDir, keyPassword)
+		keyInfo, err := ShowBlsKey(keyFile, keyPassword)
 		assert.NoError(t, err)
 		assert.NotNil(t, keyInfo)
 		assert.Equal(t, privKey.PubKey().Bytes(), keyInfo["pubkey"])
@@ -495,7 +495,7 @@ func TestShowBlsKey(t *testing.T) {
 		blsKey := NewBls(privKey, keyFile, "")
 		blsKey.Key.Save("")
 
-		keyInfo, err := ShowBlsKey(tempDir, "")
+		keyInfo, err := ShowBlsKey(keyFile, "")
 		assert.NoError(t, err)
 		assert.NotNil(t, keyInfo)
 		assert.Equal(t, privKey.PubKey().Bytes(), keyInfo["pubkey"])

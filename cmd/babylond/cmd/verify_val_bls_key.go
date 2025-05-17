@@ -49,6 +49,12 @@ $ babylond verify-validator-bls-key babylonvaloper1... --no-bls-password
 			if err != nil {
 				return fmt.Errorf("failed to get home directory: %w", err)
 			}
+
+			blsKeyFile, exist := appsigner.GetBlsKeyFileIfExist(homeDir)
+			if !exist {
+				return fmt.Errorf("BLS key file does not exist at %s", blsKeyFile)
+			}
+
 			noBlsPassword, err := cmd.Flags().GetBool(flagNoBlsPassword)
 			if err != nil {
 				return fmt.Errorf("failed to get noBlsPassword flag: %w", err)
@@ -75,7 +81,7 @@ $ babylond verify-validator-bls-key babylonvaloper1... --no-bls-password
 
 			// Get BLS public key
 			// Get BLS key information
-			info, err := appsigner.ShowBlsKey(homeDir, password)
+			info, err := appsigner.ShowBlsKey(blsKeyFile, password)
 			if err != nil {
 				return fmt.Errorf("failed to show BLS key: %w", err)
 			}
