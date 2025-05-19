@@ -77,6 +77,7 @@ check of rewards
 - [#881](https://github.com/babylonlabs-io/babylon/pull/881) Update init/export genesis logic in `x/mint` module
 - [#883](https://github.com/babylonlabs-io/babylon/pull/883) Update init/export genesis logic in `x/monitor` module
 - [#897](https://github.com/babylonlabs-io/babylon/pull/897) Add Interchain Accounts (ICA) and Interchain Queries (ICQ) modules.
+- [#xxx](https://github.com/babylonlabs-io/babylon/pull/xxx) Update genesis initialization validations.
 
 ### State Machine Breaking
 
