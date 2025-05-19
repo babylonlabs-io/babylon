@@ -40,24 +40,22 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid: true,
 		},
 		{
-			desc: "invalid EpochEndRecord with height 0",
+			desc: "valid EpochEndRecord with height 0 (default uin64)",
 			genState: &types.GenesisState{
 				EpochEndRecords: []*types.EpochEndLightClient{
 					{Epoch: 1, BtcLightClientHeight: 0},
 				},
 			},
-			valid:  false,
-			errMsg: "BTC light client height cannot be 0",
+			valid: true,
 		},
 		{
-			desc: "invalid CheckpointReported with height 0",
+			desc: "CheckpointReported with height 0",
 			genState: &types.GenesisState{
 				CheckpointsReported: []*types.CheckpointReportedLightClient{
 					{CkptHash: "deadbeef", BtcLightClientHeight: 0},
 				},
 			},
-			valid:  false,
-			errMsg: "BTC light client height cannot be 0",
+			valid: true,
 		},
 		{
 			desc: "invalid CheckpointReported with empty hash",
