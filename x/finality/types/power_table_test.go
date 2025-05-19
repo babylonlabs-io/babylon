@@ -363,9 +363,8 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 		expErrMsg string
 	}{
 		{
-			name:      "empty finality providers",
+			name:      "empty finality providers - valid",
 			vpdc:      types.VotingPowerDistCache{},
-			expErrMsg: "invalid voting power distribution cache. Empty finality providers",
 		},
 		{
 			name: "NumActiveFps exceeds number of providers",

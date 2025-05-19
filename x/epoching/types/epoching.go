@@ -98,7 +98,9 @@ func (e Epoch) WithinBoundary(height uint64) bool {
 
 // ValidateBasic does sanity checks on Epoch
 func (e Epoch) ValidateBasic() error {
-	if e.CurrentEpochInterval < 2 {
+	// epoch 0 is created with CurrentEpochInterval = 1
+	// the rest of the epochs should comply with this condition
+	if e.EpochNumber > 0 && e.CurrentEpochInterval < 2 {
 		return ErrInvalidEpoch.Wrapf("CurrentEpochInterval (%d) < 2", e.CurrentEpochInterval)
 	}
 	return nil

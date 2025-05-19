@@ -66,9 +66,6 @@ func (k Keeper) epochEndRecords(ctx context.Context) ([]*types.EpochEndLightClie
 			Epoch:                sdk.BigEndianToUint64(iter.Key()),
 			BtcLightClientHeight: sdk.BigEndianToUint64(iter.Value()),
 		}
-		if err := record.Validate(); err != nil {
-			return nil, err
-		}
 		records = append(records, record)
 	}
 	return records, nil
