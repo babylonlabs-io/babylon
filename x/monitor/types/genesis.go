@@ -33,17 +33,7 @@ func (gs GenesisState) Validate() error {
 	return nil
 }
 
-func (e EpochEndLightClient) Validate() error {
-	if e.BtcLightClientHeight == 0 {
-		return errors.New("BTC light client height cannot be 0")
-	}
-	return nil
-}
-
 func (c CheckpointReportedLightClient) Validate() error {
-	if c.BtcLightClientHeight == 0 {
-		return errors.New("BTC light client height cannot be 0")
-	}
 	if len(c.CkptHash) == 0 {
 		return errors.New("checkpoint hash cannot be empty")
 	}
