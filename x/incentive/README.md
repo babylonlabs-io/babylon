@@ -3,9 +3,9 @@
 ## Table of Contents
 
 1. [Distribution for BTC Stakers and Finality Providers](#1-distribution-for-btc-stakers-and-finality-providers)
-    2. [Overview of x/distribution logic](#overview-of-xdistribution-logic)
-    3. [Reward Distribution for BABY Stakers](#reward-distribution-for-baby-stakers)
-    4. [What is the inflation mechanism and how are rewards distributed](#what-is-the-inflation-mechanism-and-how-are-rewards-distributed)
+    1. [Overview of x/distribution logic](#overview-of-xdistribution-logic)
+    2. [Reward Distribution for BABY Stakers](#reward-distribution-for-baby-stakers)
+    3. [What is the inflation mechanism and how are rewards distributed](#what-is-the-inflation-mechanism-and-how-are-rewards-distributed)
 2. [States](#2-states)
     1. [Parameters](#21-parameters)
     2. [Gauge](#22-gauge)
