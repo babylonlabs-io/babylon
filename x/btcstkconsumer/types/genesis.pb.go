@@ -5,7 +5,7 @@ package types
 
 import (
 	fmt "fmt"
-	types "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	types "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"

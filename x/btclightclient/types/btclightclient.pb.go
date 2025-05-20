@@ -6,7 +6,7 @@ package types
 import (
 	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
-	github_com_babylonlabs_io_babylon_v2_types "github.com/babylonlabs-io/babylon/v2/types"
+	github_com_babylonlabs_io_babylon_v2_types "github.com/babylonlabs-io/babylon/v4/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
@@ -34,8 +34,8 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 //     to the header Bits field
 //     and the total work of the header.
 type BTCHeaderInfo struct {
-	Header *github_com_babylonlabs_io_babylon_v2_types.BTCHeaderBytes     `protobuf:"bytes,1,opt,name=header,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BTCHeaderBytes" json:"header,omitempty"`
-	Hash   *github_com_babylonlabs_io_babylon_v2_types.BTCHeaderHashBytes `protobuf:"bytes,2,opt,name=hash,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BTCHeaderHashBytes" json:"hash,omitempty"`
+	Header *github_com_babylonlabs_io_babylon_v2_types.BTCHeaderBytes     `protobuf:"bytes,1,opt,name=header,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BTCHeaderBytes" json:"header,omitempty"`
+	Hash   *github_com_babylonlabs_io_babylon_v2_types.BTCHeaderHashBytes `protobuf:"bytes,2,opt,name=hash,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BTCHeaderHashBytes" json:"hash,omitempty"`
 	Height uint32                                                         `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
 	Work   *cosmossdk_io_math.Uint                                        `protobuf:"bytes,4,opt,name=work,proto3,customtype=cosmossdk.io/math.Uint" json:"work,omitempty"`
 }

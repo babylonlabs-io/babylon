@@ -5,10 +5,10 @@ package types
 
 import (
 	fmt "fmt"
-	types2 "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	types3 "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	types1 "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
-	types "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	types2 "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	types3 "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	types1 "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	types "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"

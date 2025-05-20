@@ -5,7 +5,7 @@ package types
 
 import (
 	fmt "fmt"
-	github_com_babylonlabs_io_babylon_v2_types "github.com/babylonlabs-io/babylon/v2/types"
+	github_com_babylonlabs_io_babylon_v2_types "github.com/babylonlabs-io/babylon/v4/types"
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -557,7 +557,7 @@ func (*EventPowerDistUpdate) XXX_OneofWrappers() []interface{} {
 // is slashed
 // TODO: unify with existing slashing events
 type EventPowerDistUpdate_EventSlashedFinalityProvider struct {
-	Pk *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,1,opt,name=pk,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"pk,omitempty"`
+	Pk *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,1,opt,name=pk,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" json:"pk,omitempty"`
 }
 
 func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) Reset() {
@@ -652,7 +652,7 @@ func (m *EventPowerDistUpdate_EventSlashedBTCDelegation) GetStakingTxHash() stri
 // EventJailedFinalityProvider defines an event that a finality provider
 // is jailed after being detected sluggish
 type EventPowerDistUpdate_EventJailedFinalityProvider struct {
-	Pk *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,1,opt,name=pk,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"pk,omitempty"`
+	Pk *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,1,opt,name=pk,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" json:"pk,omitempty"`
 }
 
 func (m *EventPowerDistUpdate_EventJailedFinalityProvider) Reset() {
@@ -695,7 +695,7 @@ var xxx_messageInfo_EventPowerDistUpdate_EventJailedFinalityProvider proto.Inter
 // EventUnjailedFinalityProvider defines an event that a jailed finality provider
 // is unjailed after the jailing period is passed
 type EventPowerDistUpdate_EventUnjailedFinalityProvider struct {
-	Pk *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,1,opt,name=pk,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"pk,omitempty"`
+	Pk *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,1,opt,name=pk,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" json:"pk,omitempty"`
 }
 
 func (m *EventPowerDistUpdate_EventUnjailedFinalityProvider) Reset() {

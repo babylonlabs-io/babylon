@@ -9,9 +9,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	bbntypes "github.com/babylonlabs-io/babylon/v2/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 
 	"github.com/stretchr/testify/require"

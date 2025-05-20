@@ -4,11 +4,11 @@ import (
 	"math/rand"
 	"testing"
 
-	btcstaking "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
+	btcstaking "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	"github.com/stretchr/testify/require"
 )
 

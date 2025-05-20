@@ -6,7 +6,7 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	github_com_babylonlabs_io_babylon_v2_types "github.com/babylonlabs-io/babylon/v2/types"
+	github_com_babylonlabs_io_babylon_v2_types "github.com/babylonlabs-io/babylon/v4/types"
 	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/gogoproto/gogoproto"
@@ -439,7 +439,7 @@ func (m *QueryActiveFinalityProvidersAtHeightRequest) GetPagination() *query.Pag
 type ActiveFinalityProvidersAtHeightResponse struct {
 	// btc_pk is the Bitcoin secp256k1 PK of thisfinality provider
 	// the PK follows encoding in BIP-340 spec
-	BtcPkHex *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,1,opt,name=btc_pk_hex,json=btcPkHex,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"btc_pk_hex,omitempty"`
+	BtcPkHex *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,1,opt,name=btc_pk_hex,json=btcPkHex,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" json:"btc_pk_hex,omitempty"`
 	// height is the queried Babylon height
 	Height uint64 `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
 	// voting_power is the voting power of this finality provider at the given height
@@ -739,7 +739,7 @@ func (m *QueryListPublicRandomnessRequest) GetPagination() *query.PageRequest {
 type QueryListPublicRandomnessResponse struct {
 	// pub_rand_map is the map where the key is the height and the value
 	// is the public randomness at this height for the given finality provider
-	PubRandMap map[uint64]*github_com_babylonlabs_io_babylon_v2_types.SchnorrPubRand `protobuf:"bytes,1,rep,name=pub_rand_map,json=pubRandMap,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.SchnorrPubRand" json:"pub_rand_map,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	PubRandMap map[uint64]*github_com_babylonlabs_io_babylon_v2_types.SchnorrPubRand `protobuf:"bytes,1,rep,name=pub_rand_map,json=pubRandMap,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.SchnorrPubRand" json:"pub_rand_map,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// pagination defines the pagination in the response.
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
@@ -1219,7 +1219,7 @@ func (m *QueryVotesAtHeightRequest) GetHeight() uint64 {
 type QueryVotesAtHeightResponse struct {
 	// btc_pk is the Bitcoin secp256k1 PK of finality providers who have signed the block at given height.
 	// the PK follows encoding in BIP-340 spec
-	BtcPks []github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,1,rep,name=btc_pks,json=btcPks,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"btc_pks,omitempty"`
+	BtcPks []github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,1,rep,name=btc_pks,json=btcPks,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" json:"btc_pks,omitempty"`
 }
 
 func (m *QueryVotesAtHeightResponse) Reset()         { *m = QueryVotesAtHeightResponse{} }
@@ -1311,7 +1311,7 @@ type EvidenceResponse struct {
 	// block_height is the height of the conflicting blocks
 	BlockHeight uint64 `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 	// pub_rand is the public randomness the finality provider has committed to
-	PubRand *github_com_babylonlabs_io_babylon_v2_types.SchnorrPubRand `protobuf:"bytes,3,opt,name=pub_rand,json=pubRand,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.SchnorrPubRand" json:"pub_rand,omitempty"`
+	PubRand *github_com_babylonlabs_io_babylon_v2_types.SchnorrPubRand `protobuf:"bytes,3,opt,name=pub_rand,json=pubRand,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.SchnorrPubRand" json:"pub_rand,omitempty"`
 	// canonical_app_hash is the AppHash of the canonical block
 	CanonicalAppHash []byte `protobuf:"bytes,4,opt,name=canonical_app_hash,json=canonicalAppHash,proto3" json:"canonical_app_hash,omitempty"`
 	// fork_app_hash is the AppHash of the fork block
@@ -1320,10 +1320,10 @@ type EvidenceResponse struct {
 	// where finality signature is an EOTS signature, i.e.,
 	// the `s` in a Schnorr signature `(r, s)`
 	// `r` is the public randomness that is already committed by the finality provider
-	CanonicalFinalitySig *github_com_babylonlabs_io_babylon_v2_types.SchnorrEOTSSig `protobuf:"bytes,6,opt,name=canonical_finality_sig,json=canonicalFinalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.SchnorrEOTSSig" json:"canonical_finality_sig,omitempty"`
+	CanonicalFinalitySig *github_com_babylonlabs_io_babylon_v2_types.SchnorrEOTSSig `protobuf:"bytes,6,opt,name=canonical_finality_sig,json=canonicalFinalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.SchnorrEOTSSig" json:"canonical_finality_sig,omitempty"`
 	// fork_finality_sig is the finality signature to the fork block
 	// where finality signature is an EOTS signature
-	ForkFinalitySig *github_com_babylonlabs_io_babylon_v2_types.SchnorrEOTSSig `protobuf:"bytes,7,opt,name=fork_finality_sig,json=forkFinalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.SchnorrEOTSSig" json:"fork_finality_sig,omitempty"`
+	ForkFinalitySig *github_com_babylonlabs_io_babylon_v2_types.SchnorrEOTSSig `protobuf:"bytes,7,opt,name=fork_finality_sig,json=forkFinalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.SchnorrEOTSSig" json:"fork_finality_sig,omitempty"`
 }
 
 func (m *EvidenceResponse) Reset()         { *m = EvidenceResponse{} }

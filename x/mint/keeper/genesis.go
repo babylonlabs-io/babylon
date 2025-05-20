@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

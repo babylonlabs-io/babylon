@@ -3,7 +3,7 @@ package types
 import (
 	"context"
 
-	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

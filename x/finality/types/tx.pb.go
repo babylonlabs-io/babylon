@@ -6,7 +6,7 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	github_com_babylonlabs_io_babylon_v2_types "github.com/babylonlabs-io/babylon/v2/types"
+	github_com_babylonlabs_io_babylon_v2_types "github.com/babylonlabs-io/babylon/v4/types"
 	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
@@ -36,7 +36,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type MsgCommitPubRandList struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
 	// fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
-	FpBtcPk *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	FpBtcPk *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// start_height is the start block height of the list of public randomness
 	StartHeight uint64 `protobuf:"varint,3,opt,name=start_height,json=startHeight,proto3" json:"start_height,omitempty"`
 	// num_pub_rand is the number of public randomness committed
@@ -49,7 +49,7 @@ type MsgCommitPubRandList struct {
 	// randomness on behalf of fp_btc_pk
 	// TODO: another option is to restrict signer to correspond to fp_btc_pk. This restricts
 	// the tx submitter to be the holder of fp_btc_pk. Decide this later
-	Sig *github_com_babylonlabs_io_babylon_v2_types.BIP340Signature `protobuf:"bytes,6,opt,name=sig,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340Signature" json:"sig,omitempty"`
+	Sig *github_com_babylonlabs_io_babylon_v2_types.BIP340Signature `protobuf:"bytes,6,opt,name=sig,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340Signature" json:"sig,omitempty"`
 }
 
 func (m *MsgCommitPubRandList) Reset()         { *m = MsgCommitPubRandList{} }
@@ -154,11 +154,11 @@ var xxx_messageInfo_MsgCommitPubRandListResponse proto.InternalMessageInfo
 type MsgAddFinalitySig struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
 	// fp_btc_pk is the BTC PK of the finality provider that casts this vote
-	FpBtcPk *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	FpBtcPk *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// block_height is the height of the voted block
 	BlockHeight uint64 `protobuf:"varint,3,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 	// pub_rand is the public randomness committed at this height
-	PubRand *github_com_babylonlabs_io_babylon_v2_types.SchnorrPubRand `protobuf:"bytes,4,opt,name=pub_rand,json=pubRand,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.SchnorrPubRand" json:"pub_rand,omitempty"`
+	PubRand *github_com_babylonlabs_io_babylon_v2_types.SchnorrPubRand `protobuf:"bytes,4,opt,name=pub_rand,json=pubRand,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.SchnorrPubRand" json:"pub_rand,omitempty"`
 	// proof is the proof that the given public randomness is committed under the commitment
 	Proof *crypto.Proof `protobuf:"bytes,5,opt,name=proof,proto3" json:"proof,omitempty"`
 	// block_app_hash is the AppHash of the voted block
@@ -167,7 +167,7 @@ type MsgAddFinalitySig struct {
 	// where finality signature is an EOTS signature, i.e.,
 	// the `s` in a Schnorr signature `(r, s)`
 	// `r` is the public randomness that is already committed by the finality provider
-	FinalitySig *github_com_babylonlabs_io_babylon_v2_types.SchnorrEOTSSig `protobuf:"bytes,7,opt,name=finality_sig,json=finalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.SchnorrEOTSSig" json:"finality_sig,omitempty"`
+	FinalitySig *github_com_babylonlabs_io_babylon_v2_types.SchnorrEOTSSig `protobuf:"bytes,7,opt,name=finality_sig,json=finalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.SchnorrEOTSSig" json:"finality_sig,omitempty"`
 }
 
 func (m *MsgAddFinalitySig) Reset()         { *m = MsgAddFinalitySig{} }
@@ -369,7 +369,7 @@ var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 type MsgUnjailFinalityProvider struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
 	// fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
-	FpBtcPk *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	FpBtcPk *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 }
 
 func (m *MsgUnjailFinalityProvider) Reset()         { *m = MsgUnjailFinalityProvider{} }
@@ -446,11 +446,11 @@ var xxx_messageInfo_MsgUnjailFinalityProviderResponse proto.InternalMessageInfo
 type MsgEquivocationEvidence struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
 	// fp_btc_pk is the BTC PK of the finality provider that casts this vote
-	FpBtcPk *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	FpBtcPk *github_com_babylonlabs_io_babylon_v2_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// block_height is the height of the conflicting blocks
 	BlockHeight uint64 `protobuf:"varint,3,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 	// pub_rand is the public randomness the finality provider has committed to
-	PubRand *github_com_babylonlabs_io_babylon_v2_types.SchnorrPubRand `protobuf:"bytes,4,opt,name=pub_rand,json=pubRand,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.SchnorrPubRand" json:"pub_rand,omitempty"`
+	PubRand *github_com_babylonlabs_io_babylon_v2_types.SchnorrPubRand `protobuf:"bytes,4,opt,name=pub_rand,json=pubRand,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.SchnorrPubRand" json:"pub_rand,omitempty"`
 	// canonical_app_hash is the AppHash of the canonical block
 	CanonicalAppHash []byte `protobuf:"bytes,5,opt,name=canonical_app_hash,json=canonicalAppHash,proto3" json:"canonical_app_hash,omitempty"`
 	// fork_app_hash is the AppHash of the fork block
@@ -459,10 +459,10 @@ type MsgEquivocationEvidence struct {
 	// where finality signature is an EOTS signature, i.e.,
 	// the `s` in a Schnorr signature `(r, s)`
 	// `r` is the public randomness that is already committed by the finality provider
-	CanonicalFinalitySig *github_com_babylonlabs_io_babylon_v2_types.SchnorrEOTSSig `protobuf:"bytes,7,opt,name=canonical_finality_sig,json=canonicalFinalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.SchnorrEOTSSig" json:"canonical_finality_sig,omitempty"`
+	CanonicalFinalitySig *github_com_babylonlabs_io_babylon_v2_types.SchnorrEOTSSig `protobuf:"bytes,7,opt,name=canonical_finality_sig,json=canonicalFinalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.SchnorrEOTSSig" json:"canonical_finality_sig,omitempty"`
 	// fork_finality_sig is the finality signature to the fork block
 	// where finality signature is an EOTS signature
-	ForkFinalitySig *github_com_babylonlabs_io_babylon_v2_types.SchnorrEOTSSig `protobuf:"bytes,8,opt,name=fork_finality_sig,json=forkFinalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v2/types.SchnorrEOTSSig" json:"fork_finality_sig,omitempty"`
+	ForkFinalitySig *github_com_babylonlabs_io_babylon_v2_types.SchnorrEOTSSig `protobuf:"bytes,8,opt,name=fork_finality_sig,json=forkFinalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.SchnorrEOTSSig" json:"fork_finality_sig,omitempty"`
 }
 
 func (m *MsgEquivocationEvidence) Reset()         { *m = MsgEquivocationEvidence{} }

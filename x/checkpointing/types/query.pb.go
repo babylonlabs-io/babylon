@@ -6,7 +6,7 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	github_com_babylonlabs_io_babylon_v2_crypto_bls12381 "github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+	github_com_babylonlabs_io_babylon_v2_crypto_bls12381 "github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
 	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
@@ -824,7 +824,7 @@ type RawCheckpointResponse struct {
 	Bitmap []byte `protobuf:"bytes,3,opt,name=bitmap,proto3" json:"bitmap,omitempty"`
 	// bls_multi_sig defines the multi sig that is aggregated from individual BLS
 	// sigs
-	BlsMultiSig *github_com_babylonlabs_io_babylon_v2_crypto_bls12381.Signature `protobuf:"bytes,4,opt,name=bls_multi_sig,json=blsMultiSig,proto3,customtype=github.com/babylonlabs-io/babylon/v2/crypto/bls12381.Signature" json:"bls_multi_sig,omitempty"`
+	BlsMultiSig *github_com_babylonlabs_io_babylon_v2_crypto_bls12381.Signature `protobuf:"bytes,4,opt,name=bls_multi_sig,json=blsMultiSig,proto3,customtype=github.com/babylonlabs-io/babylon/v4/crypto/bls12381.Signature" json:"bls_multi_sig,omitempty"`
 }
 
 func (m *RawCheckpointResponse) Reset()         { *m = RawCheckpointResponse{} }
@@ -964,7 +964,7 @@ type RawCheckpointWithMetaResponse struct {
 	// status_desc represents the description of status enum.
 	StatusDesc string `protobuf:"bytes,3,opt,name=status_desc,json=statusDesc,proto3" json:"status_desc,omitempty"`
 	// bls_aggr_pk defines the aggregated BLS public key
-	BlsAggrPk *github_com_babylonlabs_io_babylon_v2_crypto_bls12381.PublicKey `protobuf:"bytes,4,opt,name=bls_aggr_pk,json=blsAggrPk,proto3,customtype=github.com/babylonlabs-io/babylon/v2/crypto/bls12381.PublicKey" json:"bls_aggr_pk,omitempty"`
+	BlsAggrPk *github_com_babylonlabs_io_babylon_v2_crypto_bls12381.PublicKey `protobuf:"bytes,4,opt,name=bls_aggr_pk,json=blsAggrPk,proto3,customtype=github.com/babylonlabs-io/babylon/v4/crypto/bls12381.PublicKey" json:"bls_aggr_pk,omitempty"`
 	// power_sum defines the accumulated voting power for the checkpoint
 	PowerSum uint64 `protobuf:"varint,5,opt,name=power_sum,json=powerSum,proto3" json:"power_sum,omitempty"`
 	// lifecycle defines the lifecycle of this checkpoint, i.e., each state
