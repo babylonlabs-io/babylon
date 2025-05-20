@@ -1,14 +1,15 @@
 package main
 
 import (
-	"cosmossdk.io/log"
 	"os"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	"github.com/babylonlabs-io/babylon/v2/cmd/babylond/cmd"
+	"cosmossdk.io/log"
+
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
-	"github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v4/app/params"
 )
 
 func main() {

@@ -3,8 +3,9 @@ package cmd_test
 import (
 	"context"
 	"fmt"
-	"github.com/babylonlabs-io/babylon/v2/app"
 	"testing"
+
+	"github.com/babylonlabs-io/babylon/v4/app"
 
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -22,7 +23,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 
-	bbncmd "github.com/babylonlabs-io/babylon/v2/cmd/babylond/cmd"
+	bbncmd "github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
 )
 
 var testMbm = module.NewBasicManager(genutil.AppModuleBasic{})

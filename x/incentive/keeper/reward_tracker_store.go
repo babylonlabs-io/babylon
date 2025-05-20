@@ -7,7 +7,7 @@ import (
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

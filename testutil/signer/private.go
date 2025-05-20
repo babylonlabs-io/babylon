@@ -11,9 +11,9 @@ import (
 	"github.com/cometbft/cometbft/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
-	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 const TestPassword string = "password"

@@ -5,15 +5,16 @@ package babylonclient
 
 import (
 	"fmt"
-	"github.com/babylonlabs-io/babylon/v2/app/params"
-	"github.com/cometbft/cometbft/rpc/client/http"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"io"
 	"os"
 	"path"
 	"sync"
 	"time"
+
+	"github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/cometbft/cometbft/rpc/client/http"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type CosmosProviderConfig struct {
