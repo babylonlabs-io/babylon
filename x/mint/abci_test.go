@@ -7,9 +7,9 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v2/testutil/helper"
-	"github.com/babylonlabs-io/babylon/v2/x/mint"
-	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/helper"
+	"github.com/babylonlabs-io/babylon/v4/x/mint"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	"github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"

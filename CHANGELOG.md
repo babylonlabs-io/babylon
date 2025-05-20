@@ -80,6 +80,7 @@ check of rewards
 - [#902](https://github.com/babylonlabs-io/babylon/pull/902) Add IBC rate limiter to IBC transfer module
 - [#913](https://github.com/babylonlabs-io/babylon/pull/913) Remove IBC-fee module.
 - [#926](https://github.com/babylonlabs-io/babylon/pull/926) Update genesis initialization validations.
+- [#933](https://github.com/babylonlabs-io/babylon/pull/933) Update repository version to `v4`.
 - [#937](https://github.com/babylonlabs-io/babylon/pull/937) Remove Zoneconcierge module.
 
 ### State Machine Breaking
