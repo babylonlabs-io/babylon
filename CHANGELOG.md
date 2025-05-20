@@ -80,6 +80,7 @@ check of rewards
 - [#897](https://github.com/babylonlabs-io/babylon/pull/897) Add Interchain Accounts (ICA) and Interchain Queries (ICQ) modules.
 - [#902](https://github.com/babylonlabs-io/babylon/pull/902) Add IBC rate limiter to IBC transfer module
 - [#913](https://github.com/babylonlabs-io/babylon/pull/913) Remove IBC-fee module.
+- [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
 
 ### State Machine Breaking
 
