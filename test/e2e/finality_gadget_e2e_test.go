@@ -66,7 +66,6 @@ func (s *FinalityGadgetTestSuite) Test1InstantiateFinalityContract() {
 	}, time.Second*20, time.Second)
 
 	// Instantiate the finality gadget contract
-	var contracts []string
 	adminAddr := "bbn1gl0ctnctxr43npuyswfq5wz67r8p5kmsu0xhmy"
 	nonValidatorNode.InstantiateWasmContract(
 		strconv.Itoa(latestWasmId),
@@ -78,6 +77,7 @@ func (s *FinalityGadgetTestSuite) Test1InstantiateFinalityContract() {
 		initialization.ValidatorWalletName,
 	)
 
+	var contracts []string
 	s.Eventually(func() bool {
 		contracts, err = nonValidatorNode.QueryContractsFromId(latestWasmId)
 		return err == nil && len(contracts) == 1
