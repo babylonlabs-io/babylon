@@ -24,11 +24,11 @@ import (
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	"github.com/babylonlabs-io/babylon/v2/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
-	testutilcli "github.com/babylonlabs-io/babylon/v2/testutil/cli"
-	checkpointcli "github.com/babylonlabs-io/babylon/v2/x/checkpointing/client/cli"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	testutilcli "github.com/babylonlabs-io/babylon/v4/testutil/cli"
+	checkpointcli "github.com/babylonlabs-io/babylon/v4/x/checkpointing/client/cli"
 	"github.com/cometbft/cometbft/privval"
 )
 

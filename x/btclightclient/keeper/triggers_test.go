@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v2/x/btclightclient/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	"github.com/test-go/testify/require"
 )
 
