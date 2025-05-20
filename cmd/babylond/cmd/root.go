@@ -212,6 +212,7 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		TestnetCmd(basicManager, banktypes.GenesisBalancesIterator{}),
 		genhelpers.CmdGenHelpers(gentxModule.GenTxValidator),
 		CreateBlsKeyCmd(),
+		UpdateBlsPasswordCmd(),
 		ShowBlsKeyCmd(),
 		VerifyValidatorBlsKey(),
 		GenerateBlsPopCmd(),
