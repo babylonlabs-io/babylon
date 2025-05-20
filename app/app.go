@@ -128,9 +128,6 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
 	"github.com/babylonlabs-io/babylon/v2/x/monitor"
 	monitortypes "github.com/babylonlabs-io/babylon/v2/x/monitor/types"
-	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge"
-	zckeeper "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
 	"github.com/strangelove-ventures/tokenfactory/x/tokenfactory"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 )
@@ -336,7 +333,6 @@ func NewBabylonApp(
 		monitor.NewAppModule(appCodec, app.MonitorKeeper),
 		// Babylon modules - integration
 		btcstkconsumer.NewAppModule(appCodec, app.BTCStkConsumerKeeper, app.AccountKeeper, app.BankKeeper),
-		zoneconcierge.NewAppModule(appCodec, app.ZoneConciergeKeeper, app.AccountKeeper, app.BankKeeper),
 		// Babylon modules - btc staking
 		btcstaking.NewAppModule(appCodec, app.BTCStakingKeeper),
 		finality.NewAppModule(appCodec, app.FinalityKeeper),
@@ -397,7 +393,6 @@ func NewBabylonApp(
 		ratelimittypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
-		zctypes.ModuleName,
 		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
@@ -431,7 +426,6 @@ func NewBabylonApp(
 		ratelimittypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
-		zctypes.ModuleName,
 		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
@@ -472,7 +466,6 @@ func NewBabylonApp(
 		pfmroutertypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
-		zctypes.ModuleName,
 		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
@@ -564,7 +557,6 @@ func NewBabylonApp(
 	// set postHandler
 	postHandler := sdk.ChainPostDecorators(
 		incentivekeeper.NewRefundTxDecorator(&app.IncentiveKeeper),
-		zckeeper.NewIBCHeaderDecorator(&app.ZoneConciergeKeeper),
 	)
 	app.SetPostHandler(postHandler)
 

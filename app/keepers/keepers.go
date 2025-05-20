@@ -42,9 +42,6 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
 	monitorkeeper "github.com/babylonlabs-io/babylon/v2/x/monitor/keeper"
 	monitortypes "github.com/babylonlabs-io/babylon/v2/x/monitor/types"
-	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge"
-	zckeeper "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -177,7 +174,6 @@ type AppKeepers struct {
 
 	// Integration-related modules
 	BTCStkConsumerKeeper bsckeeper.Keeper
-	ZoneConciergeKeeper  zckeeper.Keeper
 
 	// BTC staking related modules
 	BTCStakingKeeper btcstakingkeeper.Keeper
@@ -190,10 +186,9 @@ type AppKeepers struct {
 	IncentiveKeeper incentivekeeper.Keeper
 
 	// make scoped keepers public for test purposes
-	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
-	ScopedZoneConciergeKeeper capabilitykeeper.ScopedKeeper
-	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
+	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
+	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
+	ScopedWasmKeeper     capabilitykeeper.ScopedKeeper
 
 	// keys to access the substores
 	keys    map[string]*storetypes.KVStoreKey
@@ -250,7 +245,6 @@ func (ak *AppKeepers) InitKeepers(
 		ratelimittypes.StoreKey,
 		// Integration related modules
 		bsctypes.ModuleName,
-		zctypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.StoreKey,
 		finalitytypes.StoreKey,
@@ -345,7 +339,6 @@ func (ak *AppKeepers) InitKeepers(
 	// grant capabilities for the ibc and ibc-transfer modules
 	scopedIBCKeeper := ak.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	scopedTransferKeeper := ak.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-	scopedZoneConciergeKeeper := ak.CapabilityKeeper.ScopeToModule(zctypes.ModuleName)
 	scopedWasmKeeper := ak.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 	scopedICAHostKeeper := ak.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
 	scopedICAControllerKeeper := ak.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
@@ -474,7 +467,7 @@ func (ak *AppKeepers) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.TokenFactoryKeeper, &epochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper, &ak.ZoneConciergeKeeper), wasmOpts...)
+	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.TokenFactoryKeeper, &epochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
 	wasmOpts = append(owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(
@@ -622,40 +615,13 @@ func (ak *AppKeepers) InitKeepers(
 		&btclightclientKeeper,
 	)
 
-	// create querier for KVStore
-	storeQuerier, ok := bApp.CommitMultiStore().(storetypes.Queryable)
-	if !ok {
-		panic(fmt.Errorf("multistore doesn't support queries"))
-	}
-
-	zcKeeper := zckeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
-		ak.IBCKeeper.ChannelKeeper,
-		ak.IBCKeeper.ClientKeeper,
-		ak.IBCKeeper.ConnectionKeeper,
-		ak.IBCKeeper.ChannelKeeper,
-		ak.IBCKeeper.PortKeeper,
-		ak.AccountKeeper,
-		ak.BankKeeper,
-		&btclightclientKeeper,
-		&checkpointingKeeper,
-		&btcCheckpointKeeper,
-		epochingKeeper,
-		storeQuerier,
-		&ak.BTCStakingKeeper,
-		&ak.BTCStkConsumerKeeper,
-		scopedZoneConciergeKeeper,
-		appparams.AccGov.String(),
-	)
-
-	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
+	// make Monitor to subscribe to the epoching's hooks
 	epochingKeeper.SetHooks(
-		epochingtypes.NewMultiEpochingHooks(zcKeeper.Hooks(), monitorKeeper.Hooks()),
+		epochingtypes.NewMultiEpochingHooks(monitorKeeper.Hooks()),
 	)
 	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
 	checkpointingKeeper.SetHooks(
-		checkpointingtypes.NewMultiCheckpointingHooks(epochingKeeper.Hooks(), zcKeeper.Hooks(), monitorKeeper.Hooks()),
+		checkpointingtypes.NewMultiCheckpointingHooks(epochingKeeper.Hooks(), monitorKeeper.Hooks()),
 	)
 	btclightclientKeeper.SetHooks(
 		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks(), ak.BTCStakingKeeper.Hooks()),
@@ -667,7 +633,6 @@ func (ak *AppKeepers) InitKeepers(
 	ak.CheckpointingKeeper = checkpointingKeeper
 	ak.BtcCheckpointKeeper = btcCheckpointKeeper
 	ak.MonitorKeeper = monitorKeeper
-	ak.ZoneConciergeKeeper = *zcKeeper
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -770,8 +735,6 @@ func (ak *AppKeepers) InitKeepers(
 	transferStack = ratelimiter.NewIBCMiddleware(ak.RatelimitKeeper, transferStack)
 	ak.TransferKeeper.WithICS4Wrapper(cbStack)
 
-	zoneConciergeStack := zoneconcierge.NewIBCModule(ak.ZoneConciergeKeeper)
-
 	// Create Interchain Accounts Controller Stack
 	// SendPacket Path:
 	// SendPacket -> Callbacks -> ICA Controller -> IBC core
@@ -793,10 +756,9 @@ func (ak *AppKeepers) InitKeepers(
 	icqStack := icq.NewIBCModule(*ak.ICQKeeper)
 
 	// Create static IBC router, add ibc-transfer module route,
-	// and the other routes (ICA, ICQ, wasm, zoneconcierge), then set and seal it
+	// and the other routes (ICA, ICQ, wasm), then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
-		AddRoute(zctypes.ModuleName, zoneConciergeStack).
 		AddRoute(wasmtypes.ModuleName, wasmStack).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostStack).
