@@ -1,15 +1,16 @@
 package configurer
 
 import (
-	v2 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/config"
+	v2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v2"
+
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/config"
 	"github.com/stretchr/testify/require"
 )
 

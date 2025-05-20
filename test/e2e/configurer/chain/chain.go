@@ -14,10 +14,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/config"
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/containers"
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/initialization"
-	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/config"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/containers"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
+	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 )
 
 type Config struct {

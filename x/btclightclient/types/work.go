@@ -2,7 +2,7 @@ package types
 
 import (
 	sdkmath "cosmossdk.io/math"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/wire"
 )

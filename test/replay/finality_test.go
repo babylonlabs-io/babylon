@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
