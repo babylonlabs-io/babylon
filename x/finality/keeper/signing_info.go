@@ -8,8 +8,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/bits-and-blooms/bitset"
 
-	bbntypes "github.com/babylonlabs-io/babylon/v2/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 // GetMissedBlockBitmapValue returns true if a finality provider missed signing

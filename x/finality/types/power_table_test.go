@@ -8,9 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	types "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	types "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 var (
@@ -363,8 +363,8 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 		expErrMsg string
 	}{
 		{
-			name:      "empty finality providers - valid",
-			vpdc:      types.VotingPowerDistCache{},
+			name: "empty finality providers - valid",
+			vpdc: types.VotingPowerDistCache{},
 		},
 		{
 			name: "NumActiveFps exceeds number of providers",
