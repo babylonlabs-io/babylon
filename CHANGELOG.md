@@ -81,6 +81,7 @@ check of rewards
 - [#913](https://github.com/babylonlabs-io/babylon/pull/913) Remove IBC-fee module.
 - [#926](https://github.com/babylonlabs-io/babylon/pull/926) Update genesis initialization validations.
 - [#933](https://github.com/babylonlabs-io/babylon/pull/933) Update repository version to `v4`.
+- [#xxx](https://github.com/babylonlabs-io/babylon/pull/xxx) Add `release/v4` branch to docker publish workflow.
 
 ### State Machine Breaking
 
