@@ -44,7 +44,7 @@ func (s *FinalityGadgetTestSuite) TearDownSuite() {
 	}
 }
 
-func (s *FinalityGadgetTestSuite) Test1Wasm() {
+func (s *FinalityGadgetTestSuite) Test1InstantiateFinalityContract() {
 	// Wait for the chain to start
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
