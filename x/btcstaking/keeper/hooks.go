@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 
-	ltypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	ltypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"go.uber.org/zap"
 )

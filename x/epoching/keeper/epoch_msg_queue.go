@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 // InitMsgQueue initialises the msg queue length of the current epoch to 0

@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/client"
 )
 

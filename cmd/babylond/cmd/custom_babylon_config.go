@@ -5,16 +5,16 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/babylonlabs-io/babylon/v2/app/ante"
-	"github.com/babylonlabs-io/babylon/v2/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/app/ante"
+	"github.com/babylonlabs-io/babylon/v4/app/signer"
 	cmtcfg "github.com/cometbft/cometbft/config"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 )
 
 type BtcConfig struct {

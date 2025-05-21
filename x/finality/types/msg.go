@@ -1,16 +1,17 @@
 package types
 
 import (
-	errorsmod "cosmossdk.io/errors"
 	"fmt"
+
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/cometbft/cometbft/crypto/merkle"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 )
 
 // ensure that these message types implement the sdk.Msg interface

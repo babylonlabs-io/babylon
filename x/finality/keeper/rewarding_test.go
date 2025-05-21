@@ -8,9 +8,9 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 func FuzzHandleRewarding(f *testing.F) {
