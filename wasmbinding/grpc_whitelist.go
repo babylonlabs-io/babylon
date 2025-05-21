@@ -2,9 +2,9 @@ package wasmbinding
 
 import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	bsctypes "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
-	epochtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
-	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	epochtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	"github.com/cosmos/gogoproto/proto"
 )
 

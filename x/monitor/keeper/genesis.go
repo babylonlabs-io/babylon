@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	chkpttypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
-	"github.com/babylonlabs-io/babylon/v2/x/monitor/types"
+	chkpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/x/monitor/types"
 )
 
 // InitGenesis initializes the keeper state from a provided initial genesis state.
@@ -65,9 +65,6 @@ func (k Keeper) epochEndRecords(ctx context.Context) ([]*types.EpochEndLightClie
 		record := &types.EpochEndLightClient{
 			Epoch:                sdk.BigEndianToUint64(iter.Key()),
 			BtcLightClientHeight: sdk.BigEndianToUint64(iter.Value()),
-		}
-		if err := record.Validate(); err != nil {
-			return nil, err
 		}
 		records = append(records, record)
 	}

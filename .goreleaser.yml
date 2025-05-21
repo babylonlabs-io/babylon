@@ -3,17 +3,21 @@ project_name: babylon
 
 env:
   - CGO_ENABLED=1
-  - CC=/opt/musl-cross/bin/x86_64-linux-musl-gcc
-  - LD=/opt/musl-cross/bin/x86_64-linux-musl-ld
   - CGO_LDFLAGS=-L/lib
 
 before:
   hooks:
     - wget -nc https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.x86_64.a
-    - cp -n -u /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
+    - wget -nc https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.aarch64.a -O /lib/libwasmvm_muslc.aarch64.a
+    - wget -nc https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvmstatic_darwin.a -O /lib/libwasmvmstatic_darwin.a
+
     - curl -LO https://musl.cc/x86_64-linux-musl-cross.tgz
     - tar xf x86_64-linux-musl-cross.tgz
-    - mv -n -u x86_64-linux-musl-cross /opt/musl-cross
+    - mv -n -u x86_64-linux-musl-cross /opt/musl-cross-x86_64
+
+    - curl -LO https://musl.cc/aarch64-linux-musl-cross.tgz
+    - tar xf aarch64-linux-musl-cross.tgz
+    - mv -n -u aarch64-linux-musl-cross /opt/musl-cross-aarch64
 
 builds:
   - id: babylond-linux-amd64
@@ -25,6 +29,9 @@ builds:
       - linux
     goarch:
       - amd64
+    env:
+    - CC=/opt/musl-cross-x86_64/bin/x86_64-linux-musl-gcc
+    - LD=/opt/musl-cross-x86_64/bin/x86_64-linux-musl-ld
     flags:
       - -mod=readonly
       - -trimpath
@@ -42,6 +49,65 @@ builds:
       - muslc
       - mainnet
 
+  - id: babylond-linux-arm64
+    main: ./cmd/babylond/main.go
+    binary: babylond
+    builder: go
+    gobinary: "go"
+    goos:
+      - linux
+    goarch:
+      - arm64
+    env:
+      - CC=/opt/musl-cross-aarch64/bin/aarch64-linux-musl-gcc
+      - LD=/opt/musl-cross-aarch64/bin/aarch64-linux-musl-ld
+    flags:
+      - -mod=readonly
+      - -trimpath
+    ldflags:
+      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
+      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
+      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
+      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=ledger,muslc,mainnet
+      - -linkmode=external
+      - -w -s
+      - -extldflags "-Wl,-z,muldefs -static -z noexecstack"
+    tags:
+      - ledger
+      - muslc
+      - mainnet
+
+  - id: babylond-darwin
+    main: ./cmd/babylond/main.go
+    binary: babylond
+    builder: go
+    gobinary: "go"
+    goos:
+      - darwin
+    goarch:
+      - arm64
+      - amd64
+    env:
+      - CC=oa64-clang
+      - CGO_CFLAGS=-mmacosx-version-min=10.12
+      - CGO_LDFLAGS=-L/lib -mmacosx-version-min=10.12
+    flags:
+      - -mod=readonly
+      - -trimpath
+    ldflags:
+      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
+      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
+      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
+      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=ledger,static_wasm,mainnet
+      - -linkmode=external
+      - -w -s
+    tags:
+      - ledger
+      - static_wasm
+      - mainnet
+
   - id: babylond-testnet-linux-amd64
     main: ./cmd/babylond/main.go
     binary: babylond
@@ -51,6 +117,9 @@ builds:
       - linux
     goarch:
       - amd64
+    env:
+      - CC=/opt/musl-cross-x86_64/bin/x86_64-linux-musl-gcc
+      - LD=/opt/musl-cross-x86_64/bin/x86_64-linux-musl-ld
     flags:
       - -mod=readonly
       - -trimpath
@@ -68,10 +137,70 @@ builds:
       - muslc
       - testnet
 
+  - id: babylond-testnet-linux-arm64
+    main: ./cmd/babylond/main.go
+    binary: babylond
+    builder: go
+    gobinary: "go"
+    goos:
+      - linux
+    goarch:
+      - arm64
+    env:
+      - CC=/opt/musl-cross-aarch64/bin/aarch64-linux-musl-gcc
+      - LD=/opt/musl-cross-aarch64/bin/aarch64-linux-musl-ld
+    flags:
+      - -mod=readonly
+      - -trimpath
+    ldflags:
+      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
+      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
+      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
+      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=ledger,muslc,testnet
+      - -linkmode=external
+      - -w -s
+      - -extldflags "-Wl,-z,muldefs -static -z noexecstack"
+    tags:
+      - ledger
+      - muslc
+      - testnet
+
+  - id: babylond-testnet-darwin
+    main: ./cmd/babylond/main.go
+    binary: babylond
+    builder: go
+    gobinary: "go"
+    goos:
+      - darwin
+    goarch:
+      - arm64
+      - amd64
+    env:
+      - CC=oa64-clang
+      - CGO_CFLAGS=-mmacosx-version-min=10.12
+      - CGO_LDFLAGS=-L/lib -mmacosx-version-min=10.12
+    flags:
+      - -mod=readonly
+      - -trimpath
+    ldflags:
+      - -X github.com/cosmos/cosmos-sdk/version.Name=babylon
+      - -X github.com/cosmos/cosmos-sdk/version.AppName=babylond
+      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
+      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+      - -X github.com/cosmos/cosmos-sdk/version.BuildTags=ledger,static_wasm,testnet
+      - -linkmode=external
+      - -w -s
+    tags:
+      - ledger
+      - static_wasm
+      - testnet
 archives:
   - id: zipped
     builds:
       - babylond-linux-amd64
+      - babylond-linux-arm64
+      - babylond-darwin
     name_template: "{{.ProjectName}}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
     format: tar.gz
     wrap_in_directory: false
@@ -80,6 +209,8 @@ archives:
   - id: zipped-testnet
     builds:
       - babylond-testnet-linux-amd64
+      - babylond-testnet-linux-arm64
+      - babylond-testnet-darwin
     name_template: "{{.ProjectName}}-testnet-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
     format: tar.gz
     wrap_in_directory: false
@@ -88,6 +219,8 @@ archives:
   - id: binaries
     builds:
       - babylond-linux-amd64
+      - babylond-linux-arm64
+      - babylond-darwin
     name_template: "{{.ProjectName}}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
     format: binary
     wrap_in_directory: false
@@ -96,6 +229,8 @@ archives:
   - id: binaries-testnet
     builds:
       - babylond-testnet-linux-amd64
+      - babylond-testnet-linux-arm64
+      - babylond-testnet-darwin
     name_template: "{{.ProjectName}}-testnet-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
     format: binary
     wrap_in_directory: false
