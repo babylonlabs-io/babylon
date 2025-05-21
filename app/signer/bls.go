@@ -425,6 +425,9 @@ func LoadBlsPop(filePath string) (BlsPop, error) {
 // ShowBlsKey displays information about a BLS key
 // Takes a password that was determined by the password determination logic.
 func ShowBlsKey(blsKeyFile string, password string) (map[string]interface{}, error) {
+	if !cmtos.FileExists(blsKeyFile) {
+		return nil, fmt.Errorf("failed to show BLS key: BLS key file does not exist at %s", blsKeyFile)
+	}
 	blsPrivKey, err := LoadBlsPrivKeyFromFile(blsKeyFile, password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load BLS key: %w", err)
@@ -444,6 +447,10 @@ func ShowBlsKey(blsKeyFile string, password string) (map[string]interface{}, err
 // CreateBlsKey creates a new BLS key
 // Takes a password that was determined by the password determination logic.
 func CreateBlsKey(blsKeyFile string, password string, passwordFilePath string, cmd *cobra.Command) error {
+	if cmtos.FileExists(blsKeyFile) {
+		return fmt.Errorf("failed to create BLS key: BLS key already exists at %s", blsKeyFile)
+	}
+
 	// Ensure the key file directory exists
 	if err := EnsureDirs(blsKeyFile); err != nil {
 		return fmt.Errorf("failed to ensure key directory exists: %w", err)
@@ -488,6 +495,10 @@ func CreateBlsKey(blsKeyFile string, password string, passwordFilePath string, c
 // UpdateBlsPassword updates the password for a BLS key
 // Takes a password that was determined by the password determination logic.
 func UpdateBlsPassword(blsKeyFile string, blsPrivKey bls12381.PrivateKey, password, passwordFilePath string, cmd *cobra.Command) error {
+	if !cmtos.FileExists(blsKeyFile) {
+		return fmt.Errorf("failed to update BLS password: BLS key does not exist at %s", blsKeyFile)
+	}
+
 	// Create backup of BLS key file before removing it
 	backupBlsKeyFile := blsKeyFile + ".bk"
 	if err := cmtos.CopyFile(blsKeyFile, backupBlsKeyFile); err != nil {

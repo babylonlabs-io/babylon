@@ -100,7 +100,7 @@ $ babylond update-bls-password --no-bls-password
 			}
 
 			// Generate BLS key using the refactored function with explicit password
-			return appsigner.UpdateBlsPassword(homeDir, blsPrivKey, newPassword, passwordFile, cmd)
+			return appsigner.UpdateBlsPassword(blsKeyFile, blsPrivKey, newPassword, passwordFile, cmd)
 		},
 	}
 
