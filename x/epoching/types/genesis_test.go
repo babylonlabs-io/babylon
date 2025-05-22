@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v2/testutil/nullify"
-	"github.com/babylonlabs-io/babylon/v2/x/epoching"
-	"github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v3/testutil/nullify"
+	"github.com/babylonlabs-io/babylon/v3/x/epoching"
+	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	"github.com/stretchr/testify/require"
 )
 

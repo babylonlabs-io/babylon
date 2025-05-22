@@ -5,8 +5,8 @@ import (
 	fmt "fmt"
 	"sort"
 
-	"github.com/babylonlabs-io/babylon/v2/types"
-	chkpttypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v3/types"
+	chkpttypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 )
 
 // DefaultGenesis returns the default Capability genesis state

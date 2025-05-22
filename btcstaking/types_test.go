@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v2/btcstaking"
+	"github.com/babylonlabs-io/babylon/v3/btcstaking"
 	"github.com/stretchr/testify/require"
 )
 
