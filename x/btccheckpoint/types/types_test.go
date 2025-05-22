@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v2/btctxformatter"
-	"github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v3/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 	"github.com/stretchr/testify/require"
 )
 

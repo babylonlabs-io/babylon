@@ -6,6 +6,7 @@ on:
       - 'main'
       - 'release/v1.x'
       - 'release/v2.x'
+      - 'release/v3.x'
     tags:
       - '*'
 

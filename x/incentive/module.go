@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/client/cli"
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/client/cli"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"

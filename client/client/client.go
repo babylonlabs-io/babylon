@@ -1,12 +1,12 @@
 package client
 
 import (
-	"github.com/babylonlabs-io/babylon/v2/client/babylonclient"
+	"github.com/babylonlabs-io/babylon/v3/client/babylonclient"
 	"time"
 
-	bbn "github.com/babylonlabs-io/babylon/v2/app"
-	"github.com/babylonlabs-io/babylon/v2/client/config"
-	"github.com/babylonlabs-io/babylon/v2/client/query"
+	bbn "github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/client/config"
+	"github.com/babylonlabs-io/babylon/v3/client/query"
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	"go.uber.org/zap"
 )
