@@ -36,6 +36,11 @@ $ babylond update-bls-password --no-bls-password
 				return fmt.Errorf("failed to get home directory: %w", err)
 			}
 
+			blsKeyFile, exist := appsigner.GetBlsKeyFileIfExist(homeDir, "")
+			if !exist {
+				return fmt.Errorf("BLS key file does not exist at %s", blsKeyFile)
+			}
+
 			cmd.Println("\n⚠️ IMPORTANT: Your BLS key file will be overwritten! ⚠️")
 			cmd.Println("1. (Recommended) Please make a backup of your BLS key before proceeding.")
 			cmd.Println("2. To update the password of BLS key, you need to provide the old password.")
@@ -69,7 +74,10 @@ $ babylond update-bls-password --no-bls-password
 				return fmt.Errorf("failed to unset BLS password environment variable: %w", err)
 			}
 
-			blsPrivKey, err := appsigner.LoadBlsPrivKey(homeDir, oldPassword)
+			// Command should be cancelled
+			// if the BLS key is failed to decrypt with old password,
+			// because it means the old password is incorrect.
+			blsPrivKey, err := appsigner.LoadBlsPrivKeyFromFile(blsKeyFile, oldPassword)
 			if err != nil {
 				return fmt.Errorf("failed to load BLS key: %w", err)
 			}
@@ -92,7 +100,7 @@ $ babylond update-bls-password --no-bls-password
 			}
 
 			// Generate BLS key using the refactored function with explicit password
-			return appsigner.UpdateBlsPassword(homeDir, blsPrivKey, newPassword, passwordFile, cmd)
+			return appsigner.UpdateBlsPassword(blsKeyFile, blsPrivKey, newPassword, passwordFile, cmd)
 		},
 	}
 

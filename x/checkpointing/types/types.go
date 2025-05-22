@@ -26,6 +26,7 @@ const (
 type BlsSigner interface {
 	SignMsgWithBls(msg []byte) (bls12381.Signature, error)
 	BlsPubKey() (bls12381.PublicKey, error)
+	BlsKeyFilePath() string
 }
 
 type BlockHash []byte
