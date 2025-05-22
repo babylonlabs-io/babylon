@@ -123,7 +123,6 @@ func FuzzRegisterConsumer(f *testing.F) {
 		require.Equal(t, consumerRegister.String(), consumerRegister2.String())
 		require.Equal(t, types.ConsumerType_ETH_L2, consumerRegister2.Type())
 		require.Equal(t, consumerRegister.MaxMultiStakedFps, consumerRegister2.MaxMultiStakedFps)
-		
 	})
 }
 
