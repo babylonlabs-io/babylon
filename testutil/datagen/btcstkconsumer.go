@@ -12,6 +12,7 @@ func GenRandomCosmosConsumerRegister(r *rand.Rand) *bsctypes.ConsumerRegister {
 		ConsumerId:          clientID,
 		ConsumerName:        GenRandomHexStr(r, 5),
 		ConsumerDescription: "Chain description: " + GenRandomHexStr(r, 15),
+		MaxMultiStakedFps:   uint32(r.Intn(10) + 1), // Random number between 1 and 10
 		ConsumerMetadata: &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
 			CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{},
 		},
@@ -24,6 +25,7 @@ func GenRandomETHL2Register(r *rand.Rand, contractAddress string) *bsctypes.Cons
 		ConsumerId:          clientID,
 		ConsumerName:        GenRandomHexStr(r, 5),
 		ConsumerDescription: "Chain description: " + GenRandomHexStr(r, 15),
+		MaxMultiStakedFps:   uint32(r.Intn(10) + 1), // Random number between 1 and 10
 		ConsumerMetadata: &bsctypes.ConsumerRegister_EthL2ConsumerMetadata{
 			EthL2ConsumerMetadata: &bsctypes.ETHL2ConsumerMetadata{
 				FinalityContractAddress: contractAddress,
