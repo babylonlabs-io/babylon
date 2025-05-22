@@ -40,5 +40,17 @@ func FuzzConsumerRegistry(f *testing.F) {
 		require.Equal(t, consumerRegister.ConsumerId, consumerRegister2.ConsumerId)
 		require.Equal(t, consumerRegister.ConsumerName, consumerRegister2.ConsumerName)
 		require.Equal(t, consumerRegister.ConsumerDescription, consumerRegister2.ConsumerDescription)
+		require.Equal(t, consumerRegister.MaxMultiStakedFps, consumerRegister2.MaxMultiStakedFps)
+
+		/*
+			Test registering consumer with invalid max_multi_staked_fps (zero)
+		*/
+		// generate a random consumer register
+		consumerRegister = datagen.GenRandomCosmosConsumerRegister(r)
+		consumerRegister.MaxMultiStakedFps = 0
+		// Register the consumer with zero max_multi_staked_fps
+		err = bscKeeper.RegisterConsumer(ctx, consumerRegister)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "MaxMultiStakedFps must be greater than 0")
 	})
 }

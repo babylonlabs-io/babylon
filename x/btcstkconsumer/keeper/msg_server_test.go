@@ -76,12 +76,30 @@ func FuzzRegisterConsumer(f *testing.F) {
 			ConsumerId:          consumerRegister.ConsumerId,
 			ConsumerName:        consumerRegister.ConsumerName,
 			ConsumerDescription: consumerRegister.ConsumerDescription,
+			MaxMultiStakedFps:   consumerRegister.MaxMultiStakedFps,
 		})
 		require.NoError(t, err)
 		// check that the consumer is registered
 		consumerRegister2, err := bscKeeper.GetConsumerRegister(ctx, consumerRegister.ConsumerId)
 		require.NoError(t, err)
 		require.Equal(t, consumerRegister.String(), consumerRegister2.String())
+
+		/*
+			Test registering consumer with invalid max_multi_staked_fps (zero)
+		*/
+		// generate a random consumer register
+		consumerRegister = datagen.GenRandomCosmosConsumerRegister(r)
+		// mock IBC light client
+		babylonApp.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerRegister.ConsumerId, &ibctmtypes.ClientState{})
+		// Register the consumer with zero max_multi_staked_fps
+		_, err = msgServer.RegisterConsumer(ctx, &types.MsgRegisterConsumer{
+			ConsumerId:          consumerRegister.ConsumerId,
+			ConsumerName:        consumerRegister.ConsumerName,
+			ConsumerDescription: consumerRegister.ConsumerDescription,
+			MaxMultiStakedFps:   0,
+		})
+		require.Error(t, err)
+		require.ErrorContains(t, err, "MaxMultiStakedFps must be greater than 0")
 
 		/*
 			Test registering ETH L2 consumer
