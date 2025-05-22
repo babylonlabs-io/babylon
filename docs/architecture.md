@@ -47,18 +47,6 @@ The confirmation status of each checkpoint is determined by
 Bitcoin checkpoint inclusion information retrieved from the
 BTC checkpoint module.
 
-### [ZoneConcierge](../x/zoneconcierge)
-
-The Zone Concierge module
-extracts verified Consumer Zone headers from
-connected [IBC light clients](https://github.com/cosmos/ibc-go) and
-maintains their Bitcoin confirmation status based on the
-Bitcoin confirmation status of the
-Babylon transactions that carry them.
-It communicates the Bitcoin confirmation status to the Consumer Zone
-using verifiable proofs through an
-[IBC](https://github.com/cosmos/ibc-go) connection.
-
 ### [BTC Staking](../x/btcstaking)
 
 The BTC Staking module
