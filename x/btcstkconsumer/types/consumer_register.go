@@ -58,6 +58,7 @@ func (cr *ConsumerRegister) ToResponse() *ConsumerRegisterResponse {
 		ConsumerId:          cr.ConsumerId,
 		ConsumerName:        cr.ConsumerName,
 		ConsumerDescription: cr.ConsumerDescription,
+		MaxMultiStakedFps:   cr.MaxMultiStakedFps,
 	}
 	if cr.ConsumerMetadata != nil {
 		switch md := cr.ConsumerMetadata.(type) {

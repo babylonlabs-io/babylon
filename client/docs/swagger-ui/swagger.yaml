@@ -10702,6 +10702,15 @@ paths:
                         finality contract
 
                         set only for ETH L2 integration
+                    max_multi_staked_fps:
+                      type: integer
+                      format: int64
+                      description: >-
+                        max_multi_staked_fps is the maximum number of finality
+                        providers from this consumer
+
+                        that can be part of a single BTC delegation. Must be
+                        greater than 0.
                   title: >-
                     ConsumerRegisterResponse contains the information for a
                     registered consumer
@@ -11043,6 +11052,15 @@ paths:
                         finality contract
 
                         set only for ETH L2 integration
+                    max_multi_staked_fps:
+                      type: integer
+                      format: int64
+                      description: >-
+                        max_multi_staked_fps is the maximum number of finality
+                        providers from this consumer
+
+                        that can be part of a single BTC delegation. Must be
+                        greater than 0.
                   title: >-
                     ConsumerRegisterResponse contains the information for a
                     registered consumer
@@ -23064,6 +23082,14 @@ definitions:
           contract
 
           set only for ETH L2 integration
+      max_multi_staked_fps:
+        type: integer
+        format: int64
+        description: >-
+          max_multi_staked_fps is the maximum number of finality providers from
+          this consumer
+
+          that can be part of a single BTC delegation. Must be greater than 0.
     title: >-
       ConsumerRegisterResponse contains the information for a registered
       consumer
@@ -23213,6 +23239,15 @@ definitions:
                 contract
 
                 set only for ETH L2 integration
+            max_multi_staked_fps:
+              type: integer
+              format: int64
+              description: >-
+                max_multi_staked_fps is the maximum number of finality providers
+                from this consumer
+
+                that can be part of a single BTC delegation. Must be greater
+                than 0.
           title: >-
             ConsumerRegisterResponse contains the information for a registered
             consumer
@@ -23290,6 +23325,15 @@ definitions:
                 contract
 
                 set only for ETH L2 integration
+            max_multi_staked_fps:
+              type: integer
+              format: int64
+              description: >-
+                max_multi_staked_fps is the maximum number of finality providers
+                from this consumer
+
+                that can be part of a single BTC delegation. Must be greater
+                than 0.
           title: >-
             ConsumerRegisterResponse contains the information for a registered
             consumer
