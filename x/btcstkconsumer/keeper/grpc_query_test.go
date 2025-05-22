@@ -36,7 +36,7 @@ func FuzzConsumerRegistryList(f *testing.F) {
 		consumerMaxFps := make(map[string]uint32) // Track max_multi_staked_fps for each consumer
 		for i := uint64(0); i < numRegistrations; i++ {
 			var consumerID = datagen.GenRandomHexStr(r, 30)
-			maxFps := uint32(datagen.RandomInt(r, 10) + 1)
+			maxFps := uint32(datagen.RandomInt(r, 10) + 2)
 			allConsumerIDs = append(allConsumerIDs, consumerID)
 			consumerMaxFps[consumerID] = maxFps
 
@@ -87,7 +87,7 @@ func FuzzConsumersRegistry(f *testing.F) {
 		numConsumers := datagen.RandomInt(r, 100) + 1
 		for i := uint64(0); i < numConsumers; i++ {
 			consumerID := datagen.GenRandomHexStr(r, 30)
-			maxFps := uint32(datagen.RandomInt(r, 10) + 1)
+			maxFps := uint32(datagen.RandomInt(r, 10) + 2)
 
 			consumerIDs = append(consumerIDs, consumerID)
 			maxMultiStakedFps = append(maxMultiStakedFps, maxFps)

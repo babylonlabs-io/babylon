@@ -1,21 +1,17 @@
 package types
 
-import (
-	"fmt"
-)
-
 func (m *MsgRegisterConsumer) ValidateBasic() error {
 	if len(m.ConsumerId) == 0 {
-		return fmt.Errorf("ConsumerId must be non-empty")
+		return ErrEmptyConsumerId
 	}
 	if len(m.ConsumerName) == 0 {
-		return fmt.Errorf("ConsumerName must be non-empty")
+		return ErrEmptyConsumerName
 	}
 	if len(m.ConsumerDescription) == 0 {
-		return fmt.Errorf("ConsumerDescription must be non-empty")
+		return ErrEmptyConsumerDescription
 	}
-	if m.MaxMultiStakedFps == 0 {
-		return fmt.Errorf("MaxMultiStakedFps must be greater than 0")
+	if m.MaxMultiStakedFps < 2 {
+		return ErrInvalidMaxMultiStakedFps
 	}
 	return nil
 }
@@ -71,18 +67,18 @@ func (cr *ConsumerRegister) ToResponse() *ConsumerRegisterResponse {
 	return resp
 }
 
-func (cr ConsumerRegister) Validate() error {
+func (cr *ConsumerRegister) Validate() error {
 	if len(cr.ConsumerId) == 0 {
-		return fmt.Errorf("ConsumerId must be non-empty")
+		return ErrEmptyConsumerId
 	}
 	if len(cr.ConsumerName) == 0 {
-		return fmt.Errorf("ConsumerName must be non-empty")
+		return ErrEmptyConsumerName
 	}
 	if len(cr.ConsumerDescription) == 0 {
-		return fmt.Errorf("ConsumerDescription must be non-empty")
+		return ErrEmptyConsumerDescription
 	}
-	if cr.MaxMultiStakedFps == 0 {
-		return fmt.Errorf("MaxMultiStakedFps must be greater than 0")
+	if cr.MaxMultiStakedFps < 2 {
+		return ErrInvalidMaxMultiStakedFps
 	}
 	return nil
 }

@@ -99,7 +99,7 @@ func FuzzRegisterConsumer(f *testing.F) {
 			MaxMultiStakedFps:   0,
 		})
 		require.Error(t, err)
-		require.ErrorContains(t, err, "MaxMultiStakedFps must be greater than 0")
+		require.ErrorIs(t, err, types.ErrInvalidMaxMultiStakedFps)
 
 		/*
 			Test registering ETH L2 consumer
@@ -113,6 +113,7 @@ func FuzzRegisterConsumer(f *testing.F) {
 			ConsumerId:                   consumerRegister.ConsumerId,
 			ConsumerName:                 consumerRegister.ConsumerName,
 			ConsumerDescription:          consumerRegister.ConsumerDescription,
+			MaxMultiStakedFps:            consumerRegister.MaxMultiStakedFps,
 			EthL2FinalityContractAddress: contractAddr.String(),
 		})
 		require.NoError(t, err)
@@ -121,6 +122,8 @@ func FuzzRegisterConsumer(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, consumerRegister.String(), consumerRegister2.String())
 		require.Equal(t, types.ConsumerType_ETH_L2, consumerRegister2.Type())
+		require.Equal(t, consumerRegister.MaxMultiStakedFps, consumerRegister2.MaxMultiStakedFps)
+		
 	})
 }
 

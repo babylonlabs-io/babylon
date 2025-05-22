@@ -88,7 +88,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				FinalityProviders: []*btcstaking.FinalityProvider{},
 			},
 			valid:  false,
-			errMsg: "MaxMultiStakedFps must be greater than 0",
+			errMsg: types.ErrInvalidMaxMultiStakedFps.Error(),
 		},
 	}
 	for _, tc := range tests {
