@@ -40,7 +40,7 @@ func NewRegisterConsumerCmd() *cobra.Command {
 			`Registers a consumer with Babylon. The consumer-id must be unique and will be used to identify this consumer.
 			The name and optional description help identify the purpose of this consumer.
 			The max-multi-staked-fps specifies the maximum number of finality providers from this consumer that can be part of a single BTC delegation.
-			Must be greater than 0.`,
+			Must be at least 2 to allow for at least one Babylon FP and one consumer FP.`,
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -50,22 +50,22 @@ func NewRegisterConsumerCmd() *cobra.Command {
 
 			consumerId := args[0]
 			if consumerId == "" {
-				return fmt.Errorf("consumer's id cannot be empty")
+				return types.ErrEmptyConsumerId
 			}
 			name := args[1]
 			if name == "" {
-				return fmt.Errorf("consumer's name cannot be empty")
+				return types.ErrEmptyConsumerName
 			}
 			description := args[2]
 			if description == "" {
-				return fmt.Errorf("consumer's description cannot be empty")
+				return types.ErrEmptyConsumerDescription
 			}
 			maxMultiStakedFps, err := strconv.ParseUint(args[3], 10, 32)
 			if err != nil {
 				return fmt.Errorf("invalid max-multi-staked-fps: %w", err)
 			}
-			if maxMultiStakedFps == 0 {
-				return fmt.Errorf("max-multi-staked-fps must be greater than 0")
+			if maxMultiStakedFps < 2 {
+				return types.ErrInvalidMaxMultiStakedFps
 			}
 			ethL2Address := ""
 			if len(args) > 4 {

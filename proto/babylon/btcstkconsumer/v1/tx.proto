@@ -54,7 +54,8 @@ message MsgRegisterConsumer {
   // consumer_description is a description for the consumer (can be empty)
   string consumer_description = 4;
   // max_multi_staked_fps is the maximum number of finality providers from this consumer
-  // that can be part of a single BTC delegation. Must be greater than 0.
+  // that can be part of a single BTC delegation. Must be at least 2 to allow for at least
+  // one Babylon FP and one consumer FP.
   uint32 max_multi_staked_fps = 5;
   // eth_l2_finality_contract_address is the Cosmos address of the
   // finality contract. The finality contract is deployed on Babylon and

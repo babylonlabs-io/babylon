@@ -137,7 +137,8 @@ type MsgRegisterConsumer struct {
 	// consumer_description is a description for the consumer (can be empty)
 	ConsumerDescription string `protobuf:"bytes,4,opt,name=consumer_description,json=consumerDescription,proto3" json:"consumer_description,omitempty"`
 	// max_multi_staked_fps is the maximum number of finality providers from this consumer
-	// that can be part of a single BTC delegation. Must be greater than 0.
+	// that can be part of a single BTC delegation. Must be at least 2 to allow for at least
+	// one Babylon FP and one consumer FP.
 	MaxMultiStakedFps uint32 `protobuf:"varint,5,opt,name=max_multi_staked_fps,json=maxMultiStakedFps,proto3" json:"max_multi_staked_fps,omitempty"`
 	// eth_l2_finality_contract_address is the Cosmos address of the
 	// finality contract. The finality contract is deployed on Babylon and

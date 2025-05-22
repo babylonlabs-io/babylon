@@ -63,7 +63,8 @@ type ConsumerRegister struct {
 	// consumer_description is a description for the consumer (can be empty)
 	ConsumerDescription string `protobuf:"bytes,3,opt,name=consumer_description,json=consumerDescription,proto3" json:"consumer_description,omitempty"`
 	// max_multi_staked_fps is the maximum number of finality providers from this consumer
-	// that can be part of a single BTC delegation. Must be greater than 0.
+	// that can be part of a single BTC delegation. Must be at least 2 to allow for at least
+	// one Babylon FP and one consumer FP.
 	MaxMultiStakedFps uint32 `protobuf:"varint,4,opt,name=max_multi_staked_fps,json=maxMultiStakedFps,proto3" json:"max_multi_staked_fps,omitempty"`
 	// consumer_metadata is necessary metadata of the consumer, and the data
 	// depends on the type of integration
