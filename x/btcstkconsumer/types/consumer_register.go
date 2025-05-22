@@ -14,25 +14,30 @@ func (m *MsgRegisterConsumer) ValidateBasic() error {
 	if len(m.ConsumerDescription) == 0 {
 		return fmt.Errorf("ConsumerDescription must be non-empty")
 	}
+	if m.MaxMultiStakedFps == 0 {
+		return fmt.Errorf("MaxMultiStakedFps must be greater than 0")
+	}
 	return nil
 }
 
-func NewCosmosConsumerRegister(consumerId, consumerName, consumerDescription string) *ConsumerRegister {
+func NewCosmosConsumerRegister(consumerId, consumerName, consumerDescription string, maxMultiStakedFps uint32) *ConsumerRegister {
 	return &ConsumerRegister{
 		ConsumerId:          consumerId,
 		ConsumerName:        consumerName,
 		ConsumerDescription: consumerDescription,
+		MaxMultiStakedFps:   maxMultiStakedFps,
 		ConsumerMetadata: &ConsumerRegister_CosmosConsumerMetadata{
 			CosmosConsumerMetadata: &CosmosConsumerMetadata{},
 		},
 	}
 }
 
-func NewETHL2ConsumerRegister(consumerId, consumerName, consumerDescription string, ethL2FinalityContractAddress string) *ConsumerRegister {
+func NewETHL2ConsumerRegister(consumerId, consumerName, consumerDescription string, ethL2FinalityContractAddress string, maxMultiStakedFps uint32) *ConsumerRegister {
 	return &ConsumerRegister{
 		ConsumerId:          consumerId,
 		ConsumerName:        consumerName,
 		ConsumerDescription: consumerDescription,
+		MaxMultiStakedFps:   maxMultiStakedFps,
 		ConsumerMetadata: &ConsumerRegister_EthL2ConsumerMetadata{
 			EthL2ConsumerMetadata: &ETHL2ConsumerMetadata{
 				FinalityContractAddress: ethL2FinalityContractAddress,
@@ -74,6 +79,9 @@ func (cr ConsumerRegister) Validate() error {
 	}
 	if len(cr.ConsumerDescription) == 0 {
 		return fmt.Errorf("ConsumerDescription must be non-empty")
+	}
+	if cr.MaxMultiStakedFps == 0 {
+		return fmt.Errorf("MaxMultiStakedFps must be greater than 0")
 	}
 	return nil
 }
