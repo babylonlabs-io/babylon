@@ -29,6 +29,7 @@ type BTCStkConsumerKeeper interface {
 	GetConsumerOfFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (string, error)
 	GetConsumerFinalityProvider(ctx context.Context, consumerID string, fpBTCPK *bbn.BIP340PubKey) (*FinalityProvider, error)
 	SetConsumerFinalityProvider(ctx context.Context, fp *FinalityProvider)
+	GetConsumerRegistryMaxMultiStakedFps(ctx context.Context, consumerID string) (uint32, error)
 }
 
 type IncentiveKeeper interface {

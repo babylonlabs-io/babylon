@@ -52,6 +52,7 @@ func (ms msgServer) RegisterConsumer(ctx context.Context, req *types.MsgRegister
 			req.ConsumerName,
 			req.ConsumerDescription,
 			req.EthL2FinalityContractAddress,
+			req.MaxMultiStakedFps,
 		)
 		if err := ms.Keeper.RegisterConsumer(ctx, consumerRegister); err != nil {
 			return nil, err
@@ -71,6 +72,7 @@ func (ms msgServer) RegisterConsumer(ctx context.Context, req *types.MsgRegister
 			req.ConsumerId,
 			req.ConsumerName,
 			req.ConsumerDescription,
+			req.MaxMultiStakedFps,
 		)
 		if err := ms.Keeper.RegisterConsumer(ctx, consumerRegister); err != nil {
 			return nil, err
