@@ -83,6 +83,7 @@ check of rewards
 - [#933](https://github.com/babylonlabs-io/babylon/pull/933) Update repository version to `v4`.
 - [#935](https://github.com/babylonlabs-io/babylon/pull/935) Add `release/v4` branch to docker publish workflow.
 - [#937](https://github.com/babylonlabs-io/babylon/pull/937) Remove Zoneconcierge module.
+- [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
 
 ### State Machine Breaking
 
