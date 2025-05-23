@@ -4,6 +4,7 @@ package babylon.btcstkconsumer.v1;
 option go_package = "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types";
 
 import "amino/amino.proto";
+import "babylon/btcstkconsumer/v1/btcstkconsumer.proto"; // ← Add this line
 
 // EventConsumerRegistered is the event emitted when a consumer is registered
 message EventConsumerRegistered {
@@ -13,4 +14,6 @@ message EventConsumerRegistered {
   string consumer_name = 2  [(amino.dont_omitempty) = true];
   // consumer_description is a description for the consumer
   string consumer_description = 3  [(amino.dont_omitempty) = true];
+  // consumer_type is the type of the consumer
+  ConsumerType consumer_type = 4 [(amino.dont_omitempty) = true];
 }

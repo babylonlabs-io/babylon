@@ -34,9 +34,10 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 		return nil, err
 	}
 
+	var consumerType types.ConsumerType
 	if len(req.EthL2FinalityContractAddress) > 0 {
 		// this is a ETH L2 consumer
-
+		consumerType = types.ConsumerType_ETH_L2
 		// ensure the ETH L2 finality contract exists
 		contractAddr, err := sdk.AccAddressFromBech32(req.EthL2FinalityContractAddress)
 		if err != nil {
@@ -59,7 +60,7 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 		}
 	} else {
 		// this is a Cosmos consumer
-
+		consumerType = types.ConsumerType_COSMOS
 		// ensure the IBC light client exists
 		sdkCtx := sdk.UnwrapSDKContext(goCtx)
 		_, exist := ms.clientKeeper.GetClientState(sdkCtx, req.ConsumerId)
@@ -83,7 +84,8 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 		types.NewConsumerRegisteredEvent(
 			req.ConsumerId,
 			req.ConsumerName,
-			req.ConsumerDescription)); err != nil {
+			req.ConsumerDescription,
+			consumerType)); err != nil {
 		panic(fmt.Errorf("failed to emit NewConsumerRegisteredEvent event: %w", err))
 	}
 
