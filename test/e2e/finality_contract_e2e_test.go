@@ -9,13 +9,13 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type FinalityGadgetTestSuite struct {
+type FinalityContractTestSuite struct {
 	suite.Suite
 
 	configurer configurer.Configurer
 }
 
-func (s *FinalityGadgetTestSuite) SetupSuite() {
+func (s *FinalityContractTestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
 	var (
 		err error
@@ -27,7 +27,7 @@ func (s *FinalityGadgetTestSuite) SetupSuite() {
 	//   * Initialize configs and genesis.
 	// 2. Start network.
 	// 3. Execute various e2e tests.
-	s.configurer, err = configurer.NewFinalityGadgetConfigurer(s.T(), true)
+	s.configurer, err = configurer.NewFinalityContractConfigurer(s.T(), true)
 	s.Require().NoError(err)
 
 	err = s.configurer.ConfigureChains()
@@ -37,14 +37,14 @@ func (s *FinalityGadgetTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-func (s *FinalityGadgetTestSuite) TearDownSuite() {
+func (s *FinalityContractTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
 	if err != nil {
 		s.T().Logf("error to clear resources %s", err.Error())
 	}
 }
 
-func (s *FinalityGadgetTestSuite) Test1InstantiateFinalityContract() {
+func (s *FinalityContractTestSuite) Test1InstantiateFinalityContract() {
 	// Wait for the chain to start
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)

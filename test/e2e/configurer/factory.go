@@ -212,8 +212,8 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 	), nil
 }
 
-// NewFinalityGadgetConfigurer returns a new Configurer for finality gadget tests.
-func NewFinalityGadgetConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
+// NewFinalityContractConfigurer returns a new Configurer for finality contract tests.
+func NewFinalityContractConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
 	identifier := identifierName(t)
 	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, false)
 	if err != nil {
