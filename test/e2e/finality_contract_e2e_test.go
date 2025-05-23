@@ -21,7 +21,7 @@ var (
 	r = rand.New(rand.NewSource(time.Now().Unix()))
 )
 
-type FinalityGadgetTestSuite struct {
+type FinalityContractTestSuite struct {
 	suite.Suite
 
 	configurer configurer.Configurer
@@ -101,7 +101,7 @@ func (s *FinalityContractTestSuite) Test1InstantiateFinalityContract() {
 	s.T().Log("Finality gadget contract address: ", s.FinalityContractAddr)
 }
 
-func (s *FinalityGadgetTestSuite) Test2RegisterEthL2Consumer() {
+func (s *FinalityContractTestSuite) Test2RegisterEthL2Consumer() {
 	var registeredConsumer *bsctypes.ConsumerRegister
 	var err error
 
