@@ -131,7 +131,7 @@ func (s *FinalityGadgetTestSuite) Test2RegisterEthL2Consumer() {
 		s.Require().Equal(registeredConsumer.ConsumerDescription, consumerRegistryResp.ConsumerRegisters[0].ConsumerDescription)
 
 		return true
-	}, 1*time.Minute, 3*time.Second, "Consumer was not registered within the expected time")
+	}, 10*time.Second, 2*time.Second, "Consumer was not registered within the expected time")
 
 	s.T().Logf("Consumer registered: ID=%s, Name=%s, Description=%s",
 		registeredConsumer.ConsumerId,
