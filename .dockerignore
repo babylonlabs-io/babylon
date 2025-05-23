@@ -1,2 +1,7 @@
+.github
+.gitignore
+.golangci.yml
+.goreleaser.yml
+.idea
 .testnet
 .testnets
