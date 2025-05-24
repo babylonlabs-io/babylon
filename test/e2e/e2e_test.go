@@ -10,7 +10,7 @@ import (
 )
 
 // IBCTransferTestSuite tests IBC transfer end-to-end
-func TestIBCTranferTestSuite(t *testing.T) {
+func TestIBCTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(IBCTransferTestSuite))
 }
 
