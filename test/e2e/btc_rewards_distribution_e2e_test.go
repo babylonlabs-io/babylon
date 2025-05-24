@@ -117,6 +117,13 @@ func (s *BtcRewardsDistribution) SetupSuite() {
 	s.NoError(err)
 }
 
+func (s *BtcRewardsDistribution) TearDownSuite() {
+	err := s.configurer.ClearResources()
+	if err != nil {
+		s.T().Logf("error to clear resources %s", err.Error())
+	}
+}
+
 // Test1CreateFinalityProviders creates all finality providers
 func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 	chainA := s.configurer.GetChainConfig(0)

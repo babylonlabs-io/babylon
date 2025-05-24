@@ -68,6 +68,13 @@ func (s *GovFinalityResume) SetupSuite() {
 	s.NoError(err)
 }
 
+func (s *GovFinalityResume) TearDownSuite() {
+	err := s.configurer.ClearResources()
+	if err != nil {
+		s.T().Logf("error to clear resources %s", err.Error())
+	}
+}
+
 // Test1CreateFpAndDel is an end-to-end test for
 // user story 1: user creates finality provider and BTC delegation
 func (s *GovFinalityResume) Test1CreateFpAndDel() {

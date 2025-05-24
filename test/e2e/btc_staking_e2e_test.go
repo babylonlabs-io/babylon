@@ -72,6 +72,13 @@ func (s *BTCStakingTestSuite) SetupSuite() {
 	s.NoError(err)
 }
 
+func (s *BTCStakingTestSuite) TearDownSuite() {
+	err := s.configurer.ClearResources()
+	if err != nil {
+		s.T().Logf("error to clear resources %s", err.Error())
+	}
+}
+
 // TestCreateFinalityProviderAndDelegation is an end-to-end test for
 // user story 1: user creates finality provider and BTC delegation
 func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
