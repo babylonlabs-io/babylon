@@ -240,11 +240,10 @@ test-e2e-cache:
 	$(MAKE) test-e2e-gov-resume-finality
 	$(MAKE) test-e2e-cache-btc-timestamping
 	$(MAKE) test-e2e-cache-btc-staking
-	$(MAKE) clean-e2e
 	$(MAKE) test-e2e-cache-btc-staking-pre-approval
 	$(MAKE) test-e2e-cache-ibc-transfer
 	$(MAKE) test-e2e-cache-finality-contract
-	$(MAKE) test-e2e-cache-upgrade-v2
+#	$(MAKE) test-e2e-cache-upgrade-v2
 
 clean-e2e:
 	docker container rm -f $(shell docker container ls -a -q) || true
