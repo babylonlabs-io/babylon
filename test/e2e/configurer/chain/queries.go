@@ -26,11 +26,11 @@ import (
 	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/util"
-	blc "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	ct "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
-	etypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
-	mtypes "github.com/babylonlabs-io/babylon/v2/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	ct "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	etypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	mtypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
 )
 
 func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]byte, error) {
@@ -434,6 +434,34 @@ func (n *NodeConfig) QueryTx(txHash string, overallFlags ...string) (sdk.TxRespo
 
 	txAuth := txResp.Tx.GetCachedValue().(*sdktx.Tx)
 	return txResp, txAuth
+}
+
+func (n *NodeConfig) QueryTxWithError(txHash string, overallFlags ...string) (sdk.TxResponse, *sdktx.Tx, error) {
+	cmd := []string{
+		"babylond", "q", "tx", "--type=hash", txHash, "--output=json",
+		n.FlagChainID(),
+	}
+
+	out, stderr, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
+	if err != nil {
+		return sdk.TxResponse{}, nil, fmt.Errorf("failed to execute command: %v, stderr: %s", err, stderr.String())
+	}
+
+	var txResp sdk.TxResponse
+	err = util.Cdc.UnmarshalJSON(out.Bytes(), &txResp)
+	if err != nil {
+		if err == io.EOF {
+			return sdk.TxResponse{}, nil, fmt.Errorf("unexpected EOF while unmarshalling transaction response, output: %s", out.String())
+		}
+		return sdk.TxResponse{}, nil, fmt.Errorf("failed to unmarshal transaction response: %v, output: %s", err, out.String())
+	}
+
+	txAuth, ok := txResp.Tx.GetCachedValue().(*sdktx.Tx)
+	if !ok {
+		return sdk.TxResponse{}, nil, fmt.Errorf("failed to cast transaction to *sdktx.Tx, response: %v", txResp)
+	}
+
+	return txResp, txAuth, nil
 }
 
 func (n *NodeConfig) QueryICAAccountAddress(owner, connectionID string) string {

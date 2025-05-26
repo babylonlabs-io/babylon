@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -32,6 +32,13 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to get home directory: %w", err)
 			}
+
+			// Check bls_key.json is already exist
+			blsKeyFile, exist := appsigner.GetBlsKeyFileIfExist(homeDir, "")
+			if exist {
+				return fmt.Errorf("BLS key already exists at %s. If you need to generate a new key, please manually delete the existing file first", blsKeyFile)
+			}
+
 			noBlsPassword, err := cmd.Flags().GetBool(flagNoBlsPassword)
 			if err != nil {
 				return fmt.Errorf("failed to get noBlsPassword flag: %w", err)
@@ -48,7 +55,7 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 			}
 
 			// Generate BLS key using the refactored function with explicit password
-			if err := appsigner.CreateBlsKey(homeDir, password, passwordFile, cmd); err != nil {
+			if err := appsigner.CreateBlsKey(blsKeyFile, password, passwordFile, cmd); err != nil {
 				return fmt.Errorf("failed to create BLS key: %w", err)
 			}
 

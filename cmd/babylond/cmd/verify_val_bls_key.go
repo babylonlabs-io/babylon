@@ -11,10 +11,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 func VerifyValidatorBlsKey() *cobra.Command {
@@ -49,6 +49,12 @@ $ babylond verify-validator-bls-key babylonvaloper1... --no-bls-password
 			if err != nil {
 				return fmt.Errorf("failed to get home directory: %w", err)
 			}
+
+			blsKeyFile, exist := appsigner.GetBlsKeyFileIfExist(homeDir, "")
+			if !exist {
+				return fmt.Errorf("BLS key file does not exist at %s", blsKeyFile)
+			}
+
 			noBlsPassword, err := cmd.Flags().GetBool(flagNoBlsPassword)
 			if err != nil {
 				return fmt.Errorf("failed to get noBlsPassword flag: %w", err)
@@ -75,7 +81,7 @@ $ babylond verify-validator-bls-key babylonvaloper1... --no-bls-password
 
 			// Get BLS public key
 			// Get BLS key information
-			info, err := appsigner.ShowBlsKey(homeDir, password)
+			info, err := appsigner.ShowBlsKey(blsKeyFile, password)
 			if err != nil {
 				return fmt.Errorf("failed to show BLS key: %w", err)
 			}

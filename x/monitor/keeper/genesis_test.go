@@ -7,9 +7,9 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/monitor/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

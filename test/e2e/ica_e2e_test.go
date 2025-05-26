@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -49,7 +49,7 @@ func (s *ICATestSuite) TearDownSuite() {
 }
 
 func (s *ICATestSuite) TestCreateInterchainAccount() {
-	amount := int64(1_000_000)
+	amount := int64(100_000)
 
 	transferCoin := sdk.NewInt64Coin(nativeDenom, amount)
 

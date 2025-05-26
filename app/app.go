@@ -80,57 +80,57 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+	icq "github.com/cosmos/ibc-apps/modules/async-icq/v8"
+	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
+	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v8"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	"github.com/cosmos/ibc-go/modules/capability"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee"
-	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
+	ica "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v8/modules/core" // ibc module puts types under `ibchost` rather than `ibctypes`
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
-	icq "github.com/cosmos/ibc-apps/modules/async-icq/v8"
-	ica "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
 
-	"github.com/babylonlabs-io/babylon/v2/app/ante"
-	appkeepers "github.com/babylonlabs-io/babylon/v2/app/keepers"
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
-	"github.com/babylonlabs-io/babylon/v2/client/docs"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btccheckpoint"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btclightclient"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer"
-	bsctypes "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
-	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
-	"github.com/babylonlabs-io/babylon/v2/x/checkpointing"
-	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/prepare"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
-	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/vote_extensions"
-	"github.com/babylonlabs-io/babylon/v2/x/epoching"
-	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
-	"github.com/babylonlabs-io/babylon/v2/x/finality"
-	finalitytypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
-	"github.com/babylonlabs-io/babylon/v2/x/incentive"
-	incentivekeeper "github.com/babylonlabs-io/babylon/v2/x/incentive/keeper"
-	incentivetypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
-	"github.com/babylonlabs-io/babylon/v2/x/mint"
-	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
-	"github.com/babylonlabs-io/babylon/v2/x/monitor"
-	monitortypes "github.com/babylonlabs-io/babylon/v2/x/monitor/types"
-	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge"
-	zckeeper "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/app/ante"
+	appkeepers "github.com/babylonlabs-io/babylon/v4/app/keepers"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
+	"github.com/babylonlabs-io/babylon/v4/client/docs"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btclightclient"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer"
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/prepare"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/vote_extensions"
+	"github.com/babylonlabs-io/babylon/v4/x/epoching"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/x/finality"
+	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive"
+	incentivekeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
+	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v4/x/mint"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v4/x/monitor"
+	monitortypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge"
+	zckeeper "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	"github.com/strangelove-ventures/tokenfactory/x/tokenfactory"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 )
@@ -167,7 +167,6 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		ibcfeetypes.ModuleName:         nil,
 		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:            nil,
@@ -322,11 +321,11 @@ func NewBabylonApp(
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 		ibc.NewAppModule(app.IBCKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
-		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		ibctm.AppModule{},
 		ibcwasm.NewAppModule(app.IBCWasmKeeper),
 		pfmrouter.NewAppModule(app.PFMRouterKeeper, app.GetSubspace(pfmroutertypes.ModuleName)),
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(tokenfactorytypes.ModuleName)),
+		ratelimiter.NewAppModule(appCodec, app.RatelimitKeeper),
 		ica.NewAppModule(app.ICAControllerKeeper, app.ICAHostKeeper),
 		icq.NewAppModule(*app.ICQKeeper, app.GetSubspace(icqtypes.ModuleName)),
 		// Babylon modules - btc timestamping
@@ -394,8 +393,8 @@ func NewBabylonApp(
 		ibcexported.ModuleName,
 		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
+		ratelimittypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
@@ -428,8 +427,8 @@ func NewBabylonApp(
 		ibcexported.ModuleName,
 		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcfeetypes.ModuleName,
 		wasmtypes.ModuleName,
+		ratelimittypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
@@ -466,11 +465,11 @@ func NewBabylonApp(
 		ibcexported.ModuleName,
 		ibcwasmtypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcfeetypes.ModuleName,
+		ratelimittypes.ModuleName,
 		wasmtypes.ModuleName,
-		pfmroutertypes.ModuleName,
 		icatypes.ModuleName,
 		icqtypes.ModuleName,
+		pfmroutertypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,

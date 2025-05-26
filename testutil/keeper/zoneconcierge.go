@@ -20,8 +20,8 @@ import (
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 type zoneconciergeStoreQuerier struct{}
@@ -47,8 +47,36 @@ func ZoneConciergeKeeper(
 	bsKeeper types.BTCStakingKeeper,
 	btcStkKeeper types.BTCStkConsumerKeeper,
 ) (*keeper.Keeper, sdk.Context) {
+	return ZoneConciergeKeeperWithStoreKey(
+		t,
+		nil,
+		channelKeeper,
+		portKeeper,
+		btclcKeeper,
+		checkpointingKeeper,
+		btccKeeper,
+		epochingKeeper,
+		bsKeeper,
+		btcStkKeeper,
+	)
+}
+
+func ZoneConciergeKeeperWithStoreKey(
+	t testing.TB,
+	storeKey *storetypes.KVStoreKey,
+	channelKeeper types.ChannelKeeper,
+	portKeeper types.PortKeeper,
+	btclcKeeper types.BTCLightClientKeeper,
+	checkpointingKeeper types.CheckpointingKeeper,
+	btccKeeper types.BtcCheckpointKeeper,
+	epochingKeeper types.EpochingKeeper,
+	bsKeeper types.BTCStakingKeeper,
+	btcStkKeeper types.BTCStkConsumerKeeper,
+) (*keeper.Keeper, sdk.Context) {
 	logger := log.NewTestLogger(t)
-	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
+	if storeKey == nil {
+		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
+	}
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
 	db := dbm.NewMemDB()

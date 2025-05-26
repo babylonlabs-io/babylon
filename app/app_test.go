@@ -17,14 +17,13 @@ import (
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
-	babylonApp "github.com/babylonlabs-io/babylon/v2/app"
-	testsigner "github.com/babylonlabs-io/babylon/v2/testutil/signer"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
-	incentivetypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
-	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
+	testsigner "github.com/babylonlabs-io/babylon/v4/testutil/signer"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 
 	"github.com/stretchr/testify/require"
 )
@@ -38,7 +37,6 @@ var (
 		stktypes.NotBondedPoolName:   {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:          {authtypes.Burner},
 		ibctransfertypes.ModuleName:  {authtypes.Minter, authtypes.Burner},
-		ibcfeetypes.ModuleName:       nil,
 		incentivetypes.ModuleName:    nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:          nil,
