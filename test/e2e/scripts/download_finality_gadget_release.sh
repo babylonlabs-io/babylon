@@ -6,6 +6,7 @@ OWNER="babylonlabs-io"
 REPO="op-finality-gadget"
 CONTRACTS="op_finality_gadget"
 OUTPUT_FOLDER="$(dirname "$0")/../bytecode"
+mkdir -p "$OUTPUT_FOLDER"
 
 [ $# -ne 1 ] && echo "Usage: $0 <version>" && exit 1
 type wget >&2
