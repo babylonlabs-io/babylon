@@ -526,3 +526,11 @@ func TestJailingFinalityProvider(t *testing.T) {
 	activeFps := driver.GetActiveFpsAtCurrentHeight(t)
 	require.Equal(t, 1, len(activeFps))
 }
+
+func TestBadWrappedCreateValidator(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlock()
+
+}
