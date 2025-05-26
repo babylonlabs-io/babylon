@@ -5,6 +5,7 @@ command -v shellcheck >/dev/null && shellcheck "$0"
 LOCAL_REPO="../../../op-finality-gadget"
 CONTRACTS="op_finality_gadget"
 OUTPUT_FOLDER="$(dirname "$0")/../bytecode"
+mkdir -p "$OUTPUT_FOLDER"
 
 echo "DEV-only: copy from local built instead of downloading"
 
