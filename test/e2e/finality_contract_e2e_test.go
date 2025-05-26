@@ -139,6 +139,4 @@ func (s *FinalityContractTestSuite) Test2RegisterEthL2Consumer() {
 		registeredConsumer.ConsumerId,
 		registeredConsumer.ConsumerName,
 		registeredConsumer.ConsumerDescription)
-	contractAddr := contracts[0]
-	s.T().Log("Finality gadget contract address: ", contractAddr)
 }
