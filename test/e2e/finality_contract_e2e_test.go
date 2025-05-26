@@ -4,9 +4,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/initialization"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 )
 
 type FinalityContractTestSuite struct {
