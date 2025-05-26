@@ -1,8 +1,6 @@
 package e2e
 
 import (
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	bsctypes "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
 	"github.com/stretchr/testify/require"
 	"math/rand"
 	"strconv"
@@ -10,8 +8,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 )
 
 const (
