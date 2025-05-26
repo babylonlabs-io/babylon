@@ -67,6 +67,7 @@ func NewEventFinalityProviderCreated(fp *FinalityProvider) *EventFinalityProvide
 		Website:         fp.Description.Website,
 		SecurityContact: fp.Description.SecurityContact,
 		Details:         fp.Description.Details,
+		ConsumerId:      fp.ConsumerId,
 	}
 }
 
