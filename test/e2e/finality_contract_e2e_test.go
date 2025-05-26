@@ -28,7 +28,7 @@ func (s *FinalityContractTestSuite) SetupSuite() {
 	//   * Initialize configs and genesis.
 	// 2. Start network.
 	// 3. Execute various e2e tests.
-	s.configurer, err = configurer.NewFinalityContractConfigurer(s.T(), true)
+	s.configurer, err = configurer.NewBabylonConfigurer(s.T(), true)
 	s.Require().NoError(err)
 
 	err = s.configurer.ConfigureChains()

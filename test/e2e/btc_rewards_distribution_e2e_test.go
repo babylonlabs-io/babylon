@@ -109,7 +109,7 @@ func (s *BtcRewardsDistribution) SetupSuite() {
 	covenantSKs, _, _ := bstypes.DefaultCovenantCommittee()
 	s.covenantSKs = covenantSKs
 
-	s.configurer, err = configurer.NewBTCStakingConfigurer(s.T(), true)
+	s.configurer, err = configurer.NewBabylonConfigurer(s.T(), true)
 	s.NoError(err)
 	err = s.configurer.ConfigureChains()
 	s.NoError(err)
