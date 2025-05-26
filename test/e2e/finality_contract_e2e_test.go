@@ -112,6 +112,7 @@ func (s *FinalityContractTestSuite) Test2RegisterEthL2Consumer() {
 		ConsumerID,
 		datagen.GenRandomHexStr(r, 5),
 		"Chain description: "+datagen.GenRandomHexStr(r, 15),
+		3,
 	)
 
 	validatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(0)
