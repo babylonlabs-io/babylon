@@ -235,9 +235,9 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 	restakedToConsumers := false
 
 	// Track FPs per consumer to enforce at-most-1-FP-per-consumer
-	consumerFPs := make(map[string]int)
+	consumerFPs := make(map[string]struct{})
 	// Track min max_multi_staked_fps across all consumers
-	minMaxMultiStakedFPs := uint32(0)
+	minMaxMultiStakedFPs := ^uint32(0) // Initialize with MaxUint32
 
 	for i := range fpBTCPKs {
 		fpBTCPK := fpBTCPKs[i]
@@ -252,20 +252,18 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 			continue
 		} else if consumerID, err := k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
 			// Check if we already have an FP from this consumer
-			if consumerFPs[consumerID] > 0 {
+			if _, exists := consumerFPs[consumerID]; exists {
 				return false, types.ErrTooManyFPsFromSameConsumer.Wrapf("consumer %s already has an FP", consumerID)
 			}
-			consumerFPs[consumerID]++
+			consumerFPs[consumerID] = struct{}{}
 
 			// Get consumer's max_multi_staked_fps
 			maxMultiStakedFps, err := k.BscKeeper.GetConsumerRegistryMaxMultiStakedFps(ctx, consumerID)
 			if err != nil {
 				return false, err
 			}
-			if maxMultiStakedFps > 0 {
-				if minMaxMultiStakedFPs == 0 || maxMultiStakedFps < minMaxMultiStakedFPs {
-					minMaxMultiStakedFPs = maxMultiStakedFps
-				}
+			if maxMultiStakedFps < minMaxMultiStakedFPs {
+				minMaxMultiStakedFPs = maxMultiStakedFps
 			}
 
 			fp, err := k.BscKeeper.GetConsumerFinalityProvider(ctx, consumerID, &fpBTCPK)
