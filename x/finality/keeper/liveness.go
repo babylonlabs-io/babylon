@@ -58,7 +58,7 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 		return nil
 	}
 
-	updated, signInfo, err := k.updateSigningInfo(ctx, fpPk, missed, height)
+	updated, signInfo, err := k.UpdateSigningInfo(ctx, fpPk, missed, height)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 	return nil
 }
 
-func (k Keeper) updateSigningInfo(
+func (k Keeper) UpdateSigningInfo(
 	ctx context.Context,
 	fpPk *types.BIP340PubKey,
 	missed bool,
@@ -202,19 +202,4 @@ func (k Keeper) jailSluggishFinalityProvider(ctx context.Context, fpBtcPk *types
 	finalitytypes.IncrementJailedFinalityProviderCounter()
 
 	return nil
-}
-
-// ExportedHandleActivatedFinalityProvider exports the private method for testing
-func (k Keeper) ExportedHandleActivatedFinalityProvider(ctx context.Context, fpPk *types.BIP340PubKey) error {
-	return k.handleActivatedFinalityProvider(ctx, fpPk)
-}
-
-// ExportedUpdateSigningInfo exports the private updateSigningInfo method for testing
-func (k Keeper) ExportedUpdateSigningInfo(
-	ctx context.Context,
-	fpPk *types.BIP340PubKey,
-	missed bool,
-	height int64,
-) (bool, *finalitytypes.FinalityProviderSigningInfo, error) {
-	return k.updateSigningInfo(ctx, fpPk, missed, height)
 }

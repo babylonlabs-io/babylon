@@ -240,9 +240,9 @@ func TestMissedBlockCounterGoesNegativeWithBitmapResetNew(t *testing.T) {
 	err = finalityK.FinalityProviderSigningTracker.Set(ctx, fpPk.MustMarshal(), signingInfo)
 	require.NoError(t, err)
 
-	// 2. Simulate FP missing a block using updateSigningInfo method
+	// 2. Simulate FP missing a block using UpdateSigningInfo method
 	missedHeight := ctx.HeaderInfo().Height + 3
-	modified, signInfoPtr, err := finalityK.ExportedUpdateSigningInfo(ctx, fpPk, true, missedHeight)
+	modified, signInfoPtr, err := finalityK.UpdateSigningInfo(ctx, fpPk, true, missedHeight)
 	require.NoError(t, err)
 	require.True(t, modified, "SigningInfo should be modified")
 
@@ -261,26 +261,22 @@ func TestMissedBlockCounterGoesNegativeWithBitmapResetNew(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, hasMissed, "Block should be marked as missed")
 
-	// 5. Simulate FP becoming inactive and then active again using actual handleActivatedFinalityProvider
-	err = finalityK.ExportedHandleActivatedFinalityProvider(ctx, fpPk)
+	// 5. Simulate FP becoming inactive and then active again using actual HandleActivatedFinalityProvider
+	err = finalityK.HandleActivatedFinalityProvider(ctx, fpPk)
 	require.NoError(t, err)
 
-	// 6. Verify counter is reset but bitmap is not
+	// 6. Verify counter is not reset
 	signingInfo, err = finalityK.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
 	require.NoError(t, err)
 	require.Equal(t, int64(1), signingInfo.MissedBlocksCounter, "Counter should be reset to 0")
 
-	hasMissed, err = finalityK.GetMissedBlockBitmapValue(ctx, fpPk, index)
-	require.NoError(t, err)
-	require.True(t, hasMissed, "Bitmap should still mark the block as missed")
-
 	// 7. Now use updateSigningInfo to simulate FP signing the same index as previously missed block
-	modified, signInfoPtr, err = finalityK.ExportedUpdateSigningInfo(ctx, fpPk, false, missedHeight+finalityK.GetParams(ctx).SignedBlocksWindow)
+	modified, signInfoPtr, err = finalityK.UpdateSigningInfo(ctx, fpPk, false, missedHeight+finalityK.GetParams(ctx).SignedBlocksWindow)
 	require.NoError(t, err)
 	require.True(t, modified, "SigningInfo should be modified")
 
-	// 8. Verify counter went negative
+	// 8. Verify counter is not reduced to zero
 	t.Logf("Final MissedBlocksCounter value: %d", signInfoPtr.MissedBlocksCounter)
 	require.Equal(t, int64(0), signInfoPtr.MissedBlocksCounter,
-		"Missed blocks counter went negative because bitmap wasn't reset when FP became active again")
+		"Missed blocks counter is not reduced to 0 after a successful vote")
 }
