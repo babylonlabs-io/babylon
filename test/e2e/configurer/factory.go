@@ -155,8 +155,8 @@ func NewIBCTransferConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer,
 	), nil
 }
 
-// NewBTCStakingConfigurer returns a new Configurer for BTC staking service
-func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
+// NewBabylonConfigurer returns a new Configurer for BTC staking service
+func NewBabylonConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
 	identifier := identifierName(t)
 	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, false)
 	if err != nil {
