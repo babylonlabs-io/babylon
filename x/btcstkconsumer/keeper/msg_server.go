@@ -85,7 +85,8 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 			req.ConsumerId,
 			req.ConsumerName,
 			req.ConsumerDescription,
-			consumerType)); err != nil {
+			consumerType,
+			req.EthL2FinalityContractAddress)); err != nil {
 		panic(fmt.Errorf("failed to emit NewConsumerRegisteredEvent event: %w", err))
 	}
 

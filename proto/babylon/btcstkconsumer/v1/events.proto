@@ -4,7 +4,7 @@ package babylon.btcstkconsumer.v1;
 option go_package = "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types";
 
 import "amino/amino.proto";
-import "babylon/btcstkconsumer/v1/btcstkconsumer.proto"; // ← Add this line
+import "babylon/btcstkconsumer/v1/btcstkconsumer.proto";
 
 // EventConsumerRegistered is the event emitted when a consumer is registered
 message EventConsumerRegistered {
@@ -16,4 +16,7 @@ message EventConsumerRegistered {
   string consumer_description = 3  [(amino.dont_omitempty) = true];
   // consumer_type is the type of the consumer
   ConsumerType consumer_type = 4 [(amino.dont_omitempty) = true];
+  // consumer_metadata is necessary metadata of the consumer, and the data
+  // depends on the type of integration
+  ETHL2ConsumerMetadata rollup_consumer_metadata = 5;
 }
