@@ -187,6 +187,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 func TestMsgEditFinalityProviderValidateBasic(t *testing.T) {
 	var (
 		r                = rand.New(rand.NewSource(10))
+		addr             = datagen.GenRandomAddress().String()
 		randomDecPointer = func() *math.LegacyDec {
 			val := datagen.RandomLegacyDec(r, 10, 1)
 			return &val
@@ -207,6 +208,7 @@ func TestMsgEditFinalityProviderValidateBasic(t *testing.T) {
 		{
 			name: "valid commission and description",
 			msg: &types.MsgEditFinalityProvider{
+				Addr:        addr,
 				Commission:  randomDecPointer(),
 				Description: fpDesc,
 				BtcPk:       []byte(*validPk),
@@ -216,6 +218,7 @@ func TestMsgEditFinalityProviderValidateBasic(t *testing.T) {
 		{
 			name: "commission negative value",
 			msg: &types.MsgEditFinalityProvider{
+				Addr:        addr,
 				Commission:  &negativeDec,
 				Description: fpDesc,
 				BtcPk:       []byte(*validPk),
@@ -225,6 +228,7 @@ func TestMsgEditFinalityProviderValidateBasic(t *testing.T) {
 		{
 			name: "commission greater than 1",
 			msg: &types.MsgEditFinalityProvider{
+				Addr:        addr,
 				Commission:  &biggerThanOneDec,
 				Description: fpDesc,
 				BtcPk:       []byte(*validPk),
@@ -234,6 +238,7 @@ func TestMsgEditFinalityProviderValidateBasic(t *testing.T) {
 		{
 			name: "empty description",
 			msg: &types.MsgEditFinalityProvider{
+				Addr:        addr,
 				Description: nil,
 				BtcPk:       []byte(*validPk),
 			},
@@ -242,6 +247,7 @@ func TestMsgEditFinalityProviderValidateBasic(t *testing.T) {
 		{
 			name: "empty moniker",
 			msg: &types.MsgEditFinalityProvider{
+				Addr: addr,
 				Description: &stktypes.Description{
 					Moniker: "",
 				},
@@ -252,6 +258,7 @@ func TestMsgEditFinalityProviderValidateBasic(t *testing.T) {
 		{
 			name: "invalid BTC public key length",
 			msg: &types.MsgEditFinalityProvider{
+				Addr:        addr,
 				Description: fpDesc,
 				BtcPk:       []byte("shortBTCpk"),
 			},
@@ -260,10 +267,20 @@ func TestMsgEditFinalityProviderValidateBasic(t *testing.T) {
 		{
 			name: "invalid BTC public key (non-hex)",
 			msg: &types.MsgEditFinalityProvider{
+				Addr:        addr,
 				Description: fpDesc,
 				BtcPk:       []byte("B3C0F1D2E3A4B596C7D8E9FA1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6E7F8A9BZ"),
 			},
 			expected: fmt.Errorf("malformed BTC PK"),
+		},
+		{
+			name: "empty FP addr",
+			msg: &types.MsgEditFinalityProvider{
+				Commission:  randomDecPointer(),
+				Description: fpDesc,
+				BtcPk:       []byte(*validPk),
+			},
+			expected: fmt.Errorf("invalid FP addr:  - empty address string is not allowed"),
 		},
 	}
 
