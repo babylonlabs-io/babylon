@@ -10,6 +10,8 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
@@ -273,6 +275,67 @@ func TestMsgEditFinalityProviderValidateBasic(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestMsgSelectiveSlashingEvidence_ValidateBasic(t *testing.T) {
+	r := rand.New(rand.NewSource(10))
+	validAddr := datagen.GenRandomAddress().String()
+	validHash := datagen.GenRandomHexStr(r, 32)    // 64 chars
+	validSk := make([]byte, btcec.PrivKeyBytesLen) // 32 bytes
+
+	testCases := []struct {
+		name   string
+		msg    types.MsgSelectiveSlashingEvidence
+		expErr string
+	}{
+		{
+			name: "valid message",
+			msg: types.MsgSelectiveSlashingEvidence{
+				Signer:           validAddr,
+				StakingTxHash:    validHash,
+				RecoveredFpBtcSk: validSk,
+			},
+		},
+		{
+			name: "invalid signer address",
+			msg: types.MsgSelectiveSlashingEvidence{
+				Signer:           "not_bech32",
+				StakingTxHash:    validHash,
+				RecoveredFpBtcSk: validSk,
+			},
+			expErr: "invalid signer addr",
+		},
+		{
+			name: "invalid staking tx hash length",
+			msg: types.MsgSelectiveSlashingEvidence{
+				Signer:           validAddr,
+				StakingTxHash:    "short",
+				RecoveredFpBtcSk: validSk,
+			},
+			expErr: fmt.Sprintf("staking tx hash is not %d", chainhash.MaxHashStringSize),
+		},
+		{
+			name: "invalid BTC SK length",
+			msg: types.MsgSelectiveSlashingEvidence{
+				Signer:           validAddr,
+				StakingTxHash:    validHash,
+				RecoveredFpBtcSk: make([]byte, 16), // too short
+			},
+			expErr: fmt.Sprintf("malformed BTC SK. Expected length: %d", btcec.PrivKeyBytesLen),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.expErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tc.expErr)
 		})
 	}
 }
