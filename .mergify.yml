@@ -10,24 +10,23 @@ queue_rules:
       {{ title }} (#{{ number }})
       {{ body }}
     merge_method: squash
-
 pull_request_rules:
-  - name: backport patches to v3.0.x branch
+  - name: backport patches to v3.x branch
     conditions:
       - base=main
-      - label=backport/3.0.x
+      - label=backport/v3.x
     actions:
       backport:
         branches:
-          - release/v3.0.x
-  - name: backport patches to v2.0.x branch
+          - release/v3.x
+  - name: backport patches to v2.x branch
     conditions:
       - base=main
-      - label=backport/2.0.x
+      - label=backport/v2.x
     actions:
       backport:
         branches:
-          - release/v2.0.x
+          - release/v2.x
   - name: backport patches to v1.0.x branch
     conditions:
       - base=main
