@@ -11,16 +11,15 @@ import (
 
 // RegisterConsumerChain registers a Consumer chain
 // TODO: Add support for other types of consumer chains
-func (n *NodeConfig) RegisterConsumerChain(walletAddrOrName, id, name, description string) {
-	n.RegisterRollupConsumerChain(walletAddrOrName, id, name, description, "")
+func (n *NodeConfig) RegisterConsumerChain(walletAddrOrName, id, name, description string, maxMultiStaked int) {
+	n.RegisterRollupConsumerChain(walletAddrOrName, id, name, description, "", maxMultiStaked)
 }
 
 // RegisterRollupConsumerChain registers a Rollup (Eth L2) Consumer chain
-func (n *NodeConfig) RegisterRollupConsumerChain(walletAddrOrName, id, name, description, finalityContractAddr string) {
+func (n *NodeConfig) RegisterRollupConsumerChain(walletAddrOrName, id, name, description, finalityContractAddr string, maxMultiStaked int) {
 	n.LogActionF("Registering consumer chain")
-	maxMultiStaked := strconv.Itoa(3) // max number of multi-staked finality providers
 	cmd := []string{
-		"babylond", "tx", "btcstkconsumer", "register-consumer", id, name, description, maxMultiStaked, finalityContractAddr,
+		"babylond", "tx", "btcstkconsumer", "register-consumer", id, name, description, strconv.Itoa(maxMultiStaked), finalityContractAddr,
 		fmt.Sprintf("--from=%s", walletAddrOrName),
 	}
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
