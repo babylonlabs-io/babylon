@@ -4,10 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
-	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
@@ -32,7 +28,7 @@ func TestMsgDecode(t *testing.T) {
 	cdc := codec.NewProtoCodec(registry)
 
 	// build MsgWrappedCreateValidator
-	msg, err := buildMsgWrappedCreateValidatorWithAmount(
+	msg, err := datagen.BuildMsgWrappedCreateValidatorWithAmount(
 		sdk.AccAddress(valAddr1),
 		sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction),
 	)
@@ -53,33 +49,6 @@ func TestMsgDecode(t *testing.T) {
 
 	// ensure msgWithType.MsgCreateValidator.Pubkey with type Any is unmarshaled successfully
 	require.NotNil(t, msgWithType.MsgCreateValidator.Pubkey.GetCachedValue())
-}
-
-func buildMsgWrappedCreateValidatorWithAmount(addr sdk.AccAddress, bondTokens sdkmath.Int) (*types.MsgWrappedCreateValidator, error) {
-	tmValPrivkey := ed25519.GenPrivKey()
-	bondCoin := sdk.NewCoin(appparams.DefaultBondDenom, bondTokens)
-	description := stakingtypes.NewDescription("foo_moniker", "", "", "", "")
-	commission := stakingtypes.NewCommissionRates(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec())
-
-	pk, err := cryptocodec.FromCmtPubKeyInterface(tmValPrivkey.PubKey())
-	if err != nil {
-		return nil, err
-	}
-
-	createValidatorMsg, err := stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(addr).String(), pk, bondCoin, description, commission, sdkmath.OneInt(),
-	)
-	if err != nil {
-		return nil, err
-	}
-	blsPrivKey := bls12381.GenPrivKey()
-	pop, err := appsigner.BuildPoP(tmValPrivkey, blsPrivKey)
-	if err != nil {
-		return nil, err
-	}
-	blsPubKey := blsPrivKey.PubKey()
-
-	return types.NewMsgWrappedCreateValidator(createValidatorMsg, &blsPubKey, pop)
 }
 
 func TestMsgWrappedCreateValidatorValidateBasic(t *testing.T) {
