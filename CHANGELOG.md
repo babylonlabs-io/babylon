@@ -57,6 +57,14 @@ transfer stack
 - [#897](https://github.com/babylonlabs-io/babylon/pull/897) Add Interchain Accounts (ICA) and Interchain Queries (ICQ) modules.
 - [#902](https://github.com/babylonlabs-io/babylon/pull/902) Add IBC rate limiter to IBC transfer module
 - [#913](https://github.com/babylonlabs-io/babylon/pull/913) Remove IBC-fee module.
+<<<<<<< HEAD
+=======
+- [#927](https://github.com/babylonlabs-io/babylon/pull/927) Add Mergify configuration file to improve PR backporting.
+- [#924](https://github.com/babylonlabs-io/babylon/pull/924) Improve BLS file check order in related commands
+- [#926](https://github.com/babylonlabs-io/babylon/pull/926) Update genesis initialization validations.
+- [#933](https://github.com/babylonlabs-io/babylon/pull/933) Update repository version to `v4`.
+- [#935](https://github.com/babylonlabs-io/babylon/pull/935) Add `release/v4` branch to docker publish workflow.
+>>>>>>> aa82dee (imp(ci): add mergify yaml file (#927))
 - [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
 
 ### State Machine Breaking
