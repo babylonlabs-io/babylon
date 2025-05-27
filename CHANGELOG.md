@@ -63,18 +63,7 @@ transfer stack
 
 - [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
 when the babylon block is being BTC rewarded.
-<<<<<<< HEAD
-=======
 - [#947](https://github.com/babylonlabs-io/babylon/pull/947) Improve signing info update upon fp activated
-- [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
-
-### Bug fixes
-
-- [#796](https://github.com/babylonlabs-io/babylon/pull/796) fix: goreleaser add `mainnet` build flag to generated binary
-- [#741](https://github.com/babylonlabs-io/babylon/pull/741) chore: fix register consumer CLI
-- [#731](https://github.com/babylonlabs-io/babylon/pull/731) chore: fix block timeout in Babylon client
-- [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
->>>>>>> 90fc1a0 (chore: improve signing info update upon fp activated (#947))
 
 ## v1.1.0
 
