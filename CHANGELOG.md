@@ -59,6 +59,7 @@ transfer stack
 - [#913](https://github.com/babylonlabs-io/babylon/pull/913) Remove IBC-fee module.
 - [#927](https://github.com/babylonlabs-io/babylon/pull/927) Add Mergify configuration file to improve PR backporting.
 - [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
+- [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
 
 ### State Machine Breaking
 
