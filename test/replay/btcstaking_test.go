@@ -12,12 +12,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-=======
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
->>>>>>> deb43c1 (fix: msg create validator validate basic (#964))
+	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 )
 
 // TestEpochFinalization checks whether we can finalize some epochs

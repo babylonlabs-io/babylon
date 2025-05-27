@@ -4,16 +4,8 @@ import (
 	"errors"
 	"testing"
 
-<<<<<<< HEAD
-	sdkmath "cosmossdk.io/math"
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
-	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-=======
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
->>>>>>> deb43c1 (fix: msg create validator validate basic (#964))
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

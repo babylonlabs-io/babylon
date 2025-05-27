@@ -9,24 +9,12 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/app"
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
-	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/v3/x/checkpointing/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
-=======
-	"github.com/babylonlabs-io/babylon/v4/app"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
->>>>>>> deb43c1 (fix: msg create validator validate basic (#964))
 )
 
 // FuzzWrappedCreateValidator_InsufficientTokens tests adding new validators with zero voting power

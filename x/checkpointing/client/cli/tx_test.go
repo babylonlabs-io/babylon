@@ -24,20 +24,12 @@ import (
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	"github.com/stretchr/testify/suite"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/app"
 	"github.com/babylonlabs-io/babylon/v3/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
 	testutilcli "github.com/babylonlabs-io/babylon/v3/testutil/cli"
 	checkpointcli "github.com/babylonlabs-io/babylon/v3/x/checkpointing/client/cli"
-=======
-	"github.com/babylonlabs-io/babylon/v4/app"
-	"github.com/babylonlabs-io/babylon/v4/app/params"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
-	testutilcli "github.com/babylonlabs-io/babylon/v4/testutil/cli"
-	checkpointcli "github.com/babylonlabs-io/babylon/v4/x/checkpointing/client/cli"
->>>>>>> deb43c1 (fix: msg create validator validate basic (#964))
 	"github.com/cometbft/cometbft/privval"
 )
 
