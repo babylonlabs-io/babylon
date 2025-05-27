@@ -3,9 +3,9 @@ package types
 import (
 	"context"
 
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	btclctypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -29,6 +29,7 @@ type BTCStkConsumerKeeper interface {
 	GetConsumerOfFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (string, error)
 	GetConsumerFinalityProvider(ctx context.Context, consumerID string, fpBTCPK *bbn.BIP340PubKey) (*FinalityProvider, error)
 	SetConsumerFinalityProvider(ctx context.Context, fp *FinalityProvider)
+	GetConsumerRegistryMaxMultiStakedFps(ctx context.Context, consumerID string) (uint32, error)
 }
 
 type IncentiveKeeper interface {

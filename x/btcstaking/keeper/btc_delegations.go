@@ -10,9 +10,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	asig "github.com/babylonlabs-io/babylon/v2/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	asig "github.com/babylonlabs-io/babylon/v4/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 // AddBTCDelegation adds a BTC delegation post verification to the system, including
@@ -227,10 +227,17 @@ func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 
 // validateRestakedFPs ensures all finality providers are known to Babylon and at least
 // one of them is a Babylon finality provider. It also checks whether the BTC stake is
-// restaked to FPs of consumer chains
+// restaked to FPs of consumer chains. It enforces:
+// 1. Total number of FPs <= min of all consumers' max_multi_staked_fps
+// 2. At most 1 FP per consumer/BSN
 func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) (bool, error) {
 	restakedToBabylon := false
 	restakedToConsumers := false
+
+	// Track FPs per consumer to enforce at-most-1-FP-per-consumer
+	consumerFPs := make(map[string]struct{})
+	// Track min max_multi_staked_fps across all consumers
+	minMaxMultiStakedFPs := ^uint32(0) // Initialize with MaxUint32
 
 	for i := range fpBTCPKs {
 		fpBTCPK := fpBTCPKs[i]
@@ -244,6 +251,21 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 			restakedToBabylon = true
 			continue
 		} else if consumerID, err := k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
+			// Check if we already have an FP from this consumer
+			if _, exists := consumerFPs[consumerID]; exists {
+				return false, types.ErrTooManyFPsFromSameConsumer.Wrapf("consumer %s already has an FP", consumerID)
+			}
+			consumerFPs[consumerID] = struct{}{}
+
+			// Get consumer's max_multi_staked_fps
+			maxMultiStakedFps, err := k.BscKeeper.GetConsumerRegistryMaxMultiStakedFps(ctx, consumerID)
+			if err != nil {
+				return false, err
+			}
+			if maxMultiStakedFps < minMaxMultiStakedFPs {
+				minMaxMultiStakedFPs = maxMultiStakedFps
+			}
+
 			fp, err := k.BscKeeper.GetConsumerFinalityProvider(ctx, consumerID, &fpBTCPK)
 			if err != nil {
 				return false, err
@@ -258,10 +280,17 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 			return false, types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPK.MarshalHex())
 		}
 	}
+
 	if !restakedToBabylon {
 		// a BTC delegation has to stake to at least 1 Babylon finality provider
 		return false, types.ErrNoBabylonFPRestaked
 	}
+
+	// Check if total number of FPs exceeds min max_multi_staked_fps
+	if minMaxMultiStakedFPs > 0 && uint32(len(fpBTCPKs)) > minMaxMultiStakedFPs {
+		return false, types.ErrTooManyFPs.Wrapf("total FPs %d exceeds min max_multi_staked_fps %d", len(fpBTCPKs), minMaxMultiStakedFPs)
+	}
+
 	return restakedToConsumers, nil
 }
 

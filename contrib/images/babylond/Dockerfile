@@ -2,8 +2,6 @@ FROM golang:1.23-alpine AS build-env
 
 # Customize to your build env
 
-# TARGETPLATFORM should be one of linux/amd64 or linux/arm64.
-ARG TARGETPLATFORM="linux/amd64"
 # Version to build. Default is empty
 ARG VERSION
 ARG BABYLON_BUILD_OPTIONS=""
@@ -12,7 +10,6 @@ ARG COSMOS_BUILD_OPTIONS=""
 # Use muslc for static libs
 ARG BUILD_TAGS="muslc"
 ARG LEDGER_ENABLED="false"
-
 
 # Install cli tools for building and final image
 # hadolint ignore=DL3018

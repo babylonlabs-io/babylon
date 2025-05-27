@@ -8,7 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 	"github.com/stretchr/testify/suite"
@@ -346,7 +346,7 @@ func (s *IBCTransferTestSuite) TestE2EBelowThreshold() {
 		s.Require().NotEqual(before, after)
 
 		return true
-	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
+	}, 90*time.Second, 2*time.Second, "Transfer back B was not successful")
 }
 
 func (s *IBCTransferTestSuite) TestRateLimitE2EAboveThreshold() {

@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 )
 
 func NewEventPowerDistUpdateWithBTCDel(ev *EventBTCDelegationStateUpdate) *EventPowerDistUpdate {
@@ -67,6 +67,7 @@ func NewEventFinalityProviderCreated(fp *FinalityProvider) *EventFinalityProvide
 		Website:         fp.Description.Website,
 		SecurityContact: fp.Description.SecurityContact,
 		Details:         fp.Description.Details,
+		ConsumerId:      fp.ConsumerId,
 	}
 }
 

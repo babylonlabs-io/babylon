@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,25 +20,26 @@ func FuzzConsumerRegistry(f *testing.F) {
 		ctx := babylonApp.NewContext(false)
 
 		// generate a random consumer register
-		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
+		validConsumer := datagen.GenRandomCosmosConsumerRegister(r)
 
 		// check that the consumer is not registered
-		isRegistered := bscKeeper.IsConsumerRegistered(ctx, consumerRegister.ConsumerId)
+		isRegistered := bscKeeper.IsConsumerRegistered(ctx, validConsumer.ConsumerId)
 		require.False(t, isRegistered)
 
 		// Check that the consumer is not registered
-		consumerRegister2, err := bscKeeper.GetConsumerRegister(ctx, consumerRegister.ConsumerId)
+		retrievedConsumer, err := bscKeeper.GetConsumerRegister(ctx, validConsumer.ConsumerId)
 		require.Error(t, err)
-		require.Nil(t, consumerRegister2)
+		require.Nil(t, retrievedConsumer)
 
 		// Register the consumer
-		err = bscKeeper.RegisterConsumer(ctx, consumerRegister)
+		err = bscKeeper.RegisterConsumer(ctx, validConsumer)
 		require.NoError(t, err)
 		// check that the consumer is registered
-		consumerRegister2, err = bscKeeper.GetConsumerRegister(ctx, consumerRegister.ConsumerId)
+		retrievedConsumer, err = bscKeeper.GetConsumerRegister(ctx, validConsumer.ConsumerId)
 		require.NoError(t, err)
-		require.Equal(t, consumerRegister.ConsumerId, consumerRegister2.ConsumerId)
-		require.Equal(t, consumerRegister.ConsumerName, consumerRegister2.ConsumerName)
-		require.Equal(t, consumerRegister.ConsumerDescription, consumerRegister2.ConsumerDescription)
+		require.Equal(t, validConsumer.ConsumerId, retrievedConsumer.ConsumerId)
+		require.Equal(t, validConsumer.ConsumerName, retrievedConsumer.ConsumerName)
+		require.Equal(t, validConsumer.ConsumerDescription, retrievedConsumer.ConsumerDescription)
+		require.Equal(t, validConsumer.MaxMultiStakedFps, retrievedConsumer.MaxMultiStakedFps)
 	})
 }

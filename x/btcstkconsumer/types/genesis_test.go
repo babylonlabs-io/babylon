@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	btcstaking "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	btcstaking "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 
 	"github.com/stretchr/testify/require"
 )
@@ -70,6 +70,25 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid:  false,
 			errMsg: "finality provider consumer is not registered",
+		},
+		{
+			desc: "invalid max_multi_staked_fps (zero)",
+			genState: &types.GenesisState{
+				Consumers: []*types.ConsumerRegister{
+					{
+						ConsumerId:          "consumer1",
+						ConsumerName:        "Consumer One",
+						ConsumerDescription: "A valid consumer",
+						MaxMultiStakedFps:   0,
+						ConsumerMetadata: &types.ConsumerRegister_CosmosConsumerMetadata{
+							CosmosConsumerMetadata: &types.CosmosConsumerMetadata{},
+						},
+					},
+				},
+				FinalityProviders: []*btcstaking.FinalityProvider{},
+			},
+			valid:  false,
+			errMsg: types.ErrInvalidMaxMultiStakedFps.Error(),
 		},
 	}
 	for _, tc := range tests {

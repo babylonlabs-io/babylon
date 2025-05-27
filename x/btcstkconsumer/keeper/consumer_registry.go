@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 )
 
 // RegisterConsumer registers a new consumer
@@ -49,6 +49,15 @@ func (k Keeper) GetConsumerRegister(ctx context.Context, consumerID string) (*ty
 	var consumerRegister types.ConsumerRegister
 	k.cdc.MustUnmarshal(consumerRegisterBytes, &consumerRegister)
 	return &consumerRegister, nil
+}
+
+// GetConsumerRegistryMaxMultiStakedFps gets the max_multi_staked_fps from the consumer registry for a given consumer ID
+func (k Keeper) GetConsumerRegistryMaxMultiStakedFps(ctx context.Context, consumerID string) (uint32, error) {
+	consumerRegister, err := k.GetConsumerRegister(ctx, consumerID)
+	if err != nil {
+		return 0, err
+	}
+	return consumerRegister.MaxMultiStakedFps, nil
 }
 
 // GetAllRegisteredConsumerIDs gets all consumer IDs that registered to Babylon

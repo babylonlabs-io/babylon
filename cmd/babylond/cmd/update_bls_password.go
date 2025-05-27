@@ -8,8 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 )
 
 func UpdateBlsPasswordCmd() *cobra.Command {
@@ -34,6 +34,11 @@ $ babylond update-bls-password --no-bls-password
 			homeDir, err := cmd.Flags().GetString(flags.FlagHome)
 			if err != nil {
 				return fmt.Errorf("failed to get home directory: %w", err)
+			}
+
+			blsKeyFile, exist := appsigner.GetBlsKeyFileIfExist(homeDir, "")
+			if !exist {
+				return fmt.Errorf("BLS key file does not exist at %s", blsKeyFile)
 			}
 
 			cmd.Println("\n⚠️ IMPORTANT: Your BLS key file will be overwritten! ⚠️")
@@ -69,7 +74,10 @@ $ babylond update-bls-password --no-bls-password
 				return fmt.Errorf("failed to unset BLS password environment variable: %w", err)
 			}
 
-			blsPrivKey, err := appsigner.LoadBlsPrivKey(homeDir, oldPassword)
+			// Command should be cancelled
+			// if the BLS key is failed to decrypt with old password,
+			// because it means the old password is incorrect.
+			blsPrivKey, err := appsigner.LoadBlsPrivKeyFromFile(blsKeyFile, oldPassword)
 			if err != nil {
 				return fmt.Errorf("failed to load BLS key: %w", err)
 			}
@@ -92,7 +100,7 @@ $ babylond update-bls-password --no-bls-password
 			}
 
 			// Generate BLS key using the refactored function with explicit password
-			return appsigner.UpdateBlsPassword(homeDir, blsPrivKey, newPassword, passwordFile, cmd)
+			return appsigner.UpdateBlsPassword(blsKeyFile, blsPrivKey, newPassword, passwordFile, cmd)
 		},
 	}
 

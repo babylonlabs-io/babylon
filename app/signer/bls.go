@@ -16,9 +16,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v2/crypto/erc2335"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v4/crypto/erc2335"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 var _ checkpointingtypes.BlsSigner = &BlsKey{}
@@ -87,9 +87,9 @@ func GenBls(keyFilePath, passwordFilePath, password string) *Bls {
 	return pv
 }
 
-// loadBlsPrivKeyFromFile loads a BLS private key from a file.
+// LoadBlsPrivKeyFromFile loads a BLS private key from a file.
 // Password should be determined before calling this function.
-func loadBlsPrivKeyFromFile(keyFilePath, password string) (bls12381.PrivateKey, error) {
+func LoadBlsPrivKeyFromFile(keyFilePath, password string) (bls12381.PrivateKey, error) {
 	keystore, err := erc2335.LoadKeyStore(keyFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load BLS key file: %w", err)
@@ -118,7 +118,7 @@ func TryLoadBlsFromFile(keyFilePath, passwordFilePath string) (*Bls, bool, error
 		return nil, false, fmt.Errorf("failed to get password: %w", err)
 	}
 
-	blsPrivKey, err := loadBlsPrivKeyFromFile(keyFilePath, password)
+	blsPrivKey, err := LoadBlsPrivKeyFromFile(keyFilePath, password)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to load BLS key: %w", err)
 	}
@@ -266,6 +266,11 @@ func (k *BlsKey) BlsPubKey() (bls12381.PublicKey, error) {
 	return k.PubKey, nil
 }
 
+// BlsKeyFilePath returns the file path of the BLS key
+func (k *BlsKey) BlsKeyFilePath() string {
+	return k.filePath
+}
+
 // GetBlsKeyPassword is a unified function to handle BLS key password retrieval.
 // Returns password if a password was found from one of the sources.
 // 1. If noPassword is true, returns empty string without checking other sources.
@@ -324,8 +329,8 @@ func ValidatePasswordMethods(noPassword bool, passwordFilePath string) error {
 // 4. Interactive prompt for password
 // Error will be returned if the key exists but cannot decrypt it
 func LoadBlsSignerIfExists(homeDir string, noPassword bool, customPasswordPath, customKeyPath string) (checkpointingtypes.BlsSigner, error) {
-	blsKeyFile := determineKeyFilePath(homeDir, customKeyPath)
-	if !cmtos.FileExists(blsKeyFile) {
+	blsKeyFile, exist := GetBlsKeyFileIfExist(homeDir, customKeyPath)
+	if !exist {
 		return nil, nil
 	}
 
@@ -335,7 +340,7 @@ func LoadBlsSignerIfExists(homeDir string, noPassword bool, customPasswordPath, 
 		return nil, fmt.Errorf("failed to get password: %w", err)
 	}
 
-	blsPrivKey, err := loadBlsPrivKeyFromFile(blsKeyFile, password)
+	blsPrivKey, err := LoadBlsPrivKeyFromFile(blsKeyFile, password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load BLS key: %w", err)
 	}
@@ -355,24 +360,21 @@ func LoadBlsSignerIfExists(homeDir string, noPassword bool, customPasswordPath, 
 // 2. Password file (ONLY if explicitly provided and file exists)
 // 3. Interactive prompt (with confirmation for new keys)
 func LoadOrGenBlsKey(homeDir string, noPassword bool, customPasswordPath, customKeyPath string) (checkpointingtypes.BlsSigner, error) {
-	blsKeyFile := determineKeyFilePath(homeDir, customKeyPath)
-	keyExists := cmtos.FileExists(blsKeyFile)
-
-	if keyExists {
-		blsSigner, err := LoadBlsSignerIfExists(homeDir, noPassword, customPasswordPath, customKeyPath)
-		if err != nil {
-			return nil, fmt.Errorf("BLS key file exists at %s but could not be loaded: %w. If you need to generate a new key, please manually delete the existing file first", blsKeyFile, err)
-		}
-		if blsSigner != nil {
-			return blsSigner, nil
-		}
+	blsSigner, err := LoadBlsSignerIfExists(homeDir, noPassword, customPasswordPath, customKeyPath)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"BLS key file exists at %s but could not be loaded: %w. If you need to generate a new key, please manually delete the existing file first",
+			blsSigner.BlsKeyFilePath(), err)
+	}
+	if blsSigner != nil {
+		return blsSigner, nil
 	}
 
 	genPassword, err := GetBlsKeyPassword(noPassword, customPasswordPath, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get password: %w", err)
 	}
-	bls := GenBls(blsKeyFile, customPasswordPath, genPassword)
+	bls := GenBls(blsSigner.BlsKeyFilePath(), customPasswordPath, genPassword)
 	return &bls.Key, nil
 }
 
@@ -422,13 +424,11 @@ func LoadBlsPop(filePath string) (BlsPop, error) {
 
 // ShowBlsKey displays information about a BLS key
 // Takes a password that was determined by the password determination logic.
-func ShowBlsKey(homeDir string, password string) (map[string]interface{}, error) {
-	blsKeyFile := determineKeyFilePath(homeDir, "")
+func ShowBlsKey(blsKeyFile string, password string) (map[string]interface{}, error) {
 	if !cmtos.FileExists(blsKeyFile) {
-		return nil, fmt.Errorf("BLS key file does not exist at %s", blsKeyFile)
+		return nil, fmt.Errorf("failed to show BLS key: BLS key file does not exist at %s", blsKeyFile)
 	}
-
-	blsPrivKey, err := loadBlsPrivKeyFromFile(blsKeyFile, password)
+	blsPrivKey, err := LoadBlsPrivKeyFromFile(blsKeyFile, password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load BLS key: %w", err)
 	}
@@ -444,25 +444,11 @@ func ShowBlsKey(homeDir string, password string) (map[string]interface{}, error)
 	return result, nil
 }
 
-// LoadBlsPrivKey loads a BLS private key from a file.
-func LoadBlsPrivKey(homeDir, password string) (bls12381.PrivateKey, error) {
-	blsKeyFile := determineKeyFilePath(homeDir, "")
-
-	if !cmtos.FileExists(blsKeyFile) {
-		return nil, fmt.Errorf("BLS key file does not exist at %s", blsKeyFile)
-	}
-
-	return loadBlsPrivKeyFromFile(blsKeyFile, password)
-}
-
 // CreateBlsKey creates a new BLS key
 // Takes a password that was determined by the password determination logic.
-func CreateBlsKey(homeDir string, password string, passwordFilePath string, cmd *cobra.Command) error {
-	blsKeyFile := determineKeyFilePath(homeDir, "")
-
-	// Check if BLS key already exists
+func CreateBlsKey(blsKeyFile string, password string, passwordFilePath string, cmd *cobra.Command) error {
 	if cmtos.FileExists(blsKeyFile) {
-		return fmt.Errorf("BLS key already exists at %s. If you need to generate a new key, please manually delete the existing file first", blsKeyFile)
+		return fmt.Errorf("failed to create BLS key: BLS key already exists at %s", blsKeyFile)
 	}
 
 	// Ensure the key file directory exists
@@ -508,12 +494,9 @@ func CreateBlsKey(homeDir string, password string, passwordFilePath string, cmd 
 
 // UpdateBlsPassword updates the password for a BLS key
 // Takes a password that was determined by the password determination logic.
-func UpdateBlsPassword(homeDir string, blsPrivKey bls12381.PrivateKey, password string, passwordFilePath string, cmd *cobra.Command) error {
-	blsKeyFile := determineKeyFilePath(homeDir, "")
-
-	// Check if BLS key already exists
+func UpdateBlsPassword(blsKeyFile string, blsPrivKey bls12381.PrivateKey, password, passwordFilePath string, cmd *cobra.Command) error {
 	if !cmtos.FileExists(blsKeyFile) {
-		return fmt.Errorf("BLS key does not exist at %s", blsKeyFile)
+		return fmt.Errorf("failed to update BLS password: BLS key does not exist at %s", blsKeyFile)
 	}
 
 	// Create backup of BLS key file before removing it
@@ -566,4 +549,11 @@ func UpdateBlsPassword(homeDir string, blsPrivKey bls12381.PrivateKey, password 
 	}
 
 	return nil
+}
+
+// GetBlsKeyFileIfExist returns the determined BLS key file path
+// and a boolean indicating whether the file exists
+func GetBlsKeyFileIfExist(homeDir, customKeyPath string) (string, bool) {
+	blsKeyFile := determineKeyFilePath(homeDir, customKeyPath)
+	return blsKeyFile, cmtos.FileExists(blsKeyFile)
 }
