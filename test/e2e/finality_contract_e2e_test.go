@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"math/rand"
 	"strconv"
 	"time"
@@ -12,6 +11,7 @@ import (
 	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 )
