@@ -59,6 +59,11 @@ transfer stack
 - [#913](https://github.com/babylonlabs-io/babylon/pull/913) Remove IBC-fee module.
 - [#927](https://github.com/babylonlabs-io/babylon/pull/927) Add Mergify configuration file to improve PR backporting.
 - [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
+<<<<<<< HEAD
+=======
+- [#943](https://github.com/babylonlabs-io/babylon/pull/943) Adds consumer event in `x/btcstakingconsumer` module 
+- [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
+>>>>>>> ab51f4e (ci(Mergify): configuration update (#955))
 
 ### State Machine Breaking
 
