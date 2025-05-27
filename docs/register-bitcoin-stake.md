@@ -6,7 +6,7 @@
    2. [Pre-Staking Registration](#22-pre-staking-registration)
 3. [Bitcoin Stake Registration](#3-bitcoin-stake-registration)
    1. [Overview of Data that needs to be Submitted](#31-overview-of-registration-data)
-   2. [Babylon Chain BTC Staking Parameters](#32-babylon-chain-btc-staking-parameters)
+   2. [Babylon Genesis Chain BTC Staking Parameters](#32-babylon-chain-btc-staking-parameters)
    3. [Creating the Bitcoin transactions](#33-creating-the-bitcoin-transactions)
    4. [The `MsgCreateBTCDelegation` Babylon message](#34-the-msgcreatebtcdelegation-babylon-message)
    5. [Constructing the `MsgCreateBTCDelegation`](#35-constructing-the-msgcreatebtcdelegation)
@@ -21,13 +21,13 @@
 ## 1. Introduction
 
 This document walks through the communication protocol
-with the Babylon chain in order to register Bitcoin stakes.
+with the Babylon Genesis chain in order to register Bitcoin stakes.
 The document is structured as follows:
 - [Section 2](#2-bitcoin-stake-registration-methods) provides an overview
-    of the two flows for registering stakes on the Babylon chain.
+    of the two flows for registering stakes on the Babylon Genesis chain.
 - [Section 3](#3-bitcoin-stake-registration) describes the data required for stake registration,
     the registration process itself, and the `MsgCreateBTCDelegation` message used
-    to communicate staking transactions to the Babylon chain.
+    to communicate staking transactions to the Babylon Genesis chain.
 - [Section 4](#4-managing-your-bitcoin-stake) details stake management, including
     on-demand unbonding and withdrawal.
 - [Section 5](#5-bitcoin-staking-rewards) focuses on the Bitcoin staking rewards
@@ -48,7 +48,7 @@ to gain voting power and earn rewards.
 This registration process involves
 submitting a registration transaction
 followed by the validation of the staking operation by key
-network components including the Babylon chain CometBFT validators
+network components including the Babylon Genesis chain CometBFT validators
 and the covenant committee.
 
 There are two main methods for registering Bitcoin stakes on the Babylon blockchain:
@@ -57,15 +57,15 @@ There are two main methods for registering Bitcoin stakes on the Babylon blockch
   (e.g., phase-1 stakers).
 * **Pre-staking registration**: This is for stakers who seek validation from the Babylon
   chain before submitting their staking transaction on Bitcoin and locking their funds,
-  ensuring acceptance guarantees (e.g., newly created stakes after the Babylon chain launch).
+  ensuring acceptance guarantees (e.g., newly created stakes after the Babylon Genesis chain launch).
 
 Each approach is designed to accommodate different staking preferences and
 circumstances. In the following sections, we will explore the approaches in more detail.
 
 > **⚡ A Note on `k`-depth**: In the following sections,
-> we frequently refer to `k`-depth. The Babylon chain
+> we frequently refer to `k`-depth. The Babylon Genesis chain
 > only activates staking transactions if they reach `k`-depth,
-> where `k` is a Babylon chain parameter defined in the
+> where `k` is a Babylon Genesis chain parameter defined in the
 > [x/btccheckpoint](../x/btccheckpoint) module (as `btc_confirmation_depth`)
 > and controlled by governance.
 >
@@ -81,7 +81,7 @@ circumstances. In the following sections, we will explore the approaches in more
 
 This flow applies to stakers whose BTC staking transaction has already
 been confirmed in a Bitcoin block that is `k`-deep
-and is subsequently registered on the Babylon chain.
+and is subsequently registered on the Babylon Genesis chain.
 For example, this includes participants from a Babylon phase-1 network.
 
 The following diagram illustrates the post-staking registration flow:
@@ -116,13 +116,13 @@ Steps:
 ### 2.2. Pre-Staking Registration
 
 The Pre-staking registration flow  is for stakers who seek
-verification from the Babylon chain before submitting their
+verification from the Babylon Genesis chain before submitting their
 BTC staking transaction to the Bitcoin ledger. By doing so,
 they gain assurance that their stake will be accepted before
 locking their funds on Bitcoin.
 
 The process begins with the staker submitting all relevant staking data
-to the Babylon chain. Subsequently, the covenant committee provides
+to the Babylon Genesis chain. Subsequently, the covenant committee provides
 verification signatures for on-demand unbonding and slashing,
 giving the staker the required assurance for moving on with broadcasting
 their BTC staking transaction. After the transaction is confirmed in
@@ -180,7 +180,7 @@ Steps:
 > minimum gas fees that covers the gas for the staking,
 > covenant signatures, and proof of inclusion submissions.
 > This mimimum gas is defined by the `delegation_creation_base_gas_fee`
-> staking parameter of the Babylon chain
+> staking parameter of the Babylon Genesis chain
 > (this parameter will be detailed in
 > [Section 3.2.](#32-babylon-chain-btc-staking-parameters)).
 >
@@ -194,7 +194,7 @@ Steps:
 
 ### 3.1. Overview of Registration Data
 
-Registering a Bitcoin stake on the Babylon chain requires submitting the
+Registering a Bitcoin stake on the Babylon Genesis chain requires submitting the
 staking transaction along with essential metadata.
 This section provides an overview of the required data,
 while later sections detail how to create and package it into a
@@ -205,12 +205,12 @@ Babylon registration transaction.
   in the self-custodial Bitcoin staking script. It can be submitted signed or unsigned,
   depending on the staking flow and UTXO inputs.
 * **Unbonding Transaction**: An *unsigned* unbonding transaction allowing
-  the staker to on-demand unbond their stake. It is submitted to the Babylon chain
+  the staker to on-demand unbond their stake. It is submitted to the Babylon Genesis chain
   and co-signed by the covenants upon verification.
 * **Slashing Transactions**: Two staker pre-signed slashing transactions
   (one for staking, one for unbonding) that ensure enforcement
   of slashing if the finality provider to which the stake is delegated to
-  double-signs. They are submitted to the Babylon chain and co-signed
+  double-signs. They are submitted to the Babylon Genesis chain and co-signed
   by the covenants upon verification.
 * **Proof of Possession**: Confirms ownership of the Bitcoin key
   by the Babylon account used for stake registration.
@@ -234,19 +234,19 @@ Babylon registration transaction.
 > particularly important for Phase-1 stake that is in the process of being
 > registered.
 
-Once assembled, this data is packaged into a Babylon chain transaction and
+Once assembled, this data is packaged into a Babylon Genesis chain transaction and
 broadcast to the network. The process differs based on whether the staker
 follows the pre-staking or post-staking registration flow.
 
 **Upcoming Sections**:
 * Required parameters for BTC Staking transactions.
 * Construction of Bitcoin transactions for staking.
-* Building the Babylon chain transaction with required staking data.
-* Submitting the registration transaction to the Babylon chain.
+* Building the Babylon Genesis chain transaction with required staking data.
+* Submitting the registration transaction to the Babylon Genesis chain.
 
-### 3.2. Babylon Chain BTC Staking Parameters
+### 3.2. Babylon Genesis Chain BTC Staking Parameters
 
-BTC Staking transactions must adhere to parameters defined by the Babylon chain,
+BTC Staking transactions must adhere to parameters defined by the Babylon Genesis chain,
 which vary based on Bitcoin block heights. Each parameters version
 is defined by a `btc_activation_height`, determining the Bitcoin height
 from which the parameters version takes effect.
@@ -318,7 +318,7 @@ versions managed by the [x/btcstaking](../x/btcstaking) module:
 > * **Pre-staking registration flow**: Use the parameters matching the
 >   **Babylon on-chain Bitcoin light client** at the time of pre-staking
 >   registration. This ensures that the transaction commits to be validated
->   against the current staking parameters version (as observed by the Babylon chain).
+>   against the current staking parameters version (as observed by the Babylon Genesis chain).
 >   This ensures that the pre-staking registered transaction will remain valid even if
 >   it is later included
 >   in a Bitcoin block for which different parameters take effect,
@@ -353,7 +353,7 @@ You can create these transactions using:
 ### 3.4. The `MsgCreateBTCDelegation` Babylon message
 
 Cosmos SDK transactions are used for registering
-BTC delegations on the Babylon chain.
+BTC delegations on the Babylon Genesis chain.
 The `MsgCreateBTCDelegation` message
 bundles the necessary staking data and registers
 the Bitcoin stake on the Babylon blockchain.
@@ -472,7 +472,7 @@ message MsgCreateBTCDelegation {
   >
   > Whether the staking transaction should include signed or unsigned
   > UTXO inputs depends on the type of inputs used.
-  > Since the Babylon chain tracks staking transactions based on
+  > Since the Babylon Genesis chain tracks staking transactions based on
   > their transaction hash, it's crucial for the staker to submit
   > the staking transaction in a format that contains all the
   > necessary data to generate the full hash corresponding
@@ -640,12 +640,12 @@ refer to:
 * [the TypeScript library documentation](https://github.com/babylonlabs-io/btc-staking-ts?tab=readme-ov-file#create-unbonding-transaction)
 * [the Golang staking library utils](../btcstaking/witness_utils.go)
 
-> **⚡ Note: Unbonding notification on the Babylon chain**
+> **⚡ Note: Unbonding notification on the Babylon Genesis chain**
 >
 > The Babylon system employs
 > the [Vigilante Unbonding Watcher](https://github.com/babylonlabs-io/vigilante),
 > a service that monitors the Bitcoin ledger for **on-demand unbonding transactions**
-> and reports them back to the Babylon chain. Once the unbonding transaction
+> and reports them back to the Babylon Genesis chain. Once the unbonding transaction
 > is included Bitcoin, the vigilante detects it and notifies Babylon,
 > causing the stake to lose its voting power.
 
@@ -679,7 +679,7 @@ which can later be withdrawn using the same withdrawal process
 defined in the previous section.
 
 To determine the slashing timelock, refer to the `unbonding_time_blocks`
-parameter in the [Babylon Chain BTC Staking Parameters](32-babylon-chain-btc-staking-parameters). Babylon ensures that the timelock on the change output of a slashing
+parameter in the [Babylon Genesis Chain BTC Staking Parameters](32-babylon-chain-btc-staking-parameters). Babylon ensures that the timelock on the change output of a slashing
 transaction matches the unbonding time. Therefore, the unbonding time
 parameter effectively represents your slashing timelock. The reasoning behind
 the timelock is that we want to avoid situation in which some finality providers
