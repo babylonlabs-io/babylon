@@ -44,8 +44,9 @@ func (n *NodeConfig) QueryBTCStkConsumerConsumer(consumerID string) *bstkconsume
 	return &resp
 }
 
-func (n *NodeConfig) QueryConsumerFinalityProviders() []*bstkconsumertypes.FinalityProviderResponse {
-	bz, err := n.QueryGRPCGateway("/babylon/btcstkconsumer/v1/finality_providers", url.Values{})
+func (n *NodeConfig) QueryConsumerFinalityProviders(consumerId string) []*bstkconsumertypes.FinalityProviderResponse {
+	path := fmt.Sprintf("/babylon/btcstkconsumer/v1/finality_providers/%s", consumerId)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
 	var resp bstkconsumertypes.QueryFinalityProvidersResponse
