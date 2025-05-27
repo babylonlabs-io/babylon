@@ -33,7 +33,7 @@ func (n *NodeConfig) QueryBTCStkConsumerConsumers() *[]*bstkconsumertypes.Consum
 }
 
 func (n *NodeConfig) QueryBTCStkConsumerConsumer(consumerID string) *bstkconsumertypes.QueryConsumersRegistryResponse {
-	path := fmt.Sprintf("babylon/btcstkconsumer/v1/consumers_registry/%s", consumerID)
+	path := fmt.Sprintf("/babylon/btcstkconsumer/v1/consumers_registry/%s", consumerID)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
