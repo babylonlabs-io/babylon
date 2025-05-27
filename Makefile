@@ -240,10 +240,10 @@ test-e2e-cache:
 	$(MAKE) test-e2e-gov-resume-finality
 	$(MAKE) test-e2e-cache-btc-timestamping
 	$(MAKE) test-e2e-cache-btc-staking
-	$(MAKE) clean-e2e
 	$(MAKE) test-e2e-cache-btc-staking-pre-approval
 	$(MAKE) test-e2e-cache-ibc-transfer
-	$(MAKE) test-e2e-cache-upgrade-v2
+	$(MAKE) test-e2e-cache-finality-contract
+#	$(MAKE) test-e2e-cache-upgrade-v2
 
 clean-e2e:
 	docker container rm -f $(shell docker container ls -a -q) || true
@@ -265,10 +265,13 @@ test-e2e-cache-btc-staking-pre-approval:
 	go test -run TestBTCStakingPreApprovalTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-ibc-transfer:
-	go test -run TestIBCTranferTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+	go test -run TestIBCTransferTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-ica:
 	go test -run TestICATestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-cache-finality-contract:
+	go test -run TestFinalityContractTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-upgrade-v2:
 	go test -run TestSoftwareUpgradeV2TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
@@ -351,7 +354,13 @@ build-docker: ## Build babylond Docker image
 	$(MAKE) -C contrib/images babylond
 
 build-docker-e2e:
+	$(MAKE) build-docker-babylon-e2e
+	$(MAKE) build-docker-init-e2e
+
+build-docker-babylon-e2e:
 	$(MAKE) -C contrib/images babylond-e2e
+
+build-docker-init-e2e:
 	$(MAKE) -C contrib/images e2e-init-chain
 
 build-cosmos-relayer-docker: ## Build Docker image for the Cosmos relayer

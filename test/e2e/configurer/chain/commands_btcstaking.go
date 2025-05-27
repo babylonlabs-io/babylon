@@ -31,7 +31,30 @@ import (
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
+// RegisterConsumerChain registers a Consumer chain
+// TODO: Add support for other types of consumer chains
+func (n *NodeConfig) RegisterConsumerChain(walletAddrOrName, id, name, description string) {
+	n.RegisterRollupConsumerChain(walletAddrOrName, id, name, description, "")
+}
+
+// RegisterRollupConsumerChain registers a Rollup (Eth L2) Consumer chain
+func (n *NodeConfig) RegisterRollupConsumerChain(walletAddrOrName, id, name, description, finalityContractAddr string) {
+	n.LogActionF("Registering consumer chain")
+	maxMultiStaked := strconv.Itoa(3) // max number of multi-staked finality providers
+	cmd := []string{
+		"babylond", "tx", "btcstkconsumer", "register-consumer", id, name, description, maxMultiStaked, finalityContractAddr,
+		fmt.Sprintf("--from=%s", walletAddrOrName),
+	}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully registered consumer chain")
+}
+
 func (n *NodeConfig) CreateFinalityProvider(walletAddrOrName string, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossessionBTC, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec, commissionMaxRate, commissionMaxRateChange sdkmath.LegacyDec) {
+	n.CreateConsumerFinalityProvider(walletAddrOrName, "", btcPK, pop, moniker, identity, website, securityContract, details, commission, commissionMaxRate, commissionMaxRateChange)
+}
+
+func (n *NodeConfig) CreateConsumerFinalityProvider(walletAddrOrName string, consumerID string, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossessionBTC, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec, commissionMaxRate, commissionMaxRateChange sdkmath.LegacyDec) {
 	n.LogActionF("creating finality provider")
 
 	// get BTC PK hex
@@ -45,6 +68,7 @@ func (n *NodeConfig) CreateFinalityProvider(walletAddrOrName string, btcPK *bbn.
 		fmt.Sprintf("--from=%s", walletAddrOrName), "--moniker", moniker, "--identity", identity, "--website", website,
 		"--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
 		"--commission-max-rate", commissionMaxRate.String(), "--commission-max-change-rate", commissionMaxRateChange.String(),
+		"--consumer-id", consumerID,
 	}
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)

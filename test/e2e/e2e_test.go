@@ -10,7 +10,7 @@ import (
 )
 
 // IBCTransferTestSuite tests IBC transfer end-to-end
-func TestIBCTranferTestSuite(t *testing.T) {
+func TestIBCTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(IBCTransferTestSuite))
 }
 
@@ -47,4 +47,9 @@ func TestICATestSuite(t *testing.T) {
 // TestSoftwareUpgradeV2TestSuite tests software upgrade from v1.1 to v2 end-to-end
 func TestSoftwareUpgradeV2TestSuite(t *testing.T) {
 	suite.Run(t, new(SoftwareUpgradeV2TestSuite))
+}
+
+// TestFinalityContractTestSuite tests ETH L2 finality contracts integration
+func TestFinalityContractTestSuite(t *testing.T) {
+	suite.Run(t, new(FinalityContractTestSuite))
 }
