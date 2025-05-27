@@ -3,6 +3,8 @@ package keepers
 import (
 	"context"
 	"fmt"
+
+	"github.com/spf13/cast"
 	"path/filepath"
 	"strings"
 
@@ -68,6 +70,13 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	srvflags "github.com/cosmos/evm/server/flags"
+	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
 	pfmrouterkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/keeper"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
@@ -90,6 +99,7 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
 	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
+	transferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types" // ibc module puts types under `ibchost` rather than `ibctypes`
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
@@ -180,6 +190,12 @@ type AppKeepers struct {
 	// tokenomics-related modules
 	IncentiveKeeper incentivekeeper.Keeper
 
+	// Cosmos EVM modules
+	EVMKeeper       *evmkeeper.Keeper
+	FeemarketKeeper feemarketkeeper.Keeper
+	Erc20Keeper     erc20keeper.Keeper
+	//EVMTransferKeeper evmtransferkeeper.Keeper // TODO: Add with ibc-go v10 bump
+
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
@@ -245,11 +261,15 @@ func (ak *AppKeepers) InitKeepers(
 		// tokenomics-related modules
 		incentivetypes.StoreKey,
 		tokenfactorytypes.StoreKey,
+		// EVM
+		evmtypes.StoreKey,
+		feemarkettypes.StoreKey,
+		erc20types.StoreKey,
 	)
 	ak.keys = keys
 
 	// set transient store keys
-	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey)
+	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
 
 	// set memory store keys
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
@@ -433,6 +453,57 @@ func (ak *AppKeepers) InitKeepers(
 		ak.AccountKeeper,
 	)
 
+	// Cosmos EVM Keepers
+	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
+
+	// Create Ethermint keepers
+	ak.FeemarketKeeper = feemarketkeeper.NewKeeper(
+		appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
+		keys[feemarkettypes.StoreKey],
+		ak.tkeys[feemarkettypes.TransientKey],
+	)
+
+	evmKeeper := evmkeeper.NewKeeper(
+		appCodec,
+		keys[evmtypes.ModuleName],
+		ak.tkeys[evmtypes.TransientKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		accountKeeper,
+		bankKeeper,
+		stakingKeeper,
+		ak.FeemarketKeeper,
+		&ak.Erc20Keeper,
+		tracer,
+	)
+
+	ak.EVMKeeper = evmKeeper
+
+	ak.Erc20Keeper = erc20keeper.NewKeeper(
+		ak.keys[erc20types.StoreKey], appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
+		ak.AccountKeeper, ak.BankKeeper, ak.EVMKeeper, ak.StakingKeeper,
+		nil, // TransferKeeper once we bump IBC-go to v10
+	)
+
+	ak.EVMKeeper.WithStaticPrecompiles(
+		NewAvailableStaticPrecompiles(
+			ak.BankKeeper,
+			ak.Erc20Keeper,
+			ak.GovKeeper,
+			ak.SlashingKeeper,
+			ak.EvidenceKeeper,
+		),
+	)
+	// TODO: Use this once we bump ibc-go to v10
+	//ak.EVMTransferKeeper = evmtransferkeeper.NewKeeper(
+	//	appCodec, runtime.NewKVStoreService(keys[evmtypes.ModuleName]),
+	//	ak.GetSubspace(ibctransfertypes.ModuleName),
+	//	ak.IBCKeeper.ChannelKeeper, // ICS4Wrapper
+	//	ak.IBCKeeper.ChannelKeeper,
+	//	bApp.MsgServiceRouter(), ak.AccountKeeper, ak.BankKeeper,
+	//	ak.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
+	//	appparams.AccGov.String(),
+	//)
+
 	ak.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec,
 		keys[ibcexported.StoreKey],
@@ -509,7 +580,7 @@ func (ak *AppKeepers) InitKeepers(
 	)
 
 	// Create Transfer Keepers
-	ak.TransferKeeper = ibctransferkeeper.NewKeeper(
+	ak.TransferKeeper = transferkeeper.NewKeeper(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
 		ak.GetSubspace(ibctransfertypes.ModuleName),
