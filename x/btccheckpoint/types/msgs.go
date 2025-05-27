@@ -15,7 +15,7 @@ var (
 	// Ensure that MsgInsertBTCSpvProof implements all functions of the Msg interface
 	_ sdk.Msg = (*MsgInsertBTCSpvProof)(nil)
 	_ sdk.Msg = (*MsgUpdateParams)(nil)
-	// Ensure all msgs implemente ValidateBasic
+	// Ensure all msgs implement ValidateBasic
 	_ sdk.HasValidateBasic = (*MsgUpdateParams)(nil)
 	_ sdk.HasValidateBasic = (*MsgInsertBTCSpvProof)(nil)
 )
