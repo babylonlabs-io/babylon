@@ -118,6 +118,7 @@ func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
 	validatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(0)
 	require.NoError(s.T(), err)
 
+	// TODO: Register the Consumer through a gov proposal
 	validatorNode.RegisterRollupConsumerChain(initialization.ValidatorWalletName, registeredConsumer.ConsumerId, registeredConsumer.ConsumerName, registeredConsumer.ConsumerDescription, s.FinalityContractAddr)
 
 	nonValidatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
