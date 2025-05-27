@@ -103,7 +103,7 @@ func (s *FinalityContractTestSuite) Test1InstantiateFinalityContract() {
 	s.T().Log("Finality gadget contract address: ", s.FinalityContractAddr)
 }
 
-func (s *FinalityContractTestSuite) Test2RegisterEthL2Consumer() {
+func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
 	var registeredConsumer *bsctypes.ConsumerRegister
 	var err error
 
@@ -118,7 +118,7 @@ func (s *FinalityContractTestSuite) Test2RegisterEthL2Consumer() {
 	validatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(0)
 	require.NoError(s.T(), err)
 
-	validatorNode.RegisterEthL2ConsumerChain(initialization.ValidatorWalletName, registeredConsumer.ConsumerId, registeredConsumer.ConsumerName, registeredConsumer.ConsumerDescription, s.FinalityContractAddr)
+	validatorNode.RegisterRollupConsumerChain(initialization.ValidatorWalletName, registeredConsumer.ConsumerId, registeredConsumer.ConsumerName, registeredConsumer.ConsumerDescription, s.FinalityContractAddr)
 
 	nonValidatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	require.NoError(s.T(), err)
