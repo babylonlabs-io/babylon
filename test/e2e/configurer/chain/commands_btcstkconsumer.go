@@ -9,13 +9,14 @@ import (
 	"strconv"
 )
 
-// RegisterConsumerChain registers an Ethereum L2 consumer chain
+// RegisterConsumerChain registers a Consumer chain
+// TODO: Add support for other types of consumer chains
 func (n *NodeConfig) RegisterConsumerChain(walletAddrOrName, id, name, description string) {
-	n.RegisterEthL2ConsumerChain(walletAddrOrName, id, name, description, "")
+	n.RegisterRollupConsumerChain(walletAddrOrName, id, name, description, "")
 }
 
-// RegisterEthL2ConsumerChain registers an Ethereum L2 consumer chain
-func (n *NodeConfig) RegisterEthL2ConsumerChain(walletAddrOrName, id, name, description, finalityContractAddr string) {
+// RegisterRollupConsumerChain registers a Rollup (Eth L2) Consumer chain
+func (n *NodeConfig) RegisterRollupConsumerChain(walletAddrOrName, id, name, description, finalityContractAddr string) {
 	n.LogActionF("Registering consumer chain")
 	maxMultiStaked := strconv.Itoa(3) // max number of multi-staked finality providers
 	cmd := []string{

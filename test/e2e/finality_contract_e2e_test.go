@@ -1,11 +1,12 @@
 package e2e
 
 import (
-	"github.com/stretchr/testify/require"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"math/rand"
 	"strconv"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
@@ -140,4 +141,22 @@ func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
 		registeredConsumer.ConsumerId,
 		registeredConsumer.ConsumerName,
 		registeredConsumer.ConsumerDescription)
+}
+
+func (s *FinalityContractTestSuite) Test3CreateConsumerFP() {
+	consumerFpSk, _, err := datagen.GenRandomBTCKeyPair(r)
+
+	// Create and register a Consumer FP
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.Require().NoError(err)
+
+	consumerFp := chain.CreateConsumerFpFromNodeAddr(
+		s.T(),
+		r,
+		ConsumerID,
+		consumerFpSk,
+		nonValidatorNode,
+	)
+	s.Require().NotNil(consumerFp)
 }
