@@ -14,7 +14,7 @@ pull_request_rules:
   - name: backport patches to v3.x branch
     conditions:
       - base=main
-      - label=backport/v3.x
+      - label=backport-to-release/v3.x
     actions:
       backport:
         branches:
@@ -22,19 +22,11 @@ pull_request_rules:
   - name: backport patches to v2.x branch
     conditions:
       - base=main
-      - label=backport/v2.x
+      - label=backport-to-release/v2.x
     actions:
       backport:
         branches:
           - release/v2.x
-  - name: backport patches to v1.0.x branch
-    conditions:
-      - base=main
-      - label=backport/1.0.x
-    actions:
-      backport:
-        branches:
-          - release/v1.0.x
   - name: automerge to main with label automerge and branch protection passing
     conditions: []
     actions:
