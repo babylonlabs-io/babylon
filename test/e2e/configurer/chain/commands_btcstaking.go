@@ -39,8 +39,9 @@ func (n *NodeConfig) RegisterConsumerChain(walletAddrOrName, id, name, descripti
 // RegisterEthL2ConsumerChain registers an Ethereum L2 consumer chain
 func (n *NodeConfig) RegisterEthL2ConsumerChain(walletAddrOrName, id, name, description, finalityContractAddr string) {
 	n.LogActionF("Registering consumer chain")
+	maxMultiStaked := strconv.Itoa(3) // max number of multi-staked finality providers
 	cmd := []string{
-		"babylond", "tx", "btcstkconsumer", "register-consumer", id, name, description, finalityContractAddr,
+		"babylond", "tx", "btcstkconsumer", "register-consumer", id, name, description, maxMultiStaked, finalityContractAddr,
 		fmt.Sprintf("--from=%s", walletAddrOrName),
 	}
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
