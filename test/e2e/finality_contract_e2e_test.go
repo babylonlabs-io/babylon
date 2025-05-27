@@ -144,11 +144,23 @@ func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
 }
 
 func (s *FinalityContractTestSuite) Test3CreateConsumerFP() {
-	consumerFpSk, _, err := datagen.GenRandomBTCKeyPair(r)
-
-	// Create and register a Consumer FP
 	chainA := s.configurer.GetChainConfig(0)
+	// Create and register a Babylon FP first
+	validatorNode, err := chainA.GetNodeAtIndex(0)
+
+	babylonFpSk, _, err := datagen.GenRandomBTCKeyPair(r)
+
+	babylonFp := chain.CreateFpFromNodeAddr(
+		s.T(),
+		r,
+		babylonFpSk,
+		validatorNode,
+	)
+	s.Require().NotNil(babylonFp)
+
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	// Create and register a Consumer FP next
+	consumerFpSk, _, err := datagen.GenRandomBTCKeyPair(r)
 	s.Require().NoError(err)
 
 	consumerFp := chain.CreateConsumerFpFromNodeAddr(
