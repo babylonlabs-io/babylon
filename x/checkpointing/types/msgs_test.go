@@ -1,12 +1,14 @@
 package types_test
 
 import (
+	"errors"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -78,4 +80,68 @@ func buildMsgWrappedCreateValidatorWithAmount(addr sdk.AccAddress, bondTokens sd
 	blsPubKey := blsPrivKey.PubKey()
 
 	return types.NewMsgWrappedCreateValidator(createValidatorMsg, &blsPubKey, pop)
+}
+
+func TestMsgWrappedCreateValidatorValidateBasic(t *testing.T) {
+	t.Parallel()
+
+	valid, err := datagen.BuildMsgWrappedCreateValidator(datagen.GenRandomAddress())
+	require.NoError(t, err)
+
+	tcs := []struct {
+		title string
+
+		msg    types.MsgWrappedCreateValidator
+		expErr error
+	}{
+		{
+			"valid",
+			*valid,
+			nil,
+		},
+		{
+			"invalid: nil MsgCreateValidator",
+			types.MsgWrappedCreateValidator{
+				Key:                valid.Key,
+				MsgCreateValidator: nil,
+			},
+			errors.New("MsgCreateValidator is nil"),
+		},
+		{
+			"invalid: nil bls",
+			types.MsgWrappedCreateValidator{
+				Key:                nil,
+				MsgCreateValidator: valid.MsgCreateValidator,
+			},
+			errors.New("BLS key is nil"),
+		},
+		{
+			"invalid: MsgCreateValidator missing something",
+			types.MsgWrappedCreateValidator{
+				Key:                valid.Key,
+				MsgCreateValidator: &stakingtypes.MsgCreateValidator{},
+			},
+			errors.New("invalid validator address: empty address string is not allowed: invalid address"),
+		},
+		{
+			"invalid: bls missing pop",
+			types.MsgWrappedCreateValidator{
+				Key:                &types.BlsKey{},
+				MsgCreateValidator: valid.MsgCreateValidator,
+			},
+			errors.New("BLS Proof of Possession is nil"),
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.title, func(t *testing.T) {
+			t.Parallel()
+			actErr := tc.msg.ValidateBasic()
+			if tc.expErr != nil {
+				require.EqualError(t, actErr, tc.expErr.Error())
+				return
+			}
+			require.NoError(t, actErr)
+		})
+	}
 }

@@ -550,8 +550,8 @@ func TestBadWrappedCreateValidator(t *testing.T) {
 		d.SenderInfo,
 		poisonMsg,
 	)
-	require.Equal(t, resp.Code, uint32(111222))
-	require.Contains(t, resp.Log, "recovered")
+	require.Equal(t, resp.Code, uint32(1))
+	require.Equal(t, resp.Log, "BLS key is nil")
 	require.NoError(t, err)
 }
 
