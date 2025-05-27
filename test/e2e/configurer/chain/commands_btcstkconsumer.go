@@ -28,7 +28,13 @@ func (n *NodeConfig) RegisterRollupConsumerChain(walletAddrOrName, id, name, des
 }
 
 func (n *NodeConfig) CreateConsumerFinalityProvider(walletAddrOrName string, consumerID string, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossessionBTC, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec, commissionMaxRate, commissionMaxRateChange sdkmath.LegacyDec) {
-	n.LogActionF("creating finality provider")
+	// Just for logs
+	consumer := consumerID
+	if consumer == "" {
+		// Use the chain ID as the consumer
+		consumer = n.chainId
+	}
+	n.LogActionF("Creating %s finality provider", consumer)
 
 	// get BTC PK hex
 	btcPKHex := btcPK.MarshalHex()
@@ -46,5 +52,5 @@ func (n *NodeConfig) CreateConsumerFinalityProvider(walletAddrOrName string, con
 
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
-	n.LogActionF("successfully created finality provider")
+	n.LogActionF("Successfully created %s finality provider", consumer)
 }
