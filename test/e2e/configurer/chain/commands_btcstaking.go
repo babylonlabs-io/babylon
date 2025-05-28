@@ -478,7 +478,6 @@ func (n *NodeConfig) CreateBTCDelegationMultipleFPsAndCheck(
 	// Convert finality provider BTC PKs to BIP340 PKs
 	fpPKs := make([]bbn.BIP340PubKey, len(fps))
 	for i, fp := range fps {
-		//fpPKs[i] = *bbn.NewBIP340PubKeyFromBTCPK(fp.BtcPk.MustToBTCPK())
 		fpPKs[i] = *fp.BtcPk
 	}
 
