@@ -40,7 +40,7 @@ type FinalityContractTestSuite struct {
 	configurer     configurer.Configurer
 
 	// Cross-test config data
-	FinalityContractAddr string
+	finalityContractAddr string
 }
 
 func (s *FinalityContractTestSuite) SetupSuite() {
@@ -116,8 +116,8 @@ func (s *FinalityContractTestSuite) Test1InstantiateFinalityContract() {
 		contracts, err = nonValidatorNode.QueryContractsFromId(latestWasmId)
 		return err == nil && len(contracts) == 1
 	}, time.Second*10, time.Second)
-	s.FinalityContractAddr = contracts[0]
-	s.T().Log("Finality gadget contract address: ", s.FinalityContractAddr)
+	s.finalityContractAddr = contracts[0]
+	s.T().Log("Finality gadget contract address: ", s.finalityContractAddr)
 }
 
 func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
@@ -136,7 +136,7 @@ func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
 	require.NoError(s.T(), err)
 
 	// TODO: Register the Consumer through a gov proposal
-	validatorNode.RegisterRollupConsumerChain(initialization.ValidatorWalletName, registeredConsumer.ConsumerId, registeredConsumer.ConsumerName, registeredConsumer.ConsumerDescription, s.FinalityContractAddr, 3)
+	validatorNode.RegisterRollupConsumerChain(initialization.ValidatorWalletName, registeredConsumer.ConsumerId, registeredConsumer.ConsumerName, registeredConsumer.ConsumerDescription, s.finalityContractAddr, 3)
 
 	nonValidatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	require.NoError(s.T(), err)
