@@ -60,13 +60,7 @@ transfer stack
 - [#927](https://github.com/babylonlabs-io/babylon/pull/927) Add Mergify configuration file to improve PR backporting.
 - [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
 - [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
-<<<<<<< HEAD
-=======
-- [#967](https://github.com/babylonlabs-io/babylon/pull/967) Add `ValidateBasic` in `MsgInsertBTCSpvProof` (`x/btccheckpoint`)
-- [#969](https://github.com/babylonlabs-io/babylon/pull/969) Add `ValidateBasic` to `MsgSelectiveSlashingEvidence` in `x/btcstaking` module
-- [#974](https://github.com/babylonlabs-io/babylon/pull/974) Update Mergify rules for automatic backport changes to `v2`, `v3` and `v4` 
 - [#977](https://github.com/babylonlabs-io/babylon/pull/977) Update `ValidateBasic` in `x/finality` module messages
->>>>>>> cbb9ef3 (imp: update ValidateBasic in x/finality msgs (#977))
 
 ### State Machine Breaking
 
