@@ -5,9 +5,15 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 // TestEpochFinalization checks whether we can finalize some epochs
@@ -525,4 +531,45 @@ func TestJailingFinalityProvider(t *testing.T) {
 
 	activeFps := driver.GetActiveFpsAtCurrentHeight(t)
 	require.Equal(t, 1, len(activeFps))
+}
+
+func TestBadWrappedCreateValidator(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlock()
+
+	poisonMsg := &types.MsgWrappedCreateValidator{
+		MsgCreateValidator: MakeInnerMsg(t),
+		Key:                nil, // triggers nil-pointer panic in VerifyPoP
+	}
+
+	resp, err := SendTxWithMessages(
+		d.t,
+		d.App,
+		d.SenderInfo,
+		poisonMsg,
+	)
+	require.Equal(t, resp.Code, uint32(1))
+	require.Equal(t, resp.Log, "BLS key is nil")
+	require.NoError(t, err)
+}
+
+func MakeInnerMsg(t *testing.T) *stakingtypes.MsgCreateValidator {
+	priv := ed25519.GenPrivKey()
+	valAddr := sdk.ValAddress(priv.PubKey().Address())
+	consPub, _ := cryptocodec.FromCmtPubKeyInterface(priv.PubKey())
+
+	msg, err := stakingtypes.NewMsgCreateValidator(
+		valAddr.String(),
+		consPub,
+		sdk.NewCoin("ubbn", math.NewInt(1)), // 1 ubbn
+		stakingtypes.NewDescription("t", "", "", "", ""),
+		stakingtypes.NewCommissionRates(
+			math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec(),
+		),
+		math.NewInt(1), // minSelfDelegation = 1
+	)
+	require.NoError(t, err)
+	return msg
 }
