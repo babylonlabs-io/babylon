@@ -562,7 +562,7 @@ func FuzzEquivocationEvidence(f *testing.F) {
 			ForkFinalitySig:      &bbn.SchnorrEOTSSig{},
 		}
 
-		_, err = ms.EquivocationEvidence(ctx, invalidMsg)
+		err = invalidMsg.ValidateBasic()
 		require.ErrorContains(t, err, "empty PubRand")
 
 		// test valid case
@@ -605,6 +605,8 @@ func FuzzEquivocationEvidence(f *testing.F) {
 			CanonicalFinalitySig: canonicalSig,
 			ForkFinalitySig:      forkSig,
 		}
+		err = msg.ValidateBasic()
+		require.NoError(t, err)
 
 		// set block height in context to be >= evidence height
 		blockAppHash := datagen.GenRandomByteArray(r, 32)
