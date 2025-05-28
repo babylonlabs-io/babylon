@@ -86,6 +86,7 @@ check of rewards
 - [#937](https://github.com/babylonlabs-io/babylon/pull/937) Remove Zoneconcierge module.
 - [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
 - [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
+- [#967](https://github.com/babylonlabs-io/babylon/pull/967) Add `ValidateBasic` in `MsgInsertBTCSpvProof` (`x/btccheckpoint`)
 
 ### State Machine Breaking
 
