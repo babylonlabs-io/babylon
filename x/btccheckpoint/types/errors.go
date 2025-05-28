@@ -12,4 +12,5 @@ var (
 	ErrInvalidHeader                     = errorsmod.Register(ModuleName, 1103, "Proof headers are invalid")
 	ErrProvidedHeaderDoesNotHaveAncestor = errorsmod.Register(ModuleName, 1104, "Proof header does not have ancestor in previous epoch")
 	ErrEpochAlreadyFinalized             = errorsmod.Register(ModuleName, 1105, "Submission denied. Epoch already finalized")
+	ErrInvalidBTCSpvProof                = errorsmod.Register(ModuleName, 1106, "Invalid BTCSpvProof")
 )
