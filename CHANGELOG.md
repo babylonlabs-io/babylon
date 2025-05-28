@@ -66,6 +66,11 @@ transfer stack
 - [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
 - [#947](https://github.com/babylonlabs-io/babylon/pull/947) Improve signing info update upon fp activated
 
+### Bug fixes
+
+- [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
+`MsgWrappedCreateValidator` to avoid panic in transaction submission
+
 ## v1.1.0
 
 ### Bug fixes
