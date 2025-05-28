@@ -39,8 +39,6 @@ type FinalityContractTestSuite struct {
 	stakingValue   int64
 	configurer     configurer.Configurer
 
-	feePayerAddr string
-
 	// Cross-test config data
 	FinalityContractAddr string
 }
@@ -165,8 +163,10 @@ func (s *FinalityContractTestSuite) Test3CreateConsumerFPAndDelegation() {
 	chainA := s.configurer.GetChainConfig(0)
 	// Create and register a Babylon FP first
 	validatorNode, err := chainA.GetNodeAtIndex(0)
+	require.NoError(s.T(), err)
 
 	babylonFpSk, _, err := datagen.GenRandomBTCKeyPair(s.r)
+	require.NoError(s.T(), err)
 
 	s.babylonFp = chain.CreateFpFromNodeAddr(
 		s.T(),
@@ -177,6 +177,7 @@ func (s *FinalityContractTestSuite) Test3CreateConsumerFPAndDelegation() {
 	s.Require().NotNil(s.babylonFp)
 
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	require.NoError(s.T(), err)
 	// Create and register a Consumer FP next
 	consumerFpSk, _, err := datagen.GenRandomBTCKeyPair(s.r)
 	s.Require().NoError(err)
