@@ -90,6 +90,7 @@ check of rewards
 - [#943](https://github.com/babylonlabs-io/babylon/pull/943) Adds consumer event in `x/btcstakingconsumer` module 
 - [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
 - [#967](https://github.com/babylonlabs-io/babylon/pull/967) Add `ValidateBasic` in `MsgInsertBTCSpvProof` (`x/btccheckpoint`)
+- [#969](https://github.com/babylonlabs-io/babylon/pull/969) Add `ValidateBasic` to `MsgSelectiveSlashingEvidence` in `x/btcstaking` module
 
 ### State Machine Breaking
 
