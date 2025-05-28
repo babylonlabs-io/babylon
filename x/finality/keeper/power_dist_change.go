@@ -99,7 +99,7 @@ func (k Keeper) HandleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.
 
 	newlyActiveFPs := newDc.FindNewActiveFinalityProviders(prevDc)
 	for _, fp := range newlyActiveFPs {
-		if err := k.handleActivatedFinalityProvider(ctx, fp.BtcPk); err != nil {
+		if err := k.HandleActivatedFinalityProvider(ctx, fp.BtcPk); err != nil {
 			panic(fmt.Errorf("failed to execute after finality provider %s activated", fp.BtcPk.MarshalHex()))
 		}
 
@@ -126,15 +126,14 @@ func (k Keeper) HandleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.
 	}
 }
 
-// handleActivatedFinalityProvider updates the signing info start height or create a new signing info
-func (k Keeper) handleActivatedFinalityProvider(ctx context.Context, fpPk *bbn.BIP340PubKey) error {
+// HandleActivatedFinalityProvider updates the signing info start height or create a new signing info
+func (k Keeper) HandleActivatedFinalityProvider(ctx context.Context, fpPk *bbn.BIP340PubKey) error {
 	signingInfo, err := k.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if err == nil {
 		// reset signing info
 		signingInfo.StartHeight = sdkCtx.HeaderInfo().Height
 		signingInfo.JailedUntil = time.Unix(0, 0)
-		signingInfo.MissedBlocksCounter = 0
 	} else if errors.Is(err, collections.ErrNotFound) {
 		signingInfo = ftypes.NewFinalityProviderSigningInfo(
 			fpPk,
