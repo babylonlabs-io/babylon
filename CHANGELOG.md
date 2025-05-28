@@ -64,7 +64,7 @@ transfer stack
 ### State Machine Breaking
 
 - [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
-when the babylon block is being BTC rewarded.
+- [#947](https://github.com/babylonlabs-io/babylon/pull/947) Improve signing info update upon fp activated
 
 ## v1.1.0
 
