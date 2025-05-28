@@ -1,18 +1,20 @@
 package e2e
 
 import (
-	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/chaincfg"
 	"math"
 	"math/rand"
 	"strconv"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/chaincfg"
+
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-
-	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
@@ -27,11 +29,15 @@ const (
 type FinalityContractTestSuite struct {
 	suite.Suite
 
-	r            *rand.Rand
-	net          *chaincfg.Params
-	delBTCSK     *btcec.PrivateKey
-	stakingValue int64
-	configurer   configurer.Configurer
+	r              *rand.Rand
+	net            *chaincfg.Params
+	delBtcSk       *btcec.PrivateKey
+	babylonFp      *bstypes.FinalityProvider
+	consumerFp     *bstypes.FinalityProvider
+	covenantSks    []*btcec.PrivateKey
+	covenantQuorum uint32
+	stakingValue   int64
+	configurer     configurer.Configurer
 
 	feePayerAddr string
 
@@ -45,7 +51,10 @@ func (s *FinalityContractTestSuite) SetupSuite() {
 
 	s.r = rand.New(rand.NewSource(time.Now().Unix()))
 	s.net = &chaincfg.SimNetParams
-	s.delBTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
+	s.delBtcSk, _, _ = datagen.GenRandomBTCKeyPair(s.r)
+	covenantSks, _, covenantQuorum := bstypes.DefaultCovenantCommittee()
+	s.covenantSks = covenantSks
+	s.covenantQuorum = covenantQuorum
 	s.stakingValue = int64(2 * 10e8)
 
 	// The e2e test flow is as follows:
@@ -159,27 +168,27 @@ func (s *FinalityContractTestSuite) Test3CreateConsumerFPAndDelegation() {
 
 	babylonFpSk, _, err := datagen.GenRandomBTCKeyPair(s.r)
 
-	babylonFp := chain.CreateFpFromNodeAddr(
+	s.babylonFp = chain.CreateFpFromNodeAddr(
 		s.T(),
 		s.r,
 		babylonFpSk,
 		validatorNode,
 	)
-	s.Require().NotNil(babylonFp)
+	s.Require().NotNil(s.babylonFp)
 
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	// Create and register a Consumer FP next
 	consumerFpSk, _, err := datagen.GenRandomBTCKeyPair(s.r)
 	s.Require().NoError(err)
 
-	consumerFp := chain.CreateConsumerFpFromNodeAddr(
+	s.consumerFp = chain.CreateConsumerFpFromNodeAddr(
 		s.T(),
 		s.r,
 		ConsumerID,
 		consumerFpSk,
 		nonValidatorNode,
 	)
-	s.Require().NotNil(consumerFp)
+	s.Require().NotNil(s.consumerFp)
 
 	/*
 		create a random BTC delegation under these finality providers
@@ -195,25 +204,124 @@ func (s *FinalityContractTestSuite) Test3CreateConsumerFPAndDelegation() {
 		s.net,
 		nonValidatorNode.WalletName,
 		[]*bstypes.FinalityProvider{
-			babylonFp,
-			consumerFp,
+			s.babylonFp,
+			s.consumerFp,
 		},
-		s.delBTCSK,
+		s.delBtcSk,
 		nonValidatorNode.PublicAddress,
 		stakingTimeBlocks,
 		s.stakingValue,
 	)
 
 	// Check babylon delegation
-	pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(babylonFp.BtcPk.MarshalHex())
+	pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(s.babylonFp.BtcPk.MarshalHex())
 	s.Len(pendingDelSet, 1)
 	pendingDels := pendingDelSet[0]
 	s.Len(pendingDels.Dels, 1)
-	s.Equal(s.delBTCSK.PubKey().SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	s.Equal(s.delBtcSk.PubKey().SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
 	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
 
 	// check delegation
 	delegation := nonValidatorNode.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
 	s.NotNil(delegation)
 	s.Equal(delegation.BtcDelegation.StakerAddr, nonValidatorNode.PublicAddress)
+}
+
+func (s *FinalityContractTestSuite) Test4SubmitCovenantSignature() {
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// get the last BTC delegation
+	pendingDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(s.babylonFp.BtcPk.MarshalHex())
+	s.Len(pendingDelsSet, 1)
+	pendingDels := pendingDelsSet[0]
+	s.Len(pendingDels.Dels, 1)
+	pendingDelResp := pendingDels.Dels[0]
+	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
+	s.NoError(err)
+	s.Len(pendingDel.CovenantSigs, 0)
+
+	slashingTx := pendingDel.SlashingTx
+	stakingTx := pendingDel.StakingTx
+
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(stakingTx)
+	s.NoError(err)
+	stakingTxHash := stakingMsgTx.TxHash().String()
+
+	params := nonValidatorNode.QueryBTCStakingParams()
+
+	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
+	s.NoError(err)
+
+	stakingInfo, err := pendingDel.GetStakingInfo(params, s.net)
+	s.NoError(err)
+
+	stakingSlashingPathInfo, err := stakingInfo.SlashingPathSpendInfo()
+	s.NoError(err)
+
+	/*
+		generate and insert new covenant signature, to activate the BTC delegation
+	*/
+	// covenant signatures on slashing tx
+	covenantSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		s.covenantSks,
+		fpBTCPKs,
+		stakingMsgTx,
+		stakingSlashingPathInfo.GetPkScriptPath(),
+		slashingTx,
+	)
+	s.NoError(err)
+
+	// cov Schnorr sigs on unbonding signature
+	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	s.NoError(err)
+	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
+	s.NoError(err)
+
+	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
+		s.covenantSks,
+		stakingMsgTx,
+		pendingDel.StakingOutputIdx,
+		unbondingPathInfo.GetPkScriptPath(),
+		unbondingTx,
+	)
+	s.NoError(err)
+
+	unbondingInfo, err := pendingDel.GetUnbondingInfo(params, s.net)
+	s.NoError(err)
+	unbondingSlashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
+	s.NoError(err)
+	covenantUnbondingSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		s.covenantSks,
+		fpBTCPKs,
+		unbondingTx,
+		unbondingSlashingPathInfo.GetPkScriptPath(),
+		pendingDel.BtcUndelegation.SlashingTx,
+	)
+	s.NoError(err)
+
+	for i := 0; i < int(s.covenantQuorum); i++ {
+		// add covenant sigs
+		nonValidatorNode.AddCovenantSigsFromVal(
+			covenantSlashingSigs[i].CovPk,
+			stakingTxHash,
+			covenantSlashingSigs[i].AdaptorSigs,
+			bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
+			covenantUnbondingSlashingSigs[i].AdaptorSigs,
+		)
+		nonValidatorNode.WaitForNextBlock()
+	}
+
+	// Ensure the BTC delegation has covenant sigs now
+	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(s.consumerFp.BtcPk.MarshalHex())
+	s.Len(activeDelsSet, 1)
+
+	activeDels, err := chain.ParseRespsBTCDelToBTCDel(activeDelsSet[0])
+	s.NoError(err)
+	s.NotNil(activeDels)
+	s.Len(activeDels.Dels, 1)
+
+	activeDel := activeDels.Dels[0]
+	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum))
 }
