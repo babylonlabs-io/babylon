@@ -88,11 +88,7 @@ check of rewards
 - [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
 - [#967](https://github.com/babylonlabs-io/babylon/pull/967) Add `ValidateBasic` in `MsgInsertBTCSpvProof` (`x/btccheckpoint`)
 - [#969](https://github.com/babylonlabs-io/babylon/pull/969) Add `ValidateBasic` to `MsgSelectiveSlashingEvidence` in `x/btcstaking` module
-<<<<<<< HEAD
-=======
-- [#974](https://github.com/babylonlabs-io/babylon/pull/974) Update Mergify rules for automatic backport changes to `v2`, `v3` and `v4` 
 - [#977](https://github.com/babylonlabs-io/babylon/pull/977) Update `ValidateBasic` in `x/finality` module messages
->>>>>>> cbb9ef3 (imp: update ValidateBasic in x/finality msgs (#977))
 
 ### State Machine Breaking
 
