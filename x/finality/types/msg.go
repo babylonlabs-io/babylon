@@ -19,6 +19,13 @@ var (
 	_ sdk.Msg = &MsgUpdateParams{}
 	_ sdk.Msg = &MsgAddFinalitySig{}
 	_ sdk.Msg = &MsgCommitPubRandList{}
+	_ sdk.Msg = &MsgUnjailFinalityProvider{}
+	_ sdk.Msg = &MsgEquivocationEvidence{}
+	// Ensure msgs implement ValidateBasic
+	_ sdk.HasValidateBasic = &MsgAddFinalitySig{}
+	_ sdk.HasValidateBasic = &MsgCommitPubRandList{}
+	_ sdk.HasValidateBasic = &MsgUnjailFinalityProvider{}
+	_ sdk.HasValidateBasic = &MsgEquivocationEvidence{}
 )
 
 const ExpectedCommitmentLengthBytes = 32
@@ -28,8 +35,20 @@ func (m *MsgAddFinalitySig) MsgToSign() []byte {
 }
 
 func (m *MsgAddFinalitySig) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid signer address: got %s", m.Signer)
+	}
+
+	if m.FpBtcPk == nil {
+		return ErrInvalidFinalitySig.Wrap("empty Finality Provider BTC PubKey")
+	}
+
 	if m.FpBtcPk.Size() != bbn.BIP340PubKeyLen {
 		return ErrInvalidFinalitySig.Wrapf("invalid finality provider BTC public key length: got %d, want %d", m.FpBtcPk.Size(), bbn.BIP340PubKeyLen)
+	}
+
+	if m.PubRand == nil {
+		return ErrInvalidFinalitySig.Wrap("empty Public Randomness")
 	}
 
 	if m.PubRand.Size() != bbn.SchnorrPubRandLen {
@@ -38,6 +57,10 @@ func (m *MsgAddFinalitySig) ValidateBasic() error {
 
 	if m.Proof == nil {
 		return ErrInvalidFinalitySig.Wrap("empty inclusion proof")
+	}
+
+	if m.FinalitySig == nil {
+		return ErrInvalidFinalitySig.Wrap("empty finality signature")
 	}
 
 	if m.FinalitySig.Size() != bbn.SchnorrEOTSSigLen {
@@ -104,6 +127,9 @@ func (m *MsgCommitPubRandList) VerifySig() error {
 	if err != nil {
 		return err
 	}
+	if m.FpBtcPk == nil {
+		return fmt.Errorf("empty FP BTC PubKey")
+	}
 	pk, err := m.FpBtcPk.ToBTCPK()
 	if err != nil {
 		return err
@@ -128,6 +154,10 @@ func (m *MsgCommitPubRandList) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid signer address (%s)", err)
 	}
 
+	if m.FpBtcPk == nil {
+		return ErrInvalidPubRand.Wrap("empty FP BTC PubKey")
+	}
+
 	// Checks if the commitment is exactly 32 bytes
 	if len(m.Commitment) != ExpectedCommitmentLengthBytes {
 		return ErrInvalidPubRand.Wrapf("commitment must be %d bytes, got %d", ExpectedCommitmentLengthBytes, len(m.Commitment))
@@ -142,5 +172,46 @@ func (m *MsgCommitPubRandList) ValidateBasic() error {
 		)
 	}
 
+	if m.Sig == nil {
+		return ErrInvalidPubRand.Wrap("empty signature")
+	}
+
+	return nil
+}
+
+// ValidateBasic performs stateless validation on MsgUnjailFinalityProvider
+func (m *MsgUnjailFinalityProvider) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid signer address (%s)", err)
+	}
+	if m.FpBtcPk == nil {
+		return ErrInvalidUnjailFinalityProvider.Wrap("empty FP BTC PubKey")
+	}
+
+	return nil
+}
+
+func (m *MsgEquivocationEvidence) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid signer address (%s)", err)
+	}
+	if m.FpBtcPk == nil {
+		return ErrInvalidEquivocationEvidence.Wrap("empty FpBtcPk")
+	}
+	if m.PubRand == nil {
+		return ErrInvalidEquivocationEvidence.Wrap("empty PubRand")
+	}
+	if len(m.CanonicalAppHash) != 32 {
+		return ErrInvalidEquivocationEvidence.Wrap("malformed CanonicalAppHash")
+	}
+	if len(m.ForkAppHash) != 32 {
+		return ErrInvalidEquivocationEvidence.Wrap("malformed ForkAppHash")
+	}
+	if m.ForkFinalitySig == nil {
+		return ErrInvalidEquivocationEvidence.Wrap("empty ForkFinalitySig")
+	}
+	if m.CanonicalFinalitySig == nil {
+		return ErrInvalidEquivocationEvidence.Wrap("empty CanonicalFinalitySig")
+	}
 	return nil
 }
