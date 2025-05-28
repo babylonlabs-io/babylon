@@ -81,12 +81,14 @@ check of rewards
 - [#897](https://github.com/babylonlabs-io/babylon/pull/897) Add Interchain Accounts (ICA) and Interchain Queries (ICQ) modules.
 - [#902](https://github.com/babylonlabs-io/babylon/pull/902) Add IBC rate limiter to IBC transfer module
 - [#913](https://github.com/babylonlabs-io/babylon/pull/913) Remove IBC-fee module.
+- [#927](https://github.com/babylonlabs-io/babylon/pull/927) Add Mergify configuration file to improve PR backporting.
 - [#924](https://github.com/babylonlabs-io/babylon/pull/924) Improve BLS file check order in related commands
 - [#926](https://github.com/babylonlabs-io/babylon/pull/926) Update genesis initialization validations.
 - [#933](https://github.com/babylonlabs-io/babylon/pull/933) Update repository version to `v4`.
 - [#935](https://github.com/babylonlabs-io/babylon/pull/935) Add `release/v4` branch to docker publish workflow.
 - [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
 - [#943](https://github.com/babylonlabs-io/babylon/pull/943) Adds consumer event in `x/btcstakingconsumer` module 
+- [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
 
 ### State Machine Breaking
 
@@ -96,6 +98,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 transfer stack
 - [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
 when the babylon block is being BTC rewarded.
+- [#947](https://github.com/babylonlabs-io/babylon/pull/947) Improve signing info update upon fp activated
 - [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
 
 ### Bug fixes
@@ -104,6 +107,8 @@ when the babylon block is being BTC rewarded.
 - [#741](https://github.com/babylonlabs-io/babylon/pull/741) chore: fix register consumer CLI
 - [#731](https://github.com/babylonlabs-io/babylon/pull/731) chore: fix block timeout in Babylon client
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+- [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
+`MsgWrappedCreateValidator` to avoid panic in transaction submission
 
 ## v1.1.0
 

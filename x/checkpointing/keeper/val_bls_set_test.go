@@ -49,7 +49,7 @@ func FuzzGetValidatorBlsKeySet(f *testing.F) {
 
 		wcvMsgs := make([]*types.MsgWrappedCreateValidator, n)
 		for i := 0; i < n; i++ {
-			msg, err := buildMsgWrappedCreateValidator(addrs[i])
+			msg, err := datagen.BuildMsgWrappedCreateValidator(addrs[i])
 			require.NoError(t, err)
 			wcvMsgs[i] = msg
 			_, err = msgServer.WrappedCreateValidator(ctx, msg)
