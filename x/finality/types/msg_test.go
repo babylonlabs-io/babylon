@@ -4,16 +4,10 @@ import (
 	"math/rand"
 	"testing"
 
-<<<<<<< HEAD
-	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
-=======
 	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
->>>>>>> cbb9ef3 (imp: update ValidateBasic in x/finality msgs (#977))
 	"github.com/stretchr/testify/require"
 )
 
@@ -290,139 +284,6 @@ func TestMsgUnjailFinalityProvider_ValidateBasic(t *testing.T) {
 				FpBtcPk: nil,
 			},
 			expErr: "empty FP BTC PubKey",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := tc.msg.ValidateBasic()
-			if tc.expErr == "" {
-				require.NoError(t, err)
-				return
-			}
-			require.Error(t, err)
-			require.Contains(t, err.Error(), tc.expErr)
-		})
-	}
-}
-
-func TestMsgEquivocationEvidence_ValidateBasic(t *testing.T) {
-	var (
-		validAddr        = datagen.GenRandomAddress().String()
-		validPk          = bbntypes.BIP340PubKey(make([]byte, bbntypes.BIP340PubKeyLen))
-		validPubRand     = bbntypes.SchnorrPubRand(make([]byte, bbntypes.SchnorrPubRandLen))
-		validFinalitySig = bbntypes.SchnorrEOTSSig(make([]byte, bbntypes.SchnorrEOTSSigLen))
-		validHash        = make([]byte, 32)
-	)
-
-	testCases := []struct {
-		name   string
-		msg    types.MsgEquivocationEvidence
-		expErr string
-	}{
-		{
-			name: "valid message",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
-			},
-			expErr: "",
-		},
-		{
-			name: "invalid signer",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               "invalid-address",
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
-			},
-			expErr: "invalid signer address",
-		},
-		{
-			name: "nil FpBtcPk",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              nil,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
-			},
-			expErr: "empty FpBtcPk",
-		},
-		{
-			name: "nil PubRand",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              nil,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
-			},
-			expErr: "empty PubRand",
-		},
-		{
-			name: "invalid CanonicalAppHash length",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     []byte("short"),
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
-			},
-			expErr: "malformed CanonicalAppHash",
-		},
-		{
-			name: "invalid ForkAppHash length",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          []byte("short"),
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
-			},
-			expErr: "malformed ForkAppHash",
-		},
-		{
-			name: "nil ForkFinalitySig",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      nil,
-			},
-			expErr: "empty ForkFinalitySig",
-		},
-		{
-			name: "nil CanonicalFinalitySig",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: nil,
-				ForkFinalitySig:      &validFinalitySig,
-			},
-			expErr: "empty CanonicalFinalitySig",
 		},
 	}
 

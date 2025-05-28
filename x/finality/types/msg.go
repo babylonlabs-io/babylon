@@ -1,8 +1,9 @@
 package types
 
 import (
-	errorsmod "cosmossdk.io/errors"
 	"fmt"
+
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/cometbft/cometbft/crypto/merkle"
@@ -20,12 +21,10 @@ var (
 	_ sdk.Msg = &MsgAddFinalitySig{}
 	_ sdk.Msg = &MsgCommitPubRandList{}
 	_ sdk.Msg = &MsgUnjailFinalityProvider{}
-	_ sdk.Msg = &MsgEquivocationEvidence{}
 	// Ensure msgs implement ValidateBasic
 	_ sdk.HasValidateBasic = &MsgAddFinalitySig{}
 	_ sdk.HasValidateBasic = &MsgCommitPubRandList{}
 	_ sdk.HasValidateBasic = &MsgUnjailFinalityProvider{}
-	_ sdk.HasValidateBasic = &MsgEquivocationEvidence{}
 )
 
 const ExpectedCommitmentLengthBytes = 32
@@ -188,30 +187,5 @@ func (m *MsgUnjailFinalityProvider) ValidateBasic() error {
 		return ErrInvalidUnjailFinalityProvider.Wrap("empty FP BTC PubKey")
 	}
 
-	return nil
-}
-
-func (m *MsgEquivocationEvidence) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid signer address (%s)", err)
-	}
-	if m.FpBtcPk == nil {
-		return ErrInvalidEquivocationEvidence.Wrap("empty FpBtcPk")
-	}
-	if m.PubRand == nil {
-		return ErrInvalidEquivocationEvidence.Wrap("empty PubRand")
-	}
-	if len(m.CanonicalAppHash) != 32 {
-		return ErrInvalidEquivocationEvidence.Wrap("malformed CanonicalAppHash")
-	}
-	if len(m.ForkAppHash) != 32 {
-		return ErrInvalidEquivocationEvidence.Wrap("malformed ForkAppHash")
-	}
-	if m.ForkFinalitySig == nil {
-		return ErrInvalidEquivocationEvidence.Wrap("empty ForkFinalitySig")
-	}
-	if m.CanonicalFinalitySig == nil {
-		return ErrInvalidEquivocationEvidence.Wrap("empty CanonicalFinalitySig")
-	}
 	return nil
 }
