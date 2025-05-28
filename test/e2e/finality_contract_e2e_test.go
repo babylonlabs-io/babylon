@@ -1,6 +1,9 @@
 package e2e
 
 import (
+	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math"
 	"math/rand"
 	"strconv"
@@ -33,6 +36,7 @@ type FinalityContractTestSuite struct {
 	net            *chaincfg.Params
 	delBtcSk       *btcec.PrivateKey
 	babylonFp      *bstypes.FinalityProvider
+	consumerBtcSk  *btcec.PrivateKey
 	consumerFp     *bstypes.FinalityProvider
 	covenantSks    []*btcec.PrivateKey
 	covenantQuorum uint32
@@ -179,14 +183,14 @@ func (s *FinalityContractTestSuite) Test3CreateConsumerFPAndDelegation() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	require.NoError(s.T(), err)
 	// Create and register a Consumer FP next
-	consumerFpSk, _, err := datagen.GenRandomBTCKeyPair(s.r)
+	s.consumerBtcSk, _, err = datagen.GenRandomBTCKeyPair(s.r)
 	s.Require().NoError(err)
 
 	s.consumerFp = chain.CreateConsumerFpFromNodeAddr(
 		s.T(),
 		s.r,
 		ConsumerID,
-		consumerFpSk,
+		s.consumerBtcSk,
 		nonValidatorNode,
 	)
 	s.Require().NotNil(s.consumerFp)
@@ -325,4 +329,83 @@ func (s *FinalityContractTestSuite) Test4SubmitCovenantSignature() {
 
 	activeDel := activeDels.Dels[0]
 	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum))
+}
+
+func (s *FinalityContractTestSuite) Test5CommitPublicRandomnessAndSubmitFinalitySignature() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	/*
+		commit some amount of public randomness
+	*/
+	// commit public randomness list
+	numPubRand := uint64(100)
+	commitStartHeight := uint64(1)
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.consumerBtcSk, commitStartHeight, numPubRand)
+	s.NoError(err)
+
+	nonValidatorNode.CommitPubRandListConsumer(
+		ConsumerID,
+		msgCommitPubRandList.FpBtcPk,
+		msgCommitPubRandList.StartHeight,
+		msgCommitPubRandList.NumPubRand,
+		msgCommitPubRandList.Commitment,
+		msgCommitPubRandList.Sig,
+	)
+
+	// Query the public randomness commitment from the finality contract
+	s.Eventually(func() bool {
+		commitment, err := nonValidatorNode.QueryPublicRandomnessCommitment(ConsumerID, commitStartHeight)
+		if err != nil {
+			return false
+		}
+		if commitment == nil {
+			return false
+		}
+		s.Equal(randListInfo.Commitment, commitment.Commitment)
+		s.Equal(msgCommitPubRandList.NumPubRand, commitment.NumPubRand)
+		s.Equal(msgCommitPubRandList.FpBtcPk.MarshalHex(), commitment.FpBtcPk.MarshalHex())
+		return true
+	}, time.Millisecond*500, time.Second*10, "Public randomness commitment was not found within the expected time")
+
+	nonValidatorNode.WaitUntilCurrentEpochIsSealedAndFinalized(1)
+
+	// ensure btc staking is activated
+	// check how this does not errors out
+	activatedHeight := nonValidatorNode.WaitFinalityIsActivated()
+
+	/*
+		submit finality signature
+	*/
+	// get block to vote
+	blockToVote, err := nonValidatorNode.QueryBlock(int64(activatedHeight))
+	s.NoError(err)
+	appHash := blockToVote.AppHash
+
+	idx := activatedHeight - commitStartHeight
+	msgToSign := append(sdk.Uint64ToBigEndian(activatedHeight), appHash...)
+	// generate EOTS signature
+	sig, err := eots.Sign(s.consumerBtcSk, randListInfo.SRList[idx], msgToSign)
+	s.NoError(err)
+	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
+
+	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
+		// submit finality signature
+		nonValidatorNode.AddFinalitySigFromVal(s.consumerFp.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+
+		// ensure vote is eventually cast
+		var finalizedBlocks []*ftypes.IndexedBlock
+		s.Require().Eventually(func() bool {
+			finalizedBlocks = nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
+			return len(finalizedBlocks) > 0
+		}, time.Minute, time.Millisecond*50)
+		s.Equal(activatedHeight, finalizedBlocks[0].Height)
+		s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
+		s.T().Logf("the block %d is finalized", activatedHeight)
+	}, true)
+
+	finalityParams := nonValidatorNode.QueryFinalityParams()
+	nonValidatorNode.WaitForNextBlocks(uint64(finalityParams.FinalitySigTimeout))
 }
