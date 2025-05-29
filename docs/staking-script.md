@@ -13,7 +13,7 @@
 ## 1. Introduction
 
 The Babylon BTC Staking protocol turns Bitcoin into a staking asset,
-with the aim to onboard Bitcoin the asset and its holders to the
+aiming to onboard both the asset and its holders to the
 Bitcoin Supercharged Networks (BSNs) ecosystem and the Babylon Genesis
 chain (the first BSN).
 
@@ -65,7 +65,7 @@ The Bitcoin Staking protocol involves the following stakeholders:
   A finality provider is identified by their EOTS public
   key (`<FinalityProviderPk>`) and participates in the finality
   voting round of a specific BSN.
-  The selection of a finality provider also implicitly designates
+  The selection of a finality provider also implicitly determines
   the BSN they secure, as each provider may only secure one BSN.
   Bitcoin stakers specify their chosen finality provider by including
   their EOTS key in the staking script.
@@ -78,7 +78,7 @@ The Bitcoin Staking protocol involves the following stakeholders:
   is to protect BSNs against attacks from the BTC stakers and finality providers.
   It achieves this by representing itself as an M-out-of-N multi-signature
   that co-signs BTC transactions with the BTC staker. Through co-signing,
-  the covenant committee enforces spending rules on the staked bitcoins,
+  the covenant committee enforces spending rules on the staked Bitcoin,
   so that they can only be spent in a protocol compliant manner.
   The co-signatures are published on the Babylon Genesis chain and
   are a pre-requisite for the stake's activation.
@@ -106,7 +106,7 @@ The Bitcoin Staking protocol defines four key transaction types:
   * It can contain an arbitrary number of inputs.
   * It can contain an arbitrary number of outputs,
     with the requirement that at least one of those outputs
-    —henceforth known as the staking output—
+    —referred to as the staking output—
     is a Taproot output that commits to the Bitcoin Staking script.
 * **Unbonding Transaction**:
   The unbonding transaction is a Bitcoin transaction
@@ -115,7 +115,7 @@ The Bitcoin Staking protocol defines four key transaction types:
   The requirements for a valid unbonding transaction are:
   * It contains exactly one input which points to the staking output in which the
     Bitcoin to be on-demand unbonded have been locked in.
-  * It contains exactly one output—henceforth known as the unbonding output—
+  * It contains exactly one output—referred to as the unbonding output—
     that is a Taproot output committing to the Bitcoin Staking unbonding script.
   * The Bitcoin fee of the unbonding transaction must be equal to the fee
     for unbonding transactions specified in the
@@ -129,7 +129,7 @@ The Bitcoin Staking protocol defines four key transaction types:
   * It must have exactly two outputs,
     * the first sending the slashed fraction
       of the funds to a burn address specified in the Babylon Genesis chain's parameters, and
-    * the second sending the remaining funds to a Taproot output—henceforth known as the
+    * the second sending the remaining funds to a Taproot output—referred to as the
       slashing refund output— which locks the funds in a short timelock before they are redeemable
       by the staker.
   * The fee of the Bitcoin slashing transaction must be larger than or equal to the
