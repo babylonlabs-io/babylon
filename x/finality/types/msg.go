@@ -192,6 +192,19 @@ func (m *MsgUnjailFinalityProvider) ValidateBasic() error {
 	return nil
 }
 
+func (m *MsgResumeFinalityProposal) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid authority address (%s)", err)
+	}
+	if m.HaltingHeight == 0 {
+		return ErrInvalidEquivocationEvidence.Wrap("halting height is zero")
+	}
+	if len(m.FpPksHex) == 0 {
+		return ErrInvalidEquivocationEvidence.Wrap("no fp pk hex set")
+	}
+	return nil
+}
+
 func (m *MsgEquivocationEvidence) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid signer address (%s)", err)
