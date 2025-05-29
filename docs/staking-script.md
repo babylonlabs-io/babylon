@@ -258,7 +258,7 @@ The staking output can be spent through one of the following three script paths:
 
 > **⚡ Key Difference Between the Unbonding and Slashing Paths**
 > 
-> The main difference lies in the presence of `<FinalityProviderPk` in
+> The main difference lies in the presence of `<FinalityProviderPk>` in
 > the slashing path which has the following implications:
 > * For a staking request to become active, the BTC staker must include
 >   a valid (unsigned) unbonding transaction in the staking request.
