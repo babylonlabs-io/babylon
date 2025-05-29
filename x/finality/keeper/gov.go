@@ -35,9 +35,6 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 	}
 
 	voters := k.GetVoters(ctx, uint64(haltingHeight))
-	if voters == nil {
-		return fmt.Errorf("finality halting height %d does not have voters", haltingHeight)
-	}
 
 	// jail the given finality providers
 	fpPksToJail := make(map[string]struct{}, len(fpPksHex))

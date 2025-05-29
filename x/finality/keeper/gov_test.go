@@ -231,9 +231,6 @@ func TestHandleResumeFinalityWithBadHaltingHeight(t *testing.T) {
 
 	actErr = k.HandleResumeFinalityProposal(ctx, []string{}, 16)
 	require.EqualError(t, actErr, fmt.Sprintf("finality halting height %d cannot be lower than finality activation height %d", 16, 20))
-
-	actErr = k.HandleResumeFinalityProposal(ctx, []string{}, 32)
-	require.EqualError(t, actErr, fmt.Sprintf("finality halting height %d does not have voters", 32))
 }
 
 func TestHandleResumeFinalityProposalMissingSigningInfo(t *testing.T) {
