@@ -9,17 +9,17 @@ import (
 	"strconv"
 )
 
-// RegisterConsumerChain registers an Ethereum L2 consumer chain
-func (n *NodeConfig) RegisterConsumerChain(walletAddrOrName, id, name, description string) {
-	n.RegisterEthL2ConsumerChain(walletAddrOrName, id, name, description, "")
+// RegisterConsumerChain registers a Consumer chain
+// TODO: Add support for other types of consumer chains
+func (n *NodeConfig) RegisterConsumerChain(walletAddrOrName, id, name, description string, maxMultiStaked int) {
+	n.RegisterRollupConsumerChain(walletAddrOrName, id, name, description, "", maxMultiStaked)
 }
 
-// RegisterEthL2ConsumerChain registers an Ethereum L2 consumer chain
-func (n *NodeConfig) RegisterEthL2ConsumerChain(walletAddrOrName, id, name, description, finalityContractAddr string) {
+// RegisterRollupConsumerChain registers a Rollup (Eth L2) Consumer chain
+func (n *NodeConfig) RegisterRollupConsumerChain(walletAddrOrName, id, name, description, finalityContractAddr string, maxMultiStaked int) {
 	n.LogActionF("Registering consumer chain")
-	maxMultiStaked := strconv.Itoa(3) // max number of multi-staked finality providers
 	cmd := []string{
-		"babylond", "tx", "btcstkconsumer", "register-consumer", id, name, description, maxMultiStaked, finalityContractAddr,
+		"babylond", "tx", "btcstkconsumer", "register-consumer", id, name, description, strconv.Itoa(maxMultiStaked), finalityContractAddr,
 		fmt.Sprintf("--from=%s", walletAddrOrName),
 	}
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
@@ -28,7 +28,13 @@ func (n *NodeConfig) RegisterEthL2ConsumerChain(walletAddrOrName, id, name, desc
 }
 
 func (n *NodeConfig) CreateConsumerFinalityProvider(walletAddrOrName string, consumerID string, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossessionBTC, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec, commissionMaxRate, commissionMaxRateChange sdkmath.LegacyDec) {
-	n.LogActionF("creating finality provider")
+	// Just for logs
+	consumer := consumerID
+	if consumer == "" {
+		// Use the chain ID as the consumer
+		consumer = n.chainId
+	}
+	n.LogActionF("Creating %s finality provider", consumer)
 
 	// get BTC PK hex
 	btcPKHex := btcPK.MarshalHex()
@@ -46,5 +52,5 @@ func (n *NodeConfig) CreateConsumerFinalityProvider(walletAddrOrName string, con
 
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
-	n.LogActionF("successfully created finality provider")
+	n.LogActionF("Successfully created %s finality provider", consumer)
 }

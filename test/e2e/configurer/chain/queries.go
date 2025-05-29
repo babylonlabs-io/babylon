@@ -222,7 +222,7 @@ func (n *NodeConfig) QueryListSnapshots() ([]*cmtabcitypes.Snapshot, error) {
 }
 
 func (n *NodeConfig) QueryRawCheckpoint(epoch uint64) (*ct.RawCheckpointWithMetaResponse, error) {
-	path := fmt.Sprintf("babylon/checkpointing/v1/raw_checkpoint/%d", epoch)
+	path := fmt.Sprintf("/babylon/checkpointing/v1/raw_checkpoint/%d", epoch)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	if err != nil {
 		return nil, err
@@ -243,7 +243,7 @@ func (n *NodeConfig) QueryRawCheckpoints(pagination *query.PageRequest) (*ct.Que
 		queryParams.Set("pagination.limit", strconv.Itoa(int(pagination.Limit)))
 	}
 
-	bz, err := n.QueryGRPCGateway("babylon/checkpointing/v1/raw_checkpoints", queryParams)
+	bz, err := n.QueryGRPCGateway("/babylon/checkpointing/v1/raw_checkpoints", queryParams)
 	require.NoError(n.t, err)
 
 	var checkpointingResponse ct.QueryRawCheckpointsResponse
@@ -268,7 +268,7 @@ func (n *NodeConfig) QueryLastFinalizedEpoch() (uint64, error) {
 }
 
 func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfoResponse, error) {
-	bz, err := n.QueryGRPCGateway("babylon/btclightclient/v1/baseheader", url.Values{})
+	bz, err := n.QueryGRPCGateway("/babylon/btclightclient/v1/baseheader", url.Values{})
 	require.NoError(n.t, err)
 
 	var blcResponse blc.QueryBaseHeaderResponse
@@ -280,7 +280,7 @@ func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfoResponse, error) {
 }
 
 func (n *NodeConfig) QueryTip() (*blc.BTCHeaderInfoResponse, error) {
-	bz, err := n.QueryGRPCGateway("babylon/btclightclient/v1/tip", url.Values{})
+	bz, err := n.QueryGRPCGateway("/babylon/btclightclient/v1/tip", url.Values{})
 	require.NoError(n.t, err)
 
 	var blcResponse blc.QueryTipResponse
@@ -292,7 +292,7 @@ func (n *NodeConfig) QueryTip() (*blc.BTCHeaderInfoResponse, error) {
 }
 
 func (n *NodeConfig) QueryHeaderDepth(hash string) (uint32, error) {
-	path := fmt.Sprintf("babylon/btclightclient/v1/depth/%s", hash)
+	path := fmt.Sprintf("/babylon/btclightclient/v1/depth/%s", hash)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
