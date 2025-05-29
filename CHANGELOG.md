@@ -59,19 +59,10 @@ transfer stack
 - [#913](https://github.com/babylonlabs-io/babylon/pull/913) Remove IBC-fee module.
 - [#927](https://github.com/babylonlabs-io/babylon/pull/927) Add Mergify configuration file to improve PR backporting.
 - [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
-<<<<<<< HEAD
 - [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
 - [#967](https://github.com/babylonlabs-io/babylon/pull/967) Add `ValidateBasic` in `MsgInsertBTCSpvProof` (`x/btccheckpoint`)
 - [#969](https://github.com/babylonlabs-io/babylon/pull/969) Add `ValidateBasic` to `MsgSelectiveSlashingEvidence` in `x/btcstaking` module
-=======
-- [#943](https://github.com/babylonlabs-io/babylon/pull/943) Adds consumer event in `x/btcstakingconsumer` module
-- [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
-- [#967](https://github.com/babylonlabs-io/babylon/pull/967) Add `ValidateBasic` in `MsgInsertBTCSpvProof` (`x/btccheckpoint`)
-- [#969](https://github.com/babylonlabs-io/babylon/pull/969) Add `ValidateBasic` to `MsgSelectiveSlashingEvidence` in `x/btcstaking` module
-- [#974](https://github.com/babylonlabs-io/babylon/pull/974) Update Mergify rules for automatic backport changes to `v2`, `v3` and `v4`
-- [#977](https://github.com/babylonlabs-io/babylon/pull/977) Update `ValidateBasic` in `x/finality` module messages
 - [#981](https://github.com/babylonlabs-io/babylon/pull/981) Set IBC rate limit for `ubbn` to 10%
->>>>>>> a3b7a4b (chore: set default daily limit to 10% (#981))
 
 ### State Machine Breaking
 
