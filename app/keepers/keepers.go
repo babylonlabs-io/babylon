@@ -99,7 +99,6 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
 	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
-	transferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types" // ibc module puts types under `ibchost` rather than `ibctypes`
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
@@ -580,7 +579,7 @@ func (ak *AppKeepers) InitKeepers(
 	)
 
 	// Create Transfer Keepers
-	ak.TransferKeeper = transferkeeper.NewKeeper(
+	ak.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
 		ak.GetSubspace(ibctransfertypes.ModuleName),

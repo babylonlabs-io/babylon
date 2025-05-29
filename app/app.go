@@ -170,10 +170,9 @@ var (
 		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:            nil,
+		icqtypes.ModuleName:            nil,
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 		feemarkettypes.ModuleName:      nil,
-
-		icqtypes.ModuleName: nil,
 	}
 
 	// software upgrades and forks
