@@ -58,6 +58,7 @@ transfer stack
 - [#902](https://github.com/babylonlabs-io/babylon/pull/902) Add IBC rate limiter to IBC transfer module
 - [#913](https://github.com/babylonlabs-io/babylon/pull/913) Remove IBC-fee module.
 - [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
+- [#981](https://github.com/babylonlabs-io/babylon/pull/981) Set IBC rate limit for `ubbn` to 10%
 
 ### State Machine Breaking
 
