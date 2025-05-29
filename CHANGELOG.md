@@ -63,6 +63,8 @@ transfer stack
 - [#967](https://github.com/babylonlabs-io/babylon/pull/967) Add `ValidateBasic` in `MsgInsertBTCSpvProof` (`x/btccheckpoint`)
 - [#969](https://github.com/babylonlabs-io/babylon/pull/969) Add `ValidateBasic` to `MsgSelectiveSlashingEvidence` in `x/btcstaking` module
 - [#977](https://github.com/babylonlabs-io/babylon/pull/977) Update `ValidateBasic` in `x/finality` module messages
+- [#988](https://github.com/babylonlabs-io/babylon/pull/988) Fix flaky e2e ibc test
+`TestIBCTransferSuite`
 
 ### State Machine Breaking
 
