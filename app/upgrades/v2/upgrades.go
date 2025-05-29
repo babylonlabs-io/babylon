@@ -10,14 +10,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
 	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
-	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
-	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
-	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
+	icahosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	"github.com/babylonlabs-io/babylon/v3/app/keepers"
@@ -41,7 +40,7 @@ var (
 		CreateUpgradeHandler: CreateUpgradeHandler,
 		StoreUpgrades: store.StoreUpgrades{
 			Added:   []string{tokenfactorytypes.ModuleName, pfmroutertypes.StoreKey, icacontrollertypes.StoreKey, icahosttypes.StoreKey, icqtypes.StoreKey, ratelimittypes.StoreKey},
-			Deleted: []string{ibcfeetypes.StoreKey},
+			Deleted: []string{},
 		},
 	}
 )
@@ -110,7 +109,7 @@ func addRateLimits(ctx sdk.Context, chk transfertypes.ChannelKeeper, rlk ratelim
 
 func addRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper, denom, channel string, percent sdkmath.Int, durationHours uint64) error {
 	addRateLimitMsg := ratelimittypes.MsgAddRateLimit{
-		ChannelId:      channel,
+		// TODO: Add missing params
 		Denom:          denom,
 		MaxPercentSend: percent,
 		MaxPercentRecv: percent,
