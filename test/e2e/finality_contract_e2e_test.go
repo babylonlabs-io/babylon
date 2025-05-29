@@ -1,9 +1,6 @@
 package e2e
 
 import (
-	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
-	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math"
 	"math/rand"
 	"strconv"
@@ -12,9 +9,13 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"

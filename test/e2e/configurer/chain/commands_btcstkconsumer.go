@@ -1,14 +1,18 @@
 package chain
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"fmt"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/rollup"
+	"strconv"
+
+	sdkmath "cosmossdk.io/math"
+
+	"github.com/stretchr/testify/require"
+
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	"github.com/stretchr/testify/require"
-	"strconv"
+
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/rollup"
 )
 
 // RegisterConsumerChain registers a Consumer chain
