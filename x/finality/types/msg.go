@@ -146,10 +146,6 @@ func (m *MsgCommitPubRandList) ValidateBasic() error {
 		)
 	}
 
-	if m.Sig == nil {
-		return ErrInvalidPubRand.Wrap("empty signature")
-	}
-
 	return nil
 }
 

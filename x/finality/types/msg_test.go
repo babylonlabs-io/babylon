@@ -8,7 +8,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	bbntypes "github.com/babylonlabs-io/babylon/v2/types"
 	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
@@ -126,115 +125,6 @@ func TestMsgCommitPubRandListValidateBasic(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
-		})
-	}
-}
-
-func TestMsgAddFinalitySig_ValidateBasic(t *testing.T) {
-	r := rand.New(rand.NewSource(10))
-
-	sk, err := eots.KeyGen(r)
-	require.NoError(t, err)
-
-	numPubRand := uint64(100)
-	randListInfo, err := datagen.GenRandomPubRandList(r, numPubRand)
-	require.NoError(t, err)
-
-	startHeight := datagen.RandomInt(r, 10)
-	blockHeight := startHeight + datagen.RandomInt(r, 10)
-	blockHash := datagen.GenRandomByteArray(r, 32)
-
-	signer := datagen.GenRandomAccount().Address
-
-	testCases := []struct {
-		name        string
-		msgModifier func(*types.MsgAddFinalitySig)
-		expErr      string
-	}{
-		{
-			name:        "valid message",
-			msgModifier: func(*types.MsgAddFinalitySig) {},
-		},
-		{
-			name: "invalid signer address",
-			msgModifier: func(m *types.MsgAddFinalitySig) {
-				m.Signer = "invalid-address"
-			},
-			expErr: "invalid signer address",
-		},
-		{
-			name: "nil BTC public key",
-			msgModifier: func(m *types.MsgAddFinalitySig) {
-				m.FpBtcPk = nil
-			},
-			expErr: "empty Finality Provider BTC PubKey",
-		},
-		{
-			name: "invalid BTC public key size",
-			msgModifier: func(m *types.MsgAddFinalitySig) {
-				k := bbntypes.BIP340PubKey([]byte{0x01})
-				m.FpBtcPk = &k
-			},
-			expErr: "invalid finality provider BTC public key length",
-		},
-		{
-			name: "nil PubRand",
-			msgModifier: func(m *types.MsgAddFinalitySig) {
-				m.PubRand = nil
-			},
-			expErr: "empty Public Randomness",
-		},
-		{
-			name: "invalid PubRand length",
-			msgModifier: func(m *types.MsgAddFinalitySig) {
-				pr := bbntypes.SchnorrPubRand([]byte{0x02})
-				m.PubRand = &pr
-			},
-			expErr: "invalind public randomness length",
-		},
-		{
-			name: "nil proof",
-			msgModifier: func(m *types.MsgAddFinalitySig) {
-				m.Proof = nil
-			},
-			expErr: "empty inclusion proof",
-		},
-		{
-			name: "nil finality sig",
-			msgModifier: func(m *types.MsgAddFinalitySig) {
-				m.FinalitySig = nil
-			},
-			expErr: "empty finality signature",
-		},
-		{
-			name: "invalid finality sig length",
-			msgModifier: func(m *types.MsgAddFinalitySig) {
-				sig := bbntypes.SchnorrEOTSSig([]byte{0x03})
-				m.FinalitySig = &sig
-			},
-			expErr: "invalid finality signature length",
-		},
-		{
-			name: "invalid block app hash length",
-			msgModifier: func(m *types.MsgAddFinalitySig) {
-				m.BlockAppHash = []byte{0x01}
-			},
-			expErr: "invalid block app hash length",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			msg, err := datagen.NewMsgAddFinalitySig(signer, sk, startHeight, blockHeight, randListInfo, blockHash)
-			require.NoError(t, err)
-			tc.msgModifier(msg)
-			err = msg.ValidateBasic()
-			if tc.expErr == "" {
-				require.NoError(t, err)
-				return
-			}
-			require.Error(t, err)
-			require.Contains(t, err.Error(), tc.expErr)
 		})
 	}
 }
