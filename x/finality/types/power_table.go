@@ -74,6 +74,7 @@ func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(maxActiveFPs uint32
 	SortFinalityProvidersWithZeroedVotingPower(dc.FinalityProviders)
 
 	numActiveFPs := uint32(0)
+	totalVotingPower := uint64(0)
 
 	// finality providers are in the descending order of voting power
 	// and timestamped ones come in the last
@@ -95,11 +96,7 @@ func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(maxActiveFPs uint32
 		}
 
 		numActiveFPs++
-	}
-
-	totalVotingPower := uint64(0)
-	for i := uint32(0); i < numActiveFPs; i++ {
-		totalVotingPower += dc.FinalityProviders[i].TotalBondedSat
+		totalVotingPower += fp.TotalBondedSat
 	}
 
 	dc.TotalVotingPower = totalVotingPower
@@ -225,6 +222,7 @@ func (fpdi FinalityProviderDistInfo) Validate() error {
 // is treated as zero:
 // 1. IsTimestamped is false
 // 2. IsJailed is true
+// 3. IsSlashed is true
 func SortFinalityProvidersWithZeroedVotingPower(fps []*FinalityProviderDistInfo) {
 	sort.SliceStable(fps, func(i, j int) bool {
 		iShouldBeZeroed := fps[i].IsJailed || !fps[i].IsTimestamped || fps[i].IsSlashed
