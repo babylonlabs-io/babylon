@@ -577,17 +577,21 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	replayerTempDir := t.TempDir()
 	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
 
-	// 1. Set up mock IBC clients for each consumer
+	consumerID1 := "consumer1"
+	consumerID2 := "consumer2"
+	consumerID3 := "consumer3"
+
+	// 1. Set up mock IBC clients for each consumer before registering consumers
 	ctx := driver.App.BaseApp.NewContext(false)
-	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, "consumer1", &ibctmtypes.ClientState{})
-	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, "consumer2", &ibctmtypes.ClientState{})
-	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, "consumer3", &ibctmtypes.ClientState{})
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID1, &ibctmtypes.ClientState{})
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID2, &ibctmtypes.ClientState{})
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID3, &ibctmtypes.ClientState{})
 	driver.GenerateNewBlock()
 
 	// 2. Register consumers with different max_multi_staked_fps limits
-	consumer1 := driver.RegisterConsumer("consumer1", 2)
-	consumer2 := driver.RegisterConsumer("consumer2", 3)
-	consumer3 := driver.RegisterConsumer("consumer3", 4)
+	consumer1 := driver.RegisterConsumer(consumerID1, 2)
+	consumer2 := driver.RegisterConsumer(consumerID2, 3)
+	consumer3 := driver.RegisterConsumer(consumerID3, 4)
 	// Create a Babylon FP (registered without consumer ID)
 	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
 	babylonFp.RegisterFinalityProvider("")
@@ -621,9 +625,9 @@ func TestMultiConsumerDelegation(t *testing.T) {
 
 	// Set up IBC client states in the replayer before replaying blocks
 	replayerCtx := replayer.App.BaseApp.NewContext(false)
-	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, "consumer1", &ibctmtypes.ClientState{})
-	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, "consumer2", &ibctmtypes.ClientState{})
-	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, "consumer3", &ibctmtypes.ClientState{})
+	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, consumerID1, &ibctmtypes.ClientState{})
+	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, consumerID2, &ibctmtypes.ClientState{})
+	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, consumerID3, &ibctmtypes.ClientState{})
 
 	// Replay all the blocks from driver and check appHash
 	replayer.ReplayBlocks(t, driver.GetFinalizedBlocks())
