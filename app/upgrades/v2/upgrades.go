@@ -2,8 +2,6 @@ package v2
 
 import (
 	"context"
-	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	store "cosmossdk.io/store/types"
@@ -27,8 +25,27 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 )
 
-// UpgradeName defines the on-chain upgrade name for the Babylon v2 upgrade
-const UpgradeName = "v2"
+const (
+	// UpgradeName defines the on-chain upgrade name for the Babylon v2 upgrade
+	UpgradeName = "v2"
+	// InterchainQueryStoreName defines the hardcoded store name for the async-icq module,
+	// as specified in the following commit:
+	// https://github.com/cosmos/ibc-apps/blob/modules/async-icq/v8.0.0/modules/async-icq/types/keys.go#L14
+	//
+	// This store name is hardcoded for the following reasons:
+	// - The async-icq module was introduced in v2rc0 and deployed on the testnet.
+	// - Internal review showed limited usage and demand for the module.
+	// - The Cosmos EVM package requires IBC v10, while async-icq depends on IBC v8,
+	//   with no upgrade planned.
+	//
+	// As a result, we decided to remove the async-icq dependency.
+	// However, to preserve a record of all upgrades applied to the testnet,
+	// we retain the v2rc0 upgrade in our codebase and plan to remove async-icq
+	// entirely in the subsequent v2rc1 upgrade.
+	//
+	// To fully decouple from the module now, we hardcode the store name here.
+	InterchainQueryStoreName = "interchainquery"
+)
 
 var (
 	// durations in hours
@@ -41,7 +58,7 @@ func CreateUpgrade(includeAsyncICQ bool) upgrades.Upgrade {
 	addedStoreUpgrades := []string{tokenfactorytypes.StoreKey, pfmroutertypes.StoreKey, icacontrollertypes.StoreKey, icahosttypes.StoreKey, ratelimittypes.StoreKey}
 
 	if includeAsyncICQ {
-		addedStoreUpgrades = append(addedStoreUpgrades, icqtypes.StoreKey)
+		addedStoreUpgrades = append(addedStoreUpgrades, InterchainQueryStoreName)
 	}
 
 	return upgrades.Upgrade{

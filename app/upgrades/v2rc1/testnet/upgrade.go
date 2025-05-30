@@ -6,8 +6,8 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/babylonlabs-io/babylon/v4/app/keepers"
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
+	v2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v2"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
 )
 
 const UpgradeName = "v2rc1"
@@ -17,7 +17,7 @@ var Upgrade = upgrades.Upgrade{
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: store.StoreUpgrades{
 		Added:   []string{},
-		Deleted: []string{icqtypes.StoreKey},
+		Deleted: []string{v2.InterchainQueryStoreName},
 	},
 }
 
