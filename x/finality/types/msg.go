@@ -6,7 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
+	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -191,59 +191,31 @@ func (m *MsgUnjailFinalityProvider) ValidateBasic() error {
 
 	return nil
 }
-<<<<<<< HEAD
-=======
 
 func (m *MsgResumeFinalityProposal) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid authority address (%s)", err)
 	}
 	if m.HaltingHeight == 0 {
-		return ErrInvalidEquivocationEvidence.Wrap("halting height is zero")
+		return ErrInvalidResumeFinality.Wrap("halting height is zero")
 	}
 	if len(m.FpPksHex) == 0 {
-		return ErrInvalidEquivocationEvidence.Wrap("no fp pk hex set")
+		return ErrInvalidResumeFinality.Wrap("no fp pk hex set")
 	}
 
 	fps := make(map[string]struct{})
 	for _, fpPkHex := range m.FpPksHex {
 		_, err := bbntypes.NewBIP340PubKeyFromHex(fpPkHex)
 		if err != nil {
-			return ErrInvalidEquivocationEvidence.Wrapf("failed to parse FP BTC PK Hex (%s) into BIP-340", fpPkHex)
+			return ErrInvalidResumeFinality.Wrapf("failed to parse FP BTC PK Hex (%s) into BIP-340", fpPkHex)
 		}
 
 		_, found := fps[fpPkHex]
 		if found {
-			return ErrInvalidEquivocationEvidence.Wrapf("duplicated FP BTC PK Hex (%s)", fpPkHex)
+			return ErrInvalidResumeFinality.Wrapf("duplicated FP BTC PK Hex (%s)", fpPkHex)
 		}
 		fps[fpPkHex] = struct{}{}
 	}
 
 	return nil
 }
-
-func (m *MsgEquivocationEvidence) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid signer address (%s)", err)
-	}
-	if m.FpBtcPk == nil {
-		return ErrInvalidEquivocationEvidence.Wrap("empty FpBtcPk")
-	}
-	if m.PubRand == nil {
-		return ErrInvalidEquivocationEvidence.Wrap("empty PubRand")
-	}
-	if len(m.CanonicalAppHash) != 32 {
-		return ErrInvalidEquivocationEvidence.Wrap("malformed CanonicalAppHash")
-	}
-	if len(m.ForkAppHash) != 32 {
-		return ErrInvalidEquivocationEvidence.Wrap("malformed ForkAppHash")
-	}
-	if m.ForkFinalitySig == nil {
-		return ErrInvalidEquivocationEvidence.Wrap("empty ForkFinalitySig")
-	}
-	if m.CanonicalFinalitySig == nil {
-		return ErrInvalidEquivocationEvidence.Wrap("empty CanonicalFinalitySig")
-	}
-	return nil
-}
->>>>>>> 26a7ea8 (fix: resume fp halt height (#992))
