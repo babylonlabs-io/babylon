@@ -19,7 +19,6 @@ import (
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 
 	"cosmossdk.io/log"
-	"cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
@@ -53,14 +52,13 @@ import (
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
 	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 var validatorConfig = &initialization.NodeConfig{
@@ -83,7 +81,7 @@ const (
 )
 
 var (
-	defaultFeeCoin                 = sdk.NewCoin("ubbn", math.NewInt(defaultFee))
+	defaultFeeCoin                 = sdk.NewCoin("ubbn", sdkmath.NewInt(defaultFee))
 	BtcParams                      = &chaincfg.SimNetParams
 	covenantSKs, _, CovenantQuorum = bstypes.DefaultCovenantCommittee()
 )
@@ -133,8 +131,8 @@ type BabylonAppDriver struct {
 	*SenderInfo
 	r                *rand.Rand
 	t                *testing.T
-	App              *app.BabylonApp
-	BlsSigner        checkpointingtypes.BlsSigner
+	App              *babylonApp.BabylonApp
+	BlsSigner        ckpttypes.BlsSigner
 	BlockExec        *sm.BlockExecutor
 	BlockStore       *store.BlockStore
 	StateStore       sm.Store
@@ -745,7 +743,7 @@ func (d *BabylonAppDriver) GenCkptForEpoch(r *rand.Rand, t *testing.T, epochNumb
 	subAddress := d.GetDriverAccountAddress()
 	subAddressBytes := subAddress.Bytes()
 
-	rawCkpt, err := checkpointingtypes.FromRawCkptToBTCCkpt(ckptWithMeta.Ckpt, subAddressBytes)
+	rawCkpt, err := ckpttypes.FromRawCkptToBTCCkpt(ckptWithMeta.Ckpt, subAddressBytes)
 	require.NoError(t, err)
 
 	tagBytes, err := hex.DecodeString(initialization.BabylonOpReturnTag)
