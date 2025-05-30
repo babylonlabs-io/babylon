@@ -30,7 +30,7 @@ func (s *Staker) BTCPublicKey() *bbn.BIP340PubKey {
 }
 
 func (s *Staker) CreatePreApprovalDelegation(
-	fpKey *bbn.BIP340PubKey,
+	fpKeys []*bbn.BIP340PubKey,
 	stakingTime uint32,
 	totalSat int64,
 ) *bstypes.MsgCreateBTCDelegation {
@@ -41,12 +41,17 @@ func (s *Staker) CreatePreApprovalDelegation(
 		covenantPks = append(covenantPks, pk.MustToBTCPK())
 	}
 
+	var fpBTCPKs []*btcec.PublicKey
+	for _, fpKey := range fpKeys {
+		fpBTCPKs = append(fpBTCPKs, fpKey.MustToBTCPK())
+	}
+
 	stakingSlashingInfo := datagen.GenBTCStakingSlashingInfo(
 		s.r,
 		s.t,
 		BtcParams,
 		s.BTCPrivateKey,
-		[]*btcec.PublicKey{fpKey.MustToBTCPK()},
+		fpBTCPKs,
 		covenantPks,
 		params.CovenantQuorum,
 		uint16(stakingTime),
@@ -79,7 +84,7 @@ func (s *Staker) CreatePreApprovalDelegation(
 		s.t,
 		BtcParams,
 		s.BTCPrivateKey,
-		[]*btcec.PublicKey{fpKey.MustToBTCPK()},
+		fpBTCPKs,
 		covenantPks,
 		params.CovenantQuorum,
 		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
@@ -98,11 +103,17 @@ func (s *Staker) CreatePreApprovalDelegation(
 	pop, err := datagen.NewPoPBTC(s.Address(), s.BTCPrivateKey)
 	require.NoError(s.t, err)
 
+	// Convert []*BIP340PubKey to []BIP340PubKey
+	fpBtcPkList := make([]bbn.BIP340PubKey, len(fpKeys))
+	for i, pk := range fpKeys {
+		fpBtcPkList[i] = *pk
+	}
+
 	msg := &bstypes.MsgCreateBTCDelegation{
 		StakerAddr:   s.AddressString(),
 		Pop:          pop,
 		BtcPk:        s.BTCPublicKey(),
-		FpBtcPkList:  []bbn.BIP340PubKey{*fpKey},
+		FpBtcPkList:  fpBtcPkList,
 		StakingTime:  stakingTime,
 		StakingValue: totalSat,
 		StakingTx:    serializedStakingTx,

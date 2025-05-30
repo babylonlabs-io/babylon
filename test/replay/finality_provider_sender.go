@@ -30,7 +30,7 @@ func (f *FinalityProvider) BTCPublicKey() *bbn.BIP340PubKey {
 	return pk
 }
 
-func (f *FinalityProvider) RegisterFinalityProvider() {
+func (f *FinalityProvider) RegisterFinalityProvider(consumerID string) {
 	pop, err := datagen.NewPoPBTC(f.Address(), f.BTCPrivateKey)
 	require.NoError(f.t, err)
 
@@ -43,7 +43,7 @@ func (f *FinalityProvider) RegisterFinalityProvider() {
 			MaxRate:       sdkmath.LegacyMustNewDecFromStr("0.1"),
 			MaxChangeRate: sdkmath.LegacyMustNewDecFromStr("0.05"),
 		},
-		ConsumerId: "",
+		ConsumerId: consumerID,
 		BtcPk:      f.BTCPublicKey(),
 		Pop:        pop,
 	}

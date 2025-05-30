@@ -21,6 +21,7 @@ import (
 type BlockReplayer struct {
 	BlockExec *sm.BlockExecutor
 	LastState sm.State
+	App       *babylonApp.BabylonApp
 }
 
 func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
@@ -98,6 +99,7 @@ func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
 	return &BlockReplayer{
 		BlockExec: blockExec,
 		LastState: state,
+		App:       tmpApp,
 	}
 }
 
