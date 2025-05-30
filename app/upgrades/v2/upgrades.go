@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -11,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
-	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
 	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
@@ -35,16 +35,24 @@ var (
 	DailyDurationHours uint64 = 24
 	// limits (percentages)
 	DefaultDailyLimit = sdkmath.NewInt(10)
+)
 
-	Upgrade = upgrades.Upgrade{
+func CreateUpgrade(includeAsyncICQ bool) upgrades.Upgrade {
+	addedStoreUpgrades := []string{tokenfactorytypes.StoreKey, pfmroutertypes.StoreKey, icacontrollertypes.StoreKey, icahosttypes.StoreKey, ratelimittypes.StoreKey}
+
+	if includeAsyncICQ {
+		addedStoreUpgrades = append(addedStoreUpgrades, icqtypes.StoreKey)
+	}
+
+	return upgrades.Upgrade{
 		UpgradeName:          UpgradeName,
 		CreateUpgradeHandler: CreateUpgradeHandler,
 		StoreUpgrades: store.StoreUpgrades{
-			Added:   []string{tokenfactorytypes.ModuleName, pfmroutertypes.StoreKey, icacontrollertypes.StoreKey, icahosttypes.StoreKey, icqtypes.StoreKey, ratelimittypes.StoreKey},
+			Added:   addedStoreUpgrades,
 			Deleted: []string{ibcfeetypes.StoreKey},
 		},
 	}
-)
+}
 
 func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
@@ -61,8 +69,6 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 			return nil, err
 		}
 
-		// By default, ICQ allowed queries are empty. So no queries will be allowed until
-		// the allowed list is populated via gov proposal.
 		// For ICA host, by default all messages are allowed (using '*' wildcard),
 		// so we set allow list to empty and messages can be added later when needed via gov proposal
 		icaHostParams := icahosttypes.DefaultParams()
