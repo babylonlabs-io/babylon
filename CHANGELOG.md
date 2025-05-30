@@ -98,6 +98,7 @@ check of rewards
 - [#992](https://github.com/babylonlabs-io/babylon/pull/992) Add checks for bad halting height in `HandleResumeFinalityProposal`
 - [#988](https://github.com/babylonlabs-io/babylon/pull/988) Fix flaky e2e ibc test
 `TestIBCTransferSuite`
+- [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
 
 ### State Machine Breaking
 
