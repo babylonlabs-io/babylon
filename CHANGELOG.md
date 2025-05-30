@@ -39,80 +39,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-<<<<<<< HEAD
-- [#850](https://github.com/babylonlabs-io/babylon/pull/850) Add BLS improvement including permission and verification
-- [#841](https://github.com/babylonlabs-io/babylon/pull/841) chore: upgrade the make file: release
-- [#909](https://github.com/babylonlabs-io/babylon/pull/909) Update tokenfactory upgrade fee params to `ubbn`.
-- [#884](https://github.com/babylonlabs-io/babylon/pull/884) Bump tokenfactory version to v0.50.6
-- [#846](https://github.com/babylonlabs-io/babylon/pull/846) Add tokenfactory module.
-- [#821](https://github.com/babylonlabs-io/babylon/pull/821) Add import/export genesis logic in `x/btccheckpoint` module
-- [#828](https://github.com/babylonlabs-io/babylon/pull/828) Add `AllowedStakingTxHashes` and `LargetsBTCReorg` to import/export genesis logic in `x/btcstaking` module
-- [#840](https://github.com/babylonlabs-io/babylon/pull/840) Add import/export genesis logic in `x/checkpointing` module
-- [#843](https://github.com/babylonlabs-io/babylon/pull/843) Add import/export genesis logic in `x/epoching` module
-- [#847](https://github.com/babylonlabs-io/babylon/pull/847) Add ibc callbacks to
-transfer stack
-- [#859](https://github.com/babylonlabs-io/babylon/pull/859) Update init/export genesis logic in `x/finality` module
-- [#876](https://github.com/babylonlabs-io/babylon/pull/876) Add Packet Forwarding Middleware (PFM) module.
-- [#881](https://github.com/babylonlabs-io/babylon/pull/881) Update init/export genesis logic in `x/mint` module
-- [#883](https://github.com/babylonlabs-io/babylon/pull/883) Update init/export genesis logic in `x/monitor` module
-- [#897](https://github.com/babylonlabs-io/babylon/pull/897) Add Interchain Accounts (ICA) and Interchain Queries (ICQ) modules.
-- [#902](https://github.com/babylonlabs-io/babylon/pull/902) Add IBC rate limiter to IBC transfer module
-- [#913](https://github.com/babylonlabs-io/babylon/pull/913) Remove IBC-fee module.
-=======
-- [#970](https://github.com/babylonlabs-io/babylon/pull/970) Add finality contract e2e tests follup-up.
-- [#946](https://github.com/babylonlabs-io/babylon/pull/946) Add finality contract e2e tests follup-up.
-- [#945](https://github.com/babylonlabs-io/babylon/pull/945) Add finality contract e2e tests.
-- [#879](https://github.com/babylonlabs-io/babylon/pull/879) Add v2 e2e upgrade test.
-- [#869](https://github.com/babylonlabs-io/babylon/pull/869) Rename CZ to Consumer in btcstkconsumer and zoneconcierge.
-- [#837](https://github.com/babylonlabs-io/babylon/pull/837) Bump repository to v2.
-- [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.
-- [#623](https://github.com/babylonlabs-io/babylon/pull/623) Add check for empty string in `bls` loading.
-- [#536](https://github.com/babylonlabs-io/babylon/pull/536) Improve protobuf vs. json error msgs / types
-- [#513](https://github.com/babylonlabs-io/babylon/pull/513) Suport datagen BTC delegation creation from Consumers
-- [#470](https://github.com/babylonlabs-io/babylon/pull/470) Return full consumer info and remove DB object
-usage in `x/btcstkconsumer` queries
-- [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
-check of rewards
-- [#480](https://github.com/babylonlabs-io/babylon/pull/480) Improve IBC packet structure
-- [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
-- [#504](https://github.com/babylonlabs-io/babylon/pull/504) Add `btc-headers` IBC packet
-- [#575](https://github.com/babylonlabs-io/babylon/pull/575) Add `ConsumerId` field in `FinalityProviderResponse` in `x/btcstaking` module
-- [#624](https://github.com/babylonlabs-io/babylon/pull/624) Make keeper's collections private in `x/incentive` module
-- [#643](https://github.com/babylonlabs-io/babylon/pull/643) Fix flaky test `FuzzBTCDelegation`
-- [#696](https://github.com/babylonlabs-io/babylon/pull/696) Restore zoneconcierge queries in query client
-- [#822](https://github.com/babylonlabs-io/babylon/pull/822) chore: upgrade the make file: protobuf
-- [#831](https://github.com/babylonlabs-io/babylon/pull/831) Add `BtcConsumerDelegators` and `ConsumerEvents` to import/export genesis logic in `x/btcstaking` module
-- [#836](https://github.com/babylonlabs-io/babylon/pull/836) Add import/export genesis logic in `x/btcstakingconsumer` module
-- [#871](https://github.com/babylonlabs-io/babylon/pull/871) create `update-bls-password` cmd
-- [#887](https://github.com/babylonlabs-io/babylon/pull/887) Update init/export genesis logic in `x/zoneconcierge` module
-- [#927](https://github.com/babylonlabs-io/babylon/pull/927) Add Mergify configuration file to improve PR backporting.
-- [#924](https://github.com/babylonlabs-io/babylon/pull/924) Improve BLS file check order in related commands
-- [#926](https://github.com/babylonlabs-io/babylon/pull/926) Update genesis initialization validations.
-- [#933](https://github.com/babylonlabs-io/babylon/pull/933) Update repository version to `v4`.
-- [#935](https://github.com/babylonlabs-io/babylon/pull/935) Add `release/v4` branch to docker publish workflow.
->>>>>>> 517f84d (fix: changlog duplicate and add v2.0.0-rc.0 (#998))
 - [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
 
 ### State Machine Breaking
 
-<<<<<<< HEAD
-- [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
-when the babylon block is being BTC rewarded.
 - [#947](https://github.com/babylonlabs-io/babylon/pull/947) Improve signing info update upon fp activated
-=======
-- [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
-This PR contains a series of PRs on multi-staking support and BTC staking integration.
-- [#947](https://github.com/babylonlabs-io/babylon/pull/947) Improve signing info update upon fp activated
-- [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
-
-### Bug fixes
-
-- [#796](https://github.com/babylonlabs-io/babylon/pull/796) fix: goreleaser add `mainnet` build flag to generated binary
-- [#741](https://github.com/babylonlabs-io/babylon/pull/741) chore: fix register consumer CLI
-- [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
-- [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
-`MsgWrappedCreateValidator` to avoid panic in transaction submission
->>>>>>> 517f84d (fix: changlog duplicate and add v2.0.0-rc.0 (#998))
 
 ## v2.0.0-rc.0
 
@@ -127,6 +58,8 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 - [#828](https://github.com/babylonlabs-io/babylon/pull/828) Add `AllowedStakingTxHashes` and `LargetsBTCReorg` to import/export genesis logic in `x/btcstaking` module
 - [#840](https://github.com/babylonlabs-io/babylon/pull/840) Add import/export genesis logic in `x/checkpointing` module
 - [#843](https://github.com/babylonlabs-io/babylon/pull/843) Add import/export genesis logic in `x/epoching` module
+- [#847](https://github.com/babylonlabs-io/babylon/pull/847) Add ibc callbacks to
+transfer stack
 - [#859](https://github.com/babylonlabs-io/babylon/pull/859) Update init/export genesis logic in `x/finality` module
 - [#876](https://github.com/babylonlabs-io/babylon/pull/876) Add Packet Forwarding Middleware (PFM) module.
 - [#881](https://github.com/babylonlabs-io/babylon/pull/881) Update init/export genesis logic in `x/mint` module
@@ -139,8 +72,6 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 
 - [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
 when the babylon block is being BTC rewarded.
-- [#847](https://github.com/babylonlabs-io/babylon/pull/847) Add ibc callbacks to
-transfer stack
 
 ## v1.1.0
 
