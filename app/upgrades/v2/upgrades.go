@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
-	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
+	//icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
 	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
@@ -39,7 +39,8 @@ var (
 		UpgradeName:          UpgradeName,
 		CreateUpgradeHandler: CreateUpgradeHandler,
 		StoreUpgrades: store.StoreUpgrades{
-			Added:   []string{tokenfactorytypes.ModuleName, pfmroutertypes.StoreKey, icacontrollertypes.StoreKey, icahosttypes.StoreKey, icqtypes.StoreKey, ratelimittypes.StoreKey},
+			Added: []string{tokenfactorytypes.ModuleName, pfmroutertypes.StoreKey, icacontrollertypes.StoreKey, icahosttypes.StoreKey, ratelimittypes.StoreKey}, // icqtypes.StoreKey,},
+
 			Deleted: []string{},
 		},
 	}

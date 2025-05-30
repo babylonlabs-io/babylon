@@ -74,8 +74,6 @@ import (
 	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward"
 	pfmrouterkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/keeper"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
-	icqkeeper "github.com/cosmos/ibc-apps/modules/async-icq/v8/keeper"
-	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
 	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10"
 	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
@@ -168,8 +166,8 @@ type AppKeepers struct {
 	PFMRouterKeeper     *pfmrouterkeeper.Keeper     // Packet Forwarding Middleware
 	ICAHostKeeper       *icahostkeeper.Keeper       // Interchain Accounts host
 	ICAControllerKeeper *icacontrollerkeeper.Keeper // Interchain Accounts controller
-	ICQKeeper           *icqkeeper.Keeper           // Interchain Queries
-	RatelimitKeeper     ratelimitkeeper.Keeper
+	//ICQKeeper           *icqkeeper.Keeper           // Interchain Queries
+	RatelimitKeeper ratelimitkeeper.Keeper
 
 	// BTC staking related modules
 	BTCStakingKeeper btcstakingkeeper.Keeper
@@ -230,7 +228,7 @@ func (ak *AppKeepers) InitKeepers(
 		pfmroutertypes.StoreKey,
 		icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey,
-		icqtypes.StoreKey,
+		//icqtypes.StoreKey,
 		ratelimittypes.StoreKey,
 		// BTC staking related modules
 		btcstakingtypes.StoreKey,
