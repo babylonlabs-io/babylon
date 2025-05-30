@@ -5,18 +5,12 @@ import (
 	"testing"
 	"time"
 
-<<<<<<< HEAD
+	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	bbntypes "github.com/babylonlabs-io/babylon/v2/types"
 	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
-=======
-	errorsmod "cosmossdk.io/errors"
-	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
-	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
->>>>>>> 26a7ea8 (fix: resume fp halt height (#992))
 	"github.com/stretchr/testify/require"
 )
 
@@ -135,8 +129,6 @@ func TestMsgCommitPubRandListValidateBasic(t *testing.T) {
 		})
 	}
 }
-<<<<<<< HEAD
-=======
 
 func TestMsgAddFinalitySig_ValidateBasic(t *testing.T) {
 	r := rand.New(rand.NewSource(10))
@@ -247,187 +239,6 @@ func TestMsgAddFinalitySig_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgUnjailFinalityProvider_ValidateBasic(t *testing.T) {
-	validAddr := datagen.GenRandomAddress().String()
-	validPk := bbntypes.BIP340PubKey(make([]byte, bbntypes.BIP340PubKeyLen))
-
-	testCases := []struct {
-		name   string
-		msg    types.MsgUnjailFinalityProvider
-		expErr string
-	}{
-		{
-			name: "valid message",
-			msg: types.MsgUnjailFinalityProvider{
-				Signer:  validAddr,
-				FpBtcPk: &validPk,
-			},
-			expErr: "",
-		},
-		{
-			name: "invalid signer address",
-			msg: types.MsgUnjailFinalityProvider{
-				Signer:  "invalid-address",
-				FpBtcPk: &validPk,
-			},
-			expErr: "invalid signer address",
-		},
-		{
-			name: "nil BTC public key",
-			msg: types.MsgUnjailFinalityProvider{
-				Signer:  validAddr,
-				FpBtcPk: nil,
-			},
-			expErr: "empty FP BTC PubKey",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := tc.msg.ValidateBasic()
-			if tc.expErr == "" {
-				require.NoError(t, err)
-				return
-			}
-			require.Error(t, err)
-			require.Contains(t, err.Error(), tc.expErr)
-		})
-	}
-}
-
-func TestMsgEquivocationEvidence_ValidateBasic(t *testing.T) {
-	var (
-		validAddr        = datagen.GenRandomAddress().String()
-		validPk          = bbntypes.BIP340PubKey(make([]byte, bbntypes.BIP340PubKeyLen))
-		validPubRand     = bbntypes.SchnorrPubRand(make([]byte, bbntypes.SchnorrPubRandLen))
-		validFinalitySig = bbntypes.SchnorrEOTSSig(make([]byte, bbntypes.SchnorrEOTSSigLen))
-		validHash        = make([]byte, 32)
-	)
-
-	testCases := []struct {
-		name   string
-		msg    types.MsgEquivocationEvidence
-		expErr string
-	}{
-		{
-			name: "valid message",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
-			},
-			expErr: "",
-		},
-		{
-			name: "invalid signer",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               "invalid-address",
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
-			},
-			expErr: "invalid signer address",
-		},
-		{
-			name: "nil FpBtcPk",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              nil,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
-			},
-			expErr: "empty FpBtcPk",
-		},
-		{
-			name: "nil PubRand",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              nil,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
-			},
-			expErr: "empty PubRand",
-		},
-		{
-			name: "invalid CanonicalAppHash length",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     []byte("short"),
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
-			},
-			expErr: "malformed CanonicalAppHash",
-		},
-		{
-			name: "invalid ForkAppHash length",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          []byte("short"),
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
-			},
-			expErr: "malformed ForkAppHash",
-		},
-		{
-			name: "nil ForkFinalitySig",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      nil,
-			},
-			expErr: "empty ForkFinalitySig",
-		},
-		{
-			name: "nil CanonicalFinalitySig",
-			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: nil,
-				ForkFinalitySig:      &validFinalitySig,
-			},
-			expErr: "empty CanonicalFinalitySig",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := tc.msg.ValidateBasic()
-			if tc.expErr == "" {
-				require.NoError(t, err)
-				return
-			}
-			require.Error(t, err)
-			require.Contains(t, err.Error(), tc.expErr)
-		})
-	}
-}
-
 func TestMsgResumeFinalityProposal_ValidateBasic(t *testing.T) {
 	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().Unix()))
@@ -481,7 +292,7 @@ func TestMsgResumeFinalityProposal_ValidateBasic(t *testing.T) {
 				FpPksHex:      []string{validPk1Hex},
 				HaltingHeight: 0,
 			},
-			expErr: types.ErrInvalidEquivocationEvidence.Wrap("halting height is zero"),
+			expErr: types.ErrInvalidResumeFinality.Wrap("halting height is zero"),
 		},
 		{
 			name: "invalid: no fp pk",
@@ -490,7 +301,7 @@ func TestMsgResumeFinalityProposal_ValidateBasic(t *testing.T) {
 				FpPksHex:      []string{},
 				HaltingHeight: validHalting,
 			},
-			expErr: types.ErrInvalidEquivocationEvidence.Wrap("no fp pk hex set"),
+			expErr: types.ErrInvalidResumeFinality.Wrap("no fp pk hex set"),
 		},
 		{
 			name: "invalid: bad pk",
@@ -499,7 +310,7 @@ func TestMsgResumeFinalityProposal_ValidateBasic(t *testing.T) {
 				FpPksHex:      []string{"xxxx"},
 				HaltingHeight: validHalting,
 			},
-			expErr: types.ErrInvalidEquivocationEvidence.Wrapf("failed to parse FP BTC PK Hex (xxxx) into BIP-340"),
+			expErr: types.ErrInvalidResumeFinality.Wrapf("failed to parse FP BTC PK Hex (xxxx) into BIP-340"),
 		},
 		{
 			name: "invalid: duplicate fp",
@@ -508,7 +319,7 @@ func TestMsgResumeFinalityProposal_ValidateBasic(t *testing.T) {
 				FpPksHex:      []string{validPk1Hex, validPk2Hex, validPk1Hex},
 				HaltingHeight: validHalting,
 			},
-			expErr: types.ErrInvalidEquivocationEvidence.Wrapf("duplicated FP BTC PK Hex (%s)", validPk1Hex),
+			expErr: types.ErrInvalidResumeFinality.Wrapf("duplicated FP BTC PK Hex (%s)", validPk1Hex),
 		},
 	}
 
@@ -527,4 +338,3 @@ func TestMsgResumeFinalityProposal_ValidateBasic(t *testing.T) {
 		})
 	}
 }
->>>>>>> 26a7ea8 (fix: resume fp halt height (#992))
