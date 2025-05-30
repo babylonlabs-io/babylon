@@ -39,15 +39,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-<<<<<<< HEAD
 - [#909](https://github.com/babylonlabs-io/babylon/pull/909) Update tokenfactory upgrade fee params to `ubbn` .
 - [#884](https://github.com/babylonlabs-io/babylon/pull/884) Bump tokenfactory version to v0.50.6.
 - [#884](https://github.com/babylonlabs-io/babylon/pull/884) Bump tokenfactory version to v0.50.6
-=======
-- [#970](https://github.com/babylonlabs-io/babylon/pull/970) Add finality contract e2e tests follup-up.
-- [#946](https://github.com/babylonlabs-io/babylon/pull/946) Add finality contract e2e tests follup-up.
-- [#945](https://github.com/babylonlabs-io/babylon/pull/945) Add finality contract e2e tests.
->>>>>>> 517f84d (fix: changlog duplicate and add v2.0.0-rc.0 (#998))
 - [#879](https://github.com/babylonlabs-io/babylon/pull/879) Add v2 e2e upgrade test.
 - [#869](https://github.com/babylonlabs-io/babylon/pull/869) Rename CZ to Consumer in btcstkconsumer and zoneconcierge.
 - [#837](https://github.com/babylonlabs-io/babylon/pull/837) Bump repository to v2.
