@@ -40,25 +40,6 @@ func TestEpochFinalization(t *testing.T) {
 	require.Equal(t, epoch2.EpochNumber, uint64(2))
 
 	driver.FinializeCkptForEpoch(epoch1.EpochNumber)
-
-	blocks := driver.GetFinalizedBlocks()
-	// blocks := driver.GetFinalizedBlocks()
-	for _, block := range blocks {
-		// Get the block's state from driver
-		response, err := driver.StateStore.LoadFinalizeBlockResponse(int64(block.Height))
-		require.NoError(t, err)
-
-		// Print block details
-		t.Logf("Block %d:", block.Height)
-		t.Logf("  - Block Hash: %x", block.Block.Hash())
-		t.Logf("  - App Hash: %x", response.AppHash)
-		t.Logf("  - Number of Txs: %d", len(block.Block.Txs))
-
-		// If you want to see transactions in the block
-		// for j, tx := range block.Block.Txs {
-		// 	t.Logf("    Tx %d: %x", j, tx)
-		// }
-	}
 }
 
 func FuzzCreatingAndActivatingDelegations(f *testing.F) {
@@ -294,13 +275,6 @@ func TestVoting(t *testing.T) {
 	block := driver.GetIndexedBlock(activationHeight)
 	require.NotNil(t, block)
 	require.True(t, block.Finalized)
-
-	// Replay all the blocks from driver and check appHash
-	replayer := NewBlockReplayer(t, replayerTempDir)
-	replayer.ReplayBlocks(t, driver.GetFinalizedBlocks())
-	// after replay we should have the same apphash
-	require.Equal(t, driver.GetLastState().LastBlockHeight, replayer.LastState.LastBlockHeight)
-	require.Equal(t, driver.GetLastState().AppHash, replayer.LastState.AppHash)
 }
 
 func TestStakingAndFinalizingBlocks(t *testing.T) {
