@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
+- [#992](https://github.com/babylonlabs-io/babylon/pull/992) Add checks for bad halting height in `HandleResumeFinalityProposal`
 
 ### State Machine Breaking
 
