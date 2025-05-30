@@ -71,9 +71,6 @@ import (
 	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
 	pfmrouterkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/keeper"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
-	icq "github.com/cosmos/ibc-apps/modules/async-icq/v8"
-	icqkeeper "github.com/cosmos/ibc-apps/modules/async-icq/v8/keeper"
-	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
 	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v8"
 	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
@@ -167,7 +164,6 @@ type AppKeepers struct {
 	PFMRouterKeeper     *pfmrouterkeeper.Keeper     // Packet Forwarding Middleware
 	ICAHostKeeper       *icahostkeeper.Keeper       // Interchain Accounts host
 	ICAControllerKeeper *icacontrollerkeeper.Keeper // Interchain Accounts controller
-	ICQKeeper           *icqkeeper.Keeper           // Interchain Queries
 	RatelimitKeeper     ratelimitkeeper.Keeper
 
 	// BTC staking related modules
@@ -235,7 +231,6 @@ func (ak *AppKeepers) InitKeepers(
 		pfmroutertypes.StoreKey,
 		icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey,
-		icqtypes.StoreKey,
 		ratelimittypes.StoreKey,
 		// BTC staking related modules
 		btcstakingtypes.StoreKey,
@@ -335,7 +330,6 @@ func (ak *AppKeepers) InitKeepers(
 	scopedWasmKeeper := ak.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 	scopedICAHostKeeper := ak.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
 	scopedICAControllerKeeper := ak.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
-	scopedICQKeeper := ak.CapabilityKeeper.ScopeToModule(icqtypes.ModuleName)
 
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
 	// their scoped modules in `NewApp` with `ScopeToModule`
@@ -668,19 +662,6 @@ func (ak *AppKeepers) InitKeepers(
 	)
 	ak.ICAControllerKeeper = &icaControllerKeeper
 
-	// ICQ Keeper
-	icqKeeper := icqkeeper.NewKeeper(
-		appCodec,
-		ak.keys[icqtypes.StoreKey],
-		ak.IBCKeeper.ChannelKeeper,
-		ak.IBCKeeper.ChannelKeeper,
-		ak.IBCKeeper.PortKeeper,
-		scopedICQKeeper,
-		bApp.GRPCQueryRouter(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-	ak.ICQKeeper = &icqKeeper
-
 	// Create all supported IBC routes
 	var wasmStack porttypes.IBCModule
 	wasmStackIBCHandler := wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCKeeper.ChannelKeeper)
@@ -729,17 +710,13 @@ func (ak *AppKeepers) InitKeepers(
 	// channel.RecvPacket -> fee.OnRecvPacket -> icaHost.OnRecvPacket
 	icaHostStack := icahost.NewIBCModule(*ak.ICAHostKeeper)
 
-	// Create Async ICQ module stack
-	icqStack := icq.NewIBCModule(*ak.ICQKeeper)
-
 	// Create static IBC router, add ibc-transfer module route,
-	// and the other routes (ICA, ICQ, wasm, zoneconcierge), then set and seal it
+	// and the other routes (ICA, wasm, zoneconcierge), then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
 		AddRoute(wasmtypes.ModuleName, wasmStack).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
-		AddRoute(icahosttypes.SubModuleName, icaHostStack).
-		AddRoute(icqtypes.ModuleName, icqStack)
+		AddRoute(icahosttypes.SubModuleName, icaHostStack)
 
 	// Setting Router will finalize all routes by sealing router
 	// No more routes can be added
