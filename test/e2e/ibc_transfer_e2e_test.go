@@ -365,7 +365,7 @@ func (s *IBCTransferTestSuite) Test5RateLimitE2EAboveThreshold() {
 	_, err = nB.QueryBalances(s.addrB)
 	s.Require().NoError(err)
 
-	packetAmount := sdkmath.NewInt(1_000_001) // above the threshold and should fail
+	packetAmount := sdkmath.NewInt(100_000001) // above the threshold and should fail
 	channel := "channel-0"
 
 	transferCoin := sdk.NewCoin(nativeDenom, packetAmount)
