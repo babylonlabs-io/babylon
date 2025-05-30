@@ -14,6 +14,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 )
@@ -589,15 +590,19 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	driver.GenerateNewBlock()
 
 	// 2. Register consumers with different max_multi_staked_fps limits
-	consumer1 := driver.RegisterConsumer(consumerID1, 2)
-	consumer2 := driver.RegisterConsumer(consumerID2, 3)
-	consumer3 := driver.RegisterConsumer(consumerID3, 4)
+	consumer1 := driver.RegisterConsumer(consumerID1, 3)
+	consumer2 := driver.RegisterConsumer(consumerID2, 4)
+	consumer3 := driver.RegisterConsumer(consumerID3, 5)
 	// Create a Babylon FP (registered without consumer ID)
 	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
 	babylonFp.RegisterFinalityProvider("")
 
 	// 3. Create finality providers for each consumer
-	fp1 := driver.CreateFinalityProviderForConsumer(consumer1)
+	fp1s := []*FinalityProvider{
+		// Create 2 FPs for consumer1
+		driver.CreateFinalityProviderForConsumer(consumer1),
+		driver.CreateFinalityProviderForConsumer(consumer1),
+	}
 	fp2 := driver.CreateFinalityProviderForConsumer(consumer2)
 	fp3 := driver.CreateFinalityProviderForConsumer(consumer3)
 	// Generate blocks to process registrations
@@ -606,21 +611,35 @@ func TestMultiConsumerDelegation(t *testing.T) {
 
 	// 4. Create a delegation with three consumer FPs and one Babylon FP - should fail because total FPs (4) > min(max_multi_staked_fps) which is 2
 	staker.CreatePreApprovalDelegation(
-		[]*bbn.BIP340PubKey{fp1.BTCPublicKey(), fp2.BTCPublicKey(), fp3.BTCPublicKey(), babylonFp.BTCPublicKey()},
+		[]*bbn.BIP340PubKey{fp1s[0].BTCPublicKey(), fp2.BTCPublicKey(), fp3.BTCPublicKey(), babylonFp.BTCPublicKey()},
 		1000,
 		100000000,
 	)
-	driver.GenerateNewBlockAssertExecutionFailure()
+	txResults := driver.GenerateNewBlockAssertExecutionFailure()
+	require.Len(t, txResults, 1)
+	require.Equal(t, uint32(1129), txResults[0].Code)
+	require.Contains(t, txResults[0].Log, btcstakingtypes.ErrTooManyFPs.Error())
 
-	// 5. Create a valid delegation with 2 FPs (including Babylon FP)
+	// 5. Create a delegation with multiple FPs from the same consumer - should fail because there should be atmost 1 FP from each consumer
 	staker.CreatePreApprovalDelegation(
-		[]*bbn.BIP340PubKey{babylonFp.BTCPublicKey(), fp1.BTCPublicKey()},
+		[]*bbn.BIP340PubKey{fp1s[0].BTCPublicKey(), fp1s[1].BTCPublicKey(), babylonFp.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+	txResults = driver.GenerateNewBlockAssertExecutionFailure()
+	require.Len(t, txResults, 1)
+	require.Equal(t, uint32(1130), txResults[0].Code)
+	require.Contains(t, txResults[0].Log, btcstakingtypes.ErrTooManyFPsFromSameConsumer.Error())
+
+	// 6. Create a valid delegation with 2 FPs (including Babylon FP)
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{babylonFp.BTCPublicKey(), fp1s[0].BTCPublicKey()},
 		1000,
 		100000000,
 	)
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
-	// 6. Replay all blocks and verify state
+	// 7. Replay all blocks and verify state
 	replayer := NewBlockReplayer(t, replayerTempDir)
 
 	// Set up IBC client states in the replayer before replaying blocks
