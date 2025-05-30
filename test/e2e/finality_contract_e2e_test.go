@@ -1,6 +1,9 @@
 package e2e
 
 import (
+	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math"
 	"math/rand"
 	"strconv"
@@ -40,6 +43,7 @@ type FinalityContractTestSuite struct {
 	configurer     configurer.Configurer
 
 	// Cross-test config data
+	randListInfo         *datagen.RandListInfo
 	finalityContractAddr string
 }
 
@@ -338,7 +342,8 @@ func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
 	// commit public randomness list
 	numPubRand := uint64(100)
 	commitStartHeight := uint64(1)
-	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.consumerBtcSk, commitStartHeight, numPubRand)
+	var msgCommitPubRandList *ftypes.MsgCommitPubRandList
+	s.randListInfo, msgCommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(s.r, s.consumerBtcSk, commitStartHeight, numPubRand)
 	s.NoError(err)
 
 	nonValidatorNode.CommitPubRandListConsumer(
@@ -358,7 +363,7 @@ func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
 		}
 		s.Equal(msgCommitPubRandList.StartHeight, commitment.StartHeight)
 		s.Equal(msgCommitPubRandList.NumPubRand, commitment.NumPubRand)
-		s.Equal(randListInfo.Commitment, commitment.Commitment)
+		s.Equal(s.randListInfo.Commitment, commitment.Commitment)
 		s.T().Logf("Public randomness commitment found: StartHeight=%d, NumPubRand=%d, Commitment=%s",
 			commitment.StartHeight,
 			commitment.NumPubRand,
@@ -366,4 +371,47 @@ func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
 		)
 		return true
 	}, time.Second*10, time.Second, "Public randomness commitment was not found within the expected time")
+}
+
+func (s *FinalityContractTestSuite) Test6SubmitFinalitySignatura() {
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// Get blocks to vote
+	// Mock a block with start height 1
+	startHeight := uint64(1)
+	blockToVote := datagen.GenRandomBlock(s.r, startHeight)
+
+	appHash := blockToVote.AppHash
+
+	idx := 0
+	msgToSign := append(sdk.Uint64ToBigEndian(startHeight), appHash...)
+	// Generate EOTS signature
+	sig, err := eots.Sign(s.consumerBtcSk, s.randListInfo.SRList[idx], msgToSign)
+	s.NoError(err)
+	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
+
+	nonValidatorNode.AddFinalitySigConsumer(ConsumerID, s.consumerFp.BtcPk, startHeight, &s.randListInfo.PRList[idx], *s.randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+
+	// Query the finality signatures from the finality contract
+	/*
+		queryMsg := map[string]interface{}{
+			"block_voters": map[string]interface{}{
+				"height": blockToVote.Height,
+				// it requires the block hash without the 0x prefix
+				"hash": strings.TrimPrefix(hex.EncodeToString(blockToVote.AppHash), "0x"),
+			},
+		}
+
+		// Query block_voters from finality gadget CW contract
+		queryResponse := ctm.queryCwContract(t, queryMsg, ctx)
+		var voters []string
+		err = json.Unmarshal(queryResponse.Data, &voters)
+		require.NoError(t, err)
+
+		// check the voter, it should be the consumer FP public key
+		require.Equal(t, 1, len(voters))
+		require.Equal(t, consumerFpPk.MarshalHex(), voters[0])
+	*/
 }
