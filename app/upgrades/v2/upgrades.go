@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	store "cosmossdk.io/store/types"
@@ -51,12 +52,8 @@ var (
 	// durations in hours
 	DailyDurationHours uint64 = 24
 	// limits (percentages)
-<<<<<<< HEAD
-	DefaultDailyLimit = sdkmath.NewInt(20)
-=======
 	DefaultDailyLimit = sdkmath.NewInt(10)
 )
->>>>>>> a34969a (chore: Remove async-icq module (#993))
 
 func CreateUpgrade(includeAsyncICQ bool) upgrades.Upgrade {
 	addedStoreUpgrades := []string{tokenfactorytypes.StoreKey, pfmroutertypes.StoreKey, icacontrollertypes.StoreKey, icahosttypes.StoreKey, ratelimittypes.StoreKey}

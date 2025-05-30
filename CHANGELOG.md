@@ -41,13 +41,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
 - [#992](https://github.com/babylonlabs-io/babylon/pull/992) Add checks for bad halting height in `HandleResumeFinalityProposal`
-<<<<<<< HEAD
-=======
-- [#988](https://github.com/babylonlabs-io/babylon/pull/988) Fix flaky e2e ibc test
-`TestIBCTransferSuite`
 - [#993](https://github.com/babylonlabs-io/babylon/pull/993) Remove async-icq
   module.
->>>>>>> a34969a (chore: Remove async-icq module (#993))
 
 ### State Machine Breaking
 
