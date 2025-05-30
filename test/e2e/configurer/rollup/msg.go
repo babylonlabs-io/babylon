@@ -56,3 +56,9 @@ type Proof struct {
 	LeafHash []byte   `json:"leaf_hash"`
 	Aunts    [][]byte `json:"aunts"`
 }
+
+type PubRandCommitResponse struct {
+	StartHeight uint64 `json:"start_height"`
+	NumPubRand  uint64 `json:"num_pub_rand"`
+	Commitment  []byte `json:"commitment"`
+}

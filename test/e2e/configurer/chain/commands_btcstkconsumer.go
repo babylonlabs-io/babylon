@@ -1,7 +1,6 @@
 package chain
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -11,8 +10,6 @@ import (
 
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/rollup"
 )
 
 // RegisterConsumerChain registers a Consumer chain
@@ -89,31 +86,6 @@ func (n *NodeConfig) CommitPubRandListConsumer(consumerId string, fpBtcPk *bbn.B
 		n.t.Fatalf("Finality contract address for consumer %s is not set", consumerId)
 	}
 
-	// Prepare the command to commit the public randomness list
-	n.LogActionF("Committing public randomness list to finality contract %s", finalityContractAddr)
-	// Prepare the command to commit the public randomness list
-	fpPkHex := fpBtcPk.MarshalHex()
-	commitPubRandMsg := rollup.CommitPublicRandomnessMsg{
-		CommitPublicRandomness: rollup.CommitPublicRandomnessMsgParams{
-			FpPubkeyHex: fpPkHex,
-			StartHeight: startHeight,
-			NumPubRand:  numPubRand,
-			Commitment:  commitment,
-			Signature:   sig.MustToBTCSig().Serialize(),
-		},
-	}
-	msg, err := json.Marshal(commitPubRandMsg)
-	require.NoError(n.t, err)
-
-	cmd := []string{"babylond", "tx", "wasm", "execute", finalityContractAddr, string(msg)}
-
-	// specify used key
-	cmd = append(cmd, "--from=val")
-
-	// gas
-	cmd = append(cmd, "--gas=500000")
-
-	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
-	require.NoError(n.t, err)
+	n.CommitPubRandListRollup(finalityContractAddr, fpBtcPk, startHeight, numPubRand, commitment, sig)
 	n.LogActionF("Successfully committed public randomness list")
 }
