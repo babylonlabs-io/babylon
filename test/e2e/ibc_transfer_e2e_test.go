@@ -358,7 +358,7 @@ func (s *IBCTransferTestSuite) Test5RateLimitE2EAboveThreshold() {
 	nB, err := bbnChainB.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	packetAmount := sdkmath.NewInt(100_000001) // above the threshold and should fail
+	packetAmount := sdkmath.NewInt(10_000001) // above the threshold and should fail
 	transferCoin := sdk.NewCoin(nativeDenom, packetAmount)
 
 	nA.BankSendFromNode(s.addrB, transferCoin.String())

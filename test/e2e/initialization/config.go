@@ -409,7 +409,7 @@ func applyRateLimitsToChainConfig(rateLimiterGenState *ratelimiter.GenesisState)
 		Flow: &ratelimiter.Flow{
 			Inflow:       sdkmath.NewInt(0),
 			Outflow:      sdkmath.NewInt(0),
-			ChannelValue: sdkmath.NewInt(100_000000),
+			ChannelValue: sdkmath.NewInt(10_000000),
 		},
 	}
 
