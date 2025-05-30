@@ -15,7 +15,6 @@ import (
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
@@ -40,7 +39,6 @@ var (
 		incentivetypes.ModuleName:    nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:          nil,
-		icqtypes.ModuleName:          nil,
 	}
 )
 
