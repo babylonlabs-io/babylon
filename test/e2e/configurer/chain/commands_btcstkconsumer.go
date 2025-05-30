@@ -6,10 +6,12 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/stretchr/testify/require"
+	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+
+	"github.com/stretchr/testify/require"
 )
 
 // RegisterConsumerChain registers a Consumer chain
@@ -80,12 +82,52 @@ func (n *NodeConfig) CommitPubRandListConsumer(consumerId string, fpBtcPk *bbn.B
 		n.t.Fatalf("Consumer %s is not registered on %s", consumerId, n.chainId)
 	}
 
-	// TODO: Support Cosmos Consumers
 	finalityContractAddr := consumer.ConsumerRegisters[0].EthL2FinalityContractAddress
+	// TODO: Support Cosmos Consumers
 	if finalityContractAddr == "" {
 		n.t.Fatalf("Finality contract address for consumer %s is not set", consumerId)
 	}
 
 	n.CommitPubRandListRollup(finalityContractAddr, fpBtcPk, startHeight, numPubRand, commitment, sig)
 	n.LogActionF("Successfully committed public randomness list")
+}
+
+func (n *NodeConfig) AddFinalitySigConsumer(consumerId string,
+	fpBTCPK *bbn.BIP340PubKey,
+	blockHeight uint64,
+	pubRand *bbn.SchnorrPubRand,
+	proof cmtcrypto.Proof,
+	appHash []byte,
+	finalitySig *bbn.SchnorrEOTSSig,
+	overallFlags ...string,
+) {
+	if consumerId == "" {
+		// Use the chain ID as the consumer
+		consumerId = n.chainId
+	}
+	n.LogActionF("Submitting finality signature for %s", consumerId)
+
+	if consumerId == n.chainId {
+		n.AddFinalitySig(fpBTCPK, blockHeight, pubRand, proof, appHash, finalitySig, overallFlags...)
+		return
+	}
+
+	// Get the consumer registration data
+	consumer := n.QueryBTCStkConsumerConsumer(consumerId)
+	if consumer == nil {
+		n.t.Fatalf("Consumer %s not found", consumerId)
+	}
+
+	if consumer.ConsumerRegisters == nil || len(consumer.ConsumerRegisters) == 0 {
+		n.t.Fatalf("Consumer %s is not registered on %s", consumerId, n.chainId)
+	}
+
+	finalityContractAddr := consumer.ConsumerRegisters[0].EthL2FinalityContractAddress
+	// TODO: Support Cosmos Consumers
+	if finalityContractAddr == "" {
+		n.t.Fatalf("Finality contract address for consumer %s is not set", consumerId)
+	}
+
+	n.AddFinalitySigRollup(finalityContractAddr, fpBTCPK, blockHeight, pubRand, proof, appHash, finalitySig, overallFlags...)
+	n.LogActionF("Successfully added finality signature")
 }
