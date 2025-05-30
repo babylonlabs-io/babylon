@@ -13,7 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 )
 
 // TestEpochFinalization checks whether we can finalize some epochs
@@ -38,6 +40,25 @@ func TestEpochFinalization(t *testing.T) {
 	require.Equal(t, epoch2.EpochNumber, uint64(2))
 
 	driver.FinializeCkptForEpoch(epoch1.EpochNumber)
+
+	blocks := driver.GetFinalizedBlocks()
+	// blocks := driver.GetFinalizedBlocks()
+	for _, block := range blocks {
+		// Get the block's state from driver
+		response, err := driver.StateStore.LoadFinalizeBlockResponse(int64(block.Height))
+		require.NoError(t, err)
+
+		// Print block details
+		t.Logf("Block %d:", block.Height)
+		t.Logf("  - Block Hash: %x", block.Block.Hash())
+		t.Logf("  - App Hash: %x", response.AppHash)
+		t.Logf("  - Number of Txs: %d", len(block.Block.Txs))
+
+		// If you want to see transactions in the block
+		// for j, tx := range block.Block.Txs {
+		// 	t.Logf("    Tx %d: %x", j, tx)
+		// }
+	}
 }
 
 func FuzzCreatingAndActivatingDelegations(f *testing.F) {
@@ -93,7 +114,7 @@ func TestFinalityProviderRegistration(t *testing.T) {
 	infos := driver.CreateNFinalityProviderAccounts(numFp)
 
 	for _, info := range infos {
-		info.RegisterFinalityProvider()
+		info.RegisterFinalityProvider("")
 	}
 
 	driver.GenerateNewBlock()
@@ -115,7 +136,7 @@ func TestFinalityProviderCommitRandomness(t *testing.T) {
 	fp1 := infos[0]
 
 	// register and commit in one block
-	fp1.RegisterFinalityProvider()
+	fp1.RegisterFinalityProvider("")
 	fp1.CommitRandomness()
 
 	driver.GenerateNewBlock()
@@ -135,16 +156,15 @@ func TestSendingDelegation(t *testing.T) {
 	sinfos := driver.CreateNStakerAccounts(1)
 	s1 := sinfos[0]
 
-	fp1.RegisterFinalityProvider()
+	fp1.RegisterFinalityProvider("")
 
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
-	msg := s1.CreatePreApprovalDelegation(
-		fp1.BTCPublicKey(),
+	s1.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
 		1000,
 		100000000,
 	)
-	require.NotNil(t, msg)
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
 	delegations := driver.GetAllBTCDelegations(t)
@@ -168,15 +188,14 @@ func TestSendingCovenantSignatures(t *testing.T) {
 	sinfos := driver.CreateNStakerAccounts(1)
 	s1 := sinfos[0]
 
-	fp1.RegisterFinalityProvider()
+	fp1.RegisterFinalityProvider("")
 	driver.GenerateNewBlock()
 
-	msg := s1.CreatePreApprovalDelegation(
-		fp1.BTCPublicKey(),
+	s1.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
 		1000,
 		100000000,
 	)
-	require.NotNil(t, msg)
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
 	pendingDels := driver.GetPendingBTCDelegations(t)
@@ -206,16 +225,14 @@ func TestActivatingDelegation(t *testing.T) {
 	sinfos := driver.CreateNStakerAccounts(1)
 	s1 := sinfos[0]
 
-	fp1.RegisterFinalityProvider()
+	fp1.RegisterFinalityProvider("")
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
-	msg := s1.CreatePreApprovalDelegation(
-		fp1.BTCPublicKey(),
+	s1.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
 		1000,
 		100000000,
 	)
-	require.NotNil(t, msg)
-
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
 	covSender.SendCovenantSignatures()
@@ -242,7 +259,7 @@ func TestVoting(t *testing.T) {
 	s1 := sinfos[0]
 	require.NotNil(t, s1)
 
-	fp1.RegisterFinalityProvider()
+	fp1.RegisterFinalityProvider("")
 	driver.GenerateNewBlockAssertExecutionSuccess()
 	fp1.CommitRandomness()
 	driver.GenerateNewBlockAssertExecutionSuccess()
@@ -252,13 +269,11 @@ func TestVoting(t *testing.T) {
 	driver.ProgressTillFirstBlockTheNextEpoch()
 	driver.FinializeCkptForEpoch(currnetEpochNunber)
 
-	msg := s1.CreatePreApprovalDelegation(
-		fp1.BTCPublicKey(),
+	s1.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
 		1000,
 		100000000,
 	)
-	require.NotNil(t, msg)
-
 	driver.GenerateNewBlockAssertExecutionSuccess()
 	covSender.SendCovenantSignatures()
 	driver.GenerateNewBlockAssertExecutionSuccess()
@@ -279,6 +294,13 @@ func TestVoting(t *testing.T) {
 	block := driver.GetIndexedBlock(activationHeight)
 	require.NotNil(t, block)
 	require.True(t, block.Finalized)
+
+	// Replay all the blocks from driver and check appHash
+	replayer := NewBlockReplayer(t, replayerTempDir)
+	replayer.ReplayBlocks(t, driver.GetFinalizedBlocks())
+	// after replay we should have the same apphash
+	require.Equal(t, driver.GetLastState().LastBlockHeight, replayer.LastState.LastBlockHeight)
+	require.Equal(t, driver.GetLastState().AppHash, replayer.LastState.AppHash)
 }
 
 func TestStakingAndFinalizingBlocks(t *testing.T) {
@@ -422,7 +444,7 @@ func TestActivatingDelegationOnSlashedFp(t *testing.T) {
 
 	for j := 0; j < 1; j++ {
 		scenario.stakers[0].CreatePreApprovalDelegation(
-			scenario.finalityProviders[0].BTCPublicKey(),
+			[]*bbn.BIP340PubKey{scenario.finalityProviders[0].BTCPublicKey()},
 			1000,
 			100000000,
 		)
@@ -572,4 +594,153 @@ func MakeInnerMsg(t *testing.T) *stakingtypes.MsgCreateValidator {
 	)
 	require.NoError(t, err)
 	return msg
+}
+
+func TestMultiConsumerDelegation(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+	driver.GenerateNewBlock()
+
+	// 1. Register consumers with different max_multi_staked_fps limits
+	// Set up mock IBC clients for each consumer
+	ctx := driver.Ctx()
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, "consumer1", &ibctmtypes.ClientState{})
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, "consumer2", &ibctmtypes.ClientState{})
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, "consumer3", &ibctmtypes.ClientState{})
+
+	// 2. Create and register finality providers for each consumer
+	// fp1 := driver.CreateFinalityProviderForConsumer(consumer1)
+	// fp2 := driver.CreateFinalityProviderForConsumer(consumer2)
+	// fp3 := driver.CreateFinalityProviderForConsumer(consumer3)
+	// Create a Babylon FP (registered without consumer ID)
+	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
+	babylonFp.RegisterFinalityProvider("")
+
+	// Generate blocks to process registrations
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	// 3. Create a delegation with FPs from different consumers
+	staker := driver.CreateNStakerAccounts(1)[0]
+
+	// Create a delegation with three consumer FPs and one Babylon FP - should fail because total FPs (4) > min(max_multi_staked_fps) which is 2
+	// staker.CreatePreApprovalDelegation(
+	// 	[]*bbn.BIP340PubKey{fp1.BTCPublicKey(), fp2.BTCPublicKey(), fp3.BTCPublicKey(), babylonFp.BTCPublicKey()},
+	// 	1000,
+	// 	100000000,
+	// )
+	// driver.GenerateNewBlockAssertExecutionFailure()
+
+	// 4. Create a valid delegation with 2 FPs (including Babylon FP)
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{babylonFp.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	// 5. Replay all blocks and verify state
+	replayer := NewBlockReplayer(t, replayerTempDir)
+
+	// Set up IBC client states in the replayer before replaying blocks
+	replayerCtx := replayer.App.BaseApp.NewContext(false)
+	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, "consumer1", &ibctmtypes.ClientState{})
+	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, "consumer2", &ibctmtypes.ClientState{})
+	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, "consumer3", &ibctmtypes.ClientState{})
+
+	// // Debug: Print the blocks we're about to replay
+	// blocks := driver.GetFinalizedBlocks()
+	// t.Logf("Number of blocks to replay: %d", len(blocks))
+
+	// // Debug: Print the final state of the driver
+	// driverState := driver.GetLastState()
+	// t.Logf("Driver final state - Height: %d, AppHash: %x", driverState.LastBlockHeight, driverState.AppHash)
+
+	// // Debug: Print state before replay
+	// t.Logf("Replayer initial state - Height: %d, AppHash: %x", replayer.LastState.LastBlockHeight, replayer.LastState.AppHash)
+
+	// Replay all the blocks from driver and check appHash
+	// replayer := NewBlockReplayer(t, replayerTempDir)
+	replayer.ReplayBlocks(t, driver.GetFinalizedBlocks())
+	// after replay we should have the same apphash
+	require.Equal(t, driver.GetLastState().LastBlockHeight, replayer.LastState.LastBlockHeight)
+	require.Equal(t, driver.GetLastState().AppHash, replayer.LastState.AppHash)
+
+	// lastState, err := driver.StateStore.Load()
+	// require.NoError(t, err)
+	// require.NotNil(t, lastState)
+	// // iterate blocks
+	// for i, block := range blocks {
+	// 	height := block.Height
+	// 	// Get state at this height by loading the finalize block response
+	// 	response, err := driver.StateStore.LoadFinalizeBlockResponse(int64(height))
+	// 	require.NoError(t, err)
+	// 	require.NotNil(t, response)
+	// 	t.Logf("Driver at height %d - Height: %d, AppHash: %x", i, i, response.AppHash)
+	// }
+
+	// Print each block's information
+	// for _, block := range blocks {
+	// 	// Get the block's state from driver
+	// 	response, err := driver.StateStore.LoadFinalizeBlockResponse(int64(block.Height))
+	// 	require.NoError(t, err)
+
+	// 	// Print block details
+	// 	t.Logf("Block %d:", block.Height)
+	// 	t.Logf("  - Block Hash: %x", block.Block.Hash())
+	// 	t.Logf("  - App Hash: %x", response.AppHash)
+	// 	t.Logf("  - Number of Txs: %d", len(block.Block.Txs))
+
+	// 	// If you want to see transactions in the block
+	// 	// for j, tx := range block.Block.Txs {
+	// 	// 	t.Logf("    Tx %d: %x", j, tx)
+	// 	// }
+	// }
+
+	// Print final driver state
+	// driverState := driver.GetLastState()
+	// t.Logf("Driver final state - Height: %d, AppHash: %x",
+	// 	driverState.LastBlockHeight, driverState.AppHash)
+
+	// // Print replayer initial state
+	// t.Logf("Replayer initial state - Height: %d, AppHash: %x",
+	// 	replayer.LastState.LastBlockHeight, replayer.LastState.AppHash)
+
+	// for i := int64(1); i <= lastState.LastBlockHeight; i++ {
+	// 	block := driver.BlockStore.LoadBlock(i)
+	// 	require.NotNil(t, block)
+	// 	// Get state at this height by loading the finalize block response
+	// 	response, err := driver.StateStore.LoadFinalizeBlockResponse(i)
+	// 	require.NoError(t, err)
+	// 	require.NotNil(t, response)
+	// 	t.Logf("Driver at height %d - Height: %d, AppHash: %x", i, i, response.AppHash)
+	// }
+
+	// Debug: Print state after each block
+	// for i, block := range blocks {
+	// 	blockID, _ := getBlockId(t, block.Block)
+	// 	state, err := replayer.BlockExec.ApplyVerifiedBlock(replayer.LastState, blockID, block.Block)
+	// 	require.NoError(t, err)
+	// 	require.NotNil(t, state)
+	// 	replayer.LastState = state.Copy()
+	// 	t.Logf("Block %d - Replayer Height: %d, AppHash: %x", i, state.LastBlockHeight, state.AppHash)
+	// }
+
+	// 	// Compare states at this height
+	// 	require.Equal(t, driverStateAtHeight.LastBlockHeight, state.LastBlockHeight)
+	// 	require.Equal(t, driverStateAtHeight.AppHash, state.AppHash)
+	// }
+
+	// // Final state comparison
+	// require.Equal(t, driver.GetLastState().LastBlockHeight, replayer.LastState.LastBlockHeight)
+	// require.Equal(t, driver.GetLastState().AppHash, replayer.LastState.AppHash)
+
+	// Replay all the blocks from driver and check appHash
+	// replayer := NewBlockReplayer(t, replayerTempDir)
+	// replayer.ReplayBlocks(t, driver.GetFinalizedBlocks())
+	// // after replay we should have the same apphash
+	// require.Equal(t, driver.GetLastState().LastBlockHeight, replayer.LastState.LastBlockHeight)
+	// require.Equal(t, driver.GetLastState().AppHash, replayer.LastState.AppHash)
 }
