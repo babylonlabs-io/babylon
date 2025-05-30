@@ -79,7 +79,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	nA.BankSendFromNode(s.addrA, "10000000ubbn")
 
 	s.addrB = nB.KeysAdd("addr-B")
-	nB.BankSendFromNode(s.addrB, "110000000ubbn")
+	nB.BankSendFromNode(s.addrB, "10000000ubbn")
 
 	nB.WaitForNextBlock()
 	nA.WaitForNextBlock()
@@ -358,12 +358,6 @@ func (s *IBCTransferTestSuite) Test5RateLimitE2EAboveThreshold() {
 	nB, err := bbnChainB.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	packetAmount := sdkmath.NewInt(11_000001) // above the threshold and should fail
-	transferCoin := sdk.NewCoin(nativeDenom, packetAmount)
-
-	nA.BankSendFromNode(s.addrB, transferCoin.String())
-	nA.WaitForNextBlock()
-
 	balanceBeforeTransferA, err := nA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
 	s.T().Logf("Balance before transfer for addrA: %s", balanceBeforeTransferA.String())
@@ -371,7 +365,10 @@ func (s *IBCTransferTestSuite) Test5RateLimitE2EAboveThreshold() {
 	_, err = nB.QueryBalances(s.addrB)
 	s.Require().NoError(err)
 
+	packetAmount := sdkmath.NewInt(1_000_001) // above the threshold and should fail
 	channel := "channel-0"
+
+	transferCoin := sdk.NewCoin(nativeDenom, packetAmount)
 
 	s.T().Log("Attempting to send IBC transfer...")
 	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, channel, transferCoin)
