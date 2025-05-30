@@ -58,6 +58,19 @@ transfer stack
 - [#902](https://github.com/babylonlabs-io/babylon/pull/902) Add IBC rate limiter to IBC transfer module
 - [#913](https://github.com/babylonlabs-io/babylon/pull/913) Remove IBC-fee module.
 - [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
+<<<<<<< HEAD
+=======
+- [#943](https://github.com/babylonlabs-io/babylon/pull/943) Adds consumer event in `x/btcstakingconsumer` module
+- [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
+- [#967](https://github.com/babylonlabs-io/babylon/pull/967) Add `ValidateBasic` in `MsgInsertBTCSpvProof` (`x/btccheckpoint`)
+- [#969](https://github.com/babylonlabs-io/babylon/pull/969) Add `ValidateBasic` to `MsgSelectiveSlashingEvidence` in `x/btcstaking` module
+- [#974](https://github.com/babylonlabs-io/babylon/pull/974) Update Mergify rules for automatic backport changes to `v2`, `v3` and `v4`
+- [#977](https://github.com/babylonlabs-io/babylon/pull/977) Update `ValidateBasic` in `x/finality` module messages
+- [#981](https://github.com/babylonlabs-io/babylon/pull/981) Set IBC rate limit for `ubbn` to 10%
+- [#992](https://github.com/babylonlabs-io/babylon/pull/992) Add checks for bad halting height in `HandleResumeFinalityProposal`
+- [#988](https://github.com/babylonlabs-io/babylon/pull/988) Fix flaky e2e ibc test
+`TestIBCTransferSuite`
+>>>>>>> 26a7ea8 (fix: resume fp halt height (#992))
 
 ### State Machine Breaking
 
