@@ -55,7 +55,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		includeAsyncICQ bool
 	}{
 		{
-			"Test launch software upgrade v2 with async ICQ included",
+			"Test launch software upgrade v2 with async ICQ not included",
 			sample.MainnetBtcHeader854784(s.T()),
 			s.PreUpgrade,
 			s.Upgrade,
