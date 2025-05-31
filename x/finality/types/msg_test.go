@@ -489,7 +489,7 @@ func TestMsgResumeFinalityProposal_ValidateBasic(t *testing.T) {
 				FpPksHex:      []string{validPk1Hex},
 				HaltingHeight: 0,
 			},
-			expErr: types.ErrInvalidEquivocationEvidence.Wrap("halting height is zero"),
+			expErr: types.ErrInvalidResumeFinality.Wrap("halting height is zero"),
 		},
 		{
 			name: "invalid: no fp pk",
@@ -498,7 +498,7 @@ func TestMsgResumeFinalityProposal_ValidateBasic(t *testing.T) {
 				FpPksHex:      []string{},
 				HaltingHeight: validHalting,
 			},
-			expErr: types.ErrInvalidEquivocationEvidence.Wrap("no fp pk hex set"),
+			expErr: types.ErrInvalidResumeFinality.Wrap("no fp pk hex set"),
 		},
 		{
 			name: "invalid: bad pk",
@@ -507,7 +507,7 @@ func TestMsgResumeFinalityProposal_ValidateBasic(t *testing.T) {
 				FpPksHex:      []string{"xxxx"},
 				HaltingHeight: validHalting,
 			},
-			expErr: types.ErrInvalidEquivocationEvidence.Wrapf("failed to parse FP BTC PK Hex (xxxx) into BIP-340"),
+			expErr: types.ErrInvalidResumeFinality.Wrapf("failed to parse FP BTC PK Hex (xxxx) into BIP-340"),
 		},
 		{
 			name: "invalid: duplicate fp",
@@ -516,7 +516,7 @@ func TestMsgResumeFinalityProposal_ValidateBasic(t *testing.T) {
 				FpPksHex:      []string{validPk1Hex, validPk2Hex, validPk1Hex},
 				HaltingHeight: validHalting,
 			},
-			expErr: types.ErrInvalidEquivocationEvidence.Wrapf("duplicated FP BTC PK Hex (%s)", validPk1Hex),
+			expErr: types.ErrInvalidResumeFinality.Wrapf("duplicated FP BTC PK Hex (%s)", validPk1Hex),
 		},
 	}
 

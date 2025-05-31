@@ -199,22 +199,22 @@ func (m *MsgResumeFinalityProposal) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid authority address (%s)", err)
 	}
 	if m.HaltingHeight == 0 {
-		return ErrInvalidEquivocationEvidence.Wrap("halting height is zero")
+		return ErrInvalidResumeFinality.Wrap("halting height is zero")
 	}
 	if len(m.FpPksHex) == 0 {
-		return ErrInvalidEquivocationEvidence.Wrap("no fp pk hex set")
+		return ErrInvalidResumeFinality.Wrap("no fp pk hex set")
 	}
 
 	fps := make(map[string]struct{})
 	for _, fpPkHex := range m.FpPksHex {
 		_, err := bbntypes.NewBIP340PubKeyFromHex(fpPkHex)
 		if err != nil {
-			return ErrInvalidEquivocationEvidence.Wrapf("failed to parse FP BTC PK Hex (%s) into BIP-340", fpPkHex)
+			return ErrInvalidResumeFinality.Wrapf("failed to parse FP BTC PK Hex (%s) into BIP-340", fpPkHex)
 		}
 
 		_, found := fps[fpPkHex]
 		if found {
-			return ErrInvalidEquivocationEvidence.Wrapf("duplicated FP BTC PK Hex (%s)", fpPkHex)
+			return ErrInvalidResumeFinality.Wrapf("duplicated FP BTC PK Hex (%s)", fpPkHex)
 		}
 		fps[fpPkHex] = struct{}{}
 	}
