@@ -78,7 +78,7 @@ func (n *NodeConfig) CommitPubRandListConsumer(consumerId string, fpBtcPk *bbn.B
 		n.t.Fatalf("Consumer %s not found", consumerId)
 	}
 
-	if consumer.ConsumerRegisters == nil || len(consumer.ConsumerRegisters) == 0 {
+	if len(consumer.ConsumerRegisters) == 0 {
 		n.t.Fatalf("Consumer %s is not registered on %s", consumerId, n.chainId)
 	}
 
@@ -118,7 +118,7 @@ func (n *NodeConfig) AddFinalitySigConsumer(consumerId string,
 		n.t.Fatalf("Consumer %s not found", consumerId)
 	}
 
-	if consumer.ConsumerRegisters == nil || len(consumer.ConsumerRegisters) == 0 {
+	if len(consumer.ConsumerRegisters) == 0 {
 		n.t.Fatalf("Consumer %s is not registered on %s", consumerId, n.chainId)
 	}
 
