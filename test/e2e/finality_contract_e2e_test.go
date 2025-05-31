@@ -394,24 +394,19 @@ func (s *FinalityContractTestSuite) Test6SubmitFinalitySignatura() {
 
 	nonValidatorNode.AddFinalitySigConsumer(ConsumerID, s.consumerFp.BtcPk, startHeight, &s.randListInfo.PRList[idx], *s.randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
-	// Query the finality signatures from the finality contract
-	/*
-		queryMsg := map[string]interface{}{
-			"block_voters": map[string]interface{}{
-				"height": blockToVote.Height,
-				// it requires the block hash without the 0x prefix
-				"hash": strings.TrimPrefix(hex.EncodeToString(blockToVote.AppHash), "0x"),
-			},
+	// Query the finality signature from the finality contract
+
+	s.Eventually(func() bool {
+		blockVoters := nonValidatorNode.QueryBlockVotersRollup(s.finalityContractAddr, blockToVote.Height, blockToVote.AppHash)
+		if blockVoters == nil {
+			return false
 		}
-
-		// Query block_voters from finality gadget CW contract
-		queryResponse := ctm.queryCwContract(t, queryMsg, ctx)
-		var voters []string
-		err = json.Unmarshal(queryResponse.Data, &voters)
-		require.NoError(t, err)
-
-		// check the voter, it should be the consumer FP public key
-		require.Equal(t, 1, len(voters))
-		require.Equal(t, consumerFpPk.MarshalHex(), voters[0])
-	*/
+		s.Equal(1, len(blockVoters))
+		s.Equal(s.consumerFp.BtcPk.MarshalHex(), blockVoters[0])
+		s.T().Logf("Finality signature found for block height %d with app hash %x: voter %s",
+			blockToVote.Height,
+			blockToVote.AppHash,
+			s.consumerFp.BtcPk.MarshalHex())
+		return true
+	}, time.Second*10, time.Second, "Voters for the block were not found within the expected time")
 }
