@@ -39,6 +39,8 @@ type QueryMsg struct {
 	Config             *Config        `json:"config,omitempty"`
 	FirstPubRandCommit *PubRandCommit `json:"first_pub_rand_commit,omitempty"`
 	LastPubRandCommit  *PubRandCommit `json:"last_pub_rand_commit,omitempty"`
+	// BlockVoters is used to query the voters for a specific block
+	BlockVoters *BlockVoters `json:"block_voters,omitempty"`
 }
 
 type Config struct{}
@@ -62,3 +64,12 @@ type PubRandCommitResponse struct {
 	NumPubRand  uint64 `json:"num_pub_rand"`
 	Commitment  []byte `json:"commitment"`
 }
+
+type BlockVoters struct {
+	Height uint64 `json:"height"`
+	// The block app hash is expected to be in hex format, without the 0x prefix
+	Hash string `json:"hash"`
+}
+
+// List of finality provider public keys who voted for the block
+type BlockVotersResponse []string
