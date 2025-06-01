@@ -130,21 +130,11 @@ func GenRandomEvidence(r *rand.Rand, sk *btcec.PrivateKey, height uint64) (*ftyp
 	return evidence, nil
 }
 
-func GenRandomBlock(r *rand.Rand, height uint64) *ftypes.IndexedBlock {
+func GenRandomBlock(r *rand.Rand) *ftypes.IndexedBlock {
 	return &ftypes.IndexedBlock{
-		Height:  height,
+		Height:  RandomInt(r, 1000000),
 		AppHash: GenRandomByteArray(r, 32),
 	}
-}
-
-func GenRandomBlocks(r *rand.Rand, startHeight, endHeight uint64) []*ftypes.IndexedBlock {
-	blocks := make([]*ftypes.IndexedBlock, 0)
-	for i := startHeight; i <= endHeight; i++ {
-		b := GenRandomBlock(r, i)
-		blocks = append(blocks, b)
-	}
-
-	return blocks
 }
 
 func GenRandomBlockWithHeight(r *rand.Rand, height uint64) *ftypes.IndexedBlock {

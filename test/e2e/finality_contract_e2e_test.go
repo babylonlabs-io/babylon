@@ -381,7 +381,7 @@ func (s *FinalityContractTestSuite) Test6SubmitFinalitySignatura() {
 	// Get blocks to vote
 	// Mock a block with start height 1
 	startHeight := uint64(1)
-	blockToVote := datagen.GenRandomBlock(s.r, startHeight)
+	blockToVote := datagen.GenRandomBlockWithHeight(s.r, startHeight)
 
 	appHash := blockToVote.AppHash
 
