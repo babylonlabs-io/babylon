@@ -78,6 +78,7 @@ check of rewards
 - [#988](https://github.com/babylonlabs-io/babylon/pull/988) Fix flaky e2e ibc test
 `TestIBCTransferSuite`
 - [#943](https://github.com/babylonlabs-io/babylon/pull/943) Adds consumer event in `x/btcstakingconsumer` module
+- [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
 
 ### State Machine Breaking
 

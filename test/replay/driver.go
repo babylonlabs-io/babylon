@@ -16,10 +16,9 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/btctxformatter"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btckckpttypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 
 	"cosmossdk.io/log"
-	"cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
@@ -53,14 +52,13 @@ import (
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
 	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 var validatorConfig = &initialization.NodeConfig{
@@ -83,7 +81,7 @@ const (
 )
 
 var (
-	defaultFeeCoin                 = sdk.NewCoin("ubbn", math.NewInt(defaultFee))
+	defaultFeeCoin                 = sdk.NewCoin("ubbn", sdkmath.NewInt(defaultFee))
 	BtcParams                      = &chaincfg.SimNetParams
 	covenantSKs, _, CovenantQuorum = bstypes.DefaultCovenantCommittee()
 )
@@ -133,8 +131,8 @@ type BabylonAppDriver struct {
 	*SenderInfo
 	r                *rand.Rand
 	t                *testing.T
-	App              *app.BabylonApp
-	BlsSigner        checkpointingtypes.BlsSigner
+	App              *babylonApp.BabylonApp
+	BlsSigner        ckpttypes.BlsSigner
 	BlockExec        *sm.BlockExecutor
 	BlockStore       *store.BlockStore
 	StateStore       sm.Store
@@ -613,6 +611,23 @@ func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
 	}
 }
 
+func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionFailure() []*abci.ExecTxResult {
+	response := d.GenerateNewBlock()
+	var txResults []*abci.ExecTxResult
+
+	for _, tx := range response.TxResults {
+		// ignore checkpoint txs
+		if tx.GasWanted == 0 {
+			continue
+		}
+
+		require.NotEqual(d.t, tx.Code, uint32(0), tx.Log)
+		txResults = append(txResults, tx)
+	}
+
+	return txResults
+}
+
 func (d *BabylonAppDriver) GetDriverAccountAddress() sdk.AccAddress {
 	return sdk.AccAddress(d.SenderInfo.privKey.PubKey().Address())
 }
@@ -969,4 +984,43 @@ func (d *BabylonAppDriver) GovPropWaitPass(msgInGovProp sdk.Msg) {
 
 		d.GenerateNewBlockAssertExecutionSuccess()
 	}
+}
+
+// Consumer represents a registered consumer chain
+type Consumer struct {
+	ID                string
+	MaxMultiStakedFps uint32
+}
+
+// RegisterConsumer registers a new consumer with the given max_multi_staked_fps limit
+func (d *BabylonAppDriver) RegisterConsumer(consumerID string, maxMultiStakedFps uint32, ethL2ContractAddr ...string) *Consumer {
+	msg := &btcstkconsumertypes.MsgRegisterConsumer{
+		Signer:              d.GetDriverAccountAddress().String(),
+		ConsumerId:          consumerID,
+		ConsumerName:        "Test Consumer " + consumerID,
+		ConsumerDescription: "Test consumer for replay tests",
+		MaxMultiStakedFps:   maxMultiStakedFps,
+	}
+
+	// If ETH L2 contract address is provided, set it
+	if len(ethL2ContractAddr) > 0 {
+		msg.EthL2FinalityContractAddress = ethL2ContractAddr[0]
+	}
+
+	d.SendTxWithMsgsFromDriverAccount(d.t, msg)
+
+	return &Consumer{
+		ID:                consumerID,
+		MaxMultiStakedFps: maxMultiStakedFps,
+	}
+}
+
+// CreateFinalityProviderForConsumer creates a finality provider for the given consumer
+func (d *BabylonAppDriver) CreateFinalityProviderForConsumer(consumer *Consumer) *FinalityProvider {
+	fp := d.CreateNFinalityProviderAccounts(1)[0]
+
+	// Register the finality provider with the consumer ID
+	fp.RegisterFinalityProvider(consumer.ID)
+
+	return fp
 }
