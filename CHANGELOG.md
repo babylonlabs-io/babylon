@@ -50,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 `TestIBCTransferSuite`
 - [#992](https://github.com/babylonlabs-io/babylon/pull/992) Add checks for bad halting height in `HandleResumeFinalityProposal`
 - [#993](https://github.com/babylonlabs-io/babylon/pull/993) Remove async-icq
+- [#994](https://github.com/babylonlabs-io/babylon/pull/994) Soft fork ibcratelimit to call `BeginBlock`
 
 ### State Machine Breaking
 
