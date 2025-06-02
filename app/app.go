@@ -275,6 +275,15 @@ func NewBabylonApp(
 		BlockedAddresses(),
 	)
 
+	// Create IBC Tendermint Light Client Stack
+	clientKeeper := app.IBCKeeper.ClientKeeper
+	tmLightClientModule := ibctm.NewLightClientModule(appCodec, clientKeeper.GetStoreProvider())
+	clientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
+
+	// TODO: Do we we need this ?
+	//wasmLightClientModule := ibcwasm.NewLightClientModule(app.WasmClientKeeper, clientKeeper.GetStoreProvider())
+	//clientKeeper.AddRoute(ibcwasmtypes.ModuleName, &wasmLightClientModule)
+
 	/****  Module Options ****/
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
