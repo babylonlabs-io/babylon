@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#981](https://github.com/babylonlabs-io/babylon/pull/981) Set IBC rate limit for `ubbn` to 10%
+- [#1013](https://github.com/babylonlabs-io/babylon/pull/1013) Update to ibc rate limit `v8.1.0`
 
 ## v2.0.0-rc.1
 
@@ -49,11 +50,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#992](https://github.com/babylonlabs-io/babylon/pull/992) Add checks for bad halting height in `HandleResumeFinalityProposal`
 - [#993](https://github.com/babylonlabs-io/babylon/pull/993) Remove async-icq
   module.
-<<<<<<< HEAD
-=======
-- [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
-- [#1013](https://github.com/babylonlabs-io/babylon/pull/1013) Update to ibc rate limit `v8.1.0`
->>>>>>> 5a0cc9d (chore: ibcratelimit `v8.1.0` begin blocker fix (#1013))
 
 ### State Machine Breaking
 
