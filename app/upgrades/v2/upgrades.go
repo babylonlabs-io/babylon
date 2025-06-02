@@ -46,6 +46,8 @@ const (
 	//
 	// To fully decouple from the module now, we hardcode the store name here.
 	InterchainQueryStoreName = "interchainquery"
+	// FeeMiddlewareStoreName defines the hardcoded store name for the fee middleware
+	FeeMiddlewareStoreName = "feeibc"
 )
 
 var (
@@ -66,8 +68,8 @@ func CreateUpgrade(includeAsyncICQ bool) upgrades.Upgrade {
 		UpgradeName:          UpgradeName,
 		CreateUpgradeHandler: CreateUpgradeHandler,
 		StoreUpgrades: store.StoreUpgrades{
-			Added:   []string{tokenfactorytypes.ModuleName, pfmroutertypes.StoreKey, icacontrollertypes.StoreKey, icahosttypes.StoreKey, ratelimittypes.StoreKey},
-			Deleted: []string{},
+			Added:   addedStoreUpgrades,
+			Deleted: []string{FeeMiddlewareStoreName},
 		},
 	}
 }
@@ -136,7 +138,7 @@ func addRateLimits(ctx sdk.Context, chk transfertypes.ChannelKeeper, rlk ratelim
 
 func addRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper, denom, channel string, percent sdkmath.Int, durationHours uint64) error {
 	addRateLimitMsg := ratelimittypes.MsgAddRateLimit{
-		// TODO: Add missing params
+		Authority:         appparams.AccGov.String(),
 		Denom:             denom,
 		ChannelOrClientId: channel,
 		MaxPercentSend:    percent,
