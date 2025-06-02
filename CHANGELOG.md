@@ -79,6 +79,7 @@ check of rewards
 `TestIBCTransferSuite`
 - [#943](https://github.com/babylonlabs-io/babylon/pull/943) Adds consumer event in `x/btcstakingconsumer` module
 - [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
+- [#1013](https://github.com/babylonlabs-io/babylon/pull/1013) Update to ibc rate limit `v8.1.0`
 - [#1018](https://github.com/babylonlabs-io/babylon/pull/1018) Improve genesis validations in `x/mint` and `x/btccheckpoint`
 
 ### State Machine Breaking
