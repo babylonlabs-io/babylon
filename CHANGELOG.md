@@ -46,6 +46,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#969](https://github.com/babylonlabs-io/babylon/pull/969) Add `ValidateBasic` to `MsgSelectiveSlashingEvidence` in `x/btcstaking` module
 - [#977](https://github.com/babylonlabs-io/babylon/pull/977) Update `ValidateBasic` in `x/finality` module messages
 - [#981](https://github.com/babylonlabs-io/babylon/pull/981) Set IBC rate limit for `ubbn` to 10%
+- [#988](https://github.com/babylonlabs-io/babylon/pull/988) Fix flaky e2e ibc test
+`TestIBCTransferSuite`
 
 ### State Machine Breaking
 
