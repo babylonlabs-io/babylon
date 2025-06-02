@@ -668,7 +668,7 @@ func (ak *AppKeepers) InitKeepers(
 	var transferStackV2 ibcapi.IBCModule
 	transferStackV2 = transferv2.NewIBCModule(ak.TransferKeeper)
 	transferStackV2 = ibccallbacksv2.NewIBCMiddleware(
-		transferv2.NewIBCModule(ak.TransferKeeper),
+		transferStackV2,
 		ak.IBCKeeper.ChannelKeeperV2,
 		wasmStackIBCHandler,
 		ak.IBCKeeper.ChannelKeeperV2,
