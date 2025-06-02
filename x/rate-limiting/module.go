@@ -3,8 +3,8 @@ package ratelimit
 import (
 	"context"
 
-	ratelimit "github.com/cosmos/ibc-apps/modules/rate-limiting/v8"
-	"github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
+	ratelimit "github.com/cosmos/ibc-apps/modules/rate-limiting/v10"
+	"github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
 
 	"cosmossdk.io/core/appmodule"
 	"github.com/cosmos/cosmos-sdk/codec"
