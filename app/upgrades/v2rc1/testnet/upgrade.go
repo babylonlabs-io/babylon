@@ -2,11 +2,12 @@ package testnet
 
 import (
 	"context"
+
 	store "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/babylonlabs-io/babylon/v4/app/keepers"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	v2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v2"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	v2 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2"
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
 
