@@ -93,6 +93,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		epochNum := uint64(i + 1)
 		e[i] = randomEpochEntry(r, epochNum)
 		s[i] = randomSubmissionEntry(r)
+		s[i].Data.Epoch = epochNum
 	}
 
 	chkptFinTimeout := datagen.RandomUInt32(r, 10000)
