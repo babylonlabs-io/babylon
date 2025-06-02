@@ -1,10 +1,9 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"sort"
-
-	"github.com/babylonlabs-io/babylon/v2/types"
 )
 
 // DefaultGenesis returns the default Capability genesis state
@@ -20,10 +19,11 @@ func DefaultGenesis() *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	if err := validateEpochs(gs.Epochs); err != nil {
+	epochsMap, err := validateEpochs(gs.Epochs)
+	if err != nil {
 		return err
 	}
-	if err := validateSubmissions(gs.Submissions); err != nil {
+	if err := validateSubmissions(gs.Submissions, epochsMap); err != nil {
 		return err
 	}
 	// Ensure LastFinalizedEpochNumber is <= max epoch number
@@ -40,16 +40,41 @@ func (gs GenesisState) Validate() error {
 	return gs.Params.Validate()
 }
 
-func validateEpochs(epochs []EpochEntry) error {
-	return types.ValidateEntries(epochs, func(e EpochEntry) uint64 {
-		return e.EpochNumber
-	})
+func validateEpochs(epochs []EpochEntry) (map[uint64]struct{}, error) {
+	epochsMap := make(map[uint64]struct{})
+	for _, e := range epochs {
+		key := e.EpochNumber
+		if _, exists := epochsMap[key]; exists {
+			return nil, fmt.Errorf("duplicate entry for key: %v", key)
+		}
+		epochsMap[key] = struct{}{}
+
+		if err := e.Validate(); err != nil {
+			return nil, err
+		}
+	}
+	return epochsMap, nil
 }
 
-func validateSubmissions(submissions []SubmissionEntry) error {
-	return types.ValidateEntries(submissions, func(s SubmissionEntry) *SubmissionKey {
-		return s.SubmissionKey
-	})
+func validateSubmissions(submissions []SubmissionEntry, epochsMap map[uint64]struct{}) error {
+	keyMap := make(map[*SubmissionKey]struct{})
+	for _, s := range submissions {
+		if err := s.Validate(); err != nil {
+			return err
+		}
+
+		key := s.SubmissionKey
+		if _, exists := keyMap[key]; exists {
+			return fmt.Errorf("duplicate entry for key: %v", key)
+		}
+		keyMap[key] = struct{}{}
+
+		// check epoch exists
+		if _, epochExists := epochsMap[s.Data.Epoch]; !epochExists {
+			return fmt.Errorf("epoch with number %d not found in genesis", s.Data.Epoch)
+		}
+	}
+	return nil
 }
 
 func (e EpochEntry) Validate() error {
@@ -57,8 +82,14 @@ func (e EpochEntry) Validate() error {
 }
 
 func (s SubmissionEntry) Validate() error {
+	if s.SubmissionKey == nil {
+		return errors.New("invalid SubmissionEntry. SubmissionKey is nil")
+	}
 	if err := s.SubmissionKey.Validate(); err != nil {
 		return err
+	}
+	if s.Data == nil {
+		return errors.New("invalid SubmissionEntry. Data is nil")
 	}
 	return s.Data.Validate()
 }

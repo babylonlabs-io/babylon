@@ -133,7 +133,7 @@ func (k Keeper) HandleActivatedFinalityProvider(ctx context.Context, fpPk *bbn.B
 	if err == nil {
 		// reset signing info
 		signingInfo.StartHeight = sdkCtx.HeaderInfo().Height
-		signingInfo.JailedUntil = time.Unix(0, 0)
+		signingInfo.JailedUntil = time.Unix(0, 0).UTC()
 	} else if errors.Is(err, collections.ErrNotFound) {
 		signingInfo = ftypes.NewFinalityProviderSigningInfo(
 			fpPk,
