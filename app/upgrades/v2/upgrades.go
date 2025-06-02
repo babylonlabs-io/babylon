@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	store "cosmossdk.io/store/types"
@@ -51,7 +52,7 @@ var (
 	// durations in hours
 	DailyDurationHours uint64 = 24
 	// limits (percentages)
-	DefaultDailyLimit = sdkmath.NewInt(20)
+	DefaultDailyLimit = sdkmath.NewInt(10)
 )
 
 func CreateUpgrade(includeAsyncICQ bool) upgrades.Upgrade {
