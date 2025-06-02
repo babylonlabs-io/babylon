@@ -45,6 +45,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					Transaction: datagen.GenRandomByteArray(r, 32),
 					Proof:       datagen.GenRandomByteArray(r, 32),
 				}},
+				Epoch: epochNum,
 			},
 		}
 		submissions = append(submissions, validSubmission)
@@ -83,11 +84,21 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "duplicate submissions",
 			genState: &types.GenesisState{
+				Epochs:      epochs,
 				Submissions: []types.SubmissionEntry{submissions[0], submissions[0]},
 				Params:      defaultParams,
 			},
 			valid:  false,
 			errMsg: "duplicate entry for key",
+		},
+		{
+			desc: "submission for an epoch that is not in genesis",
+			genState: &types.GenesisState{
+				Submissions: []types.SubmissionEntry{submissions[0]},
+				Params:      defaultParams,
+			},
+			valid:  false,
+			errMsg: "epoch with number 1 not found in genesis",
 		},
 		{
 			desc: "last finalized epoch greater than highest epoch",
