@@ -79,14 +79,8 @@ check of rewards
 - [#992](https://github.com/babylonlabs-io/babylon/pull/992) Add checks for bad halting height in `HandleResumeFinalityProposal`
 - [#988](https://github.com/babylonlabs-io/babylon/pull/988) Fix flaky e2e ibc test
 `TestIBCTransferSuite`
-<<<<<<< HEAD
 - [#993](https://github.com/babylonlabs-io/babylon/pull/993) Remove async-icq module.
-=======
-- [#993](https://github.com/babylonlabs-io/babylon/pull/993) Remove async-icq
-  module.
-- [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
 - [#1013](https://github.com/babylonlabs-io/babylon/pull/1013) Update to ibc rate limit `v8.1.0`
->>>>>>> 5a0cc9d (chore: ibcratelimit `v8.1.0` begin blocker fix (#1013))
 
 ### State Machine Breaking
 
