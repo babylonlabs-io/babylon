@@ -1,10 +1,12 @@
 package types
 
 import (
-	errorsmod "cosmossdk.io/errors"
 	"fmt"
+
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	bbntypes "github.com/babylonlabs-io/babylon/v2/types"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,6 +21,8 @@ var (
 	_ sdk.Msg = &MsgUpdateParams{}
 	_ sdk.Msg = &MsgAddFinalitySig{}
 	_ sdk.Msg = &MsgCommitPubRandList{}
+
+	_ sdk.HasValidateBasic = &MsgResumeFinalityProposal{}
 )
 
 const ExpectedCommitmentLengthBytes = 32
@@ -140,6 +144,34 @@ func (m *MsgCommitPubRandList) ValidateBasic() error {
 			"public rand commit start block height: %d is equal or higher than (start height + num pub rand) %d",
 			m.StartHeight, m.StartHeight+m.NumPubRand,
 		)
+	}
+
+	return nil
+}
+
+func (m *MsgResumeFinalityProposal) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid authority address (%s)", err)
+	}
+	if m.HaltingHeight == 0 {
+		return ErrInvalidResumeFinality.Wrap("halting height is zero")
+	}
+	if len(m.FpPksHex) == 0 {
+		return ErrInvalidResumeFinality.Wrap("no fp pk hex set")
+	}
+
+	fps := make(map[string]struct{})
+	for _, fpPkHex := range m.FpPksHex {
+		_, err := bbntypes.NewBIP340PubKeyFromHex(fpPkHex)
+		if err != nil {
+			return ErrInvalidResumeFinality.Wrapf("failed to parse FP BTC PK Hex (%s) into BIP-340", fpPkHex)
+		}
+
+		_, found := fps[fpPkHex]
+		if found {
+			return ErrInvalidResumeFinality.Wrapf("duplicated FP BTC PK Hex (%s)", fpPkHex)
+		}
+		fps[fpPkHex] = struct{}{}
 	}
 
 	return nil

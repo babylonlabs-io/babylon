@@ -657,6 +657,96 @@ func FuzzProcessAllPowerDistUpdateEvents_SlashActiveFp(f *testing.F) {
 	})
 }
 
+func TestApplyActiveFinalityProviders(t *testing.T) {
+	t.Parallel()
+
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	isSlashed := true
+
+	tcs := []struct {
+		title string
+
+		dc        *types.VotingPowerDistCache
+		maxActive uint32
+
+		expActiveFps uint32
+		expTotalVp   uint64
+	}{
+		{
+			title: "vp 150 2 active",
+
+			dc: &ftypes.VotingPowerDistCache{
+				FinalityProviders: []*ftypes.FinalityProviderDistInfo{
+					fp(t, r, 100, !isSlashed),
+					fp(t, r, 50, !isSlashed),
+				},
+			},
+
+			maxActive:    5,
+			expActiveFps: 2,
+			expTotalVp:   150,
+		},
+		{
+			title: "vp 250 6 active, 5 max",
+
+			dc: &ftypes.VotingPowerDistCache{
+				FinalityProviders: []*ftypes.FinalityProviderDistInfo{
+					fp(t, r, 50, !isSlashed),
+					fp(t, r, 50, !isSlashed),
+					fp(t, r, 50, !isSlashed),
+					fp(t, r, 50, !isSlashed),
+					fp(t, r, 50, !isSlashed),
+					fp(t, r, 50, !isSlashed),
+				},
+			},
+
+			maxActive:    5,
+			expActiveFps: 5,
+			expTotalVp:   250,
+		},
+		{
+			title: "vp 1000 2 active, 1 slash, 1 zero vp",
+
+			dc: &ftypes.VotingPowerDistCache{
+				FinalityProviders: []*ftypes.FinalityProviderDistInfo{
+					fp(t, r, 500, !isSlashed),
+					fp(t, r, 500, !isSlashed),
+					fp(t, r, 0, !isSlashed),
+					fp(t, r, 500, isSlashed),
+				},
+			},
+
+			maxActive:    5,
+			expActiveFps: 2,
+			expTotalVp:   1000,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.title, func(t *testing.T) {
+			t.Parallel()
+
+			tc.dc.ApplyActiveFinalityProviders(tc.maxActive)
+
+			require.Equal(t, tc.expTotalVp, tc.dc.TotalVotingPower)
+			require.Equal(t, tc.expActiveFps, tc.dc.NumActiveFps)
+		})
+	}
+}
+
+func fp(t *testing.T, r *rand.Rand, totalVp uint64, isSlashed bool) *ftypes.FinalityProviderDistInfo {
+	btcPk, err := datagen.GenRandomBIP340PubKey(r)
+	require.NoError(t, err)
+
+	return &ftypes.FinalityProviderDistInfo{
+		TotalBondedSat: totalVp,
+		IsTimestamped:  true,
+		IsJailed:       false,
+		IsSlashed:      isSlashed,
+		BtcPk:          btcPk,
+	}
+}
+
 func FuzzSlashFinalityProviderEvent(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
