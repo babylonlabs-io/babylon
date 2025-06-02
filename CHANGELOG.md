@@ -84,6 +84,7 @@ check of rewards
 - [#993](https://github.com/babylonlabs-io/babylon/pull/993) Remove async-icq
   module.
 - [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
+- [#xxx](https://github.com/babylonlabs-io/babylon/pull/xxx) Improve genesis validations
 
 ### State Machine Breaking
 
