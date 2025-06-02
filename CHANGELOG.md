@@ -61,6 +61,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#992](https://github.com/babylonlabs-io/babylon/pull/992) Add checks for bad halting height in `HandleResumeFinalityProposal`
 - [#993](https://github.com/babylonlabs-io/babylon/pull/993) Remove async-icq
   module.
+<<<<<<< HEAD
+=======
+- [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
+- [#1013](https://github.com/babylonlabs-io/babylon/pull/1013) Update to ibc rate limit `v8.1.0`
+- [#1018](https://github.com/babylonlabs-io/babylon/pull/1018) Improve genesis validations in `x/mint` and `x/btccheckpoint`
+- [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
+>>>>>>> bdb62ff (chore: update genesis validations in x/mint and x/btccheckpoint (#1018))
 
 ### State Machine Breaking
 
