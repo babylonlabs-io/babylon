@@ -51,7 +51,7 @@ var (
 	// durations in hours
 	DailyDurationHours uint64 = 24
 	// limits (percentages)
-	DefaultDailyLimit = sdkmath.NewInt(20)
+	DefaultDailyLimit = sdkmath.NewInt(10)
 )
 
 func CreateUpgrade(includeAsyncICQ bool) upgrades.Upgrade {
