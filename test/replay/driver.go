@@ -421,6 +421,20 @@ func SendTxWithMessagesSuccess(
 	require.Equal(t, result.Code, uint32(0))
 }
 
+func SendTxWithMessages(
+	t *testing.T,
+	app *babylonApp.BabylonApp,
+	senderInfo *SenderInfo,
+	msgs ...sdk.Msg,
+) (*abci.ResponseCheckTx, error) {
+	txBytes := createTx(t, app.TxConfig(), senderInfo, defaultGasLimit, defaultFeeCoin, msgs...)
+
+	return app.CheckTx(&abci.RequestCheckTx{
+		Tx:   txBytes,
+		Type: abci.CheckTxType_New,
+	})
+}
+
 func DefaultSendTxWithMessagesSuccess(
 	t *testing.T,
 	app *babylonApp.BabylonApp,

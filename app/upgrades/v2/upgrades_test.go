@@ -47,14 +47,15 @@ func TestUpgradeTestSuite(t *testing.T) {
 
 func (s *UpgradeTestSuite) TestUpgrade() {
 	testCases := []struct {
-		msg           string
-		baseBtcHeader *btclighttypes.BTCHeaderInfo
-		preUpgrade    func()
-		upgrade       func()
-		postUpgrade   func()
+		msg             string
+		baseBtcHeader   *btclighttypes.BTCHeaderInfo
+		preUpgrade      func()
+		upgrade         func()
+		postUpgrade     func()
+		includeAsyncICQ bool
 	}{
 		{
-			"Test launch software upgrade v1 mainnet",
+			"Test launch software upgrade v2 with async ICQ not included",
 			sample.MainnetBtcHeader854784(s.T()),
 			s.PreUpgrade,
 			s.Upgrade,
@@ -65,12 +66,27 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				s.NoError(err)
 				s.EqualValues(DummyUpgradeHeight-1, lastProcessedHeight)
 			},
+			false,
+		},
+		{
+			"Test launch software upgrade v2 with async ICQ included",
+			sample.MainnetBtcHeader854784(s.T()),
+			s.PreUpgrade,
+			s.Upgrade,
+			func() {
+				s.PostUpgrade()
+				// check the reward tracker event last processed height
+				lastProcessedHeight, err := s.app.IncentiveKeeper.GetRewardTrackerEventLastProcessedHeight(s.ctx)
+				s.NoError(err)
+				s.EqualValues(DummyUpgradeHeight-1, lastProcessedHeight)
+			},
+			true,
 		},
 	}
 
 	for _, tc := range testCases {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
-			s.SetupTest() // reset
+			s.SetupTest(tc.includeAsyncICQ) // reset
 
 			tc.preUpgrade()
 			tc.upgrade()
@@ -79,9 +95,9 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	}
 }
 
-func (s *UpgradeTestSuite) SetupTest() {
+func (s *UpgradeTestSuite) SetupTest(includeAsyncICQ bool) {
 	// add the upgrade plan
-	app.Upgrades = []upgrades.Upgrade{v2.Upgrade}
+	app.Upgrades = []upgrades.Upgrade{v2.CreateUpgrade(includeAsyncICQ)}
 
 	// set up app
 	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)

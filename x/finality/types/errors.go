@@ -25,4 +25,7 @@ var (
 	ErrSigHeightOutdated              = errorsmod.Register(ModuleName, 1116, "the voting block is already finalized and timestamped")
 	ErrOverflowInBlockHeight          = errorsmod.Register(ModuleName, 1117, "overflow in block height calculation")
 	ErrInvalidPubRandCommit           = errorsmod.Register(ModuleName, 1118, "the public randomness commitment is invalid")
+	ErrInvalidUnjailFinalityProvider  = errorsmod.Register(ModuleName, 1119, "unjail finality provider message is not valid")
+	ErrInvalidEquivocationEvidence    = errorsmod.Register(ModuleName, 1120, "equivocation evindence message is not valid")
+	ErrInvalidResumeFinality          = errorsmod.Register(ModuleName, 1121, "resume finality proposal message is not valid")
 )

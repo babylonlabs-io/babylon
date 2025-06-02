@@ -217,8 +217,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// - are not slashed, and
 	// - their registered epochs are finalised
 	// and then check whether the BTC stake is restaked to FPs of consumers
-	// TODO: ensure the BTC delegation does not restake to too many finality providers
-	// (pending concrete design)
+	// The total number of finality providers in a delegation must be less than the minimum
+	// of all consumers' max_multi_staked_fps limits. Only one finality provider per
+	// consumer is allowed in a delegation.
 	restakedToConsumers, err := ms.validateRestakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
 	if err != nil {
 		return nil, err
